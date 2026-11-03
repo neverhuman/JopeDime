@@ -1869,12 +1869,87 @@ def run_primary(out_dir: Path) -> int:
     }
     details_sha256 = fsync_write_json(out_dir / "details.json", details_doc)
 
-    # Build compact metrics.json (guaranteed <= 50 KB for Git publication)
+    # Build compact metrics.json (guaranteed <= 50 KB for Git publication; full tables in details.json)
+    core_contrasts = (
+        "RERANK4 - CONTROL",
+        "RERANK4_SHUF - CONTROL",
+        "RERANK4 - RERANK4_SHUF",
+        "RERANK4_UNC - CONTROL",
+        "RERANK4_M0 - CONTROL",
+        "ORACLE_TOP4 - CONTROL",
+    )
+    core_arms = (
+        "CONTROL",
+        "RERANK4",
+        "RERANK4_SHUF",
+        "RERANK4_UNC",
+        "RERANK4_M0",
+        "ORACLE_TOP4",
+        "ORACLE_POOL",
+    )
+
+    def full_contrast_compact(
+        d: dict[str, Any], keep_top5: bool = False
+    ) -> dict[str, Any]:
+        out = {
+            k: v
+            for k, v in d.items()
+            if k not in ("worst_harmed_families_all", "worst_harmed_families_top10")
+        }
+        if keep_top5 and "worst_harmed_families_top10" in d:
+            out["worst_harmed_families_top5"] = d["worst_harmed_families_top10"][:5]
+        return out
+
+    def brief_contrast_compact(d: dict[str, Any]) -> dict[str, Any]:
+        keys = (
+            "median_family_gain",
+            "median_context_gain",
+            "ci95",
+            "ci975_holm2",
+            "raw_p_one_sided",
+            "holm_p_primary_secondary_m2",
+            "positive_seeds",
+            "per_seed_family_gains",
+            "n_harmed_families_median_gt_001",
+        )
+        return {k: d[k] for k in keys if k in d}
+
     compact_train_contrasts = {
-        k: strip_harmed_all(v) for k, v in primary_train_contrasts_full.items()
+        k: (
+            full_contrast_compact(v, keep_top5=(k == "RERANK4 - CONTROL"))
+            if k in ("RERANK4 - CONTROL", "RERANK4 - RERANK4_SHUF")
+            else brief_contrast_compact(v)
+        )
+        for k, v in primary_train_contrasts_full.items()
+        if k in core_contrasts
     }
     compact_val_contrasts = {
-        k: strip_harmed_all(v) for k, v in secondary_val_contrasts_full.items()
+        k: (
+            full_contrast_compact(v, keep_top5=(k == "RERANK4 - CONTROL"))
+            if k in ("RERANK4 - CONTROL", "RERANK4 - RERANK4_SHUF")
+            else brief_contrast_compact(v)
+        )
+        for k, v in secondary_val_contrasts_full.items()
+        if k in core_contrasts
+    }
+    compact_ablation_summary = {
+        ak: {
+            ck: (
+                brief_contrast_compact(cv)
+                if isinstance(cv, dict) and "median_family_gain" in cv
+                else cv
+            )
+            for ck, cv in av.items()
+            if ck
+            in (
+                "n_features",
+                "n_cells_strict_admitted_out_of_15",
+                "dl_train_oof_strict_minus_control",
+                "dl_train_oof_unc_minus_control",
+                "dl_val91_strict_minus_control",
+            )
+        }
+        for ak, av in ablation_summary.items()
     }
 
     metrics = {
@@ -1956,40 +2031,55 @@ def run_primary(out_dir: Path) -> int:
             "n_contexts": N_train,
             "n_families": len(train_fams_sorted),
             "n_cells_per_arm": 45,
-            "arm_utilities": train_arm_summary,
+            "arm_utilities": {
+                k: v for k, v in train_arm_summary.items() if k in core_arms
+            },
             "contrasts_median_across_fold_seeds": compact_train_contrasts,
             "contrasts_mean_across_fold_seeds": {
-                k: train_contrasts_mean_fseeds[k]
+                k: brief_contrast_compact(train_contrasts_mean_fseeds[k])
                 for k in (
                     "RERANK4 - CONTROL",
-                    "RERANK4_SHUF - CONTROL",
-                    "RERANK4 - RERANK4_SHUF",
                     "RERANK4_UNC - CONTROL",
-                    "RERANK4_M0 - CONTROL",
                 )
             },
-            "per_fold_seed_contrasts": train_by_fold_seed,
-            "mm_bt_elo_anchored_r882": train_elo,
+            "per_fold_seed_contrasts": {
+                fk: {
+                    ck: brief_contrast_compact(cv)
+                    for ck, cv in fv.items()
+                    if ck
+                    in (
+                        "RERANK4 - CONTROL",
+                        "RERANK4 - RERANK4_SHUF",
+                        "RERANK4_UNC - CONTROL",
+                    )
+                }
+                for fk, fv in train_by_fold_seed.items()
+            },
+            "mm_bt_elo_anchored_r882": {
+                k: v for k, v in train_elo.items() if k in core_arms
+            },
         },
         "secondary_dl_val_native91": {
             "n_contexts": N_val,
             "n_families": len(val_fams_sorted),
             "fold_seed": SECONDARY_FOLD_SEED,
-            "arm_utilities": val_arm_summary_266140,
+            "arm_utilities": {
+                k: v for k, v in val_arm_summary_266140.items() if k in core_arms
+            },
             "contrasts_fseed266140": compact_val_contrasts,
             "contrasts_3_fold_seeds_aggregate": {
-                k: val_3fseed_contrasts[k]
+                k: brief_contrast_compact(val_3fseed_contrasts[k])
                 for k in (
                     "RERANK4 - CONTROL",
-                    "RERANK4_SHUF - CONTROL",
                     "RERANK4 - RERANK4_SHUF",
                     "RERANK4_UNC - CONTROL",
-                    "RERANK4_M0 - CONTROL",
                 )
             },
-            "mm_bt_elo_anchored_r882": val_elo,
+            "mm_bt_elo_anchored_r882": {
+                k: v for k, v in val_elo.items() if k in core_arms
+            },
         },
-        "feature_block_ablations_fseed266140": ablation_summary,
+        "feature_block_ablations_fseed266140": compact_ablation_summary,
         "feature_importance_block_share_fseed266140_s266101_fold0": block_importance,
         "context_27_summary": ctx27_summary,
         "wall_seconds": round(time.time() - t0, 3),

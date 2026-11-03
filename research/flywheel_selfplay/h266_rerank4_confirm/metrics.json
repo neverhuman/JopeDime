@@ -1,24 +1,1600 @@
 {
+  "advance_gates": {
+    "confirmation_status": "NOT_CONFIRMED",
+    "primary_3_of_3_seeds_positive": true,
+    "primary_holm_lcb95_gt_0": false,
+    "primary_holm_p_lt_005": true,
+    "primary_lcb95_gt_0": false,
+    "primary_median_family_gain_gt_0002": true,
+    "primary_rerank4_beats_rerank4_shuf": true,
+    "secondary_dl_val91_3_of_3_seeds_positive": true,
+    "secondary_dl_val91_beats_shuf": true,
+    "secondary_dl_val91_gain_gt_0": true,
+    "secondary_dl_val91_gain_gt_0002": true,
+    "secondary_dl_val91_holm_lcb95_gt_0": true,
+    "verdict": "NO_ADVANCE"
+  },
+  "audits": {
+    "family_disjointness": {
+      "dl_train_fold_family_overlap_across_all_3_fold_seeds": 0,
+      "dl_train_val_family_overlap": 0,
+      "dl_val_reads_before_fit_lock": 0,
+      "has_meta_test_any": false
+    },
+    "h58_cache_provenance": {
+      "base_prior_cost_source": "stage1_stage2.pt native prior model input (sha256=136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d)",
+      "cache_manifest_schema": "jope.h58.context-feature-cache/v3",
+      "contains_dl_val_or_train_outcomes": false,
+      "context_features_npz_sha256": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+      "excluded_payloads_opened": 0,
+      "outer_rows_delivered": 0,
+      "pool_priors_npz_sha256": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"
+    },
+    "sem_rev03_definition": "sem64[:4] = structural semantic signature compute_sem24_numpy(prog[:4]) of fixed pool array rows 0..3 (candidate program descriptors only; 0 fitness/gate outcomes read)"
+  },
+  "baseline_regression": {
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "r882_bit_exact_context_matches": 91,
+    "r882_native91_abs_diff": 0.0,
+    "r882_native91_expected": 1.1377941898164525,
+    "r882_native91_mean": 1.1377941898164525,
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "schema": "jope.h266.baseline-regression/v1",
+    "top4_pick_oracle_ceiling_ctx_abs_diff": 0.0,
+    "top4_pick_oracle_ceiling_ctx_expected": 1.2403601682250796,
+    "top4_pick_oracle_ceiling_ctx_mean": 1.2403601682250796,
+    "top4_pick_oracle_ceiling_fam_abs_diff": 0.0,
+    "top4_pick_oracle_ceiling_fam_expected": 1.2519997168684853,
+    "top4_pick_oracle_ceiling_fam_mean": 1.2519997168684853
+  },
   "boot_draws": 10000,
   "boot_seed": 266150,
-  "confirmation_status": "PENDING",
+  "claim_scope": "Confirmatory fresh-split replication (3 fold seeds 266140/266141/266142 x 5 folds x 3 model seeds 266101-266103 on DL-Train 205 fam PRIMARY + DL-Val91 SECONDARY) + feature-block ablations of H265 RERANK4 zero-update listwise LambdaMART top-4 re-ranker (0 test-time reveals, single-pick)",
+  "completed_utc": "2026-11-03T17:57:31Z",
+  "confirmation_status": "NOT_CONFIRMED",
+  "context_27_summary": {
+    "context_sha256": "43022ae6a8bc83e9e25ea4a2882389152856226f5b2bdd4668db07f2f510ae91",
+    "family_id": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+    "index": 27,
+    "r882_slot0_utility": 1.1226949552792034,
+    "rerank4_invalid_picks_out_of_15": 0,
+    "rerank4_m0_invalid_picks_out_of_15": 0,
+    "rerank4_m0_slot3_oracle_picks_out_of_15": 4,
+    "rerank4_shuf_m0_invalid_picks_out_of_15": 6,
+    "rerank4_slot0_picks_out_of_15": 13,
+    "rerank4_slot3_oracle_picks_out_of_15": 2,
+    "top4_oracle_slot3_utility": 1.128496258392441
+  },
+  "feature_block_ablations_fseed266140": {
+    "NO_CTX76": {
+      "dl_train_oof_strict_minus_control": {
+        "ci95": [
+          -0.019066476709193307,
+          0.03994182315927522
+        ],
+        "ci975_holm2": [
+          -0.02386678132219666,
+          0.044158603668184734
+        ],
+        "median_context_gain": 0.017945684009442076,
+        "median_family_gain": 0.011909021093346916,
+        "n_harmed_families_median_gt_001": 25,
+        "per_seed_family_gains": [
+          0.013395939228263713,
+          0.011909021093346916,
+          0.00380740292674863
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.2512748725127487
+      },
+      "dl_train_oof_unc_minus_control": {
+        "ci95": [
+          -0.014782541001684234,
+          0.05109408254456252
+        ],
+        "ci975_holm2": [
+          -0.020385497863999655,
+          0.055862186130400615
+        ],
+        "median_context_gain": 0.027315805426693984,
+        "median_family_gain": 0.016480713898802273,
+        "n_harmed_families_median_gt_001": 48,
+        "per_seed_family_gains": [
+          0.016480713898802273,
+          0.011909021093346916,
+          0.018105118079138404
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.14258574142585742
+      },
+      "dl_val91_strict_minus_control": {
+        "ci95": [
+          0.0032959312079343397,
+          0.02004306487646833
+        ],
+        "ci975_holm2": [
+          0.0024790472549112933,
+          0.021614292479850413
+        ],
+        "median_context_gain": 0.011330648322581016,
+        "median_family_gain": 0.010853568393209164,
+        "n_harmed_families_median_gt_001": 1,
+        "per_seed_family_gains": [
+          0.008729041456605307,
+          0.024790231098195274,
+          0.010853568393209164
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0005999400059994001
+      },
+      "n_cells_strict_admitted_out_of_15": 9,
+      "n_features": 484
+    },
+    "NO_SCOREGEOM": {
+      "dl_train_oof_strict_minus_control": {
+        "ci95": [
+          0.0004619709750094191,
+          0.04701425011071368
+        ],
+        "ci975_holm2": [
+          -0.002371611803884532,
+          0.0513377609012695
+        ],
+        "median_context_gain": 0.01566731666229315,
+        "median_family_gain": 0.012209673120550957,
+        "n_harmed_families_median_gt_001": 25,
+        "per_seed_family_gains": [
+          0.012209673120550957,
+          0.010765509831170096,
+          0.03379543032701957
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.022797720227977204
+      },
+      "dl_train_oof_unc_minus_control": {
+        "ci95": [
+          0.011279304021075022,
+          0.06827718401201543
+        ],
+        "ci975_holm2": [
+          0.007701524952930376,
+          0.07307257590904882
+        ],
+        "median_context_gain": 0.01566731666229315,
+        "median_family_gain": 0.017655864592881067,
+        "n_harmed_families_median_gt_001": 45,
+        "per_seed_family_gains": [
+          0.017655864592881067,
+          0.010765509831170096,
+          0.03926596512297805
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0017998200179982
+      },
+      "dl_val91_strict_minus_control": {
+        "ci95": [
+          0.0031525411716989827,
+          0.03218759519666376
+        ],
+        "ci975_holm2": [
+          0.0015395628589175347,
+          0.034698211378616096
+        ],
+        "median_context_gain": 0.02097472349481344,
+        "median_family_gain": 0.02009157724240001,
+        "n_harmed_families_median_gt_001": 2,
+        "per_seed_family_gains": [
+          0.009161465057924999,
+          0.02239464158611499,
+          0.02009157724240001
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.006799320067993201
+      },
+      "n_cells_strict_admitted_out_of_15": 10,
+      "n_features": 528
+    },
+    "NO_SEM24": {
+      "dl_train_oof_strict_minus_control": {
+        "ci95": [
+          -0.017996688687844483,
+          0.044680272046564676
+        ],
+        "ci975_holm2": [
+          -0.021868421520232613,
+          0.05079978623604225
+        ],
+        "median_context_gain": 0.009890418792929845,
+        "median_family_gain": 0.008826799154805758,
+        "n_harmed_families_median_gt_001": 17,
+        "per_seed_family_gains": [
+          0.02771848497540935,
+          0.008826799154805758,
+          -0.0020168747827707363
+        ],
+        "positive_seeds": 2,
+        "raw_p_one_sided": 0.24837516248375163
+      },
+      "dl_train_oof_unc_minus_control": {
+        "ci95": [
+          -0.016521684908643204,
+          0.05842996565082388
+        ],
+        "ci975_holm2": [
+          -0.020922920449658048,
+          0.06461434475294947
+        ],
+        "median_context_gain": 0.023204222110744244,
+        "median_family_gain": 0.019003005399515348,
+        "n_harmed_families_median_gt_001": 43,
+        "per_seed_family_gains": [
+          0.026968846010907238,
+          0.019003005399515348,
+          0.01577959002600426
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.1508849115088491
+      },
+      "dl_val91_strict_minus_control": {
+        "ci95": [
+          0.005171377898011538,
+          0.025001639080870317
+        ],
+        "ci975_holm2": [
+          0.004134085202797144,
+          0.027025975155699624
+        ],
+        "median_context_gain": 0.015590525143401646,
+        "median_family_gain": 0.01496148777557987,
+        "n_harmed_families_median_gt_001": 1,
+        "per_seed_family_gains": [
+          0.008490506243224805,
+          0.01496148777557987,
+          0.015554249280435835
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.00039996000399960006
+      },
+      "n_cells_strict_admitted_out_of_15": 9,
+      "n_features": 531
+    },
+    "SCORE_ONLY": {
+      "dl_train_oof_strict_minus_control": {
+        "ci95": [
+          -0.011489757155003603,
+          0.01643427358582267
+        ],
+        "ci975_holm2": [
+          -0.013860654246718486,
+          0.018522731211110807
+        ],
+        "median_context_gain": 0.0004911197895931529,
+        "median_family_gain": 0.0019883549022269454,
+        "n_harmed_families_median_gt_001": 17,
+        "per_seed_family_gains": [
+          0.008945833126635586,
+          0.0019883549022269454,
+          -0.00399336023156332
+        ],
+        "positive_seeds": 2,
+        "raw_p_one_sided": 0.34366563343665635
+      },
+      "dl_train_oof_unc_minus_control": {
+        "ci95": [
+          -0.0189471439273544,
+          0.03903114136659473
+        ],
+        "ci975_holm2": [
+          -0.02307581853779672,
+          0.044007166867618484
+        ],
+        "median_context_gain": 0.0016894563639928695,
+        "median_family_gain": 0.0031952454166459814,
+        "n_harmed_families_median_gt_001": 44,
+        "per_seed_family_gains": [
+          -0.0067809215823589,
+          0.0031952454166459814,
+          0.015500825552568664
+        ],
+        "positive_seeds": 2,
+        "raw_p_one_sided": 0.24597540245975402
+      },
+      "dl_val91_strict_minus_control": {
+        "ci95": [
+          -0.002456743470226706,
+          0.003961059098675393
+        ],
+        "ci975_holm2": [
+          -0.003004928147866545,
+          0.0042904864336948826
+        ],
+        "median_context_gain": 0.0004066517881786691,
+        "median_family_gain": 0.00038952960762350664,
+        "n_harmed_families_median_gt_001": 1,
+        "per_seed_family_gains": [
+          0.002439487821313719,
+          9.56522512156055e-05,
+          0.00038952960762350664
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.28357164283571645
+      },
+      "n_cells_strict_admitted_out_of_15": 6,
+      "n_features": 32
+    },
+    "SCORE_ONLY_20": {
+      "dl_train_oof_strict_minus_control": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "dl_train_oof_unc_minus_control": {
+        "ci95": [
+          -0.02008879790888538,
+          0.03145749995070242
+        ],
+        "ci975_holm2": [
+          -0.023544419582487527,
+          0.03533830226499709
+        ],
+        "median_context_gain": -0.006508570230343347,
+        "median_family_gain": -0.001469937878355154,
+        "n_harmed_families_median_gt_001": 44,
+        "per_seed_family_gains": [
+          -0.001469937878355154,
+          0.0042662980625650035,
+          -0.02079744788085581
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.3564643535646435
+      },
+      "dl_val91_strict_minus_control": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "n_cells_strict_admitted_out_of_15": 0,
+      "n_features": 20
+    }
+  },
+  "feature_importance_block_share_fseed266140_s266101_fold0": {
+    "dope_28 (532..559)": {
+      "gain": 285.78,
+      "pct": 2.68
+    },
+    "lm48_z_48 (484..531)": {
+      "gain": 1591.14,
+      "pct": 14.9
+    },
+    "prog_412 (32..443)": {
+      "gain": 2238.25,
+      "pct": 20.96
+    },
+    "proj16_z_16 (468..483)": {
+      "gain": 392.9,
+      "pct": 3.68
+    },
+    "score_geom_32 (0..31)": {
+      "gain": 3160.78,
+      "pct": 29.59
+    },
+    "sem24_z_24 (444..467)": {
+      "gain": 3011.59,
+      "pct": 28.2
+    }
+  },
+  "fit_selections_lock_summary": {
+    "details_json_sha256": "8d234f5f371f9bdb72b1cc6d452292d472740b01a12f29d829b5df5d277f5dcc",
+    "n_cells_strict_admitted_rerank4_fseed266140_of_15": 8,
+    "n_cells_strict_admitted_rerank4_of_45": 33,
+    "n_cells_strict_admitted_rerank4_shuf_fseed266140_of_15": 1,
+    "n_cells_strict_admitted_rerank4_shuf_of_45": 1,
+    "n_confirmatory_cells_per_arm": 45,
+    "path": "fit_selections_lock.json",
+    "sha256": "ad5be106f53d754b8bf48c2601c39809c4269254ca0f296eeb0167855149f40d"
+  },
   "fold_seeds": [
     266140,
     266141,
     266142
   ],
+  "full_metrics_json_bytes": 218715,
+  "full_metrics_json_sha256": "083edb422ce1d97ff5277ff5b3ddee8f0ebe39ce63df2e96591d8efe2ee5d160",
   "holm_m": 2,
+  "hygiene": {
+    "cuda_visible_devices": "",
+    "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "optimizer_updates": 0,
+    "r882_sha256_after": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "r882_sha256_before": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "test_time_reveals_used": 0
+  },
   "model_seeds": [
     266101,
     266102,
     266103
   ],
-  "outcomes_read": 0,
+  "packaging_compaction_disclosure": {
+    "note": "attempt-001 completed all 90 confirmatory and 75 ablation cell fits across DL-Train (PRIMARY) and DL-Val91 (SECONDARY) and fsync-wrote baseline.json, fit_selections_lock.json, panels.npz, details.json, and full metrics.json (218,715 bytes, sha256=083edb422ce1d97ff5277ff5b3ddee8f0ebe39ce63df2e96591d8efe2ee5d160) before hitting the packaging assertion metrics_size <= 50_000 at line 2001. Per watcher ruling hw_t1808_argon_h266_metricscap.md, no recompute was run; the untouched 218,715-byte metrics.json was uploaded to S3 custody (VersionId=RYGkclV0aJZ4YvamtM9Yo8VM_KBAEGi6), and this compact Git metrics.json (<= 50 KB) was derived deterministically from it.",
+    "post_outcome_retries": 0,
+    "recompute_performed": false,
+    "ruling_ref": "hw_t1808_argon_h266_metricscap.md"
+  },
+  "primary_dl_train_oof_205fam": {
+    "arm_utilities": {
+      "CONTROL": {
+        "mean_changed_choices_per_fold_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_context_utility": 1.423073434552299,
+        "median_family_utility": 1.3853554329931828,
+        "per_seed_context_utility": [
+          1.423073434552299,
+          1.423073434552299,
+          1.423073434552299
+        ],
+        "per_seed_family_utility": [
+          1.3853554329931828,
+          1.3853554329931828,
+          1.3853554329931828
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.2715340442986054,
+          0.2715340442986054,
+          0.2715340442986054
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          51,
+          51,
+          51
+        ]
+      },
+      "RERANK4": {
+        "mean_changed_choices_per_fold_seed": [
+          369.0,
+          478.6666666666667,
+          445.3333333333333
+        ],
+        "median_context_utility": 1.441427615276526,
+        "median_family_utility": 1.4042938240867011,
+        "per_seed_context_utility": [
+          1.448119526098061,
+          1.441427615276526,
+          1.4413044411042024
+        ],
+        "per_seed_family_utility": [
+          1.4116097047218146,
+          1.4042938240867011,
+          1.3997804019769247
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.3202078206179929,
+          0.31473885698660103,
+          0.3273174733388023
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          55,
+          55,
+          56
+        ]
+      },
+      "RERANK4_M0": {
+        "mean_changed_choices_per_fold_seed": [
+          838.3333333333334,
+          831.6666666666666,
+          823.0
+        ],
+        "median_context_utility": 1.455466147956251,
+        "median_family_utility": 1.4285733553307298,
+        "per_seed_context_utility": [
+          1.4430873706288405,
+          1.455466147956251,
+          1.4610566728401169
+        ],
+        "per_seed_family_utility": [
+          1.4116582083298128,
+          1.4285733553307298,
+          1.434496805925765
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.3363412633305988,
+          0.33989608969100354,
+          0.344271260596117
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          64,
+          54,
+          51
+        ]
+      },
+      "RERANK4_SHUF": {
+        "mean_changed_choices_per_fold_seed": [
+          0.0,
+          0.0,
+          20.666666666666668
+        ],
+        "median_context_utility": 1.423073434552299,
+        "median_family_utility": 1.3853554329931828,
+        "per_seed_context_utility": [
+          1.423073434552299,
+          1.423073434552299,
+          1.423073434552299
+        ],
+        "per_seed_family_utility": [
+          1.3853554329931828,
+          1.3853554329931828,
+          1.3853554329931828
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.2715340442986054,
+          0.2715340442986054,
+          0.2720809406617446
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          51,
+          51,
+          50
+        ]
+      },
+      "RERANK4_UNC": {
+        "mean_changed_choices_per_fold_seed": [
+          497.3333333333333,
+          709.0,
+          595.0
+        ],
+        "median_context_utility": 1.4476719967677938,
+        "median_family_utility": 1.4209444781114045,
+        "per_seed_context_utility": [
+          1.4476719967677938,
+          1.4516255255873545,
+          1.4461859396164944
+        ],
+        "per_seed_family_utility": [
+          1.4197553151070257,
+          1.422185838359443,
+          1.4209444781114045
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.3251298878862456,
+          0.3349740224227509,
+          0.3388022969647252
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          53,
+          55,
+          54
+        ]
+      }
+    },
+    "contrasts_mean_across_fold_seeds": {
+      "RERANK4 - CONTROL": {
+        "ci95": [
+          -0.00787706294256688,
+          0.044027529293633
+        ],
+        "ci975_holm2": [
+          -0.01194890039005124,
+          0.04920517478484943
+        ],
+        "median_context_gain": 0.02058074701561141,
+        "median_family_gain": 0.016141507409700127,
+        "n_harmed_families_median_gt_001": 43,
+        "per_seed_family_gains": [
+          0.025596438277615555,
+          0.012703544472708668,
+          0.016141507409700127
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0826917308269173
+      },
+      "RERANK4_UNC - CONTROL": {
+        "ci95": [
+          -0.0029705465557468527,
+          0.07108917233751139
+        ],
+        "ci975_holm2": [
+          -0.0073554573090027645,
+          0.07880181832107816
+        ],
+        "median_context_gain": 0.026931807931237062,
+        "median_family_gain": 0.028158377929340884,
+        "n_harmed_families_median_gt_001": 53,
+        "per_seed_family_gains": [
+          0.028158377929340884,
+          0.026818176614856488,
+          0.028445072652718745
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0365963403659634
+      }
+    },
+    "contrasts_median_across_fold_seeds": {
+      "RERANK4 - CONTROL": {
+        "ci95": [
+          -0.004329162358959968,
+          0.05184527801572719
+        ],
+        "ci975_holm2": [
+          -0.008609661116881594,
+          0.055948795213113085
+        ],
+        "family_wtl_by_seed": [
+          {
+            "losses": 34,
+            "ties": 75,
+            "wins": 96
+          },
+          {
+            "losses": 39,
+            "ties": 89,
+            "wins": 77
+          },
+          {
+            "losses": 39,
+            "ties": 80,
+            "wins": 86
+          }
+        ],
+        "harm_families_gt_001_by_seed": [
+          23,
+          26,
+          27
+        ],
+        "harm_families_gt_1e4_by_seed": [
+          34,
+          39,
+          39
+        ],
+        "holm_p_primary_secondary_m2": 0.0494950504949505,
+        "holm_p_within_split_m2": 0.098990100989901,
+        "mean_context_gain": 0.020543759607297412,
+        "mean_family_gain": 0.019872543935297356,
+        "median_context_gain": 0.0183541807242269,
+        "median_family_gain": 0.018938391093518088,
+        "n_harmed_families_median_gt_001": 19,
+        "n_harmed_families_median_gt_1e4": 34,
+        "per_seed_context_gains": [
+          0.025046091545761984,
+          0.0183541807242269,
+          0.01823100655190335
+        ],
+        "per_seed_family_gains": [
+          0.02625427172863203,
+          0.018938391093518088,
+          0.014424968983741944
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0494950504949505,
+        "worst_harmed_families_top5": [
+          {
+            "delta": -1.3032934746483802,
+            "family_id": "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7"
+          },
+          {
+            "delta": -0.7166700590389812,
+            "family_id": "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d"
+          },
+          {
+            "delta": -0.5391989236616923,
+            "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d"
+          },
+          {
+            "delta": -0.5196670828134585,
+            "family_id": "fam-37f9e67be184439511ba7b76d189201834b8e82476f44aeee864cd641398783a"
+          },
+          {
+            "delta": -0.400335324979618,
+            "family_id": "fam-b8515bbd9b5fd7bfdcc3bdf7419bb6bf2f0178be17d581a8dab59a702e063a7b"
+          }
+        ]
+      },
+      "RERANK4 - RERANK4_SHUF": {
+        "ci95": [
+          -0.004329162358959968,
+          0.05184527801572719
+        ],
+        "ci975_holm2": [
+          -0.008609661116881594,
+          0.055948795213113085
+        ],
+        "family_wtl_by_seed": [
+          {
+            "losses": 34,
+            "ties": 75,
+            "wins": 96
+          },
+          {
+            "losses": 39,
+            "ties": 89,
+            "wins": 77
+          },
+          {
+            "losses": 39,
+            "ties": 80,
+            "wins": 86
+          }
+        ],
+        "harm_families_gt_001_by_seed": [
+          23,
+          26,
+          27
+        ],
+        "harm_families_gt_1e4_by_seed": [
+          34,
+          39,
+          39
+        ],
+        "mean_context_gain": 0.020543759607297412,
+        "mean_family_gain": 0.019872543935297356,
+        "median_context_gain": 0.0183541807242269,
+        "median_family_gain": 0.018938391093518088,
+        "n_harmed_families_median_gt_001": 19,
+        "n_harmed_families_median_gt_1e4": 34,
+        "per_seed_context_gains": [
+          0.025046091545761984,
+          0.0183541807242269,
+          0.01823100655190335
+        ],
+        "per_seed_family_gains": [
+          0.02625427172863203,
+          0.018938391093518088,
+          0.014424968983741944
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0494950504949505
+      },
+      "RERANK4_M0 - CONTROL": {
+        "ci95": [
+          0.00036524067065700255,
+          0.09903780109048145
+        ],
+        "ci975_holm2": [
+          -0.0056611259586233495,
+          0.10836709651635816
+        ],
+        "median_context_gain": 0.03239271340395189,
+        "median_family_gain": 0.04321792233754736,
+        "n_harmed_families_median_gt_001": 56,
+        "per_seed_family_gains": [
+          0.026302775336630068,
+          0.04321792233754736,
+          0.04914137293258216
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0240975902409759
+      },
+      "RERANK4_SHUF - CONTROL": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "RERANK4_UNC - CONTROL": {
+        "ci95": [
+          0.005382251253519643,
+          0.07948081886285865
+        ],
+        "ci975_holm2": [
+          0.0010542064529691357,
+          0.08562329860587438
+        ],
+        "median_context_gain": 0.024598562215494724,
+        "median_family_gain": 0.03558904511822146,
+        "n_harmed_families_median_gt_001": 36,
+        "per_seed_family_gains": [
+          0.03439988211384281,
+          0.03683040536625995,
+          0.03558904511822146
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.010498950104989501
+      }
+    },
+    "mm_bt_elo_anchored_r882": {
+      "CONTROL": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "RERANK4": {
+        "ci95": [
+          1520.1245662445874,
+          1540.783827185608
+        ],
+        "median_elo": 1531.4984642159177,
+        "per_seed_elo": [
+          1531.4984642159177,
+          1523.5201393550258,
+          1536.8009221282384
+        ]
+      },
+      "RERANK4_M0": {
+        "ci95": [
+          1531.962113469904,
+          1565.83536531313
+        ],
+        "median_elo": 1544.6990613081462,
+        "per_seed_elo": [
+          1544.6990613081462,
+          1541.7516031823366,
+          1545.6609291564382
+        ]
+      },
+      "RERANK4_SHUF": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "RERANK4_UNC": {
+        "ci95": [
+          1532.7483099167443,
+          1558.7546151326774
+        ],
+        "median_elo": 1542.170494230894,
+        "per_seed_elo": [
+          1542.0347539088273,
+          1542.170494230894,
+          1546.9544790442155
+        ]
+      }
+    },
+    "n_cells_per_arm": 45,
+    "n_contexts": 1219,
+    "n_families": 205,
+    "per_fold_seed_contrasts": {
+      "266140": {
+        "RERANK4 - CONTROL": {
+          "ci95": [
+            -0.015737259993798054,
+            0.04237498387842692
+          ],
+          "ci975_holm2": [
+            -0.02039845733519344,
+            0.047155626409957956
+          ],
+          "median_context_gain": 0.0183541807242269,
+          "median_family_gain": 0.009074017539172023,
+          "n_harmed_families_median_gt_001": 22,
+          "per_seed_family_gains": [
+            0.009074017539172023,
+            0.007705818235895932,
+            0.01800289562051487
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.1800819918008199
+        },
+        "RERANK4 - RERANK4_SHUF": {
+          "ci95": [
+            -0.015270972544982006,
+            0.04293804877924021
+          ],
+          "ci975_holm2": [
+            -0.019970277534525124,
+            0.0476063933153734
+          ],
+          "median_context_gain": 0.01328844530083595,
+          "median_family_gain": 0.007705818235895932,
+          "n_harmed_families_median_gt_001": 21,
+          "per_seed_family_gains": [
+            0.009074017539172023,
+            0.007705818235895932,
+            0.00676917701548043
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.17228277172282772
+        },
+        "RERANK4_UNC - CONTROL": {
+          "ci95": [
+            0.001210731847190166,
+            0.06978680185439244
+          ],
+          "ci975_holm2": [
+            -0.003949970317857825,
+            0.07460438442469124
+          ],
+          "median_context_gain": 0.0247446575773258,
+          "median_family_gain": 0.018011145011204165,
+          "n_harmed_families_median_gt_001": 42,
+          "per_seed_family_gains": [
+            0.018011145011204165,
+            0.017410562452771696,
+            0.036982314795947775
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.0206979302069793
+        }
+      },
+      "266141": {
+        "RERANK4 - CONTROL": {
+          "ci95": [
+            -0.007268131741315748,
+            0.058969941390462
+          ],
+          "ci975_holm2": [
+            -0.011505864438269996,
+            0.06415543865888168
+          ],
+          "median_context_gain": 0.027907117591801756,
+          "median_family_gain": 0.02773372731946269,
+          "n_harmed_families_median_gt_001": 35,
+          "per_seed_family_gains": [
+            0.03838347447442333,
+            0.02773372731946269,
+            0.008688184156632054
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.0683931606839316
+        },
+        "RERANK4 - RERANK4_SHUF": {
+          "ci95": [
+            -0.007268131741315748,
+            0.058969941390462
+          ],
+          "ci975_holm2": [
+            -0.011505864438269996,
+            0.06415543865888168
+          ],
+          "median_context_gain": 0.027907117591801756,
+          "median_family_gain": 0.02773372731946269,
+          "n_harmed_families_median_gt_001": 35,
+          "per_seed_family_gains": [
+            0.03838347447442333,
+            0.02773372731946269,
+            0.008688184156632054
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.0683931606839316
+        },
+        "RERANK4_UNC - CONTROL": {
+          "ci95": [
+            0.0005606276556719059,
+            0.08328037591078347
+          ],
+          "ci975_holm2": [
+            -0.004626829462358416,
+            0.0898641524838061
+          ],
+          "median_context_gain": 0.03176989209774694,
+          "median_family_gain": 0.03838347447442333,
+          "n_harmed_families_median_gt_001": 41,
+          "per_seed_family_gains": [
+            0.03838347447442333,
+            0.038386508942438995,
+            0.026619460710254984
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.023497650234976502
+        }
+      },
+      "266142": {
+        "RERANK4 - CONTROL": {
+          "ci95": [
+            -0.007865987890148562,
+            0.05543362662317097
+          ],
+          "ci975_holm2": [
+            -0.012314804030807572,
+            0.06127025614801412
+          ],
+          "median_context_gain": 0.01823100655190335,
+          "median_family_gain": 0.02173344245195343,
+          "n_harmed_families_median_gt_001": 28,
+          "per_seed_family_gains": [
+            0.02933182281925129,
+            0.0026710878627673415,
+            0.02173344245195343
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.0811918808119188
+        },
+        "RERANK4 - RERANK4_SHUF": {
+          "ci95": [
+            -0.007865987890148562,
+            0.05543362662317097
+          ],
+          "ci975_holm2": [
+            -0.012314804030807572,
+            0.06127025614801412
+          ],
+          "median_context_gain": 0.01823100655190335,
+          "median_family_gain": 0.02173344245195343,
+          "n_harmed_families_median_gt_001": 28,
+          "per_seed_family_gains": [
+            0.02933182281925129,
+            0.0026710878627673415,
+            0.02173344245195343
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.0811918808119188
+        },
+        "RERANK4_UNC - CONTROL": {
+          "ci95": [
+            -0.00971464017212479,
+            0.06240281273823561
+          ],
+          "ci975_holm2": [
+            -0.014153281651013873,
+            0.06971469207490058
+          ],
+          "median_context_gain": 0.024598562215494724,
+          "median_family_gain": 0.02465745844935869,
+          "n_harmed_families_median_gt_001": 45,
+          "per_seed_family_gains": [
+            0.028080514302395134,
+            0.02465745844935869,
+            0.02173344245195343
+          ],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.0852914708529147
+        }
+      }
+    }
+  },
   "primary_endpoint": "DL-Train 205-family OOF single-pick equal-family utility RERANK4 - CONTROL across 3 fresh fold seeds x 3 fresh model seeds (45 cells)",
+  "resource_summary": {
+    "attempt_id": "attempt-001",
+    "cpu_cores_pinned": [
+      57,
+      58,
+      59,
+      60
+    ],
+    "elapsed_seconds": 1096.126,
+    "pause_requested_seconds": 0.0,
+    "peak_rss_bytes": 857968640,
+    "peak_threads": 2
+  },
+  "s3_custody": {
+    "bucket": "veox-jopedime-learning-use2",
+    "details_json_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H266/attempt-001/details.json",
+    "details_json_sha256": "8d234f5f371f9bdb72b1cc6d452292d472740b01a12f29d829b5df5d277f5dcc",
+    "details_json_version_id": "LvbWHQX6LOd9D2wl8yErvM.v4egl3Tuq",
+    "fit_selections_lock_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H266/attempt-001/fit_selections_lock.json",
+    "fit_selections_lock_sha256": "ad5be106f53d754b8bf48c2601c39809c4269254ca0f296eeb0167855149f40d",
+    "fit_selections_lock_version_id": "1ZFL4gTjf.6OT_9CD2fIZDa1sYyUTXQk",
+    "full_metrics_json_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H266/attempt-001/metrics.json",
+    "full_metrics_json_sha256": "083edb422ce1d97ff5277ff5b3ddee8f0ebe39ce63df2e96591d8efe2ee5d160",
+    "full_metrics_json_version_id": "RYGkclV0aJZ4YvamtM9Yo8VM_KBAEGi6",
+    "panels_npz_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H266/attempt-001/panels.npz",
+    "panels_npz_sha256": "c549f3ffb428af8dc14fa0830bd309c3d22271fc80f7475ecfbfcee4866a0365",
+    "panels_npz_version_id": "Ua9dfJiAuXfw1l8_JymyUavWnr09GDC1",
+    "prefix": "experiments/rd_breakthrough_20261030/H266/attempt-001",
+    "prereg_manifest_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H266/prereg-6d662d708b85/prereg_s3_manifest.json",
+    "prereg_manifest_version_id": "3ubnOj0RBjMye3wF9V6ZjOo9WXsViRVC",
+    "s3_manifest_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H266/attempt-001/s3_manifest.json",
+    "s3_manifest_sha256": "76d6d425c0903ac2edf2aebce1343fc93d29cfa6c3d7e59dd5ec2df795cb9711",
+    "s3_manifest_version_id": "MKn2ALWFB2Akgew3Uhhtp47i_cKA1GpN"
+  },
   "schema": "jope.h266.metrics/v1",
+  "secondary_dl_val_native91": {
+    "arm_utilities": {
+      "CONTROL": {
+        "mean_changed_choices_per_fold_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_context_utility": 1.1377941898164523,
+        "median_family_utility": 1.153615276991245,
+        "per_seed_context_utility": [
+          1.1377941898164523,
+          1.1377941898164523,
+          1.1377941898164523
+        ],
+        "per_seed_family_utility": [
+          1.153615276991245,
+          1.153615276991245,
+          1.153615276991245
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.23076923076923078,
+          0.23076923076923078,
+          0.23076923076923078
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          0,
+          0,
+          0
+        ]
+      },
+      "RERANK4": {
+        "mean_changed_choices_per_fold_seed": [
+          97.0,
+          148.0,
+          100.0
+        ],
+        "median_context_utility": 1.1512203496580133,
+        "median_family_utility": 1.166476124839477,
+        "per_seed_context_utility": [
+          1.1512203496580133,
+          1.1569345278490182,
+          1.1483046500315852
+        ],
+        "per_seed_family_utility": [
+          1.166476124839477,
+          1.1719771118501296,
+          1.1636831915131092
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.26373626373626374,
+          0.3054945054945055,
+          0.26593406593406593
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          0,
+          0,
+          0
+        ]
+      },
+      "RERANK4_M0": {
+        "mean_changed_choices_per_fold_seed": [
+          295.0,
+          299.0,
+          305.0
+        ],
+        "median_context_utility": 1.1626365685180224,
+        "median_family_utility": 1.177542992859008,
+        "per_seed_context_utility": [
+          1.1621714363741473,
+          1.1680390950001465,
+          1.1626365685180224
+        ],
+        "per_seed_family_utility": [
+          1.1769566659099906,
+          1.1826415240752164,
+          1.177542992859008
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.32967032967032966,
+          0.34505494505494505,
+          0.33406593406593404
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          0,
+          0,
+          0
+        ]
+      },
+      "RERANK4_SHUF": {
+        "mean_changed_choices_per_fold_seed": [
+          0.0,
+          0.0,
+          18.0
+        ],
+        "median_context_utility": 1.1377941898164523,
+        "median_family_utility": 1.153615276991245,
+        "per_seed_context_utility": [
+          1.1377941898164523,
+          1.1377941898164523,
+          1.1337070127293933
+        ],
+        "per_seed_family_utility": [
+          1.153615276991245,
+          1.153615276991245,
+          1.1497001915710094
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.23076923076923078,
+          0.23076923076923078,
+          0.23296703296703297
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          0,
+          0,
+          1
+        ]
+      },
+      "RERANK4_UNC": {
+        "mean_changed_choices_per_fold_seed": [
+          182.0,
+          264.0,
+          225.0
+        ],
+        "median_context_utility": 1.1570914313206317,
+        "median_family_utility": 1.1721000030636695,
+        "per_seed_context_utility": [
+          1.1570914313206317,
+          1.1665670774950583,
+          1.1553160864914405
+        ],
+        "per_seed_family_utility": [
+          1.1721000030636695,
+          1.1812040804584414,
+          1.1704542211879294
+        ],
+        "top1_within_top4_accuracy_by_seed": [
+          0.2857142857142857,
+          0.3626373626373626,
+          0.3032967032967033
+        ],
+        "total_invalid_neg2_picks_across_3_fold_seeds": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "contrasts_3_fold_seeds_aggregate": {
+      "RERANK4 - CONTROL": {
+        "ci95": [
+          0.005869940907031184,
+          0.029510081904448395
+        ],
+        "ci975_holm2": [
+          0.004687993487840417,
+          0.03172785462390829
+        ],
+        "median_context_gain": 0.016173800269324135,
+        "median_family_gain": 0.015518304974943916,
+        "n_harmed_families_median_gt_001": 1,
+        "per_seed_family_gains": [
+          0.017179914198152513,
+          0.014574431505574957,
+          0.015518304974943916
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.00029997000299970003
+      },
+      "RERANK4 - RERANK4_SHUF": {
+        "ci95": [
+          0.005569977326046108,
+          0.029732466565045742
+        ],
+        "ci975_holm2": [
+          0.00433120962892121,
+          0.03194614560929511
+        ],
+        "median_context_gain": 0.01753619263167705,
+        "median_family_gain": 0.016823333448355758,
+        "n_harmed_families_median_gt_001": 1,
+        "per_seed_family_gains": [
+          0.017179914198152513,
+          0.014574431505574957,
+          0.016823333448355758
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.00029997000299970003
+      },
+      "RERANK4_UNC - CONTROL": {
+        "ci95": [
+          0.0075855933217969275,
+          0.037322379065306666
+        ],
+        "ci975_holm2": [
+          0.0060213310137514665,
+          0.04031627337591365
+        ],
+        "median_context_gain": 0.021661355611208633,
+        "median_family_gain": 0.02075843379821237,
+        "n_harmed_families_median_gt_001": 2,
+        "per_seed_family_gains": [
+          0.02075843379821237,
+          0.021909794934455613,
+          0.018455639588916304
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.00029997000299970003
+      }
+    },
+    "contrasts_fseed266140": {
+      "RERANK4 - CONTROL": {
+        "ci95": [
+          0.004095064339421178,
+          0.022738013934426825
+        ],
+        "ci975_holm2": [
+          0.003280790520763172,
+          0.02450432862159808
+        ],
+        "family_wtl_by_seed": [
+          {
+            "losses": 4,
+            "ties": 2,
+            "wins": 13
+          },
+          {
+            "losses": 4,
+            "ties": 0,
+            "wins": 15
+          },
+          {
+            "losses": 3,
+            "ties": 1,
+            "wins": 15
+          }
+        ],
+        "harm_families_gt_001_by_seed": [
+          2,
+          2,
+          1
+        ],
+        "harm_families_gt_1e4_by_seed": [
+          4,
+          4,
+          3
+        ],
+        "holm_p_primary_secondary_m2": 0.0015998400159984002,
+        "holm_p_within_split_m2": 0.0015998400159984002,
+        "mean_context_gain": 0.014358986029753273,
+        "mean_family_gain": 0.013763532409660287,
+        "median_context_gain": 0.013426159841561036,
+        "median_family_gain": 0.012860847848232075,
+        "n_harmed_families_median_gt_001": 1,
+        "n_harmed_families_median_gt_1e4": 3,
+        "per_seed_context_gains": [
+          0.013426159841561036,
+          0.019140338032565873,
+          0.01051046021513291
+        ],
+        "per_seed_family_gains": [
+          0.012860847848232075,
+          0.018361834858884717,
+          0.010067914521864067
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0007999200079992001,
+        "worst_harmed_families_top5": [
+          {
+            "delta": -0.02007765971329878,
+            "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426"
+          },
+          {
+            "delta": -0.001393904225941378,
+            "family_id": "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8"
+          },
+          {
+            "delta": -0.0005164678984663773,
+            "family_id": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c"
+          }
+        ]
+      },
+      "RERANK4 - RERANK4_SHUF": {
+        "ci95": [
+          0.003784501851980945,
+          0.023410091681695784
+        ],
+        "ci975_holm2": [
+          0.002737866987030632,
+          0.025145858556149918
+        ],
+        "family_wtl_by_seed": [
+          {
+            "losses": 4,
+            "ties": 2,
+            "wins": 13
+          },
+          {
+            "losses": 4,
+            "ties": 0,
+            "wins": 15
+          },
+          {
+            "losses": 4,
+            "ties": 1,
+            "wins": 14
+          }
+        ],
+        "harm_families_gt_001_by_seed": [
+          2,
+          2,
+          2
+        ],
+        "harm_families_gt_1e4_by_seed": [
+          4,
+          4,
+          4
+        ],
+        "mean_context_gain": 0.015721378392106262,
+        "mean_family_gain": 0.015068560883072124,
+        "median_context_gain": 0.01459763730219188,
+        "median_family_gain": 0.013982999942099584,
+        "n_harmed_families_median_gt_001": 2,
+        "n_harmed_families_median_gt_1e4": 4,
+        "per_seed_context_gains": [
+          0.013426159841561036,
+          0.019140338032565873,
+          0.01459763730219188
+        ],
+        "per_seed_family_gains": [
+          0.012860847848232075,
+          0.018361834858884717,
+          0.013982999942099584
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0007999200079992001
+      },
+      "RERANK4_M0 - CONTROL": {
+        "ci95": [
+          0.005687141194832589,
+          0.044099509452545496
+        ],
+        "ci975_holm2": [
+          0.0034407148550090545,
+          0.047229162619870584
+        ],
+        "median_context_gain": 0.024842378701570134,
+        "median_family_gain": 0.023927715867763155,
+        "n_harmed_families_median_gt_001": 2,
+        "per_seed_family_gains": [
+          0.023341388918745848,
+          0.029026247083971543,
+          0.023927715867763155
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.003999600039996
+      },
+      "RERANK4_SHUF - CONTROL": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          -0.003915085420235519
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "RERANK4_UNC - CONTROL": {
+        "ci95": [
+          0.007298953243028708,
+          0.0325810160936921
+        ],
+        "ci975_holm2": [
+          0.005847268421448938,
+          0.03478630144749528
+        ],
+        "median_context_gain": 0.01929724150417944,
+        "median_family_gain": 0.01848472607242449,
+        "n_harmed_families_median_gt_001": 1,
+        "per_seed_family_gains": [
+          0.01848472607242449,
+          0.027588803467196676,
+          0.01683894419668449
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.00029997000299970003
+      }
+    },
+    "fold_seed": 266140,
+    "mm_bt_elo_anchored_r882": {
+      "CONTROL": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "RERANK4": {
+        "ci95": [
+          1508.9432390502393,
+          1547.9992417848189
+        ],
+        "median_elo": 1520.991205221624,
+        "per_seed_elo": [
+          1520.9743697382792,
+          1539.0025445216704,
+          1520.991205221624
+        ]
+      },
+      "RERANK4_M0": {
+        "ci95": [
+          1520.9800384062958,
+          1621.3530281621402
+        ],
+        "median_elo": 1562.2348261584316,
+        "per_seed_elo": [
+          1557.110676672483,
+          1565.9102007623956,
+          1562.2348261584316
+        ]
+      },
+      "RERANK4_SHUF": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1504.6477947067199
+        ]
+      },
+      "RERANK4_UNC": {
+        "ci95": [
+          1519.0111899529506,
+          1593.083920647843
+        ],
+        "median_elo": 1543.6004420804602,
+        "per_seed_elo": [
+          1535.9165201392452,
+          1570.6286914199898,
+          1543.6004420804602
+        ]
+      }
+    },
+    "n_contexts": 91,
+    "n_families": 19
+  },
   "secondary_endpoint": "DL-Val91 (91 ctx / 19 fam) fresh-seed single-pick equal-family utility RERANK4 - CONTROL (fold_seed=266140, model_seeds=266101-266103)",
-  "status": "PREREGISTERED",
+  "status": "COMPLETE",
   "study_path": "research/flywheel_selfplay/h266_rerank4_confirm",
-  "verdict": null,
+  "verdict": "NO_ADVANCE",
+  "wall_seconds": 1088.188,
   "wave_id": "h266-rerank4-confirm-20261103"
 }
