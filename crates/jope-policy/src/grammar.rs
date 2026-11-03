@@ -22,7 +22,7 @@ use expression::{parse_expr_tokens, render_expr};
 /// Structured action/token conversion corresponding to Python's `tokens_actions`.
 pub mod actions;
 
-/// Token id reserved for padding in policy input sequences.
+// Token id reserved for padding in policy input sequences.
 
 include!("grammar/state.rs");
 include!("grammar/vocabulary.rs");
