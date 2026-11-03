@@ -11,6 +11,7 @@ import datetime
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -238,6 +239,50 @@ def run(config, config_path):
         "prior_unknown_charges": None,
         "analysis_performed": False,
     }
+
+    def await_owned_cleanup():
+        # Keep the FIFO lease until the owning launcher has drained this exact
+        # daemon and its workers, including after a fatal transport error.
+        requested = time.time()
+        with (output / "CLEANUP-REQUESTED.json").open("x") as stream:
+            q1.append_receipt(
+                stream,
+                {
+                    **state,
+                    "status": "DISPATCH_EXITED_DRAIN_REQUIRED",
+                    "requested_unix": requested,
+                },
+            )
+        previous = {
+            sig: signal.signal(sig, signal.SIG_IGN)
+            for sig in (signal.SIGTERM, signal.SIGINT)
+        }
+        try:
+            path = output / "RUNTIME-CLEANUP.json"
+            while True:
+                try:
+                    cleanup = q1.load(path)
+                    engine = q1.load(pinned(config, "engine_receipt"))
+                    if (
+                        not path.is_symlink()
+                        and cleanup["amendment_sha256"] == state["amendment_sha256"]
+                        and cleanup["engine_receipt_sha256"]
+                        == q1.sha_file(pinned(config, "engine_receipt"))
+                        and cleanup["daemon_pid"] == engine["pid"]
+                        and cleanup["completed_unix"] >= requested
+                        and cleanup["daemon_exited"] is True
+                        and cleanup["workers_remaining"] == 0
+                        and cleanup["tunnel_exited"] is True
+                    ):
+                        break
+                except (OSError, ValueError, KeyError, TypeError):
+                    # A missing/invalid drain receipt cannot release the lease.
+                    pass
+                time.sleep(2)
+        finally:
+            for sig, handler in previous.items():
+                signal.signal(sig, handler)
+
     try:
         with fifo_launch.lease(paths, fifo, 10800, lambda: os.getloadavg()[0]):
             # This separate single-use marker never rewrites original markers.
@@ -247,17 +292,20 @@ def run(config, config_path):
             with marker.open("x") as stream:
                 q1.append_receipt(stream, state)
             state["status"] = "RUNNING"
-            with (
-                (output / "receipts.jsonl").open("x") as stream,
-                (output / "load.jsonl").open("x") as samples,
-            ):
-                q1_dispatch.dispatch_units(
-                    requests(plan, failed, config, samples),
-                    [str(pinned(config, "backend"))],
-                    env,
-                    plan["timeout_seconds"],
-                    stream,
-                )
+            try:
+                with (
+                    (output / "receipts.jsonl").open("x") as stream,
+                    (output / "load.jsonl").open("x") as samples,
+                ):
+                    q1_dispatch.dispatch_units(
+                        requests(plan, failed, config, samples),
+                        [str(pinned(config, "backend"))],
+                        env,
+                        plan["timeout_seconds"],
+                        stream,
+                    )
+            finally:
+                await_owned_cleanup()
             resumed = [
                 q1.decode(line)
                 for line in (output / "receipts.jsonl").read_text().splitlines()

@@ -38,6 +38,15 @@ Before launch, the owner supplies an immutable
   and original numerical worker hash, and retain ownership of daemon/tunnel
   cleanup on success or failure. Missing/stale monitor evidence stops dispatch.
 
+The driver retains its FIFO lease after dispatch while it writes
+`CLEANUP-REQUESTED.json`. The owning launcher must stop/drain its exact daemon,
+workers and tunnel, then atomically publish `RUNTIME-CLEANUP.json` in the new
+output directory with `amendment_sha256`, `engine_receipt_sha256`, `daemon_pid`,
+`completed_unix`, `daemon_exited: true`, `workers_remaining: 0` and
+`tunnel_exited: true`. It must derive those facts from live process readbacks;
+they are not assumed from a completed client. Cleanup must precede the lease
+handoff, including on fatal backend errors.
+
 The controller takes the existing qualification FIFO lease and creates one
 separate `BUNDLE.attempt10.started.json` marker without changing historical
 markers. An existing retry marker is a refusal, not permission to resume or
