@@ -47,7 +47,7 @@ use operation::{
 use schema::read_closure;
 pub use schema::{
     ClosureManifest, InputManifest, Operation, SubtaskCommand, VerifiedTask, WorkerPolicy,
-    INPUT_SCHEMA_V1,
+    INPUT_SCHEMA_V1, INPUT_SCHEMA_V2,
 };
 
 #[cfg(test)]
