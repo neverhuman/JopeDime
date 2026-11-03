@@ -23,7 +23,7 @@ use super::population::{assemble_population, check_population, PopulationFields,
 /// construct it.
 #[derive(Clone, Debug)]
 pub struct Proposal {
-    population: SeedPopulation,
+    pub(super) population: SeedPopulation,
     pool: PurePool,
     ranking: Ranking,
     ledger: ProposalLedger,
