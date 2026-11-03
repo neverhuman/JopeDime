@@ -1,14 +1,15 @@
 {
   "boot_seed": 275150,
+  "completed_utc": "2026-11-03T21:08:35Z",
   "created_utc": "2026-11-03T20:44:00Z",
   "file_checksums_sha256": {
     "PREREG.md": "3ea54be45cd1920f25b1f14cef7d5f3da3ea9986ce16915f6eb2a0449211807b",
-    "README.md": "1ec4d8b7fd520efabc990adb37a2c24662b61fa2ec844216e51cb618ff611955",
+    "README.md": "666a71e49621436b654f29670d9eecf62f7d5b10f82cb24b52099b26b7ff0a92",
     "fold_manifest.s3.json": "0f1c606bf3927fb96dec13e22f3b9e2413dfe973d26a7b9ad03daeb6b894d95a",
-    "metrics.json": "5fb836868c9b706b4e8eafd717d2a4bb26d50e5ab19e2f3c00e1629d3a3a84d1",
+    "metrics.json": "224677cc9d9ca6c1ae65abc086c51129a5e39edd48981877b54f144721bc2e4a",
     "monitor.py": "a1d226572391dc498e6c026ffbe16ebd5181437df35eb8b02a416274a2444301",
     "runner.py": "c571d186d353190e9297811b3eeba8d5810b36799acb3b296c954cdbfddb9d5c",
-    "test_h275.py": "33794de3985361b80154174115f0128b862e62b1d27571a71802db5fa2240c0a"
+    "test_h275.py": "8a812469c1559f7bd42e930a4ee84777a67345ecb92a76ff92126145ce86b7cc"
   },
   "fold_seeds": [
     275140,
@@ -30,8 +31,9 @@
     275102,
     275103
   ],
-  "outcomes_read": 0,
   "owner": "Argon",
+  "prereg_commit": "b19fba9d09683510469abb3099056a3f0763dca1",
+  "s3_full_outputs_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H275/attempt-001/",
   "schema": "jope.h275.manifest/v1",
   "secondary_fold_seed": 275140,
   "soft_lambda_grid": [
@@ -42,9 +44,9 @@
     4.0,
     8.0
   ],
-  "status": "PREREGISTERED",
+  "status": "COMPLETED",
   "study_path": "research/flywheel_selfplay/h275_rerank8_soft_risk",
-  "verdict": null,
+  "verdict": "NO_ADVANCE",
   "wave": "H275",
   "wave_id": "h275-rerank8-soft-risk-20261103",
   "winning_arm": null
