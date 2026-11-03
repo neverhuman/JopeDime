@@ -4,6 +4,14 @@ use super::*;
 /// qualification is eligible only once its decision event is durable; a crash between the
 /// immutable file and the event leaves it pending until `qualify` is redelivered.
 pub(crate) struct Decisions(BTreeSet<(String, String, String)>);
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StoredQualificationFields {
+    evidence: OofEvidence,
+    qualification: Qualification,
+}
+
 impl Decisions {
     pub(crate) fn load(state: &State) -> Result<Self> {
         let ledger = Ledger::open(state.root(), "eligibility");
@@ -41,7 +49,7 @@ fn revalidate(
     decisions: &Decisions,
 ) -> Result<(Qualification, String)> {
     let bytes = fs::read(qualification_path(state, record))?;
-    let stored: StoredQualification = serde_json::from_slice(&bytes)?;
+    let stored: StoredQualificationFields = serde_json::from_slice(&bytes)?;
     let current = measured(state, record, &stored.evidence, false)?;
     ensure!(
         current == stored.qualification && current.guard.admits(&current),
