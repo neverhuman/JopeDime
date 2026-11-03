@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod rollback_v2_tests {
-    use super::*;
+    use super::super::*;
 
     fn digest(label: &str) -> String {
         sha256_bytes(label.as_bytes())
