@@ -1,3 +1,4 @@
+use super::proposal::training_executable;
 use super::training_rank::{training_step_window, verify_training_rank};
 use super::*;
 
