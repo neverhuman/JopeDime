@@ -26,7 +26,7 @@ pub(crate) fn dataset_validation_path(root: &Path, dataset: &str) -> PathBuf {
         .join("validation-success.v2.json")
 }
 
-pub(crate) fn run_dataset(
+fn run_dataset(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
