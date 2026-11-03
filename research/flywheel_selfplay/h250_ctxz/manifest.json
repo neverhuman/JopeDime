@@ -135,5 +135,26 @@
     "sampler": "CTXZ_FB:8 distinct uniform FIT families, one uniform context per family; top4+20 remainder; stream_seed(seed,outer,CTXZ_FB,step); CONTROL/CTXZ exact H170 order",
     "equal_family": "balanced sampler only; no additional loss weights"
   },
-  "normalization_sha256": "dcb4e96832535f1fd451cd2e79c88975a72117f85a73f7a8758c828a878283f6"
+  "normalization_sha256": "dcb4e96832535f1fd451cd2e79c88975a72117f85a73f7a8758c828a878283f6",
+  "execution_source_commit": "0f8461b7040fc2c51f0a422af0b50b4eb523cdb8",
+  "closeout": {
+    "status": "COMPLETE",
+    "verdict": "NO_ADVANCE",
+    "primary_verdict": "NO_ADVANCE",
+    "secondary_verdict": "NO_ADVANCE",
+    "metrics_sha256": "68b7e1e7d817a39e44064fda0e19acb3f058269feda24c6f9018f39b58edb297",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H250/astra-t1131/closeout/runtime.tar.gz",
+      "version_id": "_uh1d9vZLHaxDi_vb3.K_O_mpVnjdg5z",
+      "sha256": "25e1b74bf6f37b090cb6db114f949379bcafcbdb7c20bdf49586bb46751feb28",
+      "bytes": 328086655
+    },
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H250/astra-t1131/closeout/manifest.json",
+      "version_id": "iQz5qaNRy0SA43EI9H9D3InyTSSmQrFE",
+      "sha256": "778db5b8f1530319141b588e04041379fa818bcff5646524c6d5baf99092b71a",
+      "bytes": 109417
+    },
+    "audit_sha256": "f609eb3c04281b9d4304c09106f67cf6db853b13e38476df9795cdeb1712011f"
+  }
 }
