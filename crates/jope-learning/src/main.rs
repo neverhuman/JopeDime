@@ -14,6 +14,7 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+#[path = "main/progress.rs"]
 mod progress;
 use progress::{run_progress, ProgressCmd};
 
