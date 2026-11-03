@@ -141,7 +141,7 @@ pub(crate) struct Searched {
     evaluations: u64,
 }
 
-pub(crate) fn run_one(
+fn run_one(
     spec: &Spec,
     dataset: &Dataset,
     budget: Budget,
