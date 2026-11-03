@@ -373,14 +373,14 @@ mod worker_control;
 mod workers;
 
 pub(super) use admission::*;
-pub(super) use artifacts::*;
+use artifacts::*;
 pub(super) use campaign::*;
 pub(super) use confirmation::*;
-pub(super) use ranking::*;
-pub(super) use telemetry::*;
-pub(super) use training::*;
+use ranking::*;
+use telemetry::*;
+use training::*;
 pub(super) use validation::*;
-pub(super) use worker_control::*;
+use worker_control::*;
 pub(super) use workers::*;
 
 #[cfg(test)]
