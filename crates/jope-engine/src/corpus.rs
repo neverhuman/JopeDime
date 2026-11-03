@@ -28,6 +28,6 @@ mod token_cache;
 pub use build::{build, build_observed, build_observed_cached, CorpusSources};
 use ledger::LedgerCache;
 pub use ledger::ScanCacheStats;
-pub(crate) use ledger::{scan_ledger, Contribution, ScanInputs, Selected};
+pub(crate) use ledger::{scan_ledger, ScanInputs, Selected};
 pub use token_cache::read_bound_vocabulary;
 pub(crate) use token_cache::TokenCache;
