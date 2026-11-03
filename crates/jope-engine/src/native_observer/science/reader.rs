@@ -1,3 +1,4 @@
+use super::recorded::qualification_rows;
 use super::*;
 
 impl Reader {
@@ -140,7 +141,7 @@ impl Reader {
         }
         self.enrich_science(snapshot);
     }
-    fn enrich_science(&self, snapshot: &mut Snapshot) {
+    pub(super) fn enrich_science(&self, snapshot: &mut Snapshot) {
         let Ok(observed) = self.latest.lock().map(|v| v.clone()) else {
             return;
         };

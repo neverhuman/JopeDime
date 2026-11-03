@@ -1,3 +1,4 @@
+use super::recorded::{row_evidence, stamp_rows};
 use super::*;
 
 fn graph_output_rows(
@@ -51,7 +52,7 @@ fn graph_output_rows(
     stamp_rows(&mut rows, at);
     Ok(rows)
 }
-fn comparison_rows(
+pub(super) fn comparison_rows(
     v: &Value,
     generation: u64,
     reference: &Artifact,
