@@ -28,6 +28,7 @@ use std::{
 
 mod crash_tests;
 mod event_tests;
+use event_tests::fixture_events;
 fn snapshot() -> RunSnapshot {
     serde_json::from_value(json!({
         "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0", "revision": "1",
