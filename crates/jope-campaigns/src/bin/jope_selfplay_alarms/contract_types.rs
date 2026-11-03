@@ -1,11 +1,11 @@
 use super::*;
 
-const FAILING_CYCLES: u64 = 3;
+pub(crate) const FAILING_CYCLES: u64 = 3;
 
 /// Cadence budget for the content-frozen check, per file. Deliberately looser
 /// than STATUS_AGES: this fires only when mtime is FRESH and the embedded
 /// timestamp is old, which is the one thing mtime cannot see.
-const CONTENT_FROZEN_SECS: &[(&str, u64)] = &[
+pub(crate) const CONTENT_FROZEN_SECS: &[(&str, u64)] = &[
     ("ops/queue-keeper-v3.json", 900),
     ("ops/micro-wave-supply-v2.json", 300),
     ("ops/task-learning-controller.v2.json", 300),
@@ -13,24 +13,24 @@ const CONTENT_FROZEN_SECS: &[(&str, u64)] = &[
 ];
 
 /// One live producer -> consumer contract.
-struct Contract {
+pub(crate) struct Contract {
     /// Path relative to the flywheel root.
-    file: &'static str,
+    pub(crate) file: &'static str,
     /// The one schema string a healthy document carries.
-    schema: &'static str,
+    pub(crate) schema: &'static str,
     /// Unit that writes it (for the alarm text — this is who to go look at).
-    producer: &'static str,
+    pub(crate) producer: &'static str,
     /// `(source file relative to src_root_str(), struct name)` of a consumer that
     /// deserializes this file into a strict struct. `None` means every known
     /// consumer reads it as a `serde_json::Value`, so the schema gate is the
     /// whole contract.
-    consumer: Option<(&'static str, &'static str)>,
+    pub(crate) consumer: Option<(&'static str, &'static str)>,
 }
 
 /// Verified against the live root on 2026-07-28 by reading the `schema` key of
 /// every `$R/ops/*.json`. Consumers were found with
 /// `grep -rn "ops/<file>" src/`.
-const OPS_CONTRACTS: &[Contract] = &[
+pub(crate) const OPS_CONTRACTS: &[Contract] = &[
     Contract {
         file: "ops/queue-keeper-v3.json",
         schema: "JopeSelfplayQueueKeeper.v3",
@@ -120,7 +120,7 @@ const OPS_CONTRACTS: &[Contract] = &[
 /// The JSON shape a serde field demands. `Any` means "presence only" — a nested
 /// struct or enum whose internals this check deliberately does not model.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Kind {
+pub(crate) enum Kind {
     Any,
     Str,
     Bool,
@@ -154,9 +154,9 @@ impl Kind {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct RequiredField {
-    name: String,
-    kind: Kind,
+pub(crate) struct RequiredField {
+    pub(crate) name: String,
+    pub(crate) kind: Kind,
 }
 
 fn json_kind(value: &Value) -> &'static str {
@@ -199,7 +199,10 @@ fn kind_of_type(ty: &str) -> Kind {
 /// the struct was not found or uses a serde attribute this cannot reason about
 /// (`rename_all`), which the caller turns into its own visible alarm rather
 /// than a silent skip.
-fn derive_required_fields(source: &str, struct_name: &str) -> Option<(usize, Vec<RequiredField>)> {
+pub(crate) fn derive_required_fields(
+    source: &str,
+    struct_name: &str,
+) -> Option<(usize, Vec<RequiredField>)> {
     let lines: Vec<&str> = source.lines().collect();
     let head = lines.iter().position(|line| {
         let trimmed = line.trim_start();
@@ -285,7 +288,10 @@ fn derive_required_fields(source: &str, struct_name: &str) -> Option<(usize, Vec
 }
 
 /// `(field, what is wrong)` for every required field the document breaks.
-fn contract_violations(value: &Value, fields: &[RequiredField]) -> Vec<(String, String)> {
+pub(crate) fn contract_violations(
+    value: &Value,
+    fields: &[RequiredField],
+) -> Vec<(String, String)> {
     let mut out = Vec::new();
     for field in fields {
         match value.get(&field.name) {
@@ -306,7 +312,7 @@ fn contract_violations(value: &Value, fields: &[RequiredField]) -> Vec<(String, 
 
 /// Persisted streak counters. Small, rewritten every scan, and never load
 /// bearing: losing it costs at most FAILING_CYCLES minutes of escalation.
-fn load_contract_state(path: &Path) -> serde_json::Map<String, Value> {
+pub(crate) fn load_contract_state(path: &Path) -> serde_json::Map<String, Value> {
     std::fs::read(path)
         .ok()
         .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
@@ -315,7 +321,7 @@ fn load_contract_state(path: &Path) -> serde_json::Map<String, Value> {
         .unwrap_or_default()
 }
 
-fn truncate(text: &str, limit: usize) -> String {
+pub(crate) fn truncate(text: &str, limit: usize) -> String {
     let cleaned = text.replace('\n', " ");
     match cleaned.char_indices().nth(limit) {
         Some((index, _)) => format!("{}…", &cleaned[..index]),
