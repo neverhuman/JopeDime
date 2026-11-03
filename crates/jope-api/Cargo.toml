@@ -12,7 +12,14 @@ description = "Shared JopeDime v1 wire contract and JSON schemas"
 serde = { workspace = true }
 serde_json = { workspace = true }
 schemars = "=1.2.3"
-ulid = { workspace = true }
+# Parsing and formatting stay available without an entropy source; only fresh
+# run-id generation needs ulid/std (rand + getrandom). The standalone WASM
+# browser runtime consumes this crate without that feature.
+ulid = { version = "1", default-features = false }
+
+[features]
+default = ["run-id-generation"]
+run-id-generation = ["ulid/std"]
 
 [dev-dependencies]
 proptest = { workspace = true }
