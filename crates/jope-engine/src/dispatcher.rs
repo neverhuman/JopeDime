@@ -36,20 +36,19 @@ fn write_query_result(path: &std::path::Path, result: &impl serde::Serialize) ->
 
 pub(crate) fn run(cli: Cli) -> Result<()> {
     let Cli { command, root, .. } = cli;
-    let mut command = command;
-    macro_rules! try_handler {
-        ($module:ident) => {
-            match $module::handle(&root, command)? {
-                Some(next) => command = next,
+    macro_rules! next_command {
+        ($module:ident, $command:expr) => {
+            match $module::handle(&root, $command)? {
+                Some(next) => next,
                 None => return Ok(()),
             }
         };
     }
-    try_handler!(registry);
-    try_handler!(context);
-    try_handler!(learning);
-    try_handler!(fit);
-    try_handler!(neural);
+    let command = next_command!(registry, command);
+    let command = next_command!(context, command);
+    let command = next_command!(learning, command);
+    let command = next_command!(fit, command);
+    let command = next_command!(neural, command);
     match misc::handle(&root, command)? {
         Some(_) => anyhow::bail!("no dispatcher handler accepts the selected command"),
         None => Ok(()),
