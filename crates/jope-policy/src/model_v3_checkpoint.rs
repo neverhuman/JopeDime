@@ -211,7 +211,8 @@ pub fn compatible_tensor_names(
 ) -> Result<BTreeSet<String>> {
     let compatible: BTreeSet<String> = saved
         .iter()
-        .filter_map(|(name, shape)| (current.get(name) == Some(shape)).then(|| name.clone()))
+        .filter(|&(name, shape)| current.get(name) == Some(shape))
+        .map(|(name, _)| name.clone())
         .collect();
     let context_missing: Vec<&String> = current
         .keys()
