@@ -142,7 +142,7 @@ fn the_flag_selects_the_archive_on_kernel2_only_and_its_text_passes_the_lint() {
 
 #[test]
 fn run_cut_records_the_archive_selection_and_its_search_is_unchanged() {
-    use super::search::{self, CutSearch};
+    use super::super::search::{self, CutSearch};
     let cut = data();
     let make = |archive: bool| {
         let mut options = crate::search::SearchOptions::new(
@@ -279,7 +279,7 @@ fn legacy_dispatch_refuses_before_writing(flag: &str) {
 /// pre-parse check's own message, so the order is observed (B17-R03-PIPELINE-GUARD-COVERAGE).
 #[test]
 fn archived_programs_are_bounded_before_they_are_parsed() {
-    use super::refinement::MAX_PARENT_EXPRESSION_NESTING;
+    use super::super::refinement::MAX_PARENT_EXPRESSION_NESTING;
     let e = evaluator();
     let plain = measured(&e, SEED_SINE, &data());
     assert!(archive::ranked(&plain));
