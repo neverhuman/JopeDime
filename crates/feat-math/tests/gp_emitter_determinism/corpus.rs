@@ -125,6 +125,13 @@ fn emit(case: usize, program: &ScalarExpressionProgram, language: ScalarLanguage
 }
 
 fn run(command: &mut Command) -> String {
+    // The shard tests run concurrently, and each C++ case starts both g++ and
+    // clang++. Serialize subprocesses so the integration test stays within the
+    // runner's process budget without changing the emitted corpus.
+    static PROCESS_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _process_guard = PROCESS_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let output = command
         .output()
         .unwrap_or_else(|e| panic!("{command:?}: {e}"));

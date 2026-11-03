@@ -274,7 +274,8 @@ fn compile_cpp(
 
 #[test]
 fn exponential_helpers_match_runtime_value_and_fault_bits_in_three_languages() {
-    let root = Path::new(env!("CARGO_TARGET_TMPDIR")).join("stable_exponential_v2");
+    let scratch = tempfile::tempdir_in(env!("CARGO_TARGET_TMPDIR")).unwrap();
+    let root = scratch.path().join("stable_exponential_v2");
     fs::create_dir_all(&root).unwrap();
     let cases = corpus();
     let mut inputs = String::new();

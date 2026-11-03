@@ -387,8 +387,36 @@ fn matrix(rows: &[Vec<f64>], language: ScalarLanguage) -> String {
         ScalarLanguage::Cpp17 => format!("std::vector<std::vector<double>>{{{inner}}}"),
     }
 }
+fn output(cmd: &mut Command) -> std::io::Result<std::process::Output> {
+    match cmd.output() {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            let requested = cmd.get_program().to_string_lossy();
+            let fallback = match requested.as_ref() {
+                "g++" => "clang++",
+                "clang++" => "g++",
+                _ => return Err(error),
+            };
+            let mut retry = Command::new(fallback);
+            retry.args(cmd.get_args());
+            if let Some(directory) = cmd.get_current_dir() {
+                retry.current_dir(directory);
+            }
+            for (key, value) in cmd.get_envs() {
+                if let Some(value) = value {
+                    retry.env(key, value);
+                } else {
+                    retry.env_remove(key);
+                }
+            }
+            eprintln!("{requested} unavailable; retrying C++ probe with {fallback}");
+            retry.output()
+        }
+        result => result,
+    }
+}
+
 fn run(cmd: &mut Command) -> String {
-    let result = cmd.output().unwrap();
+    let result = output(cmd).unwrap_or_else(|error| panic!("failed to spawn {cmd:?}: {error}"));
     assert!(
         result.status.success(),
         "{cmd:?}: {}",

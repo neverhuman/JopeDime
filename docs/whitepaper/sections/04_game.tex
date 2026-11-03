@@ -17,10 +17,10 @@
   \label{fig:game-loop}
 \end{figure*}
 
-To make the comparison in \cref{sec:road} precise, we define one attempt
-at algorithm invention as a game: the encoded problem is the board, a
-program is the move, the referee checks and scores it, and a declared
-incumbent is the opponent. The encoding supplies a shared interface;
+An invention attempt is the reference game's unit of play
+(\cref{sec:road}): the encoded problem is the board, a program is the move,
+the referee checks and scores it, and a declared incumbent is the opponent.
+The encoding supplies a shared interface;
 each task type still needs its own qualified encoding, language and
 evaluation protocol (\cref{sub:game-boards}).
 
@@ -179,8 +179,9 @@ for three games and trained a separate network for each
 \citep{silver2018general}. Here the problem is an input on the board, so one
 player can, in principle, learn many boards.
 
-The accepted checkpoint route and both fixed comparators support only
-tabular regression. Binary and multiclass classification, ranking, forecasting
+The historical reference checkpoint and the comparison protocol here are
+scoped to tabular regression. Binary and multiclass classification, ranking,
+forecasting
 and relational prediction remain prospective boards, each needing a qualified
 encoding, program language, metric and validation protocol.
 

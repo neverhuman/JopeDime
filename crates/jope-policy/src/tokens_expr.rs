@@ -129,6 +129,7 @@ impl Parser {
     fn take(&mut self, expected: Option<&str>) -> Result<String> {
         let token = self
             .peek()
+            .map(str::to_owned)
             .ok_or_else(|| anyhow::anyhow!("unexpected end of expr"))?;
         if let Some(expected) = expected {
             ensure!(
@@ -139,7 +140,7 @@ impl Parser {
             );
         }
         self.pos += 1;
-        Ok(token.to_owned())
+        Ok(token)
     }
 
     fn primary(&mut self) -> Result<Node> {

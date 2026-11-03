@@ -1,15 +1,15 @@
 use super::*;
 
 pub(crate) struct HyperionEvent<'a> {
-    rows: usize,
-    cols: usize,
-    output_dim: usize,
-    engine: HyperionEngine,
-    device: Option<&'a str>,
-    status: Option<&'a str>,
-    message: Option<&'a str>,
-    done_frac: Option<f64>,
-    preview: Option<HyperionPreview>,
+    pub(crate) rows: usize,
+    pub(crate) cols: usize,
+    pub(crate) output_dim: usize,
+    pub(crate) engine: HyperionEngine,
+    pub(crate) device: Option<&'a str>,
+    pub(crate) status: Option<&'a str>,
+    pub(crate) message: Option<&'a str>,
+    pub(crate) done_frac: Option<f64>,
+    pub(crate) preview: Option<HyperionPreview>,
 }
 
 pub(crate) fn emit_hyperion(

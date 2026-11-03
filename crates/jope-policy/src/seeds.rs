@@ -15,10 +15,12 @@ mod population;
 mod proposal;
 
 pub use population::{
-    assemble_for_testing, logprob_from_scores, population_bytes, validate_for_search,
-    write_population, SeedBinding, SeedCandidate, SeedFile, SeedPopulation, ORIGIN_NEURAL,
-    ORIGIN_NEURAL_FALLBACK, ORIGIN_RANDOM, SEED_COUNT, SEED_SCHEMA,
+    logprob_from_scores, population_bytes, validate_for_search, write_population, SeedBinding,
+    SeedCandidate, SeedFile, SeedPopulation, ORIGIN_NEURAL, ORIGIN_NEURAL_FALLBACK, ORIGIN_RANDOM,
+    SEED_COUNT, SEED_SCHEMA,
 };
+#[cfg(any(test, feature = "testing"))]
+pub use population::assemble_for_testing;
 #[cfg(any(test, feature = "testing"))]
 pub use proposal::propose_unbound;
 #[cfg(test)]

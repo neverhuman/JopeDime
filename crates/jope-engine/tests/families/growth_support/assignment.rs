@@ -1,4 +1,5 @@
 use super::*;
+use serde_json::Map;
 
 pub(crate) fn assign(root: &Path, inputs: &Value) -> Result<Value, GrowthError> {
     family_growth::assign_new_components(&Request {
