@@ -17090,7 +17090,7 @@
         "JOPE_TYPESCRIPT_PARITY=1 cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit::",
         "cargo test --locked -p feat-math --no-default-features --test artifact_target_binding",
         "cargo test --locked -p jope-pipeline --test artifact_target_binding",
-        "cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests::",
+        "cargo test --locked -p jope-cli --no-default-features --lib kernel::numeric_emit::artifact_v3_tests::",
         "node deploy/ci/typescript/browser.mjs (all census fixtures, Chromium/Firefox/WebKit page and module worker)",
         "bash web/browser-predict/check.sh (Node26: native model integrity and first-party WASM parity; no fitting export or host imports)"
       ],

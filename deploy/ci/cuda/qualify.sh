@@ -35,6 +35,6 @@ suite golden -p feat-math --no-default-features --features cuda-parity-tests --t
 suite ordered-bound -p feat-math --no-default-features --features cuda-parity-tests --lib advanced_v3::emit::
 suite bindings -p feat-math --no-default-features --features cuda-parity-tests --test artifact_target_binding
 suite pipeline -p jope-pipeline --test artifact_target_binding
-suite cli -p jope-cli --no-default-features --lib kernel::artifact_v3_tests::
+suite cli -p jope-cli --no-default-features --lib kernel::numeric_emit::artifact_v3_tests::
 python3 deploy/ci/cuda/test_evidence.py
 python3 deploy/ci/cuda/evidence.py create "$out" "$mode"
