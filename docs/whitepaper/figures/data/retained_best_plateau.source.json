@@ -1,20 +1,20 @@
 {
   "schema": "whitepaper.retained-best-plateau-source/v1",
-  "csv_sha256": "858ae48c38dbc9496c77b031b5f0cfc8f7f7188378eaaeea3294e6d3d119240d",
+  "csv_sha256": "cf613cba08044493bc1da9722107848c33d02768297aa6c1749077ac2fcca1bc",
   "capture": {
-    "captured_at": "2026-11-03T00:28:09.371423+00:00",
+    "captured_at": "2026-11-03T02:24:32.767037+00:00",
     "round_window": [
       3174,
-      3995
+      4039
     ],
-    "rows": 822,
+    "rows": 866,
     "last_strict_gain_round": 3175,
     "last_admitted_round": 3175,
     "trailing_rejection_rounds": [
       3176,
-      3995
+      4039
     ],
-    "trailing_rejections": 820,
+    "trailing_rejections": 864,
     "retained_utility": "1.1389572403748425",
     "best_round": 3175,
     "previous_utility_at_gain": "1.1383668110784328",
@@ -22,46 +22,49 @@
     "all20_candidate_and_decision_flags_matched": true,
     "all20_summary_admission_retained_utility_matched": true,
     "crosscheck_window": [
-      3976,
-      3995
+      4020,
+      4039
     ]
   },
   "source_prefixes": {
     "adapter_admissions.jsonl": {
-      "at": "2026-11-03T00:28:09.282998+00:00",
-      "observed_bytes": 1705657,
-      "complete_prefix_bytes": 1705657,
-      "complete_prefix_sha256": "19c65b4eb30f44a8cffde04da06a965dac77b5230677fd338d60f9de6af578ab",
+      "at": "2026-11-03T02:22:38.992098+00:00",
+      "observed_bytes": 1728859,
+      "complete_prefix_bytes": 1728859,
+      "complete_prefix_sha256": "5233d6244c164779a697d198e1c241b5ca8450447fdc7fee7017bf479c242c00",
       "trailing_incomplete_bytes_omitted": 0,
-      "stable_prefix_reread": true
+      "stable_prefix_reread": true,
+      "transport": "bounded byte reads; scalar projection and hashes computed off source host"
     },
     "summary.jsonl": {
-      "at": "2026-11-03T00:28:09.306079+00:00",
-      "observed_bytes": 3358696,
-      "complete_prefix_bytes": 3358696,
-      "complete_prefix_sha256": "24d102a881aa0436192c6d87977da3021a9be7f893d9a23596b2afb32e74665a",
+      "at": "2026-11-03T02:22:41.507745+00:00",
+      "observed_bytes": 3358494,
+      "complete_prefix_bytes": 3358494,
+      "complete_prefix_sha256": "c35e1f6f14d4e3a58b3c9776f04e5492391315482df621d24012aa589b850838",
       "trailing_incomplete_bytes_omitted": 0,
-      "stable_prefix_reread": true
+      "stable_prefix_reread": true,
+      "transport": "bounded byte reads; scalar projection and hashes computed off source host"
     },
     "per-round.jsonl": {
-      "at": "2026-11-03T00:28:09.342087+00:00",
-      "observed_bytes": 2422406,
-      "complete_prefix_bytes": 2422406,
-      "complete_prefix_sha256": "e8ecd633fc53c72cb150fc216e135effc544d105525787ba43bae30ba7c83b27",
+      "at": "2026-11-03T02:24:32.722690+00:00",
+      "observed_bytes": 2456658,
+      "complete_prefix_bytes": 2456658,
+      "complete_prefix_sha256": "c80198a10e7bc59fb8ba036c54c049f77477a652f6b7fdc6d9999a04a3538b55",
       "trailing_incomplete_bytes_omitted": 0,
-      "stable_prefix_reread": true
+      "stable_prefix_reread": true,
+      "transport": "bounded byte reads; scalar projection and hashes computed off source host"
     }
   },
-  "full_admission_prefix_rows": 3221,
-  "matched_admission_prefix_bytes": 1705117,
-  "matched_admission_prefix_sha256": "543f466d0527fc50de023fc0b5283a440b9ef4e097b68f386be279ab0a37b83b",
-  "complete_admission_rows_after_cutoff_omitted": 1,
+  "full_admission_prefix_rows": 3265,
+  "matched_admission_prefix_bytes": 1728859,
+  "matched_admission_prefix_sha256": "5233d6244c164779a697d198e1c241b5ca8450447fdc7fee7017bf479c242c00",
+  "complete_admission_rows_after_cutoff_omitted": 0,
   "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
-  "capture_script_sha256": "724cdc8465fcd83ab0b612f4dc7ec3c8a5b3eca4ce327534c12019a57d0b6186",
+  "capture_script_sha256": "df98ab11998d0b6900ea24a84299d3cdb39be602f4e0b48cec1a034a51c511be",
   "projection_sha256": {
-    "admissions": "debdc08fdb764f176722af719ffd6de63dfe610198d5fcf8236595f2e98ebd56",
-    "summary": "759f967ed22d501d970d598c9b0f98f695859de1dbb967fcb46749cd52bd11fd",
-    "per_round": "16411afa755b1e3cf25172f95c9f313f36c24372feac21acf32c9037160449ab"
+    "admissions": "3f93276abd0c4080b3dc97a1c0e421fb0c0e14b3085d09049b3c9bf99716b74a",
+    "summary": "fd562c17d830afdaf1fff8634b76e17c2246a37f6e162f89b5e2784c1a17ba42",
+    "per_round": "7b2bf99e4744ef78dff6f7ad07c3042f5baf0145362fb2d10af293560e23d46a"
   },
   "selection": "Every consecutive complete admission from one round before the last strict gain through the latest round matched to complete summary and per-round journals. No outcome subsampling. Full admission-prefix continuity checked; latest20 candidate/decision/retained summaries cross-checked.",
   "source_binding": "Logged aggregate fields only; installed source, adapter, evaluation population and normalization closure remain unqualified.",
