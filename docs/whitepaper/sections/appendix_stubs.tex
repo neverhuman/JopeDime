@@ -1,19 +1,18 @@
 \section{Referee Inventory}\label{app:history}
 
-\Cref{sec:road} traces the four pillars of \cref{sec:anatomy} through the
-milestones used here: algorithm selection
+\Cref{tab:referees} collects the referees that anchor the milestones in
+\cref{sec:anatomy,sec:road}: algorithm selection
 \citep{rice1976algorithm}, typed genetic programming and evolutionary search
 \citep{koza1992genetic,montana1995stgp,real2020automlzero}, self-play and expert
 iteration \citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and
 task-conditioned amortization across tabular problems
-\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}. Each of those
-systems depends on a referee. \Cref{tab:referees} collects the main text's referees by domain. A domain enters the innovation
+\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}. A domain enters the innovation
 game only when its referee is reliable and affordable (\cref{sub:game-boards}).
 
 \begin{table}[htb]
-  \caption{\textbf{Referees by domain.} Each row restates a referee described
-  in \cref{sec:road,sec:game}; the last row states the reference referee for
-  algorithm invention.}
+  \caption{\textbf{Each domain in the main text relies on an explicit referee.}
+  Each row restates a referee from \cref{sec:road,sec:game}; the last row
+  states the reference referee for algorithm invention.}
   \label{tab:referees}
   \centering
   \small
@@ -65,9 +64,9 @@ Artifacts that violate held-out isolation belong in the audit record:
 
 \section{Training Details}\label{app:training}
 
-These historical reference specifications (\cref{sec:method}) leave checkpoint
-qualification pending. The separate adapter snapshot is in
-\cref{sec:method-status}:
+This appendix records the historical reference specifications from
+\cref{sec:method} (separate from the adapter record in
+\cref{sec:method-status}); checkpoint qualification remains pending:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
   \num{2048}-value context $z_p = \encP(p)$ joins three blocks:
@@ -146,11 +145,12 @@ qualification pending. The separate adapter snapshot is in
 
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
-The admission ledger (\cref{app:latest-admissions}) opens this appendix.
-Adapter-decision windows precede program-incumbent events and operating
-clocks (\cref{app:round-throughput}), then historical GP diagnostics
+This appendix collects the adaptive training-side operating records summarized
+in \cref{sec:method-status}: the canonical admission ledger
+(\cref{app:latest-admissions}), adapter-decision windows, program-incumbent
+clocks (\cref{app:round-throughput}) and historical GP diagnostics
 (\cref{app:historical-search}). Captures retain their own dates and
-populations; scope and decision rules follow \cref{sec:method-status}.
+populations.
 
 % Adapter admission records, ordered by their role and capture cutoff.
 \input{sections/appendix_latest_admissions}

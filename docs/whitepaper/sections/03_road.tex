@@ -50,10 +50,10 @@ halicin, an antibiotic that then treated infections in mice
 
 CLIP put images and captions in one shared space
 \citep{radford2021clip}, an analogy for our problem--program ranking map
-(\cref{sec:method}).
+(\cref{sub:method-map}).
 Reference training supervises the map with programs scored within each problem.
-Its ranks can influence search-parent selection
-(\cref{sub:method-map}); they neither condition nor screen the writer.
+Its ranks can influence search-parent selection;
+they neither condition nor screen the writer.
 Map-ranking accuracy and first-proposal quality require separate tests.
 
 Representations describe a problem, code generation supplies candidates
@@ -89,7 +89,7 @@ fixed task, bought with search. Lion, an optimizer found by program
 search, went into production at Google \citep{chen2023lion}. AlphaEvolve
 multiplied two $4\times4$ complex matrices with 48 scalar multiplications,
 improving on Strassen's algorithm in that setting after 56 years
-\citep{novikov2025alphaevolve}. MLEvolve carries the loop into
+\citep{novikov2025alphaevolve}. MLEvolve carried the loop into
 machine-learning engineering \citep{mlevolve2026}.
 
 \EZ{} adopts executable programs as moves inside this generate--judge loop,
@@ -245,7 +245,7 @@ fine-tunes on what its own evolutionary search finds \citep{evotune2025},
 and TTT-Discover trains on the one problem at hand, at a few hundred
 dollars per problem \citep{tttdiscover2026}. Evolution Fine-Tuning learns
 from \num{156000} search trajectories across 371 tasks \citep{eft2026}, and
-DiscoRL meta-learned a reinforcement-learning rule that beat human-designed
+DiscoRL meta-learns a reinforcement-learning rule that beat human-designed
 ones \citep{oh2025discorl}. These approaches retain improvements in different places: a search
 trajectory, a task-specific learner or a reusable learning rule. Our
 comparison asks about the quality and cost of the first complete candidate,
