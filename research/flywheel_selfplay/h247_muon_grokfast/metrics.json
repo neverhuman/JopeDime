@@ -1,37 +1,1830 @@
 {
   "wave": "H247",
-  "status": "PREREGISTERED_NOT_EXECUTED",
-  "optimizer_updates": 0,
-  "scored_contexts": 0,
-  "verdict": null,
-  "schema_on_completion": {
-    "wave": "H247",
-    "status": "COMPLETE",
-    "arms": [
-      "r882",
-      "CONTROL",
-      "MUON",
-      "GROKFAST"
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "primary_verdict": "NO_ADVANCE",
+  "arms": [
+    "r882",
+    "CONTROL",
+    "MUON",
+    "GROKFAST"
+  ],
+  "seeds": [
+    247101,
+    247102,
+    247103
+  ],
+  "optimizer_updates": 1800,
+  "complete_cells": 15,
+  "baseline_mean": 1.1377941898164525,
+  "eval_forward_bit_exact": true,
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+  "initial_adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+  "primary_dlval": {
+    "contexts": 91,
+    "families": 19,
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
     ],
-    "seeds": [
-      247101,
-      247102,
-      247103
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
     ],
-    "optimizer_updates": 1800,
-    "complete_cells": 15,
-    "baseline_mean": 1.1377941898164525,
-    "dope_before": "c51a56d0...",
-    "dope_after": "c51a56d0...",
-    "primary_dlval": "DL-Val91 policy-mixture panel: contrasts {ARM_minus_r882, ARM_minus_CONTROL}; holm_p (m=2: MUON, GROKFAST) and advance (median > +0.002, LCB95 > 0, Holm p < .05, >= 2/3 seeds positive); median_elo, elo_ci95 (r882 = 1500), vs_plateau_best_by_seed, harm families",
-    "secondary_oof": "same on the 1,219-context/205-family TRAIN OOF panel",
-    "harm": "families with three-seed mean delta < -0.01",
-    "plateau_best_r3175": "each arm DL-Val91 context mean vs 1.1389572 (descriptive)",
-    "memory_pauses": "pause/resume events with MemAvailable",
-    "full_metrics": "sha256 + S3 key of the full metrics.json",
-    "verdict": "ADVANCE iff MUON or GROKFAST advances on primary_dlval, else NO_ADVANCE",
-    "diagnostic_step40": "the same summaries for every arm step-40 adapter before strict fallback (DL-Val91 and OOF)",
-    "cliff_context": "H152 gate-cliff DL-Val context #27, strict and step-40 mixtures (never excluded)",
-    "step40_drift": "L2 from r882 per cell and arm"
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1305416538462532
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1372851489413973,
+        1.1377941898164525
+      ]
+    ],
+    "vs_plateau_best_by_seed": [
+      [
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.008415546153746734
+      ],
+      [
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.0011630101835473639
+      ],
+      [
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.001672051058602575,
+        -0.0011630101835473639
+      ]
+    ],
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_family_counts_by_seed": [
+          0,
+          0,
+          0
+        ],
+        "harm_families_by_seed": [
+          [],
+          [],
+          []
+        ]
+      },
+      "MUON_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          -0.0004876075750528543
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          0,
+          0,
+          2
+        ],
+        "harm_families_by_seed": [
+          [],
+          [],
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ]
+        ]
+      },
+      "MUON_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          -0.0004876075750528543
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_family_counts_by_seed": [
+          0,
+          0,
+          2
+        ],
+        "harm_families_by_seed": [
+          [],
+          [],
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ]
+        ]
+      },
+      "GROKFAST_minus_r882": {
+        "per_seed_gain": [
+          -0.006947166034612005,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          4,
+          0,
+          0
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f"
+          ],
+          [],
+          []
+        ]
+      },
+      "GROKFAST_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.006947166034612005,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_family_counts_by_seed": [
+          4,
+          0,
+          0
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f"
+          ],
+          [],
+          []
+        ]
+      }
+    }
+  },
+  "secondary_oof": {
+    "contexts": 1219,
+    "families": 205,
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.422640705563497
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.4227087449088796,
+        1.423073434552298
+      ]
+    ],
+    "vs_plateau_best_by_seed": [
+      [
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28411623455229806,
+        0.2836835055634972
+      ],
+      [
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28411623455229806
+      ],
+      [
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28375154490887966,
+        0.28411623455229806
+      ]
+    ],
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_family_counts_by_seed": [
+          0,
+          0,
+          0
+        ],
+        "harm_families_by_seed": [
+          [],
+          [],
+          []
+        ]
+      },
+      "MUON_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          -0.00013556534588193118
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          0,
+          0,
+          3
+        ],
+        "harm_families_by_seed": [
+          [],
+          [],
+          [
+            "fam-51a20e2322f149368a1393d370f00e2d8b0f669d142cfeaf246fbd44138791a5",
+            "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+            "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b"
+          ]
+        ]
+      },
+      "MUON_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          -0.00013556534588193118
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_family_counts_by_seed": [
+          0,
+          0,
+          3
+        ],
+        "harm_families_by_seed": [
+          [],
+          [],
+          [
+            "fam-51a20e2322f149368a1393d370f00e2d8b0f669d142cfeaf246fbd44138791a5",
+            "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+            "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b"
+          ]
+        ]
+      },
+      "GROKFAST_minus_r882": {
+        "per_seed_gain": [
+          -0.0003296460061593747,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          7,
+          0,
+          0
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-1f8630dfdf8dcdca95c7877191f1eaf34d1f81de5547a427b724669f51e4b91c",
+            "fam-3d0df192e03d688e7571d3482149c3c52017923c8f30e525284800f9777f1622",
+            "fam-51a20e2322f149368a1393d370f00e2d8b0f669d142cfeaf246fbd44138791a5",
+            "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9",
+            "fam-890fcd287bf096f27c549aa1e31829e14da0e2ee10fd7fad2624313b345c7e13",
+            "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+            "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b"
+          ],
+          [],
+          []
+        ]
+      },
+      "GROKFAST_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.0003296460061593747,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_family_counts_by_seed": [
+          7,
+          0,
+          0
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-1f8630dfdf8dcdca95c7877191f1eaf34d1f81de5547a427b724669f51e4b91c",
+            "fam-3d0df192e03d688e7571d3482149c3c52017923c8f30e525284800f9777f1622",
+            "fam-51a20e2322f149368a1393d370f00e2d8b0f669d142cfeaf246fbd44138791a5",
+            "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9",
+            "fam-890fcd287bf096f27c549aa1e31829e14da0e2ee10fd7fad2624313b345c7e13",
+            "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+            "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b"
+          ],
+          [],
+          []
+        ]
+      }
+    }
+  },
+  "descriptive_unconstrained_val": {
+    "contexts": 91,
+    "families": 19,
+    "median_elo": [
+      1500.0,
+      1492.6916751716383,
+      1493.604131402655,
+      1504.567497757991
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1464.2688041866245,
+        1515.565973166428
+      ],
+      [
+        1477.9993218483837,
+        1509.1428725242297
+      ],
+      [
+        1461.5164429568842,
+        1545.0204504891185
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1359881584628935,
+        1.1360556313882146,
+        1.1252089121172038
+      ],
+      [
+        1.1377941898164525,
+        1.1283916494822879,
+        1.1347346799280191,
+        1.1297504825627007
+      ],
+      [
+        1.1377941898164525,
+        1.1331736469327427,
+        1.1352452935404245,
+        1.133641636297487
+      ]
+    ],
+    "vs_plateau_best_by_seed": [
+      [
+        -0.0011630101835473639,
+        -0.0029690415371064205,
+        -0.0029015686117852546,
+        -0.01374828788279614
+      ],
+      [
+        -0.0011630101835473639,
+        -0.010565550517712019,
+        -0.004222520071980762,
+        -0.009206717437299172
+      ],
+      [
+        -0.0011630101835473639,
+        -0.005783553067257197,
+        -0.0037119064595754203,
+        -0.005315563702512849
+      ]
+    ],
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          -0.0017299879281460425,
+          -0.009006643899041633,
+          -0.00440428483521235
+        ],
+        "median_gain": -0.00440428483521235,
+        "ci95": [
+          -0.010859435477568735,
+          0.0006626255302455802
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9312068793120688,
+        "harm_family_counts_by_seed": [
+          4,
+          6,
+          7
+        ],
+        "harm_families_by_seed": null
+      },
+      "MUON_minus_r882": {
+        "per_seed_gain": [
+          -0.0016653559681014994,
+          -0.0029306884194465125,
+          -0.002441574327563668
+        ],
+        "median_gain": -0.002441574327563668,
+        "ci95": [
+          -0.008406333463227526,
+          0.0007510441359977413
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.7914208579142086,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          2,
+          3,
+          2
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ]
+        ]
+      },
+      "MUON_minus_CONTROL": {
+        "per_seed_gain": [
+          0.00006463196004454306,
+          0.006075955479595119,
+          0.0019627105076486825
+        ],
+        "median_gain": 0.0019627105076486825,
+        "ci95": [
+          -0.0025796781829290657,
+          0.00867417989588203
+        ],
+        "positive_seeds": 3,
+        "p_one_sided": 0.35206479352064796,
+        "harm_family_counts_by_seed": [
+          4,
+          3,
+          4
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345"
+          ],
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ]
+        ]
+      },
+      "GROKFAST_minus_r882": {
+        "per_seed_gain": [
+          -0.012033662395360223,
+          -0.0077050248430674565,
+          -0.0039560002858256855
+        ],
+        "median_gain": -0.0077050248430674565,
+        "ci95": [
+          -0.021741555356348266,
+          -0.00030834917017919303
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9823017698230176,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          10,
+          5,
+          7
+        ],
+        "harm_families_by_seed": null
+      },
+      "GROKFAST_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.01030367446721418,
+          0.0013016190559741751,
+          0.00044828454938666536
+        ],
+        "median_gain": 0.00044828454938666536,
+        "ci95": [
+          -0.003578387343916092,
+          0.0035787548009012494
+        ],
+        "positive_seeds": 2,
+        "p_one_sided": 0.46055394460553944,
+        "harm_family_counts_by_seed": [
+          8,
+          1,
+          3
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8",
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          ],
+          [
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d"
+          ],
+          [
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          ]
+        ]
+      }
+    }
+  },
+  "descriptive_unconstrained_oof": {
+    "contexts": 1219,
+    "families": 205,
+    "median_elo": [
+      1500.0,
+      1498.286336715168,
+      1499.7081059880668,
+      1492.380863034728
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1492.523292184683,
+        1501.9036832712322
+      ],
+      [
+        1496.7794131986211,
+        1502.3540911194696
+      ],
+      [
+        1487.0665231493724,
+        1498.9950849113054
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.423073434552298,
+        1.4217894236910325,
+        1.4225673031610864,
+        1.414201412183255
+      ],
+      [
+        1.423073434552298,
+        1.415455948729262,
+        1.4212508017044632,
+        1.4194444131409913
+      ],
+      [
+        1.423073434552298,
+        1.4161511026640639,
+        1.422117593035826,
+        1.4134828058747968
+      ]
+    ],
+    "vs_plateau_best_by_seed": [
+      [
+        0.28411623455229806,
+        0.28283222369103256,
+        0.2836101031610865,
+        0.275244212183255
+      ],
+      [
+        0.28411623455229806,
+        0.27649874872926206,
+        0.28229360170446327,
+        0.28048721314099145
+      ],
+      [
+        0.28411623455229806,
+        0.27719390266406396,
+        0.2831603930358262,
+        0.2745256058747969
+      ]
+    ],
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          -0.001038063608314213,
+          -0.009454240383805315,
+          -0.004988413111575601
+        ],
+        "median_gain": -0.004988413111575601,
+        "ci95": [
+          -0.014459825643815063,
+          0.00044105222525356796
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9459054094590541,
+        "harm_family_counts_by_seed": [
+          17,
+          23,
+          25
+        ],
+        "harm_families_by_seed": null
+      },
+      "MUON_minus_r882": {
+        "per_seed_gain": [
+          0.00010101408589008429,
+          -0.0022691356714187156,
+          -0.0014590295381734556
+        ],
+        "median_gain": -0.0014590295381734556,
+        "ci95": [
+          -0.0073449444487295595,
+          0.0014739430714132166
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.7564243575642435,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          9,
+          12,
+          14
+        ],
+        "harm_families_by_seed": null
+      },
+      "MUON_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0011390776942042972,
+          0.0071851047123866005,
+          0.0035293835734021453
+        ],
+        "median_gain": 0.0035293835734021453,
+        "ci95": [
+          -0.000629161348971288,
+          0.010750502387141522
+        ],
+        "positive_seeds": 3,
+        "p_one_sided": 0.0780921907809219,
+        "harm_family_counts_by_seed": [
+          13,
+          13,
+          23
+        ],
+        "harm_families_by_seed": null
+      },
+      "GROKFAST_minus_r882": {
+        "per_seed_gain": [
+          -0.00943945054342597,
+          -0.005301201651969306,
+          -0.00987519874128647
+        ],
+        "median_gain": -0.00943945054342597,
+        "ci95": [
+          -0.016670533154312977,
+          -0.00023545402551014463
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9777022297770223,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          47,
+          21,
+          38
+        ],
+        "harm_families_by_seed": null
+      },
+      "GROKFAST_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.008401386935111757,
+          0.004153038731836009,
+          -0.0048867856297108705
+        ],
+        "median_gain": -0.0048867856297108705,
+        "ci95": [
+          -0.011554280335209085,
+          0.00608501875822459
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.7348265173482652,
+        "harm_family_counts_by_seed": [
+          39,
+          10,
+          39
+        ],
+        "harm_families_by_seed": null
+      }
+    }
+  },
+  "diagnostic_step40_val": {
+    "contexts": 91,
+    "families": 19,
+    "median_elo": [
+      1500.0,
+      1496.3429052372064,
+      1500.0,
+      1466.1115465622768
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1444.3380170644637,
+        1556.095762037598
+      ],
+      [
+        1488.8169140806688,
+        1511.9244431013142
+      ],
+      [
+        1404.0828437453977,
+        1522.1212543917568
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.115228168471615,
+        1.1349921227005684,
+        1.1038981934555234
+      ],
+      [
+        1.1377941898164525,
+        1.1008024183539282,
+        1.1358410079889782,
+        1.0881685489035697
+      ],
+      [
+        1.1377941898164525,
+        1.1102288205725153,
+        1.1344279224075493,
+        1.1065816326946565
+      ]
+    ],
+    "vs_plateau_best_by_seed": [
+      [
+        -0.0011630101835473639,
+        -0.023729031528384903,
+        -0.003965077299431519,
+        -0.03505900654447647
+      ],
+      [
+        -0.0011630101835473639,
+        -0.03815478164607167,
+        -0.0031161920110216457,
+        -0.05078865109643016
+      ],
+      [
+        -0.0011630101835473639,
+        -0.02872837942748463,
+        -0.004529277592450587,
+        -0.03237556730534341
+      ]
+    ],
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          -0.021507328705454284,
+          -0.0353256788181857,
+          -0.026317886620090825
+        ],
+        "median_gain": -0.026317886620090825,
+        "ci95": [
+          -0.058291612823571946,
+          -0.002603579326259435
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.993000699930007,
+        "harm_family_counts_by_seed": [
+          7,
+          10,
+          7
+        ],
+        "harm_families_by_seed": null
+      },
+      "MUON_minus_r882": {
+        "per_seed_gain": [
+          -0.002684085342583619,
+          -0.0018709425926330986,
+          -0.003224529833791386
+        ],
+        "median_gain": -0.002684085342583619,
+        "ci95": [
+          -0.007966282053306803,
+          0.001448787799119225
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.8705129487051295,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          4,
+          4,
+          4
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ]
+        ]
+      },
+      "MUON_minus_CONTROL": {
+        "per_seed_gain": [
+          0.018823243362870664,
+          0.0334547362255526,
+          0.023093356786299438
+        ],
+        "median_gain": 0.023093356786299438,
+        "ci95": [
+          0.003450781651612212,
+          0.050564938642832936
+        ],
+        "positive_seeds": 3,
+        "p_one_sided": 0.001999800019998,
+        "harm_family_counts_by_seed": [
+          3,
+          3,
+          3
+        ],
+        "harm_families_by_seed": [
+          [
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+          ],
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d"
+          ],
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d"
+          ]
+        ]
+      },
+      "GROKFAST_minus_r882": {
+        "per_seed_gain": [
+          -0.03238196101636738,
+          -0.04744930474508095,
+          -0.029833217567012574
+        ],
+        "median_gain": -0.03238196101636738,
+        "ci95": [
+          -0.06643258760387326,
+          -0.0076776597730462935
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.999000099990001,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          10,
+          10,
+          11
+        ],
+        "harm_families_by_seed": null
+      },
+      "GROKFAST_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.010874632310913094,
+          -0.012123625926895249,
+          -0.0035153309469217494
+        ],
+        "median_gain": -0.010874632310913094,
+        "ci95": [
+          -0.024103470390327935,
+          0.0016126995865149926
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9411058894110589,
+        "harm_family_counts_by_seed": [
+          8,
+          11,
+          9
+        ],
+        "harm_families_by_seed": null
+      }
+    }
+  },
+  "diagnostic_step40_oof": {
+    "contexts": 1219,
+    "families": 205,
+    "median_elo": [
+      1500.0,
+      1486.665255409716,
+      1497.3144144561904,
+      1483.3291879108149
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1474.9333905651697,
+        1496.695168459671
+      ],
+      [
+        1492.372711604589,
+        1501.4613736786152
+      ],
+      [
+        1472.048122103639,
+        1493.1609121817469
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.423073434552298,
+        1.391262152872924,
+        1.4186810191169619,
+        1.4054485725089931
+      ],
+      [
+        1.423073434552298,
+        1.396579627582398,
+        1.4186512092759926,
+        1.3926856370910528
+      ],
+      [
+        1.423073434552298,
+        1.3888302300162227,
+        1.4202180858260187,
+        1.386412668209499
+      ]
+    ],
+    "vs_plateau_best_by_seed": [
+      [
+        0.28411623455229806,
+        0.2523049528729242,
+        0.279723819116962,
+        0.26649137250899324
+      ],
+      [
+        0.28411623455229806,
+        0.2576224275823982,
+        0.27969400927599275,
+        0.25372843709105286
+      ],
+      [
+        0.28411623455229806,
+        0.24987303001622285,
+        0.2812608858260188,
+        0.24745546820949915
+      ]
+    ],
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          -0.03401631389733568,
+          -0.02637344028507056,
+          -0.0348280481126879
+        ],
+        "median_gain": -0.03401631389733568,
+        "ci95": [
+          -0.06088150204815722,
+          -0.00544829000918335
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9906009399060094,
+        "harm_family_counts_by_seed": [
+          85,
+          86,
+          90
+        ],
+        "harm_families_by_seed": null
+      },
+      "MUON_minus_r882": {
+        "per_seed_gain": [
+          -0.004334445093067247,
+          -0.004265875978703605,
+          -0.003090937144427036
+        ],
+        "median_gain": -0.004265875978703605,
+        "ci95": [
+          -0.01126109521013363,
+          0.0008011114695131586
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9401059894010599,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          31,
+          29,
+          31
+        ],
+        "harm_families_by_seed": null
+      },
+      "MUON_minus_CONTROL": {
+        "per_seed_gain": [
+          0.029681868804268437,
+          0.022107564306366945,
+          0.031737110968260866
+        ],
+        "median_gain": 0.029681868804268437,
+        "ci95": [
+          0.003470406422844152,
+          0.052951930408849636
+        ],
+        "positive_seeds": 3,
+        "p_one_sided": 0.012598740125987402,
+        "harm_family_counts_by_seed": [
+          50,
+          54,
+          51
+        ],
+        "harm_families_by_seed": null
+      },
+      "GROKFAST_minus_r882": {
+        "per_seed_gain": [
+          -0.01608928316492474,
+          -0.030747720532067715,
+          -0.03775384308968007
+        ],
+        "median_gain": -0.030747720532067715,
+        "ci95": [
+          -0.05438728632257938,
+          -0.006967523539073815
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.994000599940006,
+        "holm_p": 1.0,
+        "advance": false,
+        "harm_family_counts_by_seed": [
+          92,
+          88,
+          95
+        ],
+        "harm_families_by_seed": null
+      },
+      "GROKFAST_minus_CONTROL": {
+        "per_seed_gain": [
+          0.01792703073241094,
+          -0.004374280246997157,
+          -0.002925794976992163
+        ],
+        "median_gain": -0.002925794976992163,
+        "ci95": [
+          -0.013683255373648087,
+          0.013519595228457575
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.4914508549145086,
+        "harm_family_counts_by_seed": [
+          67,
+          60,
+          64
+        ],
+        "harm_families_by_seed": null
+      }
+    }
+  },
+  "plateau_note": "vs_plateau_best_by_seed is meaningful for DL-Val91 panels only (the plateau best 1.1389572 is a DL-Val91 mean); on OOF TRAIN panels it is a raw offset.",
+  "cliff_context": {
+    "index": 27,
+    "context_sha256": "43022ae6a8bc83e9e25ea4a2882389152856226f5b2bdd4668db07f2f510ae91",
+    "family_id": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+    "r882": 1.1226949552792034,
+    "strict_per_arm_by_seed": [
+      [
+        1.1226949552792034,
+        1.1226949552792034,
+        1.1226949552792034,
+        0.4981559642233627
+      ],
+      [
+        1.1226949552792034,
+        1.1226949552792034,
+        1.1226949552792034,
+        1.1226949552792034
+      ],
+      [
+        1.1226949552792034,
+        1.1226949552792034,
+        1.1226949552792034,
+        1.1226949552792034
+      ]
+    ],
+    "step40_per_arm_by_seed": [
+      [
+        1.1226949552792034,
+        1.1226949552792034,
+        1.1226949552792034,
+        0.49918243148131813
+      ],
+      [
+        1.1226949552792034,
+        0.4981559642233627,
+        1.1226949552792034,
+        0.49437189653850366
+      ],
+      [
+        1.1226949552792034,
+        1.1226949552792034,
+        1.1226949552792034,
+        1.1199373548522997
+      ]
+    ],
+    "note": "Reported separately and never excluded from any statistic (hw_t0530)."
+  },
+  "step40_drift": {
+    "CONTROL": {
+      "median": 0.37216322826733683,
+      "min": 0.36199026606074197,
+      "max": 0.3923265813300734
+    },
+    "MUON": {
+      "median": 0.12223753648071052,
+      "min": 0.12040291540097399,
+      "max": 0.12468752525758503
+    },
+    "GROKFAST": {
+      "median": 0.48600719006656695,
+      "min": 0.4652512165691948,
+      "max": 0.5140122318979334
+    }
+  },
+  "selections": [
+    {
+      "CONTROL": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "MUON": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0016329995340080019,
+        "ci95": [
+          -0.006595110789184222,
+          0.010509320548094591
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "MUON": {
+        "best_step": 30,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0021741327225905057,
+        "ci95": [
+          -0.007013708524468984,
+          0.013147725102185504
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 40,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.009486974698020173,
+        "ci95": [
+          -0.034012271957732175,
+          0.06543730950899859
+        ]
+      },
+      "MUON": {
+        "best_step": 20,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0026064340903091615,
+        "ci95": [
+          -0.0011729846070121207,
+          0.008992003709155547
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0045559490982820675,
+        "ci95": [
+          -0.003284004504180367,
+          0.01497898848458542
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "MUON": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0002230695108021166,
+        "ci95": [
+          -0.000045408211426918145,
+          0.0006274236240958124
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "MUON": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0000675444798538247,
+        "ci95": [
+          -0.00038697497381134384,
+          0.0005541237181361419
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "MUON": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.00019721905225662028,
+        "ci95": [
+          -0.00007125866997241446,
+          0.0006101182180779956
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0025444562376034877,
+        "ci95": [
+          -0.000665359832842476,
+          0.0075984320693214605
+        ]
+      },
+      "MUON": {
+        "best_step": 20,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0025537724074528602,
+        "ci95": [
+          -0.00017015481376913072,
+          0.007240626911124785
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 10,
+        "selected_step": 10,
+        "accepted": true,
+        "gain": 0.004443179523971775,
+        "ci95": [
+          0.0009100652592312033,
+          0.009545795066650055
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0027347515489939364,
+        "ci95": [
+          -0.0006566943849474713,
+          0.007722769595207556
+        ]
+      },
+      "MUON": {
+        "best_step": 20,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0022362026073912402,
+        "ci95": [
+          -0.000002439024390243634,
+          0.006553981732131895
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0018165760484252394,
+        "ci95": [
+          -0.002123257187185592,
+          0.007274151637396456
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.002084841729460467,
+        "ci95": [
+          -0.0013601795429478488,
+          0.007268387033063502
+        ]
+      },
+      "MUON": {
+        "best_step": 20,
+        "selected_step": 20,
+        "accepted": true,
+        "gain": 0.0023498320778487214,
+        "ci95": [
+          0.00003089320511827331,
+          0.006716079756064069
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.002127454424621661,
+        "ci95": [
+          -0.0017117374574200485,
+          0.007435573077317415
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.001208541211686123,
+        "ci95": [
+          -0.0018113313745167167,
+          0.005556820362327962
+        ]
+      },
+      "MUON": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0016163824630913994,
+        "ci95": [
+          -0.0012283152627558726,
+          0.005968364909381947
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 40,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0062000586890689265,
+        "ci95": [
+          -0.008329559566624492,
+          0.02245277062875094
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "MUON": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0016163824630913994,
+        "ci95": [
+          -0.001230995896255078,
+          0.0059198579119755824
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "MUON": {
+        "best_step": 30,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0011909636653853553,
+        "ci95": [
+          -0.0018619036981941423,
+          0.005727328076520814
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 0,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.015282264357188845,
+        "ci95": [
+          -0.03560666388654842,
+          0.08167219022024669
+        ]
+      },
+      "MUON": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0005032186953700499,
+        "ci95": [
+          -0.00010489863220510969,
+          0.0016145547183152593
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.03423122754253615,
+        "ci95": [
+          -0.0013836574637963843,
+          0.09556159789888899
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 20,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.011196819382889536,
+        "ci95": [
+          -0.06129481195251718,
+          0.08816768351805665
+        ]
+      },
+      "MUON": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0005032186953700499,
+        "ci95": [
+          -0.00010489863220510969,
+          0.0016145547183152593
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0064907487879835215,
+        "ci95": [
+          -0.0032482840127003084,
+          0.022028043615262786
+        ]
+      }
+    },
+    {
+      "CONTROL": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.015797872124577294,
+        "ci95": [
+          -0.0345110929939321,
+          0.0826127624669439
+        ]
+      },
+      "MUON": {
+        "best_step": 10,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.0005032186953700499,
+        "ci95": [
+          -0.00010489863220510969,
+          0.0016145547183152593
+        ]
+      },
+      "GROKFAST": {
+        "best_step": 30,
+        "selected_step": 0,
+        "accepted": false,
+        "gain": 0.03403177817575742,
+        "ci95": [
+          -0.02430908564574253,
+          0.10454161897815153
+        ]
+      }
+    }
+  ],
+  "schedule_table_sha256": "see schedules.json (verified by the runner)",
+  "source_commit": "d42ebcc2e73a5b41d0d4a29fd97024028fb67136",
+  "manifest_sha256": "3f50600e691be77df6731949c4bc78f394ba2e51059091ace8e1bb33aa8566fd",
+  "resume_number": 0,
+  "recovered_cells": [],
+  "serving_promotion": false,
+  "elapsed_seconds": 2713.8594631489977,
+  "resources": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "elapsed_seconds": 2721.654732817995,
+    "peak": {
+      "rss": 3346706432,
+      "threads": 3
+    },
+    "transitions": [],
+    "pause_requested_seconds": 0.0,
+    "admission": {
+      "load5": 55.6357421875,
+      "available": 46300094464,
+      "free": 784510828544,
+      "affinity": [
+        44,
+        45,
+        46,
+        47
+      ]
+    }
+  },
+  "memory_pauses": [],
+  "full_metrics": {
+    "sha256": "6c52c27d8a5ecba8e5fba3a7d50711e355547859bc17b01729402e4338afc9c0",
+    "bytes": 382862,
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H247/attempt-001/metrics.json",
+    "version_id": "7QFb14GaCK8Yrn9JtqNFyiJlur1WdbIt"
+  },
+  "s3_manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H247/attempt-001/s3_manifest.json",
+    "sha256": "38bf97b80fc0286b3e94c045097ab02ae3f60e4e46539ed03950d2abe9aea216",
+    "version_id": "HEn0gldgO.uTIeNeBeI1Z4xKKBtd9DC3"
+  },
+  "prereg": {
+    "pr": 2094,
+    "merge": "d42ebcc2e73a5b41d0d4a29fd97024028fb67136",
+    "reviewed_head": "6ac693bb2c1ace04fe6c93e3e6bb41c07ff4c07a",
+    "review_id": 5747660843
   }
 }
