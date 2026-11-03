@@ -1,5 +1,6 @@
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
+#[cfg(test)]
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
