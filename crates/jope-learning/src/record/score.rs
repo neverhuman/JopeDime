@@ -1,5 +1,7 @@
 use super::*;
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct ScoreSource {
     /// `sotarena`, `campaign`, `arena`, ...
     pub kind: String,
