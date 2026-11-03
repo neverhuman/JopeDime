@@ -160,7 +160,7 @@ struct EvalContext<'a> {
     columns: &'a Columns,
     resources: &'a Resources,
     stats: &'a BatchStats,
-    telemetry: &'a ExecutionTelemetry,
+    telemetry: Option<&'a ExecutionTelemetry>,
 }
 
 impl Expression {
@@ -184,67 +184,53 @@ impl Expression {
                 .and_then(|values| values.get(row))
                 .ok_or_else(|| anyhow::anyhow!("fitness column {name:?} is not available"))?,
             Self::Resource { name } => read_resource(resources, *name)?,
-            Self::TrainTimeSeconds {} => resources
-                .get(&ResourceVar::FitSeconds)
-                .copied()
-                .unwrap_or_else(|| telemetry.train_time_seconds.max(0.0)),
-            Self::InferenceTimeSeconds {} => resources
-                .get(&ResourceVar::PredictSeconds)
-                .copied()
-                .unwrap_or_else(|| telemetry.inference_time_seconds.max(0.0)),
+            Self::TrainTimeSeconds {} => read_resource(resources, ResourceVar::FitSeconds)?,
+            Self::InferenceTimeSeconds {} => read_resource(resources, ResourceVar::PredictSeconds)?,
             Self::TotalTimeSeconds {} => {
-                let fit = resources
-                    .get(&ResourceVar::FitSeconds)
-                    .copied()
-                    .unwrap_or_else(|| telemetry.train_time_seconds.max(0.0));
-                let pred = resources
-                    .get(&ResourceVar::PredictSeconds)
-                    .copied()
-                    .unwrap_or_else(|| telemetry.inference_time_seconds.max(0.0));
-                fit + pred
+                read_resource(resources, ResourceVar::FitSeconds)?
+                    + read_resource(resources, ResourceVar::PredictSeconds)?
             }
-            Self::InferenceUsPerRow {} => resources
-                .get(&ResourceVar::PredictUsPerRow)
-                .copied()
-                .unwrap_or_else(|| telemetry.inference_us_per_row(stats.row_count)),
-            Self::TrainRowsPerSecond {} => telemetry.train_rows_per_second(stats.row_count),
-            Self::InferenceRowsPerSecond {} => resources
-                .get(&ResourceVar::PredictRowsPerSecond)
-                .copied()
-                .unwrap_or_else(|| telemetry.inference_rows_per_second(stats.row_count)),
-            Self::TrainMemoryBytes {} => resources
-                .get(&ResourceVar::FitPeakHeapBytes)
-                .copied()
-                .unwrap_or(telemetry.train_memory_bytes as f64),
-            Self::InferenceMemoryBytes {} => resources
-                .get(&ResourceVar::PredictPeakHeapBytes)
-                .copied()
-                .unwrap_or(telemetry.inference_memory_bytes as f64),
+            Self::InferenceUsPerRow {} => read_resource(resources, ResourceVar::PredictUsPerRow)?,
+            Self::TrainRowsPerSecond {} => match telemetry {
+                Some(t) => t.train_rows_per_second(stats.row_count),
+                None => {
+                    let fit = read_resource(resources, ResourceVar::FitSeconds)?;
+                    let rows = resources
+                        .get(&ResourceVar::TrainRows)
+                        .copied()
+                        .unwrap_or((stats.row_count as f64).max(1.0));
+                    if fit <= 1e-12 {
+                        rows * 1e6
+                    } else {
+                        rows / fit
+                    }
+                }
+            },
+            Self::InferenceRowsPerSecond {} => {
+                read_resource(resources, ResourceVar::PredictRowsPerSecond)?
+            }
+            Self::TrainMemoryBytes {} => read_resource(resources, ResourceVar::FitPeakHeapBytes)?,
+            Self::InferenceMemoryBytes {} => {
+                read_resource(resources, ResourceVar::PredictPeakHeapBytes)?
+            }
             Self::TotalMemoryBytes {} => {
-                let fit_mem = resources
-                    .get(&ResourceVar::FitPeakHeapBytes)
-                    .copied()
-                    .unwrap_or(telemetry.train_memory_bytes as f64);
-                let pred_mem = resources
-                    .get(&ResourceVar::PredictPeakHeapBytes)
-                    .copied()
-                    .unwrap_or(telemetry.inference_memory_bytes as f64);
-                fit_mem + pred_mem
+                read_resource(resources, ResourceVar::FitPeakHeapBytes)?
+                    + read_resource(resources, ResourceVar::PredictPeakHeapBytes)?
             }
-            Self::ModelBytes {} => resources
-                .get(&ResourceVar::ModelBytes)
-                .copied()
-                .unwrap_or(telemetry.model_bytes as f64),
-            Self::ComplexityStages {} => resources
-                .get(&ResourceVar::StageCount)
-                .copied()
-                .unwrap_or(telemetry.complexity_stages as f64),
-            Self::ComplexityParameters {} => resources
-                .get(&ResourceVar::ProgramNodes)
-                .copied()
-                .unwrap_or(telemetry.complexity_parameters as f64),
-            Self::FeatureCount {} => telemetry.feature_count as f64,
-            Self::FoldStd {} => telemetry.fold_std.max(0.0),
+            Self::ModelBytes {} => read_resource(resources, ResourceVar::ModelBytes)?,
+            Self::ComplexityStages {} => read_resource(resources, ResourceVar::StageCount)?,
+            Self::ComplexityParameters {} => read_resource(resources, ResourceVar::ProgramNodes)?,
+            Self::FeatureCount {} => {
+                telemetry
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("fitness telemetry feature_count is not available")
+                    })?
+                    .feature_count as f64
+            }
+            Self::FoldStd {} => telemetry
+                .ok_or_else(|| anyhow::anyhow!("fitness telemetry fold_std is not available"))?
+                .fold_std
+                .max(0.0),
             Self::PredictionTurnover {} => stats.prediction_turnover,
             Self::RowIndex {} => row as f64,
             Self::RowFraction {} => {
@@ -317,7 +303,7 @@ impl Expression {
         p: &[f64],
         columns: &Columns,
         resources: &Resources,
-        telemetry: &ExecutionTelemetry,
+        telemetry: Option<&ExecutionTelemetry>,
     ) -> Result<Vec<f64>> {
         let stats = BatchStats::compute(y, p);
         y.iter()

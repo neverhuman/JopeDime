@@ -18,7 +18,7 @@ impl Fitness {
         columns: &Columns,
         resources: &Resources,
     ) -> Result<Score> {
-        self.eval_score(y, pred, columns, resources, &ExecutionTelemetry::default())
+        self.eval_score(y, pred, columns, resources, None)
     }
     /// Score predictions with aligned auxiliary columns and candidate execution telemetry.
     pub fn evaluate_with_telemetry(
@@ -29,7 +29,7 @@ impl Fitness {
         telemetry: &ExecutionTelemetry,
     ) -> Result<Score> {
         let resources = telemetry.to_resources(y.len());
-        self.eval_score(y, pred, columns, &resources, telemetry)
+        self.eval_score(y, pred, columns, &resources, Some(telemetry))
     }
     fn eval_score(
         &self,
@@ -37,7 +37,7 @@ impl Fitness {
         pred: &[f64],
         columns: &Columns,
         resources: &Resources,
-        telemetry: &ExecutionTelemetry,
+        telemetry: Option<&ExecutionTelemetry>,
     ) -> Result<Score> {
         self.validate()?;
         let value = self.checked_value(y, pred, columns, resources, telemetry)?;
@@ -65,7 +65,7 @@ impl Fitness {
         columns: &Columns,
         resources: &Resources,
     ) -> Result<f64> {
-        self.eval_loss(y, pred, columns, resources, &ExecutionTelemetry::default())
+        self.eval_loss(y, pred, columns, resources, None)
     }
     /// The minimization loss with execution telemetry, without hashing the specification.
     pub fn loss_unhashed_with_telemetry(
@@ -76,7 +76,7 @@ impl Fitness {
         telemetry: &ExecutionTelemetry,
     ) -> Result<f64> {
         let resources = telemetry.to_resources(y.len());
-        self.eval_loss(y, pred, columns, &resources, telemetry)
+        self.eval_loss(y, pred, columns, &resources, Some(telemetry))
     }
     fn eval_loss(
         &self,
@@ -84,7 +84,7 @@ impl Fitness {
         pred: &[f64],
         columns: &Columns,
         resources: &Resources,
-        telemetry: &ExecutionTelemetry,
+        telemetry: Option<&ExecutionTelemetry>,
     ) -> Result<f64> {
         let value = self.checked_value(y, pred, columns, resources, telemetry)?;
         Ok(if self.direction() == Direction::Maximize {
@@ -99,7 +99,7 @@ impl Fitness {
         pred: &[f64],
         columns: &Columns,
         resources: &Resources,
-        telemetry: &ExecutionTelemetry,
+        telemetry: Option<&ExecutionTelemetry>,
     ) -> Result<f64> {
         ensure!(
             !y.is_empty() && y.len() == pred.len(),
@@ -127,7 +127,7 @@ impl Fitness {
         columns: &Columns,
         resources: &Resources,
         w: Option<&[f64]>,
-        telemetry: &ExecutionTelemetry,
+        telemetry: Option<&ExecutionTelemetry>,
     ) -> Result<f64> {
         if w.is_some() {
             ensure!(
@@ -456,47 +456,51 @@ impl Fitness {
                 finite(captured / total)?
             }
             Self::Resource { name } => read_resource(resources, *name)?,
-            Self::TrainTimeSeconds {} => resources
-                .get(&ResourceVar::FitSeconds)
-                .copied()
-                .unwrap_or_else(|| telemetry.train_time_seconds.max(0.0)),
-            Self::InferenceTimeSeconds {} => resources
-                .get(&ResourceVar::PredictSeconds)
-                .copied()
-                .unwrap_or_else(|| telemetry.inference_time_seconds.max(0.0)),
-            Self::TotalTimeSeconds {} => telemetry.total_time_seconds(),
-            Self::InferenceUsPerRow {} => resources
-                .get(&ResourceVar::PredictUsPerRow)
-                .copied()
-                .unwrap_or_else(|| telemetry.inference_us_per_row(y.len())),
-            Self::TrainRowsPerSecond {} => telemetry.train_rows_per_second(y.len()),
-            Self::InferenceRowsPerSecond {} => resources
-                .get(&ResourceVar::PredictRowsPerSecond)
-                .copied()
-                .unwrap_or_else(|| telemetry.inference_rows_per_second(y.len())),
-            Self::TrainMemoryBytes {} => resources
-                .get(&ResourceVar::FitPeakHeapBytes)
-                .copied()
-                .unwrap_or(telemetry.train_memory_bytes as f64),
-            Self::InferenceMemoryBytes {} => resources
-                .get(&ResourceVar::PredictPeakHeapBytes)
-                .copied()
-                .unwrap_or(telemetry.inference_memory_bytes as f64),
-            Self::TotalMemoryBytes {} => telemetry.total_memory_bytes() as f64,
-            Self::ModelBytes {} => resources
-                .get(&ResourceVar::ModelBytes)
-                .copied()
-                .unwrap_or(telemetry.model_bytes as f64),
-            Self::ComplexityStages {} => resources
-                .get(&ResourceVar::StageCount)
-                .copied()
-                .unwrap_or(telemetry.complexity_stages as f64),
-            Self::ComplexityParameters {} => resources
-                .get(&ResourceVar::ProgramNodes)
-                .copied()
-                .unwrap_or(telemetry.complexity_parameters as f64),
-            Self::FeatureCount {} => telemetry.feature_count as f64,
-            Self::FoldStd {} => telemetry.fold_std.max(0.0),
+            Self::TrainTimeSeconds {} => read_resource(resources, ResourceVar::FitSeconds)?,
+            Self::InferenceTimeSeconds {} => read_resource(resources, ResourceVar::PredictSeconds)?,
+            Self::TotalTimeSeconds {} => {
+                read_resource(resources, ResourceVar::FitSeconds)?
+                    + read_resource(resources, ResourceVar::PredictSeconds)?
+            }
+            Self::InferenceUsPerRow {} => read_resource(resources, ResourceVar::PredictUsPerRow)?,
+            Self::TrainRowsPerSecond {} => {
+                if let Some(t) = telemetry {
+                    t.train_rows_per_second(y.len())
+                } else {
+                    let rows = read_resource(resources, ResourceVar::TrainRows)?;
+                    let secs = read_resource(resources, ResourceVar::FitSeconds)?;
+                    if secs > 0.0 {
+                        rows / secs.max(1e-9)
+                    } else {
+                        rows
+                    }
+                }
+            }
+            Self::InferenceRowsPerSecond {} => {
+                read_resource(resources, ResourceVar::PredictRowsPerSecond)?
+            }
+            Self::TrainMemoryBytes {} => read_resource(resources, ResourceVar::FitPeakHeapBytes)?,
+            Self::InferenceMemoryBytes {} => {
+                read_resource(resources, ResourceVar::PredictPeakHeapBytes)?
+            }
+            Self::TotalMemoryBytes {} => {
+                read_resource(resources, ResourceVar::FitPeakHeapBytes)?
+                    + read_resource(resources, ResourceVar::PredictPeakHeapBytes)?
+            }
+            Self::ModelBytes {} => read_resource(resources, ResourceVar::ModelBytes)?,
+            Self::ComplexityStages {} => read_resource(resources, ResourceVar::StageCount)?,
+            Self::ComplexityParameters {} => read_resource(resources, ResourceVar::ProgramNodes)?,
+            Self::FeatureCount {} => {
+                telemetry
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("fitness telemetry feature_count is not available")
+                    })?
+                    .feature_count as f64
+            }
+            Self::FoldStd {} => telemetry
+                .ok_or_else(|| anyhow::anyhow!("fitness telemetry fold_std is not available"))?
+                .fold_std
+                .max(0.0),
             Self::PredictionTurnover {} => prediction_turnover(p),
             Self::Custom {
                 expression,
