@@ -9,7 +9,7 @@ fn secondary_endpoint_and_binding() {
         plan,
         prereg_path,
         committed_prereg_bytes,
-        parsed_committed,
+        parsed_committed: _,
         parent_map,
         ratchets,
         scores,
