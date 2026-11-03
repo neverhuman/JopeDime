@@ -30,8 +30,8 @@ pub(crate) fn finish(cfg: &Config, evaluated: Evaluated, analysis: Analysis) -> 
         findings,
         plan_jsonl,
         plan_sha,
-        hazards: to_notes(hazards),
-        notes: to_notes(notes),
+        hazards,
+        notes,
     } = analysis;
     let mut totals = Totals::default();
     let mut by_action: BTreeMap<&'static str, Totals> = Action::ALL
@@ -190,7 +190,7 @@ pub(crate) fn finish(cfg: &Config, evaluated: Evaluated, analysis: Analysis) -> 
         diff_vs_previous: diff,
         inventory: inventory_summary,
     };
-    let report_md = report(&summary, &rows, &lock, &ref_counts);
+    let report_md = super::super::report(&summary, &rows, &lock, &ref_counts);
     Ok(Built {
         rows,
         plan_jsonl,
