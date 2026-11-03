@@ -178,10 +178,20 @@ fn out_of_fold(
         let t_rows = train_rows.len().max(1) as u64;
         let v_rows = valid_rows.len().max(1) as u64;
         let train_mem = model_bytes
-            .saturating_add(t_rows.saturating_mul(cols).saturating_mul(8).saturating_mul((stages as u64).saturating_add(1)))
+            .saturating_add(
+                t_rows
+                    .saturating_mul(cols)
+                    .saturating_mul(8)
+                    .saturating_mul((stages as u64).saturating_add(1)),
+            )
             .saturating_add(t_rows.saturating_mul(16));
         let infer_mem = model_bytes
-            .saturating_add(v_rows.saturating_mul(cols).saturating_mul(8).saturating_mul(stages as u64))
+            .saturating_add(
+                v_rows
+                    .saturating_mul(cols)
+                    .saturating_mul(8)
+                    .saturating_mul(stages as u64),
+            )
             .saturating_add(v_rows.saturating_mul(8));
         telemetry.train_time_seconds += fit_started.elapsed().as_secs_f64();
         telemetry.train_rows += train_rows.len();
@@ -220,11 +230,8 @@ fn out_of_fold(
     }
     if fold_rmses.len() >= 2 {
         let m = fold_rmses.iter().sum::<f64>() / (fold_rmses.len() as f64);
-        let var = fold_rmses
-            .iter()
-            .map(|x| (x - m).powi(2))
-            .sum::<f64>()
-            / (fold_rmses.len() as f64);
+        let var =
+            fold_rmses.iter().map(|x| (x - m).powi(2)).sum::<f64>() / (fold_rmses.len() as f64);
         telemetry.fold_std = var.max(0.0).sqrt();
     }
     let mut scored = Vec::new();
