@@ -4,7 +4,11 @@
 //! by its launcher. This module owns validation, byte hashing, deterministic JSON, and durable
 //! receipt creation; it never loads a policy model or fits data.
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
+use serde::ser::{
+    Error as _, SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant,
+    SerializeTuple, SerializeTupleStruct, SerializeTupleVariant, Serializer,
+};
 use serde::Serialize;
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
@@ -43,6 +47,7 @@ pub struct RuntimeContext {
 
 /// Serialize compact JSON with lexically ordered object keys and reject non-finite floats.
 pub fn encoded<T: Serialize>(value: &T) -> Result<Vec<u8>> {
+    value.serialize(FiniteValue)?;
     fn sorted(value: Value) -> Value {
         match value {
             Value::Array(values) => Value::Array(values.into_iter().map(sorted).collect()),
@@ -58,6 +63,279 @@ pub fn encoded<T: Serialize>(value: &T) -> Result<Vec<u8>> {
         }
     }
     Ok(serde_json::to_vec(&sorted(serde_json::to_value(value)?))?)
+}
+
+struct FiniteValue;
+
+impl Serializer for FiniteValue {
+    type Ok = ();
+    type Error = serde_json::Error;
+    type SerializeSeq = FiniteCompound;
+    type SerializeTuple = FiniteCompound;
+    type SerializeTupleStruct = FiniteCompound;
+    type SerializeTupleVariant = FiniteCompound;
+    type SerializeMap = FiniteMap;
+    type SerializeStruct = FiniteCompound;
+    type SerializeStructVariant = FiniteCompound;
+
+    fn serialize_bool(self, _: bool) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_i8(self, _: i8) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_i16(self, _: i16) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_i32(self, _: i32) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_i64(self, _: i64) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_i128(self, _: i128) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_u8(self, _: u8) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_u16(self, _: u16) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_u32(self, _: u32) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_u64(self, _: u64) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_u128(self, _: u128) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_f32(self, value: f32) -> std::result::Result<(), Self::Error> {
+        if value.is_finite() {
+            Ok(())
+        } else {
+            Err(serde_json::Error::custom("non-finite floating-point value"))
+        }
+    }
+    fn serialize_f64(self, value: f64) -> std::result::Result<(), Self::Error> {
+        if value.is_finite() {
+            Ok(())
+        } else {
+            Err(serde_json::Error::custom("non-finite floating-point value"))
+        }
+    }
+    fn serialize_char(self, _: char) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_str(self, _: &str) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_bytes(self, _: &[u8]) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_none(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_some<T: ?Sized + Serialize>(
+        self,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn serialize_unit(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_unit_struct(self, _: &'static str) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_unit_variant(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+    ) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+    fn serialize_newtype_struct<T: ?Sized + Serialize>(
+        self,
+        _: &'static str,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn serialize_newtype_variant<T: ?Sized + Serialize>(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn serialize_seq(
+        self,
+        _: Option<usize>,
+    ) -> std::result::Result<Self::SerializeSeq, Self::Error> {
+        Ok(FiniteCompound)
+    }
+    fn serialize_tuple(self, _: usize) -> std::result::Result<Self::SerializeTuple, Self::Error> {
+        Ok(FiniteCompound)
+    }
+    fn serialize_tuple_struct(
+        self,
+        _: &'static str,
+        _: usize,
+    ) -> std::result::Result<Self::SerializeTupleStruct, Self::Error> {
+        Ok(FiniteCompound)
+    }
+    fn serialize_tuple_variant(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        _: usize,
+    ) -> std::result::Result<Self::SerializeTupleVariant, Self::Error> {
+        Ok(FiniteCompound)
+    }
+    fn serialize_map(
+        self,
+        _: Option<usize>,
+    ) -> std::result::Result<Self::SerializeMap, Self::Error> {
+        Ok(FiniteMap)
+    }
+    fn serialize_struct(
+        self,
+        _: &'static str,
+        _: usize,
+    ) -> std::result::Result<Self::SerializeStruct, Self::Error> {
+        Ok(FiniteCompound)
+    }
+    fn serialize_struct_variant(
+        self,
+        _: &'static str,
+        _: u32,
+        _: &'static str,
+        _: usize,
+    ) -> std::result::Result<Self::SerializeStructVariant, Self::Error> {
+        Ok(FiniteCompound)
+    }
+    fn collect_str<T: ?Sized + std::fmt::Display>(
+        self,
+        _: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+struct FiniteCompound;
+
+impl SerializeSeq for FiniteCompound {
+    type Ok = ();
+    type Error = serde_json::Error;
+    fn serialize_element<T: ?Sized + Serialize>(
+        &mut self,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn end(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+impl SerializeTuple for FiniteCompound {
+    type Ok = ();
+    type Error = serde_json::Error;
+    fn serialize_element<T: ?Sized + Serialize>(
+        &mut self,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn end(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+impl SerializeTupleStruct for FiniteCompound {
+    type Ok = ();
+    type Error = serde_json::Error;
+    fn serialize_field<T: ?Sized + Serialize>(
+        &mut self,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn end(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+impl SerializeTupleVariant for FiniteCompound {
+    type Ok = ();
+    type Error = serde_json::Error;
+    fn serialize_field<T: ?Sized + Serialize>(
+        &mut self,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn end(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+impl SerializeStruct for FiniteCompound {
+    type Ok = ();
+    type Error = serde_json::Error;
+    fn serialize_field<T: ?Sized + Serialize>(
+        &mut self,
+        _: &'static str,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn end(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+impl SerializeStructVariant for FiniteCompound {
+    type Ok = ();
+    type Error = serde_json::Error;
+    fn serialize_field<T: ?Sized + Serialize>(
+        &mut self,
+        _: &'static str,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn end(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+struct FiniteMap;
+
+impl SerializeMap for FiniteMap {
+    type Ok = ();
+    type Error = serde_json::Error;
+    fn serialize_key<T: ?Sized + Serialize>(
+        &mut self,
+        key: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        key.serialize(FiniteValue)
+    }
+    fn serialize_value<T: ?Sized + Serialize>(
+        &mut self,
+        value: &T,
+    ) -> std::result::Result<(), Self::Error> {
+        value.serialize(FiniteValue)
+    }
+    fn end(self) -> std::result::Result<(), Self::Error> {
+        Ok(())
+    }
 }
 
 /// SHA-256 the exact bytes of a file without loading the entire file into memory.
