@@ -19,7 +19,7 @@ class BackendFatal(RuntimeError):
 
 
 def redacted_stderr(raw):
-    """Allowlisted structured stderr only; unexpected bytes remain hash-bound."""
+    """Allowlisted diagnostics only; unexpected bytes remain hash-bound."""
     raw = raw or b""
     if isinstance(raw, str):
         raw = raw.encode()
@@ -40,6 +40,13 @@ def redacted_stderr(raw):
         "error_class": {"ValueError", "KeyError", "TypeError", "JSONDecodeError"},
     }
     safe = {}
+    if raw == b"production backend refused: production engine request failed\n":
+        # The admitted retry retains the old signed adapter. Its one fixed
+        # transport diagnostic contains no credentials or data values.
+        safe = {
+            "phase": "legacy_engine_request",
+            "message": "production engine request failed",
+        }
     try:
         if len(raw) > 4096:
             raise ValueError("diagnostic exceeds limit")
