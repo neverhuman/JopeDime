@@ -129,7 +129,7 @@ pub struct FlywheelReceipt {
     /// Active vs passive discovery lift recorded for this flywheel receipt.
     pub active_vs_passive_discovery_lift: PairedInterval,
     /// Final round receipt recorded for this flywheel receipt.
-    pub final_round_receipt: super::evaluate::Receipt,
+    pub final_round_receipt: super::super::evaluate::Receipt,
     /// Surrogate beats strongest baseline recorded for this flywheel receipt.
     pub surrogate_beats_strongest_baseline: bool,
     /// Final vs round0 primary verdict recorded for this flywheel receipt.
