@@ -31,7 +31,7 @@ pub fn recover(directory: &Path, prepared: &PreparedExport) -> Result<Value> {
         json!({"all_backends_qualified":reports.iter().all(|r|r["status"]=="qualified"),"backends":reports,"experiment_sha256":plan.experiment.identity()?,"original_window":read::<Value>(&journal.join("window.json"))?,"budget":"original campaign execution cutoff; no additional allowance","cost_scope":if plan.scope=="asm-panel" {"qualification costs are a subset of this campaign's worker command accounting; do not add twice"} else {"qualification costs are additional to comparator fit-observation accounting"},"preparation_cost":{"wall_seconds":prepared.preparation_wall_seconds,"cpu_seconds":prepared.preparation_cpu_seconds,"scope":"preparation through public materialization and verification is additional to worker counters; final receipt publication excluded","receipt_publication_cpu_seconds":null},"controller_cpu_seconds":null,"fits":0}),
     )
 }
-fn may_submit(status: &Value) -> bool {
+pub(super) fn may_submit(status: &Value) -> bool {
     status == "unattempted" || status == "unknown_started_without_finished"
 }
 
@@ -149,7 +149,7 @@ pub fn run(args: QualifyArgs) -> Result<Value> {
         .all(|r| r["status"] == "qualified" || r["status"] == "unsupported");
     Ok(json!({"ok":launch.exit_code==Some(0) && complete,"launch":launch,"report":report}))
 }
-fn normal(name: &str) -> bool {
+pub(super) fn normal(name: &str) -> bool {
     let path = Path::new(name);
     !name.is_empty()
         && path
@@ -184,7 +184,7 @@ pub fn worker(input: &Path, output: &Path) -> Result<()> {
                     "stdout.log",
                     "stderr.log"
                 ]
-                .contains(&name.as_str()),
+                .contains(&&name[..]),
             "unsafe generated filename"
         );
         use std::io::Write;

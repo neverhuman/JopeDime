@@ -1,3 +1,4 @@
+use super::runner::{parity, utf8_error};
 use super::*;
 use serde_json::json;
 

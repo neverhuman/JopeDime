@@ -1,3 +1,4 @@
+use super::prepare::materialize;
 use super::*;
 
 fn recipe(method: &str, loss: Option<f64>) -> ConfirmedRecipe {
