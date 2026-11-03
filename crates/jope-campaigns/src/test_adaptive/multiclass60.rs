@@ -300,7 +300,7 @@ mod validation;
 use self::plan as plan_module;
 use self::plan::{
     multiclass_head_family, read_plan, read_value, ready_dataset_bindings, required_hash,
-    rewrite_seed, run_root, validate_source_manifest,
+    rewrite_seed, run_root,
 };
 use evolution::{
     checkpoint_path, load_checkpoint, next_population, slot_rank_order, slots_from_receipts,
