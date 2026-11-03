@@ -1,0 +1,29 @@
+{
+  "wave": "H249",
+  "wave_id": "h249-side-branch-20261103",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "arms": [
+    "r882",
+    "CONTROL",
+    "SIDE4",
+    "SIDE16"
+  ],
+  "seeds": [
+    249101,
+    249102,
+    249103
+  ],
+  "fold_seed": 249140,
+  "optimizer_updates": 0,
+  "planned_updates": 1800,
+  "trainable_parameters": {
+    "CONTROL": 29211,
+    "SIDE4": 6232,
+    "SIDE16": 24928
+  },
+  "r882_adapter_parameters": 29211,
+  "adapter_2d_matrices": 16,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "serving_promotion": false
+}

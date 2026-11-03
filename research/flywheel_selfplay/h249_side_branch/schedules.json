@@ -1,0 +1,1212 @@
+{
+  "wave": "H249",
+  "note": "constant settings over 40 updates; CONTROL uses exact H170 CTRL AdamW (lr=1e-4, betas=(0.9,0.999), wd=1e-4) on all 47 adapter tensors (29,211 params); SIDE4 (rank 4, alpha=4, 6,232 params) and SIDE16 (rank 16, alpha=16, 24,928 params) freeze all 47 r882 adapter tensors and train only (A, B) low-rank side-branch factors on the 16 2-D adapter matrices with AdamW (lr=1e-4, betas=(0.9,0.999), decoupled wd=1e-2)",
+  "arms": {
+    "CONTROL": [
+      {
+        "step": 1,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 2,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 3,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 4,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 5,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 6,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 7,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 8,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 9,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 10,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 11,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 12,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 13,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 14,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 15,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 16,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 17,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 18,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 19,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 20,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 21,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 22,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 23,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 24,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 25,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 26,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 27,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 28,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 29,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 30,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 31,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 32,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 33,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 34,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 35,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 36,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 37,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 38,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 39,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      },
+      {
+        "step": 40,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "rank": null,
+        "alpha": null,
+        "trainable_params": 29211
+      }
+    ],
+    "SIDE4": [
+      {
+        "step": 1,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 2,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 3,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 4,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 5,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 6,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 7,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 8,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 9,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 10,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 11,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 12,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 13,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 14,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 15,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 16,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 17,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 18,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 19,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 20,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 21,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 22,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 23,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 24,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 25,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 26,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 27,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 28,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 29,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 30,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 31,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 32,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 33,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 34,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 35,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 36,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 37,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 38,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 39,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      },
+      {
+        "step": 40,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 4,
+        "alpha": 4.0,
+        "trainable_params": 6232
+      }
+    ],
+    "SIDE16": [
+      {
+        "step": 1,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 2,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 3,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 4,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 5,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 6,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 7,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 8,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 9,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 10,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 11,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 12,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 13,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 14,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 15,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 16,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 17,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 18,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 19,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 20,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 21,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 22,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 23,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 24,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 25,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 26,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 27,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 28,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 29,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 30,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 31,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 32,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 33,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 34,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 35,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 36,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 37,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 38,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 39,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      },
+      {
+        "step": 40,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.01,
+        "rank": 16,
+        "alpha": 16.0,
+        "trainable_params": 24928
+      }
+    ]
+  }
+}
