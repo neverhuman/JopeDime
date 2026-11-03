@@ -1,0 +1,94 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "01_energy_price_fast_retrain",
+  "dataset": {
+    "id": "127a1b5eccc09a84",
+    "display_name": "Polish Day-Ahead Electricity Market, Demand, Renewables and Weather",
+    "task": "regression",
+    "rows": 9901,
+    "features": 8,
+    "categorical_features": 0,
+    "train_rows": 7921,
+    "test_rows": 1980,
+    "source": {
+      "platform": "zenodo",
+      "id": "10.5281/zenodo.20818296",
+      "url": "https://zenodo.org/records/20818296/files/biogas_energy_dataset.csv?download=1",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": "ts"
+  },
+  "business_question": "Which program gives the best P90 day-ahead price forecast that can be retrained within the window before gate closure?",
+  "constraint": "fit_seconds max",
+  "objective_kind": "constrained",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "fit_seconds",
+    "fit_cpu_seconds"
+  ],
+  "accuracy": {
+    "metric": "pinball",
+    "quantile": 0.9
+  },
+  "why": "Day-ahead bids are due before gate closure, and the model is refitted on the latest prices every day. Under-forecasting a price spike is the expensive mistake, hence P90 pinball. A program that is accurate but cannot be retrained inside the window is useless, hence a hard limit on fit_seconds rather than a soft price.",
+  "caveats": [
+    "Time-ordered data, but jope pipeline run validates on an unordered fold partition of train.csv, so this case does not exercise chronological (regime) validation",
+    "fit_seconds is a reading of this host under its load; the limit is calibrated on this host and must be recalibrated elsewhere",
+    "Corpus copy is 9,901 rows (Jul 2024-Sep 2025)."
+  ],
+  "objective_template": {
+    "metric": "constrained",
+    "fitness": {
+      "metric": "pinball",
+      "quantile": 0.9
+    },
+    "limits": [
+      {
+        "resource": "fit_seconds",
+        "max": {
+          "$median": "fit_seconds"
+        }
+      }
+    ]
+  }
+}

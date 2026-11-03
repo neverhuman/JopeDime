@@ -1,0 +1,100 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "06_etf_frequent_retrain",
+  "dataset": {
+    "id": "f285fd52a7c14111",
+    "display_name": "Taiwan 0050 ETF Historical OHLCV",
+    "task": "regression",
+    "rows": 10000,
+    "features": 3,
+    "categorical_features": 0,
+    "train_rows": 8000,
+    "test_rows": 2000,
+    "source": {
+      "platform": "github",
+      "id": "tw-stocker-0050",
+      "url": "https://raw.githubusercontent.com/voidful/tw_stocker/main/data/0050.csv",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": "Datetime"
+  },
+  "business_question": "For a price model retrained every session under drift, which program minimizes error plus training time?",
+  "constraint": "price per training second",
+  "objective_kind": "composite",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "fit_seconds"
+  ],
+  "accuracy": {
+    "metric": "rmse"
+  },
+  "why": "Under drift a price model is refitted every session. Training time is a recurring cost, priced per second in a composite with scaled RMSE.",
+  "caveats": [
+    "Time-ordered data, but jope pipeline run validates on an unordered fold partition of train.csv, so this case does not exercise chronological (regime) validation",
+    "Corpus copy keeps 3 features (Datetime, Volume, Dividends); OHLC were dropped at ingest."
+  ],
+  "objective_template": {
+    "metric": "composite",
+    "terms": [
+      {
+        "weight": 1.0,
+        "scale": {
+          "$target_sigma": true
+        },
+        "fitness": {
+          "metric": "rmse"
+        }
+      },
+      {
+        "weight": 0.1,
+        "scale": {
+          "$median": "fit_seconds"
+        },
+        "fitness": {
+          "metric": "resource",
+          "name": "fit_seconds"
+        }
+      }
+    ]
+  }
+}

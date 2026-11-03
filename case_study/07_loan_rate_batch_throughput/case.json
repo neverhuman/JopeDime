@@ -1,0 +1,90 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "07_loan_rate_batch_throughput",
+  "dataset": {
+    "id": "18f905fa597f92d3",
+    "display_name": "OpenIntro loans_full_schema (Lending Club), interest_rate",
+    "task": "regression",
+    "rows": 10000,
+    "features": 41,
+    "categorical_features": 10,
+    "train_rows": 8000,
+    "test_rows": 2000,
+    "source": {
+      "platform": "rdatasets",
+      "id": "openintro/loans_full_schema",
+      "url": "https://vincentarelbundock.github.io/Rdatasets/csv/openintro/loans_full_schema.csv",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target / grouped / native split",
+    "time_column": null
+  },
+  "business_question": "Which interest-rate model is most accurate while repricing the book at a minimum batch throughput?",
+  "constraint": "predict_rows_per_second min",
+  "objective_kind": "constrained",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "predict_rows_per_second",
+    "predict_us_per_row"
+  ],
+  "accuracy": {
+    "metric": "mae"
+  },
+  "why": "Nightly repricing scores the whole loan book in one batch window, so the constraint is a minimum batch throughput in rows per second. Among programs that meet it, MAE in rate points decides.",
+  "caveats": [
+    "Throughput is measured on the held-out batch, median of three passes."
+  ],
+  "objective_template": {
+    "metric": "constrained",
+    "fitness": {
+      "metric": "mae"
+    },
+    "limits": [
+      {
+        "resource": "predict_rows_per_second",
+        "min": {
+          "$median": "predict_rows_per_second"
+        }
+      }
+    ]
+  }
+}

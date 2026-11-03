@@ -1,0 +1,20 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "rmse"
+  },
+  "limits": [
+    {
+      "resource": "program_nodes",
+      "max": 1000000000000000.0
+    },
+    {
+      "resource": "stage_count",
+      "max": 1000000000000000.0
+    },
+    {
+      "resource": "model_bytes",
+      "max": 1000000000000000.0
+    }
+  ]
+}

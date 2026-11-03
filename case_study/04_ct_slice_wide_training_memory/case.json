@@ -1,0 +1,101 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "04_ct_slice_wide_training_memory",
+  "dataset": {
+    "id": "2056a3aad9468d87",
+    "display_name": "Relative Location of CT Slices on Axial Images (UCI 206 slice_localization)",
+    "task": "regression",
+    "rows": 50000,
+    "features": 384,
+    "categorical_features": 0,
+    "train_rows": 39877,
+    "test_rows": 10123,
+    "source": {
+      "platform": "uci",
+      "id": "206",
+      "url": "https://archive.ics.uci.edu/dataset/206",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target / grouped / native split",
+    "time_column": null
+  },
+  "business_question": "On 384 wide features and 40k rows, which program trades accuracy against peak training memory best?",
+  "constraint": "price per heap byte",
+  "objective_kind": "composite",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "fit_peak_heap_bytes",
+    "fit_seconds"
+  ],
+  "accuracy": {
+    "metric": "rmse"
+  },
+  "why": "With 384 wide features and about 40k training rows, kernel and expansion stages can multiply the working set. On a shared training host memory is a cost, so a composite prices peak training heap next to scaled RMSE.",
+  "caveats": [
+    "Peak heap is process heap growth from the jope binary's counting allocator, valid because candidates run one at a time",
+    "The largest dataset here; expect the slowest runs."
+  ],
+  "objective_template": {
+    "metric": "composite",
+    "terms": [
+      {
+        "weight": 1.0,
+        "scale": {
+          "$target_sigma": true
+        },
+        "fitness": {
+          "metric": "rmse"
+        }
+      },
+      {
+        "weight": 0.1,
+        "scale": {
+          "$median": "fit_peak_heap_bytes"
+        },
+        "fitness": {
+          "metric": "resource",
+          "name": "fit_peak_heap_bytes"
+        }
+      }
+    ]
+  }
+}
