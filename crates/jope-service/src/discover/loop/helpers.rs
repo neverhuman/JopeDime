@@ -1,6 +1,6 @@
 use super::*;
 
-fn checkpoint_blobs(state: &Checkpoint) -> Result<Vec<BlobRef>> {
+pub(super) fn checkpoint_blobs(state: &Checkpoint) -> Result<Vec<BlobRef>> {
     let roots: Vec<_> = state
         .input_roots
         .iter()

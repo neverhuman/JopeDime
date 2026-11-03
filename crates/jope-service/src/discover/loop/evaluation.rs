@@ -1,6 +1,6 @@
 use super::*;
 
-fn checked_response(request: &Request, response: Response) -> Response {
+pub(super) fn checked_response(request: &Request, response: Response) -> Response {
     if response.attempt != request.attempt
         || !response.valid()
         || (response.failure.is_none() && response.scores.len() != 3)
