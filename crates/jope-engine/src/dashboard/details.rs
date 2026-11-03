@@ -1,6 +1,4 @@
-use super::evidence::{
-    completed, decimal, number, panel, phase, rmse, status_age, status_age_with_limit,
-};
+use super::evidence::{decimal, number, panel, phase, rmse, status_age, status_age_with_limit};
 use super::prelude::*;
 use super::tasks::label;
 
