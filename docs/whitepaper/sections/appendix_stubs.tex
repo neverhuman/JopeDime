@@ -147,10 +147,10 @@ qualification pending. The separate adapter snapshot is in
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
 The admission ledger (\cref{app:latest-admissions}) opens this appendix.
-Adapter-decision windows and the separate historical GP diagnostics
-(\cref{app:historical-search}) precede program-incumbent events and
-operating clocks (\cref{app:round-throughput}). Captures retain their own
-dates and populations; scope and decision rules follow \cref{sec:method-status}.
+Adapter-decision windows precede program-incumbent events and operating
+clocks (\cref{app:round-throughput}), then historical GP diagnostics
+(\cref{app:historical-search}). Captures retain their own dates and
+populations; scope and decision rules follow \cref{sec:method-status}.
 
 % Adapter admission records, ordered by their role and capture cutoff.
 \input{sections/appendix_latest_admissions}
@@ -162,8 +162,6 @@ dates and populations; scope and decision rules follow \cref{sec:method-status}.
 \input{sections/appendix_retained_utility_lift}
 \input{sections/appendix_admission_outcomes}
 \input{sections/appendix_live_adapter_decisions}
-% Historical search uses a separate population; its panels share only the float.
-\input{sections/appendix_historical_search}
 
 \FloatBarrier
 % Program-incumbent events and operating clocks.
@@ -174,3 +172,6 @@ dates and populations; scope and decision rules follow \cref{sec:method-status}.
 \input{sections/appendix_latest_round_clock}
 
 \input{sections/appendix_round_throughput}
+
+% Historical search diagnostics are distinct from the live admission record.
+\input{sections/appendix_historical_search}
