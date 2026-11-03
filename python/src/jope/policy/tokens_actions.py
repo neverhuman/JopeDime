@@ -67,27 +67,6 @@ def encode_actions(
     return out
 
 
-def _snap_bin(value: Any, slot: Slot) -> int | None:
-    if not slot.val_ids:
-        return None
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        numeric: list[tuple[int, float]] = []
-        for tid, text in zip(slot.val_ids, slot.bin_texts):
-            try:
-                numeric.append((tid, float(text)))
-            except ValueError:
-                continue
-        if numeric:
-            v = float(value)
-            return min(
-                numeric,
-                key=lambda pair: abs(math.log(abs(v) / abs(pair[1])))
-                if v != 0 and pair[1] != 0 and (v > 0) == (pair[1] > 0)
-                else abs(v - pair[1]) + 1.0,
-            )[0]
-    return None
-
-
 def decode_tokens(ids: Sequence[int], vocab: ActionVocab) -> tuple[str, dict[str, Any]]:
     """Token ids -> (engine, actions dict). Inverse of encode_actions."""
     from ..pipeline_text import parse_param_token

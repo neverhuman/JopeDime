@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from test_exact_train import *
+from test_exact_train_sampling import FREEZE_GUARD, FREEZE_HISTORY
 
 def split_median_divergence(epoch_draw_stats: dict) -> dict:
     """train-vs-validation per-dataset epoch-draw median ratio, per task and overall.
