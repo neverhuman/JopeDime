@@ -8,6 +8,7 @@ pub use sync::{
     fetch_model, publish_best, publish_file, publish_model, run_entries, sync_events,
     sync_snapshot, sync_snapshot_for, Upload,
 };
+#[cfg(test)]
 pub(super) use sync::{pack_object, unpack_object};
 
 use anyhow::{Context, Result};
