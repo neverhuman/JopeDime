@@ -1,5 +1,5 @@
-use super::*;
 use super::confirmation::median_f64;
+use super::*;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
