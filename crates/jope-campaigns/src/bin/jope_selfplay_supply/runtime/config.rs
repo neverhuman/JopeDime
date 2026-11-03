@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 pub(crate) fn load_supply_failure_streak(path: &Path) -> Result<(Option<String>, u32)> {
     if !path.is_file() {
         return Ok((None, 0));
