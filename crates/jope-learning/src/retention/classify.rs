@@ -12,7 +12,7 @@ use super::inventory::{E1Overlap, GroupInv};
 use super::lifecycle::Coverage;
 use super::policy::{Kind, Policy};
 use super::refs::Role;
-use super::{round4, Action};
+use super::{Action, round4};
 use anyhow::Result;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -155,7 +155,5 @@ mod costing;
 mod decision;
 
 use costing::exact_max;
-pub(super) use costing::{
-    cost, e_candidates, human_bytes, is_live, roles_str, storage_now, tv_for,
-};
+pub(super) use costing::{cost, e_candidates, human_bytes, is_live, roles_str, tv_for};
 pub use decision::decide;
