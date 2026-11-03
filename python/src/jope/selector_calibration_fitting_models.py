@@ -24,10 +24,7 @@ from .selector_calibration_fitting_primitives import (
     _engine_head_key,
     _finite_float,
     _head_from_genome,
-    _meta_categories,
     _parse_actions,
-    _portfolio_meta_feature_names,
-    _portfolio_meta_feature_values,
     _stats,
     pattern_flags,
 )

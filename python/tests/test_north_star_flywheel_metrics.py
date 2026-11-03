@@ -28,6 +28,7 @@ from jope.north_star import (
     verify_dope_frozen_unchanged,
 )
 from jope.north_star.dope_freeze_guard import DOPE_NORMALIZER_BUFFERS
+from test_north_star_flywheel_guards import _ToyFusedNet
 
 
 def test_ns14_rust_fitness_tie_averaged_roc_auc_and_validation() -> None:

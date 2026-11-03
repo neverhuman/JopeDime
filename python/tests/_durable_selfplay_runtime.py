@@ -1,6 +1,7 @@
 """Test group re-exported by test_durable_selfplay for stable test IDs."""
 
 from test_durable_selfplay import *  # noqa: F403
+import test_exact_service_runtime as service_runtime_module
 
 def test_queue_horizons_use_observed_p95_cluster_slots_and_clamps():
     assert dynamic_queue_targets([]) == (256, 512, 0.0)
@@ -45,15 +46,15 @@ def test_wave_generation_is_polled_without_blocking(monkeypatch):
         def communicate():
             return ('{"wave":"strict-wave-000006","manifests":42}\n', "")
 
-    monkeypatch.setattr(service_module, "_wave_process", FinishedWave())
-    state = service_module.wave_generation_state()
+    monkeypatch.setattr(service_runtime_module, "_wave_process", FinishedWave())
+    state = service_runtime_module.wave_generation_state()
     assert state == {
         "pending": False,
         "phase": "wave_committed",
         "wave": "strict-wave-000006",
         "manifests": 42,
     }
-    assert service_module._wave_process is None
+    assert service_runtime_module._wave_process is None
 
 def test_ingestion_cycle_uses_bounded_batches(tmp_path, monkeypatch):
     calls = []
@@ -145,7 +146,27 @@ def test_submit_adopts_a_job_that_became_active_during_refill(tmp_path, monkeypa
     assert "already active" in detail
 
 @pytest.mark.xbabe2  # needs the runtime-bundle tree on the old state plane (bundle_sources() is empty on a clean checkout)
-def test_runtime_bundle_contains_the_complete_prime_python_package():
+def test_runtime_bundle_contains_the_complete_prime_python_package(tmp_path, monkeypatch):
+    import build_selfplay_bundle as bundle_builder
+
+    source_root = tmp_path / "source"
+    prime_root = tmp_path / "jope-prime"
+    monkeypatch.setattr(bundle_builder, "SOURCE", source_root)
+    monkeypatch.setattr(bundle_builder, "PRIME", prime_root)
+    monkeypatch.setattr(bundle_builder, "SCQ_PROJECTS", source_root / "etc/projects.toml")
+    package_files = (
+        "prime.toml",
+        "src/jope/__init__.py",
+        "src/jope/grammars/spec.py",
+        "src/jope/policy/model_v3.py",
+        "registry/compatibility/gen31_policy_v3_vocab.json",
+        "registry/compatibility/prime_arena_suites_v1.json",
+    )
+    for relative in package_files:
+        path = prime_root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n" if path.suffix == ".json" else "")
+
     targets = {target for _, target in bundle_sources()}
     assert "jope-prime/src/jope/__init__.py" in targets
     assert "jope-prime/src/jope/grammars/spec.py" in targets

@@ -180,6 +180,36 @@ def _head_from_actions(actions: dict[str, Any] | None) -> str | None:
     return str(op) if op else None
 
 
+def _score_value(row: dict[str, Any], key: str) -> float:
+    value = _finite_float(row.get(key))
+    if value is not None:
+        return value
+    reward = _finite_float(row.get("reward"))
+    return reward if reward is not None else float("-inf")
+
+
+def _rank_rows(rows: list[dict[str, Any]], score_key: str) -> list[dict[str, Any]]:
+    return sorted(
+        rows,
+        key=lambda row: (
+            -_score_value(row, score_key),
+            -_score_value(row, "reward"),
+            int(row.get("proposal_index") if isinstance(row.get("proposal_index"), int) else 10**9),
+            str(row.get("canonical_genome") or ""),
+        ),
+    )
+
+
+def _portfolio_diversity_key(row: dict[str, Any]) -> str:
+    existing = row.get("candidate_diversity_key")
+    if isinstance(existing, str) and existing:
+        return existing
+    actions = _parse_actions(str(row.get("canonical_genome") or row.get("genome") or ""))
+    transforms = [stage for stage in (actions or {}).get("transforms") or [] if isinstance(stage, dict)]
+    first = str(transforms[0].get("op") if transforms else "none")
+    return f"{row.get('head_type') or _head_from_actions(actions) or 'unknown'}:{first}"
+
+
 def _correlation_lists(xs: list[float], ys: list[float]) -> float | None:
     if len(xs) < 2 or len(ys) < 2:
         return None
@@ -197,3 +227,16 @@ def _finite_float(value: Any) -> float | None:
         numeric = float(value)
         return numeric if math.isfinite(numeric) else None
     return None
+
+
+def _metric_value(value: Any) -> float:
+    numeric = _finite_float(value)
+    return float("-inf") if numeric is None else numeric
+
+
+def _policy_metric_key(metrics: dict[str, Any]) -> tuple[float, float, float]:
+    return (
+        _metric_value(metrics.get("win_rate")),
+        _metric_value(metrics.get("median_delta")),
+        _metric_value(metrics.get("mean_delta")),
+    )
