@@ -2,6 +2,7 @@ use super::*;
 
 pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
+        #[cfg(feature = "neural")]
         EngineCmd::PolicyParity { directory } => jope_parallel::neural::parity(&directory)?,
         #[cfg(feature = "neural")]
         EngineCmd::ExportPolicy {
