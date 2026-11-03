@@ -199,7 +199,7 @@ pub fn qualify_rounds_with_prereg(
         context_rows,
         cluster_log_ratios,
         cluster_log_reductions,
-    } = evaluate::evaluate_contexts(
+    } = evaluate::evaluate_contexts(evaluate::ContextEvaluationInput {
         plan,
         identity,
         ratchet_outputs,
@@ -207,10 +207,8 @@ pub fn qualify_rounds_with_prereg(
         parity,
         parent_of_context,
         expected_context_set,
-        &verified_prereg,
-        &dataset_by_id,
-        &dataset_by_hash,
-    )?;
+        verified_prereg: &verified_prereg,
+    })?;
 
     let n_missing_expected_contexts = expected_context_set.len();
     let n_unreferenced_test_scores = test_scores

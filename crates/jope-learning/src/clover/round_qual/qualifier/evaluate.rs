@@ -22,18 +22,28 @@ pub(crate) struct ContextEvaluation {
     pub(crate) cluster_log_reductions: BTreeMap<String, Vec<f64>>,
 }
 
-pub(crate) fn evaluate_contexts(
-    plan: &RoundQualPlan,
-    identity: &ExperimentIdentity,
-    ratchet_outputs: &[Value],
-    test_scores: &[QualTestScore],
-    parity: &[ParityRecord],
-    parent_of_context: &BTreeMap<String, String>,
-    mut expected_context_set: BTreeSet<String>,
-    verified_prereg: &Option<(SelfPlayPrereg, bool)>,
-    _dataset_by_id: &BTreeMap<String, ScoredDataset>,
-    _dataset_by_hash: &BTreeMap<String, ScoredDataset>,
-) -> Result<ContextEvaluation> {
+pub(super) struct ContextEvaluationInput<'a> {
+    pub(super) plan: &'a RoundQualPlan,
+    pub(super) identity: &'a ExperimentIdentity,
+    pub(super) ratchet_outputs: &'a [Value],
+    pub(super) test_scores: &'a [QualTestScore],
+    pub(super) parity: &'a [ParityRecord],
+    pub(super) parent_of_context: &'a BTreeMap<String, String>,
+    pub(super) expected_context_set: BTreeSet<String>,
+    pub(super) verified_prereg: &'a Option<(SelfPlayPrereg, bool)>,
+}
+
+pub(crate) fn evaluate_contexts(input: ContextEvaluationInput<'_>) -> Result<ContextEvaluation> {
+    let ContextEvaluationInput {
+        plan,
+        identity,
+        ratchet_outputs,
+        test_scores,
+        parity,
+        parent_of_context,
+        mut expected_context_set,
+        verified_prereg,
+    } = input;
     let mut seen_parity = BTreeSet::new();
     for pr in parity {
         ensure!(
