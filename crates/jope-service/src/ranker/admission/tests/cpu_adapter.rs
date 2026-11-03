@@ -36,7 +36,8 @@ fn real_cpu_adapter_admission_is_sensitive_to_program_channels_and_revealed_fitn
             .iter()
             .map(|&cost| f64::from(cost))
             .collect();
-        slate.select(&costs, &mut rng(0x4d35)).unwrap()
+        let mut selection_rng = ChaCha12Rng::seed_from_u64(0x4d35);
+        slate.select(&costs, &mut selection_rng).unwrap()
     }
 
     let root = PathBuf::from(
