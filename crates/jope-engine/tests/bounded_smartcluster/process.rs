@@ -52,23 +52,49 @@ fn scqd_binary_uses_shared_target_when_test_artifacts_are_ledger_scoped() {
 }
 
 /// The workspace target's `scqd` binary, including when Cargo nests test artifacts under a
-/// ledger-specific target directory. The test never builds it (W7-D5): a test must not spend a
-/// time-budgeted CI lane on a nested `cargo build`. The workspace test build that
-/// runs this test already produces it (`jain-smartcluster-daemon`'s integration tests make
-/// Cargo build its `scqd` binary), and `deploy/ci/full-lane.sh` refuses to run the tests
-/// without it. Locally: `cargo build --locked -p jain-smartcluster-daemon --bin scqd`.
+/// ledger-specific target directory. Full workspace lanes prebuild it; a package-scoped test run
+/// builds it once on demand because Cargo does not build another package's binary as a test
+/// dependency.
 pub(crate) fn scqd_binary() -> PathBuf {
-    let exe = std::env::current_exe().unwrap();
-    let profile_dir = exe.parent().unwrap().parent().unwrap();
-    let binary = scqd_binary_for_profile(profile_dir);
-    assert!(
-        binary.is_file(),
-        "{} is absent: this fixture runs the workspace's own scqd and never builds it; build it \
-         first with `cargo build --locked -p jain-smartcluster-daemon --bin scqd` (the \
-         full-default CI lane builds it with the workspace)",
-        binary.display()
-    );
-    binary
+    static BINARY: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+    BINARY
+        .get_or_init(|| {
+            let exe = std::env::current_exe().unwrap();
+            let profile_dir = exe.parent().unwrap().parent().unwrap();
+            let binary = scqd_binary_for_profile(profile_dir);
+            if !binary.is_file() {
+                let target_dir = profile_dir
+                    .parent()
+                    .expect("the test executable has a Cargo target profile directory");
+                let status = Command::new("cargo")
+                    .args([
+                        "build",
+                        "--locked",
+                        "-p",
+                        "jain-smartcluster-daemon",
+                        "--bin",
+                        "scqd",
+                        "--jobs",
+                        "1",
+                    ])
+                    .arg("--target-dir")
+                    .arg(target_dir)
+                    .status()
+                    .expect("could not start Cargo to build the scqd test fixture");
+                assert!(
+                    status.success(),
+                    "Cargo failed to build the scqd test fixture"
+                );
+            }
+            let binary = scqd_binary_for_profile(profile_dir);
+            assert!(
+                binary.is_file(),
+                "{} is absent after the scqd build",
+                binary.display()
+            );
+            binary
+        })
+        .clone()
 }
 
 pub(crate) struct Scqd {
