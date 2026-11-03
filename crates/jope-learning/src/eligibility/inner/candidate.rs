@@ -22,12 +22,12 @@ pub struct InnerEvidence {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct CandidateFreeze {
-    schema: String,
-    comparison_sha256: String,
-    frozen_recipe_sha256: String,
-    search_receipt_sha256: String,
-    frozen_at_unix_ms: u64,
-    selection_source: String,
+    pub(super) schema: String,
+    pub(super) comparison_sha256: String,
+    pub(super) frozen_recipe_sha256: String,
+    pub(super) search_receipt_sha256: String,
+    pub(super) frozen_at_unix_ms: u64,
+    pub(super) selection_source: String,
 }
 /// Called after measured inner selection and before the controller schedules the
 /// candidate's outer prediction job. It records ordering; no outcome is invented.
