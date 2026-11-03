@@ -2,6 +2,7 @@ use super::types::*;
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     io::Read,
@@ -266,7 +267,7 @@ pub(crate) fn build(specification: Specification) -> Result<Plan> {
 
 pub fn plan(input: &Path, output: &Path) -> Result<Value> {
     let plan = build(read(input)?)?;
-    super::worker::write_private(output, &plan)?;
+    super::super::worker::write_private(output, &plan)?;
     Ok(
         json!({"ok":plan.failures.is_empty(),"plan":output,"plan_sha256":hash(&std::fs::read(output)?),"planned_units":plan.planned_units,"planned_searches":plan.planned_searches,"failures":plan.failures,"fits":0,"execution_admitted":false,"kpi":"not yet measured"}),
     )
