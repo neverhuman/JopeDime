@@ -87,7 +87,7 @@ pub fn highlight(source: &str, language: HighlightLanguage) -> Vec<Span<'_>> {
 
 #[path = "highlight/scanner.rs"]
 mod scanner;
-pub(super) use scanner::*;
+use scanner::*;
 
 #[cfg(test)]
 mod tests {
