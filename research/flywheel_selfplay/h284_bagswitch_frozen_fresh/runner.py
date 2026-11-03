@@ -185,52 +185,19 @@ def h279_cell_regression(train, P8, fam_by_cid):
 
 
 def build_stored_round_packets(round_json_path: Path, gpu_costs_npz_path: Path, val_rows: list[dict], vap, vpj, vcf) -> dict:
-    """Build K=8 feature and outcome packets for a stored round JSON (r782, r785) + GPU-rescored costs npz."""
-    round_obj = json.loads(Path(round_json_path).read_text())["context_outcomes"]
-    costs = {}
+    """Build K=8 feature and outcome packets for a stored round (r782, r785) + GPU-rescored costs npz,
+    verifying 91/91 exact slot-0 utility match against round-{n}.json dev_utility.per_context."""
+    stored = json.loads(Path(round_json_path).read_text())["dev_utility"]
+    vids = [r["context_sha256"] for r in val_rows]
     with np.load(gpu_costs_npz_path, allow_pickle=False) as z:
-        for r in val_rows:
-            cid = r["context_sha256"]
-            costs[cid] = z[cid].astype(np.float32)
-
-    out = {}
-    for r in val_rows:
-        cid = r["context_sha256"]
-        cands = round_obj[cid]["candidates"]
-        val_gain = np.array(
-            [
-                np.nan if c.get("val_gain") is None else float(c["val_gain"])
-                for c in cands
-            ],
-            dtype=np.float64,
-        )
-        gate = np.isfinite(val_gain) & (val_gain > -2.0)
-        utility = np.where(gate, val_gain, -2.0).astype(np.float64)
-        fitness = (-utility).astype(np.float64)
-
-        rc = costs[cid]
-        order = np.argsort(rc, kind="mergesort")
-        tk = order[: fb.K]
-        X = core.build_candidate_features(
-            cid=cid,
-            cand_indices=tk,
-            r882_cost=rc,
-            base_prior_cost=vap[cid],
-            proj16=vpj[cid],
-            ctx_feat=vcf[cid],
-            pool_npz=round_obj[cid],
-            full_order=order,
-        )
-        if not np.all(np.isfinite(X)):
-            raise RuntimeError(f"non-finite features in stored round for {cid}")
-        out[cid] = {
-            "X": X,
-            "utility_k": utility[tk],
-            "gate_k": gate[tk],
-            "fitness_k": fitness[tk],
-            "slot0_u": float(utility[int(order[0])]),
-        }
-    return out
+        costs = {c: z[c].astype(np.float32) for c in vids}
+    V = topk.load_packets(val_rows, costs, vap, vpj, vcf, fb.K)
+    slot0_matches = int(
+        sum(float(V[c]["utility_k"][0]) == float(s) for c, s in zip(vids, stored["per_context"]))
+    )
+    if slot0_matches != 91:
+        raise RuntimeError(f"stored round {round_json_path.name} slot 0 mismatch: {slot0_matches}/91")
+    return V
 
 
 def score_packet_collection(
@@ -321,82 +288,114 @@ def s3_fetch_versioned(bucket: str, key: str, version_id: str, dst: Path, expect
 
 
 def load_fresh_pool_receipt(receipt_path: Path, cache_dir: Path, cohort_map: dict[str, str]) -> dict:
-    """Load a fresh pool receipt (fresh_pools_H283.json or fresh_pools_H285.json), fetching S3 artifacts by VersionId
-    when needed, and return normalized {cids, fams, packets, provenance}."""
+    """Load a fresh pool receipt (fresh_pools_H283.json or fresh_pools_H285.json), fetching S3 artifacts by VersionId,
+    and return normalized {cids, fams, packets, s3_meta, receipt_sha256}."""
+    import tarfile
+
     rec = json.loads(Path(receipt_path).read_text())
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
-
-    # Support either local_path or S3 bucket/key/VersionId
-    npz_path = None
-    s3_meta = {}
-    if isinstance(rec, dict):
-        # Case 1: top-level packet npz URI/key or local path
-        bucket = rec.get("bucket") or rec.get("s3_bucket") or "veox-jopedime-learning-use2"
-        key = rec.get("s3_key") or rec.get("key") or rec.get("packets_s3_key") or rec.get("features_s3_key")
-        vid = rec.get("VersionId") or rec.get("version_id") or rec.get("s3_version_id") or rec.get("packets_version_id")
-        exp_sha = rec.get("sha256") or rec.get("packets_sha256")
-        if not key and isinstance(rec.get("packets"), dict):
-            pk = rec["packets"]
-            bucket = pk.get("bucket") or pk.get("s3_bucket") or bucket
-            key = pk.get("s3_key") or pk.get("key")
-            vid = pk.get("VersionId") or pk.get("version_id") or pk.get("s3_version_id")
-            exp_sha = pk.get("sha256")
-        if not key and isinstance(rec.get("artifacts"), list):
-            for art in rec["artifacts"]:
-                if isinstance(art, dict) and str(art.get("key") or art.get("s3_key") or art.get("file", "")).endswith(".npz"):
-                    bucket = art.get("bucket") or art.get("s3_bucket") or bucket
-                    key = art.get("s3_key") or art.get("key")
-                    vid = art.get("VersionId") or art.get("version_id") or art.get("s3_version_id")
-                    exp_sha = art.get("sha256")
-                    break
-        if key:
-            if key.startswith("s3://"):
-                parts = key[5:].split("/", 1)
-                bucket, key = parts[0], parts[1]
-            dst = cache_dir / Path(key).name
-            got_sha = s3_fetch_versioned(bucket, key, str(vid or ""), dst, exp_sha)
-            npz_path = dst
-            s3_meta = {"bucket": bucket, "key": key, "VersionId": vid, "sha256": got_sha}
-        elif rec.get("local_path") and Path(rec["local_path"]).exists():
-            npz_path = Path(rec["local_path"])
-            s3_meta = {"local_path": str(npz_path), "sha256": sha(npz_path)}
-
-    if npz_path is None:
-        raise RuntimeError(f"Could not resolve fresh packet npz from receipt {receipt_path}")
-
+    wave = str(rec.get("wave", ""))
     packets = {}
     cids = []
     fams = []
-    with np.load(npz_path, allow_pickle=False) as z:
-        files = set(z.files)
-        if "X" in files and ("cids" in files or "context_ids" in files):
-            raw_cids = [str(c) for c in (z["cids"] if "cids" in files else z["context_ids"])]
+    s3_meta = {
+        "wave": wave,
+        "half": rec.get("half"),
+        "cohort_sha256": rec.get("cohort_sha256"),
+        "objects": [],
+    }
+
+    if wave == "H283" or "objects" in rec:
+        by_name = {}
+        for obj in rec.get("objects", []):
+            uri = str(obj["s3_uri"])
+            bucket, key = uri[5:].split("/", 1)
+            vid = str(obj["version_id"])
+            exp_sha = str(obj["sha256"])
+            fname = Path(key).name
+            dst = cache_dir / fname
+            got_sha = s3_fetch_versioned(bucket, key, vid, dst, exp_sha)
+            by_name[fname] = dst
+            s3_meta["objects"].append({"s3_uri": uri, "version_id": vid, "sha256": got_sha})
+
+        extract_dir = cache_dir / "extracted"
+        extract_dir.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(by_name["fresh-build.tar.gz"], "r:gz") as tf:
+            tf.extractall(extract_dir)
+        pools_dir = extract_dir / "fresh" / "pools"
+
+        with np.load(by_name["fresh_top8_packets.npz"], allow_pickle=False) as z:
+            raw_cids = [str(c) for c in z["cids"]]
             X_all = z["X"].astype(np.float32)
-            if X_all.ndim == 2:
-                X_all = X_all.reshape(len(raw_cids), fb.K, 568)
-            u_key = "utility_k" if "utility_k" in files else ("utility" if "utility" in files else "val_gain_k")
-            g_key = "gate_k" if "gate_k" in files else ("gate" if "gate" in files else None)
-            u_all = z[u_key].astype(np.float64)
-            if g_key and g_key in files:
-                g_all = z[g_key].astype(bool)
-            else:
-                g_all = np.isfinite(u_all) & (u_all > -2.0 + 1e-9)
-            raw_fams = (
-                [str(f) for f in z["family_ids"]]
-                if "family_ids" in files
-                else ([str(f) for f in z["fams"]] if "fams" in files else [cohort_map[c] for c in raw_cids])
-            )
+            order_top8 = z["order_top8"].astype(np.int64)
             for i, cid in enumerate(raw_cids):
+                with np.load(pools_dir / f"{cid}.npz", allow_pickle=False) as zp:
+                    fit = zp["fitness"].astype(np.float64)
+                    gate = zp["gate"].astype(bool)
+                u_full = np.where(gate, -fit, -2.0).astype(np.float64)
+                tk = order_top8[i]
                 cids.append(cid)
-                fams.append(raw_fams[i])
+                fams.append(cohort_map[cid])
                 packets[cid] = {
                     "X": X_all[i],
-                    "utility_k": np.where(g_all[i], u_all[i], -2.0).astype(np.float64),
-                    "gate_k": g_all[i],
+                    "utility_k": u_full[tk],
+                    "gate_k": gate[tk],
+                    "order_top8": tk.tolist(),
                 }
-        else:
-            raise RuntimeError(f"Unsupported npz layout in {npz_path}: {sorted(files)[:10]}")
+    elif wave == "H285" or "uri" in rec:
+        uri = str(rec["uri"])
+        bucket, key = uri[5:].split("/", 1)
+        vid = str(rec["version_id"])
+        exp_sha = str(rec["sha256"])
+        dst_npz = cache_dir / Path(key).name
+        got_sha = s3_fetch_versioned(bucket, key, vid, dst_npz, exp_sha)
+        s3_meta["objects"].append({"s3_uri": uri, "version_id": vid, "sha256": got_sha})
+
+        h285_tar_key = "experiments/rd_breakthrough_20261030/H285/astra-t2305/closeout/full-outputs.tar.gz"
+        h285_tar_vid = "x7Hj8CQ6ZtURHZXxmUNlXwp2.am44NXD"
+        dst_tar = cache_dir / "full-outputs.tar.gz"
+        tar_sha = s3_fetch_versioned(bucket, h285_tar_key, h285_tar_vid, dst_tar, None)
+        s3_meta["objects"].append(
+            {"s3_uri": f"s3://{bucket}/{h285_tar_key}", "version_id": h285_tar_vid, "sha256": tar_sha}
+        )
+
+        extract_dir = cache_dir / "extracted"
+        extract_dir.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(dst_tar, "r:gz") as tf:
+            tf.extractall(extract_dir)
+        pools_candidates = list(extract_dir.rglob("pools"))
+        pools_dir = (
+            pools_candidates[0]
+            if pools_candidates
+            else Path("/home/ubuntu/jope-rescue-20260921/h285-astra/attempts/attempt1/pools")
+        )
+
+        row_fam_map = {
+            str(r["cid"]): str(r["family_key"])
+            for r in rec.get("rows", [])
+            if "cid" in r and "family_key" in r
+        }
+        with np.load(dst_npz, allow_pickle=False) as z:
+            raw_cids = [str(c) for c in z["cids"]]
+            X_all = z["X"].astype(np.float32)
+            indices = z["indices"].astype(np.int64)
+            for i, cid in enumerate(raw_cids):
+                with np.load(pools_dir / f"{cid}.npz", allow_pickle=False) as zp:
+                    fit = zp["fitness"].astype(np.float64)
+                    gate = zp["gate"].astype(bool)
+                u_full = np.where(gate, -fit, -2.0).astype(np.float64)
+                tk = indices[i]
+                cids.append(cid)
+                fams.append(row_fam_map.get(cid) or cohort_map[cid])
+                packets[cid] = {
+                    "X": X_all[i],
+                    "utility_k": u_full[tk],
+                    "gate_k": gate[tk],
+                    "order_top8": tk.tolist(),
+                }
+    else:
+        raise RuntimeError(f"Unsupported fresh pool receipt schema in {receipt_path}")
 
     return {
         "cids": cids,
