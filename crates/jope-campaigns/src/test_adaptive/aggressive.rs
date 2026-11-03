@@ -63,8 +63,6 @@ pub(crate) use views::*;
 mod validation;
 pub(crate) use validation::*;
 mod runner;
-pub(crate) use runner::{run_aggressive_with_specs, validate_aggressive_with_specs};
-
 pub(crate) use runner::{run_aggressive, run_golden46, validate_aggressive, validate_golden46};
 
 #[cfg(test)]
