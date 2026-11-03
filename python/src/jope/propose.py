@@ -512,7 +512,7 @@ def _selection_head(row: dict[str, Any]) -> str:
     try:
         actions = parse_pipeline_actions(_selection_canonical_key(row))
         return str((actions.get("head") or {}).get("op") or "")
-    except (Exception, ArithmeticError):
+    except Exception:
         return ""
 
 
@@ -627,7 +627,7 @@ def _historical_mutation_candidates(
                 actions = parse_pipeline_actions(source)
                 mutated = _mutate_actions(actions, vocab=vocab, rng=rng)
                 genome = format_pipeline_actions(mutated)
-            except (Exception, ArithmeticError):
+            except Exception:
                 continue
             if genome in seen:
                 continue
