@@ -108,7 +108,7 @@ fn a_missing_required_field_names_the_file_and_the_field() {
     assert!(row["threshold"]
         .as_str()
         .unwrap()
-        .contains("src/bin/jope_selfplay_supply.rs"));
+        .contains("src/bin/jope_selfplay_supply/options.rs"));
 }
 
 #[test]
@@ -137,7 +137,7 @@ fn a_wrong_typed_required_field_is_a_violation_too() {
 /// derived field list, so an over-strict extractor still fails
 /// `a_complete_in_schema_document_is_silent` instead of agreeing with
 /// itself. Its values also pass every aggregate check in the consumer's
-/// `load_queue_status` (jope_selfplay_supply.rs): queued + starting =
+/// `load_queue_status` (jope_selfplay_supply/runtime/queue.rs): queued + starting =
 /// queued_starting, reserve + admission manifests = unclaimed manifests,
 /// complete_reserve_waves = protected_reserve_waves.len(), useful_work =
 /// queued + starting + dispatching + validated_ready, and
@@ -176,7 +176,7 @@ fn a_complete_in_schema_document_is_silent() {
 fn the_complete_keeper_fixture_covers_every_required_queue_status_field() {
     let fixture: Value = serde_json::from_str(&complete_keeper_document(0)).unwrap();
     let keys = fixture.as_object().unwrap();
-    let source = live_source("src/bin/jope_selfplay_supply.rs");
+    let source = live_source("src/bin/jope_selfplay_supply/options.rs");
     let (_, required) = derive_required_fields(&source, "QueueStatus").unwrap();
     assert!(!required.is_empty());
     let missing: Vec<&str> = required
@@ -248,7 +248,7 @@ fn live_source(relative: &str) -> String {
 
 #[test]
 fn the_supply_queue_status_contract_is_derived_from_supplys_own_struct() {
-    let source = live_source("src/bin/jope_selfplay_supply.rs");
+    let source = live_source("src/bin/jope_selfplay_supply/options.rs");
     let (line, required) = derive_required_fields(&source, "QueueStatus").unwrap();
     assert!(line > 0);
     let by_name: Vec<&str> = required.iter().map(|f| f.name.as_str()).collect();
@@ -291,12 +291,12 @@ fn the_supply_queue_status_contract_is_derived_from_supplys_own_struct() {
 #[test]
 fn a_container_level_serde_default_makes_every_field_optional() {
     // Both DurableState structs carry #[serde(default)], which is the only
-    // reason jope_selfplay_freshness.rs:328 and
-    // jope_selfplay_trainer_watchdog.rs:691 survive a wrong-shaped
+    // reason jope_selfplay_freshness.rs and
+    // jope_selfplay_trainer_watchdog/implementation.rs survive a wrong-shaped
     // document. The contract must agree with serde, not with intent.
     for relative in [
         "src/bin/jope_selfplay_freshness.rs",
-        "src/bin/jope_selfplay_trainer_watchdog.rs",
+        "src/bin/jope_selfplay_trainer_watchdog/implementation.rs",
     ] {
         let source = live_source(relative);
         let (_, required) = derive_required_fields(&source, "DurableState").unwrap();

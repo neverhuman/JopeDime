@@ -270,7 +270,7 @@ mod tests {
         ];
         let csv = incumbent_compare_csv(&rows);
         assert!(csv.starts_with("dataset,incumbent_model,incumbent_report,incumbent_rmse,"));
-        assert!(csv.contains("\"d,1\",m,,2.0,1.0,,True,,1.0,,,\r\n"));
+        assert!(csv.contains("\"d,1\",m,,2.0,1.0,,True,,1.0,,50.0,\r\n"));
     }
 
     #[test]

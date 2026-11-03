@@ -144,6 +144,7 @@ pub fn head_op_of(genome: &str) -> Option<&str> {
         if cursor == capture_start {
             continue;
         }
+        let capture_end = chars[cursor - 1].0 + chars[cursor - 1].1.len_utf8();
         while cursor < chars.len() && chars[cursor].1 != '(' && chars[cursor].1 != ')' {
             cursor += 1;
         }
@@ -162,7 +163,6 @@ pub fn head_op_of(genome: &str) -> Option<&str> {
         // Python's `$` also accepts the position immediately before one final newline.
         if cursor == chars.len() || (cursor + 1 == chars.len() && chars[cursor].1 == '\n') {
             let capture_begin = chars[capture_start].0;
-            let capture_end = chars[cursor - 2].0 + chars[cursor - 2].1.len_utf8();
             return genome.get(capture_begin..capture_end);
         }
         let _ = start;

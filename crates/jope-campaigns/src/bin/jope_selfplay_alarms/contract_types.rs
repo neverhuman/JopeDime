@@ -37,7 +37,7 @@ pub(crate) const OPS_CONTRACTS: &[Contract] = &[
         producer: "jope-selfplay-queue.service",
         // jope_selfplay_supply.rs:404-416 load_queue_status(); the struct whose
         // non-Option `queued_target` took supply down with the keeper.
-        consumer: Some(("src/bin/jope_selfplay_supply.rs", "QueueStatus")),
+        consumer: Some(("src/bin/jope_selfplay_supply/options.rs", "QueueStatus")),
     },
     Contract {
         file: "ops/micro-wave-supply-v2.json",
@@ -56,7 +56,10 @@ pub(crate) const OPS_CONTRACTS: &[Contract] = &[
         schema: "JopeContinuousTrainerWatchdogState.v1",
         producer: "jope-selfplay-trainer-watchdog.service",
         // jope_selfplay_trainer_watchdog.rs:690 load_state().
-        consumer: Some(("src/bin/jope_selfplay_trainer_watchdog.rs", "DurableState")),
+        consumer: Some((
+            "src/bin/jope_selfplay_trainer_watchdog/implementation.rs",
+            "DurableState",
+        )),
     },
     Contract {
         file: "ops/freshness-status.json",
@@ -205,8 +208,7 @@ pub(crate) fn derive_required_fields(
 ) -> Option<(usize, Vec<RequiredField>)> {
     let lines: Vec<&str> = source.lines().collect();
     let head = lines.iter().position(|line| {
-        let trimmed = line.trim_start();
-        let trimmed = trimmed.strip_prefix("pub ").unwrap_or(trimmed);
+        let trimmed = strip_visibility(line.trim_start());
         trimmed.strip_prefix("struct ").and_then(|rest| {
             rest.split(|c: char| !c.is_alphanumeric() && c != '_')
                 .next()
@@ -256,7 +258,7 @@ pub(crate) fn derive_required_fields(
         {
             continue;
         }
-        let declaration = trimmed.strip_prefix("pub ").unwrap_or(trimmed);
+        let declaration = strip_visibility(trimmed);
         let Some((raw_name, raw_type)) = declaration.split_once(':') else {
             continue;
         };
@@ -285,6 +287,14 @@ pub(crate) fn derive_required_fields(
         });
     }
     Some((head + 1, fields))
+}
+
+fn strip_visibility(declaration: &str) -> &str {
+    if let Some(rest) = declaration.strip_prefix("pub(") {
+        rest.split_once(' ').map_or(declaration, |(_, rest)| rest)
+    } else {
+        declaration.strip_prefix("pub ").unwrap_or(declaration)
+    }
 }
 
 /// `(field, what is wrong)` for every required field the document breaks.

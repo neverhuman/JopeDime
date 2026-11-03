@@ -141,10 +141,18 @@ pub fn python_src() -> PathBuf {
     python_root().join("src")
 }
 
-/// `~/jope-dime/scripts` — the self-play Python scripts, now
-/// `python/src/jope/research`.
+/// The self-play Python scripts. Prefer the installed package path and fall
+/// back to the repository's test-support tree when running from a source checkout.
 pub fn research_scripts_root() -> PathBuf {
-    python_src().join("jope/research")
+    let installed = python_src().join("jope/research");
+    let test_support = python_root().join("test-support/jope/research");
+    if test_support.join("test_exact_dl_generate.py").is_file()
+        && !installed.join("test_exact_dl_generate.py").is_file()
+    {
+        test_support
+    } else {
+        installed
+    }
 }
 
 /// `~/jope-dime/scripts/<name>`.
@@ -230,7 +238,7 @@ mod tests {
         assert!(research_script("x.py").starts_with(&home));
         assert_eq!(
             research_script("x.py"),
-            home.join("python/src/jope/research/x.py")
+            research_scripts_root().join("x.py")
         );
         assert_eq!(
             corpus_eval_binary(),

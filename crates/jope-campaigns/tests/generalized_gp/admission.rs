@@ -35,7 +35,7 @@ fn generalized_source_capture_retains_parseable_generation_zero_and_successors()
     let result = std::process::Command::new(std::env::current_exe().unwrap())
         .args([
             "--exact",
-            "offspring_schedule_and_fresh_elite_evaluation_are_exact",
+            "evolution::offspring_schedule_and_fresh_elite_evaluation_are_exact",
             "--nocapture",
         ])
         .env("JOPE_GP_SOURCE_DIR", directory.path())

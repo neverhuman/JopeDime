@@ -46,8 +46,9 @@ fn exploration_selects_uncertain_candidates_in_stable_descending_order() {
     ];
     let selected = select_candidates(&pool, 1, 2).unwrap();
     assert_eq!(selected[0], pool[0]);
-    assert_eq!(selected[1], pool[1]);
-    assert_eq!(selected[2], pool[2]);
+    // The engine floor is applied before uncertainty exploration, matching Python.
+    assert_eq!(selected[1], pool[2]);
+    assert_eq!(selected[2], pool[1]);
 }
 
 #[test]
