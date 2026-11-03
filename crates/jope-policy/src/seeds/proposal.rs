@@ -5,18 +5,18 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::path::Path;
 
-use super::config::{ChallengerIdentity, CheckpointBinding};
-use super::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
-use super::grammar::BoundVocabulary;
-use super::model::PolicyModel;
-use super::proposal_ledger::{self, ProposalLedger};
-use super::ranking::{self, Bindings, Ranking, SELECTION_ID};
-use super::{
+use crate::config::{ChallengerIdentity, CheckpointBinding};
+use crate::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
+use crate::grammar::BoundVocabulary;
+use crate::model::PolicyModel;
+use crate::proposal_ledger::{self, ProposalLedger};
+use crate::ranking::{self, Bindings, Ranking, SELECTION_ID};
+use crate::{
     context_sha256, is_sha256_hex, refuse_rejected_checkpoint, require_accepted_policy,
     require_accepted_vocabulary, sha256_hex, CHECKPOINT_VOCABULARY_SHA256,
 };
 
-use super::population::{assemble_population, check_population, PopulationFields};
+use super::population::{assemble_population, check_population, PopulationFields, SeedBinding, SeedPopulation};
 
 /// Everything a proposal run produced, for the caller's receipt. Fields are private: only
 /// [`propose`] and [`propose_challenger`] (and `propose_unbound` with the `testing` feature)
@@ -78,12 +78,12 @@ impl ProposalSeeds {
 ///
 /// The model must come from [`PolicyModel::load_bound`] with this `checkpoint`, and its
 /// recomputed parameter hash must be the accepted step-60000 hash
-/// ([`super::ACCEPTED_PARAMETER_SHA256`]); any other model (including untrained weights) is
+/// ([`crate::ACCEPTED_PARAMETER_SHA256`]); any other model (including untrained weights) is
 /// refused, so a file stamped with the accepted state was produced by the accepted weights. The
 /// receipt must name the accepted configuration (claimed and recomputed hash equal to
-/// [`super::ACCEPTED_CONFIG_SHA256`]) and the step-60000 vocabulary
-/// ([`super::CHECKPOINT_VOCABULARY_SHA256`]). The vocabulary's own byte hash must be that
-/// vocabulary or its documented product restriction ([`super::PRODUCT_VOCABULARY_SHA256`]), and
+/// [`crate::ACCEPTED_CONFIG_SHA256`]) and the step-60000 vocabulary
+/// ([`crate::CHECKPOINT_VOCABULARY_SHA256`]). The vocabulary's own byte hash must be that
+/// vocabulary or its documented product restriction ([`crate::PRODUCT_VOCABULARY_SHA256`]), and
 /// the context must hash to `binding.context_sha256()`.
 pub fn propose(
     model: &PolicyModel,
@@ -143,7 +143,7 @@ pub fn propose_challenger(
 /// Test support (`testing`): [`propose`] for untrained weights. Refuses any bound
 /// model and any checkpoint other than
 /// [`CheckpointBinding::unbound_for_testing`]'s, so its files are stamped with
-/// [`super::testing::UNBOUND_TEST_STATE_SHA256`] and never with a checkpoint state.
+/// [`crate::testing::UNBOUND_TEST_STATE_SHA256`] and never with a checkpoint state.
 #[cfg(any(test, feature = "testing"))]
 pub fn propose_unbound(
     model: &PolicyModel,
@@ -156,7 +156,7 @@ pub fn propose_unbound(
 ) -> Result<Proposal> {
     ensure!(
         model.bound_identity().is_none()
-            && checkpoint.state_sha256() == super::testing::UNBOUND_TEST_STATE_SHA256,
+            && checkpoint.state_sha256() == crate::testing::UNBOUND_TEST_STATE_SHA256,
         "refused: the unbound test path only accepts untrained weights and the test binding"
     );
     propose_checked(
@@ -188,15 +188,15 @@ fn propose_checked(
     require_accepted_vocabulary(vocabulary)?;
     ensure!(
         match vocabulary.identity() {
-            super::grammar::VocabularyIdentity::Checkpoint =>
+            crate::grammar::VocabularyIdentity::Checkpoint =>
                 vocabulary.sha256() == checkpoint.vocabulary_sha256(),
-            super::grammar::VocabularyIdentity::ProductRestriction { base_sha256 } =>
+            crate::grammar::VocabularyIdentity::ProductRestriction { base_sha256 } =>
                 base_sha256 == checkpoint.vocabulary_sha256(),
         },
         "vocabulary is not bound to this checkpoint"
     );
     ensure!(
-        context_sha256(context) == binding.context_sha256,
+        context_sha256(context) == binding.context_sha256(),
         "context bytes differ from the seed binding"
     );
     sample_rank_assemble(
@@ -228,7 +228,7 @@ pub(crate) fn propose_with_vocabulary_for_test(
     );
     sample_rank_assemble(
         model,
-        super::testing::UNBOUND_TEST_STATE_SHA256,
+        crate::testing::UNBOUND_TEST_STATE_SHA256,
         vocabulary,
         context,
         binding,
@@ -269,7 +269,7 @@ fn sample_rank_assemble(
         vocab,
         context,
         &programs,
-        Bindings::unchecked(state_sha256, &binding.context_sha256, vocabulary.sha256())
+        Bindings::unchecked(state_sha256, binding.context_sha256(), vocabulary.sha256())
             .with_vocabulary(vocabulary),
         &ranking::Options::default(),
     )?;
@@ -287,7 +287,7 @@ fn sample_rank_assemble(
     let ledger = proposal_ledger::build(&proposal_ledger::ProposalRun {
         task,
         checkpoint_sha256: state_sha256,
-        context_sha256: &binding.context_sha256,
+        context_sha256: binding.context_sha256(),
         vocabulary_sha256: vocabulary.sha256(),
         pool: &pool,
         exploration_seed: seeds.exploration,
