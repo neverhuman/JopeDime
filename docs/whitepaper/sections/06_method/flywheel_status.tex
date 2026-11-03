@@ -9,9 +9,9 @@ candidate selection and admission for a cost-ranking adapter; logged adapter uti
 
 \paragraph{Two admission decisions.}
 Program candidates use two training-side folds; the historical reference
-specifies five. Evaluation logging does not imply training-pool admission.
-Ordinary admission excludes failed gates and non-improving candidates:
-lower scores must beat the context incumbent by more than $10^{-6}$
+uses five. Evaluation logging does not imply pool admission: failed gates
+and non-improving candidates are dropped (not kept as negatives), and
+a lower score must beat the context incumbent by more than $10^{-6}$
 (\cref{fig:program-promotion-margins}). Historical programs retain a
 separate admission path.
 

@@ -1,15 +1,15 @@
 Typed program edits, cross-family retrieval and grammar synthesis supply
 candidates in the inspected implementation. The inspected loop freezes every
-network parameter, then enables updates
-only for non-anchor parameters of the cost-ranking adapter. This loop
+network parameter, then enables updates only for non-anchor cost-adapter
+parameters (its parent-delta head receives no loss gradient). This loop
 has no neural program writer. Its pool-utility calculation uses the
-recorded scores and gate
-outcomes of the first four candidates as revealed history, then selects
-the lowest predicted cost from the pool, including those entries.
-Training puts the lowest recorded scores first in its slates; utility
-evaluation uses stored pool order. The calls can therefore reveal different
-examples. For new proposals, the caller uses predicted costs and an
-exploration setting to select programs for exact evaluation.
+recorded scores and gate outcomes of the first four candidates as revealed
+history, then selects the lowest predicted cost from the pool, including
+those entries. Training puts the lowest recorded scores first in its
+slates; utility evaluation uses stored pool order, so the calls can reveal
+different examples. For new proposals, the caller reveals the first four
+stored pool entries and pairs low-cost picks with
+random exploration draws.
 
 At the adapter interface, the caller supplies modality tokens and their
 mask. It separately zeros the 584-entry context-feature slot and both
