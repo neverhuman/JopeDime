@@ -116,12 +116,12 @@ pub(super) fn round_six(value: f64) -> f64 {
     rounded / scale
 }
 
-pub(super) fn score_rank_percentile(scores: &mut Vec<f64>, score: f64) -> f64 {
+pub(super) fn score_rank_percentile(scores: &mut [f64], score: f64) -> f64 {
     if scores.is_empty() {
         return 0.5;
     }
     scores.sort_by(f64::total_cmp);
     let lower = scores.partition_point(|value| *value < score);
     let upper = scores.partition_point(|value| *value <= score);
-    (((lower as f64 + 0.5 * (upper - lower) as f64) / scores.len() as f64).clamp(0.0, 1.0))
+    ((lower as f64 + 0.5 * (upper - lower) as f64) / scores.len() as f64).clamp(0.0, 1.0)
 }
