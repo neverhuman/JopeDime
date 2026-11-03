@@ -88,7 +88,7 @@ pub(crate) fn render_gameplay_tab(
     let wins = dashboard
         .gameplay
         .iter()
-        .filter(|event| event.kind == EventKind::StrictWin)
+        .filter(|event| event.kind == TuiEventKind::StrictWin)
         .take(5)
         .map(|event| {
             let (label, _) = origin_label(event.origin);
@@ -150,7 +150,7 @@ pub(crate) fn render_gameplay_tab(
     let feed_rows = dashboard
         .gameplay
         .iter()
-        .filter(|event| event.kind == EventKind::Eval)
+        .filter(|event| event.kind == TuiEventKind::Eval)
         .take(rows[4].height.saturating_sub(3) as usize)
         .map(|event| {
             let (label, color) = origin_label(event.origin);
