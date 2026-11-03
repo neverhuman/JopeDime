@@ -57,7 +57,7 @@ fn sigkill_at_each_cache_durable_boundary_keeps_only_complete_entries() {
         let f = Fixture::new();
         f.full("full", true);
         let status = Command::new(std::env::current_exe().unwrap())
-            .args(["--exact", "cache_kill_child", "--ignored"])
+            .args(["--exact", "reconcile::cache_kill_child", "--ignored"])
             .env("JOPE_CORPUS_KILL_ROOT", f.root())
             .env("JOPE_CORPUS_KILL_BOUNDARY", boundary)
             .stdout(std::process::Stdio::null())
