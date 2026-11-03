@@ -14,6 +14,9 @@ fn write_profile(dir: &Path, name: &str, body: &str) -> PathBuf {
     path
 }
 
+#[path = "closure/current_lock.rs"]
 mod current_lock;
+#[path = "closure/profile_rules.rs"]
 mod profile_rules;
+#[path = "closure/rehearsal.rs"]
 mod rehearsal;
