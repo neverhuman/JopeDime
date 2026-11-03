@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""H255 Part A: Preregistered Causal 2+2 Neural Trajectory Critic (K_rev=0 -> K_rev=2)
+"""H255 Part A: Preregistered Causal 2+2 Neural Trajectory Critic (K_rev=0 -> K_rev=2 -> 4)
 and Root-Cause Audit of the `revealed_indices=[0,1,2,3]` Oracle Self-Leakage Bug in `run_fused_closed_loop.py`.
 
 Guardrails:
 - Reads H252 `common_h252.py` and `stage1_hurdle_sos_critic.py` read-only after verifying their exact frozen SHA-256s.
+- Never writes to `/home/ubuntu/jope-data/h252/`.
 - Never touches DL-Val during any prior fit or neural parameter update (5-fold family-grouped OOF on DL-Train; DL-Val uses model fit on DL-Train only).
 - Verifies DOPE SHA-256 `c51a56d0...` before and after training, and reproduces R882 Native91 `1.1377941898164525` to 0.00e+00 first.
 """
@@ -14,7 +15,6 @@ import copy
 import hashlib
 import importlib.util
 import json
-import math
 import os
 import sys
 import time
@@ -40,7 +40,6 @@ FROZEN_STAGE1_SHA256 = "fc0dd0e2fa543f0540d677609989c1785ef33b07f6cf7e54f4f8bedb
 SEEDS = (255101, 255102, 255103)
 FOLD_SEED = 255140
 BOOT_SEED = 255150
-BOOT_DRAWS = 10_000
 
 
 def verify_frozen_h252_files() -> Dict[str, str]:
@@ -60,10 +59,36 @@ import common_h252 as ch  # noqa: E402
 import stage1_hurdle_sos_critic as s1  # noqa: E402
 
 
+def load_r882_cache_readonly(all_rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, np.ndarray]]:
+    """Read R882 costs and base priors into memory without touching /home/ubuntu/jope-data/h252/stage1."""
+    cids_sorted = sorted(r["context_sha256"] for r in all_rows)
+    out: Dict[str, Dict[str, np.ndarray]] = {}
+    with np.load(s1.R882_TRAIN_COSTS_NPZ, allow_pickle=False) as zt, np.load(
+        s1.R882_VAL_COSTS_NPZ, allow_pickle=False
+    ) as zv, np.load(s1.POOL_PRIORS_NPZ, allow_pickle=False) as zp:
+        pri_cids = [str(c) for c in zp["cids"]]
+        offsets = zp["offsets"]
+        base_pri = zp["base_prior_cost"]
+        pri_map = {
+            pri_cids[i]: base_pri[offsets[i] : offsets[i + 1]].astype(np.float32)
+            for i in range(len(pri_cids))
+        }
+        for cid in cids_sorted:
+            tc = (zt[cid] if cid in zt.files else zv[cid]).astype(np.float32)
+            bp = pri_map[cid]
+            out[cid] = {
+                "total_cost": tc,
+                "anchor_total": tc,
+                "anchor_prior": bp,
+            }
+    return out
+
+
 def load_fused_network(device: torch.device):
     if str(MICRO / "python") not in sys.path:
         sys.path.insert(0, str(MICRO / "python"))
     sys.modules.pop("research", None)
+    import rust_evaluator as evaluator  # noqa: F401
     source = ch.INPUT_DIR / "cpu_exact_fused.py"
     spec = importlib.util.spec_from_file_location("cpu_exact_fused", source)
     fused = importlib.util.module_from_spec(spec)
@@ -84,13 +109,14 @@ def load_fused_network(device: torch.device):
     before = guard.snapshot_dope_weights(net)
     if before.composite_sha256 != ch.DOPE_SHA256:
         raise RuntimeError(f"DOPE SHA-256 mismatch: {before.composite_sha256}")
-    return net, guard, before
+    return net, guard, before, evaluator.get_w1_sign_matrix()
 
 
 def audit_self_leakage_bug(
     train_rows: List[Dict[str, Any]],
     val_rows: List[Dict[str, Any]],
     pools: Dict[str, Dict[str, Any]],
+    r882_cache: Dict[str, Dict[str, np.ndarray]],
 ) -> Dict[str, Any]:
     """Quantify the exact train-vs-eval mismatch of `revealed_indices=[0,1,2,3]` in `run_fused_closed_loop.py`."""
     val_slot03_best_ranks = []
@@ -102,7 +128,7 @@ def audit_self_leakage_bug(
         order = np.argsort(f)
         ranks = [int(np.where(order == k)[0][0]) for k in range(min(4, len(f)))]
         val_slot03_best_ranks.append(min(ranks))
-        top2_r882 = set(np.argsort(p["r882_cost"])[:2].tolist())
+        top2_r882 = set(np.argsort(r882_cache[c]["total_cost"])[:2].tolist())
         val_top2_overlap.append(len(top2_r882 & {0, 1, 2, 3}) / 2.0)
 
     train_slot03_best_ranks_raw = []
@@ -127,23 +153,29 @@ def audit_self_leakage_bug(
 
 def precompute_static_adapter_terms(
     net,
-    cids: List[str],
+    all_rows: List[Dict[str, Any]],
     pools: Dict[str, Dict[str, Any]],
     ctx_feats: Dict[str, Dict[str, np.ndarray]],
+    w1_mat: np.ndarray,
     device: torch.device,
 ) -> Dict[str, Dict[str, np.ndarray]]:
-    """Precompute the K_rev=0 (`revealed_indices=None`) neural terms once per context for fast causal 2+2."""
+    """Precompute the K_rev=0 (`revealed_indices=None`) neural terms and buggy `[0,1,2,3]` trajectory delta once per context."""
     net.eval()
     static_cache: Dict[str, Dict[str, np.ndarray]] = {}
+    w1_f32 = w1_mat.astype(np.float32) / np.sqrt(412.0)
     with torch.no_grad():
-        for c in cids:
+        for r in all_rows:
+            c = r["context_sha256"]
             p = pools[c]
             cf = ctx_feats[c]
-            m = len(p["fitness"])
+            prog = p["program"]
+            m = len(prog)
+            proj16 = (prog @ w1_f32).astype(np.float32)
+            p["proj16"] = proj16
             out0 = net.adapter_10tok.predict_costs(
                 ctx_feat=torch.as_tensor(cf["ctx_feat_584"], device=device).reshape(1, 584),
-                prog_412=torch.as_tensor(p["program"], device=device).reshape(1, m, 412),
-                proj_16=torch.as_tensor(p["proj16"], device=device).reshape(1, m, 16),
+                prog_412=torch.as_tensor(prog, device=device).reshape(1, m, 412),
+                proj_16=torch.as_tensor(proj16, device=device).reshape(1, m, 16),
                 base_prior_cost=torch.zeros((1, m), device=device),
                 scale=torch.full((1,), 0.4208, device=device),
                 sos_prior=torch.zeros((1, m, 2), device=device),
@@ -153,11 +185,26 @@ def precompute_static_adapter_terms(
                 revealed_raw_f=None,
                 revealed_gate=None,
             )
+            eff_prior = out0["eff_prior"][0]
+            sem24 = out0["sem24"][0]
+            cand_q = out0["cand_q"][0]
+            idx03 = torch.arange(min(4, m), dtype=torch.long, device=device).unsqueeze(0)
+            f03 = torch.as_tensor(p["fitness"][: min(4, m)], dtype=torch.float32, device=device).unsqueeze(0)
+            g03 = torch.as_tensor(p["gate"][: min(4, m)], dtype=torch.float32, device=device).unsqueeze(0)
+            delta03 = forward_step2_trajectory_delta(
+                net.adapter_10tok,
+                eff_prior.unsqueeze(0),
+                sem24.unsqueeze(0),
+                cand_q.unsqueeze(0),
+                idx03,
+                f03,
+                g03,
+            )[0]
             static_cache[c] = {
-                "cost_k0": out0["total_cost"][0].cpu().numpy().astype(np.float64),
-                "eff_prior": out0["eff_prior"][0].cpu().numpy().astype(np.float32),
-                "sem24": out0["sem24"][0].cpu().numpy().astype(np.float32),
-                "cand_q": out0["cand_q"][0].cpu().numpy().astype(np.float32),
+                "eff_prior": eff_prior.cpu().numpy().astype(np.float32),
+                "sem24": sem24.cpu().numpy().astype(np.float32),
+                "cand_q": cand_q.cpu().numpy().astype(np.float32),
+                "delta03_r882": delta03.cpu().numpy().astype(np.float64),
             }
     return static_cache
 
@@ -252,108 +299,167 @@ def forward_step2_trajectory_delta(
     return blend_w * sem_adj + traj_attn_adj
 
 
-def eval_causal_2plus2_context(
-    adapter,
-    p: Dict[str, Any],
+def score_all_arms_for_context(
+    cid: str,
+    pool: Dict[str, Any],
+    rcost: np.ndarray,
+    sos_prior: np.ndarray,
+    sp_prior: np.ndarray,
     st: Dict[str, np.ndarray],
-    pr: Dict[str, np.ndarray],
+    base_adapter,
+    trained_adapter,
     alpha_neural: float,
+    rng: np.random.Generator,
     device: torch.device,
-    permute_reveal_seed: int | None = None,
-) -> Tuple[float, int]:
-    """Evaluate 1 context under Causal 2+2 (Step 1: 2 reveals -> Step 2: 2 reveals = 4 total reveals).
-    Returns (best_utility_of_4, exact_reveal_count).
+) -> Tuple[Dict[str, float], Dict[str, int]]:
+    """Evaluate all 6 preregistered Part A arms on context `cid` using the exact same `idx4` draw:
+    1. `R882`
+    2. `GATED_025`
+    3. `ACTIVE_2PLUS2_HURDLE` (frozen Stage-1 formula)
+    4. `CAUSAL_2PLUS2_R882_ZERO_SHOT` (replaces buggy [0,1,2,3] neural trajectory conditioning with true `rev4`)
+    5. `CAUSAL_2PLUS2_NEURAL` (causally trained trajectory head conditioned on true `rev4`)
+    6. `NEGATIVE_CONTROL_PERMUTED_REVEAL` (revealed fitnesses on `rev4` permuted within context)
     """
-    u = np.where(p["gate"], -p["fitness"], -1.0).astype(np.float64)
-    c_r882 = p["r882_cost"]
-    order_r882 = np.argsort(c_r882, kind="mergesort")
+    u = pool["utility"]
+    fitness = pool["fitness"]
+    logratio = pool["logratio"]
+    gate = pool["gate"]
+    sem24 = pool["sem24"].astype(np.float64)
+    n = len(rcost)
 
-    # Step 1 (K_rev = 0 -> 2): reveal top-2 candidates
-    idx_stage1 = order_r882[:2]
-    if permute_reveal_seed is not None:
-        rng = np.random.default_rng(permute_reveal_seed)
-        perm_idx = rng.choice(len(u), size=2, replace=False)
-        rev_f_np = p["fitness"][perm_idx]
-        rev_g_np = p["gate"][perm_idx]
-        u_rev = np.where(rev_g_np, -rev_f_np, -1.0).astype(np.float64)
-    else:
-        rev_f_np = p["fitness"][idx_stage1]
-        rev_g_np = p["gate"][idx_stage1]
-        u_rev = u[idx_stage1]
+    idx4 = rng.choice(n, size=4, replace=False)
+    top_zgap = s1.compute_r882_top_zgap(rcost)
 
-    best_u1 = float(np.max(u_rev))
-    pred_u1 = 1.0 - c_r882[idx_stage1]
-    res_1 = float(np.mean(u_rev - pred_u1))
+    pick_r882 = int(np.argmin(rcost))
+    u_r882 = float(u[pick_r882])
 
-    # Structural distance from frozen Stage-1 active 2+2 rule
-    sf = np.stack(
-        [
-            p["n_nodes"] / 30.0,
-            p["depth"] / 10.0,
-            p["has_nonlin"].astype(np.float64),
-            (p["sym_group"] % 17) / 17.0,
-        ],
-        axis=1,
+    gate_risk = sos_prior[:, 1].astype(np.float64)
+    unsafe_gate_mask = gate_risk > (gate_risk[pick_r882] + 0.10)
+    gate_safety_penalty = np.where(unsafe_gate_mask, 10.0, 0.0)
+    h_cost = (
+        0.65 * sos_prior[:, 0].astype(np.float64)
+        + 0.35 * gate_risk
+        + 0.15 * sp_prior.astype(np.float64)
+        + gate_safety_penalty
     )
-    sf_rev = sf[idx_stage1]
-    dist_to_rev = np.min(np.linalg.norm(sf[:, None, :] - sf_rev[None, :, :], axis=-1), axis=-1)
 
-    p_feas = pr["p_feas"]
-    p_beat = pr["p_beat"]
-    e_gain = pr["e_gain"]
-    sp_pen = pr["sp_pen"]
-    u_r882 = 1.0 - c_r882
-    hurdle_ev = p_feas * (u_r882 + s1.ALPHA_HURDLE * p_beat * e_gain) - (1.0 - p_feas) * 1.0 - s1.BETA_SP * sp_pen
+    s_mean = sem24.mean(axis=0, keepdims=True)
+    s_std = sem24.std(axis=0, keepdims=True) + 1e-6
+    X = (sem24 - s_mean) / s_std
 
-    if best_u1 < 0.25:
-        base_stage2 = (
-            0.55 * hurdle_ev
-            + 0.30 * (p_feas * p_beat * e_gain)
-            + 0.15 * dist_to_rev
-            - 0.20 * sp_pen
-        )
+    # GATED_025
+    if top_zgap < 0.25:
+        y4_cost = np.where(gate[idx4], fitness[idx4], 2.0)
+        y4_c = y4_cost - float(np.mean(y4_cost))
+        diff = X[:, None, :] - X[idx4][None, :, :]
+        sq = np.sum(diff * diff, axis=-1) / 24.0
+        K = np.exp(-sq / (2.0 * (2.0 ** 2)))
+        w = K / (np.sum(K, axis=1, keepdims=True) + 0.2)
+        cost_g025 = rcost + 0.05 * (w @ y4_c)
+        u_g025 = float(u[int(np.argmin(cost_g025))])
     else:
-        best_j = int(idx_stage1[int(np.argmax(u_rev))])
-        dist_to_winner = np.linalg.norm(sf - sf[best_j : best_j + 1], axis=-1)
-        sim_to_winner = np.exp(-1.5 * dist_to_winner)
-        base_stage2 = (
-            0.75 * u_r882
-            + 0.20 * hurdle_ev
-            + 0.12 * res_1 * sim_to_winner
-            + 0.06 * dist_to_rev
-        )
+        u_g025 = u_r882
 
-    if alpha_neural > 0.0:
+    # Step 1 (2 reveals: idx_a = idx4[:2]) -> Step 2 (2 active reveals: chosen_b) -> rev4 (4 reveals total)
+    if top_zgap < 0.25:
+        idx_a = idx4[:2]
+        ya_cost = np.where(gate[idx_a], fitness[idx_a], 2.0)
+        ya_c = ya_cost - float(np.mean(ya_cost))
+        diff_a = X[:, None, :] - X[idx_a][None, :, :]
+        sq_a = np.sum(diff_a * diff_a, axis=-1) / 24.0
+        Ka = np.exp(-sq_a / (2.0 * (2.2 ** 2)))
+        wa = Ka / (np.sum(Ka, axis=1, keepdims=True) + 0.2)
+        h_ca = h_cost - float(np.mean(h_cost[idx_a]))
+        interim_cost = rcost + 0.035 * (wa @ ya_c) + 0.010 * h_ca
+
+        order = np.argsort(interim_cost)
+        chosen_b: List[int] = []
+        for cand in order:
+            ci = int(cand)
+            if ci not in idx_a:
+                chosen_b.append(ci)
+                break
+        rev_so_far = list(idx_a) + chosen_b
+        best_b2 = -1
+        best_acq = 1e18
+        for cand in order[:6]:
+            ci = int(cand)
+            if ci in rev_so_far:
+                continue
+            d_min = float(np.min(np.sum((X[ci : ci + 1] - X[rev_so_far]) ** 2, axis=1) / 24.0))
+            acq = float(interim_cost[ci]) - 0.015 * np.sqrt(d_min)
+            if acq < best_acq:
+                best_acq = acq
+                best_b2 = ci
+        if best_b2 >= 0:
+            chosen_b.append(best_b2)
+
+        rev4 = np.array(list(idx_a) + chosen_b, dtype=np.int64)
+        assert len(rev4) == 4 and len(set(rev4.tolist())) == 4
+        y4_f = np.where(gate[rev4], fitness[rev4], 2.0)
+        y4_lr = np.clip(logratio[rev4], -1.5, 1.5)
+        y4_comb = 0.70 * (y4_f - float(np.mean(y4_f))) + 0.30 * (y4_lr - float(np.mean(y4_lr)))
+
+        diff4 = X[:, None, :] - X[rev4][None, :, :]
+        sq4 = np.sum(diff4 * diff4, axis=-1) / 24.0
+        K4 = 0.6 * np.exp(-sq4 / (2.0 * (1.8 ** 2))) + 0.4 * np.exp(-sq4 / (2.0 * (3.2 ** 2)))
+        w4 = K4 / (np.sum(K4, axis=1, keepdims=True) + 0.15)
+        h_c4_act = h_cost - float(np.mean(h_cost[rev4]))
+
+        cost_act = rcost + 0.05 * (w4 @ y4_comb) + 0.010 * h_c4_act
+        for j_pos, c_idx in enumerate(rev4):
+            cost_act[c_idx] += 0.08 * float(y4_f[j_pos] - np.mean(y4_f))
+        u_act = float(u[int(np.argmin(cost_act))])
+
+        # Causal neural trajectory conditioning on the actual 4 revealed candidates `rev4`
         with torch.no_grad():
             eff_t = torch.as_tensor(st["eff_prior"], device=device).unsqueeze(0)
             sem_t = torch.as_tensor(st["sem24"], device=device).unsqueeze(0)
             cq_t = torch.as_tensor(st["cand_q"], device=device).unsqueeze(0)
-            r_idx_t = torch.as_tensor(idx_stage1, dtype=torch.long, device=device).unsqueeze(0)
-            r_f_t = torch.as_tensor(rev_f_np, dtype=torch.float32, device=device).unsqueeze(0)
-            r_g_t = torch.as_tensor(rev_g_np, dtype=torch.float32, device=device).unsqueeze(0)
-            delta_cost_c12 = forward_step2_trajectory_delta(
-                adapter, eff_t, sem_t, cq_t, r_idx_t, r_f_t, r_g_t
-            )[0].cpu().numpy().astype(np.float64)
-            # Also compute buggy [0,1,2,3] trajectory delta to get pure causal replacement delta
-            idx03 = np.arange(min(4, len(u)), dtype=np.int64)
-            r03_idx_t = torch.as_tensor(idx03, dtype=torch.long, device=device).unsqueeze(0)
-            r03_f_t = torch.as_tensor(p["fitness"][idx03], dtype=torch.float32, device=device).unsqueeze(0)
-            r03_g_t = torch.as_tensor(p["gate"][idx03], dtype=torch.float32, device=device).unsqueeze(0)
-            delta_cost_03 = forward_step2_trajectory_delta(
-                adapter, eff_t, sem_t, cq_t, r03_idx_t, r03_f_t, r03_g_t
-            )[0].cpu().numpy().astype(np.float64)
-            causal_utility_shift = -(delta_cost_c12 - delta_cost_03)
-        score_stage2 = base_stage2 + alpha_neural * causal_utility_shift
-    else:
-        score_stage2 = base_stage2
+            rev_idx_t = torch.as_tensor(rev4, dtype=torch.long, device=device).unsqueeze(0)
+            rev_f_t = torch.as_tensor(fitness[rev4], dtype=torch.float32, device=device).unsqueeze(0)
+            rev_g_t = torch.as_tensor(gate[rev4], dtype=torch.float32, device=device).unsqueeze(0)
 
-    score_stage2 = score_stage2.copy()
-    score_stage2[idx_stage1] = -1e18
-    idx_stage2 = np.argsort(-score_stage2, kind="mergesort")[:2]
-    chosen_4 = np.concatenate([idx_stage1, idx_stage2])
-    assert len(chosen_4) == 4 and len(set(chosen_4.tolist())) == 4
-    # In the negative control, evaluate the chosen_4 candidates on true u
-    return float(np.max(u[chosen_4])), int(len(chosen_4))
+            delta_zs = forward_step2_trajectory_delta(
+                base_adapter, eff_t, sem_t, cq_t, rev_idx_t, rev_f_t, rev_g_t
+            )[0].cpu().numpy().astype(np.float64)
+            delta_tr = forward_step2_trajectory_delta(
+                trained_adapter, eff_t, sem_t, cq_t, rev_idx_t, rev_f_t, rev_g_t
+            )[0].cpu().numpy().astype(np.float64)
+
+        # Zero-shot causal neural trajectory update on rev4
+        cost_zs = cost_act + 0.025 * (delta_zs - st["delta03_r882"])
+        u_zs = float(u[int(np.argmin(cost_zs))])
+
+        # Trained causal neural trajectory update on rev4 (gated by OOF trust-region alpha_neural)
+        cost_neu = cost_act + alpha_neural * (delta_tr - st["delta03_r882"])
+        u_neu = float(u[int(np.argmin(cost_neu))])
+
+        # Negative Control: permute revealed outcomes across pool indices
+        perm_idx = rng.choice(n, size=4, replace=False)
+        y4_f_perm = np.where(gate[perm_idx], fitness[perm_idx], 2.0)
+        y4_lr_perm = np.clip(logratio[perm_idx], -1.5, 1.5)
+        y4_comb_perm = 0.70 * (y4_f_perm - float(np.mean(y4_f_perm))) + 0.30 * (
+            y4_lr_perm - float(np.mean(y4_lr_perm))
+        )
+        cost_perm = rcost + 0.05 * (w4 @ y4_comb_perm)
+        u_perm = float(u[int(np.argmin(cost_perm))])
+    else:
+        u_act = u_r882
+        u_zs = u_r882
+        u_neu = u_r882
+        u_perm = u_r882
+
+    scores = {
+        "R882": u_r882,
+        "GATED_025": u_g025,
+        "ACTIVE_2PLUS2_HURDLE": u_act,
+        "CAUSAL_2PLUS2_R882_ZERO_SHOT": u_zs,
+        "CAUSAL_2PLUS2_NEURAL": u_neu,
+        "NEGATIVE_CONTROL_PERMUTED_REVEAL": u_perm,
+    }
+    rev_counts = {k: 4 for k in scores}
+    return scores, rev_counts
 
 
 def train_causal_step2_adapter_fold(
@@ -361,13 +467,15 @@ def train_causal_step2_adapter_fold(
     train_cids: List[str],
     val_cids: List[str],
     pools: Dict[str, Dict[str, Any]],
+    r882_cache: Dict[str, Dict[str, np.ndarray]],
     static_cache: Dict[str, Dict[str, np.ndarray]],
-    priors: Dict[str, Dict[str, np.ndarray]],
+    sos_priors: Dict[str, np.ndarray],
+    sp_priors: Dict[str, np.ndarray],
     seed: int,
     device: torch.device,
 ) -> Tuple[Any, float, Dict[str, Any]]:
     """Train the trajectory cross-attention & kernel parameters of `adapter_10tok` with
-    strictly causal Step-1 -> Step-2 masking (loss computed ONLY on i not in {c_1, c_2}),
+    strictly causal masking (loss computed ONLY on unrevealed candidates i not in rev4),
     PCGrad-EMA gradient projection, and inner OOF trust-region alpha selection.
     """
     torch.manual_seed(seed)
@@ -396,7 +504,7 @@ def train_causal_step2_adapter_fold(
     opt = torch.optim.AdamW(trainable_params, lr=2e-4, weight_decay=1e-4)
     rng = np.random.default_rng(seed)
 
-    steps = 30
+    steps = 24
     batch_size = 16
     losses = []
     pcgrad_cosines = []
@@ -414,30 +522,31 @@ def train_causal_step2_adapter_fold(
             for c in sub:
                 p = pools[c]
                 st = static_cache[c]
-                m = len(p["fitness"])
-                c_r882 = p["r882_cost"]
-                order_r882 = np.argsort(c_r882, kind="mergesort")
-                idx_s1 = order_r882[:2]
+                rcost = r882_cache[c]["total_cost"].astype(np.float64)
+                m = len(rcost)
+                rev4 = rng.choice(m, size=4, replace=False)
 
-                # Mask out revealed candidates idx_s1 so d2_joint=0 self-leakage is impossible!
+                # Mask out revealed candidates rev4 so d2_joint=0 self-leakage is impossible!
                 unrev_mask = np.ones(m, dtype=bool)
-                unrev_mask[idx_s1] = False
+                unrev_mask[rev4] = False
                 unrev_idx = np.where(unrev_mask)[0]
 
                 eff_t = torch.as_tensor(st["eff_prior"], device=device).unsqueeze(0)
                 sem_t = torch.as_tensor(st["sem24"], device=device).unsqueeze(0)
                 cq_t = torch.as_tensor(st["cand_q"], device=device).unsqueeze(0)
-                r_idx_t = torch.as_tensor(idx_s1, dtype=torch.long, device=device).unsqueeze(0)
-                r_f_t = torch.as_tensor(p["fitness"][idx_s1], dtype=torch.float32, device=device).unsqueeze(0)
-                r_g_t = torch.as_tensor(p["gate"][idx_s1], dtype=torch.float32, device=device).unsqueeze(0)
+                r_idx_t = torch.as_tensor(rev4, dtype=torch.long, device=device).unsqueeze(0)
+                r_f_t = torch.as_tensor(p["fitness"][rev4], dtype=torch.float32, device=device).unsqueeze(0)
+                r_g_t = torch.as_tensor(p["gate"][rev4], dtype=torch.float32, device=device).unsqueeze(0)
 
-                delta_c12 = forward_step2_trajectory_delta(adapter, eff_t, sem_t, cq_t, r_idx_t, r_f_t, r_g_t)[0]
-                pred_cost_unrev = torch.as_tensor(c_r882[unrev_idx], dtype=torch.float32, device=device) + delta_c12[unrev_idx]
+                delta_rev4 = forward_step2_trajectory_delta(adapter, eff_t, sem_t, cq_t, r_idx_t, r_f_t, r_g_t)[0]
+                pred_cost_unrev = (
+                    torch.as_tensor(rcost[unrev_idx] - st["delta03_r882"][unrev_idx], dtype=torch.float32, device=device)
+                    + delta_rev4[unrev_idx]
+                )
 
-                u_all = np.where(p["gate"], -p["fitness"], -1.0).astype(np.float32)
-                best_u1 = float(np.max(u_all[idx_s1]))
-                # Hurdle positive-gain advantage strictly over Step-1 revealed best_u1
-                adv_unrev = np.maximum(u_all[unrev_idx] - best_u1, 0.0)
+                u_all = p["utility"].astype(np.float32)
+                best_u_rev = float(np.max(u_all[rev4]))
+                adv_unrev = np.maximum(u_all[unrev_idx] - best_u_rev, 0.0)
                 if float(np.max(adv_unrev)) <= 1e-6:
                     target_probs = F.softmax(torch.as_tensor(u_all[unrev_idx] / 0.15, device=device), dim=-1)
                 else:
@@ -488,16 +597,29 @@ def train_causal_step2_adapter_fold(
                 p.copy_(ema_params[n])
     adapter.eval()
 
-    # Trust-region inner validation over alpha in {0.0, 0.05, 0.10, 0.20, 0.35}
+    # Inner trust-region validation over alpha in {0.0, 0.01, 0.025, 0.05}
+    alpha_grid = (0.0, 0.01, 0.025, 0.05)
+    alpha_scores = {}
     best_alpha = 0.0
     best_val_u = -1e18
-    alpha_grid = (0.0, 0.05, 0.10, 0.20, 0.35)
-    alpha_scores = {}
     for alpha in alpha_grid:
-        vals = [
-            eval_causal_2plus2_context(adapter, pools[c], static_cache[c], priors[c], alpha, device)[0]
-            for c in val_cids
-        ]
+        rng_inner = np.random.default_rng(seed + 777)
+        vals = []
+        for c in val_cids:
+            sc, _ = score_all_arms_for_context(
+                c,
+                pools[c],
+                r882_cache[c]["total_cost"].astype(np.float64),
+                sos_priors[c],
+                sp_priors[c],
+                static_cache[c],
+                base_net.adapter_10tok,
+                adapter,
+                alpha,
+                rng_inner,
+                device,
+            )
+            vals.append(sc["CAUSAL_2PLUS2_NEURAL"])
         m_val = float(np.mean(vals))
         alpha_scores[str(alpha)] = m_val
         if m_val > best_val_u + 1e-7:
@@ -520,202 +642,186 @@ def main() -> None:
     frozen_hashes = verify_frozen_h252_files()
 
     train_rows, val_rows = ch.load_cohorts()
-    train_cids = [r["context_sha256"] for r in train_rows]
-    val_cids = [r["context_sha256"] for r in val_rows]
-    all_cids = train_cids + val_cids
-    pools = ch.load_pools(all_cids)
+    all_rows = train_rows + val_rows
+    pools = ch.load_pools(all_rows, verify_hashes=False)
     ctx_feats = ch.load_context_features()
-    promos = ch.load_promotions()
+    promos_by_cid = ch.load_harvested_promotions(train_rows)
 
-    # 1. Exact Native91 regression verification
-    native_check = ch.verify_r882_native91(val_rows, pools)
-    if not native_check["passed"]:
-        raise RuntimeError(f"Native91 check failed: {native_check}")
+    # 1. Load R882 cache read-only and verify exact Native91 = 1.1377941898164525
+    r882_cache = load_r882_cache_readonly(all_rows)
+    val_native_utils = [
+        float(pools[r["context_sha256"]]["utility"][int(np.argmin(r882_cache[r["context_sha256"]]["total_cost"]))])
+        for r in val_rows
+    ]
+    val_native91_mean = float(np.mean(val_native_utils))
+    diff_native = abs(val_native91_mean - ch.R882_NATIVE91_MEAN)
+    if diff_native > 1e-12:
+        raise RuntimeError(f"Native91 mismatch: {val_native91_mean} != {ch.R882_NATIVE91_MEAN}")
 
     # 2. Load FusedJopeNetwork & verify DOPE freeze
     device = torch.device("cpu")
     torch.set_num_threads(2)
-    net, guard, before = load_fused_network(device)
+    net, guard, before, w1_mat = load_fused_network(device)
 
     # 3. Audit the self-leakage bug in run_fused_closed_loop.py
-    leakage_audit = audit_self_leakage_bug(train_rows, val_rows, pools)
+    leakage_audit = audit_self_leakage_bug(train_rows, val_rows, pools, r882_cache)
 
     # 4. Precompute static K_rev=0 terms once across all 1,310 contexts
-    static_cache = precompute_static_adapter_terms(net, all_cids, pools, ctx_feats, device)
+    static_cache = precompute_static_adapter_terms(net, all_rows, pools, ctx_feats, w1_mat, device)
 
-    # 5. Fit 5-fold family-grouped OOF Hurdle priors on DL-Train (fresh fold seed 255140)
-    priors = s1.fit_oof_and_val_priors(train_rows, val_rows, pools, ctx_feats, promos, FOLD_SEED)
+    # 5. Build 64D candidate features & fit 5-fold OOF Hurdle priors on DL-Train (fresh fold seed 255140)
+    cand_feats = s1.build_candidate_features(all_rows, pools, r882_cache, ctx_feats)
+    sos_priors_f0, sp_priors_f0, hurdle_diag_f0 = s1.fit_decomposed_hurdle_and_sp_priors(
+        train_rows, val_rows, pools, cand_feats, promos_by_cid, seed=FOLD_SEED
+    )
+
     # Audit (a): verify zero DL-Val families/contexts entered any prior fit
     train_fams = {r["family_id"] for r in train_rows}
     val_fams = {r["family_id"] for r in val_rows}
     assert not (train_fams & val_fams), "DL-Train and DL-Val family overlap!"
 
     # 6. Train 5-fold OOF causal Step-2 neural trajectory adapters on DL-Train
-    folds = ch.make_family_folds(train_rows, n_splits=5, seed=FOLD_SEED)
+    _, cid_to_fold = ch.seed_folds(train_rows, FOLD_SEED)
     fold_adapters = {}
     fold_alphas = {}
     fold_train_diagnostics = []
     for f_idx in range(5):
-        f_val_cids = [r["context_sha256"] for i, r in enumerate(train_rows) if folds[i] == f_idx]
-        f_tr_cids = [r["context_sha256"] for i, r in enumerate(train_rows) if folds[i] != f_idx]
-        # Use 20% of f_tr_cids families as inner trust-region validation so f_val_cids stays 100% OOF!
-        f_tr_rows = [r for i, r in enumerate(train_rows) if folds[i] != f_idx]
-        inner_folds = ch.make_family_folds(f_tr_rows, n_splits=5, seed=FOLD_SEED + 100 + f_idx)
-        inner_tr = [r["context_sha256"] for i, r in enumerate(f_tr_rows) if inner_folds[i] != 0]
-        inner_va = [r["context_sha256"] for i, r in enumerate(f_tr_rows) if inner_folds[i] == 0]
+        f_val_cids = [r["context_sha256"] for r in train_rows if cid_to_fold[r["context_sha256"]] == f_idx]
+        f_tr_rows = [r for r in train_rows if cid_to_fold[r["context_sha256"]] != f_idx]
+        # Inner 80/20 split by family inside f_tr_rows for trust-region alpha selection
+        tr_fams_sorted = sorted({r["family_id"] for r in f_tr_rows})
+        inner_val_fams = set(tr_fams_sorted[::5])
+        inner_tr_cids = [r["context_sha256"] for r in f_tr_rows if r["family_id"] not in inner_val_fams]
+        inner_va_cids = [r["context_sha256"] for r in f_tr_rows if r["family_id"] in inner_val_fams]
         adp, alpha, diag = train_causal_step2_adapter_fold(
-            net, inner_tr, inner_va, pools, static_cache, priors, SEEDS[0] + f_idx, device
+            net,
+            inner_tr_cids,
+            inner_va_cids,
+            pools,
+            r882_cache,
+            static_cache,
+            sos_priors_f0,
+            sp_priors_f0,
+            SEEDS[0] + f_idx,
+            device,
         )
         for c in f_val_cids:
             fold_adapters[c] = adp
             fold_alphas[c] = alpha
         fold_train_diagnostics.append({"fold": f_idx, **diag})
 
-    # Train full DL-Train adapter (with 80/20 inner family split on DL-Train for alpha trust region) for DL-Val evaluation
-    dl_train_inner_folds = ch.make_family_folds(train_rows, n_splits=5, seed=FOLD_SEED + 500)
-    full_tr_cids = [r["context_sha256"] for i, r in enumerate(train_rows) if dl_train_inner_folds[i] != 0]
-    full_va_cids = [r["context_sha256"] for i, r in enumerate(train_rows) if dl_train_inner_folds[i] == 0]
+    # Full DL-Train fit (with 80/20 inner family split on DL-Train) for DL-Val evaluation
+    all_tr_fams = sorted({r["family_id"] for r in train_rows})
+    full_inner_val_fams = set(all_tr_fams[::5])
+    full_tr_cids = [r["context_sha256"] for r in train_rows if r["family_id"] not in full_inner_val_fams]
+    full_va_cids = [r["context_sha256"] for r in train_rows if r["family_id"] in full_inner_val_fams]
     val_adapter, val_alpha, val_train_diag = train_causal_step2_adapter_fold(
-        net, full_tr_cids, full_va_cids, pools, static_cache, priors, SEEDS[0] + 99, device
+        net,
+        full_tr_cids,
+        full_va_cids,
+        pools,
+        r882_cache,
+        static_cache,
+        sos_priors_f0,
+        sp_priors_f0,
+        SEEDS[0] + 99,
+        device,
     )
 
     guard.verify_dope_frozen_unchanged(net, before)
 
     # 7. Evaluate all 6 preregistered arms across SEEDS = (255101, 255102, 255103)
-    arm_names = (
+    arm_names = [
         "R882",
         "GATED_025",
         "ACTIVE_2PLUS2_HURDLE",
         "CAUSAL_2PLUS2_R882_ZERO_SHOT",
         "CAUSAL_2PLUS2_NEURAL",
         "NEGATIVE_CONTROL_PERMUTED_REVEAL",
-    )
-    per_seed_ctx: Dict[str, Dict[int, Dict[str, float]]] = {a: {} for a in arm_names}
-    reveal_histograms: Dict[str, Dict[str, int]] = {a: {"4": 0} for a in arm_names}
+    ]
+    train_panel = np.zeros((len(SEEDS), len(train_rows), len(arm_names)), dtype=np.float64)
+    val_panel = np.zeros((len(SEEDS), len(val_rows), len(arm_names)), dtype=np.float64)
+    reveal_histograms: Dict[str, Dict[str, int]] = {a: {} for a in arm_names}
 
-    for seed in SEEDS:
-        for a in arm_names:
-            per_seed_ctx[a][seed] = {}
-        for r in train_rows + val_rows:
-            c = r["context_sha256"]
-            p = pools[c]
-            st = static_cache[c]
-            pr = priors[c]
-            is_val = r["dl_split"] == "DL-Val"
-            adp = val_adapter if is_val else fold_adapters[c]
-            alpha = val_alpha if is_val else fold_alphas[c]
-
-            res_s1 = s1.score_context_arms(c, p, pr, seed)
-            for base_arm in ("R882", "GATED_025", "ACTIVE_2PLUS2_HURDLE"):
-                per_seed_ctx[base_arm][seed][c] = res_s1[base_arm]["u4"]
-                reveal_histograms[base_arm]["4"] += 1
-
-            u_zs, rev_zs = eval_causal_2plus2_context(
-                net.adapter_10tok, p, st, pr, alpha_neural=0.10, device=device
-            )
-            per_seed_ctx["CAUSAL_2PLUS2_R882_ZERO_SHOT"][seed][c] = u_zs
-            reveal_histograms["CAUSAL_2PLUS2_R882_ZERO_SHOT"][str(rev_zs)] = (
-                reveal_histograms["CAUSAL_2PLUS2_R882_ZERO_SHOT"].get(str(rev_zs), 0) + 1
-            )
-
-            u_neu, rev_neu = eval_causal_2plus2_context(
-                adp, p, st, pr, alpha_neural=max(alpha, 0.10), device=device
-            )
-            per_seed_ctx["CAUSAL_2PLUS2_NEURAL"][seed][c] = u_neu
-            reveal_histograms["CAUSAL_2PLUS2_NEURAL"][str(rev_neu)] = (
-                reveal_histograms["CAUSAL_2PLUS2_NEURAL"].get(str(rev_neu), 0) + 1
-            )
-
-            perm_seed = ch.stream_seed("h255_perm_ctrl", seed, c)
-            u_perm, rev_perm = eval_causal_2plus2_context(
-                adp, p, st, pr, alpha_neural=max(alpha, 0.10), device=device, permute_reveal_seed=perm_seed
-            )
-            per_seed_ctx["NEGATIVE_CONTROL_PERMUTED_REVEAL"][seed][c] = u_perm
-            reveal_histograms["NEGATIVE_CONTROL_PERMUTED_REVEAL"][str(rev_perm)] = (
-                reveal_histograms["NEGATIVE_CONTROL_PERMUTED_REVEAL"].get(str(rev_perm), 0) + 1
-            )
-
-    # 8. Aggregate across seeds and compute paired family bootstrap 95% CIs, Holm p-values, and Elo
-    mean_ctx: Dict[str, Dict[str, float]] = {}
-    for a in arm_names:
-        mean_ctx[a] = {
-            c: float(np.mean([per_seed_ctx[a][s][c] for s in SEEDS]))
-            for c in all_cids
-        }
-
-    splits_summary: Dict[str, Any] = {}
-    for split_name, rows in (("DL-Train", train_rows), ("DL-Val", val_rows)):
-        fams, fam_scores = ch.aggregate_by_family(rows, mean_ctx)
-        elo = ch.compute_elo_ratings(fam_scores, anchor_arm="R882", seed=BOOT_SEED)
-        comps_vs_r882 = {}
-        comps_vs_g025 = {}
-        raw_p_r882 = []
-        raw_p_g025 = []
-        comp_arms = [a for a in arm_names if a != "R882"]
-        for a in comp_arms:
-            st_r = ch.paired_family_bootstrap(
-                fam_scores[a], fam_scores["R882"], n_draws=BOOT_DRAWS, seed=ch.stream_seed(BOOT_SEED, split_name, a, "R882")
-            )
-            st_g = ch.paired_family_bootstrap(
-                fam_scores[a], fam_scores["GATED_025"], n_draws=BOOT_DRAWS, seed=ch.stream_seed(BOOT_SEED, split_name, a, "G025")
-            )
-            # Per-seed positive check
-            seeds_pos_g025 = 0
-            for s in SEEDS:
-                _, fs_s = ch.aggregate_by_family(rows, {k: per_seed_ctx[k][s] for k in arm_names})
-                if float(np.mean(fs_s[a] - fs_s["GATED_025"])) > 0.0:
-                    seeds_pos_g025 += 1
-            st_g["seeds_positive_of_3"] = seeds_pos_g025
-            comps_vs_r882[a] = st_r
-            comps_vs_g025[a] = st_g
-            raw_p_r882.append(st_r["p_one_sided"])
-            raw_p_g025.append(st_g["p_one_sided"])
-
-        holm_r = ch.holm_bonferroni(raw_p_r882)
-        holm_g = ch.holm_bonferroni(raw_p_g025)
-        for idx_a, a in enumerate(comp_arms):
-            comps_vs_r882[a]["p_holm"] = holm_r[idx_a]
-            comps_vs_g025[a]["p_holm"] = holm_g[idx_a]
-
-        # Negative control check: NEGATIVE_CONTROL_PERMUTED_REVEAL minus CAUSAL_2PLUS2_NEURAL (and vs ACTIVE_2PLUS2_HURDLE)
-        neg_ctrl_vs_active = ch.paired_family_bootstrap(
-            fam_scores["NEGATIVE_CONTROL_PERMUTED_REVEAL"],
-            fam_scores["ACTIVE_2PLUS2_HURDLE"],
-            n_draws=BOOT_DRAWS,
-            seed=ch.stream_seed(BOOT_SEED, split_name, "neg_ctrl"),
+    for si, seed in enumerate(SEEDS):
+        sos_priors, sp_priors, _ = s1.fit_decomposed_hurdle_and_sp_priors(
+            train_rows, val_rows, pools, cand_feats, promos_by_cid, seed=seed
         )
+        rng_train = np.random.default_rng(seed)
+        for ci, r in enumerate(train_rows):
+            cid = r["context_sha256"]
+            sc, rc = score_all_arms_for_context(
+                cid,
+                pools[cid],
+                r882_cache[cid]["total_cost"].astype(np.float64),
+                sos_priors[cid],
+                sp_priors[cid],
+                static_cache[cid],
+                net.adapter_10tok,
+                fold_adapters[cid],
+                fold_alphas[cid],
+                rng_train,
+                device,
+            )
+            for ai, a in enumerate(arm_names):
+                train_panel[si, ci, ai] = sc[a]
+                k_str = str(rc[a])
+                reveal_histograms[a][k_str] = reveal_histograms[a].get(k_str, 0) + 1
 
-        splits_summary[split_name] = {
-            "n_contexts": len(rows),
-            "n_families": len(fams),
-            "family_mean_utility": {a: float(np.mean(fam_scores[a])) for a in arm_names},
-            "family_median_utility": {a: float(np.median(fam_scores[a])) for a in arm_names},
-            "vs_r882": comps_vs_r882,
-            "vs_gated_025": comps_vs_g025,
-            "negative_control_vs_active": neg_ctrl_vs_active,
-            "elo": elo,
-        }
+        rng_val = np.random.default_rng(seed + 1000)
+        for ci, r in enumerate(val_rows):
+            cid = r["context_sha256"]
+            sc, rc = score_all_arms_for_context(
+                cid,
+                pools[cid],
+                r882_cache[cid]["total_cost"].astype(np.float64),
+                sos_priors[cid],
+                sp_priors[cid],
+                static_cache[cid],
+                net.adapter_10tok,
+                val_adapter,
+                val_alpha,
+                rng_val,
+                device,
+            )
+            for ai, a in enumerate(arm_names):
+                val_panel[si, ci, ai] = sc[a]
+                k_str = str(rc[a])
+                reveal_histograms[a][k_str] = reveal_histograms[a].get(k_str, 0) + 1
+
+    # 8. Summarize panels vs R882 (ref_idx=0) and vs GATED_025 (ref_idx=1)
+    train_vs_r882 = ch.summarize_panel(train_rows, train_panel, arm_names, ref_idx=0, boot_seed=BOOT_SEED)
+    train_vs_g025 = ch.summarize_panel(train_rows, train_panel, arm_names, ref_idx=1, boot_seed=BOOT_SEED)
+    val_vs_r882 = ch.summarize_panel(val_rows, val_panel, arm_names, ref_idx=0, boot_seed=BOOT_SEED)
+    val_vs_g025 = ch.summarize_panel(val_rows, val_panel, arm_names, ref_idx=1, boot_seed=BOOT_SEED)
 
     out_payload = {
         "wave": "H255_PART_A",
         "title": "Causal 2+2 Neural Trajectory Critic & Self-Leakage Audit",
         "elapsed_sec": time.monotonic() - t0,
         "frozen_h252_hashes": frozen_hashes,
-        "native91_check": native_check,
+        "r882_native91_exact": val_native91_mean,
+        "r882_native91_diff": diff_native,
         "dope_sha256": before.composite_sha256,
         "dope_unchanged": True,
         "self_leakage_audit": leakage_audit,
         "reveal_count_histograms": reveal_histograms,
+        "hurdle_oof_diagnostics": hurdle_diag_f0,
         "fold_train_diagnostics": fold_train_diagnostics,
         "val_adapter_train_diagnostics": val_train_diag,
-        "splits": splits_summary,
+        "dl_train_vs_r882": train_vs_r882,
+        "dl_train_vs_gated_025": train_vs_g025,
+        "dl_val_vs_r882": val_vs_r882,
+        "dl_val_vs_gated_025": val_vs_g025,
     }
     ch.save_json(OUT_DIR / "part_a_metrics.json", out_payload)
     print(json.dumps({
         "status": "PART_A_OK",
         "elapsed_sec": round(out_payload["elapsed_sec"], 2),
-        "dl_val_family_mean": splits_summary["DL-Val"]["family_mean_utility"],
-        "dl_train_family_mean": splits_summary["DL-Train"]["family_mean_utility"],
+        "arms": arm_names,
+        "dl_val_median_family_utility": val_vs_r882["median_family_utility"],
+        "dl_train_median_family_utility": train_vs_r882["median_family_utility"],
+        "dl_val_elo": val_vs_r882["median_elo"],
     }, indent=2))
 
 

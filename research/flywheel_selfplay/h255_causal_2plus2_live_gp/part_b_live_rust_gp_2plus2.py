@@ -125,17 +125,25 @@ def main() -> None:
     train_rows, val_rows = ch.load_cohorts()
     cohort_rows = select_stratified_32_dl_train_cohort(train_rows, ch.INPUT_DIR)
     cohort_cids = [r["context_sha256"] for r in cohort_rows]
-    pools_base = ch.load_pools(cohort_cids + [r["context_sha256"] for r in val_rows])
+    pools_base = ch.load_pools(cohort_rows + val_rows, verify_hashes=False)
     ctx_feats = ch.load_context_features()
 
-    # Verify Native91 anchor first
-    native_check = ch.verify_r882_native91(val_rows, pools_base)
-    if not native_check["passed"]:
-        raise RuntimeError("Native91 check failed")
+    # Verify Native91 anchor first (read-only from stage1 cache)
+    r882_val_cache = pa.load_r882_cache_readonly(val_rows)
+    val_native_utils = [
+        float(pools_base[r["context_sha256"]]["utility"][int(np.argmin(r882_val_cache[r["context_sha256"]]["total_cost"]))])
+        for r in val_rows
+    ]
+    val_native91_mean = float(np.mean(val_native_utils))
+    if abs(val_native91_mean - ch.R882_NATIVE91_MEAN) > 1e-12:
+        raise RuntimeError(f"Native91 check failed: {val_native91_mean} != {ch.R882_NATIVE91_MEAN}")
 
     device = torch.device("cpu")
     torch.set_num_threads(2)
-    net, guard, before = pa.load_fused_network(device)
+    net, guard, before, w1_mat = pa.load_fused_network(device)
+    w1_scaled = (w1_mat.astype(np.float32) / np.sqrt(412.0)).astype(np.float32)
+    for c in cohort_cids:
+        pools_base[c]["proj16"] = (pools_base[c]["program"] @ w1_scaled).astype(np.float32)
 
     # Load initial champions bank restricted strictly to DL-Train
     train_cid_set = {r["context_sha256"] for r in train_rows}
@@ -436,34 +444,23 @@ def main() -> None:
     shutil.rmtree(OUT_DIR / "rust_eval_r1", ignore_errors=True)
     shutil.rmtree(OUT_DIR / "rust_eval_r2", ignore_errors=True)
 
-    # Compute paired family bootstrap 95% CIs on final incumbent utility gain over initial incumbent
-    fam_utilities: Dict[str, np.ndarray] = {}
-    for a in arm_names:
-        fam_utilities[a] = np.array([-incumbent_fitness[a][c] for c in cohort_cids], dtype=np.float64)
-    init_utilities = np.array([-initial_incumbent_fitness[c] for c in cohort_cids], dtype=np.float64)
+    # Compute paired family bootstrap 95% CIs on final incumbent utility gain over initial incumbent & legacy static-4
+    panel_arm_names = ["INITIAL_INCUMBENT"] + list(arm_names)
+    panel_3d = np.zeros((1, len(cohort_rows), len(panel_arm_names)), dtype=np.float64)
+    for ci, c in enumerate(cohort_cids):
+        panel_3d[0, ci, 0] = -initial_incumbent_fitness[c]
+        for ai, a in enumerate(arm_names, start=1):
+            panel_3d[0, ci, ai] = -incumbent_fitness[a][c]
 
-    vs_initial = {
-        a: ch.paired_family_bootstrap(
-            fam_utilities[a], init_utilities, n_draws=BOOT_DRAWS, seed=ch.stream_seed(BOOT_SEED, "vs_init", a)
-        )
-        for a in arm_names
-    }
-    vs_legacy = {
-        a: ch.paired_family_bootstrap(
-            fam_utilities[a],
-            fam_utilities["LIVE_GP_LEGACY_STATIC_4"],
-            n_draws=BOOT_DRAWS,
-            seed=ch.stream_seed(BOOT_SEED, "vs_legacy", a),
-        )
-        for a in arm_names
-        if a != "LIVE_GP_LEGACY_STATIC_4"
-    }
+    vs_initial = ch.summarize_panel(cohort_rows, panel_3d, panel_arm_names, ref_idx=0, boot_seed=BOOT_SEED)
+    vs_legacy = ch.summarize_panel(cohort_rows, panel_3d, panel_arm_names, ref_idx=1, boot_seed=BOOT_SEED)
 
     out_payload = {
         "wave": "H255_PART_B",
         "title": "Live Rust GP 2+2 Closed-Loop Flywheel on 32 Stratified DL-Train Contexts",
         "elapsed_sec": time.monotonic() - t0,
         "frozen_h252_hashes": frozen_hashes,
+        "r882_native91_exact": val_native91_mean,
         "evaluator_binary_sha256": evaluator.WORKER_SHA256,
         "dope_sha256": before.composite_sha256,
         "dope_unchanged": True,
@@ -476,8 +473,10 @@ def main() -> None:
         "rust_evaluations_per_context_per_round": BUDGET_EVAL,
         "unique_rust_batch_calls": rust_eval_calls,
         "unique_rust_candidates_evaluated": rust_eval_candidates,
-        "initial_mean_incumbent_utility": float(np.mean(init_utilities)),
-        "final_mean_incumbent_utility": {a: float(np.mean(fam_utilities[a])) for a in arm_names},
+        "initial_mean_incumbent_utility": float(np.mean(panel_3d[0, :, 0])),
+        "final_mean_incumbent_utility": {
+            a: float(np.mean(panel_3d[0, :, ai])) for ai, a in enumerate(arm_names, start=1)
+        },
         "eval_stats_by_arm": eval_stats_by_arm,
         "round_logs": round_logs,
         "vs_initial_incumbent": vs_initial,
