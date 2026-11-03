@@ -1,0 +1,29 @@
+{
+  "wave": "H279",
+  "slug": "h279_rerank8_bagged_strict_switch",
+  "status": "PREREGISTERED",
+  "verdict": "PENDING",
+  "outcomes_read": 0,
+  "optimizer_updates": 0,
+  "serving_promotion": false,
+  "arms": [
+    "r882",
+    "RERANK8_VETO",
+    "BAG_SWITCH",
+    "BAG_SWITCH_NESTED",
+    "PLACEBO"
+  ],
+  "seeds": [
+    279101,
+    279102,
+    279103
+  ],
+  "partitions": [
+    "KM276140",
+    "KM276141",
+    "KM276142",
+    "WARD"
+  ],
+  "boot_seed": 279150,
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+}
