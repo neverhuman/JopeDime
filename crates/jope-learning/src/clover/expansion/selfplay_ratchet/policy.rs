@@ -12,19 +12,34 @@ pub(crate) struct PolicyEvaluation {
     pub(crate) seed_update_frozen_by_kl_guard: Option<bool>,
 }
 
-pub(crate) fn evaluate_policy_guard(
-    round_idx: usize,
-    round_leaf_log_prob_fn: Option<RoundLeafLogProbFn<'_>>,
-    measured_tilt_policy: Option<&MeasuredTiltPolicyConfig>,
-    base_catalog_ordered: &[String],
-    archive_best_rmse: &BTreeMap<String, f64>,
-    base_best_q: &BTreeMap<String, f64>,
-    bootstrap_q: f64,
-    base_leaf_count: usize,
-    max_conditional_base_kl: f64,
-    max_new_support_mass: f64,
-    measured_tilt_rounds_admissible: &mut usize,
-) -> PolicyEvaluation {
+pub(crate) struct PolicyGuardInput<'a> {
+    pub(crate) round_idx: usize,
+    pub(crate) round_leaf_log_prob_fn: Option<RoundLeafLogProbFn<'a>>,
+    pub(crate) measured_tilt_policy: Option<&'a MeasuredTiltPolicyConfig>,
+    pub(crate) base_catalog_ordered: &'a [String],
+    pub(crate) archive_best_rmse: &'a BTreeMap<String, f64>,
+    pub(crate) base_best_q: &'a BTreeMap<String, f64>,
+    pub(crate) bootstrap_q: f64,
+    pub(crate) base_leaf_count: usize,
+    pub(crate) max_conditional_base_kl: f64,
+    pub(crate) max_new_support_mass: f64,
+    pub(crate) measured_tilt_rounds_admissible: &'a mut usize,
+}
+
+pub(crate) fn evaluate_policy_guard(input: PolicyGuardInput<'_>) -> PolicyEvaluation {
+    let PolicyGuardInput {
+        round_idx,
+        round_leaf_log_prob_fn,
+        measured_tilt_policy,
+        base_catalog_ordered,
+        archive_best_rmse,
+        base_best_q,
+        bootstrap_q,
+        base_leaf_count,
+        max_conditional_base_kl,
+        max_new_support_mass,
+        measured_tilt_rounds_admissible,
+    } = input;
     let archive_leaf_genomes: Vec<String> = archive_best_rmse.keys().cloned().collect();
     let n_new = archive_leaf_genomes.len();
     let active_support_leaves = base_leaf_count + n_new;
