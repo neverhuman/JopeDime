@@ -91,7 +91,7 @@ fn raw_cells_match_f64_engine_with_missing_tokens_extremes_and_named_columns() {
                 .collect::<Vec<_>>()
                 .join(",")
         );
-        let expected_source = literal("", "Vec<f64>", &json!(expected)).unwrap();
+        let expected_source = format!("vec!{expected:?}");
         program.push_str(&format!("mod c{i} {{\n{source}\n}}\nfn check{i}() {{ let rows={rows_source};let expected:Vec<f64>={expected_source};let got=c{i}::predict_cells(&rows).unwrap();assert_eq!(got.len(),expected.len());for (a,b) in got.iter().zip(&expected) {{assert!((a-b).abs()<=1e-12+1e-10*b.abs());assert_eq!(a.to_bits(),b.to_bits());}} let names=&[{}];let mut reversed=names.to_vec();reversed.reverse();let reordered:Vec<_>=rows.iter().map(|r|r.iter().copied().rev().collect()).collect();assert_eq!(c{i}::predict_table(&reversed,&reordered).unwrap(),got);assert!(c{i}::predict_cells(&[vec![None;13]]).is_err());assert!(c{i}::predict_table(&[],&rows).is_err());assert!(c{i}::predict_cells(&[]).unwrap().is_empty()); }}\n",p.input.columns.iter().map(|c|format!("{:?}",c.name)).collect::<Vec<_>>().join(",")));
     }
     program.push_str("fn main(){check0();check1();check2();println!(\"75 raw rows: exact f64 bits, signed zero, selected order, constant target and named columns\");}");
@@ -238,8 +238,14 @@ fn tree_decision_flip_rate_is_zero_for_golden_and_random_rows() {
             };
             let source = emit(&genome, &model, 12).unwrap();
             let expected = model.predict(&rows).unwrap();
-            let x = literal("", "Vec<Vec<f64>>", &json!(rows)).unwrap();
-            let y = literal("", "Vec<f64>", &json!(expected)).unwrap();
+            let x = format!(
+                "vec![{}]",
+                rows.iter()
+                    .map(|row| format!("vec!{row:?}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+            let y = format!("vec!{expected:?}");
             program.push_str(&format!("mod c{cases} {{\n{source}\n}}\nfn check{cases}() {{let rows={x};let expected:Vec<f64>={y};assert_eq!(c{cases}::predict_numeric(&rows).unwrap(),expected,\"leaf decision flip\");}}\n"));
             cases += 1;
         }

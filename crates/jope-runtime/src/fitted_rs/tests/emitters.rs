@@ -54,8 +54,14 @@ fn numeric_case(index: usize, dsl: &str, test: &[Vec<f64>]) -> String {
         "deterministic {dsl}"
     );
     assert!(!source.contains("fn main()"));
-    let rows = literal("", "Vec<Vec<f64>>", &json!(test)).unwrap();
-    let expected = literal("", "Vec<f64>", &json!(expected)).unwrap();
+    let rows = format!(
+        "vec![{}]",
+        test.iter()
+            .map(|row| format!("vec!{row:?}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+    let expected = format!("vec!{expected:?}");
     format!("mod c{index} {{\n{source}\n}}\nfn check{index}() {{ let rows = {rows}; let expected: Vec<f64> = {expected}; let got = c{index}::predict_numeric(&rows).unwrap(); assert_eq!(got.len(), expected.len()); for (i,(a,b)) in got.iter().zip(&expected).enumerate() {{ assert!((a-b).abs() <= 1e-12+1e-10*b.abs(), \"case {index} row {{i}}: {{a}} vs {{b}}\"); }} assert!(c{index}::predict_numeric(&[]).unwrap().is_empty()); assert!(c{index}::predict_numeric(&[vec![0.0;11]]).is_err()); assert!(c{index}::predict_numeric(&[vec![f64::NAN;12]]).is_err()); }}\n")
 }
 
