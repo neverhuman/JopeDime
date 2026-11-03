@@ -13,8 +13,8 @@
 
 The bill for a verified improvement includes the winning attempt and
 every earlier failure. It covers encoding, input tokens, generation,
-repairs, referee execution, updates and operating costs. The planning ratios below organize
-that bill; a full-run price requires the measurements in
+repairs, referee execution, updates and operating costs. The ratios below organize
+this ledger; pricing a full run still requires the measurements in
 \cref{sub:price-run,sec:results}.
 
 \subsection{The bill in one line}\label{sub:price-bill}
@@ -40,11 +40,11 @@ validity rate without weight updates (\cref{sub:method-move,sec:method-status}).
 These rates alone do not identify a learned improvement
 (\cref{sub:results-ablation}).
 
-For an observed batch, cost per verified win is the total ledger divided
-by verified wins, including update and operating costs where applicable.
-This accounting does not require independent attempts. Adaptive search
-still needs empirical cost and attempt curves; a batch with no verified
-win \mbox{has no finite} observed cost per win.
+For an observed batch, divide the total cost ledger, including applicable
+update and operating costs, by the number of verified wins. This accounting
+permits adaptive or correlated attempts; their cost and attempt curves
+still require measurement. A batch with no verified win has no finite
+observed cost per win.
 
 Training and deployment need separate ledgers. Training pays for every
 attempt, including failures. The proposed deployment protocol pays for
@@ -93,10 +93,11 @@ our routes, also re-read a growing context. Encoding and referee costs change
 the full-cost ratio; a threshold for the bill in \cref{eq:bill} requires
 counting every component.
 
-Reasoning is the second dial. Reasoning tokens may cut stillborn moves, but
-each is billed as output. The planned pilot (\cref{fig:price}, panel~b) compares
-cost per win over writer size and reasoning effort. A U-shaped curve is the hypothesis; the
-measurement decides where, and whether, the minimum sits.
+Reasoning tokens may reduce stillborn moves, but each is billed as output.
+The reference writer emits none (\cref{sub:method-move}). The planned pilot
+(\cref{fig:price}, panel~b) varies writer size and reasoning effort to measure
+cost per win. The pilot tests for a cost minimum; a U-shaped curve remains
+a hypothesis.
 
 \subsection{Rewarding useful hallucination}\label{sub:price-hallucination}
 

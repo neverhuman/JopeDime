@@ -6,11 +6,11 @@
 % Historical source notes are archived outside the paper tree.
 \section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
-Search-scored lists supply the reference training targets for a writer
-and a separate ranking map. The proposed deployment protocol then freezes
-the writer and commits one proposal. The adapter record in
-\cref{sec:method-status} is a separate loop, with its own cost ledger
-(\cref{sec:price}) and evaluation.
+The reference training rule uses search-scored lists to train a program
+writer and a separate ranking map. The proposed game-day protocol freezes
+the writer and commits one proposal. \Cref{sec:method-status} records a
+separate cost adapter loop with its own evaluation and cost ledger
+(\cref{sec:price}).
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -144,8 +144,8 @@ networks and token embeddings. The map ranks drafts without dropping them
 or screening the writer. One native GP route matches map-derived weights
 by program identity to ranked survivors for parent selection. The bounded
 search driver instead cycles among up to four parents chosen by measured
-loss. These are different influence paths, not evidence of trained-map lift;
-any evaluation must bind the exact search route that it used.
+loss. These routes have different influence paths. Neither path alone
+establishes trained-map lift; an evaluation must bind its exact search route.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
@@ -162,8 +162,8 @@ proposals requires the matched ablation in \cref{sub:results-ablation}.
 The historical target diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
 do not supply that controlled comparison.
 
-In the proposed offline loop, referee-scored search outcomes supply the
-training targets.
+The proposed offline loop below trains the writer and map from those
+referee-scored lists.
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
@@ -271,8 +271,8 @@ test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as t
 
 The proposed game-day protocol fixes the components and seed before one
 regression draw, retaining failures and all incurred costs
-(\cref{alg:gameday,box:searchone}). \Cref{sub:results-learning} compares that
-draw with a frozen reference under matched conditions.
+(\cref{alg:gameday,box:searchone}). \Cref{sub:results-learning} reserves the
+matched comparison with a frozen reference.
 
 \begin{algorithm}[tb]
 \caption{\textbf{Proposed game-day protocol (\searchone).}}\label{alg:gameday}
