@@ -1,4 +1,5 @@
 use super::*;
+use super::values::{search_digest, sha256_hex};
 
 // Synthetic plans whose gains are exact by construction (no reporter involved).
 
