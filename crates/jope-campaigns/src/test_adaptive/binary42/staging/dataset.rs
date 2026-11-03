@@ -1,3 +1,4 @@
+use super::super::member_models::StagingReceipt;
 use super::*;
 
 pub(in crate::test_adaptive::binary42) fn stage_campaign(
