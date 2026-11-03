@@ -66,7 +66,7 @@ pub fn run_with_wait(
         "duplicate GP output identity"
     );
     let started = Instant::now();
-    let mut slots = OwnedSlots((0..workers).map(|_| None).collect());
+    let mut slots = OwnedSlots::empty(workers);
     STOP.store(false, std::sync::atomic::Ordering::Relaxed);
     // SAFETY: `stop` is an extern "C" fn(c_int) whose only action is a lock-free atomic store,
     // which is async-signal-safe, so it is a valid SIGTERM and SIGINT handler.
