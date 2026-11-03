@@ -2705,3 +2705,39 @@ path = "research/flywheel_selfplay/h249_side_branch/treatment.py"
 sha256 = "370c7ff3e990ead9da4a92588cb1be85ee41bef96f61bb43bfff5683e0f7b898"
 receipt = "research/flywheel_selfplay/h249_side_branch/manifest.json"
 reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h250_ctxz/analysis.py"
+sha256 = "6524260889bd5b5ca2523f9a8a050ee352791727d8a409b88fbaf8d4c353c4e4"
+receipt = "research/flywheel_selfplay/h250_ctxz/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h250_ctxz/calibrate.py"
+sha256 = "e69648cf2e48d323cc30b9aa5ca237b3065af79c1e2c19d91b82d568e45da9d2"
+receipt = "research/flywheel_selfplay/h250_ctxz/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h250_ctxz/monitor.py"
+sha256 = "c4ed72d705993722eba2723c6970fc2ef04dcecd56e3922ba91de8e7e11ebf3b"
+receipt = "research/flywheel_selfplay/h250_ctxz/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h250_ctxz/runner.py"
+sha256 = "68f20a0462e1014c21d2e44823f33c1b174a4cf5a6acb43a463c8053e5ddceab"
+receipt = "research/flywheel_selfplay/h250_ctxz/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h250_ctxz/test_h250.py"
+sha256 = "fd1bf588c80e9d0601f8de5658a796eeca0a93e33e1ab538401951fddd095bcf"
+receipt = "research/flywheel_selfplay/h250_ctxz/manifest.json"
+reason = "Frozen research study test script pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h250_ctxz/treatment.py"
+sha256 = "9543f049c04cd8f1cdf4dc9e4477d94e1c1e7e8f5465a7bab2ea55985437c4ad"
+receipt = "research/flywheel_selfplay/h250_ctxz/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
