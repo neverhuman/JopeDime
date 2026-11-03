@@ -73,7 +73,7 @@ pub enum RouteFamilyV2 {
 }
 
 impl RouteFamilyV2 {
-    fn preference(self) -> u8 {
+    pub(crate) fn preference(self) -> u8 {
         match self {
             Self::Raw => 0,
             Self::CellOnly => 1,
