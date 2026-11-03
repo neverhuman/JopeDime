@@ -73,9 +73,9 @@ pub(crate) fn event_identity_effective(
             .funding_trust
             .as_ref()
             .context("funding witness trust not installed")?;
-        let original: super::funding::FundingEvent =
+        let original: crate::eval_registry::funding::FundingEvent =
             serde_json::from_value(value.payload["original"].clone())?;
-        let (event_key, deadline) = super::funding::validate_witness_event(
+        let (event_key, deadline) = crate::eval_registry::funding::validate_witness_event(
             trust,
             &original,
             &policy.authority_instance,
@@ -95,10 +95,11 @@ pub(crate) fn event_identity_effective(
         );
         match original.participant_slot {
             None => {
-                let reservation: super::funding::SignedReservation = serde_json::from_str(
-                    row["json"].as_str().context("signed reservation absent")?,
-                )?;
-                let stored: super::funding::FundingEvent = serde_json::from_str(
+                let reservation: crate::eval_registry::funding::SignedReservation =
+                    serde_json::from_str(
+                        row["json"].as_str().context("signed reservation absent")?,
+                    )?;
+                let stored: crate::eval_registry::funding::FundingEvent = serde_json::from_str(
                     row["start_json"]
                         .as_str()
                         .context("original funding start absent")?,
@@ -112,14 +113,14 @@ pub(crate) fn event_identity_effective(
                         && row["task_sha256"] == original.demand.task_sha256
                         && reservation == original.reservation
                         && row["authorization_id"]
-                            == super::funding::digest(&original.authorization.body)?
+                            == crate::eval_registry::funding::digest(&original.authorization.body)?
                         && stored == original,
                     "funding start postimage differs from original"
                 );
             }
             Some(slot) => {
                 let id = original.participant_id()?;
-                let stored: super::funding::FundingEvent = serde_json::from_str(
+                let stored: crate::eval_registry::funding::FundingEvent = serde_json::from_str(
                     row["json"]
                         .as_str()
                         .context("original funding participant absent")?,
@@ -149,12 +150,12 @@ pub(crate) fn event_identity_effective(
             && row["epoch"] == policy.authority_epoch,
         "authorization epoch/state mismatch"
     );
-    let start: super::StartToken = serde_json::from_str(
+    let start: crate::eval_registry::StartToken = serde_json::from_str(
         row["start_json"]
             .as_str()
             .context("original full start absent")?,
     )?;
-    let identity: super::FitIdentity = serde_json::from_str(
+    let identity: crate::eval_registry::FitIdentity = serde_json::from_str(
         row["identity_json"]
             .as_str()
             .context("original fit identity absent")?,
@@ -179,7 +180,9 @@ pub(crate) fn event_identity_effective(
                 .as_ref()
                 .context("native witness trust unavailable")?
         };
-        super::native_scq::verify_witness_event(trust, native, &identity, &start, policy)?;
+        crate::eval_registry::native_scq::verify_witness_event(
+            trust, native, &identity, &start, policy,
+        )?;
     }
     ensure!(
         start.fit_key == effect.key

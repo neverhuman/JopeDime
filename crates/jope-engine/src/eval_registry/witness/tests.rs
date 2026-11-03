@@ -42,7 +42,7 @@ impl Fixture {
             .unwrap()
             .as_bytes()
             .to_vec();
-        let original: OriginalEvent = serde_json::from_slice(&event).unwrap();
+        let original: Value = serde_json::from_slice(&event).unwrap();
         let authority_key = temp.path().join("authority-signing.key");
         let ack_key = temp.path().join("witness-ACK.key");
         // Private deterministic test keys are generated only inside this owned
@@ -55,8 +55,11 @@ impl Fixture {
         let policy = WitnessPolicy {
             schema: "parallel.fit_event_witness_policy.v1".into(),
             witness_instance: sha(b"synthetic-independent-witness"),
-            authority_instance: original.instance.clone(),
-            authority_epoch: original.effects[0].row["epoch"].as_str().unwrap().into(),
+            authority_instance: original["instance"].as_str().unwrap().to_owned(),
+            authority_epoch: original["effects"][0]["row"]["epoch"]
+                .as_str()
+                .unwrap()
+                .into(),
             authority_public_key: hex::encode(
                 private_key(&authority_key)
                     .unwrap()
