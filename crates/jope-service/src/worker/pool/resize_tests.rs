@@ -10,7 +10,7 @@ fn matrix(root: &std::path::Path) -> PathBuf {
         .into_bytes();
     csv.push(b'\n');
     csv.extend(include_bytes!(
-        "../../../../test-support/datasets/v1/d2-regression/train.csv"
+        "../../../../../test-support/datasets/v1/d2-regression/train.csv"
     ));
     let mut table =
         jope_runtime::table::parse_csv(&csv, &jope_runtime::limits::Limits::default()).unwrap();
