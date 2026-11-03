@@ -9,8 +9,8 @@ use super::{
 use anyhow::{ensure, Context, Result};
 use feat_math::advanced_v3::{
     emit_fitted_portable, emit_fitted_public_cpp17, fitted_javascript_unsupported,
-    fitted_portable_unsupported, fitted_public_cpp_unsupported, lint_fitted_public_text,
-    ColumnKind,
+    fitted_portable_templates, fitted_portable_unsupported, fitted_public_cpp_unsupported,
+    lint_fitted_public_text, ColumnKind, PortableUnsupported,
 };
 use jope_datasets::catalog::Task;
 use serde::{Deserialize, Serialize};
