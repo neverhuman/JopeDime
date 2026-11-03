@@ -227,7 +227,8 @@ fn python_interpreter() -> &'static str {
 
 #[test]
 fn emitted_helper_value_and_fault_bits_match_in_all_three_languages() {
-    let root = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("inverse_links_v2");
+    let root = PathBuf::from(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("inverse_links_v2-{}", std::process::id()));
     fs::create_dir_all(&root).unwrap();
     let cases = corpus();
     let inputs = cases
