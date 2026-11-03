@@ -6,11 +6,10 @@
 % Historical source notes are archived outside the paper tree.
 \section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
-The reference training rule uses search-scored lists to train a program
+In reference training, search-scored lists supply targets for a program
 writer and a separate ranking map. The proposed game-day protocol freezes
-the writer and commits one proposal. \Cref{sec:method-status} records a
-separate cost-adapter loop \mbox{with its own} evaluation and cost ledger
-(\cref{sec:price}).
+the writer for one proposal. \Cref{sec:method-status} describes a separate
+cost-adapter loop with its own evaluation and cost ledger (\cref{sec:price}).
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -162,8 +161,8 @@ proposals requires the matched ablation in \cref{sub:results-ablation}.
 The historical target diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
 do not supply that controlled comparison.
 
-The proposed offline loop below trains the writer and map from those
-referee-scored lists.
+Those referee-scored lists supply the proposed offline training targets
+in \cref{sub:method-selfplay}.
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
