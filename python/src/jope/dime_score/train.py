@@ -2,26 +2,21 @@ from __future__ import annotations
 
 import json
 import math
-import os
 import random
 import time
-from collections.abc import Iterable, Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Dataset
 
 from .corpus import (
-    PAD,
     DatasetUniformBatchSampler,
     TokenizedCorpus,
     prepare_corpus,
-    sha256_file,
 )
-from .model import DimeScoreModel, partial_warm_start, score_losses
+from .model import DimeScoreModel, partial_warm_start
 
 
 @dataclass
@@ -55,6 +50,24 @@ class TrainConfig:
 
 
 def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
+    from .train_autotune import _autotune_training, _timed_training_step
+    from .train_checkpoint import _checkpoint, _restore_rng
+    from .train_data import (
+        MINIMUM_VRAM_HEADROOM_MIB,
+        _append_jsonl,
+        _atomic_json,
+        _atomic_torch_save,
+        _BatchPrefetcher,
+        _embedding_lookup,
+        _make_data_loader,
+        _numeric_normalization,
+        _shutdown_loader,
+        _update_suite_progress,
+        _validity_positive_weight,
+        load_embedding_matrix,
+    )
+    from .train_quality import evaluate
+
     if config.prefetch_factor < 1:
         raise ValueError("prefetch factor must be positive")
     if config.live_hz <= 0 or config.hardware_hz <= 0:
@@ -558,9 +571,11 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
 
 
 def train_dime_score(config: TrainConfig) -> dict[str, Any]:
+    from .train_data import _append_jsonl, _atomic_json, _update_suite_progress
+
     try:
         return _train_dime_score(config)
-    except (Exception,) as error:
+    except Exception as error:
         config.run_dir.mkdir(parents=True, exist_ok=True)
         failure = {
             "schema": "jope-prime.dime-score-error.v1",
@@ -587,6 +602,9 @@ def run_initialization_pilots(
     seeds: tuple[int, ...] = (17, 29, 43),
     pilot_epochs: int = 5,
 ) -> dict[str, Any]:
+    from .train_checkpoint import warm_start_preflight
+    from .train_data import _atomic_json
+
     preflight = warm_start_preflight(base)
     initializations = ["scratch"]
     if preflight["eligible"]:
@@ -644,48 +662,55 @@ def run_initialization_pilots(
     return output
 
 
-from .train_data import (
-    AUTOTUNE_BATCH_SIZES,
-    AUTOTUNE_TIMED_STEPS,
-    AUTOTUNE_WARMUP_STEPS,
-    AUTOTUNE_WORKERS,
-    MINIMUM_VRAM_HEADROOM_MIB,
-    _BatchPrefetcher,
-    _CorpusRowIndexes,
-    _MmapCollator,
-    _append_jsonl,
-    _atomic_json,
-    _atomic_torch_save,
-    _available_loader_workers,
-    _collate,
-    _collate_cpu,
-    _embedding_lookup,
-    _loader_worker_init,
-    _make_data_loader,
-    _move_batch,
-    _numeric_normalization,
-    _queue_depth,
-    _shutdown_loader,
-    _update_suite_progress,
-    _validity_positive_weight,
-    load_embedding_matrix,
-)
-from .train_autotune import (
-    _autotune_training,
-    _benchmark_configuration,
-    _timed_training_step,
-    select_autotune_candidate,
-)
-from .train_quality import (
-    _average_precision,
-    _binary_auc,
-    _rankdata,
-    _spearman,
-    evaluate,
-    quality_metrics,
-)
-from .train_checkpoint import (
-    _checkpoint,
-    _restore_rng,
-    warm_start_preflight,
-)
+_TRAIN_SPLIT_EXPORTS = {
+    "PAD": "corpus",
+    "sha256_file": "corpus",
+    "score_losses": "model",
+    "AUTOTUNE_BATCH_SIZES": "train_data",
+    "AUTOTUNE_TIMED_STEPS": "train_data",
+    "AUTOTUNE_WARMUP_STEPS": "train_data",
+    "AUTOTUNE_WORKERS": "train_data",
+    "MINIMUM_VRAM_HEADROOM_MIB": "train_data",
+    "_BatchPrefetcher": "train_data",
+    "_CorpusRowIndexes": "train_data",
+    "_MmapCollator": "train_data",
+    "_append_jsonl": "train_data",
+    "_atomic_json": "train_data",
+    "_atomic_torch_save": "train_data",
+    "_available_loader_workers": "train_data",
+    "_collate": "train_data",
+    "_collate_cpu": "train_data",
+    "_embedding_lookup": "train_data",
+    "_loader_worker_init": "train_data",
+    "_make_data_loader": "train_data",
+    "_move_batch": "train_data",
+    "_numeric_normalization": "train_data",
+    "_queue_depth": "train_data",
+    "_shutdown_loader": "train_data",
+    "_update_suite_progress": "train_data",
+    "_validity_positive_weight": "train_data",
+    "load_embedding_matrix": "train_data",
+    "_autotune_training": "train_autotune",
+    "_benchmark_configuration": "train_autotune",
+    "_timed_training_step": "train_autotune",
+    "select_autotune_candidate": "train_autotune",
+    "_average_precision": "train_quality",
+    "_binary_auc": "train_quality",
+    "_rankdata": "train_quality",
+    "_spearman": "train_quality",
+    "evaluate": "train_quality",
+    "quality_metrics": "train_quality",
+    "_checkpoint": "train_checkpoint",
+    "_restore_rng": "train_checkpoint",
+    "warm_start_preflight": "train_checkpoint",
+}
+
+
+def __getattr__(name: str) -> Any:
+    module_name = _TRAIN_SPLIT_EXPORTS.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from importlib import import_module
+
+    module = import_module(f".{module_name}", __package__)
+    return getattr(module, name)

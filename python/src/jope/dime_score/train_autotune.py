@@ -1,39 +1,32 @@
 from __future__ import annotations
 
-import json
 import math
-import os
-import random
 import time
-from collections.abc import Iterable, Iterator
-from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 from .corpus import (
-    PAD,
     DatasetUniformBatchSampler,
     TokenizedCorpus,
-    prepare_corpus,
-    sha256_file,
 )
-from .model import DimeScoreModel, partial_warm_start, score_losses
-
+from .model import DimeScoreModel, score_losses
 from .train_data import (
     AUTOTUNE_BATCH_SIZES,
     AUTOTUNE_TIMED_STEPS,
     AUTOTUNE_WARMUP_STEPS,
     MINIMUM_VRAM_HEADROOM_MIB,
-    _BatchPrefetcher,
     _available_loader_workers,
+    _BatchPrefetcher,
     _make_data_loader,
     _shutdown_loader,
-    _validity_positive_weight,
 )
+
+if TYPE_CHECKING:
+    from .train import TrainConfig
 
 
 def select_autotune_candidate(
@@ -248,7 +241,7 @@ def _benchmark_configuration(
     except torch.OutOfMemoryError:
         torch.cuda.empty_cache()
         return {**base, "status": "out_of_memory"}
-    except (Exception,) as error:
+    except Exception as error:
         return {
             **base,
             "status": "compiler_failed" if mode == "compiled" else "failed",
@@ -357,7 +350,7 @@ def _autotune_training(
                     stage="compiler",
                     mode="compiled",
                 )
-            except (Exception,) as error:
+            except Exception as error:
                 compiled_record = {
                     "stage": "compiler",
                     "mode": "compiled",

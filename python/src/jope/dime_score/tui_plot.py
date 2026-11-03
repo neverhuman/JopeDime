@@ -8,6 +8,7 @@ from rich.console import Group
 from rich.table import Table
 from rich.text import Text
 
+
 def _fmt(value: Any, digits: int = 3) -> str:
     return f"{value:.{digits}f}" if isinstance(value, (int, float)) else "-"
 
