@@ -325,7 +325,7 @@ struct Point {
     early_stopped: i64,
 }
 
-pub(crate) fn load_points(conn: &Connection, policy_only: bool) -> Result<Vec<Point>> {
+fn load_points(conn: &Connection, policy_only: bool) -> Result<Vec<Point>> {
     let sql = format!(
         "SELECT e.run_key, r.lane, e.epoch, e.phase, e.train_loss, e.val_loss, e.overfit_gap,
                 e.val_pairwise_win_accuracy, e.val_conditional_advantage, e.wall_ms,
@@ -700,7 +700,7 @@ pub(crate) fn cmd_export(
     Ok(())
 }
 
-pub(crate) fn build_tex(pts: &[Point], boundaries: &[(i64, String, String, String)]) -> String {
+fn build_tex(pts: &[Point], boundaries: &[(i64, String, String, String)]) -> String {
     let maxg = pts.last().map(|p| p.gidx).unwrap_or(1);
     let mut marks = String::new();
     // 91 run boundaries would overplot the axis. Draw a rule at every boundary,
