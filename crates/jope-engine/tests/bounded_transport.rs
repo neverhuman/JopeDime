@@ -12,7 +12,7 @@ use fixture::*;
 use jope_parallel::native_loop::bounded::{
     contract::BoundedRunContract,
     controller::{Coordinator, Outcome, RankState},
-    rendezvous::{self, read_frame, write_frame, ControlStream, PeerIdentity, RefusalCause},
+    rendezvous::{read_frame, write_frame, ControlStream, PeerIdentity, RefusalCause},
     transport::{self, HostCredential, Sequenced, Timeouts, TlsAcceptor, TlsStream},
 };
 use std::{
