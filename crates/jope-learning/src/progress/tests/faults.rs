@@ -22,10 +22,10 @@ use serde_json::json;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 
-fn candidate(value: f64) -> Candidate {
-    mod cases;
-    use cases::cases;
+mod cases;
+use cases::cases;
 
+fn candidate(value: f64) -> Candidate {
     let (record, blob) = hwm_record("cut-a", value);
     Candidate {
         record,
