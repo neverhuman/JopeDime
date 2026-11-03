@@ -204,6 +204,7 @@ impl LearnedAdmission {
         Ok(rows.len())
     }
     /// Borrow the exact FIT conditioning only when its full Plan binding matches.
+    #[cfg(feature = "research")]
     pub(crate) fn research_conditioning(&self, plan: &Plan) -> Result<&TokenProjection> {
         let bound = self.plan.as_ref().context("learned FIT is not bound")?;
         ensure!(bound == plan, "learned conditioning Plan changed");
