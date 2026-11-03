@@ -241,12 +241,9 @@ pub fn run<R: BufRead, W: Write>(
         }
         drop(sender);
         for _ in 0..task_count {
-            let lines = receiver.recv().map_err(|_| {
-                io::Error::new(
-                    io::ErrorKind::Other,
-                    "bridge worker stopped without a result",
-                )
-            })??;
+            let lines = receiver
+                .recv()
+                .map_err(|_| io::Error::other("bridge worker stopped without a result"))??;
             for line in lines {
                 output.write_all(line.as_bytes())?;
                 output.write_all(b"\n")?;
