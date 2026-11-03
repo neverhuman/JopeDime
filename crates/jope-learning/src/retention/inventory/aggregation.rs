@@ -24,9 +24,9 @@ pub struct GroupInv {
     /// Upper bound on last modified.
     pub max_last_modified: Option<String>,
     #[serde(skip)]
-    min_ms: Option<i64>,
+    pub(super) min_ms: Option<i64>,
     #[serde(skip)]
-    max_ms: Option<i64>,
+    pub(super) max_ms: Option<i64>,
 }
 
 impl GroupInv {
