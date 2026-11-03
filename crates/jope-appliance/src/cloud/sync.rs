@@ -1,7 +1,7 @@
 use super::*;
 
-pub use telemetry::sync_events;
 use telemetry::record_publication;
+pub use telemetry::sync_events;
 pub(super) use telemetry::telemetry_command;
 pub use upload::{publish_file, Upload};
 
@@ -164,5 +164,5 @@ mod snapshot;
 
 pub use entries::{publish_best, run_entries};
 pub use models::{fetch_model, publish_model};
-pub use snapshot::{sync_snapshot, sync_snapshot_for};
 pub(crate) use snapshot::{pack_object, unpack_object};
+pub use snapshot::{sync_snapshot, sync_snapshot_for};
