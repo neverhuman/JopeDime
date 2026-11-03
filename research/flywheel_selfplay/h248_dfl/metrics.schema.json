@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "wave",
+    "status",
+    "optimizer_updates",
+    "verdict"
+  ],
+  "properties": {
+    "wave": {
+      "const": "H248"
+    },
+    "status": {
+      "enum": [
+        "PREREGISTERED",
+        "COMPLETE",
+        "INCOMPLETE"
+      ]
+    },
+    "optimizer_updates": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1800
+    },
+    "verdict": {
+      "enum": [
+        null,
+        "ADVANCE",
+        "NO_ADVANCE",
+        "CLOSED_INCOMPLETE"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "COMPLETE"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "primary_dlval",
+          "secondary_oof",
+          "diagnostic_step40_val",
+          "diagnostic_step40_oof",
+          "source_commit",
+          "selection_locks_verified"
+        ],
+        "properties": {
+          "optimizer_updates": {
+            "const": 1800
+          },
+          "smoke_optimizer_updates": {
+            "const": 3
+          },
+          "complete_cells": {
+            "const": 15
+          }
+        }
+      }
+    }
+  ]
+}
