@@ -49,7 +49,7 @@ pub(super) fn check_refinements(
             ensure!(
                 measured.last().is_none_or(|&last| index > last)
                     && measured.insert(index)
-                    && child.observation.origin == super::REFINE
+                    && child.observation.origin == super::super::REFINE
                     && child.observation.genome == refinement.program
                     && refinement.evaluations > 0
                     && refinement.failure.is_none()
@@ -78,7 +78,7 @@ pub(super) fn check_refinements(
                 == measurements
                     .iter()
                     .enumerate()
-                    .filter(|(_, m)| m.observation.origin == super::REFINE)
+                    .filter(|(_, m)| m.observation.origin == super::super::REFINE)
                     .map(|(i, _)| i)
                     .collect(),
         "refinement accounting does not re-derive"
@@ -95,7 +95,7 @@ pub(super) fn check_trace(s: &Search, refinement: &TrainingRefinement, parent: &
     let selected = s
         .engine_selection
         .as_ref()
-        .and_then(super::EngineRecord::damped_ls);
+        .and_then(super::super::EngineRecord::damped_ls);
     let expected = selected.is_some() && refinement.evaluations > 0;
     ensure!(
         refinement.trace.is_some() == expected,
