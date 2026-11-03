@@ -4478,6 +4478,16 @@
       "lanes": [],
       "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
     },
+    "python:deploy/qualification/q1/harness/test_q1_dispatch.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-04 synthetic infrastructure retry controls: redacted structured/legacy stderr, actual return codes, fatal-first dispatch stop, timeout handling and strict response-schema refusal. No model, evaluator or dataset inputs; source controls only until explicitly executed, not live Q1 qualification."
+    },
     "python:deploy/qualification/q1/harness/test_q1_cut.py": {
       "discovery": {
         "kind": "python-family"

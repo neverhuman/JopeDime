@@ -160,7 +160,12 @@ def requests(plan, failed, config, samples):
                 and engine["status"] == "ENGINE_READY",
                 "engine identity changed",
             )
-            monitor = q1.load(Path(config["monitor_status"]))
+            monitor_path = Path(config["monitor_status"])
+            q1.require(
+                monitor_path.is_file() and not monitor_path.is_symlink(),
+                "regular monitor status required",
+            )
+            monitor = q1.load(monitor_path)
             q1.require(
                 0 <= time.time() - monitor["sampled_unix"] <= 90
                 and monitor["runtime_source_commit"] == config["runtime_source_commit"],
@@ -261,6 +266,9 @@ def run(config, config_path):
             path = output / "RUNTIME-CLEANUP.json"
             while True:
                 try:
+                    if path.is_symlink():
+                        time.sleep(2)
+                        continue
                     cleanup = q1.load(path)
                     engine = q1.load(pinned(config, "engine_receipt"))
                     if (
@@ -271,6 +279,7 @@ def run(config, config_path):
                         and cleanup["daemon_pid"] == engine["pid"]
                         and cleanup["completed_unix"] >= requested
                         and cleanup["daemon_exited"] is True
+                                and q1.integer(cleanup["workers_remaining"])
                         and cleanup["workers_remaining"] == 0
                         and cleanup["tunnel_exited"] is True
                     ):
@@ -290,7 +299,7 @@ def run(config, config_path):
                 plan["pins"]["bundle_sha256"] + ".attempt10.started.json"
             )
             with marker.open("x") as stream:
-                q1.append_receipt(stream, state)
+                q1.append_receipt(stream, {**state, "status": "started_outcome_unknown", "attempt": 10})
             state["status"] = "RUNNING"
             try:
                 with (
@@ -318,6 +327,12 @@ def run(config, config_path):
                         row = new[key(row)]
                     q1.append_receipt(stream, row)
             state["status"] = "TERMINAL_UNANALYZED"
+            state["new_terminal_units"] = len(new)
+            state["new_complete_units"] = sum(row["response"]["status"] == "complete" for row in new.values())
+            state["logical_panel_sha256"] = q1.sha_file(output / "logical-panel.jsonl")
+            finish = marker.with_name(marker.name.replace(".started.json", ".finished.json"))
+            with finish.open("x") as stream:
+                q1.append_receipt(stream, state)
     except q1_dispatch.BackendFatal as error:
         state.update(status="STOPPED_FATAL_BACKEND", diagnostic=error.diagnostic)
         raise

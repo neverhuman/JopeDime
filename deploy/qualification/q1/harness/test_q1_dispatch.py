@@ -59,6 +59,17 @@ class DispatchTests(unittest.TestCase):
             self.assertNotIn("PRIVATE_SENTINEL", json.dumps(evidence))
             self.assertEqual(evidence["stderr_bytes"], len(raw))
 
+    def test_original_signed_backend_fixed_diagnostic_is_retained(self):
+        raw = b"production backend refused: production engine request failed\n"
+        evidence = dispatch.redacted_stderr(raw)
+        self.assertEqual(
+            json.loads(evidence["stderr_redacted"]),
+            {
+                "phase": "legacy_engine_request",
+                "message": "production engine request failed",
+            },
+        )
+
     def test_first_fatal_is_durable_and_prevents_second_dispatch(self):
         error = subprocess.CompletedProcess([], -9, b"", b"Bearer PRIVATE_SENTINEL")
         with tempfile.TemporaryFile(mode="w+") as stream:
