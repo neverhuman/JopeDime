@@ -76,7 +76,7 @@ pub struct RollbackBundleFileV2 {
 }
 
 impl RollbackBundleFileV2 {
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         require_relative_normalized(&self.target, "rollback bundle target")?;
         require_sha256(&self.sha256, "rollback bundle file SHA-256")
     }
@@ -105,7 +105,7 @@ impl RollbackSystemdArtifactV2 {
         }))
     }
 
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         ensure!(
             matches!(self.kind.as_str(), "service" | "timer")
                 && self.unit.ends_with(&format!(".{}", self.kind))
@@ -180,7 +180,7 @@ pub struct RollbackChallengeV1 {
 }
 
 impl RollbackChallengeV1 {
-    fn validate_at(&self, now_unix_ms: u64) -> Result<()> {
+    pub(super) fn validate_at(&self, now_unix_ms: u64) -> Result<()> {
         ensure!(
             self.schema == ROLLBACK_CHALLENGE_SCHEMA,
             "invalid rollback challenge schema"
