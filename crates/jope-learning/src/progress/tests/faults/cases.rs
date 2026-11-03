@@ -70,7 +70,7 @@ pub(crate) fn cases() -> Vec<Case> {
         Case {
             name: "duplicate-delivery",
             inject: |w| {
-                let before = super::fixture::remote_keys(&w.e.remote);
+                let before = super::super::fixture::remote_keys(&w.e.remote);
                 let (_dir, mut other, restored) = fresh_restore(&w.e.remote, w.r.id()).unwrap();
                 let again = other.deliver(&w.e.remote, None).unwrap();
                 for seq in 1..=w.o.as_ref().unwrap().records() {
@@ -79,7 +79,7 @@ pub(crate) fn cases() -> Vec<Case> {
                         w.o.as_ref().unwrap().redeliver(&w.e.remote, &key).unwrap();
                     }
                 }
-                assert_eq!(super::fixture::remote_keys(&w.e.remote), before);
+                assert_eq!(super::super::fixture::remote_keys(&w.e.remote), before);
                 format!(
                     "a second host restored {} items (all already present) and redelivered; \
                      {} attempted again",
