@@ -36,7 +36,7 @@ pub use submission::RegressorApi;
 pub const GPT6P1_SOL_MAX: &str = "GPT6p1_Sol_Max";
 /// Hash of the standalone source, frozen before repository-code inspection or execution.
 pub const GPT6P1_SOL_MAX_SHA256: &str =
-    "fe5bb21ed62edb3aebc1bd141d54834dd3f42b97cb9b0366f2e6b24bc99f75a8";
+    "f7597dd23e123a9514644769d2106fd60d334e747d091e0d16bd84592e76046b";
 /// The exact file can also be built directly with `rustc --crate-type rlib`.
 pub const GPT6P1_SOL_MAX_SOURCE: &str = include_str!("GPT6p1_Sol_Max.rs");
 
