@@ -79,7 +79,7 @@ fn validate_g20_generation_replay(
             bail!("G20 deterministic checkpoint replay drift");
         }
         let rescored = score_legacy_population(
-            &data,
+            data,
             &dataset.dataset_hash,
             generation,
             &expected_population,
