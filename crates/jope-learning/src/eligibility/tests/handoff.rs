@@ -299,10 +299,10 @@ fn pre_handoff_formats_keep_their_meaning_and_stay_quarantined() {
     old.context_handoff_sha256 = None;
     let mut evidence = f.evidence.clone();
     evidence.context.as_mut().unwrap().handoff = None;
-    let bytes = canonical_json(&StoredQualification {
-        evidence,
-        qualification: old.clone(),
-    })
+    let bytes = canonical_json(&json!({
+        "evidence": evidence,
+        "qualification": old.clone(),
+    }))
     .unwrap();
     assert!(!String::from_utf8_lossy(&bytes).contains("handoff"));
     let path = f
