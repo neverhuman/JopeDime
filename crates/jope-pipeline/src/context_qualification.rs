@@ -23,7 +23,6 @@ pub(super) use finalize::{
 };
 use std::{
     collections::BTreeMap,
-    fs,
     path::{Path, PathBuf},
     sync::atomic::AtomicBool,
 };
