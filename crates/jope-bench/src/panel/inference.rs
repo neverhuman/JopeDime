@@ -2,8 +2,8 @@
 //! Exporting does not qualify a backend, refit a model, or replace the selected method.
 use super::{
     data::RAW_CELL_ENCODING,
-    methods::{digest, FittedRustArtifact, INPUT_POLICY},
-    score::{Predictions, NUMERICAL_POLICY},
+    methods::{digest, FittedRustArtifact},
+    score::Predictions,
     synthesized::FittedSynthesizedArtifact,
 };
 use anyhow::{ensure, Context, Result};
