@@ -150,7 +150,6 @@ pub(crate) fn eval_one(train_path: &str) -> Result<(), String> {
 /// These variants are the cases where we learned nothing about the gene, and
 /// conflating them with a bad score systematically punishes whatever is
 /// slowest (wide feature sets, heavy heads) for infrastructure reasons.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) fn strict_generation_completion(
     generation: usize,
     invalid_members: usize,
