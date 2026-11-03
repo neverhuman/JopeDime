@@ -301,7 +301,10 @@ def test_checkpoint_gate_is_fail_closed_until_every_condition_passes():
 
 @pytest.mark.xbabe2  # reads /home/ubuntu/smart_cluster/etc/projects.toml (old state plane)
 def test_scheduler_project_registration_and_weight_are_exact():
-    projects = tomllib.loads(Path("/home/ubuntu/smart_cluster/etc/projects.toml").read_text())["projects"]
+    projects_path = Path("/home/ubuntu/smart_cluster/etc/projects.toml")
+    if not projects_path.is_file():
+        pytest.skip("requires xbabe2 scheduler state plane")
+    projects = tomllib.loads(projects_path.read_text())["projects"]
     assert projects["jope-testonly"] == {
         "max_tier": "normal",
         "weight": 10.0,
