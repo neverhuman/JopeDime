@@ -188,25 +188,46 @@ impl HostSources<'static> {
 }
 /// The host's own name, machine id and boot id, as read from `sources` and checked where read.
 fn observe_host(sources: &HostSources) -> Result<(String, String, String)> {
-    let host = read_line(&sources.host_name)?;
+    let host = read_identity_line(&sources.host_name)?;
     ensure!(
         is_name(&host),
         "host name `{host}` read from {} is not a census host name",
         sources.host_name.display()
     );
-    let machine_id = read_line(&sources.machine_id)?;
+    let machine_id = read_identity_line(&sources.machine_id)?;
     ensure!(
         super::census::is_machine_id(&machine_id),
         "machine id `{machine_id}` read from {} is not 32 lowercase hex",
         sources.machine_id.display()
     );
-    let boot_id = read_line(&sources.boot_id)?;
+    let boot_id = read_identity_line(&sources.boot_id)?;
     ensure!(
         super::census::is_boot_id(&boot_id),
         "boot id `{boot_id}` read from {} is empty or longer than 64 bytes",
         sources.boot_id.display()
     );
     Ok((host, machine_id, boot_id))
+}
+
+fn read_identity_line(path: &Path) -> Result<String> {
+    let canonical =
+        fs::canonicalize(path).with_context(|| format!("resolve {}", path.display()))?;
+    let file = fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK | libc::O_CLOEXEC)
+        .open(&canonical)
+        .with_context(|| format!("open {}", path.display()))?;
+    ensure!(
+        file.metadata()?.is_file(),
+        "{} is not a regular file",
+        path.display()
+    );
+    let mut bytes = Vec::new();
+    file.take(257).read_to_end(&mut bytes)?;
+    ensure!(bytes.len() <= 256, "{} exceeds 256 bytes", path.display());
+    let text =
+        String::from_utf8(bytes).with_context(|| format!("{} is not UTF-8", path.display()))?;
+    Ok(text.trim().to_string())
 }
 
 fn resolve_program(program: &str) -> Option<PathBuf> {
@@ -293,6 +314,7 @@ pub struct MergeReport {
 mod collection;
 mod merge;
 
+pub(crate) use collection::{base64_decode, der_element};
 pub use collection::{
     certificate_der, collect, file_closure_digest, hash_installed_file, local_addresses,
     observe_identity,
