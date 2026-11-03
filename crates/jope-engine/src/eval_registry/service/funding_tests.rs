@@ -15,12 +15,18 @@ struct Fixture {
 }
 struct Running {
     stop: Arc<AtomicBool>,
+    funding_active: Arc<dyn Fn() -> usize + Send + Sync>,
     thread: Option<std::thread::JoinHandle<Result<ServiceStats>>>,
 }
 impl Running {
     fn finish(mut self) -> ServiceStats {
         self.stop.store(true, Ordering::SeqCst);
         self.thread.take().unwrap().join().unwrap().unwrap()
+    }
+}
+impl Running {
+    fn funding_active(&self) -> usize {
+        (self.funding_active)()
     }
 }
 impl Drop for Running {
@@ -67,10 +73,12 @@ impl Fixture {
     }
     fn launch(&self) -> Running {
         let service = Service::bind(self.config.clone()).unwrap();
+        let funding_active = service.funding_active_reader_for_test();
         let stop = Arc::new(AtomicBool::new(false));
         let signal = stop.clone();
         Running {
             stop,
+            funding_active,
             thread: Some(std::thread::spawn(move || service.run(signal))),
         }
     }
