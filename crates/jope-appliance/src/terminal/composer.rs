@@ -71,9 +71,10 @@ mod behavior;
 mod history;
 mod view;
 
-pub(super) use behavior::clean;
+use behavior::clean;
 pub use history::HistoryFile;
-pub(super) use history::{owner_mode, regular_options, remember};
+#[cfg(test)]
+use history::{owner_mode, regular_options, remember};
 
 #[cfg(all(test, target_os = "linux"))]
 #[path = "../../tests/support/pty.rs"]
