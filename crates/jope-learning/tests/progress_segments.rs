@@ -56,7 +56,7 @@ fn exact_dedup_keeps_proof_and_bounded_index_across_reopen() -> Result<()> {
         assert!(store.usage().lookup_pages <= 2);
         assert!(store.usage().lookup_bytes <= limits().max_shard_bytes);
     }
-    let usage = store.usage().clone();
+    let usage = store.usage();
     assert!(usage.startup_bytes_read <= limits().max_startup_bytes);
     assert!(usage.hot_index_bytes <= limits().max_hot_bytes);
     assert!(usage.total_disk_bytes <= limits().max_total_disk_bytes);
