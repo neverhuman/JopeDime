@@ -352,20 +352,7 @@ def main():
     recovered = {}
     expected_schedule = json.loads((HERE / "schedules.json").read_text())
     actual_schedule = {
-        a: [
-            dict(
-                step=t,
-                lr=settings(a, t)[0],
-                beta1=settings(a, t)[1],
-                beta2=settings(a, t)[2],
-                weight_decay=settings(a, t)[3],
-                muon_lr=settings(a, t)[4],
-                grok_alpha=settings(a, t)[5],
-                grok_lambda=settings(a, t)[6],
-            )
-            for t in range(1, 41)
-        ]
-        for a in stat.ARMS
+        a: [dict(step=t, **settings(a, t)) for t in range(1, 41)] for a in stat.ARMS
     }
     if expected_schedule["arms"] != actual_schedule:
         raise RuntimeError("schedule table identity")

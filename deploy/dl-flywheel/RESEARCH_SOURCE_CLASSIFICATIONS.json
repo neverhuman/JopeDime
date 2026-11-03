@@ -6767,16 +6767,16 @@
       }
     },
     "python:research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py": {
-      "bytes": 5404,
-      "sha256": "ad7a4c15aba093e0ccdf1faa132b92e9a1aac59b98d795193802b00bc031164d",
+      "bytes": 6339,
+      "sha256": "a0c4a0f5748dcb7fd3e8c776e18485e37d5ffc65046f8fe605e1bdfacb580b63",
       "classification": {
         "role": "research",
         "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
       }
     },
     "python:research/flywheel_selfplay/h253_vrex_family_invariance/launcher.py": {
-      "bytes": 3399,
-      "sha256": "34e74e490af10d2b2e7df5867b815ff8701bf7bb0d618c8e86be0b96a382ba27",
+      "bytes": 3850,
+      "sha256": "5c7e9ac717f1c51c1161644da0ee202a5783b05f50baf2292989a4aae97af33c",
       "classification": {
         "role": "research",
         "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
@@ -6791,8 +6791,8 @@
       }
     },
     "python:research/flywheel_selfplay/h253_vrex_family_invariance/runner.py": {
-      "bytes": 45123,
-      "sha256": "6f05768ef1dbe407d506c9fdef76d74f5a3331dbf2d90d4a84fa20995eff5c3d",
+      "bytes": 44764,
+      "sha256": "9c30b88fc2b2ce0fc0cac3f67d2aba69abc083febe1f19b579a85c935399a785",
       "classification": {
         "role": "research",
         "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."

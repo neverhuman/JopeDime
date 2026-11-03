@@ -162,8 +162,26 @@ def validate_launch(
         raise RuntimeError("launch manifest binding")
     if smoke:
         return
+    # Owner t1250 permits local work while main is held. The sole allowed unmerged transport fix
+    # must retain the merged scientific preregistration and prove zero prior model/native/update calls.
+    if not launch.get("merged_source_verified"):
+        if not (
+            launch.get("merged_prereg_verified")
+            and launch.get("preregistered_protocol_commit")
+            == "144f045c585000b1eb7955eeb1fbf1eaf16b4e6f"
+            and launch.get("execution_source_reviewed")
+            and launch.get("configuration_only_amendment")
+            and launch.get("zero_prior_model_native_optimizer_calls")
+            and launch.get("scientific_AST_parity_verified")
+            and launch.get("main_hold")
+        ):
+            raise RuntimeError(
+                "unmerged transport requires merged protocol and exact-head pre-native proof"
+            )
     if (
-        not launch.get("merged_source_verified")
+        not (
+            launch.get("merged_source_verified") or launch.get("merged_prereg_verified")
+        )
         or launch.get("source_commit") != head
         or type(launch.get("review_id")) is not int
         or launch["review_id"] <= 0
