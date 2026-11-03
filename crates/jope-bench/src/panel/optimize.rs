@@ -40,10 +40,10 @@ mod prepare;
 
 pub use execution::search_dataset;
 pub(crate) use execution::{diagnostic, pending, proof};
+#[cfg(test)]
+pub(crate) use pair::incumbent_seed;
 pub use pair::{build_pair_input, DatasetSearch};
-pub(crate) use pair::{
-    challenger_checkpoint, incumbent_seed, pair_seed, pinned_checkpoint, proposal_files,
-};
+pub(crate) use pair::{challenger_checkpoint, pair_seed, pinned_checkpoint, proposal_files};
 pub(crate) use prepare::prepare_regression_context;
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-use super::admission::{admit_one, handed_off_context, retain, Admission, Report};
+use super::admission::{admit_one, Admission, Report};
 use super::*;
 
 /// Runs inside the existing controller before candidate outer-refit scheduling.
@@ -32,7 +32,7 @@ pub fn admit_dataset(
     let mut entries = Vec::new();
     for (method, frozen, receipt) in [
         (
-            super::optimize::NEURAL_METHOD,
+            super::super::optimize::NEURAL_METHOD,
             search.neural.as_ref(),
             search
                 .receipt
@@ -41,7 +41,7 @@ pub fn admit_dataset(
                 .and_then(|n| n.search.as_ref()),
         ),
         (
-            super::optimize::GENERIC_METHOD,
+            super::super::optimize::GENERIC_METHOD,
             search.generic.as_ref(),
             search.receipt.generic.as_ref(),
         ),
@@ -148,8 +148,14 @@ pub fn verify_admission(
         "teaching registration failure changed"
     );
     let expected_methods = [
-        (super::optimize::NEURAL_METHOD, search.neural.as_ref()),
-        (super::optimize::GENERIC_METHOD, search.generic.as_ref()),
+        (
+            super::super::optimize::NEURAL_METHOD,
+            search.neural.as_ref(),
+        ),
+        (
+            super::super::optimize::GENERIC_METHOD,
+            search.generic.as_ref(),
+        ),
     ]
     .into_iter()
     .filter_map(|(method, candidate)| candidate.map(|_| method))
@@ -167,8 +173,8 @@ pub fn verify_admission(
     let state = State::at(&settings.state_root);
     for entry in report.entries {
         let candidate = match entry.method.as_str() {
-            super::optimize::NEURAL_METHOD => search.neural.as_ref(),
-            super::optimize::GENERIC_METHOD => search.generic.as_ref(),
+            super::super::optimize::NEURAL_METHOD => search.neural.as_ref(),
+            super::super::optimize::GENERIC_METHOD => search.generic.as_ref(),
             _ => None,
         }
         .context("teaching candidate absent")?;

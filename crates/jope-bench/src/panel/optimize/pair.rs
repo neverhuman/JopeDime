@@ -125,9 +125,12 @@ pub fn build_pair_input(
     campaign: &CampaignPlan,
     configuration: &Configuration,
     dataset: &DevelopmentData,
-) -> Result<(super::experimental_proposal::ContextInput, PairInputPlan)> {
+) -> Result<(
+    super::super::experimental_proposal::ContextInput,
+    PairInputPlan,
+)> {
     let cut = dataset.cut(0)?;
-    let mut outer = super::campaign::request(
+    let mut outer = super::super::campaign::request(
         dataset,
         &cut,
         &campaign.methods[dataset.dataset.task.as_str()][0],
@@ -300,7 +303,7 @@ pub fn build_pair_input(
             vocabulary: &vocabulary,
             task: dataset.dataset.task,
         };
-        return super::experimental_proposal::bind_pair(
+        return super::super::experimental_proposal::bind_pair(
             configuration,
             experimental,
             dataset,

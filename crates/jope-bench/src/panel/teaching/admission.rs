@@ -14,7 +14,7 @@ pub(super) fn handed_off_context(
     freeze: &FreezeReceipt,
     directory: &Path,
 ) -> Result<Option<ContextEvidence>> {
-    let handoff = directory.join(super::optimize::TEACHER_HANDOFF);
+    let handoff = directory.join(super::super::optimize::TEACHER_HANDOFF);
     if !handoff.try_exists()? {
         return Ok(None);
     }
@@ -144,10 +144,10 @@ pub(super) fn admit_one(
         let job_sha = job.identity()?;
         let worker_path = journal.join("finished").join(format!("{job_sha}.json"));
         let worker: WorkerOutcome = serde_json::from_slice(&fs::read(&worker_path)?)?;
-        super::receipt_timing::completed_fit(journal, &job, &worker)?;
+        super::super::receipt_timing::completed_fit(journal, &job, &worker)?;
         let output =
             optimize_fit::checked_output(&job, &worker, &frozen.candidate.recipe, request.seed)?;
-        let score = super::score::score_predictions(
+        let score = super::super::score::score_predictions(
             request.task,
             &request.classes,
             &adapter.folds[request.fold as usize].labels,
@@ -257,7 +257,7 @@ pub(super) fn admit_one(
         },
         evaluator: Evaluator {
             sha256: comparison.evaluator_sha256.clone(),
-            version: super::EVALUATOR.into(),
+            version: super::super::EVALUATOR.into(),
         },
         benchmark_valid: false,
         sealed: false,

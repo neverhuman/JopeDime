@@ -73,7 +73,7 @@ pub(super) fn verify_search(
                         vocabulary: &vocabulary,
                         task: dataset.dataset.task,
                     };
-                    super::experimental_proposal::verify_report(
+                    super::super::experimental_proposal::verify_report(
                         config,
                         &input,
                         search,
@@ -122,7 +122,7 @@ pub(super) fn verify_search(
         "teaching configuration is missing an admission or explicit failure"
     );
     if let Some(file) = &search.teaching_admission {
-        super::teaching::verify_admission(plan, config, dataset, search, journal, file)?;
+        super::super::teaching::verify_admission(plan, config, dataset, search, journal, file)?;
     }
     Ok(())
 }
@@ -136,7 +136,7 @@ fn verify_receipt(
     receipt.validate_population(plan)?;
     ensure!(
         receipt.deadline_unix_ms
-            == super::receipt_timing::arm_deadline(
+            == super::super::receipt_timing::arm_deadline(
                 journal,
                 &receipt.arm,
                 &plan.selection.outer().experiment_sha256
@@ -224,7 +224,7 @@ fn verify_producer(journal: &Path, search: &DatasetSearch, receipt: &SearchRecei
         digest(outcome)? == digest(&original)?,
         "proposal execution receipt changed"
     );
-    super::receipt_timing::completed_fit(journal, &job, outcome)?;
+    super::super::receipt_timing::completed_fit(journal, &job, outcome)?;
     outcome.verify_outputs()?;
     let output = outcome
         .outputs

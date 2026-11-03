@@ -64,7 +64,7 @@ impl ExperimentalConfiguration {
             a.verify()?;
         }
         source_manifest.verify()?;
-        let build: super::worker_build::BuildReceipt =
+        let build: super::super::worker_build::BuildReceipt =
             experimental_producer::read(&self.canonicalizer_build)?;
         ensure!(
             build.schema == "jope.asm-cargo-build/v1"

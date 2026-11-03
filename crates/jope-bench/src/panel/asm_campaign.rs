@@ -400,7 +400,6 @@ use verification::verify_search;
 
 mod accounting;
 pub use accounting::accounting;
-use accounting::accounting_for_experiment;
 
 #[cfg(test)]
 mod accounting_tests;
