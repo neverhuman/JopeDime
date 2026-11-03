@@ -1,5 +1,8 @@
 use super::render::Py;
+use super::stage::stage_state;
 use feat_math::heads::FittedHead;
+use feat_math::model::Model;
+use feat_math::ops::FittedOp;
 use feat_math::spec::PlannedHead;
 
 /// The state the recipe's head `*_predict` reads, after checking it against the planned head.
