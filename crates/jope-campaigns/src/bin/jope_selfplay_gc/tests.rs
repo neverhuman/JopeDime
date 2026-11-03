@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::super::*;
 
     #[test]
     fn gate_requires_prefix_and_sanity() {
