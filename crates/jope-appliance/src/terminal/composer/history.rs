@@ -1,4 +1,5 @@
 use super::*;
+use super::behavior::acquire_history_lock;
 
 /// JSONL strings retain multiline entries. The client supplies the canonical
 /// home path; this component does not guess a second home-resolution policy.

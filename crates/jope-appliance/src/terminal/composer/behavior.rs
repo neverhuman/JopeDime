@@ -426,7 +426,7 @@ fn token_range(text: &str, cursor: usize) -> std::ops::Range<usize> {
 /// thread forks can briefly hold a duplicate of the lock descriptor until it execs, which
 /// `flock` reports as contention; retry for a bounded time so that is not mistaken for a
 /// concurrent writer.
-fn acquire_history_lock(lock: &File) -> io::Result<()> {
+pub(super) fn acquire_history_lock(lock: &File) -> io::Result<()> {
     use std::time::{Duration, Instant};
     let deadline = Instant::now() + Duration::from_millis(250);
     loop {
