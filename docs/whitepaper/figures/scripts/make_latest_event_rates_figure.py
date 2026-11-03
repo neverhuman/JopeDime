@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot operating quantities from separately retained windows."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 
 import csv
 import hashlib
@@ -147,6 +148,7 @@ def main():
         )
     ax0.set_xlim(0, max(float(r["events_per_hour"]) for r in facts) * 1.35)
     fig.tight_layout(pad=0.45, w_pad=0.8)
+    style_figure(fig, OUTPUT)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     PROVENANCE.write_text(
@@ -217,6 +219,7 @@ def make_round_clock():
         ax.grid(axis="y", alpha=0.2)
         ax.set_axisbelow(True)
     fig.tight_layout(pad=0.6, w_pad=1.4)
+    style_figure(fig, output)
     fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     facts = dict(
@@ -314,6 +317,7 @@ def make_current_program_clock():
     ax.set_axisbelow(True)
     ax.legend(loc="upper center", fontsize=6.3, frameon=False)
     fig.tight_layout(pad=0.45)
+    style_figure(fig, output)
     fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     facts = dict(
@@ -352,3 +356,5 @@ if __name__ == "__main__":
         make_round_clock()
     else:
         main()
+
+finalize_typography_receipts(__file__)

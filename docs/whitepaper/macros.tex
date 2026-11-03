@@ -135,3 +135,10 @@
     \expandafter\fb@flushstep
   \fi}
 \makeatother
+% A long algorithm statement wraps ragged-right under its own first word, with its
+% comment on the first line, instead of a justified line that restarts at the left edge.
+\makeatletter
+\newlength{\ls@cw}
+\newcommand{\LongState}[2]{\settowidth{\ls@cw}{\hspace{1.5em}\algorithmiccomment{#2}}%
+  \State\parbox[t]{\dimexpr\linewidth-\ALG@thistlm-\ls@cw\relax}{\raggedright\strut #1\strut}\Comment{#2}}
+\makeatother

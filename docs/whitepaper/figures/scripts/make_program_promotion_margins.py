@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Plot all recorded program-promotion margins in one frozen journal window."""
 from __future__ import annotations
+from flywheel_typography import style_figure, finalize_typography_receipts
 
 import argparse
 import csv
@@ -70,6 +71,7 @@ def main() -> None:
     ax.set_axisbelow(True)
     fixed = datetime(2026, 11, 3, tzinfo=timezone.utc)
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    style_figure(fig, args.output)
     fig.savefig(args.output, metadata={"Title": "Training-program promotion margins", "Author": "",
                 "Subject": "Conditional admitted-program engineering telemetry", "CreationDate": fixed, "ModDate": fixed})
     plt.close(fig)
@@ -92,3 +94,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+finalize_typography_receipts(__file__)

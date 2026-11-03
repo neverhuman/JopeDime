@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema",
+    "status",
+    "verdict",
+    "neural_updates"
+  ],
+  "properties": {
+    "schema": {
+      "const": "jope.h280.metrics/v1"
+    },
+    "status": {
+      "enum": [
+        "PREREGISTERED",
+        "COMPLETE",
+        "INCOMPLETE"
+      ]
+    },
+    "neural_updates": {
+      "const": 0
+    },
+    "verdict": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

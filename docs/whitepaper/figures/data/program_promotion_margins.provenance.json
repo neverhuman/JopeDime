@@ -2,8 +2,8 @@
   "schema": "whitepaper.program-promotion-margins-figure/v1",
   "input_csv_sha256": "cb477058ca7d41d1a44ede9778ce74c03f990fd35bcb18e21d9f77b96bbcc888",
   "source_receipt_sha256": "f19535c8b5870d0e001e5207177eed77b3af6e0d08127b7a4990a28e407f7e66",
-  "generator_sha256": "3f487a4330ff348357cc7aa953181deba2e57ee270137388083652e7e02828f8",
-  "figure_sha256": "0f4b184a873f15d3d56c9e39dae79b2befd21bc91087392f1548d991baa48fca",
+  "generator_sha256": "19d86efd03fa6490641dde5ef8fbcdd518d4b32e2509977fd19c83026e8a7b41",
+  "figure_sha256": "73ff36b49008bf65d612bc9c1d16a9c7ff86c835aed1aa3b22e19d5bc0737ba8",
   "source_window_sha256": "966a3237d0df1211da4302a6845032e728a2f8154d263d056fcfa1168e6d5237",
   "rows": 101,
   "plotted_points": 101,
@@ -22,10 +22,23 @@
   "font_family": "Liberation Serif",
   "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
   "figure_inches": [
-    3.25,
-    2.05
+    3.375,
+    2.128846153846154
   ],
-  "minimum_text_size_pt": 8.5,
+  "minimum_text_size_pt": 7.0,
   "fixed_canvas_no_tight_crop": true,
-  "reproduce": "python3 figures/scripts/make_program_promotion_margins.py"
+  "reproduce": "python3 figures/scripts/make_program_promotion_margins.py",
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      3.375,
+      2.128846153846154
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
+  }
 }

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Replay retained adapter utility and completed-round throughput; import with --logs DIR."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 
 import argparse
 import csv
@@ -236,6 +237,7 @@ else:
                ncol=2, frameon=False, fontsize=8.5, handlelength=1.4,
                borderaxespad=0.25)
     fig.tight_layout(pad=0.5, w_pad=1.1, rect=(0, 0, 1, 0.83))
+style_figure(fig, OUTPUT)
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 provenance.update(
@@ -261,3 +263,5 @@ PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 print(
     f"{len(rows)} retained rounds; throughput agrees with the logged count/time ratio"
 )
+
+finalize_typography_receipts(__file__)

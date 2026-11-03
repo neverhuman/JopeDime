@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Plot all recorded utility gains in a fixed training-program journal window."""
 from __future__ import annotations
+from flywheel_typography import style_figure, finalize_typography_receipts
 import argparse
 import csv
 from datetime import datetime, timezone
@@ -67,6 +68,7 @@ def main():
         a.set_axisbelow(True)
     fixed = datetime(2026, 11, 3, tzinfo=timezone.utc)
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    style_figure(fig, args.output)
     fig.savefig(args.output, metadata={"Title": "Recent training-program journal gains", "Author": "",
                 "Subject": "Conditional two-fold program-incumbent utility differences", "CreationDate": fixed, "ModDate": fixed})
     plt.close(fig)
@@ -84,3 +86,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+finalize_typography_receipts(__file__)

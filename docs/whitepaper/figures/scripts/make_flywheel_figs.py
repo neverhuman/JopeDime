@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build vector PDF figures from the derived flywheel CSVs in ../data.
 Usage: python3 make_flywheel_figs.py   (run from any dir)"""
+from flywheel_typography import style_figure, finalize_typography_receipts
 import argparse
 import csv
 import hashlib
@@ -105,6 +106,7 @@ def admission_shortfall():
             ha="right", fontsize=7.2)
     fig.tight_layout(pad=0.4)
     output = f"{FIGURES_DIR}/fig_fw_admission_shortfall.pdf"
+    style_figure(fig, output)
     fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     hashes = {}
@@ -159,6 +161,7 @@ ax.legend(frameon=True, facecolor="white", framealpha=0.85, edgecolor="none",
           loc="lower right", handletextpad=0.3, borderpad=0.25)
 fig.tight_layout(pad=0.4)
 figure_path = f"{FIGURES_DIR}/fig_fw_validation.pdf"
+style_figure(fig, figure_path)
 fig.savefig(figure_path, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 with open(__file__, "rb") as fh:
@@ -234,6 +237,7 @@ axR.legend(frameon=True, facecolor="white", framealpha=0.85, edgecolor="none",
            loc="center right", bbox_to_anchor=(1.0, 0.35), handletextpad=0.3, borderpad=0.25)
 fig.supxlabel("round (25 retained summary rounds; 1346–1448 not retained)", fontsize=7.5, y=0.02)
 fig.subplots_adjust(left=0.16, right=0.98, bottom=0.20, top=0.96, wspace=0.08)
+style_figure(fig, f"{FIGURES_DIR}/fig_fw_train_val.pdf")
 fig.savefig(f"{FIGURES_DIR}/fig_fw_train_val.pdf", metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 
@@ -306,6 +310,9 @@ plot_compressed_series(axs[3], R, "promotions_per_hr", "#5f3dc4", "promotions / 
                        title="Promotion rate")
 
 fig.tight_layout(pad=0.35, w_pad=0.45)
+style_figure(fig, f"{FIGURES_DIR}/fig_fw_telemetry.pdf")
 fig.savefig(f"{FIGURES_DIR}/fig_fw_telemetry.pdf", metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 print("ok")
+
+finalize_typography_receipts(__file__)
