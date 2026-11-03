@@ -1,3 +1,4 @@
+use crate::progress::inventory::{FailureClass, Fraction};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
