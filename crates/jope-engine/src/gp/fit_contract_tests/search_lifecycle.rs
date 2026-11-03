@@ -240,7 +240,7 @@ pub(crate) fn an_evaluator_allocation_failure_is_a_contained_failed_row() {
 
 /// A completed three-candidate search whose seed population leads with two
 /// fittable programs and one deterministic fit failure.
-pub(crate) fn handoff_search(
+pub(super) fn handoff_search(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
@@ -264,7 +264,7 @@ pub(crate) fn handoff_search(
 }
 
 /// The cycle pipeline's handoff, run as a configured client.
-pub(crate) fn export_selected(
+pub(super) fn export_selected(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
