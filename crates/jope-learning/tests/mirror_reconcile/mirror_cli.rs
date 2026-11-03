@@ -38,7 +38,7 @@ fn ingest(state: &Path, store: Option<&str>, dir: &Path, bundle: &str) -> Run {
 }
 
 /// Every file under `root`, as paths relative to it.
-fn tree(root: &Path) -> BTreeSet<String> {
+pub(super) fn tree(root: &Path) -> BTreeSet<String> {
     walkdir::WalkDir::new(root)
         .into_iter()
         .filter_map(|e| e.ok())
