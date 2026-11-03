@@ -155,7 +155,7 @@ mod tests {
 
     #[test]
     fn node_policy_reserves_four_gpu_only_companion_cores() {
-        let policy = include_str!("../../manifests/selfplay/scq-nodes.v3.toml");
+        let policy = include_str!("../../../manifests/selfplay/scq-nodes.v3.toml");
         let assignment = |section: &str, key: &str| {
             section
                 .lines()
