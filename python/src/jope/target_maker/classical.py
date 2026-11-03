@@ -3,13 +3,15 @@ from __future__ import annotations
 import json
 import math
 import time
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
 
 from .artifact_pins import artifact_sha256, load_joblib_pinned
+from .classical_summary import _safe_div
+from .classical_summary import summarize_target_window as summarize_target_window
 from .data import (
     TASK_BINARY,
     TASK_NAMES,
@@ -90,21 +92,6 @@ class WeightedScoreEnsemble:
             score += float(weight) * _score_model(model, x)
         score = np.clip(score, 0.0, 1.0)
         return np.column_stack([1.0 - score, score])
-
-
-from .classical_summary import (
-    _entropy,
-    _finite_unit_interval,
-    _gini,
-    _pairwise_mean_abs,
-    _safe_div,
-    _theil,
-    _trimmed_mean,
-    _uniform_distances,
-    _winsorized_mean,
-    summarize_target_window,
-)
-
 
 
 def _limit_records(
