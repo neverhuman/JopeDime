@@ -225,8 +225,6 @@ pub use probe::{
 };
 pub use proposal::{propose, propose_with_generation, ProposalOptions};
 pub(crate) use training::train_controlled;
-use training_rank::{training_step_window, verify_training_rank};
-
 #[cfg(test)]
 #[path = "controller/campaign_deadline_tests.rs"]
 mod campaign_deadline_tests;
