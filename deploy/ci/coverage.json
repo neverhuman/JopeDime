@@ -6862,6 +6862,16 @@
       "lanes": [],
       "scope": "H241 data-free controls: frozen arms/alphas/directions/fixed grid points, alpha=0 bit-exact r882, extrapolation formula in float64 and L2 = alpha*||r882 - r_prev||, refusal of negative alpha/mismatched/nonfinite tensors, non-adapter identity check, strict alpha selector (ties and noise keep r882, smallest tied alpha), fresh per-seed family folds and FIT/ASSESS disjointness, fold manifest, zero-gain never advances and the four-gate advance rule (+0.002 margin, LCB95, Holm m=2, >=2/3 seeds), harm families and plateau gap, fixed-point readout, Holm, launch binding, H239 A1 memory guard (pause <20, resume >=25 sustained 30s, hard <12 sustained 30s or <6), load pause/admission and the 07:00Z compute stop, manifest pins of r882/r782/r859."
     },
+    "python:research/flywheel_selfplay/h242_laser/test_h242.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H242 data-free controls: frozen arms/rhos/seeds, energy kept-rank rule, rank-k truncation optimality and full-rank bit-exactness, only 2-D matrices touched, matched-Frobenius seeded placebo, spectral census and LASER_SINGLE candidates, frozen spectral_inventory.json (16 matrices, 3 rank-1, 13 candidates), strict selector (ties and noise keep r882, smallest perturbation on ties), fresh per-seed family folds and fold manifest, four-gate advance rule with Holm over SVD_SELECT and LASER_SINGLE only (placebo never advances), harm/plateau/fixed readouts, launch binding, H239 A1 memory guard and 07:30Z compute stop, manifest pins."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"

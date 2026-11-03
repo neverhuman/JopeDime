@@ -461,6 +461,10 @@
       "reason": "Owner-requested H241 data-free controls for zero-update adapter extrapolation along the accepted trajectory (alpha=0 bit-exactness, extrapolation formula and distance, strict alpha selector, per-seed folds, four-gate advance rule with Holm m=2 and +0.002 margin, harm/plateau readouts, H239 A1 memory guard, manifest pins).",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h242_laser/test_h242.py": {
+      "reason": "Owner-requested H242 data-free controls for zero-update LASER-style spectral rank reduction of the r882 adapter (energy rank rule, truncation and placebo, frozen spectral census, strict selector, per-seed folds, four-gate advance rule with Holm m=2 and +0.002 margin, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [

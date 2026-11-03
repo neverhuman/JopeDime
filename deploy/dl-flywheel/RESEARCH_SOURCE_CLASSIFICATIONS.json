@@ -6421,6 +6421,38 @@
         "role": "research"
       },
       "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b"
+    },
+    "python:research/flywheel_selfplay/h242_laser/analysis.py": {
+      "bytes": 8636,
+      "sha256": "d8ce21a5be24988c7193dde1c6607f1a16cd8c9885424eb755bb0b0267f8da05",
+      "classification": {
+        "role": "research",
+        "reason": "H242 preregistered CPU-only diagnostic: zero-update LASER-style spectral rank reduction of the r882 adapter (Sharma et al. 2023): every 2-D adapter weight matrix (16, frozen in spectral_inventory.json) replaced by its top-k float64 SVD reconstruction keeping energy fraction rho of sum sigma^2; SVD_SELECT (rho in .99/.95/.90 chosen per FIT cell) primary and LASER_SINGLE (one matrix at rho .90) exploratory, Holm m=2; RANDPROJ matched-Frobenius random-direction placebo report-only; CONTROL rho=1 is r882 bit-exact; DOPE c51a56d0 frozen; fresh folds 242141-242143, strict selector locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h242_laser/monitor.py": {
+      "bytes": 8541,
+      "sha256": "a4b5b9d1a874f8e78c898750008836d5502892b95f3931418d3b094ff3e6edb0",
+      "classification": {
+        "role": "research",
+        "reason": "H242 preregistered CPU-only diagnostic: zero-update LASER-style spectral rank reduction of the r882 adapter (Sharma et al. 2023): every 2-D adapter weight matrix (16, frozen in spectral_inventory.json) replaced by its top-k float64 SVD reconstruction keeping energy fraction rho of sum sigma^2; SVD_SELECT (rho in .99/.95/.90 chosen per FIT cell) primary and LASER_SINGLE (one matrix at rho .90) exploratory, Holm m=2; RANDPROJ matched-Frobenius random-direction placebo report-only; CONTROL rho=1 is r882 bit-exact; DOPE c51a56d0 frozen; fresh folds 242141-242143, strict selector locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h242_laser/runner.py": {
+      "bytes": 28190,
+      "sha256": "e517729aaa355cb2654d7d32b4ac452642586c4b82458fa534199c7ab8db6352",
+      "classification": {
+        "role": "research",
+        "reason": "H242 preregistered CPU-only diagnostic: zero-update LASER-style spectral rank reduction of the r882 adapter (Sharma et al. 2023): every 2-D adapter weight matrix (16, frozen in spectral_inventory.json) replaced by its top-k float64 SVD reconstruction keeping energy fraction rho of sum sigma^2; SVD_SELECT (rho in .99/.95/.90 chosen per FIT cell) primary and LASER_SINGLE (one matrix at rho .90) exploratory, Holm m=2; RANDPROJ matched-Frobenius random-direction placebo report-only; CONTROL rho=1 is r882 bit-exact; DOPE c51a56d0 frozen; fresh folds 242141-242143, strict selector locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h242_laser/spectral.py": {
+      "bytes": 5065,
+      "sha256": "c942e3bc5d75e4a38915202512838ff685c3aa0bb1971d86d850d1839a28c3fd",
+      "classification": {
+        "role": "research",
+        "reason": "H242 preregistered CPU-only diagnostic: zero-update LASER-style spectral rank reduction of the r882 adapter (Sharma et al. 2023): every 2-D adapter weight matrix (16, frozen in spectral_inventory.json) replaced by its top-k float64 SVD reconstruction keeping energy fraction rho of sum sigma^2; SVD_SELECT (rho in .99/.95/.90 chosen per FIT cell) primary and LASER_SINGLE (one matrix at rho .90) exploratory, Holm m=2; RANDPROJ matched-Frobenius random-direction placebo report-only; CONTROL rho=1 is r882 bit-exact; DOPE c51a56d0 frozen; fresh folds 242141-242143, strict selector locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
