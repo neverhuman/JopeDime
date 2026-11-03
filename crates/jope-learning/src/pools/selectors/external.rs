@@ -117,7 +117,7 @@ pub struct ExternalProgramPrior {
 }
 
 impl ExternalProgramPrior {
-    fn restrict_to(&self, train: &[&Pool]) -> Result<Self> {
+    pub(super) fn restrict_to(&self, train: &[&Pool]) -> Result<Self> {
         let mut total: BTreeMap<String, (f64, usize)> = BTreeMap::new();
         for ((_, program), &(sum, count)) in &self.parent_stats {
             ensure!(
