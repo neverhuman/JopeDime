@@ -155,8 +155,8 @@ Controller rasterized the entire Rust files via `code_pages.make_pages` and wrot
 Run from the worktree; prefix shell commands with `rtk`. Root owns the single native build lane; other agents do not launch competing Cargo builds.
 
 ```sh
-rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only RUSTC=/Users/bentaylor/.rustup/toolchains/1.97.1-aarch64-apple-darwin/bin/rustc /Users/bentaylor/.rustup/toolchains/1.97.1-aarch64-apple-darwin/bin/cargo build --locked --release -j4 -p jope-service --features visual-trace --example visual_fit_dsl
-rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only RUSTC=/Users/bentaylor/.rustup/toolchains/1.97.1-aarch64-apple-darwin/bin/rustc /Users/bentaylor/.rustup/toolchains/1.97.1-aarch64-apple-darwin/bin/cargo test --locked -j4 -p jope-service --features visual-trace --example visual_fit_dsl
+rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_TARGET_DIR=/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/target RUSTC=/Users/bentaylor/.rustup/toolchains/1.97.1-aarch64-apple-darwin/bin/rustc /Users/bentaylor/.rustup/toolchains/1.97.1-aarch64-apple-darwin/bin/cargo build --locked --release -j4 -p jope-service --features visual-trace --example visual_fit_dsl
+rtk proxy env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only CARGO_TARGET_DIR=/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/target RUSTC=/Users/bentaylor/.rustup/toolchains/1.97.1-aarch64-apple-darwin/bin/rustc /Users/bentaylor/.rustup/toolchains/1.97.1-aarch64-apple-darwin/bin/cargo test --locked -j4 -p jope-service --features visual-trace --example visual_fit_dsl
 rtk proxy env OPENBLAS_NUM_THREADS=1 python3 tools/visualization/h256_stage2_validate.py /Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/capture-stage2-six-final/trace.json --receipt /ABS/NEW/neural-validation.receipt.json
 ```
 
