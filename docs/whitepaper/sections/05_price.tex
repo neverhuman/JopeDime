@@ -64,12 +64,12 @@ The pilot funnel planned for \cref{sec:results} (\cref{fig:price}, panel~a) trac
 those stages and the compute spent before each failed attempt stops.
 
 If 90\% of attempts fail to improve the incumbent, the independent-try
-model requires ten attempts per improvement in expectation. A typed language
-can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
-resource and output failures can occur after fitting has begun. The pilot
-must measure whether also-rans
+model requires ten attempts per improvement in expectation. Although a typed language
+can exclude invalid structures before fitting (\cref{sec:game}), runtime,
+resource and output failures can still occur after fitting has begun, so the pilot
+must measure whether valid also-rans
 dominate. The matched writer comparison in \cref{sub:results-learning}
-holds the budget, incumbent and referee fixed.
+holds the deployment budget, incumbent and referee fixed.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
@@ -138,9 +138,9 @@ Report empirical attempt curves for adaptive or correlated proposals.
 and AlphaZero played 44 million games of chess in about nine hours
 \citep{silver2018general}. An illustrative grid of \num{10000}
 problems, 100 rounds and 8 attempts per problem per round gives 8 million
-attempts, the same order.
-The grid counts attempts. Transfer still requires evidence across
-independent problem families; pilot learning curves support claims only
+attempts, the same order of magnitude.
+That grid counts raw attempts: transfer still requires evidence across
+independent problem families, and pilot learning curves support claims only
 within their measured range.
 
 \textbf{Precision to plan the test:} illustratively, 150 independent
@@ -152,12 +152,12 @@ families, rather than treating every dataset as an independent observation.
 
 Turning the per-token scaling comparisons of \cref{sub:price-tax} into a
 hardware bill requires accounting for resident model memory alongside active
-compute. Mixture-of-experts writers use compute on active parameters but need memory
+compute. Mixture-of-experts writers spend compute on active parameters but require memory
 for all parameters: Kimi~K2 has 32B active of 1T, while DeepSeek-V3 has 37B
 active of 671B \citep{kimiteam2025k2,deepseekv3}. Resident one-byte weights
 for 1T parameters alone require at least 13 H100 SXM GPUs with 80\,GB each
-\citep{nvidia2026h100}; runtime state needs additional memory. This memory
-floor is separate from the full cost projection discussed next.
+\citep{nvidia2026h100}, and runtime state needs additional capacity. This hardware memory
+floor is separate from the full run-cost projection discussed next.
 
 A reproducible projection therefore needs a pinned model and hardware
 configuration, dated prices, measured or justified utilization and an

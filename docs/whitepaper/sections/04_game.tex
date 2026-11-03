@@ -10,10 +10,8 @@
   \centering
   \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Reference training searches many moves; game-day evaluation commits one.}
-  The training loop (\cref{sub:method-selfplay}) is separate from the adapter
-  record in \cref{sec:method-status}. Blue: game day (\searchone{}); dashed box:
-  proposed training.
-  Valid scored programs enter learning lists; failed attempts consume budget.}
+  In the top band (blue, \searchone{}), the frozen encoder reads board $p$ and the writer $\writer$ commits one move $w$ with no retry or repair.
+  In the lower dashed box (proposed training, \cref{sub:method-selfplay}; separate from the adapter record in \cref{sec:method-status}), valid scored moves join $G_p$ while failed attempts consume budget.}
   \label{fig:game-loop}
 \end{figure*}
 
@@ -34,12 +32,12 @@ because it is ``sharply defined both in allowed operations (the moves) and in
 the ultimate goal (checkmate)'' \citep{shannon1950chess}, and checkers showed
 that a program could improve by playing itself \citep{samuel1959checkers}.
 
-Together these properties support repeated, reproducible evaluation. People
+Together, these four properties support repeated, reproducible evaluation. People
 scale judgment the same way, through prizes, leaderboards and the common task
 framework's ``scoring referee'' \citep{donoho2017fifty} (\cref{sec:road}).
-Invention has the first three properties once the problem and the solution are
-written down, within the limits of \cref{sub:game-played}; cheap replay is a
-question of cost (\cref{sec:price}).
+Invention shares the first three properties once the problem and solution are
+specified, within the limits of \cref{sub:game-played}; whether replay becomes cheap is a
+question of evaluation cost (\cref{sec:price}).
 
 % ----------------------------------------------------------------------------
 \subsection{The rules}\label{sub:game-rules}
@@ -99,8 +97,8 @@ changing comparison standard as verified programs displace it. The asymmetry is 
 moves: Go offers about 250 legal moves per turn over about 150 turns, each free
 to check \citep{silver2016mastering}, while this game offers one move, costly to
 judge. Under a single-candidate budget, the chance $\winprob$ of a win matters
-directly (\cref{eq:taste}). Whether training raises that chance on new
-families is the test in \cref{sec:results}.
+directly (\cref{eq:taste}). Whether training raises that win probability on unseen
+problem families is the empirical test in \cref{sec:results}.
 
 % ----------------------------------------------------------------------------
 \subsection{The board and the move}\label{sub:game-board}
@@ -121,9 +119,9 @@ information and have a measured cost. These are requirements to test, not
 properties guaranteed by naming an encoder. People still choose the problem
 and define what counts as a useful solution.
 
-A move is one program in a typed language over learning primitives.
-A task-specific grammar restricts legal moves; \cref{sub:method-move}
-specifies the reference vocabulary and composition limits.
+A move is one complete program written in a typed language over learning primitives.
+A task-specific grammar restricts legal moves, and \cref{sub:method-move}
+specifies the reference operator vocabulary and composition limits.
 
 Types remove whole classes of stillborn
 programs before they run \citep{montana1995stgp}. Canonicalization can merge
