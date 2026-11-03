@@ -4,14 +4,13 @@ network parameter, then enables updates only for non-anchor cost-adapter
 parameters (its parent-delta head receives no loss gradient). This loop
 has no neural program writer; its cost adapter is separate from the
 reference writer and ranking map. Its pool-utility calculation uses the
-recorded scores and gate outcomes of the first four candidates as revealed
-history, then selects the lowest predicted cost from the pool, including
-those entries. Training puts the lowest recorded scores first in its
-slates; utility evaluation uses stored pool order, so the calls can reveal
-different examples. For new proposals, the caller rotates same-context
-mutation parents from its bank. Scoring reveals the first four stored pool
-entries; optional exploration pairs the two lowest-cost picks with up to
-two random remaining draws.
+recorded scores and gate outcomes of the first four stored pool entries as
+revealed history, then selects the lowest predicted cost from the pool,
+including those entries. Training puts the lowest recorded scores first in
+its slates; utility evaluation uses stored pool order, so the calls can
+reveal different examples. For new proposals, the caller rotates
+same-context mutation parents from its bank; optional exploration pairs the
+two lowest-cost picks with up to two random remaining draws.
 
 At the adapter interface, the caller supplies modality tokens and their
 mask. It separately zeros the 584-entry context-feature slot and both
