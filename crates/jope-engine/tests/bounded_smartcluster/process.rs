@@ -51,6 +51,7 @@ impl Scqd {
         fs::create_dir_all(dir.join("run")).unwrap();
         let binary = scqd_binary();
         let uid = unsafe { libc::geteuid() };
+        let gid = unsafe { libc::getegid() };
         let socket = dir.join("run/scqd.sock");
         let config = format!(
             r#"socket_path = "{socket}"
@@ -82,6 +83,8 @@ jain_worker = "{scqd}"
 checkpoint_timeout_ms = 200
 terminate_grace_ms = 1000
 kill_grace_ms = 500
+worker_uid = {uid}
+worker_gid = {gid}
 "#,
             socket = socket.display(),
             dir = dir.display(),
