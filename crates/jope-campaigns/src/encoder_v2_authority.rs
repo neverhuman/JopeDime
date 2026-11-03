@@ -14,17 +14,17 @@ pub const LIFT_EXPERIMENT_SCHEMA: &str = "JopeEncoderLiftExperiment.v2";
 pub const LIFT_REPORT_SCHEMA: &str = "JopeEncoderLiftReport.v2";
 pub const COHORT_SEED: u64 = 20_260_806;
 
+mod lift;
 #[path = "encoder_v2_authority/metrics.rs"]
 mod metrics;
-mod lift;
 mod optional;
 
-pub use metrics::{
-    BenchmarkDataset, BenchmarkLaneMetrics, EncoderBenchmarkPlanV2, EncoderBenchmarkReportV2,
-};
 pub use lift::{
     eight_slot_sampling_weights, EncoderLiftExperimentV2, EncoderLiftReportV2, LiftPanelDataset,
     LiftTaskResult, SamplingWeight,
+};
+pub use metrics::{
+    BenchmarkDataset, BenchmarkLaneMetrics, EncoderBenchmarkPlanV2, EncoderBenchmarkReportV2,
 };
 pub use optional::{
     OptionalTaskEvidenceRow, OptionalTaskEvidenceV1, OptionalTaskReadinessV2, OptionalTaskRow,
