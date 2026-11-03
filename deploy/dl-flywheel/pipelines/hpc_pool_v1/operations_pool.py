@@ -193,7 +193,7 @@ def validate_parent(m, p, template):
          old_inputs==('74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77',7575) and
          current_inputs==('0a1932057231c93e912f195323af7e8f9fd31f2182d26b68519e413b2123badb',776) and
          shared_inputs==('74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77',7575),
-         'exact native-input extraction; all other parent worker sources byte unchanged')
+         'exact native-input extraction from 34 parent sources; all others byte unchanged')
     guard=parent_guard(m,p);units=[]
     for i,w in enumerate(old['workers']):
         need(set(w)=={'index','unit','config'} and w['index']==i and w['unit']==parent['unit_prefix']+'-worker'+str(i) and
