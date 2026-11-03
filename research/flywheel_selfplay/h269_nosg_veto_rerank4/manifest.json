@@ -1,0 +1,41 @@
+{
+  "boot_seed": 269150,
+  "created_utc": "2026-11-03T18:41:39Z",
+  "file_checksums_sha256": {
+    "PREREG.md": "5bca13751b5c3f90ba26caec9d0c23922dc9a16ef69de021d0d610ba5a70e9ac",
+    "README.md": "9441940233ea46050ad2d6e040d87ca80267fe3bee34c90a428edcc048b9d591",
+    "fold_manifest.json": "e6267c4b85fd1c22b80a4e3952ca26cffa397826acbf2623d68a0a1f9ca0e97c",
+    "metrics.json": "68b963864538dac0a61036c5a44c93ffe041c22a2717e15e86beb47f2d301733",
+    "monitor.py": "e75f02b80c1421f0a1f7f85797ac7f50e7203a7a4e6345971956dcfd7cccefba",
+    "runner.py": "a3cf03dffffe56003fcd98653f3b8113ec8674b64dfca8a4d90dcace73f4f676",
+    "test_h269.py": "5d025f87eb4c33a7276a21e5cce4d39bc3ebc8d30c6d75389b80d4fd42f7df58"
+  },
+  "fold_seeds": [
+    269140,
+    269141,
+    269142
+  ],
+  "holm_m": 3,
+  "input_checksums_sha256": {
+    "context_features_npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "dope_backbone": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "pool_priors_npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe",
+    "r882_ckpt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "model_seeds": [
+    269101,
+    269102,
+    269103
+  ],
+  "outcomes_read": 0,
+  "owner": "Argon",
+  "schema": "jope.h269.manifest/v1",
+  "status": "PREREGISTERED",
+  "study_path": "research/flywheel_selfplay/h269_nosg_veto_rerank4",
+  "verdict": null,
+  "wave": "H269",
+  "wave_id": "h269-nosg-veto-rerank4-20261103",
+  "winning_arm": null
+}

@@ -1,0 +1,22 @@
+{
+  "boot_seed": 269150,
+  "created_utc": "2026-11-03T18:41:06Z",
+  "fold_seeds": [
+    269140,
+    269141,
+    269142
+  ],
+  "holm_m": 3,
+  "model_seeds": [
+    269101,
+    269102,
+    269103
+  ],
+  "outcomes_read": 0,
+  "schema": "jope.h269.metrics/v1",
+  "status": "PREREGISTERED",
+  "study_path": "research/flywheel_selfplay/h269_nosg_veto_rerank4",
+  "verdict": null,
+  "wave_id": "h269-nosg-veto-rerank4-20261103",
+  "winning_arm": null
+}
