@@ -28,7 +28,7 @@ impl EncodingChunkV2 {
             "encoding chunk schema is not v2"
         );
         ensure!(
-            !self.datasets.is_empty() && self.datasets.len() <= super::ENCODING_CHUNK_SIZE,
+            !self.datasets.is_empty() && self.datasets.len() <= super::super::ENCODING_CHUNK_SIZE,
             "encoding chunk must contain 1..=256 datasets"
         );
         ensure!(self.attempt_number > 0, "encoding attempt number is zero");

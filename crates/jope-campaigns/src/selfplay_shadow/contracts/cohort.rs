@@ -49,7 +49,7 @@ impl CohortProposalPointerV1 {
         ensure!(
             self.task_scopes
                 .iter()
-                .all(|scope| scope.context_count == super::DATASETS_PER_COHORT),
+                .all(|scope| scope.context_count == super::super::DATASETS_PER_COHORT),
             "each proposal task scope must contain exactly 64 contexts"
         );
         if self.task_scopes.len() == 2 {
