@@ -244,7 +244,7 @@ pub(super) fn run_dataset(
         }
         let bytes = canonical_json(&checkpoint)?;
         let sha256 = sha256_bytes(&bytes);
-        immutable_write(&checkpoint_path(&root, generation), &bytes)?;
+        immutable_write(&super::campaign::checkpoint_path(&root, generation), &bytes)?;
         generation_progress(
             &spec.dataset_hash,
             &checkpoint,
