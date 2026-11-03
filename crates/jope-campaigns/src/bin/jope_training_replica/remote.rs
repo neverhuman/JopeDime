@@ -158,7 +158,7 @@ pub(super) struct RemoteObjects {
 }
 
 impl RemoteObjects {
-    fn all(&self) -> BTreeSet<String> {
+    pub(super) fn all(&self) -> BTreeSet<String> {
         self.verified.union(&self.corrupt).cloned().collect()
     }
 }
