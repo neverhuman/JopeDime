@@ -1,5 +1,4 @@
 use anyhow::{anyhow, bail, Context, Result};
-use serde_json::Value;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
