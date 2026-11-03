@@ -32,7 +32,7 @@ impl<'a> BinaryFoldCache<'a> {
         }
     }
 
-    pub(super) fn fold(
+    fn fold(
         &self,
         fold_plan_folds: usize,
         fold: usize,
