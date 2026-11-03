@@ -129,7 +129,7 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
     })
 }
 
-pub(super) fn numeric_rows<B: AsRef<[u8]>>(
+pub(in crate::discover::r#loop) fn numeric_rows<B: AsRef<[u8]>>(
     matrix: &Matrix<B>,
     target: &str,
     features: &[String],
