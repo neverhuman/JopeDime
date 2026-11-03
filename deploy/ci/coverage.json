@@ -6810,7 +6810,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only); preregistered unit tests, family folds and bootstrap verification with strict advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
+      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only); preregistered unit tests, family folds and bootstrap verification with strict advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
     },
     "python:research/flywheel_selfplay/h234_lambdaloss/test_h234.py": {
       "discovery": {
@@ -15835,6 +15835,16 @@
       ],
       "lanes": [],
       "scope": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/test_h240.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
     }
   },
   "lanes": {

@@ -1,37 +1,37 @@
 {
   "items": {
     "python:research/flywheel_selfplay/h239_subset/analysis.py": {
-        "bytes": 10524,
-        "sha256": "c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc",
-        "classification": {
-          "role": "research",
-          "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h239_subset/treatment.py": {
-        "bytes": 4306,
-        "sha256": "97045ebc9673a83c7b58e916862ae7ca4bd06b5508499a19888ae5a8f96ca4b7",
-        "classification": {
-          "role": "research",
-          "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h239_subset/runner.py": {
-        "bytes": 39262,
-        "sha256": "855f1b66eedfcc4dd3edf39b6700bc7a968e58de35bf1221f5ce3b763d37004b",
-        "classification": {
-          "role": "research",
-          "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h239_subset/monitor.py": {
-        "bytes": 7944,
-        "sha256": "5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a",
-        "classification": {
-          "role": "research",
-          "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
-        }
-      },
+      "bytes": 10524,
+      "sha256": "c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc",
+      "classification": {
+        "role": "research",
+        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h239_subset/treatment.py": {
+      "bytes": 4306,
+      "sha256": "97045ebc9673a83c7b58e916862ae7ca4bd06b5508499a19888ae5a8f96ca4b7",
+      "classification": {
+        "role": "research",
+        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h239_subset/runner.py": {
+      "bytes": 39262,
+      "sha256": "855f1b66eedfcc4dd3edf39b6700bc7a968e58de35bf1221f5ce3b763d37004b",
+      "classification": {
+        "role": "research",
+        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h239_subset/monitor.py": {
+      "bytes": 7944,
+      "sha256": "5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a",
+      "classification": {
+        "role": "research",
+        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/analysis.py": {
       "bytes": 2167,
       "sha256": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
@@ -6380,6 +6380,46 @@
       "classification": {
         "role": "research",
         "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/analysis.py": {
+      "bytes": 10514,
+      "sha256": "43f919f4e0b7c8b23e4c33a910245297fa8699d811eebecafb08fda45c791d84",
+      "classification": {
+        "role": "research",
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/treatment.py": {
+      "bytes": 4178,
+      "sha256": "dd2784138b2a22985c4f620e0430785743c6af255d3a7bb55453c05531c8dfa4",
+      "classification": {
+        "role": "research",
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/launcher.py": {
+      "bytes": 4647,
+      "sha256": "597c2c6c6cdd9d97259eb180fc7d1c29297becd0d8da95f878992185aa1b3847",
+      "classification": {
+        "role": "research",
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/monitor.py": {
+      "bytes": 8312,
+      "sha256": "2f87d1949540426103d0b6e4e06b2daf7d32f5807dd268e0aaef1b0ae96cfaf5",
+      "classification": {
+        "role": "research",
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/runner.py": {
+      "bytes": 39041,
+      "sha256": "563fed0a78d6a052cbe0d62bf90b910f11b60a3ff2d38086bf19d228fadc0cc9",
+      "classification": {
+        "role": "research",
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
       }
     }
   },
