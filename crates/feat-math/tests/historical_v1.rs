@@ -1416,6 +1416,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
                 p21_family_split.clone(),
+                reporot_identity.clone(),
+                deadlang_identity.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1496,6 +1498,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
                 p21_family_split.clone(),
+                reporot_identity.clone(),
+                deadlang_identity.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1569,6 +1573,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
                 p21_family_split.clone(),
+                reporot_identity.clone(),
+                deadlang_identity.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1673,6 +1679,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
                 p21_family_split.clone(),
+                reporot_identity.clone(),
+                deadlang_identity.clone(),
             ],
         ),
         (
@@ -1737,6 +1745,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
                 p21_family_split.clone(),
+                reporot_identity.clone(),
+                deadlang_identity.clone(),
             ],
         ),
     ] {

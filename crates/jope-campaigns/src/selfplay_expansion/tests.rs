@@ -91,7 +91,6 @@ fn write_projection(path: &Path) {
 /// Full activation fixture: one regression dataset, materialized cache,
 /// foundation/projection/standardization stubs, sealed cohort, activated
 /// tranche. Returns the entry and the activation receipt.
-
 fn activated_fixture(
     temp: &TempDir,
     id: &str,
