@@ -1,5 +1,3 @@
-use super::*;
-
 use super::{complete, cycle_index, split_before_cursor, CompletionData, CompletionSource};
 
 fn temp_dir() -> tempfile::TempDir {
