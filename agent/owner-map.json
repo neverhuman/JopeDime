@@ -119,6 +119,24 @@
     "test-support/": "data",
     "test-support/**": "data",
     ".jankurai/": "agent",
-    ".jankurai/repo-score.md": "agent"
+    ".jankurai/repo-score.md": "agent",
+    "case_study/": "research",
+    "case_study/**": "research",
+    "case_study/README.md": "research",
+    "case_study/bin/": "research",
+    "case_study/01_energy_price_fast_retrain/": "research",
+    "case_study/02_energy_price_hourly_retrain_cost/": "research",
+    "case_study/03_taxi_fare_online_latency/": "research",
+    "case_study/04_ct_slice_wide_training_memory/": "research",
+    "case_study/05_consumer_finance_edge_model/": "research",
+    "case_study/06_etf_frequent_retrain/": "research",
+    "case_study/07_loan_rate_batch_throughput/": "research",
+    "case_study/08_hotel_rate_serving_cost/": "research",
+    "case_study/09_ultrawide_parsimony/": "research",
+    "case_study/10_city_power_realtime_dispatch/": "research",
+    "case_study/11_bike_rebalancing_latency/": "research",
+    "case_study/12_hdb_resale_valuation_api/": "research",
+    "case_study/13_loan_default_wide_memory/": "research",
+    "case_study/14_transformer_load_edge_device/": "research"
   }
 }
