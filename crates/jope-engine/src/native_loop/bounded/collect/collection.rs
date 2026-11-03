@@ -22,11 +22,6 @@ fn read_small(path: &Path, limit: u64) -> Result<Vec<u8>> {
     );
     Ok(b)
 }
-fn read_line(path: &Path) -> Result<String> {
-    let text = String::from_utf8(read_small(path, 256)?)
-        .with_context(|| format!("{} is not UTF-8", path.display()))?;
-    Ok(text.trim().to_string())
-}
 
 /// SHA-256 of one installed file, streamed, with its size and identity re-checked afterwards.
 /// Symlinks resolve to the installed file, whose canonical path is returned.
