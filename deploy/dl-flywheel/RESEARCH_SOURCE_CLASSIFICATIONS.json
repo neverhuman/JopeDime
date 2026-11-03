@@ -1,5 +1,45 @@
 {
   "items": {
+    "python:research/flywheel_selfplay/h248_dfl/analysis.py": {
+        "bytes": 10408,
+        "sha256": "f5ba23ded053593d18b71964a468402198f73dc33a3f64168a855e8c9723a6bf",
+        "classification": {
+          "role": "research",
+          "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h248_dfl/treatment.py": {
+        "bytes": 5287,
+        "sha256": "1ddc27fc360d7e40cc58450b3b9215fd3191e5c4b10c8c1133d6cc2d7ec752bc",
+        "classification": {
+          "role": "research",
+          "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h248_dfl/runner.py": {
+        "bytes": 42581,
+        "sha256": "c890d8a493db1d2bc4b90d8df68c3489252798edeb6fce38e268f485076e8042",
+        "classification": {
+          "role": "research",
+          "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h248_dfl/monitor.py": {
+        "bytes": 8045,
+        "sha256": "fdd39b7ba97e2fb0957c31c43aa482ad10f83016ca862cc4434403b5711247c7",
+        "classification": {
+          "role": "research",
+          "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h248_dfl/calibrate.py": {
+        "bytes": 5470,
+        "sha256": "6cb4dc32078dd5ee16d65292ec82f545052ee41fb2b02d3ad3706d482228968a",
+        "classification": {
+          "role": "research",
+          "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+        }
+      },
     "python:research/flywheel_selfplay/h246_stable_g025_rerun/analysis.py": {
         "bytes": 25013,
         "sha256": "5cea1f820cdc3095a45178966bd566aac4b661ba74f405defc09377080848eb1",

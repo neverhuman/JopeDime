@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [
+          "research"
+        ],
+        "lanes": [],
+        "scope": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+      },
     "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
         "discovery": {
           "kind": "python-family"
