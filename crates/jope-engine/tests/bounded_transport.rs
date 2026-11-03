@@ -9,11 +9,12 @@ mod tls;
 use anyhow::Result;
 use ed25519_dalek::SigningKey;
 use fixture::*;
+pub(crate) use jope_parallel::native_loop::bounded::transport;
 use jope_parallel::native_loop::bounded::{
     contract::BoundedRunContract,
     controller::{Coordinator, Outcome, RankState},
     rendezvous::{read_frame, write_frame, ControlStream, PeerIdentity, RefusalCause},
-    transport::{self, HostCredential, Sequenced, Timeouts, TlsAcceptor, TlsStream},
+    transport::{HostCredential, Sequenced, Timeouts, TlsAcceptor, TlsStream},
 };
 use std::{
     collections::BTreeMap,
