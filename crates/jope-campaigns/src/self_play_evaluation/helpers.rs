@@ -123,5 +123,6 @@ pub(super) fn score_rank_percentile(scores: &mut [f64], score: f64) -> f64 {
     scores.sort_by(f64::total_cmp);
     let lower = scores.partition_point(|value| *value < score);
     let upper = scores.partition_point(|value| *value <= score);
-    ((lower as f64 + 0.5 * (upper - lower) as f64) / scores.len() as f64).clamp(0.0, 1.0)
+    let percentile = (lower as f64 + 0.5 * (upper - lower) as f64) / scores.len() as f64;
+    percentile.clamp(0.0, 1.0)
 }
