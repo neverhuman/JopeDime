@@ -302,7 +302,7 @@ impl Wire {
                 .push(json!({"direction":"out","message":value}));
         }
         // Resolve the single lane target from the product source, independently of a proof crate.
-        let dir = proof_dir();
+        let dir = runtime::proof_dir();
         std::fs::create_dir_all(&dir).unwrap();
         let name = format!("{}-{}", name, self.version);
         let transcript = dir.join(format!("{name}.json"));
