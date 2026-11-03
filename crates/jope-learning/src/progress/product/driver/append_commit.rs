@@ -6,7 +6,7 @@ impl<'r> Driver<'r> {
     /// Append a mapping: every blob, then every object, staging the objects for the next commit.
     /// A mapping is admitted whole or not at all: if its new items would pass the outbox maximum,
     /// it is refused ([`Refused::Full`]) before any of them is written.
-    fn append(&mut self, mapped: &Mapped, step: &mut Step) -> Result<()> {
+    pub(super) fn append(&mut self, mapped: &Mapped, step: &mut Step) -> Result<()> {
         // W12-T05: revoked evidence is never appended, let alone published.
         let revocations = crate::revocation::Revocations::load(self.outbox.state())?;
         if !revocations.is_empty() {
@@ -167,7 +167,7 @@ impl<'r> Driver<'r> {
     }
 
     /// Request an urgent flush for `why` and flush now.
-    fn urgent(&mut self, why: Urgent, clock: &dyn Clock, step: Step) -> Result<Step> {
+    pub(super) fn urgent(&mut self, why: Urgent, clock: &dyn Clock, step: Step) -> Result<Step> {
         self.cadence.request(why);
         let flushed = self.tick(clock)?;
         let mut step = Step {
