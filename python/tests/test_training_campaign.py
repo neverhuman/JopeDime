@@ -414,8 +414,6 @@ def test_checkpoint_hashing_cannot_extend_category_deadline(state, monkeypatch):
         campaign.checked(reference, 2000)
 
 
-
-
 def test_missing_category_fallback_does_not_claim_requested_real_coverage(state, monkeypatch):
     original = campaign.admitted_rows
 

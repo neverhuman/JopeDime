@@ -400,13 +400,25 @@ def test_historical_publication_explicitly_marks_inherited_state(tmp_path, small
     payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
     train_v3.verify_training_proof(load_policy_v3(payload), proof)
 
-# Re-export the distributed cases so the established test path discovers them by name.
-from _policy_training_contract_distributed import (
-    test_distributed_environment_refused_before_collectives,
-    test_real_distributed_cpu_updates_and_shards,
-    test_distributed_existing_group_mismatch_refused,
-    test_distributed_timeout_must_be_bounded,
-    test_distributed_startup_passes_explicit_topology_and_timeout,
-    test_distributed_cuda_mapping_refused_before_device_selection,
-    test_distributed_probe_timeout_reaps_owned_worker_group,
-)
+
+def _reexport_distributed_cases():
+    import _policy_training_contract_distributed as distributed_cases
+
+    globals().update(
+        {name: value for name, value in vars(distributed_cases).items() if name.startswith("test_")}
+    )
+
+
+_reexport_distributed_cases()
+
+__all__ = [
+    "SimpleNamespace",
+    "TASK_LANE",
+    "TrainingRow",
+    "ddp",
+    "deepcopy",
+    "load_policy_v3",
+    "pytest",
+    "torch",
+    "train_v3",
+]
