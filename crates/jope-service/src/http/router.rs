@@ -122,7 +122,8 @@ fn build_router(
                             ErrorCode::CapabilityUnavailable,
                             &format!(
                                 // jankurai:allow HLT-001-DEAD-MARKER reason=typed-unsupported-operation-error expires=2026-12-31
-                                "Operation {} is not implemented in this build.",
+                                "Operation {} is not \
+                                 implemented in this build.",
                                 operation.name
                             ),
                             "Use a build with this operation implemented.",
