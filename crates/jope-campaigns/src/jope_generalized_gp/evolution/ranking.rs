@@ -232,7 +232,7 @@ pub fn rank_population(
     Ok(ranked)
 }
 
-fn compare_ranked(left: &RankedCandidateV1, right: &RankedCandidateV1) -> Ordering {
+pub(super) fn compare_ranked(left: &RankedCandidateV1, right: &RankedCandidateV1) -> Ordering {
     right
         .valid
         .cmp(&left.valid)
