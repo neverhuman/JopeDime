@@ -100,8 +100,14 @@ fn a_revoked_parent_or_its_descendant_is_refused_at_teacher_admission() {
 
     // A revoked dataset input refuses every teacher that depends on it: the frozen targets.
     let f = fixture(Task::Regression, 5);
-    let policy = load_freeze(&f.state, &f.evidence.freeze).unwrap();
-    let targets = f.state.read_blob(&policy.targets_sha256).unwrap().unwrap();
+    let freeze_bytes = f
+        .state
+        .read_blob(&f.evidence.freeze.freeze_sha256)
+        .unwrap()
+        .unwrap();
+    let freeze: serde_json::Value = serde_json::from_slice(&freeze_bytes).unwrap();
+    let targets_sha256 = freeze["targets_sha256"].as_str().unwrap();
+    let targets = f.state.read_blob(targets_sha256).unwrap().unwrap();
     let repo = tempfile::tempdir().unwrap();
     testing::revoke(
         &f.state,
