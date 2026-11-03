@@ -1,4 +1,3 @@
-use super::fixture::sign;
 use super::*;
 use serde_json::Map;
 use std::collections::BTreeMap;
