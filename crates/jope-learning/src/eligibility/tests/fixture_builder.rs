@@ -189,7 +189,9 @@ pub(super) fn fixture_spec(
     };
     let freeze = freeze_optimization(&state, &plan).unwrap();
     let frozen = load_freeze(&state, &freeze).unwrap();
-    assert_eq!(frozen.label_role, "development");
+    let frozen_policy = serde_json::to_value(&frozen).unwrap();
+    assert_eq!(frozen_policy["label_role"], "development");
+    let frozen_created_at = frozen_policy["created_at_unix"].as_u64().unwrap();
     let experiment: Experiment = serde_json::from_value(json!({
             "schema":"jope.experiment/v1", "panel_sha256":plan.panel_sha256,
             "methods_sha256":"7".repeat(64), "source_sha":"a".repeat(40),
@@ -200,8 +202,8 @@ pub(super) fn fixture_spec(
         })).unwrap();
     let window = ExecutionWindow {
         experiment_sha256: experiment.identity().unwrap(),
-        started_unix_ms: frozen.created_at_unix * 1000,
-        deadline_unix_ms: frozen.created_at_unix * 1000 + 60000,
+        started_unix_ms: frozen_created_at * 1000,
+        deadline_unix_ms: frozen_created_at * 1000 + 60000,
     };
     let base = OofEvidence {
         freeze,
@@ -227,7 +229,7 @@ pub(super) fn fixture_spec(
         &classes,
         &experiment,
         &window,
-        frozen.created_at_unix,
+        frozen_created_at,
         base,
         "",
         predict,
@@ -243,7 +245,7 @@ pub(super) fn fixture_spec(
         classes,
         experiment,
         window,
-        created_at: frozen.created_at_unix,
+        created_at: frozen_created_at,
     }
 }
 
