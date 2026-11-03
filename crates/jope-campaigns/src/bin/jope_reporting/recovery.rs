@@ -11,7 +11,7 @@ mod component_check;
 mod materialize;
 
 pub(crate) use component_check::recovery_component_check;
-pub(crate) use materialize::{materialize_recovery, verify_continuity_observation};
+pub(crate) use materialize::materialize_recovery;
 
 #[derive(Clone, Copy)]
 pub(crate) struct RecoveryComponent {
