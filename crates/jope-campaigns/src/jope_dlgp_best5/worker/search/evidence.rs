@@ -1,3 +1,13 @@
+use super::*;
+
+use crate::jope_dlgp_best5::strategies::AnchorObservationV1;
+use crate::jope_generalized_gp::{GenomeOriginV1, GenomeV1, PopulationMemberV1};
+use serde::Deserialize;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs,
+};
+
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum ObservationSnapshotV1 {
