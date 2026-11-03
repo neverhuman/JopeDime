@@ -217,6 +217,8 @@ def test_dlval_context_weighting_and_family_cluster_estimator():
         0.02
     )
     assert weighted["contexts"] == 4 and weighted["families"] == 2
+    assert weighted["family_utility_by_seed"] == balanced["family_utility_by_seed"]
+    assert weighted["primary_utility_by_seed"][0][2] == pytest.approx(0.01)
     assert weighted["contrasts"]["VREX_B1_minus_CONTROL"][
         "median_gain"
     ] == pytest.approx(0.01)
