@@ -1,3 +1,6 @@
+use super::stats::{gini, mean, squash};
+use super::*;
+
 mod building;
 mod interaction;
 mod report;
