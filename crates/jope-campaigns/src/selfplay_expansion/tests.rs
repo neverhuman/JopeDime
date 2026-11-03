@@ -4,9 +4,6 @@ use super::prelude::*;
 use super::*;
 use tempfile::TempDir;
 
-use super::*;
-use tempfile::TempDir;
-
 fn paths(temp: &TempDir) -> ExpansionPaths {
     ExpansionPaths {
         source_root: temp.path().join("remote"),
