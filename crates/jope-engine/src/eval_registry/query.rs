@@ -3,6 +3,7 @@
 //! The service verifies original completion custody and separate query access
 //! before calling the private scorer. Successful artifacts remain unpublished
 //! until the service commits them to its original journal.
+use super::authority::monotonic_ns;
 use super::{verify_completion_receipt, CompletionReceipt, ExecutionOutcome, ProcessIdentity};
 use crate::{manifest::hash, prepare::Preprocessing};
 use anyhow::{bail, ensure, Context, Result};
