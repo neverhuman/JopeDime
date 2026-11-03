@@ -85,7 +85,10 @@ fn lm_runs_replay_receipt_and_all_sidecars_with_a_frozen_clock() {
         );
     }
     let engine = receipt.search.engine_selection.as_ref().unwrap();
-    assert_eq!(engine.refine.as_ref().unwrap().id, super::DAMPED_LS);
+    assert_eq!(
+        engine.refine.as_ref().unwrap().id,
+        crate::kernel2::DAMPED_LS
+    );
     assert!(receipt.search.objective_trials > 0);
     assert_eq!(
         publication::verify_run(&a.run.output.join("receipt.json")).unwrap(),
@@ -379,7 +382,7 @@ fn lm_under_the_surrogate_minimum_is_the_coordinate_run_with_its_reason() {
             assert_eq!(stage["kind"], "coordinate", "{stage}");
             assert_eq!(
                 stage["reason"],
-                super::refinement::SMALL_ALLOWANCE,
+                crate::kernel2::refinement::SMALL_ALLOWANCE,
                 "{stage}"
             );
             stages += 1;
