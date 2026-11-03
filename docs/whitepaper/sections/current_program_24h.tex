@@ -1,0 +1,20 @@
+\begin{figure*}[!tp]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering
+  \includegraphics[width=\linewidth,height=1.25in,keepaspectratio]{figures/fig_program_24h.pdf}
+  \caption{\textbf{Program-journal rates vary across a 24-hour window.}
+  All 301 captured two-fold program-pool records in the 24 hours ending at
+  18:54 UTC on 3 November 2026. Left: records per elapsed hour in all
+  24 equal one-hour bins; the dashed line is the window mean, 12.54 per hour.
+  Right: cumulative records at hourly endpoints. No smoothing or omitted bins.
+  Calendar time includes gaps and waits; these recorded-event rates do not
+  measure proposal success, adapter admission, deployment throughput or
+  writer learning. Scope: \cref{sec:method-status}.}
+  \label{fig:program-24h}
+  \caption*{\footnotesize\raggedright Provenance: \texttt{program\_24h.provenance.json}.
+  Journal-prefix SHA-256: \texttt{f5d0ee5229df88289543ce526fe84c0313b8b72a8ddc2a77b90f413058f726fa}.}
+\end{figure*}
+
+\paragraph{A recent calendar-time record.}
+\Cref{fig:program-24h} resolves the latest captured day into equal-hour
+program-journal counts, separately from the completed-round clocks.
