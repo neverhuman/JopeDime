@@ -41,7 +41,7 @@ fn every_language_compiles_and_every_token_survives_restart_and_duplicates() {
 }
 
 #[test]
-fn unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens() {
+fn emission_status_accounting_cases() {
     fn assert_failed_artifact_has_no_fabricated_source(artifact: &gp_source::Artifact) {
         assert_eq!(artifact.status, Status::Failed, "{}", artifact.language);
         assert!(artifact.source.is_none(), "{}", artifact.language);
