@@ -115,7 +115,7 @@ pub struct RollbackRoot {
 }
 
 impl RollbackRoot {
-    fn validate_before(&self, next_generation: u64) -> Result<()> {
+    pub(super) fn validate_before(&self, next_generation: u64) -> Result<()> {
         require_digest(&self.root_sha256, "rollback root")?;
         require_digest(&self.closure_sha256, "rollback closure")?;
         ensure!(
