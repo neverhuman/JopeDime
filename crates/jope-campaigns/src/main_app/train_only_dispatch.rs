@@ -1,4 +1,5 @@
 use super::*;
+use crate::cli::{CliTrainOnlyRedteamArm, CliTrainOnlyRedteamSelectionMode};
 
 pub(super) fn accepts(command: &CampaignCommand) -> bool {
     matches!(
