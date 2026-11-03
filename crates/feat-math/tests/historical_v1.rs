@@ -783,6 +783,15 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         deadlang_identity["fixtures"][1]["path"],
         changed_fixtures[1]
     );
+    let v1_0_0_identity =
+        old_fixture("transitions/v1_0_0_20261103_announced_identity_rebaseline.v1.json");
+    assert_eq!(
+        v1_0_0_identity["source_commit"],
+        "b8bab2b41d9d963166b70f3c37e7a7ffea635e67"
+    );
+    assert_eq!(v1_0_0_identity["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(v1_0_0_identity["fixtures"][0]["path"], changed_fixtures[0]);
+    assert_eq!(v1_0_0_identity["fixtures"][1]["path"], changed_fixtures[1]);
     assert_eq!(
         p21_family_split["source_commit"],
         "e240a9f27e3bba296acf77d29dae10fd2529a0c1"
@@ -1418,6 +1427,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p21_family_split.clone(),
                 reporot_identity.clone(),
                 deadlang_identity.clone(),
+                v1_0_0_identity.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1500,6 +1510,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p21_family_split.clone(),
                 reporot_identity.clone(),
                 deadlang_identity.clone(),
+                v1_0_0_identity.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1575,6 +1586,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p21_family_split.clone(),
                 reporot_identity.clone(),
                 deadlang_identity.clone(),
+                v1_0_0_identity.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1681,6 +1693,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p21_family_split.clone(),
                 reporot_identity.clone(),
                 deadlang_identity.clone(),
+                v1_0_0_identity.clone(),
             ],
         ),
         (
@@ -1747,6 +1760,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p21_family_split.clone(),
                 reporot_identity.clone(),
                 deadlang_identity.clone(),
+                v1_0_0_identity.clone(),
             ],
         ),
     ] {
@@ -1861,6 +1875,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         p21_family_split,
         reporot_identity,
         deadlang_identity,
+        v1_0_0_identity,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
