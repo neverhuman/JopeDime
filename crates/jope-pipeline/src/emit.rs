@@ -31,7 +31,6 @@ pub mod fitted;
 mod legacy;
 mod target_emission;
 
-use legacy::read_identity;
 pub use legacy::{cpp_source, emit, emit_with_options, emit_with_training};
 pub use target_emission::{
     emit_numeric_v2, emit_v3, publish_v3, read_identity_v3, reload_numeric_v2, EmittedV3,
@@ -183,6 +182,7 @@ pub(crate) mod seam {
 
 #[cfg(test)]
 mod tests {
+    use super::legacy::read_identity;
     use super::*;
 
     #[test]
