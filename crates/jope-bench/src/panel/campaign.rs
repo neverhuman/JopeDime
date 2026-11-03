@@ -36,8 +36,10 @@ pub(crate) use fit::{digest, immutable, prepare_fit_impl, request};
 pub(crate) use report::cpu_seconds;
 pub use report::{cost, report};
 pub use run::{run, run_with};
+#[cfg(feature = "asm")]
+pub(crate) use scoring::checked_predictions;
 pub use scoring::score_fit;
-pub(crate) use scoring::{checked_predictions, reuse_fold_zero, score_batch};
+pub(crate) use scoring::{reuse_fold_zero, score_batch};
 pub use types::{CampaignPlan, Method, PendingFit, Runtime, PLAN_SCHEMA};
 
 #[cfg(test)]
