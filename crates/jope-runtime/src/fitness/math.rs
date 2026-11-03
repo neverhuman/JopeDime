@@ -170,7 +170,12 @@ pub(super) fn lorenz_gini(ranked: &[(f64, f64)]) -> Result<f64> {
     finite(2.0 * area - 1.0)
 }
 /// Net per-interval returns of the documented position convention.
-pub(super) fn strategy_returns(y: &[f64], p: &[f64], max_position: f64, cost: f64) -> Result<Vec<f64>> {
+pub(super) fn strategy_returns(
+    y: &[f64],
+    p: &[f64],
+    max_position: f64,
+    cost: f64,
+) -> Result<Vec<f64>> {
     let mut last = 0.0;
     let returns: Vec<_> = y
         .iter()
