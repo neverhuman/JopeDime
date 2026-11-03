@@ -5,9 +5,6 @@
 //! combined rankings.
 
 use super::*;
-use feat_math::advanced_v3::validate_v3_genome;
-use feat_math::dsl::{ParamValue, Stage};
-use feat_math::{ColumnSpec, DataSchema, GenomeIr, Objective, RowSemantics, TaskSpec};
 use jope_dime_regressor::paths;
 use serde_json::json;
 
