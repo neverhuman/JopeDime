@@ -13,8 +13,10 @@ fn npy_parser_reads_f32_and_shape() {
     bytes.extend_from_slice(&1.5_f32.to_le_bytes());
     bytes.extend_from_slice(&(-2.0_f32).to_le_bytes());
     let parsed = parse_npy(bytes.as_slice()).unwrap();
-    assert_eq!(parsed.shape, vec![2]);
-    assert_eq!(parsed.values, vec![1.5, -2.0]);
+    assert_eq!(
+        format!("{parsed:?}"),
+        "NpyArray { shape: [2], values: [1.5, -2.0] }"
+    );
 }
 
 #[test]
