@@ -1,3 +1,4 @@
+use super::ranking::compare_ranked;
 use super::*;
 
 pub fn build_provisional_archive<F>(

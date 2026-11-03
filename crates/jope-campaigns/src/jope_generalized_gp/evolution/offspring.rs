@@ -1,3 +1,4 @@
+use super::ranking::compare_ranked;
 use super::*;
 
 fn seed64(parts: &[&str]) -> u64 {
