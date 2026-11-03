@@ -3,12 +3,10 @@ use super::details::{
     binary_replay_detail, comparison_lines, decimal_count, learning_chart, neural_lines,
     teacher_evolution_lines, teacher_lines,
 };
-use super::evidence::{
-    age, completed, decimal, duration, number, panel, phase, rmse, status_age,
-};
-use super::layout::{compact_layout, render_compact, DashboardData, History};
+use super::evidence::{age, completed, decimal, duration, number, panel, phase, rmse, status_age};
+use super::layout::{DashboardData, History, compact_layout, render_compact};
 use super::prelude::*;
-use super::tasks::{label, policy_task_state, workflow_rows, TaskRow};
+use super::tasks::{TaskRow, label, policy_task_state, workflow_rows};
 
 mod gp_search;
 mod hardware;
