@@ -198,7 +198,10 @@ impl WitnessStore {
                 );
                 store.effective_policy()
             } else {
-                store.check_epoch_next(request, super::native_scq::policy::now_ms()?)?;
+                store.check_epoch_next(
+                    request,
+                    crate::eval_registry::native_scq::policy::now_ms()?,
+                )?;
                 &request.body.next_policy
             }
         } else {
