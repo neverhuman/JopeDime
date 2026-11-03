@@ -41,29 +41,29 @@
         }
       },
     "python:research/flywheel_selfplay/h246_stable_g025_rerun/analysis.py": {
-        "bytes": 25013,
-        "sha256": "5cea1f820cdc3095a45178966bd566aac4b661ba74f405defc09377080848eb1",
-        "classification": {
-          "role": "research",
-          "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h246_stable_g025_rerun/runner.py": {
-        "bytes": 45651,
-        "sha256": "1e4c9a56e0292f634c845de1254a1fedc7cb68d5b838177245959c8c8e7ebd9f",
-        "classification": {
-          "role": "research",
-          "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h246_stable_g025_rerun/monitor.py": {
-        "bytes": 11442,
-        "sha256": "3e46072116794f76d93ed7291188a37abe897563af18c5a0f53e3a317f53b880",
-        "classification": {
-          "role": "research",
-          "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
-        }
-      },
+      "bytes": 25013,
+      "sha256": "5cea1f820cdc3095a45178966bd566aac4b661ba74f405defc09377080848eb1",
+      "classification": {
+        "role": "research",
+        "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/runner.py": {
+      "bytes": 45651,
+      "sha256": "1e4c9a56e0292f634c845de1254a1fedc7cb68d5b838177245959c8c8e7ebd9f",
+      "classification": {
+        "role": "research",
+        "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/monitor.py": {
+      "bytes": 11442,
+      "sha256": "3e46072116794f76d93ed7291188a37abe897563af18c5a0f53e3a317f53b880",
+      "classification": {
+        "role": "research",
+        "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h244_wsmooth/analysis.py": {
       "bytes": 8529,
       "sha256": "0ccd25b414ffceb7955151f875378c97b74a44f397ba4fea1000c65e18103d65",
@@ -6652,6 +6652,38 @@
       "classification": {
         "role": "research",
         "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/analysis.py": {
+      "bytes": 10283,
+      "sha256": "5ba750d2b95fa834488570c237e28c27380fc8a2b23734e78e142724b0e0175b",
+      "classification": {
+        "role": "research",
+        "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55."
+      }
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/monitor.py": {
+      "bytes": 8459,
+      "sha256": "731d8b0e612f57c7eaee2eccae623a215a4fe345d1e89acdf4f04734e436de6d",
+      "classification": {
+        "role": "research",
+        "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55."
+      }
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/runner.py": {
+      "bytes": 40920,
+      "sha256": "ba9d6924321f22235b34e316460f171649aff12dd4a076cc33ba8e6983d49ad6",
+      "classification": {
+        "role": "research",
+        "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55."
+      }
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/treatment.py": {
+      "bytes": 9992,
+      "sha256": "370c7ff3e990ead9da4a92588cb1be85ee41bef96f61bb43bfff5683e0f7b898",
+      "classification": {
+        "role": "research",
+        "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55."
       }
     }
   },
