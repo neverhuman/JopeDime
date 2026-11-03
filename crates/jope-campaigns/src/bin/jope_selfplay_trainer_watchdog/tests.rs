@@ -1,6 +1,4 @@
 use super::*;
-
-use super::*;
 use tempfile::tempdir;
 
 fn job(id: &str, project: &str, state: &str, node: Option<&str>, gpus: u64) -> Value {
