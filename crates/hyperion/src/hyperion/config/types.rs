@@ -1,6 +1,7 @@
 use super::{
     default_manifest_path, default_weights_path, orig_v2, DEFAULT_OUTPUT_DIM, DEFAULT_SEED,
 };
+use crate::data::Matrix;
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
