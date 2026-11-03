@@ -177,48 +177,41 @@ mod splits;
 mod validation;
 pub(super) use eligibility::{
     build_eligibility, build_transfer_rankings, copy_context_slices, generation_zero,
-    load_dl_proposals, proposal_score, EligibleDatasets,
+    load_dl_proposals,
 };
+#[cfg(test)]
+pub(super) use eligibility::proposal_score;
 use evaluation::StudyEvalContext;
 pub(super) use evaluation::{
-    evaluate_member_split, offspring_seed, refill_population, score_population, slice_data,
-    tournament,
+    evaluate_member_split, refill_population, score_population,
 };
+#[cfg(test)]
+pub(super) use evaluation::slice_data;
 pub(crate) use fitness::paired_robust_fitness;
 pub(super) use fitness::{
-    canonical_json_bytes, canonicalize_json, expression_column_indices, genome_compatible,
-    genome_complexity, immutable_write, metrics, rank_scored, read_receipt, receipt_digest,
-    registry_source_family, selection_key, semantic_identity, sha256_bytes, sha256_file,
-    sotarena_metadata_path, study_dir, target_identity, validate_sha256, write_receipt,
+    canonical_json_bytes, genome_compatible, genome_complexity, immutable_write, metrics,
+    rank_scored, read_receipt, receipt_digest, registry_source_family, selection_key,
+    semantic_identity, sha256_bytes, sha256_file, sotarena_metadata_path, study_dir,
+    target_identity, validate_sha256, write_receipt,
 };
 pub(crate) use prepare::prepare;
 pub(super) use prepare::{
     cache_key, validate_execution_inputs, validate_manifest_contract, validate_prepared_inputs,
 };
 pub(super) use provenance::{
-    absolute_path, checkpoint_exclusions, completed_baseline_report, corpus_dataset_ids,
-    extract_json_string_field, load_catalog, resolve_checkpoint_provenance, resolve_pointer_path,
+    absolute_path, checkpoint_exclusions, load_catalog, resolve_checkpoint_provenance,
     sha256_f64, sotarena_report_hashes, validate_train_data,
 };
 pub(crate) use report::report;
-pub(super) use report::{
-    bootstrap_interval, cohort_elo, evolution_svg, median, paired_sign_test, panel_points,
-    panel_points_scaled, report_dataset,
-};
 pub(crate) use run::run;
 pub(super) use run::{
-    champion_validation_path, checkpoint_path, dataset_validation_path, run_dataset, selection_path,
+    champion_validation_path, checkpoint_path, dataset_validation_path, selection_path,
 };
 pub(crate) use scoring::score;
-pub(super) use scoring::{
-    baseline_metric, load_or_create_baselines, load_or_create_final_cv_reranks,
-    optional_baseline_metric, prior_aspfm_metric, score_frozen_champion, stronger_tabfm,
-};
 pub(super) use splits::{build_final_cv_splits, build_splits, rank_final_cv};
 pub(crate) use validation::validate;
 pub(super) use validation::{
-    read_dataset_validation_shard, require_validated_score_gate, validate_dataset_run,
-    validate_dataset_shard, validate_generation_zero, validate_observation_link,
+    require_validated_score_gate,
 };
 
 #[cfg(test)]
