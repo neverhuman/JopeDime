@@ -1,5 +1,4 @@
-use super::*;
-
+use super::super::evaluation::DeterministicRng;
 use super::*;
 
 pub(crate) fn median(values: &[f64]) -> Result<f64> {
