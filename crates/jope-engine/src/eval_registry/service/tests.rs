@@ -164,7 +164,7 @@ fn synthetic_worker() {
     permit.verify().unwrap();
     let program = &fit.identity().canonical_program;
     if program.contains("alpha=2") {
-        panic!("injected synthetic worker failure after start authorization");
+        std::process::exit(1);
     }
     if program.contains("alpha=3") {
         unsafe {
@@ -179,7 +179,7 @@ fn synthetic_worker() {
         fs::rename(permit.custody_path(), &old).unwrap();
         fs::write(permit.custody_path(), b"replacement").unwrap();
         assert!(permit.verify().is_err());
-        panic!("injected synthetic worker failure after custody tampering");
+        std::process::exit(1);
     }
     if program.contains("alpha=6") {
         // The evaluated program would run here, after lockdown. Its artifact
