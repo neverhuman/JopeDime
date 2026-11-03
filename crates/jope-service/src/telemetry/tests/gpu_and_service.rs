@@ -1,26 +1,31 @@
 use super::*;
 
 #[derive(Default)]
-struct FakeGpu {
-    init_error: Option<NvmlError>,
+struct FakeGpuState {
     list_error: Option<NvmlError>,
-    devices: Vec<FakeDevice>,
     inits: u32,
     resets: u32,
 }
+
+#[derive(Default)]
+struct FakeGpu {
+    init_error: Option<NvmlError>,
+    state: Arc<std::sync::Mutex<FakeGpuState>>,
+    devices: Vec<FakeDevice>,
+}
 impl GpuQuery for FakeGpu {
     fn initialize(&mut self) -> Result<(), NvmlError> {
-        self.inits += 1;
+        self.state.lock().unwrap().inits += 1;
         match self.init_error.take() {
             Some(error) => Err(error),
             None => Ok(()),
         }
     }
     fn reset(&mut self) {
-        self.resets += 1;
+        self.state.lock().unwrap().resets += 1;
     }
     fn device_uuids(&self) -> Result<Vec<String>, NvmlError> {
-        match &self.list_error {
+        match &self.state.lock().unwrap().list_error {
             Some(_) => Err(NvmlError::GpuLost),
             None => Ok(self.devices.iter().map(|d| d.0.clone()).collect()),
         }
@@ -42,8 +47,10 @@ impl GpuQuery for FakeGpu {
 #[test]
 fn missing_nvml_is_unavailable_with_bounded_retry_and_never_panics() {
     let t0 = Instant::now();
+    let state = Arc::new(std::sync::Mutex::new(FakeGpuState::default()));
     let mut sensor = NvmlSensor::new(FakeGpu {
         init_error: Some(NvmlError::LibraryNotFound),
+        state: state.clone(),
         ..FakeGpu::default()
     });
     assert_eq!(sensor.readings(t0), Err("missing_library".to_owned()));
@@ -52,10 +59,10 @@ fn missing_nvml_is_unavailable_with_bounded_retry_and_never_panics() {
         sensor.readings(t0 + Duration::from_millis(50)),
         Err("missing_library".to_owned())
     );
-    assert_eq!(sensor.query.inits, 1);
+    assert_eq!(state.lock().unwrap().inits, 1);
     // After the backoff it retries; the driver is now present but has no devices.
     assert_eq!(sensor.readings(t0 + Duration::from_millis(150)), Ok(vec![]));
-    assert_eq!(sensor.query.inits, 2);
+    assert_eq!(state.lock().unwrap().inits, 2);
 
     for (error, reason) in [
         (NvmlError::DriverNotLoaded, "missing_driver"),
@@ -115,20 +122,24 @@ fn nvml_readings_are_device_scoped_and_per_device_failures_carry_a_reason() {
 #[test]
 fn a_lost_device_resets_nvml_and_reinitializes_after_backoff() {
     let t0 = Instant::now();
-    let mut sensor = NvmlSensor::new(FakeGpu {
+    let state = Arc::new(std::sync::Mutex::new(FakeGpuState {
         list_error: Some(NvmlError::GpuLost),
+        ..FakeGpuState::default()
+    }));
+    let mut sensor = NvmlSensor::new(FakeGpu {
+        state: state.clone(),
         devices: vec![("GPU-a".into(), Ok(5), Ok(7))],
         ..FakeGpu::default()
     });
     assert_eq!(sensor.readings(t0), Err("device_lost".to_owned()));
-    assert_eq!(sensor.query.resets, 1);
-    sensor.query.list_error = None;
+    assert_eq!(state.lock().unwrap().resets, 1);
+    state.lock().unwrap().list_error = None;
     assert_eq!(
         sensor.readings(t0 + Duration::from_millis(10)),
         Err("device_lost".to_owned())
     );
     let readings = sensor.readings(t0 + Duration::from_millis(150)).unwrap();
-    assert_eq!(sensor.query.inits, 2);
+    assert_eq!(state.lock().unwrap().inits, 2);
     assert_eq!(readings[0].util_pct, Ok(5.0));
 }
 
@@ -226,7 +237,7 @@ fn counters_feed_rates_times_and_reported_rows() {
 
 #[test]
 fn service_publishes_ephemeral_frames_and_returns_a_summary() {
-    let (_dir, log, snapshot) = crate::events::tests::fixture();
+    let (_dir, log, snapshot) = crate::events::tests::tests::fixture();
     let mut frames = log.subscribe_telemetry();
     let counters = Arc::new(Counters::default());
     let fake = Fake {
@@ -262,7 +273,7 @@ fn service_publishes_ephemeral_frames_and_returns_a_summary() {
 
 #[test]
 fn delayed_attachment_measures_times_from_the_canonical_run_start() {
-    let (_dir, log, snapshot) = crate::events::tests::fixture();
+    let (_dir, log, snapshot) = crate::events::tests::tests::fixture();
     let mut frames = log.subscribe_telemetry();
     let counters = Arc::new(Counters::default());
     let run_started = Instant::now();
@@ -348,7 +359,7 @@ fn telemetry_on_or_off_leaves_the_search_identical() {
         run.committed().iter().map(|r| format!("{r:?}")).collect()
     }
     let off = search();
-    let (_dir, log, snapshot) = crate::events::tests::fixture();
+    let (_dir, log, snapshot) = crate::events::tests::tests::fixture();
     let mut frames = log.subscribe_telemetry();
     let store = test_store();
     let service = TelemetryService::spawn(
@@ -412,7 +423,7 @@ fn fixed_work_overhead_measurement() {
     }
     work();
     let off: Duration = (0..3).map(|_| work()).min().unwrap();
-    let (_dir, log, snapshot) = crate::events::tests::fixture();
+    let (_dir, log, snapshot) = crate::events::tests::tests::fixture();
     let store = test_store();
     let service = TelemetryService::spawn(
         snapshot.run_id,
