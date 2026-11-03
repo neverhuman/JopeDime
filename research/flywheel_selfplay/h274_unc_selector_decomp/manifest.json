@@ -114,5 +114,34 @@
       "h268_frozen.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/runner.py",
       "h265_frozen.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/h265_frozen.py"
     }
+  },
+  "closeout": {
+    "source_commit": "6f1470e3361bf6a7be2f64849fe7ddf60904e6e1",
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H274/astra-t1955/closeout/manifest.json",
+      "version_id": "8kYjm8UjV9rOg8YHxcNlFmVl76k95_QA",
+      "sha256": "3cfcec8ad9b6eae23fe12ea2a1249b8ec7c466f812f1adc54a74014ac585a576",
+      "bytes": 143252,
+      "exact_version_get_verified": true
+    },
+    "runtime_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H274/astra-t1955/closeout/runtime.tar.gz",
+      "version_id": "ZT83GXPF8XpOccGfx.Gv44t2L6URWAdl",
+      "sha256": "9d7ee1b6aa4c67e0d0238d20b4e3e9de3b83312a28dcfb60a6af2ca19224346d",
+      "bytes": 87862064,
+      "members_verified": 777,
+      "exact_version_get_verified": true
+    },
+    "metrics_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H274/astra-t1955/closeout/metrics.json",
+      "version_id": "wbUn_zVL1C1FmsKMZlLV5qDBc9xr7L4Z",
+      "sha256": "d429adb9db84cdef4dffbb5072a12a66aa0c70458839524ccfbc951cd2141b73",
+      "bytes": 39960,
+      "exact_version_get_verified": true
+    },
+    "verdict": "NO_ADVANCE",
+    "confirmation_status": "NOT_CONFIRMED",
+    "audit_status": "PASS",
+    "inference_audit_status": "PASS"
   }
 }
