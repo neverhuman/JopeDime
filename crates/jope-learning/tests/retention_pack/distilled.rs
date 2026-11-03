@@ -64,7 +64,7 @@ fn distilled_rows_that_would_corrupt_meaning_are_refused() {
     );
     let r = row('a', 'a', Some(0.5), Outcome::Failed);
     assert!(
-        distilled::validate(&r, &k).is_err(),
+        distilled_api::validate(&r, &k).is_err(),
         "scored row with a failure outcome"
     );
     let mut r = row('a', 'a', Some(f64::NAN), Outcome::Ok);
