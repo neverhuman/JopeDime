@@ -9,13 +9,13 @@ pub(super) struct Artifact {
 #[derive(Clone, Debug)]
 pub(super) struct Fitted {
     pub(super) model: BoundModel,
-    state: Vec<u8>,
-    predictions: Vec<u64>,
-    probabilities: Vec<Vec<u64>>,
+    pub(super) state: Vec<u8>,
+    pub(super) predictions: Vec<u64>,
+    pub(super) probabilities: Vec<Vec<u64>>,
 }
 
 impl Fitted {
-    fn same(&self, other: &Self) -> bool {
+    pub(super) fn same(&self, other: &Self) -> bool {
         self.state == other.state
             && self.predictions == other.predictions
             && self.probabilities == other.probabilities
