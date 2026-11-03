@@ -200,7 +200,7 @@ fn latency_summary_reports_median_and_range_in_milliseconds() {
             Duration::from_millis(1),
             Duration::from_millis(2),
         ]),
-        Some(super::LatencySummary {
+        Some(super::super::LatencySummary {
             samples: 3,
             min_ms: 1.0,
             median_ms: 2.0,
