@@ -6,11 +6,11 @@
 
 The current preview uses the genuine saved Stage 2 five-fold ensemble, fitted SOS/hurdle and SP critics, original frozen DOPE and fresh legacy R882 base. The authorized golden fixture reproduces its exact selected index 678 and top-four; final-cost maximum error is `3.43e-9`. The six displayed synthetic regression cases use actual initial **K_rev=0** inference with no invented reveal history. The full trajectory is proven separately by the golden smoke.
 
-The fixed left table and four measured landmark grids feed one connected angled 3D network. DOPE weights are labeled **`problem encoder`**; all other neural weights are **`solution encoder`**. The view includes all **123 observed matrix operations** (120 module affines plus three captured functional MHA projections), drawing **850,956 actual nonzero weight/bias connections**. Fixed widths represent weight magnitude; measured signed `weight × input` controls light. Recorded inference is editorially expanded; pulse travel and page dwell are not inference duration. The 590 saved parameter tensors are a separate inventory, including unused trajectory weights.
+The fixed left table and four measured landmark grids feed one connected rotating 3D network. The current **layered** view arranges actual module endpoints into12 shared causal-depth planes, with15,746 actual endpoint glyphs. Small module/checkpoint/section labels are hidden per the latest user direction. Cyan and violet distinguish problem and solution encoders; continuous magnitude controls color/brightness. The view includes all **123 observed matrix operations** (120 module affines plus three captured functional MHA projections), drawing **850,956 actual nonzero weight/bias connections**. Fixed widths represent weight magnitude; measured signed `weight × input` controls light. Recorded inference is editorially expanded; pulse travel and page dwell are not inference duration. The 590 saved parameter tensors are a separate inventory, including unused trajectory weights.
 
 The actual G cost selects an eligible program from each native twelve-program slate, then the local native **release** GP fitter exports the complete unchanged Rust/Python. This bounded research route is not a registered production Engine champion or quality qualification. There are five selected DSL identities, four head variants and six Rust identities. Every case preserves its exact 76 FIT / 20 HOLD partition. Rust/Python fitted predictions and emitted Rust `Model::fit` predictions match native **exactly on all 96 rows**; both 64-row self-checks pass in all six cases.
 
-[H256 plan](H256_PLAN.md) specifies implementation, ownership, commands and gates. [H256 render receipt](H256_RENDER_RECEIPT.json) binds source/artifact hashes and all current evidence. External root: `/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/`. Raw tensors, checkpoints, models, source pages and Blender media remain outside Git.
+[H256 plan](H256_PLAN.md) specifies implementation, ownership, commands and gates. [Original H256 render receipt](H256_RENDER_RECEIPT.json) preserves the preceding technical view; [layered render receipt](LAYERED_RENDER_RECEIPT.json) binds current renderer/artifact hashes and unchanged data/source evidence. External root: `/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/`. Raw tensors, checkpoints, models, source pages and Blender media remain outside Git.
 
 | Gate | Current evidence |
 |---|---|
@@ -20,17 +20,16 @@ The actual G cost selects an eligible program from each native twelve-program sl
 | Complete Rust | A/B/C/D/E/F: 219/60/90/90/84/35 pages, **578 total**; all source bytes reconstructed and PNG hashes/dimensions checked. Saved inspection timeline: **3,720 frames / 12 fps = 310 seconds**, with six-frame page holds; no video rendered |
 | Actual landmarks | All v256 values, four valid column rows ×17 (capacity64), all predicted lm23, all fresh lm48; exact source indices/hashes and mapped destinations in scene receipt |
 | Local checks | **41 Python tests**, **2 native-helper tests**, release build, Rust format, full six-case semantic/source/training proof and capability-matrix inventory PASS |
-| Saved-scene replay | Nonsequential **3583 then 2629** decode to exactly the original RGBA pixels; `reopen-fullcode-v2/receipt.json` PASS |
+| Saved-scene replay | Nonsequential **157 then3583** saved-scene replay is checked against the final original RGBA pixels; `reopen-fullcode-v2/receipt.json` PASS |
 
 ## Latest stills and source scrolling
 
-[Saved Blender scene](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/scene.blend) · [scene receipt](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/scene.receipt.json). Blender 5.2.3 LTS, build `e13b728c6880`.
+[Saved Blender scene](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/scene.blend) · [scene receipt](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/scene.receipt.json). Blender 5.2.3 LTS, build `e13b728c6880`.
 
 | 4K still | Source cue |
 |---|---|
-| [Frame 37](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/h256-000037.png) | Case A, first Rust page |
-| [Frame 2629](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/h256-002629.png) | Case D, emitted training |
-| [Frame 3583](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/h256-003583.png) | Case F, emitted prediction |
+| [Frame 157](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/h256-000157.png) | Case A, emitted training at a rotated pose |
+| [Frame 3583](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/h256-003583.png) | Case F, emitted prediction |
 
 The complete syntax-highlighted file scrolls through training, helpers, fitted state, prediction and self-checks, with no excerpts substituted. Temporary GP operator previews are actual selected trees. Complete-source coverage does not mean every page has been visually inspected individually.
 
@@ -38,7 +37,7 @@ Displayed rates are measured **release warm repeated same-file Rust lexical sour
 
 The initial dev-native versus optimized emitted training comparison failed case D. Preserved controls isolated Darwin sin/cos optimization rounding; matched release-native and optimized Rust passed all six cases with zero error. No GP math/converter change, tolerance change or selected-program reroll was made.
 
-Current disposition: **stills ready for user design review**. Source/receipt AI peer reviews found no blockers; exact committed head and PR readback are recorded in external `h256/final-git-handoff.json`. Hosted CI is **NOT_RUN**. Video, production integration, merge and release are not completed by this preview.
+Current disposition: **layered stills for user design review**. V1 early angles are preserved as review history; V2 fixes functional junction placement and active display metadata. The parameter/channel/winner-row identities and all246 measured FP32 atlases are unchanged from the proven technical view. Source/receipt AI peer reviews found no blockers; exact committed head and PR readback are recorded in external `h256/final-layered-git-handoff.json`. Hosted CI is **NOT_RUN**. Video, production integration, merge and release are not completed by this preview.
 
 ---
 

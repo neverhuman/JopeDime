@@ -1,4 +1,4 @@
-"""Full recorded matrix connections for the saved H256 Stage-1 encoder.
+"""Recorded matrix connections for saved H256 Stage 1 and Stage 2 snapshots.
 
 Geometry is editorial. Every colored connection is one actual W[out,in] or
 bias entry. Neutral routes come only from the capture's typed dependencies.
@@ -253,7 +253,11 @@ def _position(name, role, fallback):
                           (fallback // 3 % 3 - 1) * 1.7, -3.4),fold_index(name))
 
 
-def build_network(data, spans, camera, all_weights=True, max_connections=600_000):
+def build_network(data, spans, camera, all_weights=True, max_connections=600_000, *, layout="technical"):
+    if layout=="layered":
+        return _build_layered_network(data,spans,camera,all_weights,max_connections)
+    if layout!="technical":
+        raise ValueError("Unknown H256 network layout")
     cases = data["cases"]
     inventories=[];functional_proofs=[]
     for case in cases:
@@ -316,10 +320,12 @@ def build_network(data, spans, camera, all_weights=True, max_connections=600_000
         delay = round(index / max(1,len(keys)-1) * 32)
         edge_mat, edge_uv, edge_atlas = scalar_material("Actual W·x · " + key[1], np.asarray(terms), spans, color, True, delay)
         widths = .00055 + .0022 * np.sqrt(np.abs(scalars) / max(float(np.max(np.abs(scalars))), 1e-30))
-        ribbons("Every recorded weight · " + key[1], begin, end, widths, edge_uv, edge_mat, camera)
+        edge_object=ribbons("Every recorded weight · " + key[1], begin, end, widths, edge_uv, edge_mat, camera)
+        edge_object["h256_matrix_name"]=key[1];edge_object["h256_geometry_kind"]="edges"
         positions = np.concatenate((left_all[inputs], right_all[outputs], bias_position[None, :] if len(bias_ids) else np.empty((0, 3))))
         node_mat, node_uv, node_atlas = scalar_material("Actual activation · " + key[1], np.asarray(node_values), spans, color)
-        neurons("Connected channels · " + key[1], positions, node_uv, node_mat,.024*geometry_scale)
+        node_object=neurons("Connected channels · " + key[1], positions, node_uv, node_mat,.024*geometry_scale)
+        node_object["h256_matrix_name"]=key[1];node_object["h256_geometry_kind"]="nodes"
         short_name=key[1].removeprefix("dope.router.").removeprefix("dope.target_net.").removeprefix("h256.")
         if fold is None or fold==0:
             label = text(short_name.removeprefix("fold0."),
@@ -429,6 +435,7 @@ def build_network(data, spans, camera, all_weights=True, max_connections=600_000
             point.co=position;point.handle_left_type=point.handle_right_type="AUTO"
         curve.materials.append(neutral)
         obj=bpy.data.objects.new("Actual dependency bundle",curve);bpy.context.collection.objects.link(obj)
+        obj["h256_route_from"]=source;obj["h256_route_to"]=target
         bundle_receipts.append({"from_operation_id":source,"to_operation_id":target,
                                 "operation_id_paths":paths,"typed_operations":kinds,
                                 "role":"contracted recorded functional dependencies; never a learned weight"})
@@ -487,3 +494,215 @@ def build_network(data, spans, camera, all_weights=True, max_connections=600_000
             "pulse_motion": "editorial linear travel; signed measured W*x magnitude gates every colored pulse",
             "zero_policy": "zero scalar has zero data emission; neutral structural base is constant",
             "parameter_coverage": "all recorded affine W entries and nonzero biases; full checkpoint inventory remains in capture, not a claim that every parameter is affine"}
+
+
+def weighted_causal_depths(case, weighted_operation_ids):
+    """Pure producer-DAG depth; functional operations never invent a layer."""
+    depths={};inputs={};weighted=set(weighted_operation_ids)
+    for operation in case["operations"]:
+        parents=operation.get("parent_op_ids",[])
+        if any(parent not in depths for parent in parents):
+            raise ValueError("Captured operations are not in producer order")
+        incoming=max((depths[parent] for parent in parents),default=0)
+        inputs[operation["id"]]=incoming
+        depths[operation["id"]]=incoming+int(operation["id"] in weighted)
+    if not weighted<=depths.keys():
+        raise ValueError("Weighted operation is missing from the actual DAG")
+    return inputs,depths
+
+
+def _continuous_layer_material(mat,spans,color,stage_fraction,edge):
+    """Retain the signed measured atlas, display a continuous section palette."""
+    tree=mat.node_tree;new,link=tree.nodes.new,tree.links.new
+    source=next(node for node in tree.nodes if node.bl_idname=="ShaderNodeSeparateColor")
+    actual=next(node for node in tree.nodes if node.bl_idname=="ShaderNodeEmission" and node.inputs["Strength"].is_linked)
+    absolute=new("ShaderNodeMath");absolute.operation="ABSOLUTE";link(source.outputs["Red"],absolute.inputs[0])
+    ramp=new("ShaderNodeValToRGB");ramp.color_ramp.interpolation="LINEAR"
+    palette=([(0.,(.003,.018,.035,1)),(.30,(.005,.15,.36,1)),(.65,(.015,.55,.79,1)),(1.,(.12,.91,1.,1))]
+             if color==CYAN else [(0.,(.012,.005,.032,1)),(.30,(.12,.025,.32,1)),(.65,(.38,.10,.75,1)),(1.,(.72,.38,1.,1))])
+    first=ramp.color_ramp.elements[0];first.position,first.color=palette[0]
+    last=ramp.color_ramp.elements[1];last.position,last.color=palette[-1]
+    for position,value in palette[1:-1]:ramp.color_ramp.elements.new(position).color=value
+    link(absolute.outputs[0],ramp.inputs["Fac"])
+    for old in list(actual.inputs["Color"].links):tree.links.remove(old)
+    link(ramp.outputs["Color"],actual.inputs["Color"])
+    power=new("ShaderNodeMath");power.operation="POWER";power.inputs[1].default_value=2.8 if edge else .8
+    link(absolute.outputs[0],power.inputs[0]);strength=power.outputs[0]
+    if edge:
+        progress=new("ShaderNodeValue");progress.label="Repeated editorial playback of one recorded case"
+        for first,last in spans:
+            progress.outputs[0].default_value=0.;progress.outputs[0].keyframe_insert("default_value",frame=first)
+            progress.outputs[0].default_value=(last-first)/48.;progress.outputs[0].keyframe_insert("default_value",frame=last)
+        path=progress.outputs[0].path_from_id("default_value")
+        for curve in _curves(tree):
+            if curve.data_path==path:
+                for point in curve.keyframe_points:point.interpolation="LINEAR"
+        delay=new("ShaderNodeMath");delay.operation="SUBTRACT";delay.inputs[1].default_value=stage_fraction*.65
+        link(progress.outputs[0],delay.inputs[0])
+        phase=new("ShaderNodeMath");phase.operation="FRACT";link(delay.outputs[0],phase.inputs[0])
+        flow=new("ShaderNodeUVMap");flow.uv_map="Flow"
+        axis=new("ShaderNodeSeparateXYZ");link(flow.outputs["UV"],axis.inputs[0])
+        difference=new("ShaderNodeMath");difference.operation="SUBTRACT"
+        link(axis.outputs["Y"],difference.inputs[0]);link(phase.outputs[0],difference.inputs[1])
+        distance=new("ShaderNodeMath");distance.operation="ABSOLUTE";link(difference.outputs[0],distance.inputs[0])
+        pulse=new("ShaderNodeMath");pulse.operation="LESS_THAN";pulse.inputs[1].default_value=.10
+        link(distance.outputs[0],pulse.inputs[0])
+        wave=new("ShaderNodeMath");wave.operation="MULTIPLY_ADD";wave.inputs[1].default_value=.82;wave.inputs[2].default_value=.035
+        link(pulse.outputs[0],wave.inputs[0])
+        gain=new("ShaderNodeMath");gain.operation="MULTIPLY";link(power.outputs[0],gain.inputs[0]);link(wave.outputs[0],gain.inputs[1]);strength=gain.outputs[0]
+    else:
+        gain=new("ShaderNodeMath");gain.operation="MULTIPLY";gain.inputs[1].default_value=2.3
+        link(power.outputs[0],gain.inputs[0]);strength=gain.outputs[0]
+    for old in list(actual.inputs["Strength"].links):tree.links.remove(old)
+    link(strength,actual.inputs["Strength"])
+    for node in tree.nodes:
+        if node.bl_idname=="ShaderNodeEmission" and node!=actual and not node.inputs["Strength"].is_linked:
+            node.inputs["Strength"].default_value=.0004 if edge else .008
+
+
+def _build_layered_network(data,spans,camera,all_weights,max_connections):
+    """Reposition exact technical meshes; never construct cross-branch weights."""
+    before=set(bpy.data.objects)
+    receipt=build_network(data,spans,camera,all_weights,max_connections,layout="technical")
+    created=[obj for obj in bpy.data.objects if obj not in before]
+    operations=receipt["operations"]
+    case=data["cases"][0]
+    op_by_id={operation["id"]:operation for operation in case["operations"]}
+    incoming,depths=weighted_causal_depths(case,{record["operation_id"] for record in operations if record.get("operation_id")})
+    maximum=max(depths.values());stage_entries={stage:[] for stage in range(maximum+1)}
+    by_name={record["name"]:record for record in operations}
+    def family(record):
+        if record["role"]=="problem_encoder":return 0
+        fold=record.get("fold_index")
+        return 1 if fold is None else 2+fold
+    for record in operations:
+        if not record.get("operation_id"):continue
+        oid=record["operation_id"];record["input_stage"]=incoming[oid];record["output_stage"]=depths[oid]
+        for side,channels,stage in (("input",record["input_channels"],incoming[oid]),("output",record["output_channels"],depths[oid])):
+            stage_entries[stage].extend((family(record),record["name"],side,int(channel)) for channel in channels)
+        if record["drawn_nonzero_biases"]:
+            stage_entries[incoming[oid]].append((family(record),record["name"],"bias",0))
+    positions={};radii={};stage_receipts=[]
+    for stage,entries in stage_entries.items():
+        x=-7.8+15.6*stage/max(1,maximum);entries.sort();count=len(entries);start=-2.4;bands=[]
+        for group in sorted({entry[0] for entry in entries}):
+            subset=[entry for entry in entries if entry[0]==group]
+            width=4.8*len(subset)/max(1,count)
+            rows=max(1,math.ceil(math.sqrt(len(subset)*6.8/max(width,.01))))
+            columns=max(1,math.ceil(len(subset)/rows));dy=width/columns;dz=6.8/rows
+            for index,entry in enumerate(subset):
+                _,name,side,channel=entry
+                positions[(name,side,channel)]=np.asarray((x,start+(index//rows+.5)*dy,-3.4+(index%rows+.5)*dz))
+                radii[(name,side,channel)]=min(.052,min(dy,dz)*.36)
+            bands.append({"family":group,"nodes":len(subset),"depth_interval":[start,start+width],"rows":rows,"columns":columns})
+            start+=width
+        stage_receipts.append({"stage":stage,"x":x,"nodes":count,"parallel_family_bands":bands})
+    records={record["name"]:record for record in case["trace"]["affine"]}
+    if receipt["derived_actual_functional_matrix_calls"]:
+        from h256_functional import derived_mha_affines
+        derived,_=derived_mha_affines(data,case);records.update({record["name"]:record for record in derived})
+    from network_graph import ICO
+    actor_ports={}
+    for obj in created:
+        name=obj.get("h256_matrix_name");kind=obj.get("h256_geometry_kind")
+        if not name:continue
+        record=by_name[name];x,w,b,y=arrays(records[name])
+        out,source=np.nonzero(w)
+        if not all_weights and len(out)>2048:
+            selected=np.argsort(-np.abs(w[out,source]),kind="stable")[:2048];out,source=out[selected],source[selected]
+        bias=np.flatnonzero(b)
+        if kind=="nodes":
+            identities=[(name,"input",int(channel)) for channel in record["input_channels"]]
+            identities.extend((name,"output",int(channel)) for channel in record["output_channels"])
+            if len(bias):identities.append((name,"bias",0))
+            centres=np.asarray([positions[key] for key in identities]);sizes=np.asarray([radii[key] for key in identities])
+            vertices=(centres[:,None,:]+np.asarray(ICO)[None,:,:]*sizes[:,None,None]).astype(np.float32)
+            obj.data.vertices.foreach_set("co",vertices.ravel());obj.data.update()
+            actor_ports[record["operation_id"]]={}
+            for side in ("input","output"):
+                values=[positions[(name,side,int(channel))] for channel in record[side+"_channels"]]
+                if not values and side=="input" and len(bias):values=[positions[(name,"bias",0)]]
+                if not values:raise ValueError("Displayed matrix endpoint has no actual incident channel")
+                actor_ports[record["operation_id"]][side]=np.mean(values,axis=0)
+            record["positions"]={side:value.tolist() for side,value in actor_ports[record["operation_id"]].items()}
+            record["layered_node_radius_range"]=[float(np.min(sizes)),float(np.max(sizes))]
+            record["node_atlas"].update(shader_power=.8,data_gain=2.3,quiet_base=.008)
+        else:
+            begin=np.asarray([positions[(name,"input",int(channel))] for channel in source])
+            end=np.asarray([positions[(name,"output",int(channel))] for channel in out])
+            if len(bias):
+                begin=np.concatenate((begin,np.repeat(positions[(name,"bias",0)][None,:],len(bias),axis=0)))
+                end=np.concatenate((end,[positions[(name,"output",int(channel))] for channel in bias]))
+            scalars=np.concatenate((w[out,source],b[bias]));widths=.00015+.00075*np.sqrt(np.abs(scalars)/max(float(np.max(np.abs(scalars))),1e-30))
+            direction=end-begin;eye=np.asarray(camera.location)-(begin+end)/2;lateral=np.cross(direction,eye)
+            norms=np.linalg.norm(lateral,axis=1);lateral[norms<1e-12]=(0.,0.,1.);lateral/=np.linalg.norm(lateral,axis=1)[:,None]
+            offset=lateral*widths[:,None]
+            vertices=np.stack((begin-offset,begin+offset,end+offset,end-offset),axis=1).astype(np.float32)
+            obj.data.vertices.foreach_set("co",vertices.ravel());obj.data.update()
+            record["term_atlas"].update(shader_power=2.8,data_gain=.855,quiet_base=.0004)
+        _continuous_layer_material(obj.data.materials[0],spans,CYAN if record["role"]=="problem_encoder" else VIOLET,
+                                   record["input_stage"]/max(1,maximum),kind=="edges")
+    # Generic aten names do not identify a fold. Keep parallel functional
+    # junctions separate using actual parameter and producer ancestry. Only a
+    # real multi-fold operation may reconverge in the central shared lane.
+    weighted_folds={record["operation_id"]:record.get("fold_index") for record in operations if record.get("operation_id")}
+    fold_owners={}
+    for operation in case["operations"]:
+        oid=operation["id"]
+        direct={fold_index(name) for name in [operation["name"],*operation.get("parameter_ids",[])]}
+        direct.discard(None)
+        if weighted_folds.get(oid) is not None:direct.add(weighted_folds[oid])
+        inherited=set().union(*(fold_owners[parent] for parent in operation.get("parent_op_ids",[])))
+        if direct and inherited and not inherited<=direct:
+            raise ValueError("Functional fold ownership conflicts with recorded producers")
+        fold_owners[oid]=direct or inherited
+    junction_receipts={}
+    def port(oid,side):
+        if oid in actor_ports:return Vector(actor_ports[oid][side])
+        if oid.startswith("input:"):return Vector((-7.8,0.,0.))
+        stage=depths[oid];owners=fold_owners[oid]
+        fold=next(iter(owners)) if len(owners)==1 else None
+        band=next((band for band in stage_receipts[stage]["parallel_family_bands"] if fold is not None and band["family"]==2+fold),None)
+        depth=0. if fold is None else sum(band["depth_interval"])/2 if band else (fold-2)*.85
+        position=(-7.8+15.6*stage/max(1,maximum),depth,0.)
+        junction_receipts[oid]={"fold_owners":sorted(owners),"fold_index":fold,"position":list(position),
+                               "ownership_source":"actual parameter IDs and producer invocation ancestry"}
+        return Vector(position)
+    for obj in created:
+        if obj.type=="FONT" or obj.name.startswith("Actual context token tensor surface"):
+            obj.hide_render=True;obj.hide_viewport=True
+        if obj.get("h256_route_from"):
+            a=port(obj["h256_route_from"],"output");b=port(obj["h256_route_to"],"input")
+            midpoint=(a+b)/2+Vector((0.,.05,.08))
+            for point,position in zip(obj.data.splines[0].bezier_points,(a,midpoint,b)):point.co=position
+            obj.data.bevel_depth=.002
+    # Technical mode supplied the immutable scalar atlas and identities. Its
+    # editorial shader/position metadata must describe the active layered view.
+    for record in operations:
+        if not record.get("operation_id"):
+            continue
+        record["technical_editorial_pulse_delay_frames"]=record["editorial_pulse_delay_frames"]
+        record["editorial_pulse_delay_frames"]=record["input_stage"]/max(1,maximum)*.65*48.
+        record["editorial_pulse_cycle_frames"]=48
+        record["technical_positions"]=record["positions"]
+        record["positions"]={side:actor_ports[record["operation_id"]][side].tolist() for side in ("input","output")}
+        record["technical_geometry_scale"]=record.pop("geometry_scale")
+        record["node_radius_policy"]="min(0.052, 0.36*min(stage-band cell width,cell height))"
+        for field,power,gain,quiet in (("term_atlas",2.8,.855,.0004),("node_atlas",.8,2.3,.008)):
+            atlas=record[field]
+            atlas["technical_shader_power"]=atlas["shader_power"]
+            atlas["technical_data_gain"]=atlas["data_gain"]
+            atlas["shader_power"],atlas["data_gain"],atlas["quiet_base"]=power,gain,quiet
+            atlas["color_mapping"]="linear continuous section ramp of abs(signed normalized measured value)"
+            if field=="term_atlas":atlas["data_gain_range"]=[.035,.855]
+    receipt.update({"layout":"layered","stage_planes":stage_receipts,"maximum_weighted_causal_depth":maximum,
+                    "geometry_bounds":{"x":[-8.,8.],"depth":[-2.5,2.5],"z":[-3.6,3.6]},
+                    "objects_are_unparented":True,"token_surface_displayed":False,"operation_labels_displayed":False,
+                    "functional_junctions":junction_receipts,
+                    "node_identity":"separate actual module input/output channels; shared x plane does not equate tensors",
+                    "shared_rows":"same signed max-absolute token/candidate-row observations as technical mode",
+                    "colors":"continuous absolute measured strength in cyan/violet section palettes; signed data retained in trace and atlas",
+                    "pulse_motion":"48-frame repeated editorial travel across every full case; delay follows actual weighted producer depth",
+                    "geometry_sampling":False if all_weights else "explicit 2048-edge per-matrix cap"})
+    receipt["context_token_surface"].update(displayed=False,hide_reason="shared channel stage view; recorded tensor surface omitted for clarity")
+    return receipt

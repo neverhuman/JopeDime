@@ -1,4 +1,4 @@
-"""Standalone private 3D rendering of the actual saved H256 Stage-1 encoder.
+"""Private 3D rendering of actual saved H256 encoder and Stage-2 inference.
 
 Blender --background --python h256_scene.py -- --trace ... --output ...
 Only stills and a saved scene are produced. No old GP/code proof is spliced in.
@@ -21,6 +21,7 @@ for directory in (HERE, HERE.parent):
 import bpy
 import numpy as np
 from mathutils import Vector
+from bpy_extras.object_utils import world_to_camera_view
 
 from build_scene import interpolation, line, material, text
 from h256_network import build_network, neurons, scalar_material
@@ -75,6 +76,7 @@ def build(data, args, validation):
     if data["schema"] not in {"jain.h256-stage1-capture/v1","jain.h256-stage2-capture/v1"}:
         raise ValueError("H256 scene requires the new saved-encoder capture")
     stage2=data["schema"]=="jain.h256-stage2-capture/v1"
+    clean = args.layout == "layered"
     if stage2 and data["checkpoint"].get("scaler_mode")!="canonical_full_train":
         raise ValueError("Full Stage2 scene requires the original shared full-train scaler")
     cases = data["cases"]
@@ -104,7 +106,7 @@ def build(data, args, validation):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
-    scene.cycles.samples, scene.cycles.max_bounces = 24, 2
+    scene.cycles.samples, scene.cycles.max_bounces = args.samples, 2
     scene.cycles.use_denoising = True
     scene.render.resolution_x, scene.render.resolution_y = args.width, args.height
     scene.render.resolution_percentage = 100
@@ -153,10 +155,11 @@ def build(data, args, validation):
 
     hud("JAIN", -14.7, 7.3, .72)
     hud("RECORDED INFERENCE · TIME EXPANDED", 4.1, 7.45, .22, muted)
-    hud("problem encoder", -8.4, 5.95, .5, cyan)
-    hud("solution encoder", 1.0, 5.95, .5, violet)
-    hud("DOPE", -8.4, 5.43, .22, muted)
-    hud("SAVED H256 · FIVE FOLD PREDICTION MEAN" if stage2 else "SAVED H256 · STAGE 1", 1.0, 5.43, .19, muted)
+    if not clean:
+        hud("problem encoder", -8.4, 5.95, .5, cyan)
+        hud("solution encoder", 1.0, 5.95, .5, violet)
+        hud("DOPE", -8.4, 5.43, .22, muted)
+        hud("SAVED H256 · FIVE FOLD PREDICTION MEAN" if stage2 else "SAVED H256 · STAGE 1", 1.0, 5.43, .19, muted)
     hud("TABULAR INPUT", -14.7, 5.9, .3)
     if code_mode:
         hud("RUST · COMPLETE EMITTED FILE",8.8,6.8,.32)
@@ -189,9 +192,9 @@ def build(data, args, validation):
                 elif key not in {"cases","parameters"}:
                     checkpoint_stamps(value,child)
     checkpoint_stamps(data)
-    if stamps:
+    if stamps and not clean:
         hud("checkpoint "+stamps[0][:16], 1.0, 5.03, .18, muted, True)
-    if data.get("checkpoint",{}).get("epochs") is not None:
+    if data.get("checkpoint",{}).get("epochs") is not None and not clean:
         hud(f"saved epoch {data['checkpoint']['epochs']}", 1.0, 4.71, .18, muted)
     for index, (case, span) in enumerate(zip(cases, spans)):
         objects = [hud(f"{index+1}/{len(cases)}  {case['id'].upper()}", -14.7, 5.25, .28)]
@@ -249,8 +252,9 @@ def build(data, args, validation):
             for loop in polygon.loop_indices:coordinates.data[loop].uv=uv[polygon.index]
         mesh.materials.append(mat);obj=bpy.data.objects.new("Measured tensor · "+name,mesh)
         scene.collection.objects.link(obj);obj.parent=camera
-        hud(name,-14.7,title_y,.19,ink)
-        hud(destination,-14.7,title_y-.28,.15,muted)
+        if not clean:
+            hud(name,-14.7,title_y,.19,ink)
+            hud(destination,-14.7,title_y-.28,.15,muted)
         widget_receipts.append({"name":name,"kind":"measured tensor cells, not neural neuron glyphs",
             "source_refs_by_case":source_refs,"source_shapes_by_case":source_shapes,
             "displayed_source_indices_by_case":display_indices,
@@ -291,7 +295,10 @@ def build(data, args, validation):
         landmark_grid("lm48 · 48 values",lm48,16,-3.94,-4.46,.29,.14,"lm48 → parallel base input",
                       ["outputs.fresh_descriptor_projection_lm48"]*len(cases),[[48]]*len(cases),
                       [list(range(48)) for _ in cases],lm48,(.47,.18,1.,1))
-    hud("Measured tensor cells · signed relative activity",-14.7,-5.25,.14,muted)
+    if clean:
+        hud("LANDMARKS",-14.7,.16,.22,muted)
+    else:
+        hud("Measured tensor cells · signed relative activity",-14.7,-5.25,.14,muted)
     output_atlas=None
     if not code_mode:
         output_name="ensemble_weighted_residual" if stage2 else "context_summary_64"
@@ -313,7 +320,40 @@ def build(data, args, validation):
                                            "displayed_indices":list(range(displayed_count)),"atlas":atlas})
         hud("Shared full-train scaler" if stage2 else "Stage 1 snapshot · context only",9.1,-1.48,.22,muted)
         hud("Five saved models · prediction mean" if stage2 else "Stage 1 encoder + partial projections",9.1,-1.91,.19,muted)
-    receipt = build_network(data, nn_spans, camera, args.all_weights, args.max_connections)
+    before_network = set(scene.objects)
+    receipt = build_network(data, spans if clean else nn_spans, camera,
+                            args.all_weights, args.max_connections, layout=args.layout)
+    rotation_receipt = None
+    if clean:
+        network_objects = [obj for obj in scene.objects if obj not in before_network]
+        rotor = bpy.data.objects.new("JAIN measured network rotation", None)
+        scene.collection.objects.link(rotor)
+        for obj in network_objects:
+            obj.parent = rotor
+        # A bounded yaw exposes neuron planes without moving fixed table/code.
+        # Smooth editorial motion is independent of recorded inference values.
+        rotor.location = (-.6, 0., .4)
+        period = args.rotation_period
+        amplitude = math.radians(args.rotation_degrees)
+        for frame in sorted({1, scene.frame_end, *range(1, scene.frame_end+1, max(1,period//16))}):
+            phase = 2*math.pi*(frame-1)/period
+            rotor.rotation_euler = (math.radians(3)*math.sin(phase),
+                                     math.radians(3)*math.cos(phase),
+                                     math.radians(-24)+amplitude*math.sin(phase))
+            rotor.keyframe_insert("rotation_euler", frame=frame)
+        interpolation(rotor, "LINEAR")
+        rotation_bounds=[]
+        for frame in range(1, period+2, max(1,period//16)):
+            scene.frame_set(frame)
+            projected=[world_to_camera_view(scene,camera,obj.matrix_world@Vector(corner))
+                       for obj in network_objects if not obj.hide_render for corner in obj.bound_box]
+            rotation_bounds.append({"frame":frame,"x":[min(p.x for p in projected),max(p.x for p in projected)],
+                                     "y":[min(p.y for p in projected),max(p.y for p in projected)]})
+        rotation_receipt = {"root_object":rotor.name,"objects":len(network_objects),
+            "period_frames":period,"yaw_center_degrees":-24.,"yaw_amplitude_degrees":args.rotation_degrees,
+            "fixed_panels":True,"sampled_camera_bounds":rotation_bounds,
+            "scope":"editorial bounded orbit; measured tensors and weights unchanged"}
+
     landmark_paths=[
         {"name":"v256","source":"dope629[0:256]","destination":"desc_proj input[8,32] inside Full629 tokens0..7",
          "coordinates":[{"source":j,"input_token":j//32,"input_channel":j%32} for j in range(256)]},
@@ -331,23 +371,31 @@ def build(data, args, validation):
         tensor=next((tensor for tensor in case["tensors"] if tensor.get("name")=="fit.col64x17"),None)
         if tensor is None:raise ValueError("Landmark coordinate ports require the actual recorded 64x17 input")
         landmark_paths[1]["column17_f32_sha256_by_case"].append(hashlib.sha256(np.asarray(tensor["values"],dtype="<f4").tobytes()).hexdigest())
-    hud("v256 [0:256] → 8 descriptor tokens",-8.4,-4.42,.21,muted)
-    hud("64×17 column landmarks + 64 gates → 64×18 → 64 tokens",-8.4,-4.82,.19,muted)
-    hud("Predicted landmarks23 [526:549] → semantic head tokens",-8.4,-5.22,.19,muted)
+    if not clean:
+        hud("v256 [0:256] → 8 descriptor tokens",-8.4,-4.42,.21,muted)
+    if not clean:
+        hud("64×17 column landmarks + 64 gates → 64×18 → 64 tokens",-8.4,-4.82,.19,muted)
+    if not clean:
+        hud("Predicted landmarks23 [526:549] → semantic head tokens",-8.4,-5.22,.19,muted)
     legacy=all(any(name in case["outputs"] for name in ("lm48","base.lm48","fresh_descriptor_projection_lm48","fresh_lm48_z")) and
                any(name in case["outputs"] for name in ("base_tokens_10x32","base.tokens_10x32")) and
                any(any(part in op["name"] for part in ("anchor.","mm_cross_attn")) for op in case["trace"]["affine"]) for case in cases)
     if legacy:
-        hud("lm48 → recorded legacy 10-token ranker path · parallel",-8.4,-5.62,.19,muted)
+        if not clean:
+            hud("lm48 → recorded legacy 10-token ranker path · parallel",-8.4,-5.62,.19,muted)
         landmark_paths.append({"name":"lm48","destination":"actually captured parallel legacy base path","displayed":True,
                                "readouts":[name for name in ("fresh_descriptor_projection_lm48","fresh_lm48_z","base_tokens_10x32","base_mask_10") if name in cases[0]["outputs"]],
                                "source_f32_sha256_by_case":[hashlib.sha256(np.asarray(next(case["outputs"][name] for name in ("fresh_descriptor_projection_lm48","lm48","base.lm48","fresh_lm48_z") if name in case["outputs"]),dtype="<f4").tobytes()).hexdigest() for case in cases]})
     else:
         landmark_paths.append({"name":"lm48","displayed":False,"reason":"parallel legacy base network is not captured; no invented route"})
-    hud(f"{receipt['drawn_nonzero_connections']:,} actual scalar connections",-8.4,-6.30,.25)
-    hud("Width: |weight| · firing: signed relative |weight × input|",-8.4,-6.75,.20,muted)
-    hud("Recorded weights · token-row aggregates · neutral functional bundles",-8.4,-7.13,.18,muted)
-    hud("Saved Stage 2 inference" if stage2 else "Saved Stage 1 encoder inference",-14.7,-10.0 if args.show_gp_tree else -7.95,.22,muted)
+    if not clean:
+        hud(f"{receipt['drawn_nonzero_connections']:,} actual scalar connections",-8.4,-6.30,.25)
+    if not clean:
+        hud("Width: |weight| · firing: signed relative |weight × input|",-8.4,-6.75,.20,muted)
+    if not clean:
+        hud("Recorded weights · token-row aggregates · neutral functional bundles",-8.4,-7.13,.18,muted)
+    if not clean:
+        hud("Saved Stage 2 inference" if stage2 else "Saved Stage 1 encoder inference",-14.7,-10.0 if args.show_gp_tree else -7.95,.22,muted)
     page_receipts=[]
     if code_mode:
         for case,info,(first,last) in zip(cases,pages,spans):
@@ -369,10 +417,10 @@ def build(data, args, validation):
                 finish=begin+args.code_hold_frames-1 if index+1<len(manifest["pages"]) else last
                 show(obj,begin,finish)
             for obj in (hud(f"ALL {manifest['source_lines']} lines · {manifest['source_bytes']:,} bytes",8.8,-3.5,.23,muted),
-                        hud("Verified new-model selection → native GP → Rust",8.8,-3.95,.20,muted)):
+                        hud("" if clean else "Verified new-model selection → native GP → Rust",8.8,-3.95,.20,muted)):
                 show(obj,source_start,last)
             verdict=validation["gp_sources"][case["id"]]
-            badge=hud(f"{verdict['prediction_rows']} source rows · max |Δ| {verdict['max_abs_error']:.2e}",8.8,-4.4,.21,muted)
+            badge=hud("" if clean else f"{verdict['prediction_rows']} source rows · max |Δ| {verdict['max_abs_error']:.2e}",8.8,-4.4,.21,muted)
             show(badge,source_start,last)
             rate=verdict.get("rate_rust_lexical_tokens_per_s")
             if isinstance(rate,(int,float)) and math.isfinite(rate) and rate>0:
@@ -393,8 +441,8 @@ def build(data, args, validation):
             if hashlib.sha256(program.encode()).hexdigest()!=source["selected_program_sha256"]:
                 raise ValueError("GP tree differs from the actually selected program")
             tree=gp_sexpression(program);objects=[]
-            objects.append(hud("GP TREE · TEMPORARY OPERATOR PREVIEW",-8.4,-7.40,.24))
-            objects.append(hud("Actual selected program · parameter counts; full syntax retained",-8.4,-7.76,.16,muted))
+            objects.append(hud("GP TREE" if clean else "GP TREE · TEMPORARY OPERATOR PREVIEW",-8.4,-7.40,.24))
+            objects.append(hud("" if clean else "Actual selected program · parameter counts; full syntax retained",-8.4,-7.76,.16,muted))
             def weight(node):
                 return max(1.,len(str(node[0]))*.35) if isinstance(node,list) else 1.
             def draw(node,left,right,depth,parent=None):
@@ -433,7 +481,8 @@ def build(data, args, validation):
               "parameter_inventory":parameter_inventory,
               "unused_parameter_ids":data.get("coverage",{}).get("unused_parameter_ids",[]),
               "renderer_source_sha256": {Path(__file__).name: digest(__file__), "h256_network.py": digest(HERE/"h256_network.py")},
-              "validation": validation, "network": receipt, "case_frames": spans,"nn_frames":nn_spans,"source_cues":cues,
+              "layout":args.layout,"network_rotation":rotation_receipt,
+              "validation": validation, "network": receipt, "case_frames": spans,"nn_frames":spans if clean else nn_spans,"source_cues":cues,
               "landmark_paths":landmark_paths,"whole_source_pages":page_receipts,
               "measured_landmark_widgets":widget_receipts,
               "gp_operator_trees":gp_trees,
@@ -466,6 +515,10 @@ def main():
     parser.add_argument("--gp-proof",type=Path)
     parser.add_argument("--code-hold-frames",type=int,default=6)
     parser.add_argument("--show-gp-tree",action="store_true")
+    parser.add_argument("--layout",choices=("technical","layered"),default="technical")
+    parser.add_argument("--samples",type=int,default=24)
+    parser.add_argument("--rotation-degrees",type=float,default=16.)
+    parser.add_argument("--rotation-period",type=int,default=240)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--width", type=int, default=3840)
     parser.add_argument("--height", type=int, default=2160)
@@ -475,8 +528,8 @@ def main():
     parser.add_argument("--max-connections", type=int, default=600000)
     parser.add_argument("--render-frame", type=int, action="append", default=[])
     args = parser.parse_args(sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else [])
-    if args.frames_per_case < 64 or args.max_connections < 1 or args.code_hold_frames<1:
-        parser.error("at least64 frames per case and a positive explicit connection budget required")
+    if args.frames_per_case < 64 or args.max_connections < 1 or args.code_hold_frames<1 or args.samples<1 or args.rotation_period<32 or not 0<=args.rotation_degrees<=35:
+        parser.error("Require at least64 frames/case, positive budget/samples/page hold, rotation period≥32, amplitude0..35degrees")
     schema=json.loads(args.trace.read_text())["schema"]
     if schema=="jain.h256-stage2-capture/v1":
         from h256_stage2_validate import validate
