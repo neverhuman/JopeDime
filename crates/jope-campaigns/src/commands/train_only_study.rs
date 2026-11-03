@@ -194,7 +194,7 @@ pub(crate) use prepare::prepare;
 pub(super) use prepare::{
     cache_key, validate_execution_inputs, validate_manifest_contract, validate_prepared_inputs,
 };
-pub(super) use provenance::{
+use provenance::{
     absolute_path, checkpoint_exclusions, load_catalog, resolve_checkpoint_provenance, sha256_f64,
     sotarena_report_hashes, validate_train_data,
 };
