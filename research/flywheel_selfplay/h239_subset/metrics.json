@@ -1,13 +1,1224 @@
 {
   "wave": "H239",
-  "status": "PREREGISTERED",
-  "verdict": null,
-  "primary_verdict": null,
-  "optimizer_updates": 0,
-  "complete_cells": 0,
-  "primary_dlval": null,
-  "secondary_oof": null,
-  "dope_before": null,
-  "dope_after": null,
-  "source_commit": null
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "primary_verdict": "NO_ADVANCE",
+  "optimizer_updates": 2400,
+  "complete_cells": 15,
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "source_commit": "1d31df4c235541c275b23ae7b9543ac3ec878ba5",
+  "primary_dlval": {
+    "harm_families": {
+      "r882": 0,
+      "CONTROL": 0,
+      "BIAS_ONLY": 0,
+      "HEAD_ONLY": 0,
+      "LLRD": 0
+    },
+    "elo_vs_control_by_seed": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        14.620815256545484,
+        0.0,
+        14.620815256545484,
+        14.620815256545484,
+        7.311701657228696
+      ]
+    ],
+    "median_elo_lift_vs_control": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "elo_lift_vs_control_ci95": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -3.6554498816423973,
+        10.96375087323986
+      ]
+    ],
+    "contexts": 91,
+    "families": 19,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          -0.0012228643409459604
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "BIAS_ONLY_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "BIAS_ONLY_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0012228643409459604
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 1.0
+      },
+      "HEAD_ONLY_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.00010970217861096327
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "HEAD_ONLY_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0013325665195569238
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 1.0
+      },
+      "LLRD_minus_r882": {
+        "per_seed_gain": [
+          0.00010970217861096327,
+          0.0,
+          -0.0005822581895061702
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          -0.00013924659649794684,
+          0.0003122354215538911
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.8233176682331766,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LLRD_minus_CONTROL": {
+        "per_seed_gain": [
+          0.00010970217861096327,
+          0.0,
+          0.0006406061514397902
+        ],
+        "median_gain": 0.00010970217861096327,
+        "ci95": [
+          -4.6415532165982276e-05,
+          0.00046835313233083663
+        ],
+        "positive_seeds": 2,
+        "p_one_sided": 0.38236176382361764
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.1537249791698563
+      ],
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ],
+      [
+        1.153615276991245,
+        1.1523924126502991,
+        1.153615276991245,
+        1.1537249791698563,
+        1.153033018801739
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1379087140688484
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1365175731967834,
+        1.1377941898164525,
+        1.1379087140688484,
+        1.1371863378603746
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1485.3791847434545,
+        1500.0,
+        1500.0,
+        1492.6908864006832
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1489.0362491267601,
+        1507.3078195706648
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "secondary_oof": {
+    "harm_families": {
+      "r882": 0,
+      "CONTROL": 4,
+      "BIAS_ONLY": 0,
+      "HEAD_ONLY": 1,
+      "LLRD": 2
+    },
+    "elo_vs_control_by_seed": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.7814197591137599
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.02824406150307368,
+        0.0,
+        0.02824406150307368,
+        -0.26361118749218804,
+        -0.6025400716173408
+      ]
+    ],
+    "median_elo_lift_vs_control": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -0.6025400716173408
+    ],
+    "elo_lift_vs_control_ci95": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -1.5440176874396911,
+        0.0
+      ]
+    ],
+    "contexts": 1219,
+    "families": 205,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          -0.0018939110577610857
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "BIAS_ONLY_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "BIAS_ONLY_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0018939110577610857
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 1.0
+      },
+      "HEAD_ONLY_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          -0.0024408945101234668
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "HEAD_ONLY_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          -0.0005469834523623806
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "LLRD_minus_r882": {
+        "per_seed_gain": [
+          -0.0001759683505588228,
+          0.0,
+          -0.002446064601832566
+        ],
+        "median_gain": -0.0001759683505588228,
+        "ci95": [
+          -0.00044113081764367567,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9752024797520248,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LLRD_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.0001759683505588228,
+          0.0,
+          -0.0005521535440714799
+        ],
+        "median_gain": -0.0001759683505588228,
+        "ci95": [
+          -0.00042683500656542456,
+          4.881943810820088e-06
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.966003399660034
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3851794646426245
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      [
+        1.3853554329931834,
+        1.3834615219354225,
+        1.3853554329931834,
+        1.3829145384830601,
+        1.382909368391351
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.4229488416894647
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.4213493211216004,
+        1.423073434552298,
+        1.4210433996921161,
+        1.4210390524041736
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0,
+        1499.2185802408862
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1499.971755938497,
+        1500.0,
+        1499.7081447510047,
+        1499.3692158668796
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0,
+      1499.3692158668796
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1498.5687251737145,
+        1500.0
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "step40_drift": {
+    "CONTROL": {
+      "per_cell": [
+        0.3736287233936721,
+        0.373056546717936,
+        0.3673851169964779,
+        0.36936560035338006,
+        0.3829267082640624,
+        0.3651574185937051,
+        0.35827420014060485,
+        0.3655233884131096,
+        0.3766183589098678,
+        0.3681061213280191,
+        0.38973873682037996,
+        0.38571013280430155,
+        0.39489174506044733,
+        0.37167920113560016,
+        0.39212967311898156
+      ],
+      "median": 0.373056546717936,
+      "min": 0.35827420014060485,
+      "max": 0.39489174506044733
+    },
+    "BIAS_ONLY": {
+      "per_cell": [
+        0.06815063156548505,
+        0.06849453236777317,
+        0.06716309622300494,
+        0.0664053273494221,
+        0.07040417206841827,
+        0.06807283522407986,
+        0.06569584432757831,
+        0.06728441744290378,
+        0.06850538923531087,
+        0.06839937504490669,
+        0.07153763302423435,
+        0.07079873098335725,
+        0.07132866706651914,
+        0.06793512254689717,
+        0.07084410834364831
+      ],
+      "median": 0.06839937504490669,
+      "min": 0.06569584432757831,
+      "max": 0.07153763302423435
+    },
+    "HEAD_ONLY": {
+      "per_cell": [
+        0.01798698945797758,
+        0.018116959030037537,
+        0.018023337115167546,
+        0.017674565667773003,
+        0.018225287279208205,
+        0.01788935424698685,
+        0.017533603940612107,
+        0.017871341222537158,
+        0.017982113308089607,
+        0.018283776575625195,
+        0.018456348846273195,
+        0.01867072145914707,
+        0.018286871087709766,
+        0.017776624380905392,
+        0.018476617493952296
+      ],
+      "median": 0.018023337115167546,
+      "min": 0.017533603940612107,
+      "max": 0.01867072145914707
+    },
+    "LLRD": {
+      "per_cell": [
+        0.1320165342191663,
+        0.13321091542708877,
+        0.13159612069273108,
+        0.13002417689836765,
+        0.13586835410742104,
+        0.1314700340558865,
+        0.12723435183286533,
+        0.13085538084741558,
+        0.133958178828164,
+        0.13365531943640052,
+        0.13846748974852105,
+        0.13964521836213586,
+        0.13758203290274776,
+        0.13145542564506335,
+        0.13773443888234477
+      ],
+      "median": 0.13321091542708877,
+      "min": 0.12723435183286533,
+      "max": 0.13964521836213586
+    }
+  },
+  "context_mean_minus_plateau_by_seed": [
+    [
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0010484859311514771
+    ],
+    [
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639
+    ],
+    [
+      -0.0011630101835473639,
+      -0.0024396268032165214,
+      -0.0011630101835473639,
+      -0.0010484859311514771,
+      -0.0017708621396252955
+    ]
+  ],
+  "trainable_by_arm": {
+    "CONTROL": {
+      "names": [
+        "adapter_10tok.modality_type_emb",
+        "adapter_10tok.modality_gate_logits",
+        "adapter_10tok.mm_prior_scale",
+        "adapter_10tok.null_kernel_w0_raw",
+        "adapter_10tok.sem_kernel_scale_raw",
+        "adapter_10tok.emb_kernel_scale_raw",
+        "adapter_10tok.traj_kernel_blend",
+        "adapter_10tok.null_hist_token",
+        "adapter_10tok.traj_attn_scale",
+        "adapter_10tok.modality_norm.weight",
+        "adapter_10tok.modality_norm.bias",
+        "adapter_10tok.prog_412_bottleneck.0.weight",
+        "adapter_10tok.prog_412_bottleneck.0.bias",
+        "adapter_10tok.prog_412_bottleneck.1.weight",
+        "adapter_10tok.prog_412_bottleneck.1.bias",
+        "adapter_10tok.cand_query_proj.0.weight",
+        "adapter_10tok.cand_query_proj.0.bias",
+        "adapter_10tok.cand_query_proj.1.weight",
+        "adapter_10tok.cand_query_proj.1.bias",
+        "adapter_10tok.mm_cross_attn.in_proj_weight",
+        "adapter_10tok.mm_cross_attn.in_proj_bias",
+        "adapter_10tok.mm_cross_attn.out_proj.weight",
+        "adapter_10tok.mm_cross_attn.out_proj.bias",
+        "adapter_10tok.ctx_bilinear_u.weight",
+        "adapter_10tok.prog_bilinear_v.weight",
+        "adapter_10tok.mm_prior_out.0.weight",
+        "adapter_10tok.mm_prior_out.0.bias",
+        "adapter_10tok.mm_prior_out.2.weight",
+        "adapter_10tok.mm_prior_out.2.bias",
+        "adapter_10tok.hist_token_proj.0.weight",
+        "adapter_10tok.hist_token_proj.0.bias",
+        "adapter_10tok.hist_token_proj.1.weight",
+        "adapter_10tok.hist_token_proj.1.bias",
+        "adapter_10tok.traj_cross_attn.in_proj_weight",
+        "adapter_10tok.traj_cross_attn.in_proj_bias",
+        "adapter_10tok.traj_cross_attn.out_proj.weight",
+        "adapter_10tok.traj_cross_attn.out_proj.bias",
+        "adapter_10tok.traj_delta_head.0.weight",
+        "adapter_10tok.traj_delta_head.0.bias",
+        "adapter_10tok.traj_delta_head.2.weight",
+        "adapter_10tok.traj_delta_head.2.bias",
+        "adapter_10tok.parent_delta_net.0.weight",
+        "adapter_10tok.parent_delta_net.0.bias",
+        "adapter_10tok.parent_delta_net.1.weight",
+        "adapter_10tok.parent_delta_net.1.bias",
+        "adapter_10tok.parent_delta_net.3.weight",
+        "adapter_10tok.parent_delta_net.3.bias"
+      ],
+      "tensors": 47,
+      "parameters": 29211
+    },
+    "BIAS_ONLY": {
+      "names": [
+        "adapter_10tok.modality_norm.weight",
+        "adapter_10tok.modality_norm.bias",
+        "adapter_10tok.prog_412_bottleneck.0.bias",
+        "adapter_10tok.prog_412_bottleneck.1.weight",
+        "adapter_10tok.prog_412_bottleneck.1.bias",
+        "adapter_10tok.cand_query_proj.0.bias",
+        "adapter_10tok.cand_query_proj.1.weight",
+        "adapter_10tok.cand_query_proj.1.bias",
+        "adapter_10tok.mm_cross_attn.in_proj_bias",
+        "adapter_10tok.mm_cross_attn.out_proj.bias",
+        "adapter_10tok.mm_prior_out.0.bias",
+        "adapter_10tok.mm_prior_out.2.bias",
+        "adapter_10tok.hist_token_proj.0.bias",
+        "adapter_10tok.hist_token_proj.1.weight",
+        "adapter_10tok.hist_token_proj.1.bias",
+        "adapter_10tok.traj_cross_attn.in_proj_bias",
+        "adapter_10tok.traj_cross_attn.out_proj.bias",
+        "adapter_10tok.traj_delta_head.0.bias",
+        "adapter_10tok.traj_delta_head.2.bias",
+        "adapter_10tok.parent_delta_net.0.bias",
+        "adapter_10tok.parent_delta_net.1.weight",
+        "adapter_10tok.parent_delta_net.1.bias",
+        "adapter_10tok.parent_delta_net.3.bias"
+      ],
+      "tensors": 23,
+      "parameters": 755
+    },
+    "HEAD_ONLY": {
+      "names": [
+        "adapter_10tok.traj_delta_head.2.weight",
+        "adapter_10tok.traj_delta_head.2.bias"
+      ],
+      "tensors": 2,
+      "parameters": 25
+    },
+    "LLRD": {
+      "names": [
+        "adapter_10tok.modality_type_emb",
+        "adapter_10tok.modality_gate_logits",
+        "adapter_10tok.mm_prior_scale",
+        "adapter_10tok.null_kernel_w0_raw",
+        "adapter_10tok.sem_kernel_scale_raw",
+        "adapter_10tok.emb_kernel_scale_raw",
+        "adapter_10tok.traj_kernel_blend",
+        "adapter_10tok.null_hist_token",
+        "adapter_10tok.traj_attn_scale",
+        "adapter_10tok.modality_norm.weight",
+        "adapter_10tok.modality_norm.bias",
+        "adapter_10tok.prog_412_bottleneck.0.weight",
+        "adapter_10tok.prog_412_bottleneck.0.bias",
+        "adapter_10tok.prog_412_bottleneck.1.weight",
+        "adapter_10tok.prog_412_bottleneck.1.bias",
+        "adapter_10tok.cand_query_proj.0.weight",
+        "adapter_10tok.cand_query_proj.0.bias",
+        "adapter_10tok.cand_query_proj.1.weight",
+        "adapter_10tok.cand_query_proj.1.bias",
+        "adapter_10tok.mm_cross_attn.in_proj_weight",
+        "adapter_10tok.mm_cross_attn.in_proj_bias",
+        "adapter_10tok.mm_cross_attn.out_proj.weight",
+        "adapter_10tok.mm_cross_attn.out_proj.bias",
+        "adapter_10tok.ctx_bilinear_u.weight",
+        "adapter_10tok.prog_bilinear_v.weight",
+        "adapter_10tok.mm_prior_out.0.weight",
+        "adapter_10tok.mm_prior_out.0.bias",
+        "adapter_10tok.mm_prior_out.2.weight",
+        "adapter_10tok.mm_prior_out.2.bias",
+        "adapter_10tok.hist_token_proj.0.weight",
+        "adapter_10tok.hist_token_proj.0.bias",
+        "adapter_10tok.hist_token_proj.1.weight",
+        "adapter_10tok.hist_token_proj.1.bias",
+        "adapter_10tok.traj_cross_attn.in_proj_weight",
+        "adapter_10tok.traj_cross_attn.in_proj_bias",
+        "adapter_10tok.traj_cross_attn.out_proj.weight",
+        "adapter_10tok.traj_cross_attn.out_proj.bias",
+        "adapter_10tok.traj_delta_head.0.weight",
+        "adapter_10tok.traj_delta_head.0.bias",
+        "adapter_10tok.traj_delta_head.2.weight",
+        "adapter_10tok.traj_delta_head.2.bias",
+        "adapter_10tok.parent_delta_net.0.weight",
+        "adapter_10tok.parent_delta_net.0.bias",
+        "adapter_10tok.parent_delta_net.1.weight",
+        "adapter_10tok.parent_delta_net.1.bias",
+        "adapter_10tok.parent_delta_net.3.weight",
+        "adapter_10tok.parent_delta_net.3.bias"
+      ],
+      "tensors": 47,
+      "parameters": 29211
+    }
+  },
+  "initial_adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+  "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+  "smoke_optimizer_updates": 4,
+  "recovered_cells": 0,
+  "newly_completed_optimizer_updates": 2400,
+  "resume_number": 0,
+  "descriptive_unconstrained_val": {
+    "harm_families": {
+      "r882": 0,
+      "CONTROL": 3,
+      "BIAS_ONLY": 0,
+      "HEAD_ONLY": 0,
+      "LLRD": 0
+    },
+    "elo_vs_control_by_seed": [
+      [
+        -6.5778432038457595,
+        0.0,
+        -8.039704570632694,
+        -8.770690197479098,
+        5.1176697791686365
+      ],
+      [
+        2.193021667725361,
+        0.0,
+        0.7310373597242688,
+        1.462042426700691,
+        17.549072634946924
+      ],
+      [
+        8.769712005488827,
+        0.0,
+        7.308201124845482,
+        8.038950103538127,
+        8.769712005488827
+      ]
+    ],
+    "median_elo_lift_vs_control": [
+      2.193021667725361,
+      0.0,
+      0.7310373597242688,
+      1.462042426700691,
+      8.769712005488827
+    ],
+    "elo_lift_vs_control_ci95": [
+      [
+        -24.152832390459253,
+        24.149801556777028
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -24.898294241841985,
+        21.96801645474097
+      ],
+      [
+        -22.696290196589253,
+        21.209651602030704
+      ],
+      [
+        -3.6790381083290744,
+        23.443696956174815
+      ]
+    ],
+    "contexts": 91,
+    "families": 19,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          -0.0023228691566951707,
+          -0.004606689251985353,
+          -0.002363158221609327
+        ],
+        "median_gain": -0.002363158221609327,
+        "ci95": [
+          -0.006383191338291336,
+          0.000579445834328846
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9497050294970503
+      },
+      "BIAS_ONLY_minus_r882": {
+        "per_seed_gain": [
+          -4.6415532165982276e-05,
+          -9.28310643319704e-05,
+          -9.28310643319704e-05
+        ],
+        "median_gain": -9.28310643319704e-05,
+        "ci95": [
+          -0.0002784931929959112,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "BIAS_ONLY_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0022764536245291887,
+          0.004513858187653383,
+          0.002270327157277357
+        ],
+        "median_gain": 0.0022764536245291887,
+        "ci95": [
+          -0.0006330525386338943,
+          0.0063202210697020636
+        ],
+        "positive_seeds": 3,
+        "p_one_sided": 0.055194480551944806
+      },
+      "HEAD_ONLY_minus_r882": {
+        "per_seed_gain": [
+          0.0002362754715009165,
+          0.0003291065358328869,
+          0.00017298882505593842
+        ],
+        "median_gain": 0.0002362754715009165,
+        "ci95": [
+          -0.0004177397894938668,
+          0.0014050593969925276
+        ],
+        "positive_seeds": 3,
+        "p_one_sided": 0.3852614738526147,
+        "holm_p": 0.7705229477052294,
+        "advance": false
+      },
+      "HEAD_ONLY_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0025591446281960873,
+          0.004935795787818241,
+          0.0025361470466652657
+        ],
+        "median_gain": 0.0025591446281960873,
+        "ci95": [
+          -0.00019333181824316163,
+          0.006509575625146292
+        ],
+        "positive_seeds": 3,
+        "p_one_sided": 0.036696330366963306
+      },
+      "LLRD_minus_r882": {
+        "per_seed_gain": [
+          -2.1329701605244417e-05,
+          0.0016679064955201714,
+          0.000588379251767728
+        ],
+        "median_gain": 0.000588379251767728,
+        "ci95": [
+          -0.000603995278059941,
+          0.002386367213887703
+        ],
+        "positive_seeds": 2,
+        "p_one_sided": 0.17518248175182483,
+        "holm_p": 0.5255474452554745,
+        "advance": false
+      },
+      "LLRD_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0023015394550899263,
+          0.006274595747505525,
+          0.002951537473377055
+        ],
+        "median_gain": 0.002951537473377055,
+        "ci95": [
+          0.0005610184556451825,
+          0.006904868253436633
+        ],
+        "positive_seeds": 3,
+        "p_one_sided": 0.0052994700529947
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.153615276991245,
+        1.1512924078345497,
+        1.1535688614590793,
+        1.153851552462746,
+        1.15359394728964
+      ],
+      [
+        1.153615276991245,
+        1.1490085877392595,
+        1.153522445926913,
+        1.1539443835270777,
+        1.1552831834867652
+      ],
+      [
+        1.153615276991245,
+        1.1512521187696356,
+        1.153522445926913,
+        1.153788265816301,
+        1.1542036562430127
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1353692165210012,
+        1.1377457340411143,
+        1.1380408510229643,
+        1.1377719225455458
+      ],
+      [
+        1.1377941898164525,
+        1.1329850087292146,
+        1.1376972782657762,
+        1.1381377625736406,
+        1.1395354108832043
+      ],
+      [
+        1.1377941898164525,
+        1.1353271565081786,
+        1.1376972782657762,
+        1.1379747825459063,
+        1.1384084318924736
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1506.5778432038458,
+        1498.538138633213,
+        1497.8071530063667,
+        1511.6955129830144
+      ],
+      [
+        1500.0,
+        1497.8069783322746,
+        1498.538015691999,
+        1499.2690207589753,
+        1515.3560509672216
+      ],
+      [
+        1500.0,
+        1491.2302879945112,
+        1498.5384891193567,
+        1499.2692380980493,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1497.8069783322746,
+      1498.538138633213,
+      1499.2690207589753,
+      1511.6955129830144
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1475.850198443223,
+        1524.1528323904593
+      ],
+      [
+        1495.60988977546,
+        1500.0
+      ],
+      [
+        1489.030165971467,
+        1508.770295067815
+      ],
+      [
+        1490.4982799043412,
+        1532.2285226262616
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "pseudoreplication_summary": {
+    "strict_OOF_identical": [
+      [
+        "seed239101:r882",
+        "seed239101:CONTROL",
+        "seed239101:BIAS_ONLY",
+        "seed239101:HEAD_ONLY",
+        "seed239102:r882",
+        "seed239102:CONTROL",
+        "seed239102:BIAS_ONLY",
+        "seed239102:HEAD_ONLY",
+        "seed239102:LLRD",
+        "seed239103:r882",
+        "seed239103:BIAS_ONLY"
+      ]
+    ],
+    "strict_DLVal_identical": [
+      [
+        "seed239101:r882",
+        "seed239101:CONTROL",
+        "seed239101:BIAS_ONLY",
+        "seed239101:HEAD_ONLY",
+        "seed239102:r882",
+        "seed239102:CONTROL",
+        "seed239102:BIAS_ONLY",
+        "seed239102:HEAD_ONLY",
+        "seed239102:LLRD",
+        "seed239103:r882",
+        "seed239103:BIAS_ONLY"
+      ],
+      [
+        "seed239101:LLRD",
+        "seed239103:HEAD_ONLY"
+      ]
+    ],
+    "all_arms_selector_identical_to_CONTROL": false
+  },
+  "native91": {
+    "status": "PASS",
+    "matches": 91,
+    "mean": 1.1377941898164525
+  },
+  "attempts": [
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/h239-astra/attempts/attempt1",
+      "resource": {
+        "status": "PASS",
+        "exit_code": 0,
+        "reasons": [],
+        "final_sample": {
+          "utc": 1793679059.3620422,
+          "load5": 44.71240234375,
+          "available": 77942300672,
+          "free": 763023249408,
+          "rss": 14409728,
+          "threads": 2,
+          "affinity": [
+            48,
+            49,
+            50,
+            51
+          ],
+          "elapsed": 4892.288332111002,
+          "pause_requested": false
+        },
+        "admission": {
+          "utc": 1793674167.0727828,
+          "load5": 46.39404296875,
+          "available": 61812711424,
+          "free": 859785109504,
+          "rss": 15785984,
+          "threads": 1,
+          "affinity": [
+            48,
+            49,
+            50,
+            51
+          ]
+        },
+        "elapsed_seconds": 4892.788747361003,
+        "peak": {
+          "rss": 3351130112,
+          "threads": 3
+        },
+        "pause_requested_seconds": 1284.0352225819988,
+        "compute_stop": 1793691000.0,
+        "resume_number": 0
+      },
+      "journaled_physical_updates": 2400,
+      "torn_journal_tail": false,
+      "smoke_updates": 4,
+      "exception_update_count": null,
+      "inflight_update_unknown": false
+    }
+  ],
+  "physical_optimizer_updates_lower_bound": 2400,
+  "actual_physical_updates_exact": true,
+  "serving_promotion": false,
+  "terminal_resources": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "final_sample": {
+      "utc": 1793679059.3620422,
+      "load5": 44.71240234375,
+      "available": 77942300672,
+      "free": 763023249408,
+      "rss": 14409728,
+      "threads": 2,
+      "affinity": [
+        48,
+        49,
+        50,
+        51
+      ],
+      "elapsed": 4892.288332111002,
+      "pause_requested": false
+    },
+    "admission": {
+      "utc": 1793674167.0727828,
+      "load5": 46.39404296875,
+      "available": 61812711424,
+      "free": 859785109504,
+      "rss": 15785984,
+      "threads": 1,
+      "affinity": [
+        48,
+        49,
+        50,
+        51
+      ]
+    },
+    "elapsed_seconds": 4892.788747361003,
+    "peak": {
+      "rss": 3351130112,
+      "threads": 3
+    },
+    "pause_requested_seconds": 1284.0352225819988,
+    "compute_stop": 1793691000.0,
+    "resume_number": 0,
+    "transition_count": 8
+  }
 }
