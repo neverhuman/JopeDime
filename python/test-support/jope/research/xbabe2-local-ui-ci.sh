@@ -16,7 +16,7 @@ if (Path('/proc/sys/kernel/hostname').read_text().strip() != 'xbabe2'
         or os.environ.get('XBABE2_LOCAL_UI_CI') != '1'
         or any(key in os.environ for key in (
             'CI', 'GITHUB_ACTIONS', 'GITLAB_CI', 'BUILDKITE', 'TF_BUILD', 'TEAMCITY_VERSION'))):
-    raise SystemExit('Requires explicit xbabe2 local execution; other hosts and CI are refused.')
+    raise SystemExit('Requires explicit xbabe2 local execution; other hosts and CI are refused.') # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 
 bundle = Path(sys.argv[1]).resolve()
 
@@ -24,9 +24,9 @@ def verified(path, expected):
     try:
         raw = path.read_bytes()
     except OSError as error:
-        raise SystemExit(f'Missing local proof artifact: {path}: {error}')
+        raise SystemExit(f'Missing local proof artifact: {path}: {error}') # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
     if hashlib.sha256(raw).hexdigest() != expected:
-        raise SystemExit(f'Local proof artifact changed: {path}')
+        raise SystemExit(f'Local proof artifact changed: {path}') # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
     return raw
 
 binding = json.loads(verified(bundle / 'source-binding.json',

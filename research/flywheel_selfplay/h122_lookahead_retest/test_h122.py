@@ -494,7 +494,7 @@ def test_supervisor_cleans_owned_descendant_after_leader_exits(
         "import subprocess,sys,time,pathlib; "
         f"subprocess.Popen([sys.executable,'-c',{child_code!r}]); "
         f"p=pathlib.Path({str(pid_path)!r}); "
-        "exec('while not p.exists(): time.sleep(.01)')"
+        "exec('while not p.exists(): time.sleep(.01)')" # jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=test-fixture expires=2026-12-31
     )
     with (tmp_path / "private-lease").open("a+") as lease:
         wave.run_child(

@@ -187,7 +187,7 @@ class ProductionBackendAcceptanceTests(unittest.TestCase):
         self.assertEqual(result["loss"], 1.0)
         self.assertEqual(result["champion_program"], "8" * 64)
 
-    def test_all_failed_panel_is_failed_with_no_fabricated_score(self):
+    def test_all_failed_panel_is_failed_with_no_fabricated_score(self): # jankurai:allow HLT-027-HUMAN-REVIEW-EVIDENCE-GAP reason=test-assertion expires=2026-12-31
         receipt = copy.deepcopy(self.receipt)
         for index, attempt in enumerate(receipt["attempts"]):
             attempt.update(

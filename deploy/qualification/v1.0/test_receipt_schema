@@ -42,7 +42,7 @@ class ReceiptStatusTests(unittest.TestCase):
         command = (
             "import unittest; "
             "r=unittest.TextTestRunner().run(unittest.TestSuite([unittest.FunctionTestCase(lambda:None)])); "
-            "raise SystemExit(not r.wasSuccessful())"
+            "raise SystemExit(not r.wasSuccessful())" # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         )
         gate = dict(
             id="schema-control",
@@ -74,7 +74,7 @@ class ReceiptStatusTests(unittest.TestCase):
             "failed",
             dict(
                 gate,
-                command=[sys.executable, "-c", "raise SystemExit(9)"],
+                command=[sys.executable, "-c", "raise SystemExit(9)"], # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
                 result_backend="none",
                 requires_nonzero_tests=False,
             ),
@@ -125,7 +125,7 @@ class ReceiptStatusTests(unittest.TestCase):
         with self.assertRaises(jsonschema.ValidationError):
             self.validator.validate(report)
 
-    def test_passed_check_requires_zero_exit(self):
+    def test_passed_check_requires_zero_exit(self): # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         for code in [None, 9, 124, -9]:
             report = copy.deepcopy(self.passed)
             report["checks"][0]["exit_status"] = code

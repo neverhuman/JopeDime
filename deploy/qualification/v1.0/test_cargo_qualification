@@ -41,7 +41,7 @@ class Dispatch(unittest.TestCase):
         path.write_text(
             "import json,sys; from pathlib import Path; "
             f"print(json.dumps(dict(origin={origin!r},argv=sys.argv[1:],file=str(Path(__file__).resolve())))); "
-            "raise SystemExit(7 if '--fixture-exit7' in sys.argv else 0)"
+            "raise SystemExit(7 if '--fixture-exit7' in sys.argv else 0)" # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         )
 
     def invoke(self, args, cwd=None):
