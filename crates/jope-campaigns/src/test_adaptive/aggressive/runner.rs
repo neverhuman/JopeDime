@@ -1,4 +1,5 @@
 use super::*;
+use super::{checkpoint::load_checkpoints, dataset::run_dataset, model::DatasetResult};
 
 pub(crate) fn run_golden46(
     source_registry: &Path,
