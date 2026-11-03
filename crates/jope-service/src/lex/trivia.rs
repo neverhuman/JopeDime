@@ -1,6 +1,6 @@
 use super::*;
 
-impl Lexer {
+impl<'a> Lexer<'a> {
     pub(crate) fn trivia(&mut self) -> Result<(), LexError> {
         loop {
             while let Some(c) = self
