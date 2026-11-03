@@ -530,11 +530,23 @@ class RejectedCandidateError(RuntimeError):
 class CandidateNovelty:
     """Refuse previously rejected parameter bytes before invoking an evaluator."""
 
-    def __init__(self, identity: str, history):
+    def __init__(
+        self,
+        identity: str,
+        history,
+        completed_rounds: set[int] | None = None,
+    ):
         self.identity = identity
         self.rejected = {}
         for row in history:
             decision = row.get("adapter_admission", row)
+            rnd = decision.get("round", row.get("round"))
+            if (
+                completed_rounds is not None
+                and rnd is not None
+                and int(rnd) not in completed_rounds
+            ):
+                continue
             self.record(
                 {
                     **decision,

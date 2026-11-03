@@ -1070,3 +1070,31 @@ def test_local_archive_prune_is_opt_in_in_runner():
         in source
     )
     assert "if args.checkpoint_archive_local_keep is not None:" in source
+
+
+def test_candidate_novelty_ignores_interrupted_incomplete_round_on_resume():
+    from dev_incumbent import CandidateNovelty, RejectedCandidateError
+
+    completed_decision = {
+        "evaluation_identity": "fixed-dev",
+        "accepted": False,
+        "round": 4330,
+        "candidate_parameter_sha256": "c" * 64,
+    }
+    interrupted_decision = {
+        "evaluation_identity": "fixed-dev",
+        "accepted": False,
+        "round": 4331,
+        "candidate_parameter_sha256": "d" * 64,
+    }
+    novelty = CandidateNovelty(
+        "fixed-dev",
+        [completed_decision, interrupted_decision],
+        completed_rounds={4330},
+    )
+    with pytest.raises(RejectedCandidateError, match="first rejected round 4330"):
+        novelty.evaluate("c" * 64, lambda: 1)
+    assert novelty.evaluate("d" * 64, lambda: 42) == 42
+    novelty.record(interrupted_decision)
+    with pytest.raises(RejectedCandidateError, match="first rejected round 4331"):
+        novelty.evaluate("d" * 64, lambda: 42)
