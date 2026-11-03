@@ -27,6 +27,6 @@ mod readiness;
 #[path = "league/registry.rs"]
 mod registry;
 
-pub use payoffs::{ContextIdentity, MemberSnapshot, PayoffCell, PayoffManifest, PayoffPurpose};
-pub use readiness::{LeagueGate, LeagueGateReason, MatchmakingMemory, Pfsp, TrainingMatchRecord};
+pub use payoffs::{ContextIdentity, PayoffCell, PayoffManifest, PayoffPurpose};
+pub use readiness::{LeagueGate, LeagueGateReason, MatchmakingMemory, Pfsp};
 pub use registry::{HistoricalCost, LeagueMember, LeagueRegistry, MemberKind};
