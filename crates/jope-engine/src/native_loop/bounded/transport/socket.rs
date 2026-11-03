@@ -66,8 +66,12 @@ impl<S: TimedSocket> DeadlineSocket<S> {
     fn limits(&self) -> MutexGuard<'_, Limits> {
         self.limits.lock().unwrap_or_else(PoisonError::into_inner)
     }
+    /// Current per-operation write timeout, for TLS's bounded courtesy close.
+    pub(super) fn write_timeout(&self) -> Option<Duration> {
+        self.limits().write
+    }
     /// Bring the deadline forward to `cap` if that is sooner; it is never moved later.
-    fn cap_deadline(&self, cap: Instant) {
+    pub(super) fn cap_deadline(&self, cap: Instant) {
         let mut limits = self.limits();
         limits.deadline = Some(limits.deadline.map_or(cap, |d| d.min(cap)));
     }
