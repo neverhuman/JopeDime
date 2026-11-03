@@ -386,7 +386,9 @@ struct BinaryCampaignIdentity<'a> {
 
 mod fold_cache;
 use fold_cache::BinaryFoldCache;
-pub(crate) use fold_cache::{exact_cv_on_folds_binary, BinaryCvResult};
+pub(crate) use fold_cache::BinaryCvResult;
+#[cfg(test)]
+pub(crate) use fold_cache::exact_cv_on_folds_binary;
 
 // ---------------------------------------------------------------------------
 // population
@@ -396,16 +398,13 @@ mod population;
 mod selection;
 pub(crate) use population::{
     binary_genome_complexity, evaluate_test_adaptive_binary, evaluate_test_adaptive_binary_cpp17,
-    test_adaptive_next_population, test_adaptive_seed_population, BinaryAdaptiveCpp17Evaluation,
-    BinaryAdaptiveEvaluation, BinaryAdaptiveRanked,
+    test_adaptive_next_population, test_adaptive_seed_population, BinaryAdaptiveRanked,
 };
 pub(super) use population::{
-    binary_head_stage, evaluate_binary_unique, finish_test_adaptive_binary,
-    fit_test_adaptive_binary, legacy_body, parse_binary_population, refill_binary_population,
-    with_binary_head, BinaryEvaluation,
+    evaluate_binary_unique, parse_binary_population, refill_binary_population, BinaryEvaluation,
 };
 pub(crate) use selection::{
-    score_dataset_binary, select_dataset_binary, validate_freeze_binary, BinaryScore,
+    score_dataset_binary, select_dataset_binary, validate_freeze_binary,
 };
 #[cfg(test)]
 #[path = "binary_cv/tests.rs"]
