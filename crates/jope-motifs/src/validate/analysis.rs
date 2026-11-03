@@ -1,8 +1,8 @@
 use super::*;
 
 pub(super) struct Artifact {
-    kind: &'static str,
-    text: String,
+    pub(super) kind: &'static str,
+    pub(super) text: String,
 }
 
 /// Fitted state and probe predictions of one fit, as bytes and bit patterns.
