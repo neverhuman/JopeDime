@@ -44,13 +44,11 @@ mod parser;
 mod registry;
 mod scan;
 
-use audit::policy_value;
 pub use audit::{audit, SMALLEST_GPU_NODE_FREE_MB};
 pub use registry::{DepForm, Finding, RenderSite, EXEMPT_FILES, REGISTRY, SCAN_DIRS, SHARED_KEYS};
 pub use scan::{scan_repo, scan_targets};
 
 use parser::*;
-use scan::scan_file;
 
 /// Repo root, resolved from the crate manifest so the test works from anywhere.
 pub fn repo_root() -> PathBuf {
