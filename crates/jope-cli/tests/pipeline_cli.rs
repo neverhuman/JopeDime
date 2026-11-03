@@ -242,5 +242,9 @@ fn no_progress_on_stderr(stderr: &[u8]) {
     );
 }
 
+// The test target root is tests/pipeline_cli.rs, so its sub-tests live under tests/pipeline_cli/.
 #[cfg(test)]
-mod tests;
+mod pipeline_cli {
+    use super::*;
+    mod tests;
+}
