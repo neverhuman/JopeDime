@@ -1,5 +1,6 @@
 use super::*;
 
+#[path = "recovery/retirement.rs"]
 mod retirement;
 pub(crate) use retirement::{
     apply_retired_binding_repair, build_retired_binding_repair_plan, recover_retirement_candidates,
