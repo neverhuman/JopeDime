@@ -28,15 +28,23 @@ fn q1_service_fixture() -> (tempfile::TempDir, RunService) {
         &Default::default(),
     )
     .unwrap();
-    let service = RunService::new(
+    let executable = std::env::current_exe().unwrap();
+    let binary = format!(
+        "{}:{}",
+        env!("CARGO_PKG_VERSION"),
+        hash(&std::fs::read(&executable).unwrap())
+    );
+    let service = RunService {
+        journal: Arc::new(EventLog::new(Arc::clone(&store))),
         store,
         config,
-        directory.path().to_path_buf(),
-        std::env::current_exe().unwrap(),
-        Arc::new(EngineActivity::default()),
-        lease,
-    )
-    .unwrap();
+        home: directory.path().to_path_buf(),
+        executable,
+        binary,
+        activity: Arc::new(EngineActivity::default()),
+        admission: Mutex::new(()),
+        _lease: lease,
+    };
     (directory, service)
 }
 
