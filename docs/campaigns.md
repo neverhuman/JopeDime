@@ -2,19 +2,19 @@
 
 ## Binary classification campaign
 
-`commands/binary_cv.rs` evaluates genomes through the public schema-bound
+`commands/binary_cv.rs` evaluates candidate programs through the public schema-bound
 `feat_math::advanced_v3` fit and prediction API. It creates an all-numeric
 IID schema and formats each input with Rust's shortest-round-trip float
 format, preserving the numeric feature values through encoding. Folds use
 SHA-keyed, class-stratified assignments and shared per-fold string tables.
-Binary fitness is mean defined-fold Gini minus 0.25 times its standard
+The binary score is mean defined-fold Gini minus 0.25 times its standard
 deviation; single-class validation folds have undefined AUC and do not enter
 that penalty, while their rows remain in pooled out-of-fold results.
 
 Offspring generation derives from canonical parents and the offspring seed:
-the v3 head is detached, the legacy body uses the frozen canonical mutation
-and crossover operators, and a deterministically selected probability-capable
-head is reattached before v3 genome validation. The regression lane has a
+the v3 head is detached, the legacy body is varied by the frozen canonical search
+operators, and a deterministically selected probability-capable
+head is reattached before v3 program validation. The regression lane has a
 stage-prefix cache; the binary v3 path does not. Binary runs also omit core
 pinning, live logging, checkpoints, generation summaries, and phase-two
 receipts. Slot-level artifacts are not published; fitted winner artifacts
