@@ -28,8 +28,8 @@ Primary: DL-Val context-mean per seed after averaging five cells, then three-see
 
 Unconstrained B-best and step40 are diagnostic only:
 
-| Arm | Unconstrained DL-Val gain [CI95] | Step40 DL-Val gain [CI95] | Strict ARM minus CONTROL [CI95] |
-|---|---|---|---|
+| Arm | Unconstrained DL-Val gain [CI95] | Step40 DL-Val gain [CI95] | Strict ARM minus CONTROL [CI95] | Step40 ARM minus CONTROL [CI95] |
+|---|---|---|---|---|
 | CONTROL | -0.003053060 [-0.007517642, +0.000333759] | -0.039657190 [-0.085828129, -0.008610981] | reference | reference |
 | BF16_AMP | -0.003053060 [-0.007517642, +0.000333759] | -0.039657190 [-0.084491710, -0.008610981] | +0.000000000 [+0.000000000, +0.000000000] | +0.001726795 [+0.000000000, +0.005418563] |
 | BF16_SR | -0.003135988 [-0.007545568, +0.000326133] | -0.040951580 [-0.082383418, -0.009276935] | +0.000000000 [+0.000000000, +0.000000000] | -0.000929595 [-0.004083636, +0.000846921] |
