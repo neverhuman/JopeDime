@@ -113,4 +113,4 @@ mod connection;
 #[path = "bounded_transport/deadlines.rs"]
 mod deadlines;
 #[path = "bounded_transport/rendezvous.rs"]
-mod rendezvous;
+mod rendezvous_tests;
