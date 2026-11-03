@@ -87,13 +87,13 @@ fn full_cpu_graph_matches_nonzero_python_controls_and_admission_on_both_slates()
                     .iter()
                     .map(|v| f64::from(*v))
                     .collect();
-                let a = super::super::admission::select_costs(
+                let a = crate::ranker::admission::select_costs(
                     &actual,
                     n == 20,
                     &mut ChaCha12Rng::seed_from_u64(71),
                 )
                 .unwrap();
-                let e = super::super::admission::select_costs(
+                let e = crate::ranker::admission::select_costs(
                     &oracle,
                     n == 20,
                     &mut ChaCha12Rng::seed_from_u64(71),
