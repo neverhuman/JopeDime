@@ -130,7 +130,7 @@ objective covers only programs that run.
 
 The program-only head controls for ranking without problem context
 (\cref{sub:results-ablation}). Ranking valid scored programs alone does not
-test the validity rate $q_{\text{run}}$ in \cref{sec:price}.
+test the validity rate $q_{\text{run}}$ in \cref{sub:price-bill}.
 
 \begin{keyidea}
 The reference game-day protocol omits the ranking map. Matched first
@@ -216,7 +216,7 @@ A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's
 ranking targets.
 
-The reference procedure uses two ratchets (\cref{sec:game}). A program
+The reference procedure uses two ratchets (\cref{sub:game-referee}). A program
 displaces a board's incumbent only by strictly beating it. The proposed
 reference admission test calls for 16 held-out cuts with three seeds
 each. A challenger may replace the serving writer
@@ -254,9 +254,7 @@ claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana202
 The evaluation protocol must withstand such attacks. Selection,
 promotion and final scoring must use separate data (inner folds, held-out
 cuts, a final fold scored once), with sealed meta-test families outside the
-learner's inputs.
-
-The proposed comparisons require sandboxed execution
+learner's inputs. The proposed comparisons also require sandboxed execution
 using seccomp and Landlock, with memory, swap and time limits. A
 planted label leak and a sealed canary must both be caught. Every reported
 winner must be re-run from its emitted code, with native and emitted
