@@ -59,7 +59,11 @@ pub(crate) fn fit_and_measure(
     let cpu_wanted = wanted.contains(&ResourceVar::FitCpuSeconds);
     let cpu_before = if cpu_wanted { Some(cpu()?) } else { cpu().ok() };
 
-    let window = if heap { meter::HeapWindow::open() } else { None };
+    let window = if heap {
+        meter::HeapWindow::open()
+    } else {
+        None
+    };
     let fit_clock = clock.start();
     let model = feat_math::fit(parsed, &cut.train_x, &cut.train_y)?;
     let fit_seconds = fit_clock.secs();
@@ -67,7 +71,11 @@ pub(crate) fn fit_and_measure(
     let cpu_after = if cpu_wanted { Some(cpu()?) } else { cpu().ok() };
 
     let train = model.predict(&cut.train_x)?;
-    let window = if heap { meter::HeapWindow::open() } else { None };
+    let window = if heap {
+        meter::HeapWindow::open()
+    } else {
+        None
+    };
     let pass = clock.start();
     let hold = model.predict(&cut.hold_x)?;
     let mut passes = vec![pass.secs()];
@@ -81,11 +89,21 @@ pub(crate) fn fit_and_measure(
     passes.sort_by(f64::total_cmp);
     let predict_seconds = passes[passes.len() / 2];
     let hold_rows = cut.hold_x.len();
-    ensure!(hold_rows > 0, "resource readings need at least one held-out row");
+    ensure!(
+        hold_rows > 0,
+        "resource readings need at least one held-out row"
+    );
 
     let mut resources = Resources::new();
     let mut put = |var: ResourceVar, value: f64| {
-        resources.insert(var, if var.is_measured() && !real { 0.0 } else { value });
+        resources.insert(
+            var,
+            if var.is_measured() && !real {
+                0.0
+            } else {
+                value
+            },
+        );
     };
     put(ResourceVar::FitSeconds, fit_seconds);
     if let (Some(before), Some(after)) = (cpu_before, cpu_after) {
