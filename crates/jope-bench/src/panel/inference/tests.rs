@@ -1,7 +1,7 @@
 use super::super::data::raw_table;
 use super::super::methods::{fit_rust, rust_methods, RustFitRequest};
 use super::*;
-use feat_math::advanced_v3::{DataSchema, RowSemantics};
+use feat_math::advanced_v3::{ColumnSpec, DataSchema, RowSemantics};
 use jope_pipeline::experiment::{Column, ColumnKind as Kind};
 use std::process::Command;
 pub(crate) fn fixture(task: Task, family: &str) -> (FittedRustArtifact, Vec<Vec<Option<String>>>) {
