@@ -2,8 +2,8 @@ mod candidates;
 pub(crate) use candidates::check_candidates;
 
 use super::{
-    digest, hash, read, same, AdmittedPopulation, Artifact, CandidateClaim, Claims, Evidence,
-    ExecutionProof, GenericBank, Request, RequestPlan, SynthesizedRecipe, Variation,
+    digest, generic_bank, hash, read, same, AdmittedPopulation, Artifact, CandidateClaim, Claims,
+    Evidence, ExecutionProof, GenericBank, Request, RequestPlan, SynthesizedRecipe, Variation,
     VerifiedProposalContext, Worker, LINEAGE, NUMERICS, OUTPUT_SCHEMA, SELECTION,
 };
 use anyhow::{ensure, Context, Result};
