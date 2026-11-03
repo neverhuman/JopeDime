@@ -1,0 +1,14 @@
+{
+  "wave": "H286",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "verdict": null,
+  "cohort_sha256": "0de1b3839cb3201d6c8a05aafec134e28e119ae6c233588b41d6169adb3e7b11",
+  "schema_on_completion": {
+    "verdict": "FRESH_TRANSFER_PASS / NOT_TRANSFERRED_FRESH / INSUFFICIENT_FRESH / BLOCKED_GPU_LOCK (RERANK8_VETO); per-arm verdicts for BAG_SWITCH, BAG_SWITCH_NESTED",
+    "frozen": "per seed gains, CI, W/T/L, harmed, Elo, invalid, changed; median + pooled CI; criteria",
+    "secondary": "sign test p per seed; normalized gain median + CI",
+    "pooled": "H283 + H286 (H283 portion already seen)",
+    "descriptive": "r782/r785 pools"
+  }
+}
