@@ -1,0 +1,762 @@
+{
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_unchanged": true,
+  "elapsed_sec": 296.15558552999573,
+  "eval_stats_by_arm": {
+    "LIVE_GP_CAUSAL_2PLUS2_FLY": {
+      "batch2_promotions": 8,
+      "evaluated": 256,
+      "failed": 5,
+      "passing": 251,
+      "promotions": 12
+    },
+    "LIVE_GP_CHAMPION_COND_STATIC_4": {
+      "batch2_promotions": 0,
+      "evaluated": 256,
+      "failed": 4,
+      "passing": 252,
+      "promotions": 8
+    },
+    "LIVE_GP_LEGACY_STATIC_4": {
+      "batch2_promotions": 0,
+      "evaluated": 256,
+      "failed": 5,
+      "passing": 251,
+      "promotions": 9
+    }
+  },
+  "evaluator_binary_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8",
+  "final_mean_incumbent_utility": {
+    "LIVE_GP_CAUSAL_2PLUS2_FLY": 1.8120764637636781,
+    "LIVE_GP_CHAMPION_COND_STATIC_4": 1.8110349387132616,
+    "LIVE_GP_LEGACY_STATIC_4": 1.8111846134830814
+  },
+  "frozen_h252_hashes": {
+    "common_h252.py": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+    "stage1_hurdle_sos_critic.py": "fc0dd0e2fa543f0540d677609989c1785ef33b07f6cf7e54f4f8bedbd0e5e797"
+  },
+  "initial_mean_incumbent_utility": 1.8092282854291764,
+  "n_contexts": 32,
+  "n_families": 32,
+  "n_rounds": 2,
+  "outer_test_evaluated": false,
+  "promotions_by_arm": {
+    "LIVE_GP_CAUSAL_2PLUS2_FLY": [
+      {
+        "context_sha256": "27060a5f454bb376d518e6b7165af512ea6a77a6df78bba404087fff3f1f29f3",
+        "dsl": "(pipe X (target_bin_encode append=true bins=13) (cheb degree=8) (histgbm depth=5 lr=0.13622013159755092 rounds=77))",
+        "family_id": "fam-69405f7499b3af4517ea1fefa95323238eb2ab359adf5bb8ca003ec5559af8b1",
+        "from_batch2_reveal": false,
+        "new_utility": 0.9086682665162354,
+        "old_utility": 0.9081682665162355,
+        "program_sha256": "783230570744da124ff69cd6f0748789209844bd31ca2292766f5d41ad835e05",
+        "round": 1,
+        "utility_gain": 0.0004999999999999449
+      },
+      {
+        "context_sha256": "2a334e9358fde0f93cafcc2f221534eb2ccf3c8f4d6f75eba4bed977d0d75f1e",
+        "dsl": "(pipe X (cheb append=true degree=8) (rand_proj append=true k=32 seed=701) (cheb append=true degree=6) (histgbm depth=2 lr=0.11091960048489082 rounds=200))",
+        "family_id": "fam-77118380903cc5dcaa8f3462a4b550b35310b76dba4b85322705dc31942f6e71",
+        "from_batch2_reveal": false,
+        "new_utility": 0.27082524974596667,
+        "old_utility": 0.2666592433379033,
+        "program_sha256": "93cc58e08221e8b1cd63ddd70334b2c29c0d731069d4384e47a5b353936040df",
+        "round": 1,
+        "utility_gain": 0.004166006408063361
+      },
+      {
+        "context_sha256": "6b92091878460239b099a513074b725d20ceb92b303846fbe79185578d7e55cb",
+        "dsl": "(pipe X (rff_sin append=true gamma=0.2117266605957977 n=81 seed=3663) (oblique_hinge append=true gamma=1.704006134228017 n=36 seed=5761) (poly_interact append=true) (oblique_hinge append=true gamma=1.704006134228017 n=36 seed=5761) (standardize append=true) (winsor_clip q=0.041415317687109536) (ridge lambda_frac=0.011514089847692161))",
+        "family_id": "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9",
+        "from_batch2_reveal": true,
+        "new_utility": 1.4962767173239369,
+        "old_utility": 1.4955603783918519,
+        "program_sha256": "460edccb07fa2be661607954daa50eae8d44821d0d112a42500d0848b3c911e7",
+        "round": 1,
+        "utility_gain": 0.0007163389320850033
+      },
+      {
+        "context_sha256": "61dbce8d286ec6f17fd39f4bd02f0b1852034a53b5975ff41c97e01fe0b4c427",
+        "dsl": "(pipe X (cheb append=true degree=6) (blom append=true) (poly_interact append=true) (winsor_clip q=0.02458600293044868) (standardize) (histgbm depth=4 lr=0.14833361130255468 rounds=234))",
+        "family_id": "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c",
+        "from_batch2_reveal": true,
+        "new_utility": 3.4663455982313094,
+        "old_utility": 3.466124505769378,
+        "program_sha256": "217b255fd5aa313ab3c862940833b6d7212633394c5f7d8d7762915df8959b1a",
+        "round": 1,
+        "utility_gain": 0.00022109246193124932
+      },
+      {
+        "context_sha256": "c5bc65b42f34a136a72a69677e87ddb8e7498149ae4c6b23ac854925dea1e8d1",
+        "dsl": "(pipe X (cheb append=true degree=7) (quantile_bins append=true bins=47) (cheb append=true degree=7) (winsor_clip q=0.10175969) (winsor_clip q=0.15648044) (winsor_clip q=0.18669213) (histgbm depth=4 lr=0.12161771 rounds=255))",
+        "family_id": "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d",
+        "from_batch2_reveal": false,
+        "new_utility": 0.762827120224865,
+        "old_utility": 0.7503095786885557,
+        "program_sha256": "7b965565c89fa98429c96f8cecbae8ab2eb34621d56554e4ea9d8223c773a527",
+        "round": 1,
+        "utility_gain": 0.01251754153630924
+      },
+      {
+        "context_sha256": "2eb8712ae2623887b265c3ffad27733be1673e9b65cc01fa9e18ec6f1b8896c0",
+        "dsl": "(pipe X (cheb degree=8) (standardize append=true) (winsor_clip q=0.11533808214068411) (winsor_clip q=0.11533808214068411) (histgbm depth=5 lr=0.04050479117092473 rounds=214))",
+        "family_id": "fam-e643af1140c852379145186a47403d9d750a16f3ee2f0a9be1691af3851e5b6b",
+        "from_batch2_reveal": true,
+        "new_utility": 0.6448112336871901,
+        "old_utility": 0.6443112336871901,
+        "program_sha256": "1d61711d648df5bc6625dcc7c0922585635d30c3341e29c580b8fcc92584e9af",
+        "round": 1,
+        "utility_gain": 0.0004999999999999449
+      },
+      {
+        "context_sha256": "b3dfd280244a3fdd3e4982f896ac8b57c27bf4b5938d8fc36a6024974a0531be",
+        "dsl": "(pipe X (quantile_bins append=true bins=11) (winsor_clip q=0.06162207) (rank append=true) (winsor_clip q=0.06635695) (cheb append=true degree=2) (standardize append=true) (histgbm depth=5 lr=0.21802249 rounds=280))",
+        "family_id": "fam-f74d10b5ada631e8fddaf216c742d8dfcaaf2efa6c8d593812a4e738d94cf964",
+        "from_batch2_reveal": false,
+        "new_utility": 0.9898297345945867,
+        "old_utility": 0.955364652557754,
+        "program_sha256": "8f2a5a4299fc02f3d64b3a3826649b81af911429e45a48c948ac39c290304f4b",
+        "round": 1,
+        "utility_gain": 0.03446508203683263
+      },
+      {
+        "context_sha256": "09686b35a8da2b24c7f8e6211eaf1197ec9c55a6663bbe3c25b768db1b026b68",
+        "dsl": "(pipe X (cheb append=true degree=8) (poly_interact append=true) (row_stats append=true) (winsor_clip append=true q=0.16161179653337884) (winsor_clip q=0.1622546653592138) (winsor_clip q=0.1726376648844665) (histgbm depth=6 lr=0.08 rounds=160))",
+        "family_id": "fam-43d51469e86f13dbff5975680ed8709053f611018cf34d4d286fc78227c2e7d9",
+        "from_batch2_reveal": true,
+        "new_utility": 1.246402140289954,
+        "old_utility": 1.2317685924547477,
+        "program_sha256": "96736c1bc8e64ec1cba55efe62b38c72e3bbe4b84229954ece9f07f2ecab0211",
+        "round": 2,
+        "utility_gain": 0.014633547835206429
+      },
+      {
+        "context_sha256": "230d7d994567b4a26ace17d71b93c0743d23f02923bbbd1a85f46a5ccf11b32a",
+        "dsl": "(pipe X (poly_interact append=true) (winsor_clip append=true q=0.187299504190209) (hinge append=true knots=5) (rff_cos append=true gamma=1.54677981172388 n=26 seed=7031) (standardize append=true) (ridge_gcv))",
+        "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672",
+        "from_batch2_reveal": true,
+        "new_utility": 3.6714188133643573,
+        "old_utility": 3.6557276938532155,
+        "program_sha256": "e470f63276591025c96c96596ff360be70e88cb48a5e47c23d1bc1a67794ccd1",
+        "round": 2,
+        "utility_gain": 0.01569111951114177
+      },
+      {
+        "context_sha256": "230d7d994567b4a26ace17d71b93c0743d23f02923bbbd1a85f46a5ccf11b32a",
+        "dsl": "(pipe X (poly_interact append=true) (winsor_clip append=true q=0.187299504190209) (cheb append=true degree=4) (hinge append=true knots=5) (rff_cos append=true gamma=1.54677981172388 n=26 seed=7031) (ridge_gcv))",
+        "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672",
+        "from_batch2_reveal": true,
+        "new_utility": 3.6734855162373217,
+        "old_utility": 3.6714188133643573,
+        "program_sha256": "db438656db3068fe5a413f8f0e4452f9603262aa11669a7cf60c03cde9b5b1cf",
+        "round": 2,
+        "utility_gain": 0.002066702872964399
+      },
+      {
+        "context_sha256": "2eb8712ae2623887b265c3ffad27733be1673e9b65cc01fa9e18ec6f1b8896c0",
+        "dsl": "(pipe X (cheb degree=7) (standardize append=true) (winsor_clip q=0.09785871) (winsor_clip q=0.12602842) (histgbm depth=6 lr=0.0303916 rounds=177))",
+        "family_id": "fam-e643af1140c852379145186a47403d9d750a16f3ee2f0a9be1691af3851e5b6b",
+        "from_batch2_reveal": true,
+        "new_utility": 0.6475420361693472,
+        "old_utility": 0.6448112336871901,
+        "program_sha256": "8733092d7a026ecef66b82515493828ec03b96804433fdf63f3ad31d77b5087f",
+        "round": 2,
+        "utility_gain": 0.0027308024821571797
+      },
+      {
+        "context_sha256": "2eb8712ae2623887b265c3ffad27733be1673e9b65cc01fa9e18ec6f1b8896c0",
+        "dsl": "(pipe X (cheb degree=7) (standardize append=true) (winsor_clip q=0.08606718) (winsor_clip q=0.10757263) (histgbm depth=6 lr=0.03170982 rounds=240))",
+        "family_id": "fam-e643af1140c852379145186a47403d9d750a16f3ee2f0a9be1691af3851e5b6b",
+        "from_batch2_reveal": true,
+        "new_utility": 0.6504755087967143,
+        "old_utility": 0.6475420361693472,
+        "program_sha256": "4a8fcdbf9166265ee6fb1a57e16c5b759b312849f14391faf01d0fed715edb94",
+        "round": 2,
+        "utility_gain": 0.0029334726273670952
+      }
+    ],
+    "LIVE_GP_CHAMPION_COND_STATIC_4": [
+      {
+        "context_sha256": "27060a5f454bb376d518e6b7165af512ea6a77a6df78bba404087fff3f1f29f3",
+        "dsl": "(pipe X (target_bin_encode append=true bins=13) (cheb degree=8) (histgbm depth=5 lr=0.13622013159755092 rounds=77))",
+        "family_id": "fam-69405f7499b3af4517ea1fefa95323238eb2ab359adf5bb8ca003ec5559af8b1",
+        "from_batch2_reveal": false,
+        "new_utility": 0.9086682665162354,
+        "old_utility": 0.9081682665162355,
+        "program_sha256": "783230570744da124ff69cd6f0748789209844bd31ca2292766f5d41ad835e05",
+        "round": 1,
+        "utility_gain": 0.0004999999999999449
+      },
+      {
+        "context_sha256": "2a334e9358fde0f93cafcc2f221534eb2ccf3c8f4d6f75eba4bed977d0d75f1e",
+        "dsl": "(pipe X (cheb append=true degree=8) (rand_proj append=true k=32 seed=701) (cheb append=true degree=6) (histgbm depth=2 lr=0.11091960048489082 rounds=200))",
+        "family_id": "fam-77118380903cc5dcaa8f3462a4b550b35310b76dba4b85322705dc31942f6e71",
+        "from_batch2_reveal": false,
+        "new_utility": 0.27082524974596667,
+        "old_utility": 0.2666592433379033,
+        "program_sha256": "93cc58e08221e8b1cd63ddd70334b2c29c0d731069d4384e47a5b353936040df",
+        "round": 1,
+        "utility_gain": 0.004166006408063361
+      },
+      {
+        "context_sha256": "c5bc65b42f34a136a72a69677e87ddb8e7498149ae4c6b23ac854925dea1e8d1",
+        "dsl": "(pipe X (cheb append=true degree=8) (quantile_bins append=true bins=48) (cheb append=true degree=8) (winsor_clip q=0.07670638734840621) (winsor_clip q=0.18654948502964883) (winsor_clip q=0.16829550738345653) (histgbm depth=6 lr=0.08 rounds=160))",
+        "family_id": "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d",
+        "from_batch2_reveal": false,
+        "new_utility": 0.7526424470350976,
+        "old_utility": 0.7503095786885557,
+        "program_sha256": "1354916517e235128a78103449d2b9c7cf47b850321685400fab4e5f85cd355b",
+        "round": 1,
+        "utility_gain": 0.0023328683465418942
+      },
+      {
+        "context_sha256": "c5bc65b42f34a136a72a69677e87ddb8e7498149ae4c6b23ac854925dea1e8d1",
+        "dsl": "(pipe X (cheb append=true degree=7) (quantile_bins append=true bins=47) (cheb append=true degree=7) (winsor_clip q=0.10175969) (winsor_clip q=0.15648044) (winsor_clip q=0.18669213) (histgbm depth=4 lr=0.12161771 rounds=255))",
+        "family_id": "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d",
+        "from_batch2_reveal": false,
+        "new_utility": 0.762827120224865,
+        "old_utility": 0.7526424470350976,
+        "program_sha256": "7b965565c89fa98429c96f8cecbae8ab2eb34621d56554e4ea9d8223c773a527",
+        "round": 1,
+        "utility_gain": 0.010184673189767346
+      },
+      {
+        "context_sha256": "2eb8712ae2623887b265c3ffad27733be1673e9b65cc01fa9e18ec6f1b8896c0",
+        "dsl": "(pipe X (cheb degree=8) (standardize append=true) (winsor_clip q=0.11533808214068411) (winsor_clip q=0.11533808214068411) (histgbm depth=5 lr=0.04050479117092473 rounds=214))",
+        "family_id": "fam-e643af1140c852379145186a47403d9d750a16f3ee2f0a9be1691af3851e5b6b",
+        "from_batch2_reveal": false,
+        "new_utility": 0.6448112336871901,
+        "old_utility": 0.6443112336871901,
+        "program_sha256": "1d61711d648df5bc6625dcc7c0922585635d30c3341e29c580b8fcc92584e9af",
+        "round": 1,
+        "utility_gain": 0.0004999999999999449
+      },
+      {
+        "context_sha256": "b3dfd280244a3fdd3e4982f896ac8b57c27bf4b5938d8fc36a6024974a0531be",
+        "dsl": "(pipe X (quantile_bins append=true bins=11) (winsor_clip q=0.06162207) (rank append=true) (winsor_clip q=0.06635695) (cheb append=true degree=2) (standardize append=true) (histgbm depth=5 lr=0.21802249 rounds=280))",
+        "family_id": "fam-f74d10b5ada631e8fddaf216c742d8dfcaaf2efa6c8d593812a4e738d94cf964",
+        "from_batch2_reveal": false,
+        "new_utility": 0.9898297345945867,
+        "old_utility": 0.955364652557754,
+        "program_sha256": "8f2a5a4299fc02f3d64b3a3826649b81af911429e45a48c948ac39c290304f4b",
+        "round": 1,
+        "utility_gain": 0.03446508203683263
+      },
+      {
+        "context_sha256": "2eb8712ae2623887b265c3ffad27733be1673e9b65cc01fa9e18ec6f1b8896c0",
+        "dsl": "(pipe X (cheb degree=7) (standardize append=true) (winsor_clip q=0.09785871) (winsor_clip q=0.12602842) (histgbm depth=6 lr=0.0303916 rounds=177))",
+        "family_id": "fam-e643af1140c852379145186a47403d9d750a16f3ee2f0a9be1691af3851e5b6b",
+        "from_batch2_reveal": false,
+        "new_utility": 0.6475420361693472,
+        "old_utility": 0.6448112336871901,
+        "program_sha256": "8733092d7a026ecef66b82515493828ec03b96804433fdf63f3ad31d77b5087f",
+        "round": 2,
+        "utility_gain": 0.0027308024821571797
+      },
+      {
+        "context_sha256": "2eb8712ae2623887b265c3ffad27733be1673e9b65cc01fa9e18ec6f1b8896c0",
+        "dsl": "(pipe X (cheb degree=7) (standardize append=true) (winsor_clip q=0.08606718) (winsor_clip q=0.10757263) (histgbm depth=6 lr=0.03170982 rounds=240))",
+        "family_id": "fam-e643af1140c852379145186a47403d9d750a16f3ee2f0a9be1691af3851e5b6b",
+        "from_batch2_reveal": false,
+        "new_utility": 0.6504755087967143,
+        "old_utility": 0.6475420361693472,
+        "program_sha256": "4a8fcdbf9166265ee6fb1a57e16c5b759b312849f14391faf01d0fed715edb94",
+        "round": 2,
+        "utility_gain": 0.0029334726273670952
+      }
+    ],
+    "LIVE_GP_LEGACY_STATIC_4": [
+      {
+        "context_sha256": "27060a5f454bb376d518e6b7165af512ea6a77a6df78bba404087fff3f1f29f3",
+        "dsl": "(pipe X (target_bin_encode append=true bins=13) (cheb degree=8) (histgbm depth=5 lr=0.13622013159755092 rounds=77))",
+        "family_id": "fam-69405f7499b3af4517ea1fefa95323238eb2ab359adf5bb8ca003ec5559af8b1",
+        "from_batch2_reveal": false,
+        "new_utility": 0.9086682665162354,
+        "old_utility": 0.9081682665162355,
+        "program_sha256": "783230570744da124ff69cd6f0748789209844bd31ca2292766f5d41ad835e05",
+        "round": 1,
+        "utility_gain": 0.0004999999999999449
+      },
+      {
+        "context_sha256": "2a334e9358fde0f93cafcc2f221534eb2ccf3c8f4d6f75eba4bed977d0d75f1e",
+        "dsl": "(pipe X (cheb append=true degree=8) (rand_proj append=true k=32 seed=701) (cheb append=true degree=6) (histgbm depth=2 lr=0.11091960048489082 rounds=200))",
+        "family_id": "fam-77118380903cc5dcaa8f3462a4b550b35310b76dba4b85322705dc31942f6e71",
+        "from_batch2_reveal": false,
+        "new_utility": 0.27082524974596667,
+        "old_utility": 0.2666592433379033,
+        "program_sha256": "93cc58e08221e8b1cd63ddd70334b2c29c0d731069d4384e47a5b353936040df",
+        "round": 1,
+        "utility_gain": 0.004166006408063361
+      },
+      {
+        "context_sha256": "6b92091878460239b099a513074b725d20ceb92b303846fbe79185578d7e55cb",
+        "dsl": "(pipe X (rff_sin append=true gamma=0.2117266605957977 n=81 seed=3663) (oblique_hinge append=true gamma=1.704006134228017 n=36 seed=5761) (poly_interact append=true) (oblique_hinge append=true gamma=1.704006134228017 n=36 seed=5761) (standardize append=true) (winsor_clip q=0.041415317687109536) (ridge lambda_frac=0.011514089847692161))",
+        "family_id": "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9",
+        "from_batch2_reveal": false,
+        "new_utility": 1.4962767173239369,
+        "old_utility": 1.4955603783918519,
+        "program_sha256": "460edccb07fa2be661607954daa50eae8d44821d0d112a42500d0848b3c911e7",
+        "round": 1,
+        "utility_gain": 0.0007163389320850033
+      },
+      {
+        "context_sha256": "61dbce8d286ec6f17fd39f4bd02f0b1852034a53b5975ff41c97e01fe0b4c427",
+        "dsl": "(pipe X (cheb append=true degree=6) (blom append=true) (poly_interact append=true) (winsor_clip q=0.02458600293044868) (standardize) (histgbm depth=4 lr=0.14833361130255468 rounds=234))",
+        "family_id": "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c",
+        "from_batch2_reveal": false,
+        "new_utility": 3.4663455982313094,
+        "old_utility": 3.466124505769378,
+        "program_sha256": "217b255fd5aa313ab3c862940833b6d7212633394c5f7d8d7762915df8959b1a",
+        "round": 1,
+        "utility_gain": 0.00022109246193124932
+      },
+      {
+        "context_sha256": "c5bc65b42f34a136a72a69677e87ddb8e7498149ae4c6b23ac854925dea1e8d1",
+        "dsl": "(pipe X (cheb append=true degree=8) (quantile_bins append=true bins=48) (cheb append=true degree=8) (winsor_clip q=0.07670638734840621) (winsor_clip q=0.18654948502964883) (winsor_clip q=0.16829550738345653) (histgbm depth=6 lr=0.08 rounds=160))",
+        "family_id": "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d",
+        "from_batch2_reveal": false,
+        "new_utility": 0.7526424470350976,
+        "old_utility": 0.7503095786885557,
+        "program_sha256": "1354916517e235128a78103449d2b9c7cf47b850321685400fab4e5f85cd355b",
+        "round": 1,
+        "utility_gain": 0.0023328683465418942
+      },
+      {
+        "context_sha256": "b3dfd280244a3fdd3e4982f896ac8b57c27bf4b5938d8fc36a6024974a0531be",
+        "dsl": "(pipe X (quantile_bins append=true bins=13) (winsor_clip q=0.055237026324125076) (rank append=true) (winsor_clip q=0.055237026324125076) (cheb append=true degree=2) (histgbm depth=4 lr=0.21156848582497984 rounds=258))",
+        "family_id": "fam-f74d10b5ada631e8fddaf216c742d8dfcaaf2efa6c8d593812a4e738d94cf964",
+        "from_batch2_reveal": false,
+        "new_utility": 0.9558646525577541,
+        "old_utility": 0.955364652557754,
+        "program_sha256": "85e34a2e9bb82edf0c78683c10d7fae41ab0a4827372b34fe2b90bd4bf9f3ad6",
+        "round": 1,
+        "utility_gain": 0.000500000000000056
+      },
+      {
+        "context_sha256": "b3dfd280244a3fdd3e4982f896ac8b57c27bf4b5938d8fc36a6024974a0531be",
+        "dsl": "(pipe X (quantile_bins append=true bins=11) (winsor_clip q=0.06162207) (rank append=true) (winsor_clip q=0.06635695) (cheb append=true degree=2) (standardize append=true) (histgbm depth=5 lr=0.21802249 rounds=280))",
+        "family_id": "fam-f74d10b5ada631e8fddaf216c742d8dfcaaf2efa6c8d593812a4e738d94cf964",
+        "from_batch2_reveal": false,
+        "new_utility": 0.9898297345945867,
+        "old_utility": 0.9558646525577541,
+        "program_sha256": "8f2a5a4299fc02f3d64b3a3826649b81af911429e45a48c948ac39c290304f4b",
+        "round": 1,
+        "utility_gain": 0.03396508203683257
+      },
+      {
+        "context_sha256": "230d7d994567b4a26ace17d71b93c0743d23f02923bbbd1a85f46a5ccf11b32a",
+        "dsl": "(pipe X (poly_interact append=true) (winsor_clip append=true q=0.187299504190209) (cheb append=true degree=4) (hinge append=true knots=5) (rff_cos append=true gamma=1.54677981172388 n=26 seed=7031) (ridge_gcv))",
+        "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672",
+        "from_batch2_reveal": false,
+        "new_utility": 3.6734855162373217,
+        "old_utility": 3.6557276938532155,
+        "program_sha256": "db438656db3068fe5a413f8f0e4452f9603262aa11669a7cf60c03cde9b5b1cf",
+        "round": 2,
+        "utility_gain": 0.01775782238410617
+      },
+      {
+        "context_sha256": "2eb8712ae2623887b265c3ffad27733be1673e9b65cc01fa9e18ec6f1b8896c0",
+        "dsl": "(pipe X (cheb degree=8) (standardize append=true) (winsor_clip q=0.11533808214068411) (winsor_clip q=0.11533808214068411) (poly_interact append=true) (standardize append=true) (histgbm depth=5 lr=0.04050479117092473 rounds=214))",
+        "family_id": "fam-e643af1140c852379145186a47403d9d750a16f3ee2f0a9be1691af3851e5b6b",
+        "from_batch2_reveal": false,
+        "new_utility": 0.6467545208425937,
+        "old_utility": 0.6443112336871901,
+        "program_sha256": "b22d1f279de44785364ce6a2768ed4bc12e92913e9aaaa02ff9f2dd55ba460b9",
+        "round": 2,
+        "utility_gain": 0.0024432871554035396
+      }
+    ]
+  },
+  "proposals_per_context_per_round": 16,
+  "r882_native91_exact": 1.1377941898164525,
+  "round_logs": [
+    {
+      "mean_incumbent_utility": {
+        "LIVE_GP_CAUSAL_2PLUS2_FLY": 1.810887224847152,
+        "LIVE_GP_CHAMPION_COND_STATIC_4": 1.810857930116089,
+        "LIVE_GP_LEGACY_STATIC_4": 1.8105533288099718
+      },
+      "promotions_this_round": {
+        "LIVE_GP_CAUSAL_2PLUS2_FLY": 7,
+        "LIVE_GP_CHAMPION_COND_STATIC_4": 6,
+        "LIVE_GP_LEGACY_STATIC_4": 7
+      },
+      "round": 1,
+      "wall_sec": 144.3948217540019
+    },
+    {
+      "mean_incumbent_utility": {
+        "LIVE_GP_CAUSAL_2PLUS2_FLY": 1.8120764637636781,
+        "LIVE_GP_CHAMPION_COND_STATIC_4": 1.8110349387132616,
+        "LIVE_GP_LEGACY_STATIC_4": 1.8111846134830814
+      },
+      "promotions_this_round": {
+        "LIVE_GP_CAUSAL_2PLUS2_FLY": 5,
+        "LIVE_GP_CHAMPION_COND_STATIC_4": 2,
+        "LIVE_GP_LEGACY_STATIC_4": 2
+      },
+      "round": 2,
+      "wall_sec": 140.9238037109899
+    }
+  ],
+  "rust_evaluations_per_context_per_round": 4,
+  "sealed_meta_test_read": false,
+  "title": "Live Rust GP 2+2 Closed-Loop Flywheel on 32 Stratified DL-Train Contexts",
+  "unique_rust_batch_calls": 141,
+  "unique_rust_candidates_evaluated": 398,
+  "vs_initial_incumbent": {
+    "arms": [
+      "INITIAL_INCUMBENT",
+      "LIVE_GP_LEGACY_STATIC_4",
+      "LIVE_GP_CHAMPION_COND_STATIC_4",
+      "LIVE_GP_CAUSAL_2PLUS2_FLY"
+    ],
+    "context_mean_by_seed": [
+      [
+        1.809228285429176,
+        1.811184613483081,
+        1.8110349387132612,
+        1.8120764637636775
+      ]
+    ],
+    "contexts": 32,
+    "contrasts": {
+      "LIVE_GP_CAUSAL_2PLUS2_FLY_minus_INITIAL_INCUMBENT": {
+        "advance": false,
+        "ci95": [
+          0.0007213235202536573,
+          0.005651772940059487
+        ],
+        "family_wtl_by_seed": [
+          [
+            9,
+            23,
+            0
+          ]
+        ],
+        "harm_families_count_by_seed": [
+          0
+        ],
+        "harm_frac_gt_001_by_seed": [
+          0.0
+        ],
+        "holm_p": 0.00029997000299970003,
+        "lcb90": 0.0009601807505684805,
+        "mean_family_gain": 0.00284817833450182,
+        "median_context_gain": 0.00284817833450182,
+        "median_family_gain": 0.00284817833450182,
+        "median_harm_frac_gt_001": 0.0,
+        "p_one_sided": 9.999000099990002e-05,
+        "p_vs_001_margin": 0.05579442055794421,
+        "per_seed_context_gain": [
+          0.00284817833450182
+        ],
+        "per_seed_family_gain": [
+          0.00284817833450182
+        ],
+        "positive_seeds": 1
+      },
+      "LIVE_GP_CHAMPION_COND_STATIC_4_minus_INITIAL_INCUMBENT": {
+        "advance": false,
+        "ci95": [
+          0.0001458127002519783,
+          0.004435276139534666
+        ],
+        "family_wtl_by_seed": [
+          [
+            5,
+            27,
+            0
+          ]
+        ],
+        "harm_families_count_by_seed": [
+          0
+        ],
+        "harm_frac_gt_001_by_seed": [
+          0.0
+        ],
+        "holm_p": 0.0040995900409959,
+        "lcb90": 0.0002760004005039583,
+        "mean_family_gain": 0.0018066532840852936,
+        "median_context_gain": 0.0018066532840852936,
+        "median_family_gain": 0.0018066532840852936,
+        "median_harm_frac_gt_001": 0.0,
+        "p_one_sided": 0.0040995900409959,
+        "p_vs_001_margin": 0.27377262273772623,
+        "per_seed_context_gain": [
+          0.0018066532840852936
+        ],
+        "per_seed_family_gain": [
+          0.0018066532840852936
+        ],
+        "positive_seeds": 1
+      },
+      "LIVE_GP_LEGACY_STATIC_4_minus_INITIAL_INCUMBENT": {
+        "advance": false,
+        "ci95": [
+          0.0002096510426911058,
+          0.004677798342934494
+        ],
+        "family_wtl_by_seed": [
+          [
+            8,
+            24,
+            0
+          ]
+        ],
+        "harm_families_count_by_seed": [
+          0
+        ],
+        "harm_frac_gt_001_by_seed": [
+          0.0
+        ],
+        "holm_p": 0.00039996000399960006,
+        "lcb90": 0.0002860127313816904,
+        "mean_family_gain": 0.0019563280539051184,
+        "median_context_gain": 0.0019563280539051184,
+        "median_family_gain": 0.0019563280539051184,
+        "median_harm_frac_gt_001": 0.0,
+        "p_one_sided": 0.00019998000199980003,
+        "p_vs_001_margin": 0.23397660233976603,
+        "per_seed_context_gain": [
+          0.0019563280539051184
+        ],
+        "per_seed_family_gain": [
+          0.0019563280539051184
+        ],
+        "positive_seeds": 1
+      }
+    },
+    "elo_by_seed": [
+      [
+        1500.0,
+        1577.5024409054442,
+        1561.0157169116055,
+        1605.1736890786574
+      ]
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1532.7928151463914,
+        1636.0184717817208
+      ],
+      [
+        1513.6882160765851,
+        1619.2925632079957
+      ],
+      [
+        1554.61849453635,
+        1671.126929224871
+      ]
+    ],
+    "families": 32,
+    "family_mean_by_seed": [
+      [
+        1.809228285429176,
+        1.811184613483081,
+        1.8110349387132612,
+        1.8120764637636775
+      ]
+    ],
+    "median_context_utility": [
+      1.809228285429176,
+      1.811184613483081,
+      1.8110349387132612,
+      1.8120764637636775
+    ],
+    "median_elo": [
+      1500.0,
+      1577.5024409054442,
+      1561.0157169116055,
+      1605.1736890786574
+    ],
+    "median_family_utility": [
+      1.809228285429176,
+      1.811184613483081,
+      1.8110349387132612,
+      1.8120764637636775
+    ]
+  },
+  "vs_legacy_static_4": {
+    "arms": [
+      "INITIAL_INCUMBENT",
+      "LIVE_GP_LEGACY_STATIC_4",
+      "LIVE_GP_CHAMPION_COND_STATIC_4",
+      "LIVE_GP_CAUSAL_2PLUS2_FLY"
+    ],
+    "context_mean_by_seed": [
+      [
+        1.809228285429176,
+        1.811184613483081,
+        1.8110349387132612,
+        1.8120764637636775
+      ]
+    ],
+    "contexts": 32,
+    "contrasts": {
+      "INITIAL_INCUMBENT_minus_LIVE_GP_LEGACY_STATIC_4": {
+        "advance": false,
+        "ci95": [
+          -0.0046777983429344945,
+          -0.0002096510426911058
+        ],
+        "family_wtl_by_seed": [
+          [
+            0,
+            24,
+            8
+          ]
+        ],
+        "harm_families_count_by_seed": [
+          8
+        ],
+        "harm_frac_gt_001_by_seed": [
+          0.0625
+        ],
+        "holm_p": 1.0,
+        "lcb90": -0.004122703068387044,
+        "mean_family_gain": -0.0019563280539051184,
+        "median_context_gain": -0.0019563280539051184,
+        "median_family_gain": -0.0019563280539051184,
+        "median_harm_frac_gt_001": 0.0625,
+        "p_one_sided": 1.0,
+        "p_vs_001_margin": 1.0,
+        "per_seed_context_gain": [
+          -0.0019563280539051184
+        ],
+        "per_seed_family_gain": [
+          -0.0019563280539051184
+        ],
+        "positive_seeds": 0
+      },
+      "LIVE_GP_CAUSAL_2PLUS2_FLY_minus_LIVE_GP_LEGACY_STATIC_4": {
+        "advance": false,
+        "ci95": [
+          0.0,
+          0.002124718057477333
+        ],
+        "family_wtl_by_seed": [
+          [
+            3,
+            29,
+            0
+          ]
+        ],
+        "harm_families_count_by_seed": [
+          0
+        ],
+        "harm_frac_gt_001_by_seed": [
+          0.0
+        ],
+        "holm_p": 0.12718728127187282,
+        "lcb90": 0.00011628087356627126,
+        "mean_family_gain": 0.0008918502805967017,
+        "median_context_gain": 0.0008918502805967017,
+        "median_family_gain": 0.0008918502805967017,
+        "median_harm_frac_gt_001": 0.0,
+        "p_one_sided": 0.0423957604239576,
+        "p_vs_001_margin": 0.611038896110389,
+        "per_seed_context_gain": [
+          0.0008918502805967017
+        ],
+        "per_seed_family_gain": [
+          0.0008918502805967017
+        ],
+        "positive_seeds": 1
+      },
+      "LIVE_GP_CHAMPION_COND_STATIC_4_minus_LIVE_GP_LEGACY_STATIC_4": {
+        "advance": false,
+        "ci95": [
+          -0.00157780970600669,
+          0.0009784755556239214
+        ],
+        "family_wtl_by_seed": [
+          [
+            2,
+            27,
+            3
+          ]
+        ],
+        "harm_families_count_by_seed": [
+          3
+        ],
+        "harm_frac_gt_001_by_seed": [
+          0.03125
+        ],
+        "holm_p": 1.0,
+        "lcb90": -0.001266447808261812,
+        "mean_family_gain": -0.0001496747698198249,
+        "median_context_gain": -0.0001496747698198249,
+        "median_family_gain": -0.0001496747698198249,
+        "median_harm_frac_gt_001": 0.03125,
+        "p_one_sided": 0.5704429557044296,
+        "p_vs_001_margin": 0.9768023197680232,
+        "per_seed_context_gain": [
+          -0.0001496747698198249
+        ],
+        "per_seed_family_gain": [
+          -0.0001496747698198249
+        ],
+        "positive_seeds": 0
+      }
+    },
+    "elo_by_seed": [
+      [
+        1422.4975590945558,
+        1500.0,
+        1483.5132760061613,
+        1527.6712481732131
+      ]
+    ],
+    "elo_ci95": [
+      [
+        1363.9815282182792,
+        1467.2071848536086
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1433.6575744550328,
+        1522.122944439526
+      ],
+      [
+        1500.0,
+        1560.8374999076275
+      ]
+    ],
+    "families": 32,
+    "family_mean_by_seed": [
+      [
+        1.809228285429176,
+        1.811184613483081,
+        1.8110349387132612,
+        1.8120764637636775
+      ]
+    ],
+    "median_context_utility": [
+      1.809228285429176,
+      1.811184613483081,
+      1.8110349387132612,
+      1.8120764637636775
+    ],
+    "median_elo": [
+      1422.4975590945558,
+      1500.0,
+      1483.5132760061613,
+      1527.6712481732131
+    ],
+    "median_family_utility": [
+      1.809228285429176,
+      1.811184613483081,
+      1.8110349387132612,
+      1.8120764637636775
+    ]
+  },
+  "wave": "H255_PART_B"
+}
