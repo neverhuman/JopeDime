@@ -214,10 +214,14 @@ mod tests {
                 expect_refusal(url, env, "the bucket root is refused", &mut bypasses);
             }
         }
-        for url in ["s3://example-bucket/run//1"] {
-            expect_refusal(url, ("signed", signed), "not a store URL", &mut bypasses);
-            assert!(StoreLocation::parse(url).is_err(), "{url}");
-        }
+        let invalid = "s3://example-bucket/run//1";
+        expect_refusal(
+            invalid,
+            ("signed", signed),
+            "not a store URL",
+            &mut bypasses,
+        );
+        assert!(StoreLocation::parse(invalid).is_err(), "{invalid}");
         let prefixed = [
             "s3://example-bucket/run-1",
             "S3://example-bucket/run-1",
