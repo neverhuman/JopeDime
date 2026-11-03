@@ -161,15 +161,15 @@
   },
   "items": {
     "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
-        "discovery": {
-          "kind": "python-family"
-        },
-        "dispositions": [
-          "research"
-        ],
-        "lanes": [],
-        "scope": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification."
+      "discovery": {
+        "kind": "python-family"
       },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification."
+    },
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
       "discovery": {
         "kind": "python-family"
@@ -15276,6 +15276,16 @@
       ],
       "lanes": [],
       "scope": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/test_h240.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
     }
   },
   "lanes": {

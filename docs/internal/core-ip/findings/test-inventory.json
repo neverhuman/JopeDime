@@ -430,9 +430,9 @@
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
     "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
-        "reason": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification.",
-        "role": "research"
-      },
+      "reason": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
       "reason": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
       "role": "research"
@@ -5733,6 +5733,10 @@
     "python:research/flywheel_selfplay/h238_lowlr/test_h238.py": {
       "role": "research",
       "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/test_h240.py": {
+      "role": "research",
+      "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
