@@ -73,10 +73,9 @@ pub(crate) fn provenance_group(dataset_hash: &str) -> &str {
 }
 
 mod seed;
-pub(crate) use seed::{
-    derive_corrected_generation_zero, expand_initial_population,
-    golden46_generation_zero_population, initial_population,
-};
+pub(crate) use seed::initial_population;
+#[cfg(test)]
+pub(crate) use seed::{derive_corrected_generation_zero, expand_initial_population};
 
 pub(crate) fn offspring_seed(
     run_id: &str,
