@@ -1,0 +1,185 @@
+{
+  "wave": "H231",
+  "status": "INCOMPLETE",
+  "verdict": null,
+  "scientific_hypothesis_tested": false,
+  "source_commit": "3978dc8ef0f3f1393980245f06c0b2c20a74df31",
+  "fits": 45,
+  "adapter_cells": 2,
+  "optimizer_updates": 120,
+  "planned_fits": 45,
+  "planned_adapters": 15,
+  "planned_updates": 600,
+  "unknown_inflight_updates": false,
+  "contrasts_native": null,
+  "elo_native_vs_r882": null,
+  "dl_val_plateau": null,
+  "error": "RuntimeError(\"resource stop: {'epoch': 1793668849.1330626, 'load5': 73.3779296875, 'free_bytes': 744176377856, 'disk_used_percent': 90.5, 'available_ram': 21433810944, 'swap_free': 40960, 'tree_rss': 724619264}\")",
+  "failure": null,
+  "serving_promotion": false,
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": null,
+  "completed_cells_dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "baseline91_bitexact": true,
+  "native_mean": 1.1377941898164525,
+  "retry_allowed": false,
+  "terminal_audit": {
+    "source_commit": "3978dc8ef0f3f1393980245f06c0b2c20a74df31",
+    "terminal": {
+      "exit_code": -15,
+      "error": "RuntimeError(\"resource stop: {'epoch': 1793668849.1330626, 'load5': 73.3779296875, 'free_bytes': 744176377856, 'disk_used_percent': 90.5, 'available_ram': 21433810944, 'swap_free': 40960, 'tree_rss': 724619264}\")",
+      "source_commit": "3978dc8ef0f3f1393980245f06c0b2c20a74df31",
+      "finished_epoch": 1793668849.4188673
+    },
+    "completed_histgbm_fits": 45,
+    "completed_adapter_cells": 2,
+    "durable_optimizer_updates": 120,
+    "native91_bitexact": true,
+    "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "completed_cell_dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "completed_cell_adapter_only": true,
+    "final_inflight_state_known": false,
+    "training_cells_with40durable_updates": 3,
+    "pending_prediction_cells": [
+      {
+        "seed": 230101,
+        "outer": 2,
+        "adapter_checkpoint_sha256": "64eef11e9d09613727df2550b5854b832cefdcde70f533715b445d2bb17cb08d"
+      }
+    ],
+    "optimizer_count_exact_in_post_update_prediction_phase": true,
+    "updates_by_seed": {
+      "230101": 120,
+      "230102": 0,
+      "230103": 0
+    },
+    "metrics_replay": "NOT_RUN incomplete; no partial treatment outcomes read",
+    "guard_trigger_sample": {
+      "epoch": 1793668849.1330626,
+      "load5": 73.3779296875,
+      "free_bytes": 744176377856,
+      "disk_used_percent": 90.5,
+      "available_ram": 21433810944,
+      "swap_free": 40960,
+      "tree_rss": 724619264
+    },
+    "guard_violation": "MemAvailable below20GiB"
+  },
+  "resources": {
+    "affinity": [
+      2,
+      22,
+      67,
+      104
+    ],
+    "max_tree_rss_bytes": 3895635968,
+    "min_available_ram_bytes": 21433810944,
+    "min_free_bytes": 743843819520,
+    "max_disk_percent": 90.5,
+    "load_actions": [
+      {
+        "epoch": 1793660607.044937,
+        "load_action": "pause"
+      },
+      {
+        "epoch": 1793660847.581837,
+        "load_action": "resume"
+      },
+      {
+        "epoch": 1793661002.1403744,
+        "load_action": "pause"
+      },
+      {
+        "epoch": 1793661483.5333908,
+        "load_action": "resume"
+      },
+      {
+        "epoch": 1793664858.203393,
+        "load_action": "pause"
+      },
+      {
+        "epoch": 1793666181.6063933,
+        "load_action": "resume"
+      },
+      {
+        "epoch": 1793667108.6238766,
+        "load_action": "pause"
+      },
+      {
+        "epoch": 1793667710.243657,
+        "load_action": "resume"
+      },
+      {
+        "epoch": 1793668809.0145607,
+        "load_action": "pause"
+      }
+    ],
+    "start_epoch": 1793653321.8714354,
+    "finish_epoch": 1793668849.4188673,
+    "wall_seconds": 15527.5474319458,
+    "deadline_epoch": 1793676600.0,
+    "retry": false
+  },
+  "guard_trigger": {
+    "observation": {
+      "epoch": 1793668849.1330626,
+      "load5": 73.3779296875,
+      "free_bytes": 744176377856,
+      "disk_used_percent": 90.5,
+      "available_ram": 21433810944,
+      "swap_free": 40960,
+      "tree_rss": 724619264
+    },
+    "violation": "MemAvailable below20GiB",
+    "minimum_available_ram_bytes": 21474836480
+  },
+  "treatment_A_scored": false,
+  "treatment_DLVal_scored": false,
+  "global_lock_reached": false,
+  "per_seed_outcomes": {
+    "230101": null,
+    "230102": null,
+    "230103": null
+  },
+  "native_gain": null,
+  "ci95": null,
+  "harm": null,
+  "elo": null,
+  "plateau_gain": null,
+  "custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H231/astra-t2040/closeout/manifest.json",
+    "version_id": "ioP87KygfmWpAgwHOoO5GkQvEWsLP86i",
+    "sha256": "e5783558d086b9c036076f97fc51fd3a95432d9d2917e3a415da1070ff524718",
+    "bytes": 81958
+  },
+  "completed_cell_boundary_audit": {
+    "source_commit": "3978dc8ef0f3f1393980245f06c0b2c20a74df31",
+    "completed_prediction_receipt_cell_fit_closure": [
+      {
+        "seed": 230101,
+        "outer": 0,
+        "fit_families": 123,
+        "fit_contexts": 727,
+        "excluded_groups": [
+          0,
+          1
+        ],
+        "match": true
+      },
+      {
+        "seed": 230101,
+        "outer": 1,
+        "fit_families": 123,
+        "fit_contexts": 747,
+        "excluded_groups": [
+          1,
+          2
+        ],
+        "match": true
+      }
+    ],
+    "train_dev_family_overlap": 0,
+    "partial_cell": "outer2 lacks final receipt; do not claim final in-memory hash verification",
+    "outcome_reads": false
+  }
+}

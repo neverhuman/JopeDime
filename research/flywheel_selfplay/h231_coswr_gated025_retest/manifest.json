@@ -1,6 +1,6 @@
 {
   "wave": "H231",
-  "status": "PREREGISTERED",
+  "status": "INCOMPLETE",
   "authority": "gbw_2040_rd_astra.md",
   "parent_commit": "973298e282eadfbefb159d13bfaf4d788a24c1b9",
   "parent_sources": {
@@ -97,7 +97,7 @@
     "monitor.py": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546",
     "fold_manifest.json": "8cb3f1e2488d235155b1c7fd6f93e236e3f9596d398bb81500645804073bd446",
     "test_h231.py": "fad020a5bcb243b2d374a27cc9348b612840370cfc2e0309ac85fa6b39f83f5c",
-    "README.md": "5073fe3971f6137eec7d34aee67fe19c479a7ea40e1b41dffe92bf52316ebe30",
+    "README.md": "201bc8967c4121de356835a133016f16b417be8c75c2600bd372fdf5a49cb09d",
     "runner.py": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e"
   },
   "predecessor_commit": "0d7388b1aaf30629c673a40ab551a382cf939b22",
@@ -118,5 +118,67 @@
       "scope": "Local-check admin squash admission; merge/launch22:30Z; no scientific change",
       "before_any_fit": true
     }
-  ]
+  ],
+  "verdict": null,
+  "execution_source_commit": "3978dc8ef0f3f1393980245f06c0b2c20a74df31",
+  "execution_source_sha256": {
+    "provenance.json": "02be59a496ed6b5b2619bb961ec2d000756b5d5104afd8e4c0e7e9ef825d69f4",
+    "gate.py": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e",
+    "analysis.py": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
+    "PREREG.md": "b3c632dcd90dff71e8e8f2111e0c503539d6a9c3dd2b2efaf0de39850593fbb1",
+    "monitor.py": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546",
+    "fold_manifest.json": "8cb3f1e2488d235155b1c7fd6f93e236e3f9596d398bb81500645804073bd446",
+    "test_h231.py": "fad020a5bcb243b2d374a27cc9348b612840370cfc2e0309ac85fa6b39f83f5c",
+    "README.md": "5073fe3971f6137eec7d34aee67fe19c479a7ea40e1b41dffe92bf52316ebe30",
+    "runner.py": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e"
+  },
+  "metrics_sha256": "339431f75495bbd8a0df77ba6d288daea906f42bb377ff1bbb504754610eae11",
+  "archive_manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H231/astra-t2040/closeout/manifest.json",
+    "version_id": "ioP87KygfmWpAgwHOoO5GkQvEWsLP86i",
+    "sha256": "e5783558d086b9c036076f97fc51fd3a95432d9d2917e3a415da1070ff524718",
+    "bytes": 81958
+  },
+  "terminal_audit": {
+    "source_commit": "3978dc8ef0f3f1393980245f06c0b2c20a74df31",
+    "terminal": {
+      "exit_code": -15,
+      "error": "RuntimeError(\"resource stop: {'epoch': 1793668849.1330626, 'load5': 73.3779296875, 'free_bytes': 744176377856, 'disk_used_percent': 90.5, 'available_ram': 21433810944, 'swap_free': 40960, 'tree_rss': 724619264}\")",
+      "source_commit": "3978dc8ef0f3f1393980245f06c0b2c20a74df31",
+      "finished_epoch": 1793668849.4188673
+    },
+    "completed_histgbm_fits": 45,
+    "completed_adapter_cells": 2,
+    "durable_optimizer_updates": 120,
+    "native91_bitexact": true,
+    "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "completed_cell_dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "completed_cell_adapter_only": true,
+    "final_inflight_state_known": false,
+    "training_cells_with40durable_updates": 3,
+    "pending_prediction_cells": [
+      {
+        "seed": 230101,
+        "outer": 2,
+        "adapter_checkpoint_sha256": "64eef11e9d09613727df2550b5854b832cefdcde70f533715b445d2bb17cb08d"
+      }
+    ],
+    "optimizer_count_exact_in_post_update_prediction_phase": true,
+    "updates_by_seed": {
+      "230101": 120,
+      "230102": 0,
+      "230103": 0
+    },
+    "metrics_replay": "NOT_RUN incomplete; no partial treatment outcomes read",
+    "guard_trigger_sample": {
+      "epoch": 1793668849.1330626,
+      "load5": 73.3779296875,
+      "free_bytes": 744176377856,
+      "disk_used_percent": 90.5,
+      "available_ram": 21433810944,
+      "swap_free": 40960,
+      "tree_rss": 724619264
+    },
+    "guard_violation": "MemAvailable below20GiB"
+  }
 }
