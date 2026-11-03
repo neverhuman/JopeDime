@@ -1,3 +1,4 @@
+use super::super::wave::RetainedModelProposalV2;
 use super::*;
 
 /// Deterministically builds the physical generation from already validated

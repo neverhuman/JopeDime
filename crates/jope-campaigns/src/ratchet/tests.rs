@@ -1,3 +1,11 @@
+use super::super::generation::{GenerationRoleBindingV3, GenerationRoleV3, GprKernelFamilyV3};
+use super::super::state::{
+    GlobalCvFrontierMemberV2, LearningCountersV2, PredictionSnapshotV2, SchedulingMetadataV2,
+    SelectionAuthorityV2, StruggleStateV2, TrackHistoryEntryV2,
+};
+use super::super::wave::{
+    ArtifactReleaseV1, ModelProposalV2, RetainedModelProposalV2, WaveGateKindV1, WaveGateReceiptV1,
+};
 use super::*;
 use feat_math::evolve::random_canonical_pipeline;
 use tempfile::TempDir;
