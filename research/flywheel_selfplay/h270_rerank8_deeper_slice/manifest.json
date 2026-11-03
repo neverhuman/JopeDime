@@ -1,0 +1,69 @@
+{
+  "wave": "H270",
+  "authority": "/home/ubuntu/nudges/hw_t1830_opus_h270.md",
+  "arms": [
+    "CONTROL",
+    "RERANK4",
+    "RERANK8",
+    "RERANK8_SHUF"
+  ],
+  "seeds": [
+    270101,
+    270102,
+    270103
+  ],
+  "fold_seeds": [
+    270140,
+    270141,
+    270142
+  ],
+  "secondary_fold_seed": 270140,
+  "boot_seed": 270150,
+  "k_deep": 8,
+  "k_generalisation": "topk.py: slice = r882 K lowest-cost; z-features within the K-slice; pairwise diffs over K-1 others; slot j/(K-1); labels K-1..0 (gate-failed 0); LGBMRanker group and truncation K; reproduces h265_core exactly at K=4",
+  "h265_core": {
+    "sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "source": "origin/v1/next research/flywheel_selfplay/h265_top4_listwise_reranker/runner.py"
+  },
+  "checkpoint": "/home/ubuntu/jope-data/h270/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h270/inputs/best_dev_checkpoint.json",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "total_updates": 0,
+  "inputs": {
+    "/home/ubuntu/jope-data/h270/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h270/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h270/inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "/home/ubuntu/jope-data/h270/inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "/home/ubuntu/jope-data/h270/inputs/snapshot/common_h252.py": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h58/cache/pool_priors.npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/h265_top4_listwise_reranker/runner.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "research/flywheel_selfplay/h265_top4_listwise_reranker/test_h265.py": "35eb19251ea92f1c59855cec872cdc5c7aee101d82aa18f51238a0a7eee30307",
+    "research/flywheel_selfplay/h267_bagged_median_rerank4/runner.py": "a8dc3fedddba40bec9aa23a89d6a6aacde1d344bc287781157f8fd7503ef9d6d",
+    "research/flywheel_selfplay/h267_bagged_median_rerank4/monitor.py": "dd1ffd25f658b9572650790744144a1d10d859cf3bcf6f9f380da277a91d5835"
+  },
+  "source_sha256": {
+    "test_h270.py": "10461dd9906554b8ff66221ea9f3488097a274ee0d52458011c8fe3e05f41551",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "analysis.py": "ddfeaa0426b0dfdc28feff87aefbb0171d01bfc2db83b5ec16533b45a62368e9",
+    "runner.py": "f22505f2631682c34d9ebac2f15a860e75c1c695f2592fbc2abf76947dd3d33f",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "PREREG.md": "abd3a45a399a15ae9433609d7a85b9bfbd196a6a44ac53bb34d54705964cc27a",
+    "monitor.py": "ed6a8a653b7a91bfca438cfbc944fc3c0afa8e56116566fc5dee5cf457e03aa1",
+    "fold_manifest.json": "35b44679ccae10e2faea197b6b4e06595f354c44bc3bbf5624901e290ccd9cd2"
+  },
+  "packages": {
+    "lightgbm": "4.6.0",
+    "numpy": "1.26.4",
+    "torch": "2.7.0"
+  },
+  "parent_commit": "9c41ea32497b60048aff2109e6d4354e7b9d7ce8",
+  "publication_ref": "v1/next",
+  "host": "xbabe2 CPU (taskset cores 44-47, nice 19, LightGBM n_jobs 1; H239 A1 memory guard; source runs from the registered lane outside ~/jope-data)",
+  "compute_stop": "2026-11-03T20:50:00Z"
+}

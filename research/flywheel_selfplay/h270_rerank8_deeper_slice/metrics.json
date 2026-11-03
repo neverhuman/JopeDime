@@ -1,0 +1,38 @@
+{
+  "wave": "H270",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H270",
+    "status": "COMPLETE",
+    "arms": [
+      "r882",
+      "RERANK4",
+      "RERANK8",
+      "RERANK8_SHUF"
+    ],
+    "seeds": [
+      270101,
+      270102,
+      270103
+    ],
+    "fold_seeds": [
+      270140,
+      270141,
+      270142
+    ],
+    "k_deep": 8,
+    "optimizer_updates": 0,
+    "baseline": "Native91 1.1377941898164525 (91/91) and TOP4_PICK@r882",
+    "primary_train_oof": "45-cell OOF panel: per-seed medians over fold seeds of equal-family gains; contrasts {RERANK4_minus_r882, RERANK8_minus_r882, RERANK8_minus_RERANK4, RERANK8_minus_RERANK8_SHUF, RERANK8_SHUF_minus_r882} with ci95, ci_holm_m2, p, W/T/L, harm families; Elo (r882 = 1500)",
+    "secondary_dlval": "same on DL-Val91 (fold seed 270140 cells, per-seed 5-cell mixtures)",
+    "decision": "Holm m=2 over PRIMARY and SECONDARY; gates: primary median > +0.002, Holm LCB > 0, 3/3, beats RERANK8_SHUF, secondary 3/3, RERANK8 DL-Train -2.0 picks <= CONTROL",
+    "invalid_picks": "-2.0 picks per arm, DL-Train ASSESS (45 cells) and DL-Val91 (15 cells)",
+    "oracles": "r882, ORACLE_TOP4, ORACLE_TOP8, ORACLE_POOL context and family means (DL-Train, DL-Val91)",
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0...",
+    "full_metrics": "sha256 + S3 key of the full metrics.json"
+  }
+}
