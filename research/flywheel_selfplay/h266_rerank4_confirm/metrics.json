@@ -1,0 +1,24 @@
+{
+  "boot_draws": 10000,
+  "boot_seed": 266150,
+  "confirmation_status": "PENDING",
+  "fold_seeds": [
+    266140,
+    266141,
+    266142
+  ],
+  "holm_m": 2,
+  "model_seeds": [
+    266101,
+    266102,
+    266103
+  ],
+  "outcomes_read": 0,
+  "primary_endpoint": "DL-Train 205-family OOF single-pick equal-family utility RERANK4 - CONTROL across 3 fresh fold seeds x 3 fresh model seeds (45 cells)",
+  "schema": "jope.h266.metrics/v1",
+  "secondary_endpoint": "DL-Val91 (91 ctx / 19 fam) fresh-seed single-pick equal-family utility RERANK4 - CONTROL (fold_seed=266140, model_seeds=266101-266103)",
+  "status": "PREREGISTERED",
+  "study_path": "research/flywheel_selfplay/h266_rerank4_confirm",
+  "verdict": null,
+  "wave_id": "h266-rerank4-confirm-20261103"
+}
