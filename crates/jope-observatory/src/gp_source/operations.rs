@@ -1,6 +1,6 @@
 use super::prelude::*;
-use super::types::{Artifact, Status, extension, valid_hash};
-use super::{LANGUAGES, hash};
+use super::types::{extension, valid_hash, Artifact, Status};
+use super::{hash, LANGUAGES};
 
 /// Resolve one supported language identifier to its pinned lexer kind.
 pub fn language_kind(language: &str) -> Result<Lang> {
