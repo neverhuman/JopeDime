@@ -16,7 +16,8 @@
 Five lines of AI research connect the four pillars of \cref{sec:anatomy}:
 deep learning, program search, reinforcement learning, games and the race
 for self-improvement. Each contributes a different way to propose, test or
-retain a candidate.\footnote{Each history keeps only the
+retain a candidate. \Cref{tab:roads} compares their outputs, deployment
+budgets and retained experience.\footnote{Each history keeps only the
 milestones the argument needs; \cref{app:history} collects the referees
 those milestones rely on.}
 
@@ -56,10 +57,9 @@ Its ranks can influence search-parent selection;
 they neither condition nor screen the writer.
 Map-ranking accuracy and first-proposal quality require separate tests.
 
-Representations describe a problem, code generation supplies candidates
-and a separate map can rank drafts for search. Executable tests make their
-quality observable. \EZ{} proposes training on those outcomes, then
-measuring transfer beyond its training tasks.
+Executable tests connect generated programs to feedback. \EZ{} proposes
+training on that feedback, then measuring first-proposal quality beyond
+its training tasks.
 
 % ---------------------------------------------------------------------
 \subsection{Program search built the variation--judgment loop}\label{sub:road-programs}
@@ -276,14 +276,13 @@ it is separate from the adapter record in \cref{sec:method-status}.
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}
 
-Outputs, deployment budgets and retained experience define the comparison
-in \cref{tab:roads}.
-The cross-task predictors and network generators
+The comparison in \cref{tab:roads} requires matching what a system
+produces and what it spends. Cross-task predictors and network generators
 \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025} differ from
 readable-program output; one candidate does not equalize compute or inputs.
 Absolute Zero and STP use correctness feedback, whereas a declared incumbent
-sets our comparison standard; \cref{sec:game} defines how the referee judges a
-program against it.
+sets our comparison standard. \Cref{sec:game} defines the resulting game;
+\cref{fig:game-loop} separates reference training from game-day evaluation.
 
 \begin{keyidea}
 The test is whether experience on earlier discovery tasks improves the first
