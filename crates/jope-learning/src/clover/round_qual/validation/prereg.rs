@@ -3,7 +3,6 @@ use super::*;
 /// Parse a context-to-parent-cluster map from JSON (`{"ctx": "parent"}`) or 2-column TSV
 /// (`ctx<TAB>parent`), rejecting duplicate context keys in both formats and rejecting extra TSV
 /// columns.
-
 pub fn parse_parent_map(bytes: &[u8]) -> Result<BTreeMap<String, String>> {
     let text = std::str::from_utf8(bytes).context("parent_map: invalid UTF-8")?;
     let trimmed = text.trim();
