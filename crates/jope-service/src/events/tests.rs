@@ -1,10 +1,13 @@
 #[cfg(test)]
 pub(crate) mod tests {
-    use super::*;
+    use super::super::{EventLog, JournalCommit, JournalRun, Result, RunUpdate};
+    use crate::store::{Record, RecordKey, Store, StoreError};
     use jope_api::{
-        BudgetTotal, BudgetUsed, Effort, ReasoningBody, RunPhase, RunState, TelemetryBody,
+        decimal::DecimalU64, BudgetTotal, BudgetUsed, Effort, EventBody, ReasoningBody, RunPhase,
+        RunSnapshot, RunState, TelemetryBody, TelemetryEvent,
     };
     use serde_json::json;
+    use std::{sync::Arc, time::Duration};
 
     pub(crate) fn test_body(summary: &str) -> EventBody {
         EventBody::Reasoning(ReasoningBody {
