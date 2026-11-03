@@ -3,12 +3,12 @@ use super::*;
 mod context_slices;
 pub(crate) use context_slices::copy_context_slices;
 
-pub(crate) type EligibleDatasets = (
+pub(super) type EligibleDatasets = (
     Vec<EligibilityRecord>,
     Vec<(CatalogEntry, RegressionData, String, SotarenaReportHashes)>,
 );
 
-pub(crate) fn build_eligibility(
+pub(super) fn build_eligibility(
     run_id: &str,
     sotarena_root: &Path,
     catalog: &Catalog,
