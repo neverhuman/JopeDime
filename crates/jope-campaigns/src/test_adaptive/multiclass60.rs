@@ -297,6 +297,7 @@ mod replay;
 mod runtime;
 mod validation;
 
+use self::plan as plan_module;
 use self::plan::{
     bind_frozen_comparator, build_plan, canonical_manifest_sha256, coverage_gate, dataset_entries,
     multiclass_head_family, read_plan, read_value, ready_dataset_bindings, required_hash,
@@ -328,7 +329,7 @@ pub(crate) fn plan(
     comparator_root: &Path,
     seed_catalog: &Path,
 ) -> Result<()> {
-    self::plan::plan(
+    plan_module::plan(
         run_id,
         campaign_root,
         corpus_manifest,
