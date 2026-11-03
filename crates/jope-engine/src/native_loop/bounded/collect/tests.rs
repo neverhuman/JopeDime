@@ -1,3 +1,4 @@
+use super::collection::base64_decode;
 use super::*;
 
 /// Runs nothing: these fixtures record no GPU.
