@@ -1,7 +1,6 @@
 use super::*;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
-
 pub(crate) enum GprKernelFamilyV3 {
     Rbf,
     Matern12,
