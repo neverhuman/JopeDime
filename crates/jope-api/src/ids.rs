@@ -21,12 +21,14 @@ impl std::error::Error for ParseIdError {}
 #[schemars(transparent)]
 pub struct RunId(String);
 
+#[cfg(feature = "run-id-generation")]
 impl RunId {
     pub fn new() -> Self {
         Self(format!("run_{}", Ulid::new()))
     }
 }
 
+#[cfg(feature = "run-id-generation")]
 impl Default for RunId {
     fn default() -> Self {
         Self::new()
