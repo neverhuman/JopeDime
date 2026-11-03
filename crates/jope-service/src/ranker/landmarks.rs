@@ -8,7 +8,6 @@
 //! regression-only, matching the source recipe's numeric input contract.
 #[path = "landmarks/mod.rs"]
 mod recipe;
-pub(crate) use crate::ranker::adapter;
 pub use recipe::{fit_transform_and_extract_bundle_high, RecipeError};
 
 pub const VECTOR_WIDTH: usize = 256;
