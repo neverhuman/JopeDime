@@ -244,24 +244,25 @@ jobs:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.rust == 'true') }}
     # Rust subprocess/timeout contracts need native x86-64; Rosetta returns exit 127
-    # for a missing executable instead of ENOENT. Keep both complete test slices on
+    # for a missing executable instead of ENOENT. Keep all three complete test slices on
     # existing native Linux slots, preserving every test and timeout.
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ matrix.shard == 1 && 'xbabe1-ci2' || 'xbabe2-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ fromJSON('[\"\", \"xbabe1-ci2\", \"xbabe2-ci\", \"xbabe1-ci\"]')[matrix.shard] }}"]
     timeout-minutes: 45
-    # Two deterministic nextest slices of the unchanged selection, one per jope-ci runner. Both
-    # always finish so every failure is reported; the aggregate job proves (check_test_partition.py)
-    # that the slices select and execute the unsharded rust-test set exactly once between them.
+    # Three deterministic nextest slices of the unchanged selection, one per native jope-ci runner
+    # lane (xbabe1-ci2, xbabe2-ci, xbabe1-ci). All always finish so every failure is
+    # reported; the aggregate job proves (check_test_partition.py) that the slices select and
+    # execute the unsharded rust-test set exactly once between them.
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
     env:
       JOPE_PARITY_STRICT: "1"
       OMP_NUM_THREADS: "1"
       RAYON_NUM_THREADS: "1"
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
-      JOPE_RUST_TEST_PARTITION: slice:${{ matrix.shard }}/2
+      JOPE_RUST_TEST_PARTITION: slice:${{ matrix.shard }}/3
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -538,6 +539,12 @@ jobs:
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-rust-test-2
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/rust-test-2/
+          into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Collect rust-test-3 evidence
+        uses: ./.github/actions/download-ci-evidence
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-rust-test-3
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/rust-test-3/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect emitters evidence
         uses: ./.github/actions/download-ci-evidence
