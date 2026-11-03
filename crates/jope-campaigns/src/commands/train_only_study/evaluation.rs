@@ -25,7 +25,7 @@ struct StudySplitSlices {
     validation_y: Vec<f64>,
 }
 
-struct StudyEvalContext {
+pub(super) struct StudyEvalContext {
     context_tag: String,
     folds: usize,
     slices: BTreeMap<String, StudySplitSlices>,
@@ -33,7 +33,7 @@ struct StudyEvalContext {
 }
 
 impl StudyEvalContext {
-    fn new(
+    pub(super) fn new(
         data: &RegressionData,
         dataset: &DatasetStudyEntry,
         splits: &TrainOnlySplitManifest,
@@ -66,15 +66,15 @@ impl StudyEvalContext {
         })
     }
 
-    fn begin_generation(&self, generation: usize) {
+    pub(super) fn begin_generation(&self, generation: usize) {
         self.stage_cache.begin_generation(generation as u64);
     }
 
-    fn sweep(&self) {
+    pub(super) fn sweep(&self) {
         self.stage_cache.sweep();
     }
 
-    fn evaluate(
+    pub(super) fn evaluate(
         &self,
         genome: &GenomeIr,
         split: &SplitReceipt,
