@@ -79,10 +79,9 @@ operating-rate views for separate retained windows.
 
 \paragraph{A later admission window.}
 \Cref{fig:adapter-validation-trace} shows the latest 200 complete
-admission decisions at a later capture. Every candidate and post-decision
-retained utility is plotted; all 200 decisions are rejections. These are
-observations on reused development contexts, subject to the source-binding
-limits above.
+admission decisions at a later capture (all rejections), plotting every
+candidate and post-decision retained utility on reused development
+contexts under the source-binding limits above.
 
 \begin{figure}[tb]
   \centering
@@ -99,10 +98,9 @@ limits above.
 \end{figure}
 
 \paragraph{Pool-insertion cadence.}
-\Cref{fig:pool-insertion-cadence} measures the spacing of logged
-training-pool insertions. These events are distinct from adapter admissions;
-their timestamp gaps include intervening work and waits, rather than the
-runtime of an individual proposal.
+\Cref{fig:pool-insertion-cadence} measures the timestamp gaps between
+logged training-pool insertions (distinct from adapter admissions),
+including intervening work and waits rather than single-proposal runtime.
 
 \begin{figure}[tb]
   \centering
@@ -118,18 +116,16 @@ runtime of an individual proposal.
   \label{fig:pool-insertion-cadence}
 \end{figure}
 
-\Cref{fig:fw-retained-best-plateau} tracks the recorded best;
-\cref{fig:fw-pool-insertions} counts pool insertions and adapter rejections.
-Both are in Appendix~\ref{app:live-adapter-decisions}.
-The program clock is in \cref{app:current-program-clock};
-\cref{app:flywheel-telemetry} organizes the detailed evidence.
+In \cref{app:live-adapter-decisions}, \cref{fig:fw-retained-best-plateau}
+tracks the recorded best and \cref{fig:fw-pool-insertions} counts pool
+insertions and adapter rejections (\cref{app:current-program-clock} gives
+the program clock; \cref{app:flywheel-telemetry} organizes the full record).
 
 \paragraph{Aligning the committed event histories.}
 \Cref{fig:event-counters} counts pool insertions and adapter admissions
-across a common window of logged round identifiers. Their event meanings
-remain distinct; this alignment does not join evaluation populations or
-establish a learning gain (\cref{app:event-counters}).
-\Cref{fig:pool-insertion-windows} resolves that same insertion history into
-fixed round windows, separating local event frequency from the cumulative
-count (\cref{app:pool-insertion-windows}).
+over a common round window. Their event meanings remain distinct; this
+alignment does not join evaluation populations or establish a learning gain
+(\cref{app:event-counters}). \Cref{fig:pool-insertion-windows} resolves
+that insertion history into fixed round windows, separating local event
+frequency from the cumulative count (\cref{app:pool-insertion-windows}).
 \FloatBarrier
