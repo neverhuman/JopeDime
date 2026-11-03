@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod rollback_v2_tests {
     use super::super::*;
+    use serde_json::json;
 
     fn digest(label: &str) -> String {
         sha256_bytes(label.as_bytes())
