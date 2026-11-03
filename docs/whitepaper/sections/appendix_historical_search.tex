@@ -14,13 +14,14 @@ after the controls. These are not independent discoveries
   \setlength{\abovecaptionskip}{4pt}
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_target_history.pdf}
-  \caption{\textbf{Historical GP target progress and post-hoc 71-generation trajectories.}
+  \caption{\textbf{Historical GP arms reach the same final RMSE on the post-hoc trajectory.}
   First panel: first-to-last reported best development RMSE across all 159 repeated comparison
   groups (55 distinct dataset/cut pairs) at \num{1000} evaluations per search, grouped by search arm.
   Second through fourth panels: all 71 generations per arm for one historical dataset/cut selected
   post hoc for the largest policy-seeded relative improvement. RMSE is in historical evaluator units
   (lower is better). The arms shared incumbent and teacher seeds, and elapsed time varied; these
-  development records do not establish independent discoveries or a learned-policy advantage.}
+  development records do not establish independent discoveries or a learned-policy advantage.
+  Scope: \cref{sec:method-status}.}
   \label{fig:fw-target-progress}
   \label{fig:fw-target-history}
 \end{figure*}
