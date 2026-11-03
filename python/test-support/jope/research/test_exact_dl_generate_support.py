@@ -45,8 +45,8 @@ def default_proposal_selection_policy() -> Path:
     if bundled.is_file():
         return bundled
     return (
-        Path(__file__).resolve().parents[1]
-        / "manifests/selfplay/proposal-selection-policy.v1.json"
+        Path(__file__).resolve().parents[4]
+        / "crates/jope-campaigns/manifests/selfplay/proposal-selection-policy.v1.json"
     )
 
 
