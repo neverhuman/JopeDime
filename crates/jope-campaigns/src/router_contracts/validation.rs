@@ -1,4 +1,4 @@
-use super::routes::PredictorRouteV2;
+use super::routes::{PredictorRouteV2, ValidationSchemeV2};
 use super::{validate_sha256, ROUTER_FOLDS_V2};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
