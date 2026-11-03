@@ -178,7 +178,7 @@ pub(super) struct PhaseOneFirewall {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct TrainOnlySplitManifest {
+pub(crate) struct TrainOnlySplitManifest {
     pub(super) schema: String,
     pub(super) run_id: String,
     pub(super) dataset_hash: String,

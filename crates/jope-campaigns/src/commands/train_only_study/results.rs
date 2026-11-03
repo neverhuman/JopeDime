@@ -124,7 +124,7 @@ pub(super) struct GenerationTestScore {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct FinalCvCandidate {
+pub(crate) struct FinalCvCandidate {
     pub(super) original_rank: usize,
     pub(super) semantic_sha256: String,
     pub(super) canonical_genome: String,
