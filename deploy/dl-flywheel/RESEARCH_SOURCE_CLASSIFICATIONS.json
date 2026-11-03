@@ -4472,6 +4472,38 @@
         "reason": "H242 preregistered CPU-only diagnostic: zero-update LASER-style spectral rank reduction of the r882 adapter (Sharma et al. 2023): every 2-D adapter weight matrix (16, frozen in spectral_inventory.json) replaced by its top-k float64 SVD reconstruction keeping energy fraction rho of sum sigma^2; SVD_SELECT (rho in .99/.95/.90 chosen per FIT cell) primary and LASER_SINGLE (one matrix at rho .90) exploratory, Holm m=2; RANDPROJ matched-Frobenius random-direction placebo report-only; CONTROL rho=1 is r882 bit-exact; DOPE c51a56d0 frozen; fresh folds 242141-242143, strict selector locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
       }
     },
+    "python:research/flywheel_selfplay/h243_modsoup/analysis.py": {
+      "bytes": 11343,
+      "sha256": "bb7b4f78ff99c6a17b6fe30d65ad165ccd9aca5e89a0eb2e769c74a17ec70c56",
+      "classification": {
+        "role": "research",
+        "reason": "H243 preregistered CPU-only diagnostic: zero-update module-wise soup of r882 and r782 (427b0d46): the 47 adapter tensors partitioned into 11 frozen module groups (groups.json); candidates replace one group g by (1-beta) r882_g + beta r782_g, beta in {0.5, 1.0}; MODSWAP_SELECT (best single (g, beta) per FIT cell) primary and GREEDY_SOUP (Wortsman 2022 greedy forward add on FIT, at most 5 ingredients, +0.001 strict improvement) exploratory, Holm m=2; PLACEBO matched-L2 random move of the selected group report-only; CONTROL r882 exact; DOPE c51a56d0 frozen; fresh folds 243141-243143, strict selector locked before one DL-Val91 scoring; H152 cliff context #27 reported separately, never excluded; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H242/H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h243_modsoup/monitor.py": {
+      "bytes": 8541,
+      "sha256": "fe5ec9ec56f98786330aa1ec146c3a02a256a4f5e2ebf9c0293a9b285fad190a",
+      "classification": {
+        "role": "research",
+        "reason": "H243 preregistered CPU-only diagnostic: zero-update module-wise soup of r882 and r782 (427b0d46): the 47 adapter tensors partitioned into 11 frozen module groups (groups.json); candidates replace one group g by (1-beta) r882_g + beta r782_g, beta in {0.5, 1.0}; MODSWAP_SELECT (best single (g, beta) per FIT cell) primary and GREEDY_SOUP (Wortsman 2022 greedy forward add on FIT, at most 5 ingredients, +0.001 strict improvement) exploratory, Holm m=2; PLACEBO matched-L2 random move of the selected group report-only; CONTROL r882 exact; DOPE c51a56d0 frozen; fresh folds 243141-243143, strict selector locked before one DL-Val91 scoring; H152 cliff context #27 reported separately, never excluded; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H242/H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h243_modsoup/runner.py": {
+      "bytes": 29825,
+      "sha256": "093e88eb9165bb6d3a2abf8cf10ee31a5c9864570d486a84fe372a6bb58ccd1b",
+      "classification": {
+        "role": "research",
+        "reason": "H243 preregistered CPU-only diagnostic: zero-update module-wise soup of r882 and r782 (427b0d46): the 47 adapter tensors partitioned into 11 frozen module groups (groups.json); candidates replace one group g by (1-beta) r882_g + beta r782_g, beta in {0.5, 1.0}; MODSWAP_SELECT (best single (g, beta) per FIT cell) primary and GREEDY_SOUP (Wortsman 2022 greedy forward add on FIT, at most 5 ingredients, +0.001 strict improvement) exploratory, Holm m=2; PLACEBO matched-L2 random move of the selected group report-only; CONTROL r882 exact; DOPE c51a56d0 frozen; fresh folds 243141-243143, strict selector locked before one DL-Val91 scoring; H152 cliff context #27 reported separately, never excluded; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H242/H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h243_modsoup/soup.py": {
+      "bytes": 3704,
+      "sha256": "4745aa4dcfdc580b08b1d34094b1cbe82f9e27fda1e8f1d3963c0c0db704cc57",
+      "classification": {
+        "role": "research",
+        "reason": "H243 preregistered CPU-only diagnostic: zero-update module-wise soup of r882 and r782 (427b0d46): the 47 adapter tensors partitioned into 11 frozen module groups (groups.json); candidates replace one group g by (1-beta) r882_g + beta r782_g, beta in {0.5, 1.0}; MODSWAP_SELECT (best single (g, beta) per FIT cell) primary and GREEDY_SOUP (Wortsman 2022 greedy forward add on FIT, at most 5 ingredients, +0.001 strict improvement) exploratory, Holm m=2; PLACEBO matched-L2 random move of the selected group report-only; CONTROL r882 exact; DOPE c51a56d0 frozen; fresh folds 243141-243143, strict selector locked before one DL-Val91 scoring; H152 cliff context #27 reported separately, never excluded; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H242/H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
     "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
       "bytes": 12151,
       "classification": {
