@@ -16,7 +16,7 @@ use std::{
 };
 
 /// Configured upper or lower bound for max manifest.
-include!("custody/classification.rs");
-include!("custody/verification.rs");
-include!("custody/packing.rs");
-include!("custody/dry_run.rs");
+include!("classification.rs");
+include!("verification.rs");
+include!("packing.rs");
+include!("dry_run.rs");
