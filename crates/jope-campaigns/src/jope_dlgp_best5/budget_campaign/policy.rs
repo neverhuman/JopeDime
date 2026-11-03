@@ -103,7 +103,8 @@ pub(crate) fn finite_positive(values: &[f64]) -> bool {
 mod confirmation;
 mod evidence;
 mod freeze;
-mod policy;
+#[path = "policy/policy.rs"]
+mod freeze_policy;
 mod stage;
 
 pub use confirmation::{
@@ -117,7 +118,7 @@ pub use freeze::{
     BudgetFirstCampaignFreezeV1, CampaignLayerV1, SealedTestBindingV1, SealedTestInventoryV1,
     SearchDatasetBindingV1, TestAccessPolicyV1,
 };
-pub use policy::{HyperionDecisionRuleV1, HyperionPolicyFreezeV1};
+pub use freeze_policy::{HyperionDecisionRuleV1, HyperionPolicyFreezeV1};
 pub use stage::{
     choose_predeclared_raw_fallback, stage_hyperion_sealed_features, verify_full_train_replay,
     HyperionSealedFeatureStageV1,
