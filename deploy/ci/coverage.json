@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [
+          "research"
+        ],
+        "lanes": [],
+        "scope": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+      },
     "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
       "discovery": {
         "kind": "python-family"
