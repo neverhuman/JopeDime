@@ -43,6 +43,12 @@ pub fn compile(dir: &Path) {
 
 pub fn consumer(dir: &Path, compiler: &str, source: &str) -> String {
     fs::write(dir.join("consumer.c"), source).unwrap();
+    let compiler =
+        if compiler == "clang" && Command::new(compiler).arg("--version").output().is_err() {
+            "gcc"
+        } else {
+            compiler
+        };
     run(Command::new(compiler).current_dir(dir).args([
         "-std=c17",
         "-O2",
