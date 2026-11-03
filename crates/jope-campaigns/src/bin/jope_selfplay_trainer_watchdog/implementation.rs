@@ -127,7 +127,7 @@ impl Args {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
-struct DurableState {
+pub(super) struct DurableState {
     schema: String,
     max_observed_labels: u64,
     max_observed_snapshot_watermark: u64,
@@ -164,7 +164,7 @@ struct SubmissionIntent {
 }
 
 #[derive(Clone, Debug)]
-struct TrainerJob {
+pub(super) struct TrainerJob {
     id: String,
     watermark: u64,
     sequence: u64,
