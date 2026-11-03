@@ -882,7 +882,8 @@ pub(super) use document::*;
 mod cli;
 pub use cli::execute;
 pub use cli::AblationArgs;
-pub(super) use cli::*;
+#[cfg(test)]
+use cli::{config, default_scratch_root};
 
 #[cfg(test)]
 mod tests {
@@ -929,7 +930,6 @@ mod tests {
 
     /// A=A twice on a tiny budget, with different job counts: byte-identical bodies, and every
     /// gate says there is no difference or that it has nothing to evaluate.
-
     #[path = "tests_1.rs"]
     mod tests_1;
     pub(super) use tests_1::*;
@@ -938,8 +938,6 @@ mod tests {
     pub(super) use tests_2::*;
     #[path = "tests_3.rs"]
     mod tests_3;
-    pub(super) use tests_3::*;
     #[path = "tests_4.rs"]
     mod tests_4;
-    pub(super) use tests_4::*;
 }
