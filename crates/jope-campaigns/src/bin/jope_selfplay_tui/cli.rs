@@ -33,6 +33,7 @@ pub(super) fn dump_dl_json(args: &Args) -> Result<()> {
         .iter()
         .filter(|trainer| trainer.is_trainer)
         .map(|trainer| {
+            let early_stopped = trainer.early_stopped;
             json!({
                 "job_id": trainer.job_id,
                 "node": trainer.node,
@@ -42,7 +43,7 @@ pub(super) fn dump_dl_json(args: &Args) -> Result<()> {
                 "pct": trainer.pct,
                 "running_loss": trainer.running_loss,
                 "history_points": trainer.history.len(),
-                "early_stopped": trainer.early_stopped,
+                "early_stopped": early_stopped,
                 "progress_at_ms": trainer.progress_at_ms as u64,
             })
         })
@@ -71,33 +72,41 @@ pub(super) fn dump_dl_json(args: &Args) -> Result<()> {
         "collected_at_ms": dashboard.collected_at_ms as u64,
         "generations": generations,
         "live_trainers": live_trainers,
-        "gpus": dashboard.gpus.iter().map(|gpu| json!({
-            "node": gpu.node,
-            "owner_job": gpu.owner_job,
-            "util_pct": gpu.util_pct,
-            "mem_used_mb": gpu.mem_used_mb,
-            "mem_total_mb": gpu.mem_total_mb,
-            "temp_c": gpu.temp_c,
-            "power_w": gpu.power_w,
-            "power_limit_w": gpu.power_limit_w,
-            "throttled": gpu.throttled,
-        })).collect::<Vec<_>>(),
+        "gpus": dashboard.gpus.iter().map(|gpu| {
+            let temp_c = gpu.temp_c;
+            let power_limit_w = gpu.power_limit_w;
+            let throttled = gpu.throttled;
+            json!({
+                "node": gpu.node,
+                "owner_job": gpu.owner_job,
+                "util_pct": gpu.util_pct,
+                "mem_used_mb": gpu.mem_used_mb,
+                "mem_total_mb": gpu.mem_total_mb,
+                "temp_c": temp_c,
+                "power_w": gpu.power_w,
+                "power_limit_w": power_limit_w,
+                "throttled": throttled,
+            })
+        }).collect::<Vec<_>>(),
         "accepted_task_fronts": dashboard.accepted_tasks.iter().map(|front| json!({
             "task": front.task,
             "checkpoint_sha256": front.checkpoint_sha256,
             "generation": front.generation,
             "updated_at_ms": front.updated_at_ms as u64,
         })).collect::<Vec<_>>(),
-        "watchdog": dashboard.watchdog.as_ref().map(|watchdog| json!({
-            "action": watchdog.action,
-            "checkpoint_sha256": watchdog.checkpoint_sha256,
-            "snapshot_watermark": watchdog.snapshot_watermark,
-            "labels": watchdog.labels,
-            "pending_unfrozen_labels": watchdog.pending_unfrozen_labels,
-            "last_evidence_watermark": watchdog.last_evidence_watermark,
-            "active_trainers": watchdog.active_trainers,
-            "generated_at_ms": watchdog.generated_at_ms as u64,
-        })),
+        "watchdog": dashboard.watchdog.as_ref().map(|watchdog| {
+            let last_evidence_watermark = watchdog.last_evidence_watermark;
+            json!({
+                "action": watchdog.action,
+                "checkpoint_sha256": watchdog.checkpoint_sha256,
+                "snapshot_watermark": watchdog.snapshot_watermark,
+                "labels": watchdog.labels,
+                "pending_unfrozen_labels": watchdog.pending_unfrozen_labels,
+                "last_evidence_watermark": last_evidence_watermark,
+                "active_trainers": watchdog.active_trainers,
+                "generated_at_ms": watchdog.generated_at_ms as u64,
+            })
+        }),
         "continuous": {
             "total_epochs": series.total_epochs,
             "marks": series
