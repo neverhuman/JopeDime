@@ -84,7 +84,7 @@ impl WitnessStore {
                 return Ok(original.clone());
             }
         }
-        let now = super::super::native_scq::policy::now_ms()?;
+        let now = crate::eval_registry::native_scq::policy::now_ms()?;
         ensure!(
             sha(&fs::read("/proc/self/exe")?) == request.body.next_policy.witness_executable_sha256
                 && source_sha256() == request.body.next_policy.witness_source_sha256,
