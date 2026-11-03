@@ -1,3 +1,4 @@
+use super::super::evaluation::StudyEvalContext;
 use super::*;
 
 pub(crate) fn validate_generation_zero(
