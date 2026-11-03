@@ -1,0 +1,19 @@
+{
+  "parent_source": "e61adfe566e784ca3182c248df428eb717fe2a3a",
+  "H218_runner_sha256": "7e6c0722e9fe9b0bee6488ebc13cac1ffbeb37e7cc49e66f50482bba624cf236",
+  "H218_analysis_sha256": "fb66cb9fdd20dfb4af97f1f2aae96bbdf37e49b92a33034ae4190ca0a84a5a6e",
+  "immutable_parent_modules": {
+    "research/flywheel_selfplay/h217_gated025_confirm/analysis.py": "87b57d9797030d6e72b473fa75b3710f489511c1aced3d6edf63857c4454134f",
+    "research/flywheel_selfplay/h195_blend025_kernel_confirm/analysis.py": "38a8e85d0c1a03ae9d8c6d06912f5419107c705a883465659aae8d28ea0efd43",
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "research/flywheel_selfplay/h139_selection_audit/runner.py": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "changes": [
+    "Fresh245 seed streams/folds",
+    "H239A1 cooperative pause guard; four-core CPU affinity",
+    "Sole primary DL-Val seed-median context gain with explicit H245 acceptance gate; pooled-A harm gate retained",
+    "Placebo copies primary lambda/tau and permutes zgap so gate rate matches exactly",
+    "Immutable source capsule binding instead of mutable checkout; no smoke refits; single45-fit run",
+    "Omit unused pre-lock B native diagnostic; all gate choices remain FIT-only, and no A/B outer assessment occurs before the global lock"
+  ]
+}
