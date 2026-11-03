@@ -1,4 +1,5 @@
 use super::*;
+use crate::*;
 
 pub(crate) fn activations(root: &Path) -> Result<Vec<Value>> {
     let path = root.join("catalog/v2/activations.jsonl");
