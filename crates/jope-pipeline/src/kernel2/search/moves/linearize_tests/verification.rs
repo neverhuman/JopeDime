@@ -1,7 +1,6 @@
 use super::*;
 
 /// The run's CLI flags, parsed as `jope pipeline run` parses them.
-
 pub(super) fn flags(extra: &[&str]) -> (crate::cli::SearchArgs, crate::kernel2::cli::ProfileArgs) {
     let mut argv = vec![
         "jope-pipeline",
