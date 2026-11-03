@@ -436,4 +436,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_task_elo/tests.rs"]
 mod tests;

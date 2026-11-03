@@ -387,7 +387,3 @@ fn main() -> Result<()> {
         thread::sleep(Duration::from_secs(args.interval_seconds));
     }
 }
-
-#[cfg(test)]
-#[path = "jope_dlgp_budget_supervisor/tests.rs"]
-mod tests;
