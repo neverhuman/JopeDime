@@ -21,7 +21,7 @@ the referee checks and scores it, and a declared incumbent is the opponent.
 The encoding supplies a shared interface;
 each task type still needs its own qualified encoding, language and
 evaluation protocol (\cref{sub:game-boards}). \Cref{tab:go-vs-innovation}
-makes the comparison with Go explicit.
+\mbox{makes the} comparison with Go explicit.
 
 % ----------------------------------------------------------------------------
 \subsection{Why games came first}\label{sub:game-games}
@@ -44,7 +44,7 @@ question of evaluation cost (\cref{sec:price}).
 
 Every submitted program counts as an attempt, including an illegal move. The reference writer $\writer$ reads the encoded problem,
 while the referee keeps the incumbent as a separate comparison standard
-(\cref{sub:method-board}); its code and score must stay outside the writer's
+(\cref{sub:method-board}); its code and score \mbox{must stay outside} the writer's
 input.
 
 \Cref{fig:game-loop} separates training from game day. Its top band follows
@@ -111,13 +111,13 @@ specifies the reference encoder and its cost limit.
 In the inspected implementation, that encoder consumes prepared numeric training
 rows and targets; the writer's engine and regression-task tokens are
 supplied separately. The objective, metric and budget are protocol
-settings, not additional input fields in this encoder call.
+settings, not \mbox{additional input fields} in this encoder call.
 
 A useful board should preserve distinctions relevant to algorithm choice,
 remain stable under irrelevant reorderings, exclude final evaluation
 information and have a measured cost. These are requirements to test, not
 properties guaranteed by naming an encoder. People still choose the problem
-and define what counts as a useful solution.
+and \mbox{define what} counts as a useful solution.
 
 A move is one complete program written in a typed language over learning primitives.
 A task-specific grammar restricts legal moves, and \cref{sub:method-move}
@@ -129,7 +129,7 @@ syntactic variants; it need not identify every functionally equivalent
 implementation. AutoML-Zero
 reused scores when hashes of truncated predictions matched after a short
 training and validation probe \citep{real2020automlzero}. Matching a probe
-does not establish agreement \mbox{on other} inputs (\cref{sub:method-move}).
+does not establish \mbox{agreement on other} inputs (\cref{sub:method-move}).
 
 The language bounds what can be expressed; changing its primitives changes
 that space \citep{boden1990creative}. Structural constraints can prevent invalid programs; their effect on useful proposal
@@ -175,7 +175,7 @@ multiplication and AlphaDev for sorting
 \citep{fawzi2022alphatensor,mankowitz2023alphadev}. AlphaZero used one algorithm
 for three games and trained a separate network for each
 \citep{silver2018general}. Here the problem is an input on the board, so one
-player can, in principle, learn many boards.
+player can, \mbox{in principle, learn} many boards.
 
 The historical reference checkpoint and the comparison protocol here are
 scoped to tabular regression. Binary and multiclass classification, ranking,
