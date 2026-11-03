@@ -1,3 +1,4 @@
+use super::fold_cache::binary_cv_on_slices;
 use super::*;
 
 /// Binary panel-facing selection: mirrors the regression lane's structure
