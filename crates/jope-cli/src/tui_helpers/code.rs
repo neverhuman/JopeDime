@@ -1,5 +1,5 @@
-use super::truncate;
 use super::rows::{row_genome, GenomeStage};
+use super::truncate;
 use serde_json::{Map, Value};
 use std::{
     collections::BTreeMap,
