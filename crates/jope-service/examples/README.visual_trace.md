@@ -121,3 +121,9 @@ env CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
 Keep raw captures, model objects, downloaded packages and rendered media outside
 the working tree. A public render requires a separate bounded projection of the
 selected observations; never distribute this raw JSON as a scene asset.
+
+## Selected-program source proof
+
+`visual_fit_dsl` (feature `visual-trace`) fits one supplied canonical DSL against an exact same-case version-2 numeric FIT contract and exports the entire Rust/Python files. Its five arguments are DSL path, CSV path, original contract model directory, split JSON and a new external output directory. Use `cargo run --release --locked -p jope-service --features visual-trace --example visual_fit_dsl -- ...`: native reference fitting and emitted Rust training must both be optimized. The helper records compiler/profile, both 64-row selfchecks, complete prediction vectors and unchanged-prefix emitted training parity. It rejects debug reference qualification, output reuse and missing/nonfinite input cells. It grants no production neural admission or Engine champion identity.
+
+`visual_fit_dsl --features REQUEST.json NEW_OUTPUT.json` exports the actual native raw412/sign-projection features for a bounded canonical program slate; it performs no fitting. See the [H256 plan](../../../docs/plans/blender-fused-first-render/H256_PLAN.md) for checkpoint, critic, selection, full-file page and Blender proof bindings.

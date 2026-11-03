@@ -1,5 +1,7 @@
 # JAIN: fused native run to complete-source Blender review
 
+Current checkpoint work: [H256 plan and measured proof](H256_PLAN.md). The trained five-fold path retains all landmark channels, uses **problem encoder** / **solution encoder**, and binds its real selected programs to complete native Rust files. The original r882 record below remains preserved as baseline evidence.
+
 [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114) is open on `codex/blender-fused-first-render`.
 
 JAIN is the display brand; repository and native identifiers remain JopeDime. This lane captures the actual fused r882 Engine run, its real neural admission calls, committed GP champion, native-generated Rust/Python, executed training/prediction proof, and scoped optimized-release source-emission rate. Earlier manually constructed slates and separate-source captures are historical diagnostics.

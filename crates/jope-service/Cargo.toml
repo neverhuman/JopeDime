@@ -79,3 +79,7 @@ required-features = ["visual-trace"]
 [[example]]
 name = "visual_run"
 required-features = ["visual-trace"]
+
+[[example]]
+name = "visual_fit_dsl"
+required-features = ["visual-trace"]

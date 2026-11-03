@@ -1,5 +1,7 @@
 # JAIN inference review
 
+The latest [H256 checkpoint plan](../../docs/plans/blender-fused-first-render/H256_PLAN.md) covers the trained five-fold solution encoder, explicit landmark mappings, actual proposal selection, native selected-GP refits and complete Rust scrolling. Its entry point is `blender/h256_scene.py`; the earlier board below preserves the original authenticated r882 baseline.
+
 Optional offline Blender tooling for one authenticated fused JAIN model. The
 [master plan](../../docs/plans/blender-fused-first-render/MASTER_PLAN.md) gives
 worker scopes, exact host paths, validation and remaining film gates;

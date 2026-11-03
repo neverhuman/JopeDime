@@ -1,8 +1,55 @@
-# JAIN same-run Blender status
+# JAIN H256 render status
+
+2026-11-03 · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114) · branch `codex/blender-fused-first-render` · PR #2071 / `v1/fastlane` protected.
+
+## Current H256 authority
+
+The current preview uses the genuine saved Stage 2 five-fold ensemble, fitted SOS/hurdle and SP critics, original frozen DOPE and fresh legacy R882 base. The authorized golden fixture reproduces its exact selected index 678 and top-four; final-cost maximum error is `3.43e-9`. The six displayed synthetic regression cases use actual initial **K_rev=0** inference with no invented reveal history. The full trajectory is proven separately by the golden smoke.
+
+The fixed left table and four measured landmark grids feed one connected angled 3D network. DOPE weights are labeled **`problem encoder`**; all other neural weights are **`solution encoder`**. The view includes all **123 observed matrix operations** (120 module affines plus three captured functional MHA projections), drawing **850,956 actual nonzero weight/bias connections**. Fixed widths represent weight magnitude; measured signed `weight × input` controls light. Recorded inference is editorially expanded; pulse travel and page dwell are not inference duration. The 590 saved parameter tensors are a separate inventory, including unused trajectory weights.
+
+The actual G cost selects an eligible program from each native twelve-program slate, then the local native **release** GP fitter exports the complete unchanged Rust/Python. This bounded research route is not a registered production Engine champion or quality qualification. There are five selected DSL identities, four head variants and six Rust identities. Every case preserves its exact 76 FIT / 20 HOLD partition. Rust/Python fitted predictions and emitted Rust `Model::fit` predictions match native **exactly on all 96 rows**; both 64-row self-checks pass in all six cases.
+
+[H256 plan](H256_PLAN.md) specifies implementation, ownership, commands and gates. [H256 render receipt](H256_RENDER_RECEIPT.json) binds source/artifact hashes and all current evidence. External root: `/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/`. Raw tensors, checkpoints, models, source pages and Blender media remain outside Git.
+
+| Gate | Current evidence |
+|---|---|
+| Raw neural capture | `capture-stage2-six-final/trace.json`, SHA `9825d37e18786ca807c4a62e6ea7bf9c07c70e635ad26d77409d5ac1aadd6609` |
+| Current source/metrics render input | `gp-source-six-release/trace-with-metrics.json`, SHA `22f3940018537ee6b5427529fb1014441b79a4c6879e88c7554ab3d39511af26`; full `validation-with-metrics.receipt.json` PASS |
+| Checkpoint identity | Five-fold ensemble SHA `ee40e191e4ba8f2b0a3e0a34a44746984ea2aebafc277c588f71f73f7de323c8`; critics SHA `ba5678e1097550d54ec5339cf42b341339af7d65e566cd3a2bcf28f16c596755` |
+| Complete Rust | A/B/C/D/E/F: 219/60/90/90/84/35 pages, **578 total**; all source bytes reconstructed and PNG hashes/dimensions checked. Saved inspection timeline: **3,720 frames / 12 fps = 310 seconds**, with six-frame page holds; no video rendered |
+| Actual landmarks | All v256 values, four valid column rows ×17 (capacity64), all predicted lm23, all fresh lm48; exact source indices/hashes and mapped destinations in scene receipt |
+| Local checks | **41 Python tests**, **2 native-helper tests**, release build, Rust format, full six-case semantic/source/training proof and capability-matrix inventory PASS |
+| Saved-scene replay | Nonsequential **3583 then 2629** decode to exactly the original RGBA pixels; `reopen-fullcode-v2/receipt.json` PASS |
+
+## Latest stills and source scrolling
+
+[Saved Blender scene](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/scene.blend) · [scene receipt](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/scene.receipt.json). Blender 5.2.3 LTS, build `e13b728c6880`.
+
+| 4K still | Source cue |
+|---|---|
+| [Frame 37](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/h256-000037.png) | Case A, first Rust page |
+| [Frame 2629](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/h256-002629.png) | Case D, emitted training |
+| [Frame 3583](/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-fullcode-v2/h256-003583.png) | Case F, emitted prediction |
+
+The complete syntax-highlighted file scrolls through training, helpers, fitted state, prediction and self-checks, with no excerpts substituted. Temporary GP operator previews are actual selected trees. Complete-source coverage does not mean every page has been visually inspected individually.
+
+Displayed rates are measured **release warm repeated same-file Rust lexical source emission**, including allocation/loop overhead: A/B/C/D/E/F ≈ 10.01/21.41/13.22/12.11/11.64/32.98 million lexical tokens/s. They are not neural decoding or end-to-end unique-code throughput. No neural token/sec value is invented.
+
+The initial dev-native versus optimized emitted training comparison failed case D. Preserved controls isolated Darwin sin/cos optimization rounding; matched release-native and optimized Rust passed all six cases with zero error. No GP math/converter change, tolerance change or selected-program reroll was made.
+
+Current disposition: **stills ready for user design review**. Source/receipt AI peer reviews found no blockers; exact committed head and PR readback are recorded in external `h256/final-git-handoff.json`. Hosted CI is **NOT_RUN**. Video, production integration, merge and release are not completed by this preview.
+
+---
+
+# Historical R882 same-run Blender baseline
+
+Everything below describes the earlier R882 model and v3 board, preserved as historical evidence. It is superseded as current visual authority by the H256 section above; its 43-affine / 1,181-page evidence must not be relabeled as H256.
+
 
 2026-11-03 · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114) · branch `codex/blender-fused-first-render` · native source **`f035969e68f4ab37d692d15972d60a900d2049b9`** · PR #2071/`v1/fastlane` protected.
 
-## Current authority and design
+## R882 authority and design
 
 `single-run-final/` supersedes the former separate diagnostic/source captures. Six actual in-process Engine runs now bind native conditioning/admission journals, their committed GP champions, exact source, source execution and emitted training in the same run. Compile/runtime source identity is verified and service scope clean. Native worker and r882 assets remain signed/authenticated; no neural training or checkpoint mutation occurs.
 
