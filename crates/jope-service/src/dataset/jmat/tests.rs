@@ -1,6 +1,4 @@
 use super::*;
-
-use super::*;
 const REAL: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../test-support/datasets/v1/messy-csv-like/raw-source-subset.csv"
