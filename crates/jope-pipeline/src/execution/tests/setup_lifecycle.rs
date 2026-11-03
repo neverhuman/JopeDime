@@ -144,7 +144,7 @@ pub(super) fn qualify_cancellation_and_resume(
 // Installed only by the explicitly ignored real-host fixture. No environment
 // or fault-injection path is compiled into a production executable.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum HostSetupStage {
+pub(crate) enum HostSetupStage {
     BeforeSetup,
     Attached,
     AfterDropKill,
@@ -154,7 +154,7 @@ pub(super) type HostSetupCallback =
 static HOST_SETUP_PROBE: std::sync::Mutex<Option<Arc<HostSetupCallback>>> =
     std::sync::Mutex::new(None);
 
-pub(super) fn host_setup_probe(stage: HostSetupStage, started: &Started) -> Result<()> {
+pub(crate) fn host_setup_probe(stage: HostSetupStage, started: &Started) -> Result<()> {
     // Release the registry lock before a callback blocks. The barrier must
     // permit two actual ProcessFit::start calls to enter concurrently.
     let callback = HOST_SETUP_PROBE.lock().unwrap().clone();

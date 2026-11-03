@@ -96,10 +96,9 @@ mod setup_faults;
 mod setup_lifecycle;
 mod supervisor;
 
-pub(super) use setup_faults::{
-    qualify_before_setup_cancellation, qualify_concurrency, qualify_setup_faults,
-};
-pub(super) use setup_lifecycle::{
+use setup_faults::{qualify_concurrency, qualify_setup_faults};
+pub(super) use setup_lifecycle::{host_setup_probe, HostSetupStage};
+use setup_lifecycle::{
     qualify_cancellation_and_resume, setup_group_drained, setup_host_job, HostSetupGuard,
     OwnedSetupOrphan,
 };
