@@ -64,13 +64,6 @@ pub(super) fn validate_verb(args: &ValidateArgs, env: &Env, policy: &Policy) -> 
 }
 
 #[derive(Serialize)]
-struct FailureJson {
-    schema: &'static str,
-    ok: bool,
-    error: &'static str,
-}
-
-#[derive(Serialize)]
 struct FailureLine {
     /// The fragment's index; absent for the table-wide source check.
     #[serde(skip_serializing_if = "Option::is_none")]
