@@ -1,11 +1,11 @@
 use super::*;
 
 pub(super) struct Running {
-    started: Started,
+    pub(super) started: Started,
     pub(super) cpu: u32,
     watcher: Option<thread::JoinHandle<Result<WorkerOutcome>>>,
     started_path: PathBuf,
-    stop: Arc<AtomicBool>,
+    pub(super) stop: Arc<AtomicBool>,
 }
 impl Running {
     pub(super) fn start(
