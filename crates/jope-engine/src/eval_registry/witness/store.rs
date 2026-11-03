@@ -268,7 +268,7 @@ pub struct WitnessStore {
     pub(crate) signing: Option<SigningKey>,
     pub(crate) _lease: File,
     pub(crate) records: BTreeMap<u64, (String, SignedAck, String)>,
-    pub(crate) native_grants: native_grants::NativeGrantState,
+    pub(super) native_grants: native_grants::NativeGrantState,
     pub(crate) epoch_proofs: Vec<WitnessEpochProof>,
     pub(crate) sequence: u64,
     pub(crate) tip: String,
