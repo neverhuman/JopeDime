@@ -36,6 +36,28 @@ Independent comparisons belong to \cref{sec:results}.
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
 
+
+\paragraph{A later admission window.}
+\Cref{fig:adapter-validation-trace} shows the latest 200 complete
+admission decisions at a later capture. Every candidate and post-decision
+retained utility is plotted; all 200 decisions are rejections. These are
+observations on reused development contexts, subject to the source-binding
+limits above.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_adapter_validation_trace.pdf}
+  \caption{\textbf{Candidate utility varies while the retained adapter holds.}
+  All 200 consecutive admission decisions in rounds 4064--4263, captured
+  at 10:19 UTC on 3 November 2026. Grey: candidate validation-pool utility;
+  blue: the logged post-decision retained utility (dimensionless, larger
+  preferred). Every point maps to a journal line; no smoothing or cumulative
+  maximum is applied. The window has zero admissions. This adaptive
+  engineering telemetry does not measure independent first-proposal
+  performance or a learning gain. Scope: \cref{sec:method-status}.}
+  \label{fig:adapter-validation-trace}
+\end{figure}
+
 \paragraph{The retained admission ledger.}
 \Cref{tab:admission-ledger} is the canonical chronology and count table.
 \Cref{fig:fw-latest-admissions,fig:fw-admission-margins} show its trajectory
@@ -82,4 +104,3 @@ operating-rate views for separate retained windows.
 Both are in Appendix~\ref{app:live-adapter-decisions}.
 The program clock is in \cref{app:current-program-clock};
 \cref{app:flywheel-telemetry} organizes the detailed evidence.
-\FloatBarrier
