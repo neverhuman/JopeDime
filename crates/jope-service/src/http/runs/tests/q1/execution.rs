@@ -377,8 +377,8 @@ async fn learned_q1_requires_a_verified_admitted_ranker() {
 #[tokio::test]
 async fn actual_store_bound_plan_retries_and_conflicts_without_starting_a_run() {
     let (_directory, engine, spec) = fixture();
-    let app = app(&engine);
-    let first = app
+    let router = app(&engine);
+    let first = router
         .clone()
         .oneshot(request(&spec, "plan-key"))
         .await
@@ -393,7 +393,8 @@ async fn actual_store_bound_plan_retries_and_conflicts_without_starting_a_run() 
     assert_eq!(plan.placement.workers, 1);
     assert_eq!(
         body(
-            app.clone()
+            router
+                .clone()
                 .oneshot(request(&spec, "plan-key"))
                 .await
                 .unwrap()
@@ -403,7 +404,7 @@ async fn actual_store_bound_plan_retries_and_conflicts_without_starting_a_run() 
     );
     let mut changed = spec.clone();
     changed.seed.0 += 1;
-    let conflict = app
+    let conflict = router
         .clone()
         .oneshot(request(&changed, "plan-key"))
         .await
@@ -413,7 +414,14 @@ async fn actual_store_bound_plan_retries_and_conflicts_without_starting_a_run() 
     let mut stale = spec.clone();
     stale.plan_digest = Some("0".repeat(64));
     assert_eq!(
-        body(app.oneshot(request(&stale, "stale-plan")).await.unwrap()).await["code"],
+        body(
+            router
+                .clone()
+                .oneshot(request(&stale, "stale-plan"))
+                .await
+                .unwrap()
+        )
+        .await["code"],
         "PLAN_CHANGED"
     );
     let list = Request::builder()
@@ -422,7 +430,7 @@ async fn actual_store_bound_plan_retries_and_conflicts_without_starting_a_run() 
         .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
         .body(Body::empty())
         .unwrap();
-    let listed = app(&engine).oneshot(list).await.unwrap();
+    let listed = router.clone().oneshot(list).await.unwrap();
     assert_eq!(listed.status(), StatusCode::OK);
     assert_eq!(body(listed).await, json!({"runs":[],"next_after":null}));
     for raw in [
@@ -439,7 +447,7 @@ async fn actual_store_bound_plan_retries_and_conflicts_without_starting_a_run() 
             .header("idempotency-key", "bad-continue")
             .body(Body::from(raw))
             .unwrap();
-        let reply = app(&engine).oneshot(request).await.unwrap();
+        let reply = router.clone().oneshot(request).await.unwrap();
         assert_eq!(reply.status(), StatusCode::BAD_REQUEST);
         assert_eq!(body(reply).await["code"], "INVALID_INPUT");
     }
