@@ -1,0 +1,7 @@
+{
+  "metric": "composite",
+  "terms": [
+    {"weight": 1.0, "scale": 1.0, "fitness": {"metric": "rmse"}},
+    {"weight": 0.05, "scale": 1.0, "fitness": {"metric": "resource", "name": "fit_seconds"}}
+  ]
+}

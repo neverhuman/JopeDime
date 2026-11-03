@@ -1,0 +1,5 @@
+{
+  "metric": "constrained",
+  "fitness": {"metric": "rmse"},
+  "limits": [{"resource": "row_latency_p99_us", "max": 250.0}]
+}

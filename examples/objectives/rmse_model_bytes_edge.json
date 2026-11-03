@@ -1,0 +1,8 @@
+{
+  "metric": "constrained",
+  "fitness": {"metric": "rmse"},
+  "limits": [
+    {"resource": "model_bytes", "max": 262144.0},
+    {"resource": "fit_peak_heap_bytes", "max": 67108864.0}
+  ]
+}
