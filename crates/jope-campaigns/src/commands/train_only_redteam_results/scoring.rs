@@ -1,6 +1,6 @@
 use super::*;
 
-fn finite_rmse(value: &Value, pointer: &str) -> Result<f64> {
+pub(super) fn finite_rmse(value: &Value, pointer: &str) -> Result<f64> {
     let value = value
         .pointer(pointer)
         .and_then(Value::as_f64)
@@ -11,7 +11,7 @@ fn finite_rmse(value: &Value, pointer: &str) -> Result<f64> {
     Ok(value)
 }
 
-fn sum_squared_error(truth: &[f64], predictions: &[f64]) -> Result<f64> {
+pub(super) fn sum_squared_error(truth: &[f64], predictions: &[f64]) -> Result<f64> {
     if truth.len() != predictions.len()
         || truth.is_empty()
         || truth
@@ -84,7 +84,7 @@ fn baseline_row(
     })
 }
 
-fn predict_variant(
+pub(super) fn predict_variant(
     variant: &execution::FrozenVariant,
     train: &RegressionData,
     test: &RegressionData,
@@ -198,7 +198,7 @@ pub(crate) fn score_run(
     }
     // This is the only gate above any construction of a test or baseline path.
     let (root, manifest, _, validation, validation_digest) =
-        require_global_validation(study_root, run_id)?;
+        super::validation::require_global_validation(study_root, run_id)?;
 
     let baseline_path = manifest
         .parent
