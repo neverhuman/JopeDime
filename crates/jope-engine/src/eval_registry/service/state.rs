@@ -1,4 +1,4 @@
-struct Pending {
+pub(super) struct Pending {
     process: ProcessIdentity,
     send: SyncSender<(UnixStream, String)>,
 }
