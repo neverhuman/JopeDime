@@ -78,9 +78,14 @@ struct Selection {
     model_scores_consulted: bool,
 }
 
+#[path = "select_cohort/finalize.rs"]
 mod finalize;
+#[path = "select_cohort/freeze.rs"]
 mod freeze;
+#[path = "select_cohort/selection.rs"]
 mod selection;
+use finalize::finalize;
+use freeze::{binding, freeze};
 use selection::{quotas, select};
 
 fn main() -> Result<()> {
