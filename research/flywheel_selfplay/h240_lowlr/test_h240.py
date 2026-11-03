@@ -495,3 +495,46 @@ def test_actual_resume_loader_copies_completed_cells_and_rejects_tampering(tmp_p
     with pytest.raises(RuntimeError, match="resume selection hash"):
         exec(code, dict(env, out=bad_output, recovered={}))
     assert not list(bad_output.iterdir())
+
+
+def test_launcher_only_resumes_memory_stops_with_same_source_and_bound_count(tmp_path):
+    import launcher
+
+    prior = tmp_path / "attempt-001"
+    prior.mkdir()
+    previous = dict(
+        source_commit="s",
+        manifest_sha256="m",
+        fold_manifest_sha256="f",
+        prereg_sha256="p",
+        resume_number=0,
+    )
+    prior.with_suffix(".launch.json").write_text(json.dumps(previous))
+    terminal = prior.with_suffix(".resource_summary.json")
+    terminal.write_text(
+        json.dumps(
+            dict(status="INCOMPLETE", reasons=["MemAvailable<12GiB sustained30s"])
+        )
+    )
+    output = tmp_path / "attempt-002"
+    path = output.with_suffix(".launch.json")
+    launch = dict(
+        previous,
+        output=str(output),
+        resume_number=1,
+        resume_from=str(prior),
+        merged_source_verified=True,
+    )
+    assert launcher.check_launch(launch, path) == (output, 1)
+    for reasons in [[], ["aggregate RSS>=4GiB"], ["absolute compute stop 07:30Z"]]:
+        terminal.write_text(json.dumps(dict(status="INCOMPLETE", reasons=reasons)))
+        with pytest.raises(RuntimeError):
+            launcher.check_launch(launch, path)
+    terminal.write_text(
+        json.dumps(dict(status="INCOMPLETE", reasons=["MemAvailable<6GiB"]))
+    )
+    with pytest.raises(RuntimeError):
+        launcher.check_launch(dict(launch, source_commit="different"), path)
+    with pytest.raises(RuntimeError):
+        launcher.check_launch(dict(launch, resume_number=3), path)
+    assert launcher.STOP == mon.COMPUTE_STOP

@@ -6398,6 +6398,14 @@
         "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
       }
     },
+    "python:research/flywheel_selfplay/h240_lowlr/launcher.py": {
+      "bytes": 4647,
+      "sha256": "597c2c6c6cdd9d97259eb180fc7d1c29297becd0d8da95f878992185aa1b3847",
+      "classification": {
+        "role": "research",
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+      }
+    },
     "python:research/flywheel_selfplay/h240_lowlr/monitor.py": {
       "bytes": 8312,
       "sha256": "2f87d1949540426103d0b6e4e06b2daf7d32f5807dd268e0aaef1b0ae96cfaf5",
