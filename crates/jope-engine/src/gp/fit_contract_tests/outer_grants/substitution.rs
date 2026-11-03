@@ -1,4 +1,5 @@
 use super::*;
+use crate::gp::outer_release as release_authority;
 
 /// The same receiver, for the final refit's fit completion
 /// (`lineage::verify_final_refit`): the completion consumed is the one whose
@@ -39,7 +40,7 @@ pub(crate) fn the_release_ledger_binds_the_bytes_the_authority_wrote() {
     let other = hash(OTHER_TEST.as_bytes());
     // A grant replaced right after it is written, naming other labels.
     let dir = case.root.join("grant-swap");
-    let outer = case.release("grant-swap");
+    let outer = release_authority::Authority::initialize(&case.root.join("grant-swap")).unwrap();
     let grants = dir.canonicalize().unwrap().join("grants");
     let relative = case.other.strip_prefix(&case.root).unwrap().to_path_buf();
     let path = {
@@ -48,7 +49,7 @@ pub(crate) fn the_release_ledger_binds_the_bytes_the_authority_wrote() {
             grant["scoring_labels"]["sha256"] = json!(other);
         });
         outer
-            .grant(&outer_release::GrantRequest {
+            .grant(&release_authority::GrantRequest {
                 search: handoff::Inputs {
                     root: &case.root,
                     output: &case.output,
@@ -69,10 +70,10 @@ pub(crate) fn the_release_ledger_binds_the_bytes_the_authority_wrote() {
 
     // A withheld score replaced right after it is written.
     let dir = case.root.join("withheld-swap");
-    let outer = case.release("withheld-swap");
+    let outer = release_authority::Authority::initialize(&case.root.join("withheld-swap")).unwrap();
     let withheld = dir.canonicalize().unwrap().join("withheld");
     let path = outer
-        .grant(&outer_release::GrantRequest {
+        .grant(&release_authority::GrantRequest {
             search: handoff::Inputs {
                 root: &case.root,
                 output: &case.output,

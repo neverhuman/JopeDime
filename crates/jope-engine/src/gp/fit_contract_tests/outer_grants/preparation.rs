@@ -1,4 +1,5 @@
 use super::*;
+use crate::gp::outer_release as release_authority;
 
 /// The reviewed finding [P1]: `grant_body` hashed `prepared.json` against the
 /// sealed selection, then reopened it. A preparation substituted between the
@@ -45,7 +46,7 @@ pub(crate) fn an_outer_grant_takes_its_labels_and_metadata_from_the_verified_pre
     }
     // The scorer checks the named file against the verified identity, so the
     // substituted labels are never parsed.
-    let outer = outer_release::Authority::open(&case.root.join("swapped")).unwrap();
+    let outer = release_authority::Authority::open(&case.root.join("swapped")).unwrap();
     let grant_path = case
         .root
         .join("swapped/grants")
