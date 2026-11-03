@@ -275,19 +275,19 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
             })
             .collect::<Vec<_>>();
 
-        let policy_eval = super::policy::evaluate_policy_guard(
+        let policy_eval = super::policy::evaluate_policy_guard(super::policy::PolicyGuardInput {
             round_idx,
             round_leaf_log_prob_fn,
-            measured_tilt_policy.as_ref(),
-            &base_catalog_ordered,
-            &archive_best_rmse,
-            &base_best_q,
+            measured_tilt_policy: measured_tilt_policy.as_ref(),
+            base_catalog_ordered: &base_catalog_ordered,
+            archive_best_rmse: &archive_best_rmse,
+            base_best_q: &base_best_q,
             bootstrap_q,
             base_leaf_count,
             max_conditional_base_kl,
             max_new_support_mass,
-            &mut measured_tilt_rounds_admissible,
-        );
+            measured_tilt_rounds_admissible: &mut measured_tilt_rounds_admissible,
+        });
         let archive_leaf_genomes = policy_eval.archive_leaf_genomes;
         let active_support_leaves = policy_eval.active_support_leaves;
         let tilted_leaf_log_probs = policy_eval.tilted_leaf_log_probs;
