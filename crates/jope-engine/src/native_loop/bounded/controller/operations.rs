@@ -309,7 +309,7 @@ pub fn cancel(dir: &Path, plan_sha256: &str, reason: &str, now: u64) -> Result<C
 }
 /// A journaled cancellation with nothing dispatched ends the attempt: every rank is
 /// never-started and nothing is committed.
-fn finish_cancel_before_dispatch(
+pub(super) fn finish_cancel_before_dispatch(
     dir: &Path,
     contract: &BoundedRunContract,
     plan_sha256: &str,
