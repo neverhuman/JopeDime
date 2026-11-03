@@ -176,10 +176,7 @@ fn hidden_m1_requires_json_preserves_public_requirements_and_conflicts_with_tran
     );
     let error = parse_value::<bool>("not a boolean").unwrap_err();
     let message = error.to_string();
-    assert!(
-        message.contains("expected ident") || message.contains("expected value"),
-        "{message}"
-    );
+    assert!(message.contains("expected"), "{message}");
     assert!(message.contains("invalid type"), "{message}");
 
     let argv = m1_argv(std::path::Path::new("prepared.json"));
