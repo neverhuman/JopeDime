@@ -93,4 +93,8 @@ mod refill;
 pub(crate) use evaluation::{
     evaluate_binary_unique, finish_test_adaptive_binary, fit_test_adaptive_binary, BinaryEvaluation,
 };
-pub(crate) use refill::refill_binary_population;
+pub(crate) use refill::{
+    binary_genome_complexity, evaluate_test_adaptive_binary, evaluate_test_adaptive_binary_cpp17,
+    refill_binary_population, test_adaptive_next_population, test_adaptive_seed_population,
+    BinaryAdaptiveCpp17Evaluation, BinaryAdaptiveEvaluation, BinaryAdaptiveRanked,
+};

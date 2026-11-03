@@ -385,7 +385,7 @@ struct BinaryCampaignIdentity<'a> {
 }
 
 mod fold_cache;
-pub(super) use fold_cache::BinaryFoldCache;
+use fold_cache::BinaryFoldCache;
 pub(crate) use fold_cache::{exact_cv_on_folds_binary, BinaryCvResult};
 
 // ---------------------------------------------------------------------------
