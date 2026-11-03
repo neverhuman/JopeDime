@@ -1,3 +1,4 @@
+use super::super::StudyEvalContext;
 use super::*;
 
 pub(crate) fn baseline_metric(path: &Path, dataset_hash: &str, algorithm: &str) -> Result<f64> {
