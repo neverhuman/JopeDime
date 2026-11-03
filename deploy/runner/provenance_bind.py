@@ -28,15 +28,25 @@ if _HELPER_SPEC is None or _HELPER_SPEC.loader is None:
     raise ImportError("cannot load provenance bind helpers")
 _HELPERS = importlib.util.module_from_spec(_HELPER_SPEC)
 _HELPER_SPEC.loader.exec_module(_HELPERS)
-for _name in (
-    "BASE_SHA_RE", "DEPLOYED_PATH_RE", "DIGEST_REF_RE", "FETCH_TIMEOUT_SECONDS",
-    "FETCH_TIMEOUT_MAX_SECONDS", "HOOK_NAMES", "_git_show", "clear_stale_shallow_lock",
-    "entrypoint_digest", "fetch_env", "fetch_timeout", "file_bytes", "git_dir",
-    "has_commit", "hook_digest", "lock_holders", "parse_deployed_relpaths",
-    "scripts_digest", "validate_digest_rev",
-):
-    if hasattr(_HELPERS, _name):
-        globals()[_name] = getattr(_HELPERS, _name)
+BASE_SHA_RE = _HELPERS.BASE_SHA_RE
+DEPLOYED_PATH_RE = _HELPERS.DEPLOYED_PATH_RE
+DIGEST_REF_RE = _HELPERS.DIGEST_REF_RE
+FETCH_TIMEOUT_SECONDS = _HELPERS.FETCH_TIMEOUT_SECONDS
+FETCH_TIMEOUT_MAX_SECONDS = _HELPERS.FETCH_TIMEOUT_MAX_SECONDS
+HOOK_NAMES = _HELPERS.HOOK_NAMES
+_git_show = _HELPERS._git_show
+clear_stale_shallow_lock = _HELPERS.clear_stale_shallow_lock
+entrypoint_digest = _HELPERS.entrypoint_digest
+fetch_env = _HELPERS.fetch_env
+fetch_timeout = _HELPERS.fetch_timeout
+file_bytes = _HELPERS.file_bytes
+git_dir = _HELPERS.git_dir
+has_commit = _HELPERS.has_commit
+hook_digest = _HELPERS.hook_digest
+lock_holders = _HELPERS.lock_holders
+parse_deployed_relpaths = _HELPERS.parse_deployed_relpaths
+scripts_digest = _HELPERS.scripts_digest
+validate_digest_rev = _HELPERS.validate_digest_rev
 
 
 def bind_rev(event_name: str, base_sha: str = "") -> Optional[str]:
