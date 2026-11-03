@@ -1,7 +1,7 @@
 use super::*;
 
 /// Re-derive digest and metadata after a semantic mutation, so only the invariant is wrong.
-fn rehash(pools: &[Pool], manifest: &mut Manifest) {
+pub(super) fn rehash(pools: &[Pool], manifest: &mut Manifest) {
     for (pool, entry) in pools.iter().zip(&mut manifest.pools) {
         entry.parent_id = pool.parent_id.clone();
         entry.members = pool.members.len();
