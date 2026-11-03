@@ -2,19 +2,19 @@ use super::*;
 
 #[derive(Deserialize)]
 pub(crate) struct NativePreprocessing {
-    schema: String,
-    columns: Vec<NativeColumn>,
-    labels: Vec<String>,
-    target_mean: f64,
-    target_scale: f64,
+    pub(super) schema: String,
+    pub(super) columns: Vec<NativeColumn>,
+    pub(super) labels: Vec<String>,
+    pub(super) target_mean: f64,
+    pub(super) target_scale: f64,
 }
 #[derive(Deserialize)]
 pub(crate) struct NativeColumn {
-    kind: String,
-    impute: f64,
-    mean: f64,
-    scale: f64,
-    categories: Vec<String>,
+    pub(super) kind: String,
+    pub(super) impute: f64,
+    pub(super) mean: f64,
+    pub(super) scale: f64,
+    pub(super) categories: Vec<String>,
 }
 pub(crate) fn load_training_rows(
     sources: &ReferenceSources,
