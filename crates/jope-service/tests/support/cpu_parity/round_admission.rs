@@ -3,12 +3,14 @@ use super::{
 };
 use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext, RoundMeasurement};
 use crate::ranker::admission::{select_costs, CpuRoundAdmission, RevealedRule};
+#[cfg(feature = "research")]
 use crate::ranker::stage1b::TokenProjection;
 use rand_chacha::{
     rand_core::{RngCore, SeedableRng},
     ChaCha12Rng,
 };
 use serde_json::{json, Value};
+#[cfg(feature = "research")]
 use sha2::{Digest, Sha256};
 use std::{cell::Cell, env, fs, path::PathBuf};
 
