@@ -1,5 +1,5 @@
-use super::*;
 use super::validation::{batch_ranges, checked_chunk, original_source};
+use super::*;
 
 fn artifact(root: &Path, name: &str, bytes: &[u8]) -> HistoryArtifact {
     let path = root.join(name);
