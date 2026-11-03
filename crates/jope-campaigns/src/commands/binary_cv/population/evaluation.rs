@@ -61,9 +61,9 @@ pub(crate) fn finish_test_adaptive_binary(
 
 #[derive(Clone, Debug)]
 pub(crate) struct BinaryEvaluation {
-    complexity: usize,
-    result: Option<BinaryCvResult>,
-    rejection_reason: Option<String>,
+    pub(in crate::commands::binary_cv) complexity: usize,
+    pub(in crate::commands::binary_cv) result: Option<BinaryCvResult>,
+    pub(in crate::commands::binary_cv) rejection_reason: Option<String>,
 }
 
 pub(crate) fn evaluate_binary_unique(
