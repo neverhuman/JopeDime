@@ -73,7 +73,7 @@ fn dl_tab_generations_panel_renders_dl_share_column() {
     let mut terminal = Terminal::new(backend).unwrap();
     terminal
         .draw(|frame| {
-            tui_render::render(
+            super::tui_dashboard::render(
                 frame,
                 &dashboard,
                 250,
@@ -105,7 +105,7 @@ fn dl_tab_generations_panel_renders_dl_share_column() {
     dashboard.seeding = SeedingCurveView::default();
     terminal
         .draw(|frame| {
-            tui_render::render(
+            super::tui_dashboard::render(
                 frame,
                 &dashboard,
                 250,
