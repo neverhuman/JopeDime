@@ -1,7 +1,10 @@
 // jankurai:allow repo-rot.path.fake-versioned-source reason=active-v3-search-archive-schedule-module-is-coverage-inventoried owner=jope-campaigns expires=2027-04-01
 use super::*;
 
-pub(super) fn aggregate(candidate: &CandidateEvidenceV1, folds: &[u32]) -> Result<FitnessVectorV1, String> {
+pub(super) fn aggregate(
+    candidate: &CandidateEvidenceV1,
+    folds: &[u32],
+) -> Result<FitnessVectorV1, String> {
     if folds.is_empty() {
         return Err("cannot aggregate an empty evidence bitmap".into());
     }
