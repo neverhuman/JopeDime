@@ -433,13 +433,20 @@ int main(int argc,char** argv){if(argc!=2)return 2;std::ifstream input(argv[1]);
             .arg(root.join("cases.txt"))),
         expected.as_bytes()
     );
-    let mut compilers = vec!["g++"];
+    let mut compilers = Vec::new();
+    if Command::new("g++").arg("--version").output().is_ok() {
+        compilers.push("g++");
+    }
     if Command::new("clang++").arg("--version").output().is_ok() {
         compilers.push("clang++");
     } else if Command::new("clang++-18").arg("--version").output().is_ok() {
         compilers.push("clang++-18");
     }
-    for compiler in compilers {
+    assert!(
+        !compilers.is_empty(),
+        "C++ parity requires g++, clang++, or clang++-18"
+    );
+    for compiler in &compilers {
         for (std, opt) in [
             ("-std=c++17", "-O2"),
             ("-std=c++17", "-O3"),
@@ -449,7 +456,7 @@ int main(int argc,char** argv){if(argc!=2)return 2;std::ifstream input(argv[1]);
         }
     }
     assert_eq!(
-        cpp(&root, "g++", "-std=c++17", "-O2", true),
+        cpp(&root, compilers[0], "-std=c++17", "-O2", true),
         expected.as_bytes()
     );
 }
