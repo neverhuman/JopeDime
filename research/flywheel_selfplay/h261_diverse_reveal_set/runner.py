@@ -811,9 +811,12 @@ def run_primary(out_dir: Path) -> int:
 
     # Step 1: R882 Native91 bit-exact regression gate FIRST
     ref_obj = json.loads(R882_BEST_DEV_JSON.read_text(encoding="utf-8"))
-    ref_cids = list(ref_obj["evaluation_contract"]["contexts"])
+    ref_cids = [
+        str(c["cid"]) if isinstance(c, dict) else str(c)
+        for c in ref_obj["evaluation_contract"]["contexts"]
+    ]
     ref_per_ctx = list(ref_obj["utility"]["per_context"])
-    ref_map = {str(c): float(u_val) for c, u_val in zip(ref_cids, ref_per_ctx)}
+    ref_map = {c: float(u_val) for c, u_val in zip(ref_cids, ref_per_ctx)}
 
     val_r882_utils = []
     bit_exact_r882 = 0
