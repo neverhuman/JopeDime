@@ -154,10 +154,6 @@ fn bound_emitters_match_partition_point_on_tie_plateaus() {
     let root = PathBuf::from(env!("CARGO_TARGET_TMPDIR"));
     fs::create_dir_all(&root).unwrap();
     let tmp = tempfile::tempdir_in(root).unwrap();
-    let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let cpp_driver = fs::read_to_string(repo_root.join("deploy/ci/emitters/driver.cpp")).unwrap();
-    let js_driver = fs::read_to_string(repo_root.join("deploy/ci/emitters/driver.js")).unwrap();
-
     // Verify `advanced_v3::emit::emit_bound` (bound Python & Rust) on the 24x3 dataset
     // and directly test bound Python's `lower_bound` on the three non-monotone edge arrays.
     {

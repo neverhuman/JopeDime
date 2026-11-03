@@ -1,8 +1,4 @@
 use super::*;
-use feat_math::{fit, folds::fold_of, Model};
-use serde_json::{json, Value};
-use std::{io::Write, path::Path};
-
 #[test]
 fn optional_champion_export_replay_matches_receipt() {
     use feat_math::{fit, folds::fold_of, Model};
@@ -78,7 +74,6 @@ fn optional_champion_export_replay_matches_receipt() {
     ];
 
     let sha256_hex = |bytes: &[u8]| format!("{:x}", Sha256::digest(bytes));
-    let readout: Value = serde_json::from_str(EXP008_READOUT).unwrap();
     let replay_receipt: Value = serde_json::from_str(EXP008_REPLAY_RECEIPT).unwrap();
 
     let pp_opts = EmitOptions {
@@ -155,6 +150,21 @@ fn optional_champion_export_replay_matches_receipt() {
             let parsed = GenomeIr::parse(case.genome).unwrap();
             let default_emitted = emit(&parsed, &EmitOptions::default()).unwrap();
             let pp_emitted = emit(&parsed, &pp_opts).unwrap();
+            assert_eq!(
+                sha256_hex(default_emitted.rust.as_bytes()),
+                case.default_emitted_rust_sha256,
+                "champion {idx} default emitted Rust SHA-256 mismatch"
+            );
+            assert_eq!(
+                sha256_hex(pp_emitted.rust.as_bytes()),
+                case.partition_point_emitted_rust_sha256,
+                "champion {idx} partition_point emitted Rust SHA-256 mismatch"
+            );
+            assert_eq!(
+                sha256_hex(pp_emitted.python.as_bytes()),
+                case.partition_point_emitted_python_sha256,
+                "champion {idx} partition_point emitted Python SHA-256 mismatch"
+            );
 
             let default_rs_src = tmp.path().join(format!("champ_{idx}_default.rs"));
             let default_rs_bin = tmp.path().join(format!("champ_{idx}_default_bin"));

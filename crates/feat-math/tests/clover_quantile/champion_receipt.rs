@@ -1,13 +1,7 @@
 use super::*;
-use feat_math::{folds::fold_of, Model};
-use serde_json::{json, Value};
-use std::{io::Write, path::Path};
-
 #[test]
 fn champion_receipt_matches_recorded_emissions() {
-    use feat_math::{fit, folds::fold_of, Model};
-    use serde_json::{json, Value};
-    use std::{io::Write, path::Path};
+    use serde_json::Value;
 
     const EXP008_READOUT: &str =
         include_str!("../../../../docs/internal/clover/gp-h1-readout.20261013.json");
@@ -27,9 +21,6 @@ fn champion_receipt_matches_recorded_emissions() {
         default_emitted_rust_sha256: &'static str,
         partition_point_emitted_rust_sha256: &'static str,
         partition_point_emitted_python_sha256: &'static str,
-        expected_train_csv_sha256: &'static str,
-        expected_train_rows: usize,
-        expected_columns: usize,
     }
 
     let champions = [
@@ -43,9 +34,6 @@ fn champion_receipt_matches_recorded_emissions() {
             default_emitted_rust_sha256: "9d5183c29febca9bf6cfb720d1e01751087d9a1e2d661da558d4f33824a64579",
             partition_point_emitted_rust_sha256: "58781c56cc55f65cca694965d7dc921b42663823a3ce4fc342745bd8d8fb950d",
             partition_point_emitted_python_sha256: "c693fd1a2396e80037ffd2852241a679c5921eb41f25ac37c8a0eb8f6c43f708",
-            expected_train_csv_sha256: "743c50f720b30bd3cd372b48b167138b95f602b73b9f1f8c61577f74a7e8a059",
-            expected_train_rows: 1000,
-            expected_columns: 3,
         },
         Exp008ChampionCase {
             index: 18,
@@ -57,9 +45,6 @@ fn champion_receipt_matches_recorded_emissions() {
             default_emitted_rust_sha256: "fcf13f63f3ff8e92c0b4ed26e67ca21c6c510a2c133df496b94a2a82b03a460e",
             partition_point_emitted_rust_sha256: "07086b9f152082ae78284d6afb869eac32e420c36f406bac59fe16d7212a3b6f",
             partition_point_emitted_python_sha256: "e7200bfe310667cffba39b247284acc8de72546c8149e585e22bf3cb73d5c6ff",
-            expected_train_csv_sha256: "af1b8a3c483394d282d531505356da877de40294bf41ca70a70a43509fbfe2cd",
-            expected_train_rows: 1000,
-            expected_columns: 21,
         },
         Exp008ChampionCase {
             index: 18,
@@ -71,9 +56,6 @@ fn champion_receipt_matches_recorded_emissions() {
             default_emitted_rust_sha256: "ac780329825506a35032cd69fd0437cfea35fcd5b218d0f79442f60dc1999e92",
             partition_point_emitted_rust_sha256: "de0872bd1967137d959eee077259de130cd2c0445a5d4d23323923405c02dbf3",
             partition_point_emitted_python_sha256: "46c93cf23b3218a533287c860116308be6c97bc5ddc8d029c1b2ced9b6fd41cb",
-            expected_train_csv_sha256: "af1b8a3c483394d282d531505356da877de40294bf41ca70a70a43509fbfe2cd",
-            expected_train_rows: 1000,
-            expected_columns: 21,
         },
     ];
 

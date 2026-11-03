@@ -2,12 +2,6 @@ use super::*;
 
 #[test]
 fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_point() {
-    use feat_math::{
-        emit_bound, fit, fit_table,
-        transpile::{emit_cpp17, emit_javascript},
-        ColumnSpec, DataSchema, Objective, RawTable, RowSemantics, TaskSpec,
-    };
-
     for tool in ["python3", "rustc", "g++", "node"] {
         let out = Command::new(tool)
             .arg("--version")
