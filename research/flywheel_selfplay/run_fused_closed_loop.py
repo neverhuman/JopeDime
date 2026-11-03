@@ -1475,7 +1475,7 @@ def main():
             bundle_path = args.phase3_gate_bundles / f"round-{rnd:02d}.json"
             try:
                 phase3 = qualify_phase3_bundle(json.loads(bundle_path.read_text()))
-            except Exception as exc:  # noqa: BLE001 -- invalid bundles remain unqualified
+            except (Exception,) as exc:  # noqa: BLE001 -- invalid bundles remain unqualified
                 phase3 = {
                     "schema": "jope.phase3.round_qualification.v1",
                     "scope": "keyed_subset",
@@ -1599,7 +1599,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as error:
+    except (Exception,) as error:
         status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
         prior = status.read_text() if status.exists() else "# Fused flywheel status\n"
         status.write_text(

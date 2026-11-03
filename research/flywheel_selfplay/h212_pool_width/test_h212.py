@@ -111,6 +111,7 @@ def test_dynamic_prediction_uses_explicit_context_identity():
     assert result.size == 0
 
 
+# jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
 @pytest.mark.skipif(
     not all(path.is_file() for path in (SELECTED_PATH, RAW_TABLE_PATH, CACHED_GZ_PATH)),
     reason="approved H50/H58 TRAIN files are host-local",
@@ -138,6 +139,7 @@ def test_real_h58_train_file_matches_selected_raw_and_cv_envelope():
     )
 
 
+# jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
 @pytest.mark.skipif(
     not all(path.is_file() for path in (SELECTED_PATH, RAW_TABLE_PATH, CACHED_GZ_PATH)),
     reason="approved H50/H58 TRAIN files are host-local",

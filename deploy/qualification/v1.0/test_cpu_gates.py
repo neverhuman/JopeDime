@@ -27,6 +27,7 @@ ONE_TEST = (
     "assert os.environ['CUDA_VISIBLE_DEVICES']==''; "
     "assert 'AWS_ACCESS_KEY_ID' not in os.environ and 'GITHUB_TOKEN' not in os.environ; "
     "suite=unittest.TestSuite([unittest.FunctionTestCase(lambda:None)]); "
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     "r=unittest.TextTestRunner().run(suite); raise SystemExit(not r.wasSuccessful())"
 )
 
@@ -249,6 +250,7 @@ class Controller(unittest.TestCase):
                 ("full-b-output", [sys.executable, "-c", artifact], "none"),
                 (
                     "full-c-child-failure",
+                    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                     [sys.executable, "-c", artifact + "raise SystemExit(9)"],
                     "none",
                 ),
@@ -302,11 +304,13 @@ class Controller(unittest.TestCase):
             )
         )
 
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     def test_failure_continues_to_later_gate_and_keeps_original_exit(self):
         self.source(
             [
                 (
                     "full-a-failure",
+                    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                     [sys.executable, "-c", "raise SystemExit(9)"],
                     "none",
                 ),
@@ -445,6 +449,7 @@ class Controller(unittest.TestCase):
                     [
                         sys.executable,
                         "-c",
+                        # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                         "import unittest; c=unittest.FunctionTestCase(unittest.skip('fixture')(lambda:None)); unittest.TextTestRunner().run(unittest.TestSuite([c, unittest.FunctionTestCase(lambda:None)]))",
                     ],
                     "unittest",
@@ -575,6 +580,7 @@ class Controller(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "symlink"):
             cpu.run(self.repo, link)
 
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     def test_missing_executable_is_unavailable_with_original_exit(self):
         self.source([("full-missing", ["jope-rel07-no-such-executable-5f02"], "none")])
         report = self.run_checks()
@@ -770,6 +776,7 @@ class Controller(unittest.TestCase):
                     'exec("while not Path(sys.argv[1]).exists():\\n'
                     " if time.monotonic()>deadline: raise RuntimeError('child readiness')\\n"
                     ' time.sleep(0.01)"); '
+                    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                     f"raise SystemExit({expected_exit})"
                 )
                 try:

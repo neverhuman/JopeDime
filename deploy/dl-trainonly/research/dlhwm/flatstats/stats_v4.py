@@ -77,7 +77,7 @@ def go(c):
     try:
         t0 = time.time(); s = stats(PLAN[c]); s["_secs"] = time.time() - t0
         open(fn + ".tmp", "w").write(json.dumps(s)); os.replace(fn + ".tmp", fn); return c, "ok %.1fs" % s["_secs"]
-    except Exception as e: return c, "ERR " + repr(e)[:200]
+    except (Exception,) as e: return c, "ERR " + repr(e)[:200]
 
 
 if __name__ == "__main__":

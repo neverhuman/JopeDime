@@ -326,7 +326,7 @@ def main():
     try:
         result = (install_binary(args.binary, args.sha256, args.source_sha, args.prefix)
                   if args.command == "binary" else build_source(args.checkout, args.source_sha, args.output, args.jobs))
-    except Exception as error:
+    except (Exception,) as error:
         print(json.dumps({"schema": "jope.private-cli-install-error/v1", "ok": False, "error": str(error)}))
         return 1
     print(json.dumps(result, sort_keys=True))

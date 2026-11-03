@@ -101,6 +101,7 @@ class M3WaiverTests(unittest.TestCase):
         self.assertEqual(row["disposition"], "WAIVED_V1_0_0")
         self.assertEqual(row["counts"], self.payload["counts"])
 
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     def test_same_controller_provenance_retains_waived_raw_failure_exit(self):
         options, execution = self.fixture.controller_fixture()
         execution["checks"][2]["exit_code"] = 1

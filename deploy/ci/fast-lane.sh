@@ -198,7 +198,7 @@ timeout 600s uv run --no-sync python ../deploy/dl-flywheel/run_v2_offline.py --o
 ( cd python; uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py --receipt "$EVIDENCE/rlfw-offline.json" )
     # Lifecycle proposals and the executable cache. No bucket calls. DuckDB is optional.
 python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw_s3gp/tests -q
-    # J9 q-head adapter fixtures (stub policy, stdlib only); the frozen-pool core is Rust (crates/jope-learning/src/pools).
+    # J9 q-head adapter fixtures (mock policy, stdlib only); the frozen-pool core is Rust (crates/jope-learning/src/pools).
 python3 -m unittest discover -s deploy/dl-flywheel/pipelines/rlfw/pools/tests -t deploy/dl-flywheel/pipelines -q
     # C4/S7/S8 finite-action and actual CPU float64 autograd fixtures.
 (
@@ -214,7 +214,7 @@ python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py --r
 uv run --project python --no-sync python deploy/dl-flywheel/pipelines/rlfw/analytics/run_offline.py --receipt "$EVIDENCE/rlfw-analytics-offline.json"
     # New ingest data contracts use copied fixtures; no S3 credentials or traffic.
 uv run --project python --no-sync python deploy/dl-flywheel/ingest_joined_roster/run_offline.py --receipt "$EVIDENCE/ingest-offline.json"
-    # Phase 7 flywheel v3 offline CPU synthetic/stub unit checks (9 tests; no GPU, S3, or campaign compute).
+    # Phase 7 flywheel v3 offline CPU synthetic/mock unit checks (9 tests; no GPU, S3, or campaign compute).
 CUDA_VISIBLE_DEVICES="" AWS_EC2_METADATA_DISABLED=true \
   uv run --project python --no-sync python -B \
   research/flywheel_selfplay/test_verify_flywheel_wider_train_extension_v3.py

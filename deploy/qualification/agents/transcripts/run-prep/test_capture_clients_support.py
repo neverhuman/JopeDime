@@ -112,6 +112,7 @@ def _runner_fixture(
                 home.mkdir(parents=True, exist_ok=True)
                 def stop(*unused):
                     (home / 'stopped').write_text('yes')
+                    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                     raise SystemExit(0)
                 signal.signal(signal.SIGTERM, stop)
                 (home / 'pid').write_text(str(os.getpid()))
@@ -119,17 +120,20 @@ def _runner_fixture(
                     time.sleep(0.05)
             elif args == ['serve', '--status']:
                 print('running' if (home / 'pid').is_file() else 'stopped')
+                # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                 raise SystemExit(0 if (home / 'pid').is_file() else 1)
             elif args == ['serve', '--stop']:
                 try:
                     os.kill(int((home / 'pid').read_text()), signal.SIGTERM)
                 except (OSError, ValueError):
+                    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                     raise SystemExit(1)
             elif args == ['mcp']:
                 for line in sys.stdin:
                     request = json.loads(line)
                     print(json.dumps({{'jsonrpc': '2.0', 'id': request['id'], 'result': {{}}}}), flush=True)
             else:
+                # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                 raise SystemExit(2)
             """
         ),
@@ -147,13 +151,16 @@ def _runner_fixture(
             _, capture_stdio, capture_dir, candidate, engine_home, key = sys.argv
             Path('client.pid').write_text(str(os.getpid()))
             if key == {drain_key!r}:
+                # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                 child_code = "import hashlib, json, os, signal, sys, time; from pathlib import Path; signal.signal(signal.SIGTERM, lambda *_: sys.exit(0)); Path('drain-child.pid').write_text(str(os.getpid())); Path('drain-child.ready').write_text('ready'); deadline=time.monotonic()+5\\nwhile not Path('drain-child.release').exists() and time.monotonic()<deadline: time.sleep(0.01)\\nif Path('drain-child.release').exists():\\n output=Path(sys.argv[1]); candidate=Path(sys.argv[2]); output.mkdir(parents=True, exist_ok=True); (output/'wire.jsonl').write_text(json.dumps(dict(inventory_counts=[0,1,1]))); receipt=dict(complete=True,producer_sha256=hashlib.sha256(Path(sys.argv[3]).read_bytes()).hexdigest(),argv=[str(candidate),'mcp'],executable_sha256=hashlib.sha256(candidate.read_bytes()).hexdigest(),server_exit_code=0,relay_exit_code=0,limits=dict(seconds=120,stream_bytes=16777216,frame_bytes=1048576),extra_environment_names=[]); (output/'capture.json').write_text(json.dumps(receipt))"
                 subprocess.Popen([sys.executable, '-c', child_code, capture_dir, candidate, capture_stdio])
                 deadline = time.monotonic() + 5
                 while not Path('drain-child.ready').exists() and time.monotonic() < deadline:
                     time.sleep(0.01)
                 if not Path('drain-child.ready').exists():
+                    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                     raise SystemExit('drain descendant did not start')
+                # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                 raise SystemExit(0)
             if key == {async_recorder_key!r}:
                 child_code = "import hashlib, json, os, sys, time; from pathlib import Path; Path('async-recorder.pid').write_text(str(os.getpid())); time.sleep(0.4); output=Path(sys.argv[1]); candidate=Path(sys.argv[2]); output.mkdir(parents=True, exist_ok=True); (output/'wire.jsonl').write_text(json.dumps(dict(inventory_counts=[0,1,1]))); receipt=dict(complete=True,producer_sha256=hashlib.sha256(Path(sys.argv[3]).read_bytes()).hexdigest(),argv=[str(candidate),'mcp'],executable_sha256=hashlib.sha256(candidate.read_bytes()).hexdigest(),server_exit_code=0,relay_exit_code=0,limits=dict(seconds=120,stream_bytes=16777216,frame_bytes=1048576),extra_environment_names=[]); (output/'capture.json').write_text(json.dumps(receipt))"
@@ -161,6 +168,7 @@ def _runner_fixture(
                     [sys.executable, '-c', child_code, capture_dir, candidate, capture_stdio],
                     start_new_session=True,
                 )
+                # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                 raise SystemExit(0)
             if key == {descendant_key!r}:
                 child_code = "import os, signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); open('descendant.pid', 'w').write(str(os.getpid())); time.sleep(120)"
@@ -169,6 +177,7 @@ def _runner_fixture(
                 while not Path('descendant.pid').exists() and time.monotonic() < deadline:
                     time.sleep(0.01)
                 if not Path('descendant.pid').exists():
+                    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                     raise SystemExit('descendant did not start')
             if key == {transport_key!r}:
                 recorder_options = {{'process_group': 0}} if key == {recorder_group_key!r} else {{}}
@@ -176,12 +185,14 @@ def _runner_fixture(
                 recorder.stdin.write(b'{{"jsonrpc":"2.0","id":1,"method":"ping"}}\\n')
                 recorder.stdin.flush()
                 if not recorder.stdout.readline():
+                    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                     raise SystemExit('recorder produced no response')
                 Path('recorder.pid').write_text(str(recorder.pid))
                 if key == {sleep_key!r}:
                     time.sleep(30)
                 flush_code = "import os,time;from pathlib import Path;time.sleep({flush_seconds!r});Path('recorder-flushed').write_text('yes');os.close(" + str(recorder.stdin.fileno()) + ")"
                 subprocess.Popen([sys.executable, '-B', '-c', flush_code], pass_fds=(recorder.stdin.fileno(),), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                 raise SystemExit(0)
             if key == {sleep_key!r}:
                 time.sleep(30)

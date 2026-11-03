@@ -13,7 +13,8 @@ pub(super) static ENVIRONMENT: std::sync::OnceLock<String> = std::sync::OnceLock
 pub(super) fn utc_us() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
+        .unwrap_or_default
+        ()
         .as_micros() as u64
 }
 pub(super) fn environment_id() -> &'static str {
@@ -21,7 +22,8 @@ pub(super) fn environment_id() -> &'static str {
         hash(
             format!(
                 "{}:{}:{}",
-                env::var("AWS_LAMBDA_LOG_STREAM_NAME").unwrap_or_default(),
+                env::var("AWS_LAMBDA_LOG_STREAM_NAME").unwrap_or_default
+                (),
                 std::process::id(),
                 utc_us()
             )

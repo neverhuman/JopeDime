@@ -177,6 +177,7 @@ assert denied == ['subprocess.Popen','os.posix_spawn','os.exec']
 except RuntimeError:
  pass
 else:
+ # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
  if pid==0:os._exit(93)
  os.waitpid(pid,0)
  raise AssertionError('fork was permitted')

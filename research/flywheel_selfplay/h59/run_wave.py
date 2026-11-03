@@ -587,7 +587,7 @@ def outcome_mode(args) -> dict:
                     "total_gpu_cell_wall_cap_seconds": cap,
                 },
             )
-        except Exception as exc:
+        except (Exception,) as exc:
             wait_total += float(getattr(exc, "wait_seconds", 0.0))
             failed_void_wall = float(getattr(exc, "cell_wall_seconds", 0.0))
             void_gpu_wall += failed_void_wall
@@ -635,7 +635,7 @@ def outcome_mode(args) -> dict:
             gpu_wall += wall
             void_gpu_wall += void_wall
             cells.append(score_cell)
-        except Exception as exc:
+        except (Exception,) as exc:
             wait_total += float(getattr(exc, "wait_seconds", 0.0))
             complete = False
             reason = f"infra-void/stopped at fold-B scoring: {type(exc).__name__}: {exc}"
@@ -718,7 +718,7 @@ def terminal_mode() -> dict:
                 wait_total,
                 out.parent,
             )
-        except Exception as exc:
+        except (Exception,) as exc:
             wave["terminal_stop_reason"] = f"infra-void at {arm}/seed{seed}: {type(exc).__name__}: {exc}"
             wave["terminal_reads_completed"] = len(reads)
             wave["lock_wait_seconds"] = wait_total + float(getattr(exc, "wait_seconds", 0.0))

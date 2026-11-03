@@ -42,6 +42,7 @@ class ReceiptTests(unittest.TestCase):
     def test_failure_is_retained_and_cannot_reuse_output(self):
         with tempfile.TemporaryDirectory() as scratch, patch.dict(os.environ, {"GITHUB_RUN_ID": "123", "GITHUB_RUN_ATTEMPT": "1"}):
             output = Path(scratch) / "lane"
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
             code = receipt.run_lane("hygiene", [sys.executable, "-c", "print('failure fixture'); raise SystemExit(23)"], output)
             self.assertEqual(23, code)
             result = json.loads((output / "receipt.json").read_text())
@@ -63,6 +64,7 @@ class ReceiptTests(unittest.TestCase):
             counts = root / "counts.json"
             counts.write_text('{}')
             output = root / "lane"
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
             self.assertEqual(1, receipt.run_lane("hygiene", [sys.executable, "-c", "raise SystemExit('must not run')"], output, counts))
             self.assertFalse((output / "command.log").exists())
             self.assertIn("already exists", json.loads((output / "receipt.json").read_text())["diagnostic"])

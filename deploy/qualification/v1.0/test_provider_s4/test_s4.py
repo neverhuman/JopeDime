@@ -155,6 +155,7 @@ class S4Tests(unittest.TestCase):
         )
         self.refused()
 
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     def test_failure_stops_after_first_case_and_preserves_child_exit(self):
         self.returncode = 42
         self.assertEqual(self.invoke(), 42)

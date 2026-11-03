@@ -168,7 +168,7 @@ where
     }
 
     /// Get a Frame object which provides a consistent view into the terminal state for rendering.
-    pub fn get_frame(&mut self) -> Frame<'_> {
+    pub fn get_frame(&mut self) -> Frame {
         let count = self.frame_count;
         Frame {
             cursor_position: None,
@@ -301,9 +301,9 @@ where
     /// }
     /// # std::io::Result::Ok(())
     /// ```
-    pub fn draw<F>(&mut self, render_callback: F) -> io::Result<CompletedFrame<'_>>
+    pub fn draw<F>(&mut self, render_callback: F) -> io::Result<CompletedFrame>
     where
-        F: FnOnce(&mut Frame<'_>),
+        F: FnOnce(&mut Frame),
     {
         self.try_draw(|frame| {
             render_callback(frame);
@@ -376,9 +376,9 @@ where
     /// }
     /// # io::Result::Ok(())
     /// ```
-    pub fn try_draw<F, E>(&mut self, render_callback: F) -> io::Result<CompletedFrame<'_>>
+    pub fn try_draw<F, E>(&mut self, render_callback: F) -> io::Result<CompletedFrame>
     where
-        F: FnOnce(&mut Frame<'_>) -> Result<(), E>,
+        F: FnOnce(&mut Frame) -> Result<(), E>,
         E: Into<io::Error>,
     {
         // Autoresize - otherwise we get glitches if shrinking or potential desync between widgets

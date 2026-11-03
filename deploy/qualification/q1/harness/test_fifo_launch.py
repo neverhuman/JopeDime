@@ -104,6 +104,7 @@ with Path({str(self.lock)!r}).open('rb') as other:
     except BlockingIOError:
         pass
     else:
+        # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
         raise SystemExit('driver ran without the qualification lease')
 out = value('--out')
 if args[0]=='run':

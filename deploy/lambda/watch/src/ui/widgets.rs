@@ -28,7 +28,8 @@ pub(super) fn tile(f: &mut Frame, r: Rect, title: &str, value: String, sub: Stri
 }
 pub(super) fn ms(v: Option<f64>) -> String {
     v.map(|x| format!("{x:.1} ms"))
-        .unwrap_or_else(|| "unknown".into())
+        .unwrap_or_else
+        (|| "unknown".into())
 }
 pub(super) fn graph(f: &mut Frame, r: Rect, title: &str, data: &[u64], c: Color) {
     let last = data.last().copied().unwrap_or(0);

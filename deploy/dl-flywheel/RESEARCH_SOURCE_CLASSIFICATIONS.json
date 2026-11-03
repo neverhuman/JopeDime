@@ -1,69 +1,5 @@
 {
   "items": {
-    "python:research/flywheel_selfplay/h239_subset/analysis.py": {
-      "bytes": 10524,
-      "sha256": "c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc",
-      "classification": {
-        "role": "research",
-        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h239_subset/treatment.py": {
-      "bytes": 4306,
-      "sha256": "97045ebc9673a83c7b58e916862ae7ca4bd06b5508499a19888ae5a8f96ca4b7",
-      "classification": {
-        "role": "research",
-        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h239_subset/runner.py": {
-      "bytes": 39262,
-      "sha256": "855f1b66eedfcc4dd3edf39b6700bc7a968e58de35bf1221f5ce3b763d37004b",
-      "classification": {
-        "role": "research",
-        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h239_subset/monitor.py": {
-      "bytes": 7944,
-      "sha256": "5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a",
-      "classification": {
-        "role": "research",
-        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/analysis.py": {
-      "bytes": 2167,
-      "sha256": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
-      "classification": {
-        "role": "research",
-        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/gate.py": {
-      "bytes": 11854,
-      "sha256": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e",
-      "classification": {
-        "role": "research",
-        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/runner.py": {
-      "bytes": 21390,
-      "sha256": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e",
-      "classification": {
-        "role": "research",
-        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py": {
-      "bytes": 9203,
-      "sha256": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546",
-      "classification": {
-        "role": "research",
-        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
-      }
-    },
     "python:deploy/dl-flywheel/_successor_fixture_runner.py": {
       "bytes": 7749,
       "classification": {
@@ -2535,13 +2471,13 @@
       "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e"
     },
     "python:deploy/dl-flywheel/pipelines/hpc_pool_v1/operations_pool.py": {
-      "bytes": 41357,
+      "bytes": 41997,
       "classification": {
         "reason": "Reviewed native pool orchestration or data-free mathematical/source audit support; not a test-bearing family. No runtime admission, actor implementation or scientific promotion from source import.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2"
+      "sha256": "903bd9fb4cfce58efd1295ee303c5a81ac392c8eb914a94519a3ee405ca1e3f4"
     },
     "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/historical_custody.py": {
       "bytes": 7284,
@@ -4280,166 +4216,6 @@
       },
       "sha256": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de"
     },
-    "python:research/flywheel_selfplay/h232_lion/analysis.py": {
-      "bytes": 9789,
-      "sha256": "9643a2fcef4d5cc4fdc7181ff6a15b806914d4e981fe9dc63bb398e2d8842cf5",
-      "classification": {
-        "role": "research",
-        "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h232_lion/monitor.py": {
-      "bytes": 7614,
-      "sha256": "5de09684efe35e2399fcd2a15208957f9103fb79cb754510c10b69a6a1bf4ea8",
-      "classification": {
-        "role": "research",
-        "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h232_lion/runner.py": {
-      "bytes": 29266,
-      "sha256": "45c1730b73446a5234efeb1600c6c005957784b7019a8a88af2ae2e1e18fa5ce",
-      "classification": {
-        "role": "research",
-        "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h232_lion/treatment.py": {
-      "bytes": 5141,
-      "sha256": "a2aa29abe68f49ea2d0bf53df737c68a64e6b523f425159b0f46949241415d4f",
-      "classification": {
-        "role": "research",
-        "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h234_lambdaloss/analysis.py": {
-      "bytes": 9938,
-      "sha256": "7ea925baece47d79db8e57b1f1888e8c6fa3eac638012cdf380326bdee5aa0e1",
-      "classification": {
-        "role": "research",
-        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h234_lambdaloss/monitor.py": {
-      "bytes": 7643,
-      "sha256": "62947186e8e120eac841343ef0e05234a934b84eee90279306566f18d3a7ce5a",
-      "classification": {
-        "role": "research",
-        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h234_lambdaloss/runner.py": {
-      "bytes": 29582,
-      "sha256": "573ffae88dd282a381a9800dab11e725c95a6c2200dad1396785e9f44c3fa289",
-      "classification": {
-        "role": "research",
-        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h234_lambdaloss/treatment.py": {
-      "bytes": 6194,
-      "sha256": "e4e8aab640e2d7c6118f60809c601a1876ff2d836dc2c30b6c294f4ce77777e3",
-      "classification": {
-        "role": "research",
-        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h235_betanll/analysis.py": {
-      "bytes": 9944,
-      "sha256": "1b7e85d36352043aa447f3767a974b3f6bc5c4d05d3e0e0241ce01d20c06586c",
-      "classification": {
-        "role": "research",
-        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h235_betanll/monitor.py": {
-      "bytes": 7633,
-      "sha256": "29860ca244025e0b4b3bb4805f63dd4c6d1f79e39b7779ba472eee45fc1e6a2a",
-      "classification": {
-        "role": "research",
-        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h235_betanll/runner.py": {
-      "bytes": 31406,
-      "sha256": "20596c411bb9e9dab7838dcaa5cff9e9e0228f6b6ac4574ce13a617a5e585755",
-      "classification": {
-        "role": "research",
-        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h235_betanll/treatment.py": {
-      "bytes": 6143,
-      "sha256": "dd2fcc3011c3714bc967e010edd5b70de5b8969b45396720c66f8f42a02bd9ba",
-      "classification": {
-        "role": "research",
-        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h237_adabelief/analysis.py": {
-      "bytes": 9937,
-      "sha256": "eec3cf67b107c1aec3b8b71451265bf0541eb90aa6c09404c75d74d96a428909",
-      "classification": {
-        "role": "research",
-        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h237_adabelief/monitor.py": {
-      "bytes": 8367,
-      "sha256": "953812050cfc84872a58dc22f6560558795161922493081ba85e9e713f9419c3",
-      "classification": {
-        "role": "research",
-        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h237_adabelief/runner.py": {
-      "bytes": 29570,
-      "sha256": "7a6b25ada4427c5835734df49b979d1fe620c4da73ada3980870579059323d31",
-      "classification": {
-        "role": "research",
-        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h237_adabelief/treatment.py": {
-      "bytes": 6133,
-      "sha256": "18149e4d9fe9fb9895ed4a983e2be4c5d1a9e736da1927058cb5b6a5421d2226",
-      "classification": {
-        "role": "research",
-        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
-      }
-    },
-    "python:research/flywheel_selfplay/h241_expo/analysis.py": {
-      "bytes": 8359,
-      "sha256": "29ce76010c7aeef153934592300709a3ff77b2aef4e28dd0199a8fdf625f19f7",
-      "classification": {
-        "role": "research",
-        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47."
-      }
-    },
-    "python:research/flywheel_selfplay/h241_expo/expo.py": {
-      "bytes": 2636,
-      "sha256": "bfa2671e8db01af79e03d6a3e8d35e06baa160440cf230962295d7d68942cd27",
-      "classification": {
-        "role": "research",
-        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47."
-      }
-    },
-    "python:research/flywheel_selfplay/h241_expo/monitor.py": {
-      "bytes": 8541,
-      "sha256": "b58e86efe3f05bfc2db00c0ae531cc3506e00c60d145379ff961380a972e12a9",
-      "classification": {
-        "role": "research",
-        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47."
-      }
-    },
-    "python:research/flywheel_selfplay/h241_expo/runner.py": {
-      "bytes": 26791,
-      "sha256": "b0381b21bc2c34759896a084b67b19a5808bf7691cf72311b36a1dcb4fce3127",
-      "classification": {
-        "role": "research",
-        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47."
-      }
-    },
     "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
       "bytes": 12151,
       "classification": {
@@ -6040,6 +5816,334 @@
       },
       "sha256": "c293080c8332b0a507e95545506f3f5e1dccb24903f8c8307bd71030c9b99acc"
     },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/analysis.py": {
+      "bytes": 2167,
+      "classification": {
+        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d"
+    },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/gate.py": {
+      "bytes": 11854,
+      "classification": {
+        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e"
+    },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py": {
+      "bytes": 9203,
+      "classification": {
+        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546"
+    },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/runner.py": {
+      "bytes": 21390,
+      "classification": {
+        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e"
+    },
+    "python:research/flywheel_selfplay/h232_lion/analysis.py": {
+      "bytes": 9789,
+      "classification": {
+        "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "9643a2fcef4d5cc4fdc7181ff6a15b806914d4e981fe9dc63bb398e2d8842cf5"
+    },
+    "python:research/flywheel_selfplay/h232_lion/monitor.py": {
+      "bytes": 7614,
+      "classification": {
+        "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "5de09684efe35e2399fcd2a15208957f9103fb79cb754510c10b69a6a1bf4ea8"
+    },
+    "python:research/flywheel_selfplay/h232_lion/runner.py": {
+      "bytes": 29266,
+      "classification": {
+        "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "45c1730b73446a5234efeb1600c6c005957784b7019a8a88af2ae2e1e18fa5ce"
+    },
+    "python:research/flywheel_selfplay/h232_lion/treatment.py": {
+      "bytes": 5141,
+      "classification": {
+        "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "a2aa29abe68f49ea2d0bf53df737c68a64e6b523f425159b0f46949241415d4f"
+    },
+    "python:research/flywheel_selfplay/h234_lambdaloss/analysis.py": {
+      "bytes": 9938,
+      "classification": {
+        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "7ea925baece47d79db8e57b1f1888e8c6fa3eac638012cdf380326bdee5aa0e1"
+    },
+    "python:research/flywheel_selfplay/h234_lambdaloss/monitor.py": {
+      "bytes": 7643,
+      "classification": {
+        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "62947186e8e120eac841343ef0e05234a934b84eee90279306566f18d3a7ce5a"
+    },
+    "python:research/flywheel_selfplay/h234_lambdaloss/runner.py": {
+      "bytes": 29582,
+      "classification": {
+        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "573ffae88dd282a381a9800dab11e725c95a6c2200dad1396785e9f44c3fa289"
+    },
+    "python:research/flywheel_selfplay/h234_lambdaloss/treatment.py": {
+      "bytes": 6194,
+      "classification": {
+        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "e4e8aab640e2d7c6118f60809c601a1876ff2d836dc2c30b6c294f4ce77777e3"
+    },
+    "python:research/flywheel_selfplay/h235_betanll/analysis.py": {
+      "bytes": 9944,
+      "classification": {
+        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "1b7e85d36352043aa447f3767a974b3f6bc5c4d05d3e0e0241ce01d20c06586c"
+    },
+    "python:research/flywheel_selfplay/h235_betanll/monitor.py": {
+      "bytes": 7633,
+      "classification": {
+        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "29860ca244025e0b4b3bb4805f63dd4c6d1f79e39b7779ba472eee45fc1e6a2a"
+    },
+    "python:research/flywheel_selfplay/h235_betanll/runner.py": {
+      "bytes": 31406,
+      "classification": {
+        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "20596c411bb9e9dab7838dcaa5cff9e9e0228f6b6ac4574ce13a617a5e585755"
+    },
+    "python:research/flywheel_selfplay/h235_betanll/treatment.py": {
+      "bytes": 6143,
+      "classification": {
+        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "dd2fcc3011c3714bc967e010edd5b70de5b8969b45396720c66f8f42a02bd9ba"
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/analysis.py": {
+      "bytes": 9936,
+      "classification": {
+        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "eb843c035dd28a1c719adc3be606ee8698f6d9f948e53353049c37c351165909"
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/monitor.py": {
+      "bytes": 7703,
+      "classification": {
+        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "b046df8b3caed817c97af13801719c69cca987635c2fa3e5a43f163d8a7a6463"
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/runner.py": {
+      "bytes": 33354,
+      "classification": {
+        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "b3a4450ab7f4b56e987066588e0c37ce2e856a0012bbb1234846b059de2bb698"
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/treatment.py": {
+      "bytes": 6120,
+      "classification": {
+        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "ad447c6947c0c1d49224e06f205c439599a17eaaf26a96c5ffd4dce2382b0457"
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/analysis.py": {
+      "bytes": 9937,
+      "classification": {
+        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "eec3cf67b107c1aec3b8b71451265bf0541eb90aa6c09404c75d74d96a428909"
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/monitor.py": {
+      "bytes": 8367,
+      "classification": {
+        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "953812050cfc84872a58dc22f6560558795161922493081ba85e9e713f9419c3"
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/runner.py": {
+      "bytes": 29570,
+      "classification": {
+        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "7a6b25ada4427c5835734df49b979d1fe620c4da73ada3980870579059323d31"
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/treatment.py": {
+      "bytes": 6133,
+      "classification": {
+        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "18149e4d9fe9fb9895ed4a983e2be4c5d1a9e736da1927058cb5b6a5421d2226"
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/analysis.py": {
+      "bytes": 10473,
+      "classification": {
+        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "aec88c0c6aca2386673ddd56c7c80de9c5ad255495b3330e20d344a01b59e46a"
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/monitor.py": {
+      "bytes": 7782,
+      "classification": {
+        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "3719cd3f3fb1adaba8ee09e16f23888dde4f70bbfb5950ceec060de526549f31"
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/runner.py": {
+      "bytes": 33899,
+      "classification": {
+        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "1984efab61d59fd23d10fee704c6964a2d119666890e510e0b6bb2e5953c97fb"
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/treatment.py": {
+      "bytes": 3318,
+      "classification": {
+        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "88aff929e0c5c4401faf61e27cf7332bd72e2f07e7a7d10f1719972eb434ed86"
+    },
+    "python:research/flywheel_selfplay/h239_subset/analysis.py": {
+      "bytes": 10524,
+      "classification": {
+        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc"
+    },
+    "python:research/flywheel_selfplay/h239_subset/monitor.py": {
+      "bytes": 7944,
+      "classification": {
+        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a"
+    },
+    "python:research/flywheel_selfplay/h239_subset/runner.py": {
+      "bytes": 39262,
+      "classification": {
+        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "855f1b66eedfcc4dd3edf39b6700bc7a968e58de35bf1221f5ce3b763d37004b"
+    },
+    "python:research/flywheel_selfplay/h239_subset/treatment.py": {
+      "bytes": 4306,
+      "classification": {
+        "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "97045ebc9673a83c7b58e916862ae7ca4bd06b5508499a19888ae5a8f96ca4b7"
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/analysis.py": {
+      "bytes": 10514,
+      "classification": {
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "43f919f4e0b7c8b23e4c33a910245297fa8699d811eebecafb08fda45c791d84"
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/launcher.py": {
+      "bytes": 4647,
+      "classification": {
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "597c2c6c6cdd9d97259eb180fc7d1c29297becd0d8da95f878992185aa1b3847"
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/monitor.py": {
+      "bytes": 8312,
+      "classification": {
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "2f87d1949540426103d0b6e4e06b2daf7d32f5807dd268e0aaef1b0ae96cfaf5"
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/runner.py": {
+      "bytes": 39041,
+      "classification": {
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "563fed0a78d6a052cbe0d62bf90b910f11b60a3ff2d38086bf19d228fadc0cc9"
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/treatment.py": {
+      "bytes": 4178,
+      "classification": {
+        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "dd2784138b2a22985c4f620e0430785743c6af255d3a7bb55453c05531c8dfa4"
+    },
+    "python:research/flywheel_selfplay/h241_expo/analysis.py": {
+      "bytes": 8359,
+      "classification": {
+        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47.",
+        "role": "research"
+      },
+      "sha256": "29ce76010c7aeef153934592300709a3ff77b2aef4e28dd0199a8fdf625f19f7"
+    },
+    "python:research/flywheel_selfplay/h241_expo/expo.py": {
+      "bytes": 2636,
+      "classification": {
+        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47.",
+        "role": "research"
+      },
+      "sha256": "bfa2671e8db01af79e03d6a3e8d35e06baa160440cf230962295d7d68942cd27"
+    },
+    "python:research/flywheel_selfplay/h241_expo/monitor.py": {
+      "bytes": 8541,
+      "classification": {
+        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47.",
+        "role": "research"
+      },
+      "sha256": "b58e86efe3f05bfc2db00c0ae531cc3506e00c60d145379ff961380a972e12a9"
+    },
+    "python:research/flywheel_selfplay/h241_expo/runner.py": {
+      "bytes": 26791,
+      "classification": {
+        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47.",
+        "role": "research"
+      },
+      "sha256": "b0381b21bc2c34759896a084b67b19a5808bf7691cf72311b36a1dcb4fce3127"
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {
@@ -6247,28 +6351,28 @@
       "sha256": "15e0476ef50cebbe33421627c2a4a0292b14d0d8df6b60cd7c6331e23c23379f"
     },
     "python:research/h156/analysis.py": {
-      "bytes": 11791,
+      "bytes": 12825,
       "classification": {
         "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "6a7b85de4c44448cff8f006be2ceb5ad950a26a3790aad97cbe19f55fc0f6dc0"
+      "sha256": "e30f09dece8bd0379180c6d5a2f5620b5084216f24b77f565009c21cd7df466f"
     },
     "python:research/h156/monitor.py": {
-      "bytes": 6792,
+      "bytes": 7196,
       "classification": {
         "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "d8827c49ade455e69a85decadd1c85c445790da177ecaf2e50593538808f2880"
+      "sha256": "69687c1758de927c325615acd2fda02e9a96df022ef83d9dc7d636e9ed71c670"
     },
     "python:research/h156/run.py": {
-      "bytes": 43470,
+      "bytes": 43679,
       "classification": {
         "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c"
+      "sha256": "bbed2addf40b35ccb50622f1e3e55b7539fe2b80bff4141524edbee0456c2b3c"
     },
     "python:research/h166/analysis.py": {
       "bytes": 21053,
@@ -6317,110 +6421,6 @@
         "role": "research"
       },
       "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b"
-    },
-    "python:research/flywheel_selfplay/h236_sfadamw/analysis.py": {
-      "bytes": 9936,
-      "sha256": "eb843c035dd28a1c719adc3be606ee8698f6d9f948e53353049c37c351165909",
-      "classification": {
-        "role": "research",
-        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h236_sfadamw/treatment.py": {
-      "bytes": 6120,
-      "sha256": "ad447c6947c0c1d49224e06f205c439599a17eaaf26a96c5ffd4dce2382b0457",
-      "classification": {
-        "role": "research",
-        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h236_sfadamw/monitor.py": {
-      "bytes": 7703,
-      "sha256": "b046df8b3caed817c97af13801719c69cca987635c2fa3e5a43f163d8a7a6463",
-      "classification": {
-        "role": "research",
-        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h236_sfadamw/runner.py": {
-      "bytes": 33354,
-      "sha256": "b3a4450ab7f4b56e987066588e0c37ce2e856a0012bbb1234846b059de2bb698",
-      "classification": {
-        "role": "research",
-        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h238_lowlr/analysis.py": {
-      "bytes": 10473,
-      "sha256": "aec88c0c6aca2386673ddd56c7c80de9c5ad255495b3330e20d344a01b59e46a",
-      "classification": {
-        "role": "research",
-        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h238_lowlr/treatment.py": {
-      "bytes": 3318,
-      "sha256": "88aff929e0c5c4401faf61e27cf7332bd72e2f07e7a7d10f1719972eb434ed86",
-      "classification": {
-        "role": "research",
-        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h238_lowlr/monitor.py": {
-      "bytes": 7782,
-      "sha256": "3719cd3f3fb1adaba8ee09e16f23888dde4f70bbfb5950ceec060de526549f31",
-      "classification": {
-        "role": "research",
-        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h238_lowlr/runner.py": {
-      "bytes": 33899,
-      "sha256": "1984efab61d59fd23d10fee704c6964a2d119666890e510e0b6bb2e5953c97fb",
-      "classification": {
-        "role": "research",
-        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h240_lowlr/analysis.py": {
-      "bytes": 10514,
-      "sha256": "43f919f4e0b7c8b23e4c33a910245297fa8699d811eebecafb08fda45c791d84",
-      "classification": {
-        "role": "research",
-        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h240_lowlr/treatment.py": {
-      "bytes": 4178,
-      "sha256": "dd2784138b2a22985c4f620e0430785743c6af255d3a7bb55453c05531c8dfa4",
-      "classification": {
-        "role": "research",
-        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h240_lowlr/launcher.py": {
-      "bytes": 4647,
-      "sha256": "597c2c6c6cdd9d97259eb180fc7d1c29297becd0d8da95f878992185aa1b3847",
-      "classification": {
-        "role": "research",
-        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h240_lowlr/monitor.py": {
-      "bytes": 8312,
-      "sha256": "2f87d1949540426103d0b6e4e06b2daf7d32f5807dd268e0aaef1b0ae96cfaf5",
-      "classification": {
-        "role": "research",
-        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h240_lowlr/runner.py": {
-      "bytes": 39041,
-      "sha256": "563fed0a78d6a052cbe0d62bf90b910f11b60a3ff2d38086bf19d228fadc0cc9",
-      "classification": {
-        "role": "research",
-        "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
-      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

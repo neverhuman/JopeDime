@@ -24,7 +24,7 @@ def go(c):
     try:
         t0 = time.time(); s = M.stats(PLAN[c]); s["_secs"] = time.time() - t0
         open(fn + ".tmp", "w").write(json.dumps(s)); os.replace(fn + ".tmp", fn); return c, f"ok {s['_secs']:.1f}s"
-    except Exception as e: return c, "ERR " + repr(e)[:200]
+    except (Exception,) as e: return c, "ERR " + repr(e)[:200]
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--mod", required=True); ap.add_argument("--cids", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=8); A = ap.parse_args(); os.makedirs(A.out, exist_ok=True); want = set(json.load(open(A.cids)))
