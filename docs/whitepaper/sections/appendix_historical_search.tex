@@ -1,11 +1,14 @@
 \subsection{Historical GP search diagnostics}\label{app:historical-search}
 
 The 159 repeated dataset/cut/arm groups in \cref{fig:fw-target-progress}
-span 55 dataset/cut pairs; 64 groups with lower final scores cover 23
+span 55 dataset/cut pairs; 64 groups with lower final RMSE cover 23
 pairs. Shared incumbent and teacher seeds make the arms dependent.
+
 The remaining three panels of \cref{fig:fw-target-history} show one
 dataset/cut chosen post hoc for the largest policy-seeded relative gain.
-Every generation is shown without a cumulative minimum. All arms finish
+Every generation is shown without a cumulative minimum.
+
+All arms finish
 at the same value; the policy-seeded arm first reaches it one generation
 after the controls. These are not independent discoveries
 (\cref{sec:method-status}).

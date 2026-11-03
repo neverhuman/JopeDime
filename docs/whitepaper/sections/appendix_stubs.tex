@@ -37,17 +37,20 @@ discussed in \cref{sec:anatomy,sec:road}.
   \end{tabularx}
 \end{table}
 
-Family allocation is separate from the within-dataset referee. In the native
-audit path, approved datasets are grouped by source identity, declared family
-or identical training bytes before seeded family ordering assigns the
-meta-training, meta-validation and meta-test partitions. This code path does
-not establish that a corpus or checkpoint satisfies the split.
+The inventory identifies the evaluator; family allocation is a separate
+requirement. In the native audit path, approved datasets are grouped by
+source identity, declared family or identical training bytes before seeded
+family ordering assigns the meta-training, meta-validation and meta-test
+partitions.
+
+This code path does not establish that a corpus or checkpoint satisfies
+the split.
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-Test-selected search outcomes are excluded from comparative claims;
-final evaluation requires separate isolation receipts
-(\cref{sub:method-referee}):
+Two safeguards bound the comparisons in \cref{sub:method-referee}: exclude
+test-selected search outcomes, and require final-evaluation receipts for
+input closure and execution isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry selected each dataset's best test-scored outcome from
@@ -64,9 +67,10 @@ final evaluation requires separate isolation receipts
 
 \section{Training Details}\label{app:training}
 
-Checkpoint qualification remains pending for the historical reference
-specified in \cref{sec:method}. The inventory below is separate from the
-adapter record in \cref{sec:method-status}:
+The historical reference in \cref{sec:method} still requires checkpoint
+qualification. Its encoder, training objective and execution requirements
+are inventoried below, separately from the adapter record in
+\cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
   \num{2048}-value context $z_p = \encP(p)$ joins three blocks:
@@ -86,7 +90,9 @@ adapter record in \cref{sec:method-status}:
   $0.05 + \rho_w^4$. The base native sampler balances families and takes
   the best program plus one draw from each of seven rank bands of the rest.
   Fresh-program replay can replace a comparator to include a newly admitted
-  program. Pairs stay within each comparison, keyed by corpus context and
+  program.
+
+  Pairs stay within each comparison, keyed by corpus context and
   comparison index. The Python ranking helpers instead group by dataset
   identifier. The native helper skips non-finite targets and exact ties,
   $q_w=q_u$, without an exclusion margin or logit rescaling. The trainer
@@ -114,13 +120,15 @@ adapter record in \cref{sec:method-status}:
   in the rank-local microbatch. Listwise losses average eligible groups.
   The global-batch route uses separate reductions.
   \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
-  The network has \num{27796494} parameters in total (six
+  The historical reference registers \num{27796494} parameters in total (six
   decoder blocks, width 512, four attention heads, prefix context token
   and maximum length 128 tokens over the 401-token grammar).
   Each of the writer $\writer$ and ranking-map $\mapv$ token tables allocates 657 rows:
   401 grammar rows plus 256 reserved rows. The reserved rows
   are never indexed as valid input or output tokens; the tied writer
-  projection is restricted to the grammar rows. The registered total also
+  projection is restricted to the grammar rows.
+
+  The registered total also
   includes zero-weight stability and loss-scale terms, so it does not
   measure learned or exercised capacity. Approximately 6.90 million parameters lie outside the writer's token
   generation path. Decoding bypasses them, but the native checkpoint loader
@@ -143,14 +151,18 @@ adapter record in \cref{sec:method-status}:
 
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
-These adaptive training-side records retain separate capture dates and
-populations (\cref{sec:method-status}). They separate the canonical admission
-ledger (\cref{app:latest-admissions}), adapter decisions, program-event counts
-and operating clocks (\cref{app:round-throughput}), and historical GP
-diagnostics (\cref{app:historical-search}).
+Each capture keeps its own date, population scope and event units
+(\cref{sec:method-status}). \Cref{app:latest-admissions} gives the canonical
+admission chronology.
+
+The exhibits distinguish adapter decisions from program-incumbent events
+and operating clocks (\cref{app:round-throughput}). Historical GP
+diagnostics (\cref{app:historical-search}) retain their own comparison
+protocol.
 
 % Adapter admission records, ordered by their role and capture cutoff.
 \input{sections/appendix_latest_admissions}
+\input{sections/appendix_event_counters}
 \input{sections/appendix_acceptance_over_rounds}
 \input{sections/appendix_candidate_retained_trace}
 \input{sections/appendix_recent_admission_trajectory}
