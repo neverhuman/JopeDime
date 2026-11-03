@@ -489,6 +489,10 @@
       "reason": "Owner-requested H247 data-free controls for Muon and Grokfast-EMA vs CTRL AdamW r882 adapter continuations (Newton-Schulz-5 and Muon step, parameter split, exact CTRL AdamW, Grokfast EMA filter, frozen settings, folds, strict selector, four-gate advance rule with Holm m=2, H239 A1 memory guard, manifest pins).",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h251_reptile/test_h251.py": {
+      "reason": "Owner-requested H251 data-free controls for first-order Reptile family meta-continuation vs CTRL AdamW r882 adapter continuations (Reptile inner SGD and outer interpolation, k=1 reduction, one-family batch plan, exact CTRL AdamW, frozen settings, folds, strict selector, four-gate advance rule with Holm m=2, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [

@@ -4672,6 +4672,38 @@
         "reason": "H247 preregistered CPU-only diagnostic: Muon (Jordan et al. 2024; Nesterov momentum .95, quintic Newton-Schulz-5 orthogonalization, lr 2e-4, sqrt(max(1,rows/cols)) scaling, on all 16 2-D adapter matrices; CTRL AdamW on other tensors) and Grokfast-EMA (Lee et al. 2024; alpha .98, lambda 2.0, after backward and before the global clip, on CTRL AdamW) vs the exact H170 CTRL AdamW recipe for the 40-update r882 adapter continuation, co-primary with Holm m=2; identical CTRL loss, batches and data order; one fresh fold seed 247140, seeds 247101-247103, 15 cells/arm, 1,800 updates; strict inner selector locked before assessment; unconstrained step-40 diagnostic; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H237/H232/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
       }
     },
+    "python:research/flywheel_selfplay/h251_reptile/analysis.py": {
+      "bytes": 12411,
+      "sha256": "b69bb0c5f3022e963f7758cda1db915318745a38f2870f4c87afcd15deefa822",
+      "classification": {
+        "role": "research",
+        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h251_reptile/monitor.py": {
+      "bytes": 8541,
+      "sha256": "c82a5550042ff188bc1715923019a80002f1933f9a5666a1877c8b8b54230dea",
+      "classification": {
+        "role": "research",
+        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h251_reptile/runner.py": {
+      "bytes": 38618,
+      "sha256": "84d203e561a043925ae1de1620dcc85e38d439044154de92754c1a0cc2bba5c0",
+      "classification": {
+        "role": "research",
+        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h251_reptile/treatment.py": {
+      "bytes": 7229,
+      "sha256": "7ae109d80451176ed98ab968967e3d61af1082860d204763440106270138612b",
+      "classification": {
+        "role": "research",
+        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
     "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
       "bytes": 12151,
       "classification": {
