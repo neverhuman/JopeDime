@@ -1,4 +1,10 @@
 {
+ "archive_manifest": {
+  "bytes": 4653,
+  "sha256": "2811c6a8542862c42449c2969d6fb04885c279b0f5a6d9f2cd6bc354ec5b7ac3",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H246/run-20261103T0529Z/s3_manifest.json",
+  "version_id": "rGW.vP13jYveakBNtySfFnP3qUB3L5_Z"
+ },
  "arms": [
   "R882",
   "G025",
@@ -7,7 +13,21 @@
   "BAG_VOTE_UNGATED"
  ],
  "authority": "/home/ubuntu/nudges/hw_t0505_argon_h246.md",
+ "combined_verdict": "NO_ADVANCE + NO_PLATEAU_WIN",
  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "execution": {
+  "fit_units_completed": 45,
+  "fit_wall_seconds": 14501.526855012999,
+  "fits_completed": 75,
+  "max_rss_kib": 3577496,
+  "paused_seconds": 0.0,
+  "process_cpu_seconds": 46289.777098101,
+  "run_id": "run-20261103T0529Z",
+  "smoke_fits": 4,
+  "smoke_run_id": "smoke-20261103T0525Z",
+  "smoke_wall_seconds": 205.67169026099873,
+  "wall_seconds": 14924.940179933998
+ },
  "fold_manifest_sha256": "3be3efbb8f107061849b09e0565cc03656472bea45958aedabe26f7ae522d60e",
  "fold_seeds": {
   "246101": 246141,
@@ -16,7 +36,7 @@
  },
  "holm_m": 1,
  "max_best_match_jaccard_vs_h203_h245": 0.19280141569144127,
- "metrics_sha256": "14d924f4fbd30a6be5100db959e0fd80cb451b2039fd23ef1943965a55632bdc",
+ "metrics_sha256": "6b42061ef43aeb317f00fdb3c1abd1b004ca072354f3dba2566c564d99d5b452",
  "optimizer_updates": 0,
  "owner": "rd_argon",
  "parent_commit": "796f737ecbfeb8e98cfdc32848cc7c38fe0ee0cc",
@@ -32,6 +52,7 @@
  },
  "planned_fits": 75,
  "planned_units": 45,
+ "prereg_pr": 2092,
  "prereg_sha256": "d733f8c1c1d7bf50f73bbbdb92daf8b1d7b424ed35071dfeda5c311fee684531",
  "primary_arm": "STABLE_G025",
  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
@@ -61,6 +82,7 @@
   "omp_threads_max": 4,
   "rss_max_bytes": 4294967296
  },
+ "reviewed_prereg_head": "689770aea723f7380d02c4ed789297d2cc820381",
  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H246/",
  "schema": "jope.h246.manifest/v1",
  "seeds": [
@@ -68,7 +90,7 @@
   246102,
   246103
  ],
- "source_commit": null,
+ "source_commit": "d4a1c1b0292863d7e659bc2b834cf019107c4512",
  "source_sha256": {
   "PREREG.md": "d733f8c1c1d7bf50f73bbbdb92daf8b1d7b424ed35071dfeda5c311fee684531",
   "analysis.py": "5cea1f820cdc3095a45178966bd566aac4b661ba74f405defc09377080848eb1",
@@ -78,9 +100,10 @@
   "runner.py": "1e4c9a56e0292f634c845de1254a1fedc7cb68d5b838177245959c8c8e7ebd9f",
   "test_h246.py": "e6fc4afc8d29edeae6db107063b522025a1bd985dd3aba742ffbc8d40599458b"
  },
- "status": "PREREGISTERED",
+ "stage1_lock_sha256": "f31a381fbd11512dfb9ba9003a128a9c8976493c15f9b7928b842de1bd295490",
+ "status": "COMPLETE",
  "study_path": "research/flywheel_selfplay/h246_stable_g025_rerun",
- "verdict": null,
+ "verdict": "NO_ADVANCE",
  "wave": "H246",
  "wave_id": "h246-stable-g025-rerun-20261103"
 }
