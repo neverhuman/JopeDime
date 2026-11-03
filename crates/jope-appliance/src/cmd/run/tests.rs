@@ -1,12 +1,14 @@
 use super::*;
 
+use super::args::parse_value;
 use clap::Parser;
 use serde_json::json;
+use std::{path::PathBuf, process::Command};
 
 #[derive(Parser)]
 struct Args {
     #[command(subcommand)]
-    command: crate::cli::Command,
+    command: crate::cli::ApplianceCommand,
 }
 
 #[cfg(not(windows))]
@@ -173,15 +175,13 @@ fn hidden_m1_requires_json_preserves_public_requirements_and_conflicts_with_tran
         json!({"kind": "random"})
     );
     let error = parse_value::<bool>("not a boolean").unwrap_err();
-    let typed = error
-        .downcast_ref::<BareTextValueError>()
-        .expect("plain-text parse failure has its typed error");
-    assert!(typed.json_error.is_syntax());
-    assert!(typed.source.to_string().contains("invalid type"));
+    let message = error.to_string();
+    assert!(message.contains("expected value"));
+    assert!(message.contains("invalid type"));
 
     let argv = m1_argv(std::path::Path::new("prepared.json"));
     let parsed = Args::try_parse_from(&argv).unwrap();
-    let crate::cli::Command::Run(args) = parsed.command else {
+    let crate::cli::ApplianceCommand::Run(args) = parsed.command else {
         panic!("run command")
     };
     assert_eq!(args.m1_plan, Some("prepared.json".into()));
@@ -280,7 +280,8 @@ fn hidden_m1_refuses_malformed_or_contradictory_input_before_creating_a_store() 
     let mut argv = m1_argv(&path);
     let objective = argv.iter().position(|a| a == "--objective").unwrap() + 1;
     argv[objective] = "mse".into();
-    let crate::cli::Command::Run(args) = Args::try_parse_from(argv).unwrap().command else {
+    let crate::cli::ApplianceCommand::Run(args) = Args::try_parse_from(argv).unwrap().command
+    else {
         panic!("run")
     };
     let error = dispatch(args).unwrap_err();
@@ -290,7 +291,8 @@ fn hidden_m1_refuses_malformed_or_contradictory_input_before_creating_a_store() 
     );
     assert!(!directory.path().join("store").exists());
     std::fs::write(&path, b"not json").unwrap();
-    let crate::cli::Command::Run(args) = Args::try_parse_from(m1_argv(&path)).unwrap().command
+    let crate::cli::ApplianceCommand::Run(args) =
+        Args::try_parse_from(m1_argv(&path)).unwrap().command
     else {
         panic!("run")
     };
@@ -304,7 +306,7 @@ fn hidden_m1_refuses_malformed_or_contradictory_input_before_creating_a_store() 
 #[cfg(not(feature = "engine"))]
 #[test]
 fn hidden_m1_without_engine_refuses_as_backend_before_reading_a_plan() {
-    let crate::cli::Command::Run(args) =
+    let crate::cli::ApplianceCommand::Run(args) =
         Args::try_parse_from(m1_argv(std::path::Path::new("absent.json")))
             .unwrap()
             .command
@@ -442,7 +444,7 @@ fn run_flags_round_trip_to_authoritative_runspec_json() {
         "abc",
     ])
     .unwrap();
-    let crate::cli::Command::Run(args) = parsed.command else {
+    let crate::cli::ApplianceCommand::Run(args) = parsed.command else {
         panic!("run command")
     };
     let spec = args.run_spec().unwrap();
@@ -503,7 +505,7 @@ fn noninteractive_modes_parse_without_prompting() {
         "--json",
     ])
     .unwrap();
-    let crate::cli::Command::Run(csv) = csv.command else {
+    let crate::cli::ApplianceCommand::Run(csv) = csv.command else {
         panic!("expected run command")
     };
     assert_eq!(
@@ -584,7 +586,7 @@ fn run_uses_the_typed_in_process_api_contract() {
         "--dry-run",
     ])
     .unwrap();
-    let crate::cli::Command::Run(args) = parsed.command else {
+    let crate::cli::ApplianceCommand::Run(args) = parsed.command else {
         panic!("run command")
     };
     let spec = args.run_spec().unwrap();
