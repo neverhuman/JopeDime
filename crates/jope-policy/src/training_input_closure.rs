@@ -304,14 +304,20 @@ mod tests {
 
     impl Fixture {
         fn new() -> Self {
-            let root = PathBuf::from("/mnt/jope-build-native/jope-policy-training-closure-tests")
+            let fixture_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("../../target/jope-policy-training-closure-tests")
                 .join(format!(
-                    "{}-{}",
+                    "{}-{}-{}",
                     std::process::id(),
-                    NEXT.fetch_add(1, Ordering::Relaxed)
+                    NEXT.fetch_add(1, Ordering::Relaxed),
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_nanos()
                 ));
+            let root = fixture_dir.join("root");
             fs::create_dir_all(&root).unwrap();
-            Self(root)
+            Self(fs::canonicalize(root).unwrap())
         }
 
         fn write(&self, name: &str, bytes: &[u8]) -> Value {
@@ -343,7 +349,9 @@ mod tests {
 
     impl Drop for Fixture {
         fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
+            if let Some(fixture_dir) = self.0.parent() {
+                let _ = fs::remove_dir_all(fixture_dir);
+            }
         }
     }
 
