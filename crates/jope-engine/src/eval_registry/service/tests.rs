@@ -160,7 +160,10 @@ fn invalid_cpu_evaluator_binding_rejects_before_opening_authority() {
 #[test]
 #[ignore = "internal synthetic service-owned executor; never runs numerical fits"]
 fn synthetic_worker() {
-    let (fit, permit, output) = await_start_from_environment().unwrap();
+    let Ok((fit, permit, output)) = await_start_from_environment() else {
+        // Some negative tests deliberately close the start channel before authorization.
+        return;
+    };
     permit.verify().unwrap();
     let program = &fit.identity().canonical_program;
     if program.contains("alpha=2") {
