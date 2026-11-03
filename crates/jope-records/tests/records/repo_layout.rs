@@ -9,21 +9,28 @@ use std::process::{Command, Output};
 
 use crate::{repo, scratch};
 
+/// Run Git-backed test commands against the repository named by their explicit `cwd`/`--root`,
+/// not a runner's ambient alternate Git context.
+fn clear_git_environment(command: &mut Command) {
+    for (key, _) in std::env::vars_os().filter(|(key, _)| key.to_string_lossy().starts_with("GIT_")) {
+        command.env_remove(key);
+    }
+}
+
 fn run(args: &[&str], cwd: &Path) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_jope-records"))
-        .args(args)
-        .current_dir(cwd)
+    let mut command = Command::new(env!("CARGO_BIN_EXE_jope-records"));
+    command.args(args).current_dir(cwd);
+    clear_git_environment(&mut command);
+    command
         .output()
         .expect("run jope-records")
 }
 
 fn git(dir: &Path, args: &[&str]) {
-    let status = Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
-        .status()
-        .expect("run git");
+    let mut command = Command::new("git");
+    command.arg("-C").arg(dir).args(args);
+    clear_git_environment(&mut command);
+    let status = command.status().expect("run git");
     assert!(status.success(), "git {args:?} failed in {}", dir.display());
 }
 
