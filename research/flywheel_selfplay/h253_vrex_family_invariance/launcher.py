@@ -23,8 +23,20 @@ def check_launch(launch, launch_path):
         raise RuntimeError("adjacent immutable launch receipt required")
     if output.exists() or output.with_suffix(".attempt.claim").exists():
         raise RuntimeError("exclusive unused attempt required")
-    if not launch.get("merged_source_verified"):
-        raise RuntimeError("merged source required")
+    if not (
+        launch.get("merged_source_verified")
+        or (
+            launch.get("merged_prereg_verified")
+            and launch.get("execution_source_reviewed")
+            and launch.get("configuration_only_amendment")
+            and launch.get("zero_prior_model_native_optimizer_calls")
+            and launch.get("scientific_AST_parity_verified")
+            and launch.get("main_hold")
+        )
+    ):
+        raise RuntimeError(
+            "merged source or reviewed pre-native transport under merged protocol required"
+        )
     return output, n
 
 
