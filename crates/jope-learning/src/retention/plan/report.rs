@@ -1,6 +1,6 @@
 use super::*;
 
-fn row(
+pub(super) fn row(
     g: &Group,
     f: &Facts,
     d: Decision,
@@ -48,7 +48,7 @@ fn row(
     }
 }
 
-fn diff_previous(path: &Path, rows: &[PlanRow]) -> Result<BTreeMap<String, u64>> {
+pub(super) fn diff_previous(path: &Path, rows: &[PlanRow]) -> Result<BTreeMap<String, u64>> {
     let text = fs::read_to_string(path)
         .with_context(|| format!("cannot read previous plan {}", path.display()))?;
     let mut prev: BTreeMap<String, String> = BTreeMap::new();
@@ -88,7 +88,7 @@ fn diff_previous(path: &Path, rows: &[PlanRow]) -> Result<BTreeMap<String, u64>>
     Ok(out)
 }
 
-fn report(
+pub(super) fn report(
     s: &Summary,
     rows: &[PlanRow],
     lock: &InputsLock,
