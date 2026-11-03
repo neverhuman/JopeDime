@@ -1,5 +1,4 @@
-use super::*;
-
+#[derive(Clone, Copy, Debug)]
 pub(crate) enum FeatureView {
     Identity,
     SignedLog,
@@ -30,7 +29,7 @@ pub(crate) fn apply_feature_view(
     }
 }
 
-fn missing_indicator(v: f32) -> f32 {
+pub(super) fn missing_indicator(v: f32) -> f32 {
     if v.is_nan() {
         -2.0
     } else if v == f32::INFINITY {
