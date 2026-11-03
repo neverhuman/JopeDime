@@ -41,5 +41,6 @@ figs:
 	python3 figures/scripts/make_program_promotion_margins.py
 	python3 figures/scripts/make_program_journal_rates.py
 	python3 figures/scripts/make_program_round_counts.py
+	python3 figures/scripts/make_recent_program_margins.py
 clean:
 	latexmk -C
