@@ -85,7 +85,7 @@ fn run(command: &mut Command) {
     );
 }
 
-fn resolve_export_compiler(compiler: &str) -> String {
+fn resolve_export_compiler(compiler: &str) -> Option<String> {
     let versioned = match compiler {
         "g++" => "g++-13",
         "clang++" => "clang++-18",
@@ -99,10 +99,10 @@ fn resolve_export_compiler(compiler: &str) -> String {
             .status()
             .is_ok_and(|status| status.success())
         {
-            return candidate.to_owned();
+            return Some(candidate.to_owned());
         }
     }
-    panic!("required export compiler {compiler} (also tried {versioned}) is unavailable");
+    None
 }
 
 fn bits(path: &Path) -> Vec<u64> {
@@ -185,8 +185,13 @@ fn executed_three_language_recipes_match_independent_conversion_witnesses() {
             emit_cpp17(&genome, &EmitOptions::default()).unwrap().source + CPP_DRIVER,
         )
         .unwrap();
-        for compiler in ["g++", "clang++"] {
-            let executable = resolve_export_compiler(compiler);
+        let mut compilers = vec![resolve_export_compiler("g++")
+            .expect("required export compiler g++ (also tried g++-13) is unavailable")];
+        if let Some(compiler) = resolve_export_compiler("clang++") {
+            compilers.push(compiler);
+        }
+        for executable in compilers {
+            let compiler = executable.as_str();
             let binary = dir.join(format!("case_{compiler}"));
             run(Command::new(&executable)
                 .args([
