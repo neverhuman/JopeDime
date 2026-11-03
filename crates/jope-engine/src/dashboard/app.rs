@@ -1,5 +1,5 @@
 use super::evidence::{campaign_with_manifest, number, state, tail};
-use super::layout::{compact_layout, compact_lines, DashboardData, History};
+use super::layout::{compact_layout, compact_lines, History};
 use super::prelude::*;
 use super::render::render;
 
