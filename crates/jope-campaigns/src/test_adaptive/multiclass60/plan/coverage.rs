@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 pub(crate) fn canonical_manifest_sha256(mut value: Value) -> Result<String> {
     value
         .as_object_mut()
