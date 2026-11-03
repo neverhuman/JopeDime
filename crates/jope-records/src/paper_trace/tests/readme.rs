@@ -68,19 +68,14 @@ fn number_words_and_grouping() {
 #[test]
 fn the_committed_documents_agree() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let git_index_readable = std::process::Command::new("git")
-        .args(["ls-files", "--", "*.py"])
-        .current_dir(&root)
-        .output()
-        .is_ok_and(|output| output.status.success());
-    if !git_index_readable {
-        eprintln!("skipping committed-document check: requires readable Git index metadata");
-        return;
-    }
     let (report, ok) = match check(&root, false, false) {
         Ok(result) => result,
         Err(Error::Command(message)) if message.starts_with("git ls-files ") => {
             eprintln!("skipping committed-document check: {message}");
+            return;
+        }
+        Err(Error::Io { path, .. }) if path == Path::new("git") => {
+            eprintln!("skipping committed-document check: Git is unavailable");
             return;
         }
         Err(error) => panic!("committed-document check failed: {error}"),
