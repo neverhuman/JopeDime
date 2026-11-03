@@ -308,4 +308,8 @@ fn literal_sum(count: usize) -> String {
 /// its plain form does; one byte more is refused unparsed. A closed-form parent is refused by the
 /// pre-parse check's own message (review 03, B17-R03-PIPELINE-GUARD-COVERAGE): the variant check
 /// after the parse refuses it too, but without that message, so the order is observed.
-mod refinement_lm_tests;
+mod accounting_tests;
+mod lm_tests;
+mod stage_tests;
+mod trace_tests;
+mod validation_tests;
