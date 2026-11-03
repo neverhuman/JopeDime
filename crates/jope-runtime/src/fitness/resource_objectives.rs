@@ -30,7 +30,8 @@ fn resource_specifications_round_trip_through_json_and_parse() {
         r#"{"metric":"custom","name":"serve","direction":"minimize","expression":{"op":"resource","name":"predict_us_per_row"},"aggregation":{"kind":"mean"}}"#,
     ] {
         let parsed = Fitness::parse(text).unwrap();
-        let again: Fitness = serde_json::from_str(&serde_json::to_string(&parsed).unwrap()).unwrap();
+        let again: Fitness =
+            serde_json::from_str(&serde_json::to_string(&parsed).unwrap()).unwrap();
         assert_eq!(parsed, again);
         assert!(parsed.identity().is_ok());
     }
@@ -129,7 +130,10 @@ fn a_constrained_objective_refuses_infeasible_candidates_with_a_typed_error() {
         (ResourceVar::RowLatencyP99Us, 100.0),
         (ResourceVar::PredictRowsPerSecond, 5000.0),
     ]);
-    let rmse = Fitness::Rmse {}.evaluate(&y, &[1.0, 2.0, 4.0]).unwrap().loss;
+    let rmse = Fitness::Rmse {}
+        .evaluate(&y, &[1.0, 2.0, 4.0])
+        .unwrap()
+        .loss;
     let score = f
         .evaluate_with_resources(&y, &[1.0, 2.0, 4.0], &Columns::new(), &ok)
         .unwrap();
@@ -142,7 +146,9 @@ fn a_constrained_objective_refuses_infeasible_candidates_with_a_typed_error() {
     let error = f
         .evaluate_with_resources(&y, &y, &Columns::new(), &slow)
         .unwrap_err();
-    let infeasible = error.downcast_ref::<Infeasible>().expect("typed infeasibility");
+    let infeasible = error
+        .downcast_ref::<Infeasible>()
+        .expect("typed infeasibility");
     assert_eq!(infeasible.resource, ResourceVar::RowLatencyP99Us);
     assert_eq!(infeasible.bound, "max");
     assert!(error.to_string().starts_with("resource_infeasible"));
