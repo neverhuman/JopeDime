@@ -130,7 +130,7 @@ fn verify_scope_event_bindings(
     Ok(())
 }
 impl Authority {
-    pub(crate) fn verify_native_scope_event(&self, event: &Event) -> Result<()> {
+    pub(super) fn verify_native_scope_event(&self, event: &Event) -> Result<()> {
         if event.kind != "native_scope_register" {
             return Ok(());
         }
