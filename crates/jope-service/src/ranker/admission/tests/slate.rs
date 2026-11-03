@@ -312,13 +312,10 @@ fn assembled_selection_checks_adapter_compatibility_before_rng_use() {
         let prepared = fixture
             .prepare(RevealedRule::StorageOrder, explore)
             .unwrap();
-        let costs = slate(
-            &(0..prepared.proposal_keys().len())
-                .map(|i| -(i as f64))
-                .collect::<Vec<_>>(),
-        );
-        let mut actual = rng(71);
-        let mut control = rng(71);
+        let mut costs = vec![-1e100; REVEALED];
+        costs.extend((0..prepared.proposal_keys().len()).map(|i| -(i as f64)));
+        let mut actual = ChaCha12Rng::seed_from_u64(71);
+        let mut control = ChaCha12Rng::seed_from_u64(71);
         let selection = prepared.select(&costs, &mut actual);
         if let Err(error) = prepared.inputs() {
             assert!(matches!(error.field, "tokens" | "token_mask"));
@@ -334,11 +331,14 @@ fn assembled_selection_checks_adapter_compatibility_before_rng_use() {
             prepared.proposal_keys()[chosen[0]],
             if explore { "program-21" } else { "program-13" }
         );
-        let mut untouched = rng(71);
+        let mut untouched = ChaCha12Rng::seed_from_u64(71);
         assert_eq!(
             prepared.select(&costs[..costs.len() - 1], &mut untouched),
             Err(AdmissionError::InvalidSlate)
         );
-        assert_eq!(untouched.next_u64(), rng(71).next_u64());
+        assert_eq!(
+            untouched.next_u64(),
+            ChaCha12Rng::seed_from_u64(71).next_u64()
+        );
     }
 }
