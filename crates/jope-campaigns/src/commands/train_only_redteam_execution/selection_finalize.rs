@@ -187,7 +187,7 @@ fn finalize_combined_selector(
     Ok(Some((output, digest)))
 }
 
-fn finalize_smart_only_selector(
+pub(super) fn finalize_smart_only_selector(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,
     dataset: &DatasetInput,
