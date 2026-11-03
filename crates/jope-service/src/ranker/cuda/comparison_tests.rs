@@ -1,6 +1,4 @@
 use super::*;
-
-use super::*;
 use stage1b::{SvdSlot, DOPE_FEATURES, TOKEN_WIDTH};
 
 #[test]
