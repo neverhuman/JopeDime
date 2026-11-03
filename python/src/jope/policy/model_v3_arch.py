@@ -475,6 +475,8 @@ class JopePolicyModelV3(PolicyV3ModelMethods, nn.Module):
         task: str = "regression",
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Reward (mean, std) for K token sequences against one dataset context."""
+        from .model_v3_batch import pad_sequences
+
         emb = embedding.float().reshape(1, -1).to(device)
         tgt = None if target_summary is None else target_summary.float().reshape(1, -1).to(device)
         z = self.reward_context(emb, tgt)  # v3.4: reward heads read the reward encoder

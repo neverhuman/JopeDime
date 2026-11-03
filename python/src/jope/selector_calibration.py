@@ -400,64 +400,6 @@ def cross_validate_selector_policies(
     }
 
 
-def score_candidate_with_calibration(
-    row: dict[str, Any],
-    calibration: dict[str, Any] | None = None,
-    *,
-    policy: str | None = None,
-) -> dict[str, Any]:
-    if calibration is None:
-        raise ValueError("selector calibration is required")
-    if row.get("schema_version") == SCHEMA_VERSION and calibration.get("schema_version") != SCHEMA_VERSION:
-        row, calibration = calibration, row
-    policy = policy or str(calibration.get("selected_policy") or "raw_reward")
-    if policy not in POLICIES:
-        policy = "raw_reward"
-    reward = _finite_float(row.get("reward"))
-    if reward is None:
-        reward = 0.0
-    bin_stats, bin_components = _lookup_bin_stats(row, calibration, reward)
-    engine_stats = _lookup_engine_stats(row, calibration)
-    pattern_penalties = (
-        _candidate_pattern_penalties(row, calibration)
-        if policy in {"robust_pattern_bins", PORTFOLIO_META_POLICY}
-        else {}
-    )
-    pattern_penalty = float(sum(pattern_penalties.values()))
-    calibrated_score = float(bin_stats["score"]) - pattern_penalty
-    meta_score = None
-    if policy == "raw_reward":
-        selection_score = reward
-    elif policy == PORTFOLIO_META_POLICY:
-        meta_score = _score_portfolio_meta(row, calibration, bin_stats, bin_components, pattern_penalty)
-        selection_score = meta_score if meta_score is not None else reward
-    else:
-        selection_score = reward + _CALIBRATED_SCORE_WEIGHT * calibrated_score
-    components = {
-        "raw_reward": reward,
-        "bin_score": float(bin_stats["score"]),
-        "calibrated_score": calibrated_score,
-        "calibrated_score_weight": _CALIBRATED_SCORE_WEIGHT,
-        "pattern_penalty": pattern_penalty,
-        "pattern_penalties": pattern_penalties,
-        "engine_prior_score": float(engine_stats.get("score", 0.0)),
-        "engine_prior_win_rate": float(engine_stats.get("win_rate", 0.0)),
-        "portfolio_meta_score": meta_score,
-        "portfolio_meta_enabled": meta_score is not None,
-        **bin_components,
-    }
-    return {
-        "selection_score": float(selection_score),
-        "selection_policy": policy,
-        "calibrated_expected_delta": float(bin_stats["expected_delta"]),
-        "calibrated_win_rate": float(bin_stats["win_rate"]),
-        "calibrated_tail_risk": float(bin_stats["tail_risk"]),
-        "selection_score_components": components,
-    }
-
-
-
-
 def _proposal_lookup(path: str | Path) -> dict[tuple[str, str, str, int | None], dict[str, Any]]:
     lookup: dict[tuple[str, str, str, int | None], dict[str, Any]] = {}
     try:

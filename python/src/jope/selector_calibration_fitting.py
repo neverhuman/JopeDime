@@ -56,6 +56,62 @@ from .selector_calibration_fitting_models import (
     _score_portfolio_meta,
 )
 
+
+def score_candidate_with_calibration(
+    row: dict[str, Any],
+    calibration: dict[str, Any] | None = None,
+    *,
+    policy: str | None = None,
+) -> dict[str, Any]:
+    if calibration is None:
+        raise ValueError("selector calibration is required")
+    if row.get("schema_version") == SCHEMA_VERSION and calibration.get("schema_version") != SCHEMA_VERSION:
+        row, calibration = calibration, row
+    policy = policy or str(calibration.get("selected_policy") or "raw_reward")
+    if policy not in POLICIES:
+        policy = "raw_reward"
+    reward = _finite_float(row.get("reward"))
+    if reward is None:
+        reward = 0.0
+    bin_stats, bin_components = _lookup_bin_stats(row, calibration, reward)
+    engine_stats = _lookup_engine_stats(row, calibration)
+    pattern_penalties = (
+        _candidate_pattern_penalties(row, calibration)
+        if policy in {"robust_pattern_bins", PORTFOLIO_META_POLICY}
+        else {}
+    )
+    pattern_penalty = float(sum(pattern_penalties.values()))
+    calibrated_score = float(bin_stats["score"]) - pattern_penalty
+    meta_score = None
+    if policy == "raw_reward":
+        selection_score = reward
+    elif policy == PORTFOLIO_META_POLICY:
+        meta_score = _score_portfolio_meta(row, calibration, bin_stats, bin_components, pattern_penalty)
+        selection_score = meta_score if meta_score is not None else reward
+    else:
+        selection_score = reward + _CALIBRATED_SCORE_WEIGHT * calibrated_score
+    components = {
+        "raw_reward": reward,
+        "bin_score": float(bin_stats["score"]),
+        "calibrated_score": calibrated_score,
+        "calibrated_score_weight": _CALIBRATED_SCORE_WEIGHT,
+        "pattern_penalty": pattern_penalty,
+        "pattern_penalties": pattern_penalties,
+        "engine_prior_score": float(engine_stats.get("score", 0.0)),
+        "engine_prior_win_rate": float(engine_stats.get("win_rate", 0.0)),
+        "portfolio_meta_score": meta_score,
+        "portfolio_meta_enabled": meta_score is not None,
+        **bin_components,
+    }
+    return {
+        "selection_score": float(selection_score),
+        "selection_policy": policy,
+        "calibrated_expected_delta": float(bin_stats["expected_delta"]),
+        "calibrated_win_rate": float(bin_stats["win_rate"]),
+        "calibrated_tail_risk": float(bin_stats["tail_risk"]),
+        "selection_score_components": components,
+    }
+
 def _selection_metrics(
     rows: list[dict[str, Any]], calibration: dict[str, Any], policy: str
 ) -> dict[str, Any]:
@@ -179,36 +235,6 @@ def _select_portfolio_rows(
     return selected[:3]
 
 
-def _rank_rows(rows: list[dict[str, Any]], score_key: str) -> list[dict[str, Any]]:
-    return sorted(
-        rows,
-        key=lambda row: (
-            -_score_value(row, score_key),
-            -_score_value(row, "reward"),
-            int(row.get("proposal_index") if isinstance(row.get("proposal_index"), int) else 10**9),
-            str(row.get("canonical_genome") or ""),
-        ),
-    )
-
-
-def _score_value(row: dict[str, Any], key: str) -> float:
-    value = _finite_float(row.get(key))
-    if value is not None:
-        return value
-    reward = _finite_float(row.get("reward"))
-    return reward if reward is not None else float("-inf")
-
-
-def _portfolio_diversity_key(row: dict[str, Any]) -> str:
-    existing = row.get("candidate_diversity_key")
-    if isinstance(existing, str) and existing:
-        return existing
-    actions = _parse_actions(str(row.get("canonical_genome") or row.get("genome") or ""))
-    transforms = [stage for stage in (actions or {}).get("transforms") or [] if isinstance(stage, dict)]
-    first = str(transforms[0].get("op") if transforms else "none")
-    return f"{row.get('head_type') or _head_from_actions(actions) or 'unknown'}:{first}"
-
-
 def _choose_policy(cv: dict[str, Any]) -> str:
     policies = cv.get("policies") if isinstance(cv.get("policies"), dict) else {}
     raw_key = _policy_metric_key(policies.get("raw_reward") or {})
@@ -224,19 +250,6 @@ def _choose_policy(cv: dict[str, Any]) -> str:
     if meta_key > max(raw_key, portfolio_key):
         return PORTFOLIO_META_POLICY
     return best_policy if best_key > raw_key else "raw_reward"
-
-
-def _policy_metric_key(metrics: dict[str, Any]) -> tuple[float, float, float]:
-    return (
-        _metric_value(metrics.get("win_rate")),
-        _metric_value(metrics.get("median_delta")),
-        _metric_value(metrics.get("mean_delta")),
-    )
-
-
-def _metric_value(value: Any) -> float:
-    numeric = _finite_float(value)
-    return float("-inf") if numeric is None else numeric
 
 
 def _delta_metrics(deltas: list[float]) -> dict[str, Any]:
