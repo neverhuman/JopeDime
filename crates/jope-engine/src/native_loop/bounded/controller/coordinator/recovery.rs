@@ -1,3 +1,4 @@
+use super::super::operations::finish_cancel_before_dispatch;
 use super::*;
 
 impl<S: Supervisor> Coordinator<S> {
