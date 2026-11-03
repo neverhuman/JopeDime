@@ -61,7 +61,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "0.4.1"
+version = "1.0.0"
 edition = "2021"
 rust-version = "1.96"
 license = "Apache-2.0"
