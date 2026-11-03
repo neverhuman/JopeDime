@@ -103,7 +103,7 @@ fn old_checkpoint(generation: usize, slots: Vec<SlotOutcome>) -> GenerationCheck
 }
 
 fn synthetic_combined() -> Vec<(GenerationCheckpoint, String)> {
-    let sources = include_str!("../../seeds/generation-zero.txt")
+    let sources = include_str!("../../../seeds/generation-zero.txt")
         .lines()
         .take(POPULATION)
         .enumerate()
