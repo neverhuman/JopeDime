@@ -55,13 +55,13 @@ mod witness;
 pub(crate) use admission::{verify_placement, verify_request};
 #[cfg(test)]
 pub(super) use auth::inspected_process;
+#[cfg(test)]
+pub(super) use auth::process_parent;
 pub(crate) use auth::{active_process, authenticated_exchange};
 pub(super) use auth::{
     attempt_path, cgroup, current_job, exchange, live, monotonic_ns, native_leader, service,
     verify_ancestry,
 };
-#[cfg(test)]
-pub(super) use auth::{inspected_process, process_parent};
 pub(crate) use witness::verify_witness_event;
 
 #[cfg(test)]
