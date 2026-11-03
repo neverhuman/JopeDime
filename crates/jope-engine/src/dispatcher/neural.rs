@@ -2,6 +2,7 @@ use super::*;
 
 #[cfg(feature = "neural")]
 pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
+    let mut unhandled = None;
     match command {
         #[cfg(feature = "neural")]
         EngineCmd::PolicyParity { directory } => jope_parallel::neural::parity(&directory)?,
@@ -84,9 +85,9 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             rank,
             world,
         } => jope_parallel::neural::nccl_probe(rank, world, &directory)?,
-        other => return Ok(Some(other)),
+        other => unhandled = Some(other),
     }
-    Ok(None)
+    Ok(unhandled)
 }
 
 #[cfg(not(feature = "neural"))]
