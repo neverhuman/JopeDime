@@ -1,0 +1,68 @@
+{
+  "schema": "jope.h268.manifest/v1",
+  "wave_id": "h268-rerank4-ctxnorm-labels-20261103",
+  "parent_commit": "56ede105cee07ea3cca808209eaf4a864a4d64ae",
+  "h265_source_sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "fold_seeds": [
+    268140,
+    268141,
+    268142
+  ],
+  "model_seeds": [
+    268101,
+    268102,
+    268103
+  ],
+  "boot_seed": 268150,
+  "arms": [
+    "CONTROL",
+    "RERANK4",
+    "CTXNORM",
+    "CTXNORM_SHUF"
+  ],
+  "n_cells": 135,
+  "neural_updates": 0,
+  "resource_limits": {
+    "host": "xbabe2",
+    "affinity": [
+      48,
+      50,
+      51,
+      52
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "aggregate_threads": 4,
+    "rss_bytes": 4294967296,
+    "disk_free_min": 300000000000,
+    "load5_admit": 100,
+    "load5_pause": 108,
+    "A1": true,
+    "compute_stop": "2026-11-03T20:40:00Z",
+    "closeout_deadline": "2026-11-03T21:25:00Z",
+    "single_run": true
+  },
+  "input_sha256": {
+    "inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "inputs/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "inputs/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "inputs/r882/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "inputs/r882/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "source_sha256": {
+    "audit.py": "e0eb19a7c7c06540e50a350a9866bf313980bc84d7d8a123d0f2615eb115a1cb",
+    "common_h252.py": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "test_h265.py": "ddb018652e31c7f5b1f23c606e7076dcc168f9719a2db214ec321ac008c4a677",
+    "baseline.py": "36e44f2942532a0b9fa5f7aa4aabdc198e34d1696fa8a2e5aef13875eb26683e",
+    "metrics.schema.json": "6a10879b47a9d8c41c1ae02def115bbe09dbc94ed6ce2da24ba28c704177d235",
+    "test_h268.py": "9cc2df46c32482c6669ad70d7b75280ae05d7c11909bfc1fdbba7fc81793e11e",
+    "h265_frozen.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "monitor.py": "944b08ea203d77c292d2ba9d337c02192a5cf3d3f440688407a2b1ca2a265b20",
+    "fold_manifest.json": "058e6adf7c2b76adb1d431e29d922a52ce0529d51a61f7f028bb00cc2cbde1fb",
+    "runner.py": "79c29ed161c99b0ad4da5f5edc488735648fc51e6b7f55102a9eb257778d17f2"
+  }
+}
