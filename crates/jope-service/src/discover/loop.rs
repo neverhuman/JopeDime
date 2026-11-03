@@ -259,9 +259,7 @@ pub use admission::RecordedAdmissionContext;
 pub use admission::{
     Admission, Candidate, HeuristicAdmission, RoundAdmission, RoundContext, RoundMeasurement,
 };
-use evaluation::{
-    add_events, checked_response, discard_pending, parallel_evaluate, public_failure, record_result,
-};
+use evaluation::{add_events, checked_response, discard_pending, parallel_evaluate, record_result};
 pub use executor::{Executor, ProcessExecutor, SearchSpace};
 pub(crate) use helpers::evaluation_seed;
 use helpers::{
