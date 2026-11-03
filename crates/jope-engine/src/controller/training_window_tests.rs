@@ -1,4 +1,4 @@
-use super::*;
+use super::training_rank::{training_step_window, verify_training_rank};
 use serde_json::json;
 
 #[test]
