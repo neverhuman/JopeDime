@@ -658,6 +658,7 @@ pub struct CatalogEntry {
 
 mod catalog;
 mod evaluate;
+pub use evaluate::require_no_columns;
 
 #[cfg(test)]
 mod tests;
