@@ -31,8 +31,8 @@ pub(crate) fn evaluate_contexts(
     parent_of_context: &BTreeMap<String, String>,
     mut expected_context_set: BTreeSet<String>,
     verified_prereg: &Option<(SelfPlayPrereg, bool)>,
-    dataset_by_id: &BTreeMap<String, ScoredDataset>,
-    dataset_by_hash: &BTreeMap<String, ScoredDataset>,
+    _dataset_by_id: &BTreeMap<String, ScoredDataset>,
+    _dataset_by_hash: &BTreeMap<String, ScoredDataset>,
 ) -> Result<ContextEvaluation> {
     let mut seen_parity = BTreeSet::new();
     for pr in parity {
