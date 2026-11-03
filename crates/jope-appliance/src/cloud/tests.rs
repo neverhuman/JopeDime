@@ -1,6 +1,4 @@
 use super::*;
-
-use super::*;
 #[test]
 fn workspace_origin_rejects_credential_leaks_and_plain_remote_http() {
     for url in [
