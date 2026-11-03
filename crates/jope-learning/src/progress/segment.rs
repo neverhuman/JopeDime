@@ -824,7 +824,7 @@ mod tests {
         let record = record("attempt/1");
         store.append(vec![record.clone()])?;
         assert_eq!(store.lookup("attempt/1")?, Some(record.clone()));
-        let usage = store.usage().clone();
+        let usage = store.usage();
         assert!(usage.lookup_pages <= 2);
         assert!(usage.startup_bytes_read <= limits().max_startup_bytes);
         assert!(usage.total_disk_bytes <= limits().max_total_disk_bytes);
