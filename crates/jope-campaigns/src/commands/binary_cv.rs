@@ -183,7 +183,7 @@ impl BinarySelectionEvidence {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct BinarySlotLedger {
+pub(crate) struct BinarySlotLedger {
     schema: String,
     generation: usize,
     slot: usize,
