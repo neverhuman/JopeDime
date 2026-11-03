@@ -40,9 +40,11 @@ mod scheduler;
 mod tests;
 
 use campaign_cycle::cycle;
+#[cfg(test)]
+use scheduler::materialize_attempt_spec;
 use scheduler::{
-    launch_receipt_path, load_plans, load_progress, materialize_attempt_spec,
-    next_attempt_identity, read_launch_receipt, scheduler_jobs, submit_attempt, terminal_class,
+    load_plans, load_progress, next_attempt_identity, read_launch_receipt, scheduler_jobs,
+    submit_attempt, terminal_class,
 };
 
 jope_paths::once_str!(
