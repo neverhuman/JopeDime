@@ -543,6 +543,34 @@
       "lanes": [],
       "scope": "Opt-in HTTPS for JAIN cloud workspaces (rustls with the aws-lc-rs provider). No audited appliance feature set selects it: deploy/appliance/dependencies-deny.toml denies rustls/aws-* and keeps ureq featureless, so shipping it needs a reviewed dependency-policy amendment. Local check, clippy and cloud tests with the feature are recorded in its PR."
     },
+    "feature:jope-api/default": {
+      "discovery": {
+        "dependencies": [
+          "run-id-generation"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Default build of jope-api (RunId::new/Default via run-id-generation) is checked and tested in the workspace rust-check/rust-test lanes."
+    },
+    "feature:jope-api/run-id-generation": {
+      "discovery": {
+        "dependencies": [
+          "ulid/std"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Default-enabled: RunId::new/Default generation (ulid/std, getrandom) is covered by the jope-api default build in rust-check/rust-test; jope-runtime takes jope-api with default-features=false so the WASM browser runtime (typescript lane, web/browser-predict) never links getrandom."
+    },
     "feature:jope-appliance/default": {
       "discovery": {
         "dependencies": [
