@@ -69,9 +69,16 @@ def _packed_records(manifest: dict, root: Path) -> Iterator[dict]:
 
 
 class _LabelShardWriter:
-    def __init__(self, temporary: Path, shared_root: Path):
+    def __init__(
+        self,
+        temporary: Path,
+        shared_root: Path,
+        *,
+        rows_per_shard: int = LABEL_SHARD_ROWS,
+    ):
         self.temporary = temporary
         self.shared_root = shared_root
+        self.rows_per_shard = rows_per_shard
         self.shared_root.mkdir(parents=True, exist_ok=True)
         self.handle = None
         self.building = None
@@ -89,7 +96,7 @@ class _LabelShardWriter:
             + b"\n"
         )
         self.rows += 1
-        if self.rows == LABEL_SHARD_ROWS:
+        if self.rows == self.rows_per_shard:
             self._finish(ordinal + 1)
 
     def close(self, row_count: int) -> list[dict]:

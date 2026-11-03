@@ -32,6 +32,7 @@ from test_exact_packed_corpus_storage import (
     _write_causal_pair_index,
     _write_recipe_e_evidence_index,
 )
+from test_exact_packed_corpus_reader import verify
 
 def materialize(
     manifest_path: Path,
@@ -42,6 +43,7 @@ def materialize(
         "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/current.json"
     ),
     catalog_binding_path: Path | None = None,
+    label_shard_rows: int = LABEL_SHARD_ROWS,
 ) -> dict:
     source = json.loads(manifest_path.read_text())
     train_path = Path(source["train"])
@@ -143,7 +145,9 @@ def materialize(
         causal_members = []
         recipe_e_members = []
         shard_writer = _LabelShardWriter(
-            temporary, output_root / "_label_shards_v3"
+            temporary,
+            output_root / "_label_shards_v3",
+            rows_per_shard=label_shard_rows,
         )
         with (
             (temporary / "genomes.bin").open("wb") as genomes,

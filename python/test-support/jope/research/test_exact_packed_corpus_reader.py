@@ -31,6 +31,7 @@ from test_exact_packed_corpus_storage import (
     _LabelShardWriter,
     _write_causal_pair_index,
     _write_recipe_e_evidence_index,
+    _json_loads,
 )
 
 def verify(

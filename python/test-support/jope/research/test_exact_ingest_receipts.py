@@ -35,9 +35,10 @@ def scheduler_jobs() -> dict[str, dict]:
     return {row["id"]: row for row in rows if row.get("id")}
 
 
-def corpus_db() -> sqlite3.Connection:
-    CORPUS.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(CORPUS)
+def corpus_db(corpus_path: Path | None = None) -> sqlite3.Connection:
+    path = corpus_path or CORPUS
+    path.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(path)
     con.row_factory = sqlite3.Row
     con.executescript(
         """

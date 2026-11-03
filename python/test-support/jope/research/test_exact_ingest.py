@@ -27,9 +27,14 @@ from test_exact_ingest_constants import (
     GOLDEN42, CATALOG_POINTER,
 )
 from test_exact_ingest_receipts import (
-    command, scheduler_jobs, corpus_db, receipt_dir, local_receipt_dir, validate_and_ingest,
+    command, scheduler_jobs, corpus_db as _corpus_db, receipt_dir, local_receipt_dir,
+    validate_and_ingest,
 )
 from test_exact_ingest_reconcile import reconcile, rebuild_indexes, import_hof
+
+
+def corpus_db() -> sqlite3.Connection:
+    return _corpus_db(CORPUS)
 
 
 def main() -> None:

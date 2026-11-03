@@ -86,7 +86,7 @@ from test_exact_train_policy import (
 )
 from test_exact_train_sampling import (
     OBSERVATION_COLUMNS, SPLIT_MEDIAN_RATIO_MAX, append_freeze_history, freeze_history_rows,
-    complete_causal_members, equal_quota_draw, even_spread, publish_freeze_guard,
+    complete_causal_members as _complete_causal_members, equal_quota_draw, even_spread, publish_freeze_guard,
     quota_distribution, task_reward,
 )
 from test_exact_train_catalog import (
@@ -97,6 +97,10 @@ from test_exact_train_catalog import (
 from test_exact_train_batching import make_grouped_batches
 from test_exact_train_corpus import prepare_corpus, _build_corpus_impl
 from test_exact_train_training import _train_impl
+
+
+def complete_causal_members(connection: sqlite3.Connection) -> tuple[dict, dict]:
+    return _complete_causal_members(connection, root=ROOT)
 
 def build_corpus(
     min_rows: int = 1,
