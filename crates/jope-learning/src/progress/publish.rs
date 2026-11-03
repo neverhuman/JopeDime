@@ -48,8 +48,8 @@ use crate::progress::remote::Remote;
 use crate::revocation::Revocations;
 use anyhow::{bail, ensure, Context, Result};
 use jope_datasets::store::ObservedObject;
-use jope_learning::canon::sha256_hex;
-use jope_learning::ledger::Ledger;
+use crate::canon::sha256_hex;
+use crate::ledger::Ledger;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
