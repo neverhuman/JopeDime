@@ -75,7 +75,7 @@
       "justification": "Re-reviewed by Jankurai 1.7.6 full cross-file audit at captured source 945e0f532a81314a1a1072350f9da3c9fbb5c2b6; retained current raw identity and pinned participant source hashes. The 45 prior cross-file identities no longer emitted were removed from this exact-path P37 inventory.",
       "line": 33,
       "participants": {
-        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "818d197efc6e619114636c56c7660abae381adc0a359e61cd9dc9baad0ed48d1"
+        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
       },
       "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
       "raw_identity": {
@@ -138,7 +138,7 @@
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         }
       ],
-      "sha256": "818d197efc6e619114636c56c7660abae381adc0a359e61cd9dc9baad0ed48d1"
+      "sha256": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
     },
     "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py": {
       "findings": [],

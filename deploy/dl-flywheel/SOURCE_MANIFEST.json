@@ -296,13 +296,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evidence.py",
       "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
       "path": "deploy/dl-flywheel/jope_flywheel/evidence.py",
-      "sha256": "82c6e9a88bcc74ef937d36be6d158937ce36acd56a514bbb80edb4a5f7fc26c9"
-    },
-    {
-      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evidence.py",
-      "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
-      "path": "deploy/dl-flywheel/jope_flywheel/evidence_core.py",
-      "sha256": "e5ca4edccd49533715000cbec48364a6dcee5fe2f4fac05207fa0e01390d13d0"
+      "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9"
     },
     {
       "origin": "deploy/dl-flywheel/jope_flywheel/evidence.py validation primitives",
@@ -320,7 +314,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/paper_archive.py",
       "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
       "path": "deploy/dl-flywheel/jope_flywheel/paper_archive.py",
-      "sha256": "f34ea45833b5ac809cfd3831c45c2b15487eb0e2035a5de30583ebfa6e86f739"
+      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_gate.py",
@@ -488,6 +482,12 @@
       "sha256": "bcbb141d9441b8063914cec02a6a4cbd70abeb5256b2e1ce245e8f1df4f367eb"
     },
     {
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/model.py",
+      "origin_sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712",
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py",
+      "sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712"
+    },
+    {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/objective.py",
       "origin_sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36",
       "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/objective.py",
@@ -572,16 +572,22 @@
       "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
     },
     {
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_io.py",
+      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_worker.py",
       "origin_sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_worker.py",
       "sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33"
     },
     {
-      "origin": "Compatibility facade for the canonical continuous-runtime protocol implementation",
-      "origin_sha256": "c4ead6a91176178671c6949fc7915a03f867ff1710e091ae85437224ebc073db",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/protocol.py",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py",
-      "sha256": "c3a6aa41d5e478a881be72e4dfb589dd93d3be85b0ba1e08fab7ffc0069d0d04"
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
     },
     {
       "origin": "Refactored from deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py; internal API names separated from frozen copies",
@@ -6082,7 +6088,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py (v2.0.0 learner build r3.1)",
       "origin_sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264",
       "path": "deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py",
-      "sha256": "4b7e329df7aa1056acb96127db9d20975eb96460295bd4bfbceb4803a36726cc"
+      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
     },
     {
       "normalization": "Byte copy of the v2.0.0 learner build r3.1 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",

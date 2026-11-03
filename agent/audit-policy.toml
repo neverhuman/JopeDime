@@ -652,7 +652,6 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/dashboard/paper_publish_v33.py",
   "deploy/dl-flywheel/dashboard/paper_publish_v34.py",
   "deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py",
-  "deploy/dl-flywheel/jope_flywheel/evidence_core.py",
   "deploy/dl-flywheel/jope_flywheel/queue.py",
   "deploy/dl-flywheel/jope_flywheel/training_snapshot_core.py",
   "deploy/dl-flywheel/jope_flywheel/training_snapshot_kumos.py",
@@ -1088,6 +1087,11 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h253_vrex_family_invariance/runner.py",
   "research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py",
   "research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py",
+  "deploy/dl-flywheel/jope_flywheel/evidence.py",
+  "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/readonly_snapshot.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/operational.py",
   # END EVEXCL t2320 managed exact-path entries.
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
