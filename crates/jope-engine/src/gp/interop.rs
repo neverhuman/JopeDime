@@ -11,7 +11,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 mod wire;
-use wire::{number, read_jsonl, write_jsonl};
+use wire::{number, read_jsonl, write_jsonl, NONFINITE_PREFIX};
 
 /// `python/prime.toml` default used by the Python wrapper when no explicit directory is passed.
 pub const DEFAULT_WINNERS_DIR: &str = "/home/ubuntu/jmath/artifacts/newmath/winners";
