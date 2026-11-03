@@ -1,3 +1,4 @@
+use super::layout::{rendered_lines, TerminalSize};
 use super::*;
 
 #[test]
