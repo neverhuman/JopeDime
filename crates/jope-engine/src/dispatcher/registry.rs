@@ -360,7 +360,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             command
                 .arg(root.join("tools/seed_experiment.py"))
                 .arg("--root")
-                .arg(&root)
+                .arg(root)
                 .arg("compare")
                 .arg("--manifest")
                 .arg(manifest)
