@@ -155,4 +155,4 @@ pub(super) use evolution::{
 pub(super) use evolution::{
     discovery_winner, initial_population_from_seeds, next_population, offspring_seed,
 };
-pub(super) use execution::run_tabarena_dataset_waves;
+use execution::run_tabarena_dataset_waves;
