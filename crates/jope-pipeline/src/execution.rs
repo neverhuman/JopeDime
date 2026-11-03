@@ -415,14 +415,14 @@ mod queue;
 mod supervisor;
 mod types;
 
-pub(super) use processes::{ProcessFit, Running};
-pub(super) use queue::{ActiveFits, FairQueue};
+use processes::{ProcessFit, Running};
+use queue::{ActiveFits, FairQueue};
 pub use supervisor::Supervisor;
 pub(crate) use types::after_verification;
 #[cfg(all(test, feature = "neural-search"))]
 pub(crate) use types::verification_hook;
 pub use types::*;
-pub(super) use types::{DRAIN_MS, LOG_LIMIT, POLL_MS, THREAD_VARS};
+use types::{DRAIN_MS, LOG_LIMIT, POLL_MS, THREAD_VARS};
 
 #[cfg(test)]
 mod tests;
