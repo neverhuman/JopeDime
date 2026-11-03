@@ -1,0 +1,21 @@
+{
+  "schema": "jope.hwave-metrics/v1",
+  "wave": "H254",
+  "wave_id": "h254-active2plus2-confirm-20261103",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "outcomes_read": 0,
+  "fold_seed": 254140,
+  "seeds": [
+    254101,
+    254102,
+    254103
+  ],
+  "boot_seed": 254150,
+  "holm_m": 2,
+  "arms": [
+    "R882",
+    "GATED_025",
+    "ACTIVE_2PLUS2_HURDLE"
+  ]
+}
