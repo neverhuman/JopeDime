@@ -8,13 +8,10 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-from .schema import TrainingRow
-from .split_integrity import (
-    DEVELOPMENT_SPLIT,
-    TEMPORAL_AUDIT_SPLIT,
-    assignment_for_dataset,
-    is_training_authority_label,
-    validate_split_manifest,
+from .prime_label_to_corpus_embeddings import (
+    DUAL_EMBEDDING_DIM,
+    TARGET_SUMMARY_DIM,
+    PlaceholderEmbedder,
 )
 from .prime_label_to_corpus_identity import (
     DEFAULT_PROVENANCE,
@@ -24,11 +21,15 @@ from .prime_label_to_corpus_identity import (
     _league_label_evidence,
     _reward_pair_identity,
 )
-from .prime_label_to_corpus_embeddings import (
-    DUAL_EMBEDDING_DIM,
-    TARGET_SUMMARY_DIM,
-    PlaceholderEmbedder,
+from .schema import TrainingRow
+from .split_integrity import (
+    DEVELOPMENT_SPLIT,
+    TEMPORAL_AUDIT_SPLIT,
+    assignment_for_dataset,
+    is_training_authority_label,
+    validate_split_manifest,
 )
+
 
 # --------------------------------------------------------------------------- #
 # Row parsing (schema -> canonical fields)                                    #
@@ -309,7 +310,6 @@ def build_corpus(
 
 def write_corpus(rows: list[TrainingRow], out_path: str | Path) -> Path:
     """Write ``TrainingRow`` corpus as JSONL (the format ``train_v3`` reads)."""
-    import json
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

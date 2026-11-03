@@ -608,7 +608,230 @@ def _stringify_paths(
         return str(paths)
     return [str(path) for path in paths]
 
-from .selector_calibration_fitting import (
+
+def _load_fitting_exports() -> tuple[object, ...]:
+    from .selector_calibration_fitting import (
+        _CALIBRATED_SCORE_WEIGHT as _CALIBRATED_SCORE_WEIGHT,
+    )
+    from .selector_calibration_fitting import (
+        _DEFAULT_ENGINE as _DEFAULT_ENGINE,
+    )
+    from .selector_calibration_fitting import (
+        _EXPANSIVE_TRANSFORMS as _EXPANSIVE_TRANSFORMS,
+    )
+    from .selector_calibration_fitting import (
+        _EXPLOSIVE_TRANSFORMS as _EXPLOSIVE_TRANSFORMS,
+    )
+    from .selector_calibration_fitting import (
+        _GLOBAL_HEAD as _GLOBAL_HEAD,
+    )
+    from .selector_calibration_fitting import (
+        _META_NUMERIC_FEATURES as _META_NUMERIC_FEATURES,
+    )
+    from .selector_calibration_fitting import (
+        _META_RIDGE_L2 as _META_RIDGE_L2,
+    )
+    from .selector_calibration_fitting import (
+        _PATTERN_NAMES as _PATTERN_NAMES,
+    )
+    from .selector_calibration_fitting import (
+        _PORTFOLIO_DEFERRED_HEADS as _PORTFOLIO_DEFERRED_HEADS,
+    )
+    from .selector_calibration_fitting import (
+        _PORTFOLIO_PREFERRED_HEADS as _PORTFOLIO_PREFERRED_HEADS,
+    )
+    from .selector_calibration_fitting import (
+        _SCALER_TRANSFORMS as _SCALER_TRANSFORMS,
+    )
+    from .selector_calibration_fitting import (
+        _TARGET_DELTA_FLOOR as _TARGET_DELTA_FLOOR,
+    )
+    from .selector_calibration_fitting import (
+        BIN_POLICIES as BIN_POLICIES,
+    )
+    from .selector_calibration_fitting import (
+        MODEL_REALIZATION_SCHEMA as MODEL_REALIZATION_SCHEMA,
+    )
+    from .selector_calibration_fitting import (
+        POLICIES as POLICIES,
+    )
+    from .selector_calibration_fitting import (
+        PORTFOLIO_BASELINE_POLICY as PORTFOLIO_BASELINE_POLICY,
+    )
+    from .selector_calibration_fitting import (
+        PORTFOLIO_META_POLICY as PORTFOLIO_META_POLICY,
+    )
+    from .selector_calibration_fitting import (
+        SCHEMA_VERSION as SCHEMA_VERSION,
+    )
+    from .selector_calibration_fitting import (
+        _action_feature_values as _action_feature_values,
+    )
+    from .selector_calibration_fitting import (
+        _bin_index as _bin_index,
+    )
+    from .selector_calibration_fitting import (
+        _candidate_pattern_penalties as _candidate_pattern_penalties,
+    )
+    from .selector_calibration_fitting import (
+        _choose_policy as _choose_policy,
+    )
+    from .selector_calibration_fitting import (
+        _correlation_lists as _correlation_lists,
+    )
+    from .selector_calibration_fitting import (
+        _delta_metrics as _delta_metrics,
+    )
+    from .selector_calibration_fitting import (
+        _engine_head_key as _engine_head_key,
+    )
+    from .selector_calibration_fitting import (
+        _finite_float as _finite_float,
+    )
+    from .selector_calibration_fitting import (
+        _fit_calibration_model as _fit_calibration_model,
+    )
+    from .selector_calibration_fitting import (
+        _fit_pattern_penalties as _fit_pattern_penalties,
+    )
+    from .selector_calibration_fitting import (
+        _fit_portfolio_meta_model as _fit_portfolio_meta_model,
+    )
+    from .selector_calibration_fitting import (
+        _fit_reward_bins as _fit_reward_bins,
+    )
+    from .selector_calibration_fitting import (
+        _head_from_actions as _head_from_actions,
+    )
+    from .selector_calibration_fitting import (
+        _head_from_genome as _head_from_genome,
+    )
+    from .selector_calibration_fitting import (
+        _lookup_bin_stats as _lookup_bin_stats,
+    )
+    from .selector_calibration_fitting import (
+        _lookup_engine_stats as _lookup_engine_stats,
+    )
+    from .selector_calibration_fitting import (
+        _meta_categories as _meta_categories,
+    )
+    from .selector_calibration_fitting import (
+        _metric_value as _metric_value,
+    )
+    from .selector_calibration_fitting import (
+        _parse_actions as _parse_actions,
+    )
+    from .selector_calibration_fitting import (
+        _parse_actions_for_engine as _parse_actions_for_engine,
+    )
+    from .selector_calibration_fitting import (
+        _policy_metric_key as _policy_metric_key,
+    )
+    from .selector_calibration_fitting import (
+        _portfolio_delta_metrics as _portfolio_delta_metrics,
+    )
+    from .selector_calibration_fitting import (
+        _portfolio_diversity_key as _portfolio_diversity_key,
+    )
+    from .selector_calibration_fitting import (
+        _portfolio_meta_feature_names as _portfolio_meta_feature_names,
+    )
+    from .selector_calibration_fitting import (
+        _portfolio_meta_feature_values as _portfolio_meta_feature_values,
+    )
+    from .selector_calibration_fitting import (
+        _portfolio_meta_matrix as _portfolio_meta_matrix,
+    )
+    from .selector_calibration_fitting import (
+        _rank_rows as _rank_rows,
+    )
+    from .selector_calibration_fitting import (
+        _score_portfolio_meta as _score_portfolio_meta,
+    )
+    from .selector_calibration_fitting import (
+        _score_value as _score_value,
+    )
+    from .selector_calibration_fitting import (
+        _select_portfolio_by_dataset as _select_portfolio_by_dataset,
+    )
+    from .selector_calibration_fitting import (
+        _select_portfolio_rows as _select_portfolio_rows,
+    )
+    from .selector_calibration_fitting import (
+        _select_top_by_dataset as _select_top_by_dataset,
+    )
+    from .selector_calibration_fitting import (
+        _selection_metrics as _selection_metrics,
+    )
+    from .selector_calibration_fitting import (
+        _stats as _stats,
+    )
+    from .selector_calibration_fitting import (
+        pattern_flags as pattern_flags,
+    )
+    from .selector_calibration_fitting import (
+        score_candidate_with_calibration as score_candidate_with_calibration,
+    )
+
+    return (
+        BIN_POLICIES,
+        MODEL_REALIZATION_SCHEMA,
+        POLICIES,
+        PORTFOLIO_BASELINE_POLICY,
+        PORTFOLIO_META_POLICY,
+        SCHEMA_VERSION,
+        _CALIBRATED_SCORE_WEIGHT,
+        _DEFAULT_ENGINE,
+        _EXPANSIVE_TRANSFORMS,
+        _EXPLOSIVE_TRANSFORMS,
+        _GLOBAL_HEAD,
+        _META_NUMERIC_FEATURES,
+        _META_RIDGE_L2,
+        _PATTERN_NAMES,
+        _PORTFOLIO_DEFERRED_HEADS,
+        _PORTFOLIO_PREFERRED_HEADS,
+        _SCALER_TRANSFORMS,
+        _TARGET_DELTA_FLOOR,
+        _action_feature_values,
+        _bin_index,
+        _candidate_pattern_penalties,
+        _choose_policy,
+        _correlation_lists,
+        _delta_metrics,
+        _engine_head_key,
+        _finite_float,
+        _fit_calibration_model,
+        _fit_pattern_penalties,
+        _fit_portfolio_meta_model,
+        _fit_reward_bins,
+        _head_from_actions,
+        _head_from_genome,
+        _lookup_bin_stats,
+        _lookup_engine_stats,
+        _meta_categories,
+        _metric_value,
+        _parse_actions,
+        _parse_actions_for_engine,
+        _policy_metric_key,
+        _portfolio_delta_metrics,
+        _portfolio_diversity_key,
+        _portfolio_meta_feature_names,
+        _portfolio_meta_feature_values,
+        _portfolio_meta_matrix,
+        _rank_rows,
+        _score_portfolio_meta,
+        _score_value,
+        _select_portfolio_by_dataset,
+        _select_portfolio_rows,
+        _select_top_by_dataset,
+        _selection_metrics,
+        _stats,
+        pattern_flags,
+        score_candidate_with_calibration,
+    )
+
+
+(
     BIN_POLICIES,
     MODEL_REALIZATION_SCHEMA,
     POLICIES,
@@ -663,4 +886,5 @@ from .selector_calibration_fitting import (
     _stats,
     pattern_flags,
     score_candidate_with_calibration,
-)
+) = _load_fitting_exports()
+del _load_fitting_exports

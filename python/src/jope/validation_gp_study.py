@@ -7,28 +7,27 @@ then performs exact final refits after robust-CV selection is frozen.
 
 from __future__ import annotations
 
-import csv
 import json
 import math
-import shutil
 import socket
 import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from .data.active_v3 import robust_score
+from .data.active_v3 import robust_score as robust_score
 from .engines import EngineRouter
-from .eval_ledger import iter_eval_regression_with_ledger
+from .eval_ledger import iter_eval_regression_with_ledger as iter_eval_regression_with_ledger
 from .prime_config import load_config
-from .prime_staging import stage_read_only_dataset
-from .propose import embedding_from_vs, target_summary_from_vs
+from .prime_staging import stage_read_only_dataset as stage_read_only_dataset
+from .propose import embedding_from_vs as embedding_from_vs
+from .propose import target_summary_from_vs as target_summary_from_vs
 
 DEFAULT_DATASETS = (
     "ab0239b9ef0ba28e",
@@ -256,9 +255,16 @@ def shell_join(cmd: list[str]) -> str:
     return " ".join(shlex.quote(str(part)) for part in cmd)
 
 
-from .validation_gp_study_execution import _StudyExecution
-from .validation_gp_study_reporting import _StudyReporting
-from .validation_gp_study_selection import _StudySelection
+def _load_study_mixins() -> tuple[type, type, type]:
+    from .validation_gp_study_execution import _StudyExecution
+    from .validation_gp_study_reporting import _StudyReporting
+    from .validation_gp_study_selection import _StudySelection
+
+    return _StudyExecution, _StudySelection, _StudyReporting
+
+
+_StudyExecution, _StudySelection, _StudyReporting = _load_study_mixins()
+del _load_study_mixins
 
 
 class ValidationGpStudy(_StudyExecution, _StudySelection, _StudyReporting):
@@ -304,7 +310,7 @@ class ValidationGpStudy(_StudyExecution, _StudySelection, _StudyReporting):
                 dataset = futures[future]
                 try:
                     results.append(future.result())
-                except (Exception,) as exc:  # noqa: BLE001
+                except Exception as exc:  # noqa: BLE001
                     row = {"dataset": dataset, "status": "error", "error": repr(exc)}
                     self._append_jsonl(self.per_dataset_path, row)
                     self.event_log.emit(dataset, "pipeline", "error", error=repr(exc))

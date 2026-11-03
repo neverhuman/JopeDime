@@ -16,6 +16,7 @@ from .split_integrity import (
     validate_split_manifest,
 )
 
+
 def assignment_for_dataset(manifest: dict[str, Any], dataset: str) -> dict[str, Any]:
     validate_split_manifest(manifest)
     record = manifest["assignments"].get(dataset)
