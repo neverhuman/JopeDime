@@ -376,7 +376,7 @@ impl SealedFeatureStageV2 {
             .collect())
     }
 
-    fn labels_after_route_lock(&self) -> Result<&[f64], String> {
+    pub(super) fn labels_after_route_lock(&self) -> Result<&[f64], String> {
         self.validate()?;
         Ok(&self.labels)
     }
