@@ -627,6 +627,8 @@ mod scoring;
 mod tests;
 
 pub(crate) use commands::{report, run, score, score_smart_v3, validate};
+#[cfg(test)]
+pub(super) use preparation::build_fold_bank;
 pub(crate) use preparation::prepare;
 pub(super) use preparation::validate_fold_bank;
 pub(crate) use receipts::ScqExecutionProvenance;
