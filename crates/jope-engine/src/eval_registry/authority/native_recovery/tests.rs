@@ -1,7 +1,7 @@
 use super::*;
 
 #[cfg(test)]
-mod tests {
+mod recovery_cases {
     use super::*;
     fn attempt() -> FencedAttempt {
         serde_json::from_value(
