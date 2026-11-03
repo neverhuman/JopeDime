@@ -347,5 +347,11 @@ pub(super) fn main() -> Result<()> {
         CampaignCommand::ValidateGenomeBoostFeatures { output_dir } => {
             genome_boost::validate_features(&output_dir)
         }
+        command if train_only_dispatch::accepts(&command) => train_only_dispatch::run(
+            command,
+            &cli.registry,
+            cli.dataset.as_deref(),
+            cli.kernel_version,
+        ),
     }
 }
