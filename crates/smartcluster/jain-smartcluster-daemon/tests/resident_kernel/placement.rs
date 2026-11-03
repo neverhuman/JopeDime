@@ -4,7 +4,7 @@ use super::*;
 #[tokio::test]
 #[ignore = "requires real delegated cgroup and SCQ_TEST_FIT_FIXTURE native example binary"]
 async fn fit_child_real_peer_placement_duplicate_and_target_cancellation() -> Result<()> {
-    use jain_smartcluster::jope::{MANIFEST_SCHEMA, TaskKind, TaskManifest};
+    use jain_smartcluster::jope::{TaskKind, TaskManifest, MANIFEST_SCHEMA};
     use sha2::{Digest, Sha256};
     let fixture = fs::canonicalize(
         std::env::var_os("SCQ_TEST_FIT_FIXTURE").context("build and set native fit fixture")?,
