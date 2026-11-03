@@ -34,7 +34,7 @@ const MULTICLASS_FEATURE_BUDGETS: [usize; 4] = [32, 64, 128, 256];
 // ------------------------------- v3 heads --------------------------------
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
-enum ClassWeight {
+pub(crate) enum ClassWeight {
     None,
     Balanced,
 }
