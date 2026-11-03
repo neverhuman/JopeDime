@@ -1,5 +1,8 @@
 use super::*;
 
+/// Serializable weights used to score retention value.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct ValueWeights {
     /// Influence recorded for this value weights.
     pub influence: f64,
