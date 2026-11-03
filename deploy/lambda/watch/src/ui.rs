@@ -1,8 +1,16 @@
 use crate::model::*;
 use ratatui::{prelude::*, widgets::*};
 
-mod widgets;
-use widgets::{graph, ms, panel, tile, AMBER, BG, CYAN, DIM, EDGE, GREEN, PANEL, PINK, RED, TEXT};
+const BG: Color = Color::Rgb(9, 14, 27);
+const PANEL: Color = Color::Rgb(14, 23, 41);
+const EDGE: Color = Color::Rgb(39, 57, 80);
+const TEXT: Color = Color::Rgb(217, 231, 245);
+const DIM: Color = Color::Rgb(139, 160, 184);
+const CYAN: Color = Color::Rgb(47, 221, 237);
+const GREEN: Color = Color::Rgb(110, 239, 166);
+const AMBER: Color = Color::Rgb(255, 201, 100);
+const PINK: Color = Color::Rgb(245, 126, 194);
+const RED: Color = Color::Rgb(255, 113, 126);
 
 #[derive(Default)]
 pub struct Ui {
@@ -16,6 +24,13 @@ pub struct Ui {
     pub help: bool,
     pub failures: bool,
     pub quality: bool,
+}
+fn panel(title: impl Into<String>, c: Color) -> Block<'static> {
+    Block::bordered()
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(EDGE))
+        .title(Line::from(title.into()).style(Style::default().fg(c).bold()))
+        .style(Style::default().bg(PANEL).fg(TEXT))
 }
 pub fn filtered<'a>(s: &'a Snapshot, u: &Ui) -> Vec<&'a View> {
     let q = u.query.to_lowercase();
@@ -37,6 +52,33 @@ pub fn filtered<'a>(s: &'a Snapshot, u: &Ui) -> Vec<&'a View> {
             .then_with(|| a.id.cmp(&b.id))
     });
     rows
+}
+fn tile(f: &mut Frame, r: Rect, title: &str, value: String, sub: String, c: Color) {
+    let p = Paragraph::new(vec![
+        Line::from(value).style(Style::default().fg(c).bold()),
+        Line::from(sub).style(Style::default().fg(DIM)),
+    ])
+    .block(panel(title, c));
+    f.render_widget(p, r);
+}
+fn ms(v: Option<f64>) -> String {
+    v.map(|x| format!("{x:.1} ms"))
+        .unwrap_or_else(|| "unknown".into())
+}
+fn graph(f: &mut Frame, r: Rect, title: &str, data: &[u64], c: Color) {
+    let last = data.last().copied().unwrap_or(0);
+    let peak = data.iter().max().copied().unwrap_or(0);
+    let shown = &data[data
+        .len()
+        .saturating_sub(r.width.saturating_sub(2) as usize)..];
+    f.render_widget(
+        Sparkline::default()
+            .block(panel(format!(" {title}  {last}/s  ·  60s peak {peak} "), c))
+            .data(shown)
+            .style(Style::default().fg(c))
+            .max(peak.max(1)),
+        r,
+    );
 }
 pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i64) {
     let area = f.area();
@@ -149,8 +191,7 @@ pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i
         s.budget
             .reserved_usd
             .map(|x| format!("\u{24}{:.2}", (s.budget.cap_usd - x).max(0.0)))
-            .unwrap_or_else
-            (|| "UNKNOWN".into()),
+            .unwrap_or_else(|| "UNKNOWN".into()),
         format!("\u{24}{:.0} cap · reservations", s.budget.cap_usd),
         if s.budget.reserved_usd.is_some_and(|x| x > s.budget.cap_usd) {
             RED
@@ -197,8 +238,7 @@ pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i
             let score = v
                 .score
                 .map(|x| format!("{x:.5}"))
-                .unwrap_or_else
-                (|| "—".into());
+                .unwrap_or_else(|| "—".into());
             Row::new(vec![
                 clean(&v.name),
                 clean(&v.fold),
@@ -206,11 +246,9 @@ pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i
                     .map(|n| {
                         v.target_generation
                             .map(|target| format!("{n}/{target}"))
-                            .unwrap_or_else
-                            (|| format!("g{n}"))
+                            .unwrap_or_else(|| format!("g{n}"))
                     })
-                    .unwrap_or_else
-                    (|| "—".into()),
+                    .unwrap_or_else(|| "—".into()),
                 clean(&v.metric),
                 score,
                 clean(&v.status),
@@ -382,8 +420,7 @@ pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i
     } else {
         format!(
             " q quit  ↑/↓ select  / filter  f failures  Space freeze  ? help  │ {}",
-            error.map(clean).unwrap_or_else
-            (|| format!(
+            error.map(clean).unwrap_or_else(|| format!(
                 "{} · seq {}",
                 clean(&s.status),
                 s.sequence
