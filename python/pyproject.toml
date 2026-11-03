@@ -74,6 +74,7 @@ target-version = "py311"
 # even a lint fix, invalidates the frozen vocabulary the Rust consumers verify, so ruff never touches them.
 extend-exclude = [
   "test-support/jope/research",
+  "src/jope/research/render_elo_ranking.py",
   "legacy",
   "src/jope/grammars/featmath.py",
   "src/jope/policy/tokens.py",
