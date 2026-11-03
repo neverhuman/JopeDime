@@ -35,19 +35,19 @@ pub fn record(root: &Path, observation: &Value, source: &Path) -> Result<bool> {
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct PendingChampion {
-    champion: Champion,
-    publish: bool,
+pub(super) struct PendingChampion {
+    pub(super) champion: Champion,
+    pub(super) publish: bool,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct PendingPublication {
-    sequence: u64,
-    champion: Champion,
+pub(super) struct PendingPublication {
+    pub(super) sequence: u64,
+    pub(super) champion: Champion,
 }
 
-fn immutable_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(super) fn immutable_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
     let parent = path.parent().context("immutable champion parent absent")?;
     durable_directory(parent)?;
     let temporary = tempfile::Builder::new()
@@ -125,7 +125,7 @@ fn durable_directory(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn finish_publication(outbox: &Path, pending: &PendingPublication) -> Result<()> {
+pub(super) fn finish_publication(outbox: &Path, pending: &PendingPublication) -> Result<()> {
     pending.champion.validate()?;
     ensure!(
         matches!(
@@ -173,7 +173,7 @@ fn finish_publication(outbox: &Path, pending: &PendingPublication) -> Result<()>
     Ok(())
 }
 
-fn publish_winner(root: &Path, champion: &Champion) -> Result<()> {
+pub(super) fn publish_winner(root: &Path, champion: &Champion) -> Result<()> {
     ensure!(
         matches!(
             champion.identity.partition.as_str(),

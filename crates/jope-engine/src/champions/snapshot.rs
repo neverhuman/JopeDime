@@ -1,3 +1,4 @@
+use super::outbox::{record_inner, score};
 use super::*;
 
 /// Both proposal arms share this immutable cycle-level snapshot. The request
