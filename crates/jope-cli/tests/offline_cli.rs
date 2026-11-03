@@ -66,7 +66,11 @@ mod landmark_product;
 #[path = "support/landmark_one_shot.rs"]
 mod landmark_one_shot;
 
+#[path = "offline_cli/champion_commands.rs"]
 mod champion_commands;
+#[path = "offline_cli/emission_search.rs"]
 mod emission_search;
+#[path = "offline_cli/fixture_commands.rs"]
 mod fixture_commands;
+#[path = "offline_cli/routing_contracts.rs"]
 mod routing_contracts;
