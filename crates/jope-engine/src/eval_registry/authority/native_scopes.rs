@@ -401,4 +401,5 @@ impl Authority {
     }
 }
 #[cfg(test)]
+#[path = "native_scopes/tests.rs"]
 mod tests;
