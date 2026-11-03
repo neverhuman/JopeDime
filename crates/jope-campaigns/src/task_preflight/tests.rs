@@ -1,4 +1,5 @@
 use super::*;
+use crate::task::Task;
 
 fn registry() -> GeneratedOperatorRegistry {
     GeneratedOperatorRegistry::from_bytes(
