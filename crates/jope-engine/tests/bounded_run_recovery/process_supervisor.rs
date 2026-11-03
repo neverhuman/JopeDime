@@ -9,7 +9,7 @@ pub(super) struct ProcessSupervisor {
     pub(super) socket: PathBuf,
     pub(super) plan: PathBuf,
     pub(super) root: PathBuf,
-    modes: BTreeMap<u32, &'static str>,
+    pub(super) modes: BTreeMap<u32, &'static str>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 pub(super) struct ProcessRecord {
