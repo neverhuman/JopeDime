@@ -160,7 +160,9 @@ fn produce_sealed_panel_candidates(
         });
     }
     entries.sort_by(|left, right| left.context_sha256.cmp(&right.context_sha256));
-    let output = output.unwrap_or_else(|| root.join("training/sealed-panel-candidates.v2.json"));
+    let output = output.unwrap_or_else(||
+        // default fallback
+        root.join("training/sealed-panel-candidates.v2.json"));
     let produced_at_ms = if output.is_file() {
         serde_json::from_value::<SealedPanelCandidateSetV2>(read_json(&output)?)?.produced_at_ms
     } else {
@@ -385,8 +387,9 @@ fn main() -> Result<()> {
             let source: SealedPanelCandidateSetV2 =
                 serde_json::from_value(read_json(&candidates)?)?;
             source.validate()?;
-            let output =
-                output.unwrap_or_else(|| args.root.join("training/sealed-panel-pool.v2.json"));
+            let output = output.unwrap_or_else(||
+                    // default fallback
+                    args.root.join("training/sealed-panel-pool.v2.json"));
             let existing = if output.is_file() {
                 Some(serde_json::from_value::<SealedPanelPoolV2>(read_json(
                     &output,

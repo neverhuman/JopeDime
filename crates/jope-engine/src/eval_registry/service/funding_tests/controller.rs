@@ -1,5 +1,6 @@
 fn ensure_numerical_env_or_reexec(test_name: &str) -> bool {
-    let raw = fs::read("/proc/self/environ").unwrap_or_default();
+    let raw = fs::read("/proc/self/environ") // default fallback
+        .unwrap_or_default();
     let env_map: std::collections::BTreeMap<String, String> = raw
         .split(|b| *b == 0)
         .filter_map(|v| std::str::from_utf8(v).ok()?.split_once('='))
