@@ -1000,6 +1000,12 @@
           "source_commit": "bfcd901eee5ee77677e0e7b41791767c0141a122",
           "tree_sha256": "75db3f6412ce997cb439620ec7cc96a8bee291c9de15ed97e8b5ff929320c1d9",
           "tree_change": "tokio 1.53.3 security patch for RUSTSEC-2026-0386 after the ctutils 0.4.4 patch; retain the original frozen checksum; root path dependency versions read 0.4.1"
+        },
+        {
+          "schema": "jope.lambda-version-sync-base/v1",
+          "source_commit": "cb875c05209a624ef3ec1b1d9d566f4906a5c0d9",
+          "tree_sha256": "db7e387eef5278a6caff7554988367fbe1421057f501cc5600bc2b092d16502c",
+          "tree_change": "tokio 1.53.3 security patch for RUSTSEC-2026-0386 after ctutils 0.4.4; feat-math workspace path package version 1.0.0 after main release 5b7bc511; no other package moves"
         }
       ]
     },
@@ -1839,7 +1845,7 @@
       "tree_sha256": "bbfb51f70ad3f4edf1bdd2fded5913c002232fdd19368d8df6a07d7cb3869957",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline after main release 5b7bc511: path package reads 1.0.0; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 1.0.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "regression",
@@ -2393,7 +2399,7 @@
       "tree_sha256": "bc18147980582d7e8fc2b5640c6b9c9d8103e0244867bceac14bdd19112f7c2e",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline after main release 5b7bc511: path package reads 1.0.0; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 1.0.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "regression-ops",
@@ -2669,7 +2675,7 @@
       "tree_sha256": "b2f561ea6d915d3e8877e97fd4cdf4de1751d9ce087137602224d6b2450d6acd",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline after main release 5b7bc511: path package reads 1.0.0; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 1.0.0, the workspace version of this release; no other package moves"
     },
     {
       "body": "teacher-v2",
@@ -3271,7 +3277,7 @@
       "tree_sha256": "9aa3cced85bb016e6dd1031cbc79f647a5ca834997820902a845f951d044a827",
       "custody_tarball": null,
       "reason": "new workspace lock with current feat-math0.2 and unique package; historical proposal lock retained separately",
-      "tree_change": "feat-math workspace path package version 1.0.0 after main release 5b7bc511; historical proposal lock retained separately; no other package moves"
+      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 1.0.0, the workspace version of this release; no other package moves"
     }
   ],
   "excluded": [
