@@ -27,6 +27,7 @@ fn options(output: &Path, evaluations: usize) -> RunOptions {
         rng_seed: 7,
         languages: vec![jope_pipeline::emit::Language::Rust],
         policy: Policy::Skip,
+        source_commit: Some("c".repeat(40)),
         ..RunOptions::new(dataset(), output)
     }
 }
