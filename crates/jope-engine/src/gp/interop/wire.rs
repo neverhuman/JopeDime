@@ -4,7 +4,7 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
 
-const NONFINITE_PREFIX: &str = "\0jope_python_float:";
+pub(super) const NONFINITE_PREFIX: &str = "\0jope_python_float:";
 
 pub(super) fn number(value: f64) -> Value {
     if let Some(number) = serde_json::Number::from_f64(value) {
