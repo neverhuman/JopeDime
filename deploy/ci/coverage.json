@@ -6335,6 +6335,16 @@
       "lanes": [],
       "scope": "H242 data-free controls: frozen arms/rhos/seeds, energy kept-rank rule, rank-k truncation optimality and full-rank bit-exactness, only 2-D matrices touched, matched-Frobenius seeded placebo, spectral census and LASER_SINGLE candidates, frozen spectral_inventory.json (16 matrices, 3 rank-1, 13 candidates), strict selector (ties and noise keep r882, smallest perturbation on ties), fresh per-seed family folds and fold manifest, four-gate advance rule with Holm over SVD_SELECT and LASER_SINGLE only (placebo never advances), harm/plateau/fixed readouts, launch binding, H239 A1 memory guard and 07:30Z compute stop, manifest pins."
     },
+    "python:research/flywheel_selfplay/h243_modsoup/test_h243.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H243 data-free controls: frozen constants, groups.json partitions the 47 adapter tensors (11 groups), soups touch only recipe groups (beta 1 copies r782 bits, beta .5 float64 blend), per-group L2 and matched-L2 seeded placebo, policy labels, strict selector and tie order, greedy soup (gain-ordered ingredients above .001, cap 5, strict +0.001 additions, strict LCB final check, fallback to r882), fresh per-seed folds and fold manifest, four-gate advance rule with Holm over MODSWAP_SELECT and GREEDY_SOUP only (placebo never advances), launch binding, H239 A1 memory guard and 07:30Z stop, manifest pins of r882/r782."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
