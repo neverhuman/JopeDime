@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    events::tests::{append, fixture, test_body},
+    events::tests::tests::{append, fixture, test_body},
     http::auth::BearerToken,
 };
 use axum::{
