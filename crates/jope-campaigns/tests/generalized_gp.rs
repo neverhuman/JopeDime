@@ -99,9 +99,15 @@ fn evaluation(
     }
 }
 
+#[path = "generalized_gp/admission.rs"]
 mod admission;
+#[path = "generalized_gp/catalog.rs"]
 mod catalog;
+#[path = "generalized_gp/evaluation.rs"]
 mod evaluation;
+#[path = "generalized_gp/evolution.rs"]
 mod evolution;
+#[path = "generalized_gp/persistence.rs"]
 mod persistence;
+#[path = "generalized_gp/pilot.rs"]
 mod pilot;
