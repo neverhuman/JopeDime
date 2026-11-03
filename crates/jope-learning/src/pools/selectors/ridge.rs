@@ -49,6 +49,10 @@ pub(crate) fn cholesky_solve(mut a: Vec<f64>, mut b: Vec<f64>, n: usize) -> Resu
 }
 
 impl<'a> RidgeProgram<'a> {
+    pub(super) fn weights(&self) -> &[f64] {
+        &self.weights
+    }
+
     /// Performs the fit operation and returns an error if it cannot be completed.
     pub fn fit(train: &[&Pool], program_features: &'a Features, lambda: f64) -> Result<Self> {
         ensure!(
