@@ -1,3 +1,4 @@
+use jope_learning::retention::distilled as distilled_api;
 use jope_learning::retention::parquet as parquet_api;
 
 use super::*;
@@ -8,18 +9,18 @@ fn optional_statistics_preserve_legacy_distilled_bytes_and_reader() {
         row('a', 'b', Some(0.59), Outcome::Ok),
         row('b', 'b', None, Outcome::Failed),
     ];
-    let legacy = distilled::write(&rows, &known(), &[]).unwrap();
-    let table = parquet::read(&legacy).unwrap();
-    let opts = parquet::WriteOptions {
+    let legacy = distilled_api::write(&rows, &known(), &[]).unwrap();
+    let table = parquet_api::read(&legacy).unwrap();
+    let opts = parquet_api::WriteOptions {
         codec: parquet_api::Codec::Zstd,
         row_group_rows: 0,
         page_rows: 0,
         dictionary: false,
     };
-    let with_stats = parquet::write_with_statistics(&table, &opts, "fixture").unwrap();
-    assert_eq!(distilled::read(&with_stats, &known()).unwrap(), rows);
-    assert_eq!(parquet::read(&with_stats).unwrap(), table);
-    assert_eq!(distilled::write(&rows, &known(), &[]).unwrap(), legacy);
+    let with_stats = parquet_api::write_with_statistics(&table, &opts, "fixture").unwrap();
+    assert_eq!(distilled_api::read(&with_stats, &known()).unwrap(), rows);
+    assert_eq!(parquet_api::read(&with_stats).unwrap(), table);
+    assert_eq!(distilled_api::write(&rows, &known(), &[]).unwrap(), legacy);
     let old_reader = parquet_api::FileReader::open(&legacy).unwrap();
     assert_eq!(old_reader.statistics(0, 7).unwrap(), None);
     let reader = parquet_api::FileReader::open(&with_stats).unwrap();
@@ -36,11 +37,11 @@ fn nullable_multigroup_statistics_reconcile_to_legacy_streamed_values() {
         row('b', 'b', None, Outcome::Timeout),
         row('c', 'b', Some(0.61), Outcome::Ok),
     ];
-    let legacy = distilled::write(&rows, &known(), &[]).unwrap();
-    let table = parquet::read(&legacy).unwrap();
-    let bytes = parquet::write_with_statistics(
+    let legacy = distilled_api::write(&rows, &known(), &[]).unwrap();
+    let table = parquet_api::read(&legacy).unwrap();
+    let bytes = parquet_api::write_with_statistics(
         &table,
-        &parquet::WriteOptions {
+        &parquet_api::WriteOptions {
             codec: parquet_api::Codec::Zstd,
             row_group_rows: 2,
             page_rows: 1,
@@ -54,11 +55,11 @@ fn nullable_multigroup_statistics_reconcile_to_legacy_streamed_values() {
     assert_eq!(reader.num_rows, 3);
     assert_eq!(
         reader.read_column(0, 7).unwrap().0,
-        parquet::Values::F64(vec![Some(0.59), None])
+        parquet_api::Values::F64(vec![Some(0.59), None])
     );
     assert_eq!(
         reader.read_column(1, 7).unwrap().0,
-        parquet::Values::F64(vec![Some(0.61)])
+        parquet_api::Values::F64(vec![Some(0.61)])
     );
     assert_eq!(
         reader.statistics(0, 7).unwrap().unwrap().null_count,
