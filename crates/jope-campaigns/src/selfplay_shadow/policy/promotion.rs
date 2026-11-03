@@ -126,7 +126,7 @@ pub fn plan_encoding_chunks(
         .map(|rows| {
             let datasets = rows
                 .iter()
-                .map(|row| super::EncodingDatasetIdentity {
+                .map(|row| super::super::EncodingDatasetIdentity {
                     dataset_id: row.dataset_id.clone(),
                     content_sha256: row.content_sha256.clone(),
                 })
