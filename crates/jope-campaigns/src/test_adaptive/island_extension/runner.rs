@@ -108,7 +108,7 @@ pub(crate) fn run_island_extension(registry: &Path, base_run_id: &str, resume: b
             let counter = &completed_new_leaders;
             let manifest = manifest_ref;
             handles.push(scope.spawn(move || {
-                let result = run_dataset(
+                let result = super::dataset::run_dataset(
                     registry,
                     manifest,
                     binding,
@@ -135,7 +135,7 @@ pub(crate) fn run_island_extension(registry: &Path, base_run_id: &str, resume: b
     let best_solutions = make_best_solutions(&manifest, &specs, &results)?;
     let best_solutions_bytes = canonical_json(&best_solutions)?;
     immutable_write(&root.join(BEST_SOLUTIONS_FILE), &best_solutions_bytes)?;
-    let summary = make_summary(
+    let summary = super::summary::make_summary(
         &manifest,
         results,
         &root,
@@ -186,7 +186,9 @@ pub(crate) fn validate_island_extension(registry: &Path, base_run_id: &str) -> R
         let spec = by_hash
             .get(binding.dataset_hash.as_str())
             .context("island dataset is absent from Golden42")?;
-        results.push(validate_dataset(registry, &manifest, binding, spec)?);
+        results.push(super::dataset::validate_dataset(
+            registry, &manifest, binding, spec,
+        )?);
         let dataset_root = root.join("datasets").join(&binding.dataset_hash);
         let identity = island_identity(&manifest, spec);
         for (checkpoint, _) in load_island_checkpoints(
@@ -233,7 +235,7 @@ pub(crate) fn validate_island_extension(registry: &Path, base_run_id: &str) -> R
     }
     let summary_bytes = fs::read(root.join(SUMMARY_FILE))?;
     let recorded: IslandSummary = serde_json::from_slice(&summary_bytes)?;
-    let expected_summary = make_summary(
+    let expected_summary = super::summary::make_summary(
         &manifest,
         results,
         &root,
