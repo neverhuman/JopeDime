@@ -1,0 +1,12 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "rmse"
+  },
+  "limits": [
+    {
+      "resource": "fit_peak_heap_bytes",
+      "max": 13000000
+    }
+  ]
+}

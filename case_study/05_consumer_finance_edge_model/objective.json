@@ -1,0 +1,12 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "rmse"
+  },
+  "limits": [
+    {
+      "resource": "model_bytes",
+      "max": 310000
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "jope.pipeline-seeds/v1",
+  "genomes": [
+    {
+      "genome": "(pipe X (histgbm bins=255 depth=6 lambda=1 lr=0.3 min_leaf=1 rounds=100))",
+      "program_sha256": "bd14b56f2123743492f45f2c1c7a3f5abd50409851e4cf1de38e492cf79a76f2"
+    },
+    {
+      "genome": "(pipe X (histgbm bins=255 depth=6 lambda=0 lr=0.1 min_leaf=20 rounds=100))",
+      "program_sha256": "7cda9ce575abc3de13301fe30d4a3f74cd77dfa66c3bcd949940f042e459790f"
+    },
+    {
+      "genome": "(pipe X (histgbm2 bags=1 col_subsample=1 leaves=31 lr=0.1 min_leaf=20 rounds=100 row_subsample=1))",
+      "program_sha256": "5553674591250357497d0567a9f1729d5c0e4775512d6da9564ef2c6961d1d36"
+    },
+    {
+      "genome": "(pipe X (histgbm2))",
+      "program_sha256": "af9f6d77ace2da4c6d868754d7a8ab45b1a81ed1d2cdd18748ef6ee889c48e68"
+    },
+    {
+      "genome": "(pipe X (ensemble bins=255 depth=6 lambda=1 lambda_frac=0.02 lr=0.1 min_leaf=5 rounds=150))",
+      "program_sha256": "dab2abbe14a606d2e5f780931a2f42adc9bc38bdbb9ff794941164037609a5d8"
+    },
+    {
+      "genome": "(pipe X (histgbm bins=64 depth=3 lr=0.1 rounds=60))",
+      "program_sha256": "d81cbf07cbfc8c609bc16c46187b9ddce25bda610dba22491183899571327462"
+    }
+  ]
+}

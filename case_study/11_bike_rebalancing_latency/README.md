@@ -21,10 +21,23 @@ Business constraint: **row_latency_p99_us max**. Accuracy metric: `{"metric":"as
 ## Objective (`objective.json`)
 
 ```json
-(not yet calibrated: run case_study/bin/calibrate.sh on this case)
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "asymmetric_absolute",
+    "under_cost": 3.0,
+    "over_cost": 1.0
+  },
+  "limits": [
+    {
+      "resource": "row_latency_p99_us",
+      "max": 5.800000000000001
+    }
+  ]
+}
 ```
 
-Calibration pending: `case_study/bin/calibrate.sh case_study/11_bike_rebalancing_latency` sets the limits/prices from a declared calibration run before the main runs.
+Calibrated from arm D on rng seed 1 (28 measured candidates; not a main seed). Rule: limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading. Train target σ = 0.188512.
 
 `baseline.json` ranks by the same accuracy metric alone, with non-binding limits, so the same
 resource readings are recorded for every candidate in every arm.
@@ -38,7 +51,7 @@ resource readings are recorded for every candidate in every arm.
 | C | bootstrap + 11 random + DL seeds (≤ 11) | `baseline.json` |
 | D | bootstrap + 11 random | `baseline.json` |
 
-Budget 96 evaluations (≈ generation 0 + 8–10 generations), 3600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
+Budget 96 evaluations (≈ generation 0 + 8–10 generations), 600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
 
 ## Run
 
@@ -64,3 +77,10 @@ best-so-far objective by generation) and `generations.csv`.
 - Measured readings are host- and load-dependent; `run.json` records the host, load and limits of each run.
 
 <!-- notes -->
+
+## Business context
+
+- **Dataset provenance**: UCI Bike Sharing Hour (`bbc0bb2e8fcf2ba6`, 1,999 rows × 16 features; train 1,000, test 999) from [UCI Machine Learning Repository dataset 275](https://archive.ics.uci.edu/ml/machine-learning-databases/00275/Bike-Sharing-Dataset.zip) ([Fanaee-T & Gama, Progress in Artificial Intelligence 2013](https://doi.org/10.1007/s13748-013-0040-3)).
+- **Domain & SLA context**: In station-based bike-share rebalancing ([Capital Bikeshare System Data](https://capitalbikeshare.com/system-data)), an illustrative asymmetric loss (`{"metric":"asymmetric_absolute","under_cost":3.0,"over_cost":1.0}`) penalizes demand under-prediction (empty-dock stockouts) 3× more heavily than over-prediction, subject to a hard online tail-latency cap (`row_latency_p99_us` max).
+
+_Business context contributed by agy_resource_fitness (Gemini) on 2026-11-03 (notes file sha256 744cf669fdc7…). The links were supplied by the contributor and were not independently fetched._

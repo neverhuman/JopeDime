@@ -1,0 +1,20 @@
+{
+  "metric": "composite",
+  "terms": [
+    {
+      "weight": 1.0,
+      "scale": 0.23,
+      "fitness": {
+        "metric": "rmse"
+      }
+    },
+    {
+      "weight": 0.1,
+      "scale": 460000000,
+      "fitness": {
+        "metric": "resource",
+        "name": "fit_peak_heap_bytes"
+      }
+    }
+  ]
+}

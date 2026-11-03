@@ -34,13 +34,33 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/07_loan_rate_batch_throughput/20261103T130723Z-smoke",
+    "observations_sha256": "4ecd0cea9b93453720dc7cb2e8eb49744843a75be8e90110784947e9b2dcd373",
+    "target_sigma": 0.194525,
+    "medians": {
+      "fit_cpu_seconds": 0.38899333499999855,
+      "fit_peak_heap_bytes": 32984761.0,
+      "fit_seconds": 0.388966174,
+      "hold_rows": 1569.0,
+      "model_bytes": 2185559.0,
+      "predict_peak_heap_bytes": 4192368.0,
+      "predict_rows_per_second": 177122.4210569095,
+      "predict_seconds": 0.008869952,
+      "predict_us_per_row": 5.653251752708733,
+      "program_nodes": 4.0,
+      "stage_count": 4.0,
+      "train_rows": 6431.0,
+      "mae": 0.12052287446062937,
+      "candidates": 28
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +83,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -89,5 +114,10 @@
         }
       }
     ]
-  }
+  },
+  "temporal_risk": "LOW",
+  "comparability": [
+    "Throughput: ours is in-process Rust batch prediction, baselines' is the library's Python batch call"
+  ],
+  "target_leakage_risk": "LOW"
 }

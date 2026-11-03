@@ -1,0 +1,17 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "mape",
+    "epsilon": 1.0
+  },
+  "limits": [
+    {
+      "resource": "row_latency_p99_us",
+      "max": 17
+    },
+    {
+      "resource": "model_bytes",
+      "max": 600000
+    }
+  ]
+}

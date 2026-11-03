@@ -21,10 +21,21 @@ Business constraint: **predict_rows_per_second min**. Accuracy metric: `{"metric
 ## Objective (`objective.json`)
 
 ```json
-(not yet calibrated: run case_study/bin/calibrate.sh on this case)
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "mae"
+  },
+  "limits": [
+    {
+      "resource": "predict_rows_per_second",
+      "min": 180000
+    }
+  ]
+}
 ```
 
-Calibration pending: `case_study/bin/calibrate.sh case_study/07_loan_rate_batch_throughput` sets the limits/prices from a declared calibration run before the main runs.
+Calibrated from arm D on rng seed 1 (28 measured candidates; not a main seed). Rule: limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading. Train target σ = 0.194525.
 
 `baseline.json` ranks by the same accuracy metric alone, with non-binding limits, so the same
 resource readings are recorded for every candidate in every arm.
@@ -38,7 +49,7 @@ resource readings are recorded for every candidate in every arm.
 | C | bootstrap + 11 random + DL seeds (≤ 11) | `baseline.json` |
 | D | bootstrap + 11 random | `baseline.json` |
 
-Budget 96 evaluations (≈ generation 0 + 8–10 generations), 3600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
+Budget 96 evaluations (≈ generation 0 + 8–10 generations), 600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
 
 ## Run
 
@@ -64,3 +75,10 @@ best-so-far objective by generation) and `generations.csv`.
 - Measured readings are host- and load-dependent; `run.json` records the host, load and limits of each run.
 
 <!-- notes -->
+
+## Business context
+
+- **Dataset provenance**: OpenIntro `loans_full_schema` (`18f905fa597f92d3`, 10,000 rows × 41 features; train 8,000, test 2,000) from [Rdatasets openintro/loans_full_schema.csv](https://vincentarelbundock.github.io/Rdatasets/csv/openintro/loans_full_schema.csv) ([OpenIntro LendingClub dataset documentation](https://www.openintro.org/data/index.php?data=loans_full_schema)).
+- **Domain & SLA context**: Nightly batch credit repricing across large consumer loan portfolios must complete within fixed batch processing windows, motivating a hard minimum throughput floor (`predict_rows_per_second` min) while minimizing `{"metric":"mae"}`.
+
+_Business context contributed by agy_resource_fitness (Gemini) on 2026-11-03 (notes file sha256 744cf669fdc7…). The links were supplied by the contributor and were not independently fetched._

@@ -34,13 +34,35 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/11_bike_rebalancing_latency/20261103T130742Z-smoke",
+    "observations_sha256": "a04540937be0889b18f39ccc76a5a0c7397d5724b9eeaf4279836e5b3b313f89",
+    "target_sigma": 0.188512,
+    "medians": {
+      "fit_cpu_seconds": 0.03099949000000013,
+      "fit_peak_heap_bytes": 1720650.0,
+      "fit_seconds": 0.031542723,
+      "hold_rows": 203.0,
+      "model_bytes": 157003.0,
+      "predict_peak_heap_bytes": 165904.0,
+      "predict_rows_per_second": 448097.9016656881,
+      "predict_seconds": 0.000570699,
+      "predict_us_per_row": 2.81132512315271,
+      "program_nodes": 3.0,
+      "row_latency_p50_us": 4.188000000000001,
+      "row_latency_p99_us": 5.76,
+      "stage_count": 3.0,
+      "train_rows": 797.0,
+      "mae": 0.04958719628364797,
+      "candidates": 28
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +85,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -92,5 +119,12 @@
         }
       }
     ]
-  }
+  },
+  "temporal_risk": "MEDIUM",
+  "comparability": [
+    "Baselines' one-row latency is Python-served; the native-serving proxy table credits them with batch us/row",
+    "Hour/day features",
+    "TARGET IDENTITY: cnt = casual + registered, and both are features; best library R2 = 0.998. Accuracy results are non-evidence"
+  ],
+  "target_leakage_risk": "HIGH"
 }

@@ -75,6 +75,28 @@ of arm D on its own RNG seed (never a main seed). The rule is fixed in advance:
 `summarize.sh` reports, per generation, the best-so-far objective, and the accuracy and readings
 of the best-so-far program.
 
+## Extending, comparing and reporting
+
+```sh
+case_study/bin/run_all.sh extended --cases "01 03" --rounds 3     # chained rounds per arm-A seed
+case_study/bin/collect.sh                 # copy runs from the other hosts (never overwrites)
+case_study/bin/compare.sh --extended "<stamps>"     # ours vs alternatives, same objective
+case_study/bin/leaderboard.sh --extended "<stamps>" # cases ranked by leakage risk, then margin
+case_study/bin/final_test.sh <case>       # the single pre-declared test look (after TEST WINDOW)
+```
+
+- `extend_case.sh` chains rounds of up to 1000 evaluations or 600 s each. Round r+1 starts from
+  the 11 best feasible programs found so far, and every round is a verified receipt.
+- Arm **E** seeds generation 0 with [`seeds.bestpractice.json`](seeds.bestpractice.json): our
+  grammar's equivalents of the XGBoost, LightGBM and scikit-learn defaults, the same for every case.
+- The alternatives (CatBoost, LightGBM, XGBoost, HistGB, AutoGluon, TabPFN v2, Kumo Tabular,
+  and classical models) are fitted outside the repository on the identical cut-0 rows. Each is
+  scored by `jopedime fitness evaluate` under the case's own `objective.json`.
+- `compare.sh` and `leaderboard.sh` read only those score files and our receipts and observations.
+- The interim results are summarized in the
+  [case-study brief](../docs/case-study-brief/README.md) (not the white paper). It is regenerated
+  from the evidence with `make -C docs/case-study-brief`.
+
 ## Rules every case keeps
 
 - **Sealed data.** Only datasets that `check_sealed.sh` clears: no sealed meta-test family, no
@@ -92,6 +114,15 @@ of the best-so-far program.
 - **Validation order.** `jope pipeline run` validates on an unordered fold partition of
   `train.csv`. Cases on time-ordered data say so, and do not claim chronological (regime)
   validation.
+
+## Known limitation and next work
+
+A `fit_seconds` limit refuses an over-budget program only after its fit finishes, so the search
+still pays for it. In the first calibration run, one random generation-0 program took 365 s of a
+388 s run. The fix is a preemptive per-candidate fit deadline derived from the objective's limit:
+a cooperative stage-boundary check in feat-math plus a watchdog for blocking linear algebra.
+The feat-math part moves the ADR-0004 evaluator identity, so it is separate work. Design note by
+agy_resource_fitness: `~/jope-data/resfit-2071/PREEMPTIVE_FIT_DEADLINE_DESIGN.md` on xbabe2.
 
 ## Cases
 

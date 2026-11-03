@@ -34,13 +34,33 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/09_ultrawide_parsimony/20261103T130723Z-smoke",
+    "observations_sha256": "1ad380b283955ac9ca7c364a610f290c97639cba2a7341805dccc88b2702313c",
+    "target_sigma": 0.177955,
+    "medians": {
+      "fit_cpu_seconds": 0.048984635000000054,
+      "fit_peak_heap_bytes": 4231572.0,
+      "fit_seconds": 0.048398094,
+      "hold_rows": 47.0,
+      "model_bytes": 1256837.0,
+      "predict_peak_heap_bytes": 624160.0,
+      "predict_rows_per_second": 86964.24474328896,
+      "predict_seconds": 0.000638207,
+      "predict_us_per_row": 13.578872340425532,
+      "program_nodes": 4.0,
+      "stage_count": 4.0,
+      "train_rows": 181.0,
+      "mae": 0.1567637485024028,
+      "candidates": 28
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +83,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -100,5 +125,10 @@
         }
       }
     ]
-  }
+  },
+  "temporal_risk": "LOW",
+  "comparability": [
+    "program_nodes is defined only for our programs; baselines are compared on RMSE and resources"
+  ],
+  "target_leakage_risk": "LOW"
 }

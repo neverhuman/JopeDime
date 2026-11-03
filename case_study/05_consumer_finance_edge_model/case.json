@@ -34,13 +34,33 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/05_consumer_finance_edge_model/20261103T130723Z-smoke",
+    "observations_sha256": "a198bf3f8b27ceed01b5e4c176f626915077bb82450b4b829f7b2a28fa0afe59",
+    "target_sigma": 0.0271489,
+    "medians": {
+      "fit_cpu_seconds": 0.6019718769999995,
+      "fit_peak_heap_bytes": 57307324.0,
+      "fit_seconds": 0.602322522,
+      "hold_rows": 1575.0,
+      "model_bytes": 305334.0,
+      "predict_peak_heap_bytes": 10889168.0,
+      "predict_rows_per_second": 93826.73127744171,
+      "predict_seconds": 0.022288044,
+      "predict_us_per_row": 14.151139047619049,
+      "program_nodes": 3.0,
+      "stage_count": 3.0,
+      "train_rows": 6425.0,
+      "mae": 0.01668685238126213,
+      "candidates": 28
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +83,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -89,5 +114,11 @@
         }
       }
     ]
-  }
+  },
+  "temporal_risk": "LOW",
+  "comparability": [
+    "TARGET IDENTITY: target is INCOME and the features include its components (WAGEINC, BUSSEFARMINC, INTDIVINC, KGINC, SSRETINC, TRANSFOTHINC); plain ridge R2 = 0.993. Accuracy contests measure linear-identity recovery, not modelling skill",
+    "model_bytes is our canonical JSON serialization vs each library's native format"
+  ],
+  "target_leakage_risk": "HIGH"
 }

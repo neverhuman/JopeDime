@@ -9,7 +9,7 @@
 #     matched by name against the catalog display name and provenance id.
 # Prints one line per id: CLEAR or SEALED with the reason. Read-only.
 set -euo pipefail
-root=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
+root=${JOPE_CASE_ROOT:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}
 manifest=$root/research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json
 panel=$root/crates/jope-datasets/releases/regression-10-v1/release.json
 jrb=${JOPE_JRB01_EXCLUSION:-/home/ubuntu/jope_plan/master/approved/JRB01_SEALED_FAMILY_EXCLUSION.json}

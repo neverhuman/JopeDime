@@ -1,0 +1,14 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "asymmetric_absolute",
+    "under_cost": 3.0,
+    "over_cost": 1.0
+  },
+  "limits": [
+    {
+      "resource": "row_latency_p99_us",
+      "max": 5.800000000000001
+    }
+  ]
+}
