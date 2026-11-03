@@ -7,7 +7,7 @@ use jope_learning::hwm;
 use jope_learning::ledger::Ledger;
 use jope_learning::sources::pipeline;
 use jope_learning::state::State;
-use jope_pipeline::run::{Policy, RunOptions, run};
+use jope_pipeline::run::{run, Policy, RunOptions};
 use jope_pipeline::search::Budget;
 use std::{
     path::{Path, PathBuf},
