@@ -9,7 +9,7 @@ pub(super) fn load_champion_checkpoints(
     let mut previous = initial_terminal_sha256.to_string();
     let mut generation = CHAMPION_START_GENERATION;
     loop {
-        let path = checkpoint_path(root, generation);
+        let path = super::campaign::checkpoint_path(root, generation);
         if !path.is_file() {
             break;
         }
@@ -38,7 +38,7 @@ pub(super) fn load_champion_checkpoints(
         checkpoints.push((checkpoint, sha256));
         generation += 1;
         if terminal {
-            if checkpoint_path(root, generation).is_file() {
+            if super::campaign::checkpoint_path(root, generation).is_file() {
                 bail!("champion history continues after a strict leader crossing");
             }
             break;
