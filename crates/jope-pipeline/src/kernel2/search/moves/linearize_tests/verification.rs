@@ -50,7 +50,13 @@ pub(super) fn digested(engine: &EngineRecord, bytes: &[u8]) -> EngineRecord {
 
 /// One named edit of the records at `measured` (an offered, measured line) and `refused` (a
 /// refused line); `other` is another measured program's sha256.
-pub(super) fn tamper(moves: &mut Vec<MoveRecord>, measured: usize, refused: usize, label: &str, other: &str) {
+pub(super) fn tamper(
+    moves: &mut Vec<MoveRecord>,
+    measured: usize,
+    refused: usize,
+    label: &str,
+    other: &str,
+) {
     fn fit(m: &mut MoveRecord) -> &mut FitRecord {
         m.linearization.as_mut().unwrap().fit.as_mut().unwrap()
     }
