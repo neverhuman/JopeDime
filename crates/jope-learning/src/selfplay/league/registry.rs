@@ -1,6 +1,7 @@
 use super::*;
 use anyhow::{bail, ensure};
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MemberKind {
     FrozenParent,

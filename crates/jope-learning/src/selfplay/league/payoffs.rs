@@ -1,6 +1,7 @@
 use super::*;
 use anyhow::ensure;
 
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ContextIdentity {
     pub context_id: String,
     pub family_id: String,
