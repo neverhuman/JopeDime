@@ -136,6 +136,9 @@ fn complete_evidence(
         .collect()
 }
 
+#[path = "search_v3/evidence.rs"]
 mod evidence;
+#[path = "search_v3/folds.rs"]
 mod folds;
+#[path = "search_v3/schedules.rs"]
 mod schedules;
