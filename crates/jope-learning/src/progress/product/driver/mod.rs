@@ -4,6 +4,7 @@ use crate::hwm::{parse_event, Transition};
 use crate::ledger::Ledger;
 use crate::progress::cadence::{Cadence, Checkpoints, Urgent};
 use crate::progress::engine::{self, EngineCorpus, Mapped, Previous};
+use crate::progress::inventory::Head;
 use crate::progress::inventory::{
     blob_key, decode_as, BlobRef, Checkpoint, Decoded, Dependency, Encoded, Event, EventBody,
     HwmDecision, Kind, ObjectRef, RunManifest, MAX_REFS,
