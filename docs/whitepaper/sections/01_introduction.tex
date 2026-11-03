@@ -37,11 +37,11 @@ the hardest version as a benchmark for general intelligence: today's systems
 ``can play a game of Go at a world champion level. But could a system invent
 Go?'' \citep{hassabis2025bigtech}. These challenges concern both proposing
 solutions and choosing new questions; our test concerns only candidate algorithm
-proposals under human-defined tasks and evaluation metrics (\cref{sec:meaning}).
+proposals under human-defined \mbox{tasks and evaluation} metrics (\cref{sec:meaning}).
 
 Predicting historical text does not directly reward improvement over an
 incumbent. That motivates a different training signal; it does not establish
-a ceiling on what a pretrained model can discover (\cref{sec:anatomy}).
+a ceiling on what a \mbox{pretrained model} can discover (\cref{sec:anatomy}).
 
 \paragraph{The human challenge.}
 Research effort rose while productivity declined in the industries,
@@ -73,7 +73,7 @@ AlphaGo learned from human expert games and searched heavily at every move
 \citep{silver2016mastering}.
 AlphaGo Zero learned only from games against itself, and its network alone,
 with no search, rated \num{3055}~Elo. That is close to the \num{3144} of AlphaGo Fan, the
-version that beat the European champion Fan Hui
+version that beat the \mbox{European champion} Fan Hui
 \citep{silver2016mastering,silver2017mastering}.
 
 This motivates an analogous
@@ -152,7 +152,7 @@ Zero analogy concerns the additional training feedback from the referee.
 
 \paragraph{Contributions.}
 We formulate algorithm invention as a game and give a tabular-regression
-reference whose moves are typed programs of learning primitives.
+reference whose moves are \mbox{typed programs} of learning primitives.
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=3pt,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
     judgment and retention), with an idealized relation between proposal
@@ -164,7 +164,7 @@ reference whose moves are typed programs of learning primitives.
     self-play training and for the expected compute cost per verified improvement (\cref{sec:price}).
   \item \textbf{\EZ{}:} a reference learner with a frozen problem encoder,
     a grammar-constrained program writer and a problem--program ranking map,
-    plus an expert-\hspace{0pt}iteration training procedure and audit safeguards against referee reward hacking
+    plus an expert-\hspace{0pt}iteration training procedure and audit safeguards against \mbox{referee reward} hacking
     (\cref{sec:method}).
   \item \textbf{An evaluation protocol for the single-proposal claim:}
     paired comparisons with frozen algorithms whose receipts record the
