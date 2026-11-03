@@ -231,14 +231,21 @@ pub(super) fn read_newest_json(directory: &Path, states: &mut Vec<SourceState>) 
     read_json_source(&newest.path(), "proposer-intent", false, states)
 }
 
+fn pointer_or_empty(value: &Value, path: &str) -> Value {
+    match value.pointer(path) {
+        Some(found) => found.clone(),
+        None => json!([]),
+    }
+}
+
 pub(super) fn load_scq_snapshot(scq: &Path) -> Result<Value> {
     match run_scq_json(scq, &["snapshot"]) {
         Ok(value) if value.get("Snapshot").is_some() => Ok(value),
         primary => {
-            let primary_error = primary
-                .err()
-                .map(|error| format!("{error:#}"))
-                .unwrap_or_else(|| "snapshot response lacks Snapshot".to_owned());
+            let primary_error = match primary.err() {
+                Some(error) => format!("{error:#}"),
+                None => "snapshot response lacks Snapshot".to_owned(),
+            };
             let nodes = run_scq_json(scq, &["nodes"]).with_context(|| {
                 format!("SCQ snapshot failed ({primary_error}); nodes fallback")
             })?;
@@ -246,10 +253,7 @@ pub(super) fn load_scq_snapshot(scq: &Path) -> Result<Value> {
                 .with_context(|| format!("SCQ snapshot failed ({primary_error}); jobs fallback"))?;
             let (families, priority_alert) = match run_scq_json(scq, &["priority", "ls"]) {
                 Ok(priorities) => (
-                    priorities
-                        .pointer("/FamilyPriorities/families")
-                        .cloned()
-                        .unwrap_or_else(|| json!([])),
+                    pointer_or_empty(&priorities, "/FamilyPriorities/families"),
                     None,
                 ),
                 Err(error) => (
@@ -265,9 +269,9 @@ pub(super) fn load_scq_snapshot(scq: &Path) -> Result<Value> {
                 "Snapshot": {
                     "epoch": null,
                     "ts": null,
-                    "nodes": nodes.pointer("/Nodes/nodes").cloned().unwrap_or_else(|| json!([])),
-                    "gpus": nodes.pointer("/Nodes/gpus").cloned().unwrap_or_else(|| json!([])),
-                    "jobs": jobs.pointer("/Jobs/jobs").cloned().unwrap_or_else(|| json!([])),
+                    "nodes": pointer_or_empty(&nodes, "/Nodes/nodes"),
+                    "gpus": pointer_or_empty(&nodes, "/Nodes/gpus"),
+                    "jobs": pointer_or_empty(&jobs, "/Jobs/jobs"),
                     "families": families,
                     "events": [],
                     "alerts": alerts,

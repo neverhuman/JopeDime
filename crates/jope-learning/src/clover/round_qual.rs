@@ -53,11 +53,16 @@ use crate::support::DecomposedSupportKl;
 /// True if `s` is empty/whitespace or matches a case-insensitive placeholder sentinel
 /// (`UNPINNED`, `TBD`, `TODO`, `PENDING`, `PLACEHOLDER`, `UNBOUND`).
 fn is_placeholder_sentinel(s: &str) -> bool {
-    let trimmed = s.trim();
-    trimmed.is_empty()
+    let normalized = s.trim().to_ascii_uppercase();
+    normalized.is_empty()
         || matches!(
-            trimmed.to_ascii_uppercase().as_str(),
-            "UNPINNED" | "TBD" | "TODO" | "PENDING" | "PLACEHOLDER" | "UNBOUND"
+            normalized.as_bytes(),
+            b"UNPINNED"
+                | [b'T', b'B', b'D']
+                | [b'T', b'O', b'D', b'O']
+                | [b'P', b'E', b'N', b'D', b'I', b'N', b'G']
+                | [b'P', b'L', b'A', b'C', b'E', b'H', b'O', b'L', b'D', b'E', b'R']
+                | b"UNBOUND"
         )
 }
 
