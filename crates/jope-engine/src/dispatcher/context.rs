@@ -29,7 +29,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             println!(
                 "{} new GP jobs admitted with verified saved contexts",
                 jope_parallel::queue::enqueue_bound(
-                    &root,
+                    root,
                     &jobs,
                     &contexts,
                     campaign_contexts.as_deref()
@@ -47,7 +47,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             println!(
                 "{}",
                 serde_json::to_string_pretty(&jope_parallel::queue::write_coverage(
-                    &root, &campaign, &union, &refs, &output
+                    root, &campaign, &union, &refs, &output
                 )?)?
             );
         }
@@ -147,7 +147,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
         )?,
 
         EngineCmd::HyperionService { jobs, spec, output } => {
-            jope_parallel::hyperion::service(&root, &jobs, &spec, &output)?
+            jope_parallel::hyperion::service(root, &jobs, &spec, &output)?
         }
         EngineCmd::HyperionRank {
             jobs,
@@ -155,7 +155,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             output,
             rank,
             world,
-        } => jope_parallel::hyperion::rank(&root, &jobs, &spec, &output, rank, world)?,
+        } => jope_parallel::hyperion::rank(root, &jobs, &spec, &output, rank, world)?,
         EngineCmd::ExpandCuts {
             prepared,
             output,
