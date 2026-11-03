@@ -1,14 +1,1449 @@
 {
+  "process_amendments": [
+    {
+      "amendment": "A1",
+      "authority": "/home/ubuntu/nudges/hw_t0030_res08_h236_a1_load.md",
+      "authority_sha256": "948f02832adfc5f7231f8145dc29720cbe6df86cf556e5c063eb9d8bea0a98bf",
+      "utc": "2026-11-03T00:29:13.046507+00:00",
+      "reason": "load5 inflated by foreign nice'd rustc + iowait; CPU idle ~58%",
+      "pause_load5_gt": 108,
+      "resume_load5_lte": 100,
+      "admission_load5_lte": 100,
+      "scientific_source_commit": "39fd7d58258a2aefd9aa2eadef201ae4b5069812",
+      "original_monitor_sha256": "b046df8b3caed817c97af13801719c69cca987635c2fa3e5a43f163d8a7a6463",
+      "wrapper": "/home/ubuntu/jope_plan/evidence/H236/res08-t0005/monitor_a1.py",
+      "wrapper_sha256": "9a664cb3157b04a4f14c2e67430e11c421bf855f6616570cf0be37801453699d",
+      "all_other_guards_unchanged": true,
+      "scientific_outcomes_read": false,
+      "model_constructions": 0,
+      "primary_attempt_claim_exists": false,
+      "old_admission_pid": 36071,
+      "old_admission_only_controller_stopped": true,
+      "scientific_retry": false
+    }
+  ],
+  "schema": "jope.h236.compact-metrics/v1",
   "wave": "H236",
-  "status": "PREREGISTERED",
-  "verdict": null,
-  "primary_verdict": null,
-  "optimizer_updates": 0,
-  "complete_cells": 0,
-  "scientific_execution": "NOT_STARTED",
-  "dope_before": null,
-  "dope_after": null,
-  "primary_dlval": null,
-  "secondary_oof": null,
-  "source_commit": null
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "primary_verdict": "NO_ADVANCE",
+  "optimizer_updates": 1800,
+  "complete_cells": 15,
+  "known_complete_cell_trace_updates": 1800,
+  "source_commit": "39fd7d58258a2aefd9aa2eadef201ae4b5069812",
+  "prereg_pr": 2073,
+  "execution_source_commit": "39fd7d58258a2aefd9aa2eadef201ae4b5069812",
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "baseline_mean": 1.1377941898164525,
+  "eval_forward_bit_exact": true,
+  "primary_dlval": {
+    "contexts": 91,
+    "families": 19,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "SF_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "SF_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "SF_LR3_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "SF_LR3_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ],
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ],
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "secondary_oof": {
+    "contexts": 1219,
+    "families": 205,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "SF_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "SF_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "SF_LR3_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "SF_LR3_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "trainable_parameters": 29211,
+  "smoke_optimizer_updates": 3,
+  "plateau_best_context_utility": 1.1389572,
+  "context_mean_minus_plateau_by_seed": [
+    [
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639
+    ],
+    [
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639
+    ],
+    [
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639
+    ]
+  ],
+  "step40_drift": {
+    "CONTROL": {
+      "per_cell": [
+        0.37597642727066033,
+        0.3969048706516173,
+        0.3868864530530727,
+        0.3727972134356388,
+        0.3772689182716261,
+        0.3493497630623796,
+        0.3651870571673692,
+        0.39390754768206293,
+        0.3749385547320692,
+        0.3871646122996727,
+        0.3650322311787439,
+        0.37708076109921135,
+        0.37572536351871466,
+        0.3843918631212746,
+        0.3798685905340266
+      ],
+      "median": 0.37708076109921135,
+      "min": 0.3493497630623796,
+      "max": 0.3969048706516173
+    },
+    "SF": {
+      "per_cell": [
+        0.1879432476437607,
+        0.196877821399084,
+        0.19786357625660747,
+        0.183875471120028,
+        0.19884573024364866,
+        0.16001670219697725,
+        0.17507924550301385,
+        0.21536837863246627,
+        0.1855816434301264,
+        0.2074623296288442,
+        0.18192174462724878,
+        0.19244957694280868,
+        0.19150313953876832,
+        0.20743909942299577,
+        0.18726876857075977
+      ],
+      "median": 0.19150313953876832,
+      "min": 0.16001670219697725,
+      "max": 0.21536837863246627
+    },
+    "SF_LR3": {
+      "per_cell": [
+        0.5997602569960131,
+        0.639198663384228,
+        0.6400909548741334,
+        0.5932315402004369,
+        0.6311824207541573,
+        0.5084407328178371,
+        0.5670956507896995,
+        0.6946473594991375,
+        0.5938868872615398,
+        0.6634440537137055,
+        0.5857021498845381,
+        0.6169950395832035,
+        0.611005009743291,
+        0.6634340434818368,
+        0.6014838310356777
+      ],
+      "median": 0.611005009743291,
+      "min": 0.5084407328178371,
+      "max": 0.6946473594991375
+    }
+  },
+  "pseudoreplication": {
+    "strict_OOF_identical": [
+      [
+        "seed236101:r882",
+        "seed236101:CONTROL",
+        "seed236101:SF",
+        "seed236101:SF_LR3",
+        "seed236102:r882",
+        "seed236102:CONTROL",
+        "seed236102:SF",
+        "seed236102:SF_LR3",
+        "seed236103:r882",
+        "seed236103:CONTROL",
+        "seed236103:SF",
+        "seed236103:SF_LR3"
+      ]
+    ],
+    "strict_DLVal_identical": [
+      [
+        "seed236101:r882",
+        "seed236101:CONTROL",
+        "seed236101:SF",
+        "seed236101:SF_LR3",
+        "seed236102:r882",
+        "seed236102:CONTROL",
+        "seed236102:SF",
+        "seed236102:SF_LR3",
+        "seed236103:r882",
+        "seed236103:CONTROL",
+        "seed236103:SF",
+        "seed236103:SF_LR3"
+      ]
+    ],
+    "unconstrained_OOF_identical": [
+      [
+        "seed236101:r882",
+        "seed236101:SF_LR3",
+        "seed236102:r882",
+        "seed236103:r882"
+      ]
+    ],
+    "unconstrained_DLVal_identical": [
+      [
+        "seed236101:r882",
+        "seed236101:SF_LR3",
+        "seed236102:r882",
+        "seed236103:r882"
+      ]
+    ],
+    "step40_adapter_identical": [],
+    "selected_adapter_identical": [
+      [
+        "A0:seed236101:CONTROL",
+        "A0:seed236101:SF",
+        "A0:seed236101:SF_LR3",
+        "A0:seed236102:CONTROL",
+        "A0:seed236102:SF",
+        "A0:seed236102:SF_LR3",
+        "A0:seed236103:CONTROL",
+        "A0:seed236103:SF",
+        "A0:seed236103:SF_LR3",
+        "A1:seed236101:CONTROL",
+        "A1:seed236101:SF",
+        "A1:seed236101:SF_LR3",
+        "A1:seed236102:CONTROL",
+        "A1:seed236102:SF",
+        "A1:seed236102:SF_LR3",
+        "A1:seed236103:CONTROL",
+        "A1:seed236103:SF",
+        "A1:seed236103:SF_LR3",
+        "A2:seed236101:CONTROL",
+        "A2:seed236101:SF",
+        "A2:seed236101:SF_LR3",
+        "A2:seed236102:CONTROL",
+        "A2:seed236102:SF",
+        "A2:seed236102:SF_LR3",
+        "A2:seed236103:CONTROL",
+        "A2:seed236103:SF",
+        "A2:seed236103:SF_LR3",
+        "A3:seed236101:CONTROL",
+        "A3:seed236101:SF",
+        "A3:seed236101:SF_LR3",
+        "A3:seed236102:CONTROL",
+        "A3:seed236102:SF",
+        "A3:seed236102:SF_LR3",
+        "A3:seed236103:CONTROL",
+        "A3:seed236103:SF",
+        "A3:seed236103:SF_LR3",
+        "A4:seed236101:CONTROL",
+        "A4:seed236101:SF",
+        "A4:seed236101:SF_LR3",
+        "A4:seed236102:CONTROL",
+        "A4:seed236102:SF",
+        "A4:seed236102:SF_LR3",
+        "A4:seed236103:CONTROL",
+        "A4:seed236103:SF",
+        "A4:seed236103:SF_LR3"
+      ]
+    ],
+    "selector_snapshot_identical": [
+      {
+        "outer": 0,
+        "step": 10,
+        "groups": []
+      },
+      {
+        "outer": 0,
+        "step": 20,
+        "groups": []
+      },
+      {
+        "outer": 0,
+        "step": 30,
+        "groups": []
+      },
+      {
+        "outer": 0,
+        "step": 40,
+        "groups": []
+      },
+      {
+        "outer": 1,
+        "step": 10,
+        "groups": []
+      },
+      {
+        "outer": 1,
+        "step": 20,
+        "groups": []
+      },
+      {
+        "outer": 1,
+        "step": 30,
+        "groups": []
+      },
+      {
+        "outer": 1,
+        "step": 40,
+        "groups": []
+      },
+      {
+        "outer": 2,
+        "step": 10,
+        "groups": []
+      },
+      {
+        "outer": 2,
+        "step": 20,
+        "groups": []
+      },
+      {
+        "outer": 2,
+        "step": 30,
+        "groups": []
+      },
+      {
+        "outer": 2,
+        "step": 40,
+        "groups": []
+      },
+      {
+        "outer": 3,
+        "step": 10,
+        "groups": []
+      },
+      {
+        "outer": 3,
+        "step": 20,
+        "groups": []
+      },
+      {
+        "outer": 3,
+        "step": 30,
+        "groups": []
+      },
+      {
+        "outer": 3,
+        "step": 40,
+        "groups": []
+      },
+      {
+        "outer": 4,
+        "step": 10,
+        "groups": []
+      },
+      {
+        "outer": 4,
+        "step": 20,
+        "groups": []
+      },
+      {
+        "outer": 4,
+        "step": 30,
+        "groups": []
+      },
+      {
+        "outer": 4,
+        "step": 40,
+        "groups": []
+      }
+    ],
+    "note": "Exact vectors on matched ordered contexts only; step0 and fallback r882 duplication is expected. Distinct adapter hashes do not imply independent prediction replication.",
+    "all_arms_selector_identical_to_CONTROL": false
+  },
+  "resource": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "final_sample": {
+      "utc": 1793668294.5793934,
+      "load": 41.8681640625,
+      "load5": 46.65478515625,
+      "cpu": 29.2,
+      "available": 57292410880,
+      "free": 752036843520,
+      "rss": 19906560,
+      "threads": 2,
+      "affinity": [
+        40,
+        41,
+        42,
+        43
+      ],
+      "elapsed": 2481.157561942,
+      "paused": false
+    },
+    "admission": {
+      "utc": 1793665813.421907,
+      "load": 38.46923828125,
+      "load5": 77.41357421875,
+      "cpu": 19.1,
+      "available": 77209333760,
+      "free": 787009495040,
+      "rss": 19521536,
+      "threads": 1,
+      "affinity": [
+        40,
+        41,
+        42,
+        43
+      ]
+    },
+    "elapsed_seconds": 2481.6580000629983,
+    "peak": {
+      "rss": 3373522944,
+      "threads": 3
+    },
+    "load_pauses": [],
+    "paused_seconds": 0.0,
+    "compute_stop": 1793685600.0
+  },
+  "resource_extrema": {
+    "max_cpu_percent": 98.4,
+    "max_cpu_percent_since_closeout_instruction": 48.0,
+    "raw_cpu_over85_observations": [
+      {
+        "utc": 1793667087.2015138,
+        "cpu": 85.4,
+        "elapsed": 1273.7797111719992
+      },
+      {
+        "utc": 1793667089.1335027,
+        "cpu": 88.3,
+        "elapsed": 1275.711470107999
+      },
+      {
+        "utc": 1793667089.8223982,
+        "cpu": 96.3,
+        "elapsed": 1276.4012155249984
+      },
+      {
+        "utc": 1793667090.4923096,
+        "cpu": 96.9,
+        "elapsed": 1277.0711445359993
+      },
+      {
+        "utc": 1793667091.1947145,
+        "cpu": 97.3,
+        "elapsed": 1277.7729477920002
+      },
+      {
+        "utc": 1793667091.9034164,
+        "cpu": 97.7,
+        "elapsed": 1278.4813998190002
+      },
+      {
+        "utc": 1793667092.5972757,
+        "cpu": 94.8,
+        "elapsed": 1279.1752031629985
+      },
+      {
+        "utc": 1793667093.2660146,
+        "cpu": 96.0,
+        "elapsed": 1279.845917407998
+      },
+      {
+        "utc": 1793667093.9574294,
+        "cpu": 97.4,
+        "elapsed": 1280.541724527
+      },
+      {
+        "utc": 1793667094.6349826,
+        "cpu": 96.9,
+        "elapsed": 1281.2147732619997
+      },
+      {
+        "utc": 1793667095.3102224,
+        "cpu": 96.0,
+        "elapsed": 1281.8888941629993
+      },
+      {
+        "utc": 1793667096.026157,
+        "cpu": 95.8,
+        "elapsed": 1282.6046142899977
+      },
+      {
+        "utc": 1793667096.662164,
+        "cpu": 97.3,
+        "elapsed": 1283.240646776998
+      },
+      {
+        "utc": 1793667097.3254263,
+        "cpu": 97.2,
+        "elapsed": 1283.9041315039976
+      },
+      {
+        "utc": 1793667097.9929457,
+        "cpu": 97.8,
+        "elapsed": 1284.5713469099974
+      },
+      {
+        "utc": 1793667098.6664896,
+        "cpu": 98.3,
+        "elapsed": 1285.2455307579985
+      },
+      {
+        "utc": 1793667099.3323963,
+        "cpu": 98.0,
+        "elapsed": 1285.9127938339989
+      },
+      {
+        "utc": 1793667100.0188448,
+        "cpu": 96.9,
+        "elapsed": 1286.5991540169998
+      },
+      {
+        "utc": 1793667100.640295,
+        "cpu": 97.3,
+        "elapsed": 1287.218963514999
+      },
+      {
+        "utc": 1793667101.3217216,
+        "cpu": 96.5,
+        "elapsed": 1287.9001503049985
+      },
+      {
+        "utc": 1793667102.0358481,
+        "cpu": 97.6,
+        "elapsed": 1288.6142258159998
+      },
+      {
+        "utc": 1793667102.6808975,
+        "cpu": 97.7,
+        "elapsed": 1289.259171810998
+      },
+      {
+        "utc": 1793667103.3281164,
+        "cpu": 96.7,
+        "elapsed": 1289.9065132709984
+      },
+      {
+        "utc": 1793667103.9888873,
+        "cpu": 95.8,
+        "elapsed": 1290.5685918319978
+      },
+      {
+        "utc": 1793667104.6248145,
+        "cpu": 97.0,
+        "elapsed": 1291.2030874159973
+      },
+      {
+        "utc": 1793667105.2713213,
+        "cpu": 96.3,
+        "elapsed": 1291.8496009730006
+      },
+      {
+        "utc": 1793667105.9398634,
+        "cpu": 93.2,
+        "elapsed": 1292.5178224810006
+      },
+      {
+        "utc": 1793667106.6205266,
+        "cpu": 95.3,
+        "elapsed": 1293.1992677689996
+      },
+      {
+        "utc": 1793667107.3133807,
+        "cpu": 92.1,
+        "elapsed": 1293.896201487998
+      },
+      {
+        "utc": 1793667108.0229056,
+        "cpu": 96.4,
+        "elapsed": 1294.6029957539977
+      },
+      {
+        "utc": 1793667109.3974771,
+        "cpu": 90.2,
+        "elapsed": 1295.975839464998
+      },
+      {
+        "utc": 1793667110.710886,
+        "cpu": 95.5,
+        "elapsed": 1297.291252220999
+      },
+      {
+        "utc": 1793667111.4098723,
+        "cpu": 93.2,
+        "elapsed": 1297.9883429869988
+      },
+      {
+        "utc": 1793667112.0694487,
+        "cpu": 90.6,
+        "elapsed": 1298.6476985459994
+      },
+      {
+        "utc": 1793667112.7495615,
+        "cpu": 94.6,
+        "elapsed": 1299.3282116929986
+      },
+      {
+        "utc": 1793667113.4194298,
+        "cpu": 93.8,
+        "elapsed": 1299.9976787439991
+      },
+      {
+        "utc": 1793667114.0712292,
+        "cpu": 92.2,
+        "elapsed": 1300.6506733259994
+      },
+      {
+        "utc": 1793667114.7297378,
+        "cpu": 96.2,
+        "elapsed": 1301.3084796679977
+      },
+      {
+        "utc": 1793667115.4495692,
+        "cpu": 87.3,
+        "elapsed": 1302.0292082999986
+      },
+      {
+        "utc": 1793667116.11555,
+        "cpu": 88.2,
+        "elapsed": 1302.6945413510002
+      },
+      {
+        "utc": 1793667116.8023376,
+        "cpu": 95.1,
+        "elapsed": 1303.3805241629998
+      },
+      {
+        "utc": 1793667117.462152,
+        "cpu": 95.5,
+        "elapsed": 1304.052678781998
+      },
+      {
+        "utc": 1793667118.1122546,
+        "cpu": 97.5,
+        "elapsed": 1304.6907353129973
+      },
+      {
+        "utc": 1793667118.8100471,
+        "cpu": 97.7,
+        "elapsed": 1305.3888748009995
+      },
+      {
+        "utc": 1793667119.4483042,
+        "cpu": 98.0,
+        "elapsed": 1306.0265475089982
+      },
+      {
+        "utc": 1793667120.1434772,
+        "cpu": 97.2,
+        "elapsed": 1306.72195191
+      },
+      {
+        "utc": 1793667120.8076828,
+        "cpu": 97.1,
+        "elapsed": 1307.3859613709974
+      },
+      {
+        "utc": 1793667121.474065,
+        "cpu": 97.8,
+        "elapsed": 1308.052436951999
+      },
+      {
+        "utc": 1793667122.16237,
+        "cpu": 96.1,
+        "elapsed": 1308.7432584649978
+      },
+      {
+        "utc": 1793667122.9581802,
+        "cpu": 98.4,
+        "elapsed": 1309.5372317260008
+      },
+      {
+        "utc": 1793667123.6681662,
+        "cpu": 97.3,
+        "elapsed": 1310.2474691099997
+      },
+      {
+        "utc": 1793667124.3180346,
+        "cpu": 98.4,
+        "elapsed": 1310.8964736849994
+      },
+      {
+        "utc": 1793667125.0193484,
+        "cpu": 98.0,
+        "elapsed": 1311.5979783910007
+      },
+      {
+        "utc": 1793667125.7681828,
+        "cpu": 97.4,
+        "elapsed": 1312.3467266980006
+      },
+      {
+        "utc": 1793667126.447435,
+        "cpu": 97.8,
+        "elapsed": 1313.0261608990004
+      },
+      {
+        "utc": 1793667127.1631882,
+        "cpu": 97.9,
+        "elapsed": 1313.7428897669997
+      },
+      {
+        "utc": 1793667127.8348696,
+        "cpu": 96.8,
+        "elapsed": 1314.4149273660005
+      },
+      {
+        "utc": 1793667128.5432725,
+        "cpu": 96.6,
+        "elapsed": 1315.1216946839995
+      },
+      {
+        "utc": 1793667129.235997,
+        "cpu": 96.4,
+        "elapsed": 1315.8143880450007
+      },
+      {
+        "utc": 1793667129.9880702,
+        "cpu": 94.2,
+        "elapsed": 1316.5675817099982
+      },
+      {
+        "utc": 1793667130.6641316,
+        "cpu": 93.2,
+        "elapsed": 1317.2422634549985
+      },
+      {
+        "utc": 1793667131.3663251,
+        "cpu": 94.2,
+        "elapsed": 1317.9442985429996
+      },
+      {
+        "utc": 1793667132.037025,
+        "cpu": 94.1,
+        "elapsed": 1318.6157305289998
+      },
+      {
+        "utc": 1793667132.7879457,
+        "cpu": 94.6,
+        "elapsed": 1319.366680785999
+      },
+      {
+        "utc": 1793667133.504121,
+        "cpu": 97.3,
+        "elapsed": 1320.0830377509992
+      },
+      {
+        "utc": 1793667134.2007563,
+        "cpu": 96.4,
+        "elapsed": 1320.779941806999
+      },
+      {
+        "utc": 1793667134.87787,
+        "cpu": 96.4,
+        "elapsed": 1321.45954059
+      },
+      {
+        "utc": 1793667135.548088,
+        "cpu": 94.7,
+        "elapsed": 1322.1325562679995
+      },
+      {
+        "utc": 1793667136.228455,
+        "cpu": 90.2,
+        "elapsed": 1322.8071730599986
+      },
+      {
+        "utc": 1793667136.842385,
+        "cpu": 87.3,
+        "elapsed": 1323.4207566099976
+      },
+      {
+        "utc": 1793667137.5114949,
+        "cpu": 86.9,
+        "elapsed": 1324.0900245679986
+      },
+      {
+        "utc": 1793667138.8087568,
+        "cpu": 87.7,
+        "elapsed": 1325.3886403469987
+      },
+      {
+        "utc": 1793667139.4578242,
+        "cpu": 85.4,
+        "elapsed": 1326.036612164
+      },
+      {
+        "utc": 1793667140.136138,
+        "cpu": 86.0,
+        "elapsed": 1326.7149439349996
+      },
+      {
+        "utc": 1793667312.104523,
+        "cpu": 85.6,
+        "elapsed": 1498.683100618
+      }
+    ],
+    "min_MemAvailable": 44263620608,
+    "min_disk_free": 750147272704,
+    "max_RSS": 3373522944
+  },
+  "failure": null,
+  "terminal_custody": {
+    "schema": "jope.h236.custody-receipt/v1",
+    "verified_utc": "2026-11-03T01:15:29.451482+00:00",
+    "source_commit": "39fd7d58258a2aefd9aa2eadef201ae4b5069812",
+    "status": "EXACT_VERSION_OBJECT_AND_MEMBER_REPLAY_PASS",
+    "scientific_status": "COMPLETE",
+    "scientific_verdict": "NO_ADVANCE",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261103/H236/res08-t0005/terminal-39fd7d58258a-25896e350e2d75a4/H236-execution-output.zip",
+      "version_id": "Ai.ohaMBoeHcqO9PZSXpB6.twVyCDnlJ",
+      "sha256": "25896e350e2d75a44d06ac0a89f7c5dbe2166a1f7bc2b496506e4130b998e9a6",
+      "bytes": 29911984
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261103/H236/res08-t0005/terminal-39fd7d58258a-25896e350e2d75a4/H236-terminal-manifest.json",
+      "version_id": "tRHPa2QFW3Llb_pEDHx3.iLKvrFvD6SJ",
+      "sha256": "b6cfc64df4936b511fdca0fe0aadbf2c73538f8238c7d80bf73d983525125572",
+      "bytes": 44336
+    },
+    "verified_members": 270,
+    "create_only_if_none_match": "*",
+    "exact_version_archive_and_manifest_bytes_verified": true,
+    "archive_member_sha256s_verified": true,
+    "raw_roots_retained": true,
+    "scientific_retry": false
+  },
+  "red_team_checks": {
+    "all15_cells_and_1800_traces": true,
+    "three_smoke_updates_discarded": true,
+    "native91_exact": true,
+    "selection_lock_hashes_and_disjoint_fit": true,
+    "finite_complete_panels": true,
+    "frozen_dope_and_input_audit": true,
+    "arithmetic_replay_primary_and_secondary_family_median_CI_Holm_and_decisions": true,
+    "actual_family_disjoint_train_select_assessment_and_no_DLVal_meta_test": true,
+    "resource_sample_boundaries_and_exit0_no_OOM": true
+  },
+  "metric_direction": "Higher utility=-fitness is better; failed gates have utility -2. Baseline matches all91 pinned native utility values.",
+  "full_metrics_sha256": "a55f49bfd42e34fc6f099065ba6274eb83363bb07d55a1901aafedf5ef7c571d",
+  "scientific_retry": false,
+  "serving_promotion": false,
+  "raw_roots_retained": true,
+  "hosted_ci": "NOT_RUN/NOT_A_GATE per explicit H236 assignment",
+  "publication_utc": "2026-11-03T01:16:03.705281+00:00",
+  "descriptive_harm": {
+    "CONTROL": {
+      "families_below_minus_0_01": 0,
+      "family_mean_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "SF": {
+      "families_below_minus_0_01": 0,
+      "family_mean_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "SF_LR3": {
+      "families_below_minus_0_01": 0,
+      "family_mean_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "selection_summary": {
+    "CONTROL": {
+      "selected_step_counts": {
+        "0": 15,
+        "10": 0,
+        "20": 0,
+        "30": 0,
+        "40": 0
+      },
+      "selected_steps_by_seed": {
+        "236101": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "236102": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "236103": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "SF": {
+      "selected_step_counts": {
+        "0": 15,
+        "10": 0,
+        "20": 0,
+        "30": 0,
+        "40": 0
+      },
+      "selected_steps_by_seed": {
+        "236101": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "236102": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "236103": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "SF_LR3": {
+      "selected_step_counts": {
+        "0": 15,
+        "10": 0,
+        "20": 0,
+        "30": 0,
+        "40": 0
+      },
+      "selected_steps_by_seed": {
+        "236101": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "236102": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "236103": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "elo_vs_control_by_seed": [
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  ],
+  "elo_lifts": {
+    "r882": {
+      "r882": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws; median across3seeds; seed236151; descriptive, utility gate unchanged"
+      },
+      "CONTROL": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws; median across3seeds; seed236151; descriptive, utility gate unchanged"
+      }
+    },
+    "CONTROL": {
+      "r882": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws; median across3seeds; seed236151; descriptive, utility gate unchanged"
+      },
+      "CONTROL": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws; median across3seeds; seed236151; descriptive, utility gate unchanged"
+      }
+    },
+    "SF": {
+      "r882": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws; median across3seeds; seed236151; descriptive, utility gate unchanged"
+      },
+      "CONTROL": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws; median across3seeds; seed236151; descriptive, utility gate unchanged"
+      }
+    },
+    "SF_LR3": {
+      "r882": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws; median across3seeds; seed236151; descriptive, utility gate unchanged"
+      },
+      "CONTROL": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws; median across3seeds; seed236151; descriptive, utility gate unchanged"
+      }
+    }
+  }
 }
