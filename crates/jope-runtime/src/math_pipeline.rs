@@ -315,6 +315,7 @@ impl MathPipeline {
 }
 
 mod contract;
+use contract::undefined;
 pub(super) use contract::{
     decode_input, encode, encode_f64, JS_CONTRACT, JS_CONTRACT_F64, JS_CONTRACT_HEADER,
 };

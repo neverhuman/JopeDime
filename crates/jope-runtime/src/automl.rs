@@ -251,7 +251,7 @@ pub fn select(
 }
 
 mod selection;
-pub use selection::{select, select_with_fitness};
+pub use selection::select_with_fitness;
 
 #[cfg(test)]
 mod tests;

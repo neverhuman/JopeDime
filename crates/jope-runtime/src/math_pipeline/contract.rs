@@ -107,7 +107,7 @@ pub(crate) fn decode_input(bytes: &[u8]) -> Result<InputContract> {
     .map_err(|e| Failure::integrity(format!("{INPUT_PART}: {e}")))
 }
 
-fn undefined(message: String) -> anyhow::Error {
+pub(super) fn undefined(message: String) -> anyhow::Error {
     Failure::new(
         crate::error::FailureKind::Numerical,
         format!("FITNESS_UNDEFINED: {message}"),

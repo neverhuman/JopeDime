@@ -65,7 +65,7 @@ pub fn emit_pipeline(pipeline: &MathPipeline) -> Result<String> {
     Ok(source)
 }
 
-fn lint(source: &str) -> Result<()> {
+pub(super) fn lint(source: &str) -> Result<()> {
     let hits = feat_math::transpile::lint_shipped_text(source);
     ensure!(
         hits.is_empty(),
@@ -75,7 +75,7 @@ fn lint(source: &str) -> Result<()> {
     Ok(())
 }
 
-fn no_null(value: &Value) -> bool {
+pub(super) fn no_null(value: &Value) -> bool {
     match value {
         Value::Null => false,
         Value::Array(items) => items.iter().all(no_null),
@@ -84,11 +84,11 @@ fn no_null(value: &Value) -> bool {
     }
 }
 
-fn is_identity_transform(transform: &OutputTransform) -> bool {
+pub(super) fn is_identity_transform(transform: &OutputTransform) -> bool {
     transform.intercept == 0.0 && transform.slope == 1.0 && transform.lower.is_none()
 }
 
-fn pipeline_fields(
+pub(super) fn pipeline_fields(
     source: &str,
     stages: &[PlannedStage],
     ops: &[FittedOp],
@@ -297,7 +297,7 @@ fn portfolio_literal(
 
 /// Render the small field-type grammar declared by emit_rs, never a Debug dump of fitted state.
 /// This binds constructors to the emitter's actual fields and refuses unrecognized template drift.
-fn literal(source: &str, ty: &str, value: &Value) -> Result<String> {
+pub(super) fn literal(source: &str, ty: &str, value: &Value) -> Result<String> {
     if let Some(inner) = ty.strip_prefix("Vec<").and_then(|s| s.strip_suffix('>')) {
         let items = value
             .as_array()

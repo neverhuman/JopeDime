@@ -308,3 +308,4 @@ mod tests;
 
 mod pipeline;
 pub use pipeline::emit_pipeline;
+use pipeline::{is_identity_transform, lint, literal, no_null, pipeline_fields};
