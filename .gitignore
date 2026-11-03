@@ -10,6 +10,9 @@ __pycache__/
 .venv/
 python/.venv/
 python/dist/
+# maturin editable builds (uv sync) place the jope._telemetry extension in python-source.
+python/src/jope/_telemetry*.so
+python/src/jope/_telemetry*.pyd
 /runs/
 /logs/
 /artifacts/

@@ -150,8 +150,11 @@ jobs:
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
           python3 deploy/ci/receipt.py --lane hygiene --output "$evidence" --backend unittest -- bash ops/ci/fast-lane.sh hygiene
       - name: Run source supply-chain scans directly
+        # The hygiene lane (deploy/ci/check.sh) already retains jope.spdx.json in the receipt
+        # evidence, digest-bound by receipt.py. Write this direct re-run elsewhere: a second syft
+        # SBOM (fresh namespace UUID and timestamp) in the receipt directory breaks that digest.
         env:
-          JOPE_LANE_EVIDENCE: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}
+          JOPE_LANE_EVIDENCE: ${{ github.workspace }}/target/security/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}
         run: bash tools/security-lane.sh
       - name: Upload current lane evidence
         if: always()
