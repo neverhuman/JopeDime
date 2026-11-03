@@ -195,36 +195,36 @@ impl CacheManifest {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct SealedCohort {
-    schema: String,
-    immutable: bool,
-    classification: String,
-    training_ingestion_eligible: bool,
-    counts: BTreeMap<String, usize>,
-    entries: Vec<InventoryEntry>,
-    created_at_ms: u128,
-    cohort_sha256: String,
+    pub(super) schema: String,
+    pub(super) immutable: bool,
+    pub(super) classification: String,
+    pub(super) training_ingestion_eligible: bool,
+    pub(super) counts: BTreeMap<String, usize>,
+    pub(super) entries: Vec<InventoryEntry>,
+    pub(super) created_at_ms: u128,
+    pub(super) cohort_sha256: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct Standardization {
-    dim: usize,
-    mean: Vec<f32>,
-    scale: Vec<f32>,
-    foundation: FoundationSpec,
+    pub(super) dim: usize,
+    pub(super) mean: Vec<f32>,
+    pub(super) scale: Vec<f32>,
+    pub(super) foundation: FoundationSpec,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct FoundationSpec {
-    cache_dir: PathBuf,
-    projection_file: PathBuf,
-    raw_dim: usize,
-    proj_dim: usize,
+    pub(super) cache_dir: PathBuf,
+    pub(super) projection_file: PathBuf,
+    pub(super) raw_dim: usize,
+    pub(super) proj_dim: usize,
 }
 
 pub(crate) struct FileLock(File);
 
 impl FileLock {
-    fn exclusive(path: &Path) -> Result<Self> {
+    pub(super) fn exclusive(path: &Path) -> Result<Self> {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
