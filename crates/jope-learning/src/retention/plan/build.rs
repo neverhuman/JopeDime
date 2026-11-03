@@ -9,7 +9,7 @@ use super::super::refs::{RefSet, Role};
 use super::super::{INPUTS_LOCK_SCHEMA, PLAN_SUMMARY_SCHEMA};
 use super::Decision;
 use super::{
-    report, round4, row, Action, Built, Config, InputsLock, InventoryBucket, InventoryLock,
+    round4, row, Action, Built, Config, InputsLock, InventoryBucket, InventoryLock,
     InventorySummary, Note, RowInventory, Summary, Totals,
 };
 use crate::canon::sha256_hex;
