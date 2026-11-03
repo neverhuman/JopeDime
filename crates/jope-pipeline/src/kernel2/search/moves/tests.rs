@@ -187,8 +187,20 @@ const OFF_THE_PARENTS: [&str; 3] = [
 ];
 
 mod cli_contract;
+#[allow(unused_imports)]
+use cli_contract::*;
 mod record_validation;
+#[allow(unused_imports)]
+use record_validation::*;
 mod rewrite_faults;
+#[allow(unused_imports)]
+use rewrite_faults::*;
 mod rewrite_replay;
+#[allow(unused_imports)]
+use rewrite_replay::*;
 mod rewrite_scores;
+#[allow(unused_imports)]
+use rewrite_scores::*;
 mod stop_bounds;
+#[allow(unused_imports)]
+use stop_bounds::*;

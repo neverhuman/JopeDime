@@ -4,7 +4,7 @@ use super::*;
 // count, and the set and order of the published records.
 
 /// `(pipe X (<op> expr="<source>") (ridge))`, as the search prints it.
-fn carrier(op: &str, source: &str) -> String {
+pub(super) fn carrier(op: &str, source: &str) -> String {
     let expression = MathExpr::parse(source).unwrap().to_source().unwrap();
     GenomeIr::parse(&format!("(pipe X ({op} expr=\"{expression}\") (ridge))"))
         .unwrap()
@@ -13,7 +13,7 @@ fn carrier(op: &str, source: &str) -> String {
 
 /// Three columns with a `0.0` and a `-0.0` in `c0`, values of `c0` under -1, negative values of
 /// `c1`, and a row whose columns are equal (a zero row standard deviation).
-fn faulting_cut() -> Cut {
+pub(super) fn faulting_cut() -> Cut {
     let row = |i: usize| -> Vec<f64> {
         let t = i as f64;
         match i {
@@ -116,9 +116,9 @@ fn rewritten_children_keep_fault_counts_and_signed_zeros_bit_for_bit() {
 }
 
 /// `c0/(-1.0)`, which the pass reduces to `-c0`, a negation of a variable the profile refuses.
-const DIVIDED: &str = "(pipe X (derive expr=\"c0/(-1.0)\") (ridge))";
+pub(super) const DIVIDED: &str = "(pipe X (derive expr=\"c0/(-1.0)\") (ridge))";
 /// `x*(-1.0)` in an elementwise carrier, which the pass reduces to `-x`, refused the same way.
-const MAPPED_NEGATED: &str = "(pipe X (map expr=\"x*(-1.0)\") (ridge))";
+pub(super) const MAPPED_NEGATED: &str = "(pipe X (map expr=\"x*(-1.0)\") (ridge))";
 
 #[test]
 fn the_pool_refusal_count_of_fixed_parents_is_pinned() {
@@ -159,9 +159,9 @@ fn the_pool_refusal_count_of_fixed_parents_is_pinned() {
 }
 
 /// `exp(c0)`: a function outside the kernel2 pool.
-const OUTSIDE_POOL: &str = "(pipe X (derive expr=\"exp(c0)\") (ridge))";
+pub(super) const OUTSIDE_POOL: &str = "(pipe X (derive expr=\"exp(c0)\") (ridge))";
 /// 16 nodes at depth 4: over the 15-node cap.
-const OVER_CAPS: &str =
+pub(super) const OVER_CAPS: &str =
     "(pipe X (derive expr=\"clip((c0*1.0),(c0*1.0),(c0*1.0))+(c0*(c0*1.0))\") (ridge))";
 
 #[test]

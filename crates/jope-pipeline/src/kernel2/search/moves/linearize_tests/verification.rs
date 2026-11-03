@@ -2,7 +2,7 @@ use super::*;
 
 /// The run's CLI flags, parsed as `jope pipeline run` parses them.
 
-fn flags(extra: &[&str]) -> (crate::cli::SearchArgs, crate::kernel2::cli::ProfileArgs) {
+pub(super) fn flags(extra: &[&str]) -> (crate::cli::SearchArgs, crate::kernel2::cli::ProfileArgs) {
     let mut argv = vec![
         "jope-pipeline",
         "run",
@@ -23,7 +23,7 @@ fn flags(extra: &[&str]) -> (crate::cli::SearchArgs, crate::kernel2::cli::Profil
 
 /// Rewrites a run's move records (when given) and its selection record, rehashing search.json
 /// and the receipt, so that only the move checks can refuse the change.
-fn rewrite(
+pub(super) fn rewrite(
     output: &Path,
     receipt: &Receipt,
     moves: Option<&[u8]>,
@@ -42,7 +42,7 @@ fn rewrite(
     path
 }
 
-fn digested(engine: &EngineRecord, bytes: &[u8]) -> EngineRecord {
+pub(super) fn digested(engine: &EngineRecord, bytes: &[u8]) -> EngineRecord {
     let mut engine = engine.clone();
     engine.moves.as_mut().unwrap().sha256 = Some(crate::sha256_hex(bytes));
     engine
@@ -50,7 +50,7 @@ fn digested(engine: &EngineRecord, bytes: &[u8]) -> EngineRecord {
 
 /// One named edit of the records at `measured` (an offered, measured line) and `refused` (a
 /// refused line); `other` is another measured program's sha256.
-fn tamper(moves: &mut Vec<MoveRecord>, measured: usize, refused: usize, label: &str, other: &str) {
+pub(super) fn tamper(moves: &mut Vec<MoveRecord>, measured: usize, refused: usize, label: &str, other: &str) {
     fn fit(m: &mut MoveRecord) -> &mut FitRecord {
         m.linearization.as_mut().unwrap().fit.as_mut().unwrap()
     }
@@ -136,7 +136,7 @@ fn tamper(moves: &mut Vec<MoveRecord>, measured: usize, refused: usize, label: &
 }
 
 /// A stage rewrite record, to attach where none belongs.
-fn moves_rewrite() -> Vec<StageRewrite> {
+pub(super) fn moves_rewrite() -> Vec<StageRewrite> {
     vec![StageRewrite {
         stage: 0,
         stop: "saturated".into(),

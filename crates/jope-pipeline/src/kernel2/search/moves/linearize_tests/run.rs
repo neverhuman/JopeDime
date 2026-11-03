@@ -1,6 +1,6 @@
 use super::*;
 
-fn dataset() -> String {
+pub(super) fn dataset() -> String {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../datasets/test/pmlb-229-pwlinear")
         .display()
@@ -10,7 +10,7 @@ fn dataset() -> String {
 /// The `cli_tests` run (pmlb-229-pwlinear, rng seed 7, a frozen clock, Rust only, `seeds` as the
 /// seeds file beside the output) in `dir/run`. The default selection is left unapplied, as the
 /// CLI does.
-fn run_options(
+pub(super) fn run_options(
     dir: &Path,
     seeds: &[String],
     evaluations: usize,
@@ -21,7 +21,7 @@ fn run_options(
 }
 
 /// [`run_options`] on another dataset.
-fn run_options_on(
+pub(super) fn run_options_on(
     dataset: String,
     dir: &Path,
     seeds: &[String],
@@ -69,32 +69,32 @@ fn run_options_on(
     }
 }
 
-fn four_parents() -> Refinement {
+pub(super) fn four_parents() -> Refinement {
     Refinement {
         top_k: 4,
         trials_per_program: 4,
     }
 }
 
-fn read(opt: &run::Options, relative: &str) -> Vec<u8> {
+pub(super) fn read(opt: &run::Options, relative: &str) -> Vec<u8> {
     std::fs::read(opt.run.output.join(relative)).unwrap()
 }
 
-fn published_moves(opt: &run::Options) -> Vec<MoveRecord> {
+pub(super) fn published_moves(opt: &run::Options) -> Vec<MoveRecord> {
     serde_json::from_slice(&read(opt, PATH)).unwrap()
 }
 
-fn published_measurements(opt: &run::Options) -> Vec<Measurement> {
+pub(super) fn published_measurements(opt: &run::Options) -> Vec<Measurement> {
     serde_json::from_slice(&read(opt, "search/cut-0/observations.json")).unwrap()
 }
 
-fn lint(text: &str) {
+pub(super) fn lint(text: &str) {
     let hits = feat_math::transpile::lint_shipped_text(text);
     assert!(hits.is_empty(), "{text}: {hits:?}");
 }
 
 /// The linearization run: both seeds, four parents per round, 40 evaluations.
-fn linearized_run(dir: &Path) -> run::Options {
+pub(super) fn linearized_run(dir: &Path) -> run::Options {
     run_options(
         dir,
         &[ONE_TIMES.into(), program(SINE)],
@@ -225,7 +225,7 @@ fn linearization_runs_replay_every_file_with_a_frozen_clock_and_verify() {
 /// The seeded `cli_tests` run's search sidecars (prepared, search, observations, refinements),
 /// pinned by `default_runs_keep_the_pre_wiring_search_sidecars` at the commit before the first
 /// engine method was wired, and repeated here for this flag.
-const SEEDED_PINS: [&str; 4] = [
+pub(super) const SEEDED_PINS: [&str; 4] = [
     "8b8dccfe93aff8fe789ebc37dd125145a28b9d9d702b42dea2fa737575008059",
     "b2444c5c34dee80c91aa52d19a4a34aeaa358bf68dd3919723f52463fb2c5420",
     "ad1e6ab3e218f237120668e39321daf2a60cc43b5a503011f1a05ecbbb907767",

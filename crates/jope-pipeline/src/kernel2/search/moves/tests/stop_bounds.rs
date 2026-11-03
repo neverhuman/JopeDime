@@ -5,7 +5,7 @@ use super::*;
 
 /// `engine` with the digest and both counts of `moves` (serialized as `bytes`), as publication
 /// writes them, so that only the record checks can refuse the records.
-fn recounted(engine: &EngineRecord, moves: &[MoveRecord], bytes: &[u8]) -> EngineRecord {
+pub(super) fn recounted(engine: &EngineRecord, moves: &[MoveRecord], bytes: &[u8]) -> EngineRecord {
     let mut engine = digested(engine, bytes);
     let record = engine.moves.as_mut().unwrap();
     record.refused_by_pool = Some(refused_by_pool(moves));
@@ -14,7 +14,7 @@ fn recounted(engine: &EngineRecord, moves: &[MoveRecord], bytes: &[u8]) -> Engin
 }
 
 /// Publishes `moves` in place of the run's records, under a recounted selection record.
-fn publish_recounted(
+pub(super) fn publish_recounted(
     output: &Path,
     receipt: &Receipt,
     engine: &EngineRecord,
@@ -30,14 +30,14 @@ fn publish_recounted(
 }
 
 /// The files a records edit rewrites, read back so they can be restored.
-fn originals(output: &Path) -> Vec<(PathBuf, Vec<u8>)> {
+pub(super) fn originals(output: &Path) -> Vec<(PathBuf, Vec<u8>)> {
     ["receipt.json", "search/cut-0/search.json", PATH]
         .iter()
         .map(|r| (output.join(r), std::fs::read(output.join(r)).unwrap()))
         .collect()
 }
 
-fn restore(originals: &[(PathBuf, Vec<u8>)]) {
+pub(super) fn restore(originals: &[(PathBuf, Vec<u8>)]) {
     for (file, bytes) in originals {
         std::fs::write(file, bytes).unwrap();
     }

@@ -201,10 +201,10 @@ fn proposals_are_identical_with_a_poisoned_holdout() {
 // Runs through the published route.
 
 /// The `cli_tests` seed program, which the pass reduces to `c0`.
-const SEED: &str = ONE_TIMES;
+pub(super) const SEED: &str = ONE_TIMES;
 
 /// The files every run publishes.
-const SIDECARS: [&str; 7] = [
+pub(super) const SIDECARS: [&str; 7] = [
     "receipt.json",
     "prepared/prepared.json",
     "search/cut-0/search.json",

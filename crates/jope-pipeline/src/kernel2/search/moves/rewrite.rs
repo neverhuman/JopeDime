@@ -30,7 +30,7 @@ pub(crate) fn finish_round(
 /// The rewrite pass over the top `refinement.top_k` ranked unique parents with an expression
 /// stage. `may_start` is checked before each proposal and again before each measurement; a
 /// refusal ends the pass.
-fn simplify_round(
+pub(super) fn simplify_round(
     state: &mut State,
     cut: &Cut,
     options: &Options,
@@ -97,7 +97,7 @@ fn simplify_round(
 /// not yet measured is measured once. `may_start` is checked before each parent and again before
 /// each measurement. Once it refuses, or the allowance is spent, the parent's remaining offers are
 /// recorded unmeasured and the pass ends.
-fn linearize_round(
+pub(super) fn linearize_round(
     state: &mut State,
     cut: &Cut,
     options: &Options,
@@ -171,7 +171,7 @@ fn linearize_round(
 /// Whether `text` is a pipeline program with a `map` or `derive` stage. [`check`] reads the
 /// parents back from evidence, which is untrusted, so the text is parsed within
 /// [`parse_untrusted_pipeline`]'s bounds, and a program over them is not readable.
-fn has_expression_stage(text: &str) -> bool {
+pub(super) fn has_expression_stage(text: &str) -> bool {
     parse_untrusted_pipeline(text).is_ok_and(|pipe| {
         pipe.stages
             .iter()
