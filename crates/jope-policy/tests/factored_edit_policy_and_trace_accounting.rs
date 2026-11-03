@@ -121,8 +121,11 @@ struct ReplayTrajectoryReceipt {
     records_sha256: String,
 }
 
+#[path = "factored_edit_policy_and_trace_accounting/spec_a.rs"]
 mod spec_a;
+#[path = "factored_edit_policy_and_trace_accounting/spec_b.rs"]
 mod spec_b;
+#[path = "factored_edit_policy_and_trace_accounting/trajectory.rs"]
 mod trajectory;
 
 pub use spec_a::{verify_spec_a_g7_10k_attempts, verify_spec_a_g7_legacy_mode_parity};

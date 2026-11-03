@@ -362,6 +362,7 @@ fn eos_invalid_ids_and_mode_differences_are_refused_or_documented() {
     }
 }
 
+#[path = "grammar_differential/token_budget.rs"]
 mod token_budget;
 
 #[test]

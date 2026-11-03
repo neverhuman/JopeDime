@@ -10,6 +10,7 @@ use crate::config::{ChallengerIdentity, CheckpointBinding};
 use crate::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
 use crate::grammar::BoundVocabulary;
 use crate::model::PolicyModel;
+use super::proposal::Proposal;
 use crate::proposal_ledger::{self, ProposalLedger};
 use crate::ranking::{self, Bindings, Ranking, SELECTION_ID};
 use crate::{
