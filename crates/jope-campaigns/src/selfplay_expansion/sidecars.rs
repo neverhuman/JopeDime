@@ -1,9 +1,12 @@
 use super::prelude::*;
 use super::{
     cache::copy_reflink_or_copy,
+    context::read_vs_matrix,
     inventory::valid_dataset_id,
     live::SIDECAR_NAMES,
-    model::{corpus_dir_name, load_v1_quarantine, v1_identity_denied, ExpansionPaths, TASKS},
+    model::{
+        corpus_dir_name, load_v1_quarantine, v1_identity_denied, ExpansionPaths, TARGET_DIM, TASKS,
+    },
 };
 
 pub(crate) fn validate_sidecar(path: &Path, name: &str) -> Result<String> {
