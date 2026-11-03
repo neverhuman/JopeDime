@@ -145,7 +145,7 @@ fn group_integer(value: i128) -> String {
     let text = value.unsigned_abs().to_string();
     let mut grouped = String::with_capacity(text.len() + text.len() / 3);
     for (index, ch) in text.chars().enumerate() {
-        if index > 0 && (text.len() - index) % 3 == 0 {
+        if index > 0 && (text.len() - index).is_multiple_of(3) {
             grouped.push(',');
         }
         grouped.push(ch);
