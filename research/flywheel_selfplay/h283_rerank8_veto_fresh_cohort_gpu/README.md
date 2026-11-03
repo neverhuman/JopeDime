@@ -70,8 +70,8 @@ regression cohort, scored GPU-exact on a read-only r3175 copy.
 
 - **Absolute levels:** r3175's slot-0 fresh utility mean is **1.4858** (report only; not comparable with
   1.1389572). The top-8 oracle is 1.7529. FROZEN_VETO's context means are 1.5030, 1.4987 and 1.4862.
-- **Harmed families (FROZEN_VETO):** `srcfile:fish` on all three seeds; `03088c09`, `4ef6fccb` and `83367a7f` on two;
-  `0d6229e1`, `47f0ab26` and `7aa5fbc1` on one. Lists are in [metrics.json](metrics.json).
+- **Harmed families (FROZEN_VETO):** `srcfile:fish` on all three seeds; `03088c09`, `0d6229e1`, `4ef6fccb` and `83367a7f` on two;
+  `47f0ab26` and `7aa5fbc1` on one. Lists are in [metrics.json](metrics.json).
 
 ### Primary rule
 
