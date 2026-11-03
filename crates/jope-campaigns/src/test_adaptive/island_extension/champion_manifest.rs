@@ -12,7 +12,7 @@ pub(super) fn champion_bindings(base_run_id: &str) -> Result<Vec<ChampionDataset
             .join("datasets")
             .join(&result.dataset_hash)
             .join("final-result.v1.json");
-        let checkpoint_path = root
+        let generation_29_checkpoint_path = root
             .join("datasets")
             .join(&result.dataset_hash)
             .join("checkpoints/generation-029.v1.json");
@@ -20,8 +20,8 @@ pub(super) fn champion_bindings(base_run_id: &str) -> Result<Vec<ChampionDataset
             dataset_hash: result.dataset_hash.clone(),
             initial_result_file: artifact_name(&result_path),
             initial_result_sha256: sha256_file(&result_path)?,
-            generation_29_checkpoint_file: artifact_name(&checkpoint_path),
-            generation_29_checkpoint_sha256: sha256_file(&checkpoint_path)?,
+            generation_29_checkpoint_file: artifact_name(&generation_29_checkpoint_path),
+            generation_29_checkpoint_sha256: sha256_file(&generation_29_checkpoint_path)?,
         });
     }
     if EXISTING_SURPASSED + summary.new_leaders + bindings.len() != 42 {
