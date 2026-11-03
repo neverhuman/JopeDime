@@ -75,13 +75,6 @@
       },
       "type": "object"
     },
-    "Direction": {
-      "enum": [
-        "higher",
-        "lower"
-      ],
-      "type": "string"
-    },
     "Evaluator": {
       "additionalProperties": false,
       "properties": {
@@ -193,6 +186,13 @@
       ],
       "type": "string"
     },
+    "MetricDirection": {
+      "enum": [
+        "higher",
+        "lower"
+      ],
+      "type": "string"
+    },
     "Provenance": {
       "additionalProperties": false,
       "properties": {
@@ -231,7 +231,7 @@
       "additionalProperties": false,
       "properties": {
         "direction": {
-          "$ref": "#/$defs/Direction",
+          "$ref": "#/$defs/MetricDirection",
           "description": "Redundant with the metric table; recorded so a ledger reader needs no code to rank."
         },
         "metric": {
