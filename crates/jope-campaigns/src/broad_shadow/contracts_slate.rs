@@ -166,9 +166,10 @@ pub fn validate_probe_slate(payload: &Value, production: bool) -> Result<(), Str
             let anchor_index = required(slot, "anchor_index")?;
             let source = required(slot, "source_dataset_hash")?;
             if role == "anchor" {
+                let anchor = exact_fields(&anchors[index], ANCHOR_FIELDS, "probe anchor")?;
                 if !python_int_eq(anchor_index, index)
                     || semantic != anchor_semantics[index]
-                    || required(slot, "engine")? != required(&anchors[index], "engine")?
+                    || required(slot, "engine")? != required(anchor, "engine")?
                     || !source.is_null()
                 {
                     return Err("anchor slots must exactly match ProbeSlate anchors".into());
