@@ -1,8 +1,6 @@
 use super::*;
 use tempfile::TempDir;
 
-use super::*;
-
 fn root_with(pointer: Option<u64>, labels: u64) -> TempDir {
     let dir = TempDir::new().unwrap();
     fs::create_dir_all(dir.path().join("ops")).unwrap();
