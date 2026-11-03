@@ -1,0 +1,15 @@
+{
+  "wave": "H282",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "verdict": "TRANSFER_PASS / NOT_TRANSFERRED / INSUFFICIENT_CHECKPOINTS / BLOCKED_GPU_LOCK",
+    "gpu_rescore": "per checkpoint: outcome, mean vs stored, residual, per-context/pick equality, DOPE before/after, peak VRAM, writer state",
+    "primary": "per seed: pooled (ckpt x family) gain + CI95, LCB>0, positive checkpoints vs ceil(2/3 E), invalid ok",
+    "per_checkpoint": "per seed family mean/median gain, CI95, W/T/L, Elo (slot0 = 1500), invalid, changed picks; median + pooled CI across seeds; watch families",
+    "secondary": "best reranked checkpoint mean vs plateau 1.1389572403748425",
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0..."
+  }
+}
