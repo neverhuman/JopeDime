@@ -60,6 +60,12 @@ fn agrees(actual: f64, expected: f64) -> bool {
     (actual - expected).abs() <= ABS_TOLERANCE + REL_TOLERANCE * actual.abs().max(expected.abs())
 }
 
+// Runtime arithmetic may choose either IEEE zero sign for a numerically zero result.
+// Keep bit-exact signed-zero checks in `agrees`, while comparing emitted values by number.
+fn agrees_emitted_value(actual: f64, expected: f64) -> bool {
+    (actual == 0.0 && expected == 0.0) || agrees(actual, expected)
+}
+
 /// Compiler receipts are separate from deterministic emitted program bytes.
 /// Keep failed compiler output too; this never deletes prior retained evidence.
 fn run_rust_compiler(command: &mut Command, directory: &Path) {
@@ -221,7 +227,7 @@ fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path
             );
             for (row, (actual, expected)) in values.into_iter().zip(&expected).enumerate() {
                 assert!(
-                    agrees(actual, *expected),
+                    agrees_emitted_value(actual, *expected),
                     "case {case} {implementation} value {row}: {actual:?} != {expected:?}"
                 );
             }
