@@ -1,5 +1,5 @@
 //! Real delegated-cgroup recovery tests. Never uses production sockets or process scans.
-use anyhow::{Context, Result, ensure};
+use anyhow::{ensure, Context, Result};
 use jain_smartcluster::{Client, ClientConfig};
 use jain_smartcluster_core::*;
 use jain_smartcluster_daemon::{
@@ -7,7 +7,7 @@ use jain_smartcluster_daemon::{
     config::{AuthConfig, DaemonConfig, ExecutionConfig, SchedulerConfig, WorkerConfig},
 };
 use nix::{
-    fcntl::{FcntlArg, FdFlag, fcntl},
+    fcntl::{fcntl, FcntlArg, FdFlag},
     unistd::{getegid, geteuid},
 };
 use std::os::unix::process::CommandExt;
