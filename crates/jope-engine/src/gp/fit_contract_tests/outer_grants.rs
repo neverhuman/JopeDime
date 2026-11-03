@@ -57,20 +57,22 @@ pub(crate) fn outer_case() -> OuterCase {
 }
 
 impl OuterCase {
-    fn release(&self, name: &str) -> outer_release::Authority {
-        outer_release::Authority::initialize(&self.root.join(name)).unwrap()
+    fn release(&self, name: &str) -> crate::gp::outer_release::Authority {
+        crate::gp::outer_release::Authority::initialize(&self.root.join(name)).unwrap()
     }
     fn grant(&self, name: &str, test: &Path) -> Result<Value> {
-        let path = self.release(name).grant(&outer_release::GrantRequest {
-            search: handoff::Inputs {
-                root: &self.root,
-                output: &self.output,
-                seeds: Some(&self.seeds),
-                vocabulary: None,
-            },
-            predictor: &self.predictor,
-            test,
-        })?;
+        let path = self
+            .release(name)
+            .grant(&crate::gp::outer_release::GrantRequest {
+                search: handoff::Inputs {
+                    root: &self.root,
+                    output: &self.output,
+                    seeds: Some(&self.seeds),
+                    vocabulary: None,
+                },
+                predictor: &self.predictor,
+                test,
+            })?;
         read_json(&path)
     }
     fn handoff(&self) -> PathBuf {
