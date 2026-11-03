@@ -127,4 +127,3 @@ impl<S: TimedSocket + Send> ControlStream for DeadlineSocket<S> {
         Ok(())
     }
 }
-type Socket = DeadlineSocket<TcpStream>;
