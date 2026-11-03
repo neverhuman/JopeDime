@@ -429,9 +429,9 @@ jobs:
           npm ci --no-audit --no-fund
           npm run typecheck
           npm test -- --reporter=json --outputFile="$raw_results/tests.json"
-          node --input-type=module "$raw_results/tests.json" "$JOPE_UI_SOURCE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > "$bundle/receipt.json" <<'JS'
+          node --input-type=module - "$raw_results/tests.json" "$JOPE_UI_SOURCE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > "$bundle/receipt.json" <<'JS'
           import fs from 'node:fs';
-          const [, testsPath, sourceSha, runId, attempt] = process.argv;
+          const [, , testsPath, sourceSha, runId, attempt] = process.argv;
           const r = JSON.parse(fs.readFileSync(testsPath, 'utf8'));
           if (!(r.numTotalTests > 0) || r.numFailedTests !== 0 || !r.success) throw new Error('Nonzero passing frontend tests required');
           process.stdout.write(JSON.stringify({schema:'jope.observatory-ui-ci/v1', source_sha:sourceSha, run_id:runId, attempt, node:process.version, executed:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, scope:'frontend fixtures; not live training qualification'}, null, 2));
