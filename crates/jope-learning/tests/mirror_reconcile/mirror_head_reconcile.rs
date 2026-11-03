@@ -6,7 +6,7 @@ use super::*;
 const BOUND: &str = "b5ccee8e33af34313c51896f52466f87f2f8544dcb01672e6d6b4832d1ac4393";
 
 /// One candidate for a single fixed cut, scored `value` (rmse: lower is better).
-fn candidate(value: f64, ts: u64) -> Candidate {
+pub(super) fn candidate(value: f64, ts: u64) -> Candidate {
     let identity = HwmIdentity {
         comparison: None,
         task: "regression".into(),

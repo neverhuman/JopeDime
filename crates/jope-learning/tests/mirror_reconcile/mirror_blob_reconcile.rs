@@ -1,7 +1,7 @@
 /// Every `record_sha256` the mirror's own ledger batches name whose blob is *not* on the mirror.
 /// The mirror's copy is self-contained exactly when this is empty: `hwm verify` reads a blob per
 /// event, so a name with no blob is a ledger that cannot be walked from the mirror alone.
-use super::*;
+use super::{mirror_cli::tree, mirror_head_reconcile::candidate, *};
 
 fn named_blobs_missing_from(mirror: &Path) -> Vec<String> {
     let mut missing = Vec::new();
