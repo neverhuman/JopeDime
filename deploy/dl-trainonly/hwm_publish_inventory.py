@@ -3,15 +3,34 @@
 import sys
 
 _parent = sys.modules.get("hwm_publish", sys.modules["__main__"])
-for _name in (
-    "BINARIES", "C2_HEADER_SCHEMA", "G3_DECISIONS_SCHEMA",
-    "G3_DECISIONS_SHA256", "HANDOFF_SHA", "HEADER_SCHEMA", "LANES",
-    "OBJECT_SCHEMA", "PLAN_SCHEMA", "ROLELESS", "CUT", "DSL", "Path",
-    "Sources", "catalog_roles", "clean_output", "collections", "common",
-    "decode", "digest", "finite", "read_regular", "re", "require",
-    "s3io", "sha_field", "one_holdout", "__file__",
-):
-    globals()[_name] = getattr(_parent, _name)
+BINARIES = _parent.BINARIES
+C2_HEADER_SCHEMA = _parent.C2_HEADER_SCHEMA
+G3_DECISIONS_SCHEMA = _parent.G3_DECISIONS_SCHEMA
+G3_DECISIONS_SHA256 = _parent.G3_DECISIONS_SHA256
+HANDOFF_SHA = _parent.HANDOFF_SHA
+HEADER_SCHEMA = _parent.HEADER_SCHEMA
+LANES = _parent.LANES
+OBJECT_SCHEMA = _parent.OBJECT_SCHEMA
+PLAN_SCHEMA = _parent.PLAN_SCHEMA
+ROLELESS = _parent.ROLELESS
+CUT = _parent.CUT
+DSL = _parent.DSL
+Path = _parent.Path
+Sources = _parent.Sources
+catalog_roles = _parent.catalog_roles
+clean_output = _parent.clean_output
+collections = _parent.collections
+common = _parent.common
+decode = _parent.decode
+digest = _parent.digest
+finite = _parent.finite
+read_regular = _parent.read_regular
+re = _parent.re
+require = _parent.require
+s3io = _parent.s3io
+sha_field = _parent.sha_field
+one_holdout = _parent.one_holdout
+__file__ = _parent.__file__
 
 
 def selected_payload(final, row, event, header, header_sha, final_sha, family_source=None, role_source=None):
