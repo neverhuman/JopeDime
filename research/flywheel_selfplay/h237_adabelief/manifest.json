@@ -1,0 +1,100 @@
+{
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  },
+  "wave": "H237",
+  "authority": "/home/ubuntu/nudges/hw_t0030_opus_h237_adabelief.md",
+  "checkpoint": "/home/ubuntu/jope-data/h237/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h237/inputs/best_dev_checkpoint.json",
+  "seeds": [
+    237101,
+    237102,
+    237103
+  ],
+  "fold_seed": null,
+  "boot_seed": 237150,
+  "steps": [
+    0,
+    10,
+    20,
+    30,
+    40
+  ],
+  "arms": [
+    "CONTROL",
+    "ABEL",
+    "RADAM"
+  ],
+  "total_updates": 1800,
+  "parent_commit": "39fd7d58258a2aefd9aa2eadef201ae4b5069812",
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h237/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h237/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
+    "research/h156/run.py": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c",
+    "research/h156/analysis.py": "6a7b85de4c44448cff8f006be2ceb5ad950a26a3790aad97cbe19f55fc0f6dc0",
+    "research/h148/analysis.py": "912201520712f406252aec5129f4532748571d6911a526be89d1b3a01bcc205a",
+    "research/flywheel_selfplay/h165_gradient_noise_dropout/runner.py": "6430691737b88abbd4923976bf25f95bd4acdc3af1b14eff4653f91646b52d0a",
+    "research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py": "59352b84a3ef7f9764a6489ad3865e86925de6e2f3c80d23a5c2f9e5453ad1fd",
+    "research/flywheel_selfplay/h165_gradient_noise_dropout/treatment.py": "a532ca1b8a6eb8e0ebbb455a82662bf0a03088b768ada8e285e27222427e8e04",
+    "research/flywheel_selfplay/h165_gradient_noise_dropout/monitor.py": "39c16a4cc75fda51ba370feb44013abd2fa3ca26894e4c87adfc28ff83947602",
+    "research/flywheel_selfplay/h170_onecycle/runner.py": "a76985f7e006005785885429c18582d9063f5e557b06b950cb6d023d91cb3bf8",
+    "research/flywheel_selfplay/h170_onecycle/treatment.py": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de",
+    "research/flywheel_selfplay/h170_onecycle/analysis.py": "d0cd7cf8bafe4903509e77d438242ef41b82ed75609674cf7357773f93f07694",
+    "research/flywheel_selfplay/h170_onecycle/monitor.py": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df",
+    "research/flywheel_selfplay/runtime_audit.py": "74bb794018acd001a4caa509154c9743a92d50e3891d50495a0cd4095a7cd8a4",
+    "research/flywheel_selfplay/h232_lion/runner.py": "45c1730b73446a5234efeb1600c6c005957784b7019a8a88af2ae2e1e18fa5ce",
+    "research/flywheel_selfplay/h232_lion/treatment.py": "a2aa29abe68f49ea2d0bf53df737c68a64e6b523f425159b0f46949241415d4f",
+    "research/flywheel_selfplay/h232_lion/analysis.py": "9643a2fcef4d5cc4fdc7181ff6a15b806914d4e981fe9dc63bb398e2d8842cf5",
+    "research/flywheel_selfplay/h232_lion/monitor.py": "5de09684efe35e2399fcd2a15208957f9103fb79cb754510c10b69a6a1bf4ea8",
+    "research/flywheel_selfplay/h234_lambdaloss/runner.py": "573ffae88dd282a381a9800dab11e725c95a6c2200dad1396785e9f44c3fa289",
+    "research/flywheel_selfplay/h234_lambdaloss/treatment.py": "e4e8aab640e2d7c6118f60809c601a1876ff2d836dc2c30b6c294f4ce77777e3",
+    "research/flywheel_selfplay/h234_lambdaloss/analysis.py": "7ea925baece47d79db8e57b1f1888e8c6fa3eac638012cdf380326bdee5aa0e1",
+    "research/flywheel_selfplay/h234_lambdaloss/monitor.py": "62947186e8e120eac841343ef0e05234a934b84eee90279306566f18d3a7ce5a"
+  },
+  "source_sha256": {
+    "test_h237.py": "810dbc2085fb5edc5885233611bced3f6976660fd6000af69b53d228fabc5c86",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "schedules.json": "460cae2c7e9c48eb2d5a16bd0e11700360aa10d058397eb3a700abbbe63dad65",
+    "analysis.py": "eec3cf67b107c1aec3b8b71451265bf0541eb90aa6c09404c75d74d96a428909",
+    "treatment.py": "18149e4d9fe9fb9895ed4a983e2be4c5d1a9e736da1927058cb5b6a5421d2226",
+    "PREREG.md": "441c11240950d47b67b7f83a1d3204c35018adbe48ad6114cfb155a875f10b11",
+    "monitor.py": "953812050cfc84872a58dc22f6560558795161922493081ba85e9e713f9419c3",
+    "fold_manifest.json": "910f2affd125f3e7b7a521058b104512037d68bac819421a86fea4c5df71f524",
+    "runner.py": "7a6b25ada4427c5835734df49b979d1fe620c4da73ada3980870579059323d31"
+  },
+  "host": "xbabe2 CPU (taskset cores 48-51, nice 19, 1 math thread; amendment A1 hw_t0036)",
+  "compute_stop": "2026-11-03T06:30:00Z",
+  "fold_seeds": {
+    "237101": 237141,
+    "237102": 237142,
+    "237103": 237143
+  }
+}

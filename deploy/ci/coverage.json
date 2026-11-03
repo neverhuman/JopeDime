@@ -4478,16 +4478,6 @@
       "lanes": [],
       "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
     },
-    "python:deploy/qualification/q1/harness/test_q1_dispatch.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "cpu-qualification"
-      ],
-      "lanes": [],
-      "scope": "QLT-04 synthetic infrastructure retry controls: redacted structured/legacy stderr, actual return codes, fatal-first dispatch stop, timeout handling and strict response-schema refusal. No model, evaluator or dataset inputs; source controls only until explicitly executed, not live Q1 qualification."
-    },
     "python:deploy/qualification/q1/harness/test_q1_cut.py": {
       "discovery": {
         "kind": "python-family"
@@ -4497,6 +4487,16 @@
       ],
       "lanes": [],
       "scope": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_dispatch.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-04 synthetic infrastructure retry controls: redacted structured/legacy stderr, actual return codes, fatal-first dispatch stop, timeout handling and strict response-schema refusal. No model, evaluator or dataset inputs; source controls only until explicitly executed, not live Q1 qualification."
     },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "discovery": {
@@ -6737,6 +6737,16 @@
       ],
       "lanes": [],
       "scope": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/test_h237.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H237 data-free controls: identical lr/betas/decoupled wd for every arm (schedules.json), optimizer classes (AdamW CONTROL, inline AdaBelief ABEL with eps 1e-16, torch RAdam with decoupled wd), AdaBelief equal to the Zhuang et al. 2020 reference update over 30 steps with None-gradient skipping, larger-than-Adam steps on consistent gradients, every arm moves parameters with the inherited CTRL loss, fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe2 monitor per amendment A1 (hard: MemAvailable 12 GiB, RSS 4 GiB, free 300 GB, 4 threads, 06:30Z; pause: load5 108/100 and MemAvailable 20/22 GiB hysteresis), launch binding, research-namespace release"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {

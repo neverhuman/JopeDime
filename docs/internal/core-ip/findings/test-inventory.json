@@ -449,6 +449,10 @@
       "reason": "Owner-requested H235 data-free controls for the beta-NLL variance-head vs CTRL-loss r882 adapter continuation (identical AdamW, CTRL term split, beta-NLL reference and stop-gradient, zero/clamped head, loss composition, CTRL smooth-L1 pin, per-seed folds, selector, Holm m=2 with +0.002 margin, Elo, xbabe2 monitor limits and pause hysteresis).",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h237_adabelief/test_h237.py": {
+      "reason": "Owner-requested H237 data-free controls for the AdaBelief/RAdam vs AdamW r882 adapter continuation (optimizer classes and settings, AdaBelief reference update and belief property, per-seed folds, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor hard limits and load/memory pause hysteresis).",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [
