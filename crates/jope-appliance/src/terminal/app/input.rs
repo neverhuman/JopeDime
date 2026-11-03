@@ -115,15 +115,11 @@ pub(super) fn stop_before_event_poll_for_test() -> io::Result<()> {
         return Ok(());
     }
     let pid = std::process::id().to_string();
-    std::process::Command::new("/bin/kill")
-        .args(["-WINCH", &pid])
-        .status()?;
+    signal_hook::low_level::raise(signal_hook::consts::SIGWINCH)?;
     TRACE_FIRST_EVENT.store(true, Ordering::SeqCst);
     println!("\nPROBE_BEFORE_POLL {pid}");
     io::Write::flush(&mut io::stdout())?;
-    std::process::Command::new("/bin/kill")
-        .args(["-STOP", &pid])
-        .status()?;
+    signal_hook::low_level::raise(signal_hook::consts::SIGSTOP)?;
     Ok(())
 }
 
