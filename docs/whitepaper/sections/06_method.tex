@@ -9,7 +9,7 @@
 The reference training rule uses search-scored lists to train a program
 writer and a separate ranking map. The proposed game-day protocol freezes
 the writer and commits one proposal. \Cref{sec:method-status} records a
-separate cost adapter loop with its own evaluation and cost ledger
+separate cost-adapter loop \mbox{with its own} evaluation and cost ledger
 (\cref{sec:price}).
 
 \subsection{The player in one picture}\label{sub:method-picture}
@@ -18,7 +18,7 @@ A frozen encoder reads the problem board (\cref{fig:network}); the reference
 writer emits a complete program under the contract in \cref{box:searchone}, as
 AlphaGo's policy proposed a move
 \citep{silver2016mastering}. The separate ranking map enters training search
-only through the routes described in \cref{sub:method-map}.
+only \mbox{through the routes} described in \cref{sub:method-map}.
 
 \begin{figure*}[t]
   \setlength{\abovecaptionskip}{4pt}
@@ -53,10 +53,10 @@ rather than imputed (\cref{app:training}). The input contract permits
 training-side task evidence only; final held-out labels and their derived
 statistics must stay outside the input closure. A context's recorded
 declaration that no final target was used establishes neither input closure
-nor numerical qualification. CPU contexts require native replay and bounded-execution receipts before accepted-policy use.
+nor numerical qualification. CPU contexts require native replay and bounded-execution \mbox{receipts before accepted-policy} use.
 
 Whether problems with similar best programs sit together in that space requires
-a separate representation study; \cref{sub:results-ablation} reserves that
+a separate representation study; \mbox{\cref{sub:results-ablation} reserves} that
 evaluation test.
 
 \subsection{Describing the move}\label{sub:method-move}
@@ -145,7 +145,7 @@ or screening the writer. One native GP route matches map-derived weights
 by program identity to ranked survivors for parent selection. The bounded
 search driver instead cycles among up to four parents chosen by measured
 loss. These routes have different influence paths. Neither path alone
-establishes trained-map lift; an evaluation must bind its exact search route.
+establishes trained-map lift; \mbox{an evaluation must} bind its exact search route.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
@@ -191,11 +191,11 @@ scheduling at most eight batches of 128 neural draws (\num{1024} total).
 To fill a shortfall, it tries up to \num{10000} seeded random canonical
 pipelines and projects them through the grammar. It refuses an incomplete
 candidate pool. These are training-search budgets, separate from the
-single-draw game-day protocol in \cref{sub:method-gameday}.
+\mbox{single-draw game-day} protocol in \cref{sub:method-gameday}.
 
 The reference rule is expert iteration \citep{anthony2017expert}.
 The writer term weights sampled programs from $G_p$ by their referee rank;
-it joins the map and auxiliary loss terms in the full combined training objective
+it joins the map and auxiliary loss terms in the full \mbox{combined training} objective
 (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\mathrm{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
@@ -252,7 +252,7 @@ Reliable training targets require a referee that resists exploitation.
 In February 2025 Sakana AI walked back
 claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana2025walkback}. In June
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
-\num{1968} agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}.
+\num{1968} agent-benchmark tasks \mbox{can be passed} without being solved \citep{zhong2026hackerfixer}.
 
 The evaluation protocol must withstand such attacks. Selection,
 promotion and final scoring must use separate data (inner folds, held-out
@@ -287,5 +287,5 @@ matched comparison with a frozen reference.
 \end{algorithm}
 
 Report any later search separately, just as \citet{silver2017mastering} reported
-AlphaGo Zero's raw policy network apart from its lookahead search (\cref{sec:method-status}).
+AlphaGo Zero's raw policy network apart \mbox{from its lookahead} search (\cref{sec:method-status}).
 \input{sections/06_method/flywheel_status}
