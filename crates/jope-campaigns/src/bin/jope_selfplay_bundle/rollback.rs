@@ -10,8 +10,8 @@ pub(crate) use derivation::{
     verify_rollback_derivation,
 };
 pub(crate) use systemd::{
-    git_blob, parse_systemd_artifact, rollback_bundle_files, rollback_derivation_path,
-    systemd_closure, transform_rollback_unit, unchanged_inventory_root, verify_intrinsic_existing,
+    git_blob, rollback_bundle_files, rollback_derivation_path, systemd_closure,
+    transform_rollback_unit, unchanged_inventory_root, verify_intrinsic_existing,
 };
 
 pub(crate) fn verify_existing(root: &Path, manifest: &Value) -> Result<()> {
