@@ -1,37 +1,37 @@
 {
   "items": {
     "python:research/flywheel_selfplay/h244_wsmooth/analysis.py": {
-        "bytes": 8529,
-        "sha256": "0ccd25b414ffceb7955151f875378c97b74a44f397ba4fea1000c65e18103d65",
-        "classification": {
-          "role": "research",
-          "reason": "H244 zero-update weight-perturbation prediction smoothing; frozen DOPE, FIT-only selection locked before DL-Val, Native91, mean-cost inference and H239 A1 guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h244_wsmooth/smoothing.py": {
-        "bytes": 2185,
-        "sha256": "939874ec99c0f99bd0edafabd7d3a4c469e57ed39803ac463637ecf173a8f7bd",
-        "classification": {
-          "role": "research",
-          "reason": "H244 zero-update weight-perturbation prediction smoothing; frozen DOPE, FIT-only selection locked before DL-Val, Native91, mean-cost inference and H239 A1 guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h244_wsmooth/runner.py": {
-        "bytes": 26432,
-        "sha256": "a4986dbf58f8fc944fae84e0eb3bbdbcc02eb904bcfaa48e2a638c07b1b7e0fc",
-        "classification": {
-          "role": "research",
-          "reason": "H244 zero-update weight-perturbation prediction smoothing; frozen DOPE, FIT-only selection locked before DL-Val, Native91, mean-cost inference and H239 A1 guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h244_wsmooth/monitor.py": {
-        "bytes": 7949,
-        "sha256": "793a2701feecb68c5a79ffe1019b5773d6fca3945835b45d0c5849f992aa8620",
-        "classification": {
-          "role": "research",
-          "reason": "H244 zero-update weight-perturbation prediction smoothing; frozen DOPE, FIT-only selection locked before DL-Val, Native91, mean-cost inference and H239 A1 guard; no serving promotion."
-        }
-      },
+      "bytes": 8529,
+      "sha256": "0ccd25b414ffceb7955151f875378c97b74a44f397ba4fea1000c65e18103d65",
+      "classification": {
+        "role": "research",
+        "reason": "H244 zero-update weight-perturbation prediction smoothing; frozen DOPE, FIT-only selection locked before DL-Val, Native91, mean-cost inference and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h244_wsmooth/smoothing.py": {
+      "bytes": 2185,
+      "sha256": "939874ec99c0f99bd0edafabd7d3a4c469e57ed39803ac463637ecf173a8f7bd",
+      "classification": {
+        "role": "research",
+        "reason": "H244 zero-update weight-perturbation prediction smoothing; frozen DOPE, FIT-only selection locked before DL-Val, Native91, mean-cost inference and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h244_wsmooth/runner.py": {
+      "bytes": 26432,
+      "sha256": "a4986dbf58f8fc944fae84e0eb3bbdbcc02eb904bcfaa48e2a638c07b1b7e0fc",
+      "classification": {
+        "role": "research",
+        "reason": "H244 zero-update weight-perturbation prediction smoothing; frozen DOPE, FIT-only selection locked before DL-Val, Native91, mean-cost inference and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h244_wsmooth/monitor.py": {
+      "bytes": 7949,
+      "sha256": "793a2701feecb68c5a79ffe1019b5773d6fca3945835b45d0c5849f992aa8620",
+      "classification": {
+        "role": "research",
+        "reason": "H244 zero-update weight-perturbation prediction smoothing; frozen DOPE, FIT-only selection locked before DL-Val, Native91, mean-cost inference and H239 A1 guard; no serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h239_subset/analysis.py": {
       "bytes": 10524,
       "sha256": "c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc",
@@ -6516,6 +6516,46 @@
       "classification": {
         "role": "research",
         "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h245_gated_lambda_nest/shared.py": {
+      "bytes": 2173,
+      "sha256": "9c67ec642ab702fcbb458cb553edd315b6718f923647f90f3872b6802303d782",
+      "classification": {
+        "role": "research",
+        "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h245_gated_lambda_nest/analysis.py": {
+      "bytes": 18697,
+      "sha256": "d88b42e5bd16d2246b82747dc2d7db5fbdf10cfb1500a321aa5e10896acf00b7",
+      "classification": {
+        "role": "research",
+        "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h245_gated_lambda_nest/launcher.py": {
+      "bytes": 3498,
+      "sha256": "8cd379498f08b9e30a8db1227f173a5c979450c1ca58dc5c4e7076b330143199",
+      "classification": {
+        "role": "research",
+        "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h245_gated_lambda_nest/monitor.py": {
+      "bytes": 8313,
+      "sha256": "99f51f83437cc5870c53bb5b128b05e2f6ba0acb19b0374d1b3ee084a92b0686",
+      "classification": {
+        "role": "research",
+        "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h245_gated_lambda_nest/runner.py": {
+      "bytes": 44177,
+      "sha256": "d6de0396c89976a0d3913fa28f8b999daad0505fb15eb83e0b26d007440fe3f9",
+      "classification": {
+        "role": "research",
+        "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
       }
     }
   },

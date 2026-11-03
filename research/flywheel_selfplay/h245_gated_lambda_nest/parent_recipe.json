@@ -1,0 +1,13 @@
+{
+  "parent": "H218 at e61adfe566e784ca3182c248df428eb717fe2a3a",
+  "function_ast_sha256": {
+    "blend": "68afb22530747403193c3a54ada2916c8107ed3b66f9fcba13f80e969137f7aa",
+    "zgap": "4f2805fa7e035e5a958c4a06392fffec25370ab07322d119648b30f58127dd4a",
+    "disagreement": "2d933fc921056b2dee9f5d53db5089c4a1ee16e2cc10894b9d70e98e678b91da",
+    "tau_grid": "b1974cc8dfbaedc7cbf4679a799f65b99bf449fd693339283eaf824a36e21f83",
+    "gated": "1fb7b52a60405f192b306b9d5e47243f7f046efb4263b86106c324be5e276257",
+    "choose_tau": "b5f2ff4958be1894a6bebe77a089f93980c6dd8c1a7c15090247faabdf136ba4",
+    "choose_lambda_tau": "167e8c71ce77a523ad4e740c9bd3ceae73e1189a7cd7b54c56ea3f34c862607c"
+  },
+  "normalization": "AST without location/comments/function docstring; scientific statements remain exact"
+}

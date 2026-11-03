@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "wave",
+    "status",
+    "verdict",
+    "optimizer_updates",
+    "source_commit"
+  ],
+  "properties": {
+    "wave": {
+      "const": "H245"
+    },
+    "status": {
+      "enum": [
+        "PREREGISTERED",
+        "COMPLETE",
+        "CLOSED_INCOMPLETE"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        null,
+        "ADVANCE",
+        "NO_ADVANCE",
+        "CLOSED_INCOMPLETE"
+      ]
+    },
+    "optimizer_updates": {
+      "const": 0
+    },
+    "source_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": true
+}
