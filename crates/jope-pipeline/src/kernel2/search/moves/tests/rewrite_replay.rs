@@ -1,4 +1,6 @@
 use super::*;
+use super::cli_contract::flags;
+use super::rewrite_scores::{SEED, SIDECARS};
 
 pub(super) fn dataset() -> String {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
