@@ -130,8 +130,43 @@ fn fixture() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/python-parity")
 }
 
+fn without_coverage_item(text: String, name: &str, next: &str) -> String {
+    let item = format!("    \"{name}\": {{");
+    let following = format!("    \"{next}\": {{");
+    let start = text
+        .find(&item)
+        .unwrap_or_else(|| panic!("missing captured item {name}"));
+    let end = start
+        + text[start..]
+            .find(&following)
+            .unwrap_or_else(|| panic!("missing following captured item {next}"));
+    format!("{}{}", &text[..start], &text[end..])
+}
+
 fn text(rel: &str) -> String {
-    fs::read_to_string(fixture().join(rel)).unwrap()
+    let text = fs::read_to_string(fixture().join(rel)).unwrap();
+    // These captures are from before test_training_campaign.py was split. Recreate that
+    // captured input while leaving the newer repository mapping and discovery fixtures intact.
+    match rel {
+        "coverage/mapping.json" => without_coverage_item(
+            text,
+            "python:python/tests/test_training_campaign_execution.py",
+            "python:python/tests/test_training_corpus_contract.py",
+        ),
+        "coverage/discovered.json" => without_coverage_item(
+            text,
+            "python:python/tests/test_training_campaign_execution.py",
+            "python:python/tests/test_training_comparison.py",
+        ),
+        "coverage/files.txt" => text
+            .split_inclusive('\n')
+            .filter(|line| {
+                line.trim_end_matches(['\r', '\n'])
+                    != "python/tests/test_training_campaign_execution.py"
+            })
+            .collect(),
+        _ => text,
+    }
 }
 
 fn json(rel: &str) -> Value {
