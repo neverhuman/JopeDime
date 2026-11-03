@@ -32,11 +32,7 @@ impl<'a> BinaryFoldCache<'a> {
         }
     }
 
-    fn fold(
-        &self,
-        fold_plan_folds: usize,
-        fold: usize,
-    ) -> Result<Arc<BinaryFoldSlices>> {
+    fn fold(&self, fold_plan_folds: usize, fold: usize) -> Result<Arc<BinaryFoldSlices>> {
         if let Some(hit) = self
             .slices
             .lock()
