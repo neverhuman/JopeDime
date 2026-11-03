@@ -82,23 +82,23 @@ pub struct FrozenFold {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct FrozenPolicy {
-    schema: String,
-    plan_sha256: String,
-    comparison: HwmIdentity,
-    label_role: String,
-    panel_sha256: String,
-    dataset: PanelDataset,
-    original_label_role: String,
-    label_burn_sha256: Option<String>,
-    guard: GuardPolicy,
-    evaluation_seed: u64,
-    targets_sha256: String,
-    folds: Vec<FrozenFold>,
-    created_at_unix: u64,
+    pub(super) schema: String,
+    pub(super) plan_sha256: String,
+    pub(super) comparison: HwmIdentity,
+    pub(super) label_role: String,
+    pub(super) panel_sha256: String,
+    pub(super) dataset: PanelDataset,
+    pub(super) original_label_role: String,
+    pub(super) label_burn_sha256: Option<String>,
+    pub(super) guard: GuardPolicy,
+    pub(super) evaluation_seed: u64,
+    pub(super) targets_sha256: String,
+    pub(super) folds: Vec<FrozenFold>,
+    pub(super) created_at_unix: u64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    inner_partition: Option<InnerPartition>,
+    pub(super) inner_partition: Option<InnerPartition>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    context: Option<ContextPlan>,
+    pub(super) context: Option<ContextPlan>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
