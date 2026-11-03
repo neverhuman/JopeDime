@@ -2,7 +2,6 @@
 
 /// `json.dumps(obj, allow_nan=False, separators=(",", ":"))` in Rust: dicts keep their order,
 /// non-finite floats and unsupported types raise like `json` does.
-
 fn write_json(obj: &Bound<'_, PyAny>, out: &mut String, depth: u32) -> PyResult<()> {
     if depth > MAX_JSON_DEPTH {
         return Err(value_error("Circular reference detected"));
