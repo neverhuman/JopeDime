@@ -1,7 +1,6 @@
 use super::*;
 
 /// `verify_run`'s refusal of `path`, which must name `expected`.
-
 pub(super) fn refused_with(path: &Path, label: &str, expected: &str) -> String {
     let error = format!(
         "{:#}",
