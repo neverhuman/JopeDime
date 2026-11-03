@@ -149,7 +149,7 @@ pub fn gene_stream_entries(
     let maps = evaluation_maps(evaluations);
     let audit_count = (3isize).max(limit.div_euclid(2)) as usize;
     let audit_rows: Vec<Value> = tail(candidate_audit, audit_count)
-        .into_iter()
+        .iter()
         .filter(|row| {
             row.as_object()
                 .is_some_and(|object| !row_genome(object).is_empty())
@@ -158,7 +158,7 @@ pub fn gene_stream_entries(
         .collect();
     let proposal_count = (4isize).max(limit - audit_rows.len() as isize) as usize;
     let proposal_rows: Vec<Value> = tail(proposals, proposal_count)
-        .into_iter()
+        .iter()
         .filter(|row| {
             row.as_object()
                 .is_some_and(|object| !row_genome(object).is_empty())
