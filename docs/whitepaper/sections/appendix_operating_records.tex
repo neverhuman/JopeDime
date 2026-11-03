@@ -1,13 +1,10 @@
 \subsection{Earlier utility aggregates and operating measurements}\label{app:earlier-operating-records}
 
-The earlier detailed summaries in \cref{fig:fw-trainval} cover only 25 rounds. In that subset,
-training utility exceeds validation utility by 0.282--0.290
-(\cref{fig:fw-trainval}). This is a difference between reported aggregates
-on separate training and validation contexts; it does not isolate a cause
-or establish behavior in the missing summaries. The late validation plateau
-is evidence to explain, rather than proof of useful transfer. Encoder
-integrity and parameter updates require their own receipts; the plotted
-utility tables do not establish either.
+The 25 retained summaries in \cref{fig:fw-trainval} have a train--validation
+utility gap of 0.282--0.290. Separate contexts prevent attributing a cause
+or inferring behavior in missing summaries. Neither the plateau nor these
+aggregate tables establish useful transfer, encoder integrity or parameter
+updates; those require separate receipts.
 
 \begin{figure*}[!t]
   \setlength{\abovecaptionskip}{4pt}
@@ -27,14 +24,10 @@ utility tables do not establish either.
 \end{figure*}
 
 \paragraph{Retained operating windows.}
-In the five earlier 20-round program-event slices, rounds 2005--2024 record 15
-events (\cref{fig:fw-recent-development}), rounds 2082--2101 record 10
-(\cref{fig:fw-followup-development}), rounds 2343--2362 record 22
-(\cref{fig:fw-later-development}), rounds 2508--2527 record 15
-(\cref{fig:fw-subsequent-window}) and rounds 2644--2663 record 21
-(\cref{fig:fw-program-promotions}). Each slice records zero adapter admissions.
-The later 20-round throughput slice, 2696--2715, also records none; it
-reports contexts and wall time rather than a program-event total.
-Completed-time, event-distribution and rate summaries appear in
-\cref{app:development-time,app:event-counts,app:subsequent-rates,app:promotions-per-hour,app:round-throughput}.
-Scope and clock definitions follow \cref{sec:method-status}.
+The separate 20-round event slices record 15 events in 2005--2024,
+10 in 2082--2101, 22 in 2343--2362, 15 in 2508--2527 and 21 in
+2644--2663, all with zero adapter admissions. The 2696--2715 throughput
+slice also records none, but reports contexts and time rather than an event
+total. \Cref{app:development-time,app:event-counts,app:round-throughput}
+compare these measurements under the clock definitions in
+\cref{sec:method-status}.
