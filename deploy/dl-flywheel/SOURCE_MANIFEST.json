@@ -5339,7 +5339,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/revision2/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
       "origin_sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
-      "sha256": "56206bde5c72fe84966eb25a4ed921f7b1393bf23a43482fc2f52bace673b0d5"
+      "sha256": "5c975b370cce91e835662376beda8662103efe808232fd654ce05a79cc7181e6"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -5367,7 +5367,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
       "origin_sha256": "2dbe7d79921aa18bd182e2eec2ab3bc62646d2a99b30816be7b8b7140b9a669f",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
-      "sha256": "73ce5a349721d800ee08d3cc94564031ab651c9e16df15d91178b1def3d6f648"
+      "sha256": "96456dfebc037176e1eb0ac418e529d9a49d32ac4e46260fe91676c516daad1b"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
