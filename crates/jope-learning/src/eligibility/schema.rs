@@ -297,8 +297,8 @@ pub(super) fn diagnostics(
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct StoredQualification {
-    evidence: OofEvidence,
-    qualification: Qualification,
+    pub(super) evidence: OofEvidence,
+    pub(super) qualification: Qualification,
 }
 
 #[derive(Clone, Debug, Serialize)]
