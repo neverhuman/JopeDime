@@ -1,5 +1,5 @@
 use super::export::{export_genome, observe_genome};
-use super::publish::{sha256_bytes, validate_sha256};
+use super::publish::{publish_corpus, safe_relative_path, sha256_bytes, validate_sha256};
 use super::*;
 
 #[cfg(test)]
