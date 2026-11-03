@@ -189,11 +189,29 @@ fn split_and_stage_caches_are_metric_bit_identical_to_plain_fit() {
             tabfm_ensemble_sha256: "3".repeat(64),
         },
     };
-    let evaluator = StudyEvalContext::new(&data, &dataset, &splits).unwrap();
-    evaluator.begin_generation(0);
+    let stage_cache = StageCache::new(DEFAULT_BYTE_CAP);
+    stage_cache.begin_generation(0);
+    let evaluate_cached = |genome: &GenomeIr, split: &SplitReceipt| {
+        let (train_x, train_y) = slice_data(&data, &split.train_indices)?;
+        let (validation_x, validation_y) = slice_data(&data, &split.validation_indices)?;
+        let context = StageCacheCtx {
+            context_tag: format!(
+                "{}|{}|rows={}|features={}",
+                dataset.dataset_hash,
+                dataset.train_sha256,
+                data.y.len(),
+                data.features
+            ),
+            folds: splits.splits.len(),
+            fold: split.generation,
+        };
+        let predictions = fit_with_stage_cache(genome, &train_x, &train_y, &stage_cache, &context)?
+            .predict(&validation_x)?;
+        metrics(&validation_y, &predictions)
+    };
     let genome = GenomeIr::parse("(pipe X (standardize append=true) (ridge l2=0.25))").unwrap();
-    let cached_first = evaluator.evaluate(&genome, &splits.splits[0]).unwrap();
-    let cached_second = evaluator.evaluate(&genome, &splits.splits[0]).unwrap();
+    let cached_first = evaluate_cached(&genome, &splits.splits[0]).unwrap();
+    let cached_second = evaluate_cached(&genome, &splits.splits[0]).unwrap();
     let (train_x, train_y) = slice_data(&data, &splits.splits[0].train_indices).unwrap();
     let (validation_x, validation_y) =
         slice_data(&data, &splits.splits[0].validation_indices).unwrap();
@@ -204,7 +222,7 @@ fn split_and_stage_caches_are_metric_bit_identical_to_plain_fit() {
     let plain = metrics(&validation_y, &predictions).unwrap();
     assert_eq!((cached_first.0, cached_first.1, cached_first.2), plain);
     assert_eq!((cached_second.0, cached_second.1, cached_second.2), plain);
-    assert!(evaluator.stage_cache.stats().0 > 0);
+    assert!(stage_cache.stats().0 > 0);
 
     let sources = [
         "(pipe X (standardize append=true) (ridge l2=0.25))",
@@ -217,7 +235,7 @@ fn split_and_stage_caches_are_metric_bit_identical_to_plain_fit() {
         let genome = GenomeIr::parse(source).unwrap();
         let cached_r2 = splits.splits[..2]
             .iter()
-            .map(|split| evaluator.evaluate(&genome, split).unwrap().1)
+            .map(|split| evaluate_cached(&genome, split).unwrap().1)
             .collect::<Vec<_>>();
         let uncached_r2 = splits.splits[..2]
             .iter()
