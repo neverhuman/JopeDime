@@ -86,8 +86,8 @@ use index_models::*;
 
 mod campaign_setup;
 use campaign_setup::*;
-mod worker;
 mod staging;
+mod worker;
 use staging::*;
 mod execution;
 use execution::*;
