@@ -3610,7 +3610,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/operations_pool.py",
       "origin_sha256": "903bd9fb4cfce58efd1295ee303c5a81ac392c8eb914a94519a3ee405ca1e3f4",
       "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/operations_pool.py",
-      "sha256": "484e01f44313e0c57d07c0bc5b9392cb082954607040381a99cb3d0789f34052"
+      "sha256": "903bd9fb4cfce58efd1295ee303c5a81ac392c8eb914a94519a3ee405ca1e3f4"
     },
     {
       "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies.",
