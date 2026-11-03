@@ -52,6 +52,8 @@ const PINNED_LM_PROGRAM: &str = "(pipe X (derive append=false expr=\"sin((1.6999
 /// The jope-pipeline test file that produces and pins [`PINNED_LM_PROGRAM`].
 const JOPE_PIPELINE_PIN: &str =
     include_str!("../../../jope-pipeline/src/kernel2/refinement_lm_tests.rs");
+const JOPE_PIPELINE_LM_TEST_PIN: &str =
+    include_str!("../../../jope-pipeline/src/kernel2/refinement_lm_tests/lm_tests.rs");
 
 /// The parity tests whose procedures and C++ drivers this module reuses.
 const PARITY_BITS: &str = include_str!("../parity_bits.rs");
@@ -186,7 +188,8 @@ fn the_pinned_winner_is_the_jope_pipeline_pin_and_round_trips() {
         "jope-pipeline's the_lm_refined_fixture_program_is_pinned pins another program; copy its \
          PINNED_LM_PROGRAM here"
     );
-    assert!(JOPE_PIPELINE_PIN.contains("fn the_lm_refined_fixture_program_is_pinned()"));
+    assert!(JOPE_PIPELINE_PIN.contains("mod lm_tests;"));
+    assert!(JOPE_PIPELINE_LM_TEST_PIN.contains("fn the_lm_refined_fixture_program_is_pinned()"));
     let genome = winner();
     assert_eq!(genome.canonical(), PINNED_LM_PROGRAM);
     supports(&genome).unwrap_or_else(|missing| panic!("{missing:?}"));
