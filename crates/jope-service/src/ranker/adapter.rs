@@ -491,7 +491,4 @@ fn proposal_kl(costs: &[f32], anchor: &[f32]) -> f64 {
 pub(super) mod real_cpu_parity;
 
 #[cfg(test)]
-#[path = "adapter/tests.rs"]
-mod predict;
-
 mod tests;
