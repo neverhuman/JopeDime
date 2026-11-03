@@ -1,0 +1,61 @@
+{
+  "wave": "H254",
+  "wave_id": "h254-active2plus2-confirm-20261103",
+  "authority": "/home/ubuntu/nudges/hw_t1305_argon_h254.md",
+  "owner": "rd_argon",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "checkpoint": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882/round-882.pt",
+  "reference": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882/best_dev_checkpoint.json",
+  "r882_train_costs": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882-train-costs.npz",
+  "r882_val_costs": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882-secondary-costs.npz",
+  "promotions_path": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/promotions.jsonl",
+  "pool_priors": "/home/ubuntu/jope-data/h58/cache/pool_priors.npz",
+  "fold_seed": 254140,
+  "seeds": [
+    254101,
+    254102,
+    254103
+  ],
+  "boot_seed": 254150,
+  "boot_draws": 10000,
+  "holm_m": 2,
+  "arms": [
+    "R882",
+    "GATED_025",
+    "ACTIVE_2PLUS2_HURDLE"
+  ],
+  "host": "xbabe2 CPU (taskset cores 57-60, nice 19, 1 math thread; H239 A1 memory guard pausing < 30 GiB)",
+  "compute_stop": "2026-11-03T15:30:00Z",
+  "parent_commit": "855639a54a563dbb7f6cef8a17ac2c10265f3c1c",
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  },
+  "snapshot": {
+    "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/snapshot/common_h252.py": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+    "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/snapshot/stage1_hurdle_sos_critic.py": "fc0dd0e2fa543f0540d677609989c1785ef33b07f6cf7e54f4f8bedbd0e5e797"
+  },
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h58/cache/pool_priors.npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe",
+    "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/promotions.jsonl": "c9afe08ed4d76f59aa807102423b502b57f8c6bddcfedb6a3ae89f8b85821550",
+    "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+  },
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952"
+  },
+  "parent_sources": {},
+  "source_sha256": {
+    "PREREG.md": "16a1e91cebccda1572abdeb7ee8da4f94ec7f2d771e36730d112ddba65f8feda",
+    "fold_manifest.json": "d06db7b06faf04c9576142d087d372ee4553ebddc3ac38990670e753a1c8fb90",
+    "monitor.py": "05cc96677494f83a17a555625fbb7bdb554473a376ca722fedf8658af27dac44",
+    "runner.py": "13c281618aa96cb89131d52389e375c7511c7cd2c847b573604944bcff3f0434",
+    "test_h254.py": "af102d14a2e8719476f24c77e643e9c1fb40d7c3852380562296bf9a58021f95"
+  }
+}
