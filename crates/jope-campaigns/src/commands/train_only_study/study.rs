@@ -108,7 +108,7 @@ pub(super) struct EncodingSlice {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct DatasetStudyEntry {
+pub(crate) struct DatasetStudyEntry {
     pub(super) dataset_hash: String,
     pub(super) source_family: String,
     pub(super) target_identity: String,
@@ -127,7 +127,7 @@ pub(super) struct DatasetStudyEntry {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct TrainOnlyStudyManifest {
+pub(crate) struct TrainOnlyStudyManifest {
     pub(super) schema: String,
     pub(super) study_design: String,
     pub(super) zero_shot_valid: bool,
