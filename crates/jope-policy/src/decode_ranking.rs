@@ -201,7 +201,7 @@ pub fn candidate_diversity_key_v3(
     let head = if truthy(head_type) {
         python_string(head_type.unwrap())
     } else if truthy(action_head) {
-        python_string(action_head)
+        python_string(action_head.unwrap())
     } else {
         "unknown".to_owned()
     };
@@ -313,7 +313,7 @@ where
     F: Fn(usize, usize) -> Ordering,
 {
     let mut indices: Vec<usize> = (0..len).collect();
-    indices.sort_by(compare);
+    indices.sort_by(|&a, &b| compare(a, b));
     indices
 }
 
