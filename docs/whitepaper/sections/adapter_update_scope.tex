@@ -13,7 +13,7 @@ exploration setting to select programs for exact evaluation.
 
 At the adapter interface, the caller supplies modality tokens and their
 mask. It separately zeros the 584-entry context-feature slot and both
-prior inputs, and supplies a fixed scale constant of 0.4208; zero context
+prior inputs, and supplies a fixed scale constant of \num{0.4208}; zero context
 features do not mean absent modality tokens. Its objective combines regression to recorded costs and listwise
 matching; failed gates receive target cost $+2.0$. Reporting averages
 negative selected scores rather than cost predictions, with utility $-2.0$
