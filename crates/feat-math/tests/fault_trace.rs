@@ -47,4 +47,4 @@ mod probes;
 
 use cases::{all_cases, Case, POS_ZERO};
 use compare::{check_every_form, At, Tallies};
-use corpus::{corpus, Corpus};
+use corpus::corpus;
