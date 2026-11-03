@@ -461,7 +461,12 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
         (
             "src/rng.rs",
             include_str!("../src/rng.rs"),
-            "8b947b489096a4e761044078aea863040db94d06d80598e83fc385edce145852",
+            // Re-pinned as the v1.0.0 baseline (approved by Jepson 2026-11-03): 2660e6330 routes
+            // `Pcg32::gaussian` through `portable_math::frozen_s1::{ln, cos}` so Darwin reproduces
+            // the frozen Linux S1 math. The PCG32 stream is untouched, and every other legacy-v2
+            // freeze test (genome/emission/prediction/RNG/fold constants) still passes unchanged.
+            // Previous: 8b947b489096a4e761044078aea863040db94d06d80598e83fc385edce145852
+            "6c806a91da13cec6bafe2f887fd762e968766e9e5bedfdb7ca7b09cf146de295",
         ),
         (
             "src/folds.rs",
