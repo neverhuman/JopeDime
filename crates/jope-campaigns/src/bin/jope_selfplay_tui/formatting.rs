@@ -80,10 +80,7 @@ impl UnsignedNumberState {
             Self::Unsigned(value) => Some(value),
             Self::Signed(value, float_fallback) => match u64::try_from(value) {
                 Ok(value) => Some(value),
-                Err(_) => match float_fallback {
-                    Some(value) => Some(value.max(0.0) as u64),
-                    None => None,
-                },
+                Err(_) => float_fallback.map(|value| value.max(0.0) as u64),
             },
             Self::Floating(value) => Some(value.max(0.0) as u64),
             Self::Invalid => None,
