@@ -182,13 +182,20 @@ fn main() -> Result<()> {
     }
 }
 
+#[path = "jope_causal_pair_repair/candidate.rs"]
 mod candidate;
+#[path = "jope_causal_pair_repair/cycle.rs"]
 mod cycle;
+#[path = "jope_causal_pair_repair/evaluator.rs"]
 mod evaluator;
+#[path = "jope_causal_pair_repair/jobs.rs"]
 mod jobs;
+#[path = "jope_causal_pair_repair/repair_spec.rs"]
 mod repair_spec;
+#[path = "jope_causal_pair_repair/state.rs"]
 mod state;
 #[cfg(test)]
+#[path = "jope_causal_pair_repair/tests.rs"]
 mod tests;
 
 use candidate::*;

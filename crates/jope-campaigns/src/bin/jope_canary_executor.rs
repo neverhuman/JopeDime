@@ -27,12 +27,15 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
+#[path = "jope_canary_executor/intent.rs"]
 mod intent;
+#[path = "jope_canary_executor/jobs.rs"]
 mod jobs;
+#[path = "jope_canary_executor/metrics.rs"]
 mod metrics;
-pub(super) use intent::*;
-pub(super) use jobs::*;
-pub(super) use metrics::*;
+pub(crate) use intent::*;
+pub(crate) use jobs::*;
+pub(crate) use metrics::*;
 
 const ACTIVE_STATES: &[&str] = &["queued", "starting", "dispatching", "running", "held"];
 

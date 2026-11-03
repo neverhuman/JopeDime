@@ -96,6 +96,7 @@ enum Cmd {
     },
 }
 
+#[path = "jope_training_history/capture.rs"]
 mod capture;
 use capture::{capture, parse_nodes, Cfg};
 
@@ -229,4 +230,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_training_history/tests.rs"]
 mod tests;

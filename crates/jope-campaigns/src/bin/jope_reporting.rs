@@ -60,13 +60,16 @@ struct ReportingStatus {
     blockers: Vec<String>,
 }
 
+#[path = "jope_reporting/learning.rs"]
 mod learning;
+#[path = "jope_reporting/recovery.rs"]
 mod recovery;
 #[cfg(test)]
+#[path = "jope_reporting/tests.rs"]
 mod tests;
 
-pub(super) use learning::*;
-pub(super) use recovery::*;
+pub(crate) use learning::*;
+pub(crate) use recovery::*;
 
 fn refresh(root: &Path) -> Result<ReportingStatus> {
     let mut status = selfplay_ingest::build_status(root)?;

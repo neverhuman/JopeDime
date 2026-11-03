@@ -231,6 +231,7 @@ pub(crate) fn reset_changed_shadow_epochs(
     }
 }
 
+#[path = "state/acceptance.rs"]
 mod acceptance;
 pub(crate) use acceptance::*;
 
@@ -365,5 +366,6 @@ pub(crate) fn promote_task_pointer(
     append_event(&args.root, "task_pointer_promoted", &receipt)
 }
 
+#[path = "state/promotion.rs"]
 mod promotion;
 pub(crate) use promotion::*;

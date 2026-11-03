@@ -298,6 +298,7 @@ fn evaluate(args: &Args) -> Result<Outcome> {
     Ok(Outcome { receipt, failing })
 }
 
+#[path = "jope_ops_health_check/workflow.rs"]
 mod workflow;
 
 fn main() {

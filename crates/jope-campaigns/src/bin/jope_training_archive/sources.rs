@@ -1,6 +1,8 @@
 use super::*;
 
+#[path = "sources/discovery.rs"]
 mod discovery;
+#[path = "sources/run_metadata.rs"]
 mod run_metadata;
 
 pub(crate) use discovery::{

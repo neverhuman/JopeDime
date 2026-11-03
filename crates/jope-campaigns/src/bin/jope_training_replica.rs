@@ -56,6 +56,7 @@ use std::process::{Command, Stdio};
 jope_paths::once_str!(
     fn root_str => paths::flywheel_root()
 );
+#[path = "jope_training_replica/commands.rs"]
 mod commands;
 
 const SOURCE_NODE: &str = "xbabe2";
@@ -200,10 +201,13 @@ fn object_rel(sha: &str) -> String {
 }
 
 // ---------------------------------------------------------------------------
+#[path = "jope_training_replica/local.rs"]
 mod local;
 use local::*;
+#[path = "jope_training_replica/remote.rs"]
 mod remote;
 use remote::*;
+#[path = "jope_training_replica/publish.rs"]
 mod publish;
 use publish::*;
 

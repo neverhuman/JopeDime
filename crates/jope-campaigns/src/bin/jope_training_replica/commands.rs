@@ -453,8 +453,10 @@ pub(crate) fn cmd_restore(
 // main
 // ---------------------------------------------------------------------------
 
+#[path = "commands/status.rs"]
 mod status;
 use status::previous_success;
 pub(crate) use status::{append_event, load_status, write_status};
 #[cfg(test)]
+#[path = "commands/tests.rs"]
 mod tests;

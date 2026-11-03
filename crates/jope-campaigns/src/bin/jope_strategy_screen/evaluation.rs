@@ -1,7 +1,10 @@
 use super::*;
 
+#[path = "evaluation/execution.rs"]
 mod execution;
+#[path = "evaluation/folds.rs"]
 mod folds;
+#[path = "evaluation/metrics.rs"]
 mod metrics;
 
 pub(crate) use execution::{

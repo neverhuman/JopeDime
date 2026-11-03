@@ -118,13 +118,17 @@ fn sane_name(name: &str) -> bool {
 /// Gate evaluation, pure so it is unit-testable. Returns the basis (list of
 /// satisfied gates) when the directory is deletable, None otherwise.
 #[allow(clippy::too_many_arguments)]
+#[path = "jope_selfplay_gc/planning.rs"]
 mod planning;
-pub(super) use planning::*;
+pub(crate) use planning::*;
+#[path = "jope_selfplay_gc/metrics_guard.rs"]
 mod metrics_guard;
-pub(super) use metrics_guard::*;
+pub(crate) use metrics_guard::*;
+#[path = "jope_selfplay_gc/execution.rs"]
 mod execution;
-pub(super) use execution::*;
+pub(crate) use execution::*;
 
+#[path = "jope_selfplay_gc/commands.rs"]
 mod commands;
 use commands::{cmd_receipts, cmd_runs};
 
@@ -158,4 +162,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_selfplay_gc/tests.rs"]
 mod tests;

@@ -32,15 +32,24 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
+#[path = "jope_selfplay_queue/attempts.rs"]
 mod attempts;
+#[path = "jope_selfplay_queue/database.rs"]
 mod database;
+#[path = "jope_selfplay_queue/dispatch.rs"]
 mod dispatch;
+#[path = "jope_selfplay_queue/keeper_claims.rs"]
 mod keeper_claims;
+#[path = "jope_selfplay_queue/keeper_cycle.rs"]
 mod keeper_cycle;
+#[path = "jope_selfplay_queue/manifests.rs"]
 mod manifests;
+#[path = "jope_selfplay_queue/scheduler_json.rs"]
 mod scheduler_json;
+#[path = "jope_selfplay_queue/screening.rs"]
 mod screening;
 #[cfg(test)]
+#[path = "jope_selfplay_queue/tests.rs"]
 mod tests;
 
 use attempts::*;

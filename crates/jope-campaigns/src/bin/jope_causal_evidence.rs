@@ -105,12 +105,15 @@ fn main() -> Result<()> {
     }
 }
 
+#[path = "jope_causal_evidence/epochs.rs"]
 mod epochs;
+#[path = "jope_causal_evidence/rebuild.rs"]
 mod rebuild;
+#[path = "jope_causal_evidence/receipts.rs"]
 mod receipts;
-pub(super) use epochs::*;
-pub(super) use rebuild::*;
-pub(super) use receipts::*;
+pub(crate) use epochs::*;
+pub(crate) use rebuild::*;
+pub(crate) use receipts::*;
 
 #[cfg(test)]
 #[path = "jope_causal_evidence/tests.rs"]

@@ -65,7 +65,10 @@ mod tests {
         .unwrap()
     }
 
+    #[path = "tests/manifest.rs"]
     mod manifest;
+    #[path = "tests/queue.rs"]
     mod queue;
+    #[path = "tests/submission.rs"]
     mod submission;
 }

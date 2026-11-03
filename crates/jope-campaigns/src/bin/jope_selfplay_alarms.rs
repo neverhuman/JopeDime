@@ -235,18 +235,24 @@ jope_paths::once_str!(
 
 /// Consecutive scans a status file may stay broken before the alarm escalates
 /// from "this cycle failed" to "this daemon is wedged". The timer is 60 s.
+#[path = "jope_selfplay_alarms/contract_types.rs"]
 mod contract_types;
-pub(super) use contract_types::*;
+pub(crate) use contract_types::*;
+#[path = "jope_selfplay_alarms/content_contracts.rs"]
 mod content_contracts;
-pub(super) use content_contracts::*;
+pub(crate) use content_contracts::*;
+#[path = "jope_selfplay_alarms/node_job_checks.rs"]
 mod node_job_checks;
-pub(super) use node_job_checks::*;
+pub(crate) use node_job_checks::*;
+#[path = "jope_selfplay_alarms/training_history_checks.rs"]
 mod training_history_checks;
-pub(super) use training_history_checks::*;
+pub(crate) use training_history_checks::*;
+#[path = "jope_selfplay_alarms/proposal_checks.rs"]
 mod proposal_checks;
-pub(super) use proposal_checks::*;
+pub(crate) use proposal_checks::*;
+#[path = "jope_selfplay_alarms/corpus_checks.rs"]
 mod corpus_checks;
-pub(super) use corpus_checks::*;
+pub(crate) use corpus_checks::*;
 
 /// `[<root>] [--contract-severity critical|warning]`.
 ///
@@ -324,4 +330,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_selfplay_alarms/tests.rs"]
 mod tests;

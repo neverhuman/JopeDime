@@ -353,6 +353,7 @@ pub(crate) fn build_wave_blocker_plan(
     })
 }
 
+#[path = "blocker_plan/evidence.rs"]
 mod evidence;
 pub(crate) use evidence::{
     load_held_retirement_proofs, load_scq_start_evidence, required_json_str,

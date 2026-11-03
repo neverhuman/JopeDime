@@ -327,8 +327,11 @@ fn main() -> Result<()> {
     freshness_impl::run()
 }
 
+#[path = "jope_selfplay_freshness/freshness_helpers.rs"]
 mod freshness_helpers;
+#[path = "jope_selfplay_freshness/freshness_impl/mod.rs"]
 mod freshness_impl;
+#[path = "jope_selfplay_freshness/freshness_sql.rs"]
 mod freshness_sql;
 
 use freshness_helpers::*;

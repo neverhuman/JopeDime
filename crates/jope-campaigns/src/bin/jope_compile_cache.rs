@@ -160,22 +160,27 @@ struct ReplayFile {
     valid: usize,
 }
 
+#[path = "jope_compile_cache/build.rs"]
 mod build;
+#[path = "jope_compile_cache/replay.rs"]
 mod replay;
 
-pub(super) use build::{build_entry, run_build, validate_entry};
-pub(super) use replay::{run_replay, validate_native_elf, validate_replay_receipt};
+pub(crate) use build::{build_entry, run_build, validate_entry};
+pub(crate) use replay::{run_replay, validate_native_elf, validate_replay_receipt};
 
+#[path = "jope_compile_cache/cache.rs"]
 mod cache;
+#[path = "jope_compile_cache/numeric.rs"]
 mod numeric;
+#[path = "jope_compile_cache/selection.rs"]
 mod selection;
-pub(super) use cache::{
+pub(crate) use cache::{
     atomic_bytes, cache_root, cache_status, entry_root, generic_entry_valid, write_operation,
 };
-pub(super) use numeric::{
+pub(crate) use numeric::{
     numeric_schema, prediction_sha256, raw_table, read_numeric_csv, score, validate_targets,
 };
-pub(super) use selection::{
+pub(crate) use selection::{
     audit_report, candidate_map, qualified_candidates, select_panel, verify_dataset_files,
 };
 
@@ -296,4 +301,5 @@ fn validate_sha256(label: &str, value: &str) -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_compile_cache/tests.rs"]
 mod tests;

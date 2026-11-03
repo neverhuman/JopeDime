@@ -13,6 +13,7 @@ use crate::jope_generalized_gp::{
 use crate::search_v3::{canonical_sha256, PredictionObjectV1};
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone)]
 pub struct EvaluatedPredictorV1 {
     pub predictor: FrozenPredictorV1,
     pub prediction: PredictionObjectV1,

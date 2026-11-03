@@ -1,6 +1,8 @@
 use super::*;
 
+#[path = "attempts/recording.rs"]
 mod recording;
+#[path = "attempts/reservation_lifecycle.rs"]
 mod reservation_lifecycle;
 
 pub(crate) use recording::{

@@ -1,7 +1,10 @@
 use super::*;
 
+#[path = "proposer_context/admission.rs"]
 mod admission;
+#[path = "proposer_context/proposal.rs"]
 mod proposal;
+#[path = "proposer_context/render.rs"]
 mod render;
 
 pub(crate) use admission::{

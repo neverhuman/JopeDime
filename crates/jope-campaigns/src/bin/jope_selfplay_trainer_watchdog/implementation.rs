@@ -409,6 +409,7 @@ impl CycleReport {
     }
 }
 
+#[path = "implementation/daemon.rs"]
 mod daemon;
 pub(crate) use daemon::run;
 

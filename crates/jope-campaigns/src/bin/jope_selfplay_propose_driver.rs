@@ -122,9 +122,13 @@ struct Args {
     dry_run: bool,
 }
 
+#[path = "jope_selfplay_propose_driver/catalog.rs"]
 mod catalog;
+#[path = "jope_selfplay_propose_driver/cycle.rs"]
 mod cycle;
+#[path = "jope_selfplay_propose_driver/publish.rs"]
 mod publish;
+#[path = "jope_selfplay_propose_driver/spec.rs"]
 mod spec;
 
 use catalog::*;
