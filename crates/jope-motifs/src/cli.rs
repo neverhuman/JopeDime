@@ -13,13 +13,13 @@
 
 use crate::export::{self, PublicChecks, PublicExport, StageCounts};
 use crate::mine::{input_manifest, mine};
-use crate::private_io::{Policy, create_private_dir, write_private_file, write_public_file};
+use crate::private_io::{create_private_dir, write_private_file, write_public_file, Policy};
 use crate::source::{FamilyMap, QualifiedSet, QualifiedSource};
 use crate::table::{Lifecycle, MineParameters, MotifTable};
 use crate::teaching::{StateOpener, StateTeaching};
 use crate::validate::{self, ValidateOptions, Validation};
-use crate::{Code, Coded, code_of};
-use anyhow::{Result, ensure};
+use crate::{code_of, Code, Coded};
+use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use std::collections::BTreeSet;
@@ -348,8 +348,8 @@ fn read_state(env: &Env, state: Option<&Path>) -> Result<QualifiedSet> {
 
 mod mining_command;
 mod validate_command;
-use mining_command::{MineArgs, mine_verb, render_mine};
-use validate_command::{Outcome, ValidateArgs, render_validate, validate_verb};
+use mining_command::{mine_verb, render_mine, MineArgs};
+use validate_command::{render_validate, validate_verb, Outcome, ValidateArgs};
 
 #[cfg(test)]
 mod tests;
