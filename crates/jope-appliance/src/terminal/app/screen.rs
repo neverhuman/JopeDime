@@ -88,7 +88,7 @@ impl Screen {
     }
 }
 
-fn wrap_line(text: &str, width: u16) -> Vec<String> {
+pub(super) fn wrap_line(text: &str, width: u16) -> Vec<String> {
     let width = usize::from(width.max(1));
     let mut lines = Vec::new();
     let mut line = String::new();
