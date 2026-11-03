@@ -143,7 +143,3 @@ mod kernel2;
 mod legacy;
 #[path = "tests_1/paired.rs"]
 mod paired;
-
-pub(crate) use kernel2::*;
-pub(crate) use legacy::*;
-pub(crate) use paired::*;
