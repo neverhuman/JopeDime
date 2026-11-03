@@ -101,8 +101,8 @@ CONTEXT += [("jope-pipeline", "neural_search::tests::" + name) for name in (
 POLICY = [
     ("jope-policy", "context_producer::" + name)
     for name in (
-        "tests::assembly_uses_all_three_frozen_normalizers_including_target",
-        "tests::hyperion_pool_keeps_512_component_contract",
+        "tests::test_cases::assembly_uses_all_three_frozen_normalizers_including_target",
+        "tests::test_cases::hyperion_pool_keeps_512_component_contract",
         "admission::tests::finite_component_gate_refuses_wrong_values_shapes_and_nan",
         "admission::tests::cpu_manifest_never_accepts_unpinned_registry_or_fewer_cases",
         "admission::tests::execution_requires_completion_limits_and_matching_outputs",
