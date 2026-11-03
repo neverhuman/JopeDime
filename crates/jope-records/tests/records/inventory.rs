@@ -396,7 +396,7 @@ fn committed_record_matches_the_documented_geometry_and_forward_roles() {
     // mirror of model.rs `expected_inventory`, its role partition and the Candle forward roots.
     let repo = repo();
     let record = load(&repo.join(layout::CORE_IP).join("data/tensors.json"));
-    let source = std::fs::read_to_string(repo.join(inventory::MODEL_SOURCE)).unwrap();
+    let source = inventory::model_source(&repo).expect("model sources");
     let geometry = expected_geometry(&source).expect("documented geometry");
     let tensors = record.get("tensors").and_then(Value::as_list).unwrap();
     let listed: Dict = tensors
