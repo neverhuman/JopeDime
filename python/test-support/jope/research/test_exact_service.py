@@ -253,6 +253,7 @@ def main() -> None:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
             raise SystemExit(f"{args.service} service already owns its lock") from error
         print(
             json.dumps(record_starting(args.service, args.root), sort_keys=True),

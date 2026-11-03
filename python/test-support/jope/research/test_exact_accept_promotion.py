@@ -121,4 +121,5 @@ def main() -> None:
         immutable_root=args.immutable_root,
     )
     print(json.dumps(result, sort_keys=True))
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
     raise SystemExit(0 if result["pass"] else 2)

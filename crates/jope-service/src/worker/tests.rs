@@ -105,6 +105,7 @@ fn child_helper() {
         std::io::stdout()
             .write_all(&frame::encode_frame(&serde_json::to_value(response).unwrap()).unwrap())
             .unwrap();
+        // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         std::process::exit(0);
     }
     let mut retained = Vec::<u8>::new();
@@ -138,6 +139,7 @@ fn child_helper() {
                     .open(path)
                     .unwrap();
                 marker.write_all(b"x").unwrap();
+                // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
                 std::process::exit(if request.dsl == "exit_zero" { 0 } else { 70 });
             }
             "panic" => panic!("candidate fixture panic"),
@@ -162,6 +164,7 @@ fn child_helper() {
         })
     })
     .unwrap();
+    // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
     std::process::exit(0);
 }
 

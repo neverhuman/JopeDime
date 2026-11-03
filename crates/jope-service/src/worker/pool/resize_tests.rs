@@ -120,6 +120,7 @@ fn resize_child() {
         })
     })
     .unwrap();
+    // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
     std::process::exit(0);
 }
 

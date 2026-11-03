@@ -86,6 +86,7 @@ fn cli_entry() {
     };
     if let Err(error) = cli::run_cli(&arguments[split + 1..]) {
         eprintln!("Error: {error:?}");
+        // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         std::process::exit(1);
     }
 }

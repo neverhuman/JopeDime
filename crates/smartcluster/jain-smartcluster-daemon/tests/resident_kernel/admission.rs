@@ -192,6 +192,7 @@ fn resident_fixture_entry() -> Result<()> {
             );
             if mode == "result-crash" && number == "1" {
                 // Abrupt process exit after fsync, without unwinding or a completion report.
+                // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
                 std::process::exit(23);
             }
             report(

@@ -31,6 +31,7 @@ fn manifest_child() {
     };
     if let Err(error) = result {
         eprintln!("{error:#}");
+        // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         std::process::exit(1);
     }
 }
