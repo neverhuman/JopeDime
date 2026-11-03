@@ -18,14 +18,14 @@ A frozen encoder reads the problem board (\cref{fig:network}); the reference
 writer emits a complete program under the contract in \cref{box:searchone}, as
 AlphaGo's policy proposed a move
 \citep{silver2016mastering}. The separate ranking map enters training search
-through the routes described in \cref{sub:method-map}.
+only through the routes described in \cref{sub:method-map}.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig5_network.pdf}
   \caption{\textbf{Reference training updates the writer and map; game day uses the writer alone.}
   Top: game day, the whole of \searchone{}. Dashed box: proposed training.
-  Search extends the writer's drafts; referee-scored lists supply objectives
+  Search extends the writer's drafts, and referee-scored lists supply training objectives
   for the writer ($\theta$) and map ($\psi$). Stillborn programs enter no list.}
   \label{fig:network}
 \end{figure*}
@@ -87,7 +87,7 @@ The reference map ranks programs within a problem by decreasing logit.
 It reads a program as $z_w=\encS(w)$, the layer-normalized mean of
 non-padding token embeddings, including \texttt{BOS}, the fixed engine and
 task header, and \texttt{EOS}. Pooling discards token order, limiting its
-ability to distinguish compositions built from the same tokens.
+ability to distinguish \mbox{compositions} built from the same tokens.
 
 The map's own two-layer context network projects the \num{2048}-value $z_p$
 to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
@@ -144,7 +144,7 @@ or screening the writer. One native GP route matches map-derived weights
 by program identity to ranked survivors for parent selection. The bounded
 search driver instead cycles among up to four parents chosen by measured
 loss. These are different influence paths, not evidence of trained-map lift;
-any evaluation must bind the exact route that it used.
+any evaluation must bind the exact search route that it used.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
@@ -158,10 +158,10 @@ teachers; \cref{alg:selfplay} leaves the tail route-dependent.
 Search-parent weights and writer-loss weights act at different stages;
 the latter use referee rank. Whether map-guided targets improve later
 proposals requires the matched ablation in \cref{sub:results-ablation}.
-The historical diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
+The historical target diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
 do not supply that controlled comparison.
 
-In the proposed offline loop, referee-scored search outcomes supply
+In the proposed offline loop, referee-scored search outcomes supply the
 training targets.
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
@@ -174,7 +174,7 @@ training targets.
 \For{each round}
   \For{each sampled training problem $p$}
     \State $z_p \gets \encP(p)$; keep the first 64 distinct valid draws from $\writer(\cdot\mid z_p)$ \Comment{$T=1$; bounded fallback if short}
-    \State verified search, seeded with the 64 drafts and 16 tail seeds (teachers/fallbacks and random exploration), proposes more programs \Comment{the teacher}
+    \State verified search, seeded with the 64 drafts and 16 tail seeds (teachers/fallbacks and random exploration), \mbox{proposes more programs} \Comment{the teacher}
     \State $\referee$ fits and scores each distinct program on 5 inner folds \Comment{stillborn: no score}
     \State \textbf{if} a program strictly beats $\inc{p}$ \textbf{then} it becomes $\inc{p}$ \Comment{board ratchet}
     \State add every scored program to the list $G_p$ \Comment{winners and also-rans}
@@ -193,8 +193,8 @@ candidate pool. These are training-search budgets, separate from the
 single-draw game-day protocol in \cref{sub:method-gameday}.
 
 The reference rule is expert iteration \citep{anthony2017expert}.
-The writer term weights sampled programs from $G_p$ by referee rank;
-it joins the map and auxiliary terms in the full combined training objective
+The writer term weights sampled programs from $G_p$ by their referee rank;
+it joins the map and auxiliary loss terms in the full combined training objective
 (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\mathrm{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
@@ -205,9 +205,9 @@ it joins the map and auxiliary terms in the full combined training objective
   \label{eq:totalLoss}
 \end{align}
 The writer loss in \cref{eq:writerLoss} is schematic: it displays the referee rank
-weights. The native implementation also smooths grammar-legal targets,
-averages token losses within each program and normalizes by the total sum of
-program weights (\cref{app:training}).
+weights. The native implementation also smooths grammar-legal token targets,
+averages token losses within each sampled program and normalizes by the total sum of
+\mbox{program weights} (\cref{app:training}).
 
 Here $\mathcal{L}_{\mathrm{BT}}$ is a Bradley--Terry loss on the same lists,
 $\mathcal{L}_{\mathrm{runtime}}$ a Huber loss between $\ln(1+s)$ and
@@ -256,8 +256,8 @@ claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana202
 The evaluation protocol must withstand such attacks. Selection,
 promotion and final scoring must use separate data (inner folds, held-out
 cuts, a final fold scored once), with sealed meta-test families outside the
-learner's inputs. The proposed comparisons also require sandboxed execution
-using seccomp and Landlock, with memory, swap and time limits. A
+learner's inputs. The proposed comparisons also require seccomp and
+Landlock sandboxing, with memory, swap and time limits. A
 planted label leak and a sealed canary must both be caught. Every reported
 winner must be re-run from its emitted code, with native and emitted
 predictions agreeing within
@@ -285,6 +285,6 @@ draw with a frozen reference under matched conditions.
 \end{algorithmic}
 \end{algorithm}
 
-Report any later search separately, as \citet{silver2017mastering} reported
-AlphaGo Zero's raw network apart from its lookahead search (\cref{sec:method-status}).
+Report any later search separately, just as \citet{silver2017mastering} reported
+AlphaGo Zero's raw policy network apart from its lookahead search (\cref{sec:method-status}).
 \input{sections/06_method/flywheel_status}

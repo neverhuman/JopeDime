@@ -12,8 +12,8 @@ Program candidates use two training-side folds; the historical reference
 uses five. Evaluation logging does not imply pool admission: failed gates
 and non-improving candidates are dropped (not kept as negatives), and
 a lower score must beat the context incumbent by more than $10^{-6}$
-(\cref{fig:program-promotion-margins}). Historical programs retain a
-separate admission path.
+(\cref{fig:program-promotion-margins}). Historical programs retain their
+own separate admission path.
 
 The adapter accepts ties by default, so a recorded best-round identity
 can change without raising utility. Optional strict admission requires
@@ -31,14 +31,14 @@ improvement or deployment throughput. The aggregate records do not yet bind
 an exact loop source, adapter, evaluation population or normalization, so
 cross-model comparisons and transfer remain unqualified. Retained windows
 are separate; unobserved gaps are not filled or joined into a learning curve.
-Independent comparisons belong to \cref{sec:results}.
+Independent model \mbox{comparisons} belong to \cref{sec:results}.
 
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
 
 \paragraph{The retained admission ledger.}
 \Cref{tab:admission-ledger} is the canonical chronology and count table.
-\Cref{fig:fw-latest-admissions,fig:fw-admission-margins} show its trajectory
+\Cref{fig:fw-latest-admissions,fig:fw-admission-margins} show its utility trajectory
 and pre-decision margins.
 
 \begin{figure*}[!tp]
@@ -79,9 +79,9 @@ companion operating-rate views for separate retained windows.
 
 \paragraph{A later admission window.}
 \Cref{fig:adapter-validation-trace} shows the latest 200 complete
-admission decisions at a later capture (all rejections), plotting every
-candidate and post-decision retained utility on reused development
-contexts under the same source-binding limits described above.
+admission decisions at a later capture (all rejections), plotting each
+candidate utility and the post-decision retained utility on reused development
+contexts under the same \mbox{source-binding} limits described above.
 
 \begin{figure}[tb]
   \centering
@@ -90,10 +90,10 @@ contexts under the same source-binding limits described above.
   All 200 consecutive admission decisions in rounds 4064--4263, captured
   at 10:19 UTC on 3 November 2026. Grey: candidate validation-pool utility;
   blue: the logged post-decision retained utility (dimensionless, larger
-  preferred). Every point maps to a journal line; no smoothing or cumulative
-  maximum is applied. The window has zero admissions. This adaptive
+  preferred). Every point maps to one journal line; no smoothing or cumulative
+  maximum is applied. The captured window has zero admissions. This adaptive
   engineering telemetry does not measure independent first-proposal
-  performance or a learning gain. Scope: \cref{sec:method-status}.}
+  performance or a \mbox{learning} gain. Scope: \cref{sec:method-status}.}
   \label{fig:adapter-validation-trace}
 \end{figure}
 
@@ -119,7 +119,7 @@ including intervening work and waits rather than single-proposal runtime.
 In \cref{app:live-adapter-decisions}, \cref{fig:fw-retained-best-plateau}
 tracks the recorded best and \cref{fig:fw-pool-insertions} counts pool
 insertions and adapter rejections (\cref{app:current-program-clock} gives
-the program clock; \cref{app:flywheel-telemetry} organizes the full record).
+the program clock; \cref{app:flywheel-telemetry} \mbox{organizes} the full telemetry record).
 
 \paragraph{Aligning the committed event histories.}
 \Cref{fig:event-counters} counts pool insertions and adapter admissions
