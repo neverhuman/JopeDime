@@ -112,7 +112,7 @@ fn linux_pty_typing_paste_cursor_and_menu_survive_fifty_hz_events() {
             "RUST_BACKTRACE=0",
             executable.to_str().unwrap(),
             "--exact",
-            "terminal::composer::tests::pty_composer_probe",
+            "terminal::composer::tests::terminal_cases::pty_composer_probe",
             "--ignored",
             "--nocapture",
             "--color=never",
