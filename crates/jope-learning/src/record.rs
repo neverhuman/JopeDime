@@ -15,7 +15,6 @@ mod score;
 #[cfg(test)]
 mod tests;
 
-use hwm::nullable_hex64;
 pub use hwm::{Cost, Evaluator, Genome, HwmRecord, Provenance, Score};
 pub use identity::{ComparisonContext, HwmIdentity, HWM_SCHEMA, SCORE_SCHEMA, UNBOUND};
 pub use schema::{derived_hwm_schema, derived_score_schema};
