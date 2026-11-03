@@ -18,6 +18,7 @@ twice in a row halts POLICY refits; reward refits continue).
 from __future__ import annotations
 
 import json
+import math
 import random
 import time
 from pathlib import Path
@@ -32,11 +33,18 @@ from .data.active_v3 import robust_score
 from .engines import EngineRouter
 from .eval_ledger import iter_eval_regression_with_ledger
 from .io import read_jsonl
-from .loop_selection import _model_specs as _model_specs, _select_candidates as _select_candidates
+from .loop_selection import _model_specs as _model_specs
+from .loop_selection import _select_candidates as _select_candidates
 from .loop_state import (
     LoopConfig as LoopConfig,
+)
+from .loop_state import (
     _atomic_write as _atomic_write,
+)
+from .loop_state import (
     _load_state as _load_state,
+)
+from .loop_state import (
     _patience_exhausted as _patience_exhausted,
 )
 from .model import _pearson
@@ -425,7 +433,7 @@ def _refit(
         for batch_rows in _dataset_grouped_batches(shuffled, cfg.refit_batch_size, rng):
             try:
                 batch = rows_to_policy_v3_batch(batch_rows, model.vocab, device=cfg.device)
-            except (Exception,):
+            except Exception:
                 continue
             components = model.loss_components(batch, phase="B")
             if not policy:

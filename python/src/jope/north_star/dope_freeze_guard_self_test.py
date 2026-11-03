@@ -7,6 +7,7 @@ from pathlib import Path
 import torch
 from torch import nn
 
+
 def run_self_test() -> dict:
     """
     Executes the full NS3 verification suite against the real `FusedJopeNetwork` and

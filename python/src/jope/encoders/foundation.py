@@ -137,7 +137,7 @@ def encode_many(
                     + "\n"
                 )
                 fh.flush()
-            except (Exception,) as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001
                 failed += 1
                 fh.write(json.dumps({"hash": h, "error": str(exc)[:200]}) + "\n")
                 fh.flush()

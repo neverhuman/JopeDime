@@ -18,28 +18,56 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .prime_config import ssh_control_path
-from .validator import PROJECT_ROOT, RustValidator
-
+from .engines_config import (
+    _HEAD_RE as _HEAD_RE,
+)
 from .engines_config import (
     DEFAULT_ENGINE as DEFAULT_ENGINE,
+)
+from .engines_config import (
     DEFAULT_TASK as DEFAULT_TASK,
+)
+from .engines_config import (
     ENGINE_FEATMATH as ENGINE_FEATMATH,
+)
+from .engines_config import (
     ENGINE_NEWMATH as ENGINE_NEWMATH,
+)
+from .engines_config import (
     ENGINES as ENGINES,
+)
+from .engines_config import (
     EVAL_SUBCOMMAND as EVAL_SUBCOMMAND,
+)
+from .engines_config import (
     EVALUATOR_VERSIONS as EVALUATOR_VERSIONS,
+)
+from .engines_config import (
     EVALUATOR_VERSIONS_BY_TASK as EVALUATOR_VERSIONS_BY_TASK,
+)
+from .engines_config import (
     FALLBACK_GENOMES as FALLBACK_GENOMES,
+)
+from .engines_config import (
     HEAD_COST_CLASS as HEAD_COST_CLASS,
+)
+from .engines_config import (
     TASK_BINARY as TASK_BINARY,
+)
+from .engines_config import (
     TASK_REGRESSION as TASK_REGRESSION,
+)
+from .engines_config import (
     TASKS as TASKS,
+)
+from .engines_config import (
     TIMEOUT_BY_CLASS as TIMEOUT_BY_CLASS,
-    _HEAD_RE as _HEAD_RE,
+)
+from .engines_config import (
     head_op_of as head_op_of,
 )
-
+from .prime_config import ssh_control_path
+from .validator import PROJECT_ROOT, RustValidator
 
 
 @dataclass(frozen=True)
@@ -341,7 +369,7 @@ class EngineRouter:
                     if idx is not None:
                         r.setdefault("engine", engine)
                         results.put((int(idx), r))
-            except (Exception,) as exc:
+            except Exception as exc:
                 results.put(exc)
             finally:
                 results.put(None)
@@ -420,7 +448,7 @@ class EngineRouter:
                     )
                 ):
                     results.put((indices[local_idx], out))
-            except (Exception,) as exc:  # surface lane failures instead of hanging
+            except Exception as exc:  # surface lane failures instead of hanging
                 results.put(exc)
             finally:
                 results.put(None)

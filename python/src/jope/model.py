@@ -1,22 +1,29 @@
 from __future__ import annotations
 
-import math
-import re
-from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any
+from importlib import import_module as _import_module
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 
 from .data.active import (
-    ACTIVE_MAX_TRANSFORMS,
-    TARGET_SUMMARY_DIM,
-    format_param_token,
-    format_pipeline_actions,
-    parse_param_token,
-    parse_pipeline_actions,
+    ACTIVE_MAX_TRANSFORMS as ACTIVE_MAX_TRANSFORMS,
+)
+from .data.active import (
+    TARGET_SUMMARY_DIM as TARGET_SUMMARY_DIM,
+)
+from .data.active import (
+    format_param_token as format_param_token,
+)
+from .data.active import (
+    format_pipeline_actions as format_pipeline_actions,
+)
+from .data.active import (
+    parse_param_token as parse_param_token,
+)
+from .data.active import (
+    parse_pipeline_actions as parse_pipeline_actions,
 )
 from .grammar import HEADS, TRANSFORMS
 from .schema import EMBEDDING_DIM
@@ -194,35 +201,49 @@ def _row_value(row) -> float:
     return float(row.score or 0.0)
 
 
-from .active_v2 import (
-    ActiveV2Batch,
-    normalize_active_v2_vocab,
-    active_v2_param_specs,
-    _GENOME_SCALAR_FEATURES,
-    genome_feature_dim,
-    genome_features_from_actions,
-    JopeActiveModelV2,
-    rows_to_active_v2_batch,
-    active_v2_labels_to_genome,
-    decode_active_v2_output,
-    active_v2_validation_metrics,
-    _normalize_param_vocab,
-    _param_key,
-    _safe_key,
-    _row_target_summary,
-    _row_actions,
-    _finite_or_nan,
-    _balanced_cross_entropy,
-    _ranknet_loss,
-    _listwise_top_loss,
-    _group_by_dataset,
-    _reward_bradley_terry_loss,
-    _reward_listwise_loss,
-    _select_index,
-    _decode_params,
-    _labels_to_params,
-    _pairwise_accuracy,
-    _top1_regret,
-    _mae,
-    _pearson,
+_ACTIVE_V2_EXPORTS = (
+    "ActiveV2Batch",
+    "normalize_active_v2_vocab",
+    "active_v2_param_specs",
+    "_GENOME_SCALAR_FEATURES",
+    "genome_feature_dim",
+    "genome_features_from_actions",
+    "JopeActiveModelV2",
+    "rows_to_active_v2_batch",
+    "active_v2_labels_to_genome",
+    "decode_active_v2_output",
+    "active_v2_validation_metrics",
+    "_normalize_param_vocab",
+    "_param_key",
+    "_safe_key",
+    "_row_target_summary",
+    "_row_actions",
+    "_finite_or_nan",
+    "_balanced_cross_entropy",
+    "_ranknet_loss",
+    "_listwise_top_loss",
+    "_group_by_dataset",
+    "_reward_bradley_terry_loss",
+    "_reward_listwise_loss",
+    "_select_index",
+    "_decode_params",
+    "_labels_to_params",
+    "_pairwise_accuracy",
+    "_top1_regret",
+    "_mae",
+    "_pearson",
 )
+
+
+def __getattr__(name: str):
+    if name not in _ACTIVE_V2_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    active_v2 = _import_module(".active_v2", __package__)
+    value = getattr(active_v2, name)
+    globals()[name] = value
+    return value
+
+
+__all__ = [name for name in globals() if not name.startswith("_")] + [
+    name for name in _ACTIVE_V2_EXPORTS if not name.startswith("_")
+]

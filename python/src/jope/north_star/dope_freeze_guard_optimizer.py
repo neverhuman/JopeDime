@@ -8,6 +8,7 @@ if __package__:
 else:  # Support direct execution from this package directory.
     from dope_freeze_guard_types import DOPE_NORMALIZER_BUFFERS, DopeFreezeViolationError, _storage_ptr
 
+
 def assert_optimizer_excludes_dope(
     optimizer: torch.optim.Optimizer,
     fused_net: nn.Module,

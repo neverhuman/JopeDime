@@ -27,7 +27,7 @@ class CudaH2D:
                         )
                         for _ in range(slots)
                     ]
-            except (Exception,):
+            except Exception:
                 recorder.h2d_unavailable(source)
 
     def will_sample(self, step: int) -> bool:
@@ -39,7 +39,7 @@ class CudaH2D:
                 start, end = self.events[slot]
                 if end.query():
                     self.rec.h2d_complete(self.src, slot, start.elapsed_time(end))
-            except (Exception,):
+            except Exception:
                 self.rec.h2d_fail(self.src, slot)
 
     def begin(self, step: int, size_bytes: int, data_wait_ms: float | None = None) -> int:
@@ -50,7 +50,7 @@ class CudaH2D:
         if slot >= 0:
             try:
                 self.events[slot][0].record(self.stream)
-            except (Exception,):
+            except Exception:
                 self.rec.h2d_fail(self.src)
                 return -1
         return slot
@@ -60,7 +60,7 @@ class CudaH2D:
             try:
                 self.events[slot][1].record(self.stream)
                 self.rec.h2d_recorded(self.src, slot)
-            except (Exception,):
+            except Exception:
                 self.rec.h2d_fail(self.src, slot)
 
     def flush(self, synchronize: bool = True) -> bool:
@@ -70,7 +70,7 @@ class CudaH2D:
             sync_attempted = True
             try:
                 self.stream.synchronize()
-            except (Exception,):
+            except Exception:
                 self.rec.h2d_abandon(self.src)
         if self.rec.h2d_enabled(self.src):
             self._poll()

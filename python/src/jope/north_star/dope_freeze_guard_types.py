@@ -52,7 +52,7 @@ def _storage_ptr(t: torch.Tensor) -> int | None:
         return None
     try:
         ptr = int(t.untyped_storage().data_ptr())
-    except (Exception,):
+    except Exception:
         ptr = int(t.data_ptr())
     return ptr if ptr != 0 else None
 
