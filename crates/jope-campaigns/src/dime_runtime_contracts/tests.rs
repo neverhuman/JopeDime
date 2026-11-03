@@ -65,9 +65,20 @@ fn append_is_idempotent_but_number_reuse_and_science_drift_fail() {
         append_infrastructure_attempt(directory.path(), &one).unwrap(),
         path
     );
-    let mut drift = one.clone();
-    drift.terminal.evidence_sha256 = digest_label("different-terminal");
-    drift.content_sha256 = drift.computed_content_sha256().unwrap();
+    let mut terminal = one.terminal.clone();
+    terminal.evidence_sha256 = digest_label("different-terminal");
+    let drift = DimeInfrastructureAttemptV1::new_terminal(
+        one.role,
+        one.scientific_payload.clone(),
+        one.attempt_number,
+        one.job_identity.clone(),
+        one.next_job_identity.clone(),
+        one.prior_attempt_receipt_sha256.clone(),
+        one.created_at_ms,
+        one.retry_not_before_ms,
+        terminal,
+    )
+    .unwrap();
     assert!(append_infrastructure_attempt(directory.path(), &drift).is_err());
     let mut changed_science = payload(101);
     changed_science.seed = 202;
