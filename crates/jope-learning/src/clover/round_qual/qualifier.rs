@@ -10,7 +10,6 @@ use evaluate::ContextEvaluation;
 
 /// Evaluate multi-round self-play outputs against test-split scores, parity records, parent
 /// lineage clusters, and pre-registered diagnostic checks without an external pre-registration packet.
-
 pub fn qualify_rounds(inputs: RoundQualInputs<'_>) -> Result<RoundQualReport> {
     qualify_rounds_with_prereg(inputs, None)
 }
@@ -56,7 +55,7 @@ pub fn qualify_rounds_with_prereg(
         None => None,
     };
 
-    let mut expected_context_set: BTreeSet<String> = if plan.expected_contexts.is_empty() {
+    let expected_context_set: BTreeSet<String> = if plan.expected_contexts.is_empty() {
         parent_of_context.keys().cloned().collect()
     } else {
         let mut s = BTreeSet::new();
