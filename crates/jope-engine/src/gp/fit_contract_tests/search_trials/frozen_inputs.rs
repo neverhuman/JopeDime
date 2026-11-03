@@ -2,7 +2,7 @@ use super::*;
 
 /// A seeded, vocabulary-adapted search whose seed slots name proposal records (W4-T07), with
 /// the caller's input files removed afterwards. Returns the output and the input bytes.
-pub(crate) fn frozen_input_search(
+pub(in crate::gp::fit_contract_tests) fn frozen_input_search(
     root: &Path,
     prepared: &Path,
     authority: &Fixture,
