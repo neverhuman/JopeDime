@@ -111,7 +111,7 @@ pub(super) fn run_champion_dataset(
         }
         let bytes = canonical_json(&checkpoint)?;
         let sha256 = sha256_bytes(&bytes);
-        immutable_write(&checkpoint_path(&root, generation), &bytes)?;
+        immutable_write(&super::campaign::checkpoint_path(&root, generation), &bytes)?;
         champion_generation_progress(&spec.dataset_hash, &checkpoint, completed_champions);
         let won = checkpoint.qualifying_descendant_win;
         previous = sha256.clone();
