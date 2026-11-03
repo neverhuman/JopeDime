@@ -63,8 +63,13 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                     "--fitness ranks the legacy search profile; {} keeps its own objective",
                     profile.search_profile
                 );
+                anyhow::ensure!(
+                    seed_limit == crate::search::ELITES,
+                    "--seed-limit applies to the legacy search profile; {} admits at most {} seeds",
+                    profile.search_profile,
+                    crate::search::ELITES
+                );
                 options.run.seed_genomes = seed_genomes;
-                options.run.seed_limit = seed_limit;
                 options.run.incumbent = incumbent;
                 return crate::kernel2::cli::print_run(&options, json);
             }

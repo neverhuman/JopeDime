@@ -184,14 +184,15 @@ impl Receipt {
             errors.push("v3 requires a seeding record".into());
             return;
         };
-        if seeding.seeds.len() > crate::search::ELITES
+        // The cap is `--seed-limit`'s ceiling: the default admits [`crate::search::ELITES`].
+        if seeding.seeds.len() > crate::seeds::MAX_SEED_LIMIT
             || seeding.seeds.len() as u64 > seeding.offered
         {
             errors.push(format!(
                 "{} seed(s) from {} offered exceeds the cap of {}",
                 seeding.seeds.len(),
                 seeding.offered,
-                crate::search::ELITES
+                crate::seeds::MAX_SEED_LIMIT
             ));
         }
         let mut distinct = BTreeSet::new();
