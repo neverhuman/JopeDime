@@ -240,7 +240,7 @@ impl WorkerJob {
 /// A file may change after this preflight; that later full check must reject it.
 #[derive(Default)]
 pub(super) struct BatchPreflight {
-    verified: BTreeSet<(PathBuf, String)>,
+    pub(super) verified: BTreeSet<(PathBuf, String)>,
 }
 impl BatchPreflight {
     pub(super) fn verify(&mut self, job: &WorkerJob) -> Result<()> {
