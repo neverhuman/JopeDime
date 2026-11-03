@@ -627,18 +627,13 @@ mod scoring;
 mod tests;
 
 pub(crate) use commands::{report, run, score, score_smart_v3, validate};
-pub(super) use commands::{report_run, run_arm, score_run, validate_run};
 pub(crate) use preparation::prepare;
-pub(super) use preparation::{
-    build_fold_bank, build_repeat, compute_scaling_statistic, parse_proposal_bundle,
-    proposal_manifest_from_parent, validate_fold_bank,
-};
+pub(super) use preparation::validate_fold_bank;
 pub(crate) use receipts::ScqExecutionProvenance;
 pub(super) use receipts::{
-    absolute, canonical_json_bytes, canonicalize_json, immutable_write, read_receipt,
-    receipt_digest, run_root, scq_env, scq_execution_provenance, sha256_bytes, sha256_file,
-    value_string, value_usize, write_receipt, DatasetInput, FoldBankReceipt, FoldRepeat,
-    ParentLink, ProposalBundleLink, ProposalRequest, ScalingStatistic, SelectionFirewall,
-    TrainOnlyRedteamManifest,
+    absolute, canonical_json_bytes, immutable_write, read_receipt, receipt_digest, run_root,
+    scq_execution_provenance, sha256_bytes, sha256_file, value_string, value_usize, write_receipt,
+    DatasetInput, FoldBankReceipt, FoldRepeat, ParentLink, ProposalBundleLink, ProposalRequest,
+    ScalingStatistic, SelectionFirewall, TrainOnlyRedteamManifest,
 };
 pub(super) use scoring::*;
