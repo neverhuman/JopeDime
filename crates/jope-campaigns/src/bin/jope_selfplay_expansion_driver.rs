@@ -76,15 +76,15 @@ const COVERAGE_VALVE: f64 = 0.3;
 const MAX_ENCODE_ATTEMPTS: i64 = 8;
 
 mod jope_selfplay_expansion_driver {
-    #[path = "jope_selfplay_expansion_driver/encoding.rs"]
+    #[path = "encoding.rs"]
     mod encoding;
-    #[path = "jope_selfplay_expansion_driver/guardrails.rs"]
+    #[path = "guardrails.rs"]
     mod guardrails;
-    #[path = "jope_selfplay_expansion_driver/runtime.rs"]
+    #[path = "runtime.rs"]
     mod runtime;
-    #[path = "jope_selfplay_expansion_driver/state.rs"]
+    #[path = "state.rs"]
     mod state;
-    #[path = "jope_selfplay_expansion_driver/tranche.rs"]
+    #[path = "tranche.rs"]
     mod tranche;
 
     pub(crate) use encoding::*;

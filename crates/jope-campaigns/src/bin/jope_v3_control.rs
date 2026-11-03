@@ -453,4 +453,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_v3_control/tests.rs"]
 mod tests;

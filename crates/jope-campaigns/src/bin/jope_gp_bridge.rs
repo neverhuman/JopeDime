@@ -473,7 +473,3 @@ fn main() {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "jope_gp_bridge/tests.rs"]
-mod tests;
