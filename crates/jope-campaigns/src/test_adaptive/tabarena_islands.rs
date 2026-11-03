@@ -144,12 +144,15 @@ mod tests;
 pub(crate) use artifacts::{
     recover_tabarena_lite_result, run_tabarena_lite_islands, validate_tabarena_lite_islands,
 };
-pub(super) use data::{
-    campaign_root, collect_canonical_leaders, identity, prepare_datasets, select_datasets,
-    update_leader,
-};
+pub(super) use data::{campaign_root, identity, prepare_datasets, select_datasets};
+#[cfg(test)]
+pub(super) use data::{collect_canonical_leaders, update_leader};
 pub(super) use evolution::{
-    checkpoint_path, discovery_winner, initial_population, initial_population_from_seeds,
-    load_cache, load_checkpoints, make_checkpoint, next_population, offspring_seed, replay_records,
+    checkpoint_path, initial_population, load_cache, load_checkpoints, make_checkpoint,
+    replay_records,
+};
+#[cfg(test)]
+pub(super) use evolution::{
+    discovery_winner, initial_population_from_seeds, next_population, offspring_seed,
 };
 pub(super) use execution::run_tabarena_dataset_waves;
