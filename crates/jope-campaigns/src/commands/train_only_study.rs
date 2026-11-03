@@ -182,7 +182,8 @@ pub(super) use eligibility::{
 #[cfg(test)]
 pub(super) use evaluation::slice_data;
 use evaluation::StudyEvalContext;
-pub(super) use evaluation::{evaluate_member_split, refill_population, score_population};
+use evaluation::evaluate_member_split;
+pub(super) use evaluation::{refill_population, score_population};
 pub(crate) use fitness::paired_robust_fitness;
 pub(super) use fitness::{
     canonical_json_bytes, genome_compatible, genome_complexity, immutable_write, metrics,
