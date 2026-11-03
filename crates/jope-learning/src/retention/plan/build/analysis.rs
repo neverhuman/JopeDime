@@ -15,7 +15,7 @@ pub(crate) fn analyze(evaluated: &Evaluated) -> Result<Analysis> {
     // Hazards, notes, findings.
     let mut hazards = BTreeMap::new();
     let mut notes = BTreeMap::new();
-    for r in &rows {
+    for r in rows {
         let gb = r.bytes as f64 / 1e9;
         if !r.lifecycle.expires_current.is_empty() && (r.action == Action::KeepT0 || r.tv.value) {
             add_note(
@@ -109,7 +109,7 @@ pub(crate) fn analyze(evaluated: &Evaluated) -> Result<Analysis> {
         Some(i) => {
             let (mut nc_t0, mut nc_other, mut with, mut unchanged) = (0u64, 0u64, 0u64, 0u64);
             let mut ledger_conflicts = Vec::new();
-            for r in &rows {
+            for r in rows {
                 let Some(x) = &r.inventory else { continue };
                 with += 1;
                 unchanged += u64::from(x.unchanged_since_report);
@@ -159,7 +159,7 @@ pub(crate) fn analyze(evaluated: &Evaluated) -> Result<Analysis> {
             // group changed after the report (the key may be newer than the listing).
             let mut pin_counts: BTreeMap<String, BTreeMap<String, u64>> = BTreeMap::new();
             let mut sample = Vec::new();
-            for (role, bucket, key, gi) in &pins {
+            for (role, bucket, key, gi) in pins {
                 let Some(b) = i.buckets.get(bucket) else {
                     continue;
                 };
@@ -263,7 +263,7 @@ pub(crate) fn analyze(evaluated: &Evaluated) -> Result<Analysis> {
     };
     let mut findings = Vec::new();
     let mut fam_refs: BTreeMap<(String, String), u64> = BTreeMap::new();
-    for r in &rows {
+    for r in rows {
         for (role, n) in &r.refs_by_role {
             let fam = r.family.clone().unwrap_or_else(|| r.bucket.clone());
             *fam_refs.entry((fam, role.clone())).or_default() += n;
@@ -292,7 +292,7 @@ pub(crate) fn analyze(evaluated: &Evaluated) -> Result<Analysis> {
 
     // Plan bytes and totals.
     let mut plan_jsonl = Vec::new();
-    for r in &rows {
+    for r in rows {
         plan_jsonl.extend(serde_json::to_vec(r)?);
         plan_jsonl.push(b'\n');
     }
