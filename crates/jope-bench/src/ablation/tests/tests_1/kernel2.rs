@@ -30,14 +30,14 @@ pub(crate) fn ablation_kernel2_a_equals_a_replays_byte_for_byte() {
         .unwrap();
     let record = &body.protocol.profile_a;
     assert_eq!(record.id, "kernel2-baseline");
-    assert_eq!(record.search, kernel2::receipt::ENGINE);
+    assert_eq!(record.search, jope_pipeline::kernel2::receipt::ENGINE);
     assert_eq!((record.threads, record.islands), (1, 1));
     let settings = record.kernel2.as_ref().unwrap();
     assert_eq!(settings.profile_sha256, shipped.sha256());
     assert_eq!(settings.revision, shipped.revision);
     assert_eq!(settings.fault_policy, PolicyRecord::RejectHard);
     assert_eq!(settings.refinement, SMALL_REFINEMENT);
-    assert_eq!(settings.selection, kernel2::receipt::SELECTION);
+    assert_eq!(settings.selection, jope_pipeline::kernel2::receipt::SELECTION);
     assert_eq!(body.protocol.profile_a, body.protocol.profile_b);
 
     assert_eq!(body.runs.len(), 2 * 2);
