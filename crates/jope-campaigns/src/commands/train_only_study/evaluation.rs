@@ -219,7 +219,7 @@ pub(super) fn evaluate_member_split(
 
 // Keep population identity, folds and search budget explicit.
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn score_population(
+pub(super) fn score_population(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
@@ -328,7 +328,7 @@ pub(crate) fn tournament<'a>(
     &ranked[winner]
 }
 
-pub(crate) fn refill_population(
+pub(super) fn refill_population(
     run_id: &str,
     dataset_hash: &str,
     features: usize,
