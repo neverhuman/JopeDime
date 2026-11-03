@@ -184,8 +184,8 @@ fn synthetic_trace() -> RefinementTrace {
     }
 }
 
-/// The method id, fallback reasons, statuses, a serialized trace, failure text and the CLI help
-/// all pass the shipped-text lint.
+// The method id, fallback reasons, statuses, a serialized trace, failure text and the CLI help
+// all pass the shipped-text lint.
 // fix-01: the surrogate minimum, the start's pipeline pass first, strict decrease, the binding of a
 // trace to its parent program, and the default route against the stack before the wiring.
 
