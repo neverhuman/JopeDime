@@ -1,0 +1,317 @@
+{
+  "wave": "H242",
+  "source": "r882 adapter (round-882.pt sha256 0084479a...), frozen before any outcome read",
+  "rhos": [
+    0.99,
+    0.95,
+    0.9
+  ],
+  "single_rho": 0.9,
+  "energy_rule": "k = smallest k with sum_{i<k} sigma_i^2 >= rho * sum sigma^2 (float64 SVD); k == full rank leaves the matrix bit-exact",
+  "untouched": "every 1-D or 3-D adapter tensor (biases, LayerNorm, scalars, null_hist_token) and all non-adapter tensors",
+  "matrices": [
+    {
+      "name": "adapter_10tok.modality_type_emb",
+      "shape": [
+        10,
+        32
+      ],
+      "full_rank": 10,
+      "frobenius": 0.5343427675411532,
+      "k_0.99": 10,
+      "removed_energy_0.99": 0.0,
+      "frobenius_change_0.99": 0.0,
+      "k_0.95": 8,
+      "removed_energy_0.95": 0.03796216278795577,
+      "frobenius_change_0.95": 0.10411071020181423,
+      "k_0.9": 7,
+      "removed_energy_0.9": 0.064992831825397,
+      "frobenius_change_0.9": 0.1362236979625644
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.0.weight",
+      "shape": [
+        16,
+        412
+      ],
+      "full_rank": 16,
+      "frobenius": 2.381300832568145,
+      "k_0.99": 16,
+      "removed_energy_0.99": 0.0,
+      "frobenius_change_0.99": 0.0,
+      "k_0.95": 15,
+      "removed_energy_0.95": 0.043503433737990045,
+      "frobenius_change_0.95": 0.4966792680730832,
+      "k_0.9": 14,
+      "removed_energy_0.9": 0.08887213253947762,
+      "frobenius_change_0.9": 0.7098998175105721
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.0.weight",
+      "shape": [
+        32,
+        66
+      ],
+      "full_rank": 32,
+      "frobenius": 3.274595065962403,
+      "k_0.99": 30,
+      "removed_energy_0.99": 0.00843595920872965,
+      "frobenius_change_0.99": 0.30076329816881786,
+      "k_0.95": 25,
+      "removed_energy_0.95": 0.0499089961848609,
+      "frobenius_change_0.95": 0.731555063452263,
+      "k_0.9": 22,
+      "removed_energy_0.9": 0.08881446151172362,
+      "frobenius_change_0.9": 0.9758868065121963
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.in_proj_weight",
+      "shape": [
+        96,
+        32
+      ],
+      "full_rank": 32,
+      "frobenius": 7.374007328010722,
+      "k_0.99": 31,
+      "removed_energy_0.99": 0.0052734799779690375,
+      "frobenius_change_0.99": 0.5354910487526938,
+      "k_0.95": 27,
+      "removed_energy_0.95": 0.03989203820786554,
+      "frobenius_change_0.95": 1.4728098432087482,
+      "k_0.9": 23,
+      "removed_energy_0.9": 0.09439743737806887,
+      "frobenius_change_0.9": 2.26560224917225
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.out_proj.weight",
+      "shape": [
+        32,
+        32
+      ],
+      "full_rank": 32,
+      "frobenius": 3.5028294818756396,
+      "k_0.99": 25,
+      "removed_energy_0.99": 0.008674731573463946,
+      "frobenius_change_0.99": 0.3262473696367468,
+      "k_0.95": 20,
+      "removed_energy_0.95": 0.042024370465362844,
+      "frobenius_change_0.95": 0.718074665343664,
+      "k_0.9": 16,
+      "removed_energy_0.9": 0.0977595867132791,
+      "frobenius_change_0.9": 1.0952132133740844
+    },
+    {
+      "name": "adapter_10tok.ctx_bilinear_u.weight",
+      "shape": [
+        16,
+        32
+      ],
+      "full_rank": 16,
+      "frobenius": 2.3454298202729733,
+      "k_0.99": 15,
+      "removed_energy_0.99": 0.00792953056391288,
+      "frobenius_change_0.99": 0.20885562734696936,
+      "k_0.95": 12,
+      "removed_energy_0.95": 0.04848082251326298,
+      "frobenius_change_0.95": 0.5164252069631454,
+      "k_0.9": 10,
+      "removed_energy_0.9": 0.09402786226284045,
+      "frobenius_change_0.9": 0.7192017306590831
+    },
+    {
+      "name": "adapter_10tok.prog_bilinear_v.weight",
+      "shape": [
+        16,
+        24
+      ],
+      "full_rank": 16,
+      "frobenius": 2.3981910000911513,
+      "k_0.99": 15,
+      "removed_energy_0.99": 0.002571558174723346,
+      "frobenius_change_0.99": 0.12161354426610244,
+      "k_0.95": 12,
+      "removed_energy_0.95": 0.04178503650322734,
+      "frobenius_change_0.95": 0.49022354001886825,
+      "k_0.9": 10,
+      "removed_energy_0.9": 0.09556038765453576,
+      "frobenius_change_0.9": 0.7413490242074752
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.0.weight",
+      "shape": [
+        24,
+        50
+      ],
+      "full_rank": 24,
+      "frobenius": 3.163471586595308,
+      "k_0.99": 22,
+      "removed_energy_0.99": 0.009007759849314725,
+      "frobenius_change_0.99": 0.30024261758119924,
+      "k_0.95": 18,
+      "removed_energy_0.95": 0.04679172800936877,
+      "frobenius_change_0.95": 0.684303056873207,
+      "k_0.9": 15,
+      "removed_energy_0.9": 0.09827850173778548,
+      "frobenius_change_0.9": 0.991729430700545
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.2.weight",
+      "shape": [
+        1,
+        24
+      ],
+      "full_rank": 1,
+      "frobenius": 0.17340309758618744,
+      "k_0.99": 1,
+      "removed_energy_0.99": 0.0,
+      "frobenius_change_0.99": 0.0,
+      "k_0.95": 1,
+      "removed_energy_0.95": 0.0,
+      "frobenius_change_0.95": 0.0,
+      "k_0.9": 1,
+      "removed_energy_0.9": 0.0,
+      "frobenius_change_0.9": 0.0
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.0.weight",
+      "shape": [
+        32,
+        60
+      ],
+      "full_rank": 32,
+      "frobenius": 3.257741459533409,
+      "k_0.99": 30,
+      "removed_energy_0.99": 0.006079200913958047,
+      "frobenius_change_0.99": 0.2540035949598805,
+      "k_0.95": 24,
+      "removed_energy_0.95": 0.04259574928913206,
+      "frobenius_change_0.95": 0.6723567140211061,
+      "k_0.9": 20,
+      "removed_energy_0.9": 0.09467470334267816,
+      "frobenius_change_0.9": 1.00238276642783
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.in_proj_weight",
+      "shape": [
+        96,
+        32
+      ],
+      "full_rank": 32,
+      "frobenius": 7.248617998758256,
+      "k_0.99": 31,
+      "removed_energy_0.99": 0.005582301473441063,
+      "frobenius_change_0.99": 0.5415790505732283,
+      "k_0.95": 27,
+      "removed_energy_0.95": 0.03876907893005481,
+      "frobenius_change_0.95": 1.4272431085965718,
+      "k_0.9": 23,
+      "removed_energy_0.9": 0.09308864656806436,
+      "frobenius_change_0.9": 2.211584671216948
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.out_proj.weight",
+      "shape": [
+        32,
+        32
+      ],
+      "full_rank": 32,
+      "frobenius": 3.6435921947286736,
+      "k_0.99": 24,
+      "removed_energy_0.99": 0.008874931952833781,
+      "frobenius_change_0.99": 0.3432513697643147,
+      "k_0.95": 18,
+      "removed_energy_0.95": 0.047495191340024265,
+      "frobenius_change_0.95": 0.7940623119348257,
+      "k_0.9": 15,
+      "removed_energy_0.9": 0.09488229253972913,
+      "frobenius_change_0.9": 1.1223345897138453
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.0.weight",
+      "shape": [
+        24,
+        67
+      ],
+      "full_rank": 24,
+      "frobenius": 3.0940572413834606,
+      "k_0.99": 23,
+      "removed_energy_0.99": 0.008742971601807582,
+      "frobenius_change_0.99": 0.28930629127377977,
+      "k_0.95": 20,
+      "removed_energy_0.95": 0.045496963185999495,
+      "frobenius_change_0.95": 0.6599629403924852,
+      "k_0.9": 17,
+      "removed_energy_0.9": 0.09767342853300368,
+      "frobenius_change_0.9": 0.9669779263758547
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.2.weight",
+      "shape": [
+        1,
+        24
+      ],
+      "full_rank": 1,
+      "frobenius": 0.21487938301182805,
+      "k_0.99": 1,
+      "removed_energy_0.99": 0.0,
+      "frobenius_change_0.99": 0.0,
+      "k_0.95": 1,
+      "removed_energy_0.95": 0.0,
+      "frobenius_change_0.95": 0.0,
+      "k_0.9": 1,
+      "removed_energy_0.9": 0.0,
+      "frobenius_change_0.9": 0.0
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.0.weight",
+      "shape": [
+        48,
+        114
+      ],
+      "full_rank": 48,
+      "frobenius": 4.005503179167047,
+      "k_0.99": 46,
+      "removed_energy_0.99": 0.0069861448069164665,
+      "frobenius_change_0.99": 0.33479261721011855,
+      "k_0.95": 39,
+      "removed_energy_0.95": 0.04758279317442016,
+      "frobenius_change_0.95": 0.8737396551167664,
+      "k_0.9": 34,
+      "removed_energy_0.9": 0.09258121380498963,
+      "frobenius_change_0.9": 1.2187609087744413
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.3.weight",
+      "shape": [
+        1,
+        48
+      ],
+      "full_rank": 1,
+      "frobenius": 0.007827113524612026,
+      "k_0.99": 1,
+      "removed_energy_0.99": 0.0,
+      "frobenius_change_0.99": 0.0,
+      "k_0.95": 1,
+      "removed_energy_0.95": 0.0,
+      "frobenius_change_0.95": 0.0,
+      "k_0.9": 1,
+      "removed_energy_0.9": 0.0,
+      "frobenius_change_0.9": 0.0
+    }
+  ],
+  "laser_single_candidates": [
+    "S90-modality_type_emb",
+    "S90-prog_412_bottleneck.0.weight",
+    "S90-cand_query_proj.0.weight",
+    "S90-mm_cross_attn.in_proj_weight",
+    "S90-mm_cross_attn.out_proj.weight",
+    "S90-ctx_bilinear_u.weight",
+    "S90-prog_bilinear_v.weight",
+    "S90-mm_prior_out.0.weight",
+    "S90-hist_token_proj.0.weight",
+    "S90-traj_cross_attn.in_proj_weight",
+    "S90-traj_cross_attn.out_proj.weight",
+    "S90-traj_delta_head.0.weight",
+    "S90-parent_delta_net.0.weight"
+  ]
+}
