@@ -1860,7 +1860,7 @@
         "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
         "role": "research"
       },
-      "sha256": "0f4b75b2e15fc665bdc78a92cf2bd7b4d9b9094e1d7023f5ea3f2ed785a032d8 | fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+      "sha256": "0f4b75b2e15fc665bdc78a92cf2bd7b4d9b9094e1d7023f5ea3f2ed785a032d8"
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/runtime_inventory.py": {
       "bytes": 2495,
@@ -2477,7 +2477,7 @@
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "903bd9fb4cfce58efd1295ee303c5a81ac392c8eb914a94519a3ee405ca1e3f4 | d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2"
+      "sha256": "903bd9fb4cfce58efd1295ee303c5a81ac392c8eb914a94519a3ee405ca1e3f4"
     },
     "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/historical_custody.py": {
       "bytes": 7284,
@@ -3556,7 +3556,7 @@
         "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
         "role": "research"
       },
-      "sha256": "17c034261de03499533d35ffc308bb56b5adb82008b2a53ab73f52429cbb8252 | c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
+      "sha256": "17c034261de03499533d35ffc308bb56b5adb82008b2a53ab73f52429cbb8252"
     },
     "python:deploy/dl-flywheel/run_fresh32_offline.py": {
       "bytes": 4380,
@@ -6620,7 +6620,7 @@
         "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "e30f09dece8bd0379180c6d5a2f5620b5084216f24b77f565009c21cd7df466f | 6a7b85de4c44448cff8f006be2ceb5ad950a26a3790aad97cbe19f55fc0f6dc0"
+      "sha256": "e30f09dece8bd0379180c6d5a2f5620b5084216f24b77f565009c21cd7df466f"
     },
     "python:research/h156/monitor.py": {
       "bytes": 7196,
@@ -6628,7 +6628,7 @@
         "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "69687c1758de927c325615acd2fda02e9a96df022ef83d9dc7d636e9ed71c670 | d8827c49ade455e69a85decadd1c85c445790da177ecaf2e50593538808f2880"
+      "sha256": "69687c1758de927c325615acd2fda02e9a96df022ef83d9dc7d636e9ed71c670"
     },
     "python:research/h156/run.py": {
       "bytes": 43679,
@@ -6636,7 +6636,7 @@
         "reason": "H156 owner-directed 5-fold family cross-fit early stopping and {0.5x, 1x, 2x} capacity sweep continuation from r882: nested family isolation, durable selection lock before outer assessment, dual 1219-ctx H145 train-only and 91-ctx DL-Val Elo/bootstrap reporting, bytewise frozen DOPE/anchor state, and bounded resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "bbed2addf40b35ccb50622f1e3e55b7539fe2b80bff4141524edbee0456c2b3c | 0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c"
+      "sha256": "bbed2addf40b35ccb50622f1e3e55b7539fe2b80bff4141524edbee0456c2b3c"
     },
     "python:research/h166/analysis.py": {
       "bytes": 21053,
