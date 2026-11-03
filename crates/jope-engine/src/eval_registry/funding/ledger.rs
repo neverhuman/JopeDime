@@ -46,7 +46,7 @@ fn stored_authorization(db: &Connection, verified: &VerifiedReservation) -> Resu
         |row| row.get(0),
     )?;
     ensure!(
-        serde_json::from_str::<SignedAuthorization>(&bytes)? == verified.authorization,
+        serde_json::from_str::<SignedAuthorization>(&bytes)? == *verified.authorization(),
         "original registered funding authorization differs"
     );
     Ok(())
@@ -55,7 +55,7 @@ fn stored_authorization(db: &Connection, verified: &VerifiedReservation) -> Resu
 pub fn reserve(db: &Connection, verified: &VerifiedReservation) -> Result<String> {
     transaction_required(db)?;
     stored_authorization(db, verified)?;
-    let auth = &verified.authorization.body;
+    let auth = &verified.authorization().body;
     let mut core = auth.historical_core_ms;
     let mut node = auth.historical_node_ms;
     let mut statement =
@@ -72,7 +72,7 @@ pub fn reserve(db: &Connection, verified: &VerifiedReservation) -> Result<String
             .checked_add(old.body.node_ms)
             .context("funding node charge overflow")?;
     }
-    let body = &verified.reservation.body;
+    let body = &verified.reservation().body;
     ensure!(
         core.checked_add(body.core_ms)
             .is_some_and(|sum| sum <= auth.core_ms)
@@ -87,7 +87,7 @@ pub fn reserve(db: &Connection, verified: &VerifiedReservation) -> Result<String
             body.reservation_id,
             verified.authorization_id()?,
             body.demand.task_sha256,
-            serde_json::to_string(&verified.reservation)?,
+            serde_json::to_string(verified.reservation())?,
             "reserved"
         ],
     )?;
@@ -105,7 +105,7 @@ fn original_reservation(
         |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
     )?;
     ensure!(
-        serde_json::from_str::<SignedReservation>(&json)? == verified.reservation,
+        serde_json::from_str::<SignedReservation>(&json)? == *verified.reservation(),
         "original registered reservation differs"
     );
     Ok((state, start))
@@ -136,7 +136,7 @@ fn execution_valid(
         "authenticated execution custody does not match the original funded task"
     );
     ensure!(
-        clock.unix_ms >= verified.reservation.body.not_before_unix_ms
+        clock.unix_ms >= verified.reservation().body.not_before_unix_ms
             && clock.unix_ms < demand.deadline_unix_ms
             && clock.monotonic_ns < demand.deadline_monotonic_ns,
         "original task deadline elapsed before funding consumption"
@@ -161,8 +161,8 @@ pub fn event(
     Ok(FundingEvent {
         schema: "parallel.funding_event.v1".into(),
         event_key,
-        authorization: verified.authorization.clone(),
-        reservation: verified.reservation.clone(),
+        authorization: verified.authorization().clone(),
+        reservation: verified.reservation().clone(),
         demand: verified.demand().clone(),
         execution: execution.clone(),
         participant_slot,
@@ -192,7 +192,7 @@ pub fn consume_start(
 /// successful task completion never refunds the charged funding ceilings.
 fn concurrent_admission(db: &Connection, verified: &VerifiedReservation) -> Result<()> {
     let caps = &verified.demand().resources;
-    let allocation = &verified.authorization.body.allocation;
+    let allocation = &verified.authorization().body.allocation;
     let (mut cores, mut memory, mut searches) =
         (caps.cpu_cores, caps.host_memory_bytes, caps.cpu_searches);
     let requested: BTreeSet<u32> = caps.gpu_devices.iter().copied().collect();
@@ -231,7 +231,7 @@ fn concurrent_admission(db: &Connection, verified: &VerifiedReservation) -> Resu
     ensure!(
         cores <= allocation.cpu_cores
             && memory <= allocation.host_memory_bytes
-            && searches <= verified.authorization.body.max_concurrent_cpu_searches,
+            && searches <= verified.authorization().body.max_concurrent_cpu_searches,
         "funded concurrent host allocation exhausted"
     );
     Ok(())
@@ -247,7 +247,11 @@ pub fn claim_participant(
     transaction_required(db)?;
     execution_valid(verified, execution, clock)?;
     ensure!(
-        verified.reservation.body.participant_slots.contains(&slot),
+        verified
+            .reservation()
+            .body
+            .participant_slots
+            .contains(&slot),
         "undeclared funding participant slot"
     );
     let (state, start) = original_reservation(db, verified)?;
@@ -258,7 +262,7 @@ pub fn claim_participant(
     let start: FundingEvent =
         serde_json::from_str(start.as_deref().context("original task start absent")?)?;
     ensure!(
-        start.reservation == verified.reservation && start.participant_slot.is_none(),
+        start.reservation == *verified.reservation() && start.participant_slot.is_none(),
         "participant original supervisor start mismatch"
     );
     // A start whose witness response was lost cannot release any rank.
