@@ -482,5 +482,5 @@ mod selection;
 pub(super) use selection::*;
 mod outer_release;
 pub(super) use outer_release::*;
-mod view_exports;
 mod outer_grants;
+mod view_exports;
