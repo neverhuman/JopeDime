@@ -1,3 +1,4 @@
+use super::truncate;
 use super::rows::{row_genome, GenomeStage};
 use serde_json::{Map, Value};
 use std::{
@@ -95,7 +96,7 @@ pub fn code_path(row: &Map<String, Value>, lang: &str, roots: &[PathBuf]) -> Opt
             roots
                 .iter()
                 .map(|root| root.join(&path))
-                .chain(std::iter::once(path))
+                .chain(std::iter::once(path.clone()))
                 .collect()
         };
         if let Some(found) = candidates
