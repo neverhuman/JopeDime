@@ -403,9 +403,9 @@ impl Authority {
                 }
             }
         }
-        let now = super::super::native_scq::policy::now_ms()?;
+        let now = super::super::super::native_scq::policy::now_ms()?;
         let (stages, verification) = self.verify_history_aggregate(aggregate, now, true)?;
-        let committed = super::super::native_scq::policy::now_ms()?;
+        let committed = super::super::super::native_scq::policy::now_ms()?;
         verify_review(aggregate, committed)?;
         let receipt = AggregateReceipt {
             schema: "jope.history_aggregate_receipt.v1".into(),
