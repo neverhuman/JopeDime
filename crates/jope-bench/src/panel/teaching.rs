@@ -371,8 +371,6 @@ pub fn preregister(plan: &mut CampaignPlan, config: &Configuration) -> Result<()
 mod admission;
 mod admission_report;
 
-use admission::{handed_off_context, Admission, Report};
-use admission_report::terminal_report;
 pub use admission_report::{admit_dataset, verify_admission};
 
 #[cfg(test)]

@@ -1,3 +1,5 @@
+use super::admission::{handed_off_context, Admission, Report};
+use super::admission_report::terminal_report;
 use super::*;
 #[test]
 fn transient_admission_failure_is_inventory_not_terminal() {

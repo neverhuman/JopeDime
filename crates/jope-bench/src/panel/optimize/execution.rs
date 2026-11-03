@@ -52,7 +52,7 @@ pub fn search_dataset<P: PoolAccess>(
         plan.proposal,
         neural_search::ProposalPlan::Experimental(_)
     ) {
-        let neural_input = super::experimental_proposal::prepare(
+        let neural_input = super::super::experimental_proposal::prepare(
             &mut backend,
             &plan,
             &mut variation,
@@ -140,7 +140,8 @@ pub fn search_dataset<P: PoolAccess>(
         teaching_admission: None,
         teaching_error: None,
     };
-    match super::teaching::admit_dataset(campaign, configuration, dataset, &result, journal) {
+    match super::super::teaching::admit_dataset(campaign, configuration, dataset, &result, journal)
+    {
         Ok(value) => result.teaching_admission = value,
         Err(error) => result.teaching_error = Some(format!("{error:#}")),
     }
