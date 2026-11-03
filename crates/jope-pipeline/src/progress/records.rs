@@ -1,5 +1,7 @@
 use super::*;
 
+/// One `jope.invent.progress.v1` line. Field order is the serialized order.
+#[derive(Clone, Debug, PartialEq, Serialize, serde::Deserialize)]
 pub struct Line {
     pub schema: String,
     /// [`PROGRESS`].

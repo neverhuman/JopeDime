@@ -51,8 +51,6 @@ pub const EXPLORATION: &str = "exploration";
 pub const COMPARISON: &str = "comparison";
 pub const DONE: &str = "done";
 
-/// One `jope.invent.progress.v1` line. Field order is the serialized order.
-#[derive(Clone, Debug, PartialEq, Serialize, serde::Deserialize)]
 const QUEUE_CAPACITY: usize = 64;
 const MAX_LINE_BYTES: usize = 2048;
 struct PendingLine {
