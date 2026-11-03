@@ -99,7 +99,6 @@ fn batches_sealed_within_one_millisecond_still_verify() {
     );
 }
 
-use super::*;
 use serde_json::json;
 
 fn numbers(ledger: &Ledger) -> Vec<u64> {
