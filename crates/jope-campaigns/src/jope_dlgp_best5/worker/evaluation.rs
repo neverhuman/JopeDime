@@ -1,6 +1,7 @@
 use super::*;
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::Path;
 
 use crate::jope_generalized_gp::{
     raw_sha256, ArtifactStoreV1, CorpusEvalAdapter, DatasetTableV1, EvaluatorFreezeV1,
