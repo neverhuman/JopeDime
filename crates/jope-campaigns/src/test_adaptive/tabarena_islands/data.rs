@@ -272,9 +272,7 @@ pub(crate) fn update_leader(
     }
 }
 
-pub(in crate::test_adaptive) fn prepare_datasets(
-    run_id: &str,
-) -> Result<(Vec<EncodedDataset>, Vec<ArtifactHash>)> {
+pub(super) fn prepare_datasets(run_id: &str) -> Result<(Vec<EncodedDataset>, Vec<ArtifactHash>)> {
     let (leaders, artifacts) = collect_local_leaders()?;
     let source_root = Path::new(source_root_str());
     let mut sources = fs::read_dir(source_root)?
@@ -341,7 +339,7 @@ pub(in crate::test_adaptive) fn prepare_datasets(
     Ok((datasets, artifacts))
 }
 
-pub(in crate::test_adaptive) fn select_datasets(
+pub(super) fn select_datasets(
     datasets: Vec<EncodedDataset>,
     selector: Option<&str>,
 ) -> Result<Vec<EncodedDataset>> {
