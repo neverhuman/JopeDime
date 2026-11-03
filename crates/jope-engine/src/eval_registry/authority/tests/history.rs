@@ -73,6 +73,10 @@ fn history_batch_shared_evidence_is_read_once_and_rechecked_on_retry() {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
 
+    // Reserve the watcher before the fixture and its database consume descriptors.
+    let fd = unsafe { libc::inotify_init1(libc::IN_NONBLOCK | libc::IN_CLOEXEC) };
+    assert!(fd >= 0);
+    let mut events = unsafe { std::fs::File::from_raw_fd(fd) };
     let fixture = Fixture::new(false);
     let mut inventory = staged_history_fixture(&fixture);
     let original = inventory.occurrences[0].clone();
@@ -89,9 +93,6 @@ fn history_batch_shared_evidence_is_read_once_and_rechecked_on_retry() {
     let evidence = fixture.root.join("objects").join(&original.evidence_sha256);
     // Observe real opens, not a timing threshold or a replacement verifier.
     // OPEN and CLOSE events alternate, so inotify cannot coalesce repeated opens.
-    let fd = unsafe { libc::inotify_init1(libc::IN_NONBLOCK | libc::IN_CLOEXEC) };
-    assert!(fd >= 0);
-    let mut events = unsafe { std::fs::File::from_raw_fd(fd) };
     let path = std::ffi::CString::new(evidence.as_os_str().as_bytes()).unwrap();
     assert!(
         unsafe {
