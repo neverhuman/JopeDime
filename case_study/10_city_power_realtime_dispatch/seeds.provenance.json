@@ -1,0 +1,241 @@
+{
+  "candidates": [
+    {
+      "canonical_genome": "(pipe X (winsor_moments append=true q=0.02) (sigmoid append=false) (robust_scale) (robust_scale) (standardize) (hinge knots=6) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "mean_reward_heads": 0.6337844133377075,
+      "origin": "neural_policy",
+      "program_sha256": "d6117c7343e6024f4492bd70ea6e3333e53676e855cf3411177af20aa76ee881",
+      "rank_log_weight": -2.437278845040404,
+      "raw_decoded_genome": "(pipe X (winsor_moments append=true q=0.02) (sigmoid append=false) (robust_scale) (robust_scale) (standardize) (hinge knots=6) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "reward_heads": [
+        0.4895639717578888,
+        0.4697713851928711,
+        -0.3799397051334381,
+        1.9557420015335083
+      ],
+      "runtime_head_prediction": 0.006387216039001942,
+      "slot": 0
+    },
+    {
+      "canonical_genome": "(pipe X (bin_onehot bins=4) (robust_scale append=true) (ridge))",
+      "mean_reward_heads": 0.06082751229405403,
+      "origin": "neural_policy",
+      "program_sha256": "86cce6c4c6cbbde491e0d70237d35c899719f1bd87a6be5119f89ccfed8a9025",
+      "rank_log_weight": -3.0102357460840574,
+      "raw_decoded_genome": "(pipe X (bin_onehot bins=4) (robust_scale append=true) (ridge))",
+      "reward_heads": [
+        1.2071031332015991,
+        -0.6090303063392639,
+        -0.41196027398109436,
+        0.05719749256968498
+      ],
+      "runtime_head_prediction": 0.003914398141205311,
+      "slot": 1
+    },
+    {
+      "canonical_genome": "(pipe X (target_bin_encode append=true bins=8 prior=10) (gbm depth=4 lr=0.05 rounds=240))",
+      "mean_reward_heads": 0.046513866633176804,
+      "origin": "neural_rejection_fallback",
+      "program_sha256": "be8fac9211f21f13b4fb5d2850efb62cd16cf33d538c046862c4f1b421185af5",
+      "rank_log_weight": -3.0245493917449346,
+      "raw_decoded_genome": "(pipe X (target_bin_encode append=true bins=8 prior=10) (gbm depth=4 lr=0.05 rounds=240))",
+      "reward_heads": [
+        -0.004512753337621689,
+        0.11884109675884247,
+        -0.17885777354240417,
+        0.2505849003791809
+      ],
+      "runtime_head_prediction": 0.048425279557704926,
+      "slot": 2
+    },
+    {
+      "canonical_genome": "(pipe X (bin_onehot bins=4) (target_bin_encode append=true bins=8) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "mean_reward_heads": 0.044686660170555115,
+      "origin": "neural_policy",
+      "program_sha256": "af923e254ee53b149245d9b8e73afa452c685db0400221f42c18879151c77b6a",
+      "rank_log_weight": -3.0263765982075563,
+      "raw_decoded_genome": "(pipe X (bin_onehot bins=4) (target_bin_encode append=true bins=8) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "reward_heads": [
+        0.7370104193687439,
+        0.07534651458263397,
+        -0.028813863173127174,
+        -0.6047964692115784
+      ],
+      "runtime_head_prediction": 0.002446239348500967,
+      "slot": 3
+    },
+    {
+      "canonical_genome": "(pipe X (bin_onehot bins=4) (target_bin_encode bins=8) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "mean_reward_heads": -0.006837695837020874,
+      "origin": "neural_policy",
+      "program_sha256": "602e7ba3714f78303fa80cbb2be93da92c7e17a506141e63ea260680b65dd443",
+      "rank_log_weight": -3.0779009542151323,
+      "raw_decoded_genome": "(pipe X (bin_onehot bins=4) (target_bin_encode bins=8) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "reward_heads": [
+        0.5091270804405212,
+        -1.4861599206924438,
+        0.5543888211250305,
+        0.3952932357788086
+      ],
+      "runtime_head_prediction": 0.0015977465081959963,
+      "slot": 4
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins append=true bins=8) (sigmoid append=false) (sigmoid) (quantile_bins append=true bins=16) (robust_scale) (elasticnet alpha=0.01 l1_ratio=0.2))",
+      "mean_reward_heads": -0.10025256872177124,
+      "origin": "neural_policy",
+      "program_sha256": "47f1d93de41b0e233ef0fc9cf9741cb9c04456ba338de6530715e1d47b29e4a0",
+      "rank_log_weight": -3.1713158270998827,
+      "raw_decoded_genome": "(pipe X (quantile_bins append=true bins=8) (sigmoid append=false) (sigmoid) (quantile_bins append=true bins=16) (robust_scale) (elasticnet alpha=0.01 l1_ratio=0.2))",
+      "reward_heads": [
+        -0.8122934699058533,
+        -0.033409103751182556,
+        -0.8482593297958374,
+        1.2929515838623047
+      ],
+      "runtime_head_prediction": 0.004957255907356739,
+      "slot": 5
+    },
+    {
+      "canonical_genome": "(pipe X (cheb append=true degree=2) (rank) (norm_features append=false) (ensemble))",
+      "mean_reward_heads": -0.22909575700759888,
+      "origin": "neural_policy",
+      "program_sha256": "191eb808f58d878c3222326d0155343004cb0ac0b0866adcce2d92d3ffddc975",
+      "rank_log_weight": -3.3001590153857103,
+      "raw_decoded_genome": "(pipe X (cheb append=true degree=2) (rank) (norm_features append=false) (ensemble))",
+      "reward_heads": [
+        -1.6787595748901367,
+        -0.5027735829353333,
+        0.5234835743904114,
+        0.7416665554046631
+      ],
+      "runtime_head_prediction": 0.031805068254470825,
+      "slot": 6
+    },
+    {
+      "canonical_genome": "(pipe X (sigmoid append=true) (hinge knots=6) (bin_onehot bins=4) (robust_scale append=true) (histgbm depth=4 lr=0.15 rounds=180))",
+      "mean_reward_heads": -0.25780269503593445,
+      "origin": "neural_policy",
+      "program_sha256": "a1cb988805b024101af1a4989444f0e337cb2a11c086921ec484e593618afd7c",
+      "rank_log_weight": -3.328865953414046,
+      "raw_decoded_genome": "(pipe X (sigmoid append=true) (hinge knots=6) (bin_onehot bins=4) (robust_scale append=true) (histgbm depth=4 lr=0.15 rounds=180))",
+      "reward_heads": [
+        0.010229106992483139,
+        -0.5944172143936157,
+        -0.6008353233337402,
+        0.15381260216236115
+      ],
+      "runtime_head_prediction": 0.3963930308818817,
+      "slot": 7
+    },
+    {
+      "canonical_genome": "(pipe X (blom append=false) (ensemble_ridge_gbm))",
+      "mean_reward_heads": -0.3080311119556427,
+      "origin": "neural_policy",
+      "program_sha256": "a0c7c907673dc5096b0d90e31c1d3cbc46a09da848e977480f5ca881c6128116",
+      "rank_log_weight": -3.379094370333754,
+      "raw_decoded_genome": "(pipe X (blom append=false) (ensemble_ridge_gbm))",
+      "reward_heads": [
+        -0.49014899134635925,
+        0.5351145267486572,
+        -0.3927583694458008,
+        -0.8843315839767456
+      ],
+      "runtime_head_prediction": 0.016572820022702217,
+      "slot": 8
+    },
+    {
+      "canonical_genome": "(pipe X (winsor_clip q=0.05) (sigmoid append=true) (winsor_clip append=true q=0.05) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "mean_reward_heads": -0.3311501145362854,
+      "origin": "neural_policy",
+      "program_sha256": "d95b62c13b382d7aec5702d36d3047aff61f62360227c9955089ff24f573299d",
+      "rank_log_weight": -3.402213372914397,
+      "raw_decoded_genome": "(pipe X (winsor_clip q=0.05) (sigmoid append=true) (winsor_clip append=true q=0.05) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "reward_heads": [
+        -1.149590253829956,
+        -0.6336356997489929,
+        0.4884035885334015,
+        -0.029777977615594864
+      ],
+      "runtime_head_prediction": 1.199924349784851,
+      "slot": 9
+    },
+    {
+      "canonical_genome": "(pipe X (sigmoid) (gpr m=400 steps=30))",
+      "mean_reward_heads": -0.3531162142753601,
+      "origin": "neural_policy",
+      "program_sha256": "34f76d78ec5f496cc1e375772cb3f307e4311baf6859b70d3d5aacd96b16e490",
+      "rank_log_weight": -3.4241794726534716,
+      "raw_decoded_genome": "(pipe X (sigmoid) (gpr m=400 steps=30))",
+      "reward_heads": [
+        -0.4191678464412689,
+        -1.2084406614303589,
+        0.6033543944358826,
+        -0.3882107138633728
+      ],
+      "runtime_head_prediction": 0.26946982741355896,
+      "slot": 10
+    }
+  ],
+  "case_name": "10_city_power_realtime_dispatch",
+  "context_encoding": {
+    "backend": "Rust/Candle 0.11 CPU FP32; frozen accepted transforms; native-component qualification required",
+    "context_sha256": "d4160261b150fccf0d93abd2ba6e1358db40fbcc4326d447b7ee7a19ca68100a",
+    "encoded_features": 7,
+    "encoded_train_rows": 256,
+    "encoder_identity": {
+      "assembly": "6582df23f5c1ee048d11040a5f2bd1447032932fc23f6c5a3aa9cb4f2d6896cb",
+      "component_bundle": "985074846ccfe92c818e920e5268ea5269a9e35f1fa2057ddae662266c6c7f9f",
+      "foundation_weights": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "frozen_transforms": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "hyperion_manifest": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "hyperion_weights": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "recipe": "native-hyperion-sweep3-chunks1-batch1024;foundation-pcg20260707-f64-label-normalization;target-pcg17-two-windows;frozen-512+1024+512-clip32/v1",
+      "target_weights": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f"
+    },
+    "final_test_targets_used": false,
+    "manifest_sha256": "8190eb23a1fb34d7aae7fcab164422120acf22ff91ce8316561fbc6179620961",
+    "prepared_rows_sha256": "e77e8ecff43aab85010e2f5028c109074a3f98c045cd410ef10a37ecdf00c523",
+    "qualification": "unqualified_cpu_context_producer (no pre-existing GPU contexts-assembly-v2 file used; encoded directly from train.csv via CpuProducer)",
+    "schema": "jope.cpu-context/v1",
+    "total_features": 7,
+    "total_train_rows": 8000,
+    "train_csv_sha256": "32b6438dfa20c3ba6d0159f2e64e0bfffcfe8327e25eb41619840a54f85a167a"
+  },
+  "dataset_hash": "ca8b2f30cf07dd87",
+  "fallback_used": false,
+  "policy_model": {
+    "base_vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "bundle_id": "policy-step-60000",
+    "config_sha256": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf",
+    "model_ot_sha256": "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129",
+    "parameter_sha256": "9c7057e7f6a9e348f030da73f03522977b8c08915d3a221d7d5ab2e4213fcd92",
+    "policy_safetensors_path": "/home/ubuntu/.cache/jope/models/bundles/policy-step-60000/policy.safetensors",
+    "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+    "ranking_backend": "candle_cpu_float32",
+    "ranking_selection_id": "mean_reward_heads_desc_program_hash_v1",
+    "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+    "step": 60000,
+    "vocabulary_name": "featmath-jain-v1",
+    "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+  },
+  "sampling": {
+    "attempted_draws": 64,
+    "batch": 32,
+    "dataset_seed": 14594810904102516711,
+    "elapsed_seconds": 14.172340535,
+    "exploration_seed": 15682219424669769075,
+    "fallback_attempts": 1,
+    "fallback_seed": 4177459394779759903,
+    "rounds": 2,
+    "sampling_seed": 9770348042804453454,
+    "temperature": 1.0,
+    "unique_neural_programs": 63,
+    "valid_neural_draws": 64
+  },
+  "schema": "jope.pipeline-seeds-provenance/v1",
+  "seed_count": 11,
+  "seeds_file": "ca8b2f30cf07dd87.seeds.json",
+  "seeds_sha256": "b966128126cebfbee153d6669b2813f45b567d6096bc104165174568f747616d",
+  "status": "ok"
+}

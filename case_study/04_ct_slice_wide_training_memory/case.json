@@ -27,7 +27,10 @@
   "seeds": {
     "file": "seeds.dl.json",
     "provenance": "seeds.provenance.json",
-    "limit": 11
+    "limit": 11,
+    "sha256": "729800ea289411a805056c81f0d1d66197c032723271963b319aa86a0960a52a",
+    "provenance_sha256": "7af4cba55ccd3f43dfa596913d7c40ab34b7fdd144195a6d83e2696be31de48c",
+    "source": "step-60000 neural policy (Rust/Candle CPU), produced by agy_resource_fitness; see seeds.provenance.json"
   },
   "budget": {
     "evaluations": 96,

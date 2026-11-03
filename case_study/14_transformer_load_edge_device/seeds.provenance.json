@@ -1,0 +1,241 @@
+{
+  "candidates": [
+    {
+      "canonical_genome": "(pipe X (pair_prod append=true topk=4) (standardize append=true) (robust_scale append=true) (elasticnet alpha=0.0005 l1_ratio=0.5))",
+      "mean_reward_heads": 1.2573215961456299,
+      "origin": "neural_policy",
+      "program_sha256": "477b76907488ad84a4e42195564beeb2e0ff13176e08d13387193280555d6fbd",
+      "rank_log_weight": -2.6554653209899435,
+      "raw_decoded_genome": "(pipe X (pair_prod append=true topk=4) (standardize append=true) (robust_scale append=true) (elasticnet alpha=0.0005 l1_ratio=0.5))",
+      "reward_heads": [
+        1.2679499387741089,
+        1.6283711194992065,
+        0.26513057947158813,
+        1.8678346872329712
+      ],
+      "runtime_head_prediction": 0.004347611218690872,
+      "slot": 0
+    },
+    {
+      "canonical_genome": "(pipe X (gpr kernel=periodic+linear m=400 steps=30))",
+      "mean_reward_heads": 0.985806405544281,
+      "origin": "neural_policy",
+      "program_sha256": "4ad71796211089ec316bba9afd5040030be57b460dff76cba0a0ed9e102a1653",
+      "rank_log_weight": -2.9269805115912924,
+      "raw_decoded_genome": "(pipe X (gpr kernel=periodic+linear m=400 steps=30))",
+      "reward_heads": [
+        1.0372141599655151,
+        0.8917616009712219,
+        1.3455060720443726,
+        0.6687438488006592
+      ],
+      "runtime_head_prediction": 0.5432968139648438,
+      "slot": 1
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins append=true bins=8) (stack))",
+      "mean_reward_heads": 0.9204152822494507,
+      "origin": "neural_rejection_fallback",
+      "program_sha256": "0743589115e4c86d28d95bf7fc47510b803885c8416dbf6939365697b2f33356",
+      "rank_log_weight": -2.9923716348861227,
+      "raw_decoded_genome": "(pipe X (quantile_bins append=true bins=8) (stack))",
+      "reward_heads": [
+        1.6154862642288208,
+        0.7962056994438171,
+        0.5373784899711609,
+        0.7325907945632935
+      ],
+      "runtime_head_prediction": 0.667475163936615,
+      "slot": 2
+    },
+    {
+      "canonical_genome": "(pipe X (standardize) (poly_interact append=true) (poly_interact append=true) (standardize) (stack))",
+      "mean_reward_heads": 0.8569077253341675,
+      "origin": "neural_policy",
+      "program_sha256": "3e42df0d5546b14b4e49872eadb109b4c2e7337d1484df2b4e974190b8e314a7",
+      "rank_log_weight": -3.055879191801406,
+      "raw_decoded_genome": "(pipe X (standardize) (poly_interact append=true) (poly_interact append=true) (standardize) (stack))",
+      "reward_heads": [
+        0.9826804995536804,
+        -0.22320862114429474,
+        2.058110237121582,
+        0.6100488305091858
+      ],
+      "runtime_head_prediction": 10.295065879821777,
+      "slot": 3
+    },
+    {
+      "canonical_genome": "(pipe X (robust_scale) (rank append=true) (gpr kernel=periodic+linear m=400 steps=30))",
+      "mean_reward_heads": 0.7224290370941162,
+      "origin": "neural_policy",
+      "program_sha256": "262d87f1626b183b2bac701f22fa16b65654da13fef3c58ff92a3d7a320cb9a8",
+      "rank_log_weight": -3.190357880041457,
+      "raw_decoded_genome": "(pipe X (robust_scale) (rank append=true) (gpr kernel=periodic+linear m=400 steps=30))",
+      "reward_heads": [
+        0.416372150182724,
+        0.2757139801979065,
+        1.0153230428695679,
+        1.1823068857192993
+      ],
+      "runtime_head_prediction": 0.6419116258621216,
+      "slot": 4
+    },
+    {
+      "canonical_genome": "(pipe X (oblique_hinge n=32 seed=19) (robust_scale append=true) (robust_scale) (gpr kernel=rbf+linear m=300 steps=40))",
+      "mean_reward_heads": 0.6787906289100647,
+      "origin": "neural_policy",
+      "program_sha256": "e184260c381fae615603611400e33234c43fb88b2fb7a4e4c30ec1c69e4e323b",
+      "rank_log_weight": -3.2339962882255087,
+      "raw_decoded_genome": "(pipe X (oblique_hinge n=32 seed=19) (robust_scale append=true) (robust_scale) (gpr kernel=rbf+linear m=300 steps=40))",
+      "reward_heads": [
+        1.0171968936920166,
+        0.836556077003479,
+        -0.09142785519361496,
+        0.952837347984314
+      ],
+      "runtime_head_prediction": 0.6176635026931763,
+      "slot": 5
+    },
+    {
+      "canonical_genome": "(pipe X (standardize) (norm_row) (norm_features append=false) (gpr kernel=periodic+linear m=400 steps=40))",
+      "mean_reward_heads": 0.6269435882568359,
+      "origin": "neural_policy",
+      "program_sha256": "91a9fc41b963f55b8687c134c59f2ed788e1f7903c11f94b66689c088fc06fea",
+      "rank_log_weight": -3.2858433288787374,
+      "raw_decoded_genome": "(pipe X (standardize) (norm_row) (norm_features append=false) (gpr kernel=periodic+linear m=400 steps=40))",
+      "reward_heads": [
+        0.4023333191871643,
+        -0.5689105987548828,
+        1.3865259885787964,
+        1.2878254652023315
+      ],
+      "runtime_head_prediction": 0.6874327063560486,
+      "slot": 6
+    },
+    {
+      "canonical_genome": "(pipe X (standardize) (standardize) (rand_proj k=64 seed=31) (standardize) (standardize) (robust_scale) (krr m=600))",
+      "mean_reward_heads": 0.603071928024292,
+      "origin": "neural_policy",
+      "program_sha256": "6ddb13e51360c39e9b2c12a423c29e730ebd3e25fb856cbe77a5955515e79abc",
+      "rank_log_weight": -3.3097149891112814,
+      "raw_decoded_genome": "(pipe X (standardize) (standardize) (rand_proj k=64 seed=31) (standardize) (standardize) (robust_scale) (krr m=600))",
+      "reward_heads": [
+        1.2794965505599976,
+        -0.21767695248126984,
+        0.9701982140541077,
+        0.38027000427246094
+      ],
+      "runtime_head_prediction": 0.03503063693642616,
+      "slot": 7
+    },
+    {
+      "canonical_genome": "(pipe X (standardize) (pair_prod append=true topk=4) (robust_scale) (pair_prod append=true topk=4) (robust_scale append=true) (quantile_bins append=true bins=8) (gpr kernel=rbf+linear m=300 steps=40))",
+      "mean_reward_heads": 0.5896340608596802,
+      "origin": "neural_policy",
+      "program_sha256": "53149dffcf40fca81072e9f67ea20862a499f80d0a7e92a5eb65ed8a50ea1fb0",
+      "rank_log_weight": -3.323152856275893,
+      "raw_decoded_genome": "(pipe X (standardize) (pair_prod append=true topk=4) (robust_scale) (pair_prod append=true topk=4) (robust_scale append=true) (quantile_bins append=true bins=8) (gpr kernel=rbf+linear m=300 steps=40))",
+      "reward_heads": [
+        0.49569985270500183,
+        1.0453853607177734,
+        -0.538491427898407,
+        1.3559423685073853
+      ],
+      "runtime_head_prediction": 0.5072395205497742,
+      "slot": 8
+    },
+    {
+      "canonical_genome": "(pipe X (rank append=true) (gpr kernel=rq m=300 steps=40))",
+      "mean_reward_heads": 0.5798433423042297,
+      "origin": "neural_policy",
+      "program_sha256": "1579ba80e51a6685d0f0b33e922c0836b1bd9bd3de2907888c84248fdce339c3",
+      "rank_log_weight": -3.3329435748313436,
+      "raw_decoded_genome": "(pipe X (rank append=true) (gpr kernel=rq m=300 steps=40))",
+      "reward_heads": [
+        1.1971441507339478,
+        0.1567375510931015,
+        0.8171273469924927,
+        0.14836432039737701
+      ],
+      "runtime_head_prediction": 0.6036676168441772,
+      "slot": 9
+    },
+    {
+      "canonical_genome": "(pipe X (standardize) (robust_scale) (gpr m=400 steps=40))",
+      "mean_reward_heads": 0.555748462677002,
+      "origin": "neural_policy",
+      "program_sha256": "5e18037a2383bb20c46fcd37293f4ad01c38c13ee86f48cbaff2df2fce2ea10a",
+      "rank_log_weight": -3.3570384544585714,
+      "raw_decoded_genome": "(pipe X (standardize) (robust_scale) (gpr m=400 steps=40))",
+      "reward_heads": [
+        -0.01656772568821907,
+        0.5289826989173889,
+        1.3219074010849,
+        0.38867151737213135
+      ],
+      "runtime_head_prediction": 0.20613227784633636,
+      "slot": 10
+    }
+  ],
+  "case_name": "14_transformer_load_edge_device",
+  "context_encoding": {
+    "backend": "Rust/Candle 0.11 CPU FP32; frozen accepted transforms; native-component qualification required",
+    "context_sha256": "08d9eb9af8f2455b81e5b20ccc0b8e0a4db3b261fb60edcc604b4e26de790321",
+    "encoded_features": 6,
+    "encoded_train_rows": 256,
+    "encoder_identity": {
+      "assembly": "6582df23f5c1ee048d11040a5f2bd1447032932fc23f6c5a3aa9cb4f2d6896cb",
+      "component_bundle": "985074846ccfe92c818e920e5268ea5269a9e35f1fa2057ddae662266c6c7f9f",
+      "foundation_weights": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "frozen_transforms": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "hyperion_manifest": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "hyperion_weights": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "recipe": "native-hyperion-sweep3-chunks1-batch1024;foundation-pcg20260707-f64-label-normalization;target-pcg17-two-windows;frozen-512+1024+512-clip32/v1",
+      "target_weights": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f"
+    },
+    "final_test_targets_used": false,
+    "manifest_sha256": "a66fb66ae4c0474220afc6dd36ddaca08e43cd1607731bb2b29aa0a87798e73d",
+    "prepared_rows_sha256": "9108af65d3c308e80feda7dca63163757b5a3e59e54d8713748da362e18c26a7",
+    "qualification": "unqualified_cpu_context_producer (no pre-existing GPU contexts-assembly-v2 file used; encoded directly from train.csv via CpuProducer)",
+    "schema": "jope.cpu-context/v1",
+    "total_features": 6,
+    "total_train_rows": 8000,
+    "train_csv_sha256": "b8c3eed26a555c6f80796819b0602a29b4e26b677df8c61d86efe90f25949118"
+  },
+  "dataset_hash": "6ce1759b1a18e332",
+  "fallback_used": false,
+  "policy_model": {
+    "base_vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "bundle_id": "policy-step-60000",
+    "config_sha256": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf",
+    "model_ot_sha256": "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129",
+    "parameter_sha256": "9c7057e7f6a9e348f030da73f03522977b8c08915d3a221d7d5ab2e4213fcd92",
+    "policy_safetensors_path": "/home/ubuntu/.cache/jope/models/bundles/policy-step-60000/policy.safetensors",
+    "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+    "ranking_backend": "candle_cpu_float32",
+    "ranking_selection_id": "mean_reward_heads_desc_program_hash_v1",
+    "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+    "step": 60000,
+    "vocabulary_name": "featmath-jain-v1",
+    "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+  },
+  "sampling": {
+    "attempted_draws": 64,
+    "batch": 32,
+    "dataset_seed": 7845681334874278226,
+    "elapsed_seconds": 15.734335822,
+    "exploration_seed": 5549867378890032028,
+    "fallback_attempts": 4,
+    "fallback_seed": 6071909129600671526,
+    "rounds": 2,
+    "sampling_seed": 3942314105509914307,
+    "temperature": 1.0,
+    "unique_neural_programs": 60,
+    "valid_neural_draws": 64
+  },
+  "schema": "jope.pipeline-seeds-provenance/v1",
+  "seed_count": 11,
+  "seeds_file": "6ce1759b1a18e332.seeds.json",
+  "seeds_sha256": "7071c131a9fc84037e536e775d401422210f4934e0f878d14abbb0a2fd157873",
+  "status": "ok"
+}

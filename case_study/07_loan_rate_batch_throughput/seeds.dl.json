@@ -1,0 +1,50 @@
+{
+  "dataset_hash": "18f905fa597f92d3",
+  "genomes": [
+    {
+      "genome": "(pipe X (robust_scale) (robust_scale append=true) (hinge knots=6) (pair_prod append=true topk=8) (elasticnet alpha=0.01 l1_ratio=0.2))",
+      "program_sha256": "b1abe7dde92cc4f496cef965739b7eb027bd8f6619ed5501562de2319c1d91bf"
+    },
+    {
+      "genome": "(pipe X (winsor_clip append=true q=0.05) (step append=true) (robust_scale append=true) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "7100d3837a342388229919ff21712684188471545fe8a736111ad6f40df5605a"
+    },
+    {
+      "genome": "(pipe X (blom) (winsor_clip append=false q=0.05) (stack))",
+      "program_sha256": "0c99bb5105ac1864228b1539dbf4cae875f849b7ee444844f66d3b45bb51ee9a"
+    },
+    {
+      "genome": "(pipe X (winsor_clip append=true q=0.01) (standardize append=true) (histgbm2 bags=3 leaves=31 lr=0.08 rounds=500))",
+      "program_sha256": "1f168d01ed5321cc71155009324c2a34ba66b6f17c17297aac2e8b5286659e9d"
+    },
+    {
+      "genome": "(pipe X (winsor_clip append=true q=0.05) (robust_scale) (winsor_clip append=false q=0.05) (quantile_bins bins=32) (ridge))",
+      "program_sha256": "6c5e6386d9067159db472fe5f3889a9a83ae2c3ff2d4b1e231244f9bae732fc4"
+    },
+    {
+      "genome": "(pipe X (winsor_clip append=true q=0.05) (robust_scale append=true) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "program_sha256": "5367192d212e4a21b76dee9dfaf8ec84eda36112d5dc78f529c6ad49194d0918"
+    },
+    {
+      "genome": "(pipe X (winsor_clip append=true q=0.05) (robust_scale append=false) (standardize) (winsor_clip append=true q=0.05) (elasticnet alpha=0.01 l1_ratio=0.2))",
+      "program_sha256": "5d0975dcfbd8bcbeebb032f08131b67c6cf32c1b086600338864856860d25177"
+    },
+    {
+      "genome": "(pipe X (robust_scale append=true) (robust_scale) (robust_scale) (ridge))",
+      "program_sha256": "392e0e7a5417afb3b3637e9e917fc70cbd60822222293f8763af13c9d9b27de3"
+    },
+    {
+      "genome": "(pipe X (hinge knots=8) (ridge))",
+      "program_sha256": "62cd2edf2efa7ffe8995cf75b2f13cccc4d604b98b6791bd19edfed62d556ba0"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=12) (gpr kernel=periodic m=400 steps=30))",
+      "program_sha256": "3f4039fd37f1e02d20cebc552c6b49e4b15ac400e7163c69ab3efd5f6aa9e96a"
+    },
+    {
+      "genome": "(pipe X (robust_scale) (robust_scale) (histgbm2 bags=5 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "58ba13634a18d87058bb5e855b428bc64795b91a4d88c5231127e5216aec0427"
+    }
+  ],
+  "schema": "jope.pipeline-seeds/v1"
+}

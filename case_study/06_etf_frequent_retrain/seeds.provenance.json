@@ -1,0 +1,241 @@
+{
+  "candidates": [
+    {
+      "canonical_genome": "(pipe X (standardize append=true) (quantile_bins append=true bins=8) (norm_row append=true) (elasticnet alpha=0.001 l1_ratio=0.2))",
+      "mean_reward_heads": 0.510965883731842,
+      "origin": "neural_policy",
+      "program_sha256": "6029488f0fcb9d4fc666c12ae153abd43b918ff4761b55b0516c0d6458c8528f",
+      "rank_log_weight": -2.8592550666683954,
+      "raw_decoded_genome": "(pipe X (standardize append=true) (quantile_bins append=true bins=8) (norm_row append=true) (elasticnet alpha=0.001 l1_ratio=0.2))",
+      "reward_heads": [
+        0.5249468684196472,
+        0.7385603785514832,
+        0.5749788880348206,
+        0.20537731051445007
+      ],
+      "runtime_head_prediction": 0.004128426779061556,
+      "slot": 0
+    },
+    {
+      "canonical_genome": "(pipe X (hinge append=true knots=8) (ridge))",
+      "mean_reward_heads": 0.4604356586933136,
+      "origin": "neural_policy",
+      "program_sha256": "c78ef79d917d52dddbc066204489a7fca93aa62203a5bf56ff6da8974b3aa1f8",
+      "rank_log_weight": -2.909785291706924,
+      "raw_decoded_genome": "(pipe X (hinge append=true knots=8) (ridge))",
+      "reward_heads": [
+        0.4837535321712494,
+        0.24850885570049286,
+        0.3564477860927582,
+        0.7530324459075928
+      ],
+      "runtime_head_prediction": 0.00790601409971714,
+      "slot": 1
+    },
+    {
+      "canonical_genome": "(pipe X (ensemble))",
+      "mean_reward_heads": 0.17632681131362915,
+      "origin": "neural_policy",
+      "program_sha256": "21eeca2e0223712112f602e1d830beb665a40d08d93c90806caacc508d95a24a",
+      "rank_log_weight": -3.1938941390866082,
+      "raw_decoded_genome": "(pipe X (ensemble))",
+      "reward_heads": [
+        0.035779919475317,
+        -0.24992795288562775,
+        0.1253000795841217,
+        0.7941551804542542
+      ],
+      "runtime_head_prediction": 0.011585300788283348,
+      "slot": 2
+    },
+    {
+      "canonical_genome": "(pipe X (oblique_hinge n=32 seed=19) (hinge append=true knots=4) (histgbm2 bags=3 leaves=63 lr=0.08 rounds=500))",
+      "mean_reward_heads": 0.17109563946723938,
+      "origin": "neural_policy",
+      "program_sha256": "4c48c596a362ba2c4fd143ac15f56c8375b14ae9c79eba059d7784441e503d56",
+      "rank_log_weight": -3.199125310932998,
+      "raw_decoded_genome": "(pipe X (oblique_hinge n=32 seed=19) (hinge append=true knots=4) (histgbm2 bags=3 leaves=63 lr=0.08 rounds=500))",
+      "reward_heads": [
+        0.9007560014724731,
+        -0.688906729221344,
+        0.5181849002838135,
+        -0.0456516407430172
+      ],
+      "runtime_head_prediction": 1.2717833518981934,
+      "slot": 3
+    },
+    {
+      "canonical_genome": "(pipe X (logistic))",
+      "mean_reward_heads": 0.14885832369327545,
+      "origin": "neural_policy",
+      "program_sha256": "c47bdd92aa0043470fcf0dff7024abe6e50679ab3be434a666d9e4f2f103f270",
+      "rank_log_weight": -3.221362626706962,
+      "raw_decoded_genome": "(pipe X (logistic))",
+      "reward_heads": [
+        -0.5593637824058533,
+        -0.5628370642662048,
+        0.9727535843849182,
+        0.7448805570602417
+      ],
+      "runtime_head_prediction": 0.0037090082187205553,
+      "slot": 4
+    },
+    {
+      "canonical_genome": "(pipe X (rand_proj append=true k=16 seed=31) (quantile_bins bins=16) (hinge knots=2) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "mean_reward_heads": 0.03209257125854492,
+      "origin": "neural_policy",
+      "program_sha256": "124c796e653ccc6b5ea0e46499a6146cff9b466e926e5099551201cb06d333fc",
+      "rank_log_weight": -3.3381283791416925,
+      "raw_decoded_genome": "(pipe X (rand_proj append=true k=16 seed=31) (quantile_bins bins=16) (hinge knots=2) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "reward_heads": [
+        0.48905041813850403,
+        -0.8273128867149353,
+        0.557548463344574,
+        -0.09091570973396301
+      ],
+      "runtime_head_prediction": 0.003934904467314482,
+      "slot": 5
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins append=true bins=16) (ridge))",
+      "mean_reward_heads": 0.0200883150100708,
+      "origin": "neural_policy",
+      "program_sha256": "4405f5f9debc052f5c3a7a4516de0b2605abd4e089ed72f87f41c753404af59b",
+      "rank_log_weight": -3.3501326353901666,
+      "raw_decoded_genome": "(pipe X (quantile_bins append=true bins=16) (ridge))",
+      "reward_heads": [
+        -0.49370965361595154,
+        -0.17880532145500183,
+        -0.27239754796028137,
+        1.0252658128738403
+      ],
+      "runtime_head_prediction": 0.011571917682886124,
+      "slot": 6
+    },
+    {
+      "canonical_genome": "(pipe X (sigmoid append=true) (poly_interact append=true) (pair_prod append=false topk=12) (hinge append=true knots=2) (hinge knots=4) (winsor_moments append=true q=0.02) (ridge))",
+      "mean_reward_heads": 0.015279162675142288,
+      "origin": "neural_policy",
+      "program_sha256": "3308110fb403f65cdc081dbdf3de83a2a61297205beee14b461cf483233680c9",
+      "rank_log_weight": -3.354941787725095,
+      "raw_decoded_genome": "(pipe X (sigmoid append=true) (poly_interact append=true) (pair_prod append=false topk=12) (hinge append=true knots=2) (hinge knots=4) (winsor_moments append=true q=0.02) (ridge))",
+      "reward_heads": [
+        1.3172701597213745,
+        -0.7984462380409241,
+        -0.5663953423500061,
+        0.10868807137012482
+      ],
+      "runtime_head_prediction": 0.009997649118304253,
+      "slot": 7
+    },
+    {
+      "canonical_genome": "(pipe X (blom) (ridge))",
+      "mean_reward_heads": -0.0662868320941925,
+      "origin": "neural_policy",
+      "program_sha256": "abed7fd8a89d06a98f52a43721cbafe7b44a784fca0f71ce26f44e69fc2ef1bc",
+      "rank_log_weight": -3.43650778249443,
+      "raw_decoded_genome": "(pipe X (blom) (ridge))",
+      "reward_heads": [
+        -0.89003986120224,
+        0.40430736541748047,
+        0.17124786972999573,
+        0.04933728650212288
+      ],
+      "runtime_head_prediction": 0.013226635754108429,
+      "slot": 8
+    },
+    {
+      "canonical_genome": "(pipe X (robust_scale) (ridge))",
+      "mean_reward_heads": -0.0727466493844986,
+      "origin": "neural_policy",
+      "program_sha256": "21d5b1169496d1be6ce27108215c834446e916470a8b67df7f204683993537c1",
+      "rank_log_weight": -3.442967599784736,
+      "raw_decoded_genome": "(pipe X (robust_scale) (ridge))",
+      "reward_heads": [
+        -1.1799544095993042,
+        0.20788680016994476,
+        -0.1748988926410675,
+        0.855979859828949
+      ],
+      "runtime_head_prediction": 0.012081434950232506,
+      "slot": 9
+    },
+    {
+      "canonical_genome": "(pipe X (sigmoid) (robust_scale append=true) (standardize append=true) (row_stats) (step append=true) (stack))",
+      "mean_reward_heads": -0.0902898907661438,
+      "origin": "neural_policy",
+      "program_sha256": "19fc598b873c7872000a191bc058527d28c433753715c30915d21f268e5f8d1a",
+      "rank_log_weight": -3.460510841166381,
+      "raw_decoded_genome": "(pipe X (sigmoid) (robust_scale append=true) (standardize append=true) (row_stats) (step append=true) (stack))",
+      "reward_heads": [
+        -0.3979552090167999,
+        -0.3433395028114319,
+        0.8706896901130676,
+        -0.4905545115470886
+      ],
+      "runtime_head_prediction": 2.0679759979248047,
+      "slot": 10
+    }
+  ],
+  "case_name": "06_etf_frequent_retrain",
+  "context_encoding": {
+    "backend": "Rust/Candle 0.11 CPU FP32; frozen accepted transforms; native-component qualification required",
+    "context_sha256": "1238d6edfcb3ffd76247262529f8380102c39bdba28309aa3caab2c73b2c8fc3",
+    "encoded_features": 3,
+    "encoded_train_rows": 256,
+    "encoder_identity": {
+      "assembly": "6582df23f5c1ee048d11040a5f2bd1447032932fc23f6c5a3aa9cb4f2d6896cb",
+      "component_bundle": "985074846ccfe92c818e920e5268ea5269a9e35f1fa2057ddae662266c6c7f9f",
+      "foundation_weights": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "frozen_transforms": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "hyperion_manifest": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "hyperion_weights": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "recipe": "native-hyperion-sweep3-chunks1-batch1024;foundation-pcg20260707-f64-label-normalization;target-pcg17-two-windows;frozen-512+1024+512-clip32/v1",
+      "target_weights": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f"
+    },
+    "final_test_targets_used": false,
+    "manifest_sha256": "efb739c5ee64a87ffc038d32ebf545808ed7e887b1ac8dc8e74b80b85f6f7d7e",
+    "prepared_rows_sha256": "7116f124122eba2e1f3732a10ee0e94e9f4bd7d2dbc418acc7aa3411387dd2b4",
+    "qualification": "unqualified_cpu_context_producer (no pre-existing GPU contexts-assembly-v2 file used; encoded directly from train.csv via CpuProducer)",
+    "schema": "jope.cpu-context/v1",
+    "total_features": 3,
+    "total_train_rows": 8000,
+    "train_csv_sha256": "51763da31cd7a39ca7745370863f75809b5c4e4bf9f7721e11cae491bc2a078d"
+  },
+  "dataset_hash": "f285fd52a7c14111",
+  "fallback_used": false,
+  "policy_model": {
+    "base_vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "bundle_id": "policy-step-60000",
+    "config_sha256": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf",
+    "model_ot_sha256": "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129",
+    "parameter_sha256": "9c7057e7f6a9e348f030da73f03522977b8c08915d3a221d7d5ab2e4213fcd92",
+    "policy_safetensors_path": "/home/ubuntu/.cache/jope/models/bundles/policy-step-60000/policy.safetensors",
+    "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+    "ranking_backend": "candle_cpu_float32",
+    "ranking_selection_id": "mean_reward_heads_desc_program_hash_v1",
+    "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+    "step": 60000,
+    "vocabulary_name": "featmath-jain-v1",
+    "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+  },
+  "sampling": {
+    "attempted_draws": 64,
+    "batch": 32,
+    "dataset_seed": 17475652460524710769,
+    "elapsed_seconds": 12.629193246,
+    "exploration_seed": 10566105612122705247,
+    "fallback_attempts": 2,
+    "fallback_seed": 9058431011074162627,
+    "rounds": 2,
+    "sampling_seed": 1926038635081010895,
+    "temperature": 1.0,
+    "unique_neural_programs": 62,
+    "valid_neural_draws": 64
+  },
+  "schema": "jope.pipeline-seeds-provenance/v1",
+  "seed_count": 11,
+  "seeds_file": "f285fd52a7c14111.seeds.json",
+  "seeds_sha256": "dbb1213b04a0acc46e20ebbccbb83a0766d9b2a4b2d2d251b233dcd26dcea75d",
+  "status": "ok"
+}

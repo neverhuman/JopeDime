@@ -1,0 +1,50 @@
+{
+  "dataset_hash": "bbc0bb2e8fcf2ba6",
+  "genomes": [
+    {
+      "genome": "(pipe X (robust_scale) (sigmoid) (robust_scale) (pair_prod append=true topk=4) (sigmoid) (standardize append=true) (gpr m=400 steps=40))",
+      "program_sha256": "cb977645d1db3770616203c23c96bc5130a624780fe0fa39a6e9b8681ac0f88b"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (pair_prod append=true topk=4) (blom append=true) (pair_prod append=true topk=4) (quantile_bins append=true bins=8) (histgbm2 bags=5 leaves=63 lr=0.08 rounds=500))",
+      "program_sha256": "2cc46657c2ba74f4d5fed1cf55eed7852629bb7c633674d3c44a7e8056010813"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (robust_scale) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "c4b9ce1a6592868a8c03939850bb8a79d5ae6a5e2308b59f2ebaee9cc219c8f0"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (sigmoid append=true) (cheb degree=2) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "program_sha256": "f16026de3b9c5f10b3dd34beaf599d029cf0cca0c7d351dae5c0df81753749f8"
+    },
+    {
+      "genome": "(pipe X (robust_scale append=true) (pair_prod append=true topk=4) (sigmoid append=true) (blom append=true) (histgbm2 bags=3 leaves=15 lr=0.08 rounds=500))",
+      "program_sha256": "87e9f2aad266b086f708a51d63237a65dbff240361e1b386b5f80cffb8115953"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (pair_prod append=true topk=4) (winsor_clip append=true q=0.1) (pair_prod append=true topk=4) (quantile_bins append=true bins=8) (winsor_clip append=true q=0.1) (gpr kernel=rbf m=400 steps=40))",
+      "program_sha256": "c0b3f37b786202ca3443507ff95da8afbae1b503c4cd28663c65ae0477cd3206"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (robust_scale) (oblique_hinge append=true n=32 seed=19) (rand_proj append=true k=32 seed=31) (rand_proj append=true k=32 seed=31) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "program_sha256": "581d4f1be488e67c916313ff0c5a5c823ad4ffb8409ff4b6edd22387ba2acc6a"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (robust_scale) (quantile_bins append=true bins=16) (sigmoid append=true) (standardize append=false) (gpr kernel=rq m=400 steps=30))",
+      "program_sha256": "a7c9ab3d71e3977d8dd793116f1866b8ebd87dac7eabe46ea74163300fa6ce3f"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=false) (blom) (elasticnet alpha=0.01 l1_ratio=0.2))",
+      "program_sha256": "e5e28e8e70896b603340325dddf4f3f6a671de5a0dde01110d20bb0cc3f9f9bb"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (rank append=true) (row_stats append=true) (row_stats) (sigmoid append=true) (robust_scale) (ksmooth gamma=2.0 k=32))",
+      "program_sha256": "4ee6ab37203b1390c128a2132eba666e610dc7977461829e1f7bb6efd94e59dc"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (robust_scale append=false) (pair_prod append=true topk=4) (target_bin_encode append=true bins=8) (ksmooth gamma=2.0 k=64))",
+      "program_sha256": "01dee01d1fac31d71830d2257e45cb7ad9824942d6b252c8f6f04fc7323db577"
+    }
+  ],
+  "schema": "jope.pipeline-seeds/v1"
+}
