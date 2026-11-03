@@ -11,69 +11,37 @@ fn publish_worker(pool: &std::path::Path, worker: &WorkerIdentity) {
     .unwrap();
 }
 
-/// Counts completed readiness polls. Every `connect_rank` attempt reads
-/// `rank-<n>.json` and closes it without writing (inotify `IN_CLOSE_NOWRITE`),
-/// so a test can act after a known number of client attempts instead of after
-/// a guessed delay.
+/// Counts completed readiness polls through the readiness file's access time.
+/// A future modification time makes relatime update access time on every client
+/// read, without allocating a process-wide inotify instance.
 struct ReadinessPolls {
-    inotify: std::os::fd::OwnedFd,
-    name: std::ffi::OsString,
+    path: std::path::PathBuf,
+    last_access: std::time::SystemTime,
 }
 impl ReadinessPolls {
     fn watch(pool: &std::path::Path, rank: usize) -> Self {
-        use std::os::{fd::FromRawFd, unix::ffi::OsStrExt};
-        let fd = unsafe { libc::inotify_init1(libc::IN_CLOEXEC | libc::IN_NONBLOCK) };
-        assert!(fd >= 0, "inotify: {}", std::io::Error::last_os_error());
-        let inotify = unsafe { std::os::fd::OwnedFd::from_raw_fd(fd) };
-        let directory = std::ffi::CString::new(pool.as_os_str().as_bytes()).unwrap();
-        let watch =
-            unsafe { libc::inotify_add_watch(fd, directory.as_ptr(), libc::IN_CLOSE_NOWRITE) };
-        assert!(
-            watch >= 0,
-            "inotify watch: {}",
-            std::io::Error::last_os_error()
-        );
-        Self {
-            inotify,
-            name: format!("rank-{rank}.json").into(),
-        }
+        let path = pool.join(format!("rank-{rank}.json"));
+        Self::advance_modified_time(&path);
+        let last_access = fs::metadata(&path).unwrap().accessed().unwrap();
+        Self { path, last_access }
     }
-    /// Read-only closes of the readiness file among the pending events.
-    fn pending(&self) -> usize {
-        use std::os::{fd::AsRawFd, unix::ffi::OsStrExt};
-        let header = std::mem::size_of::<libc::inotify_event>();
-        let mut buffer = [0u8; 4096];
-        let mut polls = 0;
-        loop {
-            let read = unsafe {
-                libc::read(
-                    self.inotify.as_raw_fd(),
-                    buffer.as_mut_ptr().cast(),
-                    buffer.len(),
-                )
-            };
-            if read < 0 {
-                let error = std::io::Error::last_os_error();
-                assert_eq!(error.kind(), std::io::ErrorKind::WouldBlock, "{error}");
-                return polls;
-            }
-            let mut offset = 0;
-            while offset + header <= read as usize {
-                let event: libc::inotify_event =
-                    unsafe { std::ptr::read_unaligned(buffer.as_ptr().add(offset).cast()) };
-                let name = &buffer[offset + header..offset + header + event.len as usize];
-                let name = &name[..name.iter().position(|b| *b == 0).unwrap_or(name.len())];
-                if event.mask & libc::IN_CLOSE_NOWRITE != 0 && name == self.name.as_bytes() {
-                    polls += 1;
-                }
-                offset += header + event.len as usize;
-            }
-        }
+
+    fn advance_modified_time(path: &std::path::Path) {
+        let file = fs::OpenOptions::new().write(true).open(path).unwrap();
+        let future = std::time::SystemTime::now() + Duration::from_secs(60 * 60);
+        file.set_times(std::fs::FileTimes::new().set_modified(future))
+            .unwrap();
     }
+
+    /// Reset after publishing readiness, discarding any reads before publication settles.
+    fn pending(&mut self) {
+        Self::advance_modified_time(&self.path);
+        self.last_access = fs::metadata(&self.path).unwrap().accessed().unwrap();
+    }
+
     /// Blocks until `count` further polls complete; a client that stops polling
     /// within `bound` fails the test instead of hanging it.
-    fn await_polls(&self, count: usize, bound: Duration) {
-        use std::os::fd::AsRawFd;
+    fn await_polls(&mut self, count: usize, bound: Duration) {
         let deadline = Instant::now() + bound;
         let mut seen = 0;
         while seen < count {
@@ -82,17 +50,13 @@ impl ReadinessPolls {
                 !remaining.is_zero(),
                 "readiness client completed {seen} of {count} polls within {bound:?}"
             );
-            let mut ready = libc::pollfd {
-                fd: self.inotify.as_raw_fd(),
-                events: libc::POLLIN,
-                revents: 0,
-            };
-            let timeout = remaining.as_millis().clamp(1, i32::MAX as u128) as i32;
-            if unsafe { libc::poll(&mut ready, 1, timeout) } < 0 {
-                let error = std::io::Error::last_os_error();
-                assert_eq!(error.kind(), std::io::ErrorKind::Interrupted, "{error}");
+            let accessed = fs::metadata(&self.path).unwrap().accessed().unwrap();
+            if accessed > self.last_access {
+                self.last_access = accessed;
+                seen += 1;
+            } else {
+                std::thread::sleep(Duration::from_millis(2).min(remaining));
             }
-            seen += self.pending();
         }
     }
 }
@@ -116,7 +80,7 @@ fn pretransfer_socket_readiness_race_is_retryable_within_one_deadline() {
     publish_worker(&pool, &original);
     drop(listener);
     fs::remove_file(&socket).unwrap();
-    let polls = ReadinessPolls::watch(&pool, 0);
+    let mut polls = ReadinessPolls::watch(&pool, 0);
     let bound = Duration::from_secs(30);
     let client_pool = pool.clone();
     let client_executable = executable.clone();
