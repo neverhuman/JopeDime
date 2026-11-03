@@ -48,7 +48,10 @@ pub(super) fn render(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u
     }
     match ui.tab {
         Tab::Overview => render_overview(frame, dashboard, refresh_ms, area),
+        #[cfg(test)]
         Tab::GpuDl => render_gpu_tab(frame, dashboard, refresh_ms, area),
+        #[cfg(not(test))]
+        Tab::GpuDl => render_compact_gpu_dl(frame, dashboard, refresh_ms, area),
         Tab::Gameplay => render_gameplay_tab(frame, dashboard, refresh_ms, area),
         Tab::Dl => render_dl_tab(frame, dashboard, refresh_ms, area, ui.arm),
     }
