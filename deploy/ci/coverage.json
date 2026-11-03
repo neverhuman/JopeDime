@@ -160,16 +160,6 @@
     }
   },
   "items": {
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
-    },
     "benchmark:crates/feat-math/examples/expression_benchmark.rs": {
       "discovery": {
         "kind": "benchmark-source"
@@ -179,6 +169,16 @@
       ],
       "lanes": [],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
+    },
+    "benchmark:crates/feat-math/src/kernel/ridge_fast/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Ignored benchmark measurements; not a collected test or performance proof."
     },
     "benchmark:crates/feat-math/tests/bench.rs": {
       "discovery": {
@@ -2404,6 +2404,46 @@
       ],
       "scope": "Descriptor-anchored exact reviewed vendor inventory/hash/size checks and 28 fail-closed tamper controls; no substitute for Git review of provenance or numerical qualification."
     },
+    "python:deploy/ci/test_provenance_binding.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
+    },
+    "python:deploy/ci/test_provenance_manual.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
+    },
+    "python:deploy/ci/test_provenance_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
+    },
+    "python:deploy/ci/test_runner_cases.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
+    },
     "python:deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py": {
       "discovery": {
         "kind": "python-family"
@@ -2863,6 +2903,26 @@
         "python"
       ],
       "scope": "Fixture-only Lane B seal and judge-evaluator tests via run_rlfw_offline.py. Temporary seals only; no real seal is released, and no Kumo weights, corpus, or live evaluator are loaded."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane_curve.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture-only Lane B judge tests via run_rlfw_offline.py. Temporary fixtures only; no real seal, Kumo weights, corpus, or live evaluator."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane_quarantine.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture-only Lane B judge tests via run_rlfw_offline.py. Temporary fixtures only; no real seal, Kumo weights, corpus, or live evaluator."
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_kumo_canaries.py": {
       "discovery": {
@@ -4258,6 +4318,26 @@
       ],
       "scope": "Direct stdlib unittest execution of GPU budget reservations and train-only output manifest custody; synthetic CPU controls, no compute or S3 qualification."
     },
+    "python:deploy/dl-trainonly/test_contracts_budget.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of GPU budget reservation and train-only output custody controls; synthetic CPU fixtures, no compute or S3 qualification."
+    },
+    "python:deploy/dl-trainonly/test_contracts_output.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of GPU budget reservation and train-only output custody controls; synthetic CPU fixtures, no compute or S3 qualification."
+    },
     "python:deploy/dl-trainonly/test_feature_reduction.py": {
       "discovery": {
         "kind": "python-family"
@@ -4368,6 +4448,16 @@
       "lanes": [],
       "scope": "REL-07 synthetic capture-client process-group, timeout, interrupt, and recorder drain controls."
     },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
     "python:deploy/qualification/agents/transcripts/run-prep/test_codex_capture_drain.py": {
       "discovery": {
         "kind": "python-family"
@@ -4377,24 +4467,6 @@
       ],
       "lanes": [],
       "scope": "REL-07 Codex normal-exit recorder drain regression. Synthetic same-process-group recorder fixture only; no named client or candidate execution."
-    },
-    "python:deploy/qualification/q1/harness/fifo_launch_admission.py": {
-      "discovery": {"kind": "python-family"},
-      "dispositions": ["research"],
-      "lanes": [],
-      "scope": "QLT-04 FIFO launcher admission and signed-input test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
-    },
-    "python:deploy/qualification/q1/harness/fifo_launch_process.py": {
-      "discovery": {"kind": "python-family"},
-      "dispositions": ["research"],
-      "lanes": [],
-      "scope": "QLT-04 FIFO launcher process cleanup test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
-    },
-    "python:deploy/qualification/q1/harness/fifo_launch_queue.py": {
-      "discovery": {"kind": "python-family"},
-      "dispositions": ["research"],
-      "lanes": [],
-      "scope": "QLT-04 FIFO launcher queue/lease test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
     },
     "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
       "discovery": {
@@ -4436,6 +4508,16 @@
       "lanes": [],
       "scope": "Standalone pytest protocol/statistical fixtures for the Q1 qualification harness (QLT-01, #497): owner-signature refusal, sealed-holdout and smoke-scope guards, backend-failure accounting; no learned model or sealed payload executes. Not collected by a CI lane; owner-signed qualification runs are separate."
     },
+    "python:deploy/qualification/q1/harness/test_q1_cut.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes."
+    },
     "python:deploy/qualification/q1/harness/test_q1_dispatch.py": {
       "discovery": {
         "kind": "python-family"
@@ -4446,15 +4528,35 @@
       "lanes": [],
       "scope": "QLT-04 synthetic infrastructure retry controls: redacted structured/legacy stderr, actual return codes, fatal-first dispatch stop, timeout handling and strict response-schema refusal. No model, evaluator or dataset inputs; source controls only until explicitly executed, not live Q1 qualification."
     },
-    "python:deploy/qualification/q1/harness/test_q1_cut.py": {
+    "python:deploy/qualification/q1/harness/test_q1_metadata_source.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "cpu-qualification"
       ],
       "lanes": [],
-      "scope": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes."
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_owner_selection.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_statistics.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
     },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "discovery": {
@@ -4475,6 +4577,26 @@
       ],
       "lanes": [],
       "scope": "REL-07 signer-compatible gate-receipt adapter controls; exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, artifact SHA256 binding, and missing/duplicate/malformed gate refusals."
+    },
+    "python:deploy/qualification/v1.0/test_gates_receipt_scaffold.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/v1.0/test_gates_receipt_variants.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
     },
     "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
       "discovery": {
@@ -4666,7 +4788,39 @@
       "lanes": [],
       "scope": "Operational S3 shard-cache unit test against an in-memory fake client; statically inventoried, not collected by any CI lane (the python lane collects python/tests), pending operational qualification."
     },
+    "python:python/src/jope/north_star/dope_freeze_guard_self_test.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
+    },
     "python:python/test-support/jope/research/test_exact_accept.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_accept_gate.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_accept_promotion.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4697,6 +4851,66 @@
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
     "python:python/test-support/jope/research/test_exact_campaign.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_binary_repair.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_build.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_config.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_extension.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_freeze.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_population.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4776,6 +4990,36 @@
       "lanes": [],
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
+    "python:python/test-support/jope/research/test_exact_dl_generate_args.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_dl_generate_main.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_dl_generate_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
     "python:python/test-support/jope/research/test_exact_evaluator.py": {
       "discovery": {
         "kind": "python-family"
@@ -4806,7 +5050,57 @@
       "lanes": [],
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
+    "python:python/test-support/jope/research/test_exact_ingest_constants.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_ingest_receipts.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_ingest_reconcile.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
     "python:python/test-support/jope/research/test_exact_monitor.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_monitor_bootstrap.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_monitor_config.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4827,6 +5121,36 @@
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
     "python:python/test-support/jope/research/test_exact_packed_corpus.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_materialize.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_reader.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_storage.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4866,6 +5190,26 @@
       "lanes": [],
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
+    "python:python/test-support/jope/research/test_exact_service_cycles.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_service_runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
     "python:python/test-support/jope/research/test_exact_status.py": {
       "discovery": {
         "kind": "python-family"
@@ -4877,6 +5221,86 @@
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
     "python:python/test-support/jope/research/test_exact_train.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_batching.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_catalog.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_config.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_corpus.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_corpus_setup.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_policy.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_sampling.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_training.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -5071,6 +5495,30 @@
         "full-python"
       ],
       "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
+    },
+    "python:python/tests/test_north_star_flywheel_history.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained CPU synthetic North Star history and metric controls; does not qualify live training or overhead."
+    },
+    "python:python/tests/test_north_star_flywheel_metrics.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained CPU synthetic North Star history and metric controls; does not qualify live training or overhead."
     },
     "python:python/tests/test_optional_task_readiness.py": {
       "discovery": {
@@ -6334,6 +6782,16 @@
       "lanes": [],
       "scope": "H230 data-free frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
     },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
+    },
     "python:research/flywheel_selfplay/h232_lion/test_h232.py": {
       "discovery": {
         "kind": "python-family"
@@ -6344,6 +6802,16 @@
       "lanes": [],
       "scope": "H232 data-free controls: hw_t2120 arm settings (CONTROL = H170 CTRL AdamW lr 1e-4 wd 1e-4; LION lr 1e-5, LION_LR3 lr 3.33e-5, betas 0.9/0.99, decoupled wd 3e-4) constant over 40 updates and equal to schedules.json, Lion step equal to the Chen et al. 2023 reference update with None-gradient skipping, every arm moves parameters, None-safe gradient norm and full-coordinate drift, family folds and fit-only batch plan, strict inner selector reachability, median family bootstrap with Holm m=2 and the +0.002 advance margin (ties fail), canonical Elo, duplicate/pseudoreplication disclosure, xbabe1 monitor hard limits (RSS 4 GiB, MemAvailable 20 GiB, free 150 GB, 4 threads, 04:00Z compute stop) with load5 60/55 pause hysteresis, launch binding"
     },
+    "python:research/flywheel_selfplay/h233_stable_g025/test_h233.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only); preregistered unit tests, family folds and bootstrap verification with strict advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
+    },
     "python:research/flywheel_selfplay/h234_lambdaloss/test_h234.py": {
       "discovery": {
         "kind": "python-family"
@@ -6353,6 +6821,36 @@
       ],
       "lanes": [],
       "scope": "H234 data-free controls: identical H170 CTRL AdamW recipe for every arm (schedules.json), LambdaLoss NDCG-weighted pairwise loss equal to an explicit pairwise reference (1e-9), ordering/ties/gate and gradient direction, arm loss composition (CONTROL, LAMBDAMIX = CTRL + 0.5 Lambda, LAMBDA), pinned reading that the inherited CTRL loss already contains a ListNet KL term, fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe1 monitor hard limits with load5 60/55 pause hysteresis and 04:30Z compute stop, launch binding"
+    },
+    "python:research/flywheel_selfplay/h235_betanll/test_h235.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H235 data-free controls: identical H170 CTRL AdamW recipe for every arm (schedules.json), CTRL loss split exactly into its smooth-L1 regression and listwise KL terms, beta-NLL (beta 0.5) equal to Seitzer et al. 2022 with stop-gradient weights (value, log-variance gradient, sigma^2=1 limit), zero-initialised and clamped log-variance head, arm loss composition (CONTROL, BNLL_MIX = beta-NLL + CTRL KL, BNLL_ADD = CTRL + 0.5 beta-NLL), pinned reading of the inherited CTRL loss (smooth-L1 regression term), fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe2 monitor hard limits (RSS 4 GiB, MemAvailable 20 GiB, free 300 GB, 4 threads, 05:00Z) with load5 60/55 pause hysteresis, launch binding"
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/test_h236.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/test_h237.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H237 data-free controls: identical lr/betas/decoupled wd for every arm (schedules.json), optimizer classes (AdamW CONTROL, inline AdaBelief ABEL with eps 1e-16, torch RAdam with decoupled wd), AdaBelief equal to the Zhuang et al. 2020 reference update over 30 steps with None-gradient skipping, larger-than-Adam steps on consistent gradients, every arm moves parameters with the inherited CTRL loss, fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe2 monitor per amendment A1 (hard: MemAvailable 12 GiB, RSS 4 GiB, free 300 GB, 4 threads, 06:30Z; pause: load5 108/100 and MemAvailable 20/22 GiB hysteresis), launch binding, research-namespace release"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -8321,7 +8819,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14789,6 +15287,22 @@
       ],
       "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
     },
+    "target:jope-service/example/q1_infra_retry": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "research"
+        ],
+        "source": "crates/jope-service/examples/q1_infra_retry.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "Research-feature-gated Q1 infrastructure retry example; not default execution or live qualification."
+    },
     "target:jope-service/lib/jope_service": {
       "discovery": {
         "doctest": true,
@@ -15291,358 +15805,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "python:deploy/ci/test_runner_cases.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "hygiene"
-      ],
-      "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
-    },
-    "python:deploy/ci/_runner_case_support.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "hygiene"
-      ],
-      "scope": "Shared imports and repository helpers for runner case modules; not a directly discovered test file."
-    },
-    "python:deploy/ci/_runner_case_mac.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "hygiene"
-      ],
-      "scope": "Mac runner admission, registration, transport, and repository custody contract cases."
-    },
-    "python:deploy/ci/_runner_case_trim.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "hygiene"
-      ],
-      "scope": "Runner target trimming and idle-lane launcher contract cases."
-    },
-    "python:python/src/jope/north_star/dope_freeze_guard_self_test.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-default",
-        "full-python"
-      ],
-      "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
-    },
-    "python:research/flywheel_selfplay/h233_stable_g025/test_h233.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate preregistered unit tests and family bootstrap verification."
-    },
-    "python:python/test-support/jope/research/test_exact_accept_gate.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_accept_promotion.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_campaign_binary_repair.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_campaign_build.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_campaign_config.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_campaign_extension.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_campaign_freeze.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_campaign_population.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_dl_generate_args.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_dl_generate_main.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_dl_generate_support.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_ingest_constants.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_ingest_receipts.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_ingest_reconcile.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_monitor_bootstrap.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_monitor_config.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_packed_corpus_materialize.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_packed_corpus_reader.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_packed_corpus_storage.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_service_cycles.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_service_runtime.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_train_batching.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_train_catalog.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_train_config.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_train_corpus.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_train_corpus_setup.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_train_policy.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_train_sampling.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
-    },
-    "python:python/test-support/jope/research/test_exact_train_training.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     }
   },
   "lanes": {

@@ -386,19 +386,19 @@ limits and client examples](docs/program-source-stream.md).
 
 ## At a glance
 
-| What | 0.4.1 |
+| What | 1.0.0 |
 | --- | --- |
-| `jope` with no arguments | prints `jope 0.4.1` <sup>1</sup> |
-| Workspace | 37 members: 30 crates at 0.4.1 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
+| `jope` with no arguments | prints `jope 1.0.0` <sup>1</sup> |
+| Workspace | 37 members: 30 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
+| Coverage map | 1,199 items over 35 lanes |
+| Python still tracked | 3,325 `.py` files, 305 of them under `python/` |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | 6,135 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 209, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 17 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (automatic triggering paused; dispatch manually) (top-level declarations; 20 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 1,136 items over 35 lanes |
 | Capability matrix | 840 rows: 353 moved, 77 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 3,063 `.py` files, 177 of them under `python/` |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -435,7 +435,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 0.4.1
+# jope 1.0.0
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
@@ -502,7 +502,7 @@ annotated tag `vX.Y.Z` and the GitHub release and reads both back. A release hol
 SPDX and CycloneDX SBOMs, the release notes, a release manifest and `SHA256SUMS`, signed with cosign
 by a release key held on xbabe2. There is no Python wheel and no provenance attestation.
 [`release.yml`](.github/workflows/release.yml) is dispatch-only and fails closed. This tree is the
-source of v0.4.1; the release exists only once `release.sh --publish` has run.
+source of v1.0.0; the release exists only once `release.sh --publish` has run.
 
 To verify one, take `signing.pub` from the tag and check its fingerprint as
 [docs/release/README.md](docs/release/README.md) describes, then check the signature and the sums:
