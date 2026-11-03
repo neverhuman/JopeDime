@@ -151,5 +151,10 @@
     "Elo": null,
     "final_DOPE_observation": null,
     "scientific_retry": false
-  }
+  },
+  "elo_lifts": null,
+  "harm_families": null,
+  "selection_summary": null,
+  "descriptive_unconstrained_val": null,
+  "descriptive_unconstrained_oof": null
 }

@@ -1,4 +1,4 @@
-# H238: lower-LR / longer-horizon AdamW — CLOSED_INCOMPLETE / CLOSED_INCOMPLETE
+# H238: lower-LR / longer-horizon AdamW — CLOSED_INCOMPLETE
 
 Hypothesis: smaller AdamW steps over the same or longer horizon yield adapters that the strict selector admits, improving DL-Val91 utility over r882.
 
@@ -12,9 +12,9 @@ Execution source `8c75d0d0dc54d4d89cf4b3f8153f7b74366da252`, prereg PR #2079. Of
 
 All arms retain exact H170 CTRL AdamW betas, weight decay, loss, sampler and clip 1.0; the long arm shares the exact first 40 minibatches.
 
-Native91 PASS: all91 values exact, mean **1.1377941898164525**, cached/native forward bit-identical; TRAIN smoke PASS with3 disposable updates and exact r882 restoration. The single primary was paused below20GiB MemAvailable, then the assigned <12GiB hard guard ended it (exit-15). Final observed available RAM12778967040bytes; peak own RSS3392147456bytes/3threads, disk789492039680bytes. This was an assigned memory-guard termination. No scientific retry.
+Native91 PASS: all 91 values exact, mean **1.1377941898164525**, cached/native forward bit-identical; TRAIN smoke PASS with 3 disposable updates and exact r882 restoration. The single primary was paused below 20 GiB MemAvailable, then the assigned <12 GiB hard guard ended it (exit -15). Final observed available RAM 12,778,967,040 bytes; peak own RSS 3,392,147,456 bytes / 3 threads, disk 789,492,039,680 bytes. This was an assigned memory-guard termination. No scientific retry.
 
-Completed **3/15 cells**, with **600 updates in durable complete-cell traces**. Valid saved snapshots establish a lower bound of **640 primary updates**; the exact interrupted total remains **null**. All40 saved snapshots were readable/finite, with47 tensors/29211coordinates each. The final fourth-cell trajectory had no complete cell receipt.
+Completed **3/15 cells**, with **600 updates in durable complete-cell traces**. Valid saved snapshots establish a lower bound of **640 primary updates**; the exact interrupted total remains **null**. All 40 saved snapshots were readable/finite, with 47 tensors/29,211 coordinates each. The final fourth-cell trajectory had no complete cell receipt.
 
 Primary and secondary final utility effects, CI95, Holm verdict and Elo remain **null** because the wave is incomplete. No NO_ADVANCE/ADVANCE conclusion is drawn from the partial cells. The final in-memory DOPE observation is also null; the earlier Native91/TRAIN-smoke frozen-DOPE observation and raw source/audits are preserved.
 
