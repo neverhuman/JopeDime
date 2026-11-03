@@ -3715,7 +3715,7 @@ impl Authority {
 
     /// The access capability binds this exact descriptor independently of fit
     /// eligibility. Acceptance is durable before prediction and can occur once.
-    pub(crate) fn prepare_query(
+    pub(super) fn prepare_query(
         &mut self,
         inputs: &super::query::QueryInputs,
         access: &super::query::VerifiedQueryAccess,
@@ -3787,7 +3787,7 @@ impl Authority {
 
     /// Original-result retrieval has no accept, predict, completion or mutation
     /// path. An expired execution deadline cannot prevent reading its evidence.
-    pub(crate) fn retrieve_query(
+    pub(super) fn retrieve_query(
         &mut self,
         inputs: &super::query::QueryInputs,
         access: &super::query::VerifiedQueryAccess,
@@ -3822,7 +3822,7 @@ impl Authority {
 
     /// Only opaque scorer output can be published. A lost accepted response or
     /// failed score cannot be converted into a new evaluation by this API.
-    pub(crate) fn commit_query(
+    pub(super) fn commit_query(
         &mut self,
         inputs: &super::query::QueryInputs,
         artifacts: &super::query::QueryArtifacts,
