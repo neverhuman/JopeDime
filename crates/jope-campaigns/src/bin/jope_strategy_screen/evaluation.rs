@@ -8,8 +8,8 @@ mod folds;
 mod metrics;
 
 pub(crate) use execution::{
-    eval_checked, eval_on, eval_one, eval_predictions, eval_timeout_seconds, eval_with_timeout,
-    perturbed_generation_csv, predict_on, run_eval_child, strict_generation_completion, subset,
+    eval_checked, eval_one, eval_predictions, eval_timeout_seconds, eval_with_timeout,
+    perturbed_generation_csv, strict_generation_completion, subset,
 };
 pub(crate) use folds::{
     complete_pooled_oof_r2, expected_search_evaluations, kfold, replace_generation_outcomes,
