@@ -78,6 +78,30 @@ def main() -> None:
         if int(row["partial"]):
             ax.bar(centers[j], total[j], widths[j], facecolor="none", edgecolor="black", linewidth=0.8)
             ax.annotate("partial", (centers[j], total[j]), xytext=(-6, 8), textcoords="offset points", ha="right", fontsize=8.5)
+    transition = source["cohort_transition"]
+    before = [e for e in events if int(e["round"]) < transition["round"]]
+    after = [e for e in events if int(e["round"]) >= transition["round"]]
+    left = max(before, key=lambda e: datetime.fromisoformat(e["timestamp_utc"]))
+    right = min(after, key=lambda e: datetime.fromisoformat(e["timestamp_utc"]))
+    start = datetime.fromisoformat(source["first_timestamp_utc"])
+    def offset_us(event):
+        dt = datetime.fromisoformat(event["timestamp_utc"]) - start
+        return (dt.days * 86400 + dt.seconds) * 1000000 + dt.microseconds
+    bracket = [offset_us(left), offset_us(right)]
+    assert bracket == transition["clock_bracket_offset_us"]
+    assert [int(left["source_line"]), int(right["source_line"])] == [transition["last_warmup_source_line"], transition["first_full_cohort_source_line"]]
+    assert [len(before), len(after)] == [transition["warmup_records"], transition["full_cohort_records"]]
+    assert left["source_record_sha256"] == transition["last_warmup_record_sha256"]
+    assert right["source_record_sha256"] == transition["first_full_cohort_record_sha256"]
+    assert sha(events_data) == transition["source_events_csv_sha256"]
+    bounds = [u / 3600000000 for u in bracket]
+    ax.axvspan(*bounds, color="0.92", zorder=0)
+    for bound in bounds:
+        ax.axvline(bound, color="0.45", linewidth=0.6, linestyle=":", zorder=1)
+    ax.annotate("Round 775 transition\n(warm-up / full cohort)",
+                xy=(sum(bounds) / 2, 0.56), xycoords=("data", "axes fraction"),
+                xytext=(0.22, 0.66), textcoords="axes fraction", fontsize=8.5,
+                ha="left", va="center", arrowprops={"arrowstyle":"-", "linewidth":0.6, "color":"0.35"})
     ax.set_ylim(0, max(total) * 1.24)
     ax.set_xlim(-1, int(rows[-1]["end_offset_us"]) / 3600000000 + 1)
     ax.set_xlabel("Hours since first journal timestamp")
@@ -103,6 +127,7 @@ def main() -> None:
         "matplotlib_version": matplotlib.__version__, "font_family": "Liberation Serif", "font_file_sha256": sha(font.read_bytes()),
         "figure_inches": [6.75, 1.70], "minimum_text_size_pt": 8.5, "vertical_scale": "linear",
         "bar_width_tracks_observed_exposure": True, "fixed_canvas_no_tight_crop": True,
+        "cohort_transition": transition,
         "reproduce": "python3 figures/scripts/make_program_journal_rates.py"}
     args.provenance.parent.mkdir(parents=True, exist_ok=True)
     args.provenance.write_text(json.dumps(provenance, indent=2) + "\n")

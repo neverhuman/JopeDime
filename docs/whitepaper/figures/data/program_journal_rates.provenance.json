@@ -2,9 +2,9 @@
   "schema": "whitepaper.program-journal-rates-figure/v1",
   "bins_csv_sha256": "4afeb053a2d1a348ff165974a40a78dcca6227419e022245e36e851c65098c85",
   "events_csv_sha256": "11ccd9a0c286aa0fbe97cd9a0214e08f110bdcaef1f83d604741f52f4da8df29",
-  "source_receipt_sha256": "5fca8321d69b3c15996e48754a6b06dbd411fd956e94fe88e8c9aca8644d0306",
-  "generator_sha256": "d4e323995091f5c7d2ce2026811a1262811f67f6000aa14c71089f76c8f28a09",
-  "figure_sha256": "1da7e96cfc76bc13bf0853bac1b14abb4e841e6ae779297f1d74220816521b7f",
+  "source_receipt_sha256": "807976380827edb70d12c35197e2cc1919e248cd4111c8d40ff132638c6ce7b0",
+  "generator_sha256": "db683819d844d70227318910fd8960ac323cab702c66706dcb69254832725f1f",
+  "figure_sha256": "5c951c0368cef11e670ad85c8722b7a45d864ea1d50180e559349c9f5b687cc0",
   "source_prefix_sha256": "574ee75abb612245c33f9500c84e576fdd69a9243090c58e0a7d79ede2f7ad96",
   "source_records": 3490,
   "plotted_bins": 21,
@@ -25,5 +25,22 @@
   "vertical_scale": "linear",
   "bar_width_tracks_observed_exposure": true,
   "fixed_canvas_no_tight_crop": true,
+  "cohort_transition": {
+    "round": 775,
+    "warmup_records": 182,
+    "full_cohort_records": 3308,
+    "last_warmup_source_line": 182,
+    "first_full_cohort_source_line": 183,
+    "last_warmup_record_sha256": "f72ea64f37719bef345aa7f726cee800b22ace88774a83ddbf06a8ec7c728fcc",
+    "first_full_cohort_record_sha256": "50ad7e2617af240ca01fd59edddf5cc447aff4d5e274a45041c8abab6d792b06",
+    "last_warmup_timestamp_utc": "2026-10-30T02:06:43.552278+00:00",
+    "first_full_cohort_timestamp_utc": "2026-10-30T04:49:15.453823+00:00",
+    "clock_bracket_offset_us": [
+      39584356964,
+      49336258509
+    ],
+    "marker": "Bracket between last warm-up and first full-cohort journal events; exact switch time is not inferred. Fixed count bins remain unchanged and may straddle the bracket.",
+    "source_events_csv_sha256": "11ccd9a0c286aa0fbe97cd9a0214e08f110bdcaef1f83d604741f52f4da8df29"
+  },
   "reproduce": "python3 figures/scripts/make_program_journal_rates.py"
 }

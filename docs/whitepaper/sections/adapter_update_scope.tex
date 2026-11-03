@@ -22,6 +22,12 @@ for failed gates. The full-cohort
 route disables development-anchor margin projection; smaller-cohort runs can
 enable it. These two operating routes require separate verification receipts.
 
+In the inspected full-cohort route, each round adds small Gaussian noise
+to the trainable adapter parameters and takes at most two optimizer steps.
+Rejection restores both weights and optimizer state to the retained
+incumbent, so consecutive rejected proposals restart from perturbed copies
+of that checkpoint rather than extending one training trajectory.
+
 These selection records alone establish no gain from optimizer
 updates or the separate reference map. The limits of component
 diagnostics are covered in \cref{sub:results-diagnostics}.

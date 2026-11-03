@@ -38,5 +38,22 @@
   "missing_protocol_is_a_pass": false,
   "stable_prefix_reread": true,
   "source_read_only": true,
-  "scope": "Adaptive training-side program-pool journal additions, ordinary promotions distinguished from historical admissions. Clock exposure includes work, waits and gaps; zero bins mean no journal additions. Not attempted proposals, adapter admissions, model updates, serving throughput, stable-population comparisons or learning gains. Exact loop/population/normalization qualification remains separate."
+  "scope": "Adaptive training-side program-pool journal additions, ordinary promotions distinguished from historical admissions. Clock exposure includes work, waits and gaps; zero bins mean no journal additions. Not attempted proposals, adapter admissions, model updates, serving throughput, stable-population comparisons or learning gains. Exact loop/population/normalization qualification remains separate.",
+  "cohort_transition": {
+    "round": 775,
+    "warmup_records": 182,
+    "full_cohort_records": 3308,
+    "last_warmup_source_line": 182,
+    "first_full_cohort_source_line": 183,
+    "last_warmup_record_sha256": "f72ea64f37719bef345aa7f726cee800b22ace88774a83ddbf06a8ec7c728fcc",
+    "first_full_cohort_record_sha256": "50ad7e2617af240ca01fd59edddf5cc447aff4d5e274a45041c8abab6d792b06",
+    "last_warmup_timestamp_utc": "2026-10-30T02:06:43.552278+00:00",
+    "first_full_cohort_timestamp_utc": "2026-10-30T04:49:15.453823+00:00",
+    "clock_bracket_offset_us": [
+      39584356964,
+      49336258509
+    ],
+    "marker": "Bracket between last warm-up and first full-cohort journal events; exact switch time is not inferred. Fixed count bins remain unchanged and may straddle the bracket.",
+    "source_events_csv_sha256": "11ccd9a0c286aa0fbe97cd9a0214e08f110bdcaef1f83d604741f52f4da8df29"
+  }
 }
