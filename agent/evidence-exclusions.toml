@@ -2690,13 +2690,13 @@ reason = "Frozen research study file pinned by sha256 in study manifest receipt.
 
 [[evidence_exclusion]]
 path = "research/flywheel_selfplay/h249_side_branch/runner.py"
-sha256 = "ba9d6924321f22235b34e316460f171649aff12dd4a076cc33ba8e6983d49ad6"
+sha256 = "0d7d5746c3000934bf577605ef7e16443451024d9b60459d4a174666c36ebf53"
 receipt = "research/flywheel_selfplay/h249_side_branch/manifest.json"
 reason = "Frozen research study file pinned by sha256 in study manifest receipt."
 
 [[evidence_exclusion]]
 path = "research/flywheel_selfplay/h249_side_branch/test_h249.py"
-sha256 = "bafd8e3beeed5ad7d611eb06f7c1c68df31905807aa2573bbebb36ff2f24fa95"
+sha256 = "13ffd97a6536046c5457a5ba8c98d7214b13b34a2901e2c4fba60e849b8db220"
 receipt = "research/flywheel_selfplay/h249_side_branch/manifest.json"
 reason = "Frozen research study test script pinned by sha256 in study manifest receipt."
 
