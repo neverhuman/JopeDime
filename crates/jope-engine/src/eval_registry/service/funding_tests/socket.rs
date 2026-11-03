@@ -184,24 +184,35 @@ fn funding_concurrency_is_bounded_before_descriptor_read_and_released_on_disconn
         held.push(stream);
     }
     let deadline = Instant::now() + Duration::from_secs(5);
-    while service.state.funding_active.load(Ordering::SeqCst) != fixture.config.max_workers {
+    loop {
+        let response = fixture.raw_response(&fixture.start());
+        assert_eq!(response["ok"], false);
+        let error = response["error"].as_str().unwrap();
+        if error.contains("funding admission slots exhausted") {
+            break;
+        }
+        assert!(
+            error.contains("execution custody"),
+            "unexpected funding response while filling admission slots: {error}"
+        );
         assert!(
             Instant::now() < deadline,
             "funding slot holders did not reach sealed FD read"
         );
         std::thread::sleep(Duration::from_millis(5));
     }
-    let response = fixture.raw_response(&fixture.start());
-    assert_eq!(response["ok"], false);
-    assert!(response["error"]
-        .as_str()
-        .unwrap()
-        .contains("funding admission slots exhausted"));
     assert_eq!(fixture.count("funding_authorizations"), 0);
     assert_eq!(fixture.count("funding_witness"), 0);
     drop(held);
     let deadline = Instant::now() + Duration::from_secs(5);
-    while service.state.funding_active.load(Ordering::SeqCst) != 0 {
+    loop {
+        let response = fixture.raw_response(&fixture.start());
+        let error = response["error"].as_str().unwrap_or_default();
+        if !error.contains("funding admission slots exhausted") {
+            assert_eq!(response["ok"], false);
+            assert!(error.contains("execution custody"), "{error}");
+            break;
+        }
         assert!(
             Instant::now() < deadline,
             "disconnected funding holder retained its slot"
