@@ -182,8 +182,13 @@ fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior() {
     flywheel::flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior_body();
 }
 
+#[path = "pools/flywheel.rs"]
 mod flywheel;
+#[path = "pools/lift.rs"]
 mod lift;
+#[path = "pools/selection.rs"]
 mod selection;
+#[path = "pools/surrogate.rs"]
 mod surrogate;
+#[path = "pools/validation.rs"]
 mod validation;
