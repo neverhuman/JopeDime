@@ -17,6 +17,25 @@ use crate::{require, Error, Result};
 
 pub const RECORD: &str = "docs/internal/core-ip/data/tensors.json";
 pub const MODEL_SOURCE: &str = "crates/jope-policy/src/model.rs";
+pub const MODEL_INFERENCE_SOURCE: &str = "crates/jope-policy/src/model/inference.rs";
+
+/// Compose the model declaration, inference module, and deployed reward head for geometry and
+/// forward-role checks after the policy implementation was split across source files.
+pub fn model_source(repo: &Path) -> Result<String> {
+    let model = py::read_text(&repo.join(MODEL_SOURCE))?;
+    let inference = py::read_text(&repo.join(MODEL_INFERENCE_SOURCE))?;
+    let reward_start = model
+        .find("pub fn reward_runtime(")
+        .ok_or_else(|| Error::Shape("model source has no `reward_runtime`".into()))?;
+    let reward_tail = &model[reward_start..];
+    let reward_end = reward_tail.find("pub fn cache_max_error(").ok_or_else(|| {
+        Error::Shape("model source has no `cache_max_error` after reward_runtime".into())
+    })?;
+    Ok(format!(
+        "{model}\n{inference}\n{}\n#[cfg(feature = \"inference-cuda\")]\n",
+        &reward_tail[..reward_end]
+    ))
+}
 pub const EXPECTED_PARAMETERS: i64 = 27_796_494;
 pub const EXPECTED_TENSORS: usize = 136;
 pub const SCOPE: &str =

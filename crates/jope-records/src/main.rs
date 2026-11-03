@@ -321,7 +321,7 @@ fn run(cli: Cli) -> jope_records::Result<Output> {
                 .and_then(Value::as_str)
                 .ok_or_else(|| jope_records::Error::Shape("record: path is not a string".into()))?;
             let raw = py::read_bytes(Path::new(asset))?;
-            let source = py::read_text(&repo.join(inventory::MODEL_SOURCE))?;
+            let source = inventory::model_source(&repo)?;
             inventory::verify(
                 &record,
                 &raw,
