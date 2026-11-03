@@ -314,7 +314,7 @@ pub(super) struct ObservationLink {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ScoredMember {
+pub(crate) struct ScoredMember {
     pub(super) member: GenomeMember,
     pub(super) observations: Vec<ObservationLink>,
     pub(super) split_r2: Vec<f64>,
