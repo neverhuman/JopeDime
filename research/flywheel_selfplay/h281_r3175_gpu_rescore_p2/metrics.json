@@ -1,13 +1,207 @@
 {
   "wave": "H281",
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "COMPLETE",
+  "verdict": "ADOPT_SHADOW_PASS",
   "optimizer_updates": 0,
-  "verdict": null,
-  "schema_on_completion": {
-    "verdict": "ADOPT_SHADOW_PASS / NOT_TRANSFERRED / P2_UNRESOLVABLE / BLOCKED_GPU_LOCK",
-    "gpu_rescore": "outcome A_EXACT/B_NOT_EXACT, gpu mean, stored mean, abs residual, per-context and pick equality, differing contexts, DOPE before/after, peak VRAM, writer state before/after",
-    "p2": "per-seed family mean/median gain, pooled CI95, W/T/L (ties not wins), Elo (r3175 = 1500), invalid picks, harmed families, fam-769243ee; top-8 pool diff vs CPU",
-    "dope_before": "c51a56d0...",
-    "dope_after": "c51a56d0..."
+  "gpu_rescore": {
+    "wave": "H281",
+    "step": "gpu_rescore",
+    "started_utc": 1793743989.977298,
+    "host": "xbabe1",
+    "writer_before": {
+      "alive": true,
+      "state": "S",
+      "on_gpu": true,
+      "ok": true
+    },
+    "vram_free_before": 7127171072,
+    "vram_total": 25757220864,
+    "need_bytes": 1610612736,
+    "headroom_bytes": 3221225472,
+    "status": "COMPLETE",
+    "finished_utc": 1793743994.763578,
+    "outcome": "A_EXACT",
+    "gpu_mean": 1.1389572403748425,
+    "stored_mean": 1.1389572403748425,
+    "abs_mean_residual": 0.0,
+    "per_context_equal": 91,
+    "picks_equal": 91,
+    "differing_contexts": [],
+    "costs_sha256": "d99363f62c36463e6fe1ca825a87332198e6a817021bc208c6379b2d2c330bab",
+    "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "ckpt_sha256_after": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "peak_gpu": {
+      "allocated": 28364288,
+      "reserved": 54525952
+    },
+    "writer_after": {
+      "alive": true,
+      "state": "S",
+      "on_gpu": true,
+      "ok": true
+    },
+    "vram_free_after": 6587154432,
+    "torch": "2.6.0+cu124",
+    "cuda": "12.4",
+    "gpu_name": "NVIDIA GeForce RTX 4090",
+    "tf32_matmul": false,
+    "cudnn_tf32": true,
+    "float32_matmul_precision": "highest",
+    "optimizer_updates": 0
+  },
+  "p2": {
+    "wave": "H281",
+    "step": "p2",
+    "regression_h278_p2_panel_exact": true,
+    "slot0_equals_stored": 91,
+    "top8_pool_diff_vs_cpu": [
+      {
+        "index": 18,
+        "cid": "25aff0bcd9fb3ea4dd28c6a71463b1e02d8293401f40a2e48e56c2b5a3ab54d8",
+        "cpu_top8": [
+          68,
+          521,
+          599,
+          667,
+          850,
+          329,
+          341,
+          1009
+        ],
+        "gpu_top8": [
+          521,
+          68,
+          599,
+          667,
+          850,
+          329,
+          341,
+          1009
+        ]
+      }
+    ],
+    "max_abs_cost_diff_gpu_vs_cpu": 0.000929027795791626,
+    "picks_changed": [
+      55,
+      37,
+      56
+    ],
+    "p2": {
+      "contexts": 91,
+      "families": 19,
+      "per_seed_family_mean_gain": [
+        0.06520979965339162,
+        0.03090407419684464,
+        0.03923957378620763
+      ],
+      "per_seed_family_median_gain": [
+        0.0326203290653897,
+        0.025932988411650926,
+        0.018269891058092957
+      ],
+      "median_family_mean_gain": 0.03923957378620763,
+      "pooled_ci95": [
+        0.019976588239116567,
+        0.0695759558000724
+      ],
+      "pooled_lcb95": 0.019976588239116567,
+      "positive_seeds": 3,
+      "wtl_by_seed": [
+        [
+          16,
+          2,
+          1
+        ],
+        [
+          13,
+          4,
+          2
+        ],
+        [
+          14,
+          1,
+          4
+        ]
+      ],
+      "elo_challenger_by_seed": [
+        1980.027983250824,
+        1824.4324956564387,
+        1717.3175050662367
+      ],
+      "invalid_picks_by_seed": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "harmed_families_by_seed": [
+        [
+          "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279"
+        ],
+        [
+          "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
+          "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279"
+        ],
+        [
+          "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
+          "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+          "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+          "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345"
+        ]
+      ],
+      "context_mean_by_seed": [
+        [
+          1.1389572403748425,
+          1.2070334048481632
+        ],
+        [
+          1.1389572403748425,
+          1.171219735415504
+        ],
+        [
+          1.1389572403748425,
+          1.1799216305912128
+        ]
+      ],
+      "watch_family_harmed_by_seed": [
+        [],
+        [],
+        [
+          "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c"
+        ]
+      ]
+    },
+    "adopt_gate": true,
+    "verdict": "ADOPT_SHADOW_PASS"
+  },
+  "prereg": {
+    "publication_ref": "v1/next",
+    "commit": "6ea4bf921f1be3ccb8180df6f9f59cb303c49c33",
+    "review_receipt_sha256": "e5a58ba5df6542d70d7bee47c1c129439930b1fbd08e9b0a6db0f871f642bb48"
+  },
+  "fixed_rule": "H278 PREREG 4c2caaa0 P2: ADOPT_SHADOW_PASS iff gain > 0 on 3/3 seeds, pooled family-bootstrap (10k, seed 278150) LCB95 > 0, invalid picks not above r3175; ties not wins",
+  "frozen_models": {
+    "export_manifest": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H278/export/export_manifest.json",
+    "version_id": "S_PoMNCZ0jiAYru1vEligisesVuKDuPf",
+    "sha256": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+    "refit": false
+  },
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "r3175_sha_after": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+  "honesty": "H278 exploratory P2 readout already seen; confirmation of a fixed rule, not fresh evidence; adoption also needs >=3 consecutive positive live shadow rounds",
+  "s3_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H281/attempt-001/s3_manifest.json",
+    "sha256": "314651c953ed89f348d5c3aca49ef0305bb54580476232b1ffce159ed5efb49a",
+    "version_id": "vksGYlW0D6vuo.9.sAkVwhRX.TUfnixa"
   }
 }
