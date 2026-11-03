@@ -1,3 +1,4 @@
+use super::super::decisions::comparison_outcomes;
 use super::*;
 
 impl Loop {

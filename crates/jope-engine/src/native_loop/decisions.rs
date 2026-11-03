@@ -113,7 +113,7 @@ pub(super) fn verify_parent_decision(
     );
     Ok(())
 }
-fn comparison_outcomes(
+pub(super) fn comparison_outcomes(
     root: &Path,
     g: u64,
     targets: &[Artifact],
