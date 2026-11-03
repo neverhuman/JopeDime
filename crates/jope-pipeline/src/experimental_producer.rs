@@ -22,6 +22,7 @@ use std::{
 
 mod validation;
 pub use validation::{admit, export_metadata, verify_inputs};
+#[cfg(test)]
 pub(super) use validation::{check_candidates, validate_recipe, CanonicalResult, Canonicalization};
 
 pub const PLAN_SCHEMA: &str = "jope.experimental-proposal-plan/v1";
