@@ -305,9 +305,10 @@ def inventory(source, header_sha, ledger_pins=None):
         # re-assigned), exactly as the campaign-2 input list was built; a ROLELESS_BRIDGE is never an admitted role.
         require(header.get("schema") == C2_HEADER_SCHEMA, "G3 decisions bind only a campaign-2 header")
         require(isinstance(g3, dict) and set(g3) == {"path", "sha256"}, "invalid G3 decisions pin")
-        require(sha_field(g3["sha256"]) == G3_DECISIONS_SHA256, "not the owner-named G3 decision file")
+        g3_pin = _parent.G3_DECISIONS_SHA256
+        require(sha_field(g3["sha256"]) == g3_pin, "not the owner-named G3 decision file")
         decisions = src.doc(g3["path"], sha_field(g3["sha256"]))
-        g3_source = {"path": str(Path(g3["path"]).absolute()), "sha256": G3_DECISIONS_SHA256}
+        g3_source = {"path": str(Path(g3["path"]).absolute()), "sha256": g3_pin}
         require(decisions.get("schema") == G3_DECISIONS_SCHEMA, "unsupported G3 decisions schema")
         identities = decisions.get("per_identity")
         require(isinstance(identities, list) and identities, "G3 decisions carry no identities")
