@@ -92,10 +92,13 @@ fn independent_signature_and_full_original_event_survive_lost_ack_and_restart() 
     let store = f.store();
     assert_eq!(store.get_ack(&request).unwrap(), Some(ack.clone()));
     ack.verify(&f.policy, &request).unwrap();
-    let record: Record =
+    let record: Value =
         serde_json::from_slice(&read(&f.root.join("segments/00000000000000000001.json")).unwrap())
             .unwrap();
-    assert_eq!(record.core.request.body.event, f.event);
+    assert_eq!(
+        record["core"]["request"]["body"]["event"],
+        serde_json::to_value(&f.event).unwrap()
+    );
     assert_eq!(store.sequence, 1);
     let mut forged = ack.clone();
     forged.signature = sign(
@@ -174,10 +177,10 @@ fn missing_committed_tail_corruption_and_unresolved_partial_segments_block_open(
             .unwrap(),
             _ => fs::write(
                 f.root.join("head.json"),
-                bytes(&Head {
-                    sequence: 1,
-                    sha256: sha(b"wrong"),
-                })
+                bytes(&serde_json::json!({
+                    "sequence": 1,
+                    "sha256": sha(b"wrong"),
+                }))
                 .unwrap(),
             )
             .unwrap(),
@@ -195,10 +198,10 @@ fn stale_derived_head_adopts_original_signed_segment_without_new_event() {
     let ack = f.store().record_authorization(&request).unwrap();
     fs::write(
         f.root.join("head.json"),
-        bytes(&Head {
-            sequence: 0,
-            sha256: ZERO.into(),
-        })
+        bytes(&serde_json::json!({
+            "sequence": 0,
+            "sha256": ZERO,
+        }))
         .unwrap(),
     )
     .unwrap();

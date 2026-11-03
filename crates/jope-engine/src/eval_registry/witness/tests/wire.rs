@@ -117,7 +117,9 @@ fn bounded_frames_reject_oversized_and_truncated_payloads() {
     let sender = std::thread::spawn(move || write_frame(&mut a, &request));
     let got: SignedRequest = read_frame(&mut b).unwrap();
     sender.join().unwrap().unwrap();
-    verify_request(&f.policy, &got).unwrap();
+    let mut store = f.store();
+    let ack = store.record_authorization(&got).unwrap();
+    ack.verify(&f.policy, &got).unwrap();
 }
 
 #[test]
