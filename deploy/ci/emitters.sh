@@ -58,7 +58,7 @@ source_contract() { # <label> <expected-passes> <filtered-count-pattern> <cargo 
 }
 source_contract c17-native-contracts 6 83 -p feat-math --test golden c17_export::
 source_contract legacy-wrapper-pins 1 '[0-9]+' -p feat-math --test capability_manifest \
-  legacy_wrapper_body_hashes_are_pinned -- --exact
+  legacy::legacy_wrapper_body_hashes_are_pinned -- --exact
 # Restart assertions share this harness process with subprocess-spawning tests. A forked
 # child can briefly retain another test's flock descriptor after its parent drops the store.
 # Serialize this target while retaining all 14 cases and the exclusive-owner assertions.
@@ -73,7 +73,7 @@ source_contract gp-source-engine-grammar 1 '[0-9]+' -p jope-parallel --test gram
 source_contract gp-source-policy-grammar 1 '[0-9]+' -p jope-policy --test grammar_differential \
   grammar_source_capture_retains_decoded_and_projected_programs -- --exact
 source_contract gp-source-generalized 1 '[0-9]+' -p jope-dime-regressor --test generalized_gp \
-  generalized_source_capture_retains_parseable_generation_zero_and_successors -- --exact
+  admission::generalized_source_capture_retains_parseable_generation_zero_and_successors -- --exact
 
 EMIT=$(cargo run -q --locked -p jope-ci -- cargo-artifact build --package feat-math --example emit)
 

@@ -102,6 +102,17 @@ jobs:
           NODE_VERSION='${{ matrix.node }}' bash ops/ci/typescript.sh prepare
       - name: Formatting and complete source checks
         run: bash ops/ci/typescript.sh source-check
+      - name: Install the pinned cargo-deny for the standalone browser lock scan
+        if: matrix.node == '26.1.0'
+        run: |
+          set -euo pipefail
+          archive=cargo-deny-0.20.2-x86_64-unknown-linux-musl
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/$archive.tar.gz" "https://github.com/EmbarkStudios/cargo-deny/releases/download/0.20.2/$archive.tar.gz"
+          printf '%s  %s\n' 9f12ed4c49936e09b48bf862b595cde2fe64fcbd9d74dfacac6131ca824c8d5f "$RUNNER_TEMP/$archive.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$archive.tar.gz" -C "$RUNNER_TEMP"
+          install -D -m 0755 "$RUNNER_TEMP/$archive/cargo-deny" "$RUNNER_TEMP/cargo-deny-bin/cargo-deny"
+          printf '%s\n' "$RUNNER_TEMP/cargo-deny-bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/cargo-deny-bin/cargo-deny" --version
       - name: Native browser runtime integrity and WASM parity
         if: matrix.node == '26.1.0'
         run: |
