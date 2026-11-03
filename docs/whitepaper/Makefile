@@ -46,5 +46,6 @@ figs:
 	python3 figures/scripts/make_program_24h.py
 	python3 figures/scripts/make_adapter_admission_rates.py
 	python3 figures/scripts/make_full_cohort_program_rates.py
+	python3 figures/scripts/make_candidate_margin_window.py
 clean:
 	latexmk -C

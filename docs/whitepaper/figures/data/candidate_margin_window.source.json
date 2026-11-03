@@ -1,0 +1,32 @@
+{
+  "schema": "whitepaper.candidate-margin-window-source/v1",
+  "source_journal": "adapter_admissions.jsonl",
+  "captured_utc": "2026-11-03T23:20:01.938226+00:00",
+  "source_prefix_bytes": 2057471,
+  "source_prefix_sha256": "96b01f45c5ed3b4ef0a90bc7fbaa6f1105af2ddc73f95c191e7f7d6678a73c45",
+  "source_prefix_records": 3874,
+  "complete_prefix_reread": true,
+  "selection": "Every recorded decision in fixed rounds4351-4550, with no outcome filtering.",
+  "round_window": [
+    4351,
+    4550
+  ],
+  "rows": 200,
+  "source_line_window": [
+    3576,
+    3775
+  ],
+  "csv_sha256": "3b58237a14e2d088ba3bf1326d8d0a301324db2e67d2073b4eafd0cbe77f5b80",
+  "evaluation_identity_sha256": [
+    "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6"
+  ],
+  "accepted": 0,
+  "transformation": "Signed candidate_utility minus explicit previous_best_utility, using unrounded recorded values; empirical CDF weights each decision equally. No smoothing, imputation or cumulative minimum.",
+  "scope": "Adaptive training-side development-pool decisions; not independent evaluation units, learning evidence or deployment performance. Exact loop/adapter/pool binding remains unresolved in the common telemetry scope.",
+  "timestamp_window_utc": [
+    "2026-11-03T13:54:51.947993+00:00",
+    "2026-11-03T20:27:14.934652+00:00"
+  ],
+  "minimum_signed_margin": -0.011656492711164423,
+  "maximum_signed_margin": -0.0022743394317388255
+}

@@ -700,7 +700,7 @@ def make_fig5_network() -> None:
         rad=0.05,
     )
 
-    fig.text(0.5, 0.068, "Live: frozen proposal generator; value side: 131,841-parameter residual cost-ranking adapter.",
+    fig.text(0.5, 0.068, "Live: frozen proposal generator; value side: residual cost-ranking adapter.",
              ha="center", va="center", fontsize=8.5, color="#334155")
     fig.text(0.5, 0.024, "34.9M decoder / 13.8M value net: reference designs only; distinct from the historical checkpoint above.",
              ha="center", va="center", fontsize=8.5, color="#334155")
@@ -727,7 +727,7 @@ def write_provenance():
             "canvas_inches": {names[0]: [3.35, 2.3], names[1]: [7.0, 2.3], names[2]: [7.0, 2.9]},
             "scope": "Conceptual diagrams only; no empirical data or runtime qualification.",
             "preservation": "Original nodes, arrows, labels and conceptual point locations retained; network gains explicit reference qualifiers and a separate live-system footer.",
-            "capacity_label_source": "Supplied authoring brief; live and reference design counts are separate from the retained historical checkpoint inventory.",
+            "capacity_label_source": "Reference design counts follow the authoring brief; the live label omits an unbound capacity. Historical checkpoint inventory remains separate.",
             "reproduce": "python3 figures/scripts/make_schematics.py"}
     (OUT / "data/schematics.provenance.json").write_text(json.dumps(data, indent=2) + "\n")
 

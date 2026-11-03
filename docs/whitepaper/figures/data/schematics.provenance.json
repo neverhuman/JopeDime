@@ -1,6 +1,6 @@
 {
   "schema": "whitepaper.schematic-rendering/v1",
-  "generator_sha256": "6820cfeeeaf12dd452952689cda947099e081a4011928f9d9fcadaf9a00a328b",
+  "generator_sha256": "6498af79ab8883ce9b0b9eab2f5bc844230a7c04a0a8793b12dc0d2af9644744",
   "font_family": "Liberation Serif",
   "font_file_sha256": {
     "roman": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
@@ -12,7 +12,7 @@
   "figure_sha256": {
     "fig2_novelty_judgment.pdf": "c605cfaca1dc29afe5026112d15b4711ab550ca01aac37fc5654503da11204a5",
     "fig3_game_loop.pdf": "78309e315968c6b66e6014a477005b77cb1235a7d8c6e8d8345b9081506c196f",
-    "fig5_network.pdf": "a2ccbf608c8b3e96c44e9d08d0f392bba1ae6d6ae0823fc4e59c7b4f67c2c925"
+    "fig5_network.pdf": "b86cd02c317f62c427f315f285b1d592b358dad4b686d29ced87fb10b16f57e3"
   },
   "canvas_inches": {
     "fig2_novelty_judgment.pdf": [
@@ -30,6 +30,6 @@
   },
   "scope": "Conceptual diagrams only; no empirical data or runtime qualification.",
   "preservation": "Original nodes, arrows, labels and conceptual point locations retained; network gains explicit reference qualifiers and a separate live-system footer.",
-  "capacity_label_source": "Supplied authoring brief; live and reference design counts are separate from the retained historical checkpoint inventory.",
+  "capacity_label_source": "Reference design counts follow the authoring brief; the live label omits an unbound capacity. Historical checkpoint inventory remains separate.",
   "reproduce": "python3 figures/scripts/make_schematics.py"
 }
