@@ -10,36 +10,36 @@ use super::metrics::{rebind, stored};
 use super::provenance::{authority, rejected_decisions};
 use super::*;
 
-const ROUTES: [&str; 5] = ["qualify", "revalidate", "ingest", "freeze", "replay"];
-const TASKS: [Task; 3] = [Task::Regression, Task::Binary, Task::Multiclass];
+pub(super) const ROUTES: [&str; 5] = ["qualify", "revalidate", "ingest", "freeze", "replay"];
+pub(super) const TASKS: [Task; 3] = [Task::Regression, Task::Binary, Task::Multiclass];
 
-struct Mutation {
+pub(super) struct Mutation {
     class: &'static str,
     /// Expected substring of the live `qualify` refusal.
     expected: &'static str,
     apply: fn(&Fixture) -> (HwmRecord, OofEvidence),
 }
 
-fn context(f: &Fixture, context: ContextEvidence) -> (HwmRecord, OofEvidence) {
+pub(super) fn context(f: &Fixture, context: ContextEvidence) -> (HwmRecord, OofEvidence) {
     let mut evidence = f.evidence.clone();
     evidence.context = Some(context);
     (f.record.clone(), evidence)
 }
 
-fn folds(f: &Fixture, mutate: fn(&mut Vec<String>)) -> (HwmRecord, OofEvidence) {
+pub(super) fn folds(f: &Fixture, mutate: fn(&mut Vec<String>)) -> (HwmRecord, OofEvidence) {
     let mut evidence = f.evidence.clone();
     mutate(&mut evidence.fold_predictions_sha256);
     (f.record.clone(), evidence)
 }
 
-fn record(f: &Fixture, mutate: fn(&mut HwmRecord)) -> (HwmRecord, OofEvidence) {
+pub(super) fn record(f: &Fixture, mutate: fn(&mut HwmRecord)) -> (HwmRecord, OofEvidence) {
     let mut record = f.record.clone();
     mutate(&mut record);
     record.identity_sha256 = record.identity.sha256().unwrap();
     (record, f.evidence.clone())
 }
 
-const MUTATIONS: [Mutation; 18] = [
+pub(super) const MUTATIONS: [Mutation; 18] = [
     Mutation {
         class: "missing-context",
         expected: "MissingEncoderProvenance",
@@ -244,7 +244,7 @@ const MUTATIONS: [Mutation; 18] = [
 /// original HWM events in ledger order, ignoring every recorded outcome, transition,
 /// displaced link, improvement counter and pointer, and keeps per comparison the earliest
 /// record with the lowest mean fold loss among those whose qualification recomputes.
-fn independent_replay(state: &State) -> BTreeMap<String, String> {
+pub(super) fn independent_replay(state: &State) -> BTreeMap<String, String> {
     let mut best: BTreeMap<String, (f64, String)> = BTreeMap::new();
     for event in Ledger::open(state.root(), "hwm").events().unwrap() {
         let record: HwmRecord = serde_json::from_value(event["record"].clone()).unwrap();
@@ -264,7 +264,7 @@ fn independent_replay(state: &State) -> BTreeMap<String, String> {
         .collect()
 }
 
-fn manifest(state: &State) -> BTreeMap<String, String> {
+pub(super) fn manifest(state: &State) -> BTreeMap<String, String> {
     freeze_teaching(state)
         .unwrap()
         .entries
@@ -274,7 +274,7 @@ fn manifest(state: &State) -> BTreeMap<String, String> {
 }
 
 /// A forged, internally consistent success claim: stored evidence plus its decision event.
-fn forge_qualification(
+pub(super) fn forge_qualification(
     f: &Fixture,
     record: &HwmRecord,
     evidence: &OofEvidence,
@@ -304,7 +304,7 @@ fn forge_qualification(
 }
 
 /// A forged accepted HWM event bound to that claim, and the pointer it names.
-fn forge_acceptance(f: &Fixture, record: &HwmRecord, qualification_sha256: &str) {
+pub(super) fn forge_acceptance(f: &Fixture, record: &HwmRecord, qualification_sha256: &str) {
     let key = PointerKey::of(record);
     let event = hwm::HwmEvent {
         schema: hwm::EVENT_SCHEMA.into(),
@@ -327,7 +327,7 @@ fn forge_acceptance(f: &Fixture, record: &HwmRecord, qualification_sha256: &str)
     f.state.write_pointer(&key, record, None).unwrap();
 }
 
-fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
+pub(super) fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
     hwm::ingest(
         &f.state,
         None,
@@ -342,7 +342,7 @@ fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
 }
 
 /// One mutation class through all five routes for one task; returns each route's refusal.
-fn attack(m: &Mutation, task: Task) -> Vec<(&'static str, String)> {
+pub(super) fn attack(m: &Mutation, task: Task) -> Vec<(&'static str, String)> {
     let f = fixture(task, 5);
     let class = format!("{} ({})", m.class, task.as_str());
     // The success a forger would claim: the valid submission's measurement.
@@ -461,3 +461,5 @@ cells! {
 }
 
 mod matrix_cases;
+#[allow(unused_imports)]
+use matrix_cases::*;

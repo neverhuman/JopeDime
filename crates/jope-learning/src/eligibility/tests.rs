@@ -11,20 +11,44 @@ use serde_json::json;
 use std::path::PathBuf;
 
 mod admission;
+#[allow(unused_imports)]
+use admission::*;
 mod fitted;
+#[allow(unused_imports)]
+use fitted::*;
 mod fixture_builder;
+#[allow(unused_imports)]
+use fixture_builder::*;
 mod fixtures;
+#[allow(unused_imports)]
+use fixtures::*;
 mod handoff;
+#[allow(unused_imports)]
+use handoff::*;
 mod handoff_fixture;
+#[allow(unused_imports)]
+use handoff_fixture::*;
 mod inner_admission;
+#[allow(unused_imports)]
+use inner_admission::*;
 mod linkage;
+#[allow(unused_imports)]
+use linkage::*;
 mod matrix;
+#[allow(unused_imports)]
+use matrix::*;
 mod metrics;
+#[allow(unused_imports)]
+use metrics::*;
 mod producer;
+#[allow(unused_imports)]
+use producer::*;
 mod provenance;
+#[allow(unused_imports)]
+use provenance::*;
 mod revocation;
+#[allow(unused_imports)]
+use revocation::*;
 mod transitions;
-
-pub(super) use fixture_builder::*;
-pub(super) use fixtures::*;
-pub(super) use handoff_fixture::*;
+#[allow(unused_imports)]
+use transitions::*;

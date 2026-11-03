@@ -251,7 +251,7 @@ pub(super) fn handed_off(
 }
 
 /// Producer-side scope, built from the fixture rows rather than the receiver's derivation.
-fn context_scope(comparison: &HwmIdentity, rows: &[TargetRow]) -> Scope {
+pub(super) fn context_scope(comparison: &HwmIdentity, rows: &[TargetRow]) -> Scope {
     Scope {
         comparison: comparison.clone(),
         source_family: context_plan().source_family,
@@ -269,14 +269,14 @@ fn context_scope(comparison: &HwmIdentity, rows: &[TargetRow]) -> Scope {
 }
 
 /// `width` finite f32 values inside the W2 frozen clip (|v| <= 32), little-endian.
-fn context_output(width: usize, offset: f32) -> Vec<u8> {
+pub(super) fn context_output(width: usize, offset: f32) -> Vec<u8> {
     (0..width)
         .flat_map(|index| (offset + index as f32 / 128.).to_le_bytes())
         .collect()
 }
 
 /// Retain one synthetic producer's receipt, fitted state and output; nothing is encoded.
-fn produce_context(
+pub(super) fn produce_context(
     state: &State,
     scope: Scope,
     encoder: Encoder,
@@ -303,7 +303,11 @@ fn produce_context(
     }
 }
 
-fn valid_context(state: &State, comparison: &HwmIdentity, rows: &[TargetRow]) -> ContextEvidence {
+pub(super) fn valid_context(
+    state: &State,
+    comparison: &HwmIdentity,
+    rows: &[TargetRow],
+) -> ContextEvidence {
     let parent = produce_context(
         state,
         context_scope(comparison, rows),

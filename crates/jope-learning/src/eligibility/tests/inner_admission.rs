@@ -1,5 +1,5 @@
 use super::*;
-fn inner_fixture(
+pub(super) fn inner_fixture(
     f: &Fixture,
 ) -> (
     FreezePlan,

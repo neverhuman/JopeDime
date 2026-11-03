@@ -60,7 +60,7 @@ fn revalidate(
 pub fn revalidate_qualification(state: &State, record: &HwmRecord) -> Result<Qualification> {
     Ok(revalidate(state, record, &Decisions::load(state)?)?.0)
 }
-fn qualification_path(state: &State, record: &HwmRecord) -> std::path::PathBuf {
+pub(super) fn qualification_path(state: &State, record: &HwmRecord) -> std::path::PathBuf {
     state
         .root()
         .join("eligibility/qualified")
@@ -123,7 +123,7 @@ pub(crate) fn require_qualified(
     Ok(revalidate(state, record, decisions)?.1)
 }
 
-fn retain_artifact(state: &State, artifact: &Artifact, live: bool) -> Result<()> {
+pub(super) fn retain_artifact(state: &State, artifact: &Artifact, live: bool) -> Result<()> {
     if live {
         artifact.verify()?;
         let bytes = fs::read(&artifact.path)?;

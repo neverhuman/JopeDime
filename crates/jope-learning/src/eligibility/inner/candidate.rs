@@ -21,7 +21,7 @@ pub struct InnerEvidence {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct CandidateFreeze {
+pub(super) struct CandidateFreeze {
     schema: String,
     comparison_sha256: String,
     frozen_recipe_sha256: String,

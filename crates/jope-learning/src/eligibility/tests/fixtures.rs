@@ -1,14 +1,5 @@
 use super::*;
-use crate::{
-    encoder_receipt::{Encoder, EncoderCapability, Inputs, Member, Product, Scope},
-    hwm::{self, Candidate},
-    record::{ComparisonContext, Cost, Evaluator, Genome, Provenance, Score, HWM_SCHEMA},
-};
-use jope_pipeline::evaluation_result::{Consumption, RESULT_SCHEMA};
-use jope_pipeline::execution::{Artifact, ObservedConsumption, WorkerCommand, EXECUTION_SCHEMA};
-use jope_pipeline::experiment::REQUEST_SCHEMA;
-use serde_json::json;
-use std::path::PathBuf;
+use crate::encoder_receipt::{Encoder, Product};
 
 pub(super) struct Fixture {
     pub(super) _directory: tempfile::TempDir,
@@ -48,7 +39,7 @@ impl Fixture {
 }
 
 /// Predictions exact on the first `improved` folds, the train-only baseline elsewhere.
-fn exact_on(improved: usize) -> impl Fn(u8, &[&TargetRow], Predictions) -> Predictions {
+pub(super) fn exact_on(improved: usize) -> impl Fn(u8, &[&TargetRow], Predictions) -> Predictions {
     move |fold: u8, hold: &[&TargetRow], baseline: Predictions| {
         if (fold as usize) >= improved {
             return baseline;
@@ -73,7 +64,7 @@ fn exact_on(improved: usize) -> impl Fn(u8, &[&TargetRow], Predictions) -> Predi
     }
 }
 
-fn context_plan() -> ContextPlan {
+pub(super) fn context_plan() -> ContextPlan {
     ContextPlan {
         source_family: "synthetic-fixture-family".into(),
         encoder: Encoder {
@@ -87,7 +78,8 @@ fn context_plan() -> ContextPlan {
 }
 
 /// The synthetic W2 producer executable's bytes: never executed, only pinned.
-const FIXTURE_PRODUCER: &[u8] = b"synthetic W2 context producer executable; never executed";
+pub(super) const FIXTURE_PRODUCER: &[u8] =
+    b"synthetic W2 context producer executable; never executed";
 
 /// The W2 producer the fixture controller preregisters with every freeze.
 pub(super) fn producer_plan() -> ProducerPlan {
@@ -148,7 +140,7 @@ pub(super) struct HandoffParts {
 /// `jope_pipeline::cpu_context_bridge::execution_attestation`'s record, field for field in
 /// its serialization order, written out here independently of the receiver.
 #[derive(Serialize)]
-struct FixtureAttestation {
+pub(super) struct FixtureAttestation {
     schema: &'static str,
     supervisor_receipt_sha256: String,
     program_sha256: String,
@@ -165,7 +157,7 @@ struct FixtureAttestation {
 
 /// `jope_policy::context_producer::TrainingIdentity`, in its serialization order.
 #[derive(Serialize, Deserialize)]
-struct FixtureTraining {
+pub(super) struct FixtureTraining {
     dataset_sha256: String,
     prepared_sha256: String,
     training_sha256: String,
@@ -175,7 +167,7 @@ struct FixtureTraining {
 
 /// `jope_policy::context_producer::AdmissionPins`, in its serialization order.
 #[derive(Serialize)]
-struct FixturePins {
+pub(super) struct FixturePins {
     source_sha256: String,
     producer_sha256: String,
     artifact_sha256: String,

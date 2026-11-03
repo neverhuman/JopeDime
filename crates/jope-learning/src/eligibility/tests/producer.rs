@@ -17,7 +17,7 @@ use super::provenance::{assert_refused, authority, Authority};
 use super::*;
 
 /// The registration a W2 qualification yields, as `ProducerRegistration` serializes it.
-fn registration() -> serde_json::Value {
+pub(super) fn registration() -> serde_json::Value {
     let plan = producer_plan();
     json!({
         "release": plan.release,
@@ -29,7 +29,7 @@ fn registration() -> serde_json::Value {
 
 /// The freeze's context plan as the live driver builds it: the preregistered context encoder and
 /// the W2 producer parsed field for field from its registration.
-fn preregistered() -> ContextPlan {
+pub(super) fn preregistered() -> ContextPlan {
     ContextPlan {
         producer: Some(serde_json::from_value(registration()).unwrap()),
         ..context_plan()
@@ -38,7 +38,7 @@ fn preregistered() -> ContextPlan {
 
 /// The context the producer run hands off; distinct from the fixture's own context, so nothing
 /// of this run is retained before the product path retains it.
-fn teaching_context() -> Vec<u8> {
+pub(super) fn teaching_context() -> Vec<u8> {
     context_output(2048, 0.625)
 }
 
@@ -46,7 +46,7 @@ fn teaching_context() -> Vec<u8> {
 /// it: the handoff record the run emitted for teacher admission, the context job and its
 /// supervisor receipt, the experiment and window, the artifact the job wrote and the context's
 /// bytes. `tamper` changes the run first. Nothing is retained.
-fn producer_run(
+pub(super) fn producer_run(
     f: &Fixture,
     context: &[u8],
     window: &ExecutionWindow,
@@ -57,7 +57,7 @@ fn producer_run(
 
 /// [`producer_run`] in `experiment` instead of `f`'s: the context job's request and the retained
 /// experiment are that experiment's.
-fn producer_run_in(
+pub(super) fn producer_run_in(
     f: &Fixture,
     context: &[u8],
     experiment: &Experiment,
@@ -78,14 +78,14 @@ fn producer_run_in(
 }
 
 /// `f`'s teacher, submitted with the context the product path issued for `run`.
-fn submission(f: &Fixture, run: &ContextRun) -> OofEvidence {
+pub(super) fn submission(f: &Fixture, run: &ContextRun) -> OofEvidence {
     OofEvidence {
         context: Some(retain_handed_off_context(&f.state, &f.evidence.freeze, run).unwrap()),
         ..f.evidence.clone()
     }
 }
 
-fn ingest(f: &Fixture) -> hwm::IngestReport {
+pub(super) fn ingest(f: &Fixture) -> hwm::IngestReport {
     hwm::ingest(
         &f.state,
         None,
@@ -99,7 +99,7 @@ fn ingest(f: &Fixture) -> hwm::IngestReport {
     .unwrap()
 }
 
-fn nothing() -> Authority {
+pub(super) fn nothing() -> Authority {
     Authority {
         qualified: vec![],
         pointers: vec![],
@@ -112,7 +112,10 @@ fn nothing() -> Authority {
 /// retain the run and admit the teacher. The qualification records the handoff.
 /// A producer run whose artifact the job wrote as `change` edits it: the job's supervisor receipt,
 /// the handoff and the controller's admission pins all name the edited bytes.
-fn with_changed_artifact(f: &Fixture, change: impl FnOnce(&mut serde_json::Value)) -> ContextRun {
+pub(super) fn with_changed_artifact(
+    f: &Fixture,
+    change: impl FnOnce(&mut serde_json::Value),
+) -> ContextRun {
     producer_run(f, &teaching_context(), &f.window, |p| {
         let mut artifact: serde_json::Value = serde_json::from_slice(&p.artifact).unwrap();
         change(&mut artifact);
@@ -125,6 +128,14 @@ fn with_changed_artifact(f: &Fixture, change: impl FnOnce(&mut serde_json::Value
 /// clipped values) and the handoff's context digest are substituted. The artifact still holds the
 /// original context, so the substitute is refused and no authority changes.
 mod admission;
+#[allow(unused_imports)]
+use admission::*;
 mod artifact;
+#[allow(unused_imports)]
+use artifact::*;
 mod records;
+#[allow(unused_imports)]
+use records::*;
 mod window;
+#[allow(unused_imports)]
+use window::*;

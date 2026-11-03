@@ -38,12 +38,19 @@ pub use context::{
     HandoffEncoder, HandoffEvidence, HandoffRelease, ProducerPlan, HANDOFF_SCHEMA,
     TEACHER_ADMISSION,
 };
+#[cfg(test)]
+use decisions::qualification_path;
 pub(crate) use decisions::require_qualified;
+use decisions::retain_artifact;
 pub(super) use decisions::Decisions;
 pub use decisions::{freeze_teaching, qualify, revalidate_qualification, revalidate_replay};
-pub(super) use freeze::{
-    authenticated_rows, baseline, blob, fold_rows, freeze_path, immutable_write, load_freeze,
-    require_blob, rows_sha, task, FrozenPolicy,
+#[cfg(test)]
+use freeze::burn_path;
+#[cfg(test)]
+use freeze::freeze_path;
+use freeze::{
+    baseline, blob, fold_fitting_input, fold_rows, freeze_impl, immutable_write, load_freeze,
+    require_blob, rows_sha, task,
 };
 pub use freeze::{
     effective_label_role, freeze_optimization, freeze_teaching_for, qualify_for,
@@ -53,17 +60,19 @@ pub use inner::{
     derive_inner_partition, freeze_inner_optimization, register_inner_candidate, InnerEvidence,
     InnerPartition,
 };
-pub(super) use measurement::measured;
+use measurement::measured;
 pub(crate) use schema::quarantined;
-pub(super) use schema::{
-    diagnostics, requalification_refused, StoredQualification, DIAGNOSTICS, FREEZE, PREDICTIONS,
+use schema::{
+    diagnostics, requalification_refused, FrozenPolicy, StoredQualification, FREEZE, PREDICTIONS,
     QUALIFICATION, RUST_FITTED, RUST_FITTED_V2,
 };
 pub use schema::{
     Diagnostics, FoldPredictions, FreezePlan, FreezeReceipt, FrozenFold, GuardPolicy, OofEvidence,
     Qualification, TargetRow, TeachingManifest,
 };
-pub(super) use verify::{combine, verify_measured_outputs};
+#[cfg(test)]
+use verify::combine;
+use verify::verify_measured_outputs;
 
 #[cfg(test)]
 mod tests;
