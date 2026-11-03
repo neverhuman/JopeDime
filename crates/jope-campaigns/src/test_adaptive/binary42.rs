@@ -87,7 +87,6 @@ use index_models::*;
 mod campaign_setup;
 use campaign_setup::*;
 mod worker;
-use worker::*;
 mod staging;
 use staging::*;
 mod execution;
@@ -103,7 +102,6 @@ use publication::*;
 mod campaign;
 use campaign::*;
 mod validation;
-use validation::*;
 
 #[cfg(test)]
 mod tests;
