@@ -188,7 +188,7 @@ fn started_datasets_keep_admission_priority_over_new_comparators() {
     fs::create_dir_all(&generation).unwrap();
     fs::write(generation.join("shard-0.manifest.json"), b"{}").unwrap();
     let ready = vec![binding(0, "waiting"), binding(1, "started")];
-    let active = active_dataset_bindings(&ready, directory.path());
+    let active = super::ledger::active_dataset_bindings(&ready, directory.path());
     assert_eq!(active[0].dataset_hash, "started");
     assert_eq!(active[1].dataset_hash, "waiting");
 }
