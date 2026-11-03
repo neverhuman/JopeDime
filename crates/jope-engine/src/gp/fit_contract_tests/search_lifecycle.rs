@@ -9,7 +9,7 @@ pub(crate) fn a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadli
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let census = root.join("census");
-    let _guard = CensusGuard(census.clone());
+    let _guard = CensusGuard::new(census.clone());
     let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
     authority.start();
     let output = root.join("blocked");
@@ -67,7 +67,7 @@ pub(crate) fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_d
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let census = root.join("census");
-    let _guard = CensusGuard(census.clone());
+    let _guard = CensusGuard::new(census.clone());
     let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
     authority.start();
     let output = root.join("leaky");
@@ -109,7 +109,7 @@ pub(crate) fn helpers_do_not_survive_a_killed_search_controller() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let census = root.join("census");
-    let _guard = CensusGuard(census.clone());
+    let _guard = CensusGuard::new(census.clone());
     let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
     authority.start();
     let output = root.join("killed-controller");

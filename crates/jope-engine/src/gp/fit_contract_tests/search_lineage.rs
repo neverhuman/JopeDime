@@ -349,6 +349,12 @@ pub(crate) fn settled_left_behind(census: &Path) -> Vec<i32> {
 /// A failing test must not leak the helpers it provoked.
 pub(crate) struct CensusGuard(PathBuf);
 
+impl CensusGuard {
+    pub(crate) fn new(census: PathBuf) -> Self {
+        Self(census)
+    }
+}
+
 impl Drop for CensusGuard {
     fn drop(&mut self) {
         for pid in live_left_behind(&self.0) {

@@ -24,7 +24,7 @@ pub(crate) fn refusal<T: std::fmt::Debug>(result: Result<T>) -> String {
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
 pub(crate) fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once() {
-    use outer_release::{Authority as Release, GrantRequest};
+    use crate::gp::outer_release::{Authority as Release, GrantRequest};
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let prepared = root.join(prepared.strip_prefix(temp.path()).unwrap());
@@ -132,7 +132,7 @@ pub(crate) fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release
             .arg(&grant)
             .arg("--output")
             .arg(&scored_receipt)
-            .env(outer_release::AUTHORITY_ENV, &outer_dir)
+            .env(crate::gp::outer_release::AUTHORITY_ENV, &outer_dir)
             .output()
             .unwrap(),
     );
