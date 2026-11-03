@@ -1,0 +1,178 @@
+{
+  "wave": "H250",
+  "status": "PASS",
+  "optimizer_updates": 0,
+  "model_forward_calls": 0,
+  "utility_outcomes_scored": 0,
+  "DLVal_scored": 0,
+  "fold_manifest_sha256": "42d514def846a25617c2e95a27b61338d2c638aa861e45f2d461e8bb13c7ad20",
+  "spread_sha256": "8e3f48746df0a4f80083c5aa1f41bb0b0ea3014862c4b9ebebca021a7ccfdc19",
+  "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "parent_commit": "26136dffbf6aa500dfba15ae47b044485c3cd70b",
+  "calibration_source_sha256": "e69648cf2e48d323cc30b9aa5ca237b3065af79c1e2c19d91b82d568e45da9d2",
+  "by_outer": {
+    "0": {
+      "epsilon": 0.04398515709490122,
+      "median_label_std": 0.43985157094901217,
+      "fit_contexts": 782,
+      "fit_families": 123,
+      "fit_ids_sha256": "906b81918321b443f65dacf61f72963aaef11518cd3f620f1a0987971da75539",
+      "failure_labels_replaced": 39309,
+      "candidate_labels": 900863,
+      "all_contexts_have_nonfailure": true
+    },
+    "1": {
+      "epsilon": 0.04137605082779555,
+      "median_label_std": 0.41376050827795546,
+      "fit_contexts": 726,
+      "fit_families": 123,
+      "fit_ids_sha256": "f0f8c96a28dd1c6aa83a9fba7705eb880297c14797e67c496392437b7d278276",
+      "failure_labels_replaced": 35175,
+      "candidate_labels": 836351,
+      "all_contexts_have_nonfailure": true
+    },
+    "2": {
+      "epsilon": 0.043957714671018895,
+      "median_label_std": 0.43957714671018894,
+      "fit_contexts": 685,
+      "fit_families": 123,
+      "fit_ids_sha256": "7c32f7ca50ef243247c0d3fb16002ec73cd384fb4b1840593f894997b52bcffa",
+      "failure_labels_replaced": 31204,
+      "candidate_labels": 789119,
+      "all_contexts_have_nonfailure": true
+    },
+    "3": {
+      "epsilon": 0.03865023772195667,
+      "median_label_std": 0.3865023772195667,
+      "fit_contexts": 703,
+      "fit_families": 123,
+      "fit_ids_sha256": "c39cb598960b159d584384d8471effc4369180715933e45f1c6513964934378d",
+      "failure_labels_replaced": 33795,
+      "candidate_labels": 809856,
+      "all_contexts_have_nonfailure": true
+    },
+    "4": {
+      "epsilon": 0.03970724859355304,
+      "median_label_std": 0.3970724859355304,
+      "fit_contexts": 761,
+      "fit_families": 123,
+      "fit_ids_sha256": "82c3488b8efcc7c531983402ad7daa147f2605db6a8f9ce37f6f2bbc895fc689",
+      "failure_labels_replaced": 39974,
+      "candidate_labels": 876672,
+      "all_contexts_have_nonfailure": true
+    }
+  },
+  "by_cell": {
+    "A0-250101": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "2660cf66896042fe5a06339961b2a902476a69e3a4f69b9adb5235ee4c515b14",
+        "CTXZ_FB": "e8196b947cdaf4fd27ccbec0b3edf5a67ddbe6cd7a669a5006a3c0fd19f02bc6",
+        "CTXZ": "2660cf66896042fe5a06339961b2a902476a69e3a4f69b9adb5235ee4c515b14"
+      }
+    },
+    "A0-250102": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "3e096136743fa210fd6f6823c95e878fedb395b4483bd826bac9ff38cc18043b",
+        "CTXZ_FB": "9a549306ff9c5981df96fcbf9e0f7809e492590a542f5d541e2260faae971d0a",
+        "CTXZ": "3e096136743fa210fd6f6823c95e878fedb395b4483bd826bac9ff38cc18043b"
+      }
+    },
+    "A0-250103": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "bb5e46714b1bb54b7236a47c5c2c48ce5576297f5737a7ab67115d5be6049780",
+        "CTXZ_FB": "303be189dbe9a2d398fef88a4a0201353556c8ad6423eeb93a0bdd6bb434fee1",
+        "CTXZ": "bb5e46714b1bb54b7236a47c5c2c48ce5576297f5737a7ab67115d5be6049780"
+      }
+    },
+    "A1-250101": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "6d2f635f2abd4d6f05e659bc842df21bf51e121a5eae4b39f2de271ff4073c75",
+        "CTXZ_FB": "925c1cbb1997049d65ef831a70a4fff914816c4ba15995d52ef35702067376c7",
+        "CTXZ": "6d2f635f2abd4d6f05e659bc842df21bf51e121a5eae4b39f2de271ff4073c75"
+      }
+    },
+    "A1-250102": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "314bf856b30e9f36c13a4117abeab7af2aac4eaef18825ebf4f737c9bda07f17",
+        "CTXZ_FB": "77751c78febb747d3f538f384404bb01f10d62645ef0fac2e177de66817716c7",
+        "CTXZ": "314bf856b30e9f36c13a4117abeab7af2aac4eaef18825ebf4f737c9bda07f17"
+      }
+    },
+    "A1-250103": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "21eb3266daa132ae94b0786e0dd8f15cb88a85dcb42cf7c635d90f9722c65b87",
+        "CTXZ_FB": "4c51487b0b044a7ba3ef03bc944911b851047e329bfa514f747675f72f25d5ac",
+        "CTXZ": "21eb3266daa132ae94b0786e0dd8f15cb88a85dcb42cf7c635d90f9722c65b87"
+      }
+    },
+    "A2-250101": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "7c0ba0ef06902819d54c61ff61db6a79daa2a293b9307bb0ffb67652466fb88e",
+        "CTXZ_FB": "25e15b51a50186d235de3c46e5f43a46a1bba3f08db74ca7ba72b1c28a5f0ce3",
+        "CTXZ": "7c0ba0ef06902819d54c61ff61db6a79daa2a293b9307bb0ffb67652466fb88e"
+      }
+    },
+    "A2-250102": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "af77cf335e41197eaffaea34421c0c4b63d883a33907b2bb0e90bb8b9e686d99",
+        "CTXZ_FB": "cbd231f740faf32da1dd8eb11486a608344e3b4d464587cd6aa49bf5391ae82a",
+        "CTXZ": "af77cf335e41197eaffaea34421c0c4b63d883a33907b2bb0e90bb8b9e686d99"
+      }
+    },
+    "A2-250103": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "2995590fbc996bd31eb8d672fb1dcff5bcf5fdc239fd7a9882efcbaf244a7f96",
+        "CTXZ_FB": "5b85fe96804d713d6b524dd8f27d01289368873944837b37d96480d162bbd4c9",
+        "CTXZ": "2995590fbc996bd31eb8d672fb1dcff5bcf5fdc239fd7a9882efcbaf244a7f96"
+      }
+    },
+    "A3-250101": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "920eb15030c51ef8ff6b304a90c0d56e70d0eff609a17c85902c955e652bb343",
+        "CTXZ_FB": "8e74cf0050d258ed2f6b8f122ed19b56fb2bd0ea6c01261cd14be0055c2fdcba",
+        "CTXZ": "920eb15030c51ef8ff6b304a90c0d56e70d0eff609a17c85902c955e652bb343"
+      }
+    },
+    "A3-250102": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "f6c17d58a21dce5b8f594f954b8cbb77eafc98ebc5415cd105108154f77a9ad4",
+        "CTXZ_FB": "e22b028d061b505187211c4f20275da934f1e95a7c176c5f9c84be1e3c8b32a7",
+        "CTXZ": "f6c17d58a21dce5b8f594f954b8cbb77eafc98ebc5415cd105108154f77a9ad4"
+      }
+    },
+    "A3-250103": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "24818c7b2bc95f0487cf1072c25d0020464d814fbb8ae60be6091909ffd6e13e",
+        "CTXZ_FB": "5aa990d21555c817d2b422554a68425c638936b11dd818d592cb33b2783088a9",
+        "CTXZ": "24818c7b2bc95f0487cf1072c25d0020464d814fbb8ae60be6091909ffd6e13e"
+      }
+    },
+    "A4-250101": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "26611315184bcf4d75f617074af0b4f48d483690eb151c0e318211aa12b421d1",
+        "CTXZ_FB": "5a0b04da7de1eb58e9938a9ca8a5a6ac86287b61fde40aa632464a732f0fbde7",
+        "CTXZ": "26611315184bcf4d75f617074af0b4f48d483690eb151c0e318211aa12b421d1"
+      }
+    },
+    "A4-250102": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "f25719ad877fcf2454fa4bdf5ac00644f1ac1cbe5d100d64dfc736238ec8f7ec",
+        "CTXZ_FB": "82d1b53bf98c245d2a065fcb8fbb88198717d6e3577c5d644745c1dd4d7656b4",
+        "CTXZ": "f25719ad877fcf2454fa4bdf5ac00644f1ac1cbe5d100d64dfc736238ec8f7ec"
+      }
+    },
+    "A4-250103": {
+      "batch_plan_sha256_by_arm": {
+        "CONTROL": "d12b9cac86f48078d13c4a299ab40b5d33f05ad670a9a075bca15fbbd622066b",
+        "CTXZ_FB": "3a66473231e2c809396255322644527f0dfbeb1763a4dc16017ff79e806dbdbd",
+        "CTXZ": "d12b9cac86f48078d13c4a299ab40b5d33f05ad670a9a075bca15fbbd622066b"
+      }
+    }
+  },
+  "definition": "epsilon=.1*median across FIT contexts of float64 full-pool population std after replacing invalid-gate costs with worst valid full-context cost+1. No valid clipping. No model forward or utility scoring.",
+  "audit_summary": {
+    "protected_reads": 0,
+    "refused": [],
+    "opened_count": 1219
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "kind": "FIT label-only; no model forward or utility score",
+  "executed_source_sha256": {
+    "calibrate.py": "e69648cf2e48d323cc30b9aa5ca237b3065af79c1e2c19d91b82d568e45da9d2",
+    "runner.py": "68f20a0462e1014c21d2e44823f33c1b174a4cf5a6acb43a463c8053e5ddceab",
+    "analysis.py": "6524260889bd5b5ca2523f9a8a050ee352791727d8a409b88fbaf8d4c353c4e4",
+    "treatment.py": "9543f049c04cd8f1cdf4dc9e4477d94e1c1e7e8f5465a7bab2ea55985437c4ad",
+    "monitor.py": "c4ed72d705993722eba2723c6970fc2ef04dcecd56e3922ba91de8e7e11ebf3b"
+  },
+  "raw_calibration_sha256": "42cdc407d8fcbd7dc932f7c5dab1de501fb1f6237b587ec1af5ad3102620f45d",
+  "resource_summary_sha256": "3ba87587573dbc8342b3a5d076feb118b80afe562f8f6f161577f199ed5b7208"
+}
