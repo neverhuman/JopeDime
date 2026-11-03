@@ -107,7 +107,7 @@ impl TrainingRoster {
         Ok(())
     }
 
-    fn bound_context(&self, context: &str, cut: &Cut) -> Result<&DiscoveryContext> {
+    pub(super) fn bound_context(&self, context: &str, cut: &Cut) -> Result<&DiscoveryContext> {
         self.validate()?;
         let c = self
             .contexts
