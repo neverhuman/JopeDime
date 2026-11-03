@@ -89,10 +89,10 @@ const SCRATCH_ROOT_LIMIT: u64 = 32 * 1024 * 1024 * 1024;
 
 /// Regular-file bytes under the scratch root, its allocation directory and the task directory.
 #[derive(Clone, Copy, Debug, PartialEq)]
-struct ScratchUsage {
-    root: u64,
-    allocation: u64,
-    task: u64,
+pub(in crate::smartcluster_worker::policy) struct ScratchUsage {
+    pub(in crate::smartcluster_worker::policy) root: u64,
+    pub(in crate::smartcluster_worker::policy) allocation: u64,
+    pub(in crate::smartcluster_worker::policy) task: u64,
 }
 
 /// Sums [`ScratchUsage`] in one walk of `root` (`allocation` and `task` are inside it). A
@@ -102,7 +102,11 @@ struct ScratchUsage {
 /// separate walk used to fail on a missing one): the root as a directory, possibly behind a link
 /// as before (walkdir follows a root link), the other two as physical directories. Every other
 /// error still fails closed. Entries renamed during a walk are counted on the next tick.
-fn scratch_usage(root: &Path, allocation: &Path, task: &Path) -> Result<ScratchUsage> {
+pub(in crate::smartcluster_worker::policy) fn scratch_usage(
+    root: &Path,
+    allocation: &Path,
+    task: &Path,
+) -> Result<ScratchUsage> {
     let root_metadata =
         fs::metadata(root).with_context(|| format!("scratch root {}", root.display()))?;
     ensure!(root_metadata.is_dir(), "scratch root is not a directory");

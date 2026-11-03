@@ -1,6 +1,6 @@
 use super::*;
 
-fn read_frame(stream: &mut UnixStream) -> Result<WorkerControlFrame> {
+pub(super) fn read_frame(stream: &mut UnixStream) -> Result<WorkerControlFrame> {
     let mut header = [0; 4];
     stream.read_exact(&mut header)?;
     let length = u32::from_be_bytes(header) as usize;
@@ -34,7 +34,7 @@ fn report(
     Ok(())
 }
 
-fn within_allocation(child: &TaskManifest, parent: &TaskManifest) -> Result<()> {
+pub(super) fn within_allocation(child: &TaskManifest, parent: &TaskManifest) -> Result<()> {
     ensure!(
         child.kind == TaskKind::ResidentGpu
             && child.checkpoint_allowance_ms.unwrap_or(1000)
@@ -85,7 +85,7 @@ pub async fn dispatch_subtask(
 pub(crate) fn write_immutable_record(path: &Path, value: &Value) -> Result<()> {
     create_immutable(path, &serde_json::to_vec(value)?)
 }
-fn create_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(super) fn create_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     ensure!(
         bytes.len() <= FRAME_LIMIT,
         "durable control record too large"
@@ -113,14 +113,18 @@ fn create_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
+#[path = "execution/control.rs"]
 mod control;
+#[path = "execution/runner.rs"]
 mod runner;
 
 pub(crate) use control::{
     record_control_stop, stop_control_with, ControlStopDeadline, ControlStopReason, DeadlineWatch,
     ScratchGuard,
 };
+pub(super) use control::{scratch_usage, ScratchUsage};
 pub(crate) use runner::execute;
+pub(super) use runner::validate_dataset_packer;
 
 pub fn serve(path: &Path, sha: &str) -> Result<()> {
     let policy = load_policy()?;
