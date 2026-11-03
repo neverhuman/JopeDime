@@ -13,7 +13,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 REGISTER = ROOT / "agent/evidence-exclusions.toml"
 POLICY = ROOT / "agent/audit-policy.toml"
 LEGACY_POLICY_PATHS_SHA256 = "d215126faf0ebbfddaae4e952a73e95e217e58434e80f51e63ceedef02f14b55"
-MANAGED_POLICY_PATHS_SHA256 = "0784f56b6710ff577a1932991fe6ca7b7485f95946883920ae6cb47b472d7f2e"
+MANAGED_POLICY_PATHS_SHA256 = "dcbfacba7887457ef776ba5ede540ffc885b52841ceb9e09c5b9dc4efc850a66"
 RECEIPT_NAME = re.compile(r"(?i)(provenance|manifest|receipt|snapshot|checkpoint|source.?pins|source.?packet|source.?counts|file_map|findings|inventory|metrics|compat_freeze|freeze|gp-config|classifications|deletions|handoff|pr3\.md|technical-review\.md|runtime_kumos|preregistration|cohort|\.sha256|\.lock\.json)")
 
 
