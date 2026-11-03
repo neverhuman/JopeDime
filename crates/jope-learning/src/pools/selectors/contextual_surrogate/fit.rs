@@ -34,7 +34,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         let parents: BTreeSet<_> = train.iter().map(|p| p.parent_id.as_str()).collect();
         let folds: Vec<_> = train
             .iter()
-            .map(|p| super::evaluate::fold_of(INNER_SALT, &p.parent_id, INNER_FOLDS))
+            .map(|p| crate::pools::evaluate::fold_of(INNER_SALT, &p.parent_id, INNER_FOLDS))
             .collect();
         let mut counts = CvCounts {
             attempted_units: train.iter().map(|p| p.members.len()).sum(),
