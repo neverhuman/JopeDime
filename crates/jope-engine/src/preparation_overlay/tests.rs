@@ -1,6 +1,4 @@
 use super::*;
-
-use super::*;
 use crate::manifest::file_hash;
 use ed25519_dalek::{Signer, SigningKey};
 #[test]
