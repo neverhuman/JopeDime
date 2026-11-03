@@ -1,3 +1,5 @@
+use super::super::index_models::LineageRecord;
+use super::super::worker_models::GenerationCheckpoint;
 use super::*;
 
 pub(in crate::test_adaptive::binary42) fn lineage_for(
