@@ -1,5 +1,20 @@
 use super::*;
 
+fn checkpoint_champion(champion: &Option<Champion>) -> Value {
+    champion
+        .as_ref()
+        .map(|champion| {
+            json!({
+                "candidate": &champion.candidate,
+                "loss": champion.loss,
+                "value": champion.value,
+                "predictions_digest": &champion.predictions_digest,
+                "model": &champion.model,
+            })
+        })
+        .unwrap_or(Value::Null)
+}
+
 #[test]
 #[ignore = "requires the hash-pinned RES-07 CPU packet and frozen RES-06 bundle"]
 fn learned_cpu_admission_recovery_matches_uninterrupted_execution() {
@@ -287,7 +302,7 @@ fn learned_cpu_admission_recovery_matches_uninterrupted_execution() {
                     "programs": recovered.checkpoint.programs,
                     "memo": recovered.checkpoint.memo,
                     "elites": recovered.checkpoint.elites,
-                    "champion": recovered.checkpoint.champion,
+                    "champion": checkpoint_champion(&recovered.checkpoint.champion),
                     "pending": recovered.checkpoint.pending,
                 }),
                 calls.load(Ordering::SeqCst),
@@ -298,7 +313,7 @@ fn learned_cpu_admission_recovery_matches_uninterrupted_execution() {
                     "programs": discovery.checkpoint.programs,
                     "memo": discovery.checkpoint.memo,
                     "elites": discovery.checkpoint.elites,
-                    "champion": discovery.checkpoint.champion,
+                    "champion": checkpoint_champion(&discovery.checkpoint.champion),
                     "pending": discovery.checkpoint.pending,
                 }),
                 calls.load(Ordering::SeqCst),
