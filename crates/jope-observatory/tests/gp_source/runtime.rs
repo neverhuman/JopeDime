@@ -106,11 +106,17 @@ fn rust_compiler_kill_is_recorded_as_failed_lost_work() {
     assert_eq!(result["total"]["counts"]["compile_errors"], 1);
     assert!(result["total"]["counts"]["lost_tokens"].as_u64().unwrap() > 0);
     let events = fs::read_to_string(state.path().join("events.jsonl")).unwrap();
+    let occurrence_id = events
+        .lines()
+        .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
+        .find(|event| event["kind"] == "source")
+        .and_then(|event| event["occurrence"]["id"].as_str().map(str::to_owned))
+        .unwrap();
     assert!(events
         .lines()
         .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
         .any(|e| e["kind"] == "checked"
-            && e["occurrence_id"] == "fixture"
+            && e["occurrence_id"].as_str() == Some(occurrence_id.as_str())
             && e["language"] == "rust"
             && e["status"] == "failed"
             && e["diagnostic"].as_str().unwrap().contains("signal")
