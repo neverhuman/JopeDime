@@ -11,6 +11,35 @@ after the controls. These are not independent discoveries
 (\cref{sec:method-status}).
 
 \begin{figure*}[!t]
+  \begin{minipage}[t]{\dimexpr.5\textwidth-.5\columnsep\relax}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_admission_outcomes.pdf}
+  \caption{\textbf{Cumulative adapter admission frequencies.}
+  All \num{2937} completed records in rounds 883--3819, captured at 18:27 UTC
+  on 2 November 2026. At round $r$, the denominator is all $r-882$ decisions
+  since round 883. Blue counts every admission; dashed red counts strict
+  gains, and the shaded difference counts accepted ties. The final
+  numerator is four: two strict gains and two ties; the other \num{2933}
+  decisions are rejections. Classification uses unrounded logged values.
+  These adaptive frequencies do not estimate independent proposal quality
+  or a training effect. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-admission-outcomes}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{\dimexpr.5\textwidth-.5\columnsep\relax}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_adapter_decisions.pdf}
+  \caption{\textbf{Candidate utility relative to the retained adapter.}
+  Rounds 3931--3950, captured at 23:00 UTC on 2 November 2026.
+  Each point is candidate utility minus the pre-round recorded best;
+  zero denotes equality. Markers show logged admission decisions, with
+  all 20 candidates rejected. Recorded-best utility remained 1.1389572.
+  This adaptive development window does not measure independent
+  first-proposal or serving performance. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-live-adapter-decisions}
+  \end{minipage}
+  \par\medskip
   \setlength{\abovecaptionskip}{4pt}
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_target_history.pdf}
