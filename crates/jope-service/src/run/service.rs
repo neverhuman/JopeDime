@@ -32,7 +32,10 @@ pub(crate) fn run_objective(
         !objective.requires_order(),
         "objective requires an ordered split"
     );
-    jope_runtime::fitness::require_no_columns(&objective, "numeric run")?;
+    ensure!(
+        objective.columns().is_empty(),
+        "numeric run does not support auxiliary columns"
+    );
     let trained_loss = matches!(objective, Fitness::Rmse {});
     let name = objective.name();
     let public_name = if Fitness::catalog().iter().any(|entry| entry.name == name) {
