@@ -218,6 +218,9 @@ fn err<T: std::fmt::Debug>(r: Result<T>) -> String {
     format!("{:#}", r.expect_err("expected a refusal"))
 }
 
+#[path = "bounded_census/cli.rs"]
 mod cli;
+#[path = "bounded_census/collection.rs"]
 mod collection;
+#[path = "bounded_census/merge.rs"]
 mod merge;
