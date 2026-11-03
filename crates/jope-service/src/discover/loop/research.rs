@@ -1,3 +1,4 @@
+use super::executor::{RefitIoError, RefitWorkerError};
 use super::*;
 
 #[cfg(feature = "research")]

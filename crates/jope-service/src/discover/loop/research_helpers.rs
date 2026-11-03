@@ -1,7 +1,7 @@
 use super::*;
 
 #[cfg(feature = "research")]
-pub(super) fn parallel_evaluate_research(
+pub(crate) fn parallel_evaluate_research(
     executor: &impl Executor,
     requests: &[Request],
     workers: usize,
@@ -64,7 +64,7 @@ pub(super) fn parallel_evaluate_research(
 }
 
 #[cfg(feature = "research")]
-pub(super) fn research_response(request: &Request, response: Response) -> Result<Response> {
+pub(crate) fn research_response(request: &Request, response: Response) -> Result<Response> {
     ensure!(
         response.attempt == request.attempt
             && response.failure != Some(WorkerFailure::StaleAttempt)

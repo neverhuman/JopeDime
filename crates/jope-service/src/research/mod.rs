@@ -14,9 +14,8 @@ pub use inventory::{RecordCounts, RecordInventory};
 mod job_resolver;
 pub use job_resolver::{AcceptedJobAdmission, TrustedJobResolver};
 mod run;
-pub use run::{record_run, RecordingBackend};
-mod job;
 pub use job::{record_catalog_job, RecordingReceipt};
+pub use run::{record_run, RecordingBackend};
 
 mod producer;
 pub use producer::RoundCapture;
@@ -399,5 +398,3 @@ impl RecordWriter {
 
 #[cfg(test)]
 mod tests;
-
-pub(crate) mod qualified;

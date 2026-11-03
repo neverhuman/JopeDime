@@ -33,10 +33,8 @@ use std::{
 };
 
 mod measurement;
-pub(super) use measurement::{
-    conditioning_sha256, decode_v2_measurement, evaluator_sha256, seed_protocol_sha256,
-    validate_v2_request,
-};
+pub(super) use measurement::{conditioning_sha256, evaluator_sha256, seed_protocol_sha256};
+use measurement::{decode_v2_measurement, validate_v2_request};
 mod provenance;
 pub(crate) use provenance::{AdmittedOperatorProvenance, OperatorOrigin, OperatorProvenance};
 

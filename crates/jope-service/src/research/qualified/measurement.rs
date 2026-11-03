@@ -149,7 +149,7 @@ pub(super) fn validate_v2_request(plan: &Plan, spec: &V2FoldSpec) -> Result<()> 
     Ok(())
 }
 
-pub(super) fn evaluator_sha256() -> String {
+pub(in crate::research) fn evaluator_sha256() -> String {
     let mut hash = Sha256::new();
     hash.update(b"jope.research.r782-v2-evaluator/v1\0");
     hash.update(include_bytes!("../worker/evaluate.rs"));
@@ -158,7 +158,7 @@ pub(super) fn evaluator_sha256() -> String {
     format!("{:x}", hash.finalize())
 }
 
-pub(super) fn seed_protocol_sha256() -> String {
+pub(in crate::research) fn seed_protocol_sha256() -> String {
     let mut hash = Sha256::new();
     hash.update(b"jope.research.evaluation-seed/v1\0");
     hash.update(SEED_PROTOCOL);
@@ -166,7 +166,10 @@ pub(super) fn seed_protocol_sha256() -> String {
     format!("{:x}", hash.finalize())
 }
 
-pub(super) fn conditioning_sha256(plan: &Plan, conditioning: &TokenProjection) -> Result<String> {
+pub(in crate::research) fn conditioning_sha256(
+    plan: &Plan,
+    conditioning: &TokenProjection,
+) -> Result<String> {
     ensure!(
         conditioning
             .tokens
