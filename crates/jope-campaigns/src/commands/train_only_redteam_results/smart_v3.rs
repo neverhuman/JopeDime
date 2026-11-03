@@ -1,5 +1,9 @@
 // jankurai:allow repo-rot.path.fake-versioned-source reason=active-v3-redteam-results-module-is-coverage-inventoried owner=jope-campaigns expires=2027-04-01
 use super::*;
+use super::{
+    report::median,
+    scoring::{finite_rmse, predict_variant, sum_squared_error},
+};
 
 fn smart_comparison_baselines(
     entry: &Value,

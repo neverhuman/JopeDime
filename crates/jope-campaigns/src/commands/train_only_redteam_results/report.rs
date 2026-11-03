@@ -8,7 +8,7 @@ fn score_for<'a>(receipt: &'a DatasetScoreReceipt, variant: &str) -> Result<&'a 
         .with_context(|| format!("score receipt lacks variant {variant}"))
 }
 
-fn median(mut values: Vec<f64>) -> Result<f64> {
+pub(super) fn median(mut values: Vec<f64>) -> Result<f64> {
     if values.is_empty() || values.iter().any(|value| !value.is_finite()) {
         bail!("median needs finite values");
     }
@@ -30,7 +30,8 @@ pub(crate) fn report_run(
     if workers == 0 {
         bail!("--workers must be positive");
     }
-    let (root, manifest, _, _, validation_digest) = require_global_validation(study_root, run_id)?;
+    let (root, manifest, _, _, validation_digest) =
+        super::validation::require_global_validation(study_root, run_id)?;
     let (index, index_digest): (ScoreIndex, _) = read_receipt(&root.join("scores.v1.json"))?;
     if index.schema != "TrainOnlyRedteamScoreIndex.v1"
         || index.run_id != run_id

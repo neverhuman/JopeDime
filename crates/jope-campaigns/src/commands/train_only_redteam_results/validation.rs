@@ -237,7 +237,7 @@ pub(crate) fn validate_run(
     Ok(path)
 }
 
-fn require_global_validation(
+pub(super) fn require_global_validation(
     study_root: &Path,
     run_id: &str,
 ) -> Result<(
