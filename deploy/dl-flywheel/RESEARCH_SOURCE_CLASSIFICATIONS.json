@@ -1,45 +1,45 @@
 {
   "items": {
     "python:research/flywheel_selfplay/h250_ctxz/analysis.py": {
-        "bytes": 13603,
-        "sha256": "6524260889bd5b5ca2523f9a8a050ee352791727d8a409b88fbaf8d4c353c4e4",
-        "classification": {
-          "role": "research",
-          "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h250_ctxz/treatment.py": {
-        "bytes": 4927,
-        "sha256": "9543f049c04cd8f1cdf4dc9e4477d94e1c1e7e8f5465a7bab2ea55985437c4ad",
-        "classification": {
-          "role": "research",
-          "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h250_ctxz/runner.py": {
-        "bytes": 43475,
-        "sha256": "68f20a0462e1014c21d2e44823f33c1b174a4cf5a6acb43a463c8053e5ddceab",
-        "classification": {
-          "role": "research",
-          "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h250_ctxz/monitor.py": {
-        "bytes": 8045,
-        "sha256": "c4ed72d705993722eba2723c6970fc2ef04dcecd56e3922ba91de8e7e11ebf3b",
-        "classification": {
-          "role": "research",
-          "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h250_ctxz/calibrate.py": {
-        "bytes": 5114,
-        "sha256": "e69648cf2e48d323cc30b9aa5ca237b3065af79c1e2c19d91b82d568e45da9d2",
-        "classification": {
-          "role": "research",
-          "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-        }
-      },
+      "bytes": 13603,
+      "sha256": "6524260889bd5b5ca2523f9a8a050ee352791727d8a409b88fbaf8d4c353c4e4",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/treatment.py": {
+      "bytes": 4927,
+      "sha256": "9543f049c04cd8f1cdf4dc9e4477d94e1c1e7e8f5465a7bab2ea55985437c4ad",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/runner.py": {
+      "bytes": 43475,
+      "sha256": "68f20a0462e1014c21d2e44823f33c1b174a4cf5a6acb43a463c8053e5ddceab",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/monitor.py": {
+      "bytes": 8045,
+      "sha256": "c4ed72d705993722eba2723c6970fc2ef04dcecd56e3922ba91de8e7e11ebf3b",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/calibrate.py": {
+      "bytes": 5114,
+      "sha256": "e69648cf2e48d323cc30b9aa5ca237b3065af79c1e2c19d91b82d568e45da9d2",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h248_dfl/analysis.py": {
       "bytes": 12087,
       "sha256": "5bd45453e789dcbf933680b4f54cb98ab6e333832be3dcc58af56014874e92ac",
@@ -6756,6 +6756,46 @@
       "classification": {
         "role": "research",
         "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/analysis.py": {
+      "bytes": 13999,
+      "sha256": "d544c64fa5f014df3dfb87adf005a4220daed6f6a2a51d7c09051ee363e5822d",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py": {
+      "bytes": 5404,
+      "sha256": "ad7a4c15aba093e0ccdf1faa132b92e9a1aac59b98d795193802b00bc031164d",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/launcher.py": {
+      "bytes": 3399,
+      "sha256": "34e74e490af10d2b2e7df5867b815ff8701bf7bb0d618c8e86be0b96a382ba27",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/monitor.py": {
+      "bytes": 8432,
+      "sha256": "320d3d64445e51216614c9841c7a3f82dda06dce4f33fee3250d29cfa6f8b5ff",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/runner.py": {
+      "bytes": 45269,
+      "sha256": "36f32e4d55aa1197f19790310f3710a41cee7aa03b907e8bca2c2de77d4471d3",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
       }
     }
   },
