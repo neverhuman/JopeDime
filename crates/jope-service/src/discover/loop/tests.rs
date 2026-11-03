@@ -5,7 +5,8 @@ use std::{
     time::Duration,
 };
 
-const TRAIN: &[u8] = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+const TRAIN: &[u8] =
+    include_bytes!("../../../../../test-support/datasets/v1/d2-regression/train.csv");
 const TRAIN_SHA: &str = "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931";
 
 fn plan(directory: &Path, rows: usize, effort: Effort, evaluations: u64) -> Plan {
@@ -138,11 +139,8 @@ mod recovery;
 mod service_entry;
 mod waves;
 
-pub(super) use admission_controls::finish;
-pub(super) use native_workers::{
-    ensure_worker_receipt, live_native_workers, native_worker, native_worker_fault, pool,
-    run_store, same,
-};
+use admission_controls::finish;
+use native_workers::{native_worker, pool, run_store, same};
 
 #[test]
 #[ignore = "supervised SIGKILL child; invoked by real_native_workers_preserve_projection_across_capacity_pause_and_sigkill"]

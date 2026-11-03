@@ -6,6 +6,6 @@ mod run;
 mod space;
 
 pub use evaluate::evaluate_native;
-pub(super) use evaluate::{native_scores, Indices, NativeFolds, NativeModel};
+pub(super) use evaluate::{numeric_rows, NativeModel};
 pub use run::run_m1;
 pub use space::NativeSpace;
