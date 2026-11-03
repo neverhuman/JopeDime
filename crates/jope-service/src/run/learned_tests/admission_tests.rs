@@ -1,6 +1,6 @@
 use super::*;
 
-fn spec(dataset: &str, device: &str) -> RunSpec {
+pub(super) fn spec(dataset: &str, device: &str) -> RunSpec {
     serde_json::from_value(json!({"dataset":dataset,"target":"target","task":"regression",
         "ignore_columns":[],"test_dataset":null,"split":{"kind":"random","holdout_fraction":0.2,"group_column":null,"time_column":null},
         "objective":"rmse","effort":"fast","budget":{"evaluations":"12","wall_seconds":"60"},
@@ -112,7 +112,7 @@ fn default_auto_plan_is_byte_identical_with_ranker_absent_or_disabled() {
     );
 }
 
-async fn post(app: axum::Router, request: &RunSpec, key: &str) -> (u16, Value) {
+pub(super) async fn post(app: axum::Router, request: &RunSpec, key: &str) -> (u16, Value) {
     let response = app
         .oneshot(
             Request::builder()
