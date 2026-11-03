@@ -53,13 +53,13 @@ specialization in the inventor data he studied.
 \citet{park2023disruptive} reported declining disruption on citation-based
 measures of papers and patents. These observations motivate our question:
 can execution feedback help a proposer depart usefully from familiar ideas?
-\Cref{sub:anatomy-history} develops the role of the scientific record.
+\mbox{\Cref{sub:anatomy-history} develops} the role of the scientific record.
 
 \paragraph{From search to learning.}
 Tests can select a better candidate without teaching the next proposer.
 Automated research systems already couple proposals to tests
 \citep{lu2024aiscientist,gottweis2025coscientist,novikov2025alphaevolve,karpathy2026autoresearch,socher2026bookbite,socher2026eureka}.
-\Cref{sub:anatomy-where,sec:road} distinguish retained candidate \mbox{solutions} from
+\Cref{sub:anatomy-where,sec:road} distinguish retained \mbox{candidate solutions} from
 learned proposer updates.
 
 \begin{figure}[tb]% floats so the text above can fill the column
@@ -73,7 +73,7 @@ AlphaGo learned from human expert games and searched heavily at every move
 \citep{silver2016mastering}.
 AlphaGo Zero learned only from games against itself, and its network alone,
 with no search, rated \num{3055}~Elo. That is close to the \num{3144} of AlphaGo Fan, the
-version that beat the \mbox{European champion} Fan Hui
+version that beat \mbox{the European champion} Fan Hui
 \citep{silver2016mastering,silver2017mastering}.
 
 This motivates an analogous
@@ -128,14 +128,14 @@ referee and retained state (\cref{tab:pillars}). Program-incumbent
 promotion and proposed writer admission are distinct rules in that design.
 We call the design \emph{engineered intelligence}: its aim, proposer, referee
 and retained state are specified for audit. Pretrained components still supply prior knowledge
-(\cref{box:searchone}); execution feedback supplies the additional teacher.
+(\cref{box:searchone}); \mbox{execution feedback} supplies the additional teacher.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:searchone]{What ``search = 1'' means}
 \begin{itemize}[leftmargin=*,nosep]
   \item \textbf{One inference, one candidate.} For each new problem, the program
     writer emits one complete program ($\budget = 1$), with no retries, repairs,
-    best-of-$N$ selection, reranking or model parameter weight updates.
+    best-of-$N$ selection, reranking \mbox{or model} parameter weight updates.
   \item \textbf{Everything is counted.} This includes reasoning tokens and
     problem encoding. One inference is one \mbox{generation, not} a single forward pass.
   \item \textbf{Declare the fitting procedure.} Fitting the emitted algorithm
@@ -159,7 +159,7 @@ reference whose moves are \mbox{typed programs} of learning primitives.
     quality and the number of attempts (\cref{sec:anatomy}).
   \item \textbf{The innovation game:} a board, move, referee and \mbox{opponent},
     with a reward ordering and two reference admission rules; each task
-    type requires a qualified board encoding and task referee (\cref{sec:game}).
+    type requires a qualified \mbox{board encoding} and task referee (\cref{sec:game}).
   \item \textbf{The economics of algorithmic self-play:} a cost model for
     self-play training and for the expected compute cost per verified improvement (\cref{sec:price}).
   \item \textbf{\EZ{}:} a reference learner with a frozen problem encoder,

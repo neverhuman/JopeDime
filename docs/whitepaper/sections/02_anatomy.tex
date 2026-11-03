@@ -30,7 +30,7 @@
 
 The learning question in \cref{sec:intro} requires separating four roles:
 aim, variation, judgment and retention. They distinguish a system's proposals, evaluation and retained experience.
-We call judgment learned before a try \emph{taste}.
+\mbox{We call} judgment learned before a try \emph{taste}.
 
 \subsection{Novelty is free}\label{sub:anatomy-novelty}
 
@@ -75,22 +75,22 @@ four pillars to the learning question in \cref{sec:intro};
 
 \subsection{Taste is judgment moved upstream}\label{sub:anatomy-taste}
 
-Skill in invention is judgment that arrives before the try. For Poincaré, creating meant not making the useless combinations: ``Invention is discernment, choice.'' The sterile combinations, he added, do not even present themselves to the mind of \mbox{the inventor} \citep[pp.~324--325]{poincare1910creation}.
+Skill in invention is judgment that arrives before the try. For Poincaré, creating meant not making the useless combinations: ``Invention is discernment, choice.'' The sterile combinations, he added, do not even present themselves to the \mbox{mind of the inventor} \citep[pp.~324--325]{poincare1910creation}.
 
 Chess masters show the same economy: in de Groot's think-aloud studies they considered about as many moves as weaker players but found the right ones \citep{degroot1965thought}. Chase and Simon studied chunks through perception and recall tasks \citep{chase1973perception}. Much of that knowledge is tacit; experts know more than they can say \citep{polanyi1966tacit}.
 AlphaGo's policy network first learned to select candidate moves from human expert games,
 and then refined that \mbox{move judgment} through self-play \citep{silver2016mastering}.
 
 Taste has a price we can state. Suppose each try beats the incumbent with a fixed, nonzero probability
-$\winprob$, independently of the others. The number of tries up to and including the first win is then geometric, with mean
+$\winprob$, independently of the others. The number of tries up to and including \mbox{the first win} is then geometric, with mean
 \begin{equation}
   \mathbb{E}[\Ntries] = \frac{1}{\winprob},
   \label{eq:taste}
 \end{equation}
 where $\Ntries$ counts all candidate attempts, including incomplete or
 invalid outputs and failed executions. Under this fixed-probability,
-independent-try model, better proposal \mbox{quality}
-shortens the expected search.\footnote{Adaptive search and correlated
+independent-try model, better \mbox{proposal quality shortens}
+the expected search.\footnote{Adaptive search and correlated
 proposals need not follow \cref{eq:taste}; independence alone does not say
 whether the approximation overstates or understates their cost. Empirical
 attempt curves are required for those systems.}
@@ -125,7 +125,7 @@ improves algorithm invention must be measured directly in the innovation game.
 \subsection{Where the pillars live}\label{sub:anatomy-where}
 
 Machines distribute the pillars across different components
-(\cref{tab:where}). Swarm designs fit the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, that knowledge archive supplies retention; the model of reality, the twins and the laboratories supply judgment; and the agents supply variation and critique.
+(\cref{tab:where}). Swarm designs fit the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, that knowledge archive supplies retention; the model of reality, the twins and the laboratories supply judgment; \mbox{and the agents} supply variation and critique.
 
 Agent search can retain programs, revise its context or update its
 proposer. The label \emph{swarm} does not specify which it does. The
