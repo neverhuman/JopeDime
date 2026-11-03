@@ -95,7 +95,7 @@ fn multiclass_only_fragment_fails_name_absence_as_not_exercised() {
     assert_eq!(motif.support.tasks, [TaskLabel::Multiclass]);
     let (result, artifacts) =
         check_motif(&table, 0, motif, &ValidateOptions::default(), &tables).expect("runs");
-    assert!(artifacts.is_empty(), "{artifacts:?}");
+    assert!(artifacts.is_empty(), "{} artifacts produced", artifacts.len());
     assert_eq!(result.name_absence.exercised, 0);
     assert!(!result.name_absence.passed);
     assert_eq!(codes(&result.name_absence), ["name_absence_not_exercised"]);
