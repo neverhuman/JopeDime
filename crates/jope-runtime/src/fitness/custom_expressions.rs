@@ -394,4 +394,30 @@ fn execution_telemetry_memory_complexity_and_regime_features_score_and_compose()
     // weighted abs_error mean = (0.2*1 + 0.2*(4/3) + 0.5*(5/3) + 0.3*2) / 4 = 1.9 / 4 = 0.475
     // resource term = 0.5*0.25 + 2.0*0.05 + 1e-7*5_000_000 = 0.125 + 0.10 + 0.50 = 0.725
     near(custom_score.loss, 0.475 + 0.725);
+    assert!(custom.requires_order());
+    assert!(Fitness::PredictionTurnover {}.requires_order());
+
+    // Without telemetry or resources, every resource/telemetry alias errors instead of returning 0.
+    for metric in [
+        Fitness::TrainTimeSeconds {},
+        Fitness::InferenceTimeSeconds {},
+        Fitness::TotalTimeSeconds {},
+        Fitness::InferenceUsPerRow {},
+        Fitness::TrainRowsPerSecond {},
+        Fitness::InferenceRowsPerSecond {},
+        Fitness::TrainMemoryBytes {},
+        Fitness::InferenceMemoryBytes {},
+        Fitness::TotalMemoryBytes {},
+        Fitness::ModelBytes {},
+        Fitness::ComplexityStages {},
+        Fitness::ComplexityParameters {},
+        Fitness::FeatureCount {},
+        Fitness::FoldStd {},
+        custom,
+    ] {
+        assert!(
+            metric.evaluate(&y, &p).is_err(),
+            "{metric:?} must fail without resources/telemetry"
+        );
+    }
 }

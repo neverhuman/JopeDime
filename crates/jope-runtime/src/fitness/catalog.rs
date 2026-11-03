@@ -413,10 +413,13 @@ impl Fitness {
             | Self::Calmar { .. }
             | Self::Omega { .. }
             | Self::ExpectedShortfall { .. }
-            | Self::Mase { .. } => true,
-            Self::Weighted { fitness, .. } | Self::Constrained { fitness, .. } => {
-                fitness.requires_order()
+            | Self::Mase { .. }
+            | Self::PredictionTurnover {} => true,
+            Self::Custom { expression, .. } => expression.requires_order(),
+            Self::Weighted { weights, fitness } => {
+                weights.requires_order() || fitness.requires_order()
             }
+            Self::Constrained { fitness, .. } => fitness.requires_order(),
             Self::Composite { terms } => terms.iter().any(|t| t.fitness.requires_order()),
             _ => false,
         }

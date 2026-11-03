@@ -92,7 +92,22 @@ impl Fitness {
 
     /// Whether evaluation depends on [`ExecutionTelemetry`] or [`Resources`].
     pub fn uses_execution_telemetry(&self) -> bool {
-        !self.resources().is_empty() || matches!(self, Self::FeatureCount {} | Self::FoldStd {})
+        !self.resources().is_empty() || self.uses_telemetry_only_fields()
+    }
+
+    pub(crate) fn uses_telemetry_only_fields(&self) -> bool {
+        match self {
+            Self::FeatureCount {} | Self::FoldStd {} => true,
+            Self::Custom { expression, .. } => expression.uses_telemetry_only_fields(),
+            Self::Weighted { weights, fitness } => {
+                weights.uses_telemetry_only_fields() || fitness.uses_telemetry_only_fields()
+            }
+            Self::Composite { terms } => {
+                terms.iter().any(|t| t.fitness.uses_telemetry_only_fields())
+            }
+            Self::Constrained { fitness, .. } => fitness.uses_telemetry_only_fields(),
+            _ => false,
+        }
     }
 
     pub fn validate(&self) -> Result<()> {
@@ -526,6 +541,76 @@ impl Expression {
                 otherwise.collect_resources(out);
             }
             _ => (),
+        }
+    }
+
+    pub(crate) fn requires_order(&self) -> bool {
+        match self {
+            Self::PredictionTurnover {} | Self::RowIndex {} | Self::RowFraction {} => true,
+            Self::Abs { arg }
+            | Self::Neg { arg }
+            | Self::Square { arg }
+            | Self::Sqrt { arg }
+            | Self::Ln { arg }
+            | Self::Log1p { arg }
+            | Self::Exp { arg }
+            | Self::Sign { arg }
+            | Self::Tanh { arg }
+            | Self::Sigmoid { arg }
+            | Self::Cbrt { arg }
+            | Self::Step { arg }
+            | Self::Clip { arg, .. } => arg.requires_order(),
+            Self::Add { left, right }
+            | Self::Sub { left, right }
+            | Self::Mul { left, right }
+            | Self::Div { left, right }
+            | Self::Min { left, right }
+            | Self::Max { left, right }
+            | Self::Pow { left, right } => left.requires_order() || right.requires_order(),
+            Self::Where {
+                condition,
+                then,
+                otherwise,
+            } => condition.requires_order() || then.requires_order() || otherwise.requires_order(),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn uses_telemetry_only_fields(&self) -> bool {
+        match self {
+            Self::FeatureCount {} | Self::FoldStd {} => true,
+            Self::Abs { arg }
+            | Self::Neg { arg }
+            | Self::Square { arg }
+            | Self::Sqrt { arg }
+            | Self::Ln { arg }
+            | Self::Log1p { arg }
+            | Self::Exp { arg }
+            | Self::Sign { arg }
+            | Self::Tanh { arg }
+            | Self::Sigmoid { arg }
+            | Self::Cbrt { arg }
+            | Self::Step { arg }
+            | Self::Clip { arg, .. } => arg.uses_telemetry_only_fields(),
+            Self::Add { left, right }
+            | Self::Sub { left, right }
+            | Self::Mul { left, right }
+            | Self::Div { left, right }
+            | Self::Min { left, right }
+            | Self::Max { left, right }
+            | Self::Pow { left, right } => {
+                left.uses_telemetry_only_fields() || right.uses_telemetry_only_fields()
+            }
+            Self::Where {
+                condition,
+                then,
+                otherwise,
+            } => {
+                condition.uses_telemetry_only_fields()
+                    || then.uses_telemetry_only_fields()
+                    || otherwise.uses_telemetry_only_fields()
+            }
+            _ => false,
         }
     }
 }
