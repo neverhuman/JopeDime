@@ -19,9 +19,9 @@ pub(crate) use scheduling::{
     qualifying_winner_for_policy, rank_slots, shard_members_with_sizes, shard_start,
 };
 #[cfg(test)]
-pub(crate) use scheduling::{cohort_win, qualifying_winner, shard_members, strict_win};
+pub(super) use scheduling::{cohort_win, qualifying_winner, shard_members, strict_win};
 #[cfg(test)]
-pub(crate) use worker::is_sha256_hex;
+pub(super) use worker::is_sha256_hex;
 pub(crate) use worker::{
     cpp17_toolchain, evaluate_worker_candidate, expected_job_id, validate_candidate_backend,
     validate_shard_manifest,
