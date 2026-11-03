@@ -418,11 +418,10 @@ fn worst_case_records_fit_the_cap() {
 
 #[test]
 fn population_is_finite_sorted_descending_and_at_most_64() {
-    let values = (0..1000).map(|i| i as f64 / 1000.0).chain([
-        f64::NAN,
-        f64::INFINITY,
-        f64::NEG_INFINITY,
-    ]);
+    let values =
+        (0..1000)
+            .map(|i| i as f64 / 1000.0)
+            .chain([f64::NAN, f64::INFINITY, f64::NEG_INFINITY]);
     let snapshot = population_snapshot(values, POPULATION_SAMPLES);
     assert_eq!(snapshot.len(), 64);
     assert!(snapshot.iter().all(|v| v.is_finite()));
