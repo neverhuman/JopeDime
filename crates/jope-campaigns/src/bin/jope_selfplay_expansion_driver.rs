@@ -76,22 +76,28 @@ const COVERAGE_VALVE: f64 = 0.3;
 const MAX_ENCODE_ATTEMPTS: i64 = 8;
 
 mod jope_selfplay_expansion_driver {
+    #[path = "jope_selfplay_expansion_driver/encoding.rs"]
     mod encoding;
+    #[path = "jope_selfplay_expansion_driver/guardrails.rs"]
     mod guardrails;
+    #[path = "jope_selfplay_expansion_driver/runtime.rs"]
     mod runtime;
+    #[path = "jope_selfplay_expansion_driver/state.rs"]
     mod state;
+    #[path = "jope_selfplay_expansion_driver/tranche.rs"]
     mod tranche;
 
-    pub(super) use encoding::*;
-    pub(super) use guardrails::*;
-    pub(super) use runtime::*;
-    pub(super) use state::*;
-    pub(super) use tranche::*;
+    pub(crate) use encoding::*;
+    pub(crate) use guardrails::*;
+    pub(crate) use runtime::*;
+    pub(crate) use state::*;
+    pub(crate) use tranche::*;
 }
 
 use jope_selfplay_expansion_driver::*;
 
 #[cfg(test)]
+#[path = "jope_selfplay_expansion_driver/tests.rs"]
 mod tests;
 
 fn main() -> Result<()> {

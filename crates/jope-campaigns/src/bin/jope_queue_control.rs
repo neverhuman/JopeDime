@@ -25,11 +25,17 @@ use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
+#[path = "jope_queue_control/blocker_plan.rs"]
 mod blocker_plan;
+#[path = "jope_queue_control/inventory.rs"]
 mod inventory;
+#[path = "jope_queue_control/recovery.rs"]
 mod recovery;
+#[path = "jope_queue_control/retirement.rs"]
 mod retirement;
+#[path = "jope_queue_control/seed_export.rs"]
 mod seed_export;
+#[path = "jope_queue_control/socket.rs"]
 mod socket;
 use blocker_plan::*;
 use inventory::*;
@@ -876,4 +882,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_queue_control/tests.rs"]
 mod tests;

@@ -30,12 +30,18 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[path = "jope_selfplay_bundle/activation.rs"]
 mod activation;
+#[path = "jope_selfplay_bundle/build.rs"]
 mod build;
+#[path = "jope_selfplay_bundle/inventory.rs"]
 mod inventory;
+#[path = "jope_selfplay_bundle/rollback.rs"]
 mod rollback;
+#[path = "jope_selfplay_bundle/synchronization.rs"]
 mod synchronization;
 #[cfg(test)]
+#[path = "jope_selfplay_bundle/tests.rs"]
 mod tests;
 
 use activation::*;

@@ -115,28 +115,40 @@ fn py_shim() -> &'static str {
 // CPython-compatible JSON serialization
 // ---------------------------------------------------------------------------
 
+#[path = "jope_selfplay_promotion/json_compat.rs"]
 mod json_compat;
 use json_compat::*;
+#[path = "jope_selfplay_promotion/io_journal.rs"]
 mod io_journal;
 use io_journal::*;
+#[path = "jope_selfplay_promotion/catalog.rs"]
 mod catalog;
 use catalog::*;
+#[path = "jope_selfplay_promotion/scheduler.rs"]
 mod scheduler;
 use scheduler::*;
+#[path = "jope_selfplay_promotion/python_handlers.rs"]
 mod python_handlers;
 use python_handlers::*;
+#[path = "jope_selfplay_promotion/spec_rendering.rs"]
 mod spec_rendering;
 use spec_rendering::*;
+#[path = "jope_selfplay_promotion/checkpoint_handlers.rs"]
 mod checkpoint_handlers;
 use checkpoint_handlers::*;
+#[path = "jope_selfplay_promotion/gate_verdicts.rs"]
 mod gate_verdicts;
 use gate_verdicts::*;
+#[path = "jope_selfplay_promotion/gate_evaluation.rs"]
 mod gate_evaluation;
 use gate_evaluation::*;
+#[path = "jope_selfplay_promotion/checkpoint_promotion.rs"]
 mod checkpoint_promotion;
 use checkpoint_promotion::*;
+#[path = "jope_selfplay_promotion/promotion_pointer.rs"]
 mod promotion_pointer;
 use promotion_pointer::*;
+#[path = "jope_selfplay_promotion/controller.rs"]
 mod controller;
 use controller::*;
 
@@ -249,4 +261,5 @@ fn main() -> Result<()> {
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]
+#[path = "jope_selfplay_promotion/tests.rs"]
 mod tests;

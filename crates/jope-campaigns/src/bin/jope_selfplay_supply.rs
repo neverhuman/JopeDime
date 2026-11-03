@@ -204,18 +204,27 @@ fn append_supply_event(root: &Path, kind: &str, detail: &Value) -> Result<()> {
     )
 }
 
+#[path = "jope_selfplay_supply/options.rs"]
 mod options;
 use options::*;
+#[path = "jope_selfplay_supply/persisted.rs"]
 mod persisted;
 use persisted::*;
+#[path = "jope_selfplay_supply/constants.rs"]
 mod constants;
 use constants::*;
+#[path = "jope_selfplay_supply/lock.rs"]
 mod lock;
 use lock::*;
+#[path = "jope_selfplay_supply/proposer_context.rs"]
 mod proposer_context;
+#[path = "jope_selfplay_supply/proposer_input.rs"]
 mod proposer_input;
+#[path = "jope_selfplay_supply/runtime.rs"]
 mod runtime;
+#[path = "jope_selfplay_supply/supply.rs"]
 mod supply;
+#[path = "jope_selfplay_supply/wave_builder.rs"]
 mod wave_builder;
 use proposer_context::*;
 use proposer_input::*;
@@ -224,6 +233,7 @@ use supply::*;
 use wave_builder::*;
 
 #[cfg(test)]
+#[path = "jope_selfplay_supply/tests.rs"]
 mod tests;
 
 fn main() -> Result<()> {

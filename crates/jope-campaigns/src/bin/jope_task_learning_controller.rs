@@ -476,10 +476,15 @@ fn cycle(args: &Args) -> Result<Value> {
     Ok(status(args, &state, &accepted, &corpus, action, None))
 }
 
+#[path = "jope_task_learning_controller/execution.rs"]
 mod execution;
+#[path = "jope_task_learning_controller/recipe.rs"]
 mod recipe;
+#[path = "jope_task_learning_controller/scheduler.rs"]
 mod scheduler;
+#[path = "jope_task_learning_controller/state.rs"]
 mod state;
+#[path = "jope_task_learning_controller/trainer.rs"]
 mod trainer;
 
 use execution::*;
@@ -489,4 +494,5 @@ use state::*;
 use trainer::*;
 
 #[cfg(test)]
+#[path = "jope_task_learning_controller/tests/mod.rs"]
 mod tests;

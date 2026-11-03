@@ -59,5 +59,7 @@ fn full_lineage(job: &str) -> Checkpoint {
     checkpoint(&"d".repeat(64), &format!("lineage:{job}"), 152, &[])
 }
 
+#[path = "tests/checkpoint.rs"]
 mod checkpoint;
+#[path = "tests/trainer.rs"]
 mod trainer;

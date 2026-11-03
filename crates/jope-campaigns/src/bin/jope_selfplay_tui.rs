@@ -146,17 +146,29 @@ const DAEMON_HEARTBEATS: [(&str, u64); 5] = [
     ("ops/freshness-status.json", 150),
 ];
 
+#[path = "jope_selfplay_tui/cli.rs"]
 mod cli;
+#[path = "jope_selfplay_tui/formatting.rs"]
 mod formatting;
+#[path = "jope_selfplay_tui/funnel.rs"]
 mod funnel;
+#[path = "jope_selfplay_tui/history.rs"]
 mod history;
+#[path = "jope_selfplay_tui/models.rs"]
 mod models;
+#[path = "jope_selfplay_tui/receipts.rs"]
 mod receipts;
+#[path = "jope_selfplay_tui/slow.rs"]
 mod slow;
+#[path = "jope_selfplay_tui/sources.rs"]
 mod sources;
+#[path = "jope_selfplay_tui/telemetry.rs"]
 mod telemetry;
+#[path = "jope_selfplay_tui/terminal.rs"]
 mod terminal;
+#[path = "jope_selfplay_tui/trainer_metrics.rs"]
 mod trainer_metrics;
+#[path = "jope_selfplay_tui/waves.rs"]
 mod waves;
 
 use cli::*;

@@ -732,8 +732,10 @@ fn main() -> Result<()> {
     }
 }
 
+#[path = "jope_selfplay_corpus_freezer/retention.rs"]
 mod retention;
 use retention::*;
 
 #[cfg(test)]
+#[path = "jope_selfplay_corpus_freezer/tests.rs"]
 mod tests;

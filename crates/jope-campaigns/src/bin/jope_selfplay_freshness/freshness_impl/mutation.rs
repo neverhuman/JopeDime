@@ -1,5 +1,6 @@
 use super::*;
 
+#[path = "mutation/retirement.rs"]
 mod retirement;
 
 impl Supervisor {

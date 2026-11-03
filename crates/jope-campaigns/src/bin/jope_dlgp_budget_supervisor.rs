@@ -31,9 +31,12 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
+#[path = "jope_dlgp_budget_supervisor/campaign_cycle.rs"]
 mod campaign_cycle;
+#[path = "jope_dlgp_budget_supervisor/scheduler.rs"]
 mod scheduler;
 #[cfg(test)]
+#[path = "jope_dlgp_budget_supervisor/tests.rs"]
 mod tests;
 
 use campaign_cycle::cycle;
@@ -386,4 +389,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_dlgp_budget_supervisor/tests.rs"]
 mod tests;

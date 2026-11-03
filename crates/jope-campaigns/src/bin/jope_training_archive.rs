@@ -275,13 +275,16 @@ enum Cmd {
     },
 }
 
+#[path = "jope_training_archive/commands.rs"]
 mod commands;
+#[path = "jope_training_archive/ingest.rs"]
 mod ingest;
+#[path = "jope_training_archive/sources.rs"]
 mod sources;
 
-pub(super) use commands::*;
-pub(super) use ingest::*;
-pub(super) use sources::*;
+pub(crate) use commands::*;
+pub(crate) use ingest::*;
+pub(crate) use sources::*;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();

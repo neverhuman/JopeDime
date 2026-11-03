@@ -224,8 +224,11 @@ struct MissingAttempt {
     manifest_sha256: String,
 }
 
+#[path = "jope_ledger_reconciler/fill.rs"]
 mod fill;
+#[path = "jope_ledger_reconciler/reap.rs"]
 mod reap;
+#[path = "jope_ledger_reconciler/revert.rs"]
 mod revert;
 
 use fill::run_fill;
@@ -329,4 +332,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "jope_ledger_reconciler/tests.rs"]
 mod tests;

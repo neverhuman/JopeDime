@@ -54,18 +54,23 @@ jope_paths::once_str!(
 const SCQ_SNAPSHOT_TIMEOUT_SECS: &str = "30";
 const HOUR_MS: u64 = 3_600_000;
 
+#[path = "jope_utilization_supervisor/diagnostics.rs"]
 mod diagnostics;
+#[path = "jope_utilization_supervisor/report.rs"]
 mod report;
+#[path = "jope_utilization_supervisor/response.rs"]
 mod response;
 #[cfg(test)]
+#[path = "jope_utilization_supervisor/tests.rs"]
 mod tests;
 
-pub(super) use diagnostics::*;
-pub(super) use report::*;
-pub(super) use response::*;
+pub(crate) use diagnostics::*;
+pub(crate) use report::*;
+pub(crate) use response::*;
 
+#[path = "jope_utilization_supervisor/arguments.rs"]
 mod arguments;
-pub(super) use arguments::*;
+pub(crate) use arguments::*;
 // ---------------------------------------------------------------------------
 // DETECT — scheduler ground truth
 // ---------------------------------------------------------------------------

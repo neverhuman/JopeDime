@@ -1,7 +1,10 @@
 use super::*;
 
+#[path = "jobs/evaluations.rs"]
 mod evaluations;
+#[path = "jobs/job_io.rs"]
 mod job_io;
+#[path = "jobs/proposals.rs"]
 mod proposals;
 
 pub(crate) use evaluations::{

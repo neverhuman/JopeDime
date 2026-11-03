@@ -365,20 +365,27 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[path = "jope_capacity/policy.rs"]
 mod policy;
-pub(super) use policy::{parse_policy, validate_metrics, validate_policy};
+pub(crate) use policy::{parse_policy, validate_metrics, validate_policy};
+#[path = "jope_capacity/scq_nodes.rs"]
 mod scq_nodes;
-pub(super) use scq_nodes::{integer, number, parse_scq_nodes, zero_pressure, ScqNodes};
+pub(crate) use scq_nodes::{integer, number, parse_scq_nodes, zero_pressure, ScqNodes};
+#[path = "jope_capacity/samples.rs"]
 mod samples;
-pub(super) use samples::{build_sample, load_history, sample_due, trailing_minute_samples};
+pub(crate) use samples::{build_sample, load_history, sample_due, trailing_minute_samples};
+#[path = "jope_capacity/state.rs"]
 mod state;
-pub(super) use state::{fresh_queue_depth, load_state, parse_stage, stage_name};
+pub(crate) use state::{fresh_queue_depth, load_state, parse_stage, stage_name};
+#[path = "jope_capacity/reports.rs"]
 mod reports;
-pub(super) use reports::{
+pub(crate) use reports::{
     build_reports, compile_cache_status, receipt_dirs, replay_receipt, scheduler_matches_runtime,
 };
+#[path = "jope_capacity/receipts.rs"]
 mod receipts;
-pub(super) use receipts::write_receipt;
+pub(crate) use receipts::write_receipt;
 
 #[cfg(test)]
+#[path = "jope_capacity/tests.rs"]
 mod tests;

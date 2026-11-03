@@ -108,9 +108,13 @@ enum Command {
     },
 }
 
+#[path = "jope_sealed_zeroshot/planning.rs"]
 mod planning;
+#[path = "jope_sealed_zeroshot/portfolio.rs"]
 mod portfolio;
+#[path = "jope_sealed_zeroshot/reporting.rs"]
 mod reporting;
+#[path = "jope_sealed_zeroshot/sealed.rs"]
 mod sealed;
 
 use planning::{atomic_write, plan};

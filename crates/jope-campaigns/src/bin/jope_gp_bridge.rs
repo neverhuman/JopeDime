@@ -23,11 +23,16 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 
+#[path = "jope_gp_bridge/lineage.rs"]
 mod lineage;
+#[path = "jope_gp_bridge/population.rs"]
 mod population;
+#[path = "jope_gp_bridge/receipts.rs"]
 mod receipts;
 #[cfg(test)]
+#[path = "jope_gp_bridge/tests.rs"]
 mod tests;
+#[path = "jope_gp_bridge/verification.rs"]
 mod verification;
 
 use lineage::lineage_value;
@@ -470,4 +475,5 @@ fn main() {
 }
 
 #[cfg(test)]
+#[path = "jope_gp_bridge/tests.rs"]
 mod tests;

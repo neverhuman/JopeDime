@@ -1,6 +1,8 @@
 use super::*;
 
+#[path = "rollback/derivation.rs"]
 mod derivation;
+#[path = "rollback/systemd.rs"]
 mod systemd;
 
 pub(crate) use derivation::{

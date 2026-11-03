@@ -5,7 +5,9 @@ pub(crate) const MAXIMUM_OBSERVATION_GAP_SECONDS: u64 = 120;
 
 use super::*;
 
+#[path = "recovery/component_check.rs"]
 mod component_check;
+#[path = "recovery/materialize.rs"]
 mod materialize;
 
 pub(crate) use component_check::recovery_component_check;

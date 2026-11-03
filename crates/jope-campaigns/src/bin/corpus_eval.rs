@@ -424,11 +424,17 @@ struct ResolvedAuthority {
     hall_of_fame_sha256: Option<String>,
 }
 
+#[path = "corpus_eval/args.rs"]
 mod args;
+#[path = "corpus_eval/data.rs"]
 mod data;
+#[path = "corpus_eval/evaluate.rs"]
 mod evaluate;
+#[path = "corpus_eval/multiclass.rs"]
 mod multiclass;
+#[path = "corpus_eval/process.rs"]
 mod process;
+#[path = "corpus_eval/runner.rs"]
 mod runner;
 
 use args::flag_value;
@@ -494,4 +500,5 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
+#[path = "corpus_eval/tests.rs"]
 mod tests;

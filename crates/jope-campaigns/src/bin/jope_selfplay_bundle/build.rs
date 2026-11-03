@@ -140,5 +140,6 @@ pub(crate) fn clean_detached_commit(source: &Path) -> Result<String> {
     Ok(commit)
 }
 
+#[path = "build/inputs.rs"]
 mod inputs;
 pub(crate) use inputs::*;

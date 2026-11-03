@@ -332,6 +332,7 @@ fn evaluate_generation(
     Ok(())
 }
 
+#[path = "aspfm_recovery_evolve/campaign.rs"]
 mod campaign;
 use campaign::{build_campaigns, integrate, run_campaign};
 

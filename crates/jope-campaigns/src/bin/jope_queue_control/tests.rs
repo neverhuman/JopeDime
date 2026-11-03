@@ -32,5 +32,7 @@ fn seed(semantic: &str, mean: f64, dl_origin: bool) -> SeedRow {
     }
 }
 
+#[path = "tests/mutation_tests.rs"]
 mod mutation_tests;
+#[path = "tests/queue_tests.rs"]
 mod queue_tests;

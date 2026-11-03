@@ -1,5 +1,6 @@
 use super::*;
 
+#[path = "ingest/reports.rs"]
 mod reports;
 pub(crate) use reports::{derive_annotations, ingest_truncations, open_db, recompute_flags};
 

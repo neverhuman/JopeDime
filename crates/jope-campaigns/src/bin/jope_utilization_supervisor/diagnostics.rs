@@ -238,5 +238,6 @@ pub(crate) fn tail_bytes(path: &Path, limit: u64) -> Option<Vec<u8>> {
     Some(bytes)
 }
 
+#[path = "diagnostics/diagnose.rs"]
 mod diagnose;
 pub(crate) use diagnose::*;

@@ -102,6 +102,7 @@ pub(crate) fn production_task_v3(
     })
 }
 
+#[path = "execution/render.rs"]
 mod render;
 pub(crate) use render::render_spec;
 

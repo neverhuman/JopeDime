@@ -235,9 +235,12 @@ fn seed_from(tag: &str) -> u64 {
 
 /// Headerless numeric CSV, target in the final column (the registry contract:
 /// meta.json `headers_removed_from_csv: true`, `target_is_final_column: true`).
+#[path = "jope_strategy_screen/evaluation.rs"]
 mod evaluation;
+#[path = "jope_strategy_screen/search.rs"]
 mod search;
 #[cfg(test)]
+#[path = "jope_strategy_screen/tests.rs"]
 mod tests;
 
 #[allow(unused_imports)]
@@ -290,7 +293,9 @@ struct GenerationStat {
     invalid_members: usize,
 }
 
+#[path = "jope_strategy_screen/final_cv.rs"]
 mod final_cv;
+#[path = "jope_strategy_screen/screen.rs"]
 mod screen;
 
 use final_cv::final_cv;
