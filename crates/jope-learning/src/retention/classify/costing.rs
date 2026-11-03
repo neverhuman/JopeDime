@@ -30,7 +30,7 @@ pub(crate) fn is_live(max_last_modified: Option<&str>, as_of: u64, window_h: u64
 }
 
 /// The group's exact last write, when an unchanged inventory listed its objects.
-fn exact_max<'a>(f: &Facts<'a>) -> Option<&'a str> {
+pub(super) fn exact_max<'a>(f: &Facts<'a>) -> Option<&'a str> {
     if f.inv_fresh {
         f.inv.and_then(|i| i.max_last_modified.as_deref())
     } else {
