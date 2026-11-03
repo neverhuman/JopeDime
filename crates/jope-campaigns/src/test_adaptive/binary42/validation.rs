@@ -1,3 +1,5 @@
+use super::publication::collect_artifacts;
+use super::worker_models::GenerationCheckpoint;
 use super::*;
 
 pub(crate) fn validate_shard_accounting(
