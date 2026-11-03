@@ -13,7 +13,6 @@ use jope_bench::task::Task;
 use jope_bench::{DEFAULT_FOLDS, DEFAULT_SEED};
 
 /// Ceiling on the default `run --workers`: the agreed per-host CPU budget, so a bare run on a
-
 pub(crate) const DEFAULT_MAX_WORKERS: usize = 20;
 
 /// Rayon threads for `run`: an explicit `--workers` as given (at least 1); otherwise the available
