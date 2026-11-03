@@ -16,7 +16,7 @@ use jope_dime_regressor::paths;
 
 mod aggressive;
 mod args;
-mod commands;
+pub(crate) mod commands;
 mod core;
 mod data;
 // frozen, hash-pinned module; bytes immutable until unfrozen
