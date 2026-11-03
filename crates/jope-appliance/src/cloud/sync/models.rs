@@ -49,7 +49,7 @@ pub fn publish_model(run: &str, model: &Path) -> Result<String> {
         c.origin
     ))
 }
-fn imported(c: &Connection, cloud: &str) -> bool {
+pub(super) fn imported(c: &Connection, cloud: &str) -> bool {
     let result = (|| -> Result<()> {
         anyhow::ensure!(uuid(cloud), "invalid run");
         let path = account_root(c)?

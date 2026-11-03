@@ -39,7 +39,7 @@ pub fn run_entries(
                     continue;
                 }
             }
-            let here = imported(&c, id);
+            let here = super::models::imported(&c, id);
             entries.push(Entry {
                 id: id.into(),
                 status: row["metadata"]["status"]
@@ -58,7 +58,7 @@ pub fn run_entries(
                 .as_str()
                 .filter(|id| uuid(id))
                 .context("invalid cloud identity")?;
-            let here = imported(&c, id);
+            let here = super::models::imported(&c, id);
             entries.push(Entry {
                 id: id.into(),
                 status: format!(
