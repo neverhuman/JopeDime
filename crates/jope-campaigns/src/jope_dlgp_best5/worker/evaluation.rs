@@ -390,7 +390,7 @@ impl Best5EvaluationContext {
         Ok(evaluated)
     }
 
-    fn replace_with_derived_predictor(
+    pub(super) fn replace_with_derived_predictor(
         &mut self,
         dataset: &DatasetTableV1,
         predictor: FrozenPredictorV1,

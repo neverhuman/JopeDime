@@ -3,6 +3,11 @@ use super::evidence::{
     portfolio_finalist_selection, rank_evidence,
 };
 use super::*;
+use crate::jope_generalized_gp::{GenomeOriginV1, PopulationMemberV1};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::Path,
+};
 
 /// Runs one isolated dataset × arm × seed search. Every generation evaluates
 /// exactly 80 members on its matching split; archive and CV7 backfills are
