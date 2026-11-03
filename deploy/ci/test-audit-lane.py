@@ -129,6 +129,9 @@ class AuditLaneTests(unittest.TestCase):
         self.base = Path(self.temp.name)
         self.repo = self.base / "repo"
         self.repo.mkdir()
+        tools = self.repo / "tools"
+        tools.mkdir()
+        (tools / "check_evidence_exclusions.py").write_text("raise SystemExit(0)\n")
         names = ["ops/ci/jankurai.sh", "deploy/ci/audit-source.py"]
         if (ROOT / "deploy/ci/verify-audit-report.py").exists():
             names.append("deploy/ci/verify-audit-report.py")

@@ -249,7 +249,7 @@ fn engine_provider_requires_native_inputs() {
         context
             .observe(0, &["(pipe X (ridge))".into()], &[])
             .is_err(),
-        "Engine provider accepted fabricated features without a native input closure"
+        "Engine provider accepted forged features without a native input closure"
     );
     assert_eq!(
         calls.load(Ordering::SeqCst),
