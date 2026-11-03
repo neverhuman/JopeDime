@@ -1,6 +1,6 @@
 # JAIN same-run Blender status
 
-2026-11-03 · branch `codex/blender-fused-first-render` · native source **`f035969e68f4ab37d692d15972d60a900d2049b9`** · PR #2071/`v1/fastlane` protected.
+2026-11-03 · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114) · branch `codex/blender-fused-first-render` · native source **`f035969e68f4ab37d692d15972d60a900d2049b9`** · PR #2071/`v1/fastlane` protected.
 
 ## Current authority and design
 
@@ -79,7 +79,7 @@ These are rendered stills, not an encoded video or user-approved final design. T
 ## Remaining work and handoff
 
 1. Deliver the three rendered v3 stills and collect user design feedback. Rendering, receipt binding and nonsequential saved-scene reopen now pass; design approval remains a separate gate. Complete-source artifacts and cue frames remain available for further paused inspection without rerendering a video.
-2. Root freezes offline tool/docs head, reruns current focused controls and full actual-run validation as required, records frame receipts and exact review scope, and opens the source-only PR. Local evidence does not imply hosted CI passed or a merge/release occurred.
+2. Draft PR #2114 is open. Source-only tool/docs implementation is committed and pushed; 28 focused controls and full six-run semantic validation passed at reviewed head `5066b3efe0a8a1b7b55d10086fc8487cad9d69f7`. The service tree is unchanged from native capture f035969. The final handoff-only documentation commit retains that proof; local evidence does not imply hosted CI passed or a merge/release occurred.
 3. Video, final editorial length, public sanitization/disclosure package and release qualification remain gated on design and lifecycle work. Protect PR #2071; keep raw traces/models/source-page assets and private GP-debug media outside the public PR.
 
 All earlier `native*`, separate `engine*`, old source-rate receipts, and prior layout screenshots remain preserved historical diagnostics. They are superseded by current same-run authority; do not splice their model/source/rate identities into this report. The earlier read-only review receipt remains historical; current semantic validation is the PASS receipt linked above.

@@ -1,8 +1,8 @@
 # JAIN: native same-run capture and complete-source Blender master plan
 
-Date: 2026-11-03. Branch: `codex/blender-fused-first-render`. Initial main base: `855639a54a563dbb7f6cef8a17ac2c10265f3c1c`. Current native capture/emitter source: **`f035969e68f4ab37d692d15972d60a900d2049b9`**. Display brand is **JAIN**; repository paths and native identifiers remain JopeDime.
+Date: 2026-11-03. Branch: `codex/blender-fused-first-render`. Initial main base: `855639a54a563dbb7f6cef8a17ac2c10265f3c1c`. [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114). Current native capture/emitter source: **`f035969e68f4ab37d692d15972d60a900d2049b9`**. Display brand is **JAIN**; repository paths and native identifiers remain JopeDime.
 
-[STATUS.md](STATUS.md) indexes current measured receipts, the saved v3 board and three rendered 4K stills, plus the passed nonsequential saved-scene reopen and remaining design/PR gates. [REVIEW_RECEIPT.json](REVIEW_RECEIPT.json) binds the exact source/artifact inventory and review state. The source implementation, a local fixture check, an actual runtime capture, a rendered still, hosted CI, and a finished film are separate completion states.
+[STATUS.md](STATUS.md) indexes current measured receipts, the saved v3 board and three rendered 4K stills, plus the passed nonsequential saved-scene reopen and remaining design and lifecycle gates. [REVIEW_RECEIPT.json](REVIEW_RECEIPT.json) binds the exact source/artifact inventory and review state. The source implementation, a local fixture check, an actual runtime capture, a rendered still, hosted CI, and a finished film are separate completion states.
 
 ## 1. Objective, decisions, and limits
 
