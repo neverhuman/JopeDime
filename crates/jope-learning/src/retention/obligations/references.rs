@@ -51,7 +51,7 @@ impl StrongPhysicalRef {
         Ok(())
     }
 
-    fn exact_version(&self) -> bool {
+    pub(super) fn exact_version(&self) -> bool {
         matches!(self.version_id, VersionId::Explicit(_))
     }
 }
@@ -71,7 +71,7 @@ pub struct ProvenanceRef {
 }
 
 impl ProvenanceRef {
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         ensure!(!self.schema.is_empty(), "provenance schema is missing");
         ensure!(!self.identity.is_empty(), "provenance identity is missing");
         ensure!(valid_digest(&self.sha256), "invalid provenance digest");

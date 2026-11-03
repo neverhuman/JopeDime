@@ -101,7 +101,7 @@ pub struct PinGeneration {
 }
 
 impl PinGeneration {
-    fn gaps(&self) -> Vec<String> {
+    pub(super) fn gaps(&self) -> Vec<String> {
         let mut gaps = self.unresolved.clone();
         if self.root_generation.is_empty() || self.pin_generation.is_empty() {
             gaps.push("root or pin generation identity is unknown".into());
@@ -157,7 +157,7 @@ impl PinGeneration {
         Ok(())
     }
 
-    fn promise_pins(&self) -> Result<BTreeMap<StrongPhysicalRef, BTreeSet<String>>> {
+    pub(super) fn promise_pins(&self) -> Result<BTreeMap<StrongPhysicalRef, BTreeSet<String>>> {
         let mut pinned = BTreeMap::<StrongPhysicalRef, BTreeSet<String>>::new();
         for promise in &self.promises {
             promise.validate()?;
