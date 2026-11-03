@@ -304,7 +304,7 @@ pub fn build_surrogate_offspring(
     generation: u32,
     master_seed: u64,
 ) -> Result<Vec<PopulationMemberV1>, String> {
-    if ranked.len() != 80 || !super::SEARCH_SEEDS.contains(&master_seed) {
+    if ranked.len() != 80 || !super::super::SEARCH_SEEDS.contains(&master_seed) {
         return Err("surrogate offspring requires 80 ranked genomes and seed 101 or 202".into());
     }
     for genome in ranked {

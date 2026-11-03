@@ -9,7 +9,7 @@ pub fn build_control_offspring(
     generation: u32,
     master_seed: u64,
 ) -> Result<Vec<PopulationMemberV1>, String> {
-    if ranked.len() != 80 || !super::SEARCH_SEEDS.contains(&master_seed) {
+    if ranked.len() != 80 || !super::super::SEARCH_SEEDS.contains(&master_seed) {
         return Err("control offspring requires 80 ranked genomes and seed 101 or 202".into());
     }
     let semantics = ranked
