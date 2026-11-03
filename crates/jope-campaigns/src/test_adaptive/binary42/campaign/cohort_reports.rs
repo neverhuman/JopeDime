@@ -5,7 +5,7 @@ pub(crate) fn summarize_dataset(
     spec: &FrozenDataset,
 ) -> Result<(DatasetValidationSummary, Vec<AllEvaluationIndexRecord>)> {
     let root = campaign_root(run_id, &spec.id);
-    let checkpoints = load_checkpoints(&root)?;
+    let checkpoints = super::super::indexes::load_checkpoints(&root)?;
     let complete = root.join("RUN_COMPLETE").exists();
     let exhausted = root.join("RUN_EXHAUSTED").exists();
     if complete && exhausted {
@@ -34,7 +34,7 @@ pub(crate) fn summarize_dataset(
         .map(|slot| &slot.member.semantic_sha256)
         .collect::<BTreeSet<_>>()
         .len();
-    let evaluations = evaluation_records(&checkpoints)
+    let evaluations = super::super::indexes::evaluation_records(&checkpoints)
         .into_iter()
         .map(|evaluation| AllEvaluationIndexRecord {
             dataset: spec.id.clone(),
