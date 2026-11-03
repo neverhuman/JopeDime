@@ -1,5 +1,37 @@
 {
   "items": {
+    "python:research/flywheel_selfplay/h239_subset/analysis.py": {
+        "bytes": 10524,
+        "sha256": "c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc",
+        "classification": {
+          "role": "research",
+          "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h239_subset/treatment.py": {
+        "bytes": 4306,
+        "sha256": "97045ebc9673a83c7b58e916862ae7ca4bd06b5508499a19888ae5a8f96ca4b7",
+        "classification": {
+          "role": "research",
+          "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h239_subset/runner.py": {
+        "bytes": 39045,
+        "sha256": "a5608fa3497d2d8e90a8860696fdb55c5c8e0984e3a899b6bec5f917526538e6",
+        "classification": {
+          "role": "research",
+          "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h239_subset/monitor.py": {
+        "bytes": 7935,
+        "sha256": "6d253474cb73a5d32722044fe70c7d4d846b3e89adec8ab7d3399db30f459ed7",
+        "classification": {
+          "role": "research",
+          "reason": "H239 owner-authorized CPU parameter-subset AdamW continuation; frozen DOPE, family FIT/SELECT/ASSESS boundaries, Native91 and TRAIN smoke, strict inference and A1 cooperative memory guard; no serving promotion."
+        }
+      },
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/analysis.py": {
       "bytes": 2167,
       "sha256": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
