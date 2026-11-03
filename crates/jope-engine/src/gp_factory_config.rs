@@ -44,14 +44,13 @@ fn python_int(value: &str) -> Result<usize> {
     let value = value.trim();
     let bytes = value.as_bytes();
     for (index, byte) in bytes.iter().enumerate() {
-        if *byte == b'_' {
-            if index == 0
+        if *byte == b'_'
+            && (index == 0
                 || index + 1 == bytes.len()
                 || !bytes[index - 1].is_ascii_digit()
-                || !bytes[index + 1].is_ascii_digit()
-            {
-                bail!("invalid literal for int() with base 10: '{value}'");
-            }
+                || !bytes[index + 1].is_ascii_digit())
+        {
+            bail!("invalid literal for int() with base 10: '{value}'");
         }
     }
     let compact = value.replace('_', "");
