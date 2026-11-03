@@ -160,7 +160,6 @@ impl PrepareArgs {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
 mod results;
 mod study;
 use results::*;
