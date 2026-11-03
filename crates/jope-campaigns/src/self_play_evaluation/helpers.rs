@@ -36,7 +36,7 @@ pub(super) fn finite(value: Option<&Value>) -> Option<f64> {
         .filter(|value| value.is_finite())
 }
 
-pub(super) fn field(row: &Value, key: &str) -> Option<&Value> {
+pub(super) fn field<'a>(row: &'a Value, key: &str) -> Option<&'a Value> {
     row.as_object()?.get(key)
 }
 

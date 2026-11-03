@@ -79,7 +79,11 @@ pub struct ScoredEvent {
 /// Port of `SelfPlayEvaluationMixin.evaluate_and_append`'s deterministic data path.
 /// Results are supplied as indexed values after the external ledger evaluator runs.
 pub fn evaluate_and_append(mut request: EvaluationRequest) -> std::io::Result<EvaluationSummary> {
-    let result_by_index: BTreeMap<usize, Value> = request.eval_results.iter().cloned().collect();
+    let result_by_index: BTreeMap<usize, Value> = request
+        .eval_results
+        .iter()
+        .map(|(index, value)| (*index, value.clone()))
+        .collect();
     let mut pool_index = BTreeMap::<String, usize>::new();
     for (index, row) in request.candidate_pool_rows.iter().enumerate() {
         if let Some(id) = field(row, "candidate_pool_id").and_then(Value::as_str) {
