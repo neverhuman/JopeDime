@@ -6,6 +6,9 @@ use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+/// Schema identifier for config values.
+pub const CONFIG_SCHEMA: &str = "jope.progress.config/v1";
+
 /// The approval state of the default [`Config`] values: the outbox limits (W8-T02) and the
 /// cadence (W8-T05) were adopted by owner delegation on 2026-09-26 (owner decision D6). This is
 /// reported beside them; it is not a setting, and no configuration file can change it.
