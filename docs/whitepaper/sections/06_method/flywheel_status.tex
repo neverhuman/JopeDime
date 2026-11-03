@@ -58,6 +58,26 @@ limits above.
   \label{fig:adapter-validation-trace}
 \end{figure}
 
+\paragraph{Pool-insertion cadence.}
+\Cref{fig:pool-insertion-cadence} measures the spacing of logged
+training-pool insertions. These events are distinct from adapter admissions;
+their timestamp gaps include intervening work and waits, rather than the
+runtime of an individual proposal.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_pool_insertion_cadence.pdf}
+  \caption{\textbf{Pool-insertion timestamps are unevenly spaced.}
+  The latest 101 complete insertion records at 10:51 UTC on 3 November
+  2026 span rounds 4051--4280 and yield all 100 adjacent timestamp gaps.
+  Each point maps to two consecutive journal records; all gaps are retained
+  without a duration cutoff. The vertical axis is symmetric-log with a linear region
+  within one second. These engineering timestamps include work and waits;
+  they do not measure proposal runtime, adapter admission or independent
+  learning gains. Scope: \cref{sec:method-status}.}
+  \label{fig:pool-insertion-cadence}
+\end{figure}
+
 \paragraph{The retained admission ledger.}
 \Cref{tab:admission-ledger} is the canonical chronology and count table.
 \Cref{fig:fw-latest-admissions,fig:fw-admission-margins} show its trajectory

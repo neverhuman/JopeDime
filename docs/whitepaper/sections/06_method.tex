@@ -6,10 +6,11 @@
 % Historical source notes are archived outside the paper tree.
 \section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
-The reference design specifies training a writer and separate ranking map
-on search-scored lists, then deploying the frozen writer for one proposal.
-The adapter record in \cref{sec:method-status} is a separate loop,
-with a distinct cost ledger (\cref{sec:price}) and evaluation.
+Search-scored lists supply the reference training targets for a writer
+and a separate ranking map. The proposed deployment protocol then freezes
+the writer and commits one proposal. The adapter record in
+\cref{sec:method-status} is a separate loop, with its own cost ledger
+(\cref{sec:price}) and evaluation.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 

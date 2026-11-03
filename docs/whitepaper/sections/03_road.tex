@@ -121,10 +121,8 @@ Language models also learn from feedback: human preferences
 \citep{christiano2017preferences,ouyang2022instructgpt} and rule-based
 checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
 
-This line of work motivates training on referee-scored play. For \EZ{},
-the next step is to define a game whose reward measures relative algorithm
-quality, then distinguish gains on training games from transfer to unseen
-families.
+This recipe needs a game whose referee compares algorithm performance.
+The next line of work shows how tasks acquire rules and executable referees.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:selfplay]{Self-play in 90 seconds}
