@@ -246,10 +246,10 @@ jobs:
     # Rust subprocess/timeout contracts need native x86-64; Rosetta returns exit 127
     # for a missing executable instead of ENOENT. Keep all three complete test slices on
     # existing native Linux slots, preserving every test and timeout.
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ fromJSON('[\"\", \"xbabe1-ci2\", \"xbabe2-ci\", \"xbabe1-ci\"]')[matrix.shard] }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ fromJSON('[\"\", \"xbabe1-ci2\", \"xbabe2-ci\", \"xbabe2-full\"]')[matrix.shard] }}"]
     timeout-minutes: 45
     # Three deterministic nextest slices of the unchanged selection, one per native jope-ci runner
-    # lane (xbabe1-ci2, xbabe2-ci, xbabe1-ci). All always finish so every failure is
+    # lane (xbabe1-ci2, xbabe2-ci, xbabe2-full). All always finish so every failure is
     # reported; the aggregate job proves (check_test_partition.py) that the slices select and
     # execute the unsharded rust-test set exactly once between them.
     strategy:
