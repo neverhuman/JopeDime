@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) struct CheckpointProvenance {
     pub(super) accepted_pointer_path: PathBuf,
     pub(super) accepted_pointer_sha256: String,

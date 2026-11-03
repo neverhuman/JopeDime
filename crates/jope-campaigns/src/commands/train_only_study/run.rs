@@ -1,3 +1,4 @@
+use super::evaluation::StudyEvalContext;
 use super::*;
 
 pub(crate) fn checkpoint_path(root: &Path, dataset: &str, generation: usize) -> PathBuf {
