@@ -18,9 +18,11 @@ and `load_r882_embedded`; a directory uses `load_r882_release`. Neither path acc
 unsigned replacement weights or test signing keys. A foreign executable's package
 can be inspected without executing it.
 
-The optional CSV directory contains `case-a.csv` and `case-b.csv`, each with exactly
-96 finite numeric rows and headers `x0,x1,x2,x3,target` (or `y`). Its bytes are kept
-unchanged. The production `random_split(96,76,20261103,"public-run/fit-v1")`
+The optional CSV directory contains 2–8 regular files named `case-a.csv` through
+`case-h.csv`, processed in filename order. Each has exactly 96 finite numeric rows
+and headers `x0,x1,x2,x3,target` (or `y`). Case filenames outside this range and
+nonregular case entries are refused; unrelated files are ignored. Their bytes are
+kept unchanged. The production `random_split(96,76,20261103,"public-run/fit-v1")`
 selects the 76 FIT rows. HOLDOUT rows never enter descriptor extraction. Without
 this argument, the example generates two deterministic 96-row all-FIT diagnostic
 tables. Neither mode is a benchmark or quality qualification.
@@ -33,7 +35,7 @@ ranker calls caused a product run's exported winner.
 
 `trace.json` is private evidence, not a public render package. It includes
 checkpoint-derived values, native affine operands/outputs and ranker internals.
-The output manifest is renamed into place only after both cases pass. Existing
+The output manifest is renamed into place only after every case passes. Existing
 captures are refused. `source` and `tokens_per_second` remain null because this
 example performs neither source emission nor complete product execution.
 

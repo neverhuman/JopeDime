@@ -94,6 +94,35 @@ fn stages_same(a: &StageOutput, b: &StageOutput) -> bool {
         && same(&a.mask, &b.mask)
 }
 
+fn case_ids(input: Option<&Path>) -> Result<Vec<String>> {
+    let Some(input) = input else {
+        return Ok(vec!["case-a".into(), "case-b".into()]);
+    };
+    let mut ids = Vec::new();
+    for entry in fs::read_dir(input)? {
+        let entry = entry?;
+        let name = entry.file_name();
+        let Some(name) = name.to_str() else { continue };
+        if name.starts_with("case-") && name.ends_with(".csv") {
+            ensure!(
+                name.len() == 10 && (b'a'..=b'h').contains(&name.as_bytes()[5]),
+                "CSV cases must use safe names case-a.csv through case-h.csv"
+            );
+            ensure!(
+                entry.file_type()?.is_file(),
+                "case CSV must be a regular file"
+            );
+            ids.push(name.trim_end_matches(".csv").to_owned());
+        }
+    }
+    ids.sort();
+    ensure!(
+        (2..=8).contains(&ids.len()),
+        "CSV directory must contain 2..8 cases"
+    );
+    Ok(ids)
+}
+
 fn main() -> Result<()> {
     let args = std::env::args_os().skip(1).collect::<Vec<_>>();
     ensure!(
@@ -102,6 +131,7 @@ fn main() -> Result<()> {
     );
     let asset_path = Path::new(&args[0]);
     let out = Path::new(&args[1]);
+    let ids = case_ids(args.get(2).map(Path::new))?;
     ensure!(
         !out.join("trace.json").exists(),
         "refuse to replace an existing capture"
@@ -132,8 +162,7 @@ fn main() -> Result<()> {
     }
     fs::create_dir_all(out)?;
     let mut cases = Vec::new();
-    for index in 0..2 {
-        let id = if index == 0 { "case-a" } else { "case-b" };
+    for (index, id) in ids.iter().enumerate() {
         let (full_x, full_y, csv) = if let Some(input) = args.get(2) {
             read_table(&Path::new(input).join(format!("{id}.csv")))?
         } else {
@@ -279,4 +308,37 @@ fn main() -> Result<()> {
     fs::rename(out.join("trace.json.partial"), out.join("trace.json"))?;
     println!("PRIVATE trace: {}", out.join("trace.json").display());
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn case_catalog_preserves_default_and_sorts_up_to_eight_inputs() -> Result<()> {
+        assert_eq!(case_ids(None)?, ["case-a", "case-b"]);
+        let dir = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR"))?;
+        for letter in (b'a'..=b'h').rev() {
+            fs::write(dir.path().join(format!("case-{}.csv", letter as char)), "")?;
+        }
+        fs::write(dir.path().join("notes.json"), "{}")?;
+        let ids = case_ids(Some(dir.path()))?;
+        assert_eq!(ids.len(), 8);
+        assert_eq!(ids.first().unwrap(), "case-a");
+        assert_eq!(ids.last().unwrap(), "case-h");
+        Ok(())
+    }
+
+    #[test]
+    fn case_catalog_refuses_missing_unsafe_and_nonregular_inputs() -> Result<()> {
+        let dir = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR"))?;
+        fs::write(dir.path().join("case-a.csv"), "")?;
+        assert!(case_ids(Some(dir.path())).is_err());
+        fs::write(dir.path().join("case-z.csv"), "")?;
+        assert!(case_ids(Some(dir.path())).is_err());
+        fs::remove_file(dir.path().join("case-z.csv"))?;
+        fs::create_dir(dir.path().join("case-b.csv"))?;
+        assert!(case_ids(Some(dir.path())).is_err());
+        Ok(())
+    }
 }
