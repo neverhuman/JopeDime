@@ -269,7 +269,7 @@ fn build_command(standard: CxxStd) -> String {
     parts.join(" ")
 }
 
-fn write(directory: &Path, name: &str, contents: &str) -> Result<Artifact> {
+pub(super) fn write(directory: &Path, name: &str, contents: &str) -> Result<Artifact> {
     let path: PathBuf = directory.join(name);
     std::fs::create_dir_all(path.parent().context("artifact parent")?)?;
     std::fs::write(&path, contents).with_context(|| format!("write {}", path.display()))?;
