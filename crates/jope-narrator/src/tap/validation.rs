@@ -1,5 +1,5 @@
-use crate::LineageFact;
 use super::Links;
+use crate::LineageFact;
 
 pub(crate) fn validate_fact(fact: &LineageFact) -> anyhow::Result<()> {
     use LineageFact::*;
