@@ -16,7 +16,7 @@ pub(crate) struct V7Fit {
 /// Convert a row-major `h × width` buffer (keeping the first `keep` dims) into a column-major
 /// feat-core [`Matrix`].
 #[cfg(feature = "hyperion-cpu")]
-fn column_major_block(row_major: &[f32], h: usize, width: usize, keep: usize) -> Matrix {
+pub(super) fn column_major_block(row_major: &[f32], h: usize, width: usize, keep: usize) -> Matrix {
     let mut data = vec![0.0f32; h * keep];
     for r in 0..h {
         for d in 0..keep {
