@@ -1,0 +1,8 @@
+# LaTeX build leftovers and per-build working files; brief.pdf and data/ are kept.
+brief.aux
+brief.log
+brief.fls
+brief.fdb_latexmk
+brief.out
+data/evo/*.long.csv
+data/evo/best.txt

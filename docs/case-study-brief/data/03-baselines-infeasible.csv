@@ -1,0 +1,12 @@
+x,y,label,anchor
+470.596,0.00204352,CatBoost,south west
+529.545,0.00185849,XGBoost,north west
+537.303,0.00205959,CatBoost-1000,south west
+581.935,0.00195998,Ridge,north west
+603.521,0.00253957,LightGBM,south west
+2031.11,0.00232726,HistGB,north west
+22715.2,0.00277689,kNN,south west
+65573.3,0.00198708,RF,north west
+70668.6,0.00231037,ExtraTrees,south west
+1.09169e+06,0.00181685,AutoGluon,north west
+1.85187e+08,0.00160125,TabPFN,north west

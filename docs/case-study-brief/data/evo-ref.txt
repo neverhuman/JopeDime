@@ -1,0 +1,14 @@
+09|||LOW
+07|0.11575|CatBoost|LOW
+04|0.12427|kNN|LOW
+03|0.00185849|XGBoost, native-serving proxy|MEDIUM
+08|0.0247128|XGBoost|MEDIUM
+13|||HIGH
+11|3.69224e-07|Ridge, native-serving proxy|HIGH
+06|0.0540951|kNN|HIGH
+05|0.0022713|Ridge|HIGH
+02|0.368425|XGBoost|HIGH
+12|0.0252822|XGBoost, native-serving proxy|HIGH
+14|0.132617|HistGB, native-serving proxy|HIGH
+10|0.0419703|LightGBM, native-serving proxy|HIGH
+01|0.00800633|TabPFN|HIGH

@@ -1,0 +1,16 @@
+\textbf{Ours: DL seeds (A, 96 evals)} & \num{0.1187} & \num{5.48e+05} & 3 runs \\
+\textbf{Ours: DL seeds, extended (3 rounds)} & \num{0.1174} & \num{6.02e+05} & 3 runs \\
+\textbf{Ours: best-practice seeds (E, 96 evals)} & \num{0.1177} & \num{2.84e+05} & 3 runs \\
+\textbf{Ours: accuracy-only ranking (C)} & \num{0.117} & \num{1.07e+04} & 3 runs \\
+\midrule
+AutoGluon (best\_quality, 300 s) & \num{0.1141} & \num{647} & \textcolor{bad}{infeasible (0/1)} \\
+CatBoost (default) & \num{0.1157} & \num{3.89e+05} & feasible (3/3) \\
+CatBoost (1000 trees, depth 6) & \num{0.1161} & \num{4.26e+05} & feasible (3/3) \\
+scikit-learn HistGB & \num{0.1185} & \num{2.81e+05} & feasible (3/3) \\
+LightGBM (default) & \num{0.1185} & \num{5.62e+05} & feasible (3/3) \\
+Extra trees (300) & \num{0.1224} & \num{1.26e+04} & \textcolor{bad}{infeasible (0/3)} \\
+Random forest (300) & \num{0.123} & \num{1.55e+04} & \textcolor{bad}{infeasible (0/3)} \\
+XGBoost (default) & \num{0.1256} & \num{1.09e+06} & feasible (3/3) \\
+Ridge (CV) & \num{0.1265} & \num{1.78e+06} & feasible (3/3) \\
+k-NN (k=10) & \num{0.1331} & \num{3.01e+04} & \textcolor{bad}{infeasible (0/3)} \\
+Kumo Tabular small (NVIDIA, CPU) & \num{0.2652} & \num{170} & \textcolor{bad}{infeasible (0/1)} \\

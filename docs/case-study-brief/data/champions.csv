@@ -1,0 +1,58 @@
+case,arm,seed,accuracy,resource,objective,model_bytes,fit_seconds,p99_us,evaluations,genome
+03_taxi_fare_online_latency,A,7,0.0018921931702748846,2.3539999999999996,0.0018921931702748846,716754.0,0.01948538,2.3539999999999996,96,(pipe X (blom append=true) (robust_scale) (robust_scale) (qu
+03_taxi_fare_online_latency,A,13,0.0018810493581281342,2.936,0.0018810493581281342,1641054.0,0.019873444,2.936,96,(pipe X (quantile_bins append=true bins=8) (blom append=true
+03_taxi_fare_online_latency,A,11,0.0018793924522659017,3.427,0.0018793924522659017,1551859.0,0.01943807,3.427,96,(pipe X (quantile_bins append=true bins=7) (blom append=true
+03_taxi_fare_online_latency,C,7,0.0018921931702748846,2.6149999999999998,0.0018921931702748846,716754.0,0.041475867,2.6149999999999998,96,(pipe X (blom append=true) (robust_scale) (robust_scale) (qu
+03_taxi_fare_online_latency,C,11,0.001709500631759159,12097.396999999999,0.001709500631759159,37550960.0,0.061916221,12097.396999999999,41,(pipe X (cheb degree=4) (blom append=true) (pair_prod append
+03_taxi_fare_online_latency,C,13,0.0018386623953427033,3615.5480000000002,0.0018386623953427033,5301485.0,27.901732651,3615.5480000000002,52,(pipe X (standardize append=true) (poly_interact append=true
+03_taxi_fare_online_latency,E,7,0.0018994266440754662,1.222,0.0018994266440754662,3737.0,0.02084375,1.222,96,(pipe X (robust_scale append=true) (robust_scale) (row_stats
+03_taxi_fare_online_latency,E,11,0.001822154889316864,7.0729999999999995,0.001822154889316864,200923.0,0.218853778,7.0729999999999995,96,(pipe X (sigmoid append=true) (ensemble bins=255 depth=6 lam
+03_taxi_fare_online_latency,E,13,0.0018950876815976123,0.32099999999999995,0.0018950876815976123,4065.0,0.007371896,0.32099999999999995,59,(pipe X (quantile_bins append=true bins=20) (ridge))
+03_taxi_fare_online_latency,A-extended,11,0.0018467107621581234,3.4259999999999997,0.0018467107621581234,1305221.0,0.040220435,3.4259999999999997,167,(pipe X (robust_scale) (quantile_bins append=true bins=6) (b
+03_taxi_fare_online_latency,A-extended,13,0.0018201511952664388,2.264,0.0018201511952664388,949981.0,0.014000902,2.264,393,(pipe X (sigmoid append=true) (quantile_bins append=true bin
+03_taxi_fare_online_latency,A-extended,7,0.001858657384829538,4.118,0.001858657384829538,2032185.0,0.037832429,4.118,64,(pipe X (quantile_bins append=true bins=12) (robust_scale) (
+09_ultrawide_parsimony,A,7,0.1478400069254386,1.0,0.8463333718079925,4405474.0,3.446365619,,96,(pipe X (histgbm2 bags=3 col_subsample=0.8 leaves=63 lr=0.01
+09_ultrawide_parsimony,A,11,0.14417219087103017,1.0,0.8259566159501676,1381720.0,1.489320567,,96,(pipe X (histgbm2 bags=5 col_subsample=0.6 leaves=63 lr=0.08
+09_ultrawide_parsimony,A,13,0.14366361650145307,1.0,0.8231312027858504,454990.0,0.891180443,,96,(pipe X (histgbm2 bags=5 col_subsample=0.8 leaves=15 lr=0.05
+09_ultrawide_parsimony,C,11,0.14672618965525852,1.0,0.14672618965525852,603007.0,0.832803853,,96,(pipe X (histgbm2 bags=3 col_subsample=0.8 leaves=31 lr=0.02
+09_ultrawide_parsimony,C,7,0.13844425871735766,3.0,0.13844425871735766,2949648.0,2.771060115,,96,(pipe X (standardize) (hinge append=false knots=6) (histgbm2
+09_ultrawide_parsimony,C,13,0.14455854330038312,2.0,0.14455854330038312,376443.0,0.653556379,,96,(pipe X (cheb append=true degree=6) (histgbm2 bags=3 col_sub
+09_ultrawide_parsimony,E,7,0.1405519432938068,1.0,0.8058441294100377,533259.0,0.307731568,,96,(pipe X (ensemble bins=255 depth=6 lambda=1 lambda_frac=0.02
+09_ultrawide_parsimony,E,11,0.1405519432938068,1.0,0.8058441294100377,533259.0,0.393595263,,96,(pipe X (ensemble bins=255 depth=6 lambda=1 lambda_frac=0.02
+09_ultrawide_parsimony,E,13,0.14055194329450785,1.0,0.8058441294139326,533325.0,0.32646026,,96,(pipe X (ensemble bins=255 depth=6 lambda=1 lambda_frac=0.02
+09_ultrawide_parsimony,A-extended,11,0.12476537961613973,2.0,0.7431409978674431,355277.0,0.070383846,,1000,(pipe X (quantile_bins bins=13) (histgbm depth=6 lr=0.174430
+09_ultrawide_parsimony,A-extended,13,0.1231594160174764,2.0,0.734218977874869,317367.0,0.040335306,,1000,(pipe X (quantile_bins bins=13) (histgbm depth=5 lr=0.176230
+09_ultrawide_parsimony,A-extended,7,0.1357873053318307,1.0,0.7793739185101708,431240.0,0.710565189,,823,(pipe X (histgbm2 bags=4 col_subsample=0.00834972844836914 l
+02_energy_price_hourly_retrain_cost,A,7,0.012555740031916536,0.047999228000009,0.42684170290640217,86882.0,0.047146855,,96,(pipe X (row_stats append=true) (histgbm depth=7 lr=0.244267
+02_energy_price_hourly_retrain_cost,A,13,0.012450522689719364,0.00999536300000159,0.40617311100267767,4057.0,0.010306312,,96,(pipe X (cheb degree=7) (ridge_gcv))
+02_energy_price_hourly_retrain_cost,A,11,0.010965504284523808,0.02799924400000009,0.3664528737529675,39708331.0,0.027938268,,96,(pipe X (sigmoid append=true) (sigmoid append=true) (pair_pr
+02_energy_price_hourly_retrain_cost,C,13,0.009051984304210624,1.3678556030000095,0.009051984304210624,383256.0,1.367923154,,96,(pipe X (sigmoid append=true) (cheb append=true degree=8) (c
+02_energy_price_hourly_retrain_cost,C,11,0.007835610189434107,90.25578138100002,0.007835610189434107,3490087.0,90.33197592,,40,(pipe X (blom append=true) (target_bin_encode append=true bi
+02_energy_price_hourly_retrain_cost,C,7,0.01067145115166685,69.785713294,0.01067145115166685,16834229.0,69.79107101,,36,(pipe X (quantile_bins bins=32) (sigmoid append=true) (pair_
+02_energy_price_hourly_retrain_cost,E,7,0.0069797692718383654,0.07600264899997455,0.25970050611500894,431462.0,0.07623255,,96,(pipe X (histgbm bins=255 depth=6 lambda=2 lr=0.493615150545
+02_energy_price_hourly_retrain_cost,E,11,0.007042086013174515,0.07499663199996576,0.2612534431229162,454709.0,0.074838886,,96,(pipe X (histgbm bins=255 depth=6 lambda=1 lr=0.234882884403
+02_energy_price_hourly_retrain_cost,E,13,0.007257497039834727,0.07500056,0.2682039713729677,439191.0,0.074551151,,41,(pipe X (histgbm bins=255 depth=6 lambda=1 lr=0.3 min_leaf=1
+01_energy_price_fast_retrain,A,13,0.009888552510701993,0.275863765,0.009888552510701993,335290.0,0.275863765,,96,(pipe X (quantile_bins append=true bins=20) (quantile_bins a
+01_energy_price_fast_retrain,A,7,0.0114098171433827,0.003083283,0.0114098171433827,1086135.0,0.003083283,,96,(pipe X (ksmooth gamma=0.65724825587856 k=15))
+01_energy_price_fast_retrain,A,11,0.010347410331999748,0.413896587,0.010347410331999748,8458669.0,0.413896587,,94,(pipe X (pair_prod append=true topk=13) (blom) (blom) (stand
+01_energy_price_fast_retrain,C,13,0.009468965609687997,2.555132571,0.009468965609687997,585640.0,2.555132571,,96,(pipe X (cheb append=true degree=8) (cheb append=true degree
+01_energy_price_fast_retrain,C,7,0.01022860688320868,55.81648989,0.01022860688320868,15743376.0,55.81648989,,61,(pipe X (hinge append=true knots=8) (histgbm2 bags=5 col_sub
+01_energy_price_fast_retrain,C,11,0.009459590628796038,385.435752703,0.009459590628796038,10893480.0,385.435752703,,27,(pipe X (blom append=true) (poly_interact) (target_bin_encod
+01_energy_price_fast_retrain,E,11,0.009214816209906582,0.069266022,0.009214816209906582,490518.0,0.069266022,,9,(pipe X (histgbm bins=255 depth=6 lambda=1 lr=0.3 min_leaf=1
+01_energy_price_fast_retrain,E,13,0.009214816209906582,0.086045407,0.009214816209906582,490518.0,0.086045407,,38,(pipe X (histgbm bins=255 depth=6 lambda=1 lr=0.3 min_leaf=1
+01_energy_price_fast_retrain,E,7,0.009214816209906582,0.068543957,0.009214816209906582,490518.0,0.068543957,,46,(pipe X (histgbm bins=255 depth=6 lambda=1 lr=0.3 min_leaf=1
+01_energy_price_fast_retrain,A-extended,11,0.009685848403749088,0.216291647,0.009685848403749088,300953.0,0.216291647,,75,(pipe X (cheb degree=3) (histgbm depth=5 lr=0.14911016623704
+01_energy_price_fast_retrain,A-extended,13,0.009714824092063685,0.105559956,0.009714824092063685,3931639.0,0.105559956,,157,(pipe X (blom append=false) (blom append=false) (blom append
+01_energy_price_fast_retrain,A-extended,7,0.009199129770395265,0.388511288,0.009199129770395265,818996.0,0.388511288,,61,(pipe X (cheb degree=3) (winsor_clip q=0.09588389427934504)
+07_loan_rate_batch_throughput,A,11,0.11935712101737293,548396.0377075578,0.11935712101737293,22590.0,0.120369171,,14,(pipe X (hinge knots=8) (ridge))
+07_loan_rate_batch_throughput,A,13,0.11750130956873803,723931.2094634281,0.11750130956873803,58385.0,0.242503003,,42,(pipe X (histgbm depth=2 lr=0.20569689231070595 rounds=289))
+07_loan_rate_batch_throughput,A,7,0.11935712101737293,370771.9239872656,0.11935712101737293,22590.0,0.081691367,,29,(pipe X (hinge knots=8) (ridge))
+07_loan_rate_batch_throughput,C,11,0.11742106938186099,12064.308438585453,0.11742106938186099,2414875.0,15.942125114,,14,(pipe X (robust_scale) (robust_scale) (histgbm2 bags=5 leave
+07_loan_rate_batch_throughput,C,7,0.11694033526196804,2397.7331106808656,0.11694033526196804,8046816.0,44.961094701,,27,(pipe X (winsor_clip append=false q=0.05) (robust_scale appe
+07_loan_rate_batch_throughput,C,13,0.1166737979575408,10702.402130625213,0.1166737979575408,3174036.0,13.913212159,,28,(pipe X (robust_scale) (robust_scale) (quantile_bins bins=27
+07_loan_rate_batch_throughput,E,7,0.11776390009049717,284493.9896338296,0.11776390009049717,459473.0,0.790176692,,25,(pipe X (ensemble bins=255 depth=6 lambda=1 lambda_frac=0.02
+07_loan_rate_batch_throughput,E,11,0.11776390009049717,267021.2427396686,0.11776390009049717,459473.0,0.755971909,,14,(pipe X (ensemble bins=255 depth=6 lambda=1 lambda_frac=0.02
+07_loan_rate_batch_throughput,E,13,0.11750130956873803,820953.624753557,0.11750130956873803,58385.0,0.19641602,,39,(pipe X (histgbm depth=2 lr=0.20569689231070595 rounds=289))
+07_loan_rate_batch_throughput,A-extended,11,0.11733010157243422,509420.2155084527,0.11733010157243422,108112.0,0.19130501,,148,(pipe X (standardize) (winsor_clip append=false q=0.05124972
+07_loan_rate_batch_throughput,A-extended,13,0.11747591822070852,694311.6888633998,0.11747591822070852,100613.0,0.206236915,,124,(pipe X (histgbm depth=3 lr=0.09734108952095348 rounds=151))
+07_loan_rate_batch_throughput,A-extended,7,0.11742499482003017,602023.3971846484,0.11742499482003017,129964.0,0.249040172,,86,(pipe X (histgbm depth=3 lr=0.0843179619406082 rounds=204))

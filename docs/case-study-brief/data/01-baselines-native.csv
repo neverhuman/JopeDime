@@ -1,0 +1,11 @@
+x,y,label
+1.045,0.00957249,xgboost\_default
+1.7599,0.0100885,lightgbm\_default
+3.82743,0.00991692,sklearn\_hgb
+0.284262,0.014155,ridge\_cv
+33674,0.00878468,autogluon\_best
+3.39213,0.00945165,catboost\_default
+139.3,0.0102803,extra\_trees
+21.1903,0.0112816,knn10
+3.28348,0.0100511,catboost\_strong
+66.9944,0.0102149,random\_forest
