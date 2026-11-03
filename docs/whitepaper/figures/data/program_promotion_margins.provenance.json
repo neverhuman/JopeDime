@@ -1,0 +1,31 @@
+{
+  "schema": "whitepaper.program-promotion-margins-figure/v1",
+  "input_csv_sha256": "da21230b758146eecd797f7d14bf0e75e4e1080ac792fa66ba1539cb0c4d1890",
+  "source_receipt_sha256": "a105df7cba39ae1d48e9c9b43e84a972fae4c5e59cab7a5ca1feeaf585b1e7ba",
+  "generator_sha256": "3f487a4330ff348357cc7aa953181deba2e57ee270137388083652e7e02828f8",
+  "figure_sha256": "87a4e7508b0826798ccc3f648ccf94b170a14929208344e62f819b2292a783b4",
+  "source_window_sha256": "3405595e244e409e7a0209be953f0ee3d92655205b21e8d209c7696f89865915",
+  "rows": 101,
+  "plotted_points": 101,
+  "round_window": [
+    4097,
+    4335
+  ],
+  "source_line_window": [
+    3352,
+    3452
+  ],
+  "derivation": "Parse JSON numeric lexemes as Decimal; subtract old_utility from new_utility within each source record. Keep exact decimal values and every source-line identity; float conversion only for rendering.",
+  "scope": "Adaptive training-side admitted program/context records only. Positivity is required by admission and cannot estimate proposal-level success, adapter improvement or neural writer learning. Utility/source population closure remains separate.",
+  "vertical_scale": "logarithmic",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    3.25,
+    2.05
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_program_promotion_margins.py"
+}

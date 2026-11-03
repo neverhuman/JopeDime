@@ -38,5 +38,6 @@ figs:
 	python3 figures/scripts/make_pool_insertion_cadence.py
 	python3 figures/scripts/make_event_counters.py
 	python3 figures/scripts/make_pool_insertion_windows.py
+	python3 figures/scripts/make_program_promotion_margins.py
 clean:
 	latexmk -C
