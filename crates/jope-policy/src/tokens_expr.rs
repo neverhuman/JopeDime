@@ -78,7 +78,7 @@ fn tokenize(text: &str) -> Result<Vec<String>> {
         }
         if bytes[i] == b'-' {
             let previous = out.last().map(String::as_str);
-            let unary = previous.map_or(true, |token| "(,+-*/".contains(token));
+            let unary = previous.is_none_or(|token| "(,+-*/".contains(token));
             if unary
                 && i + 1 < bytes.len()
                 && (bytes[i + 1].is_ascii_digit() || bytes[i + 1] == b'.')
