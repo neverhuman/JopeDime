@@ -95,16 +95,15 @@ mod compatibility;
 mod gate;
 mod inference;
 
-pub(crate) use compatibility::{
-    read_admission, read_generation_zero, read_telemetry, ReadableAdmission, ReadableGeneration0,
-    ReadableTelemetry,
-};
-pub(crate) use gate::{
-    ArtifactReleaseV1, LearningWaveManifestV1, WaveGateKindV1, WaveGateReceiptV1,
-};
-pub(crate) use inference::{descending_f64, seeded_temperature_score, select_ranked};
+pub(crate) use compatibility::{read_admission, read_generation_zero, read_telemetry};
+#[cfg(test)]
+pub(crate) use compatibility::{ReadableAdmission, ReadableGeneration0, ReadableTelemetry};
+pub(crate) use gate::LearningWaveManifestV1;
+#[cfg(test)]
+pub(crate) use gate::{ArtifactReleaseV1, WaveGateKindV1, WaveGateReceiptV1};
+#[cfg(test)]
+pub(crate) use inference::ModelProposalV2;
 pub(crate) use inference::{
-    read_seed_inference, LegacySeedInferenceV1, ModelProposalV2, ModelRetentionBucketV2,
-    ModelRetentionReceiptV2, ReadableSeedInference, RetainedModelProposalV2,
-    SeedInferenceRequestV2, SeedInferenceResponseV2,
+    read_seed_inference, ModelRetentionBucketV2, ModelRetentionReceiptV2, ReadableSeedInference,
+    RetainedModelProposalV2, SeedInferenceRequestV2, SeedInferenceResponseV2,
 };
