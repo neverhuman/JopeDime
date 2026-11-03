@@ -50,7 +50,7 @@ pub(super) fn within_allocation(child: &TaskManifest, parent: &TaskManifest) -> 
     Ok(())
 }
 
-/// Persist the coordinator's dispatch intent before `Client::send_control` delivery.
+/// Persist the coordinator's dispatch intent before control delivery.
 pub fn freeze_dispatch_intent(path: &Path, command: &SubtaskCommand) -> Result<()> {
     let bytes = serde_json::to_vec(command)?;
     if path.exists() {
@@ -61,26 +61,6 @@ pub fn freeze_dispatch_intent(path: &Path, command: &SubtaskCommand) -> Result<(
         return Ok(());
     }
     create_immutable(path, &bytes)
-}
-/// Delivery acknowledgement is not completion; verify the durable receipt separately.
-pub async fn dispatch_subtask(
-    client: &Client,
-    job_id: jain_smartcluster::JobId,
-    intent: &Path,
-    command: &SubtaskCommand,
-) -> Result<jain_smartcluster::OperationAck> {
-    let payload = serde_json::to_vec(command)?;
-    ensure!(payload.len() <= 64 * 1024, "subtask command too large");
-    freeze_dispatch_intent(intent, command)?;
-    Ok(client
-        .send_control(jain_smartcluster::SendControlRequest {
-            job_id,
-            control: ControlMessage::Application {
-                name: CONTROL_NAME.to_owned(),
-                payload,
-            },
-        })
-        .await?)
 }
 pub(crate) fn write_immutable_record(path: &Path, value: &Value) -> Result<()> {
     create_immutable(path, &serde_json::to_vec(value)?)
@@ -119,11 +99,12 @@ mod control;
 mod runner;
 
 pub(crate) use control::{
-    record_control_stop, stop_control_with, ControlStopDeadline, ControlStopReason, DeadlineWatch,
-    ScratchGuard,
+    record_control_stop, stop_control_with, ControlStopReason, DeadlineWatch, ScratchGuard,
 };
+#[cfg(test)]
 pub(super) use control::{scratch_usage, ScratchUsage};
 pub(crate) use runner::execute;
+#[cfg(test)]
 pub(super) use runner::validate_dataset_packer;
 
 pub fn serve(path: &Path, sha: &str) -> Result<()> {
