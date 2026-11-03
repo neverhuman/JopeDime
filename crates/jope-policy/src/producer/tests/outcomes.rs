@@ -5,7 +5,7 @@
 fn recorded_outcomes_are_rederived_from_tokens() -> Result<()> {
     use crate::decode::{DrawOutcome, UniformOutcome};
     let vocabulary = crate::grammar::bind_vocabulary(
-        include_bytes!("../../../jope-engine/assets/grammar/featmath.json"),
+        include_bytes!("../../../../jope-engine/assets/grammar/featmath.json"),
         crate::CHECKPOINT_VOCABULARY_SHA256,
     )?;
     let (_, proposal) = filled_proposal();
