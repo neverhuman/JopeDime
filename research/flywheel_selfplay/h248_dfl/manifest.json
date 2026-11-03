@@ -65,9 +65,10 @@
     "research/flywheel_selfplay/h170_onecycle/treatment.py": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de"
   },
   "source_sha256": {
-    "PREREG.md": "327bd445fd20f8e69f0315f375a04c81d9846cc58ebb5326758467adf263deba",
-    "analysis.py": "f5ba23ded053593d18b71964a468402198f73dc33a3f64168a855e8c9723a6bf",
+    "PREREG.md": "c852bb3517187dc636461dadbaf06f069e56361a6188bffeebffa12d8d2d62d4",
+    "analysis.py": "5bd45453e789dcbf933680b4f54cb98ab6e333832be3dcc58af56014874e92ac",
     "calibrate.py": "6cb4dc32078dd5ee16d65292ec82f545052ee41fb2b02d3ad3706d482228968a",
+    "calibration-proof.json": "0640d1d37f5875558448ab43cb868139bcf0d37fa54b32685ee65574c972cc57",
     "fold_manifest.json": "2c8234f7107b1708bed089ba20065b7ccb909c1f1c6bc631b9589e4364392563",
     "metrics.schema.json": "9f70bb3acddea716b86fa2339df25e27bb044a01d336341d70855d3af8fc8483",
     "monitor.py": "fdd39b7ba97e2fb0957c31c43aa482ad10f83016ca862cc4434403b5711247c7",
@@ -75,7 +76,7 @@
     "runner.py": "c890d8a493db1d2bc4b90d8df68c3489252798edeb6fce38e268f485076e8042",
     "schedules.json": "961448d135979fde0cadc7421ae1287fdd5e489d413e99caf5d7f12fd55ddc87",
     "temperatures.json": "3ceb74bdca5041a06620d0f6cc6b0db09d0f7d5ec2aee7b3b8bcea796458a5e2",
-    "test_h248.py": "670cc97edefa15cd3965e390df9d86e764a0c67b8f3a57903c382920c17d5558",
+    "test_h248.py": "e65ea376080167bf523dc5801a704657920dca50cd6400cdb5416e4fee52e2c6",
     "treatment.py": "1ddc27fc360d7e40cc58450b3b9215fd3191e5c4b10c8c1133d6cc2d7ec752bc"
   },
   "host": "xbabe2 CPU48-51 nice19 numeric1 aggregate<=4 RSS4GiB H239A1",
@@ -120,5 +121,13 @@
     "weighting": "N_fit/(123*family_context_count), minibatch mean; DFL term only",
     "failure_cost": "worst finite valid full-context native cost+1; invalid gate only",
     "regret_minimum": "sampled24 candidates; labels detached"
+  },
+  "reporting_reference": {
+    "path": "/home/ubuntu/jope-rescue-20260921/h248-astra/inputs/archived-plateau-reference.json",
+    "sha256": "be48f4949001fd859b016cd731847a20dbe3b89fa19ba70cf5e587283e236914",
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+    "reference_mean": 1.1389572403748425,
+    "role": "Postprocessing only; never worker input; historical archived r3175 with failed H226 CPU parity retained; no new model evaluation",
+    "source_H245_metrics_commit": "f189e51e0225deba08e7c9a0d820332d34edef99"
   }
 }

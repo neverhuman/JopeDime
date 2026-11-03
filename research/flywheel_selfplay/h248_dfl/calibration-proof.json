@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "executed_archive_directory": "calibration/source-snapshot",
+  "formatting_only_for_calibration_path": true,
+  "sources": {
+    "calibrate.py": {
+      "executed_sha256": "21d09d26197cf8527dfa5db3fa660eac485b0feff3134ed1bc081627cfc0695e",
+      "semantic_ast_sha256": "4f8314ea4813b4e07a948e177bd3502f1a769a208245429de514114bc3579e24"
+    },
+    "runner.py": {
+      "executed_sha256": "d685169e0e8917a100150bcdc52e51d4cf67094ddcf15d4be807e25a17a85a0e",
+      "semantic_ast_sha256": "eb44c15fa7338ef9314de37330527dab542ae743481f615082f4548b3476ad4a"
+    },
+    "treatment.py": {
+      "executed_sha256": "500681dfe939e8e46336a7696519cef47f734d082a2019e79cbba17bbfeadbf0",
+      "semantic_ast_sha256": "8a340f177a669bcef9a6f9ac234d61fef6e715ce91b1998d3ab7f9ae512497c9"
+    }
+  }
+}

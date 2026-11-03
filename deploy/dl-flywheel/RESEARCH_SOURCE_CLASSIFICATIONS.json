@@ -1,8 +1,8 @@
 {
   "items": {
     "python:research/flywheel_selfplay/h248_dfl/analysis.py": {
-        "bytes": 10408,
-        "sha256": "f5ba23ded053593d18b71964a468402198f73dc33a3f64168a855e8c9723a6bf",
+        "bytes": 12087,
+        "sha256": "5bd45453e789dcbf933680b4f54cb98ab6e333832be3dcc58af56014874e92ac",
         "classification": {
           "role": "research",
           "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."

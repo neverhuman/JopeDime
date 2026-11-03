@@ -287,3 +287,17 @@ def test_manifest_and_schema():
         json.loads((HERE / "metrics.json").read_text()),
         json.loads((HERE / "metrics.schema.json").read_text()),
     )
+
+
+def test_archived_plateau_elo_ties_and_direction():
+    r = rows(3)
+    values = np.ones((3, 3, 4))
+    reference = np.ones(3)
+    j = stat.archived_plateau_elo(r, values, reference)
+    assert all(
+        v["median_rating"] == 1500 and v["ci95_lift"] == [0.0, 0.0]
+        for v in j["arms"].values()
+    )
+    values[:, :, 2] += 1.0
+    j = stat.archived_plateau_elo(r, values, reference)
+    assert j["arms"]["DFL_MIX"]["median_rating"] > 1500

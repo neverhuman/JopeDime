@@ -95,7 +95,14 @@ Report strict, unconstrained SELECT-best and **unconstrained step-40** panels,
 step-40 L2 drift over all adapter coordinates, harm families (loss >1e-4), and
 canonical Elo (r882=1500, 400 MM iterations, prior0.01, 1,000 family bootstrap draws).
 Compare DL-Val context means descriptively to historical plateau1.1389572; TRAIN
-OOF is a different panel. Shared fallbacks/identical predictions are disclosed.
+OOF is a different panel. Additionally, report pairwise Elo against the pinned,
+archived-only H201 r3175 vector (r3175=1500, 1,000 paired family draws, seed248151)
+for strict and step-40 DL-Val panels. That vector has the same evaluation identity,
+context order and exact archived r882 utilities as this study; its source/hash is
+in manifest.reporting_reference. This is publication-only postprocessing, excluded
+from optimization, temperature calibration, selection and advancement. H226 CPU
+r3175 replay still fails archived parity and is not used; no new model evaluation
+or CPU r3175 qualification is claimed, and historical winner-selection bias remains. Shared fallbacks/identical predictions are disclosed.
 Family bootstrap conditions on these fixed candidates and the exposed development
 panel; it does not establish untouched-test generalization.
 

@@ -265,3 +265,44 @@ def pseudoreplication(primary, secondary, unconstrained, unconstrained_val, cell
         for c in cells
     )
     return report
+
+
+def archived_plateau_elo(rows, panel, reference, seed=BOOT_SEED + 1):
+    """Descriptive archived-only comparator, never called for optimization/selection/advancement."""
+    values = np.asarray(panel, dtype=np.float64)
+    reference = np.asarray(reference, dtype=np.float64)
+    if (
+        values.shape != (3, len(rows), len(ALL_ARMS))
+        or reference.shape != (len(rows),)
+        or not np.isfinite(values).all()
+        or not np.isfinite(reference).all()
+    ):
+        raise ValueError("matched finite plateau panel required")
+    families = [r["family_id"] for r in rows]
+    n = len(set(families))
+    ix = np.random.default_rng(seed).integers(0, n, (1000, n))
+    out = {}
+    for ai, arm in enumerate(ALL_ARMS):
+        wins = np.stack(
+            [
+                family_wins(np.column_stack([reference, values[si, :, ai]]), families)
+                for si in range(3)
+            ]
+        )
+        observed = bt_ratings(wins.sum(axis=1))[:, 1]
+        boot = np.median(bt_ratings(wins[:, ix].sum(axis=2))[:, :, 1], axis=0)
+        out[arm] = dict(
+            per_seed_rating=observed.tolist(),
+            median_rating=float(np.median(observed)),
+            ci95_rating=np.quantile(boot, [0.025, 0.975]).tolist(),
+            per_seed_lift=(observed - 1500).tolist(),
+            median_lift=float(np.median(observed) - 1500),
+            ci95_lift=np.quantile(boot - 1500, [0.025, 0.975]).tolist(),
+        )
+    return dict(
+        arms=out,
+        reference_anchor=1500,
+        bootstrap_draws=1000,
+        boot_seed=seed,
+        role="DESCRIPTIVE_ARCHIVED_ONLY; not a new CPU r3175 qualification; historical winner selection remains",
+    )
