@@ -1,0 +1,38 @@
+{
+  "wave": "H256",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H256",
+    "status": "COMPLETE",
+    "arms": [
+      "r882",
+      "CONTROL",
+      "GC_AGC",
+      "AGC_ONLY"
+    ],
+    "seeds": [
+      256101,
+      256102,
+      256103
+    ],
+    "complete_cells": 15,
+    "baseline_mean": 1.1377941898164525,
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0...",
+    "primary_dlval": "DL-Val91 policy-mixture panel: contrasts {ARM_minus_r882, ARM_minus_CONTROL, GC_AGC_minus_AGC_ONLY}; holm_p (m=2: GC_AGC, AGC_ONLY) and advance (median > +0.002, LCB95 > 0, Holm p < .05, 3/3 seeds positive); median_elo, elo_ci95 (r882 = 1500), vs_plateau_best_by_seed, harm families",
+    "secondary_oof": "same on the 1,219-context/205-family TRAIN OOF panel",
+    "harm": "families with per-seed delta < -1e-4",
+    "plateau_best_r3175": "each arm DL-Val91 context mean vs 1.1389572 (descriptive)",
+    "memory_pauses": "pause/resume events with MemAvailable",
+    "full_metrics": "sha256 + S3 key of the full metrics.json",
+    "verdict": "ADVANCE iff GC_AGC or AGC_ONLY advances on primary_dlval, else NO_ADVANCE",
+    "diagnostic_step40": "the same summaries for every arm step-40 adapter before strict fallback (DL-Val91 and OOF)",
+    "cliff_context": "H152 gate-cliff DL-Val context #27, strict and step-40 mixtures (never excluded)",
+    "step40_drift": "L2 from r882 per cell and arm",
+    "optimizer_updates": 1800,
+    "agc_clip_fraction": "AGC-clipped units / unit evaluations per arm"
+  },
+  "optimizer_updates": 0
+}
