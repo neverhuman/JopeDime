@@ -187,7 +187,7 @@ pub(crate) fn validate(
     Ok(path)
 }
 
-pub(crate) fn require_validated_score_gate(
+pub(super) fn require_validated_score_gate(
     study_root: &Path,
     run_id: &str,
     sotarena_root: &Path,
