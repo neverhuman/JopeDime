@@ -232,11 +232,13 @@ pub(super) fn handle_generate_gate_proposals(request: &Value, root: &Path) -> Re
         // the full attempt family: a completed attempt wins, then the highest
         // live one; only then does a failed latest attempt earn a successor.
         let base_spec = render_attempt(1)?;
+        let base_spec_value = base_spec.to_value();
+        let base_job_id = get_str(&base_spec_value, "job_id")?.to_owned();
         let id_for = |attempt: u32| {
             if attempt > 1 {
-                format!("{}-r{attempt}", base_spec.job_id)
+                format!("{base_job_id}-r{attempt}")
             } else {
-                base_spec.job_id.clone()
+                base_job_id.clone()
             }
         };
         let states: Vec<Option<String>> = (1..=MAX_PROPOSAL_ATTEMPTS)
@@ -274,14 +276,16 @@ pub(super) fn handle_generate_gate_proposals(request: &Value, root: &Path) -> Re
         } else {
             render_attempt(attempt)?
         };
-        if needs_submit && job_state(&jobs, &spec.job_id).is_none() {
-            check_and_submit(&spec.spec.to_string_lossy())?;
+        let spec_value = spec.to_value();
+        let spec_job_id = get_str(&spec_value, "job_id")?;
+        if needs_submit && job_state(&jobs, spec_job_id).is_none() {
+            check_and_submit(get_str(&spec_value, "spec")?)?;
         }
-        if spec.checkpoint_sha256 != digest {
+        if get_str(&spec_value, "checkpoint_sha256")? != digest {
             bail!("proposal spec checkpoint content drift");
         }
         let mut row = checkpoint.clone();
-        for (key, value) in spec.to_value().as_object().unwrap() {
+        for (key, value) in spec_value.as_object().unwrap() {
             row[key] = value.clone();
         }
         rendered.push(row);
