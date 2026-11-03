@@ -164,7 +164,6 @@ fn planned(manifest: &Decoded<RunManifest>, work_id: &str) -> Result<()> {
 
 mod checkpoint;
 /// A published engine corpus as a W8 corpus manifest.
-#[derive(Clone, Debug)]
 mod corpus;
 mod search;
 
