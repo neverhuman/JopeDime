@@ -77,11 +77,9 @@ fn fabric_enabled_fails_closed() {
     let source = NO_PRODUCT_WORKER.replacen("enabled = false", "enabled = true", 1);
     let error = parse(&source).expect_err("fabric must not start");
     assert!(matches!(error, ConfigError::FabricNotImplemented));
-    assert!(
-        error
-            .to_string()
-            .contains("fabric networking is not implemented in this build")
-    );
+    assert!(error
+        .to_string()
+        .contains("fabric networking is not implemented in this build"));
 }
 
 #[test]
