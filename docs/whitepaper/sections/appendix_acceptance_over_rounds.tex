@@ -1,17 +1,14 @@
-\subsection{Recorded-best trajectory and cumulative acceptance rate}\label{app:acceptance-over-rounds}
+\subsection{Recorded-best trajectory and cumulative acceptance rate}\label{app:acceptance-over-rounds}\label{app:record-windows}
 
-\Cref{fig:fw-acceptance-over-rounds} combines the \num{1889} consecutive
-admission evaluations across rounds 775--2663
-with their cumulative acceptance rate and candidate utility-shortfall
-distribution. The left panel tracks candidate proposals against the
-post-decision recorded-best validation pool utility across the two strict
-improvements (rounds 785 and 859, reaching 1.1376 and 1.1378 from the
-initial 1.1074) and the two accepted ties (rounds 782 and 882). The center
-panel tracks the cumulative share of elapsed rounds accepted up to each
-round: the cumulative rate reaches 18.18\% at round 785 ($2/11$ rounds),
-stands at 3.70\% at the last accepted tie ($4/108$ at round 882) and
-declines across the \num{1781} subsequent rejected rounds to 0.21\%
-($4/\num{1889}$) by round 2663.
+\Cref{fig:fw-acceptance-over-rounds} covers \num{1889} decisions in
+rounds 775--2663. From 1.1074, the recorded best reaches 1.1376 at round
+785 and 1.1378 at 859; rounds 782 and 882 are accepted ties.
+The cumulative accepted share reaches 18.18\% ($2/11$) at round 785,
+3.70\% ($4/108$) at round 882 and 0.21\% ($4/\num{1889}$) after
+\num{1781} further rejections. Each round contributes once to the
+utility-shortfall distribution, without counting independent tasks or
+distinct programs. Cross-harness comparisons require matched data,
+normalization and scoring protocols.
 
 \begin{figure*}[t]
   \setlength{\abovecaptionskip}{4pt}

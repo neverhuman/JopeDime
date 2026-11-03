@@ -147,17 +147,14 @@ qualification pending. The separate adapter snapshot is in
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
 The admission ledger (\cref{app:latest-admissions}) opens this appendix.
-Adapter-decision windows (\cref{app:acceptance-over-rounds,app:record-windows,app:candidate-retained-trace,app:recent-admission-trajectory,app:rolling-admissions,app:selection-changes,app:retained-utility-lift,app:admission-outcomes,app:live-adapter-decisions})
-follow, then program-incumbent events and operating clocks
-(\cref{app:earlier-operating-records,app:development-time,app:event-counts,app:subsequent-window,app:promotions-per-hour,app:round-throughput,app:latest-event-rates,app:latest-round-clock,app:program-gain-distribution,app:current-program-clock})
-and historical GP search diagnostics (\cref{app:historical-search}).
-Captures retain their own dates and populations; scope and decision rules
-follow \cref{sec:method-status}.
+Adapter-decision windows precede program-incumbent events and operating
+clocks (\cref{app:round-throughput}), then historical GP diagnostics
+(\cref{app:historical-search}). Captures retain their own dates and
+populations; scope and decision rules follow \cref{sec:method-status}.
 
 % Adapter admission records, ordered by their role and capture cutoff.
 \input{sections/appendix_latest_admissions}
 \input{sections/appendix_acceptance_over_rounds}
-\input{sections/appendix_record_windows}
 \input{sections/appendix_candidate_retained_trace}
 \input{sections/appendix_recent_admission_trajectory}
 \input{sections/appendix_rolling_admissions}
@@ -170,15 +167,11 @@ follow \cref{sec:method-status}.
 % Program-incumbent events and operating clocks.
 \input{sections/appendix_operating_records}
 \input{sections/appendix_completed_time}
-\input{sections/appendix_event_counts}
 \input{sections/appendix_subsequent_window}
-\input{sections/appendix_promotions_per_hour}
-\input{sections/appendix_round_throughput}
 \input{sections/appendix_window_operating_summary}
 \input{sections/appendix_latest_round_clock}
-\input{sections/appendix_program_gain_distribution}
-\input{sections/appendix_current_program_clock}
 
-\FloatBarrier
+\input{sections/appendix_round_throughput}
+
 % Historical search diagnostics are distinct from the live admission record.
 \input{sections/appendix_historical_search}
