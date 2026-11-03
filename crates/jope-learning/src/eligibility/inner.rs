@@ -4,7 +4,6 @@ use super::*;
 use jope_pipeline::{prepared_data::DevelopmentData, search_plan::SelectionPlan};
 
 mod candidate;
-use candidate::CandidateFreeze;
 pub use candidate::{register_inner_candidate, InnerEvidence};
 
 pub const INNER_SCHEMA: &str = "jope.teaching-inner-partition/v1";
