@@ -14,9 +14,6 @@ pub const RETENTION_PLAN_V2_SCHEMA: &str = "jope.retention-plan/v2";
 /// Configured upper or lower bound for max inventory age secs.
 pub const MAX_INVENTORY_AGE_SECS: u64 = 24 * 60 * 60;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-/// `ValueWeights` is a record for the value weights contract in this module: Read-only value and packing review plans. This module returns data in memory and has no storage or filesystem effects; applying a recommendation belongs to a later reviewed tool.
 mod plan_build;
 mod replacement;
 mod types;
