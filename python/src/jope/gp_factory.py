@@ -39,28 +39,34 @@ from pathlib import Path
 from typing import Any
 
 from .champion_miner import build_champions
-from .gp_factory_io import _atomic_json
 from .data.active_v3 import robust_score
-from .prime_staging import stage_read_only_dataset
-from .propose import embedding_from_vs, target_summary_from_vs
-from .schema import TrainingRow
-
 from .gp_factory_config import (
+    _PRIME_CONFIG,
     CANDIDATE_POOLS_GLOB,
     GP_HOST,
-    GP_HOST2,
-    GP_HOST2_WORKERS,
     GP_WORK_ROOT,
     GPU_CACHE,
     JAIN_BIN,
     MODEL_NAME,
     MODEL_SEED_RECENT,
     REG_ROOT,
-    SELF_ROWS_GLOB,
     SELF_ROWS_GLOBS,
-    _PRIME_CONFIG,
     _gp_host_map,
 )
+from .gp_factory_config import (
+    GP_HOST2 as GP_HOST2,
+)
+from .gp_factory_config import (
+    GP_HOST2_WORKERS as GP_HOST2_WORKERS,
+)
+from .gp_factory_config import (
+    SELF_ROWS_GLOB as SELF_ROWS_GLOB,
+)
+from .gp_factory_io import _atomic_json
+from .prime_staging import stage_read_only_dataset
+from .propose import embedding_from_vs, target_summary_from_vs
+from .schema import TrainingRow
+
 POOL_SEEDS_PER_DATASET = 8
 
 
@@ -275,7 +281,7 @@ class GpFactory:
         if missing:
             try:
                 model = self._fresh_policy_model()
-            except (Exception,) as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001
                 self.log(f"[factory] WARNING: --fresh-proposals disabled — cannot load {ckpt}: {exc!r}")
                 self.fresh_proposals_ckpt = None
                 return {}
@@ -304,7 +310,7 @@ class GpFactory:
                         if g and g not in genomes:
                             genomes.append(g)
                     cache[(batch, h)] = genomes
-                except (Exception,) as exc:  # noqa: BLE001
+                except Exception as exc:  # noqa: BLE001
                     self.log(f"[factory] WARNING: fresh proposal failed for {h}: {exc!r}")
                     cache[(batch, h)] = []
         return {h: cache[(batch, h)] for h in hashes if cache.get((batch, h))}

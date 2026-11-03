@@ -168,5 +168,3 @@ def fit_batched_platt_calibration_gpu(
         b = (b - db).clamp(-15.0, 15.0)
 
     return a, b
-
-
