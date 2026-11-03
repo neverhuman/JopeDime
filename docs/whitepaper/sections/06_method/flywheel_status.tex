@@ -44,8 +44,8 @@ and pre-decision margins.
 \begin{figure*}[!t]
   \centering
   \includegraphics[width=\linewidth,height=1.65in,keepaspectratio]{figures/fig_fw_latest_admissions.pdf}
-  \caption{\textbf{Separate adapter admission trajectory.}
-  The captured prefix in \cref{tab:admission-ledger}: blue is post-decision
+  \caption{\textbf{The adapter admits eight candidates across the captured prefix.}
+  In \cref{tab:admission-ledger}, blue is the post-decision
   retained best; grey marks rejected candidates, red stars strict gains
   and hollow diamonds exact ties. Decisions use unrounded logged values.
   Scope: \cref{sec:method-status}.}
@@ -60,14 +60,14 @@ operating-rate views for separate retained windows.
 \begin{figure*}[!t]
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_promotions_per_hour.pdf}
-  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions). Scope: \cref{sec:method-status}.}
+  \caption{\textbf{Training-program promotions continue while the retained adapter holds flat.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions). Scope: \cref{sec:method-status}.}
   \label{fig:fw-promotions-per-hour}\label{fig:fw-program-promotions}
 \end{figure*}
 
 \begin{figure*}[!t]
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_round_throughput.pdf}
-  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
+  \caption{\textbf{Whole-round throughput varies while retained adapter utility holds flat.}
   Left: candidate adapter validation utility and the recorded best.
   Right: distinct training contexts divided by the full wall time of each
   completed round (contexts per second). The rates include all work and waits
