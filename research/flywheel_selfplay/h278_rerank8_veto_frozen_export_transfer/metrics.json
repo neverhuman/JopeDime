@@ -1,0 +1,17 @@
+{
+  "wave": "H278",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H278",
+    "verdict": "ADOPT_SHADOW_PASS / NOT_TRANSFERRED / P2_BLOCKED",
+    "export": "fit-lock sha, per-seed selected n_est/margin/tau, model file sha256s, S3 keys + VersionIds, dev feature packet sha256s, code sha256s",
+    "p1_r882_supporting": "per-seed family mean/median gain, pooled CI95, W/T/L (ties not wins), Elo (r882 = 1500), invalid picks, harmed families, fam-769243ee",
+    "p2_r3175": "BLOCKED with reason, or ADOPTION GATE; EXPLORATORY readout on CPU-reproducible r3175 pool",
+    "r3175_rescore": "cpu mean, stored mean, per-context equality",
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0..."
+  }
+}
