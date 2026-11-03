@@ -1,16 +1,9 @@
 use super::*;
 
+#[derive(Default)]
 pub(super) struct FairQueue {
     datasets: VecDeque<String>,
     jobs: BTreeMap<String, VecDeque<WorkerJob>>,
-}
-impl Default for FairQueue {
-    fn default() -> Self {
-        Self {
-            datasets: VecDeque::new(),
-            jobs: BTreeMap::new(),
-        }
-    }
 }
 impl FairQueue {
     pub(super) fn push(&mut self, dataset: String, job: WorkerJob) {
