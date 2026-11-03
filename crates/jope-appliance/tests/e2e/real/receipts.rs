@@ -186,7 +186,7 @@ pub(crate) fn ndjson_receipt(
     Ok(())
 }
 
-fn wait_complete<T: Transport>(client: &T, run: &jope_api::ids::RunId) -> Result<()> {
+pub(super) fn wait_complete<T: Transport>(client: &T, run: &jope_api::ids::RunId) -> Result<()> {
     let deadline = Instant::now() + Duration::from_secs(150);
     loop {
         let snapshot = client.run_status(run)?;
@@ -202,7 +202,7 @@ fn wait_complete<T: Transport>(client: &T, run: &jope_api::ids::RunId) -> Result
     }
 }
 
-fn start_independent<T: Transport>(
+pub(super) fn start_independent<T: Transport>(
     client: &T,
     spec: &RunSpec,
     key: &str,
