@@ -49,8 +49,7 @@ mod tests;
 
 pub use cache_registry::*;
 pub use cache_types::*;
-pub use encoder_process::*;
-pub use encoding::*;
+pub(crate) use encoding::FoldEncodingScope;
 pub use feature_ops::*;
 pub use folds::*;
 pub use model::*;
@@ -59,7 +58,6 @@ use precomputed::{
     load_precomputed_train_features, read_authorized_table,
     require_frozen_precomputed_dataset_binding,
 };
-pub use scoring::*;
 pub(super) use scoring_view::score_view;
 
 use cache_registry::{precomputed_fold_encoding, sidecars_for_view, StageExecution};
@@ -69,7 +67,7 @@ use encoder_process::{
     output_artifacts, parse_regression_csv, read_output_matrices, read_vs_matrix,
     require_cuda_device, run_encoder_with_timeout, select_rows, verify_runtime_identity,
 };
-use encoding::{encode_fold, FoldEncodingScope};
+use encoding::encode_fold;
 use feature_ops::{rmse, seed64};
 use folds::{validate_plan_feature_feasibility, validate_stage_folds, write_immutable};
 use scoring::{build_measured_decision, cache_key, encode_full_train, execute_stage};
