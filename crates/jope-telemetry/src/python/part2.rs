@@ -18,13 +18,13 @@ fn metric_id(name: &str) -> PyResult<u16> {
 /// Freeze a dataset-family split with the canonical jope-datasets implementation.
 #[pyfunction]
 #[pyo3(signature = (dataset_families, train_count, holdout_count, seed=0))]
-fn freeze_source_family_split_py(
-    py: Python<'_>,
-    dataset_families: &Bound<'_, PyAny>,
+fn freeze_source_family_split_py<'py>(
+    py: Python<'py>,
+    dataset_families: &Bound<'py, PyAny>,
     train_count: usize,
     holdout_count: usize,
     seed: u64,
-) -> PyResult<Bound<'_, PyAny>> {
+) -> PyResult<Bound<'py, PyAny>> {
     let families: BTreeMap<String, String> =
         serde_json::from_str(&to_json(dataset_families)?).map_err(value_error)?;
     let split = rust_freeze_source_family_split(&families, train_count, holdout_count, seed)
@@ -42,8 +42,8 @@ fn derive_source_family(meta_path: &str) -> PyResult<String> {
 #[pyfunction]
 #[pyo3(signature = (dataset, source_family, outer_split, row_ids, train_sha256, training_targets, test_sha256=None))]
 #[allow(clippy::too_many_arguments)]
-fn build_binary_dataset_contracts(
-    py: Python<'_>,
+fn build_binary_dataset_contracts<'py>(
+    py: Python<'py>,
     dataset: &str,
     source_family: &str,
     outer_split: &str,
@@ -51,7 +51,7 @@ fn build_binary_dataset_contracts(
     train_sha256: &str,
     training_targets: Vec<f64>,
     test_sha256: Option<&str>,
-) -> PyResult<Bound<'_, PyAny>> {
+) -> PyResult<Bound<'py, PyAny>> {
     let outer_split = match outer_split {
         "train" => OuterSplit::Train,
         "holdout" => OuterSplit::Holdout,
