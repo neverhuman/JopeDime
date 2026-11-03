@@ -190,7 +190,6 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             "verified {} files",
             transport::verify(&manifest, &destination)?
         ),
-        #[cfg(feature = "neural")]
         other => return Ok(Some(other)),
     }
     Ok(None)
