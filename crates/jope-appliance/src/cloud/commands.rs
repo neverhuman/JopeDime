@@ -47,7 +47,7 @@ pub fn cloud_command(command: CloudCommand) -> Result<()> {
     use jope_client::Transport;
     match command {
         CloudCommand::Runs => {
-            let (entries, notice) = run_entries(&local_client()?)?;
+            let (entries, notice) = run_entries(&super::sync::local_client()?)?;
             println!("{notice}");
             for row in entries {
                 println!(
@@ -62,7 +62,7 @@ pub fn cloud_command(command: CloudCommand) -> Result<()> {
             }
         }
         CloudCommand::Sync { run } => {
-            let local = local_client()?;
+            let local = super::sync::local_client()?;
             let version = local.system_info()?.version;
             let runs = if let Some(run) = run {
                 vec![local.run_status(&run.parse()?)?]
