@@ -221,7 +221,7 @@ impl WorkerJob {
         }
         Ok(crate::sha256_hex(&serde_json::to_vec(self)?))
     }
-    fn verify_inputs(&self) -> Result<()> {
+    pub(super) fn verify_inputs(&self) -> Result<()> {
         self.command.program.verify()?;
         ensure!(
             !self.command.inputs.is_empty(),
