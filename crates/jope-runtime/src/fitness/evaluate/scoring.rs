@@ -214,7 +214,11 @@ impl Fitness {
                     "log error needs nonnegative targets and predictions"
                 );
                 let v = row_loss(&|y, p| (y.ln_1p() - p.ln_1p()).powi(2));
-                if matches!(self, Self::Rmsle {}) { v.sqrt() } else { v }
+                if matches!(self, Self::Rmsle {}) {
+                    v.sqrt()
+                } else {
+                    v
+                }
             }
             Self::R2 {} | Self::ExplainedVariance {} => {
                 let den = wvariance(y, w);
@@ -236,7 +240,11 @@ impl Fitness {
             Self::Spearman {} => correlation(&ranks(y), &ranks(p), None)?,
             Self::Huber { delta } => error_loss(&|e| {
                 let e = e.abs();
-                if e <= *delta { 0.5 * e * e } else { delta * (e - 0.5 * delta) }
+                if e <= *delta {
+                    0.5 * e * e
+                } else {
+                    delta * (e - 0.5 * delta)
+                }
             }),
             Self::PseudoHuber { delta } => {
                 error_loss(&|e| delta * delta * ((1.0 + (e / delta).powi(2)).sqrt() - 1.0))
@@ -246,24 +254,52 @@ impl Fitness {
                 e + (-2.0 * e).exp().ln_1p() - std::f64::consts::LN_2
             }),
             Self::Pinball { quantile } => error_loss(&|e| {
-                if e >= 0.0 { quantile * e } else { (quantile - 1.0) * e }
+                if e >= 0.0 {
+                    quantile * e
+                } else {
+                    (quantile - 1.0) * e
+                }
             }),
             Self::Expectile { quantile } => error_loss(&|e| {
-                if e >= 0.0 { quantile * e * e } else { (1.0 - quantile) * e * e }
+                if e >= 0.0 {
+                    quantile * e * e
+                } else {
+                    (1.0 - quantile) * e * e
+                }
             }),
             Self::Linex { a } => error_loss(&|e| (a * e).exp_m1() - a * e),
-            Self::AsymmetricAbsolute { under_cost, over_cost } => error_loss(&|e| {
-                if e >= 0.0 { under_cost * e } else { -over_cost * e }
+            Self::AsymmetricAbsolute {
+                under_cost,
+                over_cost,
+            } => error_loss(&|e| {
+                if e >= 0.0 {
+                    under_cost * e
+                } else {
+                    -over_cost * e
+                }
             }),
-            Self::AsymmetricSquared { under_cost, over_cost } => error_loss(&|e| {
-                if e >= 0.0 { under_cost * e * e } else { over_cost * e * e }
+            Self::AsymmetricSquared {
+                under_cost,
+                over_cost,
+            } => error_loss(&|e| {
+                if e >= 0.0 {
+                    under_cost * e * e
+                } else {
+                    over_cost * e * e
+                }
             }),
             Self::PoissonDeviance {} => {
                 ensure!(
                     y.iter().all(|x| *x >= 0.0) && p.iter().all(|x| *x > 0.0),
                     "Poisson requires y>=0 and pred>0"
                 );
-                row_loss(&|y, p| 2.0 * (if y == 0.0 { p } else { y * (y / p).ln() - y + p }))
+                row_loss(&|y, p| {
+                    2.0 * (if y == 0.0 {
+                        p
+                    } else {
+                        y * (y / p).ln() - y + p
+                    })
+                })
             }
             Self::GammaDeviance {} => {
                 ensure!(
@@ -285,23 +321,45 @@ impl Fitness {
                 })
             }
             Self::Mase { season } => {
-                ensure!(y.len() > *season, "MASE needs more scored rows than its season");
+                ensure!(
+                    y.len() > *season,
+                    "MASE needs more scored rows than its season"
+                );
                 let naive = mean(
                     &y.windows(season + 1)
                         .map(|w| (w[*season] - w[0]).abs())
                         .collect::<Vec<_>>(),
                 );
-                ensure!(naive > 0.0, "MASE undefined when the seasonal naive forecast is exact");
+                ensure!(
+                    naive > 0.0,
+                    "MASE undefined when the seasonal naive forecast is exact"
+                );
                 mean(&abs) / naive
             }
             Self::MeanReturn { max_position, cost } => {
                 mean(&strategy_returns(y, p, *max_position, *cost)?)
             }
-            Self::Sharpe { max_position, cost, target, periods_per_year }
-            | Self::Sortino { max_position, cost, target, periods_per_year } => {
+            Self::Sharpe {
+                max_position,
+                cost,
+                target,
+                periods_per_year,
+            }
+            | Self::Sortino {
+                max_position,
+                cost,
+                target,
+                periods_per_year,
+            } => {
                 let returns = strategy_returns(y, p, *max_position, *cost)?;
                 let den = if matches!(self, Self::Sortino { .. }) {
-                    mean(&returns.iter().map(|r| (r - target).min(0.0).powi(2)).collect::<Vec<_>>()).sqrt()
+                    mean(
+                        &returns
+                            .iter()
+                            .map(|r| (r - target).min(0.0).powi(2))
+                            .collect::<Vec<_>>(),
+                    )
+                    .sqrt()
                 } else {
                     variance(&returns).sqrt()
                 };
@@ -314,7 +372,11 @@ impl Fitness {
             Self::MaxDrawdown { max_position, cost } => {
                 max_drawdown(&strategy_returns(y, p, *max_position, *cost)?)?
             }
-            Self::Calmar { max_position, cost, periods_per_year } => {
+            Self::Calmar {
+                max_position,
+                cost,
+                periods_per_year,
+            } => {
                 let returns = strategy_returns(y, p, *max_position, *cost)?;
                 let drawdown = max_drawdown(&returns)?;
                 ensure!(drawdown > 0.0, "Calmar undefined without a drawdown");
@@ -322,7 +384,11 @@ impl Fitness {
                 let growth = end.powf(periods_per_year / returns.len() as f64) - 1.0;
                 growth / drawdown
             }
-            Self::Omega { max_position, cost, threshold } => {
+            Self::Omega {
+                max_position,
+                cost,
+                threshold,
+            } => {
                 let returns = strategy_returns(y, p, *max_position, *cost)?;
                 let gains: f64 = returns.iter().map(|r| (r - threshold).max(0.0)).sum();
                 let losses: f64 = returns.iter().map(|r| (threshold - r).max(0.0)).sum();
@@ -330,7 +396,11 @@ impl Fitness {
                 ensure!(losses > 0.0, "Omega undefined without a shortfall");
                 gains / losses
             }
-            Self::ExpectedShortfall { max_position, cost, alpha } => {
+            Self::ExpectedShortfall {
+                max_position,
+                cost,
+                alpha,
+            } => {
                 let losses: Vec<f64> = strategy_returns(y, p, *max_position, *cost)?
                     .iter()
                     .map(|r| -r)
@@ -352,7 +422,10 @@ impl Fitness {
             Self::NormalizedGini {} => {
                 let model = lorenz_gini(&ranked(y, p, w))?;
                 let perfect = lorenz_gini(&ranked(y, y, w))?;
-                ensure!(perfect != 0.0, "normalized Gini undefined for constant targets");
+                ensure!(
+                    perfect != 0.0,
+                    "normalized Gini undefined for constant targets"
+                );
                 model / perfect
             }
             Self::Kge {} => {
@@ -366,12 +439,17 @@ impl Fitness {
             }
             Self::CaptureAt { fraction } => {
                 let total: f64 = y.iter().sum();
-                ensure!(total > 0.0 && total.is_finite(), "capture needs a positive target total");
+                ensure!(
+                    total > 0.0 && total.is_finite(),
+                    "capture needs a positive target total"
+                );
                 let mass = fraction * y.len() as f64;
                 let (mut taken, mut captured) = (0.0f64, 0.0);
                 for (_, target) in ranked(y, p, None) {
                     let take = (mass - taken).min(1.0);
-                    if take <= 0.0 { break; }
+                    if take <= 0.0 {
+                        break;
+                    }
                     captured += take * target;
                     taken += take;
                 }
@@ -420,7 +498,11 @@ impl Fitness {
             Self::FeatureCount {} => telemetry.feature_count as f64,
             Self::FoldStd {} => telemetry.fold_std.max(0.0),
             Self::PredictionTurnover {} => prediction_turnover(p),
-            Self::Custom { expression, aggregation, .. } => {
+            Self::Custom {
+                expression,
+                aggregation,
+                ..
+            } => {
                 let v = expression.rows_with_context(y, p, columns, resources, telemetry)?;
                 match aggregation {
                     RegressionAggregation::Mean {} => wmean(&v, w),
@@ -428,8 +510,12 @@ impl Fitness {
                         None => v.iter().sum(),
                         Some(w) => v.iter().zip(w).map(|(v, w)| v * w).sum(),
                     },
-                    RegressionAggregation::Min {} => v.iter().copied().fold(f64::INFINITY, f64::min),
-                    RegressionAggregation::Max {} => v.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+                    RegressionAggregation::Min {} => {
+                        v.iter().copied().fold(f64::INFINITY, f64::min)
+                    }
+                    RegressionAggregation::Max {} => {
+                        v.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+                    }
                     RegressionAggregation::Median {} => wquantile(&v, w, 0.5)?,
                     RegressionAggregation::Std {} => wvariance(&v, w).max(0.0).sqrt(),
                     RegressionAggregation::Variance {} => wvariance(&v, w).max(0.0),
@@ -456,7 +542,11 @@ impl Fitness {
                 let mut sum = 0.0;
                 for t in terms {
                     let natural = finite(t.fitness.value(y, p, columns, resources, w, telemetry)?)?;
-                    let loss = if t.fitness.direction() == Direction::Maximize { -natural } else { natural };
+                    let loss = if t.fitness.direction() == Direction::Maximize {
+                        -natural
+                    } else {
+                        natural
+                    };
                     sum += t.weight * loss / t.scale;
                 }
                 sum
@@ -465,10 +555,20 @@ impl Fitness {
                 for l in limits {
                     let value = read_resource(resources, l.resource)?;
                     if let Some(max) = l.max.filter(|&max| value > max) {
-                        bail!(Infeasible { resource: l.resource, value, limit: max, bound: "max" });
+                        bail!(Infeasible {
+                            resource: l.resource,
+                            value,
+                            limit: max,
+                            bound: "max"
+                        });
                     }
                     if let Some(min) = l.min.filter(|&min| value < min) {
-                        bail!(Infeasible { resource: l.resource, value, limit: min, bound: "min" });
+                        bail!(Infeasible {
+                            resource: l.resource,
+                            value,
+                            limit: min,
+                            bound: "min"
+                        });
                     }
                 }
                 fitness.value(y, p, columns, resources, w, telemetry)?
