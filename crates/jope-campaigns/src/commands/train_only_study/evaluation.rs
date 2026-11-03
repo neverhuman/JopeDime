@@ -25,7 +25,7 @@ struct StudySplitSlices {
     validation_y: Vec<f64>,
 }
 
-pub(super) struct StudyEvalContext {
+pub(crate) struct StudyEvalContext {
     context_tag: String,
     folds: usize,
     slices: BTreeMap<String, StudySplitSlices>,
