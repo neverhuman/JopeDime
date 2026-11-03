@@ -120,5 +120,6 @@ pub use model::{
     BurnReceipt, ContextFields, EligibleState, GuardFields, PointerKeyFields, PointerRecord,
     QualifiedEntry, QualifiedRead,
 };
+#[cfg(test)]
 pub(super) use reader::guard_admits;
 pub use reader::StateTeaching;
