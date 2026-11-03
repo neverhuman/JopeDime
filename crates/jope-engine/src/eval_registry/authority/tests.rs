@@ -215,7 +215,7 @@ fn run_child_with_preparation_delay(
                 preparation_delay.as_millis().to_string(),
             )
             .stdout(Stdio::null())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::null())
             .spawn()
             .unwrap(),
     );
