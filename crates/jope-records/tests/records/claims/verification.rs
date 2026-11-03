@@ -219,10 +219,6 @@ fn inaccessible_custody_root_is_unavailable_not_a_crash() {
     std::fs::create_dir(&sealed).expect("sealed directory");
     let evidence = sealed.join("custody.json");
     std::fs::write(&evidence, "{}").expect("custody evidence");
-    if std::fs::metadata(&evidence).expect("metadata").uid() == 0 {
-        eprintln!("skipped: root can traverse a mode-000 directory");
-        return;
-    }
     let mut document = fixture.document();
     set(node(&mut document, "E-other"), "location", "custody".into());
     set(
@@ -244,6 +240,10 @@ fn inaccessible_custody_root_is_unavailable_not_a_crash() {
     );
     std::fs::set_permissions(&sealed, std::fs::Permissions::from_mode(0o000)).expect("seal");
     let _guard = Sealed(&sealed);
+    if std::fs::metadata(&evidence).is_ok() {
+        eprintln!("skipped: process can traverse a mode-000 directory");
+        return;
+    }
     assert_eq!(
         fixture
             .verify(&document)
