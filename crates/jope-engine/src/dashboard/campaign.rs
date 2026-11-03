@@ -1,8 +1,7 @@
 use super::details::decimal_count;
 use super::evidence::{
-    age, campaign_resource_evidence, completed, count_pair, duration, experiment_worker_evidence,
-    live_operations, memory_throttle_reason, metric_tail, metrics, number, panel, phase,
-    policy_receipt, state, status_age, status_age_with_limit,
+    age, completed, count_pair, duration, live_operations, memory_throttle_reason, metric_tail,
+    metrics, number, phase, policy_receipt, state, status_age, status_age_with_limit,
 };
 use super::prelude::*;
 use super::tasks::{campaign_task_state, label, training_hold};
