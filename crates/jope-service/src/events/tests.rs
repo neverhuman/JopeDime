@@ -1,5 +1,7 @@
+pub(crate) use helpers as tests;
+
 #[cfg(test)]
-pub(crate) mod tests {
+pub(crate) mod helpers {
     use super::super::{EventLog, JournalCommit, JournalRun, Result, RunUpdate};
     use crate::store::{Record, RecordKey, Store, StoreError};
     use jope_api::{
