@@ -222,7 +222,9 @@ pub fn model_published(sha256: &str, at: &str, sequence: u64) -> Value {
 }
 
 mod telemetry;
-pub use telemetry::{bucket, environment, telemetry, telemetry_model, tenth, Pseudonyms};
+#[cfg(test)]
+pub use telemetry::{bucket, tenth};
+pub use telemetry::{environment, telemetry, telemetry_model, Pseudonyms};
 
 #[cfg(test)]
 mod tests;
