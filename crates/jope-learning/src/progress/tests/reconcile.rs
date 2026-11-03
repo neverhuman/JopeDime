@@ -10,7 +10,7 @@ use crate::progress::product::{Config, Driver};
 use crate::progress::publish::{publish, reusable, Publication};
 use crate::progress::rebuild::reconstruct;
 use crate::progress::reconcile::{apply, plan};
-use crate::state::State;
+use jope_learning::state::State;
 
 fn config() -> Config {
     Config {
