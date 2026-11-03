@@ -1,0 +1,15 @@
+{
+  "schema": "jope.h261.metrics/v1",
+  "wave_id": "h261-diverse-reveal-set-20261103",
+  "study_path": "research/flywheel_selfplay/h261_diverse_reveal_set",
+  "status": "PREREGISTERED",
+  "outcomes_read": 0,
+  "verdict": "PENDING_EXECUTION",
+  "claim_scope": "equal-budget 4-reveal test-time search policy comparison (NOT checkpoint lift; 0 optimizer updates)",
+  "fold_seed": 261140,
+  "seeds": [261101, 261102, 261103],
+  "boot_seed": 261150,
+  "holm_m": 2,
+  "primary_contrast": "MMR4_CV - TOP4_PICK",
+  "secondary_contrast": "STRUCT4 - TOP4_PICK"
+}

@@ -1,0 +1,56 @@
+{
+  "wave_id": "h261-diverse-reveal-set-20261103",
+  "slug": "h261_diverse_reveal_set",
+  "title": "Diversity-Aware 4-Reveal Selection from Top-16 (MMR4_CV and STRUCT4 vs TOP4_PICK)",
+  "owner": "Argon",
+  "status": "PREREGISTERED",
+  "created_at": "2026-11-03T15:44:00Z",
+  "prereg_locked": true,
+  "outcomes_read": 0,
+  "claim_scope": "equal-budget 4-reveal test-time search policy comparison (NOT checkpoint lift; 0 optimizer updates)",
+  "fold_seed": 261140,
+  "seeds": [261101, 261102, 261103],
+  "boot_seed": 261150,
+  "boot_draws": 10000,
+  "holm_m": 2,
+  "primary_contrast": "MMR4_CV - TOP4_PICK",
+  "secondary_contrast": "STRUCT4 - TOP4_PICK",
+  "inputs": {
+    "round_882_pt": {
+      "path": "/home/ubuntu/jope_plan/evidence/H261/argon-t1530/inputs/r882/round-882.pt",
+      "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+    },
+    "round_3175_pt": {
+      "path": "/home/ubuntu/jope_plan/evidence/H261/argon-t1530/inputs/r3175/round-3175.pt",
+      "sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b"
+    },
+    "dope_splits_json": {
+      "path": "/home/ubuntu/jope-data/h50/splits/dope.json",
+      "sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+    },
+    "fold_manifest": {
+      "path": "research/flywheel_selfplay/h261_diverse_reveal_set/fold_manifest.json",
+      "fold_seed": 261140,
+      "n_folds": 5
+    }
+  },
+  "hyperparameters": {
+    "gate_threshold": 0.25,
+    "top_m_pool": 16,
+    "k_reveals_on_gated": 4,
+    "mmr_lambda_grid": [0.1, 0.2, 0.3, 0.5, 1.0],
+    "holm_m": 2,
+    "elo_anchor_arm": "TOP4_PICK",
+    "elo_anchor_value": 1500.0
+  },
+  "files": [
+    "PREREG.md",
+    "README.md",
+    "fold_manifest.json",
+    "manifest.json",
+    "metrics.json",
+    "monitor.py",
+    "runner.py",
+    "test_h261.py"
+  ]
+}
