@@ -1,3 +1,5 @@
+use super::*;
+
 #[test]
 fn numeric_csv_accepts_one_header_and_rejects_later_malformed_rows() {
     let data = read_numeric_csv("feature,target\n1.0,2.0\n3.0,4.0\n", "fixture").unwrap();
