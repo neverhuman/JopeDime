@@ -1,3 +1,4 @@
+use super::super::{Kernel2Evaluator, LINEARIZE, REWRITE, archive, search};
 use super::*;
 
 // laneD:B18-pareto-archive begin
@@ -8,7 +9,7 @@ pub(super) fn check_archive(
     s: &Search,
     observations: &[Kernel2Observation],
 ) -> Result<()> {
-    let path = Path::new(super::archive::PATH);
+    let path = Path::new(archive::PATH);
     let Some(record) = s.engine_selection.as_ref().and_then(|e| e.archive.as_ref()) else {
         ensure!(
             std::fs::symlink_metadata(root.join(path)).is_err(),
@@ -32,7 +33,7 @@ pub(super) fn check_archive(
         "the archive's cost version disagrees with its record"
     );
     ensure!(
-        super::archive::build(observations)?.to_json().as_bytes() == bytes.as_slice(),
+        archive::build(observations)?.to_json().as_bytes() == bytes.as_slice(),
         "the archive does not re-derive from the observations"
     );
     Ok(())
@@ -49,9 +50,9 @@ pub(super) fn check_moves(
     r: &Receipt,
     measurements: &[Measurement],
     observations: &[Kernel2Observation],
-    evaluator: &super::Kernel2Evaluator,
+    evaluator: &Kernel2Evaluator,
 ) -> Result<()> {
-    use super::search::moves;
+    use search::moves;
     let s = &r.search;
     let path = Path::new(moves::PATH);
     let Some(record) = s.engine_selection.as_ref().and_then(|e| e.moves.as_ref()) else {
@@ -59,8 +60,7 @@ pub(super) fn check_moves(
             std::fs::symlink_metadata(root.join(path)).is_err()
                 && measurements.iter().all(|m| {
                     // laneD:B19-minimax-linearize: the linearization pass's origin too.
-                    m.observation.origin != super::REWRITE
-                        && m.observation.origin != super::LINEARIZE
+                    m.observation.origin != REWRITE && m.observation.origin != LINEARIZE
                 }),
             "move evidence is published without its selection"
         );
