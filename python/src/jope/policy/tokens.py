@@ -132,6 +132,27 @@ class EncodeError(ValueError):
     pass
 
 
+def _snap_bin(value: Any, slot: Slot) -> int | None:
+    if not slot.val_ids:
+        return None
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        numeric: list[tuple[int, float]] = []
+        for tid, text in zip(slot.val_ids, slot.bin_texts):
+            try:
+                numeric.append((tid, float(text)))
+            except ValueError:
+                continue
+        if numeric:
+            v = float(value)
+            return min(
+                numeric,
+                key=lambda pair: abs(math.log(abs(v) / abs(pair[1])))
+                if v != 0 and pair[1] != 0 and (v > 0) == (pair[1] > 0)
+                else abs(v - pair[1]) + 1.0,
+            )[0]
+    return None
+
+
 from .tokens_build import (
     append_missing_task_tokens, build_action_vocab, extend_action_vocab_append_only,
     extend_engine_ops_append_only, reconcile_head_tasks_from_grammar,
@@ -142,4 +163,4 @@ from .tokens_generation import (
 from .tokens_expr import (
     _expr_to_prefix, _parse_expr, _snap_const, _tokenize_expr, encode_expr, render_expr,
 )
-from .tokens_actions import _snap_bin, decode_tokens, encode_actions
+from .tokens_actions import decode_tokens, encode_actions

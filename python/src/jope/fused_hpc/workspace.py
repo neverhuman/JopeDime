@@ -13,6 +13,7 @@ from jope.fused_hpc.block256_slate_and_workspace import (
     RBUF_STRIDE_PER_ROW,
 )
 
+@dataclass(frozen=True)
 class Phase2HeadSliceSpec:
     """Per-winner buffer layout specification for a Phase 2 head family."""
 
