@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 
 pub(crate) fn reject_v1_quarantine_window(encodings_root: &Path) -> Result<()> {
     let quarantine_root = encodings_root.join("incident-quarantine");

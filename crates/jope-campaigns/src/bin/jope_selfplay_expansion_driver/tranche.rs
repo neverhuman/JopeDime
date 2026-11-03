@@ -1,4 +1,5 @@
 use super::*;
+use crate::*;
 
 pub(crate) fn installable(conn: &Connection, task: &str) -> Result<Vec<String>> {
     let fetched: HashSet<String> = std::fs::read_dir(fetch_root(task).join("targets"))
