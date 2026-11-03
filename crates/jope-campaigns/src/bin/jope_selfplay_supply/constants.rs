@@ -1,5 +1,3 @@
-use super::*;
-
 pub(crate) const MICRO_WAVE_KIND: &str = "deterministic_128_dataset_micro_wave";
 pub(crate) const WAVE_SCHEMA: &str = "JopeRealtimeSelfplayWave.v1";
 pub(crate) const DATASETS_PER_WAVE: usize = 128;
