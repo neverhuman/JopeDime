@@ -1,4 +1,3 @@
-use super::*;
 use super::{count_tokens, SourceLanguage::*, LEXER_VERSION};
 
 #[test]
