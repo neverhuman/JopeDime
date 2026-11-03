@@ -105,7 +105,7 @@ impl StudyEvalContext {
     }
 }
 
-pub(crate) fn evaluate_member_split(
+pub(super) fn evaluate_member_split(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
