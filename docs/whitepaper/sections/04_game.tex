@@ -9,8 +9,8 @@
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
-  \caption{\textbf{Reference training and proposed one-move evaluation.}
-  Training loop (\cref{sub:method-selfplay}), separate from the adapter
+  \caption{\textbf{Reference training searches many moves; game-day evaluation commits one.}
+  The training loop (\cref{sub:method-selfplay}) is separate from the adapter
   record in \cref{sec:method-status}. Blue: game day (\searchone{}); dashed box:
   proposed training.
   Valid scored programs enter learning lists; failed attempts consume budget.}
@@ -53,8 +53,8 @@ input.
 the single-candidate contract in \cref{box:searchone}.
 
 \begin{table}[htb]
-  \caption{\textbf{Go and the innovation game, element by element.}
-  Moves differ most: Go's are cheap, while each program is costly to judge
+  \caption{\textbf{Go and the innovation game share structure but differ in move cost.}
+  Go's moves are cheap, while each program is costly to judge
   (\cref{sub:game-played}). Go's game length is
   from \citet{silver2016mastering}.}
   \label{tab:go-vs-innovation}
