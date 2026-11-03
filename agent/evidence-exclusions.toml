@@ -2639,3 +2639,69 @@ path = "research/flywheel_selfplay/h58/runner.py"
 sha256 = "cd90f163409de2c25b7316f63c351ba94b0d6fb54fdd8748262987ed9fd052fc"
 receipt = "research/flywheel_selfplay/h113_w3_continuous/manifest.json"
 reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h248_dfl/analysis.py"
+sha256 = "5bd45453e789dcbf933680b4f54cb98ab6e333832be3dcc58af56014874e92ac"
+receipt = "research/flywheel_selfplay/h248_dfl/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h248_dfl/calibrate.py"
+sha256 = "6cb4dc32078dd5ee16d65292ec82f545052ee41fb2b02d3ad3706d482228968a"
+receipt = "research/flywheel_selfplay/h248_dfl/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h248_dfl/monitor.py"
+sha256 = "fdd39b7ba97e2fb0957c31c43aa482ad10f83016ca862cc4434403b5711247c7"
+receipt = "research/flywheel_selfplay/h248_dfl/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h248_dfl/runner.py"
+sha256 = "ab3cc245da5f45c4ebb30dd72f321ebaa4dc83b614ffdc0e947077582306ffa7"
+receipt = "research/flywheel_selfplay/h248_dfl/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h248_dfl/test_h248.py"
+sha256 = "e65ea376080167bf523dc5801a704657920dca50cd6400cdb5416e4fee52e2c6"
+receipt = "research/flywheel_selfplay/h248_dfl/manifest.json"
+reason = "Frozen research study test script pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h248_dfl/treatment.py"
+sha256 = "1ddc27fc360d7e40cc58450b3b9215fd3191e5c4b10c8c1133d6cc2d7ec752bc"
+receipt = "research/flywheel_selfplay/h248_dfl/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h249_side_branch/analysis.py"
+sha256 = "5ba750d2b95fa834488570c237e28c27380fc8a2b23734e78e142724b0e0175b"
+receipt = "research/flywheel_selfplay/h249_side_branch/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h249_side_branch/monitor.py"
+sha256 = "731d8b0e612f57c7eaee2eccae623a215a4fe345d1e89acdf4f04734e436de6d"
+receipt = "research/flywheel_selfplay/h249_side_branch/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h249_side_branch/runner.py"
+sha256 = "ba9d6924321f22235b34e316460f171649aff12dd4a076cc33ba8e6983d49ad6"
+receipt = "research/flywheel_selfplay/h249_side_branch/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h249_side_branch/test_h249.py"
+sha256 = "bafd8e3beeed5ad7d611eb06f7c1c68df31905807aa2573bbebb36ff2f24fa95"
+receipt = "research/flywheel_selfplay/h249_side_branch/manifest.json"
+reason = "Frozen research study test script pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h249_side_branch/treatment.py"
+sha256 = "370c7ff3e990ead9da4a92588cb1be85ee41bef96f61bb43bfff5683e0f7b898"
+receipt = "research/flywheel_selfplay/h249_side_branch/manifest.json"
+reason = "Frozen research study file pinned by sha256 in study manifest receipt."

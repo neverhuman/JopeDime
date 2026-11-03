@@ -910,6 +910,17 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h247_muon_grokfast/runner.py",
   "research/flywheel_selfplay/h247_muon_grokfast/test_h247.py",
   "research/flywheel_selfplay/h247_muon_grokfast/treatment.py",
+  "research/flywheel_selfplay/h248_dfl/analysis.py",
+  "research/flywheel_selfplay/h248_dfl/calibrate.py",
+  "research/flywheel_selfplay/h248_dfl/monitor.py",
+  "research/flywheel_selfplay/h248_dfl/runner.py",
+  "research/flywheel_selfplay/h248_dfl/test_h248.py",
+  "research/flywheel_selfplay/h248_dfl/treatment.py",
+  "research/flywheel_selfplay/h249_side_branch/analysis.py",
+  "research/flywheel_selfplay/h249_side_branch/monitor.py",
+  "research/flywheel_selfplay/h249_side_branch/runner.py",
+  "research/flywheel_selfplay/h249_side_branch/test_h249.py",
+  "research/flywheel_selfplay/h249_side_branch/treatment.py",
   "research/flywheel_selfplay/h55/run_wave.py",
   "research/flywheel_selfplay/h58/runner.py",
   "research/flywheel_selfplay/h61/run_wave.py",
@@ -1060,7 +1071,7 @@ extra_excluded_paths = [
   "vendor/security/torch-sys-0.26.0/build.rs",
   "vendor/security/torch-sys-0.26.0/libtch/torch_api.cpp",
   "vendor/security/torch-sys-0.26.0/src/c_generated.rs",
-  # END EVEXCL t2320 managed exact-path entries.
+# END EVEXCL t2320 managed exact-path entries.
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
 

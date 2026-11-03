@@ -6336,6 +6336,78 @@
       },
       "sha256": "56c27da85ced0a96cc32b2a40640cde203722123d99999bb664928ca03b89003"
     },
+    "python:research/flywheel_selfplay/h248_dfl/analysis.py": {
+      "bytes": 12087,
+      "classification": {
+        "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "5bd45453e789dcbf933680b4f54cb98ab6e333832be3dcc58af56014874e92ac"
+    },
+    "python:research/flywheel_selfplay/h248_dfl/calibrate.py": {
+      "bytes": 5470,
+      "classification": {
+        "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "6cb4dc32078dd5ee16d65292ec82f545052ee41fb2b02d3ad3706d482228968a"
+    },
+    "python:research/flywheel_selfplay/h248_dfl/monitor.py": {
+      "bytes": 8045,
+      "classification": {
+        "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "fdd39b7ba97e2fb0957c31c43aa482ad10f83016ca862cc4434403b5711247c7"
+    },
+    "python:research/flywheel_selfplay/h248_dfl/runner.py": {
+      "bytes": 42644,
+      "classification": {
+        "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "ab3cc245da5f45c4ebb30dd72f321ebaa4dc83b614ffdc0e947077582306ffa7"
+    },
+    "python:research/flywheel_selfplay/h248_dfl/treatment.py": {
+      "bytes": 5287,
+      "classification": {
+        "reason": "H248 expected-regret adapter continuation, fixed FIT-only temperatures, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "1ddc27fc360d7e40cc58450b3b9215fd3191e5c4b10c8c1133d6cc2d7ec752bc"
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/analysis.py": {
+      "bytes": 10283,
+      "classification": {
+        "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55.",
+        "role": "research"
+      },
+      "sha256": "5ba750d2b95fa834488570c237e28c27380fc8a2b23734e78e142724b0e0175b"
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/monitor.py": {
+      "bytes": 8459,
+      "classification": {
+        "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55.",
+        "role": "research"
+      },
+      "sha256": "731d8b0e612f57c7eaee2eccae623a215a4fe345d1e89acdf4f04734e436de6d"
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/runner.py": {
+      "bytes": 40920,
+      "classification": {
+        "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55.",
+        "role": "research"
+      },
+      "sha256": "ba9d6924321f22235b34e316460f171649aff12dd4a076cc33ba8e6983d49ad6"
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/treatment.py": {
+      "bytes": 9992,
+      "classification": {
+        "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55.",
+        "role": "research"
+      },
+      "sha256": "370c7ff3e990ead9da4a92588cb1be85ee41bef96f61bb43bfff5683e0f7b898"
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {
