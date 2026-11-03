@@ -1,3 +1,5 @@
+use jope_learning::retention::parquet as parquet_api;
+
 use super::*;
 
 #[test]
@@ -9,7 +11,7 @@ fn optional_statistics_preserve_legacy_distilled_bytes_and_reader() {
     let legacy = distilled::write(&rows, &known(), &[]).unwrap();
     let table = parquet::read(&legacy).unwrap();
     let opts = parquet::WriteOptions {
-        codec: parquet::Codec::Zstd,
+        codec: parquet_api::Codec::Zstd,
         row_group_rows: 0,
         page_rows: 0,
         dictionary: false,
@@ -18,13 +20,13 @@ fn optional_statistics_preserve_legacy_distilled_bytes_and_reader() {
     assert_eq!(distilled::read(&with_stats, &known()).unwrap(), rows);
     assert_eq!(parquet::read(&with_stats).unwrap(), table);
     assert_eq!(distilled::write(&rows, &known(), &[]).unwrap(), legacy);
-    let old_reader = parquet::FileReader::open(&legacy).unwrap();
+    let old_reader = parquet_api::FileReader::open(&legacy).unwrap();
     assert_eq!(old_reader.statistics(0, 7).unwrap(), None);
-    let reader = parquet::FileReader::open(&with_stats).unwrap();
+    let reader = parquet_api::FileReader::open(&with_stats).unwrap();
     let stats = reader.statistics(0, 7).unwrap().unwrap();
     assert_eq!(stats.value_count, 2);
     assert_eq!(stats.null_count, Some(1));
-    assert_eq!(stats.min, Some(parquet::StatisticValue::F64(0.59)));
+    assert_eq!(stats.min, Some(parquet_api::StatisticValue::F64(0.59)));
 }
 
 #[test]
@@ -39,7 +41,7 @@ fn nullable_multigroup_statistics_reconcile_to_legacy_streamed_values() {
     let bytes = parquet::write_with_statistics(
         &table,
         &parquet::WriteOptions {
-            codec: parquet::Codec::Zstd,
+            codec: parquet_api::Codec::Zstd,
             row_group_rows: 2,
             page_rows: 1,
             dictionary: true,
@@ -47,7 +49,7 @@ fn nullable_multigroup_statistics_reconcile_to_legacy_streamed_values() {
         "fixture",
     )
     .unwrap();
-    let reader = parquet::FileReader::open(&bytes).unwrap();
+    let reader = parquet_api::FileReader::open(&bytes).unwrap();
     assert_eq!(reader.row_groups.len(), 2);
     assert_eq!(reader.num_rows, 3);
     assert_eq!(
