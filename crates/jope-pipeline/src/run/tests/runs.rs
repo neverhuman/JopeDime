@@ -216,4 +216,43 @@ fn a_seed_limit_admits_more_seeds_into_generation_zero() {
     assert_eq!(crate::seeds::admit_up_to(&offered, 8).unwrap().seeds.len(), 8);
     assert!(crate::seeds::admit_up_to(&offered, 0).is_err());
     assert!(crate::seeds::admit_up_to(&offered, crate::seeds::MAX_SEED_LIMIT + 1).is_err());
+
+    // End to end: six seeds enter generation 0, the receipt validates and its evidence verifies.
+    let temp = tempfile::tempdir().unwrap();
+    let genomes: Vec<_> = offered[..6]
+        .iter()
+        .map(|(genome, _)| {
+            let canonical = crate::seeds::canonical_pipeline(genome).unwrap();
+            serde_json::json!({
+                "genome": canonical,
+                "program_sha256": crate::sha256_hex(canonical.as_bytes()),
+            })
+        })
+        .collect();
+    let seeds_path = temp.path().join("seeds.json");
+    std::fs::write(
+        &seeds_path,
+        serde_json::to_vec(&serde_json::json!({
+            "schema": crate::seeds::SEEDS_SCHEMA_ID,
+            "genomes": genomes,
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    let output = temp.path().join("seeded");
+    let receipt = run(&RunOptions {
+        seed_genomes: Some(seeds_path),
+        seed_limit: 6,
+        ..small(&output, 30)
+    })
+    .unwrap();
+    assert_eq!(receipt.search.seeding.as_ref().unwrap().seeds.len(), 6);
+    let verified = crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+    let seeded_in_generation_zero = verified
+        .cuts
+        .iter()
+        .flat_map(|(_, o)| o)
+        .filter(|o| o.generation == 0 && o.origin == search::INCUMBENT)
+        .count();
+    assert_eq!(seeded_in_generation_zero, 6);
 }
