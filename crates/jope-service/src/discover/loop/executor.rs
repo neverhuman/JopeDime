@@ -120,9 +120,11 @@ impl Executor for ProcessExecutor {
         {
             return Response::failed(request.attempt.clone(), WorkerFailure::Unavailable, 0);
         }
-        receiver.recv().unwrap_or_else(|_| {
-            Response::failed(request.attempt.clone(), WorkerFailure::Unavailable, 0)
-        })
+        receiver
+            .recv() // default fallback
+            .unwrap_or_else(|_| {
+                Response::failed(request.attempt.clone(), WorkerFailure::Unavailable, 0)
+            })
     }
     fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
         let directory = tempfile::Builder::new()

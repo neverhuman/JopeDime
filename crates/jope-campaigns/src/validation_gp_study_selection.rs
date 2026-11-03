@@ -98,18 +98,22 @@ impl<R: SelectionRuntime> StudySelection<R> {
             let timings = result.get("timings").filter(|v| v.is_object());
             let min_fold = folds.iter().copied().reduce(f64::min);
             let row = json!({
-                "dataset": dataset,
-                "rank_input": idx,
-                "genome": genome,
-                "oof_r2": oof,
-                "fold_r2": folds,
-                "robust_score": score,
-                "lcb95": lcb95(&folds),
-                "min_fold_r2": min_fold,
-                "cost_ms": timings.and_then(|v| v.get("total_ms")).cloned().unwrap_or(Value::Null),
-                "cache_hit": truthy(result.get("cache_hit")),
-                "errors": result.get("errors").filter(|v| truthy(Some(v))).cloned().unwrap_or_else(|| json!([])),
-            });
+                        "dataset": dataset,
+                        "rank_input": idx,
+                        "genome": genome,
+                        "oof_r2": oof,
+                        "fold_r2": folds,
+                        "robust_score": score,
+                        "lcb95": lcb95(&folds),
+                        "min_fold_r2": min_fold,
+                        "cost_ms": timings.and_then(|v| v.get("total_ms")).cloned().unwrap_or(Value::Null),
+                        "cache_hit": truthy(result.get("cache_hit")),
+                        "errors": result.get("errors").filter(|v| truthy(Some(v))).cloned() // default fallback
+                            .unwrap_or_else(|| {
+                // default fallback
+                json!([])
+            }),
+                    });
             append_jsonl(&self.robust_path, &row)?;
             output.push(row);
         }
@@ -239,7 +243,11 @@ impl<R: SelectionRuntime> StudySelection<R> {
             .get("metrics")
             .filter(|v| v.is_object())
             .cloned()
-            .unwrap_or_else(|| json!({}));
+            // default fallback
+            .unwrap_or_else(|| {
+                // default fallback
+                json!({})
+            });
         Ok(json!({
             "model_name": model_name,
             "genome": genome,

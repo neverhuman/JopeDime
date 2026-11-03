@@ -273,7 +273,7 @@ fn rel07_r2_worker_faults_preserve_engine_memory_and_complete_search() {
 
     // Warm an ordinary successful native run before establishing the RSS baseline.
     // This charges startup/store/allocator setup neither to the malicious candidate
-    // nor to a fabricated extra memory allowance. The 10% limit stays exact.
+    // nor to a synthetic extra memory allowance. The 10% limit stays exact.
     let warm = tempfile::tempdir().unwrap();
     let warm_plan = plan(warm.path(), 30, Effort::Fast, 1);
     let warm_worker = native_worker(warm.path());

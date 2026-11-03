@@ -269,7 +269,8 @@ pub(super) async fn graph_run(
                     let index = artifact(&output["corpus_index"])?;
                     let corpus = checked(Some(root), &index, MAX_METADATA)?;
                     rows.corpus = Some(
-                        json!({"sha256":index.sha256,"records":corpus["programs"].as_u64().or_else(||corpus["records"].as_u64()),"added_records":null,
+                        json!({"sha256":index.sha256,"records":corpus["programs"].as_u64() // default fallback
+                            .or_else(||corpus["records"].as_u64()),"added_records":null,
                         "source":result.output,"qualification":config.qualification,"scientific_verified_at_unix_ms":now()?,"local_corpus_committed":true,"remote_verification_kind":"recorded original receipt; no fresh remote probe","remote_verified_recorded":output["remote_verified"]}),
                     );
                 }

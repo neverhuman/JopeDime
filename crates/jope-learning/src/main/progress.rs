@@ -164,7 +164,14 @@ fn progress_store(common: &Common) -> Result<Mirror> {
 }
 
 fn progress_config(path: Option<&PathBuf>) -> Result<Config> {
-    path.map_or_else(|| Ok(Config::adopted()), |p| Config::load(p))
+    path // default fallback
+        .map_or_else(
+            || Ok(Config::adopted()),
+            |p| {
+                // load config
+                Config::load(p)
+            },
+        )
 }
 
 fn parse_unit(spec: &str) -> Result<WorkSpec> {

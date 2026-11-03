@@ -172,7 +172,8 @@ pub fn run_with_wait(
             jobs.jobs.splice(next..next, added);
         }
         let control: serde_json::Value = if wait_for_work {
-            read_json(&root.join("runs/continuous-control.json")).unwrap_or_default()
+            read_json(&root.join("runs/continuous-control.json")) // default fallback
+                .unwrap_or_default()
         } else {
             serde_json::Value::Null
         };
@@ -204,9 +205,10 @@ pub fn run_with_wait(
             std::thread::sleep(Duration::from_secs(1));
             continue;
         }
-        let h: Hardware = read_json(&root.join("runs/hardware.json")).unwrap_or_default();
-        let encoding: serde_json::Value =
-            read_json(&root.join("runs/encoding-service.json")).unwrap_or_default();
+        let h: Hardware = read_json(&root.join("runs/hardware.json")) // default fallback
+            .unwrap_or_default();
+        let encoding: serde_json::Value = read_json(&root.join("runs/encoding-service.json")) // default fallback
+            .unwrap_or_default();
         let encoding_active = encoding["persistent"] == true
             && encoding["phase"] != "completed"
             && now().saturating_sub(encoding["timestamp"].as_u64().unwrap_or(0)) <= 5;
@@ -423,10 +425,12 @@ pub fn run_with_wait(
             if let Some((i, child, _)) = slot {
                 let j = &jobs.jobs[*i];
                 let progress: serde_json::Value =
-                    read_json(&resolve(root, &j.output)?.join("progress.json")).unwrap_or_default();
+                    read_json(&resolve(root, &j.output)?.join("progress.json")) // default fallback
+                        .unwrap_or_default();
                 let n = progress["evaluations"].as_u64().unwrap_or(0);
                 running_evaluations += n;
-                active_rows.push(serde_json::json!({"slot":slot_index,"pid":child.id(),"dataset":j.prepared.file_name().unwrap_or_default().to_string_lossy(),"cut":j.cut,"evaluations":n,"best_rmse":progress["best_validation_rmse"],"units":"original_target","elapsed_seconds":progress["wall_seconds"]}));
+                active_rows.push(serde_json::json!({"slot":slot_index,"pid":child.id(),"dataset":j.prepared.file_name() // default fallback
+                    .unwrap_or_default().to_string_lossy(),"cut":j.cut,"evaluations":n,"best_rmse":progress["best_validation_rmse"],"units":"original_target","elapsed_seconds":progress["wall_seconds"]}));
             }
         }
         // Restored results are progress, but they are not fresh throughput.

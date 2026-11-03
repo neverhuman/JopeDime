@@ -57,6 +57,7 @@ impl Policy {
 
 /// Why the propose stage is not run here.
 pub(crate) const PROPOSE_SKIP_REASON: &str =
+    // jankurai:allow HLT-001-DEAD-MARKER reason=typed-unsupported-operation-error expires=2026-12-31
     "the encode/propose stage is not implemented in this work \
      package: no policy checkpoint is bound and no seed population is proposed, so the search \
      starts from its own bootstrap population";

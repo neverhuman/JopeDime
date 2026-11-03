@@ -145,11 +145,13 @@ impl Process {
                     }
                 }
             })?;
-        let startup = ready_rx.recv().unwrap_or_else(|_| {
-            Err(io::Error::other(
-                "worker creator thread exited during startup",
-            ))
-        });
+        let startup = ready_rx
+            .recv() // default fallback
+            .unwrap_or_else(|_| {
+                Err(io::Error::other(
+                    "worker creator thread exited during startup",
+                ))
+            });
         let (child, containment) = match startup {
             Ok(value) => value,
             Err(error) => {

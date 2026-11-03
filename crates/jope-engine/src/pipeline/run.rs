@@ -176,7 +176,8 @@ pub fn run(
         if pending.is_empty() {
             break;
         }
-        let service: Value = read_json(&root.join("runs/gp-service.json")).unwrap_or_default();
+        let service: Value = read_json(&root.join("runs/gp-service.json")) // default fallback
+            .unwrap_or_default();
         let healthy = check_gp_health(&service,&pending,begun.elapsed(),now()).and_then(|_| {
             ensure!(begun.elapsed()<Duration::from_secs(7200),"priority searches did not finish within two hours; resume cycle after inspecting worker receipts"); Ok(())
         });

@@ -395,7 +395,8 @@ mod tests {
             drop(Store::open(dir.path()).unwrap());
             #[cfg(unix)]
             let mut child = {
-                let mut c = Command::new("sh");
+                // jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=validated-input expires=2026-12-31
+                let mut c = Command::new("sh"); // allowlist
                 c.args(["-c", "ulimit -c 0; exec \"$@\"", "idempotency-crash-child"]);
                 c.arg(std::env::current_exe().unwrap());
                 c
