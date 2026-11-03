@@ -2,7 +2,6 @@ use super::*;
 
 /// Coordinator-side rendezvous for one plan attempt. Fail-closed: the first invalid,
 /// forged, stale or substituted message refuses the whole group.
-
 pub struct Rendezvous {
     contract: BoundedRunContract,
     plan_sha256: String,
