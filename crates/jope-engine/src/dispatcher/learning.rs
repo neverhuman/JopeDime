@@ -147,7 +147,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             output,
         } => {
             jope_parallel::tournament::baseline(
-                &root,
+                root,
                 &jope_parallel::manifest::read_json(&jobs)?,
                 &jope_parallel::manifest::read_json(&vocabulary)?,
                 &output,
@@ -178,7 +178,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
                         "admission manifest requires strict policy"
                     );
                     jope_parallel::teaching_store::publish_admitted(
-                        &root,
+                        root,
                         jope_parallel::teaching_store::PublishRequest {
                             contexts_path: &contexts,
                             vocabulary: &vocabulary,
@@ -196,7 +196,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
                     )?;
                 } else {
                     jope_parallel::teaching_store::publish(
-                        &root,
+                        root,
                         jope_parallel::teaching_store::PublishRequest {
                             contexts_path: &contexts,
                             vocabulary: &vocabulary,
@@ -219,7 +219,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
                     "label-policy changes require a separate teaching store"
                 );
                 jope_parallel::corpus_publication::build(
-                    &root,
+                    root,
                     jope_parallel::corpus_publication::PublicationSources {
                         contexts: &contexts,
                         vocab: &vocabulary,
@@ -243,7 +243,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             }
         }
         EngineCmd::ExportTeachingCorpus { corpus, output } => {
-            jope_parallel::teaching_store::export(&root, &corpus, &output)?
+            jope_parallel::teaching_store::export(root, &corpus, &output)?
         }
         EngineCmd::ProjectCorpus {
             source_root,
@@ -251,7 +251,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             output,
         } => {
             let receipt = jope_parallel::corpus_projection::project(
-                &root,
+                root,
                 source_root.as_deref().unwrap_or(root),
                 &corpus,
                 &output,
