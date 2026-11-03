@@ -1,7 +1,6 @@
 use super::*;
 
 /// A connected, authenticated participant control stream.
-
 pub struct Connected {
     pub global_rank: u32,
     pub stream: Box<dyn ControlStream>,
