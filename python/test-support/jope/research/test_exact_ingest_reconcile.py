@@ -90,7 +90,7 @@ def reconcile(limit: int) -> dict:
             ingested += 1
             rows_total += summary["rows"]
             valid_total += summary["valid"]
-        except Exception as error:
+        except (Exception,) as error:
             corpus.rollback()
             failures += 1
             backlog.execute(

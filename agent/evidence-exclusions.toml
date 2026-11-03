@@ -2603,3 +2603,21 @@ path = "vendor/security/torch-sys-0.26.0/libtch/torch_api.cpp"
 sha256 = "3b416a34ff5a6dda9ec6e88ef8e6e8735228e2501ec3c2a01919d93217eaccea"
 receipt = "vendor/security/PROVENANCE.json"
 reason = "Vendored torch-sys 0.26.0 torch_api.cpp pinned by vendor/security/PROVENANCE.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py"
+sha256 = "d1855ed756bec3b029d02ad28fa094b489baed2e0447d75b4b5e3e328217f717"
+receipt = "research/flywheel_selfplay/h169_optimizer_geometry/manifest.json"
+reason = "Frozen research study test script pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h171_grad_accum/test_h171.py"
+sha256 = "dea4112ab8c88a8a1e406b409e03985b57130f4b22fcaba2256cd526237c8867"
+receipt = "research/flywheel_selfplay/h171_grad_accum/manifest.json"
+reason = "Frozen research study test script pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h177_pooled_selector/test_h177.py"
+sha256 = "dc5a2a0d041414ba2caa6f95b10368e47d0b0d277c60d7477111fe76c2290491"
+receipt = "research/flywheel_selfplay/h177_pooled_selector/manifest.json"
+reason = "Frozen research study test script pinned by sha256 in study manifest receipt."
