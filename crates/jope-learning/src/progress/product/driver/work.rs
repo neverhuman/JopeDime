@@ -1,4 +1,6 @@
 use super::*;
+use crate::progress::cadence::Clock;
+use crate::progress::inventory::encode;
 
 impl<'r> Driver<'r> {
     fn planned(&self, work_id: &str) -> Result<()> {
