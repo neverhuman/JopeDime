@@ -1,6 +1,6 @@
 use super::*;
 
-fn binding(root: &Path, path: &Path) -> Result<Binding> {
+pub(super) fn binding(root: &Path, path: &Path) -> Result<Binding> {
     let full = resolve(root, path)?;
     Ok(Binding {
         path: path.into(),
