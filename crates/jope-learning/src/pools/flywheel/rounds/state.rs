@@ -94,12 +94,12 @@ impl RoundState {
         let heldout_active_acquired: Vec<BTreeSet<usize>> = base_acquired.clone();
         let heldout_passive_acquired: Vec<BTreeSet<usize>> = base_acquired.clone();
 
-        let mut round_summaries = Vec::with_capacity(cfg.rounds);
-        let mut round_metrics_by_budget: Vec<BTreeMap<usize, Vec<ContextMetrics>>> =
+        let round_summaries = Vec::with_capacity(cfg.rounds);
+        let round_metrics_by_budget: Vec<BTreeMap<usize, Vec<ContextMetrics>>> =
             Vec::with_capacity(cfg.rounds);
-        let mut passive_round_metrics_by_budget: Vec<BTreeMap<usize, Vec<ContextMetrics>>> =
+        let passive_round_metrics_by_budget: Vec<BTreeMap<usize, Vec<ContextMetrics>>> =
             Vec::with_capacity(cfg.rounds);
-        let mut final_active_discovery_hwm = vec![0.0; pools.len()];
+        let final_active_discovery_hwm = vec![0.0; pools.len()];
         let mut final_passive_discovery_hwm = vec![0.0; pools.len()];
         let mut all_rounds_kl_admissible = true;
         let mut final_train_sub_pools: Vec<Vec<Pool>> = Vec::new();
