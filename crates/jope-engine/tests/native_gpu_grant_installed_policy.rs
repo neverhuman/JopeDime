@@ -161,12 +161,13 @@ fn installed_policy_uid0_verified() {
         );
     }
 
-    // Negative control: unprivileged tempdir policy path must be refused by uid0 ancestry check
+    // Negative control: writable tempdir policy path must be refused by uid0 ancestry check.
     let (_t, root) = tempdir();
     let unpriv_policy = root.join("native-policy-v5.json");
     fs::write(&unpriv_policy, b"{}").unwrap();
+    fs::set_permissions(&unpriv_policy, fs::Permissions::from_mode(0o666)).unwrap();
     let err = verify_root_owned_ancestry(&unpriv_policy)
-        .expect_err("non-root policy path must be rejected");
+        .expect_err("writable policy path must be rejected");
     assert!(
         err.contains("uid 0") || err.contains("writable") || err.contains("symlink"),
         "unexpected error: {err}"
