@@ -23,7 +23,7 @@ pub fn render_scq_spec_with_io(
     inputs: &[ScqInputV1],
     outputs: &[ScqOutputV1],
 ) -> String {
-    let policy = super::ScqPolicyV1::frozen();
+    let policy = super::super::ScqPolicyV1::frozen();
     let args = args
         .iter()
         .map(|value| toml_quote(value))
