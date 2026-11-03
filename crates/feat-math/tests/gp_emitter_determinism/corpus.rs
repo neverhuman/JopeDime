@@ -124,6 +124,37 @@ fn emit(case: usize, program: &ScalarExpressionProgram, language: ScalarLanguage
         .unwrap()
 }
 
+fn cpp_compilers() -> &'static [&'static str] {
+    static COMPILERS: std::sync::OnceLock<Vec<&'static str>> = std::sync::OnceLock::new();
+    COMPILERS.get_or_init(|| {
+        let available: Vec<_> = ["g++", "clang++"]
+            .into_iter()
+            .filter(
+                |compiler| match Command::new(compiler).arg("--version").output() {
+                    Ok(output) => {
+                        assert!(
+                            output.status.success(),
+                            "{compiler} --version failed: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        );
+                        true
+                    }
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                        eprintln!("skipping unavailable optional C++ compiler {compiler}");
+                        false
+                    }
+                    Err(error) => panic!("failed to start {compiler}: {error}"),
+                },
+            )
+            .collect();
+        assert!(
+            !available.is_empty(),
+            "GP emitter determinism requires at least one C++ compiler"
+        );
+        available
+    })
+}
+
 fn run(command: &mut Command) -> String {
     // The shard tests run concurrently, and each C++ case starts both g++ and
     // clang++. Serialize subprocesses so the integration test stays within the

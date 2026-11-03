@@ -179,8 +179,9 @@ fn compile_case(case: usize, program: &ScalarExpressionProgram, directory: &Path
                 fs::write(directory.join("model.cpp"), source).unwrap();
                 let driver = format!("#include \"model.cpp\"\n#include <cstdio>\nint main(){{const auto rows={test_rows};const auto y={y};const auto model=Model::fit({training},y[0]);const auto f=scalar_stage1_values(rows);auto print=[](double v){{std::uint64_t bits;std::memcpy(&bits,&v,8);std::printf(\"V %016llx\\n\",static_cast<unsigned long long>(bits));}};for(const auto& row:f.first)for(double v:row)print(v);for(double v:model.predict(rows))print(v);for(auto v:f.second)std::printf(\"Q %u\\n\",v);}}\n");
                 fs::write(directory.join("probe.cpp"), driver).unwrap();
-                ["g++", "clang++"]
-                    .into_iter()
+                cpp_compilers()
+                    .iter()
+                    .copied()
                     .map(|compiler| {
                         let executable = directory.join(format!("{compiler}-probe"));
                         run(Command::new(compiler)

@@ -20,7 +20,7 @@ fn symbolic_cpp17_compiles_with_both_warning_strict_compilers() {
     fs::write(directory.join("model.cpp"), source).unwrap();
     fs::write(directory.join("probe.cpp"),
         "#include \"model.cpp\"\nint main(){const std::vector<std::vector<double>> x={{0.25,0.75,1.5}};const auto m=Model::fit(x,{1.0});const auto p=m.predict(x);return p.size()==1 && p[0]==1.0 ? 0 : 1;}\n").unwrap();
-    for compiler in ["g++", "clang++"] {
+    for compiler in cpp_compilers() {
         let executable = directory.join(format!("{compiler}-probe"));
         run(Command::new(compiler)
             .args([
