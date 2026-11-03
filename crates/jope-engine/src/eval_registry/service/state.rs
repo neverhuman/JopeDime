@@ -12,7 +12,7 @@ pub(super) struct State {
     pub(super) config: ServiceConfig,
     pub(super) identity: ServiceIdentity,
     pub(super) runtime: String,
-    pub(super) pending: Mutex<BTreeMap<String, Pending>>,
+    pending: Mutex<BTreeMap<String, Pending>>,
     pub(super) requests: AtomicUsize,
     pub(super) worker_spawns: AtomicUsize,
     pub(super) committed: AtomicUsize,
