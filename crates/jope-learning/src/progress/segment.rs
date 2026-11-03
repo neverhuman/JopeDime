@@ -44,9 +44,6 @@ struct Current {
     root_sha256: String,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
-/// `Usage` is a record for the usage contract in this module: Bounded immutable progress history segments and a hash-bound exact-key shard index.
-
 /// `SegmentStore` is a record for the segment store contract in this module: Bounded immutable progress history segments and a hash-bound exact-key shard index.
 pub struct SegmentStore {
     root: PathBuf,
