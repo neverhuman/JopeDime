@@ -258,7 +258,11 @@ fn native_client_probe() {
         let exit_code = code
             .parse::<i32>()
             .expect("JOPE_CLT02_EXIT must be a valid i32 exit code");
-        std::process::exit(exit_code);
+        assert_eq!(
+            exit_code, 0,
+            "simulated child reported exit code {exit_code}"
+        );
+        return;
     }
     let home = PathBuf::from(std::env::var_os("JOPE_CLT02_HOME").expect("supervised fixture home"));
     if let Some(gate) = std::env::var_os("JOPE_CLT02_GATE") {
