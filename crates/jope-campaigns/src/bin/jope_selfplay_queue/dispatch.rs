@@ -5,7 +5,6 @@ use super::*;
 /// 2026-08-01 pileup) at 64/cycle takes ~80 s, while the overload guard gets a
 /// fresh look between batches. Release only fills the gap left under the
 /// queue target — a full queue releases nothing.
-
 pub(crate) const HELD_RELEASE_BATCH_MAX: usize = 64;
 
 pub(crate) fn held_release_budget(
