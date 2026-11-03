@@ -241,6 +241,7 @@ def test_distributed_probe_timeout_reaps_owned_worker_group(tmp_path, parent_exi
     script = (
         "import subprocess,sys,time; from pathlib import Path; "
         "p=subprocess.Popen([sys.executable,'-c','import time; time.sleep(300)']); "
+        # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         "Path(sys.argv[1]).write_text(str(p.pid)); " + ("sys.exit(0)" if parent_exits else "time.sleep(300)")
     )
     children = [

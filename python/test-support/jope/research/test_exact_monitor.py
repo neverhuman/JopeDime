@@ -364,6 +364,7 @@ def main() -> None:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
             raise SystemExit("test-only monitor is already running")
         while True:
             try:

@@ -2236,6 +2236,7 @@ def main() -> None:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
             raise SystemExit("self-play controller is already running") from error
         controller = FlywheelController(args.root, default_handlers(args.root))
         try:

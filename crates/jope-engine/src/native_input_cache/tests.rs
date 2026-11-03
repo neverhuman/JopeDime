@@ -71,6 +71,7 @@ fn ext4_fixture() -> tempfile::TempDir {
     t
 }
 #[test]
+// jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 fn full_first_hash_then_identity_checked_reuse_and_scope_exit() {
     reset();
     let t = ext4_fixture();

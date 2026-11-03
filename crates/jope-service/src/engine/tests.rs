@@ -60,6 +60,7 @@ fn in_process_engine_takes_the_same_lock_and_opens_recovered_store_without_daemo
 }
 
 #[test]
+// jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 fn active_runs_and_open_tcp_clients_prevent_idle_exit() {
     let activity = Arc::new(EngineActivity::default());
     assert!(!activity.idle_for(Duration::from_secs(1)));

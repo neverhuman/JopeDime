@@ -153,10 +153,12 @@ fn outbound_frames_bind_node_fence_cursor_sequence_and_domain() {
 #[test]
 fn terminal_failure_is_closed_and_detail_is_digest_only() {
     let identity = identity();
+    // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
     let outcome = NodeTerminalOutcome::failure(&ExecutionError::NonZeroExit(19));
     assert!(matches!(
         outcome,
         NodeTerminalOutcome::Failure {
+            // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
             code: NodeFailureCode::NonZeroExit(19),
             ..
         }
@@ -174,6 +176,7 @@ fn terminal_failure_is_closed_and_detail_is_digest_only() {
     assert!(!String::from_utf8_lossy(&frame.encode().unwrap()).contains("process exited"));
 
     let impossible = NodeTerminalOutcome::Failure {
+        // jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         code: NodeFailureCode::NonZeroExit(0),
         detail_digest: [7; 32],
     };
