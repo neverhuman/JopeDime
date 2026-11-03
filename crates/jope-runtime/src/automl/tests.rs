@@ -183,22 +183,25 @@ mod fitness_tests {
         // earlier folds' predictions, minus the gap rows just before the fold.
         let folds: Vec<usize> = assignment[15..].to_vec();
         let positions: Vec<usize> = (15..60).collect();
-        let rows = ForwardRows {
+        let rows = super::selection::ForwardRows {
             positions: &positions,
             starts: vec![15, 30, 45],
             gap: 2,
         };
-        assert!(calibration_rows(&folds, 0, Some(&rows)).is_empty());
+        assert!(super::selection::calibration_rows(&folds, 0, Some(&rows)).is_empty());
         // Fold 1 starts at row 30: rows 28 and 29 are embargoed for its model and its map.
         assert_eq!(
-            calibration_rows(&folds, 1, Some(&rows)),
+            super::selection::calibration_rows(&folds, 1, Some(&rows)),
             (0..13).collect::<Vec<_>>()
         );
         assert_eq!(
-            calibration_rows(&folds, 2, Some(&rows)),
+            super::selection::calibration_rows(&folds, 2, Some(&rows)),
             (0..28).collect::<Vec<_>>()
         );
-        assert_eq!(calibration_rows(&folds, 1, None).len(), 30);
+        assert_eq!(
+            super::selection::calibration_rows(&folds, 1, None).len(),
+            30
+        );
         for order_dependent in ["sortino", "mase", "max_drawdown"] {
             assert!(select_with_fitness(
                 &train,
