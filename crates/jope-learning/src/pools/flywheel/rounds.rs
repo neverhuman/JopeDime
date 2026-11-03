@@ -14,16 +14,28 @@ pub(super) struct RoundResults {
 mod state;
 use state::RoundState;
 
-pub(super) fn run_rounds(
-    pools: &[Pool],
-    context_features: &Features,
-    pf: &Features,
-    scores_set: &BTreeSet<String>,
-    direction: ScoreDirection,
-    cfg: &FlywheelConfig,
-    parquet_dir: Option<&Path>,
-    fold_s3_priors: Option<&[ExternalProgramPrior]>,
-) -> Result<RoundResults> {
+pub(super) struct RoundInput<'a> {
+    pub(super) pools: &'a [Pool],
+    pub(super) context_features: &'a Features,
+    pub(super) pf: &'a Features,
+    pub(super) scores_set: &'a BTreeSet<String>,
+    pub(super) direction: ScoreDirection,
+    pub(super) cfg: &'a FlywheelConfig,
+    pub(super) parquet_dir: Option<&'a Path>,
+    pub(super) fold_s3_priors: Option<&'a [ExternalProgramPrior]>,
+}
+
+pub(super) fn run_rounds(input: RoundInput<'_>) -> Result<RoundResults> {
+    let RoundInput {
+        pools,
+        context_features,
+        pf,
+        scores_set,
+        direction,
+        cfg,
+        parquet_dir,
+        fold_s3_priors,
+    } = input;
     let RoundState {
         folds,
         refs,
@@ -51,8 +63,8 @@ pub(super) fn run_rounds(
             &active_acquired_by_fold,
             &base_acquired,
             cfg,
-            direction.clone(),
-            &scores_set,
+            direction,
+            scores_set,
             parquet_dir,
             r,
         )?;
@@ -95,7 +107,7 @@ pub(super) fn run_rounds(
                 &fold_rows,
                 &cfg.score_name,
                 &pools[0].protocol_sha256,
-                &scores_set,
+                scores_set,
             )?;
             let mut by_ctx: BTreeMap<String, Vec<Member>> = BTreeMap::new();
             for row in m_rows {
