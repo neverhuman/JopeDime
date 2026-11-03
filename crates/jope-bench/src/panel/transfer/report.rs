@@ -23,11 +23,11 @@ pub(crate) fn rmse(actual: &[f64], predicted: &[f64]) -> Result<f64> {
     Ok(mse.sqrt())
 }
 #[derive(Clone, Copy, Debug, Serialize)]
-struct Gains {
-    audit: f64,
+pub(super) struct Gains {
+    pub(super) audit: f64,
     outer: f64,
-    contribution: f64,
-    audit_skill: f64,
+    pub(super) contribution: f64,
+    pub(super) audit_skill: f64,
     outer_skill: f64,
     parent_audit_skill: f64,
     parent_outer_skill: f64,
