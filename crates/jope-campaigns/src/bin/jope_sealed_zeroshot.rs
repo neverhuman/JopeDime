@@ -118,9 +118,9 @@ mod reporting;
 mod sealed;
 
 use planning::{atomic_write, plan};
-use portfolio::{baseline_genomes, build_portfolio, sha256_hex, PortfolioGenome};
-use reporting::{median, report};
-use sealed::{contaminated, load_sealed, SealedCohort, SealedEntry};
+use portfolio::{build_portfolio, sha256_hex};
+use reporting::report;
+use sealed::{contaminated, load_sealed, SealedEntry};
 
 fn main() -> Result<()> {
     let args = Args::parse();
@@ -194,6 +194,7 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::{portfolio::baseline_genomes, reporting::median};
 
     #[test]
     fn job_ids_never_collide_with_the_ingestion_prefix() {
