@@ -1,11 +1,12 @@
 {
   "boot_seed": 269150,
+  "completed_utc": "2026-11-03T19:09:15Z",
   "created_utc": "2026-11-03T18:41:39Z",
   "file_checksums_sha256": {
     "PREREG.md": "5bca13751b5c3f90ba26caec9d0c23922dc9a16ef69de021d0d610ba5a70e9ac",
-    "README.md": "9441940233ea46050ad2d6e040d87ca80267fe3bee34c90a428edcc048b9d591",
+    "README.md": "2f97ef4f99b242fe6a570253726c6e1530af32813337348fa5b63d445499a6ea",
     "fold_manifest.json": "e6267c4b85fd1c22b80a4e3952ca26cffa397826acbf2623d68a0a1f9ca0e97c",
-    "metrics.json": "68b963864538dac0a61036c5a44c93ffe041c22a2717e15e86beb47f2d301733",
+    "metrics.json": "36e7b898b2f20351ea3e7ffda45a11931ab2a45a468a72ca5b5802ea1087966c",
     "monitor.py": "e75f02b80c1421f0a1f7f85797ac7f50e7203a7a4e6345971956dcfd7cccefba",
     "runner.py": "a3cf03dffffe56003fcd98653f3b8113ec8674b64dfca8a4d90dcace73f4f676",
     "test_h269.py": "5d025f87eb4c33a7276a21e5cce4d39bc3ebc8d30c6d75389b80d4fd42f7df58"
@@ -31,10 +32,11 @@
   ],
   "outcomes_read": 0,
   "owner": "Argon",
+  "prereg_sha": "ff9c177a6ddbfa18d644a46089f2792e6dc19609",
   "schema": "jope.h269.manifest/v1",
-  "status": "PREREGISTERED",
+  "status": "COMPLETED",
   "study_path": "research/flywheel_selfplay/h269_nosg_veto_rerank4",
-  "verdict": null,
+  "verdict": "NO_ADVANCE",
   "wave": "H269",
   "wave_id": "h269-nosg-veto-rerank4-20261103",
   "winning_arm": null

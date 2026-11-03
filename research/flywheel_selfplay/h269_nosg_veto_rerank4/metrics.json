@@ -1,22 +1,918 @@
 {
+  "advance_gates": {
+    "NOSG": {
+      "arm": "NOSG",
+      "arm_advance": false,
+      "control_dl_train_invalid_neg2_picks_by_seed": [51, 51, 51],
+      "dl_train_invalid_le_control_all_seeds": false,
+      "dl_train_invalid_le_control_median": false,
+      "dl_train_invalid_neg2_picks_by_seed": [55, 56, 59],
+      "n_cells_strict_admitted_of_45": 29,
+      "primary_3_of_3_seeds_positive": true,
+      "primary_beats_nosg_shuf": false,
+      "primary_holm3_p_lt_005": false,
+      "primary_holm3_simultaneous_lcb_gt_0": false,
+      "primary_holm3_stepdown_lcb_gt_0": false,
+      "primary_lcb95_gt_0": false,
+      "primary_median_family_gain_gt_0002": true,
+      "secondary_dl_val91_3_of_3_seeds_positive": true,
+      "secondary_dl_val91_gain_gt_0": true
+    },
+    "NOSG_VETO": {
+      "arm": "NOSG_VETO",
+      "arm_advance": false,
+      "control_dl_train_invalid_neg2_picks_by_seed": [51, 51, 51],
+      "dl_train_invalid_le_control_all_seeds": false,
+      "dl_train_invalid_le_control_median": true,
+      "dl_train_invalid_neg2_picks_by_seed": [48, 56, 49],
+      "n_cells_strict_admitted_of_45": 45,
+      "primary_3_of_3_seeds_positive": true,
+      "primary_beats_nosg_shuf": true,
+      "primary_holm3_p_lt_005": false,
+      "primary_holm3_simultaneous_lcb_gt_0": false,
+      "primary_holm3_stepdown_lcb_gt_0": false,
+      "primary_lcb95_gt_0": false,
+      "primary_median_family_gain_gt_0002": true,
+      "secondary_dl_val91_3_of_3_seeds_positive": true,
+      "secondary_dl_val91_gain_gt_0": true
+    },
+    "verdict": "NO_ADVANCE",
+    "winning_arm": null
+  },
+  "audits": {
+    "dl_val91_reuse_disclosure": "DL-Val91 (19 families, 91 contexts) has been heavily reused across prior waves; DL-Train 205-family OOF on fresh fold seeds 269140/269141/269142 is the primary decision endpoint.",
+    "family_disjointness": {"dl_train_fold_family_overlap_across_all_3_fold_seeds": 0, "dl_train_val_family_overlap": 0, "dl_val_reads_before_fit_lock": 0, "has_meta_test_any": false},
+    "h58_cache_provenance": {"base_prior_cost_source": "stage1_stage2.pt native prior model input (sha256=136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d)", "cache_manifest_schema": "jope.h58.context-feature-cache/v3", "contains_dl_val_or_train_outcomes": false, "context_features_npz_sha256": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf", "excluded_payloads_opened": 0, "outer_rows_delivered": 0, "pool_priors_npz_sha256": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"}
+  },
+  "baseline_regression": {"dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814", "r882_bit_exact_context_matches": 91, "r882_native91_abs_diff": 0.0, "r882_native91_expected": 1.1377941898164525, "r882_native91_mean": 1.1377941898164525, "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64", "schema": "jope.h269.baseline-regression/v1", "top4_pick_oracle_ceiling_ctx_abs_diff": 0.0, "top4_pick_oracle_ceiling_ctx_expected": 1.2403601682250796, "top4_pick_oracle_ceiling_ctx_mean": 1.2403601682250796, "top4_pick_oracle_ceiling_fam_abs_diff": 0.0, "top4_pick_oracle_ceiling_fam_expected": 1.2519997168684853, "top4_pick_oracle_ceiling_fam_mean": 1.2519997168684853},
+  "boot_draws": 10000,
   "boot_seed": 269150,
-  "created_utc": "2026-11-03T18:41:06Z",
-  "fold_seeds": [
-    269140,
-    269141,
-    269142
-  ],
+  "claim_scope": "Confirmatory fresh-fold evaluation (fold_seeds 269140/269141/269142 x 5 folds x model_seeds 269101-269103 on DL-Train 205 fam PRIMARY + DL-Val91 SECONDARY, Holm m=3) of H266 NO_SCOREGEOM (528 cols, NOSG) and outcome-free LGBMClassifier -2.0 invalid-gate veto (NOSG_VETO, tau in {0.05, 0.10, 0.20})",
+  "completed_utc": "2026-11-03T19:03:30Z",
+  "context_27_summary": {"context_sha256": "43022ae6a8bc83e9e25ea4a2882389152856226f5b2bdd4668db07f2f510ae91", "family_id": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f", "index": 27, "nosg_invalid_picks_out_of_15": 0, "nosg_slot3_oracle_picks_out_of_15": 0, "nosg_veto_invalid_picks_out_of_15": 0, "nosg_veto_slot3_oracle_picks_out_of_15": 0, "r882_slot0_utility": 1.1226949552792034, "rerank4_slot3_oracle_picks_out_of_15": 2, "top4_oracle_slot3_utility": 1.128496258392441},
+  "feature_importance_nosg_528_fseed269140_s269101_fold0": {
+    "dope_28 (500..527)": {"gain": 357.93, "pct": 3.64},
+    "lm48_z_48 (452..499)": {"gain": 1621.39, "pct": 16.48},
+    "prog_412 (0..411)": {"gain": 2971.47, "pct": 30.21},
+    "proj16_z_16 (436..451)": {"gain": 749.67, "pct": 7.62},
+    "sem24_z_24 (412..435)": {"gain": 4135.27, "pct": 42.04}
+  },
+  "fit_selections_lock_summary": {"details_json_sha256": "8e76f75a7fe743eedc733b4b3b0dc925bec65e3d07b327fd4ef37c285e9ecd1e", "n_cells_strict_admitted_nosg_of_45": 29, "n_cells_strict_admitted_nosg_shuf_of_45": 0, "n_cells_strict_admitted_nosg_veto_of_45": 45, "n_cells_strict_admitted_rerank4_of_45": 29, "n_confirmatory_cells_per_arm": 45, "path": "fit_selections_lock.json", "sha256": "6d912a206f569ac49e6a08ecade69da65112119ac07fffacf2a07efcb2c073c3"},
+  "fold_seeds": [269140, 269141, 269142],
+  "holm3_adjusted_p": {"NOSG_TRAIN": 0.10598940105989402, "NOSG_VETO_TRAIN": 0.056394360563943605, "NOSG_VETO_VAL91": 0.00029997000299970003},
+  "holm3_family": ["NOSG_TRAIN", "NOSG_VETO_TRAIN", "NOSG_VETO_VAL91"],
+  "holm3_raw_p": {"NOSG_TRAIN": 0.10598940105989402, "NOSG_VETO_TRAIN": 0.028197180281971802, "NOSG_VETO_VAL91": 9.999000099990002e-05},
   "holm_m": 3,
-  "model_seeds": [
-    269101,
-    269102,
-    269103
-  ],
-  "outcomes_read": 0,
+  "hygiene": {"cuda_visible_devices": "", "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814", "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814", "optimizer_updates": 0, "r882_sha256_after": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64", "r882_sha256_before": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64", "test_time_reveals_used": 0},
+  "model_seeds": [269101, 269102, 269103],
+  "primary_dl_train_oof_205fam": {
+    "arm_utilities": {
+      "CONTROL": {
+        "mean_changed_choices_per_fold_seed": [0.0, 0.0, 0.0],
+        "median_context_utility": 1.423073434552299,
+        "median_family_utility": 1.3853554329931828,
+        "per_seed_context_utility": [1.423073434552299, 1.423073434552299, 1.423073434552299],
+        "per_seed_family_utility": [1.3853554329931828, 1.3853554329931828, 1.3853554329931828],
+        "top1_within_top4_accuracy_by_seed": [0.2715340442986054, 0.2715340442986054, 0.2715340442986054],
+        "total_invalid_neg2_picks_across_fold_seeds": [51, 51, 51]
+      },
+      "NOSG": {
+        "mean_changed_choices_per_fold_seed": [272.0, 306.3333333333333, 396.6666666666667],
+        "median_context_utility": 1.4390015812652204,
+        "median_family_utility": 1.400629284917074,
+        "per_seed_context_utility": [1.4390015812652204, 1.4293006742208685, 1.4432103456043375],
+        "per_seed_family_utility": [1.400629284917074, 1.398351280407867, 1.4053422734395626],
+        "top1_within_top4_accuracy_by_seed": [0.299972655181843, 0.29286300246103364, 0.3169264424391578],
+        "total_invalid_neg2_picks_across_fold_seeds": [55, 56, 59]
+      },
+      "NOSG_SHUF": {
+        "mean_changed_choices_per_fold_seed": [0.0, 0.0, 0.0],
+        "median_context_utility": 1.423073434552299,
+        "median_family_utility": 1.3853554329931828,
+        "per_seed_context_utility": [1.423073434552299, 1.423073434552299, 1.423073434552299],
+        "per_seed_family_utility": [1.3853554329931828, 1.3853554329931828, 1.3853554329931828],
+        "top1_within_top4_accuracy_by_seed": [0.2715340442986054, 0.2715340442986054, 0.2715340442986054],
+        "total_invalid_neg2_picks_across_fold_seeds": [51, 51, 51]
+      },
+      "NOSG_UNC": {
+        "mean_changed_choices_per_fold_seed": [497.6666666666667, 584.6666666666666, 571.0],
+        "median_context_utility": 1.4481814821691534,
+        "median_family_utility": 1.4157362908654687,
+        "per_seed_context_utility": [1.4481814821691534, 1.4410101246837632, 1.45925435596799],
+        "per_seed_family_utility": [1.4197830871812884, 1.3939007129720113, 1.4157362908654687],
+        "top1_within_top4_accuracy_by_seed": [0.32595023243095433, 0.3273174733388023, 0.34016953787257315],
+        "total_invalid_neg2_picks_across_fold_seeds": [52, 61, 58]
+      },
+      "NOSG_VETO": {
+        "mean_changed_choices_per_fold_seed": [93.66666666666667, 129.0, 179.33333333333334],
+        "median_context_utility": 1.4351125840321832,
+        "median_family_utility": 1.3967187384093818,
+        "per_seed_context_utility": [1.4351125840321832, 1.4364644046692805, 1.432428399025719],
+        "per_seed_family_utility": [1.3967187384093818, 1.394941058518714, 1.4039738548433578],
+        "top1_within_top4_accuracy_by_seed": [0.2890347279190593, 0.29340989882417284, 0.30133989608969103],
+        "total_invalid_neg2_picks_across_fold_seeds": [48, 56, 49]
+      },
+      "NOSG_VETO_UNC_SAFE": {
+        "mean_changed_choices_per_fold_seed": [107.66666666666667, 129.0, 179.33333333333334],
+        "median_context_utility": 1.433897281635167,
+        "median_family_utility": 1.3962012333306824,
+        "per_seed_context_utility": [1.433897281635167, 1.4364644046692805, 1.432428399025719],
+        "per_seed_family_utility": [1.3962012333306824, 1.394941058518714, 1.4039738548433578],
+        "top1_within_top4_accuracy_by_seed": [0.2909488651900465, 0.29340989882417284, 0.30133989608969103],
+        "total_invalid_neg2_picks_across_fold_seeds": [48, 56, 49]
+      },
+      "RERANK4": {
+        "mean_changed_choices_per_fold_seed": [228.33333333333334, 377.0, 390.3333333333333],
+        "median_context_utility": 1.4376027108014393,
+        "median_family_utility": 1.3986160060417638,
+        "per_seed_context_utility": [1.4335612299549325, 1.4426521347507915, 1.4376027108014393],
+        "per_seed_family_utility": [1.390356538546521, 1.40853733504384, 1.3986160060417638],
+        "top1_within_top4_accuracy_by_seed": [0.3018867924528302, 0.31036368608148757, 0.3158326497128794],
+        "total_invalid_neg2_picks_across_fold_seeds": [58, 58, 59]
+      },
+      "TOP4_PICK_ORACLE": {
+        "mean_changed_choices_per_fold_seed": [888.0, 888.0, 888.0],
+        "median_context_utility": 1.61406593322801,
+        "median_family_utility": 1.5787159877909234,
+        "per_seed_context_utility": [1.61406593322801, 1.61406593322801, 1.61406593322801],
+        "per_seed_family_utility": [1.5787159877909234, 1.5787159877909234, 1.5787159877909234],
+        "top1_within_top4_accuracy_by_seed": [1.0, 1.0, 1.0],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      }
+    },
+    "contrasts_median_across_fold_seeds": {
+      "NOSG - CONTROL": {
+        "ci95": [-0.007127631833049451, 0.04422300989858786],
+        "ci975_holm2": [-0.009324166567247362, 0.04908915777582467],
+        "ci9833_holm3": [-0.01030323853018318, 0.052797849307067775],
+        "ci_holm3_stepdown": [-0.007127631833049451, 0.04422300989858786],
+        "family_wtl_by_seed": [
+          {"losses": 29, "ties": 117, "wins": 59},
+          {"losses": 32, "ties": 120, "wins": 53},
+          {"losses": 40, "ties": 83, "wins": 82}
+        ],
+        "harm_families_gt_001_by_seed": [21, 24, 27],
+        "harm_families_gt_1e4_by_seed": [29, 32, 40],
+        "holm_m3_effective_m": 1,
+        "holm_m3_stepdown_rank": 3,
+        "holm_p_m3": 0.10598940105989402,
+        "mean_context_gain": 0.014097432477843045,
+        "mean_family_gain": 0.016085513261651675,
+        "median_context_gain": 0.01592814671292131,
+        "median_family_gain": 0.015273851923891236,
+        "n_harmed_families_median_gt_001": 22,
+        "n_harmed_families_median_gt_1e4": 31,
+        "per_seed_context_gains": [0.01592814671292131, 0.006227239668569418, 0.02013691105203841],
+        "per_seed_family_gains": [0.015273851923891236, 0.012995847414684111, 0.01998684044637968],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.10598940105989402,
+        "worst_harmed_families_top5": [
+          {"delta": -0.7346097741326578, "family_id": "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d"},
+          {"delta": -0.6114910574331573, "family_id": "fam-f3dabbc88d07fc0ad26a29ae0a8df36750a5763d2bd8cd38c132604bb7ea9de9"},
+          {"delta": -0.30004597952530243, "family_id": "fam-b8515bbd9b5fd7bfdcc3bdf7419bb6bf2f0178be17d581a8dab59a702e063a7b"},
+          {"delta": -0.25096561063315903, "family_id": "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7"},
+          {"delta": -0.22552631721841543, "family_id": "fam-bc48bce7bb551b3a67095b0f41bf6951be54ffabe6d202b680a7bae0f9c0e9bb"}
+        ]
+      },
+      "NOSG - NOSG_SHUF": {
+        "ci95": [-0.007127631833049451, 0.04422300989858786],
+        "ci975_holm2": [-0.009324166567247362, 0.04908915777582467],
+        "ci9833_holm3": [-0.01030323853018318, 0.052797849307067775],
+        "family_wtl_by_seed": [
+          {"losses": 29, "ties": 117, "wins": 59},
+          {"losses": 32, "ties": 120, "wins": 53},
+          {"losses": 40, "ties": 83, "wins": 82}
+        ],
+        "harm_families_gt_001_by_seed": [21, 24, 27],
+        "harm_families_gt_1e4_by_seed": [29, 32, 40],
+        "mean_context_gain": 0.014097432477843045,
+        "mean_family_gain": 0.016085513261651675,
+        "median_context_gain": 0.01592814671292131,
+        "median_family_gain": 0.015273851923891236,
+        "n_harmed_families_median_gt_001": 22,
+        "n_harmed_families_median_gt_1e4": 31,
+        "per_seed_context_gains": [0.01592814671292131, 0.006227239668569418, 0.02013691105203841],
+        "per_seed_family_gains": [0.015273851923891236, 0.012995847414684111, 0.01998684044637968],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.10598940105989402
+      },
+      "NOSG_SHUF - CONTROL": {
+        "ci95": [0.0, 0.0],
+        "ci975_holm2": [0.0, 0.0],
+        "ci9833_holm3": [0.0, 0.0],
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [0.0, 0.0, 0.0],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "NOSG_UNC - CONTROL": {
+        "ci95": [0.0006885103185943354, 0.06939476399567945],
+        "ci975_holm2": [-0.003426573451465867, 0.07503374617767573],
+        "ci9833_holm3": [-0.005662639845902793, 0.07791287781798649],
+        "median_context_gain": 0.025108047616854368,
+        "median_family_gain": 0.03038085787228573,
+        "n_harmed_families_median_gt_001": 43,
+        "per_seed_family_gains": [0.03442765418810553, 0.008545279978828603, 0.03038085787228573],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.022897710228977103
+      },
+      "NOSG_VETO - CONTROL": {
+        "ci95": [-0.00019873077660411063, 0.027250996425128578],
+        "ci975_holm2": [-0.0016114729936724786, 0.03036592029995397],
+        "ci9833_holm3": [-0.002263457241017307, 0.031805616166468424],
+        "ci_holm3_stepdown": [-0.0016114729936724786, 0.03036592029995397],
+        "family_wtl_by_seed": [
+          {"losses": 18, "ties": 145, "wins": 42},
+          {"losses": 24, "ties": 133, "wins": 48},
+          {"losses": 25, "ties": 121, "wins": 59}
+        ],
+        "harm_families_gt_001_by_seed": [10, 12, 12],
+        "harm_families_gt_1e4_by_seed": [18, 24, 25],
+        "holm_m3_effective_m": 2,
+        "holm_m3_stepdown_rank": 2,
+        "holm_p_m3": 0.056394360563943605,
+        "mean_context_gain": 0.011595028023428489,
+        "mean_family_gain": 0.013189117597301743,
+        "median_context_gain": 0.01203914947988416,
+        "median_family_gain": 0.011363305416199,
+        "n_harmed_families_median_gt_001": 8,
+        "n_harmed_families_median_gt_1e4": 19,
+        "per_seed_context_gains": [0.01203914947988416, 0.013390970116981427, 0.00935496447341988],
+        "per_seed_family_gains": [0.011363305416199, 0.009585625525531482, 0.018618421850174746],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.028197180281971802,
+        "worst_harmed_families_top5": [
+          {"delta": -0.45664777888446406, "family_id": "fam-37f9e67be184439511ba7b76d189201834b8e82476f44aeee864cd641398783a"},
+          {"delta": -0.14595166123052405, "family_id": "fam-bc48bce7bb551b3a67095b0f41bf6951be54ffabe6d202b680a7bae0f9c0e9bb"},
+          {"delta": -0.044427770752362816, "family_id": "fam-c0387cd570ed363b76be94f93960ab0a8adbd89ffdb67ca115fa0770828142fa"},
+          {"delta": -0.03109647247968339, "family_id": "fam-19957714b6b2c679b5e74c1d8959d3dcf37c29da96b848c3ad9b370ea000beb4"},
+          {"delta": -0.0270369163273787, "family_id": "fam-9b2bb9fe35853aec5d1778896dfb3f15ff9531ee4a0c4a9b1d043fb7f3e8d489"}
+        ]
+      },
+      "NOSG_VETO - NOSG": {
+        "ci95": [-0.023714782273182827, 0.024032938432661688],
+        "ci975_holm2": [-0.02751763927934466, 0.0272420892654331],
+        "ci9833_holm3": [-0.029673838276143887, 0.02876818632123627],
+        "median_context_gain": -0.0038889972330371503,
+        "median_family_gain": -0.003410221889152631,
+        "n_harmed_families_median_gt_001": 35,
+        "per_seed_family_gains": [-0.003910546507692227, -0.003410221889152631, -0.0013684185962049248],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.46035396460353967
+      },
+      "NOSG_VETO - NOSG_SHUF": {
+        "ci95": [-0.00019873077660411063, 0.027250996425128578],
+        "ci975_holm2": [-0.0016114729936724786, 0.03036592029995397],
+        "ci9833_holm3": [-0.002263457241017307, 0.031805616166468424],
+        "family_wtl_by_seed": [
+          {"losses": 18, "ties": 145, "wins": 42},
+          {"losses": 24, "ties": 133, "wins": 48},
+          {"losses": 25, "ties": 121, "wins": 59}
+        ],
+        "harm_families_gt_001_by_seed": [10, 12, 12],
+        "harm_families_gt_1e4_by_seed": [18, 24, 25],
+        "mean_context_gain": 0.011595028023428489,
+        "mean_family_gain": 0.013189117597301743,
+        "median_context_gain": 0.01203914947988416,
+        "median_family_gain": 0.011363305416199,
+        "n_harmed_families_median_gt_001": 8,
+        "n_harmed_families_median_gt_1e4": 19,
+        "per_seed_context_gains": [0.01203914947988416, 0.013390970116981427, 0.00935496447341988],
+        "per_seed_family_gains": [0.011363305416199, 0.009585625525531482, 0.018618421850174746],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.028197180281971802
+      },
+      "NOSG_VETO_UNC_SAFE - CONTROL": {
+        "ci95": [-2.7060390254930797e-05, 0.027508704029716235],
+        "ci975_holm2": [-0.0014183814619916635, 0.030605959466158274],
+        "ci9833_holm3": [-0.002060406450550711, 0.03214240123665879],
+        "median_context_gain": 0.010823847082867877,
+        "median_family_gain": 0.010845800337499331,
+        "n_harmed_families_median_gt_001": 8,
+        "per_seed_family_gains": [0.010845800337499331, 0.009585625525531482, 0.018618421850174746],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.025697430256974303
+      },
+      "RERANK4 - CONTROL": {
+        "ci95": [-0.02040440550809584, 0.045398686739699504],
+        "ci975_holm2": [-0.02498989628468548, 0.05044201457172735],
+        "ci9833_holm3": [-0.02734218410538534, 0.053270591687302665],
+        "median_context_gain": 0.014529276249140244,
+        "median_family_gain": 0.01326057304858104,
+        "n_harmed_families_median_gt_001": 24,
+        "per_seed_family_gains": [0.005001105553338385, 0.023181902050657312, 0.01326057304858104],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.270972902709729
+      },
+      "TOP4_PICK_ORACLE - CONTROL": {
+        "ci95": [0.1399272594290431, 0.2701757456639461],
+        "ci975_holm2": [0.13476282466426226, 0.28264169379935605],
+        "ci9833_holm3": [0.13162181443146728, 0.2894722712304764],
+        "median_context_gain": 0.190992498675711,
+        "median_family_gain": 0.19336055479774025,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [0.19336055479774025, 0.19336055479774025, 0.19336055479774025],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      }
+    },
+    "mm_bt_elo_anchored_r882": {
+      "CONTROL": {
+        "ci95": [1500.0, 1500.0],
+        "median_elo": 1500.0,
+        "per_seed_elo": [1500.0, 1500.0, 1500.0]
+      },
+      "NOSG": {
+        "ci95": [1505.1514567009922, 1521.0793832162115],
+        "median_elo": 1512.4373200201019,
+        "per_seed_elo": [1511.6507554460622, 1512.4373200201019, 1523.3795066569692]
+      },
+      "NOSG_SHUF": {
+        "ci95": [1500.0, 1500.0],
+        "median_elo": 1500.0,
+        "per_seed_elo": [1500.0, 1500.0, 1500.0]
+      },
+      "NOSG_UNC": {
+        "ci95": [1520.6386968482443, 1546.7734430664095],
+        "median_elo": 1534.2720456163092,
+        "per_seed_elo": [1530.3002768696863, 1534.5249591932716, 1534.2720456163092]
+      },
+      "NOSG_VETO": {
+        "ci95": [1501.6294367455623, 1512.7152209712183],
+        "median_elo": 1509.7022754101215,
+        "per_seed_elo": [1507.4721180904146, 1509.7022754101215, 1510.6627637494464]
+      },
+      "NOSG_VETO_UNC_SAFE": {
+        "ci95": [1502.68754401976, 1514.2207887306693],
+        "median_elo": 1509.7022754101215,
+        "per_seed_elo": [1508.8255632646312, 1509.7022754101215, 1510.6627637494464]
+      },
+      "RERANK4": {
+        "ci95": [1509.1369570041809, 1528.0956503368673],
+        "median_elo": 1521.4982148216873,
+        "per_seed_elo": [1511.891080550352, 1521.4982148216873, 1525.6848407431128]
+      },
+      "TOP4_PICK_ORACLE": {
+        "ci95": [1799.197717350074, 1832.9347811919133],
+        "median_elo": 1812.5656508454024,
+        "per_seed_elo": [1813.5719316797756, 1812.5656508454024, 1812.0847943182725]
+      }
+    },
+    "n_cells_per_arm": 45,
+    "n_contexts": 1219,
+    "n_families": 205,
+    "per_fold_seed_contrasts": {
+      "269140": {
+        "NOSG - CONTROL": {
+          "ci95": [-0.009360095553006292, 0.04267371809918039],
+          "ci975_holm2": [-0.011834071500762825, 0.047769559379212616],
+          "ci9833_holm3": [-0.01363468106779335, 0.05043641813230566],
+          "median_context_gain": 0.022342481072329168,
+          "median_family_gain": 0.014655555259222679,
+          "n_harmed_families_median_gt_001": 28,
+          "per_seed_family_gains": [0.014655555259222679, 0.012092343356380337, 0.019414743374275505],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.1354864513548645
+        },
+        "NOSG_SHUF - CONTROL": {
+          "ci95": [0.0, 0.0],
+          "ci975_holm2": [0.0, 0.0],
+          "ci9833_holm3": [0.0, 0.0],
+          "median_context_gain": 0.0,
+          "median_family_gain": 0.0,
+          "n_harmed_families_median_gt_001": 0,
+          "per_seed_family_gains": [0.0, 0.0, 0.0],
+          "positive_seeds": 0,
+          "raw_p_one_sided": 1.0
+        },
+        "NOSG_UNC - CONTROL": {
+          "ci95": [0.0015101902841938577, 0.0679520124015351],
+          "ci975_holm2": [-0.00223488697911716, 0.07454698898653683],
+          "ci9833_holm3": [-0.004513617305422001, 0.07727059407844508],
+          "median_context_gain": 0.035536634664193434,
+          "median_family_gain": 0.02399450970166475,
+          "n_harmed_families_median_gt_001": 44,
+          "per_seed_family_gains": [0.03176567181642828, 0.004706177484541578, 0.02399450970166475],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.0197980201979802
+        },
+        "NOSG_VETO - CONTROL": {
+          "ci95": [0.002722778768347285, 0.03159274848684986],
+          "ci975_holm2": [0.0013022249127691587, 0.03457558398115981],
+          "ci9833_holm3": [0.0006805299156652458, 0.036499308702768955],
+          "median_context_gain": 0.00935496447341988,
+          "median_family_gain": 0.01378472456873531,
+          "n_harmed_families_median_gt_001": 14,
+          "per_seed_family_gains": [0.015352381368085834, 0.003582624052678707, 0.01378472456873531],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.007099290070992901
+        },
+        "NOSG_VETO_UNC_SAFE - CONTROL": {
+          "ci95": [0.002761968224085299, 0.03172010113478877],
+          "ci975_holm2": [0.0013669117430817695, 0.034582075389794964],
+          "ci9833_holm3": [0.0007461212565521013, 0.03666064944991615],
+          "median_context_gain": 0.00935496447341988,
+          "median_family_gain": 0.013355471309314098,
+          "n_harmed_families_median_gt_001": 14,
+          "per_seed_family_gains": [0.013355471309314098, 0.003582624052678707, 0.01378472456873531],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.006199380061993801
+        },
+        "RERANK4 - CONTROL": {
+          "ci95": [-0.006626106426162158, 0.036265823658923106],
+          "ci975_holm2": [-0.009153030629110374, 0.038967195855444746],
+          "ci9833_holm3": [-0.010499152871948794, 0.04089209049678957],
+          "median_context_gain": 0.01803016292966997,
+          "median_family_gain": 0.01207790928911212,
+          "n_harmed_families_median_gt_001": 26,
+          "per_seed_family_gains": [0.01207790928911212, 0.014210768331919192, 0.011917299007731435],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.09469053094690531
+        }
+      },
+      "269141": {
+        "NOSG - CONTROL": {
+          "ci95": [-0.014247611819041781, 0.05643209933903313],
+          "ci975_holm2": [-0.019074219030258813, 0.061604467389172614],
+          "ci9833_holm3": [-0.020873807920878798, 0.06459683179740107],
+          "median_context_gain": 0.00695005395926418,
+          "median_family_gain": 0.005988627294849446,
+          "n_harmed_families_median_gt_001": 27,
+          "per_seed_family_gains": [0.017594626527811703, 0.005988627294849446, -0.00335176104148266],
+          "positive_seeds": 2,
+          "raw_p_one_sided": 0.14108589141085892
+        },
+        "NOSG_SHUF - CONTROL": {
+          "ci95": [0.0, 0.0],
+          "ci975_holm2": [0.0, 0.0],
+          "ci9833_holm3": [0.0, 0.0],
+          "median_context_gain": 0.0,
+          "median_family_gain": 0.0,
+          "n_harmed_families_median_gt_001": 0,
+          "per_seed_family_gains": [0.0, 0.0, 0.0],
+          "positive_seeds": 0,
+          "raw_p_one_sided": 1.0
+        },
+        "NOSG_UNC - CONTROL": {
+          "ci95": [-0.025639101610496023, 0.05681944223635596],
+          "ci975_holm2": [-0.03153459504256175, 0.06370583327326569],
+          "ci9833_holm3": [-0.03430565911615842, 0.06734938778017742],
+          "median_context_gain": 0.01793669013146415,
+          "median_family_gain": 0.009954780820237465,
+          "n_harmed_families_median_gt_001": 43,
+          "per_seed_family_gains": [0.024161319855698322, 0.009954780820237465, -0.004622014199380283],
+          "positive_seeds": 2,
+          "raw_p_one_sided": 0.24147585241475852
+        },
+        "NOSG_VETO - CONTROL": {
+          "ci95": [0.0047684493965387854, 0.04436407161921557],
+          "ci975_holm2": [0.0036016721453176817, 0.048450761962244855],
+          "ci9833_holm3": [0.0029701316952584016, 0.05077931067194417],
+          "median_context_gain": 0.013390970116981427,
+          "median_family_gain": 0.014684903673036914,
+          "n_harmed_families_median_gt_001": 9,
+          "per_seed_family_gains": [0.00995834204080281, 0.014684903673036914, 0.02730720429342244],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.0005999400059994001
+        },
+        "NOSG_VETO_UNC_SAFE - CONTROL": {
+          "ci95": [0.005676886083338268, 0.045201398981133234],
+          "ci975_holm2": [0.00451468754623473, 0.049345947436882975],
+          "ci9833_holm3": [0.00400730122036754, 0.051403665479872705],
+          "median_context_gain": 0.013390970116981427,
+          "median_family_gain": 0.014684903673036914,
+          "n_harmed_families_median_gt_001": 11,
+          "per_seed_family_gains": [0.012295842810586096, 0.014684903673036914, 0.02730720429342244],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.00029997000299970003
+        },
+        "RERANK4 - CONTROL": {
+          "ci95": [-0.022946361874605047, 0.04559813535734447],
+          "ci975_holm2": [-0.027629086753408215, 0.05082620802630459],
+          "ci9833_holm3": [-0.02999293779060956, 0.054526690121481994],
+          "median_context_gain": 0.002338235245046061,
+          "median_family_gain": 0.004384974316336364,
+          "n_harmed_families_median_gt_001": 18,
+          "per_seed_family_gains": [0.004384974316336364, 0.014184703230466611, -0.0050127038781963154],
+          "positive_seeds": 2,
+          "raw_p_one_sided": 0.30146985301469853
+        }
+      },
+      "269142": {
+        "NOSG - CONTROL": {
+          "ci95": [-0.005882868233111691, 0.04805467788805261],
+          "ci975_holm2": [-0.008477704329186415, 0.05323007268083811],
+          "ci9833_holm3": [-0.009707447680449522, 0.05593778080741865],
+          "median_context_gain": 0.02013691105203841,
+          "median_family_gain": 0.015545099004030529,
+          "n_harmed_families_median_gt_001": 26,
+          "per_seed_family_gains": [0.010800712759194898, 0.015545099004030529, 0.018649549471738344],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.07779222077792221
+        },
+        "NOSG_SHUF - CONTROL": {
+          "ci95": [0.0, 0.0],
+          "ci975_holm2": [0.0, 0.0],
+          "ci9833_holm3": [0.0, 0.0],
+          "median_context_gain": 0.0,
+          "median_family_gain": 0.0,
+          "n_harmed_families_median_gt_001": 0,
+          "per_seed_family_gains": [0.0, 0.0, 0.0],
+          "positive_seeds": 0,
+          "raw_p_one_sided": 1.0
+        },
+        "NOSG_UNC - CONTROL": {
+          "ci95": [0.0063117641822980335, 0.07398600807608263],
+          "ci975_holm2": [0.0020274763483349874, 0.07996268934163749],
+          "ci9833_holm3": [0.00019498620042310275, 0.08390547958762949],
+          "median_context_gain": 0.02502757800142641,
+          "median_family_gain": 0.018763206863187422,
+          "n_harmed_families_median_gt_001": 42,
+          "per_seed_family_gains": [0.018763206863187422, 0.016843843866923572, 0.03572039704221788],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.008099190080991902
+        },
+        "NOSG_VETO - CONTROL": {
+          "ci95": [0.001489357937518823, 0.028753146073713966],
+          "ci975_holm2": [7.435391368102385e-05, 0.03181152765492146],
+          "ci9833_holm3": [-0.0006772929076984737, 0.033125227507077984],
+          "median_context_gain": 0.01203914947988416,
+          "median_family_gain": 0.01141691006842141,
+          "n_harmed_families_median_gt_001": 6,
+          "per_seed_family_gains": [0.016687836006928768, 0.010270557459369044, 0.01141691006842141],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.011998800119988001
+        },
+        "NOSG_VETO_UNC_SAFE - CONTROL": {
+          "ci95": [0.001489357937518823, 0.028753146073713966],
+          "ci975_holm2": [7.435391368102385e-05, 0.03181152765492146],
+          "ci9833_holm3": [-0.0006772929076984737, 0.033125227507077984],
+          "median_context_gain": 0.01203914947988416,
+          "median_family_gain": 0.01141691006842141,
+          "n_harmed_families_median_gt_001": 6,
+          "per_seed_family_gains": [0.016687836006928768, 0.010270557459369044, 0.01141691006842141],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.011998800119988001
+        },
+        "RERANK4 - CONTROL": {
+          "ci95": [-0.0029566823254219376, 0.0630753223757105],
+          "ci975_holm2": [-0.00757144072072928, 0.06901559945553544],
+          "ci9833_holm3": [-0.010051151478457476, 0.07328110811693533],
+          "median_context_gain": 0.03398146337624497,
+          "median_family_gain": 0.02169044361492265,
+          "n_harmed_families_median_gt_001": 32,
+          "per_seed_family_gains": [0.004321307668165364, 0.031159114072801742, 0.02169044361492265],
+          "positive_seeds": 3,
+          "raw_p_one_sided": 0.03849615038496151
+        }
+      }
+    }
+  },
+  "primary_endpoint": "DL-Train 205-family OOF single-pick equal-family utility minus CONTROL across 3 fresh fold seeds x 3 fresh model seeds (45 cells)",
+  "s3_full_outputs_pointer": {
+    "bucket": "veox-jopedime-learning-use2",
+    "details_json": {"VersionId": "hy3ayOqeLTC1CZqJJ6LtIAyde6LJdeEa", "bytes": 406827, "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/details.json", "sha256": "8e76f75a7fe743eedc733b4b3b0dc925bec65e3d07b327fd4ef37c285e9ecd1e"},
+    "fit_selections_lock_json": {"VersionId": "MJq1YH.FdweFSHUSs_d0ssYtuKHjINCE", "bytes": 125064, "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/fit_selections_lock.json", "sha256": "6d912a206f569ac49e6a08ecade69da65112119ac07fffacf2a07efcb2c073c3"},
+    "metrics_full_json": {"VersionId": "FDeKBSZUh1jhQQkpsEEtYt280ilk8Ul1", "bytes": 62910, "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/metrics_full.json", "sha256": "9224654fe1c36e25e8277712c44b3aea70738876f31dc1317bc5f52e8d8733c3"},
+    "panels_npz": {"VersionId": "Gc9eN7aA9bQEDR5gDrwzjSBuKychN9tA", "bytes": 384223, "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/panels.npz", "sha256": "f7077473635809a68b535724b4efd87f68319afcc1e594b5d447f3c01063e405"},
+    "prefix": "experiments/rd_breakthrough_20261030/H269/attempt-001",
+    "s3_manifest_json": {"VersionId": "CjmqMcpp74lmq0bGU4oRRo3GFVHfxuMC", "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/s3_manifest.json"}
+  },
   "schema": "jope.h269.metrics/v1",
-  "status": "PREREGISTERED",
+  "secondary_dl_val_native91": {
+    "arm_utilities": {
+      "CONTROL": {
+        "mean_changed_choices_per_fold_seed": [0.0, 0.0, 0.0],
+        "median_context_utility": 1.1377941898164523,
+        "median_family_utility": 1.153615276991245,
+        "per_seed_context_utility": [1.1377941898164523, 1.1377941898164523, 1.1377941898164523],
+        "per_seed_family_utility": [1.153615276991245, 1.153615276991245, 1.153615276991245],
+        "top1_within_top4_accuracy_by_seed": [0.23076923076923078, 0.23076923076923078, 0.23076923076923078],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      },
+      "NOSG": {
+        "mean_changed_choices_per_fold_seed": [98.0, 109.0, 190.0],
+        "median_context_utility": 1.1533374902419906,
+        "median_family_utility": 1.1685041226620239,
+        "per_seed_context_utility": [1.1533374902419906, 1.1553214166601053, 1.151047071180335],
+        "per_seed_family_utility": [1.1685041226620239, 1.170426224210664, 1.1663318511721474],
+        "top1_within_top4_accuracy_by_seed": [0.25934065934065936, 0.26153846153846155, 0.27912087912087913],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      },
+      "NOSG_SHUF": {
+        "mean_changed_choices_per_fold_seed": [0.0, 0.0, 0.0],
+        "median_context_utility": 1.1377941898164523,
+        "median_family_utility": 1.153615276991245,
+        "per_seed_context_utility": [1.1377941898164523, 1.1377941898164523, 1.1377941898164523],
+        "per_seed_family_utility": [1.153615276991245, 1.153615276991245, 1.153615276991245],
+        "top1_within_top4_accuracy_by_seed": [0.23076923076923078, 0.23076923076923078, 0.23076923076923078],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      },
+      "NOSG_UNC": {
+        "mean_changed_choices_per_fold_seed": [174.0, 233.0, 230.0],
+        "median_context_utility": 1.1613883825340667,
+        "median_family_utility": 1.176216030015486,
+        "per_seed_context_utility": [1.1613883825340667, 1.1635065567906087, 1.1558339836960658],
+        "per_seed_family_utility": [1.176216030015486, 1.1782667268619884, 1.1709172094766895],
+        "top1_within_top4_accuracy_by_seed": [0.2681318681318681, 0.3054945054945055, 0.2923076923076923],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      },
+      "NOSG_VETO": {
+        "mean_changed_choices_per_fold_seed": [45.0, 54.0, 91.0],
+        "median_context_utility": 1.1477335232316779,
+        "median_family_utility": 1.1631361121574084,
+        "per_seed_context_utility": [1.1451075669692528, 1.1556150489918757, 1.1477335232316779],
+        "per_seed_family_utility": [1.1606207224744538, 1.1706857842013871, 1.1631361121574084],
+        "top1_within_top4_accuracy_by_seed": [0.24835164835164836, 0.2813186813186813, 0.26593406593406593],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      },
+      "NOSG_VETO_UNC_SAFE": {
+        "mean_changed_choices_per_fold_seed": [50.0, 54.0, 91.0],
+        "median_context_utility": 1.1477335232316779,
+        "median_family_utility": 1.1631361121574084,
+        "per_seed_context_utility": [1.1461419800265849, 1.1556150489918757, 1.1477335232316779],
+        "per_seed_family_utility": [1.161611581297793, 1.1706857842013871, 1.1631361121574084],
+        "top1_within_top4_accuracy_by_seed": [0.25934065934065936, 0.2813186813186813, 0.26593406593406593],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      },
+      "RERANK4": {
+        "mean_changed_choices_per_fold_seed": [51.0, 177.0, 99.0],
+        "median_context_utility": 1.1507784626873288,
+        "median_family_utility": 1.16608024943209,
+        "per_seed_context_utility": [1.1454060722212964, 1.1567373419969913, 1.1507784626873288],
+        "per_seed_family_utility": [1.160906659084306, 1.1718156343564046, 1.16608024943209],
+        "top1_within_top4_accuracy_by_seed": [0.25934065934065936, 0.2681318681318681, 0.24835164835164836],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      },
+      "TOP4_PICK_ORACLE": {
+        "mean_changed_choices_per_fold_seed": [350.0, 350.0, 350.0],
+        "median_context_utility": 1.2403601682250796,
+        "median_family_utility": 1.2519997168684853,
+        "per_seed_context_utility": [1.2403601682250796, 1.2403601682250796, 1.2403601682250796],
+        "per_seed_family_utility": [1.2519997168684853, 1.2519997168684853, 1.2519997168684853],
+        "top1_within_top4_accuracy_by_seed": [1.0, 1.0, 1.0],
+        "total_invalid_neg2_picks_across_fold_seeds": [0, 0, 0]
+      }
+    },
+    "contrasts_3_fold_seeds_aggregate": {
+      "NOSG - CONTROL": {
+        "ci95": [0.0039797568655391925, 0.024949339797796857],
+        "ci975_holm2": [0.0026363347829256073, 0.026688721939265025],
+        "ci9833_holm3": [0.0020681181694537135, 0.02739673364685156],
+        "median_context_gain": 0.01590255260306339,
+        "median_family_gain": 0.015240207732311358,
+        "n_harmed_families_median_gt_001": 2,
+        "per_seed_family_gains": [0.013107679098439096, 0.016783623412109733, 0.015240207732311358],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0018998100189981002
+      },
+      "NOSG_VETO - CONTROL": {
+        "ci95": [0.0024012911763571705, 0.0188809088156584],
+        "ci975_holm2": [0.001608816780988645, 0.020312639587455064],
+        "ci9833_holm3": [0.0011228093462674394, 0.02107675390689948],
+        "median_context_gain": 0.01187905012425472,
+        "median_family_gain": 0.01137887959270716,
+        "n_harmed_families_median_gt_001": 1,
+        "per_seed_family_gains": [0.007460292776138405, 0.01137887959270716, 0.012709463242269237],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0023997600239976003
+      },
+      "RERANK4 - CONTROL": {
+        "ci95": [0.002838990494390059, 0.01999102095171111],
+        "ci975_holm2": [0.0018855910804978803, 0.021307168556135223],
+        "ci9833_holm3": [0.001416203770303661, 0.022262848148214998],
+        "median_context_gain": 0.012046037055072789,
+        "median_family_gain": 0.011547970760229504,
+        "n_harmed_families_median_gt_001": 2,
+        "per_seed_family_gains": [0.008620072122414025, 0.013528594052879461, 0.011547970760229504],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0024997500249975004
+      }
+    },
+    "contrasts_fseed269140": {
+      "NOSG - CONTROL": {
+        "ci95": [0.004319941266626052, 0.02627098135133828],
+        "ci975_holm2": [0.003168671717085405, 0.02803580468364448],
+        "ci9833_holm3": [0.0025479147809793923, 0.029229057705310542],
+        "family_wtl_by_seed": [
+          {"losses": 4, "ties": 1, "wins": 14},
+          {"losses": 3, "ties": 1, "wins": 15},
+          {"losses": 6, "ties": 1, "wins": 12}
+        ],
+        "harm_families_gt_001_by_seed": [2, 1, 3],
+        "harm_families_gt_1e4_by_seed": [4, 3, 6],
+        "mean_context_gain": 0.015441136211024645,
+        "mean_family_gain": 0.014805455690366802,
+        "median_context_gain": 0.015543300425538309,
+        "median_family_gain": 0.014888845670778894,
+        "n_harmed_families_median_gt_001": 2,
+        "n_harmed_families_median_gt_1e4": 4,
+        "per_seed_context_gains": [0.015543300425538309, 0.017527226843653043, 0.013252881363882585],
+        "per_seed_family_gains": [0.014888845670778894, 0.016810947219419045, 0.012716574180902466],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0013998600139986002,
+        "worst_harmed_families_top5": [
+          {"delta": -0.023629638476269754, "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426"},
+          {"delta": -0.02041107856707025, "family_id": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279"},
+          {"delta": -0.002107339358315752, "family_id": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c"},
+          {"delta": -0.0019752938755419613, "family_id": "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8"}
+        ]
+      },
+      "NOSG - NOSG_SHUF": {
+        "ci95": [0.004319941266626052, 0.02627098135133828],
+        "ci975_holm2": [0.003168671717085405, 0.02803580468364448],
+        "ci9833_holm3": [0.0025479147809793923, 0.029229057705310542],
+        "family_wtl_by_seed": [
+          {"losses": 4, "ties": 1, "wins": 14},
+          {"losses": 3, "ties": 1, "wins": 15},
+          {"losses": 6, "ties": 1, "wins": 12}
+        ],
+        "harm_families_gt_001_by_seed": [2, 1, 3],
+        "harm_families_gt_1e4_by_seed": [4, 3, 6],
+        "mean_context_gain": 0.015441136211024645,
+        "mean_family_gain": 0.014805455690366802,
+        "median_context_gain": 0.015543300425538309,
+        "median_family_gain": 0.014888845670778894,
+        "n_harmed_families_median_gt_001": 2,
+        "n_harmed_families_median_gt_1e4": 4,
+        "per_seed_context_gains": [0.015543300425538309, 0.017527226843653043, 0.013252881363882585],
+        "per_seed_family_gains": [0.014888845670778894, 0.016810947219419045, 0.012716574180902466],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0013998600139986002
+      },
+      "NOSG_SHUF - CONTROL": {
+        "ci95": [0.0, 0.0],
+        "ci975_holm2": [0.0, 0.0],
+        "ci9833_holm3": [0.0, 0.0],
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [0.0, 0.0, 0.0],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "NOSG_UNC - CONTROL": {
+        "ci95": [0.0059396602075003704, 0.038541517081141764],
+        "ci975_holm2": [0.003925003690623579, 0.04097356002194914],
+        "ci9833_holm3": [0.0030192226184697227, 0.04213220384492963],
+        "median_context_gain": 0.023594192717614426,
+        "median_family_gain": 0.02260075302424131,
+        "n_harmed_families_median_gt_001": 3,
+        "per_seed_family_gains": [0.02260075302424131, 0.02465144987074348, 0.0173019324854445],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0023997600239976003
+      },
+      "NOSG_VETO - CONTROL": {
+        "ci95": [0.004579702520245453, 0.025023891429866343],
+        "ci975_holm2": [0.0036950974754587996, 0.026809825467096142],
+        "ci9833_holm3": [0.0032190956247510915, 0.02792387596300808],
+        "ci_holm3_stepdown": [0.0032190956247510915, 0.02792387596300808],
+        "family_wtl_by_seed": [
+          {"losses": 4, "ties": 5, "wins": 10},
+          {"losses": 3, "ties": 5, "wins": 11},
+          {"losses": 4, "ties": 4, "wins": 11}
+        ],
+        "harm_families_gt_001_by_seed": [0, 0, 2],
+        "harm_families_gt_1e4_by_seed": [4, 3, 4],
+        "holm_m3_effective_m": 3,
+        "holm_m3_stepdown_rank": 1,
+        "holm_p_m3": 0.00029997000299970003,
+        "mean_context_gain": 0.011691189914483147,
+        "mean_family_gain": 0.01119892928650487,
+        "median_context_gain": 0.00993933341522557,
+        "median_family_gain": 0.009520835166163533,
+        "n_harmed_families_median_gt_001": 0,
+        "n_harmed_families_median_gt_1e4": 3,
+        "per_seed_context_gains": [0.007313377152800449, 0.01782085917542342, 0.00993933341522557],
+        "per_seed_family_gains": [0.0070054454832088435, 0.017070507210142232, 0.009520835166163533],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05,
+        "worst_harmed_families_top5": [
+          {"delta": -0.007876374531018193, "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426"},
+          {"delta": -0.0023370358787869194, "family_id": "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8"},
+          {"delta": -0.0009071822537571883, "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"}
+        ]
+      },
+      "NOSG_VETO - NOSG": {
+        "ci95": [-0.015069334493327775, 0.007460243966882644],
+        "ci975_holm2": [-0.016257729525137925, 0.009464731014470321],
+        "ci9833_holm3": [-0.017001567953968028, 0.010684124271424988],
+        "median_context_gain": -0.003313547948657014,
+        "median_family_gain": -0.003195739014738934,
+        "n_harmed_families_median_gt_001": 5,
+        "per_seed_family_gains": [-0.00788340018757005, 0.00025955999072318754, -0.003195739014738934],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.819018098190181
+      },
+      "NOSG_VETO - NOSG_SHUF": {
+        "ci95": [0.004579702520245453, 0.025023891429866343],
+        "ci975_holm2": [0.0036950974754587996, 0.026809825467096142],
+        "ci9833_holm3": [0.0032190956247510915, 0.02792387596300808],
+        "family_wtl_by_seed": [
+          {"losses": 4, "ties": 5, "wins": 10},
+          {"losses": 3, "ties": 5, "wins": 11},
+          {"losses": 4, "ties": 4, "wins": 11}
+        ],
+        "harm_families_gt_001_by_seed": [0, 0, 2],
+        "harm_families_gt_1e4_by_seed": [4, 3, 4],
+        "mean_context_gain": 0.011691189914483147,
+        "mean_family_gain": 0.01119892928650487,
+        "median_context_gain": 0.00993933341522557,
+        "median_family_gain": 0.009520835166163533,
+        "n_harmed_families_median_gt_001": 0,
+        "n_harmed_families_median_gt_1e4": 3,
+        "per_seed_context_gains": [0.007313377152800449, 0.01782085917542342, 0.00993933341522557],
+        "per_seed_family_gains": [0.0070054454832088435, 0.017070507210142232, 0.009520835166163533],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "NOSG_VETO_UNC_SAFE - CONTROL": {
+        "ci95": [0.004975873586329181, 0.02549954182658932],
+        "ci975_holm2": [0.004054950665868765, 0.02731769035154052],
+        "ci9833_holm3": [0.0035784969502390255, 0.02841335186682759],
+        "median_context_gain": 0.00993933341522557,
+        "median_family_gain": 0.009520835166163533,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [0.007996304306548036, 0.017070507210142232, 0.009520835166163533],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "RERANK4 - CONTROL": {
+        "ci95": [0.005029390713603914, 0.01992552714150843],
+        "ci975_holm2": [0.004288842590791218, 0.021095109603040032],
+        "ci9833_holm3": [0.0037124430163477788, 0.021710659063754294],
+        "median_context_gain": 0.012984272870876445,
+        "median_family_gain": 0.012464972440845186,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [0.007291382093061005, 0.018200357365159597, 0.012464972440845186],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK_ORACLE - CONTROL": {
+        "ci95": [0.059714322291469175, 0.1479935461878264],
+        "ci975_holm2": [0.05506379913832459, 0.15722443803554806],
+        "ci9833_holm3": [0.05295672330622243, 0.16163320456484218],
+        "median_context_gain": 0.10256597840862725,
+        "median_family_gain": 0.09838443987724041,
+        "n_harmed_families_median_gt_001": 0,
+        "per_seed_family_gains": [0.09838443987724041, 0.09838443987724041, 0.09838443987724041],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      }
+    },
+    "fold_seed": 269140,
+    "mm_bt_elo_anchored_r882": {
+      "CONTROL": {
+        "ci95": [1500.0, 1500.0],
+        "median_elo": 1500.0,
+        "per_seed_elo": [1500.0, 1500.0, 1500.0]
+      },
+      "NOSG": {
+        "ci95": [1504.5471840539428, 1550.2098069787867],
+        "median_elo": 1525.7836785976442,
+        "per_seed_elo": [1524.3583930900709, 1525.7836785976442, 1533.546974908704]
+      },
+      "NOSG_SHUF": {
+        "ci95": [1500.0, 1500.0],
+        "median_elo": 1500.0,
+        "per_seed_elo": [1500.0, 1500.0, 1500.0]
+      },
+      "NOSG_UNC": {
+        "ci95": [1503.3266729134227, 1578.1991418803652],
+        "median_elo": 1539.1125692789508,
+        "per_seed_elo": [1534.6230467309736, 1551.6872327175333, 1539.1125692789508]
+      },
+      "NOSG_VETO": {
+        "ci95": [1506.7553081356564, 1536.8924811962374],
+        "median_elo": 1517.0652270453695,
+        "per_seed_elo": [1510.908274924939, 1528.12840088518, 1517.0652270453695]
+      },
+      "NOSG_VETO_UNC_SAFE": {
+        "ci95": [1507.674448898343, 1541.7918039844726],
+        "median_elo": 1517.0652270453695,
+        "per_seed_elo": [1515.4518569982793, 1528.12840088518, 1517.0652270453695]
+      },
+      "RERANK4": {
+        "ci95": [1501.7080097565984, 1540.640344861772],
+        "median_elo": 1517.3081149615152,
+        "per_seed_elo": [1515.3707852298282, 1536.7682655953358, 1517.3081149615152]
+      },
+      "TOP4_PICK_ORACLE": {
+        "ci95": [1805.9494888759466, 1907.4550163140873],
+        "median_elo": 1842.9325538362675,
+        "per_seed_elo": [1845.5804150126066, 1842.9325538362675, 1839.4616016935308]
+      }
+    },
+    "n_contexts": 91,
+    "n_families": 19
+  },
+  "secondary_endpoint": "DL-Val91 (91 ctx / 19 fam) fresh-seed single-pick equal-family utility minus CONTROL (fold_seed=269140, model_seeds=269101-269103; heavily reused validation split disclosed)",
+  "status": "COMPLETE",
   "study_path": "research/flywheel_selfplay/h269_nosg_veto_rerank4",
-  "verdict": null,
+  "verdict": "NO_ADVANCE",
+  "wall_seconds": 1073.879,
   "wave_id": "h269-nosg-veto-rerank4-20261103",
   "winning_arm": null
 }
