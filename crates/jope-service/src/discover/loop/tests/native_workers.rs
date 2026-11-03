@@ -295,17 +295,28 @@ fn rel07_r2_worker_faults_preserve_engine_memory_and_complete_search() {
             inner: pool(&binary, 1),
             failures: Mutex::new(vec![]),
         };
-        let prime = d
-            .request(
-                99,
-                0,
-                1,
-                &Candidate {
-                    algorithm_id: "alg_00000099".into(),
-                    dsl: NativeSpace.canonical("(pipe X (ridge))").unwrap(),
-                },
-            )
-            .unwrap();
+        let prime_candidate = Candidate {
+            algorithm_id: "alg_00000099".into(),
+            dsl: NativeSpace.canonical("(pipe X (ridge))").unwrap(),
+        };
+        d.attempt += 1;
+        let prime = Request {
+            attempt: Attempt {
+                run: p.run_id.clone(),
+                round: 99,
+                slot: 1 << 16,
+                attempt: (u64::from(d.checkpoint.epoch) << 32) | u64::from(d.attempt),
+            },
+            matrix_path: p.matrix_path.clone(),
+            fold_spec: p.fold_spec(1).unwrap(),
+            dsl: prime_candidate.dsl,
+            objective: json!(p.objective),
+            seed: evaluation_seed(p.seed, 99, 0, 1),
+            limits: worker::Limits {
+                wall_ms: p.evaluation_wall_ms,
+                rss_bytes: p.evaluation_rss_bytes,
+            },
+        };
         assert_eq!(observed.inner.evaluate(&prime).failure, None);
         let engine = std::process::id();
         let baseline = crate::sampler::sample(engine).unwrap().1;
