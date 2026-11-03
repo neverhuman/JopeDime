@@ -4,6 +4,7 @@ CTRL AdamW, frozen schedules, fold seed 249140 partition, strict selector, Holm 
 Toy tensors are never study data."""
 
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,7 @@ import torch
 
 import analysis as stat
 import monitor as mon
+import runner as run
 from treatment import (
     ALPHAS,
     BETAS,
@@ -300,3 +302,41 @@ def test_manifest_pins():
     assert (
         "treatment.py" in m["source_sha256"] and "schedules.json" in m["source_sha256"]
     )
+
+
+def test_schedules_hashable_under_audit_and_write_refused(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "h249_audit_test", HERE.parent / "runtime_audit.py"
+    )
+    audit_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(audit_mod)
+    m = json.loads((HERE / "manifest.json").read_text())
+    launch_file = tmp_path / "launch.json"
+    launch_file.write_text("{}\n")
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    # Test both actual HERE and a simulated /home/ubuntu/jope-data study path
+    for study_dir in [
+        HERE,
+        Path(
+            "/home/ubuntu/jope-data/h249/capsule/research/flywheel_selfplay/h249_side_branch"
+        ),
+    ]:
+        allowed = run.audit_allowed_paths(m, launch_file, study_dir=study_dir)
+        audit = audit_mod.Audit(allowed, out_dir)
+        sched_path = str((study_dir / "schedules.json").resolve())
+        manifest_path = str((study_dir / "manifest.json").resolve())
+        audit.check("open", (sched_path, "rb", 0))
+        audit.check("open", (manifest_path, "r", 0))
+        with pytest.raises(RuntimeError, match="input/output boundary refusal"):
+            audit.check("open", (sched_path, "wb", os.O_WRONLY))
+        with pytest.raises(RuntimeError, match="input/output boundary refusal"):
+            audit.check("open", (manifest_path, "w", os.O_WRONLY))
+        with pytest.raises(RuntimeError, match="input/output boundary refusal"):
+            audit.check(
+                "open",
+                ("/home/ubuntu/jope-data/h249/unlisted_secret.json", "rb", 0),
+            )
+    assert run.sha(HERE / "schedules.json") == m["source_sha256"]["schedules.json"]

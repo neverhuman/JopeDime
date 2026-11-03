@@ -17,3 +17,4 @@ Wave **H249** tests a function-preserving capacity expansion of the frozen `r882
   - `CONTROL`: exact H170 `CTRL` full-adapter continuation (`29,211` trainable parameters).
   - `SIDE4` (**primary**): rank $r = 4$, $\alpha = 4.0$ low-rank residual side branch on all `16` 2-D adapter matrices (`6,232` trainable parameters; `r882` adapter frozen).
   - `SIDE16` (**secondary**): rank $r = 16$, $\alpha = 16.0$ low-rank residual side branch on all `16` 2-D adapter matrices (`24,928` trainable parameters; `r882` adapter frozen).
+- **Deviation Note (`hw_t1100_argon_h249_fix.md`)**: `attempt-001` crashed on audit boundary (`sha(HERE / "schedules.json")` under `/home/ubuntu/jope-data` capsule path, status `INCOMPLETE_INFRA`) before any outcome read (`0` completed cells, `0` outer/DL-Val91 assessments); `attempt-002` = full rerun of all 45 cells (`15` cells × `3` arms), same prereg (`PREREG.md` and `fold_manifest.json` unchanged).

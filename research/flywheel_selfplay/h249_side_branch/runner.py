@@ -328,6 +328,25 @@ def compact_summary(summary):
     return out
 
 
+def audit_allowed_paths(pins, launch_path, study_dir=HERE, pool_paths=()):
+    study = Path(study_dir).resolve()
+    study_files = set(pins.get("source_sha256", ())) | {
+        "manifest.json",
+        "schedules.json",
+        "PREREG.md",
+        "fold_manifest.json",
+        "provenance.json",
+    }
+    allowed = (
+        set(pins["inputs"])
+        | set(pins["assets"])
+        | {str(Path(launch_path).resolve())}
+        | {str((study / name).resolve()) for name in study_files}
+        | set(pool_paths)
+    )
+    return allowed
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--output", type=Path, required=True)
@@ -350,12 +369,14 @@ def main():
     out = OUT = args.output.resolve()
     out.mkdir()
     pins = json.loads((HERE / "manifest.json").read_text())
+    manifest_sha256 = sha(HERE / "manifest.json")
+    schedules_sha256 = sha(HERE / "schedules.json")
     launch = json.loads(args.launch.read_text())
     verify(pins, launch=launch, smoke=args.smoke)
     validate_launch(
         launch,
         launch.get("source_commit"),
-        sha(HERE / "manifest.json"),
+        manifest_sha256,
         sha(HERE / "PREREG.md"),
         sha(HERE / "fold_manifest.json"),
         smoke=args.smoke,
@@ -395,14 +416,18 @@ def main():
         (HERE / "fold_manifest.json").read_text()
     )["families_by_seed"]:
         raise RuntimeError("fold identity")
-    allowed = set(pins["inputs"]) | set(pins["assets"]) | {str(args.launch.resolve())}
-    allowed |= {
+    pool_paths = {
         str(rt.INPUT / "pools" / (r["context_sha256"] + ".npz")) for r in train + val
     }
+    allowed = audit_allowed_paths(
+        pins, args.launch, study_dir=HERE, pool_paths=pool_paths
+    )
     audit = rt.Audit(allowed, out)
     sys.addaudithook(audit.check)
     if json.loads(args.launch.read_text()) != launch:
         raise RuntimeError("launch mutation")
+    if sha(HERE / "schedules.json") != schedules_sha256:
+        raise RuntimeError("schedules mutation")
     updates, started = 0, time.monotonic()
     try:
         net, guard, names, frozen, fused = rt.build(pins["checkpoint"])
