@@ -98,5 +98,32 @@
     "lightgbm": "4.6.0",
     "torch": "2.7.0",
     "scikit-learn": "1.7.2"
+  },
+  "closeout": {
+    "source_commit": "1e8af0396cc4ac368b2c7505853ea9262ce378a6",
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H277/astra-t2055/closeout/manifest.json",
+      "version_id": "pEKhK75HVr4rzb1Ys5BHG4WcL5R8dy7h",
+      "sha256": "0ce33e54844c64bde6302fbb0d50875236cee195e3b3f9ef14f0788fbeec2435",
+      "bytes": 94918,
+      "exact_version_get_verified": true
+    },
+    "runtime_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H277/astra-t2055/closeout/runtime.tar.gz",
+      "version_id": "_x4Lh97cR0MbklaN0OpJjBfTNig161tQ",
+      "sha256": "53410a49efdf8b24d1cbe2ab562a279cea7ef261f30c7f64ff7ee50e63c599fa",
+      "bytes": 164022592,
+      "members_verified": 525,
+      "exact_version_get_verified": true
+    },
+    "metrics_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H277/astra-t2055/closeout/metrics.json",
+      "version_id": "14gmRaw6SBlyWWKeBDf.bUQ7QosZRK8b",
+      "sha256": "72284eb1c960ffa3207099c50ea39ec3456678787232ae37faf03a1951de6c72",
+      "bytes": 34975,
+      "exact_version_get_verified": true
+    },
+    "verdict": "NO_ADVANCE",
+    "audit_status": "PASS"
   }
 }
