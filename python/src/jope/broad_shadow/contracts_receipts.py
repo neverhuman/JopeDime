@@ -3,14 +3,26 @@
 from __future__ import annotations
 
 import hashlib
+import math
 from collections.abc import Mapping
 from typing import Any
 
 from .contracts_common import (
-    BROAD_CORPUS_SCHEMA, BROAD_RECEIPT_SCHEMA, FIDELITIES, PILOT_RECEIPT_COUNT,
-    _content_hash, _dataset, _exact_fields, _finite, _positive_integer, _safe_relative_path,
+    BROAD_CORPUS_SCHEMA,
+    BROAD_RECEIPT_SCHEMA,
+    FIDELITIES,
+    PILOT_RECEIPT_COUNT,
+    _content_hash,
+    _dataset,
+    _exact_fields,
+    _finite,
+    _optional_finite,
+    _positive_integer,
+    _safe_relative_path,
     _sha256,
+    robust_score,
 )
+from .contracts_slate import _validate_protocol
 
 _RECEIPT_FIELDS = {
     "schema",

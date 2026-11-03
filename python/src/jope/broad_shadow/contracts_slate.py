@@ -7,9 +7,19 @@ from collections import Counter
 from typing import Any
 
 from .contracts_common import (
-    ANCHOR_COUNT, PILOT_DATASET_COUNT, PILOT_GENOMES_PER_DATASET, PROBE_SLATE_SCHEMA,
-    SLOT_ROLE_COUNTS, SYNTHETIC_SPLITS, _content_hash, _dataset, _exact_fields, _finite,
-    _positive_integer, _sha256, _slug,
+    ANCHOR_COUNT,
+    PILOT_DATASET_COUNT,
+    PILOT_GENOMES_PER_DATASET,
+    PROBE_SLATE_SCHEMA,
+    SLOT_ROLE_COUNTS,
+    SYNTHETIC_SPLITS,
+    _content_hash,
+    _dataset,
+    _exact_fields,
+    _finite,
+    _positive_integer,
+    _sha256,
+    _slug,
 )
 
 _ANCHOR_FIELDS = {

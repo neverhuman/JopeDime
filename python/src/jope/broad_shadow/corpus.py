@@ -7,8 +7,8 @@ import json
 import math
 import os
 import shutil
-from collections import Counter, defaultdict, deque
-from collections.abc import Iterator, Mapping, Sequence
+from collections import Counter, defaultdict
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +27,7 @@ from .contracts import (
     validate_broad_receipt,
     validate_probe_slate,
 )
+from .corpus_sampler import ExactOnceBatchSampler
 
 PACK_FILES = {
     "token_ids": ("token_ids.npy", "uint16"),
@@ -420,6 +421,6 @@ class BroadCorpus:
         start, end = int(self.offsets[index]), int(self.offsets[index + 1])
         return self.token_ids[start:end]
 
-from .corpus_sampler import ExactOnceBatchSampler
+
 # Preserve the original import path for objects serialized with pickle.
 ExactOnceBatchSampler.__module__ = __name__

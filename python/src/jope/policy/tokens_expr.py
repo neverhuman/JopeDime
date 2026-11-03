@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from .tokens import EncodeError, ExprTable
 
@@ -30,7 +31,11 @@ def _tokenize_expr(text: str) -> list[str]:
             continue
         if ch == "-":
             prev = out[-1] if out else None
-            if (prev is None or prev in "(,+-*/") and i + 1 < n and (text[i + 1].isdigit() or text[i + 1] == "."):
+            if (
+                (prev is None or prev in "(,+-*/")
+                and i + 1 < n
+                and (text[i + 1].isdigit() or text[i + 1] == ".")
+            ):
                 match = _NUM_RE.match(text, i + 1)
                 assert match is not None
                 out.append("-" + match.group(0))
@@ -49,7 +54,7 @@ def _tokenize_expr(text: str) -> list[str]:
             out.append(match.group(0))
             i = match.end()
             continue
-        raise EncodeError(f"cannot tokenize expr at {text[i:i+8]!r}")
+        raise EncodeError(f"cannot tokenize expr at {text[i : i + 8]!r}")
     return out
 
 
@@ -107,7 +112,7 @@ def _parse_expr(text: str) -> Any:
 
     node = parse_binary(1)
     if pos["i"] != len(tokens):
-        raise EncodeError(f"trailing expr tokens: {tokens[pos['i']:]}")
+        raise EncodeError(f"trailing expr tokens: {tokens[pos['i'] :]}")
     return node
 
 
