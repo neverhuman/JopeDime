@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [
+          "research"
+        ],
+        "lanes": [],
+        "scope": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification."
+      },
     "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
       "discovery": {
         "kind": "python-family"
