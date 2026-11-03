@@ -133,7 +133,7 @@ fn run_dataset(
     Ok(result)
 }
 
-struct TabArenaLane {
+pub(super) struct TabArenaLane {
     dataset_index: usize,
     encoded: EncodedDataset,
     root: PathBuf,
