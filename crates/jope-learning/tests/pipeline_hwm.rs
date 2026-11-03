@@ -35,6 +35,7 @@ fn run_into(
         languages: vec![jope_pipeline::emit::Language::Rust],
         policy: Policy::Skip,
         incumbent: incumbent.map(Path::to_path_buf),
+        source_commit: Some("c".repeat(40)),
         ..RunOptions::new(dataset(slug), &output)
     })
     .unwrap();
