@@ -18,7 +18,7 @@ fn equal_rung1_scores_never_replace_the_champion() {
     let p = plan(directory.path(), 30, Effort::Medium, 4);
     let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
     let mut d = Discovery::open(store, p).unwrap();
-    finish(&mut d, &Unique, &LateImprovement::new(false), 8);
+    finish(&mut d, &Unique, &EqualScores, 8);
     let events = d.projection().unwrap();
     assert_eq!(
         events
@@ -27,7 +27,7 @@ fn equal_rung1_scores_never_replace_the_champion() {
             .iter()
             .filter(|e| e["kind"] == "algorithm.accepted")
             .count(),
-        2
+        1
     );
     assert_eq!(
         events
@@ -42,7 +42,32 @@ fn equal_rung1_scores_never_replace_the_champion() {
             .count(),
         8
     );
-    assert_eq!(d.champion().unwrap().candidate.algorithm_id, "alg_00000001");
+    let first_champion = events
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|event| event["kind"] == "algorithm.accepted")
+        .and_then(|event| event["body"]["algorithm_id"].as_str())
+        .unwrap();
+    assert_eq!(d.champion().unwrap().candidate.algorithm_id, first_champion);
+}
+
+struct EqualScores;
+impl Executor for EqualScores {
+    fn evaluate(&self, request: &Request) -> Response {
+        Response {
+            attempt: request.attempt.clone(),
+            scores: vec![2.0, 2.0, 2.0],
+            fold_scores: vec![],
+            predictions_digest: digest(request.dsl.as_bytes()),
+            wall_ms: 0,
+            failure: None,
+        }
+    }
+
+    fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
+        Ok(request.dsl.as_bytes().to_vec())
+    }
 }
 
 struct WaveSpace;
