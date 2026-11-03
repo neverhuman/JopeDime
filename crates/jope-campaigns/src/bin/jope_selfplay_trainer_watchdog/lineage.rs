@@ -349,10 +349,7 @@ pub(crate) fn load_snapshot_watermark(pointer_path: &Path, labels: u64) -> Resul
     Ok(watermark)
 }
 
-pub(super) fn load_training_snapshot(
-    pointer_path: &Path,
-    labels: u64,
-) -> Result<TrainingSnapshot> {
+pub(super) fn load_training_snapshot(pointer_path: &Path, labels: u64) -> Result<TrainingSnapshot> {
     let pointer = read_json(pointer_path)?;
     let watermark = load_snapshot_watermark(pointer_path, labels)?;
     let manifest = PathBuf::from(
