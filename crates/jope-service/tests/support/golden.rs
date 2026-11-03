@@ -207,4 +207,5 @@ fn validate_schema(
 }
 
 #[cfg(test)]
+#[path = "golden/tests.rs"]
 mod tests;

@@ -1,3 +1,3 @@
-include!("golden/tests/common.rs");
-include!("golden/tests/fixture_loader.rs");
-include!("golden/tests/res07.rs");
+include!("tests/common.rs");
+include!("tests/fixture_loader.rs");
+include!("tests/res07.rs");
