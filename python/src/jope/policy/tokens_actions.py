@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
-from ..pipeline_text import format_param_token, parse_param_token
-from .tokens import ActionVocab, BOS, EOS, EncodeError, Slot, _snap_bin, encode_expr, render_expr
+from ..pipeline_text import format_param_token
+from .tokens import BOS, EOS, ActionVocab, EncodeError, _snap_bin, encode_expr, render_expr
+
 
 def encode_actions(
     engine: str, actions: dict[str, Any], vocab: ActionVocab, *, task: str = "regression"

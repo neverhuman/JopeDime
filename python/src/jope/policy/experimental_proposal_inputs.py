@@ -270,5 +270,3 @@ def export_inputs(request):
         "reload/continuation proof incomplete",
     )
     return plan, records[0], sha_bytes(verification_bytes)
-
-

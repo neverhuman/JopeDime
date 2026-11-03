@@ -7,24 +7,68 @@ receipts. This worker only emits claims, which become evidence after that admiss
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import os
-import struct
 import subprocess
 import time
 from pathlib import Path
 
 from . import training_campaign as campaign
-
 from .experimental_proposal_inputs import (
-    CONTEXTS, LINEAGE, MAX_CHECKPOINT, MAX_METADATA, NUMERICS, OUTPUT, REQUEST, SELECTION,
-    artifact_bytes, export_inputs, load_context, private_write, require, sha_bytes, shape,
-    validate_request,
+    CONTEXTS as CONTEXTS,
 )
-
-from .experimental_proposal_model import ARCHITECTURE_FIELDS, architecture
+from .experimental_proposal_inputs import (
+    LINEAGE as LINEAGE,
+)
+from .experimental_proposal_inputs import (
+    MAX_CHECKPOINT as MAX_CHECKPOINT,
+)
+from .experimental_proposal_inputs import (
+    MAX_METADATA as MAX_METADATA,
+)
+from .experimental_proposal_inputs import (
+    NUMERICS as NUMERICS,
+)
+from .experimental_proposal_inputs import (
+    OUTPUT as OUTPUT,
+)
+from .experimental_proposal_inputs import (
+    REQUEST as REQUEST,
+)
+from .experimental_proposal_inputs import (
+    SELECTION as SELECTION,
+)
+from .experimental_proposal_inputs import (
+    artifact_bytes as artifact_bytes,
+)
+from .experimental_proposal_inputs import (
+    export_inputs as export_inputs,
+)
+from .experimental_proposal_inputs import (
+    load_context as load_context,
+)
+from .experimental_proposal_inputs import (
+    private_write as private_write,
+)
+from .experimental_proposal_inputs import (
+    require as require,
+)
+from .experimental_proposal_inputs import (
+    sha_bytes as sha_bytes,
+)
+from .experimental_proposal_inputs import (
+    shape as shape,
+)
+from .experimental_proposal_inputs import (
+    validate_request as validate_request,
+)
+from .experimental_proposal_model import (
+    ARCHITECTURE_FIELDS as ARCHITECTURE_FIELDS,
+)
+from .experimental_proposal_model import (
+    architecture as architecture,
+)
 
 
 def strict_model(request, context, plan, record):
@@ -32,9 +76,17 @@ def strict_model(request, context, plan, record):
 
     import torch
 
-    from ..grammars.vocab import grammars_from_vocab_v3
-    from .model_v3 import MODEL_VERSION, TASK_LANE, load_policy_v3
-    from .train_v3 import verify_training_proof
+    from ..grammars.vocab import grammars_from_vocab_v3 as grammars_from_vocab_v3
+    from .model_v3 import (
+        MODEL_VERSION as MODEL_VERSION,
+    )
+    from .model_v3 import (
+        TASK_LANE as TASK_LANE,
+    )
+    from .model_v3 import (
+        load_policy_v3 as load_policy_v3,
+    )
+    from .train_v3 import verify_training_proof as verify_training_proof
 
     # policy.pt contains tensors and primitive metadata; optimizer/RNG resume.pt is refused.
     payload = torch.load(
@@ -79,7 +131,7 @@ def strict_model(request, context, plan, record):
         )
     vocabulary = json.loads(artifact_bytes(request["vocabulary"]))
     if vocabulary.get("schema") == "parallel.action_vocab.v1":
-        from .training_corpus_contract import load_frozen_action_vocab
+        from .training_corpus_contract import load_frozen_action_vocab as load_frozen_action_vocab
 
         views, table = load_frozen_action_vocab(vocabulary)
         require(
@@ -312,10 +364,10 @@ def assemble(neural, bank, results):
 def run(request, output_path, *, request_sha256):
     import torch
 
-    from ..pipeline_text import format_pipeline_actions
-    from .automaton import DecoderState
-    from .decode import sample_sequences
-    from .tokens import decode_tokens
+    from ..pipeline_text import format_pipeline_actions as format_pipeline_actions
+    from .automaton import DecoderState as DecoderState
+    from .decode import sample_sequences as sample_sequences
+    from .tokens import decode_tokens as decode_tokens
 
     started = time.monotonic()
 

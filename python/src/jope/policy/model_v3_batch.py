@@ -9,8 +9,9 @@ import torch
 
 from .automaton import replay_masks
 from .losses import bootstrap_mask, rwr_weights
-from .model_v3_arch import PolicyV3Batch, TASK_LANE
+from .model_v3_arch import TASK_LANE, PolicyV3Batch
 from .tokens import PAD, ActionVocab, encode_actions
+
 
 def pad_sequences(
     sequences: Sequence[Sequence[int]], device: str | torch.device = "cpu"

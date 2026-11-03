@@ -176,5 +176,5 @@ def configure_cuda_fast_math() -> None:
         torch.backends.cudnn.allow_tf32 = True
         try:
             torch.set_float32_matmul_precision("high")
-        except (Exception,):
+        except Exception:
             pass
