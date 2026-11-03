@@ -1,13 +1,13 @@
 use super::*;
 
-fn fixture_events() -> Vec<PublicEvent> {
+pub(super) fn fixture_events() -> Vec<PublicEvent> {
     include_str!("events.jsonl")
         .lines()
         .map(|line| serde_json::from_str(line).unwrap())
         .collect()
 }
 
-fn frame(event: &PublicEvent) -> String {
+pub(super) fn frame(event: &PublicEvent) -> String {
     format!(
         "id: {}\ndata: {}\n\n",
         event.sequence.0,
@@ -163,7 +163,7 @@ impl Transport for PersistedEventTransport {
     }
 }
 
-fn durable(event: jope_client::Result<StreamEvent>) -> PublicEvent {
+pub(super) fn durable(event: jope_client::Result<StreamEvent>) -> PublicEvent {
     match event.unwrap() {
         StreamEvent::Durable(event) => *event,
         StreamEvent::Telemetry(_) => panic!("fixture contains only durable events"),
