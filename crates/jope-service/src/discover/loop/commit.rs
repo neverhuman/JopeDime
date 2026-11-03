@@ -290,7 +290,7 @@ impl Discovery {
         Ok(published)
     }
 
-    fn request(
+    pub(super) fn request(
         &mut self,
         round: u64,
         slot: u32,
