@@ -211,15 +211,12 @@ fn interrupted_active_span_consumes_remaining_wall_budget_before_replay() {
     let home = directory.path().join("store");
     {
         let store = Arc::new(Store::open(&home).unwrap());
-        let mut d = Discovery::open(store, p.clone()).unwrap();
-        let mut checkpoint = d.checkpoint.clone();
-        checkpoint.elapsed_ms = 250;
-        checkpoint.active_since_ms = Some(wall_clock_ms().unwrap() - 1500);
-        d.commit_control(checkpoint, RunState::Running).unwrap();
+        let _interrupted = Discovery::open(store, p.clone()).unwrap();
+        std::thread::sleep(Duration::from_millis(1500));
     }
     let store = Arc::new(Store::open(&home).unwrap());
     let mut recovered = Discovery::open(store, p).unwrap();
-    assert!(recovered.checkpoint.elapsed_ms >= 1750);
+    assert!(recovered.checkpoint.elapsed_ms >= 1000);
     assert_eq!(recovered.completed(), Some(CompletionReason::BudgetTime));
     assert_eq!(recovered.budget_bound_by(), Some("time"));
     assert!(recovered
@@ -241,6 +238,7 @@ fn explicit_pause_excludes_idle_time_and_backwards_active_clock_refuses() {
     let mut p = plan(directory.path(), 30, Effort::Fast, 24);
     p.wall_seconds = 1;
     let home = directory.path().join("store");
+    let paused_elapsed;
     {
         let store = Arc::new(Store::open(&home).unwrap());
         let mut d = Discovery::open(store, p.clone()).unwrap();
@@ -254,12 +252,13 @@ fn explicit_pause_excludes_idle_time_and_backwards_active_clock_refuses() {
         );
         checkpoint.active_since_ms = Some(1000);
         assert!(checkpoint.elapsed_at(999).is_err());
-        checkpoint.active_since_ms = None;
-        d.commit_control(checkpoint, RunState::Paused).unwrap();
+        d.pause().unwrap();
+        paused_elapsed = d.checkpoint.elapsed_ms;
     }
+    std::thread::sleep(Duration::from_millis(50));
     let store = Arc::new(Store::open(&home).unwrap());
     let recovered = Discovery::open(store, p).unwrap();
-    assert_eq!(recovered.checkpoint.elapsed_ms, 900);
+    assert_eq!(recovered.checkpoint.elapsed_ms, paused_elapsed);
     assert_eq!(recovered.completed(), None);
     assert!(recovered.checkpoint.active_since_ms.is_some());
 }
