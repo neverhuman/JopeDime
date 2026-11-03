@@ -7,13 +7,13 @@ fn preserves_legacy_unpinned_behavior() {
     let PreregFixture {
         identity,
         plan,
-        parsed_committed,
+        parsed_committed: _,
         parent_map,
         ratchets,
         scores,
         parity,
         pinned_bytes,
-        pinned_plan,
+        pinned_plan: _,
         ..
     } = fixture;
     // 7. Verify R3 A-M3 & R2 P3-3 backward compatibility on legacy no-`--prereg` calls:
