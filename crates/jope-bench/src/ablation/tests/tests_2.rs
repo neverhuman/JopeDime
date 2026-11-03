@@ -1,5 +1,3 @@
-pub(crate) const ABLATION_TEST_GROUP_2: u8 = 2;
-
 use super::*;
 
 #[path = "tests_2/part_a.rs"]
