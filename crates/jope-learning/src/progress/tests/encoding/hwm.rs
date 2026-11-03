@@ -11,7 +11,7 @@ fn hwm_decision_link_is_checked_against_the_real_hwm_ledger() {
 
     let ingest = |value: f64| {
         let (record, blob) = hwm_record("cut-a", value);
-        let report = hwm::ingest(
+        let report = crate::hwm::ingest(
             &state,
             None,
             vec![Candidate {
