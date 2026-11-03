@@ -87,7 +87,7 @@ pub fn run(args: &ParticipantArgs, sources: &HostSources) -> Result<i32> {
         }
         _ => None,
     };
-    let grant_sha256 = super::digest(&planned.grant)?;
+    let grant_sha256 = super::super::digest(&planned.grant)?;
     let member = rendezvous::join(
         &mut stream,
         &contract,
@@ -108,7 +108,7 @@ pub fn run(args: &ParticipantArgs, sources: &HostSources) -> Result<i32> {
             device_uuid: planned.device.as_ref().map(|d| d.uuid.clone()),
             source_commit: identity.source_commit.clone(),
             executable_sha256: identity.executable_sha256.clone(),
-            runtime: identity.runtime.clone(),
+            runtime: identity.runtime,
             installed_policy_sha256: identity.installed_policy_sha256.clone(),
             artifact_closure_sha256: closure.clone(),
             grant_sha256: grant_sha256.clone(),
