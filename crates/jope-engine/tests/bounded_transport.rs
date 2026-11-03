@@ -11,7 +11,7 @@ use ed25519_dalek::SigningKey;
 use fixture::*;
 use jope_parallel::native_loop::bounded::{
     contract::BoundedRunContract,
-    controller::{self, Coordinator, Outcome, RankState},
+    controller::{Coordinator, Outcome, RankState},
     rendezvous::{self, read_frame, write_frame, ControlStream, PeerIdentity, RefusalCause},
     transport::{self, HostCredential, Sequenced, Timeouts, TlsAcceptor, TlsStream},
 };
