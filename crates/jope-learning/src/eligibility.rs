@@ -41,16 +41,12 @@ pub use context::{
 #[cfg(test)]
 use decisions::qualification_path;
 pub(crate) use decisions::require_qualified;
-use decisions::retain_artifact;
 pub(super) use decisions::Decisions;
 pub use decisions::{freeze_teaching, qualify, revalidate_qualification, revalidate_replay};
 #[cfg(test)]
-use freeze::burn_path;
-#[cfg(test)]
 use freeze::freeze_path;
 use freeze::{
-    baseline, blob, fold_fitting_input, fold_rows, freeze_impl, immutable_write, load_freeze,
-    require_blob, rows_sha, task,
+    baseline, blob, fold_rows, immutable_write, load_freeze, require_blob, rows_sha, task,
 };
 pub use freeze::{
     effective_label_role, freeze_optimization, freeze_teaching_for, qualify_for,
