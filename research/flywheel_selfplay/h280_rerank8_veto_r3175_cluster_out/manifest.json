@@ -1,0 +1,152 @@
+{
+  "wave": "H280",
+  "wave_id": "h280-rerank8-veto-r3175-cluster-out-20261103",
+  "authority": "/home/ubuntu/nudges/hw_t2205_astra_h280.md",
+  "parent_commit": "ea8aa652a1b402a25c79273016928a78bc8f4a9c",
+  "publication_ref": "v1/next",
+  "source_sha256": {
+    "audit.py": "3edf4f2c9952e2653d71bdd0d783b0b6e0a3c7c344f1e75eeb972a2185ca7e37",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "regression.py": "d95d8f28645d101c0b01a19702c385c3dafb9f78fd48684b5473314c7eb4fc4b",
+    "test_h280.py": "ae9c1896cafe1c717715c896803b3da1ded61882094773de64a0b4aa1e06c1aa",
+    "analysis_h280.py": "a95354295fc5f8d2e5a3299f0dc73d985bea8aa05db1fcab5d17d257a606a26d",
+    "cell.py": "98a8d0ef661c1973baf4c3c7a512ab71a9dc8b8dd83e33517c264b65ba643703",
+    "metrics.schema.json": "bd7b5a9d1ad1d52d16eae7ac240d6cbdcaab1813bb59ef76d2545ce3f67aa404",
+    "dependencies.py": "7f01bb8b81ac86cb234d3e10993d137de1c23f09dfcba36747d880539fc282db",
+    "dependency-pins.json": "96a112417378173d9a3768d5a39e2ca23e680f575cc09c4aeaa330b41896b046",
+    "folds.json": "e89f9aa130cf1529a684c83c2dc8bd1658dbae69a5c1e0af87760ed8d92208f2",
+    "PREREG.md": "e8174cc13191b297a2f8ad9ad0f4b94b8115e25f43599b9584798e5427c87640",
+    "monitor.py": "f2a9cf99b611fb5abf9e2fae113f8c37e7116cccacc42160a5901e6c282016f1",
+    "data.py": "5b6396d4b75278a3428457f38ae617a9702b12a9d3d1f3fd083ec9ea54cc2428",
+    "cohort.json": "9518c24bab1d9d8cbb951164d78ebcc001cb3fe62151bcb0ed508391c9b45789",
+    "runner.py": "381623cb3817c339e8ba441481e4e72f8b3261052306f57daee98783ca3f0a95",
+    "pool_build.py": "1ef59265b11040d69c56aa67b7f45193e33e0ae1be1f7d8818a21d3e0330d2ce"
+  },
+  "input_sha256": {
+    "inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "inputs/h272-F272140-S272101-K0.json": "bb3b9a035c516b8312c10eff7b857be8bbfe3d5b9900ea07f1ba833b0542847f",
+    "inputs/r3175-secondary-costs.npz": "dd50b71d4fe74b0928951bdd80a07bf4335999219b124ad3d189c014bc988424",
+    "inputs/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "inputs/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "inputs/round-3175.pt": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "inputs/round-3175.json": "7565576d267f83400fee14e369e461d0a177fee097329b41c093420ceb0b6bbc",
+    "export/veto-seed278101.txt": "1d099ac06298b460308cd4d55f444b082ee5c68673dd6ea0b0ee26299d5b508d",
+    "export/veto-seed278102.txt": "9df7a85a622b51ae3e52651ed0f00236d2513caf9bdf3a35b7b15a7a39cfb246",
+    "export/veto-seed278103.txt": "db7283f3c8da2112ab9295844b2d4bcad2f7e0440a9ec61a1795b8bd80f4aaf4",
+    "export/ranker-seed278101.txt": "7a690df843d8ac78f1b3bbbb40c4bfccfa44783c863ae9be26aa66c3abea797b",
+    "export/ranker-seed278103.txt": "ae406a1c416cd780482b6ca6ff45db8fb054ab0a3527ec41ead6ec8008c89b2d",
+    "export/ranker-seed278102.txt": "2a2a8b3b5dd767f6c375bccac0f889291452f40c681d05199ec5014c500476cc",
+    "export/custody.json": "4b76fe3c0018430e77455f57bde593ec8497af5e211f75b2ec6516e612438941",
+    "export/export_manifest.json": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+    "prep/val/dope-secondary.json": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+    "prep/val/features.npz": "f19f8ae36f7634de7314b501ecfa49a40fbee441914760a7459e4651d75c7eae",
+    "prep/val/r882-copy.pt": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "prep/val/r882-secondary-costs.npz": "dd50b71d4fe74b0928951bdd80a07bf4335999219b124ad3d189c014bc988424",
+    "prep/val/receipt.json": "4c7ad45a06f44bb5f257eef1045ff2d5c11ddf786fb768400e1a38c70eb5b5c7",
+    "prep/val/checkpoint-load.json": "74f6002c208c315fdf80a16980aeb0df89e93ccef7ada7e7d9a8aa590c47a349",
+    "prep/smoke/r882-copy.pt": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "prep/smoke/checkpoint-load.json": "74f6002c208c315fdf80a16980aeb0df89e93ccef7ada7e7d9a8aa590c47a349",
+    "prep/train/features.npz": "220a3ff5d2cd7420efc1b590638eee52b535a858967bf0948bb13390ee3d3e61",
+    "prep/train/r882-copy.pt": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "prep/train/r882-train-costs.npz": "f99bc7a05a0830a9b75610f04819a6f08716953d610886537825b2045a752cfa",
+    "prep/train/receipt.json": "96d0ab0f08a5b7a53498636ad651b61e038a8dce3e204b2aac4df987b78c55ba",
+    "prep/train/checkpoint-load.json": "74f6002c208c315fdf80a16980aeb0df89e93ccef7ada7e7d9a8aa590c47a349",
+    "prep/train/dope-train.json": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+    "prep/smoke2/features.npz": "04e58e5f2c20b1af615ce677a1c79492daf44a6c780b421309641eedae6f847d",
+    "prep/smoke2/r882-copy.pt": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "prep/smoke2/r882-train-costs.npz": "8d922ba2dfef7c283a9b649c0ae33645c75434ed1648c09c568ce077a9841903",
+    "prep/smoke2/receipt.json": "59016bc5428d73a5d7d48ae2d9ed1e68c9b112594f4d8cb813ee825f7ac71856",
+    "prep/smoke2/checkpoint-load.json": "74f6002c208c315fdf80a16980aeb0df89e93ccef7ada7e7d9a8aa590c47a349",
+    "prep/smoke2/dope-train.json": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+    "regression.json": "9c26c1fb3a21d227d4c4680067ae5678ef5b3a755c521e2abdaf93ad620d3bf5"
+  },
+  "shared_input_sha256": {
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h58/cache/pool_priors.npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6"
+  },
+  "packages": {
+    "torch": "2.7.0",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "scikit-learn": "1.7.2"
+  },
+  "fold_manifest": {
+    "file": "folds.json",
+    "sha256": "e89f9aa130cf1529a684c83c2dc8bd1658dbae69a5c1e0af87760ed8d92208f2"
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "r3175_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "model_seeds": [
+    280101,
+    280102,
+    280103
+  ],
+  "boot_seed": 280150,
+  "cohort": {
+    "contexts": 1219,
+    "families": 205,
+    "subsample": false
+  },
+  "resource_limits": {
+    "host": "xbabe2",
+    "cpus": [
+      48,
+      50,
+      51,
+      52
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "aggregate_threads": 4,
+    "rss_bytes": 4294967296,
+    "pause_mem_available_bytes": 12884901888,
+    "pause_swap_in_pages_per_second": 2000,
+    "pause_swap_sustained_seconds": 30,
+    "ignore_swap_occupancy": true,
+    "compute_stop": "2026-11-04T00:50:00Z",
+    "closeout_deadline": "2026-11-04T01:35:00Z"
+  },
+  "zero_neural_updates": true,
+  "preparation_source": {
+    "epoch": 1793744074.76605,
+    "preparation_executed_source_sha256": "d4340bff7b712436be7828e80115cbfb0bf54a8c057a1fac30abedc7fc11b815",
+    "published_pool_source_sha256": "1ef59265b11040d69c56aa67b7f45193e33e0ae1be1f7d8818a21d3e0330d2ce",
+    "pool_source_AST_equal_after_import_normalization": true,
+    "inference_sources": [
+      {
+        "path": "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py",
+        "sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+        "archived": "code-closure/inference/cpu_exact_fused.py"
+      },
+      {
+        "path": "/home/ubuntu/JopeDimeMicro/python/model.py",
+        "sha256": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+        "archived": "code-closure/inference/model.py"
+      },
+      {
+        "path": "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py",
+        "sha256": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+        "archived": "code-closure/inference/phase12_multimodal_model.py"
+      },
+      {
+        "path": "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py",
+        "sha256": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+        "archived": "code-closure/inference/rust_evaluator.py"
+      },
+      {
+        "path": "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py",
+        "sha256": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+        "archived": "code-closure/inference/multilevel_model.py"
+      }
+    ]
+  }
+}
