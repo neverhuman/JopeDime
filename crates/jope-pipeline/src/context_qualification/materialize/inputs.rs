@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Deserialize)]
 pub(crate) struct NativePreprocessing {
     schema: String,
     columns: Vec<NativeColumn>,
