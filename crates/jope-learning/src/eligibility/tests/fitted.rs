@@ -13,12 +13,14 @@ use jope_pipeline::prepared_data::{fitting_input_sha256, raw_table};
 /// The fixture's authenticated prepared development data, as the receiver reads it.
 pub(super) fn development(f: &Fixture) -> DevelopmentData {
     let policy = load_freeze(&f.state, &f.evidence.freeze).unwrap();
+    let dataset: jope_pipeline::experiment::PanelDataset =
+        serde_json::from_value(serde_json::to_value(policy).unwrap()["dataset"].clone()).unwrap();
     let bytes = f
         .state
-        .read_blob(&policy.dataset.split.development_sha256)
+        .read_blob(&dataset.split.development_sha256)
         .unwrap()
         .unwrap();
-    parse_development(&bytes, &policy.dataset).unwrap()
+    parse_development(&bytes, &dataset).unwrap()
 }
 
 /// The fitting input a fit worker receives for `fold`, digested as the worker digests it.
