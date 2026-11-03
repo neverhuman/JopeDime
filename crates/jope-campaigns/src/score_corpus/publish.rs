@@ -252,7 +252,7 @@ fn verify_existing_corpus(
     Ok(())
 }
 
-fn safe_relative_path(value: &str) -> Result<PathBuf> {
+pub(super) fn safe_relative_path(value: &str) -> Result<PathBuf> {
     let path = Path::new(value);
     if path.as_os_str().is_empty()
         || path.is_absolute()
