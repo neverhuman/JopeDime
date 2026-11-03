@@ -144,5 +144,39 @@
     "memory_emergency_bytes": 6442450944,
     "max_process_resumes": 2
   },
-  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261103/H239/astra-t0235/"
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261103/H239/astra-t0235/",
+  "execution_source_commit": "1d31df4c235541c275b23ae7b9543ac3ec878ba5",
+  "execution_source_sha256": {
+    "test_h239.py": "8c21435fe46c833316f8c554d81467492ec1de27292e4a65cb4a37e497325a32",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "schedules.json": "376b9a1a77c1c7fe268c638d8a94e2d31f7621cc5459cbe529c9ffb7facc09c5",
+    "metrics.schema.json": "d65399ef6d7ede3c5ccea635895dafc4ca02e0d0d73bb3dfaa325076aa9e4c47",
+    "analysis.py": "c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc",
+    "treatment.py": "97045ebc9673a83c7b58e916862ae7ca4bd06b5508499a19888ae5a8f96ca4b7",
+    "trainable_tensors.json": "a0cecfe568faca0eef47c0faacad50d5ab76e06320d2c8e8ca954bec92b43a06",
+    "TENSORS.md": "a1f13078bc69366105b77ccb2219142e99b5ae3481014a38b07fefbb93f18e35",
+    "PREREG.md": "2d9e2cad40b5fbcd071df1a05fe20473076dfc1d9bc58094fffa41406a6ef020",
+    "monitor.py": "5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a",
+    "fold_manifest.json": "7c295897296f37bd1041ac3abaf1cea6f3860d62db2f2e830e756ab90bc459df",
+    "runner.py": "855f1b66eedfcc4dd3edf39b6700bc7a968e58de35bf1221f5ce3b763d37004b"
+  },
+  "closeout": {
+    "status": "COMPLETE",
+    "primary_verdict": "NO_ADVANCE",
+    "verdict": "NO_ADVANCE",
+    "metrics_sha256": "1cf6276cbc1e3dbbff47c2cf0c30ad1280dbd713af65fd8a01c6275c0bb42150",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261103/H239/astra-t0235/closeout/runtime.tar.gz",
+      "version_id": "OMus8Jyv45.ClC4oCoL8vGsqn0h3AZrN",
+      "sha256": "43725a839bcd17e8326db7713a19681e85bb42f617b11c0f70a5ae1f74feebe5",
+      "bytes": 37634353
+    },
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261103/H239/astra-t0235/closeout/manifest.json",
+      "version_id": "S2wtI9VmumcqiWz976BnQhaDIbJeJ5Lz",
+      "sha256": "9bd01c59a1936d29c3f8b174696ddd391a904b469dda019283c3afcf18618ae5",
+      "bytes": 60533
+    },
+    "audit_sha256": "c652f7bc879979b29f4bed5b2c58a5733087f5e99fe769289ed467145f9e72aa"
+  }
 }
