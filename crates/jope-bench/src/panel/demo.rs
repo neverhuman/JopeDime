@@ -370,6 +370,11 @@ pub(super) fn read_bounded(path: &Path) -> Result<Vec<u8>> {
 }
 
 /// Fresh private output only; evidence never lands in a checkout or /tmp.
+fn is_checkout_path(path: &Path) -> bool {
+    path.ancestors()
+        .any(|ancestor| ancestor.join(".git").exists() || ancestor.join("Cargo.lock").is_file())
+}
+
 pub(super) fn new_output(path: &Path) -> Result<PathBuf> {
     let absolute = std::path::absolute(path)?;
     ensure!(
@@ -382,14 +387,14 @@ pub(super) fn new_output(path: &Path) -> Result<PathBuf> {
         .context("output has no existing ancestor")?;
     let resolved = fs::canonicalize(ancestor)?.join(absolute.strip_prefix(ancestor)?);
     ensure!(
-        !resolved.starts_with("/tmp") && !resolved.ancestors().any(|p| p.join(".git").exists()),
+        !resolved.starts_with("/tmp") && !is_checkout_path(&resolved),
         "demo evidence requires a durable path outside Git checkouts and /tmp"
     );
     let parent = absolute.parent().context("output parent missing")?;
     fs::create_dir_all(parent)?;
     let parent = fs::canonicalize(parent)?;
     ensure!(
-        !parent.starts_with("/tmp") && !parent.ancestors().any(|p| p.join(".git").exists()),
+        !parent.starts_with("/tmp") && !is_checkout_path(&parent),
         "unsafe demo output parent"
     );
     let mut builder = fs::DirBuilder::new();
