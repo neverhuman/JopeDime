@@ -1,15 +1,16 @@
-use super::classify::{decide, Facts};
-use super::groups::{flatten, GroupLookup, Ledger};
-use super::index::aggregate;
-use super::inputs::{load, load_spec, InputRecord};
-use super::inventory::{self, E1Pair, Inventory, PinState};
-use super::lifecycle::{coverage, Lifecycles};
-use super::policy::{Policy, DEFAULT_POLICY_JSON};
-use super::refs::{RefSet, Role, ScanStats};
+use super::super::classify::{decide, Facts};
+use super::super::groups::{flatten, GroupLookup, Ledger};
+use super::super::index::aggregate;
+use super::super::inputs::{load_spec, InputRecord};
+use super::super::inventory::{self, E1Pair, Inventory, PinState};
+use super::super::lifecycle::{coverage, Lifecycles};
+use super::super::policy::{Policy, DEFAULT_POLICY_JSON};
+use super::super::refs::{RefSet, Role};
+use super::super::{INPUTS_LOCK_SCHEMA, PLAN_SUMMARY_SCHEMA};
 use super::Decision;
 use super::{
     report, round4, row, Action, Built, Config, InputsLock, InventoryBucket, InventoryLock,
-    InventorySummary, Note, RowInventory, Summary, Totals, INPUTS_LOCK_SCHEMA, PLAN_SUMMARY_SCHEMA,
+    InventorySummary, Note, RowInventory, Summary, Totals,
 };
 use crate::canon::sha256_hex;
 use anyhow::{bail, ensure, Context, Result};
