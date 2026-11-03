@@ -385,10 +385,10 @@ struct BinaryCampaignIdentity<'a> {
 }
 
 mod fold_cache;
-use fold_cache::BinaryFoldCache;
-pub(crate) use fold_cache::BinaryCvResult;
 #[cfg(test)]
 pub(crate) use fold_cache::exact_cv_on_folds_binary;
+pub(crate) use fold_cache::BinaryCvResult;
+use fold_cache::BinaryFoldCache;
 
 // ---------------------------------------------------------------------------
 // population
@@ -403,9 +403,7 @@ pub(crate) use population::{
 pub(super) use population::{
     evaluate_binary_unique, parse_binary_population, refill_binary_population, BinaryEvaluation,
 };
-pub(crate) use selection::{
-    score_dataset_binary, select_dataset_binary, validate_freeze_binary,
-};
+pub(crate) use selection::{score_dataset_binary, select_dataset_binary, validate_freeze_binary};
 #[cfg(test)]
 #[path = "binary_cv/tests.rs"]
 pub(crate) mod tests;
