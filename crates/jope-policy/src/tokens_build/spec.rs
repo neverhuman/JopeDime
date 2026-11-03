@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use serde_json::{Number, Value};
 use std::collections::BTreeMap;
 
-use crate::grammar::{Expr, Op, Slot};
+use crate::grammar::{Expr, Op};
 
 pub const SPECIALS: [&str; 3] = ["PAD", "BOS", "EOS"];
 pub const ABSENT: &str = "<ABSENT>";
