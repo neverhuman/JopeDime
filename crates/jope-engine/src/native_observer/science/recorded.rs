@@ -73,7 +73,7 @@ pub(super) fn original_time(value: Option<u64>, at: u64) -> Result<Option<u64>> 
 pub(super) fn finite(v: &Value) -> Option<f64> {
     v.as_f64().filter(|v| v.is_finite() && *v >= 0.0)
 }
-fn row_evidence(
+pub(super) fn row_evidence(
     id: &str,
     reference: &Artifact,
     kind: &str,
@@ -83,7 +83,7 @@ fn row_evidence(
     json!({"id":id,"artifact":reference,"verification_kind":kind,"original_at_unix_ms":original,
         "verified_at_unix_ms":at,"stale_after_ms":STALE_MS,"production_model_improvement_claim":false})
 }
-fn qualification_rows(
+pub(super) fn qualification_rows(
     id: &str,
     a: &Artifact,
     v: &Value,
@@ -191,7 +191,7 @@ fn qualification_rows(
     stamp_rows(&mut rows, at);
     Ok(rows)
 }
-fn stamp_rows(rows: &mut Rows, at: u64) {
+pub(super) fn stamp_rows(rows: &mut Rows, at: u64) {
     for row in rows
         .checkpoints
         .iter_mut()
