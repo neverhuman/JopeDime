@@ -228,7 +228,7 @@ fn positive_integer(value: &Value, name: &str, allow_zero: bool) -> Result<u64> 
     Ok(number)
 }
 
-fn sha256<'a>(value: &'a Value, name: &str) -> Result<&'a str> {
+fn sha256(value: &Value, name: impl std::fmt::Display) -> Result<&str> {
     let text = value
         .as_str()
         .filter(|text| valid_hex(text, 64))
@@ -271,7 +271,7 @@ fn slug<'a>(value: &'a Value, name: &str) -> Result<&'a str> {
 
 fn validate_encoding_ref(value: &Value, name: &str, dimensions: u64) -> Result<()> {
     let row = exact_fields(value, ENCODING_FIELDS, name)?;
-    sha256(&row["sha256"], &format!("{name}.sha256"))?;
+    sha256(&row["sha256"], format!("{name}.sha256"))?;
     safe_relative_path(&row["path"], &format!("{name}.path"))?;
     let offset = positive_integer(&row["offset_bytes"], &format!("{name}.offset_bytes"), true)?;
     if offset % 4 != 0 {
