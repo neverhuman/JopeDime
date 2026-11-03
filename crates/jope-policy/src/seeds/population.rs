@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::path::Path;
 
-use super::Proposal;
+use super::proposal::Proposal;
 use crate::config::{ChallengerIdentity, CheckpointBinding};
 use crate::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
 use crate::grammar::BoundVocabulary;
