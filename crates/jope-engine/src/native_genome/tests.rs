@@ -1,4 +1,4 @@
-use super::*;
+use super::{execution::completed_children, *};
 #[test]
 fn omitted_overlay_preserves_original_task_serialization() {
     let t = task();

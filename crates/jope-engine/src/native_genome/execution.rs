@@ -83,7 +83,7 @@ pub fn target(root: &Path, continuation: &Artifact) -> Result<ContinuationTarget
     })
 }
 /// Children only: the verified direct parent row never counts toward continuation admission.
-fn completed_children(rows: &[Value]) -> Result<usize> {
+pub(super) fn completed_children(rows: &[Value]) -> Result<usize> {
     let mut completed = 0;
     for row in rows {
         if !row["failure"].is_null() {
