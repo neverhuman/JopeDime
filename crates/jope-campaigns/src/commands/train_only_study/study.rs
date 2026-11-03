@@ -207,7 +207,7 @@ pub(super) struct Ancestry {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub(super) struct GenomeMember {
+pub(crate) struct GenomeMember {
     pub(super) slot: usize,
     pub(super) canonical_genome: String,
     pub(super) semantic_sha256: String,
