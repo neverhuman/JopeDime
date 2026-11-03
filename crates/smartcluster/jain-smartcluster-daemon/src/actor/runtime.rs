@@ -329,10 +329,52 @@ pub(super) fn process_group_exists(pid: u32) -> bool {
     let Ok(pid) = i32::try_from(pid) else {
         return false;
     };
+    let Ok(processes) = std::fs::read_dir("/proc") else {
+        return process_group_signalable(pid);
+    };
+    let mut indeterminate = false;
+    for process in processes.flatten() {
+        if process
+            .file_name()
+            .to_string_lossy()
+            .parse::<u32>()
+            .is_err()
+        {
+            continue;
+        }
+        let stat = match std::fs::read_to_string(process.path().join("stat")) {
+            Ok(stat) => stat,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(_) => {
+                indeterminate = true;
+                continue;
+            }
+        };
+        let Some((state, process_group)) = proc_stat_state_and_group(&stat) else {
+            indeterminate = true;
+            continue;
+        };
+        if process_group == pid && state != 'Z' && state != 'X' {
+            return true;
+        }
+    }
+    indeterminate && process_group_signalable(pid)
+}
+
+fn process_group_signalable(pid: i32) -> bool {
     matches!(
         kill(Pid::from_raw(-pid), None),
         Ok(()) | Err(nix::errno::Errno::EPERM)
     )
+}
+
+fn proc_stat_state_and_group(stat: &str) -> Option<(char, i32)> {
+    let (_, fields) = stat.rsplit_once(") ")?;
+    let mut fields = fields.split_whitespace();
+    let state = fields.next()?.chars().next()?;
+    fields.next()?;
+    let process_group = fields.next()?.parse().ok()?;
+    Some((state, process_group))
 }
 
 #[cfg(test)]
@@ -344,5 +386,13 @@ mod output_tests {
         let error = std::io::Error::from_raw_os_error(nix::libc::EIO);
         assert!(output_error_is_eof(OutputKind::Pty, &error));
         assert!(!output_error_is_eof(OutputKind::Stdout, &error));
+    }
+
+    #[test]
+    fn proc_stat_group_parsing_ignores_parentheses_in_process_name() {
+        assert_eq!(
+            proc_stat_state_and_group("123 (worker ) with spaces) Z 1 42 0"),
+            Some(('Z', 42))
+        );
     }
 }
