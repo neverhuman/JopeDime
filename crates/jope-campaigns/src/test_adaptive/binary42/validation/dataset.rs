@@ -1,3 +1,7 @@
+use super::super::{
+    indexes::load_checkpoints,
+    member_models::{CandidateReceipt, SeedManifest, StagingReceipt},
+};
 use super::*;
 
 pub(crate) fn validate_dataset_campaign(
