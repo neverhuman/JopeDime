@@ -2,9 +2,9 @@
 //! Fixtures only; nothing here talks to S3.
 
 use jope_learning::canon::sha256_hex;
-use jope_learning::retention::distilled::{self, DistilledRow, Outcome, SplitRole};
+use jope_learning::retention::distilled::{DistilledRow, Outcome, SplitRole};
 use jope_learning::retention::pack::{read_entry, verify, PackWriter, SealedPack, MIN_PACK_BYTES};
-use jope_learning::retention::parquet::{self, Cell, ColumnSpec, ColumnType, Table};
+use jope_learning::retention::parquet::{Cell, ColumnSpec, ColumnType, Table};
 use jope_learning::retention::tags::{ObjectKind, Supersession, Tier, WriteTags};
 use std::collections::BTreeSet;
 
