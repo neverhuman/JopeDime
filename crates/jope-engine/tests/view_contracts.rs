@@ -6,7 +6,7 @@ mod authority;
 
 const FENCED: &str = "mandatory fit authority service unavailable: fitting is fenced";
 
-pub(super) fn fixture() -> (tempfile::TempDir, PathBuf) {
+fn fixture() -> (tempfile::TempDir, PathBuf) {
     let t = tempfile::tempdir().unwrap();
     let root = t.path();
     fs::create_dir(root.join("manifests")).unwrap();
@@ -32,7 +32,7 @@ pub(super) fn fixture() -> (tempfile::TempDir, PathBuf) {
     (t, prepared)
 }
 
-pub(super) fn clock_search(
+fn clock_search(
     prepared: &std::path::Path,
     output: &std::path::Path,
     evaluations: &str,
@@ -60,7 +60,7 @@ pub(super) fn clock_search(
         .output()
         .unwrap()
 }
-pub(super) fn seeded_search(
+fn seeded_search(
     root: &std::path::Path,
     prepared: &std::path::Path,
     output: &std::path::Path,
