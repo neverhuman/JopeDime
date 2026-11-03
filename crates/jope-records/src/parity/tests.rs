@@ -219,7 +219,7 @@ fn walks_list_as_pathlib_listed_and_refuse_where_it_raised() {
     }
     mode(&tools.join("sub"), 0o755);
     mode(&krate.join("src"), 0o644);
-    if std::fs::metadata(krate.join("src/main.rs")).is_err() {
+    if std::fs::read_dir(krate.join("src")).is_err() {
         let refused = fallback_bins(&root).unwrap_err().to_string();
         assert!(
             refused.contains("[Errno 13] Permission denied"),
