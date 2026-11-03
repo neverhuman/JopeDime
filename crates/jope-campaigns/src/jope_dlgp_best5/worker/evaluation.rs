@@ -1,17 +1,12 @@
 use super::*;
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::{self, OpenOptions};
-use std::io::Write;
-use std::path::Path;
-use std::process::Command;
 
 use crate::jope_generalized_gp::{
     raw_sha256, ArtifactStoreV1, CorpusEvalAdapter, DatasetTableV1, EvaluatorFreezeV1,
-    FrozenArtifactV1, GenomeOriginV1, GenomeV1, PopulationMemberV1, RowSplitV1, SealedTestTableV1,
+    FrozenArtifactV1, GenomeV1, RowSplitV1, SealedTestTableV1,
 };
 use crate::search_v3::{canonical_sha256, PredictionObjectV1};
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
 pub struct EvaluatedPredictorV1 {
