@@ -50,6 +50,8 @@ pub(crate) fn run(cli: Cli) -> Result<()> {
     try_handler!(learning);
     try_handler!(fit);
     try_handler!(neural);
-    try_handler!(misc);
-    anyhow::bail!("no dispatcher handler accepts the selected command")
+    match misc::handle(&root, command)? {
+        Some(_) => anyhow::bail!("no dispatcher handler accepts the selected command"),
+        None => Ok(()),
+    }
 }
