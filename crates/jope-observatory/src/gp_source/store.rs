@@ -1,6 +1,9 @@
+use super::operations::{Check, language_kind};
 use super::prelude::*;
-use super::types::{Artifact, Event, LanguageMetrics, Payload, Status};
-use super::{complete_line, emit, hash, EVENT_SCHEMA, LANGUAGES};
+use super::types::{
+    Artifact, Event, LanguageMetrics, MAX_LINE, Payload, Status, extension, valid_hash,
+};
+use super::{EVENT_SCHEMA, LANGUAGES, complete_line, hash};
 
 #[derive(Clone, Debug)]
 struct Pending {
