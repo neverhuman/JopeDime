@@ -4,7 +4,7 @@ use super::details::{
     teacher_evolution_lines, teacher_lines,
 };
 use super::evidence::{
-    age, completed, decimal, duration, metrics, number, panel, phase, rmse, state, status_age,
+    age, completed, decimal, duration, number, panel, phase, rmse, status_age,
 };
 use super::layout::{compact_layout, render_compact, DashboardData, History};
 use super::prelude::*;
