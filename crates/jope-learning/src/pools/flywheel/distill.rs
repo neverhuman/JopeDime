@@ -4,6 +4,8 @@ pub(super) struct DistilledRound {
     pub(super) reloaded: Vec<distilled::DistilledRow>,
     pub(super) raw_keys: BTreeSet<String>,
     pub(super) parquet_bytes: Vec<u8>,
+    pub(super) parquet_sha256: String,
+    pub(super) tokens_by_prog: BTreeMap<String, Option<Vec<u32>>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -128,5 +130,7 @@ pub(super) fn distill_round(
         reloaded,
         raw_keys,
         parquet_bytes,
+        parquet_sha256,
+        tokens_by_prog,
     })
 }

@@ -22,6 +22,7 @@ pub(super) fn run_rounds(
     direction: ScoreDirection,
     cfg: &FlywheelConfig,
     parquet_dir: Option<&Path>,
+    fold_s3_priors: Option<&[ExternalProgramPrior]>,
 ) -> Result<RoundResults> {
     let RoundState {
         folds,
@@ -59,6 +60,8 @@ pub(super) fn run_rounds(
             reloaded,
             raw_keys,
             parquet_bytes,
+            parquet_sha256,
+            tokens_by_prog,
         } = distilled_round;
 
         // Partition reloaded rows by outer fold `run_id` and bridge each fold's training rows via distilled_rows_to_measurement_rows.
@@ -257,7 +260,7 @@ pub(super) fn run_rounds(
                 continue;
             }
             ensure!(!train.is_empty(), "fold {k} has no training pools");
-            let ext_prior = fold_s3_priors.as_ref().map(|ps| &ps[k]);
+            let ext_prior = fold_s3_priors.map(|ps| &ps[k]);
             let surrogate = ContextualSurrogateQHat::fit_with_prior(
                 &train,
                 context_features,
