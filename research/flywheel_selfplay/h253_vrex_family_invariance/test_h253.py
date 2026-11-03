@@ -217,6 +217,8 @@ def test_dlval_context_weighting_and_family_cluster_estimator():
         0.02
     )
     assert weighted["contexts"] == 4 and weighted["families"] == 2
+    assert weighted["family_utility_by_seed"] == balanced["family_utility_by_seed"]
+    assert weighted["primary_utility_by_seed"][0][2] == pytest.approx(0.01)
     assert weighted["contrasts"]["VREX_B1_minus_CONTROL"][
         "median_gain"
     ] == pytest.approx(0.01)
@@ -316,3 +318,55 @@ def test_launch_requires_exact_merged_source_and_review():
         tx.validate_launch(launch, "b" * 40, "m", "p", "f")
     with pytest.raises(RuntimeError):
         tx.validate_launch(dict(launch, review_id=None), "a" * 40, "m", "p", "f")
+
+
+def test_runner_schedule_contract_matches_frozen_table():
+    import ast
+
+    module = ast.parse((HERE / "runner.py").read_text())
+    main = next(
+        n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main"
+    )
+    node = next(
+        n
+        for n in ast.walk(main)
+        if isinstance(n, ast.Assign)
+        and any(
+            isinstance(t, ast.Name) and t.id == "actual_schedule" for t in n.targets
+        )
+    )
+    actual = eval(
+        compile(ast.Expression(node.value), "<actual runner schedule>", "eval"),
+        dict(stat=stat, settings=tx.settings),
+    )
+    assert actual == json.loads((HERE / "schedules.json").read_text())["arms"]
+
+
+def test_unmerged_pre_native_transport_requires_all_bound_proofs():
+    launch = dict(
+        manifest_sha256="m",
+        source_commit="a" * 40,
+        merged_source_verified=False,
+        review_id=12,
+        prereg_pr=2107,
+        prereg_sha256="p",
+        fold_manifest_sha256="f",
+        merged_prereg_verified=True,
+        preregistered_protocol_commit="144f045c585000b1eb7955eeb1fbf1eaf16b4e6f",
+        execution_source_reviewed=True,
+        configuration_only_amendment=True,
+        zero_prior_model_native_optimizer_calls=True,
+        scientific_AST_parity_verified=True,
+        main_hold=True,
+    )
+    tx.validate_launch(launch, "a" * 40, "m", "p", "f")
+    for field in [
+        "merged_prereg_verified",
+        "execution_source_reviewed",
+        "configuration_only_amendment",
+        "zero_prior_model_native_optimizer_calls",
+        "scientific_AST_parity_verified",
+        "main_hold",
+    ]:
+        with pytest.raises(RuntimeError):
+            tx.validate_launch(dict(launch, **{field: False}), "a" * 40, "m", "p", "f")
