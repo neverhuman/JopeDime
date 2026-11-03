@@ -60,6 +60,8 @@ pub(super) use auth::{
     attempt_path, cgroup, current_job, exchange, live, monotonic_ns, native_leader, service,
     verify_ancestry,
 };
+#[cfg(test)]
+pub(super) use auth::{inspected_process, process_parent};
 pub(crate) use witness::verify_witness_event;
 
 #[cfg(test)]
