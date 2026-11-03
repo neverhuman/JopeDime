@@ -1,4 +1,4 @@
-use super::super::{Kernel2Evaluator, LINEARIZE, REWRITE, archive, search};
+use super::super::{archive, search, Kernel2Evaluator, LINEARIZE, REWRITE};
 use super::*;
 
 // laneD:B18-pareto-archive begin
