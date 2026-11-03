@@ -710,7 +710,7 @@ impl WidgetRef for Block<'_> {
     }
 }
 
-impl Block<'_> {
+impl<'a> Block<'a> {
     fn render_borders(&self, area: Rect, buf: &mut Buffer) {
         self.render_left_side(area, buf);
         self.render_top_side(area, buf);
@@ -908,11 +908,11 @@ impl Block<'_> {
     }
 
     /// An iterator over the titles that match the position and alignment
-    fn filtered_titles(
-        &self,
+    fn filtered_titles<'b>(
+        &'b self,
         position: Position,
         alignment: Alignment,
-    ) -> impl DoubleEndedIterator<Item = &Line> {
+    ) -> impl DoubleEndedIterator<Item = &'b Line<'a>> + 'b {
         self.titles
             .iter()
             .filter(move |(pos, _)| pos.unwrap_or(self.titles_position) == position)
