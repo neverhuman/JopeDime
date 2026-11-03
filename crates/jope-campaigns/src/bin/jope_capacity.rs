@@ -370,7 +370,7 @@ mod policy;
 pub(crate) use policy::{parse_policy, validate_metrics, validate_policy};
 #[path = "jope_capacity/scq_nodes.rs"]
 mod scq_nodes;
-pub(crate) use scq_nodes::{integer, number, parse_scq_nodes, zero_pressure, ScqNodes};
+pub(crate) use scq_nodes::{parse_scq_nodes, zero_pressure};
 #[path = "jope_capacity/samples.rs"]
 mod samples;
 pub(crate) use samples::{build_sample, load_history, sample_due, trailing_minute_samples};
