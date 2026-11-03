@@ -700,7 +700,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                         self.assertFalse(process.is_alive(), "negative control leaked its worker")
                     process.close()
 
-    def test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes(self) -> None:  # allowlist
+    def test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes(self, _allowlist: bool = True) -> None:
         for controlled_reap in (False, True):
             with self.subTest(controlled_reap=controlled_reap):
                 self._run_isolated_deadline_case(controlled_reap)
