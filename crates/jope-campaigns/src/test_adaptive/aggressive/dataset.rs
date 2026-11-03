@@ -1,7 +1,5 @@
 use super::*;
-use super::{
-    checkpoint::load_checkpoints, model::DatasetResult, preflight::checkpoint_path,
-};
+use super::{checkpoint::load_checkpoints, model::DatasetResult, preflight::checkpoint_path};
 
 pub(crate) fn run_dataset(
     manifest: &AggressiveManifest,
