@@ -64,15 +64,15 @@ the single-candidate contract in \cref{box:searchone}.
     \toprule
     Element        & Go                              & The innovation game \\
     \midrule
-    Board          & Stones on a $19\times19$ grid   & The encoded problem $z_p = \encP(p)$ for $p \in \Prob$ \\
-    Move           & Place one stone, or pass        & Write one complete program $w \in \Sol$ \\
+    Board          & Stones on a \mbox{$19\times19$ grid} & The encoded problem $z_p = \encP(p)$ for $p \in \Prob$ \\
+    Move           & Place one stone, \mbox{or pass} & Write one complete \mbox{program $w \in \Sol$} \\
     Legal move     & Empty point; no suicide or forbidden repetition & Parses, type-checks, runs within limits \\
-    Illegal move   & Not allowed                     & Stillborn ($\tilde{w}$): an automatic loss \\
-    Referee        & The rules of Go                 & The referee $\referee$, on hidden folds \\
+    Illegal move   & Not allowed                     & Stillborn ($\tilde{w}$): \mbox{an automatic loss} \\
+    Referee        & The rules of Go                 & The referee $\referee$, \mbox{on hidden folds} \\
     Win            & Higher final score             & Valid move $w^+$ beating $\inc{p}$ under $\reward$ \\
     Opponent       & A past self                     & The incumbent $\inc{p}$ from $\opp$, often a past self \\
-    Rating         & Elo                             & Win rate and Elo across problems \\
-    Moves per game & About 150, each cheap           & One ($\budget$), costly to judge \\
+    Rating         & Elo                             & Win rate and Elo \mbox{across problems} \\
+    Moves per game & About 150, \mbox{each cheap}    & One ($\budget$), \mbox{costly to judge} \\
     \bottomrule
   \end{tabularx}
 \end{table}
