@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "H238 compact metrics",
+  "type": "object",
+  "required": [
+    "wave",
+    "status",
+    "verdict",
+    "primary_verdict",
+    "optimizer_updates",
+    "complete_cells",
+    "dope_before",
+    "dope_after",
+    "primary_dlval",
+    "secondary_oof",
+    "source_commit"
+  ],
+  "properties": {
+    "wave": {
+      "const": "H238"
+    },
+    "status": {
+      "enum": [
+        "PREREGISTERED",
+        "COMPLETE",
+        "CLOSED_INCOMPLETE"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        null,
+        "ADVANCE",
+        "NO_ADVANCE",
+        "CLOSED_INCOMPLETE"
+      ]
+    },
+    "primary_verdict": {
+      "enum": [
+        null,
+        "ADVANCE",
+        "NO_ADVANCE"
+      ]
+    },
+    "optimizer_updates": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 3000
+    },
+    "complete_cells": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+    },
+    "dope_before": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "dope_after": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "primary_dlval": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "secondary_oof": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "source_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": true
+}
