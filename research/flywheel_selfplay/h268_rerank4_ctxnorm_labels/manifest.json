@@ -64,5 +64,39 @@
     "monitor.py": "944b08ea203d77c292d2ba9d337c02192a5cf3d3f440688407a2b1ca2a265b20",
     "fold_manifest.json": "058e6adf7c2b76adb1d431e29d922a52ce0529d51a61f7f028bb00cc2cbde1fb",
     "runner.py": "79c29ed161c99b0ad4da5f5edc488735648fc51e6b7f55102a9eb257778d17f2"
+  },
+  "closeout": {
+    "source_commit": "ee85f557b4050bb696ac857e93b5ef3a383331ea",
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H268/astra-t1812/closeout/manifest.json",
+      "version_id": "4.uhh0mBxG6UgGUdgDa4Rybu_PnmWkdq",
+      "sha256": "370b755e46820415915ca139d9babbd9b5fc6f1b1a1190078850f0274c63888c",
+      "bytes": 101288,
+      "exact_version_get_verified": true
+    },
+    "runtime_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H268/astra-t1812/closeout/runtime.tar.gz",
+      "version_id": "XXFrHUTC5kkC6KGMOm5.3lwg_lUsEBMT",
+      "sha256": "52e46fc386bc01021ac08c043c47ee1635d48179ab75261671915c779ff2ff56",
+      "bytes": 63158773,
+      "members_verified": 549,
+      "exact_version_get_verified": true
+    },
+    "metrics_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H268/astra-t1812/closeout/metrics.json",
+      "version_id": "BaSDbj2f8JdB_UMWoIiycTQXFDFLx9Xe",
+      "sha256": "9b509e553a8e4e9891c5c38e1714d6796897dfcc4d488b10e743579b54869b07",
+      "bytes": 22258,
+      "exact_version_get_verified": true
+    },
+    "verdict": "ADVANCE",
+    "audit_status": "PASS",
+    "inference_review": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H268/astra-t1812/closeout/inference-review.json",
+      "version_id": "ZhorO7WqN2mS6zSVg9pMpfuJYebAylmZ",
+      "sha256": "9175192c1b119b27eb1b4d9ec1579fc4b20d48b52839292752d9c501023ce65e",
+      "bytes": 886,
+      "exact_version_get_verified": true
+    }
   }
 }

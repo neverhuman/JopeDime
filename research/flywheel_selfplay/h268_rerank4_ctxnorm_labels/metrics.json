@@ -1,7 +1,1007 @@
 {
+  "admitted_cells": {
+    "CTXNORM": 42,
+    "CTXNORM_SHUF": 5,
+    "RERANK4": 28
+  },
+  "archive": {
+    "manifest.json": {
+      "bytes": 101288,
+      "exact_version_get_verified": true,
+      "sha256": "370b755e46820415915ca139d9babbd9b5fc6f1b1a1190078850f0274c63888c",
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H268/astra-t1812/closeout/manifest.json",
+      "version_id": "4.uhh0mBxG6UgGUdgDa4Rybu_PnmWkdq"
+    },
+    "metrics-full.json": {
+      "bytes": 703963,
+      "exact_version_get_verified": true,
+      "sha256": "7530e072d8d3bd2784da2bba346034f301dc507b244a821c262e35cafb910f3b",
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H268/astra-t1812/closeout/metrics-full.json",
+      "version_id": "3vSrJDTj0fNjtgKdedpCbDkhhFMVFkq9"
+    },
+    "runtime.tar.gz": {
+      "bytes": 63158773,
+      "exact_version_get_verified": true,
+      "members_verified": 549,
+      "sha256": "52e46fc386bc01021ac08c043c47ee1635d48179ab75261671915c779ff2ff56",
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H268/astra-t1812/closeout/runtime.tar.gz",
+      "version_id": "XXFrHUTC5kkC6KGMOm5.3lwg_lUsEBMT"
+    }
+  },
+  "audit": {
+    "cells": 135,
+    "choice_checks": 37008,
+    "fit_input_seed_checks": 1846,
+    "input_hashes_unchanged": true,
+    "models_replayed": 180,
+    "neural_updates": 0,
+    "selector_replay": "135 complete grids and 2000-draw CIs",
+    "source_commit": "ee85f557b4050bb696ac857e93b5ef3a383331ea",
+    "status": "PASS"
+  },
+  "baseline": {
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "r882_bit_exact_context_matches": 91,
+    "r882_native91_abs_diff": 0.0,
+    "r882_native91_expected": 1.1377941898164525,
+    "r882_native91_mean": 1.1377941898164525,
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "schema": "jope.h265.baseline-regression/v1",
+    "top4_pick_oracle_ceiling_ctx_abs_diff": 0.0,
+    "top4_pick_oracle_ceiling_ctx_expected": 1.2403601682250796,
+    "top4_pick_oracle_ceiling_ctx_mean": 1.2403601682250796,
+    "top4_pick_oracle_ceiling_fam_abs_diff": 0.0,
+    "top4_pick_oracle_ceiling_fam_expected": 1.2519997168684853,
+    "top4_pick_oracle_ceiling_fam_mean": 1.2519997168684853
+  },
+  "cell_count": 135,
+  "completed_epoch": 1793731090.9984472,
+  "dope_unchanged": true,
+  "elapsed_seconds": 1095.569611787796,
+  "estimand": "Mean OOF utilities over three fold partitions; DL-Val mean utility over five models in foldseed268140; not a single deployable checkpoint",
+  "fit_selections_lock_sha256": "528245bde4b3cd912ccf3adb75fd9ebb516ff0fb176cb2031e7026c526898e65",
+  "fold_seeds": [
+    268140,
+    268141,
+    268142
+  ],
+  "full_output_paths": [
+    "attempts/attempt1/metrics-full.json",
+    "attempts/attempt1/family-harm-table.json",
+    "attempts/attempt1/raw-invalid-counts.json",
+    "attempts/attempt1/primary_panel.npz",
+    "attempts/attempt1/secondary_panel.npz",
+    "attempts/attempt1/fit_selections_lock.json"
+  ],
+  "gates": {
+    "placebo_positive": true,
+    "primary_holm_lcb": true,
+    "primary_margin": true,
+    "primary_three_positive": true,
+    "secondary_three_positive": true
+  },
+  "input_checkpoint_unchanged": true,
+  "model_seeds": [
+    268101,
+    268102,
+    268103
+  ],
+  "neural_updates": 0,
+  "packaging": {
+    "epoch": 1793731166.4552212,
+    "full_outputs_saved_before_compact": true,
+    "removed_from_git_only": [
+      "per-cell fit receipts",
+      "per-family harmed lists"
+    ],
+    "size_limit_bytes": 50000
+  },
+  "primary": {
+    "CTXNORM - CONTROL": {
+      "ci95": [
+        0.0030864788517936973,
+        0.06408731033901542
+      ],
+      "ci975_holm2": [
+        1.0357569395884425e-05,
+        0.06947995998968715
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 70,
+          "ties": 2,
+          "wins": 133
+        },
+        {
+          "losses": 77,
+          "ties": 6,
+          "wins": 122
+        },
+        {
+          "losses": 64,
+          "ties": 13,
+          "wins": 128
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        49,
+        49,
+        39
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        70,
+        77,
+        64
+      ],
+      "harmed_families_count_mean_seed": 81,
+      "holm_lcb95": 1.0357569395884425e-05,
+      "holm_p_one_sided": 0.025197480251974803,
+      "mean_context_gain": 0.029011520506460078,
+      "mean_family_gain": 0.0333336709447585,
+      "median_context_gain": 0.02632347475742775,
+      "median_family_gain": 0.02996420778520235,
+      "per_seed_context_gains": [
+        0.03774550465012284,
+        0.02632347475742775,
+        0.022965582111829638
+      ],
+      "per_seed_family_gains": [
+        0.04363190127629216,
+        0.02996420778520235,
+        0.026404903772781006
+      ],
+      "positive_seeds": 3,
+      "raw_p_one_sided": 0.012598740125987402
+    },
+    "CTXNORM - CTXNORM_SHUF": {
+      "ci95": [
+        0.0035103415930012203,
+        0.06408731033901542
+      ],
+      "ci975_holm2": [
+        0.0005889242193144309,
+        0.06947995998968715
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 68,
+          "ties": 2,
+          "wins": 135
+        },
+        {
+          "losses": 77,
+          "ties": 6,
+          "wins": 122
+        },
+        {
+          "losses": 64,
+          "ties": 13,
+          "wins": 128
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        50,
+        49,
+        39
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        68,
+        77,
+        64
+      ],
+      "harmed_families_count_mean_seed": 79,
+      "mean_context_gain": 0.03039942956083994,
+      "mean_family_gain": 0.03408288437814192,
+      "median_context_gain": 0.02632347475742775,
+      "median_family_gain": 0.02996420778520235,
+      "per_seed_context_gains": [
+        0.042073828020346586,
+        0.02632347475742775,
+        0.022800985904745486
+      ],
+      "per_seed_family_gains": [
+        0.0459695366809825,
+        0.02996420778520235,
+        0.026314908668240912
+      ],
+      "positive_seeds": 3,
+      "raw_p_one_sided": 0.010498950104989501
+    },
+    "CTXNORM - RERANK4": {
+      "ci95": [
+        0.006021751110747096,
+        0.03819726806458991
+      ],
+      "ci975_holm2": [
+        0.004248476535634422,
+        0.04091953203782177
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 62,
+          "ties": 7,
+          "wins": 136
+        },
+        {
+          "losses": 73,
+          "ties": 11,
+          "wins": 121
+        },
+        {
+          "losses": 84,
+          "ties": 12,
+          "wins": 109
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        39,
+        46,
+        42
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        62,
+        73,
+        84
+      ],
+      "harmed_families_count_mean_seed": 70,
+      "mean_context_gain": 0.01792982761747216,
+      "mean_family_gain": 0.02138539218345051,
+      "median_context_gain": 0.018310693378491935,
+      "median_family_gain": 0.022547095054093826,
+      "per_seed_context_gains": [
+        0.02445488589362569,
+        0.018310693378491935,
+        0.01102390358029885
+      ],
+      "per_seed_family_gains": [
+        0.027485343153434923,
+        0.022547095054093826,
+        0.014123738342822791
+      ],
+      "positive_seeds": 3,
+      "raw_p_one_sided": 0.0023997600239976003
+    },
+    "CTXNORM_SHUF - CONTROL": {
+      "ci95": [
+        -3.151768220172323e-05,
+        0.00019574905018105576
+      ],
+      "ci975_holm2": [
+        -4.7276523302584845e-05,
+        0.00026998531362029123
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 23,
+          "ties": 155,
+          "wins": 27
+        },
+        {
+          "losses": 0,
+          "ties": 205,
+          "wins": 0
+        },
+        {
+          "losses": 1,
+          "ties": 203,
+          "wins": 1
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        15,
+        0,
+        0
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        23,
+        0,
+        1
+      ],
+      "harmed_families_count_mean_seed": 24,
+      "mean_context_gain": -0.0013879090543798655,
+      "mean_family_gain": -0.0007492134333834175,
+      "median_context_gain": 0.0,
+      "median_family_gain": 0.0,
+      "per_seed_context_gains": [
+        -0.0043283233702237495,
+        0.0,
+        0.0001645962070841527
+      ],
+      "per_seed_family_gains": [
+        -0.002337635404690349,
+        0.0,
+        8.999510454009707e-05
+      ],
+      "positive_seeds": 1,
+      "raw_p_one_sided": 0.8832116788321168
+    },
+    "RERANK4 - CONTROL": {
+      "ci95": [
+        -0.008186571206583048,
+        0.03203460162077647
+      ],
+      "ci975_holm2": [
+        -0.011189700163150284,
+        0.03553839168447239
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 81,
+          "ties": 11,
+          "wins": 113
+        },
+        {
+          "losses": 65,
+          "ties": 45,
+          "wins": 95
+        },
+        {
+          "losses": 63,
+          "ties": 22,
+          "wins": 120
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        55,
+        37,
+        44
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        81,
+        65,
+        63
+      ],
+      "harmed_families_count_mean_seed": 79,
+      "mean_context_gain": 0.011081692888987917,
+      "mean_family_gain": 0.011948278761307987,
+      "median_context_gain": 0.011941678531530787,
+      "median_family_gain": 0.012281165429958212,
+      "per_seed_context_gains": [
+        0.013290618756497147,
+        0.008012781378935817,
+        0.011941678531530787
+      ],
+      "per_seed_family_gains": [
+        0.01614655812285722,
+        0.007417112731108526,
+        0.012281165429958212
+      ],
+      "positive_seeds": 3,
+      "raw_p_one_sided": 0.12818718128187181
+    },
+    "elo": {
+      "CONTROL": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "CTXNORM": {
+        "ci95": [
+          1522.5082757670032,
+          1554.3085506804596
+        ],
+        "median_elo": 1539.711777964573,
+        "per_seed_elo": [
+          1541.6733444747836,
+          1532.6542137066976,
+          1539.711777964573
+        ]
+      },
+      "CTXNORM_SHUF": {
+        "ci95": [
+          1498.638303769631,
+          1502.1966899148738
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1501.5078619457813,
+          1500.0,
+          1499.832984100166
+        ]
+      },
+      "RERANK4": {
+        "ci95": [
+          1506.4565357476636,
+          1532.003785125836
+        ],
+        "median_elo": 1516.9107231657026,
+        "per_seed_elo": [
+          1511.087931023273,
+          1516.9107231657026,
+          1530.181559412492
+        ]
+      }
+    },
+    "invalid_minus2_context_counts_by_seed": {
+      "CONTROL": [
+        17,
+        17,
+        17
+      ],
+      "CTXNORM": [
+        8,
+        7,
+        9
+      ],
+      "CTXNORM_SHUF": [
+        15,
+        17,
+        17
+      ],
+      "RERANK4": [
+        6,
+        9,
+        10
+      ]
+    }
+  },
+  "raw_invalid_counts": {
+    "primary": {
+      "CONTROL": [
+        [
+          17,
+          17,
+          17
+        ],
+        [
+          17,
+          17,
+          17
+        ],
+        [
+          17,
+          17,
+          17
+        ]
+      ],
+      "CTXNORM": [
+        [
+          21,
+          20,
+          18
+        ],
+        [
+          15,
+          21,
+          19
+        ],
+        [
+          15,
+          16,
+          17
+        ]
+      ],
+      "CTXNORM_SHUF": [
+        [
+          20,
+          17,
+          17
+        ],
+        [
+          17,
+          17,
+          17
+        ],
+        [
+          19,
+          17,
+          17
+        ]
+      ],
+      "RERANK4": [
+        [
+          17,
+          17,
+          18
+        ],
+        [
+          17,
+          21,
+          20
+        ],
+        [
+          14,
+          19,
+          17
+        ]
+      ]
+    },
+    "secondary": {
+      "CONTROL": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "CTXNORM": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "CTXNORM_SHUF": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "RERANK4": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  "resource_summary": {
+    "admission": {
+      "affinity": [
+        48,
+        50,
+        51,
+        52
+      ],
+      "available": 69755269120,
+      "free": 781021634560,
+      "load5": 47.34912109375,
+      "rss": 15745024,
+      "threads": 1,
+      "utc": 1793729990.450568
+    },
+    "compute_stop": 1793738400.0,
+    "elapsed_seconds": 1102.0135903280025,
+    "exit_code": 0,
+    "final_sample": {
+      "affinity": [
+        48,
+        50,
+        51,
+        52
+      ],
+      "available": 61223587840,
+      "elapsed": 1101.5131632590055,
+      "free": 770660814848,
+      "load5": 52.908203125,
+      "pause_requested": false,
+      "rss": 625029120,
+      "threads": 3,
+      "utc": 1793731091.9642668
+    },
+    "pause_requested_seconds": 0.0,
+    "peak": {
+      "rss": 849575936,
+      "threads": 3
+    },
+    "reasons": [],
+    "resume_number": 0,
+    "status": "PASS",
+    "transitions": []
+  },
   "schema": "jope.h268.metrics/v1",
-  "status": "PREREGISTERED",
-  "verdict": null,
-  "source_commit": null,
-  "outcomes_read": 0
+  "secondary": {
+    "CTXNORM - CONTROL": {
+      "ci95": [
+        0.001842383990980458,
+        0.029271451002608705
+      ],
+      "ci975_holm2": [
+        -0.00023359320632890097,
+        0.03142961252911658
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 5,
+          "ties": 1,
+          "wins": 13
+        },
+        {
+          "losses": 3,
+          "ties": 0,
+          "wins": 16
+        },
+        {
+          "losses": 3,
+          "ties": 1,
+          "wins": 15
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        2,
+        3,
+        3
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        5,
+        3,
+        3
+      ],
+      "harmed_families_count_mean_seed": 3,
+      "holm_lcb95": -0.00023359320632890097,
+      "holm_p_one_sided": 0.025197480251974803,
+      "mean_context_gain": 0.015499761025502351,
+      "mean_family_gain": 0.014874545304750159,
+      "median_context_gain": 0.014351150850839722,
+      "median_family_gain": 0.013746891867646471,
+      "per_seed_context_gains": [
+        0.02046108546675292,
+        0.011687046758914407,
+        0.014351150850839722
+      ],
+      "per_seed_family_gains": [
+        0.019654377670901238,
+        0.011222366375702763,
+        0.013746891867646471
+      ],
+      "positive_seeds": 3,
+      "raw_p_one_sided": 0.013598640135986401
+    },
+    "CTXNORM - CTXNORM_SHUF": {
+      "ci95": [
+        0.002864186260948722,
+        0.029456290751323118
+      ],
+      "ci975_holm2": [
+        0.0010092846128947788,
+        0.031492062536953004
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 5,
+          "ties": 1,
+          "wins": 13
+        },
+        {
+          "losses": 3,
+          "ties": 0,
+          "wins": 16
+        },
+        {
+          "losses": 3,
+          "ties": 1,
+          "wins": 15
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        2,
+        3,
+        3
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        5,
+        3,
+        3
+      ],
+      "harmed_families_count_mean_seed": 3,
+      "mean_context_gain": 0.01624792509092211,
+      "mean_family_gain": 0.01559120772531014,
+      "median_context_gain": 0.014392533882235499,
+      "median_family_gain": 0.013786532455615058,
+      "per_seed_context_gains": [
+        0.02266419463161642,
+        0.011687046758914407,
+        0.014392533882235499
+      ],
+      "per_seed_family_gains": [
+        0.021764724344612595,
+        0.011222366375702763,
+        0.013786532455615058
+      ],
+      "positive_seeds": 3,
+      "raw_p_one_sided": 0.008599140085991401
+    },
+    "CTXNORM - RERANK4": {
+      "ci95": [
+        -0.0003175385910414537,
+        0.012977123040787748
+      ],
+      "ci975_holm2": [
+        -0.0011081426660350998,
+        0.014129985921164304
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 8,
+          "ties": 1,
+          "wins": 10
+        },
+        {
+          "losses": 7,
+          "ties": 1,
+          "wins": 11
+        },
+        {
+          "losses": 6,
+          "ties": 1,
+          "wins": 12
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        3,
+        2,
+        4
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        8,
+        7,
+        6
+      ],
+      "harmed_families_count_mean_seed": 4,
+      "mean_context_gain": 0.006026207655489223,
+      "mean_family_gain": 0.00577247259631073,
+      "median_context_gain": 0.004543528844612051,
+      "median_family_gain": 0.004352222366944176,
+      "per_seed_context_gains": [
+        0.01001508187850478,
+        0.004543528844612051,
+        0.0035200122433508394
+      ],
+      "per_seed_family_gains": [
+        0.009593394220462473,
+        0.004352222366944176,
+        0.003371801201525541
+      ],
+      "positive_seeds": 3,
+      "raw_p_one_sided": 0.0326967303269673
+    },
+    "CTXNORM_SHUF - CONTROL": {
+      "ci95": [
+        -0.0001189217639057631,
+        0.0
+      ],
+      "ci975_holm2": [
+        -0.0001189217639057631,
+        0.0
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 2,
+          "ties": 17,
+          "wins": 0
+        },
+        {
+          "losses": 0,
+          "ties": 19,
+          "wins": 0
+        },
+        {
+          "losses": 1,
+          "ties": 18,
+          "wins": 0
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        2,
+        0,
+        0
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        2,
+        0,
+        1
+      ],
+      "harmed_families_count_mean_seed": 3,
+      "mean_context_gain": -0.0007481640654197599,
+      "mean_family_gain": -0.0007166624205599807,
+      "median_context_gain": -4.138303139577837e-05,
+      "median_family_gain": -3.9640587968587704e-05,
+      "per_seed_context_gains": [
+        -0.0022031091648635017,
+        0.0,
+        -4.138303139577837e-05
+      ],
+      "per_seed_family_gains": [
+        -0.0021103466737113544,
+        0.0,
+        -3.9640587968587704e-05
+      ],
+      "positive_seeds": 0,
+      "raw_p_one_sided": 1.0
+    },
+    "RERANK4 - CONTROL": {
+      "ci95": [
+        0.0014288795396620666,
+        0.01897129548361973
+      ],
+      "ci975_holm2": [
+        0.0006087097216003326,
+        0.020454183283033174
+      ],
+      "family_wtl_by_seed": [
+        {
+          "losses": 5,
+          "ties": 0,
+          "wins": 14
+        },
+        {
+          "losses": 5,
+          "ties": 0,
+          "wins": 14
+        },
+        {
+          "losses": 3,
+          "ties": 2,
+          "wins": 14
+        }
+      ],
+      "harm_families_gt_001_by_seed": [
+        3,
+        2,
+        1
+      ],
+      "harm_families_gt_1e4_by_seed": [
+        5,
+        5,
+        3
+      ],
+      "harmed_families_count_mean_seed": 5,
+      "mean_context_gain": 0.009473553370013125,
+      "mean_family_gain": 0.009102072708439426,
+      "median_context_gain": 0.010446003588248135,
+      "median_family_gain": 0.010060983450438762,
+      "per_seed_context_gains": [
+        0.010446003588248135,
+        0.0071435179143023554,
+        0.010831138607488881
+      ],
+      "per_seed_family_gains": [
+        0.010060983450438762,
+        0.006870144008758587,
+        0.010375090666120928
+      ],
+      "positive_seeds": 3,
+      "raw_p_one_sided": 0.006299370062993701
+    },
+    "elo": {
+      "CONTROL": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "CTXNORM": {
+        "ci95": [
+          1534.8381483498129,
+          1643.5052066142778
+        ],
+        "median_elo": 1584.763927798164,
+        "per_seed_elo": [
+          1584.763927798164,
+          1615.4754963600753,
+          1563.3433085312095
+        ]
+      },
+      "CTXNORM_SHUF": {
+        "ci95": [
+          1495.3272250743871,
+          1500.0
+        ],
+        "median_elo": 1497.2846200704278,
+        "per_seed_elo": [
+          1496.3398091783824,
+          1500.0,
+          1497.2846200704278
+        ]
+      },
+      "RERANK4": {
+        "ci95": [
+          1495.5092156012372,
+          1574.6065080037372
+        ],
+        "median_elo": 1535.727898072443,
+        "per_seed_elo": [
+          1549.9585160602476,
+          1535.727898072443,
+          1522.5629556804063
+        ]
+      }
+    },
+    "invalid_minus2_context_counts_by_seed": {
+      "CONTROL": [
+        0,
+        0,
+        0
+      ],
+      "CTXNORM": [
+        0,
+        0,
+        0
+      ],
+      "CTXNORM_SHUF": [
+        0,
+        0,
+        0
+      ],
+      "RERANK4": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "source_commit": "ee85f557b4050bb696ac857e93b5ef3a383331ea",
+  "status": "COMPLETE",
+  "support_disclosure": "No new reranker test-time reveals; frozen cached r882 scores retain native support conditioning",
+  "trained_val_reads_before_global_lock": 0,
+  "verdict": "ADVANCE"
 }
