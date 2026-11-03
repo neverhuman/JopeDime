@@ -40,5 +40,6 @@ figs:
 	python3 figures/scripts/make_pool_insertion_windows.py
 	python3 figures/scripts/make_program_promotion_margins.py
 	python3 figures/scripts/make_program_journal_rates.py
+	python3 figures/scripts/make_program_round_counts.py
 clean:
 	latexmk -C
