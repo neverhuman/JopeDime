@@ -52,7 +52,7 @@ impl OrigV2Config {
     }
 
     #[cfg(any(feature = "hyperion-cpu", test))]
-    fn plan(&self) -> OrigV2SweepPlan {
+    pub(crate) fn plan(&self) -> OrigV2SweepPlan {
         OrigV2SweepPlan {
             sweeps: self.sweeps,
             windows: self.windows.clone(),
@@ -64,7 +64,7 @@ impl OrigV2Config {
     }
 
     #[cfg(any(feature = "hyperion-cpu", test))]
-    fn validate_profile(&self) -> Result<()> {
+    pub(crate) fn validate_profile(&self) -> Result<()> {
         if self.sweeps != ORIG_V2_SWEEPS
             || self.windows != ORIG_V2_WINDOWS
             || self.shifts != ORIG_V2_SHIFTS
