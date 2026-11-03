@@ -1,4 +1,5 @@
 use super::*;
+use crate::progress::cadence::Clock;
 use crate::progress::inventory::{encode, Commit, Head, HEAD_SCHEMA};
 
 impl<'r> Driver<'r> {
