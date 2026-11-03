@@ -1,7 +1,6 @@
 use super::*;
 
 /// [`shared_scratch_config`] as command-line arguments.
-
 pub(crate) fn shared_scratch_args(scratch: PathBuf, out: PathBuf) -> AblationArgs {
     AblationArgs {
         profile_a: Profile::Kernel2Baseline.id().to_owned(),
