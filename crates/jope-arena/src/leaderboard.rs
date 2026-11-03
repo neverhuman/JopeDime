@@ -18,7 +18,7 @@
 //! Either way the `benchmark_valid` cell of a ladder row is computed from the rows that entered
 //! the fit (`True` only when every one of the method's ranked rows is valid), never assumed.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -27,10 +27,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::corrections::{Corrections, CorrectionsMeta};
-use crate::elo::{fit_elo, matches_from_scores_directed, Direction, TIE_RELATIVE_TOLERANCE};
+use crate::elo::Direction;
 use crate::io::{read_bytes, read_json, read_text, resolve_input, sha256_hex};
-use crate::pyfmt::{py_bool, py_repr, py_round};
-use crate::scores::{parse_scores, ScoreRow};
+use crate::scores::parse_scores;
+#[cfg(test)]
+use crate::scores::ScoreRow;
 
 /// `tracks/<track>/track.json` (the fields the ladder needs; the rest is kept as `extra`).
 #[derive(Clone, Debug, Deserialize)]

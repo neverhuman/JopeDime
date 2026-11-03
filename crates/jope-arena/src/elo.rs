@@ -141,7 +141,6 @@ pub struct Fit {
 /// match arrays, in the numpy accumulation order.
 #[allow(clippy::too_many_arguments)]
 mod fit;
-pub(super) use fit::*;
 pub use fit::{fit_elo, fit_elo_arrays, numpy_pairwise_sum};
 
 /// The reporter's `outcome`: 1 when `left` beats `right` in `direction`, 0.5 within the relative
