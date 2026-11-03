@@ -7,6 +7,7 @@
 //! refuses, listing every reason, rather than admitting a partially matching group.
 use super::{contract::BoundedRunContract, is_commit, is_digest, is_name};
 use anyhow::{ensure, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 mod model;
