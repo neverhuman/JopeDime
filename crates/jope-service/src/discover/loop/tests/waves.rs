@@ -8,7 +8,7 @@ fn equal_rung1_scores_never_replace_the_champion() {
             Ok(s.into())
         }
         fn seeds(&self) -> Result<Vec<String>> {
-            TinySpace.seeds()
+            WaveSpace.seeds()
         }
         fn propose(&self, _: &[String], _: usize, rng: &mut ChaCha12Rng) -> Result<Vec<String>> {
             Ok(vec![format!("tie-{}", rng.next_u64())])
@@ -18,7 +18,7 @@ fn equal_rung1_scores_never_replace_the_champion() {
     let p = plan(directory.path(), 30, Effort::Medium, 4);
     let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
     let mut d = Discovery::open(store, p).unwrap();
-    finish(&mut d, &Unique, &Controlled { failure: None }, 8);
+    finish(&mut d, &Unique, &LateImprovement::new(false), 8);
     let events = d.projection().unwrap();
     assert_eq!(
         events
@@ -197,7 +197,7 @@ fn numerical_artifact_refit_failure_fails_only_the_candidate() {
     struct Unfittable;
     impl Executor for Unfittable {
         fn evaluate(&self, request: &Request) -> Response {
-            Controlled { failure: None }.evaluate(request)
+            LateImprovement::new(false).evaluate(request)
         }
         fn fitted_model(&self, _: &Request) -> Result<Vec<u8>> {
             bail!("unit fixture numerical refit failure")
@@ -207,7 +207,7 @@ fn numerical_artifact_refit_failure_fails_only_the_candidate() {
     let p = plan(directory.path(), 30, Effort::Fast, 1);
     let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
     let mut d = Discovery::open(store, p).unwrap();
-    finish(&mut d, &TinySpace, &Unfittable, 1);
+    finish(&mut d, &WaveSpace, &Unfittable, 1);
     assert!(d.champion().is_none());
     assert_eq!(d.completed(), Some(CompletionReason::BudgetEvaluations));
     assert_eq!(d.nondeterminism().count.0, 0);
@@ -229,11 +229,28 @@ fn ultra_evaluates_both_cv_repeats_without_treating_repeated_validation_as_leaka
         algorithm_id: "alg_0000".into(),
         dsl: NativeSpace.canonical("(pipe X (ridge))").unwrap(),
     };
-    let request = d.request(0, 0, 1, &candidate).unwrap();
-    let spec: NativeFolds = serde_json::from_value(request.fold_spec.clone()).unwrap();
-    assert_eq!(spec.folds.len(), 10);
-    assert_eq!(spec.folds.iter().filter(|f| f.repeat == 0).count(), 5);
-    assert_eq!(spec.folds.iter().filter(|f| f.repeat == 1).count(), 5);
+    let fold_spec = p.fold_spec(1).unwrap();
+    let folds = fold_spec["folds"].as_array().unwrap();
+    assert_eq!(folds.len(), 10);
+    assert_eq!(folds.iter().filter(|f| f["repeat"] == 0).count(), 5);
+    assert_eq!(folds.iter().filter(|f| f["repeat"] == 1).count(), 5);
+    let request = Request {
+        attempt: Attempt {
+            run: p.run_id.clone(),
+            round: 0,
+            slot: 0,
+            attempt: 1,
+        },
+        matrix_path: p.matrix_path.clone(),
+        fold_spec,
+        dsl: candidate.dsl,
+        objective: serde_json::json!(p.objective.clone()),
+        seed: p.seed,
+        limits: worker::Limits {
+            wall_ms: p.evaluation_wall_ms,
+            rss_bytes: p.evaluation_rss_bytes,
+        },
+    };
     let matrix = Matrix::open(fs::read(&p.matrix_path).unwrap()).unwrap();
     let score = evaluate_native(&request, &matrix).unwrap();
     assert_eq!(score.values.len(), 3);
