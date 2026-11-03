@@ -189,9 +189,6 @@ fn dataset_seed(hash: &str) -> Result<u64> {
     Ok(BASE_SEED ^ u64::from_str_radix(hash, 16).context("dataset hash is not hexadecimal")?)
 }
 
-/// Binary-lane seed derivation: BASE_SEED ^ lane tag ^ dataset hash, so the
-/// binary offspring streams never coincide with the regression lane's.
-
 #[cfg(test)]
 mod tests {
     use super::*;
