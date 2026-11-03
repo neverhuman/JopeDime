@@ -23,4 +23,5 @@ if _shared is None:
 
 CachedS3Library = _shared.CachedS3Library
 CachedNativeTools = _shared.CachedNativeTools
-__all__ = ("CachedS3Library", "CachedNativeTools")
+VerifiedVersionCache = _shared.VerifiedVersionCache
+__all__ = ("CachedS3Library", "CachedNativeTools", "VerifiedVersionCache")
