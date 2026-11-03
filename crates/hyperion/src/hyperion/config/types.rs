@@ -279,29 +279,29 @@ pub struct HyperionAugment {
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct ManifestFile {
-    version: String,
+    pub(crate) version: String,
     #[serde(default)]
-    step: u64,
-    dim: usize,
+    pub(crate) step: u64,
+    pub(crate) dim: usize,
     #[serde(default)]
-    heads: usize,
+    pub(crate) heads: usize,
     #[serde(default)]
-    layers: usize,
+    pub(crate) layers: usize,
     #[serde(default)]
-    emb_dim: usize,
+    pub(crate) emb_dim: usize,
     #[serde(default)]
-    min_patch: usize,
+    pub(crate) min_patch: usize,
     #[serde(default)]
-    max_patch: usize,
+    pub(crate) max_patch: usize,
     #[serde(default)]
-    n_bands: usize,
-    q_low: f32,
-    q_high: f32,
+    pub(crate) n_bands: usize,
+    pub(crate) q_low: f32,
+    pub(crate) q_high: f32,
     #[serde(default = "default_quant_scale")]
-    quant_scale: f32,
+    pub(crate) quant_scale: f32,
     #[serde(default = "default_pad_u8")]
-    pad_u8: u8,
-    ws_list: Vec<usize>,
+    pub(crate) pad_u8: u8,
+    pub(crate) ws_list: Vec<usize>,
 }
 
 pub(crate) fn default_quant_scale() -> f32 {
@@ -314,12 +314,12 @@ pub(crate) fn default_pad_u8() -> u8 {
 
 #[derive(Clone)]
 pub(crate) struct WeightProjection {
-    n_bands: usize,
-    output_dim: usize,
-    value_scale: Vec<f32>,
-    value_bias: Vec<f32>,
-    band_value: Vec<f32>,
-    band_abs: Vec<f32>,
-    band_missing: Vec<f32>,
-    output_bias: Vec<f32>,
+    pub(crate) n_bands: usize,
+    pub(crate) output_dim: usize,
+    pub(crate) value_scale: Vec<f32>,
+    pub(crate) value_bias: Vec<f32>,
+    pub(crate) band_value: Vec<f32>,
+    pub(crate) band_abs: Vec<f32>,
+    pub(crate) band_missing: Vec<f32>,
+    pub(crate) output_bias: Vec<f32>,
 }

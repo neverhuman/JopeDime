@@ -3,14 +3,14 @@ use super::*;
 
 /// v7 encode result: feature blocks (column-major) + the confidence surface + dataset vector.
 pub(crate) struct V7Fit {
-    train_block: Matrix,
-    hold_block: Matrix,
-    confidence: Matrix,
-    hold_confidence: Matrix,
-    dataset_vector: Vec<f32>,
-    device: Option<&'static str>,
-    cancelled: bool,
-    advanced: bool,
+    pub(crate) train_block: Matrix,
+    pub(crate) hold_block: Matrix,
+    pub(crate) confidence: Matrix,
+    pub(crate) hold_confidence: Matrix,
+    pub(crate) dataset_vector: Vec<f32>,
+    pub(crate) device: Option<&'static str>,
+    pub(crate) cancelled: bool,
+    pub(crate) advanced: bool,
 }
 
 /// Convert a row-major `h × width` buffer (keeping the first `keep` dims) into a column-major

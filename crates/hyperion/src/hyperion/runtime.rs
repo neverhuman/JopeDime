@@ -1,4 +1,4 @@
-mod preview;
+#[path = "runtime/preview.rs"] mod preview;
 pub(super) use preview::{build_hyperion_preview, emit_hyperion, HyperionEvent};
 
 struct Runtime {
