@@ -1,4 +1,4 @@
-use super::*;
+use super::super::*;
 
 pub(crate) fn table_descriptors(s: &ProbeStage, n: usize, p: usize) -> TableStage {
     let mut corr = vec![0.0; p * p];
