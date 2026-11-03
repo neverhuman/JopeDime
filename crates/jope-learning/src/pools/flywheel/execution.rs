@@ -105,6 +105,7 @@ pub fn run_distilled_flywheel_with_s3_prior(
         direction,
         cfg,
         parquet_dir,
+        fold_s3_priors.as_deref(),
     )?;
     let rounds::RoundResults {
         round_summaries,
