@@ -1,4 +1,5 @@
 use super::*;
+use feat_math::dsl::Stage;
 
 pub(crate) fn genome_complexity(source: &str) -> Result<usize> {
     let GenomeIr::Pipeline(pipeline) = GenomeIr::parse(source)? else {
