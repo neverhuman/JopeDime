@@ -8,6 +8,12 @@ use clap::CommandFactory;
 use feat_math::transpile::lint_shipped_text;
 use serde_json::Value;
 
+struct Run {
+    status: u8,
+    out: String,
+    err: String,
+}
+
 fn env_with(policy: Policy, open_state: StateOpener) -> Env {
     Env { policy, open_state }
 }
