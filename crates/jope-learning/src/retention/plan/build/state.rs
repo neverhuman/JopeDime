@@ -1,6 +1,6 @@
 use super::*;
 
-use super::super::index::IndexAgg;
+use super::super::super::index::IndexAgg;
 
 pub(crate) struct Loaded {
     pub(crate) as_of_unix: u64,
@@ -27,7 +27,7 @@ pub(crate) struct Evaluated {
     pub(crate) loaded: Loaded,
     pub(crate) lifecycles: Lifecycles,
     pub(crate) inv: Option<Inventory>,
-    pub(crate) rows: Vec<super::PlanRow>,
+    pub(crate) rows: Vec<super::super::PlanRow>,
 }
 
 pub(crate) struct Analysis {
