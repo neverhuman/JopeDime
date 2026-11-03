@@ -125,7 +125,7 @@ pub(crate) fn exact_cv_on_folds_binary(
     )
 }
 
-fn binary_cv_on_slices(
+pub(super) fn binary_cv_on_slices(
     genome: &GenomeIr,
     fold_cache: &BinaryFoldCache<'_>,
     fold_plan_folds: usize,
