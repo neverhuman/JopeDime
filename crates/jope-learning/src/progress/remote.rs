@@ -189,7 +189,8 @@ mod tests {
     /// PR #114 review round 1 (the reviewer's probe, as a refusal): the preflight reads a store
     /// URL exactly as the store opens it. Every spelling the store reads as an S3 bucket root is
     /// refused whatever the environment: an upper-case scheme, `.` and `..` segments (also
-    /// percent-encoded), an empty segment `object_store` cannot parse as a prefix, no bucket.
+    /// percent-encoded), and no bucket. An empty path segment that `object_store` cannot parse
+    /// is refused as an invalid store URL instead of being treated as a bucket root.
     /// Every S3 spelling with a run-scoped prefix still goes through the unsigned-request and
     /// conditional-write checks. Pure URL parsing: no store is opened, and no credential or
     /// network is used.
@@ -206,13 +207,16 @@ mod tests {
             "s3://example-bucket/run/%2e%2e",
             "s3://example-bucket/%2E",
             "S3A://example-bucket/run/./../",
-            "s3://example-bucket/run//1",
             "s3:///run-1",
         ];
         for url in root {
             for env in [("signed", signed as Env), ("unsigned, unconditional", both)] {
                 expect_refusal(url, env, "the bucket root is refused", &mut bypasses);
             }
+        }
+        for url in ["s3://example-bucket/run//1"] {
+            expect_refusal(url, ("signed", signed), "not a store URL", &mut bypasses);
+            assert!(StoreLocation::parse(url).is_err(), "{url}");
         }
         let prefixed = [
             "s3://example-bucket/run-1",
