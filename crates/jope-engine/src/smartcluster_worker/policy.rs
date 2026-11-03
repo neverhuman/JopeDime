@@ -3,8 +3,8 @@ use crate::{manifest::*, resident_protocol as resident};
 use anyhow::{ensure, Context, Result};
 use jain_smartcluster::{
     jope::{TaskKind, TaskManifest},
-    Client, ControlMessage, FencedAttempt, JobRecord, JobState, ProtocolVersion,
-    StructuredProgress, Timestamp, Validate, WorkerControlFrame, WorkerReport, WorkerReportFrame,
+    ControlMessage, FencedAttempt, JobRecord, JobState, ProtocolVersion, StructuredProgress,
+    Timestamp, Validate, WorkerControlFrame, WorkerReport, WorkerReportFrame,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
