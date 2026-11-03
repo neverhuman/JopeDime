@@ -1,0 +1,69 @@
+{
+  "schema": "whitepaper.retained-best-plateau-source/v1",
+  "csv_sha256": "858ae48c38dbc9496c77b031b5f0cfc8f7f7188378eaaeea3294e6d3d119240d",
+  "capture": {
+    "captured_at": "2026-11-03T00:28:09.371423+00:00",
+    "round_window": [
+      3174,
+      3995
+    ],
+    "rows": 822,
+    "last_strict_gain_round": 3175,
+    "last_admitted_round": 3175,
+    "trailing_rejection_rounds": [
+      3176,
+      3995
+    ],
+    "trailing_rejections": 820,
+    "retained_utility": "1.1389572403748425",
+    "best_round": 3175,
+    "previous_utility_at_gain": "1.1383668110784328",
+    "retained_state_contiguous": true,
+    "all20_candidate_and_decision_flags_matched": true,
+    "all20_summary_admission_retained_utility_matched": true,
+    "crosscheck_window": [
+      3976,
+      3995
+    ]
+  },
+  "source_prefixes": {
+    "adapter_admissions.jsonl": {
+      "at": "2026-11-03T00:28:09.282998+00:00",
+      "observed_bytes": 1705657,
+      "complete_prefix_bytes": 1705657,
+      "complete_prefix_sha256": "19c65b4eb30f44a8cffde04da06a965dac77b5230677fd338d60f9de6af578ab",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true
+    },
+    "summary.jsonl": {
+      "at": "2026-11-03T00:28:09.306079+00:00",
+      "observed_bytes": 3358696,
+      "complete_prefix_bytes": 3358696,
+      "complete_prefix_sha256": "24d102a881aa0436192c6d87977da3021a9be7f893d9a23596b2afb32e74665a",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true
+    },
+    "per-round.jsonl": {
+      "at": "2026-11-03T00:28:09.342087+00:00",
+      "observed_bytes": 2422406,
+      "complete_prefix_bytes": 2422406,
+      "complete_prefix_sha256": "e8ecd633fc53c72cb150fc216e135effc544d105525787ba43bae30ba7c83b27",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true
+    }
+  },
+  "full_admission_prefix_rows": 3221,
+  "matched_admission_prefix_bytes": 1705117,
+  "matched_admission_prefix_sha256": "543f466d0527fc50de023fc0b5283a440b9ef4e097b68f386be279ab0a37b83b",
+  "complete_admission_rows_after_cutoff_omitted": 1,
+  "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+  "capture_script_sha256": "724cdc8465fcd83ab0b612f4dc7ec3c8a5b3eca4ce327534c12019a57d0b6186",
+  "projection_sha256": {
+    "admissions": "debdc08fdb764f176722af719ffd6de63dfe610198d5fcf8236595f2e98ebd56",
+    "summary": "759f967ed22d501d970d598c9b0f98f695859de1dbb967fcb46749cd52bd11fd",
+    "per_round": "16411afa755b1e3cf25172f95c9f313f36c24372feac21acf32c9037160449ab"
+  },
+  "selection": "Every consecutive complete admission from one round before the last strict gain through the latest round matched to complete summary and per-round journals. No outcome subsampling. Full admission-prefix continuity checked; latest20 candidate/decision/retained summaries cross-checked.",
+  "source_binding": "Logged aggregate fields only; installed source, adapter, evaluation population and normalization closure remain unqualified.",
+  "scope": "Adaptive development-side adapter decisions, distinct from training-program events. No independent first-proposal, learning-gain, writer/ranking-map benefit or serving comparison."
+}
