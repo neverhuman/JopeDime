@@ -5,12 +5,12 @@
 use super::fixture::{
     env, obj, producer, remote_keys, run, snapshot, Fault, Faulty, Item, Run, BIG,
 };
-use crate::mirror::Mirror;
 use crate::progress::census::{reconcile, Disposition};
 use crate::progress::inventory::*;
 use crate::progress::outbox::{Admission, Appended, Boundary, Limits, Outbox, Outcome, Refused};
-use crate::state::State;
 use anyhow::Result;
+use jope_learning::mirror::Mirror;
+use jope_learning::state::State;
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
