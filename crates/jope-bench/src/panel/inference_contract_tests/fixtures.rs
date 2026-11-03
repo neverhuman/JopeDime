@@ -1,5 +1,6 @@
 // Extracted from inference_contract_tests.rs; test behavior is unchanged.
 use super::*;
+use feat_math::advanced_v3::ColumnSpec;
 
 /// Present category strings that must stay data in every backend. Several imitate
 /// shell, Python, JavaScript and Rust syntax, template markers or the missing sentinel.
@@ -61,7 +62,7 @@ pub(crate) fn fit(
 
 pub(crate) fn fit_method(
     task: Task,
-    method: super::super::methods::RustMethod,
+    method: super::super::super::methods::RustMethod,
     categories: &[Option<String>],
     repeats: &dyn Fn(usize) -> usize,
     amount_missing_everywhere: bool,
