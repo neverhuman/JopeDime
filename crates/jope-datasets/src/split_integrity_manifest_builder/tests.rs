@@ -123,14 +123,27 @@ fn legacy_development_selection_cannot_split_a_family() {
     assert_eq!(manifest["status"], "incomplete");
     assert_eq!(
         manifest["incomplete_reasons"],
-        json!(["legacy_development_family_overlap"])
+        json!([
+            "legacy_development_family_overlap",
+            "legacy_development_split_empty"
+        ])
     );
     validate_split_manifest(&manifest).unwrap();
 }
 
 #[test]
 fn validator_rejects_family_overlap_after_hash_is_recomputed() {
-    let mut manifest = build(6, json!(0.25), &[]);
+    let mut source_families = families(6);
+    source_families.insert("d1".into(), "family-0".into());
+    let mut manifest = build_split_manifest(
+        &labels(6),
+        &source_families,
+        &json!(0.5),
+        &json!(0.25),
+        &json!(1),
+        &[],
+    )
+    .unwrap();
     let first = manifest["assignments"]["d0"]["split"].clone();
     manifest["assignments"]["d1"]["split"] = json!(if first == TRAIN_SPLIT {
         DEVELOPMENT_SPLIT
