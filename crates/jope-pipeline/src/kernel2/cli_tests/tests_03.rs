@@ -6,7 +6,7 @@ use super::*;
 /// evidence before its refusal is checked, and the two records the review found accepted (a
 /// fallback with equal counts, Jacobians traded for trials) are among them.
 fn rehashed_multi_site_lm_traces_are_refused_with_every_edit_applied() {
-    use super::refinement::{ELEMENTWISE, SMALL_ALLOWANCE, UNSUPPORTED};
+    use super::super::refinement::{ELEMENTWISE, SMALL_ALLOWANCE, UNSUPPORTED};
     let temp = tempfile::tempdir().unwrap();
     let opt = flag_run(&temp.path().join("multi"), MULTI_SITE_SEED, 40, 12, "lm");
     let receipt = run::run(&opt).unwrap();
