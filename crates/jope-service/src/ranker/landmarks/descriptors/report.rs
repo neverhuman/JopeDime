@@ -1,4 +1,4 @@
-use super::*;
+use super::super::*;
 
 pub(crate) fn report_descriptors(
     s: &ProbeStage,

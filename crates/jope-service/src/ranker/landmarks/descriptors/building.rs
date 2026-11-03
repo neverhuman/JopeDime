@@ -1,4 +1,4 @@
-use super::*;
+use super::super::*;
 
 pub(crate) fn building_blocks(s: &ProbeStage, n: usize, p: usize) -> BlockStage {
     let max_probe = |k: usize| s.probes.iter().map(|r| r[k]).fold(0.0_f64, f64::max);
