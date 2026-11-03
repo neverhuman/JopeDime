@@ -48,5 +48,19 @@
     "swa-members.json": "384769120e3692308c6ec399847e2d6698da0dcb1265c577d8dbefef8987c0e9",
     "swa.py": "29f23e4a8d573469d4cb8900223eef58a38ca33322bbc7709573138beb090590",
     "test_h285.py": "d6605cced8534a94b15b8aac14be4d0ae5f693574ec5b5ebb0be2e6aaf28eaaa"
+  },
+  "closeout": {
+    "status": "COMPLETE",
+    "source_commit": "2affd94cfeb3824f4a64009a52ea9b8ea5b69f24",
+    "full_outputs": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H285/astra-t2305/closeout/full-outputs.tar.gz",
+      "version_id": "x7Hj8CQ6ZtURHZXxmUNlXwp2.am44NXD",
+      "sha256": "7d7675da2b2ebbb339a9dfdbc123a8ae1b66106ebf2cfe35243cb651960f72e3",
+      "bytes": 29584822,
+      "exact_version_get_verified": true,
+      "members_verified": 313
+    },
+    "closed_utc": "2026-11-03T23:29:57.761571+00:00",
+    "neural_updates": 0
   }
 }

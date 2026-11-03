@@ -1,18 +1,410 @@
 {
-  "schema": "jope.h285.metrics/v1",
   "wave": "H285",
-  "status": "PREREGISTERED",
-  "verdict": null,
+  "status": "COMPLETE",
+  "source_commit": "2affd94cfeb3824f4a64009a52ea9b8ea5b69f24",
+  "verdict": "NOT_TRANSFERRED_FRESH",
+  "decision": {
+    "verdict": "NOT_TRANSFERRED_FRESH",
+    "A_gates": {
+      "all_three_lcb95_positive": false,
+      "median_gt_0_010": true,
+      "harmed_at_most_35_percent": true,
+      "invalid_not_above_base": true,
+      "random_null_fails": false
+    },
+    "random_null_gates": {
+      "all_three_lcb95_positive": true,
+      "median_gt_0_010": true,
+      "harmed_at_most_35_percent": true,
+      "invalid_not_above_base": true
+    },
+    "random_null_would_pass": true,
+    "B_verdict": "NOT",
+    "B_gates": {
+      "gain_positive": false,
+      "family_lcb95_positive": false,
+      "invalid_not_above_base": true,
+      "harmed_at_most_35_percent": true
+    },
+    "B_qualification": "single deterministic exploratory run; cannot ADVANCE"
+  },
+  "fresh": {
+    "per_seed_family_mean_utility": [
+      [
+        1.1716054536443616,
+        1.3864968280693315,
+        1.5002734189757463,
+        1.1716054536443616
+      ],
+      [
+        1.1716054536443616,
+        1.3646093407476239,
+        1.4901543536588813,
+        1.1716054536443616
+      ],
+      [
+        1.1716054536443616,
+        1.2593619843940616,
+        1.4951685722126766,
+        1.1716054536443616
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1577.3248588316085,
+        1550.544307604654,
+        1500.0
+      ],
+      [
+        1500.0,
+        1561.6005091189695,
+        1599.50042000083,
+        1500.0
+      ],
+      [
+        1500.0,
+        1597.1532180012186,
+        1597.1532180012186,
+        1500.0
+      ]
+    ],
+    "families": 33,
+    "contexts": 33,
+    "columns": [
+      "BASE",
+      "A",
+      "RANDOM_VALID",
+      "SWA"
+    ],
+    "contrasts": {
+      "A": {
+        "per_seed_gain": [
+          0.21489137442496978,
+          0.19300388710326205,
+          0.08775653074969961
+        ],
+        "median_gain": 0.19300388710326205,
+        "positive_seeds": 3,
+        "per_seed_ci95": [
+          [
+            0.026874103784100448,
+            0.4670467344500924
+          ],
+          [
+            0.003449851747296244,
+            0.4497461595739031
+          ],
+          [
+            -0.00012590132794154017,
+            0.24536548295340474
+          ]
+        ],
+        "median_ci95": [
+          0.014182602935924679,
+          0.4500197135995355
+        ],
+        "harm_families_loss_gt_0_01": [
+          4,
+          3,
+          4
+        ],
+        "wtl_by_seed": [
+          {
+            "wins": 13,
+            "ties": 15,
+            "losses": 5
+          },
+          {
+            "wins": 10,
+            "ties": 19,
+            "losses": 4
+          },
+          {
+            "wins": 13,
+            "ties": 15,
+            "losses": 5
+          }
+        ],
+        "invalid_by_seed": [
+          0,
+          0,
+          1
+        ],
+        "changed_picks_by_seed": [
+          18,
+          14,
+          19
+        ]
+      },
+      "RANDOM_VALID": {
+        "per_seed_gain": [
+          0.32866796533138426,
+          0.3185489000145195,
+          0.32356311856831466
+        ],
+        "median_gain": 0.32356311856831466,
+        "positive_seeds": 3,
+        "per_seed_ci95": [
+          [
+            0.055517755728311566,
+            0.7061803947305999
+          ],
+          [
+            0.014832860871826099,
+            0.7154342754853873
+          ],
+          [
+            0.03972749268862449,
+            0.7097902638753546
+          ]
+        ],
+        "median_ci95": [
+          0.03913593148821732,
+          0.7091277391746387
+        ],
+        "harm_families_loss_gt_0_01": [
+          10,
+          5,
+          6
+        ],
+        "wtl_by_seed": [
+          {
+            "wins": 17,
+            "ties": 3,
+            "losses": 13
+          },
+          {
+            "wins": 17,
+            "ties": 8,
+            "losses": 8
+          },
+          {
+            "wins": 20,
+            "ties": 3,
+            "losses": 10
+          }
+        ],
+        "invalid_by_seed": [
+          0,
+          0,
+          0
+        ],
+        "changed_picks_by_seed": [
+          30,
+          25,
+          30
+        ]
+      },
+      "SWA": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "positive_seeds": 0,
+        "per_seed_ci95": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "median_ci95": [
+          0.0,
+          0.0
+        ],
+        "harm_families_loss_gt_0_01": [
+          0,
+          0,
+          0
+        ],
+        "wtl_by_seed": [
+          {
+            "wins": 0,
+            "ties": 33,
+            "losses": 0
+          },
+          {
+            "wins": 0,
+            "ties": 33,
+            "losses": 0
+          },
+          {
+            "wins": 0,
+            "ties": 33,
+            "losses": 0
+          }
+        ],
+        "invalid_by_seed": [
+          2,
+          2,
+          2
+        ],
+        "changed_picks_by_seed": [
+          1,
+          1,
+          1
+        ],
+        "single_run": true,
+        "family_bootstrap_ci95": [
+          0.0,
+          0.0
+        ],
+        "gain": 0.0
+      }
+    },
+    "base_invalid_by_seed": [
+      2,
+      2,
+      2
+    ],
+    "elo": {
+      "BASE": 1500.0,
+      "A": 1577.3248588316085,
+      "RANDOM_VALID": 1597.1532180012186,
+      "SWA": 1500.0
+    }
+  },
+  "reused_DLVal": {
+    "regression": {
+      "status": "PASS",
+      "cost_vectors_bit_exact_to_H278": 91,
+      "cpu_mean": 1.1366829009431036
+    },
+    "B_reused_DLVal": {
+      "single_run": true,
+      "reused": true,
+      "elo_base_swa": [
+        1500.0,
+        1503.6535056965154
+      ],
+      "gain": 0.0016130086559467478,
+      "family_bootstrap_ci95": [
+        -0.0016967073465243784,
+        0.006535733314364622
+      ],
+      "wtl": {
+        "wins": 1,
+        "ties": 17,
+        "losses": 1
+      },
+      "harm_families_loss_gt_0_01": 1,
+      "invalid_base": 0,
+      "invalid_swa": 0,
+      "changed_picks": 3
+    },
+    "forward_calls": "r3175 CPU91 + SWA CPU91; no refit",
+    "neural_updates": 0
+  },
   "neural_updates": 0,
-  "forward_calls": 0,
-  "planned_families": 60,
-  "seeds": [
-    278101,
-    278102,
-    278103
-  ],
-  "bootstrap_seed": 285150,
-  "bootstrap_draws": 10000,
+  "compute_finished_utc": "2026-11-03T23:28:32Z",
+  "audit": {
+    "status": "PASS",
+    "source_commit": "2affd94cfeb3824f4a64009a52ea9b8ea5b69f24",
+    "contexts": 33,
+    "families": 33,
+    "recomputed_metrics_equal": true,
+    "raw_outcome_and_pick_replay": true,
+    "no_picks_or_labels_in_shared_packet": true,
+    "prefix_identity": true,
+    "regression_bit_exact_vectors": 91,
+    "neural_forwards": 0
+  },
+  "resource": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "peak": {
+      "rss": 1141575680,
+      "threads": 3
+    },
+    "pause_events": [],
+    "elapsed": 92.34809732437134,
+    "command": [
+      "/usr/bin/python3",
+      "/home/ubuntu/jope-rescue-20260921/h285-astra/source/runner.py"
+    ],
+    "compute_stop": 1793759400.0
+  },
+  "full_outputs": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H285/astra-t2305/closeout/full-outputs.tar.gz",
+    "version_id": "x7Hj8CQ6ZtURHZXxmUNlXwp2.am44NXD",
+    "sha256": "7d7675da2b2ebbb339a9dfdbc123a8ae1b66106ebf2cfe35243cb651960f72e3",
+    "bytes": 29584822,
+    "exact_version_get_verified": true,
+    "members_verified": 313
+  },
   "git_status": "GIT_COMMITTED",
-  "outcome": null
+  "schema": "jope.h285.metrics/v1",
+  "cohort_execution": {
+    "planned_prefix": 60,
+    "scored": 33,
+    "excluded": 27,
+    "exclusion_reasons": {
+      "fewer_than_8_candidates": 27
+    }
+  },
+  "builder_regression": {
+    "cid": "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da",
+    "table_bit_exact": true,
+    "pool_bit_exact": true,
+    "checks": {
+      "tokens_10x32": {
+        "bit_exact": true,
+        "max_abs": 0.0
+      },
+      "mask_10": {
+        "bit_exact": true,
+        "max_abs": 0.0
+      },
+      "dope629": {
+        "bit_exact": true,
+        "max_abs": 0.0
+      },
+      "lm48_z": {
+        "bit_exact": true,
+        "max_abs": 0.0
+      },
+      "ctx_feat_584": {
+        "bit_exact": true,
+        "max_abs": 0.0
+      },
+      "base_prior_cost": {
+        "bit_exact": true,
+        "max_abs": 0.0
+      },
+      "sos_prior": {
+        "bit_exact": true,
+        "max_abs": 0.0
+      },
+      "proj16": {
+        "bit_exact": true,
+        "max_abs": 0.0
+      }
+    }
+  },
+  "fresh_packet": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H285/astra-t2305/fresh/fresh-top8-no-picks.npz",
+    "version_id": "73pe6R.AKcET0qRgr__KEFBj.WDJLZju",
+    "sha256": "137aa032c6b5ef78d9cbf45b895cf61d36703572c7b58af32442bdc74d236f3c",
+    "bytes": 94552,
+    "exact_version_get_verified": true,
+    "wave": "H285",
+    "source_commit": "2affd94cfeb3824f4a64009a52ea9b8ea5b69f24",
+    "cohort_sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+    "half": "ODD",
+    "families": 33,
+    "features": 568,
+    "contains_picks": false,
+    "selection": "r3175 ascending mergesort top8"
+  }
 }

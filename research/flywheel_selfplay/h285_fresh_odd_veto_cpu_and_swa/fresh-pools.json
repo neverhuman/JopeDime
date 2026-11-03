@@ -1,0 +1,215 @@
+{
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H285/astra-t2305/fresh/fresh-top8-no-picks.npz",
+  "version_id": "73pe6R.AKcET0qRgr__KEFBj.WDJLZju",
+  "sha256": "137aa032c6b5ef78d9cbf45b895cf61d36703572c7b58af32442bdc74d236f3c",
+  "bytes": 94552,
+  "exact_version_get_verified": true,
+  "wave": "H285",
+  "source_commit": "2affd94cfeb3824f4a64009a52ea9b8ea5b69f24",
+  "cohort_sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+  "half": "ODD",
+  "families": 33,
+  "features": 568,
+  "contains_picks": false,
+  "selection": "r3175 ascending mergesort top8",
+  "rows": [
+    {
+      "cid": "03e5fa78441059001b1557f864199399ecea418322c79359c5f62c2cfe2be1e7",
+      "family_key": "srcfile:analcatdata-wildcat",
+      "dataset_id": "d2df90b7a95ed21b",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "3998836e286821a3a5e47423a2ef2b76c0c326202320ff31cad3008816ad9cda",
+      "family_key": "dc3bee53ed795a27dae8abd18453d509e8f1cd65",
+      "dataset_id": "1055ade3a6d356eb",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "133cecfa6a816962b2a64a3282b66407a78fdf79e46c4163b04cd6a47348758b",
+      "family_key": "2da106fbb1c24b728be327ec1b5fea3d3ed94ba1",
+      "dataset_id": "436cf42e223e0a42",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "1b3cff4174078b36a0d6ff7a8312f582cecd9b6b04ee3844b52dff84ba3a53bb",
+      "family_key": "srcfile:cps",
+      "dataset_id": "c647e0abaeb556b2",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "0517cdd09bbe6a6bd6991ae9347629c8fd4850107de62fe874bd7785149a9eda",
+      "family_key": "ef5dc282e3606d0d8176b193544751ef3c955608",
+      "dataset_id": "acf970d8c2c55b1f",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "0a26636536c10a30b616b47cc177194a3cb5ebdd9caa9e1fc9e4bc540842b7b0",
+      "family_key": "2dc089955e2b96a8a025a1e620b33ba0c26e81aa",
+      "dataset_id": "dea7f031a608f917",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "066adfc6ce8b35d7e136cdff8b65bc2e64691c77b25962e488a8b1d0177fb1a9",
+      "family_key": "srcfile:rdatasets-wooldridge-rental",
+      "dataset_id": "3c4387f5a1a82ae9",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "282a809265ec207e6568b4f312d01aec8ad35b9e1f09d97e25c342ab1e1e9438",
+      "family_key": "2cfcd65cbf8b22503197d7a66a3f71418a66340a",
+      "dataset_id": "7c6cc6aa36ce6ffe",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "34ce2334373374387ce6a933a176e5cb4fab957cf2759a66b2454e923cf16f15",
+      "family_key": "srcfile:iot-agriculture",
+      "dataset_id": "689e24a7802e6f69",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "124fbce9392baffa3f7ce892da6f2989a277db24dd1cb7de1cc2325440143650",
+      "family_key": "33dee30395f7e8f37474afac1188400ba35312d5",
+      "dataset_id": "3847b2b782a94b66",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "237334164350a8207d7cad2f92f0421e36c9a7abc6f51f2bde47c0c2f8770b2b",
+      "family_key": "304591e832c944c4b8c32872857fe2e6423725e5",
+      "dataset_id": "74fca63283141074",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "3c86c375d78cb4001e8a6e1a0bc8af63b6aec9200f2f7294f90396aa31955213",
+      "family_key": "srcfile:weather-izmir",
+      "dataset_id": "859c1c56379870ac",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "3b559822da97bb2200fc001f7bfdf73db806b28596cc8082dd07176673478b49",
+      "family_key": "378ee5644aaf76dc79556f9a5ea4238ff15d41a7",
+      "dataset_id": "18252dfc9071a741",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "638a1cf225dcc4b77eea003ae718d25398642ff65ce28ec9b7f2c9a34e3ad471",
+      "family_key": "srcfile:rdatasets-wooldridge-lawsch",
+      "dataset_id": "0fabba77c3eb7088",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "1c5aca22d2dd7cc6d036490ed3345a2918ce526cf15c6ecddade9e0af00cd15a",
+      "family_key": "srcfile:ecoli",
+      "dataset_id": "040de60f9cdfecc7",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "02826e3663585754990d78947a2188f95da3de9c7ade5d0c6421d5896f4a7a27",
+      "family_key": "eaa88d97c1a693b3486832d096ebd6d85b6ee036",
+      "dataset_id": "3c8e5cc9f8dd4ad6",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "507c8b468f9f93a665edb788e07f5688a6aacdb85fb99d56410c6859eb582a62",
+      "family_key": "81be805fdbdc103d356bcebcd3ad7a32adb6ed80",
+      "dataset_id": "a0d5d52b1713659d",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "315d20fcdea19b2221a366c2d139bc4d8a6823a6355677b8714a3e17913f7d93",
+      "family_key": "ad0f5e5bc4613818178002332e4374d20f5908e9",
+      "dataset_id": "236f5dba414ea7c7",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "21fa474c553581a099662a3e50cbaeb239dc7756dbff469769b12a0f72c83f15",
+      "family_key": "31f880ecf55c85daca767bf447fc95e263296f8e",
+      "dataset_id": "9a01fad84c980a29",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "049684960cf71a8d6040794e5ff1363ddf13d590e6bc6f14fb32a8576bd61a99",
+      "family_key": "3566df13397232a61c93e80252c0a9e4c3d77f9a",
+      "dataset_id": "d103d4a1b7f5bb2b",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "256db0f83c1b1ffeaa40e67a374c5a68024113aafdc5fd6e9003b5a120bc1c3a",
+      "family_key": "32194f257492b628e8e2f2a7f5cabbf9036b403d",
+      "dataset_id": "bbe39df9a3e89aaf",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "400f246e038dfd5298ea93fbf6a8e9c748494c713221e869dae095123aa624d9",
+      "family_key": "e1f056b9dd21c978aa345874f20a7f5286086f77",
+      "dataset_id": "093aba2f77acc9f2",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "0228edc6c3b7c187257227c856d8092af85ee13aff5da9242583870d1ad3e4ca",
+      "family_key": "2288154e7c13493e7c59ad6805a63562b0e9c254",
+      "dataset_id": "13c6221e9c858fc9",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "3d380397ebbc37909f2731885348ef3ab7f4851cb20bacc00d4f61adbba01555",
+      "family_key": "7a83fab16a9f79e0bec6c81a15dd5a026bc7c49b",
+      "dataset_id": "6e39e2facae846f5",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "06b96f67d60c0d1439a856bbfca5efe97bdbf18e06f7bd39c3adea4f2ce525a0",
+      "family_key": "176711e3eebed9ab2d8296d76315ef86503f628d",
+      "dataset_id": "dc186225f1dfa11b",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "6174f00f5eea03edadfa01162e88a0612dc969da47d904299d52d960719dcf7b",
+      "family_key": "76c7e3bd3861b40c0fe233ea88b0110daa21569b",
+      "dataset_id": "c51a90be7c7b975d",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "0b11104081b1328431b21dec2eed3870093c6e1b73c97303a9d1355ff98cf92b",
+      "family_key": "b2b4ed3140d50413992ab089966d6f07ed026b9f",
+      "dataset_id": "be657bf0530318ec",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "3a0c25f2238c9a89d5725d4ec718165555505782dc647c5d1d304393f8b64b7e",
+      "family_key": "d93438d7880dea6b29aa073e78236c621de4858c",
+      "dataset_id": "7bc2fa2182bf32de",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "06f8d46a431671c0da878d1adc0bc1bb76edf8c15494c301937a56493a7cc4f0",
+      "family_key": "3e5cd50e32630da194442c0b14a226f6abd800f2",
+      "dataset_id": "edbcdd9d872fa9bc",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "09c3510f3f98d52f428ebc1c42cc1645932dfb9a0ef8b9275a2962f386e92dea",
+      "family_key": "c4a4c092c2b9b9bc4a52200cbc93f24b55f7906d",
+      "dataset_id": "b8d06b27c27ae89c",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "09ee45fadabce5e127714e32b3a9fe64a5798d6534d3fdd9e9e121dd42c44357",
+      "family_key": "377ffbe162ee711f08e30bf5fe9d5dc9ad70bb58",
+      "dataset_id": "f0cbfd83db1c6f5a",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "0b76f80966b533237de5af58fe1e3b6174375c9c87e99a9f11c79472ee454746",
+      "family_key": "4fdee854b5462ea004e5c565650182d4838d1f94",
+      "dataset_id": "521ac893fa10eddf",
+      "n_candidates": 1152
+    },
+    {
+      "cid": "14f8d91b51a495d6dd806c281c05142beb80cf06c5d5dd726849e4a36955098d",
+      "family_key": "70489f3af34f79932eb2533351b3a2a663607e8c",
+      "dataset_id": "43d4d6779e6ab60e",
+      "n_candidates": 1152
+    }
+  ]
+}
