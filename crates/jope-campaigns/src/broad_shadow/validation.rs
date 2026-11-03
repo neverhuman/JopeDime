@@ -273,7 +273,7 @@ fn positive_integer(value: Option<&Value>) -> Result<bool> {
     Ok(value.and_then(Value::as_u64).is_some_and(|value| value > 0))
 }
 
-pub(super) fn bool_field<'a>(value: &'a Value, field: &str) -> Result<bool> {
+pub(super) fn bool_field(value: &Value, field: &str) -> Result<bool> {
     value
         .get(field)
         .and_then(Value::as_bool)
