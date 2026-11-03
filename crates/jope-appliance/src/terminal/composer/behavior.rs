@@ -2,7 +2,6 @@ use super::*;
 
 /// Byte boundaries from ratatui's existing unicode-segmentation backend. Its Span
 /// iterator excludes LF, so handle each LF explicitly rather than losing it.
-
 pub(super) fn boundaries(text: &str) -> Vec<usize> {
     let mut result = vec![0];
     let mut offset = 0;
