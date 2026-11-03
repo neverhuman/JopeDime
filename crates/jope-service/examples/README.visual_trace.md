@@ -1,4 +1,33 @@
-# Frozen fused inference render diagnostics
+# JAIN native fused capture
+
+For an end-to-end film capture, prefer `visual_run`. It opens the existing
+in-process Engine with an authenticated r882 bundle and signed worker, registers
+the exact CSV, starts a normal learned run through the production router, and
+records native conditioning and actual admission slates. It exports that run's
+committed champion through the production export API. It executes the unchanged
+Rust/Python artifacts, their 64 embedded selfchecks, and 96-row native prediction
+parity. A derivative Rust harness also executes emitted training on the actual
+76 FIT rows and compares predictions with the native GP. The original emitted
+file is never edited.
+
+```sh
+JOPE_BUILD_SOURCE_SHA="$(git rev-parse HEAD)" \
+CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
+cargo run --locked -p jope-service --features visual-trace --example visual_run -- \
+  /absolute/authenticated-appliance /absolute/signed-worker \
+  /absolute/case-csv-directory /absolute/new-output-directory
+```
+
+Use a clean committed service scope. The example records a non-null source
+identity only when its compile-time source pin equals runtime checkout HEAD and
+all tracked and untracked service source is clean. Output schema
+`jain.visual-run-trace/v1` binds each run, dataset, actual calls, champion/model,
+source, execution and training proofs, and provenance. The complete same-run
+journal retains every observed round. A seed winner is reported honestly rather
+than credited to neural admission.
+
+The older `visual_trace` component diagnostic below uses a declared candidate
+slate. It is not the authority for an end-to-end film.
 
 `visual-trace` is an opt-in observation feature. The default service graph has no
 observer. It does not enable learned guidance, change bundle admission, train a

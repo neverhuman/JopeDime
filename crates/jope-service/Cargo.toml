@@ -75,3 +75,7 @@ required-features = ["visual-trace"]
 [[example]]
 name = "visual_emit_metric"
 required-features = ["visual-trace"]
+
+[[example]]
+name = "visual_run"
+required-features = ["visual-trace"]

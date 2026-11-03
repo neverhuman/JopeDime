@@ -205,6 +205,19 @@ impl LearnedAdmission {
         let lm =
             landmarks::fit_transform_and_extract_bundle_high(&x, rows.len(), features.len(), &y)?;
         let columns: Vec<_> = lm.columns().iter().flatten().copied().collect();
+        #[cfg(feature = "visual-trace")]
+        let stages = crate::visual_trace::observe_run_call(
+            serde_json::json!({"phase":"fit_conditioning", "run_id":plan.run_id,
+                "dataset_id":plan.dataset_id,"fit_matrix_sha256":plan.matrix_sha256,
+                "problem_digest":plan.problem_digest,"bundle_digest":plan.bundle_digest,
+                "seed":plan.seed,"sampled_fit_matrix_rows":rows,"features":plan.features}),
+            || self.graph.stages(lm.vector(), &columns),
+            |v| {
+                serde_json::json!({"v256":v.v256,"col":v.col,"dope629":v.dope629,
+                "lm48":v.lm48,"lm48_z":v.lm48_z,"tokens":v.tokens,"mask":v.mask})
+            },
+        )?;
+        #[cfg(not(feature = "visual-trace"))]
         let stages = self.graph.stages(lm.vector(), &columns)?;
         self.conditioning = Some(TokenProjection {
             tokens: std::array::from_fn(|i| std::array::from_fn(|j| stages.tokens[i * 32 + j])),
@@ -302,9 +315,31 @@ impl RoundAdmission for LearnedAdmission {
             RevealedRule::SurrogateFitness,
             explore,
         )?;
-        let output = self.graph.predict_costs(slate.inputs()?)?;
-        let costs: Vec<_> = output.total_cost.iter().map(|&v| f64::from(v)).collect();
-        let selected = slate.select(&costs, rng)?;
+        let evaluate = |rng: &mut ChaCha12Rng| -> Result<_> {
+            let output = self.graph.predict_costs(slate.inputs()?)?;
+            let costs: Vec<_> = output.total_cost.iter().map(|&v| f64::from(v)).collect();
+            let selected = slate.select(&costs, rng)?;
+            Ok((output, selected))
+        };
+        #[cfg(feature = "visual-trace")]
+        let (_, selected) = crate::visual_trace::observe_run_call(
+            serde_json::json!({"phase":"ranker_admission","run_id":context.plan.run_id,
+                "dataset_id":context.plan.dataset_id,"fit_matrix_sha256":context.plan.matrix_sha256,
+                "bundle_digest":context.plan.bundle_digest,"seed":context.plan.seed,
+                "round":context.round,"explore":explore,
+                "revealed_programs":slate.revealed_keys(),"proposal_programs":slate.proposal_keys(),
+                "revealed_pool_indices":slate.revealed_pool_indices(),
+                "measured":context.measured.iter().map(|m| serde_json::json!({"algorithm_id":m.algorithm_id,"program":m.dsl,"surrogate_fitness":m.surrogate_fitness})).collect::<Vec<_>>()}),
+            || evaluate(rng),
+            |(output, selected)| {
+                serde_json::json!({"total_cost":output.total_cost,
+                "anchor_cost":output.anchor_cost,"proposal_kl_to_anchor":output.proposal_kl_to_anchor,
+                "selected_proposal_indices":selected,
+                "selected_programs":selected.iter().map(|&i| proposals[i].as_str()).collect::<Vec<_>>() })
+            },
+        )?;
+        #[cfg(not(feature = "visual-trace"))]
+        let (_, selected) = evaluate(rng)?;
         self.forwards.fetch_add(1, Ordering::Relaxed);
         Ok(selected.into_iter().map(|i| proposals[i].clone()).collect())
     }

@@ -90,7 +90,12 @@ fn main() -> Result<()> {
         "metric_name":"viz.emit_batch.rust_tokens_per_s","value":rate,
         "label":"Warm batch source emission · Rust lexical tokens/s · repeated same artifact · loop overhead included",
         "scope":"fresh ModelObject::export_source(\"rust\") invocations; model load, warmup, calibration, tokenization, hashing and verification excluded; allocation and loop overhead included",
-        "build_profile":"dev unoptimized with line-tables-only debug information; diagnostic local host measurement",
+        "build_profile":if cfg!(debug_assertions) {
+            "development build with debug assertions; diagnostic local host measurement"
+        } else {
+            "optimized release build without debug assertions; local host measurement"
+        },
+        "debug_assertions":cfg!(debug_assertions),
         "model_id":model.id(),"source_sha256":sha(&expected),"source_bytes":expected.len(),
         "lexer":LEXER_VERSION,"rust_tokens_per_artifact":tokens,"repetitions":repetitions,
         "total_emitted_tokens":counted.to_string(),"batch_elapsed_ns":elapsed_ns.to_string(),

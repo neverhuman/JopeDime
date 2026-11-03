@@ -6,12 +6,125 @@ use anyhow::{ensure, Context, Result};
 use candle_core_0_11_0::Tensor;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::sync::{Mutex, OnceLock};
 
 const MAX_RECORDS: usize = 128;
 const MAX_VALUES: usize = 4_000_000;
 
 thread_local! {
     static ACTIVE: RefCell<Option<NativeTrace>> = const { RefCell::new(None) };
+}
+
+const MAX_RUN_CALLS: usize = 64;
+const MAX_RUN_VALUES: usize = 64_000_000;
+
+/// Private observations made inside one actual production run, across its host threads.
+#[derive(Debug, Serialize)]
+pub struct RunJournal {
+    pub schema: String,
+    pub run_id: Option<String>,
+    pub calls: Vec<RunCall>,
+    pub recorded_values: usize,
+    pub dropped_records: usize,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RunCall {
+    pub call_id: usize,
+    pub identity: serde_json::Value,
+    pub outputs: serde_json::Value,
+    pub trace: NativeTrace,
+}
+
+fn run_journal() -> &'static Mutex<Option<RunJournal>> {
+    static JOURNAL: OnceLock<Mutex<Option<RunJournal>>> = OnceLock::new();
+    JOURNAL.get_or_init(|| Mutex::new(None))
+}
+
+/// Explicit trusted-host opt-in; no environment or remote request enables this.
+/// Only one journal may exist in a process. A second run identity is refused.
+pub fn begin_run_journal() -> Result<RunJournalSession> {
+    let mut journal = run_journal().lock().unwrap_or_else(|p| p.into_inner());
+    ensure!(journal.is_none(), "a visual run journal is already active");
+    *journal = Some(RunJournal {
+        schema: "jope.actual-run-visual-journal/v1".into(),
+        run_id: None,
+        calls: Vec::new(),
+        recorded_values: 0,
+        dropped_records: 0,
+    });
+    Ok(RunJournalSession { active: true })
+}
+
+pub struct RunJournalSession {
+    active: bool,
+}
+
+impl RunJournalSession {
+    pub fn finish(mut self) -> Result<RunJournal> {
+        let result = run_journal()
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .take()
+            .context("visual run journal disappeared")?;
+        self.active = false;
+        ensure!(
+            !result.calls.is_empty(),
+            "no actual native calls were observed"
+        );
+        Ok(result)
+    }
+}
+
+impl Drop for RunJournalSession {
+    fn drop(&mut self) {
+        if self.active {
+            run_journal()
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .take();
+        }
+    }
+}
+
+/// Observe the existing synchronous operation at its real host-thread boundary.
+/// The singleton lock prevents concurrent attribution; affine taps use only TLS.
+pub(crate) fn observe_run_call<T>(
+    identity: serde_json::Value,
+    run: impl FnOnce() -> Result<T>,
+    summarize: impl FnOnce(&T) -> serde_json::Value,
+) -> Result<T> {
+    let mut guard = run_journal().lock().unwrap_or_else(|p| p.into_inner());
+    let Some(journal) = guard.as_mut() else {
+        drop(guard);
+        return run();
+    };
+    let id = identity["run_id"]
+        .as_str()
+        .context("observed call has no run identity")?;
+    if let Some(bound) = &journal.run_id {
+        ensure!(bound == id, "concurrent visual run attribution refused");
+    } else {
+        journal.run_id = Some(id.into());
+    }
+    ensure!(
+        journal.calls.len() < MAX_RUN_CALLS,
+        "visual run call budget exceeded"
+    );
+    let (result, trace) = capture(run)?;
+    let values = journal
+        .recorded_values
+        .checked_add(trace.values)
+        .context("run trace size overflow")?;
+    ensure!(values <= MAX_RUN_VALUES, "visual run value budget exceeded");
+    journal.calls.push(RunCall {
+        call_id: journal.calls.len(),
+        identity,
+        outputs: summarize(&result),
+        trace,
+    });
+    journal.recorded_values = values;
+    Ok(result)
 }
 
 /// Captured affine operation. All arrays are row-major; weights are `[out,in]`.
@@ -242,6 +355,40 @@ pub(crate) fn tensor(network: &str, name: &str, value: &Tensor) -> Result<()> {
 mod tests {
     use super::*;
     use candle_core_0_11_0::Device;
+
+    #[test]
+    fn actual_run_journal_observes_host_threads_and_refuses_other_run_identity() -> Result<()> {
+        let session = begin_run_journal()?;
+        let values = std::thread::spawn(|| {
+            observe_run_call(
+                serde_json::json!({"run_id":"run-software-control","phase":"test"}),
+                || {
+                    let x = Tensor::new(&[[2_f32, -3.]], &Device::Cpu)?;
+                    let w = Tensor::new(&[[0.5_f32, 2.]], &Device::Cpu)?;
+                    let y = x.matmul(&w.t()?.contiguous()?)?;
+                    affine("test", "native_control", &x, &w, None, &y)?;
+                    flat(&y)
+                },
+                |values| serde_json::json!({"values":values}),
+            )
+        })
+        .join()
+        .expect("control thread panicked")?;
+        assert_eq!(values, vec![-5.]);
+        assert!(observe_run_call(
+            serde_json::json!({"run_id":"different-run"}),
+            || -> Result<()> { panic!("mismatched run must refuse before execution") },
+            |_| serde_json::Value::Null,
+        )
+        .is_err());
+        let journal = session.finish()?;
+        assert_eq!(journal.run_id.as_deref(), Some("run-software-control"));
+        assert_eq!(journal.calls.len(), 1);
+        assert_eq!(journal.calls[0].trace.affine.len(), 1);
+        assert_eq!(journal.dropped_records, 0);
+        assert!(journal.recorded_values > 0);
+        Ok(())
+    }
 
     #[test]
     fn native_affine_capture_checks_closure_and_is_observation_only() -> Result<()> {
