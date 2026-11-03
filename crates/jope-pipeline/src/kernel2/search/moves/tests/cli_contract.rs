@@ -1,7 +1,7 @@
 /// The run's CLI flags, parsed as `jope pipeline run` parses them.
 use super::*;
 
-fn flags(extra: &[&str]) -> (crate::cli::SearchArgs, crate::kernel2::cli::ProfileArgs) {
+pub(super) fn flags(extra: &[&str]) -> (crate::cli::SearchArgs, crate::kernel2::cli::ProfileArgs) {
     let mut argv = vec![
         "jope-pipeline",
         "run",
@@ -22,7 +22,7 @@ fn flags(extra: &[&str]) -> (crate::cli::SearchArgs, crate::kernel2::cli::Profil
 
 /// Rewrites a run's move records (when given) and its selection record, rehashing search.json
 /// and the receipt, so that only the move checks can refuse the change.
-fn rewrite(
+pub(super) fn rewrite(
     output: &Path,
     receipt: &Receipt,
     moves: Option<&[u8]>,
@@ -41,7 +41,7 @@ fn rewrite(
     path
 }
 
-fn digested(engine: &EngineRecord, bytes: &[u8]) -> EngineRecord {
+pub(super) fn digested(engine: &EngineRecord, bytes: &[u8]) -> EngineRecord {
     let mut engine = engine.clone();
     engine.moves.as_mut().unwrap().sha256 = Some(crate::sha256_hex(bytes));
     engine
@@ -49,7 +49,7 @@ fn digested(engine: &EngineRecord, bytes: &[u8]) -> EngineRecord {
 
 /// One named edit of the measured record at `first`; `other` is another measured program's
 /// sha256.
-fn tamper(moves: &mut Vec<MoveRecord>, first: usize, label: &str, other: &str) {
+pub(super) fn tamper(moves: &mut Vec<MoveRecord>, first: usize, label: &str, other: &str) {
     if label == "record removed" {
         moves.remove(first);
         return;

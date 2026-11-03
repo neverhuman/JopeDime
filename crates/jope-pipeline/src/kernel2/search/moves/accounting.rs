@@ -19,14 +19,14 @@ pub(crate) fn publish(
 }
 
 /// The pool refusal count a moves record publishes: present exactly when the rewrite pass ran.
-fn pool_count(ids: &[String], moves: &[MoveRecord]) -> Option<usize> {
+pub(super) fn pool_count(ids: &[String], moves: &[MoveRecord]) -> Option<usize> {
     ids.iter()
         .any(|id| id == REWRITE_SATURATE)
         .then(|| refused_by_pool(moves))
 }
 
 /// The not-run count a moves record publishes: present exactly when the rewrite pass ran.
-fn not_run_count(ids: &[String], moves: &[MoveRecord]) -> Option<usize> {
+pub(super) fn not_run_count(ids: &[String], moves: &[MoveRecord]) -> Option<usize> {
     ids.iter()
         .any(|id| id == REWRITE_SATURATE)
         .then(|| not_run(moves))

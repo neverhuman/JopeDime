@@ -2,7 +2,7 @@ use super::*;
 
 /// `verify_run`'s refusal of `path`, which must name `expected`.
 
-fn refused_with(path: &Path, label: &str, expected: &str) -> String {
+pub(super) fn refused_with(path: &Path, label: &str, expected: &str) -> String {
     let error = format!(
         "{:#}",
         publication::verify_run(path).map(|_| ()).expect_err(label)
@@ -12,13 +12,13 @@ fn refused_with(path: &Path, label: &str, expected: &str) -> String {
 }
 
 /// The bound a fit record's numbers give, as `LinearFit::bound` computes it.
-fn bound_of(fit: &FitRecord) -> f64 {
+pub(super) fn bound_of(fit: &FitRecord) -> f64 {
     fit.max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * fit.max_abs
 }
 
 /// The larger size of a recorded line at its sampled ends, as the lowered line computes it: the
 /// product by the slope, then the intercept added.
-fn largest_end(fit: &FitRecord) -> f64 {
+pub(super) fn largest_end(fit: &FitRecord) -> f64 {
     let [a0, a1] = fit.coefficients.unwrap();
     [fit.lo, fit.hi]
         .map(|v| (v * a1 + a0).abs())
@@ -27,7 +27,7 @@ fn largest_end(fit: &FitRecord) -> f64 {
 }
 
 /// The records `edit` leaves, published under a rehashed digest.
-fn published_edit(
+pub(super) fn published_edit(
     output: &Path,
     receipt: &Receipt,
     engine: &EngineRecord,
@@ -48,7 +48,7 @@ fn published_edit(
 
 /// The cubic `0.5 x³` over `c1`, which takes three values on this dataset: a second seed with a
 /// subtree the pass considers, so round 0's pass reads two parents.
-const CUBE_C1: &str = "(c1*c1)*(c1*0.5)";
+pub(super) const CUBE_C1: &str = "(c1*c1)*(c1*0.5)";
 
 #[test]
 fn verify_refuses_inflated_and_hidden_fits_and_moved_parent_groups() {

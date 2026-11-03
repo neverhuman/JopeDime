@@ -289,14 +289,14 @@ fn the_allowance_the_start_guard_top_k_and_deduplication_bound_the_pass() {
 // Runs through the published route.
 
 /// The `cli_tests` seed program, which the rewrite pass reduces to `c0`.
-const ONE_TIMES: &str = "(pipe X (derive expr=\"1*c0\") (ridge))";
+pub(super) const ONE_TIMES: &str = "(pipe X (derive expr=\"1*c0\") (ridge))";
 /// A seed whose 6-node expression is a curve the linearization pass can replace by its line. It
 /// reads `c1`, which takes three values on this dataset; `c0` takes two, too few for a line's
 /// minimax fit.
-const SINE: &str = "(sin((0.5*c1))*3.0)";
+pub(super) const SINE: &str = "(sin((0.5*c1))*3.0)";
 
 /// The files every run publishes.
-const SIDECARS: [&str; 7] = [
+pub(super) const SIDECARS: [&str; 7] = [
     "receipt.json",
     "prepared/prepared.json",
     "search/cut-0/search.json",

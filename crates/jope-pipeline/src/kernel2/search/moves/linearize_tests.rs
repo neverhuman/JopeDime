@@ -160,7 +160,18 @@ fn rank_of(state: &State, options: &Options, o: &Kernel2Observation) -> usize {
 }
 
 mod bounds;
+#[allow(unused_imports)]
+use bounds::*;
 mod edge_cases;
-mod run;
+#[allow(unused_imports)]
+use edge_cases::*;
+#[path = "linearize_tests/run.rs"]
+mod run_cases;
+#[allow(unused_imports)]
+use run_cases::*;
 mod selection;
+#[allow(unused_imports)]
+use selection::*;
 mod verification;
+#[allow(unused_imports)]
+use verification::*;
