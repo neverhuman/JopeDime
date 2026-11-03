@@ -181,9 +181,9 @@ def precompute_static_adapter_terms(
                 sos_prior=torch.zeros((1, m, 2), device=device),
                 mm_tokens_10x32=torch.as_tensor(cf["tokens_10x32"], device=device).reshape(1, 10, 32),
                 mm_mask_10=torch.as_tensor(cf["mask_10"], device=device).reshape(1, 10),
-                revealed_indices=None,
-                revealed_raw_f=None,
-                revealed_gate=None,
+                revealed_indices=torch.zeros((1, 0), dtype=torch.long, device=device),
+                revealed_raw_f=torch.zeros((1, 0), dtype=torch.float32, device=device),
+                revealed_gate=torch.zeros((1, 0), dtype=torch.float32, device=device),
             )
             eff_prior = out0["eff_prior"][0]
             sem24 = out0["sem24"][0]
