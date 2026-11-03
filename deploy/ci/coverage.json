@@ -1427,7 +1427,7 @@
       "lanes": [
         "rust-test"
       ],
-      "scope": "Configured fast PR/manual lane as two nextest slices proven to cover the unsharded set; path-excluded jobs are not passes."
+      "scope": "Configured fast PR/manual lane as three nextest slices proven to cover the unsharded set; path-excluded jobs are not passes."
     },
     "job:.github/workflows/ci.yml/typescript": {
       "discovery": {
@@ -16997,7 +16997,7 @@
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
         "CARGO_TARGET_DIR": "job-scoped persistent runner lane target",
         "JOPE_PARITY_STRICT": "1",
-        "JOPE_RUST_TEST_PARTITION": "slice:<shard>/2, one per ci.yml rust-test matrix leg",
+        "JOPE_RUST_TEST_PARTITION": "slice:<shard>/3, one per ci.yml rust-test matrix leg",
         "MKL_NUM_THREADS": "1",
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
