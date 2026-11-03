@@ -264,15 +264,6 @@ struct EvalFailureCounts {
 }
 
 impl EvalFailureCounts {
-    fn record(&mut self, failure: EvalFailure) {
-        match failure {
-            EvalFailure::Spawn => self.spawn += 1,
-            EvalFailure::Timeout => self.timeout += 1,
-            EvalFailure::Crashed => self.crashed += 1,
-            EvalFailure::Unparseable => self.unparseable += 1,
-        }
-    }
-
     fn merge(&mut self, other: Self) {
         self.spawn += other.spawn;
         self.timeout += other.timeout;
