@@ -1,19 +1,17 @@
 use crate::config::{ChallengerIdentity, CheckpointBinding};
 use crate::context::PolicyContext;
-use crate::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
+use crate::decode::{self, PurePool, SamplingOptions};
 use crate::grammar::BoundVocabulary;
 use crate::model::PolicyModel;
 use crate::proposal_ledger::{self, ProposalLedger};
-use crate::ranking::{self, Bindings, Ranking, SELECTION_ID};
+use crate::ranking::{self, Bindings, Ranking};
 use crate::{
-    context_sha256, is_sha256_hex, refuse_rejected_checkpoint, require_accepted_policy,
-    require_accepted_vocabulary, sha256_hex, CHECKPOINT_VOCABULARY_SHA256,
+    context_sha256, refuse_rejected_checkpoint, require_accepted_policy,
+    require_accepted_vocabulary, CHECKPOINT_VOCABULARY_SHA256,
 };
 use anyhow::{ensure, Context, Result};
 
-use super::population::{
-    assemble_population, check_population, PopulationFields, SeedBinding, SeedPopulation,
-};
+use super::population::{assemble_population, check_population, SeedBinding, SeedPopulation};
 
 /// Everything a proposal run produced, for the caller's receipt. Fields are private: only
 /// [`propose`] and [`propose_challenger`] (and `propose_unbound` with the `testing` feature)
