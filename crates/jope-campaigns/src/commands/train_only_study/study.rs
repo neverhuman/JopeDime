@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct CheckpointProvenance {
+pub(crate) struct CheckpointProvenance {
     pub(super) accepted_pointer_path: PathBuf,
     pub(super) accepted_pointer_sha256: String,
     pub(super) checkpoint_path: PathBuf,
@@ -16,7 +16,7 @@ pub(super) struct CheckpointProvenance {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct CatalogPointer {
+pub(crate) struct CatalogPointer {
     pub(super) catalog: PathBuf,
     pub(super) catalog_sha256: String,
     pub(super) data: PathBuf,
@@ -24,7 +24,7 @@ pub(super) struct CatalogPointer {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(super) struct Catalog {
+pub(crate) struct Catalog {
     pub(super) dataset_dimensions: usize,
     pub(super) target_dimensions: usize,
     pub(super) record_stride_bytes: usize,
