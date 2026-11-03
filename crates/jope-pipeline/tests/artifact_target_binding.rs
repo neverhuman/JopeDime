@@ -21,6 +21,9 @@ fn rows() -> Vec<Vec<f64>> {
         .map(|i| vec![i as f64, 2.0 * i as f64 + 1.0])
         .collect()
 }
-mod publication;
+#[path = "artifact_target_binding/publication.rs"]
+mod publication_tests;
+#[path = "artifact_target_binding/runtime.rs"]
 mod runtime;
+#[path = "artifact_target_binding/writer.rs"]
 mod writer;
