@@ -30,35 +30,57 @@ impl Fitness {
 
     pub(crate) fn collect_resources(&self, out: &mut BTreeSet<ResourceVar>) {
         match self {
-            Self::Resource { name } => { out.insert(*name); }
-            Self::TrainTimeSeconds {} => { out.insert(ResourceVar::FitSeconds); }
-            Self::InferenceTimeSeconds {} => { out.insert(ResourceVar::PredictSeconds); }
+            Self::Resource { name } => {
+                out.insert(*name);
+            }
+            Self::TrainTimeSeconds {} => {
+                out.insert(ResourceVar::FitSeconds);
+            }
+            Self::InferenceTimeSeconds {} => {
+                out.insert(ResourceVar::PredictSeconds);
+            }
             Self::TotalTimeSeconds {} => {
                 out.insert(ResourceVar::FitSeconds);
                 out.insert(ResourceVar::PredictSeconds);
             }
-            Self::InferenceUsPerRow {} => { out.insert(ResourceVar::PredictUsPerRow); }
+            Self::InferenceUsPerRow {} => {
+                out.insert(ResourceVar::PredictUsPerRow);
+            }
             Self::TrainRowsPerSecond {} => {
                 out.insert(ResourceVar::FitSeconds);
                 out.insert(ResourceVar::TrainRows);
             }
-            Self::InferenceRowsPerSecond {} => { out.insert(ResourceVar::PredictRowsPerSecond); }
-            Self::TrainMemoryBytes {} => { out.insert(ResourceVar::FitPeakHeapBytes); }
-            Self::InferenceMemoryBytes {} => { out.insert(ResourceVar::PredictPeakHeapBytes); }
+            Self::InferenceRowsPerSecond {} => {
+                out.insert(ResourceVar::PredictRowsPerSecond);
+            }
+            Self::TrainMemoryBytes {} => {
+                out.insert(ResourceVar::FitPeakHeapBytes);
+            }
+            Self::InferenceMemoryBytes {} => {
+                out.insert(ResourceVar::PredictPeakHeapBytes);
+            }
             Self::TotalMemoryBytes {} => {
                 out.insert(ResourceVar::FitPeakHeapBytes);
                 out.insert(ResourceVar::PredictPeakHeapBytes);
             }
-            Self::ModelBytes {} => { out.insert(ResourceVar::ModelBytes); }
-            Self::ComplexityStages {} => { out.insert(ResourceVar::StageCount); }
-            Self::ComplexityParameters {} => { out.insert(ResourceVar::ProgramNodes); }
+            Self::ModelBytes {} => {
+                out.insert(ResourceVar::ModelBytes);
+            }
+            Self::ComplexityStages {} => {
+                out.insert(ResourceVar::StageCount);
+            }
+            Self::ComplexityParameters {} => {
+                out.insert(ResourceVar::ProgramNodes);
+            }
             Self::Custom { expression, .. } => expression.collect_resources(out),
             Self::Weighted { weights, fitness } => {
                 weights.collect_resources(out);
                 fitness.collect_resources(out);
             }
             Self::Composite { terms } => {
-                for t in terms { t.fitness.collect_resources(out); }
+                for t in terms {
+                    t.fitness.collect_resources(out);
+                }
             }
             Self::Constrained { fitness, limits } => {
                 out.extend(limits.iter().map(|l| l.resource));
@@ -70,8 +92,7 @@ impl Fitness {
 
     /// Whether evaluation depends on [`ExecutionTelemetry`] or [`Resources`].
     pub fn uses_execution_telemetry(&self) -> bool {
-        !self.resources().is_empty()
-            || matches!(self, Self::FeatureCount {} | Self::FoldStd {})
+        !self.resources().is_empty() || matches!(self, Self::FeatureCount {} | Self::FoldStd {})
     }
 
     pub fn validate(&self) -> Result<()> {
@@ -430,28 +451,48 @@ impl Expression {
 
     pub(crate) fn collect_resources(&self, out: &mut BTreeSet<ResourceVar>) {
         match self {
-            Self::Resource { name } => { out.insert(*name); }
-            Self::TrainTimeSeconds {} => { out.insert(ResourceVar::FitSeconds); }
-            Self::InferenceTimeSeconds {} => { out.insert(ResourceVar::PredictSeconds); }
+            Self::Resource { name } => {
+                out.insert(*name);
+            }
+            Self::TrainTimeSeconds {} => {
+                out.insert(ResourceVar::FitSeconds);
+            }
+            Self::InferenceTimeSeconds {} => {
+                out.insert(ResourceVar::PredictSeconds);
+            }
             Self::TotalTimeSeconds {} => {
                 out.insert(ResourceVar::FitSeconds);
                 out.insert(ResourceVar::PredictSeconds);
             }
-            Self::InferenceUsPerRow {} => { out.insert(ResourceVar::PredictUsPerRow); }
+            Self::InferenceUsPerRow {} => {
+                out.insert(ResourceVar::PredictUsPerRow);
+            }
             Self::TrainRowsPerSecond {} => {
                 out.insert(ResourceVar::FitSeconds);
                 out.insert(ResourceVar::TrainRows);
             }
-            Self::InferenceRowsPerSecond {} => { out.insert(ResourceVar::PredictRowsPerSecond); }
-            Self::TrainMemoryBytes {} => { out.insert(ResourceVar::FitPeakHeapBytes); }
-            Self::InferenceMemoryBytes {} => { out.insert(ResourceVar::PredictPeakHeapBytes); }
+            Self::InferenceRowsPerSecond {} => {
+                out.insert(ResourceVar::PredictRowsPerSecond);
+            }
+            Self::TrainMemoryBytes {} => {
+                out.insert(ResourceVar::FitPeakHeapBytes);
+            }
+            Self::InferenceMemoryBytes {} => {
+                out.insert(ResourceVar::PredictPeakHeapBytes);
+            }
             Self::TotalMemoryBytes {} => {
                 out.insert(ResourceVar::FitPeakHeapBytes);
                 out.insert(ResourceVar::PredictPeakHeapBytes);
             }
-            Self::ModelBytes {} => { out.insert(ResourceVar::ModelBytes); }
-            Self::ComplexityStages {} => { out.insert(ResourceVar::StageCount); }
-            Self::ComplexityParameters {} => { out.insert(ResourceVar::ProgramNodes); }
+            Self::ModelBytes {} => {
+                out.insert(ResourceVar::ModelBytes);
+            }
+            Self::ComplexityStages {} => {
+                out.insert(ResourceVar::StageCount);
+            }
+            Self::ComplexityParameters {} => {
+                out.insert(ResourceVar::ProgramNodes);
+            }
             Self::Abs { arg }
             | Self::Neg { arg }
             | Self::Square { arg }
@@ -475,7 +516,11 @@ impl Expression {
                 left.collect_resources(out);
                 right.collect_resources(out);
             }
-            Self::Where { condition, then, otherwise } => {
+            Self::Where {
+                condition,
+                then,
+                otherwise,
+            } => {
                 condition.collect_resources(out);
                 then.collect_resources(out);
                 otherwise.collect_resources(out);
