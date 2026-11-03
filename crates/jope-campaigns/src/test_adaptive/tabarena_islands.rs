@@ -147,12 +147,10 @@ pub(crate) use artifacts::{
 pub(super) use data::{campaign_root, identity, prepare_datasets, select_datasets};
 #[cfg(test)]
 pub(super) use data::{collect_canonical_leaders, update_leader};
-pub(super) use evolution::{
-    checkpoint_path, initial_population, load_cache, load_checkpoints, make_checkpoint,
-    replay_records,
-};
+pub(super) use evolution::{checkpoint_path, initial_population, replay_records};
 #[cfg(test)]
 pub(super) use evolution::{
     discovery_winner, initial_population_from_seeds, next_population, offspring_seed,
 };
+use evolution::{load_cache, load_checkpoints, make_checkpoint};
 use execution::run_tabarena_dataset_waves;
