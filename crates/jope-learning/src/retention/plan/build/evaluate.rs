@@ -148,7 +148,9 @@ pub(crate) fn evaluate(cfg: &Config, loaded: Loaded) -> Result<Evaluated> {
                 g.id()
             );
         }
-        if super::classify::hard_t0(&g.bucket, &g.prefix).is_some() && d.action != Action::KeepT0 {
+        if super::super::super::classify::hard_t0(&g.bucket, &g.prefix).is_some()
+            && d.action != Action::KeepT0
+        {
             bail!(
                 "internal: hard T0 group {} got {}",
                 g.id(),
