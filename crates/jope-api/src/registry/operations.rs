@@ -430,9 +430,11 @@ pub static OPERATIONS: &[Operation] = &[
         terminal_commands: &[],
     },
 ];
-/// These six commands are deliberately not separate engine operations (§4.2).
+/// These seven commands are deliberately not separate engine operations (§4.2). `\\demo`
+/// opens a dataset bundled in the client and then drives the ordinary engine operations.
 pub static LOCAL_COMMANDS: &[TerminalCommand] = &[
     command!("\\help", &[], "[command]", Client, &[], None, false),
+    command!("\\demo", &[], "[NAME]", Client, &[], None, false),
     command!(
         "\\target",
         &[],

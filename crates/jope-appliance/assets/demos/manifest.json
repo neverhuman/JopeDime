@@ -1,0 +1,82 @@
+{
+  "schema": "veox.cli-demos/v1",
+  "total_bytes": 676634,
+  "demos": [
+    {
+      "file": "example/regression_parkinsons.csv",
+      "title": "Parkinsons telemonitoring: predict the UPDRS score",
+      "task": "regression",
+      "target": "target",
+      "rows": 1000,
+      "columns": 22,
+      "bytes": 260133,
+      "sha256": "54df8327a93646ae44881a9a125dbd1b758b570b1d7f5734f45d5273b6f543b4",
+      "selection": "rows with index % 1 == 0 of the fixture's train.csv",
+      "source": {
+        "fixture": "test-support/datasets/v1/d2-regression/train.csv",
+        "fixture_sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+        "catalog_id": "21fbfe8b53dbcd60",
+        "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/telemonitoring/parkinsons_updrs.data",
+        "license_status": "unknown"
+      },
+      "scaling": "values are min-max scaled exactly as in the reference corpus"
+    },
+    {
+      "file": "example/binary_loan_approval.csv",
+      "title": "Mortgage applications: predict approval",
+      "task": "binary",
+      "target": "approve",
+      "rows": 796,
+      "columns": 54,
+      "bytes": 236569,
+      "sha256": "ee3e79313a29b2c3ee226a31c444033ae841f18b9c1ed5c08b5dbde4438cddce",
+      "selection": "rows with index % 2 == 0 of the fixture's train.csv",
+      "source": {
+        "fixture": "test-support/datasets/v1/binary-loanapp/train.csv",
+        "fixture_sha256": "207128b39ec2054af2712c102c628a01d7eb9b78f4b8fc208c2f0fc428921c4d",
+        "catalog_id": "02d7a557213d8979",
+        "url": "https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/loanapp.csv",
+        "license_status": "unknown"
+      },
+      "scaling": "values are min-max scaled exactly as in the reference corpus"
+    },
+    {
+      "file": "example/regression_apartment_rent.csv",
+      "title": "US apartment listings: predict monthly rent",
+      "task": "regression",
+      "target": "price",
+      "rows": 1600,
+      "columns": 12,
+      "bytes": 176159,
+      "sha256": "bb10d064192ada3c20a628ea9528518c9a7a58d0d47bc5c1d82e0eb054c660a3",
+      "selection": "rows with index % 5 == 0 of the fixture's train.csv",
+      "source": {
+        "fixture": "test-support/datasets/v1/grouped-apartment-rent/train.csv",
+        "fixture_sha256": "1599896e8259d16c56afb4a300cbd22846745657687ae8a041cc4f8e73a9c641",
+        "catalog_id": "c4b905cec711a618",
+        "url": "https://archive.ics.uci.edu/dataset/555",
+        "license_status": "unknown"
+      },
+      "scaling": "values are min-max scaled exactly as in the reference corpus"
+    },
+    {
+      "file": "example/regression_tiny_soil.csv",
+      "title": "30-row soil survey table: a few-second smoke test",
+      "task": "regression",
+      "target": "target",
+      "rows": 25,
+      "columns": 13,
+      "bytes": 3773,
+      "sha256": "153f24a64081035aaa97541e08bf0eb037a14dcb61eca355bafaa23ab62cbf7f",
+      "selection": "rows with index % 1 == 0 of the fixture's train.csv",
+      "source": {
+        "fixture": "test-support/datasets/v1/tiny-30-row-table/train.csv",
+        "fixture_sha256": "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1",
+        "catalog_id": "b4c8807a75fc190f",
+        "url": null,
+        "license_status": "unknown"
+      },
+      "scaling": "values are min-max scaled exactly as in the reference corpus"
+    }
+  ]
+}

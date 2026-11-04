@@ -7,6 +7,7 @@ pub mod cards;
 pub mod commands;
 pub mod complete;
 pub mod composer;
+pub mod demos;
 
 #[path = "highlight.rs"]
 pub mod highlight;

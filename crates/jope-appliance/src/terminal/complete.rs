@@ -56,6 +56,10 @@ pub const COMMANDS: &[CommandSpec] = &[
         flags: &["--name", "--json"],
     },
     CommandSpec {
+        name: "demo",
+        flags: &[],
+    },
+    CommandSpec {
         name: "target",
         flags: &["--task", "--ignore", "--group", "--time"],
     },
@@ -170,6 +174,9 @@ enum ValueSource {
     AlgorithmId,
     Path,
     AlgorithmOrPath,
+    Demo,
+    /// A dataset to open: bundled `example/` demos, then filesystem paths.
+    OpenPath,
 }
 
 /// Return suggestions for the token at `cursor` without invoking any command.
@@ -278,13 +285,14 @@ fn value_source_for_flag(command: &str, flag: &str) -> Option<ValueSource> {
 
 fn positional_source(command: &str, completed_args: usize, prefix: &str) -> Option<ValueSource> {
     if matches!(command, "open") && completed_args == 0 {
-        return Some(ValueSource::Path);
+        return Some(ValueSource::OpenPath);
     }
     if prefix.starts_with('@') {
         return Some(ValueSource::Path);
     }
     match command {
         "help" if completed_args == 0 => Some(ValueSource::Command),
+        "demo" if completed_args == 0 => Some(ValueSource::Demo),
         "target" if completed_args == 0 => Some(ValueSource::Column),
         "effort" if completed_args == 0 => Some(ValueSource::Enum(EFFORTS)),
         "landmarks" if completed_args == 0 => Some(ValueSource::Enum(LANDMARKS)),
@@ -325,6 +333,16 @@ fn complete_source(
             CompletionSource::AlgorithmId,
         ),
         ValueSource::Path => complete_paths(prefix, "", data),
+        ValueSource::OpenPath => {
+            let mut suggestions = complete_examples(prefix);
+            suggestions.extend(complete_paths(prefix, "", data));
+            suggestions
+        }
+        ValueSource::Demo => filtered(
+            super::demos::DEMOS.iter().map(|demo| demo.name),
+            prefix,
+            CompletionSource::Enum,
+        ),
         ValueSource::AlgorithmOrPath => {
             let mut suggestions = complete_source(ValueSource::AlgorithmId, prefix, data);
             suggestions.extend(complete_paths(prefix, "", data));
@@ -366,6 +384,22 @@ fn complete_columns(prefix: &str, data: &CompletionData<'_>) -> Vec<Suggestion> 
         .map(|column| Suggestion {
             insert: format!("{list_prefix}{}", serialize_token(column)),
             source: CompletionSource::Column,
+        })
+        .collect()
+}
+
+/// Bundled demos complete as virtual `example/<name>.csv` paths, even with no such directory.
+fn complete_examples(prefix: &str) -> Vec<Suggestion> {
+    if !super::demos::PREFIX.starts_with(prefix) && !prefix.starts_with(super::demos::PREFIX) {
+        return Vec::new();
+    }
+    super::demos::DEMOS
+        .iter()
+        .map(super::demos::Demo::path)
+        .filter(|path| path.starts_with(prefix))
+        .map(|insert| Suggestion {
+            insert,
+            source: CompletionSource::Path,
         })
         .collect()
 }

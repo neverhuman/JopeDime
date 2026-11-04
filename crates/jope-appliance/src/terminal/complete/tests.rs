@@ -196,6 +196,44 @@ fn quoted_path_suggestions_round_trip_quotes_and_backslashes() {
 }
 
 #[test]
+fn bundled_examples_and_demo_names_complete_without_files_on_disk() {
+    let data = CompletionData::default();
+    let line = "/open ex";
+    let suggestions = complete(line, line.len(), &data);
+    assert!(suggestions
+        .iter()
+        .any(|item| item.insert == "example/regression_parkinsons.csv"));
+    assert!(suggestions
+        .iter()
+        .all(|item| item.source == CompletionSource::Path));
+    let line = "/open example/bin";
+    assert_eq!(
+        complete(line, line.len(), &data)
+            .into_iter()
+            .map(|item| item.insert)
+            .collect::<Vec<_>>(),
+        ["example/binary_loan_approval.csv"]
+    );
+    assert!(complete("/open ", 6, &data)
+        .iter()
+        .any(|item| item.insert.starts_with("example/")));
+    let line = "/predict --input ex";
+    assert!(complete(line, line.len(), &data).is_empty());
+    let line = "/demo reg";
+    let names: Vec<String> = complete(line, line.len(), &data)
+        .into_iter()
+        .map(|item| item.insert)
+        .collect();
+    assert!(
+        names.contains(&"regression_parkinsons".to_owned()),
+        "{names:?}"
+    );
+    assert!(complete("/de", 3, &data)
+        .iter()
+        .any(|item| item.insert == "/demo"));
+}
+
+#[test]
 fn completion_only_returns_values_and_never_executes_input() {
     let temp = temp_dir();
     let marker = temp.path().join("should-not-exist");
