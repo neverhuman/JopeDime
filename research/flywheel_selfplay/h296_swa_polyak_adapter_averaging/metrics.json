@@ -1,0 +1,15 @@
+{
+  "wave": "H296",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "verdict": null,
+  "regressions": {
+    "r3175_replay": "exact 1.1389572403748425 91/91",
+    "t1845_control_184501": "exact 1.1354387884248622, selections identical"
+  },
+  "schema_on_completion": {
+    "verdict": "DEV_ADVANCE / NOT_ADVANCED",
+    "primary": "per seed SWA_CYCLE mean, lift, vs control, family-bootstrap LCB95, concentration, W/T/L, changed, Elo + CI; median-of-seeds lift + CI",
+    "secondary": "EMA_POLYAK per seed, SOUP_RET",
+    "trajectory": "lr schedule, losses, grad norms per update"
+  }
+}
