@@ -1,5 +1,13 @@
 # JAIN inference animation
 
+The [VEOX endcap](../../docs/plans/blender-fused-first-render/ENDCAP.md) adds a
+six-second 1080p closing animation and a 45-second assembled film. Its supplied
+vector logo pulses cyan to violet from V through X, with X glowing strongest and
+longest. `blender/veox_endcap.py` builds/renders it; `endcap_film.py` preserves the
+approved opening and all ten captured demonstration chapters while assembling
+the ending. The [native UHD work](../../docs/plans/blender-fused-first-render/UHD.md)
+is stopped and preserved at the owner's request, with no completed 4K delivery.
+
 The current [45-second film and opener](../../docs/plans/blender-fused-first-render/INTRO.md) combines a 12-second opening sequence with the Dendrite demonstration. The opener's final second introduces the moving demo, which continues without restarting. `blender/jain_intro.py` builds the centered satin Go board, large algorithm tile, connected illustrative feedback loop, and transformation into the captured network. `blender/intro_render.py` renders GPU plates; `intro_film.py` adds centered typography, the actual demo's panels and wordmark, original synthesized sound, and the verified 45-second assembly. The search metaphor resolves into “One inference. One algorithm.” before the full demo takes over.
 
 The equal-third 1080p30 demonstration shows ten varied synthetic tables, a rotating measured neural display, and the complete refittable recipe sources across eight languages. Each source section appears in the accelerated scroll; the full source packages provide the reading reference. Model parameters stay in separately saved fitted objects. CPU-only benchmark captures remain distinct from editorial typing speed, and GPUs are used only to render. The displayed fitted-export benchmark retains its original Rust counter and measured scope when other output languages appear.

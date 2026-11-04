@@ -1,5 +1,11 @@
 # JAIN — Just An Inference Network
 
+The current closing-shot revision adds the supplied **VEOX** logo and the line
+**Turn what if into what’s next.** The [endcap plan](ENDCAP.md) specifies a
+six-second standalone ending and a 45-second 1080p30 film containing the approved
+opening and all ten demonstrations. The [native UHD render](UHD.md) was stopped
+at the owner's request; its completed work is preserved for a later restart.
+
 The **42-second Intelligence Wave** cut plays ten freshly captured synthetic regression tables of 64–160 rows at 1080p30. Every 0.28 seconds, each chapter shuffles the 17 verified visible rows. Feature fills and purple target shades follow measured cell effects on the fused ranker's selection margin. Feature headers show shares of the average relative effects. The source pane scrolls verified language-specific code, and the compact benchmark measures the fitted Rust export.
 
 [Cell sensitivity and capture plan](NEURAL_CELL_ATTRIBUTION.md) · [Render receipt](NEURAL_CELL_ATTRIBUTION_RECEIPT.json) · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114)
