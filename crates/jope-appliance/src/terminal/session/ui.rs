@@ -169,11 +169,13 @@ impl super::Session {
                             .next()
                             .unwrap_or("")
                             .trim_start_matches(['/', '\\']);
-                        self.screen.push(&if first.eq_ignore_ascii_case("login") {
-                            "> /login".into()
-                        } else {
-                            format!("> {text}")
-                        });
+                        // A login URL argument is not echoed.
+                        self.screen
+                            .push_input(if first.eq_ignore_ascii_case("login") {
+                                "/login"
+                            } else {
+                                &text
+                            });
                         for line in self.execute(&text) {
                             self.screen.push(&line);
                         }

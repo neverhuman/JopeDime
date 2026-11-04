@@ -259,3 +259,50 @@ fn windows_backslashes_remain_argument_characters() {
     assert_eq!(previous, vec!["\\open".to_owned()]);
     assert_eq!(current, r"C:\data\x.csv");
 }
+
+#[test]
+fn live_open_completion_lists_the_real_folder_with_folders_first_and_csv_only() {
+    let temp = temp_dir();
+    std::fs::create_dir(temp.path().join("data")).unwrap();
+    std::fs::create_dir(temp.path().join(".hidden")).unwrap();
+    std::fs::write(temp.path().join("b.csv"), "x\n1\n").unwrap();
+    std::fs::write(temp.path().join("a.csv"), "x\n1\n").unwrap();
+    std::fs::write(temp.path().join("notes.txt"), "no").unwrap();
+    std::fs::write(temp.path().join("data/inner.csv"), "x\n1\n").unwrap();
+    // The interactive terminal passes no precomputed paths: the folder is read live.
+    let data = CompletionData {
+        working_directory: Some(temp.path()),
+        ..Default::default()
+    };
+    let inserts = |line: &str| -> Vec<String> {
+        complete(line, line.len(), &data)
+            .into_iter()
+            .filter(|s| s.source == CompletionSource::Path && !s.insert.starts_with("example/"))
+            .map(|s| s.insert)
+            .collect()
+    };
+    // The bundled demos are offered first, as virtual example/ paths.
+    assert!(complete("/open ", 6, &data)[0]
+        .insert
+        .starts_with("example/"));
+    assert_eq!(inserts("/open "), ["data/", "a.csv", "b.csv"]);
+    assert_eq!(inserts("/open data/"), ["data/inner.csv"]);
+    assert_eq!(inserts("/open ."), [".hidden/"]);
+    // Other path arguments are not limited to tables.
+    assert!(super::list_folder(temp.path(), "", false).contains(&"notes.txt".to_owned()));
+}
+
+#[test]
+fn bare_open_names_the_folder_and_how_to_add_a_file() {
+    let temp = temp_dir();
+    let lines = super::open_listing(temp.path()).join("\n");
+    assert!(lines.contains(&format!("No CSV files in {}", temp.path().display())));
+    assert!(lines.contains("Copy a .csv file into this folder"));
+    assert!(lines.contains("/demo"));
+    std::fs::create_dir(temp.path().join("sub")).unwrap();
+    std::fs::write(temp.path().join("rent.csv"), "x\n1\n").unwrap();
+    let lines = super::open_listing(temp.path()).join("\n");
+    assert!(lines.contains("CSV files in"));
+    assert!(lines.contains("  rent.csv"));
+    assert!(lines.contains("Folders here: sub/"));
+}

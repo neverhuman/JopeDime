@@ -175,3 +175,44 @@ fn completion_cycles_original_token_and_replaces_quoted_suffix() {
     assert!(c.text().ends_with(" --name x"));
     assert!(!c.text().contains("BAD"));
 }
+
+#[test]
+fn open_menu_moves_with_up_down_and_enter_enters_folders_or_submits_files() {
+    let directory = tempfile::tempdir().unwrap();
+    std::fs::create_dir(directory.path().join("data")).unwrap();
+    std::fs::write(directory.path().join("data/inner.csv"), "x\n1\n").unwrap();
+    std::fs::write(directory.path().join("a.csv"), "x\n1\n").unwrap();
+    std::fs::write(directory.path().join("b.csv"), "x\n1\n").unwrap();
+    let data = CompletionData {
+        working_directory: Some(directory.path()),
+        ..Default::default()
+    };
+    let press = |c: &mut Composer, code: KeyCode| {
+        c.handle(Event::Key(KeyEvent::new(code, KeyModifiers::NONE)), &data)
+            .unwrap()
+    };
+    let mut c = Composer::default();
+    c.set_text("/open ").unwrap();
+    c.cursor = c.text().len();
+    press(&mut c, KeyCode::Tab);
+    // Bundled examples come first, then the folder listing; find the folder by moving down.
+    let (choices, _) = c.completion().unwrap();
+    let folder = choices.iter().position(|s| s.insert == "data/").unwrap();
+    let selected = c.completion().unwrap().1;
+    for _ in selected..folder {
+        press(&mut c, KeyCode::Down);
+    }
+    assert_eq!(c.text(), "/open data/");
+    press(&mut c, KeyCode::Up);
+    assert_ne!(c.text(), "/open data/");
+    press(&mut c, KeyCode::Down);
+    assert_eq!(c.text(), "/open data/");
+    // Enter on a folder opens its listing instead of submitting.
+    assert_eq!(press(&mut c, KeyCode::Enter), ComposerAction::None);
+    assert_eq!(c.text(), "/open data/inner.csv");
+    // Enter on a file submits.
+    assert_eq!(
+        press(&mut c, KeyCode::Enter),
+        ComposerAction::Submit("/open data/inner.csv".into())
+    );
+}

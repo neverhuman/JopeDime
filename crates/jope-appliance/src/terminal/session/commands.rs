@@ -45,6 +45,10 @@ impl super::Session {
                 });
                 return Ok(vec!["Signing this CLI out...".into()]);
             }
+            Some("/usage" | "\\usage") => {
+                anyhow::ensure!(words.next().is_none(), "usage: /usage");
+                return Ok(self.usage());
+            }
             Some("/runs" | "\\runs") => {
                 self.refresh_runs();
                 return Ok(vec!["Loading runs...".into()]);
@@ -139,7 +143,7 @@ impl super::Session {
             "\\help" => vec![if args.first().is_some_and(|arg| arg == "history") {
                 crate::terminal::composer::HISTORY_HELP.to_owned()
             } else {
-                "/demo [NAME] · /login [URL] · /logout · /sync [RUN] · /publish [RUN] · /fetch UUID · Left: runs · \\open PATH|example/NAME.csv · \\target COLUMN · \\plan · \\run · \\attach RUN · \\quit\nDocs https://veox.ai/docs · Terms https://veox.ai/terms".into()
+                "/demo [NAME] · /usage · /login [URL] · /logout · /sync [RUN] · /publish [RUN] · /fetch UUID · Left: runs · \\open PATH|example/NAME.csv · \\target COLUMN · \\plan · \\run · \\attach RUN · \\quit\nDocs https://veox.ai/docs · Terms https://veox.ai/terms".into()
             }],
             "\\demo" => self.demo(&args)?,
             "\\quit" => {
@@ -212,9 +216,10 @@ impl super::Session {
 
     pub(super) fn open_dataset(&mut self, args: &[String]) -> anyhow::Result<Vec<String>> {
         use crate::terminal::{demos, onboarding};
-        let path = args
-            .first()
-            .ok_or_else(|| anyhow::anyhow!("usage: \\open PATH"))?;
+        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let Some(path) = args.first() else {
+            return Ok(crate::terminal::complete::open_listing(&cwd));
+        };
         let mut name = PathBuf::from(path)
             .file_name()
             .and_then(|name| name.to_str())
@@ -250,6 +255,18 @@ impl super::Session {
                     onboarding::local_files_override_from_env(),
                 ) {
                     return Ok(vec![message.to_owned()]);
+                }
+                let full = cwd.join(path);
+                if full.is_dir() {
+                    return Ok(crate::terminal::complete::open_listing(&full));
+                }
+                if !on_disk {
+                    let mut lines = vec![format!(
+                        "No such file: {path} (looked in {})",
+                        cwd.display()
+                    )];
+                    lines.extend(crate::terminal::complete::open_listing(&cwd));
+                    return Ok(lines);
                 }
                 Box::new(std::fs::File::open(path)?)
             }

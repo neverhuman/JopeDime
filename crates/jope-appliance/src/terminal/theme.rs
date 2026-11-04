@@ -20,6 +20,8 @@ pub mod runs;
 pub mod screen;
 pub mod splash;
 pub mod status;
+#[cfg(feature = "client")]
+pub mod usage;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ThemeMode {
