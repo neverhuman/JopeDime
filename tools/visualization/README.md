@@ -10,6 +10,8 @@ Add `--spatial-layout` to the cinematic scene build. The first set is `iris`, `t
 
 For a matched design review, build a fresh scene for each layout with the same capture and `--animation-loop`. Pass `--case-id case-a --frame-start 89 --frame-end 89` to `blender/render_animation.py` for each layout and composite them with the same source and table frame. Compare `network.operations` and `network.stage_planes` in the scene receipts for equality, then compare `network.ordered_endpoint_positions_f64_sha256` for distinct geometry.
 
+The Dendrite cut uses `--spatial-layout dendrite --point-connectors --animation-loop --width 1920 --height 1080`. Each display lead fans into a short shared segment with one endpoint on its panel border. The scene receipt records both camera-local endpoints and their projected pixels under `connectors.panel_contacts`. The existing per-strand animation and internal neural geometry use the same capture.
+
 ## Earlier still and baseline tooling
 
 The latest [H256 checkpoint plan](../../docs/plans/blender-fused-first-render/H256_PLAN.md) covers the trained five-fold solution encoder, explicit landmark mappings, actual proposal selection, native selected-GP refits and complete Rust scrolling. Its entry point is `blender/h256_scene.py`; the earlier board below preserves the original authenticated r882 baseline.

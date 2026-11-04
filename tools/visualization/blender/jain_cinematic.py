@@ -27,6 +27,7 @@ from build_scene import interpolation, material, text
 from h256_network import _curves
 from h256_scene import full_source_pages
 from input_influence import load_influence
+from table_panels import WIDTH as TABLE_OVERLAY_WIDTH
 
 from jain_display_network import build_display_network
 from jain_spatial_layouts import SPATIAL_LAYOUTS
@@ -37,6 +38,9 @@ def digest(path):
 
 
 def build(data, validation, args):
+    point_connectors = getattr(args, "point_connectors", False)
+    if point_connectors and (not args.animation_loop or (args.width, args.height) != (1920, 1080)):
+        raise ValueError("Point connectors align to the 1080p animation table overlay")
     pages = full_source_pages(data, args, validation)
     if pages is None:
         raise ValueError("Cinematic composition requires complete verified Rust")
@@ -149,8 +153,9 @@ def build(data, validation, args):
     label.data.space_character = 1.3
     rounded("Input card", -18.34, -9.87, 11.40, 12.73, .24, panel, -6.0)
     rounded("Input card rim", -18.34, -9.87, 11.40, 12.73, .24, material("Input rim", (.05,.24,.39,1), 1.5), -5.96, True)
-    rounded("Source card", 6.95, -9.87, 11.40, 18.57, .26, panel, -5.99)
-    rounded("Source card rim", 6.95, -9.87, 11.40, 18.57, .26, violet, -5.94, True)
+    source_left = 6.95
+    rounded("Source card", source_left, -9.87, 11.40, 18.57, .26, panel, -5.99)
+    rounded("Source card rim", source_left, -9.87, 11.40, 18.57, .26, violet, -5.94, True)
     rounded("Source title bar", 6.98, 8.10, 11.34, .56, .21, header_mat, -5.92)
     for i, rgb in enumerate(((1., .10, .17, 1), (1., .69, .10, 1), (.18, .85, .30, 1))):
         rounded("Editor control", 7.22+i*.23, 8.29, .13, .13, .065, material("Editor dot", rgb, 1), -5.75)
@@ -234,7 +239,7 @@ def build(data, validation, args):
         scene.frame_set(frame)
         poses[frame] = (camera.matrix_world.inverted() @ rotor.matrix_world).copy()
 
-    def connection(name, values, rgb, fixed, port, incoming):
+    def connector_curve(name, values, rgb, incoming, bevel_depth):
         mat = bpy.data.materials.new(name); mat.use_nodes = True
         tree = mat.node_tree; tree.nodes.clear()
         emit = tree.nodes.new("ShaderNodeEmission"); emit.inputs["Color"].default_value = rgb
@@ -251,11 +256,15 @@ def build(data, validation, args):
         output = tree.nodes.new("ShaderNodeOutputMaterial")
         tree.links.new(emit.outputs[0], output.inputs["Surface"])
         curve = bpy.data.curves.new(name, "CURVE"); curve.dimensions = "3D"
-        curve.bevel_depth, curve.bevel_resolution, curve.resolution_u = .0028, 1, 12
+        curve.bevel_depth, curve.bevel_resolution, curve.resolution_u = bevel_depth, 1, 12
         spline = curve.splines.new("BEZIER"); spline.bezier_points.add(2)
         for point in spline.bezier_points: point.handle_left_type = point.handle_right_type = "AUTO"
         curve.materials.append(mat); obj = bpy.data.objects.new(name, curve)
         scene.collection.objects.link(obj); obj.parent = camera
+        return obj, spline
+
+    def connection(name, values, rgb, fixed, port, incoming):
+        obj, spline = connector_curve(name, values, rgb, incoming, .0028)
         for frame in range(1, period+2, pose_step):
             p = poses[frame] @ Vector(port)
             dynamic = Vector((p.x,p.y,-6.12)); locked = Vector(fixed)
@@ -263,26 +272,54 @@ def build(data, validation, args):
             middle = a.lerp(b,.58); middle.x = a.x*.38+b.x*.62
             for point, position in zip(spline.bezier_points,(a,middle,b)):
                 point.co = position; point.keyframe_insert("co", frame=frame)
-        for fcurve in _curves(curve):
+        for fcurve in _curves(obj.data):
             for point in fcurve.keyframe_points: point.interpolation = "LINEAR"
             fcurve.modifiers.new("CYCLES")
 
+    panel_contacts = None
+    ingress_rgb, egress_rgb = (.018,.62,.92,1), (.48,.08,.85,1)
+    if point_connectors:
+        unit_per_px = camera.data.ortho_scale / args.width
+        table_right = (TABLE_OVERLAY_WIDTH - .5 - args.width / 2) * unit_per_px
+        y = -.5 * unit_per_px
+        input_border, output_border = (table_right,y,-6.12), (source_left,y,-6.12)
+        input_junction, output_junction = (table_right+.20,y,-6.12), (source_left-.20,y,-6.12)
+
+        def terminal(name, values, rgb, border, junction, incoming):
+            obj, spline = connector_curve(name, values, rgb, incoming, .012)
+            for point, position in zip(spline.bezier_points, (Vector(border), Vector(border).lerp(Vector(junction),.5),
+                                                             Vector(junction))):
+                point.co = position
+            return {"object":obj.name,"border":border,"branch_junction":junction,
+                    "border_px":[border[0]/unit_per_px+args.width/2,args.height/2-border[1]/unit_per_px]}
+
+        panel_contacts = {"coordinate_space":"camera local; projected border_px from top left"}
+
     input_ports = network["input_node_ports"]
+    input_strengths = []
     for row in range(5):
         for col in range(4):
             scores = [influence["cases"][case["id"]]["scores"][row][col] for case in cases]
+            input_strengths.append(scores)
             for branch in range(4):
                 index = (row*4+col)*4+branch
                 port = input_ports[round(index*(len(input_ports)-1)/79)]
-                connection("Conceptual cell ingress", scores, (.018,.62,.92,1),
-                           (-6.92, .15+(index/79-.5)*1.15, -6.12), port, True)
+                fixed = input_junction if point_connectors else (-6.92, .15+(index/79-.5)*1.15, -6.12)
+                connection("Conceptual cell ingress", scores, ingress_rgb, fixed, port, True)
     output_ports = network["output_node_ports"]
     residuals = [np.abs(np.asarray(case["outputs"]["ensemble_delta_prior"],dtype=float).reshape(-1)) for case in cases]
     bound = max(float(np.max(v)) for v in residuals)
+    output_strengths = []
     for index, port in enumerate(output_ports):
         values = [float(v[index%len(v)]/bound) if bound else 0. for v in residuals]
-        connection("Conceptual source egress", values, (.48,.08,.85,1),
-                   (6.92,.15+(index/max(1,len(output_ports)-1)-.5)*1.15,-6.12), port, False)
+        output_strengths.append(values)
+        fixed = output_junction if point_connectors else (6.92,.15+(index/max(1,len(output_ports)-1)-.5)*1.15,-6.12)
+        connection("Conceptual source egress", values, egress_rgb, fixed, port, False)
+    if point_connectors:
+        panel_contacts["input"] = terminal("Table border terminal", list(map(max, zip(*input_strengths))),
+                                            ingress_rgb, input_border, input_junction, True)
+        panel_contacts["output"] = terminal("Code border terminal", list(map(max, zip(*output_strengths))),
+                                             egress_rgb, output_border, output_junction, False)
 
     # Same exact Rust lexer count and paired round-trip sample used by native
     # telemetry; the display never substitutes a warm repeated-emission rate.
@@ -355,6 +392,8 @@ def build(data, validation, args):
                            "height":round(11.15/38*args.width*pages[0]["manifest"]["height"]/pages[0]["manifest"]["width"])},
         "timing":"recorded inference; editorial rotation, pulse travel and source-page dwell","video_rendered":False,
         "blender_version":bpy.app.version_string}
+    if panel_contacts is not None:
+        result["connectors"]["panel_contacts"] = panel_contacts
     destination = args.output; destination.parent.mkdir(parents=True,exist_ok=True)
     destination.with_suffix(".receipt.json").write_text(json.dumps(result,indent=2)+"\n")
     bpy.data.texts.new("JAIN_CINEMATIC_RECEIPT.json").write(json.dumps(result,indent=2))
@@ -381,6 +420,7 @@ def main():
     parser.add_argument("--loop-frames",type=int,default=120)
     parser.add_argument("--dataset-catalog",type=Path)
     parser.add_argument("--spatial-layout",choices=SPATIAL_LAYOUTS,default="layered")
+    parser.add_argument("--point-connectors",action="store_true",help="Use a single contact vertex at each 1080p panel border")
     parser.add_argument("--save-only",action="store_true")
     parser.add_argument("--code-hold-frames",type=int,default=6)
     parser.add_argument("--render-frame",type=int,action="append",default=[])
