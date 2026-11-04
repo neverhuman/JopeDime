@@ -1,0 +1,808 @@
+{
+  "cpu_affinity": [
+    34,
+    48,
+    49,
+    98
+  ],
+  "nice": 19,
+  "numeric_threads": 1,
+  "memory_max_bytes": 4294967296,
+  "scratch_limit_bytes": 1000000000,
+  "compute_stop": "2026-11-04T12:15Z",
+  "peak_sampled_rss_bytes": 191442944,
+  "peak_sampled_host_cpu_percent": 32.3,
+  "guard_violations": {},
+  "phase_receipts": {
+    "metareview.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "ba69fd1cd5d74a961b5653d78a134dd6f2945c3e8ef3dc73d4c67b6658545736",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "332a61d82a8ddd3ee2ee51f43ddd0fc95c09a9e7ba5d4a7b1b8956c06b34c7e4",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 40935424,
+        "threads": 2,
+        "host_cpu": 16.3
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/review_metadata.py"
+      ],
+      "started_epoch": 1793789552.1705987,
+      "finished_epoch": 1793789552.7439344,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "prereg-final.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "762098c361c0eeff6f88789043d0f615116df56d7fd7af2b6e6e06d7abe7db4a",
+        "recover.py": "bae89657a86dfed7e14444f7facced3c120751d49800c6485d81831700209293",
+        "neighbors.py": "067f17ba322306d10ea0d77ab7377ebeaaec1141019939ee82ee0e31a915f113",
+        "metadata_probe.py": "e4edebc3610a36b56679c0ffb32a6e44e31a15e1d6f7c3d400ff593a6d07365a",
+        "fetch_metadata.py": "925dc64c451e5a8ea0cf19e4323a171d37fad119d11994ed7a80289e8b8a1fff",
+        "test_h314.py": "fe9218e9da63d0d190219926071853cb51e76acdf7db56bbebfe89b152ada53a",
+        "statistics_h314.py": "e9a2b98f8685aff187c697a26c11e89c489351973185e9c3d8da341752171c39",
+        "classify.py": "5a4aad6f89d25d4f0fdbca8e695510f3af26cb378f10238db23852a19d94f31c"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 87027712,
+        "threads": 7,
+        "host_cpu": 18.0
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/publish.py",
+        "prereg"
+      ],
+      "started_epoch": 1793788772.4621248,
+      "finished_epoch": 1793788786.802384,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "metadata-fetch.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "762098c361c0eeff6f88789043d0f615116df56d7fd7af2b6e6e06d7abe7db4a",
+        "recover.py": "bae89657a86dfed7e14444f7facced3c120751d49800c6485d81831700209293",
+        "metadata_probe.py": "e4edebc3610a36b56679c0ffb32a6e44e31a15e1d6f7c3d400ff593a6d07365a",
+        "fetch_metadata.py": "925dc64c451e5a8ea0cf19e4323a171d37fad119d11994ed7a80289e8b8a1fff"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 84709376,
+        "threads": 6,
+        "host_cpu": 18.6
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/source/fetch_metadata.py"
+      ],
+      "started_epoch": 1793788366.7448037,
+      "finished_epoch": 1793788395.1643832,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "checks3.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "29953158ee1282685f8fad8e616aec2294f53f42a1046981053c4ecf204aa02d",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "86b86a29fb0c106f0c376f367d92892eb04a94cbc9cebffd9c2be21fbabcb3e9",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "cfd7175052488da6f2688186210a959c160056a3ec8fc4a7e22b3a23109279ae"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 130732032,
+        "threads": 4,
+        "host_cpu": 21.4
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/check_source.py"
+      ],
+      "started_epoch": 1793789017.6303465,
+      "finished_epoch": 1793789018.8110144,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "classify.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "29953158ee1282685f8fad8e616aec2294f53f42a1046981053c4ecf204aa02d",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "86b86a29fb0c106f0c376f367d92892eb04a94cbc9cebffd9c2be21fbabcb3e9",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "cfd7175052488da6f2688186210a959c160056a3ec8fc4a7e22b3a23109279ae"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 42696704,
+        "threads": 2,
+        "host_cpu": 15.6
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/source/classify.py"
+      ],
+      "started_epoch": 1793788972.3880005,
+      "finished_epoch": 1793788973.5451694,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "checks5.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "b123fe92e85d7749e44f4b1e54b612a3a2ac5a99267f1672f9c2721be36f5d80",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "9636f4700398c9dd0775ebf03e89bd5c2856083d3eadeaa9c49bb0f89aae3efe",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 147992576,
+        "threads": 3,
+        "host_cpu": 19.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/check_source.py"
+      ],
+      "started_epoch": 1793789651.729942,
+      "finished_epoch": 1793789652.8980935,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "checks2.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "77a53699ed14a9118ecb36568c121c5c0b3f16e691ee6eac25c66e9792322a8a",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "cfd7175052488da6f2688186210a959c160056a3ec8fc4a7e22b3a23109279ae"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 130400256,
+        "threads": 4,
+        "host_cpu": 13.2
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/check_source.py"
+      ],
+      "started_epoch": 1793788832.3526602,
+      "finished_epoch": 1793788833.5254836,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "checks4.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "ee8f8e6fc7671843782689cafd2f26db05d6fb97f78c3fc165a8ebe0f7a1946b",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "92a16f547107d7c89f37638b7a082863576c0c5e85c45b31b98341b1b814c94f",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 94212096,
+        "threads": 4,
+        "host_cpu": 13.4
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/check_source.py"
+      ],
+      "started_epoch": 1793789232.7620003,
+      "finished_epoch": 1793789233.9070144,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "prereg-meta.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "762098c361c0eeff6f88789043d0f615116df56d7fd7af2b6e6e06d7abe7db4a",
+        "recover.py": "bae89657a86dfed7e14444f7facced3c120751d49800c6485d81831700209293",
+        "metadata_probe.py": "e4edebc3610a36b56679c0ffb32a6e44e31a15e1d6f7c3d400ff593a6d07365a"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 87609344,
+        "threads": 7,
+        "host_cpu": 18.1
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/publish.py",
+        "prereg"
+      ],
+      "started_epoch": 1793788306.0974326,
+      "finished_epoch": 1793788329.3307424,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "classify2.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "ba69fd1cd5d74a961b5653d78a134dd6f2945c3e8ef3dc73d4c67b6658545736",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "332a61d82a8ddd3ee2ee51f43ddd0fc95c09a9e7ba5d4a7b1b8956c06b34c7e4",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 81457152,
+        "threads": 2,
+        "host_cpu": 16.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/source/classify.py"
+      ],
+      "started_epoch": 1793789266.8549917,
+      "finished_epoch": 1793789268.0328314,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "checks.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "762098c361c0eeff6f88789043d0f615116df56d7fd7af2b6e6e06d7abe7db4a",
+        "recover.py": "bae89657a86dfed7e14444f7facced3c120751d49800c6485d81831700209293",
+        "neighbors.py": "067f17ba322306d10ea0d77ab7377ebeaaec1141019939ee82ee0e31a915f113",
+        "metadata_probe.py": "e4edebc3610a36b56679c0ffb32a6e44e31a15e1d6f7c3d400ff593a6d07365a",
+        "fetch_metadata.py": "925dc64c451e5a8ea0cf19e4323a171d37fad119d11994ed7a80289e8b8a1fff",
+        "test_h314.py": "fe9218e9da63d0d190219926071853cb51e76acdf7db56bbebfe89b152ada53a",
+        "statistics_h314.py": "e9a2b98f8685aff187c697a26c11e89c489351973185e9c3d8da341752171c39",
+        "classify.py": "5a4aad6f89d25d4f0fdbca8e695510f3af26cb378f10238db23852a19d94f31c"
+      },
+      "status": "INCOMPLETE",
+      "exit_code": 1,
+      "reasons": [],
+      "peak": {
+        "rss": 94724096,
+        "threads": 3,
+        "host_cpu": 20.4
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/check_source.py"
+      ],
+      "started_epoch": 1793788808.7868764,
+      "finished_epoch": 1793788809.9377203,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "prereg-identity.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "c624760db9ff46a7c270d135a98dd53212952c2bc774ad5ae453ad2b3dd01e61",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "92a16f547107d7c89f37638b7a082863576c0c5e85c45b31b98341b1b814c94f",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 87441408,
+        "threads": 7,
+        "host_cpu": 19.6
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/publish.py",
+        "prereg"
+      ],
+      "started_epoch": 1793789157.4814465,
+      "finished_epoch": 1793789166.7034063,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "recover.resource_summary.json": {
+      "source_sha256": {
+        "recover.py": "bae89657a86dfed7e14444f7facced3c120751d49800c6485d81831700209293"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 91828224,
+        "threads": 2,
+        "host_cpu": 19.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/source/recover.py"
+      ],
+      "started_epoch": 1793788113.2225378,
+      "finished_epoch": 1793788121.1590705,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "evaluate2.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "b123fe92e85d7749e44f4b1e54b612a3a2ac5a99267f1672f9c2721be36f5d80",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "e96a2b293adac761431cb3c32c4b32ab8781e269340f72012b849f8b0a0e7236",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 116199424,
+        "threads": 2,
+        "host_cpu": 32.3
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/source/evaluate.py"
+      ],
+      "started_epoch": 1793789681.8031268,
+      "finished_epoch": 1793789682.9906535,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "schema-probe.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "762098c361c0eeff6f88789043d0f615116df56d7fd7af2b6e6e06d7abe7db4a",
+        "recover.py": "bae89657a86dfed7e14444f7facced3c120751d49800c6485d81831700209293",
+        "metadata_probe.py": "e4edebc3610a36b56679c0ffb32a6e44e31a15e1d6f7c3d400ff593a6d07365a"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 77762560,
+        "threads": 2,
+        "host_cpu": 12.1
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/source/schema_probe.py"
+      ],
+      "started_epoch": 1793788265.1972163,
+      "finished_epoch": 1793788266.888085,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "serialization.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "b123fe92e85d7749e44f4b1e54b612a3a2ac5a99267f1672f9c2721be36f5d80",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "e96a2b293adac761431cb3c32c4b32ab8781e269340f72012b849f8b0a0e7236",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 91086848,
+        "threads": 7,
+        "host_cpu": 16.1
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/publish.py",
+        "serialization"
+      ],
+      "started_epoch": 1793789659.6372235,
+      "finished_epoch": 1793789667.0987415,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "prereg.resource_summary.json": {
+      "source_sha256": {},
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 86556672,
+        "threads": 7,
+        "host_cpu": 11.1
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/publish.py",
+        "prereg"
+      ],
+      "started_epoch": 1793788040.0291753,
+      "finished_epoch": 1793788063.2466402,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "evaluate.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "ba69fd1cd5d74a961b5653d78a134dd6f2945c3e8ef3dc73d4c67b6658545736",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "332a61d82a8ddd3ee2ee51f43ddd0fc95c09a9e7ba5d4a7b1b8956c06b34c7e4",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "INCOMPLETE",
+      "exit_code": 1,
+      "reasons": [],
+      "peak": {
+        "rss": 113532928,
+        "threads": 2,
+        "host_cpu": 16.8
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/source/evaluate.py"
+      ],
+      "started_epoch": 1793789627.4633853,
+      "finished_epoch": 1793789628.612899,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "implementation.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "86b86a29fb0c106f0c376f367d92892eb04a94cbc9cebffd9c2be21fbabcb3e9",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "cfd7175052488da6f2688186210a959c160056a3ec8fc4a7e22b3a23109279ae"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 89526272,
+        "threads": 7,
+        "host_cpu": 18.0
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/publish.py",
+        "implementation"
+      ],
+      "started_epoch": 1793788864.5686462,
+      "finished_epoch": 1793788878.3510737,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "metadata-probe.resource_summary.json": {
+      "source_sha256": {
+        "recover.py": "bae89657a86dfed7e14444f7facced3c120751d49800c6485d81831700209293",
+        "metadata_probe.py": "e4edebc3610a36b56679c0ffb32a6e44e31a15e1d6f7c3d400ff593a6d07365a"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 94429184,
+        "threads": 2,
+        "host_cpu": 15.7
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/source/metadata_probe.py"
+      ],
+      "started_epoch": 1793788160.5123897,
+      "finished_epoch": 1793788163.898052,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "identityfix.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "ba69fd1cd5d74a961b5653d78a134dd6f2945c3e8ef3dc73d4c67b6658545736",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "332a61d82a8ddd3ee2ee51f43ddd0fc95c09a9e7ba5d4a7b1b8956c06b34c7e4",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 90935296,
+        "threads": 7,
+        "host_cpu": 23.0
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/publish.py",
+        "identityfix"
+      ],
+      "started_epoch": 1793789558.8283582,
+      "finished_epoch": 1793789583.910151,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "prejoin.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "c624760db9ff46a7c270d135a98dd53212952c2bc774ad5ae453ad2b3dd01e61",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "86b86a29fb0c106f0c376f367d92892eb04a94cbc9cebffd9c2be21fbabcb3e9",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "cfd7175052488da6f2688186210a959c160056a3ec8fc4a7e22b3a23109279ae"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 91762688,
+        "threads": 7,
+        "host_cpu": 19.3
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/publish.py",
+        "prejoin"
+      ],
+      "started_epoch": 1793789032.1781962,
+      "finished_epoch": 1793789055.209272,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    },
+    "numreview.resource_summary.json": {
+      "source_sha256": {
+        "schema_probe.py": "983d893c86d6a974dff906e471796436cb233e1ecf231c6bd8320c39acdfce5b",
+        "recover.py": "8ce85c21d26e5f84ed2fc2062f6d1a5e164fcb5ff14ae19e18570406a8e6602d",
+        "evaluate.py": "b123fe92e85d7749e44f4b1e54b612a3a2ac5a99267f1672f9c2721be36f5d80",
+        "neighbors.py": "1fc00817a6275ca7d476e308ab277e7c62268cf4f669626e080e7907126384ed",
+        "metadata_probe.py": "65bda9813a39dd7a384a5c39e0fae8129b4e2317a816c1c17e4b3a340fc8e85d",
+        "fetch_metadata.py": "3f0c03eb2863270743c31a442486a34ba11d75cc735999d68a8ca856fe2dee74",
+        "test_h314.py": "e96a2b293adac761431cb3c32c4b32ab8781e269340f72012b849f8b0a0e7236",
+        "statistics_h314.py": "a29e07c2382a01f06ab225e8e562943c286447b3238d521a4696002ab17d786e",
+        "classify.py": "dcfb1d893637d3d3229905391ef821fbae2e6d83ad07c727d698e081a3dbf1da"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 191442944,
+        "threads": 2,
+        "host_cpu": 15.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h314-astra/review_numbers.py"
+      ],
+      "started_epoch": 1793789694.0685105,
+      "finished_epoch": 1793789696.393208,
+      "cpu_affinity": [
+        34,
+        48,
+        49,
+        98
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793794500
+    }
+  }
+}
