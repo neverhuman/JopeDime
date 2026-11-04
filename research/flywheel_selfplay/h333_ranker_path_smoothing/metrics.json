@@ -1,0 +1,53 @@
+{
+  "wave": "H333",
+  "status": "INCOMPLETE_RUNTIME_FORECAST",
+  "verdict": null,
+  "campaign_fits": 0,
+  "outer_scores": 0,
+  "regression": "NOT_RUN: pre-fit resource forecast misses hard stop",
+  "native_model_audit": "NOT_RUN: no fits",
+  "runtime_forecast": {
+    "wave": "H333",
+    "status": "INCOMPLETE_RUNTIME_FORECAST",
+    "forecast_start": "2026-11-04T20:31:10.183995+00:00",
+    "workers": 1,
+    "eligible_cores": [
+      22
+    ],
+    "mandatory_tasks": 36,
+    "h329_fixed_gbdt_seconds": [
+      2.4042165620194282,
+      2.436658366001211,
+      2.5926205029827543
+    ],
+    "h329_worst_dart_to_gbdt_ratio": 1.088392827976701,
+    "h329_measured_dart_total_cpu_seconds": 30409.446641,
+    "ranker_cpu_share_assumption": 0.9,
+    "h329_inferred_gbdt_cpu_seconds": 28168.539464114267,
+    "measured_full36_gbdt_reference_cpu_seconds": 26268.587368,
+    "reference_note": "H323 unchanged GBDT member fits plus extra snapshot scoring (conservative reference)",
+    "forecast_reference_cpu_seconds": 28168.539464114267,
+    "path_smooth_multiplier_assumption": 1.0,
+    "parallel_efficiency": 0.9,
+    "safety_factor": 1.15,
+    "score_reserve_seconds": 300,
+    "forecast_seconds": 36293.13375970156,
+    "forecast_end": "2026-11-05T06:36:03.317755+00:00",
+    "optimistic_baseline_reference_end": "2026-11-05T03:48:58.771363+00:00",
+    "optimistic_note": "Smaller existing GBDT-equivalent reference, perfect efficiency, no safety, no scoring reserve; still misses. Neither projection is a measured H333 runtime or a rigorous runtime lower bound.",
+    "compute_stop": "2026-11-04T22:45:00+00:00",
+    "close_stop": "2026-11-04T23:00:00Z",
+    "launch_full_36": false,
+    "campaign_fits": 0,
+    "synthetic_fits": 0,
+    "BASE_refits": 0,
+    "outer_scores": 0,
+    "capacity_retries": 0,
+    "caveat": "PSMOOTH runtime not measured; no acceleration assumed, no reduced design, borrowed cores, deadline reset or repeated capacity sampling."
+  },
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  }
+}
