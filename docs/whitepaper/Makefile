@@ -56,5 +56,6 @@ figs:
 	python3 figures/scripts/make_full_retained_trajectory.py
 	python3 figures/scripts/make_full_round_wall_time.py
 	python3 figures/scripts/make_training_minibatch_losses.py
+	python3 figures/scripts/make_recent_discovery_retention.py
 clean:
 	latexmk -C

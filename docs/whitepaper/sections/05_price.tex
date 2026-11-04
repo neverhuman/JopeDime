@@ -39,17 +39,17 @@ validity rate without weight updates (\cref{sub:method-move,sec:method-status}).
 These rates alone do not identify a learned improvement
 (\cref{sub:results-ablation}).
 
-For an observed batch, divide all incurred costs, including applicable
-update and operating costs, by verified wins. Adaptive or correlated
-attempts are allowed, but their cost and attempt curves still require
-measurement. With no verified win, there is no finite
+For an observed batch, cost per win is all incurred costs, including
+applicable update and operating costs, divided by verified wins.
+Adaptive or correlated attempts need measured cost and attempt curves.
+With no verified win, there is no finite
 \mbox{observed cost per win.}
 
-Separate the ledgers: training pays for all attempts, including failures;
-proposed deployment pays for encoding, one proposal and its fit, with no
-repair. Fixed-weight agents pay for evaluation during task-specific search.
-Proposer training may shift cost to earlier tasks; the crossover
-\mbox{still needs} measurement (\cref{sec:results}).
+Training pays for all attempts, including failures. Proposed deployment
+pays for encoding, one proposal and its fit, with no repair. Fixed-weight
+agents pay for evaluation during task-specific search. Proposer training
+can shift costs to earlier tasks; the crossover \mbox{still needs}
+measurement (\cref{sec:results}).
 
 \subsection{Wasted moves}\label{sub:price-waste}
 
@@ -87,9 +87,8 @@ compute from resident model memory.
 If the smaller writer needs three times the tokens per
 attempt, the generation-only ratio falls to about 60. Repair turns also
 re-read a growing context; the inspected reference and adapter routes do
-not use them. Encoding and referee costs change
-the full-cost ratio; a threshold for the bill in \cref{eq:bill} requires
-counting every component.
+not use them. The full-cost ratio also includes encoding and referee costs; applying
+\cref{eq:bill} requires counting every component.
 
 Reasoning tokens may reduce stillborn moves, but are billed as output.
 The reference writer emits none (\cref{sub:method-move}). The planned pilot
@@ -158,8 +157,8 @@ floor is separate from \mbox{the full run-cost projection} discussed next.
 
 Reproducible projections need pinned model and hardware configurations,
 dated prices, measured or justified utilization and an explicit accounting
-boundary. These inputs remain unrecorded. Pricing the full run or adapter
-operating clocks \mbox{(\cref{sec:method-status}) still} requires an attempt ledger.
+boundary. Those inputs remain unrecorded; pricing the full run or adapter operating
+clocks \mbox{(\cref{sec:method-status}) still} requires an attempt ledger.
 
 \begin{keyidea}
   Cost per verified improvement depends on both the cost of an attempt
