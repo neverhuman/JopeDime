@@ -67,7 +67,7 @@ def finish_fonts(fig):
     for text in fig.findobj(Text):
         text.set_text(render_math_symbols(text.get_text()))
         text.set_fontfamily("Liberation Serif")
-        text.set_math_fontfamily("custom")
+        text.set_math_fontfamily("stix" if r"\mathcal{R}" in text.get_text() else "custom")
         text.set_fontsize(glyph_safe_size(text.get_text(), text.get_fontsize()))
 
 
@@ -86,7 +86,7 @@ def make_fig2_novelty_judgment() -> None:
     ax.set_xlabel(
         "Distance from prior human solutions (novelty) $\\rightarrow$", labelpad=4
     )
-    ax.set_ylabel("Value judged by referee $\\mathcal{R}$ $\\rightarrow$", labelpad=4)
+    ax.set_ylabel("Value judged by referee $\\mathcal{R}$ $\\rightarrow$", labelpad=2)
 
     # Declared incumbent horizontal dashed line
     inc_y = 0.55
@@ -233,7 +233,7 @@ def make_fig2_novelty_judgment() -> None:
     )
 
     finish_fonts(fig)
-    fig.tight_layout(pad=0.25)
+    fig.tight_layout(pad=0.55)
     finish_fonts(fig)
     fig.savefig(OUT / "fig2_novelty_judgment.pdf",
                 metadata={"CreationDate": None, "ModDate": None})

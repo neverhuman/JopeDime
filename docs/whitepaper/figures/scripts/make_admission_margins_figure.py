@@ -172,7 +172,7 @@ def main() -> None:
     ax0.set(
         title="Trailing candidate-margin quantiles",
         xlabel="round",
-        ylabel="candidate minus prior-best utility",
+        ylabel="candidate − retained-best utility",
     )
     ax0.legend(fontsize=6, loc="lower left")
     ax0.grid(axis="y", alpha=0.2)

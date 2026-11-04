@@ -2,8 +2,8 @@
 
 \subsection{A separate adapter admission record}\label{sec:method-status}
 
-The cost-ranking adapter has its own selection and admission record,
-separate from reference self-play (\cref{sub:method-selfplay}). Logged utility is a scalar with larger values treated as better.
+This subsection records a separate operating loop: rule-based proposals are ranked by a small cost-ranking adapter on a frozen, separately loaded candidate-scoring network, distinct from the reference writer and map (\cref{sub:method-selfplay}). A gate admits or rolls back each adapter update.
+Validation-pool utility averages the negated recorded score of each context's adapter-selected candidate over fixed validation contexts; failed gates count $-2.0$, and larger is better.
 
 \input{sections/adapter_update_scope}
 
@@ -11,9 +11,9 @@ separate from reference self-play (\cref{sub:method-selfplay}). Logged utility i
 Program candidates use two training-side folds; the historical reference
 uses five. Evaluation logging does not imply pool admission: failed gates
 and non-improving candidates are dropped (not kept as negatives), and
-a lower score must beat the context incumbent by more than $10^{-6}$
-(\cref{fig:program-promotion-margins}). Historical programs retain
-\mbox{their own separate} admission path.
+a candidate's logged utility (larger is better) must exceed its context incumbent's by more than $10^{-6}$
+(\cref{fig:program-promotion-margins}). Programs imported from earlier training-side searches retain
+their separate historical-admission path.
 
 Inspected code accepts scored ties by default; a best-round identity
 can change without raising utility. Optional strict admission requires
@@ -39,14 +39,14 @@ pools, revealed-history inputs and utility normalization.}
 \paragraph{The retained admission ledger.}
 \Cref{tab:admission-ledger} is the canonical chronology and count table.
 \Cref{fig:fw-latest-admissions,fig:fw-admission-margins} show its utility trajectory
-and pre-decision margins.
+and pre-decision margins. Program promotions continue (\cref{fig:program-journal-rates}) while the adapter admits eight updates after round 775, four exact ties (\cref{fig:fw-latest-admissions,fig:adapter-admission-rates}); the remaining figures document operating clocks.
 
 \begin{figure*}[!tp]
   \setlength{\abovecaptionskip}{4pt}
   \centering
   \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_latest_admissions.pdf}
   \caption{\textbf{The adapter admits eight candidates across the captured prefix.}
-  In \cref{tab:admission-ledger}, blue is the post-decision
+  \Cref{tab:admission-ledger} data: blue is the post-decision
   logged retained utility; grey marks rejected candidates, red stars logged increases
   and hollow diamonds exact ties. Decisions use unrounded logged values.
   Scope: \cref{sec:method-status}.}
@@ -55,14 +55,13 @@ and pre-decision margins.
 
 \input{sections/fig_rolling_margin_quantiles}
 
-\Cref{fig:fw-promotions-per-hour,fig:fw-round-throughput} add
-companion operating-rate views for separate retained windows.
+
 
 \begin{figure*}[!tp]
   \setlength{\abovecaptionskip}{4pt}
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_promotions_per_hour.pdf}
-  \caption{\textbf{Training-program promotions continue while the retained adapter holds flat.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation-pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, \mbox{with zero adapter admissions). Scope:} \cref{sec:method-status}.}
+  \caption{\textbf{Training-program promotions continue while the retained adapter holds flat.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and retained-best adapter validation-pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, \mbox{with zero adapter admissions). Scope:} \cref{sec:method-status}.}
   \label{fig:fw-promotions-per-hour}\label{fig:fw-program-promotions}
 \end{figure*}
 
@@ -71,7 +70,7 @@ companion operating-rate views for separate retained windows.
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_round_throughput.pdf}
   \caption{\textbf{Whole-round throughput varies while retained adapter utility holds flat.}
-  Left: candidate adapter validation-pool utility and the recorded best.
+  Left: candidate adapter validation-pool utility and the retained best.
   Right: distinct training contexts divided by the full wall time of each
   completed round (contexts per second). The rates include all work and waits
   inside that interval. Both panels cover the same 20 completed summaries,
@@ -81,9 +80,7 @@ companion operating-rate views for separate retained windows.
 \end{figure*}
 
 \paragraph{A later admission window.}
-\Cref{fig:adapter-validation-trace} records 200 consecutive rejections
-at a later capture. The plot pairs each candidate utility with the
-post-decision retained utility on reused \mbox{development} contexts.
+\Cref{fig:adapter-validation-trace} pairs candidate and retained-best validation-pool utility in a later window.
 
 \begin{figure}[tb]
   \setlength{\abovecaptionskip}{4pt}
@@ -101,9 +98,7 @@ post-decision retained utility on reused \mbox{development} contexts.
 \end{figure}
 
 \paragraph{Pool-insertion cadence.}
-\Cref{fig:pool-insertion-cadence} measures the timestamp gaps between
-logged training-pool insertions (distinct from adapter admissions),
-including intervening work and \mbox{waits rather than} single-proposal runtime.
+Pool-insertion gaps include intervening work and waits (\cref{fig:pool-insertion-cadence}).
 
 \begin{figure}[tb]
   \setlength{\abovecaptionskip}{4pt}
@@ -120,17 +115,10 @@ including intervening work and \mbox{waits rather than} single-proposal runtime.
   \label{fig:pool-insertion-cadence}
 \end{figure}
 
-In \cref{app:live-adapter-decisions}, \cref{fig:fw-retained-best-plateau}
-shows the full admission history and \cref{fig:fw-pool-insertions} counts pool
-insertions and adapter rejections (\cref{app:current-program-clock} gives
-the program clock; \cref{app:flywheel-telemetry} \mbox{organizes} the full telemetry record).
+\Cref{app:flywheel-telemetry} organizes the remaining admission histories and operating clocks.
 
 \paragraph{Aligning the committed event histories.}
-\Cref{fig:event-counters} aligns pool insertions and adapter admissions
-by logged round while preserving their distinct event meanings
-(\cref{app:event-counters}). \Cref{fig:pool-insertion-windows} then resolves
-local insertion frequency in fixed round windows alongside cumulative counts
-(\cref{app:pool-insertion-windows}).
+\Cref{fig:event-counters,fig:pool-insertion-windows} align the distinct event histories and resolve local insertion frequency (\cref{app:event-counters,app:pool-insertion-windows}).
 \input{sections/current_round_phase_budget}
 
 \input{sections/current_program_24h}

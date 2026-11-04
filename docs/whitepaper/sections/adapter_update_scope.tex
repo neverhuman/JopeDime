@@ -1,5 +1,5 @@
-The inspected implementation proposes typed edits, cross-family retrieval
-and grammar synthesis. It freezes all network parameters, then enables
+The inspected adapter loop proposes typed edits, cross-family retrieval
+and grammar synthesis. It freezes that candidate network, then enables
 only non-anchor cost-adapter updates (the parent-delta head receives no
 loss gradient). No neural program writer runs; the adapter is separate
 from the reference writer and ranking map.
@@ -22,7 +22,7 @@ The two routes require separate verification receipts.
 
 Each round in the inspected full-cohort route adds small Gaussian noise
 to trainable adapter parameters and takes at most two optimizer steps. Rejection
-restores incumbent weights and optimizer state: consecutive rejections
+restores the retained weights and optimizer state: consecutive rejections
 restart from perturbed checkpoint copies rather than continuing training.
 
 Selection records alone establish no gain from optimizer updates or the

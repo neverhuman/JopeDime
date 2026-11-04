@@ -209,7 +209,7 @@ else:
         where="post",
         color="#0b5394",
         lw=1.1,
-        label="recorded best",
+        label="retained best",
     )
     axes[0].set_title("Adapter validation", loc="left", fontsize=9)
     axes[0].set_ylabel("validation pool utility")

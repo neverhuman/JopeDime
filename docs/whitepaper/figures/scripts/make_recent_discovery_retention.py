@@ -49,7 +49,7 @@ def main():
     axes[0].yaxis.set_major_locator(MaxNLocator(3,integer=True))
     axes[1].scatter(rounds,[float(v) for v in candidate],s=13,color='#8c9095',label='Candidate',zorder=3)
     axes[1].plot(rounds,[float(v) for v in retained],color='#17649a',linewidth=1.2,label='Retained',zorder=4)
-    axes[1].set_title('Development-pool utility',loc='left',fontsize=9,pad=4)
+    axes[1].set_title('Validation-pool utility',loc='left',fontsize=9,pad=4)
     lo,hi=min(candidate+retained),max(candidate+retained)
     pad=max(float(hi-lo)*.12,.0002)
     axes[1].set(ylim=(float(lo)-pad,float(hi)+pad),ylabel='Utility',xlabel='Completed round')

@@ -223,7 +223,7 @@ def plot():
         )
     ax.set(
         xlabel="Round",
-        ylabel="Development pool utility",
+        ylabel="Validation-pool utility",
         xlim=(rounds[0] - 12, rounds[-1] + 12),
     )
     ax.xaxis.set_major_locator(MaxNLocator(nbins=8, integer=True))

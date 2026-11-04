@@ -3,12 +3,12 @@
   "source_csv": "figures/data/latest_admissions.csv",
   "source_csv_sha256": "5246d4176a6f97e4bb94aba8905bbbfbb98eb9767eff300a8babb8ef49f11f64",
   "source_receipt_sha256": "dc7dcb9bca24c04b992d5f9285253b69859d4e1ac5d1b800685a834dd164a00d",
-  "generator_sha256": "eb2732e16ef69f7ade40cd047e541ce53fdf549e4cc36067649e99d0bd1dcd97",
+  "generator_sha256": "31553292b8d06211cd85599bd4dcbc31f45e580a84f13406f51dec32da4cecea",
   "rolling_csv_sha256": "ce4799eb0952121c08b622fb591145fdf97ec66228ade8769c9a156062061128",
   "quantile_window": 50,
   "quantiles": "Linear interpolation at p*(n-1), all50 candidate margins, Decimal precision50; no partial windows",
   "near_tie_counts": "Cumulative rejected rows in two exclusive bands; no acceptance trials inferred",
-  "figure_sha256": "c40c94e3b0098cbe8a441fb4eda7a998600c200a14589ca008f1d367584054f9",
+  "figure_sha256": "613a2a0065c2cdef1bbb4cdfb33a0dd47152222d52effd04adb9f6b663caec0f",
   "round_window": [
     775,
     3950

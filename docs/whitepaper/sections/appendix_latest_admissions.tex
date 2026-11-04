@@ -9,11 +9,11 @@
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_acceptance_over_rounds.pdf}
   \caption{\textbf{Cumulative adapter acceptance falls to 0.21\% across rounds 775--2663.}
   All three panels use the same \num{1889} consecutive admission evaluations (\cref{tab:admission-ledger}).
-  (a) Candidate validation-pool utility (logged scalar score; grey) and post-decision recorded best (blue), with stars at
+  (a) Candidate validation-pool utility (logged scalar score; grey) and post-decision retained best (blue), with stars at
   strict gains (rounds 785 and 859) and hollow diamonds at accepted ties (rounds 782 and 882).
   (b) Cumulative accepted share of elapsed rounds (\%), peaking at 18.18\% at round 785 and
   declining across \num{1781} subsequent rejected rounds to 0.21\% ($4/\num{1889}$).
-  (c) Empirical cumulative distribution (fraction of evaluations) of recorded-best minus candidate validation-pool utility;
+  (c) Empirical cumulative distribution (fraction of evaluations) of retained-best minus candidate validation-pool utility;
   zero marks the four accepted \mbox{adapter evaluations.} Scope: \cref{sec:method-status}.}
   \label{fig:fw-validation}
   \label{fig:fw-acceptance-over-rounds}
@@ -37,7 +37,7 @@
 
 \begin{table}[!htbp]
   \caption{\textbf{The canonical admission ledger records every complete row in the prefix.}
-  Strict gains and ties use unrounded candidate minus prior-best
+  Strict gains and ties use unrounded candidate minus prior retained-best
   utility, without outcome selection. Scope: \cref{sec:method-status}.}
   \label{tab:admission-ledger}
   \centering\footnotesize\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{0.92}\sisetup{group-digits=integer}% full-precision logged values: roman digits and a true minus
@@ -51,7 +51,7 @@
     Strict-gain rounds & 785, 859, 2750, 3175 \\
     Exact-tie rounds & 782, 882, 2795, 3100 \\
     Final logged retained utility & \num{1.1389572403748425} \\
-    Recorded best-round identity & 3175 \\
+    Retained-best round identity & 3175 \\
     New rows since prior capture & 753 (0 admitted) \\
     Rejected margins in $[-10^{-4},0)$ & 26 \\
     Rejected margins in $[-10^{-3},-10^{-4})$ & 51 \\

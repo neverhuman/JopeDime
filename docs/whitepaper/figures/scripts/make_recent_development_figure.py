@@ -165,7 +165,7 @@ if wide:
     axes[1].plot(rounds, candidate, "o-", color="#6e7781", ms=2.5, lw=0.8,
                  label="candidate adapter")
     axes[1].step(rounds, best, where="post", color="#0b5394", lw=1.15,
-                 label="recorded best")
+                 label="retained best")
     axes[1].set_title("Right: Adapter validation", fontsize=8, loc="left", pad=3)
     axes[1].set_ylabel("validation\npool utility")
     axes[1].set_ylim(min(candidate + best) - 0.004, max(candidate + best) + 0.0013)
@@ -227,7 +227,7 @@ else:
         ax_bot.plot(w_rounds, w_cand, "o-", color="#6e7781", ms=2.2, lw=0.8,
                     label="candidate adapter")
         ax_bot.step(w_rounds, w_best, where="post", color="#0b5394", lw=1.1,
-                    label="recorded best (1.1378)")
+                    label="retained best (1.1378)")
         ax_bot.set_ylim(1.124, 1.1395)
         ax_bot.ticklabel_format(axis="y", style="plain", useOffset=False)
         ax_bot.set_xlabel("round")

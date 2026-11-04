@@ -13,8 +13,8 @@
   },
   "source_receipt_sha256": "dc7dcb9bca24c04b992d5f9285253b69859d4e1ac5d1b800685a834dd164a00d",
   "csv_sha256": "5246d4176a6f97e4bb94aba8905bbbfbb98eb9767eff300a8babb8ef49f11f64",
-  "generator_sha256": "7d7069567e117aa75af093d43ecccd96135aceb72bd244aa7503a8a0f29bc3fd",
-  "figure_sha256": "b282f607a245b0f5c3bc69432d2e493a00acefdc8bf9ecd4ff03fc39d0bc6894",
+  "generator_sha256": "d4e078723104b4db3b1f83a9640645db9967d7fd629b2a4e38aba87bfaa04c2a",
+  "figure_sha256": "b38f0b1bb3d3b218d3d82e23722f07b0646926e2d8314c42b8e96aeee0a9a65e",
   "round_window": [
     775,
     3950

@@ -76,11 +76,11 @@ with no search, rated \num{3055}~Elo. That is close to the \num{3144} of AlphaGo
 version that beat \mbox{the European champion} Fan Hui
 \citep{silver2016mastering,silver2017mastering}.
 
-The reference design trains on repeated program evaluations, then proposes deploying
-a writer with a single-candidate budget, \searchone{} (\cref{box:searchone}). This is a test condition,
-not a promise that every first proposal wins. \Cref{fig:emptysquare}
-separates training feedback from the frozen writer and fitting procedure
-at deployment.
+The reference design uses repeated program evaluations as training feedback
+and proposes a single-candidate deployment budget, \searchone{} (\cref{box:searchone}).
+This test condition does not promise that every first proposal wins.
+\Cref{fig:emptysquare} separates training feedback from the frozen writer
+and fitting procedure at deployment.
 
 \begin{figure}[t]
   \centering
@@ -170,8 +170,8 @@ reference whose moves are \mbox{typed programs} of learning primitives.
 \end{enumerate}
 
 \paragraph{Evidence scope.}
-The separate adapter record in \cref{sec:method-status} establishes
-neither neural writer updates nor ranking-map training gains.
+A separate operating loop (\cref{sec:method-status}) runs no neural writer:
+rule-based proposals are ranked by a small cost-ranking adapter. Its record establishes neither neural writer updates nor ranking-map training gains.
 Independent first-proposal comparisons remain pending;
 \cref{sec:method,sec:results} specify the design and planned tests.
 

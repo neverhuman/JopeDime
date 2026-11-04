@@ -98,7 +98,7 @@ axes[0].step(
     where="post",
     color="#0b5394",
     lw=1.1,
-    label="recorded best",
+    label="retained best",
 )
 axes[0].scatter(
     [rounds[i] for i in gains],
@@ -120,7 +120,7 @@ axes[0].scatter(
     zorder=4,
     label=f"accepted ties ({len(ties)})",
 )
-axes[0].set_title("(a) Candidate & recorded-best utility", loc="left", fontsize=7.5)
+axes[0].set_title("(a) Candidate & retained-best utility", loc="left", fontsize=7.5)
 axes[0].set_xlabel("round (775–2663)")
 axes[0].set_ylabel("validation pool utility")
 axes[0].set_xlim(rounds[0] - 15, rounds[-1] + 15)
@@ -192,7 +192,7 @@ axes[2].step(
     lw=1.1,
 )
 axes[2].set_title("(c) Candidate shortfall ECDF", loc="left", fontsize=7.5)
-axes[2].set_xlabel("recorded best − candidate utility")
+axes[2].set_xlabel("retained best − candidate utility")
 axes[2].set_ylabel("share of logged rounds")
 axes[2].set_xlim(0, float(max(gaps)) * 1.05)
 axes[2].set_ylim(0, 1.03)

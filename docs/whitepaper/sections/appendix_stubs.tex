@@ -90,7 +90,7 @@ remains pending. The separate \mbox{adapter record} appears in
 
   Within-comparison pairs use corpus context and comparison index;
   Python ranking helpers group by dataset identifier. Native pairing skips
-  non-finite targets and exact ties, $q_w=q_u$, without an exclusion margin
+  non-finite targets and exact ties, $\kappa_w=\kappa_u$, without an exclusion margin
   or logit rescaling. Training refuses non-finite supervision before loss
   formation. \mbox{\Cref{eq:writerLoss,eq:mapLoss}} give list-level losses.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
@@ -107,9 +107,9 @@ remains pending. The separate \mbox{adapter record} appears in
   $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
   for measured seconds \mbox{$s\geq0$ and} raw scalar head output $h$.
   \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
-  Here $q_w=1/(1+\mathrm{RMSE}_w/m_p)$ (\cref{eq:totalLoss}), with $m_p$
+  Here $\kappa_w=1/(1+\mathrm{RMSE}_w/m_p)$ (\cref{eq:totalLoss}), with $m_p$
   the corpus list's median RMSE. Microbatch Bradley--Terry weights use
-  $|q_w-q_u|$, doubled when either member is at or above the 90th percentile.
+  $|\kappa_w-\kappa_u|$, doubled when either member is at or above the 90th percentile.
   Weights are mean-scaled and cast to float32; weighted losses average
   non-tied within-comparison pairs in the rank-local microbatch. Listwise
   losses average eligible groups; the global-batch route uses separate reductions.
@@ -141,7 +141,7 @@ remains pending. The separate \mbox{adapter record} appears in
   receipts.
 \end{itemize}
 
-\section{Flywheel Telemetry}\label{app:flywheel-telemetry}
+\section{Operating-Loop Telemetry}\label{app:flywheel-telemetry}
 
 Each capture has its own date, population scope and event units
 (\cref{sec:method-status}). \Cref{app:latest-admissions} gives the canonical

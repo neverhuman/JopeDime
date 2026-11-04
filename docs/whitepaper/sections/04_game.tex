@@ -12,7 +12,7 @@
   \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Reference training searches many moves; game-day evaluation commits one.}
   In the top band (blue, \searchone{}; proposed game day), the frozen encoder reads board $p$ and the writer $\writer$ commits one move $w$ with no retry or repair.
-  In the lower dashed box (proposed training, \cref{sub:method-selfplay}; separate from the adapter record in \cref{sec:method-status}), valid scored moves join $G_p$ while failed attempts consume budget.}
+  In the lower dashed box (proposed training, \cref{sub:method-selfplay}; separate from the adapter record in \cref{sec:method-status}), valid scored moves join the problem's scored list $G_p$ (\cref{sub:method-map}) while failed attempts consume budget. The game-day verdict never enters $G_p$; a cut fixes a dataset split and evaluation case.}
   \label{fig:game-loop}
 \end{figure*}
 
@@ -76,14 +76,14 @@ in \cref{box:searchone}; the dashed box covers reference training.
   \end{tabularx}
 \end{table}
 
-Formally, the game is a tuple of seven parts,
+Formally, the game is a tuple of six parts,
 \[
-  \Game = (\Prob, \encP, \Sol, \encS, \referee, \reward, \opp).
+  \Game = (\Prob, \encP, \Sol, \referee, \reward, \opp).
 \]
 In the reference learner, $\encP$ represents a problem $p \in \Prob$ as
-$z_p$, while $\encS$ embeds a program $w \in \Sol$ as $z_w$ for the separate
-ranking map (\cref{sub:method-map}). Game-day generation and the referee
-do not use $\encS$. The referee $\referee$ reports validity and score, the
+$z_p$. The referee $\referee$ reports validity and score, the
+%
+%
 reward $\reward$ orders moves, and the opponent $\opp$ supplies the
 incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
 selection \citep{rice1976algorithm}: the player writes an algorithm instead of
@@ -106,7 +106,7 @@ summary of the training data, the objective and metric, and the constraints.
 Landmark scores from cheap learners \citep{pfahringer2000landmarking} and
 learned tabular summaries are possible encodings; \cref{sub:method-board}
 specifies the reference encoder and its cost limit.
-In the inspected implementation, that encoder consumes prepared numeric training
+In the reference implementation, that encoder consumes prepared numeric training
 rows and targets; the writer's engine and regression-task tokens are
 supplied separately. The objective, metric and budget are protocol
 settings, not \mbox{additional input fields} in this encoder call.
