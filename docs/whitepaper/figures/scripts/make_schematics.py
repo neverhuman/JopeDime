@@ -4,7 +4,7 @@
 Contains zero fabricated empirical results:
 - fig2_novelty_judgment.pdf: Conceptual 2D schematic of Novelty vs. Referee Value,
   with EurekaZero's single proposal (B=1) explicitly shown as an unmeasured
-  vertical question-mark interval ('?', tested in Section 7).
+  vertical question-mark interval ('?', to be tested in Section 7).
 - fig3_game_loop.pdf: Schematic of the innovation game loop (top blue row:
   game-day search=1 deployment; dashed box: training-only referee & ratchets).
 - fig5_network.pdf: Architectural schematic of the 27.8M historical reference
@@ -223,7 +223,7 @@ def make_fig2_novelty_judgment() -> None:
     ax.text(
         0.81,
         0.79,
-        "Learned proposer ($B = 1$)\n(height tested in Section 7)",
+        "Learned proposer ($B = 1$)\n(height to be tested\nin Section 7)",
         fontsize=7.2,
         color="#92400e",
         ha="center",
@@ -726,7 +726,7 @@ def write_provenance():
             "figure_sha256": {name: sha(OUT / name) for name in names},
             "canvas_inches": {names[0]: [3.35, 2.3], names[1]: [7.0, 2.3], names[2]: [7.0, 2.9]},
             "scope": "Conceptual diagrams only; no empirical data or runtime qualification.",
-            "preservation": "Original nodes, arrows, labels and conceptual point locations retained; network gains explicit reference qualifiers and a separate live-system footer.",
+            "preservation": "Conceptual nodes, arrows and point locations retained; labels distinguish proposed or unmeasured behavior and the historical reference from the separate live system.",
             "capacity_label_source": "Reference design counts follow the authoring brief; the live label omits an unbound capacity. Historical checkpoint inventory remains separate.",
             "reproduce": "python3 figures/scripts/make_schematics.py"}
     (OUT / "data/schematics.provenance.json").write_text(json.dumps(data, indent=2) + "\n")
