@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "The 1.0.2 workspace version bump (just bump 1.0.2) changes crates/jope-campaigns/Cargo.toml and Cargo.lock, which the ADR-0004 evaluator identity hashes, while leaving evaluator code, the DSL ABI, every frozen behavioural fixture and the known-identity table unchanged. Announced identity and lineage-source fixtures were regenerated at 862472d961e73c648a25ea3d13ea02ebeef91773 with JOPE_COMPAT_FREEZE_REGENERATE=identity; every other compat-freeze surface compared and passed.",
+  "plan_reference": "jAIn CLI 1.0.2 candidate (first-run TUI, #2123); ADR-0004 identity-only procedure",
+  "source_commit": "862472d961e73c648a25ea3d13ea02ebeef91773",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "2158e96e0f14861817eb34bcba4605e467fd990946976990eee0772afd138a77",
+      "after": "e4a832fcad5c113ee310b56e4ed7d7638593d9c7bc930485a687e294c00574eb"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "dbc387e4fadc3863e893f13e21780d3d7aa9b8cef0e5908807248b67a806453e",
+      "after": "6e93ff7cceb7e5204d440685c7784a225c3e7837aaa80a30b47929b73b891e44"
+    }
+  ]
+}

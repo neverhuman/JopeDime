@@ -270,3 +270,18 @@ regeneration at `e5aa71d2ed1d6707e14d5db333c8ff58ef7cc3f0` records it; every oth
 surface still compared and passed, and the DSL ABI and evaluator code are unchanged. The
 transition is registered in `v1_0_1_20261104_version_bump_identity_rebaseline.v1.json`. No
 known-identity row is added because this identity has no shipped receipt yet.
+
+## Current identity transition: 1.0.2 version bump (2026-11-04)
+
+`just bump 1.0.2` (the jAIn CLI 1.0.2 candidate, which carries the #2123 first-run TUI)
+changes only version strings. Two of them are evaluator identity inputs:
+`crates/jope-campaigns/Cargo.toml` (`b5b13bf9…` to `f3ff1cca…`) and `Cargo.lock`
+(`9af944a5…` to `350fcbec…`). The evaluator implementation hash advances from
+`4352672bab0f4e83149a1200ae9c351773c80248c68300749e01bba7f8925cfa` to
+`5efb746a82a080f03761c27e73e270c84cd616c6b42468ff8bda5fcc0207060c`, and the identity digest
+from `749f6e0783fedebda781051ba9c4254b7620d6f141487f1bcaba27c836581669` to
+`85c270715de817a2d5cfe91d7f5ae006c894fe042b2670e5acdb12b6bf363f52`. Announced identity-only
+regeneration at `862472d961e73c648a25ea3d13ea02ebeef91773` records it; every other compat-freeze
+surface still compared and passed, and the DSL ABI and evaluator code are unchanged. The
+transition is registered in `v1_0_2_20261104_version_bump_identity_rebaseline.v1.json`. No
+known-identity row is added because this identity has no shipped receipt yet.
