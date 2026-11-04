@@ -51,8 +51,8 @@ researchers as in the early 1970s to sustain chip-density growth.
 \citet{jones2009burden} found later first inventions and greater
 specialization in the inventor data he studied.
 \citet{park2023disruptive} reported declining disruption on citation-based
-measures of papers and patents. These observations motivate our question:
-can execution feedback help a proposer depart usefully from familiar ideas?
+measures of papers and patents. These observations motivate testing execution feedback as an additional
+teacher.
 \mbox{\Cref{sub:anatomy-history} develops} the role of the scientific record.
 
 \paragraph{From search to learning.}
@@ -76,9 +76,8 @@ with no search, rated \num{3055}~Elo. That is close to the \num{3144} of AlphaGo
 version that beat \mbox{the European champion} Fan Hui
 \citep{silver2016mastering,silver2017mastering}.
 
-For invention, the analogous goal is to learn from repeated program
-evaluations during training, then deploy a writer with a single-candidate
-budget, \searchone{} (\cref{box:searchone}). This is a test condition,
+The reference design trains on repeated program evaluations, then deploys
+a writer with a single-candidate budget, \searchone{} (\cref{box:searchone}). This is a test condition,
 not a promise that every first proposal wins. \Cref{fig:emptysquare}
 separates training feedback from the frozen writer and fitting procedure
 at deployment.
@@ -121,12 +120,10 @@ at deployment.
 \end{figure}
 
 \paragraph{Engineered intelligence.}
-The reference design assigns each role in \cref{sec:anatomy} an inspectable
-component: a declared task and metric, a grammar-constrained writer, a
-referee and retained state (\cref{tab:pillars}). Program-incumbent
-promotion and proposed writer admission are distinct rules in that design.
-We call the design \emph{engineered intelligence}: its aim, proposer, referee
-and retained state are specified for audit. Pretrained components still supply prior knowledge
+The reference design specifies each role in \cref{sec:anatomy} for audit:
+a declared task and metric, a grammar-constrained writer, a referee and
+retained state (\cref{tab:pillars}). We call this \emph{engineered intelligence}.
+Program-incumbent promotion and proposed writer admission are distinct rules. Pretrained components still supply prior knowledge
 (\cref{box:searchone}); \mbox{execution feedback} supplies the additional teacher.
 
 \begin{figure}[tb]% floats so the text above can fill the column

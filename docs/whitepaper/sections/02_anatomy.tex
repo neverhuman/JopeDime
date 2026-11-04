@@ -50,9 +50,9 @@ bottleneck.
 
 \subsection{The four pillars}\label{sub:anatomy-pillars}
 
-The four pillars organize accounts of discovery from biology, psychology,
-philosophy and engineering (\cref{tab:pillars}). This synthesis leaves the
-underlying theories distinct.
+The four pillars compare accounts of discovery in biology, psychology,
+philosophy and engineering (\cref{tab:pillars}) without merging their
+underlying theories.
 
 Campbell argued that every genuine gain in knowledge needs a mechanism for introducing variation, a consistent selection process and a mechanism for preserving and reproducing what is selected \citep[p.~381]{campbell1960bvsr}. The aim is what keeps the selection consistent, which makes it the fourth pillar.
 
@@ -65,9 +65,9 @@ Campbell argued that every genuine gain in knowledge needs a mechanism for intro
 \textbf{Retention} preserves what survives: inheritance for
 \citet{darwin1859origin}, selective retention for
 \citet{campbell1960bvsr}, the textbook for a science and the incumbent for a
-game. Archiving a winning program preserves an output; using evaluation
-feedback to update the proposer attempts to improve future outputs.
-That distinction frames the learning question in \cref{sec:intro};
+game. Archiving a winning program preserves an output; updating the proposer
+from evaluation feedback aims to improve future outputs.
+This is the learning question in \cref{sec:intro};
 \cref{tab:where} compares where human and machine systems retain feedback.
 
 \subsection{Taste is judgment moved upstream}\label{sub:anatomy-taste}
@@ -92,10 +92,9 @@ proposals need not follow \cref{eq:taste}; independence alone does not say
 whether the approximation overstates or understates their cost. Empirical
 attempt curves are required for those systems.}
 
-The equation relates proposal quality to expected attempts, whether
-training, structural constraints or revealed outcomes improve that quality.
-Comparisons of random generators, pretrained models and agent systems
-therefore need measured win probabilities. In particular, \searchone{} fixes the number of candidates a system
+Training, structural constraints and revealed outcomes can change proposal
+quality. Comparing random generators, pretrained models and agent systems
+therefore requires measured win probabilities. \searchone{} fixes the number of candidates a system
 may submit; it does not require the probability of a win to approach certainty.
 A single-candidate system can fail, and every failure must remain in its
 reported results. \Cref{sec:price} uses the same idealization to relate
@@ -115,20 +114,19 @@ feedback adds a way to reward useful departures from the historical record.
 
 A referee offers such an additional teacher. AlphaGo Zero learned with no human data, from the rules and the outcomes of its own games, and found strategies outside traditional Go knowledge \citep{silver2017mastering}. Its predecessor had already made such a move. As David Silver told Wired in March 2016, AlphaGo put the chance that a human would play its Move~37 against Lee Sedol at one in ten thousand, and it won that game \citep{metz2016twomoves}.
 
-The knowledge then flowed back to people. In more than 5.8 million moves by professionals from 1950 to 2021, previously unseen moves grew more frequent once superhuman programs arrived, and came with better decisions \citep{shin2023superhuman}. These results establish the possibility in Go. Whether an analogous execution-feedback signal
-improves algorithm invention must be measured directly in the innovation game.
+The knowledge then flowed back to people. In more than 5.8 million moves by professionals from 1950 to 2021, previously unseen moves grew more frequent once superhuman programs arrived, and came with better decisions \citep{shin2023superhuman}. These results concern Go. Algorithm invention needs a direct test of
+whether analogous execution feedback improves proposals in the innovation game.
 
 \subsection{Where the pillars live}\label{sub:anatomy-where}
 
 Machines distribute the pillars across different components
 (\cref{tab:where}). Swarm designs fit the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, that knowledge archive supplies retention; the model of reality, the twins and the laboratories supply judgment; \mbox{and the agents} supply variation and critique.
 
-Agent search can retain programs, revise its context or update its
-proposer. The label \emph{swarm} does not specify which it does. The
-comparison in \cref{tab:where} isolates deployment with fixed proposer
-weights; \EZ{} aims to improve the proposer through training before a new
-problem arrives. Both need a reliable referee, and training costs belong
-\mbox{in any account} of deployment savings.
+Agent search can retain programs, revise context or update its proposer;
+\emph{swarm} alone does not specify which. The comparison in
+\cref{tab:where} fixes proposer weights at deployment; \EZ{} proposes
+training the writer before a new problem arrives. Both require a reliable
+referee, and training costs belong \mbox{in any account} of deployment savings.
 
 \begin{table}[t]
   \caption{\textbf{Each approach retains feedback in a different place.} The agent-search column describes
