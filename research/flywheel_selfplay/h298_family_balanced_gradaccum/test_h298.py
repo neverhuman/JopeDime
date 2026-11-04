@@ -125,3 +125,20 @@ def test_regression_receipt_and_prereg_batches() -> None:
             assert 8175 <= batches[seed]["PAIRED_CONTROL"][step]["n_presentations"] <= 8192
             assert batches[seed]["FAMBAL_ACC1"][step]["n_presentations"] == 8192
             assert batches[seed]["FAMBAL_ACC4"][step]["n_presentations"] == 32768
+
+
+def test_metrics_json_complete_and_within_50kb() -> None:
+    m_path = HERE / "metrics.json"
+    assert m_path.exists()
+    assert m_path.stat().st_size < 50 * 1024
+    m = json.loads(m_path.read_text())
+    assert m["wave_id"] == "H298"
+    assert m["slug"] == "h298_family_balanced_gradaccum"
+    assert m["verdict"] == "NOT_ADVANCED"
+    assert m["r3175_baseline_mean"] == a298.R3175_DEV91_MEAN
+    p = m["primary_arm_FAMBAL_ACC4"]
+    assert p["n_seeds"] == 3
+    assert p["seeds_passing_all_gates"] == 0
+    assert p["all_3_of_3_pass"] is False
+    assert pytest.approx(p["median_lift_vs_r3175"]) == -0.033528458894059865
+    assert pytest.approx(p["median_lift_vs_paired_control"]) == 0.000279167521094692
