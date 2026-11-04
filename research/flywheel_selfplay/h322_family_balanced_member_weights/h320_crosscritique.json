@@ -1,0 +1,15 @@
+{
+  "peer_wave": "H320",
+  "commit": "29696715d81c0cec66561835258651811b91b663",
+  "path": "research/flywheel_selfplay/h320_trimmed_inner_objective/README.md",
+  "readme_sha256": "04f87e12754ac94a7a5cbe2551abdb7ca8b3527b8c27fecb219dd3e1ccddee4e",
+  "reviewed_utc": "2026-11-04T14:32:38.323778+00:00",
+  "notes": [
+    "H320 reports TRIM_NOT_ADVANCED: paired drop10 negative in all9 cells, median approximately-.0096, retaining57percent ofBASE gain; lower harm alone did not satisfy its joint gate.",
+    "This identifies a negative result for one inner-selection objective. It does not establish that every selector must fail, or identify pool composition or fresh-data scarcity as the unique cause of the dev91 tail.",
+    "Its per-inner-fold trimming removes10 of approximately37 families, whereas outer TRAIN trims10of205 and dev91 trims10of19. These are different trimming fractions as well as different cohorts/incumbents.",
+    "The H320 README explicitly reports10971 outer observations present in memory with0 guarded accesses. This is an access-accounting claim; H322 separately requires physical exclusion of outer pool and cache ranges from each fitting worker.",
+    "H322 weights member fitting and retains the original objective. No H322 decision endpoint or implementation was changed in response to H320 outcomes."
+  ],
+  "scope": "Published peer report review; no peer feature/model rerun; H322 outcomes not yet scored"
+}
