@@ -599,3 +599,162 @@ fn test_h256_production_1310_and_1219_bundles_rust_golden_parity() {
     assert!(max_abs_diff_f64(&pred_1219.bagged_pinv, &exp_pinv_1219) <= 1e-5);
     assert_eq!(pred_1219.static_pick_j, exp_pick_1219);
 }
+
+#[test]
+fn h256_subsample_batch_consensus_is_deterministic_and_valid() {
+    let dir = weights_dir();
+    let p1219_bytes =
+        std::fs::read(dir.join("h256_production_1219_dl_train_bundle.safetensors")).unwrap();
+    let p1219 = H256ProductionBundle::from_safetensors_bytes(&p1219_bytes).unwrap();
+
+    let golden_bytes =
+        std::fs::read(dir.join("golden_inference_fixture_context0.safetensors")).unwrap();
+    let g = SafetensorsMap::deserialize(&golden_bytes).unwrap();
+
+    let n_cand = 1152usize;
+    let raw_dope629 = g.f32_vec("raw_ctx.dope629", &[629]).unwrap();
+    let raw_hidden256 = g.f32_vec("raw_ctx.hidden256", &[256]).unwrap();
+    let raw_col_lm = g.f32_vec("raw_ctx.col_lm_64x17", &[64, 17]).unwrap();
+    let raw_col_mask = g.f32_vec("raw_ctx.col_mask_64", &[64]).unwrap();
+    let raw_lm48_z = g.f32_vec("raw_ctx.lm48_z", &[48]).unwrap();
+
+    let program_412 = g.f32_vec("pool.program_412", &[n_cand, 412]).unwrap();
+    let proj16 = g.f32_vec("pool.proj16", &[n_cand, 16]).unwrap();
+    let sem24 = g.f32_vec("pool.sem24", &[n_cand, 24]).unwrap();
+    let cand_q_32 = g.f32_vec("pool.cand_q_32", &[n_cand, 32]).unwrap();
+    let rcost = g.f64_vec("pool.r882_total_cost", &[n_cand]).unwrap();
+    let aprior = g.f64_vec("pool.r882_anchor_prior", &[n_cand]).unwrap();
+    let sos_prior_2d = g.f32_vec("expected_critic.sos_prior_2d", &[n_cand, 2]).unwrap();
+    let sp_prior_1d = g.f32_vec("expected_critic.sp_prior_1d", &[n_cand]).unwrap();
+    let h_cost = g.f64_vec("expected_critic.h_cost", &[n_cand]).unwrap();
+    let gate_risk: Vec<f32> = (0..n_cand).map(|i| sos_prior_2d[i * 2 + 1]).collect();
+
+    // Build an 11-view batch (1x100% + 8x80% perturbed views + 2xcol-jitter views)
+    let mut dope_views: Vec<Vec<f32>> = Vec::with_capacity(11);
+    let mut hid_views: Vec<Vec<f32>> = Vec::with_capacity(11);
+    let mut col_views: Vec<Vec<f32>> = Vec::with_capacity(11);
+    let mut mask_views: Vec<Vec<f32>> = Vec::with_capacity(11);
+    let mut lm_views: Vec<Vec<f32>> = Vec::with_capacity(11);
+
+    for b in 0..11usize {
+        let mut dv = raw_dope629.clone();
+        let mut hv = raw_hidden256.clone();
+        let mut cv = raw_col_lm.clone();
+        let mv = raw_col_mask.clone();
+        let mut lv = raw_lm48_z.clone();
+        if b > 0 {
+            let delta = ((b as f32) - 5.0) * 0.015;
+            for (idx, val) in dv.iter_mut().enumerate() {
+                *val += delta * (((idx + b) % 7) as f32 - 3.0) * 0.1;
+            }
+            for (idx, val) in hv.iter_mut().enumerate() {
+                *val += delta * (((idx + b) % 5) as f32 - 2.0) * 0.05;
+            }
+            for (idx, val) in cv.iter_mut().enumerate() {
+                *val += delta * (((idx + b) % 11) as f32 - 5.0) * 0.02;
+            }
+            for (idx, val) in lv.iter_mut().enumerate() {
+                *val += delta * (((idx + b) % 3) as f32 - 1.0) * 0.05;
+            }
+        }
+        dope_views.push(dv);
+        hid_views.push(hv);
+        col_views.push(cv);
+        mask_views.push(mv);
+        lm_views.push(lv);
+    }
+
+    let batch_views: Vec<SubsampleBatchContextView<'_>> = (0..11)
+        .map(|b| SubsampleBatchContextView {
+            raw_dope629: &dope_views[b],
+            raw_hidden256: &hid_views[b],
+            raw_col_lm_64x17: &col_views[b],
+            raw_col_mask_64: &mask_views[b],
+            raw_lm48_z: &lm_views[b],
+        })
+        .collect();
+    let weights = [2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5];
+
+    let (readouts1, consensus1) = p1219
+        .predict_static_top8_batch(
+            &batch_views,
+            Some(&weights),
+            &rcost,
+            &aprior,
+            &program_412,
+            &sem24,
+            &proj16,
+            &cand_q_32,
+            &h_cost,
+            &gate_risk,
+            &sp_prior_1d,
+            n_cand,
+        )
+        .unwrap();
+
+    let (_readouts2, consensus2) = p1219
+        .predict_static_top8_batch(
+            &batch_views,
+            Some(&weights),
+            &rcost,
+            &aprior,
+            &program_412,
+            &sem24,
+            &proj16,
+            &cand_q_32,
+            &h_cost,
+            &gate_risk,
+            &sp_prior_1d,
+            n_cand,
+        )
+        .unwrap();
+
+    assert_eq!(readouts1.len(), 11);
+    assert_eq!(consensus1.view_pick_j.len(), 11);
+    assert_eq!(consensus1.gen0_seed_indices.len(), 8);
+    assert_eq!(
+        consensus1.gen0_seed_indices[0],
+        consensus1.consensus_pick_index
+    );
+    assert_eq!(consensus1.consensus_pick_j, consensus2.consensus_pick_j);
+    assert_eq!(
+        consensus1.consensus_pick_index,
+        consensus2.consensus_pick_index
+    );
+    assert_eq!(consensus1.gen0_seed_indices, consensus2.gen0_seed_indices);
+    assert!(
+        max_abs_diff_f64(
+            &consensus1.consensus_bagged_scores,
+            &consensus2.consensus_bagged_scores
+        ) == 0.0
+    );
+
+    let h257_st_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/weights/h257_phase2_curriculum_bundle.safetensors");
+    assert!(
+        h257_st_path.exists(),
+        "missing H257 safetensors bundle at {}",
+        h257_st_path.display()
+    );
+    let h257_bytes = std::fs::read(&h257_st_path).unwrap();
+    assert!(h257_bytes.len() <= 5 * 1024 * 1024);
+    let p_h257 = H256ProductionBundle::from_safetensors_bytes(&h257_bytes).unwrap();
+    let (ro_257, cons_257) = p_h257
+        .predict_static_top8_batch(
+            &batch_views,
+            Some(&weights),
+            &rcost,
+            &aprior,
+            &program_412,
+            &sem24,
+            &proj16,
+            &cand_q_32,
+            &h_cost,
+            &gate_risk,
+            &sp_prior_1d,
+            n_cand,
+        )
+        .unwrap();
+    assert_eq!(ro_257.len(), 11);
+    assert_eq!(cons_257.gen0_seed_indices.len(), 8);
+}

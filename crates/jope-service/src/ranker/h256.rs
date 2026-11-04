@@ -2221,6 +2221,200 @@ impl H256ProductionBundle {
             static_pick_j,
         })
     }
+
+    pub fn aggregate_subsample_batch_picks(
+        view_readouts: &[Top8PredictionReadout],
+        view_weights: Option<&[f64]>,
+        top8_indices: &[usize; TOPK_SLICE],
+    ) -> Result<SubsampleBatchConsensus> {
+        ensure!(
+            !view_readouts.is_empty(),
+            "view_readouts must contain at least one subsample view"
+        );
+        let b = view_readouts.len();
+        let default_weights: Vec<f64> = (0..b)
+            .map(|idx| if idx == 0 { 2.0 } else { 1.0 })
+            .collect();
+        let weights: &[f64] = match view_weights {
+            Some(w) => {
+                ensure!(
+                    w.len() == b,
+                    "view_weights length {} does not match view_readouts length {}",
+                    w.len(),
+                    b
+                );
+                w
+            }
+            None => &default_weights,
+        };
+        let w_sum: f64 = weights.iter().copied().sum();
+        ensure!(w_sum > 0.0 && w_sum.is_finite(), "view_weights sum must be positive and finite");
+
+        let mut consensus_bagged_scores = [0.0_f64; TOPK_SLICE];
+        let mut consensus_bagged_pinv = [0.0_f64; TOPK_SLICE];
+        let mut view_pick_j = Vec::with_capacity(b);
+        let mut view_pick_indices = Vec::with_capacity(b);
+
+        for (v_idx, ro) in view_readouts.iter().enumerate() {
+            let w = weights[v_idx] / w_sum;
+            for j in 0..TOPK_SLICE {
+                consensus_bagged_scores[j] += w * ro.bagged_scores[j];
+                consensus_bagged_pinv[j] += w * ro.bagged_pinv[j];
+            }
+            view_pick_j.push(ro.static_pick_j);
+            view_pick_indices.push(top8_indices[ro.static_pick_j]);
+        }
+
+        let consensus_pick_j = select_pick_from_scores_8(
+            &consensus_bagged_scores,
+            &consensus_bagged_pinv,
+            1.5,
+            1.0,
+            0.05,
+        );
+        let consensus_pick_index = top8_indices[consensus_pick_j];
+
+        // Deduplicated diverse Generation-0 GP seed indices:
+        // 1. Consensus Top-1 pick
+        // 2. Individual subsample view picks in view priority order
+        // 3. Remaining Top-8 candidates sorted by descending consensus_bagged_scores
+        let mut gen0_seed_indices = Vec::with_capacity(TOPK_SLICE);
+        gen0_seed_indices.push(consensus_pick_index);
+        for &cand_idx in &view_pick_indices {
+            if !gen0_seed_indices.contains(&cand_idx) {
+                gen0_seed_indices.push(cand_idx);
+            }
+        }
+        let mut slot_order: Vec<usize> = (0..TOPK_SLICE).collect();
+        slot_order.sort_by(|&a, &b| {
+            consensus_bagged_scores[b]
+                .total_cmp(&consensus_bagged_scores[a])
+                .then_with(|| a.cmp(&b))
+        });
+        for j in slot_order {
+            let cand_idx = top8_indices[j];
+            if !gen0_seed_indices.contains(&cand_idx) {
+                gen0_seed_indices.push(cand_idx);
+            }
+        }
+
+        Ok(SubsampleBatchConsensus {
+            consensus_bagged_scores,
+            consensus_bagged_pinv,
+            consensus_pick_j,
+            consensus_pick_index,
+            view_pick_j,
+            view_pick_indices,
+            gen0_seed_indices,
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn predict_static_top8_batch(
+        &self,
+        views: &[SubsampleBatchContextView<'_>],
+        view_weights: Option<&[f64]>,
+        r882_total_cost: &[f64],
+        r882_anchor_prior: &[f64],
+        program_412: &[f32],
+        sem24: &[f32],
+        proj16: &[f32],
+        cand_q_32: &[f32],
+        h_cost: &[f64],
+        gate_risk: &[f32],
+        sp_prior_1d: &[f32],
+        n_cand: usize,
+    ) -> Result<(Vec<Top8PredictionReadout>, SubsampleBatchConsensus)> {
+        ensure!(
+            !views.is_empty(),
+            "views must contain at least one SubsampleBatchContextView"
+        );
+        let mut view_readouts = Vec::with_capacity(views.len());
+        let mut top8_indices_ref = [0_usize; TOPK_SLICE];
+
+        for (v_idx, v) in views.iter().enumerate() {
+            let ct_s3 = self.s3_scaler.transform_context(
+                v.raw_dope629,
+                v.raw_hidden256,
+                v.raw_col_lm_64x17,
+                v.raw_col_mask_64,
+            )?;
+            let s3_ctx_vec16 = self.s3_encoder.extract_s3_ctx_vec16(&ct_s3);
+            let std_ctx = self.stage2_scaler.transform_context(
+                v.raw_dope629,
+                v.raw_hidden256,
+                v.raw_col_lm_64x17,
+                v.raw_col_mask_64,
+            )?;
+            let dp_f_out = self.stage2_arm_f_soup.forward_prior_and_context(
+                &std_ctx,
+                cand_q_32,
+                sem24,
+                gate_risk,
+                sp_prior_1d,
+                n_cand,
+            )?;
+            let dp_g_out = self.stage2_arm_g_soup.forward_prior_and_context(
+                &std_ctx,
+                cand_q_32,
+                sem24,
+                gate_risk,
+                sp_prior_1d,
+                n_cand,
+            )?;
+            let pkt = build_enriched_top8_features_616(
+                r882_total_cost,
+                r882_anchor_prior,
+                program_412,
+                sem24,
+                proj16,
+                v.raw_dope629,
+                v.raw_hidden256,
+                v.raw_col_lm_64x17,
+                v.raw_col_mask_64,
+                v.raw_lm48_z,
+                &s3_ctx_vec16,
+                &dp_f_out.delta_prior,
+                &dp_g_out.delta_prior,
+                h_cost,
+                gate_risk,
+                sp_prior_1d,
+                n_cand,
+            )?;
+            if v_idx == 0 {
+                top8_indices_ref = pkt.top8_indices;
+            }
+            let ro = self.predict_top8_from_matrices(&pkt.x_568, &pkt.x_616)?;
+            view_readouts.push(ro);
+        }
+
+        let consensus = Self::aggregate_subsample_batch_picks(
+            &view_readouts,
+            view_weights,
+            &top8_indices_ref,
+        )?;
+        Ok((view_readouts, consensus))
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct SubsampleBatchContextView<'a> {
+    pub raw_dope629: &'a [f32],
+    pub raw_hidden256: &'a [f32],
+    pub raw_col_lm_64x17: &'a [f32],
+    pub raw_col_mask_64: &'a [f32],
+    pub raw_lm48_z: &'a [f32],
+}
+
+#[derive(Clone, Debug)]
+pub struct SubsampleBatchConsensus {
+    pub consensus_bagged_scores: [f64; TOPK_SLICE],
+    pub consensus_bagged_pinv: [f64; TOPK_SLICE],
+    pub consensus_pick_j: usize,
+    pub consensus_pick_index: usize,
+    pub view_pick_j: Vec<usize>,
+    pub view_pick_indices: Vec<usize>,
+    pub gen0_seed_indices: Vec<usize>,
 }
 
 #[cfg(test)]

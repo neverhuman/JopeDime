@@ -1,0 +1,17 @@
+{
+  "schema": "jope.h257.phase2_checkpoint_manifest/v1",
+  "wave": "H257",
+  "cycle_name": "H257_Phase2_Curriculum_Cycle",
+  "phase1_warm_start_wave": "H256",
+  "bundles": {
+    "h257_phase2_curriculum_bundle.safetensors": {
+      "filename": "h257_phase2_curriculum_bundle.safetensors",
+      "size_bytes": 3298740,
+      "size_mib": 3.1459,
+      "sha256": "50890932273ce43fb25e3ac90afac9c4f3ea1977e473432c39e952bf6d07a7bd",
+      "tensor_count": 384,
+      "rust_loader": "jope_service::ranker::h256::H256ProductionModel::from_safetensors_bytes",
+      "rust_batch_inference": "jope_service::ranker::h256::H256ProductionModel::predict_static_top8_batch"
+    }
+  }
+}
