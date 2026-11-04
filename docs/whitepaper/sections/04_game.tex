@@ -41,9 +41,9 @@ evaluation cost (\cref{sec:price}).
 % ----------------------------------------------------------------------------
 \subsection{The rules}\label{sub:game-rules}
 
-Every submitted program is an attempt, even an illegal move. The reference
-writer $\writer$ reads the encoded problem; the referee keeps the incumbent
-as a separate comparison standard (\cref{sub:method-board}). The incumbent's code and
+Every submitted program counts as an attempt, including an illegal move.
+The reference writer $\writer$ reads the encoded problem; the referee uses
+the incumbent as a separate standard (\cref{sub:method-board}). The incumbent's code and
 score \mbox{must stay outside} the writer's input.
 
 \Cref{fig:game-loop} separates training from game day. Its top band follows
@@ -89,13 +89,12 @@ incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
 selection \citep{rice1976algorithm}: the player writes an algorithm instead of
 \mbox{picking} it, and the incumbent sets the comparison standard.
 
-With one move, the game is a contextual bandit: the board supplies context,
-the program is the action and the
-verdict is the reward \citep{lattimore2020bandit}. The incumbent supplies a
-changing comparison standard as verified programs displace it. The asymmetry is in the
-moves: Go offers about 250 legal moves per turn over about 150 turns, each free
-to check \citep{silver2016mastering}, while this game offers one move, costly to
-judge. Under a single-candidate budget, the chance $\winprob$ of a win matters
+One move makes the game a contextual bandit: board as context, program as
+action and verdict as reward \citep{lattimore2020bandit}. Verified programs
+can displace the incumbent, changing the comparison standard. Move cost
+sets the games apart: Go offers about 250 legal moves per turn over about
+150 turns, each free to check \citep{silver2016mastering}; this game offers
+one move, costly to judge. Under a single-candidate budget, the chance $\winprob$ of a win matters
 directly (\cref{eq:taste}). Whether training raises that win probability on unseen
 problem families is the empirical test in \cref{sec:results}.
 
@@ -112,11 +111,11 @@ rows and targets; the writer's engine and regression-task tokens are
 supplied separately. The objective, metric and budget are protocol
 settings, not \mbox{additional input fields} in this encoder call.
 
-A useful board should preserve distinctions relevant to algorithm choice,
-ignore irrelevant reorderings, exclude final evaluation information and
-have a measured cost. Naming an encoder guarantees none of these
-properties; they require tests. People still choose the problem and define
-what counts as useful.
+Board quality requires tests: it should preserve distinctions relevant to
+algorithm choice, ignore irrelevant reorderings, exclude final evaluation
+information and have a measured cost. Naming an encoder establishes none
+of these properties. People still choose the problem and define what
+counts as useful.
 
 A move is one complete program written in a typed language over learning primitives.
 A task-specific grammar restricts legal moves, and \cref{sub:method-move}
@@ -147,11 +146,11 @@ $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
   \reward(p, \tilde{w}) \;<\; \reward(p, w^-) \;<\; \reward(p, w^+).
 \]
 
-The opponent is a ratcheting incumbent: a program must strictly improve
-under the same evaluation protocol to displace it. The reference design
+The opponent is a ratcheting incumbent: replacing it requires strict
+improvement under the same evaluation protocol. The reference design
 proposes a separate admission test for a retrained writer
-(\cref{sub:method-selfplay}). Its two self-play rules pit a proposer
-against incumbents retained from earlier play. AlphaGo Zero likewise
+(\cref{sub:method-selfplay}). Its two self-play rules compare against
+incumbents retained from earlier play. AlphaGo Zero likewise
 separated network admission from move selection \citep{silver2017mastering}.
 These are reference rules, not a record of writer improvement. The later loop in
 \cref{sec:method-status} updates only a cost-ranking adapter; its default
@@ -175,11 +174,10 @@ for three games and trained a separate network for each
 \citep{silver2018general}. Here the problem is an input on the board, so one
 player can, \mbox{in principle, learn} many boards.
 
-The historical reference checkpoint and the comparison protocol here are
-scoped to tabular regression. Binary and multiclass classification, ranking,
-forecasting
-and relational prediction remain prospective boards, each needing a qualified
-encoding, program language, metric and validation protocol.
+The historical reference checkpoint and comparison protocol cover only
+tabular regression. Binary and multiclass classification, ranking,
+forecasting and relational prediction remain prospective; each needs a
+qualified encoding, program language, metric and validation protocol.
 
 Beyond machine learning, examples of referees include sorting tests
 \citep{mankowitz2023alphadev}, evaluators for mathematical constructions
@@ -211,8 +209,8 @@ isolation and parity checks required here.
 uniformly over all problems, no learner has lower error off the training set
 than another, ours included \citep{wolpert1996nfl}.
 
-Real problems are structured, though, and a player that
-reads the board can choose its bias board by board. \Cref{sec:results} reserves the tests of that hypothesis against fixed
+Problem structure motivates a player that chooses its bias from the board.
+\Cref{sec:results} reserves tests of that hypothesis against fixed
 frontier-designed regressors, with paired outcomes beside Elo summaries
 \citep{elo1978rating}. Non-transitivity limits what a single rating can establish
 \citep{balduzzi2018reevaluating}. A worked game, chosen by a rule fixed
