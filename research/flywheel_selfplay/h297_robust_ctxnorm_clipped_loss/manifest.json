@@ -65,5 +65,24 @@
     "host_cpu_pause_above": 85,
     "compute_stop": "2026-11-04T05:35:00Z"
   },
-  "epoch": 1793761076.978514
+  "epoch": 1793761076.978514,
+  "results": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/results.tar.gz",
+    "version_id": "K7zNgkztjDJ32iTNlNc9clWVrzZDw2tF",
+    "sha256": "d3829dd9591d39428062f8c50ea99b276872c4126452b7c853fe83d088cf2216",
+    "bytes": 129503755,
+    "exact_version_get_verified": true,
+    "members_verified": 88,
+    "members_sha256_verified": true
+  },
+  "result_members": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/results-member-manifest.json",
+    "version_id": "xYtwmNYEdo_nxjt2JgGmuj5HAYt7VjKg",
+    "sha256": "4b63c596de06eee389a75fbe710e224e7d471a0c6c6a8ce47dc52f1404f4de99",
+    "bytes": 14436,
+    "exact_version_get_verified": true
+  },
+  "source_commit": "8f4c22f5fb568951de563aecf1d14d903a542c7f",
+  "verdict": "NOT_ADVANCED",
+  "closed_epoch": 1793764622.3502476
 }
