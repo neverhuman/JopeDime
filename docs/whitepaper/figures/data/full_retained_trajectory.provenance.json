@@ -1,0 +1,45 @@
+{
+  "schema": "whitepaper.full-retained-trajectory-figure/v1",
+  "csv_sha256": "7bb0dd88e1a6ac1a57075d1b72c87db26d7bbe95a953bf90b8ccf526297fdd58",
+  "source_receipt_sha256": "79cbb37b1e4f9c885307f9298831a475a85a2d079927152c0a66c877a0bd9a60",
+  "generator_sha256": "c14a5ca88933fb2ae491ec7e930eea25a4f70a3f0bc8917674bb7e04f05b86b1",
+  "figure_sha256": "7b7eba5e4be8cb783ae1f89247947333179578e711d2404f4fa5fdaf69b66508",
+  "records": 4063,
+  "round_window": [
+    775,
+    4838
+  ],
+  "missing_rounds": [
+    4331
+  ],
+  "strict_gain_rounds": [
+    785,
+    859,
+    2750,
+    3175
+  ],
+  "tie_rounds": [
+    782,
+    882,
+    2795,
+    3100
+  ],
+  "plotted_states": 4063,
+  "line_gap_breaks": 1,
+  "cumulative_maximum": false,
+  "smoothing": false,
+  "first_retained_utility": "1.1073772627425547",
+  "final_retained_utility": "1.1389572403748425",
+  "scope": "Adaptive development-side cost-adapter admission records. These do not establish independent first-proposal quality, writer or ranking-map learning, serving performance or transfer.",
+  "source_binding": "Logged aggregate field interpretation only; exact installed source, adapter, candidate pools, normalization and evaluation-population closure remain unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "minimum_text_size_pt": 8.5,
+  "figure_inches": [
+    3.25,
+    2.0
+  ],
+  "matplotlib_version": "3.10.8",
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_full_retained_trajectory.py"
+}

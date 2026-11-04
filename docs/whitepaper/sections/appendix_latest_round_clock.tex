@@ -1,21 +1,20 @@
-\subsection{A later program-event window}\label{app:latest-round-clock}
+\subsection{A full-run wall-time record}\label{app:latest-round-clock}
 
-Event counts and durations measure different parts of a completed round
-(\cref{fig:fw-latest-round-clock}). In this 16:51 UTC capture on
-1 November 2026, all 20 summary event counts match the promotion journal
-and their admission records, separate from \cref{tab:admission-ledger}.
+Logged round durations span the admission period
+(\cref{fig:fw-latest-round-clock}); these operating clocks are separate from
+the admission counts in \cref{tab:admission-ledger}.
 Pricing a game-day proposal still requires \mbox{the full attempt} ledger (\cref{sub:price-run}).
 
-\begin{figure*}[!t]
+\begin{figure}[!tbp]
   \setlength{\abovecaptionskip}{4pt}
   \centering
-  \includegraphics[width=\linewidth,height=2.15in,keepaspectratio]{figures/fig_fw_latest_round_clock.pdf}
-  \caption{\textbf{Rounds 3033--3052 record eight program events and no adapter admissions.}
-  Every completed summary in rounds 3033--3052, including zero-event rounds.
-  Left: strict training-program incumbent events per completed round (count). Right: each
-  round's full logged wall time (seconds), including work and waits. The window
-  records eight events over \num{1831.32}\,s (15.73 events per hour)
-  and no adapter admissions. These are distinct event and time measures.
-  Scope: \cref{sec:method-status}.}
+  \includegraphics[width=\linewidth]{figures/fig_fw_latest_round_clock.pdf}
+  \caption{\textbf{Recorded round durations vary across the full admission period.}
+  All \num{4064} retained wall-time records in rounds 775--4838, captured at
+  04:58 UTC on 4 November 2026. Each point is a logged round's wall seconds;
+  the line is the trailing 51-round median, starting with the 51st record.
+  The vertical axis is logarithmic; no raw duration is filtered.
+  These clocks include timed in-round work and waits, not inter-round gaps
+  or single-proposal latency. Scope: \cref{sec:method-status}.}
   \label{fig:fw-latest-round-clock}
-\end{figure*}
+\end{figure}

@@ -1,0 +1,32 @@
+{
+  "schema": "whitepaper.full-round-wall-time-figure/v1",
+  "csv_sha256": "46daa1916799f347f1af01311c07a6044d9bc2c9e9d6f758ed6e7e15aafd6488",
+  "source_receipt_sha256": "d67bbcaefbfa04cf59bc97f6c410cd62c4a48bbc0deb3541e889a924f2d52fef",
+  "generator_sha256": "fe301b2658e4db665129d75b41502e94d68d3725f1df5b98fd7020a4ba8aa578",
+  "figure_sha256": "bf284cbe90dc519577c00f9e81524e75b644cdbf75871c58075b6b65a11dda64",
+  "records": 4064,
+  "round_window": [
+    775,
+    4838
+  ],
+  "points": 4064,
+  "trailing_median_rounds": 51,
+  "median_points": 4014,
+  "first_median_round": 825,
+  "minimum_seconds": "36.618897815",
+  "maximum_seconds": "1409.249195829",
+  "raw_points_filtered": 0,
+  "vertical_scale": "logarithmic",
+  "scope": "Recorded in-round wall seconds, including timed work and waits; not inter-round elapsed gaps, proposal latency, serving throughput or independent learning. Legacy records need not carry a completion flag.",
+  "source_binding": "Logged aggregate field interpretation only; exact installed source, adapter, candidate pools, normalization and evaluation-population closure remain unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "minimum_text_size_pt": 8.5,
+  "figure_inches": [
+    3.25,
+    2.0
+  ],
+  "matplotlib_version": "3.10.8",
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_full_round_wall_time.py"
+}

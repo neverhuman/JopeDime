@@ -53,5 +53,7 @@ figs:
 	python3 figures/scripts/make_decision_cadence.py
 	python3 figures/scripts/make_parameter_displacement.py
 	python3 figures/scripts/make_gradient_norms.py
+	python3 figures/scripts/make_full_retained_trajectory.py
+	python3 figures/scripts/make_full_round_wall_time.py
 clean:
 	latexmk -C

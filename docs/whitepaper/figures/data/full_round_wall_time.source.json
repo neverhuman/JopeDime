@@ -1,0 +1,23 @@
+{
+  "schema": "whitepaper.full-round-wall-time-source/v1",
+  "source_records": "Final round JSON records",
+  "captured_utc": "2026-11-04T04:58:34.169628+00:00",
+  "records": 4064,
+  "round_window": [
+    775,
+    4838
+  ],
+  "capture_cutoff": 4838,
+  "missing_rounds": [],
+  "excluded_records": [],
+  "source_file_set_sha256": "dfc562d9b392af9e7550d84894bdfbe344301a38e7fd7c7a6c3f7e7f22fd614b",
+  "source_bytes": 790895761,
+  "stable_record_reread": true,
+  "trailing_median_rounds": 51,
+  "selection": "Every retained round JSON record from775 through fixed admission-capture cutoff with a finite nonnegative logged wall_seconds value. No latency/outcome filtering; missing durations remain missing.",
+  "legacy_records_without_completion_flag": 3556,
+  "explicit_completion_flag_records": 508,
+  "csv_sha256": "46daa1916799f347f1af01311c07a6044d9bc2c9e9d6f758ed6e7e15aafd6488",
+  "scope": "Recorded in-round wall seconds, including timed work and waits; not inter-round elapsed gaps, proposal latency, serving throughput or independent learning. Legacy records need not carry a completion flag.",
+  "source_binding": "Logged aggregate field interpretation only; exact installed source, adapter, candidate pools, normalization and evaluation-population closure remain unqualified."
+}
