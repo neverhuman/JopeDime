@@ -141,19 +141,17 @@ four parents chosen by measured loss. Neither establishes trained-map
 lift; \mbox{evaluation must} bind the exact search route.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
-the 16 tail seeds are unscored. While scored survivors remain, unscored
-survivors share the lowest scored weight.
-A cut fixes a dataset split and evaluation case. Native assembly takes up
-to ten same-cut teachers, then cross-cut teachers up to a 16-seed tail.
-Random fallbacks fill to ten slots if needed; random exploration fills the
-rest. The standalone seed writer uses 16 random programs. Teacher-first
-execution prioritizes retained cut teachers; \cref{alg:selfplay} leaves the
-tail route-dependent.
-Search-parent weights act during search; writer-loss weights use referee
-rank during training. Testing whether map-guided targets improve later
-proposals requires the matched ablation in \cref{sub:results-ablation}.
-The historical target diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
-do not supply that controlled comparison.
+the 16 tail seeds are unscored. Unscored survivors inherit the lowest
+scored weight while any scored remain.
+A cut fixes dataset split and evaluation case. Native assembly's 16-seed
+tail takes up to ten same-cut teachers, then cross-cut teachers; random
+fallbacks fill to ten, random exploration the rest. Standalone seeding uses
+16 random programs. Teacher-first execution prioritizes retained cut teachers;
+\cref{alg:selfplay} leaves the tail route-dependent.
+Search-parent weights govern search; writer-loss weights use referee rank
+in training. Whether map-guided targets improve later proposals needs
+the matched ablation in \cref{sub:results-ablation}; historical diagnostics
+in \cref{fig:fw-target-progress,fig:fw-target-history} cannot supply it.
 
 \Cref{sub:method-selfplay} takes these referee-scored lists as proposed
 offline \mbox{training} targets.
