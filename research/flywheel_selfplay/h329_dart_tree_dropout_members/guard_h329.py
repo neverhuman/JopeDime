@@ -1,0 +1,65 @@
+"""Resource monitor owns only h329-run.service; fails closed and stops its cgroup."""
+import datetime,json,os,subprocess,threading,time
+from pathlib import Path
+DATA=Path('/home/ubuntu/jope-data/h329-gov03')
+
+def cpu():
+    a=list(map(int,Path('/proc/stat').read_text().splitlines()[0].split()[1:]));return sum(a[:8]),a[3]+a[4]
+
+def monitor():
+    prev=cpu()
+    while True:
+        time.sleep(5)
+        total,idle=cpu();dt=total-prev[0];usage=100*(1-(idle-prev[1])/dt) if dt else 0;prev=(total,idle)
+        mem=int(next(x.split()[1] for x in Path('/proc/meminfo').read_text().splitlines() if x.startswith('MemAvailable:')))*1024
+        size=0
+        for p in DATA.rglob('*'):
+            try:
+                if p.is_file():size+=p.stat().st_size
+            except FileNotFoundError:
+                pass # Own verified archive reclamation can race a telemetry snapshot.
+        utc=datetime.datetime.now(datetime.timezone.utc)
+        r=dict(utc=utc.isoformat(),cpu_percent=usage,load1=os.getloadavg()[0],mem_available_bytes=mem,scratch_bytes=size)
+        with (DATA/'resource.jsonl').open('a') as f:f.write(json.dumps(r)+'\n')
+        reason=[]
+        if usage>85:reason.append('host CPU >85%')
+        if os.getloadavg()[0]>85:reason.append('host load >85')
+        if mem<20*1024**3:reason.append('MemAvailable <20GiB')
+        if size>2_000_000_000:reason.append('scratch >2GB')
+        if utc>=datetime.datetime(2026,11,4,20,45,tzinfo=datetime.timezone.utc):reason.append('compute deadline')
+        if reason:
+            (DATA/'STOP.json').write_text(json.dumps(dict(reason=reason,**r)))
+            subprocess.run(['systemctl','--user','stop','h329-run.service'],check=False)
+            return
+
+if __name__=='__main__':
+    DATA.mkdir(exist_ok=True,parents=True)
+    threading.Thread(target=monitor,daemon=True).start()
+    import sys
+    source=Path(__file__).resolve().parent
+    for phase in ['fetch','preflight','regress','forecast','fit','score']:
+        command=[sys.executable,str(source/'fetch_base_h329.py')] if phase=='fetch' else ([sys.executable,str(source/'input_preflight.py')] if phase=='preflight' else ([sys.executable,str(source/'forecast_h329.py')] if phase=='forecast' else [sys.executable,str(source/'run_h329.py'),phase]))
+        if phase=='fit':
+            # Fresh sibling-aware sample; reserve only the assigned six physical cores.
+            raw=subprocess.check_output(['mpstat','-P','16,17,18,19,20,22,80,81,82,83,84,86','1','3','-o','JSON'],text=True)
+            stats=json.loads(raw)['sysstat']['hosts'][0]['statistics'];eligible=[];readback={}
+            for c in [16,17,18,19,20,22]:
+                idle=min(float(next(x for x in s['cpu-load'] if x['cpu']==str(n))['idle']) for s in stats for n in [c,c+64])
+                readback[c]=idle
+                if idle>=85:eligible.append(c)
+            if not eligible:raise RuntimeError('No idle authorized cores; close INCOMPLETE')
+            from forecast_h329 import estimate
+            fixture=json.loads((DATA/'timing_fixture.json').read_text())
+            forecast=estimate(fixture['forecast_multiplier'],len(eligible))
+            forecast['eligible_cores']=eligible;forecast['both_smt_idle']=readback
+            (DATA/'runtime_forecast.json').write_text(json.dumps(forecast,indent=2)+'\n')
+            (source.parent/'runtime-forecast-at-launch.json').write_text(json.dumps(forecast,indent=2)+'\n')
+            print(json.dumps(dict(runtime_forecast=forecast)),flush=True)
+            if not forecast['launch_full_36']:
+                (DATA/'INCOMPLETE_RUNTIME_FORECAST.json').write_text(json.dumps(forecast,indent=2)+'\n')
+                raise RuntimeError('Full36 DART forecast misses window; no campaign fits launched')
+            env=dict(os.environ,H329_WORKERS=str(len(eligible)))
+            (DATA/'pre_fit_resource.json').write_text(json.dumps(dict(eligible_cores=eligible,idle_percent=readback)))
+            command=['taskset','-c',','.join(map(str,eligible)),*command]
+            subprocess.run(command,check=True,env=env)
+        else:subprocess.run(command,check=True)
