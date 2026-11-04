@@ -74,7 +74,12 @@ def build_bank(rows: Sequence[dict]) -> Tuple[List[BankEntry], dict]:
     fam_of = {r["context_sha256"]: r["family_id"] for r in rows}
     ds_of = {r["context_sha256"]: r["dataset_id"] for r in rows}
     recs: Dict[str, dict] = {}
-    info = {"champions_in": 0, "winners_in": 0, "winners_non_train_dropped": 0, "noncanonical_dropped": 0}
+    info = {
+        "champions_in": 0,
+        "winners_in": 0,
+        "winners_non_train_dropped": 0,
+        "noncanonical_dropped": 0,
+    }
 
     def add(dsl: str, cid: str, kind: str):
         if cid not in fam_of:
@@ -96,15 +101,26 @@ def build_bank(rows: Sequence[dict]) -> Tuple[List[BankEntry], dict]:
         if r.get("dl_split") == "DL-Train":
             info["champions_in"] += 1
             add(r["dsl"], r["context_sha256"], "champion")
-    for r in json.loads((C.RES01 / "winners.json").read_text())["all_90_qualified_novel_winner_records"]:
+    for r in json.loads((C.RES01 / "winners.json").read_text())[
+        "all_90_qualified_novel_winner_records"
+    ]:
         info["winners_in"] += 1
         add(r["dsl"], r["context_sha256"], "winner")
     bank = []
     for sha in sorted(recs):
         r = recs[sha]
         cids = tuple(r["cids"])
-        bank.append(BankEntry(r["dsl"], sha, G.island_of(r["dsl"]), cids, tuple(fam_of[c] for c in cids),
-                              tuple(ds_of[c] for c in cids), tuple(r["kinds"])))
+        bank.append(
+            BankEntry(
+                r["dsl"],
+                sha,
+                G.island_of(r["dsl"]),
+                cids,
+                tuple(fam_of[c] for c in cids),
+                tuple(ds_of[c] for c in cids),
+                tuple(r["kinds"]),
+            )
+        )
     info["entries"] = len(bank)
     return bank, info
 
@@ -112,22 +128,36 @@ def build_bank(rows: Sequence[dict]) -> Tuple[List[BankEntry], dict]:
 class TargetBank:
     """Eligible bank for one target context (family- and dataset-disjoint)."""
 
-    def __init__(self, bank: Sequence[BankEntry], cid: str, fam_of: Dict[str, str], ds_of: Dict[str, str]):
+    def __init__(
+        self,
+        bank: Sequence[BankEntry],
+        cid: str,
+        fam_of: Dict[str, str],
+        ds_of: Dict[str, str],
+    ):
         self.cid = cid
         fam, ds = fam_of[cid], ds_of[cid]
         same_fam = [b for b in bank if fam in b.families]
-        same_ds_other_fam = [b for b in bank if ds in b.dataset_ids and fam not in b.families]
+        same_ds_other_fam = [
+            b for b in bank if ds in b.dataset_ids and fam not in b.families
+        ]
         excl = {b.sha for b in same_fam} | {b.sha for b in same_ds_other_fam}
         self.eligible = [b for b in bank if b.sha not in excl]
         self.excluded_shas: Set[str] = excl
-        self.excluded_cids: Set[str] = {c for c, f in fam_of.items() if f == fam} | {c for c, d in ds_of.items() if d == ds}
+        self.excluded_cids: Set[str] = {c for c, f in fam_of.items() if f == fam} | {
+            c for c, d in ds_of.items() if d == ds
+        }
         self.n_excluded_same_family = len(same_fam)
         self.n_excluded_same_dataset_other_family = len(same_ds_other_fam)
         self.by_sha = {b.sha: b for b in self.eligible}
 
     def exclusion_record(self) -> dict:
-        return {"n_excluded": len(self.excluded_shas), "same_family": self.n_excluded_same_family,
-                "same_dataset_other_family": self.n_excluded_same_dataset_other_family, "eligible": len(self.eligible)}
+        return {
+            "n_excluded": len(self.excluded_shas),
+            "same_family": self.n_excluded_same_family,
+            "same_dataset_other_family": self.n_excluded_same_dataset_other_family,
+            "eligible": len(self.eligible),
+        }
 
     def filter(self, cands: Iterable[G.Candidate]) -> List[G.Candidate]:
         out = []
@@ -147,7 +177,9 @@ def _lineage(c: G.Candidate) -> Tuple[str, ...]:
     return ()
 
 
-def assert_bank_disjoint(cid: str, candidates: Iterable[G.Candidate], tb: TargetBank) -> None:
+def assert_bank_disjoint(
+    cid: str, candidates: Iterable[G.Candidate], tb: TargetBank
+) -> None:
     """Hard invariant: no candidate is (or descends from) a same-family / same-dataset bank record of `cid`."""
     if tb.cid != cid:
         raise BankLeakError(f"TargetBank for {tb.cid} used for {cid}")
@@ -155,11 +187,15 @@ def assert_bank_disjoint(cid: str, candidates: Iterable[G.Candidate], tb: Target
         if c.sha in tb.excluded_shas or any(x in tb.excluded_cids for x in _lineage(c)):
             with _BANK_LOCK:
                 BANK_COUNTERS["same_family_bank_hits"] += 1
-            raise BankLeakError(f"{cid}: candidate {c.sha[:12]} ({c.operator}) touches an excluded bank record")
+            raise BankLeakError(
+                f"{cid}: candidate {c.sha[:12]} ({c.operator}) touches an excluded bank record"
+            )
 
 
 def bank_candidate(b: BankEntry, operator: str = "bank_nn") -> G.Candidate:
-    return G.Candidate(b.dsl, b.sha, operator, (b.sha,), b.island, (("bank_cids", "|".join(b.cids)),))
+    return G.Candidate(
+        b.dsl, b.sha, operator, (b.sha,), b.island, (("bank_cids", "|".join(b.cids)),)
+    )
 
 
 def merge_lineage(*cands: G.Candidate) -> str:
@@ -174,7 +210,9 @@ def merge_lineage(*cands: G.Candidate) -> str:
 # ----------------------------------------------------------------------------------------------------------------------
 # Context codes (bank nearest neighbours, BANK_NN1)
 # ----------------------------------------------------------------------------------------------------------------------
-LM12 = slice(320 + 629, 320 + 629 + 12)  # lm48_z[:12] inside pack_view_feats [tokens 320 | dope629 | lm48_z 48]
+LM12 = slice(
+    320 + 629, 320 + 629 + 12
+)  # lm48_z[:12] inside pack_view_feats [tokens 320 | dope629 | lm48_z 48]
 DOPE = slice(320, 320 + 629)
 
 
@@ -191,15 +229,42 @@ class ContextCoder:
 
 
 class NeuralContextCoder(ContextCoder):
-    """Target: view 0 of the SEARCH-envelope views (screener encoding). Bank contexts: view 0 of the neural track's
-    full-table view cache (bank contexts are never the context being audited)."""
+    """Target: view 0 of the SEARCH-envelope views (screener encoding). Bank contexts: exact float32 view 0 of the
+    neural track's full-table encodings, from the merged file $H317_DATA/neural/views_c32_train1219.npz when present
+    (else the per-context $H317_DATA/views/<cid>.npz). Bank contexts are never the context being audited; a target's
+    own family (hence its own full-table encoding) is excluded by TargetBank before any distance is computed."""
 
     name = "dope_view0"
 
-    def __init__(self, search_views: Callable[[str], np.ndarray], bank_view_dir: Path = C.DATA_ROOT / "views"):
+    def __init__(
+        self,
+        search_views: Callable[[str], np.ndarray],
+        bank_view_dir: Path = C.DATA_ROOT / "views",
+        merged_path: Optional[Path] = C.DATA_ROOT
+        / "neural"
+        / "views_c32_train1219.npz",
+    ):
         self.search_views, self.bank_view_dir = search_views, Path(bank_view_dir)
+        self.merged_path = Path(merged_path) if merged_path else None
+        self._merged: Optional[Dict[str, np.ndarray]] = None
         self._cache: Dict[str, dict] = {}
         self._lock = threading.Lock()
+
+    def _merged_view0(self) -> Optional[Dict[str, np.ndarray]]:
+        if (
+            self._merged is None
+            and self.merged_path is not None
+            and self.merged_path.exists()
+        ):
+            import importlib
+
+            V = importlib.import_module("crop_shuffle_synthetic_views")
+            m = V.load_merged_views(self.merged_path)
+            self._merged = {
+                str(c): np.asarray(v, np.float64)
+                for c, v in zip(m["cids"], m["view0_f32"])
+            }
+        return self._merged
 
     def target(self, cid):
         v = np.asarray(self.search_views(cid), np.float64)[0]
@@ -211,8 +276,18 @@ class NeuralContextCoder(ContextCoder):
         if hit is None:
             import importlib
 
-            V = importlib.import_module("crop_shuffle_synthetic_views")
-            v = np.asarray(V.context_view_feats(cid, "full", views=[0], view_dir=self.bank_view_dir)[0], np.float64)
+            with self._lock:
+                merged = self._merged_view0()
+            if merged is not None:
+                v = merged[cid]
+            else:
+                V = importlib.import_module("crop_shuffle_synthetic_views")
+                v = np.asarray(
+                    V.context_view_feats(
+                        cid, "full", views=[0], view_dir=self.bank_view_dir
+                    )[0],
+                    np.float64,
+                )
             hit = {"lm12": v[LM12], "dope": v[DOPE]}
             with self._lock:
                 self._cache[cid] = hit
@@ -229,14 +304,18 @@ def numpy_landmarks(x: np.ndarray, y: np.ndarray, folds: np.ndarray) -> np.ndarr
     corr = np.abs(xs.T @ ys) / n
     sub = xs[:, : min(p, 40)]
     with np.errstate(invalid="ignore", divide="ignore"):
-        cc = np.nan_to_num(np.abs(np.corrcoef(sub.T))) if sub.shape[1] > 1 else np.zeros((1, 1))
+        cc = (
+            np.nan_to_num(np.abs(np.corrcoef(sub.T)))
+            if sub.shape[1] > 1
+            else np.zeros((1, 1))
+        )
     off = cc[~np.eye(len(cc), dtype=bool)] if len(cc) > 1 else np.zeros(1)
 
     def r2(feats):
         a, b = feats[folds == 0], feats[folds == 1]
         ya, yb = ys[folds == 0], ys[folds == 1]
         out = []
-        for (tr, ytr, te, yte) in ((a, ya, b, yb), (b, yb, a, ya)):
+        for tr, ytr, te, yte in ((a, ya, b, yb), (b, yb, a, ya)):
             A = np.c_[tr, np.ones(len(tr))]
             w = np.linalg.solve(A.T @ A + 1.0 * np.eye(A.shape[1]), A.T @ ytr)
             pr = np.c_[te, np.ones(len(te))] @ w
@@ -246,11 +325,26 @@ def numpy_landmarks(x: np.ndarray, y: np.ndarray, folds: np.ndarray) -> np.ndarr
     lin = r2(xs[:, :60])
     quad = r2(np.c_[xs[:, :30], xs[:, :30] ** 2])
     rk = r2(((np.argsort(np.argsort(x[:, :60], 0), 0) / max(n - 1, 1)) - 0.5) * 3.4)
-    skew = float(np.mean(ys ** 3))
-    kurt = float(np.mean(ys ** 4))
-    return np.nan_to_num(np.array([math.log(n), math.log(p), skew, math.log(max(kurt, 1e-3)), len(np.unique(y)) / n,
-                     float(corr.mean()), float(corr.max()), lin, quad - lin, rk - lin, float(off.mean()),
-                     float(np.mean([len(np.unique(x[:, j])) <= 2 for j in range(p)]))]))
+    skew = float(np.mean(ys**3))
+    kurt = float(np.mean(ys**4))
+    return np.nan_to_num(
+        np.array(
+            [
+                math.log(n),
+                math.log(p),
+                skew,
+                math.log(max(kurt, 1e-3)),
+                len(np.unique(y)) / n,
+                float(corr.mean()),
+                float(corr.max()),
+                lin,
+                quad - lin,
+                rk - lin,
+                float(off.mean()),
+                float(np.mean([len(np.unique(x[:, j])) <= 2 for j in range(p)])),
+            ]
+        )
+    )
 
 
 class NumpyContextCoder(ContextCoder):
@@ -287,9 +381,13 @@ def _zdist(t: np.ndarray, M: np.ndarray) -> np.ndarray:
     return np.sqrt(np.sum(((M - mu) / sd - (t - mu) / sd) ** 2, axis=1))
 
 
-def bank_nn(tb: TargetBank, coder: ContextCoder, k: int, key: str = "lm12") -> List[Tuple[float, BankEntry]]:
+def bank_nn(
+    tb: TargetBank, coder: ContextCoder, k: int, key: str = "lm12"
+) -> List[Tuple[float, BankEntry]]:
     """Eligible entries by distance of their nearest eligible source context (z-scored over eligible contexts only)."""
-    ctx_ids = sorted({c for b in tb.eligible for c in b.cids if c not in tb.excluded_cids})
+    ctx_ids = sorted(
+        {c for b in tb.eligible for c in b.cids if c not in tb.excluded_cids}
+    )
     M = np.stack([coder.bank(c)[key] for c in ctx_ids])
     d = dict(zip(ctx_ids, _zdist(np.asarray(coder.target(tb.cid)[key], np.float64), M)))
     scored = []
@@ -301,7 +399,9 @@ def bank_nn(tb: TargetBank, coder: ContextCoder, k: int, key: str = "lm12") -> L
     return scored[:k]
 
 
-def bank_champions_by_dope(tb: TargetBank, coder: ContextCoder, k: int, operator: str) -> List[G.Candidate]:
+def bank_champions_by_dope(
+    tb: TargetBank, coder: ContextCoder, k: int, operator: str
+) -> List[G.Candidate]:
     """Champions of the k nearest eligible contexts by Euclidean distance of z-scored DOPE view-0 encodings (the
     screener's context encoding; target = SEARCH rows only). Distinct DSLs, nearest first."""
     champs = [b for b in tb.eligible if "champion" in b.kinds]
@@ -378,8 +478,12 @@ def unique_by_sha(cands: Iterable[G.Candidate]) -> List[G.Candidate]:
 # ----------------------------------------------------------------------------------------------------------------------
 # Shortlist: bank NN + grammar proposals (M ~ 160)
 # ----------------------------------------------------------------------------------------------------------------------
-def grammar_shortlist(g: GPContext, parents: Sequence[G.Candidate], per_island: int = SHORTLIST_GRAMMAR_PER_ISLAND,
-                      tag: str = "gen0") -> List[G.Candidate]:
+def grammar_shortlist(
+    g: GPContext,
+    parents: Sequence[G.Candidate],
+    per_island: int = SHORTLIST_GRAMMAR_PER_ISLAND,
+    tag: str = "gen0",
+) -> List[G.Candidate]:
     rng = g.rng("grammar", tag)
     w = g.ctx.width
     out: List[G.Candidate] = []
@@ -393,19 +497,40 @@ def grammar_shortlist(g: GPContext, parents: Sequence[G.Candidate], per_island: 
             par: List[G.Candidate] = []
             if isl == 3 and u < 0.5 and len(pg) >= 2:
                 i, j = rng.sample(range(len(pg)), 2)
-                gen, op, par = G.op_portfolio([pg[i], pg[j]]), "nn_portfolio", [parents[i], parents[j]]
+                gen, op, par = (
+                    G.op_portfolio([pg[i], pg[j]]),
+                    "nn_portfolio",
+                    [parents[i], parents[j]],
+                )
             elif u < 0.5 and pg:
                 i = rng.randrange(len(pg))
-                gen, op, par = G.head_swap(pg[i], isl, rng), "nn_head_swap", [parents[i]]
+                gen, op, par = (
+                    G.head_swap(pg[i], isl, rng),
+                    "nn_head_swap",
+                    [parents[i]],
+                )
             elif u < 0.7 and pg:
                 i = rng.randrange(len(pg))
-                base = G.head_swap(pg[i], isl, rng) if parents[i].island != isl else pg[i]
-                gen = rng.choice([G.op_parameter, lambda x, r: G.op_insert_stage(x, r), G.op_delete_stage])(base, rng)
+                base = (
+                    G.head_swap(pg[i], isl, rng) if parents[i].island != isl else pg[i]
+                )
+                gen = rng.choice(
+                    [
+                        G.op_parameter,
+                        lambda x, r: G.op_insert_stage(x, r),
+                        G.op_delete_stage,
+                    ]
+                )(base, rng)
                 op, par = "nn_mutate", [parents[i]]
             else:
                 gen, op = G.op_synth(isl, rng), "grammar_synth"
-            cand = G.safe_candidate(gen, f"{tag}_{op}_i{isl}", [p.sha for p in par], w,
-                                    bank_cids=merge_lineage(*par))
+            cand = G.safe_candidate(
+                gen,
+                f"{tag}_{op}_i{isl}",
+                [p.sha for p in par],
+                w,
+                bank_cids=merge_lineage(*par),
+            )
             if cand is None or cand.sha in seen or cand.island != isl:
                 continue
             seen.add(cand.sha)
@@ -414,7 +539,9 @@ def grammar_shortlist(g: GPContext, parents: Sequence[G.Candidate], per_island: 
     return g.tb.filter(out)
 
 
-def build_shortlist(g: GPContext, n_bank: int = SHORTLIST_BANK_NN, with_grammar: bool = True) -> List[G.Candidate]:
+def build_shortlist(
+    g: GPContext, n_bank: int = SHORTLIST_BANK_NN, with_grammar: bool = True
+) -> List[G.Candidate]:
     nn = [bank_candidate(b) for _, b in bank_nn(g.tb, g.coder, n_bank)]
     nn = [c for c in nn if G.width_ok(c.dsl, g.ctx.width)]
     out = list(nn)
@@ -456,7 +583,9 @@ class SeedRun:
             "best_sha": b.sha if b else None,
             "bm_best_search_utility": bm.utility if bm else None,
             "bm_best_sha": bm.sha if bm else None,
-            "mean_passing_search_utility": float(np.mean([r.utility for r in passing])) if passing else None,
+            "mean_passing_search_utility": float(np.mean([r.utility for r in passing]))
+            if passing
+            else None,
             "n_passing": len(passing),
             "n_failed": sum(r.status != "completed" for r in self.results),
             "n_families_passing": len({G.head_family(r.dsl) for r in passing}),
@@ -465,7 +594,9 @@ class SeedRun:
         }
 
 
-def _pick(order_scores: np.ndarray, chosen: List[int], allowed: Optional[Sequence[int]] = None) -> Optional[int]:
+def _pick(
+    order_scores: np.ndarray, chosen: List[int], allowed: Optional[Sequence[int]] = None
+) -> Optional[int]:
     idx = np.argsort(-order_scores, kind="stable")
     allow = set(allowed) if allowed is not None else None
     for j in idx:
@@ -498,8 +629,14 @@ def seed_A(g: GPContext, n: int = 8, n_nn: int = 24) -> SeedRun:
         if j is not None:
             chosen.append(j)
         while len(chosen) < min(n, len(cands)):
-            acq = np.array([total[k] + 0.30 * _min_dist(D, k, chosen) if k not in chosen else -1e18
-                            for k in range(len(cands))])
+            acq = np.array(
+                [
+                    total[k] + 0.30 * _min_dist(D, k, chosen)
+                    if k not in chosen
+                    else -1e18
+                    for k in range(len(cands))
+                ]
+            )
             chosen.append(int(np.argmax(acq)))
         order = [cands[k] for k in chosen]
         res = g.evaluate(order)
@@ -528,14 +665,22 @@ def seed_B(g: GPContext, per_regime: int = 4) -> SeedRun:
                 chosen.append(j)
                 mine.append(j)
             per.append(mine)
-        order_idx = [per[r][k] for k in range(per_regime) for r in range(4) if k < len(per[r])]  # round-robin
+        order_idx = [
+            per[r][k] for k in range(per_regime) for r in range(4) if k < len(per[r])
+        ]  # round-robin
         order = [cands[k] for k in order_idx]
         res = g.evaluate(order)
     return SeedRun("B", order, res, info={"shortlist": len(cands)})
 
 
-def _island_roles(Sm: np.ndarray, cons: np.ndarray, cands: Sequence[G.Candidate], D: np.ndarray, chosen: List[int],
-                  per_island: int) -> List[List[int]]:
+def _island_roles(
+    Sm: np.ndarray,
+    cons: np.ndarray,
+    cands: Sequence[G.Candidate],
+    D: np.ndarray,
+    chosen: List[int],
+    per_island: int,
+) -> List[List[int]]:
     """Plan §3.3 island roles over the [32, M] matrix (pool roles replaced by island consensus: no pool DSLs)."""
     sd_all = Sm.std(0)
     by_isl = {i: [k for k, c in enumerate(cands) if c.island == i] for i in range(4)}
@@ -563,7 +708,9 @@ def _island_roles(Sm: np.ndarray, cons: np.ndarray, cands: Sequence[G.Candidate]
                 acq = np.full(len(cands), -1e18)
                 for k in allowed:
                     if k not in chosen:
-                        acq[k] = (cons[k] + 0.5 * sd_all[k] if role is None else 0.0) + 0.3 * _min_dist(D, k, chosen)
+                        acq[k] = (
+                            cons[k] + 0.5 * sd_all[k] if role is None else 0.0
+                        ) + 0.3 * _min_dist(D, k, chosen)
                 j = int(np.argmax(acq)) if acq.max() > -1e17 else None
             if j is None:  # island exhausted: fill with the overall consensus best
                 j = _pick(cons, chosen)
@@ -580,7 +727,9 @@ def _round_robin(per: List[List[int]]) -> List[int]:
     return [p[k] for k in range(k_max) for p in per if k < len(p)]
 
 
-def seed_C(g: GPContext, per_island: int = 4, shortlist: Optional[List[G.Candidate]] = None) -> SeedRun:
+def seed_C(
+    g: GPContext, per_island: int = 4, shortlist: Optional[List[G.Candidate]] = None
+) -> SeedRun:
     """16 seeds across 4 islands from one [32, M~160] scoring of bank NN + grammar proposals."""
     with selection_scope("H0.4.seedC"):
         cands = shortlist if shortlist is not None else build_shortlist(g)
@@ -591,11 +740,20 @@ def seed_C(g: GPContext, per_island: int = 4, shortlist: Optional[List[G.Candida
         per = _island_roles(Sm, cons, cands, D, [], per_island)
         order = [cands[k] for k in _round_robin(per)]
         res = g.evaluate(order)
-    return SeedRun("C", order, res, info={"shortlist": len(cands),
-                                          "shortlist_islands": [sum(c.island == i for c in cands) for i in range(4)]})
+    return SeedRun(
+        "C",
+        order,
+        res,
+        info={
+            "shortlist": len(cands),
+            "shortlist_islands": [sum(c.island == i for c in cands) for i in range(4)],
+        },
+    )
 
 
-def seed_D(g: GPContext, per_island: int = 5, shortlist: Optional[List[G.Candidate]] = None) -> SeedRun:
+def seed_D(
+    g: GPContext, per_island: int = 5, shortlist: Optional[List[G.Candidate]] = None
+) -> SeedRun:
     """Active 2+2: reveal top-2 by consensus, correct, reveal 2 by corrected UCB, correct; then 20 seeds (5/island)."""
     with selection_scope("H0.4.seedD"):
         cands = shortlist if shortlist is not None else build_shortlist(g)
@@ -610,7 +768,9 @@ def seed_D(g: GPContext, per_island: int = 5, shortlist: Optional[List[G.Candida
             if j is not None:
                 revealed.append(j)
         rev_res += g.evaluate([cands[k] for k in revealed])
-        S_corr, pred, _ = S.corrected_matrix(g.screener, g.cid, dsls, [(r.dsl, r.utility) for r in rev_res], g.corrector)
+        S_corr, pred, _ = S.corrected_matrix(
+            g.screener, g.cid, dsls, [(r.dsl, r.utility) for r in rev_res], g.corrector
+        )
         ucb = pred + 0.5 * S_corr.std(0)
         r2 = []
         for _ in range(2):
@@ -619,8 +779,9 @@ def seed_D(g: GPContext, per_island: int = 5, shortlist: Optional[List[G.Candida
                 r2.append(j)
         rev_res += g.evaluate([cands[k] for k in r2])
         revealed += r2
-        S_corr, pred, info = S.corrected_matrix(g.screener, g.cid, dsls, [(r.dsl, r.utility) for r in rev_res],
-                                                g.corrector)
+        S_corr, pred, info = S.corrected_matrix(
+            g.screener, g.cid, dsls, [(r.dsl, r.utility) for r in rev_res], g.corrector
+        )
         D = np.stack([G.ext_descriptor(d) for d in dsls])
         per = _island_roles(S_corr, pred, cands, D, list(revealed), per_island - 1)
         # 5th seed per island: the island's best corrected prediction not yet chosen
@@ -635,8 +796,16 @@ def seed_D(g: GPContext, per_island: int = 5, shortlist: Optional[List[G.Candida
         seeds = [cands[k] for k in _round_robin(per)]
         res = g.evaluate(seeds)
         order = [cands[k] for k in revealed] + seeds
-    return SeedRun("D", order, rev_res + res, n_reveals=len(revealed),
-                   info={"shortlist": len(cands), "corrector": {k: float(v) for k, v in info.items()}})
+    return SeedRun(
+        "D",
+        order,
+        rev_res + res,
+        n_reveals=len(revealed),
+        info={
+            "shortlist": len(cands),
+            "corrector": {k: float(v) for k, v in info.items()},
+        },
+    )
 
 
 def registry_candidates(width: int) -> List[G.Candidate]:
@@ -655,7 +824,9 @@ def seed_E(g: GPContext, seed_a: SeedRun) -> SeedRun:
         covered = [not G.feat412_blind(c.dsl) for c in presets]
         mode = "fixed"
         if all(covered):
-            sc = S.zscore_rows(g.screener.score(g.cid, [0], [c.dsl for c in presets]))[0]
+            sc = S.zscore_rows(g.screener.score(g.cid, [0], [c.dsl for c in presets]))[
+                0
+            ]
             presets = [presets[int(j)] for j in np.argsort(-sc, kind="stable")]
             mode = "screener_view0"
         bank = list(seed_a.order[:8])
@@ -667,8 +838,16 @@ def seed_E(g: GPContext, seed_a: SeedRun) -> SeedRun:
                 order.append(bank[k])
         order = unique_by_sha(order)
         res = g.evaluate(order)
-    return SeedRun("E", order, res, info={"preset_order": mode, "featurize_covered": int(sum(covered)),
-                                          "presets": [c.operator for c in presets]})
+    return SeedRun(
+        "E",
+        order,
+        res,
+        info={
+            "preset_order": mode,
+            "featurize_covered": int(sum(covered)),
+            "presets": [c.operator for c in presets],
+        },
+    )
 
 
 SCHEMES = ("A", "B", "C", "D", "E")
@@ -678,7 +857,13 @@ def run_h04(g: GPContext) -> Dict[str, SeedRun]:
     with selection_scope("H0.4.shortlist"):
         sl = build_shortlist(g)
     a = seed_A(g)
-    return {"A": a, "B": seed_B(g), "C": seed_C(g, shortlist=sl), "D": seed_D(g, shortlist=sl), "E": seed_E(g, a)}
+    return {
+        "A": a,
+        "B": seed_B(g),
+        "C": seed_C(g, shortlist=sl),
+        "D": seed_D(g, shortlist=sl),
+        "E": seed_E(g, a),
+    }
 
 
 def run_scheme(g: GPContext, scheme: str) -> SeedRun:
@@ -700,6 +885,7 @@ def run_scheme(g: GPContext, scheme: str) -> SeedRun:
 @dataclass
 class OneProgram:
     """A single deployable program built after a search (CV5 / BAG_FINAL): SEARCH-evaluated once, AUDIT once."""
+
     name: str
     cand: Optional[G.Candidate]
     result: Optional[SearchResult]
@@ -711,8 +897,12 @@ class OneProgram:
         return 0 if self.result is None else 1
 
 
-def portfolio_nnls(g: GPContext, results: Sequence[SearchResult], cand_of: Dict[str, G.Candidate],
-                   name: str = "CV5") -> OneProgram:
+def portfolio_nnls(
+    g: GPContext,
+    results: Sequence[SearchResult],
+    cand_of: Dict[str, G.Candidate],
+    name: str = "CV5",
+) -> OneProgram:
     """Best-by-SEARCH gate-passing program per head class (tree / linear / kernel, + best non-portfolio meta pipe)
     -> `(portfolio (member A) (member B) ... (blend folds=5 guard=clip kind=nnls repeats=auto))`, one SEARCH eval.
     Fallback (single best tree) when < 2 classes pass, the portfolio does not parse, or its SEARCH eval fails."""
@@ -725,35 +915,64 @@ def portfolio_nnls(g: GPContext, results: Sequence[SearchResult], cand_of: Dict[
             best.setdefault(isl, r)
         members = [best[i] for i in sorted(best)][:4]
         if len(members) < 2:
-            return OneProgram(name, None, None, True, {"reason": "fewer_than_2_classes", "classes": sorted(best)})
+            return OneProgram(
+                name,
+                None,
+                None,
+                True,
+                {"reason": "fewer_than_2_classes", "classes": sorted(best)},
+            )
         gen = G.op_portfolio([G.parse(m.dsl) for m in members])
         parents = [cand_of[m.sha] for m in members if m.sha in cand_of]
-        cand = G.safe_candidate(gen, f"{name}_portfolio_nnls", [m.sha for m in members], g.ctx.width,
-                                cost_exempt=True, bank_cids=merge_lineage(*parents))
+        cand = G.safe_candidate(
+            gen,
+            f"{name}_portfolio_nnls",
+            [m.sha for m in members],
+            g.ctx.width,
+            cost_exempt=True,
+            bank_cids=merge_lineage(*parents),
+        )
         if cand is None:
             return OneProgram(name, None, None, True, {"reason": "parse_error"})
         if cand.sha in g.tb.excluded_shas:
             return OneProgram(name, None, None, True, {"reason": "excluded_sha"})
         res = g.evaluate([cand])[0]
-        info = {"classes": [G.island_of(m.dsl) for m in members], "member_shas": [m.sha for m in members]}
+        info = {
+            "classes": [G.island_of(m.dsl) for m in members],
+            "member_shas": [m.sha for m in members],
+        }
         if res.status != "completed":
-            return OneProgram(name, cand, res, True, {**info, "reason": f"search_failed:{res.error}"})
+            return OneProgram(
+                name, cand, res, True, {**info, "reason": f"search_failed:{res.error}"}
+            )
         return OneProgram(name, cand, res, False, info)
 
 
-def bag_final_program(g: GPContext, chosen: Optional[SearchResult], cand_of: Dict[str, G.Candidate]) -> OneProgram:
+def bag_final_program(
+    g: GPContext, chosen: Optional[SearchResult], cand_of: Dict[str, G.Candidate]
+) -> OneProgram:
     """BAG_FINAL secondary (report-only): bagged histgbm2 twin of a chosen tree-head program."""
     with selection_scope("BAG_FINAL.build"):
         if chosen is None or G.island_of(chosen.dsl) != 0:
-            return OneProgram("BAG_FINAL", None, None, True, {"reason": "not_a_tree_head"})
+            return OneProgram(
+                "BAG_FINAL", None, None, True, {"reason": "not_a_tree_head"}
+            )
         gen = G.bag_final(G.parse(chosen.dsl))
         par = [cand_of[chosen.sha]] if chosen.sha in cand_of else []
-        cand = G.safe_candidate(gen, "bag_final", [chosen.sha], g.ctx.width, cost_exempt=True,
-                                bank_cids=merge_lineage(*par))
+        cand = G.safe_candidate(
+            gen,
+            "bag_final",
+            [chosen.sha],
+            g.ctx.width,
+            cost_exempt=True,
+            bank_cids=merge_lineage(*par),
+        )
         if cand is None or cand.sha in g.tb.excluded_shas:
             return OneProgram("BAG_FINAL", None, None, True, {"reason": "invalid"})
         res = g.evaluate([cand])[0]
-        return OneProgram("BAG_FINAL", cand, res, res.status != "completed", {"from": chosen.sha})
+        return OneProgram(
+            "BAG_FINAL", cand, res, res.status != "completed", {"from": chosen.sha}
+        )
 
 
 def sel_meanlr(results: Sequence[SearchResult]) -> Optional[SearchResult]:
@@ -762,8 +981,12 @@ def sel_meanlr(results: Sequence[SearchResult]) -> Optional[SearchResult]:
     return min(ps, key=lambda r: (r.mean_lr, r.sha)) if ps else None
 
 
-def noise_probe(g: GPContext, seeds: Sequence[G.Candidate], base: Sequence[SearchResult],
-                splits: Sequence[str] = ("noise1", "noise2")) -> dict:
+def noise_probe(
+    g: GPContext,
+    seeds: Sequence[G.Candidate],
+    base: Sequence[SearchResult],
+    splits: Sequence[str] = ("noise1", "noise2"),
+) -> dict:
     """Re-evaluate Gen-0 seeds under extra y-stratified random 2-fold splits of the SEARCH rows (diagnostic).
 
     Decomposes mean_lr[c, s] = offset_s + candidate effect + residual: reports the SD of the shared per-split offsets
@@ -773,19 +996,27 @@ def noise_probe(g: GPContext, seeds: Sequence[G.Candidate], base: Sequence[Searc
         for sp in splits:
             rows[sp] = {r.sha: r for r in g.engine.search_alt(g.ctx, sp, list(seeds))}
     names = ["search"] + list(splits)
-    shas = [c.sha for c in seeds if all(rows[n][c.sha].status == "completed" for n in names)]
+    shas = [
+        c.sha for c in seeds if all(rows[n][c.sha].status == "completed" for n in names)
+    ]
     if len(shas) < 2:
         return {"n_candidates": len(shas)}
     M = np.array([[rows[n][s].mean_lr for n in names] for s in shas])  # [C, S]
     U = np.array([[rows[n][s].utility for n in names] for s in shas])
     off = M.mean(0)
     resid = M - off[None, :]
-    return {"n_candidates": len(shas), "splits": names, "shared_offset_sd": float(np.std(off, ddof=1)),
-            "candidate_specific_sd": float(np.mean(np.std(resid, axis=1, ddof=1))),
-            "raw_candidate_sd": float(np.mean(np.std(M, axis=1, ddof=1))),
-            "utility_raw_candidate_sd": float(np.mean(np.std(U, axis=1, ddof=1))),
-            "rank_agreement_spearman": float(np.mean([_spearman(M[:, 0], M[:, j]) for j in range(1, M.shape[1])])),
-            "n_extra_evals": len(seeds) * len(splits)}
+    return {
+        "n_candidates": len(shas),
+        "splits": names,
+        "shared_offset_sd": float(np.std(off, ddof=1)),
+        "candidate_specific_sd": float(np.mean(np.std(resid, axis=1, ddof=1))),
+        "raw_candidate_sd": float(np.mean(np.std(M, axis=1, ddof=1))),
+        "utility_raw_candidate_sd": float(np.mean(np.std(U, axis=1, ddof=1))),
+        "rank_agreement_spearman": float(
+            np.mean([_spearman(M[:, 0], M[:, j]) for j in range(1, M.shape[1])])
+        ),
+        "n_extra_evals": len(seeds) * len(splits),
+    }
 
 
 def _spearman(a: np.ndarray, b: np.ndarray) -> float:
@@ -796,7 +1027,11 @@ def _spearman(a: np.ndarray, b: np.ndarray) -> float:
 def bank_nn8_pick(g: GPContext, k: int = 8) -> SeedRun:
     """BANK_NN8_PICK: the 8 nearest cross-family bank champions (DOPE view-0), all evaluated, best-by-SEARCH."""
     with selection_scope("BANK_NN8_PICK"):
-        order = [c for c in bank_champions_by_dope(g.tb, g.coder, k * 2, "bank_nn8") if G.width_ok(c.dsl, g.ctx.width)][:k]
+        order = [
+            c
+            for c in bank_champions_by_dope(g.tb, g.coder, k * 2, "bank_nn8")
+            if G.width_ok(c.dsl, g.ctx.width)
+        ][:k]
         res = g.evaluate(order)
     return SeedRun("NN8", order, res)
 
@@ -829,15 +1064,25 @@ class EvoRun:
         for gen in sorted(set(self.gen_of.values())):
             b = self.best_after(gen)
             curve[gen] = None if b is None else b.utility
-        return {"arm": self.arm, "live_per_gen": self.live_per_gen, "screened_per_gen": self.screened_per_gen,
-                "line_search_live": self.line_search_live, "migration_live": self.migration_live,
-                "best_search_curve": curve, "island_hist": self.island_hist, "archive_cells": self.archive_cells,
-                "n_results": len(self.results), "n_failed": sum(r.status != "completed" for r in self.results),
-                "result_shas": [r.sha for r in self.results]}
+        return {
+            "arm": self.arm,
+            "live_per_gen": self.live_per_gen,
+            "screened_per_gen": self.screened_per_gen,
+            "line_search_live": self.line_search_live,
+            "migration_live": self.migration_live,
+            "best_search_curve": curve,
+            "island_hist": self.island_hist,
+            "archive_cells": self.archive_cells,
+            "n_results": len(self.results),
+            "n_failed": sum(r.status != "completed" for r in self.results),
+            "result_shas": [r.sha for r in self.results],
+        }
 
 
 class _Pop:
-    def __init__(self, seeds: Sequence[G.Candidate], seed_results: Sequence[SearchResult]):
+    def __init__(
+        self, seeds: Sequence[G.Candidate], seed_results: Sequence[SearchResult]
+    ):
         self.results: List[SearchResult] = []
         self.gen_of: Dict[str, int] = {}
         self.cand_of: Dict[str, G.Candidate] = {}
@@ -859,12 +1104,23 @@ class _Pop:
         return sorted(self.results, key=rank_key)
 
 
-def _cand_with_lineage(gen, op, parents: Sequence[G.Candidate], width: int) -> Optional[G.Candidate]:
-    return G.safe_candidate(gen, op, [p.sha for p in parents], width, bank_cids=merge_lineage(*parents))
+def _cand_with_lineage(
+    gen, op, parents: Sequence[G.Candidate], width: int
+) -> Optional[G.Candidate]:
+    return G.safe_candidate(
+        gen, op, [p.sha for p in parents], width, bank_cids=merge_lineage(*parents)
+    )
 
 
-def _fill_unique(g: GPContext, pool: List[G.Candidate], need: int, seen: Set[str], island: Optional[int],
-                 rng: random.Random, tag: str) -> List[G.Candidate]:
+def _fill_unique(
+    g: GPContext,
+    pool: List[G.Candidate],
+    need: int,
+    seen: Set[str],
+    island: Optional[int],
+    rng: random.Random,
+    tag: str,
+) -> List[G.Candidate]:
     out = []
     tries = 0
     while len(out) < need and tries < need * 50:
@@ -878,8 +1134,14 @@ def _fill_unique(g: GPContext, pool: List[G.Candidate], need: int, seen: Set[str
     return out
 
 
-def propose_panmictic(g: GPContext, pop: _Pop, n: int, rng: random.Random, gen: int, eligible_nn: List[G.Candidate]
-                      ) -> List[G.Candidate]:
+def propose_panmictic(
+    g: GPContext,
+    pop: _Pop,
+    n: int,
+    rng: random.Random,
+    gen: int,
+    eligible_nn: List[G.Candidate],
+) -> List[G.Candidate]:
     """H257 / rust_evaluator propose_flywheel_candidates mix on the top-4 fertile parents."""
     seen = set(pop.gen_of)
     fertile = [pop.cand_of[r.sha] for r in pop.ranked()[:4]]
@@ -890,14 +1152,24 @@ def propose_panmictic(g: GPContext, pop: _Pop, n: int, rng: random.Random, gen: 
             seen.add(c.sha)
             out.append(c)
 
-    for c in eligible_nn:  # A. champion retrieval (up to min(4, n // 3) unseen NN bank records)
-        if len([x for x in out if x.operator == "champion_retrieval"]) >= min(4, n // 3):
+    for c in (
+        eligible_nn
+    ):  # A. champion retrieval (up to min(4, n // 3) unseen NN bank records)
+        if len([x for x in out if x.operator == "champion_retrieval"]) >= min(
+            4, n // 3
+        ):
             break
         if c.sha not in seen:
-            add(G.Candidate(c.dsl, c.sha, "champion_retrieval", c.parents, c.island, c.meta))
+            add(
+                G.Candidate(
+                    c.dsl, c.sha, "champion_retrieval", c.parents, c.island, c.meta
+                )
+            )
     fg = [f.genome() for f in fertile]
     step = 0
-    while len(out) < n and step < n * 6 and fg:  # B. EditZero kinds cycling over parents
+    while (
+        len(out) < n and step < n * 6 and fg
+    ):  # B. EditZero kinds cycling over parents
         i = step % len(fg)
         par, pgen = fertile[i], fg[i]
         kind = step % 5
@@ -912,18 +1184,28 @@ def propose_panmictic(g: GPContext, pop: _Pop, n: int, rng: random.Random, gen: 
         else:
             j = (i + 1) % len(fg)
             child, op = G.op_crossover(pgen, fg[j], rng), "edit_crossover"
-            add(_cand_with_lineage(child, f"g{gen}_{op}", [par, fertile[j]], g.ctx.width))
+            add(
+                _cand_with_lineage(
+                    child, f"g{gen}_{op}", [par, fertile[j]], g.ctx.width
+                )
+            )
             step += 1
             continue
         add(_cand_with_lineage(child, f"g{gen}_{op}", [par], g.ctx.width))
         step += 1
-    out += _fill_unique(g, out, n - len(out), seen, None, rng, f"g{gen}")  # C. synthesis fill
+    out += _fill_unique(
+        g, out, n - len(out), seen, None, rng, f"g{gen}"
+    )  # C. synthesis fill
     return out[:n]
 
 
-def _screen(g: GPContext, props: Sequence[G.Candidate], pop: _Pop) -> Tuple[np.ndarray, np.ndarray]:
+def _screen(
+    g: GPContext, props: Sequence[G.Candidate], pop: _Pop
+) -> Tuple[np.ndarray, np.ndarray]:
     revealed = [(r.dsl, r.utility) for r in pop.results]
-    S_corr, pred, _ = S.corrected_matrix(g.screener, g.cid, [c.dsl for c in props], revealed, g.corrector)
+    S_corr, pred, _ = S.corrected_matrix(
+        g.screener, g.cid, [c.dsl for c in props], revealed, g.corrector
+    )
     return pred, S_corr
 
 
@@ -931,7 +1213,9 @@ def _zs(v: np.ndarray) -> np.ndarray:
     return (v - v.mean()) / max(v.std(), 1e-9)
 
 
-def pick_exploit_ucb(props: Sequence[G.Candidate], pred: np.ndarray, pop: _Pop, k: int) -> List[int]:
+def pick_exploit_ucb(
+    props: Sequence[G.Candidate], pred: np.ndarray, pop: _Pop, k: int
+) -> List[int]:
     """H257 pick: (k-2) exploit by z(pred) + 0.25 cos-to-best - 0.08 complexity/12, then 2 UCB by min distance."""
     if len(props) <= k:
         return list(range(len(props)))
@@ -945,18 +1229,33 @@ def pick_exploit_ucb(props: Sequence[G.Candidate], pred: np.ndarray, pop: _Pop, 
     ref = np.stack([G.ext_descriptor(r.dsl) for r in pop.results])
     while len(chosen) < k:
         R = np.concatenate([ref, D[chosen]], axis=0)
-        ucb = np.array([score[j] + 0.35 * float(np.min(np.linalg.norm(R - D[j][None], axis=1))) if j not in chosen
-                        else -1e18 for j in range(len(props))])
+        ucb = np.array(
+            [
+                score[j] + 0.35 * float(np.min(np.linalg.norm(R - D[j][None], axis=1)))
+                if j not in chosen
+                else -1e18
+                for j in range(len(props))
+            ]
+        )
         chosen.append(int(np.argmax(ucb)))
     return chosen
 
 
-def evo_panmictic(g: GPContext, seed_cands: Sequence[G.Candidate], seed_results: Sequence[SearchResult],
-                  gens: int = EVO_GENS, n_prop: int = PROPOSALS_PER_GEN, n_live: int = LIVE_PER_GEN,
-                  arm: str = "evoA") -> EvoRun:
+def evo_panmictic(
+    g: GPContext,
+    seed_cands: Sequence[G.Candidate],
+    seed_results: Sequence[SearchResult],
+    gens: int = EVO_GENS,
+    n_prop: int = PROPOSALS_PER_GEN,
+    n_live: int = LIVE_PER_GEN,
+    arm: str = "evoA",
+) -> EvoRun:
     with selection_scope(f"H0.5.{arm}"):
         pop = _Pop(seed_cands, seed_results)
-        nn = [bank_candidate(b, "champion_retrieval") for _, b in bank_nn(g.tb, g.coder, 96)]
+        nn = [
+            bank_candidate(b, "champion_retrieval")
+            for _, b in bank_nn(g.tb, g.coder, 96)
+        ]
         nn = [c for c in nn if G.width_ok(c.dsl, g.ctx.width)]
         live, screened = {}, {}
         for gen in range(1, gens + 1):
@@ -968,13 +1267,38 @@ def evo_panmictic(g: GPContext, seed_cands: Sequence[G.Candidate], seed_results:
             res = g.evaluate(pick)
             pop.add(pick, res, gen)
             live[gen], screened[gen] = len(pick), len(props)
-        return EvoRun(arm, pop.results, pop.gen_of, pop.cand_of, live, screened,
-                      island_hist={gen: [sum(1 for r in pop.results if pop.gen_of[r.sha] == gen and
-                                             G.island_of(r.dsl) == i) for i in range(4)] for gen in range(gens + 1)})
+        return EvoRun(
+            arm,
+            pop.results,
+            pop.gen_of,
+            pop.cand_of,
+            live,
+            screened,
+            island_hist={
+                gen: [
+                    sum(
+                        1
+                        for r in pop.results
+                        if pop.gen_of[r.sha] == gen and G.island_of(r.dsl) == i
+                    )
+                    for i in range(4)
+                ]
+                for gen in range(gens + 1)
+            },
+        )
 
 
 # -- Evo B: islands, MAP-Elites archive, epsilon-lexicase, migration, line search -------------------------------------
-_NONLIN = {"cheb", "hinge", "poly_interact", "pair_prod", "rff_sin", "rff_cos", "oblique_hinge", "bin_onehot"}
+_NONLIN = {
+    "cheb",
+    "hinge",
+    "poly_interact",
+    "pair_prod",
+    "rff_sin",
+    "rff_cos",
+    "oblique_hinge",
+    "bin_onehot",
+}
 
 
 def elite_cell(dsl: str) -> Tuple[int, int]:
@@ -988,7 +1312,9 @@ def elite_cell(dsl: str) -> Tuple[int, int]:
 
 class MapElites:
     def __init__(self):
-        self.cells: Dict[int, Dict[Tuple[int, int], SearchResult]] = {i: {} for i in range(4)}
+        self.cells: Dict[int, Dict[Tuple[int, int], SearchResult]] = {
+            i: {} for i in range(4)
+        }
 
     def add(self, r: SearchResult) -> None:
         if r.status != "completed":
@@ -1041,18 +1367,37 @@ def migration_splices(arch: MapElites, g: GPContext, gen: int) -> List[G.Candida
     bests = [arch.champion(i) for i in range(3)]
     bests = [b for b in bests if b is not None]
     out = []
-    combos = [bests] + [[a, b] for k, a in enumerate(bests) for b in bests[k + 1:]] if len(bests) >= 2 else []
+    combos = (
+        [bests] + [[a, b] for k, a in enumerate(bests) for b in bests[k + 1 :]]
+        if len(bests) >= 2
+        else []
+    )
     for combo in combos:
         gen_ = G.op_portfolio([G.parse(b.dsl) for b in combo])
-        c = G.safe_candidate(gen_, f"g{gen}_migration_splice", [b.sha for b in combo], g.ctx.width, cost_exempt=True)
+        c = G.safe_candidate(
+            gen_,
+            f"g{gen}_migration_splice",
+            [b.sha for b in combo],
+            g.ctx.width,
+            cost_exempt=True,
+        )
         if c is not None:
             out.append(c)
     return out
 
 
-def propose_island(g: GPContext, isl: int, arch: MapElites, pop: _Pop, n: int, rng: random.Random, gen: int,
-                   seen: Set[str], nn_by_isl: Dict[int, List[G.Candidate]], ring_in: Optional[SearchResult]
-                   ) -> Tuple[List[G.Candidate], List[G.Candidate]]:
+def propose_island(
+    g: GPContext,
+    isl: int,
+    arch: MapElites,
+    pop: _Pop,
+    n: int,
+    rng: random.Random,
+    gen: int,
+    seen: Set[str],
+    nn_by_isl: Dict[int, List[G.Candidate]],
+    ring_in: Optional[SearchResult],
+) -> Tuple[List[G.Candidate], List[G.Candidate]]:
     """12 proposals for island `isl`; returns (proposals, line_search_subset)."""
     out: List[G.Candidate] = []
     ls: List[G.Candidate] = []
@@ -1074,13 +1419,29 @@ def propose_island(g: GPContext, isl: int, arch: MapElites, pop: _Pop, n: int, r
             for gen_ in nb:
                 if len(ls) >= n // 2:
                     break
-                add(_cand_with_lineage(gen_, f"g{gen}_line_search", [pop.cand_of[champ.sha]], g.ctx.width), ls)
+                add(
+                    _cand_with_lineage(
+                        gen_,
+                        f"g{gen}_line_search",
+                        [pop.cand_of[champ.sha]],
+                        g.ctx.width,
+                    ),
+                    ls,
+                )
     if gen in MIGRATION_GENS and ring_in is not None and isl != 3:
         mig = G.head_swap(G.parse(ring_in.dsl), isl, rng)
-        add(_cand_with_lineage(mig, f"g{gen}_ring_migrant", [pop.cand_of[ring_in.sha]], g.ctx.width))
+        add(
+            _cand_with_lineage(
+                mig, f"g{gen}_ring_migrant", [pop.cand_of[ring_in.sha]], g.ctx.width
+            )
+        )
     pool = arch.elites(isl)
     if len(pool) < 2:
-        pool = [r for r in pop.results if G.island_of(r.dsl) == isl and r.status == "completed"] or pool
+        pool = [
+            r
+            for r in pop.results
+            if G.island_of(r.dsl) == isl and r.status == "completed"
+        ] or pool
     tries = 0
     while len(out) < n and tries < n * 12:
         tries += 1
@@ -1092,14 +1453,22 @@ def propose_island(g: GPContext, isl: int, arch: MapElites, pop: _Pop, n: int, r
             if u < 0.30:
                 child, op, par = G.op_parameter(g1, rng), "edit_parameter", [c1]
             elif u < 0.45:
-                child, op, par = G.op_replace_head(g1, rng, isl), "edit_replace_head", [c1]
+                child, op, par = (
+                    G.op_replace_head(g1, rng, isl),
+                    "edit_replace_head",
+                    [c1],
+                )
             elif u < 0.65:
                 child, op, par = G.op_insert_stage(g1, rng), "edit_insert_stage", [c1]
             elif u < 0.75:
                 child, op, par = G.op_delete_stage(g1, rng), "edit_delete_stage", [c1]
             elif u < 0.92 and len(pool) >= 2:
                 p2 = epsilon_lexicase(pool, rng)
-                child, op, par = G.op_crossover(g1, G.parse(p2.dsl), rng), "edit_crossover", [c1, pop.cand_of[p2.sha]]
+                child, op, par = (
+                    G.op_crossover(g1, G.parse(p2.dsl), rng),
+                    "edit_crossover",
+                    [c1, pop.cand_of[p2.sha]],
+                )
             else:
                 child, op, par = G.op_synth(isl, rng), "grammar_synth", []
         else:
@@ -1117,9 +1486,15 @@ def propose_island(g: GPContext, isl: int, arch: MapElites, pop: _Pop, n: int, r
     return out[:n], ls
 
 
-def evo_islands(g: GPContext, seed_cands: Sequence[G.Candidate], seed_results: Sequence[SearchResult],
-                gens: int = EVO_GENS, n_prop: int = PROPOSALS_PER_GEN, n_live: int = LIVE_PER_GEN,
-                arm: str = "evoB") -> EvoRun:
+def evo_islands(
+    g: GPContext,
+    seed_cands: Sequence[G.Candidate],
+    seed_results: Sequence[SearchResult],
+    gens: int = EVO_GENS,
+    n_prop: int = PROPOSALS_PER_GEN,
+    n_live: int = LIVE_PER_GEN,
+    arm: str = "evoB",
+) -> EvoRun:
     per_island_prop = n_prop // 4
     with selection_scope(f"H0.5.{arm}"):
         pop = _Pop(seed_cands, seed_results)
@@ -1127,7 +1502,10 @@ def evo_islands(g: GPContext, seed_cands: Sequence[G.Candidate], seed_results: S
         for r in pop.results:
             arch.add(r)
         nn_all = [bank_candidate(b, "nn") for _, b in bank_nn(g.tb, g.coder, 96)]
-        nn_by_isl = {i: [c for c in nn_all if c.island == i and G.width_ok(c.dsl, g.ctx.width)] for i in range(4)}
+        nn_by_isl = {
+            i: [c for c in nn_all if c.island == i and G.width_ok(c.dsl, g.ctx.width)]
+            for i in range(4)
+        }
         live, screened, ls_live, mig_live, cells = {}, {}, {}, {}, {}
         for gen in range(1, gens + 1):
             rng = g.rng(arm, "gen", gen)
@@ -1135,18 +1513,36 @@ def evo_islands(g: GPContext, seed_cands: Sequence[G.Candidate], seed_results: S
             props: List[G.Candidate] = []
             ls_set: Set[str] = set()
             for isl in range(4):
-                ring_src = arch.champion((isl - 1) % 4) if gen in MIGRATION_GENS else None
-                p, ls = propose_island(g, isl, arch, pop, per_island_prop, rng, gen, seen, nn_by_isl, ring_src)
+                ring_src = (
+                    arch.champion((isl - 1) % 4) if gen in MIGRATION_GENS else None
+                )
+                p, ls = propose_island(
+                    g,
+                    isl,
+                    arch,
+                    pop,
+                    per_island_prop,
+                    rng,
+                    gen,
+                    seen,
+                    nn_by_isl,
+                    ring_src,
+                )
                 if isl == 3 and gen in MIGRATION_GENS:
-                    spl = [c for c in migration_splices(arch, g, gen) if c.sha not in seen
-                           and c.sha not in g.tb.excluded_shas]
+                    spl = [
+                        c
+                        for c in migration_splices(arch, g, gen)
+                        if c.sha not in seen and c.sha not in g.tb.excluded_shas
+                    ]
                     for c in spl:
                         seen.add(c.sha)
                     p = (spl + p)[:per_island_prop]
                 props += p
                 ls_set |= {c.sha for c in ls}
             if len(props) != n_prop:
-                props += _fill_unique(g, props, n_prop - len(props), seen, None, rng, f"g{gen}_fill")
+                props += _fill_unique(
+                    g, props, n_prop - len(props), seen, None, rng, f"g{gen}_fill"
+                )
             assert len(props) == n_prop, (len(props), n_prop)
             assert_bank_disjoint(g.cid, props, g.tb)
             pred, _ = _screen(g, props, pop)
@@ -1166,7 +1562,9 @@ def evo_islands(g: GPContext, seed_cands: Sequence[G.Candidate], seed_results: S
                 j = int(j)
                 if j not in chosen and sum(isl_of[k] == isl_of[j] for k in chosen) < 2:
                     chosen.append(j)
-            for j in np.argsort(-z, kind="stable"):  # cannot happen with 4 islands x 12, kept for exactness
+            for j in np.argsort(
+                -z, kind="stable"
+            ):  # cannot happen with 4 islands x 12, kept for exactness
                 if len(chosen) >= n_live:
                     break
                 if int(j) not in chosen:
@@ -1178,12 +1576,32 @@ def evo_islands(g: GPContext, seed_cands: Sequence[G.Candidate], seed_results: S
                 arch.add(r)
             live[gen], screened[gen] = len(pick), len(props)
             ls_live[gen] = sum(c.sha in ls_set for c in pick)
-            mig_live[gen] = sum("migration" in c.operator or "ring_migrant" in c.operator for c in pick)
+            mig_live[gen] = sum(
+                "migration" in c.operator or "ring_migrant" in c.operator for c in pick
+            )
             cells[gen] = sum(len(arch.cells[i]) for i in range(4))
-        return EvoRun(arm, pop.results, pop.gen_of, pop.cand_of, live, screened, ls_live, mig_live,
-                      island_hist={gen: [sum(1 for r in pop.results if pop.gen_of[r.sha] == gen and
-                                             G.island_of(r.dsl) == i) for i in range(4)] for gen in range(gens + 1)},
-                      archive_cells=cells)
+        return EvoRun(
+            arm,
+            pop.results,
+            pop.gen_of,
+            pop.cand_of,
+            live,
+            screened,
+            ls_live,
+            mig_live,
+            island_hist={
+                gen: [
+                    sum(
+                        1
+                        for r in pop.results
+                        if pop.gen_of[r.sha] == gen and G.island_of(r.dsl) == i
+                    )
+                    for i in range(4)
+                ]
+                for gen in range(gens + 1)
+            },
+            archive_cells=cells,
+        )
 
 
 ARMS = {"evoA": evo_panmictic, "evoB": evo_islands}
@@ -1191,15 +1609,24 @@ ARMS = {"evoA": evo_panmictic, "evoB": evo_islands}
 
 def h257_replica_evo(g: GPContext, seed_cands, seed_results) -> EvoRun:
     """H257 `run_3gen_live_gp_evolution_for_context`: 3 generations, 20 proposals, 5 children per generation."""
-    return evo_panmictic(g, seed_cands, seed_results, gens=3, n_prop=20, n_live=5, arm="h257")
+    return evo_panmictic(
+        g, seed_cands, seed_results, gens=3, n_prop=20, n_live=5, arm="h257"
+    )
 
 
-def screen_topk_pick(g: GPContext, k: int, shortlist: Optional[List[G.Candidate]] = None) -> SeedRun:
+def screen_topk_pick(
+    g: GPContext, k: int, shortlist: Optional[List[G.Candidate]] = None
+) -> SeedRun:
     """SCREEN_TOPK_PICK: one screening of bank NN + grammar proposals, live-evaluate the top-K by consensus."""
     with selection_scope("SCREEN_TOPK_PICK"):
         cands = shortlist if shortlist is not None else build_shortlist(g)
         if len(cands) < k:  # extend the grammar part until K candidates exist
-            extra = grammar_shortlist(g, cands[:12], per_island=int(math.ceil((k - len(cands)) / 4)) + 4, tag="topk")
+            extra = grammar_shortlist(
+                g,
+                cands[:12],
+                per_island=int(math.ceil((k - len(cands)) / 4)) + 4,
+                tag="topk",
+            )
             cands = unique_by_sha(cands + extra)
         assert_bank_disjoint(g.cid, cands, g.tb)
         Sm = S.screen_matrix(g.screener, g.cid, [c.dsl for c in cands])

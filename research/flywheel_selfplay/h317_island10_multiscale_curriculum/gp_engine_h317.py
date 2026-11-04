@@ -94,9 +94,14 @@ def _pool_hook(event: str, args) -> None:
         raw = os.path.abspath(os.fsdecode(p))
     except TypeError:
         return
-    if raw.startswith(_POOL_PREFIX) or os.path.basename(os.path.dirname(raw)) == "pools":
+    if (
+        raw.startswith(_POOL_PREFIX)
+        or os.path.basename(os.path.dirname(raw)) == "pools"
+    ):
         POOL_GUARD["refused_pool_open_in_selection"] += 1
-        raise C.GuardViolation(f"H317 GP: pool file opened inside selection scope {_SCOPE.stack!r}: {raw}")
+        raise C.GuardViolation(
+            f"H317 GP: pool file opened inside selection scope {_SCOPE.stack!r}: {raw}"
+        )
 
 
 def install_pool_guard() -> None:
@@ -128,8 +133,15 @@ def read_cpu_times(path: str = "/proc/stat") -> Tuple[int, int]:
 
 
 class ResourceGuard:
-    def __init__(self, min_mem_gib: float = 20.0, max_busy: float = 0.85, poll_s: float = 5.0,
-                 log_path: Optional[Path] = None, mem_fn=read_mem_available_gib, cpu_fn=read_cpu_times):
+    def __init__(
+        self,
+        min_mem_gib: float = 20.0,
+        max_busy: float = 0.85,
+        poll_s: float = 5.0,
+        log_path: Optional[Path] = None,
+        mem_fn=read_mem_available_gib,
+        cpu_fn=read_cpu_times,
+    ):
         self.min_mem_gib, self.max_busy, self.poll_s = min_mem_gib, max_busy, poll_s
         self.log_path = Path(log_path) if log_path else None
         self.mem_fn, self.cpu_fn = mem_fn, cpu_fn
@@ -167,13 +179,23 @@ class ResourceGuard:
         if ok:
             return 0.0
         t0 = time.time()
-        rec = {"pause_start_utc": t0, "mem_gib": round(mem, 2), "cpu_busy": round(busy, 3)}
+        rec = {
+            "pause_start_utc": t0,
+            "mem_gib": round(mem, 2),
+            "cpu_busy": round(busy, 3),
+        }
         self._log({"event": "pause", **rec})
         while not ok:
             time.sleep(self.poll_s)
             ok, mem, busy = self.status()
         dur = time.time() - t0
-        rec.update({"pause_s": round(dur, 2), "resume_mem_gib": round(mem, 2), "resume_cpu_busy": round(busy, 3)})
+        rec.update(
+            {
+                "pause_s": round(dur, 2),
+                "resume_mem_gib": round(mem, 2),
+                "resume_cpu_busy": round(busy, 3),
+            }
+        )
         with self._lock:
             self.pauses.append(rec)
         self._log({"event": "resume", **rec})
@@ -207,8 +229,12 @@ class ContextEnvs:
     b1: float  # rmse(y1 - mean(y0))
     ba: float  # rmse(ya - mean(SEARCH y))
     full_mode: bool = False  # Stage V: SEARCH = all rows, no AUDIT
-    alts: Dict[str, "AltEnv"] = field(default_factory=dict)  # NOISE_PROBE re-split SEARCH envelopes
-    env_sha: Dict[str, str] = field(default_factory=dict)  # kind -> sha256(worker bytes)
+    alts: Dict[str, "AltEnv"] = field(
+        default_factory=dict
+    )  # NOISE_PROBE re-split SEARCH envelopes
+    env_sha: Dict[str, str] = field(
+        default_factory=dict
+    )  # kind -> sha256(worker bytes)
 
     @property
     def n_search(self) -> int:
@@ -233,6 +259,7 @@ class ContextEnvs:
 @dataclass
 class AltEnv:
     """SEARCH rows with a different y-stratified random 2-fold split (NOISE_PROBE diagnostic only)."""
+
     name: str
     path: Path
     y0: np.ndarray
@@ -256,7 +283,13 @@ def build_alt(ctx: ContextEnvs, name: str, env_dir: Path) -> AltEnv:
     alt = C.Jtt1(senv.magic, senv.nt, 0, senv.width, senv.flag, folds, senv.mat.copy())
     b = alt.to_worker_bytes()
     p = _write_env(env_dir, b)
-    return AltEnv(name, p, y[folds == 0].copy(), y[folds == 1].copy(), hashlib.sha256(b).hexdigest())
+    return AltEnv(
+        name,
+        p,
+        y[folds == 0].copy(),
+        y[folds == 1].copy(),
+        hashlib.sha256(b).hexdigest(),
+    )
 
 
 def _write_env(env_dir: Path, b: bytes) -> Path:
@@ -272,7 +305,9 @@ def _write_env(env_dir: Path, b: bytes) -> Path:
     return p
 
 
-def build_context(cid: str, family_id: str, env_dir: Path, full_mode: bool = False) -> ContextEnvs:
+def build_context(
+    cid: str, family_id: str, env_dir: Path, full_mode: bool = False
+) -> ContextEnvs:
     env = C.read_jtt1(C.table_path(cid))
     if full_mode:
         search, audit, mask = env, env, np.zeros(env.nt, dtype=bool)
@@ -295,8 +330,24 @@ def build_context(cid: str, family_id: str, env_dir: Path, full_mode: bool = Fal
     else:
         ya = audit.y[audit.folds == 1].copy()
         ba = float(np.sqrt(np.mean((ya - y.mean()) ** 2)))
-    return ContextEnvs(cid, family_id, int(env.width), search, audit, mask, sp, ap, y0, y1, ya, b0, b1, ba, full_mode,
-                       env_sha=shas)
+    return ContextEnvs(
+        cid,
+        family_id,
+        int(env.width),
+        search,
+        audit,
+        mask,
+        sp,
+        ap,
+        y0,
+        y1,
+        ya,
+        b0,
+        b1,
+        ba,
+        full_mode,
+        env_sha=shas,
+    )
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -324,7 +375,9 @@ class SearchResult:
 
     @property
     def ok(self) -> bool:
-        return self.status == "completed" and self.p0 is not None and self.p1 is not None
+        return (
+            self.status == "completed" and self.p0 is not None and self.p1 is not None
+        )
 
 
 @dataclass(frozen=True)
@@ -352,13 +405,33 @@ def _close(a: np.ndarray, b: np.ndarray) -> bool:
     return bool(np.allclose(a, b, rtol=1e-10, atol=1e-9 * scale))
 
 
-def parse_search(ctx: ContextEnvs, cand: Candidate, doc: Optional[dict], wall: float, err: str,
-                 y0: Optional[np.ndarray] = None, y1: Optional[np.ndarray] = None) -> SearchResult:
+def parse_search(
+    ctx: ContextEnvs,
+    cand: Candidate,
+    doc: Optional[dict],
+    wall: float,
+    err: str,
+    y0: Optional[np.ndarray] = None,
+    y1: Optional[np.ndarray] = None,
+) -> SearchResult:
     y0 = ctx.y0 if y0 is None else y0
     y1 = ctx.y1 if y1 is None else y1
-    fail = dict(cid=ctx.cid, sha=cand.sha, dsl=cand.dsl, status="failed", utility=C.GATE_FAIL_UTILITY, fitness=100.0,
-                gate=False, lr0=float("nan"), lr1=float("nan"), mean_lr=float("nan"), tail_lr=float("nan"),
-                sd_lr=float("nan"), complexity=cand.dsl.count("("), wall_s=wall)
+    fail = dict(
+        cid=ctx.cid,
+        sha=cand.sha,
+        dsl=cand.dsl,
+        status="failed",
+        utility=C.GATE_FAIL_UTILITY,
+        fitness=100.0,
+        gate=False,
+        lr0=float("nan"),
+        lr1=float("nan"),
+        mean_lr=float("nan"),
+        tail_lr=float("nan"),
+        sd_lr=float("nan"),
+        complexity=cand.dsl.count("("),
+        wall_s=wall,
+    )
     if doc is None:
         return SearchResult(**fail, error=err or "no_output")
     inner = doc.get("inner_cv") or []
@@ -370,19 +443,50 @@ def parse_search(ctx: ContextEnvs, cand: Candidate, doc: Optional[dict], wall: f
         return SearchResult(**fail, error="s1_failed")
     p0, p1 = _arr(inner[0].get("predictions")), _arr(inner[1].get("predictions"))
     t0, t1 = _arr(inner[0].get("targets")), _arr(inner[1].get("targets"))
-    if p0 is None or p1 is None or t0 is None or t1 is None or not _close(t0, y0) or not _close(t1, y1):
+    if (
+        p0 is None
+        or p1 is None
+        or t0 is None
+        or t1 is None
+        or not _close(t0, y0)
+        or not _close(t1, y1)
+    ):
         return SearchResult(**fail, error="row_order_mismatch")
     if not (np.all(np.isfinite(p0)) and np.all(np.isfinite(p1))):
         return SearchResult(**fail, error="nonfinite_predictions")
-    return SearchResult(cid=ctx.cid, sha=cand.sha, dsl=cand.dsl, status="completed", utility=float(s1["utility"]),
-                        fitness=float(s1["fitness"]), gate=bool(s1["gate"]), lr0=s1["lr0"], lr1=s1["lr1"],
-                        mean_lr=s1["mean_lr"], tail_lr=s1["tail_lr"], sd_lr=s1["sd_lr"],
-                        complexity=int(s1["complexity"]), p0=p0, p1=p1, wall_s=wall)
+    return SearchResult(
+        cid=ctx.cid,
+        sha=cand.sha,
+        dsl=cand.dsl,
+        status="completed",
+        utility=float(s1["utility"]),
+        fitness=float(s1["fitness"]),
+        gate=bool(s1["gate"]),
+        lr0=s1["lr0"],
+        lr1=s1["lr1"],
+        mean_lr=s1["mean_lr"],
+        tail_lr=s1["tail_lr"],
+        sd_lr=s1["sd_lr"],
+        complexity=int(s1["complexity"]),
+        p0=p0,
+        p1=p1,
+        wall_s=wall,
+    )
 
 
-def parse_audit(ctx: ContextEnvs, cand: Candidate, doc: Optional[dict], wall: float, err: str) -> AuditResult:
-    fail = dict(cid=ctx.cid, sha=cand.sha, dsl=cand.dsl, status="failed", utility=C.GATE_FAIL_UTILITY,
-                model_rmse=None, base_rmse=None, wall_s=wall)
+def parse_audit(
+    ctx: ContextEnvs, cand: Candidate, doc: Optional[dict], wall: float, err: str
+) -> AuditResult:
+    fail = dict(
+        cid=ctx.cid,
+        sha=cand.sha,
+        dsl=cand.dsl,
+        status="failed",
+        utility=C.GATE_FAIL_UTILITY,
+        model_rmse=None,
+        base_rmse=None,
+        wall_s=wall,
+    )
     if doc is None:
         return AuditResult(**fail, error=err or "no_output")
     inner = doc.get("inner_cv") or []
@@ -396,11 +500,24 @@ def parse_audit(ctx: ContextEnvs, cand: Candidate, doc: Optional[dict], wall: fl
         return AuditResult(**fail, error="row_order_mismatch")
     if not np.all(np.isfinite(pa)):
         return AuditResult(**fail, error="nonfinite_predictions")
-    if m is None or b is None or not (math.isfinite(float(m)) and math.isfinite(float(b))):
+    if (
+        m is None
+        or b is None
+        or not (math.isfinite(float(m)) and math.isfinite(float(b)))
+    ):
         return AuditResult(**fail, error="nonfinite_metrics")
     u = C.audit_utility_from_rmse(m, b)  # continuous; no reclassification by value
-    return AuditResult(cid=ctx.cid, sha=cand.sha, dsl=cand.dsl, status="completed", utility=u, model_rmse=float(m),
-                       base_rmse=float(b), pa=pa, wall_s=wall)
+    return AuditResult(
+        cid=ctx.cid,
+        sha=cand.sha,
+        dsl=cand.dsl,
+        status="completed",
+        utility=u,
+        model_rmse=float(m),
+        base_rmse=float(b),
+        pa=pa,
+        wall_s=wall,
+    )
 
 
 def _result_to_json(kind: str, r, env_sha: str) -> dict:
@@ -434,7 +551,9 @@ def _result_from_json(d: dict):
 # ----------------------------------------------------------------------------------------------------------------------
 # Engine
 # ----------------------------------------------------------------------------------------------------------------------
-Runner = Callable[[ContextEnvs, str, Candidate, str, Path], Tuple[Optional[dict], float, str]]
+Runner = Callable[
+    [ContextEnvs, str, Candidate, str, Path], Tuple[Optional[dict], float, str]
+]
 
 
 def eval_timeout(base_s: float, kind: str, dsl: str) -> float:
@@ -446,20 +565,57 @@ def eval_timeout(base_s: float, kind: str, dsl: str) -> float:
 
 def rust_runner(worker_bin: Path, timeout_s: float, nice: int = 19) -> Runner:
     def run(ctx: ContextEnvs, kind: str, cand: Candidate, core: str, slot: Path):
-        env_path = ctx.search_path if kind == "search" else ctx.audit_path if kind == "audit" else ctx.alts[kind].path
+        env_path = (
+            ctx.search_path
+            if kind == "search"
+            else ctx.audit_path
+            if kind == "audit"
+            else ctx.alts[kind].path
+        )
         C.assert_allowed(env_path)
         cand_path, out_path = slot / "candidate.json", slot / "out.json"
-        cand_path.write_text(json.dumps({"dsl": cand.dsl, "program_sha256": cand.sha, "birth_seq": 0,
-                                         "parents": list(cand.parents), "operator": cand.operator}, sort_keys=True))
+        cand_path.write_text(
+            json.dumps(
+                {
+                    "dsl": cand.dsl,
+                    "program_sha256": cand.sha,
+                    "birth_seq": 0,
+                    "parents": list(cand.parents),
+                    "operator": cand.operator,
+                },
+                sort_keys=True,
+            )
+        )
         open(out_path, "w").close()  # truncate in place (no deletion)
-        cmd = ["taskset", "-c", core, "nice", "-n", str(nice), str(worker_bin), "--fit-s1", str(env_path),
-               str(cand_path), str(out_path)]
-        env = {"PATH": "/usr/bin:/bin", "RAYON_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "HOME": str(slot),
-               "TMPDIR": str(slot)}
+        cmd = [
+            "taskset",
+            "-c",
+            core,
+            "nice",
+            "-n",
+            str(nice),
+            str(worker_bin),
+            "--fit-s1",
+            str(env_path),
+            str(cand_path),
+            str(out_path),
+        ]
+        env = {
+            "PATH": "/usr/bin:/bin",
+            "RAYON_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "HOME": str(slot),
+            "TMPDIR": str(slot),
+        }
         t0 = time.monotonic()
         try:
-            p = subprocess.run(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                               timeout=eval_timeout(timeout_s, kind, cand.dsl))
+            p = subprocess.run(
+                cmd,
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                timeout=eval_timeout(timeout_s, kind, cand.dsl),
+            )
             rc, err = p.returncode, p.stderr.decode(errors="replace")[-300:].strip()
         except subprocess.TimeoutExpired:
             return None, time.monotonic() - t0, "timeout"
@@ -478,9 +634,16 @@ def rust_runner(worker_bin: Path, timeout_s: float, nice: int = 19) -> Runner:
 
 
 class EvalEngine:
-    def __init__(self, cores: Sequence[int], root: Path = GP_ROOT, timeout_s: float = DEFAULT_TIMEOUT_S,
-                 guard: Optional[ResourceGuard] = None, runner: Optional[Runner] = None, persist: bool = True,
-                 worker_bin: Path = C.WORKER_BIN):
+    def __init__(
+        self,
+        cores: Sequence[int],
+        root: Path = GP_ROOT,
+        timeout_s: float = DEFAULT_TIMEOUT_S,
+        guard: Optional[ResourceGuard] = None,
+        runner: Optional[Runner] = None,
+        persist: bool = True,
+        worker_bin: Path = C.WORKER_BIN,
+    ):
         if not cores:
             raise ValueError("need at least one core")
         self.cores = [str(int(c)) for c in cores]
@@ -495,43 +658,77 @@ class EvalEngine:
         self._free: "queue.Queue[str]" = queue.Queue()
         for c in self.cores:
             self._free.put(c)
-        self._pool = cf.ThreadPoolExecutor(max_workers=len(self.cores), thread_name_prefix="h317gp-eval")
-        self._memo: Dict[Tuple[str, str, str, str], object] = {}  # (cid, program sha, kind, envelope sha)
+        self._pool = cf.ThreadPoolExecutor(
+            max_workers=len(self.cores), thread_name_prefix="h317gp-eval"
+        )
+        self._memo: Dict[
+            Tuple[str, str, str, str], object
+        ] = {}  # (cid, program sha, kind, envelope sha)
         self._inflight: Dict[Tuple[str, str, str, str], cf.Future] = {}
-        self._lock = threading.RLock()  # re-entrant: add_done_callback may run inline under the lock
+        self._lock = (
+            threading.RLock()
+        )  # re-entrant: add_done_callback may run inline under the lock
         self._file_locks: Dict[str, threading.Lock] = {}
         self._loaded: set = set()  # (cid, mode)
         self._ctx: Dict[Tuple[str, bool], ContextEnvs] = {}
-        self.counters = {"requests_search": 0, "requests_audit": 0, "memo_hits": 0, "physical_runs": 0,
-                         "failures": 0, "timeouts": 0, "wall_s_total": 0.0, "memo_env_mismatch_refused": 0}
-        self.walls: List[Tuple[str, str, float, str]] = []  # (kind, operator, wall, error)
+        self._ctx_locks: Dict[
+            Tuple[str, bool], threading.Lock
+        ] = {}  # single-flight context + memo construction
+        self.retry_log: List[dict] = []
+        self.counters = {
+            "requests_search": 0,
+            "requests_audit": 0,
+            "memo_hits": 0,
+            "physical_runs": 0,
+            "failures": 0,
+            "timeouts": 0,
+            "wall_s_total": 0.0,
+            "memo_env_mismatch_refused": 0,
+        }
+        self.walls: List[
+            Tuple[str, str, float, str]
+        ] = []  # (kind, operator, wall, error)
 
     # -- contexts ------------------------------------------------------------------------------------------------------
     def context(self, cid: str, family_id: str, full_mode: bool = False) -> ContextEnvs:
+        """One ContextEnvs object per (cid, mode) per engine, built and memo-loaded exactly once even when several
+        jobs (e.g. the two search seeds of one context) ask concurrently (GP red team MEDIUM-2). Shards partition by
+        context, so one context's memo file has a single writing process."""
         key = (cid, full_mode)
         with self._lock:
             ctx = self._ctx.get(key)
-        if ctx is None:
-            ctx = build_context(cid, family_id, self.env_dir, full_mode)
+            if ctx is not None:
+                return ctx
+            lk = self._ctx_locks.setdefault(key, threading.Lock())
+        with lk:
             with self._lock:
-                self._ctx[key] = ctx
-        self._load_memo(ctx)
-        return ctx
+                ctx = self._ctx.get(key)
+            if ctx is not None:
+                return ctx
+            ctx = build_context(cid, family_id, self.env_dir, full_mode)
+            self._load_memo(ctx)
+            with self._lock:
+                self._ctx[key] = ctx  # published only after its memo is loaded
+            return ctx
 
     # -- memo persistence ----------------------------------------------------------------------------------------------
     def _memo_path(self, cid: str, mode: str) -> Path:
         return self.memo_dir / f"{cid}.{mode}.jsonl"
 
     def _load_memo(self, ctx: ContextEnvs) -> None:
+        """Called under the per-(cid, mode) single-flight lock; marks the memo loaded only after reading it."""
         with self._lock:
             if (ctx.cid, ctx.mode) in self._loaded:
                 return
-            self._loaded.add((ctx.cid, ctx.mode))
         if not self.persist:
+            with self._lock:
+                self._loaded.add((ctx.cid, ctx.mode))
             return
         p = self._memo_path(ctx.cid, ctx.mode)
         C.assert_allowed(p)
         if not p.exists():
+            with self._lock:
+                self._loaded.add((ctx.cid, ctx.mode))
             return
         with open(p) as f:
             for line in f:
@@ -541,12 +738,18 @@ class EvalEngine:
                     continue  # torn final line after a crash
                 kind, env_sha, r = _result_from_json(d)
                 known = ctx.env_sha.get(kind)
-                if r.cid != ctx.cid or env_sha is None or (known is not None and env_sha != known):
+                if (
+                    r.cid != ctx.cid
+                    or env_sha is None
+                    or (known is not None and env_sha != known)
+                ):
                     with self._lock:
                         self.counters["memo_env_mismatch_refused"] += 1
                     continue  # refused: produced on a different envelope
                 with self._lock:
                     self._memo[(r.cid, r.sha, kind, env_sha)] = r
+        with self._lock:
+            self._loaded.add((ctx.cid, ctx.mode))
 
     def _append_memo(self, ctx: ContextEnvs, kind: str, r) -> None:
         if not self.persist:
@@ -561,16 +764,45 @@ class EvalEngine:
             f.flush()
 
     # -- evaluation ----------------------------------------------------------------------------------------------------
-    def _run_one(self, ctx: ContextEnvs, kind: str, cand: Candidate):
+    @staticmethod
+    def _transient(err: str) -> bool:
+        return err == "timeout" or err.startswith(
+            "rc=-"
+        )  # timeout or killed by a signal (outcome-independent)
+
+    def _attempt(self, ctx: ContextEnvs, kind: str, cand: Candidate):
         core = self._free.get()
         try:
             if self.guard is not None:
                 self.guard.wait()
             slot = self.slot_dir / f"core{core}"
             slot.mkdir(parents=True, exist_ok=True)
-            doc, wall, err = self.runner(ctx, kind, cand, core, slot)
+            return self.runner(ctx, kind, cand, core, slot)
         finally:
             self._free.put(core)
+
+    def _run_one(self, ctx: ContextEnvs, kind: str, cand: Candidate):
+        """Timeouts and signal kills are retried once before being recorded as a failure (GP red team LOW-1);
+        both attempts are logged to <root>/retries.jsonl."""
+        doc, wall, err = self._attempt(ctx, kind, cand)
+        if doc is None and self._transient(err):
+            doc2, wall2, err2 = self._attempt(ctx, kind, cand)
+            rec = {
+                "cid": ctx.cid,
+                "sha": cand.sha,
+                "kind": kind,
+                "attempt1": {"err": err, "wall_s": wall},
+                "attempt2": {"err": err2, "wall_s": wall2},
+                "utc": time.time(),
+            }
+            with self._lock:
+                self.retry_log.append(rec)
+                self.counters["retries"] = self.counters.get("retries", 0) + 1
+            if self.persist:
+                self.root.mkdir(parents=True, exist_ok=True)
+                with self._lock, open(self.root / "retries.jsonl", "a") as f:
+                    f.write(json.dumps(rec, sort_keys=True) + "\n")
+            doc, wall, err = doc2, wall + wall2, err2
         if kind == "audit":
             r = parse_audit(ctx, cand, doc, wall, err)
         elif kind == "search":
@@ -590,7 +822,9 @@ class EvalEngine:
         self._append_memo(ctx, kind, r)
         return r
 
-    def _evaluate(self, ctx: ContextEnvs, cands: Sequence[Candidate], kind: str) -> list:
+    def _evaluate(
+        self, ctx: ContextEnvs, cands: Sequence[Candidate], kind: str
+    ) -> list:
         futs: List[cf.Future] = []
         env_sha = ctx.kind_sha(kind)
         for cand in cands:
@@ -617,10 +851,14 @@ class EvalEngine:
         with self._lock:
             self._inflight.pop(key, None)
 
-    def search(self, ctx: ContextEnvs, cands: Sequence[Candidate]) -> List[SearchResult]:
+    def search(
+        self, ctx: ContextEnvs, cands: Sequence[Candidate]
+    ) -> List[SearchResult]:
         return self._evaluate(ctx, cands, "search")
 
-    def search_alt(self, ctx: ContextEnvs, name: str, cands: Sequence[Candidate]) -> List[SearchResult]:
+    def search_alt(
+        self, ctx: ContextEnvs, name: str, cands: Sequence[Candidate]
+    ) -> List[SearchResult]:
         """NOISE_PROBE: SEARCH rows under an alternative y-stratified 2-fold split (diagnostic, never selects)."""
         if not name.startswith("noise"):
             raise ValueError("alternative envelopes are named noise*")
@@ -638,7 +876,9 @@ class EvalEngine:
 
     def audit(self, ctx: ContextEnvs, cands: Sequence[Candidate]) -> List[AuditResult]:
         if in_selection_scope():
-            raise AuditLeakError(f"AUDIT evaluation requested inside selection scope {_SCOPE.stack!r}")
+            raise AuditLeakError(
+                f"AUDIT evaluation requested inside selection scope {_SCOPE.stack!r}"
+            )
         if ctx.full_mode:
             raise AuditLeakError("full-mode (Stage V) context has no AUDIT envelope")
         return self._evaluate(ctx, cands, "audit")
@@ -651,7 +891,9 @@ class EvalEngine:
         d["p95_wall_s_search"] = float(np.quantile(walls, 0.95)) if walls else None
         if self.guard is not None:
             d["pauses"] = len(self.guard.pauses)
-            d["pause_s_total"] = float(sum(p.get("pause_s", 0.0) for p in self.guard.pauses))
+            d["pause_s_total"] = float(
+                sum(p.get("pause_s", 0.0) for p in self.guard.pauses)
+            )
         return d
 
     def close(self) -> None:
@@ -672,7 +914,9 @@ class AuditLedger:
         self.requested: Dict[Tuple[str, str, object], int] = {}
         self._lock = threading.Lock()
 
-    def score(self, pipeline: str, ctx: ContextEnvs, seed, outputs: Sequence[Candidate]) -> List[AuditResult]:
+    def score(
+        self, pipeline: str, ctx: ContextEnvs, seed, outputs: Sequence[Candidate]
+    ) -> List[AuditResult]:
         key = (pipeline, ctx.cid, seed)
         with self._lock:
             if key in self.declared:
@@ -682,12 +926,20 @@ class AuditLedger:
         with self._lock:
             self.requested[key] = len(res)
         if len(res) != len(outputs):
-            raise AuditLeakError(f"AUDIT request count {len(res)} != declared {len(outputs)} for {key}")
+            raise AuditLeakError(
+                f"AUDIT request count {len(res)} != declared {len(outputs)} for {key}"
+            )
         return res
 
     def check(self) -> dict:
-        bad = {str(k): (self.declared[k], self.requested.get(k)) for k in self.declared
-               if self.requested.get(k) != self.declared[k]}
+        bad = {
+            str(k): (self.declared[k], self.requested.get(k))
+            for k in self.declared
+            if self.requested.get(k) != self.declared[k]
+        }
         if bad:
             raise AuditLeakError(f"AUDIT ledger mismatch: {bad}")
-        return {"outputs": len(self.declared), "audit_requests": int(sum(self.requested.values()))}
+        return {
+            "outputs": len(self.declared),
+            "audit_requests": int(sum(self.requested.values())),
+        }

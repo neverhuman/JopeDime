@@ -79,13 +79,24 @@ class StackSpec:
     def declared(self) -> Tuple[List[str], List[str], np.ndarray]:
         """Effective members (w_audit > 0): exactly these get one AUDIT request each."""
         keep = [i for i, w in enumerate(self.w_audit) if w > W_EPS]
-        return [self.members[i] for i in keep], [self.dsls[i] for i in keep], self.w_audit[keep]
+        return (
+            [self.members[i] for i in keep],
+            [self.dsls[i] for i in keep],
+            self.w_audit[keep],
+        )
 
     def to_json(self) -> dict:
-        return {"config": self.config, "members": self.members, "islands": self.islands,
-                "w_audit": [float(x) for x in self.w_audit], "w_fold0": [float(x) for x in self.w_fold0],
-                "w_fold1": [float(x) for x in self.w_fold1], "search": self.search,
-                "fallback_single": self.fallback_single, "info": self.info}
+        return {
+            "config": self.config,
+            "members": self.members,
+            "islands": self.islands,
+            "w_audit": [float(x) for x in self.w_audit],
+            "w_fold0": [float(x) for x in self.w_fold0],
+            "w_fold1": [float(x) for x in self.w_fold1],
+            "search": self.search,
+            "fallback_single": self.fallback_single,
+            "info": self.info,
+        }
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -100,8 +111,17 @@ def s1_from_lr(lr0: float, lr1: float, comp: float) -> dict:
     else:
         fit = 100.0 + max(mean_lr, 0.0) + max(tail_lr, 0.0) + max(sd_lr, 0.0)
         util = C.GATE_FAIL_UTILITY
-    return {"lr0": lr0, "lr1": lr1, "mean_lr": mean_lr, "tail_lr": tail_lr, "sd_lr": sd_lr, "complexity": comp,
-            "gate": bool(gate), "fitness": float(fit), "utility": float(util)}
+    return {
+        "lr0": lr0,
+        "lr1": lr1,
+        "mean_lr": mean_lr,
+        "tail_lr": tail_lr,
+        "sd_lr": sd_lr,
+        "complexity": comp,
+        "gate": bool(gate),
+        "fitness": float(fit),
+        "utility": float(util),
+    }
 
 
 def _lr(pred: np.ndarray, y: np.ndarray, base: float) -> float:
@@ -111,7 +131,11 @@ def _lr(pred: np.ndarray, y: np.ndarray, base: float) -> float:
 
 def crossfit_search_s1(P0, P1, fd: FoldData, w0, w1, comps) -> dict:
     wbar = 0.5 * (np.asarray(w0) + np.asarray(w1))
-    return s1_from_lr(_lr(P0 @ w0, fd.y0, fd.b0), _lr(P1 @ w1, fd.y1, fd.b1), float(np.dot(wbar, comps)))
+    return s1_from_lr(
+        _lr(P0 @ w0, fd.y0, fd.b0),
+        _lr(P1 @ w1, fd.y1, fd.b1),
+        float(np.dot(wbar, comps)),
+    )
 
 
 def softmax_prior(fitness: np.ndarray, tau: float = TAU_PRIOR) -> np.ndarray:
@@ -127,7 +151,9 @@ Block = Tuple[np.ndarray, np.ndarray, float]  # (P [n, K], y [n], base)
 
 def mse_objective(blocks: Sequence[Block], prior: np.ndarray, lam: float):
     def f(w):
-        val = np.mean([np.mean((P @ w - y) ** 2) / max(b * b, 1e-24) for P, y, b in blocks])
+        val = np.mean(
+            [np.mean((P @ w - y) ** 2) / max(b * b, 1e-24) for P, y, b in blocks]
+        )
         return float(val + lam * np.sum((w - prior) ** 2))
 
     def grad(w):
@@ -139,7 +165,13 @@ def mse_objective(blocks: Sequence[Block], prior: np.ndarray, lam: float):
     return f, grad
 
 
-def s1_objective(blocks: Sequence[Block], comps: np.ndarray, prior: np.ndarray, lam: float, temp: float = 0.02):
+def s1_objective(
+    blocks: Sequence[Block],
+    comps: np.ndarray,
+    prior: np.ndarray,
+    lam: float,
+    temp: float = 0.02,
+):
     def lrs(w):
         out = []
         for P, y, b in blocks:
@@ -149,13 +181,18 @@ def s1_objective(blocks: Sequence[Block], comps: np.ndarray, prior: np.ndarray, 
 
     def f(w):
         lr = lrs(w)
-        return float(0.8 * lr.mean() + 0.1 * lr.max() + 0.1 * lr.std() + 0.0005 * np.dot(w, comps)
-                     + lam * np.sum((w - prior) ** 2))
+        return float(
+            0.8 * lr.mean()
+            + 0.1 * lr.max()
+            + 0.1 * lr.std()
+            + 0.0005 * np.dot(w, comps)
+            + lam * np.sum((w - prior) ** 2)
+        )
 
     def grad(w):
         lr = lrs(w)
         G_ = []
-        for (P, y, b) in blocks:
+        for P, y, b in blocks:
             r = P @ w - y
             mse = max(float(np.mean(r * r)), 1e-300)
             G_.append(P.T @ r / (len(y) * mse))
@@ -165,19 +202,27 @@ def s1_objective(blocks: Sequence[Block], comps: np.ndarray, prior: np.ndarray, 
         sm /= sm.sum()
         gt = sm @ G_
         sd = lr.std()
-        gs = ((lr - lr.mean())[:, None] * (G_ - gm[None, :])).mean(0) / sd if sd > 1e-12 else np.zeros_like(gm)
+        gs = (
+            ((lr - lr.mean())[:, None] * (G_ - gm[None, :])).mean(0) / sd
+            if sd > 1e-12
+            else np.zeros_like(gm)
+        )
         return 0.8 * gm + 0.1 * gt + 0.1 * gs + 0.0005 * comps + 2.0 * lam * (w - prior)
 
     return f, grad
 
 
-def frank_wolfe(f: Callable, grad: Callable, w0: np.ndarray, iters: int = 300, tol: float = 1e-10) -> np.ndarray:
+def frank_wolfe(
+    f: Callable, grad: Callable, w0: np.ndarray, iters: int = 300, tol: float = 1e-10
+) -> np.ndarray:
     """Frank-Wolfe over the probability simplex with an exact grid line search; never leaves the simplex."""
     w = np.asarray(w0, np.float64).copy()
     w = np.maximum(w, 0.0)
     w /= w.sum()
     fw = f(w)
-    gammas = np.concatenate([np.linspace(0.0, 1.0, 41)[1:], [0.5 ** k for k in range(6, 14)]])
+    gammas = np.concatenate(
+        [np.linspace(0.0, 1.0, 41)[1:], [0.5**k for k in range(6, 14)]]
+    )
     for _ in range(iters):
         g = grad(w)
         s = np.zeros_like(w)
@@ -204,15 +249,21 @@ def h257_grid(k: int) -> List[np.ndarray]:
     else:
         for i in range(21):
             for j in range(21 - i):
-                grid.append(np.array([i * 0.05, j * 0.05, max(0.0, 1.0 - i * 0.05 - j * 0.05)]))
+                grid.append(
+                    np.array([i * 0.05, j * 0.05, max(0.0, 1.0 - i * 0.05 - j * 0.05)])
+                )
     return grid
 
 
-def h257_grid_fit(blocks: Sequence[Block], prior: np.ndarray, reg: float = 0.02) -> np.ndarray:
+def h257_grid_fit(
+    blocks: Sequence[Block], prior: np.ndarray, reg: float = 0.02
+) -> np.ndarray:
     grid = h257_grid(len(prior)) + [prior]
     best_w, best = prior, 1e30
     for w in grid:
-        loss = np.mean([np.mean((P @ w - y) ** 2) / max(b ** 2, 1e-12) for P, y, b in blocks])
+        loss = np.mean(
+            [np.mean((P @ w - y) ** 2) / max(b**2, 1e-12) for P, y, b in blocks]
+        )
         loss += reg * float(np.sum((w - prior) ** 2))
         if loss < best:
             best, best_w = loss, w
@@ -223,10 +274,14 @@ def h257_grid_fit(blocks: Sequence[Block], prior: np.ndarray, reg: float = 0.02)
 # Member selection
 # ----------------------------------------------------------------------------------------------------------------------
 def passing_sorted(results: Sequence[SearchResult]) -> List[SearchResult]:
-    return sorted([r for r in results if r.gate and r.ok], key=lambda r: (r.fitness, r.sha))
+    return sorted(
+        [r for r in results if r.gate and r.ok], key=lambda r: (r.fitness, r.sha)
+    )
 
 
-def top_n_dedup(results: Sequence[SearchResult], n: int, b0: float) -> List[SearchResult]:
+def top_n_dedup(
+    results: Sequence[SearchResult], n: int, b0: float
+) -> List[SearchResult]:
     """H257 duplicate rule: skip a tree whose fold-0 OOF predictions equal a chosen one's within 1e-6 * b0."""
     chosen: List[SearchResult] = []
     for r in passing_sorted(results):
@@ -242,7 +297,9 @@ def residuals(r: SearchResult, fd: FoldData) -> np.ndarray:
     return np.concatenate([r.p0 - fd.y0, r.p1 - fd.y1])
 
 
-def cv3_members(results: Sequence[SearchResult], n: int, fd: FoldData) -> List[SearchResult]:
+def cv3_members(
+    results: Sequence[SearchResult], n: int, fd: FoldData
+) -> List[SearchResult]:
     ps = passing_sorted(results)
     if not ps:
         return []
@@ -269,10 +326,21 @@ def cv3_members(results: Sequence[SearchResult], n: int, fd: FoldData) -> List[S
     while len({G.island_of(c.dsl) for c in chosen}) < target and guard < 12:
         guard += 1
         have = {G.island_of(c.dsl) for c in chosen}
-        add = next((r for r in pool if G.island_of(r.dsl) not in have and r not in chosen
-                    and compatible(r, [c for c in chosen])), None)
+        add = next(
+            (
+                r
+                for r in pool
+                if G.island_of(r.dsl) not in have
+                and r not in chosen
+                and compatible(r, [c for c in chosen])
+            ),
+            None,
+        )
         if add is None:
-            add = next((r for r in pool if G.island_of(r.dsl) not in have and r not in chosen), None)
+            add = next(
+                (r for r in pool if G.island_of(r.dsl) not in have and r not in chosen),
+                None,
+            )
         if add is None:
             break
         if len(chosen) < n:
@@ -290,7 +358,9 @@ def cv3_members(results: Sequence[SearchResult], n: int, fd: FoldData) -> List[S
 # ----------------------------------------------------------------------------------------------------------------------
 # Configs
 # ----------------------------------------------------------------------------------------------------------------------
-def _mats(members: Sequence[SearchResult]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def _mats(
+    members: Sequence[SearchResult],
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     P0 = np.column_stack([m.p0 for m in members])
     P1 = np.column_stack([m.p1 for m in members])
     f = np.array([m.fitness for m in members])
@@ -306,29 +376,63 @@ def stratified_subfolds(y: np.ndarray, k: int = N_SUB) -> List[np.ndarray]:
 
 
 def _spec(config, members, w0, w1, wa, fd, P0, P1, comps, **info) -> StackSpec:
-    return StackSpec(config, [m.sha for m in members], [m.dsl for m in members], [G.island_of(m.dsl) for m in members],
-                     np.asarray(wa, np.float64), np.asarray(w0, np.float64), np.asarray(w1, np.float64),
-                     crossfit_search_s1(P0, P1, fd, w0, w1, comps), info=info)
+    return StackSpec(
+        config,
+        [m.sha for m in members],
+        [m.dsl for m in members],
+        [G.island_of(m.dsl) for m in members],
+        np.asarray(wa, np.float64),
+        np.asarray(w0, np.float64),
+        np.asarray(w1, np.float64),
+        crossfit_search_s1(P0, P1, fd, w0, w1, comps),
+        info=info,
+    )
 
 
-def single_spec(results: Sequence[SearchResult], config: str = "single") -> Optional[StackSpec]:
+def single_spec(
+    results: Sequence[SearchResult], config: str = "single"
+) -> Optional[StackSpec]:
     done = [r for r in results if r.status == "completed" and r.ok]
     if not done:
         return None
     b = min(done, key=lambda r: (0 if r.gate else 1, r.fitness, r.sha))
     one = np.ones(1)
-    search = {k: getattr(b, k) for k in ("lr0", "lr1", "mean_lr", "tail_lr", "sd_lr", "fitness", "utility", "gate")}
+    search = {
+        k: getattr(b, k)
+        for k in (
+            "lr0",
+            "lr1",
+            "mean_lr",
+            "tail_lr",
+            "sd_lr",
+            "fitness",
+            "utility",
+            "gate",
+        )
+    }
     search["complexity"] = float(b.complexity)
-    return StackSpec(config, [b.sha], [b.dsl], [G.island_of(b.dsl)], one, one, one, search,
-                     fallback_single=(config != "single"))
+    return StackSpec(
+        config,
+        [b.sha],
+        [b.dsl],
+        [G.island_of(b.dsl)],
+        one,
+        one,
+        one,
+        search,
+        fallback_single=(config != "single"),
+    )
 
 
 def weights_h257(mem: Sequence[SearchResult], fd: FoldData):
     """(w for fold 0 [fit on fold 1], w for fold 1 [fit on fold 0], pooled w)."""
     P0, P1, f, _ = _mats(mem)
     prior = softmax_prior(f)
-    return (h257_grid_fit([(P1, fd.y1, fd.b1)], prior), h257_grid_fit([(P0, fd.y0, fd.b0)], prior),
-            h257_grid_fit([(P0, fd.y0, fd.b0), (P1, fd.y1, fd.b1)], prior))
+    return (
+        h257_grid_fit([(P1, fd.y1, fd.b1)], prior),
+        h257_grid_fit([(P0, fd.y0, fd.b0)], prior),
+        h257_grid_fit([(P0, fd.y0, fd.b0), (P1, fd.y1, fd.b1)], prior),
+    )
 
 
 def fit_scale(y: np.ndarray) -> float:
@@ -346,7 +450,11 @@ def weights_fw_mse(mem: Sequence[SearchResult], fd: FoldData):
         fo, gr = mse_objective(blocks, prior, LAMBDA)
         return frank_wolfe(fo, gr, prior)
 
-    return fit([(P1, fd.y1, s1)]), fit([(P0, fd.y0, s0)]), fit([(P0, fd.y0, s0), (P1, fd.y1, s1)])
+    return (
+        fit([(P1, fd.y1, s1)]),
+        fit([(P0, fd.y0, s0)]),
+        fit([(P0, fd.y0, s0), (P1, fd.y1, s1)]),
+    )
 
 
 def weights_s1_direct(mem: Sequence[SearchResult], fd: FoldData):
@@ -371,7 +479,9 @@ def cv1_h257_top3(results: Sequence[SearchResult], fd: FoldData) -> Optional[Sta
     return _spec("CV1", mem, w0, w1, wa, fd, P0, P1, comps)
 
 
-def cv2_fw(results: Sequence[SearchResult], fd: FoldData, n: int) -> Optional[StackSpec]:
+def cv2_fw(
+    results: Sequence[SearchResult], fd: FoldData, n: int
+) -> Optional[StackSpec]:
     mem = top_n_dedup(results, n, fd.b0)
     if len(mem) < 2:
         return single_spec(results, f"CV2@{n}")
@@ -391,14 +501,27 @@ def _s1_blocks(P: np.ndarray, y: np.ndarray) -> List[Block]:
     return out
 
 
-def cv3_s1direct(results: Sequence[SearchResult], fd: FoldData, n: int) -> Optional[StackSpec]:
+def cv3_s1direct(
+    results: Sequence[SearchResult], fd: FoldData, n: int
+) -> Optional[StackSpec]:
     mem = cv3_members(results, n, fd)
     if len(mem) < 2:
         return single_spec(results, f"CV3@{n}")
     P0, P1, _, comps = _mats(mem)
     w0, w1, wa = weights_s1_direct(mem, fd)
-    return _spec(f"CV3@{n}", mem, w0, w1, wa, fd, P0, P1, comps, n_requested=n,
-                 n_islands=len({G.island_of(m.dsl) for m in mem}))
+    return _spec(
+        f"CV3@{n}",
+        mem,
+        w0,
+        w1,
+        wa,
+        fd,
+        P0,
+        P1,
+        comps,
+        n_requested=n,
+        n_islands=len({G.island_of(m.dsl) for m in mem}),
+    )
 
 
 def cv4_hier(results: Sequence[SearchResult], fd: FoldData) -> Optional[StackSpec]:
@@ -425,7 +548,7 @@ def cv4_hier(results: Sequence[SearchResult], fd: FoldData) -> Optional[StackSpe
 
     def fit_direction(blocks_of: Callable[[np.ndarray], List[Block]]) -> np.ndarray:
         """Island sub-stacks then a meta-simplex, all on the same fitting rows; returns member weights."""
-        preds, maps = [], []
+        maps = []
         for g in groups:
             cols = [idx[r.sha] for r in g]
             if len(cols) == 1:
@@ -442,7 +565,9 @@ def cv4_hier(results: Sequence[SearchResult], fd: FoldData) -> Optional[StackSpe
         maps.append(mb)
         Mx = np.stack(maps, axis=1)  # [K_members, n_groups + 1]
         prior = np.full(Mx.shape[1], 1.0 / Mx.shape[1])
-        meta_blocks = [(P @ Mx, y, b) for (P, y, b) in blocks_of(np.arange(len(members)))]
+        meta_blocks = [
+            (P @ Mx, y, b) for (P, y, b) in blocks_of(np.arange(len(members)))
+        ]
         fo, gr = mse_objective(meta_blocks, prior, LAMBDA)
         v = frank_wolfe(fo, gr, prior)
         w = Mx @ v
@@ -451,14 +576,21 @@ def cv4_hier(results: Sequence[SearchResult], fd: FoldData) -> Optional[StackSpe
     s0, s1 = fit_scale(fd.y0), fit_scale(fd.y1)
     w0 = fit_direction(lambda cols: [(P1[:, cols], fd.y1, s1)])
     w1 = fit_direction(lambda cols: [(P0[:, cols], fd.y0, s0)])
-    wa = fit_direction(lambda cols: [(P0[:, cols], fd.y0, s0), (P1[:, cols], fd.y1, s1)])
+    wa = fit_direction(
+        lambda cols: [(P0[:, cols], fd.y0, s0), (P1[:, cols], fd.y1, s1)]
+    )
     return _spec("CV4", members, w0, w1, wa, fd, P0, P1, comps, n_groups=len(groups))
 
 
-def all_configs(results: Sequence[SearchResult], fd: FoldData, n_grid: Sequence[int] = N_GRID) -> Dict[str, StackSpec]:
+def all_configs(
+    results: Sequence[SearchResult], fd: FoldData, n_grid: Sequence[int] = N_GRID
+) -> Dict[str, StackSpec]:
     with selection_scope("H0.6.stack_fit"):
-        out: Dict[str, Optional[StackSpec]] = {"single": single_spec(results), "CV1": cv1_h257_top3(results, fd),
-                                               "CV4": cv4_hier(results, fd)}
+        out: Dict[str, Optional[StackSpec]] = {
+            "single": single_spec(results),
+            "CV1": cv1_h257_top3(results, fd),
+            "CV4": cv4_hier(results, fd),
+        }
         for n in n_grid:
             out[f"CV2@{n}"] = cv2_fw(results, fd, n)
             out[f"CV3@{n}"] = cv3_s1direct(results, fd, n)
@@ -468,20 +600,50 @@ def all_configs(results: Sequence[SearchResult], fd: FoldData, n_grid: Sequence[
 # ----------------------------------------------------------------------------------------------------------------------
 # AUDIT scoring of a fixed stack (outside selection scope; never feeds a choice)
 # ----------------------------------------------------------------------------------------------------------------------
-def stack_audit_utility(spec: StackSpec, audit_by_sha: Dict[str, AuditResult], ya: np.ndarray, ba: float,
-                        y_search_mean: float) -> dict:
+def stack_audit_utility(
+    spec: StackSpec,
+    audit_by_sha: Dict[str, AuditResult],
+    ya: np.ndarray,
+    ba: float,
+    y_search_mean: float,
+) -> dict:
     """AUDIT utility of a FIXED stack. Weights never change with AUDIT outcomes: a member whose AUDIT output crashed or
-    is non-finite contributes the SEARCH-target-mean prediction instead (coordinator rule 3, leakage red team).
-    A single-member output uses the worker's own AUDIT utility (0.0 = mean predictor if it crashed)."""
+    is non-finite contributes the SEARCH-target-mean prediction instead (leakage red team rule 3). The output is
+    invalid only if the entire prediction is that substitution (`all_substituted`); partial substitution is reported
+    as `substituted_weight_mass` (GP red team MEDIUM-3). A single-member output uses the worker's own AUDIT utility."""
     shas, _, w = spec.declared()
-    w = w / w.sum()  # renormalise the SEARCH-fit weights after dropping ~0 entries (no AUDIT input)
-    ok = [audit_by_sha[s].status == "completed" and audit_by_sha[s].pa is not None for s in shas]
+    w = (
+        w / w.sum()
+    )  # renormalise the SEARCH-fit weights after dropping ~0 entries (no AUDIT input)
+    ok = np.array(
+        [
+            audit_by_sha[s].status == "completed" and audit_by_sha[s].pa is not None
+            for s in shas
+        ]
+    )
+    sub_mass = float(w[~ok].sum())
+    base = {
+        "n_members": len(shas),
+        "n_mean_substituted": int((~ok).sum()),
+        "substituted_weight_mass": sub_mass,
+        "all_substituted": bool(not ok.any()),
+    }
     if len(shas) == 1:
         a = audit_by_sha[shas[0]]
-        return {"status": "completed", "utility": float(a.utility) if ok[0] else 0.0, "n_mean_substituted": int(not ok[0]),
-                "crashed": int(not ok[0])}
-    cols = [audit_by_sha[s].pa if good else np.full(len(ya), y_search_mean) for s, good in zip(shas, ok)]
+        return {
+            "status": "completed",
+            "utility": float(a.utility) if ok[0] else 0.0,
+            **base,
+        }
+    cols = [
+        audit_by_sha[s].pa if good else np.full(len(ya), y_search_mean)
+        for s, good in zip(shas, ok)
+    ]
     pred = np.column_stack(cols) @ w
     rmse = float(np.sqrt(np.mean((pred - ya) ** 2)))
-    return {"status": "completed", "utility": C.audit_utility_from_rmse(rmse, ba), "rmse": rmse,
-            "n_mean_substituted": int(len(ok) - sum(ok)), "crashed": int(len(ok) - sum(ok))}
+    return {
+        "status": "completed",
+        "utility": C.audit_utility_from_rmse(rmse, ba),
+        "rmse": rmse,
+        **base,
+    }

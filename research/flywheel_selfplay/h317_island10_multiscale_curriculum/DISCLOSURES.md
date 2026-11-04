@@ -66,3 +66,12 @@ none informed any design choice. The guard v2 refusal log of production runs sta
   verified inside the sandbox (tables/pools hard-linked from res-01; views re-encoded from TRAIN tables; R882 from
   TRAIN-only H189 files).
 - DL-Val is in any case a reuse cohort for Stage V (PREREG §1).
+
+## Added before the GP-block launch (amendment A2)
+- **P205 timing context.** P205 (all families) made the GP builder's earlier timing context `8f4cde4314f5…` (6 columns)
+  a pilot context. Before launch, that context had one full real-worker H0.4→H0.6 timing job, with the test-only
+  fallback screener and the numpy coder; its memo is separate, under `gp/timing_root`. No decision or design choice
+  used its values, and the production run uses a different memo root, so no cache is reused. The context is kept in
+  P205 (dropping it would be a post-hoc pilot change) and is flagged in `LAUNCH_GP.json`.
+- **Fake-worker fixtures.** Two test fixture contexts that are P205 pilots (`64f250c8…`, `8463e453…`) were used only
+  with the fake worker; no real evaluation was run on them.

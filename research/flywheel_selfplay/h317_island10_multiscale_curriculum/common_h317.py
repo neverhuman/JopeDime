@@ -100,7 +100,13 @@ _DENY_PRE_V = (
     "/home/ubuntu/flywheel/data/",
     "/home/ubuntu/scratch/",
     "/home/ubuntu/jope-data/h317-cl/redteam/",
+    # Stage V agent: other waves' evidence/inputs (e.g. H258 inputs/r882/best_dev_checkpoint.json holds DL-Val
+    # outcomes) and shared result stores. H317's own evidence dir is exempt (see _ALLOW_PRE_V).
+    "/home/ubuntu/jope_plan/evidence/",
+    "/home/ubuntu/jope_plan/ns/results/",
+    "/home/ubuntu/jope-data/h317-stagev/",
 )
+_ALLOW_PRE_V = ("/home/ubuntu/jope_plan/evidence/H317/",)
 _DENY_SUBSTR_PRE_V = ("/research/flywheel_selfplay/custody/files/",)
 _MIXED_H58 = ("pool_priors.npz", "context_features.npz")
 _SEALED_TOKENS = (
@@ -207,8 +213,9 @@ def _check_path(raw) -> None:
         if any(tok in low for tok in _SEALED_TOKENS):
             _refuse("refused_sealed_path", "sealed/holdout path refused", p)
         if not stage_v:
-            if any(
-                p.startswith(d) or p == d.rstrip(os.sep) for d in _DENY_PRE_V
+            if (
+                any(p.startswith(d) or p == d.rstrip(os.sep) for d in _DENY_PRE_V)
+                and not any(p.startswith(a) for a in _ALLOW_PRE_V)
             ) or any(s in p for s in _DENY_SUBSTR_PRE_V):
                 _refuse(
                     "refused_denylisted_tree",
@@ -377,6 +384,36 @@ def unlock_stage_v(*_ignored) -> None:
     os.write(fd, f"{os.getpid()} {got}\n".encode())
     os.fsync(fd)
     os.close(fd)
+    _STATE["stage_v"] = True
+
+
+def resume_stage_v() -> None:
+    """Re-enter Stage V in a later process (e.g. the xbabe0 audit phase, or a resume after an infrastructure crash):
+    the same LOCK/receipt/code-hash checks as unlock_stage_v, but the STAGE_V_STARTED marker must ALREADY exist and
+    name this LOCK's sha; no new marker is created. Whether a unit may run is decided by the Stage V driver's
+    outcome records (no retry of a recorded unit)."""
+    _require_guard()
+    lock_path = DATA_ROOT / "stage_v" / "LOCK.json"
+    posted = LOCK_RECEIPT.read_text().split()[0]
+    got = sha256_file(lock_path)
+    if got != posted:
+        raise GuardViolation(f"LOCK.json sha {got} != posted receipt {posted}")
+    lock = json.loads(lock_path.read_text())
+    for rel, sha in lock["code_sha256"].items():
+        p = Path(rel) if rel.startswith("/") else HERE / rel
+        if sha256_file(p) != sha:
+            raise GuardViolation(f"file changed after LOCK: {rel}")
+    marker = lock_path.parent / "STAGE_V_STARTED"
+    try:
+        named = marker.read_text().split()[1]
+    except (OSError, IndexError):
+        raise GuardViolation(
+            "resume_stage_v: no STAGE_V_STARTED marker (run unlock_stage_v first)"
+        )
+    if named != got:
+        raise GuardViolation(
+            f"resume_stage_v: marker names LOCK {named}, current LOCK is {got}"
+        )
     _STATE["stage_v"] = True
 
 

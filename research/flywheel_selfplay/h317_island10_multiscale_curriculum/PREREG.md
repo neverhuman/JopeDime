@@ -402,3 +402,28 @@ screener features, arm-independent (seed, fold) seeds for pairing). Launch only 
 - **Code commit before launch.** The GP code changes (multi-process sharding + merge, the Docker sandbox, staging,
   lint) and the GP code red-team fixes are committed to `origin/v1/next` before the first GP-block pilot eval, with a
   fresh same-agent review receipt.
+
+## 8. Pre-outcome amendment A2 (2026-11-04 ~13:45Z; no GP-block or Stage V outcome read; H0.1 decided = A, H0.2 running)
+- **GP execution on xbabe0:** `gp_lab.py launch`, 11 shards × 8 single-threaded workers on cpus 16-63,80-127, with
+  1 torch thread per shard. Contexts are partitioned i % 11 == k over sorted cids, so both seeds of a context share a
+  shard. New evals pause while host-wide CPU > 85% or MemAvailable < 20 GiB.
+- **Sandbox:** `sandbox_h317_docker.sh` (empty image, host system dirs read-only, `--network none`, uid 1000,
+  cap-drop ALL, read-only root, tmpfs home/tmp). Only the staged TRAIN view, code, JopeDimeMicro subset, views and
+  H0.1-A screener models are mounted. Staging goes through `stage_xbabe0.sh` with a sha manifest and a checker that
+  asserts no DL-Val cid, dataset id or family id appears (the redacted `selected.json` excepted).
+- **Parity:** worker parity xbabe0 vs xbabe2 is bit-identical (SEARCH and AUDIT digests) on non-pilot `002f7ead…`.
+  torch/BLAS differ across hosts (2.10 vs 2.7), so screener scores are host-specific. The entire GP block runs on
+  xbabe0 only.
+- **Screener:** the H0.1-A OOF fold models, the mean over both training seeds. Per-fold model shas and the
+  training-cid-set sha are in `config.json`.
+- **Rules pinned now:**
+  - **Invalid output:** the entire AUDIT prediction is the SEARCH-mean substitution (single crashed, or all members
+    crashed). Partial substitution is reported as `substituted_weight_mass`.
+  - **Timeouts and signal kills:** retried once, then recorded as a failure, with both attempts logged.
+  - **Width:** `--max-expanded-width 1000` is the default. Registry presets, bank records, CV5, migration splices and
+    BAG_FINAL are exempt from the width/cost rules.
+  - **H0.4 Holm:** the sign-flip one-sided level is 0.025/(m−rank), ranked like the Holm LCB.
+  - **Merge:** refuses missing or duplicate records and never changes a pinned decision. H0.6's LOFO runs over all
+    205 families after the merge.
+- **Stage V API:** `gp_lab.run_pipeline` / `run_stage_v_context`, with no cross-context state. The only per-context
+  memo, keyed by envelope, replays exact evals.

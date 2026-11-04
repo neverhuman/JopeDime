@@ -15,13 +15,11 @@ the AUDIT rows' X and y, so a GP target only ever gets its SEARCH-row view set (
 
 from __future__ import annotations
 
-import hashlib
 import importlib
-import json
 import sys
 import threading
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Optional, Sequence, Tuple
 
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
@@ -59,18 +57,35 @@ class Screener:
     is_fallback = False
     n_views = N_VIEWS
 
-    def score(self, cid: str, view_index_set: Sequence[int], dsl_list: Sequence[str]) -> np.ndarray:
+    def score(
+        self, cid: str, view_index_set: Sequence[int], dsl_list: Sequence[str]
+    ) -> np.ndarray:
         raise NotImplementedError
 
     def describe(self) -> dict:
-        return {"name": self.name, "is_fallback": self.is_fallback, "n_views": self.n_views}
+        return {
+            "name": self.name,
+            "is_fallback": self.is_fallback,
+            "n_views": self.n_views,
+        }
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Deterministic fallback (tests / dry runs only; refused by gp_lab for real arms)
 # ----------------------------------------------------------------------------------------------------------------------
-_FB_PRIOR = {"histgbm": 0.35, "histgbm2": 0.30, "gpr": 0.25, "ksmooth": 0.15, "krr": 0.15, "ridge_gcv": 0.10,
-             "ridge": 0.08, "elasticnet": 0.08, "ensemble": 0.30, "stack": 0.30, "portfolio": 0.35}
+_FB_PRIOR = {
+    "histgbm": 0.35,
+    "histgbm2": 0.30,
+    "gpr": 0.25,
+    "ksmooth": 0.15,
+    "krr": 0.15,
+    "ridge_gcv": 0.10,
+    "ridge": 0.08,
+    "elasticnet": 0.08,
+    "ensemble": 0.30,
+    "stack": 0.30,
+    "portfolio": 0.35,
+}
 
 
 class FallbackScreener(Screener):
@@ -108,12 +123,16 @@ class SearchViewProvider:
 
     def _fn(self):
         if self.view_fn is None:
-            self.view_fn = importlib.import_module("crop_shuffle_synthetic_views").context_view_feats
+            self.view_fn = importlib.import_module(
+                "crop_shuffle_synthetic_views"
+            ).context_view_feats
         return self.view_fn
 
     def __call__(self, cid: str, kind: str = "search") -> np.ndarray:
         if kind != "search":
-            raise C.GuardViolation("GP screener context input must be the SEARCH-row view set")
+            raise C.GuardViolation(
+                "GP screener context input must be the SEARCH-row view set"
+            )
         with self._lock:
             if cid not in self._mem:
                 vf = np.asarray(self._fn()(cid, "search"), np.float32)
@@ -129,8 +148,14 @@ class SearchViewProvider:
 class NeuralScreenerAdapter(Screener):
     is_fallback = False
 
-    def __init__(self, model_obj, view_feats_fn: Callable[[str], np.ndarray], name: str = "neural_oof",
-                 higher_is_better: bool = True, family_of: Optional[Dict[str, str]] = None):
+    def __init__(
+        self,
+        model_obj,
+        view_feats_fn: Callable[[str], np.ndarray],
+        name: str = "neural_oof",
+        higher_is_better: bool = True,
+        family_of: Optional[Dict[str, str]] = None,
+    ):
         self.model = model_obj
         self.view_feats_fn = view_feats_fn
         self.family_of = family_of or {}
@@ -142,7 +167,9 @@ class NeuralScreenerAdapter(Screener):
         self.scored = 0
         # Scale L (InducedSetBlock over candidates) makes a candidate's score depend on the batch: no caching then.
         models = getattr(model_obj, "models", None)
-        self.cache_scores = bool(models) and all(getattr(m, "set_blocks", None) is None for m in models)
+        self.cache_scores = bool(models) and all(
+            getattr(m, "set_blocks", None) is None for m in models
+        )
 
     def score(self, cid, view_index_set, dsl_list):
         """Cached per (cid, views, program) only for candidate-isolated models (exact); batch-coupled models are
@@ -152,15 +179,27 @@ class NeuralScreenerAdapter(Screener):
             return np.zeros((len(views), 0))
         vf = np.asarray(self.view_feats_fn(cid), np.float32)
         if vf.shape != (N_VIEWS, VIEW_CTX_DIM):
-            raise ValueError(f"view feats shape {vf.shape} != {(N_VIEWS, VIEW_CTX_DIM)}")
+            raise ValueError(
+                f"view feats shape {vf.shape} != {(N_VIEWS, VIEW_CTX_DIM)}"
+            )
         shas = [G.sha256_text(d) for d in dsl_list]
         use_cache = self.cache_scores
-        missing = [j for j, h in enumerate(shas) if not use_cache or (cid, views, h) not in self._cache]
+        missing = [
+            j
+            for j, h in enumerate(shas)
+            if not use_cache or (cid, views, h) not in self._cache
+        ]
         if missing:
             f412, p16, s24 = G.featurize_batch([dsl_list[j] for j in missing])
             with self._lock:  # target-bound call: the neural Screener raises ScreenerLeak if cid/family was trained on
-                out = self.model.score(vf[list(views)], f412, p16, s24, target_cid=cid,
-                                       target_family=self.family_of.get(cid))
+                out = self.model.score(
+                    vf[list(views)],
+                    f412,
+                    p16,
+                    s24,
+                    target_cid=cid,
+                    target_family=self.family_of.get(cid),
+                )
                 self.calls += 1
                 self.scored += len(missing)
             out = np.asarray(out, np.float64)
@@ -170,7 +209,9 @@ class NeuralScreenerAdapter(Screener):
                 return self.sign * out
             for k, j in enumerate(missing):
                 self._cache[(cid, views, shas[j])] = out[:, k]
-        return self.sign * np.stack([self._cache[(cid, views, h)] for h in shas], axis=1)
+        return self.sign * np.stack(
+            [self._cache[(cid, views, h)] for h in shas], axis=1
+        )
 
 
 class FoldScreeners:
@@ -183,18 +224,27 @@ class FoldScreeners:
         return self.by_fold[self.fold_of[cid]]
 
 
-def load_neural_fold_screeners(run_dir: Path, fold_of: Dict[str, int], view_provider: Callable[[str], np.ndarray],
-                               folds: Sequence[int] = range(C.N_FOLDS), seeds: Optional[Sequence[int]] = None,
-                               module: str = "rapid_hypothesis_lab",
-                               family_of: Optional[Dict[str, str]] = None) -> FoldScreeners:
+def load_neural_fold_screeners(
+    run_dir: Path,
+    fold_of: Dict[str, int],
+    view_provider: Callable[[str], np.ndarray],
+    folds: Sequence[int] = range(C.N_FOLDS),
+    seeds: Optional[Sequence[int]] = None,
+    module: str = "rapid_hypothesis_lab",
+    family_of: Optional[Dict[str, str]] = None,
+) -> FoldScreeners:
     """Unbound OOF fold screeners (`rapid_hypothesis_lab.load_fold_screener`); every score passes target_cid, so the
     neural side re-checks that the target and its family are outside that fold model's training set."""
     lab = importlib.import_module(module)
     by_fold = {}
     for f in folds:
         obj = lab.load_fold_screener(run_dir, f, seeds=seeds, device="cpu")
-        by_fold[int(f)] = NeuralScreenerAdapter(obj, view_provider, name=f"neural_oof:{Path(run_dir).name}:fold{f}",
-                                                family_of=family_of)
+        by_fold[int(f)] = NeuralScreenerAdapter(
+            obj,
+            view_provider,
+            name=f"neural_oof:{Path(run_dir).name}:fold{f}",
+            family_of=family_of,
+        )
     return FoldScreeners(by_fold, fold_of)
 
 
@@ -208,13 +258,29 @@ class ResidualCorrector:
     Only SEARCH utilities enter. Failures (-2.0) are clipped to `u_floor` to limit their leverage.
     """
 
-    def __init__(self, slope_prior: float = 0.10, slope_lambda: float = 1.0, kappa: float = 0.5,
-                 bandwidth: Optional[float] = None, u_floor: float = -0.5):
-        self.slope_prior, self.slope_lambda, self.kappa = slope_prior, slope_lambda, kappa
+    def __init__(
+        self,
+        slope_prior: float = 0.10,
+        slope_lambda: float = 1.0,
+        kappa: float = 0.5,
+        bandwidth: Optional[float] = None,
+        u_floor: float = -0.5,
+    ):
+        self.slope_prior, self.slope_lambda, self.kappa = (
+            slope_prior,
+            slope_lambda,
+            kappa,
+        )
         self.bandwidth, self.u_floor = bandwidth, u_floor
 
-    def fit_predict(self, s_cand: np.ndarray, d_cand: np.ndarray, s_rev: np.ndarray, d_rev: np.ndarray,
-                    u_rev: np.ndarray) -> Tuple[np.ndarray, dict]:
+    def fit_predict(
+        self,
+        s_cand: np.ndarray,
+        d_cand: np.ndarray,
+        s_rev: np.ndarray,
+        d_rev: np.ndarray,
+        u_rev: np.ndarray,
+    ) -> Tuple[np.ndarray, dict]:
         s_cand = np.asarray(s_cand, np.float64)
         if len(u_rev) == 0:
             return s_cand.copy(), {"n_rev": 0}
@@ -228,7 +294,10 @@ class ResidualCorrector:
         b = max(0.0, (cov + lam * self.slope_prior) / (var + lam))
         a = um - b * sm
         r = u - (a + b * s_rev)
-        dist2 = np.sum((np.asarray(d_cand)[:, None, :] - np.asarray(d_rev)[None, :, :]) ** 2, axis=-1)
+        dist2 = np.sum(
+            (np.asarray(d_cand)[:, None, :] - np.asarray(d_rev)[None, :, :]) ** 2,
+            axis=-1,
+        )
         h = self.bandwidth
         if h is None:
             pos = dist2[dist2 > 1e-12]
@@ -240,15 +309,24 @@ class ResidualCorrector:
         return pred, {"n_rev": n, "a": a, "b": b, "h": h, "resid_sd": float(np.std(r))}
 
 
-def screen_matrix(screener: Screener, cid: str, dsls: Sequence[str], views: Sequence[int] = tuple(range(N_VIEWS))
-                  ) -> np.ndarray:
+def screen_matrix(
+    screener: Screener,
+    cid: str,
+    dsls: Sequence[str],
+    views: Sequence[int] = tuple(range(N_VIEWS)),
+) -> np.ndarray:
     """[B, M] row-z-scored screener matrix."""
     return zscore_rows(screener.score(cid, list(views), list(dsls)))
 
 
-def corrected_matrix(screener: Screener, cid: str, dsls: Sequence[str], revealed: Sequence[Tuple[str, float]],
-                     corrector: Optional[ResidualCorrector] = None, views: Sequence[int] = tuple(range(N_VIEWS))
-                     ) -> Tuple[np.ndarray, np.ndarray, dict]:
+def corrected_matrix(
+    screener: Screener,
+    cid: str,
+    dsls: Sequence[str],
+    revealed: Sequence[Tuple[str, float]],
+    corrector: Optional[ResidualCorrector] = None,
+    views: Sequence[int] = tuple(range(N_VIEWS)),
+) -> Tuple[np.ndarray, np.ndarray, dict]:
     """Score candidates and revealed programs in one batch; returns (S_corr [B, M] in utility units, consensus [M], info).
 
     `revealed` = [(dsl, SEARCH utility)] only. Per-view rows get the same calibration and residual shift.
@@ -262,7 +340,9 @@ def corrected_matrix(screener: Screener, cid: str, dsls: Sequence[str], revealed
     if not revealed:
         return S[:, :M], cons[:M], {"n_rev": 0}
     d_all = np.stack([G.ext_descriptor(d) for d in list(dsls) + rdsl])
-    pred, info = corrector.fit_predict(cons[:M], d_all[:M], cons[M:], d_all[M:], np.array([u for _, u in revealed]))
+    pred, info = corrector.fit_predict(
+        cons[:M], d_all[:M], cons[M:], d_all[M:], np.array([u for _, u in revealed])
+    )
     a, b = info["a"], info["b"]
     shift = pred - (a + b * cons[:M])
     S_corr = a + b * S[:, :M] + shift[None, :]
