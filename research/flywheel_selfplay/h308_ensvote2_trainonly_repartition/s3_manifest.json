@@ -1,0 +1,31 @@
+{
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H308/",
+  "verification": "exact-version GET + sha256 match for every object before local deletion",
+  "objects": [
+    {
+      "key": "h308_models_locks_and_outputs.tar.gz",
+      "version_id": "kA4PRbNsYKJTjAJIYLTbp0W58dX3qb2L",
+      "sha256": "1304eae8ad9cf55400c6d646cd0994b14bb23296e94a368d5e584f822e1f962f",
+      "bytes": 534433491,
+      "contents": "24 P1/P2 fit locks + guard receipts + inner/refit LightGBM members, P0 regression task, outputs, logs, pre-score lock inventory"
+    },
+    {
+      "key": "metrics_full.json",
+      "version_id": "QrVmJhid20JiJoK_3vFr4.Aa4HAkyZku",
+      "sha256": "0b0e5086675443a8e693cdfa137932afa88f00f66a90f33bc943954053dc7bf6",
+      "bytes": 49700
+    },
+    {
+      "key": "regression_receipt.json",
+      "version_id": "L6SNMPoP645SUh63kUqqo3aF6N.pOEH0",
+      "sha256": "2f0d0e87ebe365356c7e8aef24632a4637aeff45efd81bab4e8ef4440b81c55d",
+      "bytes": 1322
+    },
+    {
+      "key": "picks.npz",
+      "version_id": "uXsQkA27JSci7XVbEFvbyJvfvzmO3nP0",
+      "sha256": "ac16ccdfd715d000a249dfea87d707159329f189a43475452af038a03517290f",
+      "bytes": 3239
+    }
+  ]
+}
