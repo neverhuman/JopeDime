@@ -16,12 +16,11 @@
   \label{fig:game-loop}
 \end{figure*}
 
-An invention attempt is the reference game's unit of play
-(\cref{sec:road}): a problem supplies the board, a program the move, the
-referee a verdict and a declared incumbent the opponent. The shared
-interface still needs a qualified encoding, language and evaluation
-protocol for each task type (\cref{sub:game-boards}).
-\Cref{tab:go-vs-innovation} compares it with Go.
+The reference game treats an invention attempt as its unit of play
+(\cref{sec:road}): a problem is the board, a program the move, the referee
+supplies a verdict and a declared incumbent is the opponent. Each task type
+still needs a qualified encoding, language and evaluation protocol
+(\cref{sub:game-boards}). \Cref{tab:go-vs-innovation} compares it with Go.
 
 % ----------------------------------------------------------------------------
 \subsection{Why games came first}\label{sub:game-games}
@@ -32,20 +31,20 @@ because it is ``sharply defined both in allowed operations (the moves) and in
 the ultimate goal (checkmate)'' \citep{shannon1950chess}, and checkers showed
 that a program could improve by playing itself \citep{samuel1959checkers}.
 
-Together, these four properties support repeated, reproducible evaluation. People
-scale judgment in the same way (\cref{sec:road}), through prizes, leaderboards and the common task
-framework's ``scoring referee'' \citep{donoho2017fifty}.
-Invention shares the first three properties once the problem and solution are
-specified, within the limits of \cref{sub:game-played}; whether replay becomes cheap is a
-question of evaluation cost (\cref{sec:price}).
+These four properties support reproducible repeated evaluation. People
+scale judgment similarly (\cref{sec:road}), through prizes, leaderboards and
+the common task framework's ``scoring referee'' \citep{donoho2017fifty}.
+Once problem and solution are specified, invention shares the first three
+within the limits of \cref{sub:game-played}; cheap replay depends on
+evaluation cost (\cref{sec:price}).
 
 % ----------------------------------------------------------------------------
 \subsection{The rules}\label{sub:game-rules}
 
-Every submitted program counts as an attempt, including an illegal move. The reference writer $\writer$ reads the encoded problem,
-while the referee keeps the incumbent as a separate comparison standard
-(\cref{sub:method-board}); its code and score \mbox{must stay outside} the writer's
-input.
+Every submitted program is an attempt, even an illegal move. The reference
+writer $\writer$ reads the encoded problem; the referee keeps the incumbent
+as a separate comparison standard (\cref{sub:method-board}). The incumbent's code and
+score \mbox{must stay outside} the writer's input.
 
 \Cref{fig:game-loop} separates training from game day. Its top band follows
 the single-candidate contract in \cref{box:searchone}.
@@ -148,13 +147,12 @@ $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
   \reward(p, \tilde{w}) \;<\; \reward(p, w^-) \;<\; \reward(p, w^+).
 \]
 
-The opponent is a ratcheting incumbent. A program must strictly improve
-under the same evaluation protocol to displace a board's incumbent.
-The reference design gives a retrained writer a separate proposed admission
-test (\cref{sub:method-selfplay}). The two rules define its self-play:
-a proposer faces incumbents retained from earlier play.
-AlphaGo Zero likewise separated network admission from move
-selection \citep{silver2017mastering}.
+The opponent is a ratcheting incumbent: a program must strictly improve
+under the same evaluation protocol to displace it. The reference design
+proposes a separate admission test for a retrained writer
+(\cref{sub:method-selfplay}). Its two self-play rules pit a proposer
+against incumbents retained from earlier play. AlphaGo Zero likewise
+separated network admission from move selection \citep{silver2017mastering}.
 These are reference rules, not a record of writer improvement. The later loop in
 \cref{sec:method-status} updates only a cost-ranking adapter; its default
 admission gate can retain equal utility. That record does not establish
@@ -216,10 +214,10 @@ than another, ours included \citep{wolpert1996nfl}.
 Real problems are structured, though, and a player that
 reads the board can choose its bias board by board. \Cref{sec:results} reserves the tests of that hypothesis against fixed
 frontier-designed regressors, with paired outcomes beside Elo summaries
-\citep{elo1978rating}. Non-transitive comparisons are one reason not to
-reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
-A worked game, chosen by a rule fixed before inspection, is to be \mbox{reported alongside}
-the results (\cref{sub:results-failures}).
+\citep{elo1978rating}. Non-transitivity limits what a single rating can establish
+\citep{balduzzi2018reevaluating}. A worked game, chosen by a rule fixed
+before inspection, will \mbox{accompany the results}
+(\cref{sub:results-failures}).
 
 The game defines an attempt and a verdict. \Cref{sec:price} counts the work
 behind a verified improvement, including invalid programs and valid losses.
