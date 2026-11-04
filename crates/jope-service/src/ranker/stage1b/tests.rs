@@ -421,3 +421,56 @@ fn res07_stage1b_tokens_and_mask_match_reference_on_50_contexts() {
         );
     }
 }
+
+#[test]
+fn pre_condense_token_packer_preserves_all_coordinates_scale_norms_and_column_masks() {
+    use super::{pack_pre_condense_tokens, COL_FEATURES, COL_SLOTS, HIDDEN256_FEATURES};
+    let dope629: Vec<f32> = (0..DOPE_FEATURES)
+        .map(|i| (i as f32 + 1.0) * 0.01)
+        .collect();
+    let hidden256: Vec<f32> = (0..HIDDEN256_FEATURES)
+        .map(|i| (i as f32) * 0.02 - 1.0)
+        .collect();
+    let mut col_lm = vec![0.0_f32; COL_SLOTS * COL_FEATURES];
+    for c in 0..12 {
+        for f in 0..16 {
+            col_lm[c * COL_FEATURES + f] = (c * 17 + f) as f32 * 0.005;
+        }
+        col_lm[c * COL_FEATURES + 16] = 1.0;
+    }
+
+    let packed = pack_pre_condense_tokens(&dope629, &hidden256, &col_lm).unwrap();
+    let flat_first_16: Vec<f32> = packed.full629_tokens[..16]
+        .iter()
+        .flatten()
+        .copied()
+        .collect();
+    assert_eq!(&flat_first_16[..], &dope629[..512]);
+    let flat_heads: Vec<f32> = packed.full629_tokens[16..18]
+        .iter()
+        .flatten()
+        .copied()
+        .collect();
+    assert_eq!(&flat_heads[..53], &dope629[512..565]);
+    assert_eq!(&flat_heads[53..64], &packed.block_log_norms[..]);
+    let flat_col_gates: Vec<f32> = packed.full629_tokens[18..20]
+        .iter()
+        .flatten()
+        .copied()
+        .collect();
+    assert_eq!(&flat_col_gates[..], &dope629[565..629]);
+
+    let flat_hidden: Vec<f32> = packed.hidden256_tokens.iter().flatten().copied().collect();
+    assert_eq!(&flat_hidden[..], &hidden256[..]);
+
+    assert_eq!(packed.col_mask_64.iter().sum::<f32>(), 12.0);
+    assert_eq!(packed.col_features_64x18[0][17], dope629[565]);
+    assert_eq!(packed.col_features_64x18[12], [0.0; 18]);
+
+    assert!(pack_pre_condense_tokens(&dope629[..628], &hidden256, &col_lm).is_err());
+    assert!(pack_pre_condense_tokens(&dope629, &hidden256[..255], &col_lm).is_err());
+    assert!(pack_pre_condense_tokens(&dope629, &hidden256, &col_lm[..100]).is_err());
+    let mut bad = dope629.clone();
+    bad[10] = f32::NAN;
+    assert!(pack_pre_condense_tokens(&bad, &hidden256, &col_lm).is_err());
+}
