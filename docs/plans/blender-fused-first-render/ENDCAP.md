@@ -2,7 +2,7 @@
 
 The owner stopped the native 4K render and requested a 1080p animated VEOX ending and an assembled film. Preserve the partial UHD render for a later explicit restart. The approved opening and measured demonstrations remain the source of truth.
 
-The final line is **Turn what if into what’s next.** It turns the opening's search question into an invitation to build. The supplied VEOX vector mark resolves through cyan and violet illumination above a dark reflective floor, the line appears beneath it, and the whole photograph fades to black. The decorative closing filaments are brand animation, not a claim about measured neural pathways.
+The final line is **Turn what if into what’s next.** It turns the opening's search question into an invitation to build. The supplied VEOX vector mark resolves through cyan and violet illumination above a dark reflective floor, the line appears beneath it, and the whole photograph fades to black. This is brand animation, not a claim about measured neural pathways.
 
 The owner subsequently requested a left-to-right letter pulse with the X glowing
 strongest and longest. The final shot assigns a separate material to each letter
@@ -12,6 +12,16 @@ restrained after-pulse and a long glow through frame 155. The steady slogan is
 unaffected. The complete photograph, including its real reflection, fades from
 frame 158 to exact black by frame 179. Verify the actual rendered letter regions,
 not only the keyed shader values, since tone mapping changes apparent intensity.
+
+Revision 5 removes all 26 decorative ribbon curves at the owner's request. It
+uses a pure colored emission surface during each letter pulse, with Standard
+color management only for this isolated closing shot. This preserves vivid
+cyan, blue, and violet instead of washing the bright faces toward white under
+AgX. The inactive mark uses a neutral silver surface. Physical floor reflections
+and the existing pulse order/long X hold remain. Compare rendered color saturation
+separately from luminance; the prior nearly white peaks do not establish a useful
+target for hue strength. The opening, demonstration, and source compositor keep
+their existing color settings.
 
 ## Objective and limits
 
@@ -35,7 +45,7 @@ All scenes, copied runtimes, fonts, images, sound, and videos remain outside Git
 
 ## Implementation and reproduction
 
-1. `veox_endcap.py build` parses the supplied five SVG paths, preserving both V components and the O's hole. It creates shallow relief, physically lit reflections, restrained transient filaments, packed typography, a locked camera, and keyed fades. Unsupported SVG commands fail rather than altering the logo. The saved scene embeds the same receipt as its external `.receipt.json`.
+1. `veox_endcap.py build` parses the supplied five SVG paths, preserving both V components and the O's hole. It creates shallow relief, physically lit reflections, vivid letter pulses, packed typography, a locked camera, and keyed fades. Unsupported SVG commands fail rather than altering the logo. The saved scene embeds the same receipt as its external `.receipt.json`.
 2. Inspect six 96-sample Cycles preview frames, including the full logo and final black. Render all 180 frames only after this visual review. Select an idle authorized OptiX or Metal GPU explicitly; never fall back or terminate foreign compute. Fresh output directories and per-frame SHA-256 receipts prevent accidental overwrite and stale frame reuse.
 3. `endcap_film.py` validates the original film/source/audio/plate receipts, computes the bounded 840-frame demo mapping, and verifies complete row/file/cue/shuffle coverage. Recompose the original opening from its native plates, then append the resampled original demonstration and the new closing shot.
 4. Preserve the original procedural PCM through 39 seconds. Add an original quiet resolving cue only in the six-second tail. Encode H.264 CRF 16 with the slower preset, AAC audio, and chapter metadata. Full decode both delivered MP4s and check exact frame counts, duration, picture profile, audio, and final fade.

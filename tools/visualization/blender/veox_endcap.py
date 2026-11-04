@@ -15,10 +15,10 @@ import xml.etree.ElementTree as ET
 WIDTH, HEIGHT, FPS, FRAMES = 1920, 1080, 30, 180
 COPY = ("Turn what if into what’s next.",)
 LETTER_PULSES = {
-    "V": {"color": (.01, .72, 1.), "peak": 24, "end": 43, "strength": 4.0},
-    "E": {"color": (.035, .34, 1.), "peak": 42, "end": 62, "strength": 4.5},
-    "O": {"color": (.28, .09, 1.), "peak": 60, "end": 82, "strength": 5.0},
-    "X": {"color": (.56, .075, 1.), "peak": 82, "end": 179, "strength": 9.0},
+    "V": {"color": (.005, .36, 1.), "peak": 24, "end": 43, "strength": 1.2},
+    "E": {"color": (.02, .18, 1.), "peak": 42, "end": 62, "strength": 1.4},
+    "O": {"color": (.28, .04, 1.), "peak": 60, "end": 82, "strength": 1.6},
+    "X": {"color": (.62, .18, 1.), "peak": 82, "end": 179, "strength": 2.2},
 }
 
 
@@ -108,22 +108,6 @@ def animate(socket, values):
         socket.keyframe_insert("default_value", frame=frame)
 
 
-def make_curve(bpy, name, coordinates, mat, radius):
-    curve = bpy.data.curves.new(name, "CURVE")
-    curve.dimensions = "3D"
-    curve.resolution_u = 20
-    curve.bevel_depth, curve.bevel_resolution = radius, 3
-    spline = curve.splines.new("BEZIER")
-    spline.bezier_points.add(len(coordinates) - 1)
-    for point, coordinate in zip(spline.bezier_points, coordinates):
-        point.co = coordinate
-        point.handle_left_type = point.handle_right_type = "AUTO"
-    obj = bpy.data.objects.new(name, curve)
-    bpy.context.collection.objects.link(obj)
-    curve.materials.append(mat)
-    return obj
-
-
 def aim(obj, target):
     from mathutils import Vector
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
@@ -148,8 +132,10 @@ def build(args):
     scene.world.use_nodes = True
     scene.world.node_tree.nodes["Background"].inputs["Color"].default_value = (.001, .002, .006, 1)
     scene.world.node_tree.nodes["Background"].inputs["Strength"].default_value = .12
-    scene.view_settings.view_transform = "AgX"
-    scene.view_settings.look = "AgX - Medium High Contrast"
+    # This isolated brand shot uses display-referred neon colors. Standard
+    # avoids AgX's bright-highlight desaturation, which made pulses look white.
+    scene.view_settings.view_transform = "Standard"
+    scene.view_settings.look = "None"
     scene.view_settings.exposure = 0
     scene.cycles.max_bounces = 8
     scene.cycles.transparent_max_bounces = 8
@@ -164,20 +150,28 @@ def build(args):
     marks = {}
     ivory = (.84, .87, .92, 1.)
     for letter, pulse in LETTER_PULSES.items():
-        mark, reveal, surface = material(bpy, f"VEOX {letter} pulse", ivory[:3], emission=.38, roughness=.18, metallic=.26)
+        mark, reveal, surface = material(bpy, f"VEOX {letter} pulse", (.25, .27, .30), emission=.08, roughness=.18, metallic=.26)
         animate(reveal, [(1, 0), (7, 0), (19, 1), (180, 1)])
         peak, end, strength = pulse["peak"], pulse["end"], pulse["strength"]
-        color = (*pulse["color"], 1.)
+        nodes, links = mark.node_tree.nodes, mark.node_tree.links
+        emission = nodes.new("ShaderNodeEmission")
+        emission.inputs["Color"].default_value = (*pulse["color"], 1.)
+        pulse_mix = nodes.new("ShaderNodeMixShader")
+        links.new(surface.outputs[0], pulse_mix.inputs[1])
+        links.new(emission.outputs[0], pulse_mix.inputs[2])
+        # Replace only the opaque surface of the existing reveal mix. A pure
+        # colored active face keeps the ivory lighting from washing out neon.
+        links.new(pulse_mix.outputs[0], reveal.node.inputs[2])
         if letter == "X":
             # The arriving energy collects in X: one broad crest, a quiet
             # after-pulse, and a long violet hold through the final fade.
-            power = [(1,.38),(64,.38),(82,strength),(98,6.2),(116,7.0),(135,5.3),(155,3.8),(180,2.8)]
-            colors = [(1,ivory),(64,ivory),(78,color),(180,color)]
+            power = [(1,0),(64,0),(82,strength),(98,1.8),(116,1.95),(135,1.7),(155,1.5),(180,1.35)]
+            active = [(1,0),(64,0),(78,1),(180,1)]
         else:
-            power = [(1,.38),(peak-13,.38),(peak,strength),(peak+5,strength*.76),(end,.38),(180,.38)]
-            colors = [(1,ivory),(peak-13,ivory),(peak-4,color),(peak+6,color),(end,ivory),(180,ivory)]
-        animate(surface.inputs["Emission Strength"], power)
-        animate(surface.inputs["Emission Color"], colors)
+            power = [(1,0),(peak-13,0),(peak,strength),(peak+5,strength*.76),(end,0),(180,0)]
+            active = [(1,0),(peak-13,0),(peak-4,1),(peak+6,1),(end,0),(180,0)]
+        animate(emission.inputs["Strength"], power)
+        animate(pulse_mix.inputs[0], active)
         marks[letter] = mark
 
     tree = ET.fromstring(logo_bytes)
@@ -213,22 +207,6 @@ def build(args):
         obj.rotation_euler[0], obj.location = math.pi / 2, (0, -.04, 2.2)
         obj.data.materials.append(ink)
 
-    # Decorative closing filaments inherit the film's palette; they assert no model topology.
-    for side in (-1, 1):
-        for lane in range(13):
-            tint = (.01, .56, .82) if side < 0 else (.43, .08, .78)
-            thread, alpha, shader = material(bpy, f"Closing filament {side} {lane}", tint, emission=2.4)
-            animate(alpha, [(1, 0), (8+lane, .8), (29+lane, .44), (54+lane, 0), (180, 0)])
-            arc = make_curve(bpy, f"Light resolves {side} {lane}", [
-                (side*10.5, 1.2+lane*.06, 2.5+lane*.12),
-                (side*6.8, .7+lane*.06, 2.2+lane*.09),
-                (side*3.7, .3+lane*.03, 2.6+lane*.035),
-                (side*.12, .02, 3.0)], thread, .004 + (lane%3)*.001)
-            arc.data.bevel_factor_end = 0
-            arc.data.keyframe_insert("bevel_factor_end", frame=1+lane)
-            arc.data.bevel_factor_end = 1
-            arc.data.keyframe_insert("bevel_factor_end", frame=32+lane)
-
     for name, location, color, power, size in (
         ("Ivory softbox", (0,-4,9), (1,.93,.84), 1250, 8),
     ):
@@ -255,8 +233,8 @@ def build(args):
     glow = nodes.new("CompositorNodeGlare")
     glow.inputs["Type"].default_value = "Fog Glow"
     glow.inputs["Quality"].default_value = "High"
-    glow.inputs["Threshold"].default_value = 1.8
-    glow.inputs["Strength"].default_value = .32
+    glow.inputs["Threshold"].default_value = .6
+    glow.inputs["Strength"].default_value = .38
     links.new(image.outputs["Image"], glow.inputs["Image"])
     multiply = nodes.new("ShaderNodeMix")
     multiply.data_type = "RGBA"
@@ -278,6 +256,7 @@ def build(args):
                "font_sha256":font_sha, "worker_sha256":digest(__file__), "copy":list(COPY),
                "logo_paths":len(paths), "vector_cubic_subdivisions":32,
                "letter_pulses":LETTER_PULSES, "strongest_longest_letter":"X",
+               "decorative_ribbons":0, "pulse_surface":"pure colored emission", "view_transform":"Standard",
                "note":"Illustrative brand closing shot; no inferred neural topology or benchmark claims."}
     embedded = bpy.data.texts.new("VEOX_ENDCAP_RECEIPT.json")
     embedded.write(json.dumps(receipt, indent=2))
