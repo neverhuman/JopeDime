@@ -148,7 +148,7 @@ def main():
                    "critic training identity differs")
     native = json.loads(args.native_features.read_text())
     stage1.require(native["schema"] == "jain.h256-native-slate-features/v1", "wrong native feature artifact")
-    stage1.require(1 <= len(native["cases"]) <= 6, "native case count outside bound")
+    stage1.require(1 <= len(native["cases"]) <= 16, "native case count outside bound")
     if args.fit_inputs:
         stage1.require(args.round882 and stage1.sha(args.round882) == stage1.EXPECTED["assets/round-882.pt"],
                        "fresh K0 base needs exact frozen checkpoint")

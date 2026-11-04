@@ -1,3 +1,5 @@
+Current work: [ten-dataset 1080p30 animation plan](ANIMATION_PLAN.md), [reference composition](CINEMATIC_PLAN.md), and [status](STATUS.md). The owner superseded the previous GPU-inference/still-only scope: benchmark inference on CPU, use idle GPUs only for rendering, show names/total rows and all Rust with fast typing and readable semantic holds.
+
 # JAIN: fused native run to complete-source Blender review
 
 Current checkpoint work: [H256 plan and measured proof](H256_PLAN.md). The trained five-fold path retains all landmark channels and binds real selected programs to complete native Rust files. Current `h256_scene.py --layout layered` shows12 shared neuron planes, a bounded rotating network and continuous cyan/violet measured-strength colors; technical names are kept in receipts per the latest user direction. The original r882 record below remains preserved as baseline evidence.

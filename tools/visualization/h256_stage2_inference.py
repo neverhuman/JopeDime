@@ -307,7 +307,7 @@ def main():
     parser.add_argument("--native-features", type=Path, required=True, help="exact raw412/projection16 candidate artifact")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--scaler-mode", choices=["canonical_full_train", "foldwise"], default="canonical_full_train")
-    parser.add_argument("--limit", type=int, default=6, choices=range(1, 7))
+    parser.add_argument("--limit", type=int, default=6, choices=range(1, 17))
     args = parser.parse_args()
     stage1.require(not args.output_dir.exists(), "output exists; refusing overwrite")
     root, custody = args.root.resolve(), args.stage2_custody.resolve()

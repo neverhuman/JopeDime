@@ -1,0 +1,145 @@
+{
+  "schema": "jain.ten-dataset-animation-delivery/v1",
+  "status": "GPU_RENDER_IN_PROGRESS",
+  "created_utc": "2026-11-04T00:49:18.831590+00:00",
+  "pr": "https://github.com/neverhuman/JopeDime/pull/2114",
+  "protected_prs": [
+    2071,
+    2115
+  ],
+  "native_build_commit": "d002d68112e611b6ee9ac3a722c47631669f963d",
+  "source_hashes": {
+    "tools/visualization/animation_capture.py": "b8435ca8e5dd734b2b458534e975d97170afa702b314042b7aa79de863e9dd4e",
+    "tools/visualization/round_trip_metrics.py": "b85a7b770c6beabf258b479f4abbc1bedb4e26fb356c184611dee44bbd13795e",
+    "tools/visualization/cinematic_pages.py": "2e1871017d34369a987b692e250c04501a767c7c4577d0e3d7edf8361e77716e",
+    "tools/visualization/input_influence.py": "4b6504ae87f6ba5b02a62e7fa6bcbd4cd86d95f29286032d00660fd0d600faa3",
+    "tools/visualization/animate_source.py": "0730aced0eb5e6962efc4bd26af8e33daa013f7feba8e311903d2f4d7e6244f6",
+    "tools/visualization/h256_stage2_inference.py": "9c987ebbd8ba540a83b18e10f562d449fbac50b49abc632e2efecc23cde44ffe",
+    "tools/visualization/h256_stage2_inputs.py": "8167ec749f905a6e3be8e045025241565383dd39ed89815537ca390f1f66a803",
+    "tools/visualization/h256_stage2_validate.py": "7bba59311fac3b7247c5e9d337fb5cb4152cbc7af07e67b83d5f2315c0248aed",
+    "tools/visualization/blender/jain_cinematic.py": "843c7c0b421920cbce7c43b403799405e307e48c8b1c44dbcd052b7a5fd95003",
+    "tools/visualization/blender/jain_display_network.py": "60c16ca2a9f29fa709e5cbbda93c4db3a4d765b543b2bb9e7311dc2ef5b90d8d",
+    "tools/visualization/blender/render_animation.py": "ca3c3f8e8866c01ffc54048fc1cee2e4321e213fef555b873b76579572f4dbf5",
+    "crates/jope-service/examples/visual_inference_metric.rs": "03759ef39fea56749bc8306a831405575d6e5f2333fc968bfd233cdc46ef5c7b"
+  },
+  "artifacts": {
+    "capture.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/capture.receipt.json",
+      "sha256": "73c9d8c6c12dc4d31394f589379a186b0eebc756d35873d340cafb5f451f14cb"
+    },
+    "continuity.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/continuity.receipt.json",
+      "sha256": "843c33172a29825b8e5b805e55e2f5d0819fd1a869cf245c52273ca9c3d2c927"
+    },
+    "dataset-catalog.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/dataset-catalog.json",
+      "sha256": "68db211c796db9ecb4bad400374a253625e884630ec7709db91a9b7c7c6187ae"
+    },
+    "gp-source/validation.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/gp-source/validation.receipt.json",
+      "sha256": "9a26646a909a7dd894c8924d69c60ae9904181ee096886d107441f1471c07f74"
+    },
+    "metrics/catalog.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/metrics/catalog.receipt.json",
+      "sha256": "6561f06c727f1ffeaac4c3114631e326de7ae7e4dcd68ded8f0435800b6a3e92"
+    },
+    "metrics/loader-controls.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/metrics/loader-controls.receipt.json",
+      "sha256": "1c418ae9d6d127812b19fe07d9bb58a8209cd4271cb190a917f724596f5d666d"
+    },
+    "nn-binding-check.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/nn-binding-check.receipt.json",
+      "sha256": "2c55abd9cd0afe0cceb064a66f07f29f96d7d61bcaf0d9b2b7fea8dd57e56880"
+    },
+    "v2-binding-continuity.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/v2-binding-continuity.receipt.json",
+      "sha256": "327775907bfa933a96de6b8a68621a153b9d2c7ec8858970b988a6f6fc7b9aeb"
+    },
+    "code-pages/catalog.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/code-pages/catalog.receipt.json",
+      "sha256": "5ab77c3a1f467fe2cfd4d5baadd81826f493d70f8ac6018e0c3526665637404e"
+    },
+    "cell-influence/influence.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/cell-influence/influence.receipt.json",
+      "sha256": "712cd820b29d09235305f0bbf25bae8fb63365637c5c2b7843c1b47aa3aa8964"
+    },
+    "scene-v2/scene.blend": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/scene-v2/scene.blend",
+      "sha256": "7913084e99ca22330bbd11b8578cdd5b754ef23db4690307d52389b2271203fa"
+    },
+    "scene-v2/scene.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/scene-v2/scene.receipt.json",
+      "sha256": "ee84101a34c8676e3a0519d11d7e887d7b2d990acfb611f33eac34fb00727d78"
+    }
+  },
+  "datasets": {
+    "count": 10,
+    "origin": "synthetic",
+    "rows_each": 96,
+    "features": 4,
+    "visible_rows_each": 13,
+    "target_last_and_purple": true,
+    "selection": "fixed six plus outcome-free farthest extension from declared24pool; no reroll"
+  },
+  "source": {
+    "bytes": 994626,
+    "pages": 451,
+    "coverage": "all ten original Rust files, top to bottom, syntax highlighted; training and prediction included",
+    "scroll_seconds": 1.2,
+    "semantic_hold_seconds": 6,
+    "initial_typing_seconds": 0.6
+  },
+  "inference": {
+    "device": "cpu",
+    "actual_round_trips": 40,
+    "warmups_per_case": 1,
+    "measured_samples_per_case": 3,
+    "statistic": "actual paired median-duration sample",
+    "counter": "native jope.source-lex/v1 Rust-only; same count/time as TEL07 0x012a",
+    "display": "hardware-neutral totalms and equivalent Rust tokens/sec",
+    "selection_source_and_descriptor_exact": true,
+    "critic_and_final_cost_error": 0.0,
+    "rendering_outside_interval": true
+  },
+  "network": {
+    "recorded_matrix_operations": 123,
+    "sampled_nodes": 2230,
+    "sampled_actual_weight_bias_strands": 5437,
+    "full_topology_claim": false,
+    "actual_ten_binding_audit": "PASS zero mismatches",
+    "ingress_egress": "editorial",
+    "pulse_rotation": "editorial120-frame loop at30fps"
+  },
+  "sensitivity": {
+    "method": "actual fitted GP prediction delta with FIT-median feature replacement",
+    "rows_per_case": 5,
+    "additional_visible_rows": "neutral; no invented saliency"
+  },
+  "local_checks": {
+    "python_controls": 41,
+    "native_metric_tests": 3,
+    "native_fit_tests": 2,
+    "ten_full_source_training_parity": "PASS exact0.0",
+    "capability_matrix": "PASS845rows",
+    "hosted_ci": "NOT_RUN"
+  },
+  "render": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "loop_frames_per_case": 120,
+    "hosts": [
+      "xbabe1",
+      "xbabe3"
+    ],
+    "gpu_inference": false,
+    "render_receipts": "PENDING",
+    "movie": "PENDING"
+  },
+  "remaining": [
+    "actual10GPUloops",
+    "complete H264 composition and ffprobe",
+    "visual QA",
+    "Git main integration and final review/push"
+  ]
+}

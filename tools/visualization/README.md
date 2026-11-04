@@ -1,4 +1,10 @@
-# JAIN inference review
+# JAIN inference animation
+
+The current [ten-dataset animation plan](../../docs/plans/blender-fused-first-render/ANIMATION_PLAN.md) uses `animation_capture.py`, `round_trip_metrics.py`, `cinematic_pages.py`, `input_influence.py`, `blender/jain_cinematic.py`, `blender/render_animation.py` and `animate_source.py`. It produces an equal-third 1080p30 view with dataset names/total rows, a measured neural display and the complete Rust files revealed by fast typing. CPU-only inference benchmarks feed the hardware-neutral on-screen total time and equivalent Rust tokens/sec. The Rust-only native counter and TEL07 event are shared with internal telemetry; editorial typing speed is separate. GPUs are used only to render.
+
+All generated data/model/source/scene/video assets stay outside Git. Ten explicitly synthetic examples are selected by embedding diversity before inference; the actual five-fold selected DSLs and native GP-to-Rust exports must pass the semantic/source/training gates. The code pane preserves every byte and pauses longer on training and prediction. See the plan for exact ownership, paths, commands, scopes and stop conditions.
+
+## Earlier still and baseline tooling
 
 The latest [H256 checkpoint plan](../../docs/plans/blender-fused-first-render/H256_PLAN.md) covers the trained five-fold solution encoder, explicit landmark mappings, actual proposal selection, native selected-GP refits and complete Rust scrolling. Its entry point is `blender/h256_scene.py`; the earlier board below preserves the original authenticated r882 baseline.
 

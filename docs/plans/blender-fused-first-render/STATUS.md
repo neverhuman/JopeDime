@@ -1,4 +1,8 @@
-# JAIN H256 render status
+# JAIN ten-dataset animation status
+
+The current authority is [ANIMATION_PLAN.md](ANIMATION_PLAN.md), in draft PR #2114. The latest owner requests 1920×1080 at30fps, ten diverse datasets, complete Rust fast typing with readable holds, names and total rows, no hardware/lexical/warm/replay text on screen, and CPU-only inference benchmarks. GPU use is limited to rendering. The four additional native runs passed at native-source commit `d002d68112e611b6ee9ac3a722c47631669f963d`; the ten-case saved-model/source/metric/render gates are in progress. No completed video is claimed by this entry.
+
+## Earlier six-dataset still evidence (historical)
 
 2026-11-03 · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114) · branch `codex/blender-fused-first-render` · PR #2071 / `v1/fastlane` protected.
 

@@ -31,7 +31,7 @@ def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
 
 
-def read_json(path, maximum=256 * 1024 * 1024):
+def read_json(path, maximum=512 * 1024 * 1024):
     path = Path(path)
     require(path.is_file() and path.stat().st_size <= maximum, "missing/oversize JSON artifact")
     return json.loads(path.read_text(), parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
