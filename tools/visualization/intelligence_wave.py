@@ -207,7 +207,7 @@ def code_strip(files, source_root, output, font, width, height):
 
 
 def hud(frame, title_font, value_font, rate_font, metric, source_file, source_line,
-        cue, rect, icon, primary_language, binding_label):
+        cue, rect, icon, primary_language, binding_label=""):
     draw = ImageDraw.Draw(frame)
     # These opaque regions cover the archived benchmark labels and source title only.
     draw.rectangle((674, 23, 1247, 186), fill="black")
@@ -234,11 +234,16 @@ def hud(frame, title_font, value_font, rate_font, metric, source_file, source_li
         draw.text((960, 1021), binding_label, anchor="mm", font=title_font, fill="#AFC0D3")
 
 
-def load_icon(language):
-    path = ICON_ROOT / f"{language}.png"
+def load_icon(language, *, cuda_icon=None):
+    override = cuda_icon if language == "cuda" else None
+    path = override if override is not None else ICON_ROOT / f"{language}.png"
     with Image.open(path) as raster:
         icon = raster.convert("RGBA")
     icon.thumbnail((86, 86), Image.Resampling.LANCZOS)
+    if override is not None:
+        centered = Image.new("RGBA", (86, 86))
+        centered.paste(icon, ((86 - icon.width) // 2, (86 - icon.height) // 2))
+        icon = centered
     return icon, digest(path)
 
 
@@ -303,9 +308,8 @@ def render(args):
                 # language exports of one recipe each get their own icon.
                 icon_languages = {item["language"] for item in files} - {"rust"}
                 icon_languages.add(primary_language)
-                icons = {language: load_icon(language) for language in sorted(icon_languages)}
-                binding_label = ("Rust / Wasm binding" if primary_language in {"go", "typescript"}
-                                 else "Rust core" if primary_language in {"c", "cuda"} else "")
+                icons = {language: load_icon(language, cuda_icon=args.cuda_icon)
+                         for language in sorted(icon_languages)}
                 pages = output / "code-pages" / cid
                 strip, rows, line_height, offsets, cues, file_bindings = code_strip(
                     files, source_catalog.parent, pages, args.code_font, width, height,
@@ -372,7 +376,7 @@ def render(args):
                     file_language = file_bindings[file_index]["language"]
                     icon_language = file_language if file_language in icons else primary_language
                     hud(frame, *fonts, metric, file_bindings[file_index], line, cue, rect,
-                        icons[icon_language][0], icon_language, binding_label)
+                        icons[icon_language][0], icon_language)
                     if frame_index in samples:
                         still = output / f"{cid}-{samples[frame_index]}.png"
                         frame.save(still)
@@ -417,6 +421,7 @@ def main():
     for option in ("scene-receipt", "source-catalog", "loops-root", "table-panels", "output-dir"):
         parser.add_argument(f"--{option}", type=Path, required=True)
     parser.add_argument("--neural-influence", type=Path)
+    parser.add_argument("--cuda-icon", type=Path, help="Use external CUDA Toolkit artwork for the CUDA badge")
     parser.add_argument("--code-font", type=Path, default=Path("/System/Library/Fonts/Menlo.ttc"))
     parser.add_argument("--ui-font", type=Path, default=Path("/System/Library/Fonts/Avenir Next.ttc"))
     parser.add_argument("--ffmpeg")
