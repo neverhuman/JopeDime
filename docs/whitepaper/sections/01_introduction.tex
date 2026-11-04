@@ -56,7 +56,7 @@ teacher.
 \mbox{\Cref{sub:anatomy-history} develops} the role of the scientific record.
 
 \paragraph{From search to learning.}
-Tests can select a better candidate without teaching the next proposer.
+Selecting a better program does not by itself improve the proposer.
 Automated research systems already couple proposals to tests
 \citep{lu2024aiscientist,gottweis2025coscientist,novikov2025alphaevolve,karpathy2026autoresearch,socher2026bookbite,socher2026eureka}.
 \Cref{sub:anatomy-where,sec:road} distinguish retained \mbox{candidate solutions} from
@@ -120,11 +120,10 @@ and fitting procedure at deployment.
 \end{figure}
 
 \paragraph{Engineered intelligence.}
-The reference design specifies each role in \cref{sec:anatomy} for audit:
-a declared task and metric, a grammar-constrained writer, a referee and
-retained state (\cref{tab:pillars}). We call this \emph{engineered intelligence}.
-Program-incumbent promotion and proposed writer admission are distinct rules. Pretrained components still supply prior knowledge
-(\cref{box:searchone}); \mbox{execution feedback} supplies the additional teacher.
+The reference design makes the roles in \cref{sec:anatomy} auditable:
+a declared task and metric, a program writer, a referee and retained state
+(\cref{tab:pillars}). We call this \emph{engineered intelligence}.
+\Cref{sec:method} specifies the components and admission rules.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:searchone]{What ``search = 1'' means}
@@ -175,8 +174,8 @@ rule-based proposals are ranked by a small cost-ranking adapter. Its record esta
 Independent first-proposal comparisons remain pending;
 \cref{sec:method,sec:results} specify the design and planned tests.
 
-\Cref{sec:anatomy,sec:road} connect the roles of invention to AI components;
-\cref{sec:game} defines an attempt. \Cref{sec:price,sec:method} account for its
-cost and specify reference training targets. The planned tests in
-\cref{sec:results} must bound interpretation in
-\cref{sec:meaning,sec:conclusion}.
+\Cref{sec:anatomy} identifies the roles of invention; \cref{sec:road}
+traces their AI building blocks. \Cref{sec:game} defines the game,
+\cref{sec:price} its costs and \cref{sec:method} the reference design.
+\Cref{sec:results} specifies the planned tests; \cref{sec:meaning,sec:conclusion}
+reserve their interpretation and conclusions.
