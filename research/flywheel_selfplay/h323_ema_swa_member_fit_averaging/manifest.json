@@ -1,0 +1,37 @@
+{
+  "wave": "H323",
+  "authority": "/home/ubuntu/nudges/hw_t1500_opus_h323.md",
+  "sources": {
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d",
+    "h315_margin_gated_ens_vote2_robust/evaluate_h315.py": "a52c646dce4b9a569a68108a32f41a013fe8637b7b3d7aedfc6469225887c2a9",
+    "h319_bagged_ens_vote2_members/evaluate_h319.py": "13a1b04ec9a225cb37fc6c86b30ecba419e0c1893161aff1f9ea2809bde7d97e"
+  },
+  "source_sha256": {
+    "PREREG.md": "34eb07deb1533107ffb5f3a4da8f8c15acb45bdb409fb160acc094e3425db5ea",
+    "run_h323.py": "0d933291f67a64fcbf14841145f474e48b8a69b8e6ef2ac4d7fbc944dd82ea3a",
+    "evaluate_h323.py": "d9abee850f0dea7954d6f3d2f6033ff77d411905493d6bf278ea07bf0d1eb918",
+    "test_h323.py": "20d6e08e7ee4867ae7c14b80e0320fb837c428c44d4a68e8aae679d077138168"
+  },
+  "snapshots": [
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0
+  ],
+  "ema_decay": 0.7,
+  "paired_rng": 323191,
+  "margin": 0.002,
+  "lcb_level": 0.975,
+  "host": {
+    "cores": "32,34,35,63,71,78",
+    "workers": 6,
+    "nice": 19,
+    "memory_max": "6G",
+    "memory_swap_max": "0"
+  },
+  "compute_stop": "2026-11-04T16:45:00Z"
+}
