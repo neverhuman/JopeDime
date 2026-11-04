@@ -108,7 +108,6 @@ def permutation_null(utility, picks, families, draws=1000, seed=305150):
     """Preserve vectors of three seeds while exchanging context slots within family."""
     rng = np.random.default_rng(seed)
     groups = [np.flatnonzero(families == f) for f in sorted(set(families))]
-    observed = float(np.median(family_deltas(utility, picks, families).mean(1)))
     values = np.empty(draws)
     all_indices = np.arange(len(families))
     mutable = sum(len(g) > 1 and np.any(picks[:, g] != picks[:, g[:1]]) for g in groups)
@@ -116,12 +115,20 @@ def permutation_null(utility, picks, families, draws=1000, seed=305150):
     weights = np.zeros(len(families))
     for g in groups:
         weights[g] = 1.0 / (len(groups) * len(g))
+
+    # The identity and permuted statistics must use exactly the same arithmetic.
+    # Different reduction orders can turn a degenerate null into a false p=1/(B+1).
+    def statistic(p):
+        # Advanced indexing can change C/F memory layout and therefore BLAS reductions.
+        u = np.ascontiguousarray(utility[all_indices[None, :], p] - utility[:, 0])
+        return float(np.median(u @ weights))
+
+    observed = statistic(picks)
     for draw in range(draws):
         perm = all_indices.copy()
         for g in groups:
             perm[g] = rng.permutation(g)
-        u = utility[all_indices[None, :], picks[:, perm]] - utility[:, 0]
-        values[draw] = np.median(u @ weights)
+        values[draw] = statistic(picks[:, perm])
     return dict(
         seed=seed,
         draws=draws,

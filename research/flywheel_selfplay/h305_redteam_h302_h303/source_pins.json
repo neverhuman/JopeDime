@@ -1,4 +1,5 @@
 {
+  "h303-runtime-0600.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
   "h302_ensvote2_trainseed_nested_cv/s3_manifest.json": "f0064d0ea9ada2e9d33ece0cc117dcfc5afa2559dfd3050843fb581ad0790c3d",
   "h302_ensvote2_trainseed_nested_cv/metrics.json": "fda930ec71a942feb471af38e08319187e2c54350eaf1af541db647cedc2560d",
   "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
@@ -34,5 +35,15 @@
   "h287_bagswitch_seed_ensemble_export/export_manifest.json": "874693a78d52ebeee2e2c0c38d0f028cd3887a01abec8d0c383128e0b4cf06d7",
   "h287_bagswitch_seed_ensemble_export/closeout-review-receipt.json": "afad005f9a0918f2b3bbc200093d7019a5b609635a1a6025aeca0c17ff5f92fc",
   "h287_bagswitch_seed_ensemble_export/README.md": "682f364a38b2304a8a54f23213a0bc24da745bf2c144ef4cc21c2e05de3e03e0",
-  "h287_bagswitch_seed_ensemble_export/runner.py": "80ab54ab917ef44a79b09179494ccfdb5b0e6cc635de7080168185fec37e0d77"
+  "h287_bagswitch_seed_ensemble_export/runner.py": "80ab54ab917ef44a79b09179494ccfdb5b0e6cc635de7080168185fec37e0d77",
+  "h303-close/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+  "h303-close/s3_manifest.json": "3232419337b3e77bff029e360f462d970af8e1d24387b7ba475b935f11aacf45",
+  "h303-close/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+  "h303-close/metrics.json": "40208ed13938dc07ac57ff9094e7317dbb4cc484da17f289a64cd92d83f92367",
+  "h303-close/test_h303.py": "1b2d7478f8f24e31054e3851841c92229c38ccff5417b4f4ed49d0c04979f4a2",
+  "h303-close/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+  "h303-close/PREREG.md": "5fc595731dbc2751b76d0dc3cfdf12bfaee029c2453b56e7b3de66cdb81a60d7",
+  "h303-close/preflight_h303.py": "b21a6b752a49abddb99bb39ea131be45f8a146e6f98e63801653360b06d86686",
+  "h303-close/README.md": "8f6b3c4f9bc1cdd242a310a7bcc745132c04ba084c80114660e9c810fb2aa844",
+  "h303-close/regression_receipt.json": "0f145686d3a290ed2bfd89ff78d174a00ca4ea1ad851a203a654e65400ae50f5"
 }

@@ -49,6 +49,14 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["unique_statistics"], 1)
         self.assertEqual(result["families_with_nonconstant_pick_vectors"], 0)
 
+    def test_permutation_constant_vectors_with_roundoff(self):
+        utility = np.random.default_rng(5).normal(size=(10, 8))
+        picks = np.full((3, 10), 2)
+        families = np.array(["A"] * 3 + ["B"] * 5 + ["C"] * 2)
+        result = stats.permutation_null(utility, picks, families, draws=20)
+        self.assertEqual(result["p_upper_plus_one"], 1.0)
+        self.assertEqual(result["observed"], result["null_min"])
+
     def test_identical_seeds_effective_one(self):
         p = np.array([[0, 1, 2]] * 3)
         d = np.array([[0.0, 1.0, -2.0]] * 3)

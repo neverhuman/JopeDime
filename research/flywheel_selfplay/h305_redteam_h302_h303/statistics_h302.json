@@ -307,21 +307,21 @@
   "permutation": {
     "seed": 305150,
     "draws": 1000,
-    "observed": 0.05889172313111306,
+    "observed": 0.058891723131113065,
     "upper_tail_count": 0,
     "p_upper_plus_one": 0.000999000999000999,
-    "null_mean": 0.0010818267159495175,
-    "null_sd": 0.008145042953668042,
+    "null_mean": 0.0010818267159495183,
+    "null_sd": 0.00814504295366804,
     "null_min": -0.02365901717187268,
-    "null_max": 0.03430801991325423,
+    "null_max": 0.034308019913254204,
     "null_q025_q50_q975": [
-      -0.014674511760257839,
-      0.0008899974504902024,
-      0.01832888600113613
+      -0.014674511760257842,
+      0.0008899974504902034,
+      0.018328886001136163
     ],
     "unique_statistics": 1000,
     "families_with_nonconstant_pick_vectors": 161,
-    "null_statistics_sha256": "b64b3d982c0926f29f94ddc7eeda589b6fa9be5402d2111e2dd46201895cfd81",
+    "null_statistics_sha256": "1cef29bb5207b2bf501a3c264c22251ba4a98061ea47492d971a6393e41e3998",
     "limitation": "Conditional within-family context-exchange null; not a retraining/label-shuffle null or proof against design selection leakage."
   }
 }
