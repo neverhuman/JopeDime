@@ -19,7 +19,12 @@
         "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/telemonitoring/parkinsons_updrs.data",
         "license_status": "unknown"
       },
-      "scaling": "values are min-max scaled exactly as in the reference corpus"
+      "scaling": "values are min-max scaled exactly as in the reference corpus",
+      "license": {
+        "spdx": "CC-BY-4.0",
+        "evidence_url": "https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring",
+        "attribution": "Tsanas, A. & Little, M. (2009). Parkinsons Telemonitoring. UCI Machine Learning Repository. https://doi.org/10.24432/C5ZS3N"
+      }
     },
     {
       "file": "example/binary_loan_approval.csv",
@@ -38,7 +43,12 @@
         "url": "https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/loanapp.csv",
         "license_status": "unknown"
       },
-      "scaling": "values are min-max scaled exactly as in the reference corpus"
+      "scaling": "values are min-max scaled exactly as in the reference corpus",
+      "license": {
+        "spdx": "GPL-3.0-only",
+        "evidence_url": "https://cran.r-project.org/package=wooldridge",
+        "attribution": "R package wooldridge (GPL-3), data from Hunter & Walker (1996) via Rdatasets; no licence stated by the original authors"
+      }
     },
     {
       "file": "example/regression_apartment_rent.csv",
@@ -57,7 +67,12 @@
         "url": "https://archive.ics.uci.edu/dataset/555",
         "license_status": "unknown"
       },
-      "scaling": "values are min-max scaled exactly as in the reference corpus"
+      "scaling": "values are min-max scaled exactly as in the reference corpus",
+      "license": {
+        "spdx": "CC-BY-4.0",
+        "evidence_url": "https://archive.ics.uci.edu/dataset/555/apartment+for+rent+classified",
+        "attribution": "Apartment for Rent Classified (2019). UCI Machine Learning Repository. https://doi.org/10.24432/C5X623"
+      }
     },
     {
       "file": "example/regression_tiny_soil.csv",
@@ -76,7 +91,12 @@
         "url": null,
         "license_status": "unknown"
       },
-      "scaling": "values are min-max scaled exactly as in the reference corpus"
+      "scaling": "values are min-max scaled exactly as in the reference corpus",
+      "license": {
+        "spdx": "CC-BY-SA-4.0",
+        "evidence_url": "https://github.com/JonasSchmidinger/LimeSoDa/blob/main/man/BB.30_2.Rd",
+        "attribution": "LimeSoDa dataset BB.30_2, Schmidinger et al. (2025), CC BY-SA 4.0"
+      }
     }
   ]
 }

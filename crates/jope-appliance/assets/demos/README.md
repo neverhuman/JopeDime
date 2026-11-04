@@ -11,13 +11,16 @@ the fixture's `train.csv`, prepends the catalog's recorded column headers, and k
 exactly as the corpus stores them (min-max scaled). `manifest.json` records, per demo, the row
 selection, source fixture SHA-256, catalog id, source URL and license status.
 
-| Demo | Source | Rows |
-| --- | --- | ---: |
-| `regression_parkinsons` | UCI Parkinsons Telemonitoring (`d2-regression`) | 1000 |
-| `binary_loan_approval` | Rdatasets `wooldridge/loanapp` (`binary-loanapp`), every 2nd row | 796 |
-| `regression_apartment_rent` | UCI dataset 555, apartment rent (`grouped-apartment-rent`), every 5th row | 1600 |
-| `regression_tiny_soil` | 30-row corpus table (`tiny-30-row-table`), source not recorded | 25 |
+| Demo | Source | Rows | Licence (researched 2026-11-04) |
+| --- | --- | ---: | --- |
+| `regression_parkinsons` | UCI Parkinsons Telemonitoring (`d2-regression`) | 1000 | CC-BY-4.0 ([UCI 189](https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring)) |
+| `binary_loan_approval` | Rdatasets `wooldridge/loanapp` (`binary-loanapp`), every 2nd row | 796 | GPL-3.0-only via the R package [wooldridge](https://cran.r-project.org/package=wooldridge); no licence from the original authors (Hunter & Walker 1996) |
+| `regression_apartment_rent` | UCI dataset 555, apartment rent (`grouped-apartment-rent`), every 5th row | 1600 | CC-BY-4.0 ([UCI 555](https://archive.ics.uci.edu/dataset/555/apartment+for+rent+classified)) |
+| `regression_tiny_soil` | LimeSoDa `BB.30_2` (`tiny-30-row-table`, source file `limesoda-bb-30-2-dataset.csv`) | 25 | CC-BY-SA-4.0 ([LimeSoDa](https://github.com/JonasSchmidinger/LimeSoDa/blob/main/man/BB.30_2.Rd)) |
 
-**Licensing is not yet cleared for public redistribution.** The S3 catalog records every
-source's license status as `unknown`, and this directory makes no further license claim.
-Confirm each source's terms (and attribution wording) before a public release ships them.
+**Not cleared for a public release yet.** The dataset catalog still records every source as
+`unknown`; the licences above were researched afterwards and are recorded in `manifest.json`
+with evidence URLs and attribution. Before a public release ships these bytes, the owner must
+accept GPL-3.0 data (`binary_loan_approval`) and CC BY-SA share-alike terms
+(`regression_tiny_soil`) inside the binary or replace those demos, and the CC BY attributions
+must ship with the executable (`/demo` prints them). See `docs/public-readiness-checklist.md` §3.

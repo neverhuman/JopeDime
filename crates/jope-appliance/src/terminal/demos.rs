@@ -20,6 +20,9 @@ pub struct Demo {
     pub target: &'static str,
     /// An objective preset, or `None` for the engine's default for the task.
     pub objective: Option<&'static str>,
+    /// SPDX licence and short credit, shown by `/demo` (see assets/demos/manifest.json).
+    pub license: &'static str,
+    pub credit: &'static str,
     pub bytes: &'static [u8],
 }
 
@@ -45,6 +48,8 @@ pub static DEMOS: &[Demo] = &[
         task: "regression",
         target: "target",
         objective: Some("rmse"),
+        license: "CC-BY-4.0",
+        credit: "Tsanas & Little (2009), UCI ML Repository, doi:10.24432/C5ZS3N",
         bytes: include_bytes!("../../assets/demos/regression_parkinsons.csv"),
     },
     Demo {
@@ -53,6 +58,8 @@ pub static DEMOS: &[Demo] = &[
         task: "binary",
         target: "approve",
         objective: Some("logloss"),
+        license: "GPL-3.0-only",
+        credit: "Hunter & Walker (1996) via the R package wooldridge (GPL-3)",
         bytes: include_bytes!("../../assets/demos/binary_loan_approval.csv"),
     },
     Demo {
@@ -61,6 +68,8 @@ pub static DEMOS: &[Demo] = &[
         task: "regression",
         target: "price",
         objective: Some("rmse"),
+        license: "CC-BY-4.0",
+        credit: "Apartment for Rent Classified (2019), UCI ML Repository, doi:10.24432/C5X623",
         bytes: include_bytes!("../../assets/demos/regression_apartment_rent.csv"),
     },
     Demo {
@@ -69,6 +78,8 @@ pub static DEMOS: &[Demo] = &[
         task: "regression",
         target: "target",
         objective: Some("rmse"),
+        license: "CC-BY-SA-4.0",
+        credit: "LimeSoDa BB.30_2, Schmidinger et al. (2025)",
         bytes: include_bytes!("../../assets/demos/regression_tiny_soil.csv"),
     },
 ];
@@ -120,6 +131,13 @@ pub fn listing() -> Vec<String> {
         ));
     }
     lines.push("Or open one to set the target yourself: /open example/<name>.csv".into());
+    lines.push("Sources (values are min-max scaled subsets):".into());
+    for demo in DEMOS {
+        lines.push(format!(
+            "  {}: {} · {}",
+            demo.name, demo.credit, demo.license
+        ));
+    }
     lines
 }
 
@@ -149,6 +167,7 @@ mod tests {
                 .find(|entry| entry["file"] == demo.path())
                 .unwrap_or_else(|| panic!("{} missing from manifest", demo.name));
             assert_eq!(entry["task"], demo.task);
+            assert_eq!(entry["license"]["spdx"], demo.license);
             assert_eq!(entry["target"], demo.target);
             assert_eq!(entry["rows"].as_u64(), Some(demo.rows() as u64));
             assert_eq!(

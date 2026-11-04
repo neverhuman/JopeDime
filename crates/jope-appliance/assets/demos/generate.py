@@ -18,6 +18,17 @@ DEMOS = [
     ("regression_tiny_soil", "tiny-30-row-table", 1, "30-row soil survey table: a few-second smoke test"),
 ]
 LIMIT = 1_000_000
+# Researched 2026-11-04 (the dataset catalog itself still records `unknown`).
+LICENSES = {
+    "regression_parkinsons": ("CC-BY-4.0", "https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring",
+        "Tsanas, A. & Little, M. (2009). Parkinsons Telemonitoring. UCI Machine Learning Repository. https://doi.org/10.24432/C5ZS3N"),
+    "binary_loan_approval": ("GPL-3.0-only", "https://cran.r-project.org/package=wooldridge",
+        "R package wooldridge (GPL-3), data from Hunter & Walker (1996) via Rdatasets; no licence stated by the original authors"),
+    "regression_apartment_rent": ("CC-BY-4.0", "https://archive.ics.uci.edu/dataset/555/apartment+for+rent+classified",
+        "Apartment for Rent Classified (2019). UCI Machine Learning Repository. https://doi.org/10.24432/C5X623"),
+    "regression_tiny_soil": ("CC-BY-SA-4.0", "https://github.com/JonasSchmidinger/LimeSoDa/blob/main/man/BB.30_2.Rd",
+        "LimeSoDa dataset BB.30_2, Schmidinger et al. (2025), CC BY-SA 4.0"),
+}
 
 
 def sha(data):
@@ -57,6 +68,11 @@ def main():
                 "license_status": catalog.get("provenance", {}).get("license", {}).get("status"),
             },
             "scaling": "values are min-max scaled exactly as in the reference corpus",
+            "license": {
+                "spdx": LICENSES[name][0],
+                "evidence_url": LICENSES[name][1],
+                "attribution": LICENSES[name][2],
+            },
         })
     assert total < LIMIT, total
     manifest = {"schema": "veox.cli-demos/v1", "total_bytes": total, "demos": entries}
