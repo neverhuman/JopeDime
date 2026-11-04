@@ -11,10 +11,11 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-The cost of a verified improvement covers the winning attempt and every
-earlier failure: encoding, input tokens, generation, repairs, referee execution,
-updates and operations. These ratios organize the ledger; full-run pricing
-still needs the measurements in \cref{sub:price-run,sec:results}.
+The ledger for a verified improvement includes the winning attempt and
+every earlier failure: encoding, input tokens, generation, repairs,
+referee execution, updates and operations. The ratios below organize
+these costs; full-run pricing still needs measurements
+(\cref{sub:price-run,sec:results}).
 
 \subsection{The bill in one line}\label{sub:price-bill}
 
@@ -166,7 +167,7 @@ operating clocks \mbox{(\cref{sec:method-status}) still} requires an attempt led
 \end{keyidea}
 
 Under the fixed-probability model in \cref{eq:bill}, doubling $\winprob$ halves
-expected cost per win only if mean attempt cost stays fixed. Measure that
+expected cost per win only at fixed mean attempt cost. Measure the
 tradeoff under a common task mix, incumbent and verification rule.
-Referee-scored attempts supply reference training targets
+Referee-scored attempts also supply reference training targets
 (\cref{sec:method}); the adapter record remains a separate operating observation.
