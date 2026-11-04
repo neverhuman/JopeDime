@@ -7,10 +7,17 @@ impl super::Session {
     ) -> io::Result<()> {
         let width = usize::from(terminal.size()?.width);
         let (status, activity) = self.status_lines(width);
-        terminal.draw(|frame| {
+        let completed = terminal.draw(|frame| {
             self.screen
                 .draw(frame, &self.composer, &self.version, &status, &activity);
         })?;
+        if self.links {
+            crate::terminal::links::overlay(
+                &mut io::stdout(),
+                &self.screen.links,
+                completed.buffer,
+            )?;
+        }
         Ok(())
     }
 

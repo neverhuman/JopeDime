@@ -32,24 +32,37 @@ fn random_hex() -> String {
 }
 
 fn telemetry_enabled() -> bool {
-    cloud_root()
-        .ok()
-        .and_then(|root| read_private(&root.join("telemetry")).ok())
-        .is_some_and(|bytes| bytes == b"basic")
+    !crate::terminal::onboarding::telemetry_forced_off_from_env()
+        && cloud_root()
+            .ok()
+            .and_then(|root| read_private(&root.join("telemetry")).ok())
+            .is_some_and(|bytes| bytes == b"basic")
+}
+
+/// The one telemetry setting, shared by first run and `jain cloud telemetry on|off`.
+pub fn set_telemetry(enabled: bool) -> Result<()> {
+    write_private(
+        &cloud_root()?.join("telemetry"),
+        if enabled { b"basic" } else { b"off" },
+    )
 }
 
 pub(in crate::cloud) fn telemetry_command(setting: Option<String>) -> Result<String> {
-    let path = cloud_root()?.join("telemetry");
     match setting.as_deref() {
-        Some("on") => write_private(&path, b"basic")?,
-        Some("off") => write_private(&path, b"off")?,
+        Some("on") => set_telemetry(true)?,
+        Some("off") => set_telemetry(false)?,
         Some(_) => anyhow::bail!("use `on` or `off`"),
         None => {}
+    }
+    if crate::terminal::onboarding::telemetry_forced_off_from_env() {
+        return Ok(
+            "Telemetry off: DO_NOT_TRACK or JAIN_TELEMETRY=0 is set in this environment.".into(),
+        );
     }
     Ok(if telemetry_enabled() {
         "Telemetry on: connected runs also send de-identified counts (bucketed sizes, scores in tenths, no names, no rows) to telemetry.veox.ai.".into()
     } else {
-        "Telemetry off. Your account still receives the run details you sync; `jopedime cloud telemetry on` also sends de-identified counts to telemetry.veox.ai.".into()
+        "Telemetry off. Your account still receives the run details you sync; `jain cloud telemetry on` also sends de-identified counts to telemetry.veox.ai.".into()
     })
 }
 
@@ -225,7 +238,7 @@ pub(super) fn record_publication(
 }
 
 /// RFC 3339 UTC, seconds precision, without a date-time dependency.
-fn chrono_like_now() -> String {
+pub fn chrono_like_now() -> String {
     let secs = now_ms() / 1000;
     let (days, rem) = (secs / 86_400, secs % 86_400);
     // Civil-from-days (Howard Hinnant), valid for the Unix era.

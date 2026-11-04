@@ -1,10 +1,28 @@
 # Terminal reference
 
-The `jopedime` executable provides local model commands and commands that communicate with the shared background engine. Use `jopedime --help` to see the commands in the installed build.
+The **jAIn CLI** by VEOX (`jain`) provides local model commands and commands that communicate with the shared background engine. The same program is also built as `jopedime`, its historical name; `jain --version --json` reports product `jain` whichever name runs it. Use `jain --help` to see the commands in the installed build.
 
 ## Interactive screen
 
-Launching without arguments in a terminal opens the full-screen **JAIN by VEOX** landing view, with a large ASCII wordmark and **Powered by JopeDime**. Submit a command to start the transcript; the composer stays near the bottom.
+Launching without arguments in a terminal opens the full-screen **jAIn by VEOX** landing view with an animated JAIN wordmark (`JAIN_NO_ANIMATION=1` shows the finished logo immediately). Submit a command to start the transcript; the composer stays near the bottom.
+
+### First run
+
+The first launch asks three questions in a dialog (or as prompts in line mode):
+
+1. **Terms of Service** — read https://veox.ai/terms (version `2026-11-03`); Enter or `y` accepts, `q` or `n` exits without changing anything. A new terms version asks again.
+2. **Usage statistics** — on by default; `n` turns them off. This is the same setting as `jain cloud telemetry on|off`. `DO_NOT_TRACK=1` or `JAIN_TELEMETRY=0` forces it off and skips the question.
+3. **Log in to your free veox Cloud Workspace** or create one (starts the browser device login), or **continue with the bundled demos**.
+
+Choices are stored in `<JOPEDIME_HOME>/state.json` (owner-only). Agents and scripts accept the terms without a prompt with `jain --accept-terms ...` or `JAIN_ACCEPT_TERMS=1`, after showing the user the terms URL. Commands that contact the veox Cloud Workspace (`auth login`, `cloud sync|runs|publish|fetch`) never wait for input without a terminal; they fail with an error naming the terms URL and the flag. Local commands (`fit`, `predict`, `run`, ...) are not gated.
+
+### Demos
+
+`/demo` lists the datasets bundled in the executable; `/demo NAME` (for example `/demo regression`) opens one with its target and task preset and starts a fast run. `/open example/<name>.csv` opens a bundled demo as if it were a file (a real file at that path takes precedence), and Tab completes `example/` names and `/demo` names. Signed out, the interactive session opens only the bundled demos; your own files need a free veox Cloud Workspace account (`/login`). `JAIN_ALLOW_LOCAL_FILES=1` lifts that for offline and CI use.
+
+### Links
+
+URLs printed by the jAIn CLI (login, terms, cloud runs, help) are always shown in full and are never split across lines when they fit. In terminals that support OSC 8 hyperlinks (iTerm2, WezTerm, kitty, VTE/GNOME Terminal, Windows Terminal, VS Code) they are also clickable; `JAIN_HYPERLINKS=1` forces links on and `JAIN_HYPERLINKS=0` turns them off. Only veox-hosted (`*.veox.ai`) and loopback URLs become links, and a link's target is always its visible text; escape sequences in data are always removed.
 
 Use **Page Up / Page Down** or the mouse wheel to scroll results. While reading history, new output keeps your position and increments a new-lines indicator; **End** returns to live output. Scrolling does not change your pending input. The view retains up to 2,000 lines / 1 MiB; durable run results remain in the engine.
 
@@ -35,7 +53,7 @@ The executable's top-level help lists these exit statuses: 0 for success, 2 for 
 
 Press **Ctrl-C** to exit immediately and return to your shell on Linux or macOS, including while editing a draft or searching history. On macOS this is Control-C; Command-C remains the terminal’s copy shortcut. **Ctrl-D** exits when the input is empty; `\quit` also exits. The CLI restores terminal input and cursor visibility when it leaves.
 
-An active run continues in the local background engine. Reconnect with `jopedime attach RUN`; use explicit `\pause` or `\cancel` commands to control it. Ctrl-C does not send either command.
+An active run continues in the local background engine. Reconnect with `jain attach RUN`; use explicit `\pause` or `\cancel` commands to control it. Ctrl-C does not send either command.
 
 ## Connect to VEOX
 

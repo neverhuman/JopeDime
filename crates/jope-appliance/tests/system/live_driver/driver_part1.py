@@ -196,7 +196,7 @@ def attach(home,rid,name):
     master,slave=pty.openpty()
     fcntl.ioctl(slave,termios.TIOCSWINSZ,struct.pack('HHHH',40,120,0,0))
     child=subprocess.Popen([args.binary,'attach',rid],stdin=slave,stdout=slave,stderr=slave,
-        env={**base_env,'JOPEDIME_HOME':str(home),'TERM':'dumb','NO_COLOR':'1'})
+        env={**base_env,'JOPEDIME_HOME':str(home),'TERM':'dumb','NO_COLOR':'1','JAIN_ACCEPT_TERMS':'1','JAIN_ALLOW_LOCAL_FILES':'1'})
     children.append(child);os.close(slave)
     text=bytearray();deadline=time.monotonic()+(.3 if name=='terminal-before-close' and args.capture_sse else 2)
     while time.monotonic()<deadline:

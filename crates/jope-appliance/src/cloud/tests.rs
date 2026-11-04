@@ -109,6 +109,74 @@ fn model_transfer_preserves_exact_identity_and_refuses_changed_parts() {
     assert!(unpack_object(&zip.finish().unwrap().into_inner()).is_err());
 }
 #[test]
+fn browser_command_uses_the_platform_opener_and_never_xdg_open_on_windows() {
+    let url = "https://app.veox.ai/cli/connect?user_code=AB-12";
+    assert_eq!(
+        browser_command("macos", url),
+        ("open", vec![url.to_owned()])
+    );
+    assert_eq!(
+        browser_command("linux", url),
+        ("xdg-open", vec![url.to_owned()])
+    );
+    let (program, args) = browser_command("windows", url);
+    assert_eq!(program, "explorer.exe");
+    assert_eq!(args, [url]);
+    assert!(open_browser("https://app.veox.ai/x\"y").is_err());
+    assert!(open_browser("http://evil.example").is_err());
+}
+
+#[test]
+fn device_login_identifies_the_jain_cli() {
+    assert_eq!(CLIENT_ID, "jain-cli");
+    assert_eq!(CLIENT_NAME, "jAIn CLI");
+}
+
+#[test]
+fn account_tier_reads_tier_or_plan_and_is_shown_with_the_email() {
+    assert_eq!(
+        account_tier(&json!({"tier": "free"})).as_deref(),
+        Some("free")
+    );
+    assert_eq!(
+        account_tier(&json!({"plan": "pro"})).as_deref(),
+        Some("pro")
+    );
+    assert_eq!(
+        account_tier(&json!({"plan": {"name": "enterprise"}})).as_deref(),
+        Some("enterprise")
+    );
+    assert_eq!(account_tier(&json!({"tier": "\u{1b}[31m"})), None);
+    assert_eq!(account_tier(&json!({})), None);
+    let mut c = Connection {
+        origin: "https://app.veox.ai".into(),
+        account_id: "00000000-0000-0000-0000-000000000000".into(),
+        email: "a@example.test".into(),
+        token: String::new(),
+        gateway: None,
+        may_publish: false,
+        tier: Some("free".into()),
+        terms_current: None,
+    };
+    assert_eq!(c.signed_in_as(), "a@example.test (Free)");
+    c.tier = None;
+    assert_eq!(c.signed_in_as(), "a@example.test");
+    // Connections saved before tiers existed still load.
+    let old: Connection = serde_json::from_value(json!({
+        "origin": "https://app.veox.ai", "account_id": "x", "email": "e", "token": "t",
+        "may_publish": true
+    }))
+    .unwrap();
+    assert_eq!(old.tier, None);
+    assert_eq!(
+        terms_version_field(&json!("2026-11-03")).as_deref(),
+        Some("2026-11-03")
+    );
+    assert_eq!(terms_version_field(&json!("x\u{1b}")), None);
+    assert_eq!(terms_version_field(&json!(5)), None);
+}
+
+#[test]
 fn gateway_credentials_cannot_be_forwarded_to_another_origin() {
     assert!(Client::new(
         "https://app.veox.ai",

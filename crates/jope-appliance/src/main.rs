@@ -100,7 +100,20 @@ mod commands;
 use commands::{load_fitness, report, run_fit, run_fit_predict, run_predict, serve, summary_line};
 
 fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    #[allow(unused_mut)]
+    let mut args: Vec<String> = std::env::args().skip(1).collect();
+    // `--accept-terms` is global: remove it before dispatch and record the acceptance.
+    #[cfg(feature = "client")]
+    if terminal::onboarding::take_accept_flag(&mut args) {
+        let home = jope_paths::jopedime_home();
+        if let Err(error) = terminal::onboarding::accept_noninteractive(&home, "flag") {
+            return report(Err(error));
+        }
+        if args.is_empty() && !std::io::IsTerminal::is_terminal(&std::io::stdin()) {
+            out("Terms accepted.\n");
+            return ExitCode::SUCCESS;
+        }
+    }
     // `--version` alone, and `--version --json` (SPECIFICATION.md §3.3).
     match args
         .iter()
@@ -170,9 +183,21 @@ fn main() -> ExitCode {
             Err(error) => report(Err(error)),
         },
         #[cfg(feature = "client")]
-        ApplianceCommand::Auth { command } => report(cloud::auth_command(command)),
+        ApplianceCommand::Auth { command } => report(
+            match &command {
+                cloud::AuthCommand::Login { .. } => terminal::onboarding::require_terms(false),
+                _ => Ok(()),
+            }
+            .and_then(|()| cloud::auth_command(command)),
+        ),
         #[cfg(feature = "client")]
-        ApplianceCommand::Cloud { command } => report(cloud::cloud_command(command)),
+        ApplianceCommand::Cloud { command } => report(
+            match &command {
+                cloud::CloudCommand::Telemetry { .. } => Ok(()),
+                _ => terminal::onboarding::require_terms(false),
+            }
+            .and_then(|()| cloud::cloud_command(command)),
+        ),
         ApplianceCommand::Methods { task, json } => {
             report(methods_value(task.as_deref()).map(|value| {
                 if json.json {

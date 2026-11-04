@@ -28,17 +28,20 @@ pub fn auth_command(command: AuthCommand) -> Result<()> {
                 client.save_token(token.trim().to_owned())?
             } else {
                 let device = client.start_login()?;
+                let links =
+                    io::stdout().is_terminal() && crate::terminal::links::supported_from_env();
                 println!(
-                    "Open {}\nPairing code: {}\nSign in and approve the CLI in your browser.",
-                    device.verification_uri_complete, device.user_code
+                    "Open {}\nPairing code: {}\nLog in to your free veox Cloud Workspace (or create one) and approve the jAIn CLI in your browser.",
+                    crate::terminal::links::linkify(&device.verification_uri_complete, links),
+                    device.user_code
                 );
                 io::stdout().flush()?;
-                if !no_browser {
-                    let _ = open_browser(&device.verification_uri_complete);
+                if !no_browser && open_browser(&device.verification_uri_complete).is_err() {
+                    println!("Could not open a browser here; open the link above on any device.");
                 }
                 client.finish_login(&device, &AtomicBool::new(false))?
             };
-            println!("Signed in to {} as {}", c.origin, c.email);
+            println!("Logged in to {} as {}", c.origin, c.signed_in_as());
         }
     }
     Ok(())
@@ -119,16 +122,21 @@ pub fn spawn_login(
             let _ = sender.send(vec![
                 format!("Open {}", device.verification_uri_complete),
                 format!(
-                    "Pairing code: {} · sign in and approve this CLI in your browser.",
+                    "Pairing code: {} · log in to your free veox Cloud Workspace and approve this jAIn CLI.",
                     device.user_code
                 ),
             ]);
-            let _ = open_browser(&device.verification_uri_complete);
+            if open_browser(&device.verification_uri_complete).is_err() {
+                let _ = sender.send(vec![
+                    "Could not open a browser here; open the link above on any device.".into(),
+                ]);
+            }
             let c = client.finish_login(&device, &cancel)?;
 
             Ok(format!(
-                "Signed in to {} as {}. Local datasets stay local; model publication is explicit.",
-                c.origin, c.email
+                "Logged in as {} on {}. Local datasets stay local; model publication is explicit.",
+                c.signed_in_as(),
+                c.origin
             ))
         })();
         let _ = sender.send(vec![

@@ -85,6 +85,10 @@ impl PtySession {
         let mut command = CommandBuilder::new(program);
         command.args(args);
         command.env("TERM", "xterm-256color");
+        // Interactive sessions start with the first-run terms dialog and only open bundled
+        // demos while signed out; these tests exercise other behavior.
+        command.env("JAIN_ACCEPT_TERMS", "1");
+        command.env("JAIN_ALLOW_LOCAL_FILES", "1");
         for (key, value) in env {
             command.env(key, value);
         }

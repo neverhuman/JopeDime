@@ -10,7 +10,7 @@ use ratatui::{
     Frame,
 };
 
-use super::{composer::Composer, sanitize_user_string, ColorLevel, Theme, ThemeMode};
+use super::{composer::Composer, links, sanitize_user_string, ColorLevel, Theme, ThemeMode};
 
 const MAX_LINES: usize = 2000;
 const MAX_BYTES: usize = 1024 * 1024;
@@ -20,9 +20,13 @@ const TAGLINE: &str = "Your data. Your models. Your next discovery.";
 pub struct Screen {
     pub browser: Option<super::runs::Browser>,
     pub cloud_label: String,
+    /// A modal dialog (first run) shown instead of the landing or transcript.
+    pub panel: Option<Vec<String>>,
+    /// Trusted URLs drawn in the last frame, for the OSC 8 overlay (`links::overlay`).
+    pub links: Vec<links::Spot>,
     lines: VecDeque<String>,
     bytes: usize,
-    wrapped: Vec<String>,
+    wrapped: Vec<Wrapped>,
     width: u16,
     dirty: bool,
     top: Option<usize>,
@@ -60,7 +64,7 @@ impl Screen {
             self.wrapped = self
                 .lines
                 .iter()
-                .flat_map(|line| wrap(line, width))
+                .flat_map(|line| wrap_links(line, width))
                 .collect();
             self.dirty = false;
         }
@@ -68,7 +72,7 @@ impl Screen {
 
     /// The landing shows until the first transcript line or the runs panel.
     pub fn is_landing(&self) -> bool {
-        self.browser.is_none() && self.lines.is_empty()
+        self.browser.is_none() && self.panel.is_none() && self.lines.is_empty()
     }
 
     /// Whether the landing logo needs frequent redraws.
@@ -155,10 +159,11 @@ impl Screen {
             Constraint::Length(1),
         ])
         .split(area);
+        self.links.clear();
         frame.render_widget(
             Paragraph::new(Line::from(vec![
-                Span::styled(" JAIN by VEOX ", accent.add_modifier(Modifier::BOLD)),
-                Span::styled(format!("/ CLI   ·   JopeDime {version}"), muted),
+                Span::styled(" jAIn by VEOX ", accent.add_modifier(Modifier::BOLD)),
+                Span::styled(format!("· CLI {version}"), muted),
             ])),
             rows[0],
         );
@@ -169,7 +174,9 @@ impl Screen {
         };
         self.reflow(body.width.max(1));
         self.page_height = usize::from(body.height);
-        if let Some(browser) = &mut self.browser {
+        if let Some(panel) = &self.panel {
+            self.links = draw_panel(frame, body, panel, accent);
+        } else if let Some(browser) = &mut self.browser {
             browser.draw(frame, body, accent);
         } else if self.lines.is_empty() {
             let started = *self.started.get_or_insert_with(std::time::Instant::now);
@@ -185,20 +192,26 @@ impl Screen {
             let max = self.wrapped.len().saturating_sub(self.page_height);
             let start = self.top.map(|top| top.min(max)).unwrap_or(max);
             self.top = self.top.map(|_| start);
+            let visible = self.wrapped.iter().skip(start).take(self.page_height);
+            for (row, line) in visible.clone().enumerate() {
+                for (column, url) in &line.links {
+                    self.links.push(links::Spot {
+                        x: body.x + column,
+                        y: body.y + row as u16,
+                        url: url.clone(),
+                    });
+                }
+            }
             frame.render_widget(
                 Paragraph::new(
-                    self.wrapped
-                        .iter()
-                        .skip(start)
-                        .take(self.page_height)
-                        .cloned()
-                        .map(Line::from)
+                    visible
+                        .map(|line| Line::from(line.text.clone()))
                         .collect::<Vec<_>>(),
                 ),
                 body,
             );
         }
-        let landing_view = self.is_landing() && status == IDLE_STATUS;
+        let landing_view = (self.is_landing() || self.panel.is_some()) && status == IDLE_STATUS;
         if landing_view {
             let connected = !self.cloud_label.is_empty();
             frame.render_widget(
@@ -219,7 +232,9 @@ impl Screen {
         let input = block.inner(rows[4]);
         frame.render_widget(block, rows[4]);
         composer.draw(frame, input);
-        let footer = if self.browser.is_some() {
+        let footer = if self.panel.is_some() {
+            " Answer above to continue · Ctrl-C exits".into()
+        } else if self.browser.is_some() {
             " Up/Down choose · Enter attach/open · o cloud · d download · r refresh · Esc/right back · Ctrl-C exit".into()
         } else if landing_view {
             // Instructions live in the guidance sentence; keep only account state here.
@@ -258,19 +273,19 @@ fn guidance(width: usize, connected: bool) -> String {
     let login = if connected {
         ""
     } else {
-        ", /login to connect your VEOX account"
+        ", /login to connect your free veox Cloud Workspace"
     };
     let full = format!(
-        " Type /open <file.csv> to start a run, press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
+        " Type /demo to try a bundled example or /open <file.csv> for your own data, press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
     );
     if full.chars().count() <= width {
         return full;
     }
-    let short = " Type /open <file.csv> to start, /help for commands, or Ctrl-C to exit.";
+    let short = " Type /demo or /open <file.csv> to start, /help for commands, or Ctrl-C to exit.";
     if short.chars().count() <= width {
         short.into()
     } else {
-        " /open <file.csv> · /help · Ctrl-C".into()
+        " /demo · /open <file.csv> · /help · Ctrl-C".into()
     }
 }
 
@@ -301,29 +316,146 @@ fn landing(
     frame.render_widget(Paragraph::new(lines).alignment(Alignment::Center), centered);
 }
 
+/// One wrapped row and the trusted URLs that lie wholly inside it, as (column, url).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+struct Wrapped {
+    text: String,
+    links: Vec<(u16, String)>,
+}
+
 fn wrap(text: &str, width: u16) -> Vec<String> {
+    wrap_links(text, width)
+        .into_iter()
+        .map(|line| line.text)
+        .collect()
+}
+
+/// Wrap at grapheme boundaries. A trusted URL that fits the width starts a new row rather
+/// than being split, so it stays whole and clickable; a URL wider than the row is wrapped
+/// and shown as plain text only.
+fn wrap_links(text: &str, width: u16) -> Vec<Wrapped> {
     let width = usize::from(width.max(1));
     let text = text.replace('\t', "    ");
-    let span = Span::raw(text);
-    let mut lines = Vec::new();
+    let urls: Vec<(usize, usize)> = links::find_urls(&text)
+        .into_iter()
+        .filter(|(start, end)| links::trusted(&text[*start..*end]))
+        .collect();
+    // (row text, starting byte offset of each row in `text`)
+    let mut rows: Vec<(String, usize, usize)> = Vec::new();
     let mut line = String::new();
+    let mut line_start = 0;
     let mut cells = 0;
-    for grapheme in span.styled_graphemes(Style::default()) {
-        let size = Span::raw(grapheme.symbol).width();
-        if cells + size > width && !line.is_empty() {
-            lines.push(std::mem::take(&mut line));
+    for (offset, symbol) in graphemes(&text) {
+        let size = Span::raw(symbol).width();
+        let url_fits = urls
+            .iter()
+            .find(|(start, _)| *start == offset)
+            .map(|(start, end)| end - start)
+            .filter(|len| *len <= width);
+        let breaks = match url_fits {
+            Some(len) => cells + len > width,
+            None => cells + size > width,
+        };
+        if breaks && !line.is_empty() {
+            rows.push((std::mem::take(&mut line), line_start, offset));
+            line_start = offset;
             cells = 0;
         }
         if size > width {
             line.push('?');
             cells += 1;
         } else {
-            line.push_str(grapheme.symbol);
+            line.push_str(symbol);
             cells += size;
         }
     }
-    lines.push(line);
-    lines
+    rows.push((line, line_start, text.len()));
+    rows.into_iter()
+        .map(|(row, from, to)| {
+            let links = urls
+                .iter()
+                .filter(|(start, end)| *start >= from && *end <= to)
+                .map(|(start, end)| {
+                    let column = Span::raw(&text[from..*start]).width() as u16;
+                    (column, text[*start..*end].to_owned())
+                })
+                .collect();
+            Wrapped { text: row, links }
+        })
+        .collect()
+}
+
+/// Grapheme clusters with their byte offsets, via ratatui's own segmentation. Callers pass
+/// single logical lines, so no grapheme is dropped and offsets stay exact.
+fn graphemes(text: &str) -> Vec<(usize, &str)> {
+    let mut offset = 0;
+    Span::raw(text)
+        .styled_graphemes(Style::default())
+        .map(|grapheme| {
+            let at = offset;
+            offset += grapheme.symbol.len();
+            (at, &text[at..offset])
+        })
+        .collect()
+}
+
+/// A bordered dialog centered in `area`. Returns the trusted URLs drawn inside it.
+fn draw_panel(
+    frame: &mut Frame<'_>,
+    area: Rect,
+    lines: &[String],
+    accent: Style,
+) -> Vec<links::Spot> {
+    let clean: Vec<String> = lines
+        .iter()
+        .map(|line| sanitize_user_string(line))
+        .collect();
+    let longest = clean
+        .iter()
+        .map(|line| Span::raw(line.as_str()).width())
+        .max()
+        .unwrap_or(0) as u16;
+    let width = (longest + 4).min(area.width).max(1);
+    let height = (clean.len() as u16 + 2).min(area.height).max(1);
+    let rect = Rect {
+        x: area.x + area.width.saturating_sub(width) / 2,
+        y: area.y + area.height.saturating_sub(height) / 2,
+        width,
+        height,
+    };
+    let block = Block::bordered().border_style(accent);
+    let inner = block.inner(rect);
+    let inner = Rect {
+        x: inner.x + 1,
+        width: inner.width.saturating_sub(1),
+        ..inner
+    };
+    frame.render_widget(block, rect);
+    let mut spots = Vec::new();
+    for (row, line) in clean.iter().enumerate().take(usize::from(inner.height)) {
+        for (column, url) in links::spots_in(line) {
+            if column + url.len() as u16 <= inner.width {
+                spots.push(links::Spot {
+                    x: inner.x + column,
+                    y: inner.y + row as u16,
+                    url,
+                });
+            }
+        }
+    }
+    let styled: Vec<Line> = clean
+        .into_iter()
+        .enumerate()
+        .map(|(index, line)| {
+            if index == 0 {
+                Line::styled(line, accent.add_modifier(Modifier::BOLD))
+            } else {
+                Line::from(line)
+            }
+        })
+        .collect();
+    frame.render_widget(Paragraph::new(styled), inner);
+    spots
 }
 
 #[cfg(test)]
@@ -391,6 +523,74 @@ mod tests {
         assert_eq!(screen.top, None);
         assert_eq!(screen.unread, 0);
         assert_eq!(wrap("e\u{301}中x", 3), vec!["e\u{301}中", "x"]);
+    }
+
+    #[test]
+    fn header_is_jain_by_veox_and_trusted_urls_stay_whole_and_are_reported_for_links() {
+        let mut terminal = Terminal::new(TestBackend::new(60, 20)).unwrap();
+        let mut screen = Screen::default();
+        let composer = Composer::default();
+        screen.push("Open https://app.veox.ai/cli/connect?user_code=ABCD-1234 then wait");
+        screen.push("untrusted https://evil.example/x");
+        terminal
+            .draw(|frame| screen.draw(frame, &composer, "1.2.3", "ready", ""))
+            .unwrap();
+        let buffer = terminal.backend().buffer().clone();
+        let row = |y: u16| (0..60).map(|x| buffer[(x, y)].symbol()).collect::<String>();
+        assert!(row(0).contains("jAIn by VEOX"), "{}", row(0));
+        assert_eq!(screen.links.len(), 1);
+        let spot = &screen.links[0];
+        assert_eq!(
+            spot.url,
+            "https://app.veox.ai/cli/connect?user_code=ABCD-1234"
+        );
+        // The URL moved to its own row instead of being split at the edge.
+        assert!(row(spot.y)[usize::from(spot.x)..].starts_with(&spot.url));
+        let mut out = Vec::new();
+        links::overlay(&mut out, &screen.links, &buffer).unwrap();
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("\u{1b}]8;;https://app.veox.ai/cli/connect"));
+    }
+
+    #[test]
+    fn long_urls_wrap_as_plain_text_without_partial_links() {
+        let url = format!("https://veox.ai/{}", "a".repeat(40));
+        let rows = wrap_links(&format!("x {url}"), 20);
+        assert!(rows.iter().all(|row| row.links.is_empty()));
+        assert_eq!(
+            rows.iter().map(|r| r.text.as_str()).collect::<String>(),
+            format!("x {url}")
+        );
+        let rows = wrap_links("see https://veox.ai/terms now", 22);
+        assert_eq!(rows[0].text, "see ");
+        assert_eq!(rows[1].links, vec![(0, "https://veox.ai/terms".to_owned())]);
+    }
+
+    #[test]
+    fn first_run_panel_replaces_landing_and_reports_the_terms_link() {
+        let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+        let mut screen = Screen {
+            panel: Some(vec![
+                "Welcome".into(),
+                String::new(),
+                "https://veox.ai/terms".into(),
+            ]),
+            ..Screen::default()
+        };
+        let composer = Composer::default();
+        terminal
+            .draw(|frame| screen.draw(frame, &composer, "t", IDLE_STATUS, ""))
+            .unwrap();
+        assert!(!screen.is_landing());
+        assert_eq!(screen.links.len(), 1);
+        assert_eq!(screen.links[0].url, "https://veox.ai/terms");
+        let buffer = terminal.backend().buffer();
+        let spot = &screen.links[0];
+        let drawn: String = (0..21)
+            .map(|i| buffer[(spot.x + i, spot.y)].symbol())
+            .collect();
+        assert_eq!(drawn, "https://veox.ai/terms");
     }
 
     #[test]

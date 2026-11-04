@@ -91,7 +91,7 @@ impl super::Session {
     pub(super) fn leave(&self) {
         if let Some(snapshot) = &self.snapshot {
             eprintln!(
-                "run continues in the background; reconnect with `jopedime attach {}`",
+                "run continues in the background; reconnect with `jain attach {}`",
                 snapshot.run_id
             );
         }

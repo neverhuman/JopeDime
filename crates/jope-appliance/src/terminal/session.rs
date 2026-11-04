@@ -126,6 +126,9 @@ struct Session {
     last_sync: Instant,
     synced_terminal: mpsc::Receiver<RunId>,
     synced_terminal_sender: mpsc::Sender<RunId>,
+    home: PathBuf,
+    first_run: Option<crate::terminal::onboarding::FirstRun>,
+    links: bool,
 }
 
 impl Session {
@@ -141,6 +144,7 @@ impl Session {
         let (run_list_sender, run_lists) = mpsc::channel();
         let (synced_terminal_sender, synced_terminal) = mpsc::channel();
         let history = home.join("history");
+        let first_run = first_run_dialog(&home);
         let mut screen = crate::terminal::screen::Screen::default();
         screen.cloud_label = crate::cloud::account_label();
         let composer = crate::terminal::composer::Composer::with_history(history)?;
@@ -169,6 +173,9 @@ impl Session {
             last_sync: Instant::now(),
             synced_terminal,
             synced_terminal_sender,
+            home,
+            first_run,
+            links: crate::terminal::links::supported_from_env(),
         })
     }
 }
@@ -179,6 +186,8 @@ mod activity;
 mod commands;
 #[path = "session/events.rs"]
 mod events;
+#[path = "session/first_run.rs"]
+mod first_run;
 #[path = "session/ui.rs"]
 mod ui;
 
@@ -253,17 +262,26 @@ fn open_cloud_url(url: &str) -> anyhow::Result<()> {
         url.starts_with("https://") && !url.chars().any(char::is_control),
         "invalid cloud URL"
     );
-    #[cfg(target_os = "macos")]
-    let command = "open";
-    #[cfg(not(target_os = "macos"))]
-    let command = "xdg-open";
-    std::process::Command::new(command)
-        .arg(url)
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn()?;
-    Ok(())
+    crate::cloud::open_browser(url)
+}
+
+/// The first-run dialog to show, if any. Terms accepted non-interactively (`--accept-terms`
+/// or `JAIN_ACCEPT_TERMS=1`) skip the dialog entirely: agents and scripts never see a prompt.
+fn first_run_dialog(home: &std::path::Path) -> Option<crate::terminal::onboarding::FirstRun> {
+    use crate::terminal::onboarding;
+    if onboarding::accepted_noninteractively() {
+        return None;
+    }
+    if onboarding::env_accepts_terms() {
+        let _ = onboarding::accept_noninteractive(home, "env");
+        return None;
+    }
+    onboarding::FirstRun::new(
+        &onboarding::load(home),
+        &onboarding::required_terms_version_now(),
+        onboarding::telemetry_forced_off_from_env(),
+        crate::cloud::connection().is_ok(),
+    )
 }
 
 #[cfg(test)]

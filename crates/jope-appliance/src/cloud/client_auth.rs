@@ -136,19 +136,24 @@ impl Client {
         ))
     }
     pub fn start_login(&self) -> Result<Device> {
-        let (status, value) = self.form(
-            "/api/cli/device",
-            &[
-                ("client_id", "jain-cli"),
-                ("scope", "cli"),
-                ("client_name", "jAIn CLI"),
-            ],
-        )?;
+        // The workspace records terms acceptance at approval when the user has accepted them.
+        let accepted =
+            crate::terminal::onboarding::load(&jope_paths::jopedime_home()).terms_version;
+        let mut values = vec![
+            ("client_id", CLIENT_ID),
+            ("scope", "cli"),
+            ("client_name", CLIENT_NAME),
+        ];
+        if let Some(version) = accepted.as_deref() {
+            values.push(("terms_version", version));
+        }
+        let (status, value) = self.form("/api/cli/device", &values)?;
         anyhow::ensure!(
             status == 200,
             "workspace could not start login (HTTP {status})"
         );
         let mut device: Device = serde_json::from_value(value)?;
+
         anyhow::ensure!(
             device.verification_uri == format!("{}/cli/connect", self.origin)
                 && device.verification_uri_complete
@@ -190,7 +195,7 @@ impl Client {
             let (status, value) = self.form(
                 "/api/cli/token",
                 &[
-                    ("client_id", "jain-cli"),
+                    ("client_id", CLIENT_ID),
                     ("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
                     ("device_code", &device.device_code),
                 ],
@@ -238,6 +243,8 @@ impl Client {
             token,
             gateway: self.gateway.clone(),
             may_publish: account["mayPublish"].as_bool().unwrap_or(false),
+            tier: account_tier(&account),
+            terms_current: terms_version_field(&account["termsCurrent"]),
         };
         let _lock = connection_lock()?;
         if let Some((generation, cancel)) = pending {

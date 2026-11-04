@@ -5,8 +5,8 @@ mod sync;
 
 pub use commands::{auth_command, cloud_command, default_workspace, spawn_login};
 pub use sync::{
-    fetch_model, publish_best, publish_file, publish_model, run_entries, sync_events,
-    sync_snapshot, sync_snapshot_for, Upload,
+    chrono_like_now, fetch_model, publish_best, publish_file, publish_model, run_entries,
+    set_telemetry, sync_events, sync_snapshot, sync_snapshot_for, Upload,
 };
 #[cfg(test)]
 use sync::{pack_object, unpack_object};
@@ -89,6 +89,12 @@ pub struct Connection {
     #[serde(default)]
     gateway: Option<Gateway>,
     pub may_publish: bool,
+    /// The account's plan (`free`, `pro`, ...) when the workspace reports one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tier: Option<String>,
+    /// The terms version the workspace currently requires (`termsCurrent`), if reported.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub terms_current: Option<String>,
 }
 #[derive(Clone)]
 pub struct Client {
@@ -101,6 +107,7 @@ pub struct Client {
 pub struct Device {
     #[serde(skip)]
     generation: String,
+
     device_code: String,
     pub user_code: String,
     pub verification_uri: String,
@@ -221,9 +228,70 @@ pub fn connection() -> Result<Connection> {
 }
 pub fn account_label() -> String {
     match connection() {
-        Ok(c) => format!("VEOX: {}", c.email),
+        Ok(c) => format!("VEOX: {}", c.signed_in_as()),
         Err(_) => "Cloud not connected · /login".into(),
     }
+}
+impl Connection {
+    /// `email (Tier)` when the workspace reported a plan, otherwise the email.
+    pub fn signed_in_as(&self) -> String {
+        match self
+            .tier
+            .as_deref()
+            .map(str::trim)
+            .filter(|t| !t.is_empty())
+        {
+            Some(tier) => {
+                let mut chars = tier.chars();
+                let tier: String = chars
+                    .next()
+                    .map(|c| c.to_uppercase().chain(chars).collect())
+                    .unwrap_or_default();
+                format!("{} ({tier})", self.email)
+            }
+            None => self.email.clone(),
+        }
+    }
+}
+
+/// The OAuth device-flow client of the jAIn CLI.
+pub const CLIENT_ID: &str = "jain-cli";
+pub const CLIENT_NAME: &str = "jAIn CLI";
+
+/// The plan name from `GET /api/cli/account`: `tier`, else `plan` (a string or `{name}`).
+fn account_tier(account: &Value) -> Option<String> {
+    [&account["tier"], &account["plan"], &account["plan"]["name"]]
+        .into_iter()
+        .find_map(Value::as_str)
+        .map(|tier| {
+            crate::terminal::sanitize_user_string(tier)
+                .chars()
+                .take(32)
+                .collect::<String>()
+        })
+        .filter(|tier| !tier.trim().is_empty())
+}
+/// A terms version as the workspace reports it (`2026-11-03`); anything else is ignored.
+fn terms_version_field(value: &Value) -> Option<String> {
+    value
+        .as_str()
+        .filter(|v| {
+            (1..=32).contains(&v.len())
+                && v.bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'.')
+        })
+        .map(str::to_owned)
+}
+
+/// Record that the signed-in user accepted terms `version` (`POST /api/account/terms`).
+pub fn record_terms(version: &str) -> Result<String> {
+    let c = connection()?;
+    Client::connected(&c)?.json(
+        "POST",
+        "/api/account/terms",
+        json!({"version": version, "source": "cli"}),
+    )?;
+    Ok(format!("Terms {version} recorded for {}", c.email))
 }
 fn encode(value: &str) -> String {
     value
@@ -287,18 +355,40 @@ pub fn gateway(path: Option<&Path>, workspace: &str) -> Result<Option<Gateway>> 
     })
     .transpose()
 }
+
+/// The program and arguments that open `url` in the default browser on `os`
+/// (`std::env::consts::OS`). Windows uses `explorer.exe URL`, which hands the URL to the
+/// registered protocol handler without `cmd.exe` metacharacter parsing.
+pub fn browser_command(os: &str, url: &str) -> (&'static str, Vec<String>) {
+    match os {
+        "macos" => ("open", vec![url.to_owned()]),
+        "windows" => ("explorer.exe", vec![url.to_owned()]),
+        _ => ("xdg-open", vec![url.to_owned()]),
+    }
+}
+
+/// Validate and open `url` without waiting for the browser. Fails (so callers keep showing
+/// the URL) when no opener can be started, e.g. over SSH without a display.
 pub fn open_browser(url: &str) -> Result<()> {
     let uri: ureq::http::Uri = url.parse()?;
     anyhow::ensure!(
-        uri.scheme_str() == Some("https") || matches!(uri.host(), Some("localhost" | "127.0.0.1")),
+        (uri.scheme_str() == Some("https")
+            || matches!(uri.host(), Some("localhost" | "127.0.0.1")))
+            && !url
+                .chars()
+                .any(|c| c.is_control() || c.is_whitespace() || c == '"'),
         "invalid browser URL"
     );
-    #[cfg(target_os = "macos")]
-    let command = "open";
-    #[cfg(not(target_os = "macos"))]
-    let command = "xdg-open";
-    std::process::Command::new(command)
-        .arg(url)
+    let os = std::env::consts::OS;
+    if !matches!(os, "macos" | "windows")
+        && std::env::var_os("DISPLAY").is_none()
+        && std::env::var_os("WAYLAND_DISPLAY").is_none()
+    {
+        anyhow::bail!("no graphical display; open the URL on your own machine");
+    }
+    let (program, args) = browser_command(os, url);
+    std::process::Command::new(program)
+        .args(args)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())

@@ -12,18 +12,29 @@ pub fn required(plain: bool, term: Option<&str>, no_color: bool, width: u16) -> 
 /// A line-oriented transcript writer, shared by startup fallback and narrow resizes.
 pub struct LineMode<W> {
     writer: W,
+    links: bool,
 }
 
 impl<W: Write> LineMode<W> {
     pub fn new(writer: W) -> Self {
-        Self { writer }
+        Self {
+            writer,
+            links: false,
+        }
+    }
+
+    /// Render trusted VEOX URLs as OSC 8 hyperlinks (see `super::links`).
+    pub fn with_links(mut self, links: bool) -> Self {
+        self.links = links;
+        self
     }
 
     /// Preserve logical line breaks while stripping all terminal controls in user content.
     pub fn transcript(&mut self, lines: &[String]) -> io::Result<()> {
         for line in lines {
             for logical in line.split('\n') {
-                writeln!(self.writer, "{}", sanitize_user_string(logical))?;
+                let clean = sanitize_user_string(logical);
+                writeln!(self.writer, "{}", super::links::linkify(&clean, self.links))?;
             }
         }
         self.writer.flush()
@@ -58,6 +69,26 @@ mod tests {
         .unwrap();
         assert_eq!(mode.writer, b"first\nsecond\nred link\n");
         assert!(!mode.writer.contains(&0x1b));
+    }
+
+    #[test]
+    fn links_are_added_only_for_trusted_urls_after_stripping_user_escapes() {
+        let mut mode = LineMode::new(Vec::new()).with_links(true);
+        mode.transcript(&[
+            "Terms https://veox.ai/terms".into(),
+            "\x1b]8;;https://evil.example\x07https://veox.ai/x\x1b]8;;\x07 https://evil.example"
+                .into(),
+        ])
+        .unwrap();
+        let text = String::from_utf8(mode.writer).unwrap();
+        assert_eq!(
+            text,
+            format!(
+                "Terms {}\n{} https://evil.example\n",
+                super::super::links::osc8("https://veox.ai/terms", "https://veox.ai/terms"),
+                super::super::links::osc8("https://veox.ai/x", "https://veox.ai/x"),
+            )
+        );
     }
 
     #[test]

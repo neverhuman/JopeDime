@@ -49,6 +49,10 @@ impl super::Session {
                     self.screen.push(&line);
                 }
                 self.screen.cloud_label = crate::cloud::account_label();
+                // A login can report newer terms (`termsCurrent`): ask for them now.
+                if self.first_run.is_none() {
+                    self.first_run = first_run_dialog(&self.home);
+                }
                 last_draw = None;
             }
             while let Ok(result) = self.background_events.try_recv() {
@@ -64,9 +68,40 @@ impl super::Session {
                 }
                 last_draw = None;
             }
+            if let Some(dialog) = &self.first_run {
+                self.screen.panel = Some(dialog.lines());
+            }
             if event::poll(INPUT_LATENCY)? {
                 let input = event::read()?;
                 last_draw = None;
+                if let Some(dialog) = self.first_run.as_mut() {
+                    let Event::Key(key) = &input else { continue };
+                    if key.kind == KeyEventKind::Release {
+                        continue;
+                    }
+                    if key.modifiers.contains(KeyModifiers::CONTROL)
+                        && matches!(key.code, KeyCode::Char('c' | 'd'))
+                    {
+                        guard.leave_inline()?;
+                        return Ok(());
+                    }
+                    match dialog.key(key.code) {
+                        None => {}
+                        Some(crate::terminal::onboarding::Outcome::Quit) => {
+                            guard.leave_inline()?;
+                            eprintln!(
+                                "The VEOX terms of service were not accepted; nothing was changed."
+                            );
+                            return Ok(());
+                        }
+                        Some(outcome) => {
+                            for line in self.finish_first_run(outcome, "tui") {
+                                self.screen.push(&line);
+                            }
+                        }
+                    }
+                    continue;
+                }
                 if matches!(&input, Event::Key(key) if key.kind != KeyEventKind::Release && key.code == KeyCode::Left)
                     && self.composer.text().is_empty()
                     && self.screen.browser.is_none()
@@ -204,11 +239,15 @@ impl super::Session {
                     }
                 }
             })?;
-        let mut output = crate::terminal::line_mode::LineMode::new(io::stdout());
+        let mut output =
+            crate::terminal::line_mode::LineMode::new(io::stdout()).with_links(self.links);
         output.transcript(&[format!(
-            "JAIN by VEOX · Powered by JopeDime {} · engine {}",
+            "jAIn by VEOX · CLI {} · engine {}",
             self.version, self.engine_mode
         )])?;
+        if let Some(dialog) = &self.first_run {
+            output.transcript(&dialog.lines())?;
+        }
         let width = terminal::size().map(|size| size.0).unwrap_or(80);
         output.transcript(&pending_composer_lines(&self.composer, width))?;
         loop {
@@ -220,6 +259,12 @@ impl super::Session {
             self.tick_sync();
             while let Ok(lines) = self.cloud_events.try_recv() {
                 output.transcript(&lines)?;
+                if self.first_run.is_none() {
+                    self.first_run = first_run_dialog(&self.home);
+                    if let Some(dialog) = &self.first_run {
+                        output.transcript(&dialog.lines())?;
+                    }
+                }
             }
             while let Ok(result) = self.background_events.try_recv() {
                 let lines = result.into_messages();
@@ -249,6 +294,22 @@ impl super::Session {
             match receiver.recv_timeout(INPUT_LATENCY) {
                 Ok(Input::Line(line)) => {
                     let line = line.trim_end_matches(['\r', '\n']);
+                    if let Some(dialog) = self.first_run.as_mut() {
+                        match dialog.line(line) {
+                            None => output.transcript(&dialog.lines())?,
+                            Some(crate::terminal::onboarding::Outcome::Quit) => {
+                                output.transcript(&[
+                                    "The VEOX terms of service were not accepted; nothing was changed.".into(),
+                                ])?;
+                                return Ok(());
+                            }
+                            Some(outcome) => {
+                                let lines = self.finish_first_run(outcome, "line");
+                                output.transcript(&lines)?;
+                            }
+                        }
+                        continue;
+                    }
                     if let Some(input) = accept_line(&mut self.composer, line)? {
                         output.transcript(&self.execute(&input))?;
                     }

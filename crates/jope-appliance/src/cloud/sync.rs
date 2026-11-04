@@ -3,6 +3,7 @@ use super::*;
 use telemetry::record_publication;
 pub use telemetry::sync_events;
 pub(super) use telemetry::telemetry_command;
+pub use telemetry::{chrono_like_now, set_telemetry};
 pub use upload::{publish_file, Upload};
 
 mod telemetry;
