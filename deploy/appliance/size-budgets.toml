@@ -47,11 +47,16 @@ base_executable_bytes = 8144648
 final_executable_bytes = 8268941
 note = "A21: measured Linux dist-ci development fixture; pre-CLI main already8144488/8267461B, candidate adds160B code and1480B compressed notices; models unchanged,5% tolerance retained. See measurements/browser-predict-fixture-20261102.json."
 
-# Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.
+# Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded,engine,mcp,client,cloud-tls`.
+# Rebaselined 2026-11-04 (amendment A23): the public edition is now the released CLI with its
+# local engine, MCP, client and HTTPS login. Measured on xbabe2 (Rust 1.97.1, x86_64) at source
+# 5edb737d93211266893ef73956a0992eb74dcc7d: 23,072,736 B code; the unsigned stage adds 32 B
+# alignment, 34,834 B notice frames, a 1,932 B manifest, then 64 B signature + 128 B footer.
+# The previous 4,542,168 B base measured an `embedded`-only binary. No model weights.
 [profile.native-only]
-base_executable_bytes = 4542168
-final_executable_bytes = 4561056
-note = "native methods only; the payload is the licence and third-party notices (sealed with an independent P-256 key)"
+base_executable_bytes = 23072736
+final_executable_bytes = 23109726
+note = "A23: public CLI edition (engine, mcp, client, cloud-tls), no model weights; the payload is the licence and third-party notices (sealed with an independent P-256 key)"
 
 # Blocked (models.lock.json). The tensors alone are 438,062,296 bytes before lossless packing.
 [profile.full]
