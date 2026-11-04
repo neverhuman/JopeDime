@@ -2,7 +2,7 @@
 
 \subsection{A separate adapter admission record}\label{sec:method-status}
 
-A separate operating loop ranks rule-based proposals with a small cost-ranking adapter on a frozen, separately loaded candidate-scoring network. It is distinct from the reference writer and ranking map (\cref{sub:method-selfplay}). A gate admits or rolls back each adapter update.
+The inspected loop ranks rule-based proposals with a cost-ranking adapter on a frozen, separately loaded candidate-scoring network. Its updates train neither the reference program writer nor the ranking map (\cref{sub:method-selfplay}). A gate admits or rolls back each adapter update.
 Validation-pool utility averages the negated recorded score of each context's adapter-selected candidate over fixed validation contexts; failed gates count $-2.0$, and larger is better.
 
 \input{sections/adapter_update_scope}
