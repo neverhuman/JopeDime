@@ -13,7 +13,7 @@ and its recorded evaluations; \cref{sec:price} defines the cost ledger.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
-The reference player's frozen encoder reads the problem board
+The reference design's frozen encoder reads the problem board
 (\cref{fig:network}); its writer emits a complete program under the
 contract in \cref{box:searchone}, as AlphaGo's policy proposed a move
 \citep{silver2016mastering}. The separate ranking map enters training search
@@ -231,7 +231,7 @@ Architecture specifications do not qualify a checkpoint or runtime
 (\cref{sub:results-protocol}). The historical reference covers tabular
 regression only; native training currently refuses numerical dispatch.
 CPU float32 (Candle) and GPU BF16 (tch) inference are not yet shown to agree numerically; random streams and uniform-token fallback differ.
-This record does not establish that Algorithm~\ref{alg:selfplay}'s proposed player-admission ratchet has run.
+This record does not establish that \Cref{alg:selfplay}'s proposed player-admission ratchet has run.
 
 
 

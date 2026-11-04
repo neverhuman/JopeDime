@@ -627,7 +627,7 @@ def make_fig5_network() -> None:
         y_mid,
         0.295,
         h_mid,
-        "Map $v_\\psi(z_p, z_w)$\nProgram embed $z_w = \\phi_{\\mathrm{S}}(w)$;\n4-head scorer ($\\mathcal{L}_{\\mathrm{map}} + \\mathcal{L}_{\\mathrm{BT}}$)",
+        "Map $v_\\psi(z_p, z_w)$\nProgram embed $z_w = \\phi_{\\mathrm{S}}(w)$;\n4 ranking heads ($\\mathcal{L}_{\\mathrm{map}} + \\mathcal{L}_{\\mathrm{BT}}$)",
         "#fef3c7",
         "#d97706",
         "#78350f",
