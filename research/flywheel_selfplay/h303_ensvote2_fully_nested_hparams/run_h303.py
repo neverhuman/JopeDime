@@ -191,18 +191,19 @@ def setup():
         costs = {c: zt[c].astype(np.float32) for c in cids}
     ids, aprior, proj16, ctxf = set(cids), {}, {}, {}
     with np.load(r302.CACHE / "pool_priors.npz", allow_pickle=False) as zp:
-        pc, offsets = [str(c) for c in zp["cids"]], zp["offsets"]
+        pc, offsets, base, proj = [str(c) for c in zp["cids"]], zp["offsets"], zp["base_prior_cost"], zp["proj16"]
         for i, c in enumerate(pc):
             if c in ids:
                 lo, hi = int(offsets[i]), int(offsets[i + 1])
-                aprior[c] = zp["base_prior_cost"][lo:hi].astype(np.float32).copy()
-                proj16[c] = zp["proj16"][lo:hi].astype(np.float32).copy()
+                aprior[c] = base[lo:hi].astype(np.float32).copy()
+                proj16[c] = proj[lo:hi].astype(np.float32).copy()
     with np.load(r302.CACHE / "context_features.npz", allow_pickle=False) as zc:
+        lm48, dope = zc["lm48_z"], zc["dope629"]
         for i, c in enumerate(str(x) for x in zc["cids"]):
             if c in ids:
                 ctxf[c] = {
-                    "lm48_z": zc["lm48_z"][i].astype(np.float32).copy(),
-                    "dope629": zc["dope629"][i].astype(np.float32).copy(),
+                    "lm48_z": lm48[i].astype(np.float32).copy(),
+                    "dope629": dope[i].astype(np.float32).copy(),
                 }
     P8 = topk.load_packets(train_rows, costs, aprior, proj16, ctxf, ens.K)
     G.update(r302=r302, a302=a302, core=core, veto=veto, bagged=bagged, ens=ens, P8=P8, train_rows=train_rows,

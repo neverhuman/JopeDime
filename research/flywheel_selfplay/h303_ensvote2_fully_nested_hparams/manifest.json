@@ -56,5 +56,15 @@
   "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
   "parent_commit": "dff103e50249ab2831a58d95d3304a88a139ca69",
   "publication_ref": "v1/next",
-  "compute_stop": "2026-11-04T07:45:00Z"
+  "compute_stop": "2026-11-04T07:45:00Z",
+  "post_prereg_sources": {
+    "run_h303.py": {
+      "sha256": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+      "deviation": "setup() npz arrays hoisted out of the per-context loop (2 hunks, identical loaded values); prereg-commit sha kept in source_sha256"
+    },
+    "preflight_h303.py": {
+      "sha256": "b21a6b752a49abddb99bb39ea131be45f8a146e6f98e63801653360b06d86686",
+      "deviation": "added after prereg; outer_train-only recomputation check"
+    }
+  }
 }
