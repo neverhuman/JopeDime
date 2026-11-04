@@ -154,7 +154,7 @@ def main(DATA, lock, reg, prereg_commit):
     picks8 = np.zeros((3, 91), dtype=np.int32)
     chosen = {}
     for s, rs in enumerate((30001, 30002, 30003)):
-        lp = DATA / "lock" / "fold_ALL" / f"root_{rs}" / "fit_lock.json"
+        lp = DATA / "lock" / f"fold_{R.LOCK_KEY}" / f"root_{rs}" / "fit_lock.json"
         lk = json.loads(lp.read_text())
         ch = lk["chosen"]
         chosen[str(rs)] = ch

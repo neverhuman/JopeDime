@@ -5,7 +5,7 @@ Phases (separate processes; each refuses to run out of order):
   regress-train  H308 regression: H303 P0 fold 0 / seed 30001 via H308's TRAIN-only loader must reproduce the archived
                  H303 lock and fold-0 picks sha 18fdb2538cea... (no dev91 access; dev guard active).
   lock           for each root seed 30001/30002/30003: H303 NESTED unchanged (18-config grid, inner 4-fold family CV on
-                 ALL 205 DL-Train families with inner folds SHA256("H303-inner-v1" NUL "ALL" NUL family) mod 4, 1e-4
+                 ALL 205 DL-Train families with inner folds SHA256("H303-inner-v1" NUL "4" NUL family) mod 4, 1e-4
                  conservative ties, pinned members) -> one frozen chooser per seed; fit_lock.json per seed, fsynced.
                  A dev guard (audit hook) refuses any open of a dev91 pool file, dev91 costs or dev91 reference table;
                  the TRAIN-only loader decodes no DL-Val cache row; counters prove dev91_rows_read_before_lock == 0.
@@ -40,7 +40,7 @@ R882_REF = Path("/home/ubuntu/jope-data/h276/inputs/best_dev_checkpoint.json")
 H303_REF = DATA / "h303_ref"
 R3175_MEAN = 1.1389572403748425
 R882_MEAN = 1.1377941898164525
-LOCK_KEY = "ALL"
+LOCK_KEY = 4  # int (H302 casts outer_fold to int); outside folds 0-3; inner fold salt str(4)
 DEV_GUARD = {"denied": 0}
 
 
@@ -123,7 +123,7 @@ def load_train_side():
 def lock_task(rseed):
     r303 = LOCK_CTX["r303"]
     r303.SCRATCH = DATA / "lock"
-    r303.G["fam_to_fold"] = {f: "train" for f in r303.G["_fams"]}  # every family is lock-train (!= LOCK_KEY)
+    r303.G["fam_to_fold"] = {f: -1 for f in r303.G["_fams"]}  # every family is lock-train (!= LOCK_KEY)
     lock = r303.task((LOCK_KEY, rseed))
     return dict(root_seed=rseed, chosen=lock["chosen"], n_tied=lock["n_tied"], elapsed_sec=lock["elapsed_sec"])
 

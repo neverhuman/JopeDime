@@ -70,5 +70,15 @@
     "memory_max": "8G"
   },
   "parent_commit": "4a0d7abac823ca0b14c82960556af9167c8a6e89",
-  "compute_stop": "2026-11-04T10:45:00Z"
+  "compute_stop": "2026-11-04T10:45:00Z",
+  "post_prereg_sources": {
+    "run_h310.py": {
+      "sha256": "5df537132cf4847cbb753c8501ecf6da4ad8c6b0a9ba77dab2cf14182b987a8b",
+      "deviation": "LOCK_KEY \"ALL\" -> int 4 (H302 casts outer_fold to int); fam_to_fold sentinel -1; inner fold salt str(4)"
+    },
+    "evaluate_h310.py": {
+      "sha256": "09169b8eaabf04d8ee6da3b2fbb619c9dbd910f1749be9bf37d7c6232086f730",
+      "deviation": "lock path uses R.LOCK_KEY"
+    }
+  }
 }
