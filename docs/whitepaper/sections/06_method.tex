@@ -6,17 +6,17 @@
 % Historical source notes are archived outside the paper tree.
 \section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
-In reference training, search-scored lists supply targets for a program
-writer and a separate ranking map. The proposed game-day protocol freezes
-the writer for one proposal. \Cref{sec:method-status} describes a separate
-cost-ranking adapter loop with its own evaluation and cost ledger (\cref{sec:price}).
+The reference training design uses search-scored lists to supervise a
+program writer and a separate ranking map. The proposed game-day protocol
+freezes the writer for one proposal. \Cref{sec:method-status} covers the
+separate cost-ranking adapter loop, its evaluation and cost ledger (\cref{sec:price}).
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
-A frozen encoder reads the problem board (\cref{fig:network}); the reference
-writer emits a complete program under the contract in \cref{box:searchone}, as
-AlphaGo's policy proposed a move
-\citep{silver2016mastering}. The separate ranking map enters training search
+The reference player uses a frozen encoder to read the problem board
+(\cref{fig:network}) and a writer to emit a complete program under the
+contract in \cref{box:searchone}, as AlphaGo's policy proposed a move
+\citep{silver2016mastering}. Its separate ranking map enters training search
 only \mbox{through the routes} described in \cref{sub:method-map}.
 
 \begin{figure*}[t]
@@ -62,7 +62,7 @@ evaluation test.
 
 A move is one program in the typed language of \cref{sec:game}, with a
 401-token training inventory listing 31 transforms and 22 prediction heads; the product runtime restricts executable heads.
-The writer emits a flat operator-and-slot token stream with a fixed
+The reference writer emits a flat operator-and-slot token stream with a fixed
 start, engine and regression-task header, with no reasoning or
 parenthesis tokens or \texttt{pipe} wrapper. Its nine-phase grammar mask permits
 up to six transform stages and three expression stages; each expression
@@ -100,9 +100,9 @@ targets or bootstrap samples. Training applies dropout of 0.05 in each
 ranking head. The runtime head instead reads $[r_z,z_w]$, while the
 program-only control reads $z_w$.
 
-The score is not a calibrated error estimate. Comparing its magnitude across problems or reading it as a
-probability of a verified win requires separate evidence. The referee
-still establishes validity and measures performance.
+The score is not a calibrated error estimate. Cross-problem score
+comparisons or a probability of a verified win require separate evidence.
+The referee still establishes validity and measures performance.
 
 The map's training objective uses scored lists $G_p$ for problem $p$;
 $\rho_w\in[0,1]$ is a program's percentile, 1 for the best.
@@ -138,13 +138,13 @@ The reference game-day protocol omits the ranking map. Matched first
 proposals therefore test whether training improved the program writer.
 \end{keyidea}
 
-In the reference native implementation, the writer and map use separate context
-networks and token embeddings. The map ranks drafts without dropping them
-or screening the writer. One native GP route matches map-derived weights
-by program identity to ranked survivors for parent selection. The bounded
-search driver instead cycles among up to four parents chosen by measured
-loss. These routes have different influence paths. Neither path alone
-establishes trained-map lift; \mbox{an evaluation must} bind its exact search route.
+The native reference writer and map use separate context networks and
+token embeddings. The map ranks drafts without dropping them or screening
+the writer. One native GP route matches map-derived weights to ranked
+survivors by program identity for parent selection. The bounded search
+driver instead cycles among up to four parents chosen by measured loss.
+Neither influence path alone establishes trained-map lift;
+\mbox{an evaluation must} bind its exact search route.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
@@ -161,8 +161,8 @@ proposals requires the matched ablation in \cref{sub:results-ablation}.
 The historical target diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
 do not supply that controlled comparison.
 
-Those referee-scored lists supply the proposed offline \mbox{training} targets
-in \cref{sub:method-selfplay}.
+\Cref{sub:method-selfplay} uses those referee-scored lists as proposed
+offline \mbox{training} targets.
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
@@ -231,17 +231,18 @@ averages across cuts. Negative values favor the challenger. This admission
 comparison is separate from the single-program comparison in
 \cref{sub:results-learning}.
 
-\paragraph{The historical reference.} The reference model combines a decoder-only writer with separate
-ranking and auxiliary heads. \Cref{app:training} records the architecture,
-registered capacity, token allocation and training corpus in one inventory.
+\paragraph{The historical reference.} A decoder-only writer and separate
+ranking and auxiliary heads form the reference model. \Cref{app:training}
+inventories its architecture, registered capacity, token allocation and
+training corpus.
 
-These specifications do not supply the checkpoint's acceptance evidence or
-qualify its runtime. Both records remain inputs to the evaluation contract
-(\cref{sub:results-protocol}). The historical reference checkpoint is
-scoped to tabular regression. Its native training entry point enforces a
-dispatch hold. Numerical parity of the CPU float32 Candle port
-with the native CUDA BF16 tch runtime remains unqualified; random streams
-and uniform-token fallback differ.
+Architecture specifications do not establish checkpoint acceptance or
+runtime qualification. Both records remain required by the evaluation
+contract (\cref{sub:results-protocol}). The historical reference checkpoint
+is scoped to tabular regression; its native training entry point enforces
+a dispatch hold. Numerical parity between the CPU float32 Candle port and
+native CUDA BF16 tch runtime remains unqualified; random streams and
+uniform-token fallback differ.
 
 
 
@@ -285,6 +286,6 @@ matched comparison with a frozen reference.
 \end{algorithmic}
 \end{algorithm}
 
-Report any later search separately, just as \citet{silver2017mastering} reported
+Report later search separately, as \citet{silver2017mastering} reported
 AlphaGo Zero's raw policy network apart \mbox{from its lookahead} search (\cref{sec:method-status}).
 \input{sections/06_method/flywheel_status}

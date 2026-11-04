@@ -11,10 +11,10 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-The bill for a verified improvement includes the winning attempt and
-every earlier failure. It covers encoding, input tokens, generation,
-repairs, referee execution, updates and operating costs. The ratios below organize
-this ledger; pricing a full run still requires the measurements in
+The bill for a verified improvement covers the winning attempt and every
+earlier failure. It includes encoding, input tokens, generation, repairs,
+referee execution, updates and operating costs. The ratios below organize
+this ledger; a full-run price still requires the measurements in
 \cref{sub:price-run,sec:results}.
 
 \subsection{The bill in one line}\label{sub:price-bill}
@@ -46,11 +46,11 @@ permits adaptive or correlated attempts; their cost and attempt curves
 still require measurement. A batch with no verified win has no finite
 \mbox{observed cost per win.}
 
-Keep training and deployment costs in separate ledgers. Training pays
-for every attempt, including failures; the proposed deployment protocol pays
-for encoding, one proposal and its fit, with no repair. Fixed-weight agent
+Keep training and deployment in separate ledgers. Training pays for every
+attempt, including failures. The proposed deployment protocol pays for
+encoding, one proposal and its fit, with no repair. Fixed-weight agent
 loops pay for evaluation during task-specific search. Training a proposer
-may shift some of that cost to earlier tasks; the crossover point \mbox{still needs}
+may shift some cost to earlier tasks; the crossover \mbox{still needs}
 measurement (\cref{sec:results}).
 
 \subsection{Wasted moves}\label{sub:price-waste}
@@ -88,8 +88,9 @@ component's cost per win matches. \Cref{sub:price-run} separates active
 compute from resident model memory.
 
 If the smaller writer needs three times the tokens per
-attempt, the generation-only ratio falls to about 60. Repair turns, unused in
-our routes, also re-read a growing context. Encoding and referee costs change
+attempt, the generation-only ratio falls to about 60. Repair turns also
+re-read a growing context; the inspected reference and adapter routes do
+not use them. Encoding and referee costs change
 the full-cost ratio; a threshold for the bill in \cref{eq:bill} requires
 counting every component.
 
@@ -160,11 +161,11 @@ for 1T parameters alone require at least 13 H100 SXM GPUs with 80\,GB each
 \citep{nvidia2026h100}, and runtime state needs additional capacity. This hardware memory
 floor is separate from \mbox{the full run-cost projection} discussed next.
 
-A reproducible projection therefore needs a pinned model and hardware
-configuration, dated prices, measured or justified utilization and an
-explicit accounting boundary. Those inputs remain unrecorded; a full
-cost projection remains a measurement task. Pricing the adapter
-operating clocks \mbox{(\cref{sec:method-status}) still} requires an attempt ledger.
+A reproducible projection needs a pinned model and hardware configuration,
+dated prices, measured or justified utilization and an explicit accounting
+boundary. Those inputs remain unrecorded; a full cost projection remains
+a measurement task. Pricing the adapter operating clocks
+\mbox{(\cref{sec:method-status}) still} requires an attempt ledger.
 
 \begin{keyidea}
   Cost per verified improvement depends on both the cost of an attempt

@@ -1,8 +1,8 @@
 \section{Referee Inventory}\label{app:history}
 
-A reliable, affordable referee is a condition for the innovation game
-(\cref{sub:game-boards}). \Cref{tab:referees} inventories the evaluators
-behind algorithm selection \citep{rice1976algorithm}, typed and
+The innovation game needs a reliable, affordable referee
+(\cref{sub:game-boards}). \Cref{tab:referees} lists the evaluators behind
+algorithm selection \citep{rice1976algorithm}, typed and
 evolutionary search \citep{koza1992genetic,montana1995stgp,real2020automlzero},
 self-play and expert iteration
 \citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and tabular
@@ -37,20 +37,19 @@ discussed in \cref{sec:anatomy,sec:road}.
   \end{tabularx}
 \end{table}
 
-The inventory identifies the evaluator; family allocation is a separate
-requirement. In the native audit path, approved datasets are grouped by
-source identity, declared family or identical training bytes before seeded
-family ordering assigns the meta-training, meta-validation and meta-test
-partitions.
+Family allocation is separate from evaluator choice. In the native audit
+path, approved datasets are grouped by source identity, declared family
+or identical training bytes; seeded family ordering then assigns the
+meta-training, meta-validation and meta-test partitions.
 
 This code path does not establish that a corpus or checkpoint satisfies
 the required partition split.
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-Two safeguards bound the comparisons in \cref{sub:method-referee}: exclude
-test-selected search outcomes, and require final-evaluation receipts for
-input closure and execution isolation:
+The comparisons in \cref{sub:method-referee} require two safeguards:
+exclude test-selected search outcomes, and obtain final-evaluation receipts
+for input closure and execution isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry selected each dataset's best test-scored outcome from
@@ -68,8 +67,8 @@ input closure and execution isolation:
 \section{Training Details}\label{app:training}
 
 The historical reference in \cref{sec:method} still requires checkpoint
-qualification. Its encoder, training objective and execution requirements
-are inventoried below, separately from \mbox{the adapter record} in
+qualification. This inventory covers its encoder, training objective and
+execution requirements, separately from \mbox{the adapter record} in
 \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
@@ -129,9 +128,9 @@ are inventoried below, separately from \mbox{the adapter record} in
   are never indexed as valid input or output tokens; the tied writer
   projection is restricted to the grammar rows.
 
-  The registered total also
-  includes zero-weight stability and loss-scale terms, so it does not
-  measure learned or exercised capacity. Approximately 6.90 million parameters lie outside the writer's token
+  The registered total includes zero-weight stability and loss-scale
+  terms; it does not measure learned or exercised capacity. Approximately
+  6.90 million parameters lie outside the writer's token
   generation path. They share no weights with the writer and game-day decoding
   bypasses them, though the native loader still requires all of them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
