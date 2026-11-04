@@ -1,0 +1,15 @@
+{
+  "schema": "jope.h317.archive-manifest/v1",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H317/closeout-20261104/h317_closeout_bundle.tar.zst",
+  "version_id": "QCaZLShDtGBbI6ftRWYsGPYq6kxYGCIz",
+  "sha256": "525ac16332e83a709a0f4f2837a0e78303467e3ead6068d58e2e5c1129e52480",
+  "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+  "members_file": "bundle_SHA256SUMS",
+  "utc": "2026-11-04T16:21:01Z",
+  "exploratory_archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H317/closeout-20261104/h317_explore_learners.tar.zst",
+    "version_id": "DpLUJyNKYSm_71ekAW9vtxRJBv4XBtBM",
+    "sha256": "b7ae80b132d8544295eff459c18fbffa526844bbff78672fdba50f5b38023dc9",
+    "verified": "EXACT_VERSION_GET_SHA_MATCH"
+  }
+}
