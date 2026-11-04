@@ -7,8 +7,7 @@ Contains zero fabricated empirical results:
   vertical question-mark interval ('?', to be tested in Section 7).
 - fig3_game_loop.pdf: Schematic of the innovation game loop (top blue row:
   game-day search=1 deployment; dashed box: training-only referee & ratchets).
-- fig5_network.pdf: Architectural schematic of the 27.8M historical reference
-  checkpoint showing the frozen 2,048-value encoder, grammar-masked writer
+- fig5_network.pdf: Architectural schematic of proposed reference training, showing the frozen 2,048-value encoder, grammar-masked writer
   pi_theta, and separate training-only ranking map v_psi (with explicit note
   that v_psi has no influence path into pi_theta's draw).
 """
@@ -588,7 +587,7 @@ def make_fig5_network() -> None:
     ax.text(
         0.66,
         0.545,
-        "Reference training only: 27.8M historical checkpoint",
+        "Proposed training (reference design)",
         fontsize=8.2,
         fontweight="bold",
         color="#334155",
@@ -700,9 +699,9 @@ def make_fig5_network() -> None:
         rad=0.05,
     )
 
-    fig.text(0.5, 0.068, "Live: frozen proposal generator; value side: residual cost-ranking adapter.",
+    fig.text(0.5, 0.068, "Live loop (Section 6.8): rule-based proposals, no neural writer.",
              ha="center", va="center", fontsize=8.5, color="#334155")
-    fig.text(0.5, 0.024, "34.9M decoder / 13.8M value net: reference designs only; distinct from the historical checkpoint above.",
+    fig.text(0.5, 0.024, "A cost-ranking adapter picks which proposals are scored.",
              ha="center", va="center", fontsize=8.5, color="#334155")
     finish_fonts(fig)
     fig.savefig(
@@ -727,7 +726,7 @@ def write_provenance():
             "canvas_inches": {names[0]: [3.35, 2.3], names[1]: [7.0, 2.3], names[2]: [7.0, 2.9]},
             "scope": "Conceptual diagrams only; no empirical data or runtime qualification.",
             "preservation": "Conceptual nodes, arrows and point locations retained; labels distinguish proposed or unmeasured behavior and the historical reference from the separate live system.",
-            "capacity_label_source": "Reference design counts follow the authoring brief; the live label omits an unbound capacity. Historical checkpoint inventory remains separate.",
+            "capacity_label_source": "Unsupported alternative capacity counts omitted. Proposed training is distinct from the offline historical checkpoint and live rule-based proposal/cost-ranking loop.",
             "reproduce": "python3 figures/scripts/make_schematics.py"}
     (OUT / "data/schematics.provenance.json").write_text(json.dumps(data, indent=2) + "\n")
 

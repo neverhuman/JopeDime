@@ -23,9 +23,9 @@ only \mbox{through the routes} in \cref{sub:method-map}.
   \setlength{\abovecaptionskip}{4pt}
   \centering
   \includegraphics[width=\linewidth]{figures/fig5_network.pdf}
-  \caption{\textbf{Reference training updates the writer and map; game day uses the writer alone.}
-  Top: reference game day, the whole of \searchone{}. Dashed box: proposed training.
-  Search extends the writer's drafts, and referee-scored lists supply training objectives
+  \caption{\textbf{Proposed training updates the writer and map; game day uses the writer alone.}
+  Top: reference \searchone{} game day. Dashed box: proposed training; the 27.8M historical checkpoint was trained offline (\cref{app:training}).
+  Search extends the writer's drafts; referee-scored lists supply training objectives
   for the writer ($\theta$) and map ($\psi$). Stillborn programs enter no list.}
   \label{fig:network}
 \end{figure*}
@@ -274,5 +274,5 @@ matched comparison with a frozen reference.
 \end{algorithm}
 
 Report later search separately, as \citet{silver2017mastering} reported
-AlphaGo Zero's raw policy network apart \mbox{from its lookahead} search (\cref{sec:method-status}).
+AlphaGo Zero's raw policy network apart \mbox{from its lookahead} search (\cref{sub:results-search}).
 \input{sections/06_method/flywheel_status}

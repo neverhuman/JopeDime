@@ -2,7 +2,7 @@
   "schema": "whitepaper.current-program-clock-figure/v1",
   "input_csv_sha256": "5783621e173e8ab553876816f5e5456cbe87ab97945aae0790deec6eb80eb610",
   "source_receipt_sha256": "409851fb54d0dfa49c711cbcc15d089781d2a69d2acf15e78806a6cb06169ed7",
-  "generator_sha256": "95f043c326c063567f88286351997e15eaa22e74e9d5d0dd7d068cea0b627ef9",
+  "generator_sha256": "42cf0bf637a3cd0d45ada15b8bc8b959017cc70415dde8293a8688a4425d787e",
   "figure_sha256": "1d898315d739056ef7234c40bab7d5e9bbf8a4a1586494585dd390ab108aa165",
   "rows": 20,
   "round_window": [

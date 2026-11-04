@@ -16,7 +16,7 @@ from matplotlib.font_manager import findfont
 FIGURES = Path(__file__).resolve().parent.parent
 DATA = FIGURES / "data/retained_best_plateau.csv"
 SOURCE = FIGURES / "data/retained_best_plateau.source.json"
-OUTPUT = FIGURES / "fig_fw_retained_best_plateau.pdf"
+OUTPUT = FIGURES / "fig_legacy_retained_best_plateau_866.pdf"
 PROVENANCE = FIGURES / "data/retained_best_plateau.provenance.json"
 
 
@@ -100,6 +100,9 @@ def main():
 
     facts = dict(
         schema="whitepaper.retained-best-plateau-figure/v1",
+        figure_path=OUTPUT.name, legacy_only=True,
+        canonical_figure="fig_fw_retained_best_plateau.pdf",
+        canonical_provenance="data/full_retained_trajectory.provenance.json",
         input_csv_sha256=sha(DATA), source_receipt_sha256=sha(SOURCE),
         generator_sha256=sha(Path(__file__)), figure_sha256=sha(OUTPUT),
         rows=len(rows), round_window=[rounds[0], rounds[-1]],

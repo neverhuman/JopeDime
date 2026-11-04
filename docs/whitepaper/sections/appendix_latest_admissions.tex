@@ -50,7 +50,7 @@
     Admissions / rejections & 8 / \num{3168} \\
     Strict-gain rounds & 785, 859, 2750, 3175 \\
     Exact-tie rounds & 782, 882, 2795, 3100 \\
-    Final retained utility & \num{1.1389572403748425} \\
+    Final logged retained utility & \num{1.1389572403748425} \\
     Recorded best-round identity & 3175 \\
     New rows since prior capture & 753 (0 admitted) \\
     Rejected margins in $[-10^{-4},0)$ & 26 \\
@@ -63,7 +63,9 @@
 \end{table}
 
 \Cref{tab:admission-ledger} collects the chronology, exact counts and
-margin summaries for one capture. The pre-decision margin is
+margin summaries for one capture. Native replay of the round-3175 checkpoint failed
+the parity gate and scored below round 882 (\cref{sub:results-diagnostics}).
+The pre-decision margin is
 $\Delta_r=u_{\mathrm{cand},r}-u_{\mathrm{prev},r}$;
 the default rule accepts $\Delta_r\geq0$.
 

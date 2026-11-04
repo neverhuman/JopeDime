@@ -2,7 +2,7 @@
   "schema": "whitepaper.window-operating-summary/v2",
   "input_csv_sha256": "7d3eaed80874d387c45abbc4b5583e828acbf5bbc06c1769384f97ab80843ba1",
   "source_receipt_sha256": "d12b515b417c50a11da18468f8c9764c441fd08a4fcd5a3433ebd124b357e82d",
-  "generator_sha256": "95f043c326c063567f88286351997e15eaa22e74e9d5d0dd7d068cea0b627ef9",
+  "generator_sha256": "42cf0bf637a3cd0d45ada15b8bc8b959017cc70415dde8293a8688a4425d787e",
   "figure_sha256": "2c1e2581e08e90b8af61742ccf15939a6ba0da40648381fccd7aa1169072782b",
   "windows": [
     {

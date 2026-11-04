@@ -47,7 +47,7 @@ and pre-decision margins.
   \includegraphics[width=\linewidth,height=1.60in,keepaspectratio]{figures/fig_fw_latest_admissions.pdf}
   \caption{\textbf{The adapter admits eight candidates across the captured prefix.}
   In \cref{tab:admission-ledger}, blue is the post-decision
-  retained best; grey marks rejected candidates, red stars strict gains
+  logged retained utility; grey marks rejected candidates, red stars logged increases
   and hollow diamonds exact ties. Decisions use unrounded logged values.
   Scope: \cref{sec:method-status}.}
   \label{fig:fw-latest-admissions}
@@ -145,22 +145,16 @@ fixed later decision window (\cref{app:candidate-margin-window}).
 \Cref{fig:decision-cadence} adds the timestamp gaps between recent recorded
 adapter decisions (\cref{app:decision-cadence}).
 
-\href{eurekazero_supplement.pdf}{Supplementary Figure~S1} shows recorded candidate parameter
-displacement before admission (\cref{app:parameter-displacement}).
-
-The step-level gradient diagnostic in \cref{app:gradient-norms} remains
-separate from parameter displacement and retained learning.
-
-\href{eurekazero_supplement.pdf}{Supplementary Figure~S2} shows recorded
-minibatch losses on distinct batches, not a matched loss decrease.
-
-\href[page=2]{eurekazero_supplement.pdf}{Supplementary Figure~S3} aligns training-program
-promotions with adapter utility by completed round. The two admission
-rules remain distinct.
-
-\href[page=2]{eurekazero_supplement.pdf}{Supplementary Figure~S4} separates
-candidate utility lift from the change in retained utility at each recorded
-decision; these remain adaptive development measurements.
-
-\href[page=2]{eurekazero_supplement.pdf}{Supplementary Figure~S5} shows
-program-recording cadence.
+\begin{samepage}
+Recorded diagnostics are in
+\href{eurekazero_supplement.pdf}{Supplementary Figure~S1} (\cref{app:parameter-displacement}),
+\href{eurekazero_supplement.pdf}{Supplementary Figure~S2} (\cref{app:gradient-norms}),
+\href[page=2]{eurekazero_supplement.pdf}{Supplementary Figure~S3} (\cref{app:recent-discovery-retention}),
+\href[page=2]{eurekazero_supplement.pdf}{Supplementary Figure~S4} (\cref{app:recorded-decision-lift}), and
+\href[page=2]{eurekazero_supplement.pdf}{Supplementary Figure~S5} and
+\href[page=3]{eurekazero_supplement.pdf}{Supplementary Figure~S6} (\cref{app:program-record-cadence}).
+These adaptive diagnostics do not establish retained or independent learning:
+distinct minibatches do not form a matched loss comparison, and program
+and adapter admission use different rules. The step-level gradient
+diagnostic in \cref{app:gradient-norms} remains separate.\par
+\end{samepage}

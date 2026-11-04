@@ -177,7 +177,7 @@ def make_round_clock():
 
     data = FIGURES / "data/latest_round_clock.csv"
     receipt = FIGURES / "data/latest_round_clock.source.json"
-    output = FIGURES / "fig_fw_latest_round_clock.pdf"
+    output = FIGURES / "fig_legacy_round_clock_20.pdf"
     provenance = FIGURES / "data/latest_round_clock.provenance.json"
     source = json.loads(receipt.read_text())
     assert sha(data) == source["csv_sha256"], "Round-clock CSV hash mismatch"
@@ -224,6 +224,9 @@ def make_round_clock():
     plt.close(fig)
     facts = dict(
         schema="whitepaper.latest-round-clock-figure/v1",
+        figure_path=output.name, legacy_only=True,
+        canonical_figure="fig_fw_latest_round_clock.pdf",
+        canonical_provenance="data/full_round_wall_time.provenance.json",
         input_csv_sha256=sha(data),
         source_receipt_sha256=sha(receipt),
         generator_sha256=sha(Path(__file__)),

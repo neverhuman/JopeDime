@@ -175,7 +175,7 @@ def plot():
         where="post",
         color="#0b5394",
         lw=1.25,
-        label="Retained best",
+        label="Logged retained utility",
     )
     ax.scatter(
         [rounds[i] for i in gains],
@@ -184,7 +184,7 @@ def plot():
         marker="*",
         color="#c92a2a",
         zorder=5,
-        label=f"Strict gains ({len(gains)})",
+        label=f"Logged increases ({len(gains)})",
     )
     ax.scatter(
         [rounds[i] for i in ties],
@@ -200,7 +200,7 @@ def plot():
     if gains:
         i = gains[-1]
         ax.annotate(
-            f"Round {rounds[i]}: strict gain\n+{candidates[i] - previous[i]:.10f}",
+            f"Round {rounds[i]}: Logged retained utility\nchange: +{candidates[i] - previous[i]:.10f}",
             xy=(rounds[i], float(bests[i])),
             xytext=(0.64, 0.52),
             textcoords="axes fraction",
