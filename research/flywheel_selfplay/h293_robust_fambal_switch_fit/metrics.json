@@ -1,0 +1,59 @@
+{
+  "status": "PREREGISTERED",
+  "verdict": "PENDING",
+  "wave": "H293",
+  "primary": "FAMBAL_RANKNORM",
+  "source_commit": null,
+  "fit_lock_sha256": "712a1e3ea6360ffe09774220573292d411c1495a5bcbd938d91ee1b95a8a73c6",
+  "regression": {
+    "status": "PASS",
+    "seed": 287101,
+    "fold_seed": 279101,
+    "contexts": 1219,
+    "families": 205,
+    "utility_bit_exact": true,
+    "gain": 0.09355105605170722,
+    "reference": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H287/attempt-001/inner_cv_panel.npz",
+      "version_id": "q.6LcRMZUiijQHzSI0GlzFw9.KwPyIL9",
+      "sha256": "c521ca0f04f69f812a84a812229d4bcae73030a781f7533b9a3e237ff9e94ebf"
+    },
+    "epoch": 1793755822.6113389
+  },
+  "outer_scored": false,
+  "neural_forwards": 0,
+  "optimizer_updates": 0,
+  "custody": {
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H293/astra-t0125/prereg-manifest.json",
+      "version_id": "5HE29IdK9X6LIFclx1.3TTaLNytpnHXz",
+      "sha256": "9a2c3911928bf9a26b60834f5fffb9c8ae3659d40fd45196c7a2f84361f80466",
+      "bytes": 3618,
+      "exact_version_get_verified": true
+    },
+    "inputs": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H293/astra-t0125/inputs-and-closure.tar.gz",
+      "version_id": "vCJhECK_Gt_LkyNgQZjHv2B2ZLMLpqmf",
+      "sha256": "77f03e81fbcf4c3f7e04aa1412d1b04b2891680c6f4ab4d2de0457a38233aa3f",
+      "bytes": 3847408,
+      "exact_version_get_verified": true,
+      "members_verified": 17
+    },
+    "fit_source_models": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H293/astra-t0125/fit-source-models.tar.gz",
+      "version_id": "qscjKf9iKiExpjuMIwEj5aLGvRLFPUhA",
+      "sha256": "5976fb64096f152e85d7c5c524fb8dea61921da9e7242663ee38cb1716f64ada",
+      "bytes": 43152959,
+      "exact_version_get_verified": true,
+      "members_verified": 844
+    },
+    "fit_member_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H293/astra-t0125/fit-custody-full.json",
+      "version_id": "DoEdgay1N_B0SrTOn5Lb6_hjhYJeDhTk",
+      "sha256": "2c7292cf170d0df30187ffa6a44d3ea0a002257499a07a4afbf199ef5b73462a",
+      "bytes": 142713,
+      "exact_version_get_verified": true
+    }
+  }
+}
