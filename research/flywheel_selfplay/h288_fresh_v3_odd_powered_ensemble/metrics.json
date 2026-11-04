@@ -1,0 +1,14 @@
+{
+  "wave": "H288",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "verdict": null,
+  "cohort_sha256": "e247983d0412f37ad28ba3553decee1f4f6a096bd461caefafca58fdc858eac3",
+  "schema_on_completion": {
+    "primary_verdicts": "BAG_SWITCH, BAG_SWITCH_NESTED: FRESH_TRANSFER_PASS / NOT_TRANSFERRED_FRESH / INSUFFICIENT_FRESH / BLOCKED_GPU_LOCK",
+    "secondary_replication": "RERANK8_VETO verdict",
+    "arms": "per seed gains, CI, W/T/L, sign-test p, harmed, Elo, invalid, changed; median + pooled CI; criteria; secondary trimmed mean and normalized gain",
+    "nulls": "random valid slot; random slot no labels",
+    "pooled": "H286 + H288 (H286 portion already seen)"
+  }
+}
