@@ -1,17 +1,962 @@
 {
   "schema": "jope.h289.metrics/v1",
   "wave": "H289",
-  "status": "PREREGISTERED",
-  "verdict": null,
-  "neural_forwards": 0,
-  "neural_updates": 0,
-  "recorded_candidates": 1499,
-  "last_round": 4675,
-  "bootstrap_seeds": [
+  "source_commit": "5773d6e29fd8600174f94ccf973f9624f4da8ee0",
+  "status": "COMPLETE",
+  "verdict": "KEEP_RULE",
+  "decision": {
+    "verdict": "KEEP_RULE",
+    "qualifying_rounds": [],
+    "winner_lead_within_noise_all_three": false,
+    "shadow_only": true,
+    "fresh_test_required_before_adoption": true
+  },
+  "seeds": [
     289101,
     289102,
     289103
   ],
   "bootstrap_draws": 10000,
-  "git_status": "GIT_COMMITTED"
+  "scope": "reused DL-Val91; shadow-only recorded-path replay, not counterfactual optimization",
+  "regression": {
+    "status": "PASS",
+    "r3175_mean": 1.1389572403748425,
+    "expected_mean": 1.1389572403748425,
+    "mean_bit_exact": true,
+    "contexts": 91,
+    "families": 19,
+    "r3175_candidate_equals_best": true,
+    "all_candidate_program_utilities_exact": true,
+    "recorded_candidates": 1499,
+    "first_round": 3175,
+    "last_round": 4675,
+    "excluded": [
+      {
+        "round": 4331,
+        "reason": "incomplete_or_identity_or_candidate_missing"
+      }
+    ],
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+    "dope_identity": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "no_forwards": true,
+    "history_sha256": "e6214cd5f3f3322a6ef22bfa7b3f7a797e106869c9195cdfe18d217b6ac7f446"
+  },
+  "records": 1499,
+  "window": {
+    "window_first_requested": 4476,
+    "window_last_requested": 4675,
+    "window_records": 200,
+    "plateau_definition": "per-context arithmetic mean over recorded window",
+    "baseline_minus_plateau_point": 0.007055611467983136,
+    "baseline_minus_plateau_bootstrap": {
+      "by_seed": [
+        {
+          "seed": 289101,
+          "median": 0.006733782758774232,
+          "ci95": [
+            4.712654044364755e-05,
+            0.01531600957418941
+          ]
+        },
+        {
+          "seed": 289102,
+          "median": 0.006757398397724462,
+          "ci95": [
+            2.5882316016452326e-05,
+            0.015459273609642363
+          ]
+        },
+        {
+          "seed": 289103,
+          "median": 0.00668619692208852,
+          "ci95": [
+            5.145532372905056e-05,
+            0.01537205441605942
+          ]
+        }
+      ],
+      "median": 0.006733782758774232,
+      "ci95": [
+        4.712654044364755e-05,
+        0.01537205441605942
+      ],
+      "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+    },
+    "best_of_N_centered_null": {
+      "1": {
+        "by_seed": [
+          {
+            "seed": 289101,
+            "median": 0.0002579129180114516,
+            "ci95": [
+              -0.010477072794657424,
+              0.008828253573795297
+            ]
+          },
+          {
+            "seed": 289102,
+            "median": 0.0002579129180114516,
+            "ci95": [
+              -0.010595878147229877,
+              0.008828253573795297
+            ]
+          },
+          {
+            "seed": 289103,
+            "median": 0.0003717159399492751,
+            "ci95": [
+              -0.010491005509227264,
+              0.008828253573795297
+            ]
+          }
+        ],
+        "median": 0.0002579129180114516,
+        "ci95": [
+          -0.010491005509227264,
+          0.008828253573795297
+        ],
+        "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+      },
+      "5": {
+        "by_seed": [
+          {
+            "seed": 289101,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.004429873510904756,
+              0.008828253573795297
+            ]
+          },
+          {
+            "seed": 289102,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.004261393882626016,
+              0.008828253573795297
+            ]
+          },
+          {
+            "seed": 289103,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.004261393882626016,
+              0.008828253573795297
+            ]
+          }
+        ],
+        "median": 0.002274339431738604,
+        "ci95": [
+          -0.004261393882626016,
+          0.008828253573795297
+        ],
+        "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+      },
+      "10": {
+        "by_seed": [
+          {
+            "seed": 289101,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.004261393882626017,
+              0.008828253573795299
+            ]
+          },
+          {
+            "seed": 289102,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.004261393882626016,
+              0.008828253573795299
+            ]
+          },
+          {
+            "seed": 289103,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.004261393882626016,
+              0.008828253573795299
+            ]
+          }
+        ],
+        "median": 0.002274339431738604,
+        "ci95": [
+          -0.004261393882626016,
+          0.008828253573795299
+        ],
+        "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+      },
+      "25": {
+        "by_seed": [
+          {
+            "seed": 289101,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.004086203593878831,
+              0.011188826346484366
+            ]
+          },
+          {
+            "seed": 289102,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.004085809057721965,
+              0.011232622381174555
+            ]
+          },
+          {
+            "seed": 289103,
+            "median": 0.002274339431738604,
+            "ci95": [
+              -0.0040858090577219645,
+              0.01117652117038994
+            ]
+          }
+        ],
+        "median": 0.002274339431738604,
+        "ci95": [
+          -0.004085809057721965,
+          0.011188826346484366
+        ],
+        "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+      },
+      "50": {
+        "by_seed": [
+          {
+            "seed": 289101,
+            "median": 0.002527768187953871,
+            "ci95": [
+              -0.002483474092128361,
+              0.011188826346484366
+            ]
+          },
+          {
+            "seed": 289102,
+            "median": 0.0025502937114041486,
+            "ci95": [
+              -0.002483474092128361,
+              0.011232622381174555
+            ]
+          },
+          {
+            "seed": 289103,
+            "median": 0.0025502937114041486,
+            "ci95": [
+              -0.002483474092128361,
+              0.01117652117038994
+            ]
+          }
+        ],
+        "median": 0.0025502937114041486,
+        "ci95": [
+          -0.002483474092128361,
+          0.011188826346484366
+        ],
+        "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+      },
+      "100": {
+        "by_seed": [
+          {
+            "seed": 289101,
+            "median": 0.0025482503035469044,
+            "ci95": [
+              -0.002483474092128361,
+              0.011188826346484366
+            ]
+          },
+          {
+            "seed": 289102,
+            "median": 0.0025502937114041486,
+            "ci95": [
+              -0.002483474092128361,
+              0.011232622381174555
+            ]
+          },
+          {
+            "seed": 289103,
+            "median": 0.0025502937114041486,
+            "ci95": [
+              -0.002483474092128361,
+              0.01117652117038994
+            ]
+          }
+        ],
+        "median": 0.0025502937114041486,
+        "ci95": [
+          -0.002483474092128361,
+          0.011188826346484366
+        ],
+        "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+      },
+      "200": {
+        "by_seed": [
+          {
+            "seed": 289101,
+            "median": 0.0025482503035469044,
+            "ci95": [
+              -0.002483474092128361,
+              0.011188826346484366
+            ]
+          },
+          {
+            "seed": 289102,
+            "median": 0.0025502937114041486,
+            "ci95": [
+              -0.002483474092128361,
+              0.011232622381174555
+            ]
+          },
+          {
+            "seed": 289103,
+            "median": 0.0025502937114041486,
+            "ci95": [
+              -0.002483474092128361,
+              0.01117652117038994
+            ]
+          }
+        ],
+        "median": 0.0025502937114041486,
+        "ci95": [
+          -0.002483474092128361,
+          0.011188826346484366
+        ],
+        "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+      }
+    },
+    "within_noise_by_seed": [
+      false,
+      false,
+      false
+    ],
+    "within_noise_all_three": false
+  },
+  "replay": {
+    "R0": {
+      "accept_count_by_seed": [
+        0,
+        0,
+        0
+      ],
+      "median_accept_count": 0.0,
+      "accepted_rounds_by_seed": [
+        [],
+        [],
+        []
+      ],
+      "terminal_round_by_seed": [
+        3175,
+        3175,
+        3175
+      ],
+      "terminal_context_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "terminal_elo_base1500": [
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      "terminal_raw_gain_ci95_by_seed": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "R1": {
+      "accept_count_by_seed": [
+        0,
+        0,
+        0
+      ],
+      "median_accept_count": 0.0,
+      "accepted_rounds_by_seed": [
+        [],
+        [],
+        []
+      ],
+      "terminal_round_by_seed": [
+        3175,
+        3175,
+        3175
+      ],
+      "terminal_context_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "terminal_elo_base1500": [
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      "terminal_raw_gain_ci95_by_seed": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "R2": {
+      "accept_count_by_seed": [
+        0,
+        0,
+        0
+      ],
+      "median_accept_count": 0.0,
+      "accepted_rounds_by_seed": [
+        [],
+        [],
+        []
+      ],
+      "terminal_round_by_seed": [
+        3175,
+        3175,
+        3175
+      ],
+      "terminal_context_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "terminal_elo_base1500": [
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      "terminal_raw_gain_ci95_by_seed": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "R3": {
+      "accept_count_by_seed": [
+        0,
+        0,
+        0
+      ],
+      "median_accept_count": 0.0,
+      "accepted_rounds_by_seed": [
+        [],
+        [],
+        []
+      ],
+      "terminal_round_by_seed": [
+        3175,
+        3175,
+        3175
+      ],
+      "terminal_context_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "terminal_elo_base1500": [
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      "terminal_raw_gain_ci95_by_seed": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ]
+    }
+  },
+  "accepted_round_comparisons": {},
+  "attribution": {
+    "mean_lead": 0.007055611467983626,
+    "invalid_tail_contribution": 0.0,
+    "both_valid_contribution": 0.007055611467983626,
+    "invalid_tail_fraction": 0.0,
+    "excess_penalty_removed_by_clip": 0.0,
+    "base_invalid": 0,
+    "mean_candidate_invalid": 0.0,
+    "top10_contexts": [
+      {
+        "cid": "25aff0bcd9fb3ea4dd28c6a71463b1e02d8293401f40a2e48e56c2b5a3ab54d8",
+        "family": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+        "mean_loss": 0.20187800056660787,
+        "mean_contribution_to_91_mean": 0.0022184395666660205,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "983bb1e5e396d436d7347fc8ca1ebd116cfed99493c6e91f6026a7d167c19780",
+        "family": "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+        "mean_loss": 0.1893604891364241,
+        "mean_contribution_to_91_mean": 0.0020808844960046604,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "a5f7054e2579b9621abced81485d180f84fba472bc81781851ff0d1373962f6f",
+        "family": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+        "mean_loss": 0.12413241996221455,
+        "mean_contribution_to_91_mean": 0.0013640925270573029,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421",
+        "family": "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+        "mean_loss": 0.10642138481037776,
+        "mean_contribution_to_91_mean": 0.0011694657671470084,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "d3256ae1379733db78cffa708665e2a969bb4462f220f7939f788af563c4a2b1",
+        "family": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+        "mean_loss": 0.02389713457453213,
+        "mean_contribution_to_91_mean": 0.000262605874445408,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "ef2a5b74b537b84846779a8980d058d1e54d89a3308ad5373f703f63a930c825",
+        "family": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+        "mean_loss": -0.013367108494364755,
+        "mean_contribution_to_91_mean": -0.00014689130213587642,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "8ce52a03cba8a51f8badf92c9d2360e2bdf9843bf4533794da77c9fc2ed37916",
+        "family": "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+        "mean_loss": 0.007724212927436764,
+        "mean_contribution_to_91_mean": 8.488146074106335e-05,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "e08aa019a5ed29d85716048f297b069afb2d85999f764a617f95a6df621a4911",
+        "family": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+        "mean_loss": 0.0025216958434307627,
+        "mean_contribution_to_91_mean": 2.7710943334403986e-05,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "65e0dcc10529cdd462c1220a80eaf2cd303bc741a81cfaecb193292f034d9f21",
+        "family": "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+        "mean_loss": -0.0005750418127311785,
+        "mean_contribution_to_91_mean": -6.319140799243719e-06,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      },
+      {
+        "cid": "ac07466e92de77e35088ea1849f7190b24c77b557431bd3a3e8ee63fa479b1e9",
+        "family": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+        "mean_loss": 0.00011906128835183632,
+        "mean_contribution_to_91_mean": 1.3083658060641353e-06,
+        "invalid_frequency": 0.0,
+        "base_invalid": false,
+        "invalid_tail_contribution": 0.0
+      }
+    ],
+    "family_contributions": [
+      {
+        "family": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+        "contexts": 5,
+        "contribution": 8.488146074106335e-05
+      },
+      {
+        "family": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+        "contexts": 5,
+        "contribution": 0.0016266984015027104
+      },
+      {
+        "family": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+        "contexts": 5,
+        "contribution": 0.0022184395666660205
+      },
+      {
+        "family": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+        "contexts": 1,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+        "contexts": 5,
+        "contribution": -0.0001455829363298123
+      },
+      {
+        "family": "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+        "contexts": 5,
+        "contribution": 0.0032440311223524243
+      },
+      {
+        "family": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+        "contexts": 5,
+        "contribution": -5.670902831864569e-07
+      },
+      {
+        "family": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345",
+        "contexts": 5,
+        "contribution": 0.0
+      },
+      {
+        "family": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+        "contexts": 5,
+        "contribution": 2.7710943334403986e-05
+      },
+      {
+        "family": "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4",
+        "contexts": 5,
+        "contribution": 0.0
+      }
+    ]
+  },
+  "current_rule_audit": {
+    "literal_mean_gt_best_accepts": [],
+    "journal_accepts": [],
+    "match": true,
+    "R0_owner_tie_tolerance": 0.0001
+  },
+  "neural_updates": 0,
+  "neural_forwards": 0,
+  "DOPE": "untouched; recorded identity c51a56d0 verified",
+  "finished_utc": "2026-11-04T00:18:52Z",
+  "report_summary": {
+    "purpose": "Descriptive summaries of the sole frozen attempt; no new experiment or resampling",
+    "probability_baseline_gt_round_by_seed": [
+      {
+        "seed": 289101,
+        "min": 0.6435,
+        "median": 0.9617,
+        "max": 0.9885
+      },
+      {
+        "seed": 289102,
+        "min": 0.6381,
+        "median": 0.9593,
+        "max": 0.9876
+      },
+      {
+        "seed": 289103,
+        "min": 0.6348,
+        "median": 0.9636,
+        "max": 0.9882
+      }
+    ],
+    "individual_round_ci_contains_zero_by_seed": [
+      157,
+      157,
+      157
+    ],
+    "candidate_elo_medians_across_last200": {
+      "min": 1481.7162853998977,
+      "median": 1489.0362491267601,
+      "max": 1496.3464943034846
+    },
+    "final_recorded_round": {
+      "round": 4675,
+      "baseline_minus_round_mean": 0.003518451949980102,
+      "baseline_lead": {
+        "by_seed": [
+          {
+            "seed": 289101,
+            "median": 0.003370306604717782,
+            "ci95": [
+              0.0,
+              0.009097357726954415
+            ]
+          },
+          {
+            "seed": 289102,
+            "median": 0.003370306604717782,
+            "ci95": [
+              0.0,
+              0.008919190980890437
+            ]
+          },
+          {
+            "seed": 289103,
+            "median": 0.003370306604717782,
+            "ci95": [
+              0.0,
+              0.008919190980890437
+            ]
+          }
+        ],
+        "median": 0.003370306604717782,
+        "ci95": [
+          0.0,
+          0.008919190980890437
+        ],
+        "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+      },
+      "bootstrap_probability_baseline_gt_round": [
+        0.88,
+        0.8773,
+        0.8793
+      ],
+      "bootstrap_strict_win_probability": [
+        0.88,
+        0.8773,
+        0.8793
+      ],
+      "candidate_vs_baseline": {
+        "context_mean_gain": -0.003518451949980102,
+        "equal_family_mean_gain": -0.0033703066047177815,
+        "paired_family_median_gain": 0.0,
+        "bootstrap": {
+          "by_seed": [
+            {
+              "seed": 289101,
+              "median": -0.003370306604717782,
+              "ci95": [
+                -0.009097357726954415,
+                0.0
+              ]
+            },
+            {
+              "seed": 289102,
+              "median": -0.003370306604717782,
+              "ci95": [
+                -0.008919190980890437,
+                0.0
+              ]
+            },
+            {
+              "seed": 289103,
+              "median": -0.003370306604717782,
+              "ci95": [
+                -0.008919190980890437,
+                0.0
+              ]
+            }
+          ],
+          "median": -0.003370306604717782,
+          "ci95": [
+            -0.008919190980890437,
+            0.0
+          ],
+          "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+        },
+        "elo_base1500": {
+          "point": 1492.6921804293352,
+          "bootstrap": {
+            "by_seed": [
+              {
+                "seed": 289101,
+                "median": 1492.6921804293352,
+                "ci95": [
+                  1481.7162853998977,
+                  1500.0
+                ]
+              },
+              {
+                "seed": 289102,
+                "median": 1492.6921804293352,
+                "ci95": [
+                  1481.7162853998977,
+                  1500.0
+                ]
+              },
+              {
+                "seed": 289103,
+                "median": 1492.6921804293352,
+                "ci95": [
+                  1481.7162853998977,
+                  1500.0
+                ]
+              }
+            ],
+            "median": 1492.6921804293352,
+            "ci95": [
+              1481.7162853998977,
+              1500.0
+            ],
+            "interpretation": "median of bootstrap-seed medians/endpoints; Monte Carlo stability, not independent datasets"
+          }
+        },
+        "family_wtl": {
+          "wins": 0,
+          "ties": 17,
+          "losses": 2
+        },
+        "harmed_families_loss_gt_0_01": 2
+      }
+    },
+    "gate_diagnostics": {
+      "R0": {
+        "points": {
+          "min": -0.011661218463524081,
+          "median": -0.008365373651728625,
+          "max": -0.0004006263127240839
+        },
+        "reasons": {
+          "strict_mean_or_tie": 4497
+        },
+        "bootstrap_evaluated_events": 0
+      },
+      "R1": {
+        "points": {
+          "min": 0.0,
+          "median": 0.0,
+          "max": 0.0
+        },
+        "reasons": {
+          "strict_margin_or_raw_tie": 4497
+        },
+        "bootstrap_evaluated_events": 0
+      },
+      "R2": {
+        "points": {
+          "min": 0.0,
+          "median": 0.0,
+          "max": 0.0
+        },
+        "reasons": {
+          "strict_margin_or_raw_tie": 4497
+        },
+        "bootstrap_evaluated_events": 0
+      },
+      "R3": {
+        "points": {
+          "min": 0.0,
+          "median": 0.0,
+          "max": 0.0
+        },
+        "reasons": {
+          "strict_margin_or_raw_tie": 4497
+        },
+        "bootstrap_evaluated_events": 0
+      }
+    },
+    "top_four_context_share_of_net_lead": 0.9684323446494588,
+    "nonzero_plateau_family_contributions": 7
+  },
+  "output_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H289/astra-t0005/outputs/full-evidence.tar.gz",
+    "version_id": "cDHUYJa_nbNw0lhqY2jMBhNNK_93XkJb",
+    "sha256": "5955c673f891f65ec044f6e7d4dde78e730f4bfdde6628715ffe3349adbfb141",
+    "bytes": 707277,
+    "exact_version_get_verified": true,
+    "members_verified": 105
+  },
+  "resource_summary": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "peak": {
+      "rss": 154963968,
+      "threads": 2
+    },
+    "pause_events": [],
+    "elapsed": 3.998518943786621,
+    "command": [
+      "/usr/bin/python3",
+      "/home/ubuntu/jope-rescue-20260921/h289-astra/source/runner.py"
+    ],
+    "compute_stop": 1793760000.0
+  },
+  "audit": {
+    "status": "PASS",
+    "events_verified": 17988,
+    "saved_family_draws_verified": 3,
+    "draws_per_seed": 10000,
+    "chronological_incumbents_verified": true,
+    "rank_transform_independently_reconstructed_past_only": true,
+    "accepted_round_raw_qualification_recomputed": true,
+    "baseline_and_tail_decomposition_verified": true,
+    "neural_forwards": 0,
+    "neural_updates": 0,
+    "metrics_sha256": "1dcbd945a875f2c7a10222df6578a218ba9ac306cf9898226ebf87a77e23ecce"
+  },
+  "full_metrics_sha256": "1dcbd945a875f2c7a10222df6578a218ba9ac306cf9898226ebf87a77e23ecce",
+  "hosted_CI": "NOT_RUN owner research split/CI_FREEZE",
+  "attempt": 1
 }

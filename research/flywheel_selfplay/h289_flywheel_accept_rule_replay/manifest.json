@@ -62,5 +62,27 @@
     "prepared-custody.json": "37bc9b81cd543cb88d4237042764ccc06db8b55da6587157ac165817b2df9b33",
     "runner.py": "ee59bfd2056bb9a213a509bdf9b0dad667bd2e9e36e39d417891b1dad6454673",
     "test_h289.py": "310d89bcb7cc68bc7cf91cbc8d4b062418156cfd5d89492f9769b353b85fcf34"
-  }
+  },
+  "status": "COMPLETE",
+  "verdict": "KEEP_RULE",
+  "source_commit": "5773d6e29fd8600174f94ccf973f9624f4da8ee0",
+  "output_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H289/astra-t0005/outputs/full-evidence.tar.gz",
+    "version_id": "cDHUYJa_nbNw0lhqY2jMBhNNK_93XkJb",
+    "sha256": "5955c673f891f65ec044f6e7d4dde78e730f4bfdde6628715ffe3349adbfb141",
+    "bytes": 707277,
+    "exact_version_get_verified": true,
+    "members_verified": 105
+  },
+  "source_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H289/astra-t0005/prereg/source.tar.gz",
+    "version_id": "tzTADTIby.wOgHa75sqrCGezTG5S32R0",
+    "sha256": "65aba8e8d7e58933637b509dcc12d406a29a2ce8b5be77a76fb41f5de183af9a",
+    "bytes": 45216,
+    "exact_version_get_verified": true,
+    "members_verified": 28,
+    "source_commit": "5773d6e29fd8600174f94ccf973f9624f4da8ee0"
+  },
+  "metrics_sha256": "2810072ab31392ab4583a1e76d95f7a9b34712cc4b227a46062002fc2d684e2e",
+  "audit_sha256": "bd568fff2933c63b93feef779c9e8d89d2b88eea37542341b6e90a7d7f5bab69"
 }
