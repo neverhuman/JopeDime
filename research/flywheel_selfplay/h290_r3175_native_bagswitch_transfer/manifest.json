@@ -1,0 +1,161 @@
+{
+  "schema": "jope.h290.manifest/v1",
+  "wave_id": "h290-r3175-native-bagswitch-transfer-20261104",
+  "parent_commit": "9bd76739e9000ca7b33c639f1287de2a059fd825",
+  "authority": "hw_t0030_astra_h290.md",
+  "fit_lock_sha256": "9c1405fb1509cce8c104626cff39e4da65d27c3a3634483a824ebe7fccbd3abe",
+  "fit_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H290/astra-t0030/fit/native-and-placebo.tar.gz",
+    "version_id": "S9aWLdTicGN_hPXKGUDswfMJgULMuS_f",
+    "sha256": "cc7e12f736508632e4b953fb6f93bdeeddf050a556bb63ba2dc37b5c39b396d6",
+    "bytes": 10282522,
+    "exact_version_get_verified": true,
+    "members_verified": 102
+  },
+  "input_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H290/astra-t0030/inputs/prepared-closure.tar.gz",
+    "version_id": "ZgoK8WWwS37XN_qnHsQFJz3bRp2MwGEu",
+    "sha256": "2767b777cb841f670063c657bfd2e0ca06235054dc70385f5ee520e1053e7fee",
+    "bytes": 1834939,
+    "exact_version_get_verified": true,
+    "members_verified": 50
+  },
+  "regression": {
+    "status": "PASS",
+    "cpu_dlval91": 1.1366829009431036,
+    "cell": "KM276140_280101_0",
+    "selected_parameters_exact": true,
+    "picks_exact": true,
+    "ranker_and_gate_serialization_sha_exact": true,
+    "contexts": 1219,
+    "families": 205,
+    "features": 568,
+    "neural_forwards": 0,
+    "neural_updates": 0
+  },
+  "preparation": {
+    "status": "PASS",
+    "cohorts": [
+      {
+        "wave": "H286",
+        "contexts": 200,
+        "families": 200,
+        "requested_families": 200,
+        "unbuilt_families": 0,
+        "all_features_bit_exact": true,
+        "all_top8_orders_exact": true,
+        "recorded_gpu_regression_91_of_91": true,
+        "recorded_gpu_slot0_mean": 1.3386470888122088,
+        "recomputed_slot0_mean": 1.3386470888122088,
+        "training_context_and_dataset_overlap": 0,
+        "file": "H286.npz",
+        "sha256": "8c99fc8846db761e5712507e22f30f1b06860626e8f3454303fe1fedf4bcd32d"
+      },
+      {
+        "wave": "H283",
+        "contexts": 29,
+        "families": 29,
+        "requested_families": 60,
+        "unbuilt_families": 31,
+        "all_features_bit_exact": true,
+        "all_top8_orders_exact": true,
+        "recorded_gpu_regression_91_of_91": true,
+        "recorded_gpu_slot0_mean": 1.4857802960114652,
+        "recomputed_slot0_mean": 1.4857802960114652,
+        "training_context_and_dataset_overlap": 0,
+        "file": "H283.npz",
+        "sha256": "c1123089a84fdc08d8fbbd09890ece7458f3a95bf3623e156f3ead07c7aa28ef"
+      }
+    ],
+    "semi_fresh": true,
+    "paired_cpu_gpu_drift": {
+      "status": "NOT_MEASURABLE",
+      "reason": "No recorded matched CPU/GPU packets for these test contexts; CPU training and GPU test concern different contexts. No new forwards."
+    },
+    "neural_forwards": 0,
+    "neural_updates": 0
+  },
+  "source_sha256": {
+    "audit.py": "240994a4bd73e2188ec4c81ffe0459ac0428df37ffd077ae5b4055ff50c78793",
+    "fit.py": "c85212dd0e20031c910c46756c75285f1c1a55b5220546fb21dcaa18941c1ce5",
+    "custody.py": "838c7cf23a3f801488b7272c0eb7c531faa421d40bde6f3d5078e76f0c22177b",
+    "regression.py": "e2e37334e18c98f20fcccb88b2775361d86e5307a26558eca8423ef4262c98db",
+    "FIT_PROTOCOL.md": "92d83f355ad01a47bed2ee11855f8280ba65316a7889c1f22c947a41e3ce8708",
+    "fit-summary.json": "9bbde847f4bf8c8ad10b40a1ecd093142b4c1ce9071dfced060330a91777dcd3",
+    "fit-custody.json": "8087c458ae412ab490d1c767931d57dc2435b8539d8cb3f6f3ca4b31e03350e4",
+    "dependencies.py": "373e2311fdfe3a4710085335afb276a3525a98a0205d6fabb141cda04ad507bf",
+    "statistics_h290.py": "60d7048534c308aab7726c3286bd52ef5e806fcd69f2e87a05bce4bacabd18dc",
+    "PREREG.md": "871dcd4f2af334f0afbb4b59d7af236552cb219728e5d95c1658edf03192b04a",
+    "monitor.py": "b8f0c7b929f3b8803fabefb7d982acdabd013a909f1d833b00932290ac99f191",
+    "prepare_evaluation.py": "32e0cac3ba3eac9316737771ed8192cccc665604e6fca89214c296bc1ed4e233",
+    "test_h290.py": "78200a7954a41f42b701192e2b8b81dd1072ee2218295edde0be95ac0bd5004c",
+    "input-custody.json": "2a133363dabee39aa3c51d039c7bf85b5854eb3f92abd73d3654042f38966796",
+    "runner.py": "e7057220e61a63e14b818ba4c7b6ca465ee8733f9bb70e98025805f8cada2671"
+  },
+  "code_closure_sha256": {
+    "bagged.py": {
+      "git_path": "research/flywheel_selfplay/h279_rerank8_bagged_strict_switch/bagged.py",
+      "sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+      "bytes": 17183
+    },
+    "topk.py": {
+      "git_path": "research/flywheel_selfplay/h279_rerank8_bagged_strict_switch/topk.py",
+      "sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+      "bytes": 13667
+    },
+    "h265_core.py": {
+      "git_path": "research/flywheel_selfplay/h279_rerank8_bagged_strict_switch/h265_core.py",
+      "sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+      "bytes": 59012
+    },
+    "veto.py": {
+      "git_path": "research/flywheel_selfplay/h279_rerank8_bagged_strict_switch/veto.py",
+      "sha256": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+      "bytes": 6661
+    },
+    "analysis.py": {
+      "git_path": "research/flywheel_selfplay/h279_rerank8_bagged_strict_switch/analysis.py",
+      "sha256": "763ad41d0e35fbf97dce4ca46deab5557e414d2c93ed46f729cdabfce30752d6",
+      "bytes": 13064
+    },
+    "freeze_bagged.py": {
+      "git_path": "research/flywheel_selfplay/h284_bagswitch_frozen_fresh/freeze_bagged.py",
+      "sha256": "50d8ea9d1af560820dad819184f5bf70cc480bd741a68f236ac80ee837b52cba",
+      "bytes": 11043
+    },
+    "export_manifest.json": {
+      "git_path": "research/flywheel_selfplay/h284_bagswitch_frozen_fresh/export_manifest.json",
+      "sha256": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc",
+      "bytes": 16416
+    },
+    "h280-folds.json": {
+      "git_path": "research/flywheel_selfplay/h280_rerank8_veto_r3175_cluster_out/folds.json",
+      "sha256": "e89f9aa130cf1529a684c83c2dc8bd1658dbae69a5c1e0af87760ed8d92208f2",
+      "bytes": 16921
+    },
+    "h280-manifest.json": {
+      "git_path": "research/flywheel_selfplay/h280_rerank8_veto_r3175_cluster_out/manifest.json",
+      "sha256": "07f84da07c27ec5abb68b1ea7c197a9148f196bbe1f268b7e6fa4cb898e65f0b",
+      "bytes": 10638
+    }
+  },
+  "resource_limits": {
+    "affinity": [
+      48,
+      50,
+      51,
+      52
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "aggregate_threads": 4,
+    "rss_bytes": 4294967296,
+    "abort_available_below_bytes": 10737418240
+  },
+  "prereg_deadline": "2026-11-04T01:30:00Z",
+  "compute_stop": "2026-11-04T03:40:00Z",
+  "closeout_deadline": "2026-11-04T03:45:00Z",
+  "training_protocol_sha256": "92d83f355ad01a47bed2ee11855f8280ba65316a7889c1f22c947a41e3ce8708",
+  "protocol_sha256": "871dcd4f2af334f0afbb4b59d7af236552cb219728e5d95c1658edf03192b04a",
+  "amendment": "Post-fit pre-score metadata clarification: H283 secondary29built/60requested, no primary gate change. Scoring/test source formatting AST-equivalent to fit-stage snapshots; training-executed code unchanged."
+}

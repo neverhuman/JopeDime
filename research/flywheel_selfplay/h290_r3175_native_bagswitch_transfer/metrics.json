@@ -1,0 +1,26 @@
+{
+  "wave": "H290",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "fit_status": "FIT_LOCKED_REMOTE_VERIFIED",
+  "fit_lock_sha256": "9c1405fb1509cce8c104626cff39e4da65d27c3a3634483a824ebe7fccbd3abe",
+  "regression": {
+    "status": "PASS",
+    "cpu_dlval91": 1.1366829009431036,
+    "cell": "KM276140_280101_0",
+    "selected_parameters_exact": true,
+    "picks_exact": true,
+    "ranker_and_gate_serialization_sha_exact": true,
+    "contexts": 1219,
+    "families": 205,
+    "features": 568,
+    "neural_forwards": 0,
+    "neural_updates": 0
+  },
+  "primary_families": 200,
+  "secondary_families_built": 29,
+  "secondary_families_requested": 60,
+  "evaluation_model_scores_computed": false,
+  "neural_forwards": 0,
+  "neural_updates": 0
+}

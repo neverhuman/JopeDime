@@ -1,0 +1,408 @@
+{
+  "status": "FIT_LOCKED",
+  "fit_lock_sha256": "9c1405fb1509cce8c104626cff39e4da65d27c3a3634483a824ebe7fccbd3abe",
+  "archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H290/astra-t0030/fit/native-and-placebo.tar.gz",
+    "version_id": "S9aWLdTicGN_hPXKGUDswfMJgULMuS_f",
+    "sha256": "cc7e12f736508632e4b953fb6f93bdeeddf050a556bb63ba2dc37b5c39b396d6",
+    "bytes": 10282522,
+    "exact_version_get_verified": true,
+    "members_verified": 102
+  },
+  "train_contexts": 1219,
+  "train_families": 205,
+  "evaluation_packet_reads_before_lock": 0,
+  "regression": {
+    "status": "PASS",
+    "cpu_dlval91": 1.1366829009431036,
+    "cell": "KM276140_280101_0",
+    "selected_parameters_exact": true,
+    "picks_exact": true,
+    "ranker_and_gate_serialization_sha_exact": true,
+    "contexts": 1219,
+    "families": 205,
+    "features": 568,
+    "neural_forwards": 0,
+    "neural_updates": 0
+  },
+  "cells": [
+    {
+      "seed": 290101,
+      "selected_n_estimators": 50,
+      "raw_margin": 0.02,
+      "strict_margin": 0.02,
+      "selected_tau": 0.1,
+      "q_fixed": 6,
+      "ranker": {
+        "file": "ranker-seed290101.txt",
+        "sha256": "275c9e7e1bd40787b070756bbf8f1ace517ca49c39f273f2f0172453900cb2a6",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "veto": {
+        "file": "veto-seed290101.txt",
+        "sha256": "6e9d322219e93338ef6fe5cb9707d913def810e3f989f4cf4fab72d9b95caa8f",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "bags": [
+        {
+          "file": "bag0-seed290101.txt",
+          "sha256": "fa8aa2c125f056de72aea1e53a628a96a39590fcd5e2911b93e61db0319cc28e",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag1-seed290101.txt",
+          "sha256": "615e1954507c3c57536e5758ed480359050a902dbe6cfe841741e9d396ff701c",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag2-seed290101.txt",
+          "sha256": "63d25494417c4c2b44f11527ba7db0e2496aacc8808364fca9832bf3fc897c5a",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag3-seed290101.txt",
+          "sha256": "7265b6b5062015a59a1b3841bb5876c346a030b9a9e0c90d4ce758369bd42a7e",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag4-seed290101.txt",
+          "sha256": "c45b8be1d7418077cd4a3a4b2f126b1c9ef872c47a787f41f1745c2a23381f68",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag5-seed290101.txt",
+          "sha256": "8cc73df76064348e0f97b948e0b7c05837dcae35b6648705a93a7d222556fbf0",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag6-seed290101.txt",
+          "sha256": "00009e1e5a5a8c2293537b0fd9601fa25145de623f3ff1ac434821bd2fc27f37",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag7-seed290101.txt",
+          "sha256": "bfc54a868ebd45d18ce2d7ae5b30ee797691960807a28ea73e60747710458fb2",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        }
+      ],
+      "placebo": {
+        "file": "placebo-seed290101.txt",
+        "sha256": "7cd9250b8ee34b30c4b3ea6a338fcba46644884e6ed10f8ff575262a9453b108",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "placebo_bags": [
+        {
+          "file": "placebo_bag0-seed290101.txt",
+          "sha256": "e195112fc0b664a78942e9a0e49eb7502618ad812b5bd641a9951e12a2bf5517",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag1-seed290101.txt",
+          "sha256": "bd5a0187476ceb66e826f6e5aa3a0e54dd09d946794864b5dda8c7a750d47fda",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag2-seed290101.txt",
+          "sha256": "93e571e5f766c5d281047ed3a15a5f1d2eac165fbe8497d6edb98c8dda31aeb7",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag3-seed290101.txt",
+          "sha256": "ff0a8f62e5fbda90bcac5beea33b54f9fe187707d8ba93d0cbf27536fd4c25cd",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag4-seed290101.txt",
+          "sha256": "daaac24dcd1c97238f0f0d35030379272c923e07af2170a24755aa1bdc0f3bf2",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag5-seed290101.txt",
+          "sha256": "5e645b7b8c08c27fa7e9a315c89d71f4660a0e98861b95c2f26d67928ec089f1",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag6-seed290101.txt",
+          "sha256": "db817449bd70f24c201a22a3b5d252fd7840bab6520fc96f5ef241902cf5a36e",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag7-seed290101.txt",
+          "sha256": "0221d5d7188abd39987c62d713e63e91ddc5c4e7b17861124090a5464fcf9a1f",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        }
+      ]
+    },
+    {
+      "seed": 290102,
+      "selected_n_estimators": 200,
+      "raw_margin": 0.02,
+      "strict_margin": 0.02,
+      "selected_tau": 0.1,
+      "q_fixed": 6,
+      "ranker": {
+        "file": "ranker-seed290102.txt",
+        "sha256": "d254385718a43a79757976c5f73a0bf6c7ddaa596e967b6c6bb519e3e053f957",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "veto": {
+        "file": "veto-seed290102.txt",
+        "sha256": "6db8cd01e2d021bab72d54fa770c762fee54c59b16e61e8b39c5fb051795a31b",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "bags": [
+        {
+          "file": "bag0-seed290102.txt",
+          "sha256": "807f40205868ed81a0956a04773ac4595090df984a1ef7cd5ac35304a1058a91",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag1-seed290102.txt",
+          "sha256": "6cdb31801c4629d75175dad532d4b41a4a67307bb52e5ef297b4e9e72dd7a68c",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag2-seed290102.txt",
+          "sha256": "2d504eb40748ae40e75abd30f15b5bf8ffb2db7bbec2752b1d76b22e8c5b6d05",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag3-seed290102.txt",
+          "sha256": "63115821d6f1d4fcd0456d77b34671f4b019169eca9b11a974f8d0deef43462d",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag4-seed290102.txt",
+          "sha256": "0bab8817f9231473281d6613c7e5452ab4f1f7724b9ec85f7d6d3b518b33529d",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag5-seed290102.txt",
+          "sha256": "2a0167c05d782c908130359745ecb5d23c588c93e9dd375928ca05fbb0e1a7c4",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag6-seed290102.txt",
+          "sha256": "a9356dbd17be0c03b0267effff3c00acc116f1812b306617ef31ec0c99c9d704",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag7-seed290102.txt",
+          "sha256": "e6cac4d9814855f2ff8481fcec082fa95be9fbfd8b6023f22191d96ede3ae4b4",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        }
+      ],
+      "placebo": {
+        "file": "placebo-seed290102.txt",
+        "sha256": "71281db6d4dc982afded279901aad9a8f825cb2588447363313fd2d4bf0782e4",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "placebo_bags": [
+        {
+          "file": "placebo_bag0-seed290102.txt",
+          "sha256": "60cacc945fab808f813a7f91fb2c6e9881b0e0d7101a0fc00ada515050874864",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag1-seed290102.txt",
+          "sha256": "5b3070bd0069a262c3bb68a0bc067c1297dcad3023bb11d5706b514f41ef1b72",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag2-seed290102.txt",
+          "sha256": "25fd86e070f0b7db9fc5539100f5be156c4c1e790283894f3677fbcd24fffe08",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag3-seed290102.txt",
+          "sha256": "7099becb0a0e404740dffc79fd79b55431256d2be90bc47f2f27992d138490d8",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag4-seed290102.txt",
+          "sha256": "26cc1d338bc866b96240c9e96a156dd8064bad42bfdf295683c192a4a96d3430",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag5-seed290102.txt",
+          "sha256": "f7c453d3e5b37d8b1a459af4e6fa284acbcd33642df87da66a3f93d3e3944e45",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag6-seed290102.txt",
+          "sha256": "b30cdc42ee0907ba229a4f25ed9a2ab7a993c931bf2c1e9b920ae34025707f95",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag7-seed290102.txt",
+          "sha256": "332d862c9c46d6717866a3dad654821f32535224ea3fdfe8d44e840a1b170397",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        }
+      ]
+    },
+    {
+      "seed": 290103,
+      "selected_n_estimators": 50,
+      "raw_margin": 0.05,
+      "strict_margin": 0.05,
+      "selected_tau": 0.1,
+      "q_fixed": 6,
+      "ranker": {
+        "file": "ranker-seed290103.txt",
+        "sha256": "67a30f0320fb2ef90ccad1b5aef4196aebae010e5f47118dd9866146184f8a44",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "veto": {
+        "file": "veto-seed290103.txt",
+        "sha256": "5ff53440e63bd34d394b8f0c0b938dc4d9625c4832928cbd79bfb521be80a067",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "bags": [
+        {
+          "file": "bag0-seed290103.txt",
+          "sha256": "f7f9d9402226c50f24555e3ada2bd37337443075ad78dd19686d338af3c93c93",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag1-seed290103.txt",
+          "sha256": "09503134235067e28cc6ac527aab074555480be405d440df74bdd41a54add095",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag2-seed290103.txt",
+          "sha256": "e2c5aa398437f713a0d0a5f54c9929a2fc4280d99b76b363f4678ec15ebe10b1",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag3-seed290103.txt",
+          "sha256": "e785aa3dc39ab2802ec1a614baa98191042aa6c695de23774584497ddc3dc9c0",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag4-seed290103.txt",
+          "sha256": "3c0e1b4a128c2efc77b507e50055481d1ae4bcfccfa35befb7731d661eeadab0",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag5-seed290103.txt",
+          "sha256": "81a929127e87391fa6426fdf2fdd5c15a8ddabd52a57c5187a06bfc1a43e1c8e",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag6-seed290103.txt",
+          "sha256": "e830642c6d701a816c840a5717a10d2edecddbf463313e1d622b0cfdcb0e9611",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "bag7-seed290103.txt",
+          "sha256": "430a01f49ca24c9ba73e916d7bcb3cc977f14eec7d46a8599e709e5c5aaa08f8",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        }
+      ],
+      "placebo": {
+        "file": "placebo-seed290103.txt",
+        "sha256": "8c349d8468d117c2509e692fa03a83a3addead177680dc3379218f6c8b825ee9",
+        "num_feature": 568,
+        "reload_bit_exact_on_all_1219_train_contexts": true
+      },
+      "placebo_bags": [
+        {
+          "file": "placebo_bag0-seed290103.txt",
+          "sha256": "873ebe5d422d70f646e2aff6ce97560338b47b0f58d45163d98d5aa62bf8a2a2",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag1-seed290103.txt",
+          "sha256": "a82ec12a5f653273a207efe9743ef000c26c6435db058b7a68fc66a210b8450b",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag2-seed290103.txt",
+          "sha256": "b394b4f55f5fc537571ac14faa0ffd3350d1a75b8bc94f8a1ec1162a30970d7f",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag3-seed290103.txt",
+          "sha256": "33bbaf644d8a1139e76f4ee66d2aed70fc291ed1623dcfd79eed0d43362db9ae",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag4-seed290103.txt",
+          "sha256": "ff7b45a95adb711fc6f80b98b0d01592236a6946900974da2e87365729aab7c7",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag5-seed290103.txt",
+          "sha256": "cdbc939408c14139bd3e19d6861e866e1d56e906465072e032460a79ae16c457",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag6-seed290103.txt",
+          "sha256": "1e5b69106fa7cb022d9c98cfc613a54735d4bf73b155f87a0e27c35801849da2",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        },
+        {
+          "file": "placebo_bag7-seed290103.txt",
+          "sha256": "d4dfa8716923d6940f1528ed9cbaea5912667ce787326a8d69e8bd1dbcdcfb11",
+          "num_feature": 568,
+          "reload_bit_exact_on_all_1219_train_contexts": true
+        }
+      ]
+    }
+  ]
+}
