@@ -1,6 +1,6 @@
 {
   "schema": "whitepaper.schematic-rendering/v1",
-  "generator_sha256": "c08697a5415af78e8062d49b427002ef5dd1c75cfd5c01350b207c80edcb600b",
+  "generator_sha256": "32041006e31ac30874d6e8af224d2d267f5dddb2e13269e79c35fdccbb1f2405",
   "font_family": "Liberation Serif",
   "font_file_sha256": {
     "roman": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
@@ -12,7 +12,7 @@
   "figure_sha256": {
     "fig2_novelty_judgment.pdf": "7673618518cff9129847883fd8c770bfff39745c3d577099d34ed49344107ca8",
     "fig3_game_loop.pdf": "7701aaae5c8cd700cb8dcec28ad64c0eb91daeae428fa0a4d6935463444bcff2",
-    "fig5_network.pdf": "796a483176ca27daffdc9ccec1e72736d36f9a23cc3a5d0f5d8f1ca3d517e6b9"
+    "fig5_network.pdf": "222a28333a20f7570a12c30e4fabb7fc8915214ba90d8cdd86c23d74c24d8b62"
   },
   "canvas_inches": {
     "fig2_novelty_judgment.pdf": [

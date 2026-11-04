@@ -518,7 +518,7 @@ def make_fig5_network() -> None:
     ax.text(
         0.03,
         0.955,
-        "Reference game day (search = 1): frozen encoder + single writer draw (map $v_\\psi$ absent)",
+        "Proposed game day (search = 1): frozen encoder + single writer draw (map $v_\\psi$ absent)",
         fontsize=8.6,
         fontweight="bold",
         color="#1e3a8a",
