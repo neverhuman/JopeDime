@@ -6,7 +6,7 @@ impl Client {
         #[cfg(not(feature = "cloud-tls"))]
         anyhow::ensure!(
             workspace.starts_with("http://"),
-            "this jopedime build has no TLS; HTTPS workspaces need the cloud-tls feature"
+            "this jain build has no TLS; HTTPS workspaces need the cloud-tls feature"
         );
         let builder = ureq::Agent::config_builder();
         #[cfg(feature = "cloud-tls")]

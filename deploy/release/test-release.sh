@@ -469,11 +469,23 @@ printf '#!/bin/sh\nprintf "jope 0.2.0-dirty\\n"\n' > "$scratch/jope-bad" && chmo
 printf '#!/bin/sh\nexit 3\n' > "$scratch/jope-fail" && chmod +x "$scratch/jope-fail"
 expect "binary prints 'jope 0.2.0' first" ok '^jope 0\.2\.0$' unit 'binary_prints_version "$1" 0.2.0 "$2"' "$scratch/jope-good" "$scratch/run"
 expect "binary printing 'jope 0.2.0-dirty' is refused" refuse 'jope 0\.2\.0-dirty' unit 'binary_prints_version "$1" 0.2.0 "$2"' "$scratch/jope-bad" "$scratch/run"
-printf '#!/bin/sh\n[ "$1" = version ] && printf "jopedime 0.2.0\\n" || printf "usage\\n"\n' > "$scratch/jopedime-good" && chmod +x "$scratch/jopedime-good"
-expect "jopedime version prints 'jopedime 0.2.0' first" ok '^jopedime 0\.2\.0$' \
-  unit 'binary_prints_version "$1" 0.2.0 "$2" jopedime version' "$scratch/jopedime-good" "$scratch/run"
-expect "jopedime without its version argument is refused" refuse '^usage$' \
-  unit 'binary_prints_version "$1" 0.2.0 "$2" jopedime' "$scratch/jopedime-good" "$scratch/run"
+printf '#!/bin/sh\n[ "$1" = version ] && printf "jain 0.2.0\\n" || printf "usage\\n"\n' > "$scratch/jain-good" && chmod +x "$scratch/jain-good"
+expect "jain version prints 'jain 0.2.0' first" ok '^jain 0\.2\.0$' \
+  unit 'binary_prints_version "$1" 0.2.0 "$2" jain version' "$scratch/jain-good" "$scratch/run"
+expect "jain without its version argument is refused" refuse '^usage$' \
+  unit 'binary_prints_version "$1" 0.2.0 "$2" jain' "$scratch/jain-good" "$scratch/run"
+# B1: the released client must report cloud-tls, or HTTPS /login is refused at run time.
+mkdir -p "$scratch/features/run"
+printf '#!/bin/sh\nprintf %%s "{\\"product\\":\\"jain\\",\\"features\\":{\\"client\\":true,\\"engine\\":true,\\"cloud_tls\\":true,\\"dev_keys\\":false},\\"trusts_development_key\\":false}"\n' \
+  > "$scratch/jain-tls" && chmod +x "$scratch/jain-tls"
+printf '#!/bin/sh\nprintf %%s "{\\"product\\":\\"jain\\",\\"features\\":{\\"client\\":true,\\"engine\\":true,\\"cloud_tls\\":false,\\"dev_keys\\":false},\\"trusts_development_key\\":false}"\n' \
+  > "$scratch/jain-no-tls" && chmod +x "$scratch/jain-no-tls"
+expect "a jain build reporting cloud-tls passes the appliance feature check" ok '^jain reports product jain with cloud-tls$' \
+  unit 'check_appliance_features "$1" "$2"' "$scratch/jain-tls" "$scratch/features"
+expect "a jain build without cloud-tls is refused" refuse 'does not satisfy' \
+  unit 'check_appliance_features "$1" "$2"' "$scratch/jain-no-tls" "$scratch/features"
+expect "static: the release builds jain with cloud-tls" ok '^ok$' \
+  unit '[[ $APPLIANCE_BUILD_COMMAND == *" --bin jain "* && $APPLIANCE_BUILD_COMMAND == *" --features cloud-tls "* ]] && echo ok'
 expect "binary exiting non-zero is refused" refuse '^rc=1$' unit 'rc=0; binary_prints_version "$1" 0.2.0 "$2" || rc=$?; echo "rc=$rc"; exit "$rc"' "$scratch/jope-fail" "$scratch/run"
 printf '#!/bin/sh\necho "jope 0.2.0"\necho "tmpdir=${TMPDIR-unset}"\n' > "$scratch/jope-tmpdir" && chmod +x "$scratch/jope-tmpdir"
 expect "env -i: the binary check hands the binary the pinned TMPDIR by name" ok "^tmpdir=$TMPDIR\$" \
@@ -1056,8 +1068,8 @@ expect "the release manifest records the pinned syft and cosign" ok '^ok$' \
 echo "# containers carry the run's temporary directory (sourced build_jope, check_binary, make_receipt; docker and objdump stood in by functions)"
 { art /src/crates/jope-cli/Cargo.toml jope '"/target/release/jope"' false; jq -nc '{reason: "build-finished", success: true}'; } \
   > "$scratch/dk-build.jsonl"
-{ art /src/crates/jope-appliance/Cargo.toml jopedime '"/target/release/jopedime"' false
-  jq -nc '{reason: "build-finished", success: true}'; } > "$scratch/dk-build-jopedime.jsonl"
+{ art /src/crates/jope-appliance/Cargo.toml jain '"/target/release/jain"' false
+  jq -nc '{reason: "build-finished", success: true}'; } > "$scratch/dk-build-jain.jsonl"
 { art /src/crates/jope-engine/Cargo.toml jope-build-receipt '"/target/release/jope-build-receipt"' false
   jq -nc '{reason: "build-finished", success: true}'; } > "$scratch/dk-receipt-tool.jsonl"
 # $1 dir, $2 commit, $3 cargo metadata, $4 build messages, $5 receipt-tool build messages. The
@@ -1067,8 +1079,8 @@ tag=v0.2.0 version=0.2.0 sha=$2 run_dir=$1/run target_root=$1/target
 dist=$run_dir/dist src_dir=$run_dir/src log=$1/docker.log meta=$3 build_msgs=$4 receipt_msgs=$5 app_msgs=$6
 mkdir -p "$run_dir/tmp" "$run_dir/home" "$dist" "$src_dir" "$target_root/cargo-home" "$target_root/release"
 printf '#!/bin/sh\necho "jope 0.2.0"\n' > "$target_root/release/jope"
-printf '#!/bin/sh\n[ "$1" = version ] && echo "jopedime 0.2.0"\n' > "$target_root/release/jopedime"
-chmod 0755 "$target_root/release/jope" "$target_root/release/jopedime"
+printf '#!/bin/sh\n[ "$1" = version ] || exit 1\nif [ "$2" = --json ]; then echo "{\\"product\\":\\"jain\\",\\"features\\":{\\"client\\":true,\\"engine\\":true,\\"cloud_tls\\":true,\\"dev_keys\\":false},\\"trusts_development_key\\":false}"; else echo "jain 0.2.0"; fi\n' > "$target_root/release/jain"
+chmod 0755 "$target_root/release/jope" "$target_root/release/jain"
 : > "$log"
 docker() {
   local line i img=-1 out=''
@@ -1088,7 +1100,7 @@ docker() {
       elif [[ " ${cmd[*]} " == *" jope-build-receipt "* ]]; then cat "$receipt_msgs"
       elif [[ " ${cmd[*]} " == *" jope-appliance "* ]]; then cat "$app_msgs"
       else cat "$build_msgs"; fi ;;
-    /dist/jopedime-*) [[ ${cmd[1]-} == version ]] && printf 'jopedime 0.2.0\n' ;;
+    /dist/jain-*) [[ ${cmd[1]-} == version ]] && printf 'jain 0.2.0\n' ;;
     /dist/*) printf 'jope 0.2.0\n' ;;
     /target/release/jope-build-receipt)
       local b=''
@@ -1133,9 +1145,9 @@ printf 'runs=%s;carrying_tmp=%s;container_tmp_mode=%s;bounded=%s;attributed=%s;r
 EOF
 )
 expect "every build/check/receipt container carries private TMPDIR, fixed CPU/RAM/Cargo limits and run attribution" ok \
-  '^runs=10;carrying_tmp=10;container_tmp_mode=700;bounded=10;attributed=10;receipts=jope,jopedime$' \
+  '^runs=10;carrying_tmp=10;container_tmp_mode=700;bounded=10;attributed=10;receipts=jain,jope$' \
   unit "$CONTAINERS" "$scratch/containers" "$c1" "$work/meta-ok.json" "$scratch/dk-build.jsonl" "$scratch/dk-receipt-tool.jsonl" \
-  "$scratch/dk-build-jopedime.jsonl"
+  "$scratch/dk-build-jain.jsonl"
 # The same rule, read from the source, so that a new docker run cannot bypass builder_container.
 expect "static: every docker run in release.sh is in builder_container" ok '^sites=builder_container\(\)$' \
   unit 'sites=$(awk "/^[A-Za-z_][A-Za-z0-9_]*\\(\\) [{(]\$/ { f = \$1 }

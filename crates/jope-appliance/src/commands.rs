@@ -288,7 +288,7 @@ pub(crate) fn report(result: anyhow::Result<()>) -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
-            eprintln!("jopedime: {error:#}");
+            eprintln!("jain: {error:#}");
             ExitCode::from(
                 common::report_exit_code(&error).unwrap_or_else(|| kind_of(&error).exit_code()),
             )

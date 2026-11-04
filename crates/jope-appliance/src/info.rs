@@ -8,7 +8,7 @@ pub(super) fn version_value() -> Value {
         Err(error) => json!({"error": error.to_string()}),
     };
     json!({
-        "product": "jopedime",
+        "product": PRODUCT,
         "version": VERSION,
         "source_sha40": bootstrap::source_sha40(),
         "runtime_abi": RUNTIME_ABI,
@@ -18,6 +18,7 @@ pub(super) fn version_value() -> Value {
             "engine": cfg!(feature = "engine"),
             "mcp": cfg!(feature = "mcp"),
             "client": cfg!(feature = "client"),
+            "cloud_tls": cfg!(feature = "cloud-tls"),
             "embedded": bootstrap::EMBEDDED,
             "dev_keys": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
             "cuda": backend::CUDA_COMPILED,

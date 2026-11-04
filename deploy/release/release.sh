@@ -259,11 +259,14 @@ readonly DOCKER_SOCKET=unix:///var/run/docker.sock
 TEST_ROOT=''
 readonly MANIFEST_SCHEMA=jope.release-manifest/v1
 readonly BUILD_COMMAND="cargo build --release --locked -p jope-cli --bin jope --message-format=json-render-diagnostics"
-# The model-object CLI (`jopedime model import|verify|export`, including `--format javascript`). It is
-# built from the same export in the same builder and goes through every check jope does.
-# `cloud-tls` is selected so the released client can sign in to HTTPS cloud workspaces
-# (deploy/appliance/AMENDMENTS.md A22); without it `jopedime auth login` refuses every https URL.
-readonly APPLIANCE_BUILD_COMMAND="cargo build --release --locked -p jope-appliance --bin jopedime --features cloud-tls --message-format=json-render-diagnostics"
+# The jAIn CLI, `jain` (historically `jopedime`; the model-object CLI `jain model import|verify|
+# export`, the interactive terminal and `/login`). It is built from the same export in the same
+# builder and goes through every check jope does. `cloud-tls` is required: without it the
+# released client refuses the HTTPS workspace (https://app.veox.ai) and cannot log in. The
+# feature set is checked again from the built binary's `version --json` (APPLIANCE_FEATURES).
+readonly APPLIANCE_BUILD_COMMAND="cargo build --release --locked -p jope-appliance --bin jain --features cloud-tls --message-format=json-render-diagnostics"
+# jq filter over `jain version --json` that the released client must satisfy.
+readonly APPLIANCE_FEATURES='.product == "jain" and .features.client == true and .features.cloud_tls == true and .features.engine == true and .features.dev_keys == false and .trusts_development_key == false'
 # The same prefixes as GPU_LIBRARY_PREFIXES in crates/jope-engine/src/build_receipt.rs (lowercase).
 readonly -a GPU_LIBRARY_PREFIXES=(libcuda libcudart libcudnn libcublas libcurand libcusparse
   libcufft libcusolver libcupti libcufile libcutensor libnpp libnvjpeg libnccl libnvrtc
@@ -1228,11 +1231,11 @@ build_jope() {
 
   step "$APPLIANCE_BUILD_COMMAND (in $BUILDER_IMAGE_NAME)"
   # shellcheck disable=SC2086  # APPLIANCE_BUILD_COMMAND is a fixed word list
-  docker_run -- $APPLIANCE_BUILD_COMMAND > "$run_dir/build-jopedime.jsonl"
-  exe=$(select_executable "$run_dir/build-jopedime.jsonl" /src/crates/jope-appliance/Cargo.toml jopedime) \
-    || die "could not select the jopedime executable from $run_dir/build-jopedime.jsonl"
+  docker_run -- $APPLIANCE_BUILD_COMMAND > "$run_dir/build-jain.jsonl"
+  exe=$(select_executable "$run_dir/build-jain.jsonl" /src/crates/jope-appliance/Cargo.toml jain) \
+    || die "could not select the jain executable from $run_dir/build-jain.jsonl"
   app_bin_container=$exe
-  app_bin=$dist/jopedime-$tag-$TARGET_TRIPLE
+  app_bin=$dist/jain-$tag-$TARGET_TRIPLE
   install_binary "$exe" "$app_bin"
 }
 
@@ -1266,10 +1269,10 @@ check_binary() {
   stage=check
   local cdir=$run_dir/checks out
   mkdir -p -- "$cdir/run"
-  step "binary checks: glibc <= $MAX_GLIBC, no GPU libraries, prints 'jope $version' / 'jopedime $version'"
+  step "binary checks: glibc <= $MAX_GLIBC, no GPU libraries, prints 'jope $version' / 'jain $version', jain has cloud-tls"
   link_checks "$bin" "$cdir" ''
   observed_glibc=$link_glibc
-  link_checks "$app_bin" "$cdir" jopedime-
+  link_checks "$app_bin" "$cdir" jain-
   app_glibc=$link_glibc
   binary_prints_version "$bin" "$version" "$cdir/run" > "$cdir/version-host.txt" \
     || die "the binary does not print 'jope $version' first (see $cdir/version-host.txt)"
@@ -1278,13 +1281,24 @@ check_binary() {
   printf '%s\n' "$out" > "$cdir/version-bookworm.txt"
   [[ ${out%%$'\n'*} == "jope $version" ]] || die "inside $BUILDER_IMAGE_NAME the binary printed '${out%%$'\n'*}'"
   printf 'runs on the host and inside %s: jope %s\n' "$BUILDER_IMAGE_NAME" "$version"
-  binary_prints_version "$app_bin" "$version" "$cdir/run" jopedime version > "$cdir/jopedime-version-host.txt" \
-    || die "jopedime version does not print 'jopedime $version' first (see $cdir/jopedime-version-host.txt)"
+  binary_prints_version "$app_bin" "$version" "$cdir/run" jain version > "$cdir/jain-version-host.txt" \
+    || die "jain version does not print 'jain $version' first (see $cdir/jain-version-host.txt)"
   out=$(builder_container --network none -v "$dist:/dist:ro" -w / -- "/dist/${app_bin##*/}" version </dev/null) \
-    || die "jopedime did not run inside $BUILDER_IMAGE_NAME"
-  printf '%s\n' "$out" > "$cdir/jopedime-version-bookworm.txt"
-  [[ ${out%%$'\n'*} == "jopedime $version" ]] || die "inside $BUILDER_IMAGE_NAME jopedime printed '${out%%$'\n'*}'"
-  printf 'runs on the host and inside %s: jopedime %s\n' "$BUILDER_IMAGE_NAME" "$version"
+    || die "jain did not run inside $BUILDER_IMAGE_NAME"
+  printf '%s\n' "$out" > "$cdir/jain-version-bookworm.txt"
+  [[ ${out%%$'\n'*} == "jain $version" ]] || die "inside $BUILDER_IMAGE_NAME jain printed '${out%%$'\n'*}'"
+  printf 'runs on the host and inside %s: jain %s\n' "$BUILDER_IMAGE_NAME" "$version"
+  check_appliance_features "$app_bin" "$cdir"
+}
+
+# check_appliance_features <binary> <dir>: the released client reports product jain and the
+# APPLIANCE_FEATURES set, including cloud-tls (B1: without it HTTPS login is refused).
+check_appliance_features() {
+  (cd "$2/run" && env -i PATH=/usr/bin:/bin TMPDIR="${TMPDIR:?}" timeout 60 "$1" version --json </dev/null) \
+    > "$2/jain-version.json" || die "jain version --json failed (see $2/jain-version.json)"
+  jq -e "$APPLIANCE_FEATURES" "$2/jain-version.json" >/dev/null \
+    || die "jain version --json does not satisfy: $APPLIANCE_FEATURES (see $2/jain-version.json)"
+  printf 'jain reports product jain with cloud-tls\n'
 }
 
 make_receipt() {
@@ -1297,7 +1311,7 @@ make_receipt() {
     || die "could not select jope-build-receipt from $run_dir/receipt-tool.jsonl"
   mkdir -p -- "$run_dir/receipt"
   receipt_for "$tool" "$bin" "$bin_container" "jope-$tag.build-receipt.json" "jope-cli-$tag" "$BUILD_COMMAND" "$observed_glibc"
-  receipt_for "$tool" "$app_bin" "$app_bin_container" "jopedime-$tag.build-receipt.json" "jope-appliance-$tag" \
+  receipt_for "$tool" "$app_bin" "$app_bin_container" "jain-$tag.build-receipt.json" "jope-appliance-$tag" \
     "$APPLIANCE_BUILD_COMMAND" "$app_glibc"
 }
 

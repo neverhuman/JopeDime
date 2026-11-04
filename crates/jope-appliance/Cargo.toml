@@ -5,7 +5,15 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "The jopedime appliance: one signed executable that fits and predicts with native methods and its packaged assets"
+description = "The jAIn CLI (jopedime) appliance: one signed executable that fits and predicts with native methods and its packaged assets"
+
+# `jain` (the jAIn CLI) is the released command. `jopedime` is the same program under its
+# historical name, kept for existing scripts, tests and launchers; neither depends on argv[0].
+[[bin]]
+name = "jain"
+path = "src/main.rs"
+# The unit tests run once, through the `jopedime` target below.
+test = false
 
 [[bin]]
 name = "jopedime"

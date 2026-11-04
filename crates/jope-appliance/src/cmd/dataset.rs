@@ -10,7 +10,7 @@ pub(crate) fn report(result: anyhow::Result<()>) -> std::process::ExitCode {
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(error) => {
-            eprintln!("jopedime: {error:#}");
+            eprintln!("jain: {error:#}");
             let code = error
                 .chain()
                 .find_map(|cause| {

@@ -1,5 +1,5 @@
-//! `jopedime`: one signed executable that fits and predicts tabular models with native Rust
-//! methods (deploy/appliance/README.md).
+//! `jain`, the jAIn CLI (also built as `jopedime`): one signed executable that fits and
+//! predicts tabular models with native Rust methods (deploy/appliance/README.md).
 //!
 //! Every command that fits, predicts, verifies or prints notices first authenticates the
 //! executable's own package (footer, manifest, signature, executable region); an integrity
@@ -59,6 +59,8 @@ use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+/// The user-facing product name, whatever the executable is called (`jain` or `jopedime`).
+pub const PRODUCT: &str = "jain";
 
 /// The status a run will exit with, so a closed stdout while printing its receipt keeps it.
 static PENDING_EXIT: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
@@ -77,7 +79,7 @@ fn out(text: &str) {
                 PENDING_EXIT.load(std::sync::atomic::Ordering::SeqCst),
             ));
         }
-        eprintln!("jopedime: stdout: {error}");
+        eprintln!("jain: stdout: {error}");
         std::process::exit(i32::from(FailureKind::Output.exit_code()));
     }
 }
@@ -107,7 +109,7 @@ fn main() -> ExitCode {
         .as_slice()
     {
         ["--version"] | ["-V"] => {
-            out(&format!("jopedime {VERSION}\n"));
+            out(&format!("{PRODUCT} {VERSION}\n"));
             return ExitCode::SUCCESS;
         }
         ["--version", "--json"] | ["--json", "--version"] => {
@@ -120,7 +122,8 @@ fn main() -> ExitCode {
     if let Some(attach) = session::requested(&args) {
         return report(session::run(attach));
     }
-    let cli = Cli::parse();
+    let argv0 = std::env::args_os().next().unwrap_or_else(|| PRODUCT.into());
+    let cli = Cli::parse_from(std::iter::once(argv0).chain(args.into_iter().map(Into::into)));
     match cli.command {
         #[cfg(feature = "research")]
         ApplianceCommand::Research(args) => report(research::run(args)),
@@ -130,7 +133,7 @@ fn main() -> ExitCode {
             if flag.json {
                 print_json(&version_value());
             } else {
-                out(&format!("jopedime {VERSION}\n"));
+                out(&format!("{PRODUCT} {VERSION}\n"));
             }
             ExitCode::SUCCESS
         }
@@ -146,7 +149,7 @@ fn main() -> ExitCode {
                     print_json(&value);
                 } else {
                     eprintln!(
-                        "jopedime doctor: {} (package: {}; devices: {})",
+                        "jain doctor: {} (package: {}; devices: {})",
                         if ok { "ok" } else { "NOT OK" },
                         value["package"]["status"].as_str().unwrap_or("?"),
                         value["devices"]["reason"].as_str().unwrap_or("?")
@@ -208,7 +211,7 @@ fn main() -> ExitCode {
             Err(error) => match cmd::run::dispatch_exit_code(&error) {
                 Some(code) => {
                     if code != 130 {
-                        eprintln!("jopedime: {error:#}");
+                        eprintln!("jain: {error:#}");
                     }
                     ExitCode::from(code)
                 }

@@ -47,11 +47,16 @@ base_executable_bytes = 8144648
 final_executable_bytes = 8268941
 note = "A21: measured Linux dist-ci development fixture; pre-CLI main already8144488/8267461B, candidate adds160B code and1480B compressed notices; models unchanged,5% tolerance retained. See measurements/browser-predict-fixture-20261102.json."
 
-# Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.
+# Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded,engine,mcp,client,cloud-tls`.
+# Rebaselined 2026-11-03 for the public jAIn CLI (amendment A22): the installable edition now
+# carries the interactive terminal and its local engine plus HTTPS login. Same-host dist builds:
+# embedded,engine,mcp,client 20,405,928 B; adding cloud-tls (static AWS-LC/rustls) 23,823,520 B
+# (+3,417,592 B). NEEDED stays libc/libm/libgcc_s. The previous 4,542,168 B base measured an
+# `embedded`-only binary, which had no interactive terminal, engine or login.
 [profile.native-only]
-base_executable_bytes = 4542168
-final_executable_bytes = 4561056
-note = "native methods only; the payload is the licence and third-party notices (sealed with an independent P-256 key)"
+base_executable_bytes = 23823520
+final_executable_bytes = 23860478
+note = "A22: public jAIn CLI, no model weights; final = base + 34,834 B notice frames + 1,932 B manifest + 64 B signature + 128 B footer from an unsigned stage (signing pending)"
 
 # Blocked (models.lock.json). The tensors alone are 438,062,296 bytes before lossless packing.
 [profile.full]

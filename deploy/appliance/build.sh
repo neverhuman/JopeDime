@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy/appliance/build.sh — build, pack and check one `jopedime` package.
+# deploy/appliance/build.sh — build, pack and check one `jain` (historically `jopedime`) package.
 #
 #   build.sh --profile NAME --out DIR [--cargo-profile dist|dist-ci] [--models DIR] [--source-sha SHA] [--rehearsal]
 #
@@ -40,6 +40,10 @@ features=embedded
 [ "$scope" = development ] && features=embedded,dev-keys
 # Both R882 runtime editions need the ordinary defaults despite --no-default-features below.
 case $profile in full | fused-cpu) features=$features,engine,mcp,client ;; esac
+# The public native-only edition is the installable jAIn CLI: the interactive terminal and its
+# local engine, without pretrained weights, plus cloud-tls so /login reaches https://app.veox.ai
+# (A22; without it HTTPS login is refused at run time).
+case $profile in native-only) features=$features,engine,mcp,client,cloud-tls ;; esac
 case $profile in dope-gpu | fused-cuda) features=$features,dope-cuda ;; esac
 mkdir -p "$out"
 
@@ -57,10 +61,28 @@ if [ "$profile" = dope-gpu ] || [ "$profile" = fused-cuda ]; then
   dist audit --policy deploy/appliance/dependencies-dope-gpu.toml
 fi
 
-echo "== build jopedime ($cargo_profile, features $features, source $source_sha)"
+echo "== build jain ($cargo_profile, features $features, source $source_sha)"
 code=$(JOPE_BUILD_SOURCE_SHA=$source_sha cargo run -q --locked -p jope-ci -- cargo-artifact build \
-  --package jope-appliance --bin jopedime --profile "$cargo_profile" --no-default-features --features "$features")
+  --package jope-appliance --bin jain --profile "$cargo_profile" --no-default-features --features "$features")
 cp -- "$code" "$out/code"
+
+if [ "$profile" = native-only ]; then
+  echo "== verify the public jAIn CLI features: product jain, client, engine, cloud-tls, release trust"
+  "$out/code" --version --json > "$out/version.json"
+  jq -e --arg source "$source_sha" '
+    .product == "jain" and
+    .source_sha40 == $source and
+    .features.embedded == true and
+    .features.engine == true and
+    .features.client == true and
+    .features.cloud_tls == true and
+    .features.dev_keys == false and
+    .trusts_development_key == false
+  ' "$out/version.json" > /dev/null || {
+    echo "$0: native-only requires product jain with engine,mcp,client,cloud-tls,embedded and release trust" >&2
+    exit 1
+  }
+fi
 
 if [ "$profile" = full ] || [ "$profile" = fused-cpu ]; then
   echo "== verify $profile v1 compiled features and source"
@@ -102,6 +124,13 @@ if [ -z "$models" ]; then
   else
     mkdir -p "$models"
   fi
+fi
+
+# The public edition carries no model weights at all (models.lock.json native-only total_bytes 0).
+if [ "$scope" = public ] && [ -n "$(find "$models" -type f -print -quit)" ]; then
+  echo "$0: the public $profile profile must not package model files; found:" >&2
+  find "$models" -type f >&2
+  exit 1
 fi
 
 common=(--profile "$profile_file" --code "$out/code" --models "$models" --notices "$out/notices.json"

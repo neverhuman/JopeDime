@@ -2,8 +2,9 @@ use super::*;
 
 #[derive(Parser)]
 #[command(
-    name = "jopedime",
-    about = "Fit and predict tabular models with native Rust methods, from one signed executable.",
+    name = "jain",
+    bin_name = "jain",
+    about = "jAIn CLI by VEOX: fit and predict tabular models with native Rust methods, from one signed executable.",
     disable_version_flag = true,
     after_help = "Exit status: 0 success, 2 invalid input, 3 integrity or compatibility, \
                   4 backend unavailable, 5 time budget exhausted, 6 numerical failure, \
