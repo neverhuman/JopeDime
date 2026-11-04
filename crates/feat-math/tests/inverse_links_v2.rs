@@ -183,7 +183,9 @@ fn inverse_links_are_monotone_on_a_dense_probability_grid() {
 }
 
 fn run(command: &mut Command) -> Vec<u8> {
-    let output = command.output().unwrap();
+    let output = command
+        .output()
+        .unwrap_or_else(|error| panic!("could not execute {command:?}: {error}"));
     assert!(
         output.status.success(),
         "{command:?}: {}\n{}",
@@ -208,9 +210,25 @@ fn compile_cpp(root: &Path, compiler: &str, standard: &str, optimization: &str) 
     run(Command::new(binary).arg(root.join("bits.txt")))
 }
 
+fn compiler_available(compiler: &str) -> bool {
+    Command::new(compiler)
+        .arg("--version")
+        .output()
+        .is_ok_and(|output| output.status.success())
+}
+
+fn python_interpreter() -> &'static str {
+    if compiler_available("python3") {
+        "python3"
+    } else {
+        "python"
+    }
+}
+
 #[test]
 fn emitted_helper_value_and_fault_bits_match_in_all_three_languages() {
-    let root = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("inverse_links_v2");
+    let root = PathBuf::from(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("inverse_links_v2-{}", std::process::id()));
     fs::create_dir_all(&root).unwrap();
     let cases = corpus();
     let inputs = cases
@@ -279,7 +297,8 @@ int main(int argc,char** argv) {
         fs::write(root.join(file), source).unwrap();
     }
     let binary = root.join("links-rust");
-    run(Command::new("rustc")
+    let rustc = std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into());
+    run(Command::new(rustc)
         .args(["--edition=2021", "-O", "-o"])
         .arg(&binary)
         .arg(root.join("links.rs")));
@@ -288,13 +307,21 @@ int main(int argc,char** argv) {
         expected.as_bytes()
     );
     assert_eq!(
-        run(Command::new("python3")
+        run(Command::new(python_interpreter())
             .env("PYTHONDONTWRITEBYTECODE", "1")
             .arg(root.join("links.py"))
             .arg(root.join("bits.txt"))),
         expected.as_bytes()
     );
-    for compiler in ["g++", "clang++"] {
+    let mut cpp_compilers = ["g++", "clang++"]
+        .into_iter()
+        .filter(|compiler| compiler_available(compiler))
+        .collect::<Vec<_>>();
+    if cpp_compilers.is_empty() && compiler_available("c++") {
+        cpp_compilers.push("c++");
+    }
+    assert!(!cpp_compilers.is_empty(), "no C++ compiler is available");
+    for compiler in cpp_compilers {
         for (standard, opt) in [
             ("-std=c++17", "-O2"),
             ("-std=c++17", "-O3"),

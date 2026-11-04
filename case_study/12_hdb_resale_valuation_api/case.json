@@ -1,0 +1,101 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "12_hdb_resale_valuation_api",
+  "dataset": {
+    "id": "f2d74feab0307e24",
+    "display_name": "Singapore HDB Resale Flat Prices from January 2017",
+    "task": "regression",
+    "rows": 10000,
+    "features": 7,
+    "categorical_features": 4,
+    "train_rows": 8000,
+    "test_rows": 2000,
+    "source": {
+      "platform": "data.gov.sg",
+      "id": "resale-flat-prices",
+      "url": "https://storage.data.gov.sg/resale-flat-prices/resources/resale-flat-prices-based-on-registration-date-from-jan-2017-onwards-2023-04-17T03-28-08Z.csv",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": null
+  },
+  "business_question": "Which resale-price model has the lowest percentage error while meeting an API latency budget and a model-size budget?",
+  "constraint": "row_latency_p99_us max + model_bytes max",
+  "objective_kind": "constrained",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11,
+    "sha256": "5af796733d4a465c353e2ae9aec8b4b79b488ab1cef681c19566111601dbc398",
+    "provenance_sha256": "109a760515e9082d20639c97f275a690c54b476306c9a800598dc26cfd24efdb",
+    "source": "step-60000 neural policy (Rust/Candle CPU), produced by agy_resource_fitness; see seeds.provenance.json"
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "row_latency_p99_us",
+    "model_bytes"
+  ],
+  "accuracy": {
+    "metric": "mape",
+    "epsilon": 1.0
+  },
+  "why": "A public resale-valuation API answers one query at a time and is deployed in a small container, so latency and model size are both hard limits, and percentage error is what users judge.",
+  "caveats": [
+    "Time-ordered data, but jope pipeline run validates on an unordered fold partition of train.csv, so this case does not exercise chronological (regime) validation"
+  ],
+  "objective_template": {
+    "metric": "constrained",
+    "fitness": {
+      "metric": "mape",
+      "epsilon": 1.0
+    },
+    "limits": [
+      {
+        "resource": "row_latency_p99_us",
+        "max": {
+          "$median": "row_latency_p99_us"
+        }
+      },
+      {
+        "resource": "model_bytes",
+        "max": {
+          "$median": "model_bytes"
+        }
+      }
+    ]
+  }
+}

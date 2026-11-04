@@ -78,7 +78,7 @@ use crate::{
     prepare::Cut,
     receipt::Phase,
     search_events::{
-        self, ProposalBehaviorLaw, EditTransition, Effort, EvidenceRef, Recorder, SearchBinding,
+        self, EditTransition, Effort, EvidenceRef, ProposalBehaviorLaw, Recorder, SearchBinding,
         SearchDecision, SearchEvent, SearchEventLog,
     },
     sha256_hex,
@@ -400,6 +400,11 @@ pub struct Observation {
     /// The island that drew this candidate, when the search ran more than one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub island: Option<usize>,
+    /// What the candidate cost to train and serve, present when the search ranks by an objective
+    /// that reads resources ([`jope_runtime::fitness::ResourceVar`]). Selection is re-derived
+    /// from these recorded readings, never by measuring again.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resources: Option<jope_runtime::fitness::Resources>,
 }
 
 impl Observation {
@@ -510,6 +515,9 @@ pub struct ObservationRecord {
     pub failure: Option<String>,
     #[serde(default)]
     pub island: Option<usize>,
+    /// Resource readings keyed by their snake_case variable names.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resources: Option<std::collections::BTreeMap<String, f64>>,
 }
 
 impl ObservationRecord {
@@ -541,6 +549,24 @@ impl ObservationRecord {
                 .is_none_or(|loss| status == MEASURED && loss.is_finite()),
             "an objective loss belongs to a measured observation"
         );
+        let resources = match self.resources {
+            None => None,
+            Some(readings) => Some(
+                readings
+                    .into_iter()
+                    .map(|(name, value)| {
+                        let var: jope_runtime::fitness::ResourceVar =
+                            serde_json::from_value(serde_json::Value::String(name.clone()))
+                                .with_context(|| format!("unknown resource {name:?}"))?;
+                        ensure!(
+                            value.is_finite() && value >= 0.0,
+                            "resource {name} needs a finite nonnegative reading"
+                        );
+                        Ok((var, value))
+                    })
+                    .collect::<Result<jope_runtime::fitness::Resources>>()?,
+            ),
+        };
         Ok(Observation {
             genome: self.genome,
             program_sha256: self.program_sha256,
@@ -555,6 +581,7 @@ impl ObservationRecord {
             status,
             failure: self.failure,
             island: self.island,
+            resources,
         })
     }
 }
@@ -820,6 +847,7 @@ pub(crate) fn evaluate(
         status,
         failure,
         island: None,
+        resources: None,
     };
 
     let parsed = match GenomeIr::parse(genome) {
@@ -836,16 +864,34 @@ pub(crate) fn evaluate(
     // feat-math is a large numerical surface and the search reaches parameter
     // combinations no hand-written call does. A panic in one candidate must not
     // take the run down with it.
+    // An objective that reads resources gets the candidate's measured cost (fit and predict timed
+    // apart, heap, model size); every other search runs exactly the unmeasured path.
+    let wanted = objective.map(Fitness::resources).unwrap_or_default();
     let fitted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let model = feat_math::fit(&parsed, &cut.train_x, &cut.train_y)?;
-        let train = model.predict(&cut.train_x)?;
-        let hold = model.predict(&cut.hold_x)?;
-        anyhow::Ok((train, hold))
+        if wanted.is_empty() {
+            let model = feat_math::fit(&parsed, &cut.train_x, &cut.train_y)?;
+            let train = model.predict(&cut.train_x)?;
+            let hold = model.predict(&cut.hold_x)?;
+            anyhow::Ok((train, hold, None, None))
+        } else {
+            let measured =
+                crate::resource_measure::fit_and_measure(&parsed, cut, &wanted, clock, started)?;
+            anyhow::Ok((
+                measured.train,
+                measured.hold,
+                Some(measured.resources),
+                Some(measured.seconds),
+            ))
+        }
     }));
-    let seconds = started.elapsed().as_secs_f64();
+    let elapsed = started.elapsed().as_secs_f64();
+    let seconds = match &fitted {
+        Ok(Ok((_, _, _, Some(core)))) => *core,
+        _ => elapsed,
+    };
 
-    let (train, hold) = match fitted {
-        Ok(Ok(predictions)) => predictions,
+    let (train, hold, resources) = match fitted {
+        Ok(Ok((train, hold, resources, _))) => (train, hold, resources),
         Ok(Err(error)) => return record(FIT_FAILED, Some(format!("{error:#}")), seconds),
         Err(payload) => {
             let detail = payload
@@ -885,18 +931,27 @@ pub(crate) fn evaluate(
     let objective_loss = match objective {
         None => None,
         Some(objective) => match objective
-            .loss_unhashed(&cut.hold_y, &hold, &Default::default())
+            .loss_with_resources(
+                &cut.hold_y,
+                &hold,
+                &Default::default(),
+                resources.as_ref().unwrap_or(&Default::default()),
+            )
             .and_then(|loss| {
                 ensure!(loss.is_finite(), "non-finite objective loss");
                 Ok(loss)
             }) {
             Ok(loss) => Some(loss),
             Err(error) => {
-                return record(
-                    SCORE_FAILED,
-                    Some(format!("objective {}: {error:#}", objective.name())),
-                    seconds,
-                )
+                // An infeasible candidate keeps its readings: they are why it was refused.
+                return Observation {
+                    resources,
+                    ..record(
+                        SCORE_FAILED,
+                        Some(format!("objective {}: {error:#}", objective.name())),
+                        seconds,
+                    )
+                };
             }
         },
     };
@@ -905,6 +960,7 @@ pub(crate) fn evaluate(
         hold_r2: Some(hold_r2),
         rmse: Some(hold_rmse),
         objective_loss,
+        resources,
         ..record(MEASURED, None, seconds)
     }
 }
@@ -2480,6 +2536,7 @@ mod tests {
                 status: FIT_FAILED,
                 failure: Some("injected failure".to_owned()),
                 island: None,
+                resources: None,
             }
         })
         .unwrap();

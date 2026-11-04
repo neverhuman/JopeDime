@@ -59,13 +59,13 @@ pub(super) fn emit(
         emitted.artifacts.push(Artifact {
             language,
             build,
-            ..super::write(directory, name, source)?
+            ..super::legacy::write(directory, name, source)?
         });
     }
     let previous = std::fs::read_to_string(directory.join("targets.txt"))?;
     let prefix = previous.trim_end_matches('\n');
     let separator = if prefix.is_empty() { "" } else { " " };
-    super::write(
+    super::legacy::write(
         directory,
         "targets.txt",
         &format!("{prefix}{separator}cpp17-fitted\n"),

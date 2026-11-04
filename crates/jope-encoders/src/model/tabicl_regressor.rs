@@ -52,7 +52,7 @@ use attention_weights::{layer_norm, MabWeights};
 use pooling::pool_mean_std_p10_p90;
 
 /// The full TabICL regressor model (quantile head extracted by the runner).
-pub(super) struct TabIclReg {
+pub(crate) struct TabIclReg {
     w: Weights,
     // col embedder
     in_lin_w: Tensor,
@@ -78,7 +78,7 @@ pub(super) struct TabIclReg {
 }
 
 impl TabIclReg {
-    pub(super) fn load(ckpt_path: &Path, device: Device) -> Result<Self> {
+    pub(crate) fn load(ckpt_path: &Path, device: Device) -> Result<Self> {
         let w = Weights::load(ckpt_path, device)?;
         let mut col_blocks = Vec::new();
         for i in 0..COL_BLOCKS {
@@ -131,7 +131,7 @@ impl TabIclReg {
         })
     }
 
-    pub(super) fn device(&self) -> &Device {
+    pub(crate) fn device(&self) -> &Device {
         self.w.device()
     }
 
@@ -244,7 +244,7 @@ impl TabIclReg {
         Ok((test_reps, q))
     }
 
-    pub(super) fn regression_fusion_features_single(
+    pub(crate) fn regression_fusion_features_single(
         &self,
         ctx_x: &[f32],
         ctx_y: &[f32],
@@ -313,7 +313,7 @@ impl TabIclReg {
     /// min-max-normalized-but-NOT-yet-zscored features (the z-score by train
     /// stats happens here); `ctx_y` are the raw context targets (standardized
     /// here). Matches jope's Python `TabICLReg` foundation encoder.
-    pub(super) fn foundation_2048(
+    pub(crate) fn foundation_2048(
         &self,
         ctx_x: &[f32],
         ctx_y: &[f32],
@@ -339,7 +339,7 @@ impl TabIclReg {
 }
 
 /// Public wrapper exposing the pooled 2048-d foundation vector from a loaded
-/// TabICL regressor checkpoint (the internals stay `pub(super)`).
+/// TabICL regressor checkpoint (the internals stay `pub(crate)`).
 pub struct TabIclFoundation {
     inner: TabIclReg,
 }

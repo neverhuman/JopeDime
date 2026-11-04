@@ -1,0 +1,99 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "10_city_power_realtime_dispatch",
+  "dataset": {
+    "id": "ca8b2f30cf07dd87",
+    "display_name": "Power Consumption of Tetouan City with Weather",
+    "task": "regression",
+    "rows": 10000,
+    "features": 7,
+    "categorical_features": 0,
+    "train_rows": 8000,
+    "test_rows": 2000,
+    "source": {
+      "platform": "uci machine learning repository",
+      "id": "UCI-849",
+      "url": "https://archive.ics.uci.edu/static/public/849/data.csv",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": null
+  },
+  "business_question": "Which city power-demand model is most accurate while meeting both a real-time scoring budget and a retraining budget?",
+  "constraint": "row_latency_p50_us max + fit_seconds max",
+  "objective_kind": "constrained",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11,
+    "sha256": "b966128126cebfbee153d6669b2813f45b567d6096bc104165174568f747616d",
+    "provenance_sha256": "1896d7a5c36742bc20cd641caf6cef88d865834a4009da678b4991de4f89d05f",
+    "source": "step-60000 neural policy (Rust/Candle CPU), produced by agy_resource_fitness; see seeds.provenance.json"
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "row_latency_p50_us",
+    "fit_seconds"
+  ],
+  "accuracy": {
+    "metric": "rmse"
+  },
+  "why": "Grid dispatch scores each 10-minute reading in real time and refits often, so the program must meet both a median one-row latency budget and a training-time budget.",
+  "caveats": [
+    "Time-ordered data, but jope pipeline run validates on an unordered fold partition of train.csv, so this case does not exercise chronological (regime) validation"
+  ],
+  "objective_template": {
+    "metric": "constrained",
+    "fitness": {
+      "metric": "rmse"
+    },
+    "limits": [
+      {
+        "resource": "row_latency_p50_us",
+        "max": {
+          "$median": "row_latency_p50_us"
+        }
+      },
+      {
+        "resource": "fit_seconds",
+        "max": {
+          "$median": "fit_seconds"
+        }
+      }
+    ]
+  }
+}

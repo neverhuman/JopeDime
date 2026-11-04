@@ -979,12 +979,15 @@ pub enum WaveSlotGroup {
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum CandidateOrigin {
+pub enum WaveCandidateOrigin {
     LocalElite,
     RobustWinner,
     DlDirect,
     GpOffspring,
 }
+
+/// Compatibility name for the origin of a candidate in a wave slot.
+pub type CandidateOrigin = WaveCandidateOrigin;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WaveSlot {

@@ -11,6 +11,8 @@
 
 pub mod cache;
 pub mod cli;
+/// Frozen 42-dataset golden embedding cohort shared with the study tooling.
+pub mod embeddings_golden;
 pub mod fetch;
 pub mod index;
 pub mod manifest;

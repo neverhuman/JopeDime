@@ -120,12 +120,12 @@ impl NativeCaptureInputs {
         })
     }
 
-    pub(super) fn validate_binding(&self, binding: &Binding, plan: &Plan) -> Result<()> {
+    pub(crate) fn validate_binding(&self, binding: &Binding, plan: &Plan) -> Result<()> {
         ensure!(&self.plan == plan, "native input Plan changed");
         self.validate_record_binding(binding)
     }
 
-    pub(super) fn validate_record_binding(&self, binding: &Binding) -> Result<()> {
+    pub(crate) fn validate_record_binding(&self, binding: &Binding) -> Result<()> {
         ensure!(
             binding.identity.bundle_sha256 == self.plan.bundle_digest
                 && binding.identity.problem_sha256 == self.plan.problem_digest
@@ -152,7 +152,7 @@ impl NativeCaptureInputs {
         Ok(())
     }
 
-    pub(super) fn validate_observation(
+    pub(crate) fn validate_observation(
         &self,
         binding: &Binding,
         dsls: &[String],
@@ -186,9 +186,32 @@ impl NativeCaptureInputs {
     }
 }
 
+/// Build an in-memory native input closure for service-side job resolver tests.
+/// It is deliberately test-only: no bundle is authenticated and no Engine
+/// recording is produced from this fixture.
+#[cfg(test)]
+pub(crate) fn resolver_test_inputs(
+    plan: &Plan,
+    conditioning_sha256: &str,
+    conditioning: &TokenProjection,
+) -> Result<NativeCaptureInputs> {
+    let metadata = serde_json::json!({
+        "feature_names": featurizer::FEATURE_NAMES.to_vec(),
+        "recipe": "rank_prepare.features/412-v1",
+        "proj16_domain": "jope-context-cross-v1"
+    });
+    NativeCaptureInputs::from_parts(
+        &format!("sha256:{}", plan.bundle_digest),
+        &serde_json::to_vec(&metadata)?,
+        plan,
+        conditioning_sha256,
+        conditioning,
+    )
+}
+
 // Boundary-only controls: no Engine record is written or accepted as evidence.
 #[cfg(test)]
-pub(super) fn input_controls(mut record: super::ResearchRound) {
+pub(crate) fn input_controls(mut record: super::ResearchRound) {
     use super::{
         capture::{CaptureProvider, SlateObservation},
         CaptureConfig, CaptureContext, RecordEvidence, RecordedReveal, Rung0Measurement,

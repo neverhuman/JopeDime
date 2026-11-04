@@ -1,0 +1,338 @@
+{
+  "schema": "whitepaper.pool-insertions-figure/v1",
+  "input_csv_sha256": "38017ebddcd985dcae771efdca7cbeb456ce6f9619a8b2abb0e061a6f72a5b1e",
+  "source_receipt_sha256": "887e574dc5c288d442a93c8353d6ebc563c02a8a305127c0f37d02d6b1137931",
+  "generator_sha256": "05bcd6f9e02d0a244b34050f98079610c54e8914088db7716de85940f6b17fba",
+  "figure_sha256": "c2a075aa6a17086b2e9d88eb4223c3b6c31fb4d79284e19a11cd9ddf94cda96b",
+  "rows": 866,
+  "round_window": [
+    3174,
+    4039
+  ],
+  "window_size": 20,
+  "windows": [
+    {
+      "first_round": 3174,
+      "last_round": 3193,
+      "rounds": 20,
+      "automatic_pool_insertions": 11,
+      "rejected_adapter_candidates": 19
+    },
+    {
+      "first_round": 3194,
+      "last_round": 3213,
+      "rounds": 20,
+      "automatic_pool_insertions": 9,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3214,
+      "last_round": 3233,
+      "rounds": 20,
+      "automatic_pool_insertions": 10,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3234,
+      "last_round": 3253,
+      "rounds": 20,
+      "automatic_pool_insertions": 12,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3254,
+      "last_round": 3273,
+      "rounds": 20,
+      "automatic_pool_insertions": 8,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3274,
+      "last_round": 3293,
+      "rounds": 20,
+      "automatic_pool_insertions": 10,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3294,
+      "last_round": 3313,
+      "rounds": 20,
+      "automatic_pool_insertions": 11,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3314,
+      "last_round": 3333,
+      "rounds": 20,
+      "automatic_pool_insertions": 8,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3334,
+      "last_round": 3353,
+      "rounds": 20,
+      "automatic_pool_insertions": 7,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3354,
+      "last_round": 3373,
+      "rounds": 20,
+      "automatic_pool_insertions": 17,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3374,
+      "last_round": 3393,
+      "rounds": 20,
+      "automatic_pool_insertions": 8,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3394,
+      "last_round": 3413,
+      "rounds": 20,
+      "automatic_pool_insertions": 6,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3414,
+      "last_round": 3433,
+      "rounds": 20,
+      "automatic_pool_insertions": 6,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3434,
+      "last_round": 3453,
+      "rounds": 20,
+      "automatic_pool_insertions": 10,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3454,
+      "last_round": 3473,
+      "rounds": 20,
+      "automatic_pool_insertions": 11,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3474,
+      "last_round": 3493,
+      "rounds": 20,
+      "automatic_pool_insertions": 13,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3494,
+      "last_round": 3513,
+      "rounds": 20,
+      "automatic_pool_insertions": 10,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3514,
+      "last_round": 3533,
+      "rounds": 20,
+      "automatic_pool_insertions": 7,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3534,
+      "last_round": 3553,
+      "rounds": 20,
+      "automatic_pool_insertions": 12,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3554,
+      "last_round": 3573,
+      "rounds": 20,
+      "automatic_pool_insertions": 9,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3574,
+      "last_round": 3593,
+      "rounds": 20,
+      "automatic_pool_insertions": 17,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3594,
+      "last_round": 3613,
+      "rounds": 20,
+      "automatic_pool_insertions": 7,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3614,
+      "last_round": 3633,
+      "rounds": 20,
+      "automatic_pool_insertions": 10,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3634,
+      "last_round": 3653,
+      "rounds": 20,
+      "automatic_pool_insertions": 6,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3654,
+      "last_round": 3673,
+      "rounds": 20,
+      "automatic_pool_insertions": 7,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3674,
+      "last_round": 3693,
+      "rounds": 20,
+      "automatic_pool_insertions": 16,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3694,
+      "last_round": 3713,
+      "rounds": 20,
+      "automatic_pool_insertions": 8,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3714,
+      "last_round": 3733,
+      "rounds": 20,
+      "automatic_pool_insertions": 9,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3734,
+      "last_round": 3753,
+      "rounds": 20,
+      "automatic_pool_insertions": 9,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3754,
+      "last_round": 3773,
+      "rounds": 20,
+      "automatic_pool_insertions": 15,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3774,
+      "last_round": 3793,
+      "rounds": 20,
+      "automatic_pool_insertions": 4,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3794,
+      "last_round": 3813,
+      "rounds": 20,
+      "automatic_pool_insertions": 5,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3814,
+      "last_round": 3833,
+      "rounds": 20,
+      "automatic_pool_insertions": 5,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3834,
+      "last_round": 3853,
+      "rounds": 20,
+      "automatic_pool_insertions": 14,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3854,
+      "last_round": 3873,
+      "rounds": 20,
+      "automatic_pool_insertions": 5,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3874,
+      "last_round": 3893,
+      "rounds": 20,
+      "automatic_pool_insertions": 10,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3894,
+      "last_round": 3913,
+      "rounds": 20,
+      "automatic_pool_insertions": 8,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3914,
+      "last_round": 3933,
+      "rounds": 20,
+      "automatic_pool_insertions": 10,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3934,
+      "last_round": 3953,
+      "rounds": 20,
+      "automatic_pool_insertions": 11,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3954,
+      "last_round": 3973,
+      "rounds": 20,
+      "automatic_pool_insertions": 13,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3974,
+      "last_round": 3993,
+      "rounds": 20,
+      "automatic_pool_insertions": 8,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 3994,
+      "last_round": 4013,
+      "rounds": 20,
+      "automatic_pool_insertions": 12,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 4014,
+      "last_round": 4033,
+      "rounds": 20,
+      "automatic_pool_insertions": 14,
+      "rejected_adapter_candidates": 20
+    },
+    {
+      "first_round": 4034,
+      "last_round": 4039,
+      "rounds": 6,
+      "automatic_pool_insertions": 3,
+      "rejected_adapter_candidates": 6
+    }
+  ],
+  "automatic_pool_insertions": 421,
+  "rejected_adapter_candidates": 865,
+  "transformations": "Separate raw count sums in consecutive nonoverlapping windows of 20 rounds; final partial window retained. No smoothing, normalization or outcome subsampling.",
+  "scope": "Adaptive training-side program insertion events and development-side adapter decisions have distinct units. No independent first-proposal, learning-gain, writer/ranking-map benefit or serving comparison.",
+  "source_binding": "Logged aggregate fields only; installed loop source, adapter, evaluation population and normalization closure remain unqualified.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    3.25,
+    2.35
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_pool_insertions_figure.py"
+}

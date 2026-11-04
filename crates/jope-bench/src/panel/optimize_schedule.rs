@@ -218,7 +218,7 @@ pub fn dataset_order(tasks: &[jope_datasets::catalog::Task]) -> Vec<usize> {
 mod tests {
     #[test]
     fn frozen_category_round_robin_includes_every_dataset_once() {
-        use jope_datasets::catalog::Task::*;
+        use jope_datasets::catalog::DatasetTask::*;
         let order = super::dataset_order(&[
             Regression, Regression, Binary, Binary, Multiclass, Multiclass,
         ]);

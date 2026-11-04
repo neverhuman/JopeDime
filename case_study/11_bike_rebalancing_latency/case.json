@@ -1,0 +1,96 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "11_bike_rebalancing_latency",
+  "dataset": {
+    "id": "bbc0bb2e8fcf2ba6",
+    "display_name": "Bike Sharing Hour",
+    "task": "regression",
+    "rows": 1999,
+    "features": 16,
+    "categorical_features": 0,
+    "train_rows": 1000,
+    "test_rows": 999,
+    "source": {
+      "platform": "uci",
+      "id": "bike-sharing-hour",
+      "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00275/Bike-Sharing-Dataset.zip",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": null
+  },
+  "business_question": "Which station-demand model minimizes newsvendor cost (a missing bike costs 3, an idle one 1) within an online latency budget?",
+  "constraint": "row_latency_p99_us max",
+  "objective_kind": "constrained",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11,
+    "sha256": "6a6e970737614d33366aa8c398419edf11240ba85d37046e9a54b3e7c94dd165",
+    "provenance_sha256": "52304bd720a515a11b55dbe8b2f958dff74773c774c22ec4df55a099b38426b8",
+    "source": "step-60000 neural policy (Rust/Candle CPU), produced by agy_resource_fitness; see seeds.provenance.json"
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "row_latency_p99_us"
+  ],
+  "accuracy": {
+    "metric": "asymmetric_absolute",
+    "under_cost": 3.0,
+    "over_cost": 1.0
+  },
+  "why": "Station rebalancing trucks need a demand number per station on request. A missing bike costs 3 and an idle one 1 (newsvendor), within an online latency budget.",
+  "caveats": [
+    "Corpus copy is 1,999 rows (1,000 train)."
+  ],
+  "objective_template": {
+    "metric": "constrained",
+    "fitness": {
+      "metric": "asymmetric_absolute",
+      "under_cost": 3.0,
+      "over_cost": 1.0
+    },
+    "limits": [
+      {
+        "resource": "row_latency_p99_us",
+        "max": {
+          "$median": "row_latency_p99_us"
+        }
+      }
+    ]
+  }
+}

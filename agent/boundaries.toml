@@ -5,9 +5,33 @@
 id = "rust-ts-vite-react-postgres-bounded-python"
 version = "1.0.0"
 
+# Exact non-product Python reference path for the Rust portable-math parity oracle.
+# P-1B receipts pin the bytes; see docs/release/jankurai-pytruth-exceptions-20261102.md.
+[python]
+allowed_non_product_paths = [
+  "crates/feat-math/tests/portable/full_ref.py",
+  "crates/jope-appliance/tests/system/live_driver",
+  "crates/jope-bench/adapters/_panel.py",
+  "crates/jope-bench/adapters/catboost_adapter.py",
+  "crates/jope-bench/adapters/lightgbm_adapter.py",
+  "crates/jope-bench/adapters/sklearn_rf_adapter.py",
+  "crates/jope-bench/adapters/test_panel.py",
+  "crates/jope-bench/adapters/xgboost_adapter.py",
+  "crates/jope-bench/src/panel/inference_boundary.py",
+  "crates/jope-bench/src/panel/inference_cpp_boundary.py",
+  "deploy",
+  "ops",
+  "ops/s3_shard_cache/s3_shard_cache.py",
+  "python",
+  "python/ai-service",
+  "research",
+  "test-support",
+  "tools",
+]
+
 [queues]
-adapter_paths = ["crates/jope-client/src/transport.rs", "crates/jope-client/src/http.rs"]
-event_contract_paths = ["crates/jope-engine/src/resident_protocol.rs"]
+adapter_paths = ["crates/jope-client/src/transport.rs", "crates/jope-client/src/http.rs", "crates/jope-engine/src/sealed_storage.rs"]
+event_contract_paths = ["crates/jope-engine/src/resident_protocol.rs", "crates/jope-engine/src/resident_protocol/artifacts.rs", "crates/jope-engine/src/resident_protocol/dispatch.rs"]
 generated_type_paths = ["schemas/jope.api.v1.openapi.json"]
 client_markers = [
   "crates/jope-client/src/transport.rs",
@@ -15,6 +39,8 @@ client_markers = [
   "crates/jope-client/src/sse.rs",
   "crates/jope-client/src/files.rs",
   "crates/jope-client/src/discover.rs",
+  "crates/jope-client/src/discover/local.rs",
+  "crates/jope-client/src/discover/tests.rs",
   "crates/jope-client/src/inproc.rs",
   "crates/jope-client/src/fake.rs",
 ]

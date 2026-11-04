@@ -115,15 +115,14 @@ extra_excluded_paths = [
   # P37: H173 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
   "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
   "deploy/release/test-release.sh",
-  # HLT-005: frozen portable-math parity oracle, not Python runtime product code.
-  # Exact bytes are pinned by the P-1B campaign receipts; see the pytruth register.
-  "crates/feat-math/tests/portable/full_ref.py",
-"research/flywheel_selfplay/h158_distillation/runtime.py",
+  "research/flywheel_selfplay/h158_distillation/runtime.py",
   "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
   "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+  # H230 closed INCOMPLETE wave; exact manifest-pinned files and HLT-033 dispositions are recorded in docs/release/jankurai-ciaudit-frozen-exceptions-20261102.md.
+  "research/flywheel_selfplay/h230_coswr_gated025_stack/analysis.py",
+  "research/flywheel_selfplay/h230_coswr_gated025_stack/gate.py",
+  "research/flywheel_selfplay/h230_coswr_gated025_stack/runner.py",
   # Exact copies retained as part of immutable experiment manifests/results.
-  "research/flywheel_selfplay/h189_swa_ema/h182_base.py",
-  "research/flywheel_selfplay/h192_margin_gate/runner.py",
   "research/flywheel_selfplay/h192_margin_gate/treatment.py",
   "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/run_acceptance.py",
 
@@ -180,6 +179,11 @@ extra_excluded_paths = [
   # Exact HLT-019 false positive: the pinned KL reference fixture says “nats”
   # as a logarithmic unit, not as a NATS streaming client; see docs/streaming.md.
   "deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py",
+  # HLT-000 finding in pinned recovery evidence; preserve the inventoried bytes.
+  "crates/jope-campaigns/manifests/advanced-v3/recovery-evidence/portable-xlang/ref.cpp",
+  # HLT-019 marker in the immutable DL snapshot; SOURCE_MANIFEST.json pins the
+  # exact file at SHA-256 4522d95b1597adf1e5de2d1e8ea9eb1ce782416010a4ffc690c98bf0a0ec3728.
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_scratch.py",
   "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
   # P38: pinned research artifacts load only inputs whose complete identity is checked.
   # P38: in-memory SQLite fixtures bind row values; only fixed table/placeholder syntax is composed.
@@ -218,6 +222,877 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h227_pool_headroom/test_h227.py",
 # Additional current-main exact-path exceptions retain their existing rationale
   # in the P5 and streaming evidence registers referenced above.
+  "research/flywheel_selfplay/h231_coswr_gated025_retest/analysis.py",
+  "research/flywheel_selfplay/h231_coswr_gated025_retest/gate.py",
+  "research/flywheel_selfplay/h231_coswr_gated025_retest/runner.py",
+  "crates/jope-bench/src/panel/inference.rs",
+  "crates/jope-bench/src/panel/inference_contract_tests/fixtures.rs",
+  "crates/jope-bench/src/panel/inference_contract_tests/runner.rs",
+  "crates/jope-records/tests/python_parity/negative.rs",
+  "crates/jope-engine/src/grammar.rs",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/pilot_publish_core.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/pilot_publish_core.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/pilot_publish_core.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/pilot_publish_core.py",
+  "deploy/dl-flywheel/pipelines/publication/pilot_publish_core.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/campaign_custody.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/campaign_custody.py",
+  "deploy/dl-flywheel/pipelines/programs/campaign_custody.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_io.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_io.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/protocol.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/protocol.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/protocol.py",
+  "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot_native.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_native.py",
+  "research/flywheel_selfplay/h189_swa_ema/h182_base.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/queue.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/queue.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/queue.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/objective.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evidence.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/borrowed/program_worker_original.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/program_worker.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
+  "research/flywheel_selfplay/h174_swag/runner.py",
+  "research/flywheel_selfplay/h232_lion/runner.py",
+  "research/flywheel_selfplay/h192_margin_gate/runner.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/target_noise.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/target_noise.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/target_noise.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/label_campaign.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/label_campaign.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/score_join.py",
+  "research/flywheel_selfplay/h211_gpu_delta_calibration/runner.py",
+  "research/flywheel_selfplay/h213_gpu_delta_sustained/runner.py",
+  "research/flywheel_selfplay/h215_pess_disagreement/runner.py",
+  "research/flywheel_selfplay/h219_fbal_accum_run/runner.py",
+  "research/flywheel_selfplay/h220_family_mixup/runner.py",
+  "research/flywheel_selfplay/h221_bagged_delta_head/runner.py",
+  "research/flywheel_selfplay/h228_family_invariant/runner.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/receipt_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/receipt_gate.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_io.py",
+  "research/flywheel_selfplay/h179_deep_ensemble/runner.py",
+  "research/flywheel_selfplay/h180_adapter_ablation/runner.py",
+  "research/flywheel_selfplay/h182_ensemble_size_dose/runner.py",
+  "research/flywheel_selfplay/h184_adapter_components/runner.py",
+  "research/flywheel_selfplay/h188_kernel_inputs/runner.py",
+  "research/flywheel_selfplay/h198_ttt/runner.py",
+  "research/flywheel_selfplay/h146_lookahead_exec/runner.py",
+  "research/flywheel_selfplay/h149_wd_dose/runner.py",
+  "research/flywheel_selfplay/h151_lookahead_drift_control/runner.py",
+  "research/flywheel_selfplay/h153_sam/runner.py",
+  "research/flywheel_selfplay/h158_distillation/runner.py",
+  "research/flywheel_selfplay/h164_sam_retry/runner.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/batch_stream.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/s3_library.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/s3_library.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/s3_library.py",
+  "research/flywheel_selfplay/h146_lookahead_exec/science.py",
+  "research/flywheel_selfplay/h149_wd_dose/science.py",
+  "research/flywheel_selfplay/h153_sam/science.py",
+  "research/flywheel_selfplay/h160_trajectory_subspace/analysis.py",
+  "research/flywheel_selfplay/h164_sam_retry/science.py",
+  "research/h148/analysis.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/readonly_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_transport.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_transport.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_transport.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_transport.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_semantics.py",
+  "deploy/dl-flywheel/pipelines/programs/staged_inputs.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_commit.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_commit.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_commit.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_commit.py",
+  "research/flywheel_selfplay/h199_blend025_native/runner.py",
+  "research/flywheel_selfplay/h200_nested_blend/runner.py",
+  "research/flywheel_selfplay/h203_blend025_gated/runner.py",
+  "research/flywheel_selfplay/h210_blend025_gated_retry/runner.py",
+  "research/flywheel_selfplay/h217_gated025_confirm/runner.py",
+  "research/flywheel_selfplay/h218_gated_lambda_nest/runner.py",
+  "research/flywheel_selfplay/h223_bagged_blend_gate/runner.py",
+  "research/flywheel_selfplay/h226_gated025_r3175/runner.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/staged_inputs.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_evaluate.py",
+  "research/flywheel_selfplay/h154_trajectory_ema_swa/runner.py",
+  "research/flywheel_selfplay/h161_robust_fambal/runner.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v4/native_corpus_authority.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_corpus_authority.py",
+  "deploy/dl-flywheel/pipelines/native/native_corpus_authority.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/verified_cache.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_failure.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/global_attempts.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_admission.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_queue.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_queue.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_queue.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/dsl_tokenizer.py",
+  "research/flywheel_selfplay/h167_input_noise/analysis.py",
+  "research/flywheel_selfplay/h169_optimizer_geometry/analysis.py",
+  "research/flywheel_selfplay/h170_onecycle/analysis.py",
+  "research/flywheel_selfplay/h171_grad_accum/analysis.py",
+  "research/flywheel_selfplay/h174_swag/analysis.py",
+  "research/flywheel_selfplay/h232_lion/analysis.py",
+  "research/flywheel_selfplay/h151_lookahead_drift_control/science.py",
+  "research/flywheel_selfplay/h229_pool_headroom_replication/runner.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_attempt3_controller.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_controller_v2.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/prepare.py",
+  "research/h166/monitor.py",
+  "deploy/dl-flywheel/tests_continuous/test_continuous_runner.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/sampler.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/authority_lease.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/authority_lease.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_contracts.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_contracts.py",
+  "research/flywheel_selfplay/h199_blend025_native/monitor.py",
+  "research/flywheel_selfplay/h200_nested_blend/monitor.py",
+  "research/flywheel_selfplay/h203_blend025_gated/monitor.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_inputs.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_build.py",
+  "research/flywheel_selfplay/h169_optimizer_geometry/runner.py",
+  "research/flywheel_selfplay/h170_onecycle/runner.py",
+  "deploy/dl-flywheel/pipelines/native/neural_native_batch.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/historical_custody.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_custody.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/timing.py",
+  "research/flywheel_selfplay/h151_lookahead_drift_control/monitor.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/execution_boundary.py",
+  "research/flywheel_selfplay/h210_blend025_gated_retry/analysis.py",
+  "research/flywheel_selfplay/h217_gated025_confirm/analysis.py",
+  "research/flywheel_selfplay/h218_gated_lambda_nest/analysis.py",
+  "research/flywheel_selfplay/h223_bagged_blend_gate/analysis.py",
+  "research/flywheel_selfplay/h224_learned_switch_gate/analysis.py",
+  "research/flywheel_selfplay/h226_gated025_r3175/analysis.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_queue.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/transport.py",
+  "research/flywheel_selfplay/h189_swa_ema/h182_source_treatment.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/executor.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/callbacks.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/callbacks.py",
+  "research/flywheel_selfplay/h211_gpu_delta_calibration/science.py",
+  "research/flywheel_selfplay/h213_gpu_delta_sustained/science.py",
+  "research/flywheel_selfplay/h221_bagged_delta_head/science.py",
+  "research/flywheel_selfplay/h179_deep_ensemble/treatment.py",
+  "deploy/dl-flywheel/pipelines/native/neural_native_train.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/global_attempts.py",
+  "research/flywheel_selfplay/h220_family_mixup/test_h220.py",
+  "research/flywheel_selfplay/h228_family_invariant/test_h228.py",
+  "deploy/dl-flywheel/pipelines/native/neural_decode.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/native_variant_snapshot.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_controller.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_controller.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_controller.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/durable.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/cli.py",
+  "research/flywheel_selfplay/h219_fbal_accum_run/test_h219.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v4/verified_cache.py",
+  "deploy/dl-flywheel/pipelines/prepared/verified_cache.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/common.py",
+  "research/flywheel_selfplay/h220_family_mixup/launch.py",
+  "research/flywheel_selfplay/h211_gpu_delta_calibration/test_h211.py",
+  "research/flywheel_selfplay/h213_gpu_delta_sustained/test_h213.py",
+  "research/flywheel_selfplay/h221_bagged_delta_head/test_h221.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_controller.py",
+  "deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/export_verified.py",
+  "research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py",
+  "research/flywheel_selfplay/h173_hard_context_reweight/monitor.py",
+  "deploy/lambda/training/teacher-v2/rust/proposal-engine/src/main.rs",
+  "deploy/lambda/csv/versions/rust-v1/main.rs",
+  "deploy/dl-flywheel/pipelines/programs/authority.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/history_collect.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/resources.py",
+  "deploy/dl-flywheel/pipelines/native/neural_storage.py",
+  "research/flywheel_selfplay/h211_gpu_delta_calibration/launch.py",
+  "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/role_authority.py",
+  "research/h162/analysis.py",
+  "research/flywheel_selfplay/h194_invalid_margin/runner.py",
+  "research/flywheel_selfplay/h190_ens10_indep_folds/runner.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_runtime.py",
+  "research/flywheel_selfplay/h229_pool_headroom_replication/analysis.py",
+  "research/flywheel_selfplay/h177_pooled_selector/treatment.py",
+  "research/flywheel_selfplay/h198_ttt/s3_arrays.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/provenance/attempt1-fixtures/tests_semantics.py",
+  "research/flywheel_selfplay/h186_kernel_sweep/test_h186.py",
+  "research/flywheel_selfplay/h173_hard_context_reweight/runner.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations_launch.py",
+  "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/broker.py",
+  "deploy/dl-flywheel/pipelines/prepared/continuous_runner.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/__init__.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/__init__.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/__init__.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/__init__.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/__init__.py",
+  "deploy/dl-flywheel/pipelines/final_capture_v1/__init__.py",
+  "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/__init__.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/__init__.py",
+  "python/legacy/fable_god/python/__init__.py",
+  "python/src/jope/encoders/__init__.py",
+  "tools/ops/_diskd_test_parts/__init__.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/__init__.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/__init__.py",
+  "deploy/dl-flywheel/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/jope_flywheel/evergreen_expansion.py",
+  "deploy/dl-flywheel/jope_flywheel/evergreen_recipes.py",
+  "deploy/dl-flywheel/jope_flywheel/evergreen_source.py",
+  "deploy/dl-flywheel/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/jope_flywheel/s3_library.py",
+  "deploy/dl-flywheel/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/jope_flywheel/timing.py",
+  "deploy/dl-flywheel/jope_flywheel/training_admission.py",
+  "deploy/dl-flywheel/jope_flywheel/training_snapshot_native.py",
+  "deploy/dl-flywheel/jope_flywheel/verified_cache.py",
+  "deploy/dl-flywheel/operations/evergreen_deploy.py",
+  "deploy/dl-flywheel/pipelines/admission/flywheel_training_admission.py",
+  "deploy/dl-flywheel/pipelines/archive/neural_paper_archive.py",
+  "deploy/dl-flywheel/pipelines/archive/neural_paper_continuation_archive.py",
+  "deploy/dl-flywheel/pipelines/boundary_admission_v2/__init__.py",
+  "deploy/dl-flywheel/pipelines/continuous/native_corpus_authority.py",
+  "deploy/dl-flywheel/pipelines/continuous/neural_native_stream.py",
+  "deploy/dl-flywheel/pipelines/continuous/neural_storage.py",
+  "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/timing.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/cli_v6.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py",
+  "deploy/dl-flywheel/pipelines/encoding/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_controller.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_queue.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_transport.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/pilot_publish_core.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/prepare_config.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/provenance/production2a_worker_cedc828f.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/build_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/read_selection.py",
+  "deploy/dl-flywheel/pipelines/encoding/pilot_ofm_encode.py",
+  "deploy/dl-flywheel/pipelines/final_capture_v1/capture.py",
+  "deploy/dl-flywheel/pipelines/final_capture_v1/run_offline.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/borrowed/program_worker_original.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/campaign_custody.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/common.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/staged_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/test_operational.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/permanent_broker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/staged_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/staged_inputs.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_attempt2_controller.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/selected_qualification_controller_v1_held.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/readonly_io.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/run_offline.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_semantics.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/readonly_io.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/run_offline.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_semantics.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/run_offline.py",
+  "deploy/dl-flywheel/pipelines/growth/growth_pipeline.py",
+  "deploy/dl-flywheel/pipelines/hpc/archive_trace.py",
+  "deploy/dl-flywheel/pipelines/hpc/cache_ab.py",
+  "deploy/dl-flywheel/pipelines/hpc/host_trace.py",
+  "deploy/dl-flywheel/pipelines/hpc/native_dispatch.py",
+  "deploy/dl-flywheel/pipelines/hpc/native_evaluate.py",
+  "deploy/dl-flywheel/pipelines/hpc/native_inputs_core.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v4/native_dispatch.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v4/native_evaluate.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/timing.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_dispatch.py",
+  "deploy/dl-flywheel/pipelines/native/neural_native_cli.py",
+  "deploy/dl-flywheel/pipelines/native/neural_native_stream.py",
+  "deploy/dl-flywheel/pipelines/neural/campaign_custody.py",
+  "deploy/dl-flywheel/pipelines/neural/flywheel_kumos_snapshot.py",
+  "deploy/dl-flywheel/pipelines/neural/neural_cli.py",
+  "deploy/dl-flywheel/pipelines/neural/neural_core.py",
+  "deploy/dl-flywheel/pipelines/neural/neural_gpu_preflight.py",
+  "deploy/dl-flywheel/pipelines/neural/neural_resume.py",
+  "deploy/dl-flywheel/pipelines/prepared/archive_worker.py",
+  "deploy/dl-flywheel/pipelines/prepared/exact_artifact_cache.py",
+  "deploy/dl-flywheel/pipelines/prepared/prepared_snapshot.py",
+  "deploy/dl-flywheel/pipelines/prepared/prepared_worker.py",
+  "deploy/dl-flywheel/pipelines/programs/label_campaign_cli.py",
+  "deploy/dl-flywheel/pipelines/publication/evergreen_packet_publish.py",
+  "deploy/dl-flywheel/pipelines/rl_spec_audit/audit_math.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/scratch.py",
+  "deploy/dl-flywheel/pipelines/telemetry/trace_archive.py",
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
+  "deploy/dl-flywheel/tests_hpc/test_verified_cache.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/authority_lease.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/execution_boundary.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/executor.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/global_attempts.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/label_campaign.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/prepare.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/receipt_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/protocol.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/queue.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/s3_library.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/target_noise.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/transport.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/callbacks.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_io.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/paper_archive.py",
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py",
+  "research/flywheel_selfplay/h144_reg_sweep/runner.py",
+  "research/flywheel_selfplay/h144_reg_sweep/science.py",
+  "research/flywheel_selfplay/h176_data_scaling/runner.py",
+  "research/flywheel_selfplay/h209_gpu_delta_calibration/runner.py",
+  # BEGIN EVEXCL t2320 managed exact-path entries
+  "crates/feat-math/src/emit_py.rs",
+  "crates/feat-math/src/emit_rs.rs",
+  "crates/feat-math/src/evolve.rs",
+  "crates/feat-math/src/full_rust.rs",
+  "crates/feat-math/src/gpr.rs",
+  "crates/feat-math/src/heads.rs",
+  "crates/feat-math/src/kernel/lexicase.rs",
+  "crates/feat-math/src/math_expr/evolution/v2/refinement/lm.rs",
+  "crates/feat-math/src/portfolio.rs",
+  "crates/feat-math/src/registry.rs",
+  "crates/feat-math/src/router_policy.rs",
+  "crates/feat-math/src/tokens.rs",
+  "crates/feat-math/src/transpile.rs",
+  "crates/feat-math/tests/golden.rs",
+  "crates/jope-automl/src/Gemini4_argon_high.rs",
+  "crates/jope-bench/regressors/Opus5p5_Extra.rs",
+  "crates/jope-bench/src/panel/demo.rs",
+  "crates/jope-campaigns/src/campaign_evaluator.rs",
+  "crates/jope-campaigns/src/commands/exact_cv.rs",
+  "crates/jope-campaigns/src/encoder_v2_identity.rs",
+  "crates/jope-campaigns/src/four_task.rs",
+  "crates/jope-engine/src/gp/selection_replay.rs",
+  "crates/jope-engine/src/native_graph.rs",
+  "crates/jope-engine/src/teaching_store.rs",
+  "crates/jope-engine/tests/objective_fixtures.rs",
+  "deploy/dl-flywheel/dashboard/collect.py",
+  "deploy/dl-flywheel/dashboard/flywheel.js",
+  "deploy/dl-flywheel/dashboard/paper_publish_v33.py",
+  "deploy/dl-flywheel/dashboard/paper_publish_v34.py",
+  "deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py",
+  "deploy/dl-flywheel/jope_flywheel/queue.py",
+  "deploy/dl-flywheel/jope_flywheel/training_snapshot_core.py",
+  "deploy/dl-flywheel/jope_flywheel/training_snapshot_kumos.py",
+  "deploy/dl-flywheel/pipelines/archive/paper_backup_core.py",
+  "deploy/dl-flywheel/pipelines/boundary_admission_v2/boundary.py",
+  "deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py",
+  "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/dsl_tokenizer.py",
+  "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/objective.py",
+  "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/sampler.py",
+  "deploy/dl-flywheel/pipelines/continuous/continuous_cli.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/runner_v6.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/tests/test_kl_guard.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/tests/test_r2_custody.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/run_next128.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/broker_history.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/test_fresh128.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/validation.json",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/protocol-review.json",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/evergreen.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/evergreen.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/evergreen.py",
+  "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/preparation.py",
+  "deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_preparation.py",
+  "deploy/dl-flywheel/pipelines/hpc_pool_v1/operations_pool.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v4/native_failure.py",
+  "deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py",
+  "deploy/dl-flywheel/pipelines/native_result_overlay_v1/packet.py",
+  "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_durability.py",
+  "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/test_overlay.py",
+  "deploy/dl-flywheel/pipelines/prepared/baseline_runner.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/baseline.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/build.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/build_scratch.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/context_costs.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_baseline.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_context_costs.py",
+  "deploy/dl-flywheel/pipelines/rlfw/kv_decode.py",
+  "deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py",
+  "deploy/dl-flywheel/pipelines/rlfw/onpolicy/tests/test_autograd.py",
+  "deploy/dl-flywheel/pipelines/rlfw/policy_binding.py",
+  "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_train_v7.py",
+  "deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_lifecycle.py",
+  "deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_score_cache.py",
+  "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/preflight.py",
+  "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/test_preflight.py",
+  "deploy/dl-flywheel/pipelines/variants/variant_dispatch.py",
+  "deploy/dl-flywheel/tests/test_evidence.py",
+  "deploy/dl-flywheel/tests/test_program_bridge.py",
+  "deploy/dl-flywheel/tests/test_training_snapshot.py",
+  "deploy/dl-flywheel/tests/test_training_snapshot_kumos.py",
+  "deploy/dl-flywheel/tests_native/test_neural_native_batch.py",
+  "deploy/dl-trainonly/lane/historical/test_p8_gpu_gate.py.988f37ef0fa93a32b86c74f0a636844aa00065dcdbce73800a77ae18ab832194",
+  "deploy/dl-trainonly/lane/historical/test_s1_tail.py.75b0d6cec156857e16d130a695d07540a773ea30540492d1d28d742266810a79",
+  "deploy/dl-trainonly/lane/historical/test_target_linear.py.288ad91dbfe7a712a89477645d92df01e13d25675449d8f50b5b92cf74ca2c2f",
+  "deploy/dl-trainonly/lane/historical/test_v2_provenance.py.32c8da6f92cd9dacc05ac8d2ec69eeed216909fab474aa6654043a6d9005fb29",
+  "deploy/dl-trainonly/lane/historical/test_v2_provenance.py.672aeb154b2da3c41207c1f6c3448e603d2c73dd8e6b9fd1d30c68e15cb98196",
+  "deploy/dl-trainonly/lane/historical/test_v2_provenance.py.b0c6c42591fc4821bf6e1ab69eefe7e392215a56cfd513c72807acaeb4c7a803",
+  "deploy/dl-trainonly/lane/historical/test_v2_provenance.py.cd41e84fda25154cd5d51ae729ef83c511bac40d15d8a6cd1b0168aeb8c4dbe4",
+  "deploy/dl-trainonly/lane/historical/test_v2_rowsel_build_fallback.py.78c65a10c36cc9eff7a104b4493cae1421462f06c5f3a32f71c2c07eb4d229a6",
+  "deploy/dl-trainonly/lane/historical/test_v2_rowsel_build_fallback.py.92bd41b0d2949893080b8607b7a8e1b84eb78ca233fad08a44c6bfbce111cc2f",
+  "deploy/dl-trainonly/lane/historical/test_v2_rowsel_build_fallback.py.b19c8dd794d6e1bfa34cba5c22154de51b975cb425c54e0a1c2018bc7fa222bf",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/automaton.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/ckpt.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/corpus_build.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/corpus_schema.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/epoch.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/families.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/family_keys.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/family_pin.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/family_screen.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/live.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/normalizers.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/oracle.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/programs.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/rowsel.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/rowsel_raw.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/s3io.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/scale_check.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/t1raw.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/restore/test_p7_restore.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_live.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_model_objective.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_p7_sampler.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_payload_strip.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_s3io.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_t1raw.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_target_linear.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_nonraw_split_v2.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fallback.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_split_v2g.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_raw.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/fixtures_dl_d5.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_check.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_mapping.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_parser.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_refusals.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_dl_d5/test_d5_unpromotable.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_families.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_keys.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_screen.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_review_fixes.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/__init__.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/fixtures_p3.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_commit_publish.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_interface.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_automaton.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_oracle.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_programs.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p4/test_tokenizer.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/fixtures_p5.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_build.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_hygiene.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_schema.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_metafeatures.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_normalizers.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_review_findings.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_check.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/p2_decisions.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/source_receipts.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_l7a.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_dope_run.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_g3_append_build.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_gpu_encode.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_publish.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_manifest.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_strip_outer_test.py",
+  "deploy/dl-trainonly/research/dlhwm/flatstats/ta_common.py",
+  "deploy/lambda/csv/rust/src/batch.rs",
+  "deploy/lambda/csv/rust/src/gp_diagnose.rs",
+  "deploy/lambda/csv/rust/src/gp_v1.rs",
+  "deploy/lambda/csv/rust/src/gp_v1_pre_archive.rs",
+  "deploy/lambda/csv/rust/src/gp_v2_pre_archive.rs",
+  "deploy/lambda/csv/rust/src/main.rs",
+  "deploy/lambda/regression/rust/src/main.rs",
+  "deploy/lambda/training/teacher-v2/qualify_s1.py",
+  "deploy/lambda/training/teacher-v2/rust/island-engine/src/main.rs",
+  "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs",
+  "deploy/lambda/watch/src/model.rs",
+  "deploy/qualification/agents/transcripts/20261031T015221Z/claude-code.client.jsonl",
+  "deploy/qualification/agents/transcripts/20261031T015221Z/claude-code.command.json",
+  "deploy/qualification/agents/transcripts/20261031T015221Z/codex-cli.command.json",
+  "deploy/qualification/q1/cut_manifests/fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987.json",
+  "deploy/qualification/q1/harness/q1.py",
+  "python/legacy/fable_god/provenance/regressor_source/starlight_core_regressor_train.py",
+  "python/src/jope/cli.py",
+  "python/src/jope/policy/train_v3.py",
+  "python/src/jope/propose.py",
+  "research/flywheel_selfplay/custody/MANIFEST.json",
+  "research/flywheel_selfplay/dataset_builder.py",
+  "research/flywheel_selfplay/h160_trajectory_subspace/run.py",
+  "research/flywheel_selfplay/h163_prediction_ensemble/monitor.py",
+  "research/flywheel_selfplay/h163_prediction_ensemble/run.py",
+  "research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py",
+  "research/flywheel_selfplay/h165_gradient_noise_dropout/runner.py",
+  "research/flywheel_selfplay/h167_input_noise/runner.py",
+  "research/flywheel_selfplay/h168_selector_remedy/monitor.py",
+  "research/flywheel_selfplay/h168_selector_remedy/runner.py",
+  "research/flywheel_selfplay/h168_selector_remedy/science.py",
+  "research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py",
+  "research/flywheel_selfplay/h171_grad_accum/runner.py",
+  "research/flywheel_selfplay/h171_grad_accum/test_h171.py",
+  "research/flywheel_selfplay/h173_hard_context_reweight/science.py",
+  "research/flywheel_selfplay/h175_selector_power/power.py",
+  "research/flywheel_selfplay/h177_pooled_selector/runner.py",
+  "research/flywheel_selfplay/h177_pooled_selector/test_h177.py",
+  "research/flywheel_selfplay/h181_covariate_selector/test_h181.py",
+  "research/flywheel_selfplay/h184_adapter_components/test_h184.py",
+  "research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py",
+  "research/flywheel_selfplay/h196_tta/test_custody.py",
+  "research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py",
+  "research/flywheel_selfplay/h206_search_distill/test_h206.py",
+  "research/flywheel_selfplay/h212_pool_width/runner.py",
+  "research/flywheel_selfplay/h222_lipschitz_adapter/launcher.py",
+  "research/flywheel_selfplay/h224_learned_switch_gate/monitor.py",
+  "research/flywheel_selfplay/h225_multistep_regret/monitor.py",
+  "research/flywheel_selfplay/h228_family_invariant/launch.py",
+  "research/flywheel_selfplay/h230_coswr_gated025_stack/monitor.py",
+  "research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py",
+  "research/flywheel_selfplay/h232_lion/treatment.py",
+  "research/flywheel_selfplay/h234_lambdaloss/analysis.py",
+  "research/flywheel_selfplay/h234_lambdaloss/monitor.py",
+  "research/flywheel_selfplay/h234_lambdaloss/runner.py",
+  "research/flywheel_selfplay/h234_lambdaloss/test_h234.py",
+  "research/flywheel_selfplay/h234_lambdaloss/treatment.py",
+  "research/flywheel_selfplay/h235_betanll/analysis.py",
+  "research/flywheel_selfplay/h235_betanll/monitor.py",
+  "research/flywheel_selfplay/h235_betanll/runner.py",
+  "research/flywheel_selfplay/h235_betanll/test_h235.py",
+  "research/flywheel_selfplay/h235_betanll/treatment.py",
+  "research/flywheel_selfplay/h236_sfadamw/analysis.py",
+  "research/flywheel_selfplay/h236_sfadamw/monitor.py",
+  "research/flywheel_selfplay/h236_sfadamw/runner.py",
+  "research/flywheel_selfplay/h236_sfadamw/test_h236.py",
+  "research/flywheel_selfplay/h236_sfadamw/treatment.py",
+  "research/flywheel_selfplay/h237_adabelief/analysis.py",
+  "research/flywheel_selfplay/h237_adabelief/monitor.py",
+  "research/flywheel_selfplay/h237_adabelief/runner.py",
+  "research/flywheel_selfplay/h237_adabelief/test_h237.py",
+  "research/flywheel_selfplay/h237_adabelief/treatment.py",
+  "research/flywheel_selfplay/h238_lowlr/analysis.py",
+  "research/flywheel_selfplay/h238_lowlr/monitor.py",
+  "research/flywheel_selfplay/h238_lowlr/runner.py",
+  "research/flywheel_selfplay/h238_lowlr/test_h238.py",
+  "research/flywheel_selfplay/h238_lowlr/treatment.py",
+  "research/flywheel_selfplay/h239_subset/analysis.py",
+  "research/flywheel_selfplay/h239_subset/monitor.py",
+  "research/flywheel_selfplay/h239_subset/runner.py",
+  "research/flywheel_selfplay/h239_subset/test_h239.py",
+  "research/flywheel_selfplay/h239_subset/treatment.py",
+  "research/flywheel_selfplay/h240_lowlr/analysis.py",
+  "research/flywheel_selfplay/h240_lowlr/launcher.py",
+  "research/flywheel_selfplay/h240_lowlr/monitor.py",
+  "research/flywheel_selfplay/h240_lowlr/runner.py",
+  "research/flywheel_selfplay/h240_lowlr/test_h240.py",
+  "research/flywheel_selfplay/h240_lowlr/treatment.py",
+  "research/flywheel_selfplay/h241_expo/analysis.py",
+  "research/flywheel_selfplay/h241_expo/expo.py",
+  "research/flywheel_selfplay/h241_expo/monitor.py",
+  "research/flywheel_selfplay/h241_expo/runner.py",
+  "research/flywheel_selfplay/h241_expo/test_h241.py",
+  "research/flywheel_selfplay/h242_laser/analysis.py",
+  "research/flywheel_selfplay/h242_laser/monitor.py",
+  "research/flywheel_selfplay/h242_laser/runner.py",
+  "research/flywheel_selfplay/h242_laser/spectral.py",
+  "research/flywheel_selfplay/h242_laser/test_h242.py",
+  "research/flywheel_selfplay/h243_modsoup/analysis.py",
+  "research/flywheel_selfplay/h243_modsoup/monitor.py",
+  "research/flywheel_selfplay/h243_modsoup/runner.py",
+  "research/flywheel_selfplay/h243_modsoup/soup.py",
+  "research/flywheel_selfplay/h243_modsoup/test_h243.py",
+  "research/flywheel_selfplay/h244_wsmooth/analysis.py",
+  "research/flywheel_selfplay/h244_wsmooth/monitor.py",
+  "research/flywheel_selfplay/h244_wsmooth/runner.py",
+  "research/flywheel_selfplay/h244_wsmooth/smoothing.py",
+  "research/flywheel_selfplay/h244_wsmooth/test_h244.py",
+  "research/flywheel_selfplay/h245_gated_lambda_nest/analysis.py",
+  "research/flywheel_selfplay/h245_gated_lambda_nest/launcher.py",
+  "research/flywheel_selfplay/h245_gated_lambda_nest/monitor.py",
+  "research/flywheel_selfplay/h245_gated_lambda_nest/runner.py",
+  "research/flywheel_selfplay/h245_gated_lambda_nest/shared.py",
+  "research/flywheel_selfplay/h245_gated_lambda_nest/test_h245.py",
+  "research/flywheel_selfplay/h246_stable_g025_rerun/analysis.py",
+  "research/flywheel_selfplay/h246_stable_g025_rerun/monitor.py",
+  "research/flywheel_selfplay/h246_stable_g025_rerun/runner.py",
+  "research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py",
+  "research/flywheel_selfplay/h247_muon_grokfast/analysis.py",
+  "research/flywheel_selfplay/h247_muon_grokfast/monitor.py",
+  "research/flywheel_selfplay/h247_muon_grokfast/runner.py",
+  "research/flywheel_selfplay/h247_muon_grokfast/test_h247.py",
+  "research/flywheel_selfplay/h247_muon_grokfast/treatment.py",
+  "research/flywheel_selfplay/h248_dfl/analysis.py",
+  "research/flywheel_selfplay/h248_dfl/calibrate.py",
+  "research/flywheel_selfplay/h248_dfl/monitor.py",
+  "research/flywheel_selfplay/h248_dfl/runner.py",
+  "research/flywheel_selfplay/h248_dfl/test_h248.py",
+  "research/flywheel_selfplay/h248_dfl/treatment.py",
+  "research/flywheel_selfplay/h249_side_branch/analysis.py",
+  "research/flywheel_selfplay/h249_side_branch/monitor.py",
+  "research/flywheel_selfplay/h249_side_branch/runner.py",
+  "research/flywheel_selfplay/h249_side_branch/test_h249.py",
+  "research/flywheel_selfplay/h249_side_branch/treatment.py",
+  "research/flywheel_selfplay/h250_ctxz/analysis.py",
+  "research/flywheel_selfplay/h250_ctxz/calibrate.py",
+  "research/flywheel_selfplay/h250_ctxz/monitor.py",
+  "research/flywheel_selfplay/h250_ctxz/runner.py",
+  "research/flywheel_selfplay/h250_ctxz/test_h250.py",
+  "research/flywheel_selfplay/h250_ctxz/treatment.py",
+  "research/flywheel_selfplay/h251_reptile/analysis.py",
+  "research/flywheel_selfplay/h251_reptile/monitor.py",
+  "research/flywheel_selfplay/h251_reptile/runner.py",
+  "research/flywheel_selfplay/h251_reptile/test_h251.py",
+  "research/flywheel_selfplay/h251_reptile/treatment.py",
+  "research/flywheel_selfplay/h55/run_wave.py",
+  "research/flywheel_selfplay/h58/runner.py",
+  "research/flywheel_selfplay/h61/run_wave.py",
+  "research/flywheel_selfplay/publish_phase7_addendum_v2.py",
+  "research/flywheel_selfplay/publish_phase7_addendum_v3.py",
+  "research/flywheel_selfplay/publish_phase7_addendum_v4.py",
+  "research/flywheel_selfplay/rd_breakthrough/w5_provenance/verify.py",
+  "research/flywheel_selfplay/research_restore_20261101/history/research-history-index.json",
+  "research/flywheel_selfplay/rust_evaluator.py",
+  "research/flywheel_selfplay/s3_persistence.py",
+  "research/flywheel_selfplay/selfplay_loop.py",
+  "research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py",
+  "research/h148/run.py",
+  "research/h156/analysis.py",
+  "research/h156/monitor.py",
+  "research/h156/run.py",
+  "research/h162/run.py",
+  "research/h166/analysis.py",
+  "research/h166/run.py",
+  "research/mcp-spike/rmcp3/src/main.rs",
+  "vendor/security/candle-core-0.11.0/src/backprop.rs",
+  "vendor/security/candle-core-0.11.0/src/cpu_backend/mod.rs",
+  "vendor/security/candle-core-0.11.0/src/cuda_backend/device.rs",
+  "vendor/security/candle-core-0.11.0/src/cuda_backend/mod.rs",
+  "vendor/security/candle-core-0.11.0/src/device.rs",
+  "vendor/security/candle-core-0.11.0/src/display.rs",
+  "vendor/security/candle-core-0.11.0/src/metal_backend/mod.rs",
+  "vendor/security/candle-core-0.11.0/src/op.rs",
+  "vendor/security/candle-core-0.11.0/src/pickle.rs",
+  "vendor/security/candle-core-0.11.0/src/quantized/avx.rs",
+  "vendor/security/candle-core-0.11.0/src/quantized/cuda.rs",
+  "vendor/security/candle-core-0.11.0/src/quantized/gguf_file.rs",
+  "vendor/security/candle-core-0.11.0/src/quantized/k_quants.rs",
+  "vendor/security/candle-core-0.11.0/src/quantized/metal.rs",
+  "vendor/security/candle-core-0.11.0/src/quantized/mod.rs",
+  "vendor/security/candle-core-0.11.0/src/quantized/neon.rs",
+  "vendor/security/candle-core-0.11.0/src/quantized/utils.rs",
+  "vendor/security/candle-core-0.11.0/src/safetensors.rs",
+  "vendor/security/candle-core-0.11.0/src/shape.rs",
+  "vendor/security/candle-core-0.11.0/src/storage.rs",
+  "vendor/security/candle-core-0.11.0/src/tensor.rs",
+  "vendor/security/candle-core-0.11.0/tests/bilinear_tests.rs",
+  "vendor/security/candle-core-0.11.0/tests/conv_tests.rs",
+  "vendor/security/candle-core-0.11.0/tests/grad_tests.rs",
+  "vendor/security/candle-core-0.11.0/tests/quantized_tests.rs",
+  "vendor/security/candle-core-0.11.0/tests/tensor_tests.rs",
+  "vendor/security/crossterm-0.28.1/src/cursor.rs",
+  "vendor/security/crossterm-0.28.1/src/event.rs",
+  "vendor/security/crossterm-0.28.1/src/event/sys/unix/parse.rs",
+  "vendor/security/crossterm-0.28.1/src/style.rs",
+  "vendor/security/crossterm-0.28.1/src/style/types/color.rs",
+  "vendor/security/crossterm-0.28.1/src/terminal.rs",
+  "vendor/security/gemm-0.18.2/src/lib.rs",
+  "vendor/security/gemm-0.19.0/src/lib.rs",
+  "vendor/security/gemm-c32-0.18.2/src/microkernel.rs",
+  "vendor/security/gemm-c32-0.19.0/src/microkernel.rs",
+  "vendor/security/gemm-c64-0.18.2/src/microkernel.rs",
+  "vendor/security/gemm-c64-0.19.0/src/microkernel.rs",
+  "vendor/security/gemm-common-0.18.2/src/cache.rs",
+  "vendor/security/gemm-common-0.18.2/src/gemm.rs",
+  "vendor/security/gemm-common-0.18.2/src/gemv.rs",
+  "vendor/security/gemm-common-0.18.2/src/microkernel.rs",
+  "vendor/security/gemm-common-0.18.2/src/simd.rs",
+  "vendor/security/gemm-common-0.19.0/src/cache.rs",
+  "vendor/security/gemm-common-0.19.0/src/gemm.rs",
+  "vendor/security/gemm-common-0.19.0/src/gemv.rs",
+  "vendor/security/gemm-common-0.19.0/src/microkernel.rs",
+  "vendor/security/gemm-common-0.19.0/src/simd.rs",
+  "vendor/security/gemm-f16-0.18.2/src/gemm.rs",
+  "vendor/security/gemm-f16-0.19.0/src/gemm.rs",
+  "vendor/security/gemm-f32-0.18.2/src/microkernel.rs",
+  "vendor/security/gemm-f32-0.19.0/src/microkernel.rs",
+  "vendor/security/gemm-f64-0.18.2/src/microkernel.rs",
+  "vendor/security/gemm-f64-0.19.0/src/microkernel.rs",
+  "vendor/security/pulp-0.22.3/benches/bench.rs",
+  "vendor/security/pulp-0.22.3/examples/dot_product.rs",
+  "vendor/security/pulp-0.22.3/src/aarch64.rs",
+  "vendor/security/pulp-0.22.3/src/core_arch/aarch64/mod.rs",
+  "vendor/security/pulp-0.22.3/src/core_arch/x86/avx512bw.rs",
+  "vendor/security/pulp-0.22.3/src/core_arch/x86/avx512dq.rs",
+  "vendor/security/pulp-0.22.3/src/core_arch/x86/avx512f.rs",
+  "vendor/security/pulp-0.22.3/src/lib.rs",
+  "vendor/security/pulp-0.22.3/src/wasm.rs",
+  "vendor/security/pulp-0.22.3/src/x86.rs",
+  "vendor/security/pulp-0.22.3/src/x86/v1.rs",
+  "vendor/security/pulp-0.22.3/src/x86/v2.rs",
+  "vendor/security/pulp-0.22.3/src/x86/v3.rs",
+  "vendor/security/pulp-0.22.3/src/x86/v4.rs",
+  "vendor/security/ratatui-0.29.0/examples/constraint-explorer.rs",
+  "vendor/security/ratatui-0.29.0/examples/flex.rs",
+  "vendor/security/ratatui-0.29.0/src/backend/crossterm.rs",
+  "vendor/security/ratatui-0.29.0/src/backend/termion.rs",
+  "vendor/security/ratatui-0.29.0/src/backend/termwiz.rs",
+  "vendor/security/ratatui-0.29.0/src/backend/test.rs",
+  "vendor/security/ratatui-0.29.0/src/buffer/buffer.rs",
+  "vendor/security/ratatui-0.29.0/src/layout/layout.rs",
+  "vendor/security/ratatui-0.29.0/src/layout/rect.rs",
+  "vendor/security/ratatui-0.29.0/src/style.rs",
+  "vendor/security/ratatui-0.29.0/src/style/color.rs",
+  "vendor/security/ratatui-0.29.0/src/style/palette/material.rs",
+  "vendor/security/ratatui-0.29.0/src/style/palette/tailwind.rs",
+  "vendor/security/ratatui-0.29.0/src/style/stylize.rs",
+  "vendor/security/ratatui-0.29.0/src/symbols/border.rs",
+  "vendor/security/ratatui-0.29.0/src/terminal/terminal.rs",
+  "vendor/security/ratatui-0.29.0/src/text/line.rs",
+  "vendor/security/ratatui-0.29.0/src/text/span.rs",
+  "vendor/security/ratatui-0.29.0/src/text/text.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/barchart.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/block.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/canvas.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/canvas/world.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/chart.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/gauge.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/list/rendering.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/paragraph.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/reflow.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/scrollbar.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/sparkline.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/table/table.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/table/table_state.rs",
+  "vendor/security/ratatui-0.29.0/src/widgets/tabs.rs",
+  "vendor/security/ratatui-0.29.0/tests/widgets_chart.rs",
+  "vendor/security/ratatui-0.29.0/tests/widgets_table.rs",
+  "vendor/security/tch-0.26.0/examples/stable-diffusion/main.rs",
+  "vendor/security/tch-0.26.0/src/nn/var_store.rs",
+  "vendor/security/tch-0.26.0/src/vision/imagenet.rs",
+  "vendor/security/tch-0.26.0/src/vision/rust_image.rs",
+  "vendor/security/tch-0.26.0/src/wrappers/jit.rs",
+  "vendor/security/tch-0.26.0/src/wrappers/tensor.rs",
+  "vendor/security/tch-0.26.0/src/wrappers/tensor_fallible_generated.rs",
+  "vendor/security/tch-0.26.0/src/wrappers/tensor_generated.rs",
+  "vendor/security/tch-0.26.0/tests/tensor_tests.rs",
+  "vendor/security/tch-0.26.0/tests/var_store.rs",
+  "vendor/security/tokenizers-0.22.2/src/models/bpe/model.rs",
+  "vendor/security/tokenizers-0.22.2/src/models/bpe/trainer.rs",
+  "vendor/security/tokenizers-0.22.2/src/models/unigram/lattice.rs",
+  "vendor/security/tokenizers-0.22.2/src/models/unigram/model.rs",
+  "vendor/security/tokenizers-0.22.2/src/models/unigram/trainer.rs",
+  "vendor/security/tokenizers-0.22.2/src/pre_tokenizers/byte_level.rs",
+  "vendor/security/tokenizers-0.22.2/src/pre_tokenizers/unicode_scripts/scripts.rs",
+  "vendor/security/tokenizers-0.22.2/src/processors/template.rs",
+  "vendor/security/tokenizers-0.22.2/src/tokenizer/added_vocabulary.rs",
+  "vendor/security/tokenizers-0.22.2/src/tokenizer/encoding.rs",
+  "vendor/security/tokenizers-0.22.2/src/tokenizer/mod.rs",
+  "vendor/security/tokenizers-0.22.2/src/tokenizer/normalizer.rs",
+  "vendor/security/tokenizers-0.22.2/tests/documentation.rs",
+  "vendor/security/torch-sys-0.26.0/build.rs",
+  "vendor/security/torch-sys-0.26.0/libtch/torch_api.cpp",
+  "vendor/security/torch-sys-0.26.0/src/c_generated.rs",
+"research/flywheel_selfplay/h253_vrex_family_invariance/analysis.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/launcher.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/monitor.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/runner.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py",
+  "deploy/dl-flywheel/jope_flywheel/evidence.py",
+  "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py",
+  "deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/readonly_snapshot.py",
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/operational.py",
+  # END EVEXCL t2320 managed exact-path entries.
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
 
@@ -333,6 +1208,14 @@ owner = "ops"
 expires = "2027-02-01"
 reason = "HLT-001 sha256:f721d1bd0ddfef70ad394a991b174cb29a4ee513b2d69f7abd2ab7351bdf2e16 is a false positive: old/new name prior/candidate states in the append-only transition validator. Its 905-byte source hash fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30 is pinned by generated_target_admission_v1/SOURCE_PINS.json and deploy/dl-flywheel/SOURCE_MANIFEST.json. See docs/release/jankurai-t1900-transition-hlt001-exception-20261102.md."
 
+[[dead_language_allow]]
+name = "p3-registry-fixture-old"
+term = "old"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_registry.py"]
+owner = "dl-trainonly"
+expires = "2099-12-31"
+reason = "Byte-pinned P3 registry fixture tests retired-family ID rejection using literal key old (deploy/dl-trainonly/lane/MANIFEST.json)."
+
 # Paid/shared work is governed by docs/testing.md; this declares its preflight surface
 # so the auditor can validate the documented cost controls. No spend is approved here.
 [[cost_surface]]
@@ -390,14 +1273,9 @@ reason = "HLT-001 sha256:3740a6e00ade6e4fe9e0be004362168ebfb4ab21276cfcce8332337
 [[evidence_snapshot]]
 name = "dl-flywheel-pipelines-encoding-fresh32"
 paths = [
-  "deploy/dl-flywheel/pipelines/encoding/fresh32/evergreen_kumos_packet.py",
-  "deploy/dl-flywheel/pipelines/encoding/fresh32/evergreen_kumos_packet_authority.py",
-  "deploy/dl-flywheel/pipelines/encoding/fresh32/generic_worker_dfba7d52.py",
-  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_intake.py",
   "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_io.py",
   "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_publish.py",
   "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_timing.py",
-  "deploy/dl-flywheel/pipelines/encoding/fresh32/pilot_publish_core.py",
 ]
 pinned_by = [
   "deploy/dl-flywheel/pipelines/encoding/fresh32/config.template.json",
@@ -406,97 +1284,16 @@ owner = "dl-flywheel"
 reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/fresh32; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
 
 [[evidence_snapshot]]
-name = "dl-flywheel-pipelines-encoding-next128-packet0"
-paths = [
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet_authority.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/generic_worker_dfba7d52.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_intake.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_io.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_publish.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_timing.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/pilot_publish_core.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/config.template.json",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/next128/packet0; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "dl-flywheel-pipelines-encoding-next128-packet1"
-paths = [
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet_authority.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/generic_worker_dfba7d52.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_intake.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_io.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_publish.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_timing.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/pilot_publish_core.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/config.template.json",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/next128/packet1; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "dl-flywheel-pipelines-encoding-next128-packet2"
-paths = [
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet_authority.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/generic_worker_dfba7d52.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_intake.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_io.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_publish.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_timing.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/pilot_publish_core.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/config.template.json",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/next128/packet2; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "dl-flywheel-pipelines-encoding-next128-packet3"
-paths = [
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet_authority.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/generic_worker_dfba7d52.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_intake.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_io.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_publish.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_timing.py",
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/pilot_publish_core.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/config.template.json",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/next128/packet3; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
 name = "dl-flywheel-pipelines-fresh_gp_v2-revision2"
 paths = [
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/borrowed/program_worker_original.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/campaign_custody.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/label_campaign.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/native_global_guard.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/neural_outbox.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/receipt_gate.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/augmentation.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/evergreen.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_gate.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_inputs.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_io.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_observer.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_worker.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/protocol.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/queue.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/s3_library.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/score_join.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/target_noise.py",
 ]
 pinned_by = [
@@ -504,60 +1301,6 @@ pinned_by = [
 ]
 owner = "dl-flywheel"
 reason = "frozen evidence package deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2; SOURCE_PACKET.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "dl-flywheel-pipelines-fresh_gp_v2-revision3"
-paths = [
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/borrowed/program_worker_original.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/campaign_custody.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/label_campaign.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_global_guard.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/neural_outbox.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/receipt_gate.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/augmentation.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/evergreen.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_gate.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_inputs.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_io.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_observer.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_worker.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/protocol.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/queue.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/s3_library.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/score_join.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/target_noise.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/INDEPENDENT_REVIEW.json",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3; INDEPENDENT_REVIEW.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "dl-flywheel-pipelines-fresh_gp_v2-v1"
-paths = [
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/campaign_custody.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/label_campaign.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/program_worker.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/receipt_gate.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/augmentation.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/evergreen.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_gate.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_inputs.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_io.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_observer.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_worker.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/protocol.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/queue.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/s3_library.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/score_join.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/target_noise.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/packaged-offline-receipt.json",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/fresh_gp_v2/v1; provenance/packaged-offline-receipt.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
 
 [[evidence_snapshot]]
 name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision1-package"
@@ -572,58 +1315,9 @@ owner = "dl-flywheel"
 reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package; SOURCE_PINS.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
 
 [[evidence_snapshot]]
-name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision2-package"
-paths = [
-  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/bindings.py",
-  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/readonly_io.py",
-  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_io.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/SOURCE_PINS.json",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package; SOURCE_PINS.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision3-package"
-paths = [
-  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/bindings.py",
-  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/readonly_io.py",
-  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_io.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/SOURCE_PINS.json",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package; SOURCE_PINS.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
 name = "dl-flywheel-pipelines-hpc_verified_v5"
 paths = [
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/augmentation.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/batch_stream.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evidence.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/paper_archive.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_gate.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_inputs.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_io.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_observer.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_worker.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/protocol.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/queue.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/s3_library.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/score_join.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/target_noise.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/timing.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_admission.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_native.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/timing.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/verified_cache.py",
 ]
 pinned_by = [
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations.launch.template.json",
@@ -634,7 +1328,6 @@ reason = "frozen evidence package deploy/dl-flywheel/pipelines/hpc_verified_v5; 
 [[evidence_snapshot]]
 name = "dl-flywheel-pipelines-telemetry-trace_recovery_v2"
 paths = [
-  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
   "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py",
 ]
 pinned_by = [
@@ -642,18 +1335,6 @@ pinned_by = [
 ]
 owner = "dl-flywheel"
 reason = "frozen evidence package deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "dl-flywheel-pipelines-telemetry-trace_recovery_v3"
-paths = [
-  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
-  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py",
-]
-pinned_by = [
-  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/README.md",
-]
-owner = "dl-flywheel"
-reason = "frozen evidence package deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3; README.md records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
 
 [[evidence_snapshot]]
 name = "research-flywheel_selfplay-h144_reg_sweep"
@@ -668,88 +1349,6 @@ owner = "research"
 reason = "frozen evidence package research/flywheel_selfplay/h144_reg_sweep; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
 
 [[evidence_snapshot]]
-name = "research-flywheel_selfplay-h146_lookahead_exec"
-paths = [
-  "research/flywheel_selfplay/h146_lookahead_exec/runner.py",
-  "research/flywheel_selfplay/h146_lookahead_exec/science.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h146_lookahead_exec/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h146_lookahead_exec; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h149_wd_dose"
-paths = [
-  "research/flywheel_selfplay/h149_wd_dose/runner.py",
-  "research/flywheel_selfplay/h149_wd_dose/science.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h149_wd_dose/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h149_wd_dose; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h151_lookahead_drift_control"
-paths = [
-  "research/flywheel_selfplay/h151_lookahead_drift_control/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h151_lookahead_drift_control/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h151_lookahead_drift_control; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h153_sam"
-paths = [
-  "research/flywheel_selfplay/h153_sam/runner.py",
-  "research/flywheel_selfplay/h153_sam/science.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h153_sam/attempt.json",
-  "research/flywheel_selfplay/h153_sam/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h153_sam; attempt.json, manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h158_distillation"
-paths = [
-  "research/flywheel_selfplay/h158_distillation/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h158_distillation/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h158_distillation; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h160_trajectory_subspace"
-paths = [
-  "research/flywheel_selfplay/h160_trajectory_subspace/analysis.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h160_trajectory_subspace/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h160_trajectory_subspace; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h164_sam_retry"
-paths = [
-  "research/flywheel_selfplay/h164_sam_retry/runner.py",
-  "research/flywheel_selfplay/h164_sam_retry/science.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h164_sam_retry/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h164_sam_retry; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
 name = "research-flywheel_selfplay-h176_data_scaling"
 paths = [
   "research/flywheel_selfplay/h176_data_scaling/runner.py",
@@ -759,94 +1358,6 @@ pinned_by = [
 ]
 owner = "research"
 reason = "frozen evidence package research/flywheel_selfplay/h176_data_scaling; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h179_deep_ensemble"
-paths = [
-  "research/flywheel_selfplay/h179_deep_ensemble/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h179_deep_ensemble/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h179_deep_ensemble; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h180_adapter_ablation"
-paths = [
-  "research/flywheel_selfplay/h180_adapter_ablation/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h180_adapter_ablation/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h180_adapter_ablation; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h182_ensemble_size_dose"
-paths = [
-  "research/flywheel_selfplay/h182_ensemble_size_dose/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h182_ensemble_size_dose/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h182_ensemble_size_dose; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h184_adapter_components"
-paths = [
-  "research/flywheel_selfplay/h184_adapter_components/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h184_adapter_components/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h184_adapter_components; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h188_kernel_inputs"
-paths = [
-  "research/flywheel_selfplay/h188_kernel_inputs/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h188_kernel_inputs/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h188_kernel_inputs; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h189_swa_ema"
-paths = [
-  "research/flywheel_selfplay/h189_swa_ema/h182_base.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h189_swa_ema/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h189_swa_ema; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h192_margin_gate"
-paths = [
-  "research/flywheel_selfplay/h192_margin_gate/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h192_margin_gate/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h192_margin_gate; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h198_ttt"
-paths = [
-  "research/flywheel_selfplay/h198_ttt/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h198_ttt/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h198_ttt; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
 
 [[evidence_snapshot]]
 name = "research-flywheel_selfplay-h209_gpu_delta_calibration"
@@ -860,78 +1371,53 @@ owner = "research"
 reason = "frozen evidence package research/flywheel_selfplay/h209_gpu_delta_calibration; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
 
 [[evidence_snapshot]]
-name = "research-flywheel_selfplay-h211_gpu_delta_calibration"
+name = "fresh-gp-v2-revision2"
 paths = [
-  "research/flywheel_selfplay/h211_gpu_delta_calibration/runner.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/authority_lease.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/execution_boundary.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/executor.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/global_attempts.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/prepare.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/transport.py",
 ]
-pinned_by = [
-  "research/flywheel_selfplay/h211_gpu_delta_calibration/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h211_gpu_delta_calibration; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+pinned_by = ["deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/SOURCE_PACKET.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
 
 [[evidence_snapshot]]
-name = "research-flywheel_selfplay-h213_gpu_delta_sustained"
+name = "research-h165-gradient-noise-dropout-preregistered-sources"
 paths = [
-  "research/flywheel_selfplay/h213_gpu_delta_sustained/runner.py",
+  "research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py",
+  "research/flywheel_selfplay/h165_gradient_noise_dropout/runner.py",
 ]
-pinned_by = [
-  "research/flywheel_selfplay/h213_gpu_delta_sustained/manifest.json",
-]
+pinned_by = ["research/flywheel_selfplay/h234_lambdaloss/manifest.json"]
 owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h213_gpu_delta_sustained; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+reason = "Exact HLT-043 duplicate occurrences (analysis fingerprint 2c57abf1e9c1; runner fingerprint 0f0f5ced3a46) are immutable preregistered source bytes: the H234 manifest records each H165 path and SHA-256. Preserve the source package and scan the H234 copies; exclude only these pinned paths from copy-code scoring."
 
 [[evidence_snapshot]]
-name = "research-flywheel_selfplay-h215_pess_disagreement"
+name = "research-h195-blend025-kernel-confirm-preregistered-runner"
 paths = [
-  "research/flywheel_selfplay/h215_pess_disagreement/runner.py",
+  "research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py",
 ]
-pinned_by = [
-  "research/flywheel_selfplay/h215_pess_disagreement/manifest.json",
-]
+pinned_by = ["research/flywheel_selfplay/h195_blend025_kernel_confirm/metrics.json"]
 owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h215_pess_disagreement; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+reason = "The exact HLT-043 duplicate occurrence (fingerprint 3ed9b9efe1cc) is immutable preregistered source: metrics.json bound_sha256 records this path and SHA-256. Preserve the source package and scan the H233 copy; exclude only this pinned path from copy-code scoring."
 
 [[evidence_snapshot]]
-name = "research-flywheel_selfplay-h219_fbal_accum_run"
+name = "generated-target-callbacks-revision1"
 paths = [
-  "research/flywheel_selfplay/h219_fbal_accum_run/runner.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/callbacks.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py",
 ]
-pinned_by = [
-  "research/flywheel_selfplay/h219_fbal_accum_run/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h219_fbal_accum_run; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+pinned_by = ["deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/SOURCE_PACKET.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
 
 [[evidence_snapshot]]
-name = "research-flywheel_selfplay-h220_family_mixup"
+name = "generated-target-callbacks-revision2"
 paths = [
-  "research/flywheel_selfplay/h220_family_mixup/runner.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py",
 ]
-pinned_by = [
-  "research/flywheel_selfplay/h220_family_mixup/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h220_family_mixup; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h221_bagged_delta_head"
-paths = [
-  "research/flywheel_selfplay/h221_bagged_delta_head/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h221_bagged_delta_head/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h221_bagged_delta_head; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
-
-[[evidence_snapshot]]
-name = "research-flywheel_selfplay-h228_family_invariant"
-paths = [
-  "research/flywheel_selfplay/h228_family_invariant/runner.py",
-]
-pinned_by = [
-  "research/flywheel_selfplay/h228_family_invariant/manifest.json",
-]
-owner = "research"
-reason = "frozen evidence package research/flywheel_selfplay/h228_family_invariant; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+pinned_by = ["deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/SOURCE_PACKET.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."

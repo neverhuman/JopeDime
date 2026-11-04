@@ -9,7 +9,7 @@ use tokio::time::timeout;
 
 use super::{CancelReceipt, DispatchError, JobHandle, JobStatus};
 
-pub(super) fn typed_job_spec(
+pub(crate) fn typed_job_spec(
     workload: JainWorkload,
     idempotency_key: IdempotencyKey,
 ) -> Result<JobSpec, DispatchError> {
@@ -65,20 +65,20 @@ impl From<&JobRecord> for CancelReceipt {
 }
 
 #[derive(Clone, Copy)]
-pub(super) enum StreamKind {
+pub(crate) enum StreamKind {
     Subscription,
     Attachment,
 }
 
 impl StreamKind {
-    pub(super) const fn operation(self) -> &'static str {
+    pub(crate) const fn operation(self) -> &'static str {
         match self {
             Self::Subscription => "subscribe",
             Self::Attachment => "attach",
         }
     }
 
-    pub(super) const fn expected_response(self) -> &'static str {
+    pub(crate) const fn expected_response(self) -> &'static str {
         match self {
             Self::Subscription => "subscribed",
             Self::Attachment => "attached",
@@ -86,7 +86,7 @@ impl StreamKind {
     }
 }
 
-pub(super) async fn with_timeout<T, F>(
+pub(crate) async fn with_timeout<T, F>(
     duration: Option<Duration>,
     operation: &'static str,
     future: F,
@@ -119,14 +119,14 @@ fn response_name(response: &Response) -> &'static str {
     }
 }
 
-pub(super) fn unexpected(expected: &'static str, response: &Response) -> DispatchError {
+pub(crate) fn unexpected(expected: &'static str, response: &Response) -> DispatchError {
     DispatchError::UnexpectedResponse {
         expected,
         actual: response_name(response),
     }
 }
 
-pub(super) fn server_frame_name(frame: &ServerFrame) -> &'static str {
+pub(crate) fn server_frame_name(frame: &ServerFrame) -> &'static str {
     match frame {
         ServerFrame::Response(_) => "response",
         ServerFrame::Event(_) => "event",

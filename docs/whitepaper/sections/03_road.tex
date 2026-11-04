@@ -15,8 +15,9 @@
 
 Five lines of AI research connect the four pillars of \cref{sec:anatomy}:
 deep learning, program search, reinforcement learning, games and the race
-for self-improvement. We trace what each proposes, how it is tested and
-what carries forward to the next attempt.\footnote{Each history keeps only the
+for self-improvement. Each contributes a different way to propose, test or
+retain a candidate. \Cref{tab:roads} compares their outputs, deployment
+budgets and retained experience.\footnote{Each history keeps only the
 milestones the argument needs; \cref{app:history} collects the referees
 those milestones rely on.}
 
@@ -50,16 +51,15 @@ halicin, an antibiotic that then treated infections in mice
 
 CLIP put images and captions in one shared space
 \citep{radford2021clip}, an analogy for our problem--program ranking map
-(\cref{sec:method}).
-Reference training supervises the map with programs scored within each problem.
-Its ranks can influence search-parent selection
-(\cref{sub:method-map}); they neither condition nor screen the writer.
+(\cref{sub:method-map}).
+The reference objective supervises the map with programs scored within each problem.
+Its ranks can influence search-parent selection;
+they neither condition nor screen the writer.
 Map-ranking accuracy and first-proposal quality require separate tests.
 
-Representations describe a problem, code generation supplies candidates
-and a separate map can rank drafts for search. Executable tests make their
-quality observable. \EZ{} proposes training on those outcomes, then
-measuring transfer beyond its training tasks.
+Executable tests connect generated programs to feedback. \EZ{} proposes
+training on that feedback, then measuring first-proposal quality beyond
+its training tasks.
 
 % ---------------------------------------------------------------------
 \subsection{Program search built the variation--judgment loop}\label{sub:road-programs}
@@ -89,7 +89,7 @@ fixed task, bought with search. Lion, an optimizer found by program
 search, went into production at Google \citep{chen2023lion}. AlphaEvolve
 multiplied two $4\times4$ complex matrices with 48 scalar multiplications,
 improving on Strassen's algorithm in that setting after 56 years
-\citep{novikov2025alphaevolve}. MLEvolve carries the loop into
+\citep{novikov2025alphaevolve}. MLEvolve carried the loop into
 machine-learning engineering \citep{mlevolve2026}.
 
 \EZ{} adopts executable programs as moves inside this generate--judge loop,
@@ -121,10 +121,8 @@ Language models also learn from feedback: human preferences
 \citep{christiano2017preferences,ouyang2022instructgpt} and rule-based
 checks of answers, as in DeepSeek-R1 \citep{guo2025deepseekr1}.
 
-This line of work motivates training on referee-scored play. For \EZ{},
-the next step is to define a game whose reward measures relative algorithm
-quality, then distinguish gains on training games from transfer to unseen
-families.
+This recipe needs a game whose referee compares algorithm performance.
+The next line of work shows how tasks acquire rules and executable referees.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:selfplay]{Self-play in 90 seconds}
@@ -245,7 +243,7 @@ fine-tunes on what its own evolutionary search finds \citep{evotune2025},
 and TTT-Discover trains on the one problem at hand, at a few hundred
 dollars per problem \citep{tttdiscover2026}. Evolution Fine-Tuning learns
 from \num{156000} search trajectories across 371 tasks \citep{eft2026}, and
-DiscoRL meta-learned a reinforcement-learning rule that beat human-designed
+DiscoRL meta-learns a reinforcement-learning rule that beat human-designed
 ones \citep{oh2025discorl}. These approaches retain improvements in different places: a search
 trajectory, a task-specific learner or a reusable learning rule. Our
 comparison asks about the quality and cost of the first complete candidate,
@@ -276,13 +274,13 @@ it is separate from the adapter record in \cref{sec:method-status}.
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}
 
-\Cref{tab:roads} separates outputs, budgets and retained experience.
-The cross-task predictors and network generators
+The comparison in \cref{tab:roads} requires matching what a system
+produces and what it spends. Cross-task predictors and network generators
 \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025} differ from
 readable-program output; one candidate does not equalize compute or inputs.
 Absolute Zero and STP use correctness feedback, whereas a declared incumbent
-sets our comparison standard; \cref{sec:game} defines how the referee judges a
-program against it.
+sets our comparison standard. \Cref{sec:game} defines the resulting game;
+\cref{fig:game-loop} separates reference training from game-day evaluation.
 
 \begin{keyidea}
 The test is whether experience on earlier discovery tasks improves the first

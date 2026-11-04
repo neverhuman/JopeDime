@@ -66,5 +66,10 @@
     "numpy": "1.26.4",
     "torch": "2.7.0",
     "psutil": "7.1.0"
+  },
+  "parent_source_sha256": {
+    "../flywheel_selfplay/h146_lookahead_exec/runner.py": "f394358bb1ead59c212d57b18844b51c748becb36610f7ba38d7c58f6d6d57cd",
+    "../flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "../flywheel_selfplay/h146_lookahead_exec/science.py": "b82efcff0b9c34d3b826c68642b4ef30cfc5b459179f2c27b5f24faa34bffdce"
   }
 }

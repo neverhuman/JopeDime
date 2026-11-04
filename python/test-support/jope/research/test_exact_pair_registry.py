@@ -1047,7 +1047,7 @@ class PairRegistry:
             ).fetchone()[0]
             if prior:
                 return int(prior)
-            raise RuntimeError("superseded retirement has no submitted protocol pairs")
+            raise RuntimeError("retirement record has no submitted protocol pairs")
         timestamp = now_ms()
         self.db.execute("BEGIN IMMEDIATE")
         try:
@@ -1061,7 +1061,7 @@ class PairRegistry:
                         and active["job_id"] != job_id
                     )
                 ):
-                    raise RuntimeError("retirement and active-attempt consistency check failed")
+                    raise RuntimeError("retirement/active-attempt consistency audit failed")
                 self.db.execute(
                     """
                     UPDATE attempts SET state='superseded_unstarted',

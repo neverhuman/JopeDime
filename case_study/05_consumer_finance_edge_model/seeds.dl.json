@@ -1,0 +1,50 @@
+{
+  "dataset_hash": "9721aa73ef1df237",
+  "genomes": [
+    {
+      "genome": "(pipe X (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "5c1c80088d85c084e2bd65462f928f5d4ad88e947c68dfab7773af2e722abda5"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "program_sha256": "289ece5c5156e78d1a289698e30b779e7abcbcd116a345aaac22e84901508b83"
+    },
+    {
+      "genome": "(pipe X (winsor_moments append=true q=0.02) (sigmoid) (robust_scale) (pair_prod append=true topk=4) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "5a5f27f60c1c4386e67707622839860860e7c1a560afdf8554087c18242a1dde"
+    },
+    {
+      "genome": "(pipe X (quantile_bins bins=16) (blom append=true) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "b94ea6f9207b8dc1c7c917be10e74aed917060e85d31a9e5771ff1393224f197"
+    },
+    {
+      "genome": "(pipe X (histgbm2 leaves=15 rounds=300))",
+      "program_sha256": "3f6af0eff8a8970ac0bf1ed8d963ad9d5401751dbbccaeda07c7b2502ad1eb68"
+    },
+    {
+      "genome": "(pipe X (quantile_bins bins=32) (cheb append=true degree=4) (sigmoid) (ksmooth gamma=2.0 k=32))",
+      "program_sha256": "0c4a7594b56733ff7a591dc62c7bde75d57d88641ec5bac797e585d601cdb1c9"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=16) (histgbm depth=4 lr=0.1 rounds=180))",
+      "program_sha256": "c2b77c3d5673b80f28e3b981ebaf0dbd283daa5bb3936c7b4d58c9b51c4e6c29"
+    },
+    {
+      "genome": "(pipe X (quantile_bins bins=32) (ensemble))",
+      "program_sha256": "f9c863de20670f896ce0514a13542efdffedad6857870c66774296a16ee297d0"
+    },
+    {
+      "genome": "(pipe X (ensemble_ridge_gbm))",
+      "program_sha256": "f8d603935d5f7b8dce4637371612ba185944a339b753f9f3a2a132290d8635bc"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=16) (cheb append=true degree=4) (histgbm depth=4 lr=0.15 rounds=180))",
+      "program_sha256": "bd73c5af185cbb4c62ffb15f009369ab44f7c541104deeb70de65d91d0393b22"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=16) (gbm rounds=150))",
+      "program_sha256": "9e61ce40d1420d42188a4351fe7859c792dd3996d02785c73daec2315f71ddb7"
+    }
+  ],
+  "schema": "jope.pipeline-seeds/v1"
+}

@@ -11,18 +11,20 @@ use super::*;
 use jope_pipeline::prepared_data::{fitting_input_sha256, raw_table};
 
 /// The fixture's authenticated prepared development data, as the receiver reads it.
-fn development(f: &Fixture) -> DevelopmentData {
+pub(super) fn development(f: &Fixture) -> DevelopmentData {
     let policy = load_freeze(&f.state, &f.evidence.freeze).unwrap();
+    let dataset: jope_pipeline::experiment::PanelDataset =
+        serde_json::from_value(serde_json::to_value(policy).unwrap()["dataset"].clone()).unwrap();
     let bytes = f
         .state
-        .read_blob(&policy.dataset.split.development_sha256)
+        .read_blob(&dataset.split.development_sha256)
         .unwrap()
         .unwrap();
-    parse_development(&bytes, &policy.dataset).unwrap()
+    parse_development(&bytes, &dataset).unwrap()
 }
 
 /// The fitting input a fit worker receives for `fold`, digested as the worker digests it.
-fn fold_input(data: &DevelopmentData, fold: u8) -> String {
+pub(super) fn fold_input(data: &DevelopmentData, fold: u8) -> String {
     data.cut(fold)
         .unwrap()
         .train
@@ -32,7 +34,7 @@ fn fold_input(data: &DevelopmentData, fold: u8) -> String {
 
 /// Re-store fold `fold`'s fitted artifact after `edit`, keeping every digest link coherent: the
 /// worker's output file and receipt, the result and the fold's predictions record.
-fn refit(
+pub(super) fn refit(
     f: &Fixture,
     evidence: &OofEvidence,
     fold: usize,
@@ -57,7 +59,7 @@ fn refit(
 }
 
 /// Fold `fold`'s artifact as v2, naming `input`.
-fn name(f: &Fixture, evidence: &OofEvidence, fold: usize, input: &str) -> OofEvidence {
+pub(super) fn name(f: &Fixture, evidence: &OofEvidence, fold: usize, input: &str) -> OofEvidence {
     refit(f, evidence, fold, |fitted| {
         fitted["schema"] = "jope.panel-fitted-rust/v2".into();
         fitted["fitting_input_sha256"] = input.into();
@@ -65,7 +67,7 @@ fn name(f: &Fixture, evidence: &OofEvidence, fold: usize, input: &str) -> OofEvi
 }
 
 /// Every fold's artifact as v2, each naming its own fold's fitting input.
-fn bound(f: &Fixture) -> OofEvidence {
+pub(super) fn bound(f: &Fixture) -> OofEvidence {
     let data = development(f);
     (0..5).fold(f.evidence.clone(), |evidence, fold| {
         name(f, &evidence, fold, &fold_input(&data, fold as u8))
@@ -73,7 +75,7 @@ fn bound(f: &Fixture) -> OofEvidence {
 }
 
 /// Qualify, deliver and freeze `evidence` for `f.record`; returns the qualification.
-fn admit(f: &Fixture, evidence: &OofEvidence) -> Qualification {
+pub(super) fn admit(f: &Fixture, evidence: &OofEvidence) -> Qualification {
     let q = qualify(&f.state, &f.record, evidence).unwrap();
     let report = hwm::ingest(
         &f.state,
@@ -107,7 +109,7 @@ fn v2_fitted_artifacts_bind_every_fold_to_its_own_training_input() {
 }
 
 /// One all-row fit reused for a fold: its input includes the fold's held-out rows.
-fn all_rows(data: &DevelopmentData) -> String {
+pub(super) fn all_rows(data: &DevelopmentData) -> String {
     fitting_input_sha256(
         &raw_table(
             &data.dataset.features,

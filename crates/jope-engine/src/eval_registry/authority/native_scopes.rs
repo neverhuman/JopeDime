@@ -3,7 +3,7 @@ use super::*;
 use crate::native_graph::Artifact;
 use ed25519_dalek::{Signature, VerifyingKey};
 const DOMAIN: &[u8] = b"jope.native_scope_registration.signature.v1\0";
-pub(super) const TABLE_SQL: &str = "CREATE TABLE IF NOT EXISTS native_scopes(scope TEXT PRIMARY KEY,registration_sha TEXT NOT NULL,json TEXT NOT NULL) WITHOUT ROWID";
+pub(crate) const TABLE_SQL: &str = "CREATE TABLE IF NOT EXISTS native_scopes(scope TEXT PRIMARY KEY,registration_sha TEXT NOT NULL,json TEXT NOT NULL) WITHOUT ROWID";
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NativeScopeRegistrationBody {
@@ -145,10 +145,10 @@ impl Authority {
         verified(&signed)?;
         verify_scope_event_bindings(event, &signed, sha, &self.manifest_sha)
     }
-    pub(super) fn native_scope_table_exists(&self) -> bool {
+    pub(crate) fn native_scope_table_exists(&self) -> bool {
         table_exists(&self.db).unwrap_or(false)
     }
-    pub(super) fn registered_native_scope(&self, scope: &str) -> Result<Option<ScopePolicy>> {
+    pub(crate) fn registered_native_scope(&self, scope: &str) -> Result<Option<ScopePolicy>> {
         if self.manifest.schema != NATIVE_SCHEMA || !table_exists(&self.db)? {
             return Ok(None);
         }
@@ -175,7 +175,7 @@ impl Authority {
         );
         Ok(Some(signed.body.scope))
     }
-    pub(super) fn retained_scope(
+    pub(crate) fn retained_scope(
         &self,
         scope: &str,
         allow_native: bool,
@@ -189,7 +189,7 @@ impl Authority {
             Ok(None)
         }
     }
-    pub(super) fn all_retained_scopes(&self) -> Result<Vec<ScopePolicy>> {
+    pub(crate) fn all_retained_scopes(&self) -> Result<Vec<ScopePolicy>> {
         let mut scopes = self.manifest.scopes.clone();
         if table_exists(&self.db)? {
             let mut q = self
@@ -209,7 +209,7 @@ impl Authority {
         }
         Ok(scopes)
     }
-    pub(super) fn scope_state_keys_sql(table: &str, column: &str) -> Result<&'static str> {
+    pub(crate) fn scope_state_keys_sql(table: &str, column: &str) -> Result<&'static str> {
         match (table, column) {
             ("entries", "key") => Ok("SELECT key FROM entries"),
             ("coverage", "scope") => Ok("SELECT scope FROM coverage"),
@@ -220,25 +220,19 @@ impl Authority {
             ("activations", "scope") => Ok("SELECT scope FROM activations"),
             ("recovery_epochs", "id") => Ok("SELECT id FROM recovery_epochs"),
             ("queries", "key") => Ok("SELECT key FROM queries"),
-            ("authorization_witness", "fit_key") => {
-                Ok("SELECT fit_key FROM authorization_witness")
-            }
-            ("funding_authorizations", "id") => {
-                Ok("SELECT id FROM funding_authorizations")
-            }
+            ("authorization_witness", "fit_key") => Ok("SELECT fit_key FROM authorization_witness"),
+            ("funding_authorizations", "id") => Ok("SELECT id FROM funding_authorizations"),
             ("funding_reservations", "id") => Ok("SELECT id FROM funding_reservations"),
             ("funding_participants", "id") => Ok("SELECT id FROM funding_participants"),
             ("funding_witness", "event_key") => Ok("SELECT event_key FROM funding_witness"),
             ("native_tasks", "id") => Ok("SELECT id FROM native_tasks"),
             ("native_slots", "id") => Ok("SELECT id FROM native_slots"),
             ("native_scopes", "scope") => Ok("SELECT scope FROM native_scopes"),
-            ("scope_training", "scope") => {
-                Ok("SELECT scope FROM native_scopes ORDER BY scope")
-            }
+            ("scope_training", "scope") => Ok("SELECT scope FROM native_scopes ORDER BY scope"),
             _ => anyhow::bail!("unknown authority scope-state key query"),
         }
     }
-    pub(super) fn scope_training_postimage(db: &Connection, scope: &str) -> Result<Value> {
+    pub(crate) fn scope_training_postimage(db: &Connection, scope: &str) -> Result<Value> {
         let mut q =
             db.prepare("SELECT training FROM scope_training WHERE scope=? ORDER BY training")?;
         let training = q
@@ -246,7 +240,7 @@ impl Authority {
             .collect::<std::result::Result<Vec<_>, _>>()?;
         Ok(json!({"scope":scope,"training_json":serde_json::to_string(&training)?}))
     }
-    pub(super) fn replay_scope_training(db: &Connection, key: &str, row: &Value) -> Result<()> {
+    pub(crate) fn replay_scope_training(db: &Connection, key: &str, row: &Value) -> Result<()> {
         ensure!(row["scope"] == key, "scope-training replay key differs");
         let hashes: Vec<String> = serde_json::from_str(
             row["training_json"]
@@ -273,7 +267,7 @@ impl Authority {
         }
         Ok(())
     }
-    pub(super) fn verify_scope_registration_evidence(
+    pub(crate) fn verify_scope_registration_evidence(
         &self,
         s: &SignedNativeScopeRegistration,
     ) -> Result<()> {
@@ -407,142 +401,5 @@ impl Authority {
     }
 }
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use ed25519_dalek::{Signer, SigningKey};
-    fn signed() -> SignedNativeScopeRegistration {
-        let key = SigningKey::from_bytes(&[94; 32]);
-        let a = Artifact {
-            path: "evidence.json".into(),
-            sha256: "a".repeat(64),
-        };
-        let body = NativeScopeRegistrationBody {
-            schema: "jope.native_scope_registration.v1".into(),
-            root: "/data".into(),
-            authority_root: "/data/authority".into(),
-            authority_instance: "a".repeat(64),
-            authority_manifest_sha256: "b".repeat(64),
-            authority_epoch: "a".repeat(64),
-            journal_sequence: 12,
-            journal_tip_sha256: "c".repeat(64),
-            run: "run".into(),
-            scope: ScopePolicy {
-                scope: "native-production".into(),
-                training_sha256: (0..96).map(|i| format!("{i:064x}")).collect(),
-                numerical_contract_sha256: vec!["d".repeat(64)],
-                fit_seeds: vec![0],
-            },
-            preparation_overlay: a.clone(),
-            scientific_policy: a,
-            not_before_unix_ms: 100,
-            expires_unix_ms: 200,
-        };
-        let bytes = encoded(&body).unwrap();
-        let mut message = DOMAIN.to_vec();
-        message.extend(&bytes);
-        SignedNativeScopeRegistration {
-            authorization_public_key: hex::encode(key.verifying_key().to_bytes()),
-            body_sha256: hash(&bytes),
-            body,
-            signature: hex::encode(key.sign(&message).to_bytes()),
-        }
-    }
-    #[test]
-    fn signature_binds_original_head_epoch_all96training_and_fixed_key() {
-        let s = signed();
-        verify_signature(&s, &s.authorization_public_key).unwrap();
-        for field in 0..4 {
-            let mut bad = s.clone();
-            match field {
-                0 => bad.body.journal_sequence += 1,
-                1 => bad.body.authority_epoch = "f".repeat(64),
-                2 => bad.body.scope.training_sha256[2] = "f".repeat(64),
-                _ => bad.body.scope.fit_seeds = vec![1],
-            };
-            assert!(verify_signature(&bad, &s.authorization_public_key).is_err());
-        }
-        assert!(verify_signature(
-            &s,
-            &hex::encode(SigningKey::from_bytes(&[95; 32]).verifying_key().to_bytes())
-        )
-        .is_err());
-    }
-    #[test]
-    fn scope_training_postimages_replay_without_erasing_original_namespace() {
-        let db = Connection::open_in_memory().unwrap();
-        db.execute_batch("CREATE TABLE scope_training(scope TEXT NOT NULL,training TEXT NOT NULL,PRIMARY KEY(scope,training)) WITHOUT ROWID;").unwrap();
-        db.execute_batch(TABLE_SQL).unwrap();
-        let s = signed();
-        db.execute(
-            "INSERT INTO scope_training VALUES('original','retained')",
-            [],
-        )
-        .unwrap();
-        db.execute(
-            "INSERT INTO native_scopes VALUES(?,?,?)",
-            params![
-                s.body.scope.scope,
-                "a".repeat(64),
-                serde_json::to_string(&s.body.scope).unwrap()
-            ],
-        )
-        .unwrap();
-        let row = json!({"scope":s.body.scope.scope,"training_json":serde_json::to_string(&s.body.scope.training_sha256).unwrap()});
-        Authority::replay_scope_training(&db, &s.body.scope.scope, &row).unwrap();
-        Authority::replay_scope_training(&db, &s.body.scope.scope, &row).unwrap();
-        assert_eq!(
-            Authority::scope_training_postimage(&db, &s.body.scope.scope).unwrap(),
-            row
-        );
-        assert_eq!(
-            db.query_row(
-                "SELECT count(*) FROM scope_training WHERE scope='original'",
-                [],
-                |r| r.get::<_, u64>(0)
-            )
-            .unwrap(),
-            1
-        );
-        let mut bad = row;
-        bad["training_json"] = json!("[]");
-        assert!(Authority::replay_scope_training(&db, &s.body.scope.scope, &bad).is_err());
-    }
-    #[test]
-    fn original_signed_scope_event_cannot_be_moved_or_change_postimages() {
-        let signed = signed();
-        verify_signature(&signed, &signed.authorization_public_key).unwrap();
-        let b = &signed.body;
-        let sha = hash(&encoded(&signed).unwrap());
-        let mut event = Event {
-            instance: b.authority_instance.clone(),
-            seq: b.journal_sequence + 1,
-            previous: b.journal_tip_sha256.clone(),
-            kind: "native_scope_register".into(),
-            payload: json!({"scope":b.scope.scope,"registration_sha":sha}),
-            effects: vec![
-                StateRow {
-                    table: "native_scopes".into(),
-                    key: b.scope.scope.clone(),
-                    row: json!({"scope":b.scope.scope,"registration_sha":sha,"json":serde_json::to_string(&b.scope).unwrap()}),
-                },
-                StateRow {
-                    table: "scope_training".into(),
-                    key: b.scope.scope.clone(),
-                    row: json!({"scope":b.scope.scope,"training_json":serde_json::to_string(&b.scope.training_sha256).unwrap()}),
-                },
-            ],
-        };
-        verify_scope_event_bindings(&event, &signed, &sha, &b.authority_manifest_sha256).unwrap();
-        event.seq += 1;
-        assert!(
-            verify_scope_event_bindings(&event, &signed, &sha, &b.authority_manifest_sha256)
-                .is_err()
-        );
-        event.seq -= 1;
-        event.effects[1].row["training_json"] = json!("[]");
-        assert!(
-            verify_scope_event_bindings(&event, &signed, &sha, &b.authority_manifest_sha256)
-                .is_err()
-        );
-    }
-}
+#[path = "native_scopes/tests.rs"]
+mod tests;

@@ -4,7 +4,11 @@ use feat_math::kernel::Program;
 use feat_math::math_expr::{BinOp, Expr, MathExpr, Var};
 use feat_math::transpile::{emit, EmitOptions};
 use feat_math::{fit_predict, GenomeIr};
-use std::{fs, path::Path, process::Command};
+use std::{
+    fs,
+    path::Path,
+    process::{Command, Stdio},
+};
 
 fn binary(op: BinOp, a: Expr, b: Expr) -> Expr {
     Expr::Binary(op, Box::new(a), Box::new(b))
@@ -71,12 +75,34 @@ fn every_nested_binary_operator_shape_preserves_tree_values_and_faults() {
 }
 
 fn run(command: &mut Command) {
-    let output = command.output().expect("required export toolchain");
+    let output = command
+        .output()
+        .unwrap_or_else(|error| panic!("required export command {command:?}: {error}"));
     assert!(
         output.status.success(),
         "{command:?}: {}",
         String::from_utf8_lossy(&output.stderr)
     );
+}
+
+fn resolve_export_compiler(compiler: &str) -> Option<String> {
+    let versioned = match compiler {
+        "g++" => "g++-13",
+        "clang++" => "clang++-18",
+        other => other,
+    };
+    for candidate in [compiler, versioned] {
+        if Command::new(candidate)
+            .arg("--version")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok_and(|status| status.success())
+        {
+            return Some(candidate.to_owned());
+        }
+    }
+    None
 }
 
 fn bits(path: &Path) -> Vec<u64> {
@@ -159,9 +185,15 @@ fn executed_three_language_recipes_match_independent_conversion_witnesses() {
             emit_cpp17(&genome, &EmitOptions::default()).unwrap().source + CPP_DRIVER,
         )
         .unwrap();
-        for compiler in ["g++", "clang++"] {
+        let mut compilers = vec![resolve_export_compiler("g++")
+            .expect("required export compiler g++ (also tried g++-13) is unavailable")];
+        if let Some(compiler) = resolve_export_compiler("clang++") {
+            compilers.push(compiler);
+        }
+        for executable in compilers {
+            let compiler = executable.as_str();
             let binary = dir.join(format!("case_{compiler}"));
-            run(Command::new(compiler)
+            run(Command::new(&executable)
                 .args([
                     "-std=c++17",
                     "-Wall",

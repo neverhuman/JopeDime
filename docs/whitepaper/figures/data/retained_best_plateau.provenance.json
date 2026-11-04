@@ -1,0 +1,35 @@
+{
+  "schema": "whitepaper.retained-best-plateau-figure/v1",
+  "input_csv_sha256": "cf613cba08044493bc1da9722107848c33d02768297aa6c1749077ac2fcca1bc",
+  "source_receipt_sha256": "40b904b6f214d23b8891097e922b6b33566378083a4056702d8388295e400503",
+  "generator_sha256": "9c88415c99460dd99c20154fcd220bdc602bc9bdfda57a59993b923a1d5eb71e",
+  "figure_sha256": "26e28ff2357d0c443a3df29255685be39bd4e08b09cc922b8a4bc94659367ced",
+  "rows": 866,
+  "round_window": [
+    3174,
+    4039
+  ],
+  "last_strict_gain_round": 3175,
+  "last_admitted_round": 3175,
+  "trailing_rejection_rounds": [
+    3176,
+    4039
+  ],
+  "trailing_rejections": 864,
+  "final_retained_utility": "1.1389572403748425",
+  "best_round": 3175,
+  "baseline_retained_utility": "1.1383668110784328",
+  "transformations": "Every logged retained score plotted in order as a post-decision step; one rug mark per trailing rejection. No smoothing, cumulative maximum, clipping or outcome selection.",
+  "scope": "Adaptive development-side adapter decisions, distinct from training-program events. No independent first-proposal, learning-gain, writer/ranking-map benefit or serving comparison.",
+  "source_binding": "Logged aggregate fields only; installed source, adapter, evaluation population and normalization closure remain unqualified.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    3.25,
+    2.0
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_retained_best_plateau_figure.py"
+}

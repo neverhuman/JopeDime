@@ -10,6 +10,7 @@
 \makeatletter\patchcmd{\ALG@doentity}{\item[]\nointerlineskip}{}{}{\PackageError{main}{algorithmicx noend patch failed}{}}\makeatother
 \usepackage{flushend}% equal-height columns on the last page only
 \usepackage{placeins}% \FloatBarrier keeps section 7 floats out of section 8
+\usepackage{flafter}% keep floats after their source definitions and preceding callouts
 \setcounter{topnumber}{3}\setcounter{totalnumber}{4}% three top floats per column, so Tables 7-8 fit on their page ahead of the Section 8 barrier
 \renewcommand{\textfraction}{0.1}\renewcommand{\topfraction}{0.85}% let a column top hold a tall figure, so the Section 6.8 and 7 figures keep pace with their text
 \usepackage[numbers,sort&compress]{natbib}
@@ -44,7 +45,7 @@
 \input{sections/08_meaning}
 \appendix
 \input{sections/appendix_stubs}
-\FloatBarrier% every appendix float prints before the references
+\FlushFloatsInPlace\FloatBarrier% every appendix float prints before the references
 \bibliographystyle{abbrvnat}
 \bibliography{refs}
 \end{document}

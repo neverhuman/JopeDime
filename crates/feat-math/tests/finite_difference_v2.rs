@@ -307,6 +307,12 @@ fn run(command: &mut Command) -> Vec<u8> {
 
 fn cpp(root: &Path, compiler: &str, standard: &str, opt: &str, sanitizer: bool) -> Vec<u8> {
     let binary = root.join(format!("{compiler}-{standard}-{opt}-{sanitizer}"));
+    let compiler =
+        if compiler == "clang++" && Command::new("clang++").arg("--version").output().is_err() {
+            "clang++-18"
+        } else {
+            compiler
+        };
     let mut command = Command::new(compiler);
     command.args([standard, opt, "-ffp-contract=off", "-fno-fast-math"]);
     if sanitizer {
@@ -427,7 +433,13 @@ int main(int argc,char** argv){if(argc!=2)return 2;std::ifstream input(argv[1]);
             .arg(root.join("cases.txt"))),
         expected.as_bytes()
     );
-    for compiler in ["g++", "clang++"] {
+    let mut compilers = vec!["g++"];
+    if Command::new("clang++").arg("--version").output().is_ok() {
+        compilers.push("clang++");
+    } else if Command::new("clang++-18").arg("--version").output().is_ok() {
+        compilers.push("clang++-18");
+    }
+    for compiler in compilers {
         for (std, opt) in [
             ("-std=c++17", "-O2"),
             ("-std=c++17", "-O3"),

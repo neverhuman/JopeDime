@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+"""Check/install the narrowly approved repair of the existing hourly audit helpers."""
+
+import argparse
+import ast
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import tempfile
+import textwrap
+
+ROOT = Path.home() / "jope_plan/evidence/main-audit"
+POLICY = Path(__file__).with_name("main-audit-deletions.json")
+ORIGINAL = {
+    "prepare_source.py": "932226db63abcf1a8be5c8da621d18b2d9496ad7c69cea4b2d4ca922a3587dfe",
+    "run_audit.py": "4f131afa854990c4852d9a673475bd90983494e0d15ebda27f74ffc2111ca22b",
+}
+
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def replace_once(source, old, new):
+    if source.count(old) != 1:
+        raise RuntimeError("helper changed; preserve it and reconcile the exact patch")
+    return source.replace(old, new, 1)
+
+
+def candidates(originals, policy_raw):
+    prepare = originals["prepare_source.py"].decode()
+    extra = textwrap.dedent('''
+        # The original eleven leak/custody removals remain required. Shared-module
+        # removals are an exact allowlist, not an instruction to delete restored files.
+        REQUIRED_DELETIONS=EXPECTED_DELETIONS
+        import hashlib
+        SHARED_POLICY_PATH=Path(__file__).with_name('acknowledged-deletions.json')
+        _shared_policy_raw=SHARED_POLICY_PATH.read_bytes()
+        if hashlib.sha256(_shared_policy_raw).hexdigest() != __POLICY_SHA__:
+            raise RuntimeError('approved shared-source deletion inventory differs')
+        SHARED_POLICY=json.loads(_shared_policy_raw)
+        SHARED_DELETIONS=frozenset(row['deleted_path'] for row in SHARED_POLICY['source_deletions'])
+        if len(SHARED_DELETIONS)!=42:
+            raise RuntimeError('expected exactly42 approved shared-module removals')
+        EXPECTED_DELETIONS=EXPECTED_DELETIONS | SHARED_DELETIONS
+
+        def validate_shared_source_ruling(head, git):
+            import posixpath
+            def source_exists(path):
+                for _ in range(16):
+                    entry=git('ls-tree',head,'--',path)
+                    if not entry:
+                        return False
+                    mode=entry.split()[0]
+                    if mode!='120000':
+                        return mode.startswith('100')
+                    target=git('show',head+':'+path)
+                    path=posixpath.normpath(posixpath.join(posixpath.dirname(path),target))
+                    if path.startswith('../') or path.startswith('/'):
+                        raise RuntimeError('shared module link escapes repository')
+                raise RuntimeError('shared module link cycle')
+            commits={row['introduced_by']['commit'] for row in SHARED_POLICY['source_deletions']}
+            for commit in sorted(commits):
+                git('merge-base','--is-ancestor',commit,head)
+            for path,record in SHARED_POLICY['bootstraps'].items():
+                if git('rev-parse',head+':'+path) != record['git_blob']:
+                    raise RuntimeError('reviewed package search-path bootstrap differs: '+path)
+            for record in SHARED_POLICY['source_deletions']:
+                roots=SHARED_POLICY['bootstraps'][record['bootstrap']]['shared_roots']
+                name=posixpath.basename(record['deleted_path'])
+                candidates=[record['deleted_path']]+[root+'/'+name for root in roots]
+                if not any(source_exists(path) for path in candidates):
+                    raise RuntimeError('shared module is no longer locatable: '+record['module'])
+    ''').replace("__POLICY_SHA__", repr(digest(policy_raw)))
+    prepare = replace_once(prepare,
+        "EXPECTED_DELETIONS=EXPECTED_DELETIONS | CUSTODY_DELETIONS\n",
+        "EXPECTED_DELETIONS=EXPECTED_DELETIONS | CUSTODY_DELETIONS\n" + extra)
+    ruling = textwrap.dedent('''
+        DELETION_RULING.update(
+            owner_instruction='owner nudge lanes_t2315_luna_next.md',
+            prs=[1445,1612,1921,1929,1960,2021,2049],
+            shared_source_inventory=str(SHARED_POLICY_PATH),
+            shared_source_inventory_sha256=__POLICY_SHA__,
+            disposition='Seven PR1445 leak-scrub reports and four PR1612 externalized custody copies retain their original recovery pins. Exactly42 additional source removals from PR1929 and related PR1921/1960/2021/2049 resolve through reviewed shared-package locations; static source lookup only, not runtime qualification. Every other deletion and new bulk/model copy remains refused.',
+        )
+    ''').replace("__POLICY_SHA__", repr(digest(policy_raw)))
+    prepare = replace_once(prepare, "# These two files exist in the older verification snapshot",
+                           ruling + "\n# These two files exist in the older verification snapshot")
+    prepare = replace_once(prepare, "    validate_custody_ruling(head,git)\n",
+                           "    validate_custody_ruling(head,git)\n    validate_shared_source_ruling(head,git)\n")
+    prepare = replace_once(prepare, "# Only the exact eleven owner-acknowledged paths can be unlinked.",
+                           "# Only the exact owner-acknowledged paths can be unlinked.")
+    run = originals["run_audit.py"].decode()
+    run = replace_once(run, "DELETION_RULING, unexpected_deletions\n",
+                       "DELETION_RULING, unexpected_deletions, REQUIRED_DELETIONS\n")
+    selector = textwrap.dedent('''
+        def changed_workspace_packages(head, changed):
+            import tomllib
+            workspace=tomllib.loads(git('show',head+':Cargo.toml'))['workspace']
+            touched={}
+            for member in workspace['members']:
+                files=[path for path in changed if path.startswith(member.rstrip('/')+'/')]
+                if not files:
+                    continue
+                manifest=tomllib.loads(git('show',head+':'+member.rstrip('/')+'/Cargo.toml'))
+                touched[manifest['package']['name']]=files
+            return touched
+    ''')
+    run = replace_once(run, "def now():", selector + "\ndef now():")
+    old = """  crates=sorted({p.split('/')[1] for p in changed if p.startswith('crates/') and len(p.split('/'))>2})
+  touched={crate:[p for p in changed if p.startswith('crates/'+crate+'/')] for crate in crates}
+  packages=[]
+  import tomllib
+  for crate in crates:
+   manifest=tomllib.loads(git('show',head+':crates/'+crate+'/Cargo.toml'))
+   packages.append(manifest['package']['name'])
+"""
+    run = replace_once(run, old, "  touched=changed_workspace_packages(head,changed)\n  packages=sorted(touched)\n")
+    run = replace_once(run, "missing_expected=sorted(EXPECTED_DELETIONS-set(deleted))",
+                       "missing_expected=sorted(REQUIRED_DELETIONS-set(deleted))")
+    run = replace_once(run, "exactly eleven owner-acknowledged PR#1445/#1612 deletions permitted.",
+                       "exactly53 acknowledged deletion paths permitted; original eleven remain required.")
+    start = "      'Deletion acknowledged by owner, PR #1445 ("
+    lines = run.splitlines(keepends=True)
+    matches = [i for i, line in enumerate(lines) if line.startswith(start)]
+    if len(matches) != 1:
+        raise RuntimeError("audit report description changed")
+    lines[matches[0]] = "      DELETION_RULING['disposition'],\n"
+    run = "".join(lines).replace("owner-acknowledged PR#1445/#1612/unexpected=",
+                                "owner-acknowledged exact53-path inventory/unexpected=")
+    result = {"prepare_source.py": prepare.encode(), "run_audit.py": run.encode(),
+              "acknowledged-deletions.json": policy_raw}
+    for name in ORIGINAL:
+        ast.parse(result[name], filename=name)
+    return result
+
+
+def atomic_write(path, raw, mode):
+    descriptor, temporary = tempfile.mkstemp(prefix=path.name + ".", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(temporary, mode)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--install", action="store_true")
+    parser.add_argument("--preserve", type=Path, required=True)
+    args = parser.parse_args()
+    policy_raw = POLICY.read_bytes()
+    policy = json.loads(policy_raw)
+    originals = {}
+    for name, expected in ORIGINAL.items():
+        if (ROOT / name).is_symlink():
+            raise RuntimeError("helper is a symlink; preserve its ownership first: " + name)
+        raw = (ROOT / name).read_bytes()
+        if digest(raw) != expected:
+            raise RuntimeError("mutable helper no longer matches reviewed predecessor: " + name)
+        originals[name] = raw
+    patched = candidates(originals, policy_raw)
+    args.preserve.mkdir(parents=True, exist_ok=True)
+    for name, raw in patched.items():
+        target = args.preserve / (name + ".candidate")
+        with target.open("xb") as stream:
+            stream.write(raw)
+    receipt = dict(policy_sha256=digest(policy_raw), source_deletions=len(policy["source_deletions"]),
+                   original_sha256=ORIGINAL,
+                   candidate_sha256={name: digest(raw) for name, raw in patched.items()},
+                   ast_parse=True, installed=False, audit_or_tests_started=False)
+    if args.install:
+        with (ROOT / "hourly.lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            for name, expected in ORIGINAL.items():
+                if digest((ROOT / name).read_bytes()) != expected:
+                    raise RuntimeError("helper changed before install: " + name)
+                shutil.copy2(ROOT / name, args.preserve / (name + ".before-install"))
+            if (ROOT / "acknowledged-deletions.json").exists():
+                raise RuntimeError("preserve/reconcile existing deletion policy before install")
+            # The complete policy is present before either consumer can read it.
+            atomic_write(ROOT / "acknowledged-deletions.json", policy_raw, 0o644)
+            for name in ORIGINAL:
+                atomic_write(ROOT / name, patched[name], (ROOT / name).stat().st_mode & 0o777)
+            receipt["installed"] = True
+    with (args.preserve / "installation.json").open("x") as stream:
+        json.dump(receipt, stream, indent=2)
+        stream.write("\n")
+    print(json.dumps(receipt, indent=2))
+
+
+if __name__ == "__main__":
+    main()

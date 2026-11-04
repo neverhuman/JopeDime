@@ -146,7 +146,7 @@ def build_workers(args):
                 receipt["executables"].append({"target_name": name, **original})
             for name in ("jope-context-worker", "jope-policy-producer"):
                 require("context-producer" in features[name], "qualified context feature absent")
-        except Exception as error:
+        except (Exception,) as error:
             write(out / "failed-build.json", {"build": receipt, "error": str(error)})
             raise
         write(out / "build.json", receipt)

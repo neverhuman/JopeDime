@@ -7,12 +7,12 @@ use super::fixture::{
     Faulty, Run, BIG, PUBLISHER,
 };
 use crate::hwm::Transition;
-use crate::mirror::Mirror;
 use crate::progress::inventory::*;
 use crate::progress::outbox::Outbox;
 use crate::progress::publish::{advance, prepare, publish, reusable, Plan, Prepared, Publication};
 use crate::progress::remote::Remote;
-use crate::state::State;
+use jope_learning::mirror::Mirror;
+use jope_learning::state::State;
 use std::fs;
 
 fn ready(p: Prepared) -> Plan {

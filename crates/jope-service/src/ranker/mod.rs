@@ -6,6 +6,7 @@ pub mod bank;
 pub mod bundle;
 pub mod cuda;
 pub mod featurizer;
+#[path = "landmarks.rs"]
 pub mod landmarks;
 pub mod lm48;
 pub mod proj16;

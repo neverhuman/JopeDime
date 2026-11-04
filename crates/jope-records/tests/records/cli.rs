@@ -11,11 +11,30 @@ use jope_records::{
 use crate::{repo, scratch};
 
 fn run(args: &[&str], cwd: &Path) -> Output {
+    let repo = repo();
     Command::new(env!("CARGO_BIN_EXE_jope-records"))
         .args(args)
         .current_dir(cwd)
+        // CI may check out the repository as a different uid from the test process. Keep the
+        // child CLI's git discovery scoped to this test checkout instead of weakening global
+        // safe.directory configuration.
+        .env("GIT_CONFIG_COUNT", "1")
+        .env("GIT_CONFIG_KEY_0", "safe.directory")
+        .env("GIT_CONFIG_VALUE_0", repo)
         .output()
         .expect("run jope-records")
+}
+
+fn has_git_checkout(repo: &Path) -> bool {
+    Command::new("git")
+        .args(["-C"])
+        .arg(repo)
+        .args(["rev-parse", "--show-toplevel"])
+        .env("GIT_CONFIG_COUNT", "1")
+        .env("GIT_CONFIG_KEY_0", "safe.directory")
+        .env("GIT_CONFIG_VALUE_0", repo)
+        .output()
+        .is_ok_and(|output| output.status.success())
 }
 
 /// `print(json.dumps(summary, sort_keys=True))`.
@@ -86,15 +105,18 @@ fn committed_records_print_the_python_summaries() {
         ),
     ];
     for (args, summary) in expected {
-        // Defaults resolve from the git toplevel of the working directory ...
-        let from_git = run(&args, &repo.join("docs"));
-        assert_eq!(succeeds(&from_git), summary, "{args:?}");
-        // ... or from --repo.
+        // Exercise git-root discovery when Git can resolve this checkout. Some CI harnesses
+        // copy sources to /src with absent or unusable Git metadata.
+        if has_git_checkout(&repo) {
+            let from_git = run(&args, &repo.join("docs"));
+            assert_eq!(succeeds(&from_git), summary, "{args:?}");
+        }
+        // Explicit repository selection works in both full checkouts and source-only CI copies.
         let mut explicit = args.clone();
         explicit.extend(["--repo", &repo_arg]);
         assert_eq!(succeeds(&run(&explicit, &repo)), summary, "{args:?} --repo");
     }
-    let findings = succeeds(&run(&["verify-findings"], &repo));
+    let findings = succeeds(&run(&["verify-findings", "--repo", &repo_arg], &repo));
     assert_eq!(
         findings,
         "{\"entries\": 195, \"gap\": 97, \"improvement\": 98, \"scope\": \"inventory integrity only; no product finding closed\"}\n"
@@ -159,13 +181,26 @@ fn elo_history_prints_the_python_summaries() {
     )
     .expect("committed histories");
     let expected = printed(&summary.to_json());
-    assert_eq!(succeeds(&run(&["elo-history"], &repo)), expected);
+    let repo_arg = repo.display().to_string();
     assert_eq!(
-        succeeds(&run(&["elo-history", "--require-all"], &repo)),
+        succeeds(&run(&["elo-history", "--repo", &repo_arg], &repo)),
+        expected
+    );
+    assert_eq!(
+        succeeds(&run(
+            &["elo-history", "--require-all", "--repo", &repo_arg],
+            &repo,
+        )),
         expected
     );
     let sensitivity = succeeds(&run(
-        &["elo-history", "--sensitivity", "H-same-cut-v1-deep"],
+        &[
+            "elo-history",
+            "--sensitivity",
+            "H-same-cut-v1-deep",
+            "--repo",
+            &repo_arg,
+        ],
         &repo,
     ));
     assert_eq!(
@@ -179,6 +214,8 @@ fn elo_history_prints_the_python_summaries() {
             "elo-history",
             "--sensitivity",
             "H-legacy-round1-internal-elo",
+            "--repo",
+            &repo_arg,
         ],
         &repo,
     );
@@ -200,6 +237,8 @@ fn verify_inventory_needs_its_asset() {
             "verify-inventory",
             "--record",
             &record.display().to_string(),
+            "--repo",
+            &repo.display().to_string(),
         ],
         &repo,
     );

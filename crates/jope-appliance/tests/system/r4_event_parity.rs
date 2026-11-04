@@ -1,7 +1,7 @@
 //! Fixture-level R4 parity between terminal SSE attach and MCP event paging.
 //! This does not qualify live CLI/MCP dispatch or service handlers.
 
-use super::{durable, fixture_events, frame};
+use super::event_tests::{durable, fixture_events, frame};
 use jope_api::{decimal::DecimalU64, PublicEvent};
 use jope_client::{
     transport::{header, HeaderMap, HeaderValue},

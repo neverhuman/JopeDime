@@ -11,9 +11,9 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-A verified improvement carries the cost of the attempts that precede it.
-The ledger includes encoding, input tokens, generation, repairs, referee
-execution, updates and operating costs. The planning ratios below organize
+The bill for a verified improvement includes the winning attempt and
+every earlier failure. It covers encoding, input tokens, generation,
+repairs, referee execution, updates and operating costs. The planning ratios below organize
 that bill; a full-run price requires the measurements in
 \cref{sub:price-run,sec:results}.
 
@@ -26,32 +26,25 @@ expected cost per win is mean cost per attempt divided by that probability
   \Cwin = \frac{\Cattempt}{\winprob}.
   \label{eq:bill}
 \end{equation}
-$\Cattempt$ is the mean incurred cost per candidate attempt, including
-failures. A repair that emits a revised candidate is another
-attempt; charge its work once. $\winprob$ is the probability that an
-attempt beats the incumbent.
+Here $\Cattempt$ is the mean incurred cost per candidate attempt, including
+failures, and $\winprob$ is the probability that an attempt beats the
+incumbent. A repair that emits a revised candidate is another attempt;
+charge its work once.
 
-Write $\winprob = q_{\text{run}}\,q_{\text{beat}}$, where $q_{\text{run}}$
-is the share of protocol-valid attempts and $q_{\text{beat}}$ the win rate
-among them. Report both with the overall win rate; $q_{\text{beat}}$ is
+Write $\winprob = q_{\mathrm{run}}\,q_{\mathrm{beat}}$, where $q_{\mathrm{run}}$
+is the share of protocol-valid attempts and $q_{\mathrm{beat}}$ the win rate
+among them. Report both with the overall win rate; $q_{\mathrm{beat}}$ is
 undefined if no attempt is valid. Valid ties and losses still cost money.
 Grammar constraints or selection using revealed outcomes can alter the
 validity rate without weight updates (\cref{sub:method-move,sec:method-status}).
 These rates alone do not identify a learned improvement
 (\cref{sub:results-ablation}).
 
-Generating a token costs about 2~FLOPs per active parameter, and
-training on one about~6 \citep{kaplan2020scaling}. Cost projections require reproducible inputs and calculations (\cref{sub:price-run}).
-
 For an observed batch, cost per verified win is the total ledger divided
 by verified wins, including update and operating costs where applicable.
 This accounting does not require independent attempts. Adaptive search
 still needs empirical cost and attempt curves; a batch with no verified
 win has no finite observed cost per win.
-
-\Cref{fig:fw-latest-round-clock} pairs program-event counts with full round
-durations in a later capture. That clock includes all work and waits;
-turning it into a proposal price still requires the attempt ledger.
 
 Training and deployment need separate ledgers. Training pays for every
 attempt, including failures. The proposed deployment protocol pays for
@@ -67,21 +60,22 @@ A stillborn attempt fails to produce a usable program under the declared
 protocol: generation is incomplete, parsing or type-checking fails,
 execution exceeds its limits or crashes, or outputs fail predeclared
 validity checks. An also-ran is valid but does not beat the incumbent.
-
 The pilot funnel planned for \cref{sec:results} (\cref{fig:price}, panel~a) traces
 those stages and the compute spent before each failed attempt stops.
 
 If 90\% of attempts fail to improve the incumbent, the independent-try
 model requires ten attempts per improvement in expectation. A typed language
 can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
-resource and output failures may consume part or all of the fit, and their
-incurred cost must be counted. The pilot must measure whether also-rans
+resource and output failures can occur after fitting has begun. The pilot
+must measure whether also-rans
 dominate. The matched writer comparison in \cref{sub:results-learning}
 holds the budget, incumbent and referee fixed.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
-Here and in \cref{sub:price-run}, we consider language-model writers for regression and
+Generating a token costs about 2\,FLOPs per active parameter, and
+training on one about~6 \citep{kaplan2020scaling}. Here and in
+\cref{sub:price-run}, we consider language-model writers for regression and
 the agent comparators of \cref{sub:results-headtohead,sub:results-search}.
 The compact reference network and its generation limit are specified in
 \cref{sec:method}.
@@ -90,9 +84,10 @@ Small models are cheap per token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
 an 8B one. With equal token counts and compute unit costs, the smaller
 writer can tolerate a win rate about 190 times lower before that
-component's cost per win matches.
+component's cost per win matches. \Cref{sub:price-run} separates active
+compute from resident model memory.
 
-If it needs three times the tokens per
+If the smaller writer needs three times the tokens per
 attempt, the generation-only ratio falls to about 60. Repair turns also
 re-read a growing context. Encoding and referee costs change the full-cost
 ratio; a threshold for the complete bill in \cref{eq:bill} requires
@@ -108,11 +103,11 @@ measurement decides where, and whether, the minimum sits.
 A familiar solution can be a useful prior. Matching the incumbent's score
 earns a tie; promotion requires improvement under the same protocol. A
 \emph{useful hallucination} here is an unfamiliar proposal whose value the
-referee verifies (\cref{box:hallucination}). Possible exploration controls include temperature
-and entropy schedules, a curriculum past known solutions, and
-quality-diversity archives \citep{lehman2011novelty,mouret2015mapelites}.
-Any novelty bonus must preserve the reward ordering in \cref{sec:game}.
-These are design options.
+referee verifies (\cref{box:hallucination}). Possible design options for
+exploration include temperature and entropy schedules, a curriculum past
+known solutions and quality-diversity archives
+\citep{lehman2011novelty,mouret2015mapelites}; any novelty bonus must
+preserve the reward ordering in \cref{sub:game-referee}.
 
 The reference training routes combine policy draws with grammar-based
 fallback and random exploration to seed verified search
@@ -132,7 +127,7 @@ controls and their budget shares, including unsuccessful attempts;
 
 \subsection{How many games?}\label{sub:price-games}
 
-Keep three quantities separate.
+Attempts, training experience and test precision answer different questions.
 \textbf{Tries to find one improvement:} $1/\winprob$ on average (\cref{eq:taste}).
 For independent tries with fixed $\winprob = 1\%$, 69 attempts reach even
 odds and 299 reach a 95\% probability of at least one win in that model.
@@ -144,9 +139,9 @@ and AlphaZero played 44 million games of chess in about nine hours
 \citep{silver2018general}. An illustrative grid of \num{10000}
 problems, 100 rounds and 8 attempts per problem per round gives 8 million
 attempts, the same order.
-The grid counts work, not learning: the number of problem families matters
-more, and pilot learning curves, read only within their measured range, must
-decide.
+The grid counts attempts. Transfer still requires evidence across
+independent problem families; pilot learning curves support claims only
+within their measured range.
 
 \textbf{Precision to plan the test:} illustratively, 150 independent
 units at a win rate near 60\% give an approximate 95\% interval of
@@ -167,7 +162,8 @@ floor is separate from the full cost projection discussed next.
 A reproducible projection therefore needs a pinned model and hardware
 configuration, dated prices, measured or justified utilization and an
 explicit accounting boundary. Those inputs remain unrecorded; a full
-cost projection remains a measurement task.
+cost projection remains a measurement task. Pricing the adapter
+operating clocks (\cref{sec:method-status}) still requires an attempt ledger.
 
 \begin{keyidea}
   Cost per verified improvement depends on both the cost of an attempt
@@ -177,4 +173,5 @@ cost projection remains a measurement task.
 Under \cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves
 expected cost per win only if mean attempt cost stays fixed. Measuring that
 tradeoff requires a common task mix, incumbent and verification rule.
-\Cref{sec:method} turns from the price of an attempt to the learner that makes it.
+In the reference protocol, referee-scored attempts supply training targets
+(\cref{sec:method}); the adapter record is a separate operating observation.

@@ -10,36 +10,36 @@ use super::metrics::{rebind, stored};
 use super::provenance::{authority, rejected_decisions};
 use super::*;
 
-const ROUTES: [&str; 5] = ["qualify", "revalidate", "ingest", "freeze", "replay"];
-const TASKS: [Task; 3] = [Task::Regression, Task::Binary, Task::Multiclass];
+pub(super) const ROUTES: [&str; 5] = ["qualify", "revalidate", "ingest", "freeze", "replay"];
+pub(super) const TASKS: [Task; 3] = [Task::Regression, Task::Binary, Task::Multiclass];
 
-struct Mutation {
+pub(super) struct Mutation {
     class: &'static str,
     /// Expected substring of the live `qualify` refusal.
     expected: &'static str,
     apply: fn(&Fixture) -> (HwmRecord, OofEvidence),
 }
 
-fn context(f: &Fixture, context: ContextEvidence) -> (HwmRecord, OofEvidence) {
+pub(super) fn context(f: &Fixture, context: ContextEvidence) -> (HwmRecord, OofEvidence) {
     let mut evidence = f.evidence.clone();
     evidence.context = Some(context);
     (f.record.clone(), evidence)
 }
 
-fn folds(f: &Fixture, mutate: fn(&mut Vec<String>)) -> (HwmRecord, OofEvidence) {
+pub(super) fn folds(f: &Fixture, mutate: fn(&mut Vec<String>)) -> (HwmRecord, OofEvidence) {
     let mut evidence = f.evidence.clone();
     mutate(&mut evidence.fold_predictions_sha256);
     (f.record.clone(), evidence)
 }
 
-fn record(f: &Fixture, mutate: fn(&mut HwmRecord)) -> (HwmRecord, OofEvidence) {
+pub(super) fn record(f: &Fixture, mutate: fn(&mut HwmRecord)) -> (HwmRecord, OofEvidence) {
     let mut record = f.record.clone();
     mutate(&mut record);
     record.identity_sha256 = record.identity.sha256().unwrap();
     (record, f.evidence.clone())
 }
 
-const MUTATIONS: [Mutation; 18] = [
+pub(super) const MUTATIONS: [Mutation; 18] = [
     Mutation {
         class: "missing-context",
         expected: "MissingEncoderProvenance",
@@ -244,7 +244,7 @@ const MUTATIONS: [Mutation; 18] = [
 /// original HWM events in ledger order, ignoring every recorded outcome, transition,
 /// displaced link, improvement counter and pointer, and keeps per comparison the earliest
 /// record with the lowest mean fold loss among those whose qualification recomputes.
-fn independent_replay(state: &State) -> BTreeMap<String, String> {
+pub(super) fn independent_replay(state: &State) -> BTreeMap<String, String> {
     let mut best: BTreeMap<String, (f64, String)> = BTreeMap::new();
     for event in Ledger::open(state.root(), "hwm").events().unwrap() {
         let record: HwmRecord = serde_json::from_value(event["record"].clone()).unwrap();
@@ -264,7 +264,7 @@ fn independent_replay(state: &State) -> BTreeMap<String, String> {
         .collect()
 }
 
-fn manifest(state: &State) -> BTreeMap<String, String> {
+pub(super) fn manifest(state: &State) -> BTreeMap<String, String> {
     freeze_teaching(state)
         .unwrap()
         .entries
@@ -274,16 +274,16 @@ fn manifest(state: &State) -> BTreeMap<String, String> {
 }
 
 /// A forged, internally consistent success claim: stored evidence plus its decision event.
-fn forge_qualification(
+pub(super) fn forge_qualification(
     f: &Fixture,
     record: &HwmRecord,
     evidence: &OofEvidence,
     claim: &Qualification,
 ) -> String {
-    let bytes = canonical_json(&StoredQualification {
-        evidence: evidence.clone(),
-        qualification: claim.clone(),
-    })
+    let bytes = canonical_json(&serde_json::json!({
+        "evidence": evidence,
+        "qualification": claim,
+    }))
     .unwrap();
     let path = qualification_path(&f.state, record);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -304,7 +304,7 @@ fn forge_qualification(
 }
 
 /// A forged accepted HWM event bound to that claim, and the pointer it names.
-fn forge_acceptance(f: &Fixture, record: &HwmRecord, qualification_sha256: &str) {
+pub(super) fn forge_acceptance(f: &Fixture, record: &HwmRecord, qualification_sha256: &str) {
     let key = PointerKey::of(record);
     let event = hwm::HwmEvent {
         schema: hwm::EVENT_SCHEMA.into(),
@@ -327,7 +327,7 @@ fn forge_acceptance(f: &Fixture, record: &HwmRecord, qualification_sha256: &str)
     f.state.write_pointer(&key, record, None).unwrap();
 }
 
-fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
+pub(super) fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
     hwm::ingest(
         &f.state,
         None,
@@ -342,7 +342,7 @@ fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
 }
 
 /// One mutation class through all five routes for one task; returns each route's refusal.
-fn attack(m: &Mutation, task: Task) -> Vec<(&'static str, String)> {
+pub(super) fn attack(m: &Mutation, task: Task) -> Vec<(&'static str, String)> {
     let f = fixture(task, 5);
     let class = format!("{} ({})", m.class, task.as_str());
     // The success a forger would claim: the valid submission's measurement.
@@ -460,55 +460,6 @@ cells! {
     unauthenticated_producer: 17,
 }
 
-#[test]
-fn authorized_submission_passes_every_route_for_every_task() {
-    for task in [Task::Regression, Task::Binary, Task::Multiclass] {
-        let f = fixture(task, 5);
-        let q = qualify(&f.state, &f.record, &f.evidence).unwrap();
-        assert_eq!(revalidate_qualification(&f.state, &f.record).unwrap(), q);
-        let report = deliver(&f, &f.record, "");
-        assert_eq!((report.accepted, report.rejected), (1, 0));
-        assert_eq!(freeze_teaching(&f.state).unwrap().entries, vec![q.clone()]);
-        assert_eq!(
-            revalidate_replay(&f.state, std::slice::from_ref(&q))
-                .unwrap()
-                .entries,
-            vec![q.clone()]
-        );
-        let expected = BTreeMap::from([(q.comparison.sha256().unwrap(), q.record_sha256)]);
-        assert_eq!(independent_replay(&f.state), expected);
-        assert_eq!(manifest(&f.state), expected);
-        eprintln!(
-            "W3-T07 authorized {}: all five routes admitted",
-            task.as_str()
-        );
-    }
-}
-
-#[test]
-fn independent_replay_reproduces_the_winner_in_either_arrival_order() {
-    for strong_first in [false, true] {
-        let f = fixture(Task::Regression, 4);
-        let (strong, strong_evidence) = f.candidate("strong", &exact_on(5));
-        let (unqualified, _) = f.candidate("unqualified", &exact_on(5));
-        qualify(&f.state, &f.record, &f.evidence).unwrap();
-        let stronger = qualify(&f.state, &strong, &strong_evidence).unwrap();
-        let mut order = vec![(&f.record, ""), (&strong, "strong")];
-        if strong_first {
-            order.reverse();
-        }
-        order.insert(1, (&unqualified, "unqualified"));
-        for (record, tag) in order {
-            deliver(&f, record, tag);
-        }
-        let expected = BTreeMap::from([(
-            stronger.comparison.sha256().unwrap(),
-            stronger.record_sha256.clone(),
-        )]);
-        assert_eq!(independent_replay(&f.state), expected);
-        assert_eq!(manifest(&f.state), expected);
-        let verified = hwm::verify(&f.state, &[]).unwrap();
-        assert!(verified.ok(), "{:?}", verified.breaks);
-        assert_eq!(verified.initialized, 1);
-    }
-}
+mod matrix_cases;
+#[allow(unused_imports)]
+use matrix_cases::*;

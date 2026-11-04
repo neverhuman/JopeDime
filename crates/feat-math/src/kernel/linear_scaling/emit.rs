@@ -55,7 +55,7 @@ impl LinearScaledWinner {
 // Type the scalar binding and Step literals in these new version-2 libraries.
 // Method receivers need a concrete type even when the result binding is typed.
 // The frozen legacy emitter remains untouched, including its original bytes.
-pub(super) fn rust_scalar_library(source: &str) -> Result<String> {
+pub(crate) fn rust_scalar_library(source: &str) -> Result<String> {
     let marker = "fn expression_value(row: &[f64]) -> f64 {";
     let (before, body) = source
         .split_once(marker)
@@ -115,7 +115,7 @@ pub(super) fn rust_scalar_library(source: &str) -> Result<String> {
 }
 
 // Adapt only these new libraries; the legacy emitters remain byte-identical.
-pub(super) fn python_scalar_library(source: &str) -> String {
+pub(crate) fn python_scalar_library(source: &str) -> String {
     let mut library = source.to_owned();
     for name in ["_row_sum", "_row_mean"] {
         let start = format!("def {name}(row):");
@@ -137,7 +137,7 @@ pub(super) fn python_scalar_library(source: &str) -> String {
         )
 }
 
-pub(super) fn cpp_scalar_library(source: &str) -> String {
+pub(crate) fn cpp_scalar_library(source: &str) -> String {
     let helpers = "\nstatic double scalar_min(double a,double b){if(std::isnan(a))return b;if(std::isnan(b))return a;return a<b?a:b;}\nstatic double scalar_max(double a,double b){if(std::isnan(a))return b;if(std::isnan(b))return a;return a>b?a:b;}\n";
     source
         .replacen("using V =", &format!("{helpers}\nusing V ="), 1)

@@ -1,0 +1,241 @@
+{
+  "candidates": [
+    {
+      "canonical_genome": "(pipe X (stack))",
+      "mean_reward_heads": 0.5762434601783752,
+      "origin": "neural_policy",
+      "program_sha256": "fcb8436b3be696a848b1c4bf48ad09dcba6575e483413da9637c03e4378d1a9a",
+      "rank_log_weight": -2.7133015843769344,
+      "raw_decoded_genome": "(pipe X (stack))",
+      "reward_heads": [
+        1.2396048307418823,
+        -0.37354719638824463,
+        1.310523271560669,
+        0.1283930093050003
+      ],
+      "runtime_head_prediction": 2.536489248275757,
+      "slot": 0
+    },
+    {
+      "canonical_genome": "(pipe X (robust_scale) (quantile_bins bins=16) (winsor_clip append=true q=0.02) (cheb degree=4) (histgbm2 bags=5 leaves=63 lr=0.05 rounds=500))",
+      "mean_reward_heads": 0.5464545488357544,
+      "origin": "neural_policy",
+      "program_sha256": "9658b3818097cc5692135078b84302ec975f4e52f1256eae1851657c211b4599",
+      "rank_log_weight": -2.743090495719555,
+      "raw_decoded_genome": "(pipe X (robust_scale) (quantile_bins bins=16) (winsor_clip append=true q=0.02) (cheb degree=4) (histgbm2 bags=5 leaves=63 lr=0.05 rounds=500))",
+      "reward_heads": [
+        0.9355809092521667,
+        0.565966010093689,
+        0.35138437151908875,
+        0.3328869640827179
+      ],
+      "runtime_head_prediction": 2.487501382827759,
+      "slot": 1
+    },
+    {
+      "canonical_genome": "(pipe X (pair_prod append=true topk=4) (step append=true t=0.75) (quantile_bins bins=32) (pair_prod append=true topk=4) (winsor_clip append=true q=0.1) (krr m=600))",
+      "mean_reward_heads": 0.4066169559955597,
+      "origin": "neural_policy",
+      "program_sha256": "4eea0de5a27f3cf3192add9a9e5b072d17e831a6a814b4dee69e3d3c80958aae",
+      "rank_log_weight": -2.88292808855975,
+      "raw_decoded_genome": "(pipe X (pair_prod append=true topk=4) (step append=true t=0.75) (quantile_bins bins=32) (pair_prod append=true topk=4) (winsor_clip append=true q=0.1) (krr m=600))",
+      "reward_heads": [
+        0.7203323841094971,
+        0.4495888352394104,
+        0.8680130839347839,
+        -0.41146644949913025
+      ],
+      "runtime_head_prediction": 0.023247091099619865,
+      "slot": 2
+    },
+    {
+      "canonical_genome": "(pipe X (winsor_clip append=true q=0.05) (winsor_clip append=false q=0.05) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.17178383469581604,
+      "origin": "neural_policy",
+      "program_sha256": "f71e9c2a36cc79099312d43654bd02335e5b3e44cf1758ec30950889b5862711",
+      "rank_log_weight": -3.1177612098594936,
+      "raw_decoded_genome": "(pipe X (winsor_clip append=true q=0.05) (winsor_clip append=false q=0.05) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "reward_heads": [
+        0.14414581656455994,
+        -0.4578474164009094,
+        1.0321190357208252,
+        -0.03128206357359886
+      ],
+      "runtime_head_prediction": 1.0391751527786255,
+      "slot": 3
+    },
+    {
+      "canonical_genome": "(pipe X (blom) (rand_proj append=true k=16 seed=31) (robust_scale append=true) (rank append=true) (histgbm2 bags=3 leaves=15 lr=0.08 rounds=500))",
+      "mean_reward_heads": 0.12852975726127625,
+      "origin": "neural_policy",
+      "program_sha256": "b158a9938d3ddac2c2fcf69b94127d1308dd334e56085bf67c28c4f1581391f8",
+      "rank_log_weight": -3.1610152872940334,
+      "raw_decoded_genome": "(pipe X (blom) (rand_proj append=true k=16 seed=31) (robust_scale append=true) (rank append=true) (histgbm2 bags=3 leaves=15 lr=0.08 rounds=500))",
+      "reward_heads": [
+        0.257085919380188,
+        0.2838630676269531,
+        -0.24051761627197266,
+        0.21368762850761414
+      ],
+      "runtime_head_prediction": 2.212587833404541,
+      "slot": 4
+    },
+    {
+      "canonical_genome": "(pipe X (winsor_clip append=true q=0.05) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.08686921745538712,
+      "origin": "neural_policy",
+      "program_sha256": "9d67544572da35429239e2ebb33fc29bbf70cfb4e3bd32e790b8933c638a1cb2",
+      "rank_log_weight": -3.2026758270999225,
+      "raw_decoded_genome": "(pipe X (winsor_clip append=true q=0.05) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "reward_heads": [
+        -0.36329057812690735,
+        -0.5095073580741882,
+        0.9316710829734802,
+        0.2886037528514862
+      ],
+      "runtime_head_prediction": 0.8036265969276428,
+      "slot": 5
+    },
+    {
+      "canonical_genome": "(pipe X (target_bin_encode append=true bins=16) (sigmoid append=true) (standardize append=true) (hinge append=true knots=4) (target_bin_encode append=true bins=8) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.06823430210351944,
+      "origin": "neural_policy",
+      "program_sha256": "5b419c25b2eaea33e2d1ff8f13e41fc61aae460ec9ed903ab915f92d9d09daa6",
+      "rank_log_weight": -3.22131074245179,
+      "raw_decoded_genome": "(pipe X (target_bin_encode append=true bins=16) (sigmoid append=true) (standardize append=true) (hinge append=true knots=4) (target_bin_encode append=true bins=8) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "reward_heads": [
+        -0.9164348840713501,
+        0.4598037004470825,
+        0.2026558816432953,
+        0.52691251039505
+      ],
+      "runtime_head_prediction": 4.949635982513428,
+      "slot": 6
+    },
+    {
+      "canonical_genome": "(pipe X (nystrom append=true gamma=0.5 k=8 seed=7) (winsor_clip append=false q=0.05) (histgbm depth=4 lr=0.15 rounds=180))",
+      "mean_reward_heads": 0.0442790761590004,
+      "origin": "neural_policy",
+      "program_sha256": "075af052c5bb76bcf6c301e59958a75cad18d1670bf3e1212d9f854b78fa640a",
+      "rank_log_weight": -3.245265968396309,
+      "raw_decoded_genome": "(pipe X (nystrom append=true gamma=0.5 k=8 seed=7) (winsor_clip append=false q=0.05) (histgbm depth=4 lr=0.15 rounds=180))",
+      "reward_heads": [
+        1.1975511312484741,
+        -1.1904600858688354,
+        0.2709510624408722,
+        -0.10092580318450928
+      ],
+      "runtime_head_prediction": 0.022822359576821327,
+      "slot": 7
+    },
+    {
+      "canonical_genome": "(pipe X (bin_onehot append=true bins=4) (target_bin_encode append=true bins=8) (histgbm2 bags=5 leaves=15 lr=0.03 rounds=500))",
+      "mean_reward_heads": -0.0043126605451107025,
+      "origin": "neural_policy",
+      "program_sha256": "263bf6eb807a2946ac941b97902f124f095f85431ca91b9c0a57d6f3619a077a",
+      "rank_log_weight": -3.2938577051004203,
+      "raw_decoded_genome": "(pipe X (bin_onehot append=true bins=4) (target_bin_encode append=true bins=8) (histgbm2 bags=5 leaves=15 lr=0.03 rounds=500))",
+      "reward_heads": [
+        -0.6239143013954163,
+        0.07207131385803223,
+        0.6256061792373657,
+        -0.0910138338804245
+      ],
+      "runtime_head_prediction": 5.043331623077393,
+      "slot": 8
+    },
+    {
+      "canonical_genome": "(pipe X (standardize append=true) (oblique_hinge append=true n=32 seed=19) (step append=true) (histgbm2 bags=5 lr=0.08 rounds=500))",
+      "mean_reward_heads": -0.09401872009038925,
+      "origin": "neural_policy",
+      "program_sha256": "9059f50cd30357dc7638afcb5442270f7187ddbfa50db27b51d63c5773ed8a4a",
+      "rank_log_weight": -3.383563764645699,
+      "raw_decoded_genome": "(pipe X (standardize append=true) (oblique_hinge append=true n=32 seed=19) (step append=true) (histgbm2 bags=5 lr=0.08 rounds=500))",
+      "reward_heads": [
+        -0.018688995391130447,
+        -1.3463109731674194,
+        0.6414231657981873,
+        0.3475019633769989
+      ],
+      "runtime_head_prediction": 3.327341318130493,
+      "slot": 9
+    },
+    {
+      "canonical_genome": "(pipe X (winsor_clip append=true q=0.05) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "mean_reward_heads": -0.09407731145620346,
+      "origin": "neural_policy",
+      "program_sha256": "2565a43ccf08ed77d4fd8300df4174bed39179e3f712be7ace8304dbd2008653",
+      "rank_log_weight": -3.383622356011513,
+      "raw_decoded_genome": "(pipe X (winsor_clip append=true q=0.05) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "reward_heads": [
+        -0.5142499804496765,
+        -0.27002453804016113,
+        0.618299126625061,
+        -0.21033385396003723
+      ],
+      "runtime_head_prediction": 1.8683897256851196,
+      "slot": 10
+    }
+  ],
+  "case_name": "13_loan_default_wide_memory",
+  "context_encoding": {
+    "backend": "Rust/Candle 0.11 CPU FP32; frozen accepted transforms; native-component qualification required",
+    "context_sha256": "10c7332eacea8f8a3714857f1c1abade808826d3a772523abb18549b1d42e8b9",
+    "encoded_features": 64,
+    "encoded_train_rows": 256,
+    "encoder_identity": {
+      "assembly": "6582df23f5c1ee048d11040a5f2bd1447032932fc23f6c5a3aa9cb4f2d6896cb",
+      "component_bundle": "985074846ccfe92c818e920e5268ea5269a9e35f1fa2057ddae662266c6c7f9f",
+      "foundation_weights": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "frozen_transforms": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "hyperion_manifest": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "hyperion_weights": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "recipe": "native-hyperion-sweep3-chunks1-batch1024;foundation-pcg20260707-f64-label-normalization;target-pcg17-two-windows;frozen-512+1024+512-clip32/v1",
+      "target_weights": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f"
+    },
+    "final_test_targets_used": false,
+    "manifest_sha256": "45d374e7474320fbad5a625faf6e8f43568d1260b19b12c222120552b37e016a",
+    "prepared_rows_sha256": "a7a9c0821c004aa624fa4b4285ce1815ffa75da2adf75e20a1f3e9fac41f1e17",
+    "qualification": "unqualified_cpu_context_producer (no pre-existing GPU contexts-assembly-v2 file used; encoded directly from train.csv via CpuProducer)",
+    "schema": "jope.cpu-context/v1",
+    "total_features": 735,
+    "total_train_rows": 1000,
+    "train_csv_sha256": "e755ac135f7a0d45ac212a01e9ae558d3930e842634dacdc8609402157f1d5ad"
+  },
+  "dataset_hash": "053a91a333d4f3a7",
+  "fallback_used": false,
+  "policy_model": {
+    "base_vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "bundle_id": "policy-step-60000",
+    "config_sha256": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf",
+    "model_ot_sha256": "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129",
+    "parameter_sha256": "9c7057e7f6a9e348f030da73f03522977b8c08915d3a221d7d5ab2e4213fcd92",
+    "policy_safetensors_path": "/home/ubuntu/.cache/jope/models/bundles/policy-step-60000/policy.safetensors",
+    "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+    "ranking_backend": "candle_cpu_float32",
+    "ranking_selection_id": "mean_reward_heads_desc_program_hash_v1",
+    "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+    "step": 60000,
+    "vocabulary_name": "featmath-jain-v1",
+    "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+  },
+  "sampling": {
+    "attempted_draws": 64,
+    "batch": 32,
+    "dataset_seed": 376773648974092743,
+    "elapsed_seconds": 50.785622358,
+    "exploration_seed": 7674358396350319515,
+    "fallback_attempts": 3,
+    "fallback_seed": 5310111944096079843,
+    "rounds": 2,
+    "sampling_seed": 8215939784703803925,
+    "temperature": 1.0,
+    "unique_neural_programs": 61,
+    "valid_neural_draws": 64
+  },
+  "schema": "jope.pipeline-seeds-provenance/v1",
+  "seed_count": 11,
+  "seeds_file": "053a91a333d4f3a7.seeds.json",
+  "seeds_sha256": "a7dba7f507fd0a2ef6d2d4d72c355389f9e3e7ada0422935d2ae45a1b5969f9a",
+  "status": "ok"
+}

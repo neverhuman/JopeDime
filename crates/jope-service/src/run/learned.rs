@@ -139,19 +139,6 @@ pub(crate) struct LearnedAdmission {
     forwards: Arc<AtomicUsize>,
 }
 impl LearnedAdmission {
-    /// Borrow the actual FIT-bound conditioning for research provenance.
-    /// The Plan must exactly match the one used to fit these tokens.
-    #[allow(dead_code)] // Used by the qualified provider once it is admitted.
-    pub(crate) fn research_conditioning<'a>(&'a self, plan: &Plan) -> Result<&'a TokenProjection> {
-        ensure!(
-            self.plan.as_ref() == Some(plan),
-            "FIT conditioning Plan differs"
-        );
-        self.conditioning
-            .as_ref()
-            .context("FIT conditioning is not bound")
-    }
-
     pub(crate) fn placement(&self) -> Placement {
         self.graph.placement().clone()
     }
@@ -229,6 +216,16 @@ impl LearnedAdmission {
         self.plan = Some(plan.clone());
         Ok(rows.len())
     }
+    /// Borrow the exact FIT conditioning only when its full Plan binding matches.
+    #[cfg(feature = "research")]
+    pub(crate) fn research_conditioning(&self, plan: &Plan) -> Result<&TokenProjection> {
+        let bound = self.plan.as_ref().context("learned FIT is not bound")?;
+        ensure!(bound == plan, "learned conditioning Plan changed");
+        self.conditioning
+            .as_ref()
+            .context("learned FIT conditioning is not bound")
+    }
+
     fn program(&self, dsl: &str) -> Result<([f32; 412], [f32; 16])> {
         let features = self.featurizer.featurize(dsl)?;
         let projection = proj16::proj16(&features.map(f64::from)).map(|v| v as f32);

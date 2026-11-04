@@ -19,10 +19,8 @@ from __future__ import annotations
 
 import json
 import math
-import os
 import random
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -32,10 +30,23 @@ if TYPE_CHECKING:
 import torch
 
 from .data.active_v3 import robust_score
-from .engines import ENGINES, EngineRouter
+from .engines import EngineRouter
 from .eval_ledger import iter_eval_regression_with_ledger
-from .grammars.spec import GrammarSpec
 from .io import read_jsonl
+from .loop_selection import _model_specs as _model_specs
+from .loop_selection import _select_candidates as _select_candidates
+from .loop_state import (
+    LoopConfig as LoopConfig,
+)
+from .loop_state import (
+    _atomic_write as _atomic_write,
+)
+from .loop_state import (
+    _load_state as _load_state,
+)
+from .loop_state import (
+    _patience_exhausted as _patience_exhausted,
+)
 from .model import _pearson
 from .pipeline_text import format_pipeline_actions
 from .policy.decode import candidate_risk_reason_v3, sample_sequences
@@ -44,56 +55,6 @@ from .policy.model_v3 import JopePolicyModelV3, rows_to_policy_v3_batch
 from .policy.tokens import decode_tokens
 from .propose import embedding_from_vs, load_any_model, load_standardization, target_summary_from_vs
 from .schema import TrainingRow
-
-
-@dataclass
-class LoopConfig:
-    art_dir: Path
-    checkpoint: Path
-    run_dir: Path
-    ledger: Path
-    engines: tuple[str, ...] = ENGINES
-    datasets_per_iter: int = 32
-    samples_per_dataset_engine: int = 8
-    cv_top_m: int = 2
-    cv_uncertain_m: int = 1
-    max_cv_per_engine: int = 64  # per iteration
-    folds: int = 3
-    temperature_schedule: tuple[float, ...] = (0.6, 0.8, 1.0)
-    refit_reward_every: int = 1
-    refit_policy_every: int = 0  # 0 = policy frozen (reward-only loop)
-    refit_epochs: int = 2
-    refit_lr: float = 1e-4
-    refit_batch_size: int = 128
-    max_iterations: int | None = None
-    max_hours: float | None = None
-    patience_iters: int = 8
-    min_delta: float = 0.002
-    eval_workers: int | None = None
-    seed: int = 0
-    device: str = "cpu"
-    gene_feed_path: Path | None = None  # when set, stream per-gene events for the live TUI
-
-
-def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
-    os.replace(tmp, path)
-
-
-def _load_state(path: Path) -> dict[str, Any]:
-    if path.exists():
-        try:
-            return json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            pass
-    return {
-        "iteration": 0,
-        "roster_cursor": 0,
-        "best_window": [],
-        "policy_refits_halted": False,
-        "spearman_bad_streak": 0,
-    }
 
 
 def run_loop(cfg: LoopConfig, *, router: EngineRouter | None = None) -> dict[str, Any]:
@@ -178,15 +139,6 @@ def run_loop(cfg: LoopConfig, *, router: EngineRouter | None = None) -> dict[str
 
     summary.update({"iterations": state["iteration"], "loop_rows": len(loop_rows)})
     return summary
-
-
-def _patience_exhausted(state: dict[str, Any], cfg: LoopConfig) -> bool:
-    window = state.get("best_window") or []
-    if len(window) < cfg.patience_iters + 1:
-        return False
-    recent = window[-cfg.patience_iters :]
-    baseline = window[-(cfg.patience_iters + 1)]
-    return max(recent) < baseline + cfg.min_delta
 
 
 def _loop_iteration(
@@ -447,43 +399,6 @@ def _loop_iteration(
     }
 
 
-def _model_specs(model: JopePolicyModelV3) -> list[GrammarSpec]:
-    # Grammar specs are stored on the model at load time via checkpoint; fall back to repo specs.
-    specs = getattr(model, "_grammar_specs", None)
-    if specs:
-        return specs
-    from .grammars import all_grammars
-
-    return all_grammars()
-
-
-def _select_candidates(pool: list[dict[str, Any]], cfg: LoopConfig) -> list[dict[str, Any]]:
-    by_mu = sorted(pool, key=lambda c: c["mu"], reverse=True)
-    selected: list[dict[str, Any]] = []
-    seen_div: set[tuple[str, str]] = set()
-    engines_present = {c["engine"] for c in pool}
-    # exploit: top-mu with (engine, head) diversity
-    for cand in by_mu:
-        if len(selected) >= cfg.cv_top_m:
-            break
-        div = (cand["engine"], str(cand.get("head_type")))
-        if div in seen_div:
-            continue
-        seen_div.add(div)
-        selected.append(cand)
-    # >=1 per engine floor
-    for engine in engines_present:
-        if not any(c["engine"] == engine for c in selected):
-            best = next((c for c in by_mu if c["engine"] == engine and c not in selected), None)
-            if best is not None:
-                selected.append(best)
-    # explore: most uncertain among the rest
-    rest = [c for c in pool if c not in selected]
-    rest.sort(key=lambda c: c["sigma"], reverse=True)
-    selected.extend(rest[: cfg.cv_uncertain_m])
-    return selected
-
-
 def _refit(
     model: JopePolicyModelV3,
     rows: list[TrainingRow],
@@ -518,7 +433,7 @@ def _refit(
         for batch_rows in _dataset_grouped_batches(shuffled, cfg.refit_batch_size, rng):
             try:
                 batch = rows_to_policy_v3_batch(batch_rows, model.vocab, device=cfg.device)
-            except Exception:
+            except (Exception, ArithmeticError):
                 continue
             components = model.loss_components(batch, phase="B")
             if not policy:

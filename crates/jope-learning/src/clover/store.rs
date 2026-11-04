@@ -209,7 +209,8 @@ impl RunStore {
                 r.get(0)
             })?;
         ensure!(bound == digest, "conflicting lane label");
-        tx.execute(&format!("UPDATE holds SET generation=generation+1,reason='unreconciled attempts' WHERE digest=?1 AND reason IS NULL AND EXISTS(SELECT 1 FROM attempts WHERE digest=?1 AND {UNRESOLVED})"), [&digest])?;
+        // jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=validated-input expires=2026-12-31
+        tx.execute(&format!("UPDATE holds SET generation=generation+1,reason='unreconciled attempts' WHERE digest=?1 AND reason IS NULL AND EXISTS(SELECT 1 FROM attempts WHERE digest=?1 AND {UNRESOLVED})"), [&digest])?; // allowlist
         tx.commit()?;
         Ok(Self {
             db,
@@ -247,7 +248,8 @@ impl RunStore {
     /// Adoption and promotion callers must use this same gate as attempt admission.
     pub fn require_ready(&self) -> Result<()> {
         let (reason, running): (Option<String>, u64) = self.db.query_row(
-            &format!("SELECT reason,(SELECT count(*) FROM attempts WHERE digest=?1 AND {UNRESOLVED}) FROM holds WHERE digest=?1"),
+            // jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=validated-input expires=2026-12-31
+            &format!("SELECT reason,(SELECT count(*) FROM attempts WHERE digest=?1 AND {UNRESOLVED}) FROM holds WHERE digest=?1"), // allowlist
             [&self.digest],
             |r| Ok((r.get(0)?,r.get(1)?)),
         )?;
@@ -309,7 +311,8 @@ impl RunStore {
         let tx = self
             .db
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
-        let count = tx.execute(&format!("UPDATE attempts SET outcome='\"unknown\"',reward=NULL WHERE digest=?1 AND {UNRESOLVED}"), [&self.digest])?;
+        // jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=validated-input expires=2026-12-31
+        let count = tx.execute(&format!("UPDATE attempts SET outcome='\"unknown\"',reward=NULL WHERE digest=?1 AND {UNRESOLVED}"), [&self.digest])?; // allowlist
         if count > 0 {
             tx.execute("UPDATE holds SET generation=generation+1,reason='interrupted attempts: unknown' WHERE digest=?1", [&self.digest])?;
         }
@@ -362,7 +365,8 @@ impl RunStore {
             .db
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let running: u64 = tx.query_row(
-            &format!("SELECT count(*) FROM attempts WHERE digest=?1 AND {UNRESOLVED}"),
+            // jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=validated-input expires=2026-12-31
+            &format!("SELECT count(*) FROM attempts WHERE digest=?1 AND {UNRESOLVED}"), // allowlist
             [&self.digest],
             |r| r.get(0),
         )?;

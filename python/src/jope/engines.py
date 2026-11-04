@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import os
 import queue
-import re
 import subprocess
 import threading
 from collections.abc import Iterator, Sequence
@@ -19,88 +18,56 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .engines_config import (
+    _HEAD_RE as _HEAD_RE,
+)
+from .engines_config import (
+    DEFAULT_ENGINE as DEFAULT_ENGINE,
+)
+from .engines_config import (
+    DEFAULT_TASK as DEFAULT_TASK,
+)
+from .engines_config import (
+    ENGINE_FEATMATH as ENGINE_FEATMATH,
+)
+from .engines_config import (
+    ENGINE_NEWMATH as ENGINE_NEWMATH,
+)
+from .engines_config import (
+    ENGINES as ENGINES,
+)
+from .engines_config import (
+    EVAL_SUBCOMMAND as EVAL_SUBCOMMAND,
+)
+from .engines_config import (
+    EVALUATOR_VERSIONS as EVALUATOR_VERSIONS,
+)
+from .engines_config import (
+    EVALUATOR_VERSIONS_BY_TASK as EVALUATOR_VERSIONS_BY_TASK,
+)
+from .engines_config import (
+    FALLBACK_GENOMES as FALLBACK_GENOMES,
+)
+from .engines_config import (
+    HEAD_COST_CLASS as HEAD_COST_CLASS,
+)
+from .engines_config import (
+    TASK_BINARY as TASK_BINARY,
+)
+from .engines_config import (
+    TASK_REGRESSION as TASK_REGRESSION,
+)
+from .engines_config import (
+    TASKS as TASKS,
+)
+from .engines_config import (
+    TIMEOUT_BY_CLASS as TIMEOUT_BY_CLASS,
+)
+from .engines_config import (
+    head_op_of as head_op_of,
+)
 from .prime_config import ssh_control_path
 from .validator import PROJECT_ROOT, RustValidator
-
-ENGINE_FEATMATH = "featmath"
-ENGINE_NEWMATH = "newmath"
-ENGINES = (ENGINE_FEATMATH, ENGINE_NEWMATH)
-DEFAULT_ENGINE = ENGINE_FEATMATH
-
-TASK_REGRESSION = "regression"
-TASK_BINARY = "binary"
-TASKS = (TASK_REGRESSION, TASK_BINARY)
-DEFAULT_TASK = TASK_REGRESSION
-
-# The bridge subcommand + cache-key evaluator string are keyed by (engine, task).
-EVAL_SUBCOMMAND = {TASK_REGRESSION: "eval-regression", TASK_BINARY: "eval-binary"}
-EVALUATOR_VERSIONS_BY_TASK = {
-    (ENGINE_FEATMATH, TASK_REGRESSION): "jope-validate.eval-regression.v2",
-    (ENGINE_NEWMATH, TASK_REGRESSION): "jope-newmath-validate.eval-regression.v1",
-    (ENGINE_FEATMATH, TASK_BINARY): "jope-validate.eval-binary.v1",
-    (ENGINE_NEWMATH, TASK_BINARY): "jope-newmath-validate.eval-binary.v1",
-    ("prime", TASK_REGRESSION): "jope-prime-evald.compiled-plan.v1",
-}
-# Legacy flat alias (regression) kept for callers that index by engine only.
-EVALUATOR_VERSIONS = {
-    ENGINE_FEATMATH: EVALUATOR_VERSIONS_BY_TASK[(ENGINE_FEATMATH, TASK_REGRESSION)],
-    ENGINE_NEWMATH: EVALUATOR_VERSIONS_BY_TASK[(ENGINE_NEWMATH, TASK_REGRESSION)],
-}
-
-FALLBACK_GENOMES = {
-    ENGINE_FEATMATH: "(pipe X (robust_scale) (ridge))",
-    ENGINE_NEWMATH: "(pipe X (robust_scale) (ridge alpha=1.0))",
-}
-
-# Wall-clock eval timeout per head cost class (seconds). "portfolio" covers the
-# v35 multi-member OOF+NNLS head (~200 member-fits per eval; see
-# docs/specs/portfolio_head.md §7.5).
-TIMEOUT_BY_CLASS = {
-    "cheap": 10.0,
-    "medium": 30.0,
-    "expensive": 90.0,
-    "extreme": 120.0,
-    "portfolio": 600.0,
-}
-
-HEAD_COST_CLASS = {
-    ENGINE_FEATMATH: {
-        "ridge": "cheap",
-        "logistic": "cheap",
-        "elasticnet": "cheap",
-        # Jacobi eigensolve is O(p^3): ~1 ms at p=32 but ~10 s at the 512-col cap
-        # after wide transform chains — "medium" (30 s) covers the tail.
-        "ridge_gcv": "medium",
-        "histgbm": "medium",
-        "gbm": "medium",
-        "ksmooth": "medium",
-        "ensemble": "medium",
-        "ensemble_ridge_gbm": "medium",
-        "histgbm2": "expensive",
-        "krr": "expensive",
-        "stack": "expensive",
-        "gpr": "extreme",
-        "portfolio": "portfolio",
-    },
-    ENGINE_NEWMATH: {
-        "ridge": "cheap",
-        "logistic": "cheap",
-        "elasticnet": "cheap",
-        "huber_ridge": "cheap",
-        "knn": "medium",
-        "gbm": "medium",
-        "random_forest": "medium",
-        "ensemble_ridge_gbm": "medium",
-    },
-}
-
-_HEAD_RE = re.compile(r"\(([a-z_0-9]+)[^()]*\)\s*\)\s*$")
-
-
-def head_op_of(genome: str) -> str | None:
-    """Best-effort last-stage op name from a genome string (for cost classing)."""
-    match = _HEAD_RE.search(genome or "")
-    return match.group(1) if match else None
 
 
 @dataclass(frozen=True)
@@ -402,7 +369,7 @@ class EngineRouter:
                     if idx is not None:
                         r.setdefault("engine", engine)
                         results.put((int(idx), r))
-            except Exception as exc:
+            except (Exception, ArithmeticError) as exc:
                 results.put(exc)
             finally:
                 results.put(None)
@@ -481,7 +448,7 @@ class EngineRouter:
                     )
                 ):
                     results.put((indices[local_idx], out))
-            except Exception as exc:  # surface lane failures instead of hanging
+            except (Exception, ArithmeticError) as exc:  # surface lane failures instead of hanging
                 results.put(exc)
             finally:
                 results.put(None)

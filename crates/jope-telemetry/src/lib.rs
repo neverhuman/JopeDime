@@ -20,6 +20,7 @@ pub mod api;
 pub mod collectors;
 pub mod core;
 pub mod cpu_quota;
+pub mod cuda_events;
 pub mod event;
 pub mod fleet;
 pub mod flywheel;

@@ -87,7 +87,7 @@ pub fn execute_query_worker() -> Result<()> {
     Ok(())
 }
 
-pub(super) fn predict(
+pub(crate) fn predict(
     state: &State,
     model: &[u8],
     rows: &[Vec<f64>],
@@ -163,7 +163,7 @@ pub(super) fn predict(
             return Err(error);
         }
     };
-    let mut original = OriginalChild {
+    let mut original = super::worker::OriginalChild {
         child,
         process: process.clone(),
         reaped: false,

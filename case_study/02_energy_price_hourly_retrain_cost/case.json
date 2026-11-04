@@ -1,0 +1,104 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "02_energy_price_hourly_retrain_cost",
+  "dataset": {
+    "id": "14bc1b3a41c041b5",
+    "display_name": "Hourly Day-Ahead Electricity Prices with Exogenous Variables",
+    "task": "regression",
+    "rows": 6720,
+    "features": 11,
+    "categorical_features": 1,
+    "train_rows": 5376,
+    "test_rows": 1344,
+    "source": {
+      "platform": "github — nixtla",
+      "id": "Nixtla/transfer-learning-time-series:datasets/electricity-short-with-ex-vars.csv",
+      "url": "https://raw.githubusercontent.com/Nixtla/transfer-learning-time-series/main/datasets/electricity-short-with-ex-vars.csv",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": "ds"
+  },
+  "business_question": "When every hourly refit costs compute, which program minimizes forecast error plus the CPU cost of refitting?",
+  "constraint": "price per CPU second",
+  "objective_kind": "composite",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11,
+    "sha256": "2ee4dbfaa789f8fc307e376bb1ac8e10f69fab027f4cd2bb6fe5bfb0ba649c19",
+    "provenance_sha256": "703efae356d959323b500273376ae5fb4eb3a08f74de779e283a405edf4e6003",
+    "source": "step-60000 neural policy (Rust/Candle CPU), produced by agy_resource_fitness; see seeds.provenance.json"
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "fit_cpu_seconds",
+    "fit_seconds"
+  ],
+  "accuracy": {
+    "metric": "rmse"
+  },
+  "why": "An hourly refit is paid in compute every hour, so the cost is a price per CPU second, not a cliff. A composite adds that price to scaled RMSE, and the search finds the cheapest accurate program.",
+  "caveats": [
+    "Time-ordered data, but jope pipeline run validates on an unordered fold partition of train.csv, so this case does not exercise chronological (regime) validation",
+    "CPU price is illustrative; set your own cost per CPU second."
+  ],
+  "objective_template": {
+    "metric": "composite",
+    "terms": [
+      {
+        "weight": 1.0,
+        "scale": {
+          "$target_sigma": true
+        },
+        "fitness": {
+          "metric": "rmse"
+        }
+      },
+      {
+        "weight": 0.1,
+        "scale": {
+          "$median": "fit_cpu_seconds"
+        },
+        "fitness": {
+          "metric": "resource",
+          "name": "fit_cpu_seconds"
+        }
+      }
+    ]
+  }
+}

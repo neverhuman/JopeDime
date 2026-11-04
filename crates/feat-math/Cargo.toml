@@ -3,7 +3,8 @@ name = "feat-math"
 publish = false
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+# Frozen S1 compatibility submodule retains its glibc upstream license.
+license = "Apache-2.0 AND LGPL-2.1-or-later"
 description = "Model-synthesis kernel: pipeline-program DSL interpreter, Python/Rust/C++17/JavaScript/TypeScript code emitters, native C17 model exports, and in-process program synthesis"
 
 [features]

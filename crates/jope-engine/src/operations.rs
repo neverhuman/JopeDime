@@ -17,14 +17,19 @@ fn command(cmd: &str, args: &[&str]) -> Value {
     }
 }
 pub fn doctor() -> Value {
-    json!({"schema":"parallel.doctor.v1","neural_compiled":cfg!(feature="neural"),"rust":command("rustc",&["--version"]),"gpus":command("nvidia-smi",&["--query-gpu=index,uuid,name,memory.total,utilization.gpu,memory.used,power.draw,temperature.gpu","--format=csv,noheader,nounits"]),"topology":command("nvidia-smi",&["topo","-m"]),"cpu":command("lscpu",&["-J"]),"numa":command("numactl",&["--hardware"]),"torch":command("python3",&["-c","import torch; print(torch.__version__); print(torch.__file__); print(torch.cuda.nccl.version()); print(torch._C._GLIBCXX_USE_CXX11_ABI)"]),"disk":command("df",&["-h","."]),"memory":fs::read_to_string("/proc/meminfo").unwrap_or_default()})
+    json!({"schema":"parallel.doctor.v1","neural_compiled":cfg!(feature="neural"),"rust":command("rustc",&["--version"]),"gpus":command("nvidia-smi",&["--query-gpu=index,uuid,name,memory.total,utilization.gpu,memory.used,power.draw,temperature.gpu","--format=csv,noheader,nounits"]),"topology":command("nvidia-smi",&["topo","-m"]),"cpu":command("lscpu",&["-J"]),"numa":command("numactl",&["--hardware"]),"torch":command("python3",&["-c","import torch; print(torch.__version__); print(torch.__file__); print(torch.cuda.nccl.version()); print(torch._C._GLIBCXX_USE_CXX11_ABI)"]),"disk":command("df",&["-h","."]),"memory":fs::read_to_string("/proc/meminfo") // default fallback
+        .unwrap_or_default()})
 }
 pub fn status(root: &Path) -> Result<Value> {
     let run = crate::dashboard::campaign(root);
-    let hardware: Value = read_json(&root.join("runs/hardware.json")).unwrap_or_default();
-    let gp: Value = read_json(&root.join("runs/gp-service.json")).unwrap_or_default();
-    let neural: Value = read_json(&root.join("runs/neural-service.json")).unwrap_or_default();
-    let encoding: Value = read_json(&root.join("runs/encoding-service.json")).unwrap_or_default();
+    let hardware: Value = read_json(&root.join("runs/hardware.json")) // default fallback
+        .unwrap_or_default();
+    let gp: Value = read_json(&root.join("runs/gp-service.json")) // default fallback
+        .unwrap_or_default();
+    let neural: Value = read_json(&root.join("runs/neural-service.json")) // default fallback
+        .unwrap_or_default();
+    let encoding: Value = read_json(&root.join("runs/encoding-service.json")) // default fallback
+        .unwrap_or_default();
     let count = |key: &str| gp[key].as_u64().unwrap_or(0);
     let total =
         count("completed_views") + count("failed_views") + count("active") + count("queued");

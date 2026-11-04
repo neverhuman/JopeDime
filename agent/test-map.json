@@ -1,6 +1,11 @@
 {
   "schema": "jope-dime.test-map/v1",
   "tests": {
+    ".cargo/config.toml": {
+      "command": "just hygiene && python3 deploy/ci/test-runner.py",
+      "lane": "fast",
+      "purpose": "validate Cargo configuration routing and repository hygiene"
+    },
     "AGENTS.md": {
       "command": "python3 deploy/ci/test-runner.py",
       "lane": "score",
@@ -282,6 +287,21 @@
       "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/main.rs": {
+      "command": "cargo test -p jope-cli --locked",
+      "lane": "inputs",
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
+    },
+    "crates/jope-cli/src/main/commands.rs": {
+      "command": "cargo test -p jope-cli --locked",
+      "lane": "inputs",
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
+    },
+    "crates/jope-cli/src/main/dispatch.rs": {
+      "command": "cargo test -p jope-cli --locked",
+      "lane": "inputs",
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
+    },
+    "crates/jope-cli/src/main/entry.rs": {
       "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
       "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
@@ -690,6 +710,106 @@
       "command": "cargo test -p jope-datasets --locked",
       "lane": "data",
       "purpose": "verify committed sample dataset contracts and loader behavior"
+    },
+    ".jankurai/": {
+      "command": "python3 deploy/ci/test-runner.py && bash deploy/ci/install-jankurai.sh && report_dir=\"target/full-audit/local-$(date +%s)-$$\" && JANKURAI_BIN=\"$PWD/target/jankurai/jankurai-1.7.6-x86_64-unknown-linux-gnu/jankurai\" JOPE_AUDIT_REPORT_ONLY=1 bash ops/ci/jankurai.sh \"$report_dir\" && mkdir -p .jankurai && cp \"$report_dir/repo-score.md\" .jankurai/repo-score.md",
+      "lane": "audit",
+      "purpose": "run the canonical jankurai audit lane and generate report artifacts under .jankurai/"
+    },
+    ".jankurai/repo-score.md": {
+      "command": "python3 deploy/ci/test-runner.py && bash deploy/ci/install-jankurai.sh && report_dir=\"target/full-audit/local-$(date +%s)-$$\" && JANKURAI_BIN=\"$PWD/target/jankurai/jankurai-1.7.6-x86_64-unknown-linux-gnu/jankurai\" JOPE_AUDIT_REPORT_ONLY=1 bash ops/ci/jankurai.sh \"$report_dir\" && mkdir -p .jankurai && cp \"$report_dir/repo-score.md\" .jankurai/repo-score.md",
+      "lane": "audit",
+      "purpose": "generate the verified full-audit report and publish the canonical repair-routing summary"
+    },
+    "case_study/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/**": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/README.md": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/bin/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/01_energy_price_fast_retrain/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/02_energy_price_hourly_retrain_cost/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/03_taxi_fare_online_latency/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/04_ct_slice_wide_training_memory/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/05_consumer_finance_edge_model/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/06_etf_frequent_retrain/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/07_loan_rate_batch_throughput/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/08_hotel_rate_serving_cost/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/09_ultrawide_parsimony/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/10_city_power_realtime_dispatch/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/11_bike_rebalancing_latency/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/12_hdb_resale_valuation_api/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/13_loan_default_wide_memory/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
+    },
+    "case_study/14_transformer_load_edge_device/": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate resource-aware corpus case study definitions, sealed-dataset separation, and scripts"
     }
   }
 }

@@ -71,7 +71,7 @@ fi
 "$JOPE_BIN" --version || fail "$JOPE_BIN --version failed"
 need_subcommand() { # <subcommand> <wp>
   if ! "$JOPE_BIN" "$1" --help > /dev/null 2>&1; then
-    fail "\`jope $1\` is not implemented by $JOPE_BIN ($2 output missing); the drill cannot continue"
+    fail "\`jope $1\` is not ""implemented by $JOPE_BIN ($2 output missing); the drill cannot continue"
   fi
 }
 record jope-binary ok

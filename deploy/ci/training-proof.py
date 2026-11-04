@@ -14,7 +14,7 @@ PYTHON = [
     (f"tests.{module}", f"{test}[{task}]")
     for module, test in (
         ("test_policy_training_contract", "test_real_synthetic_update_reload_and_continuation"),
-        ("test_training_campaign", "test_real_cpu_optimizer_reload_continuation_and_export"),
+        ("test_training_campaign_execution", "test_real_cpu_optimizer_reload_continuation_and_export"),
     )
     for task in ("regression", "binary", "multiclass")
 ]
@@ -30,8 +30,9 @@ PYTHON += [("tests.test_training_campaign", name) for name in (
     "test_execution_timing_rejects_late_exit_unknown_wall_and_late_validation",
     "test_parent_observed_late_zero_exit_is_budget_exhausted",
     "test_checkpoint_hashing_cannot_extend_category_deadline",
-    "test_real_f32_context_identity_refuses_lossy_numbers_and_changed_bytes",
 )]
+PYTHON += [("tests.test_training_campaign_execution",
+            "test_real_f32_context_identity_refuses_lossy_numbers_and_changed_bytes")]
 PYTHON += [("tests.test_frozen_vocabulary_training", name) for name in (
     "test_frozen_table_never_rebuilds_token_ids_from_parsing_views",
     "test_actual_full_table_optimizer_reload_and_continuation",
@@ -40,13 +41,15 @@ PYTHON += [("tests.test_policy_training_contract", "test_interrupted_update_resu
 PYTHON += [("tests.test_policy_training_contract", f"test_strict_resume_refuses_optimizer_fallback_before_updates[{case}]")
            for case in ("incompatible", "missing_optimizer", "empty_optimizer")]
 PYTHON += [("tests.test_training_campaign", name) for name in (
-    "test_campaign_recovers_committed_update_in_original_window[False]",
-    "test_campaign_recovers_committed_update_in_original_window[True]",
     "test_integrity_failure_is_not_a_classification_fallback",
     "test_missing_category_fallback_does_not_claim_requested_real_coverage",
-    "test_stopped_recovery_refuses_unproven_and_rejected_attempts",
     "test_unused_context_is_rejected_before_training",
     "test_unselected_task_cannot_hide_forbidden_authority",
+)]
+PYTHON += [("tests.test_training_campaign_execution", name) for name in (
+    "test_campaign_recovers_committed_update_in_original_window[False]",
+    "test_campaign_recovers_committed_update_in_original_window[True]",
+    "test_stopped_recovery_refuses_unproven_and_rejected_attempts",
 )]
 PYTHON += [("tests.test_training_input_closure", name) for name in (
     "test_projected_closure_is_invariant_to_excluded_artifact_mutation",
@@ -98,8 +101,8 @@ CONTEXT += [("jope-pipeline", "neural_search::tests::" + name) for name in (
 POLICY = [
     ("jope-policy", "context_producer::" + name)
     for name in (
-        "tests::assembly_uses_all_three_frozen_normalizers_including_target",
-        "tests::hyperion_pool_keeps_512_component_contract",
+        "tests::test_cases::assembly_uses_all_three_frozen_normalizers_including_target",
+        "tests::test_cases::hyperion_pool_keeps_512_component_contract",
         "admission::tests::finite_component_gate_refuses_wrong_values_shapes_and_nan",
         "admission::tests::cpu_manifest_never_accepts_unpinned_registry_or_fewer_cases",
         "admission::tests::execution_requires_completion_limits_and_matching_outputs",

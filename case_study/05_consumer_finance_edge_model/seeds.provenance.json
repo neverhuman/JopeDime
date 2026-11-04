@@ -1,0 +1,241 @@
+{
+  "candidates": [
+    {
+      "canonical_genome": "(pipe X (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.48332276940345764,
+      "origin": "neural_policy",
+      "program_sha256": "5c1c80088d85c084e2bd65462f928f5d4ad88e947c68dfab7773af2e722abda5",
+      "rank_log_weight": -3.142311317017588,
+      "raw_decoded_genome": "(pipe X (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "reward_heads": [
+        0.08301515877246857,
+        0.3507921099662781,
+        0.3662024438381195,
+        1.1332813501358032
+      ],
+      "runtime_head_prediction": 0.6260626316070557,
+      "slot": 0
+    },
+    {
+      "canonical_genome": "(pipe X (sigmoid) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.4679669737815857,
+      "origin": "neural_policy",
+      "program_sha256": "289ece5c5156e78d1a289698e30b779e7abcbcd116a345aaac22e84901508b83",
+      "rank_log_weight": -3.15766711263946,
+      "raw_decoded_genome": "(pipe X (sigmoid) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "reward_heads": [
+        0.22314982116222382,
+        -0.05646692216396332,
+        0.45720961689949036,
+        1.2479753494262695
+      ],
+      "runtime_head_prediction": 0.5178593993186951,
+      "slot": 1
+    },
+    {
+      "canonical_genome": "(pipe X (winsor_moments append=true q=0.02) (sigmoid) (robust_scale) (pair_prod append=true topk=4) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.35393020510673523,
+      "origin": "neural_policy",
+      "program_sha256": "5a5f27f60c1c4386e67707622839860860e7c1a560afdf8554087c18242a1dde",
+      "rank_log_weight": -3.2717038813143104,
+      "raw_decoded_genome": "(pipe X (winsor_moments append=true q=0.02) (sigmoid) (robust_scale) (pair_prod append=true topk=4) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "reward_heads": [
+        1.4195142984390259,
+        -0.7604674696922302,
+        0.4250461459159851,
+        0.33162784576416016
+      ],
+      "runtime_head_prediction": 0.9533231854438782,
+      "slot": 2
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins bins=16) (blom append=true) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.3268190920352936,
+      "origin": "neural_policy",
+      "program_sha256": "b94ea6f9207b8dc1c7c917be10e74aed917060e85d31a9e5771ff1393224f197",
+      "rank_log_weight": -3.298814994385752,
+      "raw_decoded_genome": "(pipe X (quantile_bins bins=16) (blom append=true) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "reward_heads": [
+        0.055859457701444626,
+        -0.16673268377780914,
+        1.0325154066085815,
+        0.385634183883667
+      ],
+      "runtime_head_prediction": 0.8436383605003357,
+      "slot": 3
+    },
+    {
+      "canonical_genome": "(pipe X (histgbm2 leaves=15 rounds=300))",
+      "mean_reward_heads": 0.18201479315757751,
+      "origin": "neural_policy",
+      "program_sha256": "3f6af0eff8a8970ac0bf1ed8d963ad9d5401751dbbccaeda07c7b2502ad1eb68",
+      "rank_log_weight": -3.443619293263468,
+      "raw_decoded_genome": "(pipe X (histgbm2 leaves=15 rounds=300))",
+      "reward_heads": [
+        0.1023835688829422,
+        0.4031803011894226,
+        -0.6779524683952332,
+        0.9004477858543396
+      ],
+      "runtime_head_prediction": 0.20711536705493927,
+      "slot": 4
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins bins=32) (cheb append=true degree=4) (sigmoid) (ksmooth gamma=2.0 k=32))",
+      "mean_reward_heads": 0.14482156932353973,
+      "origin": "neural_policy",
+      "program_sha256": "0c4a7594b56733ff7a591dc62c7bde75d57d88641ec5bac797e585d601cdb1c9",
+      "rank_log_weight": -3.480812517097506,
+      "raw_decoded_genome": "(pipe X (quantile_bins bins=32) (cheb append=true degree=4) (sigmoid) (ksmooth gamma=2.0 k=32))",
+      "reward_heads": [
+        0.6746377348899841,
+        0.4283791780471802,
+        -0.8312857747077942,
+        0.3075551986694336
+      ],
+      "runtime_head_prediction": 0.00866071879863739,
+      "slot": 5
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins append=true bins=16) (histgbm depth=4 lr=0.1 rounds=180))",
+      "mean_reward_heads": 0.07565513253211975,
+      "origin": "neural_policy",
+      "program_sha256": "c2b77c3d5673b80f28e3b981ebaf0dbd283daa5bb3936c7b4d58c9b51c4e6c29",
+      "rank_log_weight": -3.549978953888926,
+      "raw_decoded_genome": "(pipe X (quantile_bins append=true bins=16) (histgbm depth=4 lr=0.1 rounds=180))",
+      "reward_heads": [
+        -1.0837944746017456,
+        -0.3802250027656555,
+        0.4839482605457306,
+        1.2826918363571167
+      ],
+      "runtime_head_prediction": 0.037883393466472626,
+      "slot": 6
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins bins=32) (ensemble))",
+      "mean_reward_heads": -0.05853167921304703,
+      "origin": "neural_policy",
+      "program_sha256": "f9c863de20670f896ce0514a13542efdffedad6857870c66774296a16ee297d0",
+      "rank_log_weight": -3.6841657656340927,
+      "raw_decoded_genome": "(pipe X (quantile_bins bins=32) (ensemble))",
+      "reward_heads": [
+        -0.04915440455079079,
+        -1.3855031728744507,
+        0.9281719326972961,
+        0.2723589241504669
+      ],
+      "runtime_head_prediction": 0.02614620141685009,
+      "slot": 7
+    },
+    {
+      "canonical_genome": "(pipe X (ensemble_ridge_gbm))",
+      "mean_reward_heads": -0.06488450616598129,
+      "origin": "neural_policy",
+      "program_sha256": "f8d603935d5f7b8dce4637371612ba185944a339b753f9f3a2a132290d8635bc",
+      "rank_log_weight": -3.690518592587027,
+      "raw_decoded_genome": "(pipe X (ensemble_ridge_gbm))",
+      "reward_heads": [
+        -0.6573842763900757,
+        -0.5190029740333557,
+        0.5865017771720886,
+        0.3303475081920624
+      ],
+      "runtime_head_prediction": 0.035414669662714005,
+      "slot": 8
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins append=true bins=16) (cheb append=true degree=4) (histgbm depth=4 lr=0.15 rounds=180))",
+      "mean_reward_heads": -0.06870642304420471,
+      "origin": "neural_policy",
+      "program_sha256": "bd73c5af185cbb4c62ffb15f009369ab44f7c541104deeb70de65d91d0393b22",
+      "rank_log_weight": -3.6943405094652504,
+      "raw_decoded_genome": "(pipe X (quantile_bins append=true bins=16) (cheb append=true degree=4) (histgbm depth=4 lr=0.15 rounds=180))",
+      "reward_heads": [
+        -0.19580475986003876,
+        -0.6566116213798523,
+        0.7105851173400879,
+        -0.13299442827701569
+      ],
+      "runtime_head_prediction": 0.3043909966945648,
+      "slot": 9
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins append=true bins=16) (gbm rounds=150))",
+      "mean_reward_heads": -0.09270305931568146,
+      "origin": "neural_policy",
+      "program_sha256": "9e61ce40d1420d42188a4351fe7859c792dd3996d02785c73daec2315f71ddb7",
+      "rank_log_weight": -3.718337145736727,
+      "raw_decoded_genome": "(pipe X (quantile_bins append=true bins=16) (gbm rounds=150))",
+      "reward_heads": [
+        -0.9097197651863098,
+        0.05499212071299553,
+        0.1958363950252533,
+        0.2880789637565613
+      ],
+      "runtime_head_prediction": 0.03152642026543617,
+      "slot": 10
+    }
+  ],
+  "case_name": "05_consumer_finance_edge_model",
+  "context_encoding": {
+    "backend": "Rust/Candle 0.11 CPU FP32; frozen accepted transforms; native-component qualification required",
+    "context_sha256": "f22733eb0a3c07b46892cbd2a24f8b3616d2c96174fbcd1245af5ee5e34de2cc",
+    "encoded_features": 64,
+    "encoded_train_rows": 256,
+    "encoder_identity": {
+      "assembly": "6582df23f5c1ee048d11040a5f2bd1447032932fc23f6c5a3aa9cb4f2d6896cb",
+      "component_bundle": "985074846ccfe92c818e920e5268ea5269a9e35f1fa2057ddae662266c6c7f9f",
+      "foundation_weights": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "frozen_transforms": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "hyperion_manifest": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "hyperion_weights": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "recipe": "native-hyperion-sweep3-chunks1-batch1024;foundation-pcg20260707-f64-label-normalization;target-pcg17-two-windows;frozen-512+1024+512-clip32/v1",
+      "target_weights": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f"
+    },
+    "final_test_targets_used": false,
+    "manifest_sha256": "9b4b02beffa3013f06e11f446c85c2fbc2349b0ed57ab85a94a5db8702c0b0cc",
+    "prepared_rows_sha256": "dc2a9af279b684c1cf06395de7e4d3d7909ef9343fd0291a78841a4e35364292",
+    "qualification": "unqualified_cpu_context_producer (no pre-existing GPU contexts-assembly-v2 file used; encoded directly from train.csv via CpuProducer)",
+    "schema": "jope.cpu-context/v1",
+    "total_features": 346,
+    "total_train_rows": 8000,
+    "train_csv_sha256": "0b94e668812dfe121623cc6c2c1129cadf4dad55e54d31bfb031578a4694b7ca"
+  },
+  "dataset_hash": "9721aa73ef1df237",
+  "fallback_used": false,
+  "policy_model": {
+    "base_vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "bundle_id": "policy-step-60000",
+    "config_sha256": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf",
+    "model_ot_sha256": "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129",
+    "parameter_sha256": "9c7057e7f6a9e348f030da73f03522977b8c08915d3a221d7d5ab2e4213fcd92",
+    "policy_safetensors_path": "/home/ubuntu/.cache/jope/models/bundles/policy-step-60000/policy.safetensors",
+    "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+    "ranking_backend": "candle_cpu_float32",
+    "ranking_selection_id": "mean_reward_heads_desc_program_hash_v1",
+    "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+    "step": 60000,
+    "vocabulary_name": "featmath-jain-v1",
+    "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+  },
+  "sampling": {
+    "attempted_draws": 64,
+    "batch": 32,
+    "dataset_seed": 10890172788868192343,
+    "elapsed_seconds": 49.068366169,
+    "exploration_seed": 9104162727200830479,
+    "fallback_attempts": 3,
+    "fallback_seed": 17737729825191821987,
+    "rounds": 2,
+    "sampling_seed": 3284090733383858335,
+    "temperature": 1.0,
+    "unique_neural_programs": 61,
+    "valid_neural_draws": 64
+  },
+  "schema": "jope.pipeline-seeds-provenance/v1",
+  "seed_count": 11,
+  "seeds_file": "9721aa73ef1df237.seeds.json",
+  "seeds_sha256": "ae14fdc9670cc94dd4e4634f25f690b92d03492369036a769125499f1f51aeb3",
+  "status": "ok"
+}

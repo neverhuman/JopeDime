@@ -12,10 +12,20 @@ import aggregate
 from receipt import digest
 from results import counts
 
+# rust-test fixture: 2N selected listing cases (+1 ignored); slice M of N owns cases M-1 and M-1+N.
+SHARDS = aggregate.RUST_TEST_SHARDS
+CASES = 2 * SHARDS + 1
+SELECTED = {str(n) for n in range(2 * SHARDS)}
+
+
+def mine_of(shard):
+    return {str(shard - 1), str(shard - 1 + SHARDS)}
+
 
 class BrowserRoutingTests(unittest.TestCase):
     def test_browser_only_changes_require_the_typescript_rust_gate(self):
         for path in ('web/browser-predict/src/lib.rs',
+                     'web/browser-predict/src/tests.rs',
                      'web/browser-predict/src/future_module.rs',
                      'web/browser-predict/Cargo.toml',
                      'web/browser-predict/Cargo.lock',
@@ -58,15 +68,15 @@ class AggregateTests(unittest.TestCase):
         self.needs = {lane: {'result':'success'} for lane in aggregate.plan_module.LANES}
         self.receipts = {}
         inputs = {name: digest(aggregate.ROOT / name) for name in aggregate.INPUTS}
-        # Each rust-test matrix leg is its own execution unit; slice M of 2 selects fixtures M-1 and M+1
-        # of the four the unsharded listing selects (the fifth is ignored in every listing).
-        units = [lane for lane in aggregate.plan_module.LANES if lane != 'rust-test'] + ['rust-test-1', 'rust-test-2']
+        # Each rust-test matrix leg is its own execution unit; slice M of N selects fixtures M-1 and M-1+N
+        # of the 2N the unsharded listing selects (the last of 2N+1 is ignored in every listing).
+        units = [lane for lane in aggregate.plan_module.LANES if lane != 'rust-test'] + [f'rust-test-{m}' for m in range(1, SHARDS + 1)]
         for unit in units:
             lane = 'rust-test' if unit.startswith('rust-test') else unit
             folder = self.root / unit
             folder.mkdir()
             backend = self.mapping['lanes'][lane]['result_backend']
-            logs = {'none':'verified fixture\n', 'rust':'test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n', 'unittest':'Ran 2 tests in 0.1s\n\nOK\n', 'pytest':'2 passed in 0.1s\n', 'nextest':'Summary [1s] 2 tests run: 2 passed, 3 skipped\n'}
+            logs = {'none':'verified fixture\n', 'rust':'test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n', 'unittest':'Ran 2 tests in 0.1s\n\nOK\n', 'pytest':'2 passed in 0.1s\n', 'nextest':f'Summary [1s] 2 tests run: 2 passed, {CASES - 2} skipped\n'}
             (folder / 'command.log').write_text(logs[backend])
             if lane == 'changes':
                 (folder / 'plan.json').write_text(json.dumps(self.plan))
@@ -75,14 +85,14 @@ class AggregateTests(unittest.TestCase):
             environment = {}
             if lane == 'rust-test':
                 shard = int(unit[-1])
-                environment['JOPE_RUST_TEST_PARTITION'] = f'slice:{shard}/2'
-                mine = {str(shard - 1), str(shard + 1)}
-                (folder / 'collection-unsharded.json').write_text(json.dumps(self.listing(set('0123'))))
-                (folder / 'collection.json').write_text(json.dumps(self.listing(set('0123'), mine)))
+                environment['JOPE_RUST_TEST_PARTITION'] = f'slice:{shard}/{SHARDS}'
+                mine = mine_of(shard)
+                (folder / 'collection-unsharded.json').write_text(json.dumps(self.listing(SELECTED)))
+                (folder / 'collection.json').write_text(json.dumps(self.listing(SELECTED, mine)))
                 (folder / 'junit.xml').write_text(self.junit(sorted(mine)))
                 for name in ('nextest-started', 'nextest.toml', 'disk-before.txt', 'disk-after.txt', 'target-bytes.txt'):
                     (folder / name).write_text('fixture')
-            result_counts = dict.fromkeys(('collected','executed','passed','failed','skipped','excluded')) if backend == 'none' else counts(2, 0, 3 if backend == 'nextest' else 0)
+            result_counts = dict.fromkeys(('collected','executed','passed','failed','skipped','excluded')) if backend == 'none' else counts(2, 0, CASES - 2 if backend == 'nextest' else 0)
             receipt = dict(schema='jope.ci-receipt/v1', **self.expected, lane=lane, command=['bash','ops/ci/fast-lane.sh',lane], dirty_source=[], dirty_source_after=[], inputs=inputs, started_at='2026-09-22T00:00:00+00:00', finished_at='2026-09-22T00:01:00+00:00', status='passed', exit_status=0, counts=result_counts,
                            environment=environment, evidence={p.name:digest(p) for p in folder.iterdir()})
             self.receipts[unit] = [(folder / 'receipt.json', receipt)]
@@ -95,7 +105,7 @@ class AggregateTests(unittest.TestCase):
             if partition is not None and name not in partition:
                 return {'ignored': False, 'filter-match': {'status': 'mismatch', 'reason': 'partition'}}
             return {'ignored': False, 'filter-match': {'status': 'matches'}}
-        return {'test-count': 5, 'rust-suites': {'fixture': {'status': 'listed', 'testcases': {str(n): case(str(n)) for n in range(5)}}}}
+        return {'test-count': CASES, 'rust-suites': {'fixture': {'status': 'listed', 'testcases': {str(n): case(str(n)) for n in range(CASES)}}}}
 
     @staticmethod
     def junit(names):
@@ -126,7 +136,7 @@ class AggregateTests(unittest.TestCase):
             self.assertEqual(lane, argument)
             self.assertEqual('ops/ci/fast-lane.sh', path)
             commands[lane] = ['bash', path, argument]
-        self.assertEqual(9, len(self.receipts))
+        self.assertEqual(len(aggregate.plan_module.LANES) - 1 + SHARDS, len(self.receipts))
         for unit, candidates in self.receipts.items():
             lane = candidates[0][1]['lane']
             candidates[0][1]['command'] = commands[lane]
@@ -246,7 +256,7 @@ class AggregateTests(unittest.TestCase):
     def test_rust_test_requires_every_shard_once_with_its_own_slice(self):
         report = self.verify()
         self.assertEqual('passed', report['lanes']['rust-test']['partition']['status'])
-        self.assertEqual(4, report['lanes']['rust-test']['partition']['union']['selected'])
+        self.assertEqual(len(SELECTED), report['lanes']['rust-test']['partition']['union']['selected'])
         for change in ('missing', 'duplicate', 'wrong-slice', 'unrecorded-slice'):
             with self.subTest(change=change):
                 saved = copy.deepcopy(self.receipts)
@@ -255,7 +265,7 @@ class AggregateTests(unittest.TestCase):
                 elif change == 'duplicate':
                     self.receipts['rust-test-2'].append(self.receipts['rust-test-2'][0])
                 elif change == 'wrong-slice':
-                    self.receipts['rust-test-2'][0][1]['environment']['JOPE_RUST_TEST_PARTITION'] = 'slice:2/3'
+                    self.receipts['rust-test-2'][0][1]['environment']['JOPE_RUST_TEST_PARTITION'] = f'slice:2/{SHARDS + 1}'
                 else:
                     del self.receipts['rust-test-2'][0][1]['environment']['JOPE_RUST_TEST_PARTITION']
                 errors = self.verify()['errors']
@@ -268,17 +278,17 @@ class AggregateTests(unittest.TestCase):
                                  ('unsharded-differs', 'differs between shards')]:
             with self.subTest(change=change):
                 if change == 'overlap':
-                    self.rewrite('rust-test-2', 'collection.json', json.dumps(self.listing(set('0123'), {'0', '1', '3'})))
-                    self.rewrite('rust-test-2', 'junit.xml', self.junit(['0', '1', '3']))
+                    self.rewrite('rust-test-2', 'collection.json', json.dumps(self.listing(SELECTED, mine_of(2) | {'0'})))
+                    self.rewrite('rust-test-2', 'junit.xml', self.junit(sorted(mine_of(2) | {'0'})))
                 elif change == 'gap':
-                    self.rewrite('rust-test-2', 'collection.json', json.dumps(self.listing(set('0123'), {'1'})))
+                    self.rewrite('rust-test-2', 'collection.json', json.dumps(self.listing(SELECTED, {'1'})))
                     self.rewrite('rust-test-2', 'junit.xml', self.junit(['1']))
                 elif change == 'unexecuted':
                     self.rewrite('rust-test-2', 'junit.xml', self.junit(['1']))
                 elif change == 'beyond-partition':
-                    self.rewrite('rust-test-2', 'collection.json', json.dumps(self.listing(set('013'), {'1', '3'})))
+                    self.rewrite('rust-test-2', 'collection.json', json.dumps(self.listing(SELECTED - {'0'}, mine_of(2))))
                 else:
-                    self.rewrite('rust-test-2', 'collection-unsharded.json', json.dumps(self.listing(set('013'))))
+                    self.rewrite('rust-test-2', 'collection-unsharded.json', json.dumps(self.listing(SELECTED - {'0'})))
                 errors = self.verify()['errors']
                 self.assertTrue(any(error.startswith('rust-test partition:') and expected in error for error in errors), errors)
                 self.setUp()
@@ -341,6 +351,11 @@ class AggregateTests(unittest.TestCase):
     def test_campaign_policy_and_renderer_changes_require_inputs(self):
         for path in (
             'crates/jope-campaigns/src/spec_drift.rs',
+            'crates/jope-campaigns/src/spec_drift/audit.rs',
+            'crates/jope-campaigns/src/spec_drift/parser.rs',
+            'crates/jope-campaigns/src/spec_drift/registry.rs',
+            'crates/jope-campaigns/src/spec_drift/scan.rs',
+            'crates/jope-campaigns/src/spec_drift/tests.rs',
             'crates/jope-campaigns/src/spec_policy.rs',
             'crates/jope-campaigns/src/commands/train_only_redteam.rs',
             'crates/jope-arena/src/elo.rs',

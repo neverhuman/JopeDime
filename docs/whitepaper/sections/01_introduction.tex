@@ -56,11 +56,11 @@ can execution feedback help a proposer depart usefully from familiar ideas?
 \Cref{sub:anatomy-history} develops the role of the scientific record.
 
 \paragraph{From search to learning.}
+Tests can select a better candidate without teaching the next proposer.
 Automated research systems already couple proposals to tests
 \citep{lu2024aiscientist,gottweis2025coscientist,novikov2025alphaevolve,karpathy2026autoresearch,socher2026bookbite,socher2026eureka}.
-\Cref{sub:anatomy-where,sec:road} compare how they generate, judge and
-retain useful work.
-The learning test asks whether evaluation feedback improves the first proposal on a new problem.
+\Cref{sub:anatomy-where,sec:road} distinguish retained solutions from
+proposer updates.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{keyidea}
@@ -72,7 +72,7 @@ Can judgment bought during training improve the first proposal at deployment?
 AlphaGo learned from human expert games and searched heavily at every move
 \citep{silver2016mastering}.
 AlphaGo Zero learned only from games against itself, and its network alone,
-with no search, rated \num{3055} Elo. That is close to the \num{3144} of AlphaGo Fan, the
+with no search, rated \num{3055}~Elo. That is close to the \num{3144} of AlphaGo Fan, the
 version that beat the European champion Fan Hui
 \citep{silver2016mastering,silver2017mastering}.
 
@@ -113,7 +113,7 @@ deployment.
     \draw[flow] (df) -- (dy);
     \node[gloss] at (0,-21mm) {Frozen writer; one candidate committed before its score is known.};
   \end{tikzpicture}
-  \caption{\textbf{Training feedback and the single-candidate contract.}
+  \caption{\textbf{Training uses feedback; deployment commits one move.}
   Reference schematic: the proposed procedure updates the writer during
   training and fits the emitted estimator during deployment. The adapter-only
   record in \cref{sec:method-status} is a separate loop; first-proposal
@@ -163,8 +163,8 @@ reference whose moves are typed programs of learning primitives.
   \item \textbf{The economics of algorithmic self-play:} a cost model for
     training and for the cost per verified improvement (\cref{sec:price}).
   \item \textbf{\EZ{}:} a reference learner with a frozen problem encoder,
-    a grammar-constrained program writer and a separate problem--program map,
-    plus an expert-iteration procedure and safeguards against reward hacking
+    a grammar-constrained program writer and a problem--program ranking map,
+    plus an expert-\hspace{0pt}iteration procedure and safeguards against reward hacking
     (\cref{sec:method}).
   \item \textbf{An evaluation protocol for the single-proposal claim:}
     paired comparisons with frozen algorithms whose receipts record the
@@ -179,8 +179,8 @@ writer updates nor a training gain in the separate ranking map. Independent
 first-proposal comparisons remain pending; \cref{sec:method,sec:results}
 specify the reference design and its tests.
 
-We first separate innovation's roles (\cref{sec:anatomy}), then trace the
-AI methods that connect them (\cref{sec:road}). The game defines an attempt
-(\cref{sec:game}); the cost model prices it (\cref{sec:price}); and the
-reference learner connects attempts across tasks (\cref{sec:method}).
-The tests in \cref{sec:results} will bound the claims in \cref{sec:meaning}.
+\Cref{sec:anatomy,sec:road} identify the roles and components;
+\cref{sec:game} defines an attempt. \Cref{sec:price,sec:method} account
+for its cost and specify how attempts supply reference training targets.
+The tests in \cref{sec:results} bound the conclusions in
+\cref{sec:meaning,sec:conclusion}.

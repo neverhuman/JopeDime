@@ -1,7 +1,7 @@
 // Full-kernel reference: reuses the ACTUAL portable_math.rs source (not a copy)
 // via include!, so the Python transcription is verified against the real thing.
 // The #[cfg(test)] module in portable_math.rs is excluded in this non-test build.
-#[path = "../../../../vendor/feat-math/src/portable_math.rs"]
+#[path = "../../../../../feat-math/src/portable_math.rs"]
 mod pm;
 use pm::*;
 

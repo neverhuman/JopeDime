@@ -1,0 +1,371 @@
+use super::*;
+
+/// Largest absolute difference a receiver's replay of the frozen assembly may show against the
+/// serialized final context. Declared for this new intermediate check (the 3e-4 CPU/native
+/// parity threshold is unchanged): the replay repeats the producer's Candle CPU FP32 operations
+/// on identical inputs, so only reduction order in the 2048→1024 projection can differ between
+/// hosts, which is far below this bound; a block swap or substituted projection moves the
+/// context by orders of magnitude more.
+pub const ASSEMBLY_REPLAY_MAX_ABS: f32 = 1e-4;
+
+/// Input scope of one encode: sha256 of the prepared training rows' JSON.
+pub(crate) fn input_scope(rows: &[Vec<f64>]) -> Result<String> {
+    Ok(sha(&serde_json::to_vec(rows)?))
+}
+
+macro_rules! product {
+    ($(#[$meta:meta])* $name:ident, $width:expr, $transformation:literal) => {
+        $(#[$meta])*
+        #[derive(Clone, Debug, PartialEq)]
+        pub struct $name {
+            values: Vec<f32>,
+            scope: String,
+        }
+        impl $name {
+            /// Number of values in this product.
+            pub const WIDTH: usize = $width;
+            /// The named transformation that constructs this product.
+            pub const TRANSFORMATION: &'static str = $transformation;
+            pub(crate) fn checked(values: Vec<f32>, scope: &str) -> Result<Self> {
+                vector(&values, $width)
+                    .with_context(|| format!("{} layout", stringify!($name)))?;
+                validate_hex(scope, 64)?;
+                Ok(Self {
+                    values,
+                    scope: scope.into(),
+                })
+            }
+            /// Unit-test support: a product with arbitrary values, never available outside the
+            /// crate's own tests.
+            #[cfg(test)]
+            #[allow(dead_code)]
+            pub(crate) fn for_testing(values: Vec<f32>, scope: &str) -> Self {
+                Self::checked(values, scope).unwrap()
+            }
+            pub fn values(&self) -> &[f32] {
+                &self.values
+            }
+            /// sha256 of the prepared training rows this product was computed from.
+            pub fn scope(&self) -> &str {
+                &self.scope
+            }
+        }
+        impl std::ops::Deref for $name {
+            type Target = [f32];
+            fn deref(&self) -> &[f32] {
+                &self.values
+            }
+        }
+        /// Serializes as the bare vector: the historical wire layout.
+        impl Serialize for $name {
+            fn serialize<S: serde::Serializer>(
+                &self,
+                serializer: S,
+            ) -> std::result::Result<S::Ok, S::Error> {
+                self.values.serialize(serializer)
+            }
+        }
+    };
+}
+
+product!(
+    /// Hyperion dataset signature: per-coordinate mean, population standard deviation, tenth and
+    /// ninetieth percentile of the 128-wide row embeddings (4 × 128 values).
+    HyperionSignature,
+    512,
+    "hyperion.pool.mean-population-std-p10-p90/v1"
+);
+product!(
+    /// Raw target-conditioned Starlight Foundation output, before the frozen projection.
+    RawFoundation,
+    2048,
+    "starforge.foundation.target-conditioned/v1"
+);
+product!(
+    /// Foundation after the frozen mean subtraction and 2048→1024 projection, before the frozen
+    /// block normalization.
+    ProjectedFoundation,
+    1024,
+    "frozen-transforms.foundation-projection-2048-1024/v1"
+);
+product!(
+    /// Fused target-encoder output over the frozen seed-17 windows.
+    TargetBlock,
+    512,
+    "starforge.target-encoder-fused.seed17-windows/v1"
+);
+product!(
+    /// The policy context: normalized Hyperion, projected Foundation and Target blocks,
+    /// concatenated 512+1024+512 and clipped to ±32.
+    FinalContext,
+    2048,
+    "frozen-transforms.assemble-512-1024-512-clip32/v1"
+);
+
+impl HyperionSignature {
+    /// Pool 128-wide row embeddings into the 512-wide signature (f64 accumulation, population
+    /// standard deviation, linear-interpolated percentiles over sorted values).
+    pub fn pool(rows: &RowEmbeddings) -> Result<Self> {
+        let flat = &rows.values;
+        ensure!(
+            !flat.is_empty()
+                && flat.len().is_multiple_of(RowEmbeddings::WIDTH)
+                && flat.iter().all(|v| v.is_finite()),
+            "invalid Hyperion row embeddings"
+        );
+        let n = flat.len() / RowEmbeddings::WIDTH;
+        let mut out = vec![0.0; Self::WIDTH];
+        for j in 0..RowEmbeddings::WIDTH {
+            let mut values = (0..n)
+                .map(|i| flat[i * RowEmbeddings::WIDTH + j] as f64)
+                .collect::<Vec<_>>();
+            values.sort_by(f64::total_cmp);
+            let mean = values.iter().sum::<f64>() / n as f64;
+            let std = (values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / n as f64).sqrt();
+            let q = |p: f64| {
+                let x = p * (n - 1) as f64;
+                values[x.floor() as usize] * (1.0 - x.fract())
+                    + values[x.ceil() as usize] * x.fract()
+            };
+            out[j] = mean as f32;
+            out[128 + j] = std as f32;
+            out[256 + j] = q(0.1) as f32;
+            out[384 + j] = q(0.9) as f32;
+        }
+        Self::checked(out, &rows.scope)
+    }
+}
+impl RawFoundation {
+    /// Wrap the Foundation encoder's output for the encode with input scope `scope`.
+    pub(crate) fn from_foundation_encoder(values: Vec<f32>, scope: &str) -> Result<Self> {
+        Self::checked(values, scope)
+    }
+}
+impl TargetBlock {
+    /// Wrap the fused target encoder's output for the encode with input scope `scope`.
+    pub(crate) fn from_target_encoder(values: Vec<f32>, scope: &str) -> Result<Self> {
+        Self::checked(values, scope)
+    }
+}
+impl FinalContext {
+    pub(crate) fn from_assembly(values: Vec<f32>, scope: &str) -> Result<Self> {
+        let context = Self::checked(values, scope)?;
+        ensure!(
+            context.values.iter().all(|v| v.abs() <= 32.0),
+            "context exceeds frozen clip"
+        );
+        Ok(context)
+    }
+    /// Little-endian f32 bytes: the 8192-byte policy input file.
+    pub fn to_le_bytes(&self) -> Vec<u8> {
+        self.values.iter().flat_map(|v| v.to_le_bytes()).collect()
+    }
+    /// `jope_policy::context_sha256` of these values: the policy request's `context_sha256`.
+    pub fn sha256(&self) -> String {
+        crate::context_sha256(&self.values)
+    }
+}
+
+/// The Hyperion cell surface of one encode (W2-T03): the u8 grid quantized from the prepared
+/// training rows under their fitted quantile bounds, bound to the encode's input scope. It is
+/// the Hyperion sweep's only input, and row embeddings are built only from the sweep of their
+/// own encode's surface, so a grid of another encode (or another row count) cannot become this
+/// encode's row embeddings. It never crosses a public API and cannot be serialized.
+pub struct CellSurface {
+    grid: hyperion::hyperion_v7::grid::U8Grid,
+    rows: usize,
+    scope: String,
+}
+impl CellSurface {
+    /// The named transformation that constructs a cell surface.
+    pub const TRANSFORMATION: &'static str = "hyperion.v7.fitted-quantile-bounds-u8-grid/v1";
+    /// Wrap the frozen quantization of `rows` prepared training rows of the encode with input
+    /// scope `scope`.
+    pub(crate) fn from_quantized_rows(
+        grid: hyperion::hyperion_v7::grid::U8Grid,
+        rows: usize,
+        scope: &str,
+    ) -> Result<Self> {
+        ensure!(
+            rows > 0 && !grid.data.is_empty(),
+            "empty Hyperion cell surface"
+        );
+        validate_hex(scope, 64)?;
+        Ok(Self {
+            grid,
+            rows,
+            scope: scope.into(),
+        })
+    }
+    pub(crate) fn grid(&self) -> &hyperion::hyperion_v7::grid::U8Grid {
+        &self.grid
+    }
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+    pub fn scope(&self) -> &str {
+        &self.scope
+    }
+}
+
+#[cfg(test)]
+mod cell_surface_tests {
+    use super::*;
+    use hyperion::hyperion_v7::grid::U8Grid;
+
+    fn surface(rows: usize, scope: &str) -> Result<CellSurface> {
+        CellSurface::from_quantized_rows(
+            U8Grid {
+                data: vec![7; rows * 3],
+                h: rows,
+                w: 3,
+            },
+            rows,
+            scope,
+        )
+    }
+
+    /// W2-T03: row embeddings come only from the sweep of their own encode's cell surface and
+    /// carry its input scope; a sweep of another row count and an unscoped surface are refused.
+    #[test]
+    fn row_embeddings_are_built_only_from_their_own_encodes_cell_surface() {
+        let scope = "a".repeat(64);
+        let own = surface(3, &scope).unwrap();
+        let rows =
+            RowEmbeddings::from_hyperion_sweep(vec![0.5; 3 * RowEmbeddings::WIDTH], &own).unwrap();
+        assert_eq!((rows.len(), rows.scope()), (3, scope.as_str()));
+        assert_eq!(own.rows(), 3);
+        // A sweep of a two-row encode does not fit a three-row surface.
+        assert!(
+            RowEmbeddings::from_hyperion_sweep(vec![0.5; 2 * RowEmbeddings::WIDTH], &own).is_err()
+        );
+        // Nonfinite embeddings, a malformed scope and an empty grid are refused.
+        assert!(
+            RowEmbeddings::from_hyperion_sweep(vec![f32::NAN; 3 * RowEmbeddings::WIDTH], &own)
+                .is_err()
+        );
+        assert!(surface(3, "not-a-scope").is_err());
+        assert!(surface(0, &scope).is_err());
+    }
+}
+
+/// Hyperion row embeddings of one encode: one 128-wide embedding per prepared training row.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RowEmbeddings {
+    values: Vec<f32>,
+    scope: String,
+}
+impl RowEmbeddings {
+    /// Width of one row embedding.
+    pub const WIDTH: usize = 128;
+    /// The named transformation that constructs row embeddings.
+    pub const TRANSFORMATION: &'static str =
+        "hyperion.v7.composite-sweep3-scales4-7-11-15-batch1024/v1";
+    /// Unit-test support only.
+    #[cfg(test)]
+    pub(crate) fn for_testing(values: Vec<f32>, rows: usize, scope: &str) -> Self {
+        Self::in_scope(values, rows, scope).unwrap()
+    }
+    /// Wrap the frozen Hyperion sweep output of `surface`: one embedding per row of that
+    /// surface, in that surface's input scope.
+    pub(crate) fn from_hyperion_sweep(values: Vec<f32>, surface: &CellSurface) -> Result<Self> {
+        Self::in_scope(values, surface.rows, &surface.scope)
+    }
+    fn in_scope(values: Vec<f32>, rows: usize, scope: &str) -> Result<Self> {
+        ensure!(
+            rows > 0 && values.len() == rows * Self::WIDTH && values.iter().all(|v| v.is_finite()),
+            "incomplete Hyperion row embeddings"
+        );
+        validate_hex(scope, 64)?;
+        Ok(Self {
+            values,
+            scope: scope.into(),
+        })
+    }
+    pub fn rows(&self) -> impl Iterator<Item = &[f32]> {
+        self.values.chunks_exact(Self::WIDTH)
+    }
+    pub fn len(&self) -> usize {
+        self.values.len() / Self::WIDTH
+    }
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
+    pub fn scope(&self) -> &str {
+        &self.scope
+    }
+}
+
+/// The three encoder products of one encode. It serializes as the historical
+/// `{"hyperion": [...], "foundation": [...], "target": [...]}` object and cannot be
+/// deserialized; [`ComponentVectors`] is the serialized claim.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct Components {
+    pub hyperion: HyperionSignature,
+    pub foundation: RawFoundation,
+    pub target: TargetBlock,
+}
+impl Components {
+    /// All three products must come from the same encode (the same input scope).
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.hyperion.scope() == self.foundation.scope()
+                && self.foundation.scope() == self.target.scope(),
+            "components come from different encodes (input scopes differ)"
+        );
+        Ok(())
+    }
+    /// Input scope shared by the three products.
+    pub fn scope(&self) -> &str {
+        self.hyperion.scope()
+    }
+    /// The serialized claim of these products.
+    pub fn to_vectors(&self) -> ComponentVectors {
+        ComponentVectors {
+            hyperion: self.hyperion.values.clone(),
+            foundation: self.foundation.values.clone(),
+            target: self.target.values.clone(),
+        }
+    }
+}
+
+/// Serialized encoder components as they appear inside an artifact or a qualification case:
+/// claims, not products. Parsing refuses unknown fields and any padded, truncated or nonfinite
+/// block; nothing converts a claim back into a typed product.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct ComponentVectors {
+    pub hyperion: Vec<f32>,
+    pub foundation: Vec<f32>,
+    pub target: Vec<f32>,
+}
+impl ComponentVectors {
+    /// Layout of each block: 512 / 2048 / 512 finite values.
+    pub fn validate(&self) -> Result<()> {
+        vector(&self.hyperion, HyperionSignature::WIDTH).context("hyperion signature layout")?;
+        vector(&self.foundation, RawFoundation::WIDTH).context("raw foundation layout")?;
+        vector(&self.target, TargetBlock::WIDTH).context("target block layout")
+    }
+}
+impl<'de> Deserialize<'de> for ComponentVectors {
+    fn deserialize<D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> std::result::Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
+        struct Claimed {
+            hyperion: Vec<f32>,
+            foundation: Vec<f32>,
+            target: Vec<f32>,
+        }
+        let claimed = Claimed::deserialize(deserializer)?;
+        let vectors = Self {
+            hyperion: claimed.hyperion,
+            foundation: claimed.foundation,
+            target: claimed.target,
+        };
+        vectors
+            .validate()
+            .map_err(|error| serde::de::Error::custom(format!("{error:#}")))?;
+        Ok(vectors)
+    }
+}

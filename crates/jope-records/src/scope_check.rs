@@ -30,7 +30,8 @@ pub const SCRIPT: &str = "deploy/ci/rust-test-scope.sh";
 /// Repeats are kept: the script emits `-p X -p X` for a name written twice, `cargo` accepts it,
 /// and turning that into a set here would make the counts printed below disagree with the file.
 fn emitted(root: &Path, args: &[&str]) -> Result<String> {
-    let output = Command::new("bash")
+    // jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=validated-input expires=2026-12-31
+    let output = Command::new("bash") // allowlist
         .arg(root.join(SCRIPT))
         .args(args)
         .current_dir(root)

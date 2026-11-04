@@ -1,0 +1,80 @@
+{
+  "schema": "whitepaper.pool-insertions-source/v1",
+  "round_window": [
+    3174,
+    4039
+  ],
+  "rows": 866,
+  "window_size": 20,
+  "automatic_pool_insertions": 421,
+  "rejected_adapter_candidates": 865,
+  "adapter_candidates": 866,
+  "csv_sha256": "38017ebddcd985dcae771efdca7cbeb456ce6f9619a8b2abb0e061a6f72a5b1e",
+  "source_prefixes": {
+    "adapter_admissions.jsonl": {
+      "at": "2026-11-03T03:02:39.551347+00:00",
+      "observed_bytes": 1728859,
+      "complete_prefix_bytes": 1728859,
+      "complete_prefix_sha256": "5233d6244c164779a697d198e1c241b5ca8450447fdc7fee7017bf479c242c00",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true,
+      "transport": "bounded byte reads; scalar projection and hashes computed off source host"
+    },
+    "summary.jsonl": {
+      "at": "2026-11-03T03:02:41.025665+00:00",
+      "observed_bytes": 3358494,
+      "complete_prefix_bytes": 3358494,
+      "complete_prefix_sha256": "c35e1f6f14d4e3a58b3c9776f04e5492391315482df621d24012aa589b850838",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true,
+      "transport": "bounded byte reads; scalar projection and hashes computed off source host"
+    },
+    "per-round.jsonl": {
+      "at": "2026-11-03T03:02:42.310369+00:00",
+      "observed_bytes": 2456658,
+      "complete_prefix_bytes": 2456658,
+      "complete_prefix_sha256": "c80198a10e7bc59fb8ba036c54c049f77477a652f6b7fdc6d9999a04a3538b55",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true,
+      "transport": "bounded byte reads; scalar projection and hashes computed off source host"
+    },
+    "promotions.jsonl": {
+      "at": "2026-11-03T03:07:59.187994+00:00",
+      "observed_bytes": 12045052,
+      "complete_prefix_bytes": 12045052,
+      "complete_prefix_sha256": "7fc0875aa28439df1bec6729ab0ba4120e8576daafd5f9ca7f1dd13c6c2791b1",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true,
+      "transport": "bounded byte reads; scalar projection and hashes computed off source host"
+    }
+  },
+  "projection_sha256": {
+    "admissions": "874a84a6fff959d56f60bf37ec1c8062520072862de97fee99b5fa1cd32b6e47",
+    "summary": "7b1053e239eda05014d5430806cf262a8764b429f9669c52dcb4eb77087707ed",
+    "per_round": "25c9e293b3ca66b9e53862f631a8aca2f3ee611b435621a34cb1c5a4155f8bee",
+    "promotion_events": "62f174c3a35afdd88161c1a3e52dffb1c821ca60836bcc1692fe8e8eb70ba86f"
+  },
+  "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+  "checks": {
+    "admission_per_round_candidate_and_decision_matches": 866,
+    "summary_promotion_and_decision_matches": 20,
+    "summary_round_window": [
+      4020,
+      4039
+    ],
+    "unique_program_context_pairs": 421,
+    "all_events_training_cv_gate_passed": true,
+    "stable_prefix_rereads": true
+  },
+  "capture_scripts_sha256": {
+    "admissions_and_per_round": "b7f9127482d9dca03e22020404961b14064971c62de7ae6c2bf8958d5dbf18cb",
+    "promotion_events": "96016ec72f34c5acc7e55b1cefcfdac70c73411ac9979afda302053787c781b7"
+  },
+  "definitions": {
+    "automatic_pool_insertions": "One kind=promotion record in the automatic-promotion journal; counts program/context insertion events, not independent adapter gains or distinct programs across contexts.",
+    "adapter_rejected": "One minus the accepted flag in each admission record, cross-checked against the per-round observer.",
+    "windowing": "Nonoverlapping consecutive windows of20 completed rounds, beginning3174; retain final partial window. Empty event counts denote zero recorded promotion events within the captured complete journal prefix."
+  },
+  "source_binding": "Logged aggregate fields only; installed loop source, adapter, evaluation population and normalization closure remain unqualified.",
+  "scope": "Adaptive training-side program insertion events and development-side adapter decisions have distinct units. No independent first-proposal, learning-gain, writer/ranking-map benefit or serving comparison."
+}

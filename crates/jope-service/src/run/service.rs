@@ -32,7 +32,10 @@ pub(crate) fn run_objective(
         !objective.requires_order(),
         "objective requires an ordered split"
     );
-    jope_runtime::fitness::require_no_columns(&objective, "numeric run")?;
+    ensure!(
+        objective.columns().is_empty(),
+        "numeric run does not support auxiliary columns"
+    );
     let trained_loss = matches!(objective, Fitness::Rmse {});
     let name = objective.name();
     let public_name = if Fitness::catalog().iter().any(|entry| entry.name == name) {
@@ -72,6 +75,10 @@ pub(crate) fn error_code(error: &anyhow::Error) -> ErrorCode {
         ErrorCode::CapabilityUnavailable
     } else if error.is::<crate::ranker::bundle::BundleIntegrityError>() {
         ErrorCode::ModelIntegrityFailed
+    } else if error.downcast_ref::<crate::ranker::landmarks::RecipeError>()
+        == Some(&crate::ranker::landmarks::RecipeError::InvalidProbeBounds)
+    {
+        ErrorCode::NumericalFailure
     } else {
         match jope_runtime::error::kind_of(error) {
             jope_runtime::FailureKind::Backend => ErrorCode::BackendUnavailable,
@@ -79,6 +86,15 @@ pub(crate) fn error_code(error: &anyhow::Error) -> ErrorCode {
             _ => ErrorCode::InvalidInput,
         }
     }
+}
+
+#[cfg(test)]
+#[test]
+fn q1_invalid_probe_bounds_have_numerical_failure_code() {
+    let error = anyhow::Error::new(crate::ranker::landmarks::RecipeError::InvalidProbeBounds);
+    assert_eq!(error_code(&error), ErrorCode::NumericalFailure);
+    let shape = anyhow::Error::new(crate::ranker::landmarks::RecipeError::ShapeMismatch);
+    assert_eq!(error_code(&shape), ErrorCode::InvalidInput);
 }
 
 pub(crate) struct BackendSpace<N> {

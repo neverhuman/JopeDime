@@ -7,12 +7,9 @@
 //! later `hwm::events()` call into `invalid type: null, expected f64`: a single bad candidate,
 //! rejected on its merits, made the whole ledger unreadable.
 //!
-//! The fix is at the point of entry, not in the schema: `jope.hwm/v1` keeps its `number` score and
-//! no new outcome is invented. A non-finite candidate is refused before the lock, before the
-//! mirror preflight and before any blob — nothing is written that cannot be read back, and no
-//! fabricated replacement score is recorded in place of the one that was measured. Candidates that
-//! are merely *not better* are unaffected: they are representable, so they keep the readable
-//! rejection event they have always had.
+//! `jope.hwm/v1` keeps its `number` score. Ingest rejects non-finite candidates before the lock,
+//! mirror preflight, or blob write. Finite candidates that are not better still produce the usual
+//! readable rejection event.
 
 use jope_learning::hwm::{self, Candidate};
 use jope_learning::ledger::Ledger;

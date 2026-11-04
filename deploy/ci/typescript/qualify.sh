@@ -25,6 +25,6 @@ cargo test --locked -p feat-math --no-default-features --test golden -- --test-t
 cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit:: -- --test-threads=2 --nocapture 2>&1 | tee target/typescript-evidence/fitted.log
 cargo test --locked -p feat-math --no-default-features --test artifact_target_binding 2>&1 | tee target/typescript-evidence/bindings.log
 cargo test --locked -p jope-pipeline --test artifact_target_binding 2>&1 | tee target/typescript-evidence/pipeline.log
-cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests:: 2>&1 | tee target/typescript-evidence/cli.log
+cargo test --locked -p jope-cli --no-default-features --lib kernel::numeric_emit::artifact_v3_tests:: 2>&1 | tee target/typescript-evidence/cli.log
 node deploy/ci/typescript/verify.mjs --require-fitted-bundle
 node --test deploy/ci/typescript/evidence.test.mjs 2>&1 | tee target/typescript-evidence/receipt-controls.log

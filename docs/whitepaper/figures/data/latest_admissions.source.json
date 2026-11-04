@@ -1,38 +1,44 @@
 {
   "schema": "whitepaper.latest-admissions-source/v1",
   "capture": {
-    "observed_bytes": 1275062,
-    "prefix_bytes": 1274525,
-    "prefix_sha256": "99b274373bf4fb3f8350e9fd4c4887ebc4be76bca8c9df91c04f0f3dfc090065",
-    "source_rows": 2423,
+    "observed_bytes": 1680837,
+    "prefix_bytes": 1680837,
+    "prefix_sha256": "9943c684037f109b3889e33bfd1e0d2cded511d314f5cd1247f5d5cf244c2f10",
+    "source_rows": 3176,
     "first_round": 775,
-    "last_round": 3197,
+    "last_round": 3950,
     "trailing_incomplete_bytes_omitted": 0,
-    "complete_rows_after_matched_cutoff_omitted": 1
+    "complete_rows_after_matched_cutoff_omitted": 0
   },
-  "at": "2026-11-01T21:18:10.575322+00:00",
+  "at": "2026-11-02T23:00:00.993431+00:00",
   "stable_prefix_reread_verified": true,
   "evaluation_identity_sha256": [
     "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6"
   ],
-  "csv_sha256": "aba6f21f5c9d0e0ab2b85c12081f05d2f6c6f558a64db90299af78f58c28a0b3",
-  "selection": "Every complete admission from the published anchor through latest admission also present in the stable retained summary prefix; one later complete admission excluded pending its matching summary. No outcome selection or deduplication.",
-  "field_mapping": "Candidate, previous-best, retained-best utility, acceptance and best-round identity are logged fields. Decision tag is derived from logged acceptance and exact Decimal candidate-minus-prior-best utility.",
+  "csv_sha256": "5246d4176a6f97e4bb94aba8905bbbfbb98eb9767eff300a8babb8ef49f11f64",
+  "selection": "Every complete admission from the published anchor through the latest admission with a complete summary and per-round audit at capture. All older rows are retained in log order; no outcome selection or deduplication.",
+  "field_mapping": "Candidate, previous-best, retained-best utility, acceptance/action and best-round identity are logged fields.",
   "source_binding": "Aggregate field interpretation only; exact installed source, adapter and evaluation population remain unjoined",
   "scope": "Adaptive development admissions; independent first-proposal and deployment evaluation remain required",
   "summary_crosscheck": {
     "rows": 20,
     "round_window": [
-      3178,
-      3197
+      3931,
+      3950
     ],
     "all_retained_summaries_match": true,
-    "prefix_sha256": "56172e9fd04669876412300f1f62dc5a28cbb147fc8251d827f845b39c9f2b8d"
+    "all_candidate_and_decision_flags_match": true,
+    "summary_prefix_sha256": "f554299ce491a0f2da0ca1a0145ed016c33c34238cb518fd21e7cd74ec4c8ffd",
+    "per_round_prefix_sha256": "0c84936c4f657f4b7c04597918f1121b9f0a6fc0c4f12a3563c05a163e0a9aa8"
   },
   "prior_ledger": {
-    "rows": 2247,
-    "last_round": 3021,
-    "csv_sha256": "8593b87e632bd729ab41e6fecb63ce6cb8fe62b1ce4b9d74564dfef629c48e50",
-    "all_fields_overlap_exact": true
-  }
+    "rows": 2423,
+    "last_round": 3197,
+    "csv_sha256": "aba6f21f5c9d0e0ab2b85c12081f05d2f6c6f558a64db90299af78f58c28a0b3",
+    "all_fields_overlap_exact": true,
+    "additional_rows": 753,
+    "additional_admissions": 0
+  },
+  "projection_sha256": "b8438390eb5fcd1b7e35213dbef09f4ae5601b3379fc90ded5f730507dfcda91",
+  "capture_script_sha256": "d3d52acb0ca3c834e0fab029759a73f75204ddd020cd04b6e4eea59c9ba53bba"
 }

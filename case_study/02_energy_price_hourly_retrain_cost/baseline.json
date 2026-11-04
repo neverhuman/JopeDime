@@ -1,0 +1,16 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "rmse"
+  },
+  "limits": [
+    {
+      "resource": "fit_cpu_seconds",
+      "max": 1000000000000000.0
+    },
+    {
+      "resource": "fit_seconds",
+      "max": 1000000000000000.0
+    }
+  ]
+}

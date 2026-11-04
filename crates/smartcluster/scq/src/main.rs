@@ -24,6 +24,17 @@ use scq::{
 };
 use tokio::io::AsyncReadExt;
 
+#[path = "main/interactive.rs"]
+mod interactive;
+#[path = "main/output.rs"]
+mod output;
+#[path = "main/submission.rs"]
+mod submission;
+
+use interactive::{run_attach, run_tui, stream_events};
+use output::{print_event, print_job, print_jobs, print_status};
+use submission::submit_spec;
+
 #[derive(Debug, Parser)]
 #[command(name = "scq", version, about = "Jain single-node workload client")]
 struct Cli {
@@ -276,126 +287,6 @@ async fn dispatch(client: &Client, command: Command, json: bool) -> Result<()> {
     Ok(())
 }
 
-async fn submit_spec(args: SubmitArgs) -> Result<jain_smartcluster::JobSpec> {
-    let uid = effective_uid();
-    if let Some(file) = args.file {
-        if !args.argv.is_empty() || args.project.is_some() || args.jain_template.is_some() {
-            return Err(anyhow!(
-                "a TOML file cannot be combined with inline workload flags"
-            ));
-        }
-        return Ok(parse_scq_toml_v0(&read_input(&file).await?, uid, now())?);
-    }
-    let project = args
-        .project
-        .ok_or_else(|| anyhow!("inline submit requires --project"))?;
-    if let Some(template) = args.jain_template {
-        let template = parse_jain_template(&template)?;
-        let worker_arguments = args.argv;
-        let spec = ScqTomlSpec {
-            job: ScqTomlJob {
-                id: args.id,
-                project,
-                tier: args.tier,
-                command: "jain-worker".to_owned(),
-                args: Vec::new(),
-                workdir: None,
-                venv: None,
-            },
-            resource: ScqTomlResource {
-                gpus_per_task: args.gpus,
-                gpu_type: args.gpu_type,
-                cpus_reserved: args.cpus,
-                omp_threads: args.omp,
-                dataloader_workers: 0,
-                ram_gb: args.ram,
-                gang_size: 1,
-                placement: "single_node".into(),
-                node: None,
-            },
-            env: Default::default(),
-            preempt: ScqTomlPreemption {
-                preemptible: !args.no_preempt,
-                ..ScqTomlPreemption::default()
-            },
-            limits: ScqTomlLimits::default(),
-            dependencies: ScqTomlDependencies::default(),
-        };
-        let mut job = spec.into_job_spec(uid, now())?;
-        job.workload = Workload::Jain {
-            template,
-            arguments: worker_arguments,
-            environment: Environment::default(),
-        };
-        return Ok(job);
-    }
-    let mut argv = args.argv.into_iter();
-    let command = argv
-        .next()
-        .ok_or_else(|| anyhow!("inline submit requires `-- CMD ARGS`"))?;
-    let spec = ScqTomlSpec {
-        job: ScqTomlJob {
-            id: args.id,
-            project,
-            tier: args.tier,
-            command,
-            args: argv.collect(),
-            workdir: args.workdir,
-            venv: args.venv,
-        },
-        resource: ScqTomlResource {
-            gpus_per_task: args.gpus,
-            gpu_type: args.gpu_type,
-            cpus_reserved: args.cpus,
-            omp_threads: args.omp,
-            dataloader_workers: 0,
-            ram_gb: args.ram,
-            gang_size: 1,
-            placement: "single_node".into(),
-            node: None,
-        },
-        env: Default::default(),
-        preempt: ScqTomlPreemption {
-            preemptible: !args.no_preempt,
-            ..ScqTomlPreemption::default()
-        },
-        limits: ScqTomlLimits::default(),
-        dependencies: ScqTomlDependencies::default(),
-    };
-    Ok(spec.into_job_spec(uid, now())?)
-}
-
-fn parse_jain_template(value: &str) -> Result<JainWorkload> {
-    match value.trim().to_ascii_lowercase().as_str() {
-        "dataset-profile" => Ok(JainWorkload::DatasetProfile),
-        "feature-expansion" => Ok(JainWorkload::FeatureExpansion),
-        "training" => Ok(JainWorkload::Training),
-        "report-generation" => Ok(JainWorkload::ReportGeneration),
-        "prediction" => Ok(JainWorkload::Prediction),
-        "export" => Ok(JainWorkload::Export),
-        "chat" => Ok(JainWorkload::Chat),
-        "research" => Ok(JainWorkload::Research),
-        "managed-browser" => Ok(JainWorkload::ManagedBrowser),
-        "jope-encode" => Ok(JainWorkload::JopeEncode),
-        "jope-propose" => Ok(JainWorkload::JopePropose),
-        "lime-run" => Ok(JainWorkload::LimeRun),
-        "lime-batch" => Ok(JainWorkload::LimeBatch),
-        other => Err(anyhow!("unknown Jain workload template {other:?}")),
-    }
-}
-
-async fn read_input(path: &str) -> Result<String> {
-    if path == "-" {
-        let mut input = String::new();
-        tokio::io::stdin().read_to_string(&mut input).await?;
-        Ok(input)
-    } else {
-        tokio::fs::read_to_string(path)
-            .await
-            .with_context(|| format!("read {path}"))
-    }
-}
-
 fn list_request(args: ListArgs, active_only: bool) -> Result<ListRequest> {
     let states = if active_only {
         BTreeSet::from([
@@ -424,199 +315,16 @@ fn list_request(args: ListArgs, active_only: bool) -> Result<ListRequest> {
     })
 }
 
-async fn stream_events(
-    client: &Client,
-    request: SubscribeRequest,
-    follow: bool,
-    json: bool,
-) -> Result<()> {
-    let mut events = client.subscribe(request).await?;
-    loop {
-        let next = if follow {
-            events.recv().await
-        } else {
-            tokio::time::timeout(Duration::from_millis(200), events.recv())
-                .await
-                .ok()
-                .flatten()
-        };
-        let Some(event) = next else { break };
-        print_event(&event?, json)?;
-    }
-    Ok(())
-}
-
-async fn run_attach(
-    client: &Client,
-    job_id: JobId,
-    offset: EventOffset,
-    read_only: bool,
-) -> Result<()> {
-    let attachment = client
-        .attach(AttachRequest {
-            job_id,
-            offset,
-            read_only,
-        })
-        .await?;
-    let mut events = attachment.events;
-    if !read_only {
-        let sender = attachment.sender;
-        tokio::spawn(async move {
-            let mut stdin = tokio::io::stdin();
-            let mut buffer = vec![0_u8; 4096];
-            loop {
-                match stdin.read(&mut buffer).await {
-                    Ok(0) => {
-                        let _ = sender.close_stdin().await;
-                        break;
-                    }
-                    Ok(length) => {
-                        if sender.stdin(buffer[..length].to_vec()).await.is_err() {
-                            break;
-                        }
-                    }
-                    Err(_) => break,
-                }
-            }
-        });
-    }
-    while let Some(event) = events.recv().await {
-        print_event(&event?, false)?;
-    }
-    Ok(())
-}
-
-fn print_event(record: &jain_smartcluster::EventRecord, json: bool) -> Result<()> {
-    if json {
-        println!("{}", serde_json::to_string(record)?);
-        return Ok(());
-    }
-    match &record.event {
-        JobEvent::Stdout(bytes) | JobEvent::Pty(bytes) => {
-            io::stdout().write_all(bytes)?;
-            io::stdout().flush()?;
-        }
-        JobEvent::Stderr(bytes) => {
-            io::stderr().write_all(bytes)?;
-            io::stderr().flush()?;
-        }
-        other => println!("{} {} {:?}", record.offset, record.job_id, other),
-    }
-    Ok(())
-}
-
-fn print_job(job: &JobRecord, json: bool) -> Result<()> {
-    if json {
-        println!("{}", serde_json::to_string_pretty(job)?);
+async fn read_input(path: &str) -> Result<String> {
+    if path == "-" {
+        let mut input = String::new();
+        tokio::io::stdin().read_to_string(&mut input).await?;
+        Ok(input)
     } else {
-        println!(
-            "{}\t{:?}\t{}\t{}",
-            job.id, job.state, job.spec.project, job.spec.tenant
-        );
+        tokio::fs::read_to_string(path)
+            .await
+            .with_context(|| format!("read {path}"))
     }
-    Ok(())
-}
-
-fn print_jobs(page: &JobPage, json: bool) -> Result<()> {
-    if json {
-        println!("{}", serde_json::to_string_pretty(page)?);
-    } else {
-        println!("ID\tSTATE\tPROJECT\tTENANT");
-        for job in &page.jobs {
-            print_job(job, false)?;
-        }
-        if let Some(cursor) = &page.next_cursor {
-            println!("next cursor: {cursor}");
-        }
-    }
-    Ok(())
-}
-
-fn print_status(status: &DaemonStatus, json: bool) -> Result<()> {
-    if json {
-        println!("{}", serde_json::to_string_pretty(status)?);
-    } else {
-        println!(
-            "scqd {} protocol {} mode {:?} queued={} running={}",
-            status.daemon_version,
-            status.protocol_version,
-            status.mode,
-            status.queued_jobs,
-            status.running_jobs
-        );
-        println!(
-            "capacity cpu={}m memory={} scratch={} pressure={:?}/{:?}/{:?}",
-            status.effective_capacity.cpu_millicores,
-            status.effective_capacity.memory_bytes,
-            status.effective_capacity.scratch_bytes,
-            status.pressure.cpu,
-            status.pressure.memory,
-            status.pressure.io
-        );
-        for gpu in &status.gpus {
-            println!(
-                "{}\t{}\t{}\t{} / {} bytes\t{}",
-                gpu.id,
-                gpu.uuid,
-                gpu.name,
-                gpu.allocatable_vram_bytes,
-                gpu.total_vram_bytes,
-                if gpu.healthy { "healthy" } else { "unhealthy" }
-            );
-        }
-    }
-    Ok(())
-}
-
-struct TerminalGuard;
-
-impl TerminalGuard {
-    fn enter() -> Result<Self> {
-        terminal::enable_raw_mode()?;
-        execute!(io::stdout(), EnterAlternateScreen, cursor::Hide)?;
-        Ok(Self)
-    }
-}
-
-impl Drop for TerminalGuard {
-    fn drop(&mut self) {
-        let _ = execute!(io::stdout(), cursor::Show, LeaveAlternateScreen);
-        let _ = terminal::disable_raw_mode();
-    }
-}
-
-async fn run_tui(client: &Client) -> Result<()> {
-    let _guard = TerminalGuard::enter()?;
-    loop {
-        let status = client.status().await?;
-        let jobs = client.list(ListRequest::default()).await?;
-        execute!(
-            io::stdout(),
-            cursor::MoveTo(0, 0),
-            terminal::Clear(ClearType::All)
-        )?;
-        println!(
-            "SCQ {:?} | queued {} | running {} | q quit",
-            status.mode, status.queued_jobs, status.running_jobs
-        );
-        println!("ID                         STATE          PROJECT");
-        for job in jobs.jobs.iter().take(30) {
-            println!(
-                "{:<26} {:<14} {}",
-                job.id,
-                format!("{:?}", job.state),
-                job.spec.project
-            );
-        }
-        io::stdout().flush()?;
-        if event::poll(Duration::from_secs(1))?
-            && matches!(event::read()?, TerminalEvent::Key(key) if key.code == KeyCode::Char('q'))
-        {
-            break;
-        }
-    }
-    Ok(())
 }
 
 fn effective_uid() -> u32 {

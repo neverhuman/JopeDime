@@ -4,7 +4,9 @@ import argparse
 from collections import OrderedDict
 import gc
 import hashlib
+import importlib.abc
 import importlib.metadata
+import importlib.util
 import io
 import json
 import os
@@ -13,7 +15,6 @@ import signal
 import subprocess
 import sys
 import time
-import types
 import zipfile
 
 import boto3
@@ -50,16 +51,43 @@ def source(repo, commit, path):
     )
 
 
+class VerifiedGitBlobLoader(importlib.abc.SourceLoader):
+    """Expose only the already hash-verified Git blob to Python's import machinery."""
+
+    def __init__(self, name, filename, data):
+        self.name = name
+        self.filename = filename
+        self.data = data
+
+    def get_filename(self, fullname):
+        if fullname != self.name:
+            raise ImportError("verified Git-blob module name mismatch")
+        return self.filename
+
+    def get_data(self, path):
+        if path != self.filename:
+            raise OSError("verified Git-blob loader refuses other paths")
+        return self.data
+
+
 def load_module(repo, commit, path, name, expected, fallback_commit=None):
     data = source(repo, commit, path)
     if digest(data) != expected and fallback_commit is not None:
         data = source(repo, fallback_commit, path)
     if digest(data) != expected:
         raise RuntimeError("source hash mismatch: " + path)
-    mod = types.ModuleType(name)
-    mod.__file__ = str(Path(repo) / path)
+    filename = str(Path(repo) / path)
+    loader = VerifiedGitBlobLoader(name, filename, data)
+    spec = importlib.util.spec_from_loader(name, loader, origin=filename)
+    if spec is None:
+        raise ImportError("could not create verified Git-blob module spec")
+    mod = importlib.util.module_from_spec(spec)
     sys.modules[name] = mod
-    exec(compile(data, mod.__file__, "exec"), mod.__dict__)
+    try:
+        loader.exec_module(mod)
+    except BaseException:
+        sys.modules.pop(name, None)
+        raise
     return mod
 
 

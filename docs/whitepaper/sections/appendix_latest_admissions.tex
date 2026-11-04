@@ -1,35 +1,36 @@
 \subsection{Retained admission ledger and pre-decision margins}\label{app:latest-admissions}
 
 \begin{table}[!htbp]
-  \caption{\textbf{Canonical retained admission ledger.}
-  Every complete row in the captured prefix, without outcome selection.
-  Strict gains and exact ties use unrounded candidate minus prior-best
-  utility. Scope: \cref{sec:method-status}.}
+  \caption{\textbf{The canonical admission ledger records every complete row in the prefix.}
+  Strict gains and ties use unrounded candidate minus prior-best
+  utility, without outcome selection. Scope: \cref{sec:method-status}.}
   \label{tab:admission-ledger}
-  \centering\footnotesize\renewcommand{\arraystretch}{0.92}\sisetup{group-digits=integer}% full-precision logged values: roman digits and a true minus
-  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.46\linewidth}>{\raggedright\arraybackslash}X@{}}
+  \centering\footnotesize\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{0.92}\sisetup{group-digits=integer}% full-precision logged values: roman digits and a true minus
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xl@{}}
     \toprule
     Quantity & Recorded value \\
     \midrule
-    Capture cutoff (UTC) & 2026-11-01 21:18 \\
-    Complete rounds & 775--3197 (\num{2423} records) \\
-    Admissions / rejections & 8 / \num{2415} \\
+    Capture cutoff (UTC) & 2026-11-02 23:00 \\
+    Complete rounds & 775--3950 (\num{3176} records) \\
+    Admissions / rejections & 8 / \num{3168} \\
     Strict-gain rounds & 785, 859, 2750, 3175 \\
     Exact-tie rounds & 782, 882, 2795, 3100 \\
     Final retained utility & \num{1.1389572403748425} \\
     Recorded best-round identity & 3175 \\
-    New rows since prior capture & 176 (2 admitted) \\
-    $[-10^{-4},0)$ rejected margins & 26 \\
-    $[-10^{-3},-10^{-4})$ rejected margins & 49 \\
-    Rejected margins below $-10^{-3}$ & \num{2340} \\
+    New rows since prior capture & 753 (0 admitted) \\
+    Rejected margins in $[-10^{-4},0)$ & 26 \\
+    Rejected margins in $[-10^{-3},-10^{-4})$ & 51 \\
+    Rejected margins below $-10^{-3}$ & \num{3091} \\
     Closest rejected margin & \num{-0.0000433838086485} (round 803) \\
     Median rejected margin & \num{-0.0033601045139468} \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
+\Cref{tab:admission-ledger} collects the chronology, exact counts and
+margin summaries for one capture. The pre-decision margin is
+$\Delta_r=u_{\mathrm{cand},r}-u_{\mathrm{prev},r}$;
+the default rule accepts $\Delta_r\geq0$.
+
 \Cref{fig:fw-admission-margins} summarizes complete trailing 50-round
-windows and cumulative near-tie rejections from the same record, using
-$\Delta_r=u_{\mathrm{cand},r}-u_{\mathrm{prev},r}$.
-The default rule accepts $\Delta_r\geq0$; \cref{tab:admission-ledger}
-keeps its chronology, exact counts and margin summaries in one place.
+windows and cumulative near-tie rejections from that same record.

@@ -1,0 +1,274 @@
+# Pinned research experiment harness copy-code allowlist for Jankurai 1.7.6.
+# Each entry corresponds to an immutable preregistered flywheel_selfplay experiment
+# harness where manifest.json / metrics.json pins the exact file SHA-256.
+
+[[entries]]
+fingerprint = "c54619fded0a767c"
+owner = "research"
+reason = "Immutable preregistered research harness unit `pseudoreplication` across h234_lambdaloss/analysis.py and h235_betanll/analysis.py (manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "a6a2a1642e1bcc87"
+owner = "research"
+reason = "Immutable preregistered research harness unit `summarize` across h234_lambdaloss/analysis.py and h235_betanll/analysis.py (manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "4f7142942a3ef68a"
+owner = "research"
+reason = "Immutable preregistered research harness unit `cohorts` across h165_gradient_noise_dropout/runner.py, h234_lambdaloss/runner.py, and h235_betanll/runner.py (manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "0ea428f9f64f7edc"
+owner = "research"
+reason = "Immutable preregistered research harness unit `choose` across h165_gradient_noise_dropout/analysis.py, h234_lambdaloss/analysis.py, and h235_betanll/analysis.py (manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "922e52d554228be9"
+owner = "research"
+reason = "Immutable preregistered research harness unit `bind_source` across h195_blend025_kernel_confirm/runner.py and h233_stable_g025/runner.py (metrics/manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "89f76ddd92bb97a0"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness Engine class shared across h235 and h236."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "eed5836797c0baec"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness Engine class shared across h234 and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "cc4edef68b59c69f"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness pseudoreplication helper shared across h165, h234, h235, h236, and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "6d3e7844b73c59df"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness summarize helper shared across h234, h235, h236, and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "eb33d2d45f1493f8"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness cohorts helper shared across h165, h234, h235, h236, and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "5ba43bc9220a277a"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness choose helper shared across h165, h234, h235, h236, and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "3cd57ea9bec4b3e9"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness pseudoreplication helper pre-h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "f9a4ea05ed2ca947"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness summarize helper pre-h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "31688ef487197e32"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness cohorts helper pre-h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "cd778134122c220f"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness choose helper pre-h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "6f8887958beb1783"
+owner = "research"
+expires = "2027-02-01"
+reason = "render_elo_ranking standalone CLI renderer block"
+
+[[entries]]
+fingerprint = "0f39de89a270afba"
+owner = "research"
+expires = "2027-02-01"
+reason = "elo_replica standalone reference implementation"
+
+[[entries]]
+fingerprint = "c8d5020832854b73"
+owner = "research"
+expires = "2027-02-01"
+reason = "elo_replica standalone fast_elo reference implementation"
+
+[[entries]]
+fingerprint = "91bcf7195ffd73c5"
+owner = "research"
+expires = "2027-02-01"
+reason = "elo_replica standalone summary helper"
+
+[[entries]]
+fingerprint = "b80ba29e779a1d78"
+owner = "research"
+expires = "2027-02-01"
+reason = "Pinned research flywheel selfplay harness Engine class shared across h235, h236, and h238."
+
+[[entries]]
+fingerprint = "f04eb28b20498873"
+owner = "research"
+expires = "2027-02-01"
+reason = "Pinned research flywheel selfplay harness summarize helper shared across h234, h235, h236, h237, and h238."
+
+[[entries]]
+fingerprint = "cb599b98536926b6"
+owner = "research"
+expires = "2027-02-01"
+reason = "Pinned research flywheel selfplay harness cohorts helper shared across h165, h234, h235, h236, h237, and h238."
+
+[[entries]]
+fingerprint = "5a8a9ac30ae724b9"
+reason = "Pinned H234-H239 research wave analysis pseudoreplication helper"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "aaf61cdd8390712f"
+reason = "Pinned H165/H234-H241 research wave analysis cohort builder"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "e926c0cecff8cb1c"
+reason = "Pinned H165/H234-H239 research wave analysis selector choice helper"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "b4c4a2656f7b4b67"
+reason = "Pinned H238/H240 low-LR research wave analysis pseudoreplication helper"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "04b5384e74831b71"
+reason = "Pinned H239/H240/H241 research wave runner Guard class"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "cfb156fa3dbe6d7d"
+reason = "Pinned H238/H240 low-LR research wave pseudoreplication disclosure test"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "113d86f7aed6bdab"
+reason = "Pinned H238/H240 low-LR research wave bootstrap Holm and canonical Elo test"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "3959aa07d0444f51"
+reason = "Pinned H238/H240 low-LR research wave exact AdamW recipe test"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "7534ecdb89e11665"
+reason = "Pinned H238/H240 low-LR research wave analysis choose helper"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "53767210a1db62cc"
+reason = "Shared candidate selection loop across pinned research wave analysis scripts"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "c0813d5961edbc6b"
+reason = "Shared Elo ranking summary block across pinned research wave analysis scripts"
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "518dd7a3812d5b4b"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen per-study flywheel selfplay analysis scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "61323ea86834a0bd"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen per-study flywheel selfplay runner scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "1e829320bee20abb"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen per-study flywheel selfplay monitor scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "14b2fa727424ac29"
+scope = "research/flywheel_selfplay/h245_gated_lambda_nest/runner.py"
+reason = "Frozen H245 runner implementation pinned by study manifest."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "a3d87f48580a3f94"
+scope = "research/flywheel_selfplay/h243_modsoup..h245_gated_lambda_nest"
+reason = "Frozen H243/H245 runner and launcher scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "1745017aa29ebe4c"
+scope = "research/flywheel_selfplay/h242_laser..h244_wsmooth"
+reason = "Frozen H242/H244 test suite helpers pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "12465fe603a24f2a"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen H242..H246 monitor CLI entrypoint scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "fe1bb876ad88f1b7"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen H242..H246 runner CLI argument scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "9de4f6c7cf778369"
+scope = "research/flywheel_selfplay/h242_laser..h244_wsmooth"
+reason = "Frozen H242..H244 test suite assertion helpers pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "c08f288e99453e7b"
+scope = "research/flywheel_selfplay/h242_laser..h244_wsmooth"
+reason = "Frozen H242..H244 runner execution helpers pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "993a42c8dff9955f"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen H242..H246 analysis summary helpers pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "5061c4e397b62eb6"
+scope = "research/flywheel_selfplay/h247_muon_grokfast/analysis.py"
+reason = "Frozen H247 preregistered analysis scaffolding pinned by study manifest."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "ee3b2ebf189f7941"
+scope = "research/flywheel_selfplay/h247_muon_grokfast/monitor.py"
+reason = "Frozen H247 preregistered monitor scaffolding pinned by study manifest."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "a91e1f2f82268333"
+scope = "research/flywheel_selfplay/h247_muon_grokfast/runner.py"
+reason = "Frozen H247 preregistered runner scaffolding pinned by study manifest."
+expires = "2026-12-31"

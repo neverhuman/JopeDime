@@ -4,6 +4,11 @@
 //! boundary. Queueing, provenance, fitness bookkeeping, freshness, datasets,
 //! and deployment policy live in this crate.
 
+pub mod broad_shadow;
+pub mod broad_shadow_catalog;
+pub mod broad_shadow_cli;
+pub mod broad_shadow_ranking;
+pub mod cost;
 pub mod dime_activation;
 pub mod dime_runtime_contracts;
 pub mod encoder_v2_authority;
@@ -12,6 +17,7 @@ pub mod encoder_v2_execution;
 pub mod encoder_v2_identity;
 pub mod encoder_v2_store;
 pub mod encoder_v2_worker;
+pub mod engines_config;
 pub mod epoch6;
 pub mod epoch6_wave;
 pub mod four_task;
@@ -19,11 +25,14 @@ pub mod hyperion_gate;
 pub mod hyperion_router;
 pub mod jope_dlgp_best5;
 pub mod jope_generalized_gp;
+pub mod loop_selection;
 /// ADR-0003 locations: every former home-directory path, by root.
 pub mod paths;
 pub mod recovery_contracts;
+pub mod remote_eval_driver;
 pub mod router_contracts;
 pub mod search_v3;
+pub mod self_play_evaluation;
 pub mod selfplay_core;
 pub mod selfplay_data;
 pub mod selfplay_expansion;
@@ -42,3 +51,5 @@ pub mod task_preflight;
 pub mod task_rating;
 pub mod timeseries;
 pub mod training_history;
+pub mod validation_gp_study_reporting;
+pub mod validation_gp_study_selection;

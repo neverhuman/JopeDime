@@ -1,17 +1,15 @@
-\FloatBarrier
-\section{Rolling Adapter Admission Frequencies}\label{app:rolling-admissions}
+\subsection{Rolling adapter admission frequencies}\label{app:rolling-admissions}
 
-\Cref{fig:fw-rolling-admissions} uses a separate recent capture of adapter
-decisions. The earlier ledger in \cref{tab:admission-ledger} retains its
-own capture and cutoff. Each trailing window contains exactly 100 observed
-decisions, including accepted ties and rejected candidates. These overlapping
-counts describe the logged policy on an adaptively reused development
-population; the independent first-proposal comparison remains pending.
+Each trailing window in \cref{fig:fw-rolling-admissions} counts exactly 100
+observed decisions, including accepted ties and rejected candidates.
+Its capture is separate from the canonical ledger in \cref{tab:admission-ledger}.
+These overlapping counts describe decisions on adaptively reused
+development contexts; the independent first-proposal comparison remains pending.
 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_rolling_admissions.pdf}
-  \caption{\textbf{Trailing 100-round adapter acceptance and rejection counts.}
+  \caption{\textbf{Trailing 100-round windows record at most two adapter admissions.}
   The source window contains \num{1000} consecutive completed rounds,
   2710--3709, captured at 13:30 UTC on 2 November 2026. It records four
   admissions (two strict gains and two exact ties) and 996 rejections.
@@ -26,4 +24,3 @@ population; the independent first-proposal comparison remains pending.
   implied. Scope: \cref{sec:method-status}.}
   \label{fig:fw-rolling-admissions}
 \end{figure}
-\input{sections/appendix_selection_changes}

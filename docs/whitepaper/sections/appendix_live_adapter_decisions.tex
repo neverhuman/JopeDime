@@ -1,0 +1,50 @@
+\subsection{Current adapter admission decisions}\label{app:live-adapter-decisions}
+
+Complete entries in the summary, adapter-admission and per-round
+journals supply the scalar decisions in \cref{fig:fw-live-adapter-decisions}.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_adapter_decisions.pdf}
+  \caption{\textbf{All 20 candidates in the window are rejected.}
+  Rounds 3931--3950, captured at 23:00 UTC on 2 November 2026.
+  Each point is candidate validation utility minus the pre-decision recorded best;
+  zero denotes equality. Markers show logged admission decisions, with
+  all 20 candidates rejected. Recorded-best utility remained \num{1.1389572}.
+  This adaptive development window does not measure independent
+  first-proposal or serving performance. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-live-adapter-decisions}
+\end{figure}
+
+A later capture follows the recorded best through the rejection run
+(\cref{fig:fw-retained-best-plateau}).
+\Cref{fig:fw-pool-insertions} counts pool insertions and adapter rejections
+over the same rounds.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_retained_best_plateau.pdf}
+  \caption{\textbf{The recorded best persists through 864 consecutive rejections.}
+  Rounds 3174--4039, captured at 02:24 UTC on 3 November 2026.
+  The star marks the strict gain at round 3175 to
+  \num{1.1389572403748425}; each rug mark is a rejected decision in
+  rounds 3176--4039. Every logged retained score is plotted, without a
+  cumulative maximum. This adaptive plateau is not independent
+  first-proposal or learning-gain evidence. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-retained-best-plateau}
+\end{figure}
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_pool_insertions.pdf}
+  \caption{\textbf{Pool insertions and adapter rejections count different events.}
+  Rounds 3174--4039, from complete journal prefixes captured on
+  3 November 2026. Top: 421 logged automatic training-pool insertion
+  events. Bottom: 865 rejected adapter candidates out of 866 decisions.
+  Bars sum 20 consecutive completed rounds; the final bar covers six.
+  Program-level insertions (events per window) and adapter rejections
+  (decisions per window) have different units.
+  These adaptive counts do not measure independent first-proposal or
+  learning gains. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-pool-insertions}
+\end{figure}

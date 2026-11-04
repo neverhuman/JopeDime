@@ -16,14 +16,20 @@ use jope_policy::context_producer::{
     EncoderFiles,
 };
 use serde::{Deserialize, Serialize};
+
+mod finalize;
+pub(super) use finalize::{
+    finish_qualification, physical_directory, policy_artifact, read_artifact,
+};
 use std::{
     collections::BTreeMap,
-    fs,
     path::{Path, PathBuf},
     sync::atomic::AtomicBool,
 };
 mod materialize;
+mod planning;
 pub use materialize::*;
+use planning::make_jobs;
 
 pub const QUALIFICATION_PROTOCOL: &str = "jope.cpu-context-proof/v1";
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -245,104 +251,6 @@ pub fn plan_qualification(
     )?;
     Ok(plan)
 }
-fn make_jobs(
-    experiment: &Experiment,
-    references: &MaterializedReferences,
-    program: &Artifact,
-    assets: &EncoderAssets,
-    journal: &Path,
-) -> Result<Vec<WorkerJob>> {
-    let bytes = read_artifact(&references.manifest, 128 << 20)?;
-    let expected_inputs = context_producer::case_inputs(&bytes, &references.manifest.sha256)?;
-    ensure!(
-        references.cases.len() == 8 && references.job_identities.len() == 8,
-        "incomplete qualification case inventory"
-    );
-    let manifest: context_producer::ReferenceManifest = serde_json::from_slice(&bytes)?;
-    let mut jobs = Vec::new();
-    for (index, expected_input) in expected_inputs.iter().enumerate() {
-        let input = &references.cases[index];
-        ensure!(
-            read_artifact(input, 128 << 20)? == *expected_input,
-            "case payload differs from predeclared manifest order"
-        );
-        let identity = &references.job_identities[index];
-        let reference = &manifest.cases[index];
-        let native: serde_json::Value = serde_json::from_slice(&reference.context_receipt)?;
-        ensure!(
-            identity.fitting_rows == reference.prepared_rows.len()
-                && identity.fold as u64
-                    == native["cut"].as_u64().context("native reference cut")?
-                && native["prepared_sha256"] == identity.split_sha256
-                && native["selected_training_rows_sha256"] == identity.fitting_rows_sha256,
-            "qualification diagnostic identity differs from actual reference rows"
-        );
-        let reference_coordinates = reference.components["hyperion"]
-            .vector
-            .iter()
-            .chain(&reference.components["foundation"].vector)
-            .chain(&reference.components["target"].vector)
-            .chain(&reference.context_vector)
-            .copied()
-            .collect::<Vec<_>>();
-        ensure!(
-            reference_coordinates.len() == 5120 * 4,
-            "native diagnostic coordinate count changed"
-        );
-        let request = EvaluationRequest {
-            schema: REQUEST_SCHEMA.into(),
-            experiment_sha256: experiment.identity()?,
-            dataset_sha256: identity.dataset_sha256.clone(),
-            split_sha256: identity.split_sha256.clone(),
-            fitting_rows_sha256: identity.fitting_rows_sha256.clone(),
-            scoring_rows_sha256: sha256_hex(&reference_coordinates),
-            fitting_rows: identity.fitting_rows,
-            scoring_rows: 5120,
-            recipe_sha256: sha256_hex(&serde_json::to_vec(&(
-                QUALIFICATION_PROTOCOL,
-                &program.sha256,
-                &assets.configuration.sha256,
-                &input.sha256,
-            ))?),
-            evaluator_sha256: context_producer::verification_policy_sha256(),
-            checkpoint_sha256: Some(context_producer::TRANSFORMS_SHA256.into()),
-            task: jope_datasets::catalog::Task::Regression,
-            metric: Metric::Rmse,
-            classes: vec![],
-            fold: identity.fold,
-            stage: EvaluationStage::Diagnostic,
-            seed: experiment.seed,
-            numerical_policy: context_producer::verification_policy_sha256(),
-        };
-        let directory = journal.join("jobs").join(request.identity()?);
-        let invocation = WorkerInvocation {
-            mode: WorkerMode::QualifyCase,
-            input: policy_artifact(input),
-            assets: policy_artifact(&assets.configuration),
-            source_sha40: experiment.source_sha.clone(),
-            producer_sha256: program.sha256.clone(),
-            output: directory.join("case-output.json"),
-        };
-        let mut inputs = vec![input.clone(), assets.configuration.clone()];
-        inputs.extend(assets.files.clone());
-        let job = WorkerJob {
-            request,
-            command: WorkerCommand {
-                program: program.clone(),
-                args: invocation.arguments(),
-                inputs,
-                environment: BTreeMap::new(),
-            },
-            directory,
-            outputs: vec!["case-output.json".into()],
-            arm: None,
-        };
-        job.identity()?;
-        jobs.push(job);
-    }
-    Ok(jobs)
-}
-
 pub fn run_qualification(
     pool: &mut ExecutionPool,
     plan: &QualificationPlan,
@@ -410,76 +318,6 @@ pub fn run_qualification(
     )?;
     Ok(report)
 }
-fn finish_qualification(
-    plan: &QualificationPlan,
-    outcomes: &[WorkerOutcome],
-) -> Result<CompletedQualification> {
-    let window = artifact(&plan.journal.join("window.json"))?;
-    let mut outputs = Vec::new();
-    let mut output_bytes = Vec::new();
-    let mut proofs = Vec::new();
-    for (index, (job, outcome)) in plan.jobs.iter().zip(outcomes).enumerate() {
-        ensure!(
-            outcome.job_sha256 == job.identity()?
-                && outcome.request_sha256 == job.request.identity()?,
-            "stale qualification outcome"
-        );
-        outcome.verify_outputs()?;
-        let output = outcome
-            .outputs
-            .iter()
-            .find(|a| a.path == job.directory.join("case-output.json"))
-            .context("case output absent")?
-            .clone();
-        let proof = ExecutionProof {
-            job: job.clone(),
-            outcome: artifact(
-                &plan
-                    .journal
-                    .join("finished")
-                    .join(format!("{}.json", job.identity()?)),
-            )?,
-            started: artifact(
-                &plan
-                    .journal
-                    .join("started")
-                    .join(format!("{}.json", job.identity()?)),
-            )?,
-            experiment: plan.experiment.clone(),
-            window: window.clone(),
-            arm_window: None,
-        };
-        let attestation = proof.attest(&plan.references.cases[index], &output)?;
-        write_immutable(
-            &job.directory.join("execution-attestation.json"),
-            &serde_json::to_vec(&attestation)?,
-        )?;
-        output_bytes.push(read_artifact(&output, 2 << 20)?);
-        outputs.push(output);
-        proofs.push(proof);
-    }
-    let manifest = read_artifact(&plan.references.manifest, 128 << 20)?;
-    let qualification = context_producer::aggregate_qualification(
-        &manifest,
-        &plan.references.manifest.sha256,
-        output_bytes,
-        &plan.experiment.source_sha,
-        &plan.program.sha256,
-    )?;
-    let file = write_immutable(
-        &plan.journal.join("context-qualification.json"),
-        &serde_json::to_vec(&qualification)?,
-    )?;
-    Ok(CompletedQualification {
-        qualification: file,
-        reference_manifest: plan.references.manifest.clone(),
-        case_outputs: outputs,
-        case_executions: proofs,
-    })
-}
-
-/// New artifacts are private; existing identical bytes permit honest resume.
-/// A changed artifact at the same path fails instead of overwriting evidence.
 pub(crate) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<Artifact> {
     if path.exists() {
         let expected = Artifact {
@@ -494,32 +332,4 @@ pub(crate) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<Artifact> {
         path: path.into(),
         sha256: sha256_hex(bytes),
     })
-}
-fn artifact(path: &Path) -> Result<Artifact> {
-    ensure!(
-        path.is_absolute() && path.canonicalize()? == path && fs::symlink_metadata(path)?.is_file(),
-        "proof path must be physical regular file"
-    );
-    let a = Artifact {
-        path: path.into(),
-        sha256: crate::sha256_file(path)?,
-    };
-    a.verify()?;
-    Ok(a)
-}
-fn policy_artifact(a: &Artifact) -> context_producer::AssetFile {
-    context_producer::AssetFile {
-        path: a.path.clone(),
-        sha256: a.sha256.clone(),
-    }
-}
-fn read_artifact(a: &Artifact, maximum: u64) -> Result<Vec<u8>> {
-    policy_artifact(a).read(maximum)
-}
-fn physical_directory(path: &Path) -> Result<()> {
-    ensure!(
-        path.is_absolute() && path.canonicalize()? == path && fs::symlink_metadata(path)?.is_dir(),
-        "private custody directory must be physical and absolute"
-    );
-    Ok(())
 }

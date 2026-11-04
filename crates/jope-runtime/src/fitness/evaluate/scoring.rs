@@ -1,0 +1,582 @@
+use super::*;
+
+impl Fitness {
+    /// Score predictions of a specification that reads no auxiliary column.
+    pub fn evaluate(&self, y: &[f64], pred: &[f64]) -> Result<Score> {
+        self.evaluate_with(y, pred, &Columns::new())
+    }
+    /// Score predictions; `columns` holds every auxiliary column the specification reads,
+    /// aligned with `y`.
+    pub fn evaluate_with(&self, y: &[f64], pred: &[f64], columns: &Columns) -> Result<Score> {
+        self.evaluate_with_resources(y, pred, columns, &Resources::new())
+    }
+    /// Score predictions with auxiliary columns and candidate resource readings.
+    pub fn evaluate_with_resources(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+    ) -> Result<Score> {
+        self.eval_score(y, pred, columns, resources, None)
+    }
+    /// Score predictions with aligned auxiliary columns and candidate execution telemetry.
+    pub fn evaluate_with_telemetry(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<Score> {
+        let resources = telemetry.to_resources(y.len());
+        self.eval_score(y, pred, columns, &resources, Some(telemetry))
+    }
+    fn eval_score(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+        telemetry: Option<&ExecutionTelemetry>,
+    ) -> Result<Score> {
+        self.validate()?;
+        let value = self.checked_value(y, pred, columns, resources, telemetry)?;
+        let direction = self.direction();
+        Ok(Score {
+            value,
+            loss: if direction == Direction::Maximize {
+                -value
+            } else {
+                value
+            },
+            direction,
+            fitness_sha256: self.identity()?,
+        })
+    }
+    /// The minimization loss of an already validated specification, without hashing it.
+    pub fn loss_unhashed(&self, y: &[f64], pred: &[f64], columns: &Columns) -> Result<f64> {
+        self.loss_with_resources(y, pred, columns, &Resources::new())
+    }
+    /// The minimization loss of an already validated specification, with resource readings.
+    pub fn loss_with_resources(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+    ) -> Result<f64> {
+        self.eval_loss(y, pred, columns, resources, None)
+    }
+    /// The minimization loss with execution telemetry, without hashing the specification.
+    pub fn loss_unhashed_with_telemetry(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<f64> {
+        let resources = telemetry.to_resources(y.len());
+        self.eval_loss(y, pred, columns, &resources, Some(telemetry))
+    }
+    fn eval_loss(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+        telemetry: Option<&ExecutionTelemetry>,
+    ) -> Result<f64> {
+        let value = self.checked_value(y, pred, columns, resources, telemetry)?;
+        Ok(if self.direction() == Direction::Maximize {
+            -value
+        } else {
+            value
+        })
+    }
+    fn checked_value(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+        telemetry: Option<&ExecutionTelemetry>,
+    ) -> Result<f64> {
+        ensure!(
+            !y.is_empty() && y.len() == pred.len(),
+            "fitness needs equal, nonempty target and prediction vectors"
+        );
+        ensure!(
+            y.iter().chain(pred).all(|x| x.is_finite()),
+            "fitness inputs must be finite"
+        );
+        for name in self.columns() {
+            let values = columns
+                .get(&name)
+                .ok_or_else(|| anyhow::anyhow!("fitness column {name:?} was not supplied"))?;
+            ensure!(
+                values.len() == y.len() && values.iter().all(|v| v.is_finite()),
+                "fitness column {name:?} needs one finite value per scored row"
+            );
+        }
+        finite(self.value(y, pred, columns, resources, None, telemetry)?)
+    }
+    fn value(
+        &self,
+        y: &[f64],
+        p: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+        w: Option<&[f64]>,
+        telemetry: Option<&ExecutionTelemetry>,
+    ) -> Result<f64> {
+        if w.is_some() {
+            ensure!(
+                self.supports_weights(),
+                "{} does not accept row weights",
+                self.name()
+            );
+        }
+        let errors: Vec<_> = y.iter().zip(p).map(|(y, p)| y - p).collect();
+        if !matches!(
+            self,
+            Self::Custom { .. }
+                | Self::Weighted { .. }
+                | Self::Composite { .. }
+                | Self::Constrained { .. }
+                | Self::Resource { .. }
+                | Self::MeanReturn { .. }
+                | Self::Sharpe { .. }
+                | Self::Sortino { .. }
+                | Self::MaxDrawdown { .. }
+                | Self::Calmar { .. }
+                | Self::Omega { .. }
+                | Self::ExpectedShortfall { .. }
+                | Self::Pearson {}
+                | Self::Spearman {}
+                | Self::HitRate {}
+                | Self::NormalizedGini {}
+                | Self::Kge {}
+                | Self::CaptureAt { .. }
+                | Self::TrainTimeSeconds {}
+                | Self::InferenceTimeSeconds {}
+                | Self::TotalTimeSeconds {}
+                | Self::InferenceUsPerRow {}
+                | Self::TrainRowsPerSecond {}
+                | Self::InferenceRowsPerSecond {}
+                | Self::TrainMemoryBytes {}
+                | Self::InferenceMemoryBytes {}
+                | Self::TotalMemoryBytes {}
+                | Self::ModelBytes {}
+                | Self::ComplexityStages {}
+                | Self::ComplexityParameters {}
+                | Self::FeatureCount {}
+                | Self::FoldStd {}
+                | Self::PredictionTurnover {}
+        ) {
+            ensure!(
+                errors.iter().all(|e| e.is_finite()),
+                "non-finite regression residual"
+            );
+        }
+        let squared = || wmean(&errors.iter().map(|e| e * e).collect::<Vec<_>>(), w);
+        let abs: Vec<_> = errors.iter().map(|e| e.abs()).collect();
+        let row_loss = |f: &dyn Fn(f64, f64) -> f64| {
+            wmean(
+                &y.iter().zip(p).map(|(&y, &p)| f(y, p)).collect::<Vec<_>>(),
+                w,
+            )
+        };
+        let error_loss =
+            |f: &dyn Fn(f64) -> f64| wmean(&errors.iter().map(|&e| f(e)).collect::<Vec<_>>(), w);
+        Ok(match self {
+            Self::Rmse {} => squared().sqrt(),
+            Self::Mse {} => squared(),
+            Self::Mae {} => wmean(&abs, w),
+            Self::MedianAbsoluteError {} => wquantile(&abs, w, 0.5)?,
+            Self::MaxError {} => abs.iter().copied().fold(0.0, f64::max),
+            Self::Mape { epsilon } => row_loss(&|y, p| (y - p).abs() / y.abs().max(*epsilon)),
+            Self::Smape { epsilon } => row_loss(&|y, p| {
+                let scale = y.abs().max(p.abs()).max(*epsilon);
+                let denominator = (y.abs() / scale + p.abs() / scale).max(epsilon / scale);
+                ((y - p).abs() / scale) * (2.0 / denominator)
+            }),
+            Self::Rmspe { epsilon } => {
+                row_loss(&|y, p| ((y - p) / y.abs().max(*epsilon)).powi(2)).sqrt()
+            }
+            Self::Wape {} => {
+                let den = wmean(&y.iter().map(|y| y.abs()).collect::<Vec<_>>(), w);
+                ensure!(den > 0.0, "WAPE undefined for all-zero targets");
+                wmean(&abs, w) / den
+            }
+            Self::Msle {} | Self::Rmsle {} => {
+                ensure!(
+                    y.iter().chain(p).all(|x| *x >= 0.0),
+                    "log error needs nonnegative targets and predictions"
+                );
+                let v = row_loss(&|y, p| (y.ln_1p() - p.ln_1p()).powi(2));
+                if matches!(self, Self::Rmsle {}) {
+                    v.sqrt()
+                } else {
+                    v
+                }
+            }
+            Self::R2 {} | Self::ExplainedVariance {} => {
+                let den = wvariance(y, w);
+                ensure!(
+                    den.is_finite(),
+                    "R2/explained variance overflows: the target variance is not finite"
+                );
+                ensure!(
+                    y.len() >= 2 && den > 0.0,
+                    "R2/explained variance undefined for constant or singleton targets"
+                );
+                1.0 - if matches!(self, Self::R2 {}) {
+                    squared() / den
+                } else {
+                    wvariance(&errors, w) / den
+                }
+            }
+            Self::Pearson {} => correlation(y, p, w)?,
+            Self::Spearman {} => correlation(&ranks(y), &ranks(p), None)?,
+            Self::Huber { delta } => error_loss(&|e| {
+                let e = e.abs();
+                if e <= *delta {
+                    0.5 * e * e
+                } else {
+                    delta * (e - 0.5 * delta)
+                }
+            }),
+            Self::PseudoHuber { delta } => {
+                error_loss(&|e| delta * delta * ((1.0 + (e / delta).powi(2)).sqrt() - 1.0))
+            }
+            Self::LogCosh {} => error_loss(&|e| {
+                let e = e.abs();
+                e + (-2.0 * e).exp().ln_1p() - std::f64::consts::LN_2
+            }),
+            Self::Pinball { quantile } => error_loss(&|e| {
+                if e >= 0.0 {
+                    quantile * e
+                } else {
+                    (quantile - 1.0) * e
+                }
+            }),
+            Self::Expectile { quantile } => error_loss(&|e| {
+                if e >= 0.0 {
+                    quantile * e * e
+                } else {
+                    (1.0 - quantile) * e * e
+                }
+            }),
+            Self::Linex { a } => error_loss(&|e| (a * e).exp_m1() - a * e),
+            Self::AsymmetricAbsolute {
+                under_cost,
+                over_cost,
+            } => error_loss(&|e| {
+                if e >= 0.0 {
+                    under_cost * e
+                } else {
+                    -over_cost * e
+                }
+            }),
+            Self::AsymmetricSquared {
+                under_cost,
+                over_cost,
+            } => error_loss(&|e| {
+                if e >= 0.0 {
+                    under_cost * e * e
+                } else {
+                    over_cost * e * e
+                }
+            }),
+            Self::PoissonDeviance {} => {
+                ensure!(
+                    y.iter().all(|x| *x >= 0.0) && p.iter().all(|x| *x > 0.0),
+                    "Poisson requires y>=0 and pred>0"
+                );
+                row_loss(&|y, p| {
+                    2.0 * (if y == 0.0 {
+                        p
+                    } else {
+                        y * (y / p).ln() - y + p
+                    })
+                })
+            }
+            Self::GammaDeviance {} => {
+                ensure!(
+                    y.iter().chain(p).all(|x| *x > 0.0),
+                    "Gamma requires y>0 and pred>0"
+                );
+                row_loss(&|y, p| 2.0 * (-(y / p).ln() + y / p - 1.0))
+            }
+            Self::TweedieDeviance { power } => {
+                ensure!(
+                    y.iter().all(|x| *x >= 0.0) && p.iter().all(|x| *x > 0.0),
+                    "Tweedie requires y>=0 and pred>0"
+                );
+                let q = *power;
+                row_loss(&|y, p| {
+                    2.0 * (y.powf(2.0 - q) / ((1.0 - q) * (2.0 - q))
+                        - y * p.powf(1.0 - q) / (1.0 - q)
+                        + p.powf(2.0 - q) / (2.0 - q))
+                })
+            }
+            Self::Mase { season } => {
+                ensure!(
+                    y.len() > *season,
+                    "MASE needs more scored rows than its season"
+                );
+                let naive = mean(
+                    &y.windows(season + 1)
+                        .map(|w| (w[*season] - w[0]).abs())
+                        .collect::<Vec<_>>(),
+                );
+                ensure!(
+                    naive > 0.0,
+                    "MASE undefined when the seasonal naive forecast is exact"
+                );
+                mean(&abs) / naive
+            }
+            Self::MeanReturn { max_position, cost } => {
+                mean(&strategy_returns(y, p, *max_position, *cost)?)
+            }
+            Self::Sharpe {
+                max_position,
+                cost,
+                target,
+                periods_per_year,
+            }
+            | Self::Sortino {
+                max_position,
+                cost,
+                target,
+                periods_per_year,
+            } => {
+                let returns = strategy_returns(y, p, *max_position, *cost)?;
+                let den = if matches!(self, Self::Sortino { .. }) {
+                    mean(
+                        &returns
+                            .iter()
+                            .map(|r| (r - target).min(0.0).powi(2))
+                            .collect::<Vec<_>>(),
+                    )
+                    .sqrt()
+                } else {
+                    variance(&returns).sqrt()
+                };
+                ensure!(
+                    den > 0.0 && den.is_finite(),
+                    "risk ratio undefined with a zero or non-finite risk denominator"
+                );
+                finite((mean(&returns) - target) / den * periods_per_year.sqrt())?
+            }
+            Self::MaxDrawdown { max_position, cost } => {
+                max_drawdown(&strategy_returns(y, p, *max_position, *cost)?)?
+            }
+            Self::Calmar {
+                max_position,
+                cost,
+                periods_per_year,
+            } => {
+                let returns = strategy_returns(y, p, *max_position, *cost)?;
+                let drawdown = max_drawdown(&returns)?;
+                ensure!(drawdown > 0.0, "Calmar undefined without a drawdown");
+                let end = *equity_curve(&returns)?.last().expect("nonempty");
+                let growth = end.powf(periods_per_year / returns.len() as f64) - 1.0;
+                growth / drawdown
+            }
+            Self::Omega {
+                max_position,
+                cost,
+                threshold,
+            } => {
+                let returns = strategy_returns(y, p, *max_position, *cost)?;
+                let gains: f64 = returns.iter().map(|r| (r - threshold).max(0.0)).sum();
+                let losses: f64 = returns.iter().map(|r| (threshold - r).max(0.0)).sum();
+                ensure!(gains.is_finite() && losses.is_finite(), "Omega overflowed");
+                ensure!(losses > 0.0, "Omega undefined without a shortfall");
+                gains / losses
+            }
+            Self::ExpectedShortfall {
+                max_position,
+                cost,
+                alpha,
+            } => {
+                let losses: Vec<f64> = strategy_returns(y, p, *max_position, *cost)?
+                    .iter()
+                    .map(|r| -r)
+                    .collect();
+                tail_mean(&losses, None, *alpha)?
+            }
+            Self::HitRate {} => {
+                let weight = |i: usize| w.map_or(1.0, |w| w[i]);
+                let (mut hits, mut total) = (0.0, 0.0);
+                for i in (0..y.len()).filter(|&i| y[i] != 0.0) {
+                    total += weight(i);
+                    if p[i] != 0.0 && (p[i] > 0.0) == (y[i] > 0.0) {
+                        hits += weight(i);
+                    }
+                }
+                ensure!(total > 0.0, "hit rate undefined for all-zero targets");
+                hits / total
+            }
+            Self::NormalizedGini {} => {
+                let model = lorenz_gini(&ranked(y, p, w))?;
+                let perfect = lorenz_gini(&ranked(y, y, w))?;
+                ensure!(
+                    perfect != 0.0,
+                    "normalized Gini undefined for constant targets"
+                );
+                model / perfect
+            }
+            Self::Kge {} => {
+                ensure!(y.len() >= 2, "KGE needs at least two rows");
+                let r = correlation(y, p, None)?;
+                let alpha = (variance(p) / variance(y)).sqrt();
+                let my = mean(y);
+                ensure!(my != 0.0, "KGE undefined for a zero-mean target");
+                let beta = mean(p) / my;
+                1.0 - ((r - 1.0).powi(2) + (alpha - 1.0).powi(2) + (beta - 1.0).powi(2)).sqrt()
+            }
+            Self::CaptureAt { fraction } => {
+                let total: f64 = y.iter().sum();
+                ensure!(
+                    total > 0.0 && total.is_finite(),
+                    "capture needs a positive target total"
+                );
+                let mass = fraction * y.len() as f64;
+                let (mut taken, mut captured) = (0.0f64, 0.0);
+                for (_, target) in ranked(y, p, None) {
+                    let take = (mass - taken).min(1.0);
+                    if take <= 0.0 {
+                        break;
+                    }
+                    captured += take * target;
+                    taken += take;
+                }
+                finite(captured / total)?
+            }
+            Self::Resource { name } => read_resource(resources, *name)?,
+            Self::TrainTimeSeconds {} => read_resource(resources, ResourceVar::FitSeconds)?,
+            Self::InferenceTimeSeconds {} => read_resource(resources, ResourceVar::PredictSeconds)?,
+            Self::TotalTimeSeconds {} => {
+                read_resource(resources, ResourceVar::FitSeconds)?
+                    + read_resource(resources, ResourceVar::PredictSeconds)?
+            }
+            Self::InferenceUsPerRow {} => read_resource(resources, ResourceVar::PredictUsPerRow)?,
+            Self::TrainRowsPerSecond {} => {
+                if let Some(t) = telemetry {
+                    t.train_rows_per_second(y.len())
+                } else {
+                    let rows = read_resource(resources, ResourceVar::TrainRows)?;
+                    let secs = read_resource(resources, ResourceVar::FitSeconds)?;
+                    if secs > 0.0 {
+                        rows / secs.max(1e-9)
+                    } else {
+                        rows
+                    }
+                }
+            }
+            Self::InferenceRowsPerSecond {} => {
+                read_resource(resources, ResourceVar::PredictRowsPerSecond)?
+            }
+            Self::TrainMemoryBytes {} => read_resource(resources, ResourceVar::FitPeakHeapBytes)?,
+            Self::InferenceMemoryBytes {} => {
+                read_resource(resources, ResourceVar::PredictPeakHeapBytes)?
+            }
+            Self::TotalMemoryBytes {} => {
+                read_resource(resources, ResourceVar::FitPeakHeapBytes)?
+                    + read_resource(resources, ResourceVar::PredictPeakHeapBytes)?
+            }
+            Self::ModelBytes {} => read_resource(resources, ResourceVar::ModelBytes)?,
+            Self::ComplexityStages {} => read_resource(resources, ResourceVar::StageCount)?,
+            Self::ComplexityParameters {} => read_resource(resources, ResourceVar::ProgramNodes)?,
+            Self::FeatureCount {} => {
+                telemetry
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("fitness telemetry feature_count is not available")
+                    })?
+                    .feature_count as f64
+            }
+            Self::FoldStd {} => telemetry
+                .ok_or_else(|| anyhow::anyhow!("fitness telemetry fold_std is not available"))?
+                .fold_std
+                .max(0.0),
+            Self::PredictionTurnover {} => prediction_turnover(p),
+            Self::Custom {
+                expression,
+                aggregation,
+                ..
+            } => {
+                let v = expression.rows_with_context(y, p, columns, resources, telemetry)?;
+                match aggregation {
+                    RegressionAggregation::Mean {} => wmean(&v, w),
+                    RegressionAggregation::Sum {} => match w {
+                        None => v.iter().sum(),
+                        Some(w) => v.iter().zip(w).map(|(v, w)| v * w).sum(),
+                    },
+                    RegressionAggregation::Min {} => {
+                        v.iter().copied().fold(f64::INFINITY, f64::min)
+                    }
+                    RegressionAggregation::Max {} => {
+                        v.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+                    }
+                    RegressionAggregation::Median {} => wquantile(&v, w, 0.5)?,
+                    RegressionAggregation::Std {} => wvariance(&v, w).max(0.0).sqrt(),
+                    RegressionAggregation::Variance {} => wvariance(&v, w).max(0.0),
+                    RegressionAggregation::Quantile { quantile: q } => wquantile(&v, w, *q)?,
+                    RegressionAggregation::TailMean { fraction } => tail_mean(&v, w, *fraction)?,
+                    RegressionAggregation::RootMean {} => {
+                        let m = wmean(&v, w);
+                        ensure!(m >= 0.0, "root_mean needs a nonnegative mean");
+                        m.sqrt()
+                    }
+                }
+            }
+            Self::Weighted { weights, fitness } => {
+                ensure!(w.is_none(), "weighting cannot be nested");
+                let weights = weights.rows_with_context(y, p, columns, resources, telemetry)?;
+                let total: f64 = weights.iter().sum();
+                ensure!(
+                    weights.iter().all(|w| *w >= 0.0) && total.is_finite() && total > 0.0,
+                    "weights must be nonnegative with a positive finite total"
+                );
+                fitness.value(y, p, columns, resources, Some(&weights), telemetry)?
+            }
+            Self::Composite { terms } => {
+                let mut sum = 0.0;
+                for t in terms {
+                    let natural = finite(t.fitness.value(y, p, columns, resources, w, telemetry)?)?;
+                    let loss = if t.fitness.direction() == Direction::Maximize {
+                        -natural
+                    } else {
+                        natural
+                    };
+                    sum += t.weight * loss / t.scale;
+                }
+                sum
+            }
+            Self::Constrained { fitness, limits } => {
+                for l in limits {
+                    let value = read_resource(resources, l.resource)?;
+                    if let Some(max) = l.max.filter(|&max| value > max) {
+                        bail!(Infeasible {
+                            resource: l.resource,
+                            value,
+                            limit: max,
+                            bound: "max"
+                        });
+                    }
+                    if let Some(min) = l.min.filter(|&min| value < min) {
+                        bail!(Infeasible {
+                            resource: l.resource,
+                            value,
+                            limit: min,
+                            bound: "min"
+                        });
+                    }
+                }
+                fitness.value(y, p, columns, resources, w, telemetry)?
+            }
+        })
+    }
+}

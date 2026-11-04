@@ -1,0 +1,203 @@
+use super::*;
+
+pub(crate) fn tenant() -> String {
+    format!("unix:{}", unsafe { libc::geteuid() })
+}
+/// The rank worker every daemon runs as its trusted service, and the executable the host
+/// installation pins: the production command line observing the fixture host. A participant
+/// observes its host, so it is never the product binary here.
+pub(crate) fn participant_binary() -> PathBuf {
+    fixture_host::executable()
+}
+/// The product binary, for the roles that observe no host: `agent` and `coordinate`.
+pub(crate) fn product_binary() -> PathBuf {
+    PathBuf::from(env!("CARGO_BIN_EXE_jope-native-loop"))
+}
+
+/// No GPU probe is ever run by these fixtures.
+pub(crate) struct NoGpu;
+impl CommandRunner for NoGpu {
+    fn run(&self, program: &str, _: &[&str]) -> anyhow::Result<Option<CommandOutput>> {
+        panic!("the CPU-only fixture runs no {program}")
+    }
+}
+
+fn scqd_binary_for_profile(profile_dir: &Path) -> PathBuf {
+    let local_binary = profile_dir.join("scqd");
+    if local_binary.is_file() {
+        return local_binary;
+    }
+    let target_dir = profile_dir
+        .ancestors()
+        .find(|directory| directory.file_name().is_some_and(|name| name == "target"));
+    target_dir
+        .map(|directory| directory.join("debug/scqd"))
+        .unwrap_or(local_binary)
+}
+
+#[test]
+fn scqd_binary_uses_shared_target_when_test_artifacts_are_ledger_scoped() {
+    let temp = tempfile::tempdir().unwrap();
+    let target = temp.path().join("target");
+    let profile_dir = target.join("ledger_x2_1/debug");
+    let shared_binary = target.join("debug/scqd");
+    fs::create_dir_all(&profile_dir).unwrap();
+    fs::create_dir_all(shared_binary.parent().unwrap()).unwrap();
+    fs::write(&shared_binary, b"workspace scqd").unwrap();
+    assert_eq!(scqd_binary_for_profile(&profile_dir), shared_binary);
+
+    let local_binary = profile_dir.join("scqd");
+    fs::write(&local_binary, b"ledger scqd").unwrap();
+    assert_eq!(scqd_binary_for_profile(&profile_dir), local_binary);
+}
+
+/// The workspace target's `scqd` binary, including when Cargo nests test artifacts under a
+/// ledger-specific target directory. Full workspace lanes prebuild it; a package-scoped test run
+/// builds it once on demand because Cargo does not build another package's binary as a test
+/// dependency.
+pub(crate) fn scqd_binary() -> PathBuf {
+    static BINARY: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+    BINARY
+        .get_or_init(|| {
+            let exe = std::env::current_exe().unwrap();
+            let profile_dir = exe.parent().unwrap().parent().unwrap();
+            let binary = scqd_binary_for_profile(profile_dir);
+            if !binary.is_file() {
+                let target_dir = profile_dir
+                    .parent()
+                    .expect("the test executable has a Cargo target profile directory");
+                let status = Command::new("cargo")
+                    .args([
+                        "build",
+                        "--locked",
+                        "-p",
+                        "jain-smartcluster-daemon",
+                        "--bin",
+                        "scqd",
+                        "--jobs",
+                        "1",
+                    ])
+                    .arg("--target-dir")
+                    .arg(target_dir)
+                    .status()
+                    .expect("could not start Cargo to build the scqd test fixture");
+                assert!(
+                    status.success(),
+                    "Cargo failed to build the scqd test fixture"
+                );
+            }
+            let binary = scqd_binary_for_profile(profile_dir);
+            assert!(
+                binary.is_file(),
+                "{} is absent after the scqd build",
+                binary.display()
+            );
+            binary
+        })
+        .clone()
+}
+
+pub(crate) struct Scqd {
+    pub(crate) child: Child,
+    pub(crate) dir: PathBuf,
+    pub(crate) socket: PathBuf,
+    pub(crate) executable_sha256: String,
+}
+impl Scqd {
+    pub(crate) fn start(dir: &Path) -> Self {
+        fs::create_dir_all(dir.join("run")).unwrap();
+        let binary = scqd_binary();
+        let uid = unsafe { libc::geteuid() };
+        let gid = unsafe { libc::getegid() };
+        let worker_identity = if uid == 0 {
+            format!("worker_uid = {uid}\nworker_gid = {gid}\n")
+        } else {
+            String::new()
+        };
+        let socket = dir.join("run/scqd.sock");
+        let config = format!(
+            r#"socket_path = "{socket}"
+state_path = "{dir}/state/scqd.redb"
+event_dir = "{dir}/events"
+cgroup_root = "{dir}/not-a-cgroup"
+socket_mode = 384
+embedded = true
+
+[scheduler]
+interactive_cpu_headroom_millicores = 0
+interactive_ram_headroom_bytes = 0
+recovery_quiet_ms = 50
+
+[auth]
+admin_uids = [{uid}]
+system_uids = []
+system_principal = "sagemaker"
+web_uid = 4294967295
+web_principal = "jain-web"
+
+[workers]
+jain_worker = "{scqd}"
+
+[workers.trusted_services]
+{SERVICE} = "{participant}"
+
+[execution]
+checkpoint_timeout_ms = 200
+terminate_grace_ms = 1000
+kill_grace_ms = 500
+{worker_identity}
+"#,
+            socket = socket.display(),
+            dir = dir.display(),
+            scqd = binary.display(),
+            participant = participant_binary().display(),
+        );
+        fs::write(dir.join("scqd.toml"), config).unwrap();
+        let log = fs::File::create(dir.join("scqd.log")).unwrap();
+        let child = Command::new(&binary)
+            .arg("--config")
+            .arg(dir.join("scqd.toml"))
+            .env("RUST_LOG", "warn")
+            .stdin(Stdio::null())
+            .stdout(log.try_clone().unwrap())
+            .stderr(log)
+            .spawn()
+            .unwrap();
+        let start = Instant::now();
+        while !socket.exists() {
+            assert!(
+                start.elapsed() < Duration::from_secs(20),
+                "scqd did not start: {}",
+                fs::read_to_string(dir.join("scqd.log")).unwrap_or_default()
+            );
+            thread::sleep(Duration::from_millis(20));
+        }
+        Self {
+            child,
+            dir: dir.into(),
+            socket,
+            executable_sha256: sha(&fs::read(&binary).unwrap()),
+        }
+    }
+}
+impl Drop for Scqd {
+    fn drop(&mut self) {
+        unsafe { libc::kill(self.child.id() as i32, libc::SIGKILL) };
+        let _ = self.child.wait();
+    }
+}
+
+pub(crate) fn write_private(path: &Path, bytes: &[u8]) {
+    fs::write(path, bytes).unwrap();
+    fs::set_permissions(path, fs::Permissions::from_mode(0o600)).unwrap();
+}
+pub(crate) fn pkcs8(seed: [u8; 32]) -> Vec<u8> {
+    [
+        &[
+            0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22,
+            0x04, 0x20,
+        ][..],
+        &seed[..],
+    ]
+    .concat()
+}

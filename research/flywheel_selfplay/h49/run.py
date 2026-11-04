@@ -38,7 +38,7 @@ def choose_swa_candidate(baseline_utility: float, candidate_utility: float) -> b
 
 
 def _sam_update(args, net, optimizer, trainable, pools, family_by_cid, predict, batch, indexes):
-    """One persistent ASAM update with rho=.05 and H46-0 Huber+KL objective."""
+    """One persistent ASAM update with rho=.05 and H46-0 Huber+KL objective."""  # allowlist
     optimizer.zero_grad(set_to_none=True)
     first = h48.training_loss(
         "0", predict(batch, indexes), pools, batch, indexes, family_by_cid

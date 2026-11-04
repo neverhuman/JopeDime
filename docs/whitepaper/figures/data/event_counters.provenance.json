@@ -1,0 +1,29 @@
+{
+  "schema": "whitepaper.event-counters-figure/v1",
+  "input_commit": "2799e5ddbabb27bf38204961b77c6c3b25cf10c2",
+  "input_csv_sha256": "aefbdd5fdb3e31c420132a3055717083203380bdbcd3d7c5cf7778fc6ba03878",
+  "source_receipt_sha256": "957d48132cf96604075b90a3be9059b2091819d9675d7309e4d0bd501c44a692",
+  "generator_sha256": "02e01ea95c93b5154903025164de9f98f5e28738956b734048e61e4c00631fb7",
+  "figure_sha256": "6d3017dfe398eb8c2a75021d97be34c674ed9351cb8b84bc586b12183336a8dd",
+  "rows": 200,
+  "plotted_points": 400,
+  "round_window": [
+    4064,
+    4263
+  ],
+  "window_insertions": 89,
+  "window_adapter_admissions": 0,
+  "derivation": "Exact per-round event counts and prefix sums from hash-pinned committed inputs; overlapping interval endpoints deduplicated by original source line, with duplicate values/hashes required identical. No missing-event interpolation or outcome selection.",
+  "zero_count_basis": "The complete consecutive insertion history has events on both sides of the chosen window; rounds with no matched insertion therefore contribute zero recorded events. Every adapter decision has an explicit accepted flag.",
+  "scope": "Round-identifier alignment of distinct engineering events only; not joined evaluator/population/normalization, independent learning gain, proposal quality or speed comparison.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    3.25,
+    2.05
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_event_counters.py"
+}

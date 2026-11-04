@@ -5,6 +5,15 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-02
+
+First stable release. Absorbs every change listed under Unreleased since 0.4.1 (2944 commits on `v1/fastlane`, generated with git-cliff 2.14.1 from the commit history and curated by area below).
+
+### CI, build and release
+
+- release: bump the workspace, `jope-campaigns`, `jope-engine` and `python/pyproject.toml` to `1.0.0`; `deploy/ci/version-consistency.sh v1.0.0` passes.
+- ci: local CI on `xbabe1`–`xbabe4` (Linux shards, Colima Linux and native macOS on `xbabe4`) gates the release candidate; remaining unmerged lane branches were squash-folded into `v1/fastlane` (`audit/FOLD_ALL_t2320.md`).
+
 ### Numerical kernels and code generation
 
 - feat-math, compat: port bit-exact W1–W9 HPC hotpaths (`ops.rs`, `ksmooth.rs`, `heads.rs`, `model.rs`, `advanced_v3`, `emit_rs`, and `transpile.rs`) into `crates/feat-math` with 0-ULP numerical and multi-language codegen parity, opt-in `hpc_v1`/`hpc_v2` emission, omitted default-false `hpc_v1`/`hpc_v2` fields in `OptionsIdentity` serde, and a closed ADR-0004 identity-only transition (`feat_math_hpc_w1_w9_identity_rebaseline.v1.json`) (#440)

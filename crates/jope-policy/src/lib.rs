@@ -118,16 +118,22 @@ pub mod context;
 #[cfg(feature = "context-producer")]
 pub mod context_producer;
 pub mod decode;
+pub mod decode_ranking;
+pub mod experimental_runtime;
 pub mod grammar;
 mod hashing;
 pub mod jope_embed;
 pub mod model;
+pub mod model_v3_checkpoint;
 pub mod producer;
 pub mod proposal_ledger;
 pub mod ranking;
 pub mod seeds;
 pub mod semantic;
 pub mod support_transition;
+pub mod tokens_build;
+pub mod tokens_expr;
+pub mod training_input_closure;
 
 /// Test support (`testing`, never enabled by a product build): untrained weights and
 /// unbound helpers. Every helper here refuses the accepted state, so even a test build cannot

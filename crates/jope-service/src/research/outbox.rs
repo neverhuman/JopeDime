@@ -28,7 +28,7 @@ pub(crate) fn materialize_controls(store: &Store, run: &RunId, output: &Path) ->
     Ok(materialize(store, run, output, true)?.counts.rounds as usize)
 }
 
-pub(super) fn materialize(
+pub(crate) fn materialize(
     store: &Store,
     run: &RunId,
     output: &Path,
@@ -142,7 +142,7 @@ fn output_parent(output: &Path) -> Result<&Path> {
 }
 
 /// Refuse an unusable destination before reserving or evaluating a run.
-pub(super) fn validate_destination(output: &Path) -> Result<()> {
+pub(crate) fn validate_destination(output: &Path) -> Result<()> {
     output_parent(output)?;
     match fs::symlink_metadata(output) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),

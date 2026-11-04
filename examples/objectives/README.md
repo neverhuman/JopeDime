@@ -68,6 +68,25 @@ column in the training CSV; it is never used as a feature.
 | `direction_hit_rate.json` | Direction calls | Share of signs predicted correctly. |
 | `notional_weighted_error.json` | Risk by position size | MAE weighted by the `notional` column. |
 
+## Training and serving cost (resource-aware, `jope pipeline run --fitness`)
+
+These read what a candidate *cost* — training seconds, inference latency or throughput, peak heap,
+model size — alongside its accuracy. The program search measures them per candidate and records
+every reading in `observations.json`. Measured readings (seconds, latency, heap) need
+`--threads 1`; structural ones (`model_bytes`, `program_nodes`, `stage_count`) are reproducible.
+Weights and limits are illustrative business values.
+
+| Recipe | Decision | What it rewards |
+| --- | --- | --- |
+| `rmse_plus_fit_seconds.json` | Models retrained every session | RMSE plus 0.05 target units per training second. |
+| `pinball_spike_fast_retrain.json` | Day-ahead price bids before gate closure | P90 pinball plus CPU cost; any fit over 30 s is infeasible. |
+| `rmse_latency_p99_cap.json` | Online pricing / fraud scoring | Best RMSE whose one-row p99 latency is at most 250 µs. |
+| `mae_throughput_floor.json` | Batch scoring jobs | Best MAE that predicts at least 100,000 rows per second. |
+| `rmse_model_bytes_edge.json` | Edge or embedded deployment | Best RMSE within a 256 KiB model and 64 MiB training heap. |
+| `rmse_peak_memory.json` | Shared training hosts | RMSE plus 1 unit per 100 MB of peak training heap. |
+| `error_plus_serving_cost.json` | Cost per prediction | Mean absolute error plus 0.002 per µs of serving time per row. |
+| `rmse_parsimony_nodes.json` | Auditable, simple programs | RMSE plus 0.01 per program node (reproducible). |
+
 `evaluation_request.json` scores an asymmetric cost with hand-checkable output 17/3.
 `api_request.jsonl` is a complete inline CSV fit/predict request. `train.csv` and `predict.csv`
 are synthetic smoke fixtures.

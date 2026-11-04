@@ -93,10 +93,10 @@ fn ink(px: usize, row: usize) -> bool {
             return letter_ink(letter, x, row);
         }
         x -= width;
-        if x < GAP {
+        let Some(after_gap) = x.checked_sub(GAP) else {
             return false;
-        }
-        x -= GAP;
+        };
+        x = after_gap;
     }
     false
 }
@@ -184,7 +184,7 @@ fn pick<const N: usize>(marks: &[char; N], noise: f32) -> char {
 /// Progress of the single pass, or `None` before it starts and after it finishes.
 fn pass(t: f32) -> Option<f32> {
     let phase = t - HOLD;
-    (phase >= 0.0 && phase < PASS).then(|| phase / PASS)
+    (0.0..PASS).contains(&phase).then(|| phase / PASS)
 }
 
 /// A broad satin highlight, with a soft leading edge and a longer trailing glow.

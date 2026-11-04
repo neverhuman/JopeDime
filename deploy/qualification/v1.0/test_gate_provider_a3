@@ -23,7 +23,7 @@ import hashlib,json,os,sys,socketserver
 from http.server import HTTPServer,BaseHTTPRequestHandler
 from pathlib import Path
 home=Path(os.environ['JOPEDIME_HOME']);mode=os.environ.get('A3_TEST_MODE','good')
-if mode=='dead':sys.exit(7)
+if mode=='dead':sys.exit(7) # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 token=hashlib.sha256(str(os.getpid()).encode()).hexdigest()
 class Handler(BaseHTTPRequestHandler):
  def log_message(self,*args):pass

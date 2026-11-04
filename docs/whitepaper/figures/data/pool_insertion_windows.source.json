@@ -1,0 +1,38 @@
+{
+  "schema": "whitepaper.pool-insertion-windows-source/v1",
+  "input_commit": "91ad54aca80055782d011abc391e17d2e8d4d349",
+  "input_sha256": {
+    "data/event_counters.csv": "aefbdd5fdb3e31c420132a3055717083203380bdbcd3d7c5cf7778fc6ba03878",
+    "data/event_counters.source.json": "957d48132cf96604075b90a3be9059b2091819d9675d7309e4d0bd501c44a692",
+    "data/adapter_validation_trace.csv": "c26909c75ac70eab87b9796a7792807f53e6086deb611e29445a624a440a0839",
+    "data/adapter_validation_trace.source.json": "62a46711bb1243c8588df6abb7ca6d76ad6015d772c51b066354b5b7e06cb91a",
+    "data/pool_insertion_cadence.csv": "d6612181d46760e20ab006c44b9eb73ccbbb1b71a4fafdbcc563832c67f6ce14",
+    "data/pool_insertion_cadence.source.json": "5d5a8bf0496652576bd431f6f8911b5bccee10413b954a8d689aa5c53fd1a487",
+    "scripts/make_event_counters.py": "02e01ea95c93b5154903025164de9f98f5e28738956b734048e61e4c00631fb7"
+  },
+  "csv_sha256": "97cfc38cadc42d47294d8c8f3519c5a9e05d05701945b49f0b950be1d7e8f0fa",
+  "round_window": [
+    4064,
+    4263
+  ],
+  "input_rounds": 200,
+  "window_rounds": 20,
+  "windows": 10,
+  "window_insertions": [
+    8,
+    8,
+    7,
+    6,
+    4,
+    8,
+    14,
+    17,
+    5,
+    12
+  ],
+  "total_insertions": 89,
+  "bin_policy": "Partition all200 consecutive committed rows into ten nonoverlapping20-round windows, left-anchored at the first input row; no shifting, filtering, smoothing or outcome-dependent boundaries. Each rate is the exact window count/20.",
+  "lineage": "Each row lists all20 parentCSV line numbers and all insertion-journal line identities contributing to that count; parent source receipt reconstructs101 consecutive insertion records bracketing the complete200-round interval.",
+  "scope": "Recorded program/context insertion events per logged round, not per-attempt success probability, elapsed-time speed or independent learning gain.",
+  "new_live_data": false
+}

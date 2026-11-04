@@ -115,8 +115,8 @@ pub fn emit_bound(
             .collect::<Vec<_>>()
             .join(",")
     );
-    let source = include_str!("../templates/go/model.go.template")
-        .replace("__BOUND_HEADERS__", &json);
+    let source =
+        include_str!("../templates/go/model.go.template").replace("__BOUND_HEADERS__", &json);
     let rust_headers = format!(
         "[{}]",
         headers

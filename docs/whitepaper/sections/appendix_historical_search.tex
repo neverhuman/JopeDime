@@ -1,0 +1,30 @@
+\subsection{Historical GP search diagnostics}\label{app:historical-search}
+
+The 159 repeated dataset/cut/arm groups in \cref{fig:fw-target-progress}
+span 55 dataset/cut pairs; 64 groups with lower final RMSE cover 23
+pairs. Shared incumbent and teacher seeds make the arms dependent.
+
+The remaining three panels of \cref{fig:fw-target-history} show one
+dataset/cut chosen post hoc for the largest policy-seeded relative gain.
+Every generation is shown without a cumulative minimum.
+
+All arms finish
+at the same value; the policy-seeded arm first reaches it one generation
+after the controls. These are not independent discoveries
+(\cref{sec:method-status}).
+
+\begin{figure*}[!t]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering
+  \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_target_history.pdf}
+  \caption{\textbf{Historical GP arms reach the same final RMSE on the post-hoc trajectory.}
+  First panel: first-to-last reported best development RMSE across all 159 repeated comparison
+  groups (55 distinct dataset/cut pairs) at \num{1000} evaluations per search, grouped by search arm.
+  Second through fourth panels: all 71 generations per arm for one historical dataset/cut selected
+  post hoc for the largest policy-seeded relative improvement. RMSE is in historical evaluator units
+  (lower is better). The arms shared incumbent and teacher seeds, and elapsed time varied; these
+  development records do not establish independent discoveries or a learned-policy advantage.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-target-progress}
+  \label{fig:fw-target-history}
+\end{figure*}

@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "jope"
-version = "0.1.0"
+version = "1.0.0"
 description = "JopeDime Python: dataset encoders, the policy transformer trainer, self-play services and research drivers"
 readme = "README.md"
 license = "Apache-2.0"
@@ -74,6 +74,7 @@ target-version = "py311"
 # even a lint fix, invalidates the frozen vocabulary the Rust consumers verify, so ruff never touches them.
 extend-exclude = [
   "test-support/jope/research",
+  "src/jope/research/render_elo_ranking.py",
   "legacy",
   "src/jope/grammars/featmath.py",
   "src/jope/policy/tokens.py",

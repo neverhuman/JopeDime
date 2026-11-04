@@ -5,12 +5,12 @@
 use super::*;
 use std::path::PathBuf;
 
-struct LedgerMark {
+pub(super) struct LedgerMark {
     batches: BTreeSet<PathBuf>,
     head: Option<Vec<u8>>,
 }
 
-fn mark(state: &State, name: &str) -> LedgerMark {
+pub(super) fn mark(state: &State, name: &str) -> LedgerMark {
     let ledger = Ledger::open(state.root(), name);
     LedgerMark {
         batches: ledger
@@ -24,7 +24,7 @@ fn mark(state: &State, name: &str) -> LedgerMark {
 }
 
 /// The process died before the batch appended after `mark` became durable.
-fn crash_before_append(state: &State, name: &str, mark: LedgerMark) {
+pub(super) fn crash_before_append(state: &State, name: &str, mark: LedgerMark) {
     let ledger = Ledger::open(state.root(), name);
     for (_, path) in ledger.batches().unwrap() {
         if !mark.batches.contains(&path) {
@@ -39,12 +39,12 @@ fn crash_before_append(state: &State, name: &str, mark: LedgerMark) {
     ledger.require_intact().unwrap();
 }
 
-fn pointer_bytes(state: &State, record: &HwmRecord) -> Option<Vec<u8>> {
+pub(super) fn pointer_bytes(state: &State, record: &HwmRecord) -> Option<Vec<u8>> {
     fs::read(state.pointer_path(&PointerKey::of(record)).unwrap()).ok()
 }
 
 /// The process died after the HWM batch was durable but before the pointer moved.
-fn crash_before_pointer(state: &State, record: &HwmRecord, before: Option<Vec<u8>>) {
+pub(super) fn crash_before_pointer(state: &State, record: &HwmRecord, before: Option<Vec<u8>>) {
     let path = state.pointer_path(&PointerKey::of(record)).unwrap();
     match before {
         Some(bytes) => fs::write(path, bytes).unwrap(),
@@ -52,7 +52,7 @@ fn crash_before_pointer(state: &State, record: &HwmRecord, before: Option<Vec<u8
     }
 }
 
-fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
+pub(super) fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
     hwm::ingest(
         &f.state,
         None,
@@ -66,7 +66,7 @@ fn deliver(f: &Fixture, record: &HwmRecord, tag: &str) -> hwm::IngestReport {
     .unwrap()
 }
 
-fn qualified_decisions(state: &State) -> usize {
+pub(super) fn qualified_decisions(state: &State) -> usize {
     Ledger::open(state.root(), "eligibility")
         .events()
         .unwrap()
@@ -75,7 +75,7 @@ fn qualified_decisions(state: &State) -> usize {
         .count()
 }
 
-fn transitions(state: &State) -> Vec<String> {
+pub(super) fn transitions(state: &State) -> Vec<String> {
     hwm::events(state)
         .unwrap()
         .into_iter()
@@ -84,7 +84,7 @@ fn transitions(state: &State) -> Vec<String> {
         .collect()
 }
 
-fn current(state: &State, record: &HwmRecord) -> String {
+pub(super) fn current(state: &State, record: &HwmRecord) -> String {
     state
         .read_pointer(&PointerKey::of(record))
         .unwrap()
@@ -94,7 +94,7 @@ fn current(state: &State, record: &HwmRecord) -> String {
 }
 
 /// A weaker (four exact folds) and a stronger (five) teacher for one frozen comparison.
-fn teachers() -> (Fixture, HwmRecord, Qualification, Qualification) {
+pub(super) fn teachers() -> (Fixture, HwmRecord, Qualification, Qualification) {
     let f = fixture(Task::Regression, 4);
     let (strong, evidence) = f.candidate("strong", &exact_on(5));
     let weak = qualify(&f.state, &f.record, &f.evidence).unwrap();

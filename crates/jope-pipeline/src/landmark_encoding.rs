@@ -143,20 +143,16 @@ pub fn start(
                 })?;
             result.cancellations.push(session.cancellation_token());
             let events = if preparation.cuts.len() == 1 {
-                options
-                    .landmarks
-                    .landmark_events
-                    .clone()
-                    .unwrap_or_else(|| directory.join(format!("cut-{:03}.jsonl", cut.index)))
+                options.landmarks.landmark_events.clone().unwrap_or_else(||
+                        // default fallback
+                        directory.join(format!("cut-{:03}.jsonl", cut.index)))
             } else {
                 directory.join(format!("cut-{:03}.jsonl", cut.index))
             };
             let receipt = if preparation.cuts.len() == 1 {
-                options
-                    .landmarks
-                    .landmark_receipt
-                    .clone()
-                    .unwrap_or_else(|| directory.join(format!("cut-{:03}.json", cut.index)))
+                options.landmarks.landmark_receipt.clone().unwrap_or_else(||
+                        // default fallback
+                        directory.join(format!("cut-{:03}.json", cut.index)))
             } else {
                 directory.join(format!("cut-{:03}.json", cut.index))
             };

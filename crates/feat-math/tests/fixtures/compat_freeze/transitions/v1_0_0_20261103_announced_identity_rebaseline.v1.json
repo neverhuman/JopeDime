@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "PR #2071 v1.0.0 fastlane changes update hashed feat-math implementation, Cargo.toml, Cargo.lock, and jope-engine corpus/query lineage source paths while leaving frozen behavioral fixtures, evaluator ABI, DSL ABI, and known-identity rows unchanged. Announced identity and lineage-source fixtures were regenerated at b8bab2b41d9d963166b70f3c37e7a7ffea635e67 and committed in 1421575fcc2b1eba4dfa45bf8e8477c88c505333 per owner approval 2026-11-03.",
+  "plan_reference": "PR #2071 v1.0.0 fastlane identity rebaseline (approved by Jepson Taylor 2026-11-03); ADR-0004 identity-only procedure",
+  "source_commit": "b8bab2b41d9d963166b70f3c37e7a7ffea635e67",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "946e9098242f337b043e7dbfe2372659e21cd0fa296292574452e14fd6ad8b8b",
+      "after": "7b2de8c213dbd499657acf55a157c8564d29a9588b134c0544dc02ed04ba7f27"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "83bc856eb18df6985a656aa4394fec6e107b6eb5de416fc884e5573003cba5fb",
+      "after": "220c91624ceab0daa9671f98fe73019b65b0f4e855b6616d9d72a04e28b4d76f"
+    }
+  ]
+}

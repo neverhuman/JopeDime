@@ -52,7 +52,7 @@ unsafe fn rows_from(ptr: *const f64, rows: usize, cols: usize) -> Vec<Vec<f64>> 
 unsafe fn values_from(ptr: *const f64, len: usize) -> Vec<f64> {
     // SAFETY: C promises a live, initialized buffer; callers require `len > 0` and
     // check pointer, alignment, and size bounds. `to_vec` owns only the copied data.
-    unsafe { std::slice::from_raw_parts(ptr, len) }.to_vec()
+    (0..len).map(|i| unsafe { *ptr.add(i) }).collect()
 }
 #[no_mangle]
 pub extern "C" fn jope_model_abi_version() -> u32 {

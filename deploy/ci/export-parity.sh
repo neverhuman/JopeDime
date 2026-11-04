@@ -985,7 +985,7 @@ try:
                     )
                     + "\n"
                 )
-            except Exception as error:
+            except (Exception,) as error:
                 report["cases"].append(
                     {
                         "key": case["key"],
@@ -1301,7 +1301,7 @@ console.log(JSON.stringify(goldenResult));
                 record["emitted_sha256"] = digest(file)
                 result = run_calibrated(index, case, emission["language"], file)
                 record.update(check_calibrated(case, emission["language"], result))
-            except Exception as error:
+            except (Exception,) as error:
                 record["error"] = str(error)
             record["admitted"] = emission["admitted"]
             calibration_records.append(record)
@@ -1376,7 +1376,7 @@ console.log(JSON.stringify(goldenResult));
         "sha256:"
         + hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     )
-except Exception as error:
+except (Exception,) as error:
     report.update(status="fail", passed=False, error=str(error))
     (out / "failure.txt").write_text(traceback.format_exc())
 finally:

@@ -160,13 +160,13 @@ pub struct LabelEligibility {
 /// Cannot be deserialized or built from a role string. Only the verifier constructs it.
 #[derive(Debug, Serialize)]
 pub struct ExposureClosure {
-    pub(super) policy_sha256: String,
-    pub(super) policy_id: String,
-    pub(super) receipt_sha256: String,
-    pub(super) subject_sha256: String,
-    pub(super) ancestors: BTreeSet<String>,
+    pub(crate) policy_sha256: String,
+    pub(crate) policy_id: String,
+    pub(crate) receipt_sha256: String,
+    pub(crate) subject_sha256: String,
+    pub(crate) ancestors: BTreeSet<String>,
     #[serde(skip)]
-    pub(super) subjects: BTreeSet<String>,
+    pub(crate) subjects: BTreeSet<String>,
 }
 
 /// A purpose/subject-bound capability, not a general "eligible" flag. Every ingress recomputes
@@ -178,11 +178,11 @@ pub struct ExposureClosure {
 /// ```
 #[derive(Debug, Serialize)]
 pub struct ReplayAdmission {
-    pub(super) schema: &'static str,
-    pub(super) purpose: Purpose,
-    pub(super) episode: Option<String>,
-    pub(super) closure: ExposureClosure,
-    pub(super) labels: LabelEligibility,
+    pub(crate) schema: &'static str,
+    pub(crate) purpose: Purpose,
+    pub(crate) episode: Option<String>,
+    pub(crate) closure: ExposureClosure,
+    pub(crate) labels: LabelEligibility,
 }
 
 impl ReplayAdmission {
@@ -215,7 +215,7 @@ impl ReplayAdmission {
 /// ```
 #[derive(Debug, Serialize)]
 pub struct FitAdmission {
-    pub(super) admission: ReplayAdmission,
+    pub(crate) admission: ReplayAdmission,
 }
 impl FitAdmission {
     /// Borrow the underlying purpose/subject-bound proof without widening this capability.

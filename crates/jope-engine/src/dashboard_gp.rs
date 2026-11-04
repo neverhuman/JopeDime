@@ -18,7 +18,10 @@ enum Evidence {
     Unavailable,
     Malformed,
     IdentityMismatch,
-    Started { evaluations: u64, complete: bool },
+    Started {
+        evaluations: u64,
+        complete: bool,
+    },
 }
 impl Evidence {
     fn checked(&self) -> bool {

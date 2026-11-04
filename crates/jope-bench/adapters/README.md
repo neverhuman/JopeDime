@@ -1,5 +1,9 @@
 # External estimator adapter boundary
 
+The legacy CSV adapter helpers are kept in `benchmarks/jope-bench/adapters/` so the
+Python support module is outside the Rust product crate. The reference adapter
+entrypoints here add that repository-relative support path when invoked.
+
 These Python adapters bridge the benchmark's typed request to the installed
 XGBoost, LightGBM, CatBoost and scikit-learn estimators. They fit preprocessing
 and models on the supplied training rows and labels. Prediction rows contain

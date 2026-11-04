@@ -1,6 +1,6 @@
 //! Separate native wire route; the retired/legacy request path is unchanged.
 use super::*;
-pub(super) fn connection(
+pub(crate) fn connection(
     state: &Arc<State>,
     stream: &mut UnixStream,
     peer: &ProcessIdentity,

@@ -10,11 +10,11 @@ use super::*;
 use crate::revocation::testing;
 
 /// A submission whose handoff was rebuilt from `f`'s context after `tamper`.
-fn tampered(f: &Fixture, tamper: impl FnOnce(&mut HandoffParts)) -> OofEvidence {
+pub(super) fn tampered(f: &Fixture, tamper: impl FnOnce(&mut HandoffParts)) -> OofEvidence {
     tampered_in(f, &f.window, tamper)
 }
 
-fn tampered_in(
+pub(super) fn tampered_in(
     f: &Fixture,
     window: &ExecutionWindow,
     tamper: impl FnOnce(&mut HandoffParts),
@@ -39,7 +39,11 @@ fn tampered_in(
 // Collect independent security cases separately. Each still creates its own durable five-fold
 // fixture and uses the unchanged nextest deadline; filesystem contention must not accumulate
 // nineteen fixtures into one test's wall-clock budget.
-fn assert_handoff_refusal(label: &str, expected: &str, tamper: impl FnOnce(&mut HandoffParts)) {
+pub(super) fn assert_handoff_refusal(
+    label: &str,
+    expected: &str,
+    tamper: impl FnOnce(&mut HandoffParts),
+) {
     let f = fixture(Task::Regression, 5);
     assert_refused(&f, &tampered(&f, tamper), expected, label);
 }
@@ -213,7 +217,7 @@ fn teacher_handoff_refuses_revoked_handoff() {
     assert_refused(&f, &f.evidence, "RevokedEvidence", "revoked handoff");
 }
 
-fn assert_authenticated_handoff_admits(task: Task) {
+pub(super) fn assert_authenticated_handoff_admits(task: Task) {
     let f = fixture(task, 5);
     assert_positive_control(&f);
     let qualification = revalidate_qualification(&f.state, &f.record).unwrap();
@@ -250,10 +254,8 @@ fn teacher_admission_consumes_an_authenticated_w2_handoff_multiclass() {
 
 #[test]
 fn a_freeze_without_a_preregistered_producer_stays_quarantined() {
-    let plan = ContextPlan {
-        producer: None,
-        ..context_plan()
-    };
+    let mut plan = fixture(Task::Regression, 5).plan.context.unwrap();
+    plan.producer = None;
     let f = fixture_with(Task::Regression, 5, Some(plan));
     assert_refused(
         &f,
@@ -277,7 +279,11 @@ fn a_freeze_without_a_preregistered_producer_stays_quarantined() {
 /// handed-off context later cannot upgrade it in place.
 #[test]
 fn pre_handoff_formats_keep_their_meaning_and_stay_quarantined() {
-    let old_plan = json!({"source_family": "family", "encoder": context_plan().encoder});
+    let f = fixture(Task::Regression, 5);
+    let old_plan = json!({
+        "source_family": "family",
+        "encoder": f.plan.context.as_ref().unwrap().encoder,
+    });
     let parsed: ContextPlan = serde_json::from_value(old_plan.clone()).unwrap();
     assert_eq!(parsed.producer, None);
     assert_eq!(serde_json::to_value(&parsed).unwrap(), old_plan);
@@ -287,20 +293,24 @@ fn pre_handoff_formats_keep_their_meaning_and_stay_quarantined() {
     assert_eq!(parsed.handoff, None);
     assert_eq!(serde_json::to_value(&parsed).unwrap(), old_context);
 
-    let f = fixture(Task::Regression, 5);
     let qualified = qualify(&f.state, &f.record, &f.evidence).unwrap();
     assert_eq!(ingest(&f).accepted, 1);
     let mut old = qualified.clone();
     old.context_handoff_sha256 = None;
     let mut evidence = f.evidence.clone();
     evidence.context.as_mut().unwrap().handoff = None;
-    let bytes = canonical_json(&StoredQualification {
-        evidence,
-        qualification: old.clone(),
-    })
+    let bytes = canonical_json(&json!({
+        "evidence": evidence,
+        "qualification": old.clone(),
+    }))
     .unwrap();
     assert!(!String::from_utf8_lossy(&bytes).contains("handoff"));
-    let path = qualification_path(&f.state, &f.record);
+    let path = f
+        .state
+        .root()
+        .join("eligibility/qualified")
+        .join(&f.record.identity_sha256)
+        .join(format!("{}.json", f.record.provenance.record_sha256));
     fs::write(&path, &bytes).unwrap();
     let manifest = freeze_teaching(&f.state).unwrap();
     assert!(manifest.entries.is_empty());
@@ -322,7 +332,7 @@ fn pre_handoff_formats_keep_their_meaning_and_stay_quarantined() {
     assert!(freeze_teaching(&f.state).unwrap().entries.is_empty());
 }
 
-fn ingest(f: &Fixture) -> hwm::IngestReport {
+pub(super) fn ingest(f: &Fixture) -> hwm::IngestReport {
     hwm::ingest(
         &f.state,
         None,

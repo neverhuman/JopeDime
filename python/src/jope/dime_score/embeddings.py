@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import io
 import json
-import math
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -15,6 +12,7 @@ import numpy as np
 from ..data.vs import dataset_signature_from_vs
 from ..prime_config import PrimeConfig, load_config
 from ..prime_staging import prime_owned_path
+from .embeddings_golden import GOLDEN42
 
 EMBEDDING_VERSION = "hybrid-v3.2"
 EMBEDDING_DIM = 1536
@@ -28,51 +26,6 @@ FROZEN_STANDARDIZATION_SHA256 = "6c07305fc1de841ea387fe5b01d0074b9ba386d9d15089f
 FROZEN_PROJECTION_SHA256 = "3df4615971e7974b09f91d6ebcf22672e02b4900d4f71a18616dae8dc37b8ff9"
 FROZEN_HYPERION_WEIGHTS_SHA256 = "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be"
 FROZEN_HYPERION_MANIFEST_SHA256 = "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef"
-
-GOLDEN42 = (
-    "019de5d76a718163",
-    "047e62b52a3f4ede",
-    "13b5df533e59a626",
-    "17a4542ee4fb9e44",
-    "1a803b27c2400dc4",
-    "1cb97b1d7314d43d",
-    "21fbfe8b53dbcd60",
-    "24713c7f7bfa7807",
-    "30ef3eaa6d2971a9",
-    "3305a3ad973fb227",
-    "3baa7e37fc1f7861",
-    "3f781a51af45387e",
-    "43b4cc3ab0ebbd97",
-    "471f11cc2d38853a",
-    "4f68d277d770477f",
-    "542e75bc0cfdd1bf",
-    "55b144de19659467",
-    "55f06d147bcc2a32",
-    "5f91a00bd3b66742",
-    "693890aae9dc860b",
-    "79e600bc5fcd5da7",
-    "7af85a04de0c7018",
-    "860e5558f732f638",
-    "ab0239b9ef0ba28e",
-    "aebf5d861a8365b4",
-    "b1f909fcfceeef4b",
-    "b253fbfae8460dc1",
-    "b5beff4a53fa12c0",
-    "b78d323566930bd7",
-    "bd49e740a79bcb6c",
-    "c32fa09b48fb2f27",
-    "c7d815714ca52bce",
-    "c8f90fc9cc5364be",
-    "cf5e74b4e9594944",
-    "d2daf53412ab18dc",
-    "dee1fc8e9afd81c9",
-    "e1c1db5260d0894e",
-    "e5a3a7b3668a1cc2",
-    "ee56a1015e344c11",
-    "f0e7eb3d790df37d",
-    "f8536dfeef471c2f",
-    "fe3cc716a05d036f",
-)
 
 
 @dataclass(frozen=True)
@@ -182,6 +135,8 @@ def encode_tabarena_train(
     seed: int = SUBSAMPLE_SEED,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """Reproduce Dime's train-only categorical/median encoding, then min-max and cap."""
+    from .cache_helpers import _finite_float
+
     metadata = json.loads(Path(metadata_json).read_text(encoding="utf-8"))
     categorical = metadata.get("categorical_indicator")
     if not isinstance(categorical, list) or not all(isinstance(value, bool) for value in categorical):
@@ -263,74 +218,6 @@ def encode_tabarena_train(
     return scaled, provenance
 
 
-def _finite_float(value: str) -> float | None:
-    try:
-        parsed = float(value)
-    except ValueError:
-        return None
-    return parsed if math.isfinite(parsed) else None
-
-
-def _csv_bytes(matrix: np.ndarray) -> bytes:
-    output = io.StringIO(newline="")
-    for row in matrix:
-        output.write(",".join(format(float(value), ".9g") for value in row))
-        output.write("\n")
-    return output.getvalue().encode("utf-8")
-
-
-def _npy_bytes(array: np.ndarray) -> bytes:
-    output = io.BytesIO()
-    np.save(output, array, allow_pickle=False)
-    return output.getvalue()
-
-
-def _write_new_or_equal(path: Path, payload: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        with path.open("xb") as handle:
-            handle.write(payload)
-            handle.flush()
-            os.fsync(handle.fileno())
-    except FileExistsError:
-        if path.read_bytes() != payload:
-            raise ValueError(f"immutable artifact collision: {path}") from None
-
-
-def _sidecar(
-    dataset: str,
-    cohort: str,
-    embedding: np.ndarray,
-    contract: FrozenContract,
-    sources: dict[str, Any],
-) -> dict[str, Any]:
-    return {
-        "schema": "jope-prime.dime-embedding.v1",
-        "version": EMBEDDING_VERSION,
-        "dataset": dataset,
-        "cohort": cohort,
-        "shape": [EMBEDDING_DIM],
-        "dtype": "float32",
-        "embedding_sha256": hashlib.sha256(_npy_bytes(embedding)).hexdigest(),
-        "frozen": contract.as_dict(),
-        "sources": sources,
-        "train_rows_only": True,
-        "test_rows_inspected": 0,
-    }
-
-
-def _verify_cached_vector(path: Path, sidecar_path: Path, contract: FrozenContract) -> dict[str, Any]:
-    sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
-    if sidecar.get("frozen") != contract.as_dict():
-        raise ValueError(f"cached embedding frozen contract mismatch: {sidecar_path}")
-    vector = np.load(path, mmap_mode="r", allow_pickle=False)
-    if vector.shape != (EMBEDDING_DIM,) or vector.dtype != np.float32 or not np.isfinite(vector).all():
-        raise ValueError(f"cached embedding has invalid shape, dtype, or values: {path}")
-    if sha256_file(path) != sidecar.get("embedding_sha256"):
-        raise ValueError(f"cached embedding SHA-256 mismatch: {path}")
-    return sidecar
-
-
 def cache_dime_embeddings(
     *,
     output_root: str | Path | None = None,
@@ -341,6 +228,14 @@ def cache_dime_embeddings(
     config: PrimeConfig | None = None,
     expected_contract: FrozenContract | None = None,
 ) -> dict[str, Any]:
+    from .cache_helpers import (
+        _csv_bytes,
+        _npy_bytes,
+        _sidecar,
+        _verify_cached_vector,
+        _write_new_or_equal,
+    )
+
     config = config or load_config()
     output_base = prime_owned_path(output_root or config.cache, config)
     output = output_base / "dime_score" / "embeddings" / EMBEDDING_VERSION
@@ -458,7 +353,7 @@ def cache_dime_embeddings(
             if expert is None:
                 try:
                     expert = load_expert(device)
-                except Exception:
+                except (Exception, ArithmeticError):
                     expert = load_expert("cpu")
             raw = encode_dataset(expert, encoded_dir)
             raw_path = encoded_dir / "foundation-raw.npy"
@@ -518,3 +413,21 @@ def cache_dime_embeddings(
         "embeddings_sha256": manifest["embeddings_sha256"],
         "frozen": contract.as_dict(),
     }
+
+
+_CACHE_HELPER_EXPORTS = {
+    "_csv_bytes",
+    "_finite_float",
+    "_npy_bytes",
+    "_sidecar",
+    "_verify_cached_vector",
+    "_write_new_or_equal",
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _CACHE_HELPER_EXPORTS:
+        from . import cache_helpers
+
+        return getattr(cache_helpers, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

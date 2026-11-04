@@ -108,6 +108,12 @@ pub fn derived_schema() -> serde_json::Value {
         .and_then(serde_json::Value::as_object_mut)
         .and_then(|properties| properties.remove("objective_loss"))
         .expect("observations carry an optional objective loss");
+    // Nor does it rank by resources, so observations never carry resource readings.
+    schema
+        .pointer_mut("/$defs/ObservationRecord/properties")
+        .and_then(serde_json::Value::as_object_mut)
+        .and_then(|properties| properties.remove("resources"))
+        .expect("observations carry optional resource readings");
     schema
 }
 

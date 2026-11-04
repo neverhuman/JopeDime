@@ -1,0 +1,17 @@
+pub(crate) const MICRO_WAVE_KIND: &str = "deterministic_128_dataset_micro_wave";
+pub(crate) const WAVE_SCHEMA: &str = "JopeRealtimeSelfplayWave.v1";
+pub(crate) const DATASETS_PER_WAVE: usize = 128;
+pub(crate) const CANDIDATES_PER_DATASET: usize = 256;
+pub(crate) const COHORT_PROPOSAL_SEED: u64 = 20_260_726;
+pub(crate) const COHORT_NATIVE_D: usize = 8;
+pub(crate) const SUPPLY_STATE_V1_SCHEMA: &str = "CohortSupplyState.v1";
+pub(crate) const SUPPLY_STATE_V2_SCHEMA: &str = "CohortSupplyState.v2";
+pub(crate) const RUNTIME_PINNED_INTENT_SCHEMA: &str = "RuntimePinnedIntent.v1";
+pub(crate) const COHORT_CONTEXT_MIGRATION_SCHEMA: &str = "CohortContextMigrationReceipt.v1";
+pub(crate) const COHORT_CONTEXT_EXCLUSION_SCHEMA: &str = "CohortContextExclusionReceipt.v1";
+pub(crate) const ERROR_BACKOFF_MAX_SECONDS: u64 = 120;
+pub(crate) const MIN_USEFUL_WORK: usize = 6_144;
+pub(crate) const CANDIDATE_EVALUATIONS_PER_WAVE: usize = DATASETS_PER_WAVE * CANDIDATES_PER_DATASET;
+pub(crate) const MIN_CANDIDATE_EVALUATION_WORK: usize = 8 * CANDIDATE_EVALUATIONS_PER_WAVE;
+pub(crate) const MIN_CANDIDATE_RESERVE: usize = 2 * CANDIDATE_EVALUATIONS_PER_WAVE;
+pub(crate) const MIN_COMPLETE_RESERVE_WAVES: usize = 2;

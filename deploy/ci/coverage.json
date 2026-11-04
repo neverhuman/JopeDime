@@ -160,66 +160,6 @@
     }
   },
   "items": {
-    "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
-    },
-    "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
-    },
-    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification."
-    },
-    "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification."
-    },
-    "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification."
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
-    },
     "benchmark:crates/feat-math/examples/expression_benchmark.rs": {
       "discovery": {
         "kind": "benchmark-source"
@@ -229,6 +169,16 @@
       ],
       "lanes": [],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
+    },
+    "benchmark:crates/feat-math/src/kernel/ridge_fast/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Ignored benchmark measurements; not a collected test or performance proof."
     },
     "benchmark:crates/feat-math/tests/bench.rs": {
       "discovery": {
@@ -592,6 +542,34 @@
       ],
       "lanes": [],
       "scope": "Opt-in HTTPS for JAIN cloud workspaces (rustls with the aws-lc-rs provider). No audited appliance feature set selects it: deploy/appliance/dependencies-deny.toml denies rustls/aws-* and keeps ureq featureless, so shipping it needs a reviewed dependency-policy amendment. Local check, clippy and cloud tests with the feature are recorded in its PR."
+    },
+    "feature:jope-api/default": {
+      "discovery": {
+        "dependencies": [
+          "run-id-generation"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Default build of jope-api (RunId::new/Default via run-id-generation) is checked and tested in the workspace rust-check/rust-test lanes."
+    },
+    "feature:jope-api/run-id-generation": {
+      "discovery": {
+        "dependencies": [
+          "ulid/std"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Default-enabled: RunId::new/Default generation (ulid/std, getrandom) is covered by the jope-api default build in rust-check/rust-test; jope-runtime takes jope-api with default-features=false so the WASM browser runtime (typescript lane, web/browser-predict) never links getrandom."
     },
     "feature:jope-appliance/default": {
       "discovery": {
@@ -1477,7 +1455,7 @@
       "lanes": [
         "rust-test"
       ],
-      "scope": "Configured fast PR/manual lane as two nextest slices proven to cover the unsharded set; path-excluded jobs are not passes."
+      "scope": "Configured fast PR/manual lane as three nextest slices proven to cover the unsharded set; path-excluded jobs are not passes."
     },
     "job:.github/workflows/ci.yml/typescript": {
       "discovery": {
@@ -2454,6 +2432,46 @@
       ],
       "scope": "Descriptor-anchored exact reviewed vendor inventory/hash/size checks and 28 fail-closed tamper controls; no substitute for Git review of provenance or numerical qualification."
     },
+    "python:deploy/ci/test_provenance_binding.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
+    },
+    "python:deploy/ci/test_provenance_manual.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
+    },
+    "python:deploy/ci/test_provenance_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
+    },
+    "python:deploy/ci/test_runner_cases.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
+    },
     "python:deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py": {
       "discovery": {
         "kind": "python-family"
@@ -2462,7 +2480,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/ingest_joined_roster/tests/test_roster.py": {
       "discovery": {
@@ -2492,7 +2510,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "24 isolated CPU fixtures for closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case) via run_v2_offline.py, additive after prior812. One adoption per completed epoch, intent/CAS reconcile and holds, authority rechecks, first-exposure joins, native-overlay components, accepted-envelope and restart refusals, bitwise next update. No live planner, optimizer, S3, GPU or network activity."
+      "scope": "24 isolated CPU fixtures for closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case) via run_v2_offline.py, additive after prior814. One adoption per completed epoch, intent/CAS reconcile and holds, authority rechecks, first-exposure joins, native-overlay components, accepted-envelope and restart refusals, bitwise next update. No live planner, optimizer, S3, GPU or network activity."
     },
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_overlay_components.py": {
       "discovery": {
@@ -2502,7 +2520,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "24 isolated CPU fixtures for closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case) via run_v2_offline.py, additive after prior812. One adoption per completed epoch, intent/CAS reconcile and holds, authority rechecks, first-exposure joins, native-overlay components, accepted-envelope and restart refusals, bitwise next update. No live planner, optimizer, S3, GPU or network activity."
+      "scope": "24 isolated CPU fixtures for closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case) via run_v2_offline.py, additive after prior814. One adoption per completed epoch, intent/CAS reconcile and holds, authority rechecks, first-exposure joins, native-overlay components, accepted-envelope and restart refusals, bitwise next update. No live planner, optimizer, S3, GPU or network activity."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_anchored_step.py": {
       "discovery": {
@@ -2512,7 +2530,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior814 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py": {
       "discovery": {
@@ -2532,7 +2550,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior814 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_r2_custody.py": {
       "discovery": {
@@ -2542,7 +2560,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior814 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_runner_v6.py": {
       "discovery": {
@@ -2552,7 +2570,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior814 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
       "discovery": {
@@ -2562,7 +2580,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "37 isolated CPU fresh32 encoder fixtures via run_fresh32_offline.py, invoked additively by run_offline.py after every prior455 identity. Source/runtime and qualification preservation, exact-version custody, cross-host ownership/held-failure exclusion, fixed scope/deadline, atomic progress rename refusal, source-row CAS and safe copy-script execution. No live GP, S3, GPU, optimizer or production DB activity."
+      "scope": "37 isolated CPU fresh32 encoder fixtures via run_fresh32_offline.py, invoked additively by run_offline.py after every prior457 identity. Source/runtime and qualification preservation, exact-version custody, cross-host ownership/held-failure exclusion, fixed scope/deadline, atomic progress rename refusal, source-row CAS and safe copy-script execution. No live GP, S3, GPU, optimizer or production DB activity."
     },
     "python:deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py": {
       "discovery": {
@@ -2582,7 +2600,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "32 isolated CPU fixtures for the read-only final capture of a terminal continuous run (W10 revision 2, including the R17 runtime-limit-stopped-idle class), run by the package's own pinned runner through run_v2_offline.py, additive after prior812. Private copies only: stopped-owner checks, proof/checkpoint/restore closure, chunked parts and create-only output. No live journal, unit, S3, GPU or network."
+      "scope": "32 isolated CPU fixtures for the read-only final capture of a terminal continuous run (W10 revision 2, including the R17 runtime-limit-stopped-idle class), run by the package's own pinned runner through run_v2_offline.py, additive after prior814. Private copies only: stopped-owner checks, proof/checkpoint/restore closure, chunked parts and create-only output. No live journal, unit, S3, GPU or network."
     },
     "python:deploy/dl-flywheel/pipelines/final_capture_v1/tests/test_runtime_limit.py": {
       "discovery": {
@@ -2592,7 +2610,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "32 isolated CPU fixtures for the read-only final capture of a terminal continuous run (W10 revision 2, including the R17 runtime-limit-stopped-idle class), run by the package's own pinned runner through run_v2_offline.py, additive after prior812. Private copies only: stopped-owner checks, proof/checkpoint/restore closure, chunked parts and create-only output. No live journal, unit, S3, GPU or network."
+      "scope": "32 isolated CPU fixtures for the read-only final capture of a terminal continuous run (W10 revision 2, including the R17 runtime-limit-stopped-idle class), run by the package's own pinned runner through run_v2_offline.py, additive after prior814. Private copies only: stopped-owner checks, proof/checkpoint/restore closure, chunked parts and create-only output. No live journal, unit, S3, GPU or network."
     },
     "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/test_operational.py": {
       "discovery": {
@@ -2662,7 +2680,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "36 isolated CPU fixtures for prepared-candidate roots built from verified train-target references (C10a revision 7) and the two-phase prefetch/closed-cache worker, via run_v2_offline.py, additive after prior812. Reference/row bijection, exact contract binding, one work clock and read budget, terminal markers and operator acceptance envelopes. Counting fake store only; no S3, network, optimizer, GPU or program execution."
+      "scope": "36 isolated CPU fixtures for prepared-candidate roots built from verified train-target references (C10a revision 7) and the two-phase prefetch/closed-cache worker, via run_v2_offline.py, additive after prior814. Reference/row bijection, exact contract binding, one work clock and read budget, terminal markers and operator acceptance envelopes. Counting fake store only; no S3, network, optimizer, GPU or program execution."
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_worker.py": {
       "discovery": {
@@ -2672,7 +2690,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "36 isolated CPU fixtures for prepared-candidate roots built from verified train-target references (C10a revision 7) and the two-phase prefetch/closed-cache worker, via run_v2_offline.py, additive after prior812. Reference/row bijection, exact contract binding, one work clock and read budget, terminal markers and operator acceptance envelopes. Counting fake store only; no S3, network, optimizer, GPU or program execution."
+      "scope": "36 isolated CPU fixtures for prepared-candidate roots built from verified train-target references (C10a revision 7) and the two-phase prefetch/closed-cache worker, via run_v2_offline.py, additive after prior814. Reference/row bijection, exact contract binding, one work clock and read budget, terminal markers and operator acceptance envelopes. Counting fake store only; no S3, network, optimizer, GPU or program execution."
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/test_compatibility.py": {
       "discovery": {
@@ -2772,7 +2790,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "38 isolated CPU fixtures for train-only native-result overlay packet chains (W3 revision 2 with the caller-written bounded terminal acceptance envelope) via run_v2_offline.py, additive after prior812. Delta-chain validation, anchors and label unions, emission body identity, role guards, row/token caps and create-only roots; one fixture reads the vendored R6 dev-split preregistration under its pinned sha256. No live native results, S3, GPU or network."
+      "scope": "38 isolated CPU fixtures for train-only native-result overlay packet chains (W3 revision 2 with the caller-written bounded terminal acceptance envelope) via run_v2_offline.py, additive after prior814. Delta-chain validation, anchors and label unions, emission body identity, role guards, row/token caps and create-only roots; one fixture reads the vendored R6 dev-split preregistration under its pinned sha256. No live native results, S3, GPU or network."
     },
     "python:deploy/dl-flywheel/pipelines/prepared/test_cold_recovery.py": {
       "discovery": {
@@ -2914,6 +2932,26 @@
       ],
       "scope": "Fixture-only Lane B seal and judge-evaluator tests via run_rlfw_offline.py. Temporary seals only; no real seal is released, and no Kumo weights, corpus, or live evaluator are loaded."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane_curve.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture-only Lane B judge tests via run_rlfw_offline.py. Temporary fixtures only; no real seal, Kumo weights, corpus, or live evaluator."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane_quarantine.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture-only Lane B judge tests via run_rlfw_offline.py. Temporary fixtures only; no real seal, Kumo weights, corpus, or live evaluator."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_kumo_canaries.py": {
       "discovery": {
         "kind": "python-family"
@@ -3054,6 +3092,26 @@
       ],
       "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler_cli.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler_recovery.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
       "discovery": {
         "kind": "python-family"
@@ -3142,7 +3200,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/test_reuse.py": {
       "discovery": {
@@ -3152,7 +3210,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/test_custody.py": {
       "discovery": {
@@ -3162,7 +3220,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/test_adapter.py": {
       "discovery": {
@@ -3172,7 +3230,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
       "discovery": {
@@ -4288,6 +4346,26 @@
       ],
       "scope": "Direct stdlib unittest execution of GPU budget reservations and train-only output manifest custody; synthetic CPU controls, no compute or S3 qualification."
     },
+    "python:deploy/dl-trainonly/test_contracts_budget.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of GPU budget reservation and train-only output custody controls; synthetic CPU fixtures, no compute or S3 qualification."
+    },
+    "python:deploy/dl-trainonly/test_contracts_output.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of GPU budget reservation and train-only output custody controls; synthetic CPU fixtures, no compute or S3 qualification."
+    },
     "python:deploy/dl-trainonly/test_feature_reduction.py": {
       "discovery": {
         "kind": "python-family"
@@ -4378,6 +4456,36 @@
       "lanes": [],
       "scope": "REL-07 PR1436 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
     },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_identity.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 synthetic capture-client recorder identity, cleanup, and frozen-candidate provenance controls."
+    },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_process.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 synthetic capture-client process-group, timeout, interrupt, and recorder drain controls."
+    },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
     "python:deploy/qualification/agents/transcripts/run-prep/test_codex_capture_drain.py": {
       "discovery": {
         "kind": "python-family"
@@ -4438,6 +4546,46 @@
       "lanes": [],
       "scope": "Standalone unittest controls for the Q1 canonical cut hash (QLT-04, jope.q1-cut/v1): golden cross-language digest, key-order independence, field/order sensitivity and invalid-fold refusal; data-free, no learned model or sealed payload executes."
     },
+    "python:deploy/qualification/q1/harness/test_q1_dispatch.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "QLT-04 synthetic infrastructure retry controls: redacted structured/legacy stderr, actual return codes, fatal-first dispatch stop, timeout handling and strict response-schema refusal. No model, evaluator or dataset inputs; source controls only until explicitly executed, not live Q1 qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_metadata_source.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_owner_selection.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_statistics.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "discovery": {
         "kind": "python-family"
@@ -4457,6 +4605,26 @@
       ],
       "lanes": [],
       "scope": "REL-07 signer-compatible gate-receipt adapter controls; exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, artifact SHA256 binding, and missing/duplicate/malformed gate refusals."
+    },
+    "python:deploy/qualification/v1.0/test_gates_receipt_scaffold.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/v1.0/test_gates_receipt_variants.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
     },
     "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
       "discovery": {
@@ -4648,7 +4816,39 @@
       "lanes": [],
       "scope": "Operational S3 shard-cache unit test against an in-memory fake client; statically inventoried, not collected by any CI lane (the python lane collects python/tests), pending operational qualification."
     },
+    "python:python/src/jope/north_star/dope_freeze_guard_self_test.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
+    },
     "python:python/test-support/jope/research/test_exact_accept.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_accept_gate.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_accept_promotion.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4679,6 +4879,66 @@
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
     "python:python/test-support/jope/research/test_exact_campaign.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_binary_repair.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_build.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_config.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_extension.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_freeze.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_population.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4758,6 +5018,36 @@
       "lanes": [],
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
+    "python:python/test-support/jope/research/test_exact_dl_generate_args.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_dl_generate_main.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_dl_generate_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
     "python:python/test-support/jope/research/test_exact_evaluator.py": {
       "discovery": {
         "kind": "python-family"
@@ -4788,7 +5078,57 @@
       "lanes": [],
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
+    "python:python/test-support/jope/research/test_exact_ingest_constants.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_ingest_receipts.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_ingest_reconcile.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
     "python:python/test-support/jope/research/test_exact_monitor.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_monitor_bootstrap.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_monitor_config.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4809,6 +5149,36 @@
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
     "python:python/test-support/jope/research/test_exact_packed_corpus.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_materialize.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_reader.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_storage.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -4848,6 +5218,26 @@
       "lanes": [],
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
+    "python:python/test-support/jope/research/test_exact_service_cycles.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_service_runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
     "python:python/test-support/jope/research/test_exact_status.py": {
       "discovery": {
         "kind": "python-family"
@@ -4859,6 +5249,86 @@
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
     "python:python/test-support/jope/research/test_exact_train.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_batching.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_catalog.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_config.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_corpus.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_corpus_setup.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_policy.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_sampling.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
+    },
+    "python:python/test-support/jope/research/test_exact_train_training.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -5054,6 +5524,30 @@
       ],
       "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
     },
+    "python:python/tests/test_north_star_flywheel_history.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained CPU synthetic North Star history and metric controls; does not qualify live training or overhead."
+    },
+    "python:python/tests/test_north_star_flywheel_metrics.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained CPU synthetic North Star history and metric controls; does not qualify live training or overhead."
+    },
     "python:python/tests/test_optional_task_readiness.py": {
       "discovery": {
         "kind": "python-family"
@@ -5161,6 +5655,17 @@
       "scope": "Maintained pytest family: PR execution selects not xbabe2; full-main CPU uses this explicit file list and reports excluded host-only cases. Full-main selects this maintained file explicitly; xbabe2-marked tests remain deselected."
     },
     "python:python/tests/test_training_campaign.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_training_campaign_execution.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -6305,6 +6810,16 @@
       "lanes": [],
       "scope": "H230 data-free frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
     },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
+    },
     "python:research/flywheel_selfplay/h232_lion/test_h232.py": {
       "discovery": {
         "kind": "python-family"
@@ -6323,7 +6838,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
+      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only); preregistered unit tests, family folds and bootstrap verification with strict advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
     },
     "python:research/flywheel_selfplay/h234_lambdaloss/test_h234.py": {
       "discovery": {
@@ -6344,6 +6859,16 @@
       ],
       "lanes": [],
       "scope": "H235 data-free controls: identical H170 CTRL AdamW recipe for every arm (schedules.json), CTRL loss split exactly into its smooth-L1 regression and listwise KL terms, beta-NLL (beta 0.5) equal to Seitzer et al. 2022 with stop-gradient weights (value, log-variance gradient, sigma^2=1 limit), zero-initialised and clamped log-variance head, arm loss composition (CONTROL, BNLL_MIX = beta-NLL + CTRL KL, BNLL_ADD = CTRL + 0.5 beta-NLL), pinned reading of the inherited CTRL loss (smooth-L1 regression term), fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe2 monitor hard limits (RSS 4 GiB, MemAvailable 20 GiB, free 300 GB, 4 threads, 05:00Z) with load5 60/55 pause hysteresis, launch binding"
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/test_h236.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
     },
     "python:research/flywheel_selfplay/h237_adabelief/test_h237.py": {
       "discovery": {
@@ -6374,36 +6899,6 @@
       ],
       "lanes": [],
       "scope": "H242 data-free controls: frozen arms/rhos/seeds, energy kept-rank rule, rank-k truncation optimality and full-rank bit-exactness, only 2-D matrices touched, matched-Frobenius seeded placebo, spectral census and LASER_SINGLE candidates, frozen spectral_inventory.json (16 matrices, 3 rank-1, 13 candidates), strict selector (ties and noise keep r882, smallest perturbation on ties), fresh per-seed family folds and fold manifest, four-gate advance rule with Holm over SVD_SELECT and LASER_SINGLE only (placebo never advances), harm/plateau/fixed readouts, launch binding, H239 A1 memory guard and 07:30Z compute stop, manifest pins."
-    },
-    "python:research/flywheel_selfplay/h243_modsoup/test_h243.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H243 data-free controls: frozen constants, groups.json partitions the 47 adapter tensors (11 groups), soups touch only recipe groups (beta 1 copies r782 bits, beta .5 float64 blend), per-group L2 and matched-L2 seeded placebo, policy labels, strict selector and tie order, greedy soup (gain-ordered ingredients above .001, cap 5, strict +0.001 additions, strict LCB final check, fallback to r882), fresh per-seed folds and fold manifest, four-gate advance rule with Holm over MODSWAP_SELECT and GREEDY_SOUP only (placebo never advances), launch binding, H239 A1 memory guard and 07:30Z stop, manifest pins of r882/r782."
-    },
-    "python:research/flywheel_selfplay/h247_muon_grokfast/test_h247.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H247 data-free controls: frozen arms and hyperparameters, schedule table identity, Newton-Schulz-5 polar-factor approximation and transposition, Muon step formula with Nesterov momentum, weight decay and rows/cols scaling, MUON parameter split (2-D to Muon, others to CTRL AdamW, None gradients skipped), CONTROL equal to torch AdamW, Grokfast-EMA filter equal to the reference (first-step init, None skipped), CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and harm/plateau reporting, launch binding, H239 A1 memory guard and 09:30Z stop, manifest pins."
-    },
-    "python:research/flywheel_selfplay/h251_reptile/test_h251.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H251 data-free controls: frozen arms and hyperparameters, schedule table identity, Reptile positions and outer-step snapshot boundaries, REPTILE_K1 equal to scaled SGD and k=5 outer interpolation, plain inner SGD (no momentum or weight decay, None gradients skipped), CONTROL equal to torch AdamW, one-family 8x24 batch plan with shared family stream, CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and the REPTILE-REPTILE_K1 contrast, launch binding, H239 A1 memory and load guard and 15:00Z stop, manifest pins."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -8372,7 +8867,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -14840,6 +15335,22 @@
       ],
       "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
     },
+    "target:jope-service/example/q1_infra_retry": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "research"
+        ],
+        "source": "crates/jope-service/examples/q1_infra_retry.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "Research-feature-gated Q1 infrastructure retry example; not default execution or live qualification."
+    },
     "target:jope-service/lib/jope_service": {
       "discovery": {
         "doctest": true,
@@ -14871,7 +15382,13 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "RES-09 SafeTensors golden-fixture loader: exact tensor names/shapes, strict/skip modes and synthetic fixture checks; real RES-07 goldens load only when present (skip diagnostic otherwise)."
+      "scope": "RES-09 SafeTensors golden-fixture loader: exact tensor names/shapes, strict/skip modes and synthetic fixture checks; real RES-07 goldens load only when present (skip diagnostic otherwise).",
+      "source_files": [
+        "crates/jope-service/tests/support/golden/tests.rs",
+        "crates/jope-service/tests/support/golden/tests/common.rs",
+        "crates/jope-service/tests/support/golden/tests/fixture_loader.rs",
+        "crates/jope-service/tests/support/golden/tests/res07.rs"
+      ]
     },
     "target:jope-service/test/no_gp_leak": {
       "discovery": {
@@ -15337,16 +15854,6 @@
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
     },
-    "python:research/flywheel_selfplay/h236_sfadamw/test_h236.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
-    },
     "python:research/flywheel_selfplay/h238_lowlr/test_h238.py": {
       "discovery": {
         "kind": "python-family"
@@ -15356,6 +15863,16 @@
       ],
       "lanes": [],
       "scope": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification."
     },
     "python:research/flywheel_selfplay/h240_lowlr/test_h240.py": {
       "discovery": {
@@ -15367,6 +15884,26 @@
       "lanes": [],
       "scope": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
     },
+    "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h243_modsoup/test_h243.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H243 data-free controls: frozen constants, groups.json partitions the 47 adapter tensors (11 groups), soups touch only recipe groups (beta 1 copies r782 bits, beta .5 float64 blend), per-group L2 and matched-L2 seeded placebo, policy labels, strict selector and tie order, greedy soup (gain-ordered ingredients above .001, cap 5, strict +0.001 additions, strict LCB final check, fallback to r882), fresh per-seed folds and fold manifest, four-gate advance rule with Holm over MODSWAP_SELECT and GREEDY_SOUP only (placebo never advances), launch binding, H239 A1 memory guard and 07:30Z stop, manifest pins of r882/r782."
+    },
     "python:research/flywheel_selfplay/h245_gated_lambda_nest/test_h245.py": {
       "discovery": {
         "kind": "python-family"
@@ -15377,6 +15914,36 @@
       "lanes": [],
       "scope": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
     },
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h247_muon_grokfast/test_h247.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H247 data-free controls: frozen arms and hyperparameters, schedule table identity, Newton-Schulz-5 polar-factor approximation and transposition, Muon step formula with Nesterov momentum, weight decay and rows/cols scaling, MUON parameter split (2-D to Muon, others to CTRL AdamW, None gradients skipped), CONTROL equal to torch AdamW, Grokfast-EMA filter equal to the reference (first-step init, None skipped), CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and harm/plateau reporting, launch binding, H239 A1 memory guard and 09:30Z stop, manifest pins."
+    },
+    "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+    },
     "python:research/flywheel_selfplay/h249_side_branch/test_h249.py": {
       "discovery": {
         "kind": "python-family"
@@ -15386,6 +15953,26 @@
       ],
       "lanes": [],
       "scope": "H249 data-free controls: frozen arms and hyperparameters, schedule table identity, zero-init low-rank residual side branch (SIDE4 rank 4, SIDE16 rank 16) step-0 bit-identity and Kaiming-uniform A / zero B init, applied forward training with frozen r882 weights untouched and exact equivalence to merged weights, CONTROL equal to torch AdamW, CTRL loss and drift, shared fold-seed 249140 partition and fold manifest, strict selector, four-gate advance rule with Holm m=2, launch binding, H239 A1 memory guard and 15:00Z stop, manifest pins."
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h251_reptile/test_h251.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H251 data-free controls: frozen arms and hyperparameters, schedule table identity, Reptile positions and outer-step snapshot boundaries, REPTILE_K1 equal to scaled SGD and k=5 outer interpolation, plain inner SGD (no momentum or weight decay, None gradients skipped), CONTROL equal to torch AdamW, one-family 8x24 batch plan with shared family stream, CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and the REPTILE-REPTILE_K1 contrast, launch binding, H239 A1 memory and load guard and 15:00Z stop, manifest pins."
     },
     "python:research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py": {
       "discovery": {
@@ -16588,7 +17175,7 @@
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
         "CARGO_TARGET_DIR": "job-scoped persistent runner lane target",
         "JOPE_PARITY_STRICT": "1",
-        "JOPE_RUST_TEST_PARTITION": "slice:<shard>/2, one per ci.yml rust-test matrix leg",
+        "JOPE_RUST_TEST_PARTITION": "slice:<shard>/3, one per ci.yml rust-test matrix leg",
         "MKL_NUM_THREADS": "1",
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
@@ -16681,7 +17268,7 @@
         "JOPE_TYPESCRIPT_PARITY=1 cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit::",
         "cargo test --locked -p feat-math --no-default-features --test artifact_target_binding",
         "cargo test --locked -p jope-pipeline --test artifact_target_binding",
-        "cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests::",
+        "cargo test --locked -p jope-cli --no-default-features --lib kernel::numeric_emit::artifact_v3_tests::",
         "node deploy/ci/typescript/browser.mjs (all census fixtures, Chromium/Firefox/WebKit page and module worker)",
         "bash web/browser-predict/check.sh (Node26: native model integrity and first-party WASM parity; no fitting export or host imports)"
       ],

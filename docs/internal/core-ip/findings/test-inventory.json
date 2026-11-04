@@ -935,6 +935,22 @@
         "orchestration"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler_cli.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler_recovery.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
       "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability.",
       "role": "regression",
@@ -5761,6 +5777,217 @@
     "python:research/flywheel_selfplay/h236_sfadamw/test_h236.py": {
       "role": "research",
       "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
+    },
+    "python:python/src/jope/north_star/dope_freeze_guard_self_test.py": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "evaluation"
+      ]
+    },
+    "python:python/tests/test_north_star_flywheel_history.py": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "evaluation"
+      ]
+    },
+    "python:python/tests/test_north_star_flywheel_metrics.py": {
+      "role": "regression",
+      "subsystems": [
+        "training",
+        "evaluation"
+      ]
+    },
+    "python:python/tests/test_training_campaign_execution.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
+    "python:deploy/ci/test_provenance_binding.py": {
+      "role": "infrastructure",
+      "reason": "Runner provenance binding controls using synthetic metadata."
+    },
+    "python:deploy/ci/test_provenance_manual.py": {
+      "role": "infrastructure",
+      "reason": "Manual runner provenance controls using synthetic metadata."
+    },
+    "python:deploy/ci/test_provenance_support.py": {
+      "role": "infrastructure",
+      "reason": "Support controls for synthetic runner provenance tests."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane_curve.py": {
+      "role": "infrastructure",
+      "reason": "Fixture-only Lane B curve validation; no live evaluator or model."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane_quarantine.py": {
+      "role": "infrastructure",
+      "reason": "Fixture-only Lane B quarantine controls; no live evaluator or model."
+    },
+    "python:deploy/dl-trainonly/test_contracts_budget.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic CPU budget reservation controls; no compute qualification."
+    },
+    "python:deploy/dl-trainonly/test_contracts_output.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic train-only output manifest controls; no S3 qualification."
+    },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_support.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic release tooling support controls, not release execution."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_metadata_source.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic Q1 metadata source controls; no live qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_owner_selection.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic Q1 owner selection controls; no live qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_statistics.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic Q1 statistics controls; no live qualification."
+    },
+    "python:deploy/qualification/v1.0/test_gates_receipt_scaffold.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic gate receipt scaffolding controls; no live qualification."
+    },
+    "python:deploy/qualification/v1.0/test_gates_receipt_variants.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic gate receipt variant controls; no live qualification."
+    },
+    "python:python/test-support/jope/research/test_exact_accept_gate.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_accept_promotion.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_binary_repair.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_build.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_config.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_extension.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_freeze.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_campaign_population.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_dl_generate_args.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_dl_generate_main.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_dl_generate_support.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_ingest_constants.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_ingest_receipts.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_ingest_reconcile.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_monitor_bootstrap.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_monitor_config.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_materialize.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_reader.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_packed_corpus_storage.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_service_cycles.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_service_runtime.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_train_batching.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_train_catalog.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_train_config.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_train_corpus.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_train_corpus_setup.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_train_policy.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_train_sampling.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:python/test-support/jope/research/test_exact_train_training.py": {
+      "role": "research",
+      "reason": "research script test outside the maintained product surface"
+    },
+    "python:deploy/ci/test_runner_cases.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic infrastructure controls; not a live qualification or product-learning run."
+    },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_identity.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic infrastructure controls; not a live qualification or product-learning run."
+    },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_process.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic infrastructure controls; not a live qualification or product-learning run."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_dispatch.py": {
+      "role": "infrastructure",
+      "reason": "Synthetic infrastructure controls; not a live qualification or product-learning run."
     },
     "python:research/flywheel_selfplay/h238_lowlr/test_h238.py": {
       "role": "research",

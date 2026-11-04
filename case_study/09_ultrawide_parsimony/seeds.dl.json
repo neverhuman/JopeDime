@@ -1,0 +1,50 @@
+{
+  "dataset_hash": "9ae61bc7da3ba01c",
+  "genomes": [
+    {
+      "genome": "(pipe X (target_bin_encode append=true bins=16) (rank append=false) (target_bin_encode append=true bins=16) (rank) (target_bin_encode append=true bins=16) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "program_sha256": "286a451f275d8d29c2b9aad5abb393461bf3937ecee8c48ffb6a59b6e1c9a97f"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (target_bin_encode bins=4) (rand_proj append=true k=32 seed=31) (oblique_hinge append=true n=32 seed=19) (quantile_bins bins=32) (ensemble))",
+      "program_sha256": "5237e5440d191173fca0a485c87c34d34c3252b3de01ad8c1c098b6f74ea3d02"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (quantile_bins bins=32) (winsor_clip append=true q=0.02) (pair_prod append=true topk=4) (histgbm depth=4 lr=0.15 rounds=180))",
+      "program_sha256": "db0fb8dd147053a51e1c8388b425ab841b7b4057e9c3b3f0871a86599c9b23be"
+    },
+    {
+      "genome": "(pipe X (rand_proj append=true k=64 seed=31) (blom append=true) (rff_sin append=true gamma=2.0 n=64 seed=29) (quantile_bins append=true bins=8) (rff_sin append=true gamma=2.0 n=64 seed=29) (histgbm depth=2 lr=0.05 rounds=180))",
+      "program_sha256": "fa80d0a4bf6004add067e16991d6694d408d79c7d9beb8e42f9e0939b427ddbc"
+    },
+    {
+      "genome": "(pipe X (target_bin_encode append=true bins=16) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "program_sha256": "80942f6b459e828cdf02f1c5ca98bf0c402e563303bb23744eba991703babd31"
+    },
+    {
+      "genome": "(pipe X (robust_scale append=false) (histgbm depth=3 lr=0.1 rounds=80))",
+      "program_sha256": "1cce859ae0ebd1770d0d2d60bb20753ce0d2331be516dd5aacc020ddc51c068b"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (target_bin_encode append=true bins=16) (elasticnet alpha=0.01 l1_ratio=0.8))",
+      "program_sha256": "c33290b80a52c628b4e847e3176ba2647073722db284082e3d2428721316859c"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (blom append=false) (robust_scale append=true) (target_bin_encode append=true bins=8) (robust_scale) (histgbm depth=2 lr=0.15 rounds=180))",
+      "program_sha256": "2bbeefd2aaf1f863f2031b57fe13203bae4d6c375489d5c11d8e1c5dd15b17ff"
+    },
+    {
+      "genome": "(pipe X (histgbm2 bags=5 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "1ce5d94c9a6a9809da451d737f263980496870e46855eea0656895cc2e7a6e78"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (target_bin_encode append=true bins=16) (rank) (target_bin_encode append=true bins=16) (histgbm depth=4 lr=0.15 rounds=180))",
+      "program_sha256": "a22a0b8e2bbc95e0521b577e824175415b56c6a757aaf2596e095ccba995045e"
+    },
+    {
+      "genome": "(pipe X (target_bin_encode append=true bins=16) (pair_prod append=true topk=4) (target_bin_encode append=true bins=16) (pair_prod append=true topk=4) (histgbm lr=0.15 rounds=180))",
+      "program_sha256": "6f9f3bfb07fe48bf25bf773b8d8fe30f8d46f3d0c2ba6e20dc9b87df6dd9e36e"
+    }
+  ],
+  "schema": "jope.pipeline-seeds/v1"
+}

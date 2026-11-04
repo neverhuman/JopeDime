@@ -1,0 +1,29 @@
+{
+  "schema": "whitepaper.live-adapter-decisions-figure/v1",
+  "input_csv_sha256": "c88f9aee09512452e2a8e62793bc8f86c6ea6d96f7efd9914ef932d551c81b5c",
+  "source_receipt_sha256": "62aa2c6f66ceb348e9abc5f6b36230fe855f19f2eb36ca1963a3ca3bf0203fad",
+  "generator_sha256": "36024098bbc44558eb791a6e367e4bbb6864fd67dcf4970083bb286b49cf81ce",
+  "figure_sha256": "63bd03d259ea2a681e9373b313416e7d521b4c1bd5ef807553c153f2ce189992",
+  "rows": 20,
+  "round_window": [
+    3931,
+    3950
+  ],
+  "adapter_admissions": 0,
+  "rejected": 20,
+  "retained_utility_values": [
+    "1.1389572403748425"
+  ],
+  "minimum_margin": "-0.0088563794394934",
+  "maximum_margin": "-0.0035184519499803",
+  "definitions": "Each point is candidate_utility minus previous_best_utility from the admission journal. Zero means score equality, not an independent performance threshold. Marker categories use the logged accepted flag, not a threshold inferred from rounded values. All 20 consecutive matched complete rounds are included; no smoothing or outcome selection.",
+  "scope": "Adaptive development-side adapter admission decisions, separate from strict program-incumbent events. No independent first-proposal, learning-gain, cross-model or serving comparison.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    3.25,
+    2.2
+  ],
+  "reproduce": "python3 figures/scripts/make_live_adapter_decisions_figure.py"
+}

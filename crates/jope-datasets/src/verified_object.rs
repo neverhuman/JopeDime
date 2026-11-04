@@ -22,117 +22,12 @@ use std::path::Path;
 /// Canonical wire-contract identifier for verified object references (`I02` / `I46`).
 pub const VERIFIED_OBJECT_CONTRACT_ID: &str = "jope.verified-object-ref.v1";
 
-/// Default maximum object size (`256 MiB`) permitted for in-memory readback verification.
-pub const DEFAULT_MAX_VERIFIED_READBACK_BYTES: u64 = 256 * 1024 * 1024;
+mod options;
 
-/// How an immutable object reached verified publication closure.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum PublicationStatus {
-    /// Object was newly created by `put_if_absent` and verified on readback.
-    Created,
-    /// Object already existed before or during `put_if_absent` (create race) and its body
-    /// was verified byte-for-byte on readback.
-    ExistingVerified,
-    /// The `put_if_absent` response was lost or ambiguous after write, and bounded readback
-    /// proved the exact expected bytes (and required physical version) are present.
-    ReconciledAfterAmbiguousPut,
-}
+pub use options::{VerificationOptions, VersionRequirement, DEFAULT_MAX_VERIFIED_READBACK_BYTES};
 
-impl PublicationStatus {
-    /// Map to [`PutOutcome`] for legacy counter compatibility (`MirrorReport`, `PublishReport`).
-    pub fn as_put_outcome(self) -> PutOutcome {
-        match self {
-            PublicationStatus::Created | PublicationStatus::ReconciledAfterAmbiguousPut => {
-                PutOutcome::Created
-            }
-            PublicationStatus::ExistingVerified => PutOutcome::Exists,
-        }
-    }
-}
-
-/// Truthful physical-version availability classification for a verified object.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum PhysicalVersionStatus {
-    /// Backend returned a non-empty physical `VersionId` with the readback body and exact-version
-    /// readback confirmed those identical bytes.
-    VerifiedVersionId,
-    /// Local filesystem store (`file://`) verified content bytes; backend has no S3 `VersionId`.
-    UnversionedLocalFixture,
-    /// In-memory store (`memory://`) verified content bytes; backend has no S3 `VersionId`.
-    UnversionedMemoryFixture,
-    /// Another unversioned fixture backend verified content bytes without a physical `VersionId`.
-    UnversionedBackend,
-}
-
-/// Whether publication requires a backend physical `VersionId` or permits unversioned local/memory
-/// fixtures (`file://`, `memory://`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VersionRequirement {
-    /// Allow unversioned `file://` or `memory://` fixture stores (recording their unversioned
-    /// status truthfully), while still requiring `VersionId` if the backend is `AmazonS3` or
-    /// returns a version on `PUT`.
-    AllowUnversionedFixture,
-    /// Require a non-empty physical `VersionId` returned with the readback body and verified via
-    /// exact-version `GET`; refuse any backend or response that lacks a physical `VersionId`.
-    RequirePhysicalVersionId,
-}
-
-/// Options governing verified immutable publication and readback bounds.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct VerificationOptions {
-    pub version_requirement: VersionRequirement,
-    pub max_readback_bytes: u64,
-}
-
-impl Default for VerificationOptions {
-    fn default() -> Self {
-        Self {
-            version_requirement: VersionRequirement::AllowUnversionedFixture,
-            max_readback_bytes: DEFAULT_MAX_VERIFIED_READBACK_BYTES,
-        }
-    }
-}
-
-impl VerificationOptions {
-    pub fn require_physical_version_id() -> Self {
-        Self {
-            version_requirement: VersionRequirement::RequirePhysicalVersionId,
-            max_readback_bytes: DEFAULT_MAX_VERIFIED_READBACK_BYTES,
-        }
-    }
-
-    pub fn with_max_readback_bytes(mut self, max_readback_bytes: u64) -> Self {
-        self.max_readback_bytes = max_readback_bytes;
-        self
-    }
-}
-
-/// Data-only serializable receipt and reference for a content-verified immutable object.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct VerifiedObjectRef {
-    pub schema: String,
-    pub store_url: String,
-    pub backend: String,
-    pub key: String,
-    pub resolved_key: String,
-    pub expected_sha256: String,
-    pub observed_sha256: String,
-    pub expected_bytes: u64,
-    pub observed_bytes: u64,
-    /// Opaque concurrency token (`ETag`) returned with the readback body; never treated as a
-    /// content SHA-256 or a physical `VersionId`.
-    pub e_tag: Option<String>,
-    /// Physical backend `VersionId` returned with the readback body (`None` on unversioned
-    /// `file://` or `memory://` stores).
-    pub physical_version_id: Option<String>,
-    pub version_status: PhysicalVersionStatus,
-    pub status: PublicationStatus,
-    /// Always `false` in local/injected fixture execution; live S3 durability qualification
-    /// requires a separate authorized gate.
-    pub live_s3_qualified: bool,
-}
+mod contract;
+pub use contract::{PhysicalVersionStatus, PublicationStatus, VerifiedObjectRef};
 
 /// Proof witness that an immutable object in [`Store`] has been verified by content, byte length,
 /// and physical version policy.
@@ -469,54 +364,5 @@ async fn verify_stored_object(
     })
 }
 
-fn validate_sha256_hex(sha: &str) -> Result<()> {
-    ensure!(
-        sha.len() == 64 && sha.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f')),
-        "invalid expected sha256 {sha:?}: must be 64 lowercase hex digits"
-    );
-    Ok(())
-}
-
-fn validate_key_and_expected_hash(rel: &str, expected_sha256: &str) -> Result<()> {
-    validate_sha256_hex(expected_sha256)?;
-    ensure!(!rel.is_empty(), "object key must not be empty");
-    ensure!(
-        !rel.split('/')
-            .any(|seg| seg.is_empty() || seg == "." || seg == ".."),
-        "invalid object key {rel:?}: empty or traversal segments are forbidden"
-    );
-    if let Some(key_hash) = rel.strip_prefix("blobs/sha256/") {
-        ensure!(
-            key_hash == expected_sha256,
-            "content-addressed key {rel} does not match expected sha256 {expected_sha256}"
-        );
-    }
-    Ok(())
-}
-
-fn backend_name(scheme: &ObjectStoreScheme) -> String {
-    match scheme {
-        ObjectStoreScheme::Local => "local".to_owned(),
-        ObjectStoreScheme::Memory => "memory".to_owned(),
-        ObjectStoreScheme::AmazonS3 => "amazon_s3".to_owned(),
-        ObjectStoreScheme::GoogleCloudStorage => "google_cloud_storage".to_owned(),
-        ObjectStoreScheme::MicrosoftAzure => "microsoft_azure".to_owned(),
-        ObjectStoreScheme::Http => "http".to_owned(),
-        _ => "custom".to_owned(),
-    }
-}
-
-fn is_non_reconcilable_put_error(err: &anyhow::Error) -> bool {
-    let msg = format!("{err:#}").to_ascii_lowercase();
-    msg.contains("accessdenied")
-        || msg.contains("access denied")
-        || msg.contains("permissiondenied")
-        || msg.contains("permission denied")
-        || msg.contains("forbidden")
-        || msg.contains("unauthenticated")
-        || msg.contains("unauthorized")
-        || msg.contains("invalidaccesskeyid")
-        || msg.contains("signaturedoesnotmatch")
-        || msg.contains("before-write")
-        || msg.contains("denied")
-}
+mod validation;
+use validation::*;

@@ -1,0 +1,241 @@
+{
+  "candidates": [
+    {
+      "canonical_genome": "(pipe X (sigmoid) (standardize) (cheb append=true) (rank append=true) (histgbm2 bags=5 leaves=63 lr=0.08 rounds=500))",
+      "mean_reward_heads": 0.7388495206832886,
+      "origin": "neural_policy",
+      "program_sha256": "e8139ad87cf58d27af07032e12a6efae65241d51bf3c8c3ba6bdd895354e565f",
+      "rank_log_weight": -2.8069090531399836,
+      "raw_decoded_genome": "(pipe X (sigmoid) (standardize) (cheb append=true) (rank append=true) (histgbm2 bags=5 leaves=63 lr=0.08 rounds=500))",
+      "reward_heads": [
+        1.2004414796829224,
+        -0.5599855780601501,
+        0.6782551407814026,
+        1.636687159538269
+      ],
+      "runtime_head_prediction": 0.6613029837608337,
+      "slot": 0
+    },
+    {
+      "canonical_genome": "(pipe X (bin_onehot append=true bins=4) (oblique_hinge append=true n=32 seed=19) (winsor_moments append=true q=0.02) (hinge append=true knots=6) (cheb append=true degree=6) (robust_scale) (histgbm2 bags=3 leaves=15 lr=0.08 rounds=500))",
+      "mean_reward_heads": 0.7014613151550293,
+      "origin": "neural_policy",
+      "program_sha256": "7fdcced8180005ff7e0216320ef98b5014b9177e13a152bb1f9b722b3b06ff33",
+      "rank_log_weight": -2.844297258668243,
+      "raw_decoded_genome": "(pipe X (bin_onehot append=true bins=4) (oblique_hinge append=true n=32 seed=19) (winsor_moments append=true q=0.02) (hinge append=true knots=6) (cheb append=true degree=6) (robust_scale) (histgbm2 bags=3 leaves=15 lr=0.08 rounds=500))",
+      "reward_heads": [
+        0.624862551689148,
+        -0.07139702141284943,
+        1.2407803535461426,
+        1.0115993022918701
+      ],
+      "runtime_head_prediction": 0.8273546695709229,
+      "slot": 1
+    },
+    {
+      "canonical_genome": "(pipe X (winsor_clip append=true q=0.1) (rank) (histgbm2 bags=5 leaves=63 lr=0.08 rounds=500))",
+      "mean_reward_heads": 0.5933113694190979,
+      "origin": "neural_policy",
+      "program_sha256": "5233e86467a28fc0d5b343ec3990fe8c855baf1fdd61919a4c6022b65481acb3",
+      "rank_log_weight": -2.9524472044041743,
+      "raw_decoded_genome": "(pipe X (winsor_clip append=true q=0.1) (rank) (histgbm2 bags=5 leaves=63 lr=0.08 rounds=500))",
+      "reward_heads": [
+        0.9359510540962219,
+        -0.19450585544109344,
+        1.661982536315918,
+        -0.03018200770020485
+      ],
+      "runtime_head_prediction": 0.12151089310646057,
+      "slot": 2
+    },
+    {
+      "canonical_genome": "(pipe X (sigmoid append=true) (target_bin_encode append=true bins=8) (gpr kernel=rq m=400 steps=30))",
+      "mean_reward_heads": 0.5314152836799622,
+      "origin": "neural_policy",
+      "program_sha256": "4e954e6dd9842dc1280dec270d98fcbc5272ecf39ccccc86f6af03013e2d95af",
+      "rank_log_weight": -3.01434329014331,
+      "raw_decoded_genome": "(pipe X (sigmoid append=true) (target_bin_encode append=true bins=8) (gpr kernel=rq m=400 steps=30))",
+      "reward_heads": [
+        0.5865150690078735,
+        -0.8402026295661926,
+        2.2015528678894043,
+        0.1777959167957306
+      ],
+      "runtime_head_prediction": 0.441606342792511,
+      "slot": 3
+    },
+    {
+      "canonical_genome": "(pipe X (quantile_bins bins=32) (cheb append=true degree=4) (rank append=true) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.4001981019973755,
+      "origin": "neural_policy",
+      "program_sha256": "daed73b0783a9b3642ef0b2dd7333c7a5a4974ecf406e49186b0bdc30014837b",
+      "rank_log_weight": -3.1455604718258967,
+      "raw_decoded_genome": "(pipe X (quantile_bins bins=32) (cheb append=true degree=4) (rank append=true) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "reward_heads": [
+        0.7808390855789185,
+        -0.049018338322639465,
+        0.839623749256134,
+        0.029347863048315048
+      ],
+      "runtime_head_prediction": 1.2581045627593994,
+      "slot": 4
+    },
+    {
+      "canonical_genome": "(pipe X (sigmoid) (sigmoid append=true) (standardize append=true) (hinge append=true knots=4) (target_bin_encode append=true bins=8) (histgbm2 leaves=63 lr=0.03 rounds=500))",
+      "mean_reward_heads": 0.3468160629272461,
+      "origin": "neural_policy",
+      "program_sha256": "ab69911d174c6fe688f268800f88cb5791f808369b0038f5080a66f7a7e37cfd",
+      "rank_log_weight": -3.198942510896026,
+      "raw_decoded_genome": "(pipe X (sigmoid) (sigmoid append=true) (standardize append=true) (hinge append=true knots=4) (target_bin_encode append=true bins=8) (histgbm2 leaves=63 lr=0.03 rounds=500))",
+      "reward_heads": [
+        0.24019508063793182,
+        -0.11893826723098755,
+        0.2192319929599762,
+        1.046775460243225
+      ],
+      "runtime_head_prediction": 2.6114003658294678,
+      "slot": 5
+    },
+    {
+      "canonical_genome": "(pipe X (target_bin_encode append=true bins=8) (quantile_bins append=true bins=16) (robust_scale) (gpr kernel=rq m=400 steps=30))",
+      "mean_reward_heads": 0.0630970150232315,
+      "origin": "neural_policy",
+      "program_sha256": "2b3a1bde6edc5f1358e2c9a1aac803e6ca33ceeff97b75281af7b2750b589a70",
+      "rank_log_weight": -3.4826615588000407,
+      "raw_decoded_genome": "(pipe X (target_bin_encode append=true bins=8) (quantile_bins append=true bins=16) (robust_scale) (gpr kernel=rq m=400 steps=30))",
+      "reward_heads": [
+        1.1303170919418335,
+        -1.2878750562667847,
+        0.19981056451797485,
+        0.21013545989990234
+      ],
+      "runtime_head_prediction": 0.47042983770370483,
+      "slot": 6
+    },
+    {
+      "canonical_genome": "(pipe X (row_diff_stats append=true) (blom) (robust_scale append=true) (gpr m=400 steps=40))",
+      "mean_reward_heads": -0.025641828775405884,
+      "origin": "neural_policy",
+      "program_sha256": "b4bf72c689b3d67a033c4e4f0ca53aeb5d65735f5e83093e01cddab45cce6eb7",
+      "rank_log_weight": -3.571400402598678,
+      "raw_decoded_genome": "(pipe X (row_diff_stats append=true) (blom) (robust_scale append=true) (gpr m=400 steps=40))",
+      "reward_heads": [
+        1.176342487335205,
+        -0.8504195809364319,
+        0.42763587832450867,
+        -0.856126070022583
+      ],
+      "runtime_head_prediction": 0.23901017010211945,
+      "slot": 7
+    },
+    {
+      "canonical_genome": "(pipe X (standardize) (blom append=true) (sigmoid append=true) (robust_scale) (gpr kernel=rq m=400 steps=30))",
+      "mean_reward_heads": -0.07542940974235535,
+      "origin": "neural_policy",
+      "program_sha256": "9930631ebb94bf088ab7da8e7e9919e178f839894d5dcaff0813659b2b10e2eb",
+      "rank_log_weight": -3.6211879835656275,
+      "raw_decoded_genome": "(pipe X (standardize) (blom append=true) (sigmoid append=true) (robust_scale) (gpr kernel=rq m=400 steps=30))",
+      "reward_heads": [
+        -0.2754019498825073,
+        -0.12649841606616974,
+        -0.682561457157135,
+        0.7827441692352295
+      ],
+      "runtime_head_prediction": 0.35163381695747375,
+      "slot": 8
+    },
+    {
+      "canonical_genome": "(pipe X (hinge append=false knots=6) (oblique_hinge append=true n=32 seed=19) (sigmoid append=false) (sigmoid append=true) (quantile_bins bins=32) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "mean_reward_heads": -0.12612447142601013,
+      "origin": "neural_policy",
+      "program_sha256": "e8ed187231ddaf5ae01ea469cbc64c155bf25236af75d7246059c6e24a95b5ef",
+      "rank_log_weight": -3.6718830452492823,
+      "raw_decoded_genome": "(pipe X (hinge append=false knots=6) (oblique_hinge append=true n=32 seed=19) (sigmoid append=false) (sigmoid append=true) (quantile_bins bins=32) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "reward_heads": [
+        0.824489176273346,
+        0.24593167006969452,
+        -1.5157170295715332,
+        -0.05920172110199928
+      ],
+      "runtime_head_prediction": 0.009318558499217033,
+      "slot": 9
+    },
+    {
+      "canonical_genome": "(pipe X (oblique_hinge append=true n=32 seed=19) (sigmoid append=true) (gpr kernel=rbf+linear m=300 steps=40))",
+      "mean_reward_heads": -0.13362982869148254,
+      "origin": "neural_policy",
+      "program_sha256": "2e670f171ec8846d7a5bf3a4e715985e621f7221592c34df351d1cd382a1554c",
+      "rank_log_weight": -3.6793884025147547,
+      "raw_decoded_genome": "(pipe X (oblique_hinge append=true n=32 seed=19) (sigmoid append=true) (gpr kernel=rbf+linear m=300 steps=40))",
+      "reward_heads": [
+        0.26622217893600464,
+        -0.10579623281955719,
+        -0.8881507515907288,
+        0.19320544600486755
+      ],
+      "runtime_head_prediction": 0.6699824929237366,
+      "slot": 10
+    }
+  ],
+  "case_name": "12_hdb_resale_valuation_api",
+  "context_encoding": {
+    "backend": "Rust/Candle 0.11 CPU FP32; frozen accepted transforms; native-component qualification required",
+    "context_sha256": "6fb1f084724b451552d373d995f2932d3bced0387597d4eb97a9053d33b12818",
+    "encoded_features": 7,
+    "encoded_train_rows": 256,
+    "encoder_identity": {
+      "assembly": "6582df23f5c1ee048d11040a5f2bd1447032932fc23f6c5a3aa9cb4f2d6896cb",
+      "component_bundle": "985074846ccfe92c818e920e5268ea5269a9e35f1fa2057ddae662266c6c7f9f",
+      "foundation_weights": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "frozen_transforms": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "hyperion_manifest": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "hyperion_weights": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "recipe": "native-hyperion-sweep3-chunks1-batch1024;foundation-pcg20260707-f64-label-normalization;target-pcg17-two-windows;frozen-512+1024+512-clip32/v1",
+      "target_weights": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f"
+    },
+    "final_test_targets_used": false,
+    "manifest_sha256": "05e4a5170cb29cff3a1ba86e6cb564ccae8a8216ca434e9f9b10487e982d8b25",
+    "prepared_rows_sha256": "7d377076a38f9eb555aa42c9ee7b52494c48d5d602de81b739eb44ca109dd9c8",
+    "qualification": "unqualified_cpu_context_producer (no pre-existing GPU contexts-assembly-v2 file used; encoded directly from train.csv via CpuProducer)",
+    "schema": "jope.cpu-context/v1",
+    "total_features": 7,
+    "total_train_rows": 8000,
+    "train_csv_sha256": "22d9f0e2c631ece252f291f8539a171ec9e64d3e45d0bc6f580e931def34c138"
+  },
+  "dataset_hash": "f2d74feab0307e24",
+  "fallback_used": false,
+  "policy_model": {
+    "base_vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+    "bundle_id": "policy-step-60000",
+    "config_sha256": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf",
+    "model_ot_sha256": "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129",
+    "parameter_sha256": "9c7057e7f6a9e348f030da73f03522977b8c08915d3a221d7d5ab2e4213fcd92",
+    "policy_safetensors_path": "/home/ubuntu/.cache/jope/models/bundles/policy-step-60000/policy.safetensors",
+    "policy_safetensors_sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+    "ranking_backend": "candle_cpu_float32",
+    "ranking_selection_id": "mean_reward_heads_desc_program_hash_v1",
+    "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+    "step": 60000,
+    "vocabulary_name": "featmath-jain-v1",
+    "vocabulary_sha256": "570b2e5e8d859a73b888f5d0bee27f59da0e2376536babce24c241604f818e81"
+  },
+  "sampling": {
+    "attempted_draws": 64,
+    "batch": 32,
+    "dataset_seed": 17498542746568266820,
+    "elapsed_seconds": 15.861041691,
+    "exploration_seed": 11529959559623374844,
+    "fallback_attempts": 0,
+    "fallback_seed": 17332218904940963085,
+    "rounds": 2,
+    "sampling_seed": 10555247805575905082,
+    "temperature": 1.0,
+    "unique_neural_programs": 64,
+    "valid_neural_draws": 64
+  },
+  "schema": "jope.pipeline-seeds-provenance/v1",
+  "seed_count": 11,
+  "seeds_file": "f2d74feab0307e24.seeds.json",
+  "seeds_sha256": "5af796733d4a465c353e2ae9aec8b4b79b488ab1cef681c19566111601dbc398",
+  "status": "ok"
+}

@@ -1,0 +1,362 @@
+from test_provenance_support import *
+
+
+class ProvenanceBindTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.repo = Path(self.tmp.name)
+        write_tree(self.repo, "base-v1")
+        git(self.repo, "init", "-q")
+        git(self.repo, "config", "user.email", "test@example.com")
+        git(self.repo, "config", "user.name", "test")
+        git(self.repo, "config", "advice.defaultBranchName", "false")
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "-m", "base")
+        self.base_sha = git(self.repo, "rev-parse", "HEAD")
+        self.base_digest = digest_of(self.repo, self.base_sha)
+
+        write_tree(self.repo, "head-v2-runner-change")
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "-m", "runner change")
+        self.head_sha = git(self.repo, "rev-parse", "HEAD")
+        self.head_digest = digest_of(self.repo, None)
+        self.assertNotEqual(self.base_digest, self.head_digest)
+
+        self.ep_base = hashlib.sha256(
+            bind.file_bytes(self.repo, self.base_sha, "deploy/runner/entrypoint.sh")
+        ).hexdigest()
+        self.ep_head = hashlib.sha256(
+            (self.repo / "deploy/runner/entrypoint.sh").read_bytes()
+        ).hexdigest()
+        self.assertNotEqual(self.ep_base, self.ep_head)
+
+        self.ep_file = self.repo / "fake-image-entrypoint"
+        self.image_id = "sha256:image-fixed"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _env(self, event, host_digest, entrypoint_marker, **extra):
+        if entrypoint_marker == "base":
+            self.ep_file.write_bytes(
+                bind.file_bytes(self.repo, self.base_sha, "deploy/runner/entrypoint.sh")
+            )
+        else:
+            self.ep_file.write_bytes(
+                (self.repo / "deploy/runner/entrypoint.sh").read_bytes()
+            )
+        env = {
+            "GITHUB_EVENT_NAME": event,
+            "JOPE_RUNNER_SCRIPTS_SHA256": host_digest,
+            "JOPE_RUNNER_ENTRYPOINT_PATH": str(self.ep_file),
+            "JOPE_RUNNER_IMAGE_ID": self.image_id,
+            "JOPE_RUNNER_IMAGE_ID_RECORDED": self.image_id,
+            "JOPE_RUNNER_HOST": "xbabe1",
+            "GITHUB_WORKSPACE": str(self.repo),
+        }
+        env.update(extra)
+        return env
+
+    def test_candidate_capability_label_cannot_bootstrap_its_own_pool(self):
+        self.assertEqual("jope-ci", bind.runner_pool(self.repo,
+            {"GITHUB_EVENT_NAME":"pull_request", "BASE_SHA":self.base_sha}))
+        self.assertEqual("jope-mac-ci", bind.runner_pool(self.repo,
+            {"GITHUB_EVENT_NAME":"push"}))
+        path=self.repo/"deploy/runner/mac-capacity.json"
+        for label in ["foreign", "jope-ci,jope-main-guard", "jope-mac-ci\nINJECTED=1", None, 12]:
+            path.write_text(json.dumps({"runner_label":label}))
+            with self.subTest(label=label),self.assertRaises(ValueError):
+                bind.runner_pool(self.repo,{"GITHUB_EVENT_NAME":"push"})
+
+    def test_pull_request_passes_when_host_matches_base_not_head(self):
+        env = self._env("pull_request", self.base_digest, "base", BASE_SHA=self.base_sha)
+        result = bind.verify_scripts_and_image(self.repo, env)
+        self.assertEqual(result["bind_rev"], self.base_sha)
+        self.assertEqual(result["expected_scripts_sha256"], self.base_digest)
+
+    def test_pull_request_fails_when_host_at_other_digest(self):
+        other = hashlib.sha256(b"not-base-not-head").hexdigest()
+        env = self._env("pull_request", other, "base", BASE_SHA=self.base_sha)
+        with self.assertRaisesRegex(ValueError, "different files"):
+            bind.verify_scripts_and_image(self.repo, env)
+
+    def test_pull_request_fails_when_host_only_matches_head(self):
+        env = self._env("pull_request", self.head_digest, "head", BASE_SHA=self.base_sha)
+        with self.assertRaisesRegex(ValueError, "different files"):
+            bind.verify_scripts_and_image(self.repo, env)
+
+    def test_main_push_requires_exact_match_to_checkout(self):
+        env = self._env("push", self.head_digest, "head")
+        result = bind.verify_scripts_and_image(self.repo, env)
+        self.assertEqual(result["bind_rev"], "WORKTREE")
+        self.assertEqual(result["expected_scripts_sha256"], self.head_digest)
+        with self.assertRaisesRegex(ValueError, "different files"):
+            bind.verify_scripts_and_image(
+                self.repo, self._env("push", self.base_digest, "base")
+            )
+
+    def test_workflow_dispatch_requires_exact_match(self):
+        env = self._env("workflow_dispatch", self.head_digest, "head")
+        bind.verify_scripts_and_image(self.repo, env)
+        with self.assertRaisesRegex(ValueError, "different files"):
+            bind.verify_scripts_and_image(
+                self.repo, self._env("workflow_dispatch", self.base_digest, "base")
+            )
+
+    def test_pull_request_without_base_sha_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "BASE_SHA"):
+            bind.bind_rev("pull_request", "")
+
+    def test_hooks_follow_same_bind(self):
+        host = Path(self.tmp.name) / "host-hooks"
+        host.mkdir()
+        for name in bind.HOOK_NAMES:
+            (host / name).write_bytes(
+                bind.file_bytes(self.repo, self.base_sha, f"deploy/runner/{name}")
+            )
+        env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": self.base_sha}
+        bind.verify_hooks(self.repo, host, env)
+        for name in bind.HOOK_NAMES:
+            (host / name).write_bytes((self.repo / "deploy/runner" / name).read_bytes())
+        with self.assertRaisesRegex(ValueError, "admission hook differs"):
+            bind.verify_hooks(self.repo, host, env)
+        env_push = {"GITHUB_EVENT_NAME": "push"}
+        bind.verify_hooks(self.repo, host, env_push)
+
+    def test_event_path_supplies_base_sha(self):
+        event = Path(self.tmp.name) / "event.json"
+        event.write_text(json.dumps({"pull_request": {"base": {"sha": self.base_sha}}}))
+        env = self._env(
+            "pull_request", self.base_digest, "base", GITHUB_EVENT_PATH=str(event)
+        )
+        env.pop("BASE_SHA", None)
+        result = bind.verify_scripts_and_image(self.repo, env)
+        self.assertEqual(result["bind_rev"], self.base_sha)
+
+    def _shallow_clone(self) -> Path:
+        """A clean depth-1 clone of the PR head, as actions/checkout leaves a cold workspace."""
+        git(self.repo, "config", "uploadpack.allowReachableSHA1InWant", "true")
+        clone = Path(self.tmp.name) / "shallow-checkout"
+        subprocess.check_call(
+            ["git", "clone", "-q", "--depth=1", f"file://{self.repo}", str(clone)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self.assertEqual(git(clone, "rev-parse", "HEAD"), self.head_sha)
+        self.assertFalse(bind.has_commit(clone, self.base_sha))
+        return clone
+
+    def test_shallow_checkout_fetches_base_then_binds_to_it(self):
+        clone = self._shallow_clone()
+        # The cold-workspace failure the explicit fetch exists for.
+        with self.assertRaises(subprocess.CalledProcessError):
+            bind.scripts_digest(clone, self.base_sha)
+        env = self._env("pull_request", self.base_digest, "base", BASE_SHA=self.base_sha)
+        self.assertEqual(bind.ensure_bind_rev(clone, env), self.base_sha)
+        self.assertTrue(bind.has_commit(clone, self.base_sha))
+        result = bind.verify_scripts_and_image(clone, env)
+        self.assertEqual(result["expected_scripts_sha256"], self.base_digest)
+        head_env = self._env("pull_request", self.head_digest, "head", BASE_SHA=self.base_sha)
+        with self.assertRaisesRegex(ValueError, "different files"):
+            bind.verify_scripts_and_image(clone, head_env)
+
+    def test_shallow_checkout_push_fetches_nothing(self):
+        clone = self._shallow_clone()
+        self.assertIsNone(bind.ensure_bind_rev(clone, {"GITHUB_EVENT_NAME": "push"}))
+        self.assertFalse(bind.has_commit(clone, self.base_sha))
+
+    def test_unfetchable_base_fails_closed(self):
+        clone = self._shallow_clone()
+        env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": "0" * 40}
+        with mock.patch.object(bind, "has_commit", return_value=False), \
+                mock.patch.object(bind.subprocess, "Popen") as popen:
+            with self.assertRaisesRegex(ValueError, "all-zero push sentinel"):
+                bind.ensure_bind_rev(clone, env)
+            popen.assert_not_called()
+
+    def test_fetch_token_goes_through_git_config_env_not_argv(self):
+        env = bind.fetch_env(
+            self.repo,
+            {"JOPE_PROVENANCE_FETCH_TOKEN": "tok", "GITHUB_SERVER_URL": "https://github.com"},
+        )
+        n = int(env["GIT_CONFIG_COUNT"]) - 1
+        self.assertEqual(env[f"GIT_CONFIG_KEY_{n}"], "http.https://github.com/.extraheader")
+        self.assertEqual(
+            env[f"GIT_CONFIG_VALUE_{n}"], "AUTHORIZATION: basic eC1hY2Nlc3MtdG9rZW46dG9r"
+        )
+        no_token = bind.fetch_env(self.repo, {})
+        self.assertNotIn("http.https://github.com/.extraheader", no_token.values())
+
+    def test_base_sha_must_be_40_lowercase_hex(self):
+        sha = self.base_sha
+        bad = [
+            "HEAD",
+            "main",
+            "refs/heads/main",
+            sha.upper(),
+            sha[:7],
+            sha[:39],
+            sha + "0",
+            sha[:39] + "g",
+            " " + sha,
+            sha + "\n",
+            "--upload-pack=touch${IFS}pwned" + "0" * 10,
+            "0" * 64,
+        ]
+        for value in bad:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "40 lowercase hex"):
+                    bind.bind_rev("pull_request", value)
+        self.assertEqual(bind.bind_rev("pull_request", sha), sha)
+
+    def test_malformed_base_sha_is_refused_before_any_fetch(self):
+        clone = self._shallow_clone()
+        env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": self.base_sha[:12]}
+        with mock.patch.object(bind.subprocess, "Popen") as popen:
+            with self.assertRaisesRegex(ValueError, "40 lowercase hex"):
+                bind.ensure_bind_rev(clone, env)
+            popen.assert_not_called()
+
+    def test_malformed_event_payload_base_fails_closed(self):
+        event = Path(self.tmp.name) / "event.json"
+        event.write_text(json.dumps({"pull_request": {"base": {"sha": "main"}}}))
+        env = {"GITHUB_EVENT_NAME": "pull_request", "GITHUB_EVENT_PATH": str(event)}
+        with self.assertRaisesRegex(ValueError, "40 lowercase hex"):
+            bind.bind_rev_from_env(env)
+
+    def test_base_fetch_times_out_and_fails_closed(self):
+        clone = self._shallow_clone()
+        hang = Path(self.tmp.name) / "hang-upload-pack"
+        hang.write_text("#!/bin/sh\nexec sleep 60\n")
+        hang.chmod(0o755)
+        git(clone, "config", "remote.origin.uploadpack", str(hang))
+        env = {
+            "GITHUB_EVENT_NAME": "pull_request",
+            "BASE_SHA": self.base_sha,
+            "JOPE_PROVENANCE_FETCH_TIMEOUT": "1",
+        }
+        started = time.monotonic()
+        with self.assertRaisesRegex(ValueError, "timed out after 1s"):
+            bind.ensure_bind_rev(clone, env)
+        self.assertLess(time.monotonic() - started, 30)
+        self.assertFalse(bind.has_commit(clone, self.base_sha))
+
+    def test_fetch_timeout_default_and_bad_overrides(self):
+        self.assertEqual(bind.fetch_timeout({}), float(bind.FETCH_TIMEOUT_SECONDS))
+        self.assertEqual(bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": "30"}), 30.0)
+        for raw in ("0", "-5", "abc", "nan", "inf"):
+            with self.subTest(raw=raw):
+                with self.assertRaisesRegex(ValueError, "JOPE_PROVENANCE_FETCH_TIMEOUT"):
+                    bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": raw})
+
+    def test_fetch_timeout_upper_cap_fails_closed(self):
+        cap = bind.FETCH_TIMEOUT_MAX_SECONDS
+        self.assertEqual(
+            bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": str(cap)}), float(cap)
+        )
+        for raw in (str(cap + 1), "600.5", "1e9"):
+            with self.subTest(raw=raw):
+                with self.assertRaisesRegex(ValueError, "exceeds the 600s cap"):
+                    bind.fetch_timeout({"JOPE_PROVENANCE_FETCH_TIMEOUT": raw})
+
+    def test_stale_shallow_lock_is_removed_then_fetch_succeeds(self):
+        clone = self._shallow_clone()
+        lock = clone / ".git" / "shallow.lock"
+        lock.write_text("")
+        env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": self.base_sha}
+        self.assertEqual(bind.ensure_bind_rev(clone, env), self.base_sha)
+        self.assertFalse(lock.exists())
+        self.assertTrue(bind.has_commit(clone, self.base_sha))
+
+    def test_held_shallow_lock_fails_closed(self):
+        clone = self._shallow_clone()
+        lock = clone / ".git" / "shallow.lock"
+        lock.write_text("")
+        holder = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                "import sys,time; f=open(sys.argv[1]); print('held', flush=True); time.sleep(60)",
+                str(lock),
+            ],
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            self.assertEqual(holder.stdout.readline().strip(), "held")
+            env = {"GITHUB_EVENT_NAME": "pull_request", "BASE_SHA": self.base_sha}
+            with self.assertRaisesRegex(ValueError, f"held by {holder.pid} "):
+                bind.ensure_bind_rev(clone, env)
+            # Refused before fetching: the lock is untouched and the base is still absent.
+            self.assertTrue(lock.exists())
+            self.assertFalse(bind.has_commit(clone, self.base_sha))
+        finally:
+            holder.kill()
+            holder.wait()
+
+    def test_uninspectable_proc_fails_closed(self):
+        clone = self._shallow_clone()
+        (clone / ".git" / "shallow.lock").write_text("")
+        missing = Path(self.tmp.name) / "no-proc"
+        with self.assertRaisesRegex(ValueError, "cannot inspect processes"):
+            bind.clear_stale_shallow_lock(clone, proc_root=missing)
+
+    def test_no_lock_is_a_no_op(self):
+        clone = self._shallow_clone()
+        self.assertFalse(bind.clear_stale_shallow_lock(clone))
+
+    def test_digest_rev_validation(self):
+        sha = self.base_sha
+        self.assertIsNone(bind.validate_digest_rev("WORKTREE"))
+        for good in (sha, "main", "HEAD", "origin/main", "refs/heads/ops/x-1.2"):
+            with self.subTest(good=good):
+                self.assertEqual(bind.validate_digest_rev(good), good)
+        bad = [
+            "",
+            "-n",
+            "--output=/tmp/x",
+            "HEAD~1",
+            "HEAD^",
+            "main:deploy",
+            "main@{1}",
+            "a..b",
+            "a//b",
+            "main.lock",
+            "main/",
+            "has space",
+            "-" + sha,
+            sha + "\n",
+            "x" * 201,
+        ]
+        for value in bad:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "digest REV"):
+                    bind.validate_digest_rev(value)
+
+    def test_digest_cli_rejects_bad_rev_and_extra_args(self):
+        script = ROOT / "deploy/runner/provenance_bind.py"
+        env = dict(os.environ, GITHUB_WORKSPACE=str(self.repo))
+        ok = subprocess.run(
+            [sys.executable, str(script), "digest", self.base_sha],
+            env=env, capture_output=True, text=True,
+        )
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertEqual(ok.stdout.strip(), self.base_digest)
+        for argv in (["digest", "--output=x"], ["digest", "HEAD~1"], ["digest", "main", "extra"]):
+            with self.subTest(argv=argv):
+                bad = subprocess.run(
+                    [sys.executable, str(script), *argv],
+                    env=env, capture_output=True, text=True,
+                )
+                self.assertEqual(bad.returncode, 1)
+                self.assertEqual(bad.stdout, "")
+
+    def test_parse_matches_repo_common_sh(self):
+        common = (ROOT / "deploy/runner/common.sh").read_text()
+        paths = bind.parse_deployed_relpaths(common)
+        self.assertGreaterEqual(len(paths), 10)
+        live = bind.scripts_digest(ROOT, None)
+        bash = subprocess.check_output(
+            ["bash", "-ec", BASH_DIGEST], cwd=ROOT, text=True
+        ).strip()
+        self.assertEqual(live, bash)

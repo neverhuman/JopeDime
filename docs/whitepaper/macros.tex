@@ -9,7 +9,7 @@
 \makeatother
 \mathchardef\UrlBigBreakPenalty=100
 \mathchardef\UrlBreakPenalty=500
-\sisetup{group-separator={,},group-minimum-digits=4}
+\sisetup{group-separator={,},group-minimum-digits=4,group-digits=integer}
 \renewcommand{\bibpreamble}{\raggedright}
 \setlength{\textfloatsep}{16pt plus 10pt minus 4pt}
 \setlength{\floatsep}{10pt plus 6pt minus 2pt}
@@ -20,6 +20,7 @@
 % twocolumn implies \flushbottom, which stretches gaps around floats and headings.
 \raggedbottom
 \makeatletter\@secpenalty=0 \@clubpenalty=10000\makeatother% under \raggedbottom a short column has zero badness, so the default -300 ended columns before headings that fit; setting \@clubpenalty keeps \clubpenalty=10000 after headings and lists
+\makeatletter\@beginparpenalty=0\makeatother% under \raggedbottom the default -51 ended columns between a colon lead-in and its list
 \brokenpenalty=10000% never hyphenate across a column or page break
 \clubpenalty=10000 \widowpenalty=10000 \displaywidowpenalty=10000% no single first or last paragraph lines at a column break
 \doublehyphendemerits=100000% discourage hyphen ladders (consecutive lines ending in a hyphen)
@@ -86,4 +87,40 @@
 \makeatletter
 \NewCommandCopy\EZ@citep\citep
 \DeclareRobustCommand{\citep}{\ifhmode\ifdim\lastskip>\z@\unskip\penalty500\ \fi\fi\EZ@citep}
+\makeatother
+% A \FloatBarrier that flushes figure* floats onto a float-only page can leave
+% the next column with the previous page's reduced text room, so that column
+% stops after a few lines (the Section 7 opening after the Section 6.8 figures).
+% When the barrier leaves an empty column holding no column floats, give it the
+% full column height again.
+\makeatletter
+\let\fb@plainbarrier\FloatBarrier
+\renewcommand{\FloatBarrier}{\fb@plainbarrier\fb@freshcolumn}
+\newcommand{\fb@freshcolumn}{%
+  \ifdim\pagegoal=\maxdimen
+    \ifx\@toplist\@empty\ifx\@botlist\@empty
+      \ifdim\@colroom<\@colht
+        \global\@colroom\@colht\global\vsize\@colht
+      \fi
+    \fi\fi
+  \fi}
+\makeatother
+% Before the References, end columns one at a time until no float is held.
+% Each held figure* then reaches the top of a fresh page above the References
+% heading, instead of the float-only page that \FloatBarrier's \clearpage gives
+% a single held figure*. Falls back to \clearpage after 12 columns.
+\makeatletter
+\newif\iffb@held
+\newcount\fb@flushcount
+\newcommand{\FlushFloatsInPlace}{\global\fb@flushcount\z@\fb@flushstep}
+\newcommand{\fb@flushstep}{%
+  \begingroup\let\@elt\relax
+  \edef\@tempa{\@botlist\@deferlist\@dbldeferlist}%
+  \ifx\@tempa\@empty\global\fb@heldfalse\else\global\fb@heldtrue\fi
+  \endgroup
+  \iffb@held
+    \global\advance\fb@flushcount\@ne
+    \ifnum\fb@flushcount>12 \clearpage\else\null\newpage\fi
+    \expandafter\fb@flushstep
+  \fi}
 \makeatother

@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-public-v3-successor-has-parity-property-contracts-and-keeps-legacy-api-isolated owner=feat-math expires=2027-04-01
 //! Append-only advanced-v3 table and task boundary.
 //!
 //! This module intentionally does not change the legacy numeric-matrix API.

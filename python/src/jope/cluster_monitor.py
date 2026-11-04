@@ -117,7 +117,7 @@ def host_load(host: str, *, ttl: float = _LOAD_TTL) -> tuple[float | None, int |
             if len(out) >= 2:
                 c = _num(out[1])
                 cores = int(c) if c is not None else None
-    except Exception:  # noqa: BLE001 — fail-open by design
+    except (Exception, ArithmeticError):  # noqa: BLE001 — fail-open by design
         load1, cores = None, None
     _load_cache[host] = (now, load1, cores)
     return load1, cores

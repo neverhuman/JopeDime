@@ -1,0 +1,99 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "14_transformer_load_edge_device",
+  "dataset": {
+    "id": "6ce1759b1a18e332",
+    "display_name": "Electricity Transformer Temperature and Load Measurements (ETTm1)",
+    "task": "regression",
+    "rows": 10000,
+    "features": 6,
+    "categorical_features": 0,
+    "train_rows": 8000,
+    "test_rows": 2000,
+    "source": {
+      "platform": "github",
+      "id": "skforecast-datasets:ETTm1",
+      "url": "https://raw.githubusercontent.com/skforecast/skforecast-datasets/main/data/ETTm1.csv",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": null
+  },
+  "business_question": "Which transformer load/temperature model is most accurate on a substation edge device with a model-size and latency budget?",
+  "constraint": "model_bytes max + row_latency_p99_us max",
+  "objective_kind": "constrained",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11,
+    "sha256": "7071c131a9fc84037e536e775d401422210f4934e0f878d14abbb0a2fd157873",
+    "provenance_sha256": "92d20b377579addd566a0e83ec3b1bea26c4b3111468e2b5a4c6d4801afe2dfd",
+    "source": "step-60000 neural policy (Rust/Candle CPU), produced by agy_resource_fitness; see seeds.provenance.json"
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "model_bytes",
+    "row_latency_p99_us"
+  ],
+  "accuracy": {
+    "metric": "rmse"
+  },
+  "why": "A substation edge device forecasts transformer oil temperature from load readings. The model must fit the device's storage and answer each reading within a latency budget.",
+  "caveats": [
+    "Time-ordered data, but jope pipeline run validates on an unordered fold partition of train.csv, so this case does not exercise chronological (regime) validation"
+  ],
+  "objective_template": {
+    "metric": "constrained",
+    "fitness": {
+      "metric": "rmse"
+    },
+    "limits": [
+      {
+        "resource": "model_bytes",
+        "max": {
+          "$median": "model_bytes"
+        }
+      },
+      {
+        "resource": "row_latency_p99_us",
+        "max": {
+          "$median": "row_latency_p99_us"
+        }
+      }
+    ]
+  }
+}

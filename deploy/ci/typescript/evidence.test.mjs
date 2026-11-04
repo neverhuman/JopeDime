@@ -6,7 +6,7 @@ import {join,resolve} from 'node:path';
 import {spawnSync,execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 
-test('matrix evidence rejects stale identities, missing engines, omitted cases, altered inputs and fabricated success',()=>{
+test('matrix evidence rejects stale identities, missing engines, omitted cases, altered inputs and forged success',()=>{
   const dir=mkdtempSync(join(tmpdir(),'typescript-evidence-'));
   const verifier=resolve('deploy/ci/typescript/evidence.mjs');
   const inputNames=['deploy/ci/typescript/package-lock.json','deploy/ci/typescript/browser-deps.lock.json','rust-toolchain.toml'];

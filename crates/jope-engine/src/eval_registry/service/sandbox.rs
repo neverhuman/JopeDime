@@ -133,10 +133,10 @@ pub struct WorkerSandbox {
     pub require_fs_allowlist: bool,
     /// Threads a child may hold at lockdown. Production children lock down
     /// single-threaded; libtest runs each fixture child on a second thread.
-    pub(super) threads: u64,
+    pub(crate) threads: u64,
     /// Fixture-only directories in which a child may also replace files.
     #[cfg(test)]
-    pub(super) mutable_dirs: Vec<PathBuf>,
+    pub(crate) mutable_dirs: Vec<PathBuf>,
 }
 impl Default for WorkerSandbox {
     fn default() -> Self {
@@ -190,14 +190,14 @@ fn enforce(abi: u32, sandbox: &WorkerSandbox) -> Result<u32> {
 }
 
 /// Refuse to bind a service whose children this host cannot confine.
-pub(super) fn check(sandbox: &WorkerSandbox) -> Result<()> {
+pub(crate) fn check(sandbox: &WorkerSandbox) -> Result<()> {
     enforce(landlock_abi(), sandbox)?;
     status_field("/proc/thread-self/status", "Seccomp_filters:")?;
     Ok(())
 }
 
 /// Spawn-time confinement, prepared before fork so the child need not allocate.
-pub(super) struct Confinement {
+pub(crate) struct Confinement {
     filter: Vec<libc::sock_filter>,
     cpu_seconds: u64,
     file_bytes: u64,
@@ -208,7 +208,7 @@ impl Confinement {
     /// A fit child may create and write files only in its own ticket's
     /// directory, so concurrent children cannot touch each other's artifacts.
     /// The service discards an artifact larger than `max_descriptor_bytes`.
-    pub(super) fn fit(config: &ServiceConfig, custody: &Path) -> Result<Self> {
+    pub(crate) fn fit(config: &ServiceConfig, custody: &Path) -> Result<Self> {
         Self::new(
             config,
             config.handshake_timeout + config.fit_deadline,
@@ -217,7 +217,7 @@ impl Confinement {
         )
     }
     /// A query child writes no files; it returns predictions over its channel.
-    pub(super) fn query(config: &ServiceConfig, remaining: Duration) -> Result<Self> {
+    pub(crate) fn query(config: &ServiceConfig, remaining: Duration) -> Result<Self> {
         Self::new(config, remaining, QUERY_FILE_BYTES, Vec::new())
     }
     fn new(
@@ -255,7 +255,7 @@ impl Confinement {
     }
     /// Replace the inherited environment with the allowlist and the policy.
     /// Call before setting the child's own variables: it clears explicit ones.
-    pub(super) fn configure(&self, command: &mut Command) {
+    pub(crate) fn configure(&self, command: &mut Command) {
         command.env_clear();
         for name in INHERITED_ENV {
             if let Some(value) = std::env::var_os(name) {
@@ -264,14 +264,14 @@ impl Confinement {
         }
         command.env(POLICY_ENV, &self.policy);
     }
-    pub(super) fn attestation(&self) -> Attestation {
+    pub(crate) fn attestation(&self) -> Attestation {
         Attestation {
             filters: self.inherited_filters + 2,
         }
     }
     /// Run between fork and exec: async-signal-safe system calls only. `keep`
     /// is the child's private channel and stays inherited.
-    pub(super) fn enter(&self, keep: RawFd) -> std::io::Result<()> {
+    pub(crate) fn enter(&self, keep: RawFd) -> std::io::Result<()> {
         let error = std::io::Error::last_os_error;
         // SAFETY: plain system calls on integers and stack values.
         unsafe {
@@ -312,11 +312,11 @@ impl Confinement {
 
 /// What the service expects of a child that completed its lockdown.
 #[derive(Clone, Copy)]
-pub(super) struct Attestation {
+pub(crate) struct Attestation {
     filters: u64,
 }
 impl Attestation {
-    pub(super) fn verify(self, pid: u32) -> Result<()> {
+    pub(crate) fn verify(self, pid: u32) -> Result<()> {
         let path = format!("/proc/{pid}/status");
         ensure!(
             status_field(&path, "NoNewPrivs:")? == 1
@@ -329,7 +329,7 @@ impl Attestation {
 }
 
 /// Called by the original child's verified code before it fits or predicts.
-pub(super) fn lockdown() -> Result<()> {
+pub(crate) fn lockdown() -> Result<()> {
     let policy = std::env::var(POLICY_ENV).context("evaluator sandbox policy absent")?;
     lockdown_with(&serde_json::from_str(&policy)?)
 }

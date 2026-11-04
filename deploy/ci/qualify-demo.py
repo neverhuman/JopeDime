@@ -181,7 +181,7 @@ def main():
             if code != 0 or error:
                 raise ValueError(error or ('demo exited ' + str(code)))
             result = verify_demo(folder, task, args.source_sha, args.sha256)
-        except Exception as problem:
+        except (Exception,) as problem:
             result = {'task': task, 'ok': False, 'error': str(problem), 'under_60_seconds': None}
         result.update({'command': command, 'exit_code': code, 'outer_elapsed_seconds': time.monotonic() - started})
         results.append(result)

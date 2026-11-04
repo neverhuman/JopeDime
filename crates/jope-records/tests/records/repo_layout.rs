@@ -4,27 +4,83 @@
 //! UTF-8 is a finding, and only a file git reports deleted is skipped unread. Added with the
 //! guard; there is no Python predecessor.
 
+use std::io::Write;
 use std::path::Path;
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
 
 use crate::{repo, scratch};
 
+/// Run Git-backed test commands against the repository named by their explicit `cwd`/`--root`,
+/// not a runner's ambient alternate Git context.
+fn clear_git_environment(command: &mut Command) {
+    for (key, _) in std::env::vars_os().filter(|(key, _)| key.to_string_lossy().starts_with("GIT_"))
+    {
+        command.env_remove(key);
+    }
+}
+
 fn run(args: &[&str], cwd: &Path) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_jope-records"))
-        .args(args)
-        .current_dir(cwd)
-        .output()
-        .expect("run jope-records")
+    let mut command = Command::new(env!("CARGO_BIN_EXE_jope-records"));
+    command.args(args).current_dir(cwd);
+    clear_git_environment(&mut command);
+    command.output().expect("run jope-records")
 }
 
 fn git(dir: &Path, args: &[&str]) {
-    let status = Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
-        .status()
-        .expect("run git");
+    let mut command = Command::new("git");
+    command.arg("-C").arg(dir).args(args);
+    clear_git_environment(&mut command);
+    let status = command.status().expect("run git");
     assert!(status.success(), "git {args:?} failed in {}", dir.display());
+}
+
+/// Add an index entry directly so tests for unusual paths do not depend on filesystem support.
+fn git_index_entry(root: &Path, mode: &str, path: &[u8], contents: &[u8]) {
+    let mut hash = Command::new("git");
+    hash.arg("-C")
+        .arg(root)
+        .args(["hash-object", "-w", "--stdin"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped());
+    clear_git_environment(&mut hash);
+    let mut hash = hash.spawn().expect("hash index fixture");
+    hash.stdin
+        .take()
+        .expect("hash stdin")
+        .write_all(contents)
+        .expect("write index fixture blob");
+    let hash = hash.wait_with_output().expect("finish index fixture hash");
+    assert!(
+        hash.status.success(),
+        "{}",
+        String::from_utf8_lossy(&hash.stderr)
+    );
+    let object = String::from_utf8(hash.stdout).expect("object id is UTF-8");
+
+    let mut entry = format!("{mode} {} 0\t", object.trim()).into_bytes();
+    entry.extend_from_slice(path);
+    entry.push(0);
+    let mut update = Command::new("git");
+    update
+        .arg("-C")
+        .arg(root)
+        .args(["update-index", "-z", "--index-info"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped());
+    clear_git_environment(&mut update);
+    let mut update = update.spawn().expect("update index fixture");
+    update
+        .stdin
+        .take()
+        .expect("index stdin")
+        .write_all(&entry)
+        .expect("write index entry");
+    let update = update.wait_with_output().expect("finish index update");
+    assert!(
+        update.status.success(),
+        "{}",
+        String::from_utf8_lossy(&update.stderr)
+    );
 }
 
 /// Positive control: the committed tree has no finding.
@@ -162,17 +218,14 @@ fn a_manifest_cargo_cannot_read_fails_with_bad_manifest() {
     );
 }
 
-/// Verifier finding on 7982c479f: a tracked copy of package `x` under a directory whose name is
-/// not UTF-8 passed with exit 0 and 0 findings. The tracked paths were decoded lossily, so the
-/// guard opened a path that does not exist and took it for one deleted in the working tree. A
-/// tracked path that is not UTF-8 is now a bad-path finding: every rule matches paths as text,
-/// so none of them could check it.
+/// Verifier finding on 7982c479f: a tracked path that is not UTF-8 passed with exit 0 and 0
+/// findings. The tracked paths were decoded lossily, so the guard opened a path that does not
+/// exist and took it for one deleted in the working tree. A tracked path that is not UTF-8 is now
+/// a bad-path finding: every rule matches paths as text, so none of them could check it. The raw
+/// Git index fixture avoids requiring the filesystem to create a non-UTF-8 directory.
 #[cfg(unix)]
 #[test]
 fn a_tracked_path_that_is_not_utf8_fails_with_bad_path() {
-    use std::ffi::OsStr;
-    use std::os::unix::ffi::OsStrExt;
-
     let directory = scratch();
     let root = directory.path();
     git(root, &["init", "-q"]);
@@ -186,15 +239,14 @@ fn a_tracked_path_that_is_not_utf8_fails_with_bad_path() {
         "crates/x/Cargo.toml",
         b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
     );
-    let odd = root.join(OsStr::from_bytes(b"arch\xffived"));
-    std::fs::create_dir_all(&odd).expect("directory whose name is not UTF-8");
-    std::fs::write(
-        odd.join("Cargo.toml"),
-        b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
-    )
-    .expect("duplicate manifest");
     write(root, "deploy/ci/repo-layout-allow.txt", b"# none\n");
     git(root, &["add", "-A"]);
+    git_index_entry(
+        root,
+        "100644",
+        b"arch\xffived/Cargo.toml",
+        b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
+    );
     let root_arg = root.display().to_string();
     let output = run(&["repo-layout", "--root", &root_arg], &repo());
     assert_eq!(
@@ -209,8 +261,8 @@ fn a_tracked_path_that_is_not_utf8_fails_with_bad_path() {
 
 /// Verifier finding on 7982c479f: a tracked manifest the guard could not open was skipped as
 /// "deleted in the working tree". Only a path that `git ls-files --deleted` reports is skipped
-/// now; a tracked `Cargo.toml` that is a dangling symlink (present to git, unreadable here)
-/// refuses instead of passing unchecked.
+/// now; a tracked but unreadable `Cargo.toml` refuses instead of passing unchecked. Representing
+/// that path as a directory keeps the fixture independent of symlink permissions.
 #[cfg(unix)]
 #[test]
 fn a_missing_manifest_is_skipped_only_when_git_reports_it_deleted() {
@@ -246,18 +298,20 @@ fn a_missing_manifest_is_skipped_only_when_git_reports_it_deleted() {
         String::from_utf8_lossy(&deleted.stderr)
     );
 
-    // Tracked and present to git, but it cannot be read: a refusal, never a skip.
-    std::fs::create_dir_all(root.join("linked")).expect("symlink directory");
-    std::os::unix::fs::symlink("missing.toml", root.join("linked/Cargo.toml")).expect("symlink");
-    git(root, &["add", "-A"]);
+    // Tracked but unreadable: model the path as a directory, without requiring symlink support.
+    std::fs::create_dir_all(root.join("linked/Cargo.toml")).expect("unreadable manifest directory");
+    git_index_entry(
+        root,
+        "100644",
+        b"linked/Cargo.toml",
+        b"[package]\nname = \"x\"\nversion = \"0.1.0\"\n",
+    );
     let dangling = run(&["repo-layout", "--root", &root_arg], &repo());
     let stderr = String::from_utf8_lossy(&dangling.stderr);
     assert_eq!(dangling.status.code(), Some(1), "{stderr}");
     assert_eq!(String::from_utf8_lossy(&dangling.stdout), "");
     assert!(
-        stderr.starts_with("jope-records: ")
-            && stderr.contains("linked/Cargo.toml: ")
-            && stderr.contains("(os error 2)"),
+        stderr.starts_with("jope-records: ") && stderr.contains("linked/Cargo.toml: "),
         "{stderr}"
     );
 }

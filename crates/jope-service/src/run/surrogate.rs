@@ -3,8 +3,7 @@
 //! Version 2 is the private opaque fold_spec selector; WRK framing and request/
 //! response fields are unchanged. Version 1 keeps the native heuristic evaluator.
 use crate::{
-    dataset::jmat::Matrix,
-    discover::r#loop::numeric_rows,
+    dataset::jmat::{JmatCell, Matrix},
     objective::regression::RegressionObjective,
     worker::{Request, Scores, WorkerFailure},
 };
@@ -35,9 +34,57 @@ pub(crate) fn native<B: AsRef<[u8]> + Sync>(
     matrix: &Matrix<B>,
 ) -> std::result::Result<Scores, WorkerFailure> {
     jope_runtime::budget::Budget::new(None, 1)
-        .install(|| evaluate(request, matrix))
+        .install(|| {
+            feat_math::portable_math::frozen_s1::with_frozen_s1_math(|| evaluate(request, matrix))
+        })
         .map_err(|_| WorkerFailure::Unavailable)?
         .map_err(|_| WorkerFailure::InvalidRequest)
+}
+
+fn surrogate_numeric_rows<B: AsRef<[u8]>>(
+    matrix: &Matrix<B>,
+    target: &str,
+    features: &[String],
+    rows: &[usize],
+) -> Result<(feat_math::Rows, Vec<f64>)> {
+    ensure!(
+        !features.is_empty()
+            && features.iter().collect::<BTreeSet<_>>().len() == features.len()
+            && !features.iter().any(|feature| feature == target),
+        "invalid surrogate features"
+    );
+    let column = |name: &str| {
+        matrix
+            .columns()
+            .iter()
+            .position(|candidate| candidate.name == name)
+            .context("unknown surrogate column")
+    };
+    let target = column(target)?;
+    let features = features
+        .iter()
+        .map(|feature| column(feature))
+        .collect::<Result<Vec<_>>>()?;
+    let mut x = Vec::with_capacity(rows.len());
+    let mut y = Vec::with_capacity(rows.len());
+    for &row in rows {
+        let Some(JmatCell::Numeric(label)) = matrix.cell(row, target) else {
+            anyhow::bail!("invalid surrogate target");
+        };
+        ensure!(label.is_finite(), "non-finite surrogate target");
+        y.push(label);
+        x.push(
+            features
+                .iter()
+                .map(|&feature| match matrix.cell(row, feature) {
+                    Some(JmatCell::Numeric(value)) if value.is_finite() => Ok(value),
+                    Some(JmatCell::Missing) => Ok(f64::NAN),
+                    _ => anyhow::bail!("invalid surrogate feature"),
+                })
+                .collect::<Result<Vec<_>>>()?,
+        );
+    }
+    Ok((x, y))
 }
 
 fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Scores> {
@@ -77,9 +124,10 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
                 && train.len() + fold.validation.len() == matrix.rows(),
             "surrogate requires disjoint full-FIT validation partitions"
         );
-        let (x, y) = numeric_rows(matrix, &spec.target, &spec.features, &fold.train)?;
+        let (x, y) = surrogate_numeric_rows(matrix, &spec.target, &spec.features, &fold.train)?;
         let mean = y.iter().sum::<f64>() / y.len() as f64;
-        let (vx, vy) = numeric_rows(matrix, &spec.target, &spec.features, &fold.validation)?;
+        let (vx, vy) =
+            surrogate_numeric_rows(matrix, &spec.target, &spec.features, &fold.validation)?;
         let prediction = predict_s1(&request.dsl, &x, &y, &vx)?;
         let rmse = objective.evaluate(&vy, &prediction)?.loss;
         let baseline = objective.evaluate(&vy, &vec![mean; vy.len()])?.loss;
@@ -88,7 +136,7 @@ fn evaluate<B: AsRef<[u8]>>(request: &Request, matrix: &Matrix<B>) -> Result<Sco
             "undefined trained surrogate baseline"
         );
         let ratio = (rmse / baseline).max(1e-12);
-        logs.push(ratio.ln());
+        logs.push(feat_math::portable_math::frozen_s1::ln(ratio));
         wins += usize::from(ratio <= 1.0);
         losses.push(rmse);
         let user_score = user_objective.evaluate(&vy, &prediction)?;
@@ -192,7 +240,7 @@ pub(crate) fn fitness(dsl: &str, logs: &[f64], wins: usize) -> Result<(f64, bool
             (logs.iter().map(|value| (value - mean).powi(2)).sum::<f64>() / 3.0).sqrt(),
         )
     };
-    let gate = wins == logs.len() && mean.exp() <= 0.90;
+    let gate = wins == logs.len() && feat_math::portable_math::frozen_s1::exp(mean) <= 0.90;
     let value = if gate {
         0.8 * mean
             + 0.1 * tail

@@ -9,7 +9,7 @@ StartLimitBurst=3
 Type=simple
 User=@JOPE_USER@
 WorkingDirectory=@JOPE_STATE@
-ExecStartPre=/usr/bin/sha256sum --check --status manifests/hyperion-concurrent-v30.sha256
+ExecStartPre=/usr/bin/sha256sum --check --status manifests/hyperion-concurrent-inputs.sha256
 ExecStart=@JOPE_BUNDLE@/jope-parallel-cpu-v30 --root @JOPE_STATE@ hyperion-service --jobs @JOPE_STATE@/manifests/generated/gp-reviewed4-jobs.json --spec @JOPE_HOME@/crates/jope-engine/manifests/hyperion-concurrent-spec.json --output @JOPE_STATE@/data/encodings/hyperion-batched-cuts
 Environment=JAIN_HYPERION_CUDA_MAX_LOAD_RATIO=1000
 Environment=RAYON_NUM_THREADS=1

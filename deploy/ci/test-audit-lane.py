@@ -18,6 +18,7 @@ import hashlib, json, os, pathlib, sys, tomllib
 mode = os.environ["AUDIT_TEST_MODE"]
 if sys.argv[1:] == ["--version"]:
     print("jankurai 1.7.5" if mode == "version" else "jankurai 1.7.6")
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     sys.exit(0)
 args = sys.argv[1:]
 assert args[0] == "audit"
@@ -25,6 +26,7 @@ assert all(v in args for v in ["--full", "--read-only", "--no-badge", "--no-scor
 assert args[args.index("--mode") + 1] == "standard"
 source = pathlib.Path(args[1])
 if mode == "missing":
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     sys.exit(0)
 failed = mode in ("failed", "false-green", "failed-above-floor")
 low = mode in ("failed", "false-green")
@@ -33,7 +35,7 @@ report = {
     "auditor_version": "1.7.6", "schema_version": "1.9.0",
     "standard_version": "0.9.0", "paper_edition": "2026.05-ed8",
     "scope": {"mode": "full", "paths": []},
-    "policy_fingerprint": "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111",
+    "policy_fingerprint": "sha256:da7cc7893bb61401234c296062e81571858032ff815bd2bcbd828c05c4af941a",
     "policy": {"minimum_score": floor, "mode": "standard", "fail_on": ["critical", "high"], "advisory_on": ["low", "medium"]},
     "score": 52 if low else 94, "raw_score": 52 if low else 94,
     "decision": {"status": "fail" if failed else "pass", "passed": not failed,
@@ -107,6 +109,7 @@ if mode == "link":
     path = output / "repo-score.md"
     path.unlink()
     path.symlink_to(output / "summary.md")
+# jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
 sys.exit(1 if mode in ("failed", "failed-above-floor") else 0)
 '''
 # Stand-in for ops/ci/verify-pyexec-exceptions.sh, which re-audits pinned product files the
@@ -129,6 +132,10 @@ class AuditLaneTests(unittest.TestCase):
         self.base = Path(self.temp.name)
         self.repo = self.base / "repo"
         self.repo.mkdir()
+        tools = self.repo / "tools"
+        tools.mkdir()
+        # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
+        (tools / "check_evidence_exclusions.py").write_text("raise SystemExit(0)\n")
         names = ["ops/ci/jankurai.sh", "deploy/ci/audit-source.py"]
         if (ROOT / "deploy/ci/verify-audit-report.py").exists():
             names.append("deploy/ci/verify-audit-report.py")

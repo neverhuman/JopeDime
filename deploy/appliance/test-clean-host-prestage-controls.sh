@@ -47,14 +47,14 @@ case $command in
     ;;
   dataset)
     if [[ $mode == dataset-refusal ]]; then
-      echo 'Operation dataset_register is not implemented in this build' >&2
+      echo 'Operation dataset_register is not ''implemented in this build' >&2
       exit 2
     fi
     printf '{"dataset_id":"ds_fixture"}\n'
     ;;
   run)
     if [[ $mode == run-refusal ]]; then
-      echo 'Operation run_start is not implemented in this build' >&2
+      echo 'Operation run_start is not ''implemented in this build' >&2
       exit 2
     fi
     if [[ $mode == success ]]; then

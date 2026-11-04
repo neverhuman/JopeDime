@@ -1,0 +1,29 @@
+{
+  "schema": "whitepaper.adapter-validation-trace-figure/v1",
+  "input_csv_sha256": "c26909c75ac70eab87b9796a7792807f53e6086deb611e29445a624a440a0839",
+  "source_receipt_sha256": "62a46711bb1243c8588df6abb7ca6d76ad6015d772c51b066354b5b7e06cb91a",
+  "generator_sha256": "9380a1e4fc129280fe3f0752613b95e73be0b1b251d990304454667583336b0f",
+  "figure_sha256": "09c73c80b7f23130a15de19d4e8a8c3666d3713735a73a3772bc50e8c5bfd137",
+  "rows": 200,
+  "round_window": [
+    4064,
+    4263
+  ],
+  "admissions": 0,
+  "candidate_values": "CSV candidate_validation_utility: exact logged candidate_utility",
+  "retained_values": "CSV retained_validation_utility: exact logged post-decision best_utility, not a cumulative maximum",
+  "source_trace": "Each CSV row records the original journal line and exact newline-inclusive record SHA256; --verify-journal checks every value.",
+  "transformations": "Every decision retained. Lines connect consecutive candidate observations; retained values use a post-decision step. No smoothing, resampling, clipping, cumulative maximum or outcome selection.",
+  "units": "Logged dimensionless validation-pool utility; larger values preferred. Horizontal coordinate is the journaled decision round.",
+  "scope": "Adaptive development-side engineering telemetry; no independent first-proposal, learning-gain, writer/map benefit or serving comparison.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    3.25,
+    2.05
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_adapter_validation_trace.py"
+}

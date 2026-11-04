@@ -35,7 +35,7 @@ impl NumpyPcg64 {
             .wrapping_add(self.increment);
     }
 
-    pub(super) fn next_u64(&mut self) -> u64 {
+    pub(crate) fn next_u64(&mut self) -> u64 {
         self.step();
         let rotation = (self.state >> 122) as u32;
         let xsl = ((self.state >> 64) as u64) ^ self.state as u64;
@@ -132,7 +132,7 @@ impl NumpyPcg64 {
     }
 }
 
-pub(super) fn seed_sequence(seed: u64) -> [u64; 4] {
+pub(crate) fn seed_sequence(seed: u64) -> [u64; 4] {
     const INIT_A: u32 = 0x43b0_d7e5;
     const MULT_A: u32 = 0x931e_8875;
     const INIT_B: u32 = 0x8b51_f9dd;

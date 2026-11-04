@@ -190,6 +190,7 @@ fn empty_record(
             status: FIT_FAILED,
             failure: None,
             island: None,
+            resources: None,
         },
         domain_fault_rate: 0.0,
         saturation_fault_rate: 0.0,

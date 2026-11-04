@@ -4,27 +4,26 @@
 % Historical reference specifications come from the supplied source notes.
 % Checkpoint acceptance and reference runtime receipts remain required.
 % Historical source notes are archived outside the paper tree.
-\section{EurekaZero: Learning Taste}\label{sec:method}
+\section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
-The reference design specifies training a writer and separate ranking map
-on search-scored lists, then deploying the frozen writer for one proposal.
-The record in \cref{sec:method-status} updates only a ranking adapter over
-heuristic, retrieval and grammar proposals. Their cost ledgers
-(\cref{sec:price}) and evaluations are separate.
+Search-scored lists supply the reference training targets for a writer
+and a separate ranking map. The proposed deployment protocol then freezes
+the writer and commits one proposal. The adapter record in
+\cref{sec:method-status} is a separate loop, with its own cost ledger
+(\cref{sec:price}) and evaluation.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
-\Cref{fig:network} connects the architecture to the contract in
-\cref{box:searchone}: a frozen encoder reads the board and $\writer$ writes
-a complete program, as AlphaGo's policy proposed a move
-\citep{silver2016mastering}. In one reference search route, the separate
-map $\mapv$ supplies weights for parent selection among ranked survivors
-(\cref{sub:method-map}); it neither conditions nor screens the writer.
+A frozen encoder reads the board (\cref{fig:network}); the reference writer
+emits a complete program under the contract in \cref{box:searchone}, as
+AlphaGo's policy proposed a move
+\citep{silver2016mastering}. The separate map enters training search
+through the routes described in \cref{sub:method-map}.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig5_network.pdf}
-  \caption{\textbf{Reference training design for the writer and separate ranking map.}
+  \caption{\textbf{Reference training updates the writer and map; game day uses the writer alone.}
   Top: game day, the whole of \searchone{}. Dashed box: proposed training.
   Search extends the writer's drafts; referee-scored lists supply objectives
   for the writer ($\theta$) and map ($\psi$). Stillborn programs enter no list.}
@@ -48,7 +47,7 @@ meta-training cohort moments standardize each component block before
 concatenation and elementwise clipping to $[-32,32]$.
 
 The reference encoder is pinned by hash and stays fixed during writer
-training. Encoding is bounded at 30 seconds per problem. A context with any non-finite value is refused
+training. Encoding is bounded at 30\,s per problem. A context with any non-finite value is refused
 rather than imputed (\cref{app:training}). The input contract permits
 training-side task evidence only; final held-out labels and their derived
 statistics must stay outside the input closure. A context's recorded
@@ -83,24 +82,24 @@ Reported winners still require the parity check in \cref{sub:method-referee}.
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
-The map reads a program as $z_w=\encS(w)$, the layer-normalized mean of
+The reference map ranks programs within a problem by decreasing logit.
+It reads a program as $z_w=\encS(w)$, the layer-normalized mean of
 non-padding token embeddings, including \texttt{BOS}, the fixed engine and
 task header, and \texttt{EOS}. Pooling discards token order, limiting its
 ability to distinguish compositions built from the same tokens.
 
 The map's own two-layer context network projects the \num{2048}-value $z_p$
 to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
-as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$, and
+as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$ and
 $|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
 Four two-layer heads receive this same \num{1536}-value interaction vector;
 their mean gives the ranking logit $\mapv(z_p,z_w)$.
-Native ranking losses supervise that mean jointly, without separate
+The reference ranking losses supervise that mean jointly, without separate
 targets or bootstrap samples. Training applies dropout of 0.05 in each
 ranking head. The runtime head instead reads $[r_z,z_w]$, while the
 program-only control reads $z_w$.
 
-Higher logits rank higher within a problem. The score is not a calibrated
-error estimate. Comparing its magnitude across problems or reading it as a
+The score is not a calibrated error estimate. Comparing its magnitude across problems or reading it as a
 probability of a verified win requires separate evidence. The referee
 still establishes validity and measures performance.
 
@@ -114,7 +113,7 @@ groups of at least three with finite percentile targets
 a target concentrated on the best
 \citep{cao2007listnet}:
 \begin{equation}
-  \mathcal{L}_{\text{map}}(p)=-\sum_{w\in G_p}
+  \mathcal{L}_{\mathrm{map}}(p)=-\sum_{w\in G_p}
   \frac{e^{\rho_w/\tau}}{\sum_{u\in G_p}e^{\rho_u/\tau}}\,
   \log\frac{e^{\mapv(z_p,z_w)}}{\sum_{u\in G_p}e^{\mapv(z_p,z_u)}},
   \label{eq:mapLoss}
@@ -131,14 +130,14 @@ objective covers only programs that run.
 
 The program-only head controls for ranking without problem context
 (\cref{sub:results-ablation}). Ranking valid scored programs alone does not
-test the validity rate $q_{\text{run}}$ in \cref{sec:price}.
+test the validity rate $q_{\mathrm{run}}$ in \cref{sub:price-bill}.
 
 \begin{keyidea}
 The reference game-day protocol omits the ranking map. Matched first
 proposals test whether training improved the writer.
 \end{keyidea}
 
-In the native implementation, the writer and map use separate context
+In the reference native implementation, the writer and map use separate context
 networks and token embeddings. The map ranks drafts without dropping them
 or screening the writer. One native GP route matches map-derived weights
 by program identity to ranked survivors for parent selection. The bounded
@@ -149,7 +148,8 @@ an evaluation must bind the route it used.
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
 scored survivor weight while scored survivors remain.
-Native assembly takes up to ten same-cut teachers, then cross-cut teachers
+A cut identifies a fixed dataset split and evaluation case. Native
+assembly takes up to ten same-cut teachers, then cross-cut teachers
 up to a 16-seed tail. Random fallbacks fill to ten slots if needed; random
 exploration fills the remaining slots. The standalone seed writer instead
 uses 16 random programs. Teacher-first execution prioritizes retained cut
@@ -160,11 +160,14 @@ proposals requires the matched ablation in \cref{sub:results-ablation}.
 The historical diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
 do not supply that comparison.
 
+In the proposed offline loop, referee-scored search outcomes supply
+training targets.
+
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
 % float can reach the top of the next page.
 \begin{algorithm*}[t]
-\caption{The reference self-play loop (training).}\label{alg:selfplay}
+\caption{\textbf{The reference self-play loop (training).}}\label{alg:selfplay}
 \begin{algorithmic}[1]
 \Require training problems; serving writer $\writer$ and map $\mapv$; incumbents $\inc{p}$
 \For{each round}
@@ -188,58 +191,54 @@ pipelines and projects them through the grammar. It refuses an incomplete
 pool. These are training-search budgets, separate from the one-draw
 protocol in \cref{sub:method-gameday}.
 
-The reference training rule is expert iteration
-\citep{anthony2017expert}: in the proposed offline loop, search-scored
-programs train the writer.
+The reference rule is expert iteration \citep{anthony2017expert}.
 The writer term weights sampled programs from $G_p$ by referee rank;
 it joins the map and auxiliary terms in the combined objective
 (\cref{app:training}):
 \begin{align}
-  \mathcal{L}_{\text{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
+  \mathcal{L}_{\mathrm{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\
-  \mathcal{L} &= \mathcal{L}_{\text{writer}} + 0.1\,\mathcal{L}_{\text{map}}
-  + 0.25\,\mathcal{L}_{\text{BT}} \nonumber\\
-  &\quad + 0.1\,\mathcal{L}_{\text{runtime}} + 0.05\,\mathcal{L}_{\text{prog}}.
+  \mathcal{L} &= \mathcal{L}_{\mathrm{writer}} + 0.1\,\mathcal{L}_{\mathrm{map}}
+  + 0.25\,\mathcal{L}_{\mathrm{BT}} \nonumber\\
+  &\quad + 0.1\,\mathcal{L}_{\mathrm{runtime}} + 0.05\,\mathcal{L}_{\mathrm{prog}}.
   \label{eq:totalLoss}
 \end{align}
 The writer loss in \cref{eq:writerLoss} is schematic: it displays the rank
 weights. The native implementation also smooths grammar-legal targets,
-averages token losses within each program, and normalizes by the sum of
+averages token losses within each program and normalizes by the sum of
 program weights (\cref{app:training}).
 
-Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
-$\mathcal{L}_{\text{runtime}}$ a Huber loss between $\ln(1+s)$ and
+Here $\mathcal{L}_{\mathrm{BT}}$ is a Bradley--Terry loss on the same lists,
+$\mathcal{L}_{\mathrm{runtime}}$ a Huber loss between $\ln(1+s)$ and
 $\ln(1+\operatorname{softplus}(h))$, where $s$ is nonnegative measured
 seconds and $h$ is the raw runtime-head output, and
-$\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
+$\mathcal{L}_{\mathrm{prog}}$ the Bradley--Terry loss of the program-only control head.
 A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's
 ranking targets.
 
-The reference procedure uses two ratchets (\cref{sec:game}). A program
-displaces a board's incumbent only by strictly beating it.
-
-The proposed reference admission test calls for 16 cuts with three seeds
+The reference procedure uses two ratchets (\cref{sub:game-referee}). A program
+displaces a board's incumbent only by strictly beating it. The proposed
+reference admission test calls for 16 held-out cuts with three seeds
 each. A challenger may replace the serving writer
 only if its mean log error ratio favors it. It must also win at least as
 many cuts as it loses and fail no more often.
 %
-Here a cut is a held-out evaluation case fixed before the admission test.
-For each cut, the rule takes the natural log of paired best-error ratios
+The admission cases are fixed before the test. For each cut, the rule takes the natural log of paired best-error ratios
 (challenger divided by serving) and averages over matched seeds; it then
 averages across cuts. Negative values favor the challenger. This admission
 comparison is separate from the single-program comparison in
 \cref{sub:results-learning}.
 
-\paragraph{The historical reference.} The decoder-only writer has separate
+\paragraph{The historical reference.} The reference model combines a decoder-only writer with separate
 ranking and auxiliary heads. \Cref{app:training} records the architecture,
 registered capacity, token allocation and training corpus in one inventory.
 
 These specifications do not supply the checkpoint's acceptance evidence or
 qualify its runtime. Both records remain inputs to the evaluation contract
-(\cref{sub:results-protocol}). The accepted native checkpoint route is
-limited to tabular regression, and the native training entry point remains
-held at its grant gate. Numerical parity of the CPU float32 Candle port
+(\cref{sub:results-protocol}). The historical reference checkpoint is
+scoped to tabular regression. Its native training entry point enforces a
+dispatch hold. Numerical parity of the CPU float32 Candle port
 with the native CUDA BF16 tch runtime remains unqualified; random streams
 and uniform-token fallback differ.
 
@@ -247,8 +246,8 @@ and uniform-token fallback differ.
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
-Search supplies training targets only as reliably as its referee.
-A learner rewarded by a referee can exploit its flaws. In February 2025 Sakana AI walked back
+Reliable training targets require a referee that resists exploitation.
+In February 2025 Sakana AI walked back
 claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana2025walkback}. In June
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
 \num{1968} agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}.
@@ -256,39 +255,35 @@ claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana202
 The evaluation protocol must withstand such attacks. Selection,
 promotion and final scoring must use separate data (inner folds, held-out
 cuts, a final fold scored once), with sealed meta-test families outside the
-learner's inputs.
-
-The proposed comparisons require sandboxed execution
+learner's inputs. The proposed comparisons also require sandboxed execution
 using seccomp and Landlock, with memory, swap and time limits. A
 planted label leak and a sealed canary must both be caught. Every reported
 winner must be re-run from its emitted code, with native and emitted
 predictions agreeing within
-$10^{-9}\max(1,|\hat y|)$.
+$10^{-9}\max(1,|\hat{y}|)$.
 
 One earlier leaderboard entry for our search selected each dataset's best
 test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as test selection (\cref{app:incidents}).
 
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
 
+The proposed game-day protocol fixes the components and seed before one
+regression draw, retaining failures and all incurred costs
+(\cref{alg:gameday,box:searchone}). \Cref{sub:results-learning} compares that
+draw with a frozen reference under matched conditions.
+
 \begin{algorithm}[tb]
-\caption{Proposed game-day protocol (\searchone).}\label{alg:gameday}
+\caption{\textbf{Proposed game-day protocol (\searchone).}}\label{alg:gameday}
 \begin{algorithmic}[1]
 \Require new regression problem $p$ with training rows and metric; frozen $\encP$ and $\writer$
 \State $z_p \gets \encP(p)$ \Comment{read the board}
-\State $w \sim \writer(\cdot \mid z_p)$, one draw at $T=1$ \Comment{one move; no retry}
+\State $w \sim \writer(\cdot\mid z_p)$, one draw at $T=1$ \Comment{one move; no retry}
 \State $f \gets \textsc{Fit}(w,\ \text{training rows})$ \Comment{as any algorithm is fit}
 \State $\hat{y} \gets f(\text{new rows})$ \Comment{a stillborn $w$ scores as a loss}
 \State \Return $w,\ \hat{y}$
 \end{algorithmic}
 \end{algorithm}
 
-\Cref{alg:gameday} applies the contract in \cref{box:searchone} to
-regression: frozen components, a recorded seed and one draw, with failures
-and all incurred costs retained. \Cref{sub:results-learning} compares that
-draw with a frozen reference under matched conditions.
-
 Report later search separately, as \citet{silver2017mastering} reported
-AlphaGo Zero's raw network apart from its search. The adapter record below
-concerns candidate selection and admission; the matched first-proposal
-comparison remains the test in \cref{sub:results-learning}.
+AlphaGo Zero's raw network apart from its search (\cref{sec:method-status}).
 \input{sections/06_method/flywheel_status}

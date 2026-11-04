@@ -1117,6 +1117,9 @@
     "python:python/tests/test_training_campaign.py": {
       "kind": "python-family"
     },
+    "python:python/tests/test_training_campaign_execution.py": {
+      "kind": "python-family"
+    },
     "python:python/tests/test_training_comparison.py": {
       "kind": "python-family"
     },

@@ -87,7 +87,7 @@ def _leave_unknown(store, *, context_id, arm, program_sha256):
             fixture_root=store.fixture_root,
             program_sha256=program_sha256,
         )
-    except Exception:
+    except (Exception,):
         return
 
 

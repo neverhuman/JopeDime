@@ -218,6 +218,55 @@ The search refuses order-dependent objectives (its cuts are a fold partition) an
 read columns (prepared cuts carry features only); use `jopedime` for those. Multi-round
 `pipeline evolve` lineages and the kernel2 profiles keep their own ranking and refuse `--fitness`.
 
+## Resource-aware objectives: training time, latency and memory
+
+A business cost is often not only how wrong a prediction is, but also what the model costs to
+train and to serve. An electricity desk retrains before every gate closure. A pricing API has a
+p99 latency budget. An edge device has a fixed heap. A specification can read those costs as
+**resource variables**, either as a scalar term or as an expression leaf, and can impose hard
+limits:
+
+| Form | JSON | Meaning |
+| --- | --- | --- |
+| Term | `{"metric":"resource","name":"fit_seconds"}` | The reading as a loss; usually a `composite` term next to an accuracy term. |
+| Leaf | `{"op":"resource","name":"predict_us_per_row"}` | The reading inside a custom expression, the same for every row. |
+| Limit | `{"metric":"constrained","fitness":…,"limits":[{"resource":"row_latency_p99_us","max":250}]}` | A candidate outside any limit is **infeasible**: it is refused (`resource_infeasible: …`), never ranked. |
+
+| Variable | Kind | Reading |
+| --- | --- | --- |
+| `fit_seconds` | measured | Wall seconds of one fit on the training rows. |
+| `fit_cpu_seconds` | measured | CPU seconds of the process during the fit, across all threads. |
+| `predict_seconds` | measured | Held-out batch prediction, median of three passes. |
+| `predict_us_per_row`, `predict_rows_per_second` | measured | Batch latency per row, and throughput. Throughput is maximized. |
+| `row_latency_p50_us`, `row_latency_p99_us` | measured | One-row (online) latency over up to 256 calls, nearest rank. |
+| `fit_peak_heap_bytes`, `predict_peak_heap_bytes` | measured | Peak process heap growth. Needs the heap meter, which the `jope` binary installs. |
+| `model_bytes` | structural | Bytes of the fitted model in canonical serialized form. |
+| `program_nodes`, `stage_count` | structural | Program cost (stages plus expression nodes) and pipeline stages. |
+| `train_rows`, `hold_rows` | structural | Row counts, for per-row normalisation. |
+
+```sh
+# Best RMSE, paying 0.05 target units per training second (illustrative price):
+cargo run --locked --release --bin jope -- pipeline run --dataset DATASET --threads 1 \
+  --fitness @examples/objectives/rmse_plus_fit_seconds.json \
+  --budget evaluations=76,seconds=1800 --output target/fast-retrain
+```
+
+**Reproducibility.** Structural variables are functions of the program and the data, so they are
+bit-identical everywhere. Measured variables are readings of this machine under its current
+load, so they are handled differently:
+
+- The search refuses them unless one candidate runs at a time (`--threads 1`, one island), so
+  readings are per-candidate.
+- Every candidate records its readings in `observations.json` (`resources`).
+- `verify-receipt --evidence` re-derives the champion from those recorded readings and never
+  measures again.
+- `pipeline score --split test` measures the refit on the test rows the same way.
+
+Prefer a structural proxy, such as `model_bytes` for size or `program_nodes` for simplicity,
+whenever it expresses the business cost. The checked-in recipes are in
+[`examples/objectives/`](../examples/objectives/README.md).
+`jopedime fit` cannot supply readings and reports the missing resource by name.
+
 ## API and MCP
 
 Rust: set `jope_runtime::api::FitOptions { fitness, validation, calibration, .. }` and call

@@ -1,0 +1,11 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "composite",
+    "terms": [
+      {"weight": 1.0, "scale": 1.0, "fitness": {"metric": "pinball", "quantile": 0.9}},
+      {"weight": 0.02, "scale": 1.0, "fitness": {"metric": "resource", "name": "fit_cpu_seconds"}}
+    ]
+  },
+  "limits": [{"resource": "fit_seconds", "max": 30.0}]
+}

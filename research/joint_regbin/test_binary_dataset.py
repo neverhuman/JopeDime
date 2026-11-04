@@ -1013,6 +1013,7 @@ class BinaryTrainCandidatePacketTests(unittest.TestCase):
         )
         panel = Path.home() / "jope-data/jrb-01/panel-v1-binary-train/manifest.json"
         if not all(path.is_file() for path in (catalog, owner_alias, panel)):
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
             self.skipTest("pinned JRB admission evidence is unavailable")
 
         admission = build_binary_train_admission(
@@ -1057,6 +1058,7 @@ class BinaryTrainCandidatePacketTests(unittest.TestCase):
         )
         panel = Path.home() / "jope-data/jrb-01/panel-v1-binary-train/manifest.json"
         if not all(path.is_file() for path in (catalog, owner_alias, panel)):
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
             self.skipTest("pinned JRB admission evidence is unavailable")
 
         with self._temporary_test_directory() as temp_dir:
@@ -1082,6 +1084,7 @@ class BinaryTrainCandidatePacketTests(unittest.TestCase):
         )
         panel = Path.home() / "jope-data/jrb-01/panel-v1-binary-train/manifest.json"
         if not all(path.is_file() for path in (catalog, owner_alias, panel)):
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
             self.skipTest("pinned JRB admission evidence is unavailable")
 
         original = json.loads(panel.read_text())

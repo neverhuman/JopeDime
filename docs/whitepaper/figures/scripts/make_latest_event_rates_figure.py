@@ -267,7 +267,7 @@ def make_current_program_clock():
     ], "CSV/journal event-count mismatch"
     assert rounds == [r["round"] for r in source["capture"]["journal_counts"]]
     assert source["capture"]["all20_summary_counts_matched"]
-    assert source["capture"]["all20_retained_round_JSON_matched"]
+    assert source["capture"]["all20_summary_admission_perround_matches"]
     admissions = [int(r["adapter_accepted"]) for r in rows]
     assert all(v in (0, 1) for v in admissions)
     assert sum(admissions) == source["capture"]["adapter_admissions"]

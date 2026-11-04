@@ -1,0 +1,104 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "09_ultrawide_parsimony",
+  "dataset": {
+    "id": "9ae61bc7da3ba01c",
+    "display_name": "mtp2",
+    "task": "regression",
+    "rows": 274,
+    "features": 1142,
+    "categorical_features": 0,
+    "train_rows": 228,
+    "test_rows": 46,
+    "source": {
+      "platform": "openml",
+      "id": "430",
+      "url": "https://www.openml.org/d/430",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": null
+  },
+  "business_question": "With 1,142 features and 228 rows, which program balances accuracy against auditability (program size)? (structural, reproducible)",
+  "constraint": "price per program node",
+  "objective_kind": "composite",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11,
+    "sha256": "19df81f7f8f207a0bade7b057fced1b849d0048fabfcf0368c395e5aba56a919",
+    "provenance_sha256": "6f2fd0d009a2352c8093e0030027d80e71456378d221b0c23102d209c5fdee5d",
+    "source": "step-60000 neural policy (Rust/Candle CPU), produced by agy_resource_fitness; see seeds.provenance.json"
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "program_nodes",
+    "stage_count",
+    "model_bytes"
+  ],
+  "accuracy": {
+    "metric": "rmse"
+  },
+  "why": "With 1,142 features and only 228 training rows, overfitting and opacity are the risks. Pricing program nodes keeps the champion small enough to audit. Structural and reproducible.",
+  "caveats": [
+    "Very small sample; variance across seeds is expected to be large."
+  ],
+  "objective_template": {
+    "metric": "composite",
+    "terms": [
+      {
+        "weight": 1.0,
+        "scale": {
+          "$target_sigma": true
+        },
+        "fitness": {
+          "metric": "rmse"
+        }
+      },
+      {
+        "weight": 0.1,
+        "scale": {
+          "$median": "program_nodes"
+        },
+        "fitness": {
+          "metric": "resource",
+          "name": "program_nodes"
+        }
+      }
+    ]
+  }
+}

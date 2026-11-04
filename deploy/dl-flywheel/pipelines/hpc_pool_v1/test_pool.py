@@ -47,11 +47,23 @@ class PoolTests(unittest.TestCase):
                'native_evaluate.py','native_inputs.py','native_failure.py','verified_cache.py','native_corpus_authority.py','jope_flywheel/__init__.py']
         names += ['support'+str(i)+'.py'for i in range(23)]
         files=sorted([{'relative_path':n,'ref':self.save('source'+str(i)+'.py',b'# inert source fixture\n')}for i,n in enumerate(names)],key=lambda x:x['relative_path'])
+        pipelines=Path(__file__).resolve().parents[1]
+        old_inputs=pipelines/'hpc_verified_v5'/'native_inputs.py'
+        native_inputs=pipelines/'hpc'/'native_inputs.py'
+        native_inputs_core=pipelines/'hpc'/'native_inputs_core.py'
+        for item in files:
+            if item['relative_path']=='native_inputs.py':item['ref']=op.reference(old_inputs)
+        current_files=[item for item in files if item['relative_path']!='native_inputs.py']
+        current_files += [
+            {'relative_path':'native_inputs.py','ref':op.reference(native_inputs)},
+            {'relative_path':'native_inputs_core.py','ref':op.reference(native_inputs_core)},
+        ]
+        current_files.sort(key=lambda x:x['relative_path'])
         parent_root=self.root/'parent';parent_root.mkdir()
         parent={'schema':'jope.native-v5-launch-input/v1','prepared':self.prepared,'worker_template':artifact,
             'source_files':files,'root':str(parent_root),'registry_path':str(self.registry),'python':op.reference(python),'unit_prefix':'jope-native-v5-parent'}
         parent_ref=self.save('parent.json',op.canonical(parent))
-        m={'schema':'jope.native-v5-pool-input/v1','prepared':self.prepared,'worker_template':None,'source_files':files,
+        m={'schema':'jope.native-v5-pool-input/v1','prepared':self.prepared,'worker_template':None,'source_files':current_files,
             'root':str(self.root/'new-pool'),'registry_path':str(self.registry),'python':parent['python'],
             'unit_prefix':'jope-native-v5-added','worker_count':12,'parent_manifest':parent_ref,'parent_plan':None,
             'other_allocations':[{'unit':'owned-learner','kind':'learner','memory_cap_bytes':8*op.GIB,
@@ -134,7 +146,7 @@ class PoolTests(unittest.TestCase):
 
     def test_parent_source_and_guard_changes_rejected(self):
         files=json.loads(json.dumps(self.m['source_files']));files[0]['ref']=self.save('replacement.py',b'# changed\n')
-        with self.assertRaisesRegex(ValueError,'34 parent'):op.dry_plan(self.mcopy(source_files=files))
+        with self.assertRaisesRegex(ValueError,'all other parent worker sources byte unchanged'):op.dry_plan(self.mcopy(source_files=files))
         parent=json.loads(op.read(self.m['parent_plan']));c=json.loads(op.read(parent['workers'][1]['config']));c['global_guard']['scope_sha256']='0'*64
         p=Path(parent['workers'][1]['config']['path']);p.write_bytes(op.canonical(c));parent['workers'][1]['config']=op.reference(p)
         p=Path(self.m['parent_plan']['path']);p.write_bytes(op.canonical(parent))

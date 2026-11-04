@@ -121,6 +121,10 @@ fn execute(program: &str, compiler: &str, standard: &str, optimization: &str, sa
     let binary = scratch.path().join("recipe");
     fs::write(&source, recipe.source + DRIVER).unwrap();
     let mut build = Command::new(compiler);
+    if compiler == "clang" {
+        // Use Clang's C++ driver mode without relying on a separate clang++ wrapper.
+        build.arg("--driver-mode=g++");
+    }
     build.args([
         standard,
         optimization,
@@ -310,20 +314,35 @@ fn expression_training_recipes_preserve_fault_fallback_and_stage_order() {
 
 #[test]
 fn expression_training_recipes_pass_compiler_and_sanitizer_matrix() {
+    let mut matrix = vec![
+        ("g++", "-std=c++17", "-O2", false),
+        ("g++", "-std=c++17", "-O3", false),
+        ("g++", "-std=c++20", "-O2", false),
+    ];
+    let clang = ["clang", "clang++", "clang++-18"]
+        .into_iter()
+        .find(|compiler| {
+            Command::new(compiler)
+                .arg("--version")
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()
+                .is_ok_and(|status| status.success())
+        });
+    if let Some(compiler) = clang {
+        matrix.extend([
+            (compiler, "-std=c++17", "-O2", false),
+            (compiler, "-std=c++20", "-O2", false),
+        ]);
+    }
+    matrix.push(("g++", "-std=c++17", "-O2", true));
     for program in [
         "(sym affine \"c0+c1\")",
         "(pipe X (map expr=\"x+c0\") (ridge))",
         "(pipe X (derive expr=\"c0+c1\") (ridge))",
     ] {
-        for (compiler, standard, optimization, sanitize) in [
-            ("g++", "-std=c++17", "-O2", false),
-            ("g++", "-std=c++17", "-O3", false),
-            ("g++", "-std=c++20", "-O2", false),
-            ("clang++", "-std=c++17", "-O2", false),
-            ("clang++", "-std=c++20", "-O2", false),
-            ("g++", "-std=c++17", "-O2", true),
-        ] {
-            execute(program, compiler, standard, optimization, sanitize);
+        for (compiler, standard, optimization, sanitize) in &matrix {
+            execute(program, compiler, standard, optimization, *sanitize);
         }
     }
 }

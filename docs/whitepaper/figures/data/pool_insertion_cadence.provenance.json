@@ -1,0 +1,27 @@
+{
+  "schema": "whitepaper.pool-insertion-cadence-figure/v1",
+  "input_csv_sha256": "d6612181d46760e20ab006c44b9eb73ccbbb1b71a4fafdbcc563832c67f6ce14",
+  "source_receipt_sha256": "5d5a8bf0496652576bd431f6f8911b5bccee10413b954a8d689aa5c53fd1a487",
+  "generator_sha256": "56a6105add5dfee8a57ac5fba5cb776ca008709d2cda92c0b9fe573b63fdc24a",
+  "figure_sha256": "e0f592f166eb723dbe61502576a1f16086f2c4ccfce363eb6b83d99491b27742",
+  "source_records": 101,
+  "plotted_intervals": 100,
+  "round_window": [
+    4051,
+    4280
+  ],
+  "units": "Seconds between adjacent logged UTC timestamps; horizontal coordinate is interval ordinal.",
+  "transformations": "Exact timestamp differences, no rounding, resampling, duration cutoff, smoothing or outcome selection. Scatter only; symmetric-log axis linear within1second, retaining zero if observed.",
+  "source_trace": "Every point maps to two consecutive source lines and their newline-inclusive record SHA256 hashes; --verify-source-window checks all source records and derived differences.",
+  "scope": "Training-pool program/context insertion timestamps, distinct from adapter admission, proposal runtime, independent learning gain or a speed comparison.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    3.25,
+    2.05
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_pool_insertion_cadence.py"
+}

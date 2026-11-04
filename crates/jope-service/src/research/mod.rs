@@ -4,7 +4,9 @@
 //! This module does not reconstruct missing costs, run a model, qualify guidance,
 //! change discovery admission, or expose a public/release CLI command.
 
+pub(crate) mod job;
 mod native_inputs;
+pub(crate) mod qualified;
 pub use native_inputs::NativeCaptureInputs;
 
 mod inventory;
@@ -12,9 +14,8 @@ pub use inventory::{RecordCounts, RecordInventory};
 mod job_resolver;
 pub use job_resolver::{AcceptedJobAdmission, TrustedJobResolver};
 mod run;
-pub use run::{record_run, RecordingBackend};
-mod job;
 pub use job::{record_catalog_job, RecordingReceipt};
+pub use run::{record_run, RecordingBackend};
 
 mod producer;
 pub use producer::RoundCapture;
@@ -397,5 +398,3 @@ impl RecordWriter {
 
 #[cfg(test)]
 mod tests;
-
-pub(crate) mod qualified;

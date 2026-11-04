@@ -27,6 +27,7 @@ pub mod fitted_rs;
 pub mod landmark_args;
 pub mod limits;
 pub mod math_pipeline;
+pub mod meter;
 pub mod methods;
 pub mod model_object;
 pub mod model_session;

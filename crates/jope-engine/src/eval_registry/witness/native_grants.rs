@@ -337,12 +337,12 @@ impl NativeGrantState {
         request: &SignedRequest,
         before: u64,
     ) -> Result<NumericalWork> {
-        let event: OriginalEvent = serde_json::from_slice(&request.body.event)?;
-        if event.kind != "authorize" {
+        let event: Value = serde_json::from_slice(&request.body.event)?;
+        if event["kind"] != "authorize" {
             return Ok(None);
         }
         let identity: super::super::FitIdentity = serde_json::from_str(
-            event.effects[0].row["identity_json"]
+            event["effects"][0]["row"]["identity_json"]
                 .as_str()
                 .context("fit identity missing")?,
         )?;
@@ -359,7 +359,7 @@ impl NativeGrantState {
             "numerical work already witnessed; grant changes cannot authorize replay"
         );
         let effective = verify_epoch_chain(policy, &request.body.epoch_proofs)?;
-        let native = event.payload.get("native_fit");
+        let native = event["payload"].get("native_fit");
         if effective.native_grant_delegation.is_some() {
             ensure!(
                 native.is_some_and(|v| !v.is_null()),

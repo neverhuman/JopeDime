@@ -1,6 +1,10 @@
 //! Port of `test_verify_dispositions.py`, plus `--require-git` and the W12-T07 synthetic
 //! identity rule.
 
+mod mutations;
+mod stages;
+mod synthetic_identity;
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -214,7 +218,7 @@ fn open_honest_dispositions_are_accepted() {
     assert_eq!(fixture.verify().expect("open dispositions").closed, 0);
 }
 
-type Mutate = Box<dyn Fn(&Fixture, &mut Value)>;
+type Mutate = Box<dyn Fn(&Fixture, &mut Value) -> bool>;
 
 fn pop_stage(name: &'static str) -> Mutate {
     Box::new(move |_, record| {
@@ -222,6 +226,7 @@ fn pop_stage(name: &'static str) -> Mutate {
             .as_list_mut()
             .expect("attestations")
             .retain(|a| a.get("stage") != Some(&Value::from(name)));
+        true
     })
 }
 
@@ -237,11 +242,15 @@ fn edit_evidence(name: &'static str, changes: Vec<(&'static str, Value)>) -> Mut
         }
         dump(&path, &body);
         set(reference, "sha256", digest(&path).into());
+        true
     })
 }
 
 fn update_reference(name: &'static str, key: &'static str, value: Value) -> Mutate {
-    Box::new(move |_, record| set(first_reference(record, name), key, value.clone()))
+    Box::new(move |_, record| {
+        set(first_reference(record, name), key, value.clone());
+        true
+    })
 }
 
 fn update_record(changes: Vec<(&'static str, Value)>) -> Mutate {
@@ -249,437 +258,27 @@ fn update_record(changes: Vec<(&'static str, Value)>) -> Mutate {
         for (key, value) in &changes {
             set(record, key, value.clone());
         }
+        true
     })
 }
 
-fn symlink_evidence(fixture: &Fixture, record: &mut Value) {
+fn symlink_evidence(fixture: &Fixture, record: &mut Value) -> bool {
     let reference = first_reference(record, "hosted_ci");
     let path = fixture
         .root
         .join(reference.get("path").and_then(Value::as_str).expect("path"));
     let target = path.with_file_name("real.json");
     std::fs::rename(&path, &target).expect("rename");
-    std::os::unix::fs::symlink("real.json", &path).expect("symlink");
-}
-
-#[test]
-fn mutations_are_rejected() {
-    let other_finding_ci = || Value::from("evidence/S03-G04/ci.json");
-    let mutations: Vec<(&str, Mutate, &str)> = vec![
-        (
-            "unknown finding",
-            update_record(vec![("finding", "S99-G1".into())]),
-            "unknown finding",
-        ),
-        (
-            "unsupported disposition",
-            update_record(vec![("disposition", "closed".into())]),
-            ": disposition$",
-        ),
-        (
-            "digest mismatch",
-            update_reference("hosted_ci", "sha256", "0".repeat(64).into()),
-            "digest mismatch",
-        ),
-        (
-            "path traversal",
-            update_reference(
-                "hosted_ci",
-                "path",
-                "evidence/S03-G03/../../register.json".into(),
-            ),
-            "path traversal",
-        ),
-        (
-            "other finding directory",
-            update_reference("hosted_ci", "path", other_finding_ci()),
-            "outside evidence/S03-G03/",
-        ),
-        (
-            "symlinked evidence",
-            Box::new(symlink_evidence),
-            "evidence symlink",
-        ),
-        (
-            "evidence names another finding",
-            edit_evidence("hosted_ci", vec![("finding", "S03-G04".into())]),
-            "another finding",
-        ),
-        (
-            "evidence names another stage",
-            edit_evidence("hosted_ci", vec![("stage", "fixture_proof".into())]),
-            "another stage",
-        ),
-        (
-            "evidence names another commit",
-            edit_evidence("hosted_ci", vec![("source_commit", PRE.into())]),
-            "another commit",
-        ),
-        (
-            "hosted CI failed",
-            edit_evidence("hosted_ci", vec![("conclusion", "failure".into())]),
-            "hosted CI evidence binding",
-        ),
-        (
-            "hosted CI other head",
-            edit_evidence("hosted_ci", vec![("head_sha", PRE.into())]),
-            "hosted CI evidence binding",
-        ),
-        (
-            "synthetic claims hosted CI",
-            edit_evidence(
-                "hosted_ci",
-                vec![("evidence_kind", "synthetic-fixture".into())],
-            ),
-            "cannot back hosted_ci",
-        ),
-        (
-            "defect without hosted CI",
-            pop_stage("hosted_ci"),
-            "needs source, fixture and hosted CI",
-        ),
-        (
-            "defect without source",
-            pop_stage("source_implementation"),
-            "needs source, fixture and hosted CI",
-        ),
-        (
-            "positive not observed",
-            edit_evidence("fixture_proof", vec![("passed_tests", Value::List(vec![]))]),
-            "not observed passing",
-        ),
-        (
-            "positive also failed",
-            edit_evidence(
-                "fixture_proof",
-                vec![(
-                    "failed_tests",
-                    strs(&[
-                        &format!("{TARGET}::{TEST}_pre"),
-                        &format!("{TARGET}::{TEST}"),
-                    ]),
-                )],
-            ),
-            "roundtrip not observed passing",
-        ),
-        (
-            "pre-fix not observed",
-            edit_evidence("fixture_proof", vec![("failed_tests", Value::List(vec![]))]),
-            "pre-fix failure not observed",
-        ),
-        (
-            "pre-fix commit equals fix",
-            Box::new(|_, record| {
-                let test = crate::nth(at(stage(record, "fixture_proof"), "tests"), 0);
-                set(test, "pre_fix_commit", FIXED.into());
-            }),
-            "distinct pre-fix commit",
-        ),
-        (
-            "no negative test",
-            Box::new(|_, record| {
-                at(stage(record, "fixture_proof"), "tests")
-                    .as_list_mut()
-                    .expect("tests")
-                    .remove(1);
-            }),
-            "pre-fix failure, negative and positive",
-        ),
-        (
-            "duplicate stage",
-            Box::new(|_, record| {
-                let copy = stage(record, "hosted_ci").clone();
-                at(record, "attestations")
-                    .as_list_mut()
-                    .expect("attestations")
-                    .push(copy);
-            }),
-            "duplicate hosted_ci",
-        ),
-        (
-            "historical unknown closed",
-            update_record(vec![
-                ("disposition", "historical-unknown".into()),
-                ("reason", "lost".into()),
-            ]),
-            "historical-unknown cannot close",
-        ),
-        (
-            "missing evidence closed",
-            update_record(vec![
-                ("disposition", "missing-execution-evidence".into()),
-                ("reason", "none".into()),
-            ]),
-            "missing-execution-evidence cannot close",
-        ),
-        (
-            "deferral of regression",
-            update_record(vec![
-                ("disposition", "deferred-non-regression".into()),
-                ("closed", false.into()),
-                ("deferred_subcases", strs(&["regression"])),
-            ]),
-            "deferral names only",
-        ),
-        (
-            "live package without live stage",
-            Box::new(|fixture, record| *record = fixture.defect("S08-G03", true)),
-            "W8 requires live qualification",
-        ),
-        (
-            "no decision owner",
-            update_record(vec![("decided_by", Value::Dict(Dict::new()))]),
-            "decided_by",
-        ),
-        (
-            "empty scope",
-            update_record(vec![("scope", " ".into())]),
-            ": scope$",
-        ),
-    ];
-    // Each mutation must fail for its own reason, not an incidental earlier check.
-    assert_eq!(mutations.len(), 26);
-    for (label, mutate, reason) in mutations {
-        let fixture = Fixture::new();
-        let mut record = fixture.defect("S03-G03", true);
-        mutate(&fixture, &mut record);
-        fixture.write(vec![record]);
-        let result = fixture.verify();
-        assert!(result.is_err(), "{label}: accepted");
-        assert_refused(result, reason);
-    }
-}
-
-/// (label, stage, evidence kind, extra body fields, expected refusal)
-type StageCase = (
-    &'static str,
-    &'static str,
-    &'static str,
-    Vec<(&'static str, Value)>,
-    &'static str,
-);
-
-#[test]
-fn live_and_promotion_stages_need_their_own_evidence() {
-    let cases: [StageCase; 3] = [
-        (
-            "synthetic live",
-            "live_qualification",
-            "synthetic-fixture",
-            vec![],
-            "cannot back live_qualification",
-        ),
-        (
-            "promotion without live",
-            "promotion",
-            "decision",
-            vec![("decision_owner_role", "scientific-decision-owner".into())],
-            "promotion without live qualification",
-        ),
-        (
-            "promotion by implementer",
-            "promotion",
-            "decision",
-            vec![("decision_owner_role", "implementation-owner".into())],
-            "promotion owner",
-        ),
-    ];
-    for (label, name, kind, extra, reason) in cases {
-        let fixture = Fixture::new();
-        let mut record = fixture.defect("S03-G03", true);
-        let reference = fixture.evidence(
-            "S03-G03",
-            &format!("{name}.json"),
-            &fixture.body("S03-G03", name, kind, &extra),
-        );
-        at(&mut record, "attestations")
-            .as_list_mut()
-            .expect("attestations")
-            .push(fixture.attestation(name, reference));
-        fixture.write(vec![record]);
-        let result = fixture.verify();
-        assert!(result.is_err(), "{label}: accepted");
-        assert_refused(result, reason);
-    }
-}
-
-#[test]
-fn register_binding_and_append_only_history() {
-    let fixture = Fixture::new();
-    fixture.write_bound(vec![fixture.defect("S03-G03", true)], &"0".repeat(64));
-    assert_refused(fixture.verify(), "bind another register");
-    let first = fixture.defect("S03-G03", false);
-    let mut later = fixture.defect("S03-G03", true);
-    set(&mut later, "sequence", 1i64.into());
-    fixture.write(vec![first.clone(), later.clone()]);
-    assert_refused(fixture.verify(), "append-only");
-    set(&mut later, "sequence", 2i64.into());
-    fixture.write(vec![first, later]);
-    assert_eq!(fixture.verify().expect("appended closure").closed, 1);
-}
-
-fn git(dir: &Path, args: &[&str]) -> String {
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args([
-            "-c",
-            "user.name=fixture",
-            "-c",
-            "user.email=fixture@invalid",
-            "-c",
-            "commit.gpgsign=false",
-        ])
-        .args(args)
-        .output()
-        .expect("run git");
-    assert!(
-        output.status.success(),
-        "git {args:?}: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    String::from_utf8(output.stdout)
-        .expect("utf-8")
-        .trim()
-        .to_owned()
-}
-
-#[test]
-fn require_git_needs_every_cited_commit() {
-    // Addition (the Python suite had no `--require-git` case). A two-commit throwaway
-    // repository stands in for the checkout, so the result does not depend on clone depth.
-    let repository = scratch();
-    git(repository.path(), &["init", "-q"]);
-    git(
-        repository.path(),
-        &["commit", "-q", "--allow-empty", "-m", "pre-fix"],
-    );
-    let pre = git(repository.path(), &["rev-parse", "HEAD"]);
-    git(
-        repository.path(),
-        &["commit", "-q", "--allow-empty", "-m", "fix"],
-    );
-    let fixed = git(repository.path(), &["rev-parse", "HEAD"]);
-
-    let mut fixture = Fixture::new();
-    fixture.fixed = fixed;
-    fixture.pre = pre;
-    fixture.write(vec![fixture.defect("S03-G03", true)]);
-    let result = verify(&fixture.root, true, Some(repository.path())).expect("cited commits exist");
-    assert_eq!(result.closed, 1);
-    // Without --require-git, absent commits are not looked up.
-    let absent = Fixture::new();
-    absent.write(vec![absent.defect("S03-G03", true)]);
-    assert_eq!(absent.verify().expect("not looked up").closed, 1);
-    let error = verify(&absent.root, true, Some(repository.path())).expect_err("absent commits");
-    assert!(
-        !error.is_value_error(),
-        "a failed git lookup is not a record rule: {error:?}"
-    );
-    let message = error.to_string();
-    assert!(
-        message.contains(&format!("'cat-file', '-e', '{FIXED}^{{commit}}'"))
-            && message.contains("returned non-zero exit status"),
-        "{message}"
-    );
-}
-
-/// Marks an evidence body with the public conformance fixtures' synthetic identity.
-fn marked(body: &Value) -> Value {
-    let mut body = body.clone();
-    set(
-        &mut body,
-        "synthetic_identity",
-        "jope.core-ip-conformance/v1".into(),
-    );
-    body
-}
-
-#[test]
-fn synthetic_identity_cannot_close_through_hosted_or_live_evidence() {
-    // W12-T07 (reproduced by repro.log): every evidence body of a W8 closure carries the
-    // conformance synthetic identity while declaring hosted-ci and live-host kinds.
-    let closure = |mark_ci: bool, mark_live: bool| {
-        let fixture = Fixture::new();
-        let finding = "S08-G03";
-        let mut record = fixture.defect(finding, true);
-        let live_body = fixture.body(finding, "live_qualification", "live-host", &[]);
-        let live_body = if mark_live {
-            marked(&live_body)
-        } else {
-            live_body
-        };
-        let live = fixture.evidence(finding, "live.json", &live_body);
-        at(&mut record, "attestations")
-            .as_list_mut()
-            .expect("attestations")
-            .push(fixture.attestation("live_qualification", live));
-        for name in ["source_implementation", "fixture_proof", "hosted_ci"] {
-            if name == "hosted_ci" && !mark_ci {
-                continue;
-            }
-            let reference = first_reference(&mut record, name);
-            let path = fixture
-                .root
-                .join(reference.get("path").and_then(Value::as_str).expect("path"));
-            dump_with(&path, &marked(&load(&path)), true, None);
-            set(reference, "sha256", digest(&path).into());
+    match std::os::unix::fs::symlink("real.json", &path) {
+        Ok(()) => true,
+        Err(error)
+            if matches!(
+                error.kind(),
+                std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::Unsupported
+            ) =>
+        {
+            false
         }
-        fixture.write(vec![record]);
-        fixture
-    };
-    // Every case runs before the verdict, so a failure lists each gap rather than the first.
-    let mut accepted = Vec::new();
-    for (label, mark_ci, reason) in [
-        (
-            "marked hosted CI and live bodies",
-            true,
-            "^S08-G03: synthetic identity cannot be hosted-ci evidence$",
-        ),
-        (
-            "marked live body",
-            false,
-            "^S08-G03: synthetic identity cannot be live-host evidence$",
-        ),
-    ] {
-        match closure(mark_ci, true).verify() {
-            Ok(summary) => accepted.push(format!("{label}: ACCEPTED {summary:?}")),
-            Err(error) => assert_refused::<()>(Err(error), reason),
-        }
+        Err(error) => panic!("symlink: {error}"),
     }
-    assert!(
-        accepted.is_empty(),
-        "synthetic identity closed a finding:\n{}",
-        accepted.join("\n")
-    );
-    // Positive control: marked source trace and synthetic fixture evidence keep their stages
-    // when hosted CI and live evidence are not synthetic.
-    let fixture = closure(false, false);
-    assert_eq!(
-        fixture
-            .verify()
-            .expect("real hosted and live evidence")
-            .closed,
-        1
-    );
-}
-
-#[test]
-fn synthetic_identity_cannot_be_declared_real_corpus_evidence() {
-    // W12-T07 addition: a synthetic-marked fixture cannot pass as real-corpus fixture proof.
-    let fixture = Fixture::new();
-    let mut record = fixture.defect("S03-G03", false);
-    let reference = first_reference(&mut record, "fixture_proof");
-    let path = fixture
-        .root
-        .join(reference.get("path").and_then(Value::as_str).expect("path"));
-    let mut body = marked(&load(&path));
-    set(&mut body, "evidence_kind", "real-corpus-fixture".into());
-    dump_with(&path, &body, true, None);
-    set(reference, "sha256", digest(&path).into());
-    fixture.write(vec![record]);
-    assert_refused(
-        fixture.verify(),
-        "^S03-G03: synthetic identity cannot be real-corpus-fixture evidence$",
-    );
 }

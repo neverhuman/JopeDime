@@ -167,6 +167,29 @@ def assertions(ctx: Context, evidence: Path) -> None:
         raise ProviderError("R4 terminal champion differs from the final snapshot")
 
 
+def maintained_probe(source_path: Path, source: str, name: str) -> str:
+    inline = re.search(rf'const {name}: &str = r####"(.*?)"####;', source, re.S)
+    if inline is not None:
+        return inline[1]
+
+    expression = re.search(rf'const {name}: &str = concat!\((.*?)\);', source, re.S)
+    if expression is None:
+        raise ProviderError(f"R4 maintained {name} probe unavailable")
+    includes = re.findall(r'include_str!\("([^"\n]+)"\)', expression[1])
+    remainder = re.sub(r'include_str!\("([^"\n]+)"\)', "", expression[1])
+    if not includes or remainder.replace(",", "").strip():
+        raise ProviderError(f"R4 maintained {name} probe unavailable")
+
+    source_root = source_path.parent.resolve()
+    parts = []
+    for relative in includes:
+        path = (source_root / relative).resolve()
+        if not path.is_relative_to(source_root) or not path.is_file():
+            raise ProviderError(f"R4 maintained {name} probe unavailable")
+        parts.append(path.read_text())
+    return "".join(parts)
+
+
 def qualify(ctx: Context, run=None) -> int:
     run = subprocess.run if run is None else run
     if ctx.gate_id != "R4":
@@ -180,15 +203,13 @@ def qualify(ctx: Context, run=None) -> int:
     binding(ctx, run)
     evidence = ctx.result.with_name(ctx.result.name + ".r4")
     evidence.mkdir(mode=0o700, parents=True)
-    source = (ROOT / "crates/jope-appliance/tests/system/live_driver.rs").read_text()
+    source_path = ROOT / "crates/jope-appliance/tests/system/live_driver.rs"
+    source = source_path.read_text()
     for name, filename in (
         ("DRIVER", "live_probe.py"),
         ("OBSERVER", "observe_http.py"),
     ):
-        match = re.search(rf'const {name}: &str = r####"(.*?)"####;', source, re.S)
-        if match is None:
-            raise ProviderError(f"R4 maintained {name} probe unavailable")
-        (evidence / filename).write_text(match[1])
+        (evidence / filename).write_text(maintained_probe(source_path, source, name))
     RUNTIME_BASE.mkdir(mode=0o700, parents=True, exist_ok=True)
     runtime = Path(tempfile.mkdtemp(prefix="r4-", dir=RUNTIME_BASE))
     (evidence / "runtime-location.txt").write_text(str(runtime) + "\n")

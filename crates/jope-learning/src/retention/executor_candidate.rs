@@ -8,6 +8,13 @@ use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "executor_candidate/mock_namespaces.rs"]
+mod mock_namespaces;
+#[path = "executor_candidate/tombstone.rs"]
+mod tombstone;
+pub use mock_namespaces::{MockNamespace, MockRecoveryNamespace};
+pub use tombstone::{Tombstone, TombstoneState};
+
 pub const EXECUTOR_PLAN_SCHEMA: &str = "jope.retirement-candidate/v1";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -144,65 +151,6 @@ impl IndependentRestoreProof {
     }
 }
 
-/// Isolated namespace used only to exercise recovery before an approved mock run.
-#[derive(Clone, Debug, Default)]
-pub struct MockRecoveryNamespace {
-    pub namespace_id: String,
-    objects: BTreeSet<StrongPhysicalRef>,
-}
-
-impl MockRecoveryNamespace {
-    pub fn with_objects(
-        namespace_id: impl Into<String>,
-        objects: impl IntoIterator<Item = StrongPhysicalRef>,
-    ) -> Self {
-        Self {
-            namespace_id: namespace_id.into(),
-            objects: objects.into_iter().collect(),
-        }
-    }
-
-    pub fn contains(&self, object: &StrongPhysicalRef) -> bool {
-        self.objects.contains(object)
-    }
-
-    /// Exercise readback into an isolated namespace while the original exact version is absent.
-    pub fn restore_exact(
-        &mut self,
-        original: &StrongPhysicalRef,
-        replacement: &StrongPhysicalRef,
-        plan_target_set_sha256: &str,
-    ) -> Result<IndependentRestoreProof> {
-        ensure!(
-            !self.objects.contains(original),
-            "mock recovery namespace unexpectedly contains the original"
-        );
-        ensure!(
-            self.objects.contains(replacement),
-            "mock recovery replacement is unavailable"
-        );
-        ensure!(
-            original.sha256 == replacement.sha256 && original.bytes == replacement.bytes,
-            "mock recovery replacement bytes do not match the requested source"
-        );
-        self.objects.insert(original.clone());
-        let receipt_sha256 = canonical_sha256(&(
-            &self.namespace_id,
-            original,
-            replacement,
-            plan_target_set_sha256,
-        ))?;
-        Ok(IndependentRestoreProof {
-            plan_target_set_sha256: plan_target_set_sha256.into(),
-            namespace_id: self.namespace_id.clone(),
-            original_absent_during_restore: true,
-            replacement_readback_verified: self.objects.contains(original),
-            runtime_restore_tested: true,
-            receipt_sha256,
-        })
-    }
-}
-
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct OwnerApproval {
@@ -299,105 +247,11 @@ impl RetirementReservation {
     }
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum TombstoneState {
-    Prepared,
-    Acknowledged,
-    ReconciledAbsent,
-    AbortedStale,
-    AbsentBeforeRequest,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(deny_unknown_fields)]
-pub struct Tombstone {
-    pub schema: String,
-    pub plan_sha256: String,
-    pub reservation_id: String,
-    pub request_id: String,
-    pub exact_target: StrongPhysicalRef,
-    pub state: TombstoneState,
-    pub detail: String,
-    pub tombstone_sha256: String,
-}
-
-impl Tombstone {
-    fn new(reservation: &RetirementReservation, target: &StrongPhysicalRef) -> Result<Self> {
-        let request_id = canonical_sha256(&(
-            &reservation.plan_sha256,
-            &reservation.reservation_id,
-            target,
-        ))?;
-        let mut tombstone = Self {
-            schema: "jope.retirement-tombstone/v1".into(),
-            plan_sha256: reservation.plan_sha256.clone(),
-            reservation_id: reservation.reservation_id.clone(),
-            request_id,
-            exact_target: target.clone(),
-            state: TombstoneState::Prepared,
-            detail: "durable intent represented in the mock journal".into(),
-            tombstone_sha256: String::new(),
-        };
-        tombstone.tombstone_sha256 = canonical_sha256(&tombstone)?;
-        Ok(tombstone)
-    }
-
-    fn reseal(&mut self) -> Result<()> {
-        self.tombstone_sha256.clear();
-        self.tombstone_sha256 = canonical_sha256(self)?;
-        Ok(())
-    }
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SimulatedCrash {
     None,
     BeforeExactRequest,
     AfterExactRequestBeforeAcknowledgement,
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct MockNamespace {
-    objects: BTreeSet<StrongPhysicalRef>,
-    requests: BTreeMap<String, StrongPhysicalRef>,
-    pub exact_request_count: u64,
-    pub simulated_effect_count: u64,
-}
-
-impl MockNamespace {
-    pub fn with_objects(objects: impl IntoIterator<Item = StrongPhysicalRef>) -> Self {
-        Self {
-            objects: objects.into_iter().collect(),
-            ..Self::default()
-        }
-    }
-
-    pub fn contains(&self, object: &StrongPhysicalRef) -> bool {
-        self.objects.contains(object)
-    }
-
-    pub fn request_count_for(&self, request_id: &str) -> u64 {
-        u64::from(self.requests.contains_key(request_id))
-    }
-
-    fn request_exact(&mut self, request_id: &str, target: &StrongPhysicalRef) -> Result<()> {
-        if let Some(recorded) = self.requests.get(request_id) {
-            ensure!(
-                recorded == target,
-                "request identity was reused for another exact version"
-            );
-            return Ok(());
-        }
-        ensure!(
-            self.objects.remove(target),
-            "exact version is already absent from mock namespace"
-        );
-        self.requests.insert(request_id.into(), target.clone());
-        self.exact_request_count += 1;
-        self.simulated_effect_count += 1;
-        Ok(())
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]

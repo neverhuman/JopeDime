@@ -3319,14 +3319,14 @@ const LINEAGES: &[(&str, &str, &str, &str, &str)] = &[
     ),
     (
         "corpus scan_policy",
-        "crates/jope-engine/src/corpus.rs",
+        "crates/jope-engine/src/corpus/build.rs",
         "let scan_policy = hash(",
         "file_hash(Path::new(",
         "every corpus version written afterwards gets a new scan policy",
     ),
     (
         "eval-registry query execution identity",
-        "crates/jope-engine/src/eval_registry/query.rs",
+        "crates/jope-engine/src/eval_registry/query/preparation.rs",
         "fn execution_query_key(",
         "\n}",
         "query keys change, and verify_artifacts refuses every query receipt written before it (it compares these source hashes)",
