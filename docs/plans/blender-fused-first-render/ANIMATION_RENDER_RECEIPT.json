@@ -1,6 +1,6 @@
 {
   "schema": "jain.ten-dataset-animation-delivery/v1",
-  "status": "GPU_RENDER_IN_PROGRESS",
+  "status": "LOCAL_DELIVERY_COMPLETE",
   "created_utc": "2026-11-04T00:49:18.831590+00:00",
   "pr": "https://github.com/neverhuman/JopeDime/pull/2114",
   "protected_prs": [
@@ -12,15 +12,17 @@
     "tools/visualization/animation_capture.py": "b8435ca8e5dd734b2b458534e975d97170afa702b314042b7aa79de863e9dd4e",
     "tools/visualization/round_trip_metrics.py": "b85a7b770c6beabf258b479f4abbc1bedb4e26fb356c184611dee44bbd13795e",
     "tools/visualization/cinematic_pages.py": "2e1871017d34369a987b692e250c04501a767c7c4577d0e3d7edf8361e77716e",
-    "tools/visualization/input_influence.py": "4b6504ae87f6ba5b02a62e7fa6bcbd4cd86d95f29286032d00660fd0d600faa3",
-    "tools/visualization/animate_source.py": "0730aced0eb5e6962efc4bd26af8e33daa013f7feba8e311903d2f4d7e6244f6",
+    "tools/visualization/input_influence.py": "9425a536eb27091f130dbd299289ee0ca21e59b4517f445bdd05f6ae23792fc8",
+    "tools/visualization/animate_source.py": "b1b4186ff33ea37f2dc76a991435f1776337e591eb440de8794e107d35464427",
     "tools/visualization/h256_stage2_inference.py": "9c987ebbd8ba540a83b18e10f562d449fbac50b49abc632e2efecc23cde44ffe",
     "tools/visualization/h256_stage2_inputs.py": "8167ec749f905a6e3be8e045025241565383dd39ed89815537ca390f1f66a803",
     "tools/visualization/h256_stage2_validate.py": "7bba59311fac3b7247c5e9d337fb5cb4152cbc7af07e67b83d5f2315c0248aed",
     "tools/visualization/blender/jain_cinematic.py": "843c7c0b421920cbce7c43b403799405e307e48c8b1c44dbcd052b7a5fd95003",
     "tools/visualization/blender/jain_display_network.py": "60c16ca2a9f29fa709e5cbbda93c4db3a4d765b543b2bb9e7311dc2ef5b90d8d",
     "tools/visualization/blender/render_animation.py": "ca3c3f8e8866c01ffc54048fc1cee2e4321e213fef555b873b76579572f4dbf5",
-    "crates/jope-service/examples/visual_inference_metric.rs": "03759ef39fea56749bc8306a831405575d6e5f2333fc968bfd233cdc46ef5c7b"
+    "crates/jope-service/examples/visual_inference_metric.rs": "03759ef39fea56749bc8306a831405575d6e5f2333fc968bfd233cdc46ef5c7b",
+    "tools/visualization/table_panels.py": "0d267dceabe4730df9dd567ae0f6684d8d17fb64b843502ad527f30ef68ea8b4",
+    "tools/visualization/tests/test_input_influence.py": "9442cc40085e97bc21e25363110fd441d025bf29889bb515e7e049117e632a37"
   },
   "artifacts": {
     "capture.receipt.json": {
@@ -70,6 +72,78 @@
     "scene-v2/scene.receipt.json": {
       "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/scene-v2/scene.receipt.json",
       "sha256": "ee84101a34c8676e3a0519d11d7e887d7b2d990acfb611f33eac34fb00727d78"
+    },
+    "cell-influence-17/influence.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/cell-influence-17/influence.json",
+      "sha256": "d413ed40bbc2da7196fe64e8bf8bb4531161a04cc10933f18c2e2385bd4bf85e"
+    },
+    "cell-influence-17/influence.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/cell-influence-17/influence.receipt.json",
+      "sha256": "5539cb28d8c770ab2899f67b13ac216ba2c23b6f5d3d3a308c59af4c178aca84"
+    },
+    "cell-influence-17/controls.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/cell-influence-17/controls.receipt.json",
+      "sha256": "bbecf2505c7fb70c37033dbbaf6b03473a4e033d87fcf099bcf0958154c09fab"
+    },
+    "cell-influence-17/table-panels.audit.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/cell-influence-17/table-panels.audit.receipt.json",
+      "sha256": "31baaf944b79fe9bb04dfc8044dee98c112d15a053a014be386e8d8dc2451c9e"
+    },
+    "table-panels-v1/catalog.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/table-panels-v1/catalog.receipt.json",
+      "sha256": "5615e3f78757a8d94e772976568e66ebfd2898d1785d08b0722636f86120b73b"
+    },
+    "gpu-loops-validation.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/gpu-loops-validation.receipt.json",
+      "sha256": "547443faddae763edfe81e0b9bc2a06dcb4bdc373cf86d98cdf97320ca0316e8"
+    },
+    "source-archive.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/source-archive.receipt.json",
+      "sha256": "ed97c524d6a64f626038bc776b53cc9adc6fce339467e552cc8065ec7b6efc70"
+    },
+    "JAIN-ten-complete-Rust-sources.zip": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/JAIN-ten-complete-Rust-sources.zip",
+      "sha256": "6207786c157b4e69dd9634ca4e35cc8af9c9e76ec1eee22b738fafd75f7ebf80"
+    },
+    "main-compatibility/compatibility.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/main-compatibility/compatibility.receipt.json",
+      "sha256": "9918814d5b739a0a7ae7521893cbb7b85067a5c33f7a0afda0373437e5a10a9d"
+    },
+    "main-compatibility/records-parity.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/main-compatibility/records-parity.receipt.json",
+      "sha256": "dd8d8aae36dd9df94a7756d18fa5b380ee0f572fa602169d45e9373987c02cb4"
+    },
+    "main-compatibility/hooks-review.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/main-compatibility/hooks-review.receipt.json",
+      "sha256": "bb1eeee9e1bac66f90eabf12a7665747ade08cd7472243f6b770ea0c6afeffc2"
+    },
+    "main-compatibility/cached-metrics.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/main-compatibility/cached-metrics.receipt.json",
+      "sha256": "c7c69ba6fcaa878a1084ef05e6a04de156af57c885a4236a7fa846d815346a35"
+    },
+    "final-movie-v1/jain-1080p30.mp4": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/final-movie-v1/jain-1080p30.mp4",
+      "sha256": "9f5e1c88cd9123fb40813ef6d153b248d58a0bfed1e5824f22f98a0a7ea9ff48"
+    },
+    "final-movie-v1/timeline.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/final-movie-v1/timeline.json",
+      "sha256": "d1930299b28d3b1970852c2c36b916e6e6b1bb94b3becb6dba6cb105b55cf582"
+    },
+    "final-movie-v1/encode.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/final-movie-v1/encode.receipt.json",
+      "sha256": "456b7b51a5dbdd99cd4d51d1bc1c58e066231252a66410eb9a4ea12ca5250390"
+    },
+    "final-movie-v1/ffprobe.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/final-movie-v1/ffprobe.receipt.json",
+      "sha256": "5094603fdd9e2d5d36457db4e0d08a6389f8758741de13e1630eae027cdffc4f"
+    },
+    "decoded-review-v1/samples.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/decoded-review-v1/samples.receipt.json",
+      "sha256": "27020c6f2331a2841904be29b2e974462e9baee74709d61cd1e70d5bbea40780"
+    },
+    "final-movie-v1/video-review.receipt.json": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/final-movie-v1/video-review.receipt.json",
+      "sha256": "0ecadba7aaaecd66686784f24644194bc483c0d5f85b87f8c528acb188998018"
     }
   },
   "datasets": {
@@ -77,9 +151,11 @@
     "origin": "synthetic",
     "rows_each": 96,
     "features": 4,
-    "visible_rows_each": 13,
+    "visible_rows_each": 17,
     "target_last_and_purple": true,
-    "selection": "fixed six plus outcome-free farthest extension from declared24pool; no reroll"
+    "selection": "fixed six plus outcome-free farthest extension from declared24pool; no reroll",
+    "distinct_selected_GP_programs": 7,
+    "distinct_Rust_files": 10
   },
   "source": {
     "bytes": 994626,
@@ -112,16 +188,30 @@
   },
   "sensitivity": {
     "method": "actual fitted GP prediction delta with FIT-median feature replacement",
-    "rows_per_case": 5,
-    "additional_visible_rows": "neutral; no invented saliency"
+    "rows_per_case": 17,
+    "additional_visible_rows": "all genuinely measured; no invented values",
+    "feature_scores_per_case": 68,
+    "actual_visible_reference_checks_per_case": 85,
+    "all_row_native_baselines_per_case": 96,
+    "max_baseline_error": 0.0,
+    "genuine_all_zero_cases": [
+      "case-b",
+      "case-h",
+      "case-i"
+    ],
+    "target_perturbed": false
   },
   "local_checks": {
-    "python_controls": 41,
+    "python_controls": 45,
     "native_metric_tests": 3,
     "native_fit_tests": 2,
     "ten_full_source_training_parity": "PASS exact0.0",
-    "capability_matrix": "PASS845rows",
-    "hosted_ci": "NOT_RUN"
+    "capability_matrix": "PASS846rows with current rebuiltchecker",
+    "hosted_ci": "NOT_RUN",
+    "current_main_compatibility": "f4809b29d91087fdcd0ef652c1ebb62d9797c109:3examplescompile,metric3+fit2tests PASS; oldqualifiedbinaries bit-identical",
+    "table_correction_controls": "4focusedtests +8corruptioncontrols PASS; all10RGBApixelreproductions match",
+    "complete_H264_decode_frames": 29760,
+    "peer_reviews": "10NNbinding,17rowtable+680scores,actualmovie/source/scroll/chapters PASS"
   },
   "render": {
     "width": 1920,
@@ -133,13 +223,19 @@
       "xbabe3"
     ],
     "gpu_inference": false,
-    "render_receipts": "PENDING",
-    "movie": "PENDING"
+    "render_receipts": "PASS10cases/1200actualGPU1080pframes",
+    "movie": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/animation-ten-v1/final-movie-v1/jain-1080p30.mp4",
+    "actual_movie_frames": 29760,
+    "movie_sha256": "9f5e1c88cd9123fb40813ef6d153b248d58a0bfed1e5824f22f98a0a7ea9ff48",
+    "duration_seconds": 992,
+    "dataset_chapters": 10,
+    "final_table": "verified raised17-row source-native RGBAoverlay covers historical13-row Blenderplate; all680scores actual",
+    "source_scroll": "eachcase startsbyte0, allpagesordered toEOF; firstpage types0.6s then smooth1.2sscrolling +fullholds;semantic6s",
+    "postflight": "ownedrenderprocessesgone; xbabe3idle1MiB/0percent,xbabe1originaltrainingPID1402163stillrunning"
   },
   "remaining": [
-    "actual10GPUloops",
-    "complete H264 composition and ffprobe",
-    "visual QA",
-    "Git main integration and final review/push"
-  ]
+    "final Git/PR handoff recorded externally after normalpush",
+    "hostedCI NOT_RUN; no merge/deploy requested"
+  ],
+  "updated_utc": "2026-11-04T01:13:22.168976+00:00"
 }

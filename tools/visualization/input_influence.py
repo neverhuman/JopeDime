@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure local fitted-GP sensitivity of the five visible table rows.
+"""Measure local fitted-GP sensitivity of the visible actual FIT table rows.
 
 Each feature cell is replaced, alone, by that feature's median over the original
 FIT rows. Scores are absolute prediction differences, normalized by the largest
@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
-import io
 import json
 import math
 from pathlib import Path
@@ -80,7 +79,7 @@ def parity(actual, expected, label):
     return max(errors, default=0.)
 
 
-def context(case, root):
+def context(case, root, visible_rows=5):
     """Read only hash-bound source, model, CSV and original row partition."""
     source = case["source"]
     require(isinstance(source, dict), "case has no fitted-GP source proof")
@@ -114,6 +113,11 @@ def context(case, root):
     require(len(visible_ids) == 5 and len(set(visible_ids)) == 5 and set(visible_ids) <= set(fit), "preview is not five actual FIT rows")
     actual_table = [[float(v) for v in rows[i]] for i in visible_ids]
     require(cells_hash(actual_table, "f") == cells_hash(raw_table, "f"), "preview does not map to exact CSV rows at native FP32 precision")
+    require(type(visible_rows) is int and 5 <= visible_rows <= 64 and visible_rows <= len(fit),
+            "visible row count must be 5..64 and fit within FIT")
+    if visible_rows > 5:
+        visible_ids = fit[:visible_rows]
+        raw_table = [[float(v) for v in rows[i]] for i in visible_ids]
     model_id = source["model_id"]
     require(model_id == proof["model"]["model_id"], "fitted model identity differs")
     model_path = directory / "models" / model_id
@@ -168,39 +172,41 @@ def perturbations(ctx):
 
 
 def score_arrays(baseline, perturbed):
-    matrix(perturbed, 5, 4, "perturbed predictions")
-    require(len(baseline) == 5 and all(math.isfinite(v) for v in baseline), "visible baseline differs")
-    deltas = [[abs(perturbed[i][j] - baseline[i]) for j in range(4)] for i in range(5)]
+    count = len(baseline)
+    require(count > 0 and all(math.isfinite(v) for v in baseline), "visible baseline differs")
+    matrix(perturbed, count, 4, "perturbed predictions")
+    deltas = [[abs(perturbed[i][j] - baseline[i]) for j in range(4)] for i in range(count)]
     require(all(math.isfinite(v) for row in deltas for v in row), "prediction difference overflow")
     maximum = max(v for row in deltas for v in row)
     scores = [[v / maximum if maximum > 0. else 0. for v in row] for row in deltas]
     return deltas, maximum, scores
 
 
-def build_case(case, root):
-    ctx = context(case, root)
+def build_case(case, root, visible_rows=5):
+    ctx = context(case, root, visible_rows)
     baseline_all = list(ctx["module"].predict_rows(ctx["rows"]))
     native_error = parity(baseline_all, ctx["native"], "all-row native baseline")
     python_error = parity(baseline_all, ctx["existing"], "existing all-row Python baseline")
     baseline = [baseline_all[i] for i in ctx["visible_ids"]]
     predictions = list(ctx["module"].predict_rows(perturbations(ctx)))
-    require(len(predictions) == 20, "perturbed prediction row count differs")
-    perturbed = [predictions[i * 4:(i + 1) * 4] for i in range(5)]
+    require(len(predictions) == 4 * visible_rows, "perturbed prediction row count differs")
+    perturbed = [predictions[i * 4:(i + 1) * 4] for i in range(visible_rows)]
     deltas, maximum, scores = score_arrays(baseline, perturbed)
-    record = {"case_id": case["id"], "row_ids": ctx["visible_ids"], "feature_names": ctx["features"],
+    record = {"case_id": case["id"], "row_ids": ctx["visible_ids"], "visible_rows": visible_rows,
+        "raw_table_hash_dtype": "float32" if visible_rows == 5 else "float64", "feature_names": ctx["features"],
         "feature_column_indices": [0, 1, 2, 3], "target_name": ctx["target"], "target_column_index": 4,
         "raw_table": ctx["raw_table"], "fit_medians": ctx["medians"], "baseline_predictions": baseline,
         "perturbed_predictions": perturbed, "absolute_deltas": deltas, "maximum_absolute_delta": maximum,
         "scores": scores, "bindings": ctx["bindings"], "target_perturbed": False,
         "baseline_parity": {"rows": len(baseline_all), "max_abs_error_native": native_error,
             "max_abs_error_existing_python": python_error, "absolute_tolerance": ABS_TOL, "relative_tolerance": REL_TOL}}
-    record["hashes"] = {key: cells_hash(record[key], "f" if key == "raw_table" else "d")
+    record["hashes"] = {key: cells_hash(record[key], "f" if key == "raw_table" and visible_rows == 5 else "d")
         for key in ("raw_table", "fit_medians", "baseline_predictions", "perturbed_predictions", "absolute_deltas", "scores")}
     return record
 
 
 def load_influence(path, trace_path, data=None):
-    """Strict scene loader; recheck bindings and the 25 relevant GP predictions per case."""
+    """Recheck actual displayed FIT rows and their N baseline + 4N perturbation predictions."""
     path, trace_path = Path(path), Path(trace_path)
     require(path.stat().st_size <= 4 * 1024 * 1024, "influence artifact exceeds bound")
     influence = read_json(path)
@@ -212,27 +218,32 @@ def load_influence(path, trace_path, data=None):
     cases = {case["id"]: case for case in data["cases"]}
     require(set(influence["cases"]) == set(cases), "influence case inventory differs")
     for cid, case in cases.items():
-        record, ctx = influence["cases"][cid], context(case, trace_path.parent)
+        record = influence["cases"][cid]
+        visible_rows = len(record["row_ids"])
+        require(record.get("visible_rows", visible_rows) == visible_rows, "declared visible row count differs")
+        expected_dtype = "float32" if visible_rows == 5 else "float64"
+        require(record.get("raw_table_hash_dtype", expected_dtype) == expected_dtype, "raw table precision domain differs")
+        ctx = context(case, trace_path.parent, visible_rows)
         require(record["case_id"] == cid and record["bindings"] == ctx["bindings"], "source/model/FIT/CSV binding differs")
         require(record["row_ids"] == ctx["visible_ids"] and record["raw_table"] == ctx["raw_table"]
                 and record["feature_names"] == ctx["features"] and record["feature_column_indices"] == [0, 1, 2, 3]
                 and record["target_name"] == ctx["target"] and record["target_column_index"] == 4
                 and record["target_perturbed"] is False and record["fit_medians"] == ctx["medians"], "cell/reference mapping differs")
         predicted = list(ctx["module"].predict_rows([ctx["rows"][i] for i in ctx["visible_ids"]] + perturbations(ctx)))
-        require(len(predicted) == 25, "verification prediction count differs")
-        parity(record["baseline_predictions"], predicted[:5], "visible baseline")
-        parity(predicted[:5], [ctx["native"][i] for i in ctx["visible_ids"]], "visible native reference")
-        matrix(record["perturbed_predictions"], 5, 4, "perturbed predictions")
-        parity([v for row in record["perturbed_predictions"] for v in row], predicted[5:], "actual perturbation")
+        require(len(predicted) == 5 * visible_rows, "verification prediction count differs")
+        parity(record["baseline_predictions"], predicted[:visible_rows], "visible baseline")
+        parity(predicted[:visible_rows], [ctx["native"][i] for i in ctx["visible_ids"]], "visible native reference")
+        matrix(record["perturbed_predictions"], visible_rows, 4, "perturbed predictions")
+        parity([v for row in record["perturbed_predictions"] for v in row], predicted[visible_rows:], "actual perturbation")
         deltas, maximum, scores = score_arrays(record["baseline_predictions"], record["perturbed_predictions"])
         require(record["absolute_deltas"] == deltas and record["maximum_absolute_delta"] == maximum
                 and record["scores"] == scores, "sensitivity/normalization arithmetic differs")
         for key, digest in record["hashes"].items():
             require(key in {"raw_table", "fit_medians", "baseline_predictions", "perturbed_predictions", "absolute_deltas", "scores"}
-                    and cells_hash(record[key], "f" if key == "raw_table" else "d") == digest, "numeric cell hash differs")
+                    and cells_hash(record[key], "f" if key == "raw_table" and visible_rows == 5 else "d") == digest, "numeric cell hash differs")
         require(set(record["hashes"]) == {"raw_table", "fit_medians", "baseline_predictions", "perturbed_predictions", "absolute_deltas", "scores"},
                 "numeric hash inventory incomplete")
-        matrix(record["scores"], 5, 4, "normalized sensitivity")
+        matrix(record["scores"], visible_rows, 4, "normalized sensitivity")
         require(all(0. <= v <= 1. for row in record["scores"] for v in row), "sensitivity outside 0..1")
     return influence
 
@@ -241,12 +252,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--trace", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--visible-rows", type=int, default=5, help="5 preserves native preview; 6..64 uses the exact ordered FIT prefix")
     args = parser.parse_args()
     require(args.output_dir.is_absolute() and not args.output_dir.exists(), "output must be a new absolute external directory")
     require(args.trace.stat().st_size <= 512 * 1024 * 1024, "trace exceeds bounded input")
     data = read_json(args.trace)
     require(data["schema"] == "jain.h256-stage2-capture/v1" and 1 <= len(data["cases"]) <= 16, "unsupported case capture")
-    records = {case["id"]: build_case(case, args.trace.parent) for case in data["cases"]}
+    records = {case["id"]: build_case(case, args.trace.parent, args.visible_rows) for case in data["cases"]}
     influence = {"schema": SCHEMA, "trace": {"path": str(args.trace.resolve()), "sha256": sha(args.trace)},
         "method": {"id": METHOD, "label": "relative input sensitivity",
             "formula": "abs(f(x) - f(x with only feature j replaced by its original FIT-only median))",
@@ -263,11 +275,12 @@ def main():
     load_influence(path, args.trace, data)
     receipt = {"schema": "jain.input-cell-influence-proof/v1", "status": "PASS", "influence_sha256": sha(path),
         "trace_sha256": influence["trace"]["sha256"], "builder_source_sha256": sha(__file__),
-        "cases": [{"id": cid, "scores": 20, "baseline_rows": record["baseline_parity"]["rows"],
+        "cases": [{"id": cid, "visible_rows": len(record["row_ids"]), "scores": 4 * len(record["row_ids"]),
+            "verification_predictions": 5 * len(record["row_ids"]), "baseline_rows": record["baseline_parity"]["rows"],
             "max_baseline_native_error": record["baseline_parity"]["max_abs_error_native"],
             "maximum_absolute_delta": record["maximum_absolute_delta"], "score_sha256": record["hashes"]["scores"]}
             for cid, record in records.items()], "method": influence["method"],
-        "strict_loader": "PASS including fresh 25-prediction cell verification per case"}
+        "strict_loader": "PASS including fresh N baseline + 4N perturbation prediction verification per case"}
     with (args.output_dir / "influence.receipt.json").open("x") as stream:
         json.dump(receipt, stream, indent=2, allow_nan=False)
         stream.write("\n")

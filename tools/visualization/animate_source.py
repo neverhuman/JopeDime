@@ -94,6 +94,7 @@ def make_timeline(scene_path: Path, pages_root: Path, *, fps: int = 30,
     scene_path, pages_root = scene_path.resolve(), pages_root.resolve()
     scene = load_json(scene_path)
     ids = case_ids(scene)
+    tables = {case["case_id"]: case for case in scene.get("tables", [])}
     spans = scene["case_frames"]
     if len(spans) != len(ids) or any(len(span) != 2 or span[1] < span[0] for span in spans):
         raise ValueError("scene case frame spans differ from case inventory")
@@ -157,6 +158,8 @@ def make_timeline(scene_path: Path, pages_root: Path, *, fps: int = 30,
                          "page": manifest["page_count"], "loop_phase_padding_frames": padding})
         current = segments[-1]["end"]
         cases.append({"case_id": cid, "start": begin, "end": current,
+                      "dataset_name": tables.get(cid, {}).get("dataset_name", cid),
+                      "total_rows": tables.get(cid, {}).get("total_rows"),
                       "loop_frame_start": span[0], "loop_frame_end": span[1],
                       "manifest_path": str(manifest_path), "manifest_sha256": manifest_sha,
                       "source_sha256": manifest["source_sha256"], "source_bytes": len(raw),
@@ -271,7 +274,7 @@ def scroll_pages(previous, following, progress: float, *, cursor: bool = True):
 
 
 def overlay_source_page(loop_png: Path, manifest_path: Path, page_index: int,
-                        source_viewport, output_png: Path) -> dict:
+                        source_viewport, output_png: Path, table_png: Path | None = None) -> dict:
     """Early full-page poster from any actual loop PNG; page_index is one-based.
 
     This binds the supplied image bytes, without claiming a full loop or GPU
@@ -296,7 +299,13 @@ def overlay_source_page(loop_png: Path, manifest_path: Path, page_index: int,
     with Image.open(loop_png) as base, Image.open(path) as source:
         if source.size != (manifest["width"], manifest["height"]):
             raise ValueError("poster page dimensions differ from manifest")
-        result = compose_frame(base.convert("RGB"), source.convert("RGB"), manifest, page, rect)
+        base = base.convert("RGB")
+        if table_png is not None:
+            from table_panels import check_image
+            with Image.open(table_png) as table:
+                check_image(table)
+                base.paste(table, (0, 0), table)
+        result = compose_frame(base, source.convert("RGB"), manifest, page, rect)
     output_png.parent.mkdir(parents=True, exist_ok=True)
     with output_png.open("xb") as stream:
         result.save(stream, format="PNG")
@@ -306,6 +315,7 @@ def overlay_source_page(loop_png: Path, manifest_path: Path, page_index: int,
                "page": page_index, "page_count": manifest["page_count"], "page_sha256": page["sha256"],
                "source_byte_start": page["source_byte_start"], "source_byte_end": page["source_byte_end"],
                "source_viewport": rect, "output_png_sha256": digest(output_png),
+               "table_overlay_sha256": digest(Path(table_png)) if table_png is not None else None,
                "scope": "one fully visible exact source page over supplied frame; full GPU-loop custody not asserted"}
     write_json(sidecar, receipt)
     return receipt
@@ -325,6 +335,21 @@ def ffmpeg_path(explicit: str | None) -> str:
     if not path:
         raise FileNotFoundError("ffmpeg unavailable; provide --ffmpeg or an existing imageio_ffmpeg runtime")
     return path
+
+
+def write_chapters(timeline: dict, path: Path) -> dict:
+    """Seekable dataset chapters use the exact movie frame boundaries."""
+    def escape(value):
+        return str(value).replace("\\", "\\\\").replace("\n", "\\\n").replace("\r", "").replace("=", "\\=").replace(";", "\\;").replace("#", "\\#")
+    lines, chapters = [";FFMETADATA1"], []
+    for case in timeline["cases"]:
+        title = case.get("dataset_name", case["case_id"])
+        lines.extend(("[CHAPTER]", "TIMEBASE=1/30", f"START={case['start']}", f"END={case['end']}", "title=" + escape(title)))
+        chapters.append({"case_id": case["case_id"], "title": title,
+                         "start_frame": case["start"], "end_frame": case["end"]})
+    with Path(path).open("x", encoding="utf-8") as stream:
+        stream.write("\n".join(lines) + "\n")
+    return {"file": str(Path(path).resolve()), "sha256": digest(Path(path)), "timebase": "1/30", "chapters": chapters}
 
 
 def verify_loop(root: Path, case: dict, scene_sha: str) -> tuple[dict, Path]:
@@ -348,9 +373,16 @@ def verify_loop(root: Path, case: dict, scene_sha: str) -> tuple[dict, Path]:
 
 def encode(timeline: dict, loops_root: Path, output_dir: Path, *, ffmpeg: str | None = None,
            crf: int = 18, preset: str = "medium", cache_frames: int = 120,
-           font: Path | None = None) -> dict:
+           font: Path | None = None, table_panels: Path | None = None) -> dict:
     from PIL import Image
     executable = ffmpeg_path(ffmpeg)
+    table_images, table_override = {}, None
+    if table_panels is not None:
+        from table_panels import load_panels
+        scene_path = Path(timeline["scene_receipt_path"])
+        if digest(scene_path) != timeline["scene_receipt_sha256"]:
+            raise ValueError("scene receipt changed before table override")
+        table_images, table_override = load_panels(table_panels, load_json(scene_path))
     loops = []
     for case in timeline["cases"]:
         receipt, path = verify_loop(loops_root, case, timeline["scene_receipt_sha256"])
@@ -358,9 +390,12 @@ def encode(timeline: dict, loops_root: Path, output_dir: Path, *, ffmpeg: str | 
     if len({receipt["scene_sha256"] for receipt, _ in loops}) != 1:
         raise ValueError("case loops were rendered from different saved scenes")
     movie = output_dir / "jain-1080p30.mp4"
+    chapters = write_chapters(timeline, output_dir / "chapters.ffmetadata")
     command = [executable, "-nostdin", "-hide_banner", "-loglevel", "error", "-n",
                "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "1920x1080", "-r", "30",
-               "-i", "pipe:0", "-an", "-c:v", "libx264", "-preset", preset, "-crf", str(crf),
+               "-i", "pipe:0", "-f", "ffmetadata", "-i", chapters["file"],
+               "-map", "0:v:0", "-map_metadata", "1", "-map_chapters", "1",
+               "-an", "-c:v", "libx264", "-preset", preset, "-crf", str(crf),
                "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(movie)]
     log_path = output_dir / "ffmpeg.stderr.log"
     rendered, loop_bindings = 0, []
@@ -404,6 +439,9 @@ def encode(timeline: dict, loops_root: Path, output_dir: Path, *, ffmpeg: str | 
                                 if handle.size != (1920, 1080):
                                     raise ValueError("render PNG dimensions differ from1080p receipt")
                                 cache[relative] = handle.convert("RGB")
+                                if case["case_id"] in table_images:
+                                    table = table_images[case["case_id"]]
+                                    cache[relative].paste(table, (0, 0), table)
                             while len(cache) > cache_frames:
                                 cache.popitem(last=False)
                         cache.move_to_end(relative)
@@ -445,6 +483,8 @@ def encode(timeline: dict, loops_root: Path, output_dir: Path, *, ffmpeg: str | 
             "fps": 30, "width": 1920, "height": 1080, "duration_seconds": rendered / 30,
             "source_bytes": sum(case["source_bytes"] for case in timeline["cases"]),
             "page_count": timeline["page_count"], "loops": loop_bindings,
+            "table_overlay": table_override,
+            "chapters": chapters,
             "typing_scope": "initial exact raster typing then monotone continuous full-file scroll; editorial cursor/timing, no generated text",
             "command": command}
 
@@ -466,6 +506,7 @@ def main() -> None:
     parser.add_argument("--encode", action="store_true")
     parser.add_argument("--ffmpeg")
     parser.add_argument("--font", type=Path, help="relocated exact original page font; SHA must match manifest")
+    parser.add_argument("--table-panels", type=Path, help="verified static17-row HUD override catalog")
     parser.add_argument("--crf", type=int, default=18)
     parser.add_argument("--preset", default="medium", choices=("ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow"))
     parser.add_argument("--cache-frames", type=int, default=120)
@@ -485,7 +526,8 @@ def main() -> None:
                       "pages": timeline["page_count"], "seconds": timeline["duration_seconds"]}), flush=True)
     if args.encode:
         receipt = encode(timeline, args.loops_root.resolve(), output, ffmpeg=args.ffmpeg,
-                         crf=args.crf, preset=args.preset, cache_frames=args.cache_frames, font=args.font)
+                         crf=args.crf, preset=args.preset, cache_frames=args.cache_frames, font=args.font,
+                         table_panels=args.table_panels)
         write_json(output / "encode.receipt.json", receipt)
         print(json.dumps({"status": receipt["status"], "movie": receipt["movie"]}), flush=True)
 
