@@ -1,0 +1,10 @@
+{
+  "wave_id": "H326",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "verdict": null,
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "wave_id": "H326",
+  "authority": "/home/ubuntu/nudges/hw_t1625_h326_bootsel.md",
+  "base_commit": "97a1ffceedfdc007c85adedd772cb387fb96e9b6",
+  "template": "h324_huber_context_influence_cap",
+  "vendor_commit": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "source_sha256": {
+    "PREREG.md": "8462a003209c832e7b3c28b1613cc483df6e8adcf6cd81b82329486709f275b6",
+    "audit_cache.py": "c4c8fe7c19bb858afa7c801f9d0dd44d3f10e4caedfae4752af165fda2b93b03",
+    "recover.py": "1ab4285e8c64f95af3dfcbf345756cae02d1a790c7439eea09df60cb331ef120",
+    "regression.py": "f65276e13ee57d46aea7da77e60b8acf17199e29b4663cc2b64e6cf001730f75",
+    "runtime.py": "8ad75eaade93b94380de2c5d888cba8502eb14518511c8a90618563d6e1dec51",
+    "selection.py": "498c0a4028d3bb766f5b7cbff8c835022a24b6e77bf11a9cd4b7cfff2ba4a469",
+    "test_boundary.py": "a30a2057c34a7b07342b7ea863911899f2e46b32b96e147afaac744b8756ee0c",
+    "test_selection.py": "3290ea8e6a4162925363b2afd4330ea318d496ecf549aeac3a1adab412cf8b42"
+  },
+  "resources": {
+    "host": "xbabe2",
+    "nice": 19,
+    "numeric_threads": 1,
+    "memory_max_bytes": 6442450944,
+    "swap_max_bytes": 0,
+    "cores_max": 6,
+    "candidates": [
+      63,
+      76,
+      78,
+      115,
+      120,
+      3
+    ],
+    "scratch_max_bytes": 2000000000,
+    "compute_stop": "2026-11-04T18:45:00Z",
+    "close_deadline": "2026-11-04T19:00:00Z"
+  },
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  }
+}
