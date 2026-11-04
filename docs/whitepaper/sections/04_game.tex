@@ -17,12 +17,11 @@
 \end{figure*}
 
 An invention attempt is the reference game's unit of play
-(\cref{sec:road}): the encoded problem is the board, a program is the move,
-the referee checks and scores it, and a declared incumbent is the opponent.
-The encoding supplies a shared interface;
-each task type still needs its own qualified encoding, language and
-evaluation protocol (\cref{sub:game-boards}). \Cref{tab:go-vs-innovation}
-\mbox{makes the} comparison with Go explicit.
+(\cref{sec:road}): a problem supplies the board, a program the move, the
+referee a verdict and a declared incumbent the opponent. The shared
+interface still needs a qualified encoding, language and evaluation
+protocol for each task type (\cref{sub:game-boards}).
+\Cref{tab:go-vs-innovation} compares it with Go.
 
 % ----------------------------------------------------------------------------
 \subsection{Why games came first}\label{sub:game-games}
@@ -115,10 +114,10 @@ supplied separately. The objective, metric and budget are protocol
 settings, not \mbox{additional input fields} in this encoder call.
 
 A useful board should preserve distinctions relevant to algorithm choice,
-remain stable under irrelevant reorderings, exclude final evaluation
-information and have a measured cost. These are requirements to test, not
-properties guaranteed by naming an encoder. People still choose the problem
-\mbox{and define what} counts as a useful solution.
+ignore irrelevant reorderings, exclude final evaluation information and
+have a measured cost. Naming an encoder guarantees none of these
+properties; they require tests. People still choose the problem and define
+what counts as useful.
 
 A move is one complete program written in a typed language over learning primitives.
 A task-specific grammar restricts legal moves, and \cref{sub:method-move}
@@ -222,6 +221,5 @@ reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
 A worked game, chosen by a rule fixed before inspection, is to be \mbox{reported alongside}
 the results (\cref{sub:results-failures}).
 
-The game defines an attempt and a verdict. \Cref{sec:price} accounts for
-the work required to obtain a verified improvement, including invalid
-programs and valid losses.
+The game defines an attempt and a verdict. \Cref{sec:price} counts the work
+behind a verified improvement, including invalid programs and valid losses.

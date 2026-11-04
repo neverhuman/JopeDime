@@ -15,9 +15,9 @@
 
 Five lines of AI research connect the four pillars of \cref{sec:anatomy}:
 deep learning, program search, reinforcement learning, games and the race
-for self-improvement. Each contributes a different way to propose, test or
-retain a candidate. \Cref{tab:roads} compares their outputs, deployment
-budgets and retained experience.\footnote{Each history keeps only the
+for self-improvement. They supply ways to propose, test and retain
+candidates; \cref{tab:roads} compares their outputs, deployment budgets and
+retained experience.\footnote{Each history keeps only the
 milestones the argument needs; \cref{app:history} collects the referees
 those milestones rely on.}
 
@@ -52,10 +52,10 @@ halicin, an antibiotic that then treated infections in mice
 CLIP placed images and captions in a single shared \mbox{space
 \citep{radford2021clip},} an analogy for our problem--program ranking map
 (\cref{sub:method-map}).
-The reference objective supervises the map with programs scored within each problem.
-During training search, its ranks can guide parent selection, yet they
-neither condition nor screen the writer; consequently, map-ranking accuracy and
-first-proposal quality require separate tests.
+The reference map learns from programs scored within each problem.
+Its ranks can guide training-search parent selection, without conditioning
+or screening the writer. Map-ranking accuracy and first-proposal quality
+therefore require separate tests.
 
 Executable tests connect generated programs to feedback. \EZ{} proposes
 training on that feedback, then \mbox{measuring} first-proposal quality beyond
@@ -92,11 +92,10 @@ improving on Strassen's algorithm in that setting after \mbox{56 years}
 \citep{novikov2025alphaevolve}, and MLEvolve extended the same search loop to
 \mbox{machine-learning engineering} tasks \citep{mlevolve2026}.
 
-\EZ{} adopts executable programs as moves inside this generate--judge loop,
-and asks how much of a verified search can transfer into the proposer itself.
+\EZ{} asks how much verified program search can transfer into the proposer.
 DreamCoder \mbox{already} learns reusable libraries and a search-guiding model across
-tasks \citep{ellis2021dreamcoder}; single-candidate evaluation tests how
-\mbox{useful} a learned proposal is before task-specific search.
+tasks \citep{ellis2021dreamcoder}; single-candidate evaluation tests a learned
+proposal before task-specific search.
 
 % ---------------------------------------------------------------------
 \subsection{Reinforcement learning turned retention into taste}\label{sub:road-rl}
@@ -121,8 +120,8 @@ Language models also learn from feedback: human preferences
 \citep{christiano2017preferences,ouyang2022instructgpt} and rule-based
 \mbox{checks of answers,} as in DeepSeek-R1 \citep{guo2025deepseekr1}.
 
-This recipe needs a game whose referee compares algorithm performance.
-The next line of work shows how tasks \mbox{acquire rules} and executable referees.
+For algorithm invention, the referee compares performance. Games show
+how tasks acquire rules and executable referees.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:selfplay]{Self-play in 90 seconds}
@@ -209,11 +208,10 @@ checker, and AlphaGeometry~2 jointly reached silver-medal standard on the
 2024 International Mathematical Olympiad problems, using computation over
 multiple days \citep{hubert2026alphaproof}.
 
-These benchmarks supply the recipe for a game (clear rules, a referee, a
-score and a sealed test) and raise the question of which parts of a task can
-vary under a shared representation and referee. \EZ{}'s reference design makes the problem an
-input to the proposer (\cref{sec:game}); whether that supports transfer across
-families remains a result to establish.
+These benchmarks supply clear rules, a referee, a score and a sealed test.
+The next question is what can vary under a shared representation and
+referee. \EZ{}'s reference design makes the problem an input to the
+proposer (\cref{sec:game}); transfer across families remains to be established.
 
 % ---------------------------------------------------------------------
 \subsection{The race for self-improvement scaled search}\label{sub:road-self}
@@ -265,11 +263,11 @@ improve, raising verified discoveries per unit of compute across generations.
 Each requires separate evidence (\cref{sec:meaning}); a recorded
 training trajectory alone establishes none of them on an unseen task.
 
-Together, these systems motivate two reference requirements: verify an improvement
-before retaining it, and sandbox candidate execution
-(\cref{sub:method-referee}). The proposed learning test compares a trained
-writer against its frozen reference under the same deployment budget,
-separately from \mbox{the adapter} \mbox{operating} record in \cref{sec:method-status}.
+These systems motivate two reference requirements: verify improvements
+before retaining them, and sandbox execution (\cref{sub:method-referee}).
+The proposed test compares a trained writer with its frozen reference at
+the same deployment budget. The adapter operating record in
+\cref{sec:method-status} remains separate.
 
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}

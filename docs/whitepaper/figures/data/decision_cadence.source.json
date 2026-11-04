@@ -1,0 +1,30 @@
+{
+  "schema": "whitepaper.decision-cadence-source/v1",
+  "source_journal": "adapter_admissions.jsonl",
+  "captured_utc": "2026-11-03T23:57:33.896650+00:00",
+  "source_prefix_bytes": 2069341,
+  "source_prefix_sha256": "8b381f1d2f3e93d18923c8000b0698c90fcba75b94dae0238c220453698be069",
+  "source_prefix_records": 3896,
+  "complete_prefix_reread": true,
+  "selection": "Latest201 complete admission-journal records before inspecting the200 adjacent timestamp differences; all records retained, no outcome or gap filtering.",
+  "records": 201,
+  "intervals": 200,
+  "round_window": [
+    4471,
+    4671
+  ],
+  "point_round_window": [
+    4472,
+    4671
+  ],
+  "source_line_window": [
+    3696,
+    3896
+  ],
+  "csv_sha256": "47a88fb8972c4195e08762834d9ad311d97a1ae714e60532c4963d3535333805",
+  "minimum_gap_seconds": "85.6508973",
+  "maximum_gap_seconds": "136.9897881",
+  "total_elapsed_seconds": "21458.1708837",
+  "transformation": "Exact decimal subtraction of consecutive logged Unix timestamps. Every adjacent pair is retained and keyed to its ending decision round. No filtering, smoothing, interpolation or imputation.",
+  "scope": "Calendar-time gaps between recorded adaptive adapter decisions; includes work, qualification waits and recording gaps. Not full-round compute time, single-proposal latency, deployment throughput or learning evidence."
+}

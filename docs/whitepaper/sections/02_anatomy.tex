@@ -28,9 +28,9 @@
   \end{tabularx}
 \end{table*}
 
-The learning question in \cref{sec:intro} requires separating four roles:
-aim, variation, judgment and retention. They distinguish a system's proposals, evaluation and retained experience.
-\mbox{We call} judgment learned before a try \emph{taste}.
+Aim, variation, judgment and retention separate what a system proposes,
+how it evaluates proposals and what it keeps (\cref{sec:intro}).
+Judgment learned before a try is \emph{taste}.
 
 \subsection{Novelty is free}\label{sub:anatomy-novelty}
 
@@ -51,10 +51,9 @@ bottleneck.
 
 \subsection{The four pillars}\label{sub:anatomy-pillars}
 
-The four pillars provide a common vocabulary for comparing accounts of
-discovery from biology, psychology, philosophy and engineering
-(\cref{tab:pillars}). This organization is our synthesis; the underlying
-theories remain distinct.
+The four pillars organize accounts of discovery from biology, psychology,
+philosophy and engineering (\cref{tab:pillars}). This synthesis leaves the
+underlying theories distinct.
 
 Campbell argued that every genuine gain in knowledge needs a mechanism for introducing variation, a consistent selection process and a mechanism for preserving and reproducing what is selected \citep[p.~381]{campbell1960bvsr}. The aim is what keeps the selection consistent, which makes it the fourth pillar.
 
@@ -67,10 +66,9 @@ Campbell argued that every genuine gain in knowledge needs a mechanism for intro
 \textbf{Retention} preserves what survives: inheritance for
 \citet{darwin1859origin}, selective retention for
 \citet{campbell1960bvsr}, the textbook for a science and the incumbent for a
-game. It can store either an output or a way to propose better outputs.
-Archiving a winning program does the first; using evaluation feedback to
-update the proposer attempts the second. This distinction connects the
-four pillars to the learning question in \cref{sec:intro};
+game. Archiving a winning program preserves an output; using evaluation
+feedback to update the proposer attempts to improve future outputs.
+That distinction frames the learning question in \cref{sec:intro};
 \cref{tab:where} compares where human and machine systems retain feedback.
 
 \subsection{Taste is judgment moved upstream}\label{sub:anatomy-taste}
@@ -112,10 +110,9 @@ Novelty is free. Judgment is the inventor.
 
 People learn much of their taste from the record of their field. Normal science, in Kuhn's account, solves puzzles inside a reigning paradigm \citep{kuhn1962structure}. The record also holds people in place: when a star life scientist dies prematurely, articles by outsiders to the star's collaborators flow into the field, draw upon different prior literature and are disproportionately \mbox{likely to be} highly cited \citep{azoulay2019funeral}.
 
-A model trained to predict text receives a signal about what was written,
-rather than a direct score for improving an algorithm. That does not prevent
-novel generalization. It motivates supplementing the historical record with
-feedback from execution, so that a useful departure from historical precedent can be rewarded.
+Text prediction rewards what was written, rather than directly scoring
+algorithm improvement. Novel generalization is still possible. Execution
+feedback adds a way to reward useful departures from the historical record.
 
 A referee offers such an additional teacher. AlphaGo Zero learned with no human data, from the rules and the outcomes of its own games, and found strategies outside traditional Go knowledge \citep{silver2017mastering}. Its predecessor had already made such a move. As David Silver told Wired in March 2016, AlphaGo put the chance that a human would play its Move~37 against Lee Sedol at one in ten thousand, and it won that game \citep{metz2016twomoves}.
 
@@ -159,6 +156,5 @@ states the proposed training and deployment protocol. Across every column,
   \end{tabularx}
 \end{table}
 
-Where feedback is retained distinguishes these systems.
-\Cref{sec:road} traces the AI components that connect proposals to
-executable tests and possible proposer updates.
+\Cref{sec:road} traces how AI connects proposals, executable tests and
+possible proposer updates.

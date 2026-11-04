@@ -1,0 +1,33 @@
+{
+  "schema": "whitepaper.decision-cadence-figure/v1",
+  "csv_sha256": "47a88fb8972c4195e08762834d9ad311d97a1ae714e60532c4963d3535333805",
+  "source_receipt_sha256": "93b832e44a85e4f77e49eb01bcd2946b104e4b8a104bb3a1b23547674617ecf0",
+  "source_prefix_sha256": "8b381f1d2f3e93d18923c8000b0698c90fcba75b94dae0238c220453698be069",
+  "generator_sha256": "83079c8239af92726debb45c8f4b77ba82cd38fbac94ac6f55d40413e62fbb97",
+  "figure_sha256": "40a5826067cd194f5530cd2ec9caf3d2c4487a0f78b087d0b6ef2d9efc372b79",
+  "source_records": 201,
+  "plotted_intervals": 200,
+  "record_round_window": [
+    4471,
+    4671
+  ],
+  "point_round_window": [
+    4472,
+    4671
+  ],
+  "minimum_gap_seconds": "85.6508973",
+  "maximum_gap_seconds": "136.9897881",
+  "total_elapsed_seconds": "21458.1708837",
+  "transformation": "Exact decimal subtraction of consecutive logged Unix timestamps. Every adjacent pair is retained and keyed to its ending decision round. No filtering, smoothing, interpolation or imputation.",
+  "scope": "Calendar-time gaps between recorded adaptive adapter decisions; includes work, qualification waits and recording gaps. Not full-round compute time, single-proposal latency, deployment throughput or learning evidence.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "figure_inches": [
+    3.375,
+    1.6
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_decision_cadence.py"
+}
