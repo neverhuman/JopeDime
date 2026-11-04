@@ -59,8 +59,8 @@ teacher.
 Selecting a better program does not by itself improve the proposer.
 Automated research systems already couple proposals to tests
 \citep{lu2024aiscientist,gottweis2025coscientist,novikov2025alphaevolve,karpathy2026autoresearch,socher2026bookbite,socher2026eureka}.
-\Cref{sub:anatomy-where,sec:road} distinguish retained \mbox{candidate solutions} from
-learned proposer updates.
+\Cref{sub:anatomy-where,sec:road} distinguish retaining \mbox{candidate solutions} from
+training the proposer.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{keyidea}
@@ -169,8 +169,8 @@ and a protocol for evaluating its first proposals.
 \end{enumerate}
 
 \paragraph{Evidence scope.}
-A separate operating loop (\cref{sec:method-status}) runs no neural writer:
-rule-based proposals are ranked by a small cost-ranking adapter. Its record establishes neither neural writer updates nor ranking-map training gains.
+The inspected operating loop (\cref{sec:method-status}) runs no neural writer:
+rule-based GP proposals are ranked by a small cost-ranking adapter. Its record establishes neither neural writer updates nor ranking-map training gains.
 Independent first-proposal comparisons remain pending;
 \cref{sec:method,sec:results} specify the design and planned tests.
 
@@ -178,4 +178,4 @@ Independent first-proposal comparisons remain pending;
 traces their AI building blocks. \Cref{sec:game} defines the game,
 \cref{sec:price} its costs and \cref{sec:method} the reference design.
 \Cref{sec:results} specifies the planned tests; \cref{sec:meaning,sec:conclusion}
-reserve their interpretation and conclusions.
+reserve discussion and conclusions until results are supplied.
