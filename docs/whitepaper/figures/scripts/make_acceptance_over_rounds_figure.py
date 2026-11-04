@@ -166,7 +166,7 @@ axes[1].scatter(
 )
 axes[1].set_title("(b) Cumulative acceptance rate", loc="left", fontsize=7.5)
 axes[1].set_xlabel("round (775–2663)")
-axes[1].set_ylabel("accepted share of rounds (%)")
+axes[1].set_ylabel("cumulative\nacceptance rate (%)")
 axes[1].set_xlim(rounds[0] - 15, rounds[-1] + 15)
 axes[1].set_ylim(-0.6, max(cum_rate_pct) * 1.12)
 axes[1].xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))

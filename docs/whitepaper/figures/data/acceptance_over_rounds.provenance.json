@@ -31,8 +31,8 @@
   "definition": "Consolidated 3-panel view of the 1,889-round prefix (775-2663): (a) candidate and post-decision recorded-best utility, (b) cumulative acceptance rate 100 * sum_{j<=k} accepted_j / k, (c) empirical CDF of utility_shortfall = best_val - candidate_val.",
   "scope": "Consolidated view of the 1,889 retained admission rounds (775-2663); adds no observations and makes no independent first-proposal or deployment claim.",
   "source_binding": "Aggregate field interpretation only; installed loop/adapter/checkpoint qualification remains required",
-  "generator_sha256": "e5b6d134667fdd454e257f40f2581b51ecb766551c91019d4f4cfc343278e4e3",
-  "figure_sha256": "7788ab224e10c4990b9fb6063a30d4a2715249c0864e8516bdc9f88e3893ac00",
+  "generator_sha256": "25d5cc3f2cb44dbeb9e534b7e141ebd09139b67027aa9e08d93e02a008eb9e16",
+  "figure_sha256": "3328a2324125ff7524251294ea1276c9343dfdc3d67251530d30252fd606cda4",
   "matplotlib_version": "3.10.8",
   "reproduce": "python3 figures/scripts/make_acceptance_over_rounds_figure.py",
   "rendering": {
