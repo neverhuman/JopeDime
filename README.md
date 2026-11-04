@@ -386,10 +386,10 @@ limits and client examples](docs/program-source-stream.md).
 
 ## At a glance
 
-| What | 1.0.1 |
+| What | 1.0.0 |
 | --- | --- |
-| `jope` with no arguments | prints `jope 1.0.1` <sup>1</sup> |
-| Workspace | 37 members: 30 crates at 1.0.1 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
+| `jope` with no arguments | prints `jope 1.0.0` <sup>1</sup> |
+| Workspace | 37 members: 30 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | 6,135 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |
@@ -435,7 +435,7 @@ every member.
 ```sh
 cargo build --locked
 cargo run --locked --bin jope
-# jope 1.0.1
+# jope 1.0.0
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 40 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
@@ -502,7 +502,7 @@ annotated tag `vX.Y.Z` and the GitHub release and reads both back. A release hol
 SPDX and CycloneDX SBOMs, the release notes, a release manifest and `SHA256SUMS`, signed with cosign
 by a release key held on xbabe2. There is no Python wheel and no provenance attestation.
 [`release.yml`](.github/workflows/release.yml) is dispatch-only and fails closed. This tree is the
-source of v1.0.1; the release exists only once `release.sh --publish` has run.
+source of v1.0.0; the release exists only once `release.sh --publish` has run.
 
 To verify one, take `signing.pub` from the tag and check its fingerprint as
 [docs/release/README.md](docs/release/README.md) describes, then check the signature and the sums:
