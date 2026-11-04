@@ -1,6 +1,6 @@
 {
   "schema": "veox.cli-demos/v1",
-  "total_bytes": 676634,
+  "total_bytes": 436292,
   "demos": [
     {
       "file": "example/regression_parkinsons.csv",
@@ -27,30 +27,6 @@
       }
     },
     {
-      "file": "example/binary_loan_approval.csv",
-      "title": "Mortgage applications: predict approval",
-      "task": "binary",
-      "target": "approve",
-      "rows": 796,
-      "columns": 54,
-      "bytes": 236569,
-      "sha256": "ee3e79313a29b2c3ee226a31c444033ae841f18b9c1ed5c08b5dbde4438cddce",
-      "selection": "rows with index % 2 == 0 of the fixture's train.csv",
-      "source": {
-        "fixture": "test-support/datasets/v1/binary-loanapp/train.csv",
-        "fixture_sha256": "207128b39ec2054af2712c102c628a01d7eb9b78f4b8fc208c2f0fc428921c4d",
-        "catalog_id": "02d7a557213d8979",
-        "url": "https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/loanapp.csv",
-        "license_status": "unknown"
-      },
-      "scaling": "values are min-max scaled exactly as in the reference corpus",
-      "license": {
-        "spdx": "GPL-3.0-only",
-        "evidence_url": "https://cran.r-project.org/package=wooldridge",
-        "attribution": "R package wooldridge (GPL-3), data from Hunter & Walker (1996) via Rdatasets; no licence stated by the original authors"
-      }
-    },
-    {
       "file": "example/regression_apartment_rent.csv",
       "title": "US apartment listings: predict monthly rent",
       "task": "regression",
@@ -72,30 +48,6 @@
         "spdx": "CC-BY-4.0",
         "evidence_url": "https://archive.ics.uci.edu/dataset/555/apartment+for+rent+classified",
         "attribution": "Apartment for Rent Classified (2019). UCI Machine Learning Repository. https://doi.org/10.24432/C5X623"
-      }
-    },
-    {
-      "file": "example/regression_tiny_soil.csv",
-      "title": "30-row soil survey table: a few-second smoke test",
-      "task": "regression",
-      "target": "target",
-      "rows": 25,
-      "columns": 13,
-      "bytes": 3773,
-      "sha256": "153f24a64081035aaa97541e08bf0eb037a14dcb61eca355bafaa23ab62cbf7f",
-      "selection": "rows with index % 1 == 0 of the fixture's train.csv",
-      "source": {
-        "fixture": "test-support/datasets/v1/tiny-30-row-table/train.csv",
-        "fixture_sha256": "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1",
-        "catalog_id": "b4c8807a75fc190f",
-        "url": null,
-        "license_status": "unknown"
-      },
-      "scaling": "values are min-max scaled exactly as in the reference corpus",
-      "license": {
-        "spdx": "CC-BY-SA-4.0",
-        "evidence_url": "https://github.com/JonasSchmidinger/LimeSoDa/blob/main/man/BB.30_2.Rd",
-        "attribution": "LimeSoDa dataset BB.30_2, Schmidinger et al. (2025), CC BY-SA 4.0"
       }
     }
   ]

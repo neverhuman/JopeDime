@@ -54,16 +54,6 @@ pub static DEMOS: &[Demo] = &[
         bytes: include_bytes!("../../assets/demos/regression_parkinsons.csv"),
     },
     Demo {
-        name: "binary_loan_approval",
-        title: "Mortgage applications: predict approval",
-        task: "binary",
-        target: "approve",
-        objective: Some("logloss"),
-        license: "GPL-3.0-only",
-        credit: "Hunter & Walker (1996) via the R package wooldridge (GPL-3)",
-        bytes: include_bytes!("../../assets/demos/binary_loan_approval.csv"),
-    },
-    Demo {
         name: "regression_apartment_rent",
         title: "US apartment listings: predict monthly rent",
         task: "regression",
@@ -73,25 +63,13 @@ pub static DEMOS: &[Demo] = &[
         credit: "Apartment for Rent Classified (2019), UCI ML Repository, doi:10.24432/C5X623",
         bytes: include_bytes!("../../assets/demos/regression_apartment_rent.csv"),
     },
-    Demo {
-        name: "regression_tiny_soil",
-        title: "30-row soil survey table: a few-second smoke test",
-        task: "regression",
-        target: "target",
-        objective: Some("rmse"),
-        license: "CC-BY-SA-4.0",
-        credit: "LimeSoDa BB.30_2, Schmidinger et al. (2025)",
-        bytes: include_bytes!("../../assets/demos/regression_tiny_soil.csv"),
-    },
 ];
 
 /// How each demo is derived: (name, fixture under `test-support/datasets/v1`, keep every k-th
 /// training row).
-pub const SOURCES: [(&str, &str, usize); 4] = [
+pub const SOURCES: [(&str, &str, usize); 2] = [
     ("regression_parkinsons", "d2-regression", 1),
-    ("binary_loan_approval", "binary-loanapp", 2),
     ("regression_apartment_rent", "grouped-apartment-rent", 5),
-    ("regression_tiny_soil", "tiny-30-row-table", 1),
 ];
 
 /// Find a demo by exact name, by task (`regression`, `binary`: the first of that task), or
@@ -114,7 +92,7 @@ pub fn find(name: &str) -> Option<&'static Demo> {
     }
 }
 
-/// The bundled demo for a path such as `example/binary_loan_approval.csv` (also accepting
+/// The bundled demo for a path such as `example/regression_parkinsons.csv` (also accepting
 /// `./example/...` and Windows separators). Only exact file names match.
 pub fn from_path(path: &str) -> Option<&'static Demo> {
     let normalized = path.replace('\\', "/");
@@ -225,22 +203,32 @@ mod tests {
     #[test]
     fn find_accepts_names_tasks_prefixes_and_paths() {
         assert_eq!(find("regression").unwrap().name, "regression_parkinsons");
-        assert_eq!(find("binary").unwrap().name, "binary_loan_approval");
         assert_eq!(
-            find("regression_tiny_soil").unwrap().name,
-            "regression_tiny_soil"
+            find("regression_apartment_rent").unwrap().name,
+            "regression_apartment_rent"
         );
         assert_eq!(
             find("regression_apart").unwrap().name,
             "regression_apartment_rent"
         );
         assert_eq!(
-            find("example/binary_loan_approval.csv").unwrap().name,
-            "binary_loan_approval"
+            find("example/regression_apartment_rent.csv").unwrap().name,
+            "regression_apartment_rent"
         );
         assert!(find("regression_").is_none(), "ambiguous prefix");
         assert!(find("").is_none());
+        // Only CC-BY-4.0 demos ship; there is no binary or multiclass demo.
+        assert!(find("binary").is_none());
         assert!(find("multiclass").is_none());
+    }
+
+    /// Every bundled demo carries a licence accepted for redistribution inside the public
+    /// binary (docs/public-readiness-checklist.md); copyleft and share-alike data stay out.
+    #[test]
+    fn only_attribution_licensed_demos_are_bundled() {
+        for demo in DEMOS {
+            assert_eq!(demo.license, "CC-BY-4.0", "{}", demo.name);
+        }
     }
 
     #[test]

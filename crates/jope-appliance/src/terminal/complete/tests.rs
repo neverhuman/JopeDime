@@ -206,13 +206,13 @@ fn bundled_examples_and_demo_names_complete_without_files_on_disk() {
     assert!(suggestions
         .iter()
         .all(|item| item.source == CompletionSource::Path));
-    let line = "/open example/bin";
+    let line = "/open example/regression_a";
     assert_eq!(
         complete(line, line.len(), &data)
             .into_iter()
             .map(|item| item.insert)
             .collect::<Vec<_>>(),
-        ["example/binary_loan_approval.csv"]
+        ["example/regression_apartment_rent.csv"]
     );
     assert!(complete("/open ", 6, &data)
         .iter()
