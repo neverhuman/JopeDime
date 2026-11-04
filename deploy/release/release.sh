@@ -264,9 +264,9 @@ readonly BUILD_COMMAND="cargo build --release --locked -p jope-cli --bin jope --
 # builder and goes through every check jope does. `cloud-tls` is required: without it the
 # released client refuses the HTTPS workspace (https://app.veox.ai) and cannot log in. The
 # feature set is checked again from the built binary's `version --json` (APPLIANCE_FEATURES).
-readonly APPLIANCE_BUILD_COMMAND="cargo build --release --locked -p jope-appliance --bin jain --features cloud-tls --message-format=json-render-diagnostics"
+readonly APPLIANCE_BUILD_COMMAND="cargo build --release --locked -p jope-appliance --bin jain --features cloud-tls,anon-gate --message-format=json-render-diagnostics"
 # jq filter over `jain version --json` that the released client must satisfy.
-readonly APPLIANCE_FEATURES='.product == "jain" and .features.client == true and .features.cloud_tls == true and .features.engine == true and .features.dev_keys == false and .trusts_development_key == false'
+readonly APPLIANCE_FEATURES='.product == "jain" and .features.client == true and .features.cloud_tls == true and .features.anon_gate == true and .features.engine == true and .features.dev_keys == false and .trusts_development_key == false'
 # The same prefixes as GPU_LIBRARY_PREFIXES in crates/jope-engine/src/build_receipt.rs (lowercase).
 readonly -a GPU_LIBRARY_PREFIXES=(libcuda libcudart libcudnn libcublas libcurand libcusparse
   libcufft libcusolver libcupti libcufile libcutensor libnpp libnvjpeg libnccl libnvrtc
@@ -1269,7 +1269,7 @@ check_binary() {
   stage=check
   local cdir=$run_dir/checks out
   mkdir -p -- "$cdir/run"
-  step "binary checks: glibc <= $MAX_GLIBC, no GPU libraries, prints 'jope $version' / 'jain $version', jain has cloud-tls"
+  step "binary checks: glibc <= $MAX_GLIBC, no GPU libraries, prints 'jope $version' / 'jain $version', jain has cloud-tls and the anonymous tier"
   link_checks "$bin" "$cdir" ''
   observed_glibc=$link_glibc
   link_checks "$app_bin" "$cdir" jain-
@@ -1298,7 +1298,7 @@ check_appliance_features() {
     > "$2/jain-version.json" || die "jain version --json failed (see $2/jain-version.json)"
   jq -e "$APPLIANCE_FEATURES" "$2/jain-version.json" >/dev/null \
     || die "jain version --json does not satisfy: $APPLIANCE_FEATURES (see $2/jain-version.json)"
-  printf 'jain reports product jain with cloud-tls\n'
+  printf 'jain reports product jain with cloud-tls and the anonymous tier\n'
 }
 
 make_receipt() {

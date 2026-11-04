@@ -512,6 +512,20 @@
       "lanes": [],
       "scope": "GPU feature not selected in CPU CI."
     },
+    "feature:jope-appliance/anon-gate": {
+      "discovery": {
+        "dependencies": [
+          "client",
+          "engine"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "Public jAIn release anonymous tier (src/anon_gate.rs): signed out, only bundled demo bytes may be fitted, predicted or registered. Selected only by deploy/release/release.sh and the native-only profile in deploy/appliance/build.sh; release.sh refuses a jain build whose version --json lacks anon_gate. Its unit test and the in-process/engine refusal checks run with --features cloud-tls,anon-gate as recorded in its PR."
+    },
     "feature:jope-appliance/client": {
       "discovery": {
         "dependencies": [

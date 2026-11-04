@@ -42,8 +42,9 @@ features=embedded
 case $profile in full | fused-cpu) features=$features,engine,mcp,client ;; esac
 # The public native-only edition is the installable jAIn CLI: the interactive terminal and its
 # local engine, without pretrained weights, plus cloud-tls so /login reaches https://app.veox.ai
-# (A22; without it HTTPS login is refused at run time).
-case $profile in native-only) features=$features,engine,mcp,client,cloud-tls ;; esac
+# (A22; without it HTTPS login is refused at run time), and anon-gate: signed out, only the
+# bundled demos run (crates/jope-appliance/src/anon_gate.rs).
+case $profile in native-only) features=$features,engine,mcp,client,cloud-tls,anon-gate ;; esac
 case $profile in dope-gpu | fused-cuda) features=$features,dope-cuda ;; esac
 mkdir -p "$out"
 
@@ -67,7 +68,7 @@ code=$(JOPE_BUILD_SOURCE_SHA=$source_sha cargo run -q --locked -p jope-ci -- car
 cp -- "$code" "$out/code"
 
 if [ "$profile" = native-only ]; then
-  echo "== verify the public jAIn CLI features: product jain, client, engine, cloud-tls, release trust"
+  echo "== verify the public jAIn CLI features: product jain, client, engine, cloud-tls, anon-gate, release trust"
   "$out/code" --version --json > "$out/version.json"
   jq -e --arg source "$source_sha" '
     .product == "jain" and
@@ -76,10 +77,11 @@ if [ "$profile" = native-only ]; then
     .features.engine == true and
     .features.client == true and
     .features.cloud_tls == true and
+    .features.anon_gate == true and
     .features.dev_keys == false and
     .trusts_development_key == false
   ' "$out/version.json" > /dev/null || {
-    echo "$0: native-only requires product jain with engine,mcp,client,cloud-tls,embedded and release trust" >&2
+    echo "$0: native-only requires product jain with engine,mcp,client,cloud-tls,anon-gate,embedded and release trust" >&2
     exit 1
   }
 fi

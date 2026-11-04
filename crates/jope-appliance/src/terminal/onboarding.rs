@@ -279,7 +279,8 @@ pub fn local_file_gate(logged_in: bool, override_env: bool) -> Result<(), &'stat
 }
 
 pub fn local_files_override_from_env() -> bool {
-    truthy(std::env::var("JAIN_ALLOW_LOCAL_FILES").ok())
+    // Development and CI builds only: the public release (`anon-gate`) has no escape hatch.
+    !crate::anon_gate::ENFORCED && truthy(std::env::var("JAIN_ALLOW_LOCAL_FILES").ok())
 }
 
 // ---- the first-run dialog ------------------------------------------------------------------

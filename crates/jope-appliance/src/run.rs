@@ -143,6 +143,7 @@ impl Run {
     fn read_csv(&mut self, role: &'static str, path: &Path) -> anyhow::Result<table::CsvTable> {
         let started = Instant::now();
         let csv = table::read_csv(path, &self.limits())?;
+        crate::anon_gate::admit(&csv.sha256).map_err(jope_runtime::Failure::input)?;
         self.receipt.inputs.push(FileRecord {
             role,
             path: path.display().to_string(),

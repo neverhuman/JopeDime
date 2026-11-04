@@ -130,5 +130,6 @@ fn native_tls_build_helpers_appear_only_with_cloud_tls() {
             assert!(present.is_empty(), "{features:?} pulls {present:?}");
         }
     }
-    assert_eq!(with_tls, 2);
+    // engine,mcp,client,cloud-tls and its embedded twin, each with and without `anon-gate`.
+    assert_eq!(with_tls, 4);
 }

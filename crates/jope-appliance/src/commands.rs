@@ -313,6 +313,8 @@ pub(crate) fn load_fitness(text: &str) -> anyhow::Result<jope_runtime::fitness::
 
 pub(crate) fn serve(mcp: bool) -> anyhow::Result<()> {
     use std::io::{BufRead, Read, Write};
+    // Inline CSV text never passes through dataset registration.
+    crate::anon_gate::require_signed_in(if mcp { "jain mcp" } else { "jain api" })?;
     let package = bootstrap::open()?;
     let mut server = jope_runtime::service::Server::new(CreatedBy {
         source_sha40: bootstrap::source_sha40(),

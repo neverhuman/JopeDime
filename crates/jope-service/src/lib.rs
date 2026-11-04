@@ -5,6 +5,8 @@
 //! worker execution, and telemetry. The modules below document the purpose of
 //! each public subsystem.
 
+/// Optional process-wide dataset admission policy (unset: admit everything).
+pub mod admission;
 /// Service configuration loading and validation.
 pub mod config;
 /// The local daemon's owner-scoped discovery record.

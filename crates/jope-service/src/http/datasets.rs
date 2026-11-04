@@ -138,6 +138,15 @@ pub(super) async fn register(
     };
 
     let (prepared, name, digest, byte_count) = parsed;
+    let digest_hex: String = digest.iter().map(|b| format!("{b:02x}")).collect();
+    if let Err(detail) = crate::admission::admit_dataset(&digest_hex) {
+        return problem(
+            ErrorCode::Unauthorized,
+            &detail,
+            "Sign in, or register a dataset this engine's admission policy accepts.",
+            None,
+        );
+    }
     if !admit_disk(&state.home, reserve, byte_count) {
         return disk_reserve_error();
     }
@@ -147,7 +156,7 @@ pub(super) async fn register(
         Err(_) => return internal_error(),
     };
     let identity_body = json!({
-        "sha256": digest.iter().map(|b| format!("{b:02x}")).collect::<String>(),
+        "sha256": digest_hex,
         "name": body.get("name").cloned().unwrap_or(Value::Null),
     });
     let identity = match RequestIdentity::new(

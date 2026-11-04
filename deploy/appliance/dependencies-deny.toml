@@ -6,8 +6,10 @@ target = "x86_64-unknown-linux-gnu"
 feature_sets = [
   [], ["embedded"], ["embedded", "dev-keys"],
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
-  # The public jAIn CLI (A22): HTTPS account login needs `cloud-tls`.
+  # The public jAIn CLI (A22): HTTPS account login needs `cloud-tls`; the release adds the
+  # dependency-free `anon-gate` anonymous tier.
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 
 # Denied in the normal/build closure unless an exact scoped package exception below applies.
@@ -59,6 +61,7 @@ version = "0.11.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["default"]
 reason = "CPU-only accepted ranker tensor implementation; reviewed vendored source; no CUDA/Metal/native backends."
@@ -69,6 +72,7 @@ version = "0.19.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["default", "f16", "gemm-f16", "rayon", "std", "wasm-simd128-enable"]
 reason = "Pure Rust CPU matrix kernels required by candle-core0.11; no external BLAS/native runtime."
@@ -79,6 +83,7 @@ version = "0.19.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["f16", "half", "rayon", "std", "sysctl", "wasm-simd128-enable"]
 reason = "Shared pure Rust CPU matrix support for the pinned Candle/GEMM selection."
@@ -89,6 +94,7 @@ version = "0.19.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
@@ -99,6 +105,7 @@ version = "0.19.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
@@ -109,6 +116,7 @@ version = "0.19.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
@@ -119,6 +127,7 @@ version = "0.19.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
@@ -129,6 +138,7 @@ version = "0.19.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
@@ -139,6 +149,7 @@ version = "1.11.1"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = ["default", "http1", "server"]
 reason = "Axum HTTP1 engine server; existing loopback/auth boundary remains required; no HTTP client/TLS allowance."
@@ -149,6 +160,7 @@ version = "3.5.0"
 feature_sets = [
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
   ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+  ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"],
 ]
 allowed_features = []
 reason = "Featureless local HTTP client; defaults, TLS and remote-fetch dependencies stay disabled and denied."
@@ -158,27 +170,27 @@ reason = "Featureless local HTTP client; defaults, TLS and remote-fetch dependen
 [[package_exceptions]]
 name = "ureq"
 version = "3.5.0"
-feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"]]
+feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"], ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"]]
 allowed_features = ["_rustls", "_tls", "rustls-no-provider", "rustls-webpki-roots"]
 reason = "A22: HTTPS to the veox Cloud Workspace with rustls and bundled webpki roots; no proxy, no redirects, no platform verifier."
 
 [[package_exceptions]]
 name = "rustls"
 version = "0.23.46"
-feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"]]
+feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"], ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"]]
 allowed_features = ["aws-lc-rs", "aws_lc_rs", "default", "log", "logging", "prefer-post-quantum", "std", "tls12"]
 reason = "A22: TLS for cloud-tls account login only; the engine and local HTTP stay plaintext loopback."
 
 [[package_exceptions]]
 name = "aws-lc-rs"
 version = "1.18.1"
-feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"]]
+feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"], ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"]]
 allowed_features = ["aws-lc-sys", "prebuilt-nasm"]
 reason = "A22: the rustls crypto provider selected in cloud.rs; no FIPS or bindgen features."
 
 [[package_exceptions]]
 name = "aws-lc-sys"
 version = "0.45.0"
-feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"]]
+feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"], ["engine", "mcp", "client", "cloud-tls", "anon-gate"], ["embedded", "engine", "mcp", "client", "cloud-tls", "anon-gate"]]
 allowed_features = ["prebuilt-nasm"]
 reason = "A22: statically linked AWS-LC for aws-lc-rs; links no shared library (checked by NEEDED in build.sh and release.sh)."

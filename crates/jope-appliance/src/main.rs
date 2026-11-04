@@ -8,6 +8,7 @@
 //! 0 success, 2 input, 3 integrity, 4 backend, 5 budget, 6 numerical, 7 output.
 #![forbid(unsafe_code)]
 
+mod anon_gate;
 mod bootstrap;
 mod cli;
 #[cfg(feature = "client")]
@@ -100,6 +101,9 @@ mod commands;
 use commands::{load_fitness, report, run_fit, run_fit_predict, run_predict, serve, summary_line};
 
 fn main() -> ExitCode {
+    // Public release builds: signed out, only bundled demo data (see anon_gate.rs). Installed
+    // before any engine, in this process and in a background `jain serve` alike.
+    anon_gate::install();
     #[allow(unused_mut)]
     let mut args: Vec<String> = std::env::args().skip(1).collect();
     // `--accept-terms` is global: remove it before dispatch and record the acceptance.

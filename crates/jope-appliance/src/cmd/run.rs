@@ -158,6 +158,8 @@ fn run_m1(args: &RunArgs) -> anyhow::Result<()> {
     use jope_runtime::Failure;
     // Authenticate before opening the input or creating a store/worker.
     let _package = crate::bootstrap::open()?;
+    // A prepared plan runs without dataset registration.
+    crate::anon_gate::require_signed_in("jain run --m1-plan")?;
     let path = args
         .m1_plan
         .as_deref()

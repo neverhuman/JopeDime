@@ -18,7 +18,11 @@ Choices are stored in `<JOPEDIME_HOME>/state.json` (owner-only). Agents and scri
 
 ### Demos
 
-`/demo` lists the datasets bundled in the executable; `/demo NAME` (for example `/demo regression`) opens one with its target and task preset and starts a fast run. `/open example/<name>.csv` opens a bundled demo as if it were a file (a real file at that path takes precedence), and Tab completes `example/` names and `/demo` names. Signed out, the interactive session opens only the bundled demos; your own files need a free veox Cloud Workspace account (`/login`). `JAIN_ALLOW_LOCAL_FILES=1` lifts that for offline and CI use.
+`/demo` lists the datasets bundled in the executable; `/demo NAME` (for example `/demo regression`) opens one with its target and task preset and starts a fast run. `/open example/<name>.csv` opens a bundled demo as if it were a file (a real file at that path takes precedence), and Tab completes `example/` names and `/demo` names. Selecting a demo prints its data licence and credit.
+
+### Signed out: the bundled demos only
+
+The public release (built with the `anon-gate` feature; `jain version --json` reports `features.anon_gate`) runs only the bundled demos until you log in to a free veox Cloud Workspace (`/login`, or `jain auth login`); your data still stays on your machine. The check is on the data itself, the SHA-256 of its bytes, so it applies the same way to the terminal, `jain fit`/`fit-predict`/`predict`, `jain run` and `dataset add`, MCP tools and direct HTTP to the local engine; a renamed or edited copy of a demo is not a demo. `jain api` and `jain run --m1-plan` need a signed-in account. Development and CI builds without the feature are not gated, and there `JAIN_ALLOW_LOCAL_FILES=1` lifts the terminal prompt; the public release has no such override.
 
 ### Links
 
