@@ -40,11 +40,11 @@ def font_path(explicit, candidates):
     return path.resolve()
 
 
-def check_image(image):
-    require(image.mode == "RGBA" and image.size == (WIDTH, HEIGHT), "RGBA611x1080 overlay required")
+def check_image(image, scale=1):
+    require(image.mode == "RGBA" and image.size == (WIDTH * scale, HEIGHT * scale), "native table overlay dimensions differ")
     alpha = image.getchannel("A")
-    require(alpha.crop((0, 0, WIDTH, BRAND_HEIGHT)).getextrema() == (0, 0), "brand region must be transparent")
-    require(alpha.crop((0, BRAND_HEIGHT, WIDTH, HEIGHT)).getextrema() == (255, 255), "old table region must be fully erased")
+    require(alpha.crop((0, 0, WIDTH * scale, BRAND_HEIGHT * scale)).getextrema() == (0, 0), "brand region must be transparent")
+    require(alpha.crop((0, BRAND_HEIGHT * scale, WIDTH * scale, HEIGHT * scale)).getextrema() == (255, 255), "old table region must be fully erased")
 
 
 def importance_percentiles(scores):
@@ -93,25 +93,30 @@ def cell_text(value, *, preserve_small=False):
 
 
 def draw_panel(name, total_rows, header, row_ids, raw_table, scores, body_path, heading_path,
-               *, percentiles=None, column_shares=None):
+               *, percentiles=None, column_shares=None, scale=1):
     from PIL import Image, ImageDraw, ImageFont
-    image = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
+    from scaled_drawing import ScaledDraw
+    require(scale in (1, 2), "render scale must be 1 or 2")
+    image = Image.new("RGBA", (WIDTH * scale, HEIGHT * scale), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image) if scale == 1 else ScaledDraw(image, scale)
     draw.rectangle((0, BRAND_HEIGHT, WIDTH - 1, HEIGHT - 1), fill=(0, 0, 0, 255))
-    body = ImageFont.truetype(str(body_path), 17)
-    heading = ImageFont.truetype(str(heading_path), 18)
+    if scale == 2:
+        # Erase every native pixel at the right and bottom logical boundary.
+        ImageDraw.Draw(image).rectangle((0, BRAND_HEIGHT * scale, image.width - 1, image.height - 1), fill=(0, 0, 0, 255))
+    body = ImageFont.truetype(str(body_path), 17 * scale)
+    heading = ImageFont.truetype(str(heading_path), 18 * scale)
     if column_shares is not None:
-        share_font = ImageFont.truetype(str(heading_path), 11)
+        share_font = ImageFont.truetype(str(heading_path), 11 * scale)
         percentages = header_percentages(column_shares)
     name_size = 18
-    while heading.getlength(name) > 560 and name_size > 12:
+    while heading.getlength(name) > 560 * scale and name_size > 12:
         name_size -= 1
-        heading = ImageFont.truetype(str(heading_path), name_size)
-    require(heading.getlength(name) <= 560, "dataset name does not fit without truncation")
+        heading = ImageFont.truetype(str(heading_path), name_size * scale)
+    require(heading.getlength(name) <= 560 * scale, "dataset name does not fit without truncation")
     ink, muted = (224, 233, 243, 255), (127, 153, 175, 255)
     draw.text((38, 145), name, font=heading, fill=ink, anchor="lt")
-    draw.text((38, 177), f"{total_rows:,} rows", font=ImageFont.truetype(str(heading_path), 17), fill=ink, anchor="lt")
-    draw.text((38, 207), "TABULAR INPUT", font=ImageFont.truetype(str(heading_path), 18), fill=ink, anchor="lt")
+    draw.text((38, 177), f"{total_rows:,} rows", font=ImageFont.truetype(str(heading_path), 17 * scale), fill=ink, anchor="lt")
+    draw.text((38, 207), "TABULAR INPUT", font=ImageFont.truetype(str(heading_path), 18 * scale), fill=ink, anchor="lt")
     if column_shares is not None:
         draw.text((601, 211), "FUSED SELECTION SENSITIVITY", font=share_font, fill=muted, anchor="rt")
     draw.rounded_rectangle((33, 232, 610, 1039), radius=14, fill=(8, 16, 25, 255), outline=(50, 140, 177, 255), width=1)
@@ -155,9 +160,9 @@ def draw_panel(name, total_rows, header, row_ids, raw_table, scores, body_path, 
                           fill=accent, width=1)
             x += width
     if percentiles is None:
-        legend = ImageFont.truetype(str(heading_path), 11)
+        legend = ImageFont.truetype(str(heading_path), 11 * scale)
         draw.text((38, 1054), "RELATIVE INPUT SENSITIVITY", font=legend, fill=muted, anchor="lt")
-    check_image(image)
+    check_image(image, scale)
     return image, name_size
 
 

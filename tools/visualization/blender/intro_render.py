@@ -11,7 +11,8 @@ import time
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from render_animation import digest, select_gpu, write_json  # noqa: E402
+from render_animation import (QUALITY_PROFILES, configure_picture, digest, select_gpu, validate_render_profile,
+                              verify_png, write_json)  # noqa: E402
 
 
 def frame_range(value: str) -> tuple[int, int]:
@@ -29,6 +30,7 @@ def render(args) -> dict:
     output = args.output_dir.resolve()
     if output.exists() or output.is_relative_to(Path(__file__).resolve().parents[3]):
         raise ValueError("render output must be fresh and outside the checkout")
+    validate_render_profile(args.scale, args.samples, args.quality)
     receipt_bytes = source_receipt.read_bytes()
     receipt = json.loads(receipt_bytes)
     if receipt.get("schema") != "jain.intro-scene/v1" or receipt.get("status") != "PASS":
@@ -38,6 +40,9 @@ def render(args) -> dict:
         raise ValueError("intro receipt must cover frames 1 through 330")
     scene_sha = digest(source_scene)
     receipt_sha = hashlib.sha256(receipt_bytes).hexdigest()
+    worker_path = Path(__file__)
+    shared_worker_path = worker_path.with_name("render_animation.py")
+    worker_sha, shared_worker_sha = digest(worker_path), digest(shared_worker_path)
     bpy.ops.wm.open_mainfile(filepath=str(source_scene), load_ui=False, use_scripts=False)
     embedded = bpy.data.texts.get("JAIN_INTRO_RECEIPT.json")
     if embedded is None or json.loads(embedded.as_string()) != receipt:
@@ -66,24 +71,18 @@ def render(args) -> dict:
     scene.cycles.use_animated_seed = False
     scene.cycles.samples = args.samples
     settings.use_persistent_data = True
-    settings.resolution_percentage = args.scale
-    settings.image_settings.file_format = "PNG"
-    settings.image_settings.color_mode = "RGB"
-    settings.image_settings.color_depth = "8"
-    settings.image_settings.compression = 15
-    settings.use_file_extension = True
-    settings.use_overwrite = False
+    profile = configure_picture(scene, args.scale, args.quality)
+    width, height = settings.resolution_x * args.scale // 100, settings.resolution_y * args.scale // 100
     output.mkdir(parents=True, exist_ok=False)
 
     result = {
         "schema": "jain.intro-gpu-frames/v1", "status": "RUNNING",
         "scene_sha256": scene_sha, "scene_receipt_sha256": receipt_sha,
-        "worker_sha256": digest(Path(__file__)),
+        "worker_sha256": worker_sha, "shared_worker_sha256": shared_worker_sha,
         "backend": args.device, "devices": devices, "gpu_only": True, "cpu_fallback": False,
         "cycles_seed": 20261103, "animated_seed": False, "samples": args.samples,
         "denoising": denoiser, "denoising_use_gpu": True, "persistent_data": True,
-        "width": settings.resolution_x * args.scale // 100,
-        "height": settings.resolution_y * args.scale // 100, "fps": 30,
+        "width": width, "height": height, "fps": 30, **profile,
         "blender_version": bpy.app.version_string, "requested_frames": frames,
         "frames": [], "argv": sys.argv,
     }
@@ -97,6 +96,8 @@ def render(args) -> dict:
                 settings.filepath = str(destination)
                 frame_started = time.monotonic_ns()
                 bpy.ops.render.render(write_still=True)
+                if args.quality == "uhd-master":
+                    verify_png(destination, width, height, profile["color_depth"])
                 entry = {"frame": frame, "file": name, "sha256": digest(destination),
                          "elapsed_ns": time.monotonic_ns() - frame_started}
                 result["frames"].append(entry)
@@ -105,6 +106,8 @@ def render(args) -> dict:
                 print(json.dumps(entry), flush=True)
         if digest(source_scene) != scene_sha or digest(source_receipt) != receipt_sha:
             raise RuntimeError("saved intro scene or receipt changed during rendering")
+        if digest(worker_path) != worker_sha or digest(shared_worker_path) != shared_worker_sha:
+            raise RuntimeError("intro or shared render worker changed during rendering")
         result["status"] = "PASS"
     except BaseException as error:
         result["status"], result["error"] = "FAIL", f"{type(error).__name__}: {error}"
@@ -123,6 +126,7 @@ def main() -> None:
     parser.add_argument("--frame", action="append", type=frame_range, required=True)
     parser.add_argument("--samples", type=int, required=True)
     parser.add_argument("--scale", type=int, choices=(100, 200), default=100)
+    parser.add_argument("--quality", choices=QUALITY_PROFILES, default="standard")
     parser.add_argument("--device", choices=("OPTIX", "METAL"), default="OPTIX")
     parser.add_argument("--device-id")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else None)

@@ -65,7 +65,7 @@ def table_orders(case_id, row_ids):
     return orders
 
 
-def shuffled_tables(root, scene, neural_path=None):
+def shuffled_tables(root, scene, neural_path=None, *, scale=1):
     _, binding = load_panels(root, scene)
     catalog_bytes = (root / "catalog.receipt.json").read_bytes()
     if hashlib.sha256(catalog_bytes).hexdigest() != binding["catalog_sha256"]:
@@ -121,7 +121,8 @@ def shuffled_tables(root, scene, neural_path=None):
             order_bindings[cid].append({"case_frame": start, "row_ids": row_ids})
             panel, _ = draw_panel(case["dataset_name"], case["total_rows"], header, row_ids,
                                   [rows[i] for i in order], [scores[i] for i in order], body, heading,
-                                  percentiles=[percentiles[i] for i in order], column_shares=column_shares)
+                                  percentiles=[percentiles[i] for i in order], column_shares=column_shares,
+                                  scale=scale)
             variants[cid].append(panel)
     return variants, order_bindings, binding
 
@@ -139,10 +140,10 @@ def scroll_offsets(rows: int, line_height: int, view_height: int) -> list[int]:
     return offsets
 
 
-def code_strip(files, source_root, output, font, width, height):
+def code_strip(files, source_root, output, font, width, height, *, scale=1):
     """Join verified, separately highlighted files in one clipped vertical scroll."""
     rows, cues, bindings, rasters = [], [], [], []
-    heading = ImageFont.truetype(str(font), 13)
+    heading = ImageFont.truetype(str(font), 13 * scale)
     for index, item in enumerate(files):
         language = item["language"]
         if language not in LANGUAGES:
@@ -151,7 +152,7 @@ def code_strip(files, source_root, output, font, width, height):
         pages = output / str(index)
         with presentation(language):
             manifest = make_pages(source, pages, font, font_size=15, columns=54, rows=56,
-                                  language=language)
+                                  language=language, render_scale=scale)
         raw = reconstruct_source(manifest)
         if manifest["source_sha256"] != item["source_sha256"] or raw != source.read_bytes():
             raise ValueError("complete code strip differs from the source catalog")
@@ -159,7 +160,7 @@ def code_strip(files, source_root, output, font, width, height):
         top = manifest["code_origin"][1]
         if index:
             divider = Image.new("RGB", (width, 2 * line_height), "#1B2535")
-            ImageDraw.Draw(divider).text((14, line_height),
+            ImageDraw.Draw(divider).text((14 * scale, line_height),
                 f"{source.name}  ·  {LANGUAGES[language]}", font=heading,
                 fill="#B4C8DE", anchor="lm")
             rasters.append(divider)
@@ -178,7 +179,7 @@ def code_strip(files, source_root, output, font, width, height):
                 raise ValueError("code raster differs from its manifest")
             page_height = len(page["rows"]) * line_height
             with Image.open(path) as raster:
-                region = raster.convert("RGB").crop((1, top, raster.width - 1, top + page_height))
+                region = raster.convert("RGB").crop((scale, top, raster.width - scale, top + page_height))
                 rasters.append(region.resize((width, page_height), Image.Resampling.LANCZOS))
         ends = [row["source_byte_end"] for row in file_rows]
         for operation in item["operations"]:
@@ -207,15 +208,16 @@ def code_strip(files, source_root, output, font, width, height):
 
 
 def hud(frame, title_font, value_font, rate_font, metric, source_file, source_line,
-        cue, rect, icon, primary_language, binding_label=""):
-    draw = ImageDraw.Draw(frame)
+        cue, rect, icon, primary_language, binding_label="", *, scale=1):
+    from scaled_drawing import ScaledDraw
+    draw = ImageDraw.Draw(frame) if scale == 1 else ScaledDraw(frame, scale)
     # These opaque regions cover the archived benchmark labels and source title only.
     draw.rectangle((674, 23, 1247, 186), fill="black")
     draw.text((960, 54), "FITTED EXPORT BENCHMARK", anchor="mm", font=title_font, fill="#CDDCEB")
     draw.text((960, 99), f"{metric['total_ms']:.1f} ms", anchor="mm", font=value_font, fill="#EDF4FF")
     draw.text((960, 140), display_rate(metric["equivalent_rust_tokens_per_s"]),
               anchor="mm", font=rate_font, fill="#D6E2F2")
-    x, y, width, _ = rect
+    x, y, width, _ = (value / scale for value in rect)
     draw.rectangle((x - 6, 23, x + width + 6, 91), fill="black")
     language = LANGUAGES[source_file["language"]]
     draw.text((x + width / 2, 56), f"{language.upper()} SOURCE",
@@ -228,21 +230,25 @@ def hud(frame, title_font, value_font, rate_font, metric, source_file, source_li
                   anchor="mm", font=title_font, fill="#DCB2FE")
     draw.text((x + width - 10, y - 10), f"Ln {source_line:,}", anchor="rm",
               font=title_font, fill="#AFC0D3")
-    frame.paste(icon, (960 - icon.width // 2, 895), icon)
+    icon_xy = (960 * scale - icon.width // 2, 895 * scale)
+    if frame.mode == "RGBA":
+        frame.alpha_composite(icon, dest=icon_xy)
+    else:
+        frame.paste(icon, icon_xy, icon)
     draw.text((960, 996), LANGUAGES[primary_language], anchor="mm", font=rate_font, fill="#EDF4FF")
     if binding_label:
         draw.text((960, 1021), binding_label, anchor="mm", font=title_font, fill="#AFC0D3")
 
 
-def load_icon(language, *, cuda_icon=None):
+def load_icon(language, *, cuda_icon=None, scale=1):
     override = cuda_icon if language == "cuda" else None
     path = override if override is not None else ICON_ROOT / f"{language}.png"
     with Image.open(path) as raster:
         icon = raster.convert("RGBA")
-    icon.thumbnail((86, 86), Image.Resampling.LANCZOS)
+    icon.thumbnail((86 * scale, 86 * scale), Image.Resampling.LANCZOS)
     if override is not None:
-        centered = Image.new("RGBA", (86, 86))
-        centered.paste(icon, ((86 - icon.width) // 2, (86 - icon.height) // 2))
+        centered = Image.new("RGBA", (86 * scale, 86 * scale))
+        centered.paste(icon, ((86 * scale - icon.width) // 2, (86 * scale - icon.height) // 2))
         icon = centered
     return icon, digest(path)
 

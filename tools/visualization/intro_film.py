@@ -53,12 +53,13 @@ def write_json(path, data):
         stream.write("\n")
 
 
-def read_demo(path, receipt_path):
+def read_demo(path, receipt_path, size=(WIDTH, HEIGHT)):
     receipt = json.loads(receipt_path.read_bytes())
-    require(receipt["schema"] == "jain.intelligence-wave-encode/v2" and receipt["status"] == "PASS"
+    schema = "jain.intelligence-wave-encode/v2" if size == (WIDTH, HEIGHT) else "jain.uhd-demo/v1"
+    require(receipt["schema"] == schema and receipt["status"] == "PASS"
             and receipt["movie_sha256"] == digest(path), "Demo movie identity differs")
-    require((receipt["width"], receipt["height"], receipt["fps"], receipt["frames"]) == (WIDTH, HEIGHT, FPS, 1260),
-            "Expected the verified 42-second 1080p30 Dendrite source")
+    require((receipt["width"], receipt["height"], receipt["fps"], receipt["frames"]) == (*size, FPS, 1260),
+            "Expected the verified Dendrite source at the requested native resolution")
     return receipt
 
 
@@ -68,7 +69,10 @@ def plan_retime(receipt):
     selected, coverage = [], []
     require(len(receipt["cases"]) == 10, "Expected all ten source datasets")
     view_x, view_y, view_width, view_height = receipt["source_viewport"]
-    require(1310 <= view_x < view_x + view_width <= WIDTH and 20 <= view_y < view_y + view_height <= HEIGHT,
+    width, height = receipt["width"], receipt["height"]
+    scale = width // WIDTH
+    require(1310 * scale <= view_x < view_x + view_width <= width
+            and 20 * scale <= view_y < view_y + view_height <= height,
             "Source viewport would be obscured by the opening reveal")
     denominator = CASE_COUNT - 1
     offsets = [(index * (SOURCE_CASE_COUNT - 1) + denominator // 2) // denominator for index in range(CASE_COUNT)]
@@ -102,6 +106,9 @@ def plan_retime(receipt):
                          "source_file_hashes": {file["filename"]: file["source_sha256"] for file in case["files"]}})
     require(len(selected) == MASTER_COUNT - PLATE_COUNT and selected[0] == 0 and selected[-1] == 1259
             and all(a < b for a, b in zip(selected, selected[1:])), "Source retime is not strictly increasing")
+    if scale == 2:
+        require(receipt["encoded_frames"] == len(selected) and receipt["source_frame_indices"] == selected,
+                "Sparse UHD source does not match the verified retime mapping")
     return {"selected_source_indices": selected, "chapters": chapters, "code_coverage": coverage,
             "first_fully_opaque_editor_frame": CODE_READY,
             "first_moving_demo_frame": PLATE_COUNT,
@@ -109,7 +116,7 @@ def plan_retime(receipt):
             "first_source_frame_after_intro": selected[INTRO_COUNT - PLATE_COUNT]}
 
 
-def read_plates(root, receipt_path, scene_receipt_path, demo, *, full):
+def read_plates(root, receipt_path, scene_receipt_path, demo, *, full, size=(WIDTH, HEIGHT)):
     scene_bytes = scene_receipt_path.read_bytes()
     scene = json.loads(scene_bytes)
     require(scene["schema"] == "jain.intro-scene/v1" and scene["status"] == "PASS"
@@ -121,8 +128,11 @@ def read_plates(root, receipt_path, scene_receipt_path, demo, *, full):
     receipt_bytes = receipt_path.read_bytes()
     data = json.loads(receipt_bytes)
     require(data["schema"] in {"jain.intro-plates/v1", "jain.intro-gpu-frames/v1"} and data["status"] == "PASS"
-            and (data["width"], data["height"], data["fps"]) == (WIDTH, HEIGHT, FPS),
-            "Intro plate render did not pass 1080p30 checks")
+            and (data["width"], data["height"], data["fps"]) == (*size, FPS),
+            "Intro plate render does not match the requested native resolution and 30 fps")
+    if size != (WIDTH, HEIGHT):
+        require(data["quality_profile"] == "uhd-master" and data["color_depth"] == 16,
+                "UHD assembly requires native RGB16 master plates")
     scene_sha = hashlib.sha256(scene_bytes).hexdigest()
     require(data["scene_receipt_sha256"] == scene_sha, "Intro plates are not bound to the supplied intro scene")
     frames = {}
@@ -153,26 +163,34 @@ def smooth(value):
     return value * value * (3 - 2 * value)
 
 
-def title_card(plate, frame, fonts):
+def title_layer(frame, fonts, size=(WIDTH, HEIGHT)):
     cue = next((cue for cue in TITLE_CUES if cue[0] <= frame < cue[1]), None)
     if cue is None:
-        return plate
+        return None
     start, end, headline, detail = cue
     amount = min(smooth((frame - start + 1) / 5), smooth((end - frame) / 6))
-    layer = Image.new("RGBA", (WIDTH, HEIGHT))
+    layer = Image.new("RGBA", size)
     draw = ImageDraw.Draw(layer)
-    x = WIDTH // 2
+    scale = size[0] // WIDTH
+    x = size[0] // 2
     tint = (112, 238, 250, round(235 * amount))
     white = (231, 243, 255, round(255 * amount))
     lines = headline.splitlines()
-    baseline = 225 if len(lines) == 1 else 184
+    baseline = (225 if len(lines) == 1 else 184) * scale
     for i, line in enumerate(lines):
-        draw.text((x, baseline + i * 86), line, font=fonts["headline"], fill=white, anchor="ms")
+        draw.text((x, baseline + i * 86 * scale), line, font=fonts["headline"], fill=white, anchor="ms")
     if detail:
-        draw.text((x, 326), detail, font=fonts["eyebrow"], fill=tint, anchor="ms")
+        draw.text((x, 326 * scale), detail, font=fonts["eyebrow"], fill=tint, anchor="ms")
     else:
-        y = baseline + (len(lines) - 1) * 86 + 28
-        draw.rounded_rectangle((x - 24, y, x + 24, y + 3), radius=2, fill=tint)
+        y = baseline + ((len(lines) - 1) * 86 + 28) * scale
+        draw.rounded_rectangle((x - 24 * scale, y, x + 24 * scale, y + 3 * scale), radius=2 * scale, fill=tint)
+    return layer
+
+
+def title_card(plate, frame, fonts):
+    layer = title_layer(frame, fonts)
+    if layer is None:
+        return plate
     return Image.alpha_composite(plate.convert("RGBA"), layer).convert("RGB")
 
 
@@ -184,15 +202,33 @@ def blend_region(plate, reference, box, amount):
         plate.paste(region, box[:2])
 
 
+def editor_boxes(viewport, scale):
+    x, y, width, height = viewport
+    return ((x, y, x + width, y + height), (max(x, x + width - 96 * scale), y - 20 * scale, x + width, y))
+
+
 def editor_destination(source, viewport):
     """Use actual editor chrome with its original blank viewport color."""
     x, y, width, height = viewport
     destination = source.copy()
-    content = (x, y, x + width, y + height)
-    current_line = (max(x, x + width - 96), y - 20, x + width, y)
+    content, current_line = editor_boxes(viewport, 1)
     destination.paste(source.getpixel((x + width // 2, y + height - 2)), content)
     destination.paste(source.getpixel((x + width // 2, y - 10)), current_line)
     return destination, (content, current_line)
+
+
+def prelap_regions(frame, content_boxes, scale):
+    def fade(start, end):
+        return smooth((frame - start + 1) / (end - start + 1))
+
+    panels = fade(PRELAP_START, PANEL_READY)
+    yield 0, (0, 125 * scale, 611 * scale, HEIGHT * scale), panels
+    yield 1, (1310 * scale, 0, WIDTH * scale, HEIGHT * scale), panels
+    for box in content_boxes:
+        yield 0, box, fade(CODE_REVEAL, CODE_READY)
+    center = fade(BRAND_REVEAL, FULL_SOURCE_LOCK)
+    yield 0, (0, 0, 611 * scale, 125 * scale), center
+    yield 0, (611 * scale, 0, 1310 * scale, HEIGHT * scale), center
 
 
 def prelap(plate, source, destination, content_boxes, frame):
@@ -200,23 +236,13 @@ def prelap(plate, source, destination, content_boxes, frame):
         return plate
     if frame >= FULL_SOURCE_LOCK:
         return source
-
-    def fade(start, end):
-        return smooth((frame - start + 1) / (end - start + 1))
-
     image = plate.copy()
-    panels = fade(PRELAP_START, PANEL_READY)
-    blend_region(image, source, (0, 125, 611, HEIGHT), panels)
-    blend_region(image, destination, (1310, 0, WIDTH, HEIGHT), panels)
-    for box in content_boxes:
-        blend_region(image, source, box, fade(CODE_REVEAL, CODE_READY))
-    center = fade(BRAND_REVEAL, FULL_SOURCE_LOCK)
-    blend_region(image, source, (0, 0, 611, 125), center)
-    blend_region(image, source, (611, 0, 1310, HEIGHT), center)
+    for reference, box, amount in prelap_regions(frame, content_boxes, 1):
+        blend_region(image, (source, destination)[reference], box, amount)
     return image
 
 
-def synthesize_audio(path):
+def synthesize_audio(path, sample_width=2):
     """Procedural stereo cue. All oscillators, percussion, and air are original."""
     total = MASTER_COUNT * AUDIO_RATE // FPS
     bed_length = round(14.6 * AUDIO_RATE)
@@ -248,10 +274,14 @@ def synthesize_audio(path):
         mix[start:start + length] += click[:, None] * balance
     peak = float(np.max(np.abs(mix)))
     require(0.03 < peak < .45, "Unexpected procedural audio level")
+    if sample_width == 3:
+        samples = np.rint(mix * 8388607).astype("<i4").view(np.uint8).reshape(-1, 4)[:, :3].tobytes()
+    else:
+        samples = np.rint(mix * 32767).astype("<i2").tobytes()
     with wave.open(str(path), "wb") as wav:
-        wav.setparams((2, 2, AUDIO_RATE, total, "NONE", "not compressed"))
-        wav.writeframes(np.rint(mix * 32767).astype("<i2").tobytes())
-        wav.writeframes(bytes((total - bed_length) * 4))
+        wav.setparams((2, sample_width, AUDIO_RATE, total, "NONE", "not compressed"))
+        wav.writeframes(samples)
+        wav.writeframes(bytes((total - bed_length) * 2 * sample_width))
     return {"rate_hz": AUDIO_RATE, "channels": 2, "samples_per_channel": total,
             "last_cue_seconds": bed_length / AUDIO_RATE, "peak_dbfs": 20 * math.log10(peak), "sha256": digest(path)}
 
@@ -298,26 +328,34 @@ def encoder_command(ffmpeg, movie, audio, frames, metadata=None):
                       "-movflags", "+faststart", str(movie)]
 
 
-def decode_source(ffmpeg, movie, log):
+def decode_source(ffmpeg, movie, log, size=(WIDTH, HEIGHT), *, uhd=False):
+    pixel_format = "rgb48le" if uhd else "rgb24"
     command = [ffmpeg, "-nostdin", "-v", "error", "-xerror", "-i", str(movie), "-map", "0:v:0", "-an",
-               "-f", "rawvideo", "-pix_fmt", "rgb24", "-fps_mode", "passthrough", "pipe:1"]
+               "-f", "rawvideo", "-pix_fmt", pixel_format, "-fps_mode", "passthrough", "pipe:1"]
     with ffmpeg_process(command, log, writing=False) as pipe:
-        size = WIDTH * HEIGHT * 3
-        while data := pipe.read(size):
-            require(len(data) == size, "Demo decode ended partway through a frame")
+        frame_bytes = size[0] * size[1] * (6 if uhd else 3)
+        while data := pipe.read(frame_bytes):
+            require(len(data) == frame_bytes, "Demo decode ended partway through a frame")
             yield data
 
 
-def verify_movie(ffmpeg, ffprobe, movie, expected_frames, chapters, log):
+def verify_movie(ffmpeg, ffprobe, movie, expected_frames, chapters, log, *,
+                 size=(WIDTH, HEIGHT), profile=("h264", "yuv420p", "aac")):
     data = json.loads(subprocess.check_output([ffprobe, "-v", "error", "-show_streams", "-show_chapters",
                                               "-of", "json", str(movie)]))
     video, = [stream for stream in data["streams"] if stream["codec_type"] == "video"]
     audio, = [stream for stream in data["streams"] if stream["codec_type"] == "audio"]
+    codec, pixel_format, audio_codec = profile
     require((video["codec_name"], video["width"], video["height"], video["avg_frame_rate"],
-             video["pix_fmt"], int(video["nb_frames"])) == ("h264", WIDTH, HEIGHT, "30/1", "yuv420p", expected_frames),
+             video["pix_fmt"], int(video["nb_frames"])) == (codec, *size, "30/1", pixel_format, expected_frames),
             f"Wrong encoded video profile or frame count for {movie.name}")
+    if codec == "prores":
+        require(video["profile"] == "XQ", f"Wrong ProRes profile for {movie.name}")
+    if size != (WIDTH, HEIGHT):
+        require(all(video.get(key) == "bt709" for key in ("color_space", "color_transfer", "color_primaries")),
+                f"Wrong Rec. 709 metadata for {movie.name}")
     duration = expected_frames / FPS
-    require(audio["codec_name"] == "aac" and int(audio["sample_rate"]) == AUDIO_RATE and audio["channels"] == 2
+    require(audio["codec_name"] == audio_codec and int(audio["sample_rate"]) == AUDIO_RATE and audio["channels"] == 2
             and abs(float(audio["duration"]) - duration) <= .025, f"Wrong audio profile for {movie.name}")
     require(abs(float(video["duration"]) - duration) < .001, f"Wrong duration for {movie.name}")
     for actual, expected in zip(data["chapters"], chapters, strict=True):
@@ -411,6 +449,157 @@ def source_image(args, frame):
     return Image.frombytes("RGB", (WIDTH, HEIGHT), data)
 
 
+def uhd_reference(raw, viewport):
+    from uhd_pixels import UHD_SIZE
+
+    source = np.frombuffer(raw, dtype="<u2").reshape(UHD_SIZE[1], UHD_SIZE[0], 3)
+    destination = source.copy()
+    x, y, width, height = viewport
+    boxes = editor_boxes(viewport, 2)
+    for (left, top, right, bottom), sample in zip(boxes, ((y + height - 4, x + width // 2), (y - 20, x + width // 2)), strict=True):
+        destination[top:bottom, left:right] = source[sample]
+    return source, destination, boxes
+
+
+def uhd_intro_raster(plate, source, destination, boxes, frame, fonts):
+    from uhd_pixels import UHD_SIZE, blend_rgb16, blend_rgba8
+
+    if frame >= FULL_SOURCE_LOCK:
+        return source
+    image = plate.copy()
+    if frame >= PRELAP_START:
+        for reference, (left, top, right, bottom), amount in prelap_regions(frame, boxes, 2):
+            region = np.s_[top:bottom, left:right]
+            blend_rgb16(image[region], (source, destination)[reference][region], amount)
+    layer = title_layer(frame, fonts, UHD_SIZE)
+    if layer is not None:
+        left, top, right, bottom = bounds = layer.getbbox()
+        blend_rgba8(image[top:bottom, left:right], layer.crop(bounds))
+    return image
+
+
+def uhd_source_profile(ffprobe, movie):
+    from uhd_pixels import UHD_SIZE
+
+    data = json.loads(subprocess.check_output([ffprobe, "-v", "error", "-select_streams", "v:0", "-show_streams",
+                                              "-of", "json", str(movie)]))
+    stream, = data["streams"]
+    require((stream["codec_name"], stream["width"], stream["height"], stream["avg_frame_rate"])
+            == ("ffv1", *UHD_SIZE, "30/1") and stream["pix_fmt"] in {"gbrp16le", "rgb48le"},
+            "UHD intro requires a native 30 fps lossless RGB16 FFV1 source")
+
+
+def run_logged(command, path):
+    with path.open("xb") as log:
+        subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
+
+
+def prores_packets(ffprobe, movie):
+    data = json.loads(subprocess.check_output([ffprobe, "-v", "error", "-select_streams", "v:0", "-show_packets",
+                                              "-show_data_hash", "sha256", "-show_entries", "packet=data_hash",
+                                              "-of", "json", str(movie)]))
+    return [packet["data_hash"] for packet in data["packets"]]
+
+
+def compose_uhd(args, source, plan, plates, fonts, custody):
+    from intro_hq import SHARE_PROFILE, UHD_PROFILE, master_command, share_command, trim_command
+    from uhd_pixels import UHD_SIZE, png_frames
+
+    uhd_source_profile(args.ffprobe, args.demo)
+    root = args.output_dir
+    audio = root / "original-intro-audio.wav"
+    audio_receipt = synthesize_audio(audio, sample_width=3)
+    metadata = root / "chapters.ffmetadata"
+    chapter_metadata(metadata, plan["chapters"])
+    master = root / "JAIN-The-Next-Move-45s-4K.mov"
+    standalone = root / "JAIN-The-Next-Move-Intro-12s-4K.mov"
+    master_share = master.with_suffix(".mp4")
+    intro_share = standalone.with_suffix(".mp4")
+    commands = [master_command(args.ffmpeg, master, audio, metadata, MASTER_COUNT / FPS, args.prores_hardware),
+                trim_command(args.ffmpeg, master, standalone, INTRO_COUNT / FPS),
+                share_command(args.ffmpeg, master, master_share), share_command(args.ffmpeg, standalone, intro_share)]
+    anchors = []
+    paths, hashes = zip(*(plates[number] for number in range(1, PLATE_COUNT + 1)), strict=True)
+    plate_frames = png_frames(paths, ffmpeg=args.ffmpeg, expected_sha256=hashes)
+    demo_frames = decode_source(args.ffmpeg, args.demo, root / "source-decode.log", UHD_SIZE, uhd=True)
+    with (ffmpeg_process(commands[0], root / "master-encode.log", writing=True) as sink,
+          closing(plate_frames), closing(demo_frames)):
+        first = next(demo_frames)
+        reference, destination, boxes = uhd_reference(first, source["source_viewport"])
+        for index, plate in zip(range(PLATE_COUNT), plate_frames, strict=True):
+            raster = memoryview(uhd_intro_raster(plate, reference, destination, boxes, index, fonts)).cast("B")
+            if index == FULL_SOURCE_LOCK:
+                anchors.append({"master_frame": index, "source_frame": 0,
+                                "input_rgb_sha256": hashlib.sha256(first).hexdigest(),
+                                "assembled_rgb_sha256": hashlib.sha256(raster).hexdigest()})
+            sink.write(raster)
+        for index, (source_index, raster) in enumerate(zip(plan["selected_source_indices"], chain((first,), demo_frames), strict=True), PLATE_COUNT):
+            if index in (PLATE_COUNT, INTRO_COUNT - 1, INTRO_COUNT, MASTER_COUNT - 1):
+                sha = hashlib.sha256(raster).hexdigest()
+                anchors.append({"master_frame": index, "source_frame": source_index,
+                                "input_rgb_sha256": sha, "assembled_rgb_sha256": sha})
+            sink.write(raster)
+    require(digest(args.demo) == source["movie_sha256"], "UHD demo movie changed during assembly")
+    require(digest(args.plates_receipt) == custody["intro_plates_receipt_sha256"]
+            and digest(args.intro_scene_receipt) == custody["intro_scene_receipt_sha256"],
+            "Intro scene or plate receipt changed during UHD assembly")
+    require(all(anchor["input_rgb_sha256"] == anchor["assembled_rgb_sha256"] for anchor in anchors),
+            "UHD handoff changed source RGB16 raster")
+    for command, name in zip(commands[1:], ("intro-trim", "master-share", "intro-share"), strict=True):
+        run_logged(command, root / f"{name}-encode.log")
+    master_packets = prores_packets(args.ffprobe, master)
+    intro_packets = prores_packets(args.ffprobe, standalone)
+    require(len(master_packets) == MASTER_COUNT and intro_packets == master_packets[:INTRO_COUNT],
+            "Standalone ProRes opener does not preserve exact master video packets")
+    videos = {}
+    for name, movie, frames, chapters, profile in (
+        ("master", master, MASTER_COUNT, plan["chapters"], UHD_PROFILE),
+        ("intro", standalone, INTRO_COUNT, [], UHD_PROFILE),
+        ("master_share", master_share, MASTER_COUNT, plan["chapters"], SHARE_PROFILE),
+        ("intro_share", intro_share, INTRO_COUNT, [], SHARE_PROFILE),
+    ):
+        videos[name] = verify_movie(args.ffmpeg, args.ffprobe, movie, frames, chapters,
+                                    root / f"{name}-full-decode.log", size=UHD_SIZE, profile=profile)
+    write_json(root / "intro-film.receipt.json", {
+        "schema": "jain.intro-film-uhd/v1", "status": "PASS", "outputs": videos, "audio": audio_receipt,
+        "width": UHD_SIZE[0], "height": UHD_SIZE[1], "fps": FPS, "raster_pixel_format": "rgb48le",
+        "prores_hardware": args.prores_hardware, "standalone_matches_master_video_packets": True,
+        "demo_sha256": source["movie_sha256"], "demo_receipt_sha256": digest(args.demo_receipt),
+        **custody, "compositor_sha256": digest(Path(__file__)), "font_sha256": digest(args.font),
+        "chapters_metadata_sha256": digest(metadata), "title_cues": TITLE_CUES,
+        "source_prelap": {"panels_start_frame": PRELAP_START, "panels_ready_frame": PANEL_READY,
+                          "editor_content_start_frame": CODE_REVEAL, "editor_content_ready_frame": CODE_READY,
+                          "brand_and_benchmark_start_frame": BRAND_REVEAL, "full_source_lock_frame": FULL_SOURCE_LOCK,
+                          "prelap_source_frame": 0, "first_moving_demo_frame": PLATE_COUNT},
+        "retime": plan, "raster_handoff": anchors, "encoder_commands": commands,
+    })
+    print(master)
+
+
+def preview_uhd(args, source, plates, fonts):
+    from uhd_pixels import png_frames
+
+    def raw_frame(index):
+        return subprocess.check_output([args.ffmpeg, "-nostdin", "-v", "error", "-i", str(args.demo),
+                                        "-vf", f"select=eq(n\\,{index})", "-frames:v", "1",
+                                        "-f", "rawvideo", "-pix_fmt", "rgb48le", "pipe:1"])
+
+    reference, destination, boxes = uhd_reference(raw_frame(0), source["source_viewport"])
+    for index in args.preview:
+        require(0 <= index < INTRO_COUNT, "Preview only accepts a master frame inside the standalone intro")
+        if index < PLATE_COUNT:
+            path, expected = plates[index + 1]
+            plate, = png_frames((path,), ffmpeg=args.ffmpeg, expected_sha256=(expected,))
+            raster = memoryview(uhd_intro_raster(plate, reference, destination, boxes, index, fonts)).cast("B")
+        else:
+            raster = raw_frame(index - PLATE_COUNT)
+        output = args.output_dir / f"preview-{index:06d}.png"
+        subprocess.run([args.ffmpeg, "-nostdin", "-v", "error", "-n", "-f", "rawvideo", "-pixel_format", "rgb48le",
+                        "-video_size", "3840x2160", "-i", "pipe:0", "-frames:v", "1", "-pix_fmt", "rgb48be", str(output)],
+                       input=raster, check=True)
+        print(output)
+
+
 def previews(args, source, plan, plates, fonts):
     needs_prelap = any(PRELAP_START <= frame < PLATE_COUNT for frame in args.preview)
     if needs_prelap:
@@ -443,10 +632,16 @@ def main():
     parser.add_argument("--font", type=Path, default=FONT_PATH)
     parser.add_argument("--ffmpeg", default="ffmpeg")
     parser.add_argument("--ffprobe", default="ffprobe")
+    parser.add_argument("--resolution", choices=("1080p", "2160p"), default="1080p")
+    parser.add_argument("--prores-hardware", action="store_true", help="Use Apple VideoToolbox for the 2160p XQ master")
     parser.add_argument("--preflight", action="store_true")
     parser.add_argument("--preview", type=int, action="append")
     args = parser.parse_args()
-    source = read_demo(args.demo, args.demo_receipt)
+    uhd = args.resolution == "2160p"
+    scale = 2 if uhd else 1
+    size = WIDTH * scale, HEIGHT * scale
+    require(not args.prores_hardware or uhd, "Hardware ProRes is only available for UHD delivery")
+    source = read_demo(args.demo, args.demo_receipt, size)
     plan = plan_retime(source)
     if args.preflight:
         print(json.dumps(plan, indent=2, allow_nan=False))
@@ -456,11 +651,16 @@ def main():
     args.output_dir = args.output_dir.resolve()
     checkout = Path(__file__).resolve().parents[2]
     require(not args.output_dir.is_relative_to(checkout), "Rendered outputs must stay outside the checkout")
-    plates, custody = read_plates(args.plates, args.plates_receipt, args.intro_scene_receipt, source, full=not args.preview)
-    fonts = {key: ImageFont.truetype(str(args.font), size) for key, size in (("headline", 72), ("eyebrow", 22))}
+    plates, custody = read_plates(args.plates, args.plates_receipt, args.intro_scene_receipt, source,
+                                  full=not args.preview, size=size)
+    fonts = {key: ImageFont.truetype(str(args.font), base * scale) for key, base in (("headline", 72), ("eyebrow", 22))}
     args.output_dir.mkdir(parents=True, exist_ok=bool(args.preview))
-    if args.preview:
+    if args.preview and uhd:
+        preview_uhd(args, source, plates, fonts)
+    elif args.preview:
         previews(args, source, plan, plates, fonts)
+    elif uhd:
+        compose_uhd(args, source, plan, plates, fonts, custody)
     else:
         compose(args, source, plan, plates, fonts, custody)
 

@@ -232,7 +232,7 @@ def reconstruct_source(manifest: dict) -> bytes:
 
 def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = None,
                font_size: int = 21, columns: int = 48, rows: int = 24, *,
-               language: str = "rust") -> dict:
+               language: str = "rust", render_scale: int = 1) -> dict:
     """Create complete-source PNG pages and a lossless source-chunk manifest.
 
     Output directories must not exist. ``manifest.json`` is written last; an
@@ -242,6 +242,9 @@ def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = Non
     ``language`` selects syntax coloring independently of source reconstruction.
     """
     from PIL import Image, ImageDraw, ImageFont
+    from scaled_drawing import ScaledDraw
+    if render_scale not in (1, 2):
+        raise ValueError("render_scale must be 1 or 2")
     source_path, output_dir = Path(source_path).resolve(), Path(output_dir).resolve()
     if output_dir.exists():
         raise FileExistsError("refuse to replace an existing code-page output directory")
@@ -258,16 +261,17 @@ def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = Non
     if font_path is None:
         raise FileNotFoundError("no monospace font found; provide --font")
     font_path = font_path.resolve()
-    font = ImageFont.truetype(str(font_path), font_size)
-    if abs(font.getlength("M") - font.getlength("i")) > .05:
+    layout_font = ImageFont.truetype(str(font_path), font_size)
+    font = layout_font if render_scale == 1 else ImageFont.truetype(str(font_path), font_size * render_scale)
+    if abs(layout_font.getlength("M") - layout_font.getlength("i")) > .05:
         raise ValueError("font must be monospace")
-    chrome_font = ImageFont.truetype(str(font_path), max(8, round(font_size * .57)))
-    cell = font.getlength("M")
+    chrome_font = ImageFont.truetype(str(font_path), max(8, round(font_size * .57)) * render_scale)
+    cell = layout_font.getlength("M")
     line_height = math.ceil(font_size * 1.23)
     left, top, right, bottom = 62, 22, 14, 14
     width = 4 * math.ceil((left + cell * columns + right) / 4)
     height = top + line_height * rows + bottom
-    if width > 4096 or height > 4096:
+    if width * render_scale > 4096 or height * render_scale > 4096:
         raise ValueError("code-page dimensions exceed 4096 pixels")
     chunks = _wrap(source, columns, MAX_PAGES * rows)
     spans, lexer = _spans(source) if language == "rust" else _language_spans(source, language)
@@ -280,9 +284,9 @@ def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = Non
         "source_lines": chunks[-1]["source_line"], "encoding": "UTF-8; original line endings preserved",
         "output_directory": str(output_dir), "page_count": page_count,
         "font_path": str(font_path), "font_sha256": _sha(font_path.read_bytes()),
-        "font_size": font_size, "columns": columns, "rows_per_page": rows,
-        "width": width, "height": height, "line_height": line_height,
-        "code_origin": [left, top], "tab_stop": 4, "palette": PALETTE, "lexer": lexer,
+        "font_size": font_size * render_scale, "columns": columns, "rows_per_page": rows,
+        "width": width * render_scale, "height": height * render_scale, "line_height": line_height * render_scale,
+        "code_origin": [left * render_scale, top * render_scale], "tab_stop": 4, "palette": PALETTE, "lexer": lexer,
         "lexer_scope": "syntax color only; never the source-emission token counter",
         "source_coverage": "all original characters in contiguous ordered chunks; chrome is separate",
         "gp_semantic_head": None, "semantic_scope": "exact source only; no invented program annotations",
@@ -296,8 +300,8 @@ def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = Non
     span_index = 0
     for page_index in range(page_count):
         page_rows = chunks[page_index * rows:(page_index + 1) * rows]
-        image = Image.new("RGBA", (width, height), PALETTE["background"])
-        draw = ImageDraw.Draw(image)
+        image = Image.new("RGBA", (width * render_scale, height * render_scale), PALETTE["background"])
+        draw = ImageDraw.Draw(image) if render_scale == 1 else ScaledDraw(image, render_scale)
         draw.rectangle((0, 0, width - 1, height - 1), outline=PALETTE["border"], width=1)
         draw.text((14, 4), f"{source_path.name}  {page_index + 1}/{page_count}", font=chrome_font, fill=PALETTE["gutter"])
         for row_index, row in enumerate(page_rows):
