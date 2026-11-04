@@ -1,0 +1,44 @@
+{
+  "schema": "whitepaper.recorded-decision-lift-figure/v1",
+  "csv_sha256": "76c2442d922896fc4c0654ef4be00968a89c9b56d41c0ece9375a5b15e1d49ff",
+  "source_receipt_sha256": "eafce1fbe0bc820347cf0f936fc6e9b964b9bebb618b077f7284a235231f4903",
+  "generator_sha256": "c54c9d12bc1444590261eb66abf5476431d878393f3de201170071c698d544f2",
+  "figure_sha256": "cccbfef71df58c8506e710344212a7994255ca30e90bdb292cdce2d2c54957f1",
+  "records": 4063,
+  "round_window": [
+    775,
+    4838
+  ],
+  "missing_rounds": [
+    4331
+  ],
+  "strict_gain_rounds": [
+    785,
+    859,
+    2750,
+    3175
+  ],
+  "accepted_tie_rounds": [
+    782,
+    882,
+    2795,
+    3100
+  ],
+  "lift_values": 8126,
+  "strict_gain_overlays": 4,
+  "symmetric_log_linear_threshold": "0.0001",
+  "smoothing": false,
+  "imputation": false,
+  "connected_data_lines": false,
+  "scope": "Logged utility differences on adaptively reused development contexts; no independent writer/ranking-map learning gain, causal training attribution, Elo conversion, serving result or transfer claim. Exact runtime source/adapter/pool/normalization binding remains unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "figure_inches": [
+    3.375,
+    2.5
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_recorded_decision_lift.py"
+}
