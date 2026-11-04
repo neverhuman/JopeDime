@@ -16,7 +16,7 @@
 \makeatletter\widowpenalty=\@M\clubpenalty=\@M\@clubpenalty=\@M\makeatother
 \hyphenation{FunSearch Alpha-Geometry AlphaZero AlphaGo AlphaFold AlphaDev AlphaProof AlphaEvolve EurekaZero DreamCoder HumanEval ImageNet MotherNet KumoRFM TabPFN EURISKO MuZero AlphaStar intelligence scoring}
 
-We specify a test of whether execution feedback improves a system's first
+We specify a test of whether execution feedback improves the first
 algorithm proposal on a new problem. AlphaGo Zero provides a
 precedent within a fixed game: it went beyond the best human play through
 self-play under the rules of Go, without seeing a human game
@@ -146,8 +146,8 @@ Zero analogy concerns the additional training feedback from the referee.
 \end{figure}
 
 \paragraph{Contributions.}
-We formulate algorithm invention as a game and give a tabular-regression
-reference whose moves are \mbox{typed programs} of learning primitives.
+We define the game, its costs, a tabular-regression reference design
+and a protocol for evaluating its first proposals.
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=3pt,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
     judgment and retention), with an idealized relation between proposal
@@ -159,8 +159,8 @@ reference whose moves are \mbox{typed programs} of learning primitives.
     self-play training and for the expected compute cost per verified improvement (\cref{sec:price}).
   \item \textbf{\EZ{}:} a reference design with a frozen problem encoder,
     a grammar-constrained program writer and a problem--program ranking map,
-    plus a proposed expert-\hspace{0pt}iteration training procedure and audit safeguards against \mbox{referee reward} hacking
-    (\cref{sec:method}).
+    with proposed expert-\hspace{0pt}iteration training and safeguards against
+    \mbox{referee reward} hacking (\cref{sec:method}).
   \item \textbf{An evaluation protocol for the single-proposal claim:}
     paired comparisons with frozen algorithms whose receipts record the
     model that designed them, performance curves against agents
