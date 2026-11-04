@@ -1,6 +1,6 @@
 [build-system]
-requires = ["maturin>=1.7,<2"]
-build-backend = "maturin"
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
 
 [project]
 name = "jope"
@@ -21,6 +21,8 @@ dependencies = [
   "orjson>=3.10",
   "psutil>=5.9",
   "rich>=13.7",
+  # jope._telemetry: the Rust extension, built out of tree (python/native, non-editable).
+  "jope-native",
 ]
 
 [project.optional-dependencies]
@@ -51,6 +53,7 @@ url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 [tool.uv.sources]
+jope-native = { path = "native", editable = false }
 torch = [
   { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cu130", extra = "cu130" },
@@ -59,11 +62,6 @@ torch = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/jope"]
 
-[tool.maturin]
-manifest-path = "../crates/jope-telemetry/Cargo.toml"
-python-source = "src"
-module-name = "jope._telemetry"
-features = ["python"]
 # Research drivers live under test-support/jope/research, outside the runtime source tree.
 
 [tool.ruff]

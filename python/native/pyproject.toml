@@ -1,0 +1,33 @@
+# The jope._telemetry PyO3 extension (crates/jope-telemetry), built as its own non-editable
+# distribution. maturin editable installs copy a mixed project's extension into its python-source
+# directory; keeping the native code in a separate package that uv installs as a normal wheel means
+# `uv sync` never writes a .so/.pyd into python/src. The build uses the workspace /target/ directory.
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "jope-native"
+version = "1.0.0"
+description = "Native (Rust/PyO3) extensions for the jope Python package"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+
+[tool.maturin]
+manifest-path = "../../crates/jope-telemetry/Cargo.toml"
+python-source = "src"
+module-name = "jope_native._telemetry"
+features = ["python"]
+
+[tool.uv]
+# Rebuild the cached wheel when the Rust sources it compiles change, not only this file.
+cache-keys = [
+  { file = "pyproject.toml" },
+  { file = "src/**/*.py" },
+  { file = "../../Cargo.toml" },
+  { file = "../../Cargo.lock" },
+  { file = "../../crates/jope-telemetry/Cargo.toml" },
+  { file = "../../crates/jope-telemetry/src/**/*.rs" },
+  { file = "../../crates/jope-datasets/Cargo.toml" },
+  { file = "../../crates/jope-datasets/src/**/*.rs" },
+]
