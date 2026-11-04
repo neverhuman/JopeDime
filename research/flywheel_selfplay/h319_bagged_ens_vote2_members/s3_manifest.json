@@ -1,0 +1,37 @@
+{
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H319/",
+  "verification": "exact-version GET streamed through sha256 (boto3) for every object before local deletion",
+  "objects": [
+    {
+      "key": "h319_bag_locks_models_outputs.tar.gz",
+      "version_id": "xNFekNwVG8exw4OgwepykpEE9ojgdy6T",
+      "sha256": "ea74bb31c05c6d9bd3db8e8114ebefa140c6f01c3f2f043247a2afd527961a11",
+      "bytes": 216396529,
+      "contents": "36 BAG fit locks (9 bootstrap members each: seeds, bootstrap family hashes, model hashes, guard counts) + LightGBM members, archived H303/H308/H315 picks, outputs, logs incl host CPU"
+    },
+    {
+      "key": "metrics_full.json",
+      "version_id": "3InXXuTx1DPY4X7zMB.Bxbkfkr6C7tj4",
+      "sha256": "6810f4c1e36792608a60fb3d9b5e78dd41d5331ecd2b02174ddd1f1468413b40",
+      "bytes": 39121
+    },
+    {
+      "key": "picks.npz",
+      "version_id": "TjnS5iC1HPeIXyHwXPDeHnH.5j91fLeX",
+      "sha256": "e683b44300f366e408028fcf82171cd3aa4710fd187048741feb325a8a7ffaad",
+      "bytes": 3186
+    },
+    {
+      "key": "regression_receipt.json",
+      "version_id": "YVfak8MGhhoeCt7r6dWH.aqlkRUq81qq",
+      "sha256": "cb7e33307ef7d1b8c11b05410cbec6bbc56c80250723533469623c55abbb3871",
+      "bytes": 508
+    },
+    {
+      "key": "fit_locks_pre_score.sha256",
+      "version_id": "IXPJRgI4ryN1NFkSfvCTdhKzq7QYzqDR",
+      "sha256": "f29e4082751e41e0ead18c1ee4dd4dcb748afdde45c36f5faf0d3cb50b033e09",
+      "bytes": 3636
+    }
+  ]
+}
