@@ -15,6 +15,7 @@ import numpy as np
 
 from h256_network import (arrays, representative, ribbons, scalar_material,
                           weighted_causal_depths, _continuous_layer_material)
+from jain_spatial_layouts import SPATIAL_LAYOUTS, transverse_position
 from network_graph import ICO, ICO_FACES, _select
 
 
@@ -117,12 +118,15 @@ def _family(name):
     return (2, name)
 
 
-def build_display_network(data, spans, camera, *, width=16.2, pulse_frames=48):
+def build_display_network(data, spans, camera, *, width=16.2, pulse_frames=48,
+                          spatial_layout="layered"):
     """Build sampled real strands; return JSON-safe receipt and display ports."""
     if not math.isfinite(width) or not 4 <= width <= 20:
         raise ValueError("Display width must be4..20 world units")
     if not isinstance(pulse_frames, int) or pulse_frames < 2:
         raise ValueError("Pulse period must be at least two frames")
+    if spatial_layout not in SPATIAL_LAYOUTS:
+        raise ValueError(f"Unknown display layout: {spatial_layout}")
     half_width = width/2
     if len(spans) != len(data["cases"]):
         raise ValueError("One full-case interval is required per captured dataset")
@@ -201,14 +205,20 @@ def build_display_network(data, spans, camera, *, width=16.2, pulse_frames=48):
     positions = {}; stage_receipts = []
     for stage, nodes in stage_nodes.items():
         nodes.sort(key=lambda node:(_family(node[0]),node[1]))
-        columns = max(1,math.ceil(len(nodes)/32)); x = -half_width+width*stage/max(1,maximum)
+        columns = max(1,math.ceil(len(nodes)/32))
+        progress = stage / max(1, maximum)
+        x = -half_width+width*stage/max(1,maximum)
         for index,(name,local,*_) in enumerate(nodes):
-            column = index//32; row = index%32; actual_rows = min(32,len(nodes)-column*32)
-            y = 0. if columns==1 else -1.1+2.2*column/(columns-1)
-            z = 0. if actual_rows==1 else -4.35+8.7*row/(actual_rows-1)
+            y, z = transverse_position(spatial_layout, progress, index, len(nodes))
             positions[(name,local)] = np.asarray((x,y,z))
         stage_receipts.append({"stage":stage,"x":x,"displayed_actual_endpoint_nodes":len(nodes),
                                "vertical_rows":32,"depth_columns":columns})
+    bounds = {"x":[-half_width-.06,half_width+.06],"depth":[-1.2,1.2],"z":[-4.41,4.41]}
+    ordered_positions = list(positions.values())
+    if spatial_layout != "layered":
+        low = np.min(ordered_positions, axis=0) - .06
+        high = np.max(ordered_positions, axis=0) + .06
+        bounds = {axis:[float(lo),float(hi)] for axis,lo,hi in zip(("x","depth","z"),low,high)}
     root = bpy.data.objects.new("JAIN display network",None);bpy.context.collection.objects.link(root)
     receipts = []; edge_count = 0; node_count = 0
     for plan in plans:
@@ -246,7 +256,8 @@ def build_display_network(data, spans, camera, *, width=16.2, pulse_frames=48):
     output_nodes=[positions[(name,index)].tolist() for name,index,*_ in stage_nodes[maximum]]
     return {"schema":"jain.clean-measured-display/v1","root_object_name":root.name,
         "input_port":[-half_width,0.,0.],"output_port":[half_width,0.,0.],"input_node_ports":input_nodes,"output_node_ports":output_nodes,
-        "bounds":{"x":[-half_width-.06,half_width+.06],"depth":[-1.2,1.2],"z":[-4.41,4.41]},
+        "bounds":bounds,"spatial_layout":spatial_layout,
+        "ordered_endpoint_positions_f64_sha256":_sha(ordered_positions),
         "stage_planes":stage_receipts,"maximum_weighted_causal_depth":maximum,
         "recorded_matrix_operations":len(inventories[0]),"available_nonzero_scalar_connections":available_edges,
         "displayed_nodes":node_count,"displayed_strands":edge_count,"operations":receipts,

@@ -4,6 +4,12 @@ The current [ten-dataset animation plan](../../docs/plans/blender-fused-first-re
 
 All generated data/model/source/scene/video assets stay outside Git. Ten explicitly synthetic examples are selected by embedding diversity before inference; the actual five-fold selected DSLs and native GP-to-Rust exports must pass the semantic/source/training gates. The code pane preserves every byte and pauses longer on training and prediction. See the plan for exact ownership, paths, commands, scopes and stop conditions.
 
+## JAIN spatial layout review
+
+Add `--spatial-layout iris|twist|hourglass|prism|manta` to the cinematic scene build to arrange the same sampled network as radial spokes, a twisted ribbon, an hourglass, hexagonal shells, or a swept manta. The default `layered` layout retains the original coordinates. Each option moves nodes across their existing causal plane. The plane sequence, actual parameter/channel identities, connection endpoints, and measured activations and contributions stay fixed. The table and source connectors follow the moved ports.
+
+For a matched design review, build a fresh scene for each layout with the same capture and `--animation-loop`. Pass `--case-id case-a --frame-start 89 --frame-end 89` to `blender/render_animation.py` for all five and composite them with the same source and table frame. Compare `network.operations` and `network.stage_planes` in the scene receipts for equality, then compare `network.ordered_endpoint_positions_f64_sha256` for distinct geometry.
+
 ## Earlier still and baseline tooling
 
 The latest [H256 checkpoint plan](../../docs/plans/blender-fused-first-render/H256_PLAN.md) covers the trained five-fold solution encoder, explicit landmark mappings, actual proposal selection, native selected-GP refits and complete Rust scrolling. Its entry point is `blender/h256_scene.py`; the earlier board below preserves the original authenticated r882 baseline.

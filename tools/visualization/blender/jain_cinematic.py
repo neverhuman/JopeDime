@@ -29,6 +29,7 @@ from h256_scene import full_source_pages
 from input_influence import load_influence
 
 from jain_display_network import build_display_network
+from jain_spatial_layouts import SPATIAL_LAYOUTS
 
 
 def digest(path):
@@ -216,7 +217,8 @@ def build(data, validation, args):
     period = args.loop_frames if args.animation_loop else 144
     pose_step = 5 if args.animation_loop else 9
     network = build_display_network(data, spans, camera, width=11.,
-                                    pulse_frames=period if args.animation_loop else 48)
+                                    pulse_frames=period if args.animation_loop else 48,
+                                    spatial_layout=args.spatial_layout)
     rotor = bpy.data.objects[network["root_object_name"]]
     rotor.location = (0., 0, .4)
     rotor.scale = (1., 1, .85)
@@ -338,7 +340,8 @@ def build(data, validation, args):
         "round_trip_metrics_sha256":digest(args.metrics),"round_trip_metrics":metrics["cases"],"metric_device":"cpu",
         "dataset_catalog_sha256":digest(args.dataset_catalog) if args.dataset_catalog else None,
         "layout":"equal thirds: table / actual sampled neural layers / complete Rust",
-        "source_hashes":{name:digest(HERE/name) for name in ("jain_cinematic.py","jain_display_network.py")},
+        "source_hashes":{name:digest(HERE/name) for name in
+                         ("jain_cinematic.py","jain_display_network.py","jain_spatial_layouts.py")},
         "network":network,"tables":table_rows,"case_frames":spans,"source_cues":cues,
         "whole_source_pages":page_receipts,"floor":{"z":-4.2,"metallic":.92,"roughness":.27},
         "connectors":{"input_strands":80,"output_strands":len(output_ports),
@@ -377,6 +380,7 @@ def main():
     parser.add_argument("--animation-loop",action="store_true")
     parser.add_argument("--loop-frames",type=int,default=120)
     parser.add_argument("--dataset-catalog",type=Path)
+    parser.add_argument("--spatial-layout",choices=SPATIAL_LAYOUTS,default="layered")
     parser.add_argument("--save-only",action="store_true")
     parser.add_argument("--code-hold-frames",type=int,default=6)
     parser.add_argument("--render-frame",type=int,action="append",default=[])
