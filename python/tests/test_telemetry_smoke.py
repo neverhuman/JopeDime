@@ -17,6 +17,17 @@ import pytest
 tel = pytest.importorskip("jope._telemetry")
 
 
+def test_extension_is_built_out_of_tree() -> None:
+    """The extension comes from the installed jope-native wheel, never from python/src."""
+    import jope
+
+    source = Path(jope.__file__).resolve().parent
+    native = Path(tel.__file__).resolve()
+    assert native.suffix in {".so", ".pyd"}, native
+    assert source not in native.parents, native
+    assert not [*source.glob("**/*.so"), *source.glob("**/*.pyd")]
+
+
 def _events(run: Path) -> list[dict]:
     return [json.loads(line) for line in (run / "events.jsonl").read_text().splitlines()]
 

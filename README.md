@@ -393,12 +393,12 @@ limits and client examples](docs/program-source-stream.md).
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | 6,135 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |
-| Python tests | 209, found by a static scan, not collected or run <sup>5</sup> |
+| Python tests | 210, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 17 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (automatic triggering paused; dispatch manually) (top-level declarations; 20 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
 | Coverage map | 1,216 items over 35 lanes |
 | Capability matrix | 841 rows: 353 moved, 78 new, 1 pending, 402 dropped, 7 lost |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 3,412 `.py` files, 307 of them under `python/` |
+| Python still tracked | 3,414 `.py` files, 309 of them under `python/` |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
