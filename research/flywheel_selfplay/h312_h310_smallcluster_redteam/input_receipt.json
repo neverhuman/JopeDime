@@ -1,0 +1,608 @@
+{
+  "status": "PASS",
+  "objects": [
+    {
+      "key": "experiments/rd_breakthrough_20261030/H310/h310_locks_models_outputs.tar.gz",
+      "version_id": "1JWgsGRcV3fD5r4hvAJXptCQ_crMYoQl",
+      "sha256": "f42107b67cf9540f4192c8edc8d2f04a1af374e221d34329af9b30d9177918e1",
+      "bytes": 84801665,
+      "contents": "3 DL-Train fit locks + inner/refit LightGBM members (fold_4), crashed attempt-0 partial members, H303 P0 train regression task, outputs, logs, receipts",
+      "path": "references/h310_locks_models_outputs.tar.gz"
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H310/metrics_full.json",
+      "version_id": "7yFDoiEs6d8JJPwzqls3nrgSmWzp2KYE",
+      "sha256": "5f05626f7fee8bb7e3ebb26a188a024d7b8df45627677b46cb002fffa0b92af2",
+      "bytes": 27297,
+      "path": "references/metrics_full.json"
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H310/picks.npz",
+      "version_id": "A2YgofnledZcp_sj_Aa6wcg4dP_BdlAg",
+      "sha256": "ad85ccc95f42533962fcbf0009b1cd4edf0beff43c5da25b8a65a7848646cda1",
+      "bytes": 1136,
+      "path": "references/picks.npz"
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H310/lock_receipt.json",
+      "version_id": "o77G3BwjNRt1MVrRIRIDPVe1jZddOW3B",
+      "sha256": "bcf3e7958485fbe1ffb8f5159c88624178b11b3efb8196201658a330ce4dc8eb",
+      "bytes": 2384,
+      "path": "references/lock_receipt.json"
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H310/regression_train_receipt.json",
+      "version_id": "MZMFMJogtLT51u9aeaOZ_gdXGMBeOOKF",
+      "sha256": "d9de35094def8b5272abe4913362189694f2ec2ff621c082cd3a88fa7401cbc3",
+      "bytes": 1417,
+      "path": "references/regression_train_receipt.json"
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H281/attempt-001/gpu-attempt-001-r3175-gpu-costs.npz",
+      "version_id": "EgHvHGbSUy6RSXD60ZKiItTdX8HGMysg",
+      "sha256": "d99363f62c36463e6fe1ca825a87332198e6a817021bc208c6379b2d2c330bab",
+      "path": "references/gpu-attempt-001-r3175-gpu-costs.npz",
+      "bytes": 409810
+    }
+  ],
+  "members": [
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag3.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag3.txt",
+      "bytes": 109626,
+      "sha256": "833e5d47c7a4489514ae8812a7b128d352898a1e7645a82bb27991caced4ebad"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag4.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag4.txt",
+      "bytes": 108803,
+      "sha256": "a4d3a25673387eb3d39f579dae89792a9bf15b343cf6c11e3c4f000303e0df58"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag2.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag2.txt",
+      "bytes": 65390,
+      "sha256": "5040d60ab21e2d1195522e1ed6e6739fab33f37dda3d9d0e8279355436951b2b"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-ranker.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-ranker.txt",
+      "bytes": 198479,
+      "sha256": "7a10b79766f4cff627a1124753220daf3ef1543c45d22494c337eef4d1ffc3a7"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag0.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag0.txt",
+      "bytes": 108823,
+      "sha256": "553b1d6c2bbfb4d14de5a457834f15bde09afa9eb000968de348b4997c12eeab"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag4.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag4.txt",
+      "bytes": 108403,
+      "sha256": "d6cc409a36a22e2e6def398893fad8c5da9cea1a707b696a9ead7802a7590da0"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag1.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag1.txt",
+      "bytes": 109321,
+      "sha256": "6636563c17141d93f41daa83d93d2375052afe42c780c79d1f8d6dbc298b38da"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag3.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag3.txt",
+      "bytes": 111246,
+      "sha256": "7035b12cc0b0c26256437cd38298959eb68db26529d8b342056ad7641be4ff7e"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag5.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag5.txt",
+      "bytes": 109496,
+      "sha256": "25148a9fd9892d8e5119be79d95422832ae481cbe61417ce4a33c7f3142e2b37"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-ranker.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-ranker.txt",
+      "bytes": 199897,
+      "sha256": "0efaa759f1cf9a735fb3f54c51b415de4c4b7aed84afb5a63c322feafead46f9"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag4.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag4.txt",
+      "bytes": 64738,
+      "sha256": "d6a596381cd06ac0fb1a122fabc9c5baebda9f12c9ec6894c5e5dd76dcb00244"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag2.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag2.txt",
+      "bytes": 109332,
+      "sha256": "8b971a80c9dde5b3f113c4adfac9b30606dc757487198b29942a65b440099ce7"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag0.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag0.txt",
+      "bytes": 109362,
+      "sha256": "af736041d0be91c9f9517ed72c0b5e687598d8f5d40ba319634e624c6093aa9b"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag7.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag7.txt",
+      "bytes": 65046,
+      "sha256": "17adc50765f9158b89654498b77b035ae10b7cf6a94221a25a3ce6e93d7a2d48"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-ranker.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-ranker.txt",
+      "bytes": 199108,
+      "sha256": "38b36792e6796927fb327f446fca4c018b61fe669548bfeeff4a006bef670cbc"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag3.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag3.txt",
+      "bytes": 64830,
+      "sha256": "e09899ad9f495581f294295e458951eec06971f9487ddc39f131e797c41a2a2a"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag6.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag6.txt",
+      "bytes": 109516,
+      "sha256": "80203778f6c96cee8f9362881f7bf91464a40bfecc001452bc3790a445bfbf90"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-veto.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-veto.txt",
+      "bytes": 139842,
+      "sha256": "e223360534a8ca42c28ad42f346ff15632332e95d934ec4af1780ad5527c1ef3"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-veto.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-veto.txt",
+      "bytes": 139681,
+      "sha256": "692f02734e455bd4eb41659cce3bfca35178a2911b01d0da37d7eed706140dfa"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag7.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag7.txt",
+      "bytes": 109528,
+      "sha256": "b7a88294a6c60fef57a7a915722c090dad242e95bd1c61fa3535d86cb9c201e2"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag6.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag6.txt",
+      "bytes": 109076,
+      "sha256": "cc35b764cc4d89d00230dbcded8d68d1355501995c77199de83262da621050bb"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag1.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag1.txt",
+      "bytes": 65211,
+      "sha256": "88df73069103f7a449f8ffa6915515f4deea466f298e2fa9f38965f28e16d4af"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag2.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag2.txt",
+      "bytes": 109643,
+      "sha256": "64943aac26d7eba13d6c21103889cfb5512497d045c39ee7f42228d010ab47bb"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag0.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag0.txt",
+      "bytes": 65549,
+      "sha256": "46d6c8349e3e5a58c029d0f4fa1ef32130dbc48cd40c1fcc2548ecb56b566de8"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag5.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag5.txt",
+      "bytes": 110726,
+      "sha256": "6732193669a161f64fc38439b7985d89136deceb364dbb9daa479f350d988ab6"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag6.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag6.txt",
+      "bytes": 65688,
+      "sha256": "0923fb50483c2e386ca1d2743e0f39c5254f221070c7c8c2f6ca1cfe6443c0ec"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-veto.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-veto.txt",
+      "bytes": 139882,
+      "sha256": "4a6fe6ff0751a013a7e00037dbcd069193b67e19e77102a4b0d80968d544f6f9"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag5.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m2-s1272701215-bag5.txt",
+      "bytes": 65213,
+      "sha256": "52aa43b2b29ef2b1efcd8d7c5401e048dde37d12c09e5213ab4c768548e3b53f"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag7.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m0-s1869595753-bag7.txt",
+      "bytes": 109796,
+      "sha256": "e877decb030b746ddae6233a672870202ca1d4bf4278bb1c993593d556304016"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag1.txt",
+      "archive_member": "lock/fold_4/root_30002/refit/f4-r30002-m1-s786733481-bag1.txt",
+      "bytes": 107933,
+      "sha256": "0cce0d21a98b165bfd7dcf335df67d965b6ec424a6870f4abf7d79ba0e470a0d"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30002/fit_lock.json",
+      "archive_member": "lock/fold_4/root_30002/fit_lock.json",
+      "bytes": 10868,
+      "sha256": "d78922f4a23d42a20da081c3b4be61b9b902986bbcdea882236400171c3c8c81"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag3.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag3.txt",
+      "bytes": 109888,
+      "sha256": "400145cb4623a0a67bd183e22a0a173d3295f68161f56baa830292daa67c53ac"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag3.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag3.txt",
+      "bytes": 109882,
+      "sha256": "fce4e3d7b403c7faa2163080652d975cab705266ce7c38521b07d47c4ef41721"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag5.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag5.txt",
+      "bytes": 109381,
+      "sha256": "56a901afd283cde81a62733a2f5db526b6267bd82bbca14a83a54203cdb6b5c2"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-veto.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-veto.txt",
+      "bytes": 139926,
+      "sha256": "4acf7726f351844536a749cd8b54ef267c31ad7dadd4aaedfd0047e8d41cee96"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag0.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag0.txt",
+      "bytes": 109888,
+      "sha256": "27d993656446d6f94f2228c14cdd01840084d9b42711cd18001a91902e70618f"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag6.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag6.txt",
+      "bytes": 110743,
+      "sha256": "1782d7802133796e4ddbd9f9be82c5843a53f01b8ec5123c2295b6243cb18891"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-ranker.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-ranker.txt",
+      "bytes": 199250,
+      "sha256": "29e8c7b44e60b09adb92b7c6aa1b26e88bac523a5a69dbf00fcfa7f8b21020eb"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag6.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag6.txt",
+      "bytes": 109041,
+      "sha256": "c72e910ab033970fcd9f9e4057daca46c067e2c6b40cca1c4a8557d24dda7d20"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag1.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag1.txt",
+      "bytes": 200418,
+      "sha256": "f013e8497ceb4caafeaa32b911791d2531d993d8e8cbc3aaffdf4c926794469e"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-veto.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-veto.txt",
+      "bytes": 139885,
+      "sha256": "c404e73f6ac7b8c0a851ac44274559c7a75781dc23aba365faa34d2724da8b12"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag0.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag0.txt",
+      "bytes": 199823,
+      "sha256": "20e29d2d9e83f680fb1ed15d002ac34c7588490d21a42816356276616a94b0e3"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag3.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag3.txt",
+      "bytes": 200774,
+      "sha256": "5d71195b621a3df1c603dfc1ce29753a9baedd536bcd37159c2b989598cba346"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag7.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag7.txt",
+      "bytes": 110484,
+      "sha256": "05e4c64155f7838502d48140b076e9dd86c0924ecb8f74e4e861d4cb4be0b89a"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-veto.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-veto.txt",
+      "bytes": 140706,
+      "sha256": "a8ee4b550e4fbf60134fe73f31e3d44146be6b8d08cf40a95dc18fd422e6cea4"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-ranker.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-ranker.txt",
+      "bytes": 198612,
+      "sha256": "c62d525e27fb54c20dbac0aae4aa3a90a28b1c3fd3f97398e77172e67b73e9eb"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag4.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag4.txt",
+      "bytes": 200226,
+      "sha256": "984e6817c9edab3ed5f025f45c45330fd8fe76746b36b8d86f6b57a0bbf7af19"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag4.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag4.txt",
+      "bytes": 109122,
+      "sha256": "6fc6f8bcd1c151856f58bb5ff4b1699927030bed09f9bc40082c3135284ebfb9"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-ranker.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-ranker.txt",
+      "bytes": 199536,
+      "sha256": "2e02c3633064c85b151c916893f1d0238e9b88a0ce96ae29a97fa9ab423f8ec3"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag1.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag1.txt",
+      "bytes": 109093,
+      "sha256": "93e66588eb6a0c9a37909ad77c2c097b77a963ec48556f444e38d552b8a16c19"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag5.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag5.txt",
+      "bytes": 198849,
+      "sha256": "2d1efbd301cc6b98f56fe42c29cf67c9c9bd922a1631e2b80888d2a212cfc995"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag7.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag7.txt",
+      "bytes": 198395,
+      "sha256": "139df3a495e0363924f86fd06bc35fb0997bd974006c41a5296e5d6d0843b46f"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag2.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag2.txt",
+      "bytes": 109138,
+      "sha256": "ecc8e4ead96cc6c014754410a3526e634f608a7a2ea95d9e1093788c79a367ab"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag0.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag0.txt",
+      "bytes": 109935,
+      "sha256": "2f036df131cce730ad39e50489941b73edadde05799821b96c73b8f636087908"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag6.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag6.txt",
+      "bytes": 197466,
+      "sha256": "84bd46b97bc29db977e9a4ba6c9f18b3953b94f587b8ef9d61d97058c8d575b0"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag4.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag4.txt",
+      "bytes": 110483,
+      "sha256": "8dd06acfbc533ff45c8dd7718ef236fae784ae6e29c877a20a7b5c2eb15489c5"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag2.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag2.txt",
+      "bytes": 110424,
+      "sha256": "edcaf2e3409da6276f4c70e9ca14c59acc8477d8773602ef20ed3d5d11c9cf66"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag5.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m1-s89540748-bag5.txt",
+      "bytes": 109936,
+      "sha256": "866ee3eac0b40099d4ddbe3532033fa1474a72d51ccca609c47b935b6ebf899a"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag7.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag7.txt",
+      "bytes": 109396,
+      "sha256": "dea2f5f8cb88e5fe13d733ece48f659a45cdc368356ffb2fd5e9bc9ba7eaf9c6"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag2.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m2-s1415857569-bag2.txt",
+      "bytes": 199842,
+      "sha256": "e3d18c3bbb23e8a19f55fd0141cf4bd4598b25fb4ec7c937fd4745903158dd92"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag1.txt",
+      "archive_member": "lock/fold_4/root_30003/refit/f4-r30003-m0-s1510579523-bag1.txt",
+      "bytes": 109743,
+      "sha256": "e9d39712989266048d0c63e1447f0898f132c58ab7b7b20513d172fb25ed45a3"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30003/fit_lock.json",
+      "archive_member": "lock/fold_4/root_30003/fit_lock.json",
+      "bytes": 10855,
+      "sha256": "40f02d99a0fd58c4345b7c26ff2c275a8f22ec4801a837795dfbd20333eddc3f"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag5.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag5.txt",
+      "bytes": 199694,
+      "sha256": "8563240415a786574b808c1a2e013815f407cc32bc380bb78788e5f55acd345e"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag1.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag1.txt",
+      "bytes": 198486,
+      "sha256": "78603c5cfb7f05461b04e4625687be8792cf032c5010f4e1e864e1de00d51dea"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag3.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag3.txt",
+      "bytes": 195608,
+      "sha256": "7942da9e747b36136aad5bf1e7097bda759aef66798d2f2de07229bd43e87c69"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag0.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag0.txt",
+      "bytes": 200163,
+      "sha256": "a56dc86190d39c6afdd44f0c20e7d21121eae295bedf50e5ff84b30989f98293"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-ranker.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-ranker.txt",
+      "bytes": 198500,
+      "sha256": "df8832b27e0f8f1bfe8267265fa3d597fc6264d8a008f9f2ba1b13e030d998de"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-veto.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-veto.txt",
+      "bytes": 140687,
+      "sha256": "f9ef0b0590f572f7fcca6ca1f8573d518cc5e9d8c5cb4343bdbdc60a5f6338c3"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag0.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag0.txt",
+      "bytes": 195719,
+      "sha256": "be3ce64ca756412d57c6482c3bc4d193ad3e95912dcbe34de3e45f8fe9919097"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag3.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag3.txt",
+      "bytes": 109069,
+      "sha256": "92051c3c1f6b43c274bdf4a8ea5d558969d9da6e781a9a15c61a690e8fb82b1f"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag3.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag3.txt",
+      "bytes": 197074,
+      "sha256": "9211957a35bdd6315251fc0abb63922106ac5673552f5e3ea11200a29bcb94a9"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag2.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag2.txt",
+      "bytes": 108741,
+      "sha256": "b2886bb5342dbe72882edccd357343e7e87eb0ed79af3dce19466152a5dfc82f"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag1.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag1.txt",
+      "bytes": 196352,
+      "sha256": "ba892744e65ed3432508e14d24174dcbea5bae16dbf6f3752d3fbceb6d8b16a8"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag7.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag7.txt",
+      "bytes": 199722,
+      "sha256": "a3704be3291cc9b970d2e679279bdaa4860d88b2a535cb4c94e69321f1e9bb54"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag7.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag7.txt",
+      "bytes": 197670,
+      "sha256": "5178401ff0b7f424eda63d8d9c03d72c6e9e193190c7e52016d908f91ec9c0ed"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag6.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag6.txt",
+      "bytes": 196487,
+      "sha256": "5294737847f85d6fb3d41ed78f8f3720154ec075d42bbdf3b6a64bf25bb31cd3"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-veto.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-veto.txt",
+      "bytes": 139873,
+      "sha256": "9b452da27548f018de9c72b7e74dc5cd1591cb4988279fb0100c17712504d1a6"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag2.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag2.txt",
+      "bytes": 196880,
+      "sha256": "e21d7482377625590cb3bacd963c223c0127af23e7592e45dec009344cd16dbd"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag2.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag2.txt",
+      "bytes": 198131,
+      "sha256": "67b1c8b9c8d651e3d3a5971ae373d56daec2b73ffebee6aae7f33e2e25b6cd5e"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-ranker.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-ranker.txt",
+      "bytes": 200868,
+      "sha256": "6f5b37eedce282b9dd3860a89c04a6d48c6880bcb72cb81e5a4c130522eebc07"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag7.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag7.txt",
+      "bytes": 109435,
+      "sha256": "0307c14870785f0760ccc2a63eb90f8f0797e2ef86e7e1f7b410e72b02ced509"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag6.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag6.txt",
+      "bytes": 198947,
+      "sha256": "a3f00643ac61bbcfa447ba6385071130fac85d1cdfedf567a1ab04c0588adefc"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag6.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag6.txt",
+      "bytes": 108677,
+      "sha256": "a76ed3403fd890b262598248cfe9e7a077d70c5429c2b12de11a71aab7d1a94a"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-veto.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-veto.txt",
+      "bytes": 139911,
+      "sha256": "adce72732c19492cc5dfb2e20b3c506fdf35a04ccff5c3bb51650cbc97ef1c4b"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag0.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag0.txt",
+      "bytes": 108683,
+      "sha256": "b3f258445227ea8cb353d760bb311004bd1964b3010392325058cdd556b9c7a5"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag1.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag1.txt",
+      "bytes": 107662,
+      "sha256": "9926c4ff4d0cfc220d9443ffb8c634ff0de439c5f2b658aac7c80334b1ca2eea"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag4.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m1-s1430007429-bag4.txt",
+      "bytes": 198580,
+      "sha256": "d8dc0c7f46c94fe3e8c63fd2643e81ac50f2d3dfd7c3e57fd2934df04d185063"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag4.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag4.txt",
+      "bytes": 198297,
+      "sha256": "a530adc7c1cba2a17d7c4a36f37a571483a7fcd46b29a1792c686407a6ea5ad8"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag5.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag5.txt",
+      "bytes": 106891,
+      "sha256": "9fffe3bf45dca223b6f8adb252a5e47bb6f19c8efbad54d6c86a212586a8784d"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag4.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-bag4.txt",
+      "bytes": 108631,
+      "sha256": "3e1e457424694792d56b6c6ffab345cfdcc7ef6cf459582279e157e4f4aef290"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag5.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m0-s685781424-bag5.txt",
+      "bytes": 196923,
+      "sha256": "c068c6b3b9dbf25e9cf2f50894ed6c7c9b133eb7bbd324aae319a3840ff2e45a"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-ranker.txt",
+      "archive_member": "lock/fold_4/root_30001/refit/f4-r30001-m2-s1330439319-ranker.txt",
+      "bytes": 198244,
+      "sha256": "ad5f0db93b3b4abdfca1a39e19dd307d939038187856a30da7bcaf65ac00869e"
+    },
+    {
+      "path": "references/archive/lock/fold_4/root_30001/fit_lock.json",
+      "archive_member": "lock/fold_4/root_30001/fit_lock.json",
+      "bytes": 10859,
+      "sha256": "a06cb7f09a771a5d3a802b3388e3bb73dd61972bcdae58be2f37a50ad52e3347"
+    }
+  ]
+}
