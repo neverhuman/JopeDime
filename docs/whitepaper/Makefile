@@ -58,5 +58,6 @@ figs:
 	python3 figures/scripts/make_training_minibatch_losses.py
 	python3 figures/scripts/make_recent_discovery_retention.py
 	python3 figures/scripts/make_recorded_decision_lift.py
+	python3 figures/scripts/make_program_record_cadence.py
 clean:
 	latexmk -C
