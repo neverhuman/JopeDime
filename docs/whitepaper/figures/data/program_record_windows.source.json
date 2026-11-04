@@ -1,0 +1,22 @@
+{
+  "schema": "whitepaper.program-record-windows-source/v1",
+  "captured_utc": "2026-11-03T20:57:04.364580+00:00",
+  "source_commit": "0c3db4dc22ec244f605e9efe1c4716f7808f781a",
+  "input_csv": "figures/data/full_cohort_program_rates.events.csv",
+  "input_csv_git_blob": "44940c44275b27c521b113087c7d05e159136acd",
+  "input_csv_sha256": "90ea47709b31f2bd9f809dafe997930976e115538d327d34e082e1ac41c6ba23",
+  "input_source_receipt_sha256": "4b43d90221726c5bbcbc9ac3e45e6ce78bb59349b028f0f82939d5e02e0a4bb5",
+  "source_prefix_sha256": "9d96625d22a614b999a34e58783bbddf17b28833c3eb2a7353660173740c8029",
+  "csv_sha256": "8e7a0434b48ad524b136e4976e368249bf88af899d9c845343842864b680538d",
+  "input_records": 3364,
+  "windows": 38,
+  "round_window": [
+    775,
+    4561
+  ],
+  "full_bin_identifier_span": 100,
+  "final_bin_identifier_span": 87,
+  "selection": "All3364committed selected post-warm-up records, journal lines183-3546; no kind/outcome/value filter. All38fixed round-identifier bins retained; no timestamps accessed outside the committed input.",
+  "transformation": "Count exact input CSV records by integer round identifier in inclusive [start,min(start+99,4561)] bins from775. Final4475-4561bin covers87identifiers, is hatched and is NOT normalized to a full bin. Each record belongs once. SHA256of concatenated original CSV data lines binds all members of each bin; original line endings retained.",
+  "scope": "Program-journal records per round-identifier bin; not completed-round exposure, attempted proposals, acceptance probability, adapter admission, runtime, speed or independent learning. No installed source/adapter/evaluation binding is inferred."
+}

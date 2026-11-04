@@ -1,0 +1,30 @@
+{
+  "schema": "whitepaper.program-record-windows-figure/v1",
+  "csv_sha256": "8e7a0434b48ad524b136e4976e368249bf88af899d9c845343842864b680538d",
+  "source_receipt_sha256": "ed3d75f1cedc174e4814b2de9b4836c9f615058763337cd14d5c8eae7872bcac",
+  "generator_sha256": "7692be9e06b4f775f62f19e53261d9665c679a90fce87ea1ab07f4b46e04eb40",
+  "figure_sha256": "5d2dee16dfb51981d97b4e06f37e85b31726bca760fea7bd8bac23d7a4d14021",
+  "input_records": 3364,
+  "plotted_windows": 38,
+  "round_window": [
+    775,
+    4561
+  ],
+  "record_sum": 3364,
+  "full_windows": 37,
+  "partial_final_identifier_span": 87,
+  "partial_final_record_count": 30,
+  "counts_not_normalized": true,
+  "filtering": false,
+  "scope": "Program-journal records per round-identifier bin; not completed-round exposure, attempted proposals, acceptance probability, adapter admission, runtime, speed or independent learning. No installed source/adapter/evaluation binding is inferred.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "figure_inches": [
+    3.375,
+    1.5
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_program_record_windows.py"
+}
