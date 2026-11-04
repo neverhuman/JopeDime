@@ -1,0 +1,11 @@
+{
+  "wave": "H303",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "verdict": null,
+  "schema_on_completion": {
+    "verdict": "NESTED_CONFIRMED / NESTED_NOT_CONFIRMED",
+    "h302_status": "survives nesting / design-leak-dependent / not established",
+    "chosen_configs": "per (outer fold, root seed) TAU, k, a with inner gain",
+    "arms": "ENS_VOTE2_NESTED and ENS_VOTE2_H302: per-seed gains, LCBs, family medians, harmed, invalid, Elo + CI, concentration (drop top 1/5/10, top-10 share, drop-top-5 LCB)"
+  }
+}
