@@ -11,10 +11,10 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-The ledger for a verified improvement includes the winning attempt and
+Pricing a verified improvement requires counting the winning attempt and
 every earlier failure: encoding, input tokens, generation, repairs,
-referee execution, updates and operations. The ratios below organize
-these costs; full-run pricing still needs measurements
+referee execution, updates and operations. The ratios below organize the
+ledger; full-run prices still need measurements
 (\cref{sub:price-run,sec:results}).
 
 \subsection{The bill in one line}\label{sub:price-bill}
@@ -39,11 +39,10 @@ validity rate without weight updates (\cref{sub:method-move,sec:method-status}).
 These rates alone do not identify a learned improvement
 (\cref{sub:results-ablation}).
 
-For an observed batch, cost per win is all incurred costs, including
-applicable update and operating costs, divided by verified wins.
-Adaptive or correlated attempts need measured cost and attempt curves.
-With no verified win, there is no finite
-\mbox{observed cost per win.}
+Observed cost per win is the batch's full incurred cost divided by its
+verified wins, including applicable update and operating costs in the
+numerator. Adaptive or correlated attempts need measured cost and attempt
+curves. With no verified win, observed cost per win has no finite value.
 
 Training pays for all attempts, including failures. Proposed deployment
 pays for encoding, one proposal and its fit, with no repair. Fixed-weight

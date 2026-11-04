@@ -6,9 +6,9 @@
 % Historical source notes are archived outside the paper tree.
 \section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
-The reference design uses search-scored lists as training targets for a
+Referee-scored program lists supply the reference training targets for a
 program writer and separate ranking map. Proposed game day freezes the
-writer for one proposal. \Cref{sec:price} supplies the cost ledger;
+writer for one proposal. \Cref{sec:price} defines the cost boundary;
 \cref{sec:method-status} records the separate cost-ranking adapter loop.
 
 \subsection{The player in one picture}\label{sub:method-picture}
@@ -222,10 +222,9 @@ over matched seeds, then average across cuts. Negative values favor the
 challenger. This admission test remains separate from the single-program
 comparison in \cref{sub:results-learning}.
 
-\paragraph{The historical reference.} A decoder-only writer and separate
-ranking and auxiliary heads form the reference model. \Cref{app:training}
-inventories its architecture, registered capacity, token allocation and
-training corpus.
+\paragraph{The historical reference.} Its decoder-only writer is separate
+from the ranking and auxiliary heads. \Cref{app:training} inventories the
+architecture, registered capacity, token allocation and training corpus.
 
 Architecture specifications do not qualify a checkpoint or runtime
 (\cref{sub:results-protocol}). The historical reference covers tabular
