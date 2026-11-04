@@ -1,7 +1,7 @@
 {
   "wave_id": "H305",
   "owner": "rd_astra",
-  "status": "ANALYSIS_COMPLETE_CUSTODY_PENDING",
+  "status": "COMPLETE",
   "prereg_commit": "4844618b6a1b049e14d5a85bcc05adab20a66ea6",
   "h302": {
     "verdict": "RT_FAIL",
@@ -1109,5 +1109,37 @@
   },
   "resource_exceptions": [
     "A supplemental tar metadata/hash extraction was inadvertently run outside the nice/taskset supervisor (~seconds, one process); no numerical scoring, foreign process action or forbidden data read occurred. It is retained as a scheduling-control deviation, not certified compliant."
-  ]
+  ],
+  "completed_utc": "2026-11-04T06:34:28.788775+00:00",
+  "custody": {
+    "evidence": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/h305_evidence.tar.gz",
+      "version_id": "msfob314CaZPinXSrZwkIeQEy7k8wj9.",
+      "sha256": "8fd13d825b08e97d075bf820911b939d4df7f94f8c04b46b9ab8925cb04920a4",
+      "bytes": 3883415,
+      "exact_version_get_verified": true,
+      "members_verified": 162
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/manifest.json",
+      "version_id": "kojW.cT0v3dqqXcvjw1HvfKt0SwJcs5U",
+      "sha256": "c6855afdf0fa62285f0b54cccf685985a2a7659a64b71701bb83633b21f17d12",
+      "bytes": 7111,
+      "exact_version_get_verified": true
+    }
+  },
+  "scratch_cleanup": {
+    "status": "DELETED",
+    "epoch": 1793774025.972549,
+    "scratch": "/home/ubuntu/jope-data/h305-astra",
+    "files": 747,
+    "bytes": 433398988,
+    "scope": "Only own non-Git scratch. All foreign source/stashes/local-only commits retained; no repository/worktree/tag deleted.",
+    "lsof_exit": 1,
+    "archive_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/h305_evidence.tar.gz",
+    "archive_version": "msfob314CaZPinXSrZwkIeQEy7k8wj9.",
+    "scratch_absent": true,
+    "finished_epoch": 1793774027.171026
+  },
+  "execution_code_commit": "7919046451cef265b635745c433970fc47c17a4c"
 }
