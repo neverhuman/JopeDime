@@ -88,10 +88,10 @@ These are descriptive association diagnostics, not causal proof.
 ## Decision (precedence and missingness explicit)
 
 First H310_LINEAGE_CONFOUNDED iff NEIGHBORED>=1 AND a measured pooled CLEAN
-median<=+.001 OR pooled CLEAN wild one-sided95%LCB<=0, with parentheses:
+median<=+.001 OR pooled CLEAN wild two-sided95%CI lower endpoint<=0, with parentheses:
 NEIGHBORED>=1 AND (pooled_clean<=.001 OR pooled_clean_LCB<=0).
 Otherwise H310_LINEAGE_INDEPENDENT iff CLEAN>=10 AND pooled CLEAN median>+.001
-AND per-seed CLEAN wild LCB>0 on>=4/6. Else INCONCLUSIVE with reasons.
+AND per-seed CLEAN wild two-sided95%CI lower endpoint>0 on>=4/6. Else INCONCLUSIVE with reasons.
 Empty or unknown CLEAN outcomes do not satisfy numerical comparisons; no inferred
 zero. UNKNOWN families cannot supply the ten-family floor. Report metadata
 coverage and limits even if either mechanical decision passes. All shadow only;
@@ -121,3 +121,18 @@ only, never its CSV objects. This changes transport access, not neighbor rules,
 thresholds, normalization, estimands or decision. No neighbor classification or
 metadata/gain join has run. Initial prereg13a16cfc5af2de6ba9ddc9b17bb3789f72a09e13
 and its completed exact H312 regression remain preserved.
+
+## Final pre-join interpretation (no classifications/gain joins run)
+
+The owner's wording “wild CI LCB” is implemented conservatively as the lower
+endpoint of the reported two-sided95% basic CI for BOTH decision clauses,
+superseding the earlier one-sided decision wording. One-sided95% bounds remain
+descriptive outputs. This is fixed before group classification and gain analysis.
+For clause(c), use each dataset's ingested `files.meta.output_headers` paired
+with `catalog.shape.rows`; record raw `original_headers` hash and `source_rows`
+separately without mixing their units into the ingested comparison. Catalog/meta
+source IDs, explicit source_family/path/file/URL identifiers and registry source
+SHA roots form the lineage identity set; no guessed prefixes. Registry metadata
+has no explicit parent_dataset_id/source_table_id/raw_source_id/ingest_root/
+lineage_root/source_sha256/raw_sha256 fields populated in selected meta files;
+absence is recorded. Neighbor thresholds and UNKNOWN policy remain unchanged.
