@@ -1,0 +1,31 @@
+{
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H315/",
+  "verification": "exact-version GET streamed through sha256 (boto3) for every object before local deletion",
+  "objects": [
+    {
+      "key": "h315_locks_models_outputs.tar.gz",
+      "version_id": "l0TNL39iFbqgDPNKuDCuKl54F9s4zEcU",
+      "sha256": "89b7daec3a497bd37d6df255a4444272548f5d3b0db75793c69942b8d3d9fd86",
+      "bytes": 791949602,
+      "contents": "36 fit locks (BASE + MARGIN choices, inner tables, inner thresholds, guard counts) + inner and refit LightGBM members, archived H303/H308 picks, outputs, logs"
+    },
+    {
+      "key": "metrics_full.json",
+      "version_id": "Aj6.rFU2j1VeAy_fffuF8DLe3QOJrNbu",
+      "sha256": "ab97b7f87da49e6249bc3d69244a89d9dca3415b3e5b08774107b4b512d439d3",
+      "bytes": 36850
+    },
+    {
+      "key": "picks.npz",
+      "version_id": "jCll6z9FGwmpNg.cocb305LcVzFYuieR",
+      "sha256": "e9e6b16a7381ff14191d2a4d31ce31d4b623c39297e7383ee6aeb871e08ca615",
+      "bytes": 8385
+    },
+    {
+      "key": "fit_locks_pre_score.sha256",
+      "version_id": "Fzae.MUfwPekHeZb9U0zIw7XNl2qwrvO",
+      "sha256": "e4a51a3e8d917861b495d855c9158add754e8887a38b219aef4884ec35abb82d",
+      "bytes": 3636
+    }
+  ]
+}
