@@ -6022,6 +6022,10 @@
     "python:research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/test_h257_phase2_curriculum.py": {
       "role": "research",
       "reason": "H257 Phase-2 warm-started subsample and GP evolutionary curriculum on top of H256; data-free semi-synthetic column/subsample view generator invariants and artifact-integrity checks; frozen DOPE, research-only, no serving qualification."
+    },
+    "python:research/flywheel_selfplay/h254_active2plus2_confirm/test_h254.py": {
+      "reason": "Owner-requested H254 data-free controls for independent frozen-constant replication of H252 Stage-1 ACTIVE_2PLUS2_HURDLE vs GATED_025 and R882 (snapshot SHA-256, fold seed 254140, byte-exact equivalence, zero DL-Val leakage guard, 4-reveal count audit, negative control permuted fitness, Holm m=2 decision rule, H239 A1 <30 GiB memory pause guard).",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

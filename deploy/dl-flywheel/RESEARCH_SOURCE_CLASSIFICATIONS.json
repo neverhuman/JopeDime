@@ -6885,6 +6885,22 @@
         "role": "research"
       },
       "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b"
+    },
+    "python:research/flywheel_selfplay/h254_active2plus2_confirm/monitor.py": {
+      "bytes": 8363,
+      "sha256": "05cc96677494f83a17a555625fbb7bdb554473a376ca722fedf8658af27dac44",
+      "classification": {
+        "role": "research",
+        "reason": "H254 preregistered CPU-only confirmation study: independent, frozen-constant replication of H252 Stage-1 ACTIVE_2PLUS2_HURDLE vs GATED_025 (equal 4-reveal budget) and R882 on DL-Val (Native91, 91 contexts / 19 families) and DL-Train OOF (1,219 contexts / 205 families) with fresh fold seed 254140 and seeds 254101-254103, Holm m=2, 10,000-draw paired family bootstrap, 400-iter MM Bradley-Terry Elo, and four required audits (zero DL-Val leakage, equal 4-reveal count, negative control with permuted revealed fitness, and descriptive +-50% constant perturbations) under H239 A1 memory guard on xbabe2 CPU 57-60."
+      }
+    },
+    "python:research/flywheel_selfplay/h254_active2plus2_confirm/runner.py": {
+      "bytes": 44500,
+      "sha256": "13c281618aa96cb89131d52389e375c7511c7cd2c847b573604944bcff3f0434",
+      "classification": {
+        "role": "research",
+        "reason": "H254 preregistered CPU-only confirmation study: independent, frozen-constant replication of H252 Stage-1 ACTIVE_2PLUS2_HURDLE vs GATED_025 (equal 4-reveal budget) and R882 on DL-Val (Native91, 91 contexts / 19 families) and DL-Train OOF (1,219 contexts / 205 families) with fresh fold seed 254140 and seeds 254101-254103, Holm m=2, 10,000-draw paired family bootstrap, 400-iter MM Bradley-Terry Elo, and four required audits (zero DL-Val leakage, equal 4-reveal count, negative control with permuted revealed fitness, and descriptive +-50% constant perturbations) under H239 A1 memory guard on xbabe2 CPU 57-60."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
