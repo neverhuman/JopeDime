@@ -14,11 +14,11 @@ import xml.etree.ElementTree as ET
 
 WIDTH, HEIGHT, FPS, FRAMES = 1920, 1080, 30, 180
 COPY = ("Turn what if into what’s next.",)
-LETTER_PULSES = {
-    "V": {"color": (.005, .36, 1.), "peak": 24, "end": 43, "strength": 1.2},
-    "E": {"color": (.02, .18, 1.), "peak": 42, "end": 62, "strength": 1.4},
-    "O": {"color": (.28, .04, 1.), "peak": 60, "end": 82, "strength": 1.6},
-    "X": {"color": (.62, .18, 1.), "peak": 82, "end": 179, "strength": 2.2},
+SPATIAL_PULSE = {
+    "coordinate": "world X", "start_frame": 19, "start_x": -4.5, "end_x": 4.5,
+    "reference_travel_frames": 58, "speed_multiplier": 3,
+    "travel_frames": 58 / 3, "front_width": .45, "tail_width": .75,
+    "x_capture_start_frame": 37, "x_capture_full_frame": 42,
 }
 
 
@@ -108,6 +108,92 @@ def animate(socket, values):
         socket.keyframe_insert("default_value", frame=frame)
 
 
+def make_wave_group(bpy):
+    """One world-space head and wake cross every glyph at the same velocity."""
+    tree = bpy.data.node_groups.new("VEOX shared traveling pulse", "ShaderNodeTree")
+    for name, kind in (("Wave", "NodeSocketFloat"), ("Captured", "NodeSocketFloat"),
+                       ("Color", "NodeSocketColor"), ("Strength", "NodeSocketFloat")):
+        tree.interface.new_socket(name, in_out="OUTPUT", socket_type=kind)
+    nodes, links = tree.nodes, tree.links
+    output = nodes.new("NodeGroupOutput")
+
+    def math_node(operation, a, b=None):
+        node = nodes.new("ShaderNodeMath")
+        node.operation = operation
+        for index, value in enumerate((a, b)):
+            if value is None:
+                continue
+            if isinstance(value, (int, float)):
+                node.inputs[index].default_value = value
+            else:
+                links.new(value, node.inputs[index])
+        return node.outputs[0]
+
+    position = nodes.new("ShaderNodeNewGeometry")
+    xyz = nodes.new("ShaderNodeSeparateXYZ")
+    links.new(position.outputs["Position"], xyz.inputs[0])
+    x = xyz.outputs["X"]
+    head = nodes.new("ShaderNodeValue")
+    head.name = "Continuous pulse head X"
+    spec = SPATIAL_PULSE
+    start, travel = spec["start_frame"], spec["travel_frames"]
+    velocity = (spec["end_x"] - spec["start_x"]) / travel
+    animate(head.outputs[0], [(1, spec["start_x"] + (1-start)*velocity),
+                             (start, spec["start_x"]), (start+travel, spec["end_x"]),
+                             (44, spec["start_x"] + (44-start)*velocity),
+                             (FRAMES, spec["start_x"] + (44-start)*velocity)])
+    # A single linear phase crosses material and letter boundaries. Fractional
+    # end frame preserves the requested exact 3x time compression at 30fps.
+    for layer in tree.animation_data.action.layers:
+        for strip in layer.strips:
+            for bag in strip.channelbags:
+                for curve in bag.fcurves:
+                    for point in curve.keyframe_points:
+                        point.interpolation = "LINEAR"
+
+    distance = math_node("SUBTRACT", x, head.outputs[0])
+    behind = math_node("LESS_THAN", distance, 0.)
+    width = math_node("ADD", spec["front_width"],
+                      math_node("MULTIPLY", behind, spec["tail_width"]-spec["front_width"]))
+    normalized = math_node("DIVIDE", distance, width)
+    squared = math_node("MULTIPLY", normalized, normalized)
+    wave = math_node("EXPONENT", math_node("MULTIPLY", squared, -1.))
+    links.new(wave, output.inputs["Wave"])
+
+    passed = nodes.new("ShaderNodeMapRange")
+    passed.interpolation_type = "SMOOTHSTEP"
+    passed.clamp = True
+    links.new(distance, passed.inputs["Value"])
+    for name, value in (("From Min", -.20), ("From Max", .20), ("To Min", 1.), ("To Max", 0.)):
+        passed.inputs[name].default_value = value
+    capture = nodes.new("ShaderNodeValue")
+    capture.name = "X stores the arriving pulse"
+    animate(capture.outputs[0], [(1,0.), (spec["x_capture_start_frame"],0.),
+                                 (spec["x_capture_full_frame"],1.), (FRAMES,1.)])
+    links.new(math_node("MULTIPLY", passed.outputs[0], capture.outputs[0]), output.inputs["Captured"])
+
+    coordinate = nodes.new("ShaderNodeMapRange")
+    coordinate.clamp = True
+    links.new(x, coordinate.inputs["Value"])
+    coordinate.inputs["From Min"].default_value = spec["start_x"]
+    coordinate.inputs["From Max"].default_value = spec["end_x"]
+    palette = nodes.new("ShaderNodeValToRGB")
+    palette.color_ramp.interpolation = "LINEAR"
+    stops = ((0., (.005,.36,1.,1.)), (.32,(.02,.18,1.,1.)),
+             (.65,(.28,.04,1.,1.)), (1.,(.62,.18,1.,1.)))
+    for index, (at, color) in enumerate(stops):
+        entry = palette.color_ramp.elements[index] if index < 2 else palette.color_ramp.elements.new(at)
+        entry.position, entry.color = at, color
+    links.new(coordinate.outputs[0], palette.inputs[0])
+    links.new(palette.outputs["Color"], output.inputs["Color"])
+    breath = nodes.new("ShaderNodeValue")
+    breath.name = "Settled X glow"
+    animate(breath.outputs[0], [(1,1.), (44,1.), (90,.86), (116,.93), (150,.72), (180,.61)])
+    strength = math_node("MULTIPLY", math_node("ADD", 1.2, coordinate.outputs[0]), breath.outputs[0])
+    links.new(strength, output.inputs["Strength"])
+    return tree
+
+
 def aim(obj, target):
     from mathutils import Vector
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
@@ -148,14 +234,16 @@ def build(args):
     bpy.context.object.data.materials.append(floor)
 
     marks = {}
-    ivory = (.84, .87, .92, 1.)
-    for letter, pulse in LETTER_PULSES.items():
+    traveling_wave = make_wave_group(bpy)
+    for letter in "VEOX":
         mark, reveal, surface = material(bpy, f"VEOX {letter} pulse", (.25, .27, .30), emission=.08, roughness=.18, metallic=.26)
         animate(reveal, [(1, 0), (7, 0), (19, 1), (180, 1)])
-        peak, end, strength = pulse["peak"], pulse["end"], pulse["strength"]
         nodes, links = mark.node_tree.nodes, mark.node_tree.links
+        field = nodes.new("ShaderNodeGroup")
+        field.node_tree = traveling_wave
         emission = nodes.new("ShaderNodeEmission")
-        emission.inputs["Color"].default_value = (*pulse["color"], 1.)
+        links.new(field.outputs["Color"], emission.inputs["Color"])
+        links.new(field.outputs["Strength"], emission.inputs["Strength"])
         pulse_mix = nodes.new("ShaderNodeMixShader")
         links.new(surface.outputs[0], pulse_mix.inputs[1])
         links.new(emission.outputs[0], pulse_mix.inputs[2])
@@ -163,15 +251,13 @@ def build(args):
         # colored active face keeps the ivory lighting from washing out neon.
         links.new(pulse_mix.outputs[0], reveal.node.inputs[2])
         if letter == "X":
-            # The arriving energy collects in X: one broad crest, a quiet
-            # after-pulse, and a long violet hold through the final fade.
-            power = [(1,0),(64,0),(82,strength),(98,1.8),(116,1.95),(135,1.7),(155,1.5),(180,1.35)]
-            active = [(1,0),(64,0),(78,1),(180,1)]
+            stored = nodes.new("ShaderNodeMath")
+            stored.operation = "MAXIMUM"
+            links.new(field.outputs["Wave"], stored.inputs[0])
+            links.new(field.outputs["Captured"], stored.inputs[1])
+            links.new(stored.outputs[0], pulse_mix.inputs[0])
         else:
-            power = [(1,0),(peak-13,0),(peak,strength),(peak+5,strength*.76),(end,0),(180,0)]
-            active = [(1,0),(peak-13,0),(peak-4,1),(peak+6,1),(end,0),(180,0)]
-        animate(emission.inputs["Strength"], power)
-        animate(pulse_mix.inputs[0], active)
+            links.new(field.outputs["Wave"], pulse_mix.inputs[0])
         marks[letter] = mark
 
     tree = ET.fromstring(logo_bytes)
@@ -197,11 +283,15 @@ def build(args):
 
     font = bpy.data.fonts.load(str(args.font))
     for index, line in enumerate(COPY):
-        ink, opacity, _ = material(bpy, f"Closing copy {index}", (.71, .80, .87) if index == 0 else (.88, .93, .97), emission=.7)
+        ink, opacity, _ = material(bpy, f"Closing copy {index}", (1., 1., 1.))
+        bright_ink = ink.node_tree.nodes.new("ShaderNodeEmission")
+        bright_ink.inputs["Color"].default_value = (1., 1., 1., 1.)
+        bright_ink.inputs["Strength"].default_value = 1.8
+        ink.node_tree.links.new(bright_ink.outputs[0], opacity.node.inputs[2])
         animate(opacity, [(1, 0), (43 + index*4, 0), (65 + index*4, 1), (180, 1)])
         text = bpy.data.curves.new(f"CTA {index}", "FONT")
         text.body, text.font, text.align_x = line, font, "CENTER"
-        text.size, text.extrude, text.bevel_depth = .53, .001, .0006
+        text.size, text.extrude, text.bevel_depth = .64, .001, .0006
         obj = bpy.data.objects.new(f"CTA {line}", text)
         bpy.context.collection.objects.link(obj)
         obj.rotation_euler[0], obj.location = math.pi / 2, (0, -.04, 2.2)
@@ -255,8 +345,9 @@ def build(args):
                "fps":FPS, "frame_start":1, "frame_end":FRAMES, "logo_sha256":logo_sha,
                "font_sha256":font_sha, "worker_sha256":digest(__file__), "copy":list(COPY),
                "logo_paths":len(paths), "vector_cubic_subdivisions":32,
-               "letter_pulses":LETTER_PULSES, "strongest_longest_letter":"X",
+               "spatial_pulse":SPATIAL_PULSE, "strongest_longest_letter":"X",
                "decorative_ribbons":0, "pulse_surface":"pure colored emission", "view_transform":"Standard",
+               "caption":{"size":.64,"emission_strength":1.8,"color":[1.,1.,1.],"steady":True},
                "note":"Illustrative brand closing shot; no inferred neural topology or benchmark claims."}
     embedded = bpy.data.texts.new("VEOX_ENDCAP_RECEIPT.json")
     embedded.write(json.dumps(receipt, indent=2))

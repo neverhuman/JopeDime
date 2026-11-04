@@ -4,21 +4,37 @@ The owner stopped the native 4K render and requested a 1080p animated VEOX endin
 
 The final line is **Turn what if into what’s next.** It turns the opening's search question into an invitation to build. The supplied VEOX vector mark resolves through cyan and violet illumination above a dark reflective floor, the line appears beneath it, and the whole photograph fades to black. This is brand animation, not a claim about measured neural pathways.
 
-The owner subsequently requested a left-to-right letter pulse with the X glowing
-strongest and longest. The final shot assigns a separate material to each letter
-(both components of V share one material). Cyan V peaks at frame 24, blue E at
-42, violet O at 60, and violet X at 82. X has the strongest crest followed by a
-restrained after-pulse and a long glow through frame 155. The steady slogan is
-unaffected. The complete photograph, including its real reflection, fades from
-frame 158 to exact black by frame 179. Verify the actual rendered letter regions,
-not only the keyed shader values, since tone mapping changes apparent intensity.
+The current revision uses one continuous spatial pulse through the letter shapes,
+following the owner's clarification that whole-letter flashes were not the intended
+effect. All four letter materials share one world-X shader field (both V pieces
+share their material). A narrow bright head with a trailing glow crosses the logo
+at constant velocity, with a continuous cyan-to-violet color gradient. The requested
+threefold speed increase compresses the prior 58-frame crest-to-crest reference into
+58/3 = 19⅓ frames, about 0.64 seconds. The front moves from X −4.5 at frame 19 to
+X +4.5 at frame 38⅓, then clears the mark. Fractional keys and explicitly linear
+interpolation avoid endpoint easing or a restart at letter boundaries.
+
+X captures light only where the front has already passed. The capture rises over
+frames 37–42 and combines with the moving wave using a maximum, producing a
+continuous transition into the strongest and longest final glow. The steady slogan
+is unaffected. The complete photograph, including its real reflection, fades from
+frame 158 to exact black by frame 179. Verify the consecutive rendered frames and
+multiple slices within each glyph, not just one intensity measurement per letter.
+
+The final caption revision increases the text from 0.53 to 0.64 world units and
+uses steady pure-white emission at strength 1.8. This increases readable stroke
+area and contrast at typical playback sizes. Existing core-white pixels were
+already at display white, so verify larger bright glyph area and crisp edges
+rather than claiming an increase beyond the display's maximum pixel value. The
+caption keeps its centered position, wording, and fade timing. The approved fast
+spatial wave is unchanged.
 
 Revision 5 removes all 26 decorative ribbon curves at the owner's request. It
 uses a pure colored emission surface during each letter pulse, with Standard
 color management only for this isolated closing shot. This preserves vivid
 cyan, blue, and violet instead of washing the bright faces toward white under
 AgX. The inactive mark uses a neutral silver surface. Physical floor reflections
-and the existing pulse order/long X hold remain. Compare rendered color saturation
+and the long X hold remain. Compare rendered color saturation
 separately from luminance; the prior nearly white peaks do not establish a useful
 target for hue strength. The opening, demonstration, and source compositor keep
 their existing color settings.
