@@ -1,22 +1,22 @@
 {
   "schema": "whitepaper.program-promotion-margins-figure/v1",
-  "input_csv_sha256": "cb477058ca7d41d1a44ede9778ce74c03f990fd35bcb18e21d9f77b96bbcc888",
-  "source_receipt_sha256": "f19535c8b5870d0e001e5207177eed77b3af6e0d08127b7a4990a28e407f7e66",
-  "generator_sha256": "19d86efd03fa6490641dde5ef8fbcdd518d4b32e2509977fd19c83026e8a7b41",
-  "figure_sha256": "73ff36b49008bf65d612bc9c1d16a9c7ff86c835aed1aa3b22e19d5bc0737ba8",
-  "source_window_sha256": "966a3237d0df1211da4302a6845032e728a2f8154d263d056fcfa1168e6d5237",
-  "rows": 101,
-  "plotted_points": 101,
+  "input_csv_sha256": "059e635e5c9c99bf2134f96856799224ff984d4ffbee6d1a52cd1ab05c50b66e",
+  "source_receipt_sha256": "6b76d3f639666cbc79d3859e14d2da8d0b67c75aa7c15b1a418ab50511edc622",
+  "generator_sha256": "e25a28075af50dceaaf12418d5844e866769b14c02bf62146f3c005b1c864082",
+  "figure_sha256": "57ab51d3a552df8f04bcbb10af0a537b10bc044ad1fe3c425839d334002cb2e3",
+  "source_window_sha256": "bc023f04ef41fe658f2bbd4655028c552ef1f3fbaf4bd9780951b20740a49795",
+  "rows": 3529,
+  "plotted_points": 3529,
   "round_window": [
-    4188,
-    4379
+    775,
+    5047
   ],
   "source_line_window": [
-    3379,
-    3479
+    183,
+    3711
   ],
   "derivation": "Parse JSON numeric lexemes as Decimal; subtract old_utility from new_utility within each source record. Keep exact decimal values and every source-line identity; float conversion only for rendering.",
-  "scope": "Adaptive training-side admitted program/context records only. Positivity is required by admission and cannot estimate proposal-level success, adapter improvement or neural writer learning. Utility/source population closure remains separate.",
+  "scope": "Adaptive training-side admitted program/context records only; each increment uses that record's own previous and new utilities. Different contexts and incumbents must not be summed into a learning curve. Positivity is required by admission and does not estimate proposal-level success, adapter improvement or neural writer learning.",
   "vertical_scale": "logarithmic",
   "matplotlib_version": "3.10.8",
   "font_family": "Liberation Serif",
@@ -25,20 +25,17 @@
     3.375,
     2.128846153846154
   ],
-  "minimum_text_size_pt": 7.0,
+  "minimum_text_size_pt": 7.35,
+  "minimum_print_target_pt": 7.0,
+  "selection_round_window": [
+    775,
+    5049
+  ],
+  "last_record_utc": "2026-11-04T11:13:46.792039+00:00",
+  "all_previous_101_records_preserved": true,
+  "scientific_inputs_changed": "Extended the same journal capture; prior101records retained, all3529ordinary records plotted.",
+  "smoothing": false,
+  "additive_cross_context_curve": false,
   "fixed_canvas_no_tight_crop": true,
-  "reproduce": "python3 figures/scripts/make_program_promotion_margins.py",
-  "rendering": {
-    "font_family": "Liberation Serif",
-    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
-    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
-    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
-    "canvas_inches": [
-      3.375,
-      2.128846153846154
-    ],
-    "minimum_print_target_pt": 7.0,
-    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
-    "scientific_inputs_unchanged": true
-  }
+  "reproduce": "python3 figures/scripts/make_program_promotion_margins.py"
 }

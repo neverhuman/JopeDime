@@ -1,21 +1,20 @@
 \subsection{Program-incumbent promotion margins}\label{app:program-promotion-margins}
 
-\Cref{fig:program-promotion-margins} reports the size of recorded
-program-incumbent changes. Each event compares two programs in its own
-context. The journal records admitted programs; it does not supply the
-denominator of evaluated or proposed candidates.
+\Cref{fig:program-promotion-margins} extends the retained program-promotion
+record to the run's last event. Each margin compares programs in one
+context; the admitted-event journal supplies no proposal-attempt denominator.
 
 \begin{figure}[!tb]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_program_promotion_margins.pdf}
   \caption{\textbf{Program-incumbent promotions have unequal utility margins.}
-  All 101 consecutive promotion-journal records in rounds 4188--4379,
-  captured at 14:53 UTC on 3 November 2026. Each point subtracts the
-  logged prior utility from the new utility in that record's own training
-  context; larger utility is preferred. All records pass the ordinary
-  program gate. The vertical axis is logarithmic; the dotted line marks
-  its $10^{-6}$ margin. Positive increments are required by admission, so
-  this conditional sample does not estimate proposal-level success,
-  adapter improvement or writer learning. Scope: \cref{sec:method-status}.}
+  All \num{3529} ordinary promotion records in rounds 775--5049; the
+  last is at round 5047 (11:13 UTC, 4 November 2026). Each point
+  subtracts old from new logged utility in its own training context;
+  larger is better. Pre-775 warm-up and historical admissions are
+  excluded. Logarithmic axis; dotted line: the $10^{-6}$ admission margin.
+  Admission requires positive increments. These cannot be summed
+  across contexts or interpreted as proposal success, adapter improvement
+  or writer learning. Scope: \cref{sec:method-status}.}
   \label{fig:program-promotion-margins}
 \end{figure}
