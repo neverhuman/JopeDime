@@ -21,7 +21,9 @@ def test_extension_is_built_out_of_tree() -> None:
     """The extension comes from the installed jope-native wheel, never from python/src."""
     import jope
 
-    source = Path(jope.__file__).resolve().parent
+    # python/src (the whole editable source root), not only python/src/jope.
+    source = Path(jope.__file__).resolve().parents[1]
+    assert source.name == "src", source
     native = Path(tel.__file__).resolve()
     assert native.suffix in {".so", ".pyd"}, native
     assert source not in native.parents, native
