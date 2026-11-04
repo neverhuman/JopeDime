@@ -239,7 +239,7 @@ def build(data, validation, args):
         scene.frame_set(frame)
         poses[frame] = (camera.matrix_world.inverted() @ rotor.matrix_world).copy()
 
-    def connector_curve(name, values, rgb, incoming, bevel_depth):
+    def connector_curve(name, values, rgb, incoming, bevel_depth, idle_strength=0.):
         mat = bpy.data.materials.new(name); mat.use_nodes = True
         tree = mat.node_tree; tree.nodes.clear()
         emit = tree.nodes.new("ShaderNodeEmission"); emit.inputs["Color"].default_value = rgb
@@ -254,7 +254,18 @@ def build(data, validation, args):
         for curve in _curves(tree):
             for point in curve.keyframe_points: point.interpolation = "LINEAR" if args.animation_loop else "CONSTANT"
         output = tree.nodes.new("ShaderNodeOutputMaterial")
-        tree.links.new(emit.outputs[0], output.inputs["Surface"])
+        surface = emit.outputs[0]
+        if idle_strength:
+            # An independent presentation stroke keeps the lead visible at zero signal.
+            guide = tree.nodes.new("ShaderNodeEmission")
+            guide.label = "Idle display guide"
+            guide.inputs["Color"].default_value = rgb
+            guide.inputs["Strength"].default_value = idle_strength
+            combined = tree.nodes.new("ShaderNodeAddShader")
+            tree.links.new(surface, combined.inputs[0])
+            tree.links.new(guide.outputs[0], combined.inputs[1])
+            surface = combined.outputs[0]
+        tree.links.new(surface, output.inputs["Surface"])
         curve = bpy.data.curves.new(name, "CURVE"); curve.dimensions = "3D"
         curve.bevel_depth, curve.bevel_resolution, curve.resolution_u = bevel_depth, 1, 12
         spline = curve.splines.new("BEZIER"); spline.bezier_points.add(2)
@@ -264,7 +275,7 @@ def build(data, validation, args):
         return obj, spline
 
     def connection(name, values, rgb, fixed, port, incoming):
-        obj, spline = connector_curve(name, values, rgb, incoming, .0028)
+        obj, spline = connector_curve(name, values, rgb, incoming, .0028, branch_idle)
         for frame in range(1, period+2, pose_step):
             p = poses[frame] @ Vector(port)
             dynamic = Vector((p.x,p.y,-6.12)); locked = Vector(fixed)
@@ -277,6 +288,7 @@ def build(data, validation, args):
             fcurve.modifiers.new("CYCLES")
 
     panel_contacts = None
+    branch_idle, terminal_idle = (.045, .12) if point_connectors else (0., 0.)
     ingress_rgb, egress_rgb = (.018,.62,.92,1), (.48,.08,.85,1)
     if point_connectors:
         unit_per_px = camera.data.ortho_scale / args.width
@@ -286,14 +298,15 @@ def build(data, validation, args):
         input_junction, output_junction = (table_right+.20,y,-6.12), (source_left-.20,y,-6.12)
 
         def terminal(name, values, rgb, border, junction, incoming):
-            obj, spline = connector_curve(name, values, rgb, incoming, .012)
-            for point, position in zip(spline.bezier_points, (Vector(border), Vector(border).lerp(Vector(junction),.5),
-                                                             Vector(junction))):
+            obj, spline = connector_curve(name, values, rgb, incoming, .012, terminal_idle)
+            a, b = Vector(border), Vector(junction)
+            for point, position in zip(spline.bezier_points, (a, a.lerp(b,.5), b)):
                 point.co = position
             return {"object":obj.name,"border":border,"branch_junction":junction,
                     "border_px":[border[0]/unit_per_px+args.width/2,args.height/2-border[1]/unit_per_px]}
 
-        panel_contacts = {"coordinate_space":"camera local; projected border_px from top left"}
+        panel_contacts = {"coordinate_space":"camera local; projected border_px from top left",
+                          "idle_display_emission":{"branch":branch_idle,"terminal":terminal_idle}}
 
     input_ports = network["input_node_ports"]
     input_strengths = []
