@@ -1,0 +1,66 @@
+{
+  "schema": "jope.h289.manifest/v1",
+  "wave_id": "h289-flywheel-accept-rule-replay-20261104",
+  "parent_commit": "892db3fbffcc40729e2ec7d6a933f11a2cf1a9e6",
+  "authority": "hw_t0005_astra_h289.md",
+  "latest_complete_round": 4675,
+  "protocol_lock": {
+    "locked_utc": "2026-11-04T00:08:38.048115+00:00",
+    "protocol_sha256": "191c8a3ba70e3cd433a73791e8410e4d12cd2abb2e48e7031803926bf648250b",
+    "capture": {
+      "status": "PASS",
+      "archive_sha256": "f02363690b6988174afa30d209112501100527f3e8826141efcdc36d5f3dbdce",
+      "archive_bytes": 120115338,
+      "uncompressed_bytes": 295027563,
+      "files_verified": 1504,
+      "latest_complete_round": 4675,
+      "remote_read_only": true,
+      "remote_process_exited": true
+    },
+    "outcomes_computed": false
+  },
+  "input_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H289/astra-t0005/inputs/recorded-snapshot.tar.gz",
+    "version_id": "PyUdeyhv8LqMyLfHB1ondkNF7dITELec",
+    "sha256": "f02363690b6988174afa30d209112501100527f3e8826141efcdc36d5f3dbdce",
+    "bytes": 120115338,
+    "exact_version_get_verified": true,
+    "files_verified_at_capture": 1504
+  },
+  "prepared_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H289/astra-t0005/inputs/prepared-closure.tar.gz",
+    "version_id": "dj7fcZrNhjkNwY2s5DkfOah1nfAUObnL",
+    "sha256": "66bc3154f4f2ec49bc9237163712826ec0bda82f32e3ba34c4881ba73b4bd071",
+    "bytes": 3293895,
+    "exact_version_get_verified": true,
+    "members_verified": 9
+  },
+  "resource_limits": {
+    "affinity": [
+      48,
+      50,
+      51,
+      52
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "aggregate_threads": 4,
+    "rss_bytes": 4294967296,
+    "abort_available_below_bytes": 10737418240
+  },
+  "closeout_deadline_utc": "2026-11-04T02:45:00Z",
+  "source_sha256": {
+    "PREREG.md": "191c8a3ba70e3cd433a73791e8410e4d12cd2abb2e48e7031803926bf648250b",
+    "PROTOCOL.md": "191c8a3ba70e3cd433a73791e8410e4d12cd2abb2e48e7031803926bf648250b",
+    "analysis.py": "42233dea750b4b0ff4e173de46e91718fb2d63889a29506d1cd86fef4dce0a98",
+    "audit.py": "d9cee9388cd30d7bd5f2d303d6379545a4c7a01089b652aa639c0c7fe06590d8",
+    "capture_remote.py": "789106e84c930c371747f333d491572373adec410ace9a53e6cd5e46c5004cee",
+    "custody.py": "bdef6804ac44bc3a6ec7cbdb823d589af56176749787af23dab9e5d5c1a96fc8",
+    "input-custody.json": "d83dd0e82383be622e4e7d4a77b044eef141b4b9ae75894a2a207d83331fc5b9",
+    "monitor.py": "fac2e2d34d788b8d9a70b0dde47a23c2b09f360f33506ce9a1a20720dbdb69a4",
+    "prepare.py": "0feb958082f245f4508deecea3d3f2faa6932e7f5911e4d0b84327c79f6fecef",
+    "prepared-custody.json": "37bc9b81cd543cb88d4237042764ccc06db8b55da6587157ac165817b2df9b33",
+    "runner.py": "ee59bfd2056bb9a213a509bdf9b0dad667bd2e9e36e39d417891b1dad6454673",
+    "test_h289.py": "310d89bcb7cc68bc7cf91cbc8d4b062418156cfd5d89492f9769b353b85fcf34"
+  }
+}

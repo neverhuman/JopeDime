@@ -1,0 +1,17 @@
+{
+  "schema": "jope.h289.metrics/v1",
+  "wave": "H289",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "neural_forwards": 0,
+  "neural_updates": 0,
+  "recorded_candidates": 1499,
+  "last_round": 4675,
+  "bootstrap_seeds": [
+    289101,
+    289102,
+    289103
+  ],
+  "bootstrap_draws": 10000,
+  "git_status": "GIT_COMMITTED"
+}
