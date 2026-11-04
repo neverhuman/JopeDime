@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "tests_collected": 11,
+  "tests_executed": 11,
+  "failed": 0,
+  "skipped": 0,
+  "sentinel": -2.0,
+  "ranker_constructor_overrides": 0,
+  "ranker_fit_callback_insertions": 2,
+  "boundaries": 2
+}
