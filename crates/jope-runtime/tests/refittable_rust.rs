@@ -1,7 +1,7 @@
 use jope_runtime::limits::Limits;
 use jope_runtime::math_pipeline::{
     refittable::{fit_csv, predict_csv},
-    F64_PREDICTION_VERSION, INPUT_PART, PIPELINE_PART,
+    PipelineState, F64_PREDICTION_VERSION, INPUT_PART, PIPELINE_PART,
 };
 use jope_runtime::model_object::{ModelObject, Part, MATH_PIPELINE, SCHEMA};
 use std::path::{Path, PathBuf};
@@ -32,6 +32,17 @@ fn reload(path: &Path) -> ModelObject {
         [INPUT_PART, PIPELINE_PART]
     );
     object
+}
+
+fn replace_state(object: &ModelObject, state: &PipelineState) -> ModelObject {
+    let mut parts = object.parts().clone();
+    parts.insert(PIPELINE_PART.into(), serde_json::to_vec(state).unwrap());
+    let mut manifest = object.manifest().clone();
+    manifest.files = parts
+        .iter()
+        .map(|(name, bytes)| Part::new(name, "application/json", bytes))
+        .collect();
+    ModelObject::new(manifest, parts, Limits::default().max_model_bytes).unwrap()
 }
 
 fn assert_predictions(actual: &[f64], expected: &[f64]) {
@@ -155,18 +166,52 @@ fn histogram_recipe_reloads_and_rejects_a_mislabeled_head() {
     // A valid content hash and width do not establish that the recipe fits this head.
     let mut state = pipeline.state;
     state.dsl = "(pipe X (robust_scale) (ridge))".into();
-    let mut parts = object.parts().clone();
-    parts.insert(PIPELINE_PART.into(), serde_json::to_vec(&state).unwrap());
-    let mut manifest = object.manifest().clone();
-    manifest.files = parts
-        .iter()
-        .map(|(name, bytes)| Part::new(name, "application/json", bytes))
-        .collect();
-    let forged = ModelObject::new(manifest, parts, Limits::default().max_model_bytes).unwrap();
+    let forged = replace_state(&object, &state);
     let error = forged
         .math_pipeline()
         .unwrap()
         .export_refittable_rust()
         .unwrap_err();
     assert!(error.to_string().contains("fitted stages or head"));
+}
+
+#[test]
+fn checksum_valid_broken_heads_are_refused_before_prediction() {
+    use feat_math::heads::{FittedHead, GbmNode};
+    use feat_math::model::Model;
+
+    let dir = tempfile::tempdir().unwrap();
+    let store = dir.path().join("models");
+    let csv = write_csv(dir.path(), "fit.csv", "x,y\n0,1\n1,1\n2,3\n3,3\n");
+    for (recipe, expected) in [
+        ("(pipe X (ridge))", "invalid fitted Ridge"),
+        (
+            "(pipe X (histgbm min_leaf=1 rounds=1))",
+            "invalid fitted GBM",
+        ),
+    ] {
+        let path = fit_csv(recipe, &csv, "y", &["x".into()], &store).unwrap();
+        let object = reload(&path);
+        let mut state = object.math_pipeline().unwrap().state;
+        let Model::Pipeline { head, .. } = &mut state.model else {
+            panic!("expected a pipeline");
+        };
+        match head.as_mut() {
+            FittedHead::Ridge(model) => model.w.clear(),
+            FittedHead::Gbm(model) => {
+                model.trees[0][0] = GbmNode::Split {
+                    feature: 0,
+                    thr_bin: 0,
+                    left: 0,
+                    right: 0,
+                };
+            }
+            _ => panic!("unexpected head"),
+        }
+        let malformed = replace_state(&object, &state)
+            .save(&store, Limits::default().max_model_bytes)
+            .unwrap();
+        let error = predict_csv(recipe, &malformed, &csv).unwrap_err();
+        assert!(error.to_string().contains(expected), "{error:#}");
+    }
 }

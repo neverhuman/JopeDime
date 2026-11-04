@@ -228,7 +228,8 @@ Build the program against the `crates/jope-runtime` path dependency from the che
 build the exporting appliance. Put the exported file at `src/main.rs` in a Cargo binary
 project and set this dependency in `Cargo.toml`. Use the toolchain pinned by that checkout.
 The program checks the source/runtime ABI at compile time. Keep the runtime revision with
-the source.
+the source. Retain the consumer project's own Cargo lockfile when building outside the
+JopeDime workspace.
 
 ```toml
 [dependencies]

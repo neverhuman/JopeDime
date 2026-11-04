@@ -11,7 +11,7 @@ use crate::table::{read_csv, CsvTable};
 use anyhow::{bail, ensure, Context, Result};
 use feat_math::dsl::{ParamValue, Stage};
 use feat_math::genome::GenomeIr;
-use feat_math::heads::FittedHead;
+use feat_math::heads::{FittedHead, GbmNode};
 use feat_math::model::Model;
 use feat_math::ops::FittedOp;
 use std::collections::{BTreeMap, BTreeSet};
@@ -94,6 +94,38 @@ fn check_state(stages: &[Stage], planned_head: &Stage, model: &Model) -> Result<
             ),
         "fitted stages or head do not match the refittable recipe"
     );
+    match head.as_ref() {
+        FittedHead::Ridge(model) => ensure!(
+            model.scales.len() == model.means.len()
+                && model.w.len() == model.means.len() + 1
+                && model.scales.iter().all(|scale| *scale > 0.0),
+            "invalid fitted Ridge dimensions or scales"
+        ),
+        FittedHead::Gbm(model) => ensure!(
+            model.edges.len() == model.n_feat
+                && model.trees.iter().all(|tree| {
+                    !tree.is_empty()
+                        && tree.iter().enumerate().all(|(index, node)| match node {
+                            GbmNode::Leaf(_) => true,
+                            // The native fitter writes parents before their children.
+                            // Enforcing forward links also rules out routing cycles.
+                            GbmNode::Split {
+                                feature,
+                                left,
+                                right,
+                                ..
+                            } => {
+                                *feature < model.n_feat
+                                    && [*left, *right]
+                                        .iter()
+                                        .all(|&child| index < child && child < tree.len())
+                            }
+                        })
+                }),
+            "invalid fitted GBM edges or tree routing"
+        ),
+        _ => bail!("unsupported fitted head"),
+    }
     Ok(())
 }
 
