@@ -1,6 +1,6 @@
 # JAIN — The next move
 
-The opener turns a Go stone into an algorithm tile, shows an illustrative training feedback loop, and reveals the captured Dendrite network. Its final second introduces the moving demonstration. The standalone opener is 12 seconds. The assembled film is 45 seconds at 1920 × 1080 and 30 fps, following the user's decision to accelerate the demonstration.
+The opener turns a Go stone into an algorithm tile, shows an illustrative training feedback loop, and reveals the captured Dendrite network. Its final second introduces the moving demonstration. The standalone opener is 12 seconds. The assembled film is 45 seconds at 1920 × 1080 and 30 fps, following the user's decision to accelerate the demonstration. Revision 2 strengthens the object's size, framing and causal relationships in response to the supplied render reviews.
 
 ## Source concepts and decisions
 
@@ -13,21 +13,25 @@ Read the four supplied concepts in this order.
 
 These documents are creative references. The produced film uses the actual saved Dendrite scene and measured demonstration. The Go position and training beat are illustrative. The opener makes no historical match, comparative cost, optimality, or benchmark claims. The measured benchmark arrives with the demonstration.
 
+The user subsequently supplied `JAIN_Intro_Render_Review_R2.md` and `JAIN_Intro_Render_Review_v1.md`, and the concept of innovation as search. Adopt R2's centered framing, substantial algorithm tile, board-free feedback circuit, larger headings, and full inference composition. Keep the explicit 12/45-second user timing instead of the reviews' 15-second alternative. Keep the training qualifier and the approved Dendrite geometry; the older rectangular network reference does not supersede that choice. Use the exact demo wordmark, panels and benchmark. The opening line becomes “Innovation is a search.” The sequence resolves toward one proposed algorithm without claiming an exhaustive or globally optimal search.
+
+The prior scene already had 19 lines in each direction and nine star points. Revision 2 makes them visible through framing and material contrast. It preserves the v1 render evidence in `h256/jain-intro-v1`; all new scenes and media belong to `h256/jain-intro-v2`.
+
 ## Timeline
 
 | Time | Picture | Copy |
 | --- | --- | --- |
-| 0–3.2 s | Ivory stone settles onto the dark reflective board, a cyan ripple lights the intersections | What if innovation was a game? |
-| 3.2–5.3 s | The same luminous contour becomes a floating algorithm tile | Every move. An algorithm. |
-| 5.3–7.7 s | A proposal passes through a test aperture and a return signal closes the loop | Test. Learn. Play again. / Algorithmic self-play · training |
-| 7.7–10.5 s | Grid anchors unfold into the sampled Dendrite geometry | JAIN / Just An Inference Network |
-| 10.5–11 s | The camera settles into the demonstration view | Headline clears |
-| 11–12 s | Moving source footage reveals the table, network, and complete source panel | Actual demo HUD |
+| 0–3.27 s | Full warm satin Go board; the central ivory stone lands and becomes the focal event | Innovation is a search. |
+| 3.27–5.27 s | The same contour becomes a large face-on dark algorithm tile with braces | Every move. An algorithm. |
+| 5.4–7.8 s | Board is gone; problem → candidate → test → problem circuit returns feedback and replaces the candidate | Test. Learn. Play again. / Algorithmic self-play · training |
+| 7.8–10.53 s | Candidate grid unfolds into the captured network; real input arrives before the forward pulse, then the actual source panel | One inference. One algorithm. |
+| 10.53–11 s | Full source composition settles, including its exact brand and benchmark | Headline clears; actual demo HUD |
+| 11–12 s | Unmodified moving source footage continues | Actual demo HUD |
 | 12–45 s | The same demonstration stream continues through all ten datasets | Actual demo HUD |
 
 ## Ownership and implementation
 
-Use the existing `codex/blender-fused-first-render` worktree and draft PR #2114. All generated scenes, plates, audio, and videos live outside Git under `h256/jain-intro-v1` in the established render artifact root. Existing training, model, export, and other PR lanes are outside this task.
+Use the existing `codex/blender-fused-first-render` worktree and draft PR #2114. All generated scenes, plates, audio, and videos live outside Git under `h256/jain-intro-v2` in the established render artifact root. Existing training, model, export, and other PR lanes are outside this task.
 
 Read first `blender/jain_cinematic.py`, `blender/jain_display_network.py`, `blender/render_animation.py`, `intelligence_wave.py`, and the final Dendrite receipts.
 
@@ -35,7 +39,7 @@ The three disjoint implementation packets are `blender/jain_intro.py` for the sc
 
 The scene reads the saved Dendrite camera, floor, materials, and sampled neural geometry. The transformation ends at those captured coordinates. Rendering uses the verified Blender 5.2.3 runtime and explicit OptiX or Metal GPU selection. The first delivery uses the local Apple M4 Max through Metal because both remote GPUs acquired other compute jobs before launch. The worker does not fall back to processor rendering.
 
-The 42-second source is mapped into 34 seconds with endpoint-inclusive nearest-frame sampling per chapter. Master frame 330 starts source playback. The source panel becomes fully exposed before its first scroll, and master frame 360 continues the same stream. Source mappings and maximum code viewport jumps are recorded so retiming can be checked for complete source coverage.
+The 42-second source is mapped into 34 seconds with endpoint-inclusive nearest-frame sampling per chapter. Master frame 330 starts unmodified source playback. The preview uses that same first case's panels and source state before the moving handoff. Master frame 360 continues the same stream. Source mappings and maximum code viewport jumps are recorded so retiming can be checked for complete source coverage.
 
 This is a fast visual overview. Every source row appears fully within the viewport, but 34 seconds is insufficient to read all ten programs. The original source packages remain the reading reference. Intro timing and the training illustration are editorial; the demo retains its captured measurements and source identities.
 

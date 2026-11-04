@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 import hashlib
+from itertools import chain
 import json
 import math
 from pathlib import Path
@@ -21,13 +22,18 @@ PLATE_COUNT, INTRO_COUNT, MASTER_COUNT = 330, 360, 1350
 SOURCE_CASE_COUNT, CASE_COUNT = 126, 102
 AUDIO_RATE = 48_000
 SCROLL_FIRST = 7
-FULL_CODE_REVEAL = 5
+PRELAP_START = 234
+PANEL_READY = 248
+CODE_REVEAL = 306
+CODE_READY = 315
+BRAND_REVEAL = 316
+FULL_SOURCE_LOCK = PLATE_COUNT - 1
 FONT_PATH = Path("/System/Library/Fonts/Avenir Next.ttc")
 TITLE_CUES = (
-    (12, 93, "What if innovation\nwas a game?", ""),
-    (99, 159, "Every move.\nAn algorithm.", ""),
-    (165, 228, "Test. Learn.\nPlay again.", "ALGORITHMIC SELF-PLAY · TRAINING"),
-    (240, 315, "JAIN", "Just An Inference Network"),
+    (0, 98, "Innovation is a search.", ""),
+    (98, 158, "Every move.\nAn algorithm.", ""),
+    (162, PRELAP_START, "Test. Learn.\nPlay again.", "ALGORITHMIC SELF-PLAY · TRAINING"),
+    (PRELAP_START, BRAND_REVEAL, "One inference.\nOne algorithm.", ""),
 )
 
 
@@ -61,8 +67,9 @@ def plan_retime(receipt):
     chapters = [{"title": "The Next Move", "start_frame": 0, "end_frame": PLATE_COUNT}]
     selected, coverage = [], []
     require(len(receipt["cases"]) == 10, "Expected all ten source datasets")
-    view_x, _, _, view_height = receipt["source_viewport"]
-    require(view_x >= 1310, "Source viewport would be obscured by the opening reveal")
+    view_x, view_y, view_width, view_height = receipt["source_viewport"]
+    require(1310 <= view_x < view_x + view_width <= WIDTH and 20 <= view_y < view_y + view_height <= HEIGHT,
+            "Source viewport would be obscured by the opening reveal")
     denominator = CASE_COUNT - 1
     offsets = [(index * (SOURCE_CASE_COUNT - 1) + denominator // 2) // denominator for index in range(CASE_COUNT)]
     for index, case in enumerate(receipt["cases"]):
@@ -78,11 +85,7 @@ def plan_retime(receipt):
         require(len(scroll) == SOURCE_CASE_COUNT and line_height > 0 and row_count > 0,
                 f"{case['case_id']}: invalid scroll metadata")
         visited = set()
-        for selected_index, source_local in enumerate(offsets):
-            # During the match cut, count only frames where the entire editor
-            # is opaque, including its first fully visible typed page.
-            if index == 0 and selected_index < FULL_CODE_REVEAL:
-                continue
+        for source_local in offsets:
             offset = scroll[source_local]
             visible = (view_height if source_local >= SCROLL_FIRST
                        else max(line_height, round(view_height * (source_local + 1) / SCROLL_FIRST)))
@@ -100,7 +103,8 @@ def plan_retime(receipt):
     require(len(selected) == MASTER_COUNT - PLATE_COUNT and selected[0] == 0 and selected[-1] == 1259
             and all(a < b for a, b in zip(selected, selected[1:])), "Source retime is not strictly increasing")
     return {"selected_source_indices": selected, "chapters": chapters, "code_coverage": coverage,
-            "first_fully_opaque_editor_frame": PLATE_COUNT + FULL_CODE_REVEAL,
+            "first_fully_opaque_editor_frame": CODE_READY,
+            "first_moving_demo_frame": PLATE_COUNT,
             "last_intro_source_frame": selected[INTRO_COUNT - PLATE_COUNT - 1],
             "first_source_frame_after_intro": selected[INTRO_COUNT - PLATE_COUNT]}
 
@@ -157,34 +161,59 @@ def title_card(plate, frame, fonts):
     amount = min(smooth((frame - start + 1) / 5), smooth((end - frame) / 6))
     layer = Image.new("RGBA", (WIDTH, HEIGHT))
     draw = ImageDraw.Draw(layer)
-    x, y = 118, 134
-    tint = (112, 238, 250, round(245 * amount))
+    x = WIDTH // 2
+    tint = (112, 238, 250, round(235 * amount))
     white = (231, 243, 255, round(255 * amount))
-    draw.rounded_rectangle((x - 28, y + 9, x - 24, y + (104 if headline == "JAIN" else 80)),
-                           radius=2, fill=tint)
-    if headline == "JAIN":
-        draw.text((x, y), headline, font=fonts["brand"], fill=white, anchor="lt")
-        draw.text((x + 3, y + 99), detail, font=fonts["brand_detail"], fill=tint, anchor="lt")
+    lines = headline.splitlines()
+    baseline = 225 if len(lines) == 1 else 184
+    for i, line in enumerate(lines):
+        draw.text((x, baseline + i * 86), line, font=fonts["headline"], fill=white, anchor="ms")
+    if detail:
+        draw.text((x, 326), detail, font=fonts["eyebrow"], fill=tint, anchor="ms")
     else:
-        if detail:
-            draw.text((x, y), detail, font=fonts["eyebrow"], fill=tint, anchor="lt")
-            y += 39
-        draw.multiline_text((x, y), headline, font=fonts["headline"], fill=white, spacing=5)
+        y = baseline + (len(lines) - 1) * 86 + 28
+        draw.rounded_rectangle((x - 24, y, x + 24, y + 3), radius=2, fill=tint)
     return Image.alpha_composite(plate.convert("RGBA"), layer).convert("RGB")
 
 
-def reveal(plate, source, index):
-    if index >= INTRO_COUNT - PLATE_COUNT - 1:
+def blend_region(plate, reference, box, amount):
+    if amount > 0.:
+        region = reference.crop(box)
+        if amount < 1.:
+            region = Image.blend(plate.crop(box), region, amount)
+        plate.paste(region, box[:2])
+
+
+def editor_destination(source, viewport):
+    """Use actual editor chrome with its original blank viewport color."""
+    x, y, width, height = viewport
+    destination = source.copy()
+    content = (x, y, x + width, y + height)
+    current_line = (max(x, x + width - 96), y - 20, x + width, y)
+    destination.paste(source.getpixel((x + width // 2, y + height - 2)), content)
+    destination.paste(source.getpixel((x + width // 2, y - 10)), current_line)
+    return destination, (content, current_line)
+
+
+def prelap(plate, source, destination, content_boxes, frame):
+    if frame < PRELAP_START:
+        return plate
+    if frame >= FULL_SOURCE_LOCK:
         return source
-    x = np.arange(WIDTH, dtype=float)
-    right = np.clip((x - 1250) / 60, 0., 1.)
-    left = np.clip((700 - x) / 80, 0., 1.)
-    center = smooth((index + .35) / 29.)
-    editor = smooth((index + .35) / FULL_CODE_REVEAL)
-    table = smooth((index + .35) / 17.)
-    line = np.rint(255 * (center + right * (editor - center) + left * (table - center))).astype(np.uint8)
-    mask = Image.fromarray(line[None, :]).resize((WIDTH, HEIGHT), Image.Resampling.NEAREST)
-    return Image.composite(source, plate, mask)
+
+    def fade(start, end):
+        return smooth((frame - start + 1) / (end - start + 1))
+
+    image = plate.copy()
+    panels = fade(PRELAP_START, PANEL_READY)
+    blend_region(image, source, (0, 125, 611, HEIGHT), panels)
+    blend_region(image, destination, (1310, 0, WIDTH, HEIGHT), panels)
+    for box in content_boxes:
+        blend_region(image, source, box, fade(CODE_REVEAL, CODE_READY))
+    center = fade(BRAND_REVEAL, FULL_SOURCE_LOCK)
+    blend_region(image, source, (0, 0, 611, 125), center)
+    blend_region(image, source, (611, 0, 1310, HEIGHT), center)
+    return image
 
 
 def synthesize_audio(path):
@@ -317,32 +346,36 @@ def compose(args, source, plan, plates, fonts, custody):
     master_command = encoder_command(args.ffmpeg, master, audio, MASTER_COUNT, metadata)
     anchors = []
     with (ffmpeg_process(master_command, root / "master-encode.log", writing=True) as long,
-          ffmpeg_process(stand_command, root / "intro-encode.log", writing=True) as short):
+          ffmpeg_process(stand_command, root / "intro-encode.log", writing=True) as short,
+          closing(decode_source(args.ffmpeg, args.demo, root / "source-decode.log")) as demo_frames):
+        first = next(demo_frames)
+        reference = Image.frombytes("RGB", (WIDTH, HEIGHT), first)
+        destination, content_boxes = editor_destination(reference, source["source_viewport"])
         for index in range(PLATE_COUNT):
-            image = title_card(image_for_plate(plates, index + 1), index, fonts)
+            plate = image_for_plate(plates, index + 1)
+            image = title_card(prelap(plate, reference, destination, content_boxes, index), index, fonts)
             raster = image.tobytes()
+            if index == FULL_SOURCE_LOCK:
+                anchors.append({"master_frame": index, "source_frame": 0,
+                                "input_rgb_sha256": hashlib.sha256(first).hexdigest(),
+                                "assembled_rgb_sha256": hashlib.sha256(raster).hexdigest()})
             long.write(raster)
             short.write(raster)
-        hold = image_for_plate(plates, PLATE_COUNT)
         selected = iter(plan["selected_source_indices"])
         wanted = next(selected)
         count, decoded = 0, 0
-        for index, raster in enumerate(decode_source(args.ffmpeg, args.demo, root / "source-decode.log")):
+        for index, raster in enumerate(chain((first,), demo_frames)):
             decoded += 1
             if index != wanted:
                 continue
             master_frame = PLATE_COUNT + count
             if master_frame < INTRO_COUNT:
-                source_image = Image.frombytes("RGB", (WIDTH, HEIGHT), raster)
-                final_raster = reveal(hold, source_image, count).tobytes()
-                short.write(final_raster)
-            else:
-                final_raster = raster
+                short.write(raster)
             if master_frame in (PLATE_COUNT, INTRO_COUNT - 1, INTRO_COUNT, MASTER_COUNT - 1):
+                sha = hashlib.sha256(raster).hexdigest()
                 anchors.append({"master_frame": master_frame, "source_frame": index,
-                                "input_rgb_sha256": hashlib.sha256(raster).hexdigest(),
-                                "assembled_rgb_sha256": hashlib.sha256(final_raster).hexdigest()})
-            long.write(final_raster)
+                                "input_rgb_sha256": sha, "assembled_rgb_sha256": sha})
+            long.write(raster)
             count += 1
             wanted = next(selected, None)
         require(decoded == source["frames"] and count == MASTER_COUNT - PLATE_COUNT and wanted is None,
@@ -351,7 +384,7 @@ def compose(args, source, plan, plates, fonts, custody):
     require(digest(args.plates_receipt) == custody["intro_plates_receipt_sha256"]
             and digest(args.intro_scene_receipt) == custody["intro_scene_receipt_sha256"],
             "Intro scene or plate receipt changed during assembly")
-    for anchor in anchors[1:]:
+    for anchor in anchors:
         require(anchor["input_rgb_sha256"] == anchor["assembled_rgb_sha256"], "End of reveal altered source raster")
     videos = {
         "intro": verify_movie(args.ffmpeg, args.ffprobe, standalone, INTRO_COUNT, [], root / "intro-full-decode.log"),
@@ -362,27 +395,41 @@ def compose(args, source, plan, plates, fonts, custody):
         "demo_sha256": source["movie_sha256"], "demo_receipt_sha256": digest(args.demo_receipt),
         **custody, "compositor_sha256": digest(Path(__file__)),
         "font_sha256": digest(args.font), "chapters_metadata_sha256": digest(metadata), "title_cues": TITLE_CUES,
+        "source_prelap": {"panels_start_frame": PRELAP_START, "panels_ready_frame": PANEL_READY,
+                          "editor_content_start_frame": CODE_REVEAL, "editor_content_ready_frame": CODE_READY,
+                          "brand_and_benchmark_start_frame": BRAND_REVEAL, "full_source_lock_frame": FULL_SOURCE_LOCK,
+                          "prelap_source_frame": 0, "first_moving_demo_frame": PLATE_COUNT},
         "retime": plan, "raster_handoff": anchors, "encoder_commands": [stand_command, master_command],
     })
     print(master)
 
 
-def previews(args, plan, plates, fonts):
+def source_image(args, frame):
+    data = subprocess.check_output([args.ffmpeg, "-nostdin", "-v", "error", "-i", str(args.demo),
+                                    "-vf", f"select=eq(n\\,{frame})", "-frames:v", "1",
+                                    "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"])
+    return Image.frombytes("RGB", (WIDTH, HEIGHT), data)
+
+
+def previews(args, source, plan, plates, fonts):
+    needs_prelap = any(PRELAP_START <= frame < PLATE_COUNT for frame in args.preview)
+    if needs_prelap:
+        reference = source_image(args, 0)
+        destination, content_boxes = editor_destination(reference, source["source_viewport"])
     for frame in args.preview:
         require(0 <= frame < INTRO_COUNT, "Preview only accepts a master frame inside the standalone intro")
         if frame < PLATE_COUNT:
-            image = title_card(image_for_plate(plates, frame + 1), frame, fonts)
+            image = image_for_plate(plates, frame + 1)
+            if frame >= PRELAP_START:
+                image = prelap(image, reference, destination, content_boxes, frame)
+            image = title_card(image, frame, fonts)
         else:
             source_frame = plan["selected_source_indices"][frame - PLATE_COUNT]
-            data = subprocess.check_output([args.ffmpeg, "-nostdin", "-v", "error", "-i", str(args.demo),
-                                            "-vf", f"select=eq(n\\,{source_frame})", "-frames:v", "1",
-                                            "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"])
-            image = reveal(image_for_plate(plates, PLATE_COUNT), Image.frombytes("RGB", (WIDTH, HEIGHT), data),
-                           frame - PLATE_COUNT)
-        destination = args.output_dir / f"preview-{frame:06d}.png"
-        with destination.open("xb") as stream:
+            image = source_image(args, source_frame)
+        output = args.output_dir / f"preview-{frame:06d}.png"
+        with output.open("xb") as stream:
             image.save(stream, format="PNG")
-        print(destination)
+        print(output)
 
 
 def main():
@@ -410,11 +457,10 @@ def main():
     checkout = Path(__file__).resolve().parents[2]
     require(not args.output_dir.is_relative_to(checkout), "Rendered outputs must stay outside the checkout")
     plates, custody = read_plates(args.plates, args.plates_receipt, args.intro_scene_receipt, source, full=not args.preview)
-    fonts = {key: ImageFont.truetype(str(args.font), size) for key, size in
-             (("brand", 104), ("brand_detail", 31), ("headline", 62), ("eyebrow", 24))}
+    fonts = {key: ImageFont.truetype(str(args.font), size) for key, size in (("headline", 72), ("eyebrow", 22))}
     args.output_dir.mkdir(parents=True, exist_ok=bool(args.preview))
     if args.preview:
-        previews(args, plan, plates, fonts)
+        previews(args, source, plan, plates, fonts)
     else:
         compose(args, source, plan, plates, fonts, custody)
 
