@@ -53,7 +53,7 @@ BOOT_SEED_GATE_H0 = 317150
 BOOT_SEED_STAGE_V = 317160
 N_BOOT = 10_000
 N_FOLDS = 5
-PILOT_N = 96  # stats red team: 24 -> MDE ~0.070, 96 -> ~0.035 (contexts beat seeds); fallback 48
+PILOT_N = 205  # all families, one context each (owner compute waiver 2026-11-04 ~13:16Z); P96 = exact subset
 AUDIT_FRACTION = 0.30
 GATE_FAIL_UTILITY = -2.0
 
@@ -757,18 +757,31 @@ def holm_adjusted_lcb_alpha(m: int, rank: int, alpha: float = 0.05) -> float:
 
 
 def contract_advance_gate(
-    summary: dict, lcb_key: str = "lcb95", margin: float = 0.001
+    summary: dict,
+    lcb_key: str = "lcb95",
+    margin: float = 0.001,
+    signflip_alpha: float = 0.025,
+    signflip_p: float | None = None,
 ) -> dict:
     """Repo common contract: adjusted family-mean LCB > +0.001, family median >= 0, <= 10% families losing > 0.01;
-    H317 adds: one-sided sign-flip p < 0.025 and leave-one-family-out minimum gain > 0."""
+    H317 adds: one-sided sign-flip p < alpha and leave-one-family-out minimum gain > 0.
+
+    Holm (GP code red team MEDIUM-1): callers testing m challengers pass either `signflip_alpha` = the rank's Holm
+    one-sided level (e.g. 0.025/(m-rank)), or `signflip_p` = an already Holm-adjusted p (compared with 0.025)."""
+    p = summary["signflip_p_one_sided"] if signflip_p is None else signflip_p
     checks = {
         "lcb_gt_margin": summary[lcb_key] > margin,
         "median_ge_0": summary["gain_family_median"] >= 0.0,
         "harm_le_10pct": summary["harmed_share_gt_0p01"] <= 0.10,
-        "signflip_p_lt_0p025": summary["signflip_p_one_sided"] < 0.025,
+        "signflip_p_lt_alpha": p < signflip_alpha,
         "lofo_min_gt_0": summary["lofo_min_gain"] > 0.0,
     }
-    return {"pass": all(checks.values()), "checks": checks}
+    return {
+        "pass": all(checks.values()),
+        "checks": checks,
+        "signflip_alpha": signflip_alpha,
+        "signflip_p_used": p,
+    }
 
 
 def paired_family_bootstrap_alpha(
@@ -819,7 +832,11 @@ def pilot_shard(
     n: int = PILOT_N,
     seed: int = PILOT_SEED,
 ) -> List[str]:
-    """24 contexts from 24 distinct families, ~equal per outer fold, one seeded context per chosen family."""
+    """n contexts from n distinct families, ~equal per outer fold, one seeded context per chosen family.
+
+    n >= number of families (or n <= 0) selects ALL families, one seeded context each. The per-family context choice
+    does not depend on n, so every smaller pilot (P24/P48/P96) is an exact subset of the all-family pilot (P205).
+    """
     by_fold: Dict[int, List[str]] = {}
     fam_ctx: Dict[str, List[str]] = {}
     for r in rows:
@@ -827,7 +844,10 @@ def pilot_shard(
     fam_fold = {r["family_id"]: folds[r["context_sha256"]] for r in rows}
     for f, j in fam_fold.items():
         by_fold.setdefault(j, []).append(f)
-    quota = [n // N_FOLDS + (1 if j < n % N_FOLDS else 0) for j in range(N_FOLDS)]
+    if n <= 0 or n >= len(fam_fold):
+        quota = [len(by_fold[j]) for j in range(N_FOLDS)]
+    else:
+        quota = [n // N_FOLDS + (1 if j < n % N_FOLDS else 0) for j in range(N_FOLDS)]
     chosen: List[str] = []
     for j in range(N_FOLDS):
         fams = sorted(by_fold[j], key=lambda f: stream_seed(seed, "fam", f))[: quota[j]]

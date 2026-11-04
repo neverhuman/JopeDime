@@ -380,3 +380,25 @@ implemented and tested), BLOCKER-2 "R882" was argmin of the adapter's input prio
 HIGH-3 coverage (→ 1,219/205/5-fold/2-seed assertions), MEDIUM-4 equal steps (→ config budgets asserted identical),
 MEDIUM-5 SAM passes on different random draws (→ shared draws per step), LOW-6…8 (→ float64 anchors, float16-matched
 screener features, arm-independent (seed, fold) seeds for pairing). Launch only after the patched tests pass.
+
+## 7. Pre-outcome amendment A1 (2026-11-04 ~13:20Z; no GP-block or Stage V outcome had been read; H0.1 was running)
+- **Authority.** Jepson, this session, ~13:16Z: "you can be more aggressive but don't exceed 85% CPU utilization, also
+  you have compute on xbabe0, xbabe1, xbabe2, xbabe3, and xbabe4". This waives the PREREG_TEMPLATE 4-numeric-thread
+  cap for H317 and supersedes §2.4/§3 where they conflict.
+- **Compute.**
+  - The GP block and Stage V run on **xbabe0** (AMD Threadripper PRO 3995WX, the same ISA as xbabe2), with up to
+    88 single-threaded Rust workers. Host CPU stays ≤ 85% including other load; new evals pause above that.
+  - Isolation is a Docker deny-by-default sandbox: no network, empty home except the staged TRAIN view, H317 code,
+    JopeDimeMicro subset, views, libs and `$H317_DATA`. bwrap is not installed there.
+  - xbabe4 (arm64 Mac) is not used for worker evals, because the pinned x86_64 worker would need emulation.
+  - Before any GP eval, the worker's parity on xbabe0 vs xbabe2 is checked on a non-pilot context.
+- **GP pilot = P205.** All 205 TRAIN families, one seeded context each; `pilot_shard` default; P96 is an exact subset
+  with identical contexts; `fold_manifest.json` v3 sha `43a1e187…`.
+  - Search seeds **317101 and 317102**; per-context value = seed mean.
+  - MDE ≈ 0.024 (stats red team variance model: context SD 0.08, seed SD 0.13).
+  - All H0.4–H0.6 rules are unchanged. H0.6's leave-one-family-out selection now runs over 205 families.
+- **Stage V: both search seeds** (per-context value = seed mean), MDE ≈ 0.029. This restores the original v2 design.
+- **Neural block (H0.1–H0.3):** unchanged.
+- **Code commit before launch.** The GP code changes (multi-process sharding + merge, the Docker sandbox, staging,
+  lint) and the GP code red-team fixes are committed to `origin/v1/next` before the first GP-block pilot eval, with a
+  fresh same-agent review receipt.

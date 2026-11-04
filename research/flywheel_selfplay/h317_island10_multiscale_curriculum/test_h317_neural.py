@@ -926,8 +926,10 @@ def test_stored_search_views_are_exactly_the_non_audit_rows():
     )
     if not files:
         pytest.skip("no stored SEARCH views on this host")
-    pilot = {r["context_sha256"] for r in V.search_pilot_rows(96)}
-    assert {p.stem for p in files} == pilot
+    # the stored SEARCH view set is the current GP pilot (P205 = common_h317.PILOT_N; P96 is an exact subset)
+    pilot = {r["context_sha256"] for r in V.search_pilot_rows(C.PILOT_N)}
+    p96 = {r["context_sha256"] for r in V.search_pilot_rows(96)}
+    assert {p.stem for p in files} == pilot and p96 <= pilot
     for p in files:
         env = C.read_jtt1(C.table_path(p.stem))
         with np.load(p, allow_pickle=False) as z:
