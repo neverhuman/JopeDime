@@ -127,3 +127,25 @@ def test_committed_weights_and_kpi_telemetry_integrity() -> None:
     assert "kpi_telemetry" in prod_1310
     assert "top8_lgbm_ranker_616_model_str" in prod_1310
     assert "top8_neural_reranker_state_dict" in prod_1310
+
+    from safetensors.numpy import load_file as load_safetensors_np
+
+    st_bundles = manifest.get("rust_safetensors_inference_bundles", {})
+    expected_st = [
+        "h256_production_full_1310_regression_bundle.safetensors",
+        "h256_production_1219_dl_train_bundle.safetensors",
+        "stage2_full_s3_reg_flywheel_pretrained_bridge.safetensors",
+        "stage1_full_s3_reg_all15796_encoder.safetensors",
+        "full_s3_reg_7split_pretrained_encoder.safetensors",
+        "sos_hurdle_and_sp_critic_models.safetensors",
+        "golden_inference_fixture_context0.safetensors",
+    ]
+    for st_name in expected_st:
+        assert st_name in st_bundles, f"Missing {st_name} in checkpoint_manifest.json"
+        st_path = weights_dir / st_name
+        assert st_path.exists(), f"Missing safetensors file {st_path}"
+        assert st_path.stat().st_size <= 5 * 1024 * 1024
+        tensors = load_safetensors_np(str(st_path))
+        assert len(tensors) == int(st_bundles[st_name]["tensor_count"])
+        for arr in tensors.values():
+            assert np.all(np.isfinite(arr))

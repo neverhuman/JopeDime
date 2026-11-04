@@ -122,12 +122,32 @@ All canonical checkpoints under `weights/` are strictly $< 5\text{ MiB}$ and inc
 | `weights/stage2_full_s3_reg_flywheel_pretrained_bridge.pt` | `4.70 MB` | `219cb783fd53db477edcd6de14dd1f0618120e1274e53c1bc496215c258b775a` | 5-fold Stage-2 `PreCondenseResidualBridge` ensemble + critic models + golden fixture summary |
 | `weights/sos_hurdle_and_sp_critic_models.pt` / `.npz` | `59 KB` / `10 KB` | `14ab6f70900834169581a068e08141c64113d76d04d5a06675890f0a4ca8e36b` | Fitted `SOSCalibratedAdapter` (`w_c`, `w_g`) + `SelfPlayTrajectoryHead` (`sp_dir`) + `FoldScaler` |
 | `weights/golden_inference_fixture_context0.pt` / `.json` | `3.51 MB` / `2.4 KB` | `de8f0ae10b0c38413cfd9171e6d627aff97764b38ffca8d9ccda48fdefe5a0bb` | Complete golden input & expected output prediction fixture on active `DL-Val` context `016648dc...` |
-| `weights/checkpoint_manifest.json` | `54 KB` | Indexed | Complete SHA-256 manifest of all `115+` fold and production checkpoints |
+| `weights/h256_production_full_1310_regression_bundle.safetensors` | `3.15 MiB` (`384` tensors) | `8c4b90ed8cbee2d9db041eb3bd9d3e4c2d42373e4e202f4bc7ec3971b960dbeb` | 100% Rust `.safetensors` bundle for the full `1,310`-context + `15,796`-S3 regression production model (Stage-1 encoder + Stage-2 bridges + scalers + critics + Top-8 NN + 6 flat GBDTs) |
+| `weights/h256_production_1219_dl_train_bundle.safetensors` | `3.15 MiB` (`384` tensors) | `dabe6f10133ddcaca7f8ed1e182b481ad976ddafde52ab4dd330382e1112b442` | 100% Rust `.safetensors` bundle for the holdout-clean `1,219` `DL-Train` + `11,121` Policy-B S3 regression model |
+| `weights/stage2_full_s3_reg_flywheel_pretrained_bridge.safetensors` | `4.30 MiB` (`549` tensors) | `70c1a68fb78842382b03c253f64e95039abfd3a8c23a3dfbae698b0bacc01167` | 100% Rust `.safetensors` bundle for Stage-2 `PreCondenseResidualBridge` soup model + 5-fold ensemble + scalers + critics |
+| `weights/stage1_full_s3_reg_all15796_encoder.safetensors` | `0.07 MiB` (`45` tensors) | `021ed66999b5479278eb55b1d1430afb083cb0309a965b39f15be064ed4aaed3` | 100% Rust `.safetensors` bundle for Stage-1 all-`15,796` S3 7-split regression 92-token encoder |
+| `weights/full_s3_reg_7split_pretrained_encoder.safetensors` | `0.07 MiB` (`45` tensors) | `d6f49d3abc0c887ab40dd8fdb59216e8001cb7e23c480b7320907027ab3ec368` | 100% Rust `.safetensors` bundle for Stage-1 Policy-B `11,121` S3 7-split regression 92-token encoder |
+| `weights/sos_hurdle_and_sp_critic_models.safetensors` | `0.03 MiB` (`7` tensors) | `f67ead9c4cd1821ffa87036bfbea0588d970df4a5443c92caa5eecbd8237a08c` | 100% Rust `.safetensors` bundle for fitted Decomposed Hurdle / SOS & Self-Play linear critics + `w1_proj_412x16` |
+| `weights/golden_inference_fixture_context0.safetensors` | `2.90 MiB` (`76` tensors) | `b64ba49f25eee8ffe76a31d20e5e0aff2cd8f5a4cf5834da3949951cd622f2ee` | End-to-end golden inference fixture (`.safetensors`) for 100% Rust parity verification |
+| `weights/checkpoint_manifest.json` | `56 KB` | Indexed | Complete SHA-256 manifest of all `.pt`, `.npz`, and `.safetensors` checkpoints |
 | `kpi_telemetry.json` | `144 KB` | `9bd1ebaa4ff15f0bc22eb9ed6f64dac801659fd3105ff071f54fcc558500fa05` | Complete Train (`FIT`), Inner-OOF, Outer-OOF (`1,219`), and Holdout (`DL-Val91`) KPI telemetry |
 | `summary.json` | `331 KB` | Indexed | Complete ablation and flagship model summary |
 
 ---
 
-## 6. Rust Serving Parity Verification
+## 6. 100% Rust `.safetensors` Inference & Golden Parity Verification
 
-Updated `crates/jope-service/src/ranker/cuda/forward.rs`, `crates/jope-service/src/ranker/stage1b.rs`, and `crates/jope-service/src/ranker/adapter.rs` to expose pre-condense `PreCondenseStage1bBundle` (`raw_vec_629`, `block_log_norms_11`, `hidden_256`, `col_lm_64x17`, `col_mask_64`) and support variable `K_ctx`-token attention in `CrossAttentionAdapter::forward`. Verified via `cargo test -p jope-service --lib ranker` (`120 passed; 0 failed`).
+1. **`.safetensors` Conversion (`export_h256_safetensors.py`)**:
+   - Converts all `H256` PyTorch neural models (`H256Stage1ContextEncoder`, `H256PreCondenseBridge`, `H256Top8NeuralReranker`), `H256FoldScaler` statistics, linear `H256CriticModels` (`w_c_full`, `w_g_full`, `sp_dir_full`), and all 6 LightGBM GBDT models (`ranker_568`, `ranker_580`, `ranker_616`, `clf_568`, `clf_580`, `clf_616` flattened into contiguous `split_feature`, `threshold`, `decision_type`, `left_child`, `right_child`, `leaf_value` tensors) into zero-Python `.safetensors` bundles (`<= 4.30 MiB` each).
+2. **Pure-Rust Inference Engine (`crates/jope-service/src/ranker/h256.rs` & `crates/jope-service/src/ranker/h256/tests.rs`)**:
+   - Implements 100% Rust `.safetensors` deserialization (`SafetensorsMap` via `safetensors = "0.7.0"`) and forward execution for:
+     - `H256FoldScaler::transform_context` & `compute_block_log_norms` (`11D`).
+     - `H256Stage1ContextEncoder` (`encode_context_tokens`, `extract_s3_ctx_vec16`).
+     - `H256PreCondenseBridge` (`forward_prior_and_context`, `forward_causal_trajectory_residual`, `SyncFreeCrossAttention`).
+     - `H256CriticModels` (`compute_sem24_from_program_412`, `build_candidate_features_64`, `predict_priors_and_h_cost`, `run_2plus2_active_reveal_step`).
+     - `build_enriched_top8_features_616` (`568D` base + `12D` candidate H256 + `36D` context H256 = `616D`).
+     - `H256Top8NeuralReranker::forward_top8` (`4`-head slot self-attention + pairwise `h_j - h_0` score & invalid-gate heads).
+     - `FlatGbdtModel::predict_batch` (exact float64 tree traversal for all 6 LightGBM rankers and classifiers, `max_abs_diff <= 1e-12`).
+     - `H256Stage2EnsembleBundle` and `H256ProductionBundle` (`1310` and `1219` bundles).
+   - Also updated `crates/jope-service/src/ranker/cuda/forward.rs`, `crates/jope-service/src/ranker/stage1b.rs`, and `crates/jope-service/src/ranker/adapter.rs` to expose `PreCondenseStage1bBundle` and variable `K_ctx`-token attention.
+   - Verified via `cargo test -p jope-service --lib ranker -- --test-threads=2` (`123 passed; 0 failed`).

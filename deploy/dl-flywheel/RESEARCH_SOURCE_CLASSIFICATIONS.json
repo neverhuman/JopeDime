@@ -6544,6 +6544,14 @@
         "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
       }
     },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/export_h256_safetensors.py": {
+      "bytes": 27983,
+      "sha256": "681c43e1810a3a569257a395905623c7c25c7d9b6ddc6e66cf0a527c30110601",
+      "classification": {
+        "role": "research",
+        "reason": "H256 .safetensors exporter converting all H256 neural (Stage-1 S3 encoders, Stage-2 PreCondenseResidualBridge, PreCondenseTop8NeuralReranker), linear critic, and 6 LightGBM GBDT models into 100% Rust-consumable .safetensors bundles and golden inference fixtures; frozen DOPE, research-only."
+      }
+    },
     "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/extract_pre_condense_cache.py": {
       "bytes": 15606,
       "sha256": "a05b8e8ea6dab47588784db0043bdf131cc0617d0add799eb4e5af791ee55cd8",
