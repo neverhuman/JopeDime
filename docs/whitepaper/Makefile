@@ -55,5 +55,6 @@ figs:
 	python3 figures/scripts/make_gradient_norms.py
 	python3 figures/scripts/make_full_retained_trajectory.py
 	python3 figures/scripts/make_full_round_wall_time.py
+	python3 figures/scripts/make_training_minibatch_losses.py
 clean:
 	latexmk -C

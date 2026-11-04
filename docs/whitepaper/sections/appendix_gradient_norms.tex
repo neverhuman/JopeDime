@@ -9,10 +9,14 @@ retained learning remains a separate question.
   \includegraphics[width=\linewidth]{figures/fig_gradient_norms.pdf}
   \caption{\textbf{Candidate gradient norms vary across recorded steps.}
   All 9 complete retained summaries, rounds 4762--4770, captured at
-  02:55 UTC on 4 November 2026. The 18 markers are logged pre-clip adapter
-  gradient norms, two per candidate round. The steps use distinct training
+  02:55 UTC on 4 November 2026. The 18 markers show logged pre-clip adapter
+  gradient norms, two per round. The steps use distinct training
   batches; their difference is not a matched loss reduction. No smoothing
   or filtering is applied. The window records zero admissions; these
   magnitudes establish no retained learning gain. Scope: \cref{sec:method-status}.}
   \label{fig:gradient-norms}
 \end{figure}
+
+\href{eurekazero_supplement.pdf}{Supplementary Figure~S2} gives the
+first and last recorded training-minibatch losses. Distinct batches
+prevent a matched before/after loss comparison.
