@@ -136,3 +136,20 @@ SHA roots form the lineage identity set; no guessed prefixes. Registry metadata
 has no explicit parent_dataset_id/source_table_id/raw_source_id/ingest_root/
 lineage_root/source_sha256/raw_sha256 fields populated in selected meta files;
 absence is recorded. Neighbor thresholds and UNKNOWN policy remain unchanged.
+
+## Metadata-only identity correction, before ANY gain join (2026-11-04T10:45Z)
+
+Initial classification found one apparent(a) match between marine-water and
+airfare datasets, solely because both Socrata metadata files say
+`source_file=export.csv?accessType=DOWNLOAD`. Their source IDs, URLs and
+fingerprints differ; Jaccard=.02857. A bare download filename is not a lineage
+root. Remove `source_file` from matchable lineage identities for ALL records;
+retain it as reported evidence. Namespaced source IDs, explicit source_family,
+full source paths/URLs and verified raw-source SHA roots remain. This corrects
+identity extraction to implement the owner's same-lineage rule; thresholds and
+decision are unchanged. Preserve initial classification SHA
+5a003c1b86e8145f1d2ad0146b6fbb40306ca887aa725afae68a9953068e45bd and all
+pair receipts. Recompute and fsync corrected classification before any gain join.
+As an explicit sensitivity, ALSO report the initial filename-based grouping's
+gains/decision after the primary analysis, labelled a known false identity match.
+No archived family gain has been joined to either grouping at this amendment.
