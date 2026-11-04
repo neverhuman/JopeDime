@@ -228,8 +228,12 @@ impl super::Session {
         }
         // A real file takes precedence; `example/<name>.csv` otherwise opens a bundled demo.
         let on_disk = std::path::Path::new(path).exists();
+        let mut notice = Vec::new();
         let reader: Box<dyn io::Read + Send> = match demos::from_path(path).filter(|_| !on_disk) {
-            Some(demo) => Box::new(io::Cursor::new(demo.bytes)),
+            Some(demo) => {
+                notice = demo.license_notice();
+                Box::new(io::Cursor::new(demo.bytes))
+            }
             None => {
                 if !on_disk
                     && path
@@ -250,7 +254,8 @@ impl super::Session {
                 Box::new(std::fs::File::open(path)?)
             }
         };
-        self.register(&name, reader)
+        notice.extend(self.register(&name, reader)?);
+        Ok(notice)
     }
 
     pub(super) fn register(

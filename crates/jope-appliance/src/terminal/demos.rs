@@ -21,8 +21,11 @@ pub struct Demo {
     pub target: &'static str,
     /// An objective preset, or `None` for the engine's default for the task.
     pub objective: Option<&'static str>,
-    /// SPDX licence and short credit, shown by `/demo` (see assets/demos/manifest.json).
+    /// Licence of the data, as recorded in assets/demos/manifest.json: the SPDX id, where the
+    /// licence was found, and the attribution it requires. Printed when the demo is selected
+    /// ([`Demo::license_notice`]).
     pub license: &'static str,
+    pub license_url: &'static str,
     pub credit: &'static str,
     pub bytes: &'static [u8],
 }
@@ -31,6 +34,17 @@ impl Demo {
     /// The virtual path, `example/<name>.csv`.
     pub fn path(&self) -> String {
         format!("{PREFIX}{}.csv", self.name)
+    }
+
+    /// Printed when a user selects this demo (`/demo NAME` or `/open example/NAME.csv`).
+    pub fn license_notice(&self) -> Vec<String> {
+        vec![
+            format!("Data licence: {} ({})", self.license, self.license_url),
+            format!(
+                "Credit: {}. Values are a min-max scaled subset of the original.",
+                self.credit
+            ),
+        ]
     }
 
     pub fn rows(&self) -> usize {
@@ -50,6 +64,7 @@ pub static DEMOS: &[Demo] = &[
         target: "target",
         objective: Some("rmse"),
         license: "CC-BY-4.0",
+        license_url: "https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring",
         credit: "Tsanas & Little (2009), UCI ML Repository, doi:10.24432/C5ZS3N",
         bytes: include_bytes!("../../assets/demos/regression_parkinsons.csv"),
     },
@@ -60,6 +75,7 @@ pub static DEMOS: &[Demo] = &[
         target: "price",
         objective: Some("rmse"),
         license: "CC-BY-4.0",
+        license_url: "https://archive.ics.uci.edu/dataset/555/apartment+for+rent+classified",
         credit: "Apartment for Rent Classified (2019), UCI ML Repository, doi:10.24432/C5X623",
         bytes: include_bytes!("../../assets/demos/regression_apartment_rent.csv"),
     },
@@ -119,13 +135,7 @@ pub fn listing() -> Vec<String> {
         ));
     }
     lines.push("Or open one to set the target yourself: /open example/<name>.csv".into());
-    lines.push("Sources (values are min-max scaled subsets):".into());
-    for demo in DEMOS {
-        lines.push(format!(
-            "  {}: {} · {}",
-            demo.name, demo.credit, demo.license
-        ));
-    }
+    lines.push("Each demo's data licence and credit are shown when you select it.".into());
     lines
 }
 
@@ -156,6 +166,7 @@ mod tests {
                 .unwrap_or_else(|| panic!("{} missing from manifest", demo.name));
             assert_eq!(entry["task"], demo.task);
             assert_eq!(entry["license"]["spdx"], demo.license);
+            assert_eq!(entry["license"]["evidence_url"], demo.license_url);
             assert_eq!(entry["target"], demo.target);
             assert_eq!(entry["rows"].as_u64(), Some(demo.rows() as u64));
             assert_eq!(
@@ -243,6 +254,17 @@ mod tests {
         assert!(from_path("other/regression_parkinsons.csv").is_none());
         assert!(from_path("example/../secret.csv").is_none());
         assert!(from_path("/example/regression_parkinsons.csv").is_none());
+    }
+
+    #[test]
+    fn selecting_a_demo_prints_its_licence_and_credit() {
+        for demo in DEMOS {
+            let notice = demo.license_notice().join("\n");
+            assert!(notice.contains(demo.license), "{notice}");
+            assert!(notice.contains(demo.license_url), "{notice}");
+            assert!(notice.contains(demo.credit), "{notice}");
+            assert!(demo.license_url.starts_with("https://"), "{}", demo.name);
+        }
     }
 
     #[test]

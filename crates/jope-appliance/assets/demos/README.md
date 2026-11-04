@@ -18,7 +18,8 @@ fixture SHA-256, catalog id, source URL and licence.
 
 **Only CC-BY-4.0 demos ship.** The dataset catalog still records these sources as `unknown`;
 the licences above were researched afterwards and are recorded in `manifest.json` with
-evidence URLs and attribution, which `/demo` prints. Two earlier candidates were removed before
+evidence URLs and attribution; the licence, its URL and the credit are printed when a user
+selects a demo (`/demo NAME` or `/open example/NAME.csv`). Two earlier candidates were removed before
 the first public release rather than ship copyleft or share-alike data inside the binary:
 `binary_loan_approval` (wooldridge `loanapp`, GPL-3.0 package data) and `regression_tiny_soil`
 (LimeSoDa `BB.30_2`, CC-BY-SA-4.0). See `docs/public-readiness-checklist.md` §3.

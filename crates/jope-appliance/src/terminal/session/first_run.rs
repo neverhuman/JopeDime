@@ -92,6 +92,7 @@ impl super::Session {
             demo.target,
             demo.task
         )];
+        lines.extend(demo.license_notice());
         lines.extend(self.register(
             &format!("{}.csv", demo.name),
             Box::new(io::Cursor::new(demo.bytes)),
