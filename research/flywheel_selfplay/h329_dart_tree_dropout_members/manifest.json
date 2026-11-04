@@ -42,16 +42,20 @@
   },
   "prereg_sha256": "b2b63044d2a4c008d9833f18acd23a8233c96635e03dd845c2db99bb9946534d",
   "source_sha256": {
+    "resource_probe.py": "39dbe5e9ede10f5bd536b9891cb3f4c66fa9354844aba1ca754b7f66caa20ae2",
     "test_h329.py": "1510798c79a126067097c99d18666737104463bc094ce73cf8396500f28a3772",
     "dart_patch.py": "0efb8cad60e2adc034935c539c6a561cfb21980b904cd73050b7e2ed4d0dab07",
     "forecast_h329.py": "2be62ede463b6740580dc3558724a1f5c871b1f37ddd3f59f3899b6e6c9fb0c5",
     "run_h329.py": "504793164da989075105e58dfea2fd41ec5358135151b76c20fb24191a8763a8",
     "evaluate_h329.py": "2faaedefb5505d95b8eebb856d78f16c346db69844f7be392d7affeee7cb6730",
+    "resume_resource_h329.py": "265cbb047210a2c334a4213685741662da47658037bb4ecaaf959f95fa581013",
     "fetch_base_h329.py": "00f3894c405b3a7f88fe398c82e1a7e40ff691a130d2c11892d3eff8f42c4d76",
     "input_preflight.py": "283ad752c5f037e28d20fae8e39e52171d07e1810b0944e6f3e4f06ea6254001",
     "runtime_h329.py": "336baa758384dfde959e31972c7b6367f31c622560aab4fe3693c7137899317e",
-    "guard_h329.py": "26b2012e374e34e893800dfde8f42ce8e3265541897fada4b794f67669198a52",
+    "guard_h329.py": "c46fefc7075c6fc268c29a39a43489f2a93c8291d8a31d10ede831c6ec0a8298",
+    "test_resource_probe.py": "bc5b9c4de352a74f7477d7e81b888b5ce10dcb4c2a28a82bc7543889263420ae",
     "test_dart_patch.py": "5e0335332de3ccf911c3ca43d543ff584d4ecbc2612a86ad1eee4b2d1f839833",
     "archive_h329.py": "6f486fa9f5b5fc73b5cf13dfe15b65f85899089df1ebf4ccfb21709e65822b01"
-  }
+  },
+  "resource_measurement_correction": "RESOURCE_MEASUREMENT.md; one fixed five-second interval; scientific code and all parameters unchanged"
 }

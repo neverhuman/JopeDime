@@ -41,12 +41,9 @@ if __name__=='__main__':
         command=[sys.executable,str(source/'fetch_base_h329.py')] if phase=='fetch' else ([sys.executable,str(source/'input_preflight.py')] if phase=='preflight' else ([sys.executable,str(source/'forecast_h329.py')] if phase=='forecast' else [sys.executable,str(source/'run_h329.py'),phase]))
         if phase=='fit':
             # Fresh sibling-aware sample; reserve only the assigned six physical cores.
-            raw=subprocess.check_output(['mpstat','-P','16,17,18,19,20,22,80,81,82,83,84,86','1','3','-o','JSON'],text=True)
-            stats=json.loads(raw)['sysstat']['hosts'][0]['statistics'];eligible=[];readback={}
-            for c in [16,17,18,19,20,22]:
-                idle=min(float(next(x for x in s['cpu-load'] if x['cpu']==str(n))['idle']) for s in stats for n in [c,c+64])
-                readback[c]=idle
-                if idle>=85:eligible.append(c)
+            from resource_probe import probe
+            eligible,readback,raw=probe()
+            (source.parent/'capacity-interval-mpstat.json').write_text(raw)
             if not eligible:raise RuntimeError('No idle authorized cores; close INCOMPLETE')
             from forecast_h329 import estimate
             fixture=json.loads((DATA/'timing_fixture.json').read_text())
