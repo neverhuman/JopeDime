@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "feature_arrays_exact": true,
+  "contexts": 1219,
+  "shape": [
+    1219,
+    8,
+    568
+  ],
+  "X_sha256": "b571397ea727459f8fc6bd247fb00c178bb31ad139bcbba164f915964cdd4116",
+  "max_abs_diff": 0.0,
+  "members_read": [
+    "X",
+    "cids"
+  ],
+  "utility_or_validity_members_read": 0
+}
