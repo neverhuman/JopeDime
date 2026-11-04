@@ -4,12 +4,12 @@ These CSVs are embedded in the `jain` executable (the jAIn CLI) and appear in th
 `example/<name>.csv` files (`/demo`, `/open example/<name>.csv`). Together they stay below 1 MB
 (`MAX_TOTAL_BYTES` in `src/terminal/demos.rs`, checked by its tests).
 
-They are generated deterministically from the reference fixtures in
-`test-support/datasets/v1/` by `generate.py` (run from the repository root with
-`python3 -I crates/jope-appliance/assets/demos/generate.py`). Each demo keeps every k-th row of
-the fixture's `train.csv`, prepends the catalog's recorded column headers, and keeps the values
-exactly as the corpus stores them (min-max scaled). `manifest.json` records, per demo, the row
-selection, source fixture SHA-256, catalog id, source URL and license status.
+They are derived deterministically from the reference fixtures in `test-support/datasets/v1/`
+(`SOURCES` in `src/terminal/demos.rs`): each demo keeps every k-th row of the fixture's
+`train.csv`, prepends the catalog's recorded column headers (`meta.json` `output_headers`), and
+keeps the values exactly as the corpus stores them (min-max scaled). A unit test re-derives
+every byte from the fixtures. `manifest.json` records, per demo, the row selection, source
+fixture SHA-256, catalog id, source URL and licence.
 
 | Demo | Source | Rows | Licence (researched 2026-11-04) |
 | --- | --- | ---: | --- |

@@ -1,8 +1,9 @@
 //! Demo datasets bundled into the executable, opened as virtual `example/<name>.csv` files.
 //!
-//! The CSVs are generated deterministically from `test-support/datasets/v1` by
-//! `assets/demos/generate.py`, which records their row selection and SHA-256 receipts in
-//! `assets/demos/manifest.json`. Together they stay below [`MAX_TOTAL_BYTES`].
+//! The CSVs are derived deterministically from `test-support/datasets/v1` (see [`SOURCES`]):
+//! every k-th row of a fixture's `train.csv` under its catalog column headers. The tests
+//! re-derive every byte from the fixtures; `assets/demos/manifest.json` records the SHA-256,
+//! row selection and licence of each. Together they stay below [`MAX_TOTAL_BYTES`].
 
 /// The virtual directory that bundled demos appear under.
 pub const PREFIX: &str = "example/";
@@ -82,6 +83,15 @@ pub static DEMOS: &[Demo] = &[
         credit: "LimeSoDa BB.30_2, Schmidinger et al. (2025)",
         bytes: include_bytes!("../../assets/demos/regression_tiny_soil.csv"),
     },
+];
+
+/// How each demo is derived: (name, fixture under `test-support/datasets/v1`, keep every k-th
+/// training row).
+pub const SOURCES: [(&str, &str, usize); 4] = [
+    ("regression_parkinsons", "d2-regression", 1),
+    ("binary_loan_approval", "binary-loanapp", 2),
+    ("regression_apartment_rent", "grouped-apartment-rent", 5),
+    ("regression_tiny_soil", "tiny-30-row-table", 1),
 ];
 
 /// Find a demo by exact name, by task (`regression`, `binary`: the first of that task), or
@@ -176,6 +186,39 @@ mod tests {
             );
             assert!(matches!(demo.task, "regression" | "binary" | "multiclass"));
             assert!(demo.name.starts_with(demo.task));
+        }
+    }
+
+    /// Regenerate every bundled CSV from its committed fixture and require identical bytes.
+    #[test]
+    fn bundled_csvs_are_exactly_derived_from_the_reference_fixtures() {
+        let root =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../test-support/datasets/v1");
+        assert_eq!(SOURCES.len(), DEMOS.len());
+        for (name, fixture, step) in SOURCES {
+            let demo = DEMOS.iter().find(|demo| demo.name == name).unwrap();
+            let meta: serde_json::Value = serde_json::from_slice(
+                &std::fs::read(root.join(fixture).join("meta.json")).unwrap(),
+            )
+            .unwrap();
+            let header: Vec<&str> = meta["output_headers"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|value| value.as_str().unwrap())
+                .collect();
+            let train = std::fs::read_to_string(root.join(fixture).join("train.csv")).unwrap();
+            let mut expected = header.join(",");
+            for row in train.lines().step_by(step) {
+                expected.push('\n');
+                expected.push_str(row);
+            }
+            expected.push('\n');
+            assert_eq!(meta["target_column"], demo.target, "{name}");
+            assert!(
+                expected.as_bytes() == demo.bytes,
+                "{name} differs from {fixture}"
+            );
         }
     }
 
