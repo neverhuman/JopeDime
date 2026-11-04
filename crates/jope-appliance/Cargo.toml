@@ -52,8 +52,8 @@ engine = ["dep:jope-service", "jope-client?/engine"]
 research = ["engine", "jope-service/research"]
 # Build service client commands without requiring the embedded engine.
 client = ["dep:jope-client", "dep:ureq", "dep:zip"]
-# HTTPS cloud workspaces. No audited appliance feature set selects it: shipping TLS needs an
-# amendment to deploy/appliance/dependencies-deny.toml, which keeps ureq featureless.
+# HTTPS cloud workspaces. Audited only in the A22 cloud-tls selections of
+# deploy/appliance/dependencies-deny.toml (the release client and the public native-only edition).
 cloud-tls = ["client", "dep:rustls", "ureq/rustls-no-provider", "ureq/rustls-webpki-roots"]
 dope-encoding = ["dep:starforge"]
 dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
