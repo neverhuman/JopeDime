@@ -1,0 +1,28 @@
+{
+  "schema": "whitepaper.parameter-displacement-figure/v1",
+  "csv_sha256": "4dfa90f8856cc389b5fc283947004686a2fe8ea76a3199359ab6974ff2c23417",
+  "source_receipt_sha256": "8151d0468c0a17e60a6e78cfe0db4ba9c787c5d345957fd74f70fb4fc3dfa02b",
+  "source_prefix_sha256": "509ef235e22f7570a99096727f95b5aa59853a4e620382243b0c91ec0a94a0e8",
+  "generator_sha256": "932c9a0b59e1638a24dff6ee10a84e293da1b5f504caeda9a0721863ea1213a4",
+  "figure_sha256": "6ce150227d177698a55e096aa791267f66c4fbfc660abe506830a297191a2468",
+  "records_and_points": 40,
+  "round_window": [
+    4662,
+    4701
+  ],
+  "accepted": 0,
+  "minimum_displacement_l2": "0.010301772505044937",
+  "maximum_displacement_l2": "0.11334812641143799",
+  "transformation": "One unsmoothed point per complete selected summary, keyed to completed round; no filtering, interpolation, imputation or cumulative envelope.",
+  "scope": "Recorded candidate parameter-space displacement. Inspected loop computes it from the trainable-parameter snapshot before warm restart to the candidate after optimization, before admission. Includes both perturbation and optimizer effects; not isolated optimizer movement, retained improvement or independent learning evidence. Exact runtime binding remains unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "figure_inches": [
+    3.375,
+    1.65
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_parameter_displacement.py"
+}

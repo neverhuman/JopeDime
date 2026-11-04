@@ -16,10 +16,10 @@
 \makeatletter\widowpenalty=\@M\clubpenalty=\@M\@clubpenalty=\@M\makeatother
 \hyphenation{FunSearch Alpha-Geometry AlphaZero AlphaGo AlphaFold AlphaDev AlphaProof AlphaEvolve EurekaZero DreamCoder HumanEval ImageNet MotherNet KumoRFM TabPFN EURISKO MuZero AlphaStar intelligence scoring}
 
-We specify how to test whether feedback from execution improves the first
-algorithm a system proposes for a new problem. AlphaGo Zero supplies a
-precedent within a fixed game: it went beyond the best human play without
-seeing a human game, learning from self-play under the rules of Go
+We specify a test of whether execution feedback improves the first
+algorithm a system proposes for a new problem. AlphaGo Zero provides a
+precedent within a fixed game: it went beyond the best human play through
+self-play under the rules of Go, without seeing a human game
 \citep{silver2017mastering}.
 
 \paragraph{The skeptics' challenge.}
@@ -35,13 +35,13 @@ memorized'' that had not made ``a single new connection that has led to a
 discovery'' \citep{patel2023question}. In January 2025, Demis Hassabis posed
 the hardest version as a benchmark for general intelligence: today's systems
 ``can play a game of Go at a world champion level. But could a system invent
-Go?'' \citep{hassabis2025bigtech}. These challenges concern both proposing
-solutions and choosing new questions; our test concerns only candidate algorithm
-proposals under human-defined \mbox{tasks and evaluation} metrics (\cref{sec:meaning}).
+Go?'' \citep{hassabis2025bigtech}. These challenges ask both how to propose solutions and how to choose new
+questions. Our test covers only algorithm proposals under human-defined
+\mbox{tasks and evaluation} metrics (\cref{sec:meaning}).
 
-Predicting historical text does not directly reward improvement over an
-incumbent. That motivates a different training signal; it does not establish
-a ceiling on what a \mbox{pretrained model} can discover (\cref{sec:anatomy}).
+Text prediction does not directly reward improvement over an incumbent.
+This motivates a different training signal without establishing a ceiling
+on what a \mbox{pretrained model} can discover (\cref{sec:anatomy}).
 
 \paragraph{The human challenge.}
 Research effort rose while productivity declined in the industries,
@@ -76,13 +76,12 @@ with no search, rated \num{3055}~Elo. That is close to the \num{3144} of AlphaGo
 version that beat \mbox{the European champion} Fan Hui
 \citep{silver2016mastering,silver2017mastering}.
 
-This motivates an analogous
-goal for invention: learn from repeated program evaluations during training,
-then deploy a writer with a single-candidate budget, \searchone{}
-(\cref{box:searchone}). The budget is a test condition, not a
-promise that every first proposal wins. \Cref{fig:emptysquare} separates
-the training feedback path from the frozen writer and fitting procedure at
-deployment.
+For invention, the analogous goal is to learn from repeated program
+evaluations during training, then deploy a writer with a single-candidate
+budget, \searchone{} (\cref{box:searchone}). This is a test condition,
+not a promise that every first proposal wins. \Cref{fig:emptysquare}
+separates training feedback from the frozen writer and fitting procedure
+at deployment.
 
 \begin{figure}[t]
   \centering
@@ -174,13 +173,13 @@ reference whose moves are \mbox{typed programs} of learning primitives.
 \end{enumerate}
 
 \paragraph{Evidence scope.}
-The adapter records in \cref{sec:method-status} establish neither neural
-writer updates nor a training gain in the separate ranking map. Independent
-first-proposal comparisons remain pending; \cref{sec:method,sec:results}
-specify the full reference design and its planned evaluation tests.
+The adapter record in \cref{sec:method-status} establishes neither neural
+writer updates nor a training gain in the separate ranking map.
+Independent first-proposal comparisons remain pending. The reference
+design and planned tests are specified in \cref{sec:method,sec:results}.
 
-\Cref{sec:anatomy,sec:road} identify the roles and components;
-\cref{sec:game} defines an attempt. \Cref{sec:price,sec:method} account
-for its cost and specify how attempts supply reference training targets.
-The empirical tests in \cref{sec:results} then bound the scope and conclusions in
+\Cref{sec:anatomy,sec:road} identify the roles and components, and
+\cref{sec:game} defines an attempt. \Cref{sec:price,sec:method} account for
+its cost and reference training targets. The planned empirical tests in
+\cref{sec:results} must bound the discussion and conclusions in
 \cref{sec:meaning,sec:conclusion}.
