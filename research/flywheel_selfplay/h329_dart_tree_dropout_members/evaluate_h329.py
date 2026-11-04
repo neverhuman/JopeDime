@@ -64,7 +64,7 @@ def evaluate(r303,base,dart,data):
    for seed in SEEDS:
     b=json.loads((data/'base'/part/f'fold_{k}'/f'root_{seed}'/'fit_lock.json').read_text())['chosen']
     c=json.loads((data/part/f'fold_{k}'/f'root_{seed}'/'fit_lock.json').read_text())['chosen']
-    choices.append(dict(partition=part,fold=k,root_seed=seed,BASE={x:b[x] for x in ('tau','k','a')},XT={x:c[x] for x in ('tau','k','a')}))
+    choices.append(dict(partition=part,fold=k,root_seed=seed,BASE={x:b[x] for x in ('tau','k','a')},DART={x:c[x] for x in ('tau','k','a')}))
   for arm,pp in [('BASE',base),('DART',dart)]:
    u,invalid=ev.panel(G,pp[part]);d=family_d(u,families);stats=G['a302'].summarize_three_seeds(u,invalid,families,pp[part],boot_seed=302150);D[arm].extend(d)
    ix=np.random.default_rng(302150).integers(0,d.shape[1],(10000,d.shape[1]))
@@ -92,5 +92,5 @@ def evaluate(r303,base,dart,data):
     paired_drop_top10=paired,aggregate=agg,cells=cells,chosen_configs=choices,config_equal_count=sum(x['BASE']==x['DART'] for x in choices),seed_jaccard=jac,
     fit_lock_sha256=locks,loader=R['loader_counters'],intervention='DART rankers only: drop_rate=.1,skip_drop=.5,max_drop=50,uniform_drop=False,xgboost_dart_mode=False,drop_seed=original random_state; veto GBDT unchanged',dope=dict(composite_sha256_prefix='c51a56d0',loaded=False,scope='CPU selection layer only'),
     tau_units='unchanged invalid probability',margin_units='original LambdaRank score units; unchanged inner-selected numeric grid',outer_fit_consumer_accesses_before_lock=0,outer_packets_prebuilt=False,physical_outer_rows_read_before_lock=0,config_sensitivity='CONFIG_INSENSITIVE' if sum(x['BASE']==x['DART'] for x in choices)>=30 else 'CONFIG_SENSITIVE')
- durable(data/'metrics.json',full);np.savez_compressed(data/'picks.npz',**{a+'_'+p:d[p] for a,d in [('BASE',base),('DART',dart)] for p in PARTS});np.savez_compressed(data/'raw_family_gains.npz',BASE=db,XT=dn)
+ durable(data/'metrics.json',full);np.savez_compressed(data/'picks.npz',**{a+'_'+p:d[p] for a,d in [('BASE',base),('DART',dart)] for p in PARTS});np.savez_compressed(data/'raw_family_gains.npz',BASE=db,DART=dn)
  print(json.dumps(dict(verdict=verdict,criteria=gates,paired=paired,aggregate=agg)),flush=True)
