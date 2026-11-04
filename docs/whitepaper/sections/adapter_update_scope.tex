@@ -1,8 +1,8 @@
-Typed program edits, cross-family retrieval and grammar synthesis supply
-candidates in the inspected implementation. The loop freezes all network
-parameters, then enables only non-anchor cost-adapter updates (its
-parent-delta head receives no loss gradient). It has no neural program
-writer; its adapter is separate from the reference writer and ranking map.
+The inspected implementation proposes typed edits, cross-family retrieval
+and grammar synthesis. It freezes all network parameters, then enables
+only non-anchor cost-adapter updates (the parent-delta head receives no
+loss gradient). No neural program writer runs; the adapter is separate
+from the reference writer and ranking map.
 Pool utility reveals recorded scores and gate outcomes for the first four
 stored entries, then selects the pool's lowest predicted cost, including
 those entries. Training slates put the lowest recorded scores first;
@@ -20,12 +20,10 @@ with utility $-2.0$ for failed gates. The full-cohort route disables
 development-anchor margin projection; smaller-cohort runs can enable it.
 The two routes require separate verification receipts.
 
-Each round in the inspected full-cohort route perturbs trainable adapter
-parameters with small Gaussian noise and takes at most two optimizer steps.
-Rejection
-restores both weights and optimizer state to the retained incumbent.
-Consecutive rejected proposals therefore restart from perturbed copies of
-that checkpoint, not one continuous training trajectory.
+Each round in the inspected full-cohort route adds small Gaussian noise
+to trainable adapter parameters and takes at most two optimizer steps. Rejection
+restores incumbent weights and optimizer state: consecutive rejections
+restart from perturbed checkpoint copies rather than continuing training.
 
 Selection records alone establish no gain from optimizer updates or the
 separate reference map (\cref{sub:results-diagnostics} covers the diagnostic

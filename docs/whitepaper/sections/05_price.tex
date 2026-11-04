@@ -11,11 +11,10 @@
 % Exhibits: Equation 2 (eq:bill), Box 3. The pilot-cost figure (fig:price) lives in Results.
 % Unsupported supplied cost projections are omitted pending reproducible calculations.
 
-The bill for a verified improvement covers the winning attempt and every
-earlier failure. It includes encoding, input tokens, generation, repairs,
-referee execution, updates and operating costs. The ratios below organize
-this ledger; a full-run price still requires the measurements in
-\cref{sub:price-run,sec:results}.
+The cost of a verified improvement covers the winning attempt and every
+earlier failure: encoding, input tokens, generation, repairs, referee execution,
+updates and operations. These ratios organize the ledger; full-run pricing
+still needs the measurements in \cref{sub:price-run,sec:results}.
 
 \subsection{The bill in one line}\label{sub:price-bill}
 
@@ -26,10 +25,9 @@ expected cost per win is mean cost per attempt divided by that probability
   \Cwin = \frac{\Cattempt}{\winprob}.
   \label{eq:bill}
 \end{equation}
-Here $\Cattempt$ is the mean incurred cost per candidate attempt, including
-failures, and $\winprob$ is the probability that an attempt beats the
-incumbent. A repair that emits a revised candidate is another attempt;
-charge its work once.
+Here $\Cattempt$ averages incurred cost across all attempts, including
+failures; $\winprob$ is the probability of beating the incumbent. Each
+repair emitting a revised candidate counts as another attempt; bill it once.
 
 Write $\winprob = q_{\mathrm{run}}\,q_{\mathrm{beat}}$, where $q_{\mathrm{run}}$
 is the share of protocol-valid attempts and $q_{\mathrm{beat}}$ the win rate
@@ -46,21 +44,20 @@ attempts are allowed, but their cost and attempt curves still require
 measurement. With no verified win, there is no finite
 \mbox{observed cost per win.}
 
-Keep training and deployment in separate ledgers. Training pays for every
-attempt, including failures. The proposed deployment protocol pays for
-encoding, one proposal and its fit, with no repair. Fixed-weight agent
-loops pay for evaluation during task-specific search. Training a proposer
-may shift some cost to earlier tasks; the crossover \mbox{still needs}
-measurement (\cref{sec:results}).
+Separate the ledgers: training pays for all attempts, including failures;
+proposed deployment pays for encoding, one proposal and its fit, with no
+repair. Fixed-weight agents pay for evaluation during task-specific search.
+Proposer training may shift cost to earlier tasks; the crossover
+\mbox{still needs} measurement (\cref{sec:results}).
 
 \subsection{Wasted moves}\label{sub:price-waste}
 
-A stillborn attempt produces no usable program under the declared
-protocol: generation is incomplete, parsing or type-checking fails,
-execution exceeds its limits or crashes, or outputs fail predeclared
-validity checks. An also-ran is valid but does not beat the incumbent.
-The planned pilot funnel in \cref{sec:results} (\cref{fig:price}, panel~a)
-tracks these stages and compute spent before each failed attempt stops.
+A stillborn attempt yields no usable program under the declared protocol:
+incomplete generation, failed parsing or type-checking, exceeded execution limits or
+crashes, or failed predeclared output-validity checks. An also-ran is valid
+but does not beat the incumbent. The planned pilot funnel in
+\cref{sec:results} (\cref{fig:price}, panel~a) tracks these stages and
+compute spent before each failed attempt stops.
 
 If 90\% of attempts fail to improve the incumbent, the independent-try
 model needs ten attempts per improvement in expectation. A typed language
@@ -100,13 +97,12 @@ for a cost-per-win minimum. A U-shaped curve remains a hypothesis.
 
 \subsection{Rewarding useful hallucination}\label{sub:price-hallucination}
 
-A familiar solution can be a useful prior. Matching the incumbent's score
-earns a tie; promotion requires improvement under the same protocol. A
-\emph{useful hallucination} here is an unfamiliar proposal whose value the
-referee verifies (\cref{box:hallucination}). Possible design options for
-exploration include temperature and entropy schedules, a curriculum past
-known solutions and quality-diversity archives
-\citep{lehman2011novelty,mouret2015mapelites}; any novelty bonus must
+Familiar solutions can be useful priors. Matching the incumbent earns a
+tie; promotion requires improvement under the same protocol. An unfamiliar
+proposal whose value the referee verifies is a \emph{useful hallucination}
+(\cref{box:hallucination}). Possible exploration controls include temperature
+and entropy schedules, curricula past known solutions and quality-diversity
+archives \citep{lehman2011novelty,mouret2015mapelites}; novelty bonuses must
 preserve the reward ordering in \cref{sub:game-referee}.
 
 Without a novelty bonus, the reference routes combine policy draws,
@@ -159,11 +155,10 @@ for 1T parameters alone require at least 13 H100 SXM GPUs with 80\,GB each
 \citep{nvidia2026h100}, and runtime state needs additional capacity. This hardware memory
 floor is separate from \mbox{the full run-cost projection} discussed next.
 
-A reproducible projection needs a pinned model and hardware configuration,
+Reproducible projections need pinned model and hardware configurations,
 dated prices, measured or justified utilization and an explicit accounting
-boundary. Those inputs remain unrecorded; a full cost projection remains
-a measurement task. Pricing the adapter operating clocks
-\mbox{(\cref{sec:method-status}) still} requires an attempt ledger.
+boundary. These inputs remain unrecorded. Pricing the full run or adapter
+operating clocks \mbox{(\cref{sec:method-status}) still} requires an attempt ledger.
 
 \begin{keyidea}
   Cost per verified improvement depends on both the cost of an attempt

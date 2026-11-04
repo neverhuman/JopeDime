@@ -1,13 +1,12 @@
 \section{Referee Inventory}\label{app:history}
 
-The innovation game needs a reliable, affordable referee
-(\cref{sub:game-boards}). \Cref{tab:referees} lists the evaluators behind
-algorithm selection \citep{rice1976algorithm}, typed and
-evolutionary search \citep{koza1992genetic,montana1995stgp,real2020automlzero},
-self-play and expert iteration
-\citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and tabular
-amortization \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}
-discussed in \cref{sec:anatomy,sec:road}.
+The game needs a reliable, affordable referee (\cref{sub:game-boards}).
+\Cref{tab:referees} inventories evaluators for algorithm selection
+\citep{rice1976algorithm}, typed and evolutionary search
+\citep{koza1992genetic,montana1995stgp,real2020automlzero}, self-play and
+expert iteration \citep{samuel1959checkers,silver2017mastering,anthony2017expert},
+and tabular amortization \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}
+(\cref{sec:anatomy,sec:road}).
 
 \begin{table}[htb]
   \caption{\textbf{Each domain in the main text relies on an explicit referee.}
@@ -37,19 +36,17 @@ discussed in \cref{sec:anatomy,sec:road}.
   \end{tabularx}
 \end{table}
 
-Family allocation is separate from evaluator choice. In the native audit
-path, approved datasets are grouped by source identity, declared family
-or identical training bytes; seeded family ordering then assigns the
-meta-training, meta-validation and meta-test partitions.
-
-This code path does not establish that a corpus or checkpoint satisfies
-the required partition split.
+Evaluator choice is separate from family allocation: the native audit
+groups approved datasets by source identity, declared family or identical
+training bytes, then assigns meta-training, meta-validation and meta-test
+partitions by seeded family order. This code path does not establish a
+corpus or checkpoint's compliance with the required split.
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-The comparisons in \cref{sub:method-referee} require two safeguards:
-exclude test-selected search outcomes, and obtain final-evaluation receipts
-for input closure and execution isolation:
+\Cref{sub:method-referee} requires excluding test-selected search outcomes
+and obtaining final-evaluation receipts for input closure and execution
+isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry selected each dataset's best test-scored outcome from
@@ -66,9 +63,9 @@ for input closure and execution isolation:
 
 \section{Training Details}\label{app:training}
 
-The historical reference in \cref{sec:method} still requires checkpoint
-qualification. This inventory covers its encoder, training objective and
-execution requirements, separately from \mbox{the adapter record} in
+The historical reference still needs checkpoint qualification. This
+inventory covers its encoder, objective and execution requirements
+(\cref{sec:method}), separately from \mbox{the adapter record} in
 \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
@@ -92,11 +89,10 @@ execution requirements, separately from \mbox{the adapter record} in
   Fresh-program replay can replace a comparator to include a newly admitted
   candidate program.
 
-  Pairs stay within a comparison, keyed by corpus context and comparison
-  index; Python ranking helpers instead group by dataset identifier. The
-  native helper skips non-finite targets and exact ties, $q_w=q_u$, with
-  neither an exclusion margin nor logit rescaling. The trainer refuses
-  non-finite supervision before forming the loss.
+  Pairs use corpus context and comparison index; Python ranking helpers
+  group by dataset identifier. The native helper skips non-finite targets
+  and exact ties, $q_w=q_u$, without an exclusion margin or logit rescaling.
+  The trainer refuses non-finite supervision before loss formation.
   \mbox{\Cref{eq:writerLoss,eq:mapLoss}} show the list-level form.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
@@ -129,10 +125,9 @@ execution requirements, separately from \mbox{the adapter record} in
   projection is restricted to the grammar rows.
 
   The registered total includes zero-weight stability and loss-scale
-  terms; it does not measure learned or exercised capacity. Approximately
-  6.90 million parameters lie outside the writer's token
-  generation path. They share no weights with the writer and game-day decoding
-  bypasses them, though the native loader still requires all of them.
+  terms; it measures neither learned nor exercised capacity. Approximately
+  6.90 million parameters share no weights with the writer and lie outside its token
+  generation path: game-day decoding bypasses them; native loading requires them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
   The records describe offline AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
@@ -142,11 +137,10 @@ execution requirements, separately from \mbox{the adapter record} in
   Checkpoint acceptance evidence and a held-out promotion receipt are still
   required by the evaluation contract (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
-  The final evaluation protocol requires candidate isolation with seccomp
-  and Landlock, cgroup memory limits with swap disabled and native versus
-  emitted-code agreement within $10^{-9}\max(1,|\hat{y}|)$. Isolation and
-  parity receipts from the final evaluator belong to the same evaluation
-  record.
+  Final evaluation requires seccomp and Landlock isolation, cgroup memory
+  limits, disabled swap and native/emitted-code agreement within
+  $10^{-9}\max(1,|\hat{y}|)$. The evaluation record must include final-evaluator
+  isolation and parity receipts.
 \end{itemize}
 
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}

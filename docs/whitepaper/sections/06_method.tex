@@ -6,10 +6,10 @@
 % Historical source notes are archived outside the paper tree.
 \section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
-The reference training design uses search-scored lists to supervise a
-program writer and a separate ranking map. The proposed game-day protocol
-freezes the writer for one proposal. \Cref{sec:method-status} covers the
-separate cost-ranking adapter loop, its evaluation and cost ledger (\cref{sec:price}).
+Reference training supervises a program writer and separate ranking map
+with search-scored lists; proposed game day freezes the writer for one
+proposal. \Cref{sec:method-status} covers the separate cost-ranking adapter
+loop, evaluation and cost ledger (\cref{sec:price}).
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -32,13 +32,13 @@ only \mbox{through the routes} described in \cref{sub:method-map}.
 
 \subsection{Reading the board}\label{sub:method-board}
 
-The reference regression encoder turns the board of \cref{sec:game}
-into \num{2048} numbers, $z_p=\encP(p)$, in three blocks.
-The first summarizes a pretrained row encoder's embeddings across rows,
-independent of row order (512 values). The second projects the hidden
-state of a pretrained third-party tabular regressor that reads the training
-rows and labels (\num{1024}; third-party provenance pending; restricted; redistribution prohibited). The third summarizes two 32-element windows of training targets scaled
-to $[0,1]$ (512 values; constant targets map to zero).
+The reference regression encoder maps the board (\cref{sec:game}) to
+\num{2048} numbers, $z_p=\encP(p)$, in three blocks: a row-order-independent
+summary of pretrained row embeddings (512 values); a projected hidden
+state from a pretrained third-party tabular regressor reading training
+rows and labels (\num{1024}; third-party provenance pending; restricted; redistribution prohibited);
+and a summary of two 32-element training-target windows scaled to $[0,1]$
+(512 values; constant targets map to zero).
 
 Preparation caps the combined tabular splits at \num{50000} rows. Encoder
 inputs remain training-side only: the regressor block samples at most
@@ -46,18 +46,16 @@ inputs remain training-side only: the regressor block samples at most
 meta-training cohort moments standardize each component block before
 concatenation and elementwise clipping to $[-32,32]$.
 
-The reference encoder is fixed and pinned by hash during writer training.
-Encoding is bounded at 30\,s per problem; contexts with any non-finite value
-are refused, not imputed (\cref{app:training}). The input contract permits
-only training-side task evidence. Final held-out labels and derived
-statistics must stay outside the input closure; declaring that no final
-target was used establishes neither input closure nor numerical
+The reference encoder stays fixed and hash-pinned during writer training.
+Encoding is capped at 30\,s per problem; any non-finite context is refused,
+not imputed (\cref{app:training}). Inputs must remain training-side: final
+held-out labels and derived statistics stay outside the closure. Declaring
+no final target use establishes neither closure nor numerical
 qualification. CPU contexts require native replay and bounded-execution
 \mbox{receipts before accepted-policy} use.
 
-Whether problems with similar best programs sit together in that space requires
-a separate representation study; \mbox{\cref{sub:results-ablation} reserves} that
-evaluation test.
+Whether similar best programs imply nearby problems needs a separate
+representation study, reserved in \mbox{\cref{sub:results-ablation}}.
 
 \subsection{Describing the move}\label{sub:method-move}
 
@@ -100,9 +98,9 @@ jointly, without separate targets or bootstrap samples. Each ranking head
 uses dropout of 0.05 during training. The runtime head reads $[r_z,z_w]$;
 the program-only control reads $z_w$.
 
-The score is not a calibrated error estimate. Cross-problem score
-comparisons or a probability of a verified win require separate evidence.
-The referee still establishes validity and measures performance.
+The logit is uncalibrated: cross-problem comparisons, error estimates and
+verified-win probabilities need separate evidence. The referee establishes
+validity and measures performance.
 
 The map's training objective uses scored lists $G_p$ for problem $p$;
 $\rho_w\in[0,1]$ is a program's percentile, 1 for the best.
@@ -137,13 +135,12 @@ The reference game-day protocol omits the ranking map. Matched first
 proposals therefore test whether training improved the program writer.
 \end{keyidea}
 
-The native reference writer and map use separate context networks and
+The native reference writer and map have separate context networks and
 token embeddings. The map ranks drafts without dropping them or screening
-the writer. One native GP route matches map-derived weights to ranked
-survivors by program identity for parent selection. The bounded search
-driver instead cycles among up to four parents chosen by measured loss.
-Neither influence path alone establishes trained-map lift;
-\mbox{an evaluation must} bind its exact search route.
+the writer. One native GP route matches map-derived parent weights to
+ranked survivors by program identity; the bounded driver cycles among up
+to four parents chosen by measured loss. Neither path establishes
+trained-map lift; \mbox{an evaluation must} bind its exact search route.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds are unscored. While scored survivors remain, unscored
@@ -191,10 +188,9 @@ through the grammar; an incomplete candidate pool is refused. These
 training-search budgets are separate from the \mbox{single-draw game-day}
 protocol in \cref{sub:method-gameday}.
 
-The reference rule is expert iteration \citep{anthony2017expert}.
-The writer term weights sampled programs from $G_p$ by their referee rank;
-it joins the map and auxiliary loss terms in the full \mbox{combined training} objective
-(\cref{app:training}):
+The reference uses expert iteration \citep{anthony2017expert}. Its writer
+loss weights programs sampled from $G_p$ by referee rank, alongside map
+and auxiliary losses in the training objective (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\mathrm{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\
@@ -217,12 +213,11 @@ A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's
 ranking targets.
 
-The reference procedure uses two ratchets (\cref{sub:game-referee}). A program
-displaces a board's incumbent only by strictly beating it. The proposed
-reference admission test calls for 16 held-out cuts with three seeds
-each. A challenger may replace the serving writer
-only if its mean log error ratio favors it. It must also win at least as
-many cuts as it loses and fail no more often.
+The reference has two ratchets (\cref{sub:game-referee}): a program must
+strictly beat the board's incumbent; proposed writer admission uses 16
+held-out cuts with three seeds each. A challenger must have a favorable
+mean log error ratio, win at least as many cuts as it loses and fail no
+more often to replace the serving writer.
 %
 The admission cases are fixed before testing. For each cut, take the natural
 log of paired best-error ratios (challenger divided by serving), average
@@ -235,13 +230,11 @@ ranking and auxiliary heads form the reference model. \Cref{app:training}
 inventories its architecture, registered capacity, token allocation and
 training corpus.
 
-Architecture specifications do not establish checkpoint acceptance or
-runtime qualification. Both records remain required by the evaluation
-contract (\cref{sub:results-protocol}). The historical reference checkpoint
-is scoped to tabular regression; its native training entry point enforces
-a dispatch hold. Numerical parity between the CPU float32 Candle port and
-native CUDA BF16 tch runtime remains unqualified; random streams and
-uniform-token fallback differ.
+Checkpoint acceptance and runtime qualification need evidence beyond
+architecture specifications (\cref{sub:results-protocol}). The historical
+reference is scoped to tabular regression; native training enforces a
+dispatch hold. CPU float32 Candle and native CUDA BF16 tch numerical parity
+remains unqualified; random streams and uniform-token fallback differ.
 
 
 
