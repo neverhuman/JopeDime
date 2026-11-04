@@ -987,7 +987,7 @@
       "tree_sha256": "aa1ed4004c718ae9d6db40f0517116e63400e63d444f79b550d4028fc48bce35",
       "custody_tarball": null,
       "reason": "frozen source, verbatim",
-      "tree_change": "cargo update -p feat-math --offline: the feat-math path entry reads 1.0.2, the workspace version of this release; no other package moves",
+      "tree_change": "tokio 1.53.3 security patch for RUSTSEC-2026-0386 after ctutils 0.4.4; feat-math workspace path package version 1.0.2 after just bump 1.0.2 (9a80a4fba); no other package moves",
       "version_sync_bases": [
         {
           "schema": "jope.lambda-version-sync-base/v1",
@@ -1012,6 +1012,12 @@
           "source_commit": "769280b4d9d216f2d21810f936bc1f8021c0233c",
           "tree_sha256": "276a8b07fd292f553636a90dba9deee77a86fe77048de3696c82d539f4558efd",
           "tree_change": "tokio 1.53.3 security patch for RUSTSEC-2026-0386 after ctutils 0.4.4; feat-math workspace path package version 1.0.1 after just bump 1.0.1 (769280b4d); no other package moves"
+        },
+        {
+          "schema": "jope.lambda-version-sync-base/v1",
+          "source_commit": "9a80a4fba14261044998c1fd9714d0743e2dc291",
+          "tree_sha256": "aa1ed4004c718ae9d6db40f0517116e63400e63d444f79b550d4028fc48bce35",
+          "tree_change": "tokio 1.53.3 security patch for RUSTSEC-2026-0386 after ctutils 0.4.4; feat-math workspace path package version 1.0.2 after just bump 1.0.2 (9a80a4fba); no other package moves"
         }
       ]
     },
