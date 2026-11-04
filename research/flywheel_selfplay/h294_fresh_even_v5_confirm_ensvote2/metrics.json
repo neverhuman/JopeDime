@@ -1,0 +1,15 @@
+{
+  "wave": "H294",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "verdict": null,
+  "cohort_sha256": "ea5364ad8d224719300a7932b0d8418709793405c1668dc581aac59302f7d0c9",
+  "regression_h292_cell": "PASS (bit-exact)",
+  "schema_on_completion": {
+    "verdict": "ENS_VOTE2: CONFIRMED_FRESH / NOT_CONFIRMED_FRESH / UNDERPOWERED",
+    "arms": "per seed gains, family medians, one-sided LCB, sign p, W/T/L, Elo, harmed, invalid both arms + McNemar; always-harmed by source group",
+    "secondary": "ENS_VOTE2+HARMVETO, CLIP, BAG_SWITCH",
+    "nulls": "both",
+    "pooled": "H288 + H292 + H294 (H288/H292 portions already seen)"
+  }
+}
