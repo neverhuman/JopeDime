@@ -176,6 +176,8 @@ deploy/release/release.sh vX.Y.Z <merge-sha>             # dry run: build, sign,
 deploy/release/release.sh vX.Y.Z <merge-sha> --publish   # repeats every check, then tags, releases and reads back
 ```
 
+A release candidate uses the tag `vX.Y.Z-rc.N` (`N` from 1, no leading zeros), for example `deploy/release/release.sh v1.0.0-rc.1 <merge-sha>`. It is built and checked exactly like `vX.Y.Z`: the crates must be at `X.Y.Z`, the notes are the `## [X.Y.Z]` section of `CHANGELOG.md`, and the binaries print `X.Y.Z`. The tag, the asset names, the evidence directory and the manifest's `tag` name the candidate, and `--publish` creates the GitHub release as a prerelease, so it never becomes the latest release.
+
 Run the script as shown. Its `#!` line is `#!/bin/bash -p`: it starts the system bash by absolute path, so no `PATH` lookup chooses the interpreter, and in privileged mode. `bash -p deploy/release/release.sh` is accepted too when that `bash` is the root-owned system one; preflight checks the running interpreter like a host tool (see [Tools](#tools)). A plain `bash deploy/release/release.sh` is refused (see [Tool configuration](#tool-configuration)).
 
 ### Guards
