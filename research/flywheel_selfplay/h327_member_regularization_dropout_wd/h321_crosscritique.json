@@ -1,0 +1,15 @@
+{
+  "peer": "H321",
+  "commit": "0fb198a5fc0d3dff9de8f95a65a64a3b7c6b59d0",
+  "reviewed_utc": "2026-11-04T15:52:03.174395+00:00",
+  "files": {
+    "research/flywheel_selfplay/h321_percontext_target_normalization/run_h321.py": "adacbd11c64a3e5b3c447fa643c3038bc795175d4f0d8a58c7b8843c39127b8b",
+    "research/flywheel_selfplay/h321_percontext_target_normalization/README.md": "6af3b80c1efe17f8dc026bb73a996add97cea1209570bb6df6c2c5fda5321ca5"
+  },
+  "findings": [
+    "run_h321.py:25-35 normalizes raw utility targets and fits LGBMRegressor regression_l2. README:5 explicitly discloses target+loss confounding.",
+    "H324 preserves LambdaRank/ordinal labels and changes ranker sample weights only relative to BASE; H321 negative result is not a pure normalization estimate.",
+    "H321 run_h321.py:76-81 documents prebuilt outer packets behind an access guard; H324 uses physical outer input exclusion."
+  ],
+  "scope": "Read-only Git source/report review; no peer runtime or data action"
+}
