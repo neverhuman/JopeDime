@@ -53,9 +53,9 @@ for input closure and execution isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry selected each dataset's best test-scored outcome from
-  \num{63108} evaluations in total across 42 datasets. Selection using test-fold scores biases the reported metric upward
-  \citep{cawley2010overfitting}. The entry is therefore \mbox{excluded from}
-  all comparative claims.
+  \num{63108} evaluations across 42 datasets. Test-fold selection biases the
+  reported metric upward \citep{cawley2010overfitting}; the entry is therefore
+  \mbox{excluded from} all comparative claims.
   \item \textbf{Input-closure and canary checks.} Benchmark release requires
   passing receipts for an inner-fold label-poison test, a sealed canary and
   a train-only input-closure audit. The audit must exclude held-out targets
@@ -92,21 +92,21 @@ execution requirements, separately from \mbox{the adapter record} in
   Fresh-program replay can replace a comparator to include a newly admitted
   candidate program.
 
-  Pairs stay within each comparison, keyed by corpus context and
-  comparison index. The Python ranking helpers instead group by dataset
-  identifier. The native helper skips non-finite targets and exact ties,
-  $q_w=q_u$, without an exclusion margin or logit rescaling. The trainer
-  refuses non-finite supervision before constructing the loss.
+  Pairs stay within a comparison, keyed by corpus context and comparison
+  index; Python ranking helpers instead group by dataset identifier. The
+  native helper skips non-finite targets and exact ties, $q_w=q_u$, with
+  neither an exclusion margin nor logit rescaling. The trainer refuses
+  non-finite supervision before forming the loss.
   \mbox{\Cref{eq:writerLoss,eq:mapLoss}} show the list-level form.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
-  loss leaves \texttt{BOS} unsupervised but includes the following non-padding
+  loss leaves \texttt{BOS} unsupervised but covers following non-padding
   tokens, including the engine and regression-task header and \texttt{EOS}.
-  That header is fixed during inference. Label smoothing of 0.05 applies
-  over legal tokens; token losses are averaged within each program before
-  the normalized rank-weighted mean over programs. The displayed aggregate
-  coefficients match the native objective; the checkpoint's objective
-  identity and configuration \mbox{still belong} in its evaluation record.
+  The header stays fixed during inference. Label smoothing of 0.05 applies
+  over legal tokens; losses average within each program before the
+  normalized rank-weighted mean over programs. Displayed aggregate
+  coefficients match the native objective; checkpoint objective identity
+  and configuration \mbox{still belong} in its evaluation record.
   \item \textbf{Runtime supervision (\cref{eq:totalLoss}).}
   The auxiliary runtime term compares $\ln(1+s)$ with
   $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,

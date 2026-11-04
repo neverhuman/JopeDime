@@ -1,36 +1,34 @@
 Typed program edits, cross-family retrieval and grammar synthesis supply
-candidates in the inspected implementation. The inspected loop freezes every
-network parameter, then enables updates only for non-anchor cost-adapter
-parameters (its parent-delta head receives no loss gradient). This loop
-has no neural program writer; its adapter is separate from the
-reference writer and ranking map. Its pool-utility calculation uses the
-recorded scores and gate outcomes of the first four stored pool entries as
-revealed history, then selects the lowest predicted cost from the pool,
-including those entries. Training puts the lowest recorded scores first in
-its slates; utility evaluation uses stored pool order, so the calls can
-reveal different examples. For new proposals, the caller rotates
-same-context mutation parents from its bank; optional exploration pairs the
-two lowest-cost picks with up to two random remaining draws.
+candidates in the inspected implementation. The loop freezes all network
+parameters, then enables only non-anchor cost-adapter updates (its
+parent-delta head receives no loss gradient). It has no neural program
+writer; its adapter is separate from the reference writer and ranking map.
+Pool utility reveals recorded scores and gate outcomes for the first four
+stored entries, then selects the pool's lowest predicted cost, including
+those entries. Training slates put the lowest recorded scores first;
+utility evaluation uses stored order, so the calls can reveal different
+examples. The caller rotates same-context mutation parents from its bank for new
+proposals. Optional exploration pairs the two lowest-cost picks with up to two random
+remaining draws.
 
-At the adapter interface, the caller supplies modality tokens and their
-mask. It separately zeros the 584-entry context-feature slot and both
-prior inputs, and supplies a fixed scale constant of \num{0.4208}; zero context
-features do not mean absent modality tokens. Its objective weights cost regression ten-to-one over listwise
-matching; failed gates receive target cost $+2.0$. Reporting averages
-negative selected scores rather than cost predictions, with utility $-2.0$
-for failed gates. The full-cohort
-route disables development-anchor margin projection; smaller-cohort runs can
-enable it. These two operating routes require separate verification receipts.
+The caller supplies modality tokens and their mask but zeros the 584-entry
+context-feature slot and both prior inputs. It uses fixed scale \num{0.4208};
+zero context features do not mean absent modality tokens. Cost regression
+is weighted ten-to-one over listwise matching; failed gates get target cost
+$+2.0$. Reporting averages negative selected scores, not cost predictions,
+with utility $-2.0$ for failed gates. The full-cohort route disables
+development-anchor margin projection; smaller-cohort runs can enable it.
+The two routes require separate verification receipts.
 
-In the inspected full-cohort route, each round adds small Gaussian noise
-to the trainable adapter parameters and takes at most two optimizer steps.
-Rejection restores both weights and optimizer state to the retained
-incumbent, so consecutive rejected proposals restart from perturbed copies
-of that checkpoint rather than extending one training trajectory.
+Each round in the inspected full-cohort route perturbs trainable adapter
+parameters with small Gaussian noise and takes at most two optimizer steps.
+Rejection
+restores both weights and optimizer state to the retained incumbent.
+Consecutive rejected proposals therefore restart from perturbed copies of
+that checkpoint, not one continuous training trajectory.
 
-These selection records alone establish no gain from optimizer
-updates or the separate reference map. The limits of component
-diagnostics are covered in \cref{sub:results-diagnostics}.
-Testing learning requires matched trained and untrained controls with
-the same pool and revealed history, reporting invalid selections separately
-from valid-program quality (\cref{sub:results-ablation}).
+Selection records alone establish no gain from optimizer updates or the
+separate reference map (\cref{sub:results-diagnostics} covers the diagnostic
+limits). Learning tests require matched trained and untrained controls
+with the same pool and revealed history, and must report invalid selections
+separately from valid-program quality (\cref{sub:results-ablation}).

@@ -46,13 +46,14 @@ inputs remain training-side only: the regressor block samples at most
 meta-training cohort moments standardize each component block before
 concatenation and elementwise clipping to $[-32,32]$.
 
-The reference encoder is pinned by hash and stays fixed during writer
-training. Encoding is bounded at 30\,s per problem. A context with any non-finite value is refused
-rather than imputed (\cref{app:training}). The input contract permits
-training-side task evidence only; final held-out labels and their derived
-statistics must stay outside the input closure. A context's recorded
-declaration that no final target was used establishes neither input closure
-nor numerical qualification. CPU contexts require native replay and bounded-execution \mbox{receipts before accepted-policy} use.
+The reference encoder is fixed and pinned by hash during writer training.
+Encoding is bounded at 30\,s per problem; contexts with any non-finite value
+are refused, not imputed (\cref{app:training}). The input contract permits
+only training-side task evidence. Final held-out labels and derived
+statistics must stay outside the input closure; declaring that no final
+target was used establishes neither input closure nor numerical
+qualification. CPU contexts require native replay and bounded-execution
+\mbox{receipts before accepted-policy} use.
 
 Whether problems with similar best programs sit together in that space requires
 a separate representation study; \mbox{\cref{sub:results-ablation} reserves} that
@@ -68,18 +69,18 @@ parenthesis tokens or \texttt{pipe} wrapper. Its nine-phase grammar mask permits
 up to six transform stages and three expression stages; each expression
 tree is bounded at depth four and 15 nodes
 \citep{kusner2017grammar,dai2018sdvae}. After the end token, detokenization
-renders a parenthesized program that must parse before entering the pool.
-The mask has no remaining-token-budget check: a draw without an end token
+renders a parenthesized program; it must parse to enter the pool.
+The mask does not check remaining token budget: a draw without an end token
 at the 128-token horizon, including the fixed header, is incomplete and
-discarded. Grammar legality does not establish successful execution or
-useful quality. The proposal
-pool removes exact decoded-string duplicates and records their SHA-256.
-The executor also records canonical recipe hashes. Probe-based behavior
-matching is a separate audit, not part of pool deduplication. Without probe
-evidence, this behavior check reports novelty as unknown. Readable Python
-and Rust exports are a reference requirement. Legacy recipe emitters reject
-the synthesized input stage; the separate fitted-state path is allowlisted.
-Reported winners still require the parity check in \cref{sub:method-referee}.
+discarded. Grammar legality establishes neither execution success nor
+useful quality. The proposal pool removes exact decoded-string duplicates
+and records their SHA-256; the executor records canonical recipe hashes.
+Probe-based behavior matching is a separate audit, outside pool
+deduplication. Without probe evidence, the behavior check reports novelty
+as unknown. Readable Python and Rust exports are a reference requirement.
+Legacy recipe emitters reject the synthesized input stage; the separate
+fitted-state path is allowlisted. Reported winners still require the parity
+check in \cref{sub:method-referee}.
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
@@ -90,15 +91,14 @@ task header, and \texttt{EOS}. Pooling discards token order, limiting its
 ability to distinguish \mbox{compositions} built from the same tokens.
 
 The map's own two-layer context network projects the \num{2048}-value $z_p$
-to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
-as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$ and
+to $r_z\in\mathbb{R}^{512}$. Three 512-value blocks form the interaction:
+$z_w$ as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$ and
 $|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
-Four two-layer heads receive this same \num{1536}-value interaction vector;
-their mean gives the ranking logit $\mapv(z_p,z_w)$.
-The reference ranking losses supervise that mean jointly, without separate
-targets or bootstrap samples. Training applies dropout of 0.05 in each
-ranking head. The runtime head instead reads $[r_z,z_w]$, while the
-program-only control reads $z_w$.
+Four two-layer heads read this \num{1536}-value vector; their mean is the
+ranking logit $\mapv(z_p,z_w)$. Reference ranking losses supervise the mean
+jointly, without separate targets or bootstrap samples. Each ranking head
+uses dropout of 0.05 during training. The runtime head reads $[r_z,z_w]$;
+the program-only control reads $z_w$.
 
 The score is not a calibrated error estimate. Cross-problem score
 comparisons or a probability of a verified win require separate evidence.
@@ -119,15 +119,14 @@ a target concentrated on the best
   \log\frac{e^{\mapv(z_p,z_w)}}{\sum_{u\in G_p}e^{\mapv(z_p,z_u)}},
   \label{eq:mapLoss}
 \end{equation}
-with native target temperature $\tau=0.25$. Temperature scales the target
-percentiles; the mean ranking logits enter the prediction softmax unscaled.
-With a unique best program, the low-temperature limit concentrates the target on that program. This is a listwise ranking
-objective over programs scored on the same problem; the analogy to
-contrastive learning \citep{oord2018cpc,radford2021clip} does not establish
-CLIP-style alignment across problems and programs.
-A Bradley--Terry term adds pairwise comparisons on the same lists
-\citep{bradley1952rank}. Stillborn moves have no score, so this ranking
-objective covers only programs that run.
+with native target temperature $\tau=0.25$. Target percentiles are scaled;
+mean ranking logits enter the prediction softmax unscaled. A unique best
+program receives all target mass in the low-temperature limit. This
+within-problem listwise ranking objective does not establish CLIP-style
+alignment across problems and programs; contrastive learning
+\citep{oord2018cpc,radford2021clip} is an analogy. A Bradley--Terry term
+compares pairs on the same lists \citep{bradley1952rank}. Stillborn moves
+have no score, so the objective covers only programs that run.
 
 The program-only head controls for ranking without problem context
 (\cref{sub:results-ablation}). Ranking valid scored programs alone does not
@@ -147,14 +146,14 @@ Neither influence path alone establishes trained-map lift;
 \mbox{an evaluation must} bind its exact search route.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
-the 16 tail seeds enter unscored. Unscored survivors share the lowest
-scored survivor weight while scored survivors remain.
-A cut identifies a fixed dataset split and evaluation case. Native
-assembly takes up to ten same-cut teachers, then cross-cut teachers
-up to a 16-seed tail. Random fallbacks fill to ten slots if needed; random
-exploration fills the remaining slots. The standalone seed writer instead
-uses 16 random programs. Teacher-first execution prioritizes retained cut
-teachers; \cref{alg:selfplay} leaves the tail route-dependent.
+the 16 tail seeds are unscored. While scored survivors remain, unscored
+survivors share the lowest scored weight.
+A cut fixes a dataset split and evaluation case. Native assembly takes up
+to ten same-cut teachers, then cross-cut teachers up to a 16-seed tail.
+Random fallbacks fill to ten slots if needed; random exploration fills the
+rest. The standalone seed writer uses 16 random programs. Teacher-first
+execution prioritizes retained cut teachers; \cref{alg:selfplay} leaves the
+tail route-dependent.
 Search-parent weights and writer-loss weights act at different stages;
 the latter use referee rank. Whether map-guided targets improve later
 proposals requires the matched ablation in \cref{sub:results-ablation}.
@@ -185,12 +184,12 @@ offline \mbox{training} targets.
 \end{algorithmic}
 \end{algorithm*}
 
-The native proposal sampler seeks 64 distinct parseable programs at $T=1$,
-scheduling at most eight batches of 128 neural draws (\num{1024} total).
-To fill a shortfall, it tries up to \num{10000} seeded random canonical
-pipelines and projects them through the grammar. It refuses an incomplete
-candidate pool. These are training-search budgets, separate from the
-\mbox{single-draw game-day} protocol in \cref{sub:method-gameday}.
+The native proposal sampler seeks 64 distinct parseable programs at $T=1$
+in at most eight batches of 128 neural draws (\num{1024} total). A shortfall
+triggers up to \num{10000} seeded random canonical pipelines projected
+through the grammar; an incomplete candidate pool is refused. These
+training-search budgets are separate from the \mbox{single-draw game-day}
+protocol in \cref{sub:method-gameday}.
 
 The reference rule is expert iteration \citep{anthony2017expert}.
 The writer term weights sampled programs from $G_p$ by their referee rank;
@@ -204,10 +203,10 @@ it joins the map and auxiliary loss terms in the full \mbox{combined training} o
   &\quad + 0.1\,\mathcal{L}_{\mathrm{runtime}} + 0.05\,\mathcal{L}_{\mathrm{prog}}.
   \label{eq:totalLoss}
 \end{align}
-The writer loss in \cref{eq:writerLoss} is schematic: it displays the referee rank
-weights. The native implementation also smooths grammar-legal token targets,
-averages token losses within each sampled program and normalizes by the total sum of
-\mbox{program weights} (\cref{app:training}).
+\Cref{eq:writerLoss} is schematic: it shows referee-rank weights. The native
+loss also smooths grammar-legal token targets, averages token losses per
+sampled program and normalizes by total \mbox{program weights}
+(\cref{app:training}).
 
 Here $\mathcal{L}_{\mathrm{BT}}$ is a Bradley--Terry loss on the same lists,
 $\mathcal{L}_{\mathrm{runtime}}$ a Huber loss between $\ln(1+s)$ and
@@ -225,11 +224,11 @@ each. A challenger may replace the serving writer
 only if its mean log error ratio favors it. It must also win at least as
 many cuts as it loses and fail no more often.
 %
-The admission cases are fixed before the test. For each cut, the rule takes the natural log of paired best-error ratios
-(challenger divided by serving) and averages over matched seeds; it then
-averages across cuts. Negative values favor the challenger. This admission
-comparison is separate from the single-program comparison in
-\cref{sub:results-learning}.
+The admission cases are fixed before testing. For each cut, take the natural
+log of paired best-error ratios (challenger divided by serving), average
+over matched seeds, then average across cuts. Negative values favor the
+challenger. This admission test remains separate from the single-program
+comparison in \cref{sub:results-learning}.
 
 \paragraph{The historical reference.} A decoder-only writer and separate
 ranking and auxiliary heads form the reference model. \Cref{app:training}
@@ -254,14 +253,13 @@ claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana202
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
 \num{1968} agent-benchmark tasks \mbox{can be passed} without being solved \citep{zhong2026hackerfixer}.
 
-The evaluation protocol must withstand such attacks. Selection,
-promotion and final scoring must use separate data (inner folds, held-out
-cuts, a final fold scored once), with sealed meta-test families outside the
-learner's inputs. The proposed comparisons also require seccomp and
-Landlock sandboxing, with memory, swap and time limits. A
-planted label leak and a sealed canary must both be caught. Every reported
-winner must be re-run from its emitted code, with native and emitted
-predictions agreeing within
+The protocol must withstand such attacks. Selection, promotion and final
+scoring require separate data (inner folds, held-out cuts and a final fold
+scored once), with sealed meta-test families outside learner inputs. The
+proposed comparisons also require seccomp and Landlock sandboxing and
+memory, swap and time limits. Both a planted label leak and a sealed canary
+must be caught. Every reported winner must be re-run from emitted code,
+with native and emitted predictions agreeing within
 $10^{-9}\max(1,|\hat{y}|)$.
 
 One earlier leaderboard entry for our search selected each dataset's best
