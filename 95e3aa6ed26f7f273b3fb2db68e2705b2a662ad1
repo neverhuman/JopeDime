@@ -1,0 +1,33 @@
+Research Waves: H256 (Phase 1) & H257 (Phase 2 Warm-Started Subsample & GP Evolutionary Curriculum)
+Phase 1 Folder: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/
+Phase 2 Folder: research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/
+Rust Inference Engine: crates/jope-service/src/ranker/h256.rs (predict_static_top8, predict_static_top8_batch, predict_active_2plus2)
+
+1. Same-Fold DL-Val91 Elo Tournament (91 Contexts / 19 Unseen Families, Anchored at R882 = 1500.00):
+   - H257_HIGH_BATCH_EVO3_STACK3 (#1 Overall): Joint Elo = 1838.71 (S1 Utility, +125.29 vs Opus5p5_Extra) | 1840.84 (CV RMSE Ratio, +109.37 vs Opus5p5_Extra) | Pairwise vs R882 = 1835.34 (S1) / 1871.00 (RMSE) | FamU = 1.261212 (+0.107597 vs R882, +0.148627 vs Opus5p5_Extra) | CV Gate Pass = 91/91 (100%)
+   - H257_BATCH11_STATIC_PLUS_EVO3_STACK3 (#2 Overall): Joint Elo = 1818.61 (S1) | 1828.40 (RMSE) | FamU = 1.261046
+   - H257_MEDIUM_BATCH_EVO3 (#3 Overall, Single GP Tree): Joint Elo = 1762.85 (S1, +49.43 vs Opus5p5_Extra) | 1773.23 (RMSE, +41.76 vs Opus5p5_Extra) | FamU = 1.253609
+   - H257_STAGE_C2_BATCH11_PLUS_EVO1 (1-Gen GP): Joint Elo = 1713.93 (S1) | 1731.47 (RMSE) | FamU = 1.240541
+   - Opus5p5_Extra (Claude Opus 5.5 Frontier LLM): Joint Elo = 1713.42 (S1) | 1731.47 (RMSE) | FamU = 1.112585 | CV Gate Pass = 85/91 (93.4%)
+   - H257_STAGE_C1_BATCH11_PLUS_GEN0 (Gen-0 Batched Seed): Joint Elo = 1694.04 (S1) | 1710.63 (RMSE) | FamU = 1.236936
+   - Gemini4_argon_high (Gemini 4 Argon Frontier LLM): Joint Elo = 1658.02 (S1) | 1665.47 (RMSE) | FamU = 1.102344 | CV Gate Pass = 86/91 (94.5%)
+   - H256_STATIC_0REV_TOP8_SOFT_VETO (Phase 1 0-Rev): Joint Elo = 1647.18 (S1) | 1646.29 (RMSE) | FamU = 1.203296
+   - H257_STAGE_C0_BATCH11_STATIC_0REV (Stage C0 0-Gen): Joint Elo = 1641.22 (S1) | 1640.53 (RMSE) | FamU = 1.202731 | DL-Train OOF FamU = 1.491716
+   - H256_ACTIVE_2PLUS2_UNIFIED (Phase 1 2+2): Joint Elo = 1641.22 (S1) | 1640.53 (RMSE) | FamU = 1.201692 | DL-Train OOF FamU = 1.489648
+   - H257_STAGE_C0_BATCH11_NN_ONLY (Pure Neural 0-Gen): Joint Elo = 1595.44 (S1) | 1592.41 (RMSE) | FamU = 1.196373 | DL-Train OOF FamU = 1.566357
+   - R882 (Control): Joint Elo = 1500.00 | FamU = 1.153615
+   - Codex5p3_high (Codex 5.3 High): Joint Elo = 1495.55 (S1) | 1492.48 (RMSE) | FamU = 1.041990
+   - TabPFN_2p5_default: Joint Elo = 1350.06 (S1) | 1338.80 (RMSE) | FamU = 0.818015
+   - AutoGluon_1p5_best_5m: Joint Elo = 1240.38 (S1) | 1237.45 (RMSE) | FamU = 0.625410
+
+2. 4-Stage Progressive Curriculum (H257_Phase2_Curriculum_Cycle, Warm-Started from Phase-1 H256):
+   - Stage C0 (0 GP Generations): Warm-start from H256 + 3x Semi-Synthetic Column & 80% Row-Subsample Convergence -> DL-Train OOF NN FamU 1.443276 -> 1.567007 (+0.123731), Invalid 11.7 -> 4.3; DL-Val91 NN FamU 1.181667 -> 1.196373.
+   - Stage C1 (Gen 0 Batched Seeding): 16 new champions injected, train cohort utility 1.873966, DL loss 8.7725 -> 8.7650.
+   - Stage C2 (1-Gen GP Evolution): 7 new evolved champions injected, train cohort utility 1.891284, DL loss 8.7648 -> 8.7584.
+   - Stage C3 (3-Gen GP Evolution): 8 new evolved champions injected, train cohort utility 1.907598, DL loss 8.7582 -> 8.7499, expanded champion_bank = 1340.
+   - Standalone GP Evolution on DL-Val91: Gen 0 (1.059807) -> Gen 1 (1.119270) -> Gen 2 (1.162717) -> Gen 3 (1.183865, +0.124058 lift).
+
+3. Pure-Rust .safetensors Weights & Verification:
+   - research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/weights/h257_phase2_curriculum_bundle.safetensors (3.146 MiB, 384 tensors, sha256=50890932273ce43fb25e3ac90afac9c4f3ea1977e473432c39e952bf6d07a7bd)
+   - pytest: 6 passed
+   - cargo test -p jope-service --lib ranker::h256::tests: 4 passed; 0 failed
