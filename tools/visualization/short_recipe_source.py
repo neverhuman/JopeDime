@@ -27,6 +27,7 @@ CALLS = {
     "robust_scale": "robust_scaler",
     "sigmoid": "logistic_squash",
     "standardize": "standard_scaler",
+    "target_bin_encode": "smoothed_target_bin_encoder",
     "winsor_clip": "winsor_limiter",
 }
 STATELESS = {"cheb", "sigmoid"}
@@ -37,7 +38,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut text = String::new();
     io::stdin().read_to_string(&mut text)?;
     let genome = GenomeIr::parse(&text)?;
-    let emitted = transpile::emit(&genome, &EmitOptions::default())?;
+    let partition_point_quantile_bounds = std::env::args().nth(1)
+        .map(|value| value.parse::<bool>()).transpose()?.unwrap_or(false);
+    let opts = EmitOptions { partition_point_quantile_bounds, ..EmitOptions::default() };
+    let emitted = transpile::emit(&genome, &opts)?;
     io::stdout().write_all(emitted.rust.as_bytes())?;
     Ok(())
 }
@@ -192,7 +196,7 @@ def verify_predictions(directory, binary, source_dir, proof, recipe):
     }
 
 
-def prepare(gp_source, output, rustc, rlib):
+def prepare(gp_source, output, rustc, rlib, partition_point_cases=()):
     gp_source, output, rustc, rlib = (p.resolve(strict=True) if p != output else p.resolve()
                                      for p in (gp_source, output, rustc, rlib))
     controller_bytes = (gp_source / "controller.receipt.json").read_bytes()
@@ -200,6 +204,8 @@ def prepare(gp_source, output, rustc, rlib):
     require(controller["status"] == "PASS", "GP source controller must have passed")
     require(tuple(case["case_id"] for case in controller["cases"]) == CASE_IDS,
             "GP source controller must contain the ordered ten cases")
+    require(len(set(partition_point_cases)) == len(partition_point_cases)
+            and set(partition_point_cases) <= set(CASE_IDS), "invalid quantile option case inventory")
     output.mkdir(parents=True, exist_ok=True)
     build = output / "build"
     build.mkdir()
@@ -223,7 +229,8 @@ def prepare(gp_source, output, rustc, rlib):
                 f"{case_id}: selected recipe differs")
         require(sha(recipe) == proof["selected_dsl"]["canonical_sha256"], "native recipe digest differs")
         checked_bytes(source_dir / "predictor.rs", selected["rust_sha256"])
-        raw = command([emitter], recipe)
+        partition_point = case_id in partition_point_cases
+        raw = command([emitter, str(partition_point).lower()], recipe)
         require(not any(marker in raw for marker in
                         (b"fn fitted_model(", b"INPUT_SCALERS", b"TARGET_SCALE", b"SELF_CHECK")),
                 f"{case_id}: emitted source unexpectedly contains fitted-state adapter code")
@@ -247,6 +254,7 @@ def prepare(gp_source, output, rustc, rlib):
             "selected_program_sha256": sha(recipe), "selected_program": recipe.decode(),
             "selected_index": selected["selected_index"], "model_id": selected["model_id"],
             "operations": operations, "excerpt": excerpt,
+            "emit_options": {"partition_point_quantile_bounds": partition_point},
             "original_fitted_source_sha256": selected["rust_sha256"],
             "original_gp_proof_sha256": selected["proof_sha256"],
             "compile": {"status": "PASS", "command": list(map(str, argv)), "binary_sha256": binary_sha},
@@ -261,7 +269,7 @@ def prepare(gp_source, output, rustc, rlib):
                  "Call-site highlights describe code correspondence. Prediction proofs use the "
                  "original v2 normalization and native FIT split. Saved objects remain unchanged.",
         "emitter": {
-            "entry_point": "feat_math::transpile::emit default options, Rust output",
+            "entry_point": "feat_math::transpile::emit, Rust output",
             "source_sha256": sha(EMITTER.encode()), "binary_sha256": sha(emitter.read_bytes()),
             "feat_math_rlib_sha256": sha(rlib.read_bytes()), "command": list(map(str, emitter_args)),
             "rustc_version": command([rustc, "-vV"]).decode(),
@@ -274,8 +282,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("gp-source", "output", "rustc", "feat-math-rlib"):
         parser.add_argument(f"--{option}", type=Path, required=True)
+    parser.add_argument("--partition-point-case", choices=CASE_IDS, action="append", default=[])
     args = parser.parse_args()
-    prepare(args.gp_source, args.output, args.rustc, args.feat_math_rlib)
+    prepare(args.gp_source, args.output, args.rustc, args.feat_math_rlib, args.partition_point_case)
 
 
 if __name__ == "__main__":

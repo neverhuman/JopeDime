@@ -15,7 +15,10 @@ from intelligence_wave import (
 )
 from intelligence_wave_effect import apply_wave
 from code_pages import FONT_CANDIDATES
-from table_panels import IMPORTANCE_FILL, importance_percentiles, percentile_color
+from table_panels import (
+    IMPORTANCE_FILL, cell_text, feature_column_shares, header_percentages, importance_percentiles,
+    percentile_color,
+)
 
 
 class IntelligenceWaveTests(unittest.TestCase):
@@ -51,6 +54,16 @@ class IntelligenceWaveTests(unittest.TestCase):
         self.assertEqual(importance_percentiles([[0] * 4] * 17), [[0] * 4] * 17)
         for rank, stop in zip((0, .5, 1), IMPORTANCE_FILL, strict=True):
             self.assertEqual(percentile_color(rank, IMPORTANCE_FILL), (*stop, 255))
+
+    def test_feature_header_shares_ignore_target_and_are_shuffle_invariant(self):
+        rows = [[1, 0, 0, 0, .99], [.5, .5, 0, 0, 1]]
+        self.assertEqual(feature_column_shares(rows), [.75, .25, 0, 0])
+        self.assertEqual(feature_column_shares(rows[::-1]), [.75, .25, 0, 0])
+        self.assertEqual(feature_column_shares([[0, 0, 0, 0, 1]]), [0, 0, 0, 0])
+        self.assertEqual(header_percentages([.242, .267, .245, .246]), [24, 27, 24, 25])
+        self.assertEqual(header_percentages([0] * 4), [0] * 4)
+        self.assertEqual(cell_text(.0002, preserve_small=True), "2.0e−04")
+        self.assertEqual(cell_text(0, preserve_small=True), "0.00")
 
     def test_source_spans_follow_their_language_and_file(self):
         font = next((Path(path) for path in FONT_CANDIDATES if Path(path).is_file()), None)

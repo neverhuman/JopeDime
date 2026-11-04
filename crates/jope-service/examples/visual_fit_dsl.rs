@@ -197,6 +197,20 @@ fn main() -> Result<()> {
         !cfg!(debug_assertions),
         "working training parity requires a native --release reference to match emitted Rust -O; a debug/release comparison is not qualification"
     );
+    let profile = std::env::var_os("JOPE_VISUAL_PARTITION_POINT_QUANTILES");
+    ensure!(
+        profile.as_deref().is_none_or(|value| value == "1"),
+        "JOPE_VISUAL_PARTITION_POINT_QUANTILES must be unset or 1"
+    );
+    let emit_options = feat_math::transpile::EmitOptions {
+        partition_point_quantile_bounds: profile.is_some(),
+        ..Default::default()
+    };
+    let source_profile = if profile.is_some() {
+        "feat-math-quantile-partition-point-v1"
+    } else {
+        "legacy-default"
+    };
     let dsl_path = fs::canonicalize(&args[0])?;
     let csv_path = fs::canonicalize(&args[1])?;
     let original_path = fs::canonicalize(&args[2])?;
@@ -406,8 +420,10 @@ fn main() -> Result<()> {
         native.len() == table.rows.len() && native.iter().all(|v| v.is_finite()),
         "invalid native predictions"
     );
-    let rust = object.export_source("rust")?;
-    let python = object.export_source("python")?;
+    let export =
+        |language| object.export_math_pipeline_source_with_options(language, &emit_options);
+    let rust = export("rust")?;
+    let python = export("python")?;
     ensure!(
         !rust.is_empty()
             && !python.is_empty()
@@ -556,7 +572,7 @@ fn main() {{
         "executed source changed"
     );
     ensure!(
-        object.export_source("rust")? == rust && object.export_source("python")? == python,
+        export("rust")? == rust && export("python")? == python,
         "fresh source emission bytes differ"
     );
     ensure!(
@@ -578,6 +594,7 @@ fn main() {{
         "command_argv":std::env::args().collect::<Vec<_>>(),"cwd":std::env::current_dir()?,
         "helper_source_sha256":sha(include_bytes!("visual_fit_dsl.rs")),
         "native_build_profile":"release","native_debug_assertions":cfg!(debug_assertions),
+        "source_profile":source_profile,
         "emitted_rust_training_profile":"-O","rustc_program":option_env!("RUSTC").unwrap_or("rustc"),
         "input_csv":{"path":csv_path,"sha256":csv_sha,"bytes":csv_bytes.len()},
         "selected_dsl":{"path":dsl_path,"sha256":sha(&dsl_bytes),"canonical_sha256":sha(canonical.as_bytes()),"canonical":canonical},

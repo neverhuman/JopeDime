@@ -3,6 +3,14 @@ use super::*;
 /// Emit version-two raw-cell prediction without changing the stored object or legacy semantics.
 /// `predict_cells` reads contract order; `predict_table` matches headers by name and ignores extras.
 pub fn emit_pipeline(pipeline: &MathPipeline) -> Result<String> {
+    emit_pipeline_with_options(pipeline, &EmitOptions::default())
+}
+
+/// Emit a fitted pipeline with an explicitly selected recipe source profile.
+pub fn emit_pipeline_with_options(
+    pipeline: &MathPipeline,
+    options: &EmitOptions,
+) -> Result<String> {
     let input = &pipeline.input;
     ensure!(
         input.prediction_version == F64_PREDICTION_VERSION,
@@ -33,11 +41,13 @@ pub fn emit_pipeline(pipeline: &MathPipeline) -> Result<String> {
         .zip(expected)
         .map(|(inputs, expected)| CheckRow { inputs, expected })
         .collect();
-    let mut source = emit_with_checks(
+    let mut source = emit_calibrated_with_checks_and_options(
         &genome,
         &pipeline.state.model,
         input.selected.len(),
+        None,
         &checks,
+        options,
     )?;
     let names: Vec<_> = input
         .columns

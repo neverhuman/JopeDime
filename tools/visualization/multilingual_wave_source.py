@@ -18,7 +18,7 @@ from short_recipe_source import (
 
 SCHEMA = "jain.multilingual-wave-source/v1"
 # Target identities and visible files. The v3 manifest binds the entire build closure.
-SCHEDULE = (
+ARCHIVED_SCHEDULE = (
     ("cpp17,cpp20", (("model.cpp", "cpp"),)),
     ("python", (("model.py", "python"),)),
     ("rust", (("model.rs", "rust"),)),
@@ -30,6 +30,19 @@ SCHEDULE = (
     ("rust", (("model.rs", "rust"),)),
     ("c17", (("c17/model.h", "c"), ("c17/model_core.rs", "rust"))),
 )
+VARIABLE_SCHEDULE = (
+    ("rust", (("model.rs", "rust"),)),
+    ("cpp17,cpp20,javascript", (("model.cpp", "cpp"), ("model.js", "javascript"))),
+    ("python", (("model.py", "python"),)),
+    ("typescript", (("model.ts", "typescript"), ("model.kernel.rs", "rust"))),
+    ("go", (("model.go", "go"), ("model.go.kernel.rs", "rust"))),
+    ("cuda", (("cuda/model.cu", "cuda"), ("cuda/model_core.rs", "rust"))),
+    ("c17", (("c17/model.h", "c"), ("c17/model_core.rs", "rust"))),
+    ("rust", (("model.rs", "rust"),)),
+    ("python", (("model.py", "python"),)),
+    ("rust", (("model.rs", "rust"),)),
+)
+SCHEDULES = {"archived": ARCHIVED_SCHEDULE, "variable": VARIABLE_SCHEDULE}
 EMITTER = """use feat_math::{
     artifact_manifest::{ArtifactDomain, Target},
     transpile::{self, EmitOptions},
@@ -49,7 +62,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut text = String::new();
     io::stdin().read_to_string(&mut text)?;
     let genome = GenomeIr::parse(&text)?;
-    let result = transpile::emit_targets_v3(&genome, &EmitOptions::default(), &targets)?;
+    let partition_point_quantile_bounds = args.get(3)
+        .map(|value| value.parse::<bool>()).transpose()?.unwrap_or(false);
+    let opts = EmitOptions { partition_point_quantile_bounds, ..EmitOptions::default() };
+    let result = transpile::emit_targets_v3(&genome, &opts, &targets)?;
     write_new(&root.join("manifest-v3.json"), &result.manifest.envelope_bytes(ArtifactDomain::Native)?)?;
     if !result.manifest.all_supported() {
         return Err(format!("target admission refused: {:?}", result.manifest.targets).into());
@@ -103,12 +119,16 @@ def compiled_spans(raw, recipe, language, rust_ops):
     if language == "javascript":
         start = next(i for i, line in enumerate(lines) if line.startswith(b"const MODEL_STAGES="))
         require(lines[start + 1].startswith(b"const MODEL_HEAD="), "JavaScript head declaration absent")
+        spec_pattern = rb'\{kind:"([^"]+)"[^{}]*\}'
+        stage_specs = list(re.finditer(spec_pattern, lines[start]))
+        head_specs = list(re.finditer(spec_pattern, lines[start + 1]))
+        require(len(stage_specs) == len(names) - 1 and len(head_specs) == 1,
+                "JavaScript operation count differs")
         operations = []
-        for i, (line_no, name) in enumerate(zip(
-            [start] * (len(names) - 1) + [start + 1], names,
-        )):
-            specs = list(re.finditer(rb'\{kind:"([^"]+)"[^{}]*\}', lines[line_no]))
-            spec = specs[i if line_no == start else 0]
+        for i, (line_no, spec) in enumerate(
+            [(start, spec) for spec in stage_specs] + [(start + 1, head_specs[0])],
+        ):
+            name = names[i]
             require(spec[1].decode() == name, "JavaScript operation spec differs")
             operations.append({
                 "ordinal": i + 1, "label": name,
@@ -232,8 +252,9 @@ def qualify(targets, directory, primary, kernel, inputs, rustc, target, referenc
             node = shutil.which("node") or "node"
             driver = proof_dir / "driver.cjs"
             write_new(driver, JS_DRIVER.encode())
-            builds.append(audited([node, "--check", primary]))
-            argv = [node, driver, primary, fit, probe, predictions]
+            js_source = directory / "model.js"
+            builds.append(audited([node, "--check", js_source]))
+            argv = [node, driver, js_source, fit, probe, predictions]
         elif variant == "c17":
             library = proof_dir / "libmodel.a"
             driver = proof_dir / "driver.c"
@@ -273,7 +294,7 @@ def qualify(targets, directory, primary, kernel, inputs, rustc, target, referenc
     return results
 
 
-def prepare(gp_source, rust_catalog, output, rustc, rlib):
+def prepare(gp_source, rust_catalog, output, rustc, rlib, schedule="archived"):
     gp_source, rust_catalog, rustc, rlib = (
         path.resolve(strict=True) for path in (gp_source, rust_catalog, rustc, rlib)
     )
@@ -297,7 +318,7 @@ def prepare(gp_source, rust_catalog, output, rustc, rlib):
         emitter_source, "-o", emitter,
     ])
     cases = []
-    for original, (targets, visible) in zip(base["cases"], SCHEDULE):
+    for original, (targets, visible) in zip(base["cases"], SCHEDULES[schedule]):
         case_id = original["case_id"]
         old = gp_source / case_id
         selection = selections[case_id]
@@ -310,12 +331,17 @@ def prepare(gp_source, rust_catalog, output, rustc, rlib):
         checked_bytes(old / "predictor.rs", selection["rust_sha256"])
         recipe = checked_bytes(old.with_suffix(".selected.dsl"), selection["selected_program_sha256"])
         out = output / case_id
-        execute([emitter, targets, out], recipe)
+        partition_point = original.get("emit_options", {}).get("partition_point_quantile_bounds", False)
+        require(type(partition_point) is bool, f"{case_id}: malformed quantile option")
+        require(not partition_point or not {"cpp17", "cpp20", "javascript"}.intersection(targets.split(",")),
+                f"{case_id}: direct C++/JS keeps its default quantile profile")
+        execute([emitter, targets, out, str(partition_point).lower()], recipe)
         manifest_path = out / "manifest-v3.json"
         manifest_bytes = manifest_path.read_bytes()
         manifest = json.loads(manifest_bytes)["payload"]
         require(manifest["genome_sha256"] == selection["selected_program_sha256"]
-                and manifest["dsl"].encode() == recipe,
+                and manifest["dsl"].encode() == recipe
+                and manifest["options"]["partition_point_quantile_bounds"] is partition_point,
                 f"{case_id}: emitted v3 recipe digest differs")
         closure = {}
         for item in manifest["targets"]:
@@ -348,20 +374,23 @@ def prepare(gp_source, rust_catalog, output, rustc, rlib):
         reference = json.loads(checked_bytes(old / "native-predictions.json",
                                              old_receipt["native_predictions_sha256"]))
         primary = out / visible[0][0]
-        kernel = out / visible[1][0] if len(visible) == 2 else None
+        kernel = out / visible[1][0] if len(visible) == 2 and visible[1][1] == "rust" else None
         qualifiers = qualify(targets, out, primary, kernel, (fit, probe), rustc,
                              contract["target"], reference)
         target_execution = {
             "typescript": "source bound; TypeScript/Wasm host execution unverified",
             "go": "source bound; Go/Wasm host execution unverified",
-            "cuda": "source bound; Ridge device path emitted; CUDA execution unverified",
         }.get(targets, "local target executed")
+        if targets == "cuda":
+            cuda_manifest = json.loads(checked_bytes(out / "cuda/manifest.json", closure["cuda/manifest.json"]))
+            target_execution = f"CUDA source bound; device {cuda_manifest['device']}; CPU kernel executed"
         cases.append({
             "case_id": case_id, "model_id": original["model_id"],
             "selected_program_sha256": selection["selected_program_sha256"],
             "original_fitted_source_sha256": selection["rust_sha256"],
             "original_gp_proof_sha256": selection["proof_sha256"],
             "target_execution": target_execution, "files": files,
+            "emit_options": {"partition_point_quantile_bounds": partition_point},
             "artifact_manifest": str(manifest_path.relative_to(output)),
             "artifact_manifest_sha256": sha(manifest_bytes), "source_closure": closure,
             "parity": qualifiers, "fit_rows": proof["fit_rows"], "holdout_rows": proof["holdout_rows"],
@@ -369,14 +398,17 @@ def prepare(gp_source, rust_catalog, output, rustc, rlib):
             "encoded_fit_sha256": proof["encoded_fit_sha256"], "encoded_probe_sha256": proof["encoded_probe_sha256"],
         })
         print(case_id, targets, [(p["status"], p["max_abs_error"]) for p in qualifiers], flush=True)
+    passed = all(proof["status"] == "PASS" for case in cases for proof in case["parity"])
     result = {
-        "schema": SCHEMA, "status": "PASS", "cases": cases, "trace_sha256": base["trace_sha256"],
+        "schema": SCHEMA, "status": "PASS" if passed else "FAIL",
+        "cases": cases, "trace_sha256": base["trace_sha256"],
+        "schedule": schedule,
         "rust_catalog_sha256": sha(base_bytes), "gp_controller_sha256": base["gp_controller_sha256"],
         "scope": "Canonical GP recipe source closure and measured per-case CPU proofs. "
                  "See target_execution and parity records for backend coverage.",
         "span_contract": base["span_contract"],
         "emitter": {
-            "entry_point": "feat_math::transpile::emit_targets_v3, default options",
+            "entry_point": "feat_math::transpile::emit_targets_v3",
             "helper_source_sha256": sha(EMITTER.encode()), "helper_binary_sha256": sha(emitter.read_bytes()),
             "feat_math_rlib_sha256": sha(rlib.read_bytes()), "build_command": emitter_build,
             "rustc_version": execute([rustc, "-vV"]).decode(),
@@ -392,14 +424,16 @@ def prepare(gp_source, rust_catalog, output, rustc, rlib):
                 relative = f"{cid}/{name}"
                 archive.write(output / relative, relative)
             archive.write(output / case["artifact_manifest"], case["artifact_manifest"])
+    require(passed, f"one or more language parity checks failed: {catalog}")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("gp-source", "rust-catalog", "output", "rustc", "feat-math-rlib"):
         parser.add_argument(f"--{option}", type=Path, required=True)
+    parser.add_argument("--schedule", choices=SCHEDULES, default="archived")
     args = parser.parse_args()
-    prepare(args.gp_source, args.rust_catalog, args.output, args.rustc, args.feat_math_rlib)
+    prepare(args.gp_source, args.rust_catalog, args.output, args.rustc, args.feat_math_rlib, args.schedule)
 
 
 if __name__ == "__main__":

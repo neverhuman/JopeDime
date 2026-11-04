@@ -13,7 +13,10 @@ import copy
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
+import random
+import statistics
 from pathlib import Path
 import shutil
 import subprocess
@@ -58,14 +61,14 @@ def git(*args):
     return subprocess.check_output(['rtk', 'proxy', 'git', *args], cwd=WORKTREE, text=True).strip()
 
 
-def command(args, output, name, *, env=None, timeout=900):
+def command(args, output, name, *, env=None, timeout=900, cwd=WORKTREE):
     output.mkdir(parents=True, exist_ok=True)
     started = time.perf_counter_ns()
-    receipt = {'argv': [str(v) for v in args], 'cwd': str(WORKTREE),
+    receipt = {'argv': [str(v) for v in args], 'cwd': str(cwd),
                'started_utc': datetime.now(timezone.utc).isoformat(),
                'scope': 'whole proof/build process; never a source-generation timing'}
     with (output / (name + '.stdout.log')).open('xb') as stdout, (output / (name + '.stderr.log')).open('xb') as stderr:
-        result = subprocess.run([str(v) for v in args], cwd=WORKTREE, stdout=stdout, stderr=stderr,
+        result = subprocess.run([str(v) for v in args], cwd=cwd, stdout=stdout, stderr=stderr,
                                 env={**os.environ, **(env or {})}, timeout=timeout, check=False)
     receipt.update(exit_code=result.returncode, process_wall_ns=time.perf_counter_ns()-started,
                    finished_utc=datetime.now(timezone.utc).isoformat())
@@ -128,6 +131,91 @@ def prepare(args):
                       'new': [(c['case_id'], c['pool_id'], c['family']) for c in cases[6:]]}), flush=True)
 
 
+
+# Fixed before inference. The family IDs index select_examples.RECIPES.
+VARIED_ROSTER = ((64, 1), (72, 10), (80, 8), (88, 7), (104, 9),
+                 (112, 11), (120, 17), (128, 6), (144, 5), (160, 12))
+
+
+def prepare_varied(args):
+    import select_examples as selection
+
+    root = args.output_root
+    require(not root.exists(), 'varied capture output already exists')
+    cases = []
+    for index, (count, family_id) in enumerate(VARIED_ROSTER):
+        cid = 'case-' + chr(97 + index)
+        seed = 20261103 + index * 1543
+        rng = random.Random(seed)
+        # Validate the serialized values the native worker will read.
+        lines = [[f'{value:.9f}' for value in selection.varied_row(family_id, i, rng)]
+                 for i in range(count)]
+        numeric = [[float(value) for value in row] for row in lines]
+        audits = []
+        for name, column in zip(('x0', 'x1', 'x2', 'x3', 'y'), zip(*numeric, strict=True), strict=True):
+            zero = sum(value == 0 for value in column)
+            distinct = len(set(column))
+            deviation = statistics.pstdev(column)
+            require(all(math.isfinite(value) for value in column) and distinct >= 2
+                    and zero < count * .75 and deviation > 1e-8,
+                    f'degenerate predeclared data: {cid}/{name}')
+            audits.append({'column': name, 'zeros': zero, 'distinct': distinct,
+                           'standard_deviation': deviation, 'minimum': min(column), 'maximum': max(column)})
+        duplicate_features = count - len({tuple(row[:4]) for row in numeric})
+        require(duplicate_features < count // 4, f'degenerate feature rows: {cid}')
+        batch = f'batch-{1 + index // 5:02d}'
+        csv = root / 'new-inputs' / batch / f'{cid}.csv'
+        csv.parent.mkdir(parents=True, exist_ok=True)
+        with csv.open('xb') as stream:
+            stream.write(('x0,x1,x2,x3,y\n' + ''.join(','.join(row) + '\n' for row in lines)).encode())
+        family = selection.RECIPES[family_id]
+        cases.append({'case_id': cid, 'display_name': 'Synthetic · ' + family.split(';')[0].capitalize(),
+                      'rows': count, 'features': 4, 'origin': 'synthetic', 'family': family,
+                      'dataset_sha256': sha(csv), 'source_csv': str(csv), 'native_batch': batch,
+                      'seed': seed, 'family_recipe_index': family_id, 'column_audit': audits,
+                      'duplicate_feature_rows': duplicate_features, 'new_native_capture': True})
+    require(len({case['dataset_sha256'] for case in cases}) == len({case['rows'] for case in cases}) == 10,
+            'varied roster must have ten distinct table sizes and hashes')
+    write(root / 'dataset-catalog.json', {'schema': 'jain.animation-dataset-catalog/v1', 'status': 'PREPARED',
+        'cases': cases, 'origin': 'synthetic', 'selection': 'fixed seeded families and distinct row counts, predeclared before inference',
+        'selection_used_quality_or_source': False, 'source': identity(__file__),
+        'recipe_source': identity(HERE / 'select_examples.py')})
+    print(json.dumps({'status': 'PREPARED', 'catalog': str(root / 'dataset-catalog.json'),
+                      'cases': [(case['case_id'], case['rows'], case['family']) for case in cases]}), flush=True)
+
+
+def capture_varied(args):
+    root = args.output_root
+    checkout = args.native_checkout.resolve()
+    require(git('-C', str(checkout), 'rev-parse', 'HEAD') == args.expected_head
+            and not git('-C', str(checkout), 'status', '--porcelain'),
+            'capture needs clean checkout at its exact executable source commit')
+    catalog = read(root / 'dataset-catalog.json')
+    batch = f'batch-{args.batch:02d}'
+    planned = [case for case in catalog['cases'] if case['native_batch'] == batch]
+    inputs = root / 'new-inputs' / batch
+    require(1 <= len(planned) <= 8
+            and sorted(p.name for p in inputs.glob('*.csv')) == [case['case_id'] + '.csv' for case in planned]
+            and all(sha(case['source_csv']) == case['dataset_sha256'] for case in planned),
+            'varied batch differs from predeclared catalog')
+    invocation = read(args.original_native / 'invocation-receipt.json')
+    binary = WORKTREE / 'target/release/examples/visual_run'
+    executable = identity(binary)
+    environment = {name: '1' for name in ('RAYON_NUM_THREADS', 'OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS')}
+    output = root / f'native-{batch}'
+    command(['rtk', 'proxy', binary, invocation['argv'][1], invocation['argv'][2], inputs, output],
+            root / 'native-command', batch, env=environment, cwd=checkout)
+    captured = read(output / 'trace.json')
+    require(captured['source_identity_verified'] is True and captured['source_commit'] == args.expected_head
+            and captured['capture_executable_sha256'] == executable['sha256'] == sha(binary)
+            and [(case['id'], case['input_rows'], case['dataset_sha256']) for case in captured['cases']]
+                == [(case['case_id'], case['rows'], case['dataset_sha256']) for case in planned],
+            'varied batch source, case or dataset identity differs')
+    write(root / 'native-command' / f'{batch}.verified.json', {'status': 'PASS', 'trace': identity(output / 'trace.json'),
+        'source_commit': args.expected_head, 'native_executable': executable, 'catalog': identity(root / 'dataset-catalog.json')})
+    print(f'PASS {len(planned)} actual native runs: {output}', flush=True)
+
+
 def build_native(args):
     root = args.output_root
     require(git('rev-parse', 'HEAD') == args.expected_head, 'HEAD changed before native build')
@@ -177,7 +265,8 @@ def assemble(args):
     """Retain each true native archive; aggregate only the catalog and contracts."""
     root = args.output_root
     dataset_catalog = read(root / 'dataset-catalog.json')
-    archives = [args.original_native.resolve(), (root / 'new-native').resolve()]
+    archives = [p.resolve() for p in args.native_archive] if args.native_archive else [
+        args.original_native.resolve(), (root / 'new-native').resolve()]
     merged, models, fit_cases, feature_cases, archive_refs = [], [], [], [], []
     asset_identity = None
     native_root = root / 'native-merged'
@@ -197,7 +286,7 @@ def assemble(args):
             declared = next(c for c in dataset_catalog['cases'] if c['case_id'] == cid)
             csv_path = archive / (cid + '.csv')
             require(sha(csv_path) == declared['dataset_sha256'] == case['dataset_sha256']
-                    and case['input_rows'] == declared['rows'] == 96 and case['features'] == 4,
+                    and case['input_rows'] == declared['rows'] >= 64 and case['features'] == declared['features'] == 4,
                     'animation dataset/shape differs from actual native run')
             shutil.copyfile(csv_path, native_root / (cid + '.csv'))
             proof_dir = native_root / cid / 'proof'
@@ -258,7 +347,7 @@ def assemble(args):
     write(root / 'assembly.receipt.json', {'status': 'PASS', 'original_native_archives': archive_refs,
         'native_catalog': identity(native_root / 'trace.json'), 'fit_inputs': identity(root / 'inputs/native-fit-inputs.json'),
         'native_features': identity(root / 'inputs/native-program-features.json'), 'case_count': len(merged),
-        'original_six_preserved': True, 'controller': identity(__file__)})
+        'original_six_preserved': not bool(args.native_archive), 'controller': identity(__file__)})
     print('PASS ten-case native provenance/inputs/features: ' + str(root), flush=True)
 
 
@@ -299,16 +388,22 @@ def sources(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('stage', choices=('prepare', 'build-native', 'capture-native', 'assemble', 'neural', 'sources'))
+    parser.add_argument('stage', choices=('prepare', 'prepare-varied', 'build-native', 'capture-native', 'capture-varied', 'assemble', 'neural', 'sources'))
     parser.add_argument('--output-root', type=Path, default=EVIDENCE / 'h256/animation-ten-v1')
     parser.add_argument('--pool', type=Path, default=EVIDENCE / 'embedding-selection')
     parser.add_argument('--original-native', type=Path, default=EVIDENCE / 'single-run-final')
     parser.add_argument('--expected-head')
+    parser.add_argument('--native-checkout', type=Path)
+    parser.add_argument('--native-archive', type=Path, action='append')
+    parser.add_argument('--batch', type=int, choices=(1, 2))
     args = parser.parse_args()
     args.output_root = args.output_root.resolve()
-    if args.stage in ('build-native', 'capture-native'):
+    if args.stage in ('build-native', 'capture-native', 'capture-varied'):
         require(args.expected_head and len(args.expected_head) == 40, 'exact expected source HEAD is required')
-    {'prepare': prepare, 'build-native': build_native, 'capture-native': capture_native,
+    if args.stage == 'capture-varied':
+        require(args.native_checkout is not None and args.batch is not None, 'varied capture needs a native checkout and batch')
+    {'prepare': prepare, 'prepare-varied': prepare_varied, 'build-native': build_native, 'capture-native': capture_native,
+     'capture-varied': capture_varied,
      'assemble': assemble, 'neural': neural, 'sources': sources}[args.stage](args)
 
 

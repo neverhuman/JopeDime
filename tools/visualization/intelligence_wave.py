@@ -21,7 +21,8 @@ from cinematic_pages import PALETTE, presentation
 from code_pages import make_pages, reconstruct_source
 from intelligence_wave_effect import NETWORK_ROI, apply_wave
 from table_panels import (
-    BODY_FONTS, HEADING_FONTS, ROWS, draw_panel, font_path, importance_percentiles, load_panels,
+    BODY_FONTS, HEADING_FONTS, ROWS, draw_panel, feature_column_shares, font_path,
+    importance_percentiles, load_panels,
 )
 
 WIDTH, HEIGHT, FPS = 1920, 1080, 30
@@ -64,7 +65,7 @@ def table_orders(case_id, row_ids):
     return orders
 
 
-def shuffled_tables(root, scene):
+def shuffled_tables(root, scene, neural_path=None):
     _, binding = load_panels(root, scene)
     catalog_bytes = (root / "catalog.receipt.json").read_bytes()
     if hashlib.sha256(catalog_bytes).hexdigest() != binding["catalog_sha256"]:
@@ -74,6 +75,17 @@ def shuffled_tables(root, scene):
     if hashlib.sha256(influence_bytes).hexdigest() != binding["influence_sha256"]:
         raise ValueError("sensitivity records changed after panel verification")
     records = json.loads(influence_bytes)["cases"]
+    neural_cases = None
+    if neural_path is not None:
+        neural_bytes = neural_path.read_bytes()
+        neural = json.loads(neural_bytes)
+        if (neural.get("schema") != "jain.neural-cell-influence/v1" or neural.get("status") != "PASS"
+                or neural.get("trace_sha256") != scene["trace_sha256"]
+                or set(neural["cases"]) != set(records)):
+            raise ValueError("verified neural sensitivity for this scene is required")
+        from neural_cell_influence import load_influence
+        neural_cases = load_influence(neural_path, Path(neural["trace_path"]))["cases"]
+        binding["neural_cell_influence_sha256"] = hashlib.sha256(neural_bytes).hexdigest()
     body = font_path(None, BODY_FONTS)
     heading = font_path(None, HEADING_FONTS)
     if digest(body) != catalog["body_font_sha256"] or digest(heading) != catalog["heading_font_sha256"]:
@@ -83,6 +95,23 @@ def shuffled_tables(root, scene):
         cid = case["case_id"]
         record = records[cid]
         rows, scores, ids = record["raw_table"], record["scores"], record["row_ids"]
+        column_shares = None
+        if neural_cases is not None:
+            measured = neural_cases[cid]
+            for key in ("row_ids", "raw_table", "feature_names", "target_name"):
+                if measured[key] != record[key]:
+                    raise ValueError(f"{cid}: neural scores do not belong to the displayed cells")
+            metric = scene["round_trip_metrics"][cid]
+            if (measured["bindings"]["model_id"] != metric["model_id"]
+                    or measured["bindings"]["selected_program_sha256"] != metric["selected_program_sha256"]
+                    or measured["baseline_winner_index"] != metric["selected_index"]):
+                raise ValueError(f"{cid}: neural scores do not match the selected recipe")
+            scores = measured["scores"]
+            if (len(scores) != ROWS or any(len(row) != 5 for row in scores)
+                    or any(not math.isfinite(score) or not 0 <= score <= 1
+                           for row in scores for score in row)):
+                raise ValueError(f"{cid}: invalid neural sensitivity scores")
+            column_shares = feature_column_shares(scores)
         percentiles = importance_percentiles(scores)
         header = [*record["feature_names"], record["target_name"]]
         variants[cid] = []
@@ -92,7 +121,7 @@ def shuffled_tables(root, scene):
             order_bindings[cid].append({"case_frame": start, "row_ids": row_ids})
             panel, _ = draw_panel(case["dataset_name"], case["total_rows"], header, row_ids,
                                   [rows[i] for i in order], [scores[i] for i in order], body, heading,
-                                  percentiles=[percentiles[i] for i in order])
+                                  percentiles=[percentiles[i] for i in order], column_shares=column_shares)
             variants[cid].append(panel)
     return variants, order_bindings, binding
 
@@ -225,7 +254,9 @@ def render(args):
         raise ValueError("Blender and source case order differs")
     rect = viewport(scene)
     x, y, width, height = rect
-    tables, table_order_bindings, table_binding = shuffled_tables(args.table_panels, scene)
+    tables, table_order_bindings, table_binding = shuffled_tables(
+        args.table_panels, scene, args.neural_influence,
+    )
     loops = [
         verify_loop(args.loops_root, {"case_id": cid, "loop_frame_start": first,
                                     "loop_frame_end": last}, scene_hash)
@@ -268,7 +299,11 @@ def render(args):
                 if not files:
                     raise ValueError(f"{cid}: missing source files")
                 primary_language = files[0]["language"]
-                icon, icon_sha = load_icon(primary_language)
+                # A Rust core remains under its binding's icon. Two direct
+                # language exports of one recipe each get their own icon.
+                icon_languages = {item["language"] for item in files} - {"rust"}
+                icon_languages.add(primary_language)
+                icons = {language: load_icon(language) for language in sorted(icon_languages)}
                 binding_label = ("Rust / Wasm binding" if primary_language in {"go", "typescript"}
                                  else "Rust core" if primary_language in {"c", "cuda"} else "")
                 pages = output / "code-pages" / cid
@@ -282,7 +317,9 @@ def render(args):
                     for frame in range(CASE_FRAMES)
                 ]
                 case.update({"files": file_bindings, "visual_rows": len(rows),
-                             "primary_language": primary_language, "language_icon_sha256": icon_sha,
+                             "primary_language": primary_language,
+                             "language_icon_sha256": icons[primary_language][1],
+                             "language_icon_hashes": {language: value[1] for language, value in icons.items()},
                              "model_id": source_case["model_id"], "cues": cues,
                              "line_height_px": line_height, "plate_indices": plate_indices,
                              "table_row_orders": table_order_bindings[cid],
@@ -332,8 +369,10 @@ def render(args):
                     while rows[last_row][0] != file_index:
                         last_row -= 1
                     line = rows[last_row][1]
+                    file_language = file_bindings[file_index]["language"]
+                    icon_language = file_language if file_language in icons else primary_language
                     hud(frame, *fonts, metric, file_bindings[file_index], line, cue, rect,
-                        icon, primary_language, binding_label)
+                        icons[icon_language][0], icon_language, binding_label)
                     if frame_index in samples:
                         still = output / f"{cid}-{samples[frame_index]}.png"
                         frame.save(still)
@@ -360,9 +399,14 @@ def render(args):
         "wave_effect_sha256": digest(Path(__file__).with_name("intelligence_wave_effect.py")),
         "table_overlay": table_binding,
         "table_shuffle_scope": "Seeded display permutations of the same 17 verified FIT rows every 0.28 seconds, rounded to video frames",
-        "table_percentile_scope": "Per-case percentile across 68 measured feature sensitivities, averaging ties and anchoring zeros to low; target excluded",
+        "table_percentile_scope": (
+            "Per-case percentile of 85 cell effects on the saved fused ranker's selection margin, "
+            "including the target; feature header shares average relative effects over shown rows"
+            if args.neural_influence else
+            "Per-case percentile across 68 measured feature sensitivities, averaging ties and anchoring zeros to low; target excluded"
+        ),
         "source_viewport": rect, "wave_roi": NETWORK_ROI,
-        "metric_scope": "archived data-to-complete-fitted-Rust benchmark, separate from visible recipe",
+        "metric_scope": "verified data-to-complete-fitted-Rust benchmark, separate from visible recipe",
         "wave_scope": "editorial exposure sweep of existing Blender pixels with source-span gain cues",
     }
     write_json(output / "encode.receipt.json", receipt)
@@ -372,6 +416,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("scene-receipt", "source-catalog", "loops-root", "table-panels", "output-dir"):
         parser.add_argument(f"--{option}", type=Path, required=True)
+    parser.add_argument("--neural-influence", type=Path)
     parser.add_argument("--code-font", type=Path, default=Path("/System/Library/Fonts/Menlo.ttc"))
     parser.add_argument("--ui-font", type=Path, default=Path("/System/Library/Fonts/Avenir Next.ttc"))
     parser.add_argument("--ffmpeg")

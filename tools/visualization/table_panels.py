@@ -26,6 +26,7 @@ HEADING_FONTS = ("/System/Library/Fonts/SFNS.ttf", "/System/Library/Fonts/Helvet
                  "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
 IMPORTANCE_FILL = ((69, 23, 42), (91, 61, 29), (13, 84, 60))
 IMPORTANCE_ACCENT = ((250, 104, 124), (249, 186, 98), (69, 224, 158))
+TARGET_FILL = ((34, 18, 46), (68, 35, 94), (101, 53, 141))
 
 
 def require(value, message):
@@ -65,14 +66,43 @@ def percentile_color(value, palette):
     return (*[round(a + fraction * (b - a)) for a, b in zip(start, end, strict=True)], 255)
 
 
+def feature_column_shares(scores):
+    """Average each feature's relative sensitivity over the visible rows."""
+    means = [sum(row[index] for row in scores) / len(scores) for index in range(4)]
+    total = sum(means)
+    return [value / total if total else 0.0 for value in means]
+
+
+def header_percentages(shares):
+    """Round the visible feature shares to integers while preserving their total."""
+    scaled = [100 * value for value in shares]
+    whole = [int(value) for value in scaled]
+    if any(shares):
+        remainder_order = sorted(range(len(shares)), key=lambda i: whole[i] - scaled[i])
+        for index in remainder_order[:100 - sum(whole)]:
+            whole[index] += 1
+    return whole
+
+
+def cell_text(value, *, preserve_small=False):
+    number = float(value)
+    text = f"{number:.2f}"
+    if preserve_small and number and float(text) == 0.0:
+        text = f"{number:.1e}"
+    return text.replace("-", "−")
+
+
 def draw_panel(name, total_rows, header, row_ids, raw_table, scores, body_path, heading_path,
-               *, percentiles=None):
+               *, percentiles=None, column_shares=None):
     from PIL import Image, ImageDraw, ImageFont
     image = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     draw.rectangle((0, BRAND_HEIGHT, WIDTH - 1, HEIGHT - 1), fill=(0, 0, 0, 255))
     body = ImageFont.truetype(str(body_path), 17)
     heading = ImageFont.truetype(str(heading_path), 18)
+    if column_shares is not None:
+        share_font = ImageFont.truetype(str(heading_path), 11)
+        percentages = header_percentages(column_shares)
     name_size = 18
     while heading.getlength(name) > 560 and name_size > 12:
         name_size -= 1
@@ -82,21 +112,30 @@ def draw_panel(name, total_rows, header, row_ids, raw_table, scores, body_path, 
     draw.text((38, 145), name, font=heading, fill=ink, anchor="lt")
     draw.text((38, 177), f"{total_rows:,} rows", font=ImageFont.truetype(str(heading_path), 17), fill=ink, anchor="lt")
     draw.text((38, 207), "TABULAR INPUT", font=ImageFont.truetype(str(heading_path), 18), fill=ink, anchor="lt")
+    if column_shares is not None:
+        draw.text((601, 211), "FUSED SELECTION SENSITIVITY", font=share_font, fill=muted, anchor="rt")
     draw.rounded_rectangle((33, 232, 610, 1039), radius=14, fill=(8, 16, 25, 255), outline=(50, 140, 177, 255), width=1)
+    highest_share = max(column_shares, default=0.0) if column_shares is not None else 0.0
     widths = [50.5, 101., 101., 101., 101., 101.]
     for row in range(ROWS + 1):
         y = 244 + row * 43.5
         values = ["row", *header] if row == 0 else [str(row_ids[row - 1]), *[
-            f"{float(value):.2f}".replace("-", "−") for value in raw_table[row - 1]]]
+            cell_text(value, preserve_small=column_shares is not None) for value in raw_table[row - 1]]]
         x = 45.
         for col, (width, value) in enumerate(zip(widths, values)):
             target = col == 5
             score = float(scores[row - 1][col - 1]) if row and 0 < col < 5 else 0.
-            percentile = percentiles[row - 1][col - 1] if percentiles is not None and row and 0 < col < 5 else None
+            ranks = percentiles[row - 1] if percentiles is not None and row else ()
+            percentile = ranks[col - 1] if 0 < col <= len(ranks) else None
+            weighted_header = row == 0 and 0 < col < 5 and column_shares is not None
             if row == 0:
                 color = (141, 28, 167, 255) if target else (29, 48, 63, 255)
+                if weighted_header:
+                    relative = column_shares[col - 1] / highest_share if highest_share else 0.0
+                    color = percentile_color(relative, IMPORTANCE_FILL)
             elif target:
-                color = (34, 18, 46, 255)
+                color = ((34, 18, 46, 255) if percentile is None
+                         else percentile_color(percentile, TARGET_FILL))
             elif col == 0:
                 color = (12, 23, 34, 255)
             elif percentile is not None:
@@ -104,23 +143,20 @@ def draw_panel(name, total_rows, header, row_ids, raw_table, scores, body_path, 
             else:
                 color = (5, round(13 + 27 * score), round(23 + 34 * score), 255)
             draw.rectangle((round(x), round(y), round(x + width - 1), round(y + 42.5)), fill=color)
-            draw.text((x + width / 2, y + 21), value, font=body, fill=ink, anchor="mm")
+            draw.text((x + width / 2, y + (15 if weighted_header else 21)),
+                      value, font=body, fill=ink, anchor="mm")
+            if weighted_header:
+                draw.text((x + width / 2, y + 32), f"{percentages[col - 1]}%",
+                          font=share_font, fill=ink, anchor="mm")
             if row and 0 < col < 5 and score > 0:
                 accent = ((20, 222, 245, 255) if percentile is None
                           else percentile_color(percentile, IMPORTANCE_ACCENT))
                 draw.line((round(x + 7), round(y + 39), round(x + 7 + (width - 14) * score), round(y + 39)),
                           fill=accent, width=1)
             x += width
-    legend = ImageFont.truetype(str(heading_path), 11)
     if percentiles is None:
+        legend = ImageFont.truetype(str(heading_path), 11)
         draw.text((38, 1054), "RELATIVE INPUT SENSITIVITY", font=legend, fill=muted, anchor="lt")
-    else:
-        draw.text((38, 1054), "FEATURE IMPORTANCE PERCENTILE", font=legend, fill=ink, anchor="lt")
-        draw.text((274, 1054), "LOW", font=legend, fill=muted, anchor="rt")
-        for step in range(121):
-            draw.line((284 + step, 1055, 284 + step, 1062),
-                      fill=percentile_color(step / 120, IMPORTANCE_ACCENT))
-        draw.text((414, 1054), "HIGH", font=legend, fill=muted, anchor="lt")
     check_image(image)
     return image, name_size
 

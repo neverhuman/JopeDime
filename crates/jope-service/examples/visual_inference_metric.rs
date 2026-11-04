@@ -382,6 +382,7 @@ fn fit_rust(
     case_id: String,
     prepared: Prepared,
     dsl: &str,
+    emit_options: &feat_math::transpile::EmitOptions,
 ) -> Result<(Value, Pending)> {
     ensure!(dsl.len() <= 64 * 1024, "selected DSL exceeds bound");
     let genome = feat_math::GenomeIr::parse(dsl.trim())?;
@@ -418,7 +419,7 @@ fn fit_rust(
     )?;
     object.verify_executable()?;
     let begin = Instant::now();
-    let rust = object.export_source("rust")?;
+    let rust = object.export_math_pipeline_source_with_options("rust", emit_options)?;
     let export_ns = begin.elapsed().as_nanos().to_string();
     ensure!(
         !rust.is_empty() && rust.len() <= MAX_SOURCE,
@@ -465,6 +466,7 @@ fn handle(
     request: Request,
     cache: &mut BTreeMap<PathBuf, Contract>,
     pending: &mut Option<Pending>,
+    emit_options: &feat_math::transpile::EmitOptions,
 ) -> Result<Value> {
     match request {
         Request::Encode {
@@ -494,6 +496,7 @@ fn handle(
                 case_id,
                 prepare(&csv_path, &split_path, &original_model_dir, cache)?,
                 &selected_dsl,
+                emit_options,
             )?;
             *pending = Some(proof);
             Ok(value)
@@ -533,6 +536,20 @@ fn main() -> Result<()> {
         std::env::args_os().len() == 1,
         "visual_inference_metric takes JSONL requests on stdin, not CLI arguments"
     );
+    let profile = std::env::var_os("JOPE_VISUAL_PARTITION_POINT_QUANTILES");
+    ensure!(
+        profile.as_deref().is_none_or(|value| value == "1"),
+        "JOPE_VISUAL_PARTITION_POINT_QUANTILES must be unset or 1"
+    );
+    let emit_options = feat_math::transpile::EmitOptions {
+        partition_point_quantile_bounds: profile.is_some(),
+        ..Default::default()
+    };
+    let source_profile = if profile.is_some() {
+        "feat-math-quantile-partition-point-v1"
+    } else {
+        "legacy-default"
+    };
     let mut input = std::io::stdin().lock();
     let mut output = std::io::stdout().lock();
     let mut cache = BTreeMap::new();
@@ -560,7 +577,8 @@ fn main() -> Result<()> {
             !request_id.is_empty() && request_id.len() <= 128,
             "request_id must have 1..128 bytes"
         );
-        let mut response = handle(request, &mut cache, &mut pending)?;
+        let mut response = handle(request, &mut cache, &mut pending, &emit_options)?;
+        response["source_profile"] = json!(source_profile);
         response["request_id"] = json!(request_id);
         response["helper_request_ns"] = json!(begin.elapsed().as_nanos().to_string());
         response["helper_source_sha256"] = json!(sha(include_bytes!("visual_inference_metric.rs")));

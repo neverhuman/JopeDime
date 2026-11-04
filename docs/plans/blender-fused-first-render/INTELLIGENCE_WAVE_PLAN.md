@@ -1,5 +1,7 @@
 # JAIN Intelligence Wave short film
 
+The [current revision](NEURAL_CELL_ATTRIBUTION.md) uses variable-size tables and measured cell sensitivity from the fused ranker. This document records the earlier cuts.
+
 ## Multilingual revision
 
 The 42-second timeline uses C++, Python, Rust, TypeScript, Go, JavaScript, CUDA C++, Python, Rust, and C in dataset order. The displayed filename, syntax lexer, and source label follow each visible file. Each chapter's language icon and name sit below the network. TypeScript and Go show their bindings and Rust/Wasm kernels. C and CUDA C++ show their interfaces and Rust cores. The source archive contains the complete build files.
@@ -10,7 +12,7 @@ The source pane shows the current line alone. The historical fitted export rate 
 
 Calculate feature importance percentiles once for each dataset across its 68 visible, measured FIT feature sensitivities. Average tied ranks and anchor exact zeros at the low end. Color cells from dark red through amber to green. The thin bars retain their relative sensitivity lengths. Move row IDs, values, the purple rightmost target, sensitivity marks, and percentile colors together at every shuffle.
 
-Run the original source preparation below to reproduce the pinned Rust recipe catalog. Then emit and qualify the multilingual source and compose the current cut.
+Run the original source preparation below to reproduce the pinned Rust recipe catalog. Then emit and qualify the multilingual source and compose the earlier percentile shuffle cut.
 
 ```sh
 rtk proxy python3 tools/visualization/multilingual_wave_source.py \
