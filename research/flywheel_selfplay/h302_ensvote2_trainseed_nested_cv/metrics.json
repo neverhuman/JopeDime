@@ -1,0 +1,1453 @@
+{
+  "wave_id": "H302",
+  "slug": "h302_ensvote2_trainseed_nested_cv",
+  "owner": "rd_argon",
+  "status": "COMPLETE",
+  "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+  "prereg_commit": "2a77787c3df2a0ac9b5ae6bf5684bd862bfca7fc",
+  "h287_export_commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+  "selected_json_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_untouched": true,
+  "optimizer_updates": 0,
+  "gpu_used": false,
+  "fresh_pools_read": 0,
+  "outer_test_rows_read_before_fold_lock": 0,
+  "elapsed_sec": 26.64,
+  "root_training_seeds": [
+    30001,
+    30002,
+    30003
+  ],
+  "member_seeds_by_root": {
+    "30001": [
+      685781424,
+      1430007429,
+      1330439319
+    ],
+    "30002": [
+      1869595753,
+      786733481,
+      1272701215
+    ],
+    "30003": [
+      1510579523,
+      89540748,
+      1415857569
+    ]
+  },
+  "shared_bootstrap_seed": 302150,
+  "regression_step1": {
+    "status": "PASS",
+    "h287_export_commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+    "selected_json_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "ensemble_spec_sha256": "32ca19f30f427ae135f5f6c2aacc0fe28097d956f4e2ca0e7fd5f41ffec49995",
+    "fit_lock_sha256": "8a20c58bdb4bfcbadfa5ba927aa0577b630e3174e6dc4a7bfd579175ca08f35f",
+    "n_check_contexts": 64,
+    "context_cids_sha256": "4005568e59fc5fddf0893e3f30ddbc5e1b7e8b599a4310d60e21ec26e52de7ba",
+    "ens_vote2_64ctx_changed_count": 19,
+    "ens_vote2_64ctx_picks_sha256": "8ef2837ae43e22721b7f7ffdf30371c29ba18e1ad3d9f0f788462d7c350d6d01",
+    "bit_exact_all_deterministic_and_per_seed_arms": true,
+    "h300_member_seeds_verified": {
+      "30001": [
+        685781424,
+        1430007429,
+        1330439319
+      ],
+      "30002": [
+        1869595753,
+        786733481,
+        1272701215
+      ],
+      "30003": [
+        1510579523,
+        89540748,
+        1415857569
+      ]
+    },
+    "h302_outer_fold_summary": {
+      "0": {
+        "n_test_families": 57,
+        "n_test_contexts": 335,
+        "n_train_families": 148,
+        "n_train_contexts": 884,
+        "test_families_sha256": "bd597ba56ed7fc26472747756551f669f1162a350c6402411a349c6258a31417",
+        "test_contexts_sha256": "6ec9dde33a57353a27ed629d220d658b3c67d881ed97bc0d251a6a79aab62ff1"
+      },
+      "1": {
+        "n_test_families": 45,
+        "n_test_contexts": 239,
+        "n_train_families": 160,
+        "n_train_contexts": 980,
+        "test_families_sha256": "ec5d54e777a34f8b03949b74f2929b00087ad0a8305558adc580b52f07709895",
+        "test_contexts_sha256": "b7fa24f4bb3ea6d192cbe958b2acc74e11d0b9beb1afdc4ad4de578b35a4cafd"
+      },
+      "2": {
+        "n_test_families": 50,
+        "n_test_contexts": 269,
+        "n_train_families": 155,
+        "n_train_contexts": 950,
+        "test_families_sha256": "d3336467d47b89c1739cd5b679424b1ff9bf997ae998109e64c9e390a98e0fa3",
+        "test_contexts_sha256": "6880ba94e4cab8d974edccb67017f7532e8379ba0154d58e4d826c6cdc471b46"
+      },
+      "3": {
+        "n_test_families": 53,
+        "n_test_contexts": 376,
+        "n_train_families": 152,
+        "n_train_contexts": 843,
+        "test_families_sha256": "456680cd81dfac7ad00359aac146dcb5e1c26553176565a0ca4a9be4c3a24c63",
+        "test_contexts_sha256": "0949389787dd0695f4456d160171f64c91f870886f334223eef806fc22b6b871"
+      }
+    }
+  },
+  "primary_ENS_VOTE2": {
+    "summary": {
+      "families": 205,
+      "contexts": 1219,
+      "shared_boot_seed": 302150,
+      "boot_draws": 10000,
+      "per_seed_family_mean_gain": [
+        0.02682276553907294,
+        0.06035828581904661,
+        0.05889172313111307
+      ],
+      "per_seed_ci95": [
+        [
+          0.012794869628991151,
+          0.04249970157313128
+        ],
+        [
+          0.011801767445946153,
+          0.12903696430944908
+        ],
+        [
+          0.010328755519978092,
+          0.12766856808753374
+        ]
+      ],
+      "per_seed_lcb_one_sided": {
+        "0.025": [
+          0.012794869628991151,
+          0.011801767445946153,
+          0.010328755519978092
+        ],
+        "0.05": [
+          0.014776021597390715,
+          0.01744899913695742,
+          0.016560918710006575
+        ]
+      },
+      "per_seed_p_boot": [
+        0.0,
+        0.005,
+        0.0055
+      ],
+      "median_gain_across_seeds": 0.05889172313111307,
+      "pooled_ci95": [
+        0.013275346493645639,
+        0.12647271440710536
+      ],
+      "pooled_lcb_one_sided_95": 0.018602443037069788,
+      "secondary_family_median_gain": {
+        "per_seed_family_median_gain": [
+          0.0,
+          0.0015880840956334907,
+          0.0
+        ],
+        "per_seed_family_median_ci95": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.010223208327578642
+          ],
+          [
+            0.0,
+            0.004782505246892055
+          ]
+        ],
+        "median_of_family_median_gain_across_seeds": 0.0,
+        "pooled_family_median_ci95": [
+          0.0,
+          0.004759093750125093
+        ]
+      },
+      "wtl_by_seed": [
+        [
+          77,
+          111,
+          17
+        ],
+        [
+          108,
+          61,
+          36
+        ],
+        [
+          96,
+          87,
+          22
+        ]
+      ],
+      "sign_test_p_by_seed": [
+        1.3523211583732057e-10,
+        7.478793747882466e-10,
+        1.6282897271135413e-12
+      ],
+      "elo_by_seed": [
+        1762.3371239114147,
+        1690.816337882448,
+        1755.878570855487
+      ],
+      "elo_ci95_by_seed": [
+        [
+          1679.296798497966,
+          1868.8236785933711
+        ],
+        [
+          1628.1092786317342,
+          1762.5241376958033
+        ],
+        [
+          1682.9131808965176,
+          1846.576500754206
+        ]
+      ],
+      "median_elo_across_seeds": 1755.878570855487,
+      "pooled_elo_ci95": [
+        1674.2529859045558,
+        1814.75162291032
+      ],
+      "harmed_share_by_seed": [
+        0.04390243902439024,
+        0.1073170731707317,
+        0.04878048780487805
+      ],
+      "harmed_count_by_seed": [
+        9,
+        22,
+        10
+      ],
+      "invalid_by_seed": [
+        [
+          17,
+          15
+        ],
+        [
+          17,
+          14
+        ],
+        [
+          17,
+          14
+        ]
+      ],
+      "changed_picks_by_seed": [
+        154,
+        301,
+        211
+      ],
+      "slot0_context_mean": 1.423073434552299,
+      "slot0_family_equal_mean": 1.3853554329931828,
+      "arm_context_mean_by_seed": [
+        1.4468086511222917,
+        1.473041079524289,
+        1.4685555860076056
+      ],
+      "arm_family_equal_mean_by_seed": [
+        1.412178198532256,
+        1.4457137188122293,
+        1.4442471561242958
+      ],
+      "arm_p": 0.0055
+    },
+    "criteria": {
+      "condition_1_median_gain_gt_0_001": true,
+      "condition_2_lcb95_gt_0_on_3of3_seeds": true,
+      "condition_3_harmed_share_le_35pct_each_seed": true,
+      "condition_4_invalid_noninferior_each_seed": true,
+      "passes_h302_primary": true,
+      "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+      "lcb_one_sided_95": [
+        0.014776021597390715,
+        0.01744899913695742,
+        0.016560918710006575
+      ],
+      "invalid_detail": [
+        {
+          "slot0_invalid": 17,
+          "arm_invalid": 15,
+          "excess": -2,
+          "tolerance": 3,
+          "mcnemar_b": 2,
+          "mcnemar_c": 4,
+          "mcnemar_p": 0.890625,
+          "ok": true
+        },
+        {
+          "slot0_invalid": 17,
+          "arm_invalid": 14,
+          "excess": -3,
+          "tolerance": 3,
+          "mcnemar_b": 2,
+          "mcnemar_c": 5,
+          "mcnemar_p": 0.9375,
+          "ok": true
+        },
+        {
+          "slot0_invalid": 17,
+          "arm_invalid": 14,
+          "excess": -3,
+          "tolerance": 3,
+          "mcnemar_b": 1,
+          "mcnemar_c": 4,
+          "mcnemar_p": 0.96875,
+          "ok": true
+        }
+      ],
+      "strict_invalid_not_above_slot0_descriptive": true,
+      "descriptive_h294_rule_check": {
+        "median_gain_gt_0_010": true,
+        "sign_test_p_lt_0_05_on_3of3": true,
+        "passes_all_h294_criteria": true
+      }
+    }
+  },
+  "policy_pick_agreement_and_seed_spread": {
+    "three_policies_make_identical_picks": false,
+    "n_contexts_all_3_seeds_agree": 912,
+    "fraction_contexts_all_3_seeds_agree": 0.7481542247744053,
+    "n_contexts_any_seed_switches": 372,
+    "n_contexts_all_3_seeds_switch_to_same_slot": 65,
+    "picks_sha256_by_seed": {
+      "30001": "b47088d981afa1a53a8926afc1a025492fafcb9591a9cc52aa191e452c8560d7",
+      "30002": "0c5761b312cd9366e2fd1e3f49ee7cb37908ff1b8d2228f49d4604d4ece40bed",
+      "30003": "a4ff743c9b974aa5145cb0aebed51b946bddda47b237dc21024ef2011c95c9ee"
+    },
+    "pairwise_seed_agreement": {
+      "30001_vs_30002": {
+        "identical_picks": false,
+        "agree_contexts": 959,
+        "agree_fraction": 0.7867104183757178,
+        "differ_contexts": 260,
+        "switched_seed_a": 154,
+        "switched_seed_b": 301,
+        "both_switched_contexts": 108,
+        "both_switched_same_slot": 87,
+        "switched_same_slot_jaccard": 0.2507204610951009
+      },
+      "30001_vs_30003": {
+        "identical_picks": false,
+        "agree_contexts": 1029,
+        "agree_fraction": 0.8441345365053322,
+        "differ_contexts": 190,
+        "switched_seed_a": 154,
+        "switched_seed_b": 211,
+        "both_switched_contexts": 98,
+        "both_switched_same_slot": 77,
+        "switched_same_slot_jaccard": 0.2883895131086142
+      },
+      "30002_vs_30003": {
+        "identical_picks": false,
+        "agree_contexts": 1021,
+        "agree_fraction": 0.837571780147662,
+        "differ_contexts": 198,
+        "switched_seed_a": 301,
+        "switched_seed_b": 211,
+        "both_switched_contexts": 179,
+        "both_switched_same_slot": 135,
+        "switched_same_slot_jaccard": 0.40540540540540543
+      }
+    },
+    "seed_noise_red_team_vs_h294": {
+      "h302_training_seeds": {
+        "seeds": [
+          30001,
+          30002,
+          30003
+        ],
+        "gain_by_seed": [
+          0.02682276553907294,
+          0.06035828581904661,
+          0.05889172313111307
+        ],
+        "gain_range_max_minus_min": 0.03353552027997367,
+        "gain_std_ddof1": 0.018952572242337946,
+        "lcb95_by_seed": [
+          0.014776021597390715,
+          0.01744899913695742,
+          0.016560918710006575
+        ],
+        "lcb95_range_max_minus_min": 0.0026729775395667055,
+        "lcb95_std_ddof1": 0.0013613322809161196,
+        "changed_picks_by_seed": [
+          154,
+          301,
+          211
+        ],
+        "changed_picks_range": 147,
+        "elo_by_seed": [
+          1762.3371239114147,
+          1690.816337882448,
+          1755.878570855487
+        ],
+        "elo_range_max_minus_min": 71.52078602896677
+      },
+      "h294_bootstrap_seeds_reference": {
+        "seeds": [
+          294150,
+          294151,
+          294152
+        ],
+        "gain_by_seed": [
+          0.04633032459283523,
+          0.04633032459283523,
+          0.04633032459283523
+        ],
+        "gain_range_max_minus_min": 0.0,
+        "gain_std_ddof1": 0.0,
+        "lcb95_by_seed": [
+          0.024272312712920317,
+          0.024316613057566595,
+          0.024649034372398116
+        ],
+        "lcb95_range_max_minus_min": 0.00037672165947779876,
+        "lcb95_std_ddof1": 0.00020590679922795287,
+        "changed_picks_by_seed": [
+          89,
+          89,
+          89
+        ],
+        "changed_picks_range": 0
+      }
+    }
+  },
+  "secondary_arms": {
+    "ENS_MEAN": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.03832858447510285,
+          0.071085391930144,
+          0.05499251049240597
+        ],
+        "median_gain_across_seeds": 0.05499251049240597,
+        "pooled_ci95": [
+          0.017710828353062424,
+          0.12415514041925833
+        ],
+        "per_seed_lcb_one_sided_95": [
+          0.019589480353157895,
+          0.027405878761406842,
+          0.012264249679101835
+        ],
+        "secondary_family_median_gain": [
+          0.0,
+          0.006396876876080038,
+          0.0
+        ],
+        "harmed_share_by_seed": [
+          0.04878048780487805,
+          0.1024390243902439,
+          0.07804878048780488
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            16
+          ],
+          [
+            17,
+            14
+          ],
+          [
+            17,
+            14
+          ]
+        ],
+        "changed_picks_by_seed": [
+          159,
+          340,
+          237
+        ],
+        "elo_by_seed": [
+          1745.510676555946,
+          1703.228922168577,
+          1754.665224784576
+        ],
+        "median_elo_across_seeds": 1745.510676555946
+      },
+      "criteria": {
+        "passes_h302_primary": true,
+        "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": true,
+        "condition_3_harmed_share_le_35pct_each_seed": true,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    },
+    "ENS_VOTE3": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.005990501415490571,
+          0.01881520256465081,
+          0.018087240400070013
+        ],
+        "median_gain_across_seeds": 0.018087240400070013,
+        "pooled_ci95": [
+          0.003854090421603733,
+          0.04077257530908566
+        ],
+        "per_seed_lcb_one_sided_95": [
+          0.0014590264130277084,
+          0.004362573360224297,
+          0.00391321873533226
+        ],
+        "secondary_family_median_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "harmed_share_by_seed": [
+          0.014634146341463415,
+          0.03902439024390244,
+          0.03414634146341464
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            18
+          ],
+          [
+            17,
+            16
+          ],
+          [
+            17,
+            17
+          ]
+        ],
+        "changed_picks_by_seed": [
+          32,
+          92,
+          74
+        ],
+        "elo_by_seed": [
+          1708.9490466533887,
+          1694.1530160649052,
+          1698.845293310868
+        ],
+        "median_elo_across_seeds": 1698.845293310868
+      },
+      "criteria": {
+        "passes_h302_primary": true,
+        "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": true,
+        "condition_3_harmed_share_le_35pct_each_seed": true,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    },
+    "MEMBER_0_BAG_SWITCH": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.059552653465158006,
+          0.06715572718341749,
+          0.0693838171407499
+        ],
+        "median_gain_across_seeds": 0.06715572718341749,
+        "pooled_ci95": [
+          0.020016317946267438,
+          0.1337370851619743
+        ],
+        "per_seed_lcb_one_sided_95": [
+          0.022584288503152052,
+          0.02328539074026747,
+          0.025499239253416732
+        ],
+        "secondary_family_median_gain": [
+          0.0,
+          0.010634639919209432,
+          0.009472059365720042
+        ],
+        "harmed_share_by_seed": [
+          0.09268292682926829,
+          0.12682926829268293,
+          0.12195121951219512
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            14
+          ],
+          [
+            17,
+            15
+          ],
+          [
+            17,
+            13
+          ]
+        ],
+        "changed_picks_by_seed": [
+          231,
+          363,
+          477
+        ],
+        "elo_by_seed": [
+          1702.7910611510235,
+          1710.5592558272176,
+          1732.9480505428496
+        ],
+        "median_elo_across_seeds": 1710.5592558272176
+      },
+      "criteria": {
+        "passes_h302_primary": true,
+        "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": true,
+        "condition_3_harmed_share_le_35pct_each_seed": true,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    },
+    "MEMBER_1_BAG_SWITCH": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.04590433037455875,
+          0.04500030704771142,
+          0.04925968688960211
+        ],
+        "median_gain_across_seeds": 0.04590433037455875,
+        "pooled_ci95": [
+          0.012496037601712485,
+          0.09438411271648671
+        ],
+        "per_seed_lcb_one_sided_95": [
+          0.025666841277817903,
+          -0.005665265698720046,
+          0.01724918911354044
+        ],
+        "secondary_family_median_gain": [
+          0.0,
+          0.008736811028995817,
+          0.0
+        ],
+        "harmed_share_by_seed": [
+          0.04878048780487805,
+          0.13170731707317074,
+          0.05853658536585366
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            16
+          ],
+          [
+            17,
+            15
+          ],
+          [
+            17,
+            14
+          ]
+        ],
+        "changed_picks_by_seed": [
+          175,
+          398,
+          211
+        ],
+        "elo_by_seed": [
+          1771.6140939386455,
+          1701.1693565344901,
+          1730.0241443809878
+        ],
+        "median_elo_across_seeds": 1730.0241443809878
+      },
+      "criteria": {
+        "passes_h302_primary": false,
+        "verdict": "NOT_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": false,
+        "condition_3_harmed_share_le_35pct_each_seed": true,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    },
+    "MEMBER_2_BAG_SWITCH": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.033802254544577005,
+          0.059585180732926644,
+          0.05865271522928986
+        ],
+        "median_gain_across_seeds": 0.05865271522928986,
+        "pooled_ci95": [
+          0.018886264225806762,
+          0.10911967445756153
+        ],
+        "per_seed_lcb_one_sided_95": [
+          0.01636537485517567,
+          0.02457958148176912,
+          0.01726078909797601
+        ],
+        "secondary_family_median_gain": [
+          0.0,
+          0.007511606890750699,
+          0.0012803177276899946
+        ],
+        "harmed_share_by_seed": [
+          0.07804878048780488,
+          0.1073170731707317,
+          0.0975609756097561
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            15
+          ],
+          [
+            17,
+            13
+          ],
+          [
+            17,
+            15
+          ]
+        ],
+        "changed_picks_by_seed": [
+          239,
+          414,
+          320
+        ],
+        "elo_by_seed": [
+          1727.4075372357647,
+          1712.556537771512,
+          1721.8109470293577
+        ],
+        "median_elo_across_seeds": 1721.8109470293577
+      },
+      "criteria": {
+        "passes_h302_primary": true,
+        "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": true,
+        "condition_3_harmed_share_le_35pct_each_seed": true,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    },
+    "MEMBER_0_RERANK8_VETO": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.050104611431656766,
+          0.04883194900940288,
+          0.048065739909562546
+        ],
+        "median_gain_across_seeds": 0.04883194900940288,
+        "pooled_ci95": [
+          -0.01664969722850556,
+          0.12147650947953102
+        ],
+        "per_seed_lcb_one_sided_95": [
+          0.008071449738825403,
+          -0.01035719668502588,
+          -0.012455690556996576
+        ],
+        "secondary_family_median_gain": [
+          0.0,
+          0.01648488619265362,
+          0.01608726621021417
+        ],
+        "harmed_share_by_seed": [
+          0.17560975609756097,
+          0.18048780487804877,
+          0.2146341463414634
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            17
+          ],
+          [
+            17,
+            14
+          ],
+          [
+            17,
+            17
+          ]
+        ],
+        "changed_picks_by_seed": [
+          469,
+          638,
+          746
+        ],
+        "elo_by_seed": [
+          1644.3252010179224,
+          1669.52948084034,
+          1652.601032403461
+        ],
+        "median_elo_across_seeds": 1652.601032403461
+      },
+      "criteria": {
+        "passes_h302_primary": false,
+        "verdict": "NOT_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": false,
+        "condition_3_harmed_share_le_35pct_each_seed": true,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    },
+    "MEMBER_1_RERANK8_VETO": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.056202671884810734,
+          0.05670023990771614,
+          0.046328500223465054
+        ],
+        "median_gain_across_seeds": 0.056202671884810734,
+        "pooled_ci95": [
+          0.009773939609690151,
+          0.10299221997371305
+        ],
+        "per_seed_lcb_one_sided_95": [
+          0.023423821608197632,
+          0.0038487633251790476,
+          0.010203804949405699
+        ],
+        "secondary_family_median_gain": [
+          0.011913045697160785,
+          0.014007880512106968,
+          0.008093921571832974
+        ],
+        "harmed_share_by_seed": [
+          0.12682926829268293,
+          0.2048780487804878,
+          0.17073170731707318
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            15
+          ],
+          [
+            17,
+            14
+          ],
+          [
+            17,
+            14
+          ]
+        ],
+        "changed_picks_by_seed": [
+          366,
+          646,
+          444
+        ],
+        "elo_by_seed": [
+          1729.244934350388,
+          1653.3770594040966,
+          1662.8108738233257
+        ],
+        "median_elo_across_seeds": 1662.8108738233257
+      },
+      "criteria": {
+        "passes_h302_primary": true,
+        "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": true,
+        "condition_3_harmed_share_le_35pct_each_seed": true,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    },
+    "MEMBER_2_RERANK8_VETO": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.05355478903514856,
+          0.04572175032146216,
+          0.048041300236202455
+        ],
+        "median_gain_across_seeds": 0.048041300236202455,
+        "pooled_ci95": [
+          0.0027170057462935562,
+          0.09997648026449943
+        ],
+        "per_seed_lcb_one_sided_95": [
+          0.03241548013616105,
+          0.0032705293200037335,
+          0.0021116148880485296
+        ],
+        "secondary_family_median_gain": [
+          0.014745181688504694,
+          0.011431912035835629,
+          0.002703815308310986
+        ],
+        "harmed_share_by_seed": [
+          0.13658536585365855,
+          0.18048780487804877,
+          0.16585365853658537
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            12
+          ],
+          [
+            17,
+            14
+          ],
+          [
+            17,
+            14
+          ]
+        ],
+        "changed_picks_by_seed": [
+          492,
+          654,
+          540
+        ],
+        "elo_by_seed": [
+          1702.030138479991,
+          1661.1872206808573,
+          1671.416958157112
+        ],
+        "median_elo_across_seeds": 1671.416958157112
+      },
+      "criteria": {
+        "passes_h302_primary": true,
+        "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": true,
+        "condition_3_harmed_share_le_35pct_each_seed": true,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    }
+  },
+  "nulls": {
+    "NULL_RANDOM_VALID_SLOT": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          0.012351121756920245,
+          0.0007886464877275704,
+          0.015245879342232444
+        ],
+        "median_gain_across_seeds": 0.012351121756920245,
+        "pooled_ci95": [
+          -0.042417415725563366,
+          0.06946022753262453
+        ],
+        "per_seed_lcb_one_sided_95": [
+          -0.037880989105162056,
+          -0.04268505859815778,
+          -0.030000520014392684
+        ],
+        "secondary_family_median_gain": [
+          -0.00556757439302108,
+          -0.002429742177901262,
+          -0.0017086126662317902
+        ],
+        "harmed_share_by_seed": [
+          0.47317073170731705,
+          0.44878048780487806,
+          0.4292682926829268
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            0
+          ],
+          [
+            17,
+            0
+          ],
+          [
+            17,
+            0
+          ]
+        ],
+        "changed_picks_by_seed": [
+          1219,
+          1219,
+          1219
+        ],
+        "elo_by_seed": [
+          1453.518567017065,
+          1482.956856211008,
+          1491.5251075188642
+        ],
+        "median_elo_across_seeds": 1482.956856211008
+      },
+      "criteria": {
+        "passes_h302_primary": false,
+        "verdict": "NOT_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": true,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": false,
+        "condition_3_harmed_share_le_35pct_each_seed": false,
+        "condition_4_invalid_noninferior_each_seed": true
+      }
+    },
+    "NULL_RANDOM_SLOT_NO_LABELS": {
+      "summary": {
+        "per_seed_family_mean_gain": [
+          -0.07969199440429743,
+          -0.06557813851537589,
+          -0.07975884413894252
+        ],
+        "median_gain_across_seeds": -0.07969199440429743,
+        "pooled_ci95": [
+          -0.1289613905984476,
+          -0.023673266169708326
+        ],
+        "per_seed_lcb_one_sided_95": [
+          -0.13657339495785176,
+          -0.10787347427246083,
+          -0.1367674908062155
+        ],
+        "secondary_family_median_gain": [
+          -0.00576373085695292,
+          -0.0119276630490609,
+          -0.0038776017764198256
+        ],
+        "harmed_share_by_seed": [
+          0.43414634146341463,
+          0.5170731707317073,
+          0.4634146341463415
+        ],
+        "invalid_by_seed": [
+          [
+            17,
+            30
+          ],
+          [
+            17,
+            28
+          ],
+          [
+            17,
+            28
+          ]
+        ],
+        "changed_picks_by_seed": [
+          1065,
+          1065,
+          1047
+        ],
+        "elo_by_seed": [
+          1481.3410154032526,
+          1433.859750459869,
+          1472.4253218925357
+        ],
+        "median_elo_across_seeds": 1472.4253218925357
+      },
+      "criteria": {
+        "passes_h302_primary": false,
+        "verdict": "NOT_CONFIRMED_TRAINING_SEEDS",
+        "condition_1_median_gain_gt_0_001": false,
+        "condition_2_lcb95_gt_0_on_3of3_seeds": false,
+        "condition_3_harmed_share_le_35pct_each_seed": false,
+        "condition_4_invalid_noninferior_each_seed": false
+      }
+    }
+  },
+  "outer_fold_receipts": [
+    {
+      "outer_fold": 0,
+      "n_outer_train_families": 148,
+      "n_outer_train_contexts": 884,
+      "n_outer_test_families": 57,
+      "n_outer_test_contexts": 335,
+      "fold_fit_lock_sha256": "896e915c977f8ac7cd9ec05361a009e83aecce1369ed8925badf3b911b2c0e85",
+      "reload_check_on_64_outer_train_contexts": {
+        "30001": {
+          "ens_vote2_changed_count_64": 17,
+          "ens_vote2_picks_sha256_64": "1525f8b06da5943abf4e2c7cacd2c7b08bc72c25c9613b0588237ee1be6cc7dc",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        },
+        "30002": {
+          "ens_vote2_changed_count_64": 37,
+          "ens_vote2_picks_sha256_64": "2130ab2dcf416fd0d0eaa5a09e5f2ed00b9bbb37b345051c25f5548fe5236fcc",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        },
+        "30003": {
+          "ens_vote2_changed_count_64": 20,
+          "ens_vote2_picks_sha256_64": "51245a4ad920576822d2ff2c9514662cb76a1edad718925b82d1a0e270b14266",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        }
+      },
+      "member_configs_summary_by_root_seed": {
+        "30001": [
+          {
+            "seed": 685781424,
+            "lr": 0.05,
+            "n_est": 50,
+            "strict_margin": 0.1,
+            "admitted": true
+          },
+          {
+            "seed": 1430007429,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.35,
+            "admitted": true
+          },
+          {
+            "seed": 1330439319,
+            "lr": 0.05,
+            "n_est": 100,
+            "strict_margin": 0.2,
+            "admitted": true
+          }
+        ],
+        "30002": [
+          {
+            "seed": 1869595753,
+            "lr": 0.05,
+            "n_est": 200,
+            "strict_margin": 0.2,
+            "admitted": true
+          },
+          {
+            "seed": 786733481,
+            "lr": 0.03,
+            "n_est": 100,
+            "strict_margin": 0.0,
+            "admitted": true
+          },
+          {
+            "seed": 1272701215,
+            "lr": 0.05,
+            "n_est": 200,
+            "strict_margin": 0.1,
+            "admitted": true
+          }
+        ],
+        "30003": [
+          {
+            "seed": 1510579523,
+            "lr": 0.05,
+            "n_est": 200,
+            "strict_margin": 0.1,
+            "admitted": true
+          },
+          {
+            "seed": 89540748,
+            "lr": 0.05,
+            "n_est": 50,
+            "strict_margin": 0.1,
+            "admitted": true
+          },
+          {
+            "seed": 1415857569,
+            "lr": 0.03,
+            "n_est": 100,
+            "strict_margin": 0.1,
+            "admitted": true
+          }
+        ]
+      }
+    },
+    {
+      "outer_fold": 1,
+      "n_outer_train_families": 160,
+      "n_outer_train_contexts": 980,
+      "n_outer_test_families": 45,
+      "n_outer_test_contexts": 239,
+      "fold_fit_lock_sha256": "c163e3603c2aac8f893714520e1fccbe6cebb4e32e80a473533782fdc4f51fd5",
+      "reload_check_on_64_outer_train_contexts": {
+        "30001": {
+          "ens_vote2_changed_count_64": 14,
+          "ens_vote2_picks_sha256_64": "6c1a6ae695b53735414735d6b1eec2d41eef7e3562695124676a87cf11f1f8a3",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        },
+        "30002": {
+          "ens_vote2_changed_count_64": 28,
+          "ens_vote2_picks_sha256_64": "8a631ad0750b81d2f0301a8c426355f321fbd7d89ca2b47a9ab5d382f466e407",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        },
+        "30003": {
+          "ens_vote2_changed_count_64": 31,
+          "ens_vote2_picks_sha256_64": "33e2ca7b5883d062233a7ea0d8c36823467e847e99f82014a8c6613e3d4f98b8",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        }
+      },
+      "member_configs_summary_by_root_seed": {
+        "30001": [
+          {
+            "seed": 685781424,
+            "lr": 0.05,
+            "n_est": 200,
+            "strict_margin": 0.2,
+            "admitted": true
+          },
+          {
+            "seed": 1430007429,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.2,
+            "admitted": true
+          },
+          {
+            "seed": 1330439319,
+            "lr": 0.05,
+            "n_est": 200,
+            "strict_margin": 0.5,
+            "admitted": true
+          }
+        ],
+        "30002": [
+          {
+            "seed": 1869595753,
+            "lr": 0.1,
+            "n_est": 200,
+            "strict_margin": 0.05,
+            "admitted": true
+          },
+          {
+            "seed": 786733481,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.1,
+            "admitted": true
+          },
+          {
+            "seed": 1272701215,
+            "lr": 0.1,
+            "n_est": 200,
+            "strict_margin": 0.2,
+            "admitted": true
+          }
+        ],
+        "30003": [
+          {
+            "seed": 1510579523,
+            "lr": 0.03,
+            "n_est": 100,
+            "strict_margin": 0.02,
+            "admitted": true
+          },
+          {
+            "seed": 89540748,
+            "lr": 0.03,
+            "n_est": 100,
+            "strict_margin": 0.05,
+            "admitted": true
+          },
+          {
+            "seed": 1415857569,
+            "lr": 0.1,
+            "n_est": 200,
+            "strict_margin": 0.0,
+            "admitted": true
+          }
+        ]
+      }
+    },
+    {
+      "outer_fold": 2,
+      "n_outer_train_families": 155,
+      "n_outer_train_contexts": 950,
+      "n_outer_test_families": 50,
+      "n_outer_test_contexts": 269,
+      "fold_fit_lock_sha256": "1f31cb90a8394b16ef2925f1c7c152eaaeb80cb3b409cc55b5cdf3d5bfd52a8a",
+      "reload_check_on_64_outer_train_contexts": {
+        "30001": {
+          "ens_vote2_changed_count_64": 3,
+          "ens_vote2_picks_sha256_64": "3f779ff5c5a6542c145efbefbcd050b66d88c546d6cb8a8c7d1abd3118433b3c",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        },
+        "30002": {
+          "ens_vote2_changed_count_64": 15,
+          "ens_vote2_picks_sha256_64": "d74f465154661526b7a4918fb39da5bcecc4bb6af886306642e8c63db8a62b2b",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        },
+        "30003": {
+          "ens_vote2_changed_count_64": 9,
+          "ens_vote2_picks_sha256_64": "cfca97e0419b39be54b59af50cbd7bd348009e44fde26cb60d010eca0c958b12",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        }
+      },
+      "member_configs_summary_by_root_seed": {
+        "30001": [
+          {
+            "seed": 685781424,
+            "lr": 0.1,
+            "n_est": 200,
+            "strict_margin": "inf",
+            "admitted": false
+          },
+          {
+            "seed": 1430007429,
+            "lr": 0.1,
+            "n_est": 100,
+            "strict_margin": 0.5,
+            "admitted": true
+          },
+          {
+            "seed": 1330439319,
+            "lr": 0.05,
+            "n_est": 100,
+            "strict_margin": 0.2,
+            "admitted": true
+          }
+        ],
+        "30002": [
+          {
+            "seed": 1869595753,
+            "lr": 0.1,
+            "n_est": 100,
+            "strict_margin": 0.35,
+            "admitted": true
+          },
+          {
+            "seed": 786733481,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.2,
+            "admitted": true
+          },
+          {
+            "seed": 1272701215,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.02,
+            "admitted": true
+          }
+        ],
+        "30003": [
+          {
+            "seed": 1510579523,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.35,
+            "admitted": true
+          },
+          {
+            "seed": 89540748,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.35,
+            "admitted": true
+          },
+          {
+            "seed": 1415857569,
+            "lr": 0.05,
+            "n_est": 200,
+            "strict_margin": 0.2,
+            "admitted": true
+          }
+        ]
+      }
+    },
+    {
+      "outer_fold": 3,
+      "n_outer_train_families": 152,
+      "n_outer_train_contexts": 843,
+      "n_outer_test_families": 53,
+      "n_outer_test_contexts": 376,
+      "fold_fit_lock_sha256": "43e032b1de18eccd016773886709dea10ec8b22de335c83021d220570ccb2233",
+      "reload_check_on_64_outer_train_contexts": {
+        "30001": {
+          "ens_vote2_changed_count_64": 15,
+          "ens_vote2_picks_sha256_64": "5dd8738e732011427aef2e9a7703a9a1d3f1aa52a0cc99135502f1b73123db84",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        },
+        "30002": {
+          "ens_vote2_changed_count_64": 12,
+          "ens_vote2_picks_sha256_64": "8fef72f2b69b55b256cf91b988127963340d10cf4bc955e2db4a1d46b38d8eb8",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        },
+        "30003": {
+          "ens_vote2_changed_count_64": 5,
+          "ens_vote2_picks_sha256_64": "ac3ce806e5dace231be65f4cf46a077e9ea7f290e8e74ea4769f14ebd587c931",
+          "reload_bit_exact_on_64_outer_train_contexts": true
+        }
+      },
+      "member_configs_summary_by_root_seed": {
+        "30001": [
+          {
+            "seed": 685781424,
+            "lr": 0.03,
+            "n_est": 50,
+            "strict_margin": 0.05,
+            "admitted": true
+          },
+          {
+            "seed": 1430007429,
+            "lr": 0.05,
+            "n_est": 100,
+            "strict_margin": 0.2,
+            "admitted": true
+          },
+          {
+            "seed": 1330439319,
+            "lr": 0.05,
+            "n_est": 100,
+            "strict_margin": 0.1,
+            "admitted": true
+          }
+        ],
+        "30002": [
+          {
+            "seed": 1869595753,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.2,
+            "admitted": true
+          },
+          {
+            "seed": 786733481,
+            "lr": 0.1,
+            "n_est": 50,
+            "strict_margin": 0.2,
+            "admitted": true
+          },
+          {
+            "seed": 1272701215,
+            "lr": 0.1,
+            "n_est": 200,
+            "strict_margin": 0.75,
+            "admitted": true
+          }
+        ],
+        "30003": [
+          {
+            "seed": 1510579523,
+            "lr": 0.03,
+            "n_est": 200,
+            "strict_margin": 0.02,
+            "admitted": true
+          },
+          {
+            "seed": 89540748,
+            "lr": 0.03,
+            "n_est": 100,
+            "strict_margin": 0.2,
+            "admitted": true
+          },
+          {
+            "seed": 1415857569,
+            "lr": 0.05,
+            "n_est": 50,
+            "strict_margin": "inf",
+            "admitted": false
+          }
+        ]
+      }
+    }
+  ],
+  "resources": {
+    "host": "xbabe2",
+    "nice": 19,
+    "cores": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "peak_rss_bytes": 885940224,
+    "max_rss_limit_bytes": 8589934592
+  }
+}

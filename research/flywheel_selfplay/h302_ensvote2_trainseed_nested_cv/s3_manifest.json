@@ -1,0 +1,43 @@
+{
+  "schema": "jope.h302.s3-manifest/v1",
+  "wave_id": "H302",
+  "slug": "h302_ensvote2_trainseed_nested_cv",
+  "owner": "rd_argon",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H302/",
+  "total_lightgbm_models_archived": 360,
+  "outer_fold_lock_files_archived": 4,
+  "objects": [
+    {
+      "key": "experiments/rd_breakthrough_20261030/H302/h302_models_and_locks.tar.gz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H302/h302_models_and_locks.tar.gz",
+      "bytes": 20736051,
+      "sha256": "e171a38042437ee5b6dc4ff28de1ab98f431b558a6dab14dcfb3a3ec990b325f",
+      "version_id": "RA93b1PNlzd5.YfaN0QzH6XpbK.0rY5y",
+      "etag": "bde257f43ebaf8b57a7ee06832663c1f"
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H302/metrics_full_h302.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H302/metrics_full_h302.json",
+      "bytes": 193010,
+      "sha256": "bc47fb72089fe2c0d7c4f0a65df1466f739b811d8f848d83d23d227062c7b483",
+      "version_id": "Xj078ivenbNRVL9nypsnsVUo_PAIeUCf",
+      "etag": "1f4f1f1b27fea9c29d934501e1f07016"
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H302/metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H302/metrics.json",
+      "bytes": 38875,
+      "sha256": "fda930ec71a942feb471af38e08319187e2c54350eaf1af541db647cedc2560d",
+      "version_id": "POlkYAPKj6GIFM5BlPPlMdWTy_vCFHZp",
+      "etag": "b06a9220c6b157209c6be401b58117e3"
+    }
+  ],
+  "s3_manifest_self": {
+    "key": "experiments/rd_breakthrough_20261030/H302/s3_manifest.json",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H302/s3_manifest.json",
+    "bytes": 1589,
+    "sha256": "ebcaf7b4098fc20bc851e59fcfd677ac3492d6c7cfda648be34a35a89194b76b",
+    "version_id": "btXY..vrXO4QiC9s_Cxm9iOJkGjKRd_F",
+    "etag": "8fcb36854bbeddcc9b39581589d46182"
+  }
+}
