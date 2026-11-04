@@ -1,0 +1,19 @@
+# H305: independent red-team of H302 and H303
+
+**Status: RUNNING. H302 replay complete; H303 audit awaits its closeout.** Preregistration `4844618b6a1b049e14d5a85bcc05adab20a66ea6` was pushed before H305 scoring. Owner [ASTRA].
+
+Hypothesis: the reported ENS_VOTE2 gains reproduce from frozen models and survive an audit of family separation, chronology, ties, direction, seed dependence, concentration, a within-family permutation null, prohibited reads and frozen DOPE identity. This audit uses independent feature/scoring/statistical code; it does not import peer runners.
+
+H302 frozen S3 models reproduce all three int32 pick hashes and gains exactly: +0.0268227655, +0.0603582858, +0.0588917231. The median is +0.0588917, family-bootstrap 95% CI [+0.0132753,+0.1264727]. This confirms reproducibility, not an unbiased outer-CV claim.
+
+The actual reference is **r882 slot0**, from `r882-train-costs.npz`. Diagnostic Elo (MM Bradley–Terry, r882=1500) is 1762.34 / 1690.82 / 1755.88. Requested r3175-anchored Elo is **unmeasured**, as are new dev91/val_reg outcomes. No AUC or speed verdict is made.
+
+H302's three pick vectors are distinct (78.7–84.4% overall pairwise agreement; only 25.1–40.5% agreement within the switched-context union). Family-gain correlation for seeds30002/30003 is .984; spectral effective seed count is1.796, a descriptive measure on the same205families. Top10families explain71.8/90.0/91.0% of net gain. Dropping them leaves +.007948/+.006323/+.005566. Drop-top5 LCB95 is positive only1/3seeds. The registered conditional permutation null gives p=1/1001; it cannot remove historical design selection bias.
+
+Two source issues remain material. First, H302 inherited fixed tau/q/agreement choices previously evaluated across all205TRAINfamilies. Second, both wave loaders materialize shared NPZ arrays before slicing TRAIN rows: caches include91DL-Val feature rows. Source inspection finds these rows excluded from fit arrays and no validation outcome use in these waves, but literal zero-DL-Val-read assertions are false. H305 reads only verified TRAIN NPY prefixes. Both loaders also construct all outer-test TRAIN features/labels before writing fit locks; their zero-outer-test-rows-read counter describes neither actual loading nor an enforced input boundary. Direct fit and lr/n/margin selection sets remain disjoint in the reviewed source.
+
+H302 prereg git time05:03:14 precedes all four archived fit-lock mtimes (05:10:38–05:19:11). Source places outer prediction after lock. Mutable mtimes and absent per-score absolute timestamps do not prove remote push order or absence of undocumented earlier scoring. The non-live r882 checkpoint's DOPE composite was independently recomputed as `c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`; its whole-file hash is unchanged.
+
+H303 is still running. Its source nests tau/q/agreement selection correctly inside outer_train; prior architecture/grid/proposer development remains reused-data context. Final per-wave verdicts and exact audit items will be recorded after its frozen closeout, or H303_AUDIT_PENDING at08:15Z. Next: finish H303 replay, archive H305 evidence, delete own scratch, close by08:45Z. No serving or live-loop change.
+
+Reproduction uses `independent_replay.py features`, then `independent_replay.py h302`, followed by `statistics.py` and `audit_structure.py`. `test_audit.py` covers tie boundaries, Elo direction, strict margins, consensus, family weighting, permutation degeneracy, seed dependence, TRAIN-prefix reads, model tampering and family partitioning. Detailed command/environment/resource receipts are in `/home/ubuntu/jope-rescue-20260921/h305-astra`; CPU nice19 cores60–63, one numeric thread, RSS4GiB, MemAvailable20GiB, hostCPU85%, scratch3GB, absolute compute stop08:30Z. Hosted CI is NOT_RUN under owner freeze; only non-force v1/next publication.
