@@ -49,16 +49,16 @@ and obtaining final-evaluation receipts for input closure and execution
 isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
-  leaderboard entry selected each dataset's best test-scored outcome from
-  \num{63108} evaluations across 42 datasets. Test-fold selection biases the
-  reported metric upward \citep{cawley2010overfitting}; the entry is therefore
-  \mbox{excluded from} all comparative claims.
+  leaderboard entry chose each dataset's best test-scored outcome from \num{63108}
+  evaluations across 42 datasets. Test-fold selection biases the metric
+  upward \citep{cawley2010overfitting}; the entry is \mbox{excluded from}
+  all comparative claims.
   \item \textbf{Input-closure and canary checks.} Benchmark release requires
   passing receipts for an inner-fold label-poison test, a sealed canary and
-  a train-only input-closure audit. The audit must exclude held-out targets
-  and derived statistics from both board encoding and candidate generation.
-  Final pre-registration and receipts belong to the \mbox{primary evaluation record} in
-  \cref{sub:results-protocol}.
+  a train-only input-closure audit excluding held-out targets and derived
+  statistics from both board encoding and candidate generation. Final
+  pre-registration and receipts belong to the \mbox{primary evaluation record}
+  in \cref{sub:results-protocol}.
 \end{itemize}
 
 \section{Training Details}\label{app:training}
@@ -86,14 +86,14 @@ inventory covers its encoder, objective and execution requirements
   percentile $\rho_w = 1 - \mathrm{rank}/\allowbreak{(|G_p|-1)}$ and writer $\writer$ sequence weight
   $0.05 + \rho_w^4$. The base native sampler balances families and takes
   the best program plus one draw from each of seven rank bands of the rest.
-  Fresh-program replay can replace a comparator to include a newly admitted
-  candidate program.
+  Fresh-program replay can replace a comparator with a newly admitted
+  candidate.
 
-  Pairs use corpus context and comparison index; Python ranking helpers
-  group by dataset identifier. The native helper skips non-finite targets
-  and exact ties, $q_w=q_u$, without an exclusion margin or logit rescaling.
-  The trainer refuses non-finite supervision before loss formation.
-  \mbox{\Cref{eq:writerLoss,eq:mapLoss}} show the list-level form.
+  Within-comparison pairs use corpus context and comparison index;
+  Python ranking helpers group by dataset identifier. Native pairing skips
+  non-finite targets and exact ties, $q_w=q_u$, without an exclusion margin
+  or logit rescaling. Training refuses non-finite supervision before loss
+  formation. \mbox{\Cref{eq:writerLoss,eq:mapLoss}} give list-level losses.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
   loss leaves \texttt{BOS} unsupervised but covers following non-padding
@@ -109,12 +109,11 @@ inventory covers its encoder, objective and execution requirements
   for measured seconds \mbox{$s\geq0$ and} raw scalar head output $h$.
   \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
   Here $q_w=1/(1+\mathrm{RMSE}_w/m_p)$ (\cref{eq:totalLoss}), with $m_p$
-  the corpus list's median RMSE. For microbatch normalization,
-  Bradley--Terry weights use $|q_w-q_u|$, doubled when either member is at
-  or above the 90th percentile. Weights are mean-scaled and cast to
-  float32; weighted losses average non-tied within-comparison pairs
-  in the rank-local microbatch. Listwise losses average eligible groups.
-  The global-batch route uses separate reductions.
+  the corpus list's median RMSE. Microbatch Bradley--Terry weights use
+  $|q_w-q_u|$, doubled when either member is at or above the 90th percentile.
+  Weights are mean-scaled and cast to float32; weighted losses average
+  non-tied within-comparison pairs in the rank-local microbatch. Listwise
+  losses average eligible groups; the global-batch route uses separate reductions.
   \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
   The historical reference registers \num{27796494} parameters in total (six
   decoder blocks, width 512, four attention heads, prefix context token
@@ -129,13 +128,13 @@ inventory covers its encoder, objective and execution requirements
   6.90 million parameters share no weights with the writer and lie outside its token
   generation path: game-day decoding bypasses them; native loading requires them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
-  The records describe offline AdamW training (learning rate $10^{-4}$,
+  Records describe offline AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
   on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
-  80 training datasets (\num{7877} lists; \num{8894} contexts). Global batch size
-  alone does not establish per-GPU microbatch or accumulation settings.
-  Checkpoint acceptance evidence and a held-out promotion receipt are still
-  required by the evaluation contract (\cref{sub:results-protocol}).
+  80 training datasets (\num{7877} lists; \num{8894} contexts). Batch size alone
+  establishes neither per-GPU microbatch nor accumulation settings.
+  Checkpoint acceptance and held-out promotion still require receipts
+  (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
   Final evaluation requires seccomp and Landlock isolation, cgroup memory
   limits, disabled swap and native/emitted-code agreement within
