@@ -1,10 +1,10 @@
 # JAIN — Just An Inference Network
 
-The **42-second Intelligence Wave** cut plays all ten synthetic regression cases at 1080p30. Each chapter holds the 17-row table in place, sweeps light over the original measured network render, and scrolls the entire unfitted Rust recipe. Exact GP fit and predict call sites cue the sweep and the source gutter markers. The visible benchmark retains its original fitted-export scope.
+The **42-second Intelligence Wave** cut plays all ten synthetic regression cases at 1080p30. Each chapter shuffles the verified 17-row table twice and sweeps light over the original measured network render. The source pane scrolls language-specific code with matching filenames, syntax colors, and current line numbers. Eight language icons and labels rotate with the chapters. The compact benchmark retains its original fitted-export scope.
 
-[Short-cut plan](INTELLIGENCE_WAVE_PLAN.md) · [Short-cut receipt](INTELLIGENCE_WAVE_RECEIPT.json) · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114)
+[Short-cut plan](INTELLIGENCE_WAVE_PLAN.md) · [Multilingual cut receipt](MULTILINGUAL_WAVE_RECEIPT.json) · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114)
 
-The local movie is `h256/intelligence-wave-v1/final/JAIN-intelligence-wave-42s.mp4` under the existing render artifact root. The ten full recipes are in `h256/intelligence-wave-v1/JAIN-ten-Rust-recipes.zip`.
+The local movie is `h256/intelligence-wave-v1/final-multilingual-v2/JAIN-intelligence-wave-42s.mp4` under the existing render artifact root. The source packages are in `h256/intelligence-wave-v1/multilingual-source/JAIN-multilingual-recipe-sources.zip`. The [original Rust cut receipt](INTELLIGENCE_WAVE_RECEIPT.json) records the earlier 42-second edit.
 
 ## Earlier long cut
 

@@ -1,17 +1,61 @@
 """Regression checks for complete sampled source scroll and wave confinement."""
-import sys
+import hashlib
 from pathlib import Path
+import sys
+import tempfile
 import unittest
 
 import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from intelligence_wave import CASE_FRAMES, SCROLL_FIRST, SCROLL_LAST, scroll_offsets
+from intelligence_wave import (
+    CASE_FRAMES, SCROLL_FIRST, SCROLL_LAST, code_strip, display_rate, scroll_offsets, table_orders,
+)
 from intelligence_wave_effect import apply_wave
+from code_pages import FONT_CANDIDATES
 
 
 class IntelligenceWaveTests(unittest.TestCase):
+    def test_compact_rate_labels(self):
+        self.assertEqual(display_rate(2_409_214), "2.4M tokens/sec")
+        self.assertEqual(display_rate(299_700), "300k tokens/sec")
+        self.assertEqual(display_rate(999_970), "1M tokens/sec")
+        self.assertEqual(display_rate(500), "500 tokens/sec")
+
+    def test_table_shuffles_are_reproducible_complete_permutations(self):
+        row_ids = range(2, 36, 2)
+        orders = table_orders("case-a", row_ids)
+        self.assertEqual(orders[0], list(range(17)))
+        self.assertEqual(orders, table_orders("case-a", row_ids))
+        self.assertEqual(len({tuple(order) for order in orders}), 3)
+        for order in orders:
+            self.assertEqual(sorted(order), list(range(17)))
+        with self.assertRaisesRegex(ValueError, "17 distinct"):
+            table_orders("case-a", [0] * 17)
+
+    def test_source_spans_follow_their_language_and_file(self):
+        font = next((Path(path) for path in FONT_CANDIDATES if Path(path).is_file()), None)
+        if font is None:
+            self.skipTest("monospace raster font unavailable")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            files = []
+            for name, language, text, spans in (
+                ("model.cpp", "cpp", b"fit();\npredict();\n", [[0, 7], [7, 18]]),
+                ("model.js", "javascript", b"const head = 'ridge';\n", [[0, 21]]),
+            ):
+                (root / name).write_bytes(text)
+                files.append({"language": language, "source_path": name,
+                              "source_sha256": hashlib.sha256(text).hexdigest(),
+                              "operations": [{"label": "ridge", "ordinal": 1, "spans": spans}]})
+            _, rows, _, _, cues, bindings = code_strip(files, root, root / "pages", font, 563, 845)
+            self.assertEqual([item["filename"] for item in bindings], ["model.cpp", "model.js"])
+            self.assertEqual([(cue["file_index"], cue["phase"]) for cue in cues],
+                             [(0, "fit"), (0, "predict"), (1, "recipe")])
+            self.assertEqual([cue["rows"] for cue in cues], [[0, 0], [1, 1], [4, 4]])
+            self.assertEqual(rows[-1], (1, 1))
+
     def test_each_wrapped_row_is_fully_visible_in_linear_scroll(self):
         row_count, line_height, view_height = 1_350, 19, 845
         offsets = scroll_offsets(row_count, line_height, view_height)

@@ -1,0 +1,258 @@
+{
+  "schema": "jain.intelligence-wave-multilingual-review/v1",
+  "status": "PASS",
+  "movie_sha256": "588fab8dcd914faa8aa87b19cce34e3741604956ae523b95055cae5380c74882",
+  "encode_receipt_sha256": "618b5abfe0b0d1aaa7a78f0cea0c59834884b1a69d77e056b4925fdebd05d3ec",
+  "ffprobe_sha256": "79e57130dc7ae3a2d464a2a9364172ceea4b56bbdb1612d725f6d99c3ed1732e",
+  "decoded_frames": 1260,
+  "fps": 30,
+  "duration_seconds": 42,
+  "width": 1920,
+  "height": 1080,
+  "chapters": 10,
+  "language_count": 8,
+  "source_catalog_sha256": "41c16e8cf863c0233e978806e3d0fb2171d05b23085930bd788ac15afcdb474e",
+  "source_archive_sha256": "2c4890be823cee26c0b2c5e442ab6713d189d71ef9c75ce89b15b2ea197e6f1b",
+  "preview_count": 21,
+  "full_source_scroll": true,
+  "verified_row_and_icon_pixels_in_previews": true,
+  "artifact_root": "h256/intelligence-wave-v1",
+  "movie": "final-multilingual-v2/JAIN-intelligence-wave-42s.mp4",
+  "sources": "multilingual-source/JAIN-multilingual-recipe-sources.zip",
+  "review_receipt_sha256": "b55c612020c47969feffe95d195d5d77e9c631ee8cad67bf33d34b7dd1d7e1cc",
+  "scene_receipt_sha256": "ee84101a34c8676e3a0519d11d7e887d7b2d990acfb611f33eac34fb00727d78",
+  "table_catalog_sha256": "5615e3f78757a8d94e772976568e66ebfd2898d1785d08b0722636f86120b73b",
+  "compositor_sha256": "753b39d42500eef216d621561419ddc8829d9456433e4f3a3dc4b28b744a4241",
+  "source_generator_sha256": "d1765b9cc57212da38beabb7d04761b465178474da6fd7c023d255790c487d0b",
+  "syntax_renderer_sha256": "3c8f02bebfc7becb8602ae4ecb03c503248a2b35419cf105ed65f2062e185d49",
+  "metric_scope": "archived data-to-complete-fitted-Rust benchmark, separate from visible recipe",
+  "table_shuffle_scope": "Seeded display permutations of the same 17 verified FIT rows, at 1.4 and 2.8 seconds",
+  "gp_source_cues": 87,
+  "visualization_unit_tests_passed": 53,
+  "cases": [
+    {
+      "case_id": "case-a",
+      "language": "cpp",
+      "files": [
+        {
+          "filename": "model.cpp",
+          "language": "cpp",
+          "source_sha256": "3435f14151bf6006bc0018d2c1d81f8e0444881a593800f3a73771420bed3d3c"
+        }
+      ],
+      "target_execution": "local target executed",
+      "original_model_id": "sha256-95c0f500a186253bbdc9d3c4928f325ec596dcbe1584863d6f4b72c5b38ab28d",
+      "language_icon_sha256": "f25db338a7fc708716c92dddcf7f2b7c91ee0da8accfb1c16cd4401beaf868b5",
+      "prediction_checks": [
+        {
+          "target": "cpp17",
+          "max_abs_error": 0.0
+        },
+        {
+          "target": "cpp20",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-b",
+      "language": "python",
+      "files": [
+        {
+          "filename": "model.py",
+          "language": "python",
+          "source_sha256": "901288452ccd3221854f98a02d1c590679adac389f7137081165a2ee2304e762"
+        }
+      ],
+      "target_execution": "local target executed",
+      "original_model_id": "sha256-4d09f2706e605a5ace33703c0c326fc08e7a4a6d6fd7a2b06a38f0c027e2c92c",
+      "language_icon_sha256": "123da8a59e9a5da5a3ac26674bc87a32d3b47fe1a0abc5bb160b228c5679b7fd",
+      "prediction_checks": [
+        {
+          "target": "python",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-c",
+      "language": "rust",
+      "files": [
+        {
+          "filename": "model.rs",
+          "language": "rust",
+          "source_sha256": "3475417f2b65c798641e2b5b4251b69cc4ef75335ddf2e95ad8b2f00d1273291"
+        }
+      ],
+      "target_execution": "local target executed",
+      "original_model_id": "sha256-4031d400c3c935d771b0df20092962d679b0a0a304db58969bf1b7789c21e1f1",
+      "language_icon_sha256": "c2e29177c22e23b029c4229a9661fdf1efaf5c41ff7d22d069ad48391bd0b860",
+      "prediction_checks": [
+        {
+          "target": "rust",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-d",
+      "language": "typescript",
+      "files": [
+        {
+          "filename": "model.ts",
+          "language": "typescript",
+          "source_sha256": "84b4d2d7be24e5e873c33a567a69e7d4cc31dda1a70edfb8d52a51f361834fce"
+        },
+        {
+          "filename": "model.kernel.rs",
+          "language": "rust",
+          "source_sha256": "1dec9a1d682c4f00ef53d2e0b3ee56b63d163a422edc7db600b4096689a3f41c"
+        }
+      ],
+      "target_execution": "source bound; TypeScript/Wasm host execution unverified",
+      "original_model_id": "sha256-afb32466c01f08b823681697ace1ce42c9a189f939f3a67fcf8ba10ac0f5af34",
+      "language_icon_sha256": "a30a9c57f519e190261e7c99e0c56e7b429607d08bf76e055191370903b7d124",
+      "prediction_checks": [
+        {
+          "target": "typescript",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-e",
+      "language": "go",
+      "files": [
+        {
+          "filename": "model.go",
+          "language": "go",
+          "source_sha256": "dd136d1ac0e044f67a6e6119867c2c2953059fe6664a59c471a92f5dcad9c73a"
+        },
+        {
+          "filename": "model.go.kernel.rs",
+          "language": "rust",
+          "source_sha256": "b2b4f2fbbb98605e05a2d194728814a41bf9a4e2bc2558fd2ffa773ae148c6a7"
+        }
+      ],
+      "target_execution": "source bound; Go/Wasm host execution unverified",
+      "original_model_id": "sha256-874edd02f5c70ecf976dbfa0d460623561003d5e12c7969ae5863f1127da1604",
+      "language_icon_sha256": "443a62adc65a50b422e3373bacdb58cef50f0b85ba1641c2042d16a29920ac39",
+      "prediction_checks": [
+        {
+          "target": "go",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-f",
+      "language": "javascript",
+      "files": [
+        {
+          "filename": "model.js",
+          "language": "javascript",
+          "source_sha256": "a2a1b1a20337df955e325b4161a0fa9e15bea1dd5bf51de62e5a374b5410a85c"
+        }
+      ],
+      "target_execution": "local target executed",
+      "original_model_id": "sha256-c03999a4d9e186ca44d20c65b0cf63d70d129354df4eb00ec11002b0a560ee20",
+      "language_icon_sha256": "2d0151fc77d7f6d2fc65b05d1a8eef51655086317af6b2eae761bf34187ce859",
+      "prediction_checks": [
+        {
+          "target": "javascript",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-g",
+      "language": "cuda",
+      "files": [
+        {
+          "filename": "model.cu",
+          "language": "cuda",
+          "source_sha256": "4040955a53ccd05a18efe59f96a40f317673a676ae3532c5cd957a15000ebc93"
+        },
+        {
+          "filename": "model_core.rs",
+          "language": "rust",
+          "source_sha256": "d645750e5e11f1c9dceecaf9b5efd744da66156b19d1e0d5c7cd042445d9940b"
+        }
+      ],
+      "target_execution": "source bound; Ridge device path emitted; CUDA execution unverified",
+      "original_model_id": "sha256-264945a1853c9b607720081934db510100195c1c19857c59efb8959b51e44462",
+      "language_icon_sha256": "7da1a620d34fbcfaa40ea31b40085d354bd60120a10e818557ae741f8327a3cd",
+      "prediction_checks": [
+        {
+          "target": "cuda",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-h",
+      "language": "python",
+      "files": [
+        {
+          "filename": "model.py",
+          "language": "python",
+          "source_sha256": "4f0ec5541df44435942d9091b805a6a10dbb492efc48ff23f01cf072e11955c6"
+        }
+      ],
+      "target_execution": "local target executed",
+      "original_model_id": "sha256-1f8d60d0dae96ef2e8851532ea9e3da881ec5a40006acf58274057dda89ae697",
+      "language_icon_sha256": "123da8a59e9a5da5a3ac26674bc87a32d3b47fe1a0abc5bb160b228c5679b7fd",
+      "prediction_checks": [
+        {
+          "target": "python",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-i",
+      "language": "rust",
+      "files": [
+        {
+          "filename": "model.rs",
+          "language": "rust",
+          "source_sha256": "76391e44452b3e7db4f45b90516e7291df55ea8536cb5f30f51ea974bd73d496"
+        }
+      ],
+      "target_execution": "local target executed",
+      "original_model_id": "sha256-090fc4da82c5729164e3882b9f25b85ac01dc1988009e48e233f51f2e8fa146c",
+      "language_icon_sha256": "c2e29177c22e23b029c4229a9661fdf1efaf5c41ff7d22d069ad48391bd0b860",
+      "prediction_checks": [
+        {
+          "target": "rust",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "case_id": "case-j",
+      "language": "c",
+      "files": [
+        {
+          "filename": "model.h",
+          "language": "c",
+          "source_sha256": "20d6f8978a52cfae780616805b8523995a3ccd30cc2237bac4cf616806665e62"
+        },
+        {
+          "filename": "model_core.rs",
+          "language": "rust",
+          "source_sha256": "fdab6293691e6af756c70a2a68a3f8fdbe3c922db556c6b1d5b27ac370eab8a1"
+        }
+      ],
+      "target_execution": "local target executed",
+      "original_model_id": "sha256-b9f234b4380e332b98f314a9f2b572e1a3e50e0be0fc8a312cef43eb12bf9050",
+      "language_icon_sha256": "cc127e265c7eb7b3096066f6bf8345d07d93a54344c131df461a73efab53d36c",
+      "prediction_checks": [
+        {
+          "target": "c17",
+          "max_abs_error": 0.0
+        }
+      ]
+    }
+  ]
+}

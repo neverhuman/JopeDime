@@ -1,4 +1,4 @@
-"""Rasterize complete, byte-bound Rust source into opaque review HUD pages.
+"""Rasterize complete, byte-bound source into opaque review HUD pages.
 
 This creates new text assets, not edited screenshots. Soft wrapping never changes
 the source. Manifest chunks retain every original character, including tabs and
@@ -18,6 +18,7 @@ from pathlib import Path
 MAX_SOURCE_BYTES = 4 * 1024 * 1024
 MAX_PAGES = 4096
 SCHEMA = "jain.code-pages/v1"
+SOURCE_LANGUAGES = ("rust", "python", "cpp", "c", "javascript", "typescript", "go", "cuda")
 PALETTE = {
     "background": "#0B1119", "border": "#263140", "text": "#E8EEF5",
     "keyword": "#8FA3BF", "punctuation": "#78849A", "string": "#C8B98F",
@@ -153,14 +154,10 @@ def _fallback_spans(source: str) -> list[tuple[int, int, str]]:
     return result
 
 
-def _spans(source: str) -> tuple[list[tuple[int, int, str]], str]:
-    try:
-        import pygments
-        from pygments.lexers import RustLexer
-        from pygments.token import Comment, Keyword, Number, Operator, Punctuation, String
-    except ImportError:
-        return _fallback_spans(source), "explicit-rust-lex/v1"
-    lexer = RustLexer(stripnl=False, ensurenl=False, tabsize=0)
+def _lexer_spans(source: str, lexer, suffix: str = "") -> tuple[list[tuple[int, int, str]], str]:
+    import pygments
+    from pygments.token import Comment, Keyword, Number, Operator, Punctuation, String
+
     spans, cursor = [], 0
     for offset, token, text in lexer.get_tokens_unprocessed(source):
         if not text:
@@ -177,7 +174,31 @@ def _spans(source: str) -> tuple[list[tuple[int, int, str]], str]:
         spans.append((offset, cursor, category))
     if cursor != len(source):
         raise ValueError("syntax lexer omitted source characters")
-    return spans, f"Pygments {pygments.__version__} RustLexer"
+    return spans, f"Pygments {pygments.__version__} {type(lexer).__name__}{suffix}"
+
+
+def _spans(source: str) -> tuple[list[tuple[int, int, str]], str]:
+    try:
+        from pygments.lexers import RustLexer
+    except ImportError:
+        return _fallback_spans(source), "explicit-rust-lex/v1"
+    return _lexer_spans(source, RustLexer(stripnl=False, ensurenl=False, tabsize=0))
+
+
+def _language_spans(source: str, language: str) -> tuple[list[tuple[int, int, str]], str]:
+    try:
+        from pygments.lexers import get_lexer_by_name
+        from pygments.util import ClassNotFound
+    except ImportError as error:
+        raise ValueError(f"Pygments is required for {language} syntax coloring") from error
+    options = {"stripnl": False, "ensurenl": False, "tabsize": 0}
+    try:
+        lexer = get_lexer_by_name(language, **options)
+    except ClassNotFound:
+        if language != "cuda":
+            raise
+        return _lexer_spans(source, get_lexer_by_name("cpp", **options), " (CUDA syntax fallback)")
+    return _lexer_spans(source, lexer)
 
 
 def reconstruct_source(manifest: dict) -> bytes:
@@ -210,13 +231,15 @@ def reconstruct_source(manifest: dict) -> bytes:
 
 
 def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = None,
-               font_size: int = 21, columns: int = 48, rows: int = 24) -> dict:
+               font_size: int = 21, columns: int = 48, rows: int = 24, *,
+               language: str = "rust") -> dict:
     """Create complete-source PNG pages and a lossless source-chunk manifest.
 
     Output directories must not exist. ``manifest.json`` is written last; an
     interrupted directory without that manifest is incomplete and never reused.
     ``columns`` counts display cells; tabs retain their source byte and advance
     to four-column stops, without inserting spaces into the stored source.
+    ``language`` selects syntax coloring independently of source reconstruction.
     """
     from PIL import Image, ImageDraw, ImageFont
     source_path, output_dir = Path(source_path).resolve(), Path(output_dir).resolve()
@@ -224,6 +247,8 @@ def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = Non
         raise FileExistsError("refuse to replace an existing code-page output directory")
     if not (8 <= font_size <= 96 and 8 <= columns <= 160 and 2 <= rows <= 100):
         raise ValueError("font_size 8..96, columns 8..160, rows 2..100 required")
+    if language not in SOURCE_LANGUAGES:
+        raise ValueError(f"unsupported source language {language!r}")
     with source_path.open("rb") as handle:
         raw = handle.read(MAX_SOURCE_BYTES + 1)
     if not raw or len(raw) > MAX_SOURCE_BYTES:
@@ -245,7 +270,7 @@ def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = Non
     if width > 4096 or height > 4096:
         raise ValueError("code-page dimensions exceed 4096 pixels")
     chunks = _wrap(source, columns, MAX_PAGES * rows)
-    spans, lexer = _spans(source)
+    spans, lexer = _spans(source) if language == "rust" else _language_spans(source, language)
     page_count = math.ceil(len(chunks) / rows)
     if not 1 <= page_count <= MAX_PAGES:
         raise ValueError("source exceeds page budget")
@@ -264,6 +289,8 @@ def make_pages(source_path: Path, output_dir: Path, font_path: Path | None = Non
         "presentation": "opaque screen-space HUD pages; page switches CONSTANT or explicit vertical scrolling",
         "pages": [],
     }
+    if language != "rust":
+        manifest["language"] = language
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     output_dir.mkdir()  # Exclusive creation; never edit or replace existing images.
     span_index = 0
@@ -331,8 +358,10 @@ def main() -> None:
     parser.add_argument("--font-size", type=int, default=21)
     parser.add_argument("--columns", type=int, default=48)
     parser.add_argument("--rows", type=int, default=24)
+    parser.add_argument("--language", choices=SOURCE_LANGUAGES, default="rust")
     args = parser.parse_args()
-    result = make_pages(args.source, args.output, args.font, args.font_size, args.columns, args.rows)
+    result = make_pages(args.source, args.output, args.font, args.font_size, args.columns, args.rows,
+                        language=args.language)
     print(json.dumps({"manifest": str(args.output.resolve() / "manifest.json"),
                       "source_sha256": result["source_sha256"], "pages": result["page_count"],
                       "width": result["width"], "height": result["height"]}))

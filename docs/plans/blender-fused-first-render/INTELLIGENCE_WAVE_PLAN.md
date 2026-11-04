@@ -1,5 +1,33 @@
 # JAIN Intelligence Wave short film
 
+## Multilingual revision
+
+The 42-second timeline uses C++, Python, Rust, TypeScript, Go, JavaScript, CUDA C++, Python, Rust, and C in dataset order. The displayed filename, syntax lexer, and source label follow each visible file. Each chapter's language icon and name sit below the network. TypeScript and Go show their bindings and Rust/Wasm kernels. C and CUDA C++ show their interfaces and Rust cores. The source archive contains the complete build files.
+
+Use the exact selected GP and original model object for every chapter. The local C++, Python, Rust, JavaScript, and C ABI checks execute the displayed targets on the saved normalized FIT and probe rows. The TypeScript, Go, and CUDA C++ chapters bind their emitted sources and qualify the numerical Rust cores on the host. Their Wasm and CUDA execution paths have separate qualification gates. Source-span cues follow the actual operations in each file and the underlying core when the interface contains no selected operations.
+
+The source pane shows the current line alone. The historical fitted export rate uses compact forms such as `2.4M tokens/sec` and `300k tokens/sec`. Shuffle each set of 17 verified visible FIT rows at chapter frames 42 and 84, moving row IDs, values, the rightmost target, and sensitivity scores as one record. Seed each permutation by case ID and record the displayed row order in the encode receipt.
+
+Run the original source preparation below to reproduce the pinned Rust recipe catalog. Then emit and qualify the multilingual source and compose the current cut.
+
+```sh
+rtk proxy python3 tools/visualization/multilingual_wave_source.py \
+  --gp-source "$ANIMATION_TEN/gp-source" --rust-catalog "$WAVE_ROOT/recipe-source/catalog.json" \
+  --output "$WAVE_ROOT/multilingual-source" --rustc "$PINNED_RUSTC" \
+  --feat-math-rlib target/release/deps/libfeat_math-22a436f36cb6fece.rlib
+rtk proxy python3 tools/visualization/intelligence_wave.py \
+  --scene-receipt "$ANIMATION_TEN/scene-v2/scene.receipt.json" \
+  --source-catalog "$WAVE_ROOT/multilingual-source/catalog.json" \
+  --loops-root "$ANIMATION_TEN/loops" --table-panels "$ANIMATION_TEN/table-panels-v1" \
+  --output-dir "$WAVE_ROOT/final-multilingual-v2"
+```
+
+Validate all 1,260 decoded frames, ten chapters, source reconstruction for each displayed file, the lexer selection, all permutations, and icon and table pixel identity on the review stills. The [icon inventory](language-icons/README.md) binds the input marks and licenses.
+
+## Original Rust cut
+
+The original Rust cut is reproducible at commit `29928ffee2601aadafcfeb00a4b2b080497f56a2`. Its plan and evidence follow.
+
 ## Objective and scope
 
 Deliver a 42.0 second 1920×1080, 30 fps cut on the existing [draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114). Play the ten existing, explicitly synthetic regression datasets in their original order. Each gets 126 frames. Keep the verified 17-row table at left and the real Blender neural display at center. Scroll the complete Rust recipe for the actual selected GP at right. A light wave across the existing neural display provides a visual cue for each data-to-recipe sequence.

@@ -48,10 +48,15 @@ def rust_spans(source: str):
 
 
 @contextmanager
-def presentation():
+def presentation(language: str = "rust"):
+    """Use the cinematic palette with the selected source's lexer."""
+    if language not in code_pages.SOURCE_LANGUAGES:
+        raise ValueError(f"unsupported source language {language!r}")
     # This CLI owns its process; restore both module bindings even on refusal.
     previous_palette, previous_spans = code_pages.PALETTE, code_pages._spans
-    code_pages.PALETTE, code_pages._spans = PALETTE, rust_spans
+    code_pages.PALETTE = PALETTE
+    if language == "rust":
+        code_pages._spans = rust_spans
     try:
         yield
     finally:
