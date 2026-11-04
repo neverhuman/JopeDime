@@ -1,7 +1,10 @@
-.PHONY: pdf figs clean
-pdf:
+.PHONY: pdf figs clean supplement
+pdf: supplement
 	latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 	cp main.pdf eurekazero_whitepaper.pdf
+supplement:
+	SOURCE_DATE_EPOCH=1793753726 latexmk -pdf -interaction=nonstopmode -halt-on-error supplement_parameter_displacement.tex
+	cp supplement_parameter_displacement.pdf eurekazero_supplement.pdf
 figs:
 	python3 figures/scripts/make_flywheel_figs.py
 	python3 figures/scripts/make_schematics.py
@@ -49,5 +52,6 @@ figs:
 	python3 figures/scripts/make_candidate_margin_window.py
 	python3 figures/scripts/make_decision_cadence.py
 	python3 figures/scripts/make_parameter_displacement.py
+	python3 figures/scripts/make_gradient_norms.py
 clean:
 	latexmk -C

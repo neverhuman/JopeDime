@@ -1,0 +1,25 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}\usepackage[utf8]{inputenc}
+\usepackage{mathptmx,amsmath,graphicx,caption}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={EurekaZero: Supplementary Telemetry},pdfauthor={JopeDime Team},pdflang={en-US}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\begin{document}
+\section*{EurekaZero: Supplementary Telemetry}
+\noindent Candidate parameter movement is recorded before admission; retention
+and independent learning remain separate questions.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=3.375in]{figures/fig_parameter_displacement.pdf}
+  \caption{\textbf{Recorded candidate displacement varies across rounds.}
+  All 40 complete retained summaries, rounds 4662--4701, captured at
+  00:55 UTC on 4 November 2026. Each point is the logged candidate parameter-space
+  L2 displacement; no smoothing or filtering is applied. In the inspected
+  loop, it includes warm-restart perturbation and optimization before
+  admission. The journal records zero admissions in this window.
+  This does not isolate optimizer effects or establish a retained learning
+  gain. Scope: the adaptive adapter admission record in the main manuscript.}
+  \label{fig:parameter-displacement}
+\end{figure}
+\end{document}

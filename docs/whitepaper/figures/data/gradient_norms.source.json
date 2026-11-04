@@ -1,0 +1,25 @@
+{
+  "schema": "whitepaper.gradient-norms-source/v1",
+  "source_journal": "summary.jsonl",
+  "captured_utc": "2026-11-04T02:55:56.919351+00:00",
+  "source_prefix_bytes": 1513622,
+  "source_prefix_sha256": "ffb53dc26416057f5fc0ea9ca001877a417c756891e9c4778320bf5d796c2b64",
+  "source_prefix_records": 9,
+  "selection": "Latest up to60 complete retained summary records, selected before inspecting gradient norms or admission values; every selected record retained with no outcome/value filtering.",
+  "records": 9,
+  "points": 18,
+  "round_window": [
+    4762,
+    4770
+  ],
+  "source_line_window": [
+    1,
+    9
+  ],
+  "csv_sha256": "f2f388cbccc8c4f3e547d6ce84ab6568a37f4c00b8a3463964ac2ef88f5e9f55",
+  "source_field": "gradient_norms_before_clip: element0 and element1 copied exactly",
+  "optimizer_steps": 2,
+  "accepted": 0,
+  "transformation": "One unsmoothed marker per recorded optimizer step per completed round. Color/shape distinguishes step index; no filtering, interpolation or cumulative envelope.",
+  "scope": "Logged candidate adapter gradient magnitudes before clipping. The two steps use separate recorded training batches; their difference is not a matched loss reduction, parameter displacement, retained improvement or independent learning. Exact runtime binding remains unqualified."
+}
