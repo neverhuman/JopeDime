@@ -1,0 +1,472 @@
+{
+  "used_cores": [
+    4
+  ],
+  "allowed_cores": [
+    4,
+    5,
+    6,
+    8,
+    33,
+    41
+  ],
+  "nice": 19,
+  "numeric_threads": 1,
+  "memory_max_bytes": 6442450944,
+  "memory_swap_max_bytes": 0,
+  "scratch_limit_bytes": 2000000000,
+  "compute_stop": "2026-11-05T00:15:00Z",
+  "close_stop": "2026-11-05T00:30:00Z",
+  "peak_sampled_rss_bytes": 836812800,
+  "peak_sampled_host_cpu": 50.5,
+  "guard_violations": [],
+  "idle_probe": {
+    "utc": "2026-11-04T21:59:12.605432+00:00",
+    "sample_seconds": 5,
+    "minimum_idle": 85,
+    "idle": {
+      "4": [
+        94.2,
+        96.1
+      ],
+      "5": [
+        95.5,
+        94.9
+      ],
+      "6": [
+        94.7,
+        95.7
+      ],
+      "8": [
+        96.3,
+        77.4
+      ],
+      "33": [
+        96.3,
+        95.3
+      ],
+      "41": [
+        90.2,
+        94.1
+      ]
+    },
+    "admitted": [
+      4,
+      5,
+      6,
+      33,
+      41
+    ],
+    "selected_core": 4
+  },
+  "phases": {
+    "calibration.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "score.py": "512bee768cda9151836bec16a3e317d4a273352af33f099e8b7bfcb3639a1947",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "base_veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "test_score_route.py": "4b28a51354448bddd4bd6b09b476c8e14c9da48b07b1b0c578d73957af5fd143",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "calibrate.py": "f17dd148741bb475fa90120b1c8aba3e1bee511491ad0ba0ddfa51e05312a35b",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2",
+        "base_h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 836812800,
+        "threads": 3,
+        "host_cpu": 50.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/source/calibrate.py"
+      ],
+      "started_epoch": 1793830199.2899215,
+      "finished_epoch": 1793830612.007223,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "regression.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 746708992,
+        "threads": 3,
+        "host_cpu": 22.9
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/source/regression.py"
+      ],
+      "started_epoch": 1793829796.600482,
+      "finished_epoch": 1793829842.87567,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "lockreview.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "score.py": "512bee768cda9151836bec16a3e317d4a273352af33f099e8b7bfcb3639a1947",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "base_veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "test_score_route.py": "4b28a51354448bddd4bd6b09b476c8e14c9da48b07b1b0c578d73957af5fd143",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "calibrate.py": "f17dd148741bb475fa90120b1c8aba3e1bee511491ad0ba0ddfa51e05312a35b",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2",
+        "base_h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 620920832,
+        "threads": 3,
+        "host_cpu": 46.7
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/review_locks.py"
+      ],
+      "started_epoch": 1793830615.7357585,
+      "finished_epoch": 1793830624.8723128,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "checks.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 79187968,
+        "threads": 2,
+        "host_cpu": 13.2
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/checks.py"
+      ],
+      "started_epoch": 1793829783.2432787,
+      "finished_epoch": 1793829784.5850902,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "recover.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 78131200,
+        "threads": 2,
+        "host_cpu": 18.1
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/source/recover.py"
+      ],
+      "started_epoch": 1793829754.9853837,
+      "finished_epoch": 1793829770.8026597,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "prereg.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 87429120,
+        "threads": 7,
+        "host_cpu": 20.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/publish.py",
+        "prereg"
+      ],
+      "started_epoch": 1793829667.9507675,
+      "finished_epoch": 1793829671.5374105,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "score.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "score.py": "512bee768cda9151836bec16a3e317d4a273352af33f099e8b7bfcb3639a1947",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "base_veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "test_score_route.py": "4b28a51354448bddd4bd6b09b476c8e14c9da48b07b1b0c578d73957af5fd143",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "calibrate.py": "f17dd148741bb475fa90120b1c8aba3e1bee511491ad0ba0ddfa51e05312a35b",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2",
+        "base_h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 696934400,
+        "threads": 3,
+        "host_cpu": 45.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/source/score.py"
+      ],
+      "started_epoch": 1793830625.2361462,
+      "finished_epoch": 1793830719.6880898,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "evaluate.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "score.py": "512bee768cda9151836bec16a3e317d4a273352af33f099e8b7bfcb3639a1947",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "base_veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "test_score_route.py": "4b28a51354448bddd4bd6b09b476c8e14c9da48b07b1b0c578d73957af5fd143",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "calibrate.py": "f17dd148741bb475fa90120b1c8aba3e1bee511491ad0ba0ddfa51e05312a35b",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2",
+        "base_h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 113082368,
+        "threads": 2,
+        "host_cpu": 41.1
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/source/evaluate.py"
+      ],
+      "started_epoch": 1793830720.0373273,
+      "finished_epoch": 1793830736.1892116,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "implementation.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "score.py": "512bee768cda9151836bec16a3e317d4a273352af33f099e8b7bfcb3639a1947",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "base_veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "test_score_route.py": "4b28a51354448bddd4bd6b09b476c8e14c9da48b07b1b0c578d73957af5fd143",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "calibrate.py": "f17dd148741bb475fa90120b1c8aba3e1bee511491ad0ba0ddfa51e05312a35b",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2",
+        "base_h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 91144192,
+        "threads": 7,
+        "host_cpu": 49.2
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/publish.py",
+        "implementation"
+      ],
+      "started_epoch": 1793830131.3280046,
+      "finished_epoch": 1793830138.5725524,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "routechecks.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "score.py": "512bee768cda9151836bec16a3e317d4a273352af33f099e8b7bfcb3639a1947",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "base_veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "test_score_route.py": "4b28a51354448bddd4bd6b09b476c8e14c9da48b07b1b0c578d73957af5fd143",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "calibrate.py": "f17dd148741bb475fa90120b1c8aba3e1bee511491ad0ba0ddfa51e05312a35b",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2",
+        "base_h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 41889792,
+        "threads": 2,
+        "host_cpu": 46.8
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/routechecks.py"
+      ],
+      "started_epoch": 1793830032.9657505,
+      "finished_epoch": 1793830034.397103,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    },
+    "numreview.resource_summary.json": {
+      "source_sha256": {
+        "statistics_h337.py": "dd554e3e111843e329fa9e168d75c9de311e24f0299be517f4101c3576ae4221",
+        "score.py": "512bee768cda9151836bec16a3e317d4a273352af33f099e8b7bfcb3639a1947",
+        "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "base_veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+        "regression.py": "8129b0fafd2dc56706414997db27b1824ae91a1a4794413d5f5c28bcb62ebfa3",
+        "recover.py": "1819005e9ef365b22b4d10bcbb14071972a097001aef23755016484d3a769b38",
+        "evaluate.py": "66a23cd39e63e270c5e54feb895560d2b9515556405b9ca454db9c4412b3058e",
+        "softvote.py": "b6e0130d82e20e01a6008631c12cd0fae6180342040045a9d6568310d7a84d08",
+        "test_score_route.py": "4b28a51354448bddd4bd6b09b476c8e14c9da48b07b1b0c578d73957af5fd143",
+        "runtime.py": "958204d87efa2902ab37a70f008e8b423602fa02ac78baa3f4422ad44a83f8b3",
+        "test_boundary.py": "bbae709956128cd8420ce9721bb66de58957e548e3b54bc98ecda3d138e88493",
+        "test_analysis.py": "79401678885ad65f47666c218460919da6a6e949e2376cd3d0b24cc42de5c20c",
+        "calibrate.py": "f17dd148741bb475fa90120b1c8aba3e1bee511491ad0ba0ddfa51e05312a35b",
+        "test_softvote.py": "1704a3210c8ef293f7a1bcd240310df3a6501b10f283144b520136b50ac35cd2",
+        "base_h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 112062464,
+        "threads": 2,
+        "host_cpu": 41.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h337-astra/review_numbers.py"
+      ],
+      "started_epoch": 1793830736.6671212,
+      "finished_epoch": 1793830749.592086,
+      "cpu_affinity": [
+        4
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793837700
+    }
+  }
+}
