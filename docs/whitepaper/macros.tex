@@ -124,7 +124,10 @@
 \makeatletter
 \newif\iffb@held
 \newcount\fb@flushcount
-\newcommand{\FlushFloatsInPlace}{\global\fb@flushcount\z@\fb@flushstep}
+% A zero penalty first lets TeX commit a column break it is still deciding, so floats it
+% is about to place at the next column top are not counted as held (that ended a column
+% under two lines of the last appendix subsection and left it nearly empty).
+\newcommand{\FlushFloatsInPlace}{\par\penalty\z@\global\fb@flushcount\z@\fb@flushstep}
 \newcommand{\fb@flushstep}{%
   \begingroup\let\@elt\relax
   \edef\@tempa{\@botlist\@deferlist\@dbldeferlist}%
