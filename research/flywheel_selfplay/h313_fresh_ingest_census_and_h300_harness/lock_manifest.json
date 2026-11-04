@@ -1,0 +1,90 @@
+{
+ "wave": "H313",
+ "locks": {
+  "30001": "a06cb7f09a771a5d3a802b3388e3bb73dd61972bcdae58be2f37a50ad52e3347",
+  "30002": "d78922f4a23d42a20da081c3b4be61b9b902986bbcdea882236400171c3c8c81",
+  "30003": "40f02d99a0fd58c4345b7c26ff2c275a8f22ec4801a837795dfbd20333eddc3f",
+  "30004": "3edf0ec25cfa8f3b5215a4dde672d6e224fbfd92b02f32aaf109f9c72ac9a32f",
+  "30005": "e684c1994d3741b0f72e3308aa7db47e59153b2ec1ac8d04b8b03bec7c2a35c8",
+  "30006": "396dd73a3a1b1cf3dcadc8d0ce30608122e88b5aa788ac232ac261092981005e"
+ },
+ "chosen": {
+  "30001": {
+   "tau": 0.1,
+   "k": 5,
+   "a": 2,
+   "inner_gain": 0.05639755383015419,
+   "inner_switches": 212
+  },
+  "30002": {
+   "tau": 0.05,
+   "k": 5,
+   "a": 2,
+   "inner_gain": 0.05496110251614889,
+   "inner_switches": 310
+  },
+  "30003": {
+   "tau": 0.05,
+   "k": 5,
+   "a": 2,
+   "inner_gain": 0.044733018189392966,
+   "inner_switches": 341
+  },
+  "30004": {
+   "tau": 0.1,
+   "k": 5,
+   "a": 2,
+   "inner_gain": 0.04534964347998098,
+   "inner_switches": 255
+  },
+  "30005": {
+   "tau": 0.1,
+   "k": 5,
+   "a": 2,
+   "inner_gain": 0.058178359709196124,
+   "inner_switches": 284
+  },
+  "30006": {
+   "tau": 0.05,
+   "k": 5,
+   "a": 2,
+   "inner_gain": 0.06584180299814386,
+   "inner_switches": 349
+  }
+ },
+ "counters": {
+  "feature_bytes_read": 98792568,
+  "feature_rows_read": 2811012,
+  "dlval_feature_rows_read": 0,
+  "dev91_packets_built_before_lock": 0,
+  "dev91_guard_denials": 0,
+  "member_seeds_new": {
+   "30004": [
+    1952251935,
+    1554721030,
+    514753433
+   ],
+   "30005": [
+    1316784594,
+    642759331,
+    744149750
+   ],
+   "30006": [
+    1442930024,
+    1192635410,
+    1213673495
+   ]
+  }
+ },
+ "dev91_rows_read_before_lock": 0,
+ "h310_reused": [
+  30001,
+  30002,
+  30003
+ ],
+ "fitted_here": [
+  30004,
+  30005,
+  30006
+ ]
+}
