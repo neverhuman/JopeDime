@@ -1031,3 +1031,290 @@ def test_stable_stage_v_api(nonpilot):
     assert set(out) == set(L.STAGE_V_PIPELINES)
     assert all(v["audit_ledger"]["audit_requests"] >= 1 for v in out.values())
     assert out["SCREEN_TOPK_PICK"]["live_evals"] == out["H317_LOCKED"]["live_evals"]
+
+
+def test_audit_half_masks_deterministic_and_stratified():
+    rng = np.random.default_rng(4)
+    ya = rng.normal(size=97)
+    m0, m1 = E.audit_half_masks("c" * 64, ya)
+    assert (
+        not (m0 & m1).any()
+        and (m0 | m1).all()
+        and abs(int(m0.sum()) - int(m1.sum())) <= 1
+    )
+    a0, _ = E.audit_half_masks("c" * 64, ya)
+    assert np.array_equal(m0, a0)
+    order = np.argsort(ya, kind="stable")
+    for s in range(
+        0, 96, 2
+    ):  # every consecutive y-sorted pair is split across the halves
+        assert m0[order[s]] != m0[order[s + 1]]
+    assert E.audit_half_utilities("c" * 64, None, ya, 0.0) == [0.0, 0.0]
+
+
+def test_run_pipeline_a3_fields_and_width(nonpilot):
+    rows = C.train_rows()
+    lock = L.LockedConfig(scheme="C", arm="evoB", generations=10, stack="CV3@5")
+    before = G.MAX_EXPANDED_WIDTH
+    kw = dict(
+        locked=lock,
+        cores=[0, 1],
+        gp_root=scratch("a3"),
+        meta_rows=rows,
+        guard=False,
+        runner=fake_runner(),
+    )
+    for name in ("BANK_NN1", "H317_LOCKED", "BANK_NN8_PORTFOLIO"):
+        rec = L.run_pipeline(
+            name,
+            nonpilot[16],
+            317101,
+            S.FallbackScreener(),
+            HashCoder(),
+            max_expanded_width=777,
+            **kw,
+        )
+        assert rec["max_expanded_width"] == 777 and G.MAX_EXPANDED_WIDTH == before
+        assert len(rec["audit_half_utilities"]) == 2 and all(
+            np.isfinite(rec["audit_half_utilities"])
+        )
+        assert (rec["search_utility"] is None) == (name == "BANK_NN1")
+    with L._expanded_width(500):
+        with pytest.raises(ValueError):
+            with L._expanded_width(600):
+                pass
+    assert G.MAX_EXPANDED_WIDTH == before
+
+
+def test_split_half_posthoc_recomputes_recorded_values(nonpilot):
+    """gp_split_half on a fake 2-context run: rebuilt AUDIT utilities equal the recorded ones; halves are finite."""
+    import hashlib
+
+    import gp_split_half as SH
+
+    cids = sorted(nonpilot[17:19])
+    run_dir = scratch("splithalf") / "run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    C.write_json(
+        run_dir / "config.json",
+        {
+            "pilot": cids,
+            "seeds": [317101],
+            "pilot_sha256": hashlib.sha256("\n".join(cids).encode()).hexdigest(),
+        },
+    )
+    fam_of = {r["context_sha256"]: r["family_id"] for r in C.train_rows()}
+    rt = make_runtime("splithalf", fake_runner(), seeds=(317101,))
+    rt.store = L.Store(run_dir)
+    L.run_stage(rt, "bank_nn1", cids, 2)
+    L.run_stage(rt, "h04", cids, 2)
+    sch = L.merge_run(run_dir, fam_of)["decisions"]["H0.4"]["used"]
+    L.run_stage(rt, "h05", cids, 2, sch)
+    arm = L.merge_run(run_dir, fam_of)["decisions"]["H0.5"]["used"]
+    L.run_stage(rt, "h06", cids, 2, sch, arm)
+    L.merge_run(run_dir, fam_of)
+    out = scratch("splithalf") / "split_half.json"
+    argv = sys.argv
+    sys.argv = [
+        "gp_split_half.py",
+        "--run-dir",
+        str(run_dir),
+        "--memo-dir",
+        str(rt.engine.memo_dir),
+        "--out",
+        str(out),
+    ]
+    try:
+        SH.main()
+    finally:
+        sys.argv = argv
+    rep = json.loads(out.read_text())
+    assert rep["checks"]["max_abs_full_diff"] < 1e-9 and rep["checks"]["n_outputs"] > 50
+    assert "H05.evoB.g10-H05.evoA.g10" in rep["per_contrast"]
+
+
+def test_a4_two_champion_migration_yields_duplicate_splice():
+    """Root cause of the 14:53Z crash: with exactly two island champions the 'all champions' splice and the single
+    pair splice are the same portfolio, so the island-3 splice list holds one program twice."""
+    arch = D.MapElites()
+    for r in (
+        _res("(pipe X (standardize) (histgbm depth=4 lr=0.08 rounds=140))", -1.0, -1.0),
+        _res("(pipe X (blom) (gpr kernel=rbf+linear steps=40))", -0.8, -0.8),
+    ):
+        arch.add(r)
+
+    class _G:
+        class ctx:
+            width = 10
+
+    spl = D.migration_splices(arch, _G, 3)
+    assert len(spl) == 2 and spl[0].sha == spl[1].sha
+
+
+def test_a4_dedupe_pick_semantics():
+    cs = [
+        G.Candidate.from_dsl(f"(pipe X (ridge lambda_frac=0.0{i + 1}))", "t")
+        for i in range(9)
+    ]
+    dup = G.Candidate.from_dsl(
+        "(pipe X (ridge lambda_frac=0.01))", "dup"
+    )  # same program as cs[0]
+    props = cs + [dup]
+    pop = D._Pop(
+        [cs[1]], [_res(cs[1].dsl, -1.0, -1.0)]
+    )  # cs[1] already evaluated in the arm
+    order = list(range(len(props)))
+    same, info = D.dedupe_pick(props, [0, 2, 3, 4, 5, 6], order, pop, 6)
+    assert (
+        same == [0, 2, 3, 4, 5, 6] and info is None
+    )  # no duplicate -> unchanged (no-op)
+    out, info = D.dedupe_pick(props, [0, 9, 1, 2, 3, 4], order, pop, 6)
+    assert (
+        len(out) == 6
+        and len({props[j].sha for j in out}) == 6
+        and not {props[j].sha for j in out} & set(pop.gen_of)
+    )
+    assert (
+        out[:4] == [0, 2, 3, 4]
+        and out[4:] == [5, 6]
+        and info["refilled"] == 2
+        and info["shortfall"] == 0
+    )
+    few, info = D.dedupe_pick(props[:3] + [dup], [0, 3, 2], [0, 1, 2, 3], pop, 3)
+    assert few == [0, 2] and info["shortfall"] == 1  # recorded, not raised
+
+
+class _SpliceFirstScreener(S.Screener):
+    """Ranks the exact two-champion splice first (both copies of a duplicate score identically, as with the real
+    screener), everything else by the deterministic hash prior."""
+
+    name = "splice_first_test"
+    is_fallback = True
+
+    def __init__(self, needles):
+        self.needles = needles
+
+    def score(self, cid, view_index_set, dsl_list):
+        base = S.FallbackScreener().score(cid, view_index_set, dsl_list)
+        bonus = np.array(
+            [
+                10.0
+                if all(n in d for n in self.needles) and d.startswith("(portfolio")
+                else 0.0
+                for d in dsl_list
+            ]
+        )
+        return base + bonus[None, :]
+
+
+def test_a4_evo_b_duplicate_splice_crashed_before_and_completes_after(
+    nonpilot, monkeypatch
+):
+    """Reproduces the crash pattern: only the I0 and I2 seed programs pass the gate (exactly two champions, I1 never
+    passes), and the two-champion splice is screened first, so both copies of the duplicate splice are picked at the
+    gen-3 migration. Pre-fix (dedupe disabled) the arm raises 're-evaluation inside an arm'; with A4 it completes
+    with exactly 6 new distinct live evals per generation."""
+    champs = (
+        "(pipe X (standardize) (histgbm depth=4 lr=0.08 rounds=140))",
+        "(pipe X (standardize) (ksmooth gamma=1.0 k=16))",
+    )
+    base = fake_runner(fail_frac=0.0)
+
+    def runner(ctx, kind, cand, core, slot):
+        doc, wall, err = base(ctx, kind, cand, core, slot)
+        if doc is None or kind != "search":
+            return doc, wall, err
+        for rec in doc["inner_cv"]:  # only the two champions pass the 2-fold gate
+            t = np.asarray(rec["targets"])
+            good = cand.dsl in champs
+            p = (
+                t + 0.05 * (t - t.mean())
+                if good
+                else t * 0.0 + t.mean() + 3.0 * t.std()
+            )
+            rec["predictions"] = p.tolist()
+            rec["metrics"]["rmse"] = float(np.sqrt(np.mean((p - t) ** 2)))
+        return doc, wall, err
+
+    rt = make_runtime("a4_evo", runner)
+    g = rt.gp(nonpilot[19], 317101)
+    g.screener = _SpliceFirstScreener(champs)
+    seeds = [
+        G.Candidate.from_dsl(d, "seed") for d in champs + ("(pipe X (ridge_gcv))",)
+    ]
+    with D.selection_scope("test"):
+        res = g.evaluate(seeds)
+    assert [r.gate for r in res] == [True, True, False]
+    real = D.dedupe_pick
+    monkeypatch.setattr(
+        D, "dedupe_pick", lambda props, chosen, *a, **k: (list(chosen), None)
+    )
+    with pytest.raises(AssertionError, match="re-evaluation inside an arm"):
+        D.evo_islands(g, seeds, res, gens=4)
+    monkeypatch.setattr(D, "dedupe_pick", real)
+    run = D.evo_islands(g, seeds, res, gens=10)
+    assert all(run.live_per_gen[gen] == 6 for gen in range(1, 11))
+    assert (
+        3 in run.dedup
+        and run.dedup[3]["shortfall"] == 0
+        and "migration_splice" in run.dedup[3]["dropped_operators"][0]
+    )
+    assert len({r.sha for r in run.results}) == len(run.results) == 3 + 60
+    assert "dedup_replaced" in run.summary() and "budget_shortfall" not in run.summary()
+    a = D.evo_panmictic(
+        g, seeds, res, gens=10
+    )  # Evo A has no such hole: no replacement ever needed
+    assert not a.dedup and all(a.live_per_gen[gen] == 6 for gen in range(1, 11))
+
+
+def test_a4_resume_amendment_record():
+    """A resume after a code amendment: LAUNCH_GP.json is never rewritten; only code/staging may change, and only with
+    --amendment, recorded create-once in LAUNCH_GP.<id>.json (a later different code state is refused)."""
+    import argparse
+
+    run_dir = scratch("a4_amend") / "run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    m1, m2 = scratch("a4_amend") / "m1.json", scratch("a4_amend") / "m2.json"
+    C.write_json(m1, {"manifest_sha256": "a"})
+    C.write_json(m2, {"manifest_sha256": "b"})
+    pilot = sorted(C.train_rows()[i]["context_sha256"] for i in range(3))
+    ns = dict(
+        cpus="16-17",
+        shards=1,
+        workers_per_shard=2,
+        jobs=2,
+        torch_threads=1,
+        screener="fallback",
+        neural_run_dir=None,
+        amendment=None,
+    )
+    L.prepare_launch(
+        run_dir, argparse.Namespace(**ns, staging_manifest=str(m1)), pilot, (317101,)
+    )
+    first = (run_dir / "LAUNCH_GP.json").read_bytes()
+    with pytest.raises(SystemExit):
+        L.prepare_launch(
+            run_dir,
+            argparse.Namespace(**ns, staging_manifest=str(m2)),
+            pilot,
+            (317101,),
+        )
+    ns["amendment"] = "A4"
+    L.prepare_launch(
+        run_dir, argparse.Namespace(**ns, staging_manifest=str(m2)), pilot, (317101,)
+    )
+    L.prepare_launch(
+        run_dir, argparse.Namespace(**ns, staging_manifest=str(m2)), pilot, (317101,)
+    )  # resumable
+    assert (run_dir / "LAUNCH_GP.json").read_bytes() == first and (
+        run_dir / "LAUNCH_GP.A4.json"
+    ).exists()
+    m3 = scratch("a4_amend") / "m3.json"
+    C.write_json(m3, {"manifest_sha256": "c"})
+    with pytest.raises(SystemExit):
+        L.prepare_launch(
+            run_dir,
+            argparse.Namespace(**ns, staging_manifest=str(m3)),
+            pilot,
+            (317101,),
+        )

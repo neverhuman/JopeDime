@@ -1051,6 +1051,9 @@ class EvoRun:
     migration_live: Dict[int, int] = field(default_factory=dict)
     island_hist: Dict[int, List[int]] = field(default_factory=dict)
     archive_cells: Dict[int, int] = field(default_factory=dict)
+    dedup: Dict[int, dict] = field(
+        default_factory=dict
+    )  # A4: only generations where a duplicate pick was replaced
 
     def best_after(self, gen: int) -> Optional[SearchResult]:
         return best_by_search([r for r in self.results if self.gen_of[r.sha] <= gen])
@@ -1064,7 +1067,7 @@ class EvoRun:
         for gen in sorted(set(self.gen_of.values())):
             b = self.best_after(gen)
             curve[gen] = None if b is None else b.utility
-        return {
+        out = {
             "arm": self.arm,
             "live_per_gen": self.live_per_gen,
             "screened_per_gen": self.screened_per_gen,
@@ -1077,6 +1080,12 @@ class EvoRun:
             "n_failed": sum(r.status != "completed" for r in self.results),
             "result_shas": [r.sha for r in self.results],
         }
+        if self.dedup:  # A4: present only when a duplicate pick was replaced (absent = records byte-identical to A2)
+            out["dedup_replaced"] = self.dedup
+            short = {g: d["shortfall"] for g, d in self.dedup.items() if d["shortfall"]}
+            if short:
+                out["budget_shortfall"] = short
+        return out
 
 
 class _Pop:
@@ -1241,6 +1250,55 @@ def pick_exploit_ucb(
     return chosen
 
 
+def dedupe_pick(
+    props: Sequence[G.Candidate],
+    chosen: Sequence[int],
+    refill_order: Sequence[int],
+    pop: "_Pop",
+    n_live: int,
+    island_cap: Optional[int] = None,
+) -> Tuple[List[int], Optional[dict]]:
+    """A4 crash fix: the arm makes exactly `n_live` NEW live evaluations of distinct programs per generation.
+
+    A pick whose program (program_sha256) was already evaluated in this arm, or repeats an earlier pick of this
+    generation, is dropped; the slot is refilled with the next proposal in the arm's own screened order
+    (`refill_order`; first honouring `island_cap` picks per island, then without it). If fewer than `n_live` distinct
+    new programs remain, the shortfall is recorded instead of raising. No-op -- `chosen` returned unchanged, info None
+    -- whenever no pick is a duplicate."""
+    seen = set(pop.gen_of)
+    out: List[int] = []
+    dropped: List[int] = []
+    for j in chosen:
+        if props[j].sha in seen:
+            dropped.append(int(j))
+            continue
+        seen.add(props[j].sha)
+        out.append(int(j))
+    if not dropped:
+        return list(chosen), None
+    for cap in (island_cap, None) if island_cap is not None else (None,):
+        for j in refill_order:
+            if len(out) >= n_live:
+                break
+            j = int(j)
+            if j in out or props[j].sha in seen:
+                continue
+            if (
+                cap is not None
+                and sum(props[k].island == props[j].island for k in out) >= cap
+            ):
+                continue
+            seen.add(props[j].sha)
+            out.append(j)
+    info = {
+        "dropped_operators": [props[j].operator for j in dropped],
+        "dropped_shas": [props[j].sha for j in dropped],
+        "refilled": len(out) - (len(chosen) - len(dropped)),
+        "shortfall": max(0, n_live - len(out)),
+    }
+    return out, info
+
+
 def evo_panmictic(
     g: GPContext,
     seed_cands: Sequence[G.Candidate],
@@ -1257,13 +1315,22 @@ def evo_panmictic(
             for _, b in bank_nn(g.tb, g.coder, 96)
         ]
         nn = [c for c in nn if G.width_ok(c.dsl, g.ctx.width)]
-        live, screened = {}, {}
+        live, screened, dedup = {}, {}, {}
         for gen in range(1, gens + 1):
             rng = g.rng(arm, "gen", gen)
             props = propose_panmictic(g, pop, n_prop, rng, gen, nn)
             assert_bank_disjoint(g.cid, props, g.tb)
             pred, _ = _screen(g, props, pop)
-            pick = [props[j] for j in pick_exploit_ucb(props, pred, pop, n_live)]
+            idx, dd = dedupe_pick(
+                props,
+                pick_exploit_ucb(props, pred, pop, n_live),
+                np.argsort(-_zs(pred), kind="stable"),
+                pop,
+                n_live,
+            )
+            if dd:
+                dedup[gen] = dd
+            pick = [props[j] for j in idx]
             res = g.evaluate(pick)
             pop.add(pick, res, gen)
             live[gen], screened[gen] = len(pick), len(props)
@@ -1285,6 +1352,7 @@ def evo_panmictic(
                 ]
                 for gen in range(gens + 1)
             },
+            dedup=dedup,
         )
 
 
@@ -1506,7 +1574,7 @@ def evo_islands(
             i: [c for c in nn_all if c.island == i and G.width_ok(c.dsl, g.ctx.width)]
             for i in range(4)
         }
-        live, screened, ls_live, mig_live, cells = {}, {}, {}, {}, {}
+        live, screened, ls_live, mig_live, cells, dedup = {}, {}, {}, {}, {}, {}
         for gen in range(1, gens + 1):
             rng = g.rng(arm, "gen", gen)
             seen = set(pop.gen_of)
@@ -1569,6 +1637,11 @@ def evo_islands(
                     break
                 if int(j) not in chosen:
                     chosen.append(int(j))
+            chosen, dd = dedupe_pick(
+                props, chosen, np.argsort(-z, kind="stable"), pop, n_live, island_cap=2
+            )
+            if dd:
+                dedup[gen] = dd
             pick = [props[j] for j in chosen]
             res = g.evaluate(pick)
             pop.add(pick, res, gen)
@@ -1601,6 +1674,7 @@ def evo_islands(
                 for gen in range(gens + 1)
             },
             archive_cells=cells,
+            dedup=dedup,
         )
 
 

@@ -901,6 +901,41 @@ class EvalEngine:
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+# AUDIT split halves (PREREG §2.3 reliability diagnostic; A3). Diagnostic only: computed after an output is fixed.
+# ----------------------------------------------------------------------------------------------------------------------
+def audit_half_masks(cid: str, ya: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Deterministic y-stratified halves of a context's AUDIT rows (AUDIT-envelope order): sort by y, then within each
+    consecutive pair one row goes to each half (seeded per context); an odd last row goes to a seeded half."""
+    ya = np.asarray(ya, np.float64)
+    rng = np.random.default_rng(C.stream_seed("H317-audit-half", cid))
+    order = np.argsort(ya, kind="stable")
+    half = np.zeros(len(ya), dtype=np.int8)
+    for s in range(0, len(order), 2):
+        blk = order[s : s + 2]
+        if len(blk) == 2:
+            first = int(rng.integers(0, 2))
+            half[blk[0]], half[blk[1]] = first, 1 - first
+        else:
+            half[blk[0]] = int(rng.integers(0, 2))
+    return half == 0, half == 1
+
+
+def audit_half_utilities(
+    cid: str, pred: Optional[np.ndarray], ya: np.ndarray, y_search_mean: float
+) -> List[float]:
+    """[u_half0, u_half1] = -log(RMSE_half(pred) / RMSE_half(SEARCH-target mean)); pred None = mean predictor -> 0."""
+    out = []
+    for m in audit_half_masks(cid, ya):
+        if pred is None:
+            out.append(0.0)
+            continue
+        rm = float(np.sqrt(np.mean((np.asarray(pred)[m] - ya[m]) ** 2)))
+        rb = float(np.sqrt(np.mean((ya[m] - y_search_mean) ** 2)))
+        out.append(C.audit_utility_from_rmse(rm, rb))
+    return out
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # AUDIT ledger: exactly one AUDIT request per declared output (coordinator amendment 2)
 # ----------------------------------------------------------------------------------------------------------------------
 class AuditLedger:

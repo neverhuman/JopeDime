@@ -75,3 +75,27 @@ none informed any design choice. The guard v2 refusal log of production runs sta
   P205 (dropping it would be a post-hoc pilot change) and is flagged in `LAUNCH_GP.json`.
 - **Fake-worker fixtures.** Two test fixture contexts that are P205 pilots (`64f250c8…`, `8463e453…`) were used only
   with the fake worker; no real evaluation was run on them.
+
+## Learner-build agent (superset worker; reported 14:43Z)
+- **res-01 table headers, outside the guard (breach).** Before the data rules arrived, it read the 17-byte headers
+  (row count, width) of the first 400 res-01 tables without the guard installed. 29 of those are DL-Val tables. No
+  labels or features were read; only aggregate percentiles were printed, and nothing fed any H317 choice.
+- **`~/scratch`.** It read the pinned worker's source snapshot `s1-src-6bf65b12` (copied), dependency/fingerprint
+  files, `s1-prod/ledger.header.json` and `s1-control/receipt.json` (which names 3 control contexts by dataset hash,
+  cut id and size), the source manifest and `steps.jsonl`. A `grep -rl` over s1 receipts timed out and printed
+  nothing.
+- **JopeDimeMicro.** A `grep -rl` over `results/**` for the binary sha printed one path; a `.rs` grep timed out. It also
+  read the bin manifest, `rust_evaluator.py`, `rank_prepare.py` and `assets/projections/program-feature-names.json`.
+- **Git and sub-agent.** One tree-wide `git grep -l s1main origin/main -- .` without the custody exclusion printed
+  file names only. Its sub-agent hashed the scratch snapshot and read git objects; whether its greps excluded custody
+  is unverified.
+- **Empirical checks** used TRAIN non-pilot contexts only, from P96 at the time. Under P205 every family is a pilot
+  family, so some of those contexts are P205 pilots. The checks were standalone learner probes with no H317 arm, memo
+  or decision involvement.
+
+## Superset worker and seed scheme F
+- The superset worker (`bootstrap.s1main.superset-2a848c8f8085`) passed parity and its unit tests at 14:43Z. That was
+  after the GP-block launch at 14:23:58Z, so under PREREG §2.5 it was not admitted and seed scheme F is absent from
+  H317's decisions.
+- Any run of the new heads (xtrees / rforest / oblivious) on the pilot is EXPLORATORY and report-only. Such a run is
+  not eligible for LOCK and is labelled as such.

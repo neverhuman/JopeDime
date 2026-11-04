@@ -70,7 +70,14 @@ import distributed_10gen_island_gp as D  # noqa: E402
 import gp_grammar_h317 as G  # noqa: E402
 import screener_h317 as S  # noqa: E402
 import stacking_h317 as ST  # noqa: E402
-from gp_engine_h317 import AuditLedger, EvalEngine, GP_ROOT, ResourceGuard, SearchResult  # noqa: E402
+from gp_engine_h317 import (  # noqa: E402
+    GP_ROOT,
+    AuditLedger,
+    EvalEngine,
+    ResourceGuard,
+    SearchResult,
+    audit_half_utilities,
+)
 
 H04_CHALLENGERS = ("B", "C", "D", "E")
 H06_SECONDARY = ("BAG_FINAL", "SEL_MEANLR")
@@ -204,16 +211,31 @@ class Runtime:
 
 
 def audit_one(
-    rt: Runtime, pipeline: str, g: D.GPContext, cand: Optional[G.Candidate]
+    rt: Runtime,
+    pipeline: str,
+    g: D.GPContext,
+    cand: Optional[G.Candidate],
+    halves: bool = False,
 ) -> dict:
+    """One AUDIT request for a fixed single output. `halves` (Stage V records, A3) adds the split-half diagnostic
+    `audit_half_utilities` from the same fit (mean predictor = [0, 0] for no output / a crash)."""
     if cand is None:
-        return {"status": "no_output", "utility": None}
+        out = {"status": "no_output", "utility": None}
+        if halves:
+            out["audit_half_utilities"] = [0.0, 0.0]
+        return out
     a = rt.ledger.score(pipeline, g.ctx, g.seed, [cand])[0]
-    return {
+    out = {
         "status": a.status,
         "utility": a.utility if a.status == "completed" else None,
         "sha": cand.sha,
     }
+    if halves:
+        pred = a.pa if a.status == "completed" else None
+        out["audit_half_utilities"] = audit_half_utilities(
+            g.cid, pred, g.ctx.ya, g.ctx.y_search_mean
+        )
+    return out
 
 
 def audit_stack(
@@ -222,13 +244,24 @@ def audit_stack(
     g: D.GPContext,
     spec: ST.StackSpec,
     cand_of: Dict[str, G.Candidate],
+    halves: bool = False,
 ) -> dict:
     shas, _, _ = spec.declared()
     res = rt.ledger.score(pipeline, g.ctx, g.seed, [cand_of[s] for s in shas])
     out = ST.stack_audit_utility(
-        spec, {a.sha: a for a in res}, g.ctx.ya, g.ctx.ba, g.ctx.y_search_mean
+        spec,
+        {a.sha: a for a in res},
+        g.ctx.ya,
+        g.ctx.ba,
+        g.ctx.y_search_mean,
+        return_pred=halves,
     )
     out["n_members"] = len(shas)
+    if halves:
+        pred = out.pop("pred")
+        out["audit_half_utilities"] = audit_half_utilities(
+            g.cid, pred, g.ctx.ya, g.ctx.y_search_mean
+        )
     return out
 
 
@@ -337,11 +370,18 @@ def stage_h05(rt: Runtime, cid: str, seed: int, scheme: str) -> dict:
     t0 = time.time()
     rec = {"type": "result", "cid": cid, "seed": seed, "scheme": scheme, "arms": {}}
     runs = {arm: fn(g, order, res) for arm, fn in D.ARMS.items()}
+    shortfall = {
+        a: r.summary().get("budget_shortfall") for a, r in runs.items() if r.dedup
+    }
     if (
         runs["evoA"].live_per_gen != runs["evoB"].live_per_gen
         or runs["evoA"].screened_per_gen != runs["evoB"].screened_per_gen
-    ):
+    ) and not any(shortfall.values()):
         raise AssertionError("evo arms broke the matched budget")
+    if any(
+        shortfall.values()
+    ):  # A4: fewer than 6 distinct new programs left in a generation (recorded, not fatal)
+        rec["budget_shortfall"] = shortfall
     for arm, run in runs.items():
         summ = run.summary()
         summ["cands"] = {sha: cand_json(c) for sha, c in run.cand_of.items()}
@@ -957,7 +997,7 @@ def _stack_output(
         prog = D.portfolio_nnls(g, res, cand_of)
         extra = prog.live_evals
         if not prog.fallback and prog.cand is not None:
-            raw = audit_one(rt, pipeline, g, prog.cand)
+            raw = audit_one(rt, pipeline, g, prog.cand, halves=True)
             v = value_of(raw)
             return {
                 "config": config,
@@ -966,6 +1006,8 @@ def _stack_output(
                 "value_m2": v[1],
                 "invalid": v[2],
                 "extra_live": extra,
+                "search_utility": prog.result.utility,
+                "audit_half_utilities": raw["audit_half_utilities"],
             }
         spec = single
     elif config == "single":
@@ -990,11 +1032,13 @@ def _stack_output(
             "value_m2": C.GATE_FAIL_UTILITY,
             "invalid": True,
             "extra_live": extra,
+            "search_utility": None,
+            "audit_half_utilities": [0.0, 0.0],
         }
     if len(spec.declared()[0]) == 1:
-        raw = audit_one(rt, pipeline, g, cand_of[spec.declared()[0][0]])
+        raw = audit_one(rt, pipeline, g, cand_of[spec.declared()[0][0]], halves=True)
     else:
-        raw = audit_stack(rt, pipeline, g, spec, cand_of)
+        raw = audit_stack(rt, pipeline, g, spec, cand_of, halves=True)
     v = value_of(raw)
     return {
         "config": config,
@@ -1004,6 +1048,9 @@ def _stack_output(
         "invalid": v[2],
         "extra_live": extra,
         "spec": spec.to_json(),
+        # in-sample SEARCH utility of the declared output: the tree's own 2-fold S1, or the stack's cross-fitted S1
+        "search_utility": spec.search.get("utility"),
+        "audit_half_utilities": raw["audit_half_utilities"],
     }
 
 
@@ -1036,7 +1083,7 @@ def stage_v_pipeline(
     if name == "BANK_NN1":
         with D.selection_scope(pipe):
             cand = D.bank_nn1(g.tb, g.coder)
-        raw = audit_one(rt, pipe, g, cand)
+        raw = audit_one(rt, pipe, g, cand, halves=True)
         v = value_of(raw)
         return {
             "pipeline": name,
@@ -1048,6 +1095,8 @@ def stage_v_pipeline(
             "value_m2": v[1],
             "invalid": v[2],
             "raw": raw,
+            "search_utility": None,  # BANK_NN1 makes no SEARCH evaluation
+            "audit_half_utilities": raw["audit_half_utilities"],
         }
     if name in ("BANK_NN8_PICK", "BANK_NN8_PORTFOLIO"):
         run = D.bank_nn8_pick(g)
@@ -1172,6 +1221,41 @@ def isolated_runtime(
     )
 
 
+_WIDTH_LOCK = threading.Lock()
+_WIDTH_STATE: dict = {"n": 0, "width": None, "prev": None}
+
+
+class _expanded_width:
+    """G.MAX_EXPANDED_WIDTH is process-global: set it for the duration of run_pipeline calls and restore it after the
+    last one; concurrent calls with a different value are refused."""
+
+    def __init__(self, width: int):
+        self.width = int(width)
+
+    def __enter__(self):
+        with _WIDTH_LOCK:
+            if _WIDTH_STATE["n"] and _WIDTH_STATE["width"] != self.width:
+                raise ValueError(
+                    "concurrent run_pipeline calls must share max_expanded_width"
+                )
+            if _WIDTH_STATE["n"] == 0:
+                _WIDTH_STATE["prev"], _WIDTH_STATE["width"] = (
+                    G.MAX_EXPANDED_WIDTH,
+                    self.width,
+                )
+                G.MAX_EXPANDED_WIDTH = self.width
+            _WIDTH_STATE["n"] += 1
+        return self
+
+    def __exit__(self, *exc):
+        with _WIDTH_LOCK:
+            _WIDTH_STATE["n"] -= 1
+            if _WIDTH_STATE["n"] == 0:
+                G.MAX_EXPANDED_WIDTH = _WIDTH_STATE["prev"]
+                _WIDTH_STATE["width"] = None
+        return False
+
+
 def run_pipeline(
     name: str,
     cid: str,
@@ -1188,6 +1272,7 @@ def run_pipeline(
     full_mode: bool = False,
     guard: bool = True,
     runner=None,
+    max_expanded_width: int = RUN_MAX_EXPANDED_WIDTH,
 ) -> dict:
     """STABLE API for stage_v_h317.py: run ONE named pipeline (STAGE_V_PIPELINES) on ONE context.
 
@@ -1197,20 +1282,25 @@ def run_pipeline(
     A fresh engine / ledger / runtime is built for the call and closed afterwards, so nothing carries across contexts
     or pipelines except the per-context, envelope-keyed memo file under `gp_root` (exact replays only).
     Returns the pipeline record: live_evals, value (AUDIT utility, mean-predictor policy), value_m2, invalid, raw,
-    config/spec, plus `engine` stats and `audit_ledger` {outputs, audit_requests}."""
-    rt = isolated_runtime(
-        screener, coder, seed, cores, gp_root, meta_rows, timeout_s, guard, runner
-    )
-    try:
-        rec = stage_v_pipeline(
-            rt, name, cid, seed, locked, k_topk=k_topk, full_mode=full_mode
+    config/spec, `search_utility` (in-sample SEARCH utility of the declared output: the tree's 2-fold S1, the stack's
+    cross-fitted S1, the CV5 program's own S1; None for BANK_NN1), `audit_half_utilities` [u_half0, u_half1] (the same
+    AUDIT fit scored on two deterministic y-stratified halves of the AUDIT rows, `gp_engine_h317.audit_half_masks`),
+    `max_expanded_width`, plus `engine` stats and `audit_ledger` {outputs, audit_requests}."""
+    with _expanded_width(max_expanded_width):
+        rt = isolated_runtime(
+            screener, coder, seed, cores, gp_root, meta_rows, timeout_s, guard, runner
         )
-        rec["audit_ledger"] = rt.ledger.check()
-        rec["engine"] = rt.engine.stats()
-        rec["bank_exclusion"] = rt.target_bank(cid).exclusion_record()
-        return rec
-    finally:
-        rt.engine.close()
+        try:
+            rec = stage_v_pipeline(
+                rt, name, cid, seed, locked, k_topk=k_topk, full_mode=full_mode
+            )
+            rec["audit_ledger"] = rt.ledger.check()
+            rec["engine"] = rt.engine.stats()
+            rec["bank_exclusion"] = rt.target_bank(cid).exclusion_record()
+            rec["max_expanded_width"] = G.MAX_EXPANDED_WIDTH
+            return rec
+        finally:
+            rt.engine.close()
 
 
 def run_stage_v_context(
@@ -1226,6 +1316,7 @@ def run_stage_v_context(
     timeout_s: float = 60.0,
     guard: bool = True,
     runner=None,
+    max_expanded_width: int = RUN_MAX_EXPANDED_WIDTH,
 ) -> dict:
     """All STAGE_V_PIPELINES on one context via `run_pipeline` (fresh runtime each), with the matching asserts:
     |live(H317_LOCKED) - live(EVOA_MATCHED)| <= 2 and SCREEN_TOPK_PICK K == live(H317_LOCKED)."""
@@ -1237,6 +1328,7 @@ def run_stage_v_context(
         timeout_s=timeout_s,
         guard=guard,
         runner=runner,
+        max_expanded_width=max_expanded_width,
     )
     out = {
         "BANK_NN1": run_pipeline("BANK_NN1", cid, seed, screener, coder, **kw),
@@ -1668,9 +1760,45 @@ def prepare_launch(
             "max_expanded_width_generated",
         )
         diff = [k for k in keep if old.get(k) != rec.get(k)]
+        amendable = {"code_sha256", "staging_manifest"}
+        amend = getattr(args, "amendment", None)
+        if diff and amend and set(diff) <= amendable:
+            # a declared code amendment for a resume (e.g. A4 crash fix): LAUNCH_GP.json stays untouched; the
+            # amendment is recorded once in LAUNCH_GP.<amendment>.json and must match on every later resume
+            apath = run_dir / f"LAUNCH_GP.{amend}.json"
+            changed = {
+                k: sorted(
+                    n
+                    for n in set(old[k]) | set(rec[k])
+                    if old[k].get(n) != rec[k].get(n)
+                )
+                for k in ("code_sha256",)
+            }
+            arec = {
+                "amendment": amend,
+                "amends": "LAUNCH_GP.json",
+                "launch_gp_sha256": C.sha256_file(path),
+                "changed_code_files": changed["code_sha256"],
+                "code_sha256": rec["code_sha256"],
+                "staging_manifest": rec["staging_manifest"],
+                "note": "resume after a code amendment; pilot, seeds, layout, screener and width are unchanged",
+            }
+            if apath.exists():
+                prev = json.loads(apath.read_text())
+                bad = [
+                    k
+                    for k in ("code_sha256", "staging_manifest")
+                    if prev.get(k) != arec[k]
+                ]
+                if bad:
+                    raise SystemExit(f"{apath.name} differs on {bad}")
+                return old
+            C.write_json(apath, {**arec, "recorded_utc": time.time()})
+            return old
         if diff:
             raise SystemExit(
-                f"LAUNCH_GP.json differs on {diff}: new run dir or restore the launched state"
+                f"LAUNCH_GP.json differs on {diff}: new run dir, restore the launched state, or pass "
+                "--amendment <id> (only code_sha256 / staging_manifest may change)"
             )
         return old
     C.write_json(path, rec)
@@ -2015,6 +2143,11 @@ def main() -> None:
     la.add_argument("--workers-per-shard", type=int, required=True)
     la.add_argument("--stages", default="h04,h05,h06")
     la.add_argument("--staging-manifest", default=None)
+    la.add_argument(
+        "--amendment",
+        default=None,
+        help="declared code amendment id for a resume, e.g. A4",
+    )
     la.set_defaults(fn=cmd_launch)
     pl = sub.add_parser(
         "prepare-launch", help="write LAUNCH_GP.json (also done by `launch`)"
@@ -2024,6 +2157,7 @@ def main() -> None:
     pl.add_argument("--shards", type=int, required=True)
     pl.add_argument("--workers-per-shard", type=int, required=True)
     pl.add_argument("--staging-manifest", required=True)
+    pl.add_argument("--amendment", default=None)
     pl.set_defaults(fn=cmd_prepare_launch)
     t = sub.add_parser("timing")
     t.add_argument("--run-dir", required=True)

@@ -427,3 +427,49 @@ screener features, arm-independent (seed, fold) seeds for pairing). Launch only 
     205 families after the merge.
 - **Stage V API:** `gp_lab.run_pipeline` / `run_stage_v_context`, with no cross-context state. The only per-context
   memo, keyed by envelope, replays exact evals.
+
+## 9. Pre-outcome amendment A3 (2026-11-04 ~14:50Z; no Stage V outcome read; written before LOCK)
+- **LOCK model training set** (clarifies §2.6 "retrained on all 1,219 TRAIN contexts").
+  - The LOCK model is retrained with the locked budget on the **full data pool defined by the winning arm**.
+  - H0.1 adopted arm A, whose definition is the seeded 525-context family-stratified subset × 4 views. The LOCK model
+    is therefore fit on all 525 subset members (the OOF fits used each fold's training share of them), with the
+    H0.2/H0.3 winners' scale and optimizer.
+  - Training on all 1,219 contexts would be an untested configuration (that is arm B's data volume).
+- **Superset worker (§2.5) not admitted.** It passed parity at 14:43Z, after the GP-block launch at 14:23:58Z. Seed
+  scheme F and the new heads (xtrees, rforest, oblivious) are not part of any H317 decision or of LOCK. An exploratory,
+  report-only run of them on P205 may follow on xbabe0; it is labelled EXPLORATORY_NOT_LOCK_ELIGIBLE.
+- **Stage V hardening** (Stage V code red team; lands before write-lock):
+  - Per-unit failures after the first outcome read are recorded as outcome-independent failures (u = 0, invalid) and
+    never re-raised.
+  - Live-eval matching becomes a recorded flag.
+  - The regression verdict is written immediately.
+  - The bank/view/TRAIN inputs join the LOCK's hashed set.
+  - One process per shard.
+- **Disclosure.** The Stage V prep reads the original `selected.json` (dev rows include pool-derived counts such as
+  `n_gate_pass`) at import, before FIRST_OUTCOME_READ. Nothing uses those counts.
+- **GP split-half reliability** (§2.3) for the Gate H0 GP block is computed post hoc from stored AUDIT predictions
+  (`gp_split_half.py`); the launched GP code path is unchanged.
+
+## 10. Post-launch amendment A4 (2026-11-04 ~15:15Z): Evo B duplicate-pick bug fix during H0.5
+- **State when the fix was made.** H0.4 was pinned (adopted A). 409 of 410 H0.5 (context, seed) jobs were recorded.
+  One job (`edf9f9b2…`, seed 317102) had crashed at 14:53:54Z with `AssertionError("re-evaluation inside an arm")`, and
+  the stage barrier stopped the launch. No H0.5 decision had been computed.
+- **Root cause.** At a migration generation where exactly two of islands I0–I2 had a gate-passing champion, Evo B's
+  "all-champion" splice and the single-pair splice are the same portfolio. Both entered the 48 proposals with
+  identical scores and both were picked (the I3 forced pick plus the 2-per-island fill).
+- **Fix.** `dedupe_pick` runs in both arms just before live evaluation:
+  - it drops picks already evaluated in the arm or repeated within the generation;
+  - it refills from the arm's own screened order, keeping Evo B's per-island cap, so each generation still makes
+    exactly 6 NEW live evals;
+  - if fewer than 6 distinct candidates remain, it records `budget_shortfall` instead of raising;
+  - when no duplicate is picked it returns the picks unchanged and adds nothing to the record.
+
+  Evo A could not hit this path.
+- **No-op proof on real records.** 30 completed H0.5 jobs from 10 shards, replayed with the fixed code against a copy
+  of the memo, gave 30/30 stored records identical and 0 new worker runs. The crashed job completes with 6/6 live evals
+  per generation in both arms and exactly one replacement (Evo B gen 6, the duplicate migration splice). Evidence:
+  `gp/replay_a4_20261104T150355Z/replay_report.json` (xbabe0).
+- **Resume.** The launch is resumed with `--amendment A4`, which writes a create-once `LAUNCH_GP.A4.json` and leaves
+  `LAUNCH_GP.json` untouched. It reruns only missing jobs; H0.4 is recomputed and must equal the pinned A.
+- **Disclosure.** This change was made after H0.4 outcomes and 409 of 410 H0.5 job records existed. It changes no
+  recorded value and no decision rule, only crash behaviour on one job; this is the post-launch disclosure.

@@ -606,6 +606,7 @@ def stack_audit_utility(
     ya: np.ndarray,
     ba: float,
     y_search_mean: float,
+    return_pred: bool = False,
 ) -> dict:
     """AUDIT utility of a FIXED stack. Weights never change with AUDIT outcomes: a member whose AUDIT output crashed or
     is non-finite contributes the SEARCH-target-mean prediction instead (leakage red team rule 3). The output is
@@ -630,20 +631,26 @@ def stack_audit_utility(
     }
     if len(shas) == 1:
         a = audit_by_sha[shas[0]]
-        return {
+        out = {
             "status": "completed",
             "utility": float(a.utility) if ok[0] else 0.0,
             **base,
         }
+        if return_pred:  # `pred` None = SEARCH-mean predictor (crashed single output)
+            out["pred"] = np.asarray(a.pa, np.float64) if ok[0] else None
+        return out
     cols = [
         audit_by_sha[s].pa if good else np.full(len(ya), y_search_mean)
         for s, good in zip(shas, ok)
     ]
     pred = np.column_stack(cols) @ w
     rmse = float(np.sqrt(np.mean((pred - ya) ** 2)))
-    return {
+    out = {
         "status": "completed",
         "utility": C.audit_utility_from_rmse(rmse, ba),
         "rmse": rmse,
         **base,
     }
+    if return_pred:
+        out["pred"] = None if not ok.any() else pred
+    return out

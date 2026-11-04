@@ -5,6 +5,9 @@ Groups (source root on xbabe2 -> target root on xbabe0):
   code        H317 source dir (top-level *.py *.sh *.md *.json)              -> $STAGE/code
   train_view  res01-train-view (1,219 TRAIN tables + pools, champions, winners, source_manifest, redacted selected.json)
                                                                               -> $STAGE/res01-train-view
+  micro_v     Stage V only: the 5 LOCKed DOPE/encoder files (dope_mlc_v3_multitask_best.pt a36510b9...,
+              frozen_stage1_stage2_inference_params_v3.pt 136b2381..., python/model.py 0aa76360...,
+              python/hpc/landmark_workspace.py, bin/libjope_hpc.so) -> $STAGE/micro (hash-only, never executed)
   micro       JopeDimeMicro subset: bin/bootstrap.s1main, python/{rust_evaluator,rank_prepare,phase12_multimodal_model}.py,
               assets/projections/program-feature-names.json (no assets/benchmark_data, no results)  -> $STAGE/micro
   views       $H317_DATA/neural/views_c32_train1219.npz + $H317_DATA/views-search/<cid>.npz (SEARCH-row view sets of
@@ -41,6 +44,15 @@ VIEWS_SEARCH_SUMS_SHA256 = (
 )
 SCREENER_RUN = "neural/runs/H0.1-A"
 WORKER_SHA256 = "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+# Stage V only (stage_v_mounts.md §1): the LOCKed DOPE / encoder files, staged so resume_stage_v can hash every LOCK
+# file in the xbabe0 container (the audit never runs the encoder). Known pins: H58 cache manifest values.
+MICRO_V_FILES = {
+    "assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9",
+    "assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381",
+    "python/model.py": "0aa76360",
+    "python/hpc/landmark_workspace.py": None,
+    "bin/libjope_hpc.so": None,
+}
 MICRO_FILES = (
     "bin/bootstrap.s1main",
     "python/rust_evaluator.py",
@@ -105,6 +117,10 @@ def main() -> None:
     if sha(C.MICRO / "bin" / "bootstrap.s1main") != WORKER_SHA256:
         raise SystemExit("worker sha mismatch")
     groups["micro"] = (C.MICRO, list(MICRO_FILES))
+    for rel, pin in MICRO_V_FILES.items():
+        if pin is not None and not sha(C.MICRO / rel).startswith(pin):
+            raise SystemExit(f"{rel}: sha does not match the pinned {pin}...")
+    groups["micro_v"] = (C.MICRO, list(MICRO_V_FILES))
     merged = C.DATA_ROOT / "neural" / "views_c32_train1219.npz"
     with np.load(merged, allow_pickle=False) as z:
         mc = {str(c) for c in z["cids"]}
