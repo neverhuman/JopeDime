@@ -1,0 +1,37 @@
+{
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H320/",
+  "verification": "exact-version GET streamed through sha256 (boto3) for every object before local deletion",
+  "objects": [
+    {
+      "key": "h320_trim_locks_models_outputs.tar.gz",
+      "version_id": "P6_rSyzB0._wHDPAnLWzWA9z3m1qM02L",
+      "sha256": "e8c112d3c0636359cee7919fc5237a00dc1ac43d1a28dff6f5b875dda5e07a57",
+      "bytes": 794311317,
+      "contents": "36 fit locks (BASE + TRIM choices, both inner tables, guard counts), refit members, inner members (per-task tar.gz, compacted during the run to stay under 2 GB), archived picks, outputs, logs"
+    },
+    {
+      "key": "metrics_full.json",
+      "version_id": "7DBGWRjq4DHK0Op1M66NvNtcD78BkfAu",
+      "sha256": "53fc98b4f9f4b593eb407d9cab3b3bee9c899a44e3dec8eefcb07a353310bd9a",
+      "bytes": 39017
+    },
+    {
+      "key": "picks.npz",
+      "version_id": "48Zge1hi_J8ysyImRXOD1.H1wNmg180a",
+      "sha256": "d3e1f664331e8639cc91a0464eff19fcf7e5ccf13aaf102b4d14b561a2370a34",
+      "bytes": 3302
+    },
+    {
+      "key": "regression_receipt.json",
+      "version_id": "HF9ZZqHZ701nIsw6Nxr63LNuHMbe_RaI",
+      "sha256": "4e93dfb55b034926c3f1655f7110f90943bf24a0a03e3bbae73917b98f25e080",
+      "bytes": 508
+    },
+    {
+      "key": "fit_locks_pre_score.sha256",
+      "version_id": "YaTFEQr.oOY_z967oQgSC.EmAOU.6OV4",
+      "sha256": "8a33a06b567b5dc165ffbd1457e76759f75027cbbbf3940c4f2c160a75a22a98",
+      "bytes": 3636
+    }
+  ]
+}
