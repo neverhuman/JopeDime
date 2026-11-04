@@ -15335,6 +15335,22 @@
       ],
       "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
     },
+    "target:jope-runtime/test/refittable_rust": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/refittable_rust.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Refittable Rust export: the exported recipe source is independent of fitted values and column names, fitted state is saved as a separate part and reloads to identical predictions; invalid fits, wrong recipes, mislabeled heads and checksum-valid broken heads are refused before prediction."
+    },
     "target:jope-service/example/q1_infra_retry": {
       "discovery": {
         "doctest": false,

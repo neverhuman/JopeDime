@@ -15,6 +15,8 @@ use feat_math::genome::GenomeIr;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+pub mod refittable;
+
 pub const PIPELINE_PART: &str = "pipeline.json";
 pub const INPUT_PART: &str = "input.json";
 pub const F64_PREDICTION_VERSION: u32 = 2;
@@ -104,6 +106,12 @@ pub struct MathPipeline {
 }
 
 impl MathPipeline {
+    /// Local recipe source contains the admitted recipe and fit/predict entry points.
+    pub fn export_refittable_rust(&self) -> Result<String> {
+        let recipe = refittable::check_pipeline(self)?;
+        Ok(refittable::emit_rust(&recipe))
+    }
+
     /// Decode and validate both parts. A model whose width differs from `selected` is refused here,
     /// before any table is read.
     pub fn decode(parts: &BTreeMap<String, Vec<u8>>, primary: &str) -> Result<Self> {
