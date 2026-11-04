@@ -40,6 +40,8 @@ pub(crate) fn terminal(
     })?;
     let mut command = CommandBuilder::new(home.join("jopedime"));
     command.env("JOPEDIME_HOME", home);
+    command.env("JAIN_ACCEPT_TERMS", "1");
+    command.env("JAIN_ALLOW_LOCAL_FILES", "1");
     command.env("TERM", "dumb");
     command.env("NO_COLOR", "1");
     let mut child = pair.slave.spawn_command(command)?;

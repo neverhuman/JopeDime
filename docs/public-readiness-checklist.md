@@ -44,6 +44,7 @@ any non-`recorded` member fails CI**.
 | `golden42`/`golden46` collections | gate: private until the 24 blank licences are backfilled (WP-D6) |
 | `registry-real-v1` (1,416 unknown of 2,613 real datasets) | stays private; backfill is ongoing, not a public-switch blocker because the collection is not public |
 | Excluded on purpose: hash-only datasets without provenance, `ZTS_small`, both NOMAD releases (restricted encrypted bundle) | done |
+| Bundled jAIn CLI demos (`crates/jope-appliance/assets/demos`, embedded in the `jopedime` executable) | **done** (2026-11-04): only CC-BY-4.0 demos ship, `regression_parkinsons` (UCI 189) and `regression_apartment_rent` (UCI 555); licences, evidence URLs and attributions are in `assets/demos/manifest.json` and printed by `/demo`. `binary_loan_approval` (GPL-3.0 wooldridge package data) and `regression_tiny_soil` (CC-BY-SA-4.0 LimeSoDa BB.30_2) were removed rather than ship copyleft/share-alike data in the binary. **gate**: `terminal::demos` test `only_attribution_licensed_demos_are_bundled` fails if a non-CC-BY-4.0 demo is added. The dataset catalog itself still says `unknown` for these sources |
 | `meta_sha256_missing` rejects (27,055 synthetic-regression directories) | owner decision, [docs/datasets.md](datasets.md); not a public-switch blocker |
 
 ## 4. Secrets and credentials

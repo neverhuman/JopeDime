@@ -7,10 +7,14 @@ pub mod cards;
 pub mod commands;
 pub mod complete;
 pub mod composer;
+pub mod demos;
 
 #[path = "highlight.rs"]
 pub mod highlight;
 pub mod line_mode;
+pub mod links;
+#[cfg(feature = "client")]
+pub mod onboarding;
 pub mod restore;
 pub mod runs;
 pub mod screen;
