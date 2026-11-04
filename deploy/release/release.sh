@@ -261,7 +261,9 @@ readonly MANIFEST_SCHEMA=jope.release-manifest/v1
 readonly BUILD_COMMAND="cargo build --release --locked -p jope-cli --bin jope --message-format=json-render-diagnostics"
 # The model-object CLI (`jopedime model import|verify|export`, including `--format javascript`). It is
 # built from the same export in the same builder and goes through every check jope does.
-readonly APPLIANCE_BUILD_COMMAND="cargo build --release --locked -p jope-appliance --bin jopedime --message-format=json-render-diagnostics"
+# `cloud-tls` is selected so the released client can sign in to HTTPS cloud workspaces
+# (deploy/appliance/AMENDMENTS.md A22); without it `jopedime auth login` refuses every https URL.
+readonly APPLIANCE_BUILD_COMMAND="cargo build --release --locked -p jope-appliance --bin jopedime --features cloud-tls --message-format=json-render-diagnostics"
 # The same prefixes as GPU_LIBRARY_PREFIXES in crates/jope-engine/src/build_receipt.rs (lowercase).
 readonly -a GPU_LIBRARY_PREFIXES=(libcuda libcudart libcudnn libcublas libcurand libcusparse
   libcufft libcusolver libcupti libcufile libcutensor libnpp libnvjpeg libnccl libnvrtc

@@ -6,6 +6,8 @@ target = "x86_64-unknown-linux-gnu"
 feature_sets = [
   [], ["embedded"], ["embedded", "dev-keys"],
   ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  # A22: the released connected client (release.sh APPLIANCE_BUILD_COMMAND) and its embedded twin.
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
 ]
 
 # Denied in the normal/build closure unless an exact scoped package exception below applies.
@@ -38,6 +40,13 @@ native = [
 denied_features = ["feat-math/fitted-cpp", "jope-assets/pack"]
 
 [native_allowed]
+# A22: reached only through the cloud-tls selections below. aws-lc-sys itself also matches the
+# `aws-*` deny and is admitted by a package exception scoped to exactly those selections, so no
+# other feature set can pull it in; cc/cmake/pkg-config appear only as its build tools.
+aws-lc-sys = "A22 cloud-tls: AWS-LC crypto provider for rustls (C/asm, built from the pinned crate source; no system OpenSSL)"
+cc = "A22 cloud-tls: build-time C compiler driver for aws-lc-sys only"
+cmake = "A22 cloud-tls: optional aws-lc-sys build driver; the default build uses cc"
+pkg-config = "A22 cloud-tls: build-time probe in the aws-lc-sys build graph; links no system library"
 
 # T0115 owner-authorized v1 CPU server/client/ranker scope. Every global deny above remains.
 # Exact versions + root selections + dependency feature caps; no native approval is granted.
@@ -46,63 +55,90 @@ denied_features = ["feat-math/fitted-cpp", "jope-assets/pack"]
 [[package_exceptions]]
 name = "candle-core"
 version = "0.11.0"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["default"]
 reason = "CPU-only accepted ranker tensor implementation; reviewed vendored source; no CUDA/Metal/native backends."
 
 [[package_exceptions]]
 name = "gemm"
 version = "0.19.0"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["default", "f16", "gemm-f16", "rayon", "std", "wasm-simd128-enable"]
 reason = "Pure Rust CPU matrix kernels required by candle-core0.11; no external BLAS/native runtime."
 
 [[package_exceptions]]
 name = "gemm-common"
 version = "0.19.0"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["f16", "half", "rayon", "std", "sysctl", "wasm-simd128-enable"]
 reason = "Shared pure Rust CPU matrix support for the pinned Candle/GEMM selection."
 
 [[package_exceptions]]
 name = "gemm-c32"
 version = "0.19.0"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
 
 [[package_exceptions]]
 name = "gemm-c64"
 version = "0.19.0"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
 
 [[package_exceptions]]
 name = "gemm-f16"
 version = "0.19.0"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
 
 [[package_exceptions]]
 name = "gemm-f32"
 version = "0.19.0"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
 
 [[package_exceptions]]
 name = "gemm-f64"
 version = "0.19.0"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["rayon", "std"]
 reason = "Pure Rust typed CPU kernels required by pinned gemm0.19; no native/CUDA backend."
 
 [[package_exceptions]]
 name = "hyper"
 version = "1.11.1"
-feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+feature_sets = [
+  ["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"],
+  ["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"],
+]
 allowed_features = ["default", "http1", "server"]
 reason = "Axum HTTP1 engine server; existing loopback/auth boundary remains required; no HTTP client/TLS allowance."
 
@@ -112,3 +148,36 @@ version = "3.5.0"
 feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
 allowed_features = []
 reason = "Featureless local HTTP client; defaults, TLS and remote-fetch dependencies stay disabled and denied."
+
+# --- A22: HTTPS for the released connected client (cloud-tls) ----------------------------------
+# Scoped to exactly the two cloud-tls selections, exact versions, features capped to what the
+# locked graph resolves. Every other selection keeps ureq featureless and rustls/aws-* denied
+# (crates/jope-dist/tests/dependency_fence.rs asserts both directions).
+
+[[package_exceptions]]
+name = "ureq"
+version = "3.5.0"
+feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"]]
+allowed_features = ["_rustls", "_tls", "rustls-no-provider", "rustls-webpki-roots"]
+reason = "A22: HTTPS to cloud workspaces with rustls and the bundled webpki root store; no native-tls, no platform verifier, no defaults."
+
+[[package_exceptions]]
+name = "rustls"
+version = "0.23.46"
+feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"]]
+allowed_features = ["aws-lc-rs", "aws_lc_rs", "default", "log", "logging", "prefer-post-quantum", "std", "tls12"]
+reason = "A22: TLS for the connected client; the AWS-LC provider is installed explicitly in cloud/client_auth.rs."
+
+[[package_exceptions]]
+name = "aws-lc-rs"
+version = "1.18.1"
+feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"]]
+allowed_features = ["aws-lc-sys", "prebuilt-nasm"]
+reason = "A22: rustls crypto provider (rustls default); non-FIPS; prebuilt-nasm only affects Windows builds."
+
+[[package_exceptions]]
+name = "aws-lc-sys"
+version = "0.45.0"
+feature_sets = [["engine", "mcp", "client", "cloud-tls"], ["embedded", "engine", "mcp", "client", "cloud-tls"]]
+allowed_features = ["prebuilt-nasm"]
+reason = "A22: AWS-LC compiled from the pinned crate source and linked statically; also listed in native_allowed."
