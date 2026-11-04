@@ -11,7 +11,7 @@
   \centering
   \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Reference training searches many moves; game-day evaluation commits one.}
-  In the top band (blue, \searchone{}), the frozen encoder reads board $p$ and the writer $\writer$ commits one move $w$ with no retry or repair.
+  In the top band (blue, \searchone{}; proposed game day), the frozen encoder reads board $p$ and the writer $\writer$ commits one move $w$ with no retry or repair.
   In the lower dashed box (proposed training, \cref{sub:method-selfplay}; separate from the adapter record in \cref{sec:method-status}), valid scored moves join $G_p$ while failed attempts consume budget.}
   \label{fig:game-loop}
 \end{figure*}
@@ -69,7 +69,7 @@ the single-candidate contract in \cref{box:searchone}.
     Illegal move   & Not allowed                     & Stillborn ($\tilde{w}$): \mbox{an automatic loss} \\
     Referee        & The rules of Go                 & The referee $\referee$, \mbox{on hidden folds} \\
     Win            & Higher final score             & Valid move $w^+$ beating $\inc{p}$ under $\reward$ \\
-    Opponent       & A past self                     & The incumbent $\inc{p}$ from $\opp$, often a past self \\
+    Opponent       & A past self                     & The incumbent $\inc{p}$ from $\opp$, possibly a past self \\
     Rating         & Elo                             & Win rate and Elo \mbox{across problems} \\
     Moves per game & About 150, \mbox{each cheap}    & One ($\budget$), \mbox{costly to judge} \\
     \bottomrule
