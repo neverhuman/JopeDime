@@ -3,8 +3,21 @@
 import math
 
 
-SPATIAL_LAYOUTS = ("layered", "iris", "twist", "hourglass", "prism", "manta")
+BIOLOGICAL_LAYOUTS = ("dendrite", "synapse", "fascicle", "ginkgo", "cortex")
+SPATIAL_LAYOUTS = ("layered", "iris", "twist", "hourglass", "prism", "manta", *BIOLOGICAL_LAYOUTS)
 ROWS_PER_COLUMN = 32
+
+
+def _bundle_grid(index, count, bundles, rows_per_column):
+    """Interleave canonical indices across bundles and return each local grid coordinate."""
+    local, group = divmod(index, bundles)
+    size = (count + bundles - 1 - group) // bundles
+    column, row = divmod(local, rows_per_column)
+    columns = (size + rows_per_column - 1) // rows_per_column
+    rows = min(rows_per_column, size - rows_per_column * column)
+    u = 0. if rows == 1 else 2. * row / (rows - 1) - 1.
+    v = 0. if columns == 1 else 2. * column / (columns - 1) - 1.
+    return group, u, v
 
 
 def transverse_position(layout, t, index, count):
@@ -64,6 +77,43 @@ def transverse_position(layout, t, index, count):
         radius = (.55 + .45 * (v + 1.) / 2.) * (.90 + .10 * arch)
         return 2.65 * radius * y, 3.97 * radius * z
 
-    # Manta: bow the depth columns and sweep the wings with a traveling bend.
-    return (1.65 * v + .90 * u ** 2,
-            (2.75 + .55 * arch) * u + .46 * wave * (1. - .65 * v ** 2) + .28 * v)
+    if layout == "manta":
+        # Bow the depth columns and sweep the wings with a traveling bend.
+        return (1.65 * v + .90 * u ** 2,
+                (2.75 + .55 * arch) * u + .46 * wave * (1. - .65 * v ** 2) + .28 * v)
+
+    if layout == "dendrite":
+        # A bent trunk opens into three staggered fans.
+        group, u, v = _bundle_grid(index, count, bundles=3, rows_per_column=12)
+        spread = .18 + .82 * t ** .92
+        return ((-1.22, 0., 1.22)[group] + (.45 + .44 * spread) * v + .40 * spread * u,
+                (-2.48, -.26, 2.52)[group] * spread + .48 * wave
+                + (.34 + .35 * spread) * u)
+
+    if layout == "synapse":
+        # Opposing cell-body silhouettes meet at a thin, still-connected cleft.
+        left = math.exp(-((t - .22) / .155) ** 2)
+        right = math.exp(-((t - .78) / .155) ** 2)
+        bulb = max(left, right)
+        return ((.69 + 1.11 * bulb) * v + .50 * (left - right) * (1. - u ** 2),
+                (.71 + 2.73 * bulb) * u + .39 * (left - right) + .24 * v)
+
+    if layout == "fascicle":
+        # Two bundles orbit the same axis, leaving an open channel between them.
+        group, u, v = _bundle_grid(index, count, bundles=2, rows_per_column=16)
+        direction = 1. if group == 0 else -1.
+        phase = math.tau * t + .48
+        return (direction * 1.75 * math.cos(phase) + .68 * v + .21 * u,
+                direction * 2.48 * math.sin(phase) + 1.07 * u)
+
+    if layout == "ginkgo":
+        # An asymmetric, ribbed leaf tapers into both connector ports.
+        span = .19 + .81 * math.sin(math.pi * t ** .78) ** .80
+        offset = .48 * wave
+        return ((.35 + 1.72 * math.sqrt(max(0., 1. - u ** 2))) * v + .58 * arch * (1. - u ** 2),
+                offset + (3.90 - abs(offset)) * span * u)
+
+    # Cortex: corrugate the stage surface into staggered gyri.
+    phase = 2.7 * math.pi * u + 1.15 * math.pi * t
+    return (1.37 * v + .96 * math.sin(phase),
+            3.25 * u + .28 * math.sin(phase) + .32 * arch)
