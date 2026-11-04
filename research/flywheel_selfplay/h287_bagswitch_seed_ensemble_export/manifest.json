@@ -1,0 +1,77 @@
+{
+  "wave": "H287",
+  "slug": "h287_bagswitch_seed_ensemble_export",
+  "authority": "/home/ubuntu/nudges/hw_t0005_argon_h287.md",
+  "arms": [
+    "slot0",
+    "RERANK8_VETO",
+    "BAG_SWITCH",
+    "ENS_MEAN",
+    "ENS_MEAN_PROPOSER",
+    "ENS_VOTE2",
+    "ENS_VOTE3",
+    "CLIP",
+    "CLIP_ENS_VOTE2"
+  ],
+  "h284_seeds": [
+    279101,
+    279102,
+    279103
+  ],
+  "refit_seeds": [
+    287101,
+    287102,
+    287103
+  ],
+  "bootstrap_seed": 287150,
+  "bootstrap_draws": 10000,
+  "k_deep": 8,
+  "fresh_pools_read": 0,
+  "checkpoint": "/home/ubuntu/jope_plan/evidence/H287/argon-t0005/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h276/inputs/best_dev_checkpoint.json",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "h284_export_manifest_version_id": "AHFLVzBwd_fOfBAFGwHd.ABmkbgIbUu3",
+  "total_updates": 0,
+  "inputs": {
+    "/home/ubuntu/jope_plan/evidence/H287/argon-t0005/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h276/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h276/inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "/home/ubuntu/jope-data/h276/inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "/home/ubuntu/jope-data/h284/inputs/h279-KM276140-S279101-C0.json": "8d603c1962d1d696574175b017c2d60f434c193955f80ab6aac15691c078a994",
+    "/home/ubuntu/jope-data/h284/export/export_manifest.json": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h58/cache/pool_priors.npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"
+  },
+  "parent_sources": {},
+  "source_sha256": {
+    "PREREG.md": "fbbfc12413a67f74ba9fd6010e47f65b5aa228afb1db3a6a39b0bf9432c4d029",
+    "analysis_h279.py": "763ad41d0e35fbf97dce4ca46deab5557e414d2c93ed46f729cdabfce30752d6",
+    "analysis_h287.py": "166b336451f270b31bcc7ad68de72012afba2b6622903f13a793bc0992490930",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "ensemble.py": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+    "fold_manifest.json": "e89f9aa130cf1529a684c83c2dc8bd1658dbae69a5c1e0af87760ed8d92208f2",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "monitor.py": "fb06dcde664f8eaa0ad9adc7ecd0ba52790f70810156d035733884154c8e2b68",
+    "provenance.json": "80bc359d5733a5303580e22f7adfe481bc7242690cbbb487e48eedb5690be873",
+    "runner.py": "80ab54ab917ef44a79b09179494ccfdb5b0e6cc635de7080168185fec37e0d77",
+    "test_h287.py": "d054fc5967e341b0b902e0646496383427252cef156b4a37e25d949abcf72588",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "README.md": "682f364a38b2304a8a54f23213a0bc24da745bf2c144ef4cc21c2e05de3e03e0",
+    "ensemble_spec.json": "32ca19f30f427ae135f5f6c2aacc0fe28097d956f4e2ca0e7fd5f41ffec49995",
+    "export_manifest.json": "874693a78d52ebeee2e2c0c38d0f028cd3887a01abec8d0c383128e0b4cf06d7",
+    "fit_lock.json": "8a20c58bdb4bfcbadfa5ba927aa0577b630e3174e6dc4a7bfd579175ca08f35f",
+    "metrics.json": "0d5938fa201959e06061d840ee344b3e985d6939e511999ac637ab0e7222753c"
+  },
+  "packages": {
+    "lightgbm": "4.6.0",
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "scikit-learn": "1.7.2"
+  },
+  "parent_commit": "9bd76739e9000ca7b33c639f1287de2a059fd825",
+  "publication_ref": "v1/next",
+  "host": "xbabe2 CPU (taskset cores 57-60, nice 19, LightGBM n_jobs 1)",
+  "compute_stop": "2026-11-04T02:30:00Z"
+}
