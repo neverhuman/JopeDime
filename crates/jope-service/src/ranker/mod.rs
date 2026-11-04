@@ -6,6 +6,7 @@ pub mod bank;
 pub mod bundle;
 pub mod cuda;
 pub mod featurizer;
+pub mod h256;
 #[path = "landmarks.rs"]
 pub mod landmarks;
 pub mod lm48;

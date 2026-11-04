@@ -14,6 +14,7 @@ use std::collections::BTreeMap;
 pub struct StageOutput {
     pub v256: Vec<f32>,
     pub col: Vec<f32>,
+    pub hidden256: Vec<f32>,
     pub dope629: Vec<f32>,
     pub lm48: Vec<f32>,
     pub lm48_z: Vec<f32>,
@@ -323,6 +324,7 @@ impl FusedForward {
         let output = StageOutput {
             v256: flat(&v)?,
             col: flat(&c)?,
+            hidden256: flat(&h)?,
             dope629: flat(&dope)?,
             lm48: flat(&lm48)?,
             lm48_z: flat(&lm48_z)?,
@@ -331,8 +333,9 @@ impl FusedForward {
         };
         ensure!(
             output
-                .dope629
+                .hidden256
                 .iter()
+                .chain(&output.dope629)
                 .chain(&output.lm48)
                 .chain(&output.lm48_z)
                 .chain(&output.tokens)

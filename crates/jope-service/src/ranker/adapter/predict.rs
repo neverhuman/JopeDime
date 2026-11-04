@@ -66,6 +66,43 @@ impl CpuAdapter {
         })
     }
 
+    /// Evaluate `predict_costs` with an optional pre-condense residual bypass
+    /// `s_new(p, D) = s_existing(p, T(D)) + Delta_s(p, D_629, H_256, C_64x17)`.
+    /// When `residual_weights.alpha_prior == 0.0`, outputs are bit-identical to `predict_costs`.
+    pub fn predict_costs_with_pre_condense_residual(
+        &self,
+        inputs: PredictCostsInputs<'_>,
+        pre_condense: &[super::super::stage1b::PreCondenseContextTokens],
+        residual_weights: &PreCondenseResidualWeights,
+    ) -> Result<PredictedCosts> {
+        ensure!(
+            pre_condense.len() == inputs.batch,
+            "pre_condense context slice length must equal batch size"
+        );
+        residual_weights.validate()?;
+        let mut base = self.predict_costs(inputs)?;
+        if residual_weights.alpha_prior == 0.0 {
+            return Ok(base);
+        }
+        let n = inputs.candidates;
+        base.proposal_kl_to_anchor.clear();
+        for (b, ctx_tokens) in pre_condense.iter().enumerate() {
+            let prog = &inputs.prog_412[b * n * 412..(b + 1) * n * 412];
+            let sem = semantic_signature(prog);
+            let delta = residual_weights.score_slate(ctx_tokens, &sem, n)?;
+            let row_total = &mut base.total_cost[b * n..(b + 1) * n];
+            let row_anchor = &base.anchor_cost[b * n..(b + 1) * n];
+            for (c, d) in row_total.iter_mut().zip(delta) {
+                *c += d;
+                ensure!(c.is_finite(), "non-finite pre-condense residual cost");
+            }
+            base.proposal_kl_to_anchor
+                .push(proposal_kl(&row_total[REVEALED..], &row_anchor[REVEALED..]));
+        }
+        base.exceeds_kl_limit = base.proposal_kl_to_anchor.iter().any(|v| *v > 0.35);
+        Ok(base)
+    }
+
     fn forward_row(
         &self,
         inputs: &PredictCostsInputs<'_>,
