@@ -107,6 +107,64 @@ def set_xgrid(r303):
     r303.SCRATCH = DATA / "scratch"
 
 
+# H305 audit (h): the H302/H303 loader decodes whole cache arrays, whose final 91 rows are DL-Val (dev91) features,
+# before filtering to TRAIN. For the H306 fit and score phases, the two mixed cache files are opened as memory maps of
+# their (ZIP_STORED) .npy members, so only the TRAIN rows that setup() indexes are decoded. Values are byte-identical.
+SELECTIVE = {"pool_priors.npz", "context_features.npz"}
+
+
+def stored_member(path, name):
+    """np.memmap of an uncompressed .npy member of an .npz (no array bytes decoded until indexed)."""
+    import zipfile
+
+    with zipfile.ZipFile(path) as zf:
+        info = zf.getinfo(name)
+        if info.compress_type != zipfile.ZIP_STORED:
+            raise RuntimeError(f"{path}:{name} is compressed; selective read impossible")
+        with open(path, "rb") as f:
+            f.seek(info.header_offset)
+            local = f.read(30)
+            assert local[:4] == b"PK\x03\x04"
+            n, m = int.from_bytes(local[26:28], "little"), int.from_bytes(local[28:30], "little")
+            start = info.header_offset + 30 + n + m
+            f.seek(start)
+            version = np.lib.format.read_magic(f)
+            shape, fortran, dtype = np.lib.format._read_array_header(f, version)
+            data_off = f.tell()
+    assert not fortran and not dtype.hasobject
+    return np.memmap(path, dtype=dtype, mode="r", offset=data_off, shape=shape)
+
+
+class _SelectiveNpz:
+    def __init__(self, path):
+        self.path = path
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def __getitem__(self, key):
+        return stored_member(self.path, key + ".npy")
+
+
+class _SelectiveNumpy:
+    """Stands in for `np` inside run_h303: np.load of the two mixed cache files returns memory maps."""
+
+    def __getattr__(self, name):
+        return getattr(np, name)
+
+    def load(self, file, *args, **kw):
+        if Path(file).name in SELECTIVE:
+            return _SelectiveNpz(Path(file))
+        return np.load(file, *args, **kw)
+
+
+def use_selective_loader(r303):
+    r303.np = _SelectiveNumpy()
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -122,6 +180,7 @@ if __name__ == "__main__":
     rec = json.loads((DATA / "regression_receipt.json").read_text())
     assert rec["status"] == "PASS", "regression must PASS before any H306 fit"
     set_xgrid(r303)
+    use_selective_loader(r303)
     r303.setup()
     if a.phase == "fit":
         r303.fit_phase(a.workers)

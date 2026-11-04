@@ -1,0 +1,30 @@
+{
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H306/",
+  "objects": [
+    {
+      "key": "h306_models_locks_and_outputs.tar.gz",
+      "version_id": "HuP6NVtw74H9WSBhjGXDtLzg7IN09XqW",
+      "sha256": "073a1db57a2703f68d20e645a54c9c77ff600b7ddbe4f0e7f610513f41f654fe",
+      "bytes": 286654300,
+      "contents": "12 XGRID fit locks + inner/refit members, regression task (fold 0 / 30001) fit, stopped attempt-0 partial scratch, outputs, logs, pre-score lock inventory"
+    },
+    {
+      "key": "metrics_full.json",
+      "version_id": "2Udw.SEJPcn6CVDHlYoFLcVqYqLzMKRx",
+      "sha256": "9fa5f268dbc6f2b5ccc01abd62554525b4504f2e3239ca94de72463aa56fe2e7",
+      "bytes": 28240
+    },
+    {
+      "key": "regression_receipt.json",
+      "version_id": ".Zk.JUtwvggzN_CurnIMqXJvpWbfOa6k",
+      "sha256": "462d07255c5a46bed95eddb1fee2ff2752d0bef0b4c493a3fea77fa6110f0cd5",
+      "bytes": 743
+    },
+    {
+      "key": "picks.npz",
+      "version_id": "wm3A0Ngy801PqjPDzZRkWJFEZxbT4hT0",
+      "sha256": "573297430d045909a3b13ea92135886de8b0d336d9bfa10046c26e83ae5b495a",
+      "bytes": 3297
+    }
+  ]
+}

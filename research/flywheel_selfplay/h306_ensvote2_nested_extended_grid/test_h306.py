@@ -41,3 +41,18 @@ def test_strip_lock_ignores_paths_and_time():
     a = dict(outer_fold=0, root_seed=30001, inner_table=[1], chosen={"tau": 0.05}, n_tied=1, members=[m], elapsed_sec=1)
     b = dict(a, elapsed_sec=99, members=[dict(m, ranker=dict(sha256="a", file="other"))])
     assert r.strip_lock(a) == r.strip_lock(b)
+
+
+def test_selective_loader_matches_np_load(tmp_path):
+    p = tmp_path / "pool_priors.npz"
+    rng = np.random.default_rng(0)
+    arrs = dict(
+        cids=np.array(["a", "bb", "ccc"]), offsets=np.array([0, 2, 5, 9]), base_prior_cost=rng.normal(size=(9, 3))
+    )
+    np.savez(p, **arrs)
+    sel = r._SelectiveNumpy().load(p)
+    with np.load(p) as z, sel as s:
+        for k in arrs:
+            m = s[k]
+            assert isinstance(m, np.memmap) and m.dtype == z[k].dtype and np.array_equal(m, z[k])
+        assert np.array_equal(s["base_prior_cost"][2:5], z["base_prior_cost"][2:5])

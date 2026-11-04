@@ -46,5 +46,15 @@
     "memory_max": "8G"
   },
   "parent_commit": "7919046451cef265b635745c433970fc47c17a4c",
-  "compute_stop": "2026-11-04T08:15:00Z"
+  "compute_stop": "2026-11-04T08:15:00Z",
+  "post_prereg_sources": {
+    "run_h306.py": {
+      "sha256": "9e9800cc63603b0d64e18e2617b6dd8a60025e26ef0288f4e3e13a00a21c3f1f",
+      "deviation": "selective memory-mapped loader for the two mixed cache npz files (H305 audit h); byte-identical TRAIN values"
+    },
+    "test_h306.py": {
+      "sha256": "fc1d167d98e376bbd80043ce1ccbcf9f66d38d6dbbacc8a8dfb3a8b1710dfe6d",
+      "deviation": "added test_selective_loader_matches_np_load"
+    }
+  }
 }
