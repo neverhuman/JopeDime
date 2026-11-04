@@ -208,5 +208,19 @@ class Tests(unittest.TestCase):
         )
 
 
+class SerializationTests(unittest.TestCase):
+    def test_numpy_fisher_counts_serialize(self):
+        import evaluate, json
+
+        r = evaluate.fisher(
+            np.array([True] * 10 + [False] * 9), ["CLEAN"] * 19, [True] * 19
+        )
+        self.assertEqual(
+            json.loads(json.dumps(r, allow_nan=False))["table"], [[0, 10], [0, 9]]
+        )
+        self.assertIsNone(r["odds_ratio"])
+        self.assertEqual(r["p_greater"], 1.0)
+
+
 if __name__ == "__main__":
     unittest.main()

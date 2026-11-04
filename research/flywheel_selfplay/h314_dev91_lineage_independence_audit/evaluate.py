@@ -21,7 +21,7 @@ def fisher(top, classes, include):
     b = sum(top[i] and classes[i] != "NEIGHBORED" for i in ids)
     c = sum(not top[i] and classes[i] == "NEIGHBORED" for i in ids)
     d = sum(not top[i] and classes[i] != "NEIGHBORED" for i in ids)
-    table = [[a, b], [c, d]]
+    table = [[int(a), int(b)], [int(c), int(d)]]
     odds, p = fisher_exact(table, alternative="greater")
     return dict(
         table=table,
@@ -137,7 +137,7 @@ def main():
         transport_clarification_commit=json.loads(
             (P / "transport-prereg-published.json").read_text()
         )["head"],
-        source_commit=json.loads((P / "identityfix-published.json").read_text())[
+        source_commit=json.loads((P / "serialization-published.json").read_text())[
             "head"
         ],
         regression="EXACT PASS",
