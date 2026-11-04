@@ -157,5 +157,18 @@
   "closeout_deadline": "2026-11-04T03:45:00Z",
   "training_protocol_sha256": "92d83f355ad01a47bed2ee11855f8280ba65316a7889c1f22c947a41e3ce8708",
   "protocol_sha256": "871dcd4f2af334f0afbb4b59d7af236552cb219728e5d95c1658edf03192b04a",
-  "amendment": "Post-fit pre-score metadata clarification: H283 secondary29built/60requested, no primary gate change. Scoring/test source formatting AST-equivalent to fit-stage snapshots; training-executed code unchanged."
+  "amendment": "Post-fit pre-score metadata clarification: H283 secondary29built/60requested, no primary gate change. Scoring/test source formatting AST-equivalent to fit-stage snapshots; training-executed code unchanged.",
+  "status": "COMPLETE",
+  "verdict": "NOT_TRANSFERRED_SEMI_FRESH",
+  "source_commit": "53df9ffc0f0c3d0da6a445a2947ae813f4f39123",
+  "output_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H290/astra-t0030/outputs/full-evidence.tar.gz",
+    "version_id": "1dlxwSWU4m4AW7vMYoDp9sic2hnlm.G1",
+    "sha256": "988d1a1aeafe1c512ace4c354260cf6c1f390585d2a0213c6dcf65756fb28c25",
+    "bytes": 3573489,
+    "exact_version_get_verified": true,
+    "members_verified": 145
+  },
+  "metrics_sha256": "c4efedd56c12e4df3d8a3b6cd3ec7585ff1b0d9ba09fb7be615c931dd5e5da89",
+  "audit_sha256": "ff9f7b6469cfc011feb70ea86ec6096a300b6709162d97f590def58cb78eaef6"
 }

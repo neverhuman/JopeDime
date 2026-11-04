@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "selected_slots_and_outcome_joins_verified": 4122,
+  "model_hashes_unchanged": 87,
+  "bootstrap_draws_verified": 20000,
+  "paired_family_statistics_and_exact_sign_test_verified": true,
+  "source_fit_bindings_unchanged": true,
+  "metrics_sha256": "e39d9e053dce8c5a81f2dbba4fb37c58f5bea294ef2a5229fc65c6c18f95a7ef",
+  "neural_forwards": 0,
+  "neural_updates": 0
+}
