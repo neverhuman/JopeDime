@@ -86,8 +86,10 @@ inventoried (`fit_locks_pre_score.sha256`, in S3) before scoring.
 | H302 (recomputed) | median | +0.05889 [pooled +0.01328, +0.12647] | min +0.01478 | 0.0000 | | | | | 1755.9 [1674.3, 1814.8] |
 
 Notes on the table:
-- Elo is MM Bradley–Terry with r3175 slot 0 = 1500, from family wins and losses (ties excluded), with a whole-family
-  bootstrap CI.
+- Elo is MM Bradley–Terry from family wins and losses (ties excluded), with a whole-family bootstrap CI. **Correction
+  (H306 step 0, label only, no numbers changed): reference = r882 slot0 (DL-Train OOF), NOT the flywheel incumbent r3175;
+  r3175-anchored Elo unmeasured.** Slot 0 of each top-8 packet is r882's lowest-cost candidate (H287 `topk.load_packets`,
+  `r882_u`); the PREREG wording "r3175 slot 0" was wrong.
 - Sign-test p ≤ 4.5e-10 on every nested seed.
 
 ### Concentration audit
