@@ -107,3 +107,17 @@ experiments/rd_breakthrough_20261030/H314/astra-20261104T102434Z/, exact-version
 GET/SHA/member verification then own scratch deletion. Claims/comms/index records.
 CI freeze: nonforce v1/next only, no PR/main/fastlane/CI. No GPU access (including
 nvidia-smi), forbidden cohorts/data/labels, live writer directories or foreign jobs.
+
+## Pre-join metadata transport clarification (2026-11-04T10:32Z)
+
+Schema inspection shows dataset manifests repeat the catalog record, while named
+column metadata is stored under the catalog's explicitly typed `files.meta` hash.
+The blanket blob-pointer wording above is narrowed: allow ONLY JSON metadata
+blobs identified by `files.meta.sha256` for the276 selected dataset IDs, with
+exact-version GET and content hash equality. Train/test/raw data hashes are
+explicitly denied, and no CSV/Parquet, full-source raw objects, feature/label rows
+or new scoring is allowed. Full-source registry reads are JSON metadata objects
+only, never its CSV objects. This changes transport access, not neighbor rules,
+thresholds, normalization, estimands or decision. No neighbor classification or
+metadata/gain join has run. Initial prereg13a16cfc5af2de6ba9ddc9b17bb3789f72a09e13
+and its completed exact H312 regression remain preserved.
