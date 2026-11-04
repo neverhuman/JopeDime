@@ -4,6 +4,7 @@ mod commands;
 mod sync;
 
 pub use commands::{auth_command, cloud_command, default_workspace, spawn_login};
+pub(crate) use sync::{chrono_like_now, set_telemetry};
 pub use sync::{
     fetch_model, publish_best, publish_file, publish_model, run_entries, sync_events,
     sync_snapshot, sync_snapshot_for, Upload,

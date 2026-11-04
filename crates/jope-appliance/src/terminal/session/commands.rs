@@ -29,7 +29,7 @@ impl super::Session {
                 );
                 self.login_cancel = Some(cancel);
                 return Ok(vec![
-                    "Starting browser login; Ctrl-C exits without stopping background runs.".into(),
+                    "Starting browser login to your veox Cloud Workspace; Ctrl-C exits without stopping background runs.".into(),
                 ]);
             }
             Some("/logout" | "\\logout") => {
@@ -44,6 +44,10 @@ impl super::Session {
                     let _ = sender.send(vec![message]);
                 });
                 return Ok(vec!["Signing this CLI out...".into()]);
+            }
+            Some("/usage" | "\\usage") => {
+                anyhow::ensure!(words.next().is_none(), "usage: /usage");
+                return Ok(self.usage());
             }
             Some("/runs" | "\\runs") => {
                 self.refresh_runs();
@@ -69,7 +73,7 @@ impl super::Session {
                 }
                 self.background_sync(runs, Some(owner));
                 return Ok(vec![
-                    "Synchronizing run metadata. Dataset rows and model bytes stay local.".into(),
+                    "Syncing results to your veox Cloud Workspace. Dataset rows and model bytes stay local.".into(),
                 ]);
             }
             Some("/publish" | "\\publish") => {
@@ -139,8 +143,9 @@ impl super::Session {
             "\\help" => vec![if args.first().is_some_and(|arg| arg == "history") {
                 crate::terminal::composer::HISTORY_HELP.to_owned()
             } else {
-                "/login [URL] · /logout · /sync [RUN] · /publish [RUN] · /fetch UUID · Left: runs · \\open PATH · \\target COLUMN · \\plan · \\run · \\attach RUN · \\quit".into()
+                "/demo [NAME] · /usage · /login [URL] · /logout · /sync [RUN] · /publish [RUN] · /fetch UUID · Left: runs · \\open PATH|example/NAME.csv · \\target COLUMN · \\plan · \\run · \\attach RUN · \\quit\nDocs https://veox.ai/docs · Terms https://veox.ai/terms".into()
             }],
+            "\\demo" => self.demo(&args)?,
             "\\quit" => {
                 if args.iter().any(|arg| arg == "--pause") {
                     self.control("pause")?;
@@ -210,9 +215,11 @@ impl super::Session {
     }
 
     pub(super) fn open_dataset(&mut self, args: &[String]) -> anyhow::Result<Vec<String>> {
-        let path = args
-            .first()
-            .ok_or_else(|| anyhow::anyhow!("usage: \\open PATH"))?;
+        use crate::terminal::{demos, onboarding};
+        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let Some(path) = args.first() else {
+            return Ok(crate::terminal::complete::open_listing(&cwd));
+        };
         let mut name = PathBuf::from(path)
             .file_name()
             .and_then(|name| name.to_str())
@@ -224,10 +231,58 @@ impl super::Session {
                 .ok_or_else(|| anyhow::anyhow!("--name needs a value"))?
                 .clone();
         }
-        let file = std::fs::File::open(path)?;
+        // A real file takes precedence; `example/<name>.csv` otherwise opens a bundled demo.
+        let on_disk = std::path::Path::new(path).exists();
+        let mut notice = Vec::new();
+        let reader: Box<dyn io::Read + Send> = match demos::from_path(path).filter(|_| !on_disk) {
+            Some(demo) => {
+                notice = demo.license_notice();
+                Box::new(io::Cursor::new(demo.bytes))
+            }
+            None => {
+                if !on_disk
+                    && path
+                        .replace('\\', "/")
+                        .trim_start_matches("./")
+                        .starts_with(demos::PREFIX)
+                {
+                    let mut lines = vec![format!("There is no bundled demo {path}.")];
+                    lines.extend(demos::listing());
+                    return Ok(lines);
+                }
+                if let Err(message) = onboarding::local_file_gate(
+                    crate::cloud::connection().is_ok(),
+                    onboarding::local_files_override_from_env(),
+                ) {
+                    return Ok(vec![message.to_owned()]);
+                }
+                let full = cwd.join(path);
+                if full.is_dir() {
+                    return Ok(crate::terminal::complete::open_listing(&full));
+                }
+                if !on_disk {
+                    let mut lines = vec![format!(
+                        "No such file: {path} (looked in {})",
+                        cwd.display()
+                    )];
+                    lines.extend(crate::terminal::complete::open_listing(&cwd));
+                    return Ok(lines);
+                }
+                Box::new(std::fs::File::open(path)?)
+            }
+        };
+        notice.extend(self.register(&name, reader)?);
+        Ok(notice)
+    }
+
+    pub(super) fn register(
+        &mut self,
+        name: &str,
+        reader: Box<dyn io::Read + Send>,
+    ) -> anyhow::Result<Vec<String>> {
         let key = format!("tui_{}", ulid::Ulid::new());
         let profile: jope_api::DatasetProfile =
-            jope_client::files::upload_csv(&self.client, &name, file, &key)?.json()?;
+            jope_client::files::upload_csv(&self.client, name, reader, &key)?.json()?;
         let target = profile
             .target_suggestions
             .first()
