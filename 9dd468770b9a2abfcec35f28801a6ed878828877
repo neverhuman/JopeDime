@@ -1,0 +1,53 @@
+Research Wave: H256 (h256-pre-condense-residual-flywheel-20261104)
+Wave Directory: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/
+Weights Directory: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/
+Rust Inference Engine: crates/jope-service/src/ranker/h256.rs (and crates/jope-service/src/ranker/h256/tests.rs)
+KPI Telemetry: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/kpi_telemetry.json
+Report: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/REPORT.md
+Scope: Regression-only (model_task == 'regression'; 0 binary/multiclass cells or contexts admitted)
+DOPE Weights SHA-256 (Locked): c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814 (bit_identical: true)
+R882 Control SHA-256: 0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64
+
+=== 1. Flagship Unified Regression Model Performance ===
+
+A. H256_STATIC_0REV_TOP8_SOFT_VETO (0 candidate reveals at test time):
+   - DL-Train OOF (1,219 contexts / 205 families, 5-fold family-grouped CV x 3 seeds):
+     * Mean Family Utility: 1.461114 (+0.075759 vs R882 1.385355)
+     * 95% Paired Family Bootstrap CI: [+0.024212, +0.140243], LCB90: +0.031165, p = 0.0019
+     * Mean Context Utility: 1.496037 (+0.072964 vs R882 1.423073)
+     * Family Wins / Ties / Losses vs R882: 153 / 1 / 51 (3.00:1 win/loss ratio, sign-test p = 7.41e-13)
+     * Top-8 Oracle Family Recovery: 30.22% (NDCG@1 = 0.3565, NDCG@3 = 0.4966, NDCG@8 = 0.7055, MRR = 0.4322)
+     * Invalid Picks: 12.67 (vs 17.0 for R882; 11.33 invalid picks prevented; Veto AUROC = 0.8205)
+   - DL-Val91 Holdout (91 contexts / 19 unseen families):
+     * Mean Family Utility: 1.203296 (+0.049680 vs R882 1.153615)
+     * 95% Paired Family Bootstrap CI: [+0.021526, +0.085821], LCB90: +0.025049, p = 0.0001
+     * Mean Context Utility: 1.189621 (+0.051826 vs R882 1.137794)
+     * Family Wins / Ties / Losses vs R882: 17 / 0 / 2 (8.50:1 win/loss ratio, sign-test p = 0.000729)
+     * Top-8 Oracle Family Recovery: 36.69% (NDCG@1 = 0.3335, NDCG@3 = 0.4932, NDCG@8 = 0.6993, MRR = 0.4138)
+     * Invalid Picks: 0.0 across all 3 seeds (Veto AUROC = 0.9025, Brier = 0.0263, ECE = 0.0869)
+
+B. H256_ACTIVE_2PLUS2_UNIFIED (2+2 causal active reveal flywheel):
+   - DL-Train OOF (1,219 contexts / 205 families, 5-fold family-grouped CV x 3 seeds):
+     * Mean Family Utility: 1.489648 (+0.104292 vs R882 1.385355)
+     * 95% Paired Family Bootstrap CI: [+0.057842, +0.166701], LCB90: +0.064042, p = 0.0001
+     * Mean Context Utility: 1.518314 (+0.095240 vs R882 1.423073)
+     * Family Wins / Ties / Losses vs R882: 159 / 3 / 43 (3.70:1 win/loss ratio, sign-test p = 7.62e-17)
+     * Top-8 Oracle Family Recovery: 41.60% (Switch precision = 67.92%, mean gain when switched = +0.1429)
+     * Invalid Picks: 5.33 (vs 17.0 for R882; 15.33 / 90.2% of R882 invalid picks prevented)
+   - DL-Val91 Holdout (91 contexts / 19 unseen families):
+     * Mean Family Utility: 1.201692 (+0.048077 vs R882 1.153615)
+     * 95% Paired Family Bootstrap CI: [+0.020565, +0.084311], LCB90: +0.023906, p = 0.0001
+     * Mean Context Utility: 1.187871 (+0.050077 vs R882 1.137794)
+     * Family Wins / Ties / Losses vs R882: 17 / 0 / 2 (8.50:1 win/loss ratio, sign-test p = 0.000729)
+     * Top-8 Oracle Family Recovery: 35.50% (Switch precision = 72.62%, mean gain when switched = +0.0801)
+     * Invalid Picks: 0.0 across all 3 seeds
+
+=== 2. 100% Rust .safetensors Inference Bundles & Golden Parity ===
+- h256_production_full_1310_regression_bundle.safetensors (3.15 MiB, 384 tensors, sha256: 8c4b90ed8cbee2d9db041eb3bd9d3e4c2d42373e4e202f4bc7ec3971b960dbeb)
+- h256_production_1219_dl_train_bundle.safetensors (3.15 MiB, 384 tensors, sha256: dabe6f10133ddcaca7f8ed1e182b481ad976ddafde52ab4dd330382e1112b442)
+- stage2_full_s3_reg_flywheel_pretrained_bridge.safetensors (4.30 MiB, 549 tensors, sha256: 70c1a68fb78842382b03c253f64e95039abfd3a8c23a3dfbae698b0bacc01167)
+- stage1_full_s3_reg_all15796_encoder.safetensors (0.07 MiB, 45 tensors, sha256: 021ed66999b5479278eb55b1d1430afb083cb0309a965b39f15be064ed4aaed3)
+- full_s3_reg_7split_pretrained_encoder.safetensors (0.07 MiB, 45 tensors, sha256: d6f49d3abc0c887ab40dd8fdb59216e8001cb7e23c480b7320907027ab3ec368)
+- sos_hurdle_and_sp_critic_models.safetensors (0.03 MiB, 7 tensors, sha256: f67ead9c4cd1821ffa87036bfbea0588d970df4a5443c92caa5eecbd8237a08c)
+- golden_inference_fixture_context0.safetensors (2.90 MiB, 76 tensors, sha256: b64ba49f25eee8ffe76a31d20e5e0aff2cd8f5a4cf5834da3949951cd622f2ee)
+- Verified 100% Rust inference parity via cargo test -p jope-service --lib ranker (126 passed; 0 failed).
