@@ -1,8 +1,8 @@
 \section{Referee Inventory}\label{app:history}
 
-The game needs a reliable, affordable referee (\cref{sub:game-boards}).
-\Cref{tab:referees} inventories the referees of the systems in
-\cref{sec:road,sec:game}.
+\Cref{tab:referees} lists the referees used by the systems in
+\cref{sec:road,sec:game}. The innovation game requires a reliable,
+affordable referee (\cref{sub:game-boards}).
 
 
 
@@ -44,9 +44,9 @@ corpus nor checkpoint compliance with the required split.
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-\Cref{sub:method-referee} excludes test-selected search outcomes and
-requires final-evaluation receipts for input closure and execution
-isolation:
+The excluded search baseline and required safeguards appear in
+\cref{sub:method-referee}. Final evaluation still needs receipts for
+input closure and execution isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry chose each dataset's best test-scored outcome from \num{63108}
@@ -62,9 +62,9 @@ isolation:
 
 \section{Training Details}\label{app:training}
 
-This inventory covers the historical reference's encoder, objective and
-execution requirements (\cref{sec:method}); checkpoint qualification
-remains pending. The separate \mbox{adapter record} appears in
+This appendix inventories the historical reference's encoder, objective
+and execution requirements from \cref{sec:method}. Checkpoint
+qualification remains pending; the separate adapter record appears in
 \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
@@ -143,13 +143,13 @@ remains pending. The separate \mbox{adapter record} appears in
 
 \section{Operating-Loop Telemetry}\label{app:flywheel-telemetry}
 
-Each capture has its own date, population scope and event units
-(\cref{sec:method-status}). \Cref{app:latest-admissions} gives the canonical
-\mbox{adapter-admission} chronology.
+The operating record separates adapter decisions, program-incumbent
+events and operating clocks (\cref{app:round-throughput}). Each capture
+has its own date, population and event units (\cref{sec:method-status}).
 
-The exhibits separate adapter decisions, program-incumbent events
-and operating clocks (\cref{app:round-throughput}). Historical GP
-diagnostics (\cref{app:historical-search}) use a \mbox{separate protocol}.
+\Cref{app:latest-admissions} gives the canonical chronology of adapter
+admissions. Historical GP diagnostics (\cref{app:historical-search})
+use a separate protocol.
 
 % Adapter admission records, ordered by their role and capture cutoff.
 \input{sections/appendix_latest_admissions}
