@@ -1,0 +1,15 @@
+{
+  "wave": "H292",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "verdicts": null,
+  "cohort_sha256": "7f7ff09da91b5ab8338a43d62a553b0fefe2cda59e00a8d48e80e49c57266aba",
+  "regression_h288_cell": "PASS (bit-exact)",
+  "schema_on_completion": {
+    "verdicts": "ENS_VOTE2, CLIP: CONFIRMED_FRESH / NOT_CONFIRMED_FRESH / INSUFFICIENT_FRESH",
+    "holm": "order, levels, per-arm criteria",
+    "arms": "per seed gains, family medians, CIs, one-sided LCBs, bootstrap and sign p, W/T/L, Elo, harmed, invalid, changed; always-harmed by source group",
+    "nulls": "both",
+    "pooled": "H288 + H292 (H288 portion already seen)"
+  }
+}

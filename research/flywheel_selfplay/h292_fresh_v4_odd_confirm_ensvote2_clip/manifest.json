@@ -1,0 +1,120 @@
+{
+  "wave": "H292",
+  "authority": "/home/ubuntu/nudges/hw_t0125_opus_h292.md",
+  "primaries": [
+    "ENS_VOTE2",
+    "CLIP"
+  ],
+  "secondary": [
+    "BAG_SWITCH",
+    "ENS_MEAN",
+    "ENS_VOTE3",
+    "RERANK8_VETO"
+  ],
+  "holm": {
+    "alpha_one_sided": 0.05,
+    "hypotheses": 2,
+    "arm_p": "max over seeds of max(bootstrap one-sided p, sign-test p)"
+  },
+  "seeds": {
+    "CLIP": "3 refit seeds (H287 members 279101-279103 / refit 287101-287103), bootstrap 292150 common draws",
+    "ENS_VOTE2": "deterministic single policy; bootstrap seeds 292150-292152 on the same picks"
+  },
+  "null_seeds": {
+    "random_valid_slot": [
+      292101,
+      292102,
+      292103
+    ],
+    "random_slot_no_labels": [
+      292201,
+      292202,
+      292203
+    ]
+  },
+  "boot_seed": 292150,
+  "draws": 10000,
+  "min_families": 80,
+  "cohort": {
+    "file": "~/jope_plan/ns/receipts/fresh_cohort_v4_H292.json",
+    "sha256": "7f7ff09da91b5ab8338a43d62a553b0fefe2cda59e00a8d48e80e49c57266aba",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H292/cohort/fresh_cohort_v4_H292.json",
+    "version_id": "Ie7wT7_grve0Jo3OgIxdB2aYyi6EgqZD",
+    "families": 295,
+    "half": "ODD",
+    "source": "H288 reserve (649 ODD families after H288s 300th); all 295 qualifying taken; 0 remain reserved"
+  },
+  "regression_h288_cell": {
+    "arm": "ENS_VOTE2",
+    "boot_seed": 288150,
+    "gain": 0.08537299387889595,
+    "result": "bit-exact from S3-published H288 artifacts (run before cohort v4)"
+  },
+  "export_manifest_sha256": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+  "h284_export_manifest_sha256": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc",
+  "h287_export_manifest_sha256": "874693a78d52ebeee2e2c0c38d0f028cd3887a01abec8d0c383128e0b4cf06d7",
+  "h287_export_commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+  "h278_sources": {
+    "runner.py": "5f5b3de8b34f797df6acfbab890568a5abf6041e4ecc5c519d77dda5c60d7234",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "freeze.py": "b352c488aaf53d2132621c5b5771917892af7924d4c2555d998b5931bbd643ab",
+    "analysis.py": "0151b35374bed298e6841cf9de1f0f27c42248bcd387428653dc178fa1d67208",
+    "manifest.json": "1d43bc10d3245891178bd3043a03ed4e4e34e79bad90cbddea3ae8744536fc0d"
+  },
+  "h281_sources": {
+    "p2.py": "776644cfbbdbc005f44824cedbbe97f0b7ae362500bcf92839118aba49fd4811"
+  },
+  "h283_sources": {
+    "evaluate.py": "11e292549348a99231a30814df92c3a5662ad90452409e907134fffc0f9cc8bb",
+    "fresh_cohort.py": "2b506d43123272b17f233c703682e6282344a32f5c9bb06c830833e2084b3df6"
+  },
+  "h284_sources": {
+    "export_manifest.json": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc",
+    "freeze_bagged.py": "50d8ea9d1af560820dad819184f5bf70cc480bd741a68f236ac80ee837b52cba",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+  },
+  "h287_sources": {
+    "export_manifest.json": "874693a78d52ebeee2e2c0c38d0f028cd3887a01abec8d0c383128e0b4cf06d7",
+    "ensemble.py": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+    "ensemble_spec.json": "32ca19f30f427ae135f5f6c2aacc0fe28097d956f4e2ca0e7fd5f41ffec49995",
+    "analysis_h287.py": "166b336451f270b31bcc7ad68de72012afba2b6622903f13a793bc0992490930",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+  },
+  "h288_sources": {
+    "evaluate.py": "54ca8991deca4090026797122d9d34687305e5a4bb87b348fb9cb56fcfd2bd84",
+    "analysis.py": "6bb1c7f236556a5bdf9507f4057781569b77ca4423705e7c37f0fdf9321ccffd",
+    "cohort_v3.py": "db8e7dc340c9d89d848a8fb57063ea7e6827a24441b1f7a34dc81e1b336596f0",
+    "build_fresh.py": "39a90db1b0e53b0e56d976f0d0aa7f5e737c4aed25eb055181539c1aefcc05b4",
+    "gpu_rescore.py": "e0d888c6e7d5e5ed9f356e908ce4a0d3e476cf68bf5d1c88db2cb8541c7f615a"
+  },
+  "source_sha256": {
+    "PREREG.md": "5e030b0b374f9da97a8289e4236af2ac236ca512c382582fa2a5af6723b6dc55",
+    "cohort_v4.py": "24c2639239260ff696f67d0a73a02dc88deab192995ac55e34c83293f3128acf",
+    "regress_h288.py": "0bd7dcc16cb0a0e74ca7d9c516b85ad9f53f377b9bf757624b2c9a7a6fb5c29b",
+    "build_fresh.py": "39a90db1b0e53b0e56d976f0d0aa7f5e737c4aed25eb055181539c1aefcc05b4",
+    "gpu_rescore.py": "e0d888c6e7d5e5ed9f356e908ce4a0d3e476cf68bf5d1c88db2cb8541c7f615a",
+    "run_gpu.sh": "0cabdf7e7d1bcb8bbb5d05390a0bf1c658509a85d7cb193cf66d3a44353a64ba",
+    "evaluate.py": "3b7490d9fe064c3e4e676e457e73f4bf8ade5447fd3613842d048496536afdc2",
+    "analysis.py": "885bb71915aac03ec40665e74b6b9753a1d7bb469ff14fa33f11e35656fdd842",
+    "test_h292.py": "fa5b24ca5c1aba742c7e4bd7a594a71d20edbd63c8482eff6e8577272d5a630b",
+    "device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e",
+    "dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2"
+  },
+  "r3175": {
+    "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "stored_dev_mean": 1.1389572403748425
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "total_updates": 0,
+  "parent_commit": "d8bc373b80c80892600ddaaa83272616f2b1bda9",
+  "publication_ref": "v1/next",
+  "compute_stop": "2026-11-04T04:00:00Z"
+}
