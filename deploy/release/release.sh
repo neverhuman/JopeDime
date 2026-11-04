@@ -4,6 +4,10 @@
 #   deploy/release/release.sh <vX.Y.Z> <merge-commit-sha>             # dry run (the default)
 #   deploy/release/release.sh <vX.Y.Z> <merge-commit-sha> --publish   # the same run, then publish
 #
+# The tag may carry a release-candidate suffix, vX.Y.Z-rc.N (N >= 1, no leading zeros). A candidate
+# is built from crates at X.Y.Z and the CHANGELOG.md section [X.Y.Z], so its binaries print X.Y.Z;
+# the tag, asset names and manifest name the candidate, and --publish marks it a GitHub prerelease.
+#
 # Run it on xbabe2 from the root of a clean checkout or registered worktree of neverhuman/JopeDime.
 # HEAD must be <merge-commit-sha>, and that commit must equal origin/main after a fresh fetch.
 # Run it as shown: the #! line starts the system bash, /bin/bash, by absolute path and in
@@ -308,7 +312,7 @@ COSIGN_PASSWORD="$(cat signing.password)" "$work/cosign" sign-blob --yes --key s
 ROOT
 readonly SIGN_SCRIPT
 
-tag='' sha='' version='' publish=0 mode=dryrun test_mode=0 stamp=''
+tag='' sha='' version='' prerelease=0 publish=0 mode=dryrun test_mode=0 stamp=''
 remote=$REPO_URL cargo_bin=$HOST_CARGO key_dir=$KEY_DIR out_root=$EVIDENCE_ROOT
 repo_root='' release_root='' run_dir='' target_root='' dist='' stage=init
 metadata_json='' notes_text='' bin='' bin_container='' observed_glibc='' tee_pid=''
@@ -325,7 +329,7 @@ sha256_of() { local h; h=$(sha256sum -- "$1"); printf '%s\n' "${h%% *}"; }
 
 usage() {
   cat <<'EOF'
-usage: deploy/release/release.sh <vX.Y.Z> <merge-commit-sha> [--publish]
+usage: deploy/release/release.sh <vX.Y.Z[-rc.N]> <merge-commit-sha> [--publish]
 
 Without --publish this is a dry run: it builds, signs, verifies and writes the evidence, but it
 never tags, pushes or publishes. Run it on xbabe2 from the root of a clean checkout whose HEAD is
@@ -392,7 +396,7 @@ docker() {
 
 # --- argument and test-mode handling -----------------------------------------------------------
 
-valid_tag() { [[ $1 =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; }
+valid_tag() { [[ $1 =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.[1-9][0-9]*)?$ ]]; }
 
 parse_args() {
   if [[ ${1-} == -h || ${1-} == --help ]]; then usage; exit 0; fi
@@ -403,9 +407,12 @@ parse_args() {
   esac
   tag=$1 sha=$2
   valid_tag "$tag" \
-    || die "tag must match ^v[0-9]+\\.[0-9]+\\.[0-9]+\$ (semver, no leading zeros, no suffix): '$tag'"
+    || die "tag must match ^v[0-9]+\\.[0-9]+\\.[0-9]+(-rc\\.[1-9][0-9]*)?\$ (semver, no leading zeros, only an -rc.N suffix): '$tag'"
   [[ $sha =~ ^[0-9a-f]{40}$ ]] || die "merge commit must be a full 40-character lowercase SHA-1: '$sha'"
+  # The crate version: a release candidate vX.Y.Z-rc.N is built from crates at X.Y.Z.
   version=${tag#v}
+  version=${version%-rc.*}
+  if [[ $tag == *-rc.* ]]; then prerelease=1; fi
   if (( publish )); then mode=publish; fi
 }
 
@@ -1533,7 +1540,9 @@ publish_release() {
   out=$(dist_names "$dist" all) || exit 1
   mapfile -t assets <<<"$out"
   assets=("${assets[@]/#/$dist/}")
-  out=$("$GH_ROLE" writer release create "$tag" -R "$REPO_SLUG" --verify-tag \
+  local -a pre=()
+  if (( prerelease )); then pre=(--prerelease); fi
+  out=$("$GH_ROLE" writer release create "$tag" -R "$REPO_SLUG" --verify-tag "${pre[@]}" \
     --title "JopeDime $tag" --notes-file "$dist/RELEASE-NOTES-$tag.md" "${assets[@]}")
   stage='release-created'
   printf '%s\n' "$out"
@@ -1637,10 +1646,11 @@ seal_run_dir() {
 }
 
 recovery_help() {
-  local next_steps
+  local next_steps pre_flag=''
+  if (( prerelease )); then pre_flag=' --prerelease'; fi
   next_steps=$(cat <<EOF
   $GH_ROLE writer release view $tag -R $REPO_SLUG     # must say 'release not found' before creating it
-  $GH_ROLE writer release create $tag -R $REPO_SLUG --verify-tag --title "JopeDime $tag" \\
+  $GH_ROLE writer release create $tag -R $REPO_SLUG --verify-tag$pre_flag --title "JopeDime $tag" \\
       --notes-file $dist/RELEASE-NOTES-$tag.md $dist/*
   Then read the release back as docs/release/README.md ("Verify a release") describes, into a new
   directory under $release_root/.

@@ -222,7 +222,8 @@ expect "baseline: every guard passes (ignored target/ is not dirt)" ok 'test mod
 expect "help prints usage" ok '^usage: deploy/release/release.sh' run "${R[@]}" --help
 expect "no arguments" refuse 'expected <tag> <merge-commit-sha>' run "${R[@]}"
 expect "one argument" refuse 'expected <tag> <merge-commit-sha>' run "${R[@]}" v0.2.0
-for bad in v1.2 1.2.3 v1.2.3-rc1 v01.2.3 V1.2.3 'v1.2.3 ' v1.2.3.4 ''; do
+for bad in v1.2 1.2.3 v1.2.3-rc1 v1.2.3-rc.0 v1.2.3-rc.01 v1.2.3-rc. v1.2.3-beta.1 v1.2.3-RC.1 \
+  v1.2.3-rc.1.2 v1.2.3+rc.1 v01.2.3 V1.2.3 'v1.2.3 ' v1.2.3.4 ''; do
   expect "bad tag format '$bad'" refuse 'tag must match' run "${R[@]}" "$bad" "$c1"
 done
 expect "short sha" refuse 'full 40-character' run "${R[@]}" v0.2.0 "${c1:0:12}"
@@ -306,6 +307,10 @@ expect "cargo metadata fails" refuse 'cargo metadata --no-deps --format-version 
   run "FAKE_CARGO_METADATA=$work/no-such-metadata.json" "${R[@]}" v0.2.0 "$c1"
 expect "tag v0.2.1 against a 0.2.0 workspace" refuse 'MISMATCH jope-cli 0.2.0 != tag version 0.2.1' \
   run "${R[@]}" v0.2.1 "$c1"
+expect "release candidate v0.2.0-rc.1 is checked against the 0.2.0 workspace" ok 'test mode: all guards passed for v0.2.0-rc.1' \
+  run "${R[@]}" v0.2.0-rc.1 "$c1"
+expect "release candidate v0.2.1-rc.1 against a 0.2.0 workspace" refuse 'MISMATCH jope-cli 0.2.0 != tag version 0.2.1' \
+  run "${R[@]}" v0.2.1-rc.1 "$c1"
 
 echo "# committed release inputs (each case is a new commit pushed as origin/main)"
 variant() {  # variant <name> <pattern> <shell snippet that edits the tree>
