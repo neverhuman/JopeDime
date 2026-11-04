@@ -8,8 +8,8 @@
 
 The reference design links search-scored lists to a program writer and
 separate ranking map. Proposed game day freezes the writer for one
-proposal. \Cref{sec:method-status} describes a separate cost-ranking adapter
-and its recorded evaluations; \cref{sec:price} defines the cost ledger.
+proposal. \Cref{sec:price} supplies the cost ledger; \cref{sec:method-status}
+records the separate cost-ranking adapter loop.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -24,7 +24,7 @@ only \mbox{through the routes} in \cref{sub:method-map}.
   \centering
   \includegraphics[width=\linewidth]{figures/fig5_network.pdf}
   \caption{\textbf{Proposed training updates the writer and map; game day uses the writer alone.}
-  Top: reference \searchone{} game day. Dashed box: proposed training; the 27.8M historical checkpoint was trained offline (\cref{app:training}).
+  Top: proposed \searchone{} game day. Dashed box: proposed training; the 27.8M historical checkpoint was trained offline (\cref{app:training}).
   Search extends the writer's drafts; referee-scored lists supply training objectives
   for the writer ($\theta$) and map ($\psi$). Stillborn programs enter no list.}
   \label{fig:network}

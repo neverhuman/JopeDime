@@ -1,0 +1,224 @@
+{
+  "schema": "whitepaper.stopped-operating-record-source/v1",
+  "captured_utc": "2026-11-04T15:06:22.000303+00:00",
+  "round_window": [
+    775,
+    5049
+  ],
+  "last_admission_utc": "2026-11-04T11:17:12.599029+00:00",
+  "admission_records": 4274,
+  "missing_admission_rounds": [
+    4331
+  ],
+  "logged_increase_rounds": [
+    785,
+    859,
+    2750,
+    3175
+  ],
+  "accepted_tie_rounds": [
+    782,
+    882,
+    2795,
+    3100
+  ],
+  "program_records": 3529,
+  "program_record_round_window": [
+    775,
+    5047
+  ],
+  "program_records_before_window_excluded": 182,
+  "program_records_after_window_excluded": 0,
+  "bin_width_rounds": 200,
+  "bins": [
+    {
+      "first_round": 775,
+      "last_round": 974,
+      "round_span": 200,
+      "program_records": 568,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 975,
+      "last_round": 1174,
+      "round_span": 200,
+      "program_records": 388,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 1175,
+      "last_round": 1374,
+      "round_span": 200,
+      "program_records": 277,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 1375,
+      "last_round": 1574,
+      "round_span": 200,
+      "program_records": 241,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 1575,
+      "last_round": 1774,
+      "round_span": 200,
+      "program_records": 205,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 1775,
+      "last_round": 1974,
+      "round_span": 200,
+      "program_records": 186,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 1975,
+      "last_round": 2174,
+      "round_span": 200,
+      "program_records": 169,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 2175,
+      "last_round": 2374,
+      "round_span": 200,
+      "program_records": 175,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 2375,
+      "last_round": 2574,
+      "round_span": 200,
+      "program_records": 143,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 2575,
+      "last_round": 2774,
+      "round_span": 200,
+      "program_records": 145,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 2775,
+      "last_round": 2974,
+      "round_span": 200,
+      "program_records": 104,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 2975,
+      "last_round": 3174,
+      "round_span": 200,
+      "program_records": 125,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 3175,
+      "last_round": 3374,
+      "round_span": 200,
+      "program_records": 103,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 3375,
+      "last_round": 3574,
+      "round_span": 200,
+      "program_records": 92,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 3575,
+      "last_round": 3774,
+      "round_span": 200,
+      "program_records": 105,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 3775,
+      "last_round": 3974,
+      "round_span": 200,
+      "program_records": 86,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 3975,
+      "last_round": 4174,
+      "round_span": 200,
+      "program_records": 80,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 4175,
+      "last_round": 4374,
+      "round_span": 200,
+      "program_records": 104,
+      "adapter_decisions": 199
+    },
+    {
+      "first_round": 4375,
+      "last_round": 4574,
+      "round_span": 200,
+      "program_records": 69,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 4575,
+      "last_round": 4774,
+      "round_span": 200,
+      "program_records": 78,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 4775,
+      "last_round": 4974,
+      "round_span": 200,
+      "program_records": 56,
+      "adapter_decisions": 200
+    },
+    {
+      "first_round": 4975,
+      "last_round": 5049,
+      "round_span": 75,
+      "program_records": 30,
+      "adapter_decisions": 75
+    }
+  ],
+  "csv_sha256": {
+    "stopped_run_admissions.csv": "197c519554675d398cb77c81e652788b51462ca372a2ea6c7b41811958b4238a",
+    "stopped_run_promotions.csv": "913841307f33c827b60174288c8b09404c92be1f186ff74bc83f9be6103813cc"
+  },
+  "source_journals": {
+    "adapter_admissions.jsonl": {
+      "sha256": "56e62cfd4af0fc5af2b58593bfbb4a8aa44b2fbaa36b8a8b073c33bd058bc312",
+      "bytes": 2273311,
+      "source_records": 4274,
+      "prefix_bytes": 2273311,
+      "prefix_sha256": "56e62cfd4af0fc5af2b58593bfbb4a8aa44b2fbaa36b8a8b073c33bd058bc312",
+      "stable_reread": true,
+      "trailing_incomplete_bytes": 0
+    },
+    "promotions.jsonl": {
+      "sha256": "d7796fdd7c0dde19e1a23f34c28afc1b9aafa27b0792df746e9f9db01f8cd6c5",
+      "bytes": 13426974,
+      "source_records": 3711,
+      "prefix_bytes": 13426974,
+      "prefix_sha256": "d7796fdd7c0dde19e1a23f34c28afc1b9aafa27b0792df746e9f9db01f8cd6c5",
+      "stable_reread": true,
+      "trailing_incomplete_bytes": 0
+    }
+  },
+  "previous_admission_capture_prefix_sha256": "11a2550d095fa9593866fb8d618428168412e19e91fbcf0b575c9bed5b61cc1f",
+  "previous_4063_admission_rows_numeric_and_hash_exact": true,
+  "evaluation_identity_sha256": [
+    "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6"
+  ],
+  "identity_hash_encoding": "SHA256 of UTF-8 logged identity string",
+  "selection": "All complete adapter decisions at rounds775..5049 and all ordinary program-promotion journal records in the same round interval; no utility/outcome filtering. Historical and earlier warm-up records are outside the window. Missing adapter4331 remains missing; the program record there is retained.",
+  "transformations": "Utility values and admission decisions are logged fields, not fitted or recomputed maxima; line breaks at missing rounds. Program bars count records in fixed200-round identifier intervals; the final interval spans75rounds and is hatched, not rescaled.",
+  "scope": "Adaptive training-side cost-adapter decisions and training-program promotion records with different event meanings. Counts are not proposal attempts or success rates. No neural-writer or ranking-map learning, independent quality, causality, throughput or transfer is established.",
+  "source_binding": "Logged aggregate fields only; installed runtime, exact adapter, candidate pools, normalization and evaluation-population closure remain unqualified. Prior native replay limitation remains in the manuscript.",
+  "source_record_hash_encoding": "SHA256 of raw JSONL line including its LF terminator"
+}
