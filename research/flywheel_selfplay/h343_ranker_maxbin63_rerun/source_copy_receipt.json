@@ -1,0 +1,148 @@
+{
+  "source_commit": "98c3c6f7531e8de5838c9e33f9b79ff89feb7c3f",
+  "prereg_source_commit": "f11e106f16d9650ab56e2a02eb8675ecf7e74e56",
+  "files": [
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/score.py",
+      "destination": "score.py",
+      "source_sha256": "3343bfcc89cf1727cb35b02f17bd69be046cf8fe5fb1fbc62e5b7e190b34c236",
+      "sha256": "274694ceea72dfdd89b21f2bcbbe832eccfedb9d7d345f86c0299c8e24408ba3",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/base_bagged.py",
+      "destination": "base_bagged.py",
+      "source_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+      "sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/base_veto.py",
+      "destination": "base_veto.py",
+      "source_sha256": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+      "sha256": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/base_ensemble.py",
+      "destination": "base_ensemble.py",
+      "source_sha256": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+      "sha256": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/fit.py",
+      "destination": "fit.py",
+      "source_sha256": "01da1cba45cdb7838e2cca167763da1d4232ad5f5e6c56914541deaf81d3addc",
+      "sha256": "53b0fdd767f7a261a4171d80649efaa647ca3c492be7f3f39c6c82234fd2c994",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/base_topk.py",
+      "destination": "base_topk.py",
+      "source_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+      "sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/base_archive_pin.json",
+      "destination": "base_archive_pin.json",
+      "source_sha256": "616f81bf374649f9c71edd53494336bc1c1b0380434cb888e73bca72c8d4421d",
+      "sha256": "616f81bf374649f9c71edd53494336bc1c1b0380434cb888e73bca72c8d4421d",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/regression.py",
+      "destination": "regression.py",
+      "source_sha256": "21e77024ecfe0720e717d967162c888391a1a1261f6926311e22231445d6b6f3",
+      "sha256": "1590f67882cc7c9a6fe973306a6b27723c8dedee4831917693140d1372795e1b",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/recover.py",
+      "destination": "recover.py",
+      "source_sha256": "61abd5fe2b3c3da942af1f21eb3fd11e9a3a13670311a42547a19c3bf7da7c49",
+      "sha256": "778f16ad02f5f5cf0b4edb8662d8958b59b5edf6971229af6a416d47bc572dec",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/evaluate.py",
+      "destination": "evaluate.py",
+      "source_sha256": "4ee84b8722b35ad78daaa02c5e4f6477917d4e00229aaf2fc9481be409352a3c",
+      "sha256": "04f1db6af8da0b4daed5d72b8461d03a7c2f533d85d99ec706080fab2949f6db",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/statistics_h341.py",
+      "destination": "statistics_h343.py",
+      "source_sha256": "85eb918c2777026365963956cb3c8f13765916c92d669a06d08d15b0685376c9",
+      "sha256": "66c56045388049712ef5c7ed7bcab9e56e65e106d2563b9f560d23509cd8969b",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/runtime.py",
+      "destination": "runtime.py",
+      "source_sha256": "29088277cf6cbd24812d094cd0d183c0d4d37eb4718df5242f9f485de82b0636",
+      "sha256": "66facf7754b0859b75118987d5c879850ae8362683c67c695c15d4f79bdef691",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/test_boundary.py",
+      "destination": "test_boundary.py",
+      "source_sha256": "726e17d9858adb87a0ef642d895b70ecc67f3b750201440cd0c48ee7007fadd8",
+      "sha256": "d9f3ddabee13889307b04861df12a37834f691ba966c5c425f822cb51cfc8a58",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/archive_models.py",
+      "destination": "archive_models.py",
+      "source_sha256": "8ef7280b4f9c1c614d72d33d7f8fdf67c761c9312d9a276077625120758f14ea",
+      "sha256": "bef1912266c25b5b3fb970b5d5a1d4ca5fba02aff95669eb14d07032dbe180d4",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/test_analysis.py",
+      "destination": "test_analysis.py",
+      "source_sha256": "0b6a8a70a4c83b331f801c95b29c35ae2e7c9c5d9e5568ebd516322011417b9d",
+      "sha256": "9246721d95bcae364ad951fd8969e353c8436cb7c378151151d07b7e8e14964f",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/test_regularization.py",
+      "destination": "test_regularization.py",
+      "source_sha256": "ebc26cefcdd85891bbd7194abc5d75522d85cb403c5154564f523ab7e6464404",
+      "sha256": "eb8bfc8da260d0fee3e6d3ba6cd4a0290a69336bf1bf53bd8285761c2e58bb33",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/forecast.py",
+      "destination": "forecast.py",
+      "source_sha256": "e9897fb0bba1e6abbd413fe8fd27e5ecfec5217653a2d95bcdc39f06c61bb259",
+      "sha256": "e9897fb0bba1e6abbd413fe8fd27e5ecfec5217653a2d95bcdc39f06c61bb259",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/base_h265_core.py",
+      "destination": "base_h265_core.py",
+      "source_sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+      "sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/regularization.py",
+      "destination": "regularization.py",
+      "source_sha256": "74233f65b43ac215f3bdee3f212e0e0038007992e19c13731563bae61efc0c75",
+      "sha256": "483d395892d4109ad0a4962f94d5460b20c221ba7ce9d8113bf81ca5e9725b5a",
+      "only_declared_metadata_substitutions": true
+    },
+    {
+      "source": "research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/vendor_pins.json",
+      "destination": "vendor_pins.json",
+      "source_sha256": "31eb323d6b5af5c87b120b31f6a2b5f417c01c1aadd8b54908f5e668d32570ac",
+      "sha256": "31eb323d6b5af5c87b120b31f6a2b5f417c01c1aadd8b54908f5e668d32570ac",
+      "only_declared_metadata_substitutions": true
+    }
+  ],
+  "changed_scope": "wave identifiers/paths, RNG343191, allowed cores, fixed deadline only; synthetic fixture RNG341 retained",
+  "scientific_change": false
+}
