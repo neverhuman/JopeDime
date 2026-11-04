@@ -545,3 +545,32 @@ GPU-library and version checks run on the TLS-enabled binary.
 
 **Approval.** This amends the shipped dependency policy and needs the owner's approval before
 merge.
+
+## A23 — The public native-only edition is the released CLI
+
+**Problem.** `build.sh --profile native-only` compiled `--no-default-features --features
+embedded`, so the public edition had no local engine (fit/predict), no MCP server and no client,
+and could not log in to an HTTPS workspace. The release qualification requires a public build
+that reports `client`, `engine`, `mcp` and `embedded`, with `cloud-tls` for HTTPS login.
+
+**Change.**
+
+- `build.sh --profile native-only` selects `embedded,engine,mcp,client,cloud-tls`, the
+  embedded twin of the A22 released client. It is already an audited selection in
+  `dependencies-deny.toml`; the dependency policy, its exceptions and A22 are unchanged.
+- After building, `build.sh` refuses a native-only binary whose `--version --json` does not
+  report `embedded`, `engine`, `mcp`, `client` and `cloud_tls` true, release trust and the
+  declared source (the `full`/`fused-cpu` check now also asserts `cloud_tls` false).
+  `--version --json` gains `features.cloud_tls`.
+- Every public-scope profile refuses any file in its models directory: the public edition
+  ships no weights (`models.lock.json` native-only `total_bytes` 0). `max_payload_mib` stays 1.
+- `crates/jope-dist/tests/dependency_fence.rs` asserts that the selection `build.sh` uses for
+  native-only is audited, and that the A22 native build entries (`aws-lc-sys`, `aws-lc-rs`,
+  `cc`, `cmake`, `pkg-config`, `rustls`) appear only in the two `cloud-tls` selections.
+
+**Size.** Measured on xbabe2 (Rust 1.97.1, x86_64, `dist`) at source
+`5edb737d93211266893ef73956a0992eb74dcc7d`: 23,072,736 B code (was 4,542,168 B for
+`embedded` only); the unsigned stage adds 32 B alignment, 34,834 B notice frames (payload, the
+licence and third-party notices only), a 1,932 B manifest, a 64 B signature and the 128 B
+footer, 23,109,726 B in all. The native-only budget moves to those measurements; tolerance
+stays 5%. NEEDED stays `libc`, `libgcc_s`, `libm`. No release was signed or published.
