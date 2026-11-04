@@ -1,0 +1,60 @@
+Research Wave: H256 (h256-pre-condense-residual-flywheel-20261104)
+Wave Directory: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/
+Weights Directory: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/
+KPI Telemetry: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/kpi_telemetry.json
+Report: research/flywheel_selfplay/h256_pre_condense_residual_flywheel/REPORT.md
+Scope: Regression-only (model_task == 'regression'; 0 binary/multiclass cells or contexts admitted)
+DOPE Weights SHA-256 (Locked): c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814 (bit_identical: true)
+R882 Control SHA-256: 0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64
+
+=== 1. Flagship Unified Regression Model Performance ===
+
+A. H256_STATIC_0REV_TOP8_SOFT_VETO (0 candidate reveals at test time):
+   - DL-Train OOF (1,219 contexts / 205 families, 5-fold family-grouped CV x 3 seeds):
+     * Mean Family Utility: 1.461114 (+0.075759 vs R882 1.385355)
+     * 95% Paired Family Bootstrap CI: [+0.024212, +0.140243], LCB90: +0.031165, p = 0.0019
+     * Mean Context Utility: 1.496037 (+0.072964 vs R882 1.423073)
+     * Family Wins / Ties / Losses vs R882: 153 / 1 / 51 (3.00:1 win/loss ratio, sign-test p = 7.41e-13)
+     * Top-8 Oracle Family Recovery: 30.22% (NDCG@1 = 0.3565, NDCG@3 = 0.4966, NDCG@8 = 0.7055, MRR = 0.4322)
+     * Invalid Picks: 12.67 (vs 17.0 for R882; 11.33 invalid picks prevented; Veto AUROC = 0.8205)
+   - DL-Val91 Holdout (91 contexts / 19 unseen families):
+     * Mean Family Utility: 1.203296 (+0.049680 vs R882 1.153615)
+     * 95% Paired Family Bootstrap CI: [+0.021526, +0.085821], LCB90: +0.025049, p = 0.0001
+     * Mean Context Utility: 1.189621 (+0.051826 vs R882 1.137794)
+     * Family Wins / Ties / Losses vs R882: 17 / 0 / 2 (8.50:1 win/loss ratio, sign-test p = 0.000729)
+     * Top-8 Oracle Family Recovery: 36.69% (NDCG@1 = 0.3335, NDCG@3 = 0.4932, NDCG@8 = 0.6993, MRR = 0.4138)
+     * Invalid Picks: 0.0 across all 3 seeds (Veto AUROC = 0.9025, Brier = 0.0263, ECE = 0.0869)
+   - Beats all prior 0-reveal waves on both OOF and DL-Val91:
+     * vs H273 (RERANK8_CLASSREG_SOFT10): OOF 1.461114 vs 1.442485 (+0.018629); DL-Val91 1.203296 vs 1.190085 (+0.013211, 0.0 vs 1.0 invalid)
+     * vs H278 (S2_LOG1P_BAGGED_SOFT15_TAU015): OOF 1.461114 vs 1.453955 (+0.007159); DL-Val91 1.203296 vs 1.192715 (+0.010581)
+     * vs H275 (A6_GATE32_CONSTRAINED_ENSEMBLE): OOF 1.461114 vs 1.458348 (+0.002766); DL-Val91 1.203296 vs 1.194687 (+0.008609)
+
+B. H256_ACTIVE_2PLUS2_UNIFIED (2+2 causal active reveal flywheel):
+   - DL-Train OOF (1,219 contexts / 205 families, 5-fold family-grouped CV x 3 seeds):
+     * Mean Family Utility: 1.489648 (+0.104292 vs R882 1.385355)
+     * 95% Paired Family Bootstrap CI: [+0.057842, +0.166701], LCB90: +0.064042, p = 0.0001
+     * Mean Context Utility: 1.518314 (+0.095240 vs R882 1.423073)
+     * Family Wins / Ties / Losses vs R882: 159 / 3 / 43 (3.70:1 win/loss ratio, sign-test p = 7.62e-17)
+     * Top-8 Oracle Family Recovery: 41.60% (Switch precision = 67.92%, mean gain when switched = +0.1429)
+     * Invalid Picks: 5.33 (vs 17.0 for R882; 15.33 / 90.2% of R882 invalid picks prevented)
+   - DL-Val91 Holdout (91 contexts / 19 unseen families):
+     * Mean Family Utility: 1.201692 (+0.048077 vs R882 1.153615)
+     * 95% Paired Family Bootstrap CI: [+0.020565, +0.084311], LCB90: +0.023906, p = 0.0001
+     * Mean Context Utility: 1.187871 (+0.050077 vs R882 1.137794)
+     * Family Wins / Ties / Losses vs R882: 17 / 0 / 2 (8.50:1 win/loss ratio, sign-test p = 0.000729)
+     * Top-8 Oracle Family Recovery: 35.50% (Switch precision = 72.62%, mean gain when switched = +0.0801)
+     * Invalid Picks: 0.0 across all 3 seeds
+   - Beats all prior 2+2 active reveal waves on both OOF and DL-Val91:
+     * vs H252/H254 (Stage-1 Hurdle 2+2): OOF 1.489648 vs 1.469325 (+0.020323); DL-Val91 1.201692 vs 1.168790 (+0.032902)
+     * vs H255 (Causal 2+2 Neural): OOF 1.489648 vs 1.468249 (+0.021399); DL-Val91 1.201692 vs 1.168790 (+0.032902)
+     * vs H256-v1 (Pre-Condense Bridge F): OOF 1.489648 vs 1.471203 (+0.018445); DL-Val91 1.201692 vs 1.169564 (+0.032128)
+
+=== 2. Committed Model Weights & Artifacts (research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/) ===
+- h256_production_full_1310_regression_bundle.pt (sha256: 4c910796d0f31854a914541a9043bf888097cd15416779964ef75df8151d6bc7)
+- h256_production_1219_dl_train_bundle.pt (sha256: 2040a1aa71449ab93725b91a8be171713b7268e4d4d07d8499b5efcb73a13bc5)
+- stage1_full_s3_reg_all15796_encoder.pt (sha256: 4be76f83689412277ff241d46e8e4ff32cb96650d1ef51646be3efdc6152f190)
+- full_s3_reg_7split_pretrained_encoder.pt (sha256: 07c92a2e25fa95276d0995eb20e37451822eb391a3d0a81db4eb3965b7391547)
+- stage1_full_s3_reg_7split_pre_condense_92tok_full_model.pt (sha256: 9019d1b3eeddf98f22b5d20723c4595b244e93aaf87a78cb8c09b02d99436a83)
+- stage2_full_s3_reg_flywheel_pretrained_bridge.pt (sha256: 219cb783fd53db477edcd6de14dd1f0618120e1274e53c1bc496215c258b775a)
+- sos_hurdle_and_sp_critic_models.pt (sha256: 14ab6f70900834169581a068e08141c64113d76d04d5a06675890f0a4ca8e36b)
+- golden_inference_fixture_context0.pt (sha256: de8f0ae10b0c38413cfd9171e6d627aff97764b38ffca8d9ccda48fdefe5a0bb)
