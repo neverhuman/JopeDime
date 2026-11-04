@@ -1,0 +1,472 @@
+{
+  "sources": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "base_code": "819a45aa5e",
+  "base_code_full": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "dope_frozen": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "kernel": "6.8.0-147-generic",
+    "host": "xbabe2"
+  },
+  "wave": "H332",
+  "authority": "/home/ubuntu/nudges/hw_t1955_solhwv_h332_clip.md",
+  "prereg_sha256": "0f6575c1e50af53b691eae6016864cd20a5f8c76ab4706c3be0be0c4998988dc",
+  "cap": 1.189812963969407,
+  "cap_config_sha256": "3b7da820efa085eb0fc7d11f9d508cb18d8500118168e3b35592827d1e4d4608",
+  "cap_models_sha256": "534a4abc42b34523fa97ba17482ebfd86fa113169d772e71a18ff240ae2a101e",
+  "cores": [
+    13,
+    15,
+    60,
+    62
+  ],
+  "workers_max": 4,
+  "MemoryMax": "6G",
+  "MemorySwapMax": 0,
+  "nice": 19,
+  "numeric_threads": 1,
+  "compute_stop": "2026-11-04T22:15:00Z",
+  "close_stop": "2026-11-04T22:30:00Z",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "source_sha256": {
+    "guard_h332.py": "bc74e89f0c8600eac5311f0b7505db806bbeaa031e5b0aea6bfdce41e700df88",
+    "archive_h332.py": "b85dc243ac071c9bd065b04e4f528da112166273e0ebe006034febbca5f6bf71",
+    "cap_parser.py": "c800862327df0e8839d68decf9db6be5c1af83f886badaf9d7e22ff4f315a070",
+    "derive_cap_h332.py": "007afa581795b035928b6ac9f501028451a3f801893c7129e292a76347730310",
+    "leaf_clipping.py": "a8c42570344c850e82a2c6330472754f897a2cec24ca70eedd67d3618239be2b",
+    "runtime_h332.py": "70949f591f5985c7ec64c2a235086324d22fd290867ffd6b2eee91c27bc397e7",
+    "test_h332.py": "d61144ffbed3ee18b924f92a5a0e01ff919cb0f1b8fe8ea8a2456bb704afdfe0",
+    "evaluate_h332.py": "be3d804687a07c74b08f072b4a77add19f0427013e1d8fb931b7c83186fd1fb2",
+    "run_h332.py": "54689a2997926a5df1a92cdd75843214809c214613a430383bbacc8eb010c76b"
+  },
+  "prereg_commit": "b97a4f0ba7ec7da545d50a3584d80a6b8208cb74",
+  "execution": {
+    "utc": "2026-11-04T21:53:27.480749+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "0",
+    "SERVICE_RESULT": "success",
+    "INVOCATION_ID": "193d13d1d31b4d32b3a80b7f3c61052e"
+  },
+  "tests": {
+    "utc": "2026-11-04T20:03:16.634417+00:00",
+    "command": "numeric1 nice19 taskset13 python3 -m unittest discover -s /home/ubuntu/jope-rescue-20260921/h332-solhwv/source -p test_h332.py -v",
+    "collected": 27,
+    "executed": 27,
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0,
+    "exit_status": 0,
+    "elapsed_seconds": 1.4087627189874183,
+    "source_sha256": {
+      "guard_h332.py": "bc74e89f0c8600eac5311f0b7505db806bbeaa031e5b0aea6bfdce41e700df88",
+      "archive_h332.py": "b85dc243ac071c9bd065b04e4f528da112166273e0ebe006034febbca5f6bf71",
+      "cap_parser.py": "c800862327df0e8839d68decf9db6be5c1af83f886badaf9d7e22ff4f315a070",
+      "derive_cap_h332.py": "007afa581795b035928b6ac9f501028451a3f801893c7129e292a76347730310",
+      "leaf_clipping.py": "a8c42570344c850e82a2c6330472754f897a2cec24ca70eedd67d3618239be2b",
+      "runtime_h332.py": "70949f591f5985c7ec64c2a235086324d22fd290867ffd6b2eee91c27bc397e7",
+      "test_h332.py": "d61144ffbed3ee18b924f92a5a0e01ff919cb0f1b8fe8ea8a2456bb704afdfe0",
+      "evaluate_h332.py": "be3d804687a07c74b08f072b4a77add19f0427013e1d8fb931b7c83186fd1fb2",
+      "run_h332.py": "54689a2997926a5df1a92cdd75843214809c214613a430383bbacc8eb010c76b"
+    }
+  },
+  "input_identity_validation": {
+    "status": "PASS",
+    "utc": "2026-11-04T20:03:17.684803+00:00",
+    "train_pool_sha256_matches": 1219,
+    "train_prefix_feature_members": 4,
+    "selected_and_r882_train_costs": "EXACT SHA256",
+    "DLVal_feature_rows_read": 0,
+    "reference_manifest_sha256": "9b148003d48ab609b2a796c57fb8b4c0296cc0ee79771f034944f4b8dc064263",
+    "scope": "All current TRAIN program/fitness/gate pools and all consumed cache feature prefixes exactly match the archived BASE inputs; no file bodies outside TRAIN prefixes."
+  },
+  "effective_model_review": {
+    "status": "PASS",
+    "utc": "2026-11-04T21:54:45.504961+00:00",
+    "tasks": 36,
+    "native_saved_models": 14040,
+    "constructor_calls": 36504,
+    "ranker_constructors": 29484,
+    "veto_constructors": 7020,
+    "unchanged_final_veto_models": 108,
+    "clip_AST_receipt": {
+      "call_sites": [
+        {
+          "BASE_AST_sha256": "5a6013608cb318e44eaf7fdd5d2c4b079095c5adc59d9151ce24950c3e0df2ad",
+          "CLIP_AST_sha256": "b4d87f116f1e0b519c05b9452842de1b5139ddb835e45a7f8fe76e13aa732fcf",
+          "removed_override_AST_sha256": "5a6013608cb318e44eaf7fdd5d2c4b079095c5adc59d9151ce24950c3e0df2ad",
+          "removing_one_keyword_restores_exact_BASE_AST": true,
+          "cap": 1.189812963969407,
+          "function": "fit_ranker",
+          "module": "topk",
+          "source_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+          "only_added_keyword": "max_delta_step",
+          "label_gain": "BASE implicit default"
+        },
+        {
+          "BASE_AST_sha256": "41f7211354240280b80fe199efaa8145fe15f6e58b8cb1f17a94a4ece61cc47d",
+          "CLIP_AST_sha256": "ac96dbc97dac22609d7cc75f2608ba831e94881ddb5efcfd0355f0b35a18f215",
+          "removed_override_AST_sha256": "41f7211354240280b80fe199efaa8145fe15f6e58b8cb1f17a94a4ece61cc47d",
+          "removing_one_keyword_restores_exact_BASE_AST": true,
+          "cap": 1.189812963969407,
+          "function": "fit_ranker_n",
+          "module": "bagged",
+          "source_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+          "only_added_keyword": "max_delta_step",
+          "label_gain": "BASE implicit default"
+        }
+      ],
+      "veto_unmodified": true,
+      "only_added_keyword": "max_delta_step",
+      "cap": 1.189812963969407
+    },
+    "cap": 1.189812963969407,
+    "all_native_objectives_original": true,
+    "all_native_extra_trees_false": true,
+    "all_ranker_label_gain_BASE_default": true,
+    "all_ranker_native_caps_match_six_significant_digits": true,
+    "all_ranker_unshrunk_leaf_outputs_within_cap": true,
+    "all_constructor_caps_exact": true,
+    "all_native_threads_one": true,
+    "source_sha256": {
+      "guard_h332.py": "bc74e89f0c8600eac5311f0b7505db806bbeaa031e5b0aea6bfdce41e700df88",
+      "archive_h332.py": "b85dc243ac071c9bd065b04e4f528da112166273e0ebe006034febbca5f6bf71",
+      "cap_parser.py": "c800862327df0e8839d68decf9db6be5c1af83f886badaf9d7e22ff4f315a070",
+      "derive_cap_h332.py": "007afa581795b035928b6ac9f501028451a3f801893c7129e292a76347730310",
+      "leaf_clipping.py": "a8c42570344c850e82a2c6330472754f897a2cec24ca70eedd67d3618239be2b",
+      "runtime_h332.py": "70949f591f5985c7ec64c2a235086324d22fd290867ffd6b2eee91c27bc397e7",
+      "test_h332.py": "d61144ffbed3ee18b924f92a5a0e01ff919cb0f1b8fe8ea8a2456bb704afdfe0",
+      "evaluate_h332.py": "be3d804687a07c74b08f072b4a77add19f0427013e1d8fb931b7c83186fd1fb2",
+      "run_h332.py": "54689a2997926a5df1a92cdd75843214809c214613a430383bbacc8eb010c76b"
+    },
+    "model_inventory_sha256": "c2b4cde6a8186d2965fe608563816ceb80ca939de8fa40e43c16e6b6826c2633",
+    "tasks_summary": {
+      "P0/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a9a481ab09298a78fd30930358d04f1e330f53439d3bdf7e705345f9fba6a973",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "30093170f87d7d67e1f2ba87c432b099e13388514987879b9d5caa1340719e90",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a15335f0ab76d40359c34ea254be7c89ac1e427a335b1821704b37f60defd8bc",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "f120bcde5a899e2c36d670a20355ceb7a4d85e54103afe3ebc046b0068cbd698",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "0ffa6beebe21a8ff2d2378ccd75b89b9f95aedbfff874b9d38fd58c30394a808",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a94cea09e0550f7567eb26b68703f0059e031703809d572bdfcf095636a05cac",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "ead5383d56173cce8787f4eb3c197de8d66fde83bef7a5ac2b513dbc1a36c5b7",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a65e8060e20e6093ebc938a2dec88d685daef88e66a58eace939a9af6079d85d",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "65ffa10f2abe47b5ee452534306b50d88c4c8a24aae5e8b71a943ddbf22bd8cc",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "6b175aee287a9d2f756abb4ea13e692957c2ded521c12995f1ec2dbab32e5b7f",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "caa051cf6959ae5616f87756f74a17721bc5c4bda9eaee61ef814c57a655429c",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "18b4eb07fea406e71aec8fd7e94547a6867a09c66ffe4c7aacbfa4533b42af99",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "2139ca0bc1c9c056bd965f15ee58af2875bbc519180b8490dea45b773ae6f3bc",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "047785de80787a046a17c82a0235a940e4017fd0d58bb69f6fc46ded70707e18",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "c08f81e7539740957b44402d8b3e391f8d2f1f0221d5f944dc8fabfe5b2397d3",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "64a2c60ade141d6334d7b4161267057626c448c9e7b8d84470804d9a56bc19e1",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "d368788c45a33ac582b344be45b0ad4a5c3f0da219d622984031aba670675ad8",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "2cdb42792afe6db74b78e346765b599070242e22f63b588855e4a3974dc00897",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "4a865e6af86caa477034968438baa466d289f1be681462b5a4afcff668d57114",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e0b46f9b5cd4b2d8d495a74a7895f68ca803c5afda4bcbb8c7d36c05761d616a",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "1f9525078a1baf06e8c1c9759b1aab073e7e6531880f516bdb324724d31d0fe5",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a5a8fdd6502c5374504d4688d15e629f72329755f846a479736604d24fb274cd",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "960436547297c7a2abe6ee7860fe10b2dda737e0b16270f95c29a483e328b783",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "d0a7504b74967fe98b432344d4fd86dafedd2cdc881f1cb16b7c6b2c7d7701c1",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "f813bdd11493d954b27dc73843b5a1b4b75b615508b32dc548de72defa98685e",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "b631a67eb287d4ed60fb5e95279acd5494d40cd68896ae342cb3c2a77bcdffb2",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "2e51e53393fc65730094fa50577193c8c9547581bab9c57fb7ea93cd67e6ebef",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a8d6098a21ea57d1bdfcd9d9341e5fd4c6909398aa7cec0b64eef8e13018e8cc",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e2fa027775c7414f2e3856373ac8bf06d6ef480623f163aece76a80c784fdaf8",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e63a2c3971d140795ca17bcf899bb8a60c85b1c839eebbf2b8e0c8fe112965e5",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "0d7f6e0e8a01ea44e29e6dffef013be380ef4ce2383f3af607a87d2fa3f32045",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "26922dcbd3c8988aeaf69eab2ca855ebc80e73014b994924a75423c01770c605",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "0c71cddc3edf2e86e17875a77d2454502cf2323ea3e363f323f14a8c84c2129a",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "5d9ee6a781142806154c4785e446db2f7ed9234e4ac3aaaf7f9afa6a77b7d386",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "c177be8f430793b304813114a94a82cc3f6a6f32b5cd76790cb06225e25d6c94",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a88308d1463f5046ff5bf925bdae1117dbd658e0fd63b5c73ed9ef8fe1b5073b",
+        "physical_outer_rows_read_before_lock": 0
+      }
+    }
+  },
+  "clip_AST_proof": {
+    "call_sites": [
+      {
+        "BASE_AST_sha256": "5a6013608cb318e44eaf7fdd5d2c4b079095c5adc59d9151ce24950c3e0df2ad",
+        "CLIP_AST_sha256": "b4d87f116f1e0b519c05b9452842de1b5139ddb835e45a7f8fe76e13aa732fcf",
+        "removed_override_AST_sha256": "5a6013608cb318e44eaf7fdd5d2c4b079095c5adc59d9151ce24950c3e0df2ad",
+        "removing_one_keyword_restores_exact_BASE_AST": true,
+        "cap": 1.189812963969407,
+        "function": "fit_ranker",
+        "module": "topk",
+        "source_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+        "only_added_keyword": "max_delta_step",
+        "label_gain": "BASE implicit default"
+      },
+      {
+        "BASE_AST_sha256": "41f7211354240280b80fe199efaa8145fe15f6e58b8cb1f17a94a4ece61cc47d",
+        "CLIP_AST_sha256": "ac96dbc97dac22609d7cc75f2608ba831e94881ddb5efcfd0355f0b35a18f215",
+        "removed_override_AST_sha256": "41f7211354240280b80fe199efaa8145fe15f6e58b8cb1f17a94a4ece61cc47d",
+        "removing_one_keyword_restores_exact_BASE_AST": true,
+        "cap": 1.189812963969407,
+        "function": "fit_ranker_n",
+        "module": "bagged",
+        "source_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "only_added_keyword": "max_delta_step",
+        "label_gain": "BASE implicit default"
+      }
+    ],
+    "veto_unmodified": true,
+    "only_added_keyword": "max_delta_step",
+    "cap": 1.189812963969407
+  },
+  "cap_derivation": {
+    "wave": "H332",
+    "status": "CAP_FIXED_BEFORE_FITS",
+    "cap": 1.189812963969407,
+    "quantile": 0.9,
+    "quantile_method": "numpy linear",
+    "formula": "abs(native leaf_value / model learning_rate)",
+    "models": 11664,
+    "pooled_leaves": 11165008,
+    "skipped_veto_models": 1296,
+    "source": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H316/solhwv-20261104T105633Z/h316_models_locks_outputs.tar.gz",
+      "version_id": "W5jY6iZlwoRszA7P9zfNLLMtRtM9ZZkW",
+      "sha256": "4eae1dec792e1c7b4adff9ff9a5226d0c38cfe1bd9605ba07cc2596f4ad7b0b5"
+    },
+    "cap_model_inventory_sha256": "534a4abc42b34523fa97ba17482ebfd86fa113169d772e71a18ff240ae2a101e",
+    "pooled_values_sha256": "36925602a65f89bd9914250227d0bdad932c5eb53eba1c750b862c37a217d724",
+    "inner_archive_sha256": {
+      "run/P0/fold_0/root_30001": "41fb0b371f71df147f69c88196d605505a4f793a6aac85484690f821cdaaead1",
+      "run/P0/fold_0/root_30002": "ba820ec8c383182261eff42199f69e64303f8e2395e8910745fa9236b13149ac",
+      "run/P0/fold_0/root_30003": "9553885e3079315ae5080f98e751863d31a3ce1ef77457ab79ddae82ef700c7d",
+      "run/P0/fold_1/root_30001": "29ec2f35d10e797675f82356b84d755ed57a7e8736e6e15bce2a8f630ffde446",
+      "run/P0/fold_1/root_30002": "6cf5620ac98728384183e071ff62939f024a2268ef154e2153cc37f07e1fa08e",
+      "run/P0/fold_1/root_30003": "a83b86b8873fefe326bf9d1944957d577f062cf96e50e290073f07ac348cef24",
+      "run/P0/fold_2/root_30001": "1263eb1841723d30db26a5c652c3489d5df2ed0048e0d408e67381922aeae970",
+      "run/P0/fold_2/root_30002": "0a9bb0eb17d9ebe89e9809e48015e53516b8248f9897ba1e125cfa653361d650",
+      "run/P0/fold_2/root_30003": "b8cd4c1d17000324ce307525859ce63848406d0eceedb81d1599dc04eab76f47",
+      "run/P0/fold_3/root_30001": "2dac073c75383c795c81af6150d40ef116cd20269e58c4785a5b22ec0bada759",
+      "run/P0/fold_3/root_30002": "c537c67334edf5844b652cf168dfc829f4524adf5787a26213e16140f0baea1a",
+      "run/P0/fold_3/root_30003": "af4b3719a690594399d3cc8c9e54a8ec184e592be6122b0c94526aa571212301",
+      "run/P1/fold_0/root_30001": "8e6910683ad86ddddb8bfcf2e5c9f7312ac2389bd1c6d3e57d091c8bc2e11774",
+      "run/P1/fold_0/root_30002": "7a7747f77fc326648aa9bd39aa12fd328355917977c44015f8bfa4db68db154b",
+      "run/P1/fold_0/root_30003": "9fde2309c7fca28fcf4ea3e08a7691b137738fc8b7b2fe7407211f4cfea92485",
+      "run/P1/fold_1/root_30001": "4b8f3d0d921f15751c195718234b955ed7213f55d69e439c3746467367cd715c",
+      "run/P1/fold_1/root_30002": "77f44306509b13d6e88e71221af6da473c595963410dfcdcf455431f224fece9",
+      "run/P1/fold_1/root_30003": "81144a8efe6aa5a2762ee3d7b52c315f86c98e638cb923de66d3a9466ab769a2",
+      "run/P1/fold_2/root_30001": "1b207d8e011418383ef2a2884b540531935f924225ea50a7a7e2698f8613135e",
+      "run/P1/fold_2/root_30002": "8177bc6d25bf21c528f74b61b993011044f0aa7c073e64cb2c70860b941dfd77",
+      "run/P1/fold_2/root_30003": "80651658d9fe880c28804aa711c0d3ede613b4f56560cf14e8e089508e19b395",
+      "run/P1/fold_3/root_30001": "dedb7816506bb1519aebec9c917bb5f836e889c0c175bde8208cd17e8a3e6117",
+      "run/P1/fold_3/root_30002": "d693ce98ad03afefaf41c821f2add0a359a8c15f9c3e88cc572b519ed858b056",
+      "run/P1/fold_3/root_30003": "c063dd40edcaa57b8ae781d4ccdd4d8667acb308e1f73aa20a7daf554bcab02c",
+      "run/P2/fold_0/root_30001": "d1a4a052b19fb26d8cb2db66d669b6b43cd308e5d874b572675b4464444a23fd",
+      "run/P2/fold_0/root_30002": "fc4e2a1e918b4ecc06e8d95cb09baf828becddbd7bd2e1ab72fa02aa882ae30a",
+      "run/P2/fold_0/root_30003": "e0bf054ec89e3c46361e7662a6308cddce1529b2c1535afb93fe8ddc39de76f5",
+      "run/P2/fold_1/root_30001": "bcf15efa9b73f634c9cab5f0feb2d4549aa77fc476aa3717765cdbd541186a93",
+      "run/P2/fold_1/root_30002": "60f03440ac3192ebc18122214a11ff657d45f99c91beee18a1abfb9ad503bc3f",
+      "run/P2/fold_1/root_30003": "cc74467ef66221da263e274aede29eee0f7f4c0d707d906fd0d78125bf450a5f",
+      "run/P2/fold_2/root_30001": "f3abe5c59ea80e602d5aa4f193dcaf4543608661c7d52ab006491a45420c0e31",
+      "run/P2/fold_2/root_30002": "d76c3987ff81c960c3d3009ac1797e647a5f67a46ffcdf08541d1b117d7ded39",
+      "run/P2/fold_2/root_30003": "dca8d05a4def37491500a0cd012c9fab906284f32d04d0eba2e40ce5f8d25829",
+      "run/P2/fold_3/root_30001": "fc3ecdbabc71e4ee688d160e5457d8bd60a0f2e15e6233f87fbd4875c06c5bad",
+      "run/P2/fold_3/root_30002": "ab26be0c5a55288a580d2ed0b2a3b2603b4fe9e4e773ec3cb8bed1b322cefd9e",
+      "run/P2/fold_3/root_30003": "32bc5ecaae5d36df585bcaf63011038292e69c4a7231a2b53e5deeb912ce95eb"
+    },
+    "scope": "ALL archived BASE inner main+8bag rankers across TRAIN partitions/roots; no veto/refits/NORM; global historical TRAIN exposure disclosed",
+    "utc": "2026-11-04T20:00:31.965426+00:00"
+  },
+  "cap_actual_exit": {
+    "utc": "2026-11-04T20:00:32.145799+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "0",
+    "SERVICE_RESULT": "success",
+    "INVOCATION_ID": "dbf1c801fd8e4143bc9f3d5fe5b0a325"
+  }
+}
