@@ -1,0 +1,380 @@
+{
+  "status": "COMPLETE",
+  "verdict": "NO_COHORT",
+  "wave": "H299",
+  "catalog_records": 4750,
+  "catalog_coverage": {
+    "prior_fresh_scanned_family_including_failures": 2814,
+    "unchanged_H283_H286_base_exclusion": 674,
+    "catalog_sealed_matching_id": 14,
+    "not_regression": 1248
+  },
+  "eligible_base_families": 2729,
+  "prior_scanned_partition_counts": {
+    "H283_assigned": 60,
+    "H286_scanned_including_failures": 480,
+    "H294_scanned_including_failures": 788,
+    "H285_assigned": 60,
+    "H288_scanned_including_failures": 692,
+    "H292_scanned_including_failures": 649
+  },
+  "available_unseen_families": 0,
+  "qualifying_families": 0,
+  "v6A": 0,
+  "v6B": 0,
+  "regression": {
+    "status": "PASS",
+    "dry_mode": true,
+    "model_forwards": 0,
+    "optimizer_updates": 0,
+    "sealed_or_holdout_data_reads": 0,
+    "teacher_data_reads": 0,
+    "pinned_cohort_source_sha256": "6d2bf2df0c0bf9f35d8bf8a2a7f537f4979d1972d0f10b6d0d43bbf70f590cea",
+    "helper_sha256": "2b506d43123272b17f233c703682e6282344a32f5c9bb06c830833e2084b3df6",
+    "expected_v5_sha256": "ea5364ad8d224719300a7932b0d8418709793405c1668dc581aac59302f7d0c9",
+    "generated_v5_sha256": "ea5364ad8d224719300a7932b0d8418709793405c1668dc581aac59302f7d0c9",
+    "family_order_exact": true,
+    "contexts_and_accept_counts_exact": true,
+    "families": 358,
+    "counts": {
+      "scanned_families_in_half": 788,
+      "qualifying": 358,
+      "taken": 358
+    },
+    "exclusions": {
+      "other_half": 1401,
+      "prior_wave_assigned": 60,
+      "prior_scanned_span": 480,
+      "no_buildable_context": 210,
+      "fewer_than_2_accepts": 220,
+      "still_reserved": 0
+    },
+    "summary_count_calls": 1529,
+    "summary_count_receipts_sha256": "c07fa8d4e98a0034efcd1c17800c4f3231a1fad482b45bd8cc53d8dda09d79ee",
+    "started_epoch": 1793765041.9947991,
+    "finished_epoch": 1793765128.15954
+  },
+  "catalog": {
+    "uri": "s3://veox-jopedime-datasets-use2/catalog/v246/catalog.jsonl",
+    "version_id": "eJuErIwj0Pgu.lAgflPcWvvRKyuwptLC",
+    "etag": "85058f0c455685c1159a343d52b60ebc",
+    "sha256": "c5f5eb6db36d24daa9abc5c7808a49773a2b94c1765620d236e91a471fe2cb54",
+    "bytes": 6853838,
+    "exact_version": true,
+    "operation": "GetObject",
+    "s3_write_operations": 0,
+    "caller_arn": "arn:aws:iam::714044927654:user/jepson",
+    "epoch": 1793765708.5189285
+  },
+  "manifest_sha256": "845a6e5739ee21f0796acb7e3f3fc6e7be0fc9138c5f3738cd9c3bd947832dfc",
+  "coverage_sha256": "24b475d9cc036697b522e96a42059d3749a248108ca3a0f81a57129d95a5b079",
+  "exclusion_proof": {
+    "H283_assigned": {
+      "count": 60,
+      "set_sha256": "e210437ded112432ff4cc982d4de752a0b7e195f39effcefb4c4f06c51f07e39",
+      "intersection_count": 0
+    },
+    "H283_initial_scanned_prefix": {
+      "count": 83,
+      "set_sha256": "148028d2b44290078285aa2fab15a948df6a75957601d1f740740798487160e0",
+      "intersection_count": 0
+    },
+    "H286_scanned_including_failures": {
+      "count": 480,
+      "set_sha256": "9de1c84ff873d2cb34c4c5e718deebedf8991cc75ef34fe3a767ac911507f8f6",
+      "intersection_count": 0
+    },
+    "H294_scanned_including_failures": {
+      "count": 788,
+      "set_sha256": "3b26dd16aee3e8c23947af2af9bde2180f00713030533a8c088ae4c8d424720b",
+      "intersection_count": 0
+    },
+    "H285_assigned": {
+      "count": 60,
+      "set_sha256": "9f48e1ff920603f24d29c78c1bf4f8bbb74ff00ee2c9d7a59d7d05387ef8db01",
+      "intersection_count": 0
+    },
+    "H285_initial_scanned_prefix": {
+      "count": 77,
+      "set_sha256": "50b7b2bcef144bdba562bdc1b3da6790b4c0fffb05e9bf60547841e1174b39c2",
+      "intersection_count": 0
+    },
+    "H288_scanned_including_failures": {
+      "count": 692,
+      "set_sha256": "d05035d7cf33e4dc5379feb15320e3be32ed4ad9ec40160548d98fabc95db33b",
+      "intersection_count": 0
+    },
+    "H292_scanned_including_failures": {
+      "count": 649,
+      "set_sha256": "355438c7edf9c119bf1a9486814dbb35e21496077a6be44ee4f7af7cd9e9f1ea",
+      "intersection_count": 0
+    },
+    "cohort_v1_all_listed": {
+      "count": 2729,
+      "set_sha256": "3415434bef3e4110e98f749aaeaf43d699dea4a50993ffbd8148b759c37fee9c",
+      "intersection_count": 0
+    },
+    "cohort_v2_all_listed": {
+      "count": 200,
+      "set_sha256": "5e2b88581ec1240d8dbb4af7c2af9973ba18c32fd74a0245f535f67511615a89",
+      "intersection_count": 0
+    },
+    "cohort_v3_all_listed": {
+      "count": 300,
+      "set_sha256": "2271bf2b97034c287d89b8a60e92ac7051e1025135ad1d2378204d3baee6b816",
+      "intersection_count": 0
+    },
+    "cohort_v4_all_listed": {
+      "count": 295,
+      "set_sha256": "efc364574b447b5a0a87da44ef03ec41bba500f7a2c848c950b62f592272dc3d",
+      "intersection_count": 0
+    },
+    "cohort_v5_all_listed": {
+      "count": 358,
+      "set_sha256": "3e5484a177481f720617b9bb87b93fef1a2d4d6d2cb6633077613f762f50aa55",
+      "intersection_count": 0
+    },
+    "flywheel_DL-Train": {
+      "count": 257,
+      "set_sha256": "da2380c475712143d31b078a52cd890a995c6109f9bd29caf50829eda5cbe26f",
+      "intersection_count": 0
+    },
+    "flywheel_DL-Val": {
+      "count": 19,
+      "set_sha256": "57ea0e7f4d90aac3ca0167fd2dfd6094094e81998f5b1957161a659ba84cb202",
+      "intersection_count": 0
+    },
+    "flywheel_DL-Holdout": {
+      "count": 20,
+      "set_sha256": "a6fdd947f33e648c8447f80170803e18f1ef874743aa302244f859021ee9f30a",
+      "intersection_count": 0
+    },
+    "flywheel_all_1780_metadata_contexts": {
+      "count": 358,
+      "set_sha256": "feda83dd0ebea8b9dbc711fe69a54425d65bb7b7281fc3e63d2bd54c0a3114a9",
+      "intersection_count": 0
+    },
+    "H287_fit_TRAIN": {
+      "count": 257,
+      "set_sha256": "da2380c475712143d31b078a52cd890a995c6109f9bd29caf50829eda5cbe26f",
+      "intersection_count": 0
+    },
+    "H291_fit_TRAIN": {
+      "count": 257,
+      "set_sha256": "da2380c475712143d31b078a52cd890a995c6109f9bd29caf50829eda5cbe26f",
+      "intersection_count": 0
+    },
+    "H295_fit_TRAIN": {
+      "count": 257,
+      "set_sha256": "da2380c475712143d31b078a52cd890a995c6109f9bd29caf50829eda5cbe26f",
+      "intersection_count": 0
+    },
+    "P3_sealed_excluded_coarse_closure": {
+      "count": 153,
+      "set_sha256": "b0c13b9bca93f744e96154af04a1d848391b6d89e1380186c76a7d0e47fdf0d6",
+      "intersection_count": 0
+    },
+    "P3_heldout_coarse_closure": {
+      "count": 63,
+      "set_sha256": "a2e3503047e22cb96d84f8530238f4cf6ed56adaa305f8d6a1864bdc4c300564",
+      "intersection_count": 0
+    },
+    "P3_dev_coarse_closure": {
+      "count": 52,
+      "set_sha256": "7a039804f7ae7cedb6f53a50ddeda8a1f9ab78d9112769e82507e364f838fffd",
+      "intersection_count": 0
+    },
+    "catalog_BeyondArena_or_sealed_text": {
+      "count": 0,
+      "set_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "intersection_count": 0
+    },
+    "catalog_sealed_matching_families_known": {
+      "count": 13,
+      "set_sha256": "d2f5266fe0e098b38f04ead870399818d0b598a983f15e62fd81018e59dc8a5e",
+      "intersection_count": 0
+    },
+    "catalog_sealed_matching_ids": {
+      "count": 14,
+      "set_sha256": "31b653550adc3373dc4b3a4f35e79956826a0888d711c77d2b5cbdc1889a2f9f",
+      "intersection_count": 0,
+      "namespace": "dataset_id"
+    }
+  },
+  "flywheel_roster_counts": {
+    "DL-Train": {
+      "contexts": 1219,
+      "coarse_families": 205,
+      "catalog_families": 257
+    },
+    "DL-Val": {
+      "contexts": 91,
+      "coarse_families": 19,
+      "catalog_families": 19
+    },
+    "DL-Holdout": {
+      "contexts": 93,
+      "coarse_families": 19,
+      "catalog_families": 20
+    }
+  },
+  "metadata_sources": {
+    "corpus_manifest_sha256": "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3",
+    "corpus_roster_projection_sha256": "15ff8c7547b48135451355f0da06c7046492fff7a4a16eec0df9aae2817fcde5",
+    "original_v1_sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+    "s1_input_lists": {
+      "input-list-join-catalog-w0-b01-20261007T070629Z.json": "5b6896e06c6c0dd951a2ca22879e51adb9b17e45c432e98d1f00ffa66ef80f78",
+      "input-list-join-catalog-w0-b01-20261007T070658Z.json": "fa8252a35cd8de9b1474c23b5c21ebee0035b936458ff5e063257b2a80d307dd",
+      "input-list-join-catalog-w1-b01-fc249-20261007T130954Z.json": "1c7ccb0ebb42258bf261e12f104a9978a70a0a9e88bc6e5c86f50e004f7fe6e5",
+      "input-list-join-catalog-w1rest-fc249-20261007T132735Z.json": "109cd5e56ce0691b21b5ab9af67a454d7f87f2629f9fa46c90c1ab7cd6f05764",
+      "input-list-join-catalog-w2A-fc249-20261007T132709Z.json": "858ed581603f34c14a32c487c0c612deb927b5d4ff0986dbdda4f118ff34eb36",
+      "input-list-join-catalog-w2BC-fc249-20261007T132804Z.json": "49bed43cf3106722d031b0ae1f72b443c00bc9742b630b7cafcdee7e7e96b18d",
+      "input-list-join-fill-20261006T165039Z.json": "2344187013f5c8eddb6ff3f970c1e3173250abc17f2e13c747de717494fb4e17",
+      "input-list-join-fill-20261006T165059Z.json": "19135dfa75806a281156210d14ec30f8310984b53d5468d41155104938052f93",
+      "input-list-join-nonraw-20261006T160739Z.json": "adf723acc9e8a504007d2efa6f362d6623c37cd2b34eff044585fa4d32583f81",
+      "input-list-join-onehold-20261007T232331Z.json": "e9877c0e5729ccf402a24332838536b9c4411da4993c40de9580351922da1775",
+      "input-list-join-rawgroup-20261006T172755Z.json": "cf7acc8fc7ba4a0f842ccec4684ec8a37ab65fb7aa0dfde43f364c63bd7d64fb",
+      "input-list.json": "821b336c60af074c533a8fb195dde80ca70a766d6a5f56a3900546e999f14efe"
+    }
+  },
+  "model_forwards": 0,
+  "optimizer_updates": 0,
+  "scout_accept_summary_reads": 0,
+  "sealed_or_holdout_data_reads": 0,
+  "s3_write_operations": 0,
+  "H300_status": "DRAFT_BLOCKED_NO_COHORT",
+  "limitations": [
+    "Catalog v246 only; no claim about newer catalogs or newly ingested sources.",
+    "Full authoritative sealed bucket roster unavailable; zero candidates make this a conservative exhaustion result, not a positive safety certification.",
+    "H287/H291/H295 TRAIN fit exclusions follow their pinned source lineage; no fit outcomes were loaded."
+  ],
+  "resources": {
+    "regression-v5": {
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 210145280,
+        "threads": 2,
+        "host_cpu": 25.3
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/source/regress_v5.py",
+        "--reference",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/reference",
+        "--out",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/evidence"
+      ],
+      "started_epoch": 1793765041.910166,
+      "finished_epoch": 1793765128.2988791,
+      "cpu_affinity": [
+        46,
+        65
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793770500
+    },
+    "scout": {
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 314015744,
+        "threads": 2,
+        "host_cpu": 27.4
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/source/scout.py",
+        "--reference",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/reference",
+        "--out",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/evidence",
+        "--source",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/source"
+      ],
+      "started_epoch": 1793765376.145198,
+      "finished_epoch": 1793765384.9524543,
+      "cpu_affinity": [
+        46,
+        65
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793770500
+    },
+    "scout-roster-correction": {
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 311390208,
+        "threads": 2,
+        "host_cpu": 20.4
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/source/scout.py",
+        "--reference",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/reference",
+        "--out",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/evidence",
+        "--source",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/source"
+      ],
+      "started_epoch": 1793765448.0687842,
+      "finished_epoch": 1793765452.0507474,
+      "cpu_affinity": [
+        46,
+        65
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793770500
+    },
+    "scout-final": {
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 313708544,
+        "threads": 2,
+        "host_cpu": 16.7
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/source/scout.py",
+        "--reference",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/reference",
+        "--out",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/evidence",
+        "--source",
+        "/home/ubuntu/jope-rescue-20260921/h299-astra/source"
+      ],
+      "started_epoch": 1793765706.921087,
+      "finished_epoch": 1793765711.6336708,
+      "cpu_affinity": [
+        46,
+        65
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793770500
+    }
+  },
+  "source_pins_sha256": "bed038f5737f5ad0ed05752843a3480806e3d3f758781d78dca891bbe3202a0a",
+  "h300_prereg_sha256": "a2e7dea673f56412cc71dddaeb82200233c8d25ccb148b41764a92b13ea7ae5c",
+  "elo": null,
+  "elo_reason": "Metadata-only scout: zero candidate scores; Elo belongs to unexecuted H300.",
+  "s3_access": {
+    "get_catalog_exact_version_calls": 4,
+    "other_s3_get_calls": 0,
+    "writes": 0,
+    "sealed_bucket_calls": 0
+  },
+  "verification_correction": "Review corrected flywheel split subsets to all nonempty corpus contexts (1219/91/93), including inner-source contexts; all1780 exclusion already covered them, verdict unchanged.",
+  "full_CI": "NOT_RUN owner CI_FREEZE/MASTER_MERGE_HOLD",
+  "adoption": false
+}
