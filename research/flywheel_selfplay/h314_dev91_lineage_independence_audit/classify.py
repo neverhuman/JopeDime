@@ -53,7 +53,8 @@ def extract(row, meta, receipts, source_registry, split_registry):
                 else ""
             )
             token = prefix + key + ":" + str(value).strip()
-            roots.add(token)
+            if key != "source_file":
+                roots.add(token)
             root_fields[key] = value
     if n.valid(prov.get("url")):
         roots.add("source_url:" + str(prov["url"]).strip())

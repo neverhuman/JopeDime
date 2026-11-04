@@ -1,23 +1,22 @@
 {
   "status": "PASS",
-  "classification_sha256": "5a003c1b86e8145f1d2ad0146b6fbb40306ca887aa725afae68a9953068e45bd",
-  "metadata_sha256": "fa67b51790d973f17a4ec06b7a0e2da51e45c1a22557d76f034470a5d9a5cd85",
-  "pair_comparisons_sha256": "6cc34923551596f1150d72b067f53e58dd7f0cfbb3b1c0fb619cf1fd40283739",
+  "classification_sha256": "2e97b4cf06dfdfb6d93e369f93ae0994870f1371847758639892e17678299b9c",
+  "metadata_sha256": "7d5bbfc06351c8d341c437d3c3ec37d95b21d7776ac4fc40f83fdcfe6f2c9b66",
+  "pair_comparisons_sha256": "c8bee3f193229c4cf8547ff70f2d1b5dd8ec45ae56c4c01b9122b4c631392551",
   "groups": {
     "NEIGHBORED": {
-      "count": 1,
-      "ids_sha256": "d1264a74c113ce672ed1c40a3baf21db1cd6e28ebf51d30439fbbca4a3930ea8",
-      "family_ids": [
-        "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119"
-      ]
+      "count": 0,
+      "ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "family_ids": []
     },
     "CLEAN": {
-      "count": 18,
-      "ids_sha256": "813bfdfb1a5abefb581caecdce6f702aada0f6b7edaae8b4f8d6a80b670b4349",
+      "count": 19,
+      "ids_sha256": "bc447c2efb1793c1d7472efaf5d7547d4d103831820660483157e5dc442a88ba",
       "family_ids": [
         "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
         "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
         "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+        "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
         "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
         "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
         "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
@@ -52,5 +51,5 @@
   "split_registry_datasets_matched": 138,
   "gain_files_opened": 0,
   "feature_or_label_rows_read": 0,
-  "finished_utc": "2026-11-04T10:42:52.949847+00:00"
+  "finished_utc": "2026-11-04T10:47:47.536561+00:00"
 }

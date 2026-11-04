@@ -8,7 +8,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "la r\u00e9gion occitanie open data:source_file:csv?lang=en&timezone=UTC&use_labels=false&delimiter=%2C",
           "source_url:https://data.laregion.fr/api/explore/v2.1/catalog/datasets/pln-suivi-en-continu-de-la-qualite-de-leau/exports/csv?lang=en&timezone=UTC&use_labels=false&delimiter=%2C"
         ],
         "lineage_field_values": {
@@ -47,7 +46,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "agriculture and agri-food canada:source_file:DailyFOBMarketPrices_PrixDeMarcheFABQuotidien.csv",
           "source_url:https://od-do.agr.gc.ca/DailyFOBMarketPrices_PrixDeMarcheFABQuotidien.csv"
         ],
         "lineage_field_values": {
@@ -87,7 +85,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:medical-expenses",
-          "rdatasets:source_file:rdatasets-ecdat-vietnamh-lnrlfood.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-vietnamh-lnrlfood.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/VietNamH.csv"
         ],
@@ -152,7 +149,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:vietnam-health",
-          "rdatasets:source_file:rdatasets-camerondata-vietnam-hh-lnhhexp.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-camerondata-vietnam-hh-lnhhexp.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/camerondata/vietnam_hh.csv"
         ],
@@ -218,7 +214,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:water_quality.csv",
           "source_url:https://raw.githubusercontent.com/JosiahParry/epa-water-quality/master/data/water_quality.csv"
         ],
         "lineage_field_values": {
@@ -257,7 +252,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "colorado information marketplace / socrata:source_file:8csg-gzw7.csv?$limit=5000000",
           "source_url:https://data.colorado.gov/resource/8csg-gzw7.csv?$limit=5000000"
         ],
         "lineage_field_values": {
@@ -296,8 +290,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/3359791/files/major.csv?download=1",
-          "zenodo:source_file:major.csv?download=1"
+          "source_url:https://zenodo.org/records/3359791/files/major.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "major.csv?download=1",
@@ -335,7 +328,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "national park service irma:source_file:761440?Reference=2315861",
           "source_url:https://irma.nps.gov/DataStore/DownloadFile/761440?Reference=2315861"
         ],
         "lineage_field_values": {
@@ -372,7 +364,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "national park service irma:source_file:747071?Reference=2315937",
           "source_url:https://irma.nps.gov/DataStore/DownloadFile/747071?Reference=2315937"
         ],
         "lineage_field_values": {
@@ -411,8 +402,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://www150.statcan.gc.ca/n1/tbl/csv/18100005-eng.zip",
-          "statistics canada:source_file:18100005-eng.zip"
+          "source_url:https://www150.statcan.gc.ca/n1/tbl/csv/18100005-eng.zip"
         ],
         "lineage_field_values": {
           "source_file": "18100005-eng.zip",
@@ -451,7 +441,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:card",
-          "rdatasets:source_file:rdatasets-wooldridge-card-lwage.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-wooldridge-card-lwage.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/card.csv"
         ],
@@ -518,7 +507,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:on-abortion",
-          "rdatasets:source_file:rdatasets-causaldata-abortion-income.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-causaldata-abortion-income.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/causaldata/abortion.csv"
         ],
@@ -584,7 +572,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "socrata:source_file:export.csv",
           "source_url:https://data.cityofnewyork.us/api/v3/views/myei-c3fa/export.csv"
         ],
         "lineage_field_values": {
@@ -624,7 +611,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:covariates-in",
-          "rdatasets:source_file:rdatasets-mlmrev-s3bbx-famcov.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-s3bbx-famcov.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/s3bbx.csv"
         ],
@@ -691,7 +677,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:australian-aids",
-          "rdatasets:source_file:rdatasets-mass-aids2-diag.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mass-aids2-diag.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/MASS/Aids2.csv"
         ],
@@ -756,7 +741,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:australian-aids",
-          "rdatasets:source_file:rdatasets-meddatasets-aids2-df-diag.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-meddatasets-aids2-df-diag.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/MedDataSets/Aids2_df.csv"
         ],
@@ -823,7 +807,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "pmlb:source_family:bng-pharynx",
-          "pmlb:source_file:pmlb-1196-bng-pharynx-target.csv",
           "pmlb:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/pmlb-1196-bng-pharynx-target.csv",
           "source_url:https://github.com/EpistasisLab/pmlb/raw/master/datasets/1196_BNG_pharynx/1196_BNG_pharynx.tsv.gz"
         ],
@@ -889,8 +872,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/3241372/files/DATA_PLM.csv?download=1",
-          "zenodo:source_file:DATA_PLM.csv?download=1"
+          "source_url:https://zenodo.org/records/3241372/files/DATA_PLM.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "DATA_PLM.csv?download=1",
@@ -928,7 +910,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:Farm-04.csv",
           "source_url:https://raw.githubusercontent.com/Derek-Zhang0810/Wind-Farm-Datasets-for-Power-Forecasting/main/Farm-04.csv"
         ],
         "lineage_field_values": {
@@ -968,7 +949,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:governors-forecast",
-          "rdatasets:source_file:rdatasets-fivethirtyeight-governor-state-forecast-win-probability.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-fivethirtyeight-governor-state-forecast-win-probability.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/fivethirtyeight/governor_state_forecast.csv"
         ],
@@ -1033,7 +1013,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:senate-forecast",
-          "rdatasets:source_file:rdatasets-fivethirtyeight-senate-seat-forecast-win-probability.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-fivethirtyeight-senate-seat-forecast-win-probability.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/fivethirtyeight/senate_seat_forecast.csv"
         ],
@@ -1099,7 +1078,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:stellar_parameters.csv",
           "source_url:https://raw.githubusercontent.com/jgussman/CHIP/main/data/spocs/stellar_parameters.csv"
         ],
         "lineage_field_values": {
@@ -1139,7 +1117,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:beauty",
-          "rdatasets:source_file:rdatasets-wooldridge-beauty-wage.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-wooldridge-beauty-wage.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/beauty.csv"
         ],
@@ -1206,7 +1183,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:cigarette-consumption",
-          "rdatasets:source_file:rdatasets-ecdat-cigar-price.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-cigar-price.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/Cigar.csv"
         ],
@@ -1272,7 +1248,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "czech statistical office open data:source_file:csv",
           "source_url:https://data.csu.gov.cz/opendata/sady/OBY04BCR/distribuce/csv"
         ],
         "lineage_field_values": {
@@ -1312,7 +1287,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:awardsshareplayers-table",
-          "rdatasets:source_file:rdatasets-lahman-awardsshareplayers-pointswon.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-awardsshareplayers-pointswon.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/AwardsSharePlayers.csv"
         ],
@@ -1379,7 +1353,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:innovation-institutional",
-          "rdatasets:source_file:rdatasets-sandwich-instinnovation-value.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-sandwich-instinnovation-value.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/sandwich/InstInnovation.csv"
         ],
@@ -1445,7 +1418,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "oedi / pvdaq:source_file:2105_inv09_data.csv",
           "source_url:https://oedi-data-lake.s3.amazonaws.com/pvdaq/2023-solar-data-prize/2105_OEDI/data/2105_inv09_data.csv"
         ],
         "lineage_field_values": {
@@ -1484,7 +1456,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "isda africa open-soil-data portal:source_file:iSDA_soil_data.csv",
           "source_url:https://isdasoil.s3.us-west-2.amazonaws.com/soil_analysis_data/latest/iSDA_soil_data.csv"
         ],
         "lineage_field_values": {
@@ -1523,8 +1494,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/15094979/files/BigSolDBv2.0.csv?download=1",
-          "zenodo:source_file:BigSolDBv2.0.csv?download=1"
+          "source_url:https://zenodo.org/records/15094979/files/BigSolDBv2.0.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "BigSolDBv2.0.csv?download=1",
@@ -1563,7 +1533,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:managers-table",
-          "rdatasets:source_file:rdatasets-lahman-managers-g.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-managers-g.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/Managers.csv"
         ],
@@ -1630,7 +1599,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:abortion-attitudes",
-          "rdatasets:source_file:rdatasets-stevedata-anes-prochoice-lchoice.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-stevedata-anes-prochoice-lchoice.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/stevedata/anes_prochoice.csv"
         ],
@@ -1696,8 +1664,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime=2024-01-01&endtime=2025-01-01&minmagnitude=4",
-          "usgs earthquake hazards program fdsn:source_file:query.csv?starttime=2024-01-01&endtime=2025-01-01&minmagnitude=4"
+          "source_url:https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime=2024-01-01&endtime=2025-01-01&minmagnitude=4"
         ],
         "lineage_field_values": {
           "source_file": "query.csv?starttime=2024-01-01&endtime=2025-01-01&minmagnitude=4",
@@ -1733,7 +1700,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github gist:source_file:eathquake_all_months.csv",
           "source_url:https://gist.githubusercontent.com/croy2001/6b954153c08cf24bf1f36d7679898648/raw/eathquake_all_months.csv"
         ],
         "lineage_field_values": {
@@ -1770,8 +1736,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime=2025-01-01&endtime=2026-01-01&minmagnitude=4&orderby=time",
-          "usgs fdsn event web service:source_file:query.csv?starttime=2025-01-01&endtime=2026-01-01&minmagnitude=4&orderby=time"
+          "source_url:https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime=2025-01-01&endtime=2026-01-01&minmagnitude=4&orderby=time"
         ],
         "lineage_field_values": {
           "source_file": "query.csv?starttime=2025-01-01&endtime=2026-01-01&minmagnitude=4&orderby=time",
@@ -1807,8 +1772,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime=2025-01-01&endtime=2025-02-01&minmagnitude=0",
-          "usgs earthquake hazards program:source_file:query.csv?starttime=2025-01-01&endtime=2025-02-01&minmagnitude=0"
+          "source_url:https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime=2025-01-01&endtime=2025-02-01&minmagnitude=0"
         ],
         "lineage_field_values": {
           "source_file": "query.csv?starttime=2025-01-01&endtime=2025-02-01&minmagnitude=0",
@@ -1847,7 +1811,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:stated-preferences",
-          "rdatasets:source_file:rdatasets-ecdat-car-price1.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-car-price1.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/Car.csv"
         ],
@@ -1912,7 +1875,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:stated-preferences",
-          "rdatasets:source_file:rdatasets-ecdat-train-price2.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-train-price2.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/Train.csv"
         ],
@@ -1978,7 +1940,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "deepchem:source_file:bace.csv",
           "source_url:https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/bace.csv"
         ],
         "lineage_field_values": {
@@ -2018,7 +1979,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:cell-body",
-          "rdatasets:source_file:rdatasets-modeldata-cells-total-inten-ch-4.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-modeldata-cells-total-inten-ch-4.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/modeldata/cells.csv"
         ],
@@ -2085,7 +2045,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:aircraft-wildlife",
-          "rdatasets:source_file:rdatasets-openintro-birds-height.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-openintro-birds-height.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/openintro/birds.csv"
         ],
@@ -2152,7 +2111,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:from-black",
-          "rdatasets:source_file:rdatasets-causaldata-black-politicians-blackpercent.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-causaldata-black-politicians-blackpercent.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/causaldata/black_politicians.csv"
         ],
@@ -2219,7 +2177,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:household-medical",
-          "rdatasets:source_file:rdatasets-camerondata-vietnamlss-lhhexp1.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-camerondata-vietnamlss-lhhexp1.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/camerondata/vietnamlss.csv"
         ],
@@ -2286,7 +2243,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:dengue-prevalence",
-          "rdatasets:source_file:rdatasets-daag-dengue-humid90.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-daag-dengue-humid90.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/DAAG/dengue.csv"
         ],
@@ -2352,8 +2308,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/7781352/files/locard_classification_nutrients_28DEC2022.csv?download=1",
-          "zenodo:source_file:locard_classification_nutrients_28DEC2022.csv?download=1"
+          "source_url:https://zenodo.org/records/7781352/files/locard_classification_nutrients_28DEC2022.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "locard_classification_nutrients_28DEC2022.csv?download=1",
@@ -2392,7 +2347,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:bwght",
-          "rdatasets:source_file:rdatasets-wooldridge-bwght-bwghtlbs.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-wooldridge-bwght-bwghtlbs.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/bwght.csv"
         ],
@@ -2459,7 +2413,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:housing-sales",
-          "rdatasets:source_file:rdatasets-ggplot2-txhousing-volume.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ggplot2-txhousing-volume.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/ggplot2/txhousing.csv"
         ],
@@ -2526,7 +2479,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:yield-monitor",
-          "rdatasets:source_file:rdatasets-agridat-gartner-corn-mass.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-agridat-gartner-corn-mass.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/agridat/gartner.corn.csv"
         ],
@@ -2593,7 +2545,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:cav-in",
-          "rdatasets:source_file:rdatasets-cardiodatasets-patient-cav-df-years.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-cardiodatasets-patient-cav-df-years.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/CardioDataSets/patient_CAV_df.csv"
         ],
@@ -2659,7 +2610,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:nuaa_orthogonal_bundle_high_resolution.csv",
           "source_url:https://raw.githubusercontent.com/katulu-io/uniwear-dataset/main/data/nuaa_orthogonal_bundle_high_resolution.csv"
         ],
         "lineage_field_values": {
@@ -2698,7 +2648,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:L2_Train.csv",
           "source_url:https://raw.githubusercontent.com/Shengwei-Peng/PV-Power-Generation-Forecasting/main/TrainingData/L2_Train.csv"
         ],
         "lineage_field_values": {
@@ -2735,7 +2684,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:L1_Train.csv",
           "source_url:https://raw.githubusercontent.com/Shengwei-Peng/PV-Power-Generation-Forecasting/main/TrainingData/L1_Train.csv"
         ],
         "lineage_field_values": {
@@ -2775,7 +2723,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:precipitation-observations",
-          "rdatasets:source_file:rdatasets-crch-rainibk-rainfc-10.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-crch-rainibk-rainfc-10.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/crch/RainIbk.csv"
         ],
@@ -2841,7 +2788,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:trtllm_b200_gpt_oss_120b_mixed_fp4_fpms.csv",
           "source_url:https://raw.githubusercontent.com/ai-dynamo/aiconfigurator/hzhou-codex/aic-prefill-validation-artifacts/issue-artifacts/aic-prefill-fpm-validation/trtllm_b200_gpt_oss_120b_mixed_fp4_fpms.csv"
         ],
         "lineage_field_values": {
@@ -2881,7 +2827,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:scottish-secondary",
-          "rdatasets:source_file:rdatasets-mlmrev-scotssec-primary.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-scotssec-primary.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/ScotsSec.csv"
         ],
@@ -2947,7 +2892,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "san francisco open data:source_file:export.csv?accessType=DOWNLOAD",
           "source_url:https://data.sf.gov/api/v3/views/2gdm-7nym/export.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -2986,7 +2930,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "odepa datos abiertos / ckan:source_file:precio_consumidor_2026.csv",
           "source_url:https://datos.odepa.gob.cl/dataset/d4646b7f-0d2e-4567-b6fa-932b1a6bb3f3/resource/9f885df4-afeb-4b75-8bab-9334f79db00f/download/precio_consumidor_2026.csv"
         ],
         "lineage_field_values": {
@@ -3025,8 +2968,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://www150.statcan.gc.ca/n1/tbl/csv/18100002-eng.zip",
-          "statistics canada:source_file:18100002-eng.zip"
+          "source_url:https://www150.statcan.gc.ca/n1/tbl/csv/18100002-eng.zip"
         ],
         "lineage_field_values": {
           "source_file": "18100002-eng.zip",
@@ -3065,7 +3007,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:criminal-offenders",
-          "rdatasets:source_file:rdatasets-crimedatasets-crimoffenders-df-priors-count.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-crimedatasets-crimoffenders-df-priors-count.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/crimedatasets/crimOffenders_df.csv"
         ],
@@ -3132,7 +3073,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:daily-s",
-          "rdatasets:source_file:rdatasets-gt-sp500-volume.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-gt-sp500-volume.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/gt/sp500.csv"
         ],
@@ -3197,7 +3137,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:gafa-stock",
-          "rdatasets:source_file:rdatasets-tsibbledata-gafa-stock-volume.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-tsibbledata-gafa-stock-volume.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/tsibbledata/gafa_stock.csv"
         ],
@@ -3263,7 +3202,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "knb / dataone:source_file:cbfs.145.7",
           "source_url:https://knb.ecoinformatics.org/knb/d1/mn/v2/object/cbfs.145.7"
         ],
         "lineage_field_values": {
@@ -3302,7 +3240,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "opendatasoft:source_file:csv",
           "source_url:https://data.townofcary.org/api/v2/catalog/datasets/electric-vehicle-charging-stations/exports/csv"
         ],
         "lineage_field_values": {
@@ -3342,7 +3279,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:pitchingpost-table",
-          "rdatasets:source_file:rdatasets-lahman-pitchingpost-era.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-pitchingpost-era.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/PitchingPost.csv"
         ],
@@ -3409,7 +3345,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:unemployment-duration",
-          "rdatasets:source_file:rdatasets-camerondata-jobless-logwage.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-camerondata-jobless-logwage.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/camerondata/jobless.csv"
         ],
@@ -3474,7 +3409,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:unemployment-duration",
-          "rdatasets:source_file:rdatasets-ecdat-unempdur-logwage.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-unempdur-logwage.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/UnempDur.csv"
         ],
@@ -3541,7 +3475,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:language-scores",
-          "rdatasets:source_file:rdatasets-nlme-bdf-avg-iq-ver-cen.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-nlme-bdf-avg-iq-ver-cen.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/nlme/bdf.csv"
         ],
@@ -3606,7 +3539,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:language-scores",
-          "rdatasets:source_file:rdatasets-mlmrev-bdf-avg-iq-ver-cen.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-bdf-avg-iq-ver-cen.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/bdf.csv"
         ],
@@ -3671,7 +3603,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:eighth-grade",
-          "rdatasets:source_file:rdatasets-mass-nlschools-iq.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mass-nlschools-iq.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/MASS/nlschools.csv"
         ],
@@ -3737,7 +3668,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "fishr fsadata / github:source_file:WalleyeErie2.csv",
           "source_url:https://raw.githubusercontent.com/fishR-Core-Team/FSAdata/main/data-raw/WalleyeErie2.csv"
         ],
         "lineage_field_values": {
@@ -3776,7 +3706,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "city of melbourne open data:source_file:csv?delimiter=%2C",
           "source_url:https://data.melbourne.vic.gov.au/api/v2/catalog/datasets/floor-space-by-use-by-block/exports/csv?delimiter=%2C"
         ],
         "lineage_field_values": {
@@ -3816,7 +3745,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:from-how",
-          "rdatasets:source_file:rdatasets-causaldata-mortgages-qob-minus-kw.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-causaldata-mortgages-qob-minus-kw.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/causaldata/mortgages.csv"
         ],
@@ -3883,7 +3811,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:high-school",
-          "rdatasets:source_file:rdatasets-mlmrev-hsb82-cses.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-hsb82-cses.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/Hsb82.csv"
         ],
@@ -3949,7 +3876,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github / ices:source_file:example_data_AIS.csv",
           "source_url:https://raw.githubusercontent.com/ices-eg/WKSSFGEO/main/data-examples/example_data_AIS.csv"
         ],
         "lineage_field_values": {
@@ -3988,7 +3914,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "federal housing finance agency:source_file:hpi_master.csv",
           "source_url:https://www.fhfa.gov/hpi/download/monthly/hpi_master.csv"
         ],
         "lineage_field_values": {
@@ -4027,7 +3952,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "planetary habitability laboratory, upr arecibo:source_file:habcat_table.csv",
           "source_url:https://www.hpcf.upr.edu/~abel/phl/habcat_table.csv"
         ],
         "lineage_field_values": {
@@ -4067,7 +3991,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:voting-intentions",
-          "rdatasets:source_file:rdatasets-cardata-chile-statusquo.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-cardata-chile-statusquo.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/carData/Chile.csv"
         ],
@@ -4132,7 +4055,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:voting-intentions",
-          "rdatasets:source_file:rdatasets-stevedata-chile88-sq.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-stevedata-chile88-sq.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/stevedata/chile88.csv"
         ],
@@ -4198,7 +4120,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "elife:source_file:elife-55414-fig6-data1-v3.csv",
           "source_url:https://cdn.elifesciences.org/articles/55414/elife-55414-fig6-data1-v3.csv"
         ],
         "lineage_field_values": {
@@ -4237,8 +4158,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/14203016/files/3x3km-test-site-trees.csv?download=1",
-          "zenodo:source_file:3x3km-test-site-trees.csv?download=1"
+          "source_url:https://zenodo.org/records/14203016/files/3x3km-test-site-trees.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "3x3km-test-site-trees.csv?download=1",
@@ -4276,8 +4196,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/19994838/files/cheltenham_game_1.1.csv?download=1",
-          "zenodo:source_file:cheltenham_game_1.1.csv?download=1"
+          "source_url:https://zenodo.org/records/19994838/files/cheltenham_game_1.1.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "cheltenham_game_1.1.csv?download=1",
@@ -4315,7 +4234,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "figshare:source_file:2292169",
           "source_url:https://ndownloader.figshare.com/files/2292169"
         ],
         "lineage_field_values": {
@@ -4354,7 +4272,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "new york state open data / socrata:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://data.ny.gov/api/views/vxuj-8kew/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -4393,8 +4310,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-08-24/lemur_data.csv",
-          "tidytuesday / github:source_file:lemur_data.csv"
+          "source_url:https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-08-24/lemur_data.csv"
         ],
         "lineage_field_values": {
           "source_file": "lemur_data.csv",
@@ -4432,7 +4348,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "connecticut open data / socrata:source_file:export.csv?accessType=DOWNLOAD",
           "source_url:https://data.ct.gov/api/v3/views/kt63-kssz/export.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -4472,7 +4387,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:from-european",
-          "rdatasets:source_file:rdatasets-mstate-ebmt3-rfstime.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mstate-ebmt3-rfstime.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mstate/ebmt3.csv"
         ],
@@ -4537,7 +4451,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:from-european",
-          "rdatasets:source_file:rdatasets-mstate-ebmt4-srv.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mstate-ebmt4-srv.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mstate/ebmt4.csv"
         ],
@@ -4604,7 +4517,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:student-teacher",
-          "rdatasets:source_file:rdatasets-mlmrev-star-tch.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-star-tch.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/star.csv"
         ],
@@ -4671,7 +4583,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:panel-of",
-          "rdatasets:source_file:rdatasets-ecdat-wages-lwage.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-wages-lwage.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/Wages.csv"
         ],
@@ -4736,7 +4647,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:panel-of",
-          "rdatasets:source_file:rdatasets-plm-wages-lwage.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-plm-wages-lwage.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/plm/Wages.csv"
         ],
@@ -4801,7 +4711,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:wages-for",
-          "rdatasets:source_file:rdatasets-hlmdiag-wages-exper.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-hlmdiag-wages-exper.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/HLMdiag/wages.csv"
         ],
@@ -4867,7 +4776,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "ministerio de vivienda y agenda urbana / datos.gob.es:source_file:VDP006_01.csv",
           "source_url:https://cdn.mivau.gob.es/portal-web-mivau/Datos_MIVAU/CSV/VDP006_01.csv"
         ],
         "lineage_field_values": {
@@ -4907,7 +4815,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:storm-tracks",
-          "rdatasets:source_file:rdatasets-dplyr-storms-pressure.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-dplyr-storms-pressure.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/dplyr/storms.csv"
         ],
@@ -4973,8 +4880,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/8111558/files/FWVZ_tremor_data.csv?download=1",
-          "zenodo:source_file:FWVZ_tremor_data.csv?download=1"
+          "source_url:https://zenodo.org/records/8111558/files/FWVZ_tremor_data.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "FWVZ_tremor_data.csv?download=1",
@@ -5012,7 +4918,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "meteoswiss open data / data.geo.admin.ch:source_file:ogd-smn_ber_d_historical.csv",
           "source_url:https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ber/ogd-smn_ber_d_historical.csv"
         ],
         "lineage_field_values": {
@@ -5049,7 +4954,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "meteoswiss:source_file:ogd-smn_klo_d_historical.csv",
           "source_url:https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/klo/ogd-smn_klo_d_historical.csv"
         ],
         "lineage_field_values": {
@@ -5086,7 +4990,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "meteoswiss open data / data.geo.admin.ch:source_file:ogd-smn_lug_d_historical.csv",
           "source_url:https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/lug/ogd-smn_lug_d_historical.csv"
         ],
         "lineage_field_values": {
@@ -5126,7 +5029,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:united-states",
-          "rdatasets:source_file:rdatasets-usdatasets-county-tbl-df-per-capita-income.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-usdatasets-county-tbl-df-per-capita-income.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/usdatasets/county_tbl_df.csv"
         ],
@@ -5192,8 +5094,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/18292967/files/HTS001.csv?download=1",
-          "zenodo:source_file:HTS001.csv?download=1"
+          "source_url:https://zenodo.org/records/18292967/files/HTS001.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "HTS001.csv?download=1",
@@ -5231,7 +5132,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "national energy system operator data portal:source_file:demanddata_2025.csv",
           "source_url:https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/b2bde559-3455-4021-b179-dfe60c0337b0/download/demanddata_2025.csv"
         ],
         "lineage_field_values": {
@@ -5270,7 +5170,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "corgis:source_file:weather.csv",
           "source_url:https://corgis-edu.github.io/corgis/datasets/csv/weather/weather.csv"
         ],
         "lineage_field_values": {
@@ -5307,7 +5206,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:weather.csv",
           "source_url:https://raw.githubusercontent.com/tidyverse/nycflights13/main/data-raw/weather.csv"
         ],
         "lineage_field_values": {
@@ -5346,7 +5244,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "data.gov.sg / github direct csv:source_file:resale-flat-prices-based-on-registration-date-from-jan-2017-onwards.csv",
           "source_url:https://raw.githubusercontent.com/noghte/datasets/main/singapore-flat-prices/resale-flat-prices-based-on-registration-date-from-jan-2017-onwards.csv"
         ],
         "lineage_field_values": {
@@ -5383,7 +5280,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "data.gov.sg:source_file:resale-flat-prices-based-on-registration-date-from-jan-2017-onwards-2023-04-17T03-28-08Z.csv",
           "source_url:https://storage.data.gov.sg/resale-flat-prices/resources/resale-flat-prices-based-on-registration-date-from-jan-2017-onwards-2023-04-17T03-28-08Z.csv"
         ],
         "lineage_field_values": {
@@ -5423,7 +5319,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:australian-health",
-          "rdatasets:source_file:rdatasets-aer-doctorvisits-income.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-aer-doctorvisits-income.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/AER/DoctorVisits.csv"
         ],
@@ -5490,7 +5385,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:can-you",
-          "rdatasets:source_file:rdatasets-fivethirtyeight-riddler-castles-castle10.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-fivethirtyeight-riddler-castles-castle10.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/fivethirtyeight/riddler_castles.csv"
         ],
@@ -5557,7 +5451,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:benefits",
-          "rdatasets:source_file:rdatasets-wooldridge-benefits-bs.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-wooldridge-benefits-bs.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/benefits.csv"
         ],
@@ -5623,7 +5516,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "international arctic buoy programme:source_file:LEVEL1_2015.csv",
           "source_url:https://iabp.apl.uw.edu/Data_Products/LEVEL1_DATA/LEVEL1_2015.csv"
         ],
         "lineage_field_values": {
@@ -5660,7 +5552,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "international arctic buoy programme:source_file:LEVEL1_2016.csv",
           "source_url:https://iabp.apl.uw.edu/Data_Products/LEVEL1_DATA/LEVEL1_2016.csv"
         ],
         "lineage_field_values": {
@@ -5699,7 +5590,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "cdc data / socrata:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://data.cdc.gov/api/views/hn4x-zwk7/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -5738,7 +5628,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "datasf socrata:source_file:rkru-6vcg.csv?$limit=50000",
           "source_url:https://data.sfgov.org/resource/rkru-6vcg.csv?$limit=50000"
         ],
         "lineage_field_values": {
@@ -5778,7 +5667,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:alcohol",
-          "rdatasets:source_file:rdatasets-wooldridge-alcohol-ethanolsq.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-wooldridge-alcohol-ethanolsq.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/alcohol.csv"
         ],
@@ -5844,7 +5732,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "king county open data / socrata:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://data.kingcounty.gov/api/views/uz4m-4d96/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -5883,8 +5770,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://tppkl.blob.core.windows.net/blobfs/TaipeiTree.csv",
-          "taiwan government data open platform:source_file:TaipeiTree.csv"
+          "source_url:https://tppkl.blob.core.windows.net/blobfs/TaipeiTree.csv"
         ],
         "lineage_field_values": {
           "source_file": "TaipeiTree.csv",
@@ -5922,7 +5808,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "osf:source_file:download",
           "source_url:https://osf.io/7mt6k/download"
         ],
         "lineage_field_values": {
@@ -5961,7 +5846,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "arcgis hub:source_file:csv?layers=7",
           "source_url:https://hub.arcgis.com/api/download/v1/items/049ffe8e321b4a70a2b09dd66b9e0255/csv?layers=7"
         ],
         "lineage_field_values": {
@@ -6000,8 +5884,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://www150.statcan.gc.ca/n1/tbl/csv/18100001-eng.zip",
-          "statistics canada:source_file:18100001-eng.zip"
+          "source_url:https://www150.statcan.gc.ca/n1/tbl/csv/18100001-eng.zip"
         ],
         "lineage_field_values": {
           "source_file": "18100001-eng.zip",
@@ -6040,7 +5923,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:rand-health",
-          "rdatasets:source_file:rdatasets-sampleselection-randhie-income.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-sampleselection-randhie-income.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/sampleSelection/RandHIE.csv"
         ],
@@ -6105,7 +5987,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:health-expenditures",
-          "rdatasets:source_file:rdatasets-camerondata-randhealth-income.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-camerondata-randhealth-income.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/camerondata/randhealth.csv"
         ],
@@ -6170,7 +6051,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:structure-of",
-          "rdatasets:source_file:rdatasets-ecdat-medexp-age.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-medexp-age.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/MedExp.csv"
         ],
@@ -6235,7 +6115,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:contacts-with",
-          "rdatasets:source_file:rdatasets-ecdat-doctorcontacts-age.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-doctorcontacts-age.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/DoctorContacts.csv"
         ],
@@ -6301,7 +6180,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:TDF_Riders_History.csv",
           "source_url:https://raw.githubusercontent.com/thomascamminady/LeTourDataSet/master/data/men/TDF_Riders_History.csv"
         ],
         "lineage_field_values": {
@@ -6340,7 +6218,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "hm land registry:source_file:UK-HPI-full-file-2026-06.csv?utm_campaign=full_fil&utm_medium=GOV.UK&utm_source=datadownload&utm_term=9.30_19_08_26",
           "source_url:https://publicdata.landregistry.gov.uk/market-trend-data/house-price-index-data/UK-HPI-full-file-2026-06.csv?utm_campaign=full_fil&utm_medium=GOV.UK&utm_source=datadownload&utm_term=9.30_19_08_26"
         ],
         "lineage_field_values": {
@@ -6379,7 +6256,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:15_9-23.csv",
           "source_url:https://raw.githubusercontent.com/wanmuhammadfaizzaki/Lithology-Classification/main/data/15_9-23.csv"
         ],
         "lineage_field_values": {
@@ -6418,7 +6294,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "federal reserve economic data (fred):source_file:fredgraph.csv?id=INDPRO%2CTCU%2CPAYEMS%2CCPIAUCSL%2CUNRATE",
           "source_url:https://fred.stlouisfed.org/graph/fredgraph.csv?id=INDPRO%2CTCU%2CPAYEMS%2CCPIAUCSL%2CUNRATE"
         ],
         "lineage_field_values": {
@@ -6457,7 +6332,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "noaa global monitoring laboratory erddap:source_file:greenhouse_gases_ch4_insitu_hourly_averages_surface.csv?time,time_decimal,latitude,elevation,intake_height,value_unc,nvalue,value_std_dev,site_code,value",
           "source_url:https://erddap.gml.noaa.gov/erddap/tabledap/greenhouse_gases_ch4_insitu_hourly_averages_surface.csv?time,time_decimal,latitude,elevation,intake_height,value_unc,nvalue,value_std_dev,site_code,value"
         ],
         "lineage_field_values": {
@@ -6497,7 +6371,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:doctor-visits",
-          "rdatasets:source_file:rdatasets-ecdat-doctoraus-income.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-doctoraus-income.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/DoctorAUS.csv"
         ],
@@ -6564,7 +6437,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:rise-fall",
-          "rdatasets:source_file:rdatasets-fivethirtyeight-ncaa-w-bball-tourney-full-percent.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-fivethirtyeight-ncaa-w-bball-tourney-full-percent.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/fivethirtyeight/ncaa_w_bball_tourney.csv"
         ],
@@ -6632,7 +6504,6 @@
         "lineage_roots": [
           "source_url:https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2018/2018-10-23/movie_profit.csv",
           "tidytuesday:source_family:tidytuesday-movie",
-          "tidytuesday:source_file:tidytuesday-data-2018-2018-10-23-movie-profit-csv-production-budget.csv",
           "tidytuesday:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/tidytuesday-data-2018-2018-10-23-movie-profit-csv-production-budget.csv"
         ],
         "lineage_field_values": {
@@ -6698,7 +6569,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:fielding-table",
-          "rdatasets:source_file:rdatasets-lahman-fielding-innouts.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-fielding-innouts.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/Fielding.csv"
         ],
@@ -6764,8 +6634,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://data.yorkopendata.org/dataset/4444c1b4-e3db-471f-a0e7-9d5e88e8d375/resource/1a1cefb2-5985-41ae-b08e-24c5c2c21ee0/download/atc_counts.csv",
-          "york open data / data.gov.uk:source_file:atc_counts.csv"
+          "source_url:https://data.yorkopendata.org/dataset/4444c1b4-e3db-471f-a0e7-9d5e88e8d375/resource/1a1cefb2-5985-41ae-b08e-24c5c2c21ee0/download/atc_counts.csv"
         ],
         "lineage_field_values": {
           "source_file": "atc_counts.csv",
@@ -6804,7 +6673,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:daily-returns",
-          "rdatasets:source_file:rdatasets-ecdat-crspday-crsp.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-crspday-crsp.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/CRSPday.csv"
         ],
@@ -6870,7 +6738,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "new york state open data / socrata:source_file:export.csv?accessType=DOWNLOAD",
           "source_url:https://data.ny.gov/api/v3/views/8mkn-d32t/export.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -6909,8 +6776,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://gender-pay-gap.service.gov.uk/viewing/download-data/2023",
-          "uk gender pay gap service:source_file:2023"
+          "source_url:https://gender-pay-gap.service.gov.uk/viewing/download-data/2023"
         ],
         "lineage_field_values": {
           "source_file": "2023",
@@ -6948,8 +6814,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/12788354/files/Museum%20Crow%20Measurements.csv?download=1",
-          "zenodo:source_file:Museum%20Crow%20Measurements.csv?download=1"
+          "source_url:https://zenodo.org/records/12788354/files/Museum%20Crow%20Measurements.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "Museum%20Crow%20Measurements.csv?download=1",
@@ -6987,7 +6852,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "socrata:source_file:export.csv?accessType=DOWNLOAD",
           "source_url:https://data.transportation.gov/api/v3/views/d6nc-s8v6/export.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -7026,8 +6890,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://github.com/space-catalog/data-releases/releases/download/dr1/spacecatalog-dr1-objects.csv.gz",
-          "spacecatalog / github releases:source_file:spacecatalog-dr1-objects.csv.gz"
+          "source_url:https://github.com/space-catalog/data-releases/releases/download/dr1/spacecatalog-dr1-objects.csv.gz"
         ],
         "lineage_field_values": {
           "source_file": "spacecatalog-dr1-objects.csv.gz",
@@ -7066,7 +6929,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:prenatal-care",
-          "rdatasets:source_file:rdatasets-mlmrev-guprenat-pcind81.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-guprenat-pcind81.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/guPrenat.csv"
         ],
@@ -7132,7 +6994,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "osf:source_file:download",
           "source_url:https://osf.io/wxy4r/download"
         ],
         "lineage_field_values": {
@@ -7172,7 +7033,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:patents-r",
-          "rdatasets:source_file:rdatasets-ecdat-patentsrd-spil.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-patentsrd-spil.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/PatentsRD.csv"
         ],
@@ -7238,8 +7098,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/11066623/files/data.csv?download=1",
-          "zenodo:source_file:data.csv?download=1"
+          "source_url:https://zenodo.org/records/11066623/files/data.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "data.csv?download=1",
@@ -7278,7 +7137,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:coffee-imports",
-          "rdatasets:source_file:rdatasets-stevedata-coffee-imports-value.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-stevedata-coffee-imports-value.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/stevedata/coffee_imports.csv"
         ],
@@ -7344,8 +7202,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://volweb.utk.edu/~auerbach/Goldman.csv",
-          "university of tennessee:source_file:Goldman.csv"
+          "source_url:https://volweb.utk.edu/~auerbach/Goldman.csv"
         ],
         "lineage_field_values": {
           "source_file": "Goldman.csv",
@@ -7384,7 +7241,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:himalayan-climber",
-          "rdatasets:source_file:rdatasets-bayesrules-climbers-sub-count.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-bayesrules-climbers-sub-count.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/bayesrules/climbers_sub.csv"
         ],
@@ -7451,7 +7307,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:credit-card",
-          "rdatasets:source_file:rdatasets-islr-default-income.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-islr-default-income.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/ISLR/Default.csv"
         ],
@@ -7517,7 +7372,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "socrata:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://data.cityofnewyork.us/api/views/bsin-59hv/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -7557,7 +7411,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:british-family",
-          "rdatasets:source_file:rdatasets-np-engel95-food.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-np-engel95-food.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/np/Engel95.csv"
         ],
@@ -7624,7 +7477,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:wages-schooling",
-          "rdatasets:source_file:rdatasets-ecdat-schooling-lwage76.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-schooling-lwage76.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/Schooling.csv"
         ],
@@ -7689,7 +7541,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:returns-to",
-          "rdatasets:source_file:rdatasets-camerondata-schooling-g25.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-camerondata-schooling-g25.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/camerondata/schooling.csv"
         ],
@@ -7755,7 +7606,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "openafrica / ckan:source_file:tmprf3jkjg0.csv",
           "source_url:https://open.africa/dataset/44359020-b2b0-4b66-af09-3de18d6519dc/resource/f1d919aa-86ce-4bbc-a7d4-57875128b584/download/tmprf3jkjg0.csv"
         ],
         "lineage_field_values": {
@@ -7794,8 +7644,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://opendata.transport.vic.gov.au/dataset/174fbf40-bef0-434a-8af0-891c7f3d2323/resource/f8d93c74-cf02-48d7-a368-fc207c0b3c4f/download/trips_vista_2024_2025.csv",
-          "victorian government datavic:source_file:trips_vista_2024_2025.csv"
+          "source_url:https://opendata.transport.vic.gov.au/dataset/174fbf40-bef0-434a-8af0-891c7f3d2323/resource/f8d93c74-cf02-48d7-a368-fc207c0b3c4f/download/trips_vista_2024_2025.csv"
         ],
         "lineage_field_values": {
           "source_file": "trips_vista_2024_2025.csv",
@@ -7834,7 +7683,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:budget-shares",
-          "rdatasets:source_file:rdatasets-ecdat-budgetitaly-income.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-budgetitaly-income.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/BudgetItaly.csv"
         ],
@@ -7899,7 +7747,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:budget-share",
-          "rdatasets:source_file:rdatasets-ecdat-budgetfood-wfood.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-budgetfood-wfood.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/BudgetFood.csv"
         ],
@@ -7966,7 +7813,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:monthly-medicare",
-          "rdatasets:source_file:rdatasets-tsibbledata-pbs-cost.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-tsibbledata-pbs-cost.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/tsibbledata/PBS.csv"
         ],
@@ -8033,7 +7879,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:intcal20",
-          "rdatasets:source_file:rdatasets-folio-intcal20-delta.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-folio-intcal20-delta.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/folio/intcal20.csv"
         ],
@@ -8098,7 +7943,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:intcal09",
-          "rdatasets:source_file:rdatasets-folio-intcal09-delta.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-folio-intcal09-delta.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/folio/intcal09.csv"
         ],
@@ -8163,7 +8007,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:intcal13",
-          "rdatasets:source_file:rdatasets-folio-intcal13-delta.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-folio-intcal13-delta.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/folio/intcal13.csv"
         ],
@@ -8230,7 +8073,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:trump-tweets",
-          "rdatasets:source_file:rdatasets-dslabs-trump-tweets-favorite-count.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-dslabs-trump-tweets-favorite-count.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/dslabs/trump_tweets.csv"
         ],
@@ -8296,7 +8138,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "osf:source_file:download",
           "source_url:https://osf.io/d6bhz/download"
         ],
         "lineage_field_values": {
@@ -8335,7 +8176,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:human_sera_raw_data.csv",
           "source_url:https://raw.githubusercontent.com/jbloomlab/SARS-CoV-2-RBD_MAP_HAARVI_sera/main/results/supp_data/human_sera_raw_data.csv"
         ],
         "lineage_field_values": {
@@ -8374,7 +8214,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:X264_AllMeasurements.csv",
           "source_url:https://raw.githubusercontent.com/timm/moot/master/optimize/config/X264_AllMeasurements.csv"
         ],
         "lineage_field_values": {
@@ -8413,8 +8252,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://www150.statcan.gc.ca/n1/tbl/csv/32100113-eng.zip",
-          "statistics canada:source_file:32100113-eng.zip"
+          "source_url:https://www150.statcan.gc.ca/n1/tbl/csv/32100113-eng.zip"
         ],
         "lineage_field_values": {
           "source_file": "32100113-eng.zip",
@@ -8452,7 +8290,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "city of chicago open data / socrata:source_file:export.csv?accessType=DOWNLOAD",
           "source_url:https://data.cityofchicago.org/api/v3/views/k7hf-8y75/export.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -8491,7 +8328,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "connecticut geodata (arcgis hub):source_file:csv?layers=0",
           "source_url:https://geodata.ct.gov/api/download/v1/items/4f7fa91ef7c3422aad852558c79bf655/csv?layers=0"
         ],
         "lineage_field_values": {
@@ -8530,8 +8366,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/8296866/files/CuatroCaminos.csv?download=1",
-          "zenodo:source_file:CuatroCaminos.csv?download=1"
+          "source_url:https://zenodo.org/records/8296866/files/CuatroCaminos.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "CuatroCaminos.csv?download=1",
@@ -8569,7 +8404,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "plos one:source_file:journal.pone.0301000.s006&type=supplementary",
           "source_url:https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0301000.s006&type=supplementary"
         ],
         "lineage_field_values": {
@@ -8608,7 +8442,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "socrata / city of chicago:source_file:export.csv?accessType=DOWNLOAD",
           "source_url:https://data.cityofchicago.org/api/v3/views/xq83-jr8c/export.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -8647,7 +8480,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "odepa datos abiertos / ckan:source_file:precio_mayorista_fruta-hortaliza_2026.csv",
           "source_url:https://datos.odepa.gob.cl/dataset/33f10516-acbe-4446-b633-68244b9b6b26/resource/580beca0-e87e-4dd4-9e8a-0bd92773f4a6/download/precio_mayorista_fruta-hortaliza_2026.csv"
         ],
         "lineage_field_values": {
@@ -8687,7 +8519,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "pmlb:source_family:bng-echomonths",
-          "pmlb:source_file:pmlb-1199-bng-echomonths-target.csv",
           "pmlb:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/pmlb-1199-bng-echomonths-target.csv",
           "source_url:https://github.com/EpistasisLab/pmlb/raw/master/datasets/1199_BNG_echoMonths/1199_BNG_echoMonths.tsv.gz"
         ],
@@ -8753,7 +8584,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "california open data / arcgis hub:source_file:csv?layers=0",
           "source_url:https://data-cdfw.opendata.arcgis.com/api/download/v1/items/e5b6759d423e4b11817916d6b4fcc25c/csv?layers=0"
         ],
         "lineage_field_values": {
@@ -8792,7 +8622,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:Exp1.csv",
           "source_url:https://raw.githubusercontent.com/yuxiwang670/dichotomous-prior-biases-in-SA/main/SourceData/CleanedData/Exp1.csv"
         ],
         "lineage_field_values": {
@@ -8831,8 +8660,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/21409257/files/lidar_agb_reference_0p01deg.csv?download=1",
-          "zenodo:source_file:lidar_agb_reference_0p01deg.csv?download=1"
+          "source_url:https://zenodo.org/records/21409257/files/lidar_agb_reference_0p01deg.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "lidar_agb_reference_0p01deg.csv?download=1",
@@ -8870,7 +8698,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "arcgis hub / opendataphilly:source_file:data?format=csv&spatialRefId=3857&where=1%3D1",
           "source_url:https://hub.arcgis.com/api/v3/datasets/ab9e89e1273f445bb265846c90b38a96_0/downloads/data?format=csv&spatialRefId=3857&where=1%3D1"
         ],
         "lineage_field_values": {
@@ -8910,7 +8737,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:fieldingpost",
-          "rdatasets:source_file:rdatasets-lahman-fieldingpost-innouts.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-fieldingpost-innouts.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/FieldingPost.csv"
         ],
@@ -8977,7 +8803,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:exam-scores",
-          "rdatasets:source_file:rdatasets-mlmrev-exam-normexam.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-exam-normexam.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/Exam.csv"
         ],
@@ -9044,7 +8869,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:locations-of",
-          "rdatasets:source_file:rdatasets-datasets-quakes-mag.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-datasets-quakes-mag.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/datasets/quakes.csv"
         ],
@@ -9110,7 +8934,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "harvard forest data archive:source_file:hf324-01-tree-biomass.csv",
           "source_url:https://harvardforest.fas.harvard.edu/data/p32/hf324/hf324-01-tree-biomass.csv"
         ],
         "lineage_field_values": {
@@ -9150,7 +8973,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "pmlb:source_family:cpu-small",
-          "pmlb:source_file:pmlb-227-cpu-small-target.csv",
           "pmlb:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/pmlb-227-cpu-small-target.csv",
           "source_url:https://github.com/EpistasisLab/pmlb/raw/master/datasets/227_cpu_small/227_cpu_small.tsv.gz"
         ],
@@ -9215,7 +9037,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "pmlb:source_family:cpu-small",
-          "pmlb:source_file:pmlb-562-cpu-small-target.csv",
           "pmlb:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/pmlb-562-cpu-small-target.csv",
           "source_url:https://github.com/EpistasisLab/pmlb/raw/master/datasets/562_cpu_small/562_cpu_small.tsv.gz"
         ],
@@ -9280,7 +9101,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "pmlb:source_family:cpu-act",
-          "pmlb:source_file:pmlb-573-cpu-act-target.csv",
           "pmlb:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/pmlb-573-cpu-act-target.csv",
           "source_url:https://github.com/EpistasisLab/pmlb/raw/master/datasets/573_cpu_act/573_cpu_act.tsv.gz"
         ],
@@ -9345,7 +9165,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "pmlb:source_family:cpu-act",
-          "pmlb:source_file:pmlb-197-cpu-act-target.csv",
           "pmlb:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/pmlb-197-cpu-act-target.csv",
           "source_url:https://github.com/EpistasisLab/pmlb/raw/master/datasets/197_cpu_act/197_cpu_act.tsv.gz"
         ],
@@ -9412,7 +9231,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:penn-world",
-          "rdatasets:source_file:rdatasets-plm-sumhes-sr.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-plm-sumhes-sr.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/plm/SumHes.csv"
         ],
@@ -9477,7 +9295,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:penn-table",
-          "rdatasets:source_file:rdatasets-ecdat-sumhes-sr.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-sumhes-sr.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/SumHes.csv"
         ],
@@ -9543,8 +9360,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/19917941/files/tars_table_2.csv.zip?download=1",
-          "zenodo:source_file:tars_table_2.csv.zip?download=1"
+          "source_url:https://zenodo.org/records/19917941/files/tars_table_2.csv.zip?download=1"
         ],
         "lineage_field_values": {
           "source_file": "tars_table_2.csv.zip?download=1",
@@ -9583,7 +9399,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:movie-information",
-          "rdatasets:source_file:rdatasets-ggplot2movies-movies-rating.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ggplot2movies-movies-rating.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/ggplot2movies/movies.csv"
         ],
@@ -9649,7 +9464,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "deutscher wetterdienst climate data center:source_file:CatRaRE_2001_2025_T5_Eta_v2026_01.csv",
           "source_url:https://opendata.dwd.de/climate_environment/CDC/event_catalogues/germany/precipitation/CatRaRE_v2026.01/data/CatRaRE_2001_2025_T5_Eta_v2026_01.csv"
         ],
         "lineage_field_values": {
@@ -9686,7 +9500,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "deutscher wetterdienst climate data center:source_file:CatRaRE_2001_2025_W3_Eta_v2026_01.csv",
           "source_url:https://opendata.dwd.de/climate_environment/CDC/event_catalogues/germany/precipitation/CatRaRE_v2026.01/data/CatRaRE_2001_2025_W3_Eta_v2026_01.csv"
         ],
         "lineage_field_values": {
@@ -9726,7 +9539,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:internal-rhs1",
-          "rdatasets:source_file:rdatasets-generalcorr-rhs1-tvcbprm.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-generalcorr-rhs1-tvcbprm.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/generalCorr/rhs1.csv"
         ],
@@ -9791,7 +9603,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:internal-mtx2",
-          "rdatasets:source_file:rdatasets-generalcorr-mtx2-totgrp.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-generalcorr-mtx2-totgrp.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/generalCorr/mtx2.csv"
         ],
@@ -9856,7 +9667,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:internal-mtx",
-          "rdatasets:source_file:rdatasets-generalcorr-mtx-dssales.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-generalcorr-mtx-dssales.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/generalCorr/mtx.csv"
         ],
@@ -9921,7 +9731,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:internal-rhs",
-          "rdatasets:source_file:rdatasets-generalcorr-rhs-lag2-tvcbprm.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-generalcorr-rhs-lag2-tvcbprm.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/generalCorr/rhs.lag2.csv"
         ],
@@ -9988,7 +9797,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:survey",
-          "rdatasets:source_file:rdatasets-ratdat-surveys-weight.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ratdat-surveys-weight.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/ratdat/surveys.csv"
         ],
@@ -10053,7 +9861,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:complete-survey",
-          "rdatasets:source_file:rdatasets-ratdat-complete-weight.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ratdat-complete-weight.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/ratdat/complete.csv"
         ],
@@ -10118,7 +9925,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:complete-survey",
-          "rdatasets:source_file:rdatasets-ratdat-complete-old-weight.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ratdat-complete-old-weight.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/ratdat/complete_old.csv"
         ],
@@ -10185,7 +9991,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:earnings-loan",
-          "rdatasets:source_file:rdatasets-causaldata-scorecard-count-working.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-causaldata-scorecard-count-working.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/causaldata/scorecard.csv"
         ],
@@ -10251,7 +10056,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "rothamsted research ckan:source_file:cattle_lwt_collated.csv",
           "source_url:https://data.rothamsted.ac.uk/dataset/individual-animal-liveweight-and-daily-liveweight-gain-contrasting-grazing-methods/resource/9e2fb696-9d26-4b04-8887-6228479818cf/download/cattle_lwt_collated.csv"
         ],
         "lineage_field_values": {
@@ -10291,7 +10095,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:best-mlb",
-          "rdatasets:source_file:rdatasets-fivethirtyeight-mlb-as-play-talent-totper9innasg.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-fivethirtyeight-mlb-as-play-talent-totper9innasg.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/fivethirtyeight/mlb_as_play_talent.csv"
         ],
@@ -10357,7 +10160,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:cow_dataset.csv",
           "source_url:https://raw.githubusercontent.com/bhuiyanmobasshir94/Cow-weight-and-Breed-Prediction/main/cow_dataset.csv"
         ],
         "lineage_field_values": {
@@ -10397,7 +10199,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:scores-on",
-          "rdatasets:source_file:rdatasets-mlmrev-chem97-gcsescore.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-chem97-gcsescore.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/Chem97.csv"
         ],
@@ -10464,7 +10265,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:heart-failure",
-          "rdatasets:source_file:rdatasets-cardiodatasets-heartfailure-df-t0.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-cardiodatasets-heartfailure-df-t0.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/CardioDataSets/heartfailure_df.csv"
         ],
@@ -10530,8 +10330,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/14619074/files/EFP_long.csv?download=1",
-          "zenodo:source_file:EFP_long.csv?download=1"
+          "source_url:https://zenodo.org/records/14619074/files/EFP_long.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "EFP_long.csv?download=1",
@@ -10570,7 +10369,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:contagious-disease",
-          "rdatasets:source_file:rdatasets-dslabs-us-contagious-diseases-count.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-dslabs-us-contagious-diseases-count.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/dslabs/us_contagious_diseases.csv"
         ],
@@ -10636,7 +10434,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:ww_wt.csv",
           "source_url:https://raw.githubusercontent.com/MohsinRamay/yieldgap/main/ww_wt.csv"
         ],
         "lineage_field_values": {
@@ -10676,7 +10473,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:how-popular",
-          "rdatasets:source_file:rdatasets-fivethirtyeight-trump-approval-poll-weight.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-fivethirtyeight-trump-approval-poll-weight.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/fivethirtyeight/trump_approval_poll.csv"
         ],
@@ -10742,7 +10538,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "hugging face:source_file:stats.csv?download=true",
           "source_url:https://huggingface.co/datasets/dharits3/ncaa-college-athlete-rosters-2025-26/resolve/main/by_sport/soccer/stats.csv?download=true"
         ],
         "lineage_field_values": {
@@ -10781,7 +10576,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "king county open data:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://data.kingcounty.gov/api/views/xyty-wq8n/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -10820,7 +10614,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:0050.csv",
           "source_url:https://raw.githubusercontent.com/voidful/tw_stocker/main/data/0050.csv"
         ],
         "lineage_field_values": {
@@ -10859,7 +10652,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:RIS_RXpower_dataset20.csv",
           "source_url:https://raw.githubusercontent.com/marcantonio14/RIS-Power-Measurements-Dataset/master/RIS_RXpower_dataset20.csv"
         ],
         "lineage_field_values": {
@@ -10899,7 +10691,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:medpar",
-          "rdatasets:source_file:rdatasets-count-medpar-provnum.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-count-medpar-provnum.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/COUNT/medpar.csv"
         ],
@@ -10966,7 +10757,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:observational-counterpart",
-          "rdatasets:source_file:rdatasets-causaldata-cps-mixtape-re75.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-causaldata-cps-mixtape-re75.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/causaldata/cps_mixtape.csv"
         ],
@@ -11033,7 +10823,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:allstarfull-table",
-          "rdatasets:source_file:rdatasets-lahman-allstarfull-yearid.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-allstarfull-yearid.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/AllstarFull.csv"
         ],
@@ -11100,7 +10889,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:fishing-mode",
-          "rdatasets:source_file:rdatasets-camerondata-fishing-price.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-camerondata-fishing-price.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/camerondata/fishing.csv"
         ],
@@ -11165,7 +10953,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:choice-of",
-          "rdatasets:source_file:rdatasets-ecdat-tuna-price-skw.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-tuna-price-skw.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/Tuna.csv"
         ],
@@ -11230,7 +11017,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:choice-of",
-          "rdatasets:source_file:rdatasets-ecdat-ketchup-price-hunts.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-ketchup-price-hunts.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/Ketchup.csv"
         ],
@@ -11295,7 +11081,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:choice-of",
-          "rdatasets:source_file:rdatasets-ecdat-catsup-price-heinz28.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-catsup-price-heinz28.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/Catsup.csv"
         ],
@@ -11362,7 +11147,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "pmlb:source_family:wind",
-          "pmlb:source_file:pmlb-503-wind-target.csv",
           "pmlb:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/pmlb-503-wind-target.csv",
           "source_url:https://github.com/EpistasisLab/pmlb/raw/master/datasets/503_wind/503_wind.tsv.gz"
         ],
@@ -11428,8 +11212,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/15315249/files/catalog.csv?download=1",
-          "zenodo:source_file:catalog.csv?download=1"
+          "source_url:https://zenodo.org/records/15315249/files/catalog.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "catalog.csv?download=1",
@@ -11468,7 +11251,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:people-table",
-          "rdatasets:source_file:rdatasets-lahman-people-birthyear.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-people-birthyear.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/People.csv"
         ],
@@ -11534,7 +11316,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "flyerintel open data:source_file:routes.csv",
           "source_url:https://flyerintel.com/data/routes.csv"
         ],
         "lineage_field_values": {
@@ -11573,8 +11354,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_44201_2025.zip",
-          "us epa airdata:source_file:daily_44201_2025.zip"
+          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_44201_2025.zip"
         ],
         "lineage_field_values": {
           "source_file": "daily_44201_2025.zip",
@@ -11610,8 +11390,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_88101_2024.zip",
-          "us epa airdata:source_file:daily_88101_2024.zip"
+          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_88101_2024.zip"
         ],
         "lineage_field_values": {
           "source_file": "daily_88101_2024.zip",
@@ -11647,8 +11426,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_TEMP_2024.zip",
-          "us epa airdata:source_file:daily_TEMP_2024.zip"
+          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_TEMP_2024.zip"
         ],
         "lineage_field_values": {
           "source_file": "daily_TEMP_2024.zip",
@@ -11684,8 +11462,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_42101_2024.zip",
-          "us epa airdata / air quality system:source_file:daily_42101_2024.zip"
+          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_42101_2024.zip"
         ],
         "lineage_field_values": {
           "source_file": "daily_42101_2024.zip",
@@ -11721,8 +11498,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_42401_2024.zip",
-          "us epa airdata / air quality system:source_file:daily_42401_2024.zip"
+          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_42401_2024.zip"
         ],
         "lineage_field_values": {
           "source_file": "daily_42401_2024.zip",
@@ -11758,8 +11534,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_42602_2024.zip",
-          "us epa airdata:source_file:daily_42602_2024.zip"
+          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_42602_2024.zip"
         ],
         "lineage_field_values": {
           "source_file": "daily_42602_2024.zip",
@@ -11795,8 +11570,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_44201_2024.zip",
-          "us epa airdata:source_file:daily_44201_2024.zip"
+          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_44201_2024.zip"
         ],
         "lineage_field_values": {
           "source_file": "daily_44201_2024.zip",
@@ -11832,8 +11606,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_88101_2025.zip",
-          "us epa airdata:source_file:daily_88101_2025.zip"
+          "source_url:https://aqs.epa.gov/aqsweb/airdata/daily_88101_2025.zip"
         ],
         "lineage_field_values": {
           "source_file": "daily_88101_2025.zip",
@@ -11872,7 +11645,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:employment-wages",
-          "rdatasets:source_file:rdatasets-plm-snmesp-k.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-plm-snmesp-k.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/plm/Snmesp.csv"
         ],
@@ -11937,7 +11709,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:employment-wages",
-          "rdatasets:source_file:rdatasets-plm-empluk-wage.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-plm-empluk-wage.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/plm/EmplUK.csv"
         ],
@@ -12004,7 +11775,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:movie-ratings",
-          "rdatasets:source_file:rdatasets-dslabs-movielens-movieid.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-dslabs-movielens-movieid.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/dslabs/movielens.csv"
         ],
@@ -12070,7 +11840,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "cms data:source_file:MUP_PHY_R26_P05_V10_D24_Geo.csv",
           "source_url:https://data.cms.gov/sites/default/files/2026-05/e534c74b-79b8-4892-8a95-5a17e2dfec9f/MUP_PHY_R26_P05_V10_D24_Geo.csv"
         ],
         "lineage_field_values": {
@@ -12109,7 +11878,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "dryad:source_file:AFC%20paper%20data.csv?download=1",
           "source_url:https://zenodo.org/records/4965051/files/AFC%20paper%20data.csv?download=1"
         ],
         "lineage_field_values": {
@@ -12148,7 +11916,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "czech statistical office open data:source_file:csv",
           "source_url:https://data.csu.gov.cz/opendata/sady/MZDQ1/distribuce/csv"
         ],
         "lineage_field_values": {
@@ -12188,7 +11955,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:deidentified-results",
-          "rdatasets:source_file:rdatasets-medicaldata-covid-testing-ct-result.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-medicaldata-covid-testing-ct-result.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/medicaldata/covid_testing.csv"
         ],
@@ -12254,8 +12020,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/18793020/files/BP_Model_Training_Data.csv?download=1",
-          "zenodo:source_file:BP_Model_Training_Data.csv?download=1"
+          "source_url:https://zenodo.org/records/18793020/files/BP_Model_Training_Data.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "BP_Model_Training_Data.csv?download=1",
@@ -12294,7 +12059,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:randomization-inference",
-          "rdatasets:source_file:rdatasets-stevedata-cft15-margin.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-stevedata-cft15-margin.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/stevedata/CFT15.csv"
         ],
@@ -12361,7 +12125,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:return-to",
-          "rdatasets:source_file:rdatasets-ecdat-retschool-daded.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-ecdat-retschool-daded.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Ecdat/RetSchool.csv"
         ],
@@ -12427,7 +12190,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "open power system data:source_file:renewable_power_plants_DK.csv",
           "source_url:https://data.open-power-system-data.org/renewable_power_plants/2020-08-25/renewable_power_plants_DK.csv"
         ],
         "lineage_field_values": {
@@ -12466,7 +12228,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "new york state open data (socrata):source_file:export.csv?accessType=DOWNLOAD",
           "source_url:https://data.ny.gov/api/v3/views/sjc6-ftj4/export.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -12506,7 +12267,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:major-party",
-          "rdatasets:source_file:rdatasets-stevedata-anes-partytherms-uid.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-stevedata-anes-partytherms-uid.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/stevedata/anes_partytherms.csv"
         ],
@@ -12573,7 +12333,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:battingpost-table",
-          "rdatasets:source_file:rdatasets-lahman-battingpost-yearid.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-battingpost-yearid.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/BattingPost.csv"
         ],
@@ -12638,7 +12397,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:batting-table",
-          "rdatasets:source_file:rdatasets-lahman-batting-ab.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-lahman-batting-ab.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/Lahman/Batting.csv"
         ],
@@ -12705,7 +12463,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:assay-of",
-          "rdatasets:source_file:rdatasets-survival-flchain-kappa.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-survival-flchain-kappa.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/survival/flchain.csv"
         ],
@@ -12772,7 +12529,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:law-dome",
-          "rdatasets:source_file:rdatasets-folio-law2006-noaa04.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-folio-law2006-noaa04.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/folio/law2006.csv"
         ],
@@ -12838,7 +12594,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "github:source_file:7z.csv",
           "source_url:https://raw.githubusercontent.com/ideas-labo/PromiseTune/main/Code/Data/7z.csv"
         ],
         "lineage_field_values": {
@@ -12878,7 +12633,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:airfare",
-          "rdatasets:source_file:rdatasets-wooldridge-airfare-bmktshr.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-wooldridge-airfare-bmktshr.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/airfare.csv"
         ],
@@ -12945,7 +12699,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:bird-counts",
-          "rdatasets:source_file:rdatasets-bayesrules-bird-counts-count-per-week.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-bayesrules-bird-counts-count-per-week.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/bayesrules/bird_counts.csv"
         ],
@@ -13011,7 +12764,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "socrata / colorado information marketplace:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://data.colorado.gov/api/views/k3gg-hhc8/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -13050,7 +12802,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "cso ireland pxstat:source_file:en",
           "source_url:https://ws.cso.ie/public/api.restful/PxStat.Data.Cube_API.ReadDataset/PEA03/CSV/1.0/en"
         ],
         "lineage_field_values": {
@@ -13090,7 +12841,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:azcabgptca",
-          "rdatasets:source_file:rdatasets-count-azcabgptca-los.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-count-azcabgptca-los.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/COUNT/azcabgptca.csv"
         ],
@@ -13157,7 +12907,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:gapminder-unfiltered",
-          "rdatasets:source_file:rdatasets-gapminder-gapminder-unfiltered-gdppercap.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-gapminder-gapminder-unfiltered-gdppercap.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/gapminder/gapminder_unfiltered.csv"
         ],
@@ -13222,7 +12971,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:gapminder",
-          "rdatasets:source_file:rdatasets-dslabs-gapminder-life-expectancy.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-dslabs-gapminder-life-expectancy.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/dslabs/gapminder.csv"
         ],
@@ -13288,7 +13036,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "socrata:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://data.novascotia.ca/api/views/8524-ec3n/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -13329,7 +13076,6 @@
         "lineage_roots": [
           "source_url:https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2018/2018-04-23/week4_australian_salary.csv",
           "tidytuesday:source_family:tidytuesday-week4",
-          "tidytuesday:source_file:tidytuesday-data-2018-2018-04-23-week4-australian-salary-csv-average-taxable-income.csv",
           "tidytuesday:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/tidytuesday-data-2018-2018-04-23-week4-australian-salary-csv-average-taxable-income.csv"
         ],
         "lineage_field_values": {
@@ -13394,8 +13140,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://www.ers.usda.gov/media/5505/supply-and-utilization-of-dairy-product-categories-monthly-and-annual.csv?v=59907",
-          "usda economic research service:source_file:supply-and-utilization-of-dairy-product-categories-monthly-and-annual.csv?v=59907"
+          "source_url:https://www.ers.usda.gov/media/5505/supply-and-utilization-of-dairy-product-categories-monthly-and-annual.csv?v=59907"
         ],
         "lineage_field_values": {
           "source_file": "supply-and-utilization-of-dairy-product-categories-monthly-and-annual.csv?v=59907",
@@ -13433,7 +13178,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "india national water data portal:source_file:river_discharge_tele_hr_cwc_ar_1970_2025.csv",
           "source_url:https://nwdp.nwic.gov.in/dataset/aee818d7-2cb6-4790-aa3c-126a72621170/resource/9c755c40-389e-4f5d-92c6-b936d28e51b3/download/river_discharge_tele_hr_cwc_ar_1970_2025.csv"
         ],
         "lineage_field_values": {
@@ -13472,8 +13216,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/19303393/files/open-source%20projects%20results.csv?download=1",
-          "zenodo:source_file:open-source%20projects%20results.csv?download=1"
+          "source_url:https://zenodo.org/records/19303393/files/open-source%20projects%20results.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "open-source%20projects%20results.csv?download=1",
@@ -13514,7 +13257,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:thyroid-disease",
-          "rdatasets:source_file:rdatasets-mldatar-thyroid-disease-thyrox-util-rate-t4u-reading.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mldatar-thyroid-disease-thyrox-util-rate-t4u-reading.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/MLDataR/thyroid_disease.csv"
         ],
@@ -13581,7 +13323,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:australian-mortality",
-          "rdatasets:source_file:rdatasets-fpp3-aus-mortality-mortality.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-fpp3-aus-mortality-mortality.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/fpp3/aus_mortality.csv"
         ],
@@ -13648,7 +13389,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:abnormal-prothrombin",
-          "rdatasets:source_file:rdatasets-mstate-prothr-tstop.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mstate-prothr-tstop.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mstate/prothr.csv"
         ],
@@ -13714,7 +13454,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "socrata:source_file:export.csv?accessType=DOWNLOAD",
           "source_url:https://data.kingcounty.gov/api/v3/views/6trh-ufm8/export.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -13753,7 +13492,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "datos argentina / magyp:source_file:avena-serie-siembra-cosecha-produccion-rendimiento.csv",
           "source_url:https://datos.magyp.gob.ar/dataset/avena-siembra-cosecha-produccion-rendimiento/resource/df671710-6a2b-4a9a-a657-c40a6e5a9aa5/download/avena-serie-siembra-cosecha-produccion-rendimiento.csv"
         ],
         "lineage_field_values": {
@@ -13793,7 +13531,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:insurance-company",
-          "rdatasets:source_file:rdatasets-islr-caravan-mostype.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-islr-caravan-mostype.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/ISLR/Caravan.csv"
         ],
@@ -13859,8 +13596,7 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "source_url:https://zenodo.org/records/10047650/files/all_data.csv?download=1",
-          "zenodo:source_file:all_data.csv?download=1"
+          "source_url:https://zenodo.org/records/10047650/files/all_data.csv?download=1"
         ],
         "lineage_field_values": {
           "source_file": "all_data.csv?download=1",
@@ -13899,7 +13635,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:us-sustaining",
-          "rdatasets:source_file:rdatasets-mlmrev-egsingle-math.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-mlmrev-egsingle-math.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/mlmRev/egsingle.csv"
         ],
@@ -13967,7 +13702,6 @@
         "lineage_roots": [
           "source_url:https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2018/2018-04-30/week5_acs2015_county_data.csv",
           "tidytuesday:source_family:tidytuesday-week5",
-          "tidytuesday:source_file:tidytuesday-data-2018-2018-04-30-week5-acs2015-county-data-csv-production.csv",
           "tidytuesday:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/tidytuesday-data-2018-2018-04-30-week5-acs2015-county-data-csv-production.csv"
         ],
         "lineage_field_values": {
@@ -14032,7 +13766,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "rothamsted research ckan:source_file:emissions_individual_datapoints.csv",
           "source_url:https://data.rothamsted.ac.uk/dataset/9378a643-20ae-4219-936d-fe51be189d99/resource/5555b439-e68a-4245-9734-ea5088b40a5b/download/emissions_individual_datapoints.csv"
         ],
         "lineage_field_values": {
@@ -14071,7 +13804,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "cms data:source_file:MUP_INP_RY26_P03_V10_DY24_PrvSvc.CSV",
           "source_url:https://data.cms.gov/sites/default/files/2026-04/828defb5-c9e6-4442-8c1b-f27bc0799daf/MUP_INP_RY26_P03_V10_DY24_PrvSvc.CSV"
         ],
         "lineage_field_values": {
@@ -14111,7 +13843,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:chicago-ridership",
-          "rdatasets:source_file:rdatasets-modeldata-chicago-ridership.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-modeldata-chicago-ridership.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/modeldata/Chicago.csv"
         ],
@@ -14178,7 +13909,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:forbes-ranking",
-          "rdatasets:source_file:rdatasets-hsaur-forbes2000-sales.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-hsaur-forbes2000-sales.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/HSAUR/Forbes2000.csv"
         ],
@@ -14245,7 +13975,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:flights",
-          "rdatasets:source_file:rdatasets-nycflights13-flights-flight.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-nycflights13-flights-flight.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/flights.csv"
         ],
@@ -14312,7 +14041,6 @@
         "source_registry_entries": [],
         "lineage_roots": [
           "rdatasets:source_family:why-classic",
-          "rdatasets:source_file:rdatasets-fivethirtyeight-classic-rock-song-list-playcount.csv",
           "rdatasets:source_path:/home/ubuntu/hyper/data/tabular/real_regression_sources/rdatasets-fivethirtyeight-classic-rock-song-list-playcount.csv",
           "source_url:https://vincentarelbundock.github.io/Rdatasets/csv/fivethirtyeight/classic_rock_song_list.csv"
         ],
@@ -14378,7 +14106,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "socrata / nyc open data:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://data.cityofnewyork.us/api/views/jr24-e7cr/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -14417,7 +14144,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "dataverseno:source_file:LPLWWT",
           "source_url:https://dataverse.no/api/access/datafile/:persistentId?persistentId=doi:10.18710/RLOFFL/LPLWWT"
         ],
         "lineage_field_values": {
@@ -14456,7 +14182,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "datos abiertos colombia / socrata:source_file:rows.csv?accessType=DOWNLOAD",
           "source_url:https://www.datos.gov.co/api/views/x6id-4v3g/rows.csv?accessType=DOWNLOAD"
         ],
         "lineage_field_values": {
@@ -14495,7 +14220,6 @@
         ],
         "source_registry_entries": [],
         "lineage_roots": [
-          "opendatani / ckan:source_file:belfast_all-sales.csv",
           "source_url:https://admin.opendatani.gov.uk/dataset/cf717c64-0c9c-48cb-b454-2e7c97b603e9/resource/e87d095c-1b9b-4a6c-912f-be02acae17ba/download/belfast_all-sales.csv"
         ],
         "lineage_field_values": {

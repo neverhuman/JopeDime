@@ -137,7 +137,7 @@ def main():
         transport_clarification_commit=json.loads(
             (P / "transport-prereg-published.json").read_text()
         )["head"],
-        source_commit=json.loads((P / "implementation-published.json").read_text())[
+        source_commit=json.loads((P / "identityfix-published.json").read_text())[
             "head"
         ],
         regression="EXACT PASS",
@@ -175,6 +175,20 @@ def main():
             "No raw source dataset bodies read; full-source registry coverage can be incomplete.",
             "Wild intervals and symmetry-based exact flips do not guarantee coverage with small heterogeneous clusters.",
         ],
+    )
+    old_classes = json.loads(
+        (M / "initial_filename_identity/classification.json").read_text()
+    )
+    literal_groups = {}
+    for name in ["NEIGHBORED", "CLEAN", "UNKNOWN"]:
+        keep = np.array([old_classes[f]["status"] == name for f in fams])
+        literal_groups[name] = stats.summarize(d[:, keep])
+    metrics["literal_filename_sensitivity"] = dict(
+        known_false_identity_match=True,
+        classification_sha256="5a003c1b86e8145f1d2ad0146b6fbb40306ca887aa725afae68a9953068e45bd",
+        groups=literal_groups,
+        decision=stats.decide(literal_groups),
+        note="Preserved pre-gain correction diagnostic: unrelated Socrata datasets shared only a generic download filename.",
     )
     raw = json.dumps(metrics, indent=2, allow_nan=False) + "\n"
     assert len(raw.encode()) < 50000

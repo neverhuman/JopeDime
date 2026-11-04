@@ -25,6 +25,29 @@ class Tests(unittest.TestCase):
             n.names([" A B ", "Ａ_b", "a-b", "Age", "age"]), ["a_b", "age"]
         )
 
+    def test_generic_filename_not_lineage_identity(self):
+        from classify import extract
+
+        row = dict(
+            id="d",
+            canonical_sha256="canon",
+            provenance=dict(platform="socrata", dataset_id="one", url="https://a/one"),
+            shape=dict(rows=100, features=1, columns=2),
+            task="regression",
+        )
+        meta = dict(
+            source_platform="socrata",
+            source_dataset_id="one",
+            source_file="export.csv?accessType=DOWNLOAD",
+            source_url="https://a/one",
+            output_headers=["x", "target"],
+        )
+        r = extract(row, meta, dict(sha256="meta", version_id="v"), [], [])
+        self.assertFalse(any("source_file:" in x for x in r["lineage_roots"]))
+        self.assertEqual(
+            r["lineage_field_values"]["source_file"], "export.csv?accessType=DOWNLOAD"
+        )
+
     def test_source_identity(self):
         a = record()
         b = record(
