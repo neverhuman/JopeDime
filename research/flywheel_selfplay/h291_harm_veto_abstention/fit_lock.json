@@ -1,0 +1,418 @@
+{
+  "hypothesis_id": "H291",
+  "slug": "h291_harm_veto_abstention",
+  "locked_at_utc": "2026-11-04T01:21:50Z",
+  "part_b_pools_read_during_part_a": 0,
+  "fresh_pools_read": 0,
+  "h287_parent_commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+  "h287_fit_lock_sha256": "8a20c58bdb4bfcbadfa5ba927aa0577b630e3174e6dc4a7bfd579175ca08f35f",
+  "dl_train_oof_cache_sha256": "7bbad071d17edc6c4c76a3c81acf67443e30f2443603a9e9af52fab5c87882de",
+  "h291_seeds": [
+    291101,
+    291102,
+    291103
+  ],
+  "bootstrap_seed": 291150,
+  "tau_grid": [
+    0.12,
+    0.15,
+    0.18,
+    0.2,
+    0.22,
+    0.25,
+    0.3
+  ],
+  "harm_loss_threshold": 0.01,
+  "feature_dim": 644,
+  "feature_layout": "568 H278 topk cols (proposed slot j) + 44 member/bag disagreement & slot0 margin cols + 32 candidate-minus-slot0 diff cols",
+  "inner_inner_selected_taus": {
+    "ENS_VOTE2+HARMVETO": [
+      [
+        0.15,
+        0.18,
+        0.12,
+        0.12
+      ],
+      [
+        0.25,
+        0.15,
+        0.18,
+        0.12
+      ],
+      [
+        0.15,
+        0.12,
+        0.18,
+        0.12
+      ]
+    ],
+    "CLIP+HARMVETO": [
+      [
+        0.25,
+        0.22,
+        0.3,
+        0.2
+      ],
+      [
+        0.15,
+        0.15,
+        0.2,
+        0.22
+      ],
+      [
+        0.3,
+        0.2,
+        0.3,
+        0.15
+      ]
+    ],
+    "CLIP_VOTE2+HARMVETO": [
+      [
+        0.15,
+        0.25,
+        0.12,
+        0.15
+      ],
+      [
+        0.18,
+        0.12,
+        0.15,
+        0.12
+      ],
+      [
+        0.18,
+        0.15,
+        0.18,
+        0.12
+      ]
+    ]
+  },
+  "locked_part_b_taus": {
+    "ENS_VOTE2+HARMVETO": [
+      0.135,
+      0.16499999999999998,
+      0.135
+    ],
+    "CLIP+HARMVETO": [
+      0.235,
+      0.175,
+      0.25
+    ],
+    "CLIP_VOTE2+HARMVETO": [
+      0.15,
+      0.135,
+      0.16499999999999998
+    ]
+  },
+  "part_a_verdict": "HARMVETO_NOT_ADVANCED",
+  "best_by_prereg_arm": "ENS_VOTE2+HARMVETO",
+  "exported_harm_veto_models": [
+    {
+      "arm": "ENS_VOTE2_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291101,
+      "locked_tau": 0.135,
+      "fold_taus": [
+        0.15,
+        0.18,
+        0.12,
+        0.12
+      ],
+      "n_train_proposed_switches": 296,
+      "n_train_harm_positive": 64,
+      "file": "harm_veto_ens_vote2_harmveto_seed291101.txt",
+      "bytes": 70675,
+      "sha256": "af2ef54d38212ed799c25cdc1ba394d4f998ce89ea5419b280b0870a211a0b18"
+    },
+    {
+      "arm": "ENS_VOTE2_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291101,
+      "locked_tau": 0.135,
+      "fold_taus": [
+        0.15,
+        0.18,
+        0.12,
+        0.12
+      ],
+      "n_train_proposed_switches": 296,
+      "n_train_harm_positive": 64,
+      "file": "placebo_ens_vote2_harmveto_seed291101.txt",
+      "bytes": 70794,
+      "sha256": "021b516b224a59e8937bc00d08f0d9fc7a557b591c5c06d14869c8ab17c3b3ed"
+    },
+    {
+      "arm": "ENS_VOTE2_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291102,
+      "locked_tau": 0.16499999999999998,
+      "fold_taus": [
+        0.25,
+        0.15,
+        0.18,
+        0.12
+      ],
+      "n_train_proposed_switches": 268,
+      "n_train_harm_positive": 57,
+      "file": "harm_veto_ens_vote2_harmveto_seed291102.txt",
+      "bytes": 70741,
+      "sha256": "a9922f1f5f470663d0a14bbf045f9e9c0816d07d9c6d83f79a84056b2460dcf7"
+    },
+    {
+      "arm": "ENS_VOTE2_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291102,
+      "locked_tau": 0.16499999999999998,
+      "fold_taus": [
+        0.25,
+        0.15,
+        0.18,
+        0.12
+      ],
+      "n_train_proposed_switches": 268,
+      "n_train_harm_positive": 57,
+      "file": "placebo_ens_vote2_harmveto_seed291102.txt",
+      "bytes": 67509,
+      "sha256": "47b96b156fe9a27b869743bd146c2465f3213342f53db26897b47b36f7e15b6f"
+    },
+    {
+      "arm": "ENS_VOTE2_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291103,
+      "locked_tau": 0.135,
+      "fold_taus": [
+        0.15,
+        0.12,
+        0.18,
+        0.12
+      ],
+      "n_train_proposed_switches": 265,
+      "n_train_harm_positive": 55,
+      "file": "harm_veto_ens_vote2_harmveto_seed291103.txt",
+      "bytes": 68365,
+      "sha256": "8e190ce3e89b4ae6ce59d1ab4750024851c4d4f5c21883e22b504051e2f35921"
+    },
+    {
+      "arm": "ENS_VOTE2_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291103,
+      "locked_tau": 0.135,
+      "fold_taus": [
+        0.15,
+        0.12,
+        0.18,
+        0.12
+      ],
+      "n_train_proposed_switches": 265,
+      "n_train_harm_positive": 55,
+      "file": "placebo_ens_vote2_harmveto_seed291103.txt",
+      "bytes": 68956,
+      "sha256": "8780c991854cc4fc72f6ff287e2e0c1aca2903ae812cc086bbd2b54b9fbb8ec8"
+    },
+    {
+      "arm": "CLIP_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291101,
+      "locked_tau": 0.235,
+      "fold_taus": [
+        0.25,
+        0.22,
+        0.3,
+        0.2
+      ],
+      "n_train_proposed_switches": 472,
+      "n_train_harm_positive": 97,
+      "file": "harm_veto_clip_harmveto_seed291101.txt",
+      "bytes": 74577,
+      "sha256": "6647851c440afcb83af1195d7f6116ebc2806ce1206b59d27fd0049c9aecfe24"
+    },
+    {
+      "arm": "CLIP_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291101,
+      "locked_tau": 0.235,
+      "fold_taus": [
+        0.25,
+        0.22,
+        0.3,
+        0.2
+      ],
+      "n_train_proposed_switches": 472,
+      "n_train_harm_positive": 97,
+      "file": "placebo_clip_harmveto_seed291101.txt",
+      "bytes": 73212,
+      "sha256": "7ceba98e4359086530c6e0d9438ca5e7deb34aec0b379c0b42f92535b823cc7f"
+    },
+    {
+      "arm": "CLIP_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291102,
+      "locked_tau": 0.175,
+      "fold_taus": [
+        0.15,
+        0.15,
+        0.2,
+        0.22
+      ],
+      "n_train_proposed_switches": 248,
+      "n_train_harm_positive": 44,
+      "file": "harm_veto_clip_harmveto_seed291102.txt",
+      "bytes": 67180,
+      "sha256": "efdef3ecc6585f22773d6df8e12355c99b7ee72bde56bf527b38f75725051b7b"
+    },
+    {
+      "arm": "CLIP_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291102,
+      "locked_tau": 0.175,
+      "fold_taus": [
+        0.15,
+        0.15,
+        0.2,
+        0.22
+      ],
+      "n_train_proposed_switches": 248,
+      "n_train_harm_positive": 44,
+      "file": "placebo_clip_harmveto_seed291102.txt",
+      "bytes": 69752,
+      "sha256": "e7e21b6576209ddfc809aecfade00c9cd5c3248880be507139bb5243fc6677db"
+    },
+    {
+      "arm": "CLIP_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291103,
+      "locked_tau": 0.25,
+      "fold_taus": [
+        0.3,
+        0.2,
+        0.3,
+        0.15
+      ],
+      "n_train_proposed_switches": 401,
+      "n_train_harm_positive": 84,
+      "file": "harm_veto_clip_harmveto_seed291103.txt",
+      "bytes": 73626,
+      "sha256": "5bdc4c5209f478e08206d98f5095efadfd01ab78936a0c3ed08cba7543071d59"
+    },
+    {
+      "arm": "CLIP_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291103,
+      "locked_tau": 0.25,
+      "fold_taus": [
+        0.3,
+        0.2,
+        0.3,
+        0.15
+      ],
+      "n_train_proposed_switches": 401,
+      "n_train_harm_positive": 84,
+      "file": "placebo_clip_harmveto_seed291103.txt",
+      "bytes": 73729,
+      "sha256": "b77d46121e1d36224f3ed327764b031320f42050a54fc6ed54470f02540febe3"
+    },
+    {
+      "arm": "CLIP_VOTE2_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291101,
+      "locked_tau": 0.15,
+      "fold_taus": [
+        0.15,
+        0.25,
+        0.12,
+        0.15
+      ],
+      "n_train_proposed_switches": 290,
+      "n_train_harm_positive": 64,
+      "file": "harm_veto_clip_vote2_harmveto_seed291101.txt",
+      "bytes": 70864,
+      "sha256": "3f7072f78a312d424b4e42cd5c7d3a2d94edb5f39951e11df8b2f52f95019ff1"
+    },
+    {
+      "arm": "CLIP_VOTE2_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291101,
+      "locked_tau": 0.15,
+      "fold_taus": [
+        0.15,
+        0.25,
+        0.12,
+        0.15
+      ],
+      "n_train_proposed_switches": 290,
+      "n_train_harm_positive": 64,
+      "file": "placebo_clip_vote2_harmveto_seed291101.txt",
+      "bytes": 70384,
+      "sha256": "304be61851ecf1d9d7e1265530725bef8aa5a5c0ca7267597388fe5f80905072"
+    },
+    {
+      "arm": "CLIP_VOTE2_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291102,
+      "locked_tau": 0.135,
+      "fold_taus": [
+        0.18,
+        0.12,
+        0.15,
+        0.12
+      ],
+      "n_train_proposed_switches": 274,
+      "n_train_harm_positive": 53,
+      "file": "harm_veto_clip_vote2_harmveto_seed291102.txt",
+      "bytes": 68691,
+      "sha256": "59ce481a3245ea1024ac73336b5ad6f7a72e0f7128e637da34aa7de8c9772570"
+    },
+    {
+      "arm": "CLIP_VOTE2_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291102,
+      "locked_tau": 0.135,
+      "fold_taus": [
+        0.18,
+        0.12,
+        0.15,
+        0.12
+      ],
+      "n_train_proposed_switches": 274,
+      "n_train_harm_positive": 53,
+      "file": "placebo_clip_vote2_harmveto_seed291102.txt",
+      "bytes": 68631,
+      "sha256": "01d247de5a12f9cf677193d06376120b282b09a2c7bd51e123165d6ebd948aa8"
+    },
+    {
+      "arm": "CLIP_VOTE2_HARMVETO",
+      "role": "harm_veto_full_dl_train",
+      "seed": 291103,
+      "locked_tau": 0.16499999999999998,
+      "fold_taus": [
+        0.18,
+        0.15,
+        0.18,
+        0.12
+      ],
+      "n_train_proposed_switches": 282,
+      "n_train_harm_positive": 58,
+      "file": "harm_veto_clip_vote2_harmveto_seed291103.txt",
+      "bytes": 70569,
+      "sha256": "757468211181b95750e0cb5a540a506b5ce2655cb0ed1a6247158147c6cf2d3b"
+    },
+    {
+      "arm": "CLIP_VOTE2_HARMVETO",
+      "role": "placebo_full_dl_train",
+      "seed": 291103,
+      "locked_tau": 0.16499999999999998,
+      "fold_taus": [
+        0.18,
+        0.15,
+        0.18,
+        0.12
+      ],
+      "n_train_proposed_switches": 282,
+      "n_train_harm_positive": 58,
+      "file": "placebo_clip_vote2_harmveto_seed291103.txt",
+      "bytes": 70999,
+      "sha256": "54a6857172f43956b0946ab069b691970bae0271cb76a4a698d5f0cdff3774ef"
+    }
+  ],
+  "fit_lock_content_sha256": "cd04dec452bacd84ea68a1c08e53a214ba2452b09c982652b5aeaf7fff2498cf"
+}
