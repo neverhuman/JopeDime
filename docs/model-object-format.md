@@ -212,7 +212,48 @@ others as ignored. `model export --format javascript` writes the program's ES202
 the fitted state, and `predictRows(rows)` over raw cells in `MODEL_COLUMNS` order. Version 1
 uses the same f32 steps (`Math.fround`); version 2 preserves f64 arithmetic and refuses
 non-finite results, within the JavaScript emitter's transform and head slice.
-Python and Rust source export, `bound-json` and `fitted` are refused for this decoder.
+Fitted Python and Rust source export support an admitted slice of version two.
+`bound-json` and `fitted` are refused for this decoder.
+
+### Local refittable Rust source
+
+`jopedime model export --model models/sha256-… --format rust-refittable --output main.rs`
+writes a local Rust program. Its only model-specific input is the supported recipe operations
+and hyperparameters. The profile emits them from parsed parameters with round-trip precision.
+This profile is for trusted local use because the recipe can include private DSL. It accepts
+version-two regression pipelines with Ridge or histogram GBM and optional non-appending
+`standardize` and `robust_scale` stages. Target transforms require a different profile.
+
+Build the program against the `crates/jope-runtime` path dependency from the checkout used to
+build the exporting appliance. Put the exported file at `src/main.rs` in a Cargo binary
+project and set this dependency in `Cargo.toml`. Use the toolchain pinned by that checkout.
+The program checks the source/runtime ABI at compile time. Keep the runtime revision with
+the source. Retain the consumer project's own Cargo lockfile when building outside the
+JopeDime workspace.
+
+```toml
+[dependencies]
+jope-runtime = { path = "/path/to/JopeDime/crates/jope-runtime" }
+```
+
+```sh
+./target/debug/predictor fit train.csv y models x0 x1
+./target/debug/predictor predict models/sha256-… input.csv
+```
+
+`fit` takes the target and ordered feature names explicitly. It learns fresh ranges and
+parameters from the specified complete numeric columns, saves the standard two-part object,
+and prints its directory. The same source can run again with a new training file and an empty
+model store. `predict` uses the digest-named directory chosen by the caller and prints one
+prediction per input row. It verifies the object, checks the recipe and supported fitted
+shape, and uses the object's saved input contract. Give that directory to `jopedime predict`
+to use the same decoder. The digest establishes byte identity, so choose it from a trusted
+fit receipt or store.
+
+Keep the program and model directory as separate artifacts. The program omits fitted
+coefficients, tree state, ranges, and self-check rows. Existing fitted export formats retain
+their original identities. The [migration plan](plans/refittable-source/MASTER_PLAN.md)
+covers the other export surfaces and public distribution gates.
 
 `crates/jope-runtime/tests/math_pipeline.rs` holds the acceptance case: a fitted pipeline from
 an external producer and that producer's predictions for 78 generated rows covering in-range,

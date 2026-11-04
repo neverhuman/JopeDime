@@ -1070,3 +1070,85 @@ def test_local_archive_prune_is_opt_in_in_runner():
         in source
     )
     assert "if args.checkpoint_archive_local_keep is not None:" in source
+
+
+def test_rejected_replay_keeps_incumbent_and_advances_without_candidate_evaluation(
+    tmp_path,
+):
+    from dev_incumbent import CandidateNovelty, batch_seed, proposal_plan
+
+    model = torch.nn.Linear(1, 1)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.01)
+    model(torch.ones(1, 1)).sum().backward()
+    optimizer.step()
+    incumbent = DevIncumbent(model, optimizer, {"mean": 2.0}, "fixed", "best.pt", 3175)
+    saved_model = copy.deepcopy(model.state_dict())
+    saved_optimizer = copy.deepcopy(optimizer.state_dict())
+    rejected = {
+        "round": 4331,
+        "evaluation_identity": "fixed",
+        "candidate_parameter_sha256": "a" * 64,
+        "accepted": False,
+        "candidate_utility": 1.0,
+    }
+    novelty = CandidateNovelty("fixed", [rejected])
+    optimizer.zero_grad()
+    model(torch.ones(1, 1)).sum().backward()
+    optimizer.step()
+
+    def forbidden():
+        pytest.fail("previously rejected candidate must not be evaluated")
+
+    candidate_dev, candidate_train, decision = incumbent.evaluate_candidate(
+        model, optimizer, novelty, "a" * 64, forbidden, 4331
+    )
+    assert candidate_dev is candidate_train is None
+    assert decision["accepted"] is False
+    assert decision["candidate_evaluated"] is False
+    assert (
+        decision["candidate_utility"] is None
+    )  # unknown this attempt, never a fabricated score
+    assert decision["first_rejected_round"] == 4331
+    assert decision["best_round"] == 3175
+    assert all(torch.equal(model.state_dict()[k], v) for k, v in saved_model.items())
+    assert optimizer.state_dict()["param_groups"] == saved_optimizer["param_groups"]
+    for k, state in saved_optimizer["state"].items():
+        for name, value in state.items():
+            assert torch.equal(optimizer.state_dict()["state"][k][name], value)
+    # This incumbent state is resumable at the completed logical round, not a rejected proposal.
+    checkpoint = tmp_path / "round-4331.pt"
+    torch.save(
+        {
+            "round": 4331,
+            "admission": "incumbent",
+            "state_dict": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+        },
+        checkpoint,
+    )
+    resumed_round = torch.load(checkpoint, weights_only=True)["round"] + 1
+    assert resumed_round == 4332
+    history = [
+        {
+            "round": 4331,
+            "adapter_admission": decision,
+            "candidate_dev_utility": None,
+            "promotions": 0,
+            "GP": {"evaluated": 0},
+        }
+    ]
+    assert (
+        proposal_plan(42, resumed_round, history)["round_seed"]
+        != proposal_plan(42, 4331, [])["round_seed"]
+    )
+    assert batch_seed(42, resumed_round, 0) != batch_seed(42, 4331, 0)
+    calls = []
+    assert incumbent.evaluate_candidate(
+        model,
+        optimizer,
+        novelty,
+        "b" * 64,
+        lambda: (calls.append(True) or {"mean": 3.0}, None),
+        resumed_round,
+    ) == ({"mean": 3.0}, None, None)
+    assert calls == [True]

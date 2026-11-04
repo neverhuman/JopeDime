@@ -10,9 +10,9 @@ __pycache__/
 .venv/
 python/.venv/
 python/dist/
-# maturin editable builds (uv sync) place the jope._telemetry extension in python-source.
-python/src/jope/_telemetry*.so
-python/src/jope/_telemetry*.pyd
+# Native extensions are built out of tree (python/native is installed non-editable), so no .so/.pyd
+# may appear under python/src. Do not ignore them: a stray one would shadow jope/_telemetry.py and
+# must stay visible to `git status` and the CI receipt dirty-source check.
 /runs/
 /logs/
 /artifacts/

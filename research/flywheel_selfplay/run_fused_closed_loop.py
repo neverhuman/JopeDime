@@ -59,7 +59,6 @@ from automatic_promotion import (  # noqa: E402
 from dev_incumbent import (  # noqa: E402
     CandidateNovelty,
     DevIncumbent,
-    RejectedCandidateError,
     add_admission_arguments,
     batch_seed,
     gp_selection_indices,
@@ -1090,29 +1089,29 @@ def main():
                     parameter.detach().cpu().contiguous().numpy().tobytes()
                 )
         candidate_parameter_sha256 = candidate_hash.hexdigest()
-        try:
-            candidate_dev, candidate_train = novelty.evaluate(
+        candidate_dev, candidate_train, adapter_admission = (
+            incumbent.evaluate_candidate(
+                net,
+                opt,
+                novelty,
                 candidate_parameter_sha256,
                 lambda: (utility(), utility(train, "train") if full else None),
+                rnd,
             )
-        except RejectedCandidateError as error:
-            incumbent.restore(net, opt)
-            guard.verify_dope_frozen_unchanged(net, before)
+        )
+        candidate_evaluated = adapter_admission is None
+        guard.verify_dope_frozen_unchanged(net, before)
+        if not candidate_evaluated:
             write_json(
                 args.output / f"candidate_refusal_round-{rnd}.json",
                 {
-                    "round": rnd,
-                    "candidate_parameter_sha256": candidate_parameter_sha256,
-                    "evaluation_identity": evaluation_identity,
+                    **adapter_admission,
                     "training_batches": training_batches,
-                    "reason": str(error),
-                    "candidate_evaluated": False,
                     "completed_round": False,
                     "incumbent_restored": True,
                 },
             )
-            raise
-        if reporter:
+        if reporter and candidate_evaluated:
             reporter.scores(
                 dev,
                 candidate_dev["per_context"],
@@ -1131,7 +1130,7 @@ def main():
                 candidate_parameter_sha256,
                 rnd,
             )
-        candidate_rejected = (
+        candidate_rejected = candidate_evaluated and (
             not incumbent.accepts(candidate_dev, evaluation_identity)
             if incumbent.strict_admission
             else candidate_dev["mean"] < incumbent.best_utility
@@ -1160,7 +1159,9 @@ def main():
                 rejected_tmp,
             )
             rejected_tmp.replace(rejected)
-        if projection_failed:
+        if not candidate_evaluated:
+            pass  # Refusal is already a terminal rejection; never admit or score it.
+        elif projection_failed:
             adapter_admission = {
                 "round": rnd,
                 "evaluation_identity": evaluation_identity,
@@ -1431,6 +1432,9 @@ def main():
             "tokens_count": token_count,
             "tokens_scope": "evaluated GP DSL tokens (cl100k_base) per full round wall second; not emitted target-language code",
             "dev_utility": dev_stats,
+            "candidate_evaluated": candidate_evaluated,
+            "completed_round": True,
+            "round_status": "evaluated" if candidate_evaluated else "REJECTED",
             "candidate_dev_utility": candidate_dev,
             "candidate_train_utility": candidate_train,
             "adapter_admission": adapter_admission,
@@ -1490,6 +1494,17 @@ def main():
             row = reporter.finish(row)
         else:
             write_json(args.output / f"round-{rnd:02d}.json", row)
+        if not candidate_evaluated:
+            write_json(
+                args.output / f"candidate_refusal_round-{rnd}.json",
+                {
+                    **adapter_admission,
+                    "training_batches": training_batches,
+                    "completed_round": True,
+                    "incumbent_restored": True,
+                    "checkpoint": str(args.output / f"round-{rnd:02d}.pt"),
+                },
+            )
         try:
             shard = write_tree_shard(
                 tree_records,
@@ -1565,7 +1580,7 @@ def main():
             status = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"
             status.write_text(
                 "# Fused flywheel status\n\n"
-                f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['gp_dsl_tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean']:.6f}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; training {train_wall:.2f}s; device packing {batch_profile['device_pack_seconds']:.2f}s; model/targets {batch_profile['model_forward_target_seconds']:.2f}s. Old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nProposal seed {plan['round_seed']}; retry level {plan['retry_level']}; actual updates {plan['steps']}; GP exploration {plan['gp_exploration']}. Effective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
+                f"Node {row['node']}; completed round {rnd}/{round_target}.\nPath: {row['path']}.\nDOPE {before.composite_sha256}: unchanged.\nTrainable parameters: {row['trainable_params']}; changed tensors {changed}.\nTraining contexts/s {row['training_contexts_per_second']:.2f}; GP DSL tok/s {row['gp_dsl_tokens_per_second']:.2f} (not target-language code).\nDev utility {dev_stats['mean']:.6f}; candidate dev {candidate_dev['mean'] if candidate_evaluated else 'not evaluated (refused)'}; adapter action {adapter_admission['action']}; best round {incumbent.best_round}. GP passing {passed}/{len(generated)}; promotions {len(events)}.\nWall {wall:.2f}s; training {train_wall:.2f}s; device packing {batch_profile['device_pack_seconds']:.2f}s; model/targets {batch_profile['model_forward_target_seconds']:.2f}s. Old GP-only baseline 133–211s, scope differs.\nReceipts: {args.output}.\nProposal seed {plan['round_seed']}; retry level {plan['retry_level']}; actual updates {plan['steps']}; GP exploration {plan['gp_exploration']}. Effective LR {effective_lr}; optimizer steps {optimizer_step_before} -> {optimizer_step_candidate}; update L2 {update_l2:.6g}. Remaining rounds: {remaining}; ETA: {eta}.\n"
             )
             findings = Path.home() / "jope_plan/ns/FLYWHEEL_GP_FUSED_FINDINGS.md"
             if findings.exists():

@@ -142,6 +142,117 @@ impl PredictCostsInputs<'_> {
     }
 }
 
+/// Optional zero-initialized residual bypass weights operating on pre-condense
+/// representations (`full629` 20x32 tokens, `hidden256` 8x32 tokens, and `col_lm` 64x18 tokens)
+/// before Stage-1B SVD condensation.
+#[derive(Clone, Debug)]
+pub struct PreCondenseResidualWeights {
+    /// Row-major `[28, 32, 24]` or pooled `[64, 24]` context-to-semantic bilinear projection.
+    pub ctx_summary_proj_64x24: Vec<f32>,
+    /// Row-major `[18, 24]` per-column feature-to-semantic projection.
+    pub col_proj_18x24: Vec<f32>,
+    /// Trust-region residual scale `alpha_prior` (`0.0` at step 0 reproduces baseline identically).
+    pub alpha_prior: f32,
+}
+
+impl PreCondenseResidualWeights {
+    pub fn zero_initialized() -> Self {
+        Self {
+            ctx_summary_proj_64x24: vec![0.0; 64 * 24],
+            col_proj_18x24: vec![0.0; 18 * 24],
+            alpha_prior: 0.0,
+        }
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.ctx_summary_proj_64x24.len() == 64 * 24,
+            "ctx_summary_proj_64x24 must have 1536 elements"
+        );
+        ensure!(
+            self.col_proj_18x24.len() == 18 * 24,
+            "col_proj_18x24 must have 432 elements"
+        );
+        ensure!(
+            self.alpha_prior.is_finite()
+                && self
+                    .ctx_summary_proj_64x24
+                    .iter()
+                    .chain(&self.col_proj_18x24)
+                    .all(|v| v.is_finite()),
+            "pre-condense residual weights must be finite"
+        );
+        Ok(())
+    }
+
+    /// Compute candidate-centered residual score adjustment `Delta_s(p, D_629, H_256, C_64x17)`
+    /// for one context slate of `n` candidates with semantic signatures `sem_24` (`[n * 24]`).
+    pub fn score_slate(
+        &self,
+        pre_condense: &super::stage1b::PreCondenseContextTokens,
+        sem_24: &[f32],
+        n: usize,
+    ) -> Result<Vec<f32>> {
+        self.validate()?;
+        ensure!(
+            sem_24.len() == n * 24,
+            "sem_24 length must match candidate count * 24"
+        );
+        if self.alpha_prior == 0.0 {
+            return Ok(vec![0.0; n]);
+        }
+
+        // Mean + max pooling across the 28 pre-condense tokens (20 full629 + 8 hidden256)
+        let mut mean_32 = [0.0_f32; 32];
+        let mut max_32 = [f32::NEG_INFINITY; 32];
+        for tok in pre_condense
+            .full629_tokens
+            .iter()
+            .chain(pre_condense.hidden256_tokens.iter())
+        {
+            for d in 0..32 {
+                mean_32[d] += tok[d] / 28.0;
+                max_32[d] = max_32[d].max(tok[d]);
+            }
+        }
+        let mut summary_64 = [0.0_f32; 64];
+        summary_64[..32].copy_from_slice(&mean_32);
+        summary_64[32..].copy_from_slice(&max_32);
+
+        let mut u_24 = [0.0_f32; 24];
+        for k in 0..24 {
+            let mut acc = 0.0_f32;
+            for j in 0..64 {
+                acc += summary_64[j] * self.ctx_summary_proj_64x24[j * 24 + k];
+            }
+            u_24[k] = acc;
+        }
+
+        // Masked active column pooling over `col_features_64x18`
+        let active_cols = pre_condense.col_mask_64.iter().sum::<f32>().max(1.0);
+        let mut col_mean_18 = [0.0_f32; 18];
+        for c in 0..super::stage1b::COL_SLOTS {
+            if pre_condense.col_mask_64[c] > 0.5 {
+                for f in 0..18 {
+                    col_mean_18[f] += pre_condense.col_features_64x18[c][f] / active_cols;
+                }
+            }
+        }
+        for k in 0..24 {
+            let mut acc = 0.0_f32;
+            for f in 0..18 {
+                acc += col_mean_18[f] * self.col_proj_18x24[f * 24 + k];
+            }
+            u_24[k] += acc;
+        }
+
+        let raw: Vec<f32> = (0..n)
+            .map(|i| dot(&u_24, &sem_24[i * 24..(i + 1) * 24]))
+            .collect();
+        Ok(centered_scaled(&raw, self.alpha_prior))
+    }
+}
+
 /// Costs are row-major `[batch, candidates]`. KL is computed over proposals
 /// only, using unit-temperature softmax(-cost) against the frozen anchor.
 /// This readout does not grant M2/Q1 qualification or change admission policy.

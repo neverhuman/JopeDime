@@ -40,6 +40,9 @@ features=embedded
 [ "$scope" = development ] && features=embedded,dev-keys
 # Both R882 runtime editions need the ordinary defaults despite --no-default-features below.
 case $profile in full | fused-cpu) features=$features,engine,mcp,client ;; esac
+# The public native-only edition is the released CLI: local engine, MCP and the client, plus
+# cloud-tls for HTTPS account login (A23; the audited A22 selection). It still ships no weights.
+case $profile in native-only) features=$features,engine,mcp,client,cloud-tls ;; esac
 case $profile in dope-gpu | fused-cuda) features=$features,dope-cuda ;; esac
 mkdir -p "$out"
 
@@ -62,19 +65,22 @@ code=$(JOPE_BUILD_SOURCE_SHA=$source_sha cargo run -q --locked -p jope-ci -- car
   --package jope-appliance --bin jopedime --profile "$cargo_profile" --no-default-features --features "$features")
 cp -- "$code" "$out/code"
 
-if [ "$profile" = full ] || [ "$profile" = fused-cpu ]; then
-  echo "== verify $profile v1 compiled features and source"
+if [ "$profile" = full ] || [ "$profile" = fused-cpu ] || [ "$profile" = native-only ]; then
+  echo "== verify $profile compiled features and source"
+  tls=false
+  [ "$profile" = native-only ] && tls=true
   "$out/code" --version --json > "$out/version.json"
-  jq -e --arg source "$source_sha" '
+  jq -e --arg source "$source_sha" --argjson tls "$tls" '
     .source_sha40 == $source and
     .features.embedded == true and
     .features.engine == true and
     .features.mcp == true and
     .features.client == true and
+    .features.cloud_tls == $tls and
     .features.dev_keys == false and
     .trusts_development_key == false
   ' "$out/version.json" > /dev/null || {
-    echo "$0: $profile requires engine,mcp,client,embedded, release trust and the declared source" >&2
+    echo "$0: $profile requires engine,mcp,client,embedded (cloud-tls $tls), release trust and the declared source" >&2
     exit 1
   }
 fi
@@ -102,6 +108,12 @@ if [ -z "$models" ]; then
   else
     mkdir -p "$models"
   fi
+fi
+# The public edition ships no model weights (models.lock.json: native-only total_bytes 0).
+if [ "$scope" = public ] && [ -n "$(find "$models" -type f -print -quit)" ]; then
+  echo "$0: the public $profile profile must not package model files; found:" >&2
+  find "$models" -type f >&2
+  exit 1
 fi
 
 common=(--profile "$profile_file" --code "$out/code" --models "$models" --notices "$out/notices.json"

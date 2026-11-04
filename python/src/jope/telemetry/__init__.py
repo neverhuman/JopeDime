@@ -29,9 +29,9 @@ try:
         open_flywheel_step,
         open_python_trainer,
     )
-except ImportError as error:  # telemetry was requested but the maturin extension is missing
+except ImportError as error:  # telemetry was requested but the jope-native extension is missing
     raise RuntimeError(
-        "jope telemetry PyO3 extension is unavailable; build it with maturin (TELEMETRY_ENABLE.md)"
+        "jope telemetry PyO3 extension is unavailable; install python/native (uv sync in python/)"
     ) from error
 
 __all__ = [

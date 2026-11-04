@@ -1,0 +1,85 @@
+{
+  "critic_npz_path": "/home/ubuntu/jope-data/h256/checkpoints/sos_hurdle_and_sp_critic_models.npz",
+  "critic_npz_sha256": "a8e51d7445796b5ea2c58d52e4a2a450471796c5782ae72d96be0434f0498e1f",
+  "critic_pt_path": "/home/ubuntu/jope-data/h256/checkpoints/sos_hurdle_and_sp_critic_models.pt",
+  "critic_pt_sha256": "ba5678e1097550d54ec5339cf42b341339af7d65e566cd3a2bcf28f16c596755",
+  "expected_5fold_ensemble_summary": {
+    "alpha_prior": 0.032999999999999995,
+    "alpha_traj": 0.01,
+    "delta_prior_first5": [
+      -0.12148446757346391,
+      0.48649226129055023,
+      0.14953186213970185,
+      -0.3390141069889069,
+      0.17643611431121825
+    ],
+    "delta_traj_first5": [
+      1.5694015741348266,
+      -0.06368281841278076,
+      0.7330176711082459,
+      -0.05569930076599121,
+      -0.026729869842529296
+    ],
+    "pick1_index": 678,
+    "pick1_utility": 1.6004391578043355,
+    "rev4_indices": [
+      174,
+      751,
+      678,
+      896
+    ],
+    "top4_indices": [
+      678,
+      896,
+      629,
+      862
+    ]
+  },
+  "expected_single_soup_summary": {
+    "alpha_prior": 0.032999999999999995,
+    "alpha_traj": 0.01,
+    "delta_prior_first5": [
+      -0.05294380336999893,
+      0.25269243121147156,
+      0.028626030310988426,
+      -0.1346774846315384,
+      0.14313051104545593
+    ],
+    "delta_traj_first5": [
+      0.8129482269287109,
+      0.004663974046707153,
+      0.22078374028205872,
+      -0.022459685802459717,
+      -0.0626802146434784
+    ],
+    "pick1_index": 678,
+    "pick1_utility": 1.6004391578043355,
+    "rev4_indices": [
+      174,
+      751,
+      678,
+      896
+    ],
+    "top4_indices": [
+      678,
+      896,
+      629,
+      862
+    ]
+  },
+  "golden_pt_path": "/home/ubuntu/jope-data/h256/checkpoints/golden_inference_fixture_context0.pt",
+  "golden_pt_sha256": "de8f0ae10b0c38413cfd9171e6d627aff97764b38ffca8d9ccda48fdefe5a0bb",
+  "primary_context_metadata": {
+    "active_flywheel_triggered": true,
+    "context_sha256": "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da",
+    "dataset_id": "12d32dd30f8c602e",
+    "family_id": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+    "num_candidates": 1152,
+    "oracle_max_utility": 2.796269817634785,
+    "r882_pick_index": 678,
+    "r882_utility": 1.6004391578043355,
+    "split": "",
+    "top_zgap": 0.0032535616373743706
+  },
+  "schema": "jope.h256.golden_inference_fixture_summary/v1"
+}

@@ -40,7 +40,7 @@ enum ModelCommand {
         #[arg(long)]
         require_executable: bool,
     },
-    /// Export fitted bytes, bound JSON state, or an exact object copy. ONNX is capability-gated.
+    /// Export source, fitted state, or an exact model-object copy.
     Export {
         #[arg(long)]
         model: PathBuf,
@@ -159,9 +159,10 @@ fn export_bytes(object: &ModelObject, format: &str) -> anyhow::Result<Vec<u8>> {
             Ok(object.parts()[&object.manifest().primary].clone())
         },
         "bound-json" => serde_json::to_vec(&object.bound()?).map_err(Into::into),
+        "rust-refittable" => Ok(object.math_pipeline()?.export_refittable_rust()?.into_bytes()),
         "python" | "rust" | "javascript" => object.export_source(format),
         "onnx" => Err(Failure::backend("ONNX export is unavailable in this build; retain the complete model object. A custom-domain ONNX graph also requires a compatible operator runtime.")),
-        _ => Err(Failure::input("format must be object, fitted, bound-json, python, rust, javascript or onnx")),
+        _ => Err(Failure::input("format must be object, fitted, bound-json, python, rust, rust-refittable, javascript or onnx")),
     }
 }
 

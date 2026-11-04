@@ -1,0 +1,1089 @@
+{
+  "canonical_stage1_encoder_checkpoint": "/home/ubuntu/jope-data/h256/full_s3_reg_7split_pretrained_encoder.pt",
+  "canonical_stage1_full_model_checkpoint": "/home/ubuntu/jope-data/h256/checkpoints/stage1_full_s3_reg_7split_pre_condense_92tok_full_model.pt",
+  "canonical_stage2_bridge_checkpoint": "/home/ubuntu/jope-data/h256/stage2_full_s3_reg_flywheel_pretrained_bridge.pt",
+  "checkpoints": [
+    {
+      "description": "Stage-1 Full-S3 7-Split Regression pretrained context encoder (11,121 Policy B / 11,086 Policy C regression cells)",
+      "num_parameters": 15005,
+      "num_tensors": 39,
+      "path": "/home/ubuntu/jope-data/h256/full_s3_reg_7split_pretrained_encoder.pt",
+      "sha256": "7e5257741409575b237f0312ee8a7c5f6e1fc48d831056b6166ceea455528a44",
+      "size_bytes": 95540,
+      "stage": "stage1_full_s3_regression_7split"
+    },
+    {
+      "description": "Complete Stage-1 Pre-Condense 92-token bridge & encoder checkpoint with Policy B/C scalers",
+      "num_parameters": 15005,
+      "num_tensors": 39,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage1_full_s3_reg_7split_pre_condense_92tok_full_model.pt",
+      "sha256": "9019d1b3eeddf98f22b5d20723c4595b244e93aaf87a78cb8c09b02d99436a83",
+      "size_bytes": 860089,
+      "stage": "stage1_full_s3_regression_7split"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256101, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256101_fold0.pt",
+      "sha256": "89a659e5d61fa96f11905c9fe9efc52e3cc5901a09b1a07328c0c1006b7ebc9a",
+      "size_bytes": 777379,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256101, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256101_fold1.pt",
+      "sha256": "cb55ff0f22f1231d44461bee767f4dc7dd5e2a5bff8555ca7332ea09294eb3bd",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256101, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256101_fold2.pt",
+      "sha256": "ad97cf78b3cb08a680aa08adc0999b74a4f9993cbeb50e4c08604ba790812383",
+      "size_bytes": 777251,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256101, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256101_fold3.pt",
+      "sha256": "4b2d92b4b15ce0ceaf9a7dada9e2e8e17e5d5397afb4577f145ea23dcf53f87c",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256101, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256101_fold4.pt",
+      "sha256": "156a84c6ca2c66ad55e0642c3915233baa6d37f78d1b080e53b3a755b4552c34",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 5-fold ensemble + parameter-soup checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256101)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_5fold_ensemble.pt",
+      "sha256": "f1f320e0a9b2cf7c6f0e6fc4aa75ee05395e66df49c52ab7aac5cc46cd05c9a6",
+      "size_bytes": 4649319,
+      "stage": "stage2_flywheel_regression_ensemble"
+    },
+    {
+      "description": "Canonical Stage-2 PreCondenseResidualBridge checkpoint warm-started from Stage-1 Full-S3 7-Split Regression",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/stage2_full_s3_reg_flywheel_pretrained_bridge.pt",
+      "sha256": "77369a7f4a386e098b389df571af321ea48f083e8116ecfa1a4f6aec967350cf",
+      "size_bytes": 4641667,
+      "stage": "stage2_canonical_bridge"
+    },
+    {
+      "description": "Unified self-contained Problem Encoder (locked DOPE) + Solution Ranker + Stage-1 Pre-Condense Encoder + Stage-2 Pre-Condense Residual Bridge",
+      "num_parameters": 2495648,
+      "num_tensors": 422,
+      "path": "/home/ubuntu/jope-data/h256/h256_fused_problem_and_solution_network.pt",
+      "sha256": "77b99d514eae88d23c3767eea62ab06bf50621d95d5e215dfd55a00b41ca0a7a",
+      "size_bytes": 11933539,
+      "stage": "unified_problem_and_solution_network"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256101, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256101_fold0.pt",
+      "sha256": "3355c0d3790952fa87eadd975cbe8233871f1c8ab466c2be95d56afcb3778f72",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256101, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256101_fold1.pt",
+      "sha256": "eebfc33cacfda1dc54593265311a0603e43cd3bfdb01312f8cc2a6dbdc5f98e3",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256101, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256101_fold2.pt",
+      "sha256": "af19ce7f98c60435eb094387ae92713c3cf56fe111af33efc1eb778332b03cb6",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256101, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256101_fold3.pt",
+      "sha256": "48a2b9fe64c938b4eb59dda4e4a428ef2495a59eeef20089a441f16ea70af191",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256101, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256101_fold4.pt",
+      "sha256": "20b026ec636cba8216d7412d076e8d75874e88f433940d105c112796615a2977",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 5-fold ensemble + parameter-soup checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256101)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_5fold_ensemble.pt",
+      "sha256": "a2b3ad9ed7fe8cfd76b1c202aef0c2c0e73186d90ba8d12aa53a575a24b64c04",
+      "size_bytes": 4643641,
+      "stage": "stage2_flywheel_regression_ensemble"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256101, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256101_fold0.pt",
+      "sha256": "e8a7e1c4d3b1bf21dfc7f11087e371aa306287c8dc730fde633c0edbff3594b4",
+      "size_bytes": 776493,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256101, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256101_fold1.pt",
+      "sha256": "549f0fddd3f9be8c0b1b6843a9841e5ff86e08f2f5f20a6cf4516d04e1336e1e",
+      "size_bytes": 776493,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256101, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256101_fold2.pt",
+      "sha256": "15d6454af7239ead256d1c3f4b3ecb32869d8bda592d8f677091b94e58339380",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256101, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256101_fold3.pt",
+      "sha256": "49fb4e647142fbbeabc7ff4e9531582bc1bc74d8f2d3bf1929c355b952f851cd",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256101, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256101_fold4.pt",
+      "sha256": "f1380f243b0b1885ffd14a77bc669fd47dfa85d5ad83ff4b7e357d79ba9cc709",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 5-fold ensemble + parameter-soup checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256101)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_5fold_ensemble.pt",
+      "sha256": "100436ad33e467f227bfcb1d71f0d8aaf66272037ce31720261905688adee945",
+      "size_bytes": 4644661,
+      "stage": "stage2_flywheel_regression_ensemble"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256101, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256101_fold0.pt",
+      "sha256": "134a675d7083ec084564d83f428c2a86d2b651acade8a40df3cc2a2335e85b8d",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256101, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256101_fold1.pt",
+      "sha256": "c719acde0615df6458fa5bdb9d554ae27942799c0e00c0b4bf3773bc67482887",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256101, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256101_fold2.pt",
+      "sha256": "bca1af87915b0fec4d1f2f7a766825a58dea888d53b97cea3df1dff8d589446d",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256101, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256101_fold3.pt",
+      "sha256": "24313cfea5a82e81f5dc7074f115efa5f07985145ac35305df9cc5eeb4a1cf3d",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256101, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256101_fold4.pt",
+      "sha256": "794f3d34a6030387638eb891788596eb6edf1607b6e5a4aef4d569c5679d6a61",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 5-fold ensemble + parameter-soup checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256101)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_5fold_ensemble.pt",
+      "sha256": "e4693fc95cf86ca05c21e85b0e85b6d6ed2c90209e6e9e8c006bd02b757f6959",
+      "size_bytes": 4643641,
+      "stage": "stage2_flywheel_regression_ensemble"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256101, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256101_fold0.pt",
+      "sha256": "94c198dccd73bb745d8faa7f7f21c2c501ce2e5a261da8e1e3d123ac9be0ffc5",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256101, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256101_fold1.pt",
+      "sha256": "37c6bead03beb56fd8696bdfeb1a32020ab25fb0d8dbecd810261b28a70856d3",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256101, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256101_fold2.pt",
+      "sha256": "ee409af0af2c93a3ccfd6425bca03b1b1d9b1eedc6951252c6bf775198a280ba",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256101, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256101_fold3.pt",
+      "sha256": "9ffc4e39400dcdb1c6779ef574d0b1bb12eec941f933ee75306065a06a2fb62f",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256101, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256101_fold4.pt",
+      "sha256": "55d7ea9bfa04f6dbf9f9419be981ee28ba81dc2e244fef6c33895e25d35148bc",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 5-fold ensemble + parameter-soup checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256101)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_5fold_ensemble.pt",
+      "sha256": "59c3989d742236dbb0e33f7bb52bd239bb1532368b5624bd1d00c7c3847a9eca",
+      "size_bytes": 4643641,
+      "stage": "stage2_flywheel_regression_ensemble"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256101, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256101_fold0.pt",
+      "sha256": "444bb2eb9457eb2ba937c530bce112222032f5f97877d299eb24c610e7a3d4ef",
+      "size_bytes": 775619,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256101, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256101_fold1.pt",
+      "sha256": "bc98db3e9fa63e2963272cb61c3e8b2f6ba5a65f4aef115247b2413e8a2be9e2",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256101, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256101_fold2.pt",
+      "sha256": "322d78d6b559a17f999c3e25ffbc1f4359a3631adcbaa7079d70b7f68e882d66",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256101, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256101_fold3.pt",
+      "sha256": "8d3cbad99b4b1b60bca93b1ab0d7c0cb842a03192a40da45c93f7439d6a1b635",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256101, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256101_fold4.pt",
+      "sha256": "1e7b0c85fd8ad0caf8e78201f4731e22d618adbc9cb6e18cc36022d705d227b7",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 5-fold ensemble + parameter-soup checkpoint (B_CAPACITY_CTRL_10TOK, seed=256101)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_5fold_ensemble.pt",
+      "sha256": "f8b7b98bd1da6a59a4fcfd84923a6447585129458cd23f110edd70b158cd76f4",
+      "size_bytes": 4640071,
+      "stage": "stage2_flywheel_regression_ensemble"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256102, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256102_fold0.pt",
+      "sha256": "825c9472f7e2718d0dc2ede46693611ebc8bb0b832a101e268e50571e94285ae",
+      "size_bytes": 777379,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256102, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256102_fold1.pt",
+      "sha256": "e2346df563cbcfdf1b4930681ad4fe0df3b8db91d61c9efb8fc04af4ed8793fb",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256102, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256102_fold2.pt",
+      "sha256": "a427349e468a5b7c8130fbfaff162e24b1baa43cf57e020c4ac510fd575c6746",
+      "size_bytes": 777251,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256102, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256102_fold3.pt",
+      "sha256": "cbf323ada293488471eafde913f5626dc36015460756558608cf44db92c389ac",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256102, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256102_fold4.pt",
+      "sha256": "65b49832aaa0f47a6641ca81c229b5484629feb13fdab069dfad15781b64b09f",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256102, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256102_fold0.pt",
+      "sha256": "e1d246338b0b25b204446fb810773d1ad9e528fe511ce779e5542baa346522d8",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256102, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256102_fold1.pt",
+      "sha256": "c57274f0c914dfc1e4240ebc5ec0c7e7bd5dacf18cb06a930fd61ecade24f5bd",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256102, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256102_fold2.pt",
+      "sha256": "7e2849951eec638b32564d4fd45e0d7d7a8dc94afdf9c61a2102d5a9b03b018c",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256102, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256102_fold3.pt",
+      "sha256": "1b1cadec1b785b4866613f050978f4cc2fc87c22f4caf470dd8010602bbe0db1",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256102, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256102_fold4.pt",
+      "sha256": "156cff451307023d9f8927bccd69967e120b7950696aa55f5a2fbdc1fe8b0757",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256102, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256102_fold0.pt",
+      "sha256": "8e453658719e2687a6fe95d25d99b57d5f25afede777b54a4fc0996a148cd68d",
+      "size_bytes": 776493,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256102, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256102_fold1.pt",
+      "sha256": "5e685e4717fe9acd070d4e01fd28d0ae8d117c088263aedd3f86eb389025bc9a",
+      "size_bytes": 776493,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256102, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256102_fold2.pt",
+      "sha256": "337023c0174e8e74470eda3a60a109d72269e24a251450765357fdef016cf161",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256102, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256102_fold3.pt",
+      "sha256": "dcd6cdaf672a38193e48e7ab438ab3920786d4b92a65f887bd8186a306ef1449",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256102, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256102_fold4.pt",
+      "sha256": "6f69d72b99ca8fb41f48b7a7a51ddde14131d4730d2c79f9415a823614c73445",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256102, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256102_fold0.pt",
+      "sha256": "e46ce134d25df6a980e19404b5b9510e1141cbd85825928cb2182ff4823d98ef",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256102, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256102_fold1.pt",
+      "sha256": "e7b69342fc0e5b56615ebb87fbbbedd1b06dcfcbc8ea0c17a2ebbc0d1014a795",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256102, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256102_fold2.pt",
+      "sha256": "262994fd943e2702d4200c80a8257639c74d4f03c48b6f737ae7641b9f63fec6",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256102, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256102_fold3.pt",
+      "sha256": "43ac19ee21783d89b8de2244c1a1430dbf641050cfd98b0c1bc2d7decf16e9ec",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256102, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256102_fold4.pt",
+      "sha256": "e96e7f57e1c453b6c8dc48cd03a1022ecb3ea933cb4f4de5cf1e39132457cf60",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256102, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256102_fold0.pt",
+      "sha256": "3c488ae2223edc57a67fa99d7f5bc126b4f96484e0702dc8e2a4a519d00eca19",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256102, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256102_fold1.pt",
+      "sha256": "eaacbe771d451edcaaa75b75c29ca5f8ca0002e71a7a59c1f1a7db49ccef173b",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256102, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256102_fold2.pt",
+      "sha256": "c9f2c8ec99292d56bbd8d6f72c482ac0b66fbb01f1c0b18652d8dfe43102e8c2",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256102, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256102_fold3.pt",
+      "sha256": "ff71226e007b84648e9580b2c4ddf6cd73d419392f290a81b07dd25205b19988",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256102, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256102_fold4.pt",
+      "sha256": "ff2d71affeff2c92f163e77f3b988a3ffaef544f8fb6a17d5c9e1962ffb2e404",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256102, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256102_fold0.pt",
+      "sha256": "a16e7c8cf3e1aa2f73f1a55a90299346dd53b03b9ad41da4a6d73f44f813a0dc",
+      "size_bytes": 775619,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256102, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256102_fold1.pt",
+      "sha256": "32cc4958d620608eea22155d683fea067e77844ba494fdf87599d3d5a39fff86",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256102, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256102_fold2.pt",
+      "sha256": "1a8816c6c02b4e282ff3b4ee6f65dc67ba9c42231534cf99dacf19c835d8b749",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256102, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256102_fold3.pt",
+      "sha256": "54cd20d7325f84a07d8da4b0227b822e98568bb88475e81692532779f9852910",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256102, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256102_fold4.pt",
+      "sha256": "f966cc7c27cfff41ad66142672dbc505373c5b9725f7b9cd473b5cde54a1362c",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256103, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256103_fold0.pt",
+      "sha256": "c3d34e06ebb8e3215c964c5f991c0c093dc300c8cef3bb705c93f04a8f493ae7",
+      "size_bytes": 777379,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256103, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256103_fold1.pt",
+      "sha256": "69f0e969ab4fc5e0ccc706a38a27e155a8b174e26b01ec5674b69caac263c32a",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256103, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256103_fold2.pt",
+      "sha256": "a3d9006cfca2183b73f94b74be73582acdb66f9dde85ea44e689b9ef38238f82",
+      "size_bytes": 777251,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256103, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256103_fold3.pt",
+      "sha256": "a4100242abc457927b97fd6d61d467d4da0f14c8af3dc48207cc2881c3104765",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (G_FULL_S3_REG_7SPLIT_11121_PRETRAINED, seed=256103, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_G_FULL_S3_REG_7SPLIT_11121_PRETRAINED_seed256103_fold4.pt",
+      "sha256": "c9205f24aab3d2e80baf8046594e9eb90359890e986496ee219955f2a08a15bf",
+      "size_bytes": 777315,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256103, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256103_fold0.pt",
+      "sha256": "98fcd5b319b6d2e19233de953a0d4b59d7e3ba6e362478f3adbd16f898e1371d",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256103, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256103_fold1.pt",
+      "sha256": "a7db1b878f670020fd3f4529a83b1cdd31b667c94882bb554f20841c77a1948d",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256103, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256103_fold2.pt",
+      "sha256": "174401a39c4ae464b63fbff7fc9328c15375f572445504099b179653e5f5d8e7",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256103, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256103_fold3.pt",
+      "sha256": "72b79f8949039e52bff8286135c8586aced63ce5be97b7ca628514c8205497fe",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (F_FULL629_HIDDEN256_COL64X17, seed=256103, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_F_FULL629_HIDDEN256_COL64X17_seed256103_fold4.pt",
+      "sha256": "dfda325e07080a4f93733d5ad84bc916a74c1a96838f9032fce9ccf3ebd7ba33",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256103, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256103_fold0.pt",
+      "sha256": "87a6bd55e47a4de255a8a570810486d559148d963273f915cd295305eafa61d1",
+      "size_bytes": 776493,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256103, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256103_fold1.pt",
+      "sha256": "e6c97400ca16ec7e0084b2f67bbab82e786dc1c34350979b5336187d68217342",
+      "size_bytes": 776493,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256103, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256103_fold2.pt",
+      "sha256": "2f4dac89168b2c69dd55b1daebf79175481d188f3502a6c612d749ade02a304c",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256103, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256103_fold3.pt",
+      "sha256": "930a1849eb855161a368840dba51115614eb90126712137d9d6166d75f23041f",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (E_FULL629_PLUS_HIDDEN256_28TOK, seed=256103, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_E_FULL629_PLUS_HIDDEN256_28TOK_seed256103_fold4.pt",
+      "sha256": "1b51fa7984140260e8d485204e8a24c3efb30f1524ec5bb9b6df3e07bd780f7e",
+      "size_bytes": 776429,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256103, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256103_fold0.pt",
+      "sha256": "4ae352446774e1c6e05a2df412cb97b13f56a0c7f5db69fcbf931601ebe37f8f",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256103, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256103_fold1.pt",
+      "sha256": "10ce54c22ef750fe1d2c6bfacc21a035339c4f702874f40d7fae3bfe03e9a43d",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256103, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256103_fold2.pt",
+      "sha256": "59c09b2de0f93113a1a461b6494ad8aeb8c15d1b50cf793e3a6b99d88a89bec1",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256103, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256103_fold3.pt",
+      "sha256": "6508d37af510ec8da06c2e329f2193a98dfee0b6903ace059833cefd61d96e4c",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (D_PRE_CONDENSE_FULL629_20TOK, seed=256103, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_D_PRE_CONDENSE_FULL629_20TOK_seed256103_fold4.pt",
+      "sha256": "d700980dcfbf52b1ac691cb42d1eb7d945ccd31360a1eadb8f92858cbddc9aff",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256103, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256103_fold0.pt",
+      "sha256": "41ea115e4f090219f9d8f7b23802b866965f42c3218ad1a4560edce79664f9dd",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256103, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256103_fold1.pt",
+      "sha256": "da6ea74219880cdaccfbd06a7e7be770a784bb3d3d4133870c9426d8371eb265",
+      "size_bytes": 776249,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256103, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256103_fold2.pt",
+      "sha256": "96bd086eb595c56bf2de0e251e0c537a2a3d4acb73562ef966edef1767d88540",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256103, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256103_fold3.pt",
+      "sha256": "b955724c1b7d36ac4e2262f9844e521faca69f88172ae31151fca892fdae96b4",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (C_LEARNED_COMPACT_BRIDGE_629, seed=256103, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_C_LEARNED_COMPACT_BRIDGE_629_seed256103_fold4.pt",
+      "sha256": "01c3aab7c7180f702513a56b5490ecd696785b34703d7df75e857361cf57508f",
+      "size_bytes": 776185,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256103, fold=0)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256103_fold0.pt",
+      "sha256": "0f24e3745e67fd1a29429d5f16a80b54d1f7cd0718c8718d59d9e75f960c2366",
+      "size_bytes": 775619,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256103, fold=1)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256103_fold1.pt",
+      "sha256": "3d2b644c07ef21ccb1484c65c2dd28ebe15adaf3938f2ff96edc33c02ba57e21",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256103, fold=2)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256103_fold2.pt",
+      "sha256": "fbcd73fada532b19e4dbb50d29d1830a472670283ce6cc04275366ec31147863",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256103, fold=3)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256103_fold3.pt",
+      "sha256": "6b5825dcc8c57bd7f3eebf18a59f569cb24911c2e3e571a8c70e3971be4abbad",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    },
+    {
+      "description": "Stage-2 PreCondenseResidualBridge fold checkpoint (B_CAPACITY_CTRL_10TOK, seed=256103, fold=4)",
+      "num_parameters": 183668,
+      "num_tensors": 84,
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_B_CAPACITY_CTRL_10TOK_seed256103_fold4.pt",
+      "sha256": "fa7f2fd84e52bd8081673587f3026d873003e8bc64d0cff88f8eff0b2ddf6573",
+      "size_bytes": 775555,
+      "stage": "stage2_flywheel_regression_fold"
+    }
+  ],
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "hypothesis_id": "H256",
+  "model_task_scope": "regression_only",
+  "schema": "jope.h256.checkpoint_manifest/v1",
+  "total_checkpoints_saved": 100,
+  "unified_problem_and_solution_checkpoint": "/home/ubuntu/jope-data/h256/h256_fused_problem_and_solution_network.pt",
+  "top_level_canonical_checkpoints": {
+    "full_s3_reg_7split_pretrained_encoder_pt": {
+      "sha256": "70f213e73f0df8136fea0713fb78d97e6ff47d9c152c0bfc74a8e01e57c433b6"
+    },
+    "h256_fused_problem_and_solution_network_pt": {
+      "sha256": "b043731c99c95e8b22154727de001d4499c216c3ba9cb785a43a618e13b78a87"
+    }
+  },
+  "flagship_production_checkpoints": {
+    "stage1_full_s3_reg_all15796_encoder_pt": {
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/stage1_full_s3_reg_all15796_encoder.pt",
+      "sha256": "e2de78f920628d0f541253d235ba22dadf6c92e6be556ada8a151831d9e0b8a7",
+      "description": "Stage-1 Pre-Condense 92-token encoder trained on ALL 15,796 S3 7-split regression cells (0 binary/multiclass) + embedded KPI telemetry."
+    },
+    "h256_production_1219_dl_train_bundle_pt": {
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/h256_production_1219_dl_train_bundle.pt",
+      "sha256": "e2728b15d7c6047185292b5d2ad49a1c052eea8d294474cb1e92d74053913ffe",
+      "description": "Holdout-clean production bundle trained on all 1,219 DL-Train regression contexts + 11,121 S3 Policy-B regression cells + embedded KPI telemetry."
+    },
+    "h256_production_full_1310_regression_bundle_pt": {
+      "path": "/home/ubuntu/jope-data/h256/checkpoints/h256_production_full_1310_regression_bundle.pt",
+      "sha256": "e5e5c50c58c1a9a50519a0be61ccf35b5bc53bc951f7641a8bc189b7eace576c",
+      "description": "Full-dataset production bundle trained on ALL 1,310 regression flywheel contexts (1,219 DL-Train + 91 DL-Val) + ALL 15,796 S3 7-split regression cells + embedded KPI telemetry."
+    },
+    "training_and_validation_kpi_telemetry_json": {
+      "path": "/home/ubuntu/jope-data/h256/training_and_validation_kpi_telemetry.json",
+      "sha256": "9bd1ebaa4ff15f0bc22eb9ed6f64dac801659fd3105ff071f54fcc558500fa05"
+    },
+    "per_context_and_family_kpi_ledger_json": {
+      "path": "/home/ubuntu/jope-data/h256/per_context_and_family_kpi_ledger.json",
+      "sha256": "b55dbcedf95182ee78bdfbef51434eec3cb05d905eef61c25b2388335a43342b"
+    },
+    "top8_neural_reranker_fold_checkpoints": [
+      {
+        "seed": 256101,
+        "fold": 0,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256101_fold0.pt",
+        "sha256": "1400612f79ec328580574156115cc2e6601c1c9fc2452fa7b90ac555d294ac9c"
+      },
+      {
+        "seed": 256101,
+        "fold": 1,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256101_fold1.pt",
+        "sha256": "077ab1e263f1376395e84413131e0c57f4dc9e0f93023a3c3e76875e92dca827"
+      },
+      {
+        "seed": 256101,
+        "fold": 2,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256101_fold2.pt",
+        "sha256": "b6e09aad91c177751739c1dda9e15c4ec7a7138641c33b5b16b09d82de221cbd"
+      },
+      {
+        "seed": 256101,
+        "fold": 3,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256101_fold3.pt",
+        "sha256": "e33d0209577e11d1101ea0c576721b501f3d5d9bd6a9ad6621c752408bce4cc8"
+      },
+      {
+        "seed": 256101,
+        "fold": 4,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256101_fold4.pt",
+        "sha256": "d786c18f2794d81b8d37696c859c1a637d9ed7f146bd9f7f7931f3ac287ee632"
+      },
+      {
+        "seed": 256102,
+        "fold": 0,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256102_fold0.pt",
+        "sha256": "349dcbbac8063b3c7ed44f3689715f12389cc510a0a448b4a51c9ddc29ec1633"
+      },
+      {
+        "seed": 256102,
+        "fold": 1,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256102_fold1.pt",
+        "sha256": "364b4a8c1092b51beabc6647018c7e93984fb2a36fb497c3479595aa02a55fc2"
+      },
+      {
+        "seed": 256102,
+        "fold": 2,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256102_fold2.pt",
+        "sha256": "5b0d4ab4314797f5c95c5f47a8c6fc5cad2faeefbdb3410d303d48490911e767"
+      },
+      {
+        "seed": 256102,
+        "fold": 3,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256102_fold3.pt",
+        "sha256": "5cbc433c02b4ed9b3fa29cfd3485f540b4e004f135e49715b3a7cacb2466f6b8"
+      },
+      {
+        "seed": 256102,
+        "fold": 4,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256102_fold4.pt",
+        "sha256": "d8daef04f3fd4d9e2b4ee24c8b57a39d3db8349186561c96aff40bdd6981c649"
+      },
+      {
+        "seed": 256103,
+        "fold": 0,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256103_fold0.pt",
+        "sha256": "5421cf8254648faf44afa529ea7d6641e400b4d5c855c2c12f38cad94564c467"
+      },
+      {
+        "seed": 256103,
+        "fold": 1,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256103_fold1.pt",
+        "sha256": "5d9365a27a8a7ccbde80725fe9d18a0bc0e93c6183a11478635f141988d7a555"
+      },
+      {
+        "seed": 256103,
+        "fold": 2,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256103_fold2.pt",
+        "sha256": "e37501a051c0f8a87a7b81d2c08ab8c5310d8f61244dfb8a51c853b60e43da9f"
+      },
+      {
+        "seed": 256103,
+        "fold": 3,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256103_fold3.pt",
+        "sha256": "38559ebd3f66d9948f0c238f0c3fd96708b6d1a61344c64d43622a959cbee068"
+      },
+      {
+        "seed": 256103,
+        "fold": 4,
+        "path": "/home/ubuntu/jope-data/h256/checkpoints/stage2_top8_neural_reranker_seed256103_fold4.pt",
+        "sha256": "82f48cd8f209911e25cc2b3b875bfff53df302e014d07a0695b25b655016bc91"
+      }
+    ]
+  },
+  "rust_safetensors_inference_bundles": {
+    "h256_production_full_1310_regression_bundle.safetensors": {
+      "path": "research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/h256_production_full_1310_regression_bundle.safetensors",
+      "size_bytes": 3298740,
+      "sha256": "8c4b90ed8cbee2d9db041eb3bd9d3e4c2d42373e4e202f4bc7ec3971b960dbeb",
+      "tensor_count": 384,
+      "description": "100% Rust .safetensors bundle for the full 1,310-context + 15,796-S3 regression production model."
+    },
+    "h256_production_1219_dl_train_bundle.safetensors": {
+      "path": "research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/h256_production_1219_dl_train_bundle.safetensors",
+      "size_bytes": 3298740,
+      "sha256": "dabe6f10133ddcaca7f8ed1e182b481ad976ddafde52ab4dd330382e1112b442",
+      "tensor_count": 384,
+      "description": "100% Rust .safetensors bundle for the holdout-clean 1,219 DL-Train + 11,121 Policy-B S3 regression model."
+    },
+    "stage2_full_s3_reg_flywheel_pretrained_bridge.safetensors": {
+      "path": "research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/stage2_full_s3_reg_flywheel_pretrained_bridge.safetensors",
+      "size_bytes": 4512984,
+      "sha256": "70c1a68fb78842382b03c253f64e95039abfd3a8c23a3dfbae698b0bacc01167",
+      "tensor_count": 549,
+      "description": "100% Rust .safetensors bundle for the Stage-2 PreCondenseResidualBridge soup model + 5-fold ensemble + scalers + critics."
+    },
+    "stage1_full_s3_reg_all15796_encoder.safetensors": {
+      "path": "research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/stage1_full_s3_reg_all15796_encoder.safetensors",
+      "size_bytes": 71260,
+      "sha256": "021ed66999b5479278eb55b1d1430afb083cb0309a965b39f15be064ed4aaed3",
+      "tensor_count": 45,
+      "description": "100% Rust .safetensors bundle for the Stage-1 all-15,796 S3 7-split regression 92-token encoder."
+    },
+    "full_s3_reg_7split_pretrained_encoder.safetensors": {
+      "path": "research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/full_s3_reg_7split_pretrained_encoder.safetensors",
+      "size_bytes": 71260,
+      "sha256": "d6f49d3abc0c887ab40dd8fdb59216e8001cb7e23c480b7320907027ab3ec368",
+      "tensor_count": 45,
+      "description": "100% Rust .safetensors bundle for the Stage-1 Policy-B 11,121 S3 7-split regression 92-token encoder."
+    },
+    "sos_hurdle_and_sp_critic_models.safetensors": {
+      "path": "research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/sos_hurdle_and_sp_critic_models.safetensors",
+      "size_bytes": 34320,
+      "sha256": "f67ead9c4cd1821ffa87036bfbea0588d970df4a5443c92caa5eecbd8237a08c",
+      "tensor_count": 7,
+      "description": "100% Rust .safetensors bundle for the fitted Decomposed Hurdle / SOS & Self-Play linear critics + w1_proj_412x16."
+    },
+    "golden_inference_fixture_context0.safetensors": {
+      "path": "research/flywheel_selfplay/h256_pre_condense_residual_flywheel/weights/golden_inference_fixture_context0.safetensors",
+      "size_bytes": 3043580,
+      "sha256": "b64ba49f25eee8ffe76a31d20e5e0aff2cd8f5a4cf5834da3949951cd622f2ee",
+      "tensor_count": 76,
+      "description": "End-to-end golden inference fixture (.safetensors) for 100% Rust parity verification."
+    }
+  }
+}

@@ -18,6 +18,7 @@ pub(super) fn version_value() -> Value {
             "engine": cfg!(feature = "engine"),
             "mcp": cfg!(feature = "mcp"),
             "client": cfg!(feature = "client"),
+            "cloud_tls": cfg!(feature = "cloud-tls"),
             "embedded": bootstrap::EMBEDDED,
             "dev_keys": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
             "cuda": backend::CUDA_COMPILED,
