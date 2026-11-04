@@ -1,0 +1,84 @@
+{
+  "wave_id": "H339",
+  "slug": "h339_lr_halving_double_rounds",
+  "status": "INCOMPLETE",
+  "disposition": "INCOMPLETE_RUNTIME_FORECAST",
+  "verdict": null,
+  "scientific_outcome": "UNKNOWN",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "prereg_commit": "5543bd6e3648c371eaddf04bdda9c61fc18c7ec7",
+  "fit_source_commit": "7697c42be062a387efc88554d30228c233c2a3cd",
+  "regression": "EXACT PASS",
+  "tests": {
+    "status": "PASS",
+    "collected": 30,
+    "executed": 30,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "scope": "8LR-half/forecast +4physical-boundary +18analysis controls; two treatment-only synthetic native fits"
+  },
+  "forecast": {
+    "first_cell_seconds": 1059.8079736232758,
+    "workers": 4,
+    "remaining_cells": 35,
+    "remaining_batches": 9,
+    "safety_multiplier": 1.15,
+    "audit_score_reserve_seconds": 600,
+    "forecast_epoch": 1793832479.5369895,
+    "projected_finish_epoch": 1793844048.5495164,
+    "compute_stop_epoch": 1793843100,
+    "admit": false,
+    "rule": "ceil(35/workers)*first_completed_cell_seconds*1.15+600 < remaining window"
+  },
+  "execution": {
+    "completed_fit_cells": 1,
+    "required_fit_cells": 36,
+    "ranker_fits_verified": 819,
+    "required_ranker_fits": 29484,
+    "final_rankers_verified": 27,
+    "unchanged_final_veto_hashes": 3,
+    "fit_locks": 1,
+    "treatment_outer_model_score_calls": 0,
+    "outer_test_rows_before_lock": 0,
+    "synthetic_treatment_control_fits": 2,
+    "base_scientific_refits": 0
+  },
+  "gates": {
+    "base_regression": "PASS",
+    "first_cell_parameter_and_native_review": "PASS",
+    "full36_fit_audit": "NOT_RUN",
+    "all36_locks": "NOT_MET",
+    "outer_scoring": "NOT_RUN",
+    "numerical_comparison": "NOT_RUN"
+  },
+  "measured": {
+    "LRHALF_gain": null,
+    "LRHALF_harm": null,
+    "LRHALF_elo": null,
+    "paired_drop10": null,
+    "paired_lcb95": null,
+    "seed_consistency": null,
+    "config_agreement": null
+  },
+  "historical_control_medians": [
+    0.0643163334285782,
+    0.04821480030677507,
+    0.04360142642936269
+  ],
+  "elo_label": "reference = r882 slot0 (DL-Train outer); r3175 not measured on TRAIN",
+  "bootstrap": {
+    "draws": 10000,
+    "rng": 339191,
+    "status": "NOT_RUN"
+  },
+  "prefix_semantics": "Only constructor rounds doubled; unchanged num_iteration selected prefixes50/100/200. Not equal effective scored shrinkage.",
+  "dev91_rows_read": 0,
+  "r3175_train": "NOT_MEASURED",
+  "serving_authority": false,
+  "automatic_next": null
+}
