@@ -871,6 +871,3248 @@
       }
     }
   },
+  "dl_val91_all_models_2fold_inner_cv_tournament": {
+    "context_count": 91,
+    "cv_rmse_ratio_elo": {
+      "GPT6_Astra_Max": {
+        "context_mean": 0.992029,
+        "elo_delta_vs_opus5p5_extra": -283.67,
+        "family_gain_vs_opus5p5_extra": -0.257179,
+        "family_gain_vs_r882": -0.298772,
+        "family_mean": 0.998634,
+        "joint_elo": 1369.62,
+        "joint_elo_ci95": [
+          1252.44,
+          1483.85
+        ],
+        "pairwise_elo_vs_r882": 1390.57,
+        "pairwise_elo_vs_r882_ci95": [
+          1281.49,
+          1503.65
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          1,
+          0,
+          18
+        ],
+        "wtl_vs_r882_families": [
+          6,
+          0,
+          13
+        ]
+      },
+      "GPT6p1_Sol_Max": {
+        "context_mean": 1.26713,
+        "elo_delta_vs_opus5p5_extra": -66.35,
+        "family_gain_vs_opus5p5_extra": 0.029118,
+        "family_gain_vs_r882": -0.012476,
+        "family_mean": 1.284931,
+        "joint_elo": 1586.94,
+        "joint_elo_ci95": [
+          1507.66,
+          1690.72
+        ],
+        "pairwise_elo_vs_r882": 1547.79,
+        "pairwise_elo_vs_r882_ci95": [
+          1452.21,
+          1651.39
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "Gemini4_argon_high": {
+        "context_mean": 1.29514,
+        "elo_delta_vs_opus5p5_extra": -42.26,
+        "family_gain_vs_opus5p5_extra": 0.033504,
+        "family_gain_vs_r882": -0.00809,
+        "family_mean": 1.289317,
+        "joint_elo": 1611.03,
+        "joint_elo_ci95": [
+          1505.25,
+          1734.57
+        ],
+        "pairwise_elo_vs_r882": 1609.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1510.96,
+          1729.29
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "H256_ACTIVE_2PLUS2_UNIFIED": {
+        "context_mean": 1.337989,
+        "elo_delta_vs_opus5p5_extra": -52.47,
+        "family_gain_vs_opus5p5_extra": 0.097316,
+        "family_gain_vs_r882": 0.055722,
+        "family_mean": 1.353129,
+        "joint_elo": 1600.82,
+        "joint_elo_ci95": [
+          1570.22,
+          1634.5
+        ],
+        "pairwise_elo_vs_r882": 1642.69,
+        "pairwise_elo_vs_r882_ci95": [
+          1585.73,
+          1713.25
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H256_STATIC_0REV_TOP8_SOFT_VETO": {
+        "context_mean": 1.339768,
+        "elo_delta_vs_opus5p5_extra": -63.93,
+        "family_gain_vs_opus5p5_extra": 0.098964,
+        "family_gain_vs_r882": 0.057371,
+        "family_mean": 1.354777,
+        "joint_elo": 1589.36,
+        "joint_elo_ci95": [
+          1559.65,
+          1625.6
+        ],
+        "pairwise_elo_vs_r882": 1613.47,
+        "pairwise_elo_vs_r882_ci95": [
+          1551.52,
+          1673.96
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3": {
+        "context_mean": 1.396156,
+        "elo_delta_vs_opus5p5_extra": 48.82,
+        "family_gain_vs_opus5p5_extra": 0.154042,
+        "family_gain_vs_r882": 0.112448,
+        "family_mean": 1.409855,
+        "joint_elo": 1702.11,
+        "joint_elo_ci95": [
+          1659.97,
+          1760.05
+        ],
+        "pairwise_elo_vs_r882": 1797.28,
+        "pairwise_elo_vs_r882_ci95": [
+          1718.51,
+          1902.12
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          1,
+          11
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3_STACK3": {
+        "context_mean": 1.405724,
+        "elo_delta_vs_opus5p5_extra": 95.23,
+        "family_gain_vs_opus5p5_extra": 0.163343,
+        "family_gain_vs_r882": 0.12175,
+        "family_mean": 1.419156,
+        "joint_elo": 1748.52,
+        "joint_elo_ci95": [
+          1703.93,
+          1815.96
+        ],
+        "pairwise_elo_vs_r882": 1843.75,
+        "pairwise_elo_vs_r882_ci95": [
+          1752.12,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          11,
+          0,
+          8
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_HIGH_BATCH_EVO3_STACK3": {
+        "context_mean": 1.406252,
+        "elo_delta_vs_opus5p5_extra": 102.3,
+        "family_gain_vs_opus5p5_extra": 0.163849,
+        "family_gain_vs_r882": 0.122256,
+        "family_mean": 1.419663,
+        "joint_elo": 1755.59,
+        "joint_elo_ci95": [
+          1703.48,
+          1827.09
+        ],
+        "pairwise_elo_vs_r882": 1871.0,
+        "pairwise_elo_vs_r882_ci95": [
+          1790.33,
+          1983.11
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          11,
+          0,
+          8
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_MEDIUM_BATCH_EVO3": {
+        "context_mean": 1.397044,
+        "elo_delta_vs_opus5p5_extra": 57.54,
+        "family_gain_vs_opus5p5_extra": 0.154892,
+        "family_gain_vs_r882": 0.113299,
+        "family_mean": 1.410706,
+        "joint_elo": 1710.83,
+        "joint_elo_ci95": [
+          1666.67,
+          1772.56
+        ],
+        "pairwise_elo_vs_r882": 1819.39,
+        "pairwise_elo_vs_r882_ci95": [
+          1752.12,
+          1925.72
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_ACTIVE_2PLUS2": {
+        "context_mean": 1.338132,
+        "elo_delta_vs_opus5p5_extra": -43.53,
+        "family_gain_vs_opus5p5_extra": 0.097425,
+        "family_gain_vs_r882": 0.055831,
+        "family_mean": 1.353238,
+        "joint_elo": 1609.76,
+        "joint_elo_ci95": [
+          1575.38,
+          1651.13
+        ],
+        "pairwise_elo_vs_r882": 1651.39,
+        "pairwise_elo_vs_r882_ci95": [
+          1593.53,
+          1729.29
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_STATIC_0REV": {
+        "context_mean": 1.339802,
+        "elo_delta_vs_opus5p5_extra": -50.46,
+        "family_gain_vs_opus5p5_extra": 0.099024,
+        "family_gain_vs_r882": 0.057431,
+        "family_mean": 1.354837,
+        "joint_elo": 1602.83,
+        "joint_elo_ci95": [
+          1570.11,
+          1641.84
+        ],
+        "pairwise_elo_vs_r882": 1634.16,
+        "pairwise_elo_vs_r882_ci95": [
+          1566.56,
+          1703.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C1_BATCH11_PLUS_GEN0": {
+        "context_mean": 1.379433,
+        "elo_delta_vs_opus5p5_extra": 10.44,
+        "family_gain_vs_opus5p5_extra": 0.136987,
+        "family_gain_vs_r882": 0.095394,
+        "family_mean": 1.3928,
+        "joint_elo": 1663.73,
+        "joint_elo_ci95": [
+          1626.4,
+          1718.57
+        ],
+        "pairwise_elo_vs_r882": 1776.97,
+        "pairwise_elo_vs_r882_ci95": [
+          1708.08,
+          1871.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C2_BATCH11_PLUS_EVO1": {
+        "context_mean": 1.383225,
+        "elo_delta_vs_opus5p5_extra": 28.06,
+        "family_gain_vs_opus5p5_extra": 0.141522,
+        "family_gain_vs_r882": 0.099929,
+        "family_mean": 1.397335,
+        "joint_elo": 1681.35,
+        "joint_elo_ci95": [
+          1642.33,
+          1736.44
+        ],
+        "pairwise_elo_vs_r882": 1797.28,
+        "pairwise_elo_vs_r882_ci95": [
+          1729.29,
+          1902.12
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H275_RERANK8_CR_SOFT": {
+        "context_mean": 1.356142,
+        "elo_delta_vs_opus5p5_extra": -61.89,
+        "family_gain_vs_opus5p5_extra": 0.114649,
+        "family_gain_vs_r882": 0.073055,
+        "family_mean": 1.370462,
+        "joint_elo": 1591.41,
+        "joint_elo_ci95": [
+          1559.81,
+          1627.52
+        ],
+        "pairwise_elo_vs_r882": 1621.65,
+        "pairwise_elo_vs_r882_ci95": [
+          1574.17,
+          1674.08
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Kumo_Tabular_L": {
+        "context_mean": 1.714465,
+        "elo_delta_vs_opus5p5_extra": 342.33,
+        "family_gain_vs_opus5p5_extra": 0.448228,
+        "family_gain_vs_r882": 0.406634,
+        "family_mean": 1.704041,
+        "joint_elo": 1995.62,
+        "joint_elo_ci95": [
+          1828.2,
+          2295.32
+        ],
+        "pairwise_elo_vs_r882": 1776.97,
+        "pairwise_elo_vs_r882_ci95": [
+          1625.78,
+          2162.79
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          18,
+          0,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "Kumo_Tabular_S": {
+        "context_mean": 1.617074,
+        "elo_delta_vs_opus5p5_extra": 280.73,
+        "family_gain_vs_opus5p5_extra": 0.365251,
+        "family_gain_vs_r882": 0.323658,
+        "family_mean": 1.621064,
+        "joint_elo": 1934.02,
+        "joint_elo_ci95": [
+          1788.57,
+          2171.65
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1642.69,
+          2091.89
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          18,
+          0,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Mitra_v2": {
+        "context_mean": 1.514369,
+        "elo_delta_vs_opus5p5_extra": 178.05,
+        "family_gain_vs_opus5p5_extra": 0.240421,
+        "family_gain_vs_r882": 0.198827,
+        "family_mean": 1.496234,
+        "joint_elo": 1831.34,
+        "joint_elo_ci95": [
+          1668.19,
+          2060.78
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1642.69,
+          2091.89
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          15,
+          0,
+          4
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Opus5p5_Extra": {
+        "context_mean": 1.253011,
+        "elo_delta_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_r882": -0.041593,
+        "family_mean": 1.255813,
+        "joint_elo": 1653.29,
+        "joint_elo_ci95": [
+          1538.37,
+          1801.12
+        ],
+        "pairwise_elo_vs_r882": 1617.54,
+        "pairwise_elo_vs_r882_ci95": [
+          1503.65,
+          1764.26
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          0,
+          19,
+          0
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "PriorLabs_TabPFN_3p5": {
+        "context_mean": 1.547233,
+        "elo_delta_vs_opus5p5_extra": 243.13,
+        "family_gain_vs_opus5p5_extra": 0.275085,
+        "family_gain_vs_r882": 0.233492,
+        "family_mean": 1.530898,
+        "joint_elo": 1896.42,
+        "joint_elo_ci95": [
+          1743.05,
+          2161.97
+        ],
+        "pairwise_elo_vs_r882": 1740.48,
+        "pairwise_elo_vs_r882_ci95": [
+          1601.43,
+          2040.73
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          0,
+          2
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "PriorLabs_TabPFN_3p5_Single": {
+        "context_mean": 1.582546,
+        "elo_delta_vs_opus5p5_extra": 281.17,
+        "family_gain_vs_opus5p5_extra": 0.317885,
+        "family_gain_vs_r882": 0.276291,
+        "family_mean": 1.573698,
+        "joint_elo": 1934.46,
+        "joint_elo_ci95": [
+          1786.25,
+          2189.37
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1651.39,
+          2040.73
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          19,
+          0,
+          0
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "R882": {
+        "context_mean": 1.279905,
+        "elo_delta_vs_opus5p5_extra": -153.29,
+        "family_gain_vs_opus5p5_extra": 0.041593,
+        "family_gain_vs_r882": 0.0,
+        "family_mean": 1.297407,
+        "joint_elo": 1500.0,
+        "joint_elo_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "pairwise_elo_vs_r882": 1500.0,
+        "pairwise_elo_vs_r882_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          5,
+          0,
+          14
+        ],
+        "wtl_vs_r882_families": [
+          0,
+          19,
+          0
+        ]
+      },
+      "TabDPT_1p3": {
+        "context_mean": 1.464966,
+        "elo_delta_vs_opus5p5_extra": 164.58,
+        "family_gain_vs_opus5p5_extra": 0.197912,
+        "family_gain_vs_r882": 0.156319,
+        "family_mean": 1.453725,
+        "joint_elo": 1817.87,
+        "joint_elo_ci95": [
+          1676.38,
+          2030.73
+        ],
+        "pairwise_elo_vs_r882": 1740.48,
+        "pairwise_elo_vs_r882_ci95": [
+          1609.43,
+          2001.48
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "TabFM": {
+        "context_mean": 1.509069,
+        "elo_delta_vs_opus5p5_extra": 188.75,
+        "family_gain_vs_opus5p5_extra": 0.250357,
+        "family_gain_vs_r882": 0.208764,
+        "family_mean": 1.506171,
+        "joint_elo": 1842.05,
+        "joint_elo_ci95": [
+          1701.61,
+          2060.94
+        ],
+        "pairwise_elo_vs_r882": 1740.48,
+        "pairwise_elo_vs_r882_ci95": [
+          1601.43,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "TabFM_Ensemble": {
+        "context_mean": 1.573928,
+        "elo_delta_vs_opus5p5_extra": 262.73,
+        "family_gain_vs_opus5p5_extra": 0.314148,
+        "family_gain_vs_r882": 0.272554,
+        "family_mean": 1.569961,
+        "joint_elo": 1916.02,
+        "joint_elo_ci95": [
+          1773.56,
+          2151.61
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1642.69,
+          2162.79
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          18,
+          0,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "TabICL_v2": {
+        "context_mean": 1.447642,
+        "elo_delta_vs_opus5p5_extra": 149.34,
+        "family_gain_vs_opus5p5_extra": 0.183376,
+        "family_gain_vs_r882": 0.141783,
+        "family_mean": 1.439189,
+        "joint_elo": 1802.63,
+        "joint_elo_ci95": [
+          1661.52,
+          2009.52
+        ],
+        "pairwise_elo_vs_r882": 1729.29,
+        "pairwise_elo_vs_r882_ci95": [
+          1601.43,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      }
+    },
+    "family_count": 19,
+    "protocol": "jope.s1-two-fold/v1 (exact 2-fold inner CV on all 91 DL-Val91 contexts / 19 unseen families)",
+    "s1_utility_gated_elo": {
+      "GPT6_Astra_Max": {
+        "context_mean": 0.879144,
+        "elo_delta_vs_opus5p5_extra": -265.72,
+        "family_gain_vs_opus5p5_extra": -0.229491,
+        "family_gain_vs_r882": -0.270521,
+        "family_mean": 0.883094,
+        "joint_elo": 1379.76,
+        "joint_elo_ci95": [
+          1265.92,
+          1494.19
+        ],
+        "pairwise_elo_vs_r882": 1390.57,
+        "pairwise_elo_vs_r882_ci95": [
+          1281.49,
+          1503.65
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          1,
+          0,
+          18
+        ],
+        "wtl_vs_r882_families": [
+          7,
+          0,
+          12
+        ]
+      },
+      "GPT6p1_Sol_Max": {
+        "context_mean": 1.125242,
+        "elo_delta_vs_opus5p5_extra": -72.5,
+        "family_gain_vs_opus5p5_extra": 0.028988,
+        "family_gain_vs_r882": -0.012043,
+        "family_mean": 1.141572,
+        "joint_elo": 1572.98,
+        "joint_elo_ci95": [
+          1492.76,
+          1681.23
+        ],
+        "pairwise_elo_vs_r882": 1525.62,
+        "pairwise_elo_vs_r882_ci95": [
+          1429.64,
+          1634.16
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          5,
+          0,
+          14
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "Gemini4_argon_high": {
+        "context_mean": 1.147858,
+        "elo_delta_vs_opus5p5_extra": -36.41,
+        "family_gain_vs_opus5p5_extra": 0.028119,
+        "family_gain_vs_r882": -0.012912,
+        "family_mean": 1.140704,
+        "joint_elo": 1609.07,
+        "joint_elo_ci95": [
+          1504.08,
+          1736.51
+        ],
+        "pairwise_elo_vs_r882": 1601.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1510.78,
+          1708.08
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "H256_ACTIVE_2PLUS2_UNIFIED": {
+        "context_mean": 1.187871,
+        "elo_delta_vs_opus5p5_extra": -65.04,
+        "family_gain_vs_opus5p5_extra": 0.089108,
+        "family_gain_vs_r882": 0.048077,
+        "family_mean": 1.201692,
+        "joint_elo": 1580.43,
+        "joint_elo_ci95": [
+          1549.99,
+          1613.76
+        ],
+        "pairwise_elo_vs_r882": 1625.78,
+        "pairwise_elo_vs_r882_ci95": [
+          1570.27,
+          1693.05
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H256_STATIC_0REV_TOP8_SOFT_VETO": {
+        "context_mean": 1.189621,
+        "elo_delta_vs_opus5p5_extra": -79.28,
+        "family_gain_vs_opus5p5_extra": 0.090711,
+        "family_gain_vs_r882": 0.04968,
+        "family_mean": 1.203296,
+        "joint_elo": 1566.2,
+        "joint_elo_ci95": [
+          1537.53,
+          1599.58
+        ],
+        "pairwise_elo_vs_r882": 1597.47,
+        "pairwise_elo_vs_r882_ci95": [
+          1540.37,
+          1660.26
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3": {
+        "context_mean": 1.24071,
+        "elo_delta_vs_opus5p5_extra": 44.03,
+        "family_gain_vs_opus5p5_extra": 0.140472,
+        "family_gain_vs_r882": 0.099441,
+        "family_mean": 1.253056,
+        "joint_elo": 1689.51,
+        "joint_elo_ci95": [
+          1647.72,
+          1747.94
+        ],
+        "pairwise_elo_vs_r882": 1758.12,
+        "pairwise_elo_vs_r882_ci95": [
+          1683.38,
+          1861.54
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3_STACK3": {
+        "context_mean": 1.248988,
+        "elo_delta_vs_opus5p5_extra": 92.96,
+        "family_gain_vs_opus5p5_extra": 0.148461,
+        "family_gain_vs_r882": 0.10743,
+        "family_mean": 1.261046,
+        "joint_elo": 1738.44,
+        "joint_elo_ci95": [
+          1687.69,
+          1808.97
+        ],
+        "pairwise_elo_vs_r882": 1797.28,
+        "pairwise_elo_vs_r882_ci95": [
+          1718.51,
+          1913.59
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_HIGH_BATCH_EVO3_STACK3": {
+        "context_mean": 1.249161,
+        "elo_delta_vs_opus5p5_extra": 104.03,
+        "family_gain_vs_opus5p5_extra": 0.148627,
+        "family_gain_vs_r882": 0.107596,
+        "family_mean": 1.261212,
+        "joint_elo": 1749.51,
+        "joint_elo_ci95": [
+          1697.34,
+          1824.22
+        ],
+        "pairwise_elo_vs_r882": 1835.34,
+        "pairwise_elo_vs_r882_ci95": [
+          1764.11,
+          1938.62
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_MEDIUM_BATCH_EVO3": {
+        "context_mean": 1.241287,
+        "elo_delta_vs_opus5p5_extra": 56.89,
+        "family_gain_vs_opus5p5_extra": 0.141024,
+        "family_gain_vs_r882": 0.099994,
+        "family_mean": 1.253609,
+        "joint_elo": 1702.37,
+        "joint_elo_ci95": [
+          1660.5,
+          1763.7
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1723.85,
+          1891.24
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_ACTIVE_2PLUS2": {
+        "context_mean": 1.187266,
+        "elo_delta_vs_opus5p5_extra": -53.44,
+        "family_gain_vs_opus5p5_extra": 0.088492,
+        "family_gain_vs_r882": 0.047461,
+        "family_mean": 1.201077,
+        "joint_elo": 1592.04,
+        "joint_elo_ci95": [
+          1560.49,
+          1629.85
+        ],
+        "pairwise_elo_vs_r882": 1634.16,
+        "pairwise_elo_vs_r882_ci95": [
+          1578.01,
+          1698.11
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_STATIC_0REV": {
+        "context_mean": 1.188993,
+        "elo_delta_vs_opus5p5_extra": -63.75,
+        "family_gain_vs_opus5p5_extra": 0.090146,
+        "family_gain_vs_r882": 0.049116,
+        "family_mean": 1.202731,
+        "joint_elo": 1581.73,
+        "joint_elo_ci95": [
+          1550.6,
+          1619.4
+        ],
+        "pairwise_elo_vs_r882": 1609.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1547.79,
+          1673.96
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C1_BATCH11_PLUS_GEN0": {
+        "context_mean": 1.224702,
+        "elo_delta_vs_opus5p5_extra": 5.22,
+        "family_gain_vs_opus5p5_extra": 0.124351,
+        "family_gain_vs_r882": 0.083321,
+        "family_mean": 1.236936,
+        "joint_elo": 1650.7,
+        "joint_elo_ci95": [
+          1615.57,
+          1703.58
+        ],
+        "pairwise_elo_vs_r882": 1752.12,
+        "pairwise_elo_vs_r882_ci95": [
+          1688.18,
+          1852.47
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C2_BATCH11_PLUS_EVO1": {
+        "context_mean": 1.227799,
+        "elo_delta_vs_opus5p5_extra": 20.12,
+        "family_gain_vs_opus5p5_extra": 0.127957,
+        "family_gain_vs_r882": 0.086926,
+        "family_mean": 1.240541,
+        "joint_elo": 1665.6,
+        "joint_elo_ci95": [
+          1628.71,
+          1718.29
+        ],
+        "pairwise_elo_vs_r882": 1770.54,
+        "pairwise_elo_vs_r882_ci95": [
+          1703.0,
+          1871.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H275_RERANK8_CR_SOFT": {
+        "context_mean": 1.204474,
+        "elo_delta_vs_opus5p5_extra": -74.57,
+        "family_gain_vs_opus5p5_extra": 0.104939,
+        "family_gain_vs_r882": 0.063908,
+        "family_mean": 1.217523,
+        "joint_elo": 1570.91,
+        "joint_elo_ci95": [
+          1536.09,
+          1611.56
+        ],
+        "pairwise_elo_vs_r882": 1609.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1555.17,
+          1669.46
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Kumo_Tabular_L": {
+        "context_mean": 1.509712,
+        "elo_delta_vs_opus5p5_extra": 335.42,
+        "family_gain_vs_opus5p5_extra": 0.388104,
+        "family_gain_vs_r882": 0.347074,
+        "family_mean": 1.500689,
+        "joint_elo": 1980.9,
+        "joint_elo_ci95": [
+          1808.88,
+          2267.2
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1634.16,
+          2280.87
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          1,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "Kumo_Tabular_S": {
+        "context_mean": 1.390438,
+        "elo_delta_vs_opus5p5_extra": 278.7,
+        "family_gain_vs_opus5p5_extra": 0.283811,
+        "family_gain_vs_r882": 0.24278,
+        "family_mean": 1.396395,
+        "joint_elo": 1924.18,
+        "joint_elo_ci95": [
+          1778.3,
+          2162.92
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1642.69,
+          2040.73
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          0,
+          2
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "Mitra_v2": {
+        "context_mean": 1.341184,
+        "elo_delta_vs_opus5p5_extra": 184.0,
+        "family_gain_vs_opus5p5_extra": 0.212794,
+        "family_gain_vs_r882": 0.171763,
+        "family_mean": 1.325378,
+        "joint_elo": 1829.48,
+        "joint_elo_ci95": [
+          1666.21,
+          2065.29
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1642.69,
+          2091.89
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          15,
+          0,
+          4
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Opus5p5_Extra": {
+        "context_mean": 1.112319,
+        "elo_delta_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_r882": -0.041031,
+        "family_mean": 1.112585,
+        "joint_elo": 1645.48,
+        "joint_elo_ci95": [
+          1531.99,
+          1798.05
+        ],
+        "pairwise_elo_vs_r882": 1617.54,
+        "pairwise_elo_vs_r882_ci95": [
+          1503.65,
+          1764.26
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          0,
+          19,
+          0
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "PriorLabs_TabPFN_3p5": {
+        "context_mean": 1.364429,
+        "elo_delta_vs_opus5p5_extra": 243.42,
+        "family_gain_vs_opus5p5_extra": 0.234247,
+        "family_gain_vs_r882": 0.193216,
+        "family_mean": 1.346831,
+        "joint_elo": 1888.9,
+        "joint_elo_ci95": [
+          1729.19,
+          2175.44
+        ],
+        "pairwise_elo_vs_r882": 1764.26,
+        "pairwise_elo_vs_r882_ci95": [
+          1625.78,
+          2091.89
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          0,
+          2
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "PriorLabs_TabPFN_3p5_Single": {
+        "context_mean": 1.400143,
+        "elo_delta_vs_opus5p5_extra": 273.68,
+        "family_gain_vs_opus5p5_extra": 0.278156,
+        "family_gain_vs_r882": 0.237125,
+        "family_mean": 1.39074,
+        "joint_elo": 1919.16,
+        "joint_elo_ci95": [
+          1773.94,
+          2179.74
+        ],
+        "pairwise_elo_vs_r882": 1776.97,
+        "pairwise_elo_vs_r882_ci95": [
+          1651.39,
+          2040.73
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          19,
+          0,
+          0
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "R882": {
+        "context_mean": 1.137794,
+        "elo_delta_vs_opus5p5_extra": -145.48,
+        "family_gain_vs_opus5p5_extra": 0.041031,
+        "family_gain_vs_r882": 0.0,
+        "family_mean": 1.153615,
+        "joint_elo": 1500.0,
+        "joint_elo_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "pairwise_elo_vs_r882": 1500.0,
+        "pairwise_elo_vs_r882_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          5,
+          0,
+          14
+        ],
+        "wtl_vs_r882_families": [
+          0,
+          19,
+          0
+        ]
+      },
+      "TabDPT_1p3": {
+        "context_mean": 1.295813,
+        "elo_delta_vs_opus5p5_extra": 163.98,
+        "family_gain_vs_opus5p5_extra": 0.170763,
+        "family_gain_vs_r882": 0.129732,
+        "family_mean": 1.283347,
+        "joint_elo": 1809.46,
+        "joint_elo_ci95": [
+          1666.87,
+          2031.63
+        ],
+        "pairwise_elo_vs_r882": 1752.12,
+        "pairwise_elo_vs_r882_ci95": [
+          1609.43,
+          2091.89
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "TabFM": {
+        "context_mean": 1.329774,
+        "elo_delta_vs_opus5p5_extra": 177.52,
+        "family_gain_vs_opus5p5_extra": 0.213034,
+        "family_gain_vs_r882": 0.172003,
+        "family_mean": 1.325618,
+        "joint_elo": 1823.0,
+        "joint_elo_ci95": [
+          1681.47,
+          2047.77
+        ],
+        "pairwise_elo_vs_r882": 1729.29,
+        "pairwise_elo_vs_r882_ci95": [
+          1585.73,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "TabFM_Ensemble": {
+        "context_mean": 1.391805,
+        "elo_delta_vs_opus5p5_extra": 270.01,
+        "family_gain_vs_opus5p5_extra": 0.276336,
+        "family_gain_vs_r882": 0.235305,
+        "family_mean": 1.38892,
+        "joint_elo": 1915.49,
+        "joint_elo_ci95": [
+          1765.7,
+          2156.87
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1642.69,
+          2162.79
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          18,
+          0,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "TabICL_v2": {
+        "context_mean": 1.278203,
+        "elo_delta_vs_opus5p5_extra": 153.15,
+        "family_gain_vs_opus5p5_extra": 0.156877,
+        "family_gain_vs_r882": 0.115846,
+        "family_mean": 1.269461,
+        "joint_elo": 1798.63,
+        "joint_elo_ci95": [
+          1655.57,
+          2017.63
+        ],
+        "pairwise_elo_vs_r882": 1740.48,
+        "pairwise_elo_vs_r882_ci95": [
+          1601.43,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      }
+    },
+    "s1_utility_unconstrained_elo": {
+      "GPT6_Astra_Max": {
+        "context_mean": 0.879144,
+        "elo_delta_vs_opus5p5_extra": -265.75,
+        "family_gain_vs_opus5p5_extra": -0.229491,
+        "family_gain_vs_r882": -0.270521,
+        "family_mean": 0.883094,
+        "joint_elo": 1380.17,
+        "joint_elo_ci95": [
+          1265.96,
+          1495.11
+        ],
+        "pairwise_elo_vs_r882": 1390.57,
+        "pairwise_elo_vs_r882_ci95": [
+          1281.49,
+          1503.65
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          1,
+          0,
+          18
+        ],
+        "wtl_vs_r882_families": [
+          7,
+          0,
+          12
+        ]
+      },
+      "GPT6p1_Sol_Max": {
+        "context_mean": 1.125242,
+        "elo_delta_vs_opus5p5_extra": -72.51,
+        "family_gain_vs_opus5p5_extra": 0.028988,
+        "family_gain_vs_r882": -0.012043,
+        "family_mean": 1.141572,
+        "joint_elo": 1573.41,
+        "joint_elo_ci95": [
+          1493.11,
+          1681.75
+        ],
+        "pairwise_elo_vs_r882": 1525.62,
+        "pairwise_elo_vs_r882_ci95": [
+          1429.64,
+          1634.16
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          5,
+          0,
+          14
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "Gemini4_argon_high": {
+        "context_mean": 1.147858,
+        "elo_delta_vs_opus5p5_extra": -36.41,
+        "family_gain_vs_opus5p5_extra": 0.028119,
+        "family_gain_vs_r882": -0.012912,
+        "family_mean": 1.140704,
+        "joint_elo": 1609.51,
+        "joint_elo_ci95": [
+          1504.34,
+          1736.55
+        ],
+        "pairwise_elo_vs_r882": 1601.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1510.78,
+          1708.08
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "H256_ACTIVE_2PLUS2_UNIFIED": {
+        "context_mean": 1.187871,
+        "elo_delta_vs_opus5p5_extra": -65.05,
+        "family_gain_vs_opus5p5_extra": 0.089108,
+        "family_gain_vs_r882": 0.048077,
+        "family_mean": 1.201692,
+        "joint_elo": 1580.87,
+        "joint_elo_ci95": [
+          1550.35,
+          1614.32
+        ],
+        "pairwise_elo_vs_r882": 1625.78,
+        "pairwise_elo_vs_r882_ci95": [
+          1570.27,
+          1693.05
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H256_STATIC_0REV_TOP8_SOFT_VETO": {
+        "context_mean": 1.189621,
+        "elo_delta_vs_opus5p5_extra": -79.29,
+        "family_gain_vs_opus5p5_extra": 0.090711,
+        "family_gain_vs_r882": 0.04968,
+        "family_mean": 1.203296,
+        "joint_elo": 1566.63,
+        "joint_elo_ci95": [
+          1537.68,
+          1600.46
+        ],
+        "pairwise_elo_vs_r882": 1597.47,
+        "pairwise_elo_vs_r882_ci95": [
+          1540.37,
+          1660.26
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3": {
+        "context_mean": 1.24071,
+        "elo_delta_vs_opus5p5_extra": 44.04,
+        "family_gain_vs_opus5p5_extra": 0.140472,
+        "family_gain_vs_r882": 0.099441,
+        "family_mean": 1.253056,
+        "joint_elo": 1689.96,
+        "joint_elo_ci95": [
+          1648.52,
+          1748.56
+        ],
+        "pairwise_elo_vs_r882": 1758.12,
+        "pairwise_elo_vs_r882_ci95": [
+          1683.38,
+          1861.54
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3_STACK3": {
+        "context_mean": 1.248988,
+        "elo_delta_vs_opus5p5_extra": 92.98,
+        "family_gain_vs_opus5p5_extra": 0.148461,
+        "family_gain_vs_r882": 0.10743,
+        "family_mean": 1.261046,
+        "joint_elo": 1738.9,
+        "joint_elo_ci95": [
+          1687.84,
+          1809.55
+        ],
+        "pairwise_elo_vs_r882": 1797.28,
+        "pairwise_elo_vs_r882_ci95": [
+          1718.51,
+          1913.59
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_HIGH_BATCH_EVO3_STACK3": {
+        "context_mean": 1.249161,
+        "elo_delta_vs_opus5p5_extra": 104.04,
+        "family_gain_vs_opus5p5_extra": 0.148627,
+        "family_gain_vs_r882": 0.107596,
+        "family_mean": 1.261212,
+        "joint_elo": 1749.97,
+        "joint_elo_ci95": [
+          1697.55,
+          1824.78
+        ],
+        "pairwise_elo_vs_r882": 1835.34,
+        "pairwise_elo_vs_r882_ci95": [
+          1764.11,
+          1938.62
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_MEDIUM_BATCH_EVO3": {
+        "context_mean": 1.241287,
+        "elo_delta_vs_opus5p5_extra": 56.9,
+        "family_gain_vs_opus5p5_extra": 0.141024,
+        "family_gain_vs_r882": 0.099994,
+        "family_mean": 1.253609,
+        "joint_elo": 1702.82,
+        "joint_elo_ci95": [
+          1660.93,
+          1764.09
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1723.85,
+          1891.24
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_ACTIVE_2PLUS2": {
+        "context_mean": 1.187266,
+        "elo_delta_vs_opus5p5_extra": -53.45,
+        "family_gain_vs_opus5p5_extra": 0.088492,
+        "family_gain_vs_r882": 0.047461,
+        "family_mean": 1.201077,
+        "joint_elo": 1592.48,
+        "joint_elo_ci95": [
+          1560.73,
+          1630.53
+        ],
+        "pairwise_elo_vs_r882": 1634.16,
+        "pairwise_elo_vs_r882_ci95": [
+          1578.01,
+          1698.11
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_STATIC_0REV": {
+        "context_mean": 1.188993,
+        "elo_delta_vs_opus5p5_extra": -63.76,
+        "family_gain_vs_opus5p5_extra": 0.090146,
+        "family_gain_vs_r882": 0.049116,
+        "family_mean": 1.202731,
+        "joint_elo": 1582.17,
+        "joint_elo_ci95": [
+          1550.75,
+          1620.46
+        ],
+        "pairwise_elo_vs_r882": 1609.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1547.79,
+          1673.96
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C1_BATCH11_PLUS_GEN0": {
+        "context_mean": 1.224702,
+        "elo_delta_vs_opus5p5_extra": 5.22,
+        "family_gain_vs_opus5p5_extra": 0.124351,
+        "family_gain_vs_r882": 0.083321,
+        "family_mean": 1.236936,
+        "joint_elo": 1651.15,
+        "joint_elo_ci95": [
+          1615.83,
+          1703.82
+        ],
+        "pairwise_elo_vs_r882": 1752.12,
+        "pairwise_elo_vs_r882_ci95": [
+          1688.18,
+          1852.47
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C2_BATCH11_PLUS_EVO1": {
+        "context_mean": 1.227799,
+        "elo_delta_vs_opus5p5_extra": 20.12,
+        "family_gain_vs_opus5p5_extra": 0.127957,
+        "family_gain_vs_r882": 0.086926,
+        "family_mean": 1.240541,
+        "joint_elo": 1666.05,
+        "joint_elo_ci95": [
+          1629.21,
+          1719.11
+        ],
+        "pairwise_elo_vs_r882": 1770.54,
+        "pairwise_elo_vs_r882_ci95": [
+          1703.0,
+          1871.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H275_RERANK8_CR_SOFT": {
+        "context_mean": 1.204474,
+        "elo_delta_vs_opus5p5_extra": -74.58,
+        "family_gain_vs_opus5p5_extra": 0.104939,
+        "family_gain_vs_r882": 0.063908,
+        "family_mean": 1.217523,
+        "joint_elo": 1571.35,
+        "joint_elo_ci95": [
+          1536.09,
+          1611.85
+        ],
+        "pairwise_elo_vs_r882": 1609.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1555.17,
+          1669.46
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Kumo_Tabular_L": {
+        "context_mean": 1.509712,
+        "elo_delta_vs_opus5p5_extra": 335.47,
+        "family_gain_vs_opus5p5_extra": 0.388104,
+        "family_gain_vs_r882": 0.347074,
+        "family_mean": 1.500689,
+        "joint_elo": 1981.4,
+        "joint_elo_ci95": [
+          1809.28,
+          2268.32
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1634.16,
+          2280.87
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          1,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "Kumo_Tabular_S": {
+        "context_mean": 1.41754,
+        "elo_delta_vs_opus5p5_extra": 279.62,
+        "family_gain_vs_opus5p5_extra": 0.309772,
+        "family_gain_vs_r882": 0.268741,
+        "family_mean": 1.422356,
+        "joint_elo": 1925.54,
+        "joint_elo_ci95": [
+          1778.59,
+          2162.92
+        ],
+        "pairwise_elo_vs_r882": 1804.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1651.39,
+          2093.66
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          18,
+          0,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Mitra_v2": {
+        "context_mean": 1.341184,
+        "elo_delta_vs_opus5p5_extra": 184.03,
+        "family_gain_vs_opus5p5_extra": 0.212794,
+        "family_gain_vs_r882": 0.171763,
+        "family_mean": 1.325378,
+        "joint_elo": 1829.95,
+        "joint_elo_ci95": [
+          1666.7,
+          2065.29
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1642.69,
+          2091.89
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          15,
+          0,
+          4
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Opus5p5_Extra": {
+        "context_mean": 1.112319,
+        "elo_delta_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_r882": -0.041031,
+        "family_mean": 1.112585,
+        "joint_elo": 1645.92,
+        "joint_elo_ci95": [
+          1531.99,
+          1798.06
+        ],
+        "pairwise_elo_vs_r882": 1617.54,
+        "pairwise_elo_vs_r882_ci95": [
+          1503.65,
+          1764.26
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          0,
+          19,
+          0
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "PriorLabs_TabPFN_3p5": {
+        "context_mean": 1.364429,
+        "elo_delta_vs_opus5p5_extra": 243.45,
+        "family_gain_vs_opus5p5_extra": 0.234247,
+        "family_gain_vs_r882": 0.193216,
+        "family_mean": 1.346831,
+        "joint_elo": 1889.38,
+        "joint_elo_ci95": [
+          1729.86,
+          2175.81
+        ],
+        "pairwise_elo_vs_r882": 1764.26,
+        "pairwise_elo_vs_r882_ci95": [
+          1625.78,
+          2091.89
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          0,
+          2
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "PriorLabs_TabPFN_3p5_Single": {
+        "context_mean": 1.400143,
+        "elo_delta_vs_opus5p5_extra": 273.73,
+        "family_gain_vs_opus5p5_extra": 0.278156,
+        "family_gain_vs_r882": 0.237125,
+        "family_mean": 1.39074,
+        "joint_elo": 1919.65,
+        "joint_elo_ci95": [
+          1775.52,
+          2181.2
+        ],
+        "pairwise_elo_vs_r882": 1776.97,
+        "pairwise_elo_vs_r882_ci95": [
+          1651.39,
+          2040.73
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          19,
+          0,
+          0
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "R882": {
+        "context_mean": 1.137794,
+        "elo_delta_vs_opus5p5_extra": -145.92,
+        "family_gain_vs_opus5p5_extra": 0.041031,
+        "family_gain_vs_r882": 0.0,
+        "family_mean": 1.153615,
+        "joint_elo": 1500.0,
+        "joint_elo_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "pairwise_elo_vs_r882": 1500.0,
+        "pairwise_elo_vs_r882_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          5,
+          0,
+          14
+        ],
+        "wtl_vs_r882_families": [
+          0,
+          19,
+          0
+        ]
+      },
+      "TabDPT_1p3": {
+        "context_mean": 1.295813,
+        "elo_delta_vs_opus5p5_extra": 164.01,
+        "family_gain_vs_opus5p5_extra": 0.170763,
+        "family_gain_vs_r882": 0.129732,
+        "family_mean": 1.283347,
+        "joint_elo": 1809.93,
+        "joint_elo_ci95": [
+          1667.26,
+          2032.9
+        ],
+        "pairwise_elo_vs_r882": 1752.12,
+        "pairwise_elo_vs_r882_ci95": [
+          1609.43,
+          2091.89
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "TabFM": {
+        "context_mean": 1.329774,
+        "elo_delta_vs_opus5p5_extra": 177.18,
+        "family_gain_vs_opus5p5_extra": 0.213034,
+        "family_gain_vs_r882": 0.172003,
+        "family_mean": 1.325618,
+        "joint_elo": 1823.1,
+        "joint_elo_ci95": [
+          1681.55,
+          2048.12
+        ],
+        "pairwise_elo_vs_r882": 1729.29,
+        "pairwise_elo_vs_r882_ci95": [
+          1585.73,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "TabFM_Ensemble": {
+        "context_mean": 1.391805,
+        "elo_delta_vs_opus5p5_extra": 270.05,
+        "family_gain_vs_opus5p5_extra": 0.276336,
+        "family_gain_vs_r882": 0.235305,
+        "family_mean": 1.38892,
+        "joint_elo": 1915.98,
+        "joint_elo_ci95": [
+          1766.52,
+          2157.58
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1642.69,
+          2162.79
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          18,
+          0,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "TabICL_v2": {
+        "context_mean": 1.278203,
+        "elo_delta_vs_opus5p5_extra": 153.17,
+        "family_gain_vs_opus5p5_extra": 0.156877,
+        "family_gain_vs_r882": 0.115846,
+        "family_mean": 1.269461,
+        "joint_elo": 1799.09,
+        "joint_elo_ci95": [
+          1656.75,
+          2017.67
+        ],
+        "pairwise_elo_vs_r882": 1740.48,
+        "pairwise_elo_vs_r882_ci95": [
+          1601.43,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      }
+    },
+    "tabular_foundation_gate_pass_counts": {
+      "Kumo_Tabular_L": 91,
+      "Kumo_Tabular_S": 90,
+      "Mitra_v2": 91,
+      "PriorLabs_TabPFN_3p5": 91,
+      "PriorLabs_TabPFN_3p5_Single": 91,
+      "TabDPT_1p3": 91,
+      "TabFM": 91,
+      "TabFM_Ensemble": 91,
+      "TabICL_v2": 91
+    }
+  },
+  "dl_val91_s3_precomputed_reference_tournament": {
+    "cv_rmse_ratio_elo": {
+      "GPT6_Astra_Max": {
+        "context_mean": 0.992029,
+        "elo_delta_vs_opus5p5_extra": -280.4,
+        "family_gain_vs_opus5p5_extra": -0.257179,
+        "family_gain_vs_r882": -0.298772,
+        "family_mean": 0.998634,
+        "joint_elo": 1383.8,
+        "joint_elo_ci95": [
+          1259.08,
+          1501.39
+        ],
+        "pairwise_elo_vs_r882": 1390.57,
+        "pairwise_elo_vs_r882_ci95": [
+          1281.49,
+          1503.65
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          1,
+          0,
+          18
+        ],
+        "wtl_vs_r882_families": [
+          6,
+          0,
+          13
+        ]
+      },
+      "GPT6p1_Sol_Max": {
+        "context_mean": 1.26713,
+        "elo_delta_vs_opus5p5_extra": -72.09,
+        "family_gain_vs_opus5p5_extra": 0.029118,
+        "family_gain_vs_r882": -0.012476,
+        "family_mean": 1.284931,
+        "joint_elo": 1592.11,
+        "joint_elo_ci95": [
+          1513.79,
+          1690.07
+        ],
+        "pairwise_elo_vs_r882": 1547.79,
+        "pairwise_elo_vs_r882_ci95": [
+          1452.21,
+          1651.39
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "Gemini4_argon_high": {
+        "context_mean": 1.29514,
+        "elo_delta_vs_opus5p5_extra": -44.81,
+        "family_gain_vs_opus5p5_extra": 0.033504,
+        "family_gain_vs_r882": -0.00809,
+        "family_mean": 1.289317,
+        "joint_elo": 1619.39,
+        "joint_elo_ci95": [
+          1519.47,
+          1735.87
+        ],
+        "pairwise_elo_vs_r882": 1609.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1510.96,
+          1729.29
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "H256_ACTIVE_2PLUS2_UNIFIED": {
+        "context_mean": 1.337989,
+        "elo_delta_vs_opus5p5_extra": -60.74,
+        "family_gain_vs_opus5p5_extra": 0.097316,
+        "family_gain_vs_r882": 0.055722,
+        "family_mean": 1.353129,
+        "joint_elo": 1603.45,
+        "joint_elo_ci95": [
+          1572.85,
+          1635.42
+        ],
+        "pairwise_elo_vs_r882": 1642.69,
+        "pairwise_elo_vs_r882_ci95": [
+          1585.73,
+          1713.25
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H256_STATIC_0REV_TOP8_SOFT_VETO": {
+        "context_mean": 1.339768,
+        "elo_delta_vs_opus5p5_extra": -72.86,
+        "family_gain_vs_opus5p5_extra": 0.098964,
+        "family_gain_vs_r882": 0.057371,
+        "family_mean": 1.354777,
+        "joint_elo": 1591.34,
+        "joint_elo_ci95": [
+          1564.26,
+          1620.43
+        ],
+        "pairwise_elo_vs_r882": 1613.47,
+        "pairwise_elo_vs_r882_ci95": [
+          1551.52,
+          1673.96
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3": {
+        "context_mean": 1.396156,
+        "elo_delta_vs_opus5p5_extra": 44.72,
+        "family_gain_vs_opus5p5_extra": 0.154042,
+        "family_gain_vs_r882": 0.112448,
+        "family_mean": 1.409855,
+        "joint_elo": 1708.92,
+        "joint_elo_ci95": [
+          1668.56,
+          1762.75
+        ],
+        "pairwise_elo_vs_r882": 1797.28,
+        "pairwise_elo_vs_r882_ci95": [
+          1718.51,
+          1902.12
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          1,
+          11
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3_STACK3": {
+        "context_mean": 1.405724,
+        "elo_delta_vs_opus5p5_extra": 92.6,
+        "family_gain_vs_opus5p5_extra": 0.163343,
+        "family_gain_vs_r882": 0.12175,
+        "family_mean": 1.419156,
+        "joint_elo": 1756.8,
+        "joint_elo_ci95": [
+          1713.52,
+          1816.83
+        ],
+        "pairwise_elo_vs_r882": 1843.75,
+        "pairwise_elo_vs_r882_ci95": [
+          1752.12,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          11,
+          0,
+          8
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_HIGH_BATCH_EVO3_STACK3": {
+        "context_mean": 1.406252,
+        "elo_delta_vs_opus5p5_extra": 101.0,
+        "family_gain_vs_opus5p5_extra": 0.163849,
+        "family_gain_vs_r882": 0.122256,
+        "family_mean": 1.419663,
+        "joint_elo": 1765.2,
+        "joint_elo_ci95": [
+          1717.5,
+          1831.49
+        ],
+        "pairwise_elo_vs_r882": 1871.0,
+        "pairwise_elo_vs_r882_ci95": [
+          1790.33,
+          1983.11
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          11,
+          0,
+          8
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_MEDIUM_BATCH_EVO3": {
+        "context_mean": 1.397044,
+        "elo_delta_vs_opus5p5_extra": 54.89,
+        "family_gain_vs_opus5p5_extra": 0.154892,
+        "family_gain_vs_r882": 0.113299,
+        "family_mean": 1.410706,
+        "joint_elo": 1719.09,
+        "joint_elo_ci95": [
+          1678.28,
+          1774.5
+        ],
+        "pairwise_elo_vs_r882": 1819.39,
+        "pairwise_elo_vs_r882_ci95": [
+          1752.12,
+          1925.72
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_ACTIVE_2PLUS2": {
+        "context_mean": 1.338132,
+        "elo_delta_vs_opus5p5_extra": -51.04,
+        "family_gain_vs_opus5p5_extra": 0.097425,
+        "family_gain_vs_r882": 0.055831,
+        "family_mean": 1.353238,
+        "joint_elo": 1613.16,
+        "joint_elo_ci95": [
+          1579.35,
+          1654.35
+        ],
+        "pairwise_elo_vs_r882": 1651.39,
+        "pairwise_elo_vs_r882_ci95": [
+          1593.53,
+          1729.29
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_STATIC_0REV": {
+        "context_mean": 1.339802,
+        "elo_delta_vs_opus5p5_extra": -58.64,
+        "family_gain_vs_opus5p5_extra": 0.099024,
+        "family_gain_vs_r882": 0.057431,
+        "family_mean": 1.354837,
+        "joint_elo": 1605.55,
+        "joint_elo_ci95": [
+          1574.2,
+          1639.84
+        ],
+        "pairwise_elo_vs_r882": 1634.16,
+        "pairwise_elo_vs_r882_ci95": [
+          1566.56,
+          1703.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C1_BATCH11_PLUS_GEN0": {
+        "context_mean": 1.379433,
+        "elo_delta_vs_opus5p5_extra": 8.1,
+        "family_gain_vs_opus5p5_extra": 0.136987,
+        "family_gain_vs_r882": 0.095394,
+        "family_mean": 1.3928,
+        "joint_elo": 1672.3,
+        "joint_elo_ci95": [
+          1636.38,
+          1724.33
+        ],
+        "pairwise_elo_vs_r882": 1776.97,
+        "pairwise_elo_vs_r882_ci95": [
+          1708.08,
+          1871.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C2_BATCH11_PLUS_EVO1": {
+        "context_mean": 1.383225,
+        "elo_delta_vs_opus5p5_extra": 23.91,
+        "family_gain_vs_opus5p5_extra": 0.141522,
+        "family_gain_vs_r882": 0.099929,
+        "family_mean": 1.397335,
+        "joint_elo": 1688.11,
+        "joint_elo_ci95": [
+          1650.78,
+          1738.43
+        ],
+        "pairwise_elo_vs_r882": 1797.28,
+        "pairwise_elo_vs_r882_ci95": [
+          1729.29,
+          1902.12
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H275_RERANK8_CR_SOFT": {
+        "context_mean": 1.356142,
+        "elo_delta_vs_opus5p5_extra": -71.31,
+        "family_gain_vs_opus5p5_extra": 0.114649,
+        "family_gain_vs_r882": 0.073055,
+        "family_mean": 1.370462,
+        "joint_elo": 1592.88,
+        "joint_elo_ci95": [
+          1560.35,
+          1630.06
+        ],
+        "pairwise_elo_vs_r882": 1621.65,
+        "pairwise_elo_vs_r882_ci95": [
+          1574.17,
+          1674.08
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Kumo_Tabular_L_S3_Query1Split": {
+        "context_mean": 1.844863,
+        "elo_delta_vs_opus5p5_extra": 229.82,
+        "family_gain_vs_opus5p5_extra": 0.573106,
+        "family_gain_vs_r882": 0.531513,
+        "family_mean": 1.82892,
+        "joint_elo": 1894.02,
+        "joint_elo_ci95": [
+          1757.59,
+          2090.49
+        ],
+        "pairwise_elo_vs_r882": 1740.48,
+        "pairwise_elo_vs_r882_ci95": [
+          1601.43,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          0,
+          2
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Kumo_Tabular_S_S3_Query1Split": {
+        "context_mean": 1.764617,
+        "elo_delta_vs_opus5p5_extra": 193.71,
+        "family_gain_vs_opus5p5_extra": 0.49882,
+        "family_gain_vs_r882": 0.457227,
+        "family_mean": 1.754633,
+        "joint_elo": 1857.91,
+        "joint_elo_ci95": [
+          1734.09,
+          2037.21
+        ],
+        "pairwise_elo_vs_r882": 1718.51,
+        "pairwise_elo_vs_r882_ci95": [
+          1593.53,
+          1938.62
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          0,
+          2
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      },
+      "Mitra_v2_S3_Query1Split": {
+        "context_mean": 1.561396,
+        "elo_delta_vs_opus5p5_extra": 90.31,
+        "family_gain_vs_opus5p5_extra": 0.305193,
+        "family_gain_vs_r882": 0.263599,
+        "family_mean": 1.561006,
+        "joint_elo": 1754.51,
+        "joint_elo_ci95": [
+          1638.62,
+          1891.01
+        ],
+        "pairwise_elo_vs_r882": 1660.26,
+        "pairwise_elo_vs_r882_ci95": [
+          1547.79,
+          1804.43
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          15,
+          0,
+          4
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Opus5p5_Extra": {
+        "context_mean": 1.253011,
+        "elo_delta_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_r882": -0.041593,
+        "family_mean": 1.255813,
+        "joint_elo": 1664.2,
+        "joint_elo_ci95": [
+          1552.28,
+          1797.09
+        ],
+        "pairwise_elo_vs_r882": 1617.54,
+        "pairwise_elo_vs_r882_ci95": [
+          1503.65,
+          1764.26
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          0,
+          19,
+          0
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "PriorLabs_TabPFN_3p5_S3_OuterTest": {
+        "context_mean": 1.721047,
+        "elo_delta_vs_opus5p5_extra": 234.2,
+        "family_gain_vs_opus5p5_extra": 0.466532,
+        "family_gain_vs_r882": 0.424939,
+        "family_mean": 1.722345,
+        "joint_elo": 1898.4,
+        "joint_elo_ci95": [
+          1770.97,
+          2075.43
+        ],
+        "pairwise_elo_vs_r882": 1804.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1687.94,
+          2000.48
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          18,
+          0,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "R882": {
+        "context_mean": 1.279905,
+        "elo_delta_vs_opus5p5_extra": -164.2,
+        "family_gain_vs_opus5p5_extra": 0.041593,
+        "family_gain_vs_r882": 0.0,
+        "family_mean": 1.297407,
+        "joint_elo": 1500.0,
+        "joint_elo_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "pairwise_elo_vs_r882": 1500.0,
+        "pairwise_elo_vs_r882_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          5,
+          0,
+          14
+        ],
+        "wtl_vs_r882_families": [
+          0,
+          19,
+          0
+        ]
+      },
+      "TabDPT_1p3_S3_Query1Split": {
+        "context_mean": 1.531955,
+        "elo_delta_vs_opus5p5_extra": 79.73,
+        "family_gain_vs_opus5p5_extra": 0.276715,
+        "family_gain_vs_r882": 0.235121,
+        "family_mean": 1.532528,
+        "joint_elo": 1743.93,
+        "joint_elo_ci95": [
+          1626.95,
+          1898.26
+        ],
+        "pairwise_elo_vs_r882": 1651.39,
+        "pairwise_elo_vs_r882_ci95": [
+          1525.62,
+          1835.34
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          15,
+          0,
+          4
+        ],
+        "wtl_vs_r882_families": [
+          15,
+          0,
+          4
+        ]
+      },
+      "TabICL_v2_S3_Query1Split": {
+        "context_mean": 1.547713,
+        "elo_delta_vs_opus5p5_extra": 85.58,
+        "family_gain_vs_opus5p5_extra": 0.290835,
+        "family_gain_vs_r882": 0.249242,
+        "family_mean": 1.546649,
+        "joint_elo": 1749.77,
+        "joint_elo_ci95": [
+          1624.16,
+          1903.74
+        ],
+        "pairwise_elo_vs_r882": 1642.69,
+        "pairwise_elo_vs_r882_ci95": [
+          1525.62,
+          1804.43
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      }
+    },
+    "note": "Precomputed S3 records use single-split evaluation (100% outer-train -> outer-test for PriorLabs_TabPFN_3p5_S3_OuterTest; 75/25 subsampled support/query for S3 encodings/) with sd_logratio=0, whereas H257/H256/R882 and the 2-fold inner-CV tournament above use exact 50/50 2-fold inner CV (jope.s1-two-fold/v1) with fold-variance penalty (-0.2 * sd_logratio). TabFM had 0/91 precomputed contexts in S3.",
+    "s1_utility_unconstrained_elo": {
+      "GPT6_Astra_Max": {
+        "context_mean": 0.879144,
+        "elo_delta_vs_opus5p5_extra": -266.46,
+        "family_gain_vs_opus5p5_extra": -0.229491,
+        "family_gain_vs_r882": -0.270521,
+        "family_mean": 0.883094,
+        "joint_elo": 1384.88,
+        "joint_elo_ci95": [
+          1252.66,
+          1505.93
+        ],
+        "pairwise_elo_vs_r882": 1390.57,
+        "pairwise_elo_vs_r882_ci95": [
+          1281.49,
+          1503.65
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          1,
+          0,
+          18
+        ],
+        "wtl_vs_r882_families": [
+          7,
+          0,
+          12
+        ]
+      },
+      "GPT6p1_Sol_Max": {
+        "context_mean": 1.125242,
+        "elo_delta_vs_opus5p5_extra": -73.95,
+        "family_gain_vs_opus5p5_extra": 0.028988,
+        "family_gain_vs_r882": -0.012043,
+        "family_mean": 1.141572,
+        "joint_elo": 1577.38,
+        "joint_elo_ci95": [
+          1496.87,
+          1680.57
+        ],
+        "pairwise_elo_vs_r882": 1525.62,
+        "pairwise_elo_vs_r882_ci95": [
+          1429.64,
+          1634.16
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          5,
+          0,
+          14
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "Gemini4_argon_high": {
+        "context_mean": 1.147858,
+        "elo_delta_vs_opus5p5_extra": -36.22,
+        "family_gain_vs_opus5p5_extra": 0.028119,
+        "family_gain_vs_r882": -0.012912,
+        "family_mean": 1.140704,
+        "joint_elo": 1615.12,
+        "joint_elo_ci95": [
+          1510.25,
+          1737.37
+        ],
+        "pairwise_elo_vs_r882": 1601.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1510.78,
+          1708.08
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "H256_ACTIVE_2PLUS2_UNIFIED": {
+        "context_mean": 1.187871,
+        "elo_delta_vs_opus5p5_extra": -66.95,
+        "family_gain_vs_opus5p5_extra": 0.089108,
+        "family_gain_vs_r882": 0.048077,
+        "family_mean": 1.201692,
+        "joint_elo": 1584.38,
+        "joint_elo_ci95": [
+          1550.77,
+          1622.29
+        ],
+        "pairwise_elo_vs_r882": 1625.78,
+        "pairwise_elo_vs_r882_ci95": [
+          1570.27,
+          1693.05
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H256_STATIC_0REV_TOP8_SOFT_VETO": {
+        "context_mean": 1.189621,
+        "elo_delta_vs_opus5p5_extra": -82.19,
+        "family_gain_vs_opus5p5_extra": 0.090711,
+        "family_gain_vs_r882": 0.04968,
+        "family_mean": 1.203296,
+        "joint_elo": 1569.14,
+        "joint_elo_ci95": [
+          1540.42,
+          1602.94
+        ],
+        "pairwise_elo_vs_r882": 1597.47,
+        "pairwise_elo_vs_r882_ci95": [
+          1540.37,
+          1660.26
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3": {
+        "context_mean": 1.24071,
+        "elo_delta_vs_opus5p5_extra": 44.06,
+        "family_gain_vs_opus5p5_extra": 0.140472,
+        "family_gain_vs_r882": 0.099441,
+        "family_mean": 1.253056,
+        "joint_elo": 1695.39,
+        "joint_elo_ci95": [
+          1653.72,
+          1752.27
+        ],
+        "pairwise_elo_vs_r882": 1758.12,
+        "pairwise_elo_vs_r882_ci95": [
+          1683.38,
+          1861.54
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_BATCH11_STATIC_PLUS_EVO3_STACK3": {
+        "context_mean": 1.248988,
+        "elo_delta_vs_opus5p5_extra": 98.27,
+        "family_gain_vs_opus5p5_extra": 0.148461,
+        "family_gain_vs_r882": 0.10743,
+        "family_mean": 1.261046,
+        "joint_elo": 1749.61,
+        "joint_elo_ci95": [
+          1698.25,
+          1820.23
+        ],
+        "pairwise_elo_vs_r882": 1797.28,
+        "pairwise_elo_vs_r882_ci95": [
+          1718.51,
+          1913.59
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_HIGH_BATCH_EVO3_STACK3": {
+        "context_mean": 1.249161,
+        "elo_delta_vs_opus5p5_extra": 111.03,
+        "family_gain_vs_opus5p5_extra": 0.148627,
+        "family_gain_vs_r882": 0.107596,
+        "family_mean": 1.261212,
+        "joint_elo": 1762.36,
+        "joint_elo_ci95": [
+          1710.61,
+          1835.62
+        ],
+        "pairwise_elo_vs_r882": 1835.34,
+        "pairwise_elo_vs_r882_ci95": [
+          1764.11,
+          1938.62
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          9,
+          0,
+          10
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_MEDIUM_BATCH_EVO3": {
+        "context_mean": 1.241287,
+        "elo_delta_vs_opus5p5_extra": 58.01,
+        "family_gain_vs_opus5p5_extra": 0.141024,
+        "family_gain_vs_r882": 0.099994,
+        "family_mean": 1.253609,
+        "joint_elo": 1709.35,
+        "joint_elo_ci95": [
+          1668.51,
+          1769.36
+        ],
+        "pairwise_elo_vs_r882": 1790.33,
+        "pairwise_elo_vs_r882_ci95": [
+          1723.85,
+          1891.24
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_ACTIVE_2PLUS2": {
+        "context_mean": 1.187266,
+        "elo_delta_vs_opus5p5_extra": -55.21,
+        "family_gain_vs_opus5p5_extra": 0.088492,
+        "family_gain_vs_r882": 0.047461,
+        "family_mean": 1.201077,
+        "joint_elo": 1596.13,
+        "joint_elo_ci95": [
+          1561.58,
+          1635.75
+        ],
+        "pairwise_elo_vs_r882": 1634.16,
+        "pairwise_elo_vs_r882_ci95": [
+          1578.01,
+          1698.11
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C0_BATCH11_STATIC_0REV": {
+        "context_mean": 1.188993,
+        "elo_delta_vs_opus5p5_extra": -65.99,
+        "family_gain_vs_opus5p5_extra": 0.090146,
+        "family_gain_vs_r882": 0.049116,
+        "family_mean": 1.202731,
+        "joint_elo": 1585.35,
+        "joint_elo_ci95": [
+          1554.51,
+          1619.41
+        ],
+        "pairwise_elo_vs_r882": 1609.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1547.79,
+          1673.96
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "H257_STAGE_C1_BATCH11_PLUS_GEN0": {
+        "context_mean": 1.224702,
+        "elo_delta_vs_opus5p5_extra": 8.33,
+        "family_gain_vs_opus5p5_extra": 0.124351,
+        "family_gain_vs_r882": 0.083321,
+        "family_mean": 1.236936,
+        "joint_elo": 1659.67,
+        "joint_elo_ci95": [
+          1623.74,
+          1710.19
+        ],
+        "pairwise_elo_vs_r882": 1752.12,
+        "pairwise_elo_vs_r882_ci95": [
+          1688.18,
+          1852.47
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H257_STAGE_C2_BATCH11_PLUS_EVO1": {
+        "context_mean": 1.227799,
+        "elo_delta_vs_opus5p5_extra": 22.76,
+        "family_gain_vs_opus5p5_extra": 0.127957,
+        "family_gain_vs_r882": 0.086926,
+        "family_mean": 1.240541,
+        "joint_elo": 1674.1,
+        "joint_elo_ci95": [
+          1637.23,
+          1727.53
+        ],
+        "pairwise_elo_vs_r882": 1770.54,
+        "pairwise_elo_vs_r882_ci95": [
+          1703.0,
+          1871.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          7,
+          0,
+          12
+        ],
+        "wtl_vs_r882_families": [
+          19,
+          0,
+          0
+        ]
+      },
+      "H275_RERANK8_CR_SOFT": {
+        "context_mean": 1.204474,
+        "elo_delta_vs_opus5p5_extra": -78.06,
+        "family_gain_vs_opus5p5_extra": 0.104939,
+        "family_gain_vs_r882": 0.063908,
+        "family_mean": 1.217523,
+        "joint_elo": 1573.27,
+        "joint_elo_ci95": [
+          1536.28,
+          1615.72
+        ],
+        "pairwise_elo_vs_r882": 1609.43,
+        "pairwise_elo_vs_r882_ci95": [
+          1555.17,
+          1669.46
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          6,
+          0,
+          13
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Kumo_Tabular_L_S3_Query1Split": {
+        "context_mean": 1.660376,
+        "elo_delta_vs_opus5p5_extra": 242.71,
+        "family_gain_vs_opus5p5_extra": 0.533443,
+        "family_gain_vs_r882": 0.492412,
+        "family_mean": 1.646028,
+        "joint_elo": 1894.05,
+        "joint_elo_ci95": [
+          1747.44,
+          2108.3
+        ],
+        "pairwise_elo_vs_r882": 1740.48,
+        "pairwise_elo_vs_r882_ci95": [
+          1601.43,
+          1967.15
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          0,
+          2
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Kumo_Tabular_S_S3_Query1Split": {
+        "context_mean": 1.588155,
+        "elo_delta_vs_opus5p5_extra": 200.91,
+        "family_gain_vs_opus5p5_extra": 0.466585,
+        "family_gain_vs_r882": 0.425555,
+        "family_mean": 1.57917,
+        "joint_elo": 1852.25,
+        "joint_elo_ci95": [
+          1722.38,
+          2038.49
+        ],
+        "pairwise_elo_vs_r882": 1729.29,
+        "pairwise_elo_vs_r882_ci95": [
+          1601.43,
+          1939.33
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          17,
+          0,
+          2
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Mitra_v2_S3_Query1Split": {
+        "context_mean": 1.405257,
+        "elo_delta_vs_opus5p5_extra": 99.23,
+        "family_gain_vs_opus5p5_extra": 0.292321,
+        "family_gain_vs_r882": 0.25129,
+        "family_mean": 1.404905,
+        "joint_elo": 1750.57,
+        "joint_elo_ci95": [
+          1627.14,
+          1901.87
+        ],
+        "pairwise_elo_vs_r882": 1669.34,
+        "pairwise_elo_vs_r882_ci95": [
+          1555.26,
+          1819.39
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "Opus5p5_Extra": {
+        "context_mean": 1.112319,
+        "elo_delta_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_opus5p5_extra": 0.0,
+        "family_gain_vs_r882": -0.041031,
+        "family_mean": 1.112585,
+        "joint_elo": 1651.34,
+        "joint_elo_ci95": [
+          1534.99,
+          1791.78
+        ],
+        "pairwise_elo_vs_r882": 1617.54,
+        "pairwise_elo_vs_r882_ci95": [
+          1503.65,
+          1764.26
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          0,
+          19,
+          0
+        ],
+        "wtl_vs_r882_families": [
+          14,
+          0,
+          5
+        ]
+      },
+      "PriorLabs_TabPFN_3p5_S3_OuterTest": {
+        "context_mean": 1.548942,
+        "elo_delta_vs_opus5p5_extra": 250.5,
+        "family_gain_vs_opus5p5_extra": 0.437526,
+        "family_gain_vs_r882": 0.396495,
+        "family_mean": 1.550111,
+        "joint_elo": 1901.83,
+        "joint_elo_ci95": [
+          1780.5,
+          2085.53
+        ],
+        "pairwise_elo_vs_r882": 1819.39,
+        "pairwise_elo_vs_r882_ci95": [
+          1688.18,
+          2040.73
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          18,
+          0,
+          1
+        ],
+        "wtl_vs_r882_families": [
+          17,
+          0,
+          2
+        ]
+      },
+      "R882": {
+        "context_mean": 1.137794,
+        "elo_delta_vs_opus5p5_extra": -151.34,
+        "family_gain_vs_opus5p5_extra": 0.041031,
+        "family_gain_vs_r882": 0.0,
+        "family_mean": 1.153615,
+        "joint_elo": 1500.0,
+        "joint_elo_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "pairwise_elo_vs_r882": 1500.0,
+        "pairwise_elo_vs_r882_ci95": [
+          1500.0,
+          1500.0
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          5,
+          0,
+          14
+        ],
+        "wtl_vs_r882_families": [
+          0,
+          19,
+          0
+        ]
+      },
+      "TabDPT_1p3_S3_Query1Split": {
+        "context_mean": 1.37876,
+        "elo_delta_vs_opus5p5_extra": 94.63,
+        "family_gain_vs_opus5p5_extra": 0.266691,
+        "family_gain_vs_r882": 0.22566,
+        "family_mean": 1.379275,
+        "joint_elo": 1745.96,
+        "joint_elo_ci95": [
+          1628.13,
+          1913.06
+        ],
+        "pairwise_elo_vs_r882": 1660.26,
+        "pairwise_elo_vs_r882_ci95": [
+          1532.98,
+          1852.93
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          15,
+          0,
+          4
+        ]
+      },
+      "TabICL_v2_S3_Query1Split": {
+        "context_mean": 1.392942,
+        "elo_delta_vs_opus5p5_extra": 93.29,
+        "family_gain_vs_opus5p5_extra": 0.279399,
+        "family_gain_vs_r882": 0.238369,
+        "family_mean": 1.391984,
+        "joint_elo": 1744.62,
+        "joint_elo_ci95": [
+          1612.95,
+          1908.51
+        ],
+        "pairwise_elo_vs_r882": 1655.8,
+        "pairwise_elo_vs_r882_ci95": [
+          1532.98,
+          1819.39
+        ],
+        "wtl_vs_opus5p5_extra_families": [
+          16,
+          0,
+          3
+        ],
+        "wtl_vs_r882_families": [
+          16,
+          0,
+          3
+        ]
+      }
+    }
+  },
   "dl_val91_same_fold_tournament_cv_rmse_ratio": {
     "GPT6_Astra_Max": {
       "context_mean": 0.992029,
@@ -1739,7 +4981,110 @@
       ]
     }
   },
-  "generated_at_utc": "2026-11-04T03:50:00Z",
+  "external_reference_panels": {
+    "panel_v1_240_regression_datasets": {
+      "dataset_count": 240,
+      "ratings": {
+        "autogluon": {
+          "datasets_scored": 240,
+          "elo": 1601.3
+        },
+        "catboost": {
+          "datasets_scored": 240,
+          "elo": 1523.7
+        },
+        "jope-fused-net-v3": {
+          "datasets_scored": 240,
+          "elo": 1383.4
+        },
+        "kumo_tabular_large_e8": {
+          "datasets_scored": 239,
+          "elo": 1874.5
+        },
+        "lightgbm": {
+          "datasets_scored": 240,
+          "elo": 1412.7
+        },
+        "random_forest": {
+          "datasets_scored": 240,
+          "elo": 1441.5
+        },
+        "ridge": {
+          "datasets_scored": 240,
+          "elo": 1338.4
+        },
+        "tabfm": {
+          "datasets_scored": 0,
+          "elo": null,
+          "reason": "not included in panel_v1 runner"
+        },
+        "tabpfn": {
+          "datasets_scored": 0,
+          "elo": null,
+          "reason": "TABPFN_REG_CKPT unset in node_run.sh"
+        },
+        "xgboost": {
+          "datasets_scored": 240,
+          "elo": 1424.4
+        }
+      },
+      "source": "/home/ubuntu/jope_plan/elo/panel_results/elo_panel_v1.json"
+    },
+    "sotarena_1973_dataset_panel": {
+      "dataset_count": 1973,
+      "ratings": {
+        "tabfm_ensemble_regressor": {
+          "elo": 1260.94
+        },
+        "tabpfn_v3_regressor": {
+          "elo": 1223.71
+        },
+        "tabpfn_v3_regressor_default": {
+          "elo": 1219.91
+        }
+      },
+      "source": "SOTArena 1,973-dataset broad regression panel"
+    },
+    "sotarena_golden45_regression_v2": {
+      "dataset_count": 45,
+      "ratings": {
+        "tabdpt_regressor": {
+          "datasets_scored": 24,
+          "elo": 1788.6
+        },
+        "tabfm_ensemble_regressor": {
+          "datasets_scored": 45,
+          "elo": 1934.9
+        },
+        "tabfm_regressor": {
+          "datasets_scored": 39,
+          "elo": 1872.9
+        },
+        "tabicl": {
+          "datasets_scored": 45,
+          "elo": 1887.6
+        },
+        "tabpfn_v25_regressor_default": {
+          "datasets_scored": 45,
+          "elo": 1893.3
+        },
+        "tabpfn_v25_regressor_real": {
+          "datasets_scored": 45,
+          "elo": 1874.8
+        },
+        "tabpfn_v3_regressor": {
+          "datasets_scored": 45,
+          "elo": 1909.5
+        },
+        "tabpfn_v3_regressor_default": {
+          "datasets_scored": 45,
+          "elo": 1906.3
+        }
+      },
+      "source": "SOTArena tabular-regression-v2 Golden45 (45 regression datasets)"
+    }
+  },
+  "generated_at_utc": "2026-11-04T05:40:00Z",
   "gp_evolution_progression_dl_val91": {
     "batch11_static_plus_evo3_family_utility": 1.253056,
     "batch11_static_plus_evo3_stack3_family_utility": 1.261046,

@@ -103,6 +103,34 @@ def test_h257_weights_and_telemetry_artifacts() -> None:
         t_s1["Opus5p5_Extra"]["joint_elo"]
     )
 
+    all_2fold = f_doc.get("dl_val91_all_models_2fold_inner_cv_tournament", {})
+    assert all_2fold.get("context_count") == 91
+    assert all_2fold.get("family_count") == 19
+    t_all_s1 = all_2fold.get("s1_utility_gated_elo", {})
+    for req_ent in (
+        "TabFM_Ensemble",
+        "TabFM",
+        "Kumo_Tabular_L",
+        "Kumo_Tabular_S",
+        "PriorLabs_TabPFN_3p5",
+        "PriorLabs_TabPFN_3p5_Single",
+        "TabICL_v2",
+        "TabDPT_1p3",
+        "Mitra_v2",
+        "H257_HIGH_BATCH_EVO3_STACK3",
+        "Opus5p5_Extra",
+        "R882",
+    ):
+        assert req_ent in t_all_s1, f"missing {req_ent} in 2-fold inner-CV tournament"
+
+    s3_pre = f_doc.get("dl_val91_s3_precomputed_reference_tournament", {})
+    assert "PriorLabs_TabPFN_3p5_S3_OuterTest" in s3_pre.get("s1_utility_unconstrained_elo", {})
+    assert "Kumo_Tabular_L_S3_Query1Split" in s3_pre.get("s1_utility_unconstrained_elo", {})
+
+    ext_panels = f_doc.get("external_reference_panels", {})
+    assert "panel_v1_240_regression_datasets" in ext_panels
+    assert "sotarena_golden45_regression_v2" in ext_panels
+
     kpi_path = HERE / "kpi_telemetry.json"
     assert kpi_path.exists(), f"missing {kpi_path}"
     k_doc = json.loads(kpi_path.read_text())

@@ -464,12 +464,150 @@ def main() -> Dict[str, Any]:
     elo_s1_utility = compute_elo_table_with_bootstrap(arm_names, u_mat, val_fams, anchor_idx=0)
     elo_cv_rmse_ratio = compute_elo_table_with_bootstrap(arm_names, lr_mat, val_fams, anchor_idx=0)
 
-    # Load 64-family frontier reference panel
+    # 3. Unified Fair 2-Fold Inner-CV (`jope.s1-two-fold/v1`) Tournament Including Tabular Foundation Models
+    tab_2fold_cache_path = CACHE_DIR / "tabular_foundation_dl_val91_cache.json"
+    dl_val91_all_models_2fold: Dict[str, Any] = {}
+    if tab_2fold_cache_path.exists():
+        tab_2fold_by_ent = json.loads(tab_2fold_cache_path.read_text())
+        tab_order = [
+            "TabFM_Ensemble",
+            "TabFM",
+            "Kumo_Tabular_L",
+            "Kumo_Tabular_S",
+            "PriorLabs_TabPFN_3p5",
+            "PriorLabs_TabPFN_3p5_Single",
+            "TabICL_v2",
+            "TabDPT_1p3",
+            "Mitra_v2",
+        ]
+        present_tab = [
+            nm for nm in tab_order if nm in tab_2fold_by_ent and len(tab_2fold_by_ent[nm]) == len(val_cids)
+        ]
+        all_names_2fold = list(arm_names) + present_tab
+        u_gated_cols_2fold = list(u_cols) + [
+            np.array([float(tab_2fold_by_ent[nm][c]["s1_utility_zero_comp"]) for c in val_cids], dtype=np.float64)
+            for nm in present_tab
+        ]
+        u_unc_cols_2fold = list(u_cols) + [
+            np.array([float(tab_2fold_by_ent[nm][c]["unconstrained_utility"]) for c in val_cids], dtype=np.float64)
+            for nm in present_tab
+        ]
+        lr_cols_2fold = list(lr_cols) + [
+            np.array([float(-tab_2fold_by_ent[nm][c]["logratio"]) for c in val_cids], dtype=np.float64)
+            for nm in present_tab
+        ]
+
+        elo_all_s1_gated = compute_elo_table_with_bootstrap(
+            all_names_2fold, np.column_stack(u_gated_cols_2fold), val_fams, anchor_idx=0
+        )
+        elo_all_s1_unc = compute_elo_table_with_bootstrap(
+            all_names_2fold, np.column_stack(u_unc_cols_2fold), val_fams, anchor_idx=0
+        )
+        elo_all_cv_lr = compute_elo_table_with_bootstrap(
+            all_names_2fold, np.column_stack(lr_cols_2fold), val_fams, anchor_idx=0
+        )
+        gate_pass_counts = {
+            nm: int(sum(1 for c in val_cids if tab_2fold_by_ent[nm][c].get("cv_gate_passed") is True))
+            for nm in present_tab
+        }
+        dl_val91_all_models_2fold = {
+            "protocol": "jope.s1-two-fold/v1 (exact 2-fold inner CV on all 91 DL-Val91 contexts / 19 unseen families)",
+            "context_count": len(val_cids),
+            "family_count": len(set(val_fams)),
+            "tabular_foundation_gate_pass_counts": gate_pass_counts,
+            "s1_utility_gated_elo": elo_all_s1_gated,
+            "s1_utility_unconstrained_elo": elo_all_s1_unc,
+            "cv_rmse_ratio_elo": elo_all_cv_lr,
+        }
+
+    # 4. S3 Precomputed Reference Tournament on DL-Val91 (Outer-Test / 1-Split Query Protocols)
+    s3_precomp_path = CACHE_DIR / "s3_precomputed_tabular_dl_val91_cache.json"
+    dl_val91_s3_precomputed: Dict[str, Any] = {}
+    if s3_precomp_path.exists():
+        s3_by_ent = json.loads(s3_precomp_path.read_text())
+        s3_order = [
+            "PriorLabs_TabPFN_3p5_S3_OuterTest",
+            "Kumo_Tabular_L_S3_Query1Split",
+            "Kumo_Tabular_S_S3_Query1Split",
+            "TabICL_v2_S3_Query1Split",
+            "TabDPT_1p3_S3_Query1Split",
+            "Mitra_v2_S3_Query1Split",
+        ]
+        present_s3 = [nm for nm in s3_order if nm in s3_by_ent and len(s3_by_ent[nm]) == len(val_cids)]
+        all_names_s3 = list(arm_names) + present_s3
+        u_unc_cols_s3 = list(u_cols) + [
+            np.array([float(s3_by_ent[nm][c]["unconstrained_utility"]) for c in val_cids], dtype=np.float64)
+            for nm in present_s3
+        ]
+        lr_cols_s3 = list(lr_cols) + [
+            np.array([float(-s3_by_ent[nm][c]["logratio"]) for c in val_cids], dtype=np.float64)
+            for nm in present_s3
+        ]
+        elo_s3_unc = compute_elo_table_with_bootstrap(
+            all_names_s3, np.column_stack(u_unc_cols_s3), val_fams, anchor_idx=0
+        )
+        elo_s3_lr = compute_elo_table_with_bootstrap(
+            all_names_s3, np.column_stack(lr_cols_s3), val_fams, anchor_idx=0
+        )
+        dl_val91_s3_precomputed = {
+            "note": (
+                "Precomputed S3 records use single-split evaluation (100% outer-train -> outer-test for "
+                "PriorLabs_TabPFN_3p5_S3_OuterTest; 75/25 subsampled support/query for S3 encodings/) with "
+                "sd_logratio=0, whereas H257/H256/R882 and the 2-fold inner-CV tournament above use exact 50/50 "
+                "2-fold inner CV (jope.s1-two-fold/v1) with fold-variance penalty (-0.2 * sd_logratio). "
+                "TabFM had 0/91 precomputed contexts in S3."
+            ),
+            "s1_utility_unconstrained_elo": elo_s3_unc,
+            "cv_rmse_ratio_elo": elo_s3_lr,
+        }
+
+    # 5. Load 64-family frontier reference panel and external tabular foundation benchmark panels
     ref_64 = json.loads((REPO_ROOT / "assets" / "automl-elo" / "v1" / "RESULTS.json").read_text())
+    external_reference_panels = {
+        "panel_v1_240_regression_datasets": {
+            "source": "/home/ubuntu/jope_plan/elo/panel_results/elo_panel_v1.json",
+            "dataset_count": 240,
+            "ratings": {
+                "kumo_tabular_large_e8": {"elo": 1874.5, "datasets_scored": 239},
+                "autogluon": {"elo": 1601.3, "datasets_scored": 240},
+                "catboost": {"elo": 1523.7, "datasets_scored": 240},
+                "random_forest": {"elo": 1441.5, "datasets_scored": 240},
+                "xgboost": {"elo": 1424.4, "datasets_scored": 240},
+                "lightgbm": {"elo": 1412.7, "datasets_scored": 240},
+                "jope-fused-net-v3": {"elo": 1383.4, "datasets_scored": 240},
+                "ridge": {"elo": 1338.4, "datasets_scored": 240},
+                "tabpfn": {"elo": None, "datasets_scored": 0, "reason": "TABPFN_REG_CKPT unset in node_run.sh"},
+                "tabfm": {"elo": None, "datasets_scored": 0, "reason": "not included in panel_v1 runner"},
+            },
+        },
+        "sotarena_golden45_regression_v2": {
+            "source": "SOTArena tabular-regression-v2 Golden45 (45 regression datasets)",
+            "dataset_count": 45,
+            "ratings": {
+                "tabfm_ensemble_regressor": {"elo": 1934.9, "datasets_scored": 45},
+                "tabpfn_v3_regressor": {"elo": 1909.5, "datasets_scored": 45},
+                "tabpfn_v3_regressor_default": {"elo": 1906.3, "datasets_scored": 45},
+                "tabpfn_v25_regressor_default": {"elo": 1893.3, "datasets_scored": 45},
+                "tabicl": {"elo": 1887.6, "datasets_scored": 45},
+                "tabpfn_v25_regressor_real": {"elo": 1874.8, "datasets_scored": 45},
+                "tabfm_regressor": {"elo": 1872.9, "datasets_scored": 39},
+                "tabdpt_regressor": {"elo": 1788.6, "datasets_scored": 24},
+            },
+        },
+        "sotarena_1973_dataset_panel": {
+            "source": "SOTArena 1,973-dataset broad regression panel",
+            "dataset_count": 1973,
+            "ratings": {
+                "tabfm_ensemble_regressor": {"elo": 1260.94},
+                "tabpfn_v3_regressor": {"elo": 1223.71},
+                "tabpfn_v3_regressor_default": {"elo": 1219.91},
+            },
+        },
+    }
 
     out_doc = {
         "schema": "jope.h257.frontier_elo_comparison/v1",
-        "generated_at_utc": "2026-11-04T03:50:00Z",
+        "generated_at_utc": "2026-11-04T05:40:00Z",
         "direct_dl_val91_head_to_head_tournament": {
             "context_count": len(val_cids),
             "family_count": len(set(val_fams)),
@@ -478,8 +616,11 @@ def main() -> Dict[str, Any]:
         },
         "dl_val91_same_fold_tournament_s1_utility": elo_s1_utility,
         "dl_val91_same_fold_tournament_cv_rmse_ratio": elo_cv_rmse_ratio,
+        "dl_val91_all_models_2fold_inner_cv_tournament": dl_val91_all_models_2fold,
+        "dl_val91_s3_precomputed_reference_tournament": dl_val91_s3_precomputed,
         "gp_evolution_progression_dl_val91": evo_progression_summary,
         "reference_64_family_frontier_panel": ref_64.get("ratings", ref_64),
+        "external_reference_panels": external_reference_panels,
     }
     out_path = HERE / "frontier_elo_comparison.json"
     ch.save_json(out_path, out_doc)
@@ -493,14 +634,33 @@ def main() -> Dict[str, Any]:
             f"| W/T/L vs Opus5.5={r['wtl_vs_opus5p5_extra_families']}"
         )
 
-    print("\n=== DL-Val91 Direct Same-Fold Tournament (2-Fold CV RMSE Ratio -logratio, Anchored at R882 = 1500.00) ===")
-    for name in sorted(arm_names, key=lambda nm: -elo_cv_rmse_ratio[nm]["joint_elo"]):
-        r = elo_cv_rmse_ratio[name]
-        print(
-            f"{name:38s} | Joint Elo={r['joint_elo']:7.2f} ({r['elo_delta_vs_opus5p5_extra']:+6.2f} vs Opus5.5) "
-            f"| Pw vs R882={r['pairwise_elo_vs_r882']:7.2f} | Fam(-lr)={r['family_mean']:.6f} | Ctx(-lr)={r['context_mean']:.6f} "
-            f"| W/T/L vs Opus5.5={r['wtl_vs_opus5p5_extra_families']}"
-        )
+    if dl_val91_all_models_2fold:
+        print("\n=== DL-Val91 All-Models 2-Fold Inner-CV Tournament (`jope.s1-two-fold/v1` S1 Gated Utility) ===")
+        t_gated = dl_val91_all_models_2fold["s1_utility_gated_elo"]
+        for name in sorted(t_gated, key=lambda nm: -t_gated[nm]["joint_elo"]):
+            r = t_gated[name]
+            print(
+                f"{name:38s} | Joint Elo={r['joint_elo']:7.2f} ({r['elo_delta_vs_opus5p5_extra']:+6.2f} vs Opus5.5) "
+                f"| Pw vs R882={r['pairwise_elo_vs_r882']:7.2f} | FamU={r['family_mean']:.6f} | CtxU={r['context_mean']:.6f}"
+            )
+        print("\n=== DL-Val91 All-Models 2-Fold Inner-CV Tournament (`jope.s1-two-fold/v1` -logratio RMSE Ratio) ===")
+        t_lr = dl_val91_all_models_2fold["cv_rmse_ratio_elo"]
+        for name in sorted(t_lr, key=lambda nm: -t_lr[nm]["joint_elo"]):
+            r = t_lr[name]
+            print(
+                f"{name:38s} | Joint Elo={r['joint_elo']:7.2f} ({r['elo_delta_vs_opus5p5_extra']:+6.2f} vs Opus5.5) "
+                f"| Pw vs R882={r['pairwise_elo_vs_r882']:7.2f} | Fam(-lr)={r['family_mean']:.6f} | Ctx(-lr)={r['context_mean']:.6f}"
+            )
+
+    if dl_val91_s3_precomputed:
+        print("\n=== DL-Val91 S3 Precomputed Reference Tournament (S1 Unconstrained Utility) ===")
+        t_s3 = dl_val91_s3_precomputed["s1_utility_unconstrained_elo"]
+        for name in sorted(t_s3, key=lambda nm: -t_s3[nm]["joint_elo"]):
+            r = t_s3[name]
+            print(
+                f"{name:38s} | Joint Elo={r['joint_elo']:7.2f} ({r['elo_delta_vs_opus5p5_extra']:+6.2f} vs Opus5.5) "
+                f"| Pw vs R882={r['pairwise_elo_vs_r882']:7.2f} | FamU={r['family_mean']:.6f} | CtxU={r['context_mean']:.6f}"
+            )
 
     if evo_progression_summary:
         print("\n=== 3-Generation Live Rust GP Evolution Progression on DL-Val91 ===")
