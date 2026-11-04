@@ -255,18 +255,3 @@ Cargo.lock, the known-identity table and behavioral compatibility fixtures are u
 identity transitions are recorded in
 `deadlang_unsupported_blend_identity_rebaseline.v1.json`; no shipped receipt or known-identity
 row is claimed.
-
-## Current identity transition: 1.0.1 version bump (2026-11-04)
-
-`just bump 1.0.1` (PR #2125, the second signed candidate of the first public jAIn CLI release)
-changes only version strings. Two of them are evaluator identity inputs:
-`crates/jope-campaigns/Cargo.toml` (`818aad9e…` to `b5b13bf9…`) and `Cargo.lock`
-(`d8e02624…` to `9af944a5…`). The evaluator implementation hash advances from
-`57228f89f32be61b2a6ae26a3b4e7d0dc0d82e97fa627ae49816da448721b888` to
-`4352672bab0f4e83149a1200ae9c351773c80248c68300749e01bba7f8925cfa`, and the identity digest
-from `61be21b47b83b4a6507583500c30be90e088a5f9db02ed04e2ab88c2a180d670` to
-`749f6e0783fedebda781051ba9c4254b7620d6f141487f1bcaba27c836581669`. Announced identity-only
-regeneration at `e5aa71d2ed1d6707e14d5db333c8ff58ef7cc3f0` records it; every other compat-freeze
-surface still compared and passed, and the DSL ABI and evaluator code are unchanged. The
-transition is registered in `v1_0_1_20261104_version_bump_identity_rebaseline.v1.json`. No
-known-identity row is added because this identity has no shipped receipt yet.

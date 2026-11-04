@@ -1,6 +1,6 @@
 # Bundled demo datasets
 
-These CSVs are embedded in the `jain` executable (the jAIn CLI) and appear in the interactive CLI as virtual
+These CSVs are embedded in the `jopedime` executable and appear in the JAIN TUI as virtual
 `example/<name>.csv` files (`/demo`, `/open example/<name>.csv`). Together they stay below 1 MB
 (`MAX_TOTAL_BYTES` in `src/terminal/demos.rs`, checked by its tests).
 
