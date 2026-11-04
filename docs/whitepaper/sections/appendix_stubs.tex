@@ -36,16 +36,16 @@ and tabular amortization \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm20
   \end{tabularx}
 \end{table}
 
-Evaluator choice is separate from family allocation: the native audit
+Family allocation is separate from evaluator choice. The native audit
 groups approved datasets by source identity, declared family or identical
 training bytes, then assigns meta-training, meta-validation and meta-test
-partitions by seeded family order. This code path does not establish a
-corpus or checkpoint's compliance with the required split.
+partitions in seeded family order. This path alone does not establish
+corpus or checkpoint compliance with the required split.
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-\Cref{sub:method-referee} requires excluding test-selected search outcomes
-and obtaining final-evaluation receipts for input closure and execution
+\Cref{sub:method-referee} excludes test-selected search outcomes and
+requires final-evaluation receipts for input closure and execution
 isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
@@ -56,16 +56,15 @@ isolation:
   \item \textbf{Input-closure and canary checks.} Benchmark release requires
   passing receipts for an inner-fold label-poison test, a sealed canary and
   a train-only input-closure audit excluding held-out targets and derived
-  statistics from both board encoding and candidate generation. Final
-  pre-registration and receipts belong to the \mbox{primary evaluation record}
-  in \cref{sub:results-protocol}.
+  statistics from both board encoding and candidate generation. The \mbox{primary evaluation record}
+  in \cref{sub:results-protocol} must contain final pre-registration and receipts.
 \end{itemize}
 
 \section{Training Details}\label{app:training}
 
-The historical reference still needs checkpoint qualification. This
-inventory covers its encoder, objective and execution requirements
-(\cref{sec:method}), separately from \mbox{the adapter record} in
+This inventory covers the historical reference's encoder, objective and
+execution requirements (\cref{sec:method}); checkpoint qualification
+remains pending. The separate \mbox{adapter record} appears in
 \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
@@ -86,8 +85,8 @@ inventory covers its encoder, objective and execution requirements
   percentile $\rho_w = 1 - \mathrm{rank}/\allowbreak{(|G_p|-1)}$ and writer $\writer$ sequence weight
   $0.05 + \rho_w^4$. The base native sampler balances families and takes
   the best program plus one draw from each of seven rank bands of the rest.
-  Fresh-program replay can replace a comparator with a newly admitted
-  candidate.
+  Fresh-program replay can substitute a newly admitted candidate for
+  one comparator.
 
   Within-comparison pairs use corpus context and comparison index;
   Python ranking helpers group by dataset identifier. Native pairing skips
@@ -101,8 +100,8 @@ inventory covers its encoder, objective and execution requirements
   The header stays fixed during inference. Label smoothing of 0.05 applies
   over legal tokens; losses average within each program before the
   normalized rank-weighted mean over programs. Displayed aggregate
-  coefficients match the native objective; checkpoint objective identity
-  and configuration \mbox{still belong} in its evaluation record.
+  coefficients match the native objective; the evaluation record must still
+  identify the checkpoint objective and \mbox{its configuration}.
   \item \textbf{Runtime supervision (\cref{eq:totalLoss}).}
   The auxiliary runtime term compares $\ln(1+s)$ with
   $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
@@ -124,22 +123,22 @@ inventory covers its encoder, objective and execution requirements
   projection is restricted to the grammar rows.
 
   The registered total includes zero-weight stability and loss-scale
-  terms; it measures neither learned nor exercised capacity. Approximately
-  6.90 million parameters share no weights with the writer and lie outside its token
-  generation path: game-day decoding bypasses them; native loading requires them.
+  terms, so it measures neither learned nor exercised capacity. Approximately
+  6.90 million parameters lie outside writer token generation and share no
+  weights with it: game-day decoding bypasses them; native loading requires them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
   Records describe offline AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
   on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
-  80 training datasets (\num{7877} lists; \num{8894} contexts). Batch size alone
-  establishes neither per-GPU microbatch nor accumulation settings.
+  80 training datasets (\num{7877} lists; \num{8894} contexts). Global batch size specifies
+  neither per-GPU microbatch nor accumulation settings.
   Checkpoint acceptance and held-out promotion still require receipts
   (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
   Final evaluation requires seccomp and Landlock isolation, cgroup memory
   limits, disabled swap and native/emitted-code agreement within
-  $10^{-9}\max(1,|\hat{y}|)$. The evaluation record must include final-evaluator
-  isolation and parity receipts.
+  $10^{-9}\max(1,|\hat{y}|)$. Its evaluation record must include final-evaluator isolation and parity
+  receipts.
 \end{itemize}
 
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}
