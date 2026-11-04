@@ -1,0 +1,49 @@
+{
+  "wave": "H297",
+  "status": "PREREGISTERED",
+  "verdict": "PENDING",
+  "source_commit": null,
+  "plan_sha256": "df471d5bd52a043d38a9bca8ee15e066b4a4c24a10bb185c66f253e0542743ef",
+  "primary": "CTXNORM_CLIP",
+  "regression": {
+    "status": "PASS",
+    "baseline_mean": 1.1389572403748425,
+    "control_mean": 1.1354387884248622,
+    "baseline_choices_exact": 91,
+    "control_choices_exact": 91,
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83"
+  },
+  "new_arm_updates": 0,
+  "new_arm_terminal_scores": 0,
+  "custody": {
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/prereg-manifest.json",
+      "version_id": "KUBGjIcMSrK3sl4CgfCXZOkCKrKkaGNG",
+      "sha256": "dd65735ad023c760b3d7ab5c13ccbacae22d8e82c3ed5df0a5fdff87c2f4b963",
+      "bytes": 3072,
+      "exact_version_get_verified": true
+    },
+    "inputs_source": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/inputs-source.tar.gz",
+      "version_id": "PVoZZo09fFm.MegYE67gQIv1XobpbBik",
+      "sha256": "bf807bfbf530ec90de4f94c0dd72a955d3c202003233388f9b57322433077597",
+      "bytes": 282167822,
+      "exact_version_get_verified": true,
+      "members_verified": 2674,
+      "members_sha256_verified": true
+    },
+    "input_members": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/inputs-source-manifest.json",
+      "version_id": "OEcLWrn9KSn2I5RAEXqMw9z6zaJ34hsK",
+      "sha256": "7ca56b89893997cf74fe1eed73444723d90c84bf3342eb549de7919f4355bc52",
+      "bytes": 579641,
+      "exact_version_get_verified": true
+    }
+  },
+  "resource_preparation": {
+    "core_fallback": "60-63 unavailable; verified idle100-103",
+    "numeric_threads": "2->1 after startup guard stopped before any score/update",
+    "sampler_assertion": "corrected occurrence count before any optimizer update; cached baseline reused"
+  },
+  "adoption": false
+}
