@@ -6,7 +6,9 @@ The 42-second timeline uses C++, Python, Rust, TypeScript, Go, JavaScript, CUDA 
 
 Use the exact selected GP and original model object for every chapter. The local C++, Python, Rust, JavaScript, and C ABI checks execute the displayed targets on the saved normalized FIT and probe rows. The TypeScript, Go, and CUDA C++ chapters bind their emitted sources and qualify the numerical Rust cores on the host. Their Wasm and CUDA execution paths have separate qualification gates. Source-span cues follow the actual operations in each file and the underlying core when the interface contains no selected operations.
 
-The source pane shows the current line alone. The historical fitted export rate uses compact forms such as `2.4M tokens/sec` and `300k tokens/sec`. Shuffle each set of 17 verified visible FIT rows at chapter frames 42 and 84, moving row IDs, values, the rightmost target, and sensitivity scores as one record. Seed each permutation by case ID and record the displayed row order in the encode receipt.
+The source pane shows the current line alone. The historical fitted export rate uses compact forms such as `2.4M tokens/sec` and `300k tokens/sec`. At 30 fps, round successive 0.28-second table boundaries to frames. This gives 15 orders per chapter and five times the previous cadence. Seed each permutation by case ID and record its frame and row IDs in the encode receipt.
+
+Calculate feature importance percentiles once for each dataset across its 68 visible, measured FIT feature sensitivities. Average tied ranks and anchor exact zeros at the low end. Color cells from dark red through amber to green. The thin bars retain their relative sensitivity lengths. Move row IDs, values, the purple rightmost target, sensitivity marks, and percentile colors together at every shuffle.
 
 Run the original source preparation below to reproduce the pinned Rust recipe catalog. Then emit and qualify the multilingual source and compose the current cut.
 
@@ -19,10 +21,10 @@ rtk proxy python3 tools/visualization/intelligence_wave.py \
   --scene-receipt "$ANIMATION_TEN/scene-v2/scene.receipt.json" \
   --source-catalog "$WAVE_ROOT/multilingual-source/catalog.json" \
   --loops-root "$ANIMATION_TEN/loops" --table-panels "$ANIMATION_TEN/table-panels-v1" \
-  --output-dir "$WAVE_ROOT/final-multilingual-v2"
+  --output-dir "$WAVE_ROOT/final-percentile-shuffle"
 ```
 
-Validate all 1,260 decoded frames, ten chapters, source reconstruction for each displayed file, the lexer selection, all permutations, and icon and table pixel identity on the review stills. The [icon inventory](language-icons/README.md) binds the input marks and licenses.
+Validate all 1,260 decoded frames, ten chapters, source reconstruction for each displayed file, and the lexer selection. Check that all 150 table orders preserve every row and its colors. Verify icon and table pixels on the review stills. The [icon inventory](language-icons/README.md) binds the input marks and licenses.
 
 ## Original Rust cut
 

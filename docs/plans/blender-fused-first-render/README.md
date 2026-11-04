@@ -1,10 +1,10 @@
 # JAIN — Just An Inference Network
 
-The **42-second Intelligence Wave** cut plays all ten synthetic regression cases at 1080p30. Each chapter shuffles the verified 17-row table twice and sweeps light over the original measured network render. The source pane scrolls language-specific code with matching filenames, syntax colors, and current line numbers. Eight language icons and labels rotate with the chapters. The compact benchmark retains its original fitted-export scope.
+The **42-second Intelligence Wave** cut plays all ten synthetic regression cases at 1080p30. Each chapter shuffles the 17 verified visible rows every 0.28 seconds and sweeps light over the original measured network render. Red, amber, and green feature cells show within-dataset importance percentiles that stay attached to their rows. The source pane scrolls language-specific code with matching filenames, syntax colors, and current line numbers. Eight language icons and labels rotate with the chapters. The compact benchmark retains its original fitted-export scope.
 
-[Short-cut plan](INTELLIGENCE_WAVE_PLAN.md) · [Multilingual cut receipt](MULTILINGUAL_WAVE_RECEIPT.json) · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114)
+[Short-cut plan](INTELLIGENCE_WAVE_PLAN.md) · [Percentile shuffle receipt](PERCENTILE_SHUFFLE_RECEIPT.json) · [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114)
 
-The local movie is `h256/intelligence-wave-v1/final-multilingual-v2/JAIN-intelligence-wave-42s.mp4` under the existing render artifact root. The source packages are in `h256/intelligence-wave-v1/multilingual-source/JAIN-multilingual-recipe-sources.zip`. The [original Rust cut receipt](INTELLIGENCE_WAVE_RECEIPT.json) records the earlier 42-second edit.
+The local movie is `h256/intelligence-wave-v1/final-percentile-shuffle/JAIN-intelligence-wave-42s.mp4` under the existing render artifact root. The source packages are in `h256/intelligence-wave-v1/multilingual-source/JAIN-multilingual-recipe-sources.zip`. The [original Rust cut receipt](INTELLIGENCE_WAVE_RECEIPT.json) and [first multilingual receipt](MULTILINGUAL_WAVE_RECEIPT.json) record the earlier 42-second edits.
 
 ## Earlier long cut
 

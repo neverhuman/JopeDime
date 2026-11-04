@@ -20,12 +20,17 @@ from animate_source import (
 from cinematic_pages import PALETTE, presentation
 from code_pages import make_pages, reconstruct_source
 from intelligence_wave_effect import NETWORK_ROI, apply_wave
-from table_panels import BODY_FONTS, HEADING_FONTS, ROWS, draw_panel, font_path, load_panels
+from table_panels import (
+    BODY_FONTS, HEADING_FONTS, ROWS, draw_panel, font_path, importance_percentiles, load_panels,
+)
 
 WIDTH, HEIGHT, FPS = 1920, 1080, 30
 CASE_FRAMES = 126
 SCROLL_FIRST, SCROLL_LAST = 7, 119
-TABLE_SWITCH_FRAMES = (0, 42, 84)
+# Five times the original three table holds. Round each boundary to the
+# nearest video frame so 8- and 9-frame holds average 0.28 seconds.
+TABLE_HOLDS = 3 * 5
+TABLE_SWITCH_FRAMES = tuple(round(hold * CASE_FRAMES / TABLE_HOLDS) for hold in range(TABLE_HOLDS))
 LANGUAGES = {
     "rust": "Rust", "python": "Python", "cpp": "C++", "javascript": "JavaScript",
     "typescript": "TypeScript", "go": "Go", "cuda": "CUDA C++", "c": "C",
@@ -46,7 +51,7 @@ def display_rate(rate: float) -> str:
 
 
 def table_orders(case_id, row_ids):
-    """Keep the first view in capture order, then pick two reproducible shuffles."""
+    """Keep the first view in capture order, then pick reproducible shuffles."""
     if len(row_ids) != ROWS or len(set(row_ids)) != ROWS:
         raise ValueError("shuffle requires 17 distinct verified rows")
     rng = random.Random(f"jain.wave.table-shuffle/v1:{case_id}")
@@ -60,7 +65,7 @@ def table_orders(case_id, row_ids):
 
 
 def shuffled_tables(root, scene):
-    panels, binding = load_panels(root, scene)
+    _, binding = load_panels(root, scene)
     catalog_bytes = (root / "catalog.receipt.json").read_bytes()
     if hashlib.sha256(catalog_bytes).hexdigest() != binding["catalog_sha256"]:
         raise ValueError("table catalog changed after panel verification")
@@ -78,16 +83,17 @@ def shuffled_tables(root, scene):
         cid = case["case_id"]
         record = records[cid]
         rows, scores, ids = record["raw_table"], record["scores"], record["row_ids"]
+        percentiles = importance_percentiles(scores)
         header = [*record["feature_names"], record["target_name"]]
-        variants[cid] = [panels[cid]]
+        variants[cid] = []
         order_bindings[cid] = []
         for start, order in zip(TABLE_SWITCH_FRAMES, table_orders(cid, ids), strict=True):
             row_ids = [ids[i] for i in order]
             order_bindings[cid].append({"case_frame": start, "row_ids": row_ids})
-            if start:
-                panel, _ = draw_panel(case["dataset_name"], case["total_rows"], header, row_ids,
-                                      [rows[i] for i in order], [scores[i] for i in order], body, heading)
-                variants[cid].append(panel)
+            panel, _ = draw_panel(case["dataset_name"], case["total_rows"], header, row_ids,
+                                  [rows[i] for i in order], [scores[i] for i in order], body, heading,
+                                  percentiles=[percentiles[i] for i in order])
+            variants[cid].append(panel)
     return variants, order_bindings, binding
 
 
@@ -287,7 +293,7 @@ def render(args):
                 if index in (1, 7, 10):
                     samples.update({0: "start", peak: "gp-cue", CASE_FRAMES - 1: "end"})
                 if index == 1:
-                    samples.update({42: "shuffle-1", 84: "shuffle-2"})
+                    samples.update(dict(zip(TABLE_SWITCH_FRAMES[1:3], ("shuffle-1", "shuffle-2"), strict=True)))
                 for frame_index, (offset, loop_index) in enumerate(zip(offsets, plate_indices, strict=True)):
                     with Image.open(inside(loop_path.parent, loop["frames"][loop_index]["file"])) as raster:
                         if raster.size != (WIDTH, HEIGHT):
@@ -353,7 +359,8 @@ def render(args):
         "generator_sha256": digest(Path(__file__)),
         "wave_effect_sha256": digest(Path(__file__).with_name("intelligence_wave_effect.py")),
         "table_overlay": table_binding,
-        "table_shuffle_scope": "Seeded display permutations of the same 17 verified FIT rows, at 1.4 and 2.8 seconds",
+        "table_shuffle_scope": "Seeded display permutations of the same 17 verified FIT rows every 0.28 seconds, rounded to video frames",
+        "table_percentile_scope": "Per-case percentile across 68 measured feature sensitivities, averaging ties and anchoring zeros to low; target excluded",
         "source_viewport": rect, "wave_roi": NETWORK_ROI,
         "metric_scope": "archived data-to-complete-fitted-Rust benchmark, separate from visible recipe",
         "wave_scope": "editorial exposure sweep of existing Blender pixels with source-span gain cues",

@@ -10,10 +10,12 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from intelligence_wave import (
-    CASE_FRAMES, SCROLL_FIRST, SCROLL_LAST, code_strip, display_rate, scroll_offsets, table_orders,
+    CASE_FRAMES, SCROLL_FIRST, SCROLL_LAST, TABLE_SWITCH_FRAMES, code_strip, display_rate,
+    scroll_offsets, table_orders,
 )
 from intelligence_wave_effect import apply_wave
 from code_pages import FONT_CANDIDATES
+from table_panels import IMPORTANCE_FILL, importance_percentiles, percentile_color
 
 
 class IntelligenceWaveTests(unittest.TestCase):
@@ -28,11 +30,27 @@ class IntelligenceWaveTests(unittest.TestCase):
         orders = table_orders("case-a", row_ids)
         self.assertEqual(orders[0], list(range(17)))
         self.assertEqual(orders, table_orders("case-a", row_ids))
-        self.assertEqual(len({tuple(order) for order in orders}), 3)
+        self.assertEqual(len({tuple(order) for order in orders}), 15)
         for order in orders:
             self.assertEqual(sorted(order), list(range(17)))
         with self.assertRaisesRegex(ValueError, "17 distinct"):
             table_orders("case-a", [0] * 17)
+
+    def test_table_shuffles_track_the_fivefold_cadence_without_drift(self):
+        self.assertEqual(TABLE_SWITCH_FRAMES, (0, 8, 17, 25, 34, 42, 50, 59, 67, 76, 84, 92, 101, 109, 118))
+        holds = [end - start for start, end in zip(TABLE_SWITCH_FRAMES, (*TABLE_SWITCH_FRAMES[1:], CASE_FRAMES))]
+        self.assertEqual(set(holds), {8, 9})
+        self.assertEqual(sum(holds), CASE_FRAMES)
+
+    def test_feature_percentiles_average_ties_and_anchor_zeros(self):
+        values = [[0, .5, .5], [1, 0, .2]]
+        first, second = importance_percentiles(values)
+        self.assertEqual(first, [0, .7, .7])
+        self.assertEqual(second, [1, 0, .4])
+        self.assertEqual(importance_percentiles(values[::-1]), [second, first])
+        self.assertEqual(importance_percentiles([[0] * 4] * 17), [[0] * 4] * 17)
+        for rank, stop in zip((0, .5, 1), IMPORTANCE_FILL, strict=True):
+            self.assertEqual(percentile_color(rank, IMPORTANCE_FILL), (*stop, 255))
 
     def test_source_spans_follow_their_language_and_file(self):
         font = next((Path(path) for path in FONT_CANDIDATES if Path(path).is_file()), None)

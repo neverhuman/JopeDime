@@ -9,6 +9,7 @@ verified fitted-GP FIT-median replacement sensitivity, never neural saliency.
 from __future__ import annotations
 
 import argparse
+from bisect import bisect_left, bisect_right
 import csv
 import hashlib
 import json
@@ -23,6 +24,8 @@ BODY_FONTS = ("/System/Library/Fonts/Menlo.ttc",
               "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf")
 HEADING_FONTS = ("/System/Library/Fonts/SFNS.ttf", "/System/Library/Fonts/Helvetica.ttc",
                  "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+IMPORTANCE_FILL = ((69, 23, 42), (91, 61, 29), (13, 84, 60))
+IMPORTANCE_ACCENT = ((250, 104, 124), (249, 186, 98), (69, 224, 158))
 
 
 def require(value, message):
@@ -43,7 +46,27 @@ def check_image(image):
     require(alpha.crop((0, BRAND_HEIGHT, WIDTH, HEIGHT)).getextrema() == (255, 255), "old table region must be fully erased")
 
 
-def draw_panel(name, total_rows, header, row_ids, raw_table, scores, body_path, heading_path):
+def importance_percentiles(scores):
+    """Rank within one table's feature cells. Ties share a rank, and zero stays low."""
+    ranked = sorted(score for row in scores for score in row)
+    scale = max(1, len(ranked) - 1)
+    return [
+        [0.0 if score == 0 else
+         (bisect_left(ranked, score) + bisect_right(ranked, score) - 1) / (2 * scale)
+         for score in row]
+        for row in scores
+    ]
+
+
+def percentile_color(value, palette):
+    low, middle, high = palette
+    start, end, fraction = ((low, middle, 2 * value) if value <= .5
+                            else (middle, high, 2 * value - 1))
+    return (*[round(a + fraction * (b - a)) for a, b in zip(start, end, strict=True)], 255)
+
+
+def draw_panel(name, total_rows, header, row_ids, raw_table, scores, body_path, heading_path,
+               *, percentiles=None):
     from PIL import Image, ImageDraw, ImageFont
     image = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
@@ -69,21 +92,35 @@ def draw_panel(name, total_rows, header, row_ids, raw_table, scores, body_path, 
         for col, (width, value) in enumerate(zip(widths, values)):
             target = col == 5
             score = float(scores[row - 1][col - 1]) if row and 0 < col < 5 else 0.
+            percentile = percentiles[row - 1][col - 1] if percentiles is not None and row and 0 < col < 5 else None
             if row == 0:
                 color = (141, 28, 167, 255) if target else (29, 48, 63, 255)
             elif target:
                 color = (34, 18, 46, 255)
             elif col == 0:
                 color = (12, 23, 34, 255)
+            elif percentile is not None:
+                color = percentile_color(percentile, IMPORTANCE_FILL)
             else:
                 color = (5, round(13 + 27 * score), round(23 + 34 * score), 255)
             draw.rectangle((round(x), round(y), round(x + width - 1), round(y + 42.5)), fill=color)
             draw.text((x + width / 2, y + 21), value, font=body, fill=ink, anchor="mm")
             if row and 0 < col < 5 and score > 0:
+                accent = ((20, 222, 245, 255) if percentile is None
+                          else percentile_color(percentile, IMPORTANCE_ACCENT))
                 draw.line((round(x + 7), round(y + 39), round(x + 7 + (width - 14) * score), round(y + 39)),
-                          fill=(20, 222, 245, 255), width=1)
+                          fill=accent, width=1)
             x += width
-    draw.text((38, 1054), "RELATIVE INPUT SENSITIVITY", font=ImageFont.truetype(str(heading_path), 11), fill=muted, anchor="lt")
+    legend = ImageFont.truetype(str(heading_path), 11)
+    if percentiles is None:
+        draw.text((38, 1054), "RELATIVE INPUT SENSITIVITY", font=legend, fill=muted, anchor="lt")
+    else:
+        draw.text((38, 1054), "FEATURE IMPORTANCE PERCENTILE", font=legend, fill=ink, anchor="lt")
+        draw.text((274, 1054), "LOW", font=legend, fill=muted, anchor="rt")
+        for step in range(121):
+            draw.line((284 + step, 1055, 284 + step, 1062),
+                      fill=percentile_color(step / 120, IMPORTANCE_ACCENT))
+        draw.text((414, 1054), "HIGH", font=legend, fill=muted, anchor="lt")
     check_image(image)
     return image, name_size
 
