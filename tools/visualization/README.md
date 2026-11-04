@@ -1,8 +1,10 @@
 # JAIN inference animation
 
-The current [ten-dataset animation plan](../../docs/plans/blender-fused-first-render/ANIMATION_PLAN.md) uses `animation_capture.py`, `round_trip_metrics.py`, `cinematic_pages.py`, `input_influence.py`, `table_panels.py`, `blender/jain_cinematic.py`, `blender/render_animation.py` and `animate_source.py`. It produces an equal-third 1080p30 view with dataset names/total rows, a measured neural display and the complete Rust files revealed by fast typing. CPU-only inference benchmarks feed the hardware-neutral on-screen total time and equivalent Rust tokens/sec. The Rust-only native counter and TEL07 event are shared with internal telemetry; editorial typing speed is separate. GPUs are used only to render.
+The current [45-second film and opener](../../docs/plans/blender-fused-first-render/INTRO.md) combines a 12-second opening sequence with the Dendrite demonstration. The opener's final second introduces the moving demo, which continues without restarting. `blender/jain_intro.py` builds the reflective Go board, algorithm tile, illustrative training loop, and transformation into the captured network. `blender/intro_render.py` renders GPU plates; `intro_film.py` adds typography, original synthesized sound, and the verified 45-second assembly.
 
-All generated data/model/source/scene/video assets stay outside Git. Ten explicitly synthetic examples are selected by embedding diversity before inference; the actual five-fold selected DSLs and native GP-to-Rust exports must pass the semantic/source/training gates. The code pane preserves every byte and pauses longer on training and prediction. See the plan for exact ownership, paths, commands, scopes and stop conditions.
+The equal-third 1080p30 demonstration shows ten varied synthetic tables, a rotating measured neural display, and the complete refittable recipe sources across eight languages. Each source section appears in the accelerated scroll; the full source packages provide the reading reference. Model parameters stay in separately saved fitted objects. CPU-only benchmark captures remain distinct from editorial typing speed, and GPUs are used only to render. The displayed fitted-export benchmark retains its original Rust counter and measured scope when other output languages appear.
+
+All generated data/model/source/scene/video assets stay outside Git. The [original capture plan](../../docs/plans/blender-fused-first-render/ANIMATION_PLAN.md), [source wave plan](../../docs/plans/blender-fused-first-render/INTELLIGENCE_WAVE_PLAN.md), and [cell attribution method](../../docs/plans/blender-fused-first-render/NEURAL_CELL_ATTRIBUTION.md) retain the source qualification and measurement evidence. See the intro plan for rebuild commands, ownership, dependencies, and validation.
 
 ## JAIN spatial layout review
 
@@ -100,5 +102,5 @@ include allocation/loop overhead and are distinct from neural decoding, unique
 source throughput and end-to-end product timing. The renderer rechecks model,
 source and rate identities. Seed winners receive no neural-selection credit.
 
-Video rendering remains pending user design approval. The CLI retains
-`--render-animation` for that later gate; do not invoke it during still review.
+The historical still-review CLI retains `--render-animation`. The approved
+current film uses the Dendrite and intro pipeline described above.
