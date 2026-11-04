@@ -624,7 +624,9 @@ fn h256_subsample_batch_consensus_is_deterministic_and_valid() {
     let cand_q_32 = g.f32_vec("pool.cand_q_32", &[n_cand, 32]).unwrap();
     let rcost = g.f64_vec("pool.r882_total_cost", &[n_cand]).unwrap();
     let aprior = g.f64_vec("pool.r882_anchor_prior", &[n_cand]).unwrap();
-    let sos_prior_2d = g.f32_vec("expected_critic.sos_prior_2d", &[n_cand, 2]).unwrap();
+    let sos_prior_2d = g
+        .f32_vec("expected_critic.sos_prior_2d", &[n_cand, 2])
+        .unwrap();
     let sp_prior_1d = g.f32_vec("expected_critic.sp_prior_1d", &[n_cand]).unwrap();
     let h_cost = g.f64_vec("expected_critic.h_cost", &[n_cand]).unwrap();
     let gate_risk: Vec<f32> = (0..n_cand).map(|i| sos_prior_2d[i * 2 + 1]).collect();

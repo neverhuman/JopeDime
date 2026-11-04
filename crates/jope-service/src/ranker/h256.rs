@@ -2232,9 +2232,8 @@ impl H256ProductionBundle {
             "view_readouts must contain at least one subsample view"
         );
         let b = view_readouts.len();
-        let default_weights: Vec<f64> = (0..b)
-            .map(|idx| if idx == 0 { 2.0 } else { 1.0 })
-            .collect();
+        let default_weights: Vec<f64> =
+            (0..b).map(|idx| if idx == 0 { 2.0 } else { 1.0 }).collect();
         let weights: &[f64] = match view_weights {
             Some(w) => {
                 ensure!(
@@ -2248,7 +2247,10 @@ impl H256ProductionBundle {
             None => &default_weights,
         };
         let w_sum: f64 = weights.iter().copied().sum();
-        ensure!(w_sum > 0.0 && w_sum.is_finite(), "view_weights sum must be positive and finite");
+        ensure!(
+            w_sum > 0.0 && w_sum.is_finite(),
+            "view_weights sum must be positive and finite"
+        );
 
         let mut consensus_bagged_scores = [0.0_f64; TOPK_SLICE];
         let mut consensus_bagged_pinv = [0.0_f64; TOPK_SLICE];
@@ -2388,11 +2390,8 @@ impl H256ProductionBundle {
             view_readouts.push(ro);
         }
 
-        let consensus = Self::aggregate_subsample_batch_picks(
-            &view_readouts,
-            view_weights,
-            &top8_indices_ref,
-        )?;
+        let consensus =
+            Self::aggregate_subsample_batch_picks(&view_readouts, view_weights, &top8_indices_ref)?;
         Ok((view_readouts, consensus))
     }
 }

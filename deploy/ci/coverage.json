@@ -7040,6 +7040,16 @@
       "lanes": [],
       "scope": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
     },
+    "python:research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/test_h257_phase2_curriculum.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H257 Phase-2 warm-started subsample and GP evolutionary curriculum trainer, semi-synthetic columns/views, frontier-vs-H257 Elo evaluation and KPI telemetry; frozen DOPE, research-only."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
@@ -9007,7 +9017,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
