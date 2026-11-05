@@ -47,11 +47,11 @@ pub mod sampler;
 pub mod store;
 /// Service telemetry collection and reporting.
 pub mod telemetry;
-/// User-facing and diagnostic warning types.
-pub mod warnings;
 /// Private diagnostic observations of native frozen inference, opt-in only.
 #[cfg(feature = "visual-trace")]
 pub mod visual_trace;
+/// User-facing and diagnostic warning types.
+pub mod warnings;
 /// Isolated worker protocol, pool management, and execution runtime.
 pub mod worker;
 
