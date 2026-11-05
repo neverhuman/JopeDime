@@ -12,7 +12,8 @@
 #   lib     systemd-run --user h357-lib: the 4 classical learners, SEARCH OOF + SEARCH->AUDIT fits (--audit fit)
 #   auditreq, stagex, auditx, pullx  Amendment 1 (PREREG §3.1): AUDIT predictions for GP members X_CL uses but X0
 #           never audited (request on xbabe2, SEARCH-only; frozen engine on xbabe0, unit h357-C-auditx; pulled back)
-#   score   phase_c_h357.py arms + decide
+#   stagescore, score0, pullscore  Amendment 2 (PREREG §3.2): phase_c_h357.py arms + decide on xbabe0 (the GP host,
+#           same docker sandbox, unit h357-C-score) so the X0 harness check is bit-exact; outputs pulled back
 set -euo pipefail
 STEP=${1:?step}
 CODE=${H357_CODE:?H357_CODE}
@@ -36,7 +37,7 @@ git -C "$REPO" "${CRED[@]}" fetch -q https://github.com/neverhuman/JopeDime.git 
 cmp -s "$CODE/PREREG.md" <(git -C "$REPO" show "origin/v1/next:$PREREG_PATH") \
   || { echo "staged PREREG.md is not the H357 PREREG on origin/v1/next: nothing runs before publication" >&2; exit 3; }
 PREREG_COMMIT=$(git -C "$REPO" log -1 --format=%H origin/v1/next -- "$PREREG_PATH")
-case $STEP in encode|stage|launch|lib|stagex|auditx)
+case $STEP in encode|stage|launch|lib|stagex|auditx|stagescore|score0)
   [ "$(date -u +%s)" -lt "$(date -u -d "$DEADLINE" +%s)" ] || { echo "past the compute deadline $DEADLINE" >&2; exit 8; } ;;
 esac
 mkdir -p "$EV/logs"
@@ -145,8 +146,46 @@ EOS
       --setenv=PYTHONDONTWRITEBYTECODE=1 -p StandardOutput=append:"$EV/logs/lib.log" \
       -p StandardError=append:"$EV/logs/lib.err" "$EV/run_lib.sh" ;;
   score)
-    cd "$CODE" && PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 nice -n 19 taskset -c 38-53,102-117 \
-      python3 -B phase_c_h357.py arms --jobs 16 \
-      && PYTHONDONTWRITEBYTECODE=1 nice -n 19 python3 -B phase_c_h357.py decide ;;
+    echo "superseded by Amendment 2: score on xbabe0 (stagescore, score0, pullscore)" >&2; exit 2 ;;
+  stagescore)  # Amendment 2 (PREREG §3.2): the scoring code + library outputs -> xbabe0 (create-once, sha-checked)
+    if "${SSH[@]}" "systemctl --user list-units --state=active --no-legend 'h357-*' | grep -q ."; then
+      echo "refused: an h357-* unit is active on $HOST" >&2; exit 4
+    fi
+    SC=$DATA/h357/score
+    "${SSH[@]}" "[ ! -e $SC ]" || { echo "$HOST:$SC exists (create-once)" >&2; exit 3; }
+    [ -e "$GPC/PREREG_ON_V1NEXT" ] || printf '%s %s\n' "$PREREG_COMMIT" "$(sha256sum "$CODE/PREREG.md" | cut -d' ' -f1)" \
+      > "$GPC/PREREG_ON_V1NEXT"
+    "${SSH[@]}" "[ ! -e $GPC/code ]" || { echo "$HOST:$GPC/code exists (create-once)" >&2; exit 3; }
+    "${SSH[@]}" "mkdir -p $(dirname "$GPC") $SC/code $SC/lib"
+    rsync -a "$GPC/" "$HOST:$GPC/"
+    "${SSH[@]}" "cd $GPC/code && sha256sum --quiet -c ../CODE.sha256"
+    MAN=$EV/staging_score_$(date -u +%Y%m%dT%H%M%SZ)
+    (cd "$CODE" && grep -E ' (h354_core|phase_d_h354|phase_c_h357)\.py$' CODE.sha256) > "$MAN.code.sha256"
+    [ "$(wc -l < "$MAN.code.sha256")" = 3 ] || { echo "code list != 3" >&2; exit 5; }
+    rsync -a --chmod=Fa-w "$CODE/h354_core.py" "$CODE/phase_d_h354.py" "$CODE/phase_c_h357.py" "$HOST:$SC/code/"
+    (cd "$H357D/lib" && find . -mindepth 2 -maxdepth 2 -name '*.json' ! -path './_work/*' | sort | xargs sha256sum) \
+      > "$MAN.lib.sha256"
+    [ "$(wc -l < "$MAN.lib.sha256")" = 776 ] || { echo "lib files != 776" >&2; exit 5; }
+    rsync -a --chmod=Fa-w --exclude _work "$H357D/lib/" "$HOST:$SC/lib/"
+    scp -q "$MAN.code.sha256" "$HOST:$SC/code.sha256"; scp -q "$MAN.lib.sha256" "$HOST:$SC/lib.sha256"
+    "${SSH[@]}" "cd $SC/code && sha256sum --quiet -c ../code.sha256 && cd $SC/lib && sha256sum --quiet -c ../lib.sha256"
+    # the P201b disjointness assertion reads both H335 Phase T run configs (config.json only; create-only)
+    T2=$DATA/runs/T_xbabe2/config.json
+    "${SSH[@]}" "mkdir -p $(dirname "$T2")"; rsync -a --ignore-existing "$T2" "$HOST:$T2"
+    "${SSH[@]}" "sha256sum $T2" | grep -q "^$(sha256sum "$T2" | cut -d' ' -f1) "
+    echo "stagescore OK -> $HOST:$SC" ;;
+  score0)
+    "${SSH[@]}" "systemd-run --user --unit h357-C-score -p MemoryMax=40G -p MemorySwapMax=0 \
+      -p StandardOutput=append:$DATA/h357/h357-C-score.log -p StandardError=append:$DATA/h357/h357-C-score.log \
+      $GPC/code/run_score_xbabe0.sh" ;;
+  pullscore)
+    if "${SSH[@]}" "systemctl --user is-active -q h357-C-score"; then echo "h357-C-score still active" >&2; exit 4; fi
+    SC=$DATA/h357/score
+    mkdir -p "$H357D/xbabe0_score"
+    rsync -a "$HOST:$SC/arms.jsonl" "$HOST:$SC/x0_check.json" "$HOST:$SC/verdict.json" "$H357D/xbabe0_score/"
+    rsync -a "$HOST:$DATA/h357/h357-C-score.log" "$EV/logs/h357-C-score.xbabe0.log"
+    "${SSH[@]}" "cd $SC && sha256sum arms.jsonl x0_check.json verdict.json" > "$EV/logs/score.xbabe0.sha256"
+    (cd "$H357D/xbabe0_score" && sha256sum --quiet -c "$EV/logs/score.xbabe0.sha256")
+    echo "pullscore OK" ;;
   *) echo "unknown step $STEP" >&2; exit 2 ;;
 esac

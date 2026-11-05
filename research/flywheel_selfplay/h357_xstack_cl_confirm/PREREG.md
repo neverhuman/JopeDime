@@ -93,6 +93,24 @@ prediction needs every declared member's AUDIT output.
 - **Unchanged:** a member whose extra AUDIT evaluation fails takes the SEARCH mean (the H317 rule, as for any member).
   The weights, arms, panel, statistics and verdicts are as above.
 
+### 3.2 Amendment 2 (implementation only; no rule or tolerance changed) — score on the GP's host
+**What happened.** After Amendment 1, `arms` ran on xbabe2 (11:14Z). Its X0 harness check failed on 1 of 194 contexts:
+`53e44260`, a 2-member stack, |Δw| = 6.1e-5 and |Δu| = 3.0e-7 against the 1e-9 tolerance. The step then stopped.
+That attempt's outputs are kept under `attempt1_xbabe2_unread/`, and **its X_CL values were never read**. Only the
+`x0_check` fields were inspected.
+
+**The diagnosis.** It used X0 only, with no library and no X_CL.
+- **xbabe2:** the same recompute gives the same deviation with 1 BLAS thread as with the default.
+- **xbabe0** (the host and docker sandbox that computed the stored stacks): it is **exact**, |Δw| = |Δu| = 0.0.
+- **Conclusion.** The frozen Frank-Wolfe stacker is not bit-reproducible across CPUs on near-degenerate stacks. In
+  H354 Phase D the stored Phase T stacks happened to reproduce exactly on xbabe2.
+
+**The fix.** `arms` and `decide` run on xbabe0, in the same H335 docker sandbox. Unit `h357-C-score`, started by
+`run_c_h357.sh stagescore` / `score0` / `pullscore`.
+- The inputs are the sha-checked H354/H357 scoring code and the 776 library output files.
+- The stacker, the 1e-9 X0 tolerance, the arms, the statistics and the verdict map are unchanged.
+- An X0 check failure there still gives `INCOMPLETE`.
+
 ## 4. Decision (fixed now)
 - **Primary (one test).** The H335 `primary_test(X_CL, X0)` (`h335_stats.py` `ee3b4543…`) over the 194 families:
   - clipped (±0.5) family-mean contrast T;
