@@ -1,0 +1,253 @@
+{
+  "sources": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "base_code": "819a45aa5e",
+  "base_code_full": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "dope_frozen": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "kernel": "6.8.0-147-generic",
+    "host": "xbabe2"
+  },
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "wave": "H345",
+  "authority": "/home/ubuntu/nudges/hw_t0100_solhwv_h345_rowsub.md",
+  "BASE_subsample": 0.8,
+  "ROWSUB_subsample": 0.6,
+  "subsample_freq": 1,
+  "no_new_seed_keyword": true,
+  "candidate_cores": [
+    15,
+    19,
+    20,
+    34,
+    35,
+    36,
+    37,
+    55,
+    60,
+    62
+  ],
+  "workers_min": 4,
+  "workers_max": 8,
+  "MemoryMax": "6G",
+  "MemorySwapMax": 0,
+  "nice": 19,
+  "numeric_threads": 1,
+  "compute_stop": "2026-11-05T04:45:00Z",
+  "close_stop": "2026-11-05T05:00:00Z",
+  "base_native_spec": {
+    "status": "PASS",
+    "utc": "2026-11-05T01:07:39.698858+00:00",
+    "ranker_models": 12636,
+    "inner_rankers": 11664,
+    "final_rankers": 972,
+    "expected": {
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1
+    },
+    "all_effective_native_bagging_fraction_point8_freq1": true,
+    "mismatches": [],
+    "seed_mapping_entries": 99,
+    "native_inventory_sha256": "226ca3caf229da5f169cc0732de92b73c1fdc9aad55ed4c9c2de0ff08eae3f92",
+    "seed_map_sha256": "da2b9c92de070ba325880dc4b7e3046a5ea8516947aae460d445b608b0647d25",
+    "source": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H316/solhwv-20261104T105633Z/h316_models_locks_outputs.tar.gz",
+      "version_id": "W5jY6iZlwoRszA7P9zfNLLMtRtM9ZZkW",
+      "sha256": "4eae1dec792e1c7b4adff9ff9a5226d0c38cfe1bd9605ba07cc2596f4ad7b0b5"
+    },
+    "scope": "All archived BASE inner main+8bag rankers and final BASE refits; NORM excluded; native parameter read-only, no fitting/scoring"
+  },
+  "h338_runtime_reference": {
+    "wave": "H338",
+    "launch_utc": "2026-11-04T22:29:29.788978+00:00",
+    "actual_exit_utc": "2026-11-05T00:21:55.403507+00:00",
+    "actual_exit": {
+      "utc": "2026-11-05T00:21:55.403507+00:00",
+      "EXIT_CODE": "exited",
+      "EXIT_STATUS": "0",
+      "SERVICE_RESULT": "success",
+      "INVOCATION_ID": "3dcf3229f3854487a5663e646b431830"
+    },
+    "workers": 4,
+    "wall_seconds": 6745.614529,
+    "cpu_capacity_upper_bound_seconds": 26982.458116,
+    "interpretation": "4 assigned cores times complete coordinator wall, including preflight/scoring/I/O; conservative CPU-capacity upper bound, not a measured optimizer-only CPU total or speed claim",
+    "efficiency": 0.9,
+    "safety": 1.15,
+    "reserve_seconds": 300
+  },
+  "template": {
+    "utc": "2026-11-05T01:02:21.561621+00:00",
+    "remote_snapshot": "8b70068544e20183095b45c64c8c720bc99a4911",
+    "path": "research/flywheel_selfplay/h338_column_subsampling/",
+    "source_sha256": {
+      "archive_h338.py": "54fdbb59c8597d297e8d07e13e9596883a4f8fe6a50d2ebf2eb1958182e78596",
+      "fetch_base_h338.py": "b3ab3c09977b7d628459aaeb71c52a05d408e39a736a582c876eb25415b4e689",
+      "evaluate_h338.py": "28b27ee2ff344237cc3b192b4083a492b0ef23bb664e0b8c9d20eac5096f7dd8",
+      "run_h338.py": "b85d988077052541057d841bee8a8924e94cd7b16bd77025cd01ee9baaaf7b5d",
+      "runtime_h338.py": "ff6feaee5d8725a71a4eed54a6c1aefb80a5b25479cbc4d07385b2ac64bad798",
+      "guard_h338.py": "0ed77136918b0d6ad05943a7fadb2815bd108048ae05cf53a82813e7498c19a3",
+      "test_h338.py": "efa9d3fc2ecaf3124098f9ce071f0fd13a9584048f1c73485c4850b99b4c0f38",
+      "column_subsampling.py": "8c1f09036bf4fa145c6829a2efac341bbf5ab9ae7022d96c9d966573f7c38cf2"
+    },
+    "vendor_sources": {
+      "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+      "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+      "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+      "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+      "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+      "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+      "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+    },
+    "original_close_head": "44bcbe16dc0cc31cb05c5bfeedd35e34697995b1",
+    "all_committed_sources_exact": true
+  },
+  "prereg_sha256": "625b65f485303d3efb0ecd9a88314eac2a04f287c78f440aa8586a38090c78ee",
+  "source_sha256": {
+    "guard_h345.py": "be725e9eddd946b719e0164160c400fa23f455d5030498f501d99f2dd4af9868",
+    "runtime_h345.py": "e00ca6103264f893a64bab3359df1a551c7a76673323e10783def34a2eda8f15",
+    "run_h345.py": "228c6a3c1fd777ca8146d4227058c8dc5711db70ffacb06cfe41040cdca6dec2",
+    "evaluate_h345.py": "6d0781b8b5f5d66527a3eda855b50c1e35227a0eb7547ded5cf7911a6423ec75",
+    "admission_h345.py": "58db7c4e6c503abc55513488e8220ff12899115be0a28c760386758ffadcc129",
+    "archive_h345.py": "a0acacddea0c66ec87489e97a40efa204d1b47d7a2c0c35bf47235c18f359954",
+    "row_subsampling.py": "138859fea514dbf7f790908624b2cd50ae08d92d4175bef69ee3539501983f8b",
+    "fetch_base_h345.py": "9758d6ef89338c07b28675484784e5c45896657366708e513b2734a1e65cf9e8",
+    "test_h345.py": "fe7293d6e0bbc62deaf0e829defe70cf2e482bede98dfa32d9dc15cdfefe0a7f"
+  },
+  "prereg_commit": "d7f9be95a17420cdfb5255e1d9d0a395221d72bf",
+  "execution": {
+    "utc": "2026-11-05T01:10:21.634205+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "1",
+    "SERVICE_RESULT": "exit-code",
+    "INVOCATION_ID": "d7bf0f8c4ff94b5e9fe362cce8afaa41"
+  },
+  "fetch_execution": {
+    "utc": "2026-11-05T01:07:39.981349+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "0",
+    "SERVICE_RESULT": "success",
+    "INVOCATION_ID": "213bba9c2f0e41c9a79188b4e9fca2fa"
+  },
+  "tests": {
+    "utc": "2026-11-05T01:06:53.309001+00:00",
+    "command": "numeric1 nice19 taskset62 python3 -m unittest discover -s /home/ubuntu/jope-rescue-20260921/h345-solhwv/source -p test_h345.py -v",
+    "collected": 28,
+    "executed": 28,
+    "passed": 28,
+    "failed": 0,
+    "skipped": 0,
+    "exit_status": 0,
+    "elapsed_seconds": 6.00212682900019,
+    "source_sha256": {
+      "guard_h345.py": "be725e9eddd946b719e0164160c400fa23f455d5030498f501d99f2dd4af9868",
+      "runtime_h345.py": "e00ca6103264f893a64bab3359df1a551c7a76673323e10783def34a2eda8f15",
+      "run_h345.py": "228c6a3c1fd777ca8146d4227058c8dc5711db70ffacb06cfe41040cdca6dec2",
+      "evaluate_h345.py": "6d0781b8b5f5d66527a3eda855b50c1e35227a0eb7547ded5cf7911a6423ec75",
+      "admission_h345.py": "58db7c4e6c503abc55513488e8220ff12899115be0a28c760386758ffadcc129",
+      "archive_h345.py": "a0acacddea0c66ec87489e97a40efa204d1b47d7a2c0c35bf47235c18f359954",
+      "row_subsampling.py": "138859fea514dbf7f790908624b2cd50ae08d92d4175bef69ee3539501983f8b",
+      "fetch_base_h345.py": "9758d6ef89338c07b28675484784e5c45896657366708e513b2734a1e65cf9e8",
+      "test_h345.py": "fe7293d6e0bbc62deaf0e829defe70cf2e482bede98dfa32d9dc15cdfefe0a7f"
+    }
+  },
+  "cpu_admission": {
+    "probe_started_utc": "2026-11-05T01:10:16.444404+00:00",
+    "probe_finished_utc": "2026-11-05T01:10:21.447676+00:00",
+    "seconds": 5,
+    "probes": 1,
+    "priority": [
+      15,
+      19,
+      20,
+      34,
+      35,
+      36,
+      37,
+      55,
+      60,
+      62
+    ],
+    "idle_percent": {
+      "15": 96.53061224489795,
+      "19": 90.26915113871635,
+      "20": 59.918200408997954,
+      "34": 85.71428571428571,
+      "35": 69.91869918699187,
+      "36": 82.51028806584362,
+      "37": 81.81818181818181,
+      "55": 88.68312757201646,
+      "60": 81.13590263691684,
+      "62": 87.95180722891567,
+      "79": 0.0,
+      "83": 90.55441478439425,
+      "84": 87.88501026694045,
+      "98": 76.82926829268293,
+      "99": 82.58196721311475,
+      "100": 77.17842323651452,
+      "101": 73.5234215885947,
+      "119": 86.27049180327869,
+      "124": 93.73737373737374,
+      "126": 93.54838709677419
+    },
+    "admitted": [
+      19,
+      55,
+      62
+    ],
+    "status": "INCOMPLETE_CPU_ADMISSION"
+  },
+  "launch_forecast": {
+    "status": "NOT_RUN_CPU_ADMISSION",
+    "h338_runtime_reference": {
+      "wave": "H338",
+      "launch_utc": "2026-11-04T22:29:29.788978+00:00",
+      "actual_exit_utc": "2026-11-05T00:21:55.403507+00:00",
+      "actual_exit": {
+        "utc": "2026-11-05T00:21:55.403507+00:00",
+        "EXIT_CODE": "exited",
+        "EXIT_STATUS": "0",
+        "SERVICE_RESULT": "success",
+        "INVOCATION_ID": "3dcf3229f3854487a5663e646b431830"
+      },
+      "workers": 4,
+      "wall_seconds": 6745.614529,
+      "cpu_capacity_upper_bound_seconds": 26982.458116,
+      "interpretation": "4 assigned cores times complete coordinator wall, including preflight/scoring/I/O; conservative CPU-capacity upper bound, not a measured optimizer-only CPU total or speed claim",
+      "efficiency": 0.9,
+      "safety": 1.15,
+      "reserve_seconds": 300
+    }
+  },
+  "first_cell_forecast": {
+    "status": "NOT_RUN_NO_TREATMENT_CELL"
+  },
+  "input_identity_validation": {
+    "status": "PASS",
+    "utc": "2026-11-05T01:09:58.118433+00:00",
+    "train_pool_sha256_matches": 1219,
+    "train_prefix_feature_members": 4,
+    "selected_and_r882_train_costs": "EXACT SHA256",
+    "DLVal_feature_rows_read": 0,
+    "reference_manifest_sha256": "9b148003d48ab609b2a796c57fb8b4c0296cc0ee79771f034944f4b8dc064263",
+    "scope": "All current TRAIN program/fitness/gate pools and all consumed cache feature prefixes exactly match the archived BASE inputs; no file bodies outside TRAIN prefixes."
+  },
+  "closeout_status": "INCOMPLETE_CPU_ADMISSION",
+  "scientific_verdict": "UNKNOWN",
+  "treatment_qualification": "NOT_RUN_CPU_ADMISSION"
+}

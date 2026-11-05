@@ -1,0 +1,19 @@
+{
+ "wave": "H345",
+ "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H345/solhwv-20261105T010000Z/",
+ "objects": [
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H345/solhwv-20261105T010000Z/h345_admission_closeout.tar.gz",
+   "version_id": "MZ1IIBPt5lEtbE7.tkNbzQBGahRS4Z97",
+   "sha256": "2fa4524a830b695848be68ec30171c4149cfab05181807eb3a92a9f3fe6720b9",
+   "bytes": 1953652,
+   "create_only": true,
+   "if_none_match": "*",
+   "exact_version_get_sha256_verified": true,
+   "all_members_exact_version_verified": true,
+   "member_count": 122
+  }
+ ],
+ "inner_task_archives": []
+}
