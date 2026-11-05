@@ -14,14 +14,27 @@
         "schema": "jope.reference-board.archive/v1",
         "set": "dev91-audit-v1",
         "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
-        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T085053Z.tar.zst",
-        "version_id": "Hz8d5S8acwppcnoqjT.hssbC_pQgCxWc",
-        "sha256": "0aafe1392caf68bf737816d757ed7c0180ee1f8884be01d3277d5cb7bb6de285",
-        "members": 1027,
-        "member_sha256sums_sha256": "79de5db9313e41b71d7eb3819d25829b48b4e389661b5895e64e9043f4556b03",
+        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T140116Z.tar.zst",
+        "version_id": "0Ax4wTWMm5FEtd0UqGKtQZae9pHK2AcQ",
+        "sha256": "bb1fcdb40b78a38bfba8da0b7aeec6491d5253a0fd268c280711c53a58cb866d",
+        "members": 1028,
+        "member_sha256sums_sha256": "8d7d7e3bde4f42a18d904e94f352c125a7ca3bd918257bcfaf699e2f6623065c",
         "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
-        "utc": "20261105T085053Z",
+        "utc": "20261105T140116Z",
         "supersedes": [
+          {
+            "schema": "jope.reference-board.archive/v1",
+            "set": "dev91-audit-v1",
+            "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+            "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T085053Z.tar.zst",
+            "version_id": "Hz8d5S8acwppcnoqjT.hssbC_pQgCxWc",
+            "sha256": "0aafe1392caf68bf737816d757ed7c0180ee1f8884be01d3277d5cb7bb6de285",
+            "members": 1027,
+            "member_sha256sums_sha256": "79de5db9313e41b71d7eb3819d25829b48b4e389661b5895e64e9043f4556b03",
+            "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+            "utc": "20261105T085053Z",
+            "note": "Pre-H369 snapshot (23 entrants). Kept in S3 (create-only). The current archive above adds scores/h364.XSTACK_2L.jsonl and the regenerated ladder.json / LADDER.md; every other member is unchanged."
+          },
           {
             "schema": "jope.reference-board.archive/v1",
             "set": "dev91-audit-v1",
@@ -91,6 +104,10 @@
           "completed": 91
         },
         "h335.Opus5p5_Extra": {
+          "records": 91,
+          "completed": 91
+        },
+        "h364.XSTACK_2L": {
           "records": 91,
           "completed": 91
         },

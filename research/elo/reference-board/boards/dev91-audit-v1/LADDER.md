@@ -5,29 +5,30 @@ AUDIT-Elo anchor: `h335.H257_REPLICA` = 1500 (family bootstrap 95% CI). Elo depe
 
 | Rank | Entrant | AUDIT-Elo | 95% CI | Family-mean u | Median wall (s) | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `kumo_tabular_large_e8.v1` | 2036.0 | 1853–2323 | 1.9356 | 81.0 | completed 91 |
-| 2 | `tabfm_ensemble.v1` | 1890.4 | 1724–2124 | 1.7675 | 79.8 | completed 91 |
-| 3 | `tabfm.v1` | 1865.2 | 1699–2095 | 1.7202 | 26.2 | completed 91 |
-| 4 | `tabpfn_v3p5.v1` | 1812.7 | 1642–2064 | 1.6411 | 117.1 | completed 91 |
-| 5 | `tabpfn_v3.v1` | 1777.8 | 1645–1949 | 1.6427 | 85.1 | completed 91 |
-| 6 | `h335.H335_AGG` | 1708.0 | 1620–1827 | 1.5592 |  | completed 91 |
-| 7 | `h335.OLD_MATCHED_CV3` | 1629.3 | 1565–1711 | 1.4607 |  | completed 91 |
-| 8 | `h335.Opus5p5_Extra` | 1577.1 | 1460–1701 | 1.2943 |  | completed 91 |
-| 9 | `h335.OLD_MATCHED` | 1533.0 | 1481–1596 | 1.4465 |  | completed 91 |
-| 10 | `autogluon_300s.v1` | 1526.4 | 1409–1642 | 1.2524 | 50.7 | completed 91 |
-| 11 | `h335.H317_BASE` | 1526.4 | 1491–1565 | 1.4073 |  | completed 91 |
-| 12 | `h335.Gemini4_argon_high` | 1519.6 | 1407–1637 | 1.3587 |  | completed 91 |
-| 13 | `h335.H257_REPLICA` | 1500.0 | 1500–1500 | 1.3703 |  | completed 91 |
-| 14 | `h335.GPT6p1_Sol_Max` | 1494.6 | 1407–1585 | 1.3543 |  | completed 91 |
-| 15 | `catboost.v1` | 1479.6 | 1361–1593 | 1.1886 | 1.2 | completed 91 |
-| 16 | `h335.BANK_NN8_PORTFOLIO` | 1452.9 | 1382–1526 | 1.2715 |  | completed 91 |
-| 17 | `h335.BANK_NN8_PICK` | 1420.9 | 1359–1482 | 1.2636 |  | completed 91 |
-| 18 | `xgboost.v1` | 1374.8 | 1262–1484 | 1.0742 | 1.8 | completed 91 |
-| 19 | `random_forest.v1` | 1367.0 | 1244–1474 | 1.1245 | 1.5 | completed 91 |
-| 20 | `h335.GPT6_Astra_Max` | 1315.2 | 1187–1435 | 1.0215 |  | completed 91 |
-| 21 | `lightgbm.v1` | 1312.3 | 1186–1419 | 1.0492 | 1.5 | completed 91 |
-| 22 | `ridge.v1` | 1238.9 | 1027–1375 | 0.9208 | 1.0 | completed 91 |
-| 23 | `h335.BANK_NN1` | 1193.8 | 1089–1277 | 0.9031 |  | completed 91 |
+| 1 | `kumo_tabular_large_e8.v1` | 2047.9 | 1860–2340 | 1.9356 | 81.0 | completed 91 |
+| 2 | `tabfm_ensemble.v1` | 1900.9 | 1732–2136 | 1.7675 | 79.8 | completed 91 |
+| 3 | `tabfm.v1` | 1875.7 | 1706–2108 | 1.7202 | 26.2 | completed 91 |
+| 4 | `tabpfn_v3p5.v1` | 1822.9 | 1650–2077 | 1.6411 | 117.1 | completed 91 |
+| 5 | `tabpfn_v3.v1` | 1787.6 | 1651–1963 | 1.6427 | 85.1 | completed 91 |
+| 6 | `h364.XSTACK_2L` | 1726.8 | 1633–1852 | 1.5607 |  | completed 91 |
+| 7 | `h335.H335_AGG` | 1707.8 | 1620–1826 | 1.5592 |  | completed 91 |
+| 8 | `h335.OLD_MATCHED_CV3` | 1627.1 | 1564–1707 | 1.4607 |  | completed 91 |
+| 9 | `h335.Opus5p5_Extra` | 1578.2 | 1461–1700 | 1.2943 |  | completed 91 |
+| 10 | `h335.OLD_MATCHED` | 1532.6 | 1480–1596 | 1.4465 |  | completed 91 |
+| 11 | `h335.H317_BASE` | 1527.4 | 1492–1566 | 1.4073 |  | completed 91 |
+| 12 | `autogluon_300s.v1` | 1526.4 | 1409–1640 | 1.2524 | 50.7 | completed 91 |
+| 13 | `h335.Gemini4_argon_high` | 1524.4 | 1413–1642 | 1.3587 |  | completed 91 |
+| 14 | `h335.H257_REPLICA` | 1500.0 | 1500–1500 | 1.3703 |  | completed 91 |
+| 15 | `h335.GPT6p1_Sol_Max` | 1496.4 | 1410–1585 | 1.3543 |  | completed 91 |
+| 16 | `catboost.v1` | 1481.1 | 1364–1594 | 1.1886 | 1.2 | completed 91 |
+| 17 | `h335.BANK_NN8_PORTFOLIO` | 1454.3 | 1384–1528 | 1.2715 |  | completed 91 |
+| 18 | `h335.BANK_NN8_PICK` | 1422.8 | 1362–1484 | 1.2636 |  | completed 91 |
+| 19 | `xgboost.v1` | 1375.3 | 1262–1485 | 1.0742 | 1.8 | completed 91 |
+| 20 | `random_forest.v1` | 1367.7 | 1245–1474 | 1.1245 | 1.5 | completed 91 |
+| 21 | `h335.GPT6_Astra_Max` | 1318.0 | 1191–1436 | 1.0215 |  | completed 91 |
+| 22 | `lightgbm.v1` | 1313.6 | 1187–1421 | 1.0492 | 1.5 | completed 91 |
+| 23 | `ridge.v1` | 1242.2 | 1031–1378 | 0.9208 | 1.0 | completed 91 |
+| 24 | `h335.BANK_NN1` | 1196.2 | 1092–1279 | 0.9031 |  | completed 91 |
 
 ## `h335.H335_AGG` head to head
 
@@ -52,6 +53,7 @@ Gain = family-equal mean of u(focus) − u(other); RMSE cut = 1 − exp(−gain)
 | `h335.H317_BASE` | +0.1519 | +14.1% | 18/0/1 | +0.0896 | 0.002989 | +0.0668 | yes |
 | `h335.OLD_MATCHED` | +0.1127 | +10.7% | 18/0/1 | +0.0776 | 0.002977 | +0.0542 | yes |
 | `h335.OLD_MATCHED_CV3` | +0.0986 | +9.4% | 16/0/3 | +0.0638 | 0.004507 | +0.0397 | yes |
+| `h364.XSTACK_2L` | -0.0015 | -0.2% | 2/3/14 | -0.0015 | 0.9551 | -0.0021 | no |
 | `tabpfn_v3p5.v1` | -0.0819 | -8.5% | 5/0/14 | -0.0716 | 0.9346 | -0.0952 | no |
 | `tabpfn_v3.v1` | -0.0835 | -8.7% | 2/0/17 | -0.0686 | 0.9511 | -0.0985 | no |
 | `tabfm.v1` | -0.1610 | -17.5% | 4/0/15 | -0.1128 | 0.9748 | -0.1468 | no |

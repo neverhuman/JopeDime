@@ -27,6 +27,7 @@ one split is never comparable with a number from another (section 2).
 | AutoGluon (300 s) | — | `autogluon_300s.v1` 91/91 | — | `autogluon` 240/240 |
 | CatBoost / XGBoost / LightGBM / random forest / ridge | — | `catboost.v1`, `xgboost.v1`, `lightgbm.v1`, `random_forest.v1`, `ridge.v1` 91/91 each | — | 240/240 each |
 | LLM regressors (Opus5p5_Extra, Gemini4_argon_high, GPT6p1_Sol_Max, GPT6_Astra_Max) | `h257.<name>` 91/91 | `h335.<name>` 91/91 | — | — |
+| JopeDime two-level GP stack (H364 XSTACK-2L on the H335 AGG output) | — | `h364.XSTACK_2L` 91/91 (scored once by H369) | — | — |
 
 **Where each column is stored:**
 
@@ -50,7 +51,8 @@ envelopes: TRAIN and DL-Val rows stay on the hosts.
   Imported unchanged by [`tools/import_h257_two_fold.sh`](tools/import_h257_two_fold.sh). Check: the family means of
   the 13 imported entrants equal H257's published means to 6 decimals.
 - **AUDIT:** this directory's harness (`tools/score_reference.py`, `models.json`), plus the 12 H335 entrants imported
-  by `tools/import_h335.py`.
+  by `tools/import_h335.py`, plus `h364.XSTACK_2L`, scored once by H369
+  (`research/flywheel_selfplay/h369_dev91_stack_entrants/`; stored board AUDIT predictions, no entrant rescored).
 - **S3 single-split:** the gp-policy-dl v2 encoding campaign and the gp-teacher-v6 TabPFN 3.5 campaigns (2026-10).
   Indexed by [`tools/index_s3_single_split.sh`](tools/index_s3_single_split.sh).
 - **panel_v1:** `~/jope_plan/elo/` on xbabe2, 2026-10-29. Copied unchanged.
@@ -91,7 +93,7 @@ do not put them in a ladder with the other two.
 
 | Board | Anchor = 1500 | Top of the table (Elo; family-mean u) |
 | --- | --- | --- |
-| [`dev91-audit-v1`](boards/dev91-audit-v1/LADDER.md) | `h335.H257_REPLICA` | `kumo_tabular_large_e8.v1` 2036 (1.936); `tabfm_ensemble.v1` 1890 (1.768); `tabfm.v1` 1865 (1.720); `tabpfn_v3p5.v1` 1813 (1.641); `tabpfn_v3.v1` 1778 (1.643); `h335.H335_AGG` 1708 (1.559); … `autogluon_300s.v1` 1526 (1.252); … `catboost.v1` 1480 (1.189). 23 entrants, all 91/91 |
+| [`dev91-audit-v1`](boards/dev91-audit-v1/LADDER.md) | `h335.H257_REPLICA` | `kumo_tabular_large_e8.v1` 2048 (1.936); `tabfm_ensemble.v1` 1901 (1.768); `tabfm.v1` 1876 (1.720); `tabpfn_v3p5.v1` 1823 (1.641); `tabpfn_v3.v1` 1788 (1.643); `h364.XSTACK_2L` 1727 (1.561); `h335.H335_AGG` 1708 (1.559); … `autogluon_300s.v1` 1526 (1.252); … `catboost.v1` 1481 (1.189). 24 entrants, all 91/91 |
 | [`dev91-s1-two-fold-v1`](boards/dev91-s1-two-fold-v1/LADDER.md) | `h257.Opus5p5_Extra` | `h257.Kumo_Tabular_L` 1976 (1.501); `h257.Kumo_Tabular_S` 1870; `h257.PriorLabs_TabPFN_3p5_Single` 1854; `h257.TabFM_Ensemble` 1840; … |
 | [`p201b-train-audit-v1`](boards/p201b-train-audit-v1/LADDER.md) | `h335.H257_REPLICA` | TRAIN, development only: `h335.H335_AGG` 1675; … `catboost.v1` 1414 |
 
@@ -99,7 +101,7 @@ do not put them in a ladder with the other two.
   sizes.
 - The published H335 AUDIT-Elo (dev91 `H335_AGG` 1742.6) is the 12-entrant field.
   `tools/ladder.py boards/dev91-audit-v1 --only h335.…` reproduces it exactly. With the 11 reference models added,
-  the field changes and `H335_AGG` reads 1708.0.
+  the field changes and `H335_AGG` reads 1708.0. With `h364.XSTACK_2L` added (H369, 24 entrants), it reads 1707.8.
 - H257's own published two-fold table (`frontier_elo_comparison.json`: TabFM_Ensemble 1915.49, Kumo L 1980.90, H257
   1749.51, anchor R882) has a 25-entrant field. Only its 13 reference entrants are stored per context, so this
   board's two-fold ladder has 13 entrants and different numbers.
