@@ -1,5 +1,17 @@
 # H378 — NL15 ranker max_delta_step1
 
-NOT_RUN. One MDS1 arm: only ranker max_delta_step0->1.0, inner/final/all8 bag rankers; NL15 feature_fraction.8 and every other setting/veto unchanged.
+**INCOMPLETE_CPU_ADMISSION**. The assigned attempt is incomplete; numerical effects remain unknown and no partial scientific readout is used.
 
-[PREREG.md](PREREG.md) fixes the full design, input closure, one admission,19:15compute/19:30close Nov5 and all advancement gates. Prereg commit will be quoted at closeout. CPU selection layer only; DOPEc51a56d0 unloaded. No models in Git.
+Hypothesis: clipping NL15 ranker leaf outputs may reduce single-context noise chasing. ONE preregistered MDS1 arm adds ranker max_delta_step=1.0 for inner/final/all8 bag rankers. num_leaves15/max_depth3/MCS20/L2=1/L1=0, LR/tree options, labels/seeds/groups/grid/ties/failure sentinel and veto GBDT stay fixed. Depth3 permits at most8 realized binary leaves. Reverting the one added keyword restores exact committed H352 NL15 ASTs in both ranker functions.
+
+Preregistration commit `de549b9157f260657d9fb4fd9f7cd7b56592495e`, published 2026-11-05T16:43:11.882215+00:00; first treatment fit None. Full specification in [PREREG.md](PREREG.md). Exact-version archived BASE9panels/36hashes/3medians and NL15ninepanels/36locks/scores/rawarrays passed before fitting; no BASE/NL15 refits or new archived-model predictions.
+
+Full-study gains, paired CIs, Elo, harmed share and decision are UNKNOWN. Partial physical costs/states are preserved in custody and the closeout receipt. No replay, new capacity sample, reduced design or partial-result promotion.
+
+The sole CPU admission gate found 2 eligible cores, below the required4. No treatment fits or outer scoring ran. Admission failed before runtime forecasts; no retry or new probe was performed. No periodic resource series was created before refusal; series extrema remain unknown, with the initial observation and exact gate/cgroup/preparation accounting retained. The first bookkeeping audit failed on that absent series; its logs are preserved and five data-free controls qualify the bounded zero-fit repair.
+
+Resources: xbabe2 CPU only, admitted cores [62, 63], nice19/math1/systemd MemoryMax6G/SwapMax0/CPUQuota800%. One5second admission gate; initial and first-task forecasts use H352 actual26189.516914CPU/.9eff/1.15safety/+300s reserve. Actual cgroupCPU 0.155560s; no speed verdict. Corrected guard uses hostCPU>85% over60s, load1>108 on3 consecutive60s samples, MemAvailable<20GiB or ownscratch>2GB. Fixed compute stop19:15Z/close19:30Z Nov5 unchanged.
+Verification: 53 data-free controls and11 custody controls pass. Same-agent red-team binds source/prereg chronology, all native parameters, physical input ranges, root CIs, tie bar and both regressions. Zero fit-worker outer payload reads before locks; zero DL-Val/dev91/DL-Test/sealed/holdout/meta_test payload rows. DOPEc51a56d0 unloaded/untouched; no neural optimizer updates, GPU, qualification.lock, writer restart or foreign-job action.
+Custody: create-only s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H378/api01-20261105T162900Z/closeout/closeout-manifest.json, exact VersionId `qNP0csb0S4qEkqAd6Uf.rU8cDT3S_rnB`, SHA256 `09dd865e0b5ed0443fdd839e1484c2b0c92616937a57adba959ba9f4f68eeefe`; 1325 files/4 parts, exact-version GET plus every member verified before own scratch cleanup. No models in Git. Evidence and executed source/vendor retained at `/home/ubuntu/jope_plan/evidence/H378/api01-20261105-t1629`.
+
+Multiplicity: exploratory sequential H348-H378 sweep on the same folds/roots, without correction. Any ADVANCE needs separately authorized one-shot dev91 confirmation; none is performed here. Next: any further attempt requires new owner allocation; do not restart this closed attempt.
