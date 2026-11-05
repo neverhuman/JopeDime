@@ -1,0 +1,10 @@
+{
+  "reference_wave": "H352 actual full36",
+  "reference_cpu_seconds": 26189.516914,
+  "reference_CPUUsageNSec": "26189516914000",
+  "source_member": "h352-jrb01/operational_evidence/UNIT-FINAL.json",
+  "source_sha256": "b32a6c37cb9fded94d97b37337f781fb13f20ffb9afdecaf59d2e441f3537438",
+  "fallback_H347_cpu_seconds": 29770.57,
+  "fallback_used": false,
+  "measured_invocation": "b43ca85cb1434a7ca8709b588a573ef4"
+}
