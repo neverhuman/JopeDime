@@ -31,19 +31,15 @@ improvement or deployment throughput. The aggregate records do not yet bind
 an exact loop source, adapter, evaluation population or normalization, so
 cross-model comparisons and transfer remain unqualified. Retained windows
 are separate; unobserved gaps are not filled or joined into a learning curve.
-Independent \mbox{model comparisons belong} to \cref{sec:results}.
+
 
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
 
-An inclusive clock ledger (\cref{fig:adapter-outcome-clock}) counts rounds
-without adapter admission as well as those with it.
-\input{sections/current_adapter_outcome_clock}
-
 \paragraph{The retained admission ledger.}
 \Cref{tab:admission-ledger} is the canonical chronology and count table.
 \Cref{fig:fw-latest-admissions,fig:fw-admission-margins} show its utility trajectory
-and pre-decision margins. Program promotions continue (\cref{fig:program-journal-rates}) while the adapter admits eight updates after round 775, four exact ties (\cref{fig:fw-latest-admissions,fig:adapter-admission-rates}); the remaining figures document operating clocks.
+and pre-decision margins. Program promotions continue (\cref{fig:program-journal-rates}) while the adapter admits eight updates after round 775, four exact ties (\cref{fig:fw-latest-admissions,fig:adapter-admission-rates}); the remaining figures, including an inclusive clock ledger by adapter outcome (\cref{fig:adapter-outcome-clock}), document operating clocks.
 
 \begin{figure*}[!tp]
   \setlength{\abovecaptionskip}{4pt}
@@ -82,6 +78,8 @@ and pre-decision margins. Program promotions continue (\cref{fig:program-journal
   Scope: \cref{sec:method-status}.}
   \label{fig:fw-round-throughput}
 \end{figure*}
+
+\input{sections/current_adapter_outcome_clock}
 
 \paragraph{A later admission window.}
 \Cref{fig:adapter-validation-trace} pairs candidate and retained-best validation-pool utility over 200 consecutive decisions (rounds 4064--4263), none of them admitted.
@@ -140,8 +138,9 @@ Supplementary Figures
 \href{eurekazero_supplement.pdf#supp-training-minibatch-losses}{S2} (\ref{app:gradient-norms}),
 \href{eurekazero_supplement.pdf#supp-recent-discovery-retention}{S3} (\ref{app:recent-discovery-retention}),
 \href{eurekazero_supplement.pdf#supp-recorded-decision-lift}{S4} (\ref{app:recorded-decision-lift}),
-\href{eurekazero_supplement.pdf#supp-program-record-cadence}{S5} and
-\href{eurekazero_supplement.pdf#supp-program-record-windows}{S6} (\ref{app:program-record-cadence})
+\href{eurekazero_supplement.pdf#supp-program-record-cadence}{S5},
+\href{eurekazero_supplement.pdf#supp-program-record-windows}{S6} (\ref{app:program-record-cadence}) and
+\href{eurekazero_supplement.pdf#supp-adapter-rejection-runs}{S9}
 hold further recorded diagnostics.
 They do not establish retained or independent learning:
 distinct minibatches do not form a matched loss comparison, and program
