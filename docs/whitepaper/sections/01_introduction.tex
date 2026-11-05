@@ -62,12 +62,6 @@ Automated research systems already couple proposals to tests
 \Cref{sub:anatomy-where,sec:road} distinguish retaining \mbox{candidate solutions} from
 training the proposer.
 
-\begin{figure}[tb]% floats so the text above can fill the column
-\begin{keyidea}
-Can judgment bought during training improve the first algorithm proposal at deployment?
-\end{keyidea}
-\end{figure}
-
 \paragraph{The Zero move.}
 AlphaGo learned from human expert games and searched heavily at every move
 \citep{silver2016mastering}.
@@ -119,12 +113,6 @@ and fitting procedure at deployment.
   \label{fig:emptysquare}
 \end{figure}
 
-\paragraph{Engineered intelligence.}
-The reference design makes the roles in \cref{sec:anatomy} auditable:
-a declared task and metric, a program writer, a referee and retained state
-(\cref{tab:pillars}). We call this \emph{engineered intelligence}.
-\Cref{sec:method} specifies the components and admission rules.
-
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:searchone]{What ``search = 1'' means}
 \begin{itemize}[leftmargin=*,nosep]
@@ -168,9 +156,21 @@ and a protocol for evaluating its first proposals.
     program-only control (\cref{sec:results}).
 \end{enumerate}
 
+\begin{figure}[tb]% floats so the text above can fill the column
+\begin{keyidea}
+Can judgment bought during training improve the first algorithm proposal at deployment?
+\end{keyidea}
+\end{figure}
+
+\paragraph{Engineered intelligence.}
+The reference design makes the roles in \cref{sec:anatomy} auditable:
+a declared task and metric, a program writer, a referee and retained state
+(\cref{tab:pillars}). We call this \emph{engineered intelligence}.
+\Cref{sec:method} specifies the components and admission rules.
+
 \paragraph{Evidence scope.}
 The inspected operating loop (\cref{sec:method-status}) runs no neural writer:
-rule-based GP proposals are ranked by a small cost-ranking adapter. Its record establishes neither neural writer updates nor ranking-map training gains.
+rule-based GP proposals are ranked by a small cost-ranking adapter. The reference program writer and ranking map are separate networks outside this loop. The recorded adapter decisions establish no learning gain for either reference network; each requires its own matched evaluation.
 Independent first-proposal comparisons remain pending;
 \cref{sec:method,sec:results} specify the design and planned tests.
 
