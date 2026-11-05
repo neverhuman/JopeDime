@@ -1,0 +1,558 @@
+{
+  "schema": "jope.reference-board.score-locations/v1",
+  "generated_by": "research/elo/reference-board/tools/score_locations.sh",
+  "rule": "Never re-run a reference model. Read these stored scores. Numbers from different splits are never compared.",
+  "boards": {
+    "dev91-audit-v1": {
+      "git": "research/elo/reference-board/boards/dev91-audit-v1/",
+      "host_root": "xbabe2:/home/ubuntu/jope-data/h335-stagev/refboard/dev91-audit-v1",
+      "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+      "n_contexts": 91,
+      "n_families": 19,
+      "split": "common_h317.search_and_audit_envelopes (H317/H335 AUDIT split; fold 0 = SEARCH/fit rows, fold 1 = AUDIT/scored rows)",
+      "s3_archive": {
+        "schema": "jope.reference-board.archive/v1",
+        "set": "dev91-audit-v1",
+        "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T070823Z.tar.zst",
+        "version_id": "L0zjqB_SDwriDnJc_4yLthrNOPyQnkHj",
+        "sha256": "9cc73218dc22fa4f94a1ad3250e8572a0f5ae86dfe38936a01aba4794245c6cf",
+        "members": 781,
+        "member_sha256sums_sha256": "7a3d7b809bf6122f2157b4079c927698783e93625da0e30e1ba3f3b7242dfca1",
+        "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+        "utc": "20261105T070823Z"
+      },
+      "entrants": {
+        "autogluon_300s.v1": {
+          "records": 0,
+          "completed": 0
+        },
+        "catboost.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.BANK_NN1": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.BANK_NN8_PICK": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.BANK_NN8_PORTFOLIO": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.Gemini4_argon_high": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.GPT6_Astra_Max": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.GPT6p1_Sol_Max": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.H257_REPLICA": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.H317_BASE": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.H335_AGG": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.OLD_MATCHED_CV3": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.OLD_MATCHED": {
+          "records": 91,
+          "completed": 91
+        },
+        "h335.Opus5p5_Extra": {
+          "records": 91,
+          "completed": 91
+        },
+        "kumo_tabular_large_e8.v1": {
+          "records": 1,
+          "completed": 1
+        },
+        "lightgbm.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "random_forest.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "ridge.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "tabfm_ensemble.v1": {
+          "records": 26,
+          "completed": 26
+        },
+        "tabfm.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "tabpfn_v3p5.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "tabpfn_v3.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "xgboost.v1": {
+          "records": 91,
+          "completed": 91
+        }
+      }
+    },
+    "dev91-s1-two-fold-v1": {
+      "git": "research/elo/reference-board/boards/dev91-s1-two-fold-v1/",
+      "host_root": "xbabe2:/home/ubuntu/jope-data/h257/refboard/dev91-s1-two-fold-v1",
+      "board_sha256": "b8836033c0540e1c7d6a488cb33248372cab02e4a16776cd57b08ede269ea190",
+      "n_contexts": 91,
+      "n_families": 19,
+      "split": "jope.s1-two-fold/v1 (H257): per context the same row count and family as dev91-audit-v1, split in half (fold 0 / fold 1); fit on one fold, predict the other, both directions. ratio_k = RMSE_k / RMSE of the training-fold mean; logratio = mean of the two log ratios; sd_logratio = half their absolute difference; gate = exp(logratio) <= 0.90 and both folds beat the baseline; u = s1_utility_zero_comp = -(0.9 * logratio + 0.2 * sd_logratio) if the gate passes, else -2.0 (also -2.0 on a fit failure). Definition: evaluate_tabular_foundation_dl_val91.py docstring, origin/main 571873a38c.",
+      "s3_archive": {
+        "schema": "jope.reference-board.archive/v1",
+        "set": "dev91-s1-two-fold-v1",
+        "board_sha256": "b8836033c0540e1c7d6a488cb33248372cab02e4a16776cd57b08ede269ea190",
+        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-s1-two-fold-v1/results-20261105T070830Z.tar.zst",
+        "version_id": "kT5xci1wsaPSYO8nz3mNSnolvdY6bSJU",
+        "sha256": "3d31024ae7752599181c63b41b2a978d92cf821c992dc46be1d9e29f316bb6e7",
+        "members": 22,
+        "member_sha256sums_sha256": "081abba9ea185660622b8a86e9dcde327bf8887a15634174862091e5acca6d78",
+        "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+        "utc": "20261105T070830Z"
+      },
+      "entrants": {
+        "h257.Gemini4_argon_high": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.GPT6_Astra_Max": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.GPT6p1_Sol_Max": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.Kumo_Tabular_L": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.Kumo_Tabular_S": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.Mitra_v2": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.Opus5p5_Extra": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.PriorLabs_TabPFN_3p5": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.PriorLabs_TabPFN_3p5_Single": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.TabDPT_1p3": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.TabFM_Ensemble": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.TabFM": {
+          "records": 91,
+          "completed": 91
+        },
+        "h257.TabICL_v2": {
+          "records": 91,
+          "completed": 91
+        }
+      }
+    },
+    "p201b-train-audit-v1": {
+      "git": "research/elo/reference-board/boards/p201b-train-audit-v1/",
+      "host_root": "xbabe2:/home/ubuntu/jope-data/h335-cl/refboard/p201b-train-audit-v1",
+      "board_sha256": "ad20a65e309e5fc670b7f646f9aa6f2ad725064368b36cd6bbdf202ba6355c19",
+      "n_contexts": 201,
+      "n_families": 201,
+      "split": "common_h317.search_and_audit_envelopes (H317/H335 AUDIT split; fold 0 = SEARCH/fit rows, fold 1 = AUDIT/scored rows)",
+      "s3_archive": {
+        "schema": "jope.reference-board.archive/v1",
+        "set": "p201b-train-audit-v1",
+        "board_sha256": "ad20a65e309e5fc670b7f646f9aa6f2ad725064368b36cd6bbdf202ba6355c19",
+        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/p201b-train-audit-v1/results-20261105T070826Z.tar.zst",
+        "version_id": "20ND6QS_IFxlJTrYtNo_EhLNU53AkdIB",
+        "sha256": "213298409134b0c46bfd4d9c1279872f4315b51b8ea88763556eafe7ac596135",
+        "members": 1060,
+        "member_sha256sums_sha256": "00fbe94f3b9e562f944aa340b7e17ea75c4310aa27266e73e82c3c104806102e",
+        "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+        "utc": "20261105T070826Z"
+      },
+      "entrants": {
+        "autogluon_300s.v1": {
+          "records": 0,
+          "completed": 0
+        },
+        "catboost.v1": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.BANK_NN1": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.BANK_NN8_PICK": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.BANK_NN8_PORTFOLIO": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.Gemini4_argon_high": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.GPT6_Astra_Max": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.GPT6p1_Sol_Max": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.H257_REPLICA": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.H317_BASE": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.H335_AGG": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.OLD_MATCHED_CV3": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.OLD_MATCHED": {
+          "records": 201,
+          "completed": 201
+        },
+        "h335.Opus5p5_Extra": {
+          "records": 201,
+          "completed": 201
+        },
+        "kumo_tabular_large_e8.v1": {
+          "records": 0,
+          "completed": 0
+        },
+        "lightgbm.v1": {
+          "records": 201,
+          "completed": 201
+        },
+        "random_forest.v1": {
+          "records": 201,
+          "completed": 200
+        },
+        "ridge.v1": {
+          "records": 201,
+          "completed": 201
+        },
+        "tabpfn_v3p5.v1": {
+          "records": 33,
+          "completed": 33
+        },
+        "tabpfn_v3.v1": {
+          "records": 0,
+          "completed": 0
+        },
+        "xgboost.v1": {
+          "records": 201,
+          "completed": 200
+        }
+      }
+    }
+  },
+  "external": {
+    "dev91-s3-single-split-v1": {
+      "git": "research/elo/reference-board/external/dev91-s3-single-split-v1.jsonl",
+      "records": 546,
+      "note": "The original objects stay where their campaigns wrote them; every line has s3_uri + version_id.",
+      "models": {
+        "s3.Kumo_Tabular_L_S3_Query1Split": {
+          "contexts": 91,
+          "protocol": "outer_train_75_25_subsampled_query_1split",
+          "s3_prefixes": [
+            "s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/encodings/kumo_tabular_l"
+          ]
+        },
+        "s3.Kumo_Tabular_S_S3_Query1Split": {
+          "contexts": 91,
+          "protocol": "outer_train_75_25_subsampled_query_1split",
+          "s3_prefixes": [
+            "s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/encodings/kumo_tabular_s"
+          ]
+        },
+        "s3.Mitra_v2_S3_Query1Split": {
+          "contexts": 91,
+          "protocol": "outer_train_75_25_subsampled_query_1split",
+          "s3_prefixes": [
+            "s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/encodings/mitra_v2"
+          ]
+        },
+        "s3.PriorLabs_TabPFN_3p5_S3_OuterTest": {
+          "contexts": 91,
+          "protocol": "outer_train_100pct_to_outer_test_1split",
+          "s3_prefixes": [
+            "s3://veox-jopedime-learning-use2/experiments/gp-teacher-v6/campaigns/regression-research-2k-fold0-3plus2-v1-20261001-tabpfn35-exact1/tabpfn35-exact",
+            "s3://veox-jopedime-learning-use2/experiments/gp-teacher-v6/campaigns/regression-research-2k-per-fold-hwm-v1-20261001-incoming-v1-tabpfn35-exact1/tabpfn35-exact"
+          ]
+        },
+        "s3.TabDPT_1p3_S3_Query1Split": {
+          "contexts": 91,
+          "protocol": "outer_train_75_25_subsampled_query_1split",
+          "s3_prefixes": [
+            "s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/encodings/tabdpt13"
+          ]
+        },
+        "s3.TabICL_v2_S3_Query1Split": {
+          "contexts": 91,
+          "protocol": "outer_train_75_25_subsampled_query_1split",
+          "s3_prefixes": [
+            "s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/encodings/tabicl2"
+          ]
+        }
+      }
+    },
+    "panel_v1": {
+      "git": "research/elo/reference-board/external/panel_v1/",
+      "s3_archive": {
+        "schema": "jope.reference-board.archive/v1",
+        "set": "external/panel_v1",
+        "board_sha256": null,
+        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/external/panel_v1/results-20261105T070833Z.tar.zst",
+        "version_id": "SFPCcT4Rmeig0yMQjQrxwNVoYeaHnl9C",
+        "sha256": "1bda5209b8bf7b2e450136535165e9f4a9e7603770f97182b817b5dd556f9657",
+        "members": 18,
+        "member_sha256sums_sha256": "a3339e3578b6ad4f8be2100cb72b5c688c0be353aba790ad1d3cc81b947c79c0",
+        "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+        "utc": "20261105T070833Z"
+      },
+      "regression_elo": [
+        {
+          "method": "kumo_tabular_large_e8",
+          "elo": 1874.5,
+          "coverage": 239
+        },
+        {
+          "method": "autogluon",
+          "elo": 1601.3,
+          "coverage": 240
+        },
+        {
+          "method": "catboost",
+          "elo": 1523.7,
+          "coverage": 240
+        },
+        {
+          "method": "random_forest",
+          "elo": 1441.5,
+          "coverage": 240
+        },
+        {
+          "method": "xgboost",
+          "elo": 1424.4,
+          "coverage": 240
+        },
+        {
+          "method": "lightgbm",
+          "elo": 1412.7,
+          "coverage": 240
+        },
+        {
+          "method": "jope-fused-net-v3",
+          "elo": 1383.4,
+          "coverage": 240
+        },
+        {
+          "method": "ridge",
+          "elo": 1338.4,
+          "coverage": 240
+        }
+      ],
+      "binary_elo": [
+        {
+          "method": "kumo_tabular_large_e8",
+          "elo": 1794.3,
+          "coverage": 239
+        },
+        {
+          "method": "autogluon",
+          "elo": 1524.5,
+          "coverage": 236
+        },
+        {
+          "method": "catboost",
+          "elo": 1490.4,
+          "coverage": 240
+        },
+        {
+          "method": "random_forest",
+          "elo": 1459.9,
+          "coverage": 240
+        },
+        {
+          "method": "jope-fused-net-v3",
+          "elo": 1444.0,
+          "coverage": 240
+        },
+        {
+          "method": "lightgbm",
+          "elo": 1439.5,
+          "coverage": 240
+        },
+        {
+          "method": "xgboost",
+          "elo": 1425.5,
+          "coverage": 240
+        },
+        {
+          "method": "ridge",
+          "elo": 1421.9,
+          "coverage": 240
+        }
+      ]
+    },
+    "sotarena_golden45": {
+      "git": "assets/regression/ (sotarena-tabular-regression-v2/results/tabular-regression-v2/scores.csv.zst, leaderboards; SOURCES.md)"
+    }
+  },
+  "models": [
+    {
+      "model": "TabFM 1.0",
+      "two_fold": "h257.TabFM",
+      "audit": "tabfm.v1"
+    },
+    {
+      "model": "TabFM 1.0 ensemble",
+      "two_fold": "h257.TabFM_Ensemble",
+      "audit": "tabfm_ensemble.v1"
+    },
+    {
+      "model": "Kumo-Tabular large",
+      "two_fold": "h257.Kumo_Tabular_L",
+      "audit": "kumo_tabular_large_e8.v1",
+      "s3_single_split": "s3.Kumo_Tabular_L_S3_Query1Split",
+      "panel_v1": "kumo_tabular_large_e8"
+    },
+    {
+      "model": "Kumo-Tabular small",
+      "two_fold": "h257.Kumo_Tabular_S",
+      "s3_single_split": "s3.Kumo_Tabular_S_S3_Query1Split"
+    },
+    {
+      "model": "TabPFN 3.5",
+      "two_fold": "h257.PriorLabs_TabPFN_3p5",
+      "audit": "tabpfn_v3p5.v1",
+      "s3_single_split": "s3.PriorLabs_TabPFN_3p5_S3_OuterTest"
+    },
+    {
+      "model": "TabPFN 3.5 (1 estimator)",
+      "two_fold": "h257.PriorLabs_TabPFN_3p5_Single"
+    },
+    {
+      "model": "TabPFN v3",
+      "audit": "tabpfn_v3.v1"
+    },
+    {
+      "model": "TabICL v2",
+      "two_fold": "h257.TabICL_v2",
+      "s3_single_split": "s3.TabICL_v2_S3_Query1Split"
+    },
+    {
+      "model": "TabDPT 1.3",
+      "two_fold": "h257.TabDPT_1p3",
+      "s3_single_split": "s3.TabDPT_1p3_S3_Query1Split"
+    },
+    {
+      "model": "Mitra v2",
+      "two_fold": "h257.Mitra_v2",
+      "s3_single_split": "s3.Mitra_v2_S3_Query1Split"
+    },
+    {
+      "model": "AutoGluon (300 s)",
+      "audit": "autogluon_300s.v1",
+      "panel_v1": "autogluon"
+    },
+    {
+      "model": "CatBoost",
+      "audit": "catboost.v1",
+      "panel_v1": "catboost"
+    },
+    {
+      "model": "XGBoost",
+      "audit": "xgboost.v1",
+      "panel_v1": "xgboost"
+    },
+    {
+      "model": "LightGBM",
+      "audit": "lightgbm.v1",
+      "panel_v1": "lightgbm"
+    },
+    {
+      "model": "Random forest",
+      "audit": "random_forest.v1",
+      "panel_v1": "random_forest"
+    },
+    {
+      "model": "Ridge",
+      "audit": "ridge.v1",
+      "panel_v1": "ridge"
+    },
+    {
+      "model": "Opus5p5_Extra (LLM regressor)",
+      "two_fold": "h257.Opus5p5_Extra",
+      "audit": "h335.Opus5p5_Extra"
+    },
+    {
+      "model": "Gemini4_argon_high (LLM regressor)",
+      "two_fold": "h257.Gemini4_argon_high",
+      "audit": "h335.Gemini4_argon_high"
+    },
+    {
+      "model": "GPT6p1_Sol_Max (LLM regressor)",
+      "two_fold": "h257.GPT6p1_Sol_Max",
+      "audit": "h335.GPT6p1_Sol_Max"
+    },
+    {
+      "model": "GPT6_Astra_Max (LLM regressor)",
+      "two_fold": "h257.GPT6_Astra_Max",
+      "audit": "h335.GPT6_Astra_Max"
+    }
+  ]
+}

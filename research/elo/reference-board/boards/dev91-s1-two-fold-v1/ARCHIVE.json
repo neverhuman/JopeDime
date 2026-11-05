@@ -1,0 +1,12 @@
+{
+  "schema": "jope.reference-board.archive/v1",
+  "set": "dev91-s1-two-fold-v1",
+  "board_sha256": "b8836033c0540e1c7d6a488cb33248372cab02e4a16776cd57b08ede269ea190",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-s1-two-fold-v1/results-20261105T070830Z.tar.zst",
+  "version_id": "kT5xci1wsaPSYO8nz3mNSnolvdY6bSJU",
+  "sha256": "3d31024ae7752599181c63b41b2a978d92cf821c992dc46be1d9e29f316bb6e7",
+  "members": 22,
+  "member_sha256sums_sha256": "081abba9ea185660622b8a86e9dcde327bf8887a15634174862091e5acca6d78",
+  "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+  "utc": "20261105T070830Z"
+}

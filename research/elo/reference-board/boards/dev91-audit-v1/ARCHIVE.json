@@ -1,0 +1,12 @@
+{
+  "schema": "jope.reference-board.archive/v1",
+  "set": "dev91-audit-v1",
+  "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T070823Z.tar.zst",
+  "version_id": "L0zjqB_SDwriDnJc_4yLthrNOPyQnkHj",
+  "sha256": "9cc73218dc22fa4f94a1ad3250e8572a0f5ae86dfe38936a01aba4794245c6cf",
+  "members": 781,
+  "member_sha256sums_sha256": "7a3d7b809bf6122f2157b4079c927698783e93625da0e30e1ba3f3b7242dfca1",
+  "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+  "utc": "20261105T070823Z"
+}

@@ -1,0 +1,215 @@
+{
+  "schema": "jope.reference-board.models/v1",
+  "rule": "A model id is scored on a board once. Any change of library version, weights, config, seed, threads or harness kind is a NEW id (bump .vN); old scores are never overwritten.",
+  "pythons": {
+    "/usr/bin/python3": "xbabe2 system Python 3.12 + ~/.local site-packages (scikit-learn 1.7.2, xgboost 2.1.4, lightgbm 4.6.0, catboost 1.2.10, autogluon 1.5.0)",
+    "/home/ubuntu/jope-data/refboard/venv/bin/python": "xbabe2 dedicated venv built by tools/setup_env.sh (CPU torch); exact freeze in venv.freeze.txt",
+    "/home/ubuntu/jope-data/refboard/venv-gpu/bin/python": "xbabe3 dedicated CUDA venv built by tools/setup_env_gpu.sh; exact freeze in venv-gpu.freeze.txt"
+  },
+  "models": {
+    "ridge.v1": {
+      "label": "Ridge (RidgeCV, impute + standardize)",
+      "kind": "sklearn_ridge",
+      "python": "/usr/bin/python3",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 1200,
+      "config": {},
+      "config_source": "panel_v1 ~/jope_plan/elo/run_methods.py",
+      "versions": {
+        "scikit-learn": "1.7.2"
+      }
+    },
+    "random_forest.v1": {
+      "label": "Random forest (300 trees)",
+      "kind": "sklearn_random_forest",
+      "python": "/usr/bin/python3",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 1200,
+      "config": {
+        "n_estimators": 300
+      },
+      "config_source": "panel_v1 run_methods.py",
+      "versions": {
+        "scikit-learn": "1.7.2"
+      }
+    },
+    "xgboost.v1": {
+      "label": "XGBoost (500 x depth 6, lr 0.05, hist)",
+      "kind": "xgboost",
+      "python": "/usr/bin/python3",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 1200,
+      "config": {
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "max_depth": 6,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "tree_method": "hist"
+      },
+      "config_source": "panel_v1 run_methods.py",
+      "versions": {
+        "xgboost": "2.1.4"
+      }
+    },
+    "lightgbm.v1": {
+      "label": "LightGBM (500 x 31 leaves, lr 0.05)",
+      "kind": "lightgbm",
+      "python": "/usr/bin/python3",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 1200,
+      "config": {
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "num_leaves": 31,
+        "subsample": 0.8,
+        "subsample_freq": 1,
+        "colsample_bytree": 0.8
+      },
+      "config_source": "panel_v1 run_methods.py",
+      "versions": {
+        "lightgbm": "4.6.0"
+      }
+    },
+    "catboost.v1": {
+      "label": "CatBoost (1000 x depth 6, lr 0.05)",
+      "kind": "catboost",
+      "python": "/usr/bin/python3",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 1200,
+      "config": {
+        "iterations": 1000,
+        "learning_rate": 0.05,
+        "depth": 6
+      },
+      "config_source": "panel_v1 run_methods.py",
+      "versions": {
+        "catboost": "1.2.10"
+      }
+    },
+    "autogluon_300s.v1": {
+      "label": "AutoGluon Tabular (default preset, 300 s)",
+      "kind": "autogluon",
+      "python": "/usr/bin/python3",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 1500,
+      "config": {
+        "time_limit": 300
+      },
+      "config_source": "panel_v1 run_methods.py",
+      "versions": {
+        "autogluon.tabular": "1.5.0"
+      }
+    },
+    "tabpfn_v3.v1": {
+      "label": "TabPFN v3 regressor (default checkpoint)",
+      "kind": "tabpfn",
+      "python": "/home/ubuntu/jope-data/refboard/venv/bin/python",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 3600,
+      "config": {
+        "model_path": "/home/ubuntu/jope-data/refboard/weights/tabpfn-v3-regressor-v3_default.ckpt"
+      },
+      "versions": {
+        "tabpfn": "9.2.0",
+        "torch": "2.15.0+cpu"
+      },
+      "weights_sha256": {
+        "/home/ubuntu/jope-data/refboard/weights/tabpfn-v3-regressor-v3_default.ckpt": "311ce18d97e9533d8585eaadafe040fbdd8070533209ed8696641dadc97a7301"
+      },
+      "weights_source": "Prior Labs TabPFN v3 default regressor checkpoint (copied from ~/guant/tabpfn/)",
+      "license": "Prior Labs TabPFN license (non-commercial weights); internal benchmarking only"
+    },
+    "tabpfn_v3p5.v1": {
+      "label": "TabPFN 3.5 regressor (Prior Labs, 2026-09-09)",
+      "kind": "tabpfn",
+      "python": "/home/ubuntu/jope-data/refboard/venv/bin/python",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 3600,
+      "config": {
+        "model_path": "/home/ubuntu/jope-data/refboard/weights/tabpfn-v3.5-20260909.safetensors"
+      },
+      "versions": {
+        "tabpfn": "9.2.0",
+        "torch": "2.15.0+cpu"
+      },
+      "weights_sha256": {
+        "/home/ubuntu/jope-data/refboard/weights/tabpfn-v3.5-20260909.safetensors": "ece4d67eadfea42eb0e610df5189bea60cb7f31073d81e9c7a019b76eacf0be3"
+      },
+      "weights_source": "huggingface.co/Prior-Labs/tabpfn_3_5 @ 06bf2ba35c80a92a3b9abb436b99cf49e7a0365e",
+      "license": "TABPFN-3.5 License v1.0 (non-commercial, non-production; LICENSE sha256 9570fdd6...); internal benchmarking only"
+    },
+    "tabfm.v1": {
+      "label": "TabFM 1.0 regressor (Google; default = uniform logit averaging)",
+      "kind": "tabfm",
+      "python": "/home/ubuntu/jope-data/refboard/venv-gpu/bin/python",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 5400,
+      "config": {},
+      "versions": {
+        "tabfm": "1.0.1",
+        "torch": "2.15.0"
+      },
+      "weights_sha256": {
+        "/home/ubuntu/jope-data/refboard/hf/hub/models--google--tabfm-1.0.0-pytorch/snapshots/77cb9cc1b4fd3a9c77fbb9552c218200bb4dab83/regression/model.safetensors": "bd5a615b0322a8f04a895038de6df6fbd71430eca750e1d792f31048654674a9"
+      },
+      "weights_source": "huggingface.co/google/tabfm-1.0.0-pytorch @ 77cb9cc1b4fd3a9c77fbb9552c218200bb4dab83 (loaded by tabfm_v1_0_0_pytorch.load, HF offline)",
+      "license": "TabFM Non-Commercial License v1.0 (non-commercial, non-production; LICENSE sha256 26d8c474...); internal benchmarking only",
+      "device": "cuda",
+      "host": "xbabe3 (RTX 3090; CPU TabFM ~>10 min/context on xbabe2, impractical)",
+      "torch_build": "2.15.0+cu132 (CUDA 13.2), driver 580.126.09"
+    },
+    "tabfm_ensemble.v1": {
+      "label": "TabFM 1.0 ensemble regressor (TabFMRegressor.ensemble: feature crosses/SVD + NNLS-blended calibration)",
+      "kind": "tabfm_ensemble",
+      "python": "/home/ubuntu/jope-data/refboard/venv-gpu/bin/python",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 7200,
+      "config": {},
+      "versions": {
+        "tabfm": "1.0.1",
+        "torch": "2.15.0"
+      },
+      "weights_sha256": {
+        "/home/ubuntu/jope-data/refboard/hf/hub/models--google--tabfm-1.0.0-pytorch/snapshots/77cb9cc1b4fd3a9c77fbb9552c218200bb4dab83/regression/model.safetensors": "bd5a615b0322a8f04a895038de6df6fbd71430eca750e1d792f31048654674a9"
+      },
+      "weights_source": "as tabfm.v1",
+      "license": "as tabfm.v1",
+      "device": "cuda",
+      "host": "xbabe3 (RTX 3090; CPU TabFM ~>10 min/context on xbabe2, impractical)",
+      "torch_build": "2.15.0+cu132 (CUDA 13.2), driver 580.126.09"
+    },
+    "kumo_tabular_large_e8.v1": {
+      "label": "KumoTabular large, 8 estimators (NVIDIA structured-data-models)",
+      "kind": "kumo_tabular",
+      "python": "/home/ubuntu/jope-data/refboard/venv/bin/python",
+      "threads": 8,
+      "seed": 0,
+      "timeout_s": 5400,
+      "config": {
+        "size": "large",
+        "num_estimators": 8
+      },
+      "config_source": "panel_v1 xbabe3 ~/jope_elo/kumo/kumo_run.py (regression path; prediction = mean of predicted quantiles)",
+      "versions": {
+        "structured-data-models": "0.2.0rc2.dev181+g50ff254e8",
+        "torch": "2.15.0+cpu"
+      },
+      "weights_sha256": {
+        "/home/ubuntu/jope-data/refboard/hf/hub/models--nvidia--Kumo-Tabular/snapshots/3c3e10bbdb590ace29e7026847f92db3c603096d/large/regressor.pt": "745e0e5d97e4256d8a24cb61c2eecbd1128da6c83938c196b7589ea6f62e7421"
+      },
+      "weights_source": "huggingface.co/nvidia/Kumo-Tabular revision v1.0.1 = 3c3e10bbdb590ace29e7026847f92db3c603096d, pinned by sdm (same blob as the panel_v1 xbabe3 run); code github.com/NVIDIA/structured-data-models @ 50ff254e8044bf1a1b1c53cf6ba1b8eea1b34740",
+      "license": "structured-data-models Apache-2.0; check the Kumo-Tabular model card before any external use"
+    }
+  }
+}

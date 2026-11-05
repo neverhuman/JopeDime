@@ -1,0 +1,94 @@
+{
+ "regression": {
+  "n_datasets": 240,
+  "n_families": 240,
+  "elo": [
+   {
+    "method": "kumo_tabular_large_e8",
+    "elo": 1874.5,
+    "coverage": 239
+   },
+   {
+    "method": "autogluon",
+    "elo": 1601.3,
+    "coverage": 240
+   },
+   {
+    "method": "catboost",
+    "elo": 1523.7,
+    "coverage": 240
+   },
+   {
+    "method": "random_forest",
+    "elo": 1441.5,
+    "coverage": 240
+   },
+   {
+    "method": "xgboost",
+    "elo": 1424.4,
+    "coverage": 240
+   },
+   {
+    "method": "lightgbm",
+    "elo": 1412.7,
+    "coverage": 240
+   },
+   {
+    "method": "jope-fused-net-v3",
+    "elo": 1383.4,
+    "coverage": 240
+   },
+   {
+    "method": "ridge",
+    "elo": 1338.4,
+    "coverage": 240
+   }
+  ]
+ },
+ "binary": {
+  "n_datasets": 240,
+  "n_families": 240,
+  "elo": [
+   {
+    "method": "kumo_tabular_large_e8",
+    "elo": 1794.3,
+    "coverage": 239
+   },
+   {
+    "method": "autogluon",
+    "elo": 1524.5,
+    "coverage": 236
+   },
+   {
+    "method": "catboost",
+    "elo": 1490.4,
+    "coverage": 240
+   },
+   {
+    "method": "random_forest",
+    "elo": 1459.9,
+    "coverage": 240
+   },
+   {
+    "method": "jope-fused-net-v3",
+    "elo": 1444.0,
+    "coverage": 240
+   },
+   {
+    "method": "lightgbm",
+    "elo": 1439.5,
+    "coverage": 240
+   },
+   {
+    "method": "xgboost",
+    "elo": 1425.5,
+    "coverage": 240
+   },
+   {
+    "method": "ridge",
+    "elo": 1421.9,
+    "coverage": 240
+   }
+  ]
+ }
+}

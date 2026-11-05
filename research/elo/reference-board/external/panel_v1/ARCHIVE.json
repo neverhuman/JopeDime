@@ -1,0 +1,12 @@
+{
+  "schema": "jope.reference-board.archive/v1",
+  "set": "external/panel_v1",
+  "board_sha256": null,
+  "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/external/panel_v1/results-20261105T070833Z.tar.zst",
+  "version_id": "SFPCcT4Rmeig0yMQjQrxwNVoYeaHnl9C",
+  "sha256": "1bda5209b8bf7b2e450136535165e9f4a9e7603770f97182b817b5dd556f9657",
+  "members": 18,
+  "member_sha256sums_sha256": "a3339e3578b6ad4f8be2100cb72b5c688c0be353aba790ad1d3cc81b947c79c0",
+  "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+  "utc": "20261105T070833Z"
+}

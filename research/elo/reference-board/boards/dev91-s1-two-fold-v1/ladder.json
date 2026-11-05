@@ -1,0 +1,231 @@
+{
+ "anchor": "h257.Opus5p5_Extra",
+ "board": "dev91-s1-two-fold-v1",
+ "board_sha256": "b8836033c0540e1c7d6a488cb33248372cab02e4a16776cd57b08ede269ea190",
+ "elo": {
+  "anchor": "h257.Opus5p5_Extra",
+  "contexts": 91,
+  "elo": {
+   "h257.GPT6_Astra_Max": {
+    "ci95": [
+     1126.5694348958345,
+     1440.8402634585414
+    ],
+    "elo": 1309.3038363351575
+   },
+   "h257.GPT6p1_Sol_Max": {
+    "ci95": [
+     1364.6834381421681,
+     1605.2840361469198
+    ],
+    "elo": 1490.207960033959
+   },
+   "h257.Gemini4_argon_high": {
+    "ci95": [
+     1406.601762381978,
+     1604.773510945463
+    ],
+    "elo": 1507.5503967161262
+   },
+   "h257.Kumo_Tabular_L": {
+    "ci95": [
+     1829.1103551238245,
+     2211.542251446561
+    ],
+    "elo": 1975.7781244622608
+   },
+   "h257.Kumo_Tabular_S": {
+    "ci95": [
+     1755.0238359283676,
+     2038.5263648869864
+    ],
+    "elo": 1869.6263766741263
+   },
+   "h257.Mitra_v2": {
+    "ci95": [
+     1572.760750641645,
+     1823.4374534159097
+    ],
+    "elo": 1690.0306691932915
+   },
+   "h257.Opus5p5_Extra": {
+    "ci95": [
+     1500.0,
+     1500.0
+    ],
+    "elo": 1500.0
+   },
+   "h257.PriorLabs_TabPFN_3p5": {
+    "ci95": [
+     1696.6831078288815,
+     2023.8067649834413
+    ],
+    "elo": 1836.8554236100836
+   },
+   "h257.PriorLabs_TabPFN_3p5_Single": {
+    "ci95": [
+     1777.3922105022586,
+     1984.6613297327146
+    ],
+    "elo": 1854.40924980575
+   },
+   "h257.TabDPT_1p3": {
+    "ci95": [
+     1591.0221262277466,
+     1795.096408481614
+    ],
+    "elo": 1681.938198015476
+   },
+   "h257.TabFM": {
+    "ci95": [
+     1634.2424991790426,
+     1847.2857603130585
+    ],
+    "elo": 1723.3781813119508
+   },
+   "h257.TabFM_Ensemble": {
+    "ci95": [
+     1756.1945080721007,
+     1964.6180043898569
+    ],
+    "elo": 1839.8805767486479
+   },
+   "h257.TabICL_v2": {
+    "ci95": [
+     1583.7619439933203,
+     1759.8788691604036
+    ],
+    "elo": 1659.3170482755434
+   }
+  },
+  "families": 19
+ },
+ "entrants": {
+  "h257.GPT6_Astra_Max": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.GPT6p1_Sol_Max": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Gemini4_argon_high": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Kumo_Tabular_L": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Kumo_Tabular_S": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Mitra_v2": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Opus5p5_Extra": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.PriorLabs_TabPFN_3p5": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.PriorLabs_TabPFN_3p5_Single": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.TabDPT_1p3": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.TabFM": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.TabFM_Ensemble": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.TabICL_v2": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  }
+ },
+ "family_mean_u": {
+  "h257.GPT6_Astra_Max": 0.883093869228421,
+  "h257.GPT6p1_Sol_Max": 1.1415723635031578,
+  "h257.Gemini4_argon_high": 1.140703591891579,
+  "h257.Kumo_Tabular_L": 1.5006890063052634,
+  "h257.Kumo_Tabular_S": 1.3963950289694738,
+  "h257.Mitra_v2": 1.325378212756842,
+  "h257.Opus5p5_Extra": 1.1125845190505264,
+  "h257.PriorLabs_TabPFN_3p5": 1.346831395116842,
+  "h257.PriorLabs_TabPFN_3p5_Single": 1.3907401305115792,
+  "h257.TabDPT_1p3": 1.283347320674737,
+  "h257.TabFM": 1.3256182754957895,
+  "h257.TabFM_Ensemble": 1.3889201917578946,
+  "h257.TabICL_v2": 1.2694610456
+ },
+ "focus": "none",
+ "focus_vs": {},
+ "incomplete": {},
+ "n_contexts": 91,
+ "n_families": 19,
+ "prediction_files_verified": 0,
+ "schema": "jope.reference-board.ladder/v1"
+}
