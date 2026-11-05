@@ -6,7 +6,7 @@ One MSG01 arm adds ranker min_split_gain=.01 (native min_gain_to_split0->.01),
 retaining H352 NL15 leaves15/depth3/bagging.8/freq1/featurefraction.8/LR/trees/
 seeds/veto/querybagging0. No seed keyword. Revert restores exact H352 ASTs.
 Primary archived NL15; secondary archived BASE;3roots are3trainingseeds.
-Preregistration commit: pending publication before treatment fits.
+Preregistration commit: `438fae60d9cfb0dd26926c761f48fbc2127d8646`, published before treatment fits.
 
 Fresh comparator regressions precede ONE fresh union idle probe. All36locks
 before once-only outer scoring. Whole-family10k bootstrap RNG375191;
