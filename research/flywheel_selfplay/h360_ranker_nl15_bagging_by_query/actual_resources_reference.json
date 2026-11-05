@@ -1,0 +1,9 @@
+{
+  "reference_cpu_seconds": 26189.516914,
+  "h352_actual_cpu_seconds": 26189.516914,
+  "h358_observed_first_task_cpu_seconds": 603.224028563,
+  "h358_total_cgroup_cpu_seconds": null,
+  "h358_total_note": "systemd unit was garbage-collected at stop; unknown total, never zero",
+  "source_H352_receipt_sha256": "b32a6c37cb9fded94d97b37337f781fb13f20ffb9afdecaf59d2e441f3537438",
+  "source_H358_first_forecast_sha256": "753feee2549708dc935c6beb26cb4e142731f32824c2592debeb7b47940c1e88"
+}
