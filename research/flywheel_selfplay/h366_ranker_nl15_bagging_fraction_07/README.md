@@ -6,7 +6,7 @@ fraction reduction. One BF07 arm changes existing ranker subsample.8->.7 only,
 retaining H352 leaves15/depth3, freq1, featurefraction.8, LR/trees/seeds/veto.
 No added keyword or bagging seed; querybagging stays0.
 Primary comparator: archived H352 NL15; secondary: archived BASE.
-Preregistration commit: pending publication before treatment fits.
+Preregistration commit: `e6fce0d3dc6a69f42d9855830d31964db78ff232`, published before treatment fits.
 
 Both fresh exact-version regressions precede treatment. Full36locks before
 once-only outer scoring. Three roots mean three training seeds30001–30003.
