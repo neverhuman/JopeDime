@@ -1166,10 +1166,10 @@
       "duplicate_lines": 1,
       "duplicate_tokens": 5,
       "effective_severity": "warning",
-      "fingerprint": "d46b4bda7841a7e7",
+      "fingerprint": "25820d09a5f20e32",
       "hard_fail": false,
       "id": "copy-code-unit-python-19a66e17a358d623",
-      "instance_count": 4,
+      "instance_count": 5,
       "instances": [
         {
           "end_line": 59,
@@ -1198,6 +1198,13 @@
           "path": "research/h145/run.py",
           "start_line": 49,
           "unit_name": "sha"
+        },
+        {
+          "end_line": 54,
+          "language": "python",
+          "path": "tools/visualization/short_recipe_source.py",
+          "start_line": 51,
+          "unit_name": "sha"
         }
       ],
       "kind": "exact_unit_same_name",
@@ -1205,9 +1212,9 @@
       "reason": "same-name semantic unit copied across multiple files",
       "recommended_action": "keep the named unit in one owner and call it from the other sites",
       "severity": "warning",
-      "total_redundant_bytes": 126,
-      "total_redundant_lines": 3,
-      "total_redundant_tokens": 15,
+      "total_redundant_bytes": 168,
+      "total_redundant_lines": 4,
+      "total_redundant_tokens": 20,
       "unit_name": "sha"
     },
     {
@@ -2090,10 +2097,10 @@
       "duplicate_lines": 1,
       "duplicate_tokens": 5,
       "effective_severity": "warning",
-      "fingerprint": "854a81dedb211d02",
+      "fingerprint": "be55fd47f1e90ed8",
       "hard_fail": false,
       "id": "copy-code-body-python-73963ced05fb3c12",
-      "instance_count": 11,
+      "instance_count": 13,
       "instances": [
         {
           "end_line": 31,
@@ -2171,6 +2178,20 @@
           "path": "research/h145/run.py",
           "start_line": 49,
           "unit_name": "sha"
+        },
+        {
+          "end_line": 66,
+          "language": "python",
+          "path": "tools/visualization/neural_cell_influence.py",
+          "start_line": 63,
+          "unit_name": "digest"
+        },
+        {
+          "end_line": 54,
+          "language": "python",
+          "path": "tools/visualization/short_recipe_source.py",
+          "start_line": 51,
+          "unit_name": "sha"
         }
       ],
       "kind": "exact_unit_different_name",
@@ -2178,9 +2199,9 @@
       "reason": "same body appears under different names across files",
       "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
       "severity": "warning",
-      "total_redundant_bytes": 420,
-      "total_redundant_lines": 10,
-      "total_redundant_tokens": 50
+      "total_redundant_bytes": 504,
+      "total_redundant_lines": 12,
+      "total_redundant_tokens": 60
     },
     {
       "confidence": "medium",
@@ -2188,10 +2209,10 @@
       "duplicate_lines": 1,
       "duplicate_tokens": 5,
       "effective_severity": "warning",
-      "fingerprint": "adba8b90a5fab649",
+      "fingerprint": "29f1a3bc5de2382f",
       "hard_fail": false,
       "id": "copy-code-body-python-939d9f6f39089364",
-      "instance_count": 25,
+      "instance_count": 27,
       "instances": [
         {
           "end_line": 35,
@@ -2367,6 +2388,20 @@
           "path": "research/joint_regbin/candidate_builder.py",
           "start_line": 46,
           "unit_name": "sha256_bytes"
+        },
+        {
+          "end_line": 41,
+          "language": "python",
+          "path": "tools/visualization/code_pages.py",
+          "start_line": 38,
+          "unit_name": "_sha"
+        },
+        {
+          "end_line": 56,
+          "language": "python",
+          "path": "tools/visualization/select_examples.py",
+          "start_line": 53,
+          "unit_name": "sha"
         }
       ],
       "kind": "exact_unit_different_name",
@@ -2374,9 +2409,9 @@
       "reason": "same body appears under different names across files",
       "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
       "severity": "warning",
-      "total_redundant_bytes": 1032,
-      "total_redundant_lines": 24,
-      "total_redundant_tokens": 120
+      "total_redundant_bytes": 1118,
+      "total_redundant_lines": 26,
+      "total_redundant_tokens": 130
     },
     {
       "confidence": "medium",
@@ -2440,10 +2475,10 @@
       "duplicate_lines": 1,
       "duplicate_tokens": 1,
       "effective_severity": "warning",
-      "fingerprint": "047a30f146f0ce25",
+      "fingerprint": "1d40fba9f62a0a4a",
       "hard_fail": false,
       "id": "copy-code-body-python-e225b388d251d099",
-      "instance_count": 25,
+      "instance_count": 26,
       "instances": [
         {
           "end_line": 33,
@@ -2619,6 +2654,13 @@
           "path": "research/flywheel_selfplay/h105_shrink_r882/run_wave.py",
           "start_line": 32,
           "unit_name": "PredecessorPending"
+        },
+        {
+          "end_line": 70,
+          "language": "python",
+          "path": "tools/visualization/orchestration/render_uhd.py",
+          "start_line": 67,
+          "unit_name": "Busy"
         }
       ],
       "kind": "exact_unit_different_name",
@@ -2626,9 +2668,9 @@
       "reason": "same body appears under different names across files",
       "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
       "severity": "warning",
-      "total_redundant_bytes": 192,
-      "total_redundant_lines": 24,
-      "total_redundant_tokens": 24
+      "total_redundant_bytes": 200,
+      "total_redundant_lines": 25,
+      "total_redundant_tokens": 25
     },
     {
       "confidence": "medium",
@@ -2676,5 +2718,5 @@
     "HLT-033-PYTHON-BAD-BEHAVIOR:sql": "The table identifier is a fixed internal constant and value data remains parameter-bound; the finding remains enumerated pending detector-specific adjudication."
   },
   "schema": "jopedime.jankurai-pyexec-dispositions/v1",
-  "scope_reason": "These exact test, generated-admission, training-tool, and historical research files contain the 42 registered HLT-033 sites and file-level findings recorded below. The H155 executor loads only H153 Git blobs at a fixed commit after SHA-256 checks; H154/H158/H159/H161/H164/H168/H173 runners load the manifest-pinned H50 fused input and SHA-verified fixed-commit guard only after input and executor verification. The exact executor hashes for these files remain in their manifests. The file-scoped auditor skip is coarse, so CI re-audits every whole file and requires exact source SHA-256 plus exact rule/fingerprint inventory; a changed-scope repository audit verifies all raw findings and copy-code classes touching registered paths. Any byte drift, missing finding, or new finding fails closed. Current raw copy-code identities were re-reviewed against the complete Jankurai 1.7.6 --include-tests copy-code scan at captured source d985ab3975f5ce1d2c4c7d89271e45c313d5a7d4; all 34 currently emitted classes involving the exact registered paths are retained."
+  "scope_reason": "These exact test, generated-admission, training-tool, and historical research files contain the 42 registered HLT-033 sites and file-level findings recorded below. The H155 executor loads only H153 Git blobs at a fixed commit after SHA-256 checks; H154/H158/H159/H161/H164/H168/H173 runners load the manifest-pinned H50 fused input and SHA-verified fixed-commit guard only after input and executor verification. The exact executor hashes for these files remain in their manifests. The file-scoped auditor skip is coarse, so CI re-audits every whole file and requires exact source SHA-256 plus exact rule/fingerprint inventory; a changed-scope repository audit verifies all raw findings and copy-code classes touching registered paths. Any byte drift, missing finding, or new finding fails closed. Current raw copy-code identities were re-reviewed against the complete Jankurai 1.7.6 --include-tests copy-code scan at captured source d985ab3975f5ce1d2c4c7d89271e45c313d5a7d4; all 34 currently emitted classes involving the exact registered paths are retained. On 2026-11-05, the same 34-class inventory was re-reviewed against the complete retained Jankurai 1.7.6 --include-tests copy-code scan for source a1e47407f30b32665f8d970d9553ea8f1e332502 (CI run 41942757274, job 126967394843; artifact SHA-256 9990949a63f7717062cb5b23d1e836be1179a46ec158e8118fe665f073620151). Exactly four raw identities were refreshed to include six additional instances across five visualization files: SHA-256 helper bodies in short_recipe_source.py, neural_cell_influence.py, code_pages.py and select_examples.py, and the empty Busy exception class in orchestration/render_uhd.py. The 30 other identities, registered paths and source hashes, rule dispositions, severities, policy exclusions and expiry are unchanged; no new audit exclusion or waiver is introduced."
 }

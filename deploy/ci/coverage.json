@@ -16029,6 +16029,227 @@
       ],
       "lanes": [],
       "scope": "H254 data-free controls: snapshot SHA-256 verification and frozen constants, fold_manifest.json identity for fold_seed 254140, byte-exact equivalence of score_arms_instrumented to snapshot stage1_hurdle_sos_critic.score_arms_for_context, Audit (a) zero DL-Val/holdout leakage and refusal on leaked promotions, Audit (b) per-context reveal count == 4 for ACTIVE_2PLUS2_HURDLE and GATED_025, Audit (c) negative control permuted fitness and Holm m=2 decision rule (including ties = NO_ADVANCE), H239 A1 memory guard pausing at MemAvailable < 30 GiB on xbabe2 cores 57-60."
+    },
+    "feature:jope-service/visual-trace": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Opt-in JAIN visual-trace instrumentation; absent from default builds. Explicit local visual_trace library tests and visualization examples are checked with --features visual-trace. Default hosted Rust execution is not feature qualification; real checkpoint replay and measured inference remain separate."
+    },
+    "python:tools/visualization/tests/test_actual_trace.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_code_pages.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_endcap_film.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_h256_selection.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_h256_trace.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_input_influence.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_intelligence_wave.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_multilingual_code_pages.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_native_scaling.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_render_orchestration.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_spatial_layouts.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_trace.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_veox_logo.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "target:jope-service/example/visual_emit_metric": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_emit_metric.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
+    },
+    "target:jope-service/example/visual_fit_dsl": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_fit_dsl.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
+    },
+    "target:jope-service/example/visual_inference_metric": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_inference_metric.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
+    },
+    "target:jope-service/example/visual_run": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_run.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
+    },
+    "target:jope-service/example/visual_trace": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_trace.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
     }
   },
   "lanes": {
