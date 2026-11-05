@@ -1,0 +1,13 @@
+{
+  "wave": "H358",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "scientific_verdict": "UNKNOWN",
+  "aggregate": null,
+  "paired_drop_top10": null,
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  }
+}
