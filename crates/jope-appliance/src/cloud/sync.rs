@@ -31,6 +31,9 @@ fn uuid(value: &str) -> bool {
             }
         })
 }
+pub(super) fn is_uuid(value: &str) -> bool {
+    uuid(value)
+}
 fn account_root(c: &Connection) -> Result<PathBuf> {
     anyhow::ensure!(uuid(&c.account_id), "invalid stored account identity");
     let name = format!(
@@ -161,7 +164,11 @@ impl Client {
 
 mod entries;
 mod models;
+pub(crate) mod report;
+pub(crate) mod results;
 mod snapshot;
+
+pub use results::sync_results;
 
 pub use entries::{publish_best, run_entries};
 pub use models::{fetch_model, publish_model};

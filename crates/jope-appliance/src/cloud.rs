@@ -1,12 +1,18 @@
 //! Application-owned HTTPS account connection. The local engine never receives credentials.
 mod client_auth;
+pub mod cloud_run;
 mod commands;
+pub(crate) mod device;
+pub mod flow;
+pub mod route;
 mod sync;
 
-pub use commands::{auth_command, cloud_command, default_workspace, spawn_login};
+pub use commands::{
+    auth_command, cloud_command, default_workspace, results_command, spawn_login, RESULTS_QUESTION,
+};
 pub(crate) use sync::{chrono_like_now, set_telemetry};
 pub use sync::{
-    fetch_model, publish_best, publish_file, publish_model, run_entries, sync_events,
+    fetch_model, publish_best, publish_file, publish_model, run_entries, sync_events, sync_results,
     sync_snapshot, sync_snapshot_for, Upload,
 };
 #[cfg(test)]
@@ -48,11 +54,34 @@ pub enum AuthCommand {
 }
 #[derive(Subcommand)]
 pub enum CloudCommand {
+    /// Whether a finished local run's model and report sync to your workspace: `on`, `off`, or
+    /// show it. No dataset rows are uploaded (kernel, smoother and Gaussian-process models keep
+    /// their support rows inside the fitted model).
+    Results {
+        setting: Option<String>,
+    },
     Sync {
         #[arg(long)]
         run: Option<String>,
     },
-    Runs,
+    /// Every run this account has, local and cloud, in one table.
+    Runs {
+        /// One JSON object per run instead of the table.
+        #[arg(long)]
+        json: bool,
+        /// Only runs that exist on this machine.
+        #[arg(long, conflicts_with = "cloud")]
+        local: bool,
+        /// Only runs that exist in the workspace.
+        #[arg(long)]
+        cloud: bool,
+        /// Only local runs not yet synced to the workspace.
+        #[arg(long, conflicts_with_all = ["local", "cloud"])]
+        unsynced: bool,
+        /// Show at most N runs.
+        #[arg(long, value_name = "N")]
+        limit: Option<usize>,
+    },
     /// Publish explicitly: the fitted model (the default), or with `--report`/`--code` only the
     /// named PDF report and ZIP of generated code. Nothing uploads without this command.
     Publish {

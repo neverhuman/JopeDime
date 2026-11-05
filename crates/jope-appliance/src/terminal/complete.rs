@@ -97,7 +97,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     },
     CommandSpec {
         name: "run",
-        flags: &["--seed", "--json"],
+        flags: &["--seed", "--local", "--cloud", "--json"],
     },
     CommandSpec {
         name: "pause",

@@ -34,6 +34,8 @@ mod research;
 mod session;
 #[path = "terminal/theme.rs"]
 pub mod terminal;
+#[cfg(feature = "client")]
+mod update;
 #[cfg(feature = "engine")]
 mod worker;
 
@@ -98,7 +100,15 @@ mod commands;
 use commands::{load_fitness, report, run_fit, run_fit_predict, run_predict, serve, summary_line};
 
 fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    #[allow(unused_mut)]
+    let mut args: Vec<String> = std::env::args().skip(1).collect();
+    // `--accept-terms` and `--telemetry on|off` are global: accepted before or after any
+    // subcommand, applied once, and removed before the subcommand parses its own arguments.
+    #[cfg(feature = "client")]
+    if let Err(message) = terminal::onboarding::take_flags(&mut args) {
+        eprintln!("jopedime: {message}");
+        return ExitCode::from(2);
+    }
     // `--version` alone, and `--version --json` (SPECIFICATION.md §3.3).
     match args
         .iter()
@@ -108,6 +118,8 @@ fn main() -> ExitCode {
     {
         ["--version"] | ["-V"] => {
             out(&format!("jopedime {VERSION}\n"));
+            #[cfg(feature = "client")]
+            update::notice_blocking(VERSION);
             return ExitCode::SUCCESS;
         }
         ["--version", "--json"] | ["--json", "--version"] => {
@@ -120,7 +132,7 @@ fn main() -> ExitCode {
     if let Some(attach) = session::requested(&args) {
         return report(session::run(attach));
     }
-    let cli = Cli::parse();
+    let cli = Cli::parse_from(std::iter::once("jopedime".to_owned()).chain(args.iter().cloned()));
     match cli.command {
         #[cfg(feature = "research")]
         ApplianceCommand::Research(args) => report(research::run(args)),
@@ -136,6 +148,8 @@ fn main() -> ExitCode {
         }
         ApplianceCommand::Doctor(flag) => match doctor() {
             Ok((value, ok)) => {
+                #[cfg(feature = "client")]
+                update::notice_blocking(VERSION);
                 let code = if ok {
                     0
                 } else {
@@ -334,8 +348,9 @@ fn main() -> ExitCode {
         ApplianceCommand::Serve {
             status,
             stop,
+            force,
             idle_exit,
-        } => ExitCode::from(cmd::serve::run(status, stop, idle_exit.as_deref())),
+        } => ExitCode::from(cmd::serve::run(status, stop, force, idle_exit.as_deref())),
         ApplianceCommand::VerifySelf(flag) => report(verify_self(flag.json)),
         ApplianceCommand::Licenses(flag) => report(licenses(flag.json)),
     }

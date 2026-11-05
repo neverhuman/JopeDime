@@ -104,7 +104,7 @@ impl super::Session {
                             crate::cloud::sync_events(&client, &snapshot)
                                 .unwrap_or_else(|error| format!("Run events: {error:#}")),
                         );
-                        let _ = done.send(run);
+                        let _ = done.send((run, snapshot.state));
                     }
                 }
                 Ok(lines)
@@ -115,13 +115,14 @@ impl super::Session {
     }
 
     pub(super) fn tick_sync(&mut self) {
-        while let Ok(run) = self.synced_terminal.try_recv() {
-            if self
-                .auto_sync
-                .as_ref()
-                .is_some_and(|(current, _)| current == &run)
-            {
-                self.auto_sync = None;
+        while let Ok((run, state)) = self.synced_terminal.try_recv() {
+            if let Some((current, owner)) = self.auto_sync.clone() {
+                if current == run {
+                    self.auto_sync = None;
+                    if state == RunState::Completed {
+                        self.routing.results_waiting = Some((run, owner));
+                    }
+                }
             }
         }
         if self.last_sync.elapsed() >= Duration::from_secs(5) {
@@ -136,6 +137,32 @@ impl super::Session {
             }
             self.last_sync = Instant::now();
         }
+    }
+
+    /// Lines from routing's background work: cloud progress, a finished login, a finished local
+    /// run's results question, and the update check.
+    pub(super) fn routing_lines(&mut self, width: usize) -> Vec<String> {
+        let mut lines = Vec::new();
+        while let Ok(message) = self.cloud_runs.try_recv() {
+            lines.extend(self.cloud_lines(message, width));
+        }
+        while let Ok(ok) = self.login_done.try_recv() {
+            lines.extend(self.login_finished(ok));
+        }
+        lines.extend(self.tick_results());
+        if let Some(receiver) = &self.update_notice {
+            match receiver.try_recv() {
+                Ok(line) => {
+                    self.activity = line.clone();
+                    lines.push(line);
+                    self.update_notice = None;
+                }
+                Err(mpsc::TryRecvError::Disconnected) => self.update_notice = None,
+                Err(mpsc::TryRecvError::Empty) => {}
+            }
+        }
+        // Already sanitized where they were made; cards carry their own styling.
+        lines
     }
 
     pub(super) fn screen_lines(&self) -> Vec<String> {

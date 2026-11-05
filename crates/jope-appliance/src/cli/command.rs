@@ -12,6 +12,15 @@ use super::*;
 pub struct Cli {
     #[command(subcommand)]
     pub command: ApplianceCommand,
+    /// Accept the VEOX terms of service without the first-run prompt (the same as
+    /// JAIN_ACCEPT_TERMS=1). An agent must show the user https://veox.ai/terms first.
+    #[arg(long, global = true)]
+    pub accept_terms: bool,
+    /// Choose usage statistics without the first-run prompt: on or off (the same as
+    /// JAIN_TELEMETRY; DO_NOT_TRACK=1 still forces off). An agent must show the user
+    /// https://veox.ai/terms first.
+    #[arg(long, global = true, value_name = "on|off", value_parser = ["on", "off"])]
+    pub telemetry: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -198,6 +207,9 @@ pub enum ApplianceCommand {
         status: bool,
         #[arg(long, conflicts_with = "idle_exit")]
         stop: bool,
+        /// With --stop: stop the engine even while it runs a job (the job is interrupted).
+        #[arg(long, requires = "stop")]
+        force: bool,
         #[arg(long, value_name = "D", conflicts_with_all = ["status", "stop"])]
         idle_exit: Option<String>,
     },

@@ -101,6 +101,14 @@ pub enum DiscoveryError {
         /// Command recorded for the current store owner.
         command: String,
     },
+    /// The running engine is another jAIn version (or an executable since replaced) and is busy
+    /// with a run, so it was not restarted underneath that run.
+    OutdatedBusy {
+        /// The engine's version.
+        version: String,
+        /// The runs it is executing.
+        running: Vec<String>,
+    },
     /// The engine did not become ready before the startup deadline.
     StartupTimeout {
         /// Exit status of the child process, if it exited before the deadline.
@@ -120,7 +128,9 @@ impl DiscoveryError {
             Self::NoEngine | Self::Spawn(_) | Self::StartupTimeout { .. } => {
                 ErrorCode::EngineUnreachable.exit_code().unwrap()
             }
-            Self::Busy { .. } => ErrorCode::EngineBusy.exit_code().unwrap(),
+            Self::Busy { .. } | Self::OutdatedBusy { .. } => {
+                ErrorCode::EngineBusy.exit_code().unwrap()
+            }
         }
     }
 }
@@ -133,6 +143,7 @@ impl fmt::Display for DiscoveryError {
             Self::Spawn(e) => write!(f, "cannot start the engine: {e}"),
             Self::NoEngine => f.write_str(NO_ENGINE),
             Self::Busy { pid, command } => write!(f, "ENGINE_BUSY: store owner PID {} command {command:?}; retry or use another JOPEDIME_HOME", pid.map_or("unknown".into(), |p|p.to_string())),
+            Self::OutdatedBusy { version, running } => write!(f, "An older jAIn engine ({version}) is still running a job ({}). Wait for it or run `jain serve --stop --force`.", running.join(", ")),
             Self::StartupTimeout { child_exit } => write!(f, "engine did not become ready within 5 s (child exit: {child_exit:?}); run `jopedime serve` for diagnostics"),
         }
     }
@@ -167,11 +178,38 @@ pub fn discover(options: &Options) -> Result<Engine, Error> {
     )
 }
 
+/// The client's own version: every engine it attaches to must match it.
+pub const CLIENT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+static NOTICE: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
+/// A one-line notice from the last discovery (an outdated engine was restarted), taken once.
+pub fn take_notice() -> Option<String> {
+    NOTICE.lock().ok()?.take()
+}
+
+fn set_notice(line: String) {
+    if let Ok(mut notice) = NOTICE.lock() {
+        *notice = Some(line);
+    }
+}
+
 fn discover_with(
     options: &Options,
     environment: Option<OsString>,
     timeout: Duration,
     start: impl FnOnce(&Options) -> io::Result<Child>,
+) -> Result<Engine, Error> {
+    discover_versioned(options, environment, timeout, start, Some(CLIENT_VERSION))
+}
+
+/// [`discover_with`] with the version an attached engine must report (`None`: any).
+fn discover_versioned(
+    options: &Options,
+    environment: Option<OsString>,
+    timeout: Duration,
+    start: impl FnOnce(&Options) -> io::Result<Child>,
+    expected: Option<&str>,
 ) -> Result<Engine, Error> {
     let selected = options.endpoint.clone().or_else(|| {
         environment
@@ -197,7 +235,9 @@ fn discover_with(
     }
     let deadline = Instant::now() + timeout;
     if let Some(engine) = attached(&options.home, deadline)? {
-        return Ok(Engine::Background(engine));
+        if let Some(engine) = reconcile(&options.home, engine, expected)? {
+            return Ok(Engine::Background(engine));
+        }
     }
     if !options.engine_available {
         return Err(Error::NoEngine);
@@ -253,9 +293,140 @@ fn discover_with(
     result
 }
 
+/// Why an attached engine is not this client's, if it is not.
+fn outdated(engine: &Background, expected: Option<&str>) -> Option<String> {
+    let expected = expected?;
+    if engine.version != expected {
+        return Some(engine.version.clone());
+    }
+    replaced_executable(engine.pid)
+        .then(|| format!("{} (an executable since replaced)", engine.version))
+}
+
+/// Linux: the engine runs a binary file that was replaced on disk (an upgrade in place).
+fn replaced_executable(pid: u32) -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        pid != std::process::id()
+            && fs::read_link(format!("/proc/{pid}/exe"))
+                .is_ok_and(|path| path.to_string_lossy().ends_with(" (deleted)"))
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = pid;
+        false
+    }
+}
+
+/// Keep a matching engine; restart an idle mismatched one; refuse a busy mismatched one.
+/// `Ok(None)` means it was stopped and the caller starts a fresh one.
+fn reconcile(
+    home: &std::path::Path,
+    engine: Background,
+    expected: Option<&str>,
+) -> Result<Option<Background>, Error> {
+    let Some(old) = outdated(&engine, expected) else {
+        return Ok(Some(engine));
+    };
+    let running = active_runs(&engine.client);
+    if !running.is_empty() {
+        return Err(Error::OutdatedBusy {
+            version: old,
+            running,
+        });
+    }
+    stop_engine(home, &engine)?;
+    set_notice(format!(
+        "Restarted the background engine: it was jAIn {old}, now {}",
+        expected.unwrap_or(CLIENT_VERSION)
+    ));
+    Ok(None)
+}
+
+/// Runs the engine is executing (running or pausing). Unknown is treated as none.
+pub fn active_runs<T: crate::Transport>(client: &T) -> Vec<String> {
+    use crate::transport::Request;
+    let mut running = Vec::new();
+    let mut after: Option<String> = None;
+    for _ in 0..64 {
+        let Ok(request) = Request::new(7, 0, &[]) else {
+            break;
+        };
+        let request = request.query(&[("limit", "256")]);
+        let request = match &after {
+            Some(cursor) => request.query(&[("after", cursor)]),
+            None => request,
+        };
+        let Ok(page) = client
+            .execute(request)
+            .and_then(|r| r.json::<jope_api::registry::RunPage>())
+        else {
+            break;
+        };
+        running.extend(
+            page.runs
+                .iter()
+                .filter(|r| {
+                    matches!(
+                        r.state,
+                        jope_api::RunState::Running | jope_api::RunState::Pausing
+                    )
+                })
+                .map(|r| r.run_id.to_string()),
+        );
+        match page.next_after {
+            Some(cursor) if after.as_ref() != Some(&cursor) => after = Some(cursor),
+            _ => break,
+        }
+    }
+    running
+}
+
+/// Ask the engine to stop and wait (at most ten seconds) for it to go.
+fn stop_engine(home: &std::path::Path, engine: &Background) -> Result<(), Error> {
+    let config = ureq::Agent::config_builder()
+        .proxy(None)
+        .max_redirects(0)
+        .http_status_as_error(false)
+        .timeout_global(Some(Duration::from_secs(5)))
+        .build();
+    let agent = ureq::Agent::new_with_config(config);
+    let token = record(home)?
+        .filter(|r| r.pid == engine.pid)
+        .map(|r| r.token)
+        .ok_or(Error::InvalidMetadata)?;
+    let request = ureq::http::Request::builder()
+        .method("POST")
+        .uri(format!("{}/__engine/stop", engine.url))
+        .header("authorization", format!("Bearer {token}"))
+        .body(Vec::new())
+        .map_err(|_| Error::InvalidMetadata)?;
+    let _ = agent.run(request);
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while Instant::now() < deadline {
+        let gone = record(home)
+            .ok()
+            .flatten()
+            .is_none_or(|r| r.pid != engine.pid)
+            || !alive(engine.pid);
+        if gone {
+            return Ok(());
+        }
+        thread::sleep(POLL);
+    }
+    Err(Error::Busy {
+        pid: Some(engine.pid),
+        command: format!(
+            "jAIn engine {} did not stop; run `jain serve --stop --force`",
+            engine.version
+        ),
+    })
+}
+
 mod local;
 #[cfg(test)]
-use local::{alive, detached, record};
+use local::detached;
+use local::{alive, record};
 use local::{
     attached, private_file, private_home, private_options, start_engine, store_owner, Reaper,
 };

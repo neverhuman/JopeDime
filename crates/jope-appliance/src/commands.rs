@@ -118,6 +118,24 @@ pub(crate) fn run_predict(
         // Only the manifest's `format` and capabilities are read here; `ModelObject::read` and
         // `load_fitted` each verify every part, so the full read happens once, on the path that
         // uses it. A Platt-calibrated object predicts whole: `load_fitted` refuses it.
+        // An export bundle (`run --out DIR`, `export --out DIR`) predicts from its model.
+        if let Some(bundle) = bundle_object(model, limit) {
+            let (object, identity_path) = bundle?;
+            return match route_of(object.manifest_bytes())? {
+                ObjectRoute::MathPipeline => {
+                    run.predict_math_pipeline(&object, model, input, output, started)
+                }
+                ObjectRoute::Calibrated => {
+                    run.predict_calibrated(&object, model, input, output, &b, started)
+                }
+                ObjectRoute::Fitted => {
+                    let fitted = object.fitted()?;
+                    let _ = identity_path;
+                    run.predict(&fitted, input, output, &b)?;
+                    Ok(())
+                }
+            };
+        }
         let route = if model.is_dir() {
             object_route(model)?
         } else {
@@ -237,18 +255,82 @@ enum ObjectRoute {
     Fitted,
 }
 
-fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
-    use jope_runtime::model_object::{
-        calibration_platt, read_bounded, MANIFEST, MATH_PIPELINE, MAX_MANIFEST_BYTES,
+/// The fitted model inside an export bundle written by `run --out` / `export` (`export.json`,
+/// a bundle `manifest.json` of digests, and the model object under `model/`), or the `model/`
+/// directory of such a bundle. The object store names an object's directory by its identity and
+/// `ModelObject::read` checks that; a bundle names it `model`, so a bundle is read by its own
+/// digests instead: every `model/*` entry must match the bundle manifest, and the object's
+/// identity must be the bundle's `model_object_digest`. `None`: not a bundle.
+pub(crate) fn bundle_object(
+    path: &Path,
+    limit: u64,
+) -> Option<anyhow::Result<(jope_runtime::model_object::ModelObject, std::path::PathBuf)>> {
+    use jope_runtime::model_object::{read_bounded, ModelObject, MANIFEST, MAX_MANIFEST_BYTES};
+    let root = if path.join("export.json").is_file() && path.join("model").join(MANIFEST).is_file()
+    {
+        path.to_owned()
+    } else if path.file_name().is_some_and(|n| n == "model")
+        && path
+            .parent()
+            .is_some_and(|p| p.join("export.json").is_file())
+    {
+        path.parent()?.to_owned()
+    } else {
+        return None;
     };
+    Some((|| -> anyhow::Result<_> {
+        let bundle: serde_json::Value =
+            serde_json::from_slice(&read_bounded(&root.join(MANIFEST), MAX_MANIFEST_BYTES)?)
+                .map_err(|e| Failure::integrity(format!("export bundle manifest: {e}")))?;
+        let entries = bundle["entries"]
+            .as_object()
+            .ok_or_else(|| Failure::integrity("export bundle manifest has no entries"))?;
+        let object_dir = root.join("model");
+        let manifest_bytes = read_bounded(&object_dir.join(MANIFEST), MAX_MANIFEST_BYTES)?;
+        let digest = jope_runtime::sha256_hex(&manifest_bytes);
+        if bundle["model_object_digest"].as_str() != Some(digest.as_str())
+            || entries.get("model/manifest.json").and_then(|v| v.as_str()) != Some(digest.as_str())
+        {
+            return Err(Failure::integrity(
+                "the bundle's model does not match its export manifest",
+            )
+            .into());
+        }
+        let manifest: jope_runtime::model_object::Manifest =
+            jope_runtime::strict_json::decode(&manifest_bytes)
+                .map_err(|e| Failure::integrity(format!("model manifest: {e}")))?;
+        let mut parts = std::collections::BTreeMap::new();
+        for part in &manifest.files {
+            if part.path.contains(['/', '\\']) || part.path.starts_with('.') {
+                return Err(Failure::integrity("unsafe model part path").into());
+            }
+            let bytes = read_bounded(&object_dir.join(&part.path), part.bytes.min(limit))?;
+            let listed = entries
+                .get(&format!("model/{}", part.path))
+                .and_then(|v| v.as_str());
+            if listed != Some(jope_runtime::sha256_hex(&bytes).as_str()) {
+                return Err(Failure::integrity(format!(
+                    "model part {} does not match the export manifest",
+                    part.path
+                ))
+                .into());
+            }
+            parts.insert(part.path.clone(), bytes);
+        }
+        let object = ModelObject::decode(manifest_bytes, parts, limit)?;
+        Ok((object, object_dir.join(MANIFEST)))
+    })())
+}
+
+fn route_of(manifest_bytes: &[u8]) -> anyhow::Result<ObjectRoute> {
+    use jope_runtime::model_object::{calibration_platt, MATH_PIPELINE};
     #[derive(serde::Deserialize)]
     struct Format {
         format: String,
         #[serde(default)]
         required_capabilities: Vec<String>,
     }
-    let bytes = read_bounded(&object_dir.join(MANIFEST), MAX_MANIFEST_BYTES)?;
-    let manifest: Format = serde_json::from_slice(&bytes)
+    let manifest: Format = serde_json::from_slice(manifest_bytes)
         .map_err(|e| Failure::integrity(format!("model manifest: {e}")))?;
     Ok(if manifest.format == MATH_PIPELINE {
         ObjectRoute::MathPipeline
@@ -261,6 +343,14 @@ fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
     } else {
         ObjectRoute::Fitted
     })
+}
+
+fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
+    use jope_runtime::model_object::{read_bounded, MANIFEST, MAX_MANIFEST_BYTES};
+    route_of(&read_bounded(
+        &object_dir.join(MANIFEST),
+        MAX_MANIFEST_BYTES,
+    )?)
 }
 
 pub(crate) fn run_fit_predict(

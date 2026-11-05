@@ -60,6 +60,17 @@ pub struct RunArgs {
     pub refit: String,
     #[arg(long)]
     pub json: bool,
+    /// Run in your veox Cloud Workspace: uploads the CSV after the user's consent. Without it,
+    /// `run` never uploads; it says on stderr when the routing rule would use the cloud.
+    #[arg(long, conflicts_with_all = ["local", "dry_run", "detach", "out", "events", "dataset"])]
+    pub cloud: bool,
+    /// Run on this machine, whatever the routing rule says.
+    #[arg(long)]
+    pub local: bool,
+    /// The user agreed to upload this CSV to their veox Cloud Workspace (with --cloud). Ask
+    /// them first; the consent is remembered per file.
+    #[arg(long, requires = "cloud")]
+    pub consent_upload: bool,
     #[arg(long, value_parser = ["ndjson"])]
     pub events: Option<String>,
     #[arg(long, default_value_t = 30)]
@@ -77,6 +88,11 @@ pub struct RunArgs {
 }
 
 impl RunArgs {
+    /// The hidden prepared-plan probe never talks to a workspace.
+    pub fn json_m1(&self) -> bool {
+        self.m1_plan.is_some()
+    }
+
     pub fn run_spec(&self) -> anyhow::Result<RunSpec> {
         let dataset = DatasetId::from_str(self.dataset.as_deref().ok_or_else(|| {
             anyhow::anyhow!("CSV must be registered before constructing RunSpec")

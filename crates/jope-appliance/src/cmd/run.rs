@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::io::Write;
 
 mod args;
+mod cloud;
 use args::parse_value;
 pub use args::RunArgs;
 
@@ -54,8 +55,20 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
         mode: Mode::Batch,
         engine_available: cfg!(feature = "engine"),
     })?;
+    if let Some(notice) = discover::take_notice() {
+        eprintln!("{notice}");
+    }
     match selection {
-        Engine::Background(background) => run(args, &background.client),
+        Engine::Background(background) => {
+            if background.version != env!("CARGO_PKG_VERSION") {
+                eprintln!(
+                    "jopedime: the background engine is version {}, this executable {}",
+                    background.version,
+                    env!("CARGO_PKG_VERSION")
+                );
+            }
+            run(args, &background.client)
+        }
         // An explicit endpoint is authoritative. Never substitute a daemon or
         // legacy server when the selected endpoint cannot be authenticated.
         Engine::Endpoint(_) => Err(DispatchUnavailable::EndpointCredentials.into()),
@@ -263,6 +276,12 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
             args.languages = vec!["rust".into(), "python".into()];
         }
         args.dataset = Some(profile.dataset_id.to_string());
+        if !args.dry_run && !args.detach && args.out.is_none() && args.events.is_none() {
+            let effort: jope_api::Effort = parse_value(&args.effort)?;
+            if let cloud::Routed::Cloud = cloud::route_run(&args, &absolute, &profile, effort)? {
+                return Ok(());
+            }
+        }
     }
     let spec = args.run_spec()?;
     let response = transport.run_start(&spec, Some(&key))?;
@@ -361,6 +380,9 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
                 &interrupts,
                 &mut std::io::stderr().lock(),
             )?;
+            if current.state == RunState::Completed && !args.json_m1() {
+                cloud::sync_after(transport, &current.run_id);
+            }
             if current.state == RunState::Failed {
                 write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
                 return Err(jope_runtime::Failure::backend(

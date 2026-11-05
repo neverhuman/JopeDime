@@ -1,8 +1,22 @@
+use super::routing;
 use super::*;
 
 impl super::Session {
     pub(super) fn submit(&mut self, input: &str) -> anyhow::Result<Vec<String>> {
         let input = input.trim();
+        if let Some(result) = self.answer(input) {
+            return result.map(|lines| {
+                lines
+                    .iter()
+                    .flat_map(|l| {
+                        crate::terminal::sanitize_user_string(l)
+                            .split('\n')
+                            .map(str::to_owned)
+                            .collect::<Vec<_>>()
+                    })
+                    .collect()
+            });
+        }
         if input.is_empty() {
             return Ok(Vec::new());
         }
@@ -26,6 +40,7 @@ impl super::Session {
                     workspace,
                     self.cloud_sender.clone(),
                     Arc::clone(&cancel),
+                    None,
                 );
                 self.login_cancel = Some(cancel);
                 return Ok(vec![
@@ -52,6 +67,13 @@ impl super::Session {
             Some("/runs" | "\\runs") => {
                 self.refresh_runs();
                 return Ok(vec!["Loading runs...".into()]);
+            }
+            Some("/sync" | "\\sync")
+                if matches!(input.split_whitespace().nth(1), Some("on" | "off")) =>
+            {
+                let setting = words.next().map(str::to_owned);
+                anyhow::ensure!(words.next().is_none(), "usage: /sync on|off");
+                return Ok(vec![crate::cloud::results_command(setting)?]);
             }
             Some("/sync" | "\\sync") => {
                 let c = crate::cloud::connection()?;
@@ -143,7 +165,7 @@ impl super::Session {
             "\\help" => vec![if args.first().is_some_and(|arg| arg == "history") {
                 crate::terminal::composer::HISTORY_HELP.to_owned()
             } else {
-                "/demo [NAME] · /usage · /login [URL] · /logout · /sync [RUN] · /publish [RUN] · /fetch UUID · Left: runs · \\open PATH|example/NAME.csv · \\target COLUMN · \\plan · \\run · \\attach RUN · \\quit\nDocs https://veox.ai/docs · Terms https://veox.ai/terms".into()
+                "/demo [NAME] · /usage · /login [URL] · /logout · /sync [RUN] · /sync on|off · /publish [RUN] · /fetch UUID · Left: runs · \\open PATH|example/NAME.csv · \\target COLUMN · \\plan · \\run [--local|--cloud] · \\attach RUN · \\quit\nDocs https://veox.ai/docs · Terms https://veox.ai/terms".into()
             }],
             "\\demo" => self.demo(&args)?,
             "\\quit" => {
@@ -162,7 +184,7 @@ impl super::Session {
                     "draft needs a registered dataset and target before it can be validated".into(),
                 ]
             }),
-            "\\run" => self.start_run(&args)?,
+            "\\run" => self.route_run(&args)?,
             "\\export" => self.export(&args)?,
             "\\attach" => {
                 let run = match args.first() {
@@ -271,7 +293,14 @@ impl super::Session {
                 Box::new(std::fs::File::open(path)?)
             }
         };
+        let demo = !on_disk;
         notice.extend(self.register(&name, reader)?);
+        if let Some(source) = self.routing.source.as_mut() {
+            source.demo = demo;
+            if on_disk {
+                source.path = std::fs::canonicalize(path).ok();
+            }
+        }
         Ok(notice)
     }
 
@@ -288,6 +317,12 @@ impl super::Session {
             .first()
             .map(|item| item.column.clone());
         let dataset = profile.dataset_id.to_string();
+        self.routing.source = Some(routing::Source {
+            path: None,
+            demo: false,
+            rows: profile.rows.0,
+            columns: profile.columns.len() as u64,
+        });
         self.draft.set_dataset(profile);
         let mut lines = vec![format!("registered {name} as {dataset}")];
         if let Some(target) = target {

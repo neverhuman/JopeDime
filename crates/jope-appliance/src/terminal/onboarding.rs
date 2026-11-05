@@ -32,8 +32,54 @@ pub struct State {
     pub telemetry: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub telemetry_decided_at: Option<String>,
+    /// Whether a finished local run's model and report go to the workspace (`/sync on|off`).
+    /// `None` until the user is first asked.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub results_sync: Option<bool>,
+    /// Upload consents, keyed by `<origin> <account> <file sha256>`: one question per dataset.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub upload_consents: std::collections::BTreeMap<String, UploadConsent>,
+    /// The account's plan as last read from the workspace, for offline routing (MCP).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub account_tier: Option<String>,
+    /// The last update check (at most one per 24 hours).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub update_check: Option<UpdateCheck>,
     #[serde(flatten)]
     pub extra: serde_json::Map<String, serde_json::Value>,
+}
+
+/// What the user agreed to upload for one dataset.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UploadConsent {
+    pub rows: u64,
+    pub columns: u64,
+    pub bytes: u64,
+    pub at: String,
+}
+
+/// The cached result of the last update check.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UpdateCheck {
+    /// Unix seconds of the last attempt (successful or not).
+    pub checked_at: u64,
+    /// The newer stable version found, if any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub available: Option<String>,
+}
+
+/// Read-modify-write the state under one process-wide lock, so background threads (the update
+/// check, a sync) never lose a concurrent answer.
+pub fn update(home: &Path, change: impl FnOnce(&mut State)) -> Result<State> {
+    static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _guard = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let mut state = load(home);
+    change(&mut state);
+    if state.schema.is_empty() {
+        state.schema = STATE_SCHEMA.into();
+    }
+    save(home, &state)?;
+    Ok(state)
 }
 
 /// The terms version to require: this build's [`TERMS_VERSION`], or a newer one reported by a
@@ -161,12 +207,106 @@ pub fn telemetry_forced_off(var: impl Fn(&str) -> Option<String>) -> bool {
 }
 
 pub fn telemetry_forced_off_from_env() -> bool {
-    telemetry_forced_off(|name| std::env::var(name).ok())
+    telemetry_forced_off(|name| std::env::var(name).ok()) || flags().telemetry == Some(false)
 }
 
-/// `JAIN_ACCEPT_TERMS=1` accepts the terms non-interactively.
+/// The global `--accept-terms` and `--telemetry on|off` flags, taken off the command line before
+/// anything else parses it (see [`take_flags`]).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Flags {
+    pub accept_terms: bool,
+    pub telemetry: Option<bool>,
+}
+
+static FLAGS: std::sync::OnceLock<Flags> = std::sync::OnceLock::new();
+
+pub fn flags() -> Flags {
+    FLAGS.get().copied().unwrap_or_default()
+}
+
+/// Remove `--accept-terms`, `--telemetry on|off` and `--telemetry=on|off` from `args`, wherever
+/// they appear, and return them. An invalid telemetry value is an error.
+pub fn parse_flags(args: &mut Vec<String>) -> Result<Flags, String> {
+    let mut flags = Flags::default();
+    let mut out = Vec::with_capacity(args.len());
+    let mut iter = std::mem::take(args).into_iter();
+    while let Some(arg) = iter.next() {
+        if arg == "--" {
+            out.push(arg);
+            out.extend(iter.by_ref());
+            break;
+        }
+        let value = if arg == "--accept-terms" {
+            flags.accept_terms = true;
+            continue;
+        } else if arg == "--telemetry" {
+            iter.next()
+                .ok_or("--telemetry needs on or off (show the user https://veox.ai/terms first)")?
+        } else if let Some(value) = arg.strip_prefix("--telemetry=") {
+            value.to_owned()
+        } else {
+            out.push(arg);
+            continue;
+        };
+        flags.telemetry = Some(match value.to_ascii_lowercase().as_str() {
+            "on" | "1" | "true" | "yes" => true,
+            "off" | "0" | "false" | "no" => false,
+            _ => return Err(format!("--telemetry takes on or off, not {value:?}")),
+        });
+    }
+    *args = out;
+    Ok(flags)
+}
+
+/// [`parse_flags`] for this process, applying the decisions to the stored state the way the
+/// environment variables do.
+pub fn take_flags(args: &mut Vec<String>) -> Result<Flags, String> {
+    let flags = parse_flags(args)?;
+    let _ = FLAGS.set(flags);
+    let home = jope_paths::jopedime_home();
+    if flags.accept_terms {
+        let _ = accept_noninteractive(&home, "flag");
+    }
+    if let Some(choice) = noninteractive_telemetry(flags, |name| std::env::var(name).ok()) {
+        let _ = record_telemetry(&home, choice);
+    }
+    Ok(flags)
+}
+
+/// The telemetry choice a flag or `JAIN_TELEMETRY` makes without a prompt. `DO_NOT_TRACK`
+/// still forces it off.
+pub fn noninteractive_telemetry(
+    flags: Flags,
+    var: impl Fn(&str) -> Option<String>,
+) -> Option<bool> {
+    let env = var("JAIN_TELEMETRY").and_then(|v| match v.trim().to_ascii_lowercase().as_str() {
+        "1" | "on" | "true" | "yes" => Some(true),
+        "0" | "off" | "false" | "no" => Some(false),
+        _ => None,
+    });
+    let choice = flags.telemetry.or(env)?;
+    let dnt = var("DO_NOT_TRACK").is_some_and(|value| {
+        let value = value.trim();
+        !value.is_empty() && value != "0" && !value.eq_ignore_ascii_case("false")
+    });
+    Some(choice && !dnt)
+}
+
+fn record_telemetry(home: &Path, enabled: bool) -> Result<()> {
+    let current = load(home);
+    if current.telemetry == Some(enabled) {
+        return Ok(());
+    }
+    update(home, |state| {
+        state.telemetry = Some(enabled);
+        state.telemetry_decided_at = Some(crate::cloud::chrono_like_now());
+    })?;
+    crate::cloud::set_telemetry(enabled)
+}
+
+/// `JAIN_ACCEPT_TERMS=1` or `--accept-terms` accepts the terms non-interactively.
 pub fn env_accepts_terms() -> bool {
-    truthy(std::env::var("JAIN_ACCEPT_TERMS").ok())
+    truthy(std::env::var("JAIN_ACCEPT_TERMS").ok()) || flags().accept_terms
 }
 
 static ACCEPTED_NONINTERACTIVELY: std::sync::atomic::AtomicBool =

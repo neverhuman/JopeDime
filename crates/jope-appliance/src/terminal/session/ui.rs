@@ -62,6 +62,13 @@ impl super::Session {
                 }
                 last_draw = None;
             }
+            let routed = self.routing_lines(usize::from(width));
+            if !routed.is_empty() {
+                for line in routed {
+                    self.screen.push(&line);
+                }
+                last_draw = None;
+            }
             while let Ok(event) = self.events.try_recv() {
                 for line in self.handle_event(event, usize::from(width)) {
                     self.screen.push(&line);
@@ -271,6 +278,10 @@ impl super::Session {
             while let Ok(result) = self.background_events.try_recv() {
                 let lines = result.into_messages();
                 output.transcript(&lines)?;
+            }
+            let routed = self.routing_lines(width);
+            if !routed.is_empty() {
+                output.transcript(&routed)?;
             }
             while let Ok(result) = self.run_lists.try_recv() {
                 match result {
