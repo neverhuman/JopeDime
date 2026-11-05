@@ -1,0 +1,14 @@
+{
+  "wave": "H363",
+  "status": "PREREGISTERED_NOT_STARTED",
+  "verdict": null,
+  "primary_reference": "H352 NL15",
+  "secondary_reference": "BASE",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "treatment_fits": 0,
+  "outer_scores": 0
+}
