@@ -1,13 +1,1 @@
-{
-  "wave": "H358",
-  "status": "PREREGISTERED",
-  "verdict": null,
-  "scientific_verdict": "UNKNOWN",
-  "aggregate": null,
-  "paired_drop_top10": null,
-  "dope": {
-    "composite_sha256_prefix": "c51a56d0",
-    "loaded": false,
-    "scope": "CPU selection layer only"
-  }
-}
+{"aggregate":null,"archive_manifest":{"bucket":"veox-jopedime-learning-use2","bytes":496544,"every_member_verified":false,"exact_version_get_sha256_verified":true,"key":"experiments/rd_breakthrough_20261030/H358/dsc01-20261105T100000Z/closeout/closeout-manifest.json","sha256":"4b75a57d7fcb933960cd8b80d9f3c7a70da38cccb53f348d9ccfc2d4934f652d","uploaded_utc":"2026-11-05T10:41:07.217524+00:00","verified_members":0,"verified_utc":"2026-11-05T10:41:07.358693+00:00","version_id":"eYybDsMKf4_CJ3zLu84J7SzMd_kwu.6c"},"audit":{"BASE_refits":0,"all_locks_before_outer":false,"capacity_probes":1,"constructor_calls":{"LGBMClassifier":2910,"LGBMRanker":12195},"final_veto_SHA_matches":null,"first_fit_utc":"2026-11-05T10:12:51.198329+00:00","fit_locks":12,"full_metrics_verified":false,"guard_receipts":12,"last_fit_utc":"2026-11-05T10:39:34.637165+00:00","native_fit_counts":{"LGBMClassifier":2907,"LGBMRanker":12192},"native_fits_total":15099,"outer_reads_before_lock_in_completed_receipts":0,"partial_record_tails":[],"physical_guard_completed_receipts":12,"prereg_commit":"d8ed3f0bf55ade425a722d5e12c612e556b442ac","prereg_precedes_every_observed_fit":true,"prereg_published_utc":"2026-11-05T10:11:27.097803+00:00","protected_rows_loaded":0,"regression":"EXACT_PASS_9_PANELS_36_HASHES_3_MEDIANS","resource_telemetry":{"cpu_percent_max":43.53702916016825,"load1_max":85.04052734375,"mem_available_min_bytes":79923056640,"samples":319,"scratch_max_bytes":764200859},"scientific_verdict":null,"score_markers":0,"source_hashes_unchanged":true,"started_tasks":18,"status":"PARTIAL_COST_AUDIT","unit_state":{"ActiveState":"inactive","MainPID":"0"},"unobserved_partial_counters":"UNKNOWN","utc":"2026-11-05T10:39:41.642738+00:00","wave":"H358"},"dope":{"composite_sha256_prefix":"c51a56d0","loaded":false,"scope":"CPU selection layer only"},"outer_scores_qualified":false,"paired_drop_top10":null,"prereg_commit":"d8ed3f0bf55ade425a722d5e12c612e556b442ac","scientific_verdict":"UNKNOWN","scratch_removed":true,"status":"INCOMPLETE_RESOURCE_GUARD","unit_actual_costs":{"cpu_seconds":null,"peak_memory_bytes":null},"verdict":null,"verification":{"BASE_refits":0,"audit_status":"PARTIAL_COST_AUDIT","capacity_probes":1,"custody_controls":7,"datafree_tests":42,"fit_locks":12,"native_fit_counts":{"LGBMClassifier":2907,"LGBMRanker":12192},"score_markers":0,"unchanged_veto_SHA_matches":null},"wave":"H358"}
