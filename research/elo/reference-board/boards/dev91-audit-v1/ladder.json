@@ -6,54 +6,61 @@
   "anchor": "h335.H257_REPLICA",
   "contexts": 91,
   "elo": {
+   "autogluon_300s.v1": {
+    "ci95": [
+     1408.9778320446912,
+     1642.0733275839189
+    ],
+    "elo": 1526.3537543939547
+   },
    "catboost.v1": {
     "ci95": [
-     1373.71920295147,
-     1599.3032608486285
+     1360.739799268908,
+     1593.4975001524917
     ],
-    "elo": 1487.8315699439406
+    "elo": 1479.6037808796289
    },
    "h335.BANK_NN1": {
     "ci95": [
-     1092.8751153819744,
-     1277.8203792588597
+     1089.3881606600917,
+     1277.3196881934434
     ],
-    "elo": 1195.3588338816933
+    "elo": 1193.8112869762335
    },
    "h335.BANK_NN8_PICK": {
     "ci95": [
-     1353.4058174882691,
-     1480.9020947393017
+     1359.4204919503816,
+     1482.1189700678256
     ],
-    "elo": 1417.6680499448933
+    "elo": 1420.8895799349061
    },
    "h335.BANK_NN8_PORTFOLIO": {
     "ci95": [
-     1378.4298868779529,
-     1529.2847113424784
+     1382.107609491542,
+     1526.3462590583333
     ],
-    "elo": 1452.3924045400322
+    "elo": 1452.866279918426
    },
    "h335.GPT6_Astra_Max": {
     "ci95": [
-     1179.9322266535328,
-     1434.878727427666
+     1186.5021737135983,
+     1434.7919046484185
     ],
-    "elo": 1311.933549412481
+    "elo": 1315.2212304791015
    },
    "h335.GPT6p1_Sol_Max": {
     "ci95": [
-     1402.6268063216605,
-     1585.4494107027176
+     1407.077143006521,
+     1584.836324913121
     ],
-    "elo": 1493.0133335565818
+    "elo": 1494.6484519520088
    },
    "h335.Gemini4_argon_high": {
     "ci95": [
-     1403.7313226029053,
-     1637.0970336339792
+     1406.913433071199,
+     1636.9378646083514
     ],
-    "elo": 1519.1973167315657
+    "elo": 1519.5531906386348
    },
    "h335.H257_REPLICA": {
     "ci95": [
@@ -64,92 +71,114 @@
    },
    "h335.H317_BASE": {
     "ci95": [
-     1489.1007688909606,
-     1564.776388142644
+     1491.0571518701524,
+     1565.163449384494
     ],
-    "elo": 1525.542519753688
+    "elo": 1526.3537543939547
    },
    "h335.H335_AGG": {
     "ci95": [
-     1625.2175105334804,
-     1831.4293545006333
+     1619.538309415206,
+     1827.3079756213012
     ],
-    "elo": 1714.2199899797904
+    "elo": 1708.0492284989643
    },
    "h335.OLD_MATCHED": {
     "ci95": [
-     1478.5184292254473,
-     1597.3360927047897
+     1480.5002805169295,
+     1595.8445225909338
     ],
-    "elo": 1532.812356423425
+    "elo": 1532.9567459133066
    },
    "h335.OLD_MATCHED_CV3": {
     "ci95": [
-     1564.6887013737633,
-     1712.2242227812071
+     1565.105850020989,
+     1710.9628309307045
     ],
-    "elo": 1630.627481324838
+    "elo": 1629.2850246556395
    },
    "h335.Opus5p5_Extra": {
     "ci95": [
-     1463.1114038899289,
-     1704.4354397080328
+     1459.5549236196,
+     1700.717841262587
     ],
-    "elo": 1581.2678975503222
+    "elo": 1577.1011628055826
+   },
+   "kumo_tabular_large_e8.v1": {
+    "ci95": [
+     1853.0873110843183,
+     2323.250118965245
+    ],
+    "elo": 2036.0011892544112
    },
    "lightgbm.v1": {
     "ci95": [
-     1193.9209215268172,
-     1423.5362106252412
+     1185.8178751729004,
+     1419.313845801567
     ],
-    "elo": 1317.6779065260066
+    "elo": 1312.2803069764204
    },
    "random_forest.v1": {
     "ci95": [
-     1247.3482086004321,
-     1471.409297544192
+     1243.618666415148,
+     1474.0019375590514
     ],
-    "elo": 1366.487995736853
+    "elo": 1366.9531380099716
    },
    "ridge.v1": {
     "ci95": [
-     1018.8550572524404,
-     1367.5037216644403
+     1026.8531625566275,
+     1374.652267085384
     ],
-    "elo": 1227.8155005447816
+    "elo": 1238.874928583996
    },
    "tabfm.v1": {
     "ci95": [
-     1705.9298912913248,
-     2103.3527486944704
+     1698.6819304582268,
+     2095.141195635423
     ],
-    "elo": 1874.3149762553699
+    "elo": 1865.2082397995005
+   },
+   "tabfm_ensemble.v1": {
+    "ci95": [
+     1723.6985524985407,
+     2123.513145882796
+    ],
+    "elo": 1890.39735822364
    },
    "tabpfn_v3.v1": {
     "ci95": [
-     1650.954052756891,
-     1950.93337424588
+     1645.374004232105,
+     1948.9679506418586
     ],
-    "elo": 1781.4156752345398
+    "elo": 1777.7943003628225
    },
    "tabpfn_v3p5.v1": {
     "ci95": [
-     1637.9106114438787,
-     2046.3483156188136
+     1642.2993452229034,
+     2063.5903793740517
     ],
-    "elo": 1804.0329155411396
+    "elo": 1812.6648492700951
    },
    "xgboost.v1": {
     "ci95": [
-     1267.0982092942786,
-     1486.6215457285887
+     1261.56252109227,
+     1484.1887282592795
     ],
-    "elo": 1377.7956631528086
+    "elo": 1374.7976722084675
    }
   },
   "families": 19
  },
  "entrants": {
+  "autogluon_300s.v1": {
+   "label": "AutoGluon Tabular (default preset, 300 s)",
+   "median_wall_s": 50.711,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
   "catboost.v1": {
    "label": "CatBoost (1000 x depth 6, lr 0.05)",
    "median_wall_s": 1.194,
@@ -254,6 +283,14 @@
     "completed": 91
    }
   },
+  "kumo_tabular_large_e8.v1": {
+   "label": "KumoTabular large, 8 estimators (NVIDIA structured-data-models)",
+   "median_wall_s": 80.977,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
   "lightgbm.v1": {
    "label": "LightGBM (500 x 31 leaves, lr 0.05)",
    "median_wall_s": 1.479,
@@ -286,6 +323,14 @@
     "completed": 91
    }
   },
+  "tabfm_ensemble.v1": {
+   "label": "TabFM 1.0 ensemble regressor (TabFMRegressor.ensemble: feature crosses/SVD + NNLS-blended calibration)",
+   "median_wall_s": 79.777,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
   "tabpfn_v3.v1": {
    "label": "TabPFN v3 regressor (default checkpoint)",
    "median_wall_s": 85.124,
@@ -312,6 +357,7 @@
   }
  },
  "family_mean_u": {
+  "autogluon_300s.v1": 1.2523900341034144,
   "catboost.v1": 1.1885500272050078,
   "h335.BANK_NN1": 0.9031099630734062,
   "h335.BANK_NN8_PICK": 1.263552314865062,
@@ -325,16 +371,50 @@
   "h335.OLD_MATCHED": 1.4465295401960019,
   "h335.OLD_MATCHED_CV3": 1.4606537136984326,
   "h335.Opus5p5_Extra": 1.2942834663045668,
+  "kumo_tabular_large_e8.v1": 1.9355769598947588,
   "lightgbm.v1": 1.049198083987621,
   "random_forest.v1": 1.1245494553977966,
   "ridge.v1": 0.92077854932292,
   "tabfm.v1": 1.720212833608439,
+  "tabfm_ensemble.v1": 1.7675288094467676,
   "tabpfn_v3.v1": 1.642734409527838,
   "tabpfn_v3p5.v1": 1.641098790511015,
   "xgboost.v1": 1.0742005803427939
  },
  "focus": "h335.H335_AGG",
  "focus_vs": {
+  "autogluon_300s.v1": {
+   "headline": {
+    "context_mean_gain": 0.268785865544812,
+    "context_wtl": [
+     70,
+     1,
+     20
+    ],
+    "families_lost": 1,
+    "families_tied": 0,
+    "families_won": 18,
+    "family_mean_gain": 0.30681734674439504,
+    "family_median_gain": 0.060913840289365376,
+    "n_families": 19,
+    "pct_rmse_reduction": 0.2642150178432905
+   },
+   "primary_clipped": {
+    "T_clipped_family_mean": 0.13426413914171495,
+    "clip": 0.5,
+    "contexts": 91,
+    "families": 19,
+    "families_lost": 1,
+    "families_tied": 0,
+    "families_won": 18,
+    "family_median": 0.060913840289365376,
+    "inferior": false,
+    "lofo_min": 0.11394548020514356,
+    "mirror_signflip_p": 0.9998359680175781,
+    "pass": true,
+    "signflip_p": 0.0001659393310546875
+   }
+  },
   "catboost.v1": {
    "headline": {
     "context_mean_gain": 0.33523343549464796,
@@ -719,6 +799,38 @@
     "signflip_p": 0.0007228851318359375
    }
   },
+  "kumo_tabular_large_e8.v1": {
+   "headline": {
+    "context_mean_gain": -0.3922433483964394,
+    "context_wtl": [
+     8,
+     0,
+     83
+    ],
+    "families_lost": 18,
+    "families_tied": 0,
+    "families_won": 1,
+    "family_mean_gain": -0.3763695790469492,
+    "family_median_gain": -0.09901369628831658,
+    "n_families": 19,
+    "pct_rmse_reduction": -0.4569855055940617
+   },
+   "primary_clipped": {
+    "T_clipped_family_mean": -0.18559616441690166,
+    "clip": 0.5,
+    "contexts": 91,
+    "families": 19,
+    "families_lost": 18,
+    "families_tied": 0,
+    "families_won": 1,
+    "family_median": -0.09901369628831658,
+    "inferior": true,
+    "lofo_min": -0.20398960331756724,
+    "mirror_signflip_p": 0.00012969970703125,
+    "pass": false,
+    "signflip_p": 0.9998722076416016
+   }
+  },
   "lightgbm.v1": {
    "headline": {
     "context_mean_gain": 0.4767679029727854,
@@ -847,6 +959,38 @@
     "signflip_p": 0.9747753143310547
    }
   },
+  "tabfm_ensemble.v1": {
+   "headline": {
+    "context_mean_gain": -0.24102449268948523,
+    "context_wtl": [
+     12,
+     0,
+     79
+    ],
+    "families_lost": 16,
+    "families_tied": 0,
+    "families_won": 3,
+    "family_mean_gain": -0.20832142859895778,
+    "family_median_gain": -0.10076305112891504,
+    "n_families": 19,
+    "pct_rmse_reduction": -0.23160898028201116
+   },
+   "primary_clipped": {
+    "T_clipped_family_mean": -0.1238234712249293,
+    "clip": 0.5,
+    "contexts": 91,
+    "families": 19,
+    "families_lost": 16,
+    "families_tied": 0,
+    "families_won": 3,
+    "family_median": -0.10076305112891504,
+    "inferior": true,
+    "lofo_min": -0.15848033073742537,
+    "mirror_signflip_p": 0.016845703125,
+    "pass": false,
+    "signflip_p": 0.9831581115722656
+   }
+  },
   "tabpfn_v3.v1": {
    "headline": {
     "context_mean_gain": -0.08403032226813222,
@@ -944,38 +1088,9 @@
    }
   }
  },
- "incomplete": {
-  "autogluon_300s.v1": {
-   "have": 0,
-   "label": null,
-   "median_wall_s": null,
-   "n": 0,
-   "need": 91,
-   "status": {}
-  },
-  "kumo_tabular_large_e8.v1": {
-   "have": 1,
-   "label": "KumoTabular large, 8 estimators (NVIDIA structured-data-models)",
-   "median_wall_s": 208.558,
-   "n": 1,
-   "need": 91,
-   "status": {
-    "completed": 1
-   }
-  },
-  "tabfm_ensemble.v1": {
-   "have": 26,
-   "label": "TabFM 1.0 ensemble regressor (TabFMRegressor.ensemble: feature crosses/SVD + NNLS-blended calibration)",
-   "median_wall_s": 75.0765,
-   "n": 26,
-   "need": 91,
-   "status": {
-    "completed": 26
-   }
-  }
- },
+ "incomplete": {},
  "n_contexts": 91,
  "n_families": 19,
- "prediction_files_verified": 755,
+ "prediction_files_verified": 1001,
  "schema": "jope.reference-board.ladder/v1"
 }

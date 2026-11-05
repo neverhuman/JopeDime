@@ -16,7 +16,7 @@ from those scores.
 | Board | Contexts / split | Reference models stored | Our models stored |
 | --- | --- | --- | --- |
 | [`dev91-s1-two-fold-v1`](reference-board/boards/dev91-s1-two-fold-v1/LADDER.md) | DL-Val91, 91 / 19 families, H257 two-fold | TabFM, TabFM ensemble, Kumo L / S, TabPFN 3.5 (8 and 1 estimators), TabICL v2, TabDPT 1.3, Mitra v2, 4 LLM regressors | none yet |
-| [`dev91-audit-v1`](reference-board/boards/dev91-audit-v1/LADDER.md) | DL-Val91, 91 / 19 families, H335 SEARCH/AUDIT | TabFM, TabPFN 3.5, TabPFN v3, CatBoost, XGBoost, LightGBM, random forest, ridge, 4 LLM regressors (TabFM ensemble 26/91, Kumo 1/91: stopped) | the 12 H335 entrants (`H335_AGG`, …) |
+| [`dev91-audit-v1`](reference-board/boards/dev91-audit-v1/LADDER.md) | DL-Val91, 91 / 19 families, H335 SEARCH/AUDIT | TabFM, TabFM ensemble, Kumo L, TabPFN 3.5, TabPFN v3, AutoGluon, CatBoost, XGBoost, LightGBM, random forest, ridge, 4 LLM regressors; all 91/91 | the 12 H335 entrants (`H335_AGG`, …) |
 | [`p201b-train-audit-v1`](reference-board/boards/p201b-train-audit-v1/LADDER.md) | TRAIN, 201 / 201, H335 SEARCH/AUDIT; development only | CatBoost, XGBoost, LightGBM, random forest, ridge (TabPFN 3.5 33/201: stopped) | the 12 H335 entrants |
 
 The two dev91 boards cover the same contexts but score different rows. Their numbers are not comparable with each
@@ -35,7 +35,7 @@ other.
 
 | Ladder | Where | Relation to the boards |
 | --- | --- | --- |
-| H335 AUDIT-Elo (12 entrants) | [`../flywheel_selfplay/h335_aggressive_locked_elo/README.md`](../flywheel_selfplay/h335_aggressive_locked_elo/README.md) | `dev91-audit-v1` restricted to the 12 H335 entrants. Reproduced exactly from the stored scores (dev91 `H335_AGG` 1742.6; TRAIN 1679.8). With the reference models added the field changes (dev91 `H335_AGG` 1714.2) |
+| H335 AUDIT-Elo (12 entrants) | [`../flywheel_selfplay/h335_aggressive_locked_elo/README.md`](../flywheel_selfplay/h335_aggressive_locked_elo/README.md) | `dev91-audit-v1` restricted to the 12 H335 entrants. Reproduced exactly from the stored scores (dev91 `H335_AGG` 1742.6; TRAIN 1679.8). With the reference models added the field changes (dev91 `H335_AGG` 1708.0) |
 | H257 phase-2 tournament (2026-11-04) | `origin/main` only: `research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/` (`REPORT.md`, `frontier_elo_comparison.json`; commit `571873a38c`, PR #2120) | Its 13 reference entrants are `dev91-s1-two-fold-v1`, per context. Its published tables (anchor R882, 25 entrants, including H257 "Joint Elo" 1749.51) have a different field. Its H257/H256/R882 entrants have no per-context score records. `evaluate_frontier_vs_h257_elo.py` recomputes them from the `.pt` prediction caches in xbabe2 `~/jope-data/h257/cache/` and `~/jope-data/h256/cache/` |
 | Golden45 H-wave loader (pre-stage) | [`h-wave-golden45/README.md`](h-wave-golden45/README.md) | Input validation only; never produced a ladder |
 | same-cut v1 / v2 | `../../assets/same-cut/` | Different datasets |
