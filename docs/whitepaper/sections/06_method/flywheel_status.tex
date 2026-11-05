@@ -8,17 +8,17 @@ Validation-pool utility averages the negated recorded score of each context's ad
 \input{sections/adapter_update_scope}
 
 \paragraph{Two admission decisions.}
-Program candidates use two training-side folds; the historical reference
+Programs and adapter updates pass separate admission rules. Program candidates use two training-side folds; the historical reference
 uses five. Evaluation logging does not imply pool admission: failed gates
 and non-improving candidates are dropped (not kept as negatives), and
 a candidate's logged utility (larger is better) must exceed its context incumbent's by more than $10^{-6}$
 (\cref{fig:program-promotion-margins}). Programs imported from earlier training-side searches retain
 their separate historical-admission path.
 
-Inspected code accepts scored ties by default; a best-round identity
+For adapter updates, inspected code accepts scored ties by default; a best-round identity
 can change without raising utility. Optional strict admission requires
 utility above the retained best plus an explicit nonnegative margin.
-Rejection restores model and optimizer states; program search continues.
+Program search continues after a rejection.
 Refusals remain unscored; completed-round clocks include rejected work.
 
 \paragraph{Scope of the telemetry.}
@@ -35,6 +35,10 @@ Independent \mbox{model comparisons belong} to \cref{sec:results}.
 
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
+
+An inclusive clock ledger (\cref{fig:adapter-outcome-clock}) counts rounds
+without adapter admission as well as those with it.
+\input{sections/current_adapter_outcome_clock}
 
 \paragraph{The retained admission ledger.}
 \Cref{tab:admission-ledger} is the canonical chronology and count table.
@@ -80,7 +84,7 @@ and pre-decision margins. Program promotions continue (\cref{fig:program-journal
 \end{figure*}
 
 \paragraph{A later admission window.}
-\Cref{fig:adapter-validation-trace} pairs candidate and retained-best validation-pool utility in a later window.
+\Cref{fig:adapter-validation-trace} pairs candidate and retained-best validation-pool utility over 200 consecutive decisions (rounds 4064--4263), none of them admitted.
 
 \begin{figure}[tb]
   \centering
@@ -97,7 +101,7 @@ and pre-decision margins. Program promotions continue (\cref{fig:program-journal
 \end{figure}
 
 \paragraph{Pool-insertion cadence.}
-Pool-insertion gaps include intervening work and waits (\cref{fig:pool-insertion-cadence}).
+Gaps between insertions include intervening work and waits (\cref{fig:pool-insertion-cadence}).
 
 \begin{figure}[tb]
   \centering
@@ -113,10 +117,6 @@ Pool-insertion gaps include intervening work and waits (\cref{fig:pool-insertion
   \label{fig:pool-insertion-cadence}
 \end{figure}
 
-\Cref{app:flywheel-telemetry} organizes the remaining admission histories and operating clocks.
-
-\paragraph{Aligning the committed event histories.}
-\Cref{fig:event-counters,fig:pool-insertion-windows} align the distinct event histories and resolve local insertion frequency (\cref{app:event-counters,app:pool-insertion-windows}).
 \input{sections/current_round_phase_budget}
 
 \input{sections/current_program_24h}
@@ -125,6 +125,9 @@ Pool-insertion gaps include intervening work and waits (\cref{fig:pool-insertion
 
 \input{sections/current_full_cohort_program_rates}
 
+\Cref{app:flywheel-telemetry} organizes the remaining admission histories and operating clocks.
+\Cref{fig:event-counters,fig:pool-insertion-windows} align the distinct event histories and resolve local insertion frequency (\cref{app:event-counters,app:pool-insertion-windows}).
+
 \Cref{fig:candidate-margin-window} gives the signed candidate margins in a
 fixed later decision window (\cref{app:candidate-margin-window}).
 
@@ -132,14 +135,15 @@ fixed later decision window (\cref{app:candidate-margin-window}).
 adapter decisions (\cref{app:decision-cadence}).
 
 \begin{samepage}
-Recorded diagnostics are in
-\href{eurekazero_supplement.pdf#supp-parameter-displacement}{Supplementary Figure~S1} (\cref{app:parameter-displacement}),
-\href{eurekazero_supplement.pdf#supp-training-minibatch-losses}{Supplementary Figure~S2} (\cref{app:gradient-norms}),
-\href{eurekazero_supplement.pdf#supp-recent-discovery-retention}{Supplementary Figure~S3} (\cref{app:recent-discovery-retention}),
-\href{eurekazero_supplement.pdf#supp-recorded-decision-lift}{Supplementary Figure~S4} (\cref{app:recorded-decision-lift}), and
-\href{eurekazero_supplement.pdf#supp-program-record-cadence}{Supplementary Figure~S5} and
-\href{eurekazero_supplement.pdf#supp-program-record-windows}{Supplementary Figure~S6} (\cref{app:program-record-cadence}).
-These adaptive diagnostics do not establish retained or independent learning:
+Supplementary Figures
+\href{eurekazero_supplement.pdf#supp-parameter-displacement}{S1} (\cref{app:parameter-displacement}),
+\href{eurekazero_supplement.pdf#supp-training-minibatch-losses}{S2} (\ref{app:gradient-norms}),
+\href{eurekazero_supplement.pdf#supp-recent-discovery-retention}{S3} (\ref{app:recent-discovery-retention}),
+\href{eurekazero_supplement.pdf#supp-recorded-decision-lift}{S4} (\ref{app:recorded-decision-lift}),
+\href{eurekazero_supplement.pdf#supp-program-record-cadence}{S5} and
+\href{eurekazero_supplement.pdf#supp-program-record-windows}{S6} (\ref{app:program-record-cadence})
+hold further recorded diagnostics.
+They do not establish retained or independent learning:
 distinct minibatches do not form a matched loss comparison, and program
 and adapter admission use different rules. The step-level gradient
 diagnostic in \cref{app:gradient-norms} remains separate.\par
@@ -147,4 +151,5 @@ diagnostic in \cref{app:gradient-norms} remains separate.\par
 
 \Cref{fig:stopped-run-record} covers the retained record through round 5049
 (\cref{app:stopped-run-record}). Program promotions and adapter
-admissions remain separate events.
+admissions remain separate events; neither replaces the matched comparisons
+reserved in \cref{sec:results}.

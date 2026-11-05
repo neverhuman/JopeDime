@@ -6,10 +6,10 @@
 % Historical source notes are archived outside the paper tree.
 \section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
-Referee-scored lists define reference targets for a program writer and
-separate ranking map. Proposed game day freezes the writer for one
-proposal. \Cref{sec:price} sets the cost boundary; the inspected operating loop in
-\cref{sec:method-status} instead updates an adapter to rank rule-based GP proposals.
+In the reference design, referee-scored lists define training targets for
+a program writer and a separate ranking map; proposed game day freezes
+the writer for one proposal. The inspected operating loop
+(\cref{sec:method-status}) instead updates an adapter that ranks rule-based GP proposals.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -98,8 +98,8 @@ uses dropout of 0.05 during training. The runtime head reads $[e_z,z_w]$;
 the program-only control reads $z_w$.
 
 The logit is uncalibrated: cross-problem comparisons, error estimates and
-verified-win probabilities need separate evidence. The referee establishes
-validity and measures performance.
+verified-win probabilities need separate evidence. The referee, not the map,
+establishes validity and measures performance.
 
 Map training uses scored lists $G_p$ for problem $p$, with percentile
 $\rho_w\in[0,1]$: 1 denotes the best. Native training requires at least
@@ -142,8 +142,8 @@ lift; \mbox{evaluation must} bind the exact search route.
 
 Search-parent weights govern search; writer-loss weights use referee rank
 in training. Whether map-guided targets improve later proposals needs
-the matched ablation in \cref{sub:results-ablation}; historical diagnostics
-in \cref{fig:fw-target-progress,fig:fw-target-history} cannot supply it.
+the matched ablation in \cref{sub:results-ablation}, not the historical
+diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}.
 
 \Cref{sub:method-selfplay} takes these referee-scored lists as proposed
 offline \mbox{training} targets.
@@ -169,6 +169,9 @@ offline \mbox{training} targets.
 \end{algorithmic}
 \end{algorithm*}
 
+\Cref{alg:selfplay} alternates verified search with training: writer
+drafts seed the search, the referee scores what it finds, and the scored
+lists train a challenger.
 The native proposal sampler seeks 64 distinct parseable programs at $T=1$
 in at most eight batches of 128 neural draws (\num{1024} total). A shortfall
 triggers up to \num{10000} seeded random canonical pipelines projected

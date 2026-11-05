@@ -1,0 +1,16 @@
+\begin{figure}[!htbp]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_adapter_outcome_clock.pdf}
+  \caption{\textbf{Adapter rollback accompanies most recorded round time.}
+  All 4,064 retained round durations in rounds 775--4838, classified by
+  4,063 scored adapter decisions: four strict gains, four ties, 4,055
+  rollbacks and one unscored round (4331). Points sum recorded in-round
+  wall hours on a logarithmic axis; rollback accounts for 99.81\% of
+  the summed time. No record is omitted. Legacy records need not mark
+  completion. Clocks include work and waits but omit inter-round gaps;
+  they are not CPU/GPU time, financial cost or independent learning.
+  Adapter rollback does not imply that program search made no progress.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:adapter-outcome-clock}
+\end{figure}

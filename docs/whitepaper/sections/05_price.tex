@@ -62,19 +62,19 @@ compute spent before each failed attempt stops.
 If 90\% of attempts fail to improve the incumbent, the independent-try
 model needs ten attempts per improvement in expectation. A typed language
 can exclude invalid structures before fitting (\cref{sec:game}), but runtime,
-resource and output failures can occur after fitting begins. The pilot
-must therefore measure whether valid also-rans dominate. The matched
-writer comparison in \cref{sub:results-learning} fixes the
-\mbox{deployment} budget, incumbent and referee.
+resource and output failures can occur after fitting begins. The pilot must therefore measure which failures dominate, stillborn
+attempts or valid also-rans, and what each costs. For a fair writer comparison,
+\cref{sub:results-learning} fixes the \mbox{deployment} budget, incumbent
+and referee for both writers.
 
 \subsection{The correction tax and the reasoning dial}\label{sub:price-tax}
 
+Here and in \cref{sub:price-run}, we consider language-model writers for
+regression and the agent comparators of
+\cref{sub:results-headtohead,sub:results-search}; \cref{sec:method}
+specifies the compact reference network and its generation limit.
 Generating a token costs about 2\,FLOPs per active parameter, and
-training on one about~6 \citep{kaplan2020scaling}. Here and in
-\cref{sub:price-run}, we consider language-model writers for regression and
-the agent comparators of \cref{sub:results-headtohead,sub:results-search}.
-The compact reference network and its generation limit are specified in
-\cref{sec:method}.
+training on one about~6 \citep{kaplan2020scaling}.
 
 Small models are cheap per token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
@@ -84,9 +84,9 @@ component's cost per win matches. \Cref{sub:price-run} separates active
 compute from resident model memory.
 
 If the smaller writer needs three times the tokens per
-attempt, the generation-only ratio falls to about 60. Repair turns also
-re-read a growing context; the inspected reference and adapter routes do
-not use them. The full-cost ratio also includes encoding and referee costs; applying
+attempt, the generation-only ratio falls to about 60. Repairs add a
+correction tax: each turn re-reads a growing context. The inspected
+reference and adapter routes use no repair turns. The full-cost ratio adds encoding and referee costs; applying
 \cref{eq:bill} requires counting every component.
 
 Reasoning tokens may reduce stillborn moves, but are billed as output.
@@ -167,5 +167,5 @@ clocks \mbox{(\cref{sec:method-status}) still} requires an attempt ledger.
 Under the fixed-probability model in \cref{eq:bill}, doubling $\winprob$ halves
 expected cost per win only at fixed mean attempt cost. Measure the
 tradeoff under a common task mix, incumbent and verification rule.
-\Cref{sec:method} specifies proposed training from these referee scores;
-the adapter record describes a separate operating loop.
+Proposed training aims to raise $\winprob$ at that fixed cost
+(\cref{sec:method}).
