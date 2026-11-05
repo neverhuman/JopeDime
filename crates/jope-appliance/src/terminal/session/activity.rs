@@ -7,11 +7,60 @@ impl super::Session {
     ) -> io::Result<()> {
         let width = usize::from(terminal.size()?.width);
         let (status, activity) = self.status_lines(width);
-        terminal.draw(|frame| {
+        let completed = terminal.draw(|frame| {
             self.screen
                 .draw(frame, &self.composer, &self.version, &status, &activity);
         })?;
+        if self.links {
+            crate::terminal::links::overlay(
+                &mut io::stdout(),
+                &self.screen.links,
+                completed.buffer,
+            )?;
+        }
         Ok(())
+    }
+
+    /// `/usage`: account, plan, current status and this machine's run statistics. The plan is
+    /// read from the workspace in the background and arrives as one more line.
+    pub(super) fn usage(&mut self) -> Vec<String> {
+        use crate::terminal::{onboarding, usage};
+        let runs = crate::terminal::runs::local_runs(&self.client).ok();
+        let connection = crate::cloud::connection().ok();
+        let state = onboarding::load(&self.home);
+        let telemetry = if onboarding::telemetry_forced_off_from_env() {
+            "Usage statistics off (DO_NOT_TRACK or JAIN_TELEMETRY=0)"
+        } else if state.telemetry == Some(true) {
+            "Usage statistics on"
+        } else {
+            "Usage statistics off"
+        };
+        let terms = match &state.terms_version {
+            Some(version) if state.terms_current() => format!("{version} accepted"),
+            Some(version) => format!("{version} accepted; newer terms pending"),
+            None => "not accepted".into(),
+        };
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|elapsed| elapsed.as_millis() as u64)
+            .unwrap_or(0);
+        let lines = usage::local_lines(
+            runs.as_deref(),
+            now_ms,
+            connection
+                .as_ref()
+                .map(|c| (c.email.as_str(), c.origin.as_str())),
+            self.snapshot.as_ref(),
+            telemetry,
+            &terms,
+        );
+        if let Some(connection) = connection {
+            let sender = self.cloud_sender.clone();
+            thread::spawn(move || {
+                let _ = sender.send(vec![usage::fetch_plan_line(&connection)]);
+            });
+        }
+        lines
     }
 
     pub(super) fn refresh_runs(&mut self) {

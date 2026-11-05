@@ -38,11 +38,16 @@ fn telemetry_enabled() -> bool {
         .is_some_and(|bytes| bytes == b"basic")
 }
 
-pub(in crate::cloud) fn telemetry_command(setting: Option<String>) -> Result<String> {
+/// The one telemetry setting, shared by the terminal's first run and `cloud telemetry on|off`.
+pub(crate) fn set_telemetry(enabled: bool) -> Result<()> {
     let path = cloud_root()?.join("telemetry");
+    write_private(&path, if enabled { b"basic" } else { b"off" })
+}
+
+pub(in crate::cloud) fn telemetry_command(setting: Option<String>) -> Result<String> {
     match setting.as_deref() {
-        Some("on") => write_private(&path, b"basic")?,
-        Some("off") => write_private(&path, b"off")?,
+        Some("on") => set_telemetry(true)?,
+        Some("off") => set_telemetry(false)?,
         Some(_) => anyhow::bail!("use `on` or `off`"),
         None => {}
     }
@@ -225,7 +230,7 @@ pub(super) fn record_publication(
 }
 
 /// RFC 3339 UTC, seconds precision, without a date-time dependency.
-fn chrono_like_now() -> String {
+pub(crate) fn chrono_like_now() -> String {
     let secs = now_ms() / 1000;
     let (days, rem) = (secs / 86_400, secs % 86_400);
     // Civil-from-days (Howard Hinnant), valid for the Unix era.

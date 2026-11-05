@@ -16019,6 +16019,16 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
+    },
+    "python:research/flywheel_selfplay/h254_active2plus2_confirm/test_h254.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H254 data-free controls: snapshot SHA-256 verification and frozen constants, fold_manifest.json identity for fold_seed 254140, byte-exact equivalence of score_arms_instrumented to snapshot stage1_hurdle_sos_critic.score_arms_for_context, Audit (a) zero DL-Val/holdout leakage and refusal on leaked promotions, Audit (b) per-context reveal count == 4 for ACTIVE_2PLUS2_HURDLE and GATED_025, Audit (c) negative control permuted fitness and Holm m=2 decision rule (including ties = NO_ADVANCE), H239 A1 memory guard pausing at MemAvailable < 30 GiB on xbabe2 cores 57-60."
     }
   },
   "lanes": {

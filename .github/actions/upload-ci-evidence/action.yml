@@ -35,6 +35,12 @@ runs:
       with:
         key: ${{ inputs.name }}-pub-1
         path: ${{ inputs.path }}
+    # The cache service can take a moment to list an entry it just saved; a lookup in the same
+    # second has been seen to miss (2026-11-04), so wait before verifying.
+    - name: Settle publication 1
+      if: ${{ !cancelled() }}
+      shell: bash
+      run: sleep 5
     # cache/save only warns on failure, so prove the entry exists before counting the attempt.
     - name: Verify publication 1
       id: first
@@ -54,6 +60,12 @@ runs:
       with:
         key: ${{ inputs.name }}-pub-2
         path: ${{ inputs.path }}
+    # The cache service can take a moment to list an entry it just saved; a lookup in the same
+    # second has been seen to miss (2026-11-04), so wait before verifying.
+    - name: Settle publication 2
+      if: ${{ !cancelled() && steps.first.outcome == 'failure' }}
+      shell: bash
+      run: sleep 20
     # cache/save only warns on failure, so prove the entry exists before counting the attempt.
     - name: Verify publication 2
       id: second
@@ -62,6 +74,8 @@ runs:
       uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         key: ${{ inputs.name }}-pub-2
+        restore-keys: |
+          ${{ inputs.name }}-pub-
         path: ${{ inputs.path }}
         lookup-only: true
         fail-on-cache-miss: true
@@ -73,6 +87,12 @@ runs:
       with:
         key: ${{ inputs.name }}-pub-3
         path: ${{ inputs.path }}
+    # The cache service can take a moment to list an entry it just saved; a lookup in the same
+    # second has been seen to miss (2026-11-04), so wait before verifying.
+    - name: Settle publication 3
+      if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}
+      shell: bash
+      run: sleep 40
     # cache/save only warns on failure, so prove the entry exists before counting the attempt.
     - name: Verify publication 3
       id: third
@@ -81,6 +101,8 @@ runs:
       uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         key: ${{ inputs.name }}-pub-3
+        restore-keys: |
+          ${{ inputs.name }}-pub-
         path: ${{ inputs.path }}
         lookup-only: true
         fail-on-cache-miss: true

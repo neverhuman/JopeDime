@@ -3,6 +3,12 @@ use super::*;
 
 impl Composer {
     pub fn view(&self, width: u16, height: u16) -> ComposerView {
+        self.view_with(width, height, true)
+    }
+
+    /// `inline_menu: false` leaves completion choices to a separate popup (the full-screen
+    /// terminal); reverse search still shows its prompt line.
+    pub fn view_with(&self, width: u16, height: u16, inline_menu: bool) -> ComposerView {
         if width == 0 || height == 0 {
             return ComposerView {
                 lines: Vec::new(),
@@ -14,7 +20,7 @@ impl Composer {
         let mut menu = Vec::new();
         if let Some(search) = &self.search {
             menu.push(format!("reverse search: {}", search.query));
-        } else if let Some(m) = &self.menu {
+        } else if let Some(m) = self.menu.as_ref().filter(|_| inline_menu) {
             let count = m.choices.len().min(2).min(height.saturating_sub(1));
             let start = m.selected.saturating_sub(count.saturating_sub(1));
             for i in start..start + count {
@@ -96,10 +102,14 @@ impl Composer {
         }
     }
     pub fn draw(&self, frame: &mut ratatui::Frame<'_>, area: Rect) {
+        self.draw_with(frame, area, true);
+    }
+
+    pub fn draw_with(&self, frame: &mut ratatui::Frame<'_>, area: Rect, inline_menu: bool) {
         if area.width == 0 || area.height == 0 {
             return;
         }
-        let view = self.view(area.width, area.height);
+        let view = self.view_with(area.width, area.height, inline_menu);
         frame.render_widget(
             Paragraph::new(view.lines.into_iter().map(Line::from).collect::<Vec<_>>()),
             area,

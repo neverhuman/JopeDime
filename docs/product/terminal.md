@@ -4,7 +4,37 @@ The `jopedime` executable provides local model commands and commands that commun
 
 ## Interactive screen
 
-Launching without arguments in a terminal opens the full-screen **JAIN by VEOX** landing view, with a large ASCII wordmark and **Powered by JopeDime**. Submit a command to start the transcript; the composer stays near the bottom.
+Launching without arguments in a terminal opens the full-screen **jAIn by VEOX** landing view with an animated JAIN wordmark (`JAIN_NO_ANIMATION=1` shows the finished logo immediately). Submit a command to start the transcript; the composer stays near the bottom.
+
+### First run
+
+The first launch asks three questions in a dialog (or as prompts in line mode):
+
+1. **Terms of Service** — read https://veox.ai/terms (version `2026-11-03`); Enter or `y` accepts, `q` or `n` exits without changing anything. A new terms version asks again.
+2. **Usage statistics** — on by default; `n` turns them off. This is the same setting as `jopedime cloud telemetry on|off`. `DO_NOT_TRACK=1` or `JAIN_TELEMETRY=0` forces it off and skips the question.
+3. **Log in to your free veox Cloud Workspace** or create one (starts the browser device login), or **continue with the bundled demos**.
+
+Choices are stored in `<JOPEDIME_HOME>/state.json` (owner-only). Agents and scripts accept the terms without a prompt with `JAIN_ACCEPT_TERMS=1`, after showing the user the terms URL; the dialog is then skipped.
+
+### Demos
+
+`/demo` lists the datasets bundled in the executable; `/demo NAME` (for example `/demo regression`) opens one with its target and task preset and starts a fast run. `/open example/<name>.csv` opens a bundled demo as if it were a file (a real file at that path takes precedence), and Tab completes `example/` names and `/demo` names. Signed out, the interactive session opens only the bundled demos; your own files need a free veox Cloud Workspace account (`/login`). `JAIN_ALLOW_LOCAL_FILES=1` lifts that for offline and CI use.
+
+### Opening your own files
+
+`/open` with no argument lists the CSV files and folders in the folder `jopedime` was started from, or, when there are none, names that folder and how to add a file (copy a `.csv` there, or start from the folder that holds your data). Tab after `/open ` lists that folder live: the bundled `example/` demos, then folders, then `.csv` files. Up/Down move through the list, Enter on a folder opens its listing, Enter on a file opens it, Esc closes the list. Signed out, `/open` opens only the bundled demos.
+
+### Transcript
+
+Each command you submit is shown as a highlighted `❯` row with a blank line before it; jAIn's reply is joined to it with `⎿`. Reasoning from the search (`Thinking` events) is set apart with `✻` and a `┊` rail, `✓` marks a completed step and `✗` an error. Text wraps at word boundaries; PgUp/PgDn and the mouse wheel scroll the history, a scrollbar shows the position, and End returns to live output.
+
+### Usage
+
+`/usage` shows the signed-in account and its plan (read from the workspace in the background), the current run, and run statistics recorded by this machine's engine for the last 7 days and in total (runs by outcome, evaluations and compute time), plus the usage-statistics and terms settings.
+
+### Links
+
+URLs printed by the jAIn CLI (login, terms, cloud runs, help) are always shown in full and are never split across lines when they fit. In terminals that support OSC 8 hyperlinks (iTerm2, WezTerm, kitty, VTE/GNOME Terminal, Windows Terminal, VS Code) they are also clickable; `JAIN_HYPERLINKS=1` forces links on and `JAIN_HYPERLINKS=0` turns them off. Only veox-hosted (`*.veox.ai`) and loopback URLs become links, and a link's target is always its visible text; escape sequences in data are always removed.
 
 Use **Page Up / Page Down** or the mouse wheel to scroll results. While reading history, new output keeps your position and increments a new-lines indicator; **End** returns to live output. Scrolling does not change your pending input. The view retains up to 2,000 lines / 1 MiB; durable run results remain in the engine.
 
