@@ -174,8 +174,17 @@ pub(crate) fn push(
         match retry(3, sleep, |_| send(client, cloud, kind, &bytes, &hash)) {
             Ok(()) => {
                 *delivered.slot(kind) = Some(hash);
-                let _ = write_private(state, &serde_json::to_vec(&delivered).unwrap_or_default());
                 lines.push(format!("Results: {} synced.", kind.label()));
+                // Not remembering it only means the next sync re-sends identical bytes (a no-op).
+                if let Err(error) = serde_json::to_vec(&delivered)
+                    .map_err(anyhow::Error::from)
+                    .and_then(|bytes| write_private(state, &bytes))
+                {
+                    lines.push(format!(
+                        "Results: could not record the {} upload locally ({error:#}).",
+                        kind.label()
+                    ));
+                }
             }
             Err(error) => lines.push(format!(
                 "Results: the {} did not sync ({error}); it is retried on the next sync.",
