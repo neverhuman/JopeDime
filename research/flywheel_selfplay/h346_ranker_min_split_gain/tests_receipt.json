@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "collected": 35,
+  "executed": 35,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "scope": "10 min-split-gain/forecast +4physical-boundary +21analysis controls; two synthetic ranker fits, one unchanged synthetic gate fit; BASE Dataset construction without fit"
+}
