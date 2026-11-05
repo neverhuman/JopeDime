@@ -151,6 +151,11 @@ fn model_tool(
     serde_json::from_str(text.lines().nth(1).unwrap()).unwrap()
 }
 
+#[path = "single_file/cloud_routing.rs"]
+mod cloud_routing;
+#[cfg(all(feature = "engine", feature = "mcp"))]
+#[path = "single_file/engine_on_demand.rs"]
+mod engine_on_demand;
 #[path = "single_file/tests_01.rs"]
 mod tests_01;
 #[path = "single_file/tests_02.rs"]
@@ -165,6 +170,8 @@ mod tests_05;
 mod tests_06;
 #[path = "single_file/tests_07.rs"]
 mod tests_07;
+#[path = "support/workspace.rs"]
+mod workspace;
 
 #[cfg(feature = "dope-encoding")]
 #[path = "support/landmark_product.rs"]

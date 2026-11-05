@@ -8,10 +8,7 @@
     feature = "engine"
 ))]
 
-#[path = "support/pty.rs"]
-mod pty;
-#[path = "support/workspace.rs"]
-mod workspace;
+use super::{pty, workspace};
 
 use std::{
     process::Command,
@@ -85,7 +82,7 @@ fn the_terminal_routes_logs_in_just_in_time_streams_and_syncs_results() {
         std::fs::set_permissions(&home, std::fs::Permissions::from_mode(0o700)).unwrap();
     }
     let csv = dir.path().join("rent.csv");
-    let demo = include_str!("../assets/demos/regression_apartment_rent.csv");
+    let demo = include_str!("../../assets/demos/regression_apartment_rent.csv");
     std::fs::write(
         &csv,
         demo.lines().take(150).collect::<Vec<_>>().join("\n") + "\n",
