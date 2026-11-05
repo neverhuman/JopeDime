@@ -166,7 +166,7 @@ def main(phase):
      if not projection['fits']:
       durable(DATA/'STOP.json',dict(reason=['INCOMPLETE_RUNTIME_FORECAST'],projection=projection))
       import subprocess
-      subprocess.run(['systemctl','--user','stop','h345-run.service'],check=False)
+      subprocess.run(['systemctl','--user','stop','h345r-run.service'],check=False)
       raise RuntimeError('INCOMPLETE_RUNTIME_FORECAST; no partial scoring/restart')
   verify_locks();durable(DATA/'fit_done.json',dict(status='PASS',locks=36));return
  verify_locks();assert json.loads((DATA/'fit_done.json').read_text())['status']=='PASS'

@@ -2,7 +2,7 @@
 from pathlib import Path
 import datetime,json,os,subprocess,threading,time,sys
 DATA=Path('/home/ubuntu/jope-data/h345-solhwv');P=Path(__file__).resolve().parent.parent
-UNIT='h345-fetch.service' if sys.argv[1]=='fetch' else 'h345-run.service'
+UNIT='h345r-fetch.service' if sys.argv[1]=='fetch' else 'h345r-run.service'
 def cpu():
  a=list(map(int,Path('/proc/stat').read_text().splitlines()[0].split()[1:]));return sum(a[:8]),a[3]+a[4]
 def monitor():
@@ -20,7 +20,7 @@ def monitor():
   if r['load1']>85:reason.append('host load >85')
   if mem<20*2**30:reason.append('MemAvailable <20GiB')
   if size>2_000_000_000:reason.append('scratch >2GB')
-  if utc>=datetime.datetime(2026,11,5,4,45,tzinfo=datetime.timezone.utc):reason.append('compute deadline')
+  if utc>=datetime.datetime(2026,11,5,5,15,tzinfo=datetime.timezone.utc):reason.append('compute deadline')
   if reason:
    (DATA/'STOP.json').write_text(json.dumps(dict(reason=reason,**r)));subprocess.run(['systemctl','--user','stop',UNIT],check=False);return
 threading.Thread(target=monitor,daemon=True).start()
@@ -38,5 +38,5 @@ for phase in ['preflight','regress','fit','score']:
   durable(DATA/'pre_fit_resource.json',dict(eligible_cores=chosen,idle_percent=admission['idle_percent'],probes=1))
   command=['/usr/bin/taskset','-c',','.join(map(str,chosen)),*command];subprocess.run(command,check=True,env=dict(os.environ,H345_WORKERS=str(len(chosen))))
  else:
-  if phase=='score' and datetime.datetime.now(datetime.timezone.utc)>=datetime.datetime(2026,11,5,4,40,tzinfo=datetime.timezone.utc):raise RuntimeError('INCOMPLETE: insufficient full scoring window')
+  if phase=='score' and datetime.datetime.now(datetime.timezone.utc)>=datetime.datetime(2026,11,5,5,10,tzinfo=datetime.timezone.utc):raise RuntimeError('INCOMPLETE: insufficient full scoring window')
   subprocess.run(command,check=True)

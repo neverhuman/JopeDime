@@ -3,7 +3,7 @@ import hashlib,json,os,tarfile
 from pathlib import Path
 import boto3
 BUCKET='veox-jopedime-learning-use2'
-PREFIX='experiments/rd_breakthrough_20261030/H345/solhwv-20261105T010000Z/'
+PREFIX='experiments/rd_breakthrough_20261030/H345/solhwv-20261105T013000Z/'
 _CLIENT=None
 
 def client():

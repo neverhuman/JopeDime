@@ -1,8 +1,8 @@
 """One CPU admission probe and fixed conservative resource forecasts; never fit."""
 from pathlib import Path
 import datetime,time,math
-ORDER=[15,19,20,34,35,36,37,55,60,62]
-DEADLINE=datetime.datetime(2026,11,5,4,45,tzinfo=datetime.timezone.utc)
+ORDER=[15,19,20,21,22,23,24,25,26,34,35,36,37,55,60,62]
+DEADLINE=datetime.datetime(2026,11,5,5,15,tzinfo=datetime.timezone.utc)
 def select(idle):return [c for c in ORDER if idle[c]>=85 and idle[c+64]>=85][:8]
 def probe():
  def sample():return {int(x.split()[0][3:]):list(map(int,x.split()[1:9])) for x in Path('/proc/stat').read_text().splitlines() if x.startswith('cpu') and x.split()[0][3:].isdigit()}

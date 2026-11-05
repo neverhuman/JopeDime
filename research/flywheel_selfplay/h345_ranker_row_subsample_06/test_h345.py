@@ -66,7 +66,7 @@ class H345Tests(unittest.TestCase):
   for extra in [dict(subsample=.6),dict(bagging_seed=11),dict(feature_fraction_seed=11)]:
    with self.assertRaises(AssertionError):r.validate_parameters('LGBMClassifier',{**p,**extra})
  def test_admission_priority_first_eight(self):
-  idle={c:100 for c in ad.ORDER+[c+64 for c in ad.ORDER]};self.assertEqual(ad.select(idle),ad.ORDER[:8]);idle[34+64]=84.999;self.assertEqual(ad.select(idle),[15,19,20,35,36,37,55,60])
+  idle={c:100 for c in ad.ORDER+[c+64 for c in ad.ORDER]};self.assertEqual(ad.select(idle),ad.ORDER[:8]);idle[21+64]=84.999;self.assertEqual(ad.select(idle),[15,19,20,22,23,24,25,26])
  def test_admission_requires_core_and_sibling_without_rounding(self):
   idle={c:0 for c in ad.ORDER+[c+64 for c in ad.ORDER]}
   for c in [15,19,20]:idle[c]=idle[c+64]=85
