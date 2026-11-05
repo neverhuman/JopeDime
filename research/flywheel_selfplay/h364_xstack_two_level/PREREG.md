@@ -35,7 +35,7 @@ gave +0.0040 (p = 0.074) on P201c, half of P201b's +0.0093.
   It is rerun from scratch on P201d with search seed 364101.
   - Its **stored** weights (`w_fold0`, `w_fold1`, `w_audit`) are used as stored. The stacker is not re-solved.
   - **X0 harness check:** on every context, the stored weights must reproduce the stored cross-fitted SEARCH log-ratios
-    and the stored AUDIT utility within 1e-9.
+    and the stored AUDIT utility within 1e-9 (changed to 1e-6 by §7.1, before any P201d outcome was read).
 - **2L** = X0 + one second level over the classical library `catboost.v1`, `lightgbm.v1`, `xgboost.v1` and
   `random_forest.v1`. These use the reference-board configs through `score_reference.fit_predict`, as in H357.
   - **Library columns.** Each learner's SEARCH OOF predictions p0 (fit fold 1) and p1 (fit fold 0), plus its AUDIT
@@ -174,4 +174,37 @@ c, then larger λ, then larger δ, then smaller τ. Part B also records:
   - The AGENT_CHAT claim and release are made under flock.
 
 ## 7. Part B: frozen second-level constants
-Added by part B, before any P201d output is pulled. See `DESIGN.json`.
+Part B is published before any P201d output is pulled. Part A was published at `5af74634dc`. The P201d GP (`h364-C-gp`,
+xbabe0, started 11:45:51Z) writes only on xbabe0, and none of its outputs had been pulled or read when this was written.
+
+**Chosen by the §4.3 rule: c = 0.35, λ = 0.10, δ = 0, τ = ∞** (`DESIGN.json`, key `c0.35_l0.1_d0_tinf`).
+- `dev_h364.py` scored all 144 grid points on the 395 dev contexts (201 P201b + 194 P201c, 201 families). The full
+  table is `dev_grid.json` (sha256 `ffd645f1…`).
+- Chosen design on dev, per family:
+  - mean gain +0.00256, LCB +0.00145;
+  - 57 / 133 / 11 families won / tied / lost;
+  - 0 contexts losing more than 0.05 (worst −0.024);
+  - by panel: P201b +0.0025, P201c +0.0027.
+- **The second level is active in 86 of 395 contexts**, with mean gain +0.0120 and mean Σβ 0.143 (max 0.35) when
+  active. It is off in the rest:
+  - the acceptance gate rejects 250;
+  - β = 0 in 56;
+  - 3 have no library column.
+- **Near-perfect families:**
+  - τ = ∞ wins because the near-perfect cutoff adds nothing on dev. With the GP weights frozen, the both-fold
+    acceptance gate already holds those contexts at X0.
+  - Of the 39 dev contexts with X0 SEARCH utility ≥ 4, the second level is active in 3, and their minimum gain is 0.
+  - τ = 6 and τ = 4 give the same LCB to 1e-4; τ = 3 lowers it to +0.0012.
+  - The four worst contexts of H354/H357 (`351a6d94`, `19f0714d`, `eeff1306`, `217e0d60`) all tie X0 exactly: the
+    acceptance gate rejects the second level.
+- **Consequence:** `2L_noguard` (τ = ∞) is identical to 2L, so it is not reported as a separate arm.
+
+### 7.1 X0 harness tolerance (changed before any P201d outcome is read)
+Part A set the X0 harness check to 1e-9. On dev, the stored-weight recompute on xbabe2 reached
+|Δlr| = 1.09e-9 (`eeff1306`, X0 SEARCH utility 18.2) and 2.9e-10 (`7d3e30f3`, 17.0), with |Δu| ≤ 5.5e-11.
+- At these near-perfect contexts the RMSE ratio is about 1e-8, so summation-order noise in `P @ w` is amplified in
+  log space.
+- The weights are stored and never re-solved here. The check therefore guards only against misalignment: wrong
+  members, rows or envelope. Misalignment produces deviations of 1e-3 or more.
+- **The tolerance is set to 1e-6 for both quantities.** A failure still gives `INCOMPLETE`.
+- Nothing else in §1–§6 changes.
