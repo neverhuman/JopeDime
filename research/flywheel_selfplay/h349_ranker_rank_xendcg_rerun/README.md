@@ -9,4 +9,4 @@ hashes+4cacheprefixes PASS. No BASErefits or treatment fits. See PREREG.md.
 
 Outcome: NOT_RUN, awaiting ONE5second core/SMT gate and full36 runtime forecast.
 Scientific metrics/verdict UNKNOWN. CPU only; DOPEc51a56d0unloaded;no dev91
-or speed verdict. Preregistration commit will be quoted after publication.
+or speed verdict. Preregistration commit: `d9886e2ecf5fda82727b8b6ecc9af723d7326757` (pushed 2026-11-05T04:07:47.620783+00:00, before any treatment fit).
