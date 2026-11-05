@@ -151,7 +151,7 @@ EOS
     if "${SSH[@]}" "systemctl --user list-units --state=active --no-legend 'h357-*' | grep -q ."; then
       echo "refused: an h357-* unit is active on $HOST" >&2; exit 4
     fi
-    SC=$DATA/h357/score
+    SC=$DATA/h357/score2  # PREREG §3.3 (score = the guard-refused 11:19Z attempt, kept)
     "${SSH[@]}" "[ ! -e $SC ]" || { echo "$HOST:$SC exists (create-once)" >&2; exit 3; }
     [ -e "$GPC/PREREG_ON_V1NEXT" ] || printf '%s %s\n' "$PREREG_COMMIT" "$(sha256sum "$CODE/PREREG.md" | cut -d' ' -f1)" \
       > "$GPC/PREREG_ON_V1NEXT"
@@ -175,17 +175,29 @@ EOS
     "${SSH[@]}" "sha256sum $T2" | grep -q "^$(sha256sum "$T2" | cut -d' ' -f1) "
     echo "stagescore OK -> $HOST:$SC" ;;
   score0)
+    # the 11:19Z h357-C-score attempt failed in decide (H317 guard, PREREG §3.3); its unit state is recorded in
+    # logs/score_attempt_guard.xbabe0.txt before the failed record is cleared for the same unit name
+    "${SSH[@]}" "if systemctl --user is-failed -q h357-C-score; then systemctl --user reset-failed h357-C-score; fi"
     "${SSH[@]}" "systemd-run --user --unit h357-C-score -p MemoryMax=40G -p MemorySwapMax=0 \
       -p StandardOutput=append:$DATA/h357/h357-C-score.log -p StandardError=append:$DATA/h357/h357-C-score.log \
       $GPC/code/run_score_xbabe0.sh" ;;
   pullscore)
     if "${SSH[@]}" "systemctl --user is-active -q h357-C-score"; then echo "h357-C-score still active" >&2; exit 4; fi
-    SC=$DATA/h357/score
+    SC=$DATA/h357/score2; SA=$DATA/h357/score  # SA: the guard-refused attempt (PREREG §3.3), kept unread
     mkdir -p "$H357D/xbabe0_score"
     rsync -a "$HOST:$SC/arms.jsonl" "$HOST:$SC/x0_check.json" "$HOST:$SC/verdict.json" "$H357D/xbabe0_score/"
     rsync -a "$HOST:$DATA/h357/h357-C-score.log" "$EV/logs/h357-C-score.xbabe0.log"
     "${SSH[@]}" "cd $SC && sha256sum arms.jsonl x0_check.json verdict.json" > "$EV/logs/score.xbabe0.sha256"
     (cd "$H357D/xbabe0_score" && sha256sum --quiet -c "$EV/logs/score.xbabe0.sha256")
+    mkdir -p "$H357D/xbabe0_score_attempt_guard"
+    rsync -a "$HOST:$SA/arms.jsonl" "$HOST:$SA/x0_check.json" "$H357D/xbabe0_score_attempt_guard/"
+    "${SSH[@]}" "cd $SA && sha256sum arms.jsonl x0_check.json" > "$EV/logs/score_attempt_guard.xbabe0.sha256"
+    (cd "$H357D/xbabe0_score_attempt_guard" && sha256sum --quiet -c "$EV/logs/score_attempt_guard.xbabe0.sha256")
+    # determinism check (bytes only; the attempt values are never read): same code, inputs, host and sandbox
+    if cmp -s "$H357D/xbabe0_score/arms.jsonl" "$H357D/xbabe0_score_attempt_guard/arms.jsonl" \
+       && cmp -s "$H357D/xbabe0_score/x0_check.json" "$H357D/xbabe0_score_attempt_guard/x0_check.json"; then
+      echo "attempt vs score2 arms.jsonl + x0_check.json: IDENTICAL"
+    else echo "attempt vs score2 arms.jsonl + x0_check.json: DIFFER"; fi
     echo "pullscore OK" ;;
   *) echo "unknown step $STEP" >&2; exit 2 ;;
 esac

@@ -111,6 +111,18 @@ That attempt's outputs are kept under `attempt1_xbabe2_unread/`, and **its X_CL 
 - The stacker, the 1e-9 X0 tolerance, the arms, the statistics and the verdict map are unchanged.
 - An X0 check failure there still gives `INCOMPLETE`.
 
+### 3.3 Fix to Amendment 2 (implementation only; no rule or tolerance changed) — the statistics module path
+**What happened.** The first `h357-C-score` run (11:19–11:20Z) completed `arms`. Its X0 harness check was exact on
+all 194 contexts (worst |Δw| = |Δu| = 0.0). `decide` then stopped before computing anything: the H317 guard refused to
+open `h335_stats.py` at the H335 evidence-tree path, where the sandbox binds the staged code. That run's
+`arms.jsonl` and `x0_check.json` stay in `h357/score` on xbabe0. **No X_CL value, contrast or verdict was printed or
+read**; the log holds only the start line, the `arms` X0-check line and the guard traceback.
+
+**The fix.** `run_score_xbabe0.sh` scores into a new create-once dir, `h357/score2`, rerunning `arms` and `decide` in
+full. It loads `h335_stats.py` from a copy in that dir, the same file the sha pin in `h354_core` (`ee3b4543…`)
+already verifies. `pullscore` also pulls the first run's two files and reports whether they are byte-identical to
+`score2`'s, as a determinism check; their values are not read. Everything else in §3.2 and §4 is unchanged.
+
 ## 4. Decision (fixed now)
 - **Primary (one test).** The H335 `primary_test(X_CL, X0)` (`h335_stats.py` `ee3b4543…`) over the 194 families:
   - clipped (±0.5) family-mean contrast T;
