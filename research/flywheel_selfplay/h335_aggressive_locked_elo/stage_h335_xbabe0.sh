@@ -39,12 +39,12 @@ ssh -o BatchMode=yes "$HOST" "cd $STAGE/code && sha256sum --quiet -c $DATA/stagi
 rsync -a --chmod=Fa-w "$DATA/bin/bootstrap.s1main.superset-2a848c8f8085" "$HOST:$DATA/bin/"
 ssh -o BatchMode=yes "$HOST" "sha256sum $DATA/bin/bootstrap.s1main.superset-2a848c8f8085" | grep -q '^2a848c8f8085a392' \
   || { echo "STAGING CHECK FAILED" >&2; exit 6; }; echo "superset worker: sha256 OK on $HOST"
-# 4. screener inputs: hard links of xbabe0's staged H317 copies, verified against xbabe2's manifest
+# 4. screener inputs (copies of xbabe2's h335-cl/neural; --ignore-existing never writes through files already present,
+#    e.g. hard links to xbabe0's staged H317 copies), every file sha256-checked against xbabe2's manifest
 scp -q "$DATA/neural_manifest.sha256" "$HOST:$DATA/staging/neural_manifest.sha256"
-ssh -o BatchMode=yes "$HOST" "set -e; cd $H317DATA/neural && sha256sum --quiet -c $DATA/staging/neural_manifest.sha256 \
-  && [ -e $DATA/neural/views_c32_train1219.npz ] || ln $H317DATA/neural/views_c32_train1219.npz $DATA/neural/; \
-  [ -d $DATA/neural/runs/H0.1-A ] || cp -al $H317DATA/neural/runs/H0.1-A $DATA/neural/runs/H0.1-A; \
-  cd $DATA/neural && sha256sum --quiet -c $DATA/staging/neural_manifest.sha256" || { echo "STAGING CHECK FAILED" >&2; exit 6; }; echo "neural: sha256 OK on $HOST"
+rsync -a --ignore-existing --chmod=Fa-w "$DATA/neural/" "$HOST:$DATA/neural/"
+ssh -o BatchMode=yes "$HOST" "cd $DATA/neural && sha256sum --quiet -c $DATA/staging/neural_manifest.sha256" \
+  || { echo "STAGING CHECK FAILED" >&2; exit 6; }; echo "neural: sha256 OK on $HOST"
 # 5. P201b SEARCH views (TRAIN P201b cids only)
 (cd "$SRC" && ./sandbox_h335.sh env H335_GROUP=BASE python3 -c \
   'import h335_core as K; print("\n".join(K.panel_p201b(K.C.train_rows())))') > "$MAN.p201b.cids"

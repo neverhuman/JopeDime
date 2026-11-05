@@ -11,9 +11,10 @@
 #   * --stage-v (only after the unlock): $H335_STAGE_V/dlval-view (the staged TRAIN view + the 91 DL-Val tables, built
 #     only after the unlock; no pools) replaces the TRAIN view at res-01/input; plus the H335 LOCK receipt (ro, fixed
 #     path), the Stage V root $H335_STAGE_V/stagev-root at /home/ubuntu/jope-data/h335-stagev (rw, H335_STAGEV_ROOT)
-#     with views-search/ re-bound ro, $DATA/stage_v ro (LOCK.json, STAGE_V_STARTED, train_inputs_manifest.json) and
-#     $DATA/build ro (the frontier binary is a LOCK file). Refused unless the receipt names sha256(LOCK.json), the
-#     marker names the same LOCK, the Stage V dirs and the frontier binary are staged and the view holds 1,310 tables.
+#     with views-search/ re-bound ro and $DATA/stage_v ro (LOCK.json, STAGE_V_STARTED, train_inputs_manifest.json).
+#     Refused unless the receipt names sha256(LOCK.json), the marker names the same LOCK, the Stage V dirs and the
+#     frontier binary $DATA/bin/frontier_audit_h335 (a LOCK file, ro with bin/) are staged, the view has 1,310 tables
+#     and $STAGE/code (the code bound at the H335 source path) is the frozen read-only copy.
 set -euo pipefail
 SRC317=/home/ubuntu/jope_plan/evidence/H317/source/research/flywheel_selfplay/h317_island10_multiscale_curriculum
 SRC=/home/ubuntu/jope_plan/evidence/H335/source/research/flywheel_selfplay/h335_aggressive_locked_elo
@@ -33,19 +34,20 @@ if [ "${1:-}" = "--stage-v" ]; then
   SVC=/home/ubuntu/jope-data/h335-stagev
   sv_refuse() { echo "Stage V refused: $*" >&2; exit 3; }
   [ -s "$RECEIPT" ] || sv_refuse "no LOCK receipt"
+  [ -s "$STAGE/code/stage_v_h335.py" ] && [ ! -w "$STAGE/code/stage_v_h335.py" ] \
+    || sv_refuse "$STAGE/code (bound at the H335 source path) is not the frozen read-only code copy"
   R=$(cut -d' ' -f1 "$RECEIPT")
   [ "$(sha256sum "$DATA/stage_v/LOCK.json" | cut -d' ' -f1)" = "$R" ] || sv_refuse "LOCK.json does not match the receipt"
   [ -s "$DATA/stage_v/STAGE_V_STARTED" ] || sv_refuse "no STAGE_V_STARTED marker"
   [ "$(cut -d' ' -f2 "$DATA/stage_v/STAGE_V_STARTED")" = "$R" ] || sv_refuse "STAGE_V_STARTED does not name this LOCK"
-  for d in "$SVROOT/views-search" "$SVROOT/run" "$SVROOT/gp" "$DATA/build"; do [ -d "$d" ] || sv_refuse "missing $d"; done
-  [ -s "$DATA/build/frontier_audit_h335" ] || sv_refuse "LOCK file $DATA/build/frontier_audit_h335 not staged"
+  for d in "$SVROOT/views-search" "$SVROOT/run" "$SVROOT/gp"; do [ -d "$d" ] || sv_refuse "missing $d"; done
+  [ -s "$DATA/bin/frontier_audit_h335" ] || sv_refuse "LOCK file $DATA/bin/frontier_audit_h335 not staged"
   VIEW=$STAGE_V/dlval-view
   [ "$(ls "$VIEW/tables" | wc -l)" = 1310 ] || sv_refuse "$VIEW/tables != 1,219 TRAIN + 91 DL-Val"
   SVM=(-v "$RECEIPT:$RECEIPT:ro"
        -v "$SVROOT:$SVC:rw"
        -v "$SVROOT/views-search:$SVC/views-search:ro"
        -v "$DATA/stage_v:$DATA/stage_v:ro"
-       -v "$DATA/build:$DATA/build:ro"
        -e H335_STAGEV_ROOT="$SVC")
 fi
 [ "$(ls "$VIEW/tables" | wc -l)" -ge 1219 ] || { echo "view $VIEW incomplete" >&2; exit 2; }

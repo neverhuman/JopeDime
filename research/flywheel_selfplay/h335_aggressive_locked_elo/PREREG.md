@@ -147,8 +147,16 @@ AUDIT-Elo ladder is reported.
 1. **LOCK.** `LOCK.json` (create-once, fsynced, `stage_v_h335.py write-lock`) records:
    - G\*, the stack, K / P, OLD_OFFSET, seeds **335101 / 335102**, checkpoints {10, G\*};
    - the pre-declared entrant list, the §5 rules, the Phase T decision file sha;
-   - `code_sha256` (every H335 file, the frozen H317 modules, the superset worker, the frontier binary, the screener
-     models, the merged views).
+   - `code_sha256`, verified at the unlock and at every `resume_stage_v` on every host:
+     - the runtime code only (h335_core, h335_lab, h335_stats, h335_frontier, frontier_audit_h335, stage_v_h335, the
+       learners-v1 grammar, the three sandboxes);
+     - the 18 frozen H317 modules;
+     - the JopeDimeMicro featurizer files (`rust_evaluator.py`, `rank_prepare.py`, `program-feature-names.json`);
+     - the superset worker, the frontier binary, the 10 screener models, the merged views, `champions.json`,
+       `winners.json` and the TRAIN-inputs manifest.
+   - Docs, tests and helper scripts are recorded in a non-verified `docs_sha256`.
+   - write-lock refuses unless the Phase T run configs' code hashes equal the current runtime files.
+   - Every Stage V step runs from a frozen read-only copy of the code.
 
    Its sha goes to the create-once receipt `~/jope_plan/ns/receipts/H335_LOCK_sha256.txt` and to AGENT_CHAT
    **before** the pinned one-shot unlock (`common_h317.unlock_stage_v`, receipt-checked, create-once
@@ -175,7 +183,15 @@ AUDIT-Elo ladder is reported.
      reference arm cannot hand AGG a free win. Segments: AGG seeds+evolution (all AGG outputs); each AGG output;
      BASE evolution (OLD_MATCHED*, H317_BASE); each of those outputs; H257_REPLICA; BANK_NN8 pick / portfolio;
      BANK_NN1. A failure is never re-raised or retried.
-   - Integrity violations stop the stage instead (guard, AUDIT ledger, bank leak, any assertion, screener leak).
+   - Integrity violations stop the stage instead (guard, AUDIT ledger, bank leak, any assertion, screener leak). They
+     write a create-once `STOPPED_INTEGRITY` marker; audit, prep and stats then refuse.
+   - **Unit-attempt cap** (H317's `MAX_UNIT_ATTEMPTS` = 2): a unit that raised a non-integrity error in-process
+     twice (durable culprit lines) is recorded failed on its third start. Units that were merely in flight when a
+     process was killed are never capped.
+   - **Early read.** `stats --final-incomplete` (verdict `INCONCLUSIVE`) is accepted only when every planned audit
+     shard has finished and the LLM step is done, or after the Stage V compute stop (2026-11-05 07:30Z).
+   - Prep may be resumed any number of times before `FIRST_OUTCOME_READ`. A recorded R882 regression result is
+     never recomputed.
    - After `FIRST_OUTCOME_READ` nothing is recomputed. An incomplete run reads `INCONCLUSIVE`.
 6. **Dedupe** is descriptive plus a sensitivity readout. The primary is recomputed without DL-Val contexts that the
    dedupe flags as duplicating a TRAIN table (flag rule = H317 `DEDUPE_FLAG` 0.5, interpretive mode `raw_sorted`).
@@ -281,3 +297,91 @@ AUDIT-Elo ladder is reported.
   an H335 decision except the ladder's algorithm and the entrant list.
 - **Plan vs PREREG.** The plan said "P201b × seed 331101" and "H331". The wave number changed (§0); seeds are
   renumbered 335101 / 335102 with identical roles.
+
+## 9. Pre-outcome amendment A1 (2026-11-04 ~22:10Z; no Phase T or dev91 outcome read)
+Engineering changes after the prereg commit e64f945d, before any Phase T outcome was read:
+- **`sandbox_h335.sh` TRAIN view.**
+  - The P201b view encoder (frozen H317 recipe) needs `cpu_exact_fused.py`, which is code: sha `b9f1468a…`, pinned
+    by `crop_shuffle_synthetic_views.FUSED_SOURCE_SHA256`. H317's TRAIN-only view lacks it.
+  - The sandbox therefore mounts `/home/ubuntu/jope-data/h335-view/res01-train-view`: hard links of H317's TRAIN-only
+    view (1,219 tables / pools, redacted `selected.json`) plus a hard link of that one file. No DL-Val byte is in it.
+  - xbabe0's Docker sandbox is unchanged (the GP needs no encoder).
+- **Encoding.** 201/201 P201b SEARCH view sets were encoded on xbabe2 (69 s, DOPE `c51a56d0` unchanged, 0 guard
+  refusals).
+  - Cross-host check: 4 P205 contexts re-encoded on xbabe2 are bit-identical to H317's xbabe3 encodings.
+- **Test guard log.** `test_h335.py` now sends its deliberate guard-probe refusals to a scratch log
+  (`H317_GUARD_LOG`).
+  - Before this fix, 16 probe lines (8 runs × 2 deliberate probes: an `h335-stagev` path and the H258 R882
+    checkpoint path) went into the production `h335-cl/guard_refusals.log`.
+  - The production refusal count is therefore reported as lines beyond this baseline of 16.
+- **`stage_h335_xbabe0.sh`.** xbabe0's staged H317 screener dir lacks the 10 OOF `preds.npz` files, so the neural
+  group is now an `rsync --ignore-existing` copy of xbabe2's `h335-cl/neural`, sha-checked against the full
+  41-file manifest.
+  - The failed first attempt had hard-linked 31 present files. They are byte-identical, verified by the same
+    manifest.
+- **Replay regression (PASS, PREREG §3.3).** On 4 P205 contexts × seed 317101, against copies of H317 memos:
+  - AGG (`unit_agg`, 10 gens, single) == the exploratory run's `single`;
+  - BASE (Seed A → Evo A 10 → single) == the main run's H0.6 `single`;
+  - 4/4 identical each, 0 physical runs (428 / 276 memo hits).
+  - Evidence: `xbabe0:/home/ubuntu/jope-data/h335-cl/replay_out_*/replay_{AGG,BASE}.json`.
+- **Live smoke (PASS).** 1 P205 context, fresh memo, real superset worker via the `prlimit` runner in the Docker
+  sandbox.
+  - AGG: 3 gens, 52 physical runs. BASE: 12 gens + references, 118 physical runs.
+  - 0 failures, 0 timeouts, 0 invalid outputs; ledger consistent. Utilities were not inspected.
+- **Phase T launch.** 2026-11-04 22:04:52Z (xbabe0 `h335-T-xbabe0`) and 22:04:54Z (xbabe2 `h335-T-xbabe2`).
+  - Both run from the staged manifest `manifest_T20261104T220258Z`; the Phase T files are sha-identical on both hosts.
+- **`run_frontier_T.sh`** (descriptive LLM-regressor Phase T run on xbabe2 cpus 54-57,118-121) was added.
+- **Stage V driver** (`stage_v_h335.py`, `sandbox_h335_stagev.sh`, the Docker `--stage-v` mode, the runbook
+  `stage_v_mounts_h335.md`): built by a sub-agent and red-teamed independently. The statistics conform to the spec.
+  Freeze / staging / resume findings were fixed before the LOCK:
+  - the LOCK hashes runtime code only (docs and tests go in a non-verified field), and every step runs from a frozen
+    copy;
+  - the featurizer files (`rust_evaluator.py`, `rank_prepare.py`, `program-feature-names.json`) are in the LOCK;
+  - durable integrity stop; unit-attempt cap; identity checks before `FIRST_OUTCOME_READ`;
+  - guarded `--final-incomplete`; write-lock checks the Phase T code identity; staging scripts.
+- **Phase V runtime smoke (PASS; red team HIGH-2; outcome-free).** The real `h335_lab.build_rt(phase="V")` +
+  `run_units` were run on 2 NON-panel fold-0 TRAIN contexts treated as targets (views encoded into a scratch dir).
+  - Setup: the Stage V flag faked in that process only, no DL-Val byte present; real superset worker, fold-0 screener
+    pair; 8 gens; checkpoints (8, 8) dedupe path; 2 seeds.
+  - AGG 4 units / 276 physical runs; BASE 4 units / 380 physical runs.
+  - 0 failures, 0 timeouts, 0 invalid; ledger consistent. Utilities were not printed.
+  - Script and output: `h335-cl/checks/smoke_v.py`, `checks/smoke_v_out_*`.
+- **Encoder parity before the LOCK (PASS; MEDIUM-6).** The frozen `SV.encoder_parity` on xbabe2 for 4 contexts: the
+  SEARCH npz and the full-table view 0 vs the merged TRAIN views (encoded on xbabe1 / xbabe3) are 4/4 bit-exact.
+  Output: `checks/encoder_parity_pre_lock.json`.
+- **Stage V agent test runs** were pinned to xbabe2 cores 44-45 (inside the Phase T xbabe2 set) for about 2.5 min
+  each at nice 19. This affects wall time only; the worker limits are CPU-time.
+- **`/home/ubuntu/.cache_never`** on xbabe0 (366 B, a list of 20 staged code filenames) was created by a reviewer's
+  stray redirect. It is left in place (no-delete rule).
+- **Production guard log baseline 17.** Line 17 is a Stage V builder test that tried to run a script whose name
+  contained a guard token ("dlval"). The guard refused it by filename; no DL-Val data was involved. The script was
+  renamed `build_stagev_view.sh`, and a test now asserts that no code-dir filename contains a guard token.
+- **Stage V re-review (GO) fixes:**
+  - the unit-attempt cap counts only culprit lines; bystanders of a process kill are never capped;
+  - `run_audit_v.sh` is staged;
+  - `--final-incomplete` also requires `LLM_DONE`;
+  - a docker `--stage-v` dry run (`verify-lock-files`) runs before the audit;
+  - S3 is a script. Stage V tests: 43 / 43.
+- **Prep's LLM step is authoritative** for the dev91 LLM entrants (`run/llm_audit.jsonl`). `h335_frontier.py --phase V`
+  is not used in Phase V.
+- **Stage V prep cores (xbabe2).** At 00:49Z, `h344-run` held cores 54-63. Prep and stats therefore moved to
+  38-53,102-117, the Phase T xbabe2 set, which was free after `h335-T-xbabe2` ended (`run_prep_v.sh`, runbook, and
+  the matching test assertion). Wall time only; no result depends on it.
+- **Phase T completed** (TRAIN, P201b, 201 contexts × seed 335101; 2026-11-04 22:04Z → 2026-11-05 00:52Z, within the
+  01:30Z stop).
+  - All 402 units completed (xbabe0 300, xbabe2 102); 0 tracebacks; 16/16 shard status files.
+  - 284,087 physical worker runs. AGG had 36 eval CPU timeouts (60 s; failed evals, not invalid outputs); BASE had 0.
+  - Guard: 0 refusals beyond the baseline of 17.
+  - The xbabe0 run dir was pulled back to xbabe2 and every file sha-checked (1,419 files).
+- **Phase T decision** (`h335_lab.py decide` from the frozen copy; `h335-cl/decision_T.json` sha `c36591c36cff6005…`).
+  - **G\* = 50.** The best checkpoint was 107 (CV3 family mean 1.9448). g50 = 1.9340 is within 1 paired SE (0.0147);
+    g25 = 1.9285 is not.
+  - **Stack CV3@12.** Its gain over single at G\* is +0.0445.
+  - Time cap not binding: projected dev91 wall 2.62 h (throughput bound; critical path 1.55 h).
+  - **No hard stop:** AGG invalid share at the locked output is 0.0.
+  - Live-match: max |Δ live evals| = 2 at every checkpoint, 0 over tolerance. Mean live evals: 321.9 locked, 319.9 OLD.
+  - 0 budget shortfalls.
+  - Reported: 7 of 201 AGG units used ≠ 22 Seed-F evals.
+  - **Locked output:** `AGG.g50.CV3@12`.
+- **Phase V shard layout kept at 6 AGG + 6 BASE × 8 workers** (`run_audit_v.sh`, unchanged). Phase T cost per run was
+  3.10 s (AGG) and 2.30 s (BASE). At G\* = 50 that predicts a balanced makespan (6:6 ≈ 7:5 within 1%).

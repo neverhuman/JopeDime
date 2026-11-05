@@ -12,7 +12,7 @@ set -euo pipefail
 SRC317=/home/ubuntu/jope_plan/evidence/H317/source/research/flywheel_selfplay/h317_island10_multiscale_curriculum
 SRC=/home/ubuntu/jope_plan/evidence/H335/source/research/flywheel_selfplay/h335_aggressive_locked_elo
 DATA=${H335_DATA:-/home/ubuntu/jope-data/h335-cl}
-VIEW=/home/ubuntu/jope-data/h317-cl/res01-train-view
+VIEW=/home/ubuntu/jope-data/h335-view/res01-train-view   # hard links of the H317 TRAIN-only view + cpu_exact_fused.py (code, sha-pinned)
 MICRO=/home/ubuntu/JopeDimeMicro
 NET=(--unshare-net)
 if [ "${1:-}" = "--net" ]; then NET=(); shift; fi

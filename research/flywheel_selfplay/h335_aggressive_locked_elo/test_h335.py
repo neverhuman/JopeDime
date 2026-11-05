@@ -13,6 +13,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+# guard-probe refusals of these tests go to a scratch log, never the production DATA_ROOT/guard_refusals.log
+os.environ.setdefault("H317_GUARD_LOG", os.path.join(os.environ.get("H317_DATA", "/home/ubuntu/jope-data/h335-cl"),
+                                                     "gp", "test-scratch", "guard_refusals.test.log"))
+os.makedirs(os.path.dirname(os.environ["H317_GUARD_LOG"]), exist_ok=True)
 import h335_core as K  # noqa: E402
 
 import json  # noqa: E402
