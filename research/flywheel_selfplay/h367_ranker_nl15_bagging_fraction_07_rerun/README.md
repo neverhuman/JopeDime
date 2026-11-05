@@ -9,7 +9,7 @@ H366 e6fce0d3dc closed a998b73846 with zero fits after CPU admission rejection;
 H367 is a new owner-authorized attempt, not a scientific rerun or result reset.
 Primary comparator archived NL15; secondary archived BASE. Three roots are
 three training seeds30001/30002/30003 across fixed P0/P1/P2/fourfolds.
-Preregistration commit: pending publication before treatment fits.
+Preregistration commit: `9f2ec1b47230b751e615af6bad707c0c07fccf79`, published before treatment fits.
 
 Fresh exact-version comparator regressions precede ONE fresh idle probe.
 All36locks before once-only outer scoring. Whole-family10k bootstrap RNG367191;
