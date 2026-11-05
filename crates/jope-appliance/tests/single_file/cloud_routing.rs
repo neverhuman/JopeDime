@@ -240,10 +240,6 @@ fn a_finished_local_run_syncs_metadata_events_model_and_report_in_order() {
                 200,
                 format!(r#"{{"modelSha256":"{}"}}"#, header("x-model-sha256")),
             ),
-            ("POST", p) if p == format!("{base}/report") => (
-                200,
-                format!(r#"{{"reportSha256":"{}"}}"#, header("x-report-sha256")),
-            ),
             ("POST", p) if p == format!("{base}/code") => (
                 200,
                 format!(r#"{{"codeSha256":"{}"}}"#, header("x-code-sha256")),
@@ -301,21 +297,79 @@ fn a_finished_local_run_syncs_metadata_events_model_and_report_in_order() {
     let metadata = at("POST /api/cli/runs");
     let events = at("/events");
     let model = at("/model");
-    let report = at("/report");
+    assert!(metadata < events && events < model, "{calls:?}");
     assert!(
-        metadata < events && events < model && model < report,
-        "{calls:?}"
+        !calls.iter().any(|c| c.ends_with("/report")),
+        "the CLI writes no report PDF"
     );
     assert_eq!(
         calls.iter().filter(|c| c.ends_with("/model")).count(),
         2,
         "one retry"
     );
+    let last_model = calls.iter().rposition(|c| c.ends_with("/model")).unwrap();
     if let Some(code) = calls.iter().position(|c| c.ends_with("/code")) {
-        assert!(report < code);
+        assert!(last_model < code);
     }
     assert!(stderr.contains("Results: model synced."), "{stderr}");
-    assert!(stderr.contains("Results: report synced."));
+    // model_published comes in an events batch after the model upload, with its digest.
+    let requests = server.requests();
+    let model_sha = requests
+        .iter()
+        .rev()
+        .find(|r| r.path.ends_with("/model"))
+        .map(|r| r.headers["x-model-sha256"].clone())
+        .unwrap();
+    let published = requests
+        .iter()
+        .position(|r| {
+            r.path.ends_with("/events")
+                && r.text().contains("\"model_published\"")
+                && r.text().contains(&model_sha)
+        })
+        .unwrap_or_else(|| panic!("no model_published: {calls:?}"));
+    assert!(published > last_model);
+    // The first events batch names the target, task, real metric and direction, and the profile;
+    // the metadata label is the file and target, not the run id.
+    let first_events = requests
+        .iter()
+        .find(|r| r.path.ends_with("/events"))
+        .unwrap()
+        .text();
+    assert!(
+        first_events.contains(r#""kind":"run_started""#),
+        "{first_events}"
+    );
+    assert!(
+        first_events.contains(r#""target":"price""#),
+        "{first_events}"
+    );
+    assert!(
+        first_events.contains(r#""task":"regression""#),
+        "{first_events}"
+    );
+    assert!(
+        first_events.contains(r#""metric":"rmse""#)
+            && first_events.contains(r#""direction":"minimize""#),
+        "{first_events}"
+    );
+    assert!(
+        first_events.contains(r#""kind":"dataset_profiled""#),
+        "{first_events}"
+    );
+    assert!(
+        !first_events.contains(r#""metric":"score""#),
+        "{first_events}"
+    );
+    let metadata_body = requests
+        .iter()
+        .find(|r| r.path == "/api/cli/runs")
+        .unwrap()
+        .text();
+    assert!(
+        metadata_body.contains(r#""label":"rent.csv · price""#),
+        "{metadata_body}"
+    );
     assert!(stderr.contains(&format!(
         "Explore it in your workspace: {}/runs/{CLOUD_RUN}",
         server.origin
@@ -334,9 +388,6 @@ fn a_finished_local_run_syncs_metadata_events_model_and_report_in_order() {
                 "{} carried a data row",
                 request.path
             );
-        }
-        if request.path.ends_with("/report") {
-            assert!(request.body.starts_with(b"%PDF-1.4"));
         }
     }
 }

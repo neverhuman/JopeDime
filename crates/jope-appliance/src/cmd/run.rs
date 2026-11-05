@@ -246,6 +246,7 @@ fn validate_m1_spec(
 pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()> {
     let export_refit: Refit = parse_value(&args.refit)?;
     let key = crate::common::resolve_idempotency_key(args.idempotency_key.as_deref());
+    let mut registered: Option<(String, jope_api::DatasetProfile)> = None;
     if let Some(path) = args.input.take() {
         let name = path
             .file_name()
@@ -276,6 +277,7 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
             args.languages = vec!["rust".into(), "python".into()];
         }
         args.dataset = Some(profile.dataset_id.to_string());
+        registered = Some((name.to_owned(), profile.clone()));
         if !args.dry_run && !args.detach && args.out.is_none() && args.events.is_none() {
             let effort: jope_api::Effort = parse_value(&args.effort)?;
             if let cloud::Routed::Cloud = cloud::route_run(&args, &absolute, &profile, effort)? {
@@ -285,6 +287,16 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
     }
     let spec = args.run_spec()?;
     let response = transport.run_start(&spec, Some(&key))?;
+    if let (RunResult::Started(snapshot), false) = (&response, args.json_m1()) {
+        let (name, profile) = match registered {
+            Some((name, profile)) => (name, Some(profile)),
+            None => (spec.dataset.to_string(), None),
+        };
+        crate::cloud::remember_run(
+            &snapshot.run_id,
+            &crate::cloud_events::RunContext::from_spec(&spec, &name, profile),
+        );
+    }
     match response {
         RunResult::Plan(plan) => write_json(&*plan),
         RunResult::Started(snapshot) if args.detach => {

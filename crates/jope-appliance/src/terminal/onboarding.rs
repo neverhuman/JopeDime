@@ -32,7 +32,7 @@ pub struct State {
     pub telemetry: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub telemetry_decided_at: Option<String>,
-    /// Whether a finished local run's model and report go to the workspace (`/sync on|off`).
+    /// Whether a finished local run's model and code go to the workspace (`/sync on|off`).
     /// `None` until the user is first asked.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub results_sync: Option<bool>,

@@ -106,9 +106,10 @@ on stderr how to send it. The local MCP server always runs locally and adds a ro
 
 ## Results sync
 
-After a local run finishes while you are logged in, its fitted model, a PDF report and the generated
-code go to your workspace, so it can be explored there like a cloud run. `jopedime cloud runs` lists every run, local and cloud (`--json`, `--local`, `--cloud`, `--unsynced`, `--limit N`). The first time, jAIn asks
-"Sync results (model + report, not your data) to your workspace? [Y/n]"; `/sync on|off` (or
+After a local run finishes while you are logged in, its fitted model and the generated code go to
+your workspace (its events carry the target, task, metric and data profile; the report PDF waits for an
+engine that writes one), so it can be explored there like a cloud run. `jopedime cloud runs` lists every run, local and cloud (`--json`, `--local`, `--cloud`, `--unsynced`, `--limit N`). The first time, jAIn asks
+"Sync results (model + code, not your data) to your workspace? [Y/n]"; `/sync on|off` (or
 `jopedime cloud results on|off`) changes the answer. No training rows are uploaded, except that kernel,
 smoother and Gaussian-process models keep the support rows they predict from inside the fitted model.
 

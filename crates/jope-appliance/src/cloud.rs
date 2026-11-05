@@ -12,8 +12,8 @@ pub use commands::{
 };
 pub(crate) use sync::{chrono_like_now, set_telemetry};
 pub use sync::{
-    fetch_model, publish_best, publish_file, publish_model, run_entries, sync_events, sync_results,
-    sync_snapshot, sync_snapshot_for, Upload,
+    fetch_model, publish_best, publish_file, publish_model, remember_run, run_entries, sync_events,
+    sync_results, sync_snapshot, sync_snapshot_for, Upload,
 };
 #[cfg(test)]
 use sync::{pack_object, unpack_object};
@@ -54,7 +54,7 @@ pub enum AuthCommand {
 }
 #[derive(Subcommand)]
 pub enum CloudCommand {
-    /// Whether a finished local run's model and report sync to your workspace: `on`, `off`, or
+    /// Whether a finished local run's model and generated code sync to your workspace: `on`, `off`, or
     /// show it. No dataset rows are uploaded (kernel, smoother and Gaussian-process models keep
     /// their support rows inside the fitted model).
     Results {

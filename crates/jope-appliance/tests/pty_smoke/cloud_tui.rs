@@ -61,7 +61,6 @@ fn handler(limited: Arc<AtomicBool>) -> Box<workspace::Handler> {
             ("POST", "/api/cli/runs") => (200, format!(r#"{{"id":"{CLOUD_RUN}","url":"{}/runs/{CLOUD_RUN}"}}"#, host(r))),
             ("POST", p) if p == format!("{base}/events") => (200, "{}".into()),
             ("POST", p) if p == format!("{base}/model") => (200, format!(r#"{{"modelSha256":"{}"}}"#, header("x-model-sha256"))),
-            ("POST", p) if p == format!("{base}/report") => (200, format!(r#"{{"reportSha256":"{}"}}"#, header("x-report-sha256"))),
             ("POST", p) if p == format!("{base}/code") => (200, format!(r#"{{"codeSha256":"{}"}}"#, header("x-code-sha256"))),
             _ => (404, r#"{"error":"not found"}"#.into()),
         }
@@ -165,7 +164,7 @@ fn the_terminal_routes_logs_in_just_in_time_streams_and_syncs_results() {
     terminal.press_key(pty::Key::Enter).unwrap();
     wait(
         &mut terminal,
-        "Sync results (model + report, not your data)",
+        "Sync results (model + code, not your data)",
         60,
     );
     terminal.type_text("y").unwrap();
@@ -175,11 +174,10 @@ fn the_terminal_routes_logs_in_just_in_time_streams_and_syncs_results() {
     println!("=== TUI transcript: local run, then results sync ===\n{local}");
     assert!(local.contains("Running locally on this machine · fast search · 149 rows."));
     assert!(local.contains("Results: model synced."));
-    assert!(local.contains("Results: report synced."));
     let calls = server.calls();
     let model = calls.iter().position(|c| c.ends_with("/model")).unwrap();
-    let report = calls.iter().position(|c| c.ends_with("/report")).unwrap();
-    assert!(model < report);
+    assert!(!calls.iter().any(|c| c.ends_with("/report")));
+    let _ = model;
     assert_eq!(
         crate_state(&home)["results_sync"],
         serde_json::json!(true),

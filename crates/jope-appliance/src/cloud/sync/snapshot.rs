@@ -26,7 +26,11 @@ pub fn sync_snapshot_for(
     let path = record_path(&c, &run)?;
     let value = serde_json::to_value(snapshot)?;
     let wall = &value["budget_used"]["wall_seconds"];
-    let mut body = json!({"deviceId":device,"localRunId":run,"label":run,"status":value["state"],"phase":value["phase"],"engineVersion":version,"revision":snapshot.revision.0.to_string(),"eventCursor":snapshot.event_watermark.0.to_string(),"evaluations":snapshot.budget_used.evaluations.0.to_string(),"elapsedSeconds":wall.as_str().map(str::to_owned).unwrap_or_else(||wall.to_string()),"metricName":snapshot.best.as_ref().map(|b|b.metric.clone()),"bestMetric":snapshot.best.as_ref().map(|b|b.cv_value).filter(|v|v.is_finite())});
+    let label = super::run_context(&run)
+        .map(|c| c.label)
+        .filter(|l| !l.is_empty())
+        .unwrap_or_else(|| run.clone());
+    let mut body = json!({"deviceId":device,"localRunId":run,"label":label,"status":value["state"],"phase":value["phase"],"engineVersion":version,"revision":snapshot.revision.0.to_string(),"eventCursor":snapshot.event_watermark.0.to_string(),"evaluations":snapshot.budget_used.evaluations.0.to_string(),"elapsedSeconds":wall.as_str().map(str::to_owned).unwrap_or_else(||wall.to_string()),"metricName":snapshot.best.as_ref().map(|b|b.metric.clone()),"bestMetric":snapshot.best.as_ref().map(|b|b.cv_value).filter(|v|v.is_finite())});
     let fingerprint = jope_runtime::sha256_hex(&serde_json::to_vec(&body)?);
     let previous = if path.exists() {
         Some(serde_json::from_slice::<SyncRecord>(&read_private(&path)?)?)

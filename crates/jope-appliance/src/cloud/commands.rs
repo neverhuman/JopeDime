@@ -166,16 +166,16 @@ pub fn results_command(setting: Option<String>) -> Result<String> {
     }
     Ok(match onboarding::load(&home).results_sync {
         Some(true) => format!("Results sync on: {}", RESULTS_NOTE),
-        Some(false) => "Results sync off: finished local runs keep their model and report on this machine. Turn on with /sync on.".into(),
+        Some(false) => "Results sync off: finished local runs keep their model and code on this machine. Turn on with /sync on.".into(),
         None => "Results sync not decided yet: you are asked after your first finished local run while logged in.".into(),
     })
 }
 
 /// What a results sync sends, for the consent question and the setting.
-pub const RESULTS_NOTE: &str = "after a local run finishes, its fitted model and a PDF report go to your workspace. No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from (rows of your training data) inside the fitted model.";
+pub const RESULTS_NOTE: &str = "after a local run finishes, its fitted model and generated code go to your workspace. No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from (rows of your training data) inside the fitted model.";
 
 /// The question asked once, the first time a logged-in local run finishes.
-pub const RESULTS_QUESTION: &str = "Sync results (model + report, not your data) to your workspace? No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from inside the fitted model. [Y/n]";
+pub const RESULTS_QUESTION: &str = "Sync results (model + code, not your data) to your workspace? No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from inside the fitted model. [Y/n]";
 
 pub fn spawn_login(
     workspace: String,

@@ -322,6 +322,8 @@ impl super::Session {
             demo: false,
             rows: profile.rows.0,
             columns: profile.columns.len() as u64,
+            name: name.to_owned(),
+            profile: Some(profile.clone()),
         });
         self.draft.set_dataset(profile);
         let mut lines = vec![format!("registered {name} as {dataset}")];
@@ -466,6 +468,15 @@ impl super::Session {
         match self.client.run_start(&spec, Some(&key))? {
             RunResult::Started(snapshot) => {
                 let run = snapshot.run_id.clone();
+                let source = self.routing.source.clone().unwrap_or_default();
+                crate::cloud::remember_run(
+                    &run,
+                    &crate::cloud_events::RunContext::from_spec(
+                        &spec,
+                        &source.name,
+                        source.profile,
+                    ),
+                );
                 self.attach(run.clone(), Some(snapshot.event_watermark))?;
                 if let Ok(c) = crate::cloud::connection() {
                     if c.may_publish {
