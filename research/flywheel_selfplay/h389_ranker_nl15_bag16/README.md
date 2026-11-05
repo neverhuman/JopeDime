@@ -1,15 +1,22 @@
 # H389 — NL15 BAG16
 
-PREREGISTERED; science UNKNOWN.
+**INCOMPLETE_CUSTODY: scientific UNKNOWN**.
+Preregistration commit: `0d802a0ccdd52d723e42d766c818e27182e07af0`, published 2026-11-05T19:09:53.363117+00:00; first observed fit 2026-11-05T19:10:45.478627+00:00.
 
-Preregistration commit: `0d802a0ccdd52d723e42d766c818e27182e07af0`, published 2026-11-05T19:09:53.363117+00:00 before any CPU probe or treatment fit.
+Hypothesis: doubling the bag ensemble may reduce selection variance. One fixed BAG16 arm, no tuning.
 
-One fixed BAG16 arm doubles fresh archived H352 bag count8->16 in the original inner/final member loop. Original index0..7 bootstrap/model seeds are preserved and8..15 extend the same deterministic rule. All individual ranker constructor ASTs and native kwargs remain H352 NL15, including LR/trees; veto unchanged. Absolute vote thresholds5/6/7, aggregation code,18configs and conservative tie rule stay fixed. This changes the vote distribution and cannot isolate variance reduction alone. No new seed keyword or threshold scaling.
+Only bagged.N_BAGS8->16 differs from H352 NL15; original index0..7 seeds preserved and indices8..15 extend the same byte-exact seed rule. All per-model constructor ASTs/native fields remain H352, including original LR/trees. Vote aggregation code and absolute thresholds5/6/7 remain unchanged; no threshold scaling, so any effect cannot be attributed to variance alone. All18configs/ties/3members retained. Fresh BASE9/36/3 and NL15ninepanels/36lock-score pairs/rawfamilyarrays exact;1219TRAINinputs and972archivednative configs/108vetoSHA verified without baseline refits.
 
-BASE9panels/36hashes/3medians and NL15ninepanels/36lock-score pairs/rawfamilyarrays regressions exact.972native configs,108archivedvetoSHAs,864originalbagseeds and1219TRAINinputs verified.58datafree+7custody controls pass; actual pinned-module install/revert preflight passes with zero fits. Actual constructor seed-count proof requires13inner/final calls for each of48bagstreams per task. Full design36tasks/40,716ranker+7,020veto native fits; all36fsyncedlocks before once-only outer scoring.
+reference = r882 slot0 (DL-Train outer); r3175 not measured on TRAIN.
 
-One5second CPU gate50..63, no fallback, max8/min4/hostCPU<=70. H352CPU26189.516914 conservatively scaled(2*819+195)/(819+195), .9eff/1.15safety/+300reserve; mandatory first-task max(scaledreference/36,actualCPU) forecast. Fixed23:15compute23:30closeNov5; corrected60secondCPU85/load108x3/memory20GiB/scratch2GB guards. No reprobe/restart/reset/cutcells.
+The full qualified cohort did not close. Numerical outcomes remain UNKNOWN/null; observed native fits, locks, score markers, costs and interruption state are preserved. Capacity: {'eligible_cores': [50, 51, 57, 59, 60, 61], 'minimum_required': 4, 'host_cpu_at_probe': 23.429458248214484, 'probe_seconds': 5, 'probes': 1, 'retries': 0, 'admitted': True}. No retry, partial scoring verdict, or budget reset.
 
-PRIMARY pairedvsNL15, secondaryBASE,10kwholefamilyRNG389191; +.002positiveLCB/.9gain retention/no worse harm/>=2positive roots. No AUC/speed verdict. Any ADVANCE needs separately authorized one-shotdev91 confirmation outsideH389. H387 and prior closes retain original dispositions; no LRHALF rerun.
+58 data-free checks PASS. One5s probe eligible cores[50, 51, 57, 59, 60, 61]; admitted=True; nice19/math1/MemoryMax6G/MemorySwapMax0, scratch<=2GB. Fixed compute stop23:15Z/close23:30Z Nov5. Available final cgroup CPU/peak memory are retained in metrics.json; missing final accounting stays null, observed CPU lower bound is labeled separately. Corrected guard: CPU>85% averaged60s or load>108 on3 consecutive60s samples; memory/scratch/deadline guards remain. Realized per-fit bagged row counts are unavailable in native Booster dumps (diagnostic only); none were invented. No speed verdict.
 
-DOPEc51a56d0 unloaded/unchanged, CPU selection layer only. No GPU, paid compute, protected/dev91 data or writer restart. See [PREREG.md](PREREG.md), [metrics.json](metrics.json).
+Custody exact-version manifest: None. Own scratch removed: False. Detailed receipts: `/home/ubuntu/jope_plan/evidence/H389/dsc01-20261105-t1905`. No models in Git.
+
+One of a sequential intervention sweep H348–H389 on the same folds/roots. Any ADVANCE is TRAIN-only and requires a separately authorized one-shot dev91vsr3175 confirmation, outside H389. DOPEc51a56d0 remained unloaded/unchanged, CPU selection layer only; zero DL-Val/dev91/DL-Test/sealed/holdout payload rows.
+
+Next: preserve UNKNOWN science and interrupted costs; no replay, reprobe, restart, or deadline reset.
+
+The live flywheel writer remains intentionally stopped at round5049; this campaign never restarts it or changes AUTORESTART_DISABLED/serving configuration. Three roots are three training seeds30001/30002/30003.
