@@ -80,7 +80,8 @@ def main():
         if row["logged_rounds"] == 0:
             ax.add_patch(Rectangle((x-.5,y-.5),1,1,facecolor=".95",edgecolor=".7",hatch="///",linewidth=.5))
         text = f"{row['logged_rounds']:,} {'round' if row['logged_rounds'] == 1 else 'rounds'}\n{row['program_records']:,} {'record' if row['program_records'] == 1 else 'records'}"
-        ax.text(x,y,text,ha="center",va="center",fontsize=9.0,color="white" if row["logged_rounds"]>=100 else "black",linespacing=1.2)
+        ax.text(x,y,text,ha="center",va="center",fontsize=9.0,color="white" if row["logged_rounds"]>=100 else "black",linespacing=1.2,
+                bbox=dict(facecolor="white", edgecolor="none", pad=1.8) if row["logged_rounds"] == 0 else None)
     ax.set_xticks([0,1],["Program record present","No program record"])
     ax.set_yticks(range(4),["Rejected update (n = 4,266)","Strict gain (n = 4)","Exact tie (n = 4)","Decision unrecorded (n = 1)"])
     ax.tick_params(length=0,pad=5)

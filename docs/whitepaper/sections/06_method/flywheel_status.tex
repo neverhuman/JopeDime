@@ -3,7 +3,7 @@
 \subsection{A separate adapter admission record}\label{sec:method-status}
 
 The inspected operating loop ranks rule-based GP proposals with a cost-ranking adapter on a frozen, separately loaded candidate-scoring network. Its updates train neither the reference program writer nor the ranking map (\cref{sub:method-selfplay}). An admission gate retains or rejects each adapter update.
-Validation-pool utility averages the negated recorded score of each context's adapter-selected candidate over fixed validation contexts; failed candidate gates count $-2.0$, and larger is better.
+Validation-pool utility averages the negated recorded score of each context's adapter-selected candidate over fixed validation contexts; failed candidate gates count $-2.0$, and larger utility is better.
 
 \input{sections/adapter_update_scope}
 
@@ -36,38 +36,40 @@ are separate; unobserved gaps are not filled or joined into a learning curve.
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
 
+Three views organize the record: adapter utility and admission,
+program-journal activity and operating clocks, with extended diagnostics
+in \cref{app:flywheel-telemetry}.
+
 \paragraph{Adapter utility and admission.}
 \Cref{tab:admission-ledger} fixes the chronology and counts.
 \Cref{fig:fw-latest-admissions,fig:fw-admission-margins} show retained
 validation-pool utility and pre-decision margins: eight updates are
-admitted after round 775, four as exact ties. A later 200-decision window
+admitted after round 775, four as exact ties. Grey candidates and the
+post-decision retained-best trace show different quantities; margins use
+the retained best before each decision. The rolling margin view starts
+only when its 50-round window is complete. A later 200-decision window
 (rounds 4064--4263) has no admissions (\cref{fig:adapter-validation-trace}).
 \Cref{fig:adapter-admission-rates} resolves rounds 775--4529 into local
 windows, using every recorded decision, including rejections, in each
-denominator and separating ties from strict gains. Grey candidates and
-the post-decision retained-best trace show different quantities; margins
-use the retained best before each decision. The rolling margin view starts
-only when its 50-round window is complete, and the later no-admission
-trace retains all 200 decisions.
+denominator and separating ties from strict~gains.
 
 \paragraph{Program-journal activity.}
-Programs pass a separate admission rule. \Cref{fig:program-journal-rates}
+Program promotions use their own journal. \Cref{fig:program-journal-rates}
 counts ordinary promotions and historical admissions against the captured
 journal clock; \cref{fig:program-round-counts} resolves recent activity by
-round, retaining observed zero counts and marking a missing decision.
+round, retaining 118 observed zero-count rounds and marking a missing decision.
 \Cref{fig:recent-program-margins} gives each recorded promotion's
 incumbent-utility difference. The 20-round window in
 \cref{fig:fw-promotions-per-hour} records continuing program promotions
 while retained adapter utility holds flat. Hourly counts resolve a captured
 day (\cref{fig:program-24h}); fixed calendar bins extend the view from
-round 775 onward (\cref{fig:full-cohort-program-rates}). The recent
-round view includes 118 observed zero-count rounds. The program record at
+round 775 onward (\cref{fig:full-cohort-program-rates}). The program record at
 round 4331 remains plotted, although its adapter decision is missing.
 The gain distribution conditions on promotion; it supplies no
 proposal-attempt denominator.
 
 \paragraph{Operating clocks.}
-Recorded time includes work and waits. \Cref{fig:fw-round-throughput}
+\Cref{fig:fw-round-throughput}
 divides distinct training contexts by whole-round time. The inclusive
 ledger in \cref{fig:adapter-outcome-clock} groups recorded round hours by
 adapter outcome, retaining rejected work. Gaps between program-pool
@@ -77,7 +79,7 @@ recorded wall time in a later timing-only snapshot. The 20-round
 throughput window and later phase-clock window are separate captures.
 In the phase view, the remainder is wall time minus the logged phases;
 no task is assigned to it. Inclusive outcome sums retain one unscored
-round, whereas inter-round gaps remain outside the summed clocks.
+round, whereas inter-round gaps remain outside the summed~clocks.
 
 \begin{figure*}[!tp]
   \setlength{\abovecaptionskip}{4pt}
@@ -155,7 +157,6 @@ round, whereas inter-round gaps remain outside the summed clocks.
 
 \input{sections/current_full_cohort_program_rates}
 
-\Cref{app:flywheel-telemetry} organizes the remaining admission histories and operating clocks.
 \Cref{fig:event-counters,fig:pool-insertion-windows} align the distinct event histories and resolve local insertion frequency (\cref{app:event-counters,app:pool-insertion-windows}).
 
 \Cref{fig:candidate-margin-window} gives the signed candidate margins in a

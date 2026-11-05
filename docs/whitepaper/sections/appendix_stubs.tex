@@ -143,13 +143,13 @@ qualification remains pending; the separate adapter record appears in
 
 \section{Operating-Loop Telemetry}\label{app:flywheel-telemetry}
 
-Adapter decisions, program-incumbent events and operating clocks count
-different units (\cref{app:round-throughput}). Each capture has its own
-date and population, with the scope limits in \cref{sec:method-status}.
-
-\Cref{app:latest-admissions} begins with the adapter-admission chronology.
-The later historical GP diagnostics (\cref{app:historical-search})
-use a separate protocol.
+Adapter utility and admission occupy \ref{app:latest-admissions}--\ref{app:live-adapter-decisions}
+and \ref{app:candidate-margin-window}. Program-journal activity and operating
+clocks interleave across \ref{app:event-counters}--\ref{app:historical-search}
+and \ref{app:decision-cadence}; historical GP diagnostics remain separate.
+Supplementary diagnostics in \ref{app:parameter-displacement}--\ref{app:program-record-cadence}
+precede the closing record in \ref{app:stopped-run-record}. Each capture has
+distinct units, dates and populations; \cref{sec:method-status} sets their scope.
 
 % Adapter admission records, ordered by their role and capture cutoff.
 \input{sections/appendix_latest_admissions}
