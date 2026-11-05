@@ -699,7 +699,7 @@ def make_fig5_network() -> None:
         rad=0.05,
     )
 
-    fig.text(0.5, 0.068, "Live loop (Section 6.8): rule-based proposals, no neural writer.",
+    fig.text(0.5, 0.068, "Inspected operating loop (Section 6.8): rule-based GP proposals, no neural writer.",
              ha="center", va="center", fontsize=8.5, color="#334155")
     fig.text(0.5, 0.024, "A cost-ranking adapter picks which proposals are scored.",
              ha="center", va="center", fontsize=8.5, color="#334155")
