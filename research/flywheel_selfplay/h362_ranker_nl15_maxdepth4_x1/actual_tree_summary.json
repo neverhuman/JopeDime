@@ -1,0 +1,139 @@
+{
+  "status": "PASS",
+  "reference_saved_ranker_trees": {
+    "BASE": {
+      "models": 972,
+      "trees": 147200,
+      "depth_histogram": {
+        "3": 147200
+      },
+      "leaf_histogram": {
+        "4": 998,
+        "5": 10648,
+        "6": 17866,
+        "7": 117688
+      },
+      "max_actual_depth": 3,
+      "max_actual_leaves": 7
+    },
+    "NL15": {
+      "models": 972,
+      "trees": 153600,
+      "depth_histogram": {
+        "3": 153600
+      },
+      "leaf_histogram": {
+        "4": 996,
+        "5": 11344,
+        "6": 18395,
+        "7": 43755,
+        "8": 79110
+      },
+      "max_actual_depth": 3,
+      "max_actual_leaves": 8
+    }
+  },
+  "NL15MD4": {
+    "completed_fit_records": {
+      "ranker": {
+        "models": 29484,
+        "trees": 5273600,
+        "depth_histogram": {
+          "4": 5273600
+        },
+        "leaf_histogram": {
+          "5": 5353,
+          "6": 59873,
+          "7": 167184,
+          "8": 333825,
+          "9": 603791,
+          "10": 694898,
+          "11": 641968,
+          "12": 677036,
+          "13": 683777,
+          "14": 617016,
+          "15": 788879
+        },
+        "max_actual_depth": 4,
+        "max_actual_leaves": 15
+      },
+      "veto": {
+        "models": 7020,
+        "trees": 491400,
+        "depth_histogram": {
+          "4": 26,
+          "5": 39103,
+          "6": 154912,
+          "7": 143606,
+          "8": 83621,
+          "9": 40750,
+          "10": 18828,
+          "11": 7335,
+          "12": 2548,
+          "13": 602,
+          "14": 69
+        },
+        "leaf_histogram": {
+          "12": 3,
+          "13": 60,
+          "14": 159,
+          "15": 491178
+        },
+        "max_actual_depth": 14,
+        "max_actual_leaves": 15
+      }
+    },
+    "saved_model_reviews": {
+      "ranker": {
+        "models": 12636,
+        "trees": 1904000,
+        "depth_histogram": {
+          "4": 1904000
+        },
+        "leaf_histogram": {
+          "5": 1811,
+          "6": 19550,
+          "7": 52679,
+          "8": 107010,
+          "9": 200424,
+          "10": 236629,
+          "11": 226376,
+          "12": 250597,
+          "13": 254318,
+          "14": 234718,
+          "15": 319888
+        },
+        "max_actual_depth": 4,
+        "max_actual_leaves": 15
+      },
+      "veto": {
+        "models": 1404,
+        "trees": 98280,
+        "depth_histogram": {
+          "5": 5395,
+          "6": 27582,
+          "7": 30372,
+          "8": 19012,
+          "9": 9323,
+          "10": 4384,
+          "11": 1551,
+          "12": 553,
+          "13": 98,
+          "14": 10
+        },
+        "leaf_histogram": {
+          "15": 98280
+        },
+        "max_actual_depth": 14,
+        "max_actual_leaves": 15
+      }
+    }
+  },
+  "configured_ranker_max_depth": 4,
+  "configured_ranker_num_leaves": 15,
+  "depth_definition": "Root-to-leaf edges; ordered [depth,leaf_count] pairs at implicit Tree index",
+  "all_observed_tree_budgets_verified": true,
+  "full_per_tree_records": "native_fit_audit.jsonl/native_model_review.json in exact-Version S3 custody; partial unreviewed rawmodels retained when incomplete",
+  "new_fits": 0,
+  "new_predictions": 0
+}
