@@ -7,7 +7,7 @@ Pinned reference is already1; fresh archived validation is pending. No fitting
 or CPU probe before the gate. No alternative numeric fraction selected.
 MSG01 reverted to0; feature_fraction.8 and all other H352 NL15 settings fixed.
 Prospective keyword removal restores both full H352 ASTs; no seed keyword.
-Preregistration commit: pending publication before treatment fits.
+Preregistration commit: `33834e7d26dc955cf2e737079f986d2f6b651f49`, published with zero treatment fits.
 
 LightGBM4.6.0 defines this as a numeric fraction default1, rather than a Boolean
 switch. Numeric1 would be an unchanged native value. See [official versioned
