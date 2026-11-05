@@ -1,0 +1,14 @@
+{
+  "wave": "H384",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "scientific_verdict": "UNKNOWN",
+  "primary_comparator": "H352 NL15",
+  "aggregate": null,
+  "paired_drop_top10": null,
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  }
+}
