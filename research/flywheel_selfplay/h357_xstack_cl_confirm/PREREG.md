@@ -65,6 +65,34 @@ H354 closed `XSTACK_NOT_ADVANCED` (`f7530131f0`), after Phase D on TRAIN P201b (
   - xbabe2: library `h357-lib` on cores 38-53 / 102-117, nice 19, MemoryMax 48 GiB, no swap.
   - Host CPU ≤ 85% and MemAvailable ≥ 20 GiB.
 
+### 3.1 Amendment 1 (implementation only; no rule changed) — AUDIT outputs for every X_CL member
+**What happened.** The first `run_c_h357.sh score` (11:01Z) stopped in `arms` with a `KeyError` inside
+`stacking_h317.stack_audit_utility`, before anything was written or printed. No AUDIT value or utility was seen.
+
+**The cause.**
+- The GP AUDIT-evaluates only an output's *declared* members (`StackSpec.declared()`, w_audit > 1e-9).
+- P201c ran a single checkpoint (g50), so the only AUDIT records are those of X0's non-zero-weight members and of the
+  single-best output.
+- X_CL's SEARCH-only weights can give weight to a GP member that X0 left at zero, and that member has no AUDIT
+  prediction.
+- In H354 Phase D this did not arise: the Phase T memo held AUDIT records from 5 checkpoints × 2 outputs, and Phase D
+  ran without this error.
+
+**The fix.** §2 requires that "AUDIT [be scored] once per arm, after the weights are fixed", and X_CL's AUDIT
+prediction needs every declared member's AUDIT output.
+- **`phase_c_h357.py audit-request`** (xbabe2) lists each context's declared X_CL GP members that have no AUDIT record.
+  The list depends only on SEARCH-derived weights; no AUDIT value is read.
+- **`gp_c_h357.py audit-extra`** (xbabe0, `h357-C-auditx`, the same docker sandbox) evaluates exactly those members.
+  It uses:
+  - the frozen GP engine, superset worker, CPU-limited runner and 60 s timeout of the GP run;
+  - one `AuditLedger` request per context.
+
+  It writes into its own run dir (`runs/H357_C_xbabe0_auditx`), so the GP run dir is never modified.
+- **`arms`** merges those records. Each must be on the GP's own AUDIT envelope (sha256 equality). `arms` refuses
+  (harness failure) if any declared X_CL member still lacks an AUDIT record.
+- **Unchanged:** a member whose extra AUDIT evaluation fails takes the SEARCH mean (the H317 rule, as for any member).
+  The weights, arms, panel, statistics and verdicts are as above.
+
 ## 4. Decision (fixed now)
 - **Primary (one test).** The H335 `primary_test(X_CL, X0)` (`h335_stats.py` `ee3b4543…`) over the 194 families:
   - clipped (±0.5) family-mean contrast T;

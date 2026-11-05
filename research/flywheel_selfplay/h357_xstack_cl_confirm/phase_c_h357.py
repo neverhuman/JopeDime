@@ -28,7 +28,7 @@ from typing import Dict, List  # noqa: E402
 
 import numpy as np  # noqa: E402
 
-C = K.C
+C, E, ST = K.C, K.E, K.ST
 WAVE = "H357"
 ARM = "X_CL"  # fixed by the H357 PREREG (chosen after the H354 P201b results; P201c is the confirmation panel)
 LIBRARY = K.ARMS[ARM]
@@ -37,6 +37,7 @@ STAGE_C = "C_AGG"
 TOL = 1e-9
 OUT = Path(os.environ.get("H357_DATA", "/home/ubuntu/jope-data/h357-xc"))
 GP_RUN_C = Path(os.environ.get("H357_GP_RUN", str(K.H335_DATA / "runs" / "H357_C_xbabe0")))
+AUDITX_RUN = Path(os.environ.get("H357_AUDITX_RUN", str(K.H335_DATA / "runs" / "H357_C_xbabe0_auditx")))
 PANEL_C = K.H335_DATA / "h357" / "P201c.json"
 P201C_CIDS_SHA256 = "36fbf6a92204487a31f2533905a57393e9c317fa7484ab7cbde5026e34468f6d"
 BOOT_SEED = 335150  # h335_core.BOOT_SEED: the H335 adoption-grade secondary, unchanged
@@ -56,8 +57,48 @@ def _panel() -> dict:
     return pan
 
 
-def _ctx(cid: str, fam: Dict[str, str]) -> "K.Context":
-    return K.load_context(cid, fam, runs=(GP_RUN_C,), stage=STAGE_C, seed=SEED_C)
+def _ctx(cid: str, fam: Dict[str, str], extra: bool = True) -> "K.Context":
+    """The P201c context. With `extra`, the Amendment-1 AUDIT records of GP members that X_CL uses but X0 gave zero
+    weight are merged in; each must be on the GP's own AUDIT envelope."""
+    ctx = K.load_context(cid, fam, runs=(GP_RUN_C,), stage=STAGE_C, seed=SEED_C)
+    memo = AUDITX_RUN / "gproot_AGG" / "memo" / f"{cid}.split.jsonl"
+    if extra and memo.exists():
+        want = {m.sha: m.dsl for m in ctx.members}
+        for line in memo.read_text().splitlines():
+            r = json.loads(line)
+            if r["kind"] != "audit" or r["cid"] != cid or r["sha"] not in want or r["sha"] in ctx.audit_by_sha:
+                continue
+            if r["env_sha256"] != ctx.audit.sha256:
+                raise AssertionError(f"{cid[:12]}: extra AUDIT record on a different envelope")
+            ctx.audit_by_sha[r["sha"]] = E.AuditResult(cid, r["sha"], r["dsl"], r["status"], float(r["utility"]),
+                                                       r.get("model_rmse"), r.get("base_rmse"), K._arr(r.get("pa")),
+                                                       float(r.get("wall_s", 0.0)), r.get("error", ""))
+    return ctx
+
+
+def gp_members_without_audit(spec: "ST.StackSpec", audit_by_sha: Dict[str, object]) -> List[str]:
+    """GP members the stack declares (w_audit > W_EPS) that have no AUDIT record; library members are excluded."""
+    return [s for s in spec.declared()[0] if not s.startswith("lib:") and s not in audit_by_sha]
+
+
+def cmd_audit_request(a) -> None:
+    """Amendment 1: list the GP members that X_CL's SEARCH-only weights use (w_audit > W_EPS) but that have no AUDIT
+    record, because X0 gave them zero weight. The list depends on SEARCH data only; no AUDIT value is read or used."""
+    pan = _panel()
+    out = OUT / "audit_extra_request.json"
+    if out.exists():
+        raise SystemExit(f"{out} exists (create-once)")
+    rows = []
+    for cid in pan["cids"]:
+        ctx = _ctx(cid, pan["family_of"], extra=False)
+        ls, _ = PD.load_library(ctx, Path(a.lib))
+        dsl = {m.sha: m.dsl for m in ctx.members}
+        miss = gp_members_without_audit(K.stack_arm(ctx, ls, ARM), ctx.audit_by_sha)
+        if miss:
+            rows.append({"cid": cid, "members": [{"sha": s, "dsl": dsl[s]} for s in miss]})
+    K.jdump(out, {"schema": "jope.h357.audit-extra-request/v1", "wave": WAVE, "arm": ARM,
+                  "gp_config_sha256": K.sha256_file(GP_RUN_C / "config.json"), "contexts": rows})
+    print(f"audit-request: {len(rows)} contexts, {sum(len(r['members']) for r in rows)} members")
 
 
 def cmd_prepare(_a) -> None:
@@ -89,8 +130,12 @@ def arms_one(cid: str, fam: Dict[str, str], lib_dir: str) -> dict:
              float(np.max(np.abs(x0.w_fold1 - np.asarray(st["w_fold1"])))))
     out0 = K.audit_arm(ctx, x0, ctx.audit_by_sha)
     du = abs(out0["utility"] - float(ctx.stored["raw"]["utility"]))
+    xcl = K.stack_arm(ctx, ls, ARM)  # SEARCH-only weights
+    lack = [s for s in xcl.declared()[0] if s not in abs_]  # GP and library members alike
+    if lack:  # harness failure (Amendment 1 audit-extra not run), never a substituted outcome
+        raise AssertionError(f"{cid[:12]}: {len(lack)} X_CL members without an AUDIT record")
     return {"cid": cid, "family": ctx.family, "x0_check": {"dw": dw, "du": du},
-            "arms": {"X0": out0, ARM: K.audit_arm(ctx, K.stack_arm(ctx, ls, ARM), abs_)},  # SEARCH-only weights
+            "arms": {"X0": out0, ARM: K.audit_arm(ctx, xcl, abs_)},
             "library": {n: {"gate": bool(ls[n].gate), "ok": bool(ls[n].ok), "search_fitness": float(ls[n].fitness),
                             "audit_utility": float(la[f"lib:{n}"].utility), "audit_status": la[f"lib:{n}"].status}
                         for n in LIBRARY}}
@@ -163,8 +208,10 @@ def main() -> None:
     p.add_argument("--lib", default=str(OUT / "lib"))
     p.add_argument("--jobs", type=int, default=16)
     sub.add_parser("decide")
+    p = sub.add_parser("audit-request")
+    p.add_argument("--lib", default=str(OUT / "lib"))
     a = ap.parse_args()
-    {"prepare": cmd_prepare, "arms": cmd_arms, "decide": cmd_decide}[a.cmd](a)
+    {"prepare": cmd_prepare, "arms": cmd_arms, "decide": cmd_decide, "audit-request": cmd_audit_request}[a.cmd](a)
 
 
 if __name__ == "__main__":

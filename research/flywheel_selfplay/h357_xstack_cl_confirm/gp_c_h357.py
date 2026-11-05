@@ -35,7 +35,7 @@ from typing import Dict, List, Sequence  # noqa: E402
 
 import h335_lab as LAB  # noqa: E402
 
-C, D, L = K.C, K.D, K.L
+C, D, L, G = K.C, K.D, K.L, K.G
 
 WAVE = "H357"
 PHASE = "C"
@@ -195,6 +195,62 @@ def cmd_launch(a) -> None:
     print(json.dumps({"wave": WAVE, "phase": PHASE, "launched_shards": a.shards, "contexts": len(cids)}))
 
 
+def cmd_audit_extra(a) -> None:
+    """Amendment 1 (H357 PREREG §3.1): AUDIT predictions for GP stack members that X_CL's SEARCH-only weights use but X0
+    gave zero weight (the GP audits only an output's declared members). Same frozen engine, runner and timeout as the
+    GP run; one AuditLedger request per context (pipeline `C.H357.XCL.extra`); records land in this run dir's own memo,
+    so the GP run dir is never written."""
+    if K.GROUP != "AGG":
+        raise SystemExit("H335_GROUP must be AGG")
+    req = json.loads(Path(a.request).read_text())
+    run_dir = Path(a.run_dir)
+    gp_cfg = json.loads((Path(a.gp_run_dir) / "config.json").read_text())
+    if req["gp_config_sha256"] != C.sha256_file(Path(a.gp_run_dir) / "config.json"):
+        raise SystemExit("request was made for a different GP run")
+    cfg = {"schema": "jope.h357.audit-extra-config/v1", "wave": WAVE, "request_sha256": C.sha256_file(Path(a.request)),
+           "gp_run_dir": str(a.gp_run_dir), "seeds": gp_cfg["seeds"], "worker_sha256": gp_cfg["worker_sha256"],
+           "timeout_s": gp_cfg["timeout_s"], "neural_run_dir": gp_cfg["neural_run_dir"],
+           "code_sha256": K.code_manifest(CODE_FILES), "host": os.uname().nodename}
+    run_dir.mkdir(parents=True, exist_ok=True)
+    p = run_dir / "config.json"
+    if p.exists():
+        old = json.loads(p.read_text())
+        if any(old.get(k) != cfg[k] for k in ("request_sha256", "worker_sha256", "timeout_s", "code_sha256")):
+            raise SystemExit("audit-extra config mismatch")
+    else:
+        C.write_json(p, cfg)
+    frozen = K.code_manifest(LAB.PHASE_T_FILES)  # H317 pins + H335 files (this driver changed by the amendment)
+    if C.sha256_file(Path(a.worker)) != gp_cfg["worker_sha256"] or any(
+            gp_cfg["code_sha256"].get(k) != v for k, v in frozen.items()):
+        raise SystemExit("worker or frozen H335/H317 code differs from the GP run")
+    rt = LAB.build_rt(run_dir, "T", L.parse_cpus(a.cores), Path(a.worker), float(gp_cfg["timeout_s"]), gp_cfg["seeds"],
+                      Path(gp_cfg["neural_run_dir"]), 1)
+    seed = gp_cfg["seeds"][0]
+    done = {json.loads(x)["cid"] for x in (run_dir / "done.jsonl").read_text().splitlines()} \
+        if (run_dir / "done.jsonl").exists() else set()
+    todo = [r for r in req["contexts"] if r["cid"] not in done]
+
+    def one(r):
+        cands = [G.Candidate.from_dsl(m["dsl"], "h357-audit-extra") for m in r["members"]]
+        if [c.sha for c in cands] != [m["sha"] for m in r["members"]]:
+            raise AssertionError(f"{r['cid'][:12]}: DSL does not reproduce the recorded member sha")
+        ctx = rt.engine.context(r["cid"], rt.fam_of[r["cid"]])
+        res = rt.ledger.score("C.H357.XCL.extra", ctx, seed, cands)
+        return {"cid": r["cid"], "n": len(res), "status": [x.status for x in res], "audit_env": ctx.audit_path.name}
+
+    t0 = time.time()
+    with open(run_dir / "done.jsonl", "a") as f:
+        for out in L.run_parallel(lambda r: one(r), [(r,) for r in todo], a.jobs):
+            f.write(json.dumps(out) + "\n")
+            f.flush()
+    status = {"wave": WAVE, "contexts": len(todo), "members": sum(len(r["members"]) for r in todo),
+              "wall_s": time.time() - t0, "engine": rt.engine.stats(), "audit_ledger": rt.ledger.check(),
+              "guard": C.guard_report(), "host": os.uname().nodename}
+    C.write_json(run_dir / f"status_audit_extra_{int(t0)}.json", status)
+    rt.engine.close()
+    print(json.dumps({k: status[k] for k in ("contexts", "members", "wall_s", "audit_ledger")}))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -216,8 +272,16 @@ def main() -> None:
         else:
             p.add_argument("--shard", required=True)
             p.add_argument("--cores", required=True)
+    p = sub.add_parser("audit-extra")
+    p.add_argument("--request", required=True)
+    p.add_argument("--gp-run-dir", required=True)
+    p.add_argument("--run-dir", required=True)
+    p.add_argument("--cores", required=True)
+    p.add_argument("--jobs", type=int, default=12)
+    p.add_argument("--worker", default=str(Path(C.DATA_ROOT) / "bin" / "bootstrap.s1main.superset-2a848c8f8085"))
     a = ap.parse_args()
-    {"panel": cmd_panel, "encode": cmd_encode, "launch": cmd_launch, "run": cmd_run}[a.cmd](a)
+    {"panel": cmd_panel, "encode": cmd_encode, "launch": cmd_launch, "run": cmd_run,
+     "audit-extra": cmd_audit_extra}[a.cmd](a)
 
 
 if __name__ == "__main__":

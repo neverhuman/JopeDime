@@ -10,6 +10,8 @@
 #   pull    xbabe0 run dir -> xbabe2 (same path); every file's sha256 compared with xbabe0's; 194 records required
 #   prep    phase_c_h357.py prepare
 #   lib     systemd-run --user h357-lib: the 4 classical learners, SEARCH OOF + SEARCH->AUDIT fits (--audit fit)
+#   auditreq, stagex, auditx, pullx  Amendment 1 (PREREG §3.1): AUDIT predictions for GP members X_CL uses but X0
+#           never audited (request on xbabe2, SEARCH-only; frozen engine on xbabe0, unit h357-C-auditx; pulled back)
 #   score   phase_c_h357.py arms + decide
 set -euo pipefail
 STEP=${1:?step}
@@ -34,7 +36,7 @@ git -C "$REPO" "${CRED[@]}" fetch -q https://github.com/neverhuman/JopeDime.git 
 cmp -s "$CODE/PREREG.md" <(git -C "$REPO" show "origin/v1/next:$PREREG_PATH") \
   || { echo "staged PREREG.md is not the H357 PREREG on origin/v1/next: nothing runs before publication" >&2; exit 3; }
 PREREG_COMMIT=$(git -C "$REPO" log -1 --format=%H origin/v1/next -- "$PREREG_PATH")
-case $STEP in encode|stage|launch|lib)
+case $STEP in encode|stage|launch|lib|stagex|auditx)
   [ "$(date -u +%s)" -lt "$(date -u -d "$DEADLINE" +%s)" ] || { echo "past the compute deadline $DEADLINE" >&2; exit 8; } ;;
 esac
 mkdir -p "$EV/logs"
@@ -96,6 +98,38 @@ case $STEP in
     [ "$n" = 194 ] || { echo "INCOMPLETE: $n/194 stage records" >&2; exit 7; } ;;
   prep)
     cd "$CODE" && PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 nice -n 19 python3 -B phase_c_h357.py prepare ;;
+  auditreq)  # Amendment 1 (PREREG §3.1): which GP members does X_CL use that X0 never audited (SEARCH-only)?
+    cd "$CODE" && PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 nice -n 19 python3 -B phase_c_h357.py audit-request ;;
+  stagex)  # Amendment 1: a new GP code root (create-once on xbabe0) + the request, sha256-checked on arrival
+    if "${SSH[@]}" "systemctl --user list-units --state=active --no-legend 'h357-*' | grep -q ."; then
+      echo "refused: an h357-* unit is active on $HOST" >&2; exit 4
+    fi
+    [ -e "$GPC/PREREG_ON_V1NEXT" ] || printf '%s %s\n' "$PREREG_COMMIT" "$(sha256sum "$CODE/PREREG.md" | cut -d' ' -f1)" \
+      > "$GPC/PREREG_ON_V1NEXT"
+    "${SSH[@]}" "[ ! -e $GPC/code ]" || { echo "$HOST:$GPC/code exists (create-once)" >&2; exit 3; }
+    "${SSH[@]}" "mkdir -p $(dirname "$GPC")"
+    rsync -a "$GPC/" "$HOST:$GPC/"
+    "${SSH[@]}" "cd $GPC/code && sha256sum --quiet -c ../CODE.sha256"
+    REQ=$H357D/audit_extra_request.json
+    "${SSH[@]}" "[ ! -e $DATA/h357/audit_extra_request.json ]" || { echo "request exists on $HOST" >&2; exit 3; }
+    rsync -a "$REQ" "$HOST:$DATA/h357/audit_extra_request.json"
+    "${SSH[@]}" "sha256sum $DATA/h357/audit_extra_request.json" | grep -q "^$(sha256sum "$REQ" | cut -d' ' -f1) "
+    echo "stagex OK -> $HOST" ;;
+  auditx)
+    "${SSH[@]}" "systemd-run --user --unit h357-C-auditx -p MemoryMax=100G -p MemorySwapMax=0 \
+      -p StandardOutput=append:$DATA/h357/h357-C-auditx.log -p StandardError=append:$DATA/h357/h357-C-auditx.log \
+      $GPC/code/run_auditx_xbabe0.sh" ;;
+  pullx)
+    if "${SSH[@]}" "systemctl --user is-active -q h357-C-auditx"; then echo "h357-C-auditx still active" >&2; exit 4; fi
+    RX=$DATA/runs/H357_C_xbabe0_auditx
+    mkdir -p "$RX"
+    rsync -a "$HOST:$RX/" "$RX/"
+    rsync -a "$HOST:$DATA/h357/h357-C-auditx.log" "$EV/logs/h357-C-auditx.xbabe0.log"
+    "${SSH[@]}" "cd $RX && find . -type f | sort | xargs -d '\n' sha256sum" > "$EV/logs/C_auditx.xbabe0.sha256"
+    (cd "$RX" && sha256sum --quiet -c "$EV/logs/C_auditx.xbabe0.sha256")
+    n=$(wc -l < "$RX/done.jsonl"); want=$(jq '.contexts | length' "$H357D/audit_extra_request.json")
+    echo "pullx OK: $(wc -l < "$EV/logs/C_auditx.xbabe0.sha256") files identical; $n/$want contexts done"
+    [ "$n" = "$want" ] || { echo "INCOMPLETE: $n/$want audit-extra contexts" >&2; exit 7; } ;;
   lib)
     cat > "$EV/run_lib.sh" <<EOS
 #!/bin/bash
