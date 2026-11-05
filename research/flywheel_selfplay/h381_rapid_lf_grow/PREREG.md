@@ -224,3 +224,11 @@ Not run unless at least 75 min remain after E2. If it runs, it is preregistered 
   - **Deadline:** if R60 is not complete by 2026-11-05T20:15Z, it is reported as incomplete and not read as a
     replication.
 - **Scope:** TRAIN only. It cannot change the §7 arms or their dev91 reading.
+
+## 9. Erratum (closeout; the §7–8 text above is left exactly as published at `b16c12ff2b`)
+- **§7.0, E3 bullet.** It reads "`S3ftB16` −0.0032 vs `S3ft`". **−0.0032 is `S3ftB16` vs S0.** The isolating
+  contrast `S3ftB16 − S3ft` is **+0.0071** (95% CI −0.022 … +0.042; sign-flip p 0.34; median −0.003; 42% of families
+  harmed by more than 0.01; `results/decide_h381_e2.json`).
+- **Effect on decisions: none.**
+  - E3 was conditioned on a data-hunger signal, and this contrast is not a reliable one.
+  - The §5/§7 arm rule does not involve E2 offline numbers.
