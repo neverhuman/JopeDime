@@ -1,0 +1,56 @@
+{
+  "utc": "2026-11-05T09:49:39.799570+00:00",
+  "scope": "Exact deployed host-adapter snapshots; copied after all scientific processes stopped. Frozen scientific source and its prereg manifest are unchanged.",
+  "files": {
+    "ops_stage_inputs.py": {
+      "sha256": "0ad216ad0699d4eb0f8ec8ce34d4e8cac7926d0ac0218c476d4ef5ec827f19a1",
+      "deploy_as": "stage_inputs.py",
+      "deploy_directory": "custody P; source/ and vendor/ beneath it",
+      "host": "xbabe2"
+    },
+    "ops_fetch_and_stage.py": {
+      "sha256": "8a17bfa50dbbfda0cb77bd159a37e0806c085410bef1f227dd47397ec492cd7f",
+      "deploy_as": "fetch_and_stage.py",
+      "deploy_directory": "custody P; source/ and vendor/ beneath it",
+      "host": "xbabe2"
+    },
+    "ops_relay.py": {
+      "sha256": "7cbf9fe77db43b7faa32ef2ae3f845826697800d4794fbb1da2ec2fe6141562e",
+      "deploy_as": "relay.py",
+      "deploy_directory": "custody P; source/ and vendor/ beneath it",
+      "host": "xbabe2"
+    },
+    "ops_courier_guard.py": {
+      "sha256": "217b0ab020e8fdf00b1010cf8928da8277b194906c9418de87c4bc0aa4610a97",
+      "deploy_as": "courier_guard.py",
+      "deploy_directory": "custody P; source/ and vendor/ beneath it",
+      "host": "xbabe2"
+    },
+    "ops_x1_prepare.py": {
+      "sha256": "5a1841cc3e53ed80067543671d41fdeab495bc79bc36ca147666c46328db1657",
+      "deploy_as": "x1_prepare.py",
+      "deploy_directory": "custody P; source/ and vendor/ beneath it",
+      "host": "xbabe1"
+    },
+    "ops_x1_launch.py": {
+      "sha256": "556f8bb8b9ee807985a40ce9f879a6934e4be1588e3e7bbd33a61745dbdf59af",
+      "deploy_as": "x1_launch.py",
+      "deploy_directory": "custody P; source/ and vendor/ beneath it",
+      "host": "xbabe1"
+    },
+    "ops_transfer_back.py": {
+      "sha256": "91e184d03f3500f30ec779d1edee2f3cc1236126c5ee2a21a4dfef6d4f06ca5a",
+      "deploy_as": "transfer_back.py",
+      "deploy_directory": "custody P; source/ and vendor/ beneath it",
+      "host": "xbabe2"
+    },
+    "ops_reclaim_verified_inner_cache.py": {
+      "sha256": "c113c38502f6657d42bf5d7fd73eeb2970c7a5f355d04095012ce3ac7bc3d41c",
+      "deploy_as": "reclaim_verified_inner_cache.py",
+      "deploy_directory": "custody P; source/ and vendor/ beneath it",
+      "host": "xbabe2"
+    }
+  },
+  "credential_transfer": false,
+  "instructions": "Copy ops_*.py to the per-host custody directory with ops_ removed. Science lives in custody/source and pinned modules in custody/vendor. Only x1_prepare.py and x1_launch.py are deployed on xbabe1; AWS staging/courier/archiving code remains xbabe2-only."
+}

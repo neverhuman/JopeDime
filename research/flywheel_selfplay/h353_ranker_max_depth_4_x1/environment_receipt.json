@@ -1,0 +1,15 @@
+{
+  "utc": "2026-11-05T09:05:32.274564+00:00",
+  "host": "xbabe1",
+  "python": "3.12.3",
+  "numpy": "1.26.4",
+  "lightgbm": "4.6.0",
+  "sklearn": "1.7.2",
+  "kernel": "6.8.0-134-generic",
+  "lightgbm_library_sha256": "6a12e1a7b13824d14c252d2a4d2e36af467383331a114eb0e7448eecbf02d7b1",
+  "root_free_bytes": 97774301184,
+  "scientific_unit": "h353-x1-run",
+  "resource_properties": "MainPID=2543973\nMemoryMax=6442450944\nMemorySwapMax=0\n",
+  "credential_transfer": false,
+  "GPU_used": false
+}
