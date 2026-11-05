@@ -91,8 +91,8 @@ def main():
     ax.xaxis.set_minor_locator(NullLocator())
     ax.set_yticks([10-row["run_index"] for row in output], [f"{row['first_round']}–{row['last_round']}" for row in output])
     ax.set_ylim(-.7,9.7)
-    ax.set_xlabel("consecutive recorded rejections (log scale)")
-    ax.set_ylabel("Logged round interval")
+    ax.set_xlabel("consecutive recorded rejections (log scale)",labelpad=8)
+    ax.set_ylabel("Logged round interval",labelpad=8)
     ax.tick_params(axis="y", length=0, pad=6)
     ax.grid(axis="x", color=".88", linewidth=.5, zorder=0)
     for spine in ["top","right","left"]:

@@ -68,10 +68,10 @@ def main():
     xs = [r["records_per_round"] for r in output]; ys = [r["rounds_at_least_k"] for r in output]
     ax.scatter(xs,ys,s=25,color="#0072b2",zorder=3)
     for x,y in zip(xs,ys):ax.annotate(f"{y:,}",(x,y),xytext=(0,6),textcoords="offset points",ha="center",va="bottom",fontsize=9.0)
-    ax.set_yscale("log");ax.set_ylim(.7,8500);ax.set_xlim(-.35,10.35)
+    ax.set_yscale("log");ax.set_ylim(.7,1.5e4);ax.set_xlim(-.35,10.35)
     ax.set_xticks(xs,[str(x) for x in xs])
-    ax.yaxis.set_major_locator(FixedLocator([1,10,100,1000,5000]));ax.yaxis.set_major_formatter(FixedFormatter(["1","10","100","1,000","5,000"]));ax.yaxis.set_minor_locator(NullLocator())
-    ax.set_xlabel("Minimum program records per logged round (k)")
+    ax.yaxis.set_major_locator(FixedLocator([1,10,100,1000,10000]));ax.yaxis.set_major_formatter(FixedFormatter(["1","10","100","1,000","10,000"]));ax.yaxis.set_minor_locator(NullLocator())
+    ax.set_xlabel("Minimum program records per logged round (k)",labelpad=8)
     ax.set_ylabel("Rounds with at least k records",labelpad=8)
     ax.grid(axis="y",color=".88",linewidth=.5,zorder=0)
     for spine in ["top","right"]:ax.spines[spine].set_visible(False)

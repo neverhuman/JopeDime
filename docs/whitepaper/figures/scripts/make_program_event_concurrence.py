@@ -88,7 +88,7 @@ def main():
     for spine in ax.spines.values():spine.set_visible(False)
     cax = fig.add_axes([.89,.19,.014,.77])
     bar = fig.colorbar(image,cax=cax,ticks=[1,10,100,1000])
-    bar.ax.set_yticklabels(["1","10","100","1,000"]);bar.ax.minorticks_off();bar.set_label("Round count (log color)")
+    bar.ax.set_yticklabels(["1","10","100","1,000"]);bar.ax.minorticks_off();bar.set_label("Round count (log color)",labelpad=8)
     pdf = OUT / "fig_program_event_concurrence.pdf"
     fig.savefig(pdf,metadata={"CreationDate":None,"ModDate":None});plt.close(fig)
     font = Path(font_manager.findfont("Liberation Serif"))
