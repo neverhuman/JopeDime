@@ -16,6 +16,9 @@ pub(crate) struct Source {
     pub demo: bool,
     pub rows: u64,
     pub columns: u64,
+    /// The name it was registered under and its profile, remembered with a started run.
+    pub name: String,
+    pub profile: Option<jope_api::DatasetProfile>,
 }
 
 /// A cloud run waiting on a login or an answer.
@@ -303,7 +306,7 @@ impl super::Session {
         match crate::terminal::onboarding::load(&self.home).results_sync {
             Some(true) => {
                 self.spawn_results(run, owner);
-                vec!["Syncing this run's model and report to your workspace…".into()]
+                vec!["Syncing this run's model and code to your workspace…".into()]
             }
             Some(false) => Vec::new(),
             None => {

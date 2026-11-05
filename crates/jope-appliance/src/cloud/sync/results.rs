@@ -1,11 +1,14 @@
 //! After a local run finishes: its results go to the workspace so the run can be explored there
-//! like a cloud run (report, predictions from the fitted model, downloads).
+//! like a cloud run (predictions from the fitted model, downloads, generated code).
 //!
-//! Order is fixed: metadata (`POST /api/cli/runs`, which names the cloud run), events
-//! (`/:id/events`), the fitted model (`/:id/model`), the PDF report (`/:id/report`), then the
-//! generated code (`/:id/code`). Each upload is retried on a transport failure, a 5xx or a 429;
-//! what succeeded is remembered per run, so the next sync sends only what is still missing.
-//! Exact retries are idempotent on the server; a different model for the same run is refused.
+//! Order is the contract's (ai-veox-app `docs/connected-cli.md`, *Local runs are first-class*):
+//! metadata (`POST /api/cli/runs`, which names the cloud run), events (`/:id/events`), the fitted
+//! model (`/:id/model`), the generated code (`/:id/code`), then `model_published` in a last events
+//! batch — after the model, which the event is checked against. Each upload is retried on a
+//! transport failure, a 5xx or a 429; what succeeded is remembered per run, so the next sync sends
+//! only what is still missing. Exact retries are idempotent on the server; a different model for
+//! the same run is refused. The report PDF is written by the engine on a cloud run; a local run
+//! uploads one only when the engine writes it (not yet), so none is sent here.
 //! No dataset rows are sent — but a kernel, smoother or Gaussian-process model keeps the
 //! support rows it predicts from inside its fitted state, which is why the consent says so.
 use super::*;
@@ -13,7 +16,6 @@ use super::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Kind {
     Model,
-    Report,
     Code,
 }
 
@@ -21,7 +23,6 @@ impl Kind {
     fn label(self) -> &'static str {
         match self {
             Self::Model => "model",
-            Self::Report => "report",
             Self::Code => "code",
         }
     }
@@ -32,12 +33,6 @@ impl Kind {
                 "x-model-sha256",
                 "modelSha256",
                 MAX_MODEL,
-            ),
-            Self::Report => (
-                "application/pdf",
-                "x-report-sha256",
-                "reportSha256",
-                16 << 20,
             ),
             Self::Code => ("application/zip", "x-code-sha256", "codeSha256", 8 << 20),
         }
@@ -50,8 +45,6 @@ pub(crate) struct Delivered {
     #[serde(default)]
     model: Option<String>,
     #[serde(default)]
-    report: Option<String>,
-    #[serde(default)]
     code: Option<String>,
 }
 
@@ -59,7 +52,6 @@ impl Delivered {
     fn slot(&mut self, kind: Kind) -> &mut Option<String> {
         match kind {
             Kind::Model => &mut self.model,
-            Kind::Report => &mut self.report,
             Kind::Code => &mut self.code,
         }
     }
@@ -146,6 +138,11 @@ fn send(client: &Client, cloud: &str, kind: Kind, bytes: &[u8], hash: &str) -> A
             }
         }
     }
+}
+
+fn delivered_model(state: &Path) -> Option<String> {
+    let delivered: Delivered = serde_json::from_slice(&read_private(state).ok()?).ok()?;
+    delivered.model
 }
 
 /// Upload `items` in order to the cloud run, skipping what `state` says already arrived.
@@ -253,27 +250,8 @@ pub(crate) fn flatten_code(bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(out.finish()?.into_inner())
 }
 
-fn finished_event<T: jope_client::Transport>(
-    local: &T,
-    run: &jope_api::ids::RunId,
-) -> Option<jope_api::RunFinishedBody> {
-    let mut after = jope_api::decimal::DecimalU64(0);
-    for _ in 0..64 {
-        let page = local.run_events(run, after, 256).ok()?;
-        for event in &page.events {
-            if let jope_api::EventBody::RunFinished(body) = &event.event {
-                return Some(body.clone());
-            }
-        }
-        if page.events.is_empty() || page.next_after.0 <= after.0 {
-            return None;
-        }
-        after = page.next_after;
-    }
-    None
-}
-
-/// Sync a finished local run's results: metadata and events, then model, report and code.
+/// Sync a finished local run's results: metadata and events, then model and code, then
+/// `model_published`.
 pub fn sync_results<T: jope_client::Transport>(
     local: &T,
     run: &jope_api::ids::RunId,
@@ -307,16 +285,6 @@ pub fn sync_results<T: jope_client::Transport>(
             )),
         }
     }
-    let finished = finished_event(local, run);
-    items.push((
-        Kind::Report,
-        super::report::pdf(&super::report::lines(
-            &snapshot,
-            finished.as_ref(),
-            &version,
-            &chrono_like_now(),
-        )),
-    ));
     if let Some(best) = &snapshot.best {
         let request = jope_api::ExportRequest {
             algorithm_id: best.algorithm_id.clone(),
@@ -347,7 +315,21 @@ pub fn sync_results<T: jope_client::Transport>(
         .join("runs")
         .join(format!("{id}.results.json"));
     let client = Client::connected(&c)?.with_timeout(Duration::from_secs(120))?;
+    let model = items
+        .iter()
+        .find(|(kind, _)| *kind == Kind::Model)
+        .map(|(_, bytes)| (jope_runtime::sha256_hex(bytes), bytes.len() as u64));
     lines.extend(push(&client, &cloud, items, &state, &std::thread::sleep));
+    // The event follows the model it names (the app checks it against the stored digest).
+    if let Some((hash, bytes)) =
+        model.filter(|(hash, _)| delivered_model(&state).as_deref() == Some(hash.as_str()))
+    {
+        lines.push(
+            super::telemetry::record_publication(&c, &client, &id, &cloud, &hash, bytes)
+                .map(|note| note.trim().to_owned())
+                .unwrap_or_else(|error| format!("Model event queued: {error:#}")),
+        );
+    }
     lines.push(format!(
         "Explore it in your workspace: {}/runs/{cloud}",
         c.origin

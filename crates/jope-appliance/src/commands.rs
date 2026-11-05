@@ -293,8 +293,7 @@ pub(crate) fn bundle_object(
         {
             return Err(Failure::integrity(
                 "the bundle's model does not match its export manifest",
-            )
-            .into());
+            ));
         }
         let manifest: jope_runtime::model_object::Manifest =
             jope_runtime::strict_json::decode(&manifest_bytes)
@@ -302,7 +301,7 @@ pub(crate) fn bundle_object(
         let mut parts = std::collections::BTreeMap::new();
         for part in &manifest.files {
             if part.path.contains(['/', '\\']) || part.path.starts_with('.') {
-                return Err(Failure::integrity("unsafe model part path").into());
+                return Err(Failure::integrity("unsafe model part path"));
             }
             let bytes = read_bounded(&object_dir.join(&part.path), part.bytes.min(limit))?;
             let listed = entries
@@ -312,8 +311,7 @@ pub(crate) fn bundle_object(
                 return Err(Failure::integrity(format!(
                     "model part {} does not match the export manifest",
                     part.path
-                ))
-                .into());
+                )));
             }
             parts.insert(part.path.clone(), bytes);
         }

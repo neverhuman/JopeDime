@@ -197,7 +197,8 @@ pub fn sync_events<T: jope_client::Transport>(
     local: &T,
     snapshot: &jope_api::RunSnapshot,
 ) -> Result<String> {
-    let events = crate::cloud_events::collect(local, snapshot)?;
+    let context = super::run_context(&snapshot.run_id.to_string());
+    let events = crate::cloud_events::collect(local, snapshot, context.as_ref())?;
     let _lock = connection_lock()?;
     let c = connection()?;
     anyhow::ensure!(

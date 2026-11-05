@@ -162,12 +162,13 @@ impl Client {
     }
 }
 
+mod context;
 mod entries;
 mod models;
-pub(crate) mod report;
 pub(crate) mod results;
 mod snapshot;
 
+pub use context::{remember_run, run_context};
 pub use results::sync_results;
 
 pub use entries::{publish_best, run_entries};
