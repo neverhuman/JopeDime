@@ -1,0 +1,132 @@
+# H381: rapid tests of 300-row low-fidelity GP search and a grown screener (TRAIN), then a 5-dataset dev91 direction check
+
+**Owner:** `cl_fwriter` (Claude Opus 5.5).
+
+**Status:** part A, written before any H381 S60 GP run or E2 training run.
+
+**Request.** Owner, 2026-11-05, after the H369 ladder:
+- Use synthetic data variety, and shorten the randomly sampled rows to about 300 if that trains much faster.
+- Make the network larger while keeping what already exists, through weight locking or fine-tuning.
+- Spot-check relative Elo on 5 random datasets from the dev91 holdout to see whether RMSE moves in the right direction.
+
+**Constraints:**
+- About 4 hours in total.
+- dev91 is read only for the final 1–2 arms. Every decision is made on TRAIN.
+- "Don't rerun models you already have": every baseline is a **stored** result.
+
+## 1. Baselines (stored; none is rerun)
+| Use | Baseline | Location |
+| --- | --- | --- |
+| E1, E2-in-loop | **X0** = H364 Phase C `AGG.g50.CV3@12` (the H335 AGG recipe), seed 364101 | `h335-cl/runs/H364_C_xbabe0` (xbabe0; pulled copy on xbabe2) |
+| E2 | **S0** = H317 `H0.1-A` (scale S, opt1, A4 views, A525 subset, 3,000 steps, 2 seeds × 5 family folds) | `h317-cl/neural/runs/H0.1-A` |
+| E2, descriptive only | H317 `H0.2-L` | `h317-cl/neural/runs/H0.2-L` |
+| dev91 | The board's stored `h335.H335_AGG` `per_seed` rows | `dev91-audit-v1` |
+
+## 2. E1: GP search on a 300-row SEARCH subsample, finished on full rows
+### Panel and checks
+- **Panel S60:** the first 60 P201d contexts (one per family) ordered by `stream_seed(381101, "S60", cid)`.
+  - `panels.json` lists them; S60 cids sha256 `4f1ceefc5920dc2c…`.
+  - P201d is the H364 panel; X0 already covers all 190 of its contexts.
+- **Pre-checks, done before this PREREG:**
+  - **Envelope identity** (`gp_h381.py idcheck`, 3 cids): `lf_rows=0` reproduces the X0 memo envelope shas.
+    `lf_rows=300` has 150 + 150 SEARCH rows, and the same AUDIT envelope sha, `ba`, `ya` and `y_search_mean`.
+  - **Replay** (R6, the first 6 S60 cids, with the H364 memo copied in): 0 physical worker runs, and `AGG.g50.single`
+    and `AGG.g50.CV3@12` equal X0 exactly (Δ = 0, identical stack specs).
+  - **Smoke** (DEV2, P201d positions 60–61, never scored): on the same candidates, 300-row evals cost 2.1× and 5.8×
+    less wall time than full-row evals.
+
+### Method
+- **Code:** `gp_h381.py`. Runtime patches only; the 18 H317 pins and the H335 files are unchanged and verified.
+- **SEARCH subsample:**
+  - In each native SEARCH fold, sort the rows by y (stable), cut them into 150 equal strata (`np.array_split`), and keep
+    one seeded-random row per stratum (`stream_seed(381111, "lf", cid, fold, 150)`).
+  - Rows keep their original order. The subsample is fixed per context for the whole search.
+- **Unchanged from X0:** the AUDIT envelope (members fit on all 1,120 SEARCH rows, 480 AUDIT rows), `ba`, the
+  screener, the views, Seed F and Evo A (K = 6 live / P = 48 screened per generation), seed 364101 and the worker.
+
+### Outputs
+| Output | Built from |
+| --- | --- |
+| `LF.g<gc>.{single, CV3@12}` | Low-fidelity SEARCH results (CV3 weights fit on 300 rows) |
+| `FR.g<gc>.{single, CV3@12}` | The `fr_k = 24` best low-fidelity candidates (`rank_key`) plus the LF CV3 members, re-evaluated on the full 1,120-row SEARCH envelope; outputs rebuilt from those results |
+
+### Runs on xbabe0 (docker sandbox, 2 × 48 cores, at the same time)
+- **A:** `--lf-rows 300 --gens 100 --checkpoints 50,100 --fr-k 24`.
+- **B:** `--lf-rows 600 --gens 50 --checkpoints 50 --fr-k 24`.
+
+### CPU accounting
+- **Search CPU of an output** is the summed single-thread worker wall-seconds of the unique candidates it used.
+  - It covers the low-fidelity SEARCH evals up to `gc`, plus the FR evals for FR outputs.
+  - The runner enforces a CPU-time limit (RLIMIT_CPU), so wall time is close to CPU time.
+- **X0's search CPU** is the same sum over its stored memo SEARCH records.
+- **Reporting:** the ratio is Σ over S60. AUDIT CPU and Python (screener) wall time are reported separately.
+
+### Decisions (TRAIN S60, vs stored X0 `AGG.g50.CV3@12`)
+Δu is AUDIT u. The family = context here (60 families).
+- **E1-win:** `FR.g100.CV3@12` passes `h335_stats.primary_test` and the search-CPU ratio ≤ 1.0.
+  - `primary_test`: clip ±0.5, exact sign-flip p < 0.025, LOFO min > 0, median ≥ 0.
+- **E1-speed:** `FR.g50.CV3@12` is non-inferior and the search-CPU ratio ≤ 0.40.
+  - Non-inferior: the family-bootstrap 95% lower bound (10,000 resamples, seed 381150) of the clipped mean Δu is
+    > −0.005.
+- **Descriptive only:** all other outputs (LF vs FR, LF600, single) and the `headline` (unclipped gain, % RMSE).
+
+## 3. E2: a deeper screener grown from S0, with frozen or fine-tuned weights
+### Model and growth
+- **S3:** S with 3 layers instead of 1 (d = 32, 4 heads, cand_hidden 228, ffn ×4.0; LayerNorm/GELU like S).
+  - It adds `ctx_blocks.{1,2}` and `cross_blocks.{1,2}`. It is registered at runtime as `SCALES["S3"]`.
+- **Growth:**
+  - Each S0 fold model (`H0.1-A/seed{317101,317102}/fold{j}/model.pt`) loads into S3 with `strict=False`; the
+    missing keys may only be new-block keys.
+  - In the new blocks, the weight **and** bias of `att.o` and `ffn.w2` are zeroed, so the grown model starts out
+    computing exactly S0. Checked before training: max |Δ| = 0 on 4 contexts.
+  - The stored normalizer is kept.
+- **Fold-cleanliness:** the S0 model's `train_cids` must equal this run's training contexts (same A525 subset, same
+  family fold).
+
+### Arms
+All new. Shared settings: opt1 (AdamW, cosine), 3,000 steps, A525 subset, 2 seeds × 5 folds, the same (seed, fold)
+run seeds as S0, and `keep_models`.
+
+| Arm | Change from S0 |
+| --- | --- |
+| `S0cont` | S0, 3,000 further steps, every parameter at 8e-5 (isolates "more training") |
+| `S3sc` | S3 from scratch at the standard opt1 settings |
+| `S3fz` | Grown S3; the S0 parameters **locked**; new layers at 8e-4 |
+| `S3ft` | Grown S3; all parameters; new at 8e-4, S0 parameters at 8e-5 |
+| `S3ftB16` | `S3ft` trained on the B16 view subset: the existing synthetic row-crop, column and distractor variety |
+
+### Decision and hosts
+- **Metric:** `rapid_hypothesis_lab` top-1 native utility per held-out context (seed mean), validated by
+  `validate_arm_dirs`.
+- **Rule:** `decide` with `PLANNED["H381-E2"]`: baseline S0, m = 5, Holm, contract gate (Holm lower bound > +0.001,
+  median ≥ 0, ≤ 10% of families harmed, LOFO > 0).
+- **Hosts:** folds 0–2 on xbabe1 (RTX 4090), folds 3–4 on xbabe3 (RTX 3090), per `FOLD_HOST`.
+- **GP in the loop:**
+  - **Trigger:** only if the best arm's family-mean gain over S0 is ≥ +0.01 (gate result reported).
+  - **Run:** its 10 models go to xbabe0. `gp_h381.py --lf-rows 0 --gens 50` on S60, seed 364101; the screener is the
+    only change from X0.
+  - **Judged by** `primary_test` vs X0.
+  - **If E1 passed,** the best screener + LF300 combination may also run.
+
+## 4. E3 (synthetic tasks)
+Not run unless at least 75 min remain after E2. If it runs, it is preregistered separately first.
+
+## 5. dev91 direction check (part B)
+- **Arms:** at most 2 final arms.
+  - The E1 output with the largest S60 clipped mean Δu vs X0.
+  - The E2-in-loop arm, if run and its S60 mean Δu > 0.
+- **Contexts:** 5 dev91 contexts from 5 distinct families.
+  - First 5 families by `stream_seed(381501, "d91fam", family)`; in each, the cid with the smallest
+    `stream_seed(381501, "d91ctx", cid)`.
+- **Compared only with stored board rows:**
+  - per (context, seed) RMSE `ba·e^(−u)` vs `h335.H335_AGG`;
+  - a 5-context Elo with all board entrants.
+  - Direction only; nothing is added to the board ladder, and the 5 contexts are recorded as exposed.
+- **Mechanics:** before any dev91 read, a part-B amendment fixes the arms, the LOCK (code and models in `code_sha256`,
+  no dev91 path there), the receipt and the one-shot unlock (H369 pattern), and is published.
+
+## 6. Other rules
+- **Hosts:** xbabe2 runs no compute (other lanes hold its CPU pools); xbabe4 is unused (macOS, no torch).
+- **DOPE:** c51a56d0 is unchanged and checked by the lab harness.
+- **Closed data:** sealed, holdout and DL-Test are never touched.
+- **Deadline:** compute ends by **2026-11-05T20:15Z**. If time runs short, drop in this order: E3, `S3ftB16`, run B.
