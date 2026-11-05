@@ -26,6 +26,7 @@ SEEDS = (335101, 335102)
 REF = "h335.H335_AGG"
 ANCHOR = "h335.H257_REPLICA"
 BOARD_SHA = "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069"
+PRE_READ = "016648dc"  # PREREG §7.4: this context's stored h335.H335_AGG row was printed before the amendment
 
 
 def board_values(bd: Path):
@@ -95,6 +96,7 @@ def main() -> None:
     rep["elo5"] = {e: {"rank": i + 1, "elo": elo["elo"][e]["elo"], "ci95": elo["elo"][e]["ci95"]}
                    for i, e in enumerate(order)}
     rep["note"] = "5 contexts / 5 families: direction only (best sign-flip p = 1/32); not added to the board"
+    rep["pre_amendment_board_read"] = {"cid_prefix": PRE_READ, "selected": [c for c in cids if c.startswith(PRE_READ)]}
     Path(a.out).write_text(json.dumps(rep, indent=1, sort_keys=True) + "\n")
     for n, r in rep["arms"].items():
         print(f"{n}: better {r['contexts_better']}/5 worse {r['contexts_worse']}/5 mean du {r['mean_delta_u']:+.4f} "

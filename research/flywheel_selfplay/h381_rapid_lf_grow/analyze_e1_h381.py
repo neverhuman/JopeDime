@@ -10,7 +10,7 @@ Reads only TRAIN run outputs: stage records (stages/C_AGG/<cid>__<seed>.jsonl) a
                X0: every SEARCH record of its memo (it ran g50 only). AUDIT CPU and unit wall are reported apart.
 Tests: h335_stats.primary_test / headline (clip 0.5), plus the PREREG family-bootstrap 95% LCB (10,000, seed 381150).
 
-  analyze_e1_h381.py --x0 RUN --arm NAME=RUN [--arm ...] --panels panels.json --out OUT.json
+  analyze_e1_h381.py --x0 RUN --arm NAME=RUN [--arm ...] --panels panels.json [--panel S60|R60|S60+R60] --out OUT.json
 """
 
 from __future__ import annotations
@@ -72,18 +72,23 @@ def main() -> None:
     ap.add_argument("--x0", required=True)
     ap.add_argument("--arm", action="append", required=True)
     ap.add_argument("--panels", required=True)
+    ap.add_argument("--panel", default="S60", help="panel name(s) in panels.json, joined by + to pool (PREREG §8)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
-    pan = json.loads(Path(a.panels).read_text())["S60"]
+    pj = json.loads(Path(a.panels).read_text())
+    pan = {"cids": [c for n in a.panel.split("+") for c in pj[n]["cids"]],
+           "families": [f for n in a.panel.split("+") for f in pj[n]["families"]]}
+    if len(set(pan["families"])) != len(pan["cids"]):
+        raise SystemExit("panel families must be distinct")
     cids, fam_of = pan["cids"], dict(zip(pan["cids"], pan["families"]))
     x0 = load_records(Path(a.x0), cids)
     x0u = {c: float(x0[c]["outputs"][X0_KEY]["value"]) for c in cids}
-    x0cpu = {}
+    x0cpu, x0w = {}, {}
     for c in cids:
-        w = memo_walls(Path(a.x0), c)["split"]
+        w = x0w[c] = memo_walls(Path(a.x0), c)["split"]
         x0cpu[c] = {"search": sum(w.get("search", {}).values()), "audit": sum(w.get("audit", {}).values())}
     X0_SEARCH = sum(v["search"] for v in x0cpu.values())
-    rep = {"schema": "jope.h381.e1-analysis/v1", "panel": "S60", "n": len(cids), "x0_key": X0_KEY,
+    rep = {"schema": "jope.h381.e1-analysis/v1", "panel": a.panel, "n": len(cids), "x0_key": X0_KEY,
            "x0": {"family_mean_u": H.family_mean(x0u, fam_of), "search_cpu_s": X0_SEARCH,
                   "audit_cpu_s": sum(v["audit"] for v in x0cpu.values()),
                   "unit_wall_s": sum(float(x0[c]["wall_s"]) for c in cids)}, "outputs": {}}
@@ -116,9 +121,20 @@ def main() -> None:
                                                                       recs[c]["outputs"][k].get("invalid")),
                 "per_context_delta": {c: vals[c] - x0u[c] for c in cids}}
         audit = sum(sum(memo[c].get(m, {}).get("audit", {}).values()) for c in cids for m in memo[c])
+        # host-speed check (descriptive, added after part A): the same full-row SEARCH program on the same context timed
+        # in this run and in X0; a ratio below 1 means this run's host was faster, which flatters search_cpu_ratio
+        same_x0 = same_run = 0.0
+        n_same = 0
+        for c in cids:
+            mine, ref = memo[c].get("split", {}).get("search", {}), x0w[c].get("search", {})
+            for s in mine.keys() & ref.keys():
+                same_x0, same_run, n_same = same_x0 + ref[s], same_run + mine[s], n_same + 1
         rep.setdefault("runs", {})[name] = {"audit_cpu_s_all_outputs": audit,
                                             "unit_wall_s": sum(float(recs[c]["wall_s"]) for c in cids),
-                                            "lf_rows": recs[cids[0]]["lf_rows"]}
+                                            "lf_rows": recs[cids[0]]["lf_rows"],
+                                            "host_speed": {"n_same_programs": n_same, "x0_wall_s": same_x0,
+                                                           "run_wall_s": same_run,
+                                                           "ratio": same_run / same_x0 if same_x0 else None}}
     rules = {}
     o = rep["outputs"]
     if "A:FR.g100.CV3@12" in o:

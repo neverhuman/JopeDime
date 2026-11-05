@@ -2,7 +2,7 @@
 
 **Owner:** `cl_fwriter` (Claude Opus 5.5).
 
-**Status:** part A, written before any H381 S60 GP run or E2 training run.
+**Status:** part A (§1–6) was written before any H381 S60 GP run or E2 training run. The part-B amendment (§7–8) was appended after the part-A TRAIN results and before any H381 dev91 read or R60 run.
 
 **Request.** Owner, 2026-11-05, after the H369 ladder:
 - Use synthetic data variety, and shorten the randomly sampled rows to about 300 if that trains much faster.
@@ -130,3 +130,97 @@ Not run unless at least 75 min remain after E2. If it runs, it is preregistered 
 - **DOPE:** c51a56d0 is unchanged and checked by the lab harness.
 - **Closed data:** sealed, holdout and DL-Test are never touched.
 - **Deadline:** compute ends by **2026-11-05T20:15Z**. If time runs short, drop in this order: E3, `S3ftB16`, run B.
+
+## 7. Part-B amendment (dev91), fixed before any H381 dev91 read
+### 7.0 Part-A results that fix the choices below (S60, vs stored X0; `results/e1_all.json` sha `6a104911…`)
+| Output | Clipped mean Δu | Median | LOFO | Sign-flip p | Raw search-CPU ratio |
+| --- | --- | --- | --- | --- | --- |
+| `E2L:AGG.g50.CV3@12` | **+0.0028** | 0 | −0.0056 | 0.424 | 0.56 |
+| `B:FR.g50.CV3@12` (best E1) | −0.0074 | −0.0024 | −0.0160 | 0.633 | 0.66 |
+| `A:FR.g100.CV3@12` (E1-win output) | −0.0520 | −0.0107 | −0.0613 | 0.974 | 0.56 |
+| `A:FR.g50.CV3@12` (E1-speed output) | −0.0583 | −0.0115 | −0.0678 | 0.987 | 0.28 |
+
+- **E1-win** and **E1-speed** both fail; every E1 output is below X0.
+- **E2 offline:** no arm passes the contract gate. The best gain is `S3fz` (+0.0103), so the GP-in-loop trigger fired and `E2L` ran.
+- **Not run:**
+  - the combination run (it needs a passing E1);
+  - E3, because E2 shows no data-hunger signal: `S3ftB16` −0.0032 vs `S3ft`, and `S0cont` −0.0069.
+- **CPU-ratio caveat (descriptive, added after part A):**
+  - On full-row SEARCH programs evaluated both in a part-A run and in X0, the part-A run's wall time is 0.64× X0's
+    for `E2L` (6,513 programs), 0.74× for B (77) and 0.94× for A (116).
+  - The raw CPU ratios therefore flatter the new runs, because the host was less loaded than during X0.
+  - `analyze_e1_h381.py` now reports this as `runs.*.host_speed`. The outputs and rules are unchanged (identical
+    `outputs` sha).
+
+### 7.1 Final arms, by the §5 rule
+- **E1:** `E1B` (`--lf-rows 600 --gens 50 --fr-k 24`, H0.1-A screener), output `FR.g50.CV3@12`.
+  - It has the largest S60 clipped mean Δu of the E1 outputs (−0.0074). It is below X0 on TRAIN, and dev91 does not
+    change that verdict.
+- **E2-in-loop:** `E2L` (the S3fz screener, `--lf-rows 0 --gens 50`), output `AGG.g50.CV3@12`.
+  - Its S60 mean Δu is +0.0288 (clipped +0.0028) > 0. It did not pass `primary_test` on TRAIN.
+- **REPLAY (harness check, not an arm):** `--lf-rows 0 --gens 50` with the H0.1-A screener, which is exactly the H335
+  AGG recipe.
+
+| Name | `lf_rows` | `gens` | `checkpoints` | `fr_k` | `neural_run_dir` (fold-0 pair) | Output |
+| --- | --- | --- | --- | --- | --- | --- |
+| REPLAY | 0 | 50 | [50] | 0 | `h335-cl/neural/runs/H0.1-A` | `AGG.g50.CV3@12` |
+| E1B | 600 | 50 | [50] | 24 | `h335-cl/neural/runs/H0.1-A` | `FR.g50.CV3@12` |
+| E2L | 0 | 50 | [50] | 0 | `h335-cl/neural/runs/H381-E2-S3fz` | `AGG.g50.CV3@12` |
+
+### 7.2 Mechanics
+- **Sandbox:** `sandbox_h381_d91.sh`. `stage_d91_h381.sh` stages the published bytes of this commit.
+- **LOCK:** `d91_h381.py lock` writes `h381-d91/stage_v/LOCK.json`.
+  - `code_sha256` covers the code, the H317 pins, the grammar port, the superset worker, and each arm's fold-0
+    `model.pt` for both seeds. It contains **no dev91 path**.
+  - `inputs_manifests_sha256` covers the two H335 Stage V prep manifests. `select` checks every selected table and
+    SEARCH view against them.
+- **Receipt and unlock:** a create-once 0444 receipt `ns/receipts/H381_LOCK_sha256.txt` (xbabe0, mirrored on xbabe2).
+  There is one `unlock`; every later command uses `resume_stage_v`.
+- **Contexts:** `select` writes a create-once `cids5.json` by the §5 rule (seed 381501).
+- **Runs:** phase V, seeds 335101 and 335102, 5 contexts × 2 seeds per arm, cores 80-127.
+  - Each run dir starts from a read-only-sourced copy of the H335 Stage V memo for the 5 contexts. A program the H335
+    run already evaluated is read from it, not recomputed. The worker is deterministic, and REPLAY tests this.
+  - REPLAY runs first.
+- **Readout:** `compare_d91_h381.py` against the stored `dev91-audit-v1` board (sha `40cb4828…`). No board entrant is
+  rerun or rescored, and nothing is added to the board.
+
+### 7.3 Checks and reading
+- **REPLAY must reproduce the board:** 0 physical worker runs, and per-seed `AGG.g50.CV3@12` u equal to the board's
+  `h335.H335_AGG` `per_seed` within 1e-9.
+  - If it fails, that is reported. The arms are then compared first with the REPLAY output (same harness), and with
+    the board rows second.
+- **Per arm, the readout reports:**
+  - per (context, seed): Δu and the % RMSE change (`ba·e^(−u)`) vs `h335.H335_AGG`;
+  - contexts better or worse (seed mean, ±1e-4);
+  - the 5-context AUDIT-Elo rank among all complete board entrants (anchor `h335.H257_REPLICA`).
+- **"RMSE moving in the right direction"** means mean Δu > 0 with at least 3 of 5 contexts better. This is descriptive
+  only: the best possible sign-flip p on 5 families is 1/32, so nothing is adopted from it.
+- **Exposure:** the 5 contexts are recorded as exposed in the H381 receipts and in the board README.
+
+### 7.4 Disclosure: board bytes read before this amendment
+- **What was read:** during part A, a command that inspected the board's record format printed the first line of
+  `dev91-audit-v1/scores/h335.H335_AGG.jsonl`. That line holds one context (`016648dc…`) with stored `per_seed` u
+  3.409 and 2.222.
+- **Nothing else:** no other dev91 table, view, memo or score was read.
+- **Why it changes nothing:**
+  - the arm choice above follows §5 from TRAIN outputs only;
+  - the contexts come from the seeded rule;
+  - the stored rows are fixed comparison values.
+- `compare_d91_h381.py` flags `016648dc…` if it is drawn.
+
+## 8. E2L replication on TRAIN (R60), fixed before it runs
+- **Why:** `E2L` is the only H381 output above X0 on S60, and S60 alone cannot separate it from noise (p 0.424).
+- **Panel R60:** P201d positions 62–121 in the S60 order (positions 60–61 are DEV2).
+  - 60 families, disjoint from S60. cids sha256 `0c711a7606e3c9b4…` (`panels.json`).
+  - S60, R6 and DEV2 are unchanged.
+- **Run:**
+  - `gp_h381.py launch --panel R60 --lf-rows 0 --gens 50 --checkpoints 50 --fr-k 0 --neural-run-dir .../H381-E2-S3fz`
+    with seed 364101;
+  - xbabe0 cores 16-63, code staged as `gpc-run2` from this commit.
+  - The screener is the only change from X0. The stored X0 already covers R60 and is not rerun.
+- **Reading** (`analyze_e1_h381.py --panel R60` and `--panel S60+R60`, output `AGG.g50.CV3@12` vs stored X0):
+  - **Replicated:** the R60 clipped mean Δu > 0 **and** the pooled S60+R60 (120 families) `primary_test` passes.
+  - **Otherwise:** `E2L` stays an unconfirmed lead.
+  - **Deadline:** if R60 is not complete by 2026-11-05T20:15Z, it is reported as incomplete and not read as a
+    replication.
+- **Scope:** TRAIN only. It cannot change the §7 arms or their dev91 reading.

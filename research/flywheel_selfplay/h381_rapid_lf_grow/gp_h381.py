@@ -19,7 +19,7 @@ With --lf-rows 0 the unit is h335_lab.unit_agg exactly (outputs AGG.*), used for
 Commands (in sandbox_h335_docker.sh on xbabe0, H335_GROUP=AGG, H335_STAGE=<stage holding code/>):
   idcheck --run-dir R                 envelope identity on 3 S60 cids (no worker run)
   launch  --run-dir R --cpus L --shards N --workers-per-shard W --lf-rows n --gens G --checkpoints a,b --fr-k k
-          [--panel S60|R6] [--neural-run-dir D]
+          [--panel S60|R6|R60] [--neural-run-dir D]
   run     spawned by launch
 """
 
@@ -73,13 +73,17 @@ def p201d() -> Dict[str, str]:
 
 def panel(name: str) -> List[str]:
     """S60: the first 60 P201d contexts (one per family) in the order stream_seed(381101, 'S60', cid).
-    R6: the first 6 of S60 (replay check). DEV2: P201d order positions 60-61 (smoke only, never scored)."""
+    R6: the first 6 of S60 (replay check). DEV2: P201d order positions 60-61 (smoke only, never scored).
+    R60: positions 62-121 (the E2L TRAIN replication panel, PREREG §8; families disjoint from S60)."""
     fam = p201d()
     order = sorted(fam, key=lambda c: C.stream_seed(PANEL_SEED, "S60", c))
     s60 = order[:60]
     if len({fam[c] for c in s60}) != 60:
         raise AssertionError("S60 must hold 60 families")
-    return {"S60": s60, "R6": s60[:6], "ID3": s60[:3], "DEV2": order[60:62]}[name]
+    r60 = order[62:122]
+    if len({fam[c] for c in r60}) != 60 or {fam[c] for c in r60} & {fam[c] for c in s60}:
+        raise AssertionError("R60 must hold 60 families disjoint from S60")
+    return {"S60": s60, "R6": s60[:6], "ID3": s60[:3], "DEV2": order[60:62], "R60": r60}[name]
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -303,13 +307,14 @@ def cmd_idcheck(a) -> None:
 def cmd_panel(a) -> None:
     fam = p201d()
     rec = {"schema": "jope.h381.panels/v1", "rule": "P201d (H364) ordered by stream_seed(381101, 'S60', cid); S60 = "
-           "first 60, R6 = first 6 (replay), DEV2 = positions 60-61 (smoke only)", "p201d_cids_sha256": P201D_SHA}
-    for name in ("S60", "R6", "DEV2"):
+           "first 60, R6 = first 6 (replay), DEV2 = positions 60-61 (smoke only), R60 = positions 62-121 (E2L "
+           "replication, PREREG §8)", "p201d_cids_sha256": P201D_SHA}
+    for name in ("S60", "R6", "DEV2", "R60"):
         cids = panel(name)
         rec[name] = {"cids": cids, "families": [fam[c] for c in cids],
                      "cids_sha256": hashlib.sha256("\n".join(cids).encode()).hexdigest()}
     C.write_json(Path(a.out), rec)
-    print(json.dumps({k: rec[k]["cids_sha256"] for k in ("S60", "R6", "DEV2")}))
+    print(json.dumps({k: rec[k]["cids_sha256"] for k in ("S60", "R6", "DEV2", "R60")}))
 
 
 def cmd_run(a) -> None:
@@ -388,7 +393,7 @@ def main() -> None:
             p.add_argument("--cpus", required=True)
             p.add_argument("--shards", type=int, required=True)
             p.add_argument("--workers-per-shard", type=int, required=True)
-            p.add_argument("--panel", default="S60", choices=("S60", "R6", "DEV2"))
+            p.add_argument("--panel", default="S60", choices=("S60", "R6", "DEV2", "R60"))
             p.add_argument("--lf-rows", type=int, required=True)
             p.add_argument("--gens", type=int, required=True)
             p.add_argument("--checkpoints", required=True)

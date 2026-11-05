@@ -136,9 +136,12 @@ def cmd_run(a) -> None:
     cfg = {"schema": "jope.h381.d91-run/v1", "arm": a.arm, **arm, "cids": cids, "seeds": list(SEEDS),
            "lock_sha256": _sha(DATA / "stage_v" / "LOCK.json")}
     p = run_dir / "config.json"
-    if p.exists() and json.loads(p.read_text()) != cfg:
-        raise SystemExit("run config mismatch")
-    C.write_json(p, cfg)
+    if p.exists():  # the runtime adds screener_manifest; every other key must be unchanged on a resume
+        old = json.loads(p.read_text())
+        if any(old.get(k) != v for k, v in cfg.items()):
+            raise SystemExit("run config mismatch")
+    else:
+        C.write_json(p, cfg)
     GPH.install(int(arm["lf_rows"]))
     rt = LAB.build_rt(run_dir, "V", L.parse_cpus(a.cores), WORKER, float(arm.get("timeout_s", 60.0)), SEEDS,
                       Path(arm["neural_run_dir"]), 1, stagev_views=VIEWS)
