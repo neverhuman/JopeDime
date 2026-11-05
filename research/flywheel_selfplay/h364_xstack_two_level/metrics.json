@@ -1,0 +1,220 @@
+{
+  "schema": "jope.h364.metrics/v1",
+  "wave": "H364",
+  "slug": "h364_xstack_two_level",
+  "verdict": "XSTACK2L_CONFIRMED",
+  "prereg_commits": {
+    "part_a": "5af74634dcc7cc2903c982994088573eb26f78e4",
+    "part_b": "f052a59f35a4905206b33d334743ccf76f7124f8"
+  },
+  "panel": "P201d (TRAIN, 190 families x 1 context: 4th seeded context per family with >= 4 contexts; disjoint from P205/P201b/P201c; 172/190 datasets also in P201c as a different context)",
+  "dev91_rows_read": 0,
+  "design": {
+    "c": 0.35,
+    "delta": 0.0,
+    "lam": 0.1,
+    "tau": "inf"
+  },
+  "design_selection": {
+    "rule": "PREREG 4.3 max family LCB on P201b+P201c (395 ctx / 201 fam), 144-point grid",
+    "dev": {
+      "mean": 0.0025565005782885847,
+      "lcb": 0.0014457006499956032,
+      "won": 57,
+      "tied": 133,
+      "lost": 11,
+      "ctx_lt_minus_0p05": 0,
+      "ctx_min": -0.024425492347197153,
+      "active_share": 0.21772151898734177,
+      "by_panel": {
+        "P201b": 0.0025077789636541565,
+        "P201c": 0.0026992250555542556
+      }
+    },
+    "dev_grid_sha256": "ffd645f1ac245a68da039aef37a1407e2f4dc6f86d919fce5d4f66fdfa70609c"
+  },
+  "harness": {
+    "x0_check": {
+      "pass": true,
+      "tol": 0.000001,
+      "worst": {
+        "dlr": 1.3462866377267346E-9,
+        "du": 9.460876526645734E-10
+      }
+    },
+    "note": "worst |dlr| 1.35e-9 at 6cdf758a (X0 SEARCH u 19.8): above part A 1e-9, within the part-B 7.1 tolerance 1e-6 set before any P201d output was read; without 7.1 the verdict would have been INCOMPLETE"
+  },
+  "gp": {
+    "seed": 364101,
+    "generations": 50,
+    "records": 190,
+    "host": "xbabe0 docker, 12 shards x 8 workers",
+    "wall": "11:45:51-12:32Z"
+  },
+  "library_runs": {
+    "jobs": 760,
+    "completed": 758,
+    "failed": 2,
+    "failed_detail": "random_forest.v1 + xgboost.v1 on e569ddf7 (excluded on SEARCH)",
+    "passes_search_gate": {
+      "catboost.v1": 188,
+      "lightgbm.v1": 187,
+      "random_forest.v1": 187,
+      "xgboost.v1": 186
+    }
+  },
+  "family_mean_u": {
+    "2L": 2.0598757014749283,
+    "X0": 2.0562397028987465
+  },
+  "primary": {
+    "T_clipped_family_mean": 0.0036359985761818285,
+    "clip": 0.5,
+    "contexts": 190,
+    "families": 190,
+    "families_lost": 10,
+    "families_tied": 149,
+    "families_won": 31,
+    "family_median": 0.0,
+    "inferior": false,
+    "lofo_min": 0.0017299791201194606,
+    "mirror_signflip_p": 0.9887266159057617,
+    "pass": true,
+    "signflip_p": 0.011273384094238281
+  },
+  "adoption_secondary": {
+    "ci95": [
+      0.00046308618230742456,
+      0.008219304791653167
+    ],
+    "contexts": 190,
+    "drop_top_1": 0.0017299791201194606,
+    "drop_top_10": -0.0000256524627689356,
+    "drop_top_3": 0.0010266024132392863,
+    "drop_top_5": 0.0006778707214455945,
+    "families": 190,
+    "gain_family_mean": 0.0036359985761818285,
+    "gain_family_median": 0.0,
+    "gate": {
+      "checks": {
+        "harm_le_10pct": true,
+        "lcb_gt_margin": false,
+        "lofo_min_gt_0": true,
+        "median_ge_0": true,
+        "signflip_p_lt_alpha": true
+      },
+      "pass": false,
+      "signflip_alpha": 0.025,
+      "signflip_p_used": 0.0112988701129887
+    },
+    "harmed_share_gt_0p01": 0.015789473684210527,
+    "lcb95": 0.00046308618230742456,
+    "lofo_min_gain": 0.0017299791201194606,
+    "signflip_p_one_sided": 0.0112988701129887,
+    "wtl": [
+      31,
+      149,
+      10
+    ]
+  },
+  "headline": {
+    "context_mean_gain": 0.0036359985761818285,
+    "context_wtl": [
+      31,
+      149,
+      10
+    ],
+    "families_lost": 10,
+    "families_tied": 149,
+    "families_won": 31,
+    "family_mean_gain": 0.0036359985761818285,
+    "family_median_gain": 0.0,
+    "n_families": 190,
+    "pct_rmse_reduction": 0.0036293963376927696
+  },
+  "context_deltas": {
+    "exact_ties": 148,
+    "lt_minus_0p05": 1,
+    "max": 0.3638736757719694,
+    "min": -0.10167591644134744
+  },
+  "second_level": {
+    "active_share": 0.22105263157894736,
+    "audit_substitutions": 0,
+    "mean_beta_sum": 0.03544724921083617,
+    "mean_beta_sum_active": 0.1603566035728303,
+    "reasons": {
+      "acceptance_gate": 115,
+      "active": 42,
+      "beta_zero": 32,
+      "no_library_column": 1
+    }
+  },
+  "train_audit_elo_p201d": {
+    "h364.2L": {
+      "elo": 1531,
+      "ci95": [
+        1515,
+        1548
+      ]
+    },
+    "h364.X0": {
+      "elo": 1500,
+      "ci95": [
+        1500,
+        1500
+      ]
+    },
+    "lib.catboost.v1": {
+      "elo": 1307.9,
+      "ci95": [
+        1246,
+        1362
+      ]
+    },
+    "lib.lightgbm.v1": {
+      "elo": 1077.2,
+      "ci95": [
+        1006,
+        1137
+      ]
+    },
+    "lib.random_forest.v1": {
+      "elo": 1203.5,
+      "ci95": [
+        1135,
+        1261
+      ]
+    },
+    "lib.xgboost.v1": {
+      "elo": 1170.9,
+      "ci95": [
+        1100,
+        1231
+      ]
+    }
+  },
+  "descriptive_notes": {
+    "gain_concentration": {
+      "top_context": "703bacaa +0.3639 (random_forest beta 0.346)",
+      "mean_without_top1": 0.00173,
+      "mean_without_top3": 0.00103,
+      "drop_top_10": -0.0000257
+    },
+    "active_contexts": {
+      "n": 42,
+      "gain": 32,
+      "loss": 10,
+      "mean_gain": 0.01645
+    },
+    "worst_context": "52c24097 -0.1017 (X0 AUDIT u 3.72, SEARCH u 2.43, beta_sum 0.082)",
+    "adoption_gate_fails_on": "lcb95 0.00046 <= margin 0.001 (all other checks pass)",
+    "h357_x_cl_p201c_for_comparison": {
+      "gain": 0.0040,
+      "signflip_p": 0.074,
+      "ctx_lt_minus_0p05": 4,
+      "worst": -0.695,
+      "elo": 1581.6
+    }
+  }
+}
