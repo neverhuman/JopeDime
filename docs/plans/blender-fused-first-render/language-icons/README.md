@@ -8,7 +8,7 @@ The [official Rust white-outline logo](https://raw.githubusercontent.com/rust-la
 
 The C badge uses the [community hexagonal C mark by ElodinKaldwin](https://commons.wikimedia.org/wiki/File:C_Programming_Language.svg), which Wikimedia Commons lists as public domain. Its SVG was rasterized and centered on a transparent square.
 
-The Dendrite cut uses the [CUDA Toolkit artwork](https://developer.download.nvidia.com/images/cuda-kv-toolkit-ari.jpg) from the [NVIDIA Developer CUDA page](https://developer.nvidia.com/cuda) as a local `--cuda-icon` input. The JPEG SHA-256 for this cut is `094695167b0dec11077e35c007bfdb2229984d5da82247bfbe33d7dceaefc482`. The repository's fallback [CUDA type badge](cuda.svg) is original JAIN film artwork.
+The Dendrite cut uses the [CUDA Toolkit artwork](https://developer.download.nvidia.com/images/cuda-kv-toolkit-ari.jpg) from the [NVIDIA Developer CUDA page](https://developer.nvidia.com/cuda). Its approved [JPEG is included here](nvidia-cuda-toolkit.jpg), unchanged at 849,545 bytes, for the `--cuda-icon` input. Its SHA-256 is `094695167b0dec11077e35c007bfdb2229984d5da82247bfbe33d7dceaefc482`. This NVIDIA artwork identifies CUDA; it remains NVIDIA's mark and is not covered by the Devicon license. The repository's fallback [CUDA type badge](cuda.svg) is original JAIN film artwork.
 
 | PNG | Upstream SVG or artwork | SVG SHA-256 | PNG SHA-256 |
 | --- | --- | --- | --- |

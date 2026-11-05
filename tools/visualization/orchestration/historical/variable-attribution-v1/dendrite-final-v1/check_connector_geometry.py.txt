@@ -1,0 +1,272 @@
+"""Verify saved Dendrite connector geometry. Run using Blender's Python."""
+
+from array import array
+import argparse
+import hashlib
+import json
+import math
+from pathlib import Path
+import sys
+
+import bpy
+from bpy_extras.object_utils import world_to_camera_view
+from mathutils import Vector
+
+
+ROOT = Path(__file__).resolve().parent
+PREVIOUS_SCENE = ROOT.parent / "biological-layout-review-v1/scenes/dendrite/scene.blend"
+TOLERANCE = 1e-5
+SIDES = {
+    "input": ("Conceptual cell ingress", 80, 0, (610.5, 540.5), 1),
+    "output": ("Conceptual source egress", 60, 2, (1311.157894736842, 540.5), -1),
+}
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def close(actual, expected):
+    return math.dist(actual, expected) <= TOLERANCE
+
+
+def file_hash(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def open_scene(path):
+    bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=False, use_scripts=False)
+    receipt_path = path.with_suffix(".receipt.json")
+    receipt = json.loads(receipt_path.read_bytes())
+    embedded = bpy.data.texts.get("JAIN_CINEMATIC_RECEIPT.json")
+    require(embedded is not None and json.loads(embedded.as_string()) == receipt,
+            f"Embedded receipt differs from {receipt_path}")
+    return bpy.context.scene, receipt
+
+
+def action_curves(owner):
+    animation = owner.animation_data
+    if animation is None or animation.action is None:
+        return []
+    return [curve for layer in animation.action.layers for strip in layer.strips
+            if (bag := strip.channelbag(animation.action_slot)) is not None for curve in bag.fcurves]
+
+
+def curve_signature(curves):
+    return sorted((curve.data_path, curve.array_index,
+                   tuple((tuple(point.co), point.interpolation) for point in curve.keyframe_points),
+                   tuple((modifier.type, getattr(modifier, "mode_before", None),
+                          getattr(modifier, "mode_after", None)) for modifier in curve.modifiers))
+                  for curve in curves)
+
+
+def mesh_signature(scene, receipt):
+    rotor = scene.objects[receipt["network"]["root_object_name"]]
+    digest = hashlib.sha256()
+    for obj in sorted(rotor.children, key=lambda child: child.name):
+        require(obj.type == "MESH", f"Unexpected nonmesh network child {obj.name}")
+        mesh = obj.data
+        digest.update(repr((obj.name, tuple(tuple(row) for row in obj.matrix_basis))).encode())
+        for collection, attribute, datatype, count in (
+            (mesh.vertices, "co", "f", 3), (mesh.loops, "vertex_index", "i", 1),
+            (mesh.polygons, "loop_start", "i", 1), (mesh.polygons, "loop_total", "i", 1),
+            *((layer.data, "uv", "f", 2) for layer in mesh.uv_layers),
+        ):
+            values = array(datatype, [0]) * (len(collection) * count)
+            collection.foreach_get(attribute, values)
+            digest.update(values.tobytes())
+    require(len(rotor.children) == 246, "Unexpected sampled neural mesh count")
+    return {"meshes": len(rotor.children), "mesh_and_uv_sha256": digest.hexdigest(),
+            "rotor_location": tuple(rotor.location), "rotor_scale": tuple(rotor.scale),
+            "rotor_action": curve_signature(action_curves(rotor))}
+
+
+def branch_objects(scene, prefix, count):
+    objects = sorted((obj for obj in scene.objects if obj.name == prefix or obj.name.startswith(prefix + ".")),
+                     key=lambda obj: obj.name)
+    require(len(objects) == count, f"{prefix}: found {len(objects)}, expected {count}")
+    return objects
+
+
+def branch_signature(obj, fixed_index):
+    tip = obj.data.splines[0].bezier_points[2 - fixed_index]
+    tip_curves = [curve for curve in action_curves(obj.data) if curve.data_path == tip.path_from_id("co")]
+    require(len(tip_curves) == 3, f"{obj.name}: missing moving endpoint action")
+    tree = obj.data.materials[0].node_tree
+    require(bool(action_curves(tree)), f"{obj.name}: missing strength action")
+    return obj.name, curve_signature(tip_curves), curve_signature(action_curves(tree))
+
+
+def check_idle_material(obj, expected):
+    tree = obj.data.materials[0].node_tree
+    guides = [node for node in tree.nodes if node.label == "Idle display guide"]
+    require(len(guides) == 1 and guides[0].bl_idname == "ShaderNodeEmission", f"{obj.name}: missing guide emission")
+    guide = guides[0]
+    strength = guide.inputs["Strength"]
+    animated_paths = {curve.data_path for curve in action_curves(tree)}
+    require(not strength.is_linked and abs(strength.default_value - expected) <= TOLERANCE,
+            f"{obj.name}: incorrect guide strength")
+    require(strength.path_from_id("default_value") not in animated_paths,
+            f"{obj.name}: presentation guide is animated")
+    links = guide.outputs[0].links
+    require(len(links) == 1 and links[0].to_node.bl_idname == "ShaderNodeAddShader",
+            f"{obj.name}: guide does not add a separate static layer")
+    combined = links[0].to_node
+    require(all(socket.is_linked and socket.links[0].from_node.bl_idname == "ShaderNodeEmission"
+                for socket in combined.inputs) and len(combined.outputs[0].links) == 1
+            and combined.outputs[0].links[0].to_node.bl_idname == "ShaderNodeOutputMaterial",
+            f"{obj.name}: animated emission and static guide do not reach material output")
+    feeds = [socket.links[0].from_node for socket in combined.inputs]
+    require(feeds.count(guide) == 1 and all(node.inputs["Strength"].path_from_id("default_value") in animated_paths
+                                          for node in feeds if node != guide),
+            f"{obj.name}: static and measured emission are not separate")
+
+
+def spline_points(obj):
+    require(obj.type == "CURVE" and len(obj.data.splines) == 1, f"{obj.name}: expected one curve")
+    spline = obj.data.splines[0]
+    require(spline.type == "BEZIER" and not spline.use_cyclic_u and len(spline.bezier_points) == 3,
+            f"{obj.name}: expected one open three-point Bézier")
+    return spline.bezier_points
+
+
+def check_static_transform(obj, camera):
+    require(obj.parent == camera and obj.animation_data is None and not obj.constraints,
+            f"{obj.name}: expected static camera-child transform")
+
+
+def evaluate_points(obj, camera_inverse, depsgraph):
+    evaluated = obj.evaluated_get(depsgraph)
+    transform = camera_inverse @ evaluated.matrix_world
+    points = spline_points(evaluated)
+    return [transform @ point.co for point in points], [
+        transform @ value for i, point in enumerate(points)
+        for value in ((point.handle_left,) if i == 2 else (point.handle_right,) if i == 0
+                      else (point.handle_left, point.handle_right))
+    ]
+
+
+def validate_animation(obj, fixed_index, junction, period):
+    points = spline_points(obj)
+    curves = action_curves(obj.data)
+    require(len(curves) == 9, f"{obj.name}: expected nine coordinate actions")
+    for curve in curves:
+        require(len(curve.modifiers) == 1 and curve.modifiers[0].type == "CYCLES"
+                and curve.modifiers[0].mode_before == "REPEAT" and curve.modifiers[0].mode_after == "REPEAT"
+                and curve.modifiers[0].cycles_before == 0 and curve.modifiers[0].cycles_after == 0,
+                f"{obj.name}: branch motion does not repeat continuously")
+        require([round(key.co.x) for key in curve.keyframe_points] == list(range(1, period + 2, 5))
+                and all(key.interpolation == "LINEAR" for key in curve.keyframe_points),
+                f"{obj.name}: unexpected geometry keyframes")
+    locked_path = points[fixed_index].path_from_id("co")
+    locked = [curve for curve in curves if curve.data_path == locked_path]
+    require(len(locked) == 3 and all(abs(key.co.y - junction[curve.array_index]) <= TOLERANCE
+                                    for curve in locked for key in curve.keyframe_points),
+            f"{obj.name}: border-side endpoint is not locked to the shared junction")
+
+
+def check_geometry(scene, receipt):
+    camera = scene.camera
+    render = scene.render
+    width, height = render.resolution_x, render.resolution_y
+    require((width, height, render.resolution_percentage, render.fps, render.fps_base) == (1920, 1080, 100, 30, 1),
+            "Unexpected frame dimensions or rate")
+    require(camera.data.type == "ORTHO" and camera.animation_data is None and not camera.constraints,
+            "Expected a static orthographic camera")
+    period = receipt["loop_frames"]
+    require(period == 120 and (scene.frame_start, scene.frame_end) == (1, 1200), "Unexpected saved timeline")
+    contacts = receipt["connectors"]["panel_contacts"]
+    idle = contacts["idle_display_emission"]
+    require(idle == {"branch": .045, "terminal": .12}, "Unexpected guide strengths in receipt")
+    terminals = {}
+    proof = {}
+    for side, (prefix, count, fixed_index, expected_px, inward) in SIDES.items():
+        contact = contacts[side]
+        terminal = scene.objects[contact["object"]]
+        border, junction = contact["border"], contact["branch_junction"]
+        require(close(contact["border_px"], expected_px), f"{side}: receipt border projection differs")
+        require(close(junction, (border[0] + .2 * inward, border[1], border[2])), f"{side}: wrong junction position")
+        check_static_transform(terminal, camera)
+        require(terminal.data.animation_data is None, f"{side}: terminal curve is animated")
+        branches = branch_objects(scene, prefix, count)
+        check_idle_material(terminal, idle["terminal"])
+        for branch in branches:
+            check_static_transform(branch, camera)
+            validate_animation(branch, fixed_index, junction, period)
+            check_idle_material(branch, idle["branch"])
+        terminals[side] = (terminal, branches, border, junction, fixed_index, expected_px, inward)
+        proof[side] = {"terminal": terminal.name, "branches": count, "border_camera_local": border,
+                       "junction_camera_local": junction, "nearest_branch_control_to_border": math.inf}
+
+    # Coordinate actions are locked or linearly interpolated and repeat every
+    # 120 frames. Evaluate every output frame in that cycle, including its seam.
+    for frame in range(1, period + 2):
+        scene.frame_set(frame)
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        inverse = camera.matrix_world.inverted()
+        for side, (terminal, branches, border, junction, fixed_index, expected_px, inward) in terminals.items():
+            points, handles = evaluate_points(terminal, inverse, depsgraph)
+            require(close(points[0], border) and close(points[-1], junction), f"{side}: terminal endpoint moved")
+            require(all(inward * (point.x - border[0]) > TOLERANCE for point in points[1:] + handles),
+                    f"{side}: terminal touches the border more than once")
+            projected = world_to_camera_view(scene, camera, camera.matrix_world @ Vector(points[0]))
+            pixels = (projected.x * width, (1.0 - projected.y) * height)
+            require(math.dist(pixels, expected_px) < .001, f"{side}: projected border {pixels} misses {expected_px}")
+            proof[side]["actual_border_px"] = pixels
+            for branch in branches:
+                points, handles = evaluate_points(branch, inverse, depsgraph)
+                require(close(points[fixed_index], junction), f"{branch.name}: junction missed at frame {frame}")
+                clearance = min(inward * (point.x - border[0]) for point in points + handles)
+                require(clearance > branch.data.bevel_depth + TOLERANCE,
+                        f"{branch.name}: branch curve touches border at frame {frame}")
+                proof[side]["nearest_branch_control_to_border"] = min(clearance,
+                                                                      proof[side]["nearest_branch_control_to_border"])
+    return proof, period + 1, idle
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--review", type=Path, default=ROOT)
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
+    current_path = args.review / "scene/scene.blend"
+    output = args.review / "connector-geometry.receipt.json"
+    scene, previous = open_scene(PREVIOUS_SCENE)
+    previous_objects = {obj.name for obj in scene.objects}
+    previous_meshes = mesh_signature(scene, previous)
+    previous_branches = [branch_signature(obj, fixed) for prefix, count, fixed, _, _ in SIDES.values()
+                         for obj in branch_objects(scene, prefix, count)]
+    scene, current = open_scene(current_path)
+    terminal_names = {current["connectors"]["panel_contacts"][side]["object"] for side in SIDES}
+    require(len(terminal_names) == 2 and previous_objects.isdisjoint(terminal_names)
+            and {obj.name for obj in scene.objects} == previous_objects | terminal_names,
+            "Expected exactly two terminal objects as the only change to scene object inventory")
+    unchanged = sorted(previous.keys() - {"connectors", "source_hashes"})
+    require(current.keys() == previous.keys(), "Unexpected receipt fields")
+    for field in unchanged:
+        require(current[field] == previous[field], f"Changed capture/geometry/timing field: {field}")
+    require({key: value for key, value in current["connectors"].items() if key != "panel_contacts"}
+            == previous["connectors"], "Changed original connector metadata")
+    require(mesh_signature(scene, current) == previous_meshes, "Neural mesh, UV, or rotor timing changed")
+    current_branches = [branch_signature(obj, fixed) for prefix, count, fixed, _, _ in SIDES.values()
+                        for obj in branch_objects(scene, prefix, count)]
+    require(current_branches == previous_branches, "A branch's moving endpoint or strength action changed")
+    panels, checked_frames, idle = check_geometry(scene, current)
+    result = {"schema": "jain.dendrite-single-border-geometry/v1", "status": "PASS",
+              "current_scene_sha256": file_hash(current_path), "prior_scene_sha256": file_hash(PREVIOUS_SCENE),
+              "current_scene_receipt_sha256": file_hash(current_path.with_suffix(".receipt.json")),
+              "prior_scene_receipt_sha256": file_hash(PREVIOUS_SCENE.with_suffix(".receipt.json")),
+              "unchanged_capture_fields": unchanged, "exact_neural_mesh_uv_sha256": previous_meshes["mesh_and_uv_sha256"],
+              "verified_neural_meshes": previous_meshes["meshes"], "rotor_and_branch_actions_preserved": True,
+              "only_new_scene_objects": sorted(terminal_names),
+              "render_frame_poses_checked_including_seam": checked_frames, "video_frames_covered_by_cycle": 1200,
+              "verified_separate_static_guide_strengths": idle,
+              "panel_contacts": panels}
+    with output.open("x", encoding="utf-8") as stream:
+        json.dump(result, stream, indent=2, allow_nan=False)
+        stream.write("\n")
+    print(f"PASS {output}")
+
+
+if __name__ == "__main__":
+    main()

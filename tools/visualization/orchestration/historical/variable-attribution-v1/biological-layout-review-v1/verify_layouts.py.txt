@@ -1,0 +1,332 @@
+#!/usr/bin/env python3
+"""Verify biological JAIN layout candidates against the original capture receipt."""
+import argparse
+import hashlib
+import json
+import math
+import runpy
+import struct
+from pathlib import Path
+
+
+LAYOUTS = ("dendrite", "synapse", "fascicle", "ginkgo", "cortex")
+PRIOR_LAYOUTS = ("iris", "twist", "hourglass", "prism", "manta")
+MINIMUM_NUMERICAL_SEPARATION = 1e-8
+RENDERED_NODE_DIAMETER = .104
+ORIGINAL_TOPOLOGY_SHA256 = "6b29a06bf8bf8ccdba01478202401dbce5e5a509f8379dae64434058905861c0"
+OPERATION_FIELDS = (
+    "name", "operation_id", "inactive", "parameter_ids", "functional_kind",
+    "source_parameter_slices", "input_stage", "output_stage", "actual_node_identities",
+    "actual_weight_strands", "fixed_display_row", "node_values_f64_sha256_by_case",
+    "signed_terms_f64_sha256_by_case", "shared_candidate_rows",
+)
+CAPTURE_FIELDS = (
+    "schema", "brand", "trace_sha256", "influence_sha256", "round_trip_metrics_sha256",
+    "round_trip_metrics", "metric_device", "dataset_catalog_sha256", "tables",
+    "case_frames", "source_cues", "whole_source_pages", "floor", "connectors",
+    "input_sensitivity_method", "rotation", "animation_loop", "fps", "loop_frames",
+    "code_pages_root", "source_viewport", "timing", "video_rendered", "blender_version",
+)
+NETWORK_FIELDS = (
+    "input_port", "output_port", "maximum_weighted_causal_depth",
+    "recorded_matrix_operations", "available_nonzero_scalar_connections", "displayed_nodes",
+    "displayed_strands", "operations", "functional_projection_proofs", "palette",
+    "pulse", "pulse_frames", "ingress_egress",
+)
+
+
+def require(test, explanation):
+    if not test:
+        raise ValueError(explanation)
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def digest_json(value):
+    return sha(json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode())
+
+
+def read_receipt(path):
+    data = path.read_bytes()
+    return json.loads(data), sha(data)
+
+
+def topology(network):
+    return [{key: op[key] for key in OPERATION_FIELDS if key in op} for op in network["operations"]]
+
+
+def position_digest(points):
+    return sha(b"".join(struct.pack("<3d", *point) for point in points))
+
+
+def compare_fields(actual, expected, fields, label):
+    for key in fields:
+        require(actual[key] == expected[key], f"{label}: changed {key}")
+
+
+def stages(network):
+    return [(item["stage"], item["x"], item["displayed_actual_endpoint_nodes"])
+            for item in network["stage_planes"]]
+
+
+def checked_bounds(network, label):
+    intervals = [network["bounds"][axis] for axis in ("x", "depth", "z")]
+    for lower, upper in intervals:
+        require(math.isfinite(lower) and math.isfinite(upper) and lower < upper,
+                f"{label}: invalid geometry extent")
+    return intervals
+
+
+def check_point(point, x, intervals, label):
+    require(len(point) == 3 and all(math.isfinite(value) for value in point),
+            f"{label}: nonfinite geometry")
+    require(math.isclose(point[0], x, abs_tol=1e-8), f"{label}: changed stage center")
+    for value, (lower, upper) in zip(point, intervals, strict=True):
+        require(lower - 1e-8 <= value <= upper + 1e-8, f"{label}: outside declared bounds")
+
+
+def transverse_separation(points):
+    """Measure same-stage center separation in world coordinates."""
+    closest = [math.inf] * len(points)
+    for i, (_, y, z) in enumerate(points):
+        for j in range(i + 1, len(points)):
+            _, other_y, other_z = points[j]
+            distance = math.hypot(y - other_y, z - other_z)
+            closest[i] = min(closest[i], distance)
+            closest[j] = min(closest[j], distance)
+    return min(closest, default=math.inf), sum(value < RENDERED_NODE_DIAMETER for value in closest)
+
+
+def geometry(network, original, expected_stages, transverse_position, label):
+    require(network["spatial_layout"] == label, f"{label}: incorrect mode in receipt")
+    allowed = [(-5.56, 5.56), (-2.86, 2.86), (-4.16, 4.16)]
+    intervals = checked_bounds(network, label)
+    for (lower, upper), (allowed_lower, allowed_upper) in zip(intervals, allowed, strict=True):
+        require(lower >= allowed_lower - 1e-8 and upper <= allowed_upper + 1e-8,
+                f"{label}: outside permitted network envelope")
+
+    maximum = original["maximum_weighted_causal_depth"]
+    nodes_by_stage = [[] for _ in expected_stages]
+    for op in network["operations"]:
+        if op.get("inactive"):
+            continue
+        name = op["name"]
+        family = 0 if name.startswith("dope.") else 1 if name.startswith("base.") else 2
+        for index, node in enumerate(op["actual_node_identities"]):
+            stage = op["output_stage"] if node["side"] == "output" else op["input_stage"]
+            nodes_by_stage[stage].append((family, name, index))
+    coords, stages_points, spacing_by_stage = {}, [], []
+    for (stage, x, count), keys in zip(expected_stages, nodes_by_stage, strict=True):
+        require(len(keys) == count, f"{label}: stage {stage} endpoint count changed")
+        points = []
+        for index, (_, name, local) in enumerate(sorted(keys)):
+            point = (x, *transverse_position(label, stage / maximum, index, count))
+            check_point(point, x, intervals, f"{label}/stage-{stage}")
+            coords[(name, local)] = point
+            points.append(point)
+        closest, close_count = transverse_separation(points)
+        require(closest > MINIMUM_NUMERICAL_SEPARATION, f"{label}: collapsed endpoints in stage {stage}")
+        stages_points.append(points)
+        spacing_by_stage.append({"stage": stage, "minimum_center_separation": closest,
+                                 "endpoints_with_neighbor_inside_one_node_diameter": close_count})
+
+    ordered_points = [point for stage in stages_points for point in stage]
+    position_sha = position_digest(ordered_points)
+    require(position_sha == network["ordered_endpoint_positions_f64_sha256"], f"{label}: endpoint position hash differs")
+    for axis, (lower, upper) in enumerate(intervals):
+        values = [point[axis] for point in ordered_points]
+        require(math.isclose(min(values) - .06, lower, abs_tol=1e-8)
+                and math.isclose(max(values) + .06, upper, abs_tol=1e-8),
+                f"{label}: declared bounds differ from endpoint bounds")
+
+    metrics = {}
+    for side, expected_points in (("input", stages_points[0]), ("output", stages_points[-1])):
+        key = f"{side}_node_ports"
+        points = network[key]
+        require(points == [list(point) for point in expected_points] and len(points) == len(original[key]),
+                f"{label}: changed {side} port ordering or coordinates disagree with endpoint positions")
+        shifts = [math.dist(a, b) for a, b in zip(points, original[key], strict=True)]
+        metrics[side] = {"count": len(points), "moved": sum(value > 1e-8 for value in shifts),
+                         "largest_displacement": max(shifts), "coordinate_sha256": digest_json(points)}
+    require(any(item["moved"] for item in metrics.values()), f"{label}: ingress and egress are unchanged")
+
+    lengths = []
+    incident = set()
+    for op in network["operations"]:
+        for strand in op.get("actual_weight_strands", []):
+            start = (op["name"], strand["from"])
+            end = (op["name"], strand["to"])
+            require(coords[start][0] < coords[end][0], f"{label}: strand runs backward in causal depth")
+            incident.update((start, end))
+            lengths.append(math.dist(coords[start], coords[end]))
+    require(incident == set(coords), f"{label}: endpoint without a real incident weight")
+    require(len(lengths) == original["displayed_strands"] and len(coords) == original["displayed_nodes"],
+            f"{label}: incorrect geometry counts")
+    diagonal = math.hypot(*(upper - lower for lower, upper in intervals))
+    require(0 < min(lengths) <= max(lengths) <= diagonal + 1e-8, f"{label}: strand lengths outside bounds")
+    return {"ports": metrics, "ordered_positions_sha256": position_sha, "bounds": network["bounds"],
+            "shortest_strand": min(lengths), "longest_strand": max(lengths), "same_stage_spacing": spacing_by_stage}
+
+
+def verify_render(proof_path, scene_path, scene_receipt_hash, frame_path, label):
+    proof, proof_sha = read_receipt(proof_path)
+    require(proof["status"] == "PASS" and proof["gpu_only"] is True and proof["cpu_fallback"] is False,
+            f"{label}: GPU render did not complete successfully")
+    require(proof["backend"] in {"OPTIX", "CUDA"} and proof["devices"], f"{label}: missing GPU device")
+    require((proof["width"], proof["height"], proof["fps"]) == (1920, 1080, 30),
+            f"{label}: render dimensions or frame rate changed")
+    require(proof["cycles_seed"] == 20261103 and proof["animated_seed"] is False and proof["samples"] > 0,
+            f"{label}: render seed or sample configuration invalid")
+    require((proof["case_id"], proof["frame_start"], proof["frame_end"]) == ("case-a", 89, 89),
+            f"{label}: renderer used a different case or timestamp")
+    require(len(proof["frames"]) == 1 and proof["frames"][0]["frame"] == 89,
+            f"{label}: wrong single-frame render inventory")
+    require(proof["scene_sha256"] == sha(scene_path.read_bytes()), f"{label}: wrong scene bytes")
+    require(proof["scene_receipt_sha256"] == scene_receipt_hash, f"{label}: wrong scene receipt bytes")
+    result = {"path": str(proof_path), "sha256": proof_sha, "samples": proof["samples"],
+              "backend": proof["backend"], "frame": 89, "frame_sha256": proof["frames"][0]["sha256"]}
+    if frame_path is not None:
+        png = frame_path.read_bytes()
+        require(png[:8] == b"\x89PNG\r\n\x1a\n" and struct.unpack(">II", png[16:24]) == (1920, 1080),
+                f"{label}: invalid frame raster")
+        require(sha(png) == result["frame_sha256"], f"{label}: raster changed after rendering")
+        result["frame_path"] = str(frame_path)
+    return result
+
+
+def verify_composite(path, candidates):
+    from PIL import Image, ImageChops
+
+    receipt, receipt_sha = read_receipt(path)
+    require(receipt["status"] == "PASS" and receipt["reference_network_pixel_match"] is True,
+            "Composite did not recreate the archived reference")
+    require((receipt["case_id"], receipt["blender_frame"], receipt["movie_frame"]) == ("case-a", 89, 92),
+            "Composite used the wrong frame")
+    require(sha(Path(receipt["reference"]).read_bytes()) == receipt["reference_sha256"],
+            "Composite reference hash mismatch")
+    require(sha(Path(receipt["contact_sheet"]).read_bytes()) == receipt["contact_sheet_sha256"],
+            "Contact sheet hash mismatch")
+    with Image.open(receipt["reference"]) as png:
+        reference = png.convert("RGB")
+    distinct_centers = set()
+    crop = tuple(receipt["network_rectangle"])
+    l, t, r, b = crop
+    require(600 <= l < r <= 1320 and 170 <= t < b <= 1080, "Composite crop reaches table, telemetry, or source")
+    for image, candidate in zip(receipt["options"], candidates, strict=True):
+        require(image["option"] == candidate["layout"], "Composite layout order changed")
+        if candidate["render"]:
+            require(image["raw_sha256"] == candidate["render"]["frame_sha256"],
+                    f"{image['option']}: composite used a different Blender frame")
+        require(sha(Path(image["path"]).read_bytes()) == image["sha256"], f"{image['option']}: final image hash mismatch")
+        with Image.open(image["path"]) as png:
+            final = png.convert("RGB")
+        require(reference.size == final.size == (1920, 1080), f"{image['option']}: wrong final dimensions")
+        diff = ImageChops.difference(reference, final).getbbox()
+        require(diff is not None and list(diff) == image["changed_rectangle"], f"{image['option']}: change rectangle differs")
+        x1, y1, x2, y2 = diff
+        require(l <= x1 < x2 <= r and t <= y1 < y2 <= b, f"{image['option']}: edited outside the central panel")
+        center_sha = sha(final.crop(crop).tobytes())
+        require(center_sha == image["network_rgb_sha256"], f"{image['option']}: wrong center pixel hash")
+        require(center_sha not in distinct_centers, f"{image['option']}: center matches another design")
+        distinct_centers.add(center_sha)
+    return {"path": str(path), "sha256": receipt_sha, "contact_sheet_sha256": receipt["contact_sheet_sha256"]}
+
+
+def prior_position_hashes(prior_root, original, expected_stages, transverse_position):
+    maximum = original["maximum_weighted_causal_depth"]
+
+    def points(layout, stage, x, count):
+        return [(x, *transverse_position(layout, stage / maximum, index, count)) for index in range(count)]
+
+    for side, stage in (("input", expected_stages[0]), ("output", expected_stages[-1])):
+        require([list(point) for point in points("layered", *stage)] == original[f"{side}_node_ports"],
+                f"Default layered {side} coordinates changed")
+    prior_hashes = {}
+    for layout in PRIOR_LAYOUTS:
+        path = prior_root / "scenes" / layout / "scene.receipt.json"
+        expected = read_receipt(path)[0]["network"]["ordered_endpoint_positions_f64_sha256"]
+        actual = position_digest(point for stage in expected_stages for point in points(layout, *stage))
+        require(actual == expected, f"Prior {layout} layout positions changed")
+        prior_hashes[layout] = actual
+    return prior_hashes
+
+
+def main():
+    review = Path(__file__).resolve().parent
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--baseline", type=Path, default=review.parent / "capture/scene/scene.receipt.json")
+    parser.add_argument("--review", type=Path, default=review)
+    parser.add_argument("--prior-review", type=Path, default=review.parent / "spatial-layout-review-v1")
+    parser.add_argument("--layout-module", type=Path, default=(review.parents[3] /
+                        "blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/blender/jain_spatial_layouts.py"))
+    parser.add_argument("--require-gpu", action="store_true")
+    parser.add_argument("--require-composite", action="store_true")
+    parser.add_argument("--output", type=Path, help="Write a new report, or print it if omitted")
+    args = parser.parse_args()
+    baseline, baseline_sha = read_receipt(args.baseline)
+    original = baseline["network"]
+    baseline_topology = topology(original)
+    topology_sha = digest_json(baseline_topology)
+    require(topology_sha == ORIGINAL_TOPOLOGY_SHA256, "Unexpected original topology")
+    expected_stages = stages(original)
+    require([item[0] for item in expected_stages] == list(range(len(expected_stages))), "Original stages are not contiguous")
+    require(all(b[1] > a[1] for a, b in zip(expected_stages, expected_stages[1:])), "Original stage x positions are unordered")
+    layout_source_sha = sha(args.layout_module.read_bytes())
+    transverse_position = runpy.run_path(str(args.layout_module))["transverse_position"]
+    prior_hashes = prior_position_hashes(args.prior_review, original, expected_stages, transverse_position)
+    geometry_hashes = set()
+    candidates = []
+    for layout in LAYOUTS:
+        scene_receipt = args.review / "scenes" / layout / "scene.receipt.json"
+        candidate, candidate_sha = read_receipt(scene_receipt)
+        compare_fields(candidate, baseline, CAPTURE_FIELDS, layout)
+        require(candidate["source_hashes"][args.layout_module.name] == layout_source_sha,
+                f"{layout}: layout source differs from scene receipt")
+        network = candidate["network"]
+        compare_fields(network, original, NETWORK_FIELDS, layout)
+        require(topology(network) == baseline_topology, f"{layout}: changed exact operation topology")
+        require(stages(network) == expected_stages, f"{layout}: changed stage order or counts")
+        mapping = geometry(network, original, expected_stages, transverse_position, layout)
+        position_sha = mapping["ordered_positions_sha256"]
+        require(position_sha not in geometry_hashes and position_sha not in prior_hashes.values(),
+                f"{layout}: geometry matches another layout")
+        geometry_hashes.add(position_sha)
+        raw = args.review / "raw"
+        proof_path = next((p for p in (raw / f"{layout}.receipt.json", raw / layout / "render.receipt.json")
+                           if p.is_file()), None)
+        frame_path = next((p for p in (raw / f"{layout}.png", raw / layout / "frame-000089.png")
+                           if p.is_file()), None)
+        if args.require_gpu:
+            require(proof_path is not None and frame_path is not None, f"{layout}: missing GPU proof or frame")
+        render = verify_render(proof_path, scene_receipt.with_name("scene.blend"), candidate_sha,
+                               frame_path, layout) if proof_path else None
+        candidates.append({"layout": layout, "scene_receipt": str(scene_receipt),
+                           "scene_receipt_sha256": candidate_sha, "geometry": mapping, "render": render})
+    require(len({item["render"]["samples"] for item in candidates if item["render"]}) <= 1,
+            "Candidates used different render sample counts")
+    composite_path = args.review / "composite.receipt.json"
+    if args.require_composite:
+        require(composite_path.is_file(), "Missing composite receipt")
+    composite = verify_composite(composite_path, candidates) if composite_path.is_file() else None
+    result = {
+        "schema": "jain.spatial-layout-review/v1", "status": "PASS",
+        "baseline": str(args.baseline), "baseline_receipt_sha256": baseline_sha,
+        "ordered_sampled_operations_sha256": topology_sha, "operations": len(baseline_topology),
+        "displayed_nodes": original["displayed_nodes"], "displayed_weight_strands": original["displayed_strands"],
+        "stages": expected_stages, "unchanged_scene_fields": CAPTURE_FIELDS,
+        "unchanged_network_fields": NETWORK_FIELDS, "layout_source_sha256": layout_source_sha,
+        "default_layered_ports_preserved": True, "prior_position_hashes": prior_hashes,
+        "composite": composite, "candidates": candidates,
+    }
+    rendered = json.dumps(result, indent=2) + "\n"
+    if args.output:
+        with args.output.open("x", encoding="utf-8") as stream:
+            stream.write(rendered)
+    else:
+        print(rendered, end="")
+
+
+if __name__ == "__main__":
+    main()

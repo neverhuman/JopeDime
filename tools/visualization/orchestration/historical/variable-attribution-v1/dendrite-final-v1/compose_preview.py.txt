@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""Bind a 1080p Dendrite plate to the matching archived JAIN context."""
+
+import argparse
+import importlib.util
+import json
+from pathlib import Path
+
+import numpy as np
+from PIL import Image, ImageChops, ImageFont
+
+
+ROOT = Path(__file__).resolve().parent
+PRIOR = ROOT.parent / "biological-layout-review-v1/compose_review.py"
+NETWORK = (611, 187, 1313, 1080)
+CONTACTS = {"input": (611, 621), "output": (1302, 1312)}
+FAN_REGIONS = {"input": (633, 656), "output": (1273, 1296)}
+CONTACT_Y = 540
+MATCHES = {"case-a": 89, "case-g": 810}
+
+
+def preview_context(case_id):
+    spec = importlib.util.spec_from_file_location("prior_review", PRIOR)
+    prior = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(prior)
+    capture = ROOT.parent / "capture"
+    encode = prior.read_json(capture / "final/encode.receipt.json")
+    scene = prior.read_json(prior.verified_file(capture / "scene/scene.receipt.json", encode["scene_receipt_sha256"]))
+    case = next(item for item in encode["cases"] if item["case_id"] == case_id)
+    sample = next(item for item in encode["previews"] if item["path"] == f"{case_id}-gp-cue.png")
+    case_frame = sample["frame"] - case["start"]
+    loops = capture / "loops" / case_id
+    loop = prior.read_json(prior.verified_file(loops / "render.receipt.json", case["loop_receipt_sha256"]))
+    raw = loop["frames"][case["plate_indices"][case_frame]]
+    if raw["frame"] != MATCHES[case_id]:
+        raise ValueError(f"Missing exact frame-{MATCHES[case_id]} archived context")
+    reference = prior.verified_file(capture / "final" / sample["path"], sample["sha256"])
+    raw_reference = prior.verified_file(loops / raw["file"], raw["sha256"])
+    cue = next(item for item in case["cues"] if item["case_frame"] == case_frame)
+    source_file = case["files"][cue["file_index"]]
+    primary = case["primary_language"]
+    icon_language = source_file["language"] if source_file["language"] in case["language_icon_hashes"] else primary
+    binding = ("Rust / Wasm binding" if primary in {"go", "typescript"}
+               else "Rust core" if primary in {"c", "cuda"} else "")
+    icon, icon_sha = prior.load_icon(icon_language)
+    if case["language_icon_hashes"][icon_language] != icon_sha:
+        raise ValueError(f"{case_id} icon bytes changed")
+    fonts = [ImageFont.truetype(prior.UI_FONT, size) for size in (16, 48, 24)]
+
+    def compose_center(path):
+        # Both matched stills are on a GP cue, where energy reaches 1.2.
+        frame = prior.apply_wave(prior.image(path), (case_frame % 34) / 33, energy=1.2)
+        prior.hud(frame, *fonts, scene["round_trip_metrics"][case_id], source_file, 0,
+                  cue, tuple(encode["source_viewport"]), icon, icon_language, binding)
+        return frame.crop(NETWORK)
+
+    baseline = prior.image(reference)
+    if ImageChops.difference(baseline.crop(NETWORK), compose_center(raw_reference)).getbbox():
+        raise ValueError("Original plate + wave + language overlay did not reproduce the reference crop")
+    context = {"case_id": case_id, "movie_frame": sample["frame"], "blender_frame": raw["frame"],
+               "reference": str(reference), "reference_sha256": sample["sha256"],
+               "baseline_raw_sha256": raw["sha256"], "network_rectangle": NETWORK,
+               "reference_network_pixel_match": True}
+    return prior, baseline, compose_center, context
+
+
+def sample_contacts(frame):
+    rgb = np.asarray(frame, dtype=np.int16)
+    summary = {}
+    for port, (left, right) in CONTACTS.items():
+        band = rgb[CONTACT_Y - 3:CONTACT_Y + 4, left:right]
+        above = rgb[CONTACT_Y - 16:CONTACT_Y - 6, left:right]
+        below = rgb[CONTACT_Y + 7:CONTACT_Y + 17, left:right]
+        peak = band[:, :, 2].max(axis=0)
+        background = np.maximum(above[:, :, 2].max(axis=0), below[:, :, 2].max(axis=0))
+        lift = peak - background
+        fan_left, fan_right = FAN_REGIONS[port]
+        fan_blue = np.concatenate((rgb[500:533, fan_left:fan_right, 2].ravel(),
+                                   rgb[548:581, fan_left:fan_right, 2].ravel()))
+        summary[port] = {"columns": list(range(left, right)), "peak_blue": peak.tolist(),
+                         "local_blue_lift": lift.tolist(),
+                         "detectable_terminal_columns": int(sum(lift >= 3)),
+                         "off_axis_fan_pixels_blue_above_5": int(sum(fan_blue > 5))}
+    return summary
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--verify-reference", action="store_true")
+    parser.add_argument("--case", choices=MATCHES, default="case-a")
+    parser.add_argument("--plate", type=Path)
+    parser.add_argument("--scene-receipt", type=Path, default=ROOT / "scene/scene.receipt.json")
+    args = parser.parse_args()
+    prior, frame, compose_center, context = preview_context(args.case)
+    if args.verify_reference:
+        print(json.dumps(context, indent=2))
+        return
+
+    number = MATCHES[args.case]
+    plate_dir = "preview-plate" if args.case == "case-a" else "preview-plate-g"
+    plate = (args.plate or ROOT / plate_dir / f"frame-{number:06d}.png").resolve()
+    receipt_path = plate.parent / "render.receipt.json"
+    receipt = prior.read_json(receipt_path)
+    scene = prior.read_json(args.scene_receipt)
+    scene_path = args.scene_receipt.with_name(args.scene_receipt.name.replace(".receipt.json", ".blend"))
+    rendered, = receipt["frames"]
+    if (receipt["schema"] != "jain.gpu-scene-loop/v1" or receipt["status"] != "PASS"
+            or receipt["case_id"] != args.case or not receipt["gpu_only"]
+            or (receipt["width"], receipt["height"]) != prior.SIZE
+            or rendered["frame"] != number or rendered["file"] != plate.name
+            or receipt["scene_receipt_sha256"] != prior.digest(args.scene_receipt)
+            or receipt["scene_sha256"] != prior.digest(scene_path)
+            or scene["network"]["spatial_layout"] != "dendrite"):
+        raise ValueError("Wrong GPU render or scene provenance for Dendrite")
+    prior.verified_file(plate, rendered["sha256"])
+
+    baseline = frame.copy()
+    frame.paste(compose_center(plate), NETWORK[:2])
+    diff = ImageChops.difference(baseline, frame).getbbox()
+    if not diff or not (NETWORK[0] <= diff[0] < diff[2] <= NETWORK[2]
+                        and NETWORK[1] <= diff[1] < diff[3] <= NETWORK[3]):
+        raise ValueError("Dendrite plate changed pixels outside the network and rims")
+    summary = sample_contacts(frame)
+    output = ROOT / f"dendrite-frame-{number}.png"
+    frame.save(output)
+    rail_inspection = Image.new("RGB", (640, 320), "black")
+    for offset, crop in enumerate(((598, 520, 638, 560), (1285, 520, 1325, 560))):
+        rail_inspection.paste(frame.crop(crop).resize((320, 320), Image.Resampling.NEAREST), (offset * 320, 0))
+    rail_inspection.save(ROOT / f"terminal-contact-review-{number}.png")
+    context.update({"status": "PASS", "path": str(output), "sha256": prior.digest(output),
+                    "plate_sha256": rendered["sha256"], "scene_sha256": receipt["scene_sha256"],
+                    "scene_receipt_sha256": receipt["scene_receipt_sha256"],
+                    "render_receipt_sha256": prior.digest(receipt_path),
+                    "idle_display_emission": scene["connectors"]["panel_contacts"].get("idle_display_emission"),
+                    "changed_rectangle": diff, "contact_samples": summary})
+    (ROOT / f"preview-composite-{number}.receipt.json").write_text(json.dumps(context, indent=2) + "\n")
+    print(json.dumps(context, indent=2))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,12 @@
 # JAIN inference animation
 
+The [render orchestration scripts](orchestration/README.md) preserve the
+distributed rendering, transfer, verification, and assembly controllers used
+for the film. They require an explicit external artifact root; Blender scenes,
+checkpoints, frame sequences, and videos stay outside the repository. The
+previously local CUDA Toolkit image is now included with the other small
+[language assets](../../docs/plans/blender-fused-first-render/language-icons/README.md).
+
 The [VEOX endcap](../../docs/plans/blender-fused-first-render/ENDCAP.md) adds a
 six-second 1080p closing animation and a 45-second assembled film. Its supplied
 vector logo pulses cyan to violet from V through X, with X glowing strongest and

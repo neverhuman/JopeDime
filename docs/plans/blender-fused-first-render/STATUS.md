@@ -1,4 +1,33 @@
-# JAIN ten-dataset animation status
+# JAIN rendering source status
+
+The approved delivery is a **45-second 1920×1080, 30 fps film** with the opener,
+ten Dendrite dataset chapters, and the six-second VEOX ending. The standalone
+12-second opener and six-second ending are also available. The final ending has
+one continuous cyan-to-violet pulse, an extended X glow, and the bright closing
+caption. See [ENDCAP.md](ENDCAP.md) and [INTRO.md](INTRO.md) for the source and
+render evidence. Native UHD rendering remains stopped by the owner.
+
+The current merge scope for [PR #2114](https://github.com/neverhuman/JopeDime/pull/2114)
+includes the native observation helpers, all Blender scene/render code, source
+and table composition, film/audio assembly, and the previously external
+[render controllers](../../../tools/visualization/orchestration/README.md).
+The approved CUDA Toolkit JPEG is now included with the small language assets.
+Scenes, checkpoints, captured datasets, frame sequences, videos, and large
+receipts remain in external custody. Generated render payloads are ignored in
+the visualization source directory, and controllers require external output
+paths. These source-preservation changes do not restart any renderer.
+
+The final production renderer and compositor bytes retain their captured
+identities. Controller adaptations record their original source digests in
+`tools/visualization/orchestration/external-source-manifest.json`. Original
+numerical capture epochs remain distinct from current-source compile/test
+validation. The latest exact-head checks, source/blob inventory, review, and
+merge readbacks are retained externally in
+`blender-render-20261103/h256/git-merge-audit-20261105/`; GitHub records the current
+PR and CI disposition. Earlier status snapshots below describe their dated
+deliveries and are not the current film specification.
+
+## Historical ten-dataset long animation
 
 [Draft PR #2114](https://github.com/neverhuman/JopeDime/pull/2114) · branch `codex/blender-fused-first-render` · protected #2071/#2115 branches untouched.
 
