@@ -62,3 +62,17 @@
   `BOARD.json`.
 - `unlock` is one-shot. Later steps re-check the LOCK (`resume_stage_v`). Sealed, holdout and DL-Test paths stay
   refused.
+
+## 6. Amendment 1 (before any dev91 read): lock attempt 2
+- **Attempt 1 was refused.** LOCK `b752ccdc…` (receipt `H369_LOCK_sha256.txt`, kept) listed `BOARD.json` under
+  `code_sha256`.
+- **Why.** `unlock_stage_v` re-hashes those files **before** it enables Stage V, and the guard refused that `dev91`
+  path. One refusal is logged in `$H369_DATA/guard_refusals.log`.
+- **Nothing happened.** No STAGE_V_STARTED marker was created, and no dev91 file was opened by the driver.
+- **Fix:**
+  - `BOARD.json` moves to `inputs_sha256`, verified by `prepare` after the unlock.
+  - The receipt becomes `H369_LOCK2_sha256.txt`, and the LOCK carries `lock_attempt: 2`.
+  - Attempt 1's `LOCK.json` and `code.json` are kept as `stage_v/attempt1/`.
+- The entrant, data and checks are unchanged.
+- **Before attempt 1:** only envelope headers and fold vectors were compared by shell (row counts, width, fold bytes;
+  no X or y values). Board envelopes = GP AUDIT envelopes without the 10 all-zero query rows, 91/91.

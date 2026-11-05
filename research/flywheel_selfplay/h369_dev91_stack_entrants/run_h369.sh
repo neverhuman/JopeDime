@@ -11,7 +11,7 @@ DATA=${H369_DATA:-/home/ubuntu/jope-data/h369-d91}
 WDIR=research/flywheel_selfplay/h369_dev91_stack_entrants
 SRC=/home/ubuntu/jope_plan/evidence/H369/source/$WDIR
 H317=/home/ubuntu/jope_plan/evidence/H317/source/research/flywheel_selfplay/h317_island10_multiscale_curriculum
-RECEIPT=/home/ubuntu/jope_plan/ns/receipts/H369_LOCK_sha256.txt
+RECEIPT=/home/ubuntu/jope_plan/ns/receipts/H369_LOCK2_sha256.txt  # attempt 1: H369_LOCK_sha256.txt (PREREG section 6)
 BOARD_ROOT=/home/ubuntu/jope-data/h335-stagev/refboard/dev91-audit-v1
 export PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 if [ "$STEP" = stage ]; then
@@ -43,12 +43,16 @@ case $STEP in
     mkdir -p "$DATA/stage_v"
     { for f in "$CODE"/*.py "$CODE"/*.sh "$CODE"/*.md "$CODE"/*.json; do sha256sum "$f"; done
       for f in common_h317.py gp_engine_h317.py gp_grammar_h317.py stacking_h317.py; do sha256sum "$H317/$f"; done
-      sha256sum "$DATA/logs/xbabe0.sha256" "$BOARD_ROOT/BOARD.json"; } \
+      sha256sum "$DATA/logs/xbabe0.sha256"; } \
       | jq -R -n '[inputs | split("  ") | {(.[1]): .[0]}] | add' > "$DATA/stage_v/code.json"
-    jq -n --slurpfile c "$DATA/stage_v/code.json" --arg utc "$(date -u +%FT%TZ)" \
-      --arg design "$(jq -r .chosen_key "$CODE/DESIGN.json")" \
+    # dev91-path inputs are verified after the unlock (prepare), never by unlock_stage_v (the guard refuses them)
+    sha256sum "$BOARD_ROOT/BOARD.json" | jq -R -n '[inputs | split("  ") | {(.[1]): .[0]}] | add' \
+      > "$DATA/stage_v/inputs.json"
+    jq -n --slurpfile c "$DATA/stage_v/code.json" --slurpfile i "$DATA/stage_v/inputs.json" \
+      --arg utc "$(date -u +%FT%TZ)" --arg design "$(jq -r .chosen_key "$CODE/DESIGN.json")" \
       '{wave:"H369", entrant:"h364.XSTACK_2L", design_key:$design, design_commit:"f052a59f35",
-        board:"dev91-audit-v1", seeds:[335101,335102], stage:"V_AGG", utc:$utc, code_sha256:$c[0]}' \
+        board:"dev91-audit-v1", seeds:[335101,335102], stage:"V_AGG", utc:$utc, code_sha256:$c[0],
+        inputs_sha256:$i[0], lock_attempt:2}' \
       > "$DATA/stage_v/LOCK.json"
     chmod 0444 "$DATA/stage_v/LOCK.json"
     S=$(sha256sum "$DATA/stage_v/LOCK.json" | cut -d' ' -f1)

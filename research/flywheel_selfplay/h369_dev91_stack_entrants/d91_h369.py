@@ -40,7 +40,7 @@ K, C = H.K, H.C
 WAVE = "H369"
 DATA = Path(os.environ.get("H369_DATA", "/home/ubuntu/jope-data/h369-d91"))
 C.DATA_ROOT = DATA
-C.LOCK_RECEIPT = Path("/home/ubuntu/jope_plan/ns/receipts/H369_LOCK_sha256.txt")
+C.LOCK_RECEIPT = Path("/home/ubuntu/jope_plan/ns/receipts/H369_LOCK2_sha256.txt")  # attempt 1 receipt: PREREG section 6
 BOARD = Path("/home/ubuntu/jope-data/h335-stagev/refboard/dev91-audit-v1")
 BOARD_SHA256 = "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069"
 GPV = DATA / "gpv"
@@ -84,6 +84,10 @@ def cmd_unlock(_a) -> None:
 
 def cmd_prepare(_a) -> None:
     C.resume_stage_v()
+    lock = json.loads((DATA / "stage_v" / "LOCK.json").read_text())
+    for p, sha in lock["inputs_sha256"].items():  # dev91-path inputs: checked only after the unlock
+        if K.sha256_file(Path(p)) != sha:
+            raise SystemExit(f"input changed after LOCK: {p}")
     b = board()
     cids = [c["cid"] for c in b["contexts"]]
     env_sha = {c["cid"]: c["envelope_sha256"] for c in b["contexts"]}
