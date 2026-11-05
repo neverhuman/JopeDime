@@ -8,5 +8,4 @@ BASE9panels/36fold+lock hashes/3medians and1219TRAIN inputs exact.34data-free te
 
 Outcome: NOT_RUN, pending the single core-admission gate and runtime forecast.
 Scientific metrics/verdict UNKNOWN; no treatment fit or outer scoring yet.
-Preregistration commit is recorded in the publication receipt and will be quoted
-here in the closeout. CPU only; DOPEc51a56d0unloaded. No dev91 or speed verdict.
+Preregistration commit: `66ef7b3e75b69bdbb0098a9322473e4799c63d90` (pushed 2026-11-05T00:16:08.901925+00:00, before any treatment fit). CPU only; DOPEc51a56d0unloaded. No dev91 or speed verdict.
