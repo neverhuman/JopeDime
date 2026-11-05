@@ -18,14 +18,16 @@ you saw.
 
 | kind | rows | moved | new | pending | dropped | lost |
 |---|---:|---:|---:|---:|---:|---:|
+| bin | 1 | 1 | 0 | 0 | 0 | 0 |
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
 | engine-subcommand | 104 | 88 | 16 | 0 | 0 | 0 |
+| example | 1 | 0 | 1 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
 | new-bin | 29 | 0 | 29 | 0 | 0 | 0 |
-| new-example | 10 | 0 | 10 | 0 | 0 | 0 |
+| new-example | 15 | 0 | 15 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
 | root-binary | 55 | 55 | 0 | 0 | 0 | 0 |
@@ -42,11 +44,9 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| bin | 1 | 1 | 0 | 0 | 0 | 0 |
-| example | 1 | 0 | 1 | 0 | 0 | 0 |
-| **total** | **841** | **353** | **78** | **1** | **402** | **7** |
+| **total** | **846** | **353** | **83** | **1** | **402** | **7** |
 
-`moved`/`new` rows without a covering test: 304.
+`moved`/`new` rows without a covering test: 305.
 
 ## Rows
 
@@ -897,4 +897,10 @@ you saw.
 
 | new-example | (new) bounded local landmark round | crates/jope-cli/examples/landmark_one_shot.rs (landmark_one_shot) | jope-cli::offline_cli landmark_one_shot::bounded_one_shot_measures_reloads_and_refuses_reuse_and_tampering | new | Explicit diagnostic execution on a fresh synthetic TRAIN-only table: native measurement, raw Dope encoding, local HWM ingest, archive and fresh-process readback. Requires dope-encoding; no production admission, promotion or continuous-service claim. |
 | new-example | (new) telemetry GP probe | crates/jope-telemetry/examples/train_gp_probe.rs (train_gp_probe) | none | new | Bounded synthetic GP tracker probe; does not establish live GP coverage or performance. |
+| new-example | (new) private fused affine diagnostic capture | crates/jope-service/examples/visual_trace.rs (visual_trace) | jope-service::example/visual_trace (2 tests); jope-service::jope_service visual_trace::tests (3 tests) | new | Requires `visual-trace`; trusted-host CPU diagnostic with authenticated r882 assets, actual affine observations and bounded CSV catalog. The two example tests cover catalog sorting/refusal; the three library tests cover observer controls. A diagnostic candidate slate does not establish production champion lineage; private traces stay outside the repository. Local execution demonstrated on Darwin arm64, not a deployment qualification. |
+| new-example | (new) scoped Rust source emission metric | crates/jope-service/examples/visual_emit_metric.rs (visual_emit_metric) | none | new | Requires `visual-trace`; local CPU warm repeated `ModelObject::export_source` measurement against unchanged verified Rust bytes and the native Rust lexical counter. Six exact-model release measurements recorded externally on Darwin arm64; no dedicated automated example tests. Includes allocation and loop overhead; excludes model loading, calibration, hashing and tokenization. Not neural decoding, newly unique source throughput or product end-to-end performance. |
+| new-example | (new) same-run fused inference and source execution proof | crates/jope-service/examples/visual_run.rs (visual_run) | jope-service::jope_service visual_trace::tests (3 tests) | new | Requires `visual-trace`; trusted-host CPU-only actual RunService conditioning/admission journal, committed GP champion, native Rust/Python export and 96-row prediction plus emitted Rust training parity on each of six selected synthetic tables. Authenticated r882 assets and signed Darwin arm64 worker; one worker, no listener, fresh external evidence directory. The three library tests cover observer controls, not the full runner; six local execution receipts provide the separate bounded integration evidence. Seed winners retain honest attribution; not a public release or predictive-quality qualification. |
+| new-example | (new) selected GP refit and complete source proof | crates/jope-service/examples/visual_fit_dsl.rs (visual_fit_dsl) | jope-service::example/visual_fit_dsl (2 tests) | new | Requires `visual-trace`; bounded finite-numeric supplied-DSL fit with same-case FIT contract, native model envelope, whole Rust/Python exports, both 64-row selfchecks and all-row prediction/emitted Rust training parity. Proof requires an optimized native reference and optimized emitted Rust; debug/release training comparisons are refused. `--features` exports actual canonical DSL raw412/sign-projection inputs without fitting. External G-selection causality is checked separately; no production admission or registered Engine champion claim. |
+
+| new-example | (new) actual data-to-Rust timing protocol | crates/jope-service/examples/visual_inference_metric.rs (visual_inference_metric) | jope-service::example/visual_inference_metric (3 tests) | new | Requires `visual-trace` and optimized release; resident JSONL fresh FIT high-landmark encoding and selected-DSL fit/Rust-only export. Complete-code response ends the caller wall clock; proof/counting follows using canonical Rust lexical tokens and TEL07 Rust throughput event 0x012a. Compatibility all-language count equals Rust count because only Rust is emitted. Tests cover canonical token/time arithmetic, invalid source/zero-time refusal and sixteen-contract capacity; native exact encoding/source proofs and outer fused-model timing receipts are separate local evidence. No production H256 serving promotion. |
 | example | q1 infrastructure retry example | crates/jope-service/examples/q1_infra_retry.rs (jope-service/q1_infra_retry) | none | new | Service retry behavior example. |

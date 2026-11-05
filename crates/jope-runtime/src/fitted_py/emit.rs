@@ -134,6 +134,24 @@ pub fn emit_calibrated_with_checks(
     output_transform: Option<&OutputTransform>,
     checks: &[CheckRow],
 ) -> Result<String> {
+    emit_calibrated_with_checks_and_options(
+        genome,
+        model,
+        width,
+        output_transform,
+        checks,
+        &EmitOptions::default(),
+    )
+}
+
+fn emit_calibrated_with_checks_and_options(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    output_transform: Option<&OutputTransform>,
+    checks: &[CheckRow],
+    options: &EmitOptions,
+) -> Result<String> {
     if checks.len() > 64 || checks.iter().any(|row| row.inputs.len() != width) {
         return Err(Failure::integrity("invalid Python self-check rows"));
     }
@@ -187,7 +205,7 @@ pub fn emit_calibrated_with_checks(
             problems.join(", ")
         )));
     }
-    let recipe = emit_recipe(genome, &EmitOptions::default())
+    let recipe = emit_recipe(genome, options)
         .map_err(|e| Failure::backend(format!("{e:#}")))?
         .python;
     let at = recipe
@@ -320,6 +338,14 @@ if __name__ == "__main__" and _self_check_sys.argv[1:] == ["--self-check"]:
 /// (`prediction_version: 2`): missing and unparseable cells encode as 0, and a non-finite
 /// normalized input or prediction raises instead of becoming a number.
 pub fn emit_math_pipeline(pipeline: &MathPipeline) -> Result<Vec<u8>> {
+    emit_math_pipeline_with_options(pipeline, &EmitOptions::default())
+}
+
+/// Emit a fitted pipeline with an explicitly selected recipe source profile.
+pub fn emit_math_pipeline_with_options(
+    pipeline: &MathPipeline,
+    options: &EmitOptions,
+) -> Result<Vec<u8>> {
     let input = &pipeline.input;
     if input.prediction_version != F64_PREDICTION_VERSION {
         return Err(Failure::backend(format!(
@@ -343,11 +369,13 @@ pub fn emit_math_pipeline(pipeline: &MathPipeline) -> Result<Vec<u8>> {
         .zip(expected)
         .map(|(inputs, expected)| CheckRow { inputs, expected })
         .collect();
-    let mut source = emit_with_checks(
+    let mut source = emit_calibrated_with_checks_and_options(
         &genome,
         &pipeline.state.model,
         input.selected.len(),
+        None,
         &checks,
+        options,
     )?;
     let at = source
         .rfind(MAIN_GUARD)

@@ -13,6 +13,7 @@ use feat_math::heads::FittedHead;
 use feat_math::model::Model;
 use feat_math::ops::FittedOp;
 use feat_math::spec::{self, Plan, PlannedHead, PlannedOp, PlannedStage, TargetKind};
+use feat_math::transpile::EmitOptions;
 use serde_json::{json, Value};
 
 pub const EMITTER_VERSION: &str = "jope-fitted-rust/v1";
@@ -107,6 +108,24 @@ pub fn emit_calibrated_with_checks(
     output_transform: Option<&OutputTransform>,
     checks: &[CheckRow],
 ) -> Result<String> {
+    emit_calibrated_with_checks_and_options(
+        genome,
+        model,
+        width,
+        output_transform,
+        checks,
+        &EmitOptions::default(),
+    )
+}
+
+fn emit_calibrated_with_checks_and_options(
+    genome: &GenomeIr,
+    model: &Model,
+    width: usize,
+    output_transform: Option<&OutputTransform>,
+    checks: &[CheckRow],
+    options: &EmitOptions,
+) -> Result<String> {
     ensure!(
         checks.len() <= 64 && checks.iter().all(|row| row.inputs.len() == width),
         "invalid Rust self-check rows"
@@ -141,8 +160,7 @@ pub fn emit_calibrated_with_checks(
         no_null(&state["Pipeline"]["target"]) || fitted_target.is_none(),
         "non-finite fitted target state"
     );
-    let mut source =
-        fitted_module_header(feat_math::emit_rs::emit_rust(&plan, &Default::default()))?;
+    let mut source = fitted_module_header(feat_math::emit_rs::emit_rust(&plan, options))?;
     // The recipe's final CSV training CLI is not an entry point in a fitted module.
     let end = source
         .find("\nfn main() {")
@@ -307,5 +325,5 @@ fn fitted_module_header(source: String) -> Result<String> {
 mod tests;
 
 mod pipeline;
-pub use pipeline::emit_pipeline;
+pub use pipeline::{emit_pipeline, emit_pipeline_with_options};
 use pipeline::{is_identity_transform, lint, literal, no_null, pipeline_fields};

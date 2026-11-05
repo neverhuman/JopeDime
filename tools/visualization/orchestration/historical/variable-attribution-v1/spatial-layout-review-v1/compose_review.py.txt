@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+"""Composite geometry comparisons over one verified JAIN animation frame."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+from pathlib import Path
+import sys
+
+from PIL import Image, ImageChops, ImageDraw, ImageFont
+
+
+ROOT = Path(__file__).resolve().parent
+CAPTURE = ROOT.parent / "capture"
+VISUALIZATION = (
+    ROOT.parents[3] / "blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization"
+)
+sys.path.insert(0, str(VISUALIZATION))
+from intelligence_wave import apply_wave, digest, hud, load_icon  # noqa: E402
+
+
+CASE_ID = "case-a"
+STILL_NAME = "case-a-gp-cue.png"
+SIZE = (1920, 1080)
+NETWORK = (612, 187, 1310, 1080)
+CONTACT_CROP = (612, 206, 1310, 895)
+OPTIONS = ("iris", "twist", "hourglass", "prism", "manta")
+UI_FONT = "/System/Library/Fonts/Avenir Next.ttc"
+
+
+def read_json(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def image(path):
+    with Image.open(path) as raster:
+        if raster.size != SIZE:
+            raise ValueError(f"{path} has dimensions {raster.size}, expected {SIZE}")
+        return raster.convert("RGB")
+
+
+def verified_file(path, expected):
+    if digest(path) != expected:
+        raise ValueError(f"Reference input digest mismatch for {path}")
+    return path
+
+
+def prepare_context():
+    encode = read_json(CAPTURE / "final/encode.receipt.json")
+    scene = read_json(verified_file(CAPTURE / "scene/scene.receipt.json", encode["scene_receipt_sha256"]))
+    case = next(case for case in encode["cases"] if case["case_id"] == CASE_ID)
+    still = next(still for still in encode["previews"] if still["path"] == STILL_NAME)
+    case_frame = still["frame"] - case["start"]
+    loops = CAPTURE / "loops" / CASE_ID
+    loop = read_json(verified_file(loops / "render.receipt.json", case["loop_receipt_sha256"]))
+    raw = loop["frames"][case["plate_indices"][case_frame]]
+    reference = verified_file(CAPTURE / "final" / STILL_NAME, still["sha256"])
+    raw_reference = verified_file(loops / raw["file"], raw["sha256"])
+
+    cue = next(cue for cue in case["cues"] if cue["case_frame"] == case_frame)
+    viewport = tuple(encode["source_viewport"])
+    source_file = case["files"][cue["file_index"]]
+    fonts = [ImageFont.truetype(UI_FONT, size) for size in (16, 48, 24)]
+    icon, _ = load_icon(source_file["language"])
+    gap = min(abs(cue["case_frame"] - case_frame) for cue in case["cues"])
+    energy = .76 + .44 * math.exp(-.5 * (gap / 3) ** 2)
+
+    def render_center(path):
+        frame = apply_wave(image(path), (case_frame % 34) / 33, energy=energy)
+        # The source title and benchmark are discarded with the rest of the
+        # pixels outside NETWORK. The icon and language caption are kept.
+        hud(frame, *fonts, scene["round_trip_metrics"][CASE_ID], source_file, 427,
+            cue, viewport, icon, source_file["language"], "")
+        return frame.crop(NETWORK)
+
+    baseline = image(reference)
+    if ImageChops.difference(baseline.crop(NETWORK), render_center(raw_reference)).getbbox():
+        raise ValueError("Original plate + wave + language overlay did not reproduce the reference crop")
+    context = {
+        "case_id": CASE_ID,
+        "movie_frame": still["frame"],
+        "blender_frame": raw["frame"],
+        "reference": str(reference),
+        "reference_sha256": still["sha256"],
+        "baseline_raw_sha256": raw["sha256"],
+        "network_rectangle": NETWORK,
+        "reference_network_pixel_match": True,
+    }
+    return baseline, render_center, context
+
+
+def contact_sheet(stills):
+    canvas = Image.new("RGB", (1698, 1280), "#090D15")
+    draw = ImageDraw.Draw(canvas)
+    title = ImageFont.truetype(UI_FONT, 32)
+    subtitle = ImageFont.truetype(UI_FONT, 16)
+    label = ImageFont.truetype(UI_FONT, 22)
+    draw.text((26, 20), "JAIN  /  SPATIAL LAYOUT STUDY", font=title, fill="#EFF5FF")
+    draw.text((27, 63), "Same inference frame. Five ways to position the layers.",
+              font=subtitle, fill="#A7B9CC")
+    for i, (option, frame) in enumerate(stills, start=1):
+        row, column = divmod(i - 1, 3)
+        x = 26 + column * 553 + (276 if row else 0)
+        y = 101 + row * 580
+        crop = frame.crop(CONTACT_CROP)
+        crop.thumbnail((535, 529), Image.Resampling.LANCZOS)
+        canvas.paste(crop, (x + 1, y + 1))
+        draw.rounded_rectangle((x, y, x + 536, y + 530), radius=9, outline="#28364D", width=1)
+        draw.text((x + 9, y + 542), f"{i:02d}  {option.title()}", font=label, fill="#E4F1FB")
+    return canvas
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--verify-reference", action="store_true", help="verify archived inputs only")
+    args = parser.parse_args()
+    baseline, render_center, context = prepare_context()
+    if args.verify_reference:
+        print(json.dumps(context, indent=2))
+        return
+
+    sources = [(option, ROOT / "raw" / f"{option}.png") for option in OPTIONS]
+    for _, source in sources:
+        if not source.is_file():
+            raise FileNotFoundError(source)
+    stills = []
+    receipts = []
+    seen_centers = set()
+    baseline_center = baseline.crop(NETWORK)
+    for i, (option, source) in enumerate(sources, start=1):
+        frame = baseline.copy()
+        center = render_center(source)
+        if not ImageChops.difference(baseline_center, center).getbbox():
+            raise ValueError(f"{option} did not change the network crop")
+        center_sha = hashlib.sha256(center.tobytes()).hexdigest()
+        if center_sha in seen_centers:
+            raise ValueError(f"{option} duplicated another layout")
+        seen_centers.add(center_sha)
+        frame.paste(center, NETWORK[:2])
+        # The render entirely replaces the old network and floor. Comparing
+        # the difference bounds proves no pixels changed outside that crop.
+        diff = ImageChops.difference(baseline, frame).getbbox()
+        if not (NETWORK[0] <= diff[0] < diff[2] <= NETWORK[2]
+                and NETWORK[1] <= diff[1] < diff[3] <= NETWORK[3]):
+            raise ValueError(f"{option} changed pixels outside the network crop")
+        output = ROOT / f"{i:02d}-{option}.png"
+        frame.save(output)
+        stills.append((option, frame))
+        receipts.append({"option": option, "raw_sha256": digest(source), "path": str(output),
+                         "network_rgb_sha256": center_sha,
+                         "sha256": digest(output), "changed_rectangle": diff})
+    sheet = ROOT / "contact-sheet.png"
+    contact_sheet(stills).save(sheet)
+    context.update({"status": "PASS", "options": receipts,
+                    "contact_sheet": str(sheet), "contact_sheet_sha256": digest(sheet)})
+    (ROOT / "composite.receipt.json").write_text(json.dumps(context, indent=2) + "\n", encoding="utf-8")
+    print(sheet)
+
+
+if __name__ == "__main__":
+    main()

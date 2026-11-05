@@ -1,0 +1,28 @@
+#!/bin/sh
+set -eu
+root=$1
+cap="$root/capture"
+worktree=$PWD
+gate="$cap/loops-transfer.receipt.json"
+count=0
+until test -s "$gate"; do
+    count=$((count + 1))
+    test "$count" -lt 360
+    sleep 5
+done
+python3 - "$gate" <<'PY'
+import json, sys
+assert json.load(open(sys.argv[1]))["status"] == "PASS"
+PY
+
+python3 tools/visualization/intelligence_wave.py \
+    --scene-receipt "$cap/scene/scene.receipt.json" --source-catalog "$cap/multilingual-source/catalog.json" \
+    --loops-root "$cap/loops" --table-panels "$cap/table-panels" --neural-influence "$cap/neural-influence.json" \
+    --output-dir "$cap/final"
+
+dir="$cap/final"
+film="$dir/JAIN-intelligence-wave-42s.mp4"
+ffprobe -v error -count_frames -select_streams v:0 -show_streams -show_format -show_chapters -of json "$film" > "$dir/ffprobe.json"
+ffmpeg -nostdin -v error -xerror -i "$film" -map 0:v:0 -f null - 2> "$dir/decode.log"
+ffmpeg -nostdin -v error -xerror -i "$film" -vf "select=eq(mod(n\\,126)\\,17),scale=480:270,tile=5x2" -frames:v 1 "$dir/ten-dataset-review.png"
+python3 "$root/verify_neural_cut.py" "$worktree" "$root"

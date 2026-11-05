@@ -159,6 +159,25 @@ impl ModelObject {
         Ok(source.into_bytes())
     }
 
+    /// Lower a numeric math pipeline with an explicit Rust/Python recipe source profile.
+    /// Standard source export continues to use the default profile.
+    pub fn export_math_pipeline_source_with_options(
+        &self,
+        language: &str,
+        options: &feat_math::transpile::EmitOptions,
+    ) -> Result<Vec<u8>> {
+        let pipeline = self.math_pipeline()?;
+        match language {
+            "rust" => crate::fitted_rs::emit_pipeline_with_options(&pipeline, options)
+                .map(String::into_bytes)
+                .map_err(|error| Failure::backend(error.to_string())),
+            "python" => crate::fitted_py::emit_math_pipeline_with_options(&pipeline, options),
+            _ => Err(Failure::input(
+                "recipe source options require Rust or Python",
+            )),
+        }
+    }
+
     pub(super) fn require_executable(&self) -> Result<()> {
         let unsupported = self.unsupported();
         if !unsupported.is_empty() {

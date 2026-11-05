@@ -1,0 +1,127 @@
+{
+  "schema": "jain.intelligence-wave-neural-review/v1",
+  "status": "PASS",
+  "movie_sha256": "0f691aeb3767a3aec8f8b89c231522ee680a1432d8076e478bc6f1da15e5e975",
+  "encode_receipt_sha256": "cec1763985aeecde68f068e4ca02a85b27ad27585246c0a51a756959d567aecc",
+  "ffprobe_sha256": "34c5b02aa2bad31b56297efde233baca4b1c3c880af58396e0235d5331f30da5",
+  "decoded_frames": 1260,
+  "fps": 30,
+  "duration_seconds": 42,
+  "width": 1920,
+  "height": 1080,
+  "chapters": 10,
+  "language_count": 8,
+  "source_catalog_sha256": "33dda54fdef5c845d6abed2f4b6669338788b63d3f95975943c27634afd4a740",
+  "source_archive_sha256": "d2f34724fa1c4fb9d683868f97fbae5824dcfbd41647dd7bb60e10f5fe77d561",
+  "preview_count": 21,
+  "full_source_scroll": true,
+  "verified_row_and_icon_pixels_in_previews": true,
+  "table_hold_seconds_mean": 0.28,
+  "orders_per_case": 15,
+  "interior_shuffles_per_case": 14,
+  "verified_cell_colors": 12750,
+  "verified_feature_headers": 600,
+  "attribution_sha256": "5b98bcf46adb598daa201a10b14d2e39fbde9e5a3279343b1de088821bd1f523",
+  "artifact_root": "h256/variable-attribution-v1",
+  "movie": "capture/final/JAIN-intelligence-wave-42s.mp4",
+  "source_archive": "capture/multilingual-source/JAIN-multilingual-recipe-sources.zip",
+  "cell_measurement": {
+    "intervention": "replace one raw visible FIT cell with its column's baseline FIT median",
+    "scope": "unchanged FIT roster and candidate bank; fresh native descriptors and frozen fused inference",
+    "scalar": "lowest alternative proposal cost minus the original winner's cost",
+    "magnitude": "absolute margin change divided by maximum absolute margin change over the 85 visible cells",
+    "eligible_slate_indices": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "target_included": true
+  },
+  "measured_interventions": 850,
+  "counterfactual_winner_switches": 0,
+  "visualization_tests_passed": 56,
+  "math_pipeline_tests_passed": 10,
+  "native_diagnostic_tests_passed": 5,
+  "scene_receipt_sha256": "3d529aab43aace88fb3261280a8132f5d5366a79c6fad54aa468c87670092167",
+  "compositor_sha256": "bfe76cba905c462a5a24b2f55b473bea077d348bb4a6142973be3460168c9cf1",
+  "table_renderer_sha256": "48acd6686696a00442d2fa8d48d5e319f41d999e3686e0a6246466b5a088a8d4",
+  "table_percentile_scope": "Per-case percentile of 85 cell effects on the saved fused ranker's selection margin, including the target; feature header shares average relative effects over shown rows",
+  "table_shuffle_scope": "Seeded display permutations of the same 17 verified FIT rows every 0.28 seconds, rounded to video frames",
+  "visual_source_profile": "opt-in partition-point quantiles for case D's recipe",
+  "fitted_export_profile": "feat-math-quantile-partition-point-v1",
+  "proof_hashes": {
+    "review": "976aaff07c744d94ff28a685ad5e97e72c0501ec737e74e63f9e121f08d33c49",
+    "dataset_sanity": "152eefe3e36b0b25d294bc35f759a0dba3f06d7d8838dfcdb8de8ada328d5d24",
+    "dataset_catalog": "748a8f3204aa19ca61bedd5e2e0d0d71aa08c680421cb0a625fcb2536992a8f4",
+    "native_and_gp_capture": "87a17d784d34aa8b3522edee0e06d0be7bd3fcdbd4e8849badd27d4ca4fa3530",
+    "fitted_export_metrics": "2437bac91b3470f5ce3b71aea0d9b9098a896325f863b4e9ab704aaf64a07426",
+    "render_transfers": "85f2fa82a1219addb48cd224375a9fa4ae447eeb4ebda90b979232589b2a6a04"
+  },
+  "datasets": [
+    {
+      "case_id": "case-a",
+      "rows": 64,
+      "fit_rows": 51,
+      "csv_sha256": "e7f49894358e15aa7f0fdd1a7db423bfe674e237c1ce663585260c38796db90c"
+    },
+    {
+      "case_id": "case-b",
+      "rows": 72,
+      "fit_rows": 57,
+      "csv_sha256": "1cf6b25f1f95e14fee8f4971007d2a3dbaa29d6447cbcfdfb0d18b0c908bf625"
+    },
+    {
+      "case_id": "case-c",
+      "rows": 80,
+      "fit_rows": 64,
+      "csv_sha256": "acf418a9b0520467a7d2e11ee30276e8c8b3760c802459009674e4e008c2a99b"
+    },
+    {
+      "case_id": "case-d",
+      "rows": 88,
+      "fit_rows": 70,
+      "csv_sha256": "c2e5699d7a0eb7263dc27e64f239cdf03cca217cdba11a927d1bfca6117790bb"
+    },
+    {
+      "case_id": "case-e",
+      "rows": 104,
+      "fit_rows": 83,
+      "csv_sha256": "5903f23b63e4f20b3e78293881b99f17acdf33af78fcf3c7cc2711b8cf004779"
+    },
+    {
+      "case_id": "case-f",
+      "rows": 112,
+      "fit_rows": 89,
+      "csv_sha256": "b07a25403bd4e3743b05291cc79e656ca1443a881ccc1dd22a79f378ff3aeba3"
+    },
+    {
+      "case_id": "case-g",
+      "rows": 120,
+      "fit_rows": 96,
+      "csv_sha256": "2a3459d38f78903e5f9ae808d234c0831b3871939afa2e253b330d8a57ef11a5"
+    },
+    {
+      "case_id": "case-h",
+      "rows": 128,
+      "fit_rows": 102,
+      "csv_sha256": "87a136cb7c0d236c5a73f49161d8b2bac49ce69a2c432234dd609c813445e229"
+    },
+    {
+      "case_id": "case-i",
+      "rows": 144,
+      "fit_rows": 115,
+      "csv_sha256": "88d5eb53c0327faf6edcbdcea89e2f2e989235b9d78e809e7f6d4e86243ccbd8"
+    },
+    {
+      "case_id": "case-j",
+      "rows": 160,
+      "fit_rows": 128,
+      "csv_sha256": "cfc29ef83ccf307779c0aad374315f7e78f531f9bd596356ddecafb1caf0bff9"
+    }
+  ]
+}
