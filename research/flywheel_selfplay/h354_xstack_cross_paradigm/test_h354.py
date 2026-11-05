@@ -137,6 +137,12 @@ class DecisionTests(unittest.TestCase):
         g["X_LLM"]["gap"] = 0.001
         self.assertEqual(PD.pick_arm(g)[1], "X_LLM")  # tie in size with X_CL -> the cheaper library
 
+    def test_load_context_defaults_are_phase_d(self):
+        import inspect
+        sig = inspect.signature(K.load_context)
+        self.assertEqual(sig.parameters["runs"].default, K.H335_RUNS)
+        self.assertEqual((sig.parameters["stage"].default, sig.parameters["seed"].default), ("T_AGG", 335101))
+
     def test_arms_are_fixed(self):
         self.assertEqual(K.ARMS["X0"], ())
         self.assertEqual(set(K.ARMS["X_ALL"]), set(K.CLASSICAL) | set(K.LLM))

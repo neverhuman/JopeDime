@@ -1,0 +1,215 @@
+{
+  "schema": "jope.h354.metrics/v1",
+  "wave": "H354",
+  "slug": "h354_xstack_cross_paradigm",
+  "verdict": "XSTACK_NOT_ADVANCED",
+  "prereg_commit": "6247baa07361452588d2afec7bb480706366bb43",
+  "panel": "P201b (TRAIN, 201 families x 1 context, H335 Phase T seed 335101; development panel)",
+  "dev91_rows_read": 0,
+  "phase_c_run": false,
+  "harness": {
+    "align_contexts": 201,
+    "align_bad": 0,
+    "align_max": {
+      "audit_base": 4.847542059860919E-15,
+      "audit_member_rmse": 2.109210989315084E-15,
+      "frontier_env": 0.0,
+      "lr_member": 7.993605777301127E-15,
+      "search_rows": 0.0
+    },
+    "x0_pass": true,
+    "x0_worst": {
+      "u": 9.595879646440153E-12,
+      "u_board": 9.595879646440153E-12,
+      "w": 0.0
+    }
+  },
+  "library": {
+    "jobs": 1608,
+    "completed": 1606,
+    "failed": 2,
+    "failed_detail": "random_forest.v1 + xgboost.v1 on context 5622b3b6 (input contains inf; the stored reference-board AUDIT also failed)",
+    "llm_audit_reruns_sha_equal_stored": 804,
+    "passes_search_gate": {
+      "GPT6_Astra_Max": 197,
+      "GPT6p1_Sol_Max": 200,
+      "Gemini4_argon_high": 201,
+      "Opus5p5_Extra": 201,
+      "catboost.v1": 198,
+      "lightgbm.v1": 196,
+      "random_forest.v1": 198,
+      "xgboost.v1": 196
+    }
+  },
+  "family_mean_u": {
+    "X0": 1.933993721026498,
+    "X_ALL": 1.9428859466353394,
+    "X_CL": 1.9432956816908196,
+    "X_LLM": 1.9387054171887568
+  },
+  "best": "X_CL",
+  "eligible": [
+    "X_CL",
+    "X_LLM",
+    "X_ALL"
+  ],
+  "picked_by_rule": "X_LLM",
+  "locked_arm": null,
+  "decision": "NOT_ADVANCED",
+  "vs_X0": {
+    "X_ALL": {
+      "T_clipped": 0.013093835290731473,
+      "signflip_p": 0.005000114440917969,
+      "lofo_min": 0.011073873409683112,
+      "family_median": 0.0029260437371421144,
+      "pass": true,
+      "won": 134,
+      "tied": 12,
+      "lost": 55,
+      "gain_unclipped": 0.008892225608841512,
+      "pct_rmse_reduction": 0.008852806697848603
+    },
+    "X_CL": {
+      "T_clipped": 0.009301960664321637,
+      "signflip_p": 0.0001010894775390625,
+      "lofo_min": 0.007436426294814818,
+      "family_median": 0.001336091606402634,
+      "pass": true,
+      "won": 132,
+      "tied": 24,
+      "lost": 45,
+      "gain_unclipped": 0.009301960664321637,
+      "pct_rmse_reduction": 0.009258831261156342
+    },
+    "X_LLM": {
+      "T_clipped": 0.009010478196400667,
+      "signflip_p": 0.040040016174316406,
+      "lofo_min": 0.006934822080476348,
+      "family_median": 0.001640252522363328,
+      "pass": false,
+      "won": 128,
+      "tied": 14,
+      "lost": 59,
+      "gain_unclipped": 0.0047116961622586375,
+      "pct_rmse_reduction": 0.004700613534719289
+    }
+  },
+  "paired_se_vs_best": {
+    "X_ALL": {
+      "gap": 0.00040973505548012857,
+      "se": 0.00698143543002506
+    },
+    "X_CL": {
+      "gap": 0.0,
+      "se": 0.0
+    },
+    "X_LLM": {
+      "gap": 0.0045902645020630016,
+      "se": 0.0072318019368211766
+    }
+  },
+  "library_weight_mean": {
+    "X_CL": 0.10876325611985026,
+    "X_LLM": 0.17792709246226443,
+    "X_ALL": 0.23035249156549176
+  },
+  "contexts_loss_gt_0p05_vs_X0": {
+    "X_CL": 3,
+    "X_LLM": 8,
+    "X_ALL": 6
+  },
+  "worst_context": {
+    "cid": "351a6d94fe18",
+    "X0_u": 4.5915,
+    "d_X_LLM": -1.3641,
+    "d_X_ALL": -1.3445,
+    "d_X_CL": -0.1518
+  },
+  "train_audit_elo_dev": {
+    "h354.X0": {
+      "elo": 1500,
+      "ci95": [
+        1500,
+        1500
+      ]
+    },
+    "h354.X_ALL": {
+      "elo": 1613.1,
+      "ci95": [
+        1584,
+        1643.3
+      ]
+    },
+    "h354.X_CL": {
+      "elo": 1574.7,
+      "ci95": [
+        1556.1,
+        1594.3
+      ]
+    },
+    "h354.X_LLM": {
+      "elo": 1577.2,
+      "ci95": [
+        1552.5,
+        1602.3
+      ]
+    },
+    "lib.GPT6_Astra_Max": {
+      "elo": 1082.2,
+      "ci95": [
+        1027,
+        1132.7
+      ]
+    },
+    "lib.GPT6p1_Sol_Max": {
+      "elo": 1305,
+      "ci95": [
+        1250.7,
+        1355.9
+      ]
+    },
+    "lib.Gemini4_argon_high": {
+      "elo": 1331,
+      "ci95": [
+        1281.9,
+        1376.8
+      ]
+    },
+    "lib.Opus5p5_Extra": {
+      "elo": 1446.7,
+      "ci95": [
+        1400.1,
+        1491.8
+      ]
+    },
+    "lib.catboost.v1": {
+      "elo": 1288,
+      "ci95": [
+        1236.8,
+        1335.3
+      ]
+    },
+    "lib.lightgbm.v1": {
+      "elo": 1083.9,
+      "ci95": [
+        1026.5,
+        1137.4
+      ]
+    },
+    "lib.random_forest.v1": {
+      "elo": 1211.2,
+      "ci95": [
+        1154.1,
+        1264.9
+      ]
+    },
+    "lib.xgboost.v1": {
+      "elo": 1181.4,
+      "ci95": [
+        1125.9,
+        1232.4
+      ]
+    }
+  },
+  "elo_anchor": "h354.X0=1500 (P201b development; not the dev91 scale)"
+}

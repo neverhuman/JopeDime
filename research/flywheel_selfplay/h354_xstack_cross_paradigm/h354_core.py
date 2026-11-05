@@ -22,7 +22,7 @@ import struct
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -156,8 +156,8 @@ class Context:
     checks: Dict[str, float] = field(default_factory=dict)
 
 
-def run_of(cid: str) -> Path:
-    for r in H335_RUNS:
+def run_of(cid: str, runs: Sequence[Path] = H335_RUNS) -> Path:
+    for r in runs:
         if cid in json.loads((r / "config.json").read_text())["cids"]:
             return r
     raise KeyError(cid)
@@ -187,10 +187,12 @@ def fold_data(search: Envelope) -> "ST.FoldData":
     return ST.FoldData(y0, y1, b0, b1)
 
 
-def load_context(cid: str, fam_of: Dict[str, str]) -> Context:
-    run = run_of(cid)
-    rec = json.loads((run / "stages" / "T_AGG" / f"{cid}__{SEED_T}.jsonl").read_text().splitlines()[0])
-    if rec["cid"] != cid or rec["seed"] != SEED_T:
+def load_context(cid: str, fam_of: Dict[str, str], runs: Sequence[Path] = H335_RUNS, stage: str = "T_AGG",
+                 seed: int = SEED_T) -> Context:
+    """One context of a stored H335-recipe AGG run: Phase D = the H335 Phase T runs (defaults); Phase C = the P201c run."""
+    run = run_of(cid, runs)
+    rec = json.loads((run / "stages" / stage / f"{cid}__{seed}.jsonl").read_text().splitlines()[0])
+    if rec["cid"] != cid or rec["seed"] != seed:
         raise AssertionError(f"{cid}: stage record identity")
     stored = rec["outputs"][STACK_KEY]
     spec = stored["spec"]
