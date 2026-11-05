@@ -1,5 +1,9 @@
+#[path = "pty_smoke/cloud_tui.rs"]
+mod cloud_tui;
 #[path = "support/pty.rs"]
 mod pty;
+#[path = "support/workspace.rs"]
+mod workspace;
 
 const SENTINELS: [&str; 4] = ["918273.125", "817263.25", "716254.375", "615245.5"];
 

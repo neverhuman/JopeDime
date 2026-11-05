@@ -2,9 +2,9 @@
 //! run with a just-in-time login that continues the same run, progress rendered once per event,
 //! the remembered upload consent, a limit refusal in plain words, a finished local run's results
 //! synced in order with a retry, the X-Jain-Device header, and the global first-run flags.
-#[path = "support/workspace.rs"]
-mod workspace;
 
+use super::workspace::{account, Recorded, Workspace, CLOUD_RUN, SESSION};
+use super::BIN;
 use std::{
     path::{Path, PathBuf},
     process::{Command, Output},
@@ -13,9 +13,6 @@ use std::{
         Arc,
     },
 };
-use workspace::{account, Recorded, Workspace, CLOUD_RUN, SESSION};
-
-const BIN: &str = env!("CARGO_BIN_EXE_jopedime");
 
 struct Home {
     _dir: tempfile::TempDir,
@@ -33,7 +30,7 @@ fn home() -> Home {
         std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700)).unwrap();
     }
     let csv = dir.path().join("rent.csv");
-    let demo = include_str!("../assets/demos/regression_apartment_rent.csv");
+    let demo = include_str!("../../assets/demos/regression_apartment_rent.csv");
     let rows: Vec<&str> = demo.lines().take(150).collect();
     std::fs::write(&csv, rows.join("\n") + "\n").unwrap();
     Home {

@@ -1,10 +1,9 @@
 //! After a batch `run` (which uses an in-process engine and leaves none behind), the engine
 //! commands start the shared engine on demand, and the model `run --out` wrote loads, verifies
 //! and predicts on its own exactly as `predict --model RUN` does.
-#![cfg(all(feature = "engine", feature = "mcp"))]
 use std::process::{Command, Output};
 
-const BIN: &str = env!("CARGO_BIN_EXE_jopedime");
+use super::BIN;
 
 fn jopedime(home: &std::path::Path, dir: &std::path::Path, args: &[&str]) -> Output {
     Command::new(BIN)
@@ -31,7 +30,7 @@ fn ok(output: &Output, what: &str) {
 fn engine_commands_start_the_engine_and_a_saved_model_round_trips() {
     let dir = tempfile::tempdir().unwrap();
     let home = dir.path().join("home");
-    let demo = include_str!("../assets/demos/regression_parkinsons.csv");
+    let demo = include_str!("../../assets/demos/regression_parkinsons.csv");
     let lines: Vec<&str> = demo.lines().collect();
     std::fs::write(dir.path().join("train.csv"), lines[..996].join("\n") + "\n").unwrap();
     let mut test = vec![lines[0]];
