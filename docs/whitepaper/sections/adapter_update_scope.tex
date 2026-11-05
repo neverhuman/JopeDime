@@ -2,27 +2,28 @@ Proposals in this operating loop use typed edits, cross-family retrieval
 and grammar synthesis. The loop freezes that candidate network, then enables
 only non-anchor cost-adapter updates (the parent-delta head receives no
 loss gradient). No neural program writer runs.
-Pool utility reveals recorded scores and gate outcomes for the first four
-stored entries, then selects the pool's lowest predicted cost, including
-those entries. Training slates put the lowest recorded scores first;
+Validation-pool utility evaluation reveals recorded scores and candidate-gate
+outcomes for the first four stored entries, then selects the pool's lowest
+predicted cost, including those entries. Training slates put the lowest recorded scores first;
 utility evaluation uses stored order, so the calls can reveal different
-examples. The caller rotates same-context mutation parents from its bank for new
-proposals. Optional exploration pairs the two lowest-cost picks with up to two random
-remaining draws.
+examples. The caller rotates same-context bank parents for mutation. Optional
+exploration adds up to two random remaining candidates to its two
+\mbox{lowest-cost picks}.
 
 The caller supplies modality tokens and their mask but zeros the 584-entry
 context-feature slot and both prior inputs. It uses fixed scale \num{0.4208};
 zero context features do not mean absent modality tokens. Cost regression
-is weighted ten-to-one over listwise matching; failed gates get target cost
+is weighted ten-to-one over listwise matching; failed candidate gates get target cost
 $+2.0$. Reporting averages negative selected scores, not cost predictions,
-with utility $-2.0$ for failed gates. The full-cohort route disables
+with utility $-2.0$ for failed candidate gates. The full-cohort route disables
 development-anchor margin projection; smaller-cohort runs can enable it.
-The two routes require separate verification receipts.
+Each route needs its own verification receipt.
 
 Each round in the inspected full-cohort route adds small Gaussian noise
-to trainable adapter parameters and takes at most two optimizer steps. Rejection
-restores the retained weights and optimizer state: consecutive rejections
-restart from perturbed checkpoint copies rather than continuing training.
+to trainable adapter parameters and takes at most two optimizer steps.
+Rejection (rollback) restores retained weights and optimizer state. Consecutive
+rejections restart from perturbed checkpoint copies; they do not accumulate
+updates across rounds.
 
 Selection records alone establish no gain from optimizer updates or the
 separate reference map (\cref{sub:results-diagnostics} covers the diagnostic

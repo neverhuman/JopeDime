@@ -70,8 +70,10 @@ tree is bounded at depth four and 15 nodes
 renders a parenthesized program; it must parse to enter the pool.
 The mask does not check remaining token budget: a draw without an end token
 at the 128-token horizon, including the fixed header, is discarded as
-incomplete. Grammar legality establishes neither execution success nor
-quality. The pool removes exact decoded-string duplicates and records
+incomplete. Grammar legality guarantees neither successful execution nor
+program quality.
+
+The pool removes exact decoded-string duplicates and records
 their SHA-256; the executor records canonical recipe hashes. Probe-based
 behavior matching is audited separately from pool deduplication; without
 probe evidence, behavioral novelty is unknown. Readable Python and Rust exports are a reference requirement.
