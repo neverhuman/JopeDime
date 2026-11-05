@@ -121,3 +121,41 @@ fn gateway_credentials_cannot_be_forwarded_to_another_origin() {
     )
     .is_err());
 }
+
+#[test]
+fn cloud_runs_filters_by_where_a_run_lives_and_limits() {
+    use crate::terminal::runs::Entry;
+    let entry = |id: &str, local: bool, cloud: bool| Entry {
+        id: id.into(),
+        status: "completed".into(),
+        local: None,
+        cloud_url: cloud.then(|| format!("https://app.veox.ai/runs/{id}")),
+        model_here: false,
+        model_cloud: false,
+        local_record: local,
+    };
+    let all = || {
+        vec![
+            entry("both", true, true),
+            entry("here", true, false),
+            entry("there", false, true),
+        ]
+    };
+    let ids = |rows: Vec<Entry>| rows.into_iter().map(|e| e.id).collect::<Vec<_>>();
+    assert_eq!(
+        ids(commands::filter_runs(all(), true, false, false, None)),
+        ["both", "here"]
+    );
+    assert_eq!(
+        ids(commands::filter_runs(all(), false, true, false, None)),
+        ["both", "there"]
+    );
+    assert_eq!(
+        ids(commands::filter_runs(all(), false, false, true, None)),
+        ["here"]
+    );
+    assert_eq!(
+        ids(commands::filter_runs(all(), false, false, false, Some(2))),
+        ["both", "here"]
+    );
+}

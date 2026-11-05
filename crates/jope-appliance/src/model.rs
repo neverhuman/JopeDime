@@ -106,6 +106,9 @@ fn max_bytes() -> u64 {
 }
 
 fn open(path: &Path) -> anyhow::Result<ModelObject> {
+    if let Some(bundle) = crate::commands::bundle_object(path, max_bytes()) {
+        return bundle.map(|(object, _)| object);
+    }
     if path.is_dir() {
         ModelObject::read(path, max_bytes())
     } else {

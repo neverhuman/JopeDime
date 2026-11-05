@@ -181,6 +181,44 @@ pub fn execute<T: Transport>(
         ),
     }
 }
+/// The routing line for a non-dry-run `run_start`. No network: the plan comes from the CLI
+/// state the terminal last wrote.
+pub fn routing_note<T: Transport>(client: &T, args: &Value) -> Option<String> {
+    use crate::cloud::route;
+    if args.get("dry_run").and_then(Value::as_bool) == Some(true) {
+        return None;
+    }
+    let effort: jope_api::Effort = args
+        .get("effort")
+        .cloned()
+        .map_or(Some(jope_api::Effort::Fast), |v| {
+            serde_json::from_value(v).ok()
+        })?;
+    let rows = args
+        .get("dataset")
+        .and_then(Value::as_str)
+        .and_then(|id| id.parse::<DatasetId>().ok())
+        .and_then(|id| client.dataset_inspect(&id).ok())
+        .map(|profile| profile.rows.0);
+    let decision = route::decide(route::Input {
+        effort,
+        rows,
+        demo: false,
+        force: None,
+        tier: crate::cloud::flow::cached_tier(),
+    });
+    Some(
+        if decision.target == route::Target::Cloud || decision.offer_cloud {
+            format!(
+            "Routing: this run starts locally on this machine. Under the jAIn routing rule it would use the user's veox Cloud Workspace ({}), but this local MCP server never uploads data: an agent cannot give the user's upload consent. To use the cloud, the user can run it from jain with /run --cloud, or you can use the hosted veox MCP.",
+            decision.line.trim_end_matches('.')
+        )
+        } else {
+            format!("Routing: {}", decision.line)
+        },
+    )
+}
+
 fn execute_inner<T: Transport>(
     client: &T,
     resources: &Resources,

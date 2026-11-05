@@ -89,6 +89,19 @@ impl super::Session {
             &format!("{}.csv", demo.name),
             Box::new(io::Cursor::new(demo.bytes)),
         )?);
+        if let Some(source) = self.routing.source.as_mut() {
+            source.demo = true;
+        }
+        lines.push(
+            crate::cloud::route::decide(crate::cloud::route::Input {
+                effort: jope_api::Effort::Fast,
+                rows: Some(demo.rows() as u64),
+                demo: true,
+                force: None,
+                tier: None,
+            })
+            .line,
+        );
         match self.start_run(&[]) {
             Ok(started) => lines.extend(started),
             // e.g. a build whose local engine runs regression only: keep the opened draft.

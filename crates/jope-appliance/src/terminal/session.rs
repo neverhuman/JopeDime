@@ -90,7 +90,17 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
         Engine::InProcess => anyhow::bail!("in-process terminal transport is unavailable"),
     };
     let system = client.system_info()?;
+    let engine_version = system.version.clone();
     let mut session = Session::new(client, home, mode, system.version)?;
+    if let Some(notice) = discover::take_notice() {
+        session.screen.push(&notice);
+    }
+    if engine_version != env!("CARGO_PKG_VERSION") {
+        session.screen.push(&format!(
+            "The background engine is jAIn {engine_version}; this jAIn is {}. Restart it with `jain serve --stop` when it is idle.",
+            env!("CARGO_PKG_VERSION")
+        ));
+    }
     if let Launch::Attach(run) = launch {
         let run = match run {
             Some(run) => RunId::from_str(&run)?,
@@ -124,11 +134,17 @@ struct Session {
     cloud_busy: Arc<AtomicBool>,
     auto_sync: Option<(RunId, (String, String))>,
     last_sync: Instant,
-    synced_terminal: mpsc::Receiver<RunId>,
-    synced_terminal_sender: mpsc::Sender<RunId>,
+    synced_terminal: mpsc::Receiver<(RunId, RunState)>,
+    synced_terminal_sender: mpsc::Sender<(RunId, RunState)>,
     home: PathBuf,
     first_run: Option<crate::terminal::onboarding::FirstRun>,
     links: bool,
+    routing: routing::Routing,
+    cloud_runs: mpsc::Receiver<routing::CloudMsg>,
+    cloud_run_sender: mpsc::Sender<routing::CloudMsg>,
+    login_done: mpsc::Receiver<bool>,
+    login_done_sender: mpsc::Sender<bool>,
+    update_notice: Option<mpsc::Receiver<String>>,
 }
 
 impl Session {
@@ -143,6 +159,9 @@ impl Session {
         let (background_sender, background_events) = mpsc::channel();
         let (run_list_sender, run_lists) = mpsc::channel();
         let (synced_terminal_sender, synced_terminal) = mpsc::channel();
+        let (cloud_run_sender, cloud_runs) = mpsc::channel();
+        let (login_done_sender, login_done) = mpsc::channel();
+        let update_notice = Some(crate::update::spawn(home.clone(), version.clone()));
         let history = home.join("history");
         let first_run = first_run_dialog(&home);
         let mut screen = crate::terminal::screen::Screen::default();
@@ -176,6 +195,12 @@ impl Session {
             home,
             first_run,
             links: crate::terminal::links::supported_from_env(),
+            routing: routing::Routing::default(),
+            cloud_runs,
+            cloud_run_sender,
+            login_done,
+            login_done_sender,
+            update_notice,
         })
     }
 }
@@ -188,6 +213,8 @@ mod commands;
 mod events;
 #[path = "session/first_run.rs"]
 mod first_run;
+#[path = "session/routing.rs"]
+mod routing;
 #[path = "session/ui.rs"]
 mod ui;
 
@@ -273,7 +300,12 @@ fn first_run_dialog(home: &std::path::Path) -> Option<crate::terminal::onboardin
         return None;
     }
     if onboarding::env_accepts_terms() {
-        let _ = onboarding::accept_noninteractive(home, "env");
+        let source = if onboarding::flags().accept_terms {
+            "flag"
+        } else {
+            "env"
+        };
+        let _ = onboarding::accept_noninteractive(home, source);
         return None;
     }
     onboarding::FirstRun::new(

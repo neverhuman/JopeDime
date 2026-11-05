@@ -16,6 +16,22 @@ use rendering::*;
 mod formatting;
 use formatting::*;
 
+/// One "Thinking" card, exactly as local narration draws it: cloud progress uses this so a cloud
+/// run reads like a local one.
+pub fn thinking_card(body: &str, width: usize, theme: Theme) -> Vec<String> {
+    let mut cards = Vec::new();
+    append_card(
+        &mut cards,
+        "  ",
+        "Thinking",
+        &sanitize_user_string(body),
+        width.max(20),
+        None,
+        theme,
+    );
+    cards
+}
+
 /// Render cards at a fixed width and with the caller's already-resolved terminal theme.
 ///
 /// The event slice is treated as a deterministic transcript window. Non-improving experiments

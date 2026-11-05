@@ -14,7 +14,7 @@ The first launch asks three questions in a dialog (or as prompts in line mode):
 2. **Usage statistics** — on by default; `n` turns them off. This is the same setting as `jopedime cloud telemetry on|off`. `DO_NOT_TRACK=1` or `JAIN_TELEMETRY=0` forces it off and skips the question.
 3. **Log in to your free veox Cloud Workspace** or create one (starts the browser device login), or **continue with the bundled demos**.
 
-Choices are stored in `<JOPEDIME_HOME>/state.json` (owner-only). Agents and scripts accept the terms without a prompt with `JAIN_ACCEPT_TERMS=1`, after showing the user the terms URL; the dialog is then skipped.
+Choices are stored in `<JOPEDIME_HOME>/state.json` (owner-only). Agents and scripts accept the terms without a prompt with `--accept-terms` (or `JAIN_ACCEPT_TERMS=1`) and choose usage statistics with `--telemetry on|off` (or `JAIN_TELEMETRY`; `DO_NOT_TRACK=1` still forces off), after showing the user https://veox.ai/terms; the dialog is then skipped. Both flags are global: before or after the subcommand.
 
 ### Demos
 
@@ -82,3 +82,49 @@ Left Arrow from empty input opens the runs panel. Left continues ordinary editin
 `/fetch CLOUD_UUID` or `jain-dev cloud fetch CLOUD_UUID` downloads and verifies the model before installing it in the active account's local model store. It prints the model path and whether this build can execute its codec. Use `jopedime model verify --model PATH --require-executable` before local prediction. Connected-run status and metrics are client reported. Cloud scoring is not yet available for these newly published connected artifacts; existing supported cloud-trained runs retain their browser prediction workflow.
 
 The development gateway is separate from VEOX account login. For that environment only, configure a private gateway JSON file with `origin`, `username`, and `password`, and pass `--gateway-auth-file PATH` or `JAIN_GATEWAY_AUTH_FILE`. Gateway credentials are refused for a different origin. The application token remains distinct and uses `X-Veox-Api-Token` behind Basic Auth. Never place account or gateway secrets in a URL or command argument.
+
+## Local or cloud
+
+`/run` decides where a run goes and says so in one line (`crate::cloud::route`):
+
+- `/run --local` and `/run --cloud` decide outright. Bundled demos always run here and need no login.
+- A Pro account's deep search (effort `medium`, `high` or `ultra`) runs in the veox Cloud Workspace.
+- Otherwise the run is local, unless the table has more than 100,000 rows (Free's cloud ceiling), when
+  the cloud is offered. A Free account is told that its cloud runs take 100,000 rows too.
+
+The public build is CPU-only, so nothing probes for a GPU. A cloud run that needs a login says
+"This run needs your veox Cloud Workspace — opening your browser to log in…", runs the device login and
+then continues the same run. The upload is asked once per dataset (remembered per file hash, account and
+workspace in `state.json`): "Upload <file> (<rows> rows, <size>) to your veox Cloud Workspace? [Y/n]".
+Progress arrives as the same "Thinking" cards as a local run, then the closing narrative and the run's
+workspace link. Tier limits read in plain words with "Run locally instead? [Y/n]" and the upgrade link.
+
+`jopedime run CSV` follows the same rule but uploads only with `--cloud` (plus `--consent-upload`, or an
+answer on a terminal, or a remembered consent); when the rule would use the cloud it runs locally and says
+on stderr how to send it. The local MCP server always runs locally and adds a routing text line to
+`run_start`: an agent cannot give the user's upload consent.
+
+## Results sync
+
+After a local run finishes while you are logged in, its fitted model, a PDF report and the generated
+code go to your workspace, so it can be explored there like a cloud run. `jopedime cloud runs` lists every run, local and cloud (`--json`, `--local`, `--cloud`, `--unsynced`, `--limit N`). The first time, jAIn asks
+"Sync results (model + report, not your data) to your workspace? [Y/n]"; `/sync on|off` (or
+`jopedime cloud results on|off`) changes the answer. No training rows are uploaded, except that kernel,
+smoother and Gaussian-process models keep the support rows they predict from inside the fitted model.
+
+## Device id and update check
+
+Workspace requests carry `X-Jain-Device`, a 32-hex HMAC-SHA256 pseudonym of the OS machine id (never the
+id itself), unless telemetry is off. Once a day the terminal (and `--version` / `doctor` at a terminal)
+reads the installer's signed stable channel pointer, verified with the pinned release key, and shows
+"jAIn <v> is available — update: curl -fsSL https://veox.ai/install.sh | sh". It never installs.
+`JAIN_NO_UPDATE_CHECK=1` or `DO_NOT_TRACK=1` turns it off; `JAIN_REGISTRY` selects an HTTPS mirror.
+
+## The shared engine
+
+Engine commands (`status`, `events`, `predict --model RUN`, `runs`, `export`, `code`, `control`,
+`restart`, …) start the shared background engine on demand. An engine from another jAIn version is
+restarted when idle ("Restarted the background engine: it was jAIn 1.0.1, now 1.0.0") and left alone,
+with an explanation, while it runs a job. `jopedime serve --stop` says what a busy engine is running;
+`--stop --force` stops it anyway. A directory written by `run --out` or `export --out` loads with
+`predict --model DIR` and `model verify --model DIR`.

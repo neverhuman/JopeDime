@@ -115,6 +115,7 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
         let deadline = Instant::now() + Duration::from_secs(if wait > 0 { wait } else { 65 });
         let mut last = None;
         loop {
+            let routing: Option<String>;
             let mut wire_args = args.clone();
             if wait > 0 {
                 let remaining = deadline
@@ -128,12 +129,18 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
             let held = permit.clone();
             let worker = tokio::task::spawn_blocking(move || {
                 let _held = held;
-                dispatch::execute(client.as_ref(), resources.as_ref(), op, wire_args)
+                let note = (op.id == 6)
+                    .then(|| dispatch::routing_note(client.as_ref(), &wire_args))
+                    .flatten();
+                (
+                    dispatch::execute(client.as_ref(), resources.as_ref(), op, wire_args),
+                    note,
+                )
             });
             let outcome = tokio::select! {
                 _=context.ct.cancelled()=>return Err(ErrorData::internal_error("request cancelled",None)),
                 result=timeout_at(deadline,worker)=>match result{
-                    Ok(Ok(value))=>value,
+                    Ok(Ok((value, note)))=>{ routing = note; value },
                     Ok(Err(_))=>return Err(ErrorData::internal_error("engine request worker failed",None)),
                     Err(_) => {
                         let response = match last {
@@ -172,6 +179,12 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
                         }
                     }
                     let mut result = CallToolResult::structured(value);
+                    // The jAIn routing rule, as one text line beside the unchanged structured
+                    // result: this server always runs locally (an agent cannot give the user's
+                    // upload consent), and says when the rule would have used the cloud.
+                    if let Some(note) = routing {
+                        result.content.push(ContentBlock::text(note));
+                    }
                     // Keep the SDK JSON text fallback for clients that do not expose
                     // structuredContent to their model. Both carry the same public value.
                     for (uri, mime, _) in links {
