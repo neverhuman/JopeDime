@@ -13,3 +13,5 @@ PASS. No BASE refits or treatment fits. See PREREG.md.
 Outcome NOT_RUN; scientific metrics/verdict UNKNOWN. Pending prereg publication
 and ONE5second admission/full36forecast on one allowed pool. DOPEc51a56d0
 unloaded,CPU selection layer only. No dev91 or speed verdict.
+
+Preregistration commit: `934693e421009a8580bdb49c5b8984c77d10d442` (published 2026-11-05T08:14:28.715488+00:00, before any treatment fit).
