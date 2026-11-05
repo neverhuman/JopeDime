@@ -1,13 +1,1 @@
-{
-  "wave": "H391",
-  "status": "NOT_RUN",
-  "verdict": null,
-  "primary_comparator": "H352 NL15",
-  "secondary_comparator": "BASE",
-  "paired_drop_top10": null,
-  "dope": {
-    "composite_sha256_prefix": "c51a56d0",
-    "loaded": false,
-    "scope": "CPU selection layer only"
-  }
-}
+{"closed_by": "ENG:watcher overseer pass 2026-11-05T21:3xZ", "cpu_seconds_journal": 34870.996, "dope": {"composite_sha256_prefix": "c51a56d0", "loaded": false, "scope": "CPU selection layer only"}, "elo": null, "fit_tasks_complete": 30, "fit_tasks_total": 36, "lane_codex_quota_exhausted_until": "2026-11-09T22:40Z", "outer_scores": 0, "paired_drop_top10": null, "prereg_commit": "978a0b3e9cd43d22b7a5f5a56bc93b16331c7a84", "primary_comparator": "H352 NL15", "scientific_verdict": "UNKNOWN", "scratch_retained_bytes_unarchived": 2001883939, "secondary_comparator": "BASE", "status": "INCOMPLETE_SCRATCH_GUARD", "stop": {"cpu_percent": 32.274802499337774, "cpu_percent_60s": null, "cpu_window_seconds": null, "load1": 50.8056640625, "load_over108_consecutive_60s_samples": 0, "load_sample_is_60s": false, "mem_available_bytes": 78803668992, "own_cgroup_cpu_usage_usec_observed": 34870089250, "reason": ["scratch >2GB"], "scratch_bytes": 2001883939, "short_CPU_diagnostic_only": true, "utc": "2026-11-05T21:02:03.384719+00:00"}, "verdict": null, "wave": "H391"}
