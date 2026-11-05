@@ -1,0 +1,368 @@
+{
+  "status": "PASS",
+  "locks": {
+    "P0/0/30001": {
+      "sha256": "bf3fcfbcd695c225d2e819f4a5df7116041a09abb6e5283d34f7c2c25f237d72",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.0808689722537057,
+        "inner_switches": 241
+      }
+    },
+    "P0/0/30002": {
+      "sha256": "384bac1b47b79069b663e7740f2f05253ab5ddaa45231c1383e5b58538245b34",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.07086672735849739,
+        "inner_switches": 251
+      }
+    },
+    "P0/0/30003": {
+      "sha256": "d31376a5c80523644361cf79db15f2a100f088991bd4edc648904f65e75c3bd2",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.041123184720770464,
+        "inner_switches": 187
+      }
+    },
+    "P0/1/30001": {
+      "sha256": "d1e6ab46f8194b2b403a47572b23948b4579b5413bb7364ae4d538389b25d0ed",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.028176032903441985,
+        "inner_switches": 299
+      }
+    },
+    "P0/1/30002": {
+      "sha256": "e4f3b9ddee9a1ffbf7e896a193f742670e804a3e49dcd65f4223fbd2723cdceb",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.037760134384794176,
+        "inner_switches": 368
+      }
+    },
+    "P0/1/30003": {
+      "sha256": "8802d83e3e560a7c103ad2856568904924558cf54b57a3ecacae318fbc94208a",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.043954822581682665,
+        "inner_switches": 299
+      }
+    },
+    "P0/2/30001": {
+      "sha256": "64506d502298a756ad38e2baf1b8d76cd61ccba884204a97fa53cb15f61319a5",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.06558522001842822,
+        "inner_switches": 274
+      }
+    },
+    "P0/2/30002": {
+      "sha256": "8c00f7e60b812c0d34cbe84c93c46a70f0b0469988ef9e97cc50299ea969bea3",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.029199829700960807,
+        "inner_switches": 113
+      }
+    },
+    "P0/2/30003": {
+      "sha256": "75b85b8ec4915e43f951b88cb2d9dc37901905234fbae40ba651ffff6530bb38",
+      "chosen": {
+        "tau": 0.05,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.01933474455964572,
+        "inner_switches": 77
+      }
+    },
+    "P0/3/30001": {
+      "sha256": "2a8c0e5dd2d8287fe2697f8530f55b1044cdc01782de893982546245faa1ad65",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.044907634405809006,
+        "inner_switches": 134
+      }
+    },
+    "P0/3/30002": {
+      "sha256": "ec66f9b5b06e49792a6694cad80911b84099106bd4cf87e52e47d1b01349d97d",
+      "chosen": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.019958107324474256,
+        "inner_switches": 131
+      }
+    },
+    "P0/3/30003": {
+      "sha256": "8e5789097d1c7eaccf988557ff8566bbecbef3b7833547ca00f735adeb26f1f8",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.03953626034990852,
+        "inner_switches": 112
+      }
+    },
+    "P1/0/30001": {
+      "sha256": "2714444c6aaba7266cbb6e7a37630f79a15641d5421df36b2ad6c9f335e387c4",
+      "chosen": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.03282383934890749,
+        "inner_switches": 96
+      }
+    },
+    "P1/0/30002": {
+      "sha256": "5841bd29196151fb2cf5eb553c8ec23602ac0eeeab02813675dee3e0d83c9e19",
+      "chosen": {
+        "tau": 0.1,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.03200899528846851,
+        "inner_switches": 77
+      }
+    },
+    "P1/0/30003": {
+      "sha256": "2d7bbcf8c4cf80a45057d874ff8f7a4196483b20fe86b1482f9290c9d2065417",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.029726534096921452,
+        "inner_switches": 112
+      }
+    },
+    "P1/1/30001": {
+      "sha256": "fe32775598e4ca52afc04ef80783eb9952caee44b4ead98e3ea88acc5ccbb66b",
+      "chosen": {
+        "tau": 0.1,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.06386625434059472,
+        "inner_switches": 222
+      }
+    },
+    "P1/1/30002": {
+      "sha256": "2afb03b13f04d062379c6c7e0148e9e2b5199f3a970cced832833ac5af378dd9",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.05195935413641689,
+        "inner_switches": 254
+      }
+    },
+    "P1/1/30003": {
+      "sha256": "d1180bf4927c1184307ac77495e05a29e536c2ae710da5301fb5b05da6b01742",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.07607913649767101,
+        "inner_switches": 263
+      }
+    },
+    "P1/2/30001": {
+      "sha256": "14c45f6557ec1a722a78e624ae08704d20c68510ed0d670dde1ac14f07c5bd3c",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.060047605123772316,
+        "inner_switches": 209
+      }
+    },
+    "P1/2/30002": {
+      "sha256": "05d888ce6a7e3b83e1cbdae3e73c7240a361054c29b18b5c6bf986cb189c2637",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.0691048327665894,
+        "inner_switches": 220
+      }
+    },
+    "P1/2/30003": {
+      "sha256": "80802839b8863aa83254470c4bf3f8e9b78a7dde7679e0bb3169894c86a35861",
+      "chosen": {
+        "tau": 0.15,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.07873639308887018,
+        "inner_switches": 199
+      }
+    },
+    "P1/3/30001": {
+      "sha256": "888d11c34dfb6abb273534396690c0bdfe7569f346a728a5f925ff271922fa14",
+      "chosen": {
+        "tau": 0.1,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.02239659306291178,
+        "inner_switches": 108
+      }
+    },
+    "P1/3/30002": {
+      "sha256": "7e4b66e61acf83a2241e8ac654fd1518a2d59ee71bf1668524e384cb91bfda97",
+      "chosen": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.02230080548028825,
+        "inner_switches": 180
+      }
+    },
+    "P1/3/30003": {
+      "sha256": "58d1bd97ab86751df7bd7f9ca5eac8d1bf895f88451be32b1acddf9c2d90b119",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.011316868147805987,
+        "inner_switches": 181
+      }
+    },
+    "P2/0/30001": {
+      "sha256": "1819e8d49169da3e8eac131835615c13839b45b8fa3a0c9234a14831ea667ea2",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.029124635745526574,
+        "inner_switches": 130
+      }
+    },
+    "P2/0/30002": {
+      "sha256": "8ba183073eb0d58b6083555b5ca9a43b1fd114d940c2481465359fad8bdc6e93",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.037730375747136245,
+        "inner_switches": 132
+      }
+    },
+    "P2/0/30003": {
+      "sha256": "62084ec587bf2bf31b0cd49d9c8c831fc68f92102c663dc989e3e33be3890629",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.057974021496261546,
+        "inner_switches": 207
+      }
+    },
+    "P2/1/30001": {
+      "sha256": "77b1a6a7f0fc0aff3f26e0573ff7842cc613c7b90bc1aafba0b1de72cc5b513b",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.020456929404174318,
+        "inner_switches": 180
+      }
+    },
+    "P2/1/30002": {
+      "sha256": "4d66fc9b36092b1a5106b56c62f408a93334bf43020702c11b06d706dcd4e9e3",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.04071614379963645,
+        "inner_switches": 169
+      }
+    },
+    "P2/1/30003": {
+      "sha256": "54cb45779890fa971262f7ed3567398740b2b8cc2c162e6f668510bf64e6a6bc",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.036131354873128414,
+        "inner_switches": 178
+      }
+    },
+    "P2/2/30001": {
+      "sha256": "6fc54b04263fa2e7b02aa4a9bb2378f8b0c08fa7974245577ae3ca449dc03d35",
+      "chosen": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.06134441636204719,
+        "inner_switches": 180
+      }
+    },
+    "P2/2/30002": {
+      "sha256": "71b7b52604b5f2aabc10d2a8628adac4a68fb9959e61afab6dc11d16942bab17",
+      "chosen": {
+        "tau": 0.1,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.05618907250710981,
+        "inner_switches": 239
+      }
+    },
+    "P2/2/30003": {
+      "sha256": "f6d48d75a25265841d6d31c820b51eae0ffce499d2983163d0fa603000267b02",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.09736401804330783,
+        "inner_switches": 333
+      }
+    },
+    "P2/3/30001": {
+      "sha256": "22b7a2d1567d4b53a81fd96f1edf92f71e2ffdd0821e798148d04052d54d2730",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.06298042395377709,
+        "inner_switches": 134
+      }
+    },
+    "P2/3/30002": {
+      "sha256": "3f93b8b8ba782cde9712277164281520dac1423d4b56161a39db171acae10089",
+      "chosen": {
+        "tau": 0.15,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.04320703492628907,
+        "inner_switches": 82
+      }
+    },
+    "P2/3/30003": {
+      "sha256": "43e552a56931f9d724eb9e0593feb56d247f03c305825c7e8ff14a80f0df2d31",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.06417896938937542,
+        "inner_switches": 88
+      }
+    }
+  },
+  "count": 36,
+  "model_files_verified": 1080,
+  "outer_rows_read_before_lock": 0
+}

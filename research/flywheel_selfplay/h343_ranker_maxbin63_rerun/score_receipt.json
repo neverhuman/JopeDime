@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "outer_model_score_calls": 36,
+  "fit_locks": 36,
+  "baseline": "Read-only H318 BASE panel, exact-regressed before MAXBIN63 fitting",
+  "panel_sha256": "9e1dc2a1475a08e86db604b21080b212cc87ddefe599707006ca17af524888b1",
+  "dev91_rows_read": 0,
+  "r3175_train": "NOT_MEASURED"
+}
