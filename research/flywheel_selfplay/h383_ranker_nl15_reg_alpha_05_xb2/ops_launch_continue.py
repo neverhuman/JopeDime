@@ -1,0 +1,11 @@
+from pathlib import Path
+import subprocess,json,datetime,math,hashlib,os
+P=Path(__file__).parent;assert os.uname().nodename.split('.')[0]=='xbabe2';read=lambda p:json.loads(p.read_text())
+review=read(P/'startup-continuation-review.json');assert review['status']=='PASS' and hashlib.sha256((P/'continue_admitted.py').read_bytes()).hexdigest()==review['entrypoint_sha256'];assert read(P/'amend-published.json')['published'];assert read(P/'capacity.json')['eligible_cores']==[31,12,13,14];assert not list(Path('/home/ubuntu/jope-data/h383-hwv').glob('P*/fold_*/root_*/constructor_audit.jsonl'))
+assert read(P/'unit-exit.json')==read(P/'startup-unit-exit.json');assert subprocess.run(['systemctl','--user','is-active','h383-run'],capture_output=True,text=True).stdout.strip()=='failed'
+# Retain first attempt before clearing only this own failed transient unit.
+(P/'unit-exit.json').rename(P/'startup-unit-exit-original.json');subprocess.run(['systemctl','--user','reset-failed','h383-run'],check=True)
+old=read(P/'startup-run-launch.json');cmd=old['command'];now=datetime.datetime.now(datetime.timezone.utc);remaining=math.floor((datetime.datetime(2026,11,5,20,45,tzinfo=datetime.timezone.utc)-now).total_seconds());assert remaining>0
+cmd=[('--property=RuntimeMaxSec='+str(remaining)) if x.startswith('--property=RuntimeMaxSec=') else x.replace('append:'+str(P/'run.log'),'append:'+str(P/'continued-run.log')).replace('append:'+str(P/'run.err'),'append:'+str(P/'continued-run.err')) for x in cmd];assert cmd[-1]==str(P/'source/controller_h383.py');cmd[-1]=str(P/'continue_admitted.py')
+subprocess.run(cmd,check=True);r=dict(utc=now.isoformat(),fixed_deadline='2026-11-05T20:45:00Z',command=cmd,invocation_id=subprocess.check_output(['systemctl','--user','show','h383-run','-p','InvocationID','--value'],text=True).strip(),continuation_of_startup_invocation=old['invocation_id'],capacity_samples_total=1,same_admitted_cores=[31,12,13,14],operational_notice=read(P/'amend-published.json'))
+(P/'run-launch.json').write_text(json.dumps(r,indent=2)+'\n');(P/'continuation-launch.json').write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(dict(continued=True,invocation_id=r['invocation_id'],same_cores=r['same_admitted_cores'],capacity_samples_total=1)))
