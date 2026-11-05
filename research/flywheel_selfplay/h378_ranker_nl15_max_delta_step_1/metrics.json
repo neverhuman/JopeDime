@@ -1,0 +1,13 @@
+{
+  "wave": "H378",
+  "status": "NOT_RUN",
+  "verdict": null,
+  "primary_comparator": "H352 NL15",
+  "paired_drop_top10": null,
+  "aggregate": null,
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  }
+}
