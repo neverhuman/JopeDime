@@ -301,7 +301,9 @@ pub fn line(version: &str) -> String {
 pub fn check(home: &std::path::Path, current: &str) -> Option<String> {
     use crate::terminal::onboarding;
     let var = |name: &str| std::env::var(name).ok();
-    if disabled(var) {
+    // Without the cloud-tls feature there is neither HTTPS nor a signature verifier: no check.
+    // (Another crate may still compile rustls in, without a provider; ureq would then panic.)
+    if disabled(var) || !cfg!(feature = "cloud-tls") {
         return None;
     }
     let state = onboarding::load(home);
