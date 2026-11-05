@@ -8,7 +8,7 @@ LR/trees/seeds/veto/query0 unchanged. No seed keyword; exact H352 AST revert.
 Hypothesis: prune low-value splits that chase single-context -2.0 noise.
 H375 closedbb4ac6db5e with zero fits after CPU-admission rejection; no relabel.
 Primary archived NL15; secondary archived BASE. Three roots are three seeds.
-Preregistration commit: pending publication before treatment fits.
+Preregistration commit: `264196c02e19cf40a875c2983b0cd8de71118d96`, published before treatment fits.
 
 Fresh comparator regressions before ONE fresh primary27..37+fallback16/17/18/
 19/22 union probe, first<=8/bothSMT>=85%/min4/hostCPU<=70%. No reprobe/restart
