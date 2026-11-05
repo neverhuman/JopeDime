@@ -3,7 +3,7 @@
 PREPARING; scientific UNKNOWN. Owner sol_v1_dsc01.
 Primary comparator: archived H352 NL15. Secondary: archived BASE.
 Sole ranker native delta bagging_by_query0->1; H352 leaves15/depth3 retained.
-Preregistration commit: pending publication before treatment fits.
+Preregistration commit: `f0e0a5d280c16d805867f0b48f5c738b54b8e257`, published before treatment fits.
 
 Fresh BASE and H352 exact-version regressions precede treatment. One admission
 probe, full36locks before once-only outer scoring, no BASE/NL15 refits.
