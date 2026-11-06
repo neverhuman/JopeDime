@@ -100,7 +100,7 @@ pub struct TrainArgs {
     /// `auto`, regression, binary or multiclass.
     #[arg(long, default_value = "auto")]
     pub task: String,
-    /// `auto` (bounded selection) or a method id, family or alias from `jopedime methods`.
+    /// `auto` (bounded selection) or a method id, family or alias from `jain methods`.
     #[arg(long, default_value = "auto")]
     pub method: String,
     /// With `--method auto`: comma-separated candidates instead of the whole roster.

@@ -120,7 +120,9 @@ pub fn sync_snapshot_for(
         record.cloud_url = Some(url.clone());
         record.synced = true;
         write_private(&path, &serde_json::to_vec(&record)?)?;
-        return Ok(format!("Synced {run}: {url}"));
+        return Ok(format!(
+            "Status synced for {run} (progress and scores; results only with your consent): {url}"
+        ));
     }
     anyhow::bail!("metadata remains queued locally")
 }

@@ -9,8 +9,10 @@ impl super::Session {
             false, // NO_COLOR controls styling; it does not disable the full-screen UI.
             width,
         );
+        self.fullscreen = fullscreen;
+        self.screen.mouse = self.mouse;
         let guard = if fullscreen {
-            crate::terminal::restore::TerminalGuard::acquire_fullscreen()?
+            crate::terminal::restore::TerminalGuard::acquire_fullscreen(self.mouse)?
         } else {
             crate::terminal::restore::TerminalGuard::acquire(false)?
         };
@@ -30,6 +32,7 @@ impl super::Session {
                 terminal.clear()?;
                 drop(terminal);
                 guard.leave_inline()?;
+                self.fullscreen = false;
                 let retained = self.screen_lines();
                 crate::terminal::line_mode::LineMode::new(io::stdout()).transcript(&retained)?;
                 return self.line_mode(&guard);
@@ -75,6 +78,19 @@ impl super::Session {
                 }
                 last_draw = None;
             }
+            if self.refresh_snapshot() {
+                last_draw = None;
+            }
+            if self.mouse_changed {
+                self.mouse_changed = false;
+                guard.set_mouse(self.mouse)?;
+            }
+            if self.transcript_requested {
+                self.transcript_requested = false;
+                self.show_transcript(&guard)?;
+                terminal.clear()?;
+                last_draw = None;
+            }
             if let Some(dialog) = &self.first_run {
                 self.screen.panel = Some(dialog.lines());
             }
@@ -107,6 +123,13 @@ impl super::Session {
                             }
                         }
                     }
+                    continue;
+                }
+                if matches!(&input, Event::Key(key) if key.kind != KeyEventKind::Release && key.code == KeyCode::F(2))
+                {
+                    let capture = !self.mouse;
+                    self.set_mouse(capture);
+                    self.screen.push(&super::commands::mouse_line(capture));
                     continue;
                 }
                 if matches!(&input, Event::Key(key) if key.kind != KeyEventKind::Release && key.code == KeyCode::Left)
@@ -304,6 +327,7 @@ impl super::Session {
             while let Ok(event) = self.events.try_recv() {
                 output.transcript(&self.handle_event(event, width))?;
             }
+            self.refresh_snapshot();
             match receiver.recv_timeout(INPUT_LATENCY) {
                 Ok(Input::Line(line)) => {
                     let line = line.trim_end_matches(['\r', '\n']);

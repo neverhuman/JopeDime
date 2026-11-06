@@ -156,7 +156,39 @@ pub const COMMANDS: &[CommandSpec] = &[
         flags: &["--json"],
     },
     CommandSpec {
+        name: "auto",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "copy",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "transcript",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "mouse",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "login",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "logout",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "sync",
+        flags: &[],
+    },
+    CommandSpec {
         name: "quit",
+        flags: &["--pause"],
+    },
+    CommandSpec {
+        name: "exit",
         flags: &["--pause"],
     },
 ];
@@ -167,6 +199,8 @@ const LANDMARKS: &[&str] = &["full", "none"];
 const LANGUAGES: &[&str] = &["rust", "python", "javascript", "typescript"];
 const REASONING: &[&str] = &["off", "concise", "detailed"];
 const EXPORT_KINDS: &[&str] = &["bundle", "model", "source"];
+const COPY_ITEMS: &[&str] = &["link", "run", "result", "all"];
+const ON_OFF: &[&str] = &["on", "off"];
 
 #[derive(Clone, Copy)]
 enum ValueSource {
@@ -297,6 +331,8 @@ fn positional_source(command: &str, completed_args: usize, prefix: &str) -> Opti
     match command {
         "help" if completed_args == 0 => Some(ValueSource::Command),
         "demo" if completed_args == 0 => Some(ValueSource::Demo),
+        "copy" if completed_args == 0 => Some(ValueSource::Enum(COPY_ITEMS)),
+        "mouse" | "sync" if completed_args == 0 => Some(ValueSource::Enum(ON_OFF)),
         "target" if completed_args == 0 => Some(ValueSource::Column),
         "effort" if completed_args == 0 => Some(ValueSource::Enum(EFFORTS)),
         "landmarks" if completed_args == 0 => Some(ValueSource::Enum(LANDMARKS)),

@@ -33,7 +33,7 @@ pub fn auth_command(command: AuthCommand) -> Result<()> {
                     device.verification_uri_complete, device.user_code
                 );
                 io::stdout().flush()?;
-                if !no_browser {
+                if !no_browser && super::flow::browser_allowed() {
                     let _ = open_browser(&device.verification_uri_complete);
                 }
                 client.finish_login(&device, &AtomicBool::new(false))?
@@ -117,7 +117,17 @@ pub fn cloud_command(command: CloudCommand) -> Result<()> {
             } else if let Some(model) = model {
                 println!("{}", publish_model(&run, &model)?);
             } else {
-                println!("{}", publish_best(&run)?);
+                // A finished local run: export its model and generated code here and send both,
+                // as the results sync does, with no hand-made ZIP (#2146).
+                let local = super::sync::local_client()?;
+                let id: jope_api::ids::RunId = run.parse()?;
+                if local.run_status(&id)?.state == jope_api::RunState::Completed {
+                    for line in sync_results(&local, &id, None)? {
+                        println!("{line}");
+                    }
+                } else {
+                    println!("{}", publish_best(&run)?);
+                }
             }
             println!("{RUNS_HINT}");
         }
@@ -174,8 +184,9 @@ pub fn results_command(setting: Option<String>) -> Result<String> {
 /// What a results sync sends, for the consent question and the setting.
 pub const RESULTS_NOTE: &str = "after a local run finishes, its fitted model and generated code go to your workspace. No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from (rows of your training data) inside the fitted model.";
 
-/// The question asked once, the first time a logged-in local run finishes.
-pub const RESULTS_QUESTION: &str = "Sync results (model + code, not your data) to your workspace? No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from inside the fitted model. [Y/n]";
+/// The question asked once, the first time a logged-in local run finishes. The answer is a
+/// standing setting (`/sync on|off`, `jain cloud results on|off`), and the question says so (#2146).
+pub const RESULTS_QUESTION: &str = "Sync results (model + code, not your data) to your workspace, for this run and every later local run? No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from inside the fitted model. Y turns results sync on (change it any time with /sync off); n keeps results on this machine. [Y/n]";
 
 pub fn spawn_login(
     workspace: String,

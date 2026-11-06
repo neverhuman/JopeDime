@@ -5,17 +5,7 @@ impl super::Session {
     pub(super) fn submit(&mut self, input: &str) -> anyhow::Result<Vec<String>> {
         let input = input.trim();
         if let Some(result) = self.answer(input) {
-            return result.map(|lines| {
-                lines
-                    .iter()
-                    .flat_map(|l| {
-                        crate::terminal::sanitize_user_string(l)
-                            .split('\n')
-                            .map(str::to_owned)
-                            .collect::<Vec<_>>()
-                    })
-                    .collect()
-            });
+            return result.map(|lines| clean_lines(&lines));
         }
         if input.is_empty() {
             return Ok(Vec::new());
@@ -93,9 +83,9 @@ impl super::Session {
                 if let Some(run) = runs.first().filter(|_| runs.len() == 1) {
                     self.auto_sync = Some((run.clone(), owner.clone()));
                 }
-                self.background_sync(runs, Some(owner));
+                self.background_sync(runs, Some(owner), false);
                 return Ok(vec![
-                    "Syncing results to your veox Cloud Workspace. Dataset rows and model bytes stay local.".into(),
+                    "Syncing run status (progress and scores) to your veox Cloud Workspace. Dataset rows and model bytes stay local.".into(),
                 ]);
             }
             Some("/publish" | "\\publish") => {
@@ -162,12 +152,47 @@ impl super::Session {
         let parsed = crate::terminal::commands::parse(input)?;
         let args = parsed.arguments;
         let messages = match parsed.command.name {
-            "\\help" => vec![if args.first().is_some_and(|arg| arg == "history") {
-                crate::terminal::composer::HISTORY_HELP.to_owned()
-            } else {
-                "/demo [NAME] · /usage · /login [URL] · /logout · /sync [RUN] · /sync on|off · /publish [RUN] · /fetch UUID · Left: runs · \\open PATH|example/NAME.csv · \\target COLUMN · \\plan · \\run [--local|--cloud] · \\attach RUN · \\quit\nDocs https://veox.ai/docs · Terms https://veox.ai/terms".into()
-            }],
+            "\\help" => {
+                if args.first().is_some_and(|arg| arg == "history") {
+                    vec![crate::terminal::composer::HISTORY_HELP.to_owned()]
+                } else {
+                    help_lines()
+                }
+            }
             "\\demo" => self.demo(&args)?,
+            "\\auto" => {
+                anyhow::ensure!(args.is_empty(), "usage: /auto");
+                if self.draft.run_spec(true).is_none() {
+                    vec!["/auto runs the default search on an opened dataset: /open FILE.csv (or /demo NAME) first.".into()]
+                } else {
+                    // The default search: the opened table, its suggested target, the default
+                    // effort and objective, routed exactly as /run routes it.
+                    let mut lines =
+                        vec!["Running the default search on the opened dataset.".to_owned()];
+                    lines.extend(self.route_run(&[])?);
+                    lines
+                }
+            }
+            "\\copy" => self.copy(&args)?,
+            "\\transcript" => {
+                anyhow::ensure!(args.is_empty(), "usage: /transcript");
+                if self.fullscreen {
+                    self.transcript_requested = true;
+                    Vec::new()
+                } else {
+                    vec!["This plain view already writes everything to your terminal: scroll back and select it there.".into()]
+                }
+            }
+            "\\mouse" => {
+                let capture = match args.first().map(String::as_str) {
+                    None => !self.mouse,
+                    Some("on") => true,
+                    Some("off") => false,
+                    Some(_) => anyhow::bail!("usage: /mouse [on|off]"),
+                };
+                self.set_mouse(capture);
+                vec![mouse_line(capture)]
+            }
             "\\quit" => {
                 if args.iter().any(|arg| arg == "--pause") {
                     self.control("pause")?;
@@ -223,12 +248,7 @@ impl super::Session {
                 parsed.command.name
             )],
         };
-        let mut output = Vec::new();
-        for message in messages {
-            let clean = crate::terminal::sanitize_user_string(&message);
-            output.extend(clean.split('\n').map(str::to_owned));
-        }
-        Ok(output)
+        Ok(clean_lines(&messages))
     }
 
     pub(super) fn execute(&mut self, input: &str) -> Vec<String> {
@@ -242,6 +262,8 @@ impl super::Session {
         let Some(path) = args.first() else {
             return Ok(crate::terminal::complete::open_listing(&cwd));
         };
+        let expanded = expand_home(path);
+        let path = &expanded;
         let mut name = PathBuf::from(path)
             .file_name()
             .and_then(|name| name.to_str())
@@ -295,6 +317,14 @@ impl super::Session {
         };
         let demo = !on_disk;
         notice.extend(self.register(&name, reader)?);
+        if self.draft.run_spec(true).is_some() {
+            notice.push(
+                "Type /run to start (or /auto for the defaults; /target COLUMN predicts another column)."
+                    .into(),
+            );
+        } else {
+            notice.push("Choose the column to predict with /target COLUMN, then type /run.".into());
+        }
         if let Some(source) = self.routing.source.as_mut() {
             source.demo = demo;
             if on_disk {
@@ -328,7 +358,7 @@ impl super::Session {
         self.draft.set_dataset(profile);
         let mut lines = vec![format!("registered {name} as {dataset}")];
         if let Some(target) = target {
-            lines.push(format!("suggested target: {target}"));
+            lines.push(format!("suggested target column: `{target}`"));
         }
         if let Some(plan) = self.validate_draft()? {
             lines.extend(plan_lines(plan));
@@ -488,5 +518,147 @@ impl super::Session {
             }
             RunResult::Plan(_) => anyhow::bail!("run request returned a dry-run plan"),
         }
+    }
+}
+
+/// Split every message into lines first, then strip terminal controls from each, so a
+/// multi-line message never runs its lines together (the old "\\quitDocs"; #2148).
+pub(super) fn clean_lines(messages: &[String]) -> Vec<String> {
+    messages
+        .iter()
+        .flat_map(|message| message.split('\n'))
+        .map(crate::terminal::sanitize_user_string)
+        .collect()
+}
+
+/// `/help`: one command per line, all with the `/` prefix (`\\` still works as an alias).
+pub(super) fn help_lines() -> Vec<String> {
+    const ROWS: &[(&str, &str)] = &[
+        (
+            "/demo [NAME]",
+            "list the bundled demos, or run one (no account needed)",
+        ),
+        (
+            "/open PATH",
+            "open your CSV (~ works), or a bundled example/NAME.csv",
+        ),
+        ("/target COLUMN", "choose the column to predict"),
+        (
+            "/run [--local|--cloud]",
+            "start a run on the opened dataset",
+        ),
+        ("/auto", "run the default search on the opened dataset"),
+        ("/plan", "check the run plan without starting it"),
+        (
+            "/effort fast|medium|high|ultra",
+            "how long to search (--evals N, --time 60s)",
+        ),
+        ("/status · /pause · /continue · /cancel", "the current run"),
+        ("/attach RUN", "follow a run (Left opens the runs panel)"),
+        ("/export --out DIR", "write the champion's code and model"),
+        (
+            "/copy [link|run|result|all]",
+            "copy to the clipboard (default: the last output)",
+        ),
+        (
+            "/transcript",
+            "show everything as plain text to select and copy",
+        ),
+        (
+            "/mouse [on|off]",
+            "F2: mouse wheel scrolling, or text selection (default)",
+        ),
+        (
+            "/login [URL] · /logout",
+            "connect your free veox Cloud Workspace",
+        ),
+        ("/usage", "account, plan and this machine's runs"),
+        (
+            "/sync [RUN] · /sync on|off",
+            "send run status, or turn results sync on or off",
+        ),
+        (
+            "/publish [RUN] · /fetch UUID",
+            "publish a model, or download one",
+        ),
+        ("/help history", "history and editing keys"),
+        (
+            "/quit or /exit [--pause]",
+            "leave; runs continue in the background",
+        ),
+    ];
+    let mut lines = vec!["Commands:".to_owned()];
+    lines.extend(
+        ROWS.iter()
+            .map(|(command, what)| format!("  {command:<40} {what}")),
+    );
+    lines.push("Keys: Left runs · PgUp/PgDn scroll · F2 mouse · Ctrl-C exit".into());
+    lines.push("Docs https://veox.ai/docs".into());
+    lines.push("Terms https://veox.ai/terms".into());
+    lines
+}
+
+pub(super) fn mouse_line(capture: bool) -> String {
+    if capture {
+        "Mouse: the wheel scrolls; hold Shift while dragging to select text (F2 or /mouse off for plain selection).".into()
+    } else {
+        "Mouse: select and copy text with your terminal as usual; PgUp/PgDn scroll (F2 or /mouse on for wheel scrolling).".into()
+    }
+}
+
+/// `~` and `~/…` name the home directory, as in a shell (#2148).
+pub(super) fn expand_home(path: &str) -> String {
+    let home = || std::env::var_os("HOME").filter(|home| !home.is_empty());
+    if path == "~" {
+        if let Some(home) = home() {
+            return home.to_string_lossy().into_owned();
+        }
+    }
+    if let Some(rest) = path.strip_prefix("~/").or_else(|| path.strip_prefix("~\\")) {
+        if let Some(home) = home() {
+            return std::path::Path::new(&home)
+                .join(rest)
+                .to_string_lossy()
+                .into_owned();
+        }
+    }
+    path.to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn help_is_one_slash_command_per_line_and_never_runs_together() {
+        let lines = help_lines();
+        assert!(lines.len() > 10);
+        assert!(lines.iter().all(|line| !line.contains('\\')), "{lines:?}");
+        assert!(lines.iter().any(|line| line.contains("/quit or /exit")));
+        assert!(lines
+            .iter()
+            .any(|line| line.trim_start().starts_with("/auto")));
+        assert!(lines
+            .iter()
+            .any(|line| line.trim_start().starts_with("/copy")));
+        assert_eq!(lines.last().unwrap(), "Terms https://veox.ai/terms");
+        assert!(!lines.iter().any(|line| line.contains("quitDocs")));
+        let split = clean_lines(&["a\nb\u{1b}[31m".into()]);
+        assert_eq!(split, ["a", "b"]);
+    }
+
+    #[test]
+    fn a_leading_tilde_names_the_home_directory() {
+        let home = std::env::var("HOME").unwrap_or_default();
+        if home.is_empty() {
+            return;
+        }
+        assert_eq!(
+            expand_home("~/my-sales.csv"),
+            format!("{home}/my-sales.csv")
+        );
+        assert_eq!(expand_home("~"), home);
+        assert_eq!(expand_home("data/~x.csv"), "data/~x.csv");
+        assert_eq!(expand_home("~other/x.csv"), "~other/x.csv");
     }
 }

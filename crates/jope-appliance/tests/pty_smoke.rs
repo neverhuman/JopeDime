@@ -27,7 +27,7 @@ fn jopedime_help_runs_in_a_pty_and_resize_is_applied() -> std::io::Result<()> {
 
     let screen = session.wait_for_text("Usage:", Duration::from_secs(10))?;
     assert!(
-        screen.contains("jopedime"),
+        screen.contains("Usage: jain"),
         "unexpected help output: {screen}"
     );
     assert_no_internal_sentinels(&screen);
@@ -210,7 +210,7 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     assert_no_internal_sentinels(&screen);
     terminal.type_text("\\help")?;
     terminal.press_key(pty::Key::Enter)?;
-    let screen = terminal.wait_for_text("\\open PATH", Duration::from_secs(10))?;
+    let screen = terminal.wait_for_text("/open PATH", Duration::from_secs(10))?;
     assert_no_internal_sentinels(&screen);
     drop(terminal);
 

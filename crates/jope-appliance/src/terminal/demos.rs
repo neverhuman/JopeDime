@@ -122,6 +122,37 @@ pub fn from_path(path: &str) -> Option<&'static Demo> {
         .find(|demo| file == format!("{}.csv", demo.name))
 }
 
+/// A command-line path to read: the file itself when it exists, otherwise a bundled demo's
+/// `example/<name>.csv` written once into `<JOPEDIME_HOME>/examples/`, so that `jain run`,
+/// `jain fit` and agents reach the same demos as the TUI without a terminal (#2142). Any other
+/// path is returned unchanged (and fails later as a missing file).
+pub fn resolve(path: &std::path::Path) -> std::path::PathBuf {
+    resolve_in(path, &jope_paths::jopedime_home())
+}
+
+pub fn resolve_in(path: &std::path::Path, home: &std::path::Path) -> std::path::PathBuf {
+    if path.exists() {
+        return path.to_owned();
+    }
+    let Some(demo) = path.to_str().and_then(from_path) else {
+        return path.to_owned();
+    };
+    materialize(demo, home).unwrap_or_else(|_| path.to_owned())
+}
+
+/// Write `demo` to `<home>/examples/<name>.csv` unless an identical copy is already there.
+pub fn materialize(demo: &Demo, home: &std::path::Path) -> std::io::Result<std::path::PathBuf> {
+    let directory = home.join("examples");
+    std::fs::create_dir_all(&directory)?;
+    let file = directory.join(format!("{}.csv", demo.name));
+    if std::fs::read(&file).ok().as_deref() != Some(demo.bytes) {
+        let temporary = directory.join(format!(".{}.csv.{}.tmp", demo.name, std::process::id()));
+        std::fs::write(&temporary, demo.bytes)?;
+        std::fs::rename(&temporary, &file)?;
+    }
+    Ok(file)
+}
+
 /// One line per demo, for `/demo` without a name.
 pub fn listing() -> Vec<String> {
     let mut lines = vec!["Bundled demos (no account needed). Run one with /demo NAME:".to_owned()];
@@ -142,6 +173,33 @@ pub fn listing() -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn example_paths_resolve_to_a_written_copy_and_real_files_win() {
+        let home = tempfile::tempdir().unwrap();
+        let resolved = resolve_in(
+            std::path::Path::new("example/regression_parkinsons.csv"),
+            home.path(),
+        );
+        assert_eq!(
+            resolved,
+            home.path().join("examples/regression_parkinsons.csv")
+        );
+        assert_eq!(std::fs::read(&resolved).unwrap(), DEMOS[0].bytes);
+        // Resolving again reuses the identical copy.
+        assert_eq!(
+            resolve_in(
+                std::path::Path::new("./example/regression_parkinsons.csv"),
+                home.path()
+            ),
+            resolved
+        );
+        // An existing file and an unknown example are returned unchanged.
+        let real = home.path().join("examples");
+        assert_eq!(resolve_in(&real, home.path()), real);
+        let unknown = std::path::Path::new("example/nope.csv");
+        assert_eq!(resolve_in(unknown, home.path()), unknown);
+    }
 
     #[test]
     fn demos_fit_the_budget_and_presets_name_real_header_columns() {

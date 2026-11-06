@@ -7,8 +7,12 @@ pub(super) fn version_value() -> Value {
         Ok(None) => Value::Null,
         Err(error) => json!({"error": error.to_string()}),
     };
+    // `product` stays "jopedime": release, qualification and installer checks match it
+    // exactly. `display_name` and `command` are what people see and type (#2144).
     json!({
         "product": "jopedime",
+        "display_name": "jAIn",
+        "command": crate::CLI,
         "version": VERSION,
         "source_sha40": bootstrap::source_sha40(),
         "runtime_abi": RUNTIME_ABI,

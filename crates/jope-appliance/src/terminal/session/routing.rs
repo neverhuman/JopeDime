@@ -265,10 +265,10 @@ impl super::Session {
                 }
                 if yes {
                     self.spawn_results(run, owner);
-                    Ok(vec!["Results sync on · turn off with /sync off".into()])
+                    Ok(vec!["Results sync on for this and later local runs · turn off with /sync off (or `jain cloud results off`)".into()])
                 } else {
                     Ok(vec![
-                        "Results stay on this machine · turn on with /sync on".into()
+                        "Results stay on this machine for this and later local runs · turn on with /sync on (or `jain cloud results on`)".into()
                     ])
                 }
             }
@@ -306,7 +306,7 @@ impl super::Session {
         match crate::terminal::onboarding::load(&self.home).results_sync {
             Some(true) => {
                 self.spawn_results(run, owner);
-                vec!["Syncing this run's model and code to your workspace…".into()]
+                vec!["Results sync is on: sending this run's model and code to your workspace… (turn off with /sync off)".into()]
             }
             Some(false) => Vec::new(),
             None => {

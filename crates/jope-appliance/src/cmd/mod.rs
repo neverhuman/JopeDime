@@ -3,6 +3,8 @@ pub mod code;
 #[cfg(feature = "client")]
 pub mod control;
 #[cfg(feature = "mcp")]
+pub mod demo;
+#[cfg(feature = "mcp")]
 pub mod events;
 #[cfg(feature = "mcp")]
 pub mod mcp_entry;
