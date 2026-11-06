@@ -133,9 +133,13 @@ where a run goes in one line (`crate::cloud::route`):
   search is part of Pro. Free's 100,000-row ceiling is said before anything is uploaded. Every other
   tier limit (daily runs, one run at a time, size, waitlist) reads in plain words with "No run started."
   and the upgrade link.
-- Progress arrives as the same "Thinking" cards as a local run, then the result led by the held-out
-  score with its unit and the baseline on the same rows, the run's own sentences, its workspace link
-  (OSC 8 where the terminal supports it) and a `Next:` line (predict in the workspace, `/copy link`).
+- Progress arrives as the same "Thinking" cards as a local run, then the result exactly as the workspace
+  leads with it (the session's `headline`): the score on the rows it names (for a synthetic-first run,
+  the held-back real rows), a baseline only when one was scored on those same rows (otherwise "No
+  baseline on these rows." and the app's note), the search's synthetic score as secondary, the served
+  model by its readable name (`method.name`; a redacted identifier is a "veox proprietary blend/model"),
+  how the table was read, the workspace link (OSC 8 where the terminal supports it) and a `Next:` line
+  (predict in the workspace, `/copy link`).
 - `jain fit` and `jain fit-predict` train on this machine, so they take only the bundled examples and
   point own data to `jain run`. The local MCP server never uploads (an agent cannot give the user's
   consent): its `run_start` on own data answers `CAPABILITY_UNAVAILABLE` with the `jain run …

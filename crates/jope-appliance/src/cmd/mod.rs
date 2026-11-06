@@ -35,6 +35,9 @@ pub mod status;
 /// The shared engine for `status`, `events` and the other engine commands: started on demand.
 #[cfg(all(feature = "mcp", feature = "engine"))]
 pub fn client() -> anyhow::Result<jope_client::Http> {
+    // A release executable without its sealed package cannot start workers: say so here
+    // rather than failing every candidate of the run it would start (journey J6, rc.4).
+    crate::bootstrap::open()?;
     crate::common::resolve_client()
 }
 

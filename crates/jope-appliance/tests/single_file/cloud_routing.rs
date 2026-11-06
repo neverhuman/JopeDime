@@ -286,7 +286,7 @@ fn the_public_rule_gates_own_data_and_keeps_the_bundled_examples_local() {
                 if count(path) == 0 {
                     r#"{"state":"running","progressEvents":[{"sequence":1,"message":"Container started","payload":{"type":"phase"}}]}"#.to_owned()
                 } else {
-                    r#"{"state":"completed","progressEvents":[],"summary":{"headline_metric":{"name":"rmse","value":101.5,"direction":"minimize","unit":"price"},"comparison":{"metric":"rmse","baseline_score":180.25,"veox_score":101.5,"lift":78.75,"outcome":"veox"},"narrative":["Selected 'price' as the target."]}}"#.to_owned()
+                    r#"{"state":"completed","progressEvents":[],"headline":{"basis":"real_holdout","rows":30,"score":{"label":"RMSE","metric":"rmse","value":101.5,"direction":"minimize","unit":"price"},"baselines":[{"kind":"linear","description":"a linear model","rows":30,"score":{"label":"RMSE","value":180.25},"lift":78.75,"outcome":"veox"}],"notes":[]},"method":{"name":"Bayesian model averaging"},"summary":{"final_model":"bma","narrative":["Selected 'price' as the target.","Selected bma as the served model."]}}"#.to_owned()
                 },
             ),
             _ => (404, r#"{"error":"not found"}"#.into()),
@@ -392,10 +392,19 @@ fn the_public_rule_gates_own_data_and_keeps_the_bundled_examples_local() {
         "{stderr}"
     );
     assert!(
-        stderr.contains("Result: held-out rmse 101.5 · lower is better · in units of `price`."),
+        stderr.contains("Result: RMSE 101.5 price (lower is better) on 30 held-back real rows."),
         "{stderr}"
     );
-    assert!(stderr.contains("Baseline (a plain model scored on the same held-out rows): rmse 180.2 · VEOX ahead by 78.75."), "{stderr}");
+    assert!(
+        stderr.contains(
+            "Baseline on the same rows (a linear model): RMSE 180.2 price · VEOX ahead by 78.75."
+        ),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("Model: Bayesian model averaging.") && !stderr.contains("Selected bma"),
+        "{stderr}"
+    );
     assert!(stderr.contains(&format!(
         "Open it in your workspace: {}/runs/{SESSION}",
         server.origin
@@ -418,6 +427,31 @@ fn the_public_rule_gates_own_data_and_keeps_the_bundled_examples_local() {
         body.contains("name=\"cloud_fallback\"\r\n\r\nno_gpu"),
         "{body}"
     );
+}
+
+/// The bundled demo produces a champion, in every edition and signed out (journey J6: a demo
+/// that ended "no champion" must never ship). `--json` gives the final run snapshot.
+#[test]
+fn the_bundled_demo_runs_here_signed_out_and_produces_a_champion() {
+    let home = home();
+    let out = jopedime(
+        &home,
+        "http://127.0.0.1:9",
+        &["demo", "run", "regression_parkinsons", "--json"],
+        &[("JAIN_PUBLIC_EDITION", "1")],
+    );
+    let stderr = text(&out.stderr);
+    assert!(out.status.success(), "{stderr}");
+    let value: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(value["run"]["state"], "completed", "{value}");
+    assert!(
+        value["run"]["best"]["algorithm_id"].is_string(),
+        "no champion: {value}"
+    );
+    let _ = Command::new(BIN)
+        .args(["serve", "--stop", "--force"])
+        .env("JOPEDIME_HOME", &home.root)
+        .output();
 }
 
 // Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
