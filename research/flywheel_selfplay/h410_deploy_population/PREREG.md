@@ -121,3 +121,60 @@ Otherwise it is reported as `NOT_SUPPORTED`, with the component that carried any
   - xbabe1 GPU for C1;
   - xbabe2 control only.
 - **Nothing is added to the board.**
+
+## 8. Part-B amendment (published before the dev91 LOCK; no dev91 byte read by H410 yet)
+**8.1 Exact arms** (LOCK `arms`, code `deploy_h410.py` / `d91_h410.py` at this commit)
+
+| Arm | Sources replayed (memo hits) | Pools | Library | Timeout |
+| --- | --- | --- | --- | --- |
+| `AB` | H335 (`H0.1-A` fold-0 pair), E2L (`H381-E2-S3fz` fold-0 pair); seeds 335101, 335102 | `PH` = H335 both seeds (the stored entrant's own two runs); `P2` = H335 + E2L; own = each H335 seed alone | yes, over `P2` | 300 s |
+| `C1` | — (new GP: `unit_lf`, lf_rows 0, g50, `H410-C1-L` fold-0 pair) | — | — | 60 s (recipe) |
+| `BIG` | H335, E2L, C1; same seeds | `P3` = all three; `PC1` = C1 alone | yes, over `P3` | 300 s |
+
+- **Builders** in every pool:
+  - `W24`, `W48`: window 0.5.
+  - `CAR`: top 200, 100 steps.
+  - `NNLS`: top 48, with intercept.
+  - `BAG_W24`, `BAG_W48`, `BAG_CAR`: bagged twins.
+  - `RUNBAG` (pools with ≥ 2 runs).
+  - With the library: `LIB.single` and `<pool>+LIB.*`.
+- **Library:**
+  - 20 presets (`LIB_PRESETS`);
+  - log1p / rank_gauss variants of 6 of them;
+  - log1p / rank_gauss / winsor variants of the top 16 of the pool;
+  - ≤ 64 polish neighbours of the top 8.
+- **Stock check:** every replayed run's stock `CV3@12` is re-audited under a new name. On dev91 it must equal the
+  stored board `per_seed` row (H335) or the H381 E2L record (E2L).
+
+**8.2 Seeding (host side, before the LOCK)**
+- **Memo:** the `AB` and `C1` run-dir memos are byte copies of H381 E2L's memo. On all 5 contexts the H335 Stage V
+  memo is a byte prefix of it, so one file serves every replay.
+- **BIG:** the BIG memo is the concatenation of the AB and C1 memos after both finish. Duplicate keys hold identical
+  results, and the loader overwrites them.
+- **Screener / views:**
+  - The C1 models are copied read-only to `h335-cl/neural/runs/H410-C1-L`.
+  - The views npz is linked, and its sha is in the LOCK inputs.
+
+**8.3 C1 retrain (TRAIN, done before this amendment)**
+- **Run:** xbabe1 RTX 4090, `rapid_hypothesis_lab.py oof`, fold 0, seeds 317101 and 317102, about 5.5 min.
+  - DOPE `c51a56d0` unchanged.
+  - Model shas `c388c637…` and `2ca8c30e…`.
+- **Not bit-identical to the stored H0.2-L**, as GPU training is nondeterministic. The fold-0 top-1 agreement is
+  0.40 / 0.37.
+- **Equal quality:** mean top-1 u on the 244 fold-0 contexts is 1.373 / 1.527, vs 1.343 / 1.523 stored.
+
+**8.4 TRAIN confirmation: primary builder rule (fixed now, before any TRAIN H410 output is read)**
+- **Launch:** the TRAIN S60 / R60 deploy runs were launched at 16:03Z, from staged code `train-s1` (the working copy
+  that this commit publishes). Their outputs are not read until the dev91 choice below is recorded.
+- **Primary TRAIN builder:**
+  - The candidates are the Tier A builders in the `PH` pool (W24, W48, CAR, NNLS, BAG_W24, BAG_W48, BAG_CAR).
+  - Pick the one with the highest mean Δu over the 5 dev91 contexts vs stored H335_AGG (seed mean).
+  - Ties go to the simpler builder, in that order.
+- **On TRAIN** it is applied to X0's own pool (`own.<builder>`) and tested vs stored X0 with `primary_test`.
+- **Secondary:**
+  - the same builder in `P2` (X0 + E2);
+  - `P2+LIB.<builder>`, if a library output beats the `PH` builder's mean Δu on dev91.
+- **Smoke (TRAIN DEV2, never scored):**
+  - replays reproduce stored X0 exactly (0 replay worker runs);
+  - 112 / 112 library evals completed; 0 timeouts;
+  - AUDIT ledger consistent; 0 same-family bank hits.
