@@ -67,7 +67,7 @@ pub(crate) enum BenchCommand {
         /// Extra program: `NAME=<dsl>` or `NAME=@<file>` (repeatable).
         #[arg(long = "program")]
         programs: Vec<String>,
-        /// Original native AutoML regressor (repeatable; GPT6p1_Sol_Max or Gemini4_argon_high).
+        /// Original native AutoML regressor (repeatable; GPT6p1_Sol_Max, Gemini4_argon_high, or grok4p7_xhigh).
         /// Each is freshly fitted on each cut. Only regression datasets are eligible.
         #[arg(long = "native")]
         natives: Vec<String>,

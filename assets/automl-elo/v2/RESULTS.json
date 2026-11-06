@@ -1,0 +1,172 @@
+{
+  "state": "COMPLETE",
+  "methods": [
+    "GPT6_Astra_Max",
+    "GPT6p1_Sol_Max",
+    "Gemini4_argon_high",
+    "Opus5p5_Extra",
+    "grok4p7_xhigh"
+  ],
+  "elo": {
+    "GPT6_Astra_Max": {
+      "rating": 1393.18436441178,
+      "ci95": [
+        1345.0301001733687,
+        1436.6026977783863
+      ]
+    },
+    "GPT6p1_Sol_Max": {
+      "rating": 1504.0445149290852,
+      "ci95": [
+        1464.3204911989023,
+        1545.7687229916557
+      ]
+    },
+    "Gemini4_argon_high": {
+      "rating": 1602.7238688041107,
+      "ci95": [
+        1562.1138631995825,
+        1647.8552537503872
+      ]
+    },
+    "Opus5p5_Extra": {
+      "rating": 1681.2740802183203,
+      "ci95": [
+        1632.4106242754735,
+        1736.7471588951937
+      ]
+    },
+    "grok4p7_xhigh": {
+      "rating": 1318.7731716367032,
+      "ci95": [
+        1254.870157012973,
+        1374.624184992721
+      ]
+    }
+  },
+  "pairwise": [
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "GPT6p1_Sol_Max",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.3454788017632944,
+      "ratio_ci95": [
+        1.135777444712288,
+        1.6703825754442125
+      ],
+      "p": 0.005599440055994401
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "Gemini4_argon_high",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.1393868314940336,
+      "ratio_ci95": [
+        0.9866858971922163,
+        1.301100970502794
+      ],
+      "p": 0.0644935506449355
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.295262126111961,
+      "ratio_ci95": [
+        1.0851705033680616,
+        1.575405040971078
+      ],
+      "p": 0.007999200079992
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "grok4p7_xhigh",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.8601588611139049,
+      "ratio_ci95": [
+        0.7205650645946267,
+        1.0035559280329363
+      ],
+      "p": 0.070992900709929,
+      "holm_grok_four_p": 0.070992900709929
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "Gemini4_argon_high",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.8468262970779099,
+      "ratio_ci95": [
+        0.6233556271142736,
+        1.0553728540565777
+      ],
+      "p": 0.2445755424457554
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.9626774679872157,
+      "ratio_ci95": [
+        0.7249217184700295,
+        1.1732764768999802
+      ],
+      "p": 0.7666233376662334
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "grok4p7_xhigh",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.6392957361993652,
+      "ratio_ci95": [
+        0.45054374010330245,
+        0.8370525373499336
+      ],
+      "p": 0.0086991300869913,
+      "holm_grok_four_p": 0.0173982601739826
+    },
+    {
+      "a": "Gemini4_argon_high",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.136806298185432,
+      "ratio_ci95": [
+        0.9781850313409002,
+        1.4331699016443702
+      ],
+      "p": 0.18668133186681332
+    },
+    {
+      "a": "Gemini4_argon_high",
+      "b": "grok4p7_xhigh",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.7549313695209309,
+      "ratio_ci95": [
+        0.6652458289723086,
+        0.8490862247350821
+      ],
+      "p": 9.999000099990002e-05,
+      "holm_grok_four_p": 0.00039996000399960006
+    },
+    {
+      "a": "Opus5p5_Extra",
+      "b": "grok4p7_xhigh",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.6640809175019095,
+      "ratio_ci95": [
+        0.49081162238829107,
+        0.8350984609226964
+      ],
+      "p": 0.005599440055994401,
+      "holm_grok_four_p": 0.016798320167983202
+    }
+  ],
+  "bootstrap_samples": 10000,
+  "cluster": "family",
+  "seeds_repeated_within_family": [
+    41,
+    73,
+    109
+  ],
+  "complete_pairwise_coverage": true,
+  "pool": "five-entrant refit; v1 four-entrant ratings are not reused as numbers"
+}
