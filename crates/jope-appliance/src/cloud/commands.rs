@@ -124,6 +124,18 @@ pub fn cloud_command(command: CloudCommand) -> Result<()> {
         CloudCommand::Results { setting } => println!("{}", results_command(setting)?),
         CloudCommand::Telemetry { setting } => println!("{}", sync::telemetry_command(setting)?),
         CloudCommand::Fetch { run } => println!("{}", fetch_model(&run)?),
+        CloudCommand::Feedback {
+            kind,
+            summary,
+            details,
+            source,
+            tools,
+        } => {
+            let mut feedback =
+                super::feedback::Feedback::new(&kind, &source, &summary, details.as_deref())?;
+            feedback.tools_used = tools;
+            println!("{}", super::feedback::send(&feedback)?);
+        }
     }
     Ok(())
 }

@@ -1,5 +1,7 @@
 #[path = "pty_smoke/cloud_tui.rs"]
 mod cloud_tui;
+#[path = "pty_smoke/feedback_tui.rs"]
+mod feedback_tui;
 #[path = "support/pty.rs"]
 mod pty;
 #[path = "support/workspace.rs"]

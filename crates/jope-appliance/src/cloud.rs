@@ -3,6 +3,7 @@ mod client_auth;
 pub mod cloud_run;
 mod commands;
 pub(crate) mod device;
+pub mod feedback;
 pub mod flow;
 pub mod route;
 mod sync;
@@ -102,6 +103,24 @@ pub enum CloudCommand {
     },
     Fetch {
         run: String,
+    },
+    /// Send the VEOX team feedback: what works well, an issue, or a feature idea. Signed in, it
+    /// goes with your account so the team can follow up; otherwise it is sent without one.
+    /// Only the text you write is sent, never a dataset or a file.
+    Feedback {
+        /// `issue`, `idea` (a feature request), `good` (what works well) or `other`.
+        kind: String,
+        /// One line, up to 200 characters.
+        summary: String,
+        /// More detail: steps, what you expected, what happened (up to 8,000 characters).
+        #[arg(long)]
+        details: Option<String>,
+        /// `user` (you) or `agent` (an AI agent reporting on its own use of jAIn).
+        #[arg(long, default_value = "user")]
+        source: String,
+        /// For an agent's report: the names of the commands or tools it used, comma separated.
+        #[arg(long, value_delimiter = ',')]
+        tools: Vec<String>,
     },
 }
 #[derive(Clone, Serialize, Deserialize)]
