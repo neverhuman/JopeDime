@@ -309,7 +309,7 @@ pub fn result_lines(view: &Value, url: &str) -> Vec<String> {
 pub fn next_line(url: &str, tui: bool) -> String {
     if tui {
         format!(
-            "Next: predict new rows in your workspace: {url}/predict · /copy link copies the run link · /open FILE.csv trains another table"
+            "Next: predict new rows in your workspace: {url}/predict (/copy link copies it) · /open FILE.csv trains another table"
         )
     } else {
         format!(
@@ -470,7 +470,7 @@ mod tests {
             ]
         );
         assert!(next_line("https://app.veox.ai/runs/x", true)
-            .starts_with("Next: predict new rows in your workspace: https://app.veox.ai/runs/x/predict · /copy link"));
+            .starts_with("Next: predict new rows in your workspace: https://app.veox.ai/runs/x/predict (/copy link copies it)"));
         assert!(next_line("u", false).contains("`jain run FILE.csv --target COLUMN`"));
         let failed = json!({"state":"failed","failure":{"message":"The table had no rows."}});
         assert_eq!(
