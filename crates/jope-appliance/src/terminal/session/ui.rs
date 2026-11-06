@@ -347,6 +347,11 @@ impl super::Session {
                         }
                         continue;
                     }
+                    // An empty line answers a pending question (Enter: the default answer).
+                    if line.is_empty() && self.routing.pending.is_some() {
+                        output.transcript(&self.execute(""))?;
+                        continue;
+                    }
                     if let Some(input) = accept_line(&mut self.composer, line)? {
                         output.transcript(&self.execute(&input))?;
                     }

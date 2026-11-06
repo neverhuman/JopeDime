@@ -215,7 +215,13 @@ impl super::Session {
 
     pub(super) fn status_lines(&self, width: usize) -> (String, String) {
         if let Some(snapshot) = &self.snapshot {
-            crate::terminal::status::render(snapshot, &[], width)
+            let since = self
+                .run_clock
+                .as_ref()
+                .filter(|(run, _)| *run == snapshot.run_id)
+                .map(|(_, at)| at.elapsed());
+            let live = crate::terminal::status::with_live_clock(snapshot, since);
+            crate::terminal::status::render(&live, &[], width)
         } else {
             (
                 self.message

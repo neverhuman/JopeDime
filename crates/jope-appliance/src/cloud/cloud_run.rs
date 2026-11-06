@@ -222,7 +222,59 @@ impl Progress {
     }
 }
 
-/// The closing lines of a finished cloud run.
+/// A score as the run page says it: four significant figures, no float noise.
+fn figure(value: f64) -> String {
+    if value == 0.0 || !value.is_finite() {
+        return format!("{value}");
+    }
+    let digits = (4 - 1 - value.abs().log10().floor() as i32).clamp(0, 8) as usize;
+    let text = format!("{value:.digits$}");
+    if text.contains('.') {
+        text.trim_end_matches('0').trim_end_matches('.').to_owned()
+    } else {
+        text
+    }
+}
+
+/// The held-out headline of a completed run, labelled as the run page leads with it (journey
+/// J3-F03): the metric, which way is better, the unit, and the baseline on the same rows.
+pub fn headline(summary: &Value) -> Vec<String> {
+    let clean = crate::terminal::sanitize_user_string;
+    let metric = &summary["headline_metric"];
+    let (Some(name), Some(value)) = (metric["name"].as_str(), metric["value"].as_f64()) else {
+        return Vec::new();
+    };
+    let mut parts = vec![format!("held-out {} {}", clean(name), figure(value))];
+    match metric["direction"].as_str() {
+        Some("minimize") => parts.push("lower is better".into()),
+        Some("maximize") => parts.push("higher is better".into()),
+        _ => {}
+    }
+    if let Some(unit) = metric["unit"].as_str().filter(|u| !u.is_empty()) {
+        parts.push(format!("in units of `{}`", clean(unit)));
+    }
+    let mut lines = vec![format!("Result: {}.", parts.join(" · "))];
+    let comparison = &summary["comparison"];
+    if let (Some(baseline), Some(lift)) = (
+        comparison["baseline_score"].as_f64(),
+        comparison["lift"].as_f64(),
+    ) {
+        let verdict = match comparison["outcome"].as_str() {
+            Some("veox") => format!("VEOX ahead by {}", figure(lift.abs())),
+            Some("baseline") => format!("the baseline ahead by {}", figure(lift.abs())),
+            _ => "the same score".to_owned(),
+        };
+        lines.push(format!(
+            "Baseline (a plain model scored on the same held-out rows): {} {} · {verdict}.",
+            clean(comparison["metric"].as_str().unwrap_or(name)),
+            figure(baseline)
+        ));
+    }
+    lines
+}
+
+/// The closing lines of a finished cloud run: the outcome, the held-out score and baseline,
+/// the run's own sentences and its workspace link (clickable where the terminal can).
 pub fn result_lines(view: &Value, url: &str) -> Vec<String> {
     let clean = crate::terminal::sanitize_user_string;
     let state = view["state"].as_str().unwrap_or("unknown");
@@ -238,6 +290,7 @@ pub fn result_lines(view: &Value, url: &str) -> Vec<String> {
         "cancelled" => lines.push("Cloud run cancelled.".into()),
         _ => {
             lines.push("✓ Cloud run finished.".into());
+            lines.extend(headline(&view["summary"]));
             let narrative = &view["summary"]["narrative"];
             match narrative {
                 Value::Array(items) => {
@@ -250,6 +303,19 @@ pub fn result_lines(view: &Value, url: &str) -> Vec<String> {
     }
     lines.push(format!("Open it in your workspace: {url}"));
     lines
+}
+
+/// The `Next:` line after a finished cloud run. `tui` picks slash commands.
+pub fn next_line(url: &str, tui: bool) -> String {
+    if tui {
+        format!(
+            "Next: predict new rows in your workspace: {url}/predict · /copy link copies the run link · /open FILE.csv trains another table"
+        )
+    } else {
+        format!(
+            "Next: predict new rows in your workspace: {url}/predict · `jain run FILE.csv --target COLUMN` trains another table"
+        )
+    }
 }
 
 /// What a followed cloud run reports to whoever is drawing it.
@@ -403,11 +469,37 @@ mod tests {
                 "Open it in your workspace: https://app.veox.ai/runs/x"
             ]
         );
+        assert!(next_line("https://app.veox.ai/runs/x", true)
+            .starts_with("Next: predict new rows in your workspace: https://app.veox.ai/runs/x/predict · /copy link"));
+        assert!(next_line("u", false).contains("`jain run FILE.csv --target COLUMN`"));
         let failed = json!({"state":"failed","failure":{"message":"The table had no rows."}});
         assert_eq!(
             result_lines(&failed, "u")[0],
             "Cloud run failed: The table had no rows."
         );
         assert!(finished("exploring") && !finished("running"));
+    }
+
+    #[test]
+    fn the_headline_leads_with_the_held_out_score_its_unit_and_the_baseline() {
+        let view = json!({"state":"completed","summary":{
+            "headline_metric":{"name":"rmse","value":0.027712345,"direction":"minimize","unit":"price"},
+            "comparison":{"metric":"rmse","veox_score":0.0277,"baseline_score":0.2104,"lift":0.1827,"outcome":"veox"},
+            "narrative":["Selected 'price' as the target."]}});
+        let lines = result_lines(&view, "https://app.veox.ai/runs/x");
+        assert_eq!(lines[0], "✓ Cloud run finished.");
+        assert_eq!(
+            lines[1],
+            "Result: held-out rmse 0.02771 · lower is better · in units of `price`."
+        );
+        assert_eq!(
+            lines[2],
+            "Baseline (a plain model scored on the same held-out rows): rmse 0.2104 · VEOX ahead by 0.1827."
+        );
+        assert_eq!(lines[3], "Selected 'price' as the target.");
+        // No headline metric: only the run's own sentences.
+        assert!(headline(&json!({"narrative":[]})).is_empty());
+        assert_eq!(figure(1234.5678), "1235");
+        assert_eq!(figure(0.5), "0.5");
     }
 }

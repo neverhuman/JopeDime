@@ -3,6 +3,8 @@
 //! Adapter tests should turn each real surface's response into the same typed
 //! `SurfaceCapture`; this module compares the champion, final scores, and the
 //! ordered durable event stream without rewriting any of those values.
+// The public edition (cloud-tls) leaves out the tests that train own data on this machine.
+#![cfg_attr(feature = "public-edition", allow(dead_code, unused_imports))]
 
 use jope_api::{
     decimal::DecimalU64, BestAlgorithm, EventBody, FinalScores, PublicEvent, RunSnapshot, RunSpec,
@@ -404,6 +406,9 @@ mod real;
 ))]
 mod qualification;
 
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[cfg(all(
     feature = "engine",
     feature = "mcp",
@@ -417,6 +422,9 @@ fn all_product_surfaces_share_the_bounded_run_projection() -> anyhow::Result<()>
     real::shared_run_surfaces()
 }
 
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[cfg(all(
     feature = "engine",
     feature = "mcp",

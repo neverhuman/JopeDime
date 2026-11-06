@@ -332,18 +332,36 @@ pub fn accept_noninteractive(home: &Path, source: &str) -> Result<()> {
 // ---- anonymous-use policy: the single place to change it --------------------------------
 
 /// Whether a signed-out interactive session may open the user's own (non-example) files.
-/// Bundled demos are always allowed. `JAIN_ALLOW_LOCAL_FILES=1` lifts the gate for offline
-/// and CI use; command-line subcommands (`jopedime run`, `fit`, ...) are not gated.
+/// Bundled demos are always allowed. Login is required for anything beyond the demos (owner
+/// rule 2026-11-06): it is how runs are metered per plan. `JAIN_ALLOW_LOCAL_FILES=1` lifts the
+/// gate for offline and CI use in engine and development builds only, never in the public
+/// edition (`crate::cloud::route::cloud_first`).
 pub const ANONYMOUS_LOCAL_FILES: bool = false;
 
-pub const LOGIN_FOR_FILES: &str = "Opening your own files needs a free veox Cloud Workspace account. Type /login to log in or create one (free; runs on your own data happen in the veox Cloud, and jAIn asks before uploading), or try a bundled demo: /demo";
-
-pub fn local_file_gate(logged_in: bool, override_env: bool) -> Result<(), &'static str> {
-    if logged_in || ANONYMOUS_LOCAL_FILES || override_env {
-        Ok(())
-    } else {
-        Err(LOGIN_FOR_FILES)
+/// The pure policy: `account` is the own-data gate's verdict for the stored login.
+pub fn local_file_gate(
+    account: Result<(), crate::cloud::route::Gate>,
+    override_env: bool,
+    cloud_first: bool,
+) -> Result<(), String> {
+    if ANONYMOUS_LOCAL_FILES || (override_env && !cloud_first) {
+        return Ok(());
     }
+    account.map_err(|gate| gate.message(true))
+}
+
+/// `/open` of the user's own file: signed in, on an account admitted from the waitlist.
+pub fn own_file_gate() -> Result<(), String> {
+    let cloud_first = crate::cloud::route::cloud_first();
+    let override_env = local_files_override_from_env();
+    if ANONYMOUS_LOCAL_FILES || (override_env && !cloud_first) {
+        return Ok(());
+    }
+    local_file_gate(
+        crate::cloud::flow::admitted().map(|_| ()),
+        override_env,
+        cloud_first,
+    )
 }
 
 pub fn local_files_override_from_env() -> bool {
@@ -534,7 +552,8 @@ impl FirstRun {
             Some(Step::Account) => vec![
                 header("Get started"),
                 String::new(),
-                "1  Log in to your free veox Cloud Workspace / create an account (opens your browser)".into(),
+                "1  Log in to your veox account (opens your browser); new accounts open from the".into(),
+                "   waitlist: https://app.veox.ai/register".into(),
                 "2  Continue with the bundled demos only".into(),
                 String::new(),
                 "Press Enter or 1 to log in · 2 for demos · you can /login at any time".into(),
@@ -702,10 +721,28 @@ mod tests {
     }
 
     #[test]
-    fn anonymous_policy_allows_signed_in_and_overridden_sessions_only() {
-        assert!(local_file_gate(true, false).is_ok());
-        assert!(local_file_gate(false, true).is_ok());
-        let message = local_file_gate(false, false).unwrap_err();
-        assert!(message.contains("/login") && message.contains("/demo"));
+    fn anonymous_policy_allows_signed_in_admitted_and_overridden_sessions_only() {
+        use crate::cloud::route::Gate;
+        assert!(local_file_gate(Ok(()), false, true).is_ok());
+        assert!(local_file_gate(Err(Gate::SignedOut), true, false).is_ok());
+        // The public edition never lifts the gate.
+        let message = local_file_gate(Err(Gate::SignedOut), true, true).unwrap_err();
+        assert!(
+            message.contains("/login") && message.contains("/demo"),
+            "{message}"
+        );
+        assert!(
+            message.contains("https://app.veox.ai/register"),
+            "{message}"
+        );
+        let waiting = local_file_gate(
+            Err(Gate::Waitlisted {
+                email: "a@b.c".into(),
+            }),
+            false,
+            true,
+        )
+        .unwrap_err();
+        assert!(waiting.contains("on the waitlist"), "{waiting}");
     }
 }

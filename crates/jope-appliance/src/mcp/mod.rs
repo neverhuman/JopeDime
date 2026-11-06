@@ -140,13 +140,22 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
             let held = permit.clone();
             let worker = tokio::task::spawn_blocking(move || {
                 let _held = held;
-                let note = (op.id == 6)
-                    .then(|| dispatch::routing_note(client.as_ref(), &wire_args))
+                let routing = (op.id == 6)
+                    .then(|| dispatch::run_routing(client.as_ref(), &wire_args))
                     .flatten();
-                (
-                    dispatch::execute(client.as_ref(), resources.as_ref(), op, wire_args),
-                    note,
-                )
+                match routing {
+                    // Own data where it trains only in the veox Cloud: not started here.
+                    Some(dispatch::RunRouting::Refuse(problem)) => {
+                        (dispatch::Outcome::Failure(problem), None)
+                    }
+                    routing => (
+                        dispatch::execute(client.as_ref(), resources.as_ref(), op, wire_args),
+                        match routing {
+                            Some(dispatch::RunRouting::Note(note)) => Some(note),
+                            _ => None,
+                        },
+                    ),
+                }
             });
             let outcome = tokio::select! {
                 _=context.ct.cancelled()=>return Err(ErrorData::internal_error("request cancelled",None)),
@@ -191,8 +200,8 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
                     }
                     let mut result = CallToolResult::structured(value);
                     // The jAIn routing rule, as one text line beside the unchanged structured
-                    // result: this server always runs locally (an agent cannot give the user's
-                    // upload consent), and says when the rule would have used the cloud.
+                    // result: a bundled demo runs here. This server never uploads (an agent
+                    // cannot give the user's upload consent), so own data is refused above.
                     if let Some(note) = routing {
                         result.content.push(ContentBlock::text(note));
                     }

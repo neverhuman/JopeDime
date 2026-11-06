@@ -72,15 +72,6 @@ pub(super) fn improvement_delta(
     Some(format!("{sign}{amount:.1}%"))
 }
 
-pub(super) fn format_champion(champion: &BestAlgorithm) -> String {
-    format!(
-        "{} ({} {})",
-        champion.algorithm_id,
-        sanitize_user_string(&champion.metric),
-        format_value(Some(champion.cv_value))
-    )
-}
-
 pub(super) fn format_value(value: Option<f64>) -> String {
     value
         .filter(|value| value.is_finite())

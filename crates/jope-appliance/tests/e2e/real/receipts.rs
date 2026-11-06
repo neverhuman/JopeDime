@@ -27,9 +27,10 @@ pub(crate) fn terminal(
         projection.scores.test.is_none(),
         "fixture has no TEST dataset"
     );
+    // The card leads with the labelled held-out score (journey J3-F03); no test set, no TEST.
     let expected = format!(
-        "champion {} ({} {:.3}) · CV {cv:.3} · HOLDOUT {holdout:.3} · TEST n/a",
-        champion.algorithm_id, champion.metric, champion.cv_value
+        "held-out {} {holdout:.3} · CV {cv:.3} · champion {}",
+        champion.metric, champion.algorithm_id
     );
     use portable_pty::{native_pty_system, CommandBuilder, PtySize};
     let pair = native_pty_system().openpty(PtySize {
