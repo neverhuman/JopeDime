@@ -184,6 +184,10 @@ pub const COMMANDS: &[CommandSpec] = &[
         flags: &[],
     },
     CommandSpec {
+        name: "feedback",
+        flags: &[],
+    },
+    CommandSpec {
         name: "quit",
         flags: &["--pause"],
     },
@@ -201,6 +205,7 @@ const REASONING: &[&str] = &["off", "concise", "detailed"];
 const EXPORT_KINDS: &[&str] = &["bundle", "model", "source"];
 const COPY_ITEMS: &[&str] = &["link", "run", "result", "all"];
 const ON_OFF: &[&str] = &["on", "off"];
+const FEEDBACK_KINDS: &[&str] = &["issue", "idea", "good", "other"];
 
 #[derive(Clone, Copy)]
 enum ValueSource {
@@ -332,6 +337,7 @@ fn positional_source(command: &str, completed_args: usize, prefix: &str) -> Opti
         "help" if completed_args == 0 => Some(ValueSource::Command),
         "demo" if completed_args == 0 => Some(ValueSource::Demo),
         "copy" if completed_args == 0 => Some(ValueSource::Enum(COPY_ITEMS)),
+        "feedback" if completed_args == 0 => Some(ValueSource::Enum(FEEDBACK_KINDS)),
         "mouse" | "sync" if completed_args == 0 => Some(ValueSource::Enum(ON_OFF)),
         "target" if completed_args == 0 => Some(ValueSource::Column),
         "effort" if completed_args == 0 => Some(ValueSource::Enum(EFFORTS)),

@@ -50,6 +50,41 @@ impl super::Session {
                 });
                 return Ok(vec!["Signing this CLI out...".into()]);
             }
+            Some("/feedback" | "\\feedback") => {
+                let rest = input
+                    .split_once(char::is_whitespace)
+                    .map(|(_, rest)| rest.trim())
+                    .unwrap_or("");
+                anyhow::ensure!(
+                    !rest.is_empty(),
+                    "usage: /feedback [issue|idea|good] WHAT HAPPENED, e.g. /feedback issue the upload stalls at 90%"
+                );
+                // A leading kind word is optional: `/feedback the export button is great` is
+                // still feedback, filed as `other`.
+                let (kind, text) = match rest.split_once(char::is_whitespace) {
+                    Some((word, tail))
+                        if crate::cloud::feedback::kind_from_word(word).is_some()
+                            && !tail.trim().is_empty() =>
+                    {
+                        (word, tail.trim())
+                    }
+                    _ => ("other", rest),
+                };
+                let (summary, details) = crate::cloud::feedback::split_text(text);
+                let feedback = crate::cloud::feedback::Feedback::new(
+                    kind,
+                    "user",
+                    &summary,
+                    details.as_deref(),
+                )?;
+                let sender = self.cloud_sender.clone();
+                thread::spawn(move || {
+                    let message = crate::cloud::feedback::send(&feedback)
+                        .unwrap_or_else(|error| format!("Feedback: {error:#}"));
+                    let _ = sender.send(vec![message]);
+                });
+                return Ok(vec!["Sending your feedback to the VEOX team...".into()]);
+            }
             Some("/usage" | "\\usage") => {
                 anyhow::ensure!(words.next().is_none(), "usage: /usage");
                 return Ok(self.usage());
@@ -573,6 +608,10 @@ pub(super) fn help_lines() -> Vec<String> {
             "connect your free veox Cloud Workspace (runs on your own data)",
         ),
         ("/usage", "account, plan and this machine's runs"),
+        (
+            "/feedback [issue|idea|good] TEXT",
+            "tell the VEOX team what works, what broke or what you need",
+        ),
         (
             "/sync [RUN] · /sync on|off",
             "send run status, or turn results sync on or off",

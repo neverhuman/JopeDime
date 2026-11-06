@@ -3,6 +3,7 @@
 mod aliases;
 pub mod catalog;
 mod dispatch;
+mod feedback;
 mod transport;
 use jope_api::registry::OPERATIONS;
 use jope_client::Transport;
@@ -59,6 +60,16 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
         request: CallToolRequestParams,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, ErrorData> {
+        if request.name == feedback::NAME {
+            let args = Value::Object(request.arguments.unwrap_or_default());
+            let result = tokio::select! {
+                _ = context.ct.cancelled() => return Err(ErrorData::internal_error("request cancelled", None)),
+                result = tokio::task::spawn_blocking(move || feedback::call(&args)) => {
+                    result.map_err(|_| ErrorData::internal_error("feedback worker failed", None))?
+                }
+            };
+            return Ok(result);
+        }
         if aliases::contains(&request.name) {
             let args = Value::Object(request.arguments.unwrap_or_default());
             let name = request.name.to_string();
@@ -286,6 +297,9 @@ impl<T: Transport + Send + Sync + 'static> ServerHandler for Adapter<T> {
             serde_json::from_value::<Vec<Tool>>(Value::Array(aliases::tools()))
                 .expect("legacy tool definitions"),
         );
+        // Last, after the legacy aliases: the one tool that is neither an engine operation nor a
+        // deprecated name.
+        tools.push(serde_json::from_value(feedback::tool()).expect("feedback tool definition"));
         Ok(ListToolsResult::with_all_items(tools))
     }
     async fn call_tool(
