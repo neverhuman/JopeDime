@@ -94,7 +94,7 @@ jobs:
           rustup default 1.97.1
           printf 'RUSTUP_HOME=%s\n' "$RUSTUP_HOME" >> "$GITHUB_ENV"
       - name: Node
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: ${{ matrix.node }}
       - name: Prepare pinned compilers in task-local storage
