@@ -67,7 +67,7 @@ pub fn records() -> Result<Vec<MethodRecord>> {
             });
         }
     }
-    for (id, task, owner) in neural::PROPOSED {
+    for &(id, task, owner) in neural::PROPOSED {
         out.push(MethodRecord {
             id: id.to_owned(),
             task,

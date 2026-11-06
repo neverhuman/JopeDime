@@ -72,10 +72,10 @@ impl FusedForward {
         let device = selected_device(request)?;
         Self::from_bytes(
             bundle
-                .asset("dope.safetensors")
+                .asset(crate::ranker::files::DOPE)
                 .context("missing authenticated DOPE")?,
             bundle
-                .asset("jope.safetensors")
+                .asset(crate::ranker::files::JOPE)
                 .context("missing authenticated ranker")?,
             device,
             workers,
