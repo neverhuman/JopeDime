@@ -405,8 +405,8 @@ fn load_with_keys(
     }
     for required in [
         "manifest.json",
-        "dope.safetensors",
-        "jope.safetensors",
+        files::DOPE,
+        files::JOPE,
         "featurizer.json",
         "bank.jsonl.zst",
     ] {
@@ -417,7 +417,7 @@ fn load_with_keys(
     if !release
         .assets
         .keys()
-        .any(|p| p.starts_with("golden/") && p.ends_with(".safetensors"))
+        .any(|p| p.starts_with("golden/") && p.ends_with(files::TENSORS))
     {
         return Err(invalid("release catalog is missing golden tensors"));
     }
@@ -427,7 +427,7 @@ fn load_with_keys(
         if !safe_path(path) || !selected_ids.insert(&spec.signed_asset_id) {
             return Err(invalid("invalid or aliased release asset path"));
         }
-        match (&spec.tensors, path.ends_with(".safetensors")) {
+        match (&spec.tensors, path.ends_with(files::TENSORS)) {
             (Some(tensors), true) if !tensors.is_empty() => {}
             (None, false) => {}
             _ => return Err(invalid("missing or inappropriate trusted tensor catalog")),
@@ -441,15 +441,15 @@ fn load_with_keys(
     if identities["manifest.json"].bytes > limits.manifest_bytes {
         return Err(invalid("fused manifest exceeds its byte cap"));
     }
-    if identities["dope.safetensors"].sha256 != release.dope_weights_sha256 {
+    if identities[files::DOPE].sha256 != release.dope_weights_sha256 {
         return Err(invalid("signed DOPE file differs from the custody pin"));
     }
     let source = AssetReader::new(input, &release.assets)?;
     let manifest_bytes = source.read("manifest.json", identities["manifest.json"], limits)?;
     let manifest = inspect_manifest(&manifest_bytes, limits)?;
     if manifest.digest != release.bundle_digest
-        || manifest.dope_weights_sha256 != identities["dope.safetensors"].sha256
-        || manifest.jope_weights_sha256 != identities["jope.safetensors"].sha256
+        || manifest.dope_weights_sha256 != identities[files::DOPE].sha256
+        || manifest.jope_weights_sha256 != identities[files::JOPE].sha256
     {
         return Err(invalid(
             "fused manifest differs from authenticated release identities",

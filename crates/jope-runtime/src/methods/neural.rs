@@ -3,7 +3,8 @@
 //! substituted; a profile that promises one fails `jopedime doctor` (AMENDMENTS.md A9).
 
 /// (method id, task, implementation owner).
-pub const PROPOSED: [(&str, &str, &str); 7] = [
+#[cfg(not(feature = "public-edition"))]
+pub const PROPOSED: &[(&str, &str, &str)] = &[
     (
         "neural.starlight.regression",
         "regression",
@@ -40,6 +41,15 @@ pub const PROPOSED: [(&str, &str, &str); 7] = [
         "jope-policy accepted semantic release",
     ),
 ];
+
+/// The public jAIn CLI edition names none of the internal neural methods (owner rule
+/// 2026-11-06); it carries no model weights, so none of them could run there either.
+#[cfg(feature = "public-edition")]
+pub const PROPOSED: &[(&str, &str, &str)] = &[(
+    "proposal.step60000.regression",
+    "regression",
+    "jope-policy accepted semantic release",
+)];
 
 /// Why a neural method cannot run in this build.
 pub const NOT_COMPILED: &str =
