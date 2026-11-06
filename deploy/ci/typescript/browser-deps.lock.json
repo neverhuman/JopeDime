@@ -1774,16 +1774,16 @@
       "sha256": "2340688e034d5dd3f5ec180b1bed32407de16db1679ce85cec3e2d34625f50dd"
     },
     {
-      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsoup3/libsoup-3.0-common_3.4.4-5ubuntu0.9_all.deb",
-      "filename": "libsoup-3.0-common_3.4.4-5ubuntu0.9_all.deb",
-      "size": 12284,
-      "sha256": "950de96545c81a4bcf9c67600c6c6b84fcf5fd680f87d4301a1e3dc1238474f0"
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsoup3/libsoup-3.0-common_3.4.4-5ubuntu0.10_all.deb",
+      "filename": "libsoup-3.0-common_3.4.4-5ubuntu0.10_all.deb",
+      "size": 12882,
+      "sha256": "89f066fe021cb2991750dc9a65fb64cc24a467ab32b5a1a722e377244b6fda4c"
     },
     {
-      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsoup3/libsoup-3.0-0_3.4.4-5ubuntu0.9_amd64.deb",
-      "filename": "libsoup-3.0-0_3.4.4-5ubuntu0.9_amd64.deb",
-      "size": 290828,
-      "sha256": "cd6bab2b426b0c81b0f7856df11f3633df118df33517378049545ff440751fcc"
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libsoup3/libsoup-3.0-0_3.4.4-5ubuntu0.10_amd64.deb",
+      "filename": "libsoup-3.0-0_3.4.4-5ubuntu0.10_amd64.deb",
+      "size": 292272,
+      "sha256": "c2acdf204d37613bddae570fcf0c579f5422655e74df625bee636a29969fe6c5"
     },
     {
       "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/g/gst-plugins-good1.0/gstreamer1.0-plugins-good_1.24.2-1ubuntu1.8_amd64.deb",
