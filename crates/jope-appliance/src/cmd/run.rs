@@ -48,6 +48,8 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
     if args.m1_plan.is_some() {
         return run_m1(&args);
     }
+    // A release executable separated from its package stops before anything starts.
+    crate::bootstrap::open()?;
     // Own data that cannot run (signed out, waitlisted, `--local`) stops here, before the
     // background engine is started; `run` checks again when it routes the registered table.
     if let Some(path) = &args.input {

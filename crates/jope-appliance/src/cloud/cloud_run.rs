@@ -236,41 +236,148 @@ fn figure(value: f64) -> String {
     }
 }
 
-/// The held-out headline of a completed run, labelled as the run page leads with it (journey
-/// J3-F03): the metric, which way is better, the unit, and the baseline on the same rows.
-pub fn headline(summary: &Value) -> Vec<String> {
+/// A model name a person can read, as the run page says it (ai-veox-app `readableModelName`,
+/// `veox_app_contracts::method::readable_name`): an egress-redacted identifier is a veox
+/// proprietary blend or model, and the common ensembles have their names.
+pub fn readable_model(id: &str) -> String {
+    let clean = crate::terminal::sanitize_user_string(id);
+    if clean.contains("[redacted]") {
+        return if clean.to_ascii_lowercase().contains("blend") {
+            "veox proprietary blend".into()
+        } else {
+            "veox proprietary model".into()
+        };
+    }
+    match clean.as_str() {
+        "bma" => "Bayesian model averaging".into(),
+        "bma_blend" => "Blend of CatBoost and Bayesian model averaging".into(),
+        "catboost" => "CatBoost".into(),
+        name if name.to_ascii_lowercase().contains("blend") => "Blend".into(),
+        _ => clean,
+    }
+}
+
+/// The run's lead result exactly as the workspace leads with it: the app's own `headline`
+/// (`veox_app_contracts::headline`). The score is on the rows it names (for a synthetic-first
+/// run, the held-back real rows); a baseline is named only when the app scored one on those same
+/// rows, and otherwise the app's own note says there is none (journey J6). The search's
+/// synthetic score is secondary and said as such. Nothing from different row sets is compared.
+pub fn headline(view: &Value) -> Vec<String> {
     let clean = crate::terminal::sanitize_user_string;
-    let metric = &summary["headline_metric"];
-    let (Some(name), Some(value)) = (metric["name"].as_str(), metric["value"].as_f64()) else {
+    let headline = &view["headline"];
+    let score = &headline["score"];
+    let (Some(value), Some(label)) = (
+        score["value"].as_f64(),
+        score["label"].as_str().or(score["metric"].as_str()),
+    ) else {
         return Vec::new();
     };
-    let mut parts = vec![format!("held-out {} {}", clean(name), figure(value))];
-    match metric["direction"].as_str() {
-        Some("minimize") => parts.push("lower is better".into()),
-        Some("maximize") => parts.push("higher is better".into()),
-        _ => {}
-    }
-    if let Some(unit) = metric["unit"].as_str().filter(|u| !u.is_empty()) {
-        parts.push(format!("in units of `{}`", clean(unit)));
-    }
-    let mut lines = vec![format!("Result: {}.", parts.join(" · "))];
-    let comparison = &summary["comparison"];
-    if let (Some(baseline), Some(lift)) = (
-        comparison["baseline_score"].as_f64(),
-        comparison["lift"].as_f64(),
-    ) {
-        let verdict = match comparison["outcome"].as_str() {
-            Some("veox") => format!("VEOX ahead by {}", figure(lift.abs())),
-            Some("baseline") => format!("the baseline ahead by {}", figure(lift.abs())),
+    let unit = score["unit"]
+        .as_str()
+        .filter(|u| !u.is_empty())
+        .map(|u| format!(" {}", clean(u)))
+        .unwrap_or_default();
+    let better = match score["direction"].as_str() {
+        Some("minimize") => " (lower is better)",
+        Some("maximize") => " (higher is better)",
+        _ => "",
+    };
+    let rows = headline["rows"]
+        .as_u64()
+        .map(|n| format!("{} ", super::route::grouped(n)))
+        .unwrap_or_default();
+    let on = match headline["basis"].as_str() {
+        Some("real_holdout") => format!("on {rows}held-back real rows"),
+        Some("synthetic_rows") => {
+            "on synthetic training-like rows only; no score on your real rows was recorded".into()
+        }
+        _ => format!("on {rows}held-out evaluation rows"),
+    };
+    let mut lines = vec![format!(
+        "Result: {} {}{unit}{better} {on}.",
+        clean(label),
+        figure(value)
+    )];
+    let baselines = headline["baselines"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    for baseline in &baselines {
+        let Some(b) = baseline["score"]["value"].as_f64() else {
+            continue;
+        };
+        let lift = baseline["lift"].as_f64().unwrap_or(0.0).abs();
+        let verdict = match baseline["outcome"].as_str() {
+            Some("veox") => format!("VEOX ahead by {}", figure(lift)),
+            Some("baseline") => format!("the baseline ahead by {}", figure(lift)),
             _ => "the same score".to_owned(),
         };
         lines.push(format!(
-            "Baseline (a plain model scored on the same held-out rows): {} {} · {verdict}.",
-            clean(comparison["metric"].as_str().unwrap_or(name)),
-            figure(baseline)
+            "Baseline on the same rows ({}): {} {}{unit} · {verdict}.",
+            clean(baseline["description"].as_str().unwrap_or("a plain model")),
+            clean(label),
+            figure(b)
         ));
     }
+    if baselines.is_empty() && headline["basis"] != "synthetic_rows" {
+        lines.push("No baseline on these rows.".into());
+    }
+    if let Some(synthetic) = headline["synthetic"]["value"].as_f64() {
+        lines.push(format!(
+            "Secondary: on synthetic training-like rows the search scored {} {}{unit} (not your data).",
+            clean(label),
+            figure(synthetic)
+        ));
+    }
+    lines.extend(
+        headline["notes"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .map(clean),
+    );
+    for warning in headline["data_warnings"].as_array().into_iter().flatten() {
+        if let Some(message) = warning["message"].as_str() {
+            lines.push(format!("Check the data: {}", clean(message)));
+        }
+    }
     lines
+}
+
+/// The served model by its readable name: the app's `method.name`, else [`readable_model`].
+fn model_line(view: &Value) -> Option<String> {
+    let name = view["method"]["name"]
+        .as_str()
+        .filter(|n| !n.is_empty() && !n.contains("[redacted]"))
+        .map(crate::terminal::sanitize_user_string)
+        .or_else(|| {
+            view["servedModel"]["name"]
+                .as_str()
+                .or(view["summary"]["final_model"].as_str())
+                .map(readable_model)
+        })?;
+    Some(format!("Model: {name}."))
+}
+
+/// A run sentence worth repeating under the app's headline: how the table was read and trained.
+/// Score and model sentences are left out (the headline and [`model_line`] say them, without
+/// mixing row sets or internal names).
+fn context_sentence(line: &str) -> bool {
+    line.starts_with("Profiled") || line.starts_with("Selected '") || line.starts_with("Trained on")
+}
+
+/// Rewrites a model identifier in a run sentence ("Selected bma_blend as the served model.").
+fn readable_sentence(line: &str) -> String {
+    match line
+        .strip_prefix("Selected ")
+        .and_then(|rest| rest.strip_suffix(" as the served model."))
+    {
+        Some(id) if !id.starts_with('\'') => {
+            format!("Selected {} as the served model.", readable_model(id))
+        }
+        _ => line.to_owned(),
+    }
 }
 
 /// The closing lines of a finished cloud run: the outcome, the held-out score and baseline,
@@ -290,14 +397,19 @@ pub fn result_lines(view: &Value, url: &str) -> Vec<String> {
         "cancelled" => lines.push("Cloud run cancelled.".into()),
         _ => {
             lines.push("✓ Cloud run finished.".into());
-            lines.extend(headline(&view["summary"]));
-            let narrative = &view["summary"]["narrative"];
-            match narrative {
-                Value::Array(items) => {
-                    lines.extend(items.iter().filter_map(Value::as_str).map(clean))
-                }
-                Value::String(text) => lines.extend(text.lines().map(clean)),
-                _ => {}
+            let lead = headline(view);
+            let narrative: Vec<String> = match &view["summary"]["narrative"] {
+                Value::Array(items) => items.iter().filter_map(Value::as_str).map(clean).collect(),
+                Value::String(text) => text.lines().map(clean).collect(),
+                _ => Vec::new(),
+            };
+            if lead.is_empty() {
+                // An app without the headline: its own sentences, with readable model names.
+                lines.extend(narrative.iter().map(|l| readable_sentence(l)));
+            } else {
+                lines.extend(lead);
+                lines.extend(model_line(view));
+                lines.extend(narrative.into_iter().filter(|l| context_sentence(l)));
             }
         }
     }
@@ -481,24 +593,77 @@ mod tests {
     }
 
     #[test]
-    fn the_headline_leads_with_the_held_out_score_its_unit_and_the_baseline() {
-        let view = json!({"state":"completed","summary":{
-            "headline_metric":{"name":"rmse","value":0.027712345,"direction":"minimize","unit":"price"},
-            "comparison":{"metric":"rmse","veox_score":0.0277,"baseline_score":0.2104,"lift":0.1827,"outcome":"veox"},
-            "narrative":["Selected 'price' as the target."]}});
+    fn the_result_leads_with_the_real_held_back_rows_like_the_workspace() {
+        // The shape of a synthetic-first run on prod (2026-11-06, run 853ca6d9…, journey J6):
+        // the search's 3.117 and the baseline arm's 5.378 are on synthetic rows; the real
+        // held-back rows scored 5.316, with no baseline on them.
+        let view = json!({"state":"completed",
+            "headline":{"basis":"real_holdout","rows":60,"baselines":[],
+                "score":{"direction":"minimize","label":"RMSE","metric":"rmse","unit":"sales_k","value":5.31614294894832},
+                "synthetic":{"direction":"minimize","label":"RMSE","metric":"rmse","unit":"sales_k","value":3.1166468523193056},
+                "notes":["The engine's baseline arm scored RMSE 5.378 on synthetic rows. That is a different set of rows from the 60 real rows above, so it is not a comparison with this score."],
+                "data_warnings":[]},
+            "method":{"id":"bma_blend","name":"Blend of CatBoost and Bayesian model averaging"},
+            "summary":{"final_model":"bma_blend","narrative":[
+                "Profiled the synthetic copy: 240 rows and 9 columns, from an upload of 300 rows and 9 columns.",
+                "Selected 'sales_k' as the target.",
+                "On 60 held-back real rows, rmse was 5.3161 sales_k (lower is better).",
+                "The search's own holdout, on synthetic rows, scored rmse 3.1166 sales_k.",
+                "Selected bma_blend as the served model.",
+                "Trained on 240 synthetic rows generated from 240 real rows.",
+                "The baseline arm scored 5.3781 sales_k on the same 48 synthetic evaluation rows."]}});
         let lines = result_lines(&view, "https://app.veox.ai/runs/x");
-        assert_eq!(lines[0], "✓ Cloud run finished.");
         assert_eq!(
             lines[1],
-            "Result: held-out rmse 0.02771 · lower is better · in units of `price`."
+            "Result: RMSE 5.316 sales_k (lower is better) on 60 held-back real rows."
+        );
+        assert_eq!(lines[2], "No baseline on these rows.");
+        assert!(lines[3].starts_with(
+            "Secondary: on synthetic training-like rows the search scored RMSE 3.117 sales_k"
+        ));
+        assert!(lines[4].contains("not a comparison with this score"));
+        assert_eq!(
+            lines[5],
+            "Model: Blend of CatBoost and Bayesian model averaging."
+        );
+        let text = lines.join("\n");
+        assert!(
+            !text.contains("ahead by") && !text.contains("same held-out rows"),
+            "{text}"
+        );
+        assert!(
+            !text.contains("bma_blend") && !text.contains("baseline arm scored 5.3781"),
+            "{text}"
+        );
+        assert!(
+            text.contains("Selected 'sales_k' as the target.")
+                && text.contains("Trained on 240 synthetic rows")
+        );
+        // A baseline scored on the same real rows is named, with who is ahead.
+        let mut same = view.clone();
+        same["headline"]["baselines"] = json!([{"kind":"linear","description":"a linear model","rows":60,
+            "score":{"label":"RMSE","value":9.5},"lift":4.18,"outcome":"veox"}]);
+        let lines = result_lines(&same, "u");
+        assert_eq!(
+            lines[2],
+            "Baseline on the same rows (a linear model): RMSE 9.5 sales_k · VEOX ahead by 4.18."
+        );
+        // Without the app's headline: its sentences, with readable model names.
+        let old = json!({"state":"completed","summary":{"narrative":["Selected bma_blend as the served model.","Selected [redacted]_regressor_blend as the served model."]}});
+        let lines = result_lines(&old, "u");
+        assert_eq!(
+            lines[1],
+            "Selected Blend of CatBoost and Bayesian model averaging as the served model."
         );
         assert_eq!(
             lines[2],
-            "Baseline (a plain model scored on the same held-out rows): rmse 0.2104 · VEOX ahead by 0.1827."
+            "Selected veox proprietary blend as the served model."
         );
-        assert_eq!(lines[3], "Selected 'price' as the target.");
-        // No headline metric: only the run's own sentences.
-        assert!(headline(&json!({"narrative":[]})).is_empty());
+        assert_eq!(
+            readable_model("[redacted]_regressor"),
+            "veox proprietary model"
+        );
+        assert_eq!(readable_model("bma"), "Bayesian model averaging");
         assert_eq!(figure(1234.5678), "1235");
         assert_eq!(figure(0.5), "0.5");
     }

@@ -73,6 +73,8 @@ fn requested_with_tty(args: &[String], input: bool, output: bool) -> Option<Laun
 }
 
 pub fn run(launch: Launch) -> anyhow::Result<()> {
+    // A release executable separated from its package could not run a single candidate.
+    crate::bootstrap::open()?;
     let home = jope_paths::jopedime_home();
     let executable = std::env::current_exe()?;
     let engine = discover::discover(&discover::Options {
