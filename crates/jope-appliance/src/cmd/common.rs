@@ -354,6 +354,7 @@ mod tests {
             token: "ab".repeat(32),
             pid: u32::MAX,
             version: "test".into(),
+            build: None,
             api_version: "1.0".into(),
             started_at: "now".into(),
         };
