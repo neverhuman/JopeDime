@@ -49,6 +49,10 @@ Everything the TUI shows can be selected and copied:
 - **`/copy`** puts text on the clipboard through the terminal (OSC 52): `/copy` the output since your previous command, `/copy link` the last URL shown, `/copy run` the current run id, `/copy result` the last run result, `/copy all` the whole transcript. Links and run ids are also printed again on a line of their own, so they can be selected where the terminal ignores OSC 52 (tmux needs `set -g set-clipboard on`; xterm needs `allowWindowOps`).
 - **`/transcript`** (or `/select`) shows the whole session as plain text on the normal screen, in your terminal's scrollback, with every line and URL whole (nothing cut at the screen edge); Enter returns to the TUI.
 
+### Feedback
+
+`/feedback [issue|idea|good] TEXT` (or `jain cloud feedback KIND SUMMARY [--details TEXT]`, or the local MCP tool `send_feedback`) sends the VEOX team one note through `POST /api/feedback` on your workspace: with your account when signed in, without one otherwise. Only the text you write, the client name and version (and, for an agent, tool names) are sent; never a dataset or a file. A workspace that does not accept feedback yet answers 404, and jAIn says so and sends nothing.
+
 ### Usage
 
 `/usage` shows the signed-in account and its plan (read from the workspace in the background), the current run, and run statistics recorded by this machine's engine for the last 7 days and in total (runs by outcome, evaluations and compute time), plus the usage-statistics and terms settings.

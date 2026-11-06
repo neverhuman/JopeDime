@@ -90,3 +90,29 @@ fn feedback_from_the_terminal_reaches_the_workspace_signed_out() {
         .env("JOPEDIME_HOME", &home)
         .output();
 }
+
+/// A workspace without `POST /api/feedback` (today's production before the app deploy) gives a
+/// plain sentence and a failed exit, and nothing else breaks.
+#[test]
+fn feedback_to_a_workspace_without_the_endpoint_says_so_plainly() {
+    let dir = tempfile::tempdir().unwrap();
+    let home = dir.path().join("home");
+    std::fs::create_dir(&home).unwrap();
+    let server = Workspace::start(Box::new(|_: &Recorded, _: &[Recorded]| {
+        (404, r#"{"error":"not found"}"#.into())
+    }));
+    let out = Command::new(BIN)
+        .args(["cloud", "feedback", "issue", "the upload stalls"])
+        .env("JOPEDIME_HOME", &home)
+        .env("JAIN_WORKSPACE", &server.origin)
+        .env("JAIN_ACCEPT_TERMS", "1")
+        .env("JAIN_NO_UPDATE_CHECK", "1")
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(!out.status.success());
+    assert!(
+        stderr.contains("does not accept feedback from the CLI yet"),
+        "{stderr}"
+    );
+}

@@ -3,7 +3,7 @@
 //!
 //! Not an engine operation, so it is not in `OPERATIONS` and has no `jope/apiSchemas` entry: it
 //! posts one note to the VEOX workspace through `crate::cloud::feedback`, the same path as the
-//! terminal's `/feedback` and `jopedime cloud feedback`. That module documents what leaves the
+//! terminal's `/feedback` and `jain cloud feedback`. That module documents what leaves the
 //! machine (only the text supplied here, the binary's name and version, and tool names).
 use rmcp::model::CallToolResult;
 use serde_json::{json, Value};

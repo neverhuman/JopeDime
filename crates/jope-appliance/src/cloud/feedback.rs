@@ -1,4 +1,4 @@
-//! Feedback to the VEOX team: `jopedime cloud feedback`, the terminal's `/feedback`, and the local
+//! Feedback to the VEOX team: `jain cloud feedback`, the terminal's `/feedback`, and the local
 //! MCP's `send_feedback` all end here, in one `POST /api/feedback` to the workspace.
 //!
 //! Signed in, the stored CLI token goes with it and the team can follow up on the account; not
@@ -139,9 +139,26 @@ pub fn send(feedback: &Feedback) -> Result<String> {
             )
         }
     };
-    let reply = client
-        .json("POST", "/api/feedback", feedback.body())
+    let (status, bytes) = client
+        .call(
+            "POST",
+            "/api/feedback",
+            serde_json::to_vec(&feedback.body())?,
+            "application/json",
+            MAX_JSON,
+        )
         .context("could not send feedback")?;
+    let reply: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
+    anyhow::ensure!(status != 404 && status != 405, "{}", NOT_ACCEPTED);
+    anyhow::ensure!(
+        (200..300).contains(&status),
+        "the workspace did not take the feedback (HTTP {status}{}); nothing was stored",
+        reply
+            .get("error")
+            .and_then(Value::as_str)
+            .map(|e| format!(": {e}"))
+            .unwrap_or_default()
+    );
     let id = reply
         .get("id")
         .and_then(Value::as_str)
@@ -152,10 +169,14 @@ pub fn send(feedback: &Feedback) -> Result<String> {
         if signed_in {
             " with your account so they can follow up"
         } else {
-            " without an account (sign in with /login if you want a reply)"
+            " without an account (sign in with /login or `jain auth login` if you want a reply)"
         }
     ))
 }
+
+/// A workspace that predates `POST /api/feedback` answers 404: say so plainly instead of a
+/// generic refusal, and nothing else breaks.
+pub const NOT_ACCEPTED: &str = "this veox Cloud Workspace does not accept feedback from the CLI yet (HTTP 404); nothing was sent. Please try again after the next workspace update";
 
 #[cfg(test)]
 mod feedback_tests {
