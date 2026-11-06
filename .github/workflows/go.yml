@@ -65,7 +65,7 @@ jobs:
         id: first
         if: ${{ !cancelled() }}
         continue-on-error: true
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}
           path: |
@@ -87,7 +87,7 @@ jobs:
         id: second
         if: ${{ !cancelled() && steps.first.outcome == 'failure' }}
         continue-on-error: true
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}-pub-2
           restore-keys: |
@@ -111,7 +111,7 @@ jobs:
         id: third
         if: ${{ !cancelled() && steps.first.outcome == 'failure' && steps.second.outcome == 'failure' }}
         continue-on-error: true
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           key: go-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.go }}-pub-3
           restore-keys: |
