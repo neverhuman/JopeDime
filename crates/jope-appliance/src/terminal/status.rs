@@ -165,31 +165,25 @@ pub fn budget_stop_line(snapshot: &RunSnapshot) -> Option<String> {
 }
 
 /// The one-line next step after a result (#2143). `tui` selects slash commands over `jain`
-/// subcommands; `connected` drops the login suggestion.
+/// subcommands. Runs on your own data are the veox Cloud's (owner rule 2026-11-06: the local,
+/// weightless engine is for the bundled demos and anonymous use), so the own-data step is the
+/// login while signed out and a cloud run once signed in.
 pub fn next_steps(run: &str, connected: bool, tui: bool) -> String {
     let predict = format!(
         "predict with `jain predict --model {run} --input new_rows.csv --output predictions.csv`"
     );
-    let (code, own, login) = if tui {
-        (
-            "get the code with /export --out DIR",
-            "try your own data with /open FILE.csv",
-            "/login to keep runs in your free veox Cloud Workspace",
-        )
+    let code = if tui {
+        "get the code with /export --out DIR".to_owned()
     } else {
-        (
-            "get the code with `jain export RUN --kind bundle --lang python --out DIR`",
-            "try your own data with `jain run FILE.csv --target COLUMN`",
-            "`jain auth login` to keep runs in your free veox Cloud Workspace",
-        )
+        format!("get the code with `jain export {run} --kind bundle --lang python --out DIR`")
     };
-    let code = code.replace("RUN", run);
-    let mut line = format!("Next: {predict} · {code} · {own}");
-    if !connected {
-        line.push_str(" · ");
-        line.push_str(login);
-    }
-    line
+    let own = match (tui, connected) {
+        (true, false) => "your own data: /login (free) — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+        (true, true) => "your own data: /open FILE.csv, then /run --cloud — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+        (false, false) => "your own data: `jain auth login` (free) — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+        (false, true) => "your own data: `jain run FILE.csv --target COLUMN --cloud` — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+    };
+    format!("Next: {predict} · {code} · {own}")
 }
 
 fn metric_field(
@@ -476,8 +470,11 @@ mod tests {
         assert!(tui.starts_with(
             "Next: predict with `jain predict --model run_01JBD8Q6N4V2T5Y8K3M7P9R1S0"
         ));
-        assert!(tui.contains("/open FILE.csv") && tui.contains("/login"));
-        assert!(!super::next_steps(run, true, true).contains("/login"));
+        assert!(tui.contains("/login") && tui.contains("happen in the veox Cloud"));
+        assert!(tui.contains("asks before uploading"));
+        let connected = super::next_steps(run, true, true);
+        assert!(!connected.contains("/login") && connected.contains("/run --cloud"));
+        assert!(super::next_steps(run, true, false).contains("--cloud"));
         let cli = super::next_steps(run, false, false);
         assert!(
             cli.contains("jain export run_01JBD8Q6N4V2T5Y8K3M7P9R1S0")

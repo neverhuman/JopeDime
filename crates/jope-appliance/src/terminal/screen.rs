@@ -392,7 +392,7 @@ fn guidance(width: usize, connected: bool) -> String {
         ", /login to connect your free veox Cloud Workspace"
     };
     let full = format!(
-        " Type /demo to try a bundled example or /open <file.csv> for your own data, press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
+        " Type /demo to try a bundled example (your own data runs in the veox Cloud), press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
     );
     if full.chars().count() <= width {
         return full;

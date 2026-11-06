@@ -540,12 +540,12 @@ pub(super) fn help_lines() -> Vec<String> {
         ),
         (
             "/open PATH",
-            "open your CSV (~ works), or a bundled example/NAME.csv",
+            "open a bundled example/NAME.csv, or your CSV once signed in (~ works)",
         ),
         ("/target COLUMN", "choose the column to predict"),
         (
             "/run [--local|--cloud]",
-            "start a run on the opened dataset",
+            "start a run (your own data: --cloud, asks before uploading)",
         ),
         ("/auto", "run the default search on the opened dataset"),
         ("/plan", "check the run plan without starting it"),
@@ -570,7 +570,7 @@ pub(super) fn help_lines() -> Vec<String> {
         ),
         (
             "/login [URL] · /logout",
-            "connect your free veox Cloud Workspace",
+            "connect your free veox Cloud Workspace (runs on your own data)",
         ),
         ("/usage", "account, plan and this machine's runs"),
         (

@@ -88,6 +88,19 @@ fn version_line_for(invoked: Option<&str>) -> String {
     format!("{name} {VERSION}\n")
 }
 
+/// `example/NAME.csv` names a bundled demo (#2142). Builds without the client carry no demos,
+/// so their bytes never enlarge an engine-only executable.
+fn example_path(path: std::path::PathBuf) -> std::path::PathBuf {
+    #[cfg(feature = "client")]
+    {
+        terminal::demos::resolve(&path)
+    }
+    #[cfg(not(feature = "client"))]
+    {
+        path
+    }
+}
+
 /// Printed when `jain` runs without arguments and without a terminal: the full-screen TUI
 /// cannot start, so say why and what works without one, then show the help (#2142).
 #[cfg(feature = "client")]
@@ -96,7 +109,8 @@ const NO_TERMINAL: &str =
 Without a terminal, use the commands directly, for example:\n  \
 jain demo list                                   the bundled demos\n  \
 jain demo run regression_parkinsons --json       run one and print the result\n  \
-jain run data.csv --target COLUMN                run on your own CSV\n  \
+jain auth login, then jain run data.csv --target COLUMN --cloud\n  \
+                                                 your own data, in the veox Cloud (asks before uploading)\n  \
 jain run example/regression_parkinsons.csv --target target   a bundled demo file\n";
 
 /// The status a run will exit with, so a closed stdout while printing its receipt keeps it.
@@ -261,7 +275,7 @@ fn main() -> ExitCode {
             model_root,
             common,
         } => {
-            train.train = terminal::demos::resolve(&train.train);
+            train.train = example_path(train.train);
             run_fit(&train, output.as_deref(), &model_root, &common)
         }
         ApplianceCommand::Model(args) => report(model::run(args)),
@@ -359,8 +373,8 @@ fn main() -> ExitCode {
             output,
             common,
         } => {
-            train.train = terminal::demos::resolve(&train.train);
-            let input = terminal::demos::resolve(&input);
+            train.train = example_path(train.train);
+            let input = example_path(input);
             run_fit_predict(&train, &input, &output, &common)
         }
         ApplianceCommand::Fitness { command } => report(match command {

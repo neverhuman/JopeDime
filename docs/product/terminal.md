@@ -9,7 +9,7 @@ Without a terminal (an agent, a script, a pipe), `jain` with no arguments says t
 ```console
 $ jain demo list                                  # or --json
 $ jain demo run regression_parkinsons --json      # the same run as /demo regression_parkinsons
-$ jain run example/regression_parkinsons.csv --target target
+$ jain run example/regression_parkinsons.csv --target target   # bundled demos run locally; your own data runs in the veox Cloud (jain auth login, then jain run FILE.csv --target COLUMN --cloud; it asks before uploading)
 $ jain fit --train example/regression_parkinsons.csv --target target --output model.jope
 ```
 
