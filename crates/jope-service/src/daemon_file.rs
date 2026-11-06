@@ -18,8 +18,20 @@ pub struct DaemonFile {
     pub token: String,
     pub pid: u32,
     pub version: String,
+    /// The source commit this engine was built from (`JOPE_BUILD_SOURCE_SHA`), when the build
+    /// declared one. Clients compare it with their own, since release candidates share one
+    /// version number (#2141). Absent in records from engines before 1.0.0-rc.3.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build: Option<String>,
     pub api_version: String,
     pub started_at: String,
+}
+
+/// The source commit this build declares: exactly 40 hexadecimal digits, or `None`.
+pub fn build_source_sha() -> Option<String> {
+    option_env!("JOPE_BUILD_SOURCE_SHA")
+        .filter(|sha| sha.len() == 40 && sha.bytes().all(|b| b.is_ascii_hexdigit()))
+        .map(str::to_owned)
 }
 
 /// The record plus what this process can establish about its owner PID.
@@ -48,6 +60,7 @@ pub fn write_daemon_file(
         token: encode_hex(&random),
         pid: std::process::id(),
         version: version.into(),
+        build: build_source_sha(),
         api_version: api_version.into(),
         started_at: started_at.into(),
     };
@@ -285,6 +298,7 @@ mod tests {
             token: "00".repeat(32),
             pid: u32::MAX,
             version: "0.4.1".to_owned(),
+            build: None,
             api_version: "1.0".to_owned(),
             started_at: "2026-10-30T10:00:00Z".to_owned(),
         };
@@ -294,6 +308,19 @@ mod tests {
             read_daemon_file(home.path()).expect("read stale daemon file"),
             DaemonFileStatus::Stale(record)
         );
+    }
+
+    #[test]
+    fn records_without_a_build_still_parse_and_builds_are_written_only_when_declared() {
+        let old: DaemonFile = serde_json::from_str(
+            r#"{"url":"http://127.0.0.1:1","token":"00","pid":1,"version":"1.0.0","api_version":"1.0","started_at":"t"}"#,
+        )
+        .expect("a pre-rc.3 record");
+        assert_eq!(old.build, None);
+        let text = serde_json::to_string(&old).unwrap();
+        assert!(!text.contains("build"), "{text}");
+        let home = tempfile::tempdir().expect("temporary home");
+        assert_eq!(sample(home.path()).build, build_source_sha());
     }
 
     #[test]

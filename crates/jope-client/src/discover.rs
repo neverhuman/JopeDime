@@ -16,7 +16,7 @@ use std::{
 /// Maximum time local discovery spends attaching to or starting an engine.
 pub const STARTUP_TIMEOUT: Duration = Duration::from_secs(5);
 /// Message returned when no explicit, existing, or startable engine is available.
-pub const NO_ENGINE: &str = "no engine found; run `jopedime serve` or pass `--endpoint`";
+pub const NO_ENGINE: &str = "no engine found; run `jain serve` or pass `--endpoint`";
 const MAX_METADATA: u64 = 16 * 1024;
 const POLL: Duration = Duration::from_millis(20);
 
@@ -56,6 +56,7 @@ impl fmt::Debug for Options {
 }
 
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)] // One value per discovery; boxing would change the public API.
 pub enum Engine {
     /// Authoritative explicit selection. Authentication/remote TLS belongs to the caller.
     Endpoint(String),
@@ -75,6 +76,9 @@ pub struct Background {
     pub pid: u32,
     /// Engine package version.
     pub version: String,
+    /// The source commit the engine was built from, when its build declared one. Release
+    /// candidates share one X.Y.Z, so this (not the version) tells two builds apart (#2141).
+    pub build: Option<String>,
     /// JopeDime API version reported by the engine.
     pub api_version: String,
     /// Engine startup timestamp from its metadata.
@@ -138,13 +142,13 @@ impl fmt::Display for DiscoveryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidEndpoint => f.write_str("invalid engine endpoint; use an HTTP(S) authority"),
-            Self::InvalidMetadata => f.write_str("invalid daemon metadata; check the engine with `jopedime serve --status`"),
+            Self::InvalidMetadata => f.write_str("invalid daemon metadata; check the engine with `jain serve --status`"),
             Self::Io(e) => write!(f, "engine discovery IO: {e}"),
             Self::Spawn(e) => write!(f, "cannot start the engine: {e}"),
             Self::NoEngine => f.write_str(NO_ENGINE),
             Self::Busy { pid, command } => write!(f, "ENGINE_BUSY: store owner PID {} command {command:?}; retry or use another JOPEDIME_HOME", pid.map_or("unknown".into(), |p|p.to_string())),
             Self::OutdatedBusy { version, running } => write!(f, "An older jAIn engine ({version}) is still running a job ({}). Wait for it or run `jain serve --stop --force`.", running.join(", ")),
-            Self::StartupTimeout { child_exit } => write!(f, "engine did not become ready within 5 s (child exit: {child_exit:?}); run `jopedime serve` for diagnostics"),
+            Self::StartupTimeout { child_exit } => write!(f, "engine did not become ready within 5 s (child exit: {child_exit:?}); run `jain serve` for diagnostics"),
         }
     }
 }
@@ -161,6 +165,9 @@ struct Record {
     token: String,
     pid: u32,
     version: String,
+    /// Absent in descriptors written by engines before 1.0.0-rc.3.
+    #[serde(default)]
+    build: Option<String>,
     api_version: String,
     started_at: String,
 }
@@ -181,6 +188,39 @@ pub fn discover(options: &Options) -> Result<Engine, Error> {
 /// The client's own version: every engine it attaches to must match it.
 pub const CLIENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// The source commit this client was built from (`JOPE_BUILD_SOURCE_SHA`, 40 hex digits), or
+/// `None` for a development build that declares none. The engine records the same value in its
+/// descriptor, so an engine from another build of the same version is recognised as outdated.
+pub fn client_build() -> Option<&'static str> {
+    valid_build(option_env!("JOPE_BUILD_SOURCE_SHA"))
+}
+
+/// A declared build identity: exactly 40 hexadecimal digits.
+pub fn valid_build(build: Option<&str>) -> Option<&str> {
+    build.filter(|sha| sha.len() == 40 && sha.bytes().all(|b| b.is_ascii_hexdigit()))
+}
+
+/// What an attached engine must be: this client's version and, when known, its build.
+#[derive(Clone, Copy, Debug)]
+struct Expected<'a> {
+    version: &'a str,
+    build: Option<&'a str>,
+}
+
+impl Expected<'_> {
+    fn label(&self) -> String {
+        label(self.version, self.build)
+    }
+}
+
+/// `1.0.0`, or `1.0.0 (build 51c0c1a)` when a build is known.
+fn label(version: &str, build: Option<&str>) -> String {
+    match build {
+        Some(build) => format!("{version} (build {})", &build[..build.len().min(7)]),
+        None => version.to_owned(),
+    }
+}
+
 static NOTICE: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
 
 /// A one-line notice from the last discovery (an outdated engine was restarted), taken once.
@@ -200,16 +240,25 @@ fn discover_with(
     timeout: Duration,
     start: impl FnOnce(&Options) -> io::Result<Child>,
 ) -> Result<Engine, Error> {
-    discover_versioned(options, environment, timeout, start, Some(CLIENT_VERSION))
+    discover_versioned(
+        options,
+        environment,
+        timeout,
+        start,
+        Some(Expected {
+            version: CLIENT_VERSION,
+            build: client_build(),
+        }),
+    )
 }
 
-/// [`discover_with`] with the version an attached engine must report (`None`: any).
+/// [`discover_with`] with the version (and build) an attached engine must report (`None`: any).
 fn discover_versioned(
     options: &Options,
     environment: Option<OsString>,
     timeout: Duration,
     start: impl FnOnce(&Options) -> io::Result<Child>,
-    expected: Option<&str>,
+    expected: Option<Expected<'_>>,
 ) -> Result<Engine, Error> {
     let selected = options.endpoint.clone().or_else(|| {
         environment
@@ -293,11 +342,23 @@ fn discover_versioned(
     result
 }
 
-/// Why an attached engine is not this client's, if it is not.
-fn outdated(engine: &Background, expected: Option<&str>) -> Option<String> {
+/// Why an attached engine is not this client's, if it is not: another version, another build
+/// of the same version (release candidates all report X.Y.Z; #2141), or a replaced executable.
+fn outdated(engine: &Background, expected: Option<Expected<'_>>) -> Option<String> {
     let expected = expected?;
-    if engine.version != expected {
+    if engine.version != expected.version {
         return Some(engine.version.clone());
+    }
+    if let Some(build) = expected.build {
+        // An engine that declares no build predates build identities (or is a development
+        // build): it cannot be shown to be this one, so it is treated as another build.
+        let theirs = valid_build(engine.build.as_deref());
+        if theirs != Some(build) {
+            return Some(match theirs {
+                Some(theirs) => label(&engine.version, Some(theirs)),
+                None => format!("{} (another build)", engine.version),
+            });
+        }
     }
     replaced_executable(engine.pid)
         .then(|| format!("{} (an executable since replaced)", engine.version))
@@ -323,7 +384,7 @@ fn replaced_executable(pid: u32) -> bool {
 fn reconcile(
     home: &std::path::Path,
     engine: Background,
-    expected: Option<&str>,
+    expected: Option<Expected<'_>>,
 ) -> Result<Option<Background>, Error> {
     let Some(old) = outdated(&engine, expected) else {
         return Ok(Some(engine));
@@ -338,7 +399,7 @@ fn reconcile(
     stop_engine(home, &engine)?;
     set_notice(format!(
         "Restarted the background engine: it was jAIn {old}, now {}",
-        expected.unwrap_or(CLIENT_VERSION)
+        expected.map_or_else(|| CLIENT_VERSION.to_owned(), |e| e.label())
     ));
     Ok(None)
 }
