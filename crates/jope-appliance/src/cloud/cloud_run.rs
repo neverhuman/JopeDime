@@ -236,25 +236,94 @@ fn figure(value: f64) -> String {
     }
 }
 
-/// A model name a person can read, as the run page says it (ai-veox-app `readableModelName`,
-/// `veox_app_contracts::method::readable_name`): an egress-redacted identifier is a veox
-/// proprietary blend or model, and the common ensembles have their names.
-pub fn readable_model(id: &str) -> String {
+/// What the run page says when nothing names the served model (ai-veox-app
+/// `veox_app_contracts::method::UNAVAILABLE`); the engine id beside it is never printed here.
+const UNAVAILABLE: &str = "method details unavailable";
+
+/// The app's name for a blend whose members its record does not list (`method::describe`).
+const BARE_BLEND: &str = "Blend";
+
+/// What the run page says beside a bare blend (`method::describe`'s description for one).
+const BARE_BLEND_SAID: &str = "Blend (a weighted average of several candidate models)";
+
+/// A model id as a person can read it, as the run page says it (ai-veox-app
+/// `readableModelName`, `veox_app_contracts::method::readable_name`/`learner`): an
+/// egress-redacted identifier is a veox proprietary blend or model, and the learners the engine
+/// serves have their names. `None` for an id nothing names (an internal or trial id such as
+/// `math_e8fb6975` or `alg_00000012`): that is never shown as though it were a name.
+pub fn readable_model(id: &str) -> Option<String> {
     let clean = crate::terminal::sanitize_user_string(id);
     if clean.contains("[redacted]") {
-        return if clean.to_ascii_lowercase().contains("blend") {
-            "veox proprietary blend".into()
-        } else {
-            "veox proprietary model".into()
-        };
+        return Some(
+            if clean.to_ascii_lowercase().contains("blend") {
+                "veox proprietary blend"
+            } else {
+                "veox proprietary model"
+            }
+            .into(),
+        );
     }
-    match clean.as_str() {
-        "bma" => "Bayesian model averaging".into(),
-        "bma_blend" => "Blend of CatBoost and Bayesian model averaging".into(),
-        "catboost" => "CatBoost".into(),
-        name if name.to_ascii_lowercase().contains("blend") => "Blend".into(),
-        _ => clean,
+    let key = clean.trim().to_ascii_lowercase();
+    let base = key.split(['_', '-', ':']).next().unwrap_or(&key);
+    Some(
+        match (key.as_str(), base) {
+            ("bma_blend", _) => "Blend of CatBoost and Bayesian model averaging",
+            (key, _) if key == "blend" || key.ends_with("_blend") => BARE_BLEND_SAID,
+            ("ges", _) => "Greedy ensemble",
+            (_, "bma") => "Bayesian model averaging",
+            (_, "catboost") => "CatBoost",
+            (_, "lightgbm") => "LightGBM",
+            (_, "xgboost") => "XGBoost",
+            (_, "ridge" | "linear" | "lasso" | "elasticnet") => "Linear model",
+            (_, "logistic" | "logreg") => "Logistic regression",
+            (_, "rf" | "randomforest") => "Random forest",
+            (_, "extratrees") => "Extra trees",
+            (_, "knn") => "Nearest neighbours",
+            _ => return None,
+        }
+        .into(),
+    )
+}
+
+/// The served model as the run page names it, never an internal id:
+/// 1. a served id or name the egress redaction rewrote is "veox proprietary blend" or
+///    "veox proprietary model" -- the run page's label for it, even where the app's `method`
+///    names it only by its kind ("Blend", run 20f45ba1…);
+/// 2. else the app's own `method.name` (ai-veox-app #146), the run page's "Winning model";
+///    a bare "Blend" keeps the run page's description beside it, so it is never just "Blend.";
+/// 3. else, from an app without `method`, the served id by [`readable_model`];
+/// 4. else "method details unavailable", as the run page says it.
+pub fn model_name(view: &Value) -> String {
+    fn named(v: &Value) -> Option<&str> {
+        v.as_str().map(str::trim).filter(|s| !s.is_empty())
     }
+    let method = &view["method"];
+    let ids: Vec<&str> = [
+        &method["id"],
+        &view["servedModel"]["name"],
+        &view["summary"]["final_model"],
+    ]
+    .into_iter()
+    .filter_map(named)
+    .collect();
+    let name = named(&method["name"]);
+    if let Some(redacted) = name
+        .into_iter()
+        .chain(ids.iter().copied())
+        .find(|n| n.contains("[redacted]"))
+    {
+        return readable_model(redacted).unwrap_or_else(|| UNAVAILABLE.into());
+    }
+    let known = method["known"].as_bool() != Some(false);
+    if let Some(name) = name.filter(|n| known && *n != UNAVAILABLE) {
+        if name == BARE_BLEND {
+            return BARE_BLEND_SAID.into();
+        }
+        return crate::terminal::sanitize_user_string(name);
+    }
+    ids.first()
+        .and_then(|id| readable_model(id))
+        .unwrap_or_else(|| UNAVAILABLE.into())
 }
 
 /// The run's lead result exactly as the workspace leads with it: the app's own `headline`
@@ -345,19 +414,18 @@ pub fn headline(view: &Value) -> Vec<String> {
     lines
 }
 
-/// The served model by its readable name: the app's `method.name`, else [`readable_model`].
+/// The `Model:` line of a finished cloud run: [`model_name`], or nothing when the run names no
+/// served model at all.
 fn model_line(view: &Value) -> Option<String> {
-    let name = view["method"]["name"]
-        .as_str()
-        .filter(|n| !n.is_empty() && !n.contains("[redacted]"))
-        .map(crate::terminal::sanitize_user_string)
-        .or_else(|| {
-            view["servedModel"]["name"]
-                .as_str()
-                .or(view["summary"]["final_model"].as_str())
-                .map(readable_model)
-        })?;
-    Some(format!("Model: {name}."))
+    let served = [
+        &view["method"]["id"],
+        &view["method"]["name"],
+        &view["servedModel"]["name"],
+        &view["summary"]["final_model"],
+    ]
+    .iter()
+    .any(|v| v.as_str().is_some_and(|s| !s.trim().is_empty()));
+    served.then(|| format!("Model: {}.", model_name(view)))
 }
 
 /// A run sentence worth repeating under the app's headline: how the table was read and trained.
@@ -373,9 +441,10 @@ fn readable_sentence(line: &str) -> String {
         .strip_prefix("Selected ")
         .and_then(|rest| rest.strip_suffix(" as the served model."))
     {
-        Some(id) if !id.starts_with('\'') => {
-            format!("Selected {} as the served model.", readable_model(id))
-        }
+        Some(id) if !id.starts_with('\'') => match readable_model(id) {
+            Some(name) => format!("Selected {name} as the served model."),
+            None => format!("Selected a served model ({UNAVAILABLE})."),
+        },
         _ => line.to_owned(),
     }
 }
@@ -660,11 +729,105 @@ mod tests {
             "Selected veox proprietary blend as the served model."
         );
         assert_eq!(
-            readable_model("[redacted]_regressor"),
-            "veox proprietary model"
+            readable_model("[redacted]_regressor").as_deref(),
+            Some("veox proprietary model")
         );
-        assert_eq!(readable_model("bma"), "Bayesian model averaging");
+        assert_eq!(
+            readable_model("bma").as_deref(),
+            Some("Bayesian model averaging")
+        );
         assert_eq!(figure(1234.5678), "1235");
         assert_eq!(figure(0.5), "0.5");
+    }
+
+    #[test]
+    fn the_model_line_says_the_name_the_run_page_shows_and_never_an_internal_id() {
+        let line = |view: Value| model_line(&view);
+        // The app's own name, as the run page's "Winning model" (prod runs 34c4a244…, 830aae70…).
+        assert_eq!(
+            line(
+                json!({"method":{"id":"bma_blend","known":true,"family":"ensemble",
+                "name":"Blend of CatBoost and Bayesian model averaging"},
+                "servedModel":{"name":"bma_blend"},"summary":{"final_model":"bma_blend"}})
+            ),
+            Some("Model: Blend of CatBoost and Bayesian model averaging.".into())
+        );
+        assert_eq!(
+            line(json!({"method":{"id":"bma","known":true,"name":"Bayesian model averaging"}})),
+            Some("Model: Bayesian model averaging.".into())
+        );
+        // An invented algorithm's display name is the account's, and is shown as the page shows it.
+        assert_eq!(
+            line(
+                json!({"method":{"id":"alg_00000012","known":true,"name":"Lightning Vector",
+                "family":"invented algorithm"}})
+            ),
+            Some("Model: Lightning Vector.".into())
+        );
+        // Prod run 20f45ba1… (rc.4 printed "Model: Blend."): the served id is redacted and the
+        // app's method names only its kind. The run page labels it "veox proprietary blend".
+        let redacted = json!({"method":{"id":"[redacted]_regressor_blend","known":true,
+            "family":"ensemble","name":"Blend",
+            "description":"A weighted average of several candidate models."},
+            "servedModel":{"name":"[redacted]_regressor_blend"},
+            "summary":{"final_model":"[redacted]_regressor_blend"}});
+        assert_eq!(
+            line(redacted),
+            Some("Model: veox proprietary blend.".into())
+        );
+        assert_eq!(
+            line(
+                json!({"method":{"id":"[redacted]_top500","known":true,"name":"veox proprietary model"}})
+            ),
+            Some("Model: veox proprietary model.".into())
+        );
+        assert_eq!(
+            line(json!({"method":{"id":"x","name":"[redacted]_classifier_blend"}})),
+            Some("Model: veox proprietary blend.".into())
+        );
+        // A bare blend the app could not name the members of keeps the page's description.
+        assert_eq!(
+            line(json!({"method":{"id":"frontier_blend","known":true,"name":"Blend"}})),
+            Some("Model: Blend (a weighted average of several candidate models).".into())
+        );
+        // Nothing names it: the page's neutral words, never the id.
+        for unknown in [
+            json!({"method":{"id":"math_e8fb6975","known":false,"name":"method details unavailable"},
+                "servedModel":{"name":"math_e8fb6975"}}),
+            json!({"servedModel":{"name":"alg_00000012"}}),
+            json!({"summary":{"final_model":"zz_unlisted_x9"}}),
+        ] {
+            let text = line(unknown.clone()).unwrap();
+            assert_eq!(text, "Model: method details unavailable.", "{unknown}");
+        }
+        // An app without `method`: the served id by its readable name.
+        assert_eq!(
+            line(
+                json!({"servedModel":{"name":"catboost_s2"},"summary":{"final_model":"catboost_s2"}})
+            ),
+            Some("Model: CatBoost.".into())
+        );
+        assert_eq!(
+            line(json!({"summary":{"final_model":"bma_blend"}})),
+            Some("Model: Blend of CatBoost and Bayesian model averaging.".into())
+        );
+        // No served model at all: no line.
+        assert_eq!(line(json!({"state":"completed"})), None);
+        // The headline-less fallback rewrites an unnamed id too.
+        assert_eq!(
+            readable_sentence("Selected math_e8fb6975 as the served model."),
+            "Selected a served model (method details unavailable)."
+        );
+        // Every line a finished prod-shaped run prints is free of the internal id.
+        let mut view = json!({"state":"completed",
+            "headline":{"basis":"real_holdout","rows":60,"baselines":[],
+                "score":{"direction":"minimize","label":"RMSE","value":5.4}}});
+        view["method"] = json!({"id":"[redacted]_regressor_blend","known":true,"name":"Blend"});
+        let text = result_lines(&view, "u").join("\n");
+        assert!(text.contains("Model: veox proprietary blend."), "{text}");
+        assert!(
+            !text.contains("[redacted]") && !text.contains("Model: Blend."),
+            "{text}"
+        );
     }
 }
