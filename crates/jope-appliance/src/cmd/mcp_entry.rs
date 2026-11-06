@@ -80,6 +80,7 @@ mod tests {
             url: "http://127.0.0.1:32123".into(),
             pid: 1,
             version: "test".into(),
+            build: None,
             api_version: "1".into(),
             started_at: "test".into(),
         })

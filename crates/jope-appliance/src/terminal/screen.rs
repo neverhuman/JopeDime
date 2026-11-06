@@ -46,6 +46,9 @@ pub struct Screen {
     pub panel: Option<Vec<String>>,
     /// Trusted URLs drawn in the last frame, for the OSC 8 overlay (`links::overlay`).
     pub links: Vec<links::Spot>,
+    /// Whether the mouse is captured (wheel scrolling) rather than left to the terminal's own
+    /// text selection; shown in the footer.
+    pub mouse: bool,
     lines: VecDeque<(Kind, String)>,
     bytes: usize,
     wrapped: Vec<Wrapped>,
@@ -347,12 +350,14 @@ impl Screen {
             }
         } else if self.top.is_some() {
             format!(
-                " {} new lines · PgUp/PgDn scroll · End follows live · Ctrl-C exits",
-                self.unread
+                " {} new lines · PgUp/PgDn scroll · End follows live · {} · Ctrl-C exits",
+                self.unread,
+                mouse_hint(self.mouse)
             )
         } else {
             format!(
-                " Left: runs · PgUp/PgDn: scroll · Ctrl-C: exit · {}",
+                " Left: runs · PgUp/PgDn: scroll · {} · /copy · Ctrl-C: exit · {}",
+                mouse_hint(self.mouse),
                 if self.cloud_label.is_empty() {
                     "Cloud not connected · /login"
                 } else {
@@ -367,6 +372,15 @@ impl Screen {
     }
 }
 
+/// The footer's mouse state: what a drag does now, and the key that changes it.
+pub fn mouse_hint(capture: bool) -> &'static str {
+    if capture {
+        "F2 mouse: scroll (Shift-drag selects)"
+    } else {
+        "F2 mouse: select text"
+    }
+}
+
 /// Status text shown before any run or message; the landing replaces it with guidance.
 pub const IDLE_STATUS: &str = "ready · no active run";
 
@@ -378,7 +392,7 @@ fn guidance(width: usize, connected: bool) -> String {
         ", /login to connect your free veox Cloud Workspace"
     };
     let full = format!(
-        " Type /demo to try a bundled example or /open <file.csv> for your own data, press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
+        " Type /demo to try a bundled example (your own data runs in the veox Cloud), press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
     );
     if full.chars().count() <= width {
         return full;

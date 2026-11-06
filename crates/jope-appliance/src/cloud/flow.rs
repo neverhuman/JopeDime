@@ -111,8 +111,29 @@ pub fn cached_tier() -> Option<Tier> {
         .and_then(Tier::parse)
 }
 
-fn browser_allowed() -> bool {
-    std::env::var("JAIN_NO_BROWSER").map_or(true, |v| v.is_empty() || v == "0")
+pub(crate) fn browser_allowed() -> bool {
+    browser_allowed_with(|name| std::env::var(name).ok())
+}
+
+/// Whether to try opening a browser: not when `JAIN_NO_BROWSER` is set, and not where none can
+/// show (#2147): an SSH session without a forwarded display, or a Linux/BSD machine with no
+/// graphical session. `BROWSER` names one explicitly and is always tried.
+pub(crate) fn browser_allowed_with(var: impl Fn(&str) -> Option<String>) -> bool {
+    let set = |name: &str| var(name).is_some_and(|value| !value.trim().is_empty());
+    if var("JAIN_NO_BROWSER").is_some_and(|v| !v.is_empty() && v != "0") {
+        return false;
+    }
+    if set("BROWSER") {
+        return true;
+    }
+    let display = set("DISPLAY") || set("WAYLAND_DISPLAY");
+    if (set("SSH_CONNECTION") || set("SSH_TTY")) && !display {
+        return false;
+    }
+    if cfg!(any(target_os = "macos", windows)) {
+        return true;
+    }
+    display
 }
 
 /// The device login, blocking until it finishes; `say` receives the pairing lines.
@@ -128,8 +149,13 @@ pub fn login_blocking(
         "Pairing code: {} · sign in and approve this CLI in your browser.",
         device.user_code
     ));
-    if browser_allowed() {
-        let _ = open_browser(&device.verification_uri_complete);
+    if browser_allowed() && open_browser(&device.verification_uri_complete).is_ok() {
+        say(
+            "Opened your browser at that link; if it did not appear, open the link yourself."
+                .into(),
+        );
+    } else {
+        say("Open the link in a browser on any device (no browser was opened here).".into());
     }
     client.finish_login(&device, cancel)
 }

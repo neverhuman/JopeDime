@@ -83,7 +83,8 @@ pub enum CloudCommand {
         #[arg(long, value_name = "N")]
         limit: Option<usize>,
     },
-    /// Publish explicitly: the fitted model (the default), or with `--report`/`--code` only the
+    /// Publish explicitly. For a finished run with no options: its fitted model and generated
+    /// code, exported here. `--model` names a saved model; `--report`/`--code` send only the
     /// named PDF report and ZIP of generated code. Nothing uploads without this command.
     Publish {
         run: String,

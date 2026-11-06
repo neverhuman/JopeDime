@@ -62,6 +62,57 @@ use std::time::{Duration, Instant};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// The command users type (`jain`, the jAIn CLI). The executable, its crate, its data directory
+/// (`~/.local/share/jopedime`) and machine-readable fields (`version --json` `product`) keep
+/// the `jopedime` name; only what people read says jAIn / `jain` (#2144).
+pub(crate) const CLI: &str = "jain";
+
+/// `jain 1.0.0`. Invoked under its build name (`jopedime…`, as the release checks run the
+/// unrenamed artifact), the line keeps that name, so `jopedime version` still prints
+/// `jopedime X.Y.Z` first.
+fn version_line() -> String {
+    let invoked = std::env::args_os().next().and_then(|argv0| {
+        Path::new(&argv0)
+            .file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+    });
+    version_line_for(invoked.as_deref())
+}
+
+fn version_line_for(invoked: Option<&str>) -> String {
+    let name = if invoked.is_some_and(|name| name.starts_with("jopedime")) {
+        "jopedime"
+    } else {
+        CLI
+    };
+    format!("{name} {VERSION}\n")
+}
+
+/// `example/NAME.csv` names a bundled demo (#2142). Builds without the client carry no demos,
+/// so their bytes never enlarge an engine-only executable.
+fn example_path(path: std::path::PathBuf) -> std::path::PathBuf {
+    #[cfg(feature = "client")]
+    {
+        terminal::demos::resolve(&path)
+    }
+    #[cfg(not(feature = "client"))]
+    {
+        path
+    }
+}
+
+/// Printed when `jain` runs without arguments and without a terminal: the full-screen TUI
+/// cannot start, so say why and what works without one, then show the help (#2142).
+#[cfg(feature = "client")]
+const NO_TERMINAL: &str =
+    "jain: the interactive TUI needs a terminal (stdin and stdout are not one here).\n\
+Without a terminal, use the commands directly, for example:\n  \
+jain demo list                                   the bundled demos\n  \
+jain demo run regression_parkinsons --json       run one and print the result\n  \
+jain auth login, then jain run data.csv --target COLUMN --cloud\n  \
+                                                 your own data, in the veox Cloud (asks before uploading)\n  \
+jain run example/regression_parkinsons.csv --target target   a bundled demo file\n";
+
 /// The status a run will exit with, so a closed stdout while printing its receipt keeps it.
 static PENDING_EXIT: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 
@@ -79,7 +130,7 @@ fn out(text: &str) {
                 PENDING_EXIT.load(std::sync::atomic::Ordering::SeqCst),
             ));
         }
-        eprintln!("jopedime: stdout: {error}");
+        eprintln!("jain: stdout: {error}");
         std::process::exit(i32::from(FailureKind::Output.exit_code()));
     }
 }
@@ -106,7 +157,7 @@ fn main() -> ExitCode {
     // subcommand, applied once, and removed before the subcommand parses its own arguments.
     #[cfg(feature = "client")]
     if let Err(message) = terminal::onboarding::take_flags(&mut args) {
-        eprintln!("jopedime: {message}");
+        eprintln!("jain: {message}");
         return ExitCode::from(2);
     }
     // `--version` alone, and `--version --json` (SPECIFICATION.md §3.3).
@@ -117,7 +168,7 @@ fn main() -> ExitCode {
         .as_slice()
     {
         ["--version"] | ["-V"] => {
-            out(&format!("jopedime {VERSION}\n"));
+            out(&version_line());
             #[cfg(feature = "client")]
             update::notice_blocking(VERSION);
             return ExitCode::SUCCESS;
@@ -132,7 +183,15 @@ fn main() -> ExitCode {
     if let Some(attach) = session::requested(&args) {
         return report(session::run(attach));
     }
-    let cli = Cli::parse_from(std::iter::once("jopedime".to_owned()).chain(args.iter().cloned()));
+    #[cfg(feature = "client")]
+    if args.is_empty() {
+        use clap::CommandFactory;
+        eprint!("{NO_TERMINAL}");
+        let mut command = Cli::command().bin_name(CLI);
+        let _ = command.print_help();
+        return ExitCode::from(2);
+    }
+    let cli = Cli::parse_from(std::iter::once(CLI.to_owned()).chain(args.iter().cloned()));
     match cli.command {
         #[cfg(feature = "research")]
         ApplianceCommand::Research(args) => report(research::run(args)),
@@ -142,7 +201,7 @@ fn main() -> ExitCode {
             if flag.json {
                 print_json(&version_value());
             } else {
-                out(&format!("jopedime {VERSION}\n"));
+                out(&version_line());
             }
             ExitCode::SUCCESS
         }
@@ -160,7 +219,7 @@ fn main() -> ExitCode {
                     print_json(&value);
                 } else {
                     eprintln!(
-                        "jopedime doctor: {} (package: {}; devices: {})",
+                        "jain doctor: {} (package: {}; devices: {})",
                         if ok { "ok" } else { "NOT OK" },
                         value["package"]["status"].as_str().unwrap_or("?"),
                         value["devices"]["reason"].as_str().unwrap_or("?")
@@ -211,18 +270,21 @@ fn main() -> ExitCode {
             }))
         }
         ApplianceCommand::Fit {
-            train,
+            mut train,
             output,
             model_root,
             common,
-        } => run_fit(&train, output.as_deref(), &model_root, &common),
+        } => {
+            train.train = example_path(train.train);
+            run_fit(&train, output.as_deref(), &model_root, &common)
+        }
         ApplianceCommand::Model(args) => report(model::run(args)),
         #[cfg(feature = "mcp")]
         ApplianceCommand::Run(args) => match cmd::run::dispatch(args) {
             Err(error) => match cmd::run::dispatch_exit_code(&error) {
                 Some(code) => {
                     if code != 130 {
-                        eprintln!("jopedime: {error:#}");
+                        eprintln!("jain: {error:#}");
                     }
                     ExitCode::from(code)
                 }
@@ -230,6 +292,8 @@ fn main() -> ExitCode {
             },
             result => report(result),
         },
+        #[cfg(feature = "mcp")]
+        ApplianceCommand::Demo { command } => report(cmd::demo::run(command)),
         #[cfg(feature = "mcp")]
         ApplianceCommand::Status(args) => report((|| {
             let client = cmd::client()?;
@@ -304,11 +368,15 @@ fn main() -> ExitCode {
             common,
         } => run_predict(&model, &input, &output, &common),
         ApplianceCommand::FitPredict {
-            train,
+            mut train,
             input,
             output,
             common,
-        } => run_fit_predict(&train, &input, &output, &common),
+        } => {
+            train.train = example_path(train.train);
+            let input = example_path(input);
+            run_fit_predict(&train, &input, &output, &common)
+        }
         ApplianceCommand::Fitness { command } => report(match command {
             cli::FitnessCommand::List => {
                 print_json(&jope_runtime::service::catalog());
@@ -353,5 +421,30 @@ fn main() -> ExitCode {
         } => ExitCode::from(cmd::serve::run(status, stop, force, idle_exit.as_deref())),
         ApplianceCommand::VerifySelf(flag) => report(verify_self(flag.json)),
         ApplianceCommand::Licenses(flag) => report(licenses(flag.json)),
+    }
+}
+
+#[cfg(test)]
+mod version_line_tests {
+    #[test]
+    fn the_version_line_says_jain_unless_invoked_under_the_build_name() {
+        let version = env!("CARGO_PKG_VERSION");
+        assert_eq!(
+            super::version_line_for(Some("jain")),
+            format!("jain {version}\n")
+        );
+        assert_eq!(super::version_line_for(None), format!("jain {version}\n"));
+        // deploy/release/release.sh runs the unrenamed `jopedime-<tag>-<target>` artifact.
+        assert_eq!(
+            super::version_line_for(Some("jopedime-v1.0.0-x86_64-unknown-linux-gnu")),
+            format!("jopedime {version}\n")
+        );
+    }
+
+    #[cfg(feature = "client")]
+    #[test]
+    fn without_a_terminal_the_message_names_the_noninteractive_commands() {
+        assert!(super::NO_TERMINAL.contains("needs a terminal"));
+        assert!(super::NO_TERMINAL.contains("jain demo run"));
     }
 }

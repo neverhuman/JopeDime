@@ -76,10 +76,10 @@
       "sha256": "e5ba01d3c41f256aaf57ec59aa0554857162e3e7f97cdfbff1ed2c0e8d720ee7"
     },
     {
-      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pcre2/libpcre2-8-0_10.42-4ubuntu2.1_amd64.deb",
-      "filename": "libpcre2-8-0_10.42-4ubuntu2.1_amd64.deb",
-      "size": 226662,
-      "sha256": "110a797a57673d3ee497a141cf988199258058c57525799c63194d81822529a0"
+      "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/p/pcre2/libpcre2-8-0_10.42-4ubuntu2.2_amd64.deb",
+      "filename": "libpcre2-8-0_10.42-4ubuntu2.2_amd64.deb",
+      "size": 228546,
+      "sha256": "f41da7cb7e979d6b037ea92650c72ec8ec532ec3c93aa8d5b997207de56695ea"
     },
     {
       "url": "https://us.archive.ubuntu.com/ubuntu/pool/main/libs/libselinux/libselinux1_3.5-2ubuntu2.1_amd64.deb",

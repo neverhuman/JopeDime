@@ -260,7 +260,7 @@ fn no_color_replays_all_five_real_recorded_fixtures_without_escape_bytes() {
             "NO_COLOR output contains escapes"
         );
         let screen = String::from_utf8(output.stdout).unwrap();
-        assert!(screen.contains("JopeDime"));
+        assert!(screen.contains("jAIn"));
         if *name == "success" {
             assert!(screen.contains("First model"));
             assert!(screen.contains("Run finished"));

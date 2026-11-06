@@ -501,11 +501,16 @@ fn engine(
 }
 
 fn write_versioned(home: &Path, url: &str, version: &str) {
-    let bytes = serde_json::to_vec(
-        &serde_json::json!({"url":url,"pid":std::process::id(),"token":TOKEN,
-            "version":version,"api_version":"1.0","started_at":"test-epoch"}),
-    )
-    .unwrap();
+    write_built(home, url, version, None);
+}
+
+fn write_built(home: &Path, url: &str, version: &str, build: Option<&str>) {
+    let mut record = serde_json::json!({"url":url,"pid":std::process::id(),"token":TOKEN,
+            "version":version,"api_version":"1.0","started_at":"test-epoch"});
+    if let Some(build) = build {
+        record["build"] = build.into();
+    }
+    let bytes = serde_json::to_vec(&record).unwrap();
     let mut file = private_options()
         .write(true)
         .create(true)
@@ -525,7 +530,10 @@ fn a_matching_engine_version_is_reused() {
         None,
         Duration::from_secs(2),
         |_| panic!("no spawn"),
-        Some("7.7.7"),
+        Some(Expected {
+            version: "7.7.7",
+            build: None,
+        }),
     );
     assert!(matches!(selected, Ok(Engine::Background(b)) if b.version == "7.7.7"));
     assert!(!seen.lock().unwrap().iter().any(|p| p == "/__engine/stop"));
@@ -544,7 +552,10 @@ fn an_idle_engine_of_another_version_is_stopped_and_replaced() {
         None,
         Duration::from_secs(5),
         |_| panic!("batch never spawns"),
-        Some("1.0.0"),
+        Some(Expected {
+            version: "1.0.0",
+            build: None,
+        }),
     );
     assert!(
         matches!(selected, Ok(Engine::InProcess)),
@@ -570,7 +581,10 @@ fn a_busy_engine_of_another_version_is_left_running_and_explained() {
         None,
         Duration::from_secs(2),
         |_| panic!("no spawn"),
-        Some("1.0.0"),
+        Some(Expected {
+            version: "1.0.0",
+            build: None,
+        }),
     );
     let error = selected.err().unwrap();
     assert!(
@@ -586,4 +600,113 @@ fn a_busy_engine_of_another_version_is_left_running_and_explained() {
         "the busy engine keeps its descriptor"
     );
     let _ = fs::remove_file(home.0.join("daemon.json"));
+}
+
+const BUILD_A: &str = "51c0c1a4e1eef9a16aaa24d33804fca6c298a2a3";
+const BUILD_B: &str = "2ab7f551c9b1aaaabbbbccccddddeeeeffff0000";
+
+#[test]
+fn an_engine_of_the_same_build_is_reused() {
+    let home = Home::new();
+    let (url, seen) = engine(home.0.clone(), None);
+    write_built(&home.0, &url, "1.0.0", Some(BUILD_A));
+    let selected = discover_versioned(
+        &home.options(),
+        None,
+        Duration::from_secs(2),
+        |_| panic!("no spawn"),
+        Some(Expected {
+            version: "1.0.0",
+            build: Some(BUILD_A),
+        }),
+    );
+    assert!(
+        matches!(&selected, Ok(Engine::Background(b)) if b.build.as_deref() == Some(BUILD_A)),
+        "{:?}",
+        selected.err()
+    );
+    assert!(!seen.lock().unwrap().iter().any(|p| p == "/__engine/stop"));
+    let _ = fs::remove_file(home.0.join("daemon.json"));
+}
+
+/// #2141: rc.1 and rc.2 both report 1.0.0; the build (source commit) tells them apart.
+#[test]
+fn an_idle_engine_of_another_build_with_the_same_version_is_replaced() {
+    for (theirs, shown) in [
+        (Some(BUILD_B), "1.0.0 (build 2ab7f55)"),
+        // A descriptor from an engine that predates build identities.
+        (None, "1.0.0 (another build)"),
+    ] {
+        let home = Home::new();
+        let (url, seen) = engine(home.0.clone(), Some("completed"));
+        write_built(&home.0, &url, "1.0.0", theirs);
+        let mut options = home.options();
+        options.mode = Mode::Batch;
+        let selected = discover_versioned(
+            &options,
+            None,
+            Duration::from_secs(5),
+            |_| panic!("batch never spawns"),
+            Some(Expected {
+                version: "1.0.0",
+                build: Some(BUILD_A),
+            }),
+        );
+        assert!(
+            matches!(selected, Ok(Engine::InProcess)),
+            "{:?}",
+            selected.err()
+        );
+        assert!(seen.lock().unwrap().iter().any(|p| p == "/__engine/stop"));
+        assert_eq!(
+            take_notice().unwrap(),
+            format!(
+                "Restarted the background engine: it was jAIn {shown}, now 1.0.0 (build 51c0c1a)"
+            )
+        );
+    }
+}
+
+#[test]
+fn a_busy_engine_of_another_build_is_refused_like_another_version() {
+    let home = Home::new();
+    let (url, seen) = engine(home.0.clone(), Some("running"));
+    write_built(&home.0, &url, "1.0.0", Some(BUILD_B));
+    let selected = discover_versioned(
+        &home.options(),
+        None,
+        Duration::from_secs(2),
+        |_| panic!("no spawn"),
+        Some(Expected {
+            version: "1.0.0",
+            build: Some(BUILD_A),
+        }),
+    );
+    assert!(
+        matches!(selected.err(), Some(Error::OutdatedBusy { version, .. }) if version == "1.0.0 (build 2ab7f55)")
+    );
+    assert!(!seen.lock().unwrap().iter().any(|p| p == "/__engine/stop"));
+    let _ = fs::remove_file(home.0.join("daemon.json"));
+}
+
+#[test]
+fn a_development_client_without_a_build_compares_versions_only() {
+    let home = Home::new();
+    let (url, seen) = engine(home.0.clone(), None);
+    write_built(&home.0, &url, "1.0.0", Some(BUILD_B));
+    let selected = discover_versioned(
+        &home.options(),
+        None,
+        Duration::from_secs(2),
+        |_| panic!("no spawn"),
+        Some(Expected {
+            version: "1.0.0",
+            build: None,
+        }),
+    );
+    assert!(matches!(selected, Ok(Engine::Background(_))));
+    assert!(!seen.lock().unwrap().iter().any(|p| p == "/__engine/stop"));
+    let _ = fs::remove_file(home.0.join("daemon.json"));
+    assert_eq!(valid_build(Some("abc")), None);
+    assert_eq!(valid_build(Some(BUILD_A)), Some(BUILD_A));
 }

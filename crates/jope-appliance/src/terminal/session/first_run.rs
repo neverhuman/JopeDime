@@ -34,12 +34,10 @@ impl super::Session {
                 ));
             }
             match telemetry {
-                Some(true) => lines.push(
-                    "Usage statistics on · turn off with `jopedime cloud telemetry off`".into(),
-                ),
-                Some(false) => lines.push(
-                    "Usage statistics off · turn on with `jopedime cloud telemetry on`".into(),
-                ),
+                Some(true) => lines
+                    .push("Usage statistics on · turn off with `jain cloud telemetry off`".into()),
+                Some(false) => lines
+                    .push("Usage statistics off · turn on with `jain cloud telemetry on`".into()),
                 None => {}
             }
             match choice {
@@ -77,7 +75,7 @@ impl super::Session {
             }
         }
         let mut lines = vec![format!(
-            "Demo {} · {} · {} rows · target {} ({})",
+            "Demo {} · {} · {} rows · predicts column `{}` ({})",
             demo.name,
             demo.title,
             demo.rows(),

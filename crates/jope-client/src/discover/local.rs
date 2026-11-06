@@ -179,6 +179,7 @@ pub(super) fn attached(home: &Path, deadline: Instant) -> Result<Option<Backgrou
         url,
         pid: record.pid,
         version: record.version,
+        build: record.build,
         api_version: record.api_version,
         started_at: record.started_at,
     }))

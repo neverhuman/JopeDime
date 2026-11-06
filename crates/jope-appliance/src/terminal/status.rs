@@ -1,7 +1,8 @@
 //! Compact status and activity lines for the inline terminal.
 
 use jope_api::{
-    Effort, MetricSample, MetricValue, RunPhase, RunSnapshot, RunState, Severity, WarningState,
+    CompletionReason, Effort, MetricSample, MetricValue, RunPhase, RunSnapshot, RunState, Severity,
+    WarningState,
 };
 
 /// Renders the status and activity rows for the terminal's live region.
@@ -44,7 +45,9 @@ pub fn render(
         status.push_str(warning);
     }
 
-    for field in optional.into_iter().flatten() {
+    // Live machine fields describe a run in progress; a finished run shows none (#2143).
+    let finished = is_terminal(snapshot.state);
+    for field in optional.into_iter().flatten().filter(|_| !finished) {
         if status.chars().count() + 3 + field.chars().count() <= width {
             status.push_str(" · ");
             status.push_str(&field);
@@ -56,14 +59,131 @@ pub fn render(
         status = compact_core(snapshot, warning.as_deref());
     }
     let status = truncate(&status, width);
-    let activity = match snapshot.phase {
-        RunPhase::Preparing => "phase: preparing",
-        RunPhase::Encoding => "phase: encoding",
-        RunPhase::Seeding => "phase: seeding",
-        RunPhase::Searching => "phase: searching",
-        RunPhase::Finalizing => "phase: finalizing",
+    (status, truncate(&activity(snapshot), width))
+}
+
+/// The activity row. A finished run reports how it ended, never the phase it ended in: the
+/// engine leaves `phase: finalizing` on a completed run (#2135), which read as still running.
+fn activity(snapshot: &RunSnapshot) -> String {
+    let phase = match snapshot.phase {
+        RunPhase::Preparing => "preparing",
+        RunPhase::Encoding => "encoding",
+        RunPhase::Seeding => "seeding",
+        RunPhase::Searching => "searching",
+        RunPhase::Finalizing => "finalizing",
     };
-    (status, truncate(activity, width))
+    match snapshot.state {
+        RunState::Completed => match snapshot.completion_reason {
+            Some(reason) => format!("finished · {}", completion_reason_name(reason)),
+            None => "finished".to_owned(),
+        },
+        RunState::Cancelled => "finished · cancelled".to_owned(),
+        RunState::Failed => "finished · failed".to_owned(),
+        _ => format!("phase: {phase}"),
+    }
+}
+
+/// Whether a run has ended.
+pub fn is_terminal(state: RunState) -> bool {
+    matches!(
+        state,
+        RunState::Completed | RunState::Cancelled | RunState::Failed
+    )
+}
+
+pub fn completion_reason_name(reason: CompletionReason) -> &'static str {
+    match reason {
+        CompletionReason::BudgetEvaluations => "evaluation budget reached",
+        CompletionReason::BudgetTime => "time budget reached",
+        CompletionReason::Converged => "converged",
+        CompletionReason::EffortReduced => "effort reduced",
+    }
+}
+
+pub fn state_name(state: RunState) -> &'static str {
+    self::state(state)
+}
+
+pub fn effort_name(value: Effort) -> &'static str {
+    effort(value)
+}
+
+/// One line for a finished run: how it ended and its champion.
+pub fn finished_line(snapshot: &RunSnapshot) -> String {
+    let ended = match (snapshot.state, snapshot.completion_reason) {
+        (RunState::Completed, Some(reason)) => {
+            format!("Run finished · {}", completion_reason_name(reason))
+        }
+        (RunState::Completed, None) => "Run finished".to_owned(),
+        (state, _) => format!("Run {}", self::state(state)),
+    };
+    match &snapshot.best {
+        Some(best) if best.cv_value.is_finite() => format!(
+            "{ended} · champion {} ({} {:.3}) · {} candidates evaluated",
+            best.algorithm_id,
+            super::sanitize_user_string(&best.metric),
+            best.cv_value,
+            snapshot.budget_used.evaluations.0
+        ),
+        _ => format!(
+            "{ended} · no champion · {} candidates evaluated",
+            snapshot.budget_used.evaluations.0
+        ),
+    }
+}
+
+/// #2134 (client side): when the search stopped on its time budget, say so plainly, with how
+/// many of the planned candidates it evaluated and, when it ran past the budget, by how much.
+/// Budget enforcement itself is the engine's; this only reports what the snapshot records.
+pub fn budget_stop_line(snapshot: &RunSnapshot) -> Option<String> {
+    if snapshot.completion_reason != Some(CompletionReason::BudgetTime) {
+        return None;
+    }
+    let done = snapshot.budget_used.evaluations.0;
+    let planned = snapshot.budget_total.evaluations.0;
+    let cap = snapshot.budget_total.wall_seconds.0;
+    let mut line = if planned > done {
+        format!("Stopped at the time budget ({cap} s) after {done} of {planned} candidates.")
+    } else {
+        format!("Stopped at the time budget ({cap} s) after {done} candidates.")
+    };
+    let elapsed = snapshot
+        .budget_used
+        .wall_seconds
+        .parse::<f64>()
+        .ok()
+        .filter(|value| value.is_finite());
+    if let Some(elapsed) = elapsed.filter(|elapsed| *elapsed >= cap as f64 + 1.0) {
+        line.push_str(&format!(
+            " Finishing the candidates in flight took it to {elapsed:.0} s."
+        ));
+    }
+    if planned > done {
+        line.push_str(" A longer budget (/effort --time, or --budget) evaluates more.");
+    }
+    Some(line)
+}
+
+/// The one-line next step after a result (#2143). `tui` selects slash commands over `jain`
+/// subcommands. Runs on your own data are the veox Cloud's (owner rule 2026-11-06: the local,
+/// weightless engine is for the bundled demos and anonymous use), so the own-data step is the
+/// login while signed out and a cloud run once signed in.
+pub fn next_steps(run: &str, connected: bool, tui: bool) -> String {
+    let predict = format!(
+        "predict with `jain predict --model {run} --input new_rows.csv --output predictions.csv`"
+    );
+    let code = if tui {
+        "get the code with /export --out DIR".to_owned()
+    } else {
+        format!("get the code with `jain export {run} --kind bundle --lang python --out DIR`")
+    };
+    let own = match (tui, connected) {
+        (true, false) => "your own data: /login (free) — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+        (true, true) => "your own data: /open FILE.csv, then /run --cloud — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+        (false, false) => "your own data: `jain auth login` (free) — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+        (false, true) => "your own data: `jain run FILE.csv --target COLUMN --cloud` — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+    };
+    format!("Next: {predict} · {code} · {own}")
 }
 
 fn metric_field(
@@ -304,6 +424,63 @@ mod tests {
         assert_eq!(activity_40, "phase: searching");
         assert_eq!(activity_80, "phase: searching");
         assert_eq!(activity_120, "phase: searching");
+    }
+
+    #[test]
+    fn a_finished_run_shows_its_end_not_its_last_phase_or_live_fields() {
+        let mut finished = snapshot();
+        finished.state = RunState::Completed;
+        // The engine leaves the last phase on a completed run (#2135).
+        finished.phase = RunPhase::Finalizing;
+        finished.completion_reason = Some(jope_api::CompletionReason::BudgetTime);
+        let (status, activity) = render(&finished, &full_telemetry(), 120);
+        assert_eq!(
+            status,
+            "completed · medium · 00:23/01:00 · best n/a · 41 exp"
+        );
+        assert_eq!(activity, "finished · time budget reached");
+        finished.state = RunState::Cancelled;
+        assert_eq!(render(&finished, &[], 80).1, "finished · cancelled");
+    }
+
+    #[test]
+    fn time_budget_stops_are_said_plainly_with_counts_and_overrun() {
+        let mut finished = snapshot();
+        finished.state = RunState::Completed;
+        assert_eq!(super::budget_stop_line(&finished), None);
+        finished.completion_reason = Some(jope_api::CompletionReason::BudgetTime);
+        finished.budget_used.evaluations = DecimalU64(15);
+        finished.budget_used.wall_seconds = "68.2".into();
+        assert_eq!(
+            super::budget_stop_line(&finished).unwrap(),
+            "Stopped at the time budget (60 s) after 15 of 128 candidates. Finishing the candidates in flight took it to 68 s. A longer budget (/effort --time, or --budget) evaluates more."
+        );
+        finished.budget_used.wall_seconds = "59.9".into();
+        finished.budget_used.evaluations = DecimalU64(128);
+        assert_eq!(
+            super::budget_stop_line(&finished).unwrap(),
+            "Stopped at the time budget (60 s) after 128 candidates."
+        );
+    }
+
+    #[test]
+    fn next_steps_name_predict_code_own_data_and_login_until_connected() {
+        let run = "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0";
+        let tui = super::next_steps(run, false, true);
+        assert!(tui.starts_with(
+            "Next: predict with `jain predict --model run_01JBD8Q6N4V2T5Y8K3M7P9R1S0"
+        ));
+        assert!(tui.contains("/login") && tui.contains("happen in the veox Cloud"));
+        assert!(tui.contains("asks before uploading"));
+        let connected = super::next_steps(run, true, true);
+        assert!(!connected.contains("/login") && connected.contains("/run --cloud"));
+        assert!(super::next_steps(run, true, false).contains("--cloud"));
+        let cli = super::next_steps(run, false, false);
+        assert!(
+            cli.contains("jain export run_01JBD8Q6N4V2T5Y8K3M7P9R1S0")
+                && cli.contains("jain auth login")
+        );
+        assert!(!cli.contains(" /"), "{cli}");
     }
 
     #[test]

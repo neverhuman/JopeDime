@@ -240,7 +240,7 @@ fn spawn_probe(scenario: &str, inline: bool) -> pty::PtySession {
         session.type_text("\x1b[1;1R").unwrap();
     }
     session
-        .wait_for_text("JopeDime", Duration::from_secs(10))
+        .wait_for_text("jAIn", Duration::from_secs(10))
         .unwrap();
     session.type_text("check\r").unwrap();
     let marker = if inline {

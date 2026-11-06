@@ -97,6 +97,15 @@ impl Draft {
             .into_iter()
             .map(|column| column.name)
             .collect();
+        // A target kept from a previously opened table that this one lacks is replaced by
+        // this table's suggestion.
+        if self
+            .target
+            .as_ref()
+            .is_some_and(|target| !self.columns.contains(target))
+        {
+            self.target = None;
+        }
         if self.target.is_none() {
             self.target = profile
                 .target_suggestions
