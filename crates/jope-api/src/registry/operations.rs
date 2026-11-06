@@ -463,7 +463,19 @@ pub static LOCAL_COMMANDS: &[TerminalCommand] = &[
         None,
         false
     ),
-    command!("\\quit", &[], "[--pause]", Client, &[], None, false),
+    command!("\\auto", &[], "", Client, &[], None, false),
+    command!(
+        "\\copy",
+        &[],
+        "[link|run|result|all]",
+        Client,
+        &[],
+        None,
+        false
+    ),
+    command!("\\transcript", &["\\select"], "", Client, &[], None, false),
+    command!("\\mouse", &[], "[on|off]", Client, &[], None, false),
+    command!("\\quit", &["\\exit"], "[--pause]", Client, &[], None, false),
 ];
 pub fn operation(id: u8) -> Option<&'static Operation> {
     OPERATIONS.iter().find(|op| op.id == id)

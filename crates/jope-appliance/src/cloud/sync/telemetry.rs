@@ -27,6 +27,11 @@ impl Client {
 
 const TELEMETRY_ORIGIN: &str = "https://telemetry.veox.ai";
 
+/// What the usage statistics contain, in the words both the first-run question and
+/// `jain cloud telemetry` use (#2148). Wording only: what is collected is `cloud_events`.
+pub(crate) const TELEMETRY_CONTENTS: &str =
+    "counts, bucketed sizes and scores rounded to tenths; never dataset rows, column names or file paths";
+
 fn random_hex() -> String {
     format!("{:032x}", rand::random::<u128>())
 }
@@ -52,9 +57,9 @@ pub(in crate::cloud) fn telemetry_command(setting: Option<String>) -> Result<Str
         None => {}
     }
     Ok(if telemetry_enabled() {
-        "Telemetry on: connected runs also send de-identified counts (bucketed sizes, scores in tenths, no names, no rows) to telemetry.veox.ai.".into()
+        format!("Telemetry on: connected runs also send anonymous usage statistics to telemetry.veox.ai: {TELEMETRY_CONTENTS}.")
     } else {
-        "Telemetry off. Your account still receives the run details you sync; `jopedime cloud telemetry on` also sends de-identified counts to telemetry.veox.ai.".into()
+        format!("Telemetry off. Your account still receives the run details you sync; `jain cloud telemetry on` also sends anonymous usage statistics to telemetry.veox.ai: {TELEMETRY_CONTENTS}.")
     })
 }
 

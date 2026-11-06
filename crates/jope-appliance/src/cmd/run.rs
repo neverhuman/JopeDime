@@ -9,6 +9,7 @@ mod args;
 mod cloud;
 use args::parse_value;
 pub use args::RunArgs;
+pub(crate) use cloud::sync_after;
 
 #[cfg(not(windows))]
 type RunInterrupts = super::inproc::Interrupts;
@@ -62,7 +63,7 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
         Engine::Background(background) => {
             if background.version != env!("CARGO_PKG_VERSION") {
                 eprintln!(
-                    "jopedime: the background engine is version {}, this executable {}",
+                    "jain: the background engine is version {}, this executable {}",
                     background.version,
                     env!("CARGO_PKG_VERSION")
                 );
@@ -248,6 +249,8 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
     let key = crate::common::resolve_idempotency_key(args.idempotency_key.as_deref());
     let mut registered: Option<(String, jope_api::DatasetProfile)> = None;
     if let Some(path) = args.input.take() {
+        // `example/<name>.csv` reaches the bundled demos, as in the TUI.
+        let path = crate::terminal::demos::resolve(&path);
         let name = path
             .file_name()
             .and_then(|name| name.to_str())
@@ -265,17 +268,7 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
             name: Some(name.into()),
         };
         let profile = transport.dataset_register(&request, Some(&registration_key))?;
-        if args.task == "auto" {
-            if let Some(task) = crate::draft::inferred_tasks(&profile).get(&args.target) {
-                args.task = serde_json::to_value(task)?
-                    .as_str()
-                    .ok_or_else(|| anyhow::anyhow!("task did not encode as a name"))?
-                    .to_owned();
-            }
-        }
-        if args.languages.is_empty() {
-            args.languages = vec!["rust".into(), "python".into()];
-        }
+        apply_profile_defaults(&mut args, &profile)?;
         args.dataset = Some(profile.dataset_id.to_string());
         registered = Some((name.to_owned(), profile.clone()));
         if !args.dry_run && !args.detach && args.out.is_none() && args.events.is_none() {
@@ -284,9 +277,23 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
                 return Ok(());
             }
         }
+    } else if let Some(dataset) = args.dataset.as_deref() {
+        // `--dataset ID` gets the defaults a CSV gets (#2145): the task inferred from the stored
+        // profile, and the dataset's own name (not its `ds_…` identifier) as the run label.
+        if let Ok(id) = dataset.parse::<jope_api::ids::DatasetId>() {
+            if let Ok(profile) = transport.dataset_inspect(&id) {
+                apply_profile_defaults(&mut args, &profile)?;
+                registered = Some((profile.name.clone(), profile));
+            }
+        }
+    }
+    if args.languages.is_empty() {
+        args.languages = DEFAULT_LANGUAGES.iter().map(|&l| l.to_owned()).collect();
     }
     let spec = args.run_spec()?;
-    let response = transport.run_start(&spec, Some(&key))?;
+    let response = transport
+        .run_start(&spec, Some(&key))
+        .map_err(explain_start)?;
     if let (RunResult::Started(snapshot), false) = (&response, args.json_m1()) {
         let (name, profile) = match registered {
             Some((name, profile)) => (name, Some(profile)),
@@ -393,6 +400,10 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
                 &mut std::io::stderr().lock(),
             )?;
             if current.state == RunState::Completed && !args.json_m1() {
+                // A plain line on stderr when the time budget cut the search short (#2134).
+                if let Some(line) = crate::terminal::status::budget_stop_line(&current) {
+                    eprintln!("{line}");
+                }
                 cloud::sync_after(transport, &current.run_id);
             }
             if current.state == RunState::Failed {
@@ -418,6 +429,41 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
                 write_json(&current)
             }
         }
+    }
+}
+
+/// Export languages when none are named: the TUI's default, so every path runs the same way.
+pub(crate) const DEFAULT_LANGUAGES: [&str; 2] = ["rust", "python"];
+
+/// `--task auto`: the task the dataset profile implies for the target, when it implies one.
+fn apply_profile_defaults(
+    args: &mut RunArgs,
+    profile: &jope_api::DatasetProfile,
+) -> anyhow::Result<()> {
+    if args.task == "auto" {
+        if let Some(task) = crate::draft::inferred_tasks(profile).get(&args.target) {
+            args.task = serde_json::to_value(task)?
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("task did not encode as a name"))?
+                .to_owned();
+        }
+    }
+    Ok(())
+}
+
+/// Name the flag that fixes a refused run start, when the refusal says which one (#2145).
+fn explain_start(error: jope_client::transport::TransportError) -> anyhow::Error {
+    let text = error.to_string();
+    let hint = if text.contains("requires task=regression") {
+        Some("this engine runs regression only: pass `--task regression` with a numeric `--target` column")
+    } else if text.contains("export language") {
+        Some("pass `--language rust,python` (or rust, python, javascript)")
+    } else {
+        None
+    };
+    match hint {
+        Some(hint) => anyhow::Error::new(error).context(format!("the run was not started; {hint}")),
+        None => error.into(),
     }
 }
 
@@ -450,7 +496,7 @@ fn export_best<T: Transport>(
     Ok(serde_json::to_value(manifest)?)
 }
 
-fn wait_status<T: Transport>(
+pub(crate) fn wait_status<T: Transport>(
     transport: &T,
     snapshot: &RunSnapshot,
     seconds: u64,

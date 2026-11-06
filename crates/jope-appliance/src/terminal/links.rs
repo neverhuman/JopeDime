@@ -8,9 +8,10 @@
 //! destination behind its text, and the URL always stays visible and copyable when the
 //! terminal does not support OSC 8.
 //!
-//! Detection is conservative: links are emitted only for terminals known to render OSC 8
-//! (`JAIN_HYPERLINKS=1` forces them on, `JAIN_HYPERLINKS=0` or a `dumb` terminal turns them
-//! off).
+//! Links are on by default (#2147): terminals that do not render OSC 8 ignore the sequence and
+//! show the plain URL, which is always the visible text. They are off for terminals known to
+//! print it instead (`dumb`, the Linux console, old VTE) or with no `TERM` at all;
+//! `JAIN_HYPERLINKS=1` forces them on and `JAIN_HYPERLINKS=0` off.
 
 use std::io::{self, Write};
 
@@ -38,7 +39,11 @@ pub fn supported(var: impl Fn(&str) -> Option<String>) -> bool {
         Some("0" | "false" | "off" | "no") => return false,
         _ => {}
     }
-    if var("TERM").is_some_and(|term| term.eq_ignore_ascii_case("dumb")) {
+    let term = var("TERM").filter(|term| !term.trim().is_empty());
+    if term
+        .as_deref()
+        .is_some_and(|term| term.eq_ignore_ascii_case("dumb") || term.eq_ignore_ascii_case("linux"))
+    {
         return false;
     }
     if var("TERM_PROGRAM").is_some_and(|program| {
@@ -55,9 +60,10 @@ pub fn supported(var: impl Fn(&str) -> Option<String>) -> bool {
     {
         return true;
     }
-    var("VTE_VERSION")
-        .and_then(|value| value.trim().parse::<u32>().ok())
-        .is_some_and(|version| version >= 5000)
+    if let Some(version) = var("VTE_VERSION").and_then(|value| value.trim().parse::<u32>().ok()) {
+        return version >= 5000;
+    }
+    term.is_some()
 }
 
 /// Whether `url` may be rendered as a clickable link: HTTPS on veox.ai or a subdomain, or a
@@ -249,8 +255,14 @@ mod tests {
         assert!(supported(env(&[("WT_SESSION", "abc")])));
         assert!(supported(env(&[("KITTY_WINDOW_ID", "1")])));
         assert!(supported(env(&[("VTE_VERSION", "6003")])));
-        assert!(!supported(env(&[("VTE_VERSION", "4205")])));
-        assert!(!supported(env(&[("TERM", "xterm-256color")])));
+        assert!(!supported(env(&[
+            ("TERM", "xterm"),
+            ("VTE_VERSION", "4205")
+        ])));
+        // On by default for an ordinary terminal; the URL stays visible either way.
+        assert!(supported(env(&[("TERM", "xterm-256color")])));
+        assert!(supported(env(&[("TERM", "tmux-256color")])));
+        assert!(!supported(env(&[("TERM", "linux")])));
         assert!(!supported(env(&[])));
         assert!(supported(env(&[("JAIN_HYPERLINKS", "1")])));
         assert!(!supported(env(&[

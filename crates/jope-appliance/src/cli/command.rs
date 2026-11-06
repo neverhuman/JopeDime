@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 #[command(
-    name = "jopedime",
+    name = "jain",
     about = "Fit and predict tabular models with native Rust methods, from one signed executable.",
     disable_version_flag = true,
     after_help = "Exit status: 0 success, 2 invalid input, 3 integrity or compatibility, \
@@ -90,7 +90,13 @@ pub enum ApplianceCommand {
     },
     /// Save, inspect, verify and export language-neutral fitted objects; or serve their MCP tools.
     Model(crate::model::ModelArgs),
-    /// Start a run from a CSV or an API dataset identifier.
+    /// List or run the bundled demos without a terminal (the TUI's /demo).
+    #[cfg(feature = "mcp")]
+    Demo {
+        #[command(subcommand)]
+        command: crate::cmd::demo::DemoCommand,
+    },
+    /// Start a run from a CSV, a bundled `example/NAME.csv`, or an API dataset identifier.
     #[cfg(feature = "mcp")]
     Run(crate::cmd::run::RunArgs),
     /// Read or long-poll a run snapshot.
@@ -99,7 +105,7 @@ pub enum ApplianceCommand {
     /// Read or follow run events as NDJSON.
     #[cfg(feature = "mcp")]
     Events(crate::cmd::events::EventsArgs),
-    /// Control a run through the local JopeDime service.
+    /// Control a run through the local jAIn engine.
     #[cfg(feature = "client")]
     Control {
         run: String,

@@ -184,7 +184,7 @@ pub(super) fn route_run(
 
 /// After a local run completes: with results sync on and a signed-in account, send its model
 /// and report. Never fails the run.
-pub(super) fn sync_after<T: jope_client::Transport>(transport: &T, run: &jope_api::ids::RunId) {
+pub(crate) fn sync_after<T: jope_client::Transport>(transport: &T, run: &jope_api::ids::RunId) {
     let home = jope_paths::jopedime_home();
     if crate::terminal::onboarding::load(&home).results_sync != Some(true) {
         return;

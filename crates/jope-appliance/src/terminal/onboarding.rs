@@ -522,13 +522,13 @@ impl FirstRun {
             Some(Step::Telemetry) => vec![
                 header("Usage statistics"),
                 String::new(),
-                "Help improve jAIn by sending anonymous usage statistics: counts and bucketed"
+                "Help improve jAIn by sending anonymous usage statistics: counts, bucketed sizes"
                     .into(),
-                "sizes only, never dataset rows, column names or file paths. Details:".into(),
+                "and scores rounded to tenths; never dataset rows, column names or file paths. Details:".into(),
                 PRIVACY_URL.into(),
                 String::new(),
                 "Press Enter (or y) to share statistics · n to turn them off".into(),
-                "Change it any time: jopedime cloud telemetry on|off · DO_NOT_TRACK=1 always wins"
+                "Change it any time: jain cloud telemetry on|off · DO_NOT_TRACK=1 always wins"
                     .into(),
             ],
             Some(Step::Account) => vec![
@@ -545,7 +545,7 @@ impl FirstRun {
 }
 
 /// Persist a finished dialog and apply the telemetry choice to the same setting that
-/// `jopedime cloud telemetry on|off` changes.
+/// `jain cloud telemetry on|off` changes.
 pub fn record(home: &Path, outcome: Outcome, terms_version: &str, source: &str) -> Result<()> {
     let Outcome::Finished {
         terms_accepted,

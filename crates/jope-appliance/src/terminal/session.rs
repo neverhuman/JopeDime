@@ -145,6 +145,23 @@ struct Session {
     login_done: mpsc::Receiver<bool>,
     login_done_sender: mpsc::Sender<bool>,
     update_notice: Option<mpsc::Receiver<String>>,
+    /// Whether the full-screen interface is drawing (otherwise the plain line mode).
+    fullscreen: bool,
+    /// Whether the mouse is captured for wheel scrolling. Off by default, so the terminal's own
+    /// text selection works on everything shown (#2147).
+    mouse: bool,
+    /// A `/mouse` change the drawing loop applies to the terminal.
+    mouse_changed: bool,
+    /// `/transcript`: show the whole transcript as plain text on the normal screen.
+    transcript_requested: bool,
+    /// The last event sequence shown per run, so re-attaching never prints a line twice.
+    shown: std::collections::BTreeMap<String, DecimalU64>,
+    /// Stops the event follower of the previously attached run.
+    follow_cancel: Option<Arc<AtomicBool>>,
+    /// When the attached run's snapshot was last read, for the status bar.
+    last_refresh: Instant,
+    /// Runs whose "status synced" line was already shown.
+    status_announced: std::collections::BTreeSet<String>,
 }
 
 impl Session {
@@ -176,7 +193,7 @@ impl Session {
             snapshot: None,
             events,
             event_sender,
-            activity: "Type \\help for commands".into(),
+            activity: "Type /help for commands".into(),
             message: None,
             exit_requested: false,
             screen,
@@ -201,12 +218,22 @@ impl Session {
             login_done,
             login_done_sender,
             update_notice,
+            fullscreen: false,
+            mouse: mouse_from_env(),
+            mouse_changed: false,
+            transcript_requested: false,
+            shown: std::collections::BTreeMap::new(),
+            follow_cancel: None,
+            last_refresh: Instant::now(),
+            status_announced: std::collections::BTreeSet::new(),
         })
     }
 }
 
 #[path = "session/activity.rs"]
 mod activity;
+#[path = "session/clipboard.rs"]
+mod clipboard;
 #[path = "session/commands.rs"]
 mod commands;
 #[path = "session/events.rs"]
@@ -275,6 +302,22 @@ fn update_snapshot_from_event(snapshot: &mut Option<RunSnapshot>, event: &Public
         snapshot.phase = body.phase;
         snapshot.pending = body.pending.clone();
     }
+    // The final event carries the result: the status bar shows it at once (#2143).
+    if let EventBody::RunFinished(body) = &event.event {
+        snapshot.state = RunState::Completed;
+        snapshot.completion_reason = Some(body.completion_reason);
+        snapshot.budget_used = body.budget_used.clone();
+        if body.champion.is_some() {
+            snapshot.best = body.champion.clone();
+        }
+    }
+}
+
+/// `JAIN_MOUSE=1` starts with wheel scrolling (mouse capture) on; the default keeps the
+/// terminal's own text selection.
+fn mouse_from_env() -> bool {
+    std::env::var("JAIN_MOUSE")
+        .is_ok_and(|value| matches!(value.trim(), "1" | "on" | "true" | "yes"))
 }
 
 fn plan_lines(plan: Plan) -> Vec<String> {
@@ -397,6 +440,53 @@ mod tests {
         assert_eq!(snapshot.state, RunState::Paused);
         assert_eq!(snapshot.phase, jope_api::RunPhase::Searching);
         assert_eq!(snapshot.pending, None);
+    }
+
+    #[test]
+    fn run_finished_event_marks_the_snapshot_completed_with_its_result() {
+        let mut snapshot = Some(
+            serde_json::from_value(serde_json::json!({
+                "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0",
+                "revision": "1",
+                "state": "running",
+                "phase": "seeding",
+                "pending": null,
+                "effort": "fast",
+                "budget_used": {"evaluations": "0", "wall_seconds": "0.0"},
+                "budget_total": {"evaluations": "128", "wall_seconds": "10"},
+                "best": null,
+                "event_watermark": "1",
+                "warnings": [],
+                "completion_reason": null
+            }))
+            .unwrap(),
+        );
+        let event: PublicEvent = serde_json::from_value(serde_json::json!({
+            "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0",
+            "sequence": "40",
+            "time": "2026-10-30T10:03:02.000Z",
+            "kind": "run.finished",
+            "body": {
+                "completion_reason": "budget_time",
+                "champion": {"algorithm_id": "alg_0001", "metric": "rmse", "cv_value": 0.5, "model_artifact": null},
+                "scores": {"cv": 0.5, "holdout": null, "test": null},
+                "budget_used": {"evaluations": "15", "wall_seconds": "18.0"},
+                "nondeterminism": {"count": "0", "experiment_ids": []}
+            }
+        }))
+        .unwrap();
+        update_snapshot_from_event(&mut snapshot, &event);
+        let snapshot = snapshot.unwrap();
+        assert_eq!(snapshot.state, RunState::Completed);
+        assert_eq!(snapshot.budget_used.evaluations, DecimalU64(15));
+        assert!(snapshot.best.is_some());
+        let (status, activity) = crate::terminal::status::render(&snapshot, &[], 100);
+        assert!(status.starts_with("completed"), "{status}");
+        assert_eq!(activity, "finished · time budget reached");
+        assert_eq!(
+            crate::terminal::status::budget_stop_line(&snapshot).unwrap(),
+            "Stopped at the time budget (10 s) after 15 of 128 candidates. Finishing the candidates in flight took it to 18 s. A longer budget (/effort --time, or --budget) evaluates more."
+        );
     }
 
     #[test]

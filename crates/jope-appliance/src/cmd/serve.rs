@@ -13,7 +13,7 @@ pub fn run(status: bool, stop: bool, force: bool, idle_exit: Option<&str>) -> u8
         match jope_service::engine::run_cli(status, stop, idle_exit) {
             Ok(()) => 0,
             Err(error) => {
-                eprintln!("jopedime: {error}");
+                eprintln!("jain: {error}");
                 error_exit_code(&error, status || stop)
             }
         }
@@ -21,7 +21,7 @@ pub fn run(status: bool, stop: bool, force: bool, idle_exit: Option<&str>) -> u8
     #[cfg(not(feature = "engine"))]
     {
         let _ = (status, stop, idle_exit);
-        eprintln!("jopedime: no engine found; run `jopedime serve` with the engine feature");
+        eprintln!("jain: no engine found; run `jain serve` with the engine feature");
         9
     }
 }
@@ -148,7 +148,7 @@ fn guarded_stop(force: bool) -> u8 {
             let code = match jope_service::engine::run_cli(false, true, None) {
                 Ok(()) => 0,
                 Err(error) => {
-                    eprintln!("jopedime: {error}");
+                    eprintln!("jain: {error}");
                     error_exit_code(&error, true)
                 }
             };
@@ -177,7 +177,7 @@ fn guarded_stop(force: bool) -> u8 {
             None => match jope_service::engine::run_cli(false, true, None) {
                 Ok(()) => 0,
                 Err(error) => {
-                    eprintln!("jopedime: {error}");
+                    eprintln!("jain: {error}");
                     error_exit_code(&error, true)
                 }
             },

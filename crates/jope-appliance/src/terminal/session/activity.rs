@@ -75,10 +75,21 @@ impl super::Session {
         });
     }
 
-    pub(super) fn background_sync(&mut self, runs: Vec<RunId>, owner: Option<(String, String)>) {
+    /// Sync run status (never results) in the background. `quiet` is the automatic sync of a
+    /// running local run: its "status synced" line is shown once per run, not every 5 s (#2146).
+    pub(super) fn background_sync(
+        &mut self,
+        runs: Vec<RunId>,
+        owner: Option<(String, String)>,
+        quiet: bool,
+    ) {
         if self.cloud_busy.swap(true, Ordering::SeqCst) {
             return;
         }
+        let announce: Vec<bool> = runs
+            .iter()
+            .map(|run| !quiet || self.status_announced.insert(run.to_string()))
+            .collect();
         let busy = Arc::clone(&self.cloud_busy);
         let done = self.synced_terminal_sender.clone();
         let client = self.client.clone();
@@ -87,13 +98,13 @@ impl super::Session {
             let result = (|| -> anyhow::Result<Vec<String>> {
                 let version = client.system_info()?.version;
                 let mut lines = Vec::new();
-                for run in runs {
+                for (run, announce) in runs.into_iter().zip(announce) {
                     let snapshot = client.run_status(&run)?;
-                    lines.push(crate::cloud::sync_snapshot_for(
-                        &snapshot,
-                        &version,
-                        owner.as_ref(),
-                    )?);
+                    let line =
+                        crate::cloud::sync_snapshot_for(&snapshot, &version, owner.as_ref())?;
+                    if announce && !line.starts_with("Up to date") {
+                        lines.push(line);
+                    }
                     if matches!(
                         snapshot.state,
                         RunState::Completed | RunState::Cancelled | RunState::Failed
@@ -132,7 +143,7 @@ impl super::Session {
                 if !same {
                     self.auto_sync = None;
                 } else if !self.cloud_busy.load(Ordering::SeqCst) {
-                    self.background_sync(vec![run], Some(owner));
+                    self.background_sync(vec![run], Some(owner), true);
                 }
             }
             self.last_sync = Instant::now();
@@ -163,6 +174,39 @@ impl super::Session {
         }
         // Already sanitized where they were made; cards carry their own styling.
         lines
+    }
+
+    /// `/transcript`: the whole session as plain text on the normal screen, where the
+    /// terminal's own scrollback, selection and copy work on every line (URLs are whole, never
+    /// cut at the screen edge). Enter returns to the full-screen interface.
+    pub(super) fn show_transcript(
+        &mut self,
+        guard: &crate::terminal::restore::TerminalGuard,
+    ) -> anyhow::Result<()> {
+        use std::io::{BufRead, Write};
+        guard.suspend_fullscreen()?;
+        let mut stdout = io::stdout().lock();
+        writeln!(
+            stdout,
+            "──── jAIn transcript (plain text: select and copy as usual) ────"
+        )?;
+        for line in self.screen_lines() {
+            writeln!(
+                stdout,
+                "{}",
+                crate::terminal::links::linkify(&line, self.links)
+            )?;
+        }
+        writeln!(
+            stdout,
+            "──── end of transcript · press Enter to return to jAIn ────"
+        )?;
+        stdout.flush()?;
+        drop(stdout);
+        let mut answer = String::new();
+        let _ = io::stdin().lock().read_line(&mut answer);
+        guard.resume_fullscreen(self.mouse)?;
+        Ok(())
     }
 
     pub(super) fn screen_lines(&self) -> Vec<String> {

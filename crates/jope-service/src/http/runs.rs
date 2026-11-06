@@ -791,9 +791,25 @@ fn q1_learned_seed<'a>(seeds: &'a [String], attempt: u64, measured: &[(String, f
         .expect("nonempty seed inventory")
 }
 fn issue(code: ErrorCode, detail: impl Into<String>) -> Box<Problem> {
-    Box::new(Problem { r#type: "about:blank".into(), title: code.as_str().into(),
-        status: code.http_status().unwrap_or(500), detail: detail.into(), instance: None,
-        code, retriable: false, remedy: "Use a supported bounded CPU regression RunSpec; inspect the local engine diagnostics for IO failures.".into(), field: None })
+    Box::new(Problem {
+        r#type: "about:blank".into(),
+        title: code.as_str().into(),
+        status: code.http_status().unwrap_or(500),
+        detail: detail.into(),
+        instance: None,
+        code,
+        retriable: false,
+        remedy: remedy(code).into(),
+        field: None,
+    })
+}
+/// The remedy matches the kind of refusal: an unsupported or invalid RunSpec is fixed by
+/// changing the request, and only an IO failure points at the engine's storage (#2145).
+fn remedy(code: ErrorCode) -> &'static str {
+    match code {
+        ErrorCode::IoFailure => "The local engine could not read or write its store; check `jain serve --status` and the free disk space, then retry.",
+        _ => "Change the request to a supported run: task regression with a numeric target, a random holdout split, and at least one export language (rust, python or javascript).",
+    }
 }
 fn invalid(detail: &str) -> Box<Problem> {
     issue(ErrorCode::InvalidInput, detail)
