@@ -1,3 +1,5 @@
+// The public edition (cloud-tls) leaves out the tests that train own data on this machine.
+#![cfg_attr(feature = "public-edition", allow(dead_code, unused_imports))]
 #[path = "pty_smoke/cloud_tui.rs"]
 mod cloud_tui;
 #[path = "pty_smoke/feedback_tui.rs"]
@@ -48,6 +50,9 @@ fn dataset_id_error_does_not_echo_private_sentinel_in_cli_or_pty() -> std::io::R
     Ok(())
 }
 
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[test]
 fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io::Result<()> {

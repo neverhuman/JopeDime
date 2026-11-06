@@ -1,7 +1,8 @@
 //! End to end against a mock veox Cloud Workspace that speaks the documented contract: a cloud
-//! run with a just-in-time login that continues the same run, progress rendered once per event,
-//! the remembered upload consent, a limit refusal in plain words, a finished local run's results
-//! synced in order with a retry, the X-Jain-Device header, and the global first-run flags.
+//! run from a signed-in account, progress rendered once per event, the remembered upload
+//! consent, a limit refusal in plain words, the public rule's login, waitlist and consent gates
+//! (owner rule 2026-11-06), a finished local run's results synced in order with a retry, the
+//! X-Jain-Device header, and the global first-run flags.
 
 use super::workspace::{account, Recorded, Workspace, CLOUD_RUN, SESSION};
 use super::BIN;
@@ -62,6 +63,31 @@ fn text(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_owned()
 }
 
+/// `jain auth login --token-file` against the mock workspace.
+fn login(home: &Home, workspace: &str) {
+    let token = home.root.parent().unwrap().join("token");
+    std::fs::write(&token, "veox_testtoken").unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&token, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
+    let out = jopedime(
+        home,
+        workspace,
+        &[
+            "auth",
+            "login",
+            "--workspace",
+            workspace,
+            "--token-file",
+            token.to_str().unwrap(),
+        ],
+        &[],
+    );
+    assert!(out.status.success(), "{}", text(&out.stderr));
+}
+
 fn host(request: &Recorded) -> String {
     format!(
         "http://{}",
@@ -70,7 +96,7 @@ fn host(request: &Recorded) -> String {
 }
 
 #[test]
-fn a_cloud_run_logs_in_just_in_time_continues_and_streams_each_event_once() {
+fn a_cloud_run_from_a_signed_in_account_streams_each_event_once() {
     let home = home();
     let limited = Arc::new(AtomicBool::new(false));
     let limit = Arc::clone(&limited);
@@ -103,6 +129,29 @@ fn a_cloud_run_logs_in_just_in_time_continues_and_streams_each_event_once() {
         }
     }));
     let csv = home.csv.to_str().unwrap();
+    // Signed out, --cloud stops before anything is registered or uploaded: no just-in-time login.
+    let out = jopedime(
+        &home,
+        &server.origin,
+        &[
+            "run",
+            csv,
+            "--target",
+            "price",
+            "--cloud",
+            "--upload-consent",
+        ],
+        &[],
+    );
+    let stderr = text(&out.stderr);
+    assert_eq!(out.status.code(), Some(2), "{stderr}");
+    assert!(
+        stderr.contains("needs you signed in: run `jain auth login`")
+            && stderr.contains("https://app.veox.ai/register"),
+        "{stderr}"
+    );
+    assert!(server.calls().is_empty(), "{:?}", server.calls());
+    login(&home, &server.origin);
     let out = jopedime(
         &home,
         &server.origin,
@@ -114,26 +163,21 @@ fn a_cloud_run_logs_in_just_in_time_continues_and_streams_each_event_once() {
             "--effort",
             "fast",
             "--cloud",
+            // The rc.3 spelling still works.
             "--consent-upload",
         ],
         &[],
     );
     let stderr = text(&out.stderr);
     assert!(out.status.success(), "{stderr}");
-    // The routing line, the just-in-time login, and the same run continuing.
     assert!(
-        stderr.contains("Running in your veox Cloud Workspace · you asked for --cloud · 149 rows."),
+        stderr.contains("Training in the veox Cloud · you asked for --cloud · 149 rows."),
         "{stderr}"
     );
-    assert!(stderr
-        .contains("This run needs your veox Cloud Workspace — opening your browser to log in…"));
-    assert!(stderr.contains(&format!(
-        "Open {}/cli/connect?user_code=ABCD-1234",
-        server.origin
-    )));
     assert!(
-        !stderr.contains("secret-device-code"),
-        "the device code never prints"
+        stderr.contains("Upload rent.csv (149 rows, 12 columns, ")
+            && stderr.contains("to train in the veox Cloud? [y/N] yes (--upload-consent)"),
+        "{stderr}"
     );
     assert!(stderr.contains(&format!(
         "Cloud run started · {}/runs/{SESSION}",
@@ -148,6 +192,10 @@ fn a_cloud_run_logs_in_just_in_time_continues_and_streams_each_event_once() {
         assert_eq!(stderr.matches(line).count(), 1, "{line}\n{stderr}");
     }
     assert!(stderr.contains("Selected 'price' as the target."));
+    assert!(stderr.contains(&format!(
+        "Next: predict new rows in your workspace: {}/runs/{SESSION}/predict",
+        server.origin
+    )));
     let stdout: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
     assert_eq!(stdout["kind"], "cloud_run");
     assert_eq!(stdout["state"], "completed");
@@ -155,17 +203,17 @@ fn a_cloud_run_logs_in_just_in_time_continues_and_streams_each_event_once() {
 
     let requests = server.requests();
     let calls = server.calls();
-    let login = calls
+    let admission = calls
         .iter()
-        .position(|c| c == "GET /api/cli/account")
+        .rposition(|c| c == "GET /api/cli/account")
         .unwrap();
     let upload = calls
         .iter()
         .position(|c| c == "POST /api/sessions")
         .unwrap();
     assert!(
-        calls[0] == "POST /api/cli/device" && login < upload,
-        "{calls:?}"
+        !calls.iter().any(|c| c.starts_with("POST /api/cli/device")) && admission < upload,
+        "the plan is read before the upload, with no device login: {calls:?}"
     );
     let post = &requests[upload];
     let body = post.text();
@@ -203,8 +251,9 @@ fn a_cloud_run_logs_in_just_in_time_continues_and_streams_each_event_once() {
     let stderr = text(&out.stderr);
     assert!(!out.status.success());
     assert!(stderr.contains(
-        "Free includes 10 cloud runs a day; you've used 10. Resets at 14:20 UTC. Run locally instead? [Y/n] · Upgrade: https://veox.ai/pricing"
+        "Free includes 10 cloud runs a day; you've used 10. Resets at 14:20 UTC. No run started. · Upgrade: https://veox.ai/pricing"
     ), "{stderr}");
+    assert!(!stderr.contains("Run locally"), "{stderr}");
     let later = &server.requests()[before..];
     assert!(
         !later.iter().any(|r| r.path.starts_with("/api/cli/device")),
@@ -214,6 +263,166 @@ fn a_cloud_run_logs_in_just_in_time_continues_and_streams_each_event_once() {
     assert!(!post.headers.contains_key("x-jain-device"));
 }
 
+/// The public edition's rule (owner rule 2026-11-06), applied here with JAIN_PUBLIC_EDITION=1:
+/// own data trains only in the veox Cloud, after a login on an admitted account and the user's
+/// consent; `--local`, `fit` and `fit-predict` take only the bundled examples, which need no
+/// account; `--wait` is checked before anything starts.
+#[test]
+fn the_public_rule_gates_own_data_and_keeps_the_bundled_examples_local() {
+    let home = home();
+    let waitlisted = Arc::new(AtomicBool::new(true));
+    let waiting = Arc::clone(&waitlisted);
+    let server = Workspace::start(Box::new(move |r: &Recorded, previous: &[Recorded]| {
+        let count = |path: &str| previous.iter().filter(|p| p.path == path).count();
+        match (r.method.as_str(), r.path.as_str()) {
+            ("GET", "/api/cli/account") if waiting.load(Ordering::SeqCst) => (
+                200,
+                account("waitlist").replace(r#""mayRun":true"#, r#""mayRun":false"#),
+            ),
+            ("GET", "/api/cli/account") => (200, account("free")),
+            ("POST", "/api/sessions") => (200, format!(r#"{{"id":"{SESSION}","origin":"cli"}}"#)),
+            ("GET", path) if path == format!("/api/sessions/{SESSION}") => (
+                200,
+                if count(path) == 0 {
+                    r#"{"state":"running","progressEvents":[{"sequence":1,"message":"Container started","payload":{"type":"phase"}}]}"#.to_owned()
+                } else {
+                    r#"{"state":"completed","progressEvents":[],"summary":{"headline_metric":{"name":"rmse","value":101.5,"direction":"minimize","unit":"price"},"comparison":{"metric":"rmse","baseline_score":180.25,"veox_score":101.5,"lift":78.75,"outcome":"veox"},"narrative":["Selected 'price' as the target."]}}"#.to_owned()
+                },
+            ),
+            _ => (404, r#"{"error":"not found"}"#.into()),
+        }
+    }));
+    let public = [("JAIN_PUBLIC_EDITION", "1")];
+    let csv = home.csv.to_str().unwrap();
+    let run = |args: &[&str]| {
+        let out = jopedime(&home, &server.origin, args, &public);
+        (out.status.code(), text(&out.stderr), text(&out.stdout))
+    };
+
+    // --wait is checked before anything starts (journey J2-F05).
+    let (code, stderr, _) = run(&["run", csv, "--target", "price", "--wait", "120"]);
+    assert_eq!(code, Some(2), "{stderr}");
+    assert!(
+        stderr.contains("--wait") && stderr.contains("0..=60"),
+        "{stderr}"
+    );
+
+    // Signed out: own data stops with the login step and the waitlist link; nothing is sent.
+    let (code, stderr, _) = run(&["run", csv, "--target", "price"]);
+    assert_eq!(code, Some(2), "{stderr}");
+    assert!(stderr.contains("Your own data trains in the veox Cloud, so it needs you signed in: run `jain auth login`"), "{stderr}");
+    assert!(stderr.contains("Accounts open from the waitlist: https://app.veox.ai/register"));
+    for fit in [
+        &["fit", "--train", csv, "--target", "price"][..],
+        &[
+            "fit-predict",
+            "--train",
+            csv,
+            "--target",
+            "price",
+            "--input",
+            csv,
+            "--output",
+            "p.csv",
+        ],
+    ] {
+        let (code, stderr, _) = run(fit);
+        assert_eq!(code, Some(2), "{stderr}");
+        assert!(stderr.contains("needs you signed in"), "{stderr}");
+    }
+    assert!(server.calls().is_empty(), "{:?}", server.calls());
+
+    // The bundled example runs here, signed out.
+    let (code, stderr, stdout) = run(&[
+        "run",
+        "example/regression_parkinsons.csv",
+        "--target",
+        "target",
+        "--effort",
+        "fast",
+        "--budget",
+        r#"{"evaluations":"2","wall_seconds":null}"#,
+    ]);
+    assert_eq!(code, Some(0), "{stderr}");
+    assert!(stdout.contains(r#""state":"completed""#), "{stdout}");
+    assert!(server.calls().is_empty(), "a demo talks to no workspace");
+
+    // Waitlisted: the waitlist message, no upload.
+    login(&home, &server.origin);
+    let (code, stderr, _) = run(&["run", csv, "--target", "price"]);
+    assert_eq!(code, Some(2), "{stderr}");
+    assert!(stderr.contains("Your account (ada@example.test) is on the waitlist; we'll email you when you're admitted"), "{stderr}");
+
+    // Admitted (Free): --local is for the bundled examples; fit points to `jain run`.
+    waitlisted.store(false, Ordering::SeqCst);
+    let (code, stderr, _) = run(&["run", csv, "--target", "price", "--local"]);
+    assert_eq!(code, Some(2), "{stderr}");
+    assert!(
+        stderr.contains("--local runs only the bundled examples"),
+        "{stderr}"
+    );
+    let (code, stderr, _) = run(&["fit", "--train", csv, "--target", "price"]);
+    assert_eq!(code, Some(2), "{stderr}");
+    assert!(
+        stderr.contains("`jain run FILE.csv --target COLUMN`"),
+        "{stderr}"
+    );
+
+    // No terminal and no --upload-consent: the error names the flag, and nothing is uploaded.
+    let (code, stderr, _) = run(&["run", csv, "--target", "price"]);
+    assert_ne!(code, Some(0), "{stderr}");
+    assert!(
+        stderr.contains("needs the user's consent: ask them first, then pass --upload-consent"),
+        "{stderr}"
+    );
+    assert!(!server.calls().iter().any(|c| c == "POST /api/sessions"));
+
+    // With the consent: the cloud run, Free's Fast search for the default medium effort, the
+    // held-out result with its baseline, the workspace link and the next steps.
+    let (code, stderr, stdout) = run(&["run", csv, "--target", "price", "--upload-consent"]);
+    assert_eq!(code, Some(0), "{stderr}");
+    assert!(
+        stderr.contains(
+            "Training in the veox Cloud · your own data trains there (medium search) · 149 rows."
+        ),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("Free runs the Fast search in the veox Cloud"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("Result: held-out rmse 101.5 · lower is better · in units of `price`."),
+        "{stderr}"
+    );
+    assert!(stderr.contains("Baseline (a plain model scored on the same held-out rows): rmse 180.2 · VEOX ahead by 78.75."), "{stderr}");
+    assert!(stderr.contains(&format!(
+        "Open it in your workspace: {}/runs/{SESSION}",
+        server.origin
+    )));
+    assert!(
+        stderr.contains("Next: predict new rows in your workspace:"),
+        "{stderr}"
+    );
+    assert!(!stderr.contains("Running locally"), "{stderr}");
+    let line: serde_json::Value = serde_json::from_str(stdout.trim()).unwrap();
+    assert_eq!(line["state"], "completed");
+    let post = server
+        .requests()
+        .into_iter()
+        .find(|r| r.path == "/api/sessions")
+        .unwrap();
+    let body = post.text();
+    assert!(body.contains("name=\"profile\"\r\n\r\nfast"), "{body}");
+    assert!(
+        body.contains("name=\"cloud_fallback\"\r\n\r\nno_gpu"),
+        "{body}"
+    );
+}
+
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[test]
 fn a_finished_local_run_syncs_metadata_events_model_and_report_in_order() {
     let home = home();
@@ -247,27 +456,7 @@ fn a_finished_local_run_syncs_metadata_events_model_and_report_in_order() {
             _ => (404, r#"{"error":"not found"}"#.into()),
         }
     }));
-    let token = home.root.parent().unwrap().join("token");
-    std::fs::write(&token, "veox_testtoken").unwrap();
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&token, std::fs::Permissions::from_mode(0o600)).unwrap();
-    }
-    let login = jopedime(
-        &home,
-        &server.origin,
-        &[
-            "auth",
-            "login",
-            "--workspace",
-            &server.origin,
-            "--token-file",
-            token.to_str().unwrap(),
-        ],
-        &[],
-    );
-    assert!(login.status.success(), "{}", text(&login.stderr));
+    login(&home, &server.origin);
     let on = jopedime(&home, &server.origin, &["cloud", "results", "on"], &[]);
     assert!(text(&on.stdout).contains("No training rows are uploaded, except that kernel, smoother and Gaussian-process models"), "{}", text(&on.stdout));
     let out = jopedime(

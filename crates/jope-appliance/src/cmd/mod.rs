@@ -1,3 +1,5 @@
+#[cfg(feature = "mcp")]
+pub mod attach;
 #[cfg(feature = "client")]
 pub mod code;
 #[cfg(feature = "client")]

@@ -99,6 +99,12 @@ pub enum ApplianceCommand {
     /// Start a run from a CSV, a bundled `example/NAME.csv`, or an API dataset identifier.
     #[cfg(feature = "mcp")]
     Run(crate::cmd::run::RunArgs),
+    /// Follow a run until it ends, then print its result (on a terminal: the interactive view).
+    #[cfg(feature = "mcp")]
+    Attach {
+        /// The run to follow (default: the one going now).
+        run: Option<String>,
+    },
     /// Read or long-poll a run snapshot.
     #[cfg(feature = "mcp")]
     Status(crate::cmd::status::StatusArgs),

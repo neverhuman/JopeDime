@@ -108,6 +108,27 @@ pub fn effort_name(value: Effort) -> &'static str {
     effort(value)
 }
 
+/// The snapshot with its elapsed time advanced to `since` (the time the client has followed
+/// it) while it runs, when the engine reports less: the engine records a run's elapsed time as
+/// it ends, so the status clock otherwise stays at 00:00 for the whole run.
+pub fn with_live_clock(snapshot: &RunSnapshot, since: Option<std::time::Duration>) -> RunSnapshot {
+    let mut live = snapshot.clone();
+    let Some(since) = since.filter(|_| !is_terminal(snapshot.state)) else {
+        return live;
+    };
+    let reported = snapshot
+        .budget_used
+        .wall_seconds
+        .parse::<f64>()
+        .ok()
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0);
+    if since.as_secs_f64() > reported {
+        live.budget_used.wall_seconds = format!("{:.1}", since.as_secs_f64());
+    }
+    live
+}
+
 /// One line for a finished run: how it ended and its champion.
 pub fn finished_line(snapshot: &RunSnapshot) -> String {
     let ended = match (snapshot.state, snapshot.completion_reason) {
@@ -119,7 +140,7 @@ pub fn finished_line(snapshot: &RunSnapshot) -> String {
     };
     match &snapshot.best {
         Some(best) if best.cv_value.is_finite() => format!(
-            "{ended} · champion {} ({} {:.3}) · {} candidates evaluated",
+            "{ended} · champion {} (CV {} {:.3}) · {} candidates evaluated",
             best.algorithm_id,
             super::sanitize_user_string(&best.metric),
             best.cv_value,
@@ -173,15 +194,15 @@ pub fn next_steps(run: &str, connected: bool, tui: bool) -> String {
         "predict with `jain predict --model {run} --input new_rows.csv --output predictions.csv`"
     );
     let code = if tui {
-        "get the code with /export --out DIR".to_owned()
+        "get the code with /export --out DIR · /copy result copies this result".to_owned()
     } else {
         format!("get the code with `jain export {run} --kind bundle --lang python --out DIR`")
     };
     let own = match (tui, connected) {
-        (true, false) => "your own data: /login (free) — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
-        (true, true) => "your own data: /open FILE.csv, then /run --cloud — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
-        (false, false) => "your own data: `jain auth login` (free) — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
-        (false, true) => "your own data: `jain run FILE.csv --target COLUMN --cloud` — runs on your own data happen in the veox Cloud, and jAIn asks before uploading",
+        (true, false) => "your own data: /login (accounts open from the waitlist: https://app.veox.ai/register); it trains in the veox Cloud, and jAIn asks before uploading",
+        (true, true) => "your own data: /open FILE.csv, then /run; it trains in the veox Cloud, and jAIn asks before uploading",
+        (false, false) => "your own data: `jain auth login` (accounts open from the waitlist: https://app.veox.ai/register); it trains in the veox Cloud, and jAIn asks before uploading",
+        (false, true) => "your own data: `jain run FILE.csv --target COLUMN`; it trains in the veox Cloud, and jAIn asks before uploading",
     };
     format!("Next: {predict} · {code} · {own}")
 }
@@ -470,11 +491,13 @@ mod tests {
         assert!(tui.starts_with(
             "Next: predict with `jain predict --model run_01JBD8Q6N4V2T5Y8K3M7P9R1S0"
         ));
-        assert!(tui.contains("/login") && tui.contains("happen in the veox Cloud"));
-        assert!(tui.contains("asks before uploading"));
+        assert!(tui.contains("/login") && tui.contains("trains in the veox Cloud"));
+        assert!(tui.contains("accounts open from the waitlist: https://app.veox.ai/register"));
+        assert!(tui.contains("asks before uploading") && tui.contains("/copy result"));
         let connected = super::next_steps(run, true, true);
-        assert!(!connected.contains("/login") && connected.contains("/run --cloud"));
-        assert!(super::next_steps(run, true, false).contains("--cloud"));
+        assert!(!connected.contains("/login") && connected.contains("/open FILE.csv, then /run;"));
+        assert!(super::next_steps(run, true, false)
+            .contains("`jain run FILE.csv --target COLUMN`; it trains in the veox Cloud"));
         let cli = super::next_steps(run, false, false);
         assert!(
             cli.contains("jain export run_01JBD8Q6N4V2T5Y8K3M7P9R1S0")
@@ -501,5 +524,27 @@ mod tests {
         assert!(!short.contains("CPU"));
         assert!(!short.contains("exp/s"));
         assert!(short.contains("GPU"));
+    }
+
+    #[test]
+    fn the_clock_moves_while_the_engine_reports_no_elapsed_time() {
+        let mut running = snapshot();
+        running.budget_used.wall_seconds = "0".into();
+        let live = super::with_live_clock(&running, Some(std::time::Duration::from_secs(75)));
+        assert!(
+            render(&live, &[], 200).0.contains("01:15/01:00"),
+            "{}",
+            render(&live, &[], 200).0
+        );
+        // The engine's own figure wins when it is larger, and a finished run keeps its own.
+        running.budget_used.wall_seconds = "90".into();
+        let live = super::with_live_clock(&running, Some(std::time::Duration::from_secs(75)));
+        assert!(render(&live, &[], 200).0.contains("01:30/01:00"));
+        let mut done = snapshot();
+        done.state = RunState::Completed;
+        done.budget_used.wall_seconds = "12".into();
+        let kept = super::with_live_clock(&done, Some(std::time::Duration::from_secs(75)));
+        assert!(render(&kept, &[], 200).0.contains("00:12/01:00"));
+        assert_eq!(super::with_live_clock(&running, None), running);
     }
 }

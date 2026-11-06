@@ -1,22 +1,72 @@
-//! `jopedime run` routing. Scripts and agents get the same rule as the terminal, with one
-//! difference: nothing is uploaded unless `--cloud` is passed. When the rule would send a run to
-//! the cloud (a Pro deep search, a large table) the run stays local and one stderr line says how
-//! to send it. With `--cloud`: a just-in-time device login if needed, the per-dataset upload
-//! consent (remembered, asked on a terminal, or given with `--consent-upload`), then progress on
-//! stderr and a `cloud_run` JSON line on stdout.
+//! `jain run` routing (owner rule 2026-11-06). A bundled `example/NAME.csv` runs on this
+//! machine; the user's own CSV trains in the veox Cloud. Before anything is registered or
+//! uploaded, own data needs a login on an account admitted from the waitlist ([`preflight`]);
+//! then the per-table upload consent (remembered, asked on a terminal, or given with
+//! `--upload-consent` by an agent that asked the user), then progress on stderr and a
+//! `cloud_run` JSON line on stdout.
 use crate::cloud::{
     cloud_run::{Refusal, Update},
     flow::{self, Prepared},
-    route::{self, Force},
+    route::{self, Force, Tier},
+    Connection,
 };
 use std::io::{BufRead, IsTerminal, Write};
 use std::sync::atomic::AtomicBool;
 
+/// Where `jain run` sends a CSV, decided before it is registered.
 pub(super) enum Routed {
     Local,
-    Cloud,
+    /// Own data for the cloud, from a signed-in, admitted account.
+    Cloud {
+        decision: route::Decision,
+        connection: Box<Connection>,
+        tier: Option<Tier>,
+    },
 }
 
+fn force(args: &super::RunArgs) -> Option<Force> {
+    match (args.cloud, args.local) {
+        (true, _) => Some(Force::Cloud),
+        (_, true) => Some(Force::Local),
+        _ => None,
+    }
+}
+
+/// The routing decision and the own-data gate, before the CSV is registered or read.
+pub(super) fn preflight(
+    args: &super::RunArgs,
+    bundled: bool,
+    effort: jope_api::Effort,
+) -> anyhow::Result<Routed> {
+    let decision = route::decide(route::Input {
+        effort,
+        rows: None,
+        demo: bundled,
+        force: force(args),
+        cloud_first: route::cloud_first(),
+    });
+    match decision.target {
+        route::Target::Refused => Err(jope_runtime::Failure::input(decision.line)),
+        route::Target::Local => Ok(Routed::Local),
+        route::Target::Cloud => {
+            // --cloud already conflicts with these; for implied cloud runs, say why.
+            if args.detach || args.out.is_some() || args.events.is_some() || args.dry_run {
+                return Err(jope_runtime::Failure::input(
+                    "your own data trains in the veox Cloud, where --dry-run, --detach, --out and --events do not apply yet: leave them out and jain follows the run to its result (and its workspace link)",
+                ));
+            }
+            let (connection, tier) = flow::admitted()
+                .map_err(|gate| jope_runtime::Failure::input(gate.message(false)))?;
+            Ok(Routed::Cloud {
+                decision,
+                connection: Box::new(connection),
+                tier,
+            })
+        }
+    }
+}
+
+/// The upload question on a terminal. `None` without one.
 fn ask(question: &str) -> Option<bool> {
     if !std::io::stdin().is_terminal() || !std::io::stderr().is_terminal() {
         return None;
@@ -25,104 +75,82 @@ fn ask(question: &str) -> Option<bool> {
     let _ = std::io::stderr().flush();
     let mut line = String::new();
     std::io::stdin().lock().read_line(&mut line).ok()?;
-    route::answer(&line)
+    Some(route::consent_answer(&line).unwrap_or(false))
 }
 
-pub(super) fn route_run(
+/// The cloud run of a registered own-data CSV: the consent, the upload, and following the run.
+pub(super) fn run_in_cloud(
     args: &super::RunArgs,
     path: &std::path::Path,
     profile: &jope_api::DatasetProfile,
     effort: jope_api::Effort,
-) -> anyhow::Result<Routed> {
-    let force = match (args.cloud, args.local) {
-        (true, _) => Some(Force::Cloud),
-        (_, true) => Some(Force::Local),
-        _ => None,
-    };
+    decision: &route::Decision,
+    c: &Connection,
+    tier: Option<Tier>,
+) -> anyhow::Result<()> {
     let rows = profile.rows.0;
-    let connection = crate::cloud::connection().ok();
-    let needs_tier = force != Some(Force::Local)
-        && (effort != jope_api::Effort::Fast || rows > route::LOCAL_ROW_THRESHOLD);
-    let tier = match (&connection, needs_tier) {
-        (Some(c), true) => flow::tier(c).ok().flatten(),
-        _ => None,
-    };
-    let decision = route::decide(route::Input {
+    let line = route::decide(route::Input {
         effort,
         rows: Some(rows),
         demo: false,
-        force,
-        tier,
-    });
-    match (decision.target, force) {
-        (route::Target::Cloud, Some(Force::Cloud)) => {}
-        (route::Target::Cloud, _) => {
-            eprintln!(
-                "{} Scripts upload only with --cloud, so it runs locally on this machine.",
-                decision.line
-            );
-            return Ok(Routed::Local);
-        }
-        (route::Target::Local, _) if decision.offer_cloud => {
-            eprintln!(
-                "{} Pass --cloud to run it in your veox Cloud Workspace.",
-                decision.line
-            );
-            return Ok(Routed::Local);
-        }
-        (route::Target::Local, Some(_)) | (route::Target::Local, None)
-            if decision.reason != route::Reason::Default =>
-        {
-            eprintln!("{}", decision.line);
-            return Ok(Routed::Local);
-        }
-        (route::Target::Local, _) => return Ok(Routed::Local),
+        force: force(args),
+        cloud_first: route::cloud_first(),
+    })
+    .line;
+    eprintln!("{line}");
+    // Free's row ceiling is known: say so before uploading anything.
+    if rows > route::FREE_MAX_DATA_ROWS && tier == Some(Tier::Free) {
+        let limit = route::Limit {
+            status: 400,
+            limit: "size".into(),
+            used: Some(rows),
+            allowed: Some(route::FREE_MAX_DATA_ROWS),
+            resets_at: None,
+            upgrade_url: route::UPGRADE_URL.into(),
+            message: String::new(),
+        };
+        anyhow::bail!(limit.render());
     }
-    eprintln!("{}", decision.line);
-    let cancel = AtomicBool::new(false);
-    let c = match connection {
-        Some(c) => c,
-        None => {
-            eprintln!("{}", flow::NEEDS_LOGIN);
-            let c = flow::login_blocking(&crate::cloud::default_workspace(), &cancel, &mut |l| {
-                eprintln!("{l}")
-            })?;
-            eprintln!("Signed in to {} as {}.", c.origin, c.email);
-            c
-        }
-    };
+    let (search, note) = route::profile_for(effort, tier);
+    if let Some(note) = note {
+        eprintln!("{note}");
+    }
     let prepared = Prepared::read(path, rows, profile.columns.len() as u64)?;
     let home = jope_paths::jopedime_home();
     let key = flow::consent_key(&c.origin, &c.account_id, &prepared.sha256);
     if !flow::consented(&crate::terminal::onboarding::load(&home), &key, &prepared) {
-        let agreed = if args.consent_upload {
-            eprintln!("{} yes (--consent-upload)", prepared.question());
+        let agreed = if args.upload_consent {
+            eprintln!("{} yes (--upload-consent)", prepared.question());
             true
         } else {
             match ask(&prepared.question()) {
                 Some(answer) => answer,
-                None => anyhow::bail!(
-                    "uploading {} needs the user's consent: ask them, then pass --consent-upload (or run without --cloud)",
-                    prepared.file_name
-                ),
+                None => {
+                    return Err(jope_runtime::Failure::input(format!(
+                        "uploading {} to train in the veox Cloud needs the user's consent: ask them first, then pass --upload-consent (nothing was uploaded)",
+                        prepared.file_name
+                    )))
+                }
             }
         };
         if !agreed {
-            eprintln!("Nothing was uploaded.");
-            return Ok(match ask(route::Limit::local_question()) {
-                Some(true) => Routed::Local,
-                _ => anyhow::bail!("not started"),
-            });
+            anyhow::bail!("Nothing was uploaded, and no run started.");
         }
         flow::remember_consent(&home, &key, &prepared)?;
     }
+    eprintln!(
+        "Uploading {} ({}) to your veox Cloud Workspace…",
+        prepared.file_name,
+        route::size(prepared.bytes.len() as u64)
+    );
+    let cancel = AtomicBool::new(false);
     let mut started = None;
     let mut finished = Vec::new();
     let mut errors = Vec::new();
     let outcome = flow::submit_and_follow(
-        &c,
+        c,
         &prepared,
-        route::profile(effort),
+        search,
         decision.cloud_fallback(),
         Some(&args.target),
         std::time::Duration::from_millis(
@@ -161,6 +189,9 @@ pub(super) fn route_run(
             } else {
                 "failed"
             };
+            if state == "completed" {
+                eprintln!("{}", crate::cloud::cloud_run::next_line(&url, false));
+            }
             println!(
                 "{}",
                 serde_json::json!({"kind":"cloud_run","id":id,"url":url,"state":state,"lines":finished})
@@ -169,16 +200,10 @@ pub(super) fn route_run(
                 errors.is_empty() && state == "completed",
                 "the cloud run did not complete"
             );
-            Ok(Routed::Cloud)
+            Ok(())
         }
-        Err(Refusal::Limit(limit)) => {
-            eprintln!("{}", limit.render());
-            match ask("") {
-                Some(true) => Ok(Routed::Local),
-                _ => anyhow::bail!("{} Upgrade: {}", limit.sentence(), limit.upgrade_url),
-            }
-        }
-        Err(Refusal::Other(message)) => anyhow::bail!(message),
+        Err(Refusal::Limit(limit)) => anyhow::bail!(limit.render()),
+        Err(Refusal::Other(message)) => anyhow::bail!("{message} No run started."),
     }
 }
 
