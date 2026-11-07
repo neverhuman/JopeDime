@@ -124,6 +124,7 @@ do not put them in a ladder with the other two.
 4. **dev91 is a test cohort.** Our models are read on it only as locked candidates, under a create-once receipt in
    `~/jope_plan/ns/receipts/`. It is a reuse cohort (H257 tuned on it).
    - **Exposure log.** H381 (2026-11-05, LOCK `b9375201`): a 5-context direction check of two TRAIN arms (not entrants; nothing added to any board) read `ac07466e…`, `8eeca816…`, `016648dc…`, `6ecbb7d5…` and `b1a5c1a1…` ([H381 README](../../flywheel_selfplay/h381_rapid_lf_grow/README.md#dev91-5-dataset-direction-check-stored-board-rows-nothing-added-to-the-board)).
+   - H410 (2026-11-06, LOCK `c828dab5`): micro-tests of deployment builders, a strong-learner library and a retrained scale-L screener on the **same 5 contexts**, adaptively tuned on under an owner overfitting waiver (not entrants; nothing added to any board). Treat these 5 as tuned-on for any later comparison ([H410 README](../../flywheel_selfplay/h410_deploy_population/README.md#dev91-the-5-exposed-contexts-stored-board-rows-nothing-added-to-the-board)).
 
 ## 5. Comparing a new model of ours
 1. Choose the board:

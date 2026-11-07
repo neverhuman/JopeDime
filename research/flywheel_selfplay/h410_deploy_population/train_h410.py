@@ -92,14 +92,34 @@ def cmd_analyze(a) -> None:
     x0 = {c: float(_last_result(X0_RUN / "stages" / "C_AGG" / f"{c}__{SEED}.jsonl")["outputs"][X0_KEY]["value"])
           for c in cids}
     recs = {c: _last_result(Path(a.run_dir) / "stages" / f"H410_{a.tag}" / f"{c}__pool.jsonl") for c in cids}
-    keys = sorted(set.intersection(*[set(r["outputs"]) for r in recs.values()]))
+    # Fallbacks (the fallback count is reported per output):
+    #  - a missing "BAG_<b>" output (no bag-eligible member: twin_spec changed nothing) -> "<b>" (the same rule as
+    #    compare_micro_h410.py);
+    #  - "P2+LIB.*" -> "P1+LIB.*" where pool P2 == P1 (the E2 replay reproduced X0, so deploy_unit's largest-pool
+    #    tie-break named the library pool P1+LIB; same union, same outputs).
+    def out_of(c, k):
+        o = recs[c]["outputs"]
+        ps = recs[c].get("pool_sizes", {})
+        alts = [k]
+        if k.startswith("P2+LIB.") and ps.get("P2") == ps.get("P1"):
+            alts.append("P1+LIB." + k[len("P2+LIB."):])
+        for a in list(alts):
+            if "BAG_" in a:
+                alts.append(a.replace("BAG_", ""))
+        for i, a in enumerate(alts):
+            if a in o:
+                return o[a], i > 0
+        return None, False
+
+    allk = sorted(set().union(*[set(r["outputs"]) for r in recs.values()]))
+    keys = [k for k in allk if all(out_of(c, k)[0] is not None for c in cids)]
     replay = {c: recs[c]["outputs"][f"X0.s{SEED}.stock"]["value"] - x0[c] for c in cids}
     rep = {"schema": "jope.h410.train-analysis/v1", "panel": a.panel, "tag": a.tag, "n": len(cids),
            "replay_max_abs_delta_vs_stored_x0": max(abs(v) for v in replay.values()), "outputs": {}}
     rng_seed = BOOT_SEED
     for k in keys:
         kk = k.replace(f"own.X0.s{SEED}.", "own.")
-        vals = {c: float(recs[c]["outputs"][k]["value"]) for c in cids}
+        vals = {c: float(out_of(c, k)[0]["value"]) for c in cids}
         pt = H.primary_test(vals, x0, fam_of)
         hl = H.headline(vals, x0, fam_of)
         _, Dd = H.family_contrast(vals, x0, fam_of, clip=H.CLIP)
@@ -109,7 +129,8 @@ def cmd_analyze(a) -> None:
                               hl["pct_rmse_reduction"], "wtl": [hl["families_won"], hl["families_tied"],
                                                                 hl["families_lost"]],
                               "primary_test": pt, "boot_lcb95_clipped": lcb,
-                              "invalid": sum(1 for c in cids if recs[c]["outputs"][k].get("invalid"))}
+                              "invalid": sum(1 for c in cids if out_of(c, k)[0].get("invalid")),
+                              "bag_fallback_contexts": sum(1 for c in cids if out_of(c, k)[1])}
     Path(a.out).write_text(json.dumps(rep, indent=1, sort_keys=True) + "\n")
     print(f"replay max |u - stored X0| = {rep['replay_max_abs_delta_vs_stored_x0']:.3g}")
     for k, r in sorted(rep["outputs"].items(), key=lambda kv: -kv[1]["family_mean_gain"]):
