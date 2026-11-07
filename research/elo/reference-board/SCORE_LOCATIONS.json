@@ -14,14 +14,27 @@
         "schema": "jope.reference-board.archive/v1",
         "set": "dev91-audit-v1",
         "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
-        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261107T120005Z.tar.zst",
-        "version_id": "wSLUByLp0bS8RozTkAMOyBshyuaXPhwL",
-        "sha256": "f24f797bd917ef2dc58fa6702a67211d568c80b337f28f21a1ff7afabd6ad39c",
-        "members": 1029,
-        "member_sha256sums_sha256": "c816228e30cc943c781718af437b35cd85ed07d9d190c516e73d9a68c17cded8",
+        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261107T181749Z.tar.zst",
+        "version_id": "0azFZXCuKdqhElY5gfhrau_yFxHf8kUT",
+        "sha256": "16aea534271da8d94213d65f8a6712ffa0dbb3d1e687e2a628d883bacc910482",
+        "members": 1489,
+        "member_sha256sums_sha256": "82998bbc641d20e3780ebc242d24cb483ccf830670c44402b3737c72fca98056",
         "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
-        "utc": "20261107T120005Z",
+        "utc": "20261107T181749Z",
         "supersedes": [
+          {
+            "schema": "jope.reference-board.archive/v1",
+            "set": "dev91-audit-v1",
+            "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+            "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261107T120005Z.tar.zst",
+            "version_id": "wSLUByLp0bS8RozTkAMOyBshyuaXPhwL",
+            "sha256": "f24f797bd917ef2dc58fa6702a67211d568c80b337f28f21a1ff7afabd6ad39c",
+            "members": 1029,
+            "member_sha256sums_sha256": "c816228e30cc943c781718af437b35cd85ed07d9d190c516e73d9a68c17cded8",
+            "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+            "utc": "20261107T120005Z",
+            "note": "Pre-H413 snapshot (25 entrants). Kept in S3 (create-only). The current archive above adds the 5 H413 reference ids (scores/<id>.jsonl and preds/<id>/<cid>.f64) and the regenerated ladder.json / LADDER.md; every other member is unchanged."
+          },
           {
             "schema": "jope.reference-board.archive/v1",
             "set": "dev91-audit-v1",
@@ -132,7 +145,15 @@
           "records": 91,
           "completed": 91
         },
+        "kumo_tabular_small_e8.v1": {
+          "records": 91,
+          "completed": 91
+        },
         "lightgbm.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "mitra_v2_zeroshot.v1": {
           "records": 91,
           "completed": 91
         },
@@ -144,11 +165,23 @@
           "records": 91,
           "completed": 91
         },
+        "tabdpt_1p3.v1": {
+          "records": 91,
+          "completed": 91
+        },
         "tabfm_ensemble.v1": {
           "records": 91,
           "completed": 91
         },
         "tabfm.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "tabicl_v2.v1": {
+          "records": 91,
+          "completed": 91
+        },
+        "tabpfn_v3p5_e1.v1": {
           "records": 91,
           "completed": 91
         },
@@ -522,6 +555,7 @@
     {
       "model": "Kumo-Tabular small",
       "two_fold": "h257.Kumo_Tabular_S",
+      "audit": "kumo_tabular_small_e8.v1",
       "s3_single_split": "s3.Kumo_Tabular_S_S3_Query1Split"
     },
     {
@@ -532,7 +566,8 @@
     },
     {
       "model": "TabPFN 3.5 (1 estimator)",
-      "two_fold": "h257.PriorLabs_TabPFN_3p5_Single"
+      "two_fold": "h257.PriorLabs_TabPFN_3p5_Single",
+      "audit": "tabpfn_v3p5_e1.v1"
     },
     {
       "model": "TabPFN v3",
@@ -541,16 +576,19 @@
     {
       "model": "TabICL v2",
       "two_fold": "h257.TabICL_v2",
+      "audit": "tabicl_v2.v1",
       "s3_single_split": "s3.TabICL_v2_S3_Query1Split"
     },
     {
       "model": "TabDPT 1.3",
       "two_fold": "h257.TabDPT_1p3",
+      "audit": "tabdpt_1p3.v1",
       "s3_single_split": "s3.TabDPT_1p3_S3_Query1Split"
     },
     {
       "model": "Mitra v2",
       "two_fold": "h257.Mitra_v2",
+      "audit": "mitra_v2_zeroshot.v1",
       "s3_single_split": "s3.Mitra_v2_S3_Query1Split"
     },
     {

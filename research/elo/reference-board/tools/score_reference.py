@@ -116,19 +116,42 @@ def fit_predict(spec: dict, Xs, ys, Xa):
         model = tabfm_v1_0_0_pytorch.load(model_type="regression", device=spec.get("device", "cpu"))
         m = TabFMRegressor.ensemble(model=model) if kind == "tabfm_ensemble" else TabFMRegressor(model=model)
     elif kind == "kumo_tabular":
-        return kumo_fit_predict(cfg, T, Xs, ys, Xa, spec.get("device", "cpu"))
+        return kumo_fit_predict(cfg, T, Xs, ys, Xa, spec.get("device", "cpu"), seed)
+    elif kind == "mitra_zeroshot":
+        return mitra_zeroshot_fit_predict(cfg, T, Xs, ys, Xa, spec.get("device", "cpu"))
+    elif kind == "tabicl":  # H413: soda-inria TabICL sklearn regressor, vendor defaults, local checkpoint, no download
+        import torch
+        from tabicl import TabICLRegressor
+        torch.set_num_threads(T)
+        m = TabICLRegressor(random_state=seed, device=spec.get("device", "cpu"), n_jobs=T, allow_auto_download=False,
+                            **cfg)
+    elif kind == "tabdpt":  # H413: Layer6 TabDPT sklearn regressor, vendor defaults (predict: n_ensembles 8)
+        import torch
+        from tabdpt import TabDPTRegressor
+        torch.set_num_threads(T)
+        pcfg = dict(cfg.pop("predict", {}))
+        m = TabDPTRegressor(device=spec.get("device", "cpu"), verbose=False, **cfg)
+        m.fit(Xs, ys)
+        return np.asarray(m.predict(Xa, seed=seed, **pcfg), dtype=np.float64).reshape(-1)
     else:
         raise ValueError(f"unknown kind {kind}")
     m.fit(Xs, ys)
     return np.asarray(m.predict(Xa), dtype=np.float64)
 
 
-def kumo_fit_predict(cfg, T, Xs, ys, Xa, dev):
-    """KumoTabular (NVIDIA structured-data-models): the panel_v1 kumo_run.py regression path, unchanged."""
+def kumo_fit_predict(cfg, T, Xs, ys, Xa, dev, seed):
+    """KumoTabular (NVIDIA structured-data-models): the panel_v1 kumo_run.py regression path, unchanged.
+
+    sdm draws the ensemble members' row/column permutations from torch's global RNG, which every process seeds from
+    entropy, so the prediction changes from run to run (H413 probe: RMSE 0.0098 vs 0.0079 on one context). Entries
+    with config torch_manual_seed=true seed it with the registry seed first and are reproducible; entries without
+    the key (kumo_tabular_large_e8.v1, scored before H413) keep the unseeded path they were scored with."""
     import pandas as pd
     import sdm
     import torch
     torch.set_num_threads(T)
+    if cfg.get("torch_manual_seed"):
+        torch.manual_seed(seed)
     model = sdm.models.KumoTabular(task="regression", size=cfg["size"], device=dev).eval()
     cols = [f"f{i}" for i in range(Xs.shape[1])]
     df = pd.DataFrame(np.vstack([Xs, Xa]), columns=cols)
@@ -142,6 +165,61 @@ def kumo_fit_predict(cfg, T, Xs, ys, Xa, dev):
     v = getattr(o, "numerical", o)
     p = v.detach().float().cpu().numpy() if hasattr(v, "detach") else np.asarray(v)
     return p.reshape(len(Xa), -1).mean(axis=1).astype(np.float64)  # mean of the predicted quantiles
+
+
+def mitra_zeroshot_fit_predict(cfg, T, Xs, ys, Xa, dev):
+    """Mitra v2 (autogluon/mitra-regressor-2), zero-shot: the H257 h257.Mitra_v2 path, ported line for line.
+
+    Sources (origin/main 571873a38c): evaluate_tabular_foundation_dl_val91.py `_pred_ofm` (y z-scored with the
+    context mean and std + 1e-8, prediction mapped back) around ofm-20261008 code/ofm_models.py `Mitra.run`
+    (context-mean impute, drop columns constant on the context, y min/max over the context into the 1000-bin grid
+    linspace(-0.5, 1.5, 1001), decode = softmax-weighted bin centres). No fine-tune, no bagging. The Tab2D class
+    is AutoGluon 1.5.0's; its tab2d.py is byte-identical to the system copy H257 imported. One difference: H257 ran
+    on CUDA under bf16 autocast; this CPU path runs float32. AutoGluon 1.5.0's MitraRegressor cannot load the v2
+    1000-bin head (H413 smoke: shape error), so this is the only working zero-shot v2 decode."""
+    import torch
+    from autogluon.tabular.models.mitra._internal.models.tab2d import Tab2D
+    from safetensors.torch import load_file
+    torch.set_num_threads(T)
+    d = cfg["model_dir"]
+    c = json.loads((Path(d) / "config.json").read_text())
+    m = Tab2D(dim=c["dim"], dim_output=c["dim_output"], n_layers=c["n_layers"], n_heads=c["n_heads"], task=c["task"],
+              use_pretrained_weights=False, path_to_weights="", device=dev)
+    m.load_state_dict(load_file(str(Path(d) / "model.safetensors"), device="cpu"))
+    m = m.to(dev).eval()
+    nb = c["dim_output"]
+    bins = torch.linspace(-0.5, 1.5, nb + 1, device=dev)
+    bw = bins[1] - bins[0]
+    # _pred_ofm
+    mu_y = float(ys.mean())
+    sd_y = float(ys.std()) + 1e-8
+    yc = (ys - mu_y) / sd_y
+    # Mitra.run
+    Xc, Xq = Xs, Xa
+    mu = np.nanmean(Xc, 0)
+    mu = np.where(np.isfinite(mu), mu, 0.0)
+    Xc = np.where(np.isnan(Xc), mu, Xc)
+    Xq = np.where(np.isnan(Xq), mu, Xq)
+    keep = (Xc.max(0) - Xc.min(0)) > 0
+    if keep.sum() == 0:
+        keep[:] = True
+    Xc, Xq = Xc[:, keep].astype(np.float32), Xq[:, keep].astype(np.float32)
+    ymin, ymax = float(yc.min()), float(yc.max())
+    yr = max(ymax - ymin, 1e-8)
+    with torch.inference_mode():
+        yn = torch.from_numpy(((yc - ymin) / yr).astype(np.float32)).to(dev)[None]
+        yb = torch.clamp(torch.bucketize(yn, bins) - 1, 0, nb - 1).to(torch.int64)
+        xs = torch.from_numpy(Xc).to(dev)[None]
+        xq = torch.from_numpy(Xq).to(dev)[None]
+        pf = torch.zeros(1, Xc.shape[1], dtype=torch.bool, device=dev)
+        ps = torch.zeros(1, Xc.shape[0], dtype=torch.bool, device=dev)
+        pq = torch.zeros(1, Xq.shape[0], dtype=torch.bool, device=dev)
+        lg = m(xs, yb, xq, pf, ps, pq)  # [1, nq, nbins]
+        w = torch.softmax(lg.float()[0], -1)
+        centres = bins[:-1] + bw / 2
+        mean = (w * centres).sum(-1)
+        pred_z = (mean * yr + ymin).cpu().numpy()
+    return np.asarray(pred_z, dtype=np.float64).reshape(-1) * sd_y + mu_y
 
 
 def one(board_root: Path, model_id: str, cid: str) -> None:

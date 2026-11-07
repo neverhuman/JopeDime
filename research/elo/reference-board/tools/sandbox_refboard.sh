@@ -1,7 +1,7 @@
 #!/bin/bash
 # Reference-board sandbox (bwrap, xbabe2). No network, own PID namespace.
 # Visible: / read-only, with /home/ubuntu, /tmp and the other data roots as EMPTY tmpfs. Bound back:
-#   ~/.local (ro; the system-python libraries), the refboard venv, HF cache and weights (ro), this reference-board
+#   ~/.local (ro; the system-python libraries), the refboard venvs (venv, venv-gpu, venv-icl, venv-mitra), HF cache and weights (ro), this reference-board
 #   source dir (ro), BOARD_ROOT/BOARD.json + BOARD_ROOT/envs (ro), BOARD_ROOT/scores + BOARD_ROOT/preds (rw).
 # Nothing else under /home/ubuntu is visible: no other board, no Stage V root, no DL-Val table outside the board's own
 # envelopes, no sealed / holdout / meta-test path.
@@ -14,7 +14,7 @@ SRCDIR=$(dirname "$(dirname "$(readlink -f "$0")")")
 mkdir -p "$BR/scores" "$BR/preds"
 # environments: whichever of the CPU venv (xbabe2) / GPU venv (xbabe3) exists on this host
 EXTRA=()
-for d in "$R/venv" "$R/venv-gpu" "$R/hf" "$R/weights"; do [ -d "$d" ] && EXTRA+=(--ro-bind "$d" "$d"); done
+for d in "$R/venv" "$R/venv-gpu" "$R/venv-icl" "$R/venv-mitra" "$R/hf" "$R/weights"; do [ -d "$d" ] && EXTRA+=(--ro-bind "$d" "$d"); done
 # REFBOARD_GPU=1: expose the NVIDIA device nodes (and nothing else) for CUDA models
 if [ "${REFBOARD_GPU:-0}" = 1 ]; then
   for n in /dev/nvidia0 /dev/nvidiactl /dev/nvidia-uvm /dev/nvidia-uvm-tools /dev/nvidia-modeset; do
