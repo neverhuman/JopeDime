@@ -10,6 +10,9 @@ Inputs:
     (h335_stats: elo_panel, headline, primary_test, family_contrast, family_mean);
   * AutoML Elo v1 / v2 RESULTS.json, read from git at pinned commits and checked by sha256. That is a TRAIN-family panel
     (64 families x 3 folds x 3 seeds); it is shown for rank agreement only and is never merged into the board.
+  * section D (addendum): the stored dev91-s1-two-fold-v1 board (--board2, same loader; its Elo must reproduce the
+    stored ladder.json) and H257's published two-fold table (origin/main, sha-pinned; its 13 reference rows must match
+    the board's family means). A different split: listed beside the AUDIT numbers, never merged into them.
 Outputs: final_study.json and FINAL_STUDY.md in --out.
 """
 from __future__ import annotations
@@ -58,6 +61,27 @@ AUTOML_ELO = {  # version -> (commit, path, sha256)
            "4f14193ab3058ce9d2168ddeca5de10e43847993706b63c74d8b2bb51e029d31"),
 }
 BOOT_SEED, N_BOOT = 412160, 10_000
+# Section D (addendum, owner 2026-11-07: "include all [other already-scored tabular models] in your table"): the other
+# dev91 split. Its stored board, plus H257's published 25-entrant table (sha-pinned on origin/main), which also holds our
+# older two-fold models. Different split and different u: never merged into the AUDIT numbers above.
+TWOFOLD_ANCHOR = "h257.Opus5p5_Extra"
+H257_TABLE = ("571873a38c961d960ca56b79cb086027ebf4c11f",
+              "research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/frontier_elo_comparison.json",
+              "e9e59a5c626f0747bf476d1dabcae76e46b4fbc5f18d2a6652d336a7f58439a6")
+H257_SECTION = ("dl_val91_all_models_2fold_inner_cv_tournament", "s1_utility_gated_elo")
+TWOFOLD_ONLY = {"h257.Kumo_Tabular_S": "Kumo-Tabular small", "h257.PriorLabs_TabPFN_3p5_Single": "TabPFN 3.5 (1 estimator)",
+                "h257.Mitra_v2": "Mitra v2", "h257.TabDPT_1p3": "TabDPT 1.3", "h257.TabICL_v2": "TabICL v2"}
+SHARED = {  # two-fold board id -> (display name, the AUDIT-board row of the same model)
+    "h257.Kumo_Tabular_L": ("Kumo-Tabular large", "kumo_tabular_large_e8.v1"),
+    "h257.TabFM_Ensemble": ("TabFM ensemble", "tabfm_ensemble.v1"),
+    "h257.TabFM": ("TabFM", "tabfm.v1"),
+    "h257.PriorLabs_TabPFN_3p5": ("TabPFN 3.5 (8 estimators)", "tabpfn_v3p5.v1"),
+    "h257.Opus5p5_Extra": ("Opus5p5_Extra", "h335.Opus5p5_Extra"),
+    "h257.Gemini4_argon_high": ("Gemini4_argon_high", "h335.Gemini4_argon_high"),
+    "h257.GPT6p1_Sol_Max": ("GPT6p1_Sol_Max", "h335.GPT6p1_Sol_Max"),
+    "h257.GPT6_Astra_Max": ("GPT6_Astra_Max", "h335.GPT6_Astra_Max"),
+}
+TWOFOLD_LLM = {"h257.Opus5p5_Extra", "h257.Gemini4_argon_high", "h257.GPT6p1_Sol_Max", "h257.GPT6_Astra_Max"}
 
 
 def cls(e: str) -> str:
@@ -104,9 +128,74 @@ def h2h(H, values: dict, fam_of: dict, focus: str, others: list, seed: int) -> d
     return out
 
 
+def bracket(order: list, e: str, shared: set) -> tuple:
+    """The nearest shared entrant ranked above e and the nearest ranked below it (None at an end)."""
+    i = order.index(e)
+    above = next((x for x in reversed(order[:i]) if x in shared), None)
+    below = next((x for x in order[i + 1:] if x in shared), None)
+    return above, below
+
+
+def twofold(H, L, board2: Path, repo: Path, fam_of: dict, elo: dict) -> dict:
+    """Section D: the stored dev91-s1-two-fold-v1 board and H257's published two-fold table (stored files only)."""
+    b2, fam2, v2, _, inc2, _ = L.load(board2)
+    if inc2 or len(v2) != 13 or b2["board"] != "dev91-s1-two-fold-v1":
+        raise SystemExit(f"expected the complete 13-entrant dev91-s1-two-fold-v1 board; incomplete={sorted(inc2)}")
+    if fam2 != fam_of:
+        raise SystemExit("the two dev91 boards do not hold the same 91 contexts / 19 families")
+    for e in [*TWOFOLD_ONLY, *SHARED]:
+        if e not in v2:
+            raise SystemExit(f"missing two-fold entrant {e}")
+    el2 = H.elo_panel(v2, fam2, TWOFOLD_ANCHOR)["elo"]
+    stored = json.loads((board2 / "ladder.json").read_text())["elo"]["elo"]
+    if any(abs(el2[e]["elo"] - stored[e]["elo"]) > 1e-6 for e in v2):
+        raise SystemExit("two-fold Elo does not reproduce the board's stored ladder.json")
+    fmu2 = {e: H.family_mean(v, fam2) for e, v in v2.items()}
+    order2 = sorted(v2, key=lambda e: -el2[e]["elo"])
+    rows = []
+    for i, e in enumerate(order2, 1):
+        nm = TWOFOLD_ONLY.get(e) or SHARED[e][0]
+        audit = SHARED.get(e, (None, None))[1]
+        rows.append({"rank": i, "id": e, "name": nm, "class": "frontier LLM" if e in TWOFOLD_LLM else "foundation model",
+                     "elo": el2[e]["elo"], "ci95": el2[e]["ci95"], "family_mean_u": fmu2[e],
+                     "audit_board_id": audit, "audit_elo": elo[audit]["elo"] if audit else None})
+    # H257's published 25-entrant two-fold table: its 13 reference rows must match the stored board's family means
+    tab = git_json(repo, *H257_TABLE)
+    for k in H257_SECTION:
+        tab = tab[k]
+    for e in v2:
+        k = e.split(".", 1)[1]
+        if abs(tab[k]["family_mean"] - fmu2[e]) > 5e-6:
+            raise SystemExit(f"H257 table {k} family mean {tab[k]['family_mean']} != board {fmu2[e]}")
+    ref_keys = {e.split(".", 1)[1]: e for e in v2}
+    trows = []
+    for i, (k, r) in enumerate(sorted(tab.items(), key=lambda kv: -kv[1]["joint_elo"]), 1):
+        e = ref_keys.get(k)
+        c = ("frontier LLM" if e in TWOFOLD_LLM else "foundation model") if e else "JopeDime (older)"
+        nm = (TWOFOLD_ONLY.get(e) or SHARED[e][0]) if e else k
+        trows.append({"rank": i, "key": k, "name": nm, "class": c, "joint_elo": r["joint_elo"],
+                      "ci95": r["joint_elo_ci95"], "family_mean_u": r["family_mean"],
+                      "two_fold_only": e in TWOFOLD_ONLY})
+    shared_two = set(SHARED)
+    place = {e: dict(zip(("above", "below"), bracket(order2, e, shared_two))) for e in TWOFOLD_ONLY}
+    order_a = sorted(elo, key=lambda e: -elo[e]["elo"])
+    ours_place = dict(zip(("above", "below"), bracket(order_a, OURS, {a for _, a in SHARED.values()})))
+    sh2 = [e for e in order2 if e in SHARED]
+    pos_a = {e: order_a.index(SHARED[e][1]) for e in sh2}
+    swapped = [[x, y] for i, x in enumerate(sh2) for y in sh2[i + 1:] if pos_a[x] > pos_a[y]]
+    return {"shared_order_two_fold": sh2, "shared_pairs_ordered_differently": swapped,"board": b2["board"], "board_sha256": b2["board_sha256"], "anchor": TWOFOLD_ANCHOR, "ladder": rows,
+            "h257_table": {"commit": H257_TABLE[0], "path": H257_TABLE[1], "sha256": H257_TABLE[2],
+                           "section": ".".join(H257_SECTION), "anchor": "R882", "rows": trows,
+                           "reference_family_means_match_board": True},
+            "placement_two_fold": place, "ours_placement_audit": ours_place,
+            "scores_sha256": {p.stem: hashlib.sha256(p.read_bytes()).hexdigest()
+                              for p in sorted((board2 / "scores").glob("*.jsonl"))}}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--board", default=str(RB / "boards" / "dev91-audit-v1"))
+    ap.add_argument("--board2", default=str(RB / "boards" / "dev91-s1-two-fold-v1"))
     ap.add_argument("--tools", default=str(RB / "tools"))
     ap.add_argument("--repo", default=str(HERE.parents[2]))
     ap.add_argument("--out", default=str(HERE))
@@ -167,6 +256,8 @@ def main() -> None:
     same_order_v1 = [r["name"] for r in sorted(frontier_rows, key=lambda r: r["rank_dev91"]) if r["rank_automl_v1"]] == \
         sorted(rank["automl_v1"], key=lambda m: rank["automl_v1"][m])
 
+    tf = twofold(H, L, Path(a.board2), Path(a.repo), fam_of, elo)
+
     best_fr = max(FRONTIER, key=lambda e: elo[e]["elo"])
     best_fd = max(FOUNDATION, key=lambda e: elo[e]["elo"])
     out = {
@@ -183,6 +274,7 @@ def main() -> None:
                      "same_order_dev91_vs_automl_v1": same_order_v1,
                      "automl_sources": {v: {"commit": s[0], "path": s[1], "sha256": s[2]} for v, s in AUTOML_ELO.items()},
                      "frontier_only_centre": "five-player mean = 1500 (anchor fit on Opus5p5_Extra, then shifted)"},
+        "two_fold": tf,
         "summary": {"ours_rank": order.index(OURS) + 1, "ours_elo": elo[OURS]["elo"], "best_frontier": best_fr,
                     "best_foundation": best_fd,
                     "ours_beats_all_frontier": all(vs_ours[e]["primary_clipped"]["pass"] for e in FRONTIER),
@@ -206,6 +298,85 @@ def row(e: str, r: dict) -> str:
     return (f"| {name(e)} | {cls(e)} | {h['family_mean_gain']:+.4f} [{ci[0]:+.3f}, {ci[1]:+.3f}] | "
             f"{pct(h['family_mean_gain'])} | {h['families_won']}/{h['families_tied']}/{h['families_lost']} | "
             f"{p['signflip_p']:.2g} | {p['lofo_min']:+.4f} | {verdict} |")
+
+
+def tf_name(e: str | None) -> str:
+    if e is None:
+        return "—"
+    return TWOFOLD_ONLY.get(e) or SHARED[e][0]
+
+
+def render_d(o: dict) -> list:
+    t, vs = o["two_fold"], o["ours_vs"]
+    ht = t["h257_table"]
+    md = ["", "## D. Tabular models scored only on the other dev91 split", "",
+          "- **Five stored tabular models have no AUDIT score:** Kumo-Tabular small, TabPFN 3.5 (1 estimator), "
+          "Mitra v2, TabDPT 1.3 and TabICL v2. They were scored once, on the same 91 contexts, under H257's two-fold "
+          "split (H257 phase 2, 2026-11-04). Nothing here was rerun.",
+          "- **They can't join table A.** The two splits score different rows with a different u (two-fold: "
+          "−(0.9 · mean log RMSE ratio + 0.2 · SD of the two folds), −2.0 when the gate fails). The Elo scales differ, "
+          "and the board rules never mix them (board README §4, rule 3).",
+          "- **No model of ours is on both splits.** XSTACK_2L has no two-fold score, and `H257_REPLICA` is only the "
+          "GP part of H257 (H335 `DISCLOSURES.md`), so it can't serve as a bridge.", "",
+          f"### D.1 The stored two-fold board (13 entrants, anchor `{t['anchor']}` = 1500)", "",
+          f"Board `{t['board']}`, sha256 `{t['board_sha256'][:16]}…`; this Elo reproduces its stored `ladder.json`.", "",
+          "| Rank | Model | Class | Two-fold Elo | 95% CI | Family-mean u (two-fold) | Same model in table A |",
+          "| --- | --- | --- | --- | --- | --- | --- |"]
+    for r in t["ladder"]:
+        b = "**" if r["audit_board_id"] is None else ""
+        a = "only on this split" if r["audit_board_id"] is None else f"AUDIT-Elo {r['audit_elo']:.1f}"
+        md.append(f"| {r['rank']} | {b}{r['name']}{b} (`{r['id']}`) | {r['class']} | {r['elo']:.1f} | "
+                  f"{r['ci95'][0]:.0f}–{r['ci95'][1]:.0f} | {r['family_mean_u']:.4f} | {a} |")
+    md += ["", f"### D.2 H257's published two-fold table ({len(ht['rows'])} entrants, anchor {ht['anchor']} = 1500)", "",
+           "- **This is the only stored table that puts the five next to models of ours.** Those are H257's older GP "
+           "models, which were tuned on this split, so their rows are optimistic. XSTACK_2L is not in it.",
+           "- **Its field is larger, so its Elo numbers differ from D.1.** Its 13 reference rows have the same "
+           "family-mean u as the stored board (checked to 5e-6).",
+           f"- Source: `{ht['commit'][:10]}:{ht['path']}` (origin/main), section `{ht['section']}`, sha256 "
+           f"`{ht['sha256'][:16]}…`.", "",
+           "| Rank | Model | Class | Elo | 95% CI | Family-mean u (two-fold) |", "| --- | --- | --- | --- | --- | --- |"]
+    for r in ht["rows"]:
+        b = "**" if r["two_fold_only"] else ""
+        md.append(f"| {r['rank']} | {b}{r['name']}{b} | {r['class']} | {r['joint_elo']:.1f} | "
+                  f"{r['ci95'][0]:.0f}–{r['ci95'][1]:.0f} | {r['family_mean_u']:.4f} |")
+    op = t["ours_placement_audit"]
+    md += ["", "### D.3 Where the five sit relative to ours (rank chain, not a measurement)", "",
+           f"- **On the AUDIT split, ours sits between {name(op['above'])} (above) and {name(op['below'])} (below)**, "
+           "counting only models scored on both splits.",
+           f"- **The two splits order the {len(t['shared_order_two_fold'])} shared models almost the same way.** "
+           f"{len(t['shared_pairs_ordered_differently'])} of "
+           f"{len(t['shared_order_two_fold']) * (len(t['shared_order_two_fold']) - 1) // 2} pairs flip: "
+           + "; ".join(f"{tf_name(x)} / {tf_name(y)}" for x, y in t["shared_pairs_ordered_differently"])
+           + ". So a rank chain is a guide, not a result.",
+           "- Each of the five is placed the same way on the two-fold split.",
+           "  - **Probably above ours:** the shared model just below it is significantly better than ours on AUDIT.",
+           "  - **Probably below ours:** the shared model just above it is significantly worse than ours on AUDIT.",
+           "  - **Not known:** neither holds.", "",
+           "| Model | Two-fold: shared model above | Two-fold: shared model below | vs ours |", "| --- | --- | --- | --- |"]
+    for e, p in t["placement_two_fold"].items():
+        ab = SHARED[p["above"]][1] if p["above"] else None
+        be = SHARED[p["below"]][1] if p["below"] else None
+        if be and vs[be]["primary_clipped"]["inferior"]:
+            v = f"probably above ours ({name(be)} is significantly better than ours)"
+        elif ab and vs[ab]["primary_clipped"]["pass"]:
+            v = f"probably below ours ({name(ab)} is significantly worse than ours)"
+        else:
+            v = "not known"
+        md.append(f"| {TWOFOLD_ONLY[e]} | {tf_name(p['above'])} | {tf_name(p['below'])} | {v} |")
+    md += ["", "- **To measure it instead:** score XSTACK_2L once on `dev91-s1-two-fold-v1` (board README §5). That "
+           "runs our model on that board's split and reruns no reference model. It is a new dev91 read and needs its "
+           "own LOCK.", "",
+           "### D.4 Other stored score sets (different datasets or splits; listed for completeness)", "",
+           "These come from [`research/elo/README.md`](../../elo/README.md); none is comparable with tables A or D.", "",
+           "- **`p201b-train-audit-v1`:** the TRAIN board (201 contexts), for development only.",
+           "- **dev91 S3 single-split** (precomputed, 2026-10): Kumo L / S, TabICL v2, TabDPT 1.3, Mitra v2 and "
+           "TabPFN 3.5 on one split with no fold penalty.",
+           "- **panel_v1** (240 regression + 240 binary datasets): Kumo 1874.5, AutoGluon 1601.3, CatBoost 1523.7, "
+           "`jope-fused-net-v3` 1383.4.",
+           "- **SOTArena Golden45** (45 public datasets, 305 methods): TabFM Ensemble 1934.9, TabPFN v3 1909.5, "
+           "`jope-dime-regressor` 1687.0 (#31).",
+           "- **AutoML Elo v1 / v2:** section C."]
+    return md
 
 
 def render(o: dict, order: list, elo: dict, fmu: dict) -> str:
@@ -238,7 +409,10 @@ def render(o: dict, order: list, elo: dict, fmu: dict) -> str:
           f"{', '.join(name(e) for e in s['foundation_beat_ours']) or 'none'}.",
           f"- **The new frontier entrant grok4p7_xhigh ranks {s['grok_rank']} of 25, last on the board.**",
           f"  - The frontier-only order on dev91 is the same as AutoML Elo v2: "
-          f"{'yes' if fr['same_order_dev91_vs_automl_v2'] else 'no'}. AutoML Elo is a separate TRAIN panel.", "",
+          f"{'yes' if fr['same_order_dev91_vs_automl_v2'] else 'no'}. AutoML Elo is a separate TRAIN panel.",
+          "- **Five more stored tabular models** (Kumo-Tabular small, TabPFN 3.5 with 1 estimator, Mitra v2, TabDPT 1.3, "
+          "TabICL v2) were scored only on the other dev91 split, so they have no AUDIT-Elo. Section D lists them with "
+          "their stored two-fold Elo and where they sit relative to ours.", "",
           "## A. Full ladder (25 entrants, all 91/91)", "",
           "| Rank | Entrant | Class | AUDIT-Elo | 95% CI | Family-mean u | Geo-mean RMSE / mean baseline |",
           "| --- | --- | --- | --- | --- | --- | --- |"]
@@ -301,6 +475,7 @@ def render(o: dict, order: list, elo: dict, fmu: dict) -> str:
            "- AutoML inputs, read from git and sha-checked:"]
     for v, src in fr["automl_sources"].items():
         md.append(f"  - {v}: `{src['commit'][:10]}:{src['path']}`, sha256 `{src['sha256'][:16]}…`.")
+    md += render_d(o)
     md += ["", "## Limits", "",
            "- **dev91 is a reuse cohort.** H257 was tuned on it.",
            "  - The 5 H381 / H410 contexts were adaptively exposed: `ac07466e`, `8eeca816`, `016648dc`, "
@@ -314,6 +489,9 @@ def render(o: dict, order: list, elo: dict, fmu: dict) -> str:
            "variance.",
            "- **grok4p7_xhigh provenance:** its authorship record says `fresh_session: false`. This is recorded and "
            "does not affect scoring.",
+           "- **Not done:** XSTACK_2L has no two-fold score, so section D ranks it against the five two-fold-only "
+           "models by rank chain only. Scoring it once on `dev91-s1-two-fold-v1` (board README §5) would measure it; "
+           "that is a new dev91 read and needs its own LOCK.",
            "- **Not done:** no new candidate of ours (owner's choice).",
            "  - The H410 TRAIN lead (pooled runs + strong-learner library, +8.1% RMSE on 120 TRAIN families, "
            "p 0.0006) is the next candidate. It needs its own LOCK before any dev91 read.", "",

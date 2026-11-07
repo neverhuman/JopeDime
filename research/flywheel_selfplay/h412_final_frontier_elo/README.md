@@ -40,6 +40,13 @@ mirrored test passes.
     blob `fe5bb21e…`); see [FINAL_STUDY C](FINAL_STUDY.md#c-the-frontier-llms-dev91-next-to-automl-elo).
 - **H335_AGG**, the input to XSTACK_2L, gives the same frontier verdicts (5/5 better). XSTACK_2L vs H335_AGG is
   +0.0015 and not separated (p 0.045).
+- **Five more stored tabular models have no AUDIT score:** Kumo-Tabular small, TabPFN 3.5 (1 estimator), Mitra v2,
+  TabDPT 1.3 and TabICL v2. They were scored only on H257's two-fold split of the same 91 contexts.
+  [FINAL_STUDY D](FINAL_STUDY.md#d-tabular-models-scored-only-on-the-other-dev91-split) lists them with their stored
+  two-fold Elo (addendum, 2026-11-07).
+  - By rank chain only, Kumo small and TabPFN 3.5 (1 estimator) probably rank above ours.
+  - Mitra, TabDPT and TabICL fall in the same band as ours. Their order against ours stays unknown until XSTACK_2L is
+    scored once on the two-fold board.
 
 ## What was done
 
@@ -67,6 +74,13 @@ mirrored test passes.
    - Board README §1, §3 and the rule-4 exposure log are updated, and `tools/score_locations.sh` gains the grok row.
 6. **Study.** `final_study_h412.py` reads the stored board files and the sha-pinned AutoML Elo results. Its outputs
    from the board root (which also checks the prediction-file shas) and from the git copy are identical.
+7. **Addendum (2026-11-07).** The owner asked for every already-scored tabular model in the table, so section D was
+   added. It is built from stored files only:
+   - the `dev91-s1-two-fold-v1` board, whose Elo reproduces its stored `ladder.json`;
+   - H257's published two-fold table, sha-pinned on `origin/main`, whose 13 reference rows match the board's family
+     means.
+
+   Sections A–C are byte-identical to the first publication. No model was run and no dev91 envelope was opened.
 
 ## Integrity
 

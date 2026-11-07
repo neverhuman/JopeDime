@@ -3557,5 +3557,590 @@
   "ours_elo": 1724.5808139672401,
   "ours_rank": 6
  },
+ "two_fold": {
+  "anchor": "h257.Opus5p5_Extra",
+  "board": "dev91-s1-two-fold-v1",
+  "board_sha256": "b8836033c0540e1c7d6a488cb33248372cab02e4a16776cd57b08ede269ea190",
+  "h257_table": {
+   "anchor": "R882",
+   "commit": "571873a38c961d960ca56b79cb086027ebf4c11f",
+   "path": "research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/frontier_elo_comparison.json",
+   "reference_family_means_match_board": true,
+   "rows": [
+    {
+     "ci95": [
+      1808.88,
+      2267.2
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.500689,
+     "joint_elo": 1980.9,
+     "key": "Kumo_Tabular_L",
+     "name": "Kumo-Tabular large",
+     "rank": 1,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1778.3,
+      2162.92
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.396395,
+     "joint_elo": 1924.18,
+     "key": "Kumo_Tabular_S",
+     "name": "Kumo-Tabular small",
+     "rank": 2,
+     "two_fold_only": true
+    },
+    {
+     "ci95": [
+      1773.94,
+      2179.74
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.39074,
+     "joint_elo": 1919.16,
+     "key": "PriorLabs_TabPFN_3p5_Single",
+     "name": "TabPFN 3.5 (1 estimator)",
+     "rank": 3,
+     "two_fold_only": true
+    },
+    {
+     "ci95": [
+      1765.7,
+      2156.87
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.38892,
+     "joint_elo": 1915.49,
+     "key": "TabFM_Ensemble",
+     "name": "TabFM ensemble",
+     "rank": 4,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1729.19,
+      2175.44
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.346831,
+     "joint_elo": 1888.9,
+     "key": "PriorLabs_TabPFN_3p5",
+     "name": "TabPFN 3.5 (8 estimators)",
+     "rank": 5,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1666.21,
+      2065.29
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.325378,
+     "joint_elo": 1829.48,
+     "key": "Mitra_v2",
+     "name": "Mitra v2",
+     "rank": 6,
+     "two_fold_only": true
+    },
+    {
+     "ci95": [
+      1681.47,
+      2047.77
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.325618,
+     "joint_elo": 1823.0,
+     "key": "TabFM",
+     "name": "TabFM",
+     "rank": 7,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1666.87,
+      2031.63
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.283347,
+     "joint_elo": 1809.46,
+     "key": "TabDPT_1p3",
+     "name": "TabDPT 1.3",
+     "rank": 8,
+     "two_fold_only": true
+    },
+    {
+     "ci95": [
+      1655.57,
+      2017.63
+     ],
+     "class": "foundation model",
+     "family_mean_u": 1.269461,
+     "joint_elo": 1798.63,
+     "key": "TabICL_v2",
+     "name": "TabICL v2",
+     "rank": 9,
+     "two_fold_only": true
+    },
+    {
+     "ci95": [
+      1697.34,
+      1824.22
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.261212,
+     "joint_elo": 1749.51,
+     "key": "H257_HIGH_BATCH_EVO3_STACK3",
+     "name": "H257_HIGH_BATCH_EVO3_STACK3",
+     "rank": 10,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1687.69,
+      1808.97
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.261046,
+     "joint_elo": 1738.44,
+     "key": "H257_BATCH11_STATIC_PLUS_EVO3_STACK3",
+     "name": "H257_BATCH11_STATIC_PLUS_EVO3_STACK3",
+     "rank": 11,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1660.5,
+      1763.7
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.253609,
+     "joint_elo": 1702.37,
+     "key": "H257_MEDIUM_BATCH_EVO3",
+     "name": "H257_MEDIUM_BATCH_EVO3",
+     "rank": 12,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1647.72,
+      1747.94
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.253056,
+     "joint_elo": 1689.51,
+     "key": "H257_BATCH11_STATIC_PLUS_EVO3",
+     "name": "H257_BATCH11_STATIC_PLUS_EVO3",
+     "rank": 13,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1628.71,
+      1718.29
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.240541,
+     "joint_elo": 1665.6,
+     "key": "H257_STAGE_C2_BATCH11_PLUS_EVO1",
+     "name": "H257_STAGE_C2_BATCH11_PLUS_EVO1",
+     "rank": 14,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1615.57,
+      1703.58
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.236936,
+     "joint_elo": 1650.7,
+     "key": "H257_STAGE_C1_BATCH11_PLUS_GEN0",
+     "name": "H257_STAGE_C1_BATCH11_PLUS_GEN0",
+     "rank": 15,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1531.99,
+      1798.05
+     ],
+     "class": "frontier LLM",
+     "family_mean_u": 1.112585,
+     "joint_elo": 1645.48,
+     "key": "Opus5p5_Extra",
+     "name": "Opus5p5_Extra",
+     "rank": 16,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1504.08,
+      1736.51
+     ],
+     "class": "frontier LLM",
+     "family_mean_u": 1.140704,
+     "joint_elo": 1609.07,
+     "key": "Gemini4_argon_high",
+     "name": "Gemini4_argon_high",
+     "rank": 17,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1560.49,
+      1629.85
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.201077,
+     "joint_elo": 1592.04,
+     "key": "H257_STAGE_C0_BATCH11_ACTIVE_2PLUS2",
+     "name": "H257_STAGE_C0_BATCH11_ACTIVE_2PLUS2",
+     "rank": 18,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1550.6,
+      1619.4
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.202731,
+     "joint_elo": 1581.73,
+     "key": "H257_STAGE_C0_BATCH11_STATIC_0REV",
+     "name": "H257_STAGE_C0_BATCH11_STATIC_0REV",
+     "rank": 19,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1549.99,
+      1613.76
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.201692,
+     "joint_elo": 1580.43,
+     "key": "H256_ACTIVE_2PLUS2_UNIFIED",
+     "name": "H256_ACTIVE_2PLUS2_UNIFIED",
+     "rank": 20,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1492.76,
+      1681.23
+     ],
+     "class": "frontier LLM",
+     "family_mean_u": 1.141572,
+     "joint_elo": 1572.98,
+     "key": "GPT6p1_Sol_Max",
+     "name": "GPT6p1_Sol_Max",
+     "rank": 21,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1536.09,
+      1611.56
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.217523,
+     "joint_elo": 1570.91,
+     "key": "H275_RERANK8_CR_SOFT",
+     "name": "H275_RERANK8_CR_SOFT",
+     "rank": 22,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1537.53,
+      1599.58
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.203296,
+     "joint_elo": 1566.2,
+     "key": "H256_STATIC_0REV_TOP8_SOFT_VETO",
+     "name": "H256_STATIC_0REV_TOP8_SOFT_VETO",
+     "rank": 23,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1500.0,
+      1500.0
+     ],
+     "class": "JopeDime (older)",
+     "family_mean_u": 1.153615,
+     "joint_elo": 1500.0,
+     "key": "R882",
+     "name": "R882",
+     "rank": 24,
+     "two_fold_only": false
+    },
+    {
+     "ci95": [
+      1265.92,
+      1494.19
+     ],
+     "class": "frontier LLM",
+     "family_mean_u": 0.883094,
+     "joint_elo": 1379.76,
+     "key": "GPT6_Astra_Max",
+     "name": "GPT6_Astra_Max",
+     "rank": 25,
+     "two_fold_only": false
+    }
+   ],
+   "section": "dl_val91_all_models_2fold_inner_cv_tournament.s1_utility_gated_elo",
+   "sha256": "e9e59a5c626f0747bf476d1dabcae76e46b4fbc5f18d2a6652d336a7f58439a6"
+  },
+  "ladder": [
+   {
+    "audit_board_id": "kumo_tabular_large_e8.v1",
+    "audit_elo": 2045.2978895749106,
+    "ci95": [
+     1829.1103551238245,
+     2211.542251446561
+    ],
+    "class": "foundation model",
+    "elo": 1975.7781244622608,
+    "family_mean_u": 1.5006890063052634,
+    "id": "h257.Kumo_Tabular_L",
+    "name": "Kumo-Tabular large",
+    "rank": 1
+   },
+   {
+    "audit_board_id": null,
+    "audit_elo": null,
+    "ci95": [
+     1755.0238359283676,
+     2038.5263648869864
+    ],
+    "class": "foundation model",
+    "elo": 1869.6263766741263,
+    "family_mean_u": 1.3963950289694738,
+    "id": "h257.Kumo_Tabular_S",
+    "name": "Kumo-Tabular small",
+    "rank": 2
+   },
+   {
+    "audit_board_id": null,
+    "audit_elo": null,
+    "ci95": [
+     1777.3922105022586,
+     1984.6613297327146
+    ],
+    "class": "foundation model",
+    "elo": 1854.40924980575,
+    "family_mean_u": 1.3907401305115792,
+    "id": "h257.PriorLabs_TabPFN_3p5_Single",
+    "name": "TabPFN 3.5 (1 estimator)",
+    "rank": 3
+   },
+   {
+    "audit_board_id": "tabfm_ensemble.v1",
+    "audit_elo": 1898.4598537616318,
+    "ci95": [
+     1756.1945080721007,
+     1964.6180043898569
+    ],
+    "class": "foundation model",
+    "elo": 1839.8805767486479,
+    "family_mean_u": 1.3889201917578946,
+    "id": "h257.TabFM_Ensemble",
+    "name": "TabFM ensemble",
+    "rank": 4
+   },
+   {
+    "audit_board_id": "tabpfn_v3p5.v1",
+    "audit_elo": 1820.323862307594,
+    "ci95": [
+     1696.6831078288815,
+     2023.8067649834413
+    ],
+    "class": "foundation model",
+    "elo": 1836.8554236100836,
+    "family_mean_u": 1.346831395116842,
+    "id": "h257.PriorLabs_TabPFN_3p5",
+    "name": "TabPFN 3.5 (8 estimators)",
+    "rank": 5
+   },
+   {
+    "audit_board_id": "tabfm.v1",
+    "audit_elo": 1873.4009024583233,
+    "ci95": [
+     1634.2424991790426,
+     1847.2857603130585
+    ],
+    "class": "foundation model",
+    "elo": 1723.3781813119508,
+    "family_mean_u": 1.3256182754957895,
+    "id": "h257.TabFM",
+    "name": "TabFM",
+    "rank": 6
+   },
+   {
+    "audit_board_id": null,
+    "audit_elo": null,
+    "ci95": [
+     1572.760750641645,
+     1823.4374534159097
+    ],
+    "class": "foundation model",
+    "elo": 1690.0306691932915,
+    "family_mean_u": 1.325378212756842,
+    "id": "h257.Mitra_v2",
+    "name": "Mitra v2",
+    "rank": 7
+   },
+   {
+    "audit_board_id": null,
+    "audit_elo": null,
+    "ci95": [
+     1591.0221262277466,
+     1795.096408481614
+    ],
+    "class": "foundation model",
+    "elo": 1681.938198015476,
+    "family_mean_u": 1.283347320674737,
+    "id": "h257.TabDPT_1p3",
+    "name": "TabDPT 1.3",
+    "rank": 8
+   },
+   {
+    "audit_board_id": null,
+    "audit_elo": null,
+    "ci95": [
+     1583.7619439933203,
+     1759.8788691604036
+    ],
+    "class": "foundation model",
+    "elo": 1659.3170482755434,
+    "family_mean_u": 1.2694610456,
+    "id": "h257.TabICL_v2",
+    "name": "TabICL v2",
+    "rank": 9
+   },
+   {
+    "audit_board_id": "h335.Gemini4_argon_high",
+    "audit_elo": 1524.4238582532269,
+    "ci95": [
+     1406.601762381978,
+     1604.773510945463
+    ],
+    "class": "frontier LLM",
+    "elo": 1507.5503967161262,
+    "family_mean_u": 1.140703591891579,
+    "id": "h257.Gemini4_argon_high",
+    "name": "Gemini4_argon_high",
+    "rank": 10
+   },
+   {
+    "audit_board_id": "h335.Opus5p5_Extra",
+    "audit_elo": 1577.8153953081603,
+    "ci95": [
+     1500.0,
+     1500.0
+    ],
+    "class": "frontier LLM",
+    "elo": 1500.0,
+    "family_mean_u": 1.1125845190505264,
+    "id": "h257.Opus5p5_Extra",
+    "name": "Opus5p5_Extra",
+    "rank": 11
+   },
+   {
+    "audit_board_id": "h335.GPT6p1_Sol_Max",
+    "audit_elo": 1497.2642864604748,
+    "ci95": [
+     1364.6834381421681,
+     1605.2840361469198
+    ],
+    "class": "frontier LLM",
+    "elo": 1490.207960033959,
+    "family_mean_u": 1.1415723635031578,
+    "id": "h257.GPT6p1_Sol_Max",
+    "name": "GPT6p1_Sol_Max",
+    "rank": 12
+   },
+   {
+    "audit_board_id": "h335.GPT6_Astra_Max",
+    "audit_elo": 1308.3508653078145,
+    "ci95": [
+     1126.5694348958345,
+     1440.8402634585414
+    ],
+    "class": "frontier LLM",
+    "elo": 1309.3038363351575,
+    "family_mean_u": 0.883093869228421,
+    "id": "h257.GPT6_Astra_Max",
+    "name": "GPT6_Astra_Max",
+    "rank": 13
+   }
+  ],
+  "ours_placement_audit": {
+   "above": "tabpfn_v3p5.v1",
+   "below": "h335.Opus5p5_Extra"
+  },
+  "placement_two_fold": {
+   "h257.Kumo_Tabular_S": {
+    "above": "h257.Kumo_Tabular_L",
+    "below": "h257.TabFM_Ensemble"
+   },
+   "h257.Mitra_v2": {
+    "above": "h257.TabFM",
+    "below": "h257.Gemini4_argon_high"
+   },
+   "h257.PriorLabs_TabPFN_3p5_Single": {
+    "above": "h257.Kumo_Tabular_L",
+    "below": "h257.TabFM_Ensemble"
+   },
+   "h257.TabDPT_1p3": {
+    "above": "h257.TabFM",
+    "below": "h257.Gemini4_argon_high"
+   },
+   "h257.TabICL_v2": {
+    "above": "h257.TabFM",
+    "below": "h257.Gemini4_argon_high"
+   }
+  },
+  "scores_sha256": {
+   "h257.GPT6_Astra_Max": "97ae05d5c3e9ce1630c9c05b80e07bd88e2540f92704b8baa716ed17e294e844",
+   "h257.GPT6p1_Sol_Max": "9960b664272ff0545523afeba0710fcee8c99be44e84e721b633dc4043ba1ef5",
+   "h257.Gemini4_argon_high": "bf1126060d06c8ec3b2b80cf280c9490ef9da2262337b0fab17d676f94c2f1d2",
+   "h257.Kumo_Tabular_L": "372a6728476db707b5726d3f8ea6146b93da4f515db69b318789d84941adf1ef",
+   "h257.Kumo_Tabular_S": "ab74259b99ffa5441743c3c4d581c64afdf0bf0d59a3d8fecd186c01bd0d6e92",
+   "h257.Mitra_v2": "5f138fe53b3a8acffd46423adb8c0296fa8a8d28887893c1b1df696b61d29a3c",
+   "h257.Opus5p5_Extra": "1bb2c48adc4cea078461e4a81822edb46d44f361de1f7e90ba1a101bfd0cdcdb",
+   "h257.PriorLabs_TabPFN_3p5": "15b3d85d6ec6d902ba2a6e3227e97299509dea7f5722faa2707241c46e010833",
+   "h257.PriorLabs_TabPFN_3p5_Single": "86038ab9ca9162f92f139251f027d9525869bfbf269e4e0417c8a42c8166616b",
+   "h257.TabDPT_1p3": "2b462ee760d324cf465ff237aa9306e67ae0af2325b82b127927c730dd7468a7",
+   "h257.TabFM": "2e909db92c87bf2b1fe28eb77f3af11490f68b5711ec43564e43f062375ad6e9",
+   "h257.TabFM_Ensemble": "87c6f5c13a7e63509a02bdb8523008469e43922b5d86884a4cd0bc2cd70d533d",
+   "h257.TabICL_v2": "8e599e779aca9844970bcca272f9a73e377874d432b33abba4103da7ae7b1849"
+  },
+  "shared_order_two_fold": [
+   "h257.Kumo_Tabular_L",
+   "h257.TabFM_Ensemble",
+   "h257.PriorLabs_TabPFN_3p5",
+   "h257.TabFM",
+   "h257.Gemini4_argon_high",
+   "h257.Opus5p5_Extra",
+   "h257.GPT6p1_Sol_Max",
+   "h257.GPT6_Astra_Max"
+  ],
+  "shared_pairs_ordered_differently": [
+   [
+    "h257.PriorLabs_TabPFN_3p5",
+    "h257.TabFM"
+   ],
+   [
+    "h257.Gemini4_argon_high",
+    "h257.Opus5p5_Extra"
+   ]
+  ]
+ },
  "wave": "H412"
 }

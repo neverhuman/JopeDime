@@ -14,6 +14,7 @@
   - Foundation models significantly better than ours (mirrored primary test): Kumo-Tabular large, TabFM ensemble.
 - **The new frontier entrant grok4p7_xhigh ranks 25 of 25, last on the board.**
   - The frontier-only order on dev91 is the same as AutoML Elo v2: yes. AutoML Elo is a separate TRAIN panel.
+- **Five more stored tabular models** (Kumo-Tabular small, TabPFN 3.5 with 1 estimator, Mitra v2, TabDPT 1.3, TabICL v2) were scored only on the other dev91 split, so they have no AUDIT-Elo. Section D lists them with their stored two-fold Elo and where they sit relative to ours.
 
 ## A. Full ladder (25 entrants, all 91/91)
 
@@ -126,6 +127,95 @@
   - v1: `269a1bc24d:assets/automl-elo/v1/RESULTS.json`, sha256 `f1f7f3c304110bb1…`.
   - v2: `1177c4f9c1:assets/automl-elo/v2/RESULTS.json`, sha256 `4f14193ab3058ce9…`.
 
+## D. Tabular models scored only on the other dev91 split
+
+- **Five stored tabular models have no AUDIT score:** Kumo-Tabular small, TabPFN 3.5 (1 estimator), Mitra v2, TabDPT 1.3 and TabICL v2. They were scored once, on the same 91 contexts, under H257's two-fold split (H257 phase 2, 2026-11-04). Nothing here was rerun.
+- **They can't join table A.** The two splits score different rows with a different u (two-fold: −(0.9 · mean log RMSE ratio + 0.2 · SD of the two folds), −2.0 when the gate fails). The Elo scales differ, and the board rules never mix them (board README §4, rule 3).
+- **No model of ours is on both splits.** XSTACK_2L has no two-fold score, and `H257_REPLICA` is only the GP part of H257 (H335 `DISCLOSURES.md`), so it can't serve as a bridge.
+
+### D.1 The stored two-fold board (13 entrants, anchor `h257.Opus5p5_Extra` = 1500)
+
+Board `dev91-s1-two-fold-v1`, sha256 `b8836033c0540e1c…`; this Elo reproduces its stored `ladder.json`.
+
+| Rank | Model | Class | Two-fold Elo | 95% CI | Family-mean u (two-fold) | Same model in table A |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Kumo-Tabular large (`h257.Kumo_Tabular_L`) | foundation model | 1975.8 | 1829–2212 | 1.5007 | AUDIT-Elo 2045.3 |
+| 2 | **Kumo-Tabular small** (`h257.Kumo_Tabular_S`) | foundation model | 1869.6 | 1755–2039 | 1.3964 | only on this split |
+| 3 | **TabPFN 3.5 (1 estimator)** (`h257.PriorLabs_TabPFN_3p5_Single`) | foundation model | 1854.4 | 1777–1985 | 1.3907 | only on this split |
+| 4 | TabFM ensemble (`h257.TabFM_Ensemble`) | foundation model | 1839.9 | 1756–1965 | 1.3889 | AUDIT-Elo 1898.5 |
+| 5 | TabPFN 3.5 (8 estimators) (`h257.PriorLabs_TabPFN_3p5`) | foundation model | 1836.9 | 1697–2024 | 1.3468 | AUDIT-Elo 1820.3 |
+| 6 | TabFM (`h257.TabFM`) | foundation model | 1723.4 | 1634–1847 | 1.3256 | AUDIT-Elo 1873.4 |
+| 7 | **Mitra v2** (`h257.Mitra_v2`) | foundation model | 1690.0 | 1573–1823 | 1.3254 | only on this split |
+| 8 | **TabDPT 1.3** (`h257.TabDPT_1p3`) | foundation model | 1681.9 | 1591–1795 | 1.2833 | only on this split |
+| 9 | **TabICL v2** (`h257.TabICL_v2`) | foundation model | 1659.3 | 1584–1760 | 1.2695 | only on this split |
+| 10 | Gemini4_argon_high (`h257.Gemini4_argon_high`) | frontier LLM | 1507.6 | 1407–1605 | 1.1407 | AUDIT-Elo 1524.4 |
+| 11 | Opus5p5_Extra (`h257.Opus5p5_Extra`) | frontier LLM | 1500.0 | 1500–1500 | 1.1126 | AUDIT-Elo 1577.8 |
+| 12 | GPT6p1_Sol_Max (`h257.GPT6p1_Sol_Max`) | frontier LLM | 1490.2 | 1365–1605 | 1.1416 | AUDIT-Elo 1497.3 |
+| 13 | GPT6_Astra_Max (`h257.GPT6_Astra_Max`) | frontier LLM | 1309.3 | 1127–1441 | 0.8831 | AUDIT-Elo 1308.4 |
+
+### D.2 H257's published two-fold table (25 entrants, anchor R882 = 1500)
+
+- **This is the only stored table that puts the five next to models of ours.** Those are H257's older GP models, which were tuned on this split, so their rows are optimistic. XSTACK_2L is not in it.
+- **Its field is larger, so its Elo numbers differ from D.1.** Its 13 reference rows have the same family-mean u as the stored board (checked to 5e-6).
+- Source: `571873a38c:research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/frontier_elo_comparison.json` (origin/main), section `dl_val91_all_models_2fold_inner_cv_tournament.s1_utility_gated_elo`, sha256 `e9e59a5c626f0747…`.
+
+| Rank | Model | Class | Elo | 95% CI | Family-mean u (two-fold) |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Kumo-Tabular large | foundation model | 1980.9 | 1809–2267 | 1.5007 |
+| 2 | **Kumo-Tabular small** | foundation model | 1924.2 | 1778–2163 | 1.3964 |
+| 3 | **TabPFN 3.5 (1 estimator)** | foundation model | 1919.2 | 1774–2180 | 1.3907 |
+| 4 | TabFM ensemble | foundation model | 1915.5 | 1766–2157 | 1.3889 |
+| 5 | TabPFN 3.5 (8 estimators) | foundation model | 1888.9 | 1729–2175 | 1.3468 |
+| 6 | **Mitra v2** | foundation model | 1829.5 | 1666–2065 | 1.3254 |
+| 7 | TabFM | foundation model | 1823.0 | 1681–2048 | 1.3256 |
+| 8 | **TabDPT 1.3** | foundation model | 1809.5 | 1667–2032 | 1.2833 |
+| 9 | **TabICL v2** | foundation model | 1798.6 | 1656–2018 | 1.2695 |
+| 10 | H257_HIGH_BATCH_EVO3_STACK3 | JopeDime (older) | 1749.5 | 1697–1824 | 1.2612 |
+| 11 | H257_BATCH11_STATIC_PLUS_EVO3_STACK3 | JopeDime (older) | 1738.4 | 1688–1809 | 1.2610 |
+| 12 | H257_MEDIUM_BATCH_EVO3 | JopeDime (older) | 1702.4 | 1660–1764 | 1.2536 |
+| 13 | H257_BATCH11_STATIC_PLUS_EVO3 | JopeDime (older) | 1689.5 | 1648–1748 | 1.2531 |
+| 14 | H257_STAGE_C2_BATCH11_PLUS_EVO1 | JopeDime (older) | 1665.6 | 1629–1718 | 1.2405 |
+| 15 | H257_STAGE_C1_BATCH11_PLUS_GEN0 | JopeDime (older) | 1650.7 | 1616–1704 | 1.2369 |
+| 16 | Opus5p5_Extra | frontier LLM | 1645.5 | 1532–1798 | 1.1126 |
+| 17 | Gemini4_argon_high | frontier LLM | 1609.1 | 1504–1737 | 1.1407 |
+| 18 | H257_STAGE_C0_BATCH11_ACTIVE_2PLUS2 | JopeDime (older) | 1592.0 | 1560–1630 | 1.2011 |
+| 19 | H257_STAGE_C0_BATCH11_STATIC_0REV | JopeDime (older) | 1581.7 | 1551–1619 | 1.2027 |
+| 20 | H256_ACTIVE_2PLUS2_UNIFIED | JopeDime (older) | 1580.4 | 1550–1614 | 1.2017 |
+| 21 | GPT6p1_Sol_Max | frontier LLM | 1573.0 | 1493–1681 | 1.1416 |
+| 22 | H275_RERANK8_CR_SOFT | JopeDime (older) | 1570.9 | 1536–1612 | 1.2175 |
+| 23 | H256_STATIC_0REV_TOP8_SOFT_VETO | JopeDime (older) | 1566.2 | 1538–1600 | 1.2033 |
+| 24 | R882 | JopeDime (older) | 1500.0 | 1500–1500 | 1.1536 |
+| 25 | GPT6_Astra_Max | frontier LLM | 1379.8 | 1266–1494 | 0.8831 |
+
+### D.3 Where the five sit relative to ours (rank chain, not a measurement)
+
+- **On the AUDIT split, ours sits between TabPFN 3.5 (above) and Opus5p5_Extra (below)**, counting only models scored on both splits.
+- **The two splits order the 8 shared models almost the same way.** 2 of 28 pairs flip: TabPFN 3.5 (8 estimators) / TabFM; Gemini4_argon_high / Opus5p5_Extra. So a rank chain is a guide, not a result.
+- Each of the five is placed the same way on the two-fold split.
+  - **Probably above ours:** the shared model just below it is significantly better than ours on AUDIT.
+  - **Probably below ours:** the shared model just above it is significantly worse than ours on AUDIT.
+  - **Not known:** neither holds.
+
+| Model | Two-fold: shared model above | Two-fold: shared model below | vs ours |
+| --- | --- | --- | --- |
+| Kumo-Tabular small | Kumo-Tabular large | TabFM ensemble | probably above ours (TabFM ensemble is significantly better than ours) |
+| TabPFN 3.5 (1 estimator) | Kumo-Tabular large | TabFM ensemble | probably above ours (TabFM ensemble is significantly better than ours) |
+| Mitra v2 | TabFM | Gemini4_argon_high | not known |
+| TabDPT 1.3 | TabFM | Gemini4_argon_high | not known |
+| TabICL v2 | TabFM | Gemini4_argon_high | not known |
+
+- **To measure it instead:** score XSTACK_2L once on `dev91-s1-two-fold-v1` (board README §5). That runs our model on that board's split and reruns no reference model. It is a new dev91 read and needs its own LOCK.
+
+### D.4 Other stored score sets (different datasets or splits; listed for completeness)
+
+These come from [`research/elo/README.md`](../../elo/README.md); none is comparable with tables A or D.
+
+- **`p201b-train-audit-v1`:** the TRAIN board (201 contexts), for development only.
+- **dev91 S3 single-split** (precomputed, 2026-10): Kumo L / S, TabICL v2, TabDPT 1.3, Mitra v2 and TabPFN 3.5 on one split with no fold penalty.
+- **panel_v1** (240 regression + 240 binary datasets): Kumo 1874.5, AutoGluon 1601.3, CatBoost 1523.7, `jope-fused-net-v3` 1383.4.
+- **SOTArena Golden45** (45 public datasets, 305 methods): TabFM Ensemble 1934.9, TabPFN v3 1909.5, `jope-dime-regressor` 1687.0 (#31).
+- **AutoML Elo v1 / v2:** section C.
+
 ## Limits
 
 - **dev91 is a reuse cohort.** H257 was tuned on it.
@@ -135,6 +225,7 @@
   - Effect sizes come from the head-to-head table, not from Elo differences.
 - **One run per entrant (seed 42).** The confidence intervals are family bootstraps; there is no seed variance.
 - **grok4p7_xhigh provenance:** its authorship record says `fresh_session: false`. This is recorded and does not affect scoring.
+- **Not done:** XSTACK_2L has no two-fold score, so section D ranks it against the five two-fold-only models by rank chain only. Scoring it once on `dev91-s1-two-fold-v1` (board README §5) would measure it; that is a new dev91 read and needs its own LOCK.
 - **Not done:** no new candidate of ours (owner's choice).
   - The H410 TRAIN lead (pooled runs + strong-learner library, +8.1% RMSE on 120 TRAIN families, p 0.0006) is the next candidate. It needs its own LOCK before any dev91 read.
 
