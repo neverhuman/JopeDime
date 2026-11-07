@@ -5,16 +5,17 @@ Elo anchor: `h257.Opus5p5_Extra` = 1500 (family bootstrap 95% CI). Elo depends o
 
 | Rank | Entrant | Elo | 95% CI | Family-mean u | Median wall (s) | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `h257.Kumo_Tabular_L` | 1975.8 | 1829–2212 | 1.5007 |  | completed 91 |
-| 2 | `h257.Kumo_Tabular_S` | 1869.6 | 1755–2039 | 1.3964 |  | completed 91 |
-| 3 | `h257.PriorLabs_TabPFN_3p5_Single` | 1854.4 | 1777–1985 | 1.3907 |  | completed 91 |
-| 4 | `h257.TabFM_Ensemble` | 1839.9 | 1756–1965 | 1.3889 |  | completed 91 |
-| 5 | `h257.PriorLabs_TabPFN_3p5` | 1836.9 | 1697–2024 | 1.3468 |  | completed 91 |
-| 6 | `h257.TabFM` | 1723.4 | 1634–1847 | 1.3256 |  | completed 91 |
-| 7 | `h257.Mitra_v2` | 1690.0 | 1573–1823 | 1.3254 |  | completed 91 |
-| 8 | `h257.TabDPT_1p3` | 1681.9 | 1591–1795 | 1.2833 |  | completed 91 |
-| 9 | `h257.TabICL_v2` | 1659.3 | 1584–1760 | 1.2695 |  | completed 91 |
-| 10 | `h257.Gemini4_argon_high` | 1507.6 | 1407–1605 | 1.1407 |  | completed 91 |
-| 11 | `h257.Opus5p5_Extra` | 1500.0 | 1500–1500 | 1.1126 |  | completed 91 |
-| 12 | `h257.GPT6p1_Sol_Max` | 1490.2 | 1365–1605 | 1.1416 |  | completed 91 |
-| 13 | `h257.GPT6_Astra_Max` | 1309.3 | 1127–1441 | 0.8831 |  | completed 91 |
+| 1 | `h257.Kumo_Tabular_L` | 1965.6 | 1818–2206 | 1.5007 |  | completed 91 |
+| 2 | `h257.Kumo_Tabular_S` | 1859.1 | 1742–2034 | 1.3964 |  | completed 91 |
+| 3 | `h257.PriorLabs_TabPFN_3p5_Single` | 1849.9 | 1772–1981 | 1.3907 |  | completed 91 |
+| 4 | `h257.TabFM_Ensemble` | 1834.2 | 1749–1957 | 1.3889 |  | completed 91 |
+| 5 | `h257.PriorLabs_TabPFN_3p5` | 1825.0 | 1681–2014 | 1.3468 |  | completed 91 |
+| 6 | `h257.TabFM` | 1716.3 | 1627–1839 | 1.3256 |  | completed 91 |
+| 7 | `h257.Mitra_v2` | 1682.2 | 1560–1821 | 1.3254 |  | completed 91 |
+| 8 | `h257.TabDPT_1p3` | 1673.8 | 1580–1789 | 1.2833 |  | completed 91 |
+| 9 | `h257.TabICL_v2` | 1655.0 | 1579–1756 | 1.2695 |  | completed 91 |
+| 10 | `h257.Opus5p5_Extra` | 1500.0 | 1500–1500 | 1.1126 |  | completed 91 |
+| 11 | `h257.Gemini4_argon_high` | 1499.2 | 1398–1596 | 1.1407 |  | completed 91 |
+| 12 | `h257.GPT6p1_Sol_Max` | 1476.4 | 1358–1588 | 1.1416 |  | completed 91 |
+| 13 | `h414.kimik3p1_max` | 1370.0 | 1277–1447 | 0.9867 | 0.4 | completed 91 |
+| 14 | `h257.GPT6_Astra_Max` | 1284.8 | 1109–1417 | 0.8831 |  | completed 91 |
