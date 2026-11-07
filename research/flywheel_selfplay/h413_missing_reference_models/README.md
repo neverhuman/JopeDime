@@ -96,6 +96,8 @@ The same table is in [`h2h_xstack.md`](h2h_xstack.md). Each model's full ladder 
   [`ARCHIVE.json`](../../elo/reference-board/boards/dev91-audit-v1/ARCHIVE.json). It holds all 30 score files and the
   AUDIT prediction files `preds/<model>/<cid>.f64`, including the 455 new ones.
 - **Host:** the board root `xbabe2:~/jope-data/h335-stagev/refboard/dev91-audit-v1/`.
+- **Run record:** the H413 closeout bundle (TRAIN smoke boards, stderr logs, receipts, scripts and logs):
+  [`CLOSEOUT.json`](CLOSEOUT.json).
 - Never rerun these ids: read the stored rows (board rule 1). A changed library, weights file, config, seed or device
   is a new id (rule 2).
 

@@ -1,0 +1,11 @@
+{
+  "schema": "jope.h413.archive-manifest/v1",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H413/closeout-20261107/h413_closeout_bundle.tar.zst",
+  "version_id": "evnaOeSoKwb6DNGzyLzN4968UcdCkaIP",
+  "sha256": "d415880dbb9f275486a1666a52295672d60662b7e7d97d0bb093a6d49eb504a0",
+  "members": 255,
+  "members_file": "bundle_SHA256SUMS",
+  "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+  "utc": "2026-11-07T18:46:37Z",
+  "contents": "H413 TRAIN smoke boards (scores and predictions, no envelopes), the 5 new ids' board-root stderr logs, the H413 receipts and the H413 evidence (scripts, logs, results, board staging, source, probes). The scores and AUDIT predictions themselves are in the dev91-audit-v1 board archive (research/elo/reference-board/boards/dev91-audit-v1/ARCHIVE.json)."
+}
