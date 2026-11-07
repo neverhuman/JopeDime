@@ -82,6 +82,13 @@ Source: [results and uncertainty](assets/automl-elo/v1/RESULTS.json),
 
 <!-- current-performance:end -->
 
+A newer complete panel, [`assets/automl-elo/v3`](assets/automl-elo/v3/SOURCES.md)
+(2026-11-07), refits the same 64 families with six entrants: `Opus5p5_Extra`
+1690.8, `Gemini4_argon_high` 1603.3, `kimik3p1_max` 1510.7, `GPT6p1_Sol_Max`
+1497.5, `GPT6_Astra_Max` 1389.2 and `grok4p7_xhigh` 1308.4. Kimi and Sol are level
+within their 95% intervals. The table above stays the four-entrant panel that the
+paper's evidence binds. The `grok4p7_xhigh` source is not on `main` yet.
+
 ### Trained neural policies
 
 The accepted step-60000 proposal policy, CLOVER-Learn v1 and the latest Dope
@@ -543,7 +550,7 @@ The 37 workspace members, by directory under `crates/`; the package name follows
 | --- | --- | --- |
 | Default build | `jope-cli` (binary `jope`), `feat-math`, `jope-pipeline`, `jope-bench`, `jope-datasets`, `jope-models`, `jope-motifs`, `jope-policy`, `jope-narrator` | The workspace `default-members`, what a bare `cargo build` selects: the `jope` binary and its direct workspace dependencies except `hyperion` and `jope-learning`, which it still builds as dependencies (`Cargo.toml` says why). Programs, fit and emitters; the pipeline; the same-cut benchmark; dataset and model stores; program fragments; the proposal policy. |
 | Encoders | `jope-encoders` (`starforge`), `hyperion`, `numpy-pcg64` | Encoders, Hyperion v5/v7 on Candle, and a bit-exact numpy RNG. |
-| Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors `GPT6p1_Sol_Max` and `Gemini4_argon_high`, selectable with `jope-bench run --native NAME` and callable directly from Rust. Four-entrant AutoML Elo and figures: [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md). |
+| Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors `GPT6p1_Sol_Max`, `Gemini4_argon_high` and `kimik3p1_max`, selectable with `jope-bench run --native NAME` and callable directly from Rust. Four-entrant AutoML Elo and figures: [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md); six-entrant refit with `kimik3p1_max`: [`assets/automl-elo/v3`](assets/automl-elo/v3/SOURCES.md). |
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
 | Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress, and the offline CLOVER tools (`jope_pools`, `jope_retention`, `jope_support`, `jope_custody`); record verifiers, the hygiene guards and the paper and README numbers trace; CI tooling; the ADR-0003 runtime roots. |
 | Appliance | `jope-appliance` (binary `jopedime`), `jope-runtime`, `jope-assets`, `jope-dist` | The signed single-file executable: local fitting and prediction with the native methods, its package format and verification, [custom regression objectives via CLI/API/MCP](docs/regression-objectives.md), and the build-time packer ([deploy/appliance](deploy/appliance/README.md)). Not published yet. |

@@ -6,8 +6,17 @@ model fitting, inference, training or sealed-label evaluation.
 
 ## Latest complete comparison
 
-The October 22 four-entrant result is the newest complete regression Elo panel
-committed to this repository. It covers **64 families**, three folds and three
+The newest complete regression Elo panel committed to this repository is
+[`assets/automl-elo/v3`](../assets/automl-elo/v3/SOURCES.md), added on 2026-11-07.
+It refits the same 64 families, folds and seeds with six entrants. It adds
+`kimik3p1_max` (576 new fits) and reuses every earlier entrant's stored cells,
+including `grok4p7_xhigh`, whose source is not on `main` yet. Kimi ranks third of
+six (Elo 1510.7, 95% interval 1468.7–1554.3), level with Sol within both
+intervals. Its [RESULTS.json](../assets/automl-elo/v3/RESULTS.json) is the
+numerical authority for that panel.
+
+The README table and the paper show the October 22 four-entrant result, because
+the paper's evidence binds those exact bytes. It covers **64 families**, three folds and three
 seeds (41, 73, 109): 576 fits per entrant, 2,304 fits altogether. All six pairs
 have complete coverage. The historical three entrants' 1,728 fits are reused;
 Gemini contributed 576 new fits. Reuse is not a new experiment.
@@ -29,7 +38,7 @@ alone does not make clear:
 - Ratings are fitted jointly against this opponent pool. A higher numeric Elo on
   another ladder is not evidence of improvement.
 
-**Opus5p5_Extra has the highest Elo. searchT6p1_Sol_Max has the lowest
+**Opus5p5_Extra has the highest Elo. GPT6p1_Sol_Max has the lowest
 geometric-mean RMSE point estimate.** The pairwise ratio intervals do not establish
 Sol's error advantage over Opus or Gemini. All three Gemini RMSE comparisons fail
 the Holm-adjusted significance threshold. The README shows the complete table
@@ -39,7 +48,7 @@ The model names identify LLM-authored regression algorithms. The benchmark fits
 those algorithms; it does not call the named language models for each dataset.
 It also does not evaluate the separately trained neural proposal policy. An Elo
 entry does not guarantee a shipped CLI selector: the product native registry
-contains Sol and Gemini; the same-cut benchmark also has a separate Opus entrant
+contains Sol, Gemini and `kimik3p1_max`; the same-cut benchmark also has a separate Opus entrant
 adapter. Preserve the distinct source/registration boundaries.
 
 ## Plots checked
