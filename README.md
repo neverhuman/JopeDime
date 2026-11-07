@@ -36,7 +36,8 @@ program-library and checkpoint views with source identities, observation age and
 
 ## Regression performance
 
-The latest complete comparison is the four-entrant October 22 panel below.
+The four-entrant October 22 panel below is the comparison the paper's evidence
+binds. A newer six-entrant refit that adds `kimik3p1_max` follows it.
 The [performance audit](docs/performance.md) traces the Git history, plots,
 model lineages and the requested fast/low/medium/high generation profiles.
 
