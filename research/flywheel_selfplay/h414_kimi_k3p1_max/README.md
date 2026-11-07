@@ -102,6 +102,11 @@ every entrant of each board are in [`focus/`](focus/).
   (576 cells) is archived separately; see `assets/automl-elo/v3/SOURCES.md` on `main`.
 - **Run record:** the H414 closeout bundle (raw run records with the two-fold fold predictions, parity runs, binaries,
   build trees, LOCK, receipts and the code pull request's gate logs): [`CLOSEOUT.json`](CLOSEOUT.json).
+- **Study refresh:** [`final_study.json`](final_study.json), written by [`final_study_h414.py`](final_study_h414.py).
+  This is the H412 study script with the H413 and H414 entrants added: 31 dev91 AUDIT entrants, 14 two-fold entrants,
+  six frontier LLMs and AutoML v3. It reads stored files only. Run from this directory,
+  `python3 -B final_study_h414.py --repo <checkout>` regenerates it byte for byte. AutoML v3 is read at commit
+  `706f2beca2` (the head of the code pull request's branch `feat/kimik3p1-max-automl`).
 - Never rerun `h414.kimik3p1_max` on these boards: read the stored rows (board rule 1).
 
 ## Not done
