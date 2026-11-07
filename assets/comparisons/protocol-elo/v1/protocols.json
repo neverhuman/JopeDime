@@ -1,0 +1,26 @@
+{
+  "schema": "jope.protocol-elo-protocols/v1",
+  "protocols": [
+    {
+      "protocol_id": "automl-64-family-rmse-bt-v2",
+      "task": "tabular regression",
+      "metric": "RMSE, lower is better",
+      "panel": "64 families, 3 folds, seeds 41, 73, 109",
+      "estimator": "Bradley-Terry, centre 1500, 250 iterations, L2 1e-4, 10000 family bootstrap",
+      "anchor": "mean of the five rated entrants, shifted to 1500",
+      "receipt": "assets/automl-elo/v2/RESULTS.json",
+      "receipt_sha256": "4f14193ab3058ce9d2168ddeca5de10e43847993706b63c74d8b2bb51e029d31"
+    },
+    {
+      "protocol_id": "hwave-median-seed-vs-r882",
+      "task": "neural policy continuation",
+      "metric": "family utility versus incumbent r882, higher Elo is better",
+      "panel": "H129 registered median-seed estimator",
+      "estimator": "median_seed_elo",
+      "anchor": "r882 = 1500",
+      "receipt": "research/flywheel_selfplay/h129_gbm_blend_harm_gate/metrics.json",
+      "receipt_sha256": "1225d85b26c45dbb03f5123e342ed3771c8fbf9a295228dc4e3825dd946f9490",
+      "not_the_same_ladder_as": "automl-64-family-rmse-bt-v2"
+    }
+  ]
+}
