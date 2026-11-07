@@ -5,30 +5,31 @@ AUDIT-Elo anchor: `h335.H257_REPLICA` = 1500 (family bootstrap 95% CI). Elo depe
 
 | Rank | Entrant | AUDIT-Elo | 95% CI | Family-mean u | Median wall (s) | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `kumo_tabular_large_e8.v1` | 2047.9 | 1860–2340 | 1.9356 | 81.0 | completed 91 |
-| 2 | `tabfm_ensemble.v1` | 1900.9 | 1732–2136 | 1.7675 | 79.8 | completed 91 |
-| 3 | `tabfm.v1` | 1875.7 | 1706–2108 | 1.7202 | 26.2 | completed 91 |
-| 4 | `tabpfn_v3p5.v1` | 1822.9 | 1650–2077 | 1.6411 | 117.1 | completed 91 |
-| 5 | `tabpfn_v3.v1` | 1787.6 | 1651–1963 | 1.6427 | 85.1 | completed 91 |
-| 6 | `h364.XSTACK_2L` | 1726.8 | 1633–1852 | 1.5607 |  | completed 91 |
-| 7 | `h335.H335_AGG` | 1707.8 | 1620–1826 | 1.5592 |  | completed 91 |
-| 8 | `h335.OLD_MATCHED_CV3` | 1627.1 | 1564–1707 | 1.4607 |  | completed 91 |
-| 9 | `h335.Opus5p5_Extra` | 1578.2 | 1461–1700 | 1.2943 |  | completed 91 |
-| 10 | `h335.OLD_MATCHED` | 1532.6 | 1480–1596 | 1.4465 |  | completed 91 |
-| 11 | `h335.H317_BASE` | 1527.4 | 1492–1566 | 1.4073 |  | completed 91 |
-| 12 | `autogluon_300s.v1` | 1526.4 | 1409–1640 | 1.2524 | 50.7 | completed 91 |
-| 13 | `h335.Gemini4_argon_high` | 1524.4 | 1413–1642 | 1.3587 |  | completed 91 |
+| 1 | `kumo_tabular_large_e8.v1` | 2045.3 | 1859–2336 | 1.9356 | 81.0 | completed 91 |
+| 2 | `tabfm_ensemble.v1` | 1898.5 | 1732–2133 | 1.7675 | 79.8 | completed 91 |
+| 3 | `tabfm.v1` | 1873.4 | 1706–2104 | 1.7202 | 26.2 | completed 91 |
+| 4 | `tabpfn_v3p5.v1` | 1820.3 | 1649–2072 | 1.6411 | 117.1 | completed 91 |
+| 5 | `tabpfn_v3.v1` | 1785.8 | 1651–1960 | 1.6427 | 85.1 | completed 91 |
+| 6 | `h364.XSTACK_2L` | 1724.6 | 1632–1850 | 1.5607 |  | completed 91 |
+| 7 | `h335.H335_AGG` | 1705.7 | 1618–1823 | 1.5592 |  | completed 91 |
+| 8 | `h335.OLD_MATCHED_CV3` | 1625.4 | 1563–1705 | 1.4607 |  | completed 91 |
+| 9 | `h335.Opus5p5_Extra` | 1577.8 | 1462–1698 | 1.2943 |  | completed 91 |
+| 10 | `h335.OLD_MATCHED` | 1530.9 | 1478–1593 | 1.4465 |  | completed 91 |
+| 11 | `h335.H317_BASE` | 1526.6 | 1492–1565 | 1.4073 |  | completed 91 |
+| 12 | `autogluon_300s.v1` | 1526.0 | 1411–1638 | 1.2524 | 50.7 | completed 91 |
+| 13 | `h335.Gemini4_argon_high` | 1524.4 | 1415–1640 | 1.3587 |  | completed 91 |
 | 14 | `h335.H257_REPLICA` | 1500.0 | 1500–1500 | 1.3703 |  | completed 91 |
-| 15 | `h335.GPT6p1_Sol_Max` | 1496.4 | 1410–1585 | 1.3543 |  | completed 91 |
-| 16 | `catboost.v1` | 1481.1 | 1364–1594 | 1.1886 | 1.2 | completed 91 |
-| 17 | `h335.BANK_NN8_PORTFOLIO` | 1454.3 | 1384–1528 | 1.2715 |  | completed 91 |
-| 18 | `h335.BANK_NN8_PICK` | 1422.8 | 1362–1484 | 1.2636 |  | completed 91 |
-| 19 | `xgboost.v1` | 1375.3 | 1262–1485 | 1.0742 | 1.8 | completed 91 |
-| 20 | `random_forest.v1` | 1367.7 | 1245–1474 | 1.1245 | 1.5 | completed 91 |
-| 21 | `h335.GPT6_Astra_Max` | 1318.0 | 1191–1436 | 1.0215 |  | completed 91 |
-| 22 | `lightgbm.v1` | 1313.6 | 1187–1421 | 1.0492 | 1.5 | completed 91 |
-| 23 | `ridge.v1` | 1242.2 | 1031–1378 | 0.9208 | 1.0 | completed 91 |
-| 24 | `h335.BANK_NN1` | 1196.2 | 1092–1279 | 0.9031 |  | completed 91 |
+| 15 | `h335.GPT6p1_Sol_Max` | 1497.3 | 1412–1585 | 1.3543 |  | completed 91 |
+| 16 | `catboost.v1` | 1480.2 | 1364–1592 | 1.1886 | 1.2 | completed 91 |
+| 17 | `h335.BANK_NN8_PORTFOLIO` | 1453.3 | 1381–1527 | 1.2715 |  | completed 91 |
+| 18 | `h335.BANK_NN8_PICK` | 1421.3 | 1359–1482 | 1.2636 |  | completed 91 |
+| 19 | `xgboost.v1` | 1374.4 | 1263–1482 | 1.0742 | 1.8 | completed 91 |
+| 20 | `random_forest.v1` | 1366.6 | 1247–1471 | 1.1245 | 1.5 | completed 91 |
+| 21 | `lightgbm.v1` | 1316.2 | 1193–1422 | 1.0492 | 1.5 | completed 91 |
+| 22 | `h335.GPT6_Astra_Max` | 1308.4 | 1175–1429 | 1.0215 |  | completed 91 |
+| 23 | `ridge.v1` | 1223.2 | 1009–1364 | 0.9208 | 1.0 | completed 91 |
+| 24 | `h335.BANK_NN1` | 1189.6 | 1084–1273 | 0.9031 |  | completed 91 |
+| 25 | `h412.grok4p7_xhigh` | 1127.4 | 1004–1222 | 0.8639 | 0.1 | completed 91 |
 
 ## `h335.H335_AGG` head to head
 
@@ -36,6 +37,7 @@ Gain = family-equal mean of u(focus) − u(other); RMSE cut = 1 − exp(−gain)
 
 | vs | Gain | RMSE cut | Families W/T/L | Clipped T | Sign-flip p | LOFO min | Passes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| `h412.grok4p7_xhigh` | +0.6953 | +50.1% | 19/0/0 | +0.2638 | 1.907e-06 | +0.2506 | yes |
 | `h335.BANK_NN1` | +0.6561 | +48.1% | 19/0/0 | +0.2576 | 1.907e-06 | +0.2441 | yes |
 | `ridge.v1` | +0.6384 | +47.2% | 17/0/2 | +0.2516 | 9.155e-05 | +0.2378 | yes |
 | `h335.GPT6_Astra_Max` | +0.5377 | +41.6% | 19/0/0 | +0.2412 | 1.907e-06 | +0.2268 | yes |

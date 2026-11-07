@@ -14,14 +14,27 @@
         "schema": "jope.reference-board.archive/v1",
         "set": "dev91-audit-v1",
         "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
-        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T140116Z.tar.zst",
-        "version_id": "0Ax4wTWMm5FEtd0UqGKtQZae9pHK2AcQ",
-        "sha256": "bb1fcdb40b78a38bfba8da0b7aeec6491d5253a0fd268c280711c53a58cb866d",
-        "members": 1028,
-        "member_sha256sums_sha256": "8d7d7e3bde4f42a18d904e94f352c125a7ca3bd918257bcfaf699e2f6623065c",
+        "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261107T120005Z.tar.zst",
+        "version_id": "wSLUByLp0bS8RozTkAMOyBshyuaXPhwL",
+        "sha256": "f24f797bd917ef2dc58fa6702a67211d568c80b337f28f21a1ff7afabd6ad39c",
+        "members": 1029,
+        "member_sha256sums_sha256": "c816228e30cc943c781718af437b35cd85ed07d9d190c516e73d9a68c17cded8",
         "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
-        "utc": "20261105T140116Z",
+        "utc": "20261107T120005Z",
         "supersedes": [
+          {
+            "schema": "jope.reference-board.archive/v1",
+            "set": "dev91-audit-v1",
+            "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+            "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T140116Z.tar.zst",
+            "version_id": "0Ax4wTWMm5FEtd0UqGKtQZae9pHK2AcQ",
+            "sha256": "bb1fcdb40b78a38bfba8da0b7aeec6491d5253a0fd268c280711c53a58cb866d",
+            "members": 1028,
+            "member_sha256sums_sha256": "8d7d7e3bde4f42a18d904e94f352c125a7ca3bd918257bcfaf699e2f6623065c",
+            "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+            "utc": "20261105T140116Z",
+            "note": "Pre-H412 snapshot (24 entrants). Kept in S3 (create-only). The current archive above adds scores/h412.grok4p7_xhigh.jsonl and the regenerated ladder.json / LADDER.md; every other member is unchanged."
+          },
           {
             "schema": "jope.reference-board.archive/v1",
             "set": "dev91-audit-v1",
@@ -108,6 +121,10 @@
           "completed": 91
         },
         "h364.XSTACK_2L": {
+          "records": 91,
+          "completed": 91
+        },
+        "h412.grok4p7_xhigh": {
           "records": 91,
           "completed": 91
         },
@@ -585,6 +602,10 @@
       "model": "GPT6_Astra_Max (LLM regressor)",
       "two_fold": "h257.GPT6_Astra_Max",
       "audit": "h335.GPT6_Astra_Max"
+    },
+    {
+      "model": "grok4p7_xhigh (LLM regressor)",
+      "audit": "h412.grok4p7_xhigh"
     }
   ]
 }

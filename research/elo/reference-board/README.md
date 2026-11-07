@@ -1,7 +1,7 @@
 # Reference board: stored scores of every reference model
 
 **Never re-run a reference model.** TabFM, Kumo-Tabular, TabPFN 3.5 / v3, TabICL, TabDPT, Mitra, AutoGluon, CatBoost,
-XGBoost, LightGBM, random forest, ridge and the 4 LLM regressors have already been scored on DL-Val91. The per-context
+XGBoost, LightGBM, random forest, ridge and the 5 LLM regressors have already been scored on DL-Val91. The per-context
 scores are in git (this directory). The full results, including raw predictions and the original producer files, are
 in S3. Read them; do not fit, infer or download these models again.
 
@@ -27,6 +27,7 @@ one split is never comparable with a number from another (section 2).
 | AutoGluon (300 s) | — | `autogluon_300s.v1` 91/91 | — | `autogluon` 240/240 |
 | CatBoost / XGBoost / LightGBM / random forest / ridge | — | `catboost.v1`, `xgboost.v1`, `lightgbm.v1`, `random_forest.v1`, `ridge.v1` 91/91 each | — | 240/240 each |
 | LLM regressors (Opus5p5_Extra, Gemini4_argon_high, GPT6p1_Sol_Max, GPT6_Astra_Max) | `h257.<name>` 91/91 | `h335.<name>` 91/91 | — | — |
+| LLM regressor grok4p7_xhigh (`crates/jope-automl/src/grok4p7_xhigh.rs` at `1177c4f9c1`, frozen) | — | `h412.grok4p7_xhigh` 91/91 (scored once by H412) | — | — |
 | JopeDime two-level GP stack (H364 XSTACK-2L on the H335 AGG output) | — | `h364.XSTACK_2L` 91/91 (scored once by H369) | — | — |
 
 **Where each column is stored:**
@@ -34,7 +35,7 @@ one split is never comparable with a number from another (section 2).
 | Column | In git (per-context scores) | In S3 (create-only; exact-version GET verified) |
 | --- | --- | --- |
 | dev91 two-fold | [`boards/dev91-s1-two-fold-v1/`](boards/dev91-s1-two-fold-v1/LADDER.md) `scores/h257.*.jsonl` | `s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-s1-two-fold-v1/results-20261105T070830Z.tar.zst` (version `kT5xci1wsaPSYO8nz3mNSnolvdY6bSJU`). Holds the 5 original H257 files verbatim, including the LLM fold predictions |
-| dev91 AUDIT | [`boards/dev91-audit-v1/`](boards/dev91-audit-v1/LADDER.md) `scores/*.jsonl` | `s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T085053Z.tar.zst` (version `Hz8d5S8acwppcnoqjT.hssbC_pQgCxWc`, 1,027 members). Holds all 23 score files and the 1,001 prediction files `preds/<model>/<cid>.f64` (11 reference models × 91). It supersedes the pre-resume archive `results-20261105T070823Z.tar.zst` (version `L0zjqB_SDwriDnJc_4yLthrNOPyQnkHj`), which stays in S3; `ARCHIVE.json` records both |
+| dev91 AUDIT | [`boards/dev91-audit-v1/`](boards/dev91-audit-v1/LADDER.md) `scores/*.jsonl` | `s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261107T120005Z.tar.zst` (version `wSLUByLp0bS8RozTkAMOyBshyuaXPhwL`, 1,029 members). Holds all 25 score files and the 1,001 prediction files `preds/<model>/<cid>.f64` (11 reference models × 91). It supersedes the pre-H412 archive `results-20261105T140116Z.tar.zst` (version `0Ax4wTWMm5FEtd0UqGKtQZae9pHK2AcQ`), the pre-H369 archive `results-20261105T085053Z.tar.zst` (version `Hz8d5S8acwppcnoqjT.hssbC_pQgCxWc`) and the pre-resume archive `results-20261105T070823Z.tar.zst` (version `L0zjqB_SDwriDnJc_4yLthrNOPyQnkHj`). All three stay in S3; `ARCHIVE.json` records all four |
 | dev91 S3 single-split | [`external/dev91-s3-single-split-v1.jsonl`](external/dev91-s3-single-split-v1.jsonl): 546 lines, each with the exact object URI and S3 version id | The original objects, left where the campaigns wrote them: `s3://veox-jopedime-learning-use2/experiments/gp-policy-dl/v2-trainonly/encodings/{kumo_tabular_l,kumo_tabular_s,tabicl2,tabdpt13,mitra_v2}/…/<stem>.npy` (last 3 floats = `[qr2, spread, logspread]`), and TabPFN 3.5 under **two** campaigns: `experiments/gp-teacher-v6/campaigns/regression-research-2k-fold0-3plus2-v1-20261001-tabpfn35-exact1/tabpfn35-exact/results/sha256/*.json` (50 contexts) and `…/regression-research-2k-per-fold-hwm-v1-20261001-incoming-v1-tabpfn35-exact1/…` (41 contexts). All 546 confirmed present by HEAD on 2026-11-05 |
 | panel_v1 | [`external/panel_v1/`](external/panel_v1/): `all_results.jsonl` (3,834 method × dataset results, regression + binary), `elo_panel_v1.json`, `panel_v1.json` (dataset list) and the producer scripts | `s3://veox-jopedime-learning-use2/experiments/reference-board/external/panel_v1/results-20261105T070833Z.tar.zst` (version `SFPCcT4Rmeig0yMQjQrxwNVoYeaHnl9C`) |
 | TRAIN board (P201b) | [`boards/p201b-train-audit-v1/`](boards/p201b-train-audit-v1/LADDER.md) | `s3://veox-jopedime-learning-use2/experiments/reference-board/p201b-train-audit-v1/results-20261105T070826Z.tar.zst` (version `20ND6QS_IFxlJTrYtNo_EhLNU53AkdIB`) |
@@ -52,7 +53,10 @@ envelopes: TRAIN and DL-Val rows stay on the hosts.
   the 13 imported entrants equal H257's published means to 6 decimals.
 - **AUDIT:** this directory's harness (`tools/score_reference.py`, `models.json`), plus the 12 H335 entrants imported
   by `tools/import_h335.py`, plus `h364.XSTACK_2L`, scored once by H369
-  (`research/flywheel_selfplay/h369_dev91_stack_entrants/`; stored board AUDIT predictions, no entrant rescored).
+  (`research/flywheel_selfplay/h369_dev91_stack_entrants/`; stored board AUDIT predictions, no entrant rescored),
+  plus `h412.grok4p7_xhigh`, scored once by H412 (`research/flywheel_selfplay/h412_final_frontier_elo/`). H412 used
+  the H335 frontier AUDIT harness with a fifth entrant compiled in. The four H335 entrants in that binary reproduce
+  their 804 stored TRAIN records exactly, so the five frontier rows are comparable.
 - **S3 single-split:** the gp-policy-dl v2 encoding campaign and the gp-teacher-v6 TabPFN 3.5 campaigns (2026-10).
   Indexed by [`tools/index_s3_single_split.sh`](tools/index_s3_single_split.sh).
 - **panel_v1:** `~/jope_plan/elo/` on xbabe2, 2026-10-29. Copied unchanged.
@@ -93,7 +97,7 @@ do not put them in a ladder with the other two.
 
 | Board | Anchor = 1500 | Top of the table (Elo; family-mean u) |
 | --- | --- | --- |
-| [`dev91-audit-v1`](boards/dev91-audit-v1/LADDER.md) | `h335.H257_REPLICA` | `kumo_tabular_large_e8.v1` 2048 (1.936); `tabfm_ensemble.v1` 1901 (1.768); `tabfm.v1` 1876 (1.720); `tabpfn_v3p5.v1` 1823 (1.641); `tabpfn_v3.v1` 1788 (1.643); `h364.XSTACK_2L` 1727 (1.561); `h335.H335_AGG` 1708 (1.559); … `autogluon_300s.v1` 1526 (1.252); … `catboost.v1` 1481 (1.189). 24 entrants, all 91/91 |
+| [`dev91-audit-v1`](boards/dev91-audit-v1/LADDER.md) | `h335.H257_REPLICA` | `kumo_tabular_large_e8.v1` 2045 (1.936); `tabfm_ensemble.v1` 1899 (1.768); `tabfm.v1` 1873 (1.720); `tabpfn_v3p5.v1` 1820 (1.641); `tabpfn_v3.v1` 1786 (1.643); `h364.XSTACK_2L` 1725 (1.561); `h335.H335_AGG` 1706 (1.559); … `autogluon_300s.v1` 1526 (1.252); … `catboost.v1` 1480 (1.189); … `h412.grok4p7_xhigh` 1127 (0.864, last). 25 entrants, all 91/91 |
 | [`dev91-s1-two-fold-v1`](boards/dev91-s1-two-fold-v1/LADDER.md) | `h257.Opus5p5_Extra` | `h257.Kumo_Tabular_L` 1976 (1.501); `h257.Kumo_Tabular_S` 1870; `h257.PriorLabs_TabPFN_3p5_Single` 1854; `h257.TabFM_Ensemble` 1840; … |
 | [`p201b-train-audit-v1`](boards/p201b-train-audit-v1/LADDER.md) | `h335.H257_REPLICA` | TRAIN, development only: `h335.H335_AGG` 1675; … `catboost.v1` 1414 |
 
@@ -102,6 +106,8 @@ do not put them in a ladder with the other two.
 - The published H335 AUDIT-Elo (dev91 `H335_AGG` 1742.6) is the 12-entrant field.
   `tools/ladder.py boards/dev91-audit-v1 --only h335.…` reproduces it exactly. With the 11 reference models added,
   the field changes and `H335_AGG` reads 1708.0. With `h364.XSTACK_2L` added (H369, 24 entrants), it reads 1707.8.
+  With `h412.grok4p7_xhigh` added (H412, 25 entrants), it reads 1705.7. The family-mean u of every stored entrant is
+  unchanged.
 - H257's own published two-fold table (`frontier_elo_comparison.json`: TabFM_Ensemble 1915.49, Kumo L 1980.90, H257
   1749.51, anchor R882) has a 25-entrant field. Only its 13 reference entrants are stored per context, so this
   board's two-fold ladder has 13 entrants and different numbers.
@@ -125,6 +131,7 @@ do not put them in a ladder with the other two.
    `~/jope_plan/ns/receipts/`. It is a reuse cohort (H257 tuned on it).
    - **Exposure log.** H381 (2026-11-05, LOCK `b9375201`): a 5-context direction check of two TRAIN arms (not entrants; nothing added to any board) read `ac07466e…`, `8eeca816…`, `016648dc…`, `6ecbb7d5…` and `b1a5c1a1…` ([H381 README](../../flywheel_selfplay/h381_rapid_lf_grow/README.md#dev91-5-dataset-direction-check-stored-board-rows-nothing-added-to-the-board)).
    - H410 (2026-11-06, LOCK `c828dab5`): micro-tests of deployment builders, a strong-learner library and a retrained scale-L screener on the **same 5 contexts**, adaptively tuned on under an owner overfitting waiver (not entrants; nothing added to any board). Treat these 5 as tuned-on for any later comparison ([H410 README](../../flywheel_selfplay/h410_deploy_population/README.md#dev91-the-5-exposed-contexts-stored-board-rows-nothing-added-to-the-board)).
+   - H412 (2026-11-07, LOCK `8b368f93`): the frozen frontier entrant `grok4p7_xhigh` was scored once on **all 91** contexts as `h412.grok4p7_xhigh` (owner instruction 2026-11-06; nothing was chosen on dev91). No model of ours was read or rerun. The FINAL frontier study reads the stored rows only ([H412 FINAL_STUDY](../../flywheel_selfplay/h412_final_frontier_elo/FINAL_STUDY.md)).
 
 ## 5. Comparing a new model of ours
 1. Choose the board:

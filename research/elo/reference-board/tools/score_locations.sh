@@ -66,5 +66,6 @@ jq -n --argjson boards "$boards" --argjson s3single "$s3single" --argjson panel 
   {model: "Opus5p5_Extra (LLM regressor)", two_fold: "h257.Opus5p5_Extra", audit: "h335.Opus5p5_Extra"},
   {model: "Gemini4_argon_high (LLM regressor)", two_fold: "h257.Gemini4_argon_high", audit: "h335.Gemini4_argon_high"},
   {model: "GPT6p1_Sol_Max (LLM regressor)", two_fold: "h257.GPT6p1_Sol_Max", audit: "h335.GPT6p1_Sol_Max"},
-  {model: "GPT6_Astra_Max (LLM regressor)", two_fold: "h257.GPT6_Astra_Max", audit: "h335.GPT6_Astra_Max"}
+  {model: "GPT6_Astra_Max (LLM regressor)", two_fold: "h257.GPT6_Astra_Max", audit: "h335.GPT6_Astra_Max"},
+  {model: "grok4p7_xhigh (LLM regressor)", audit: "h412.grok4p7_xhigh"}
  ]}'
