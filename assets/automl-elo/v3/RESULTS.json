@@ -1,0 +1,250 @@
+{
+  "state": "COMPLETE",
+  "methods": [
+    "GPT6_Astra_Max",
+    "GPT6p1_Sol_Max",
+    "Gemini4_argon_high",
+    "Opus5p5_Extra",
+    "grok4p7_xhigh",
+    "kimik3p1_max"
+  ],
+  "elo": {
+    "GPT6_Astra_Max": {
+      "rating": 1389.2113069552752,
+      "ci95": [
+        1339.4267730935544,
+        1433.5961305632059
+      ]
+    },
+    "GPT6p1_Sol_Max": {
+      "rating": 1497.5246661880271,
+      "ci95": [
+        1455.9469146661218,
+        1541.7683357422368
+      ]
+    },
+    "Gemini4_argon_high": {
+      "rating": 1603.3122972978863,
+      "ci95": [
+        1561.6420581438033,
+        1649.3772216803586
+      ]
+    },
+    "Opus5p5_Extra": {
+      "rating": 1690.8345518061888,
+      "ci95": [
+        1642.3524060892548,
+        1747.0507484901684
+      ]
+    },
+    "grok4p7_xhigh": {
+      "rating": 1308.4482213594254,
+      "ci95": [
+        1240.265086452558,
+        1366.2754657380437
+      ]
+    },
+    "kimik3p1_max": {
+      "rating": 1510.6689563931964,
+      "ci95": [
+        1468.7495833753974,
+        1554.3058691041456
+      ]
+    }
+  },
+  "pairwise": [
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "GPT6p1_Sol_Max",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.3454788017632944,
+      "ratio_ci95": [
+        1.135777444712288,
+        1.6703825754442125
+      ],
+      "p": 0.005599440055994401
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "Gemini4_argon_high",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.1393868314940336,
+      "ratio_ci95": [
+        0.9866858971922163,
+        1.301100970502794
+      ],
+      "p": 0.0644935506449355
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.295262126111961,
+      "ratio_ci95": [
+        1.0851705033680616,
+        1.575405040971078
+      ],
+      "p": 0.007999200079992
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "grok4p7_xhigh",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.8601588611139049,
+      "ratio_ci95": [
+        0.7205650645946267,
+        1.0035559280329363
+      ],
+      "p": 0.070992900709929
+    },
+    {
+      "a": "GPT6_Astra_Max",
+      "b": "kimik3p1_max",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.027727762900998,
+      "ratio_ci95": [
+        0.8713475199798311,
+        1.1938632910699054
+      ],
+      "p": 0.7303269673032696,
+      "holm_kimi_five_p": 0.7303269673032696
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "Gemini4_argon_high",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.8468262970779099,
+      "ratio_ci95": [
+        0.6233556271142736,
+        1.0553728540565777
+      ],
+      "p": 0.2445755424457554
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.9626774679872157,
+      "ratio_ci95": [
+        0.7249217184700295,
+        1.1732764768999802
+      ],
+      "p": 0.7666233376662334
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "grok4p7_xhigh",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.6392957361993652,
+      "ratio_ci95": [
+        0.45054374010330245,
+        0.8370525373499336
+      ],
+      "p": 0.0086991300869913
+    },
+    {
+      "a": "GPT6p1_Sol_Max",
+      "b": "kimik3p1_max",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.7638379449413301,
+      "ratio_ci95": [
+        0.5462145347568858,
+        0.9756267602623759
+      ],
+      "p": 0.058894110588941104,
+      "holm_kimi_five_p": 0.11778822117788221
+    },
+    {
+      "a": "Gemini4_argon_high",
+      "b": "Opus5p5_Extra",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.136806298185432,
+      "ratio_ci95": [
+        0.9781850313409002,
+        1.4331699016443702
+      ],
+      "p": 0.18668133186681332
+    },
+    {
+      "a": "Gemini4_argon_high",
+      "b": "grok4p7_xhigh",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.7549313695209309,
+      "ratio_ci95": [
+        0.6652458289723086,
+        0.8490862247350821
+      ],
+      "p": 9.999000099990002e-05
+    },
+    {
+      "a": "Gemini4_argon_high",
+      "b": "kimik3p1_max",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.9020007380227297,
+      "ratio_ci95": [
+        0.8304533938068581,
+        0.9668134732298569
+      ],
+      "p": 0.0086991300869913,
+      "holm_kimi_five_p": 0.0347965203479652
+    },
+    {
+      "a": "Opus5p5_Extra",
+      "b": "grok4p7_xhigh",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.6640809175019095,
+      "ratio_ci95": [
+        0.49081162238829107,
+        0.8350984609226964
+      ],
+      "p": 0.005599440055994401
+    },
+    {
+      "a": "Opus5p5_Extra",
+      "b": "kimik3p1_max",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 0.7934515664300079,
+      "ratio_ci95": [
+        0.6258841514321412,
+        0.9328932485511626
+      ],
+      "p": 0.027997200279972004,
+      "holm_kimi_five_p": 0.08399160083991601
+    },
+    {
+      "a": "grok4p7_xhigh",
+      "b": "kimik3p1_max",
+      "paired_families": 64,
+      "geometric_rmse_ratio": 1.194811574190018,
+      "ratio_ci95": [
+        1.066990145120507,
+        1.3429948958738556
+      ],
+      "p": 0.0020997900209979003,
+      "holm_kimi_five_p": 0.010498950104989501
+    }
+  ],
+  "bootstrap_samples": 10000,
+  "cluster": "family",
+  "seeds_repeated_within_family": [
+    41,
+    73,
+    109
+  ],
+  "complete_pairwise_coverage": true,
+  "pool": "six-entrant refit; v1 and v2 ratings are not reused as numbers",
+  "provenance": {
+    "analyzer": "analyze_six.py (this file) extends analyze_five.py",
+    "analyze_five_sha256": "43237f3389a46cafd2a9d06e8c20cc085a71602f71a8250ddffd3eabfb889c3e",
+    "elo_core_sha256": "cc9378902551695881e3af8727f3adbb4dbd9f4972e3e494ef60403863f16d9c",
+    "elo_driver_sha256": "475401528fa92473c3e5a2dd3ccecd74951fea1d7b1b03e63c871cc82ab159c7",
+    "bootstrap_indices_sha256": "440d4c56856ebf4c44fdaa3a569378beb87b85e52725011ea0cafda3838f3633",
+    "datasets_json_sha256": "dc7e53e076c7ed4b91c5e3eda9e43baa31703429e2348f65e7e332878765e2dd",
+    "v2_five_entrant_reproduced_exactly": true,
+    "cells_manifest_sha256": {
+      "kimik3p1_max": "c27900ce70d566164266078db27e402008543f9566e2358729685bcd3b245b2f",
+      "grok4p7_xhigh": "ab6b0e0258676d6b02c54e99e2c5295f8e0f1e09102abafd4e9faceebf8fd998",
+      "Gemini4_argon_high": "c6a3004458f5d25b34ff6be14553bf8f1833991a586ee11d21bf0c09e2ca7e23"
+    }
+  }
+}
