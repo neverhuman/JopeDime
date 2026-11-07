@@ -5,6 +5,11 @@ the commit areas (crate or lane) named in each subject line.
 
 ## [Unreleased]
 
+### Native AutoML regressors
+
+- automl: the owner-supplied `kimik3p1_max` Rust regressor joins the native registry byte-for-byte (`jope-bench run --native kimik3p1_max`; SHA-256 `0c211694…6ceb3`), with Gemini-style submission records whose unknown authoring fields stay `null`. Its outputs are clamped, so the adapter's non-finite refusal is never reached on extreme finite inputs.
+- automl-elo: `assets/automl-elo/v3` refits the 64-family AutoML Elo with `kimik3p1_max` added to the five-entrant pool. Kimi was fitted on all 576 cells (one CPU and 8 GiB each, no failures); no earlier entrant is refitted, and the five-entrant result is reproduced exactly first. Ratings: Opus5p5_Extra 1691, Gemini4_argon_high 1603, kimik3p1_max 1511, GPT6p1_Sol_Max 1498, GPT6_Astra_Max 1389, grok4p7_xhigh 1308 (Kimi and Sol overlap; Gemini's lower RMSE than Kimi's is significant after Holm adjustment).
+
 ## [1.0.0] - 2026-11-02
 
 First stable release. Absorbs every change listed under Unreleased since 0.4.1 (2944 commits on `v1/fastlane`, generated with git-cliff 2.14.1 from the commit history and curated by area below).

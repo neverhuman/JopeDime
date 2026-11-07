@@ -5,8 +5,8 @@
   "python": 172
  },
  "rust": {
-  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.; QLT-03-F02 additive targeted collection: cargo test --locked -p jope-service --features research --lib (2026-10-31); add only16 new feature-bound capture IDs including one ignored owned-process helper, preserving the complete historical union. Execution and software-control limits are reported separately.; QLT-03 CPU follow-up additive collection: cargo test --locked -p jope-service --features research --lib durable_capture (2026-10-31); one new parameterized suffix/export-refusal case, existing deadline case retains its ID. Collection is separate from final execution; no ignored case credited.; RNK-12 additive targeted collection: cargo test --locked -p jope-service --lib ranker::cuda:: -- --list (2026-10-31); thirteen added inline IDs including two ignored external replay entry points; existing union preserved. Listings are not CUDA qualification or execution coverage.; RNK-12 CPU arithmetic repair adds five model-free regressions in the existing jope-service library target; full fixture CPU proof is retained separately, CUDA M2 remains unqualified.",
-  "count": 6135,
+  "command": "Union of recorded pre-integration nextest listings from Go, CUDA-local-only and math-decoder heads; combined nextest listing deferred to postmerge manual validation (owner emergency exception). Additive union: cargo nextest list --locked -P main -p jope-narrator -p jope-pipeline -p jope-observatory -p jope-runtime --message-format json (2026-10-28); preserve prior feature-gated cases absent from this default-feature listing. Collection is not execution. Review-correction union from the same four-package command: versioned golden, concurrent commits, CLI completion, exact prediction float codec (2026-10-28). Current-main integration additive collection: cargo nextest list --locked -P main -p starforge --features starforge/dope --test dope_encoding --message-format json (2026-10-28); 21 CPU-feature cases, including 6 ignored, collected only. Preserve all prior cases; new CUDA-only cases are outside this collection.; telemetry addition: cargo nextest list --locked -P main -p jope-telemetry --message-format json (2026-10-29), 39 listed, 0 ignored; telemetry Rust port addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-29), 64 listed, 0 ignored; telemetry P2 addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 73 listed, 0 ignored; telemetry two-tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 77 listed, 0 ignored; telemetry reasoning tok/s addition: cargo test --locked -p jope-telemetry --lib -- --list (2026-10-30), 80 listed, 0 ignored; QLT-03-F01 additive targeted collection: cargo test --locked -p jope-appliance --bin jopedime [--features research] research -- --list (2026-10-31); only the four new feature-boundary/parser/refusal IDs added, preserving all earlier feature cases. This union is collection, not execution; exact commands and receipts accompany the PR.; QLT-03-F02 additive targeted collection: cargo test --locked -p jope-service --features research --lib (2026-10-31); add only16 new feature-bound capture IDs including one ignored owned-process helper, preserving the complete historical union. Execution and software-control limits are reported separately.; QLT-03 CPU follow-up additive collection: cargo test --locked -p jope-service --features research --lib durable_capture (2026-10-31); one new parameterized suffix/export-refusal case, existing deadline case retains its ID. Collection is separate from final execution; no ignored case credited.; RNK-12 additive targeted collection: cargo test --locked -p jope-service --lib ranker::cuda:: -- --list (2026-10-31); thirteen added inline IDs including two ignored external replay entry points; existing union preserved. Listings are not CUDA qualification or execution coverage.; RNK-12 CPU arithmetic repair adds five model-free regressions in the existing jope-service library target; full fixture CPU proof is retained separately, CUDA M2 remains unqualified.; kimik3p1_max add-only targeted collection: cargo nextest list --locked -P main -p jope-automl -p jope-bench --message-format json (2026-11-07); four new IDs inserted (three jope-automl lib, one jope-bench lib), no ID removed, every other entry preserved verbatim. Collection is not execution.",
+  "count": 6139,
   "ignored": 84,
   "packages": {
    "battle-gpu": {
@@ -2730,17 +2730,20 @@
     }
    },
    "jope-automl": {
-    "count": 7,
+    "count": 10,
     "ignored": 0,
     "binaries": {
      "jope-automl": {
       "kind": "lib",
-      "count": 7,
+      "count": 10,
       "ignored": 0,
       "tests": [
        "tests::gemini4_argon_high_lifecycle_and_shapes_are_explicit",
        "tests::gemini4_argon_high_non_finite_output_is_refused_by_the_adapter",
        "tests::gemini4_argon_high_prediction_is_row_local_and_refit_matches_fresh_state",
+       "tests::kimik3p1_max_lifecycle_and_shapes_are_explicit",
+       "tests::kimik3p1_max_prediction_is_row_local_and_refit_matches_fresh_state",
+       "tests::kimik3p1_max_wide_missing_and_extreme_finite_inputs_remain_defined",
        "tests::lifecycle_shapes_and_failed_refit_are_explicit",
        "tests::prediction_is_row_local_and_refit_matches_fresh_state",
        "tests::registry_and_transport_preserve_target_placement",
@@ -2750,12 +2753,12 @@
     }
    },
    "jope-bench": {
-    "count": 183,
+    "count": 184,
     "ignored": 1,
     "binaries": {
      "jope-bench": {
       "kind": "lib",
-      "count": 155,
+      "count": 156,
       "ignored": 1,
       "tests": [
        "ablation::tests::ablation_a_equals_a_replays_byte_for_byte_and_reports_no_difference",
@@ -2828,6 +2831,7 @@
        "methods::tests::baselines_are_valid_single_head_programs_for_their_task",
        "native::tests::gemini4_argon_high_source_hash_and_route_are_registered",
        "native::tests::held_out_labels_do_not_change_fitted_predictions",
+       "native::tests::kimik3p1_max_source_hash_and_route_are_registered",
        "native::tests::screening_and_deepening_refit_the_registered_native_method",
        "native::tests::source_hash_is_the_compiled_standalone_source",
        "panel::campaign::tests::interrupted_measurements_stay_unknown_and_evidence_is_immutable",
@@ -9743,7 +9747,7 @@
   }
  },
  "totals": {
-  "rust": 6135,
+  "rust": 6139,
   "python": 210
  }
 }
