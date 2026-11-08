@@ -20,6 +20,11 @@ mod gemini4_argon_high;
 #[path = "grok4p7_xhigh.rs"]
 mod grok4p7_xhigh;
 
+#[rustfmt::skip]
+#[allow(clippy::all, unused_imports)]
+#[path = "kimik3p1_max.rs"]
+mod kimik3p1_max;
+
 /// The owner-supplied Gemini candidate's immutable model state.
 pub use gemini4_argon_high::Regressor as Gemini4ArgonHigh;
 /// Lifecycle API for [`Gemini4ArgonHigh`].
@@ -36,6 +41,14 @@ pub use grok4p7_xhigh::Regressor as Grok4p7Xhigh;
 /// receives row-major feature columns only. Both methods validate dimensions and
 /// return errors rather than changing the frozen submission.
 pub use grok4p7_xhigh::RegressorApi as Grok4p7XhighApi;
+/// The frozen Kimik candidate's immutable model state.
+pub use kimik3p1_max::Regressor as Kimik3p1Max;
+/// Lifecycle API for [`Kimik3p1Max`].
+///
+/// `fit` receives a row-major matrix whose final column is the target; `predict`
+/// receives row-major feature columns only. Both methods validate dimensions and
+/// return errors rather than changing the frozen submission.
+pub use kimik3p1_max::RegressorApi as Kimik3p1MaxApi;
 /// The frozen GPT-6.1 candidate's immutable model state.
 pub use submission::Regressor as Gpt6p1SolMax;
 /// Lifecycle API for [`Gpt6p1SolMax`].
@@ -69,6 +82,14 @@ pub const GROK4P7_XHIGH_SHA256: &str =
 /// The exact file also builds directly with `rustc --crate-type rlib`.
 pub const GROK4P7_XHIGH_SOURCE: &str = include_str!("grok4p7_xhigh.rs");
 
+/// Frozen candidate identifier of the Kimik submission supplied at the repo root.
+pub const KIMIK3P1_MAX: &str = "kimik3p1_max";
+/// Hash of the standalone source. It is included byte-for-byte.
+pub const KIMIK3P1_MAX_SHA256: &str =
+    "0c211694ec66605b994595fd8f4cf2b8894df6f156caa3b80f1fcc75f5d6ceb3";
+/// The exact file also builds directly with `rustc --crate-type rlib`.
+pub const KIMIK3P1_MAX_SOURCE: &str = include_str!("kimik3p1_max.rs");
+
 /// One immutable, selectable native algorithm.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Definition {
@@ -97,6 +118,11 @@ pub const REGRESSORS: &[Definition] = &[
         source_sha256: GROK4P7_XHIGH_SHA256,
         source_file: "grok4p7_xhigh.rs",
     },
+    Definition {
+        id: KIMIK3P1_MAX,
+        source_sha256: KIMIK3P1_MAX_SHA256,
+        source_file: "kimik3p1_max.rs",
+    },
 ];
 
 /// Resolve a requested candidate; an unknown name never silently selects another model.
@@ -117,6 +143,7 @@ enum Model {
     Gpt6p1SolMax(Gpt6p1SolMax),
     Gemini4ArgonHigh(Box<Gemini4ArgonHigh>),
     Grok4p7Xhigh(Box<Grok4p7Xhigh>),
+    Kimik3p1Max(Box<Kimik3p1Max>),
 }
 
 /// Fit only the supplied training rows. The adapter appends each training target last.
@@ -167,6 +194,11 @@ pub fn fit_rows(
             Grok4p7XhighApi::fit(&mut model, &table, features.len(), columns)?;
             Model::Grok4p7Xhigh(Box::new(model))
         }
+        KIMIK3P1_MAX => {
+            let mut model = <Kimik3p1Max as Kimik3p1MaxApi>::new(seed);
+            Kimik3p1MaxApi::fit(&mut model, &table, features.len(), columns)?;
+            Model::Kimik3p1Max(Box::new(model))
+        }
         other => return Err(format!("registered regressor {other:?} has no fitter")),
     };
     Ok(FittedRegressor { model, width })
@@ -195,6 +227,9 @@ impl FittedRegressor {
             }
             Model::Grok4p7Xhigh(model) => {
                 Grok4p7XhighApi::predict(&**model, &flat, features.len(), self.width)?
+            }
+            Model::Kimik3p1Max(model) => {
+                Kimik3p1MaxApi::predict(&**model, &flat, features.len(), self.width)?
             }
         };
         // A frozen submission is never patched; a non-finite output is refused here instead.
@@ -341,7 +376,17 @@ mod tests {
 
     #[test]
     fn registry_and_transport_preserve_target_placement() {
-        assert_eq!(REGRESSORS.len(), 3);
+        assert_eq!(REGRESSORS.len(), 4);
+        assert_eq!(
+            definition(KIMIK3P1_MAX).unwrap().source_sha256,
+            KIMIK3P1_MAX_SHA256
+        );
+        let kimik = fit_rows(KIMIK3P1_MAX, &[vec![10.0], vec![20.0]], &[7.0, 7.0], 1).unwrap();
+        assert_eq!(
+            kimik.predict_rows(&[vec![1234.0], vec![f64::NAN]]).unwrap(),
+            vec![7.0; 2]
+        );
+        assert!(kimik.predict_rows(&[vec![1.0, 2.0]]).is_err());
         assert_eq!(
             definition(GROK4P7_XHIGH).unwrap().source_sha256,
             GROK4P7_XHIGH_SHA256
