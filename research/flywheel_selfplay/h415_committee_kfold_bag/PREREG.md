@@ -195,3 +195,64 @@ Two launches of the part-A `train_l_h415.sh` on xbabe1 refused before any optimi
   starts.
 - `run_h415.sh ltrain` and `lassemble` follow the per-fold hosts. `H415-L` must hold 10 `model.pt` files: 5 folds × 2
   seeds, with fold 0 = the H410 C1 pair.
+
+## 10. Amendment 2: deploy code (2026-11-08, before any P201e deploy unit or deploy output)
+This amendment publishes `deploy_h415.py` and `train_h415.py`, as §8 requires, and adds the deploy steps to
+`run_h415.sh`. It fixes code, not choices. §6–§7 choices are unchanged; where the text left a detail open, the code fixes
+it as stated below. The fixes were written before any H415 deploy output existed: the only deploy output so far is the
+never-scored DEV2E smoke below.
+
+**State at publication.**
+- `GS` and `GE` are running on P201e from stage `pub-gp2`. No deploy unit has read them.
+- `H415-L` is assembled on xbabe0: 10 `model.pt` files. Per-file sha manifest: `logs/H415-L.sha256` in the evidence dir.
+  - Folds 1–4 were trained 17:00–17:12Z: folds 1–2 on the xbabe1 RTX 4090, folds 3–4 on the xbabe3 RTX 3090.
+  - Every fold made real optimizer steps (e.g. fold 1, seed 317101: loss 5.84 → 4.28, relative drift 0.297) with 0
+    guard refusals.
+  - Final training loss is below H0.1-A's on all 10 fold × seed models, by about 0.03. This is a training statistic,
+    not a test; S3 is the test.
+
+**Details fixed by the code:**
+1. **H.** "Every head operator not already in" means a head operator absent from the top 48. Each such head adds its
+   2 best passing programs by fitness. A headless pipe's head is `none`.
+2. **Memo.** The deploy run dir's memo is the per-context concatenation of the arms' memos in the order `GS`, `GE`,
+   `GL` (`run_h415.sh deploy-prep`, sha manifest in `logs/`). The engine keys its memo by (context, program, envelope
+   kind, envelope sha), so for a program that more than one arm evaluated, the later arm's record is loaded. The worker
+   is deterministic, so the records agree except for a run near its CPU limit. The replay check reports, per arm, the
+   largest |Δu| between the deploy unit's stock output and the arm's stored stage record, and the member-list equality.
+   A mismatch is reported, not repaired.
+3. **`LIB.single`** is taken from the KFB pool's library (`LIB3`).
+4. **KFB full-refit fallback.** It is requested under its own AUDIT ledger key, `<output>.fallback`. A failed full
+   refit predicts the SEARCH mean, and is counted.
+5. **Invalid or missing outputs** score the X0e value (0 gain) and are counted, per §7. The H410 `BAG_<b>` → `<b>`
+   fallback is counted separately.
+6. **H317 adoption gate (descriptive):**
+   - LCB95 of the clipped family-mean contrast > 0.001 (family bootstrap, 10,000 draws, seed 415150);
+   - median ≥ 0;
+   - at most 10% of families with an unclipped family contrast < −0.01;
+   - sign-flip p < 0.025 and LOFO min > 0.
+7. **Holm secondaries.** A secondary passes when Holm rejects it and LOFO min > 0, median ≥ 0 and T > 0. T > 0 is
+   implied by a small one-sided p and is checked explicitly.
+8. **TRAIN AUDIT-Elo.** `h335_stats.elo_panel` over the declared outputs present, anchor X0e, seed 415150, 10,000
+   draws.
+9. **Worker seconds.** Every SEARCH and AUDIT result carries the wall time of its single-core, taskset-pinned
+   evaluation, memo hits included. Each unit records these seconds for its arms' pools (`search.<arm>`), the library,
+   `hf` (kf) and `akf` evaluations.
+
+**DEV2E smoke** (never scored; dev stage `dev-deploy1`, `H415_DEV_OK=1`). Arms `SMOKE_GS` (H0.1-A) and `SMOKE_GE`
+(S3fz) ran at seed 415101 on the 2 DEV2E contexts, then `deploy-prep`, `deploy` (P2, KFB on `P2+LIB2`) and
+`pull-analyze`:
+- **Replay:** both arms reproduce their stored stock outputs on both contexts (max |Δu| = 0.0, member lists equal).
+- **Envelopes:** every `kf<j>` holds the 1,120 SEARCH rows only, with fold sizes 224 × 5. Every `akf<j>` pairs
+  SEARCH \ F_j with the 480 AUDIT rows. `envelopes_ok` holds on 2/2 contexts.
+- **H:**
+  - 64 and 60 candidates, of which 16 and 12 are head additions;
+  - all usable, 0 kf failures;
+  - KCAR kept 11 and 4 members, with no partial bag, no full-refit fallback and no mean substitution.
+- **Ledgers:**
+  - AUDIT ledger consistent: 34 outputs, 480 member requests;
+  - akf ledger consistent: 4 outputs, 17 member requests;
+  - 0 same-family bank hits, 0 memo envelope mismatches, 0 failures, 0 timeouts.
+- **Guard:** 0 refusals. The one line in xbabe0's `guard_refusals.log` dates from 2026-11-05 11:20Z, before H415.
+- **Physical runs:** 979 in 558 s on 12 cores (library 195, AUDIT 89, kf 620, akf 75).
+
+The smoke's AUDIT values are not results: 2 contexts, never scored, read for no choice.

@@ -9,6 +9,19 @@
 #                     xbabe0: systemd-run --user h415-gp-ARM (docker sandbox) for ARM in GS GE GL
 #   ltrain            xbabe1 + xbabe3: systemd-run --user h415-ltrain-HOST (H0.2-L recipe; folds 1-2 / 3-4 per FOLD_HOST)
 #   lassemble         H415-L = H410 C1 fold-0 pair + the H415 folds 1-4 -> xbabe0 $DATA/neural/runs/H415-L (read-only)
+#   deploy-prep RUN ARMS
+#                     xbabe0: create-once $DATA/runs/RUN with gproot_AGG/memo/<cid>.split.jsonl = the concatenation of
+#                     the arms' memos (ARMS e.g. GS,GE,GL; arm run dirs H415_<ARM>); every arm must hold one stage
+#                     record per context of its config; sha256 manifest of sources and outputs -> logs/
+#   deploy RUN TAG ARMS PANEL CPUS JOBS MEM
+#                     xbabe0: systemd-run --user h415-deploy-TAG: train_h415.py deploy (docker sandbox)
+#   pull-analyze RUN TAG ARMS PANEL
+#                     copy the deploy + arm stage records to $EV/pulled/RUN (sha-compared), run train_h415.py analyze
+#                     from the stage on xbabe2 -> $EV/results/RUN_TAG.json
+#   smoke-gp ARM CPUS WORKERS MEM
+#                     DEV2E GP arm (never scored) into $DATA/runs/H415_SMOKE_<ARM>; deploy-prep / deploy /
+#                     pull-analyze then take RUN=H415_SMOKE_DEPLOY with ARMS SMOKE_GS,SMOKE_GE and PANEL DEV2E.
+#                     A dev stage is accepted only for DEV2E smoke steps and only with H415_DEV_OK=1.
 set -euo pipefail
 STEP=${1:?step}; shift
 STAGE=${H415_STAGE:?H415_STAGE}
@@ -24,7 +37,13 @@ SSH1=(ssh -o BatchMode=yes xbabe1)
 CRED=(-c credential.helper= -c "credential.helper=!/home/ubuntu/.local/bin/gh-role writer auth git-credential")
 declare -A NEURAL=([GS]=H0.1-A [GE]=H381-E2-S3fz [GL]=H415-L)
 [ "$(hostname)" = xbabe2 ] || { echo "run on xbabe2" >&2; exit 2; }
-[ "$(cat "$STAGE/mode")" = pub ] || { echo "$STAGE is not a pub stage" >&2; exit 3; }
+MODE=$(cat "$STAGE/mode")
+SMOKE=0
+case "$STEP ${1:-}" in "smoke-gp "*|"deploy-prep H415_SMOKE_"*|"deploy H415_SMOKE_"*|"pull-analyze H415_SMOKE_"*) SMOKE=1 ;; esac
+if [ "$MODE" != pub ]; then
+  [ "$SMOKE" = 1 ] && [ "${H415_DEV_OK:-0}" = 1 ] || { echo "$STAGE is not a pub stage" >&2; exit 3; }
+fi
+DEVENV=(); [ "$MODE" = pub ] || DEVENV=(-E H415_DEV_OK=1)
 (cd "$STAGE/code" && sha256sum --quiet -c ../CODE.sha256)
 git -C "$REPO" "${CRED[@]}" fetch -q https://github.com/neverhuman/JopeDime.git \
   +refs/heads/v1/next:refs/remotes/origin/v1/next
@@ -105,5 +124,69 @@ case $STEP in
     "${SSH0[@]}" "cd $DATA/neural/runs/H415-L && sha256sum --quiet -c && chmod -R a-w ." < "$EV/logs/H415-L.sha256"
     chmod -R a-w "$X2"
     echo "H415-L assembled: $(grep -c model.pt "$EV/logs/H415-L.sha256") model.pt files, sha OK on xbabe0" ;;
+  smoke-gp)
+    ARM=${1:?ARM}; CPUS=${2:?CPUS}; WORKERS=${3:?WORKERS}; MEM=${4:?MEM}
+    ND=${NEURAL[$ARM]:?unknown arm}
+    R=$DATA/runs/H415_SMOKE_$ARM
+    "${SSH0[@]}" "[ ! -e $R ] && mkdir -p $R && systemd-run --user --unit h415-smoke-gp-$ARM --collect \
+      ${DEVENV[*]} -p MemoryMax=${MEM^^} -p MemorySwapMax=0 -p Nice=19 bash $STAGE/code/run_h415_xbabe0.sh $STAGE \
+      $CPUS ${MEM} gp_h415.py launch --run-dir $R --neural-run-dir $DATA/neural/runs/$ND --cpus $CPUS --shards 1 \
+      --workers-per-shard $WORKERS --panel DEV2E" | tee -a "$EV/logs/smoke_gp_$ARM.log" ;;
+  deploy-prep)
+    RUN=${1:?RUN}; ARMS=${2:?ARMS}
+    R=$DATA/runs/$RUN
+    IFS=, read -ra A <<< "$ARMS"
+    MAN=$EV/logs/memo_$RUN.sha256
+    [ ! -e "$MAN" ] || { echo "$MAN exists (create-once)" >&2; exit 3; }
+    "${SSH0[@]}" "set -euo pipefail; [ ! -e $R ] || { echo '$R exists (create-once)' >&2; exit 3; }
+      C0=\$(jq -c .cids $DATA/runs/H415_${A[0]}/config.json)
+      for a in ${A[*]}; do
+        D=$DATA/runs/H415_\$a
+        [ \"\$(jq -c .cids \$D/config.json)\" = \"\$C0\" ] || { echo \"arm \$a: cids differ\" >&2; exit 4; }
+        for c in \$(jq -r '.[]' <<< \"\$C0\"); do
+          [ \$(grep -c '\"type\": \"result\"' \$D/stages/E415_AGG/\${c}__415101.jsonl) = 1 ] \
+            || { echo \"arm \$a \$c: no single stage record\" >&2; exit 4; }
+          [ -s \$D/gproot_AGG/memo/\$c.split.jsonl ] || { echo \"arm \$a \$c: no memo\" >&2; exit 4; }
+        done
+      done
+      mkdir -p $R/gproot_AGG/memo
+      for c in \$(jq -r '.[]' <<< \"\$C0\"); do
+        src=; for a in ${A[*]}; do src=\"\$src $DATA/runs/H415_\$a/gproot_AGG/memo/\$c.split.jsonl\"; done
+        cat \$src > $R/gproot_AGG/memo/\$c.split.jsonl
+        sha256sum \$src $R/gproot_AGG/memo/\$c.split.jsonl
+      done" > "$MAN"
+    chmod a-w "$MAN"
+    echo "deploy-prep $RUN from $ARMS: $(grep -c "$RUN/gproot_AGG" "$MAN") concatenated memos; manifest $MAN" ;;
+  deploy)
+    RUN=${1:?RUN}; TAG=${2:?TAG}; ARMS=${3:?ARMS}; PANEL=${4:?PANEL}; CPUS=${5:?CPUS}; JOBS=${6:?JOBS}; MEM=${7:?MEM}
+    R=$DATA/runs/$RUN
+    SRC=${ARMS//SMOKE_/}
+    "${SSH0[@]}" "[ -d $R/gproot_AGG/memo ] && [ ! -e $R/config_$TAG.json ] && systemd-run --user --unit h415-deploy-$TAG \
+      --collect ${DEVENV[*]} -p MemoryMax=${MEM^^} -p MemorySwapMax=0 -p Nice=19 bash $STAGE/code/run_h415_xbabe0.sh \
+      $STAGE $CPUS ${MEM} train_h415.py deploy --panel $PANEL --run-dir $R --tag $TAG --sources $SRC --cores $CPUS \
+      --jobs $JOBS" | tee -a "$EV/logs/deploy_$TAG.log" ;;
+  pull-analyze)
+    RUN=${1:?RUN}; TAG=${2:?TAG}; ARMS=${3:?ARMS}; PANEL=${4:?PANEL}
+    P=$EV/pulled/$RUN
+    [ ! -e "$P" ] || { echo "$P exists (create-once)" >&2; exit 3; }
+    "${SSH0[@]}" "ls $DATA/runs/$RUN/status_${TAG}_*.json" >/dev/null || { echo "deploy $TAG has no status file" >&2; exit 6; }
+    IFS=, read -ra A <<< "$ARMS"
+    mkdir -p "$P/$RUN" "$EV/results"
+    rsync -a "xbabe0:$DATA/runs/$RUN/config_$TAG.json" "xbabe0:$DATA/runs/$RUN/stages" "$P/$RUN/"
+    rsync -a "xbabe0:$DATA/runs/$RUN/" --include='status_*.json' --exclude='*' "$P/$RUN/"
+    GPA=()
+    for a in "${A[@]}"; do
+      mkdir -p "$P/H415_$a"
+      rsync -a "xbabe0:$DATA/runs/H415_$a/config.json" "xbabe0:$DATA/runs/H415_$a/stages" "$P/H415_$a/"
+      GPA+=(--gp "${a#SMOKE_}=$P/H415_$a")
+    done
+    (cd "$P" && find . -type f | sort | xargs sha256sum) > "$P.sha256"
+    "${SSH0[@]}" "cd $DATA/runs && sha256sum --quiet -c" < "$P.sha256"
+    chmod -R a-w "$P" "$P.sha256"
+    PF=(); [ "$PANEL" = P201e ] && PF=(--panel-file "$DATA/h415/P201e.json")
+    PYTHONDONTWRITEBYTECODE=1 nice -n 19 python3 -B "$STAGE/code/train_h415.py" analyze --run-dir "$P/$RUN" \
+      --tag "$TAG" --panel "$PANEL" "${GPA[@]}" "${PF[@]}" --out "$EV/results/${RUN}_$TAG.json" \
+      | tee "$EV/results/${RUN}_$TAG.txt"
+    chmod a-w "$EV/results/${RUN}_$TAG.json" "$EV/results/${RUN}_$TAG.txt" ;;
   *) echo "unknown step $STEP" >&2; exit 2 ;;
 esac
