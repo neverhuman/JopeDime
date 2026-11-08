@@ -36,8 +36,8 @@ program-library and checkpoint views with source identities, observation age and
 
 ## Regression performance
 
-The four-entrant October 22 panel below is the comparison the paper's evidence
-binds. A newer six-entrant refit that adds `kimik3p1_max` follows it.
+The ranking below is the newest complete panel: the November 7 six-entrant refit
+that adds `kimik3p1_max`. The paper's evidence binds the earlier four-entrant panel.
 The [performance audit](docs/performance.md) traces the Git history, plots,
 model lineages and the requested fast/low/medium/high generation profiles.
 
@@ -45,50 +45,70 @@ model lineages and the requested fast/low/medium/high generation profiles.
 
 ### Latest complete native-regressor ranking
 
-**64 regression families × 3 folds × 3 seeds; 576 fits per entrant.** These are four
+**64 regression families × 3 folds × 3 seeds; 576 fits per entrant.** These are six
 LLM-authored regression algorithms, fitted on the same prepared inner-CV inputs.
 The names identify the submitted algorithms. This table does not measure the
 LLMs at inference time or the neural program-proposal policy.
 
-![Four native regression algorithms: Elo point estimates and 95% family-bootstrap intervals on the 64-family panel](assets/automl-elo/v1/figures/automl-elo.svg)
-
 | Rank | Algorithm | Elo | 95% family-bootstrap interval |
 | ---: | --- | ---: | ---: |
-| 1 | `Opus5p5_Extra` | 1641.3 | 1599.3–1689.2 |
-| 2 | `Gemini4_argon_high` | 1560.8 | 1518.8–1606.9 |
-| 3 | `GPT6p1_Sol_Max` | 1455.8 | 1414.1–1496.8 |
-| 4 | `GPT6_Astra_Max` | 1342.1 | 1288.9–1388.2 |
+| 1 | `Opus5p5_Extra` | 1690.8 | 1642.4–1747.1 |
+| 2 | `Gemini4_argon_high` | 1603.3 | 1561.6–1649.4 |
+| 3 | `kimik3p1_max` | 1510.7 | 1468.7–1554.3 |
+| 4 | `GPT6p1_Sol_Max` | 1497.5 | 1455.9–1541.8 |
+| 5 | `GPT6_Astra_Max` | 1389.2 | 1339.4–1433.6 |
+| 6 | `grok4p7_xhigh` | 1308.4 | 1240.3–1366.3 |
 
-**Opus has the highest Elo; Sol has the lowest geometric-mean RMSE point estimate.**
-Elo rewards how often a method wins, while RMSE ratios also reflect error size.
-Sol / `Opus5p5_Extra` RMSE: **0.963 [0.725, 1.173]**.
-Sol / `Gemini4_argon_high` RMSE: **0.847 [0.623, 1.055]**.
-Both 95% intervals include equal error. None of Gemini's three RMSE comparisons
-is significant after Holm adjustment.
+**Opus has the highest Elo. `kimik3p1_max`, added on 2026-11-07, ranks third, level
+with Sol within both 95% intervals. Sol still has the lowest geometric-mean RMSE
+point estimate.** Elo rewards how often a method wins, while RMSE ratios also
+reflect error size.
 
-![Pairwise match scores among the four native regressors, averaged over three seeds within each family](assets/automl-elo/v1/figures/automl-pairwise.svg)
+| Opponent | Opponent / `kimik3p1_max` RMSE | 95% family-bootstrap interval | Holm-adjusted p |
+| --- | ---: | ---: | ---: |
+| `Opus5p5_Extra` | 0.793 | 0.626–0.933 | 0.084 |
+| `Gemini4_argon_high` | 0.902 | 0.830–0.967 | 0.035 |
+| `GPT6p1_Sol_Max` | 0.764 | 0.546–0.976 | 0.118 |
+| `GPT6_Astra_Max` | 1.028 | 0.871–1.194 | 0.730 |
+| `grok4p7_xhigh` | 1.195 | 1.067–1.343 | 0.010 |
 
-The heatmap cells are **seed-averaged family match scores** (ties count as 0.5),
-not integer majority-family win rates. All six pairs cover all 64 families;
-10,000 family bootstrap resamples retain the three seeds within each family.
-These are existing training families with historical exposure. Stored preprocessing
-predates the original split, and seed 41 was seen before seeds 73 and 109 were
-fixed. This is exploratory development evidence, with no untouched-family claim.
-Historical and Gemini fits used different hosts; fit times are not a controlled
-speed ranking. Elo values from different opponent pools cannot be compared.
+A ratio below 1 means the opponent's error is lower. The Holm adjustment covers
+Kimi's five comparisons. Two differences remain significant at 0.05 after it:
+`Gemini4_argon_high` has lower error than Kimi, and Kimi has lower error than
+`grok4p7_xhigh`.
 
-Source: [results and uncertainty](assets/automl-elo/v1/RESULTS.json),
-[protocol and fit custody](assets/automl-elo/v1/SOURCES.md), and
-[exposure audit](docs/paper/innovationzero/evidence/elo-summary.json).
+All 15 pairs cover all 64 families; 10,000 family bootstrap resamples retain the
+three seeds within each family. These are existing training families with
+historical exposure. Stored preprocessing predates the original split, and seed 41
+was seen before seeds 73 and 109 were fixed. This is exploratory development
+evidence, with no untouched-family claim. The entrants were fitted on different
+hosts; fit times are not a controlled speed ranking. Elo values from different
+opponent pools cannot be compared. The `grok4p7_xhigh` cells come from its open
+pull request; its source is not on `main` yet.
+
+#### `kimik3p1_max` on every panel it was scored on
+
+| Panel | What it scores | Kimi rank | Elo | 95% interval |
+| --- | --- | ---: | ---: | ---: |
+| [AutoML Elo v3](assets/automl-elo/v3/SOURCES.md) | 64 training families × 3 folds × 3 seeds | 3 of 6 | 1510.7 | 1468.7–1554.3 |
+| [`dev91-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-audit-v1/LADDER.md) | DL-Val91: 91 development contexts in 19 families, AUDIT split | 24 of 31 | 1411.0 | 1305.5–1508.6 |
+| [`dev91-s1-two-fold-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-s1-two-fold-v1/LADDER.md) | the same 91 contexts, two-fold split | 13 of 14 | 1370.0 | 1276.8–1446.9 |
+| [`p201b-train-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/p201b-train-audit-v1/LADDER.md) | 201 training contexts, one per family, AUDIT split | 12 of 19 | 1351.8 | 1310.9–1390.8 |
+
+Each panel has its own opponents and anchor, so Elo values cannot be compared
+across rows. The reference boards also rate other kinds of model: foundation
+models on both DL-Val91 boards, and classical baselines and JopeDime's own search
+models on `dev91-audit-v1` and `p201b-train-audit-v1`. Their full ladders are on
+the research branch `v1/next`, linked above. Kimi was scored once on each board,
+and no other entrant was rerun.
+
+Source: [results and uncertainty](assets/automl-elo/v3/RESULTS.json),
+[protocol and fit custody](assets/automl-elo/v3/SOURCES.md), and
+[Kimi's verification record](crates/jope-automl/submissions/kimik3p1_max/verification.json).
+The paper's evidence binds the earlier four-entrant panel and its figures,
+[`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md).
 
 <!-- current-performance:end -->
-
-A newer complete panel, [`assets/automl-elo/v3`](assets/automl-elo/v3/SOURCES.md)
-(2026-11-07), refits the same 64 families with six entrants: `Opus5p5_Extra`
-1690.8, `Gemini4_argon_high` 1603.3, `kimik3p1_max` 1510.7, `GPT6p1_Sol_Max`
-1497.5, `GPT6_Astra_Max` 1389.2 and `grok4p7_xhigh` 1308.4. Kimi and Sol are level
-within their 95% intervals. The table above stays the four-entrant panel that the
-paper's evidence binds. The `grok4p7_xhigh` source is not on `main` yet.
 
 ### Trained neural policies
 
@@ -111,7 +131,7 @@ The older figures and generated tables below retain their original protocols.
 The test-10 search ladder is a favorable selected subset with uneven finalist
 coverage; the 2259.8 published envelope is test-selected. The CLOVER overview
 contains historical quality-head and shadow-only evidence. These do not replace
-the complete four-entrant comparison above or establish current-policy Elo.
+the complete six-entrant comparison above or establish current-policy Elo.
 
 Generated by `jope-records readme-benchmarks` from committed evidence. Do not edit between the markers by hand.
 
