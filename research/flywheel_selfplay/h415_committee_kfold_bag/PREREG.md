@@ -179,3 +179,19 @@ The `BAG_<b>` → `<b>` fallback (no bag-eligible member) is applied as in H410.
   - Code, PREREG, amendment, README and `metrics.json` go on `v1/next`.
   - Run directories go to a create-only S3 archive (exact-version GET verified).
   - Same-agent review receipts in `~/jope_plan/evidence/H415/` (not an independent review).
+
+## 9. Amendment 1 (2026-11-08T17:00Z, before any H415 screener fit or P201e view, GP run or output)
+Two launches of the part-A `train_l_h415.sh` on xbabe1 refused before any optimizer step. `runs-h415` stayed empty.
+1. 16:55:22Z: `/home/ubuntu/jope-data/res-01/input/selected.json` no longer exists on xbabe1. H410 C1 used that path
+   on 2026-11-06; H415 did not remove it.
+2. 16:56:27Z: with the TRAIN view path set, the pinned trainer refused fold 3 under its own `FOLD_HOST` rule. Folds
+   0–2 run on the xbabe1 RTX 4090 and folds 3–4 on the xbabe3 RTX 3090, which H317 and H381 also kept, so paired arms
+   never mix GPU architectures.
+
+**Changes (code and hosting only; §4–§7 choices unchanged):**
+- `train_l_h415.sh` runs folds 1–2 on xbabe1 and folds 3–4 on xbabe3.
+- It sets `H317_RES01` to the TRAIN-only table view `h317-cl/res01-train` on each host: 1,219 TRAIN tables and
+  pools; `selected.json` sha `981960ad…`, the pin in `common_h317.SELECTED_SHA256`. Both are checked before the trainer
+  starts.
+- `run_h415.sh ltrain` and `lassemble` follow the per-fold hosts. `H415-L` must hold 10 `model.pt` files: 5 folds × 2
+  seeds, with fold 0 = the H410 C1 pair.

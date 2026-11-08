@@ -7,7 +7,7 @@
 #   idcheck           xbabe0: ID2 replay (H364 memo copy, seed 364101, H0.1-A) must equal the stored X0, 0 worker runs
 #   gp ARM CPUS SHARDS WORKERS MEM
 #                     xbabe0: systemd-run --user h415-gp-ARM (docker sandbox) for ARM in GS GE GL
-#   ltrain            xbabe1: systemd-run --user h415-ltrain (H0.2-L recipe, folds 1-4, GPU under qualification.lock)
+#   ltrain            xbabe1 + xbabe3: systemd-run --user h415-ltrain-HOST (H0.2-L recipe; folds 1-2 / 3-4 per FOLD_HOST)
 #   lassemble         H415-L = H410 C1 fold-0 pair + the H415 folds 1-4 -> xbabe0 $DATA/neural/runs/H415-L (read-only)
 set -euo pipefail
 STEP=${1:?step}; shift
@@ -75,22 +75,30 @@ case $STEP in
       --run-dir $R --neural-run-dir $DATA/neural/runs/$ND --cpus $CPUS --shards $SHARDS --workers-per-shard $WORKERS \
       --panel P201e" | tee -a "$EV/logs/gp_$ARM.log" ;;
   ltrain)
-    scp -q "$STAGE/code/train_l_h415.sh" xbabe1:/home/ubuntu/jope-data/h317-cl/neural/train_l_h415.sh
-    "${SSH1[@]}" "cmp -s /home/ubuntu/jope-data/h317-cl/neural/train_l_h415.sh /dev/stdin" < "$STAGE/code/train_l_h415.sh"
-    "${SSH1[@]}" "systemd-run --user --unit h415-ltrain --collect -p CPUQuota=400% -p MemoryMax=28G -p MemorySwapMax=0 \
-      -p Nice=10 bash /home/ubuntu/jope-data/h317-cl/neural/train_l_h415.sh" | tee -a "$EV/logs/ltrain.log" ;;
+    for h in xbabe1 xbabe3; do
+      scp -q "$STAGE/code/train_l_h415.sh" "$h:/home/ubuntu/jope-data/h317-cl/neural/train_l_h415.sh"
+      ssh -o BatchMode=yes "$h" "cmp -s /home/ubuntu/jope-data/h317-cl/neural/train_l_h415.sh /dev/stdin" \
+        < "$STAGE/code/train_l_h415.sh"
+      ssh -o BatchMode=yes "$h" "systemd-run --user --unit h415-ltrain-$h --collect -p CPUQuota=400% -p MemoryMax=28G \
+        -p MemorySwapMax=0 -p Nice=10 bash /home/ubuntu/jope-data/h317-cl/neural/train_l_h415.sh" \
+        | tee -a "$EV/logs/ltrain.log"
+    done ;;
   lassemble)
     L1=/home/ubuntu/jope-data/h317-cl/neural/runs-h415/H0.2-L
     X2=/home/ubuntu/jope-data/h415/H415-L
+    declare -A HOST_OF=([1]=xbabe1 [2]=xbabe1 [3]=xbabe3 [4]=xbabe3)
     [ ! -e "$X2" ] || { echo "$X2 exists (create-once)" >&2; exit 3; }
-    "${SSH1[@]}" "ls $L1/seed317101/fold4/model.pt $L1/seed317102/fold4/model.pt" >/dev/null
     mkdir -p "$X2"
     for s in 317101 317102; do
-      for f in 1 2 3 4; do mkdir -p "$X2/seed$s/fold$f"; rsync -a "xbabe1:$L1/seed$s/fold$f/" "$X2/seed$s/fold$f/"; done
+      for f in 1 2 3 4; do
+        mkdir -p "$X2/seed$s/fold$f"; rsync -a "${HOST_OF[$f]}:$L1/seed$s/fold$f/" "$X2/seed$s/fold$f/"
+      done
       mkdir -p "$X2/seed$s/fold0"; rsync -a "xbabe0:$DATA/neural/runs/H410-C1-L/seed$s/fold0/" "$X2/seed$s/fold0/"
     done
     (cd "$X2" && find . -type f | sort | xargs sha256sum) > "$EV/logs/H415-L.sha256"
-    "${SSH1[@]}" "cd $L1 && sha256sum --quiet -c" < <(grep -v '/fold0/' "$EV/logs/H415-L.sha256")
+    [ "$(grep -c '/model.pt$' "$EV/logs/H415-L.sha256")" = 10 ] || { echo "H415-L needs 10 model.pt files" >&2; exit 6; }
+    "${SSH1[@]}" "cd $L1 && sha256sum --quiet -c" < <(grep -E '/fold[12]/' "$EV/logs/H415-L.sha256")
+    ssh -o BatchMode=yes xbabe3 "cd $L1 && sha256sum --quiet -c" < <(grep -E '/fold[34]/' "$EV/logs/H415-L.sha256")
     "${SSH0[@]}" "cd $DATA/neural/runs/H410-C1-L && sha256sum --quiet -c" < <(grep '/fold0/' "$EV/logs/H415-L.sha256")
     "${SSH0[@]}" "[ ! -e $DATA/neural/runs/H415-L ]"
     rsync -a "$X2/" "xbabe0:$DATA/neural/runs/H415-L/"
