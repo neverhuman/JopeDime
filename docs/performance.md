@@ -1,6 +1,7 @@
 # Regression performance: current evidence and reproduction
 
-Reviewed on 2026-10-23. Rankings below retain their original data, opponents and
+Reviewed on 2026-10-23; updated on 2026-11-08, when the README moved to the
+six-entrant v3 panel. Rankings below retain their original data, opponents and
 exposure. This audit changes presentation and validation; it performs no new
 model fitting, inference, training or sealed-label evaluation.
 
@@ -13,11 +14,40 @@ It refits the same 64 families, folds and seeds with six entrants. It adds
 including `grok4p7_xhigh`, whose source is not on `main` yet. Kimi ranks third of
 six (Elo 1510.7, 95% interval 1468.7–1554.3), level with Sol within both
 intervals. Its [RESULTS.json](../assets/automl-elo/v3/RESULTS.json) is the
-numerical authority for that panel.
+numerical authority for that panel, and the README's generated table shows it.
 
-The README table and the paper show the October 22 four-entrant result, because
-the paper's evidence binds those exact bytes. It covers **64 families**, three folds and three
-seeds (41, 73, 109): 576 fits per entrant, 2,304 fits altogether. All six pairs
+### `kimik3p1_max` on every panel it was scored on
+
+Wave H414 (2026-11-07) scored Kimi once on every panel that holds the frontier LLM
+regressors. These are AutoML Elo v3 and three reference boards on the research branch
+`v1/next`. The dev91 S3 single-split column holds only foundation-model results that
+earlier campaigns precomputed, and `panel_v1` has no frontier entrant, so Kimi is on
+neither. No other entrant was rerun.
+
+| Panel | Kimi rank, Elo | Frontier entrants' ranks on the panel | Panel leader |
+| --- | --- | --- | --- |
+| AutoML Elo v3, 64 training families | 3 of 6, 1510.7 | Opus 1, Gemini 2, Kimi 3, Sol 4, Astra 5, grok 6 | `Opus5p5_Extra` 1690.8 |
+| [`dev91-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-audit-v1/LADDER.md), 91 DL-Val91 contexts | 24 of 31, 1411.0 | Opus 14, Gemini 17, Sol 19, Kimi 24, Astra 27, grok 31 | `kumo_tabular_large_e8.v1` 2058.7 |
+| [`dev91-s1-two-fold-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-s1-two-fold-v1/LADDER.md), the same contexts | 13 of 14, 1370.0 | Opus 10, Gemini 11, Sol 12, Kimi 13, Astra 14; grok has no entry | `h257.Kumo_Tabular_L` 1965.6 |
+| [`p201b-train-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/p201b-train-audit-v1/LADDER.md), 201 training contexts | 12 of 19, 1351.8 | Opus 3, Gemini 6, Sol 8, Kimi 12, Astra 17, grok 18 | `h335.H335_AGG` 1674.8 |
+
+The three reference boards rank the frontier entrants in the same order: Opus, Gemini,
+Sol, Kimi, Astra, grok. Only the AutoML panel puts Kimi above Sol, and there the two are
+level within their intervals. On `dev91-audit-v1`, JopeDime's `h364.XSTACK_2L` ranks 9th
+(1705.9), above every frontier entrant. Each panel has its own opponents and anchor, so
+its Elo values cannot be compared with another panel's.
+
+The ladders above are pinned at `v1/next` commit `7f7ff32833`. Kimi's per-context scores
+are each board's `scores/h414.kimik3p1_max.jsonl`, with 91, 91 and 201 completed rows.
+Each board's `ARCHIVE.json` names its create-only S3 archive (URI, version id, SHA-256).
+The [Kimi verification record](../crates/jope-automl/submissions/kimik3p1_max/verification.json)
+on `main` repeats the three board ranks, and the README table is rendered from it.
+
+### The four-entrant panel the paper binds
+
+The paper shows the October 22 four-entrant result, because its evidence binds those
+exact bytes; the README showed it until 2026-11-08. It covers **64 families**, three
+folds and three seeds (41, 73, 109): 576 fits per entrant, 2,304 fits altogether. All six pairs
 have complete coverage. The historical three entrants' 1,728 fits are reused;
 Gemini contributed 576 new fits. Reuse is not a new experiment.
 
@@ -41,8 +71,8 @@ alone does not make clear:
 **Opus5p5_Extra has the highest Elo. GPT6p1_Sol_Max has the lowest
 geometric-mean RMSE point estimate.** The pairwise ratio intervals do not establish
 Sol's error advantage over Opus or Gemini. All three Gemini RMSE comparisons fail
-the Holm-adjusted significance threshold. The README shows the complete table
-and intervals, rather than a favorable selected subset or seed.
+the Holm-adjusted significance threshold. The README shows each panel's complete
+table and intervals, rather than a favorable selected subset or seed.
 
 The model names identify LLM-authored regression algorithms. The benchmark fits
 those algorithms; it does not call the named language models for each dataset.
@@ -51,17 +81,30 @@ entry does not guarantee a shipped CLI selector: the product native registry
 contains Sol, Gemini and `kimik3p1_max`; the same-cut benchmark also has a separate Opus entrant
 adapter. Preserve the distinct source/registration boundaries.
 
-## Plots checked
+## README tables and plots checked
 
-The README now leads with the existing four-entrant Elo and pairwise figures.
-The table, Elo intervals, six pairwise columns, complete 64-family coverage and
-all six SVG/PNG hashes are checked by:
+The README's `current-performance` block is generated from the six-entrant v3 results
+and Kimi's verification record. Its three tables (the v3 ranking, Kimi's five RMSE
+comparisons and Kimi's rank on every panel) are checked by:
 
 ```sh
-bash assets/readme-performance/v1/render.sh --check
+bash assets/readme-performance/v2/render.sh --check
 # Regenerate the current block after an owning evidence update:
-bash assets/readme-performance/v1/render.sh --write
+bash assets/readme-performance/v2/render.sh --write
 ```
+
+The renderer pins the SHA-256 of both inputs. It requires complete 64-family coverage
+for all 15 pairs and Holm-adjusted p-values on exactly Kimi's five comparisons. It
+refuses to render when any statement in its prose no longer follows from the results:
+the winner, Kimi's third place, the Sol–Kimi interval overlap, Sol's lowest
+geometric-mean RMSE point estimate and the two Holm-significant differences. `deploy/ci/check.sh` runs the check.
+v3 has no committed figures, so the README block has none.
+
+Until 2026-11-08 the README led with the four-entrant Elo and pairwise figures. Their
+table, intervals, six pairwise columns and all six SVG/PNG hashes were checked by
+`assets/readme-performance/v1/render.sh`, which is now superseded (see its
+[`SUPERSEDED.md`](../assets/readme-performance/v1/SUPERSEDED.md)). The v1 figures and
+results stay unchanged for the paper.
 
 The [same-agent numerical replay](../assets/readme-performance/v1/replay.json)
 recomputed the point estimate plus all 10,000 original family-bootstrap fits.
@@ -72,11 +115,11 @@ label reads. This reuses the original numerical core; it is not an independent
 scientific validation or a new dataset benchmark. Bootstrap indices and raw
 fit custody remain outside Git as the original sources document.
 
-The command reads committed aggregates and hashes only. It performs no numerical
-fits and changes no original benchmark artifacts. The pairwise figure's short
+Both renderers read committed aggregates and hashes only. They perform no numerical
+fits and change no original benchmark artifacts. The v1 pairwise figure's short
 label says "share of families"; its cell values are actually **the mean of
 three seed-specific outcomes within each family, then averaged over families**.
-The README caption states that definition explicitly. A 0.66 cell is not an
+The v1 README caption stated that definition explicitly. A 0.66 cell is not an
 integer majority-family win fraction. Ties receive 0.5.
 
 The older `readme-clover-overview.svg` remains byte-identical and linked inside a

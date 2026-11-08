@@ -9,6 +9,7 @@ the commit areas (crate or lane) named in each subject line.
 
 - automl: the owner-supplied `kimik3p1_max` Rust regressor joins the native registry byte-for-byte (`jope-bench run --native kimik3p1_max`; SHA-256 `0c211694…6ceb3`), with Gemini-style submission records whose unknown authoring fields stay `null`. Its outputs are clamped, so the adapter's non-finite refusal is never reached on extreme finite inputs.
 - automl-elo: `assets/automl-elo/v3` refits the 64-family AutoML Elo with `kimik3p1_max` added to the five-entrant pool. Kimi was fitted on all 576 cells (one CPU and 8 GiB each, no failures); no earlier entrant is refitted, and the five-entrant result is reproduced exactly first. Ratings: Opus5p5_Extra 1691, Gemini4_argon_high 1603, kimik3p1_max 1511, GPT6p1_Sol_Max 1498, GPT6_Astra_Max 1389, grok4p7_xhigh 1308 (Kimi and Sol overlap; Gemini's lower RMSE than Kimi's is significant after Holm adjustment).
+- readme: the generated `current-performance` block now shows the six-entrant v3 ranking, Kimi's five Holm-adjusted RMSE comparisons and Kimi's rank on every panel it was scored on (AutoML Elo v3 3 of 6; `dev91-audit-v1` 24 of 31; `dev91-s1-two-fold-v1` 13 of 14; `p201b-train-audit-v1` 12 of 19). `assets/readme-performance/v2/render.sh` renders and checks it against the pinned v3 results and Kimi's verification record; v1, which the paper's evidence binds, is kept as superseded provenance.
 
 ## [1.0.0] - 2026-11-02
 
