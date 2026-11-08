@@ -124,6 +124,9 @@ async fn legacy_aliases_are_listed_and_dispatched_through_existing_handlers() {
     wire.finish("legacy-aliases").await;
 }
 
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn four_versions_lifecycle_twelve_tools_resources_and_stdout_purity() {
     for version in VERSIONS {

@@ -2,7 +2,7 @@
 
 The jAIn CLI is installed as the `jain` command. It provides local model commands and commands that communicate with the shared background engine; `jain --help` lists the commands in the installed build.
 
-Names: everything people read says jAIn / `jain` (`jain --version` prints `jain X.Y.Z`, errors start with `jain:`). The executable is still built as `jopedime`, and machine-readable names stay stable: `version --json` keeps `"product": "jopedime"` (release, qualification and installer checks match it) and adds `"display_name": "jAIn"` and `"command": "jain"`; the unrenamed release artifact (`jopedime-…`) still prints `jopedime X.Y.Z` for the release checks; the data directory stays `~/.local/share/jopedime` (`JOPEDIME_HOME`), because moving it would orphan existing runs, logins and settings.
+Names: everything people read says jAIn / `jain` (`jain --version` prints the release and source commit, `jain 1.0.0-rc.4 (2ab7f551c9b1)`, errors start with `jain:`). The executable is still built as `jopedime`, and machine-readable names stay stable: `version --json` keeps `"product": "jopedime"` (release, qualification and installer checks match it) and adds `"display_name": "jAIn"`, `"command": "jain"` and `"release"` (the release identity, from `JAIN_RELEASE_VERSION` at build time; `"version"` stays the Cargo version the installers compare); the unrenamed release artifact (`jopedime-…`) still prints `jopedime X.Y.Z` for the release checks; the data directory stays `~/.local/share/jopedime` (`JOPEDIME_HOME`), because moving it would orphan existing runs, logins and settings.
 
 Without a terminal (an agent, a script, a pipe), `jain` with no arguments says that the TUI needs a terminal, names the commands that work without one, and prints the help. The bundled demos are reachable without a terminal:
 
@@ -90,7 +90,7 @@ The executable's top-level help lists these exit statuses: 0 for success, 2 for 
 
 Press **Ctrl-C** to exit immediately and return to your shell on Linux or macOS, including while editing a draft or searching history. On macOS this is Control-C; Command-C remains the terminal’s copy shortcut. **Ctrl-D** exits when the input is empty; `\quit` also exits. The CLI restores terminal input and cursor visibility when it leaves.
 
-An active run continues in the local background engine. Reconnect with `jain attach RUN`; use explicit `\pause` or `\cancel` commands to control it. Ctrl-C does not send either command.
+An active run continues in the local background engine. Reconnect with `jain attach RUN` (without a terminal it follows the run to its result); use explicit `\pause` or `\cancel` commands to control it. Ctrl-C does not send either command.
 
 ## Connect to VEOX
 
@@ -110,24 +110,47 @@ The development gateway is separate from VEOX account login. For that environmen
 
 ## Local or cloud
 
-`/run` decides where a run goes and says so in one line (`crate::cloud::route`):
+Owner rule, 2026-11-06 (jAIn 1.0.0-rc.4): nobody downloads model weights, and the public CLI is a
+front end. Its local engine is weightless and runs only the bundled demos (`/demo`, `example/NAME.csv`,
+`jain demo run NAME`), signed out or not. The user's own data trains in the veox Cloud. `/run` says
+where a run goes in one line (`crate::cloud::route`):
 
-- `/run --local` and `/run --cloud` decide outright. Bundled demos always run here and need no login.
-- A Pro account's deep search (effort `medium`, `high` or `ultra`) runs in the veox Cloud Workspace.
-- Otherwise the run is local, unless the table has more than 100,000 rows (Free's cloud ceiling), when
-  the cloud is offered. A Free account is told that its cloud runs take 100,000 rows too.
+- A bundled demo runs here: "Running locally on this machine · a bundled demo, no account needed".
+  A file holding exactly a demo's bytes counts as that demo.
+- Own data trains in the veox Cloud: "Training in the veox Cloud · your own data trains there (fast
+  search) · N rows." `--cloud` is implied; `--local` on own data is refused ("--local runs only the
+  bundled examples").
+- Login is required for anything beyond the demos (it is how runs are metered per plan). Signed out,
+  `/open` of an own file, `/run` on it, and `jain run`/`fit`/`fit-predict` on a path stop with the login
+  step and the waitlist link (https://app.veox.ai/register). An account still on the waitlist
+  (`GET /api/cli/account` says `mayRun:false`) is told "your account is on the waitlist; we'll email you
+  when you're admitted". There is no just-in-time upload after a login: the user logs in, then runs.
+- The upload is asked once per table (remembered per file hash, account and workspace in `state.json`):
+  "Upload <file> (<rows> rows, <columns> columns, <size>) to train in the veox Cloud? [y/N]". Enter is no.
+  Without a terminal, `jain run FILE --target COLUMN` needs `--upload-consent` (the rc.3 spelling
+  `--consent-upload` still works), which an agent passes only after asking the user.
+- Free runs the Fast search in the cloud: a deeper effort is sent as `fast` with one line saying deep
+  search is part of Pro. Free's 100,000-row ceiling is said before anything is uploaded. Every other
+  tier limit (daily runs, one run at a time, size, waitlist) reads in plain words with "No run started."
+  and the upgrade link.
+- Progress arrives as the same "Thinking" cards as a local run, then the result exactly as the workspace
+  leads with it (the session's `headline`): the score on the rows it names (for a synthetic-first run,
+  the held-back real rows), a baseline only when one was scored on those same rows (otherwise "No
+  baseline on these rows." and the app's note), the search's synthetic score as secondary, the served
+  model by its readable name (`method.name`; a redacted identifier is a "veox proprietary blend/model"),
+  how the table was read, the workspace link (OSC 8 where the terminal supports it) and a `Next:` line
+  (predict in the workspace, `/copy link`).
+- `jain fit` and `jain fit-predict` train on this machine, so they take only the bundled examples and
+  point own data to `jain run`. The local MCP server never uploads (an agent cannot give the user's
+  consent): its `run_start` on own data answers `CAPABILITY_UNAVAILABLE` with the `jain run …
+  --upload-consent` path and the hosted veox MCP; a bundled demo runs and carries a routing line.
 
-The public build is CPU-only, so nothing probes for a GPU. A cloud run that needs a login says
-"This run needs your veox Cloud Workspace — opening your browser to log in…", runs the device login and
-then continues the same run. The upload is asked once per dataset (remembered per file hash, account and
-workspace in `state.json`): "Upload <file> (<rows> rows, <size>) to your veox Cloud Workspace? [Y/n]".
-Progress arrives as the same "Thinking" cards as a local run, then the closing narrative and the run's
-workspace link. Tier limits read in plain words with "Run locally instead? [Y/n]" and the upgrade link.
-
-`jain run CSV` follows the same rule but uploads only with `--cloud` (plus `--consent-upload`, or an
-answer on a terminal, or a remembered consent); when the rule would use the cloud it runs locally and says
-on stderr how to send it. The local MCP server always runs locally and adds a routing text line to
-`run_start`: an agent cannot give the user's upload consent.
+This is the public edition (`jope-appliance` feature `public-edition`, selected by `cloud-tls`, so by
+both release builds). Engine and development builds cannot reach the HTTPS cloud: they keep training own
+data here unless `--cloud` is given, and `JAIN_ALLOW_LOCAL_FILES=1` lifts their `/open` gate.
+`JAIN_PUBLIC_EDITION=1` applies the public rule in such a build (the tests use it). The public edition
+also compiles in no internal model file or method names (the r882 descriptor, ranker asset names and
+the neural method roster stay in the engine-only builds).
 
 ## Results sync
 

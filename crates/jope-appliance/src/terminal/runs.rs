@@ -200,6 +200,47 @@ pub fn local_runs<T: jope_client::Transport>(
     }
 }
 
+/// Whether a refused run start is the engine's "one run at a time" refusal (journey J3-F10).
+#[cfg(feature = "client")]
+pub fn is_busy(text: &str) -> bool {
+    text.contains("run backend is busy")
+}
+
+/// The run that keeps this engine busy, when it lists one.
+#[cfg(feature = "client")]
+pub fn active_run<T: jope_client::Transport>(client: &T) -> Option<RunId> {
+    local_runs(client)
+        .ok()?
+        .into_iter()
+        .rev()
+        .find(|run| {
+            matches!(
+                run.state,
+                jope_api::RunState::Running
+                    | jope_api::RunState::Pausing
+                    | jope_api::RunState::Paused
+            )
+        })
+        .map(|run| run.run_id)
+}
+
+/// What to say instead of the engine's busy refusal: which run, and how to wait for it, follow
+/// it or stop it. `tui` picks slash commands.
+#[cfg(feature = "client")]
+pub fn busy_message(run: Option<&RunId>, tui: bool) -> String {
+    let which = run.map_or_else(|| "another run".to_owned(), |run| format!("run {run}"));
+    let id = run.map_or_else(|| "RUN".to_owned(), ToString::to_string);
+    if tui {
+        format!(
+            "Not started: {which} is still going, and this engine trains one run at a time. Follow it with /attach {id} (then /cancel stops it), or /run again when it finishes."
+        )
+    } else {
+        format!(
+            "not started: {which} is still going, and this engine trains one run at a time. Wait for it with `jain attach {id}` (or `jain status {id} --wait 60`), stop it with `jain control {id} cancel`, then run again."
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -245,5 +286,28 @@ mod tests {
             browser.handle(&key(KeyCode::Char('r'))),
             RunBrowserAction::Refresh
         ));
+    }
+
+    #[cfg(feature = "client")]
+    #[test]
+    fn a_busy_engine_names_the_run_and_how_to_wait_follow_or_stop_it() {
+        let run: RunId = "run_01M6QAZJYJBXZEDS2W0HQZC1FE".parse().unwrap();
+        assert!(super::is_busy(
+            "Service Unavailable: The bounded CPU run backend is busy; retry this key after the active run drains."
+        ));
+        let tui = super::busy_message(Some(&run), true);
+        assert!(
+            tui.contains("run run_01M6QAZJYJBXZEDS2W0HQZC1FE is still going"),
+            "{tui}"
+        );
+        assert!(tui.contains("/attach run_01M6QAZJYJBXZEDS2W0HQZC1FE") && tui.contains("/cancel"));
+        assert!(!tui.contains("Change the request"));
+        let cli = super::busy_message(Some(&run), false);
+        assert!(
+            cli.contains("`jain attach run_01M6QAZJYJBXZEDS2W0HQZC1FE`"),
+            "{cli}"
+        );
+        assert!(cli.contains("`jain control run_01M6QAZJYJBXZEDS2W0HQZC1FE cancel`"));
+        assert!(super::busy_message(None, true).contains("another run is still going"));
     }
 }

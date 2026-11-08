@@ -1,7 +1,10 @@
 //! The terminal's routing dialogue, driven through a PTY against a mock veox Cloud Workspace:
-//! `/run --cloud` while signed out (just-in-time login, then the same run continues), the upload
-//! consent, cloud progress as thinking cards, a limit refusal, and a finished local run whose
-//! results are synced after the one-time question. Prints the transcripts it saw.
+//! `/run --cloud` while signed out (the login step, no just-in-time upload), `/login`, the
+//! upload consent, cloud progress as thinking cards, a limit refusal, and a finished local run
+//! whose results are synced after the one-time question; then the public rule (owner rule
+//! 2026-11-06): own files need a login, `/run` trains them in the cloud after the consent
+//! (Enter is no), `--local` is for the demos, and `/demo` still runs here. Prints the
+//! transcripts it saw.
 #![cfg(all(
     any(target_os = "linux", target_os = "macos"),
     feature = "client",
@@ -71,8 +74,13 @@ fn transcript(screen: &str, from: &str) -> String {
     screen[screen.find(from).unwrap_or(0)..].to_owned()
 }
 
-#[test]
-fn the_terminal_routes_logs_in_just_in_time_streams_and_syncs_results() {
+struct Fixture {
+    _dir: tempfile::TempDir,
+    home: std::path::PathBuf,
+    csv: std::path::PathBuf,
+}
+
+fn fixture() -> Fixture {
     let dir = tempfile::tempdir().unwrap();
     let home = dir.path().join("home");
     std::fs::create_dir(&home).unwrap();
@@ -87,9 +95,32 @@ fn the_terminal_routes_logs_in_just_in_time_streams_and_syncs_results() {
         demo.lines().take(150).collect::<Vec<_>>().join("\n") + "\n",
     )
     .unwrap();
+    Fixture {
+        _dir: dir,
+        home,
+        csv,
+    }
+}
+
+fn wait(t: &mut pty::PtySession, s: &str, secs: u64) -> String {
+    t.wait_for_text(s, Duration::from_secs(secs))
+        .unwrap_or_else(|e| panic!("{e}"))
+}
+
+fn line(t: &mut pty::PtySession, text: &str) {
+    t.type_text(text).unwrap();
+    t.press_key(pty::Key::Enter).unwrap();
+}
+
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
+#[test]
+fn the_terminal_routes_logs_in_streams_and_syncs_results() {
+    let f = fixture();
     let limited = Arc::new(AtomicBool::new(false));
     let server = Workspace::start(handler(Arc::clone(&limited)));
-    let home_text = home.to_str().unwrap();
+    let home_text = f.home.to_str().unwrap();
     let env = [
         ("JOPEDIME_HOME", home_text),
         ("JAIN_WORKSPACE", server.origin.as_str()),
@@ -99,39 +130,44 @@ fn the_terminal_routes_logs_in_just_in_time_streams_and_syncs_results() {
         ("TERM", "dumb"),
     ];
     let mut terminal = pty::PtySession::spawn_jopedime_with_env(&[], &env).unwrap();
-    let wait = |t: &mut pty::PtySession, s: &str, secs: u64| {
-        t.wait_for_text(s, Duration::from_secs(secs))
-            .unwrap_or_else(|e| panic!("{e}"))
-    };
     wait(&mut terminal, "engine background", 15);
-    for line in [
+    for setting in [
         "\\landmarks none",
         "\\lang rust",
         "\\target price --task regression",
         "\\effort fast --evals 4",
     ] {
-        terminal.type_text(line).unwrap();
-        terminal.press_key(pty::Key::Enter).unwrap();
+        line(&mut terminal, setting);
     }
-    terminal
-        .type_text(&format!("\\open {}", csv.display()))
-        .unwrap();
-    terminal.press_key(pty::Key::Enter).unwrap();
+    line(&mut terminal, &format!("\\open {}", f.csv.display()));
     wait(&mut terminal, "registered rent.csv as", 15);
 
-    // 1. Signed out, `/run --cloud`: log in just in time, then the same run continues.
-    terminal.type_text("/run --cloud").unwrap();
-    terminal.press_key(pty::Key::Enter).unwrap();
-    wait(&mut terminal, "Upload rent.csv (149 rows,", 20);
-    terminal.type_text("y").unwrap();
-    terminal.press_key(pty::Key::Enter).unwrap();
-    let screen = wait(&mut terminal, "Open it in your workspace:", 20);
-    let cloud = transcript(&screen, "/run --cloud");
-    println!("=== TUI transcript: cloud run with just-in-time login ===\n{cloud}");
-    assert!(cloud
-        .contains("This run needs your veox Cloud Workspace — opening your browser to log in…"));
+    // 1. Signed out, `/run --cloud`: the login step, nothing uploaded; then /login.
+    line(&mut terminal, "/run --cloud");
+    wait(&mut terminal, "needs you signed in: type /login", 20);
+    assert!(!server.calls().iter().any(|c| c == "POST /api/sessions"));
+    line(&mut terminal, "/login");
+    wait(
+        &mut terminal,
+        "Signed in: type /run to train the opened table",
+        30,
+    );
+    line(&mut terminal, "/run --cloud");
+    wait(&mut terminal, "Upload rent.csv (149 rows, 12 columns,", 20);
+    line(&mut terminal, "y");
+    let screen = wait(
+        &mut terminal,
+        "Next: predict new rows in your workspace:",
+        30,
+    );
+    let cloud = transcript(&screen, "Pairing code");
+    println!("=== TUI transcript: login, then a cloud run ===\n{cloud}");
     assert!(cloud.contains("Pairing code: WXYZ-9876"));
     assert!(!cloud.contains("secret-device-code"));
+    assert!(
+        cloud.contains("to train in the veox Cloud? [y/N]"),
+        "{cloud}"
+    );
     assert_eq!(
         cloud.matches("Thinking Container started").count(),
         1,
@@ -141,52 +177,138 @@ fn the_terminal_routes_logs_in_just_in_time_streams_and_syncs_results() {
     assert!(cloud.contains("Thinking Searching · step 2/4 · 40 evaluations · best rmse 0.2500"));
     assert!(cloud.contains("Selected 'price' as the target."));
     assert!(cloud.contains(&format!("{}/runs/{SESSION}", server.origin)));
+    assert!(cloud.contains("/copy link"), "{cloud}");
 
-    // 2. The same file again: consent remembered, the daily limit in plain words, run locally? no.
+    // 2. The same file again: consent remembered, the daily limit in plain words.
     limited.store(true, Ordering::SeqCst);
-    terminal.type_text("/run --cloud").unwrap();
-    terminal.press_key(pty::Key::Enter).unwrap();
-    let screen = wait(&mut terminal, "Free includes 10 cloud runs a day", 20);
-    terminal.type_text("n").unwrap();
-    terminal.press_key(pty::Key::Enter).unwrap();
-    let screen = wait(&mut terminal, "Not started.", 10)
-        .len()
-        .max(screen.len());
-    let _ = screen;
+    line(&mut terminal, "/run --cloud");
+    wait(&mut terminal, "Free includes 10 cloud runs a day", 20);
     let limit = transcript(&terminal.read_screen_as_text(), "Free includes 10");
     println!("=== TUI transcript: limit hit ===\n{limit}");
     assert!(limit.starts_with(
-        "Free includes 10 cloud runs a day; you've used 10. Resets at 14:20 UTC. Run locally instead? [Y/n] · Upgrade: https://veox.ai/pricing"
-    ));
+        "Free includes 10 cloud runs a day; you've used 10. Resets at 14:20 UTC. No run started. · Upgrade: https://veox.ai/pricing"
+    ), "{limit}");
 
-    // 3. A local run while signed in: when it finishes, the one-time question, then the sync.
-    terminal.type_text("/run").unwrap();
-    terminal.press_key(pty::Key::Enter).unwrap();
+    // 3. This development build still trains own data here with plain /run: when it finishes,
+    // the one-time results question, then the sync.
+    line(&mut terminal, "/run");
     wait(
         &mut terminal,
         "Sync results (model + code, not your data)",
         60,
     );
-    terminal.type_text("y").unwrap();
-    terminal.press_key(pty::Key::Enter).unwrap();
+    line(&mut terminal, "y");
     let screen = wait(&mut terminal, "Explore it in your workspace:", 60);
-    let local = transcript(&screen, "Not started.");
+    let local = transcript(&screen, "No run started.");
     println!("=== TUI transcript: local run, then results sync ===\n{local}");
-    assert!(local.contains("Running locally on this machine · fast search · 149 rows."));
+    assert!(local.contains(
+        "Running locally on this machine · fast search (this build trains own data here) · 149 rows."
+    ), "{local}");
     assert!(local.contains("Results: model synced."));
     let calls = server.calls();
-    let model = calls.iter().position(|c| c.ends_with("/model")).unwrap();
+    assert!(calls.iter().any(|c| c.ends_with("/model")));
     assert!(!calls.iter().any(|c| c.ends_with("/report")));
-    let _ = model;
     assert_eq!(
-        crate_state(&home)["results_sync"],
+        crate_state(&f.home)["results_sync"],
         serde_json::json!(true),
         "the answer is remembered"
     );
     drop(terminal);
     let _ = Command::new(BIN)
         .args(["serve", "--stop", "--force"])
-        .env("JOPEDIME_HOME", &home)
+        .env("JOPEDIME_HOME", &f.home)
+        .output();
+}
+
+#[test]
+fn under_the_public_rule_own_files_need_a_login_and_train_in_the_cloud() {
+    let f = fixture();
+    let server = Workspace::start(handler(Arc::new(AtomicBool::new(false))));
+    let home_text = f.home.to_str().unwrap();
+    let env = [
+        ("JOPEDIME_HOME", home_text),
+        ("JAIN_WORKSPACE", server.origin.as_str()),
+        ("JAIN_NO_BROWSER", "1"),
+        ("JAIN_NO_UPDATE_CHECK", "1"),
+        ("JAIN_PUBLIC_EDITION", "1"),
+        ("NO_COLOR", "1"),
+        ("TERM", "dumb"),
+    ];
+    let mut terminal = pty::PtySession::spawn_jopedime_with_env(&[], &env).unwrap();
+    wait(&mut terminal, "engine background", 15);
+    let open = format!("/open {}", f.csv.display());
+
+    // Signed out: an own file does not open (JAIN_ALLOW_LOCAL_FILES has no effect here).
+    line(&mut terminal, &open);
+    let screen = wait(&mut terminal, "needs you signed in: type /login", 20);
+    let gated = transcript(&screen, &open);
+    println!("=== TUI transcript: signed out ===\n{gated}");
+    assert!(gated.contains("https://app.veox.ai/register"), "{gated}");
+    assert!(!gated.contains("registered rent.csv"), "{gated}");
+
+    // The bundled demo still runs here.
+    line(&mut terminal, "/demo regression_parkinsons");
+    let screen = wait(&mut terminal, "Next: predict with", 120);
+    let demo = transcript(&screen, "/demo regression_parkinsons");
+    println!("=== TUI transcript: demo ===\n{demo}");
+    assert!(
+        demo.contains("Running locally on this machine · a bundled demo, no account needed"),
+        "{demo}"
+    );
+    assert!(
+        demo.contains("held-out"),
+        "the result leads with the held-out score: {demo}"
+    );
+
+    // Signed in: the file opens, /run asks before uploading; Enter is no.
+    line(&mut terminal, "/login");
+    wait(&mut terminal, "Signed in to", 30);
+    for setting in [
+        "\\landmarks none",
+        "\\lang rust",
+        "\\target price --task regression",
+    ] {
+        line(&mut terminal, setting);
+    }
+    line(&mut terminal, &open);
+    wait(&mut terminal, "Type /run to train it in the veox Cloud", 20);
+    line(&mut terminal, "/run --local");
+    wait(&mut terminal, "--local runs only the bundled examples", 20);
+    line(&mut terminal, "/run");
+    wait(&mut terminal, "to train in the veox Cloud? [y/N]", 20);
+    line(&mut terminal, "");
+    wait(
+        &mut terminal,
+        "Nothing was uploaded, and no run started.",
+        20,
+    );
+    assert!(!server.calls().iter().any(|c| c == "POST /api/sessions"));
+    line(&mut terminal, "/run");
+    wait(&mut terminal, "to train in the veox Cloud? [y/N]", 20);
+    line(&mut terminal, "y");
+    let screen = wait(
+        &mut terminal,
+        "Next: predict new rows in your workspace:",
+        30,
+    );
+    let cloud = transcript(&screen, "Training in the veox Cloud");
+    println!("=== TUI transcript: own data in the cloud ===\n{cloud}");
+    assert!(
+        cloud.starts_with(
+            "Training in the veox Cloud · your own data trains there (fast search) · 149 rows."
+        ),
+        "{cloud}"
+    );
+    assert!(cloud.contains("Uploading rent.csv"), "{cloud}");
+    assert!(cloud.contains(&format!(
+        "Open it in your workspace: {}/runs/{SESSION}",
+        server.origin
+    )));
+    assert!(!cloud.contains("Running locally"), "{cloud}");
+    drop(terminal);
+    let _ = Command::new(BIN)
+        .args(["serve", "--stop", "--force"])
+        .env("JOPEDIME_HOME", &f.home)
         .output();
 }
 

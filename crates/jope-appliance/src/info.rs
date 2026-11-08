@@ -14,6 +14,9 @@ pub(super) fn version_value() -> Value {
         "display_name": "jAIn",
         "command": crate::CLI,
         "version": VERSION,
+        // The release identity (`1.0.0-rc.4` for a candidate built from 1.0.0); `version`
+        // stays the Cargo version that the installer and release parsers compare.
+        "release": crate::release_version(),
         "source_sha40": bootstrap::source_sha40(),
         "runtime_abi": RUNTIME_ABI,
         "package_format": jope_assets::MANIFEST_SCHEMA,
@@ -23,6 +26,7 @@ pub(super) fn version_value() -> Value {
             "mcp": cfg!(feature = "mcp"),
             "client": cfg!(feature = "client"),
             "cloud_tls": cfg!(feature = "cloud-tls"),
+            "public_edition": cfg!(feature = "public-edition"),
             "embedded": bootstrap::EMBEDDED,
             "dev_keys": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
             "cuda": backend::CUDA_COMPILED,

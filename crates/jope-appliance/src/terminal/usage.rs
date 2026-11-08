@@ -101,7 +101,7 @@ pub fn local_lines(
         }
         None => {
             lines.push(format!(
-                "  {:<12} not signed in · /login for a free veox Cloud Workspace",
+                "  {:<12} not signed in · /login (accounts open from the waitlist: https://app.veox.ai/register)",
                 "Account"
             ));
             lines.push(format!(

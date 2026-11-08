@@ -60,20 +60,22 @@ pub struct RunArgs {
     pub refit: String,
     #[arg(long)]
     pub json: bool,
-    /// Run in your veox Cloud Workspace: uploads the CSV after the user's consent. Without it,
-    /// `run` never uploads; it says on stderr when the routing rule would use the cloud.
+    /// Train in the veox Cloud (the default for your own CSV; needs `jain auth login` on an
+    /// admitted account). Uploads the CSV only after the user's consent.
     #[arg(long, conflicts_with_all = ["local", "dry_run", "detach", "out", "events", "dataset"])]
     pub cloud: bool,
-    /// Run on this machine, whatever the routing rule says.
+    /// Run on this machine: only the bundled examples (example/NAME.csv); your own data trains
+    /// in the veox Cloud.
     #[arg(long)]
     pub local: bool,
-    /// The user agreed to upload this CSV to their veox Cloud Workspace (with --cloud). Ask
-    /// them first; the consent is remembered per file.
-    #[arg(long, requires = "cloud")]
-    pub consent_upload: bool,
+    /// The user agreed to upload this CSV to train in the veox Cloud: required without a
+    /// terminal. Ask them first; the consent is remembered per file and account.
+    #[arg(long = "upload-consent", visible_alias = "consent-upload")]
+    pub upload_consent: bool,
     #[arg(long, value_parser = ["ndjson"])]
     pub events: Option<String>,
-    #[arg(long, default_value_t = 30)]
+    /// Seconds each status poll waits for news (0-60), checked before the run starts.
+    #[arg(long, default_value_t = 30, value_parser = clap::value_parser!(u64).range(0..=60))]
     pub wait: u64,
     #[arg(long)]
     pub after_event: Option<String>,
