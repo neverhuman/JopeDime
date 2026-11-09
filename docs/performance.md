@@ -1,9 +1,58 @@
 # Regression performance: current evidence and reproduction
 
 Reviewed on 2026-10-23; updated on 2026-11-08, when the README moved to the
-six-entrant v3 panel. Rankings below retain their original data, opponents and
+six-entrant v3 panel, and on 2026-11-09, when the README gained a table of where
+JopeDime's own models rank. Rankings below retain their original data, opponents and
 exposure. This audit changes presentation and validation; it performs no new
 model fitting, inference, training or sealed-label evaluation.
+
+## Where JopeDime's own models rank
+
+| Panel | Model | Rank | Elo (95% interval) | Panel leader |
+| --- | --- | --- | --- | --- |
+| [`dev91-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-audit-v1/LADDER.md), 91 DL-Val91 contexts in 19 families, AUDIT split | `h364.XSTACK_2L` | 9 of 31 | 1705.9 (1621.1–1822.1) | `kumo_tabular_large_e8.v1` 2058.7 |
+| same board | `h335.H335_AGG` | 11 of 31 | 1689.5 (1608.7–1800.0) | same |
+| [Golden45 benchmark-valid](../assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv), 45 public datasets | `jope-dime-regressor` | 31 of 304 | 1687.0 (no interval published) | TabFM Ensemble 1934.9 |
+
+- **dev91-audit-v1.**
+  - `h364.XSTACK_2L` ranks above all six frontier LLM-authored entrants. The best of
+    them, `h335.Opus5p5_Extra`, is 14 of 31 at 1564.1 (1445.1–1686.8), and the two
+    intervals overlap.
+  - The eight entrants above XSTACK_2L are tabular foundation models (Kumo-Tabular,
+    TabFM, TabPFN and Mitra).
+  - DL-Val91 is a reuse cohort, not untouched data. H257 tuned on it; H381 and H410 read
+    five of its contexts, and H410 tuned on them under an owner waiver.
+  - Our models are read on it only as locked candidates, scored once each:
+    - H335_AGG under the H335 LOCK;
+    - XSTACK_2L under the H369 LOCK.
+
+    The owner chose XSTACK_2L as our strongest entrant for the H412 study after it
+    had been scored.
+- **Golden45 benchmark-valid.**
+  - `jope-dime-regressor` covers 42 of 45 datasets. It was never run on the three that
+    Golden45 added.
+  - The rank holds on the 42 Golden42 datasets alone (31 of 304, 1686.9).
+  - Restricted to the 124 methods that cover at least 42 datasets, the regressor ranks
+    14th (1662.2). Seventeen of the 30 methods above it on the full ladder cover fewer
+    than 42 datasets. Four of them (`hunt9b_r1`, `hunt9_b`, `hunt9b_a`, `hunt9b_r2`)
+    score a single dataset.
+  - These two refits are diagnostics, run on 2026-11-09 with `jope-arena elo` on
+    filtered copies of the committed scores (the 45 `jope-dime` rows removed, which
+    reproduces the benchmark-valid ladder byte for byte). They are not a new ladder.
+  - The regressor's 42 run reports are described in
+    [`assets/regression/SOURCES.md`](../assets/regression/SOURCES.md): a frozen
+    `score-panel` campaign with one seed per dataset. The reports are not committed, so
+    the "never sees test labels" label rests on that record.
+- **Not shown.**
+  - `p201b-train-audit-v1`: our entrants were selected on those training contexts.
+  - The `dev91-s1-two-fold-v1` board: it has no JopeDime model.
+  - Elo values cannot be compared across panels.
+
+The dev91 rows come from [`boards.json`](../assets/readme-performance/v2/boards.json).
+[`extract-boards.sh`](../assets/readme-performance/v2/extract-boards.sh) writes that file
+from the board's `ladder.json` at `v1/next` commit `7f7ff32833`, recording the Git blob
+and SHA-256. Its `--check` mode needs that commit's objects locally, because CI does not
+check out `v1/next`. The Golden45 rows are read from the committed snapshots.
 
 ## Latest complete comparison
 
@@ -29,13 +78,14 @@ neither. No other entrant was rerun.
 | AutoML Elo v3, 64 training families | 3 of 6, 1510.7 | Opus 1, Gemini 2, Kimi 3, Sol 4, Astra 5, grok 6 | `Opus5p5_Extra` 1690.8 |
 | [`dev91-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-audit-v1/LADDER.md), 91 DL-Val91 contexts | 24 of 31, 1411.0 | Opus 14, Gemini 17, Sol 19, Kimi 24, Astra 27, grok 31 | `kumo_tabular_large_e8.v1` 2058.7 |
 | [`dev91-s1-two-fold-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-s1-two-fold-v1/LADDER.md), the same contexts | 13 of 14, 1370.0 | Opus 10, Gemini 11, Sol 12, Kimi 13, Astra 14; grok has no entry | `h257.Kumo_Tabular_L` 1965.6 |
-| [`p201b-train-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/p201b-train-audit-v1/LADDER.md), 201 training contexts | 12 of 19, 1351.8 | Opus 3, Gemini 6, Sol 8, Kimi 12, Astra 17, grok 18 | `h335.H335_AGG` 1674.8 |
+| [`p201b-train-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/p201b-train-audit-v1/LADDER.md), 201 training contexts | 12 of 19, 1351.8 | Opus 3, Gemini 6, Sol 8, Kimi 12, Astra 17, grok 18 | `h335.H335_AGG` 1674.8, selected on these training contexts (in-sample) |
 
 The three reference boards rank the frontier entrants in the same order: Opus, Gemini,
 Sol, Kimi, Astra, grok. Only the AutoML panel puts Kimi above Sol, and there the two are
 level within their intervals. On `dev91-audit-v1`, JopeDime's `h364.XSTACK_2L` ranks 9th
-(1705.9), above every frontier entrant. Each panel has its own opponents and anchor, so
-its Elo values cannot be compared with another panel's.
+(1705.9), above every frontier entrant. Its interval overlaps Opus's, and DL-Val91 is a
+reuse cohort; see [our models' ranks](#where-jopedimes-own-models-rank). Each panel has
+its own opponents and anchor, so its Elo values cannot be compared with another panel's.
 
 The ladders above are pinned at `v1/next` commit `7f7ff32833`. Kimi's per-context scores
 are each board's `scores/h414.kimik3p1_max.jsonl`, with 91, 91 and 201 completed rows.
@@ -43,9 +93,9 @@ Each board's `ARCHIVE.json` names its create-only S3 archive (URI, version id, S
 The [Kimi verification record](../crates/jope-automl/submissions/kimik3p1_max/verification.json)
 on `main` repeats the three board ranks, and the README table is rendered from it.
 
-### The four-entrant panel the paper binds
+### The four-entrant panel the InnovationZero paper binds
 
-The paper shows the October 22 four-entrant result, because its evidence binds those
+The [InnovationZero paper](paper/innovationzero/) shows the October 22 four-entrant result, because its evidence binds those
 exact bytes; the README showed it until 2026-11-08. It covers **64 families**, three
 folds and three seeds (41, 73, 109): 576 fits per entrant, 2,304 fits altogether. All six pairs
 have complete coverage. The historical three entrants' 1,728 fits are reused;
@@ -83,9 +133,19 @@ adapter. Preserve the distinct source/registration boundaries.
 
 ## README tables and plots checked
 
-The README's `current-performance` block is generated from the six-entrant v3 results
-and Kimi's verification record. Its three tables (the v3 ranking, Kimi's five RMSE
-comparisons and Kimi's rank on every panel) are checked by:
+The README's `current-performance` block is generated from:
+- the six-entrant v3 results;
+- Kimi's verification record;
+- our models' board rows (`boards.json`);
+- the two Golden45 snapshots.
+
+Its four tables are checked by:
+- our models' ranks;
+- the v3 ranking;
+- Kimi's five RMSE comparisons;
+- Kimi's rank on every panel.
+
+The check commands:
 
 ```sh
 bash assets/readme-performance/v2/render.sh --check
@@ -93,11 +153,27 @@ bash assets/readme-performance/v2/render.sh --check
 bash assets/readme-performance/v2/render.sh --write
 ```
 
-The renderer pins the SHA-256 of both inputs. It requires complete 64-family coverage
+The renderer pins the SHA-256 of all five inputs. It requires complete 64-family coverage
 for all 15 pairs and Holm-adjusted p-values on exactly Kimi's five comparisons. It
-refuses to render when any statement in its prose no longer follows from the results:
-the winner, Kimi's third place, the Sol–Kimi interval overlap, Sol's lowest
-geometric-mean RMSE point estimate and the two Holm-significant differences. `deploy/ci/check.sh` runs the check.
+refuses to render when any statement in its prose no longer follows from the inputs.
+
+v3 statements:
+- the winner;
+- Kimi's third place;
+- the Sol–Kimi interval overlap;
+- Sol's lowest geometric-mean RMSE point estimate;
+- the two Holm-significant differences.
+
+Statements about our models:
+- XSTACK_2L above all six frontier entrants;
+- its interval overlapping Opus's;
+- only Kumo-Tabular, TabFM, TabPFN and Mitra entrants above it;
+- Kimi's board row equal to its verification record;
+- the regressor's 31 of 304 and 42/45;
+- the 3 + 42 excluded envelope rows;
+- the published 2259.8 row.
+
+`deploy/ci/check.sh` runs the check.
 v3 has no committed figures, so the README block has none.
 
 Until 2026-11-08 the README led with the four-entrant Elo and pairwise figures. Their
@@ -190,7 +266,7 @@ produce a current-policy Elo by renaming a historical result.
 
 | Commit | What it establishes |
 | --- | --- |
-| `2468be138` (2026-09-23) | Golden42 envelope rows were demoted along with the test-adaptive rows; published rank 1/Elo 2259.8 is best-test-selected evidence. |
+| `2468be138` (2026-09-23) | The 42 Golden42 envelope rows (per-dataset minima over the candidate ledger) were demoted along with the 3 test-adaptive Golden46 rows; the published rank 1 of 305 at Elo 2259.8 is best-test-selected evidence. |
 | `c852d7c60` (2026-09-23) | Explicitly records favorable `test-10` selection. |
 | `aa5943167` (2026-09-23) | Same-cut v2 adds four external engines and renders the September table. Its deep ladder contains finalists only, with uneven coverage. |
 | `5404ecacb` (2026-10-13) | CLOVER documentation refresh distinguishes v1 training, scratch comparisons and absent final-checkpoint matched Elo. |
@@ -198,12 +274,13 @@ produce a current-policy Elo by renaming a historical result.
 | `8dc79c587` (2026-10-22, #407) | Adds Gemini and the complete four-entrant 64-family comparison. README previously linked it only from the crate-layout row. |
 | `5390576ff` (2026-10-22, #415) | The combined paper preserves the four-entrant comparison and its training/exposure limitations. |
 
-The historical benchmark-valid Jope Dime Regressor rating remains **1687.0,
-rank 31/304, 42/45 coverage**, under its own published development protocol.
-The September same-cut search remains **1556.6, rank 3/15, finalist on 5/10**, on
-favorable `test-10`. The published best-test envelope remains **2259.8, rank 1**,
-excluded from the corrected benchmark-valid ladder. These are different
-questions and opponent pools; none supplies a missing neural-mode Elo.
+The benchmark-valid Jope Dime Regressor rating remains **1687.0, rank 31 of 304,
+42/45 coverage**, under its own published development protocol; a 2026-11-09 refit of
+both Golden45 ladders reproduced the committed CSVs byte for byte. The September same-cut
+search remains **1556.6, rank 3/15, finalist on 5/10**, on favorable `test-10`. The
+published best-test envelope remains **2259.8, rank 1 of 305** (42 ledger minima plus 3
+test-adaptive Golden46 accepts), excluded from the corrected benchmark-valid ladder.
+These are different questions and opponent pools; none supplies a missing neural-mode Elo.
 
 Reproduce their original committed blocks with
 `cargo run --locked -p jope-records -- readme-benchmarks --check`.
