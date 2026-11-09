@@ -21,32 +21,24 @@ scan; the code pane is built only when the selection or language changes.
 from __future__ import annotations
 
 import json
-import math
 import os
 import select
 import time
 from collections import OrderedDict
-from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
-from rich import box
-from rich.console import Group
-from rich.panel import Panel
-from rich.syntax import Syntax
-from rich.table import Table
 from rich.text import Text
 
 from .engines import EngineRouter
-from .tui import _truncate
+from .tui import _truncate as _truncate
+from .tui_stream_state import Gene, JsonlTailer, StreamState, handle_key
 
 CANON_PREVIEW = 60
 CODE_PREVIEW_CHARS = 20_000
 MAX_GENES = 2000
 INITIAL_TAIL_BYTES = 2 * 1024 * 1024
 
-
-from .tui_stream_state import Gene, JsonlTailer, StreamState, handle_key
 
 _SPARK = "▁▂▃▄▅▆▇█"
 
@@ -123,10 +115,16 @@ def _read_key(fd: int) -> str | None:
     return ch
 
 
+def _load_split_mixins():
+    from .tui_stream_data import StreamDataMixin as _StreamDataMixin
+    from .tui_stream_display import StreamDisplayMixin as _StreamDisplayMixin
+    from .tui_stream_panels import StreamPanelsMixin as _StreamPanelsMixin
 
-from .tui_stream_data import StreamDataMixin as _StreamDataMixin
-from .tui_stream_display import StreamDisplayMixin as _StreamDisplayMixin
-from .tui_stream_panels import StreamPanelsMixin as _StreamPanelsMixin
+    return _StreamDataMixin, _StreamDisplayMixin, _StreamPanelsMixin
+
+
+_StreamDataMixin, _StreamDisplayMixin, _StreamPanelsMixin = _load_split_mixins()
+del _load_split_mixins
 
 
 class StreamView(_StreamDataMixin, _StreamPanelsMixin, _StreamDisplayMixin):

@@ -6,7 +6,8 @@ use std::{io::Write, str::FromStr};
 #[derive(Args, Debug)]
 pub struct StatusArgs {
     pub run: String,
-    #[arg(long)]
+    /// Long-poll: seconds to wait for news (0-60).
+    #[arg(long, value_parser = clap::value_parser!(u64).range(0..=60))]
     pub wait: Option<u64>,
     #[arg(long)]
     pub after_event: Option<String>,

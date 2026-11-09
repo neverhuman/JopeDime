@@ -1,18 +1,12 @@
 from __future__ import annotations
 
 import json
-import os
 import random
 import socket
-import subprocess
 import time
-from collections import defaultdict
 from pathlib import Path
-from typing import Any
 
 import torch
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data.distributed import DistributedSampler
 
 from .io import read_jsonl
@@ -24,10 +18,7 @@ from .model import (
     rows_to_batch,
 )
 from .schema import TrainingRow
-
 from .train_runtime import (
-    ACTIVE_V2_LOSS_COMPONENTS,
-    _DistributedContext,
     _active_v2_loss_profile_weights,
     _active_v2_loss_summary,
     _aggregate_loss_totals,
@@ -43,13 +34,14 @@ from .train_runtime import (
     _gather_rank_status,
     _init_distributed_if_needed,
     _load_active_v2_vocab,
-    _nvidia_smi_metrics,
     _open_step_telemetry,
     _reset_cuda_peak,
     _resolve_device,
     _unwrap_model,
     _wrap_distributed,
 )
+
+
 def train_one_epoch(
     rows: list[TrainingRow],
     *,

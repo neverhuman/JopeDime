@@ -3,6 +3,7 @@
 mod aliases;
 pub mod catalog;
 mod dispatch;
+mod feedback;
 mod transport;
 use jope_api::registry::OPERATIONS;
 use jope_client::Transport;
@@ -59,6 +60,16 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
         request: CallToolRequestParams,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, ErrorData> {
+        if request.name == feedback::NAME {
+            let args = Value::Object(request.arguments.unwrap_or_default());
+            let result = tokio::select! {
+                _ = context.ct.cancelled() => return Err(ErrorData::internal_error("request cancelled", None)),
+                result = tokio::task::spawn_blocking(move || feedback::call(&args)) => {
+                    result.map_err(|_| ErrorData::internal_error("feedback worker failed", None))?
+                }
+            };
+            return Ok(result);
+        }
         if aliases::contains(&request.name) {
             let args = Value::Object(request.arguments.unwrap_or_default());
             let name = request.name.to_string();
@@ -115,6 +126,7 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
         let deadline = Instant::now() + Duration::from_secs(if wait > 0 { wait } else { 65 });
         let mut last = None;
         loop {
+            let routing: Option<String>;
             let mut wire_args = args.clone();
             if wait > 0 {
                 let remaining = deadline
@@ -128,12 +140,27 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
             let held = permit.clone();
             let worker = tokio::task::spawn_blocking(move || {
                 let _held = held;
-                dispatch::execute(client.as_ref(), resources.as_ref(), op, wire_args)
+                let routing = (op.id == 6)
+                    .then(|| dispatch::run_routing(client.as_ref(), &wire_args))
+                    .flatten();
+                match routing {
+                    // Own data where it trains only in the veox Cloud: not started here.
+                    Some(dispatch::RunRouting::Refuse(problem)) => {
+                        (dispatch::Outcome::Failure(problem), None)
+                    }
+                    routing => (
+                        dispatch::execute(client.as_ref(), resources.as_ref(), op, wire_args),
+                        match routing {
+                            Some(dispatch::RunRouting::Note(note)) => Some(note),
+                            _ => None,
+                        },
+                    ),
+                }
             });
             let outcome = tokio::select! {
                 _=context.ct.cancelled()=>return Err(ErrorData::internal_error("request cancelled",None)),
                 result=timeout_at(deadline,worker)=>match result{
-                    Ok(Ok(value))=>value,
+                    Ok(Ok((value, note)))=>{ routing = note; value },
                     Ok(Err(_))=>return Err(ErrorData::internal_error("engine request worker failed",None)),
                     Err(_) => {
                         let response = match last {
@@ -172,6 +199,12 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
                         }
                     }
                     let mut result = CallToolResult::structured(value);
+                    // The jAIn routing rule, as one text line beside the unchanged structured
+                    // result: a bundled demo runs here. This server never uploads (an agent
+                    // cannot give the user's upload consent), so own data is refused above.
+                    if let Some(note) = routing {
+                        result.content.push(ContentBlock::text(note));
+                    }
                     // Keep the SDK JSON text fallback for clients that do not expose
                     // structuredContent to their model. Both carry the same public value.
                     for (uri, mime, _) in links {
@@ -273,6 +306,9 @@ impl<T: Transport + Send + Sync + 'static> ServerHandler for Adapter<T> {
             serde_json::from_value::<Vec<Tool>>(Value::Array(aliases::tools()))
                 .expect("legacy tool definitions"),
         );
+        // Last, after the legacy aliases: the one tool that is neither an engine operation nor a
+        // deprecated name.
+        tools.push(serde_json::from_value(feedback::tool()).expect("feedback tool definition"));
         Ok(ListToolsResult::with_all_items(tools))
     }
     async fn call_tool(

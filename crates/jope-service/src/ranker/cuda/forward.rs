@@ -14,6 +14,7 @@ use std::collections::BTreeMap;
 pub struct StageOutput {
     pub v256: Vec<f32>,
     pub col: Vec<f32>,
+    pub hidden256: Vec<f32>,
     pub dope629: Vec<f32>,
     pub lm48: Vec<f32>,
     pub lm48_z: Vec<f32>,
@@ -71,10 +72,10 @@ impl FusedForward {
         let device = selected_device(request)?;
         Self::from_bytes(
             bundle
-                .asset("dope.safetensors")
+                .asset(crate::ranker::files::DOPE)
                 .context("missing authenticated DOPE")?,
             bundle
-                .asset("jope.safetensors")
+                .asset(crate::ranker::files::JOPE)
                 .context("missing authenticated ranker")?,
             device,
             workers,
@@ -160,11 +161,21 @@ impl FusedForward {
         Ok(Tensor::from_vec(values, shape, &self.device)?)
     }
     fn linear(&self, x: &Tensor, name: &str) -> Result<Tensor> {
-        cpu::linear(
+        let output = cpu::linear(
             x,
             self.p(&format!("{name}.weight"))?,
             self.p(&format!("{name}.bias"))?,
-        )
+        )?;
+        #[cfg(feature = "visual-trace")]
+        crate::visual_trace::affine(
+            "dope",
+            name,
+            x,
+            self.p(&format!("{name}.weight"))?,
+            Some(self.p(&format!("{name}.bias"))?),
+            &output,
+        )?;
+        Ok(output)
     }
     fn norm(&self, x: &Tensor, name: &str) -> Result<Tensor> {
         cpu::norm(
@@ -229,6 +240,8 @@ impl FusedForward {
             &qkv.narrow(1, 32, 32)?.t()?.contiguous()?,
         )?)?;
         let probs = cpu::softmax(&logits)?;
+        #[cfg(feature = "visual-trace")]
+        crate::visual_trace::tensor("dope", "attention_probabilities", &probs)?;
         let attended = (cpu::matmul(&probs, &qkv.narrow(1, 64, 32)?)? + &tok)?.reshape((1, 256))?;
         let bilin = (cpu::tanh(&self.linear(&x, &format!("{a}.bilinear_u"))?)?
             * cpu::silu(&self.linear(&x, &format!("{a}.bilinear_v"))?)?)?;
@@ -283,6 +296,8 @@ impl FusedForward {
         .affine(0.25, 1.)?
         .reshape((1, 64))?;
         let dope = Tensor::cat(&[&v, &task, &dist, &gates, &lm, &bb, &col_gates], 1)?;
+        #[cfg(feature = "visual-trace")]
+        crate::visual_trace::tensor("dope", "dope629", &dope)?;
         let lm48 = self
             .standard(&v, "step2_lm_mean_1x256", "step2_lm_std_1x256", 6.)?
             .matmul(self.p("step2_svd_basis_256x48")?)?;
@@ -323,16 +338,20 @@ impl FusedForward {
         let output = StageOutput {
             v256: flat(&v)?,
             col: flat(&c)?,
+            hidden256: flat(&h)?,
             dope629: flat(&dope)?,
             lm48: flat(&lm48)?,
             lm48_z: flat(&lm48_z)?,
             tokens: flat(&tokens)?,
             mask: flat(self.p("mask_10_base")?)?,
         };
+        #[cfg(feature = "visual-trace")]
+        crate::visual_trace::tensor("bridge", "stage1b_tokens", &tokens)?;
         ensure!(
             output
-                .dope629
+                .hidden256
                 .iter()
+                .chain(&output.dope629)
                 .chain(&output.lm48)
                 .chain(&output.lm48_z)
                 .chain(&output.tokens)

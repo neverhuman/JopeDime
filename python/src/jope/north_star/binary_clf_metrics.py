@@ -223,5 +223,3 @@ def evaluate_unified_regression_and_binary_batched_gpu(
         "platt_a": platt_a.squeeze(1),
         "platt_b": platt_b.squeeze(1),
     }
-
-

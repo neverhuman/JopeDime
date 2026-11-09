@@ -54,5 +54,3 @@ def architecture(payload):
             "invalid experimental normalization architecture",
         )
     return {key: payload[key] for key in ARCHITECTURE_FIELDS}
-
-

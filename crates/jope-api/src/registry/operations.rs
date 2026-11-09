@@ -430,9 +430,11 @@ pub static OPERATIONS: &[Operation] = &[
         terminal_commands: &[],
     },
 ];
-/// These six commands are deliberately not separate engine operations (§4.2).
+/// These seven commands are deliberately not separate engine operations (§4.2). `\\demo`
+/// opens a dataset bundled in the client and then drives the ordinary engine operations.
 pub static LOCAL_COMMANDS: &[TerminalCommand] = &[
     command!("\\help", &[], "[command]", Client, &[], None, false),
+    command!("\\demo", &[], "[NAME]", Client, &[], None, false),
     command!(
         "\\target",
         &[],
@@ -461,7 +463,19 @@ pub static LOCAL_COMMANDS: &[TerminalCommand] = &[
         None,
         false
     ),
-    command!("\\quit", &[], "[--pause]", Client, &[], None, false),
+    command!("\\auto", &[], "", Client, &[], None, false),
+    command!(
+        "\\copy",
+        &[],
+        "[link|run|result|all]",
+        Client,
+        &[],
+        None,
+        false
+    ),
+    command!("\\transcript", &["\\select"], "", Client, &[], None, false),
+    command!("\\mouse", &[], "[on|off]", Client, &[], None, false),
+    command!("\\quit", &["\\exit"], "[--pause]", Client, &[], None, false),
 ];
 pub fn operation(id: u8) -> Option<&'static Operation> {
     OPERATIONS.iter().find(|op| op.id == id)

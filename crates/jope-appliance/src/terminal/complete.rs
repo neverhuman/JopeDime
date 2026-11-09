@@ -56,6 +56,14 @@ pub const COMMANDS: &[CommandSpec] = &[
         flags: &["--name", "--json"],
     },
     CommandSpec {
+        name: "demo",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "usage",
+        flags: &[],
+    },
+    CommandSpec {
         name: "target",
         flags: &["--task", "--ignore", "--group", "--time"],
     },
@@ -89,7 +97,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     },
     CommandSpec {
         name: "run",
-        flags: &["--seed", "--json"],
+        flags: &["--seed", "--local", "--cloud", "--json"],
     },
     CommandSpec {
         name: "pause",
@@ -148,7 +156,43 @@ pub const COMMANDS: &[CommandSpec] = &[
         flags: &["--json"],
     },
     CommandSpec {
+        name: "auto",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "copy",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "transcript",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "mouse",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "login",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "logout",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "sync",
+        flags: &[],
+    },
+    CommandSpec {
+        name: "feedback",
+        flags: &[],
+    },
+    CommandSpec {
         name: "quit",
+        flags: &["--pause"],
+    },
+    CommandSpec {
+        name: "exit",
         flags: &["--pause"],
     },
 ];
@@ -159,6 +203,9 @@ const LANDMARKS: &[&str] = &["full", "none"];
 const LANGUAGES: &[&str] = &["rust", "python", "javascript", "typescript"];
 const REASONING: &[&str] = &["off", "concise", "detailed"];
 const EXPORT_KINDS: &[&str] = &["bundle", "model", "source"];
+const COPY_ITEMS: &[&str] = &["link", "run", "result", "all"];
+const ON_OFF: &[&str] = &["on", "off"];
+const FEEDBACK_KINDS: &[&str] = &["issue", "idea", "good", "other"];
 
 #[derive(Clone, Copy)]
 enum ValueSource {
@@ -170,6 +217,9 @@ enum ValueSource {
     AlgorithmId,
     Path,
     AlgorithmOrPath,
+    Demo,
+    /// A dataset to open: bundled `example/` demos, then filesystem paths.
+    OpenPath,
 }
 
 /// Return suggestions for the token at `cursor` without invoking any command.
@@ -202,7 +252,7 @@ pub fn complete(input: &str, cursor: usize, data: &CompletionData<'_>) -> Vec<Su
     }
 
     if let Some(path_prefix) = prefix.strip_prefix('@') {
-        return complete_paths(path_prefix, "@", data);
+        return complete_paths(path_prefix, "@", data, false);
     }
 
     let value_source = previous
@@ -278,13 +328,17 @@ fn value_source_for_flag(command: &str, flag: &str) -> Option<ValueSource> {
 
 fn positional_source(command: &str, completed_args: usize, prefix: &str) -> Option<ValueSource> {
     if matches!(command, "open") && completed_args == 0 {
-        return Some(ValueSource::Path);
+        return Some(ValueSource::OpenPath);
     }
     if prefix.starts_with('@') {
         return Some(ValueSource::Path);
     }
     match command {
         "help" if completed_args == 0 => Some(ValueSource::Command),
+        "demo" if completed_args == 0 => Some(ValueSource::Demo),
+        "copy" if completed_args == 0 => Some(ValueSource::Enum(COPY_ITEMS)),
+        "feedback" if completed_args == 0 => Some(ValueSource::Enum(FEEDBACK_KINDS)),
+        "mouse" | "sync" if completed_args == 0 => Some(ValueSource::Enum(ON_OFF)),
         "target" if completed_args == 0 => Some(ValueSource::Column),
         "effort" if completed_args == 0 => Some(ValueSource::Enum(EFFORTS)),
         "landmarks" if completed_args == 0 => Some(ValueSource::Enum(LANDMARKS)),
@@ -324,10 +378,20 @@ fn complete_source(
             prefix,
             CompletionSource::AlgorithmId,
         ),
-        ValueSource::Path => complete_paths(prefix, "", data),
+        ValueSource::Path => complete_paths(prefix, "", data, false),
+        ValueSource::OpenPath => {
+            let mut suggestions = complete_examples(prefix);
+            suggestions.extend(complete_paths(prefix, "", data, true));
+            suggestions
+        }
+        ValueSource::Demo => filtered(
+            super::demos::DEMOS.iter().map(|demo| demo.name),
+            prefix,
+            CompletionSource::Enum,
+        ),
         ValueSource::AlgorithmOrPath => {
             let mut suggestions = complete_source(ValueSource::AlgorithmId, prefix, data);
-            suggestions.extend(complete_paths(prefix, "", data));
+            suggestions.extend(complete_paths(prefix, "", data, false));
             suggestions
         }
     }
@@ -370,10 +434,131 @@ fn complete_columns(prefix: &str, data: &CompletionData<'_>) -> Vec<Suggestion> 
         .collect()
 }
 
-fn complete_paths(prefix: &str, marker: &str, data: &CompletionData<'_>) -> Vec<Suggestion> {
+/// Bundled demos complete as virtual `example/<name>.csv` paths, even with no such directory.
+fn complete_examples(prefix: &str) -> Vec<Suggestion> {
+    if !super::demos::PREFIX.starts_with(prefix) && !prefix.starts_with(super::demos::PREFIX) {
+        return Vec::new();
+    }
+    super::demos::DEMOS
+        .iter()
+        .map(super::demos::Demo::path)
+        .filter(|path| path.starts_with(prefix))
+        .map(|insert| Suggestion {
+            insert,
+            source: CompletionSource::Path,
+        })
+        .collect()
+}
+
+/// Most entries one folder listing offers; the menu scrolls through them.
+pub const MAX_LISTED: usize = 500;
+
+/// Whether `/open` can read this file name as a table.
+pub fn is_table_name(name: &str) -> bool {
+    std::path::Path::new(name)
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("csv"))
+}
+
+/// Entries of the folder named by `prefix` (relative to `cwd`, or absolute) whose names start
+/// with the rest of `prefix`: folders first (with a trailing `/`), then files, each sorted.
+/// Hidden entries appear only when the typed name starts with `.`.
+pub fn list_folder(cwd: &Path, prefix: &str, tables_only: bool) -> Vec<String> {
+    let (folder, name) = match prefix.rfind('/') {
+        Some(slash) => (&prefix[..=slash], &prefix[slash + 1..]),
+        None => ("", prefix),
+    };
+    let directory = if folder.is_empty() {
+        cwd.to_path_buf()
+    } else {
+        cwd.join(folder)
+    };
+    let Ok(entries) = std::fs::read_dir(&directory) else {
+        return Vec::new();
+    };
+    let mut folders = Vec::new();
+    let mut files = Vec::new();
+    for entry in entries.flatten().take(MAX_LISTED * 8) {
+        let Some(file_name) = entry.file_name().to_str().map(str::to_owned) else {
+            continue;
+        };
+        if !file_name.starts_with(name) || (file_name.starts_with('.') && !name.starts_with('.')) {
+            continue;
+        }
+        // Follow symlinks for the kind, as opening the path would.
+        let Ok(kind) = std::fs::metadata(entry.path()) else {
+            continue;
+        };
+        if kind.is_dir() {
+            folders.push(format!("{folder}{file_name}/"));
+        } else if !tables_only || is_table_name(&file_name) {
+            files.push(format!("{folder}{file_name}"));
+        }
+    }
+    folders.sort();
+    files.sort();
+    folders.extend(files);
+    folders.truncate(MAX_LISTED);
+    folders
+}
+
+/// What bare `/open` shows: the CSV files `/open` can see in `cwd`, or where it looked and how
+/// to add one.
+pub fn open_listing(cwd: &Path) -> Vec<String> {
+    const SHOWN: usize = 20;
+    let entries = list_folder(cwd, "", true);
+    let (folders, files): (Vec<&String>, Vec<&String>) =
+        entries.iter().partition(|entry| entry.ends_with('/'));
+    let here = cwd.display();
+    let mut lines = Vec::new();
+    if files.is_empty() {
+        lines.push(format!("No CSV files in {here}"));
+        lines.push(
+            "Copy a .csv file into this folder, or start jain from the folder that holds your data, then /open FILE.csv"
+                .into(),
+        );
+    } else {
+        lines.push(format!("CSV files in {here}:"));
+        for file in files.iter().take(SHOWN) {
+            lines.push(format!("  {file}"));
+        }
+        if files.len() > SHOWN {
+            lines.push(format!("  ... and {} more", files.len() - SHOWN));
+        }
+        lines.push("Open one with /open NAME.csv; Tab completes, Up/Down choose.".into());
+    }
+    if !folders.is_empty() {
+        let names: Vec<&str> = folders.iter().take(8).map(|f| f.as_str()).collect();
+        lines.push(format!(
+            "Folders here: {}{} (type /open FOLDER/ then Tab)",
+            names.join("  "),
+            if folders.len() > 8 { "  ..." } else { "" }
+        ));
+    }
+    lines.push("Or try a bundled demo: /demo".into());
+    lines
+}
+
+fn complete_paths(
+    prefix: &str,
+    marker: &str,
+    data: &CompletionData<'_>,
+    tables_only: bool,
+) -> Vec<Suggestion> {
     let Some(cwd) = data.working_directory else {
         return Vec::new();
     };
+    if data.paths.is_empty() {
+        // The interactive terminal: list the real folder for what has been typed so far.
+        return list_folder(cwd, prefix, tables_only)
+            .into_iter()
+            .map(|path| Suggestion {
+                insert: format!("{marker}{}", serialize_token(&path)),
+                source: CompletionSource::Path,
+            })
+            .collect();
+    }
     let mut match_prefix = prefix;
     while let Some(remainder) = match_prefix.strip_prefix("./") {
         match_prefix = remainder;

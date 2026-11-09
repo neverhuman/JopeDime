@@ -1,12 +1,15 @@
 """Coverage-aware dispatch and scheduling for no-winner bootstrap waves."""
 
+import json
 import math
 import random
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from rlfw.arena.arms import Candidate, draw_seed
+from rlfw.arena.game_spec import require_sha
 from rlfw.arena.oracle import BlindOracle
 from rlfw.arena.scheduler import ArenaScheduler
+from rlfw.research_hwm import Publication
 from rlfw.slate import RerankArms
 from rlfw.no_winner_bootstrap import (
     BootstrapSpec,

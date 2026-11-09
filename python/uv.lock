@@ -1091,6 +1091,7 @@ version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "joblib" },
+    { name = "jope-native" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-4-jope-cpu' and extra == 'extra-4-jope-cu130')" },
     { name = "orjson" },
@@ -1150,6 +1151,7 @@ requires-dist = [
     { name = "boto3", marker = "extra == 'dl-custody'", specifier = "==1.43.121" },
     { name = "catboost", marker = "extra == 'foundry'", specifier = ">=1.2.8" },
     { name = "joblib", specifier = ">=1.4" },
+    { name = "jope-native", directory = "native" },
     { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.23" },
     { name = "lightgbm", marker = "extra == 'foundry'", specifier = ">=4.0" },
     { name = "matplotlib", marker = "extra == 'research'", specifier = ">=3.9" },
@@ -1177,6 +1179,11 @@ requires-dist = [
     { name = "xgboost", marker = "extra == 'foundry'", specifier = ">=2.0" },
 ]
 provides-extras = ["benchmark", "dl-custody", "dev", "foundry", "research", "cpu", "cu130"]
+
+[[package]]
+name = "jope-native"
+version = "1.0.0"
+source = { directory = "native" }
 
 [[package]]
 name = "jsonschema"

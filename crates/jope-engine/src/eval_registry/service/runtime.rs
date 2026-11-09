@@ -151,6 +151,15 @@ impl Service {
     pub fn socket(&self) -> &Path {
         &self.state.config.socket
     }
+    #[cfg(test)]
+    pub(super) fn funding_active_reader_for_test(&self) -> Arc<dyn Fn() -> usize + Send + Sync> {
+        let state = Arc::downgrade(&self.state);
+        Arc::new(move || {
+            state
+                .upgrade()
+                .map_or(0, |state| state.funding_active.load(Ordering::SeqCst))
+        })
+    }
     /// A graceful stop drains accepted children and commits their original
     /// receipts. Disconnected submitters do not cancel their supervisor threads.
     pub fn run(self, stop: Arc<AtomicBool>) -> Result<ServiceStats> {

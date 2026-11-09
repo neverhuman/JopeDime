@@ -13,6 +13,7 @@ from jope.fused_hpc.block256_slate_and_workspace import (
     RBUF_STRIDE_PER_ROW,
 )
 
+
 @dataclass(frozen=True)
 class Phase2HeadSliceSpec:
     """Per-winner buffer layout specification for a Phase 2 head family."""
@@ -30,6 +31,8 @@ PHASE2_HEAD_SLICE_SPECS: dict[str, Phase2HeadSliceSpec] = {
     "ksmooth": Phase2HeadSliceSpec("ksmooth", 260, 4, 0),
     "histgbm": Phase2HeadSliceSpec("histgbm", 260, 268, IBUF_HIST_EXTRA_INTS),
 }
+
+
 class Phase2WinnerWorkspace:
     """Phase 2 HPC #6: Persistent non-aliasing workspace pool for Phase 2 head evaluators.
 

@@ -3,13 +3,43 @@ from __future__ import annotations
 import json
 import math
 import time
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
 
 from .artifact_pins import artifact_sha256, load_joblib_pinned
+from .classical_summary import (
+    _entropy as _entropy,
+)
+from .classical_summary import (
+    _finite_unit_interval as _finite_unit_interval,
+)
+from .classical_summary import (
+    _gini as _gini,
+)
+from .classical_summary import (
+    _pairwise_mean_abs as _pairwise_mean_abs,
+)
+from .classical_summary import (
+    _safe_div as _safe_div,
+)
+from .classical_summary import (
+    _theil as _theil,
+)
+from .classical_summary import (
+    _trimmed_mean as _trimmed_mean,
+)
+from .classical_summary import (
+    _uniform_distances as _uniform_distances,
+)
+from .classical_summary import (
+    _winsorized_mean as _winsorized_mean,
+)
+from .classical_summary import (
+    summarize_target_window as summarize_target_window,
+)
 from .data import (
     TASK_BINARY,
     TASK_NAMES,
@@ -90,21 +120,6 @@ class WeightedScoreEnsemble:
             score += float(weight) * _score_model(model, x)
         score = np.clip(score, 0.0, 1.0)
         return np.column_stack([1.0 - score, score])
-
-
-from .classical_summary import (
-    _entropy,
-    _finite_unit_interval,
-    _gini,
-    _pairwise_mean_abs,
-    _safe_div,
-    _theil,
-    _trimmed_mean,
-    _uniform_distances,
-    _winsorized_mean,
-    summarize_target_window,
-)
-
 
 
 def _limit_records(

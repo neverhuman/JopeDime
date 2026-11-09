@@ -152,6 +152,9 @@ fn r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_
     }
 }
 
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[test]
 #[cfg(all(feature = "mcp", any(target_os = "linux", target_os = "macos")))]
 fn live_terminal_attach_and_mcp_reconnect_preserve_the_same_run_projection() {

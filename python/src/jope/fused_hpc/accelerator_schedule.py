@@ -12,6 +12,7 @@ from torch import nn
 from .accelerator import ALLOWED_GPU_NODES, DEFAULT_NODE_THROUGHPUT_WEIGHTS
 from .accelerator_sort_corr import sort_valid_rows_radix_f64, sort_valid_values_radix_f64
 
+
 @dataclass(frozen=True)
 class ShapeBucketPlan:
     """Summary and batch schedule for 2D ``(P_tier, N_tr)`` shape bucketing."""
@@ -22,6 +23,7 @@ class ShapeBucketPlan:
     padded_cells_1d: int
     padded_cells_2d: int
     padding_reduction_ratio: float
+
 
 def _compute_schedule_padded_cells(
     rows_and_cols: Sequence[tuple[int, int]],
@@ -41,6 +43,7 @@ def _compute_schedule_padded_cells(
         p_pad = max(min(int(rows_and_cols[i][1]), max_p_cap) for i in batch_idx)
         total_cells += b_len * n_pad * p_pad
     return total_cells
+
 
 def bucket_tables_2d_by_p_tier_and_ntr(
     rows_and_cols: Sequence[tuple[int, int]],
@@ -156,6 +159,7 @@ def bucket_tables_2d_by_p_tier_and_ntr(
         padding_reduction_ratio=ratio,
     )
 
+
 class FusedStageCudaGraphRunner:
     """Captures and replays ``CUDAGraph``s for fixed-shape Stage 1A-neural and Stage 2 sub-networks.
 
@@ -211,6 +215,7 @@ class FusedStageCudaGraphRunner:
         graph.replay()
         return static_dope629.clone(), static_lm48.clone()
 
+
 def plan_multigpu_shards(
     items: Sequence[dict[str, Any]],
     *,
@@ -262,6 +267,7 @@ def plan_multigpu_shards(
 
     return shards
 
+
 def _snapshot_dope_state_sha256(model: nn.Module) -> str:
     """Compute a deterministic SHA-256 over ``model.dope_model.state_dict()``."""
     dope = getattr(model, "dope_model", None)
@@ -274,6 +280,7 @@ def _snapshot_dope_state_sha256(model: nn.Module) -> str:
         h.update(header)
         h.update(cpu.view(torch.uint8).numpy().tobytes())
     return h.hexdigest()
+
 
 def patch_fused_network_hpc(
     fused_net: nn.Module,

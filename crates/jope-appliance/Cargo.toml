@@ -52,9 +52,15 @@ engine = ["dep:jope-service", "jope-client?/engine"]
 research = ["engine", "jope-service/research"]
 # Build service client commands without requiring the embedded engine.
 client = ["dep:jope-client", "dep:ureq", "dep:zip"]
-# HTTPS cloud workspaces. No audited appliance feature set selects it: shipping TLS needs an
-# amendment to deploy/appliance/dependencies-deny.toml, which keeps ureq featureless.
-cloud-tls = ["client", "dep:rustls", "ureq/rustls-no-provider", "ureq/rustls-webpki-roots"]
+# HTTPS cloud workspaces. Audited only in the A22 cloud-tls selections of
+# deploy/appliance/dependencies-deny.toml (the release client and the public native-only edition).
+# Only the public jAIn CLI builds select it (release.sh, build.sh native-only), so it also
+# selects `public-edition`.
+cloud-tls = ["client", "public-edition", "dep:rustls", "ureq/rustls-no-provider", "ureq/rustls-webpki-roots"]
+# The public jAIn CLI edition (owner rule 2026-11-06): no internal model file or method names
+# compiled in, and the user's own data trains only in the veox Cloud (never on this machine;
+# JAIN_ALLOW_LOCAL_FILES has no effect). Adds no dependency.
+public-edition = ["jope-runtime/public-edition", "jope-service?/public-edition"]
 dope-encoding = ["dep:starforge"]
 dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
 # The executable refuses to run without its sealed package: every release build sets it, so a

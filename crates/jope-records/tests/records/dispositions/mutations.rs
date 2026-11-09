@@ -110,6 +110,7 @@ fn mutations_are_rejected() {
             Box::new(|_, record| {
                 let test = crate::nth(at(stage(record, "fixture_proof"), "tests"), 0);
                 set(test, "pre_fix_commit", FIXED.into());
+                true
             }),
             "distinct pre-fix commit",
         ),
@@ -120,6 +121,7 @@ fn mutations_are_rejected() {
                     .as_list_mut()
                     .expect("tests")
                     .remove(1);
+                true
             }),
             "pre-fix failure, negative and positive",
         ),
@@ -131,6 +133,7 @@ fn mutations_are_rejected() {
                     .as_list_mut()
                     .expect("attestations")
                     .push(copy);
+                true
             }),
             "duplicate hosted_ci",
         ),
@@ -161,7 +164,10 @@ fn mutations_are_rejected() {
         ),
         (
             "live package without live stage",
-            Box::new(|fixture, record| *record = fixture.defect("S08-G03", true)),
+            Box::new(|fixture, record| {
+                *record = fixture.defect("S08-G03", true);
+                true
+            }),
             "W8 requires live qualification",
         ),
         (
@@ -180,7 +186,13 @@ fn mutations_are_rejected() {
     for (label, mutate, reason) in mutations {
         let fixture = Fixture::new();
         let mut record = fixture.defect("S03-G03", true);
-        mutate(&fixture, &mut record);
+        if !mutate(&fixture, &mut record) {
+            assert_eq!(
+                label, "symlinked evidence",
+                "only symlink setup may be unsupported"
+            );
+            continue;
+        }
         fixture.write(vec![record]);
         let result = fixture.verify();
         assert!(result.is_err(), "{label}: accepted");

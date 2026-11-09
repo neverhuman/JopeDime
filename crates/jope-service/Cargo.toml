@@ -12,8 +12,14 @@ description = "JopeDime v1 engine service"
 failpoints = []
 # Internal research tooling; excluded from the default production graph.
 research = []
+# Internal, opt-in observation of the existing frozen inference graph.
+visual-trace = []
 # Optional frozen fused-ranker execution; defaults and native evaluation stay CPU.
 fused-cuda = ["candle_core_0_11_0/cuda"]
+# The public jAIn CLI edition (selected by jope-appliance `cloud-tls`): no internal model file
+# names (the r882 descriptor, ranker asset names) are compiled in. The edition carries no model
+# weights, so the ranker paths that would read them are unreachable there anyway.
+public-edition = ["jope-runtime/public-edition"]
 
 [dependencies]
 # Registry declaration patched to the vendored copy by [patch.crates-io], exactly like starforge.
@@ -69,3 +75,23 @@ path = "tests/support/golden.rs"
 
 [lints]
 workspace = true
+
+[[example]]
+name = "visual_trace"
+required-features = ["visual-trace"]
+
+[[example]]
+name = "visual_emit_metric"
+required-features = ["visual-trace"]
+
+[[example]]
+name = "visual_run"
+required-features = ["visual-trace"]
+
+[[example]]
+name = "visual_fit_dsl"
+required-features = ["visual-trace"]
+
+[[example]]
+name = "visual_inference_metric"
+required-features = ["visual-trace"]

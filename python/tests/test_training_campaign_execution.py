@@ -4,8 +4,13 @@ import copy
 from pathlib import Path
 
 import pytest
+from test_training_campaign import campaign, plan
+from test_training_campaign import state as _state_fixture
 
-from test_training_campaign import campaign, plan, state
+
+@pytest.fixture
+def state(monkeypatch):
+    yield from _state_fixture.__wrapped__(monkeypatch)
 
 
 @pytest.mark.parametrize("task", campaign.TASKS)

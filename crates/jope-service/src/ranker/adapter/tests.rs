@@ -290,3 +290,68 @@ mod cpu_graph;
 mod shape;
 #[path = "tests/validation.rs"]
 mod validation;
+
+#[test]
+fn pre_condense_residual_is_bit_identical_at_zero_init_and_context_sensitive_when_active() {
+    use super::super::stage1b::{
+        pack_pre_condense_tokens, COL_FEATURES, COL_SLOTS, DOPE_FEATURES, HIDDEN256_FEATURES,
+    };
+    let model = synthetic_adapter();
+    let f = synthetic_fixture(8);
+    let baseline = model.predict_costs(f.inputs(2, 8)).unwrap();
+
+    let dope_a: Vec<f32> = (0..DOPE_FEATURES).map(|i| (i as f32) * 0.01).collect();
+    let dope_b: Vec<f32> = (0..DOPE_FEATURES).map(|i| -((i as f32) * 0.02)).collect();
+    let hid_a: Vec<f32> = (0..HIDDEN256_FEATURES).map(|i| (i as f32) * 0.03).collect();
+    let hid_b: Vec<f32> = (0..HIDDEN256_FEATURES)
+        .map(|i| -((i as f32) * 0.01))
+        .collect();
+    let mut col = vec![0.0_f32; COL_SLOTS * COL_FEATURES];
+    for c in 0..8 {
+        col[c * COL_FEATURES] = (c as f32 + 1.0) * 0.2;
+        col[c * COL_FEATURES + 16] = 1.0;
+    }
+    let ctx_a = pack_pre_condense_tokens(&dope_a, &hid_a, &col).unwrap();
+    let ctx_b = pack_pre_condense_tokens(&dope_b, &hid_b, &col).unwrap();
+
+    let zero_w = PreCondenseResidualWeights::zero_initialized();
+    let zero_res = model
+        .predict_costs_with_pre_condense_residual(
+            f.inputs(2, 8),
+            &[ctx_a.clone(), ctx_b.clone()],
+            &zero_w,
+        )
+        .unwrap();
+    assert_eq!(zero_res.total_cost, baseline.total_cost);
+    assert_eq!(zero_res.anchor_cost, baseline.anchor_cost);
+
+    let mut active_w = PreCondenseResidualWeights::zero_initialized();
+    active_w.alpha_prior = 0.05;
+    for (i, w) in active_w.ctx_summary_proj_64x24.iter_mut().enumerate() {
+        *w = ((i % 13) as f32 - 6.0) * 0.1;
+    }
+    for (i, w) in active_w.col_proj_18x24.iter_mut().enumerate() {
+        *w = ((i % 7) as f32 - 3.0) * 0.1;
+    }
+    let active_res = model
+        .predict_costs_with_pre_condense_residual(
+            f.inputs(2, 8),
+            &[ctx_a.clone(), ctx_b.clone()],
+            &active_w,
+        )
+        .unwrap();
+    assert!(active_res
+        .total_cost
+        .iter()
+        .zip(&baseline.total_cost)
+        .any(|(a, b)| (a - b).abs() > 1e-4));
+
+    let swapped_res = model
+        .predict_costs_with_pre_condense_residual(f.inputs(2, 8), &[ctx_b, ctx_a], &active_w)
+        .unwrap();
+    assert!(active_res
+        .total_cost
+        .iter()
+        .zip(&swapped_res.total_cost)
+        .any(|(a, b)| (a - b).abs() > 1e-4));
+}

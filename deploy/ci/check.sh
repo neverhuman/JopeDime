@@ -6,7 +6,7 @@ fail=0
 python3 -B deploy/ci/verify-vendor-security.py --root .
 step(){ printf '\n== %s\n' "$*"; }
 step "cargo metadata --locked"; cargo metadata --locked --format-version 1 --no-deps > /dev/null
-step "Rust formatting"; if ! cargo fmt --all --check; then fail=1; fi
+step "Rust formatting"; if ! cargo fmt --all -- --check; then fail=1; fi
 step "explicit coverage mapping (static, not collection or execution)"; if ! cargo run -q --locked -p jope-records -- coverage validate; then fail=1; fi
 step "full-source audit evidence and trusted-main routing"; if ! python3 -B deploy/ci/test-audit-lane.py; then fail=1; fi
 step "trusted compiler cache boundaries"; if ! python3 deploy/ci/test-full-main.py; then fail=1; fi
@@ -51,7 +51,7 @@ step "no absolute home paths in python (informational until WP6 lands)"; pyabs=$
 step "rust-test scope partitions the workspace (deploy/ci/rust-test-scope.sh)"; if ! cargo run -q --locked -p jope-records -- rust-scope-check; then fail=1; fi
 step "repository layout (jope-records repo-layout; exceptions in deploy/ci/repo-layout-allow.txt)"; if ! cargo run -q --locked -p jope-records -- repo-layout; then fail=1; fi
 step "README benchmark blocks match committed evidence (jope-records readme-benchmarks)"; if ! cargo run -q --locked -p jope-records -- readme-benchmarks --check; then fail=1; fi
-step "README current regression ranking and plot identities"; if ! bash assets/readme-performance/v1/render.sh --check; then fail=1; fi
+step "README current regression ranking (AutoML Elo v3 and kimik3p1_max's panel ranks; assets/readme-performance/v2)"; if ! bash assets/readme-performance/v2/render.sh --check; then fail=1; fi
 step "paper and README numbers trace (jope-records paper-trace; docs/paper/NUMBERS_TRACE.md)"; if ! cargo run -q --locked -p jope-records -- paper-trace; then fail=1; fi
 # A family shorter than one of its own tests can never pass: full-scratch was killed at 600 s
 # inside feat-math::golden fast_profile_portfolio_head (~580-619 s). Budgets are argv[3] of each

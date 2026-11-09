@@ -9,11 +9,11 @@ All remaining `961` tracked `.py` files (`243,443` LOC) are pure orchestration, 
 | Exception ID | Category | Kept `.py` Files | Kept LOC | Justification Rule |
 | --- | --- | ---: | ---: | --- |
 | `PR-EXCEPT-TORCH` | PyTorch / Safetensors / CUDA model & checkpoint layer | 203 | 93,420 | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
-| `PR-EXCEPT-FFI` | Thin Python-to-Rust native extension / FFI shim | 4 | 945 | Thin Python-to-Rust native extension / FFI boundary shim wrapping compiled Rust crates. |
+| `PR-EXCEPT-FFI` | Thin Python-to-Rust native extension / FFI shim | 6 | 959 | Thin Python-to-Rust native extension / FFI boundary shim wrapping compiled Rust crates. |
 | `PR-EXCEPT-EXT-ML` | External third-party Python ML baseline adapters (LightGBM/XGBoost/CatBoost/TabPFN) | 16 | 8,092 | External third-party Python ML baseline adapter (LightGBM/XGBoost/CatBoost/TabPFN parity harness). |
-| **Total Kept** | **All Authorized Python Exceptions** | **225** | **102,830** | **Strict 1-line justification per file below** |
+| **Total Kept** | **All Authorized Python Exceptions** | **227** | **102,844** | **Strict 1-line justification per file below** |
 
-## Per-File 1-Line Justifications (`225` Files)
+## Per-File 1-Line Justifications (`227` Files)
 
 | Path | LOC | Exception Category | 1-Line Justification |
 | --- | ---: | --- | --- |
@@ -181,6 +181,7 @@ All remaining `961` tracked `.py` files (`243,443` LOC) are pure orchestration, 
 | `docs/internal/core-ip/tools/build.py` | 184 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Build the monograph from maintained chapters and retained numeric evidence.) |
 | `python/legacy/fable_god/provenance/regressor_source/starlight_core_regressor_train.py` | 2421 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Standalone TabPFN v3 checkpoint-compatible architecture.) |
 | `python/legacy/fable_god/python/elo_finetune/model_io.py` | 88 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Strict-load the deployed safetensors regressor into the provenance arch.) |
+| `python/native/src/jope_native/__init__.py` | 1 | `PR-EXCEPT-FFI` | Thin Python-to-Rust native extension / FFI boundary shim wrapping compiled Rust crates. (Package marker of the out-of-tree `jope-native` distribution that carries the compiled `crates/jope-telemetry` extension.) |
 | `python/src/jope/broad_shadow/cli.py` | 212 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Operator CLI for local broad-shadow artifact construction and gates.) |
 | `python/src/jope/cli.py` | 1417 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Module `cli` in `python/src/jope`) |
 | `python/src/jope/dime_score/broad_train.py` | 803 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Broad structural-critic training over the mmap-only corpus.) |
@@ -228,6 +229,7 @@ All remaining `961` tracked `.py` files (`243,443` LOC) are pure orchestration, 
 | `python/src/jope/target_maker/encode.py` | 137 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Module `encode` in `python/src/jope/target_maker`) |
 | `python/src/jope/target_maker/fused.py` | 1969 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Module `fused` in `python/src/jope/target_maker`) |
 | `python/src/jope/target_maker/model.py` | 448 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Module `model` in `python/src/jope/target_maker`) |
+| `python/src/jope/_telemetry.py` | 13 | `PR-EXCEPT-FFI` | Thin Python-to-Rust native extension / FFI boundary shim wrapping compiled Rust crates. (Aliases `jope._telemetry` to the installed `jope_native._telemetry` extension so no native library is built into python/src.) |
 | `python/src/jope/telemetry/__init__.py` | 59 | `PR-EXCEPT-FFI` | Thin Python-to-Rust native extension / FFI boundary shim wrapping compiled Rust crates. (Re-exports of the native `jope._telemetry` extension from `crates/jope-telemetry`; no telemetry logic in Python.) |
 | `python/src/jope/telemetry/cuda_events.py` | 77 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (CUDA copy-event record/query shim on the trainer's stream for H2D telemetry; sampling, slots and GB/s math are Rust.) |
 | `python/src/jope/telemetry/dope_guard.py` | 107 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (DOPE freeze guard torch walk, rows D1-D5: host byte copies and parameter flags; hashing, records and fail-closed enforcement are Rust.) |

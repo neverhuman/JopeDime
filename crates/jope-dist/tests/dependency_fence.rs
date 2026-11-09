@@ -93,3 +93,117 @@ fn full_cpu_matrix_covers_production_defaults_without_cpp_or_tls() {
     assert!(!resolved.contains_key("rustls"));
     assert!(!resolved.contains_key("cudarc"));
 }
+
+/// A22: the released connected client selects `cloud-tls`, the policy audits exactly that
+/// selection, and HTTPS comes from rustls + AWS-LC with no system TLS library or second provider.
+#[test]
+fn released_client_selection_is_audited_and_uses_one_tls_stack() {
+    use std::collections::BTreeSet;
+    let repo = jope_dist::repo_root();
+    let release = std::fs::read_to_string(repo.join("deploy/release/release.sh")).unwrap();
+    let command = release
+        .lines()
+        .find_map(|l| l.strip_prefix("readonly APPLIANCE_BUILD_COMMAND="))
+        .expect("release.sh defines APPLIANCE_BUILD_COMMAND");
+    assert!(
+        command.contains("-p jope-appliance") && command.contains("--features cloud-tls"),
+        "{command}"
+    );
+    assert!(!command.contains("--no-default-features"), "{command}");
+    let policy = Policy::load(&repo.join("deploy/appliance/dependencies-deny.toml")).unwrap();
+    let released: BTreeSet<String> = ["engine", "mcp", "client", "cloud-tls"]
+        .map(str::to_owned)
+        .into();
+    assert!(policy
+        .feature_sets
+        .iter()
+        .any(|s| s.iter().cloned().collect::<BTreeSet<_>>() == released));
+    let features: Vec<_> = released.into_iter().collect();
+    let resolved = jope_dist::audit::closure_features(
+        &repo.join("Cargo.toml"),
+        &policy.package,
+        &policy.target,
+        &features,
+    )
+    .unwrap();
+    assert!(resolved["rustls"].contains("aws_lc_rs"));
+    assert!(resolved["ureq"].contains("rustls-webpki-roots"));
+    for absent in [
+        "ring",
+        "openssl",
+        "openssl-sys",
+        "native-tls",
+        "rustls-platform-verifier",
+    ] {
+        assert!(
+            !resolved.contains_key(absent),
+            "{absent} reached the released client"
+        );
+    }
+}
+
+/// A23: `build.sh --profile native-only` (the public edition) builds an audited selection, the
+/// embedded twin of the A22 released client.
+#[test]
+fn public_native_only_selection_is_audited() {
+    use std::collections::BTreeSet;
+    let repo = jope_dist::repo_root();
+    let build = std::fs::read_to_string(repo.join("deploy/appliance/build.sh")).unwrap();
+    let extra = build
+        .lines()
+        .find_map(|l| l.strip_prefix("case $profile in native-only) features=$features,"))
+        .and_then(|l| l.strip_suffix(" ;; esac"))
+        .expect("build.sh selects the native-only features");
+    let selected: BTreeSet<String> = std::iter::once("embedded")
+        .chain(extra.split(','))
+        .map(str::to_owned)
+        .collect();
+    let wanted: BTreeSet<String> = ["embedded", "engine", "mcp", "client", "cloud-tls"]
+        .map(str::to_owned)
+        .into();
+    assert_eq!(selected, wanted);
+    let policy = Policy::load(&repo.join("deploy/appliance/dependencies-deny.toml")).unwrap();
+    assert!(policy
+        .feature_sets
+        .iter()
+        .any(|s| s.iter().cloned().collect::<BTreeSet<_>>() == selected));
+}
+
+/// A22 approves `aws-lc-sys`, `cc`, `cmake` and `pkg-config` as native build entries. The policy's
+/// native allow-list is global, so pin them to the `cloud-tls` selections: any other audited
+/// selection that starts compiling C through them must fail here instead of passing silently.
+#[test]
+fn native_tls_build_helpers_appear_only_with_cloud_tls() {
+    let repo = jope_dist::repo_root();
+    let policy = Policy::load(&repo.join("deploy/appliance/dependencies-deny.toml")).unwrap();
+    let helpers = [
+        "aws-lc-sys",
+        "aws-lc-rs",
+        "cc",
+        "cmake",
+        "pkg-config",
+        "rustls",
+    ];
+    let mut with_tls = 0;
+    for features in &policy.feature_sets {
+        let packages = closure(
+            &repo.join("Cargo.toml"),
+            &policy.package,
+            &policy.target,
+            features,
+        )
+        .unwrap();
+        let present: Vec<&str> = helpers
+            .iter()
+            .copied()
+            .filter(|name| packages.contains(*name))
+            .collect();
+        if features.iter().any(|feature| feature == "cloud-tls") {
+            with_tls += 1;
+            assert!(present.contains(&"aws-lc-sys"), "{features:?}: {present:?}");
+        } else {
+            assert!(present.is_empty(), "{features:?} pulls {present:?}");
+        }
+    }
+    assert_eq!(with_tls, 2);
+}

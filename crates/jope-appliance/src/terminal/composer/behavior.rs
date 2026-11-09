@@ -259,6 +259,30 @@ impl Composer {
                 selected,
             }
         };
+        self.apply_choice(menu)
+    }
+
+    /// Up/Down on an open menu: select the previous or next choice, wrapping.
+    fn menu_step(&mut self, backwards: bool) -> io::Result<()> {
+        let Some(mut menu) = self.menu.take() else {
+            return Ok(());
+        };
+        menu.selected =
+            complete::cycle_index(Some(menu.selected), menu.choices.len(), backwards).unwrap();
+        self.apply_choice(menu)
+    }
+
+    /// The selected choice names a folder (`dir/`, or `"dir with space/"`).
+    fn selected_folder(&self) -> bool {
+        self.menu.as_ref().is_some_and(|menu| {
+            menu.choices[menu.selected]
+                .insert
+                .trim_end_matches(['"', '\''])
+                .ends_with('/')
+        })
+    }
+
+    fn apply_choice(&mut self, menu: CompletionSession) -> io::Result<()> {
         let insert = &menu.choices[menu.selected].insert;
         if insert.chars().any(char::is_control) {
             return Err(io::Error::new(
@@ -310,6 +334,11 @@ impl Composer {
                     .intersects(KeyModifiers::ALT | KeyModifiers::SHIFT) =>
             {
                 self.insert("\n")?
+            }
+            // A folder chosen from the menu opens its listing instead of submitting.
+            KeyCode::Enter if key.modifiers.is_empty() && self.selected_folder() => {
+                self.menu = None;
+                self.tab(data, false)?;
             }
             KeyCode::Enter if key.modifiers.is_empty() => {
                 if let Some(history) = &mut self.history {
@@ -372,6 +401,8 @@ impl Composer {
                 });
                 self.search_match(false);
             }
+            KeyCode::Up if self.menu.is_some() => self.menu_step(true)?,
+            KeyCode::Down if self.menu.is_some() => self.menu_step(false)?,
             KeyCode::Up => self.history_move(true),
             KeyCode::Down => self.history_move(false),
             KeyCode::Tab => self.tab(data, key.modifiers.contains(KeyModifiers::SHIFT))?,

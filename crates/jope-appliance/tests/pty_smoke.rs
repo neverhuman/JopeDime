@@ -1,5 +1,13 @@
+// The public edition (cloud-tls) leaves out the tests that train own data on this machine.
+#![cfg_attr(feature = "public-edition", allow(dead_code, unused_imports))]
+#[path = "pty_smoke/cloud_tui.rs"]
+mod cloud_tui;
+#[path = "pty_smoke/feedback_tui.rs"]
+mod feedback_tui;
 #[path = "support/pty.rs"]
 mod pty;
+#[path = "support/workspace.rs"]
+mod workspace;
 
 const SENTINELS: [&str; 4] = ["918273.125", "817263.25", "716254.375", "615245.5"];
 
@@ -23,7 +31,7 @@ fn jopedime_help_runs_in_a_pty_and_resize_is_applied() -> std::io::Result<()> {
 
     let screen = session.wait_for_text("Usage:", Duration::from_secs(10))?;
     assert!(
-        screen.contains("jopedime"),
+        screen.contains("Usage: jain"),
         "unexpected help output: {screen}"
     );
     assert_no_internal_sentinels(&screen);
@@ -42,6 +50,9 @@ fn dataset_id_error_does_not_echo_private_sentinel_in_cli_or_pty() -> std::io::R
     Ok(())
 }
 
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[test]
 fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io::Result<()> {
@@ -206,7 +217,7 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
     assert_no_internal_sentinels(&screen);
     terminal.type_text("\\help")?;
     terminal.press_key(pty::Key::Enter)?;
-    let screen = terminal.wait_for_text("\\open PATH", Duration::from_secs(10))?;
+    let screen = terminal.wait_for_text("/open PATH", Duration::from_secs(10))?;
     assert_no_internal_sentinels(&screen);
     drop(terminal);
 
@@ -300,7 +311,7 @@ mod interactive_exit {
                 ],
             )?;
             terminal.wait_for_output_bytes(b"\x1b[?1049h", Duration::from_secs(15))?;
-            terminal.wait_for_text("Powered by JopeDime", Duration::from_secs(10))?;
+            terminal.wait_for_text("/open <file.csv>", Duration::from_secs(10))?;
             terminal.type_text(keys)?;
             terminal.wait_for_text("JAIN_EXIT_RESTORED", Duration::from_secs(5))?;
             terminal.wait_for_output_bytes(b"\x1b[?1049l", Duration::from_secs(5))?;

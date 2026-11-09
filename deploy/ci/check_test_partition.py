@@ -26,7 +26,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
-RUST_TEST_SHARDS = 2
+RUST_TEST_SHARDS = 3
 SHARD = re.compile(r"slice:([1-9][0-9]*)/([1-9][0-9]*)")
 
 

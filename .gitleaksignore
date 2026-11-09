@@ -2527,3 +2527,7 @@ a1d3d69031395058feff24a61959b417fa067f0a:research/flywheel_selfplay/h205_fresh_v
 a1d3d69031395058feff24a61959b417fa067f0a:research/flywheel_selfplay/h205_fresh_vs_static/PREREG.md:generic-api-key:122
 a1d3d69031395058feff24a61959b417fa067f0a:research/flywheel_selfplay/h205_fresh_vs_static/metrics.json:generic-api-key:460
 a1d3d69031395058feff24a61959b417fa067f0a:research/flywheel_selfplay/h205_fresh_vs_static/metrics.json:generic-api-key:911
+4f0db90b63dbd19794cba7d4934d5a0b5a54b0f7:crates/jope-appliance/tests/system/live_driver/driver_part2.py:generic-api-key:89
+4f0db90b63dbd19794cba7d4934d5a0b5a54b0f7:crates/jope-appliance/tests/system/live_driver/driver_part2.py:generic-api-key:97
+106ed6e6a33399ea598f21b9d434f8a5d6d66b92:crates/jope-appliance/tests/system/live_driver/driver_part2.py:generic-api-key:89
+106ed6e6a33399ea598f21b9d434f8a5d6d66b92:crates/jope-appliance/tests/system/live_driver/driver_part2.py:generic-api-key:97

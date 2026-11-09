@@ -4,9 +4,8 @@ use std::{collections::VecDeque, fmt::Write as _};
 
 use jope_api::decimal::DecimalU64;
 use jope_api::{
-    AlgorithmAcceptedBody, BestAlgorithm, CompletionReason, Direction, EventBody,
-    ExperimentOutcome, ExportKind, Language, ParityStatus, Plan, PublicEvent, RunFinishedBody,
-    Severity, Warning, WarningState,
+    AlgorithmAcceptedBody, CompletionReason, Direction, EventBody, ExperimentOutcome, ExportKind,
+    Language, ParityStatus, Plan, PublicEvent, RunFinishedBody, Severity, Warning, WarningState,
 };
 
 use crate::terminal::{sanitize_user_string, Ansi16Color, Symbols, Theme, ThemeColor, ThemeToken};
@@ -15,6 +14,22 @@ mod rendering;
 use rendering::*;
 mod formatting;
 use formatting::*;
+
+/// One "Thinking" card, exactly as local narration draws it: cloud progress uses this so a cloud
+/// run reads like a local one.
+pub fn thinking_card(body: &str, width: usize, theme: Theme) -> Vec<String> {
+    let mut cards = Vec::new();
+    append_card(
+        &mut cards,
+        "  ",
+        "Thinking",
+        &sanitize_user_string(body),
+        width.max(20),
+        None,
+        theme,
+    );
+    cards
+}
 
 /// Render cards at a fixed width and with the caller's already-resolved terminal theme.
 ///

@@ -286,8 +286,9 @@ fn golden_80() -> Vec<String> {
         "   Thinking Testing a log transform on skewed income features…".to_owned(),
         "✓ Export art_0123456789abcdef01234567 · source · python, rust · parity passed".to_owned(),
         "· 2 experiments in the last 10 s, no improvement".to_owned(),
-        "✓ Run finished converged · champion alg_0007 (RMSE 0.487) · CV 0.487 · HOLDOUT".to_owned(),
-        "               0.503 · TEST 0.512".to_owned(),
+        "✓ Run finished held-out RMSE 0.503 · CV 0.487 · test 0.512 · champion alg_0007 ·"
+            .to_owned(),
+        "               converged".to_owned(),
     ]
 }
 
@@ -309,7 +310,7 @@ fn golden_120() -> Vec<String> {
             "   Thinking Testing a log transform on skewed income features…".to_owned(),
             "✓ Export art_0123456789abcdef01234567 · source · python, rust · parity passed".to_owned(),
             "· 2 experiments in the last 10 s, no improvement".to_owned(),
-            "✓ Run finished converged · champion alg_0007 (RMSE 0.487) · CV 0.487 · HOLDOUT 0.503 · TEST 0.512".to_owned(),
+            "✓ Run finished held-out RMSE 0.503 · CV 0.487 · test 0.512 · champion alg_0007 · converged".to_owned(),
         ]
 }
 
@@ -320,7 +321,7 @@ fn color_golden(plain: Vec<String>) -> Vec<String> {
             if line.starts_with('✓') {
                 line.replacen('✓', "\x1b[32m✓\x1b[0m", 1)
             } else if line.starts_with('⚠') {
-                line.replacen('⚠', "\x1b[33m⚠\x1b[0m", 1)
+                line.replacen('⚠', "\x1b[34m⚠\x1b[0m", 1)
             } else if line.starts_with('·') {
                 line.replacen('·', "\x1b[90m·\x1b[0m", 1)
             } else {

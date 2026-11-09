@@ -1,7 +1,27 @@
 """Test group re-exported by test_durable_selfplay for stable test IDs."""
 
-from test_durable_selfplay import *  # noqa: F403
 import test_exact_service_runtime as service_runtime_module
+from test_durable_selfplay import (
+    PairRegistry,
+    Path,
+    active,
+    backlog_module,
+    bundle_sources,
+    candidate,
+    dynamic_queue_targets,
+    json,
+    load_pointer,
+    loaded_bundle,
+    local_receipt_dir,
+    promote_candidate,
+    pytest,
+    record_starting,
+    service_is_stale,
+    service_module,
+    sha256_text,
+    subprocess,
+)
+
 
 def test_queue_horizons_use_observed_p95_cluster_slots_and_clamps():
     assert dynamic_queue_targets([]) == (256, 512, 0.0)
@@ -10,10 +30,12 @@ def test_queue_horizons_use_observed_p95_cluster_slots_and_clamps():
     target, hard_cap, p95 = dynamic_queue_targets([50.0] * 60, 400)
     assert (target, hard_cap, p95) == (800, 1_500, 50.0)
 
+
 def test_refill_work_is_bounded_without_changing_the_total_target():
     assert backlog_module.bounded_submission_count(-1) == 0
     assert backlog_module.bounded_submission_count(511) == 511
     assert backlog_module.bounded_submission_count(9_000) == 512
+
 
 def test_service_reports_the_bundle_loaded_at_process_start(tmp_path, monkeypatch):
     monkeypatch.setenv("JOPE_LOADED_BUNDLE_SHA256", "loaded-bundle")
@@ -22,6 +44,7 @@ def test_service_reports_the_bundle_loaded_at_process_start(tmp_path, monkeypatc
     assert state["loaded_bundle_sha256"] == "loaded-bundle"
     assert state["lifecycle"] == "starting"
     assert state["last_success_at_ms"] is None
+
 
 def test_starting_service_uses_process_start_for_staleness():
     now = 1_000_000
@@ -33,6 +56,7 @@ def test_starting_service_uses_process_start_for_staleness():
     assert not service_is_stale(state, now)
     state["process_started_at_ms"] = now - 300_001
     assert service_is_stale(state, now)
+
 
 def test_wave_generation_is_polled_without_blocking(monkeypatch):
     class FinishedWave:
@@ -56,6 +80,7 @@ def test_wave_generation_is_polled_without_blocking(monkeypatch):
     }
     assert service_runtime_module._wave_process is None
 
+
 def test_ingestion_cycle_uses_bounded_batches(tmp_path, monkeypatch):
     calls = []
 
@@ -67,6 +92,7 @@ def test_ingestion_cycle_uses_bounded_batches(tmp_path, monkeypatch):
     monkeypatch.setattr(service_module, "run", fake_run)
     assert service_module.ingestion_cycle() == {"ingested": 100}
     assert calls[0][-2:] == ["--limit", "100"]
+
 
 def test_orphaned_submission_retries_only_without_a_receipt(tmp_path, monkeypatch):
     registry_path = tmp_path / "pairs.sqlite"
@@ -127,6 +153,7 @@ def test_orphaned_submission_retries_only_without_a_receipt(tmp_path, monkeypatc
     assert registry.manifest_state_counts("manifest-1") == {"submitted": 1}
     registry.close()
 
+
 def test_submit_adopts_a_job_that_became_active_during_refill(tmp_path, monkeypatch):
     monkeypatch.setattr(
         backlog_module,
@@ -144,6 +171,7 @@ def test_submit_adopts_a_job_that_became_active_during_refill(tmp_path, monkeypa
     assert job_id == "jte-race"
     assert success
     assert "already active" in detail
+
 
 @pytest.mark.xbabe2  # needs the runtime-bundle tree on the old state plane (bundle_sources() is empty on a clean checkout)
 def test_runtime_bundle_contains_the_complete_prime_python_package(tmp_path, monkeypatch):
@@ -174,6 +202,7 @@ def test_runtime_bundle_contains_the_complete_prime_python_package(tmp_path, mon
     assert "jope-prime/prime.toml" in targets
     assert "jope-prime/registry/compatibility/gen31_policy_v3_vocab.json" in targets
 
+
 def test_deployment_explicitly_restarts_already_active_services():
     deploy = (
         Path(__file__).resolve().parents[1]
@@ -186,6 +215,7 @@ def test_deployment_explicitly_restarts_already_active_services():
     assert '["systemctl", "--user", "enable", *UNITS]' in source
     assert '["systemctl", "--user", "restart", *UNITS]' in source
 
+
 def test_checkpoint_vocab_compatibility_requires_an_exact_fitting_prefix(monkeypatch):
     from jope.policy.model_v3 import _validate_action_vocab_compatibility
 
@@ -194,6 +224,7 @@ def test_checkpoint_vocab_compatibility_requires_an_exact_fitting_prefix(monkeyp
         _validate_action_vocab_compatibility(["PAD", "old"], ["PAD", "BOS", "EOS"], 3)
     with pytest.raises(ValueError, match="exceeds"):
         _validate_action_vocab_compatibility(["PAD", "BOS"], ["PAD", "BOS", "EOS"], 2)
+
 
 def test_failed_candidate_canary_leaves_last_good_active(tmp_path):
     first = tmp_path / "one"

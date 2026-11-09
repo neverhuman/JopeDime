@@ -1,6 +1,20 @@
 """Test group re-exported by test_durable_selfplay for stable test IDs."""
 
-from test_durable_selfplay import *  # noqa: F403
+from test_durable_selfplay import (
+    EXPECTED_METRIC,
+    PairRegistry,
+    Path,
+    ThreadPoolExecutor,
+    catalog_fixture,
+    digest,
+    json,
+    protocol,
+    pytest,
+    sha256_text,
+    validate_catalog_counts,
+    validate_catalog_manifest,
+)
+
 
 def test_catalog_manifest_is_authority_for_counts_hashes_and_contexts(tmp_path):
     pointer = catalog_fixture(tmp_path)
@@ -25,6 +39,7 @@ def test_catalog_manifest_is_authority_for_counts_hashes_and_contexts(tmp_path):
     with pytest.raises(ValueError, match="catalog count mismatch"):
         validate_catalog_manifest(pointer)
 
+
 def test_expected_metric_matches_the_rust_task_authority():
     """R1/D2 wire values; the Rust twin is expected_catalog_metric /
     TaskKind::primary_metric (asserted from that side by cargo tests)."""
@@ -35,6 +50,7 @@ def test_expected_metric_matches_the_rust_task_authority():
         "timeseries": "negative_mase",
         "multiclass": "macro_f1",
     }
+
 
 def test_catalog_counts_default_missing_new_tasks_and_reject_unknown_tasks():
     entries = [
@@ -72,6 +88,7 @@ def test_catalog_counts_default_missing_new_tasks_and_reject_unknown_tasks():
     with pytest.raises(ValueError, match="does not declare every per-task count"):
         validate_catalog_counts([], {"regression": -1, "binary": 0})
 
+
 def test_pair_registry_concurrent_reservation_is_exactly_once(tmp_path):
     path = tmp_path / "pairs.sqlite"
     genome = "(pipe X (ridge))"
@@ -97,6 +114,7 @@ def test_pair_registry_concurrent_reservation_is_exactly_once(tmp_path):
     assert registry.stats()["pairs"] == 1
     assert registry.stats()["duplicates_prevented"] == 7
     registry.close()
+
 
 def test_infrastructure_retry_reuses_reservation_and_protocol_migration_is_explicit(
     tmp_path,
@@ -130,6 +148,7 @@ def test_infrastructure_retry_reuses_reservation_and_protocol_migration_is_expli
     assert registry.stats()["protocol_migrations"] == 1
     registry.close()
 
+
 def test_submission_requires_live_reservations_and_is_idempotent(tmp_path):
     registry = PairRegistry(tmp_path / "pairs.sqlite")
     genome = "(pipe X (ridge))"
@@ -155,6 +174,7 @@ def test_submission_requires_live_reservations_and_is_idempotent(tmp_path):
     with pytest.raises(RuntimeError, match="non-launchable"):
         registry.authorize_submission("manifest", "one")
     registry.close()
+
 
 def test_pair_registry_batch_reservation_reuses_in_input_order(tmp_path):
     registry = PairRegistry(tmp_path / "pairs.sqlite")

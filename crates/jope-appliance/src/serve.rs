@@ -176,6 +176,7 @@ fn serve_child() {
     let ApplianceCommand::Serve {
         status,
         stop,
+        force,
         idle_exit,
     } = cli.command
     else {
@@ -184,6 +185,7 @@ fn serve_child() {
     std::process::exit(i32::from(crate::cmd::serve::run(
         status,
         stop,
+        force,
         idle_exit.as_deref(),
     )));
 }

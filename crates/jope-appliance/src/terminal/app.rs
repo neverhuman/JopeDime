@@ -170,8 +170,8 @@ impl Default for State {
     fn default() -> Self {
         Self {
             draft: String::new(),
-            status: "JopeDime · ready".into(),
-            activity: "Type \\help for commands".into(),
+            status: "jAIn · ready".into(),
+            activity: "Type /help for commands".into(),
             active: false,
         }
     }
@@ -332,12 +332,12 @@ pub fn run(
                 match &event.event {
                     EventBody::RunState(body) => {
                         state.active = matches!(body.state, RunState::Running | RunState::Pausing);
-                        state.status = format!("JopeDime · {:?}", body.state);
+                        state.status = format!("jAIn · {:?}", body.state);
                         state.activity = format!("phase: {:?}", body.phase);
                     }
                     EventBody::RunFinished(_) => {
                         state.active = false;
-                        state.status = "JopeDime · finished".into();
+                        state.status = "jAIn · finished".into();
                     }
                     EventBody::ExperimentStarted(_) => state.active = true,
                     _ => {}

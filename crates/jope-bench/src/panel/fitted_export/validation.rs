@@ -3,7 +3,7 @@ use super::*;
 pub fn artifact(path: &Path) -> Result<Artifact> {
     let path = fs::canonicalize(path)?;
     let value = Artifact {
-        sha256: super::methods::digest(&fs::read(&path)?),
+        sha256: super::super::methods::digest(&fs::read(&path)?),
         path,
     };
     value.verify()?;
@@ -15,13 +15,13 @@ pub fn location(journal: &Path, observation: &Observation) -> Result<PathBuf> {
         .join(observation.request.identity()?))
 }
 /// The original worker output, deserialized once; standalone views borrow from it.
-enum FittedOutput {
-    Registered(Box<super::worker::RustWorkerOutput>),
-    Synthesized(Box<super::synthesized::SynthesizedWorkerOutput>),
+pub(super) enum FittedOutput {
+    Registered(Box<super::super::worker::RustWorkerOutput>),
+    Synthesized(Box<super::super::synthesized::SynthesizedWorkerOutput>),
     External,
 }
 impl FittedOutput {
-    fn parse(output: &Value) -> Result<Self> {
+    pub(super) fn parse(output: &Value) -> Result<Self> {
         Ok(if output["schema"] == "jope.panel-rust-worker-output/v1" {
             Self::Registered(Box::new(serde_json::from_value(output.clone())?))
         } else if output["schema"] == "jope.panel-synthesized-worker-output/v1" {
@@ -30,7 +30,7 @@ impl FittedOutput {
             Self::External
         })
     }
-    fn view(&self) -> Result<Option<FittedInferenceView<'_>>> {
+    pub(super) fn view(&self) -> Result<Option<FittedInferenceView<'_>>> {
         Ok(match self {
             Self::Registered(value) => Some(FittedInferenceView::registered(&value.artifact)?),
             Self::Synthesized(value) => Some(FittedInferenceView::synthesized(&value.artifact)?),

@@ -2,26 +2,46 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 
 from jope.data.importers import import_quant_reports
 from jope.data.labels import assign_elo, assign_ranks
-from jope.data.target_encoding import TARGET_VS_EMBED_DIM
-from jope.data.vs import VS_DIM, dataset_signature_from_vs, read_vs_matrix
+from jope.data.target_encoding import TARGET_VS_EMBED_DIM as TARGET_VS_EMBED_DIM
+from jope.data.vs import DATASET_SIGNATURE_DIM, VS_DIM, dataset_signature_from_vs, read_vs_matrix
 from jope.io import write_jsonl
 from jope.schema import normalize_embedding
+
 from .active import (
-    ACTIVE_MAX_TRANSFORMS, ACTIVE_TEST_SIDECAR, ACTIVE_TEST_TARGET_SIDECAR,
-    ACTIVE_TRAIN_SIDECAR, ACTIVE_TRAIN_TARGET_SIDECAR, DEFAULT_QUANT_ROOT,
-    TARGET_SUMMARY_DIM, ActiveBuild, _active_canonical, _assign_relative_labels,
-    _assign_splits, _build_label_summary, _build_split_manifest, _build_target_embeddings,
-    _canonicalize_rows, _count_splits, _dedupe_active_rows, _fit_standardizer,
-    _float_or_nan, _target_summary, build_active_vocab,
-    format_pipeline_actions, parse_pipeline_actions,
+    ACTIVE_MAX_TRANSFORMS,
+    ACTIVE_TEST_TARGET_SIDECAR,
+    ACTIVE_TRAIN_SIDECAR,
+    ACTIVE_TRAIN_TARGET_SIDECAR,
+    DEFAULT_QUANT_ROOT,
+    TARGET_SUMMARY_DIM,
+    ActiveBuild,
+    _active_canonical,
+    _assign_relative_labels,
+    _assign_splits,
+    _build_label_summary,
+    _build_split_manifest,
+    _build_target_embeddings,
+    _canonicalize_rows,
+    _count_splits,
+    _dedupe_active_rows,
+    _fit_standardizer,
+    _float_or_nan,
+    _target_summary,
+    build_active_vocab,
+    format_pipeline_actions,
+    parse_pipeline_actions,
 )
+from .active import (
+    ACTIVE_TEST_SIDECAR as ACTIVE_TEST_SIDECAR,
+)
+
 
 def build_active_corpus(
     *,
@@ -303,4 +323,3 @@ def write_active_v2_artifacts(out_dir: str | Path, build: ActiveBuild) -> None:
         train_target_vs=np.asarray([row.metadata.get("train_target_vs") or "" for row in build.rows]),
         test_target_vs=np.asarray([row.metadata.get("test_target_vs") or "" for row in build.rows]),
     )
-

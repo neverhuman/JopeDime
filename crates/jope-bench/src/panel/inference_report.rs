@@ -110,9 +110,10 @@ fn journal_path(journal: &Path, name: String) -> PathBuf {
 
 #[path = "inference_report/summary.rs"]
 mod summary;
-/// The CUDA qualification receipt is bound to this plan and every case passed within tolerance.
-
 #[path = "inference_report/validation.rs"]
 mod validation;
-pub(super) use summary::write;
+/// The CUDA qualification receipt is bound to this plan and every case passed within tolerance.
+pub(super) fn write(plan: &[u8], journal: &Path, output: &Path) -> Result<()> {
+    summary::write(plan, journal, output)
+}
 use validation::*;

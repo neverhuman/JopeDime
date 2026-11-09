@@ -40,42 +40,73 @@ signatures (documented on ``PlaceholderEmbedder``).
 
 from __future__ import annotations
 
-import hashlib
-import json
-import math
-import random
-from collections.abc import Iterable
-from pathlib import Path
-from typing import Any
-
-from .schema import TrainingRow
-from .split_integrity import (
-    DEVELOPMENT_SPLIT,
-    TEMPORAL_AUDIT_SPLIT,
-    assignment_for_dataset,
-    is_training_authority_label,
-    validate_split_manifest,
+from .prime_label_to_corpus_embeddings import (
+    PlaceholderEmbedder as PlaceholderEmbedder,
 )
-
-
+from .prime_label_to_corpus_embeddings import (
+    SignatureEmbedder as SignatureEmbedder,
+)
 from .prime_label_to_corpus_identity import (
-    AGGREGATE_SCHEMA,
-    DEFAULT_PROVENANCE,
-    DUAL_EMBEDDING_DIM,
-    GRAMMAR_ENGINE_PRIORITY,
-    LEAGUE_LABEL_SCHEMA,
-    REALIZATION_SCHEMA,
-    TARGET_SUMMARY_DIM,
-    GenomeEngineResolver,
-    _finite,
-    _league_label_evidence,
-    _reward_pair_identity,
-    _sha256_file,
+    AGGREGATE_SCHEMA as AGGREGATE_SCHEMA,
 )
-from .prime_label_to_corpus_embeddings import PlaceholderEmbedder, SignatureEmbedder
+from .prime_label_to_corpus_identity import (
+    DEFAULT_PROVENANCE as DEFAULT_PROVENANCE,
+)
+from .prime_label_to_corpus_identity import (
+    DUAL_EMBEDDING_DIM as DUAL_EMBEDDING_DIM,
+)
+from .prime_label_to_corpus_identity import (
+    GRAMMAR_ENGINE_PRIORITY as GRAMMAR_ENGINE_PRIORITY,
+)
+from .prime_label_to_corpus_identity import (
+    LEAGUE_LABEL_SCHEMA as LEAGUE_LABEL_SCHEMA,
+)
+from .prime_label_to_corpus_identity import (
+    REALIZATION_SCHEMA as REALIZATION_SCHEMA,
+)
+from .prime_label_to_corpus_identity import (
+    TARGET_SUMMARY_DIM as TARGET_SUMMARY_DIM,
+)
+from .prime_label_to_corpus_identity import (
+    GenomeEngineResolver as GenomeEngineResolver,
+)
+from .prime_label_to_corpus_identity import (
+    _finite as _finite,
+)
+from .prime_label_to_corpus_identity import (
+    _league_label_evidence as _league_label_evidence,
+)
+from .prime_label_to_corpus_identity import (
+    _reward_pair_identity as _reward_pair_identity,
+)
+from .prime_label_to_corpus_identity import (
+    _sha256_file as _sha256_file,
+)
 from .prime_label_to_corpus_rows import (
-    build_corpus,
-    label_to_training_row,
-    write_corpus,
-    _parse_row,
+    _parse_row as _parse_row,
+)
+from .prime_label_to_corpus_rows import (
+    build_corpus as build_corpus,
+)
+from .prime_label_to_corpus_rows import (
+    label_to_training_row as label_to_training_row,
+)
+from .prime_label_to_corpus_rows import (
+    write_corpus as write_corpus,
+)
+from .schema import TrainingRow as TrainingRow
+from .split_integrity import (
+    DEVELOPMENT_SPLIT as DEVELOPMENT_SPLIT,
+)
+from .split_integrity import (
+    TEMPORAL_AUDIT_SPLIT as TEMPORAL_AUDIT_SPLIT,
+)
+from .split_integrity import (
+    assignment_for_dataset as assignment_for_dataset,
+)
+from .split_integrity import (
+    is_training_authority_label as is_training_authority_label,
+)
+from .split_integrity import (
+    validate_split_manifest as validate_split_manifest,
 )

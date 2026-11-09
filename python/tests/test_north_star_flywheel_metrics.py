@@ -8,27 +8,22 @@ import numpy as np
 import pytest
 import torch
 import torch.nn as nn
+from test_north_star_flywheel_guards import _ToyFusedNet
 
 from jope.north_star import (
-    DatasetEvalRecord,
     DopeFreezeViolationError,
     assert_optimizer_excludes_dope,
     assert_research_optimizer_policy,
     batched_roc_auc_gpu,
     compile_and_eval_rust_fitness,
-    compute_family_grouped_bradley_terry_elo,
     configure_research_dope,
     emit_rust_only_flywheel_source,
     evaluate_unified_regression_and_binary_batched_gpu,
     get_trainable_param_counts_by_submodule,
     lock_dope_weights_and_eval_mode,
-    reject_research_dope_unfreeze,
-    resolve_authoritative_family_and_task,
     snapshot_dope_weights,
     verify_dope_frozen_unchanged,
 )
-from jope.north_star.dope_freeze_guard import DOPE_NORMALIZER_BUFFERS
-from test_north_star_flywheel_guards import _ToyFusedNet
 
 
 def test_ns14_rust_fitness_tie_averaged_roc_auc_and_validation() -> None:

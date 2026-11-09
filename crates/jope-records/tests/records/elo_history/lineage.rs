@@ -102,6 +102,12 @@ fn recorded_lineage_facts_must_match_the_table() {
     ];
     for (label, mutate, reason) in mutations {
         let mut document = fast(record());
+        at(&mut document, "histories")
+            .as_list_mut()
+            .unwrap()
+            .retain(|history| {
+                history.get("id") != Some(&Value::from("H-render-elo-ranking-static"))
+            });
         mutate(&mut document);
         let result = Copy::new(document).verify().map(|_| ());
         assert!(result.is_err(), "{label}: accepted");

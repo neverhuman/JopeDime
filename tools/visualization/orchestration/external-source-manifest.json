@@ -1,0 +1,184 @@
+{
+  "schema": "jain.render-controller-source/v1",
+  "source_root_name": "h256",
+  "source_head": "f32d7f867054ae25b6fae70102b02dc7eae02e3a",
+  "adaptations": "External artifact root and repository discovery; explicit rendering admission flags; local tracked imports; dry-help/import support. Original guards and hash pins preserved. No render run by this change.",
+  "files": [
+    {
+      "source_artifact_relative_path": "jain-intro-v2/run_intro_render.py",
+      "source_sha256": "f58fd48dec64e8d656e134d81fc6c2c1ada85473266c9963ac9a5e6962b4cd16",
+      "source_bytes": 13243,
+      "tracked_file": "run_intro_render.py",
+      "tracked_sha256": "78708323ff4b374d96a1cd704a292450a108389603e6a204591290d25fa05269",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "jain-veox-endcap-v1/run_veox_render.py",
+      "source_sha256": "06ec2f4ed2a14776906bc3534967dcab81cd7a5fb1b1b38a864e75a31161da38",
+      "source_bytes": 13567,
+      "tracked_file": "run_veox_render.py",
+      "tracked_sha256": "9a263696d781cdfd742e3f0455007c6386250148e197d6bd1871a17888a269d8",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "jain-final-4k-v1/build_render_plan.py",
+      "source_sha256": "96a80d49e78b60f8e3f40383a84b623ca158dfd9bdb39724ab35ff94d85f2293",
+      "source_bytes": 5246,
+      "tracked_file": "build_render_plan.py",
+      "tracked_sha256": "8d6f2a8e9331d6ea0cc2dc7a3349b764cb06a00b9834096489099cabee5e9b96",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "jain-final-4k-v1/render_uhd.py",
+      "source_sha256": "5d898afc96549fe31cb7179d911c85e3b087b555968e6de92c4db0bd2ac7a784",
+      "source_bytes": 21346,
+      "tracked_file": "render_uhd.py",
+      "tracked_sha256": "afed8a49056abd71381472dcbf61f733098163d78bd91cb5dfb70bad5fae38d6",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "jain-final-4k-v1/render_metal_tail.py",
+      "source_sha256": "88a8a9c4a51c0da93f9cec6b8fd1bb2c07acee7ac33cfb4e0b2543eb03c1d546",
+      "source_bytes": 3707,
+      "tracked_file": "render_metal_tail.py",
+      "tracked_sha256": "c9e43bd95d5a37ff77905afaf33ad89e56f4d6f2e3417a5547980de1e7fcf336",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "variable-attribution-v1/dendrite-final-v1/run_render.py",
+      "source_sha256": "64d8f558f41d214379b10d8e7e9b0db0af6faad404cbd899e89d5e00e0627174",
+      "source_bytes": 10188,
+      "tracked_file": "run_dendrite_render.py",
+      "tracked_sha256": "393b13e7d78f93346a382800ab1700e68bf9bb8247853f8dc5d4352f1f9335a9",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "variable-attribution-v1/dendrite-final-v1/gpu_case_worker.sh",
+      "source_sha256": "e97205a0ea0aa5b5b7fb7ac2a1a5ad0e79c61ac33dc00449318f489a32206705",
+      "source_bytes": 2477,
+      "tracked_file": "gpu_case_worker.sh",
+      "tracked_sha256": "d0ccc16e8bb326c7e4f0f24ce83f5712c7b7122d6ba49079390d37c10b25f5bd",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "variable-attribution-v1/dendrite-final-v1/compose_film.sh",
+      "source_sha256": "e351824bf12185e406d27960a93be319018c19e9777e47415cf36c3142334d93",
+      "source_bytes": 5083,
+      "tracked_file": "compose_dendrite_film.sh",
+      "tracked_sha256": "94f10c7c976a26d484e444a75c8662fd07b8b730d71da7be17b8a686821c1ac9",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "variable-attribution-v1/dendrite-final-v1/verify_bindings.py",
+      "source_sha256": "54f2f95865238bca7444b638104bb264885f12d9ce481656a97aa0c2c948301d",
+      "source_bytes": 3255,
+      "tracked_file": "verify_bindings.py",
+      "tracked_sha256": "f4baaf4ee48478216cff0fd1cb41c01cca535baed74c3d4280dc17bcf73d7fcc",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "source_artifact_relative_path": "variable-attribution-v1/verify_neural_cut.py",
+      "source_sha256": "ca27d34a25defebee952d9d3065af1e0f5e486efe51215f278bbff821147a0f1",
+      "source_bytes": 10661,
+      "tracked_file": "verify_neural_cut.py",
+      "tracked_sha256": "6edf946d1d3411e549623b075066fb9a44b226328634886fbbc6f48358af9477",
+      "kind": "adapted-production-controller"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/biological-layout-review-v1/build_stills.py",
+      "source_sha256": "f0eddf204c4739fd468352b2a21ab2d56484bc1a76e0e63a5888a008fec91e16",
+      "source_bytes": 1231,
+      "tracked_file": "historical/variable-attribution-v1/biological-layout-review-v1/build_stills.py.txt",
+      "tracked_sha256": "f0eddf204c4739fd468352b2a21ab2d56484bc1a76e0e63a5888a008fec91e16"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/biological-layout-review-v1/render_stills.sh",
+      "source_sha256": "c082054fdf444f87c5000bca3cf70f3d79d6c2a43d4de9b436a2b310e2106b94",
+      "source_bytes": 1690,
+      "tracked_file": "historical/variable-attribution-v1/biological-layout-review-v1/render_stills.sh.txt",
+      "tracked_sha256": "c082054fdf444f87c5000bca3cf70f3d79d6c2a43d4de9b436a2b310e2106b94"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/biological-layout-review-v1/compose_review.py",
+      "source_sha256": "ce06e81cf2c294ec649b74bfcb2badde45ff59cc012d7500fb899632c3ed044d",
+      "source_bytes": 7781,
+      "tracked_file": "historical/variable-attribution-v1/biological-layout-review-v1/compose_review.py.txt",
+      "tracked_sha256": "ce06e81cf2c294ec649b74bfcb2badde45ff59cc012d7500fb899632c3ed044d"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/biological-layout-review-v1/verify_layouts.py",
+      "source_sha256": "20a41a0fa4de9c2f282255a0ec9969a096d82231b875fbb54cc6d953032420a7",
+      "source_bytes": 18466,
+      "tracked_file": "historical/variable-attribution-v1/biological-layout-review-v1/verify_layouts.py.txt",
+      "tracked_sha256": "20a41a0fa4de9c2f282255a0ec9969a096d82231b875fbb54cc6d953032420a7"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/spatial-layout-review-v1/build_stills.py",
+      "source_sha256": "2a8c296ae4b75d6f01551fb5755150492c103c0060f6c43027ac77fe3758861e",
+      "source_bytes": 1195,
+      "tracked_file": "historical/variable-attribution-v1/spatial-layout-review-v1/build_stills.py.txt",
+      "tracked_sha256": "2a8c296ae4b75d6f01551fb5755150492c103c0060f6c43027ac77fe3758861e"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/spatial-layout-review-v1/render_stills.sh",
+      "source_sha256": "d590edccad1644a27c831064fbec66ca2e62ae263d0473251ccecf8907dbebc6",
+      "source_bytes": 1680,
+      "tracked_file": "historical/variable-attribution-v1/spatial-layout-review-v1/render_stills.sh.txt",
+      "tracked_sha256": "d590edccad1644a27c831064fbec66ca2e62ae263d0473251ccecf8907dbebc6"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/spatial-layout-review-v1/compose_review.py",
+      "source_sha256": "231e2d911e810b5fbf085d73f0cbd73c96218acf2751512a360eafc9e605a405",
+      "source_bytes": 6873,
+      "tracked_file": "historical/variable-attribution-v1/spatial-layout-review-v1/compose_review.py.txt",
+      "tracked_sha256": "231e2d911e810b5fbf085d73f0cbd73c96218acf2751512a360eafc9e605a405"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/spatial-layout-review-v1/verify_layouts.py",
+      "source_sha256": "2a3f09fc7944d9f556efadb553db1f3addecdb8f1e39cd119b50ed8fb16ac37a",
+      "source_bytes": 15061,
+      "tracked_file": "historical/variable-attribution-v1/spatial-layout-review-v1/verify_layouts.py.txt",
+      "tracked_sha256": "2a3f09fc7944d9f556efadb553db1f3addecdb8f1e39cd119b50ed8fb16ac37a"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/prepare_scene.sh",
+      "source_sha256": "7d17c97fcd03881df57c6ccca99fd9f61d8f262cbb004f4e6caf60562c63bb77",
+      "source_bytes": 2636,
+      "tracked_file": "historical/variable-attribution-v1/prepare_scene.sh.txt",
+      "tracked_sha256": "7d17c97fcd03881df57c6ccca99fd9f61d8f262cbb004f4e6caf60562c63bb77"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/finish_film.sh",
+      "source_sha256": "213d286c26a795f56d9843ca47fd9396751c6e3fa2f801f2c5b8caec0dfdb8a8",
+      "source_bytes": 1091,
+      "tracked_file": "historical/variable-attribution-v1/finish_film.sh.txt",
+      "tracked_sha256": "213d286c26a795f56d9843ca47fd9396751c6e3fa2f801f2c5b8caec0dfdb8a8"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/dendrite-final-v1/compose_preview.py",
+      "source_sha256": "f754d3dcb48db43487c11efec48b364cf38bf53656e54f54ec47a9b277e3f02a",
+      "source_bytes": 7614,
+      "tracked_file": "historical/variable-attribution-v1/dendrite-final-v1/compose_preview.py.txt",
+      "tracked_sha256": "f754d3dcb48db43487c11efec48b364cf38bf53656e54f54ec47a9b277e3f02a"
+    },
+    {
+      "kind": "historical-source-snapshot",
+      "source_artifact_relative_path": "variable-attribution-v1/dendrite-final-v1/check_connector_geometry.py",
+      "source_sha256": "86ec9940faefa06ef0bc8fdbb9cda31106199fd6006de758bf1e0818239ff6e6",
+      "source_bytes": 15056,
+      "tracked_file": "historical/variable-attribution-v1/dendrite-final-v1/check_connector_geometry.py.txt",
+      "tracked_sha256": "86ec9940faefa06ef0bc8fdbb9cda31106199fd6006de758bf1e0818239ff6e6"
+    }
+  ]
+}

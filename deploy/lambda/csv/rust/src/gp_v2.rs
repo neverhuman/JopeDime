@@ -18,13 +18,205 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
-mod gp_v2_setup;
-use gp_v2_setup::*;
 const MANIFEST: &str = include_str!(env!("JOPE_GP_MANIFEST_PATH"));
 const PROTOCOL: &str = "jope.lambda-gp-screen.v1";
 const DATASET_BUCKET: &str = "veox-jopedime-datasets-use2";
 const LEARNING_BUCKET: &str = "veox-jopedime-learning-use2";
 const CURATED_PREFIX: &str = "experiments/lambda-gp/v1/campaigns/gp-corpus-20260928-v1/";
+fn default_bucket() -> String {
+    DATASET_BUCKET.to_owned()
+}
+const MAX_BYTES: usize = 150_000_000;
+const MAX_ROWS: usize = 50_000;
+const MAX_COLS: usize = 21_000;
+const WIDTH: usize = 64;
+const CANDIDATES: usize = 12;
+static COLD: AtomicBool = AtomicBool::new(true);
+static ENVIRONMENT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+fn utc_us() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_micros() as u64
+}
+fn environment_id() -> &'static str {
+    ENVIRONMENT.get_or_init(|| {
+        hash(
+            format!(
+                "{}:{}:{}",
+                env::var("AWS_LAMBDA_LOG_STREAM_NAME").unwrap_or_default(),
+                std::process::id(),
+                utc_us()
+            )
+            .as_bytes(),
+        )
+    })
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct Job {
+    #[serde(default = "default_bucket")]
+    bucket: String,
+    dataset_hash: String,
+    name: String,
+    key: String,
+    sha256: String,
+    version: String,
+    rows: usize,
+    columns: usize,
+    bytes: usize,
+    task: String,
+    #[serde(default)]
+    partition: String,
+    #[serde(flatten)]
+    metadata: BTreeMap<String, Value>,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Request {
+    attempt_id: String,
+    output_url: String,
+    job_ids: Vec<usize>,
+    download_urls: Vec<String>,
+    seed: u64,
+    #[serde(default = "default_seconds")]
+    max_job_seconds: u64,
+}
+
+const OUTPUT_BUCKET: &str = "veox-jopedime-learning-use2";
+const OUTPUT_PREFIX: &str =
+    "experiments/lambda-gp/v1/campaigns/gp-corpus-20260928-v1/raw-attempts/";
+#[derive(Clone)]
+struct LogContext {
+    attempt_id: String,
+    request_id: String,
+    job_id: Option<usize>,
+    dataset_hash: Option<String>,
+}
+fn log_event(context: Option<&LogContext>, event: &str, details: Value) {
+    if let Some(c) = context {
+        let mut row = json!({"schema":"jope.lambda-gp-log.v1","event":event,"utc_us":utc_us(),"attempt_id":c.attempt_id,"request_id":c.request_id,"job_id":c.job_id,"dataset_hash":c.dataset_hash});
+        if let Some(fields) = details.as_object() {
+            for (key, value) in fields {
+                row[key] = value.clone();
+            }
+        }
+        println!("{}", row);
+    }
+}
+fn output_key(attempt_id: &str) -> Result<String, Error> {
+    if attempt_id.len() != 32
+        || !attempt_id
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    {
+        return Err("attempt_id must be32lowercasehexcharacters".into());
+    }
+    Ok(format!("{OUTPUT_PREFIX}{attempt_id}.json"))
+}
+fn validate_output_url(attempt_id: &str, url: &str) -> Result<String, Error> {
+    let key = output_key(attempt_id)?;
+    if url.len() > 8192 || url.contains('#') {
+        return Err("invalid archive capability URL".into());
+    }
+    let (path, query) = url
+        .split_once('?')
+        .ok_or("archive capability query missing")?;
+    if path != format!("https://{OUTPUT_BUCKET}.s3.us-east-2.amazonaws.com/{key}") {
+        return Err("archive URL outside exact attempt object".into());
+    }
+    let fields = query
+        .split('&')
+        .map(|v| v.split_once('=').ok_or("invalid archive query"))
+        .collect::<Result<Vec<_>, _>>()?;
+    let value = |key: &str| -> Option<&str> {
+        let mut found = fields.iter().filter(|(k, _)| *k == key);
+        let first = found.next().map(|(_, v)| *v)?;
+        if found.next().is_some() {
+            None
+        } else {
+            Some(first)
+        }
+    };
+    let expires = value("X-Amz-Expires")
+        .and_then(|s| s.parse::<u64>().ok())
+        .ok_or("archive expiry missing")?;
+    if expires == 0 || expires > 900 {
+        return Err("archive expiry outside15minute bound".into());
+    }
+    if value("X-Amz-Algorithm") != Some("AWS4-HMAC-SHA256") {
+        return Err("archive requiresSigV4".into());
+    }
+    if value("X-Amz-Credential").is_none_or(str::is_empty) {
+        return Err("archive credential binding missing".into());
+    }
+    let date = value("X-Amz-Date").ok_or("archive date missing")?;
+    if date.len() != 16
+        || date.as_bytes()[8] != b'T'
+        || date.as_bytes()[15] != b'Z'
+        || !date
+            .bytes()
+            .enumerate()
+            .all(|(i, b)| i == 8 || i == 15 || b.is_ascii_digit())
+    {
+        return Err("archive SigV4 date malformed".into());
+    }
+    let signature = value("X-Amz-Signature").ok_or("archive signature missing")?;
+    if signature.len() != 64 || !signature.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Err("archive signature invalid".into());
+    }
+    let headers = value("X-Amz-SignedHeaders")
+        .ok_or("archive signedheaders missing")?
+        .replace("%3B", ";")
+        .replace("%3b", ";");
+    for header in [
+        "content-type",
+        "host",
+        "if-none-match",
+        "x-amz-server-side-encryption",
+    ] {
+        if !headers.split(';').any(|v| v == header) {
+            return Err(
+                "archive must bind contenttype conditionalwrite andencryption headers".into(),
+            );
+        }
+    }
+    Ok(key)
+}
+fn archive_result(attempt_id: &str, url: &str, body: &[u8]) -> Result<Value, Error> {
+    let key = validate_output_url(attempt_id, url)?;
+    if body.len() > 5_500_000 {
+        return Err("archive body exceeds5.5MB bound".into());
+    }
+    let start = Instant::now();
+    let begin = utc_us();
+    // A fresh agent performs exactly one conditional PUT; there is no application retry.
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(Duration::from_secs(15)))
+        .max_redirects(0)
+        .build()
+        .into();
+    let response=agent.put(url).header("content-type","application/json").header("if-none-match","*").header("x-amz-server-side-encryption","AES256").send(body)
+        .map_err(|_|"archive PUT failed or object already exists; capability URL redacted; recover deterministic attempt key")?;
+    let header = |key: &str| {
+        response
+            .headers()
+            .get(key)
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_owned)
+    };
+    if header("x-amz-server-side-encryption").as_deref() != Some("AES256") {
+        return Err(
+            "archive encryption acknowledgement mismatch; inspect deterministic attempt key".into(),
+        );
+    }
+    let version = header("x-amz-version-id")
+        .filter(|v| !v.is_empty() && v != "null")
+        .ok_or("archive version acknowledgement missing; recover deterministic attempt key")?;
+    Ok(
+        json!({"bucket":OUTPUT_BUCKET,"key":key,"bytes":body.len(),"sha256":hash(body),"etag":header("etag"),"version":version,"put_start_utc_us":begin,"put_end_utc_us":utc_us(),"put_s":start.elapsed().as_secs_f64(),"conditional_if_none_match":"*","server_side_encryption":"AES256"}),
+    )
+}
 fn default_seconds() -> u64 {
     25
 }
@@ -35,8 +227,7 @@ fn jobs() -> Result<Vec<Job>, Error> {
     Ok(serde_json::from_str(MANIFEST)?)
 }
 fn memory() -> Value {
-    let s = fs::read_to_string("/proc/self/status").unwrap_or_default
-    ();
+    let s = fs::read_to_string("/proc/self/status").unwrap_or_default();
     let get = |key: &str| -> Option<u64> {
         s.lines()
             .find(|l| l.starts_with(key))?
@@ -45,13 +236,11 @@ fn memory() -> Value {
             .parse()
             .ok()
     };
-    let stat = fs::read_to_string("/proc/self/stat").unwrap_or_default
-    ();
+    let stat = fs::read_to_string("/proc/self/stat").unwrap_or_default();
     let fields: Vec<&str> = stat
         .rsplit_once(')')
         .map(|(_, s)| s.split_whitespace().collect())
-        .unwrap_or_default
-        ();
+        .unwrap_or_default();
     let tick = |index: usize| fields.get(index).and_then(|v| v.parse::<u64>().ok());
     json!({"rss_kib":get("VmRSS:"), "process_lifetime_hwm_kib":get("VmHWM:"),"process_user_clock_ticks":tick(11),"process_system_clock_ticks":tick(12)})
 }
@@ -131,8 +320,7 @@ fn remaining_ms(deadline: u64) -> u64 {
     deadline.saturating_sub(
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap_or_default
-            ()
+            .unwrap_or_default()
             .as_millis() as u64,
     )
 }
@@ -316,8 +504,7 @@ fn prepare(raw: &[u8], job: &Job, seed: u64) -> Result<Prepared, Error> {
             .split(',')
             .enumerate()
             .filter(|(j, _)| *j < p && selected[*j])
-            .map(|(_, v)| number(v).map(|v| v.map(|n| n.to_string()).unwrap_or_default
-            ()))
+            .map(|(_, v)| number(v).map(|v| v.map(|n| n.to_string()).unwrap_or_default()))
             .collect::<Result<_, _>>()?;
         if fold.fit.binary_search(&i).is_ok() {
             fit_rows.push(row);
@@ -639,8 +826,7 @@ fn evaluate_with_log(
     Ok(
         json!({"schema":"jope.lambda-gp-job.v1","protocol":PROTOCOL,"dataset":job,
         "benchmark_valid":false,"canonical_learning_admitted":false,"forecast_valid":false,"scope":"isolated numeric corpus GP screening; not canonical evaluator qualification",
-        "task_original":job.metadata.get("catalog_task").cloned().unwrap_or_else
-        (||json!(job.task)),"task_executed":p.task,"task_alias_note":if job.metadata.get("catalog_task").is_some_and(|v|v=="multi_label") || job.task=="multi_label"{"legacy single target class code, mapped to multiclass"}else if job.task=="timeseries"{"CSV-order blocked screening; original chronological provenance unverified"}else{"none"},
+        "task_original":job.metadata.get("catalog_task").cloned().unwrap_or_else(||json!(job.task)),"task_executed":p.task,"task_alias_note":if job.metadata.get("catalog_task").is_some_and(|v|v=="multi_label") || job.task=="multi_label"{"legacy single target class code, mapped to multiclass"}else if job.task=="timeseries"{"CSV-order blocked screening; original chronological provenance unverified"}else{"none"},
         "seed":seed,"fold_policy":if job.task=="timeseries"{"csv_order_60_20_20"}else{"sha256_row_60_20_20"},"fold":p.fold,"fold_sha256":hash(&serde_json::to_vec(&p.fold)?),
         "fit_rows":p.fit.rows.len(),"selection_rows":p.selection.rows.len(),"audit_rows":p.audit.rows.len(),
         "feature_projection":{"policy":"fit_only_top64_population_variance_tie_original_index_v1","original_features":p.original_features,"selected_original_column_indices":p.columns,"schema":p.schema},
@@ -895,5 +1081,179 @@ async fn main() -> Result<(), Error> {
     lambda_runtime::run(service_fn(invoke)).await
 }
 #[cfg(test)]
-#[path = "gp_v2_tests.rs"]
-mod tests;
+mod tests {
+    use super::*;
+    fn fixture(task: &str) -> (Vec<u8>, Job) {
+        let raw = (0..100)
+            .map(|i| {
+                format!(
+                    "{},{},{},{}\n",
+                    i as f64 / 100.0,
+                    (i * 17 % 101) as f64 / 100.0,
+                    (i * 31 % 97) as f64 / 100.0,
+                    if task == "regression" {
+                        i as f64 * 0.7
+                    } else if task == "binary" {
+                        (i % 2) as f64
+                    } else {
+                        (i % 3) as f64 / 2.0
+                    }
+                )
+            })
+            .collect::<String>()
+            .into_bytes();
+        let job = Job {
+            bucket: default_bucket(),
+            dataset_hash: "fixture".into(),
+            name: "fixture".into(),
+            key: "blobs/sha256/fixture".into(),
+            sha256: hash(&raw),
+            version: "v1".into(),
+            rows: 100,
+            columns: 4,
+            bytes: raw.len(),
+            task: task.into(),
+            partition: "experiment".into(),
+            metadata: BTreeMap::new(),
+        };
+        (raw, job)
+    }
+    #[test]
+    fn serialized_float_state_preserves_ieee_bits() {
+        let mut bits = 0x123456789abcdef0u64;
+        for _ in 0..10000 {
+            bits = bits
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            let x = f64::from_bits(bits);
+            if x.is_finite() {
+                let encoded = serde_json::to_vec(&x).unwrap();
+                let decoded: f64 = serde_json::from_slice(&encoded).unwrap();
+                assert_eq!(
+                    x.to_bits(),
+                    decoded.to_bits(),
+                    "{}",
+                    String::from_utf8(encoded).unwrap()
+                );
+            }
+        }
+    }
+
+    fn mock_archive_url(id: &str) -> String {
+        format!("https://{OUTPUT_BUCKET}.s3.us-east-2.amazonaws.com/{OUTPUT_PREFIX}{id}.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=TEST%2F20260928%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260928T120000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost%3Bif-none-match%3Bx-amz-server-side-encryption&X-Amz-Signature={}","0".repeat(64))
+    }
+    #[test]
+    fn archive_capability_is_bound_to_exact_immutable_attempt() {
+        let id = "0123456789abcdef0123456789abcdef";
+        let url = mock_archive_url(id);
+        assert_eq!(
+            validate_output_url(id, &url).unwrap(),
+            format!("{OUTPUT_PREFIX}{id}.json")
+        );
+        for bad in [
+            url.replace(OUTPUT_BUCKET, "other-bucket"),
+            url.replace("us-east-2", "us-west-2"),
+            url.replace("raw-attempts/", "other/"),
+            url.replace("Expires=900", "Expires=901"),
+            url.replace("if-none-match", "arbitrary-header"),
+            url.replace("x-amz-server-side-encryption", "other-header"),
+            format!("{url}#fragment"),
+        ] {
+            assert!(validate_output_url(id, &bad).is_err());
+        }
+        assert!(validate_output_url("ffffffffffffffffffffffffffffffff", &url).is_err());
+        assert!(output_key("INVALID").is_err());
+        assert!(output_key("0123456789ABCDEF0123456789ABCDEF").is_err());
+    }
+    #[test]
+    fn lambda_requests_cannot_omit_durable_output_capability() {
+        assert!(serde_json::from_value::<Request>(
+            json!({"job_ids":[0],"download_urls":["unused"],"seed":42})
+        )
+        .is_err());
+    }
+    #[test]
+    fn folds_disjoint_complete() {
+        for n in 5..500 {
+            let f = fold(n, "x", 42, false);
+            let union: BTreeSet<usize> = f
+                .fit
+                .iter()
+                .chain(&f.selection)
+                .chain(&f.audit)
+                .copied()
+                .collect();
+            assert_eq!(union.len(), n);
+            assert_eq!(f.fit.len() + f.selection.len() + f.audit.len(), n);
+            assert!(!f.audit.is_empty());
+        }
+    }
+    #[test]
+    fn curated_bucket_requires_exact_namespace() {
+        let (_, mut job) = fixture("regression");
+        assert!(admit(&job).is_ok());
+        job.bucket = LEARNING_BUCKET.into();
+        assert!(admit(&job).is_err());
+        job.key = format!("{}curated-inputs/example.csv", CURATED_PREFIX);
+        assert!(admit(&job).is_ok());
+        job.bucket = "unrelated-bucket".into();
+        assert!(admit(&job).is_err());
+    }
+    #[test]
+    fn sealed_metadata_refused() {
+        let (_, mut job) = fixture("regression");
+        job.metadata.insert("sealed".into(), json!(true));
+        assert!(admit(&job).is_err());
+        job.metadata.remove("sealed");
+        job.metadata.insert(
+            "historical_partitions".into(),
+            json!(["meta_train", "meta_test"]),
+        );
+        assert!(admit(&job).is_err());
+    }
+    #[test]
+    fn malformed_and_nonfinite_cells_refused() {
+        for s in ["NaNxxx", "inf", "1\"", "\"1", "\"1\"2"] {
+            assert!(number(s).is_err());
+        }
+        assert_eq!(number("\"1.5\"").unwrap(), Some(1.5));
+    }
+    #[test]
+    fn failure_keeps_stage_timestamps() {
+        let (raw, mut job) = fixture("regression");
+        job.sha256 = "0".repeat(64);
+        let value = one(&raw, &job, 42, 25).unwrap();
+        assert_eq!(value["status"], "unsupported_or_failed");
+        let t = &value["timestamps"];
+        assert!(t["prepare_start_utc_us"].as_u64().is_some());
+        assert!(t["prepare_end_utc_us"].as_u64().is_some());
+        assert!(t.get("train_start_utc_us").is_none());
+    }
+    #[test]
+    fn corrupted_input_rejected() {
+        let (raw, mut job) = fixture("regression");
+        job.sha256 = "0".repeat(64);
+        assert!(prepare(&raw, &job, 42).is_err());
+    }
+    #[test]
+    fn costly_grammar_rejected() {
+        assert!(safe_genome("(pipe X (gpr))").is_err());
+        assert!(safe_genome("(pipe X (cheb degree=4) (ridge))").is_err());
+        assert!(safe_genome("(pipe X (rank append=true) (ridge))").is_err());
+    }
+    classification_and_regression_replay_and_audit_isolation!();
+    projection_and_vocabulary_ignore_audit_data!(|raw: &[u8]| Job {
+                bucket: default_bucket(),
+                dataset_hash: "wide".into(),
+                name: "wide".into(),
+                key: "blobs/sha256/x".into(),
+                sha256: hash(raw),
+                version: "v".into(),
+                rows: 100,
+                columns: 71,
+                bytes: raw.len(),
+                task: "regression".into(),
+                partition: "".into(),
+                metadata: BTreeMap::new(),
+            });
+}

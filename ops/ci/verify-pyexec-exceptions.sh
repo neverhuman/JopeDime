@@ -141,9 +141,18 @@ with tempfile.TemporaryDirectory(prefix='pyexec-audit-', dir=report.parent) as t
             os.link(source, destination)
     git_marker = checkout / '.git'
     if git_marker.is_file():
-        (captured_repo / '.git').write_bytes(git_marker.read_bytes())
+        git_pointer = git_marker.read_bytes()
+    elif git_marker.is_dir():
+        git_dir = subprocess.run(
+            ['git', '-C', str(checkout), 'rev-parse', '--absolute-git-dir'],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        if not Path(git_dir).is_dir():
+            raise SystemExit('P37 source capture resolved a missing Git directory')
+        git_pointer = f'gitdir: {git_dir}\n'.encode()
     else:
-        raise SystemExit('P37 source capture expected a worktree .git file')
+        raise SystemExit('P37 source capture expected Git metadata at checkout/.git')
+    (captured_repo / '.git').write_bytes(git_pointer)
     captured_policy = captured_repo / 'agent/audit-policy.toml'
     captured_policy.unlink()
     captured_policy.write_text(policy_text)

@@ -3,15 +3,34 @@
 import sys
 
 _parent = sys.modules.get("hwm_publish", sys.modules["__main__"])
-for _name in (
-    "BINARIES", "C2_HEADER_SCHEMA", "G3_DECISIONS_SCHEMA",
-    "G3_DECISIONS_SHA256", "HANDOFF_SHA", "HEADER_SCHEMA", "LANES",
-    "OBJECT_SCHEMA", "PLAN_SCHEMA", "ROLELESS", "CUT", "DSL", "Path",
-    "Sources", "catalog_roles", "clean_output", "collections", "common",
-    "decode", "digest", "finite", "read_regular", "re", "require",
-    "s3io", "sha_field", "one_holdout", "__file__",
-):
-    globals()[_name] = getattr(_parent, _name)
+BINARIES = _parent.BINARIES
+C2_HEADER_SCHEMA = _parent.C2_HEADER_SCHEMA
+G3_DECISIONS_SCHEMA = _parent.G3_DECISIONS_SCHEMA
+G3_DECISIONS_SHA256 = _parent.G3_DECISIONS_SHA256
+HANDOFF_SHA = _parent.HANDOFF_SHA
+HEADER_SCHEMA = _parent.HEADER_SCHEMA
+LANES = _parent.LANES
+OBJECT_SCHEMA = _parent.OBJECT_SCHEMA
+PLAN_SCHEMA = _parent.PLAN_SCHEMA
+ROLELESS = _parent.ROLELESS
+CUT = _parent.CUT
+DSL = _parent.DSL
+Path = _parent.Path
+Sources = _parent.Sources
+catalog_roles = _parent.catalog_roles
+clean_output = _parent.clean_output
+collections = _parent.collections
+common = _parent.common
+decode = _parent.decode
+digest = _parent.digest
+finite = _parent.finite
+read_regular = _parent.read_regular
+re = _parent.re
+require = _parent.require
+s3io = _parent.s3io
+sha_field = _parent.sha_field
+one_holdout = _parent.one_holdout
+__file__ = _parent.__file__
 
 
 def selected_payload(final, row, event, header, header_sha, final_sha, family_source=None, role_source=None):
@@ -286,9 +305,10 @@ def inventory(source, header_sha, ledger_pins=None):
         # re-assigned), exactly as the campaign-2 input list was built; a ROLELESS_BRIDGE is never an admitted role.
         require(header.get("schema") == C2_HEADER_SCHEMA, "G3 decisions bind only a campaign-2 header")
         require(isinstance(g3, dict) and set(g3) == {"path", "sha256"}, "invalid G3 decisions pin")
-        require(sha_field(g3["sha256"]) == G3_DECISIONS_SHA256, "not the owner-named G3 decision file")
+        g3_pin = _parent.G3_DECISIONS_SHA256
+        require(sha_field(g3["sha256"]) == g3_pin, "not the owner-named G3 decision file")
         decisions = src.doc(g3["path"], sha_field(g3["sha256"]))
-        g3_source = {"path": str(Path(g3["path"]).absolute()), "sha256": G3_DECISIONS_SHA256}
+        g3_source = {"path": str(Path(g3["path"]).absolute()), "sha256": g3_pin}
         require(decisions.get("schema") == G3_DECISIONS_SCHEMA, "unsupported G3 decisions schema")
         identities = decisions.get("per_identity")
         require(isinstance(identities, list) and identities, "G3 decisions carry no identities")

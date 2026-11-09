@@ -396,7 +396,7 @@ impl Run {
         {
             let text = serde_json::to_vec_pretty(&value).expect("receipt serializes");
             if let Err(error) = io::write_atomic("receipt", path, &text) {
-                eprintln!("jopedime: {error:#}");
+                eprintln!("jain: {error:#}");
                 if code == 0 {
                     code = FailureKind::Output.exit_code();
                 }
@@ -410,7 +410,7 @@ impl Run {
                 Ok(()) => summary_line(self.command, &self.receipt),
                 Err(_) => {
                     if let Some(error) = &self.receipt.error {
-                        eprintln!("jopedime {}: {}", self.command, error.message);
+                        eprintln!("jain {}: {}", self.command, error.message);
                     }
                 }
             }

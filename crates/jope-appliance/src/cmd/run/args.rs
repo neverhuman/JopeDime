@@ -60,9 +60,22 @@ pub struct RunArgs {
     pub refit: String,
     #[arg(long)]
     pub json: bool,
+    /// Train in the veox Cloud (the default for your own CSV; needs `jain auth login` on an
+    /// admitted account). Uploads the CSV only after the user's consent.
+    #[arg(long, conflicts_with_all = ["local", "dry_run", "detach", "out", "events", "dataset"])]
+    pub cloud: bool,
+    /// Run on this machine: only the bundled examples (example/NAME.csv); your own data trains
+    /// in the veox Cloud.
+    #[arg(long)]
+    pub local: bool,
+    /// The user agreed to upload this CSV to train in the veox Cloud: required without a
+    /// terminal. Ask them first; the consent is remembered per file and account.
+    #[arg(long = "upload-consent", visible_alias = "consent-upload")]
+    pub upload_consent: bool,
     #[arg(long, value_parser = ["ndjson"])]
     pub events: Option<String>,
-    #[arg(long, default_value_t = 30)]
+    /// Seconds each status poll waits for news (0-60), checked before the run starts.
+    #[arg(long, default_value_t = 30, value_parser = clap::value_parser!(u64).range(0..=60))]
     pub wait: u64,
     #[arg(long)]
     pub after_event: Option<String>,
@@ -77,6 +90,11 @@ pub struct RunArgs {
 }
 
 impl RunArgs {
+    /// The hidden prepared-plan probe never talks to a workspace.
+    pub fn json_m1(&self) -> bool {
+        self.m1_plan.is_some()
+    }
+
     pub fn run_spec(&self) -> anyhow::Result<RunSpec> {
         let dataset = DatasetId::from_str(self.dataset.as_deref().ok_or_else(|| {
             anyhow::anyhow!("CSV must be registered before constructing RunSpec")

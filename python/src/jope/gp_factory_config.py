@@ -1,4 +1,5 @@
 """Host and run configuration for the GP factory."""
+
 from __future__ import annotations
 
 import os
@@ -45,4 +46,3 @@ MODEL_NAME = "jope_gp_v1"
 CANDIDATE_POOLS_GLOB = str(
     _PRIME_CONFIG.legacy_root / "runs/self_play_v33/candidate_pools/candidate_pools_g*.jsonl"
 )
-

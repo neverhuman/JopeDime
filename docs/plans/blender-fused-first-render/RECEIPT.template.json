@@ -1,0 +1,57 @@
+{
+  "schema": "jope.blender-command-receipt/v1",
+  "status": "template_not_evidence",
+  "source": {
+    "commit": null,
+    "branch": "codex/blender-fused-first-render",
+    "dirty_diff_sha256": null
+  },
+  "command": {
+    "argv": [],
+    "cwd": null,
+    "started_utc": null,
+    "finished_utc": null,
+    "exit_code": null
+  },
+  "scope": {
+    "milestone": null,
+    "evidence_state": "not_run",
+    "trace_scope": null,
+    "internal_only": true
+  },
+  "resources": {
+    "device": "cpu",
+    "workers": null,
+    "blender_version": null,
+    "blender_build_hash": null
+  },
+  "identities": {
+    "run_id": null,
+    "dataset_sha256": null,
+    "bundle_digest": null,
+    "dope_sha256": null,
+    "jope_sha256": null
+  },
+  "checks": {
+    "collected": null,
+    "executed": null,
+    "passed": null,
+    "failed": null,
+    "skipped": null,
+    "reason": null
+  },
+  "inputs": [],
+  "outputs": [],
+  "logs": [],
+  "gates": {
+    "authentication": "pending",
+    "fused_trace": "pending",
+    "trace_parity": "pending",
+    "affine_closure": "pending",
+    "blender_render": "pending",
+    "working_source": "pending",
+    "source_comparison": "pending",
+    "tokens_per_second": "unavailable"
+  },
+  "remaining_work": []
+}

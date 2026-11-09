@@ -22,7 +22,7 @@ Native PolicyLM modules remain in the repository at `deploy/dl-trainonly/lane/sr
 
 ## Offline checks
 
-Run from the repository root in the existing qualified Python environment. CI uses `run_offline.py --output <fresh-evidence-directory>` to require 394 cases: 226 original, 74 native/growth, 26 HPC, 17 continuous and 51 prepared/transfer/custody cases in isolated interpreters. Each suite retains a separate receipt:
+Run from the repository root in the existing qualified Python environment. CI uses `run_offline.py --output <fresh-evidence-directory>` to require 395 cases: 227 original, 74 native/growth, 26 HPC, 17 continuous and 51 prepared/transfer/custody cases in isolated interpreters. Each suite retains a separate receipt:
 
 ```sh
 rtk proxy env PYTHONPATH=deploy/dl-flywheel:deploy/dl-trainonly/lane/src/dl_training_v1 JOPE_POLICYLM_SOURCE=deploy/dl-trainonly/lane/src/dl_training_v1 python3 -B -m unittest discover -s deploy/dl-flywheel/tests -v

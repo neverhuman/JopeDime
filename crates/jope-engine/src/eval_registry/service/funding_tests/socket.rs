@@ -183,42 +183,43 @@ fn funding_concurrency_is_bounded_before_descriptor_read_and_released_on_disconn
         .unwrap();
         held.push(stream);
     }
-    let deadline = Instant::now() + Duration::from_secs(5);
-    loop {
-        let response = fixture.raw_response(&fixture.start());
-        assert_eq!(response["ok"], false);
-        let error = response["error"].as_str().unwrap();
-        if error.contains("funding admission slots exhausted") {
-            break;
-        }
-        assert!(
-            error.contains("execution custody"),
-            "unexpected funding response while filling admission slots: {error}"
-        );
+    let deadline = Instant::now() + Duration::from_secs(30);
+    while service.funding_active() < fixture.config.max_workers.min(16) {
         assert!(
             Instant::now() < deadline,
             "funding slot holders did not reach sealed FD read"
         );
-        std::thread::sleep(Duration::from_millis(5));
+        std::thread::yield_now();
     }
+    let response = fixture.raw_response(&fixture.start());
+    assert_eq!(response["ok"], false);
+    assert!(
+        response["error"]
+            .as_str()
+            .unwrap()
+            .contains("funding admission slots exhausted"),
+        "funding admission should reject another request while all slots hold at FD read: {response}"
+    );
     assert_eq!(fixture.count("funding_authorizations"), 0);
     assert_eq!(fixture.count("funding_witness"), 0);
     drop(held);
     let deadline = Instant::now() + Duration::from_secs(5);
-    loop {
-        let response = fixture.raw_response(&fixture.start());
-        let error = response["error"].as_str().unwrap_or_default();
-        if !error.contains("funding admission slots exhausted") {
-            assert_eq!(response["ok"], false);
-            assert!(error.contains("execution custody"), "{error}");
-            break;
-        }
+    while service.funding_active() != 0 {
         assert!(
             Instant::now() < deadline,
             "disconnected funding holder retained its slot"
         );
-        std::thread::sleep(Duration::from_millis(5));
+        std::thread::yield_now();
     }
+    let response = fixture.raw_response(&fixture.start());
+    assert_eq!(response["ok"], false);
+    assert!(
+        response["error"]
+            .as_str()
+            .unwrap()
+            .contains("execution custody"),
+        "disconnect should release funding slot without admitting task: {response}"
+    );
     fixture
         .request(&FundingRequest::Register {
             authorization: fixture.original.authorization.clone(),

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+<title>Original CUDA type badge</title>
+<rect x="5" y="5" width="182" height="182" rx="30" fill="#182821" stroke="#9bdc9f" stroke-width="6"/>
+<path d="M49 58 H143 M49 135 H143" fill="none" stroke="#63a879" stroke-width="3" stroke-linecap="round"/>
+<path d="M52 81H41C31 81 28 86 28 96S31 111 41 111H52 M65 81V100C65 108 69 111 76 111S87 108 87 100V81 M101 81H110C121 81 125 87 125 96S121 111 110 111H101Z M135 111L148 81H152L165 111 M140 102H160" fill="none" stroke="#b1eeaf" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

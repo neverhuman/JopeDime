@@ -15,6 +15,7 @@ from rich.text import Text
 from .tui import _truncate
 from .tui_stream import CANON_PREVIEW, CODE_PREVIEW_CHARS, _fmt, _score_cell, _state_glyph
 
+
 class StreamDisplayMixin:
     def render(self) -> Panel:
         self.ingest()
@@ -134,5 +135,3 @@ class StreamDisplayMixin:
         path = out_dir / f"{gene.gene_id}.{ext}"
         path.write_text(emitted.get(self.state.lang, ""), encoding="utf-8")
         return path
-
-

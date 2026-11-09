@@ -146,7 +146,7 @@ class PoolTests(unittest.TestCase):
 
     def test_parent_source_and_guard_changes_rejected(self):
         files=json.loads(json.dumps(self.m['source_files']));files[0]['ref']=self.save('replacement.py',b'# changed\n')
-        with self.assertRaisesRegex(ValueError,'34 parent'):op.dry_plan(self.mcopy(source_files=files))
+        with self.assertRaisesRegex(ValueError,'all other parent worker sources byte unchanged'):op.dry_plan(self.mcopy(source_files=files))
         parent=json.loads(op.read(self.m['parent_plan']));c=json.loads(op.read(parent['workers'][1]['config']));c['global_guard']['scope_sha256']='0'*64
         p=Path(parent['workers'][1]['config']['path']);p.write_bytes(op.canonical(c));parent['workers'][1]['config']=op.reference(p)
         p=Path(self.m['parent_plan']['path']);p.write_bytes(op.canonical(parent))

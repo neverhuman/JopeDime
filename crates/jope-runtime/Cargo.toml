@@ -9,7 +9,8 @@ description = "Appliance runtime: native method roster, table ingress, local fit
 
 [dependencies]
 jope-narrator = { path = "../jope-narrator" }
-jope-api = { path = "../jope-api" }
+# Contract enums only; run-id generation (getrandom) is not part of the WASM runtime.
+jope-api = { path = "../jope-api", default-features = false }
 clap.workspace = true
 anyhow.workspace = true
 jope-paths = { path = "../jope-paths" }
@@ -28,6 +29,12 @@ thiserror.workspace = true
 [dev-dependencies]
 jope-narrator = { path = "../jope-narrator", features = ["testing"] }
 tempfile.workspace = true
+
+[features]
+# The public jAIn CLI edition (selected by jope-appliance `cloud-tls`): the method roster leaves
+# out the internal neural methods, whose names stay with the engine-only builds (owner rule
+# 2026-11-06: no internal model names in the public binary).
+public-edition = []
 
 [lints]
 workspace = true

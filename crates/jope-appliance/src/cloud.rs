@@ -1,12 +1,20 @@
 //! Application-owned HTTPS account connection. The local engine never receives credentials.
 mod client_auth;
+pub mod cloud_run;
 mod commands;
+pub(crate) mod device;
+pub mod feedback;
+pub mod flow;
+pub mod route;
 mod sync;
 
-pub use commands::{auth_command, cloud_command, default_workspace, spawn_login};
+pub use commands::{
+    auth_command, cloud_command, default_workspace, results_command, spawn_login, RESULTS_QUESTION,
+};
+pub(crate) use sync::{chrono_like_now, set_telemetry};
 pub use sync::{
-    fetch_model, publish_best, publish_file, publish_model, run_entries, sync_events,
-    sync_snapshot, sync_snapshot_for, Upload,
+    fetch_model, publish_best, publish_file, publish_model, remember_run, run_entries, sync_events,
+    sync_results, sync_snapshot, sync_snapshot_for, Upload,
 };
 #[cfg(test)]
 use sync::{pack_object, unpack_object};
@@ -47,12 +55,36 @@ pub enum AuthCommand {
 }
 #[derive(Subcommand)]
 pub enum CloudCommand {
+    /// Whether a finished local run's model and generated code sync to your workspace: `on`, `off`, or
+    /// show it. No dataset rows are uploaded (kernel, smoother and Gaussian-process models keep
+    /// their support rows inside the fitted model).
+    Results {
+        setting: Option<String>,
+    },
     Sync {
         #[arg(long)]
         run: Option<String>,
     },
-    Runs,
-    /// Publish explicitly: the fitted model (the default), or with `--report`/`--code` only the
+    /// Every run this account has, local and cloud, in one table.
+    Runs {
+        /// One JSON object per run instead of the table.
+        #[arg(long)]
+        json: bool,
+        /// Only runs that exist on this machine.
+        #[arg(long, conflicts_with = "cloud")]
+        local: bool,
+        /// Only runs that exist in the workspace.
+        #[arg(long)]
+        cloud: bool,
+        /// Only local runs not yet synced to the workspace.
+        #[arg(long, conflicts_with_all = ["local", "cloud"])]
+        unsynced: bool,
+        /// Show at most N runs.
+        #[arg(long, value_name = "N")]
+        limit: Option<usize>,
+    },
+    /// Publish explicitly. For a finished run with no options: its fitted model and generated
+    /// code, exported here. `--model` names a saved model; `--report`/`--code` send only the
     /// named PDF report and ZIP of generated code. Nothing uploads without this command.
     Publish {
         run: String,
@@ -72,6 +104,24 @@ pub enum CloudCommand {
     },
     Fetch {
         run: String,
+    },
+    /// Send the VEOX team feedback: what works well, an issue, or a feature idea. Signed in, it
+    /// goes with your account so the team can follow up; otherwise it is sent without one.
+    /// Only the text you write is sent, never a dataset or a file.
+    Feedback {
+        /// `issue`, `idea` (a feature request), `good` (what works well) or `other`.
+        kind: String,
+        /// One line, up to 200 characters.
+        summary: String,
+        /// More detail: steps, what you expected, what happened (up to 8,000 characters).
+        #[arg(long)]
+        details: Option<String>,
+        /// `user` (you) or `agent` (an AI agent reporting on its own use of jAIn).
+        #[arg(long, default_value = "user")]
+        source: String,
+        /// For an agent's report: the names of the commands or tools it used, comma separated.
+        #[arg(long, value_delimiter = ',')]
+        tools: Vec<String>,
     },
 }
 #[derive(Clone, Serialize, Deserialize)]

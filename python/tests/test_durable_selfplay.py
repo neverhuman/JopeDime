@@ -85,12 +85,6 @@ def catalog_fixture(tmp_path: Path) -> Path:
     return pointer
 
 
-
-
-
-
-
-
 def protocol(task="regression", version="v1"):
     return evaluation_protocol_sha256(
         task=task,
@@ -100,38 +94,6 @@ def protocol(task="regression", version="v1"):
         test_sha256="2" * 64,
         version=version,
     )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def gate_evidence(lift: float) -> dict:
@@ -171,16 +133,6 @@ def gate_evidence(lift: float) -> dict:
     }
 
 
-
-
-
-
-
-
-
-
-
-
 PARITY_FIXTURE = (
     Path(__file__).parents[2]
     / "crates"
@@ -191,8 +143,6 @@ PARITY_FIXTURE = (
 )
 
 
-
-
 def candidate_row(index: int, source: str) -> dict:
     genome = f"(pipe X (cheb degree={index + 2}) (ridge))"
     return {
@@ -201,38 +151,53 @@ def candidate_row(index: int, source: str) -> dict:
         "source": source,
     }
 
-from _durable_selfplay_registry import (
-    test_catalog_manifest_is_authority_for_counts_hashes_and_contexts,
-    test_expected_metric_matches_the_rust_task_authority,
-    test_catalog_counts_default_missing_new_tasks_and_reject_unknown_tasks,
-    test_pair_registry_concurrent_reservation_is_exactly_once,
-    test_infrastructure_retry_reuses_reservation_and_protocol_migration_is_explicit,
-    test_submission_requires_live_reservations_and_is_idempotent,
-    test_pair_registry_batch_reservation_reuses_in_input_order,
-)
-from _durable_selfplay_runtime import (
-    test_queue_horizons_use_observed_p95_cluster_slots_and_clamps,
-    test_refill_work_is_bounded_without_changing_the_total_target,
-    test_service_reports_the_bundle_loaded_at_process_start,
-    test_starting_service_uses_process_start_for_staleness,
-    test_wave_generation_is_polled_without_blocking,
-    test_ingestion_cycle_uses_bounded_batches,
-    test_orphaned_submission_retries_only_without_a_receipt,
-    test_submit_adopts_a_job_that_became_active_during_refill,
-    test_runtime_bundle_contains_the_complete_prime_python_package,
-    test_deployment_explicitly_restarts_already_active_services,
-    test_checkpoint_vocab_compatibility_requires_an_exact_fitting_prefix,
-    test_failed_candidate_canary_leaves_last_good_active,
-)
-from _durable_selfplay_promotion import (
-    test_dual_tier_promotion_keeps_internal_and_milestone_thresholds_separate,
-    test_a_non_conditional_checkpoint_can_never_be_promoted,
-    test_conditionality_margins_separate_internal_from_milestone,
-    test_unmeasured_conditionality_is_fail_closed_not_zero,
-    test_new_task_verdicts_are_advisory_until_anchored,
-    test_conditionality_gate_parity_fixture_matches_python,
-    test_every_wave_seed_has_the_exact_256_slot_composition,
-    test_controller_has_no_file_waiting_production_phases,
-    test_sealed_audit_is_one_shot_and_never_training_eligible,
-    test_systemd_services_are_independently_restartable,
-)
+
+def _reexport_durable_selfplay_groups():
+    import _durable_selfplay_promotion as promotion
+    import _durable_selfplay_registry as registry
+    import _durable_selfplay_runtime as runtime
+
+    globals().update(
+        {
+            name: value
+            for module in (promotion, registry, runtime)
+            for name, value in vars(module).items()
+            if name.startswith("test_")
+        }
+    )
+
+
+_reexport_durable_selfplay_groups()
+
+
+__all__ = [
+    "EXPECTED_METRIC",
+    "PairRegistry",
+    "Path",
+    "SealedAuditRegistry",
+    "ThreadPoolExecutor",
+    "active",
+    "backlog_module",
+    "bundle_sources",
+    "candidate",
+    "default_handlers",
+    "dynamic_queue_targets",
+    "evaluate_gate",
+    "evaluation_protocol_sha256",
+    "hashlib",
+    "json",
+    "load_pointer",
+    "loaded_bundle",
+    "local_receipt_dir",
+    "os",
+    "promote_candidate",
+    "pytest",
+    "record_starting",
+    "service_is_stale",
+    "service_module",
+    "sha256_text",
+    "subprocess",
+    "validate_catalog_counts",
+    "validate_catalog_manifest",
+    "wave_seed",
+]

@@ -7,9 +7,16 @@ pub(super) fn version_value() -> Value {
         Ok(None) => Value::Null,
         Err(error) => json!({"error": error.to_string()}),
     };
+    // `product` stays "jopedime": release, qualification and installer checks match it
+    // exactly. `display_name` and `command` are what people see and type (#2144).
     json!({
         "product": "jopedime",
+        "display_name": "jAIn",
+        "command": crate::CLI,
         "version": VERSION,
+        // The release identity (`1.0.0-rc.4` for a candidate built from 1.0.0); `version`
+        // stays the Cargo version that the installer and release parsers compare.
+        "release": crate::release_version(),
         "source_sha40": bootstrap::source_sha40(),
         "runtime_abi": RUNTIME_ABI,
         "package_format": jope_assets::MANIFEST_SCHEMA,
@@ -18,6 +25,8 @@ pub(super) fn version_value() -> Value {
             "engine": cfg!(feature = "engine"),
             "mcp": cfg!(feature = "mcp"),
             "client": cfg!(feature = "client"),
+            "cloud_tls": cfg!(feature = "cloud-tls"),
+            "public_edition": cfg!(feature = "public-edition"),
             "embedded": bootstrap::EMBEDDED,
             "dev_keys": jope_assets::verify::TRUSTS_DEVELOPMENT_KEY,
             "cuda": backend::CUDA_COMPILED,

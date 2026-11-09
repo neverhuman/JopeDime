@@ -27,6 +27,11 @@ impl Client {
 
 const TELEMETRY_ORIGIN: &str = "https://telemetry.veox.ai";
 
+/// What the usage statistics contain, in the words both the first-run question and
+/// `jain cloud telemetry` use (#2148). Wording only: what is collected is `cloud_events`.
+pub(crate) const TELEMETRY_CONTENTS: &str =
+    "counts, bucketed sizes and scores rounded to tenths; never dataset rows, column names or file paths";
+
 fn random_hex() -> String {
     format!("{:032x}", rand::random::<u128>())
 }
@@ -38,18 +43,23 @@ fn telemetry_enabled() -> bool {
         .is_some_and(|bytes| bytes == b"basic")
 }
 
-pub(in crate::cloud) fn telemetry_command(setting: Option<String>) -> Result<String> {
+/// The one telemetry setting, shared by the terminal's first run and `cloud telemetry on|off`.
+pub(crate) fn set_telemetry(enabled: bool) -> Result<()> {
     let path = cloud_root()?.join("telemetry");
+    write_private(&path, if enabled { b"basic" } else { b"off" })
+}
+
+pub(in crate::cloud) fn telemetry_command(setting: Option<String>) -> Result<String> {
     match setting.as_deref() {
-        Some("on") => write_private(&path, b"basic")?,
-        Some("off") => write_private(&path, b"off")?,
+        Some("on") => set_telemetry(true)?,
+        Some("off") => set_telemetry(false)?,
         Some(_) => anyhow::bail!("use `on` or `off`"),
         None => {}
     }
     Ok(if telemetry_enabled() {
-        "Telemetry on: connected runs also send de-identified counts (bucketed sizes, scores in tenths, no names, no rows) to telemetry.veox.ai.".into()
+        format!("Telemetry on: connected runs also send anonymous usage statistics to telemetry.veox.ai: {TELEMETRY_CONTENTS}.")
     } else {
-        "Telemetry off. Your account still receives the run details you sync; `jopedime cloud telemetry on` also sends de-identified counts to telemetry.veox.ai.".into()
+        format!("Telemetry off. Your account still receives the run details you sync; `jain cloud telemetry on` also sends anonymous usage statistics to telemetry.veox.ai: {TELEMETRY_CONTENTS}.")
     })
 }
 
@@ -192,7 +202,8 @@ pub fn sync_events<T: jope_client::Transport>(
     local: &T,
     snapshot: &jope_api::RunSnapshot,
 ) -> Result<String> {
-    let events = crate::cloud_events::collect(local, snapshot)?;
+    let context = super::run_context(&snapshot.run_id.to_string());
+    let events = crate::cloud_events::collect(local, snapshot, context.as_ref())?;
     let _lock = connection_lock()?;
     let c = connection()?;
     anyhow::ensure!(
@@ -225,7 +236,7 @@ pub(super) fn record_publication(
 }
 
 /// RFC 3339 UTC, seconds precision, without a date-time dependency.
-fn chrono_like_now() -> String {
+pub(crate) fn chrono_like_now() -> String {
     let secs = now_ms() / 1000;
     let (days, rem) = (secs / 86_400, secs % 86_400);
     // Civil-from-days (Howard Hinnant), valid for the Unix era.

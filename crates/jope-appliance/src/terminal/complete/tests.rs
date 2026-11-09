@@ -196,6 +196,44 @@ fn quoted_path_suggestions_round_trip_quotes_and_backslashes() {
 }
 
 #[test]
+fn bundled_examples_and_demo_names_complete_without_files_on_disk() {
+    let data = CompletionData::default();
+    let line = "/open ex";
+    let suggestions = complete(line, line.len(), &data);
+    assert!(suggestions
+        .iter()
+        .any(|item| item.insert == "example/regression_parkinsons.csv"));
+    assert!(suggestions
+        .iter()
+        .all(|item| item.source == CompletionSource::Path));
+    let line = "/open example/regression_a";
+    assert_eq!(
+        complete(line, line.len(), &data)
+            .into_iter()
+            .map(|item| item.insert)
+            .collect::<Vec<_>>(),
+        ["example/regression_apartment_rent.csv"]
+    );
+    assert!(complete("/open ", 6, &data)
+        .iter()
+        .any(|item| item.insert.starts_with("example/")));
+    let line = "/predict --input ex";
+    assert!(complete(line, line.len(), &data).is_empty());
+    let line = "/demo reg";
+    let names: Vec<String> = complete(line, line.len(), &data)
+        .into_iter()
+        .map(|item| item.insert)
+        .collect();
+    assert!(
+        names.contains(&"regression_parkinsons".to_owned()),
+        "{names:?}"
+    );
+    assert!(complete("/de", 3, &data)
+        .iter()
+        .any(|item| item.insert == "/demo"));
+}
+
+#[test]
 fn completion_only_returns_values_and_never_executes_input() {
     let temp = temp_dir();
     let marker = temp.path().join("should-not-exist");
@@ -220,4 +258,51 @@ fn windows_backslashes_remain_argument_characters() {
     let (previous, current) = split_before_cursor(r"\open C:\data\x.csv");
     assert_eq!(previous, vec!["\\open".to_owned()]);
     assert_eq!(current, r"C:\data\x.csv");
+}
+
+#[test]
+fn live_open_completion_lists_the_real_folder_with_folders_first_and_csv_only() {
+    let temp = temp_dir();
+    std::fs::create_dir(temp.path().join("data")).unwrap();
+    std::fs::create_dir(temp.path().join(".hidden")).unwrap();
+    std::fs::write(temp.path().join("b.csv"), "x\n1\n").unwrap();
+    std::fs::write(temp.path().join("a.csv"), "x\n1\n").unwrap();
+    std::fs::write(temp.path().join("notes.txt"), "no").unwrap();
+    std::fs::write(temp.path().join("data/inner.csv"), "x\n1\n").unwrap();
+    // The interactive terminal passes no precomputed paths: the folder is read live.
+    let data = CompletionData {
+        working_directory: Some(temp.path()),
+        ..Default::default()
+    };
+    let inserts = |line: &str| -> Vec<String> {
+        complete(line, line.len(), &data)
+            .into_iter()
+            .filter(|s| s.source == CompletionSource::Path && !s.insert.starts_with("example/"))
+            .map(|s| s.insert)
+            .collect()
+    };
+    // The bundled demos are offered first, as virtual example/ paths.
+    assert!(complete("/open ", 6, &data)[0]
+        .insert
+        .starts_with("example/"));
+    assert_eq!(inserts("/open "), ["data/", "a.csv", "b.csv"]);
+    assert_eq!(inserts("/open data/"), ["data/inner.csv"]);
+    assert_eq!(inserts("/open ."), [".hidden/"]);
+    // Other path arguments are not limited to tables.
+    assert!(super::list_folder(temp.path(), "", false).contains(&"notes.txt".to_owned()));
+}
+
+#[test]
+fn bare_open_names_the_folder_and_how_to_add_a_file() {
+    let temp = temp_dir();
+    let lines = super::open_listing(temp.path()).join("\n");
+    assert!(lines.contains(&format!("No CSV files in {}", temp.path().display())));
+    assert!(lines.contains("Copy a .csv file into this folder"));
+    assert!(lines.contains("/demo"));
+    std::fs::create_dir(temp.path().join("sub")).unwrap();
+    std::fs::write(temp.path().join("rent.csv"), "x\n1\n").unwrap();
+    let lines = super::open_listing(temp.path()).join("\n");
+    assert!(lines.contains("CSV files in"));
+    assert!(lines.contains("  rent.csv"));
+    assert!(lines.contains("Folders here: sub/"));
 }

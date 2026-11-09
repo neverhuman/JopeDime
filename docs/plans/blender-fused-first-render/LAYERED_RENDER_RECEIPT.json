@@ -1,0 +1,334 @@
+{
+  "schema": "jain.h256-layered-render/v1",
+  "created_utc": "2026-11-03T22:43:25.976592+00:00",
+  "status": "STILLS_READY_FOR_DESIGN_REVIEW",
+  "pr": "https://github.com/neverhuman/JopeDime/pull/2114",
+  "protected_pr": 2071,
+  "predecessor_receipt": {
+    "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/docs/plans/blender-fused-first-render/H256_RENDER_RECEIPT.json",
+    "sha256": "7baacbd081a920ce4d586add78cca068896666b9ef5f77b32a1093f217f7d59c",
+    "bytes": 18346
+  },
+  "render_input_sha256": "22f3940018537ee6b5427529fb1014441b79a4c6879e88c7554ab3d39511af26",
+  "source_inventory": [
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/blender/h256_network.py",
+      "sha256": "09055397aae935b3571b47714590e8e2680f0883a6f5aa13314f7ddf34a7429d",
+      "bytes": 45490
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/blender/h256_scene.py",
+      "sha256": "76ef3517b398a859451f7a6296f8928bcdc0a106e33cdf34dbb06d9798692b5b",
+      "bytes": 37597
+    }
+  ],
+  "unchanged_predecessor_source_hashes": 23,
+  "layout": {
+    "planes": 12,
+    "weighted_causal_depth": 11,
+    "real_matrix_operations": 123,
+    "real_nonzero_connections": 850956,
+    "actual_endpoint_glyphs": 15746,
+    "hidden": [
+      "operation labels",
+      "encoder headings",
+      "checkpoint text",
+      "context-token surface",
+      "technical footers"
+    ],
+    "colors": {
+      "problem_encoder": "continuous cyan magnitude ramp",
+      "solution_encoder": "continuous violet magnitude ramp"
+    },
+    "signed_measurements_preserved": true,
+    "block_connectivity": "actual per-operation W entries; co-located stage planes do not identify distinct tensors",
+    "functional_fold_lanes": "15 fold-specific junctions; only real multi-fold joins reconverge centrally"
+  },
+  "motion": {
+    "kind": "recorded inference; editorial network orbit/pulse travel/page dwell",
+    "orbit": {
+      "root_object": "JAIN measured network rotation",
+      "objects": 693,
+      "period_frames": 240,
+      "yaw_center_degrees": -24.0,
+      "yaw_amplitude_degrees": 16.0,
+      "fixed_panels": true,
+      "sampled_camera_bounds": [
+        {
+          "frame": 1,
+          "x": [
+            0.26998239755630493,
+            0.6974838972091675
+          ],
+          "y": [
+            0.2515130937099457,
+            0.7654041647911072
+          ]
+        },
+        {
+          "frame": 16,
+          "x": [
+            0.2670029103755951,
+            0.700731635093689
+          ],
+          "y": [
+            0.26301977038383484,
+            0.7541933059692383
+          ]
+        },
+        {
+          "frame": 31,
+          "x": [
+            0.26680317521095276,
+            0.7011783123016357
+          ],
+          "y": [
+            0.2761886715888977,
+            0.7412552237510681
+          ]
+        },
+        {
+          "frame": 46,
+          "x": [
+            0.26836419105529785,
+            0.6998045444488525
+          ],
+          "y": [
+            0.28788867592811584,
+            0.7291029691696167
+          ]
+        },
+        {
+          "frame": 61,
+          "x": [
+            0.26821479201316833,
+            0.6999980807304382
+          ],
+          "y": [
+            0.2951035797595978,
+            0.7201281785964966
+          ]
+        },
+        {
+          "frame": 76,
+          "x": [
+            0.2663383185863495,
+            0.7017797827720642
+          ],
+          "y": [
+            0.29852867126464844,
+            0.7160077095031738
+          ]
+        },
+        {
+          "frame": 91,
+          "x": [
+            0.26494330167770386,
+            0.7029924988746643
+          ],
+          "y": [
+            0.2976956069469452,
+            0.7173077464103699
+          ]
+        },
+        {
+          "frame": 106,
+          "x": [
+            0.26571735739707947,
+            0.7019855976104736
+          ],
+          "y": [
+            0.29316073656082153,
+            0.7233685851097107
+          ]
+        },
+        {
+          "frame": 121,
+          "x": [
+            0.26998239755630493,
+            0.6974838972091675
+          ],
+          "y": [
+            0.2844463884830475,
+            0.7325884103775024
+          ]
+        },
+        {
+          "frame": 136,
+          "x": [
+            0.2775858938694,
+            0.689681351184845
+          ],
+          "y": [
+            0.27364397048950195,
+            0.743071973323822
+          ]
+        },
+        {
+          "frame": 151,
+          "x": [
+            0.28662580251693726,
+            0.6805049180984497
+          ],
+          "y": [
+            0.26311203837394714,
+            0.7532966732978821
+          ]
+        },
+        {
+          "frame": 166,
+          "x": [
+            0.2908373475074768,
+            0.6761391758918762
+          ],
+          "y": [
+            0.25382575392723083,
+            0.7623516321182251
+          ]
+        },
+        {
+          "frame": 181,
+          "x": [
+            0.2913969159126282,
+            0.6754992604255676
+          ],
+          "y": [
+            0.24642209708690643,
+            0.7696526646614075
+          ]
+        },
+        {
+          "frame": 196,
+          "x": [
+            0.2883664071559906,
+            0.6785476207733154
+          ],
+          "y": [
+            0.24163363873958588,
+            0.7744905948638916
+          ]
+        },
+        {
+          "frame": 211,
+          "x": [
+            0.28248047828674316,
+            0.6845452189445496
+          ],
+          "y": [
+            0.24042731523513794,
+            0.7758858799934387
+          ]
+        },
+        {
+          "frame": 226,
+          "x": [
+            0.2756247818470001,
+            0.6915932297706604
+          ],
+          "y": [
+            0.2436656355857849,
+            0.7729321122169495
+          ]
+        },
+        {
+          "frame": 241,
+          "x": [
+            0.26998239755630493,
+            0.6974838972091675
+          ],
+          "y": [
+            0.2515130937099457,
+            0.7654041647911072
+          ]
+        }
+      ],
+      "scope": "editorial bounded orbit; measured tensors and weights unchanged"
+    },
+    "edge_cycle_frames": 48,
+    "edge_depth_delay": "input_stage / 11 * 0.65 * 48 frames",
+    "edge_emission": "abs(signed_normalized_actual_Wx)^2.8 * (0.035 + 0.82*pulse)",
+    "node_emission": "abs(signed_normalized_actual_activation)^0.8 * 2.3",
+    "weights_static": true,
+    "panels_static": true
+  },
+  "unchanged_proofs": {
+    "actual_parameter_channel_winner_rows": 123,
+    "signed_FP32_atlases": 246,
+    "source_pages": 578,
+    "complete_Rust_files": 6,
+    "all_six_prediction_and_training_parity": "exact0 retained; no new native source/fit/selection changes",
+    "full_semantic_receipt": {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/gp-source-six-release/validation-with-metrics.receipt.json",
+      "sha256": "4fccbf26096d6cffd98b71de29b3fe021a0039144be12421a41c9ac7616fe354",
+      "bytes": 307549
+    },
+    "landmark_mappings": "unchanged; four camera-fixed grids retained"
+  },
+  "artifacts": [
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/scene.blend",
+      "sha256": "429d0f44a4e12c87312903129092ff90a4a47a261c464b7fcbc78116c3258370",
+      "bytes": 133930933
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/scene.receipt.json",
+      "sha256": "6385d5c0ab614b4840e9f0040d4c380d96357c7328fdb8b42a273c651e6e1071",
+      "bytes": 5521155
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/comparison.receipt.json",
+      "sha256": "575b8cbba3c85c482c4943b1797b5ee9f71dd7223e8f13c5ef19452782bd12bf",
+      "bytes": 4391
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/reopen-layered-v2/receipt.json",
+      "sha256": "ad81acee4e080c371e96b5f1b1b6c7182feb0d10070e1b0d5017f140e282308a",
+      "bytes": 1961
+    }
+  ],
+  "stills": [
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/h256-000157.png",
+      "sha256": "a463a7b34fec65a2d05de1a46fa02cda6ff5f741f1e7902027c10b195ecce14c",
+      "bytes": 8234248,
+      "frame": 157,
+      "cue": "case A emitted training",
+      "dimensions": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/review-layered-v2/h256-003583.png",
+      "sha256": "31a8a7c4dc2d587f999e9139ffa5bb936816c966375a9340828d6757018a1097",
+      "bytes": 8199550,
+      "frame": 3583,
+      "cue": "case F emitted prediction",
+      "dimensions": [
+        3840,
+        2160
+      ]
+    }
+  ],
+  "checks": {
+    "saved_scene_nonsequential_reopen": "PASS exact RGBA157 then3583",
+    "fixed_geometry_meshes": 246,
+    "animated_measured_pulse_bindings": 123,
+    "fixed_camera_parented_objects": 1173,
+    "AI_peer_review": "no blockers; not human/native approval",
+    "python_tests": "41 passed; final committed-head readback recorded in external handoff",
+    "hosted_CI": "NOT_RUN"
+  },
+  "inspection": {
+    "frames": 3720,
+    "fps": 12,
+    "seconds": 310,
+    "video_rendered": false
+  },
+  "legacy_metadata_note": "Unused technical_positions/technical_shader_power/technical_data_gain are intermediate active snapshots, not historical technical-view values; use active fields and predecessor receipt for comparisons.",
+  "remaining": [
+    "User design feedback before video",
+    "Hosted CI and any merge/release lifecycle"
+  ],
+  "git_handoff": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/h256/final-layered-git-handoff.json"
+}

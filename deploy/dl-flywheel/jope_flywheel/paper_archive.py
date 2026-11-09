@@ -69,26 +69,6 @@ def token(value):
     return value
 
 
-def _reject_json_constant(_value):
-    raise EvidenceError('non-finite JSON')
-
-
-def _unique_json_object(items):
-    result = {}
-    for key, value in items:
-        if key in result:
-            raise EvidenceError('duplicate JSON key')
-        result[key] = value
-    return result
-
-
-def _finite_json_float(value):
-    result = float(value)
-    if not math.isfinite(result):
-        raise EvidenceError('non-finite JSON')
-    return result
-
-
 def absolute(path):
     p = Path(path)
     if not p.is_absolute() or '..' in p.parts or '\x00' in str(p):
@@ -124,13 +104,22 @@ def open_file(path, limit):
 
 
 def json_value(raw):
+    def reject(x):
+        raise EvidenceError('non-finite JSON')
+    def pairs(xs):
+        result = {}
+        for key, value in xs:
+            if key in result:
+                raise EvidenceError('duplicate JSON key')
+            result[key] = value
+        return result
+    def number(x):
+        result = float(x)
+        if not math.isfinite(result):
+            raise EvidenceError('non-finite JSON')
+        return result
     try:
-        return json.loads(
-            raw,
-            parse_constant=_reject_json_constant,
-            parse_float=_finite_json_float,
-            object_pairs_hook=_unique_json_object,
-        )
+        return json.loads(raw, parse_constant=reject, parse_float=number, object_pairs_hook=pairs)
     except (ValueError, UnicodeError, RecursionError) as exc:
         raise EvidenceError('invalid source JSON') from exc
 
@@ -154,7 +143,7 @@ def initial_read(path, limit):
         os.close(fd)
 
 
-class CampaignPaperArchive:
+class Archive:
     """One exclusive writer for one pinned campaign/host and owned output root.
 
     ``cycle()`` captures bounded current evidence and atomically publishes the
@@ -569,11 +558,6 @@ class CampaignPaperArchive:
         return summary
 
 
-# Preserve the deployed public name while giving this wave-four campaign observer
-# a distinct type identity from frozen archive implementations.
-Archive = CampaignPaperArchive
-
-
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--campaign-manifest', required=True, type=Path)
@@ -586,7 +570,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.interval < 60:
         parser.error('--interval must be at least 60 seconds')
-    with CampaignPaperArchive(args.campaign_manifest, args.manifest_sha, args.host, args.out) as archive:
+    with Archive(args.campaign_manifest, args.manifest_sha, args.host, args.out) as archive:
         while time.time() < archive.deadline:
             result = archive.cycle()
             print(json.dumps({'state': result['state'], 'manifest_sha256': archive.manifest_sha,

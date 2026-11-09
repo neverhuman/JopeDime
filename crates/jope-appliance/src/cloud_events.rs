@@ -63,6 +63,50 @@ fn wire(id: String, sequence: u64, at: &str, event: Value) -> Value {
     json!({"id": id, "sequence": sequence.max(1).to_string(), "at": at, "event": event})
 }
 
+/// What the CLI knew when it started a run and the engine does not repeat in its events: the
+/// target, the resolved task, the objective, the table's name and profile. Written locally at
+/// run start (`crate::cloud::remember_run`), read back when the run is synced.
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct RunContext {
+    pub label: String,
+    pub target: String,
+    pub task: Option<jope_api::Task>,
+    pub objective: Option<String>,
+    #[serde(default)]
+    pub profile: Option<jope_api::DatasetProfile>,
+}
+
+impl RunContext {
+    pub fn from_spec(
+        spec: &jope_api::RunSpec,
+        file_name: &str,
+        profile: Option<jope_api::DatasetProfile>,
+    ) -> Self {
+        Self {
+            label: bounded(&format!("{file_name} · {}", spec.target), 160),
+            target: spec.target.clone(),
+            task: (spec.task != jope_api::Task::Auto).then_some(spec.task),
+            objective: match &spec.objective {
+                jope_api::ObjectiveSpec::Name(name) => Some(name.clone()),
+                _ => None,
+            },
+            profile,
+        }
+    }
+}
+
+/// Whether a metric is minimized or maximized, for the names the engine reports.
+pub fn direction(metric: &str) -> Option<&'static str> {
+    match metric.to_ascii_lowercase().as_str() {
+        "rmse" | "mse" | "mae" | "logloss" | "log_loss" | "brier" | "mape" | "rmsle" => {
+            Some("minimize")
+        }
+        "auc" | "roc_auc" | "accuracy" | "balanced_accuracy" | "f1" | "r2" | "precision"
+        | "recall" | "pr_auc" => Some("maximize"),
+        _ => None,
+    }
+}
+
 fn task(value: jope_api::Task) -> &'static str {
     match value {
         jope_api::Task::Regression => "regression",
@@ -74,7 +118,11 @@ fn task(value: jope_api::Task) -> &'static str {
 
 /// The app-side events for one run, in engine order, from its durable event log and (when the run
 /// names its dataset) the dataset's column profile.
-pub fn collect<T: Transport>(local: &T, snapshot: &RunSnapshot) -> Result<Vec<Value>> {
+pub fn collect<T: Transport>(
+    local: &T,
+    snapshot: &RunSnapshot,
+    context: Option<&RunContext>,
+) -> Result<Vec<Value>> {
     let mut engine = Vec::new();
     let mut after = jope_api::decimal::DecimalU64(0);
     loop {
@@ -94,17 +142,31 @@ pub fn collect<T: Transport>(local: &T, snapshot: &RunSnapshot) -> Result<Vec<Va
         .evaluation_receipt
         .as_ref()
         .and_then(|r| r.identity.dataset_id.parse::<DatasetId>().ok())
-        .and_then(|id| local.dataset_inspect(&id).ok());
-    Ok(project(snapshot, &engine, profile.as_ref()))
+        .and_then(|id| local.dataset_inspect(&id).ok())
+        .or_else(|| context.and_then(|c| c.profile.clone()));
+    Ok(project_with(snapshot, &engine, profile.as_ref(), context))
 }
 
 /// The pure half of [`collect`]: engine events (and an optional profile) to app events. Ids are
 /// derived from the engine's own sequence, so a re-sync sends the same ids with the same bytes
 /// and the app counts them as duplicates.
+#[cfg(test)]
 pub fn project(
     snapshot: &RunSnapshot,
     engine: &[jope_api::events::PublicEvent],
     profile: Option<&jope_api::DatasetProfile>,
+) -> Vec<Value> {
+    project_with(snapshot, engine, profile, None)
+}
+
+/// [`project`] with what the CLI remembered at run start. The engine's CLI runs emit no plan
+/// event, so without it the account would get no `run_started` and a `score` metric: the
+/// metric then comes from the champion or the trials, the target and task from the context.
+pub fn project_with(
+    snapshot: &RunSnapshot,
+    engine: &[jope_api::events::PublicEvent],
+    profile: Option<&jope_api::DatasetProfile>,
+    context: Option<&RunContext>,
 ) -> Vec<Value> {
     let mut out = Vec::new();
     let first_at = engine
@@ -133,7 +195,37 @@ pub fn project(
         }
     }
     let mut hypotheses: BTreeMap<&str, &str> = BTreeMap::new();
-    let mut metric = String::from("score");
+    let has_plan = engine.iter().any(|e| matches!(e.event, EventBody::Plan(_)));
+    let reported = snapshot
+        .best
+        .as_ref()
+        .map(|b| b.metric.clone())
+        .or_else(|| {
+            engine.iter().find_map(|e| match &e.event {
+                EventBody::ExperimentFinished(done) if !done.metric.is_empty() => {
+                    Some(done.metric.clone())
+                }
+                EventBody::AlgorithmAccepted(a) if !a.metric.is_empty() => Some(a.metric.clone()),
+                _ => None,
+            })
+        })
+        .or_else(|| context.and_then(|c| c.objective.clone()))
+        .map(|m| bounded(&m, 80))
+        .filter(|m| !m.is_empty());
+    let mut metric = reported.clone().unwrap_or_else(|| String::from("score"));
+    if let (false, Some(context)) = (has_plan, context) {
+        let direction = direction(&metric);
+        out.push(wire(
+            "context-start".into(),
+            1,
+            &first_at,
+            json!({"kind": "run_started",
+                "task": context.task.map_or("unknown", task),
+                "target": bounded(&context.target, 256),
+                "metric": metric,
+                "direction": direction}),
+        ));
+    }
     for event in engine {
         let seq = event.sequence.0;
         match &event.event {
@@ -143,7 +235,8 @@ pub fn project(
                     format!("plan-{seq}"),
                     seq,
                     &event.time,
-                    json!({"kind": "run_started", "task": task(plan.task.value), "target": null,
+                    json!({"kind": "run_started", "task": task(plan.task.value),
+                    "target": context.map(|c| bounded(&c.target, 256)),
                     "metric": metric, "direction": match plan.objective.direction {
                         jope_api::Direction::Minimize => "minimize",
                         jope_api::Direction::Maximize => "maximize",

@@ -100,13 +100,13 @@
       "sha256": "dab86bf0a66124e657d19e52b698c760a6823970c23fbc16f5767ac1b168f8ca"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py": {
-      "bytes": 21942,
+      "bytes": 21929,
       "classification": {
         "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "4b7e329df7aa1056acb96127db9d20975eb96460295bd4bfbceb4803a36726cc"
+      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py": {
       "bytes": 18310,
@@ -2777,13 +2777,13 @@
       "sha256": "4288808ff82fee80f9c59c9233e8c7315c83cfd67fbeb51bac8ad0fc7eeabfeb"
     },
     "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/readonly_snapshot.py": {
-      "bytes": 4309,
+      "bytes": 4220,
       "classification": {
         "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "de6e08b1b288b2c7fdc1a46c9907f255df20b714a8008aa72e354a9cd8fc55a1"
+      "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c"
     },
     "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/timing.py": {
       "bytes": 4321,
@@ -3457,13 +3457,13 @@
       "sha256": "f98ad746a4c1efdfdcaa360ec6486e1e900b398640de4a905d0001fcc6400dd6"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_archive.py": {
-      "bytes": 17342,
+      "bytes": 17273,
       "classification": {
         "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "cfb027f9b638458e4eea1c2267cfe49412e9e8711c262332fbd3cd690e683f0c"
+      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/launch_v2.py": {
       "bytes": 5352,
@@ -6408,6 +6408,206 @@
       },
       "sha256": "370c7ff3e990ead9da4a92588cb1be85ee41bef96f61bb43bfff5683e0f7b898"
     },
+    "python:research/flywheel_selfplay/h250_ctxz/analysis.py": {
+      "bytes": 13603,
+      "sha256": "6524260889bd5b5ca2523f9a8a050ee352791727d8a409b88fbaf8d4c353c4e4",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/calibrate.py": {
+      "bytes": 5114,
+      "sha256": "e69648cf2e48d323cc30b9aa5ca237b3065af79c1e2c19d91b82d568e45da9d2",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/monitor.py": {
+      "bytes": 8045,
+      "sha256": "c4ed72d705993722eba2723c6970fc2ef04dcecd56e3922ba91de8e7e11ebf3b",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/runner.py": {
+      "bytes": 43475,
+      "sha256": "68f20a0462e1014c21d2e44823f33c1b174a4cf5a6acb43a463c8053e5ddceab",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/treatment.py": {
+      "bytes": 4927,
+      "sha256": "9543f049c04cd8f1cdf4dc9e4477d94e1c1e7e8f5465a7bab2ea55985437c4ad",
+      "classification": {
+        "role": "research",
+        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h251_reptile/analysis.py": {
+      "bytes": 12411,
+      "sha256": "b69bb0c5f3022e963f7758cda1db915318745a38f2870f4c87afcd15deefa822",
+      "classification": {
+        "role": "research",
+        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h251_reptile/monitor.py": {
+      "bytes": 8541,
+      "sha256": "c82a5550042ff188bc1715923019a80002f1933f9a5666a1877c8b8b54230dea",
+      "classification": {
+        "role": "research",
+        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h251_reptile/runner.py": {
+      "bytes": 38618,
+      "sha256": "84d203e561a043925ae1de1620dcc85e38d439044154de92754c1a0cc2bba5c0",
+      "classification": {
+        "role": "research",
+        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h251_reptile/treatment.py": {
+      "bytes": 7229,
+      "sha256": "7ae109d80451176ed98ab968967e3d61af1082860d204763440106270138612b",
+      "classification": {
+        "role": "research",
+        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/analysis.py": {
+      "bytes": 14057,
+      "sha256": "439007e96d50fb7e8a25bfc8d3d273369d70c260a95772b6b1defa912c2fe4ed",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/launcher.py": {
+      "bytes": 3850,
+      "sha256": "5c7e9ac717f1c51c1161644da0ee202a5783b05f50baf2292989a4aae97af33c",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/monitor.py": {
+      "bytes": 8457,
+      "sha256": "6474e36c37d6b8e7921daf85f4386bd89e4ce639882e1c1a41e9245a74377725",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/runner.py": {
+      "bytes": 44764,
+      "sha256": "9c30b88fc2b2ce0fc0cac3f67d2aba69abc083febe1f19b579a85c935399a785",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py": {
+      "bytes": 6339,
+      "sha256": "a0c4a0f5748dcb7fd3e8c776e18485e37d5ffc65046f8fe605e1bdfacb580b63",
+      "classification": {
+        "role": "research",
+        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/common_h252.py": {
+      "bytes": 19432,
+      "sha256": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/export_h256_complete_inference_bundle.py": {
+      "bytes": 26072,
+      "sha256": "d7e3684ac65bcfe3d2103946b16a4929acd474e6c4305a8ac787722565865e97",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/export_h256_comprehensive_kpi_telemetry.py": {
+      "bytes": 59908,
+      "sha256": "acf7699684f150632713f98f4260ced34889cc94bac0bb03ccadb5cf9db1971e",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/export_h256_safetensors.py": {
+      "bytes": 27983,
+      "sha256": "681c43e1810a3a569257a395905623c7c25c7d9b6ddc6e66cf0a527c30110601",
+      "classification": {
+        "role": "research",
+        "reason": "H256 .safetensors exporter converting all H256 neural (Stage-1 S3 encoders, Stage-2 PreCondenseResidualBridge, PreCondenseTop8NeuralReranker), linear critic, and 6 LightGBM GBDT models into 100% Rust-consumable .safetensors bundles and golden inference fixtures; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/extract_pre_condense_cache.py": {
+      "bytes": 15606,
+      "sha256": "a05b8e8ea6dab47588784db0043bdf131cc0617d0add799eb4e5af791ee55cd8",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/part_a_causal_2plus2_neural.py": {
+      "bytes": 34434,
+      "sha256": "d8e4589e0c46d4f80e920a5583d038b7f68f7c183cdbe6ba7bc71e5565b158f7",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/pre_condense_models.py": {
+      "bytes": 21800,
+      "sha256": "c091bdc6c33758a7f169534707cba8cea615338be8b65092d4199d92212ea795",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/pretrain_full_s3_7split_bridge.py": {
+      "bytes": 41948,
+      "sha256": "44c964611fd15b9200e30e4b5727a9b510bd2cf66ca79b6d3fdba0fe46ec70f3",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/run_h256_flywheel_ablation.py": {
+      "bytes": 70230,
+      "sha256": "ea45e8e4c399e845ab4b416a1081ca0b2cae288367d6b53e597dc5f5b06b2297",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/stage1_hurdle_sos_critic.py": {
+      "bytes": 27649,
+      "sha256": "fc0dd0e2fa543f0540d677609989c1785ef33b07f6cf7e54f4f8bedbd0e5e797",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/train_and_export_h256_flagship_production.py": {
+      "bytes": 83718,
+      "sha256": "dc290e30c87fea9fec9135db4a2872c709351bd97360dda0203490a138c80256",
+      "classification": {
+        "role": "research",
+        "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+      }
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {
@@ -6686,116 +6886,20 @@
       },
       "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b"
     },
-    "python:research/flywheel_selfplay/h250_ctxz/analysis.py": {
-      "bytes": 13603,
-      "sha256": "6524260889bd5b5ca2523f9a8a050ee352791727d8a409b88fbaf8d4c353c4e4",
+    "python:research/flywheel_selfplay/h254_active2plus2_confirm/monitor.py": {
+      "bytes": 8363,
+      "sha256": "05cc96677494f83a17a555625fbb7bdb554473a376ca722fedf8658af27dac44",
       "classification": {
         "role": "research",
-        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
+        "reason": "H254 preregistered CPU-only confirmation study: independent, frozen-constant replication of H252 Stage-1 ACTIVE_2PLUS2_HURDLE vs GATED_025 (equal 4-reveal budget) and R882 on DL-Val (Native91, 91 contexts / 19 families) and DL-Train OOF (1,219 contexts / 205 families) with fresh fold seed 254140 and seeds 254101-254103, Holm m=2, 10,000-draw paired family bootstrap, 400-iter MM Bradley-Terry Elo, and four required audits (zero DL-Val leakage, equal 4-reveal count, negative control with permuted revealed fitness, and descriptive +-50% constant perturbations) under H239 A1 memory guard on xbabe2 CPU 57-60."
       }
     },
-    "python:research/flywheel_selfplay/h250_ctxz/treatment.py": {
-      "bytes": 4927,
-      "sha256": "9543f049c04cd8f1cdf4dc9e4477d94e1c1e7e8f5465a7bab2ea55985437c4ad",
+    "python:research/flywheel_selfplay/h254_active2plus2_confirm/runner.py": {
+      "bytes": 44500,
+      "sha256": "13c281618aa96cb89131d52389e375c7511c7cd2c847b573604944bcff3f0434",
       "classification": {
         "role": "research",
-        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h250_ctxz/runner.py": {
-      "bytes": 43475,
-      "sha256": "68f20a0462e1014c21d2e44823f33c1b174a4cf5a6acb43a463c8053e5ddceab",
-      "classification": {
-        "role": "research",
-        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h250_ctxz/monitor.py": {
-      "bytes": 8045,
-      "sha256": "c4ed72d705993722eba2723c6970fc2ef04dcecd56e3922ba91de8e7e11ebf3b",
-      "classification": {
-        "role": "research",
-        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h250_ctxz/calibrate.py": {
-      "bytes": 5114,
-      "sha256": "e69648cf2e48d323cc30b9aa5ca237b3065af79c1e2c19d91b82d568e45da9d2",
-      "classification": {
-        "role": "research",
-        "reason": "H250 standardized adapter continuation, fixed FIT-only epsilon and sampler hashes, exact H170 CONTROL, strict inner selection, frozen DOPE, Native91 and H239 A1 guard; no serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h251_reptile/analysis.py": {
-      "bytes": 12411,
-      "sha256": "b69bb0c5f3022e963f7758cda1db915318745a38f2870f4c87afcd15deefa822",
-      "classification": {
-        "role": "research",
-        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
-      }
-    },
-    "python:research/flywheel_selfplay/h251_reptile/monitor.py": {
-      "bytes": 8541,
-      "sha256": "c82a5550042ff188bc1715923019a80002f1933f9a5666a1877c8b8b54230dea",
-      "classification": {
-        "role": "research",
-        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
-      }
-    },
-    "python:research/flywheel_selfplay/h251_reptile/runner.py": {
-      "bytes": 38618,
-      "sha256": "84d203e561a043925ae1de1620dcc85e38d439044154de92754c1a0cc2bba5c0",
-      "classification": {
-        "role": "research",
-        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
-      }
-    },
-    "python:research/flywheel_selfplay/h251_reptile/treatment.py": {
-      "bytes": 7229,
-      "sha256": "7ae109d80451176ed98ab968967e3d61af1082860d204763440106270138612b",
-      "classification": {
-        "role": "research",
-        "reason": "H251 preregistered CPU-only diagnostic: first-order Reptile (Nichol et al. 2018) family meta-continuation of a read-only r882 adapter copy (REPTILE: 8 outer x k=5 inner plain-SGD steps, lr 1e-3, on ONE FIT family per outer step, theta <- theta + 0.5 (phi - theta); REPTILE_K1: 40 x k=1 mechanism control with the same family stream) vs the exact H170 CTRL AdamW recipe, 40 gradient evaluations per cell for every arm, Holm m=2; identical CTRL loss, 8x24 batches and clip 1.0; one fresh fold seed 251140, seeds 251101-251103, 15 cells/arm, 1,800 gradient evaluations; strict inner selector locked before assessment; unconstrained step-40 diagnostic; REPTILE-CONTROL and REPTILE-REPTILE_K1 contrasts; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H247/H237/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
-      }
-    },
-    "python:research/flywheel_selfplay/h253_vrex_family_invariance/analysis.py": {
-      "bytes": 13999,
-      "sha256": "d544c64fa5f014df3dfb87adf005a4220daed6f6a2a51d7c09051ee363e5822d",
-      "classification": {
-        "role": "research",
-        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py": {
-      "bytes": 5404,
-      "sha256": "ad7a4c15aba093e0ccdf1faa132b92e9a1aac59b98d795193802b00bc031164d",
-      "classification": {
-        "role": "research",
-        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h253_vrex_family_invariance/launcher.py": {
-      "bytes": 3399,
-      "sha256": "34e74e490af10d2b2e7df5867b815ff8701bf7bb0d618c8e86be0b96a382ba27",
-      "classification": {
-        "role": "research",
-        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h253_vrex_family_invariance/monitor.py": {
-      "bytes": 8457,
-      "sha256": "6474e36c37d6b8e7921daf85f4386bd89e4ce639882e1c1a41e9245a74377725",
-      "classification": {
-        "role": "research",
-        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h253_vrex_family_invariance/runner.py": {
-      "bytes": 45123,
-      "sha256": "6f05768ef1dbe407d506c9fdef76d74f5a3331dbf2d90d4a84fa20995eff5c3d",
-      "classification": {
-        "role": "research",
-        "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+        "reason": "H254 preregistered CPU-only confirmation study: independent, frozen-constant replication of H252 Stage-1 ACTIVE_2PLUS2_HURDLE vs GATED_025 (equal 4-reveal budget) and R882 on DL-Val (Native91, 91 contexts / 19 families) and DL-Train OOF (1,219 contexts / 205 families) with fresh fold seed 254140 and seeds 254101-254103, Holm m=2, 10,000-draw paired family bootstrap, 400-iter MM Bradley-Terry Elo, and four required audits (zero DL-Val leakage, equal 4-reveal count, negative control with permuted revealed fitness, and descriptive +-50% constant perturbations) under H239 A1 memory guard on xbabe2 CPU 57-60."
       }
     }
   },

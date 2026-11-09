@@ -27,9 +27,10 @@ pub(crate) fn terminal(
         projection.scores.test.is_none(),
         "fixture has no TEST dataset"
     );
+    // The card leads with the labelled held-out score (journey J3-F03); no test set, no TEST.
     let expected = format!(
-        "champion {} ({} {:.3}) · CV {cv:.3} · HOLDOUT {holdout:.3} · TEST n/a",
-        champion.algorithm_id, champion.metric, champion.cv_value
+        "held-out {} {holdout:.3} · CV {cv:.3} · champion {}",
+        champion.metric, champion.algorithm_id
     );
     use portable_pty::{native_pty_system, CommandBuilder, PtySize};
     let pair = native_pty_system().openpty(PtySize {
@@ -40,6 +41,8 @@ pub(crate) fn terminal(
     })?;
     let mut command = CommandBuilder::new(home.join("jopedime"));
     command.env("JOPEDIME_HOME", home);
+    command.env("JAIN_ACCEPT_TERMS", "1");
+    command.env("JAIN_ALLOW_LOCAL_FILES", "1");
     command.env("TERM", "dumb");
     command.env("NO_COLOR", "1");
     let mut child = pair.slave.spawn_command(command)?;

@@ -300,9 +300,9 @@ pub fn install_export(args: InstallArgs) -> Result<Value> {
     )
 }
 mod run_support;
-pub(super) use run_support::{
-    assess_records, backend_report, campaign, derived, input_path, read, record_packages,
-    verify_plan, WorkerInput,
+use run_support::{
+    assess_records, backend_report, campaign, derived, equal, input_path, original_receipt, read,
+    record_packages, verify_plan, CommandReceipt, WorkerInput,
 };
 
 mod runner;

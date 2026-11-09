@@ -12,14 +12,21 @@ from rich.table import Table
 from rich.text import Text
 
 from .tui_plot import (
-    _downsample_full_history,
-    _finite_float,
+    _downsample_full_history as _downsample_full_history,
+)
+from .tui_plot import (
+    _finite_float as _finite_float,
+)
+from .tui_plot import (
     _fmt,
     _history_plot,
-    _scaled_sparkline,
     _sparkline,
 )
+from .tui_plot import (
+    _scaled_sparkline as _scaled_sparkline,
+)
 from .tui_stream import JsonlTail, _read_json
+
 
 class DimeScoreView:
     def __init__(self, root: str | Path) -> None:

@@ -505,3 +505,72 @@ Hosted end-to-end packaging reached a valid development-signed package and faile
 The candidate adds160 code bytes, absorbed by existing package alignment. Its1,480-byte net package increase is exactly the increase in compressed third-party notices (18,588 ->20,068B). The103,220 raw model bytes,86,376 stored model bytes, manifest length and signature/footer length are unchanged. The prior main's1,070,888-byte code increase over A18 predates this integration; individual intervening changes have not been separately attributed. That inherited growth is recorded explicitly rather than attributed to browser prediction or silently hidden.
 
 Both packages pass cryptographic verification with the development key; dynamic dependencies remain libc/libgcc/libm only. Complete code/package hashes, source pins, commands' profiles and attribution are in `measurements/browser-predict-fixture-20261102.json`; raw build/pack/size/verify receipts are retained under `/home/ubuntu/jopedime-readiness-20261101/browser-pack-measurements/`. Only the measured fixture baseline moves to8,144,648/8,268,941B, retaining5% tolerance. No native-only/fused/release budget, REL07 hard ceiling, release key or production deployment changes. This is a development CI qualification, not a release.
+
+## A22 — HTTPS in the released connected client (owner approval required)
+
+**Problem.** `deploy/release/release.sh` builds `jopedime` with default features only, so the
+published binary omits `cloud-tls` and `jopedime auth login` refuses every `https://` workspace
+(`crates/jope-appliance/src/cloud/client_auth.rs`). A20 deliberately left shipping TLS
+unadmitted; the public JAIN CLI cannot sign in until it is admitted.
+
+**Change.**
+
+- `release.sh` builds the appliance binary with `--features cloud-tls` (selection
+  `engine,mcp,client,cloud-tls`). The `jope` binary and every inference/appliance package
+  selection are unchanged.
+- `dependencies-deny.toml` audits two new selections: that one and its `embedded` twin. The
+  nine existing exceptions are extended to them unchanged (identical resolved features).
+- New exceptions, each scoped to only the cloud-tls selections, at exact locked versions with
+  features capped to what the graph resolves: `ureq 3.5.0` (`_rustls`, `_tls`,
+  `rustls-no-provider`, `rustls-webpki-roots`), `rustls 0.23.46`, `aws-lc-rs 1.18.1`,
+  `aws-lc-sys 0.45.0`. Every other selection keeps featureless `ureq` and denies `rustls`/`aws-*`.
+- Native approvals: `aws-lc-sys` (AWS-LC C/assembly built from the pinned crate source and
+  linked statically; no system OpenSSL), and its build tools `cc`, `cmake`, `pkg-config`.
+  `native_allowed` is not selection-scoped; the `aws-*` deny is, so `aws-lc-sys` still cannot
+  enter another selection.
+- Added pure-Rust closure: `rustls-pki-types`, `rustls-webpki`, `webpki-roots` (bundled
+  Mozilla roots, so trust does not depend on the host store), `untrusted`, `zeroize`, plus
+  build-only `jobserver`, `shlex`, `dunce`, `fs_extra`, `find-msvc-tools`.
+
+**Alternatives.** `ring` is also native (C/assembly) and would replace the provider already
+installed in `client_auth.rs`; a pure-Rust provider (RustCrypto) is less mature for a
+user-facing TLS client. A system `native-tls`/OpenSSL link would break the glibc-only dynamic
+dependency rule.
+
+**Proof.** `crates/jope-dist/tests/dependency_fence.rs` audits all selections and asserts the
+released selection is listed, `release.sh` selects it, rustls uses AWS-LC, and `ring`, OpenSSL,
+`native-tls` and the platform verifier stay out; the existing test still asserts that default
+and `embedded` selections contain no `rustls`. The release lane's existing glibc ceiling,
+GPU-library and version checks run on the TLS-enabled binary.
+
+**Approval.** This amends the shipped dependency policy and needs the owner's approval before
+merge.
+
+## A23 — The public native-only edition is the released CLI
+
+**Problem.** `build.sh --profile native-only` compiled `--no-default-features --features
+embedded`, so the public edition had no local engine (fit/predict), no MCP server and no client,
+and could not log in to an HTTPS workspace. The release qualification requires a public build
+that reports `client`, `engine`, `mcp` and `embedded`, with `cloud-tls` for HTTPS login.
+
+**Change.**
+
+- `build.sh --profile native-only` selects `embedded,engine,mcp,client,cloud-tls`, the
+  embedded twin of the A22 released client. It is already an audited selection in
+  `dependencies-deny.toml`; the dependency policy, its exceptions and A22 are unchanged.
+- After building, `build.sh` refuses a native-only binary whose `--version --json` does not
+  report `embedded`, `engine`, `mcp`, `client` and `cloud_tls` true, release trust and the
+  declared source (the `full`/`fused-cpu` check now also asserts `cloud_tls` false).
+  `--version --json` gains `features.cloud_tls`.
+- Every public-scope profile refuses any file in its models directory: the public edition
+  ships no weights (`models.lock.json` native-only `total_bytes` 0). `max_payload_mib` stays 1.
+- `crates/jope-dist/tests/dependency_fence.rs` asserts that the selection `build.sh` uses for
+  native-only is audited, and that the A22 native build entries (`aws-lc-sys`, `aws-lc-rs`,
+  `cc`, `cmake`, `pkg-config`, `rustls`) appear only in the two `cloud-tls` selections.
+
+**Size.** Measured on xbabe2 (Rust 1.97.1, x86_64, `dist`) at source
+`5edb737d93211266893ef73956a0992eb74dcc7d`: 23,072,736 B code (was 4,542,168 B for
+`embedded` only); the unsigned stage adds 32 B alignment, 34,834 B notice frames (payload, the
+licence and third-party notices only), a 1,932 B manifest, a 64 B signature and the 128 B
+footer, 23,109,726 B in all. The native-only budget moves to those measurements; tolerance
+stays 5%. NEEDED stays `libc`, `libgcc_s`, `libm`. No release was signed or published.

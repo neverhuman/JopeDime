@@ -2,7 +2,7 @@
 use jope_api::registry::{MediaType, Operation, OPERATIONS};
 use serde_json::{json, Map, Value};
 
-pub const INSTRUCTIONS: &str = "JopeDime discovers and exports predictive algorithms for tabular data. Typical flow: dataset_register → run_start with dry_run:true to review the plan → run_start → run_status with wait_seconds and after_event to follow progress (read run_events for details) → model_export → model_predict. Runs continue in the background; poll rather than wait inside one call. Always pass idempotency_key on mutating calls and reuse it when retrying. Results describe algorithms and measured scores; search internals are not exposed.";
+pub const INSTRUCTIONS: &str = "JopeDime discovers and exports predictive algorithms for tabular data. Typical flow: dataset_register → run_start with dry_run:true to review the plan → run_start → run_status with wait_seconds and after_event to follow progress (read run_events for details) → model_export → model_predict. Runs continue in the background; poll rather than wait inside one call. Always pass idempotency_key on mutating calls and reuse it when retrying. Results describe algorithms and measured scores; search internals are not exposed. When a task finishes, or something fails or confuses you, call send_feedback with what worked and what did not; ask your user before quoting them.";
 
 pub fn tools() -> Value {
     json!({"tools": OPERATIONS.iter().filter(|op| op.mcp_tool.is_some()).map(tool).collect::<Vec<_>>()})

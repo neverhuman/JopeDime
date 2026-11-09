@@ -135,34 +135,34 @@ def normalize(receipt, receipt_sha, closure=None):
             raise ValueError("real-pair scratch boundary flags required")
         points = []
         for arm, data in receipt.get("arms", {}).items():
-            points.extend(
-                {
-                    "arm": arm,
-                    "epoch": epoch,
-                    "metric": "real_pair_training_loss",
-                    "value": loss,
-                    "unit": "loss",
-                    "n": data.get("pairs"),
-                    "note": "Reported training loss; provider epochs start at zero. Validation loss and paired q uncertainty unmeasured.",
-                }
-                for epoch, loss in enumerate(data.get("epoch_loss", []))
-            )
+            for epoch, loss in enumerate(data.get("epoch_loss", [])):
+                points.append(
+                    {
+                        "arm": arm,
+                        "epoch": epoch,
+                        "metric": "real_pair_training_loss",
+                        "value": loss,
+                        "unit": "loss",
+                        "n": data.get("pairs"),
+                        "note": "Reported training loss; provider epochs start at zero. Validation loss and paired q uncertainty unmeasured.",
+                    }
+                )
             guard = data.get("guard", {})
-            points.extend(
-                {
-                    "arm": arm,
-                    "epoch": check["epoch"],
-                    "metric": "r23_exact_trie_" + field + "_to_v1",
-                    "value": check.get(field),
-                    "unit": "nats",
-                    "n": guard.get("probe_contexts"),
-                    "updates": check.get("at_step"),
-                    "kl_disqualify": guard.get("tripped") is True,
-                    "note": "Provider exact-trie guard; epoch0 is pre-update. Sticky HOLD/adoption status retained; measured-support KL separate.",
-                }
-                for check in guard.get("history", [])
-                for field in ("kl_mean", "kl_max")
-            )
+            for check in guard.get("history", []):
+                for field in ("kl_mean", "kl_max"):
+                    points.append(
+                        {
+                            "arm": arm,
+                            "epoch": check["epoch"],
+                            "metric": "r23_exact_trie_" + field + "_to_v1",
+                            "value": check.get(field),
+                            "unit": "nats",
+                            "n": guard.get("probe_contexts"),
+                            "updates": check.get("at_step"),
+                            "kl_disqualify": guard.get("tripped") is True,
+                            "note": "Provider exact-trie guard; epoch0 is pre-update. Sticky HOLD/adoption status retained; measured-support KL separate.",
+                        }
+                    )
             kl = (
                 receipt.get("eval", {})
                 .get(arm, {})

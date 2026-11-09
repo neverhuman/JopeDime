@@ -36,7 +36,8 @@ program-library and checkpoint views with source identities, observation age and
 
 ## Regression performance
 
-The latest complete comparison is the four-entrant October 22 panel below.
+The ranking below is the newest complete panel: the November 7 six-entrant refit
+that adds `kimik3p1_max`. The paper's evidence binds the earlier four-entrant panel.
 The [performance audit](docs/performance.md) traces the Git history, plots,
 model lineages and the requested fast/low/medium/high generation profiles.
 
@@ -44,41 +45,68 @@ model lineages and the requested fast/low/medium/high generation profiles.
 
 ### Latest complete native-regressor ranking
 
-**64 regression families × 3 folds × 3 seeds; 576 fits per entrant.** These are four
+**64 regression families × 3 folds × 3 seeds; 576 fits per entrant.** These are six
 LLM-authored regression algorithms, fitted on the same prepared inner-CV inputs.
 The names identify the submitted algorithms. This table does not measure the
 LLMs at inference time or the neural program-proposal policy.
 
-![Four native regression algorithms: Elo point estimates and 95% family-bootstrap intervals on the 64-family panel](assets/automl-elo/v1/figures/automl-elo.svg)
-
 | Rank | Algorithm | Elo | 95% family-bootstrap interval |
 | ---: | --- | ---: | ---: |
-| 1 | `Opus5p5_Extra` | 1641.3 | 1599.3–1689.2 |
-| 2 | `Gemini4_argon_high` | 1560.8 | 1518.8–1606.9 |
-| 3 | `GPT6p1_Sol_Max` | 1455.8 | 1414.1–1496.8 |
-| 4 | `GPT6_Astra_Max` | 1342.1 | 1288.9–1388.2 |
+| 1 | `Opus5p5_Extra` | 1690.8 | 1642.4–1747.1 |
+| 2 | `Gemini4_argon_high` | 1603.3 | 1561.6–1649.4 |
+| 3 | `kimik3p1_max` | 1510.7 | 1468.7–1554.3 |
+| 4 | `GPT6p1_Sol_Max` | 1497.5 | 1455.9–1541.8 |
+| 5 | `GPT6_Astra_Max` | 1389.2 | 1339.4–1433.6 |
+| 6 | `grok4p7_xhigh` | 1308.4 | 1240.3–1366.3 |
 
-**Opus has the highest Elo; Sol has the lowest geometric-mean RMSE point estimate.**
-Elo rewards how often a method wins, while RMSE ratios also reflect error size.
-Sol / `Opus5p5_Extra` RMSE: **0.963 [0.725, 1.173]**.
-Sol / `Gemini4_argon_high` RMSE: **0.847 [0.623, 1.055]**.
-Both 95% intervals include equal error. None of Gemini's three RMSE comparisons
-is significant after Holm adjustment.
+**Opus has the highest Elo. `kimik3p1_max`, added on 2026-11-07, ranks third, level
+with Sol within both 95% intervals. Sol still has the lowest geometric-mean RMSE
+point estimate.** Elo rewards how often a method wins, while RMSE ratios also
+reflect error size.
 
-![Pairwise match scores among the four native regressors, averaged over three seeds within each family](assets/automl-elo/v1/figures/automl-pairwise.svg)
+| Opponent | Opponent / `kimik3p1_max` RMSE | 95% family-bootstrap interval | Holm-adjusted p |
+| --- | ---: | ---: | ---: |
+| `Opus5p5_Extra` | 0.793 | 0.626–0.933 | 0.084 |
+| `Gemini4_argon_high` | 0.902 | 0.830–0.967 | 0.035 |
+| `GPT6p1_Sol_Max` | 0.764 | 0.546–0.976 | 0.118 |
+| `GPT6_Astra_Max` | 1.028 | 0.871–1.194 | 0.730 |
+| `grok4p7_xhigh` | 1.195 | 1.067–1.343 | 0.010 |
 
-The heatmap cells are **seed-averaged family match scores** (ties count as 0.5),
-not integer majority-family win rates. All six pairs cover all 64 families;
-10,000 family bootstrap resamples retain the three seeds within each family.
-These are existing training families with historical exposure. Stored preprocessing
-predates the original split, and seed 41 was seen before seeds 73 and 109 were
-fixed. This is exploratory development evidence, with no untouched-family claim.
-Historical and Gemini fits used different hosts; fit times are not a controlled
-speed ranking. Elo values from different opponent pools cannot be compared.
+A ratio below 1 means the opponent's error is lower. The Holm adjustment covers
+Kimi's five comparisons. Two differences remain significant at 0.05 after it:
+`Gemini4_argon_high` has lower error than Kimi, and Kimi has lower error than
+`grok4p7_xhigh`.
 
-Source: [results and uncertainty](assets/automl-elo/v1/RESULTS.json),
-[protocol and fit custody](assets/automl-elo/v1/SOURCES.md), and
-[exposure audit](docs/paper/innovationzero/evidence/elo-summary.json).
+All 15 pairs cover all 64 families; 10,000 family bootstrap resamples retain the
+three seeds within each family. These are existing training families with
+historical exposure. Stored preprocessing predates the original split, and seed 41
+was seen before seeds 73 and 109 were fixed. This is exploratory development
+evidence, with no untouched-family claim. The entrants were fitted on different
+hosts; fit times are not a controlled speed ranking. Elo values from different
+opponent pools cannot be compared. The `grok4p7_xhigh` cells come from its open
+pull request; its source is not on `main` yet.
+
+#### `kimik3p1_max` on every panel it was scored on
+
+| Panel | What it scores | Kimi rank | Elo | 95% interval |
+| --- | --- | ---: | ---: | ---: |
+| [AutoML Elo v3](assets/automl-elo/v3/SOURCES.md) | 64 training families × 3 folds × 3 seeds | 3 of 6 | 1510.7 | 1468.7–1554.3 |
+| [`dev91-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-audit-v1/LADDER.md) | DL-Val91: 91 development contexts in 19 families, AUDIT split | 24 of 31 | 1411.0 | 1305.5–1508.6 |
+| [`dev91-s1-two-fold-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-s1-two-fold-v1/LADDER.md) | the same 91 contexts, two-fold split | 13 of 14 | 1370.0 | 1276.8–1446.9 |
+| [`p201b-train-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/p201b-train-audit-v1/LADDER.md) | 201 training contexts, one per family, AUDIT split | 12 of 19 | 1351.8 | 1310.9–1390.8 |
+
+Each panel has its own opponents and anchor, so Elo values cannot be compared
+across rows. The reference boards also rate other kinds of model: foundation
+models on both DL-Val91 boards, and classical baselines and JopeDime's own search
+models on `dev91-audit-v1` and `p201b-train-audit-v1`. Their full ladders are on
+the research branch `v1/next`, linked above. Kimi was scored once on each board,
+and no other entrant was rerun.
+
+Source: [results and uncertainty](assets/automl-elo/v3/RESULTS.json),
+[protocol and fit custody](assets/automl-elo/v3/SOURCES.md), and
+[Kimi's verification record](crates/jope-automl/submissions/kimik3p1_max/verification.json).
+The paper's evidence binds the earlier four-entrant panel and its figures,
+[`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md).
 
 <!-- current-performance:end -->
 
@@ -103,7 +131,7 @@ The older figures and generated tables below retain their original protocols.
 The test-10 search ladder is a favorable selected subset with uneven finalist
 coverage; the 2259.8 published envelope is test-selected. The CLOVER overview
 contains historical quality-head and shadow-only evidence. These do not replace
-the complete four-entrant comparison above or establish current-policy Elo.
+the complete six-entrant comparison above or establish current-policy Elo.
 
 Generated by `jope-records readme-benchmarks` from committed evidence. Do not edit between the markers by hand.
 
@@ -392,13 +420,13 @@ limits and client examples](docs/program-source-stream.md).
 | Workspace | 37 members: 30 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
-| Rust tests | 6,135 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |
-| Python tests | 209, found by a static scan, not collected or run <sup>5</sup> |
+| Rust tests | 6,139 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |
+| Python tests | 210, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 17 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (automatic triggering paused; dispatch manually) (top-level declarations; 20 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 1,214 items over 35 lanes |
-| Capability matrix | 840 rows: 353 moved, 77 new, 1 pending, 402 dropped, 7 lost <sup>8</sup> |
+| Coverage map | 1,242 items over 35 lanes |
+| Capability matrix | 846 rows: 353 moved, 83 new, 1 pending, 402 dropped, 7 lost |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 3,410 `.py` files, 307 of them under `python/` |
+| Python still tracked | 3,499 `.py` files, 309 of them under `python/` |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
@@ -543,7 +571,7 @@ The 37 workspace members, by directory under `crates/`; the package name follows
 | --- | --- | --- |
 | Default build | `jope-cli` (binary `jope`), `feat-math`, `jope-pipeline`, `jope-bench`, `jope-datasets`, `jope-models`, `jope-motifs`, `jope-policy`, `jope-narrator` | The workspace `default-members`, what a bare `cargo build` selects: the `jope` binary and its direct workspace dependencies except `hyperion` and `jope-learning`, which it still builds as dependencies (`Cargo.toml` says why). Programs, fit and emitters; the pipeline; the same-cut benchmark; dataset and model stores; program fragments; the proposal policy. |
 | Encoders | `jope-encoders` (`starforge`), `hyperion`, `numpy-pcg64` | Encoders, Hyperion v5/v7 on Candle, and a bit-exact numpy RNG. |
-| Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors `GPT6p1_Sol_Max` and `Gemini4_argon_high`, selectable with `jope-bench run --native NAME` and callable directly from Rust. Four-entrant AutoML Elo and figures: [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md). |
+| Native AutoML | [`jope-automl`](crates/jope-automl/README.md) | Dependency-free original regressors `GPT6p1_Sol_Max`, `Gemini4_argon_high` and `kimik3p1_max`, selectable with `jope-bench run --native NAME` and callable directly from Rust. Four-entrant AutoML Elo and figures: [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md); six-entrant refit with `kimik3p1_max`: [`assets/automl-elo/v3`](assets/automl-elo/v3/SOURCES.md). |
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
 | Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress, and the offline CLOVER tools (`jope_pools`, `jope_retention`, `jope_support`, `jope_custody`); record verifiers, the hygiene guards and the paper and README numbers trace; CI tooling; the ADR-0003 runtime roots. |
 | Appliance | `jope-appliance` (binary `jopedime`), `jope-runtime`, `jope-assets`, `jope-dist` | The signed single-file executable: local fitting and prediction with the native methods, its package format and verification, [custom regression objectives via CLI/API/MCP](docs/regression-objectives.md), and the build-time packer ([deploy/appliance](deploy/appliance/README.md)). Not published yet. |

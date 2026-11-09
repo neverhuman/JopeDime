@@ -35,15 +35,24 @@ from pathlib import Path
 
 import torch
 
-
 if __package__:
     from .binary_clf_head import (
-        BatchedTaskDetection,
-        _sanitize_masked,
-        _validate_2d_mask,
-        _validate_2d_tensor,
-        detect_binary_target_batched_gpu,
-        fit_batched_platt_calibration_gpu,
+        BatchedTaskDetection as BatchedTaskDetection,
+    )
+    from .binary_clf_head import (
+        _sanitize_masked as _sanitize_masked,
+    )
+    from .binary_clf_head import (
+        _validate_2d_mask as _validate_2d_mask,
+    )
+    from .binary_clf_head import (
+        _validate_2d_tensor as _validate_2d_tensor,
+    )
+    from .binary_clf_head import (
+        detect_binary_target_batched_gpu as detect_binary_target_batched_gpu,
+    )
+    from .binary_clf_head import (
+        fit_batched_platt_calibration_gpu as fit_batched_platt_calibration_gpu,
     )
     from .binary_clf_metrics import (
         batched_roc_auc_gpu,
@@ -51,12 +60,22 @@ if __package__:
     )
 else:
     from binary_clf_head import (
-        BatchedTaskDetection,
-        _sanitize_masked,
-        _validate_2d_mask,
-        _validate_2d_tensor,
-        detect_binary_target_batched_gpu,
-        fit_batched_platt_calibration_gpu,
+        BatchedTaskDetection as BatchedTaskDetection,
+    )
+    from binary_clf_head import (
+        _sanitize_masked as _sanitize_masked,
+    )
+    from binary_clf_head import (
+        _validate_2d_mask as _validate_2d_mask,
+    )
+    from binary_clf_head import (
+        _validate_2d_tensor as _validate_2d_tensor,
+    )
+    from binary_clf_head import (
+        detect_binary_target_batched_gpu as detect_binary_target_batched_gpu,
+    )
+    from binary_clf_head import (
+        fit_batched_platt_calibration_gpu as fit_batched_platt_calibration_gpu,
     )
     from binary_clf_metrics import (
         batched_roc_auc_gpu,

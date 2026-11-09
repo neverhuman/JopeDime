@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+review="$(cd "$(dirname "$0")" && pwd)"
+remote="/home/ubuntu/jope-data/jain-render-20261103/spatial-layout-review-v1"
+runtime=/home/ubuntu/jope-data/jain-render-20261103/runtime/blender-5.2.3-linux-x64/blender
+worker=/home/ubuntu/jope-data/jain-render-20261103/variable-attribution-v1/code/tools/visualization/blender/render_animation.py
+opts=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=6)
+if (($# == 0)); then
+  set -- iris twist hourglass prism manta
+fi
+for layout in "$@"; do
+  scene="$review/scenes/$layout/scene.blend"
+  for ((attempt=0; attempt<180; attempt++)); do
+    if [[ -s "$scene" ]] && /usr/bin/grep -Fq "\"scene\": \"$scene\"" "$review/build.log"; then
+      break
+    fi
+    sleep 1
+  done
+  [[ -s "$scene" ]] && /usr/bin/grep -Fq "\"scene\": \"$scene\"" "$review/build.log"
+  echo "Rendering $layout"
+  scp -q -rp "${opts[@]}" "$review/scenes/$layout" "xbabe3:$remote/scenes/"
+  ssh "${opts[@]}" xbabe3 "set -eu
+    \"$runtime\" --background --factory-startup --disable-autoexec --python-exit-code 1 --python \"$worker\" -- \
+      --scene \"$remote/scenes/$layout/scene.blend\" --receipt \"$remote/scenes/$layout/scene.receipt.json\" \
+      --case-id case-a --frame-start 89 --frame-end 89 --samples 24 --device OPTIX \
+      --output-dir \"$remote/plates/$layout\" > \"$remote/logs/$layout.log\" 2>&1" || {
+      ssh "${opts[@]}" xbabe3 "tail -30 \"$remote/logs/$layout.log\""
+      exit 1
+    }
+  scp -qp "${opts[@]}" "xbabe3:$remote/plates/$layout/frame-000089.png" "$review/raw/$layout.png"
+  scp -qp "${opts[@]}" "xbabe3:$remote/plates/$layout/render.receipt.json" "$review/raw/$layout.receipt.json"
+done

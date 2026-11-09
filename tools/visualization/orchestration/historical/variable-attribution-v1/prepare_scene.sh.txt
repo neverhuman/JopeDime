@@ -1,0 +1,53 @@
+#!/bin/sh
+set -eu
+capture=$1
+h256=$(dirname "$(dirname "$capture")")
+tools=tools/visualization
+gp="$capture/gp-source-pp"
+log="$capture/scene-prep"
+mkdir "$log"
+
+count=0
+until test -s "$gp/validation.receipt.json"; do
+    count=$((count + 1))
+    test "$count" -lt 450
+    sleep 2
+done
+export JOPE_VISUAL_PARTITION_POINT_QUANTILES=1
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 NUMEXPR_NUM_THREADS=1 RAYON_NUM_THREADS=1
+
+python3 "$tools/cinematic_pages.py" --source-root "$gp" --output-dir "$capture/code-pages" \
+    --font-size 24 --columns 60 --rows 46 > "$log/code-pages.log" 2>&1 &
+code=$!
+python3 "$tools/input_influence.py" --trace "$gp/trace.json" --output-dir "$capture/cell-influence-5" \
+    > "$log/legacy-five-rows.log" 2>&1 &
+legacy=$!
+(
+    python3 "$tools/input_influence.py" --trace "$gp/trace.json" --output-dir "$capture/cell-influence-17" --visible-rows 17 &&
+    python3 "$tools/table_panels.py" --trace "$gp/trace.json" --influence "$capture/cell-influence-17/influence.json" \
+        --dataset-catalog "$capture/dataset-catalog.json" --output-dir "$capture/table-panels"
+) > "$log/table-custody.log" 2>&1 &
+table=$!
+python3 "$tools/round_trip_metrics.py" --root "$h256" --stage2-custody "$h256/stage2-custody-20261103T1911Z" \
+    --original-run "$capture/native-merged" --trace "$gp/trace.json" --fit-inputs "$capture/inputs/native-fit-inputs.json" \
+    --native-features "$capture/inputs/native-program-features.json" --critic-inputs "$capture/bridge/critic-predictions.json" \
+    --native-helper "$capture/gp-source-pp-build/visual_inference_metric" \
+    --native-helper-source crates/jope-service/examples/visual_inference_metric.rs \
+    --output-dir "$capture/metrics" > "$log/metrics.log" 2>&1 &
+metrics=$!
+
+failed=0
+for process in "$code" "$legacy" "$table" "$metrics"; do
+    wait "$process" || failed=1
+done
+test "$failed" -eq 0
+
+blender=$(dirname "$h256")/../blender-runtime/Blender.app/Contents/MacOS/Blender
+"$blender" --background --factory-startup --python "$tools/blender/jain_cinematic.py" -- \
+    --trace "$gp/trace.json" --saved-validation "$gp/validation.receipt.json" --gp-proof "$gp" \
+    --code-pages "$capture/code-pages" --influence "$capture/cell-influence-5/influence.json" \
+    --metrics "$capture/metrics/catalog.receipt.json" --dataset-catalog "$capture/dataset-catalog.json" \
+    --output "$capture/scene/scene.blend" --width 1920 --height 1080 --fps 30 --animation-loop \
+    --loop-frames 120 --samples 8 --save-only > "$log/blender.log" 2>&1
+test -s "$capture/scene/scene.receipt.json"
+echo "PASS $capture/scene/scene.blend"

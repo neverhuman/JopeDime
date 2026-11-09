@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 from typing import Any
 
@@ -14,15 +15,14 @@ from ..schema import normalize_embedding
 from ..selector_calibration import load_selector_calibration, score_candidate_with_calibration
 from ..selector_reranker import load_selector_reranker, score_candidate_with_reranker
 from .automaton import DecoderState
-from .model_v3 import JopePolicyModelV3, pad_sequences
-from .tokens import BOS, decode_tokens
-from .decode_risk import candidate_risk_reason_v3
 from .decode_ranking import (
     _candidate_diversity_key_v3,
     _rank_candidates_with_reranker,
-    _row_numeric,
     rank_candidates,
 )
+from .decode_risk import candidate_risk_reason_v3
+from .model_v3 import JopePolicyModelV3, pad_sequences
+from .tokens import BOS, decode_tokens
 
 # Transforms that blow up dimensionality/instability when repeated (risk guard).
 
@@ -49,8 +49,6 @@ def _require_legal_actions(legal: Sequence[int], state: DecoderState) -> None:
             f"{state.phase} for engine={state.engine!r} task={state.task!r}; "
             "the grammar declares no generatable op for this (engine, task) pair"
         )
-
-
 
 
 @torch.no_grad()
@@ -224,8 +222,6 @@ def greedy_sequence(
     return sample_sequences(
         model, embedding, target_summary, n=1, engine=engine, task=task, temperature=0.0, device=device
     )[0]
-
-
 
 
 def propose_v3(

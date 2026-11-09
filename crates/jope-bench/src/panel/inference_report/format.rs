@@ -285,4 +285,6 @@ pub(crate) fn csv_row(fields: &[&Json], out: &mut String) {
 
 #[path = "format/statistics.rs"]
 mod statistics;
-pub(crate) use statistics::{distribution, mean, midpoint, power_of_two, rational};
+pub(crate) use statistics::distribution;
+#[cfg(test)]
+pub(crate) use statistics::mean;

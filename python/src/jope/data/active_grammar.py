@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import math
 import re
 from typing import Any
+
+from jope.grammar import HEADS, TRANSFORMS
+
+ACTIVE_MAX_TRANSFORMS = 6
+
 
 def parse_pipeline_actions(genome: str) -> dict[str, Any]:
     stages = _split_pipeline_stages(genome)

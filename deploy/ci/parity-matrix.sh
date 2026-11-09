@@ -8,7 +8,7 @@
 # rows it summarises (two lanes bumping the same tally to the same wrong number merge without a
 # git conflict, so the gate recomputes it). Prints counts by status and by kind.
 #
-# The clap subcommands are taken from the source enum (crates/jope-engine/src/main.rs, which also
+# The clap subcommands are taken from the source enum (crates/jope-engine/src/command.rs, which also
 # lists the `neural`-gated and hidden variants) and, unless --no-build is given, cross-checked
 # against the parsed `cargo run -q -p jope-parallel -- --help` output. The hygiene lane passes
 # --no-build; the test lanes run the full form once the engine is built. The check itself is

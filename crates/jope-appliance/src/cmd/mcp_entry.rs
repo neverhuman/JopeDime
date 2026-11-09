@@ -38,7 +38,11 @@ fn discover_engine(options: &Options, explicit_endpoint: bool) -> Result<Engine>
     if !options.home.is_absolute() && !explicit_endpoint {
         bail!("shared MCP discovery requires an absolute user home directory");
     }
-    discover::discover(options).map_err(anyhow::Error::from)
+    let engine = discover::discover(options).map_err(anyhow::Error::from);
+    if let Some(notice) = discover::take_notice() {
+        eprintln!("{notice}");
+    }
+    engine
 }
 
 fn with_discovery_fallback<T>(
@@ -76,6 +80,7 @@ mod tests {
             url: "http://127.0.0.1:32123".into(),
             pid: 1,
             version: "test".into(),
+            build: None,
             api_version: "1".into(),
             started_at: "test".into(),
         })

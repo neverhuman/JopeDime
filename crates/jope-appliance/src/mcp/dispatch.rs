@@ -181,6 +181,66 @@ pub fn execute<T: Transport>(
         ),
     }
 }
+
+/// How the jAIn routing rule (owner rule 2026-11-06) applies to a `run_start`.
+pub enum RunRouting {
+    /// One text line beside the unchanged structured result.
+    Note(String),
+    /// Not started: the Problem JSON the tool answers instead.
+    Refuse(Value),
+}
+
+/// The text an agent gets when it asks this local server to train the user's own data.
+pub const OWN_DATA_REFUSAL: &str = "Your own data trains in the veox Cloud, and this local MCP server never uploads: an agent cannot give the user's upload consent here. Ask the user, then run `jain run FILE.csv --target COLUMN --upload-consent` (they sign in first with `jain auth login`, on an account admitted from the waitlist), or use the hosted veox MCP. The bundled demos (example/NAME.csv, `jain demo run NAME`) run here.";
+
+/// The routing rule for an MCP `run_start` (op 6). A bundled demo runs on this machine; the
+/// user's own dataset is refused where own data trains only in the veox Cloud. A dry run (a
+/// plan, nothing trained) passes.
+pub fn run_routing<T: Transport>(client: &T, args: &Value) -> Option<RunRouting> {
+    use crate::cloud::route;
+    if args.get("dry_run").and_then(Value::as_bool) == Some(true) {
+        return None;
+    }
+    let effort: jope_api::Effort = args
+        .get("effort")
+        .cloned()
+        .map_or(Some(jope_api::Effort::Fast), |v| {
+            serde_json::from_value(v).ok()
+        })?;
+    let profile = args
+        .get("dataset")
+        .and_then(Value::as_str)
+        .and_then(|id| id.parse::<DatasetId>().ok())
+        .and_then(|id| client.dataset_inspect(&id).ok())?;
+    Some(routing_for(&profile, effort, route::cloud_first()))
+}
+
+/// [`run_routing`] once the dataset is known.
+pub fn routing_for(
+    profile: &DatasetProfile,
+    effort: jope_api::Effort,
+    cloud_first: bool,
+) -> RunRouting {
+    use crate::cloud::route;
+    let decision = route::decide(route::Input {
+        effort,
+        rows: Some(profile.rows.0),
+        demo: crate::terminal::demos::is_bundled_profile(profile),
+        force: None,
+        cloud_first,
+    });
+    match decision.target {
+        route::Target::Local => RunRouting::Note(format!("Routing: {}", decision.line)),
+        route::Target::Cloud | route::Target::Refused => RunRouting::Refuse(
+            serde_json::to_value(problem(
+                jope_api::error::ErrorCode::CapabilityUnavailable,
+                OWN_DATA_REFUSAL,
+            ))
+            .expect("Problem JSON"),
+        ),
+    }
+}
+
 fn execute_inner<T: Transport>(
     client: &T,
     resources: &Resources,
@@ -568,5 +628,58 @@ mod export_destination_tests {
             panic!("empty destination succeeded")
         };
         assert_eq!(problem["code"], "INVALID_INPUT");
+    }
+}
+
+#[cfg(test)]
+mod routing_tests {
+    use super::*;
+
+    fn profile(name: &str, bytes: u64, rows: u64) -> DatasetProfile {
+        serde_json::from_value(json!({
+            "dataset_id": "ds_21fbfe8b53dbcd605d79486b",
+            "name": name,
+            "bytes": bytes.to_string(),
+            "rows": rows.to_string(),
+            "columns": [],
+            "target_suggestions": [],
+            "warnings": []
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn a_bundled_demo_runs_here_and_own_data_is_refused_with_the_cli_path() {
+        let demo = &crate::terminal::demos::DEMOS[0];
+        let bundled = profile(
+            &format!("{}.csv", demo.name),
+            demo.bytes.len() as u64,
+            demo.rows() as u64,
+        );
+        match routing_for(&bundled, jope_api::Effort::Fast, true) {
+            RunRouting::Note(note) => {
+                assert!(
+                    note.starts_with("Routing: Running locally on this machine · a bundled demo"),
+                    "{note}"
+                )
+            }
+            RunRouting::Refuse(_) => panic!("a demo must run"),
+        }
+        // Same name, other contents: the user's own data.
+        let own = profile(&format!("{}.csv", demo.name), 12_345, 40);
+        match routing_for(&own, jope_api::Effort::Fast, true) {
+            RunRouting::Refuse(problem) => {
+                assert_eq!(problem["code"], "CAPABILITY_UNAVAILABLE", "{problem}");
+                let detail = problem["detail"].as_str().unwrap();
+                assert!(detail.contains("--upload-consent") && detail.contains("hosted veox MCP"));
+                assert!(!detail.contains("starts locally"), "{detail}");
+            }
+            RunRouting::Note(note) => panic!("own data ran here: {note}"),
+        }
+        // Engine and development builds keep training own data here.
+        assert!(matches!(
+            routing_for(&own, jope_api::Effort::Fast, false),
+            RunRouting::Note(_)
+        ));
     }
 }

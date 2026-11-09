@@ -1,57 +1,26 @@
 from __future__ import annotations
 
-import json
-import math
-import os
-import shutil
 import time
-from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import numpy as np
-import torch
-from torch.nn import functional as F
 
-from .artifact_pins import artifact_sha256, load_joblib_pinned
 from .classical import (
     PairIndex,
     RetrievalQuery,
     WeightedScoreEnsemble,
-    WindowFeature,
-    _best_f1_threshold,
-    _classification_metrics,
     _ensemble_members,
     _ensemble_requested,
-    _limit_records,
     _model_artifact_name,
     _model_specs,
     _score_model,
-    _split_records,
     _validation_weights,
-    build_pair_indices,
-    build_retrieval_queries,
     pair_feature_names,
     pair_features,
     retrieval_metrics_from_scores,
     select_window_features,
-    summarize_target_window,
 )
-from .data import (
-    TASK_BINARY,
-    DatasetRecord,
-    bits_at_indices,
-    compute_profile,
-    deterministic_shuffle,
-    load_manifest,
-    read_target_input,
-    sample_indices,
-    stable_seed,
-)
-from .encode import encode_values, load_encoder, normalize_task
-from .model import build_model_from_checkpoint
-
 from .fused import (
     FusedTrainingConfig,
     FusedWindow,
@@ -61,10 +30,12 @@ from .fused import (
     _window_features,
 )
 
+
 def _cosine_scores(vectors: np.ndarray, pairs: Sequence[PairIndex]) -> np.ndarray:
     return np.asarray(
         [float(np.dot(vectors[pair.left], vectors[pair.right])) for pair in pairs], dtype=np.float64
     )
+
 
 def _pair_features_matrix(left: np.ndarray, right: np.ndarray) -> np.ndarray:
     left = np.nan_to_num(np.asarray(left, dtype=np.float32), nan=0.0, posinf=0.0, neginf=0.0)
@@ -107,6 +78,7 @@ def _pair_features_matrix(left: np.ndarray, right: np.ndarray) -> np.ndarray:
     )
     return np.nan_to_num(out.astype(np.float32, copy=False), nan=0.0, posinf=0.0, neginf=0.0)
 
+
 def _pair_matrix_from_feature_matrix(
     features: np.ndarray, pairs: Sequence[PairIndex], *, chunk_size: int | None = None
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -122,6 +94,7 @@ def _pair_matrix_from_feature_matrix(
         end = min(len(pairs), start + chunk)
         x[start:end] = _pair_features_matrix(features[left_idx[start:end]], features[right_idx[start:end]])
     return x, y
+
 
 def _score_pairs_from_feature_matrix(
     model: object,
@@ -142,6 +115,7 @@ def _score_pairs_from_feature_matrix(
         scores[start:end] = _score_model(model, x)
     return scores
 
+
 def _retrieval_from_vectors(vectors: np.ndarray, queries: Sequence[RetrievalQuery]) -> dict[str, float]:
     if not queries:
         return {}
@@ -150,6 +124,7 @@ def _retrieval_from_vectors(vectors: np.ndarray, queries: Sequence[RetrievalQuer
         candidates = np.asarray(query.candidates, dtype=np.int64)
         scores_by_query.append(vectors[candidates] @ vectors[int(query.query)])
     return retrieval_metrics_from_scores(scores_by_query, len(queries[0].candidates))
+
 
 def _model_pair_scores_for_batch(
     model_bundle: Mapping[str, object],
@@ -162,6 +137,7 @@ def _model_pair_scores_for_batch(
     )
     features = batch.window_features[:, np.asarray(indices, dtype=np.int64)]
     return _score_pairs_from_feature_matrix(model_bundle["model"], features, pairs, chunk_size=8192)
+
 
 def _model_retrieval_for_batch(
     model_bundle: Mapping[str, object],
@@ -189,6 +165,7 @@ def _model_retrieval_for_batch(
         cursor += size
     return retrieval_metrics_from_scores(scores_by_query, len(queries[0].candidates))
 
+
 def _classical_retrieval_from_features(
     model: object,
     features: np.ndarray,
@@ -209,6 +186,7 @@ def _classical_retrieval_from_features(
         scores_by_query.append(all_scores[cursor : cursor + size])
         cursor += size
     return retrieval_metrics_from_scores(scores_by_query, len(queries[0].candidates))
+
 
 def _fit_classical_models(
     bundle_dir: Path,
@@ -318,6 +296,7 @@ def _fit_classical_models(
                 "fit_seconds": 0.0,
             }
     return bundles, reports
+
 
 def _fit_classical_models_all(
     bundle_dir: Path,

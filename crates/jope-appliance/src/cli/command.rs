@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Parser)]
 #[command(
-    name = "jopedime",
+    name = "jain",
     about = "Fit and predict tabular models with native Rust methods, from one signed executable.",
     disable_version_flag = true,
     after_help = "Exit status: 0 success, 2 invalid input, 3 integrity or compatibility, \
@@ -12,6 +12,15 @@ use super::*;
 pub struct Cli {
     #[command(subcommand)]
     pub command: ApplianceCommand,
+    /// Accept the VEOX terms of service without the first-run prompt (the same as
+    /// JAIN_ACCEPT_TERMS=1). An agent must show the user https://veox.ai/terms first.
+    #[arg(long, global = true)]
+    pub accept_terms: bool,
+    /// Choose usage statistics without the first-run prompt: on or off (the same as
+    /// JAIN_TELEMETRY; DO_NOT_TRACK=1 still forces off). An agent must show the user
+    /// https://veox.ai/terms first.
+    #[arg(long, global = true, value_name = "on|off", value_parser = ["on", "off"])]
+    pub telemetry: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -81,16 +90,28 @@ pub enum ApplianceCommand {
     },
     /// Save, inspect, verify and export language-neutral fitted objects; or serve their MCP tools.
     Model(crate::model::ModelArgs),
-    /// Start a run from a CSV or an API dataset identifier.
+    /// List or run the bundled demos without a terminal (the TUI's /demo).
+    #[cfg(feature = "mcp")]
+    Demo {
+        #[command(subcommand)]
+        command: crate::cmd::demo::DemoCommand,
+    },
+    /// Start a run from a CSV, a bundled `example/NAME.csv`, or an API dataset identifier.
     #[cfg(feature = "mcp")]
     Run(crate::cmd::run::RunArgs),
+    /// Follow a run until it ends, then print its result (on a terminal: the interactive view).
+    #[cfg(feature = "mcp")]
+    Attach {
+        /// The run to follow (default: the one going now).
+        run: Option<String>,
+    },
     /// Read or long-poll a run snapshot.
     #[cfg(feature = "mcp")]
     Status(crate::cmd::status::StatusArgs),
     /// Read or follow run events as NDJSON.
     #[cfg(feature = "mcp")]
     Events(crate::cmd::events::EventsArgs),
-    /// Control a run through the local JopeDime service.
+    /// Control a run through the local jAIn engine.
     #[cfg(feature = "client")]
     Control {
         run: String,
@@ -198,6 +219,9 @@ pub enum ApplianceCommand {
         status: bool,
         #[arg(long, conflicts_with = "idle_exit")]
         stop: bool,
+        /// With --stop: stop the engine even while it runs a job (the job is interrupted).
+        #[arg(long, requires = "stop")]
+        force: bool,
         #[arg(long, value_name = "D", conflicts_with_all = ["status", "stop"])]
         idle_exit: Option<String>,
     },

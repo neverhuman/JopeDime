@@ -7,6 +7,7 @@ import struct
 import pytest
 from migrate_jain_web_cpu import cpu_payload
 
+
 def test_corrected_ingest_requires_hash_bound_prediction_evidence(tmp_path, monkeypatch):
     import test_exact_ingest as ingest
     from test_exact_common import selfplay_authority, sha256_text
@@ -91,6 +92,7 @@ def test_corrected_ingest_requires_hash_bound_prediction_evidence(tmp_path, monk
         2,
         "strict-wave-000001",
     )
+
 
 def test_jain_cpu_clone_removes_every_gpu_admission_path():
     source = {

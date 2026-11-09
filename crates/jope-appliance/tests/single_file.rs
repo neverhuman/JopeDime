@@ -1,6 +1,8 @@
 //! The single file is the whole product (SPECIFICATION.md §14.2, §17.1): a packaged `jopedime`
 //! copied alone into an empty directory, run with an empty environment, fits, saves, reloads and
 //! predicts; every command authenticates its own package; each failure class has its exit status.
+// The public edition (cloud-tls) leaves out the tests that train own data on this machine.
+#![cfg_attr(feature = "public-edition", allow(dead_code, unused_imports))]
 use jope_assets::verify::development_key;
 use jope_assets::writer::{assemble_development, stage, write_new, EntryInput, StageOptions};
 use jope_assets::{Codec, License, Scope};
@@ -151,20 +153,51 @@ fn model_tool(
     serde_json::from_str(text.lines().nth(1).unwrap()).unwrap()
 }
 
+#[path = "single_file/cloud_routing.rs"]
+mod cloud_routing;
+#[cfg(all(feature = "engine", feature = "mcp"))]
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
+#[path = "single_file/engine_on_demand.rs"]
+mod engine_on_demand;
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[path = "single_file/tests_01.rs"]
 mod tests_01;
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[path = "single_file/tests_02.rs"]
 mod tests_02;
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[path = "single_file/tests_03.rs"]
 mod tests_03;
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[path = "single_file/tests_04.rs"]
 mod tests_04;
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[path = "single_file/tests_05.rs"]
 mod tests_05;
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[path = "single_file/tests_06.rs"]
 mod tests_06;
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[path = "single_file/tests_07.rs"]
 mod tests_07;
+#[path = "support/workspace.rs"]
+mod workspace;
 
 #[cfg(feature = "dope-encoding")]
 #[path = "support/landmark_product.rs"]

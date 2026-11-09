@@ -120,11 +120,45 @@ impl TerminalGuard {
     }
 
     /// Own the full terminal while retaining panic/signal and partial-startup cleanup.
-    pub fn acquire_fullscreen() -> io::Result<Self> {
+    ///
+    /// The mouse is captured only when `mouse` is set: without capture the terminal keeps its
+    /// own text selection, so any text on screen can be selected and copied (F2 or `/mouse`
+    /// toggles wheel scrolling, which needs capture; most terminals select with Shift-drag
+    /// while it is on).
+    pub fn acquire_fullscreen(mouse: bool) -> io::Result<Self> {
         let guard = Self::acquire(true)?;
         guard.state.fullscreen.store(true, Ordering::SeqCst);
-        execute!(io::stdout(), EnterAlternateScreen, EnableMouseCapture)?;
+        execute!(io::stdout(), EnterAlternateScreen)?;
+        guard.set_mouse(mouse)?;
         Ok(guard)
+    }
+
+    /// Capture the mouse (wheel scrolling) or release it (the terminal's own selection).
+    pub fn set_mouse(&self, capture: bool) -> io::Result<()> {
+        if capture {
+            execute!(io::stdout(), EnableMouseCapture)
+        } else {
+            execute!(io::stdout(), DisableMouseCapture)
+        }
+    }
+
+    /// Hand the normal screen back for a moment (the plain transcript view): leave the
+    /// alternate screen, release the mouse and leave raw mode. [`Self::resume_fullscreen`]
+    /// takes it again.
+    pub fn suspend_fullscreen(&self) -> io::Result<()> {
+        execute!(
+            io::stdout(),
+            DisableMouseCapture,
+            LeaveAlternateScreen,
+            Show
+        )?;
+        disable_raw_mode()
+    }
+
+    pub fn resume_fullscreen(&self, mouse: bool) -> io::Result<()> {
+        enable_raw_mode()?;
+        execute!(io::stdout(), EnterAlternateScreen, Hide)?;
+        self.set_mouse(mouse)
     }
 
     /// Used on a narrow resize; restoration happens before the first plain transcript write.

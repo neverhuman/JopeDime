@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import copy
-import math
-from typing import Any, Sequence
+from collections.abc import Sequence
 
 from ..grammars.spec import ExprSpec, GrammarSpec
 from ..pipeline_text import format_param_token
 from .tokens import (
-    ABSENT, SPECIALS, ActionVocab, EncodeError, ExprTable, OpInfo, Slot,
+    ABSENT,
+    SPECIALS,
+    ActionVocab,
+    ExprTable,
+    OpInfo,
+    Slot,
 )
+
 
 def build_action_vocab(specs: Sequence[GrammarSpec]) -> ActionVocab:
     tokens: list[str] = list(SPECIALS)
@@ -77,9 +82,7 @@ def build_action_vocab(specs: Sequence[GrammarSpec]) -> ActionVocab:
                 slots: list[Slot] = []
                 for param in op.params:
                     bin_texts = [format_param_token(b) for b in param.bins]
-                    val_ids = [
-                        add(f"VAL={spec.engine}:{name}:{param.name}={text}") for text in bin_texts
-                    ]
+                    val_ids = [add(f"VAL={spec.engine}:{name}:{param.name}={text}") for text in bin_texts]
                     absent_id = None
                     if not param.required:
                         absent_id = add(f"VAL={spec.engine}:{name}:{param.name}={ABSENT}")
@@ -190,23 +193,22 @@ def extend_action_vocab_append_only(base: ActionVocab, spec: GrammarSpec) -> Act
             slots: list[Slot] = []
             for param in op.params:
                 bin_texts = [format_param_token(value) for value in param.bins]
-                val_ids = [
-                    add(f"VAL={spec.engine}:{name}:{param.name}={text}")
-                    for text in bin_texts
-                ]
+                val_ids = [add(f"VAL={spec.engine}:{name}:{param.name}={text}") for text in bin_texts]
                 absent_id = None
                 if not param.required:
                     absent_id = add(f"VAL={spec.engine}:{name}:{param.name}={ABSENT}")
-                slots.append(Slot(
-                    param=param.name,
-                    kind=param.kind,
-                    val_ids=val_ids,
-                    bin_texts=bin_texts,
-                    absent_id=absent_id,
-                    is_expr=(param.kind == "expr"),
-                    required=param.required,
-                    default=param.default,
-                ))
+                slots.append(
+                    Slot(
+                        param=param.name,
+                        kind=param.kind,
+                        val_ids=val_ids,
+                        bin_texts=bin_texts,
+                        absent_id=absent_id,
+                        is_expr=(param.kind == "expr"),
+                        required=param.required,
+                        default=param.default,
+                    )
+                )
             vocab.ops[op_id] = OpInfo(
                 token_id=op_id,
                 engine=spec.engine,
@@ -234,9 +236,7 @@ def extend_action_vocab_append_only(base: ActionVocab, spec: GrammarSpec) -> Act
 CANONICAL_TASKS = ("regression", "binary", "timeseries", "multiclass")
 
 
-def append_missing_task_tokens(
-    base: ActionVocab, tasks: Sequence[str] = CANONICAL_TASKS
-) -> ActionVocab:
+def append_missing_task_tokens(base: ActionVocab, tasks: Sequence[str] = CANONICAL_TASKS) -> ActionVocab:
     """Append TASK tokens for canonical tasks absent from the vocab, id-stable.
 
     The append-only engine/op extenders never create TASK tokens (the gen-31 base
@@ -306,13 +306,9 @@ def reconcile_head_tasks_from_grammar(
         if op is None or op_id is None:
             continue
         current = tuple(vocab.head_tasks.get(op_id, ()))
-        additions = [
-            task for task in granted if task in op.tasks and task not in current
-        ]
+        additions = [task for task in granted if task in op.tasks and task not in current]
         if additions:
-            vocab.head_tasks[op_id] = tuple(
-                sorted({*current, *additions}, key=lambda task: order[task])
-            )
+            vocab.head_tasks[op_id] = tuple(sorted({*current, *additions}, key=lambda task: order[task]))
     return vocab
 
 
@@ -344,15 +340,10 @@ def extend_engine_ops_append_only(
         slots: list[Slot] = []
         for param in op.params:
             bin_texts = [format_param_token(value) for value in param.bins]
-            val_ids = [
-                add(f"VAL={spec.engine}:{name}:{param.name}={text}")
-                for text in bin_texts
-            ]
+            val_ids = [add(f"VAL={spec.engine}:{name}:{param.name}={text}") for text in bin_texts]
             absent_id = None
             if not param.required:
-                absent_id = add(
-                    f"VAL={spec.engine}:{name}:{param.name}={ABSENT}"
-                )
+                absent_id = add(f"VAL={spec.engine}:{name}:{param.name}={ABSENT}")
             slots.append(
                 Slot(
                     param=param.name,

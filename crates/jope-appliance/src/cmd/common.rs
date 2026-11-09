@@ -14,9 +14,44 @@ use std::path::Path;
 use ulid::Ulid;
 
 #[cfg(feature = "client")]
-/// Resolve the running local service from the owner-only daemon record.
+/// The shared local engine, started on demand exactly as `run` and the terminal start it, and
+/// restarted first when it is another jAIn version and idle. An explicit `JOPEDIME_ENDPOINT`
+/// keeps the previous record-based resolution.
 pub(crate) fn resolve_client() -> anyhow::Result<jope_client::Http> {
-    resolve_client_at(&jope_paths::jopedime_home())
+    use jope_client::discover::{self, Engine, Mode, Options};
+    let home = jope_paths::jopedime_home();
+    let selected = discover::discover(&Options {
+        home: home.clone(),
+        executable: std::env::current_exe()?,
+        endpoint: None,
+        mode: Mode::Interactive,
+        engine_available: cfg!(feature = "engine"),
+    });
+    if let Some(notice) = discover::take_notice() {
+        eprintln!("{notice}");
+    }
+    match selected {
+        Ok(Engine::Background(engine)) => Ok(engine.client),
+        Ok(Engine::Endpoint(_)) | Ok(Engine::InProcess) => resolve_client_at(&home),
+        Err(error @ (discover::Error::Busy { .. } | discover::Error::OutdatedBusy { .. })) => {
+            Err(CommandError {
+                code: error.exit_code(),
+                message: error.to_string(),
+            }
+            .into())
+        }
+        Err(error) => Err(CommandError {
+            code: error.exit_code(),
+            message: engine_unavailable(&error),
+        }
+        .into()),
+    }
+}
+
+/// The actionable form of an engine that could not be reached or started.
+#[cfg(feature = "client")]
+pub(crate) fn engine_unavailable(reason: &dyn Display) -> String {
+    format!("The jAIn engine isn't running and couldn't be started: {reason}. Try: jain serve")
 }
 
 #[cfg(feature = "client")]
@@ -54,13 +89,13 @@ fn resolve_client_at(home: &Path) -> anyhow::Result<jope_client::Http> {
 #[derive(Debug)]
 struct CommandError {
     code: u8,
-    message: &'static str,
+    message: String,
 }
 
 #[cfg(feature = "client")]
 impl std::fmt::Display for CommandError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str(self.message)
+        formatter.write_str(&self.message)
     }
 }
 
@@ -70,7 +105,10 @@ impl std::error::Error for CommandError {}
 #[cfg(feature = "client")]
 impl CommandError {
     fn unreachable(message: &'static str) -> Self {
-        Self { code: 9, message }
+        Self {
+            code: 9,
+            message: message.into(),
+        }
     }
 }
 
@@ -316,6 +354,7 @@ mod tests {
             token: "ab".repeat(32),
             pid: u32::MAX,
             version: "test".into(),
+            build: None,
             api_version: "1.0".into(),
             started_at: "now".into(),
         };

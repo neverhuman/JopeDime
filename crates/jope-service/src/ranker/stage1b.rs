@@ -237,6 +237,123 @@ fn lm_smart_80(lm48: &[f32; LM48_FEATURES], mean: &[f32; 80], std: &[f32; 80]) -
     std::array::from_fn(|index| ((raw[index] - mean[index]) / std[index]).clamp(-8.0, 8.0))
 }
 
+pub const HIDDEN256_FEATURES: usize = 256;
+pub const COL_SLOTS: usize = 64;
+pub const COL_FEATURES: usize = 17;
+pub const FULL629_TOKEN_COUNT: usize = 20;
+pub const HIDDEN256_TOKEN_COUNT: usize = 8;
+
+/// Coordinate-preserving pre-condense representation before Stage-1B SVD projection.
+///
+/// Packs `dope629` into 20 semantic block tokens (`[20, 32]`) with an 11-value
+/// log-norm/max-abs scale side-channel in tokens 16..18, `hidden256` into 8
+/// router tokens (`[8, 32]`), and `col_lm` + `col_gates` into 64 masked column
+/// tokens (`[64, 18]`, with binary mask `col_mask_64`).
+#[derive(Clone, Debug, PartialEq)]
+pub struct PreCondenseContextTokens {
+    pub full629_tokens: [[f32; TOKEN_WIDTH]; FULL629_TOKEN_COUNT],
+    pub block_log_norms: [f32; 11],
+    pub hidden256_tokens: [[f32; TOKEN_WIDTH]; HIDDEN256_TOKEN_COUNT],
+    pub col_features_64x18: [[f32; 18]; COL_SLOTS],
+    pub col_mask_64: [f32; COL_SLOTS],
+}
+
+fn block_log_rms(slice: &[f32]) -> f32 {
+    let mean_sq = slice.iter().map(|&v| v * v).sum::<f32>() / (slice.len() as f32);
+    (mean_sq + 1e-8).sqrt().ln_1p()
+}
+
+fn block_log_max(slice: &[f32]) -> f32 {
+    slice
+        .iter()
+        .fold(0.0_f32, |acc, &v| acc.max(v.abs()))
+        .ln_1p()
+}
+
+/// Pack `dope629`, pre-head `hidden256`, and `col_lm` (`64 x 17`) into coordinate-preserving
+/// pre-condense tokens without applying Stage-1B SVD truncation.
+pub fn pack_pre_condense_tokens(
+    dope629: &[f32],
+    hidden256: &[f32],
+    col_lm: &[f32],
+) -> Result<PreCondenseContextTokens> {
+    ensure!(
+        dope629.len() == DOPE_FEATURES,
+        "dope629 width must be {DOPE_FEATURES}"
+    );
+    ensure!(
+        hidden256.len() == HIDDEN256_FEATURES,
+        "hidden256 width must be {HIDDEN256_FEATURES}"
+    );
+    ensure!(
+        col_lm.len() == COL_SLOTS * COL_FEATURES,
+        "col_lm width must be {}",
+        COL_SLOTS * COL_FEATURES
+    );
+    ensure!(
+        dope629
+            .iter()
+            .chain(hidden256)
+            .chain(col_lm)
+            .all(|v| v.is_finite()),
+        "pre-condense inputs must be finite"
+    );
+
+    let block_log_norms = [
+        block_log_rms(&dope629[0..256]),
+        block_log_max(&dope629[0..256]),
+        block_log_rms(&dope629[256..384]),
+        block_log_max(&dope629[256..384]),
+        block_log_rms(&dope629[384..512]),
+        block_log_max(&dope629[384..512]),
+        block_log_rms(&dope629[512..526]),
+        block_log_rms(&dope629[526..549]),
+        block_log_rms(&dope629[549..565]),
+        block_log_rms(&dope629[565..629]),
+        block_log_max(&dope629[565..629]),
+    ];
+
+    let mut full629_tokens = [[0.0_f32; TOKEN_WIDTH]; FULL629_TOKEN_COUNT];
+    // Tokens 0..16: desc256 (8 tokens), task128 (4 tokens), dist128 (4 tokens) = 512 coords
+    for t in 0..16 {
+        full629_tokens[t].copy_from_slice(&dope629[t * 32..(t + 1) * 32]);
+    }
+    // Tokens 16..18: gates14 (14) + lm23 (23) + bb16 (16) = 53 coords + 11 block_log_norms = 64 coords
+    let mut heads_and_norms = [0.0_f32; 64];
+    heads_and_norms[..53].copy_from_slice(&dope629[512..565]);
+    heads_and_norms[53..64].copy_from_slice(&block_log_norms);
+    full629_tokens[16].copy_from_slice(&heads_and_norms[0..32]);
+    full629_tokens[17].copy_from_slice(&heads_and_norms[32..64]);
+    // Tokens 18..20: col_gates64 (64 coords)
+    full629_tokens[18].copy_from_slice(&dope629[565..597]);
+    full629_tokens[19].copy_from_slice(&dope629[597..629]);
+
+    let mut hidden256_tokens = [[0.0_f32; TOKEN_WIDTH]; HIDDEN256_TOKEN_COUNT];
+    for t in 0..HIDDEN256_TOKEN_COUNT {
+        hidden256_tokens[t].copy_from_slice(&hidden256[t * 32..(t + 1) * 32]);
+    }
+
+    let mut col_features_64x18 = [[0.0_f32; 18]; COL_SLOTS];
+    let mut col_mask_64 = [0.0_f32; COL_SLOTS];
+    for c in 0..COL_SLOTS {
+        let row = &col_lm[c * COL_FEATURES..(c + 1) * COL_FEATURES];
+        let valid = if row[16] > 0.5 { 1.0 } else { 0.0 };
+        col_mask_64[c] = valid;
+        if valid > 0.5 {
+            col_features_64x18[c][..17].copy_from_slice(row);
+            col_features_64x18[c][17] = dope629[565 + c];
+        }
+    }
+
+    Ok(PreCondenseContextTokens {
+        full629_tokens,
+        block_log_norms,
+        hidden256_tokens,
+        col_features_64x18,
+        col_mask_64,
+    })
+}
+
 #[cfg(test)]
 #[path = "stage1b/tests.rs"]
 mod tests;

@@ -7,14 +7,21 @@ pub mod cards;
 pub mod commands;
 pub mod complete;
 pub mod composer;
+pub mod demos;
 
 #[path = "highlight.rs"]
 pub mod highlight;
 pub mod line_mode;
+pub mod links;
+#[cfg(feature = "client")]
+pub mod onboarding;
 pub mod restore;
 pub mod runs;
 pub mod screen;
+pub mod splash;
 pub mod status;
+#[cfg(feature = "client")]
+pub mod usage;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ThemeMode {
@@ -176,11 +183,11 @@ impl Theme {
                 if light {
                     Ansi16Color::Blue
                 } else {
-                    Ansi16Color::Cyan
+                    Ansi16Color::BrightBlue
                 }
             }
             ThemeToken::Good | ThemeToken::CodeString => Ansi16Color::Green,
-            ThemeToken::Warn => Ansi16Color::Yellow,
+            ThemeToken::Warn => Ansi16Color::Blue,
             ThemeToken::Bad => Ansi16Color::Red,
             ThemeToken::CodeKeyword => Ansi16Color::Blue,
             ThemeToken::CodeNumber => Ansi16Color::Magenta,
@@ -400,9 +407,12 @@ mod tests {
                 ThemeToken::Muted,
                 ThemeColor::Ansi16(Ansi16Color::BrightBlack),
             ),
-            (ThemeToken::Accent, ThemeColor::Ansi16(Ansi16Color::Cyan)),
+            (
+                ThemeToken::Accent,
+                ThemeColor::Ansi16(Ansi16Color::BrightBlue),
+            ),
             (ThemeToken::Good, ThemeColor::Ansi16(Ansi16Color::Green)),
-            (ThemeToken::Warn, ThemeColor::Ansi16(Ansi16Color::Yellow)),
+            (ThemeToken::Warn, ThemeColor::Ansi16(Ansi16Color::Blue)),
             (ThemeToken::Bad, ThemeColor::Ansi16(Ansi16Color::Red)),
             (
                 ThemeToken::CodeKeyword,

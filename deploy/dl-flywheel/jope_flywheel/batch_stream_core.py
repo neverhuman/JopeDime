@@ -18,7 +18,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib,itertools,json,math,os,sqlite3,time
 from pathlib import Path
-from .protocol import canonical,digest,require as need,sha256
+from .protocol import canonical,digest,sha256
+
+def need(condition,message):
+    """Keep the core usable with the pinned runtime protocol's public API."""
+    if not condition:raise ValueError(message)
 
 SCHEMA='jope.flywheel-batch-manifest/v1'
 RUN_SCHEMA='jope.flywheel-data-run/v1'

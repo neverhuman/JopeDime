@@ -55,3 +55,11 @@ allow = ["bzip2-1.0.6"]
 name = "target-lexicon"
 version = "=0.13.5"
 allow = ["Apache-2.0 WITH LLVM-exception"]
+
+# feat-math vendors the frozen S1 Linux reference math (src/portable_math/frozen_s1/linux_reference,
+# SPDX LGPL-2.1-or-later, glibc upstream) so Darwin reproduces Linux S1 bit-for-bit (2660e6330), and
+# its manifest declares "Apache-2.0 AND LGPL-2.1-or-later". First-party, publish = false. Scoped to
+# this one crate; the global allow list is unchanged.
+[[licenses.exceptions]]
+name = "feat-math"
+allow = ["LGPL-2.1-or-later"]

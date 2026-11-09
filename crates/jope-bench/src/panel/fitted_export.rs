@@ -280,7 +280,7 @@ mod prepare;
 mod tests;
 mod validation;
 
-pub use prepare::prepare;
-use prepare::{materialize, prepare_entries, winner};
-use validation::verify_entries;
+pub(super) use prepare::prepare;
+use prepare::{prepare_entries, winner};
 pub use validation::{artifact, location};
+use validation::{verify_entries, FittedOutput};

@@ -6,6 +6,7 @@ from collections.abc import Sequence
 import numpy as np
 import torch
 
+
 def precompute_champion_topk_batched_gpu(
     lm48: torch.Tensor,
     lm48_z: torch.Tensor,
@@ -76,6 +77,7 @@ def precompute_champion_topk_batched_gpu(
         "order_128": order_128,
         "top4_champ128_indices": order_128[:, : min(4, n_champ128)],
     }
+
 
 def compute_table_seed_sha256_u32(
     x_tr: np.ndarray | torch.Tensor,

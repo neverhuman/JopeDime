@@ -130,6 +130,7 @@ JOPE_HD double exact_log_f64(double x) {
 }
 """
 
+
 def _as_f64_array(x: float | np.ndarray) -> tuple[np.ndarray, bool]:
     arr = np.asarray(x, dtype=np.float64)
     is_scalar = arr.ndim == 0

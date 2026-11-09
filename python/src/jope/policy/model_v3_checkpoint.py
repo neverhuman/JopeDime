@@ -7,6 +7,7 @@ from typing import Any
 
 from .model_v3_arch import DATASET_BLOCK_RMS, TARGET_BLOCK_RMS, JopePolicyModelV3
 
+
 def _validate_action_vocab_compatibility(
     saved_tokens: list[str] | None,
     current_tokens: list[str],

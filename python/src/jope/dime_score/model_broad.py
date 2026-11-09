@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from .model_config import DATASET_DIM, D_MODEL, FFN_DIM, N_HEADS, N_LAYERS
+from .model_config import D_MODEL, DATASET_DIM, FFN_DIM, N_HEADS, N_LAYERS
 
 
 class DimeBroadCritic(nn.Module):

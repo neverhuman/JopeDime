@@ -78,7 +78,7 @@ pub(super) fn prepare_entries(
         )
         .collect()
 }
-pub(super) fn prepare(args: ExportArgs) -> Result<Value> {
+pub(in crate::panel) fn prepare(args: ExportArgs) -> Result<Value> {
     let preparation_start = std::time::Instant::now();
     let preparation_cpu_start = campaign::cpu_seconds()?;
     ensure!(args.fold < 5, "fold must be0..4");
@@ -169,7 +169,7 @@ pub(super) fn prepare(args: ExportArgs) -> Result<Value> {
         .iter()
         .find(|d| d.id == args.dataset)
         .context("dataset specification absent")?;
-    let data = super::data::load_development(&args.campaign.datasets, spec)?;
+    let data = super::super::data::load_development(&args.campaign.datasets, spec)?;
     let cut = data.cut(args.fold)?;
     ensure!(
         cut.hold.rows_sha256 == observation.request.scoring_rows_sha256,
@@ -182,24 +182,25 @@ pub(super) fn prepare(args: ExportArgs) -> Result<Value> {
         .clone()
         .context("fitted hash absent")?;
     let entries = if output["schema"] == "jope.panel-rust-worker-output/v1" {
-        let output: super::worker::RustWorkerOutput = serde_json::from_value(output)?;
+        let output: super::super::worker::RustWorkerOutput = serde_json::from_value(output)?;
         ensure!(
             output.artifact_sha256 == fitted_sha
-                && super::methods::digest(&output.artifact.bytes()?) == fitted_sha,
+                && super::super::methods::digest(&output.artifact.bytes()?) == fitted_sha,
             "native fitted artifact changed"
         );
         prepare_entries(&FittedInferenceView::registered(&output.artifact)?, &rows)?
     } else if output["schema"] == "jope.panel-synthesized-worker-output/v1" {
-        let output: super::synthesized::SynthesizedWorkerOutput = serde_json::from_value(output)?;
+        let output: super::super::synthesized::SynthesizedWorkerOutput =
+            serde_json::from_value(output)?;
         ensure!(
             output.artifact_sha256 == fitted_sha
-                && super::methods::digest(&output.artifact.bytes()?) == fitted_sha,
+                && super::super::methods::digest(&output.artifact.bytes()?) == fitted_sha,
             "generated fitted artifact changed"
         );
         prepare_entries(&FittedInferenceView::synthesized(&output.artifact)?, &rows)?
     } else {
         ensure!(
-            output["contract"] == super::methods::ADAPTER_CONTRACT
+            output["contract"] == super::super::methods::ADAPTER_CONTRACT
                 && output["fitted"]["sha256"] == fitted_sha
                 && output["fitted"]["reload_verified"] == false,
             "external native fitted receipt changed"

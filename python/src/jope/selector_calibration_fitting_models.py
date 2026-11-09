@@ -2,32 +2,34 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from typing import Any
 
 import numpy as np
 
 from .selector_calibration_fitting_primitives import (
-    PORTFOLIO_META_POLICY,
     _CALIBRATED_SCORE_WEIGHT,
-    SCHEMA_VERSION,
     _DEFAULT_ENGINE,
     _EXPANSIVE_TRANSFORMS,
-    _META_NUMERIC_FEATURES,
     _GLOBAL_HEAD,
+    _META_NUMERIC_FEATURES,
     _META_RIDGE_L2,
     _PATTERN_NAMES,
     _SCALER_TRANSFORMS,
     _TARGET_DELTA_FLOOR,
+    PORTFOLIO_META_POLICY,
+    SCHEMA_VERSION,
     _bin_index,
     _correlation_lists,
     _engine_head_key,
     _finite_float,
+    _head_from_actions,
     _head_from_genome,
     _parse_actions,
     _stats,
     pattern_flags,
 )
+
 
 def _fit_calibration_model(
     rows: list[dict[str, Any]],
@@ -417,5 +419,3 @@ def _action_feature_values(actions: dict[str, Any] | None) -> dict[str, Any]:
         "appended_expansion_count": int(appended_expansion_count),
         "gpr_periodic": int(gpr_periodic),
     }
-
-

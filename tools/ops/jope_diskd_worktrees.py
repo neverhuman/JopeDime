@@ -11,6 +11,9 @@ from pathlib import Path
 from typing import Any
 
 from jope_diskd_constants import (
+    CARGO_INCREMENTAL_BINARY_CACHE_NAMES,
+    PROTECTED_PARTS,
+    PROTECTED_PREFIXES,
     REBUILDABLE_WORKTREE_IGNORED_DIRS,
     REBUILDABLE_WORKTREE_IGNORED_FILES,
     TARGET_EVIDENCE_PARTS,
@@ -104,6 +107,8 @@ def detached_worktree_reflog_is_on_main(repo: Path, worktree: Path) -> bool:
         return False
 
 def safe_target_tree(root: Path, *, now: float, ttl_seconds: int = TARGET_RETENTION_SECONDS) -> bool:
+    from jope_diskd_cache import fail_walk
+
     try:
         root_stat = root.lstat()
         if not stat.S_ISDIR(root_stat.st_mode) or root_stat.st_uid != current_uid():

@@ -4,7 +4,7 @@ use super::*;
 /// What the check reads from the tree besides the matrix.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tree {
-    /// `jope-parallel` subcommands: the `Cmd` variants of `crates/jope-engine/src/main.rs`.
+    /// `jope-parallel` subcommands: the `EngineCmd` variants in `crates/jope-engine/src/command.rs`.
     pub clap: Vec<String>,
     /// `(package, kind, name, src path)` of every bin/example target.
     pub bins: Vec<(String, String, String, String)>,
@@ -22,15 +22,21 @@ pub fn scan_tree(root: &Path) -> Result<Tree> {
     scan_rest(root, clap)
 }
 
-/// The `jope-parallel` subcommands of `crates/jope-engine/src/main.rs`, when it exists
-/// (`main_rs.exists()`, which raised on an error other than a missing path: that refuses).
-fn clap_names(root: &Path) -> Result<Vec<String>> {
+/// The `jope-parallel` subcommands declared by the engine binary. The current binary keeps
+/// `EngineCmd` in `command.rs`; older and synthetic trees declare `Cmd` inline in `main.rs`.
+/// A missing entry point retains the empty-command behavior; missing declared sources refuse.
+pub(super) fn clap_names(root: &Path) -> Result<Vec<String>> {
     let main_rs = root.join("crates/jope-engine/src/main.rs");
     Ok(if exists(&main_rs, "clap subcommands")? {
-        parse_clap_enum(&main_rs, "Cmd")?
-            .into_iter()
-            .map(|c| c.name)
-            .collect()
+        let source = py::read_text_replace(&main_rs)?;
+        if py::regex(r"(?m)^\s*mod\s+command\s*;").is_match(&source) {
+            parse_clap_enum(&root.join("crates/jope-engine/src/command.rs"), "EngineCmd")?
+        } else {
+            parse_clap_enum(&main_rs, "Cmd")?
+        }
+        .into_iter()
+        .map(|c| c.name)
+        .collect()
     } else {
         vec![]
     })

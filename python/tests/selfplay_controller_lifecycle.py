@@ -13,12 +13,14 @@ from test_exact_controller import (
     default_handlers,
 )
 
+
 def catalog_entries():
     return [
         {"task": task, "dataset_hash": f"{task}-{index}"}
         for task, count in (("regression", 2_322), ("binary", 542))
         for index in range(count)
     ]
+
 
 def snapshot(labels=50_000):
     return {
@@ -29,6 +31,7 @@ def snapshot(labels=50_000):
         "catalog_counts": {"regression": 2_322, "binary": 542},
         "evaluator_sha256": "c" * 64,
     }
+
 
 def test_production_controller_owns_deterministic_post_training_phases():
     handlers = default_handlers()
@@ -44,6 +47,7 @@ def test_production_controller_owns_deterministic_post_training_phases():
     assert handlers["evaluate_frozen_gate"].__name__ == "_evaluate_frozen_gate"
     assert handlers["run_sotarena_qualification"].__name__ == "_run_sotarena_qualification"
 
+
 def test_action_key_binds_every_control_input():
     base = {
         "action": "freeze_corpus",
@@ -57,6 +61,7 @@ def test_action_key_binds_every_control_input():
     assert action_key(**base) == action_key(**dict(reversed(list(base.items()))))
     changed = {**base, "seed": 18}
     assert action_key(**base) != action_key(**changed)
+
 
 def test_journal_retries_pending_action_and_never_duplicates_success(tmp_path):
     journal = ActionJournal(tmp_path)
@@ -83,6 +88,7 @@ def test_journal_retries_pending_action_and_never_duplicates_success(tmp_path):
         "succeeded",
     ]
     journal.close()
+
 
 @pytest.mark.parametrize("gate_pass,expected", [(True, "accepted"), (False, "rejected")])
 def test_controller_resumes_each_phase_and_gate_is_fail_closed(tmp_path, gate_pass, expected):
@@ -119,6 +125,7 @@ def test_controller_resumes_each_phase_and_gate_is_fail_closed(tmp_path, gate_pa
     assert pointer["advanced"] is gate_pass
     if not gate_pass:
         assert pointer["checkpoint_sha256"] == "a" * 64
+
 
 def test_controller_coalesces_threshold_and_rejects_catalog_drift(tmp_path):
     controller = FlywheelController(tmp_path, {})

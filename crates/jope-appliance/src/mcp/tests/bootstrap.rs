@@ -124,6 +124,9 @@ async fn legacy_aliases_are_listed_and_dispatched_through_existing_handlers() {
     wire.finish("legacy-aliases").await;
 }
 
+// Trains the user's own CSV on this machine, which the public edition (cloud-tls) refuses
+// by design (owner rule 2026-11-06); the default-feature lanes run it.
+#[cfg(not(feature = "public-edition"))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn four_versions_lifecycle_twelve_tools_resources_and_stdout_purity() {
     for version in VERSIONS {
@@ -131,14 +134,21 @@ async fn four_versions_lifecycle_twelve_tools_resources_and_stdout_purity() {
         wire.ready().await;
         let catalog = wire.call("tools/list", json!({})).await;
         let tools = catalog["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 21);
+        assert_eq!(tools.len(), 22);
         let names: Vec<_> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
         let expected: Vec<_> = OPERATIONS.iter().filter_map(|op| op.mcp_tool).collect();
         assert_eq!(names[..expected.len()], expected);
-        for tool in &tools[expected.len()..] {
+        // Then the legacy aliases, then `send_feedback` last: the one listed tool that is neither
+        // an engine operation nor a deprecated name.
+        let (feedback, aliases) = tools[expected.len()..].split_last().unwrap();
+        for tool in aliases {
             assert_eq!(tool["_meta"]["deprecated"], true);
             assert!(tool["_meta"]["replacement"].is_string());
         }
+        assert_eq!(feedback["name"], "send_feedback");
+        assert!(feedback
+            .get("_meta")
+            .is_none_or(|meta| meta["deprecated"] != true));
         assert!(tools[expected.len()..]
             .iter()
             .any(|tool| tool["name"] == "narration_read"));

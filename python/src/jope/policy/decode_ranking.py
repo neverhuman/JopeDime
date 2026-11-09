@@ -30,6 +30,8 @@ def rank_candidates(valid, n, stability_threshold, selection_key):
             if viable:
                 floor.append(viable[0])
     return [top] + floor + [i for i in ranked_order if i != top and i not in floor]
+
+
 def _rank_candidates_with_reranker(
     valid: list[dict[str, Any]],
     n: int,
@@ -116,6 +118,8 @@ def _rank_candidates_with_reranker(
         if add(i):
             break
     return selected + [i for i in base_order if i not in selected_set]
+
+
 def _candidate_diversity_key_v3(
     actions: dict[str, Any],
     head_type: Any,
@@ -132,6 +136,8 @@ def _candidate_diversity_key_v3(
     active = sorted(str(k) for k, v in families.items() if v)
     family = active[0] if active else first
     return f"{head}:{family}"
+
+
 def _row_numeric(row: dict[str, Any], key: str, default: float = float("-inf")) -> float:
     value = row.get(key)
     if isinstance(value, (int, float)) and math.isfinite(float(value)):

@@ -73,6 +73,8 @@ fn requested_with_tty(args: &[String], input: bool, output: bool) -> Option<Laun
 }
 
 pub fn run(launch: Launch) -> anyhow::Result<()> {
+    // A release executable separated from its package could not run a single candidate.
+    crate::bootstrap::open()?;
     let home = jope_paths::jopedime_home();
     let executable = std::env::current_exe()?;
     let engine = discover::discover(&discover::Options {
@@ -90,7 +92,24 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
         Engine::InProcess => anyhow::bail!("in-process terminal transport is unavailable"),
     };
     let system = client.system_info()?;
-    let mut session = Session::new(client, home, mode, system.version)?;
+    let engine_version = system.version.clone();
+    // The header and the update check name the release (`1.0.0-rc.4`), not only the Cargo
+    // version the engine reports (journey J3-F09).
+    let label = if system.version == env!("CARGO_PKG_VERSION") {
+        crate::release_version().to_owned()
+    } else {
+        system.version
+    };
+    let mut session = Session::new(client, home, mode, label)?;
+    if let Some(notice) = discover::take_notice() {
+        session.screen.push(&notice);
+    }
+    if engine_version != env!("CARGO_PKG_VERSION") {
+        session.screen.push(&format!(
+            "The background engine is jAIn {engine_version}; this jAIn is {}. Restart it with `jain serve --stop` when it is idle.",
+            env!("CARGO_PKG_VERSION")
+        ));
+    }
     if let Launch::Attach(run) = launch {
         let run = match run {
             Some(run) => RunId::from_str(&run)?,
@@ -124,8 +143,37 @@ struct Session {
     cloud_busy: Arc<AtomicBool>,
     auto_sync: Option<(RunId, (String, String))>,
     last_sync: Instant,
-    synced_terminal: mpsc::Receiver<RunId>,
-    synced_terminal_sender: mpsc::Sender<RunId>,
+    synced_terminal: mpsc::Receiver<(RunId, RunState)>,
+    synced_terminal_sender: mpsc::Sender<(RunId, RunState)>,
+    home: PathBuf,
+    first_run: Option<crate::terminal::onboarding::FirstRun>,
+    links: bool,
+    routing: routing::Routing,
+    cloud_runs: mpsc::Receiver<routing::CloudMsg>,
+    cloud_run_sender: mpsc::Sender<routing::CloudMsg>,
+    login_done: mpsc::Receiver<bool>,
+    login_done_sender: mpsc::Sender<bool>,
+    update_notice: Option<mpsc::Receiver<String>>,
+    /// Whether the full-screen interface is drawing (otherwise the plain line mode).
+    fullscreen: bool,
+    /// Whether the mouse is captured for wheel scrolling. Off by default, so the terminal's own
+    /// text selection works on everything shown (#2147).
+    mouse: bool,
+    /// A `/mouse` change the drawing loop applies to the terminal.
+    mouse_changed: bool,
+    /// `/transcript`: show the whole transcript as plain text on the normal screen.
+    transcript_requested: bool,
+    /// The last event sequence shown per run, so re-attaching never prints a line twice.
+    shown: std::collections::BTreeMap<String, DecimalU64>,
+    /// Stops the event follower of the previously attached run.
+    follow_cancel: Option<Arc<AtomicBool>>,
+    /// When the attached run's snapshot was last read, for the status bar.
+    last_refresh: Instant,
+    /// Runs whose "status synced" line was already shown.
+    status_announced: std::collections::BTreeSet<String>,
+    /// The attached run and when it was attached, for a status clock that moves while the
+    /// engine's snapshot still reports no elapsed time (it records it as the run ends).
+    run_clock: Option<(RunId, Instant)>,
 }
 
 impl Session {
@@ -140,7 +188,11 @@ impl Session {
         let (background_sender, background_events) = mpsc::channel();
         let (run_list_sender, run_lists) = mpsc::channel();
         let (synced_terminal_sender, synced_terminal) = mpsc::channel();
+        let (cloud_run_sender, cloud_runs) = mpsc::channel();
+        let (login_done_sender, login_done) = mpsc::channel();
+        let update_notice = Some(crate::update::spawn(home.clone(), version.clone()));
         let history = home.join("history");
+        let first_run = first_run_dialog(&home);
         let mut screen = crate::terminal::screen::Screen::default();
         screen.cloud_label = crate::cloud::account_label();
         let composer = crate::terminal::composer::Composer::with_history(history)?;
@@ -153,7 +205,7 @@ impl Session {
             snapshot: None,
             events,
             event_sender,
-            activity: "Type \\help for commands".into(),
+            activity: "Type /help for commands".into(),
             message: None,
             exit_requested: false,
             screen,
@@ -169,16 +221,40 @@ impl Session {
             last_sync: Instant::now(),
             synced_terminal,
             synced_terminal_sender,
+            home,
+            first_run,
+            links: crate::terminal::links::supported_from_env(),
+            routing: routing::Routing::default(),
+            cloud_runs,
+            cloud_run_sender,
+            login_done,
+            login_done_sender,
+            update_notice,
+            fullscreen: false,
+            mouse: mouse_from_env(),
+            mouse_changed: false,
+            transcript_requested: false,
+            shown: std::collections::BTreeMap::new(),
+            follow_cancel: None,
+            last_refresh: Instant::now(),
+            status_announced: std::collections::BTreeSet::new(),
+            run_clock: None,
         })
     }
 }
 
 #[path = "session/activity.rs"]
 mod activity;
+#[path = "session/clipboard.rs"]
+mod clipboard;
 #[path = "session/commands.rs"]
 mod commands;
 #[path = "session/events.rs"]
 mod events;
+#[path = "session/first_run.rs"]
+mod first_run;
+#[path = "session/routing.rs"]
+mod routing;
 #[path = "session/ui.rs"]
 mod ui;
 
@@ -239,6 +315,22 @@ fn update_snapshot_from_event(snapshot: &mut Option<RunSnapshot>, event: &Public
         snapshot.phase = body.phase;
         snapshot.pending = body.pending.clone();
     }
+    // The final event carries the result: the status bar shows it at once (#2143).
+    if let EventBody::RunFinished(body) = &event.event {
+        snapshot.state = RunState::Completed;
+        snapshot.completion_reason = Some(body.completion_reason);
+        snapshot.budget_used = body.budget_used.clone();
+        if body.champion.is_some() {
+            snapshot.best = body.champion.clone();
+        }
+    }
+}
+
+/// `JAIN_MOUSE=1` starts with wheel scrolling (mouse capture) on; the default keeps the
+/// terminal's own text selection.
+fn mouse_from_env() -> bool {
+    std::env::var("JAIN_MOUSE")
+        .is_ok_and(|value| matches!(value.trim(), "1" | "on" | "true" | "yes"))
 }
 
 fn plan_lines(plan: Plan) -> Vec<String> {
@@ -253,17 +345,31 @@ fn open_cloud_url(url: &str) -> anyhow::Result<()> {
         url.starts_with("https://") && !url.chars().any(char::is_control),
         "invalid cloud URL"
     );
-    #[cfg(target_os = "macos")]
-    let command = "open";
-    #[cfg(not(target_os = "macos"))]
-    let command = "xdg-open";
-    std::process::Command::new(command)
-        .arg(url)
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn()?;
-    Ok(())
+    crate::cloud::open_browser(url)
+}
+
+/// The first-run dialog to show, if any. Terms accepted non-interactively
+/// (`JAIN_ACCEPT_TERMS=1`) skip the dialog entirely: agents and scripts never see a prompt.
+fn first_run_dialog(home: &std::path::Path) -> Option<crate::terminal::onboarding::FirstRun> {
+    use crate::terminal::onboarding;
+    if onboarding::accepted_noninteractively() {
+        return None;
+    }
+    if onboarding::env_accepts_terms() {
+        let source = if onboarding::flags().accept_terms {
+            "flag"
+        } else {
+            "env"
+        };
+        let _ = onboarding::accept_noninteractive(home, source);
+        return None;
+    }
+    onboarding::FirstRun::new(
+        &onboarding::load(home),
+        &onboarding::required_terms_version_now(),
+        onboarding::telemetry_forced_off_from_env(),
+        crate::cloud::connection().is_ok(),
+    )
 }
 
 #[cfg(test)]
@@ -347,6 +453,53 @@ mod tests {
         assert_eq!(snapshot.state, RunState::Paused);
         assert_eq!(snapshot.phase, jope_api::RunPhase::Searching);
         assert_eq!(snapshot.pending, None);
+    }
+
+    #[test]
+    fn run_finished_event_marks_the_snapshot_completed_with_its_result() {
+        let mut snapshot = Some(
+            serde_json::from_value(serde_json::json!({
+                "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0",
+                "revision": "1",
+                "state": "running",
+                "phase": "seeding",
+                "pending": null,
+                "effort": "fast",
+                "budget_used": {"evaluations": "0", "wall_seconds": "0.0"},
+                "budget_total": {"evaluations": "128", "wall_seconds": "10"},
+                "best": null,
+                "event_watermark": "1",
+                "warnings": [],
+                "completion_reason": null
+            }))
+            .unwrap(),
+        );
+        let event: PublicEvent = serde_json::from_value(serde_json::json!({
+            "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0",
+            "sequence": "40",
+            "time": "2026-10-30T10:03:02.000Z",
+            "kind": "run.finished",
+            "body": {
+                "completion_reason": "budget_time",
+                "champion": {"algorithm_id": "alg_0001", "metric": "rmse", "cv_value": 0.5, "model_artifact": null},
+                "scores": {"cv": 0.5, "holdout": null, "test": null},
+                "budget_used": {"evaluations": "15", "wall_seconds": "18.0"},
+                "nondeterminism": {"count": "0", "experiment_ids": []}
+            }
+        }))
+        .unwrap();
+        update_snapshot_from_event(&mut snapshot, &event);
+        let snapshot = snapshot.unwrap();
+        assert_eq!(snapshot.state, RunState::Completed);
+        assert_eq!(snapshot.budget_used.evaluations, DecimalU64(15));
+        assert!(snapshot.best.is_some());
+        let (status, activity) = crate::terminal::status::render(&snapshot, &[], 100);
+        assert!(status.starts_with("completed"), "{status}");
+        assert_eq!(activity, "finished · time budget reached");
+        assert_eq!(
+            crate::terminal::status::budget_stop_line(&snapshot).unwrap(),
+            "Stopped at the time budget (10 s) after 15 of 128 candidates. Finishing the candidates in flight took it to 18 s. A longer budget (/effort --time, or --budget) evaluates more."
+        );
     }
 
     #[test]

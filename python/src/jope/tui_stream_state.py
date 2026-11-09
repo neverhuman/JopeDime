@@ -9,6 +9,7 @@ from typing import Any
 
 INITIAL_TAIL_BYTES = 2 * 1024 * 1024
 
+
 class JsonlTailer:
     """Yield only rows appended since the last poll; reset on rotation (inode/size)."""
 
@@ -98,5 +99,3 @@ def handle_key(state: StreamState, key: str, n_genes: int) -> StreamState:
     elif key == "s":
         s.save = True
     return s
-
-

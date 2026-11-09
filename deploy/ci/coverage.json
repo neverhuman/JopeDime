@@ -512,6 +512,34 @@
       "lanes": [],
       "scope": "GPU feature not selected in CPU CI."
     },
+    "feature:jope-api/default": {
+      "discovery": {
+        "dependencies": [
+          "run-id-generation"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Default build of jope-api (RunId::new/Default via run-id-generation) is checked and tested in the workspace rust-check/rust-test lanes."
+    },
+    "feature:jope-api/run-id-generation": {
+      "discovery": {
+        "dependencies": [
+          "ulid/std"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Default-enabled: RunId::new/Default generation (ulid/std, getrandom) is covered by the jope-api default build in rust-check/rust-test; jope-runtime takes jope-api with default-features=false so the WASM browser runtime (typescript lane, web/browser-predict) never links getrandom."
+    },
     "feature:jope-appliance/client": {
       "discovery": {
         "dependencies": [
@@ -532,6 +560,7 @@
         "dependencies": [
           "client",
           "dep:rustls",
+          "public-edition",
           "ureq/rustls-no-provider",
           "ureq/rustls-webpki-roots"
         ],
@@ -643,6 +672,20 @@
         "full-default"
       ],
       "scope": "Default-on registry-driven rmcp adapter over an injected shared client. Appliance protocol fixture tests cover lifecycle, tools, resources, framing and concurrent status/cancel; live CLI/daemon integration and named-client qualification are separate."
+    },
+    "feature:jope-appliance/public-edition": {
+      "discovery": {
+        "dependencies": [
+          "jope-runtime/public-edition",
+          "jope-service?/public-edition"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "jAIn 1.0.0-rc.4 public edition (owner rule 2026-11-06), selected only through jope-appliance cloud-tls (release.sh and build.sh native-only): no internal model file or neural method names compiled in, and own data trains only in the veox Cloud. Adds no dependency. Release binaries are checked with `strings` in the release lane; no hosted feature lane runs it."
     },
     "feature:jope-appliance/research": {
       "discovery": {
@@ -1135,6 +1178,17 @@
       ],
       "scope": "Explicit CPU feature invocation; runtime/SDK failure remains an observed diagnostic failure. No GPU or live S3 qualification."
     },
+    "feature:jope-runtime/public-edition": {
+      "discovery": {
+        "dependencies": [],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "Selected only by jope-appliance/public-edition: the method roster leaves out the internal neural methods. jAIn 1.0.0-rc.4 public edition (owner rule 2026-11-06), selected only through jope-appliance cloud-tls (release.sh and build.sh native-only): no internal model file or neural method names compiled in, and own data trains only in the veox Cloud. Adds no dependency. Release binaries are checked with `strings` in the release lane; no hosted feature lane runs it."
+    },
     "feature:jope-service/failpoints": {
       "discovery": {
         "dependencies": [],
@@ -1158,6 +1212,19 @@
       ],
       "lanes": [],
       "scope": "RNK-12 optional native frozen DOPE/router, Stage-1B projections and shared adapter on CUDA; explicit device placement and no CPU fallback. CPU unit/refusal/trace/lease controls are separate from ignored external real CPU/CUDA M2 replay. CUDA qualification requires an exclusive existing qualification.lock and declared source/bundle/50-context fixture/device/driver evidence. No hosted feature lane or serving/Q1 promotion; numeric qualification remains a separate observed gate."
+    },
+    "feature:jope-service/public-edition": {
+      "discovery": {
+        "dependencies": [
+          "jope-runtime/public-edition"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "Selected only by jope-appliance/public-edition: no r882 descriptor or ranker asset names. jAIn 1.0.0-rc.4 public edition (owner rule 2026-11-06), selected only through jope-appliance cloud-tls (release.sh and build.sh native-only): no internal model file or neural method names compiled in, and own data trains only in the veox Cloud. Adds no dependency. Release binaries are checked with `strings` in the release lane; no hosted feature lane runs it."
     },
     "feature:jope-service/research": {
       "discovery": {
@@ -1427,7 +1494,7 @@
       "lanes": [
         "rust-test"
       ],
-      "scope": "Configured fast PR/manual lane as two nextest slices proven to cover the unsharded set; path-excluded jobs are not passes."
+      "scope": "Configured fast PR/manual lane as three nextest slices proven to cover the unsharded set; path-excluded jobs are not passes."
     },
     "job:.github/workflows/ci.yml/typescript": {
       "discovery": {
@@ -2452,7 +2519,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/ingest_joined_roster/tests/test_roster.py": {
       "discovery": {
@@ -2482,7 +2549,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "24 isolated CPU fixtures for closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case) via run_v2_offline.py, additive after prior812. One adoption per completed epoch, intent/CAS reconcile and holds, authority rechecks, first-exposure joins, native-overlay components, accepted-envelope and restart refusals, bitwise next update. No live planner, optimizer, S3, GPU or network activity."
+      "scope": "24 isolated CPU fixtures for closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case) via run_v2_offline.py, additive after prior814. One adoption per completed epoch, intent/CAS reconcile and holds, authority rechecks, first-exposure joins, native-overlay components, accepted-envelope and restart refusals, bitwise next update. No live planner, optimizer, S3, GPU or network activity."
     },
     "python:deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_overlay_components.py": {
       "discovery": {
@@ -2492,7 +2559,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "24 isolated CPU fixtures for closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case) via run_v2_offline.py, additive after prior812. One adoption per completed epoch, intent/CAS reconcile and holds, authority rechecks, first-exposure joins, native-overlay components, accepted-envelope and restart refusals, bitwise next update. No live planner, optimizer, S3, GPU or network activity."
+      "scope": "24 isolated CPU fixtures for closed-epoch boundary adoption (C10b revision 7, plus the in-time overlay acceptance case) via run_v2_offline.py, additive after prior814. One adoption per completed epoch, intent/CAS reconcile and holds, authority rechecks, first-exposure joins, native-overlay components, accepted-envelope and restart refusals, bitwise next update. No live planner, optimizer, S3, GPU or network activity."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_anchored_step.py": {
       "discovery": {
@@ -2502,7 +2569,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior814 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py": {
       "discovery": {
@@ -2522,7 +2589,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior814 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_r2_custody.py": {
       "discovery": {
@@ -2532,7 +2599,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior814 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/test_runner_v6.py": {
       "discovery": {
@@ -2542,7 +2609,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior812 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
+      "scope": "83 isolated CPU fixtures for the v2.0.0 continual learner, build r3.1 (runner_v6, genesis, resume, custody, R23 anchored step, T12 KL guard, CLI checks), via run_v2_offline.py, its own python-lane command after the unchanged prior814 run_offline.py identities. Genesis from a private final capture of a v1-shaped run, origin and batch proofs, bounded planner/outbox verify indexes, memory gate, own-row cap, tick-safe stop and bitwise restart; terminal closure order, full prefix re-hash and exact proof inventory, proof/commit/ACK/outbox joins, capture and ancestry joins, v1 epoch accounting, the CUDA next-update parity gate before R14, boot-clock window, unit/GPU/stopped-owner checks, the closure-sealed G32 learning guard with exactly-once epoch checks, the R23 anchored objective (L6 plus 0.2 x exact trie KL to the v1 anchor, eval mode, no RNG) and the T12 KL-to-anchor guard, on private temporary worlds with local stub scripts. No live campaign, launch, unit control, S3, GPU, network or program-search execution."
     },
     "python:deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
       "discovery": {
@@ -2552,7 +2619,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "37 isolated CPU fresh32 encoder fixtures via run_fresh32_offline.py, invoked additively by run_offline.py after every prior455 identity. Source/runtime and qualification preservation, exact-version custody, cross-host ownership/held-failure exclusion, fixed scope/deadline, atomic progress rename refusal, source-row CAS and safe copy-script execution. No live GP, S3, GPU, optimizer or production DB activity."
+      "scope": "37 isolated CPU fresh32 encoder fixtures via run_fresh32_offline.py, invoked additively by run_offline.py after every prior457 identity. Source/runtime and qualification preservation, exact-version custody, cross-host ownership/held-failure exclusion, fixed scope/deadline, atomic progress rename refusal, source-row CAS and safe copy-script execution. No live GP, S3, GPU, optimizer or production DB activity."
     },
     "python:deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py": {
       "discovery": {
@@ -2572,7 +2639,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "32 isolated CPU fixtures for the read-only final capture of a terminal continuous run (W10 revision 2, including the R17 runtime-limit-stopped-idle class), run by the package's own pinned runner through run_v2_offline.py, additive after prior812. Private copies only: stopped-owner checks, proof/checkpoint/restore closure, chunked parts and create-only output. No live journal, unit, S3, GPU or network."
+      "scope": "32 isolated CPU fixtures for the read-only final capture of a terminal continuous run (W10 revision 2, including the R17 runtime-limit-stopped-idle class), run by the package's own pinned runner through run_v2_offline.py, additive after prior814. Private copies only: stopped-owner checks, proof/checkpoint/restore closure, chunked parts and create-only output. No live journal, unit, S3, GPU or network."
     },
     "python:deploy/dl-flywheel/pipelines/final_capture_v1/tests/test_runtime_limit.py": {
       "discovery": {
@@ -2582,7 +2649,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "32 isolated CPU fixtures for the read-only final capture of a terminal continuous run (W10 revision 2, including the R17 runtime-limit-stopped-idle class), run by the package's own pinned runner through run_v2_offline.py, additive after prior812. Private copies only: stopped-owner checks, proof/checkpoint/restore closure, chunked parts and create-only output. No live journal, unit, S3, GPU or network."
+      "scope": "32 isolated CPU fixtures for the read-only final capture of a terminal continuous run (W10 revision 2, including the R17 runtime-limit-stopped-idle class), run by the package's own pinned runner through run_v2_offline.py, additive after prior814. Private copies only: stopped-owner checks, proof/checkpoint/restore closure, chunked parts and create-only output. No live journal, unit, S3, GPU or network."
     },
     "python:deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/test_operational.py": {
       "discovery": {
@@ -2652,7 +2719,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "36 isolated CPU fixtures for prepared-candidate roots built from verified train-target references (C10a revision 7) and the two-phase prefetch/closed-cache worker, via run_v2_offline.py, additive after prior812. Reference/row bijection, exact contract binding, one work clock and read budget, terminal markers and operator acceptance envelopes. Counting fake store only; no S3, network, optimizer, GPU or program execution."
+      "scope": "36 isolated CPU fixtures for prepared-candidate roots built from verified train-target references (C10a revision 7) and the two-phase prefetch/closed-cache worker, via run_v2_offline.py, additive after prior814. Reference/row bijection, exact contract binding, one work clock and read budget, terminal markers and operator acceptance envelopes. Counting fake store only; no S3, network, optimizer, GPU or program execution."
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_worker.py": {
       "discovery": {
@@ -2662,7 +2729,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "36 isolated CPU fixtures for prepared-candidate roots built from verified train-target references (C10a revision 7) and the two-phase prefetch/closed-cache worker, via run_v2_offline.py, additive after prior812. Reference/row bijection, exact contract binding, one work clock and read budget, terminal markers and operator acceptance envelopes. Counting fake store only; no S3, network, optimizer, GPU or program execution."
+      "scope": "36 isolated CPU fixtures for prepared-candidate roots built from verified train-target references (C10a revision 7) and the two-phase prefetch/closed-cache worker, via run_v2_offline.py, additive after prior814. Reference/row bijection, exact contract binding, one work clock and read budget, terminal markers and operator acceptance envelopes. Counting fake store only; no S3, network, optimizer, GPU or program execution."
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_reference_export_v2/test_compatibility.py": {
       "discovery": {
@@ -2762,7 +2829,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "38 isolated CPU fixtures for train-only native-result overlay packet chains (W3 revision 2 with the caller-written bounded terminal acceptance envelope) via run_v2_offline.py, additive after prior812. Delta-chain validation, anchors and label unions, emission body identity, role guards, row/token caps and create-only roots; one fixture reads the vendored R6 dev-split preregistration under its pinned sha256. No live native results, S3, GPU or network."
+      "scope": "38 isolated CPU fixtures for train-only native-result overlay packet chains (W3 revision 2 with the caller-written bounded terminal acceptance envelope) via run_v2_offline.py, additive after prior814. Delta-chain validation, anchors and label unions, emission body identity, role guards, row/token caps and create-only roots; one fixture reads the vendored R6 dev-split preregistration under its pinned sha256. No live native results, S3, GPU or network."
     },
     "python:deploy/dl-flywheel/pipelines/prepared/test_cold_recovery.py": {
       "discovery": {
@@ -3172,7 +3239,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/capture_reuse_v3/tests/test_reuse.py": {
       "discovery": {
@@ -3182,7 +3249,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/incremental_v1/tests/test_custody.py": {
       "discovery": {
@@ -3192,7 +3259,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/tests/test_adapter.py": {
       "discovery": {
@@ -3202,7 +3269,7 @@
       "lanes": [
         "python"
       ],
-      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior812; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
+      "scope": "Exact portable source-only fixtures via deploy/dl-flywheel/run_offline.py: standalone82 and dashboard37 after unchanged prior814; unique roster/no skip/fresh output. No live runtime qualification. Includes three guarded owning CI classify cases; no CLI/Git or runtime."
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/test_trace_archive.py": {
       "discovery": {
@@ -6852,6 +6919,36 @@
       "lanes": [],
       "scope": "H237 data-free controls: identical lr/betas/decoupled wd for every arm (schedules.json), optimizer classes (AdamW CONTROL, inline AdaBelief ABEL with eps 1e-16, torch RAdam with decoupled wd), AdaBelief equal to the Zhuang et al. 2020 reference update over 30 steps with None-gradient skipping, larger-than-Adam steps on consistent gradients, every arm moves parameters with the inherited CTRL loss, fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe2 monitor per amendment A1 (hard: MemAvailable 12 GiB, RSS 4 GiB, free 300 GB, 4 threads, 06:30Z; pause: load5 108/100 and MemAvailable 20/22 GiB hysteresis), launch binding, research-namespace release"
     },
+    "python:research/flywheel_selfplay/h238_lowlr/test_h238.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/test_h240.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+    },
     "python:research/flywheel_selfplay/h241_expo/test_h241.py": {
       "discovery": {
         "kind": "python-family"
@@ -6871,6 +6968,126 @@
       ],
       "lanes": [],
       "scope": "H242 data-free controls: frozen arms/rhos/seeds, energy kept-rank rule, rank-k truncation optimality and full-rank bit-exactness, only 2-D matrices touched, matched-Frobenius seeded placebo, spectral census and LASER_SINGLE candidates, frozen spectral_inventory.json (16 matrices, 3 rank-1, 13 candidates), strict selector (ties and noise keep r882, smallest perturbation on ties), fresh per-seed family folds and fold manifest, four-gate advance rule with Holm over SVD_SELECT and LASER_SINGLE only (placebo never advances), harm/plateau/fixed readouts, launch binding, H239 A1 memory guard and 07:30Z compute stop, manifest pins."
+    },
+    "python:research/flywheel_selfplay/h243_modsoup/test_h243.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H243 data-free controls: frozen constants, groups.json partitions the 47 adapter tensors (11 groups), soups touch only recipe groups (beta 1 copies r782 bits, beta .5 float64 blend), per-group L2 and matched-L2 seeded placebo, policy labels, strict selector and tie order, greedy soup (gain-ordered ingredients above .001, cap 5, strict +0.001 additions, strict LCB final check, fallback to r882), fresh per-seed folds and fold manifest, four-gate advance rule with Holm over MODSWAP_SELECT and GREEDY_SOUP only (placebo never advances), launch binding, H239 A1 memory guard and 07:30Z stop, manifest pins of r882/r782."
+    },
+    "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h245_gated_lambda_nest/test_h245.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+    },
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h247_muon_grokfast/test_h247.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H247 data-free controls: frozen arms and hyperparameters, schedule table identity, Newton-Schulz-5 polar-factor approximation and transposition, Muon step formula with Nesterov momentum, weight decay and rows/cols scaling, MUON parameter split (2-D to Muon, others to CTRL AdamW, None gradients skipped), CONTROL equal to torch AdamW, Grokfast-EMA filter equal to the reference (first-step init, None skipped), CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and harm/plateau reporting, launch binding, H239 A1 memory guard and 09:30Z stop, manifest pins."
+    },
+    "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/test_h249.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H249 data-free controls: frozen arms and hyperparameters, schedule table identity, zero-init low-rank residual side branch (SIDE4 rank 4, SIDE16 rank 16) step-0 bit-identity and Kaiming-uniform A / zero B init, applied forward training with frozen r882 weights untouched and exact equivalence to merged weights, CONTROL equal to torch AdamW, CTRL loss and drift, shared fold-seed 249140 partition and fold manifest, strict selector, four-gate advance rule with Holm m=2, launch binding, H239 A1 memory guard and 15:00Z stop, manifest pins."
+    },
+    "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+    },
+    "python:research/flywheel_selfplay/h251_reptile/test_h251.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H251 data-free controls: frozen arms and hyperparameters, schedule table identity, Reptile positions and outer-step snapshot boundaries, REPTILE_K1 equal to scaled SGD and k=5 outer interpolation, plain inner SGD (no momentum or weight decay, None gradients skipped), CONTROL equal to torch AdamW, one-family 8x24 batch plan with shared family stream, CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and the REPTILE-REPTILE_K1 contrast, launch binding, H239 A1 memory and load guard and 15:00Z stop, manifest pins."
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/test_h256_pre_condense_flywheel.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+    },
+    "python:research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/test_h257_phase2_curriculum.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H257 Phase-2 warm-started subsample and GP evolutionary curriculum trainer, semi-synthetic columns/views, frontier-vs-H257 Elo evaluation and KPI telemetry; frozen DOPE, research-only."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -15307,6 +15524,22 @@
       ],
       "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
     },
+    "target:jope-runtime/test/refittable_rust": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-runtime/tests/refittable_rust.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Refittable Rust export: the exported recipe source is independent of fitted values and column names, fitted state is saved as a separate part and reloads to identical predictions; invalid fits, wrong recipes, mislabeled heads and checksum-valid broken heads are refused before prediction."
+    },
     "target:jope-service/example/q1_infra_retry": {
       "discovery": {
         "doctest": false,
@@ -15826,7 +16059,7 @@
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
     },
-    "python:research/flywheel_selfplay/h238_lowlr/test_h238.py": {
+    "python:research/flywheel_selfplay/h254_active2plus2_confirm/test_h254.py": {
       "discovery": {
         "kind": "python-family"
       },
@@ -15834,127 +16067,228 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+      "scope": "H254 data-free controls: snapshot SHA-256 verification and frozen constants, fold_manifest.json identity for fold_seed 254140, byte-exact equivalence of score_arms_instrumented to snapshot stage1_hurdle_sos_critic.score_arms_for_context, Audit (a) zero DL-Val/holdout leakage and refusal on leaked promotions, Audit (b) per-context reveal count == 4 for ACTIVE_2PLUS2_HURDLE and GATED_025, Audit (c) negative control permuted fitness and Holm m=2 decision rule (including ties = NO_ADVANCE), H239 A1 memory guard pausing at MemAvailable < 30 GiB on xbabe2 cores 57-60."
     },
-    "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
+    "feature:jope-service/visual-trace": {
       "discovery": {
-        "kind": "python-family"
+        "dependencies": [],
+        "kind": "feature"
       },
       "dispositions": [
-        "research"
+        "cpu-qualification"
       ],
       "lanes": [],
-      "scope": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification."
+      "scope": "Opt-in JAIN visual-trace instrumentation; absent from default builds. Explicit local visual_trace library tests and visualization examples are checked with --features visual-trace. Default hosted Rust execution is not feature qualification; real checkpoint replay and measured inference remain separate."
     },
-    "python:research/flywheel_selfplay/h240_lowlr/test_h240.py": {
+    "python:tools/visualization/tests/test_actual_trace.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
+    "python:tools/visualization/tests/test_code_pages.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h243_modsoup/test_h243.py": {
+    "python:tools/visualization/tests/test_endcap_film.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H243 data-free controls: frozen constants, groups.json partitions the 47 adapter tensors (11 groups), soups touch only recipe groups (beta 1 copies r782 bits, beta .5 float64 blend), per-group L2 and matched-L2 seeded placebo, policy labels, strict selector and tie order, greedy soup (gain-ordered ingredients above .001, cap 5, strict +0.001 additions, strict LCB final check, fallback to r882), fresh per-seed folds and fold manifest, four-gate advance rule with Holm over MODSWAP_SELECT and GREEDY_SOUP only (placebo never advances), launch binding, H239 A1 memory guard and 07:30Z stop, manifest pins of r882/r782."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h245_gated_lambda_nest/test_h245.py": {
+    "python:tools/visualization/tests/test_h256_selection.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
+    "python:tools/visualization/tests/test_h256_trace.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h247_muon_grokfast/test_h247.py": {
+    "python:tools/visualization/tests/test_input_influence.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H247 data-free controls: frozen arms and hyperparameters, schedule table identity, Newton-Schulz-5 polar-factor approximation and transposition, Muon step formula with Nesterov momentum, weight decay and rows/cols scaling, MUON parameter split (2-D to Muon, others to CTRL AdamW, None gradients skipped), CONTROL equal to torch AdamW, Grokfast-EMA filter equal to the reference (first-step init, None skipped), CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and harm/plateau reporting, launch binding, H239 A1 memory guard and 09:30Z stop, manifest pins."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
+    "python:tools/visualization/tests/test_intelligence_wave.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h249_side_branch/test_h249.py": {
+    "python:tools/visualization/tests/test_multilingual_code_pages.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H249 data-free controls: frozen arms and hyperparameters, schedule table identity, zero-init low-rank residual side branch (SIDE4 rank 4, SIDE16 rank 16) step-0 bit-identity and Kaiming-uniform A / zero B init, applied forward training with frozen r882 weights untouched and exact equivalence to merged weights, CONTROL equal to torch AdamW, CTRL loss and drift, shared fold-seed 249140 partition and fold manifest, strict selector, four-gate advance rule with Holm m=2, launch binding, H239 A1 memory guard and 15:00Z stop, manifest pins."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
+    "python:tools/visualization/tests/test_native_scaling.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h251_reptile/test_h251.py": {
+    "python:tools/visualization/tests/test_render_orchestration.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H251 data-free controls: frozen arms and hyperparameters, schedule table identity, Reptile positions and outer-step snapshot boundaries, REPTILE_K1 equal to scaled SGD and k=5 outer interpolation, plain inner SGD (no momentum or weight decay, None gradients skipped), CONTROL equal to torch AdamW, one-family 8x24 batch plan with shared family stream, CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and the REPTILE-REPTILE_K1 contrast, launch binding, H239 A1 memory and load guard and 15:00Z stop, manifest pins."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
     },
-    "python:research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py": {
+    "python:tools/visualization/tests/test_spatial_layouts.py": {
       "discovery": {
         "kind": "python-family"
       },
       "dispositions": [
-        "research"
+        "runtime-tools"
       ],
       "lanes": [],
-      "scope": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_trace.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "python:tools/visualization/tests/test_veox_logo.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visualization fixture tests, explicitly run by python3 -m unittest discover -s tools/visualization/tests -v. Local source-bound receipts cover these tests; hosted python/tests collection does not include this directory. Rendering, model/checkpoint replay and GPU qualification require separate bounded inputs and receipts."
+    },
+    "target:jope-service/example/visual_emit_metric": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_emit_metric.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
+    },
+    "target:jope-service/example/visual_fit_dsl": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_fit_dsl.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
+    },
+    "target:jope-service/example/visual_inference_metric": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_inference_metric.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
+    },
+    "target:jope-service/example/visual_run": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_run.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
+    },
+    "target:jope-service/example/visual_trace": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "visual-trace"
+        ],
+        "source": "crates/jope-service/examples/visual_trace.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "JAIN visual-trace-feature-gated rendering input/telemetry helper. Explicit local feature-enabled example checks and the visual_fit_dsl/visual_inference_metric example tests have source-bound receipts. Default CI does not select this opt-in example; live inference requires pinned models and bounded external output custody."
     }
   },
   "lanes": {
@@ -17147,7 +17481,7 @@
         "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
         "CARGO_TARGET_DIR": "job-scoped persistent runner lane target",
         "JOPE_PARITY_STRICT": "1",
-        "JOPE_RUST_TEST_PARTITION": "slice:<shard>/2, one per ci.yml rust-test matrix leg",
+        "JOPE_RUST_TEST_PARTITION": "slice:<shard>/3, one per ci.yml rust-test matrix leg",
         "MKL_NUM_THREADS": "1",
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
@@ -17240,7 +17574,7 @@
         "JOPE_TYPESCRIPT_PARITY=1 cargo test --locked -p feat-math --no-default-features --lib advanced_v3::emit::",
         "cargo test --locked -p feat-math --no-default-features --test artifact_target_binding",
         "cargo test --locked -p jope-pipeline --test artifact_target_binding",
-        "cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests::",
+        "cargo test --locked -p jope-cli --no-default-features --lib kernel::numeric_emit::artifact_v3_tests::",
         "node deploy/ci/typescript/browser.mjs (all census fixtures, Chromium/Firefox/WebKit page and module worker)",
         "bash web/browser-predict/check.sh (Node26: native model integrity and first-party WASM parity; no fitting export or host imports)"
       ],

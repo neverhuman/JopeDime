@@ -12,8 +12,6 @@ Architecture (per the approved plan):
 
 from __future__ import annotations
 
-import copy
-import math
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -22,24 +20,11 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from ..model import _reward_listwise_loss
-from .automaton import replay_masks
 from .losses import (
-    LISTWISE_TARGET_TAU,
-    PHASE_A_PROFILE,
-    PHASE_B_PROFILE,
     POLICY_V3_LOSS_COMPONENTS,
-    STABILITY_POS_WEIGHT,
-    bootstrap_mask,
-    kg_combine,
-    masked_sequence_nll,
-    rank_pct_listwise_terms,
-    rwr_weights,
-    self_play_bt_loss,
-    stability_bce_term,
 )
-from .tokens import PAD, ActionVocab, encode_actions
 from .model_v3_arch_methods import PolicyV3ModelMethods
+from .tokens import PAD, ActionVocab
 
 MAX_SEQ_LEN = 128
 MODEL_VERSION = "policy_v3.4-split-context"
@@ -489,8 +474,6 @@ class JopePolicyModelV3(PolicyV3ModelMethods, nn.Module):
         # Route through forward so DistributedDataParallel registers its grad-sync hooks;
         # single-process training calls this identically.
         return self.loss_components(batch, phase=phase)
-
-
 
     def set_phase(self, phase: str) -> None:
         """Curriculum switch. The reward branch trains in BOTH phases (freezing it in

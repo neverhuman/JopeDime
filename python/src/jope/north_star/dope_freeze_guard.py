@@ -44,6 +44,7 @@ else:  # Support direct execution from this package directory.
         _tensor_le_sha256,
     )
 
+
 def reject_research_dope_unfreeze(entrypoint: str) -> None:
     """Serving/flywheel entrypoints must never consume the research environment."""
     flag = os.environ.get("JOPE_RESEARCH_DOPE_UNFREEZE", "0")

@@ -1,7 +1,7 @@
 /// Summarize a timing journal against its plan: the report and each direct-request record.
 use super::*;
 
-fn summarize(plan: &Json, journal: &Path) -> Result<(Json, Vec<Json>)> {
+pub(super) fn summarize(plan: &Json, journal: &Path) -> Result<(Json, Vec<Json>)> {
     let q = read(&journal.join("qualification.json"));
     let qualification = qualified(plan, &q)?;
     let launch = read(&journal.join("launch.json"));

@@ -1,9 +1,9 @@
 use super::*;
 
-struct Finished {
-    code: i32,
-    stdout: Vec<u8>,
-    stderr: Vec<u8>,
+pub(crate) struct Finished {
+    pub(super) code: i32,
+    pub(super) stdout: Vec<u8>,
+    pub(super) stderr: Vec<u8>,
 }
 
 fn exit_code(status: ExitStatus) -> i32 {
@@ -79,7 +79,7 @@ pub(crate) fn run_process(args: &[String], dir: &Path, cutoff_ms: u64) -> Attemp
 }
 
 /// `str(UnicodeDecodeError)` for UTF-8 text.
-fn utf8_error(bytes: &[u8], error: &std::str::Utf8Error) -> String {
+pub(super) fn utf8_error(bytes: &[u8], error: &std::str::Utf8Error) -> String {
     let start = error.valid_up_to();
     match error.error_len() {
         Some(_) => format!(
@@ -142,7 +142,7 @@ fn rust_literal(selected: &[Json]) -> Attempt<String> {
 
 /// `actual.get('kind') == 'values'`, one value per row and every value's bits equal to
 /// `expected`'s; Python's exception texts for malformed predictions.
-fn parity(actual: &Json, rows: usize, expected: &Json) -> Attempt<()> {
+pub(super) fn parity(actual: &Json, rows: usize, expected: &Json) -> Attempt<()> {
     let refused = || Err("prediction parity failed".to_owned());
     let Json::Object(members) = actual else {
         return Err(format!(

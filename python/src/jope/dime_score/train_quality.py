@@ -1,28 +1,15 @@
 from __future__ import annotations
 
-import json
 import math
-import os
-import random
-import time
-from collections.abc import Iterable, Iterator
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Dataset
 
 from .corpus import (
-    PAD,
-    DatasetUniformBatchSampler,
     TokenizedCorpus,
-    prepare_corpus,
-    sha256_file,
 )
-from .model import DimeScoreModel, partial_warm_start, score_losses
-
+from .model import DimeScoreModel, score_losses
 from .train_data import _collate, _validity_positive_weight
 
 

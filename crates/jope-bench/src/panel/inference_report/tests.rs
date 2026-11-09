@@ -1,3 +1,4 @@
+use super::summary::summarize;
 use super::*;
 
 #[path = "tests/tests_01.rs"]

@@ -429,6 +429,58 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:tools/visualization/tests/test_actual_trace.py": {
+      "reason": "Synthetic same-run trace/journal identity, FP32-bit closure and tamper-refusal controls; no private model, dataset or production inference capture. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_code_pages.py": {
+      "reason": "Synthetic full-source page wrapping, raster completeness and output-bound controls; fixtures are not fitted or emitted models. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_endcap_film.py": {
+      "reason": "Film timeline retiming, frame-cue and PCM prefix/fade controls using synthetic frames and audio; no rendering or model qualification. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_h256_selection.py": {
+      "reason": "Synthetic final-cost selection and source-driver readout controls without private models; no H256 performance or live inference qualification. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_h256_trace.py": {
+      "reason": "Synthetic tensor producer/consumer graph, weight identity and capture-confinement refusal controls; no checkpoint replay or production tensor evidence. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_input_influence.py": {
+      "reason": "Synthetic displayed-row perturbation and sensitivity normalization controls; no fitted-model attribution or dataset outcome qualification. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_intelligence_wave.py": {
+      "reason": "Display-only source scrolling, row shuffle, percentile/header weighting and wave confinement controls; no inference throughput or model quality qualification. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_multilingual_code_pages.py": {
+      "reason": "Synthetic syntax-highlighting and lossless full-source page controls across display languages; no generated-code compiler/runtime parity qualification. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_native_scaling.py": {
+      "reason": "Source rerasterization and high-bit image compositing fixture controls; no native UHD render or GPU qualification. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_render_orchestration.py": {
+      "reason": "Render-controller configuration, output confinement, explicit admission, safe import/help and historical-source integrity controls; no SSH, GPU, render or production artifact replay. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_spatial_layouts.py": {
+      "reason": "Synthetic node-coordinate layout bounds, distinctness and geometry controls; no production neural graph or activation evidence. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_trace.py": {
+      "reason": "Tiny invented affine/bridge arithmetic, trace integrity, measured-rate refusal and GP-preview syntax controls; never used as production inference evidence. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
+    "python:tools/visualization/tests/test_veox_logo.py": {
+      "reason": "Supplied VEOX vector contour, hole and unsupported-path refusal controls for branding infrastructure; no model or rendering qualification. Run explicitly with the visualization fixture suite; this static classification makes no hosted execution claim.",
+      "role": "infrastructure"
+    },
     "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
       "reason": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
       "role": "research"
@@ -6008,6 +6060,24 @@
     "python:research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py": {
       "role": "research",
       "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
+    },
+    "target:jope-runtime/test/refittable_rust": {
+      "role": "regression",
+      "subsystems": [
+        "export"
+      ]
+    },
+    "python:research/flywheel_selfplay/h256_pre_condense_residual_flywheel/test_h256_pre_condense_flywheel.py": {
+      "role": "research",
+      "reason": "H256 pre-condense residual bypass (PreCondenseResidualBridge), Stage-1 Full-S3 7-split regression pretraining (11,121 Policy-B and 15,796 all-S3 regression cells), fitted SOS/SP critics, and unified H256_STATIC_0REV_TOP8_SOFT_VETO (DL-Train OOF 1.461114, DL-Val91 1.203296) + H256_ACTIVE_2PLUS2_UNIFIED (DL-Train OOF 1.489648, DL-Val91 1.201692) production models and KPI telemetry; frozen DOPE, research-only."
+    },
+    "python:research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/test_h257_phase2_curriculum.py": {
+      "role": "research",
+      "reason": "H257 Phase-2 warm-started subsample and GP evolutionary curriculum on top of H256; data-free semi-synthetic column/subsample view generator invariants and artifact-integrity checks; frozen DOPE, research-only, no serving qualification."
+    },
+    "python:research/flywheel_selfplay/h254_active2plus2_confirm/test_h254.py": {
+      "reason": "Owner-requested H254 data-free controls for independent frozen-constant replication of H252 Stage-1 ACTIVE_2PLUS2_HURDLE vs GATED_025 and R882 (snapshot SHA-256, fold seed 254140, byte-exact equivalence, zero DL-Val leakage guard, 4-reveal count audit, negative control permuted fitness, Holm m=2 decision rule, H239 A1 <30 GiB memory pause guard).",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

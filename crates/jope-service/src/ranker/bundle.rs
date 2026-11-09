@@ -3,6 +3,7 @@
 //! File hashes and the declared qualification matrix do not authenticate a
 //! bundle. The loader must verify the release signature before using either.
 
+use super::files;
 use jope_api::error::ErrorCode;
 use p256::{
     ecdsa::{signature::Verifier, Signature, VerifyingKey},

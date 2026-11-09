@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import math
 import random
-import re
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -12,21 +11,57 @@ from typing import Any
 
 import numpy as np
 
-from jope.data.importers import import_quant_reports
-from jope.data.labels import assign_elo, assign_ranks
+from jope.data.importers import import_quant_reports as import_quant_reports
+from jope.data.labels import assign_elo as assign_elo
+from jope.data.labels import assign_ranks as assign_ranks
 from jope.data.target_encoding import TARGET_VS_EMBED_DIM, encode_target_embedding
-from jope.data.vs import DATASET_SIGNATURE_DIM, VS_DIM, dataset_signature_from_vs, read_vs_matrix
-from jope.grammar import HEADS, TRANSFORMS
-from jope.io import write_jsonl
+from jope.data.vs import DATASET_SIGNATURE_DIM as DATASET_SIGNATURE_DIM
+from jope.data.vs import VS_DIM as VS_DIM
+from jope.data.vs import dataset_signature_from_vs as dataset_signature_from_vs
+from jope.data.vs import read_vs_matrix as read_vs_matrix
+from jope.grammar import HEADS as HEADS
+from jope.grammar import TRANSFORMS as TRANSFORMS
+from jope.io import write_jsonl as write_jsonl
 from jope.prime_config import load_config
-from jope.schema import TrainingRow, normalize_embedding
+from jope.schema import TrainingRow
+from jope.schema import normalize_embedding as normalize_embedding
 from jope.validator import RustValidator
+
+from .active_grammar import (
+    ACTIVE_MAX_TRANSFORMS as ACTIVE_MAX_TRANSFORMS,
+)
+from .active_grammar import (
+    _format_param as _format_param,
+)
+from .active_grammar import (
+    _freeze_vocab,
+    _param_token,
+    format_pipeline_actions,
+    parse_pipeline_actions,
+)
+from .active_grammar import (
+    _parse_param as _parse_param,
+)
+from .active_grammar import (
+    _parse_stage as _parse_stage,
+)
+from .active_grammar import (
+    _split_pipeline_stages as _split_pipeline_stages,
+)
+from .active_grammar import (
+    _tokenize_stage as _tokenize_stage,
+)
+from .active_grammar import (
+    format_param_token as format_param_token,
+)
+from .active_grammar import (
+    parse_param_token as parse_param_token,
+)
 
 ACTIVE_TRAIN_SIDECAR = "hyperion3train128dim.vs"
 ACTIVE_TEST_SIDECAR = "hyperion3test128dim.vs"
 ACTIVE_TRAIN_TARGET_SIDECAR = "train_target.vs"
 ACTIVE_TEST_TARGET_SIDECAR = "test_target.vs"
-ACTIVE_MAX_TRANSFORMS = 6
 TARGET_SUMMARY_DIM = TARGET_VS_EMBED_DIM
 DEFAULT_QUANT_ROOT = load_config().regression_dataset_root
 
@@ -353,13 +388,6 @@ def _count_splits(mapping: dict[str, str]) -> dict[str, int]:
         counts[split] += 1
     return counts
 
-
-
-from .active_grammar import (
-    _format_param, _parse_param, _split_pipeline_stages, _parse_stage,
-    _tokenize_stage, _freeze_vocab, _param_token,
-    format_pipeline_actions, format_param_token, parse_pipeline_actions, parse_param_token,
-)
 
 def build_active_corpus(
     *,

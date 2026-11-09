@@ -1,28 +1,33 @@
 use super::*;
 
+fn agent(timeout: Duration) -> ureq::Agent {
+    let builder = ureq::Agent::config_builder();
+    #[cfg(feature = "cloud-tls")]
+    let builder = builder.tls_config(
+        ureq::tls::TlsConfig::builder()
+            .unversioned_rustls_crypto_provider(Arc::new(
+                rustls::crypto::aws_lc_rs::default_provider(),
+            ))
+            .build(),
+    );
+    ureq::Agent::new_with_config(
+        builder
+            .proxy(None)
+            .max_redirects(0)
+            .http_status_as_error(false)
+            .timeout_global(Some(timeout))
+            .build(),
+    )
+}
+
 impl Client {
     pub fn new(workspace: &str, token: Option<String>, gateway: Option<Gateway>) -> Result<Self> {
         let workspace = origin(workspace)?;
         #[cfg(not(feature = "cloud-tls"))]
         anyhow::ensure!(
             workspace.starts_with("http://"),
-            "this jopedime build has no TLS; HTTPS workspaces need the cloud-tls feature"
+            "this jain build has no TLS; HTTPS workspaces need the cloud-tls feature"
         );
-        let builder = ureq::Agent::config_builder();
-        #[cfg(feature = "cloud-tls")]
-        let builder = builder.tls_config(
-            ureq::tls::TlsConfig::builder()
-                .unversioned_rustls_crypto_provider(Arc::new(
-                    rustls::crypto::aws_lc_rs::default_provider(),
-                ))
-                .build(),
-        );
-        let config = builder
-            .proxy(None)
-            .max_redirects(0)
-            .http_status_as_error(false)
-            .timeout_global(Some(Duration::from_secs(20)))
-            .build();
         if let Some(gateway) = &gateway {
             anyhow::ensure!(
                 origin(&gateway.origin)? == workspace,
@@ -33,8 +38,14 @@ impl Client {
             origin: workspace,
             token,
             gateway,
-            agent: ureq::Agent::new_with_config(config),
+            agent: agent(Duration::from_secs(20)),
         })
+    }
+    /// The same client with a different overall request budget (large uploads).
+    pub(crate) fn with_timeout(&self, timeout: Duration) -> Result<Self> {
+        let mut client = self.clone();
+        client.agent = agent(timeout);
+        Ok(client)
     }
     pub fn connected(c: &Connection) -> Result<Self> {
         Self::new(&c.origin, Some(c.token.clone()), c.gateway.clone())
@@ -70,6 +81,12 @@ impl Client {
             let mut value = ureq::http::HeaderValue::from_str(&value)?;
             value.set_sensitive(true);
             request.headers_mut().insert(name, value);
+        }
+        // The hashed device pseudonym, never the machine id; omitted when telemetry is off.
+        if let Some(device) = super::device::header() {
+            request
+                .headers_mut()
+                .insert("x-jain-device", ureq::http::HeaderValue::from_str(&device)?);
         }
         Ok(request)
     }

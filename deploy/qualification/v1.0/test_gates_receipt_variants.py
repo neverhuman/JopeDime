@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-import copy, hashlib, json, subprocess, unittest
+import contextlib
+import copy
+import hashlib
+import io
+import json
+import subprocess
+import sys
+import unittest
 from pathlib import Path
 from unittest.mock import patch
 

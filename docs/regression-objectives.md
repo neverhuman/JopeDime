@@ -264,7 +264,7 @@ load, so they are handled differently:
 
 Prefer a structural proxy, such as `model_bytes` for size or `program_nodes` for simplicity,
 whenever it expresses the business cost. The checked-in recipes are in
-[`examples/objectives/`](../examples/objectives/README.md#training-and-serving-cost-resource-aware-jope-pipeline-run---fitness).
+[`examples/objectives/`](../examples/objectives/README.md).
 `jopedime fit` cannot supply readings and reports the missing resource by name.
 
 ## API and MCP

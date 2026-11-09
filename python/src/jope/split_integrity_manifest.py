@@ -17,6 +17,7 @@ from .split_integrity import (
     canonical_sha256,
 )
 
+
 def _label_body(row: dict[str, Any]) -> dict[str, Any]:
     label = row.get("label")
     return label if isinstance(label, dict) else row

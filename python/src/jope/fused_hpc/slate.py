@@ -95,6 +95,8 @@ void build_live_96_slate_block256_cuda_kernel(
     }
 }
 """
+
+
 def _fnv1a_embs_hash_u64(embs_24: np.ndarray) -> np.ndarray:
     """Compute deterministic 64-bit FNV-1a keys over ``(..., 24)`` int32 embeddings."""
     arr = np.asarray(embs_24, dtype=np.int32)

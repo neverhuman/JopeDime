@@ -1,4 +1,5 @@
 """FIFO launch unittest mixins, imported by ``test_fifo_launch``."""
+from dataclasses import replace
 from pathlib import Path
 import fcntl
 import math

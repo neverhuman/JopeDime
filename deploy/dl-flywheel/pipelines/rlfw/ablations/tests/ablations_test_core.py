@@ -10,6 +10,7 @@ from rlfw.ablations.catalog import CatalogTrie
 from rlfw.ablations.compare import ci_verdict, lineage_deltas, score_context
 from rlfw.ablations.exact import effective_support, j_b, kl_divergence
 from rlfw.ablations.gumbel import gumbel_topk
+from rlfw.ablations.losses import dpo_loss, ipo_loss
 from rlfw.ablations.measured import build_pairs, checked_measurement
 from rlfw.ablations.ope import self_normalized_is, uniform_trie_ope
 from rlfw.ablations.puct import puct_select

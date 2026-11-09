@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import copy
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import torch
 from torch.nn import functional as F
 
 from ..model import _reward_listwise_loss
+
+if TYPE_CHECKING:
+    from .model_v3_arch import PolicyV3Batch
+
 from .losses import (
     LISTWISE_TARGET_TAU,
     PHASE_A_PROFILE,
@@ -25,6 +29,7 @@ from .losses import (
 class PolicyV3ModelMethods:
     def loss_components(self, batch: PolicyV3Batch, *, phase: str = "B") -> dict[str, torch.Tensor]:
         from .model_v3_arch import _task_lane_mask
+
         embedding = batch.embedding
         if self.training and self.training_embedding_jitter > 0.0 and embedding.shape[0] > 1:
             scale = embedding.std(dim=0, keepdim=True, unbiased=False).clamp_min(1e-6)
@@ -165,6 +170,7 @@ class PolicyV3ModelMethods:
 
     def checkpoint_payload(self, **extra: Any) -> dict[str, Any]:
         from .model_v3_arch import MODEL_VERSION, TASK_LANE
+
         return {
             "model_version": MODEL_VERSION,
             "model": self.state_dict(),

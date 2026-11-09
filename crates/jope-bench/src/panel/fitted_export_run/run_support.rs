@@ -69,25 +69,25 @@ pub(super) fn assess_records(
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct WorkerInput {
-    schema: String,
-    files: BTreeMap<String, String>,
-    commands: Vec<Vec<String>>,
-    runtimes: BTreeMap<String, Runtime>,
+    pub(super) schema: String,
+    pub(super) files: BTreeMap<String, String>,
+    pub(super) commands: Vec<Vec<String>>,
+    pub(super) runtimes: BTreeMap<String, Runtime>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct CommandReceipt {
-    arguments: Vec<String>,
-    program: Artifact,
-    started_unix_ms: u64,
-    finished_unix_ms: u64,
-    wall_seconds: f64,
-    exit_code: Option<i32>,
-    signal: Option<i32>,
-    stdout: Artifact,
-    stderr: Artifact,
+pub(super) struct CommandReceipt {
+    pub(super) arguments: Vec<String>,
+    pub(super) program: Artifact,
+    pub(super) started_unix_ms: u64,
+    pub(super) finished_unix_ms: u64,
+    pub(super) wall_seconds: f64,
+    pub(super) exit_code: Option<i32>,
+    pub(super) signal: Option<i32>,
+    pub(super) stdout: Artifact,
+    pub(super) stderr: Artifact,
 }
-fn equal(a: &impl Serialize, b: &impl Serialize) -> Result<bool> {
+pub(super) fn equal(a: &impl Serialize, b: &impl Serialize) -> Result<bool> {
     Ok(serde_json::to_value(a)? == serde_json::to_value(b)?)
 }
 pub(super) fn read<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
@@ -133,7 +133,7 @@ pub(super) fn verify_plan(plan: &RunPlan, prepared: &PreparedExport) -> Result<(
     );
     Ok(())
 }
-fn needed(commands: &[Vec<String>]) -> impl Iterator<Item = &str> {
+pub(super) fn needed(commands: &[Vec<String>]) -> impl Iterator<Item = &str> {
     commands
         .iter()
         .filter_map(|args| args.first().map(String::as_str))
@@ -201,7 +201,7 @@ pub(super) fn derived(
     let mut inputs = vec![
         Artifact {
             path: input_path.clone(),
-            sha256: super::methods::digest(&bytes),
+            sha256: super::super::methods::digest(&bytes),
         },
         plan.tools.clone(),
     ];
@@ -269,7 +269,7 @@ pub(super) fn input_path(job: &WorkerJob) -> Result<&Path> {
         .map(|item| item.path.as_path())
         .context("worker payload missing")
 }
-fn original_receipt(journal: &Path, job: &WorkerJob) -> Result<Option<WorkerOutcome>> {
+pub(super) fn original_receipt(journal: &Path, job: &WorkerJob) -> Result<Option<WorkerOutcome>> {
     let path = journal
         .join("finished")
         .join(format!("{}.json", job.identity()?));
@@ -365,7 +365,7 @@ pub(super) fn backend_report(
         dependency_failure.is_none(),
         "completed qualification has stale tool dependencies: {dependency_failure:?}"
     );
-    super::receipt_timing::completed_fit(&journal, &job, &outcome)?;
+    super::super::receipt_timing::completed_fit(&journal, &job, &outcome)?;
     let dependencies =
         jope_pipeline::execution::inventory_dependencies(std::slice::from_ref(&job))?;
     ensure!(
@@ -426,7 +426,8 @@ pub(super) fn backend_report(
     }
     let output = fs::read(job.directory.join("predictions.json"))?;
     ensure!(
-        super::methods::digest(&output) == commands.last().context("zero commands")?.stdout.sha256,
+        super::super::methods::digest(&output)
+            == commands.last().context("zero commands")?.stdout.sha256,
         "prediction output differs from executed program stdout"
     );
     match inference::verify_qualification(qualification, &qualification.identity()?, &output) {

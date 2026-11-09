@@ -28,18 +28,6 @@ flywheel path documented in ``FUSION_REDTEAM.md`` Part B (``HPC #1-#5``):
 
 from __future__ import annotations
 
-import hashlib
-import math
-from collections.abc import Callable, Sequence
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-from typing import Any
-
-import numpy as np
-import torch
-from torch import nn
-
-
 ALLOWED_GPU_NODES: tuple[str, ...] = ("xbabe1", "xbabe2", "xbabe3")
 DEFAULT_NODE_THROUGHPUT_WEIGHTS: dict[str, float] = {
     "xbabe1": 0.45,
@@ -63,24 +51,91 @@ PROBE_14_NAMES: tuple[str, ...] = (
     "lin",
 )
 
-from .accelerator_champion import (
+
+def _load_split_exports():
+    from .accelerator_champion import (
+        compute_table_seed_sha256_u32 as compute_table_seed_sha256_u32,
+    )
+    from .accelerator_champion import (
+        precompute_champion_topk_batched_gpu as precompute_champion_topk_batched_gpu,
+    )
+    from .accelerator_loading import (
+        PinnedBatchBufferPool as PinnedBatchBufferPool,
+    )
+    from .accelerator_loading import (
+        count_rust_tokens_out_of_loop as count_rust_tokens_out_of_loop,
+    )
+    from .accelerator_loading import (
+        parallel_load_dataset_splits as parallel_load_dataset_splits,
+    )
+    from .accelerator_schedule import (
+        FusedStageCudaGraphRunner as FusedStageCudaGraphRunner,
+    )
+    from .accelerator_schedule import (
+        ShapeBucketPlan as ShapeBucketPlan,
+    )
+    from .accelerator_schedule import (
+        _compute_schedule_padded_cells as _compute_schedule_padded_cells,
+    )
+    from .accelerator_schedule import (
+        _snapshot_dope_state_sha256 as _snapshot_dope_state_sha256,
+    )
+    from .accelerator_schedule import (
+        bucket_tables_2d_by_p_tier_and_ntr as bucket_tables_2d_by_p_tier_and_ntr,
+    )
+    from .accelerator_schedule import (
+        patch_fused_network_hpc as patch_fused_network_hpc,
+    )
+    from .accelerator_schedule import (
+        plan_multigpu_shards as plan_multigpu_shards,
+    )
+    from .accelerator_sort_corr import (
+        erf_approx_f64 as erf_approx_f64,
+    )
+    from .accelerator_sort_corr import (
+        exact_corr_with_yz_f64 as exact_corr_with_yz_f64,
+    )
+    from .accelerator_sort_corr import (
+        fused_14_probe_corrs_with_yz_f64 as fused_14_probe_corrs_with_yz_f64,
+    )
+    from .accelerator_sort_corr import (
+        reuse_monotone_sort_order_f64 as reuse_monotone_sort_order_f64,
+    )
+    from .accelerator_sort_corr import (
+        sort_valid_rows_radix_f64 as sort_valid_rows_radix_f64,
+    )
+    from .accelerator_sort_corr import (
+        sort_valid_values_radix_f64 as sort_valid_values_radix_f64,
+    )
+
+    return (
+        compute_table_seed_sha256_u32,
+        precompute_champion_topk_batched_gpu,
+        PinnedBatchBufferPool,
+        count_rust_tokens_out_of_loop,
+        parallel_load_dataset_splits,
+        FusedStageCudaGraphRunner,
+        ShapeBucketPlan,
+        _compute_schedule_padded_cells,
+        _snapshot_dope_state_sha256,
+        bucket_tables_2d_by_p_tier_and_ntr,
+        patch_fused_network_hpc,
+        plan_multigpu_shards,
+        erf_approx_f64,
+        exact_corr_with_yz_f64,
+        fused_14_probe_corrs_with_yz_f64,
+        reuse_monotone_sort_order_f64,
+        sort_valid_rows_radix_f64,
+        sort_valid_values_radix_f64,
+    )
+
+
+(
     compute_table_seed_sha256_u32,
     precompute_champion_topk_batched_gpu,
-)
-from .accelerator_sort_corr import (
-    erf_approx_f64,
-    exact_corr_with_yz_f64,
-    fused_14_probe_corrs_with_yz_f64,
-    reuse_monotone_sort_order_f64,
-    sort_valid_rows_radix_f64,
-    sort_valid_values_radix_f64,
-)
-from .accelerator_loading import (
     PinnedBatchBufferPool,
     count_rust_tokens_out_of_loop,
     parallel_load_dataset_splits,
-)
-from .accelerator_schedule import (
     FusedStageCudaGraphRunner,
     ShapeBucketPlan,
     _compute_schedule_padded_cells,
@@ -88,4 +143,11 @@ from .accelerator_schedule import (
     bucket_tables_2d_by_p_tier_and_ntr,
     patch_fused_network_hpc,
     plan_multigpu_shards,
-)
+    erf_approx_f64,
+    exact_corr_with_yz_f64,
+    fused_14_probe_corrs_with_yz_f64,
+    reuse_monotone_sort_order_f64,
+    sort_valid_rows_radix_f64,
+    sort_valid_values_radix_f64,
+) = _load_split_exports()
+del _load_split_exports

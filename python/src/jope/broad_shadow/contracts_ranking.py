@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import statistics
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any
 
 from .contracts_common import _finite, content_sha256
 from .contracts_receipts import validate_broad_receipt
+
 
 def build_hashed(schema: str, hash_field: str, **fields: Any) -> dict[str, Any]:
     """Build the canonical self-hashed envelope shared by all broad schemas."""

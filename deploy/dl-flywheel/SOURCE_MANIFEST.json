@@ -5,7 +5,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "b43ad671c69a6c472e932eaf34e8b6ba68870a42d3350d48a81d2dc73397c075"
+      "sha256": "7e655613baf48a38bab612f9d1bdcff005ff6e9505e244c5a387c0eede5b692a"
     },
     {
       "normalization": " PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Final PR395 additive exact NPZ target/vendor tamper control and retained upstream benchmark discovery; no prior mapping removed or floor reduced. PR414 C17 native integration: owning fast emitter lane adds required native C17 compiler contracts. All source memberships, original origin hashes and unrelated rows remain unchanged. Phase 7 flywheel self-play research: additive python-family registration and research source classifications; all prior entries and dispositions retained.",
@@ -284,7 +284,7 @@
       "origin": "split from deploy/dl-flywheel/jope_flywheel/batch_stream.py; canonical live implementation, frozen hpc_verified_v5 copy retained",
       "origin_sha256": "b63c028c2cbd22dbb41633b4db14d8a258bf72a063055fabff4f34edb8edb7fc",
       "path": "deploy/dl-flywheel/jope_flywheel/batch_stream_core.py",
-      "sha256": "b63c028c2cbd22dbb41633b4db14d8a258bf72a063055fabff4f34edb8edb7fc"
+      "sha256": "044b8aae2996c71ca858aa1a91d9df2073d04903a43c53cdb47e9ca14d6e7c9d"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evergreen.py",
@@ -296,13 +296,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evidence.py",
       "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
       "path": "deploy/dl-flywheel/jope_flywheel/evidence.py",
-      "sha256": "82c6e9a88bcc74ef937d36be6d158937ce36acd56a514bbb80edb4a5f7fc26c9"
-    },
-    {
-      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evidence.py",
-      "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
-      "path": "deploy/dl-flywheel/jope_flywheel/evidence_core.py",
-      "sha256": "e5ca4edccd49533715000cbec48364a6dcee5fe2f4fac05207fa0e01390d13d0"
+      "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9"
     },
     {
       "origin": "deploy/dl-flywheel/jope_flywheel/evidence.py validation primitives",
@@ -320,7 +314,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/paper_archive.py",
       "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
       "path": "deploy/dl-flywheel/jope_flywheel/paper_archive.py",
-      "sha256": "f34ea45833b5ac809cfd3831c45c2b15487eb0e2035a5de30583ebfa6e86f739"
+      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_gate.py",
@@ -488,6 +482,12 @@
       "sha256": "bcbb141d9441b8063914cec02a6a4cbd70abeb5256b2e1ce245e8f1df4f367eb"
     },
     {
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/model.py",
+      "origin_sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712",
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py",
+      "sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712"
+    },
+    {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/objective.py",
       "origin_sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36",
       "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/objective.py",
@@ -572,16 +572,22 @@
       "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
     },
     {
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_io.py",
+      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_io.py",
+      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
+    },
+    {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_worker.py",
       "origin_sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_worker.py",
       "sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33"
     },
     {
-      "origin": "Compatibility facade for the canonical continuous-runtime protocol implementation",
-      "origin_sha256": "c4ead6a91176178671c6949fc7915a03f867ff1710e091ae85437224ebc073db",
+      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/protocol.py",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py",
-      "sha256": "c3a6aa41d5e478a881be72e4dfb589dd93d3be85b0ba1e08fab7ffc0069d0d04"
+      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
     },
     {
       "origin": "Refactored from deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py; internal API names separated from frozen copies",
@@ -3795,7 +3801,7 @@
       "origin": "work/heartbeat-20261009-0616/native-v4/verified_cache.py",
       "origin_sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/verified_cache.py",
-      "sha256": "653959be6efe60a802dc260ddb5c921d5d0589559c2439339f57e63a2ff66716",
+      "sha256": "56731d243f7a0d7ec344a7565c393da8a0578218d365d82e3bc8f8f01fa5d3b3",
       "normalization": "Import CachedS3Library and CachedNativeTools from the unpinned canonical pipelines/hpc implementation; preserve hpc_verified_v5 and prepared evidence-pinned copies."
     },
     {
@@ -4956,7 +4962,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/dl-flywheel/run_offline.py",
       "origin_sha256": "bd75be69227f5014503344656ac0c5d744f1c8af2cd2021db56043a825d91a51",
       "path": "deploy/dl-flywheel/run_offline.py",
-      "sha256": "7d59f30cbdf01414026d2d26aaedd822cf9195c43d9e470330a4e5ffff66f94b"
+      "sha256": "bd7067f98a54dd4647c4bdf3561d3f3864e3e2bac6e7e295c060a0fbff21bf27"
     },
     {
       "normalization": "Portable isolated source/tests or additive metadata/docs. Pool runtime/tests byte-exact; RL math helpers/cases unchanged with explicit create-only output. Prior587 fixtures retained; only30 new fixtures executed.119 non-test classifications relocated with role/reason retained; both main RLFW families preserved.",
@@ -5333,7 +5339,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/revision2/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
       "origin_sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
-      "sha256": "56206bde5c72fe84966eb25a4ed921f7b1393bf23a43482fc2f52bace673b0d5"
+      "sha256": "5c975b370cce91e835662376beda8662103efe808232fd654ce05a79cc7181e6"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -5361,7 +5367,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
       "origin_sha256": "2dbe7d79921aa18bd182e2eec2ab3bc62646d2a99b30816be7b8b7140b9a669f",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
-      "sha256": "73ce5a349721d800ee08d3cc94564031ab651c9e16df15d91178b1def3d6f648"
+      "sha256": "96456dfebc037176e1eb0ac418e529d9a49d32ac4e46260fe91676c516daad1b"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -6082,7 +6088,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py (v2.0.0 learner build r3.1)",
       "origin_sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264",
       "path": "deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py",
-      "sha256": "4b7e329df7aa1056acb96127db9d20975eb96460295bd4bfbceb4803a36726cc"
+      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
     },
     {
       "normalization": "Byte copy of the v2.0.0 learner build r3.1 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",

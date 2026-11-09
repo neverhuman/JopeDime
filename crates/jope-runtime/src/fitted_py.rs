@@ -20,6 +20,7 @@ mod stage;
 mod tests;
 
 pub use emit::{
-    emit, emit_calibrated, emit_calibrated_with_checks, emit_math_pipeline, emit_with_checks,
-    emit_with_checks_and_platt, emit_with_platt, CheckRow,
+    emit, emit_calibrated, emit_calibrated_with_checks, emit_math_pipeline,
+    emit_math_pipeline_with_options, emit_with_checks, emit_with_checks_and_platt, emit_with_platt,
+    CheckRow,
 };

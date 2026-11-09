@@ -1,0 +1,15 @@
+# Rendering outputs belong in an explicit artifact directory outside Git.
+# Keep source, small icons, and supplied vector artwork versioned.
+*.blend
+*.blend[0-9]
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.webm
+*.exr
+*.wav
+*.flac
+*.pt
+*.npz
+*.npy

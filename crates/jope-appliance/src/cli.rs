@@ -25,7 +25,8 @@ mod serve_tests {
             ApplianceCommand::Serve {
                 status: false,
                 stop: false,
-                idle_exit: None
+                idle_exit: None,
+                ..
             }
         ));
         assert!(matches!(
@@ -35,7 +36,8 @@ mod serve_tests {
             ApplianceCommand::Serve {
                 status: true,
                 stop: false,
-                idle_exit: None
+                idle_exit: None,
+                ..
             }
         ));
         assert!(matches!(
@@ -45,14 +47,26 @@ mod serve_tests {
             ApplianceCommand::Serve {
                 status: false,
                 stop: true,
-                idle_exit: None
+                idle_exit: None,
+                ..
             }
         ));
         assert!(
-            matches!(Cli::try_parse_from(["jopedime", "serve", "--idle-exit", "2s"]).unwrap().command, ApplianceCommand::Serve { status: false, stop: false, idle_exit: Some(value) } if value == "2s")
+            matches!(Cli::try_parse_from(["jopedime", "serve", "--idle-exit", "2s"]).unwrap().command, ApplianceCommand::Serve { status: false, stop: false, idle_exit: Some(value), .. } if value == "2s")
         );
         assert!(Cli::try_parse_from(["jopedime", "serve", "--status", "--stop"]).is_err());
         assert!(Cli::try_parse_from(["jopedime", "serve", "--stop", "--idle-exit", "2s"]).is_err());
+        assert!(matches!(
+            Cli::try_parse_from(["jopedime", "serve", "--stop", "--force"])
+                .unwrap()
+                .command,
+            ApplianceCommand::Serve {
+                stop: true,
+                force: true,
+                ..
+            }
+        ));
+        assert!(Cli::try_parse_from(["jopedime", "serve", "--force"]).is_err());
     }
 }
 

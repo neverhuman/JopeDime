@@ -1,16 +1,23 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from pathlib import Path
 
 from ..grammars.spec import GrammarSpec
 from .tokens import (
-    GENERATION31_SNAPSHOT_SHA256, GENERATION31_TOKEN_SHA256, GENERATION31_VOCAB_SIZE,
-    ActionVocab, append_missing_task_tokens, build_action_vocab,
-    extend_action_vocab_append_only, extend_engine_ops_append_only,
+    GENERATION31_SNAPSHOT_SHA256,
+    GENERATION31_TOKEN_SHA256,
+    GENERATION31_VOCAB_SIZE,
+    ActionVocab,
+    append_missing_task_tokens,
+    build_action_vocab,
+    extend_action_vocab_append_only,
+    extend_engine_ops_append_only,
     reconcile_head_tasks_from_grammar,
 )
+
 
 def generation31_vocab_snapshot_path() -> Path:
     """Return the Prime-owned frozen grammar snapshot for generation 31."""
@@ -23,16 +30,11 @@ def generation31_vocab_snapshot_path() -> Path:
 
 def build_generation31_action_vocab(path: str | Path | None = None) -> ActionVocab:
     """Rehydrate and verify generation 31's immutable 1,103-token vocabulary."""
-    from ..grammars.spec import GrammarSpec
-
     snapshot_path = Path(path) if path is not None else generation31_vocab_snapshot_path()
     snapshot_bytes = snapshot_path.read_bytes()
     snapshot_hash = hashlib.sha256(snapshot_bytes).hexdigest()
     if snapshot_hash != GENERATION31_SNAPSHOT_SHA256:
-        raise ValueError(
-            "generation-31 grammar snapshot drift: "
-            f"sha256={snapshot_hash}"
-        )
+        raise ValueError(f"generation-31 grammar snapshot drift: sha256={snapshot_hash}")
     snapshot = json.loads(snapshot_bytes)
     if snapshot.get("schema_version") != 4 or snapshot.get("syntax") != "active_multi_engine_v3":
         raise ValueError("generation-31 vocabulary snapshot has an unsupported schema")
@@ -41,19 +43,16 @@ def build_generation31_action_vocab(path: str | Path | None = None) -> ActionVoc
         raise ValueError("generation-31 vocabulary snapshot must contain featmath then newmath")
     specs = [GrammarSpec.from_json(engines[name]) for name in ("featmath", "newmath")]
     vocab = build_action_vocab(specs)
-    payload = json.dumps(
-        vocab.tokens, ensure_ascii=False, separators=(",", ":")
-    ).encode("utf-8")
+    payload = json.dumps(vocab.tokens, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     token_hash = hashlib.sha256(payload).hexdigest()
     if vocab.size != GENERATION31_VOCAB_SIZE or token_hash != GENERATION31_TOKEN_SHA256:
         raise ValueError(
-            "generation-31 vocabulary snapshot drift: "
-            f"size={vocab.size}, token_sha256={token_hash}"
+            f"generation-31 vocabulary snapshot drift: size={vocab.size}, token_sha256={token_hash}"
         )
-    if (
-        vocab.tokens[59] != "VAL=featmath:bin_onehot:bins=15"
-        or vocab.tokens[-2:] != ["TASK=regression", "TASK=binary"]
-    ):
+    if vocab.tokens[59] != "VAL=featmath:bin_onehot:bins=15" or vocab.tokens[-2:] != [
+        "TASK=regression",
+        "TASK=binary",
+    ]:
         raise ValueError("generation-31 vocabulary boundary fixture drift")
     return vocab
 
@@ -63,18 +62,13 @@ def build_prime_action_vocab() -> ActionVocab:
     from ..grammars import grammar_for, prime_grammar
     from ..grammars.prime import registry_snapshot
 
-    vocab = extend_action_vocab_append_only(
-        build_generation31_action_vocab(), prime_grammar()
-    )
+    vocab = extend_action_vocab_append_only(build_generation31_action_vocab(), prime_grammar())
     compatibility_names = [
         str(entry["name"])
         for entry in registry_snapshot()
-        if entry.get("role") == "head"
-        and "compatibility" in entry.get("tags", [])
+        if entry.get("role") == "head" and "compatibility" in entry.get("tags", [])
     ]
-    compatibility_names.extend(
-        ("logit_ridge", "tab_boost", "gam_boost", "extra_trees")
-    )
+    compatibility_names.extend(("logit_ridge", "tab_boost", "gam_boost", "extra_trees"))
     # Four-task program: the multiclass decode heads. These are genuinely NEW
     # tokens (the snapshot has no multiclass head at all), appended here — after
     # every pre-existing op and before the TASK tokens — so every id below the

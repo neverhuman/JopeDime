@@ -2,12 +2,23 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 
 from .contracts_common import (
-    BROAD_CATALOG_SCHEMA, DATASET_EMBEDDING_DIMENSIONS, PILOT_DATASET_COUNT,
-    REAL_SPLIT_COUNTS, REAL_SPLITS, SYNTHETIC_SPLITS, TARGET_SUMMARY_DIMENSIONS,
-    _content_hash, _dataset, _exact_fields, _positive_integer, _safe_relative_path, _sha256,
+    BROAD_CATALOG_SCHEMA,
+    DATASET_EMBEDDING_DIMENSIONS,
+    REAL_SPLIT_COUNTS,
+    REAL_SPLITS,
+    SYNTHETIC_SPLITS,
+    TARGET_SUMMARY_DIMENSIONS,
+    _content_hash,
+    _dataset,
+    _exact_fields,
+    _positive_integer,
+    _safe_relative_path,
+    _sha256,
+    _slug,
 )
 
 _ENCODING_FIELDS = {"sha256", "path", "offset_bytes", "dimensions", "dtype"}

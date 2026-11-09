@@ -12,53 +12,98 @@ Architecture (per the approved plan):
 
 from __future__ import annotations
 
-import copy
-import math
-from collections.abc import Sequence
-from dataclasses import dataclass, field
-from typing import Any
-
-import torch
-from torch import nn
-from torch.nn import functional as F
-
-from ..model import _reward_listwise_loss
-from .automaton import replay_masks
+from ..model import _reward_listwise_loss as _reward_listwise_loss
+from .automaton import replay_masks as replay_masks
 from .losses import (
-    LISTWISE_TARGET_TAU,
-    PHASE_A_PROFILE,
-    PHASE_B_PROFILE,
-    POLICY_V3_LOSS_COMPONENTS,
-    STABILITY_POS_WEIGHT,
-    bootstrap_mask,
-    kg_combine,
-    masked_sequence_nll,
-    rank_pct_listwise_terms,
-    rwr_weights,
-    self_play_bt_loss,
-    stability_bce_term,
+    LISTWISE_TARGET_TAU as LISTWISE_TARGET_TAU,
 )
-from .tokens import PAD, ActionVocab, encode_actions
-
-
+from .losses import (
+    PHASE_A_PROFILE as PHASE_A_PROFILE,
+)
+from .losses import (
+    PHASE_B_PROFILE as PHASE_B_PROFILE,
+)
+from .losses import (
+    POLICY_V3_LOSS_COMPONENTS as POLICY_V3_LOSS_COMPONENTS,
+)
+from .losses import (
+    STABILITY_POS_WEIGHT as STABILITY_POS_WEIGHT,
+)
+from .losses import (
+    bootstrap_mask as bootstrap_mask,
+)
+from .losses import (
+    kg_combine as kg_combine,
+)
+from .losses import (
+    masked_sequence_nll as masked_sequence_nll,
+)
+from .losses import (
+    rank_pct_listwise_terms as rank_pct_listwise_terms,
+)
+from .losses import (
+    rwr_weights as rwr_weights,
+)
+from .losses import (
+    self_play_bt_loss as self_play_bt_loss,
+)
+from .losses import (
+    stability_bce_term as stability_bce_term,
+)
 from .model_v3_arch import (
-    DATASET_BLOCK_RMS,
-    DEFAULT_TARGET_KEEP_DIM,
-    LEGACY_MODEL_VERSION,
-    MAX_SEQ_LEN,
-    MODEL_VERSION,
-    TARGET_BLOCK_RMS,
-    TARGET_TAIL_CHECK_BATCHES,
-    TASK_LANE,
-    JopePolicyModelV3,
-    PolicyV3Batch,
-    _task_lane_mask,
+    DATASET_BLOCK_RMS as DATASET_BLOCK_RMS,
+)
+from .model_v3_arch import (
+    DEFAULT_TARGET_KEEP_DIM as DEFAULT_TARGET_KEEP_DIM,
+)
+from .model_v3_arch import (
+    LEGACY_MODEL_VERSION as LEGACY_MODEL_VERSION,
+)
+from .model_v3_arch import (
+    MAX_SEQ_LEN as MAX_SEQ_LEN,
+)
+from .model_v3_arch import (
+    MODEL_VERSION as MODEL_VERSION,
+)
+from .model_v3_arch import (
+    TARGET_BLOCK_RMS as TARGET_BLOCK_RMS,
+)
+from .model_v3_arch import (
+    TARGET_TAIL_CHECK_BATCHES as TARGET_TAIL_CHECK_BATCHES,
+)
+from .model_v3_arch import (
+    TASK_LANE as TASK_LANE,
+)
+from .model_v3_arch import (
+    JopePolicyModelV3 as JopePolicyModelV3,
+)
+from .model_v3_arch import (
+    PolicyV3Batch as PolicyV3Batch,
+)
+from .model_v3_arch import (
+    _task_lane_mask as _task_lane_mask,
 )
 from .model_v3_batch import (
-    encode_row_artifacts,
-    pad_sequences,
-    precompute_row_artifacts,
-    row_artifact_key,
-    rows_to_policy_v3_batch,
+    encode_row_artifacts as encode_row_artifacts,
 )
-from .model_v3_checkpoint import _validate_action_vocab_compatibility, load_policy_v3
+from .model_v3_batch import (
+    pad_sequences as pad_sequences,
+)
+from .model_v3_batch import (
+    precompute_row_artifacts as precompute_row_artifacts,
+)
+from .model_v3_batch import (
+    row_artifact_key as row_artifact_key,
+)
+from .model_v3_batch import (
+    rows_to_policy_v3_batch as rows_to_policy_v3_batch,
+)
+from .model_v3_checkpoint import (
+    _validate_action_vocab_compatibility as _validate_action_vocab_compatibility,
+)
+from .model_v3_checkpoint import (
+    load_policy_v3 as load_policy_v3,
+)
+from .tokens import PAD as PAD
+from .tokens import ActionVocab as ActionVocab
+from .tokens import encode_actions as encode_actions

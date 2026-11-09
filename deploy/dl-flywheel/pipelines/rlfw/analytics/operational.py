@@ -29,7 +29,7 @@ UNMEASURED = {
     "expected_distinct_D_B": "programs",
     "archive_exposure_by_parent": "exposures",
     "actor_probability_movement_on_verified_improvements": "probability",
-    "entropy": "natural-log units",
+    "entropy": "nats",
     "heldout_gain_per_declared_resource_budget": "gain/budget",
     "parent_l6_paired_mean_delta": "loss",
 }

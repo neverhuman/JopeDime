@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from jope_diskd_cache import fail_walk
-from jope_diskd_constants import OFFLOAD_PREFIX
+from jope_diskd_constants import OFFLOAD_PREFIX, PROTECTED_PARTS, TARGET_EVIDENCE_SUFFIXES
 
 from jope_diskd_worktrees import current_uid, parse_worktree_list, protected_path, under_home
 

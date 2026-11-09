@@ -1,0 +1,29 @@
+from argparse import Namespace
+from pathlib import Path
+import sys
+
+builder, capture, output = map(Path, sys.argv[sys.argv.index("--") + 1:])
+sys.path.insert(0, str(builder))
+import jain_cinematic
+from jain_spatial_layouts import BIOLOGICAL_LAYOUTS
+from h256_stage2_validate import validate
+
+trace = capture / "gp-source-pp/trace.json"
+proof = trace.parent
+saved = proof / "validation.receipt.json"
+data, validation = validate(trace, saved_receipt=saved, gp_root=proof)
+for layout in BIOLOGICAL_LAYOUTS:
+    destination = output / layout / "scene.blend"
+    if destination.parent.exists():
+        raise FileExistsError(destination.parent)
+    print(f"Building {layout}", flush=True)
+    jain_cinematic.build(data, validation, Namespace(
+        trace=trace, saved_validation=saved, gp_proof=proof,
+        code_pages=capture / "code-pages",
+        influence=capture / "cell-influence-5/influence.json",
+        metrics=capture / "metrics/catalog.receipt.json",
+        dataset_catalog=capture / "dataset-catalog.json",
+        output=destination, width=1920, height=1080, samples=24, fps=30,
+        animation_loop=True, loop_frames=120, save_only=True,
+        code_hold_frames=6, render_frame=[], spatial_layout=layout,
+    ))

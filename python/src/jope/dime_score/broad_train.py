@@ -13,10 +13,25 @@ from typing import Any
 import numpy as np
 import torch
 
-from jope.broad_shadow.corpus import BroadCorpus, ExactOnceBatchSampler
+from jope.broad_shadow.corpus import BroadCorpus
+from jope.broad_shadow.corpus import ExactOnceBatchSampler as ExactOnceBatchSampler
 
-from .model import DimeBroadCritic, broad_critic_losses, broad_partial_warm_start
-from .train import MINIMUM_VRAM_HEADROOM_MIB
+from .model import DimeBroadCritic, broad_critic_losses
+
+
+def __getattr__(name: str) -> Any:
+    modules = {
+        "ensemble_predict": "broad_train_loop",
+        "train_broad_critic": "broad_train_loop",
+        "broad_partial_warm_start": "model",
+        "MINIMUM_VRAM_HEADROOM_MIB": "train",
+    }
+    module_name = modules.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from importlib import import_module
+
+    return getattr(import_module(f".{module_name}", __package__), name)
 
 
 @dataclass
@@ -448,7 +463,3 @@ def _autotune_broad_batch(
         "candidates": records,
         "selected": selected,
     }
-
-
-
-from .broad_train_loop import ensemble_predict, train_broad_critic

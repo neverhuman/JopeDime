@@ -6,8 +6,10 @@ use serde_json::Value;
 use std::io::Write;
 
 mod args;
+mod cloud;
 use args::parse_value;
 pub use args::RunArgs;
+pub(crate) use cloud::sync_after;
 
 #[cfg(not(windows))]
 type RunInterrupts = super::inproc::Interrupts;
@@ -46,6 +48,15 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
     if args.m1_plan.is_some() {
         return run_m1(&args);
     }
+    // A release executable separated from its package stops before anything starts.
+    crate::bootstrap::open()?;
+    // Own data that cannot run (signed out, waitlisted, `--local`) stops here, before the
+    // background engine is started; `run` checks again when it routes the registered table.
+    if let Some(path) = &args.input {
+        let path = crate::terminal::demos::resolve(path);
+        let effort: jope_api::Effort = parse_value(&args.effort)?;
+        cloud::preflight(&args, crate::terminal::demos::is_bundled(&path), effort)?;
+    }
     use jope_client::discover::{self, Engine, Mode, Options};
     let selection = discover::discover(&Options {
         home: jope_paths::jopedime_home(),
@@ -54,8 +65,20 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
         mode: Mode::Batch,
         engine_available: cfg!(feature = "engine"),
     })?;
+    if let Some(notice) = discover::take_notice() {
+        eprintln!("{notice}");
+    }
     match selection {
-        Engine::Background(background) => run(args, &background.client),
+        Engine::Background(background) => {
+            if background.version != env!("CARGO_PKG_VERSION") {
+                eprintln!(
+                    "jain: the background engine is version {}, this executable {}",
+                    background.version,
+                    env!("CARGO_PKG_VERSION")
+                );
+            }
+            run(args, &background.client)
+        }
         // An explicit endpoint is authoritative. Never substitute a daemon or
         // legacy server when the selected endpoint cannot be authenticated.
         Engine::Endpoint(_) => Err(DispatchUnavailable::EndpointCredentials.into()),
@@ -233,7 +256,17 @@ fn validate_m1_spec(
 pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()> {
     let export_refit: Refit = parse_value(&args.refit)?;
     let key = crate::common::resolve_idempotency_key(args.idempotency_key.as_deref());
+    let mut registered: Option<(String, jope_api::DatasetProfile)> = None;
     if let Some(path) = args.input.take() {
+        // `example/<name>.csv` reaches the bundled demos, as in the TUI.
+        let path = crate::terminal::demos::resolve(&path);
+        // Own data: decide where it trains and check the login before registering anything.
+        let routed = if args.json_m1() {
+            cloud::Routed::Local
+        } else {
+            let effort: jope_api::Effort = parse_value(&args.effort)?;
+            cloud::preflight(&args, crate::terminal::demos::is_bundled(&path), effort)?
+        };
         let name = path
             .file_name()
             .and_then(|name| name.to_str())
@@ -251,21 +284,65 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
             name: Some(name.into()),
         };
         let profile = transport.dataset_register(&request, Some(&registration_key))?;
-        if args.task == "auto" {
-            if let Some(task) = crate::draft::inferred_tasks(&profile).get(&args.target) {
-                args.task = serde_json::to_value(task)?
-                    .as_str()
-                    .ok_or_else(|| anyhow::anyhow!("task did not encode as a name"))?
-                    .to_owned();
+        apply_profile_defaults(&mut args, &profile)?;
+        args.dataset = Some(profile.dataset_id.to_string());
+        registered = Some((name.to_owned(), profile.clone()));
+        if let cloud::Routed::Cloud {
+            decision,
+            connection,
+            tier,
+        } = routed
+        {
+            let effort: jope_api::Effort = parse_value(&args.effort)?;
+            return cloud::run_in_cloud(
+                &args,
+                &absolute,
+                &profile,
+                effort,
+                &decision,
+                &connection,
+                tier,
+            );
+        }
+    } else if let Some(dataset) = args.dataset.as_deref() {
+        // `--dataset ID` gets the defaults a CSV gets (#2145): the task inferred from the stored
+        // profile, and the dataset's own name (not its `ds_…` identifier) as the run label.
+        if let Ok(id) = dataset.parse::<jope_api::ids::DatasetId>() {
+            if let Ok(profile) = transport.dataset_inspect(&id) {
+                // A registered table that is not a bundled example is own data: it trains in the
+                // veox Cloud, from its file (an engine dataset has no file to upload).
+                if crate::cloud::route::cloud_first()
+                    && !crate::terminal::demos::is_bundled_profile(&profile)
+                {
+                    return Err(jope_runtime::Failure::input(OWN_DATASET));
+                }
+                apply_profile_defaults(&mut args, &profile)?;
+                registered = Some((profile.name.clone(), profile));
             }
         }
-        if args.languages.is_empty() {
-            args.languages = vec!["rust".into(), "python".into()];
-        }
-        args.dataset = Some(profile.dataset_id.to_string());
+    }
+    if args.languages.is_empty() {
+        args.languages = DEFAULT_LANGUAGES.iter().map(|&l| l.to_owned()).collect();
     }
     let spec = args.run_spec()?;
-    let response = transport.run_start(&spec, Some(&key))?;
+    let response = transport.run_start(&spec, Some(&key)).map_err(|error| {
+        if crate::terminal::runs::is_busy(&error.to_string()) {
+            let run = crate::terminal::runs::active_run(transport);
+            jope_runtime::Failure::backend(crate::terminal::runs::busy_message(run.as_ref(), false))
+        } else {
+            explain_start(error)
+        }
+    })?;
+    if let (RunResult::Started(snapshot), false) = (&response, args.json_m1()) {
+        let (name, profile) = match registered {
+            Some((name, profile)) => (name, Some(profile)),
+            None => (spec.dataset.to_string(), None),
+        };
+        crate::cloud::remember_run(
+            &snapshot.run_id,
+            &crate::cloud_events::RunContext::from_spec(&spec, &name, profile),
+        );
+    }
     match response {
         RunResult::Plan(plan) => write_json(&*plan),
         RunResult::Started(snapshot) if args.detach => {
@@ -361,6 +438,13 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
                 &interrupts,
                 &mut std::io::stderr().lock(),
             )?;
+            if current.state == RunState::Completed && !args.json_m1() {
+                // A plain line on stderr when the time budget cut the search short (#2134).
+                if let Some(line) = crate::terminal::status::budget_stop_line(&current) {
+                    eprintln!("{line}");
+                }
+                cloud::sync_after(transport, &current.run_id);
+            }
             if current.state == RunState::Failed {
                 write_run_id(&mut std::io::stderr().lock(), &current.run_id)?;
                 return Err(jope_runtime::Failure::backend(
@@ -384,6 +468,44 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
                 write_json(&current)
             }
         }
+    }
+}
+
+/// `--dataset ID` of the user's own table where own data trains only in the veox Cloud.
+pub(crate) const OWN_DATASET: &str = "Your own data trains in the veox Cloud, from its file: `jain run FILE.csv --target COLUMN` (jAIn asks before uploading). On this machine `--dataset` runs only the bundled examples.";
+
+/// Export languages when none are named: the TUI's default, so every path runs the same way.
+pub(crate) const DEFAULT_LANGUAGES: [&str; 2] = ["rust", "python"];
+
+/// `--task auto`: the task the dataset profile implies for the target, when it implies one.
+fn apply_profile_defaults(
+    args: &mut RunArgs,
+    profile: &jope_api::DatasetProfile,
+) -> anyhow::Result<()> {
+    if args.task == "auto" {
+        if let Some(task) = crate::draft::inferred_tasks(profile).get(&args.target) {
+            args.task = serde_json::to_value(task)?
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("task did not encode as a name"))?
+                .to_owned();
+        }
+    }
+    Ok(())
+}
+
+/// Name the flag that fixes a refused run start, when the refusal says which one (#2145).
+fn explain_start(error: jope_client::transport::TransportError) -> anyhow::Error {
+    let text = error.to_string();
+    let hint = if text.contains("requires task=regression") {
+        Some("this engine runs regression only: pass `--task regression` with a numeric `--target` column")
+    } else if text.contains("export language") {
+        Some("pass `--language rust,python` (or rust, python, javascript)")
+    } else {
+        None
+    };
+    match hint {
+        Some(hint) => anyhow::Error::new(error).context(format!("the run was not started; {hint}")),
+        None => error.into(),
     }
 }
 
@@ -416,7 +538,7 @@ fn export_best<T: Transport>(
     Ok(serde_json::to_value(manifest)?)
 }
 
-fn wait_status<T: Transport>(
+pub(crate) fn wait_status<T: Transport>(
     transport: &T,
     snapshot: &RunSnapshot,
     seconds: u64,

@@ -135,7 +135,10 @@ fn a_resource_objective_records_every_reading_and_reverifies_from_them() {
         .collect();
     assert!(!measured.is_empty());
     for o in &measured {
-        let r = o.resources.as_ref().expect("every candidate records its readings");
+        let r = o
+            .resources
+            .as_ref()
+            .expect("every candidate records its readings");
         for var in [
             ResourceVar::FitSeconds,
             ResourceVar::PredictSeconds,
@@ -198,8 +201,10 @@ fn measured_resource_objectives_need_one_candidate_at_a_time() {
         .iter()
         .flat_map(|(_, o)| o)
         .filter(|o| o.measured())
-        .all(|o| o.resources.as_ref().unwrap()[&jope_runtime::fitness::ResourceVar::FitSeconds]
-            >= 0.0));
+        .all(
+            |o| o.resources.as_ref().unwrap()[&jope_runtime::fitness::ResourceVar::FitSeconds]
+                >= 0.0
+        ));
 }
 
 #[test]
@@ -207,13 +212,22 @@ fn a_seed_limit_admits_more_seeds_into_generation_zero() {
     let offered: Vec<(String, &'static str)> = (1..=8)
         .map(|k| {
             (
-                format!("(pipe X (rff_cos gamma=1.0 n={} seed={k}) (ridge_gcv))", 8 * k),
+                format!(
+                    "(pipe X (rff_cos gamma=1.0 n={} seed={k}) (ridge_gcv))",
+                    8 * k
+                ),
                 crate::seeds::FROM_SEEDS_FILE,
             )
         })
         .collect();
-    assert_eq!(crate::seeds::admit(&offered).unwrap().seeds.len(), search::ELITES);
-    assert_eq!(crate::seeds::admit_up_to(&offered, 8).unwrap().seeds.len(), 8);
+    assert_eq!(
+        crate::seeds::admit(&offered).unwrap().seeds.len(),
+        search::ELITES
+    );
+    assert_eq!(
+        crate::seeds::admit_up_to(&offered, 8).unwrap().seeds.len(),
+        8
+    );
     assert!(crate::seeds::admit_up_to(&offered, 0).is_err());
     assert!(crate::seeds::admit_up_to(&offered, crate::seeds::MAX_SEED_LIMIT + 1).is_err());
 

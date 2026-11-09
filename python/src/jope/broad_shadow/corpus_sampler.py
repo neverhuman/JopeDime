@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict, deque
 from collections.abc import Iterator, Mapping, Sequence
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 

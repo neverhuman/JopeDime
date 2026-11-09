@@ -2,7 +2,7 @@ use super::*;
 
 pub fn auth_command(command: AuthCommand) -> Result<()> {
     match command {
-        AuthCommand::Status => println!("{}", account_label()),
+        AuthCommand::Status => println!("{}", auth_status()),
         AuthCommand::Logout => println!("{}", logout()?),
         AuthCommand::Login {
             workspace,
@@ -33,7 +33,7 @@ pub fn auth_command(command: AuthCommand) -> Result<()> {
                     device.verification_uri_complete, device.user_code
                 );
                 io::stdout().flush()?;
-                if !no_browser {
+                if !no_browser && super::flow::browser_allowed() {
                     let _ = open_browser(&device.verification_uri_complete);
                 }
                 client.finish_login(&device, &AtomicBool::new(false))?
@@ -46,19 +46,37 @@ pub fn auth_command(command: AuthCommand) -> Result<()> {
 pub fn cloud_command(command: CloudCommand) -> Result<()> {
     use jope_client::Transport;
     match command {
-        CloudCommand::Runs => {
+        CloudCommand::Runs {
+            json,
+            local,
+            cloud,
+            unsynced,
+            limit,
+        } => {
             let (entries, notice) = run_entries(&super::sync::local_client()?)?;
-            println!("{notice}");
-            for row in entries {
-                println!(
-                    "{} · {} · {}{}",
-                    row.id,
-                    row.status,
-                    row.availability(),
-                    row.cloud_url
-                        .map(|url| format!(" · {url}"))
-                        .unwrap_or_default()
-                );
+            let rows = filter_runs(entries, local, cloud, unsynced, limit);
+            if json {
+                for row in rows {
+                    println!(
+                        "{}",
+                        json!({"id":row.id,"status":row.status,"availability":row.availability(),
+                               "local":row.local.as_ref().map(ToString::to_string),"cloudUrl":row.cloud_url,
+                               "modelHere":row.model_here,"modelCloud":row.model_cloud})
+                    );
+                }
+            } else {
+                println!("{notice}");
+                for row in rows {
+                    println!(
+                        "{} · {} · {}{}",
+                        row.id,
+                        row.status,
+                        row.availability(),
+                        row.cloud_url
+                            .map(|url| format!(" · {url}"))
+                            .unwrap_or_default()
+                    );
+                }
             }
         }
         CloudCommand::Sync { run } => {
@@ -78,6 +96,7 @@ pub fn cloud_command(command: CloudCommand) -> Result<()> {
                         .unwrap_or_else(|error| format!("Run events: {error:#}"))
                 );
             }
+            println!("{RUNS_HINT}");
         }
         CloudCommand::Publish {
             run,
@@ -98,42 +117,140 @@ pub fn cloud_command(command: CloudCommand) -> Result<()> {
             } else if let Some(model) = model {
                 println!("{}", publish_model(&run, &model)?);
             } else {
-                println!("{}", publish_best(&run)?);
+                // A finished local run: export its model and generated code here and send both,
+                // as the results sync does, with no hand-made ZIP (#2146).
+                let local = super::sync::local_client()?;
+                let id: jope_api::ids::RunId = run.parse()?;
+                if local.run_status(&id)?.state == jope_api::RunState::Completed {
+                    for line in sync_results(&local, &id, None)? {
+                        println!("{line}");
+                    }
+                } else {
+                    println!("{}", publish_best(&run)?);
+                }
             }
+            println!("{RUNS_HINT}");
         }
+        CloudCommand::Results { setting } => println!("{}", results_command(setting)?),
         CloudCommand::Telemetry { setting } => println!("{}", sync::telemetry_command(setting)?),
         CloudCommand::Fetch { run } => println!("{}", fetch_model(&run)?),
+        CloudCommand::Feedback {
+            kind,
+            summary,
+            details,
+            source,
+            tools,
+        } => {
+            let mut feedback =
+                super::feedback::Feedback::new(&kind, &source, &summary, details.as_deref())?;
+            feedback.tools_used = tools;
+            println!("{}", super::feedback::send(&feedback)?);
+        }
     }
     Ok(())
 }
+
+/// Printed after a sync or publication.
+pub const RUNS_HINT: &str = "See all your runs: jain cloud runs";
+
+/// `cloud runs` filters: where a run exists, and how many.
+pub(crate) fn filter_runs(
+    entries: Vec<crate::terminal::runs::Entry>,
+    local: bool,
+    cloud: bool,
+    unsynced: bool,
+    limit: Option<usize>,
+) -> Vec<crate::terminal::runs::Entry> {
+    entries
+        .into_iter()
+        .filter(|e| {
+            let here = e.local.is_some() || e.local_record;
+            let there = e.cloud_url.is_some();
+            (!local || here) && (!cloud || there) && (!unsynced || (here && !there))
+        })
+        .take(limit.unwrap_or(usize::MAX))
+        .collect()
+}
+
+/// `jain auth status`: the login, the plan, and whether the account is admitted yet (owner rule
+/// 2026-11-06: own data trains in the veox Cloud only for an admitted account).
+fn auth_status() -> String {
+    let Ok(c) = connection() else {
+        return format!(
+            "Not signed in · jain auth login (accounts open from the waitlist: {})",
+            super::route::REGISTER_URL
+        );
+    };
+    match super::flow::admission(&c) {
+        Ok((tier, true)) => format!(
+            "VEOX: {} · plan {} · admitted: your own data trains in the veox Cloud",
+            c.email,
+            tier.map_or("unknown", |t| t.as_str())
+        ),
+        Ok((_, false)) => format!(
+            "VEOX: {} · on the waitlist: we'll email you when you're admitted ({}); the bundled demos work meanwhile",
+            c.email,
+            super::route::REGISTER_URL
+        ),
+        Err(error) => format!(
+            "VEOX: {} · the workspace could not be asked for the plan ({error:#})",
+            c.email
+        ),
+    }
+}
+
+/// `cloud results on|off`, and the terminal's `/sync on|off`: one stored answer.
+pub fn results_command(setting: Option<String>) -> Result<String> {
+    use crate::terminal::onboarding;
+    let home = jope_paths::jopedime_home();
+    match setting.as_deref() {
+        Some("on") => {
+            onboarding::update(&home, |s| s.results_sync = Some(true))?;
+        }
+        Some("off") => {
+            onboarding::update(&home, |s| s.results_sync = Some(false))?;
+        }
+        Some(_) => anyhow::bail!("use `on` or `off`"),
+        None => {}
+    }
+    Ok(match onboarding::load(&home).results_sync {
+        Some(true) => format!("Results sync on: {}", RESULTS_NOTE),
+        Some(false) => "Results sync off: finished local runs keep their model and code on this machine. Turn on with `jain cloud results on` (or /sync on).".into(),
+        // Outside the TUI nothing asks (journey J2-F07): say how to decide.
+        None => "Results sync not decided yet. Decide with `jain cloud results on` or `jain cloud results off` (in the terminal interface, /sync on|off; it also asks after your first finished local run while signed in).".into(),
+    })
+}
+
+/// What a results sync sends, for the consent question and the setting.
+pub const RESULTS_NOTE: &str = "after a local run finishes, its fitted model and generated code go to your workspace. No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from (rows of your training data) inside the fitted model.";
+
+/// The question asked once, the first time a logged-in local run finishes. The answer is a
+/// standing setting (`/sync on|off`, `jain cloud results on|off`), and the question says so (#2146).
+pub const RESULTS_QUESTION: &str = "Sync results (model + code, not your data) to your workspace, for this run and every later local run? No training rows are uploaded, except that kernel, smoother and Gaussian-process models keep the support rows they predict from inside the fitted model. Y turns results sync on (change it any time with /sync off); n keeps results on this machine. [Y/n]";
 
 pub fn spawn_login(
     workspace: String,
     sender: std::sync::mpsc::Sender<Vec<String>>,
     cancel: Arc<AtomicBool>,
+    done: Option<std::sync::mpsc::Sender<bool>>,
 ) {
     std::thread::spawn(move || {
-        let result = (|| -> Result<String> {
-            let client = Client::new(&workspace, None, gateway(None, &workspace)?)?;
-            let device = client.start_login()?;
-            let _ = sender.send(vec![
-                format!("Open {}", device.verification_uri_complete),
-                format!(
-                    "Pairing code: {} · sign in and approve this CLI in your browser.",
-                    device.user_code
-                ),
-            ]);
-            let _ = open_browser(&device.verification_uri_complete);
-            let c = client.finish_login(&device, &cancel)?;
-
-            Ok(format!(
-                "Signed in to {} as {}. Local datasets stay local; model publication is explicit.",
+        let result = super::flow::login_blocking(&workspace, &cancel, &mut |line| {
+            let _ = sender.send(vec![line]);
+        })
+        .map(|c| {
+            format!(
+                "Signed in to {} as {}. Your own data trains in the veox Cloud, and jAIn asks before uploading each table; publishing a model is always explicit.",
                 c.origin, c.email
-            ))
-        })();
+            )
+        });
+        let ok = result.is_ok();
         let _ = sender.send(vec![
             result.unwrap_or_else(|error| format!("Login: {error:#}"))
         ]);
+        if let Some(done) = done {
+            let _ = done.send(ok);
+        }
     });
 }
 pub fn default_workspace() -> String {

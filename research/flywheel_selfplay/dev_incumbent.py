@@ -611,6 +611,37 @@ class DevIncumbent:
         model.load_state_dict(self.model_state, strict=True)
         optimizer.load_state_dict(copy.deepcopy(self.optimizer_state))
 
+    def evaluate_candidate(
+        self, model, optimizer, novelty, parameter_sha, evaluate, round_idx
+    ):
+        """Refused bytes keep the incumbent and complete without a candidate score."""
+        if novelty.identity != self.identity:
+            raise ValueError("development evaluation identity changed")
+        try:
+            dev, train = novelty.evaluate(parameter_sha, evaluate)
+        except RejectedCandidateError as error:
+            self.restore(model, optimizer)
+            return (
+                None,
+                None,
+                {
+                    "round": round_idx,
+                    "evaluation_identity": self.identity,
+                    "candidate_parameter_sha256": parameter_sha,
+                    "candidate_evaluated": False,
+                    "candidate_utility": None,
+                    "first_rejected_round": novelty.rejected[parameter_sha],
+                    "reason": str(error),
+                    "previous_best_utility": self.best_utility,
+                    "accepted": False,
+                    "action": "refuse_rejected_candidate_keep_incumbent_and_continue_GP",
+                    "best_utility": self.best_utility,
+                    "best_round": self.best_round,
+                    "best_checkpoint": self.best_checkpoint,
+                },
+            )
+        return dev, train, None
+
     def accepts(self, utility: dict, identity: str):
         if identity != self.identity:
             raise ValueError("development evaluation identity changed")

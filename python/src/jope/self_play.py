@@ -15,24 +15,17 @@ State/telemetry (TUI-tailable, atomic):
 
 from __future__ import annotations
 
-import hashlib
 import json
-import math
-import subprocess
-import time
-from collections import defaultdict
 from pathlib import Path
-from typing import Any
 
-import torch
-
-from .data.active_v3 import robust_score
-from .engines import EngineRouter
-from .eval_ledger import iter_eval_regression_with_ledger
-from .io import read_jsonl
+from .data.active_v3 import robust_score as robust_score
+from .engines import EngineRouter as EngineRouter
+from .eval_ledger import iter_eval_regression_with_ledger as iter_eval_regression_with_ledger
+from .io import read_jsonl as read_jsonl
 from .prime_config import load_config
-from .propose import embedding_from_vs, target_summary_from_vs
-from .schema import TrainingRow
+from .propose import embedding_from_vs as embedding_from_vs
+from .propose import target_summary_from_vs as target_summary_from_vs
+from .schema import TrainingRow as TrainingRow
 
 PROJ = load_config().root
 NCCL_ENV = (
@@ -50,7 +43,46 @@ def _atomic_json(path: Path, payload: dict) -> None:
     tmp.replace(path)
 
 
-from .self_play_selection import (
+def _load_split_exports():
+    from .self_play_evaluation import SelfPlayEvaluationMixin
+    from .self_play_selection import (
+        _candidate_pool_id as _candidate_pool_id,
+    )
+    from .self_play_selection import (
+        _candidate_pool_record as _candidate_pool_record,
+    )
+    from .self_play_selection import (
+        _choose_deployed_candidate as _choose_deployed_candidate,
+    )
+    from .self_play_selection import (
+        _finite_float as _finite_float,
+    )
+    from .self_play_selection import (
+        _proposal_failure_exceeded as _proposal_failure_exceeded,
+    )
+    from .self_play_selection import (
+        _resolve_ship_decision as _resolve_ship_decision,
+    )
+    from .self_play_selection import (
+        deployment_elo as deployment_elo,
+    )
+    from .self_play_training import SelfPlayTrainingMixin
+
+    return (
+        SelfPlayEvaluationMixin,
+        _candidate_pool_id,
+        _candidate_pool_record,
+        _choose_deployed_candidate,
+        _finite_float,
+        _proposal_failure_exceeded,
+        _resolve_ship_decision,
+        deployment_elo,
+        SelfPlayTrainingMixin,
+    )
+
+
+(
+    SelfPlayEvaluationMixin,
     _candidate_pool_id,
     _candidate_pool_record,
     _choose_deployed_candidate,
@@ -58,9 +90,9 @@ from .self_play_selection import (
     _proposal_failure_exceeded,
     _resolve_ship_decision,
     deployment_elo,
-)
-from .self_play_training import SelfPlayTrainingMixin
-from .self_play_evaluation import SelfPlayEvaluationMixin
+    SelfPlayTrainingMixin,
+) = _load_split_exports()
+del _load_split_exports
 
 
 class SelfPlay(SelfPlayTrainingMixin, SelfPlayEvaluationMixin):

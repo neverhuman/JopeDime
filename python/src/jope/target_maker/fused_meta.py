@@ -1,67 +1,32 @@
 from __future__ import annotations
 
-import json
 import math
-import os
-import shutil
-import time
-from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import numpy as np
-import torch
-from torch.nn import functional as F
 
-from .artifact_pins import artifact_sha256, load_joblib_pinned
 from .classical import (
     PairIndex,
     RetrievalQuery,
-    WeightedScoreEnsemble,
-    WindowFeature,
-    _best_f1_threshold,
-    _classification_metrics,
-    _ensemble_members,
-    _ensemble_requested,
-    _limit_records,
     _model_artifact_name,
-    _model_specs,
     _score_model,
-    _split_records,
-    _validation_weights,
-    build_pair_indices,
-    build_retrieval_queries,
-    pair_feature_names,
-    pair_features,
     retrieval_metrics_from_scores,
-    select_window_features,
-    summarize_target_window,
 )
 from .data import (
     TASK_BINARY,
-    DatasetRecord,
-    bits_at_indices,
-    compute_profile,
-    deterministic_shuffle,
-    load_manifest,
-    read_target_input,
-    sample_indices,
-    stable_seed,
 )
-from .encode import encode_values, load_encoder, normalize_task
-from .model import build_model_from_checkpoint
-
 from .fused import (
     FusedTrainingConfig,
     _BatchEncoding,
-    _TargetEncoding,
     _cosine_scores,
     _jsonable_config,
     _model_pair_scores_for_batch,
     _safe_unit,
     _score_report_with_retrieval,
+    _TargetEncoding,
 )
+
 
 def _meta_feature_names(classical_names: Sequence[str]) -> list[str]:
     names = [f"classical_score:{name}" for name in classical_names]
@@ -81,6 +46,7 @@ def _meta_feature_names(classical_names: Sequence[str]) -> list[str]:
         ]
     )
     return names
+
 
 def _meta_features(
     batch: _BatchEncoding,
@@ -127,6 +93,7 @@ def _meta_features(
     rows[:, cursor : cursor + tail.shape[1]] = tail
     return np.nan_to_num(rows, nan=0.0, posinf=0.0, neginf=0.0)
 
+
 def _meta_features_for_two(
     left: _TargetEncoding,
     right: _TargetEncoding,
@@ -157,6 +124,7 @@ def _meta_features_for_two(
     row[0, cursor : cursor + len(values)] = np.asarray(values, dtype=np.float32)
     return np.nan_to_num(row, nan=0.0, posinf=0.0, neginf=0.0)
 
+
 def _fit_meta_model(kind: str, seed: int) -> object:
     if kind == "logistic":
         from sklearn.linear_model import LogisticRegression
@@ -183,6 +151,7 @@ def _fit_meta_model(kind: str, seed: int) -> object:
             random_state=seed,
         )
     raise ValueError(f"Unknown fused meta model kind: {kind!r}")
+
 
 def _fit_meta_candidates(
     bundle_dir: Path,
@@ -293,6 +262,7 @@ def _fit_meta_candidates(
             }
     return reports, artifacts
 
+
 def _meta_retrieval(
     model: object,
     batch: _BatchEncoding,
@@ -311,6 +281,7 @@ def _meta_retrieval(
         model, batch, queries, all_pairs, sizes, classical_scores, classical_names
     )
 
+
 def _flatten_retrieval_pairs(queries: Sequence[RetrievalQuery]) -> tuple[list[PairIndex], list[int]]:
     all_pairs: list[PairIndex] = []
     sizes: list[int] = []
@@ -319,6 +290,7 @@ def _flatten_retrieval_pairs(queries: Sequence[RetrievalQuery]) -> tuple[list[Pa
         sizes.append(len(pairs))
         all_pairs.extend(pairs)
     return all_pairs, sizes
+
 
 def _meta_retrieval_from_flat(
     model: object,
@@ -340,6 +312,7 @@ def _meta_retrieval_from_flat(
         scores_by_query.append(all_scores[cursor : cursor + size])
         cursor += size
     return retrieval_metrics_from_scores(scores_by_query, len(queries[0].candidates))
+
 
 def _weight_grid() -> list[tuple[str, tuple[float, float, float]]]:
     candidates = [

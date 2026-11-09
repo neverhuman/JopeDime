@@ -7,11 +7,60 @@ impl super::Session {
     ) -> io::Result<()> {
         let width = usize::from(terminal.size()?.width);
         let (status, activity) = self.status_lines(width);
-        terminal.draw(|frame| {
+        let completed = terminal.draw(|frame| {
             self.screen
                 .draw(frame, &self.composer, &self.version, &status, &activity);
         })?;
+        if self.links {
+            crate::terminal::links::overlay(
+                &mut io::stdout(),
+                &self.screen.links,
+                completed.buffer,
+            )?;
+        }
         Ok(())
+    }
+
+    /// `/usage`: account, plan, current status and this machine's run statistics. The plan is
+    /// read from the workspace in the background and arrives as one more line.
+    pub(super) fn usage(&mut self) -> Vec<String> {
+        use crate::terminal::{onboarding, usage};
+        let runs = crate::terminal::runs::local_runs(&self.client).ok();
+        let connection = crate::cloud::connection().ok();
+        let state = onboarding::load(&self.home);
+        let telemetry = if onboarding::telemetry_forced_off_from_env() {
+            "Usage statistics off (DO_NOT_TRACK or JAIN_TELEMETRY=0)"
+        } else if state.telemetry == Some(true) {
+            "Usage statistics on"
+        } else {
+            "Usage statistics off"
+        };
+        let terms = match &state.terms_version {
+            Some(version) if state.terms_current() => format!("{version} accepted"),
+            Some(version) => format!("{version} accepted; newer terms pending"),
+            None => "not accepted".into(),
+        };
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|elapsed| elapsed.as_millis() as u64)
+            .unwrap_or(0);
+        let lines = usage::local_lines(
+            runs.as_deref(),
+            now_ms,
+            connection
+                .as_ref()
+                .map(|c| (c.email.as_str(), c.origin.as_str())),
+            self.snapshot.as_ref(),
+            telemetry,
+            &terms,
+        );
+        if let Some(connection) = connection {
+            let sender = self.cloud_sender.clone();
+            thread::spawn(move || {
+                let _ = sender.send(vec![usage::fetch_plan_line(&connection)]);
+            });
+        }
+        lines
     }
 
     pub(super) fn refresh_runs(&mut self) {
@@ -26,10 +75,21 @@ impl super::Session {
         });
     }
 
-    pub(super) fn background_sync(&mut self, runs: Vec<RunId>, owner: Option<(String, String)>) {
+    /// Sync run status (never results) in the background. `quiet` is the automatic sync of a
+    /// running local run: its "status synced" line is shown once per run, not every 5 s (#2146).
+    pub(super) fn background_sync(
+        &mut self,
+        runs: Vec<RunId>,
+        owner: Option<(String, String)>,
+        quiet: bool,
+    ) {
         if self.cloud_busy.swap(true, Ordering::SeqCst) {
             return;
         }
+        let announce: Vec<bool> = runs
+            .iter()
+            .map(|run| !quiet || self.status_announced.insert(run.to_string()))
+            .collect();
         let busy = Arc::clone(&self.cloud_busy);
         let done = self.synced_terminal_sender.clone();
         let client = self.client.clone();
@@ -38,13 +98,13 @@ impl super::Session {
             let result = (|| -> anyhow::Result<Vec<String>> {
                 let version = client.system_info()?.version;
                 let mut lines = Vec::new();
-                for run in runs {
+                for (run, announce) in runs.into_iter().zip(announce) {
                     let snapshot = client.run_status(&run)?;
-                    lines.push(crate::cloud::sync_snapshot_for(
-                        &snapshot,
-                        &version,
-                        owner.as_ref(),
-                    )?);
+                    let line =
+                        crate::cloud::sync_snapshot_for(&snapshot, &version, owner.as_ref())?;
+                    if announce && !line.starts_with("Up to date") {
+                        lines.push(line);
+                    }
                     if matches!(
                         snapshot.state,
                         RunState::Completed | RunState::Cancelled | RunState::Failed
@@ -55,7 +115,7 @@ impl super::Session {
                             crate::cloud::sync_events(&client, &snapshot)
                                 .unwrap_or_else(|error| format!("Run events: {error:#}")),
                         );
-                        let _ = done.send(run);
+                        let _ = done.send((run, snapshot.state));
                     }
                 }
                 Ok(lines)
@@ -66,13 +126,14 @@ impl super::Session {
     }
 
     pub(super) fn tick_sync(&mut self) {
-        while let Ok(run) = self.synced_terminal.try_recv() {
-            if self
-                .auto_sync
-                .as_ref()
-                .is_some_and(|(current, _)| current == &run)
-            {
-                self.auto_sync = None;
+        while let Ok((run, state)) = self.synced_terminal.try_recv() {
+            if let Some((current, owner)) = self.auto_sync.clone() {
+                if current == run {
+                    self.auto_sync = None;
+                    if state == RunState::Completed {
+                        self.routing.results_waiting = Some((run, owner));
+                    }
+                }
             }
         }
         if self.last_sync.elapsed() >= Duration::from_secs(5) {
@@ -82,11 +143,70 @@ impl super::Session {
                 if !same {
                     self.auto_sync = None;
                 } else if !self.cloud_busy.load(Ordering::SeqCst) {
-                    self.background_sync(vec![run], Some(owner));
+                    self.background_sync(vec![run], Some(owner), true);
                 }
             }
             self.last_sync = Instant::now();
         }
+    }
+
+    /// Lines from routing's background work: cloud progress, a finished login, a finished local
+    /// run's results question, and the update check.
+    pub(super) fn routing_lines(&mut self, width: usize) -> Vec<String> {
+        let mut lines = Vec::new();
+        while let Ok(message) = self.cloud_runs.try_recv() {
+            lines.extend(self.cloud_lines(message, width));
+        }
+        while let Ok(ok) = self.login_done.try_recv() {
+            lines.extend(self.login_finished(ok));
+        }
+        lines.extend(self.tick_results());
+        if let Some(receiver) = &self.update_notice {
+            match receiver.try_recv() {
+                Ok(line) => {
+                    self.activity = line.clone();
+                    lines.push(line);
+                    self.update_notice = None;
+                }
+                Err(mpsc::TryRecvError::Disconnected) => self.update_notice = None,
+                Err(mpsc::TryRecvError::Empty) => {}
+            }
+        }
+        // Already sanitized where they were made; cards carry their own styling.
+        lines
+    }
+
+    /// `/transcript`: the whole session as plain text on the normal screen, where the
+    /// terminal's own scrollback, selection and copy work on every line (URLs are whole, never
+    /// cut at the screen edge). Enter returns to the full-screen interface.
+    pub(super) fn show_transcript(
+        &mut self,
+        guard: &crate::terminal::restore::TerminalGuard,
+    ) -> anyhow::Result<()> {
+        use std::io::{BufRead, Write};
+        guard.suspend_fullscreen()?;
+        let mut stdout = io::stdout().lock();
+        writeln!(
+            stdout,
+            "──── jAIn transcript (plain text: select and copy as usual) ────"
+        )?;
+        for line in self.screen_lines() {
+            writeln!(
+                stdout,
+                "{}",
+                crate::terminal::links::linkify(&line, self.links)
+            )?;
+        }
+        writeln!(
+            stdout,
+            "──── end of transcript · press Enter to return to jAIn ────"
+        )?;
+        stdout.flush()?;
+        drop(stdout);
+        let mut answer = String::new();
+        let _ = io::stdin().lock().read_line(&mut answer);
+        guard.resume_fullscreen(self.mouse)?;
+        Ok(())
     }
 
     pub(super) fn screen_lines(&self) -> Vec<String> {
@@ -95,12 +215,18 @@ impl super::Session {
 
     pub(super) fn status_lines(&self, width: usize) -> (String, String) {
         if let Some(snapshot) = &self.snapshot {
-            crate::terminal::status::render(snapshot, &[], width)
+            let since = self
+                .run_clock
+                .as_ref()
+                .filter(|(run, _)| *run == snapshot.run_id)
+                .map(|(_, at)| at.elapsed());
+            let live = crate::terminal::status::with_live_clock(snapshot, since);
+            crate::terminal::status::render(&live, &[], width)
         } else {
             (
                 self.message
                     .clone()
-                    .unwrap_or_else(|| "ready · no active run".into()),
+                    .unwrap_or_else(|| crate::terminal::screen::IDLE_STATUS.into()),
                 self.activity.clone(),
             )
         }

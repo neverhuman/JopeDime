@@ -5,7 +5,6 @@ import os
 import random
 import socket
 import subprocess
-import time
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,11 +13,9 @@ from typing import Any
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
-from torch.utils.data.distributed import DistributedSampler
 
 from .model import (
     JopeActiveModelV2,
-    active_v2_validation_metrics,
     normalize_active_v2_vocab,
     rows_to_active_v2_batch,
 )
@@ -42,6 +39,7 @@ ACTIVE_V2_LOSS_COMPONENTS = [
     "value_huber",
 ]
 
+
 @dataclass(frozen=True)
 class _DistributedContext:
     enabled: bool
@@ -62,9 +60,7 @@ def _open_step_telemetry(*, device: str, rank: int, metadata: dict[str, Any]):
         return None
     from .telemetry import open_python_trainer
 
-    return open_python_trainer(
-        run_dir, sorted(ACTIVE_V2_LOSS_COMPONENTS), {**metadata, "device": device}
-    )
+    return open_python_trainer(run_dir, sorted(ACTIVE_V2_LOSS_COMPONENTS), {**metadata, "device": device})
 
 
 def _dataset_grouped_batches(
@@ -101,6 +97,7 @@ def _dataset_grouped_batches(
         batches.append(current)
     return batches
 
+
 def _init_distributed_if_needed(device: str) -> tuple[_DistributedContext, str]:
     world_size = int(os.environ.get("WORLD_SIZE") or "1")
     rank = int(os.environ.get("RANK") or "0")
@@ -123,6 +120,7 @@ def _init_distributed_if_needed(device: str) -> tuple[_DistributedContext, str]:
         backend=backend,
     ), device
 
+
 def _wrap_distributed(
     model: JopeActiveModelV2,
     device: str,
@@ -137,8 +135,10 @@ def _wrap_distributed(
         )
     return DistributedDataParallel(model, find_unused_parameters=True)
 
+
 def _unwrap_model(model: Any) -> JopeActiveModelV2:
     return model.module if isinstance(model, DistributedDataParallel) else model
+
 
 def _aggregate_loss_totals(
     total: float,
@@ -164,13 +164,16 @@ def _aggregate_loss_totals(
         denom,
     )
 
+
 def _distributed_barrier(distributed: _DistributedContext) -> None:
     if distributed.enabled and dist.is_initialized():
         dist.barrier()
 
+
 def _destroy_distributed(distributed: _DistributedContext) -> None:
     if distributed.enabled and dist.is_initialized():
         dist.destroy_process_group()
+
 
 def _gather_rank_status(device: str, distributed: _DistributedContext) -> list[dict[str, Any]]:
     status: dict[str, Any] = {
@@ -189,6 +192,7 @@ def _gather_rank_status(device: str, distributed: _DistributedContext) -> list[d
     gathered: list[dict[str, Any] | None] = [None for _ in range(distributed.world_size)]
     dist.all_gather_object(gathered, status)
     return [row for row in gathered if isinstance(row, dict)] if distributed.is_rank0 else []
+
 
 def _active_v2_loss_summary(
     model: JopeActiveModelV2,
@@ -219,8 +223,10 @@ def _active_v2_loss_summary(
         name: value / max(1, steps) for name, value in sorted(component_totals.items())
     }
 
+
 def _flatten_metrics(prefix: str, values: dict[str, float]) -> dict[str, float]:
     return {f"{prefix}_{name}": value for name, value in values.items()}
+
 
 def _nvidia_smi_metrics() -> dict[str, float]:
     try:
@@ -250,6 +256,7 @@ def _nvidia_smi_metrics() -> dict[str, float]:
         "nvidia_smi_gpu_utilization_pct": util,
     }
 
+
 def _reset_cuda_peak(device: str) -> None:
     if not str(device).startswith("cuda") or not torch.cuda.is_available():
         return
@@ -257,6 +264,7 @@ def _reset_cuda_peak(device: str) -> None:
         torch.cuda.reset_peak_memory_stats(torch.device(device))
     except RuntimeError:
         return
+
 
 def _cuda_metrics(device: str) -> dict[str, float]:
     if not str(device).startswith("cuda") or not torch.cuda.is_available():
@@ -271,6 +279,7 @@ def _cuda_metrics(device: str) -> dict[str, float]:
     except RuntimeError:
         return {}
 
+
 def _configure_cuda_fast_math(device: str) -> bool:
     if not str(device).startswith("cuda") or not torch.cuda.is_available():
         return False
@@ -279,12 +288,14 @@ def _configure_cuda_fast_math(device: str) -> bool:
     torch.backends.cudnn.allow_tf32 = True
     return True
 
+
 def _epoch_loss_profile(loss_profile: str, *, epoch: int, epochs: int) -> str:
     profile = str(loss_profile or "two_phase")
     if profile != "two_phase":
         return profile
     switch_epoch = max(1, int(round(max(1, epochs) * 0.3)))
     return "decoder_pretrain" if epoch <= switch_epoch else "reward_focus"
+
 
 def _active_v2_loss_profile_weights(profile: str) -> dict[str, float]:
     if profile == "legacy":
@@ -337,6 +348,7 @@ def _active_v2_loss_profile_weights(profile: str) -> dict[str, float]:
         }
     raise ValueError(f"unknown active_v2 loss profile: {profile}")
 
+
 def _checkpoint_metric_value(row: dict[str, Any], metric: str) -> float | None:
     value = row.get(metric)
     if value is None and not metric.startswith("val_"):
@@ -345,11 +357,13 @@ def _checkpoint_metric_value(row: dict[str, Any], metric: str) -> float | None:
         return float(value)
     return None
 
+
 def _checkpoint_metric_better(metric: str, current: float, best: float | None) -> bool:
     if best is None:
         return True
     lower_is_better = any(token in metric for token in ("loss", "regret", "mae", "rmse"))
     return current < best if lower_is_better else current > best
+
 
 def _load_active_v2_vocab(corpus: Path, rows: list[TrainingRow]) -> dict:
     candidates = [corpus.parent / "active_vocab.json", corpus.parent / "vocab.json"]
@@ -362,6 +376,7 @@ def _load_active_v2_vocab(corpus: Path, rows: list[TrainingRow]) -> dict:
     from .data.active import build_active_vocab
 
     return normalize_active_v2_vocab(build_active_vocab(row.canonical_genome or row.genome for row in rows))
+
 
 def _resolve_device(device: str) -> str:
     if device.startswith("cuda") and not torch.cuda.is_available():

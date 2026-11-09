@@ -67,6 +67,7 @@ fn exact_operations_tools_and_commands_match_spec_inventory() {
     actual.sort_unstable();
     let mut expected = vec![
         "\\help",
+        "\\demo",
         "\\open",
         "\\target",
         "\\objective",
@@ -90,6 +91,10 @@ fn exact_operations_tools_and_commands_match_spec_inventory() {
         "\\attach",
         "\\doctor",
         "\\quit",
+        "\\auto",
+        "\\copy",
+        "\\transcript",
+        "\\mouse",
     ];
     expected.sort_unstable();
     assert_eq!(actual, expected);
@@ -126,7 +131,7 @@ fn api08_uniqueness_mutation_keys_and_unexposed_admin_operations() {
             assert!(command_names.insert(*alias));
         }
     }
-    assert_eq!(command_names.len(), 26);
+    assert_eq!(command_names.len(), 33);
 }
 #[test]
 fn api08_engine_mappings_aliases_and_context_roles() {
