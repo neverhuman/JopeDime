@@ -56,3 +56,5 @@ vendored, or historical source bytes are changed by this disposition.
 | `research/flywheel_selfplay/h153_sam/runtime.py:99` | The experiment runner verifies the input paths against its exact `manifest.json` pins before calling `build`; `cpu_exact_fused.py` is a recorded input identity. This runtime is also pinned by downstream H-wave manifests; its source bytes are preserved. |
 
 The baseline full audit is retained at `/home/ubuntu/jope_plan/master/audit/rerun/j_fbe191a33.json`; its repository-wide score is not a P37-only result.
+
+On 2026-11-09, after the flywheel waves through H416 were copied onto this branch, jankurai 1.7.6 no longer emitted the H147 and H168 copy-code identities in the changed-scope audit. The copy-code classes that touch a registered path were refreshed to that scan: 36 classes, replacing the previous 34. The 24 exact file pins and their per-file findings were not changed. `ops/ci/verify-pyexec-exceptions.sh` passed against that inventory.
