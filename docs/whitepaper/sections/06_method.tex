@@ -256,8 +256,10 @@ must be caught. Every reported winner must be re-run from emitted code,
 with native and emitted predictions agreeing within
 $10^{-9}\max(1,|\hat{y}|)$.
 
-One earlier leaderboard entry for our search selected each dataset's best
-test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as test selection (\cref{app:incidents}).
+One earlier leaderboard entry for our search used test scores on all 45 of its
+datasets. On 42 it took each dataset's best test-scored outcome from a ledger of
+\num{63108} evaluations; on the other three it took programs accepted by a
+test-adaptive run. We exclude all 45 rows as test selection (\cref{app:incidents}).
 
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
 

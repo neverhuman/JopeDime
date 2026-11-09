@@ -50,8 +50,9 @@ input closure and execution isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry chose each dataset's best test-scored outcome from \num{63108}
-  evaluations across 42 datasets. Test-fold selection biases the metric
-  upward \citep{cawley2010overfitting}; the entry is \mbox{excluded from}
+  evaluations across 42 datasets, and took programs accepted by a test-adaptive
+  run on three more. Test-fold selection biases the metric
+  upward \citep{cawley2010overfitting}; all 45 rows are \mbox{excluded from}
   all comparative claims.
   \item \textbf{Input-closure and canary checks.} Benchmark release requires
   passing receipts for an inner-fold label-poison test, a sealed canary and

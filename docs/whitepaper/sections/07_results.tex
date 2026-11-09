@@ -2,9 +2,10 @@
 
 \begin{table*}[t]% defined before the opening paragraph so it can reach the next page top
   \caption{\textbf{Evaluation plan at a glance.} Each test is specified in the
-  subsection named in the first column. No outcome is reported yet; the
-  contract in \cref{sub:results-protocol} fixes inputs, budgets and splits
-  before outcomes are opened.}
+  subsection named in the first column. No first-proposal outcome is
+  reported yet; the fixed-method row reports only a development reference
+  board. The contract in \cref{sub:results-protocol} fixes inputs, budgets
+  and splits before outcomes are opened.}
   \label{tab:results-plan}
   \centering
   \small\setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
@@ -21,7 +22,7 @@
       & Does one task-conditioned program compete with methods that run
         unchanged across tasks?
       & Frozen algorithms whose receipts record the designing model
-      & \Cref{tab:headtohead,fig:leaderboard} & Pending \\
+      & \Cref{tab:headtohead,fig:leaderboard} & Reference board only \\
     The cost of more attempts (\cref{sub:results-search})
       & What do successive attempts buy, per attempt and per unit of cost?
       & Agents allowed successive attempts; the pilot cost funnel
@@ -85,32 +86,62 @@ comparison and training-update evidence before claiming transfer.}
 
 \subsection{One proposal against fixed methods}\label{sub:results-headtohead}
 
-\TBD{Identify Jepson's supplied frozen comparators, their provenance and
-eligibility, and the matched outcomes and uncertainty for
-\cref{tab:headtohead,fig:leaderboard}.}
+No one-proposal writer has yet been evaluated against fixed methods. As a
+development reference, \cref{tab:headtohead,fig:leaderboard} report the
+reference board \texttt{dev91-audit-v1}: 31 frozen entrants, each fitted on
+the search rows of 91 development contexts in 19 families and scored once on
+their audit rows. They are six frontier-designed regressors, whose receipts
+record the designing model; ten tabular foundation models; one AutoML system;
+five classic learners; and nine search models and baselines of ours. Our
+entrant is the locked two-level stack \texttt{XSTACK\_2L}, a search-assisted
+ensemble rather than a single first proposal. It is rated ninth, at Elo
+\num{1705.9} (95\% interval \num{1621.1}--\num{1822.1}).
 
-\begin{table}[t]
+Paired over families, \texttt{XSTACK\_2L} is better than each of the six
+frontier-designed regressors under a predeclared test: a one-sided exact
+sign-flip test on clipped family means at $\alpha=0.025$, with a positive
+leave-one-family-out minimum. The mirrored test finds it worse than
+Kumo-Tabular large, Kumo-Tabular small and the TabFM ensemble. It is not
+separated from the other foundation models. The board is a reuse cohort: an
+earlier study tuned on its contexts, and five of them were read again. These
+are development comparisons, not untouched-family evidence.
+\TBD{Supply the one-proposal writer's matched outcomes against these
+comparators on untouched families.}
+
+\begin{table*}[t]
   \centering
-  \caption{\textbf{Planned paired comparisons.} No outcomes are yet supplied.
-  Report ties, failures and excluded cases alongside wins.}
+  \caption[Development reference: XSTACK\_2L against frozen comparators]{\textbf{Development reference: \texttt{XSTACK\_2L} against frozen
+  comparators on \texttt{dev91-audit-v1}.} Gain is the family-equal mean of
+  $u(\texttt{XSTACK\_2L})-u(\text{comparator})$, with
+  $u=-\ln(\mathrm{RMSE}/\mathrm{RMSE}_{\text{mean}})$ against the search-row
+  mean predictor, and its 95\% family-bootstrap interval (\num{10000} draws).
+  RMSE is the implied cut $1-e^{-\text{gain}}$; positive values favour
+  \texttt{XSTACK\_2L}. $p$ is the one-sided exact sign-flip test over the 19
+  families on family means clipped at $\pm0.5$, and LOFO is the smallest
+  leave-one-family-out clipped mean. ``Better'' means the test passes
+  ($p<0.025$, LOFO $>0$); ``worse'' means its mirror passes. Wins, ties and
+  losses count families. Every entrant was scored on all 91 contexts; none
+  failed or was excluded. The rows are every frontier-designed regressor; the
+  foundation models rated first and second and the best TabPFN; the two adjacent
+  to \texttt{XSTACK\_2L}; and the best AutoML system and classic learner. All 30
+  contrasts are in \texttt{figures/data/leaderboard\_dev91.json}. This is a reuse
+  cohort, not a first-proposal result.}
   \label{tab:headtohead}
-  \small\setlength{\tabcolsep}{4pt}\setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
-  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.55\linewidth}>{\raggedright\arraybackslash}X@{}}
-    \toprule
-    Comparator & Outcome and uncertainty \\
-    \midrule
-    \TBD{first frozen comparator identity} & \TBD{paired evaluation} \\
-    \TBD{second frozen comparator identity} & \TBD{paired evaluation} \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
+  \small\setlength{\tabcolsep}{4pt}
+  \input{figures/data/leaderboard_dev91_table}
+\end{table*}
 
 \begin{figure}[t]
   \centering
-  \fbox{\parbox{0.88\linewidth}{\TBD{Leaderboard: supply the evaluated methods,
-  paired outcomes, rating protocol and uncertainty.}}}
-  \caption{\textbf{Leaderboard pending.} Elo is a summary of a specified
-  comparison population, not a substitute for paired task results.}
+  \input{figures/fig_leaderboard_dev91}
+  \caption{\textbf{Development leaderboard on \texttt{dev91-audit-v1}.} Elo of
+  all 31 frozen entrants, with 95\% family-bootstrap intervals (family-grouped
+  Bradley--Terry; anchor \texttt{H257\_REPLICA} $=1500$), from 91 development
+  contexts in 19 families. Every entrant was fitted on the search rows and
+  scored once on the audit rows. Bold: our locked candidates. The board is a
+  reuse cohort, not the untouched-family test of
+  \cref{sub:results-headtohead}. Elo is a summary of a specified comparison
+  population, not a substitute for paired task results (\cref{tab:headtohead}).}
   \label{fig:leaderboard}
 \end{figure}
 

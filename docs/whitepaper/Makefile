@@ -59,5 +59,6 @@ figs:
 	python3 figures/scripts/make_recorded_decision_lift.py
 	python3 figures/scripts/make_program_record_cadence.py
 	python3 figures/scripts/make_program_record_windows.py
+	bash figures/scripts/make_leaderboard_dev91.sh --write
 clean:
 	latexmk -C
