@@ -28,6 +28,13 @@
 #   pull-analyze RUN TAG
 #                     copy the confirm deploy, the GE / GL arm stages and the H416_GS Phase T records to $EV/pulled/RUN
 #                     (sha-compared) and run train_h416.py analyze from the stage -> $EV/results/RUN_TAG.json
+#   memo-conflicts RUN
+#                     (amendment 1) xbabe0: re-verify the arms' source memos against deploy-prep's manifest and list, per
+#                     context, the memo keys (kind, envelope, program sha) whose stored results differ between the GS,
+#                     GE and GL memos -> $EV/results/RUN.memo_conflicts.jsonl (create-once)
+#   analyze-a1 RUN TAG
+#                     (amendment 1) re-verify the pulled copy of pull-analyze against itself and xbabe0, then run
+#                     train_h416.py analyze with --memo-conflicts -> $EV/results/RUN_TAG.a1.json (create-once)
 set -euo pipefail
 STEP=${1:?step}; shift
 STAGE=${H416_STAGE:?H416_STAGE}
@@ -50,6 +57,7 @@ SMOKE=0
 case "$STEP ${1:-}" in
   "smoke-gp "*|"deploy-prep H416_SMOKE_"*|"deploy H416_SMOKE_"*|"pull-select H416_SMOKE_"*|"pull-analyze H416_SMOKE_"*)
     SMOKE=1 ;;
+  "memo-conflicts H416_SMOKE_"*|"analyze-a1 H416_SMOKE_"*) SMOKE=1 ;;
   # data preparation (no scoring; outputs create-once and re-verified by the published code at every use) and the
   # identity check (a dev stage writes H416_SMOKE_ID2B; the published stage repeats it into H416_ID2B)
   "panel "*|"tprep "*|"idcheck "*) SMOKE=1 ;;
@@ -255,5 +263,57 @@ $(wc -l < "$EV/logs/tprep_xbabe0.txt") from T_xbabe0 (xbabe0)" | tee -a "$EV/log
       else tail -n 25 "$OUT.txt"; fi
       echo "analyze exit $rc"; exit "$rc"
     fi ;;
+  memo-conflicts)
+    RUN=${1:?RUN}
+    MAN=$EV/logs/memo_$RUN.sha256
+    OUT=$EV/results/$RUN.memo_conflicts.jsonl
+    [ -f "$MAN" ] && [ -f "$EV/logs/cids_$RUN.txt" ] || { echo "no deploy-prep manifest for $RUN" >&2; exit 6; }
+    [ ! -e "$OUT" ] || { echo "$OUT exists (create-once)" >&2; exit 3; }
+    PFX=H416_; ! smoke_name "$RUN" || PFX=H416_SMOKE_
+    # the arms' source memos as deploy-prep hashed them (the run's own memo has grown since: it is not re-checked)
+    grep -v " $DATA/runs/$RUN/" "$MAN" | "${X0[@]}" "sha256sum --quiet -c"
+    "${X0[@]}" "set -euo pipefail; cd $DATA/runs; while read -r c; do
+        for a in GS=H416_GS GE=${PFX}GE GL=${PFX}GL; do
+          jq -c --arg a \${a%%=*} '{a: \$a, k: (.kind + \"|\" + .env_sha256 + \"|\" + .sha), r: [.fitness, .error, .status]}' \
+            \${a#*=}/gproot_AGG/memo/\$c.split.jsonl
+        done | jq -s -c --arg c \$c '[group_by(.k)[] | select(length > 1)] as \$d
+          | [\$d[] | select((map(.r) | unique | length) > 1)] as \$x
+          | {cid: \$c, shared_keys: (\$d | length),
+             gs_conflicts: ([\$x[] | select(any(.[]; .a == \"GS\"))] | length),
+             arm_conflicts: ([\$x[] | select(all(.[]; .a != \"GS\"))] | length),
+             conflicts: [\$x[] | {key: .[0].k, results: map({run: .a, fitness: .r[0], error: .r[1], status: .r[2]})}]}'
+      done" < "$EV/logs/cids_$RUN.txt" > "$OUT"
+    chmod a-w "$OUT"
+    [ "$(wc -l < "$OUT")" = "$(wc -l < "$EV/logs/cids_$RUN.txt")" ] || { echo "memo-conflicts: missing contexts" >&2; exit 5; }
+    jq -s -c --arg r "$RUN" '{run: $r, contexts: length, shared_key_contexts: (map(select(.shared_keys > 0)) | length),
+      gs_conflict_contexts: [.[] | select(.gs_conflicts > 0) | .cid],
+      arm_conflict_contexts: [.[] | select(.arm_conflicts > 0) | .cid]}' "$OUT" | tee -a "$EV/logs/memo_conflicts.log" ;;
+  analyze-a1)
+    RUN=${1:?RUN}; TAG=${2:?TAG}
+    P=$EV/pulled/$RUN
+    CF=$EV/results/$RUN.memo_conflicts.jsonl
+    OUT=$EV/results/${RUN}_$TAG.a1
+    [ -d "$P/$RUN" ] && [ -f "$P.sha256" ] || { echo "pull-analyze $RUN $TAG first" >&2; exit 6; }
+    [ -f "$CF" ] || { echo "memo-conflicts $RUN first" >&2; exit 6; }
+    [ ! -e "$OUT.json" ] && [ ! -e "$OUT.txt" ] || { echo "$OUT.json / .txt exists (create-once)" >&2; exit 3; }
+    (cd "$P" && sha256sum --quiet -c "$P.sha256")  # the pulled copy is unchanged since pull-analyze
+    "${X0[@]}" "cd $DATA/runs && sha256sum --quiet -c" < "$P.sha256"  # and still equals xbabe0
+    PANEL=$(jq -r .panel "$P/$RUN/config_$TAG.json")
+    case $PANEL in
+      P201b) PFX=H416_; DSG=$STAGE/code/DESIGN.json; REFS=$EV/results/H416_DEV_P201E.p201e_refs.json ;;
+      ID2B) PFX=H416_SMOKE_; DSG=${3:?smoke design}; REFS=${4:?smoke p201e refs} ;;
+      *) echo "analyze-a1 reads a confirm run (P201b / ID2B)" >&2; exit 2 ;; esac
+    [ "$PANEL" = P201b ] && { cmp -s "$DSG" <(git -C "$REPO" show "origin/v1/next:$WDIR/DESIGN.json") \
+      || { echo "staged DESIGN.json is not on origin/v1/next" >&2; exit 3; }; }
+    rc=0
+    PYTHONDONTWRITEBYTECODE=1 nice -n 19 python3 -B "$STAGE/code/train_h416.py" analyze --run-dir "$P/$RUN" \
+      --tag "$TAG" --gs-t "$P/H416_GS/stages/T_AGG" --gp "GE=$P/${PFX}GE" --gp "GL=$P/${PFX}GL" \
+      --board-dir "$STAGE/code" --panel-file "$P201B" --design "$DSG" --p201e "$REFS" --memo-conflicts "$CF" \
+      --out "$OUT.json" > "$OUT.txt" 2>&1 || rc=$?
+    chmod a-w "$OUT.txt"; [ -e "$OUT.json" ] && chmod a-w "$OUT.json"
+    # the ID2B smoke reads 2 confirmation contexts: only its harness checks are shown
+    if [ "$PANEL" != ID2B ]; then cat "$OUT.txt"; elif [ "$rc" = 0 ]; then grep '^checks:' "$OUT.txt"
+    else tail -n 25 "$OUT.txt"; fi
+    echo "analyze exit $rc"; exit "$rc" ;;
   *) echo "unknown step $STEP" >&2; exit 2 ;;
 esac

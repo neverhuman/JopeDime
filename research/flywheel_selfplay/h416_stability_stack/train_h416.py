@@ -10,7 +10,10 @@
   select  --run-dir R --tag T --h415-dir D --panel-file F --out DESIGN.json
           P201e design grid and the PREREG §6 selection rule (numpy + h335_stats + meta_h416 only).
   analyze --run-dir R --tag T --gs-t D --gp GE=D --gp GL=D --board-dir D --panel-file F --design F --p201e F --out F
-          P201b readout (PREREG §8): board Elo field, paired Elo tests, Holm, recommendation rule.
+          [--memo-conflicts F]
+          P201b readout (PREREG §8): board Elo field, paired Elo tests, Holm, recommendation rule. With
+          --memo-conflicts (amendment 1, PREREG §10), a GS replay failure on a memo-conflict context is admitted:
+          that context scores X0b for every new entrant, and the deploy's own values are read as a sensitivity.
 """
 
 from __future__ import annotations
@@ -242,6 +245,38 @@ def holm(ps: dict, alpha: float = HOLM_ALPHA) -> dict:
     return rej
 
 
+def readout(np, H, field: dict, new: dict, x0: dict, fam_of: dict) -> dict:
+    """PREREG §8 on one set of new-entrant values: board Elo, P1, the Holm pairs and the recommendation rule."""
+    arms, point, boot, elo = elo_boot(np, H, {**field, **new}, fam_of, ANCHOR, BOOT_SEED, N_BOOT)
+    p1 = delta_elo(np, arms, point, boot, "h416.SXB", "h415.KFB")
+    p1["pass"] = bool(p1["ci95"][0] > 0)
+    pairs = [(x, y) for i, x in enumerate(COST_ORDER[::-1]) for y in COST_ORDER[::-1][i + 1:]]
+    dts = {f"{x} - {y}": delta_elo(np, arms, point, boot, x, y) for x, y in pairs}
+    hr = holm({k: v["p_two_sided"] for k, v in dts.items()})
+    for k, v in dts.items():
+        v["holm_rejected"] = hr[k]
+        v["direction"] = ("a_better" if v["delta"] > 0 else "b_better") if hr[k] else "not_distinguished"
+        v["magnitude"] = pair_stats(np, H, new[v["a"]], new[v["b"]], fam_of)
+    vs_x0 = {e: pair_stats(np, H, new[e], x0, fam_of) for e in NEW}
+    top = max(NEW, key=lambda e: (elo[e]["elo"], -COST_ORDER.index(e)))
+    distinct = {e: next(v for v in dts.values() if {v["a"], v["b"]} == {top, e})["holm_rejected"]
+                for e in NEW if e != top}
+    kb = dts["h415.KFB - h410s.BAG3"]
+    return {"elo": elo, "primary": p1, "pairwise": dts, "vs_X0b": vs_x0, "top": top, "distinct": distinct,
+            "verdict": "SXB_CONFIRMED" if p1["pass"] else "SXB_NOT_CONFIRMED",
+            "kfb_vs_bag3": {"a_better": "KFB_BETTER", "b_better": "BAG3_BETTER"}.get(kb["direction"],
+                                                                                   "NOT_DISTINGUISHED")}
+
+
+def load_conflicts(path: str, cids) -> dict:
+    """`run_h416.sh memo-conflicts` output: one line per deploy context; returns {cid: GS-involving conflict keys}."""
+    rows = [json.loads(x) for x in Path(path).read_text().splitlines() if x.strip()]
+    got = {r["cid"]: int(r["gs_conflicts"]) for r in rows}
+    if len(rows) != len(got) or sorted(got) != sorted(cids):
+        raise SystemExit("the memo-conflicts file does not hold exactly one line per deploy context")
+    return got
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # select (P201e, PREREG §6)
 # ----------------------------------------------------------------------------------------------------------------------
@@ -407,6 +442,19 @@ def cmd_analyze(a) -> None:
                                              for c in cids)),
                   "members_same": sum(1 for c in cids if (recs15[c]["outputs"][f"{n}.stock"].get("spec") or {}).get(
                       "members") == (stored[n][c].get("spec") or {}).get("members"))}
+    # amendment 1 (PREREG §10): the deploy memo concatenates the GS, GE and GL memos, and the engine's loader keeps the
+    # last entry per key. A program whose stored result in GE / GL differs from GS's then replays GS differently. A GS
+    # replay failure is admitted only on such a memo-conflict context, which scores X0b for every new entrant.
+    def gs_ok(c: str) -> bool:
+        o = recs15[c]["outputs"]["GS.stock"]
+        return (abs(o["value"] - t[c]["value"]) <= CHECK_TOL and abs(o["value"] - field[X0B][c]) <= CHECK_TOL
+                and (o.get("spec") or {}).get("members") == (t[c].get("spec") or {}).get("members"))
+
+    conf = load_conflicts(a.memo_conflicts, cids) if a.memo_conflicts else {c: 0 for c in cids}
+    gs_fail = sorted(c for c in cids if not gs_ok(c))
+    exempt = sorted(c for c in gs_fail if conf[c] > 0)
+    rep["GS"].update({"failed": gs_fail, "memo_conflict_contexts": sorted(c for c in cids if conf[c] > 0),
+                      "a1_exempt": exempt, "a1_applied": bool(a.memo_conflicts)})
     checks["replay"] = rep
     # (3) AUDIT envelope = the board's envelope; (4) SXB re-derived offline from the npz columns
     # the board envelope is the AUDIT Jtt1's to_bytes(); the worker copy (env_sha) adds 10 zero query rows
@@ -421,9 +469,8 @@ def cmd_analyze(a) -> None:
     # gate (PREREG §9.2): no entrant value is computed or printed unless every harness check passes
     n = len(cids)
     gate = {"board_ladder": checks["board_ladder_reproduced_max_abs"] <= 1e-6,
-            "gs_replay": rep["GS"]["max_abs_delta_vs_T"] <= CHECK_TOL
-            and rep["GS"]["max_abs_delta_vs_board"] <= CHECK_TOL
-            and rep["GS"]["members_same"] == n,
+            # without --memo-conflicts this is the original check (every context's GS replay is exact)
+            "gs_replay": gs_fail == exempt,
             **{f"{g}_replay": rep[g]["max_abs_delta"] <= CHECK_TOL and rep[g]["members_same"] == n for g in gp},
             "audit_envelope": checks["audit_envelope_matches_board"] == n,
             "sxb_offline": checks["sxb_offline_max_abs_delta"] <= CHECK_TOL,
@@ -436,39 +483,39 @@ def cmd_analyze(a) -> None:
                                            "checks": checks}, indent=1, sort_keys=True) + "\n")
         raise SystemExit(f"harness gate failed: {sorted(k for k, v in gate.items() if not v)} (no entrant read)")
     x0 = field[X0B]
-    new, inv, bagfb = {}, {}, {}
+    new_dep, inv, bagfb = {}, {}, {}  # the deploy's own values
     for e, k in NEW.items():
         if k == "P3+LIB3.SXB":
-            new[e] = {c: sx.get(c, x0[c]) for c in cids}
+            new_dep[e] = {c: sx.get(c, x0[c]) for c in cids}
             inv[e], bagfb[e] = len(cids) - len(sx), 0
             continue
         ov = {c: out_value(recs15[c], k, x0[c]) for c in cids}
-        new[e] = {c: v[0] for c, v in ov.items()}
+        new_dep[e] = {c: v[0] for c, v in ov.items()}
         inv[e] = sum(1 for v in ov.values() if v[1])
         bagfb[e] = sum(1 for v in ov.values() if v[2])
+    exs = set(exempt)  # amendment 1: an admitted replay-conflict context scores X0b (0 gain) for every new entrant
+    new = {e: {c: (x0[c] if c in exs else v) for c, v in d.items()} for e, d in new_dep.items()}
     # (5) the board panel: stored complete entrants + the 4 new entrants
-    arms, point, boot, elo = elo_boot(np, H, {**field, **new}, fam_of, ANCHOR, BOOT_SEED, N_BOOT)
-    p1 = delta_elo(np, arms, point, boot, "h416.SXB", "h415.KFB")
-    p1["pass"] = bool(p1["ci95"][0] > 0)
-    pairs = [(x, y) for i, x in enumerate(COST_ORDER[::-1]) for y in COST_ORDER[::-1][i + 1:]]
-    dts = {f"{x} - {y}": delta_elo(np, arms, point, boot, x, y) for x, y in pairs}
-    hr = holm({k: v["p_two_sided"] for k, v in dts.items()})
-    for k, v in dts.items():
-        v["holm_rejected"] = hr[k]
-        v["direction"] = ("a_better" if v["delta"] > 0 else "b_better") if hr[k] else "not_distinguished"
-        x, y = v["a"], v["b"]
-        v["magnitude"] = pair_stats(np, H, new[x], new[y], fam_of)
-    vs_x0 = {e: pair_stats(np, H, new[e], x0, fam_of) for e in NEW}
-    top = max(NEW, key=lambda e: (elo[e]["elo"], -COST_ORDER.index(e)))
-    distinct = {e: next(v for v in dts.values() if {v["a"], v["b"]} == {top, e})["holm_rejected"]
-                for e in NEW if e != top}
-    kb = dts["h415.KFB - h410s.BAG3"]
-    verdict = "SXB_CONFIRMED" if p1["pass"] else "SXB_NOT_CONFIRMED"
-    kfb_vs_bag3 = {"a_better": "KFB_BETTER", "b_better": "BAG3_BETTER"}.get(kb["direction"], "NOT_DISTINGUISHED")
+    ro = readout(np, H, field, new, x0, fam_of)
+    elo, p1, dts, vs_x0 = ro["elo"], ro["primary"], ro["pairwise"], ro["vs_X0b"]
+    top, distinct, verdict, kfb_vs_bag3 = ro["top"], ro["distinct"], ro["verdict"], ro["kfb_vs_bag3"]
+    sens = None
+    if exs:  # amendment 1 sensitivity (descriptive): the same readout on the deploy's own values
+        rs = readout(np, H, field, new_dep, x0, fam_of)
+        sens = {"board_elo": {e: rs["elo"][e] for e in NEW}, "primary": rs["primary"], "verdict": rs["verdict"],
+                "kfb_vs_bag3": rs["kfb_vs_bag3"],
+                "pairwise": {k: {f: v[f] for f in ("delta", "ci95", "p_two_sided", "holm_rejected", "direction")}
+                             for k, v in rs["pairwise"].items()},
+                "recommendation": {"candidate": rs["top"], "board_elo": rs["elo"][rs["top"]],
+                                   "distinguished_from": rs["distinct"],
+                                   "beats_X0b_primary": bool(rs["vs_X0b"][rs["top"]]["pass"]),
+                                   "advice": "SCORE" if rs["vs_X0b"][rs["top"]]["pass"] else "HOLD"},
+                "vs_X0b": rs["vs_X0b"]}
     # (6) descriptive: the grid replicated on P201b; KFB vs BAG3 pooled over P201e + P201b
     grid = {}
     for d in M.DESIGNS:
-        vd = {c: vals[d].get(c, x0[c]) for c in cids}  # no usable H program: the X0b value (0 gain)
+        # no usable H program, or an amendment-1 context: the X0b value (0 gain)
+        vd = {c: (x0[c] if c in exs else vals[d].get(c, x0[c])) for c in cids}
         grid[d] = {"vs_KFB": pair_stats(np, H, vd, new["h415.KFB"], fam_of),
                    "vs_BAG3": pair_stats(np, H, vd, new["h410s.BAG3"], fam_of),
                    "vs_X0b": pair_stats(np, H, vd, x0, fam_of)}
@@ -497,7 +544,7 @@ def cmd_analyze(a) -> None:
                                   "beats_X0b_primary": bool(vs_x0[top]["pass"]),
                                   "advice": "SCORE" if vs_x0[top]["pass"] else "HOLD"},
                "grid_replication": grid, "pooled_p201e_p201b_kfb_vs_bag3": pooled, "internal_elo": el_int,
-               "worker_s_total": ws}
+               "worker_s_total": ws, "a1_replay_exempt": exempt, "a1_sensitivity_deploy_values": sens}
     Path(a.out).write_text(json.dumps(rep_out, indent=1, sort_keys=True) + "\n")
     print(f"checks: {json.dumps({k: v for k, v in checks.items() if k not in ('board_entrants',)})}")
     print(f"verdict {verdict}; KFB vs BAG3 {kfb_vs_bag3}; recommendation {top} (distinguished from {distinct}); "
@@ -513,6 +560,13 @@ def cmd_analyze(a) -> None:
               f"p {s['signflip_p']:.3g} lofo {s['lofo_min']:+.4f} pass {s['pass']} inv {inv[e]}")
     for k, v in sorted(elo.items(), key=lambda kv: -kv[1]["elo"]):
         print(f"board elo {k:28s} {v['elo']:7.1f} [{v['ci95'][0]:.1f}, {v['ci95'][1]:.1f}]")
+    if sens:
+        sp, sr = sens["primary"], sens["recommendation"]
+        print(f"a1 exempt {len(exempt)} context(s) {[c[:8] for c in exempt]}; sensitivity (deploy values): verdict "
+              f"{sens['verdict']}; KFB vs BAG3 {sens['kfb_vs_bag3']}; P1 dElo {sp['delta']:+.1f} "
+              f"[{sp['ci95'][0]:+.1f}, {sp['ci95'][1]:+.1f}]; recommendation {sr['candidate']} -> {sr['advice']}")
+        for k, v in sens["board_elo"].items():
+            print(f"a1 sensitivity elo {k:20s} {v['elo']:7.1f} [{v['ci95'][0]:.1f}, {v['ci95'][1]:.1f}]")
 
 
 def main() -> None:
@@ -544,6 +598,7 @@ def main() -> None:
     p.add_argument("--panel-file", required=True)
     p.add_argument("--design", required=True)
     p.add_argument("--p201e", help="P201e KFB / BAG3 values + families (pooled descriptive)")
+    p.add_argument("--memo-conflicts", help="run_h416.sh memo-conflicts output (amendment 1, PREREG §10)")
     p.add_argument("--out", required=True)
     a = ap.parse_args()
     {"deploy": cmd_deploy, "select": cmd_select, "analyze": cmd_analyze}[a.cmd](a)

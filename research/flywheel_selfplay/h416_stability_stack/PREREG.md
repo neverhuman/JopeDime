@@ -2,7 +2,8 @@
 
 **Status: part A.** Published on `origin/v1/next` before any H416 deploy output on P201e or P201b, any P201b GP arm and
 any design choice. Part B (`DESIGN.json`, §6) is published before any P201b deploy unit runs. §9.1 lists everything that
-existed before this PREREG.
+existed before this PREREG. **Amendment 1** (§10, a GS replay memo conflict on one context) is published after the P201b
+confirm deploy and before any P201b entrant value is read.
 
 - **Owner:** `cl_fwriter` (Claude Opus 5.5, xbabe2). Claim: `ns/receipts/H416_claim.txt` (2026-11-09T11:35:34Z).
 - **Authority:** owner brief, 2026-11-09:
@@ -241,7 +242,7 @@ H416.
   1. the board ladder recomputed from the stored score files equals the committed `ladder.json` (|Δ| ≤ 1e-6 on every
      Elo and CI bound; seed 335160);
   2. the deploy unit's `GS` stock output reproduces the stored Phase T `AGG.g50.CV3@12` and the board's `h335.H335_AGG`
-     on every context (same members, |Δu| ≤ 1e-9);
+     on every context (same members, |Δu| ≤ 1e-9) (amended in §10);
   3. the `GE` and `GL` stock outputs equal their arms' records (same members, |Δu| ≤ 1e-9);
   4. every context's AUDIT envelope equals the board's: sha256 of the AUDIT `Jtt1.to_bytes()` (the board's envelope
      format, `h335_frontier.write_envelopes`) = the board's `envelope_sha256`. The worker copy hashed in `env_sha`
@@ -291,3 +292,57 @@ at import that each copy returns the original's values. Every step refuses unles
 - Run directories go to a create-only S3 archive (exact-version GET verified; logs outside the bundled directory).
 - Same-agent review receipts in `~/jope_plan/evidence/H416/` (not an independent review).
 - Changes made before the outputs they affect are read are published as numbered amendments.
+
+## 10. Amendment 1 (2026-11-09; after the P201b confirm deploy, before any P201b entrant value was read)
+**What happened.** `pull-analyze H416_CONFIRM P201B` (stage `pub-pub2`, 22:37Z) stopped at §9.2 gate 2 (`gs_replay`) and
+wrote the checks alone.
+- 200 of 201 contexts replayed `GS` exactly.
+- On `efeb5b1a…` (Phase T recorded on xbabe0), the `GS` stock selected a different stack: Δu 8.0e-4 against both the
+  stored Phase T record and the board.
+- Every other gate passed:
+  - `GE` / `GL` exact on 201/201;
+  - AUDIT envelope 201/201;
+  - SXB offline ≤ 8.4e-10;
+  - `KCAR100.bag` = KFB (Δ 0);
+  - reference predictions ≤ 4.0e-15.
+
+**Cause.** The §5 deploy memo concatenates the `GS`, `GE` and `GL` memos in that order, and the H317 engine's memo loader
+keeps the last entry per key (context, program sha, kind, envelope).
+- On `efeb5b1a…`, two programs timed out in the stored Phase T run (the 60 s wall-clock limit) but completed in the new
+  `GE` run, with fitness −1.2587 and −1.2748.
+- The `GS` replay therefore read `GE`'s results, and its search took a different path. The confirm deploy ran 234 new
+  search evaluations on this context, against 85–88 on others.
+- A scan of the `GS` / `GE` / `GL` memos of all 201 contexts finds conflicting results on this context only (2 keys).
+  `GE` and `GL` never conflict.
+- One shared memo cannot replay both `GS` and `GE` exactly on this context, so rerunning §5 cannot fix it.
+
+**Rule** (fixed before any P201b entrant value was read):
+1. `run_h416.sh memo-conflicts H416_CONFIRM` re-verifies the arms' source memos against the deploy-prep manifest. It
+   lists, per context, the memo keys whose stored results differ between `GS`, `GE` and `GL` (create-once).
+2. Gate 2 becomes: every context whose `GS` replay fails must have a memo conflict that involves `GS`. Every other gate
+   is unchanged.
+3. On such an admitted context, all four new entrants score X0b's board value (0 gain), counted as `a1_replay_exempt`.
+   The §6 grid replication does the same. The stored entrants keep their board values.
+   - This applies the §7 invalid-output rule to that context.
+   - It is fixed without any entrant value and treats the four new entrants alike.
+4. **Sensitivity (descriptive, not a verdict).** The same §8 readout on the deploy's own values for the admitted
+   context(s) is reported next to the primary (`a1_sensitivity_deploy_values`). If it changes the verdict, the
+   KFB-vs-BAG3 label or the recommendation, both are reported and the primary governs.
+5. `run_h416.sh analyze-a1 H416_CONFIRM P201B` reruns the readout from the pulled copy, re-verified against itself and
+   xbabe0, with the conflict file. The gate-failed output `results/H416_CONFIRM_P201B.json` is kept.
+
+**Code.**
+- `train_h416.py`: analyze `--memo-conflicts`. The §8 readout moved unchanged into one `readout` function, called for
+  the primary and for the sensitivity.
+- `run_h416.sh`: new steps `memo-conflicts` and `analyze-a1`.
+
+Checked before publication (dev stage `dev-a1`; no value displayed):
+- **ID2B smoke:** no conflict, every gate passes, and every readout field is byte-identical to the original smoke
+  readout.
+- **A scratch copy with one context's `GS` members altered:**
+  - without the conflict mark, the gate blocks;
+  - with it, the gate passes and the context is exempt;
+  - the sensitivity equals the unexempted readout.
+
+**Lesson.** The ID2B identity check replayed `GS` from its own memo, and the ID2B confirm smoke had no conflicting keys
+on its 2 contexts. A memo-conflict scan belongs in deploy-prep.
