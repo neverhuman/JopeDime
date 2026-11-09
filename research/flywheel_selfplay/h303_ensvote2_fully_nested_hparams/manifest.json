@@ -1,0 +1,70 @@
+{
+  "wave": "H303",
+  "authority": "/home/ubuntu/nudges/hw_t0535_opus_h303.md",
+  "primary": "ENS_VOTE2_NESTED",
+  "grid": {
+    "tau": [
+      0.05,
+      0.10,
+      0.15
+    ],
+    "k": [
+      5,
+      6,
+      7
+    ],
+    "a": [
+      2,
+      3
+    ]
+  },
+  "inner_fold_rule": "SHA256(H303-inner-v1 NUL str(outer_fold) NUL family) last byte mod 4",
+  "tie": "|d| <= 1e-4 -> fewest inner switches, then higher k, higher a, lower tau",
+  "h302_prereg": "2a77787c3d",
+  "h302_close": "aa224daa9f",
+  "h287_export_commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+  "selected_json_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "root_training_seeds": [
+    30001,
+    30002,
+    30003
+  ],
+  "boot_seed": 302150,
+  "draws": 10000,
+  "h302_picks_sha256": {
+    "30001": "b47088d981afa1a53a8926afc1a025492fafcb9591a9cc52aa191e452c8560d7",
+    "30002": "0c5761b312cd9366e2fd1e3f49ee7cb37908ff1b8d2228f49d4604d4ece40bed",
+    "30003": "a4ff743c9b974aa5145cb0aebed51b946bddda47b237dc21024ef2011c95c9ee"
+  },
+  "h302_sources": {
+    "run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4"
+  },
+  "source_sha256": {
+    "PREREG.md": "5fc595731dbc2751b76d0dc3cfdf12bfaee029c2453b56e7b3de66cdb81a60d7",
+    "run_h303.py": "d56c41d658f06a2a4e00f5d472bd628f2d528ec461ae5f5d2559303ed1c09804",
+    "evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "test_h303.py": "1b2d7478f8f24e31054e3851841c92229c38ccff5417b4f4ed49d0c04979f4a2"
+  },
+  "host": {
+    "name": "xbabe2",
+    "cores": "101-108",
+    "nice": 19,
+    "workers": 6,
+    "memory_max": "8G (systemd cgroup)"
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "parent_commit": "dff103e50249ab2831a58d95d3304a88a139ca69",
+  "publication_ref": "v1/next",
+  "compute_stop": "2026-11-04T07:45:00Z",
+  "post_prereg_sources": {
+    "run_h303.py": {
+      "sha256": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+      "deviation": "setup() npz arrays hoisted out of the per-context loop (2 hunks, identical loaded values); prereg-commit sha kept in source_sha256"
+    },
+    "preflight_h303.py": {
+      "sha256": "b21a6b752a49abddb99bb39ea131be45f8a146e6f98e63801653360b06d86686",
+      "deviation": "added after prereg; outer_train-only recomputation check"
+    }
+  }
+}

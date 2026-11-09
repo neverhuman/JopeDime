@@ -1,0 +1,1242 @@
+{
+  "wave_id": "H326",
+  "status": "INCOMPLETE_INPUT_COVERAGE",
+  "reason": "MISSING_GRID_OOF_AND_INNER_MEMBER_POLICY_METADATA",
+  "cells": [
+    {
+      "partition": "P0",
+      "fold": 0,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        884
+      ],
+      "cache_sha256": "27c98c353203f4c3a85b5a54f6b64ec03b63b486933fdd4004fd71202e8c7d2a",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.09612510193329017,
+        "inner_switches": 253
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_0-root_30001.tar.gz",
+        "version_id": "XPdTwMHpydvEEdhV1XjfSmPW7IBdC_bY",
+        "sha256": "af56f7d1fc80d63c67f5e2adb8b756d03aad6e7b62490d5adf5a1fe0e490bb87"
+      },
+      "allowed_contexts": 884,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 0,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        884
+      ],
+      "cache_sha256": "0c5ddf1e62b535bfb940bfed71fe7fb529deb4c31af0fa62bd09044ddc848be8",
+      "available_config": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.04990812236121466,
+        "inner_switches": 209
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_0-root_30002.tar.gz",
+        "version_id": "I5rqaggF9fJJO63bQkW.Mlwv.RIt7sYY",
+        "sha256": "da38f0b1dedc34c2deae69732c545625a10ea672e50482b01985e40a2a408c7d"
+      },
+      "allowed_contexts": 884,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 0,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        884
+      ],
+      "cache_sha256": "596fdaf781126777a137731a2d17a8b6ffcf70acc44975df040e0d737a71e0e1",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.07546451241125224,
+        "inner_switches": 280
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_0-root_30003.tar.gz",
+        "version_id": "PVS5MRopaW3zF3ABqJT6T6eHtlHljLES",
+        "sha256": "928eb35bb98694de84e2c1f7ff940fce261f54a95d92076666644ecdfa30d6aa"
+      },
+      "allowed_contexts": 884,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        980
+      ],
+      "cache_sha256": "2d0e5426d035a3eda954599d5bd4b37867758dde75f3ce50eeaf10b577daa618",
+      "available_config": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.04194931569032038,
+        "inner_switches": 310
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_1-root_30001.tar.gz",
+        "version_id": "iFjRJ8GEAeWuDHeoSU.80t76OLpHlj4W",
+        "sha256": "0eb80503cdae0113347e693426651ae29cfe2a6a125b4968d5d07ccf3a2c7d86"
+      },
+      "allowed_contexts": 980,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        980
+      ],
+      "cache_sha256": "70f7cc5f0f5e94c51fa7c95922b648318632806ecaeceacee431984419ee4015",
+      "available_config": {
+        "tau": 0.1,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.04213075417392936,
+        "inner_switches": 276
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_1-root_30002.tar.gz",
+        "version_id": "2_hmXVF5Jf.4.0mFckugly64mivdcALp",
+        "sha256": "1ff9062258f5a4957f78175e6ca35ee178a5bbfd15e14e4b97202a95155a1e6e"
+      },
+      "allowed_contexts": 980,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        980
+      ],
+      "cache_sha256": "b927c82170e2c1a6cf3afc694720f1881512bb5965900ed62f4622e2e98ee5b2",
+      "available_config": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.04870699099953354,
+        "inner_switches": 349
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_1-root_30003.tar.gz",
+        "version_id": "uC2VXzvq9fkY6C.WJn8m.Q8WfM2z9AZo",
+        "sha256": "79af1f6d7855a3d4202211f08a11c6187f02ba07b43cda80707c07826a9555cb"
+      },
+      "allowed_contexts": 980,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        950
+      ],
+      "cache_sha256": "44067fa678b3a2284a053a97d026e430f1b1e525bb6e1c0158058ce8b5e36cfa",
+      "available_config": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.03340321499233683,
+        "inner_switches": 162
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_2-root_30001.tar.gz",
+        "version_id": "PJC6DwHa06hv_e_AwsggkBcVK7WtgnV_",
+        "sha256": "6d114571a2c95c2bc3ffa60efc39375f6d2e4bc6bf465393d03830d3940227b9"
+      },
+      "allowed_contexts": 950,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        950
+      ],
+      "cache_sha256": "0e62a6937163c78220a754f1992e5e8469239c5e128223402b2bd6a387320510",
+      "available_config": {
+        "tau": 0.05,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.07153303054935838,
+        "inner_switches": 126
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_2-root_30002.tar.gz",
+        "version_id": "G_wlwWMfS3TT8E2GIbLiFwvjWX7FKhXG",
+        "sha256": "8780c1ca87ac505ec8b3de055ec179e27cd3811c5bf0c49a5c999cbd355d9543"
+      },
+      "allowed_contexts": 950,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        950
+      ],
+      "cache_sha256": "84b6d74ebc445589335151a61f8fa6c942e1dabfd16208e3b2140fe085066d87",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.06342329300935323,
+        "inner_switches": 167
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_2-root_30003.tar.gz",
+        "version_id": "CtiiFBuhYIZC2xE5eOLA6kGL4FvCwEXb",
+        "sha256": "93093dfdc8894616adc9a119f68d9b6177bf89756f820775292641cca666472c"
+      },
+      "allowed_contexts": 950,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        843
+      ],
+      "cache_sha256": "26d01b9ab8f5f07acff8f0ec936125b9bfbc6ea4816a839c72599598cf2ab747",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.05176442582421969,
+        "inner_switches": 126
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_3-root_30001.tar.gz",
+        "version_id": "Qb5Cx81XBwLqWwAbDwqkit0ulPr53UxX",
+        "sha256": "1234688fc3d848770eb8443ea9ebe32afdef7d69eec8b09fa851f7e6082a9a9d"
+      },
+      "allowed_contexts": 843,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        843
+      ],
+      "cache_sha256": "fd73f99793db31c405fc56497471c55ab9af8f6a52b1024009c68ea98989272a",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.039012278799754815,
+        "inner_switches": 112
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_3-root_30002.tar.gz",
+        "version_id": "vnPWaslSC7TpPZIkxA8qmylbBaioAgdh",
+        "sha256": "d53f33428d8a3d7782f507d012eac5d98c41d64ba5802cde89fa9e83597b389f"
+      },
+      "allowed_contexts": 843,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        843
+      ],
+      "cache_sha256": "76bb525e481b7f24085c68861960f109b097c2aa21096c4dcc6a61f9ee0ad1b5",
+      "available_config": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.013568867863902089,
+        "inner_switches": 58
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P0-fold_3-root_30003.tar.gz",
+        "version_id": "6aGgDDUHG3fxvSIS4MyOzwKTBmx2asQX",
+        "sha256": "2cdd5ac64882bcd13943ed986e522692b814b4578e1d6a2a6a0db85af2c9c91a"
+      },
+      "allowed_contexts": 843,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        858
+      ],
+      "cache_sha256": "ff74dd9f5a9bad8d244f01b8bc3eab8bd3b0658707bfa360aaf55fefa2247536",
+      "available_config": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.058994636636859804,
+        "inner_switches": 131
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_0-root_30001.tar.gz",
+        "version_id": "paNIHLZ7Cm.Ki_HSnwKZzOSs691_ntzW",
+        "sha256": "ce226f0a4c4d09d16b52a6fd038c661a683729279b20b681ae98ade067031fc7"
+      },
+      "allowed_contexts": 858,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        858
+      ],
+      "cache_sha256": "afee482d832f3b44a9b03a1905f3dc174404e9c5922fd4abc08b3beaafc565cf",
+      "available_config": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.0267357757890898,
+        "inner_switches": 93
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_0-root_30002.tar.gz",
+        "version_id": "D6tOsggU4KET6S9YFalqmcj6bYTnW2tm",
+        "sha256": "79f8c79e29bdc581dddc3d49501dcd04f7e2865ade54bb37db68df27dae908d6"
+      },
+      "allowed_contexts": 858,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        858
+      ],
+      "cache_sha256": "0b38d6770cb912a65be4972e709d4c8747de4909b8691fcea61dfdf191371b8f",
+      "available_config": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.04077708637147774,
+        "inner_switches": 85
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_0-root_30003.tar.gz",
+        "version_id": "Y9q71idsPaWDL2y81kGNrBP3xH2RNBF.",
+        "sha256": "8a3b0cf13cb5ff74814dafe3c169551779c370e1ad55bbd9dedef2f6b6b2a4a8"
+      },
+      "allowed_contexts": 858,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        915
+      ],
+      "cache_sha256": "c3ae7e9c0f99e27929e7df79ac25bfbe6f78979513c8c0e4c7e7365b598e9635",
+      "available_config": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.05027102861882714,
+        "inner_switches": 302
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_1-root_30001.tar.gz",
+        "version_id": "Jv2ewiKCs2PU90Wl3mDRzsO6mJ4HLVbd",
+        "sha256": "f843c5f9faf95aaf89c68536ed0327d86144920afc2997c75d0a82fe93888331"
+      },
+      "allowed_contexts": 915,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        915
+      ],
+      "cache_sha256": "5ffbead24b6673707b5821d305fdf729eb479682e04d8bbee6b14c8ecee04601",
+      "available_config": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.08157414751584494,
+        "inner_switches": 176
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_1-root_30002.tar.gz",
+        "version_id": "WXC4LiBZiQfo1fG8TD6bawxFLjS.dVc0",
+        "sha256": "143b11994109b8e7f295a63a0404bdb4416bf59503efffd01d45b4c66ea0515c"
+      },
+      "allowed_contexts": 915,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        915
+      ],
+      "cache_sha256": "a10699958472d4a33e14b793c7b32d88cdb81247427d9c980d73e2a4bc4df7bc",
+      "available_config": {
+        "tau": 0.05,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.04885423903112198,
+        "inner_switches": 127
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_1-root_30003.tar.gz",
+        "version_id": "rVwqAdzjyuUzKoU232m6ht2Q7GGNKV5o",
+        "sha256": "2e1f29d0aaf9be5ecc3a67e6b24d7100f791f991470005606e4c9578e75d8dd4"
+      },
+      "allowed_contexts": 915,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        960
+      ],
+      "cache_sha256": "184506d6ab776d4854d435654ecdb005a053ba1fe6ad7bf6d6969be45b28a732",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.08361889199926312,
+        "inner_switches": 283
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_2-root_30001.tar.gz",
+        "version_id": "cSRC.BpHiwEv8A7eJ6mBIpVzww_MWS1O",
+        "sha256": "a942f25cf1b3d7dc6b95d8f2da1b2161ce1be39e194da1c3fa242d1c351c7554"
+      },
+      "allowed_contexts": 960,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        960
+      ],
+      "cache_sha256": "b16de5f234b0b79b6ee94c17082e21f3265377d7d6a19ead538e14c46a1a375e",
+      "available_config": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.05627198406473723,
+        "inner_switches": 177
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_2-root_30002.tar.gz",
+        "version_id": "ZEzwLh7Q3gGTzIPz7nXYTvhdkJLZW3oe",
+        "sha256": "95046c5632cde9512ad4f0710cd0915b243b2cf354681daab87d4ad69611aaf7"
+      },
+      "allowed_contexts": 960,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        960
+      ],
+      "cache_sha256": "302ebd4720d118d1f854c3a4c94d72bbd333a7efe39684207c616ac5d24d0020",
+      "available_config": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.09003330847559785,
+        "inner_switches": 287
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_2-root_30003.tar.gz",
+        "version_id": "ZV7Osv00lx7RMLERYIYfq5ogmNUG0B78",
+        "sha256": "1f4398e2f959c95c925b8e0fb322db7f09a800481876f10418e2875c1c820677"
+      },
+      "allowed_contexts": 960,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        924
+      ],
+      "cache_sha256": "201d48caf607200f2975cfe8a9b07e5ca2eccda702a92679f8b8102b2f912932",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.015257636573852965,
+        "inner_switches": 204
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_3-root_30001.tar.gz",
+        "version_id": "XxadmcSbloLE2kqliEUuVwxhjMCdjbgt",
+        "sha256": "37ef675d5ce3633d418efb45b7355f21a9c2255bc0679793453dc66d9059e89b"
+      },
+      "allowed_contexts": 924,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        924
+      ],
+      "cache_sha256": "a84b0ba459c70c11278f3c263f73e0024ecfa6fea608277707b23fe35a09c6fa",
+      "available_config": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.02403532836077401,
+        "inner_switches": 210
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_3-root_30002.tar.gz",
+        "version_id": "eUYZoJZRifsVOoha82lX1PqwIz04RcfP",
+        "sha256": "434b2a5cf8074387957e9356137a0c9023ed6670cdd688ad9a979957861f3f20"
+      },
+      "allowed_contexts": 924,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        924
+      ],
+      "cache_sha256": "527a59bb41b2fe6ba606ffc7ab2b25d1c26605eadf5c1c71d9a244694b4db0d7",
+      "available_config": {
+        "tau": 0.15,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.018571574604791374,
+        "inner_switches": 138
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P1-fold_3-root_30003.tar.gz",
+        "version_id": ".jVBrpPh1pzuRWpAc1wk9.OW_CLYtU8t",
+        "sha256": "b7574e0c84ff1c495e3be9249a98911869a15c95cc05c08c3f27079e8b04c2e6"
+      },
+      "allowed_contexts": 924,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        920
+      ],
+      "cache_sha256": "d0182a7ce9abeb06d0c32ab9de9c742226aa2eb75e702a7c0f728474e1e8121d",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.036117064140880936,
+        "inner_switches": 162
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_0-root_30001.tar.gz",
+        "version_id": "7JN66GvDLLvjHOwXlu6rpND742YnXZo.",
+        "sha256": "1a58181fda2af91387222548570df3f258be186f01382d495bafce74f60564ef"
+      },
+      "allowed_contexts": 920,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        920
+      ],
+      "cache_sha256": "ff5a28b81f8f31984317f779598eb00a2640192da36ba530b9c0b26ec5251060",
+      "available_config": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.054337012157573875,
+        "inner_switches": 175
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_0-root_30002.tar.gz",
+        "version_id": "3Y79QrxbZsXIK.wr2WjqaQvbNpcZ5GNJ",
+        "sha256": "3cb787464bbcdd377b67b90e59669474601592d5f992de2467b30b223eac71e1"
+      },
+      "allowed_contexts": 920,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        920
+      ],
+      "cache_sha256": "52cd526cb941355d0736ee83cc0bff2aef2c4b021b356c38e4372ab418f0e017",
+      "available_config": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.03768497692454022,
+        "inner_switches": 146
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_0-root_30003.tar.gz",
+        "version_id": "2Q2cpyuO2fM3vWWvHhWdu3PakIohf21n",
+        "sha256": "61a607a8093bc6029bccb3b1ec9601f6ef3e90c8eed0ee62226c8401f3ec0195"
+      },
+      "allowed_contexts": 920,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        905
+      ],
+      "cache_sha256": "a0fc81c3db22740e3465888f45cfc0ca2b432a99f3318a7bc80a595e88bcebed",
+      "available_config": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.03916058778803856,
+        "inner_switches": 181
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_1-root_30001.tar.gz",
+        "version_id": "UDji_hrjDB4dNxatyT745IbLNbtQ9bXw",
+        "sha256": "7e2ae4471f1eaf844c4358fcbfe1340a90304ace3b35447f2200c3485e73bb61"
+      },
+      "allowed_contexts": 905,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        905
+      ],
+      "cache_sha256": "fac20e6386268110b169011e62c51b8ea7e1afa4e68f4b5c7d6119f19be9bfde",
+      "available_config": {
+        "tau": 0.05,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.04291044643850052,
+        "inner_switches": 104
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_1-root_30002.tar.gz",
+        "version_id": "W8eZ00R9_GAekHDRuvBPw6X9ALuFZaZg",
+        "sha256": "7b480877601adfb53c78c825249840cb3d86c46cc43076fce5d7695176106687"
+      },
+      "allowed_contexts": 905,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        905
+      ],
+      "cache_sha256": "0fcd2756504342ff1f17bc036efe0c1dc24ec7689c66043cf9f49dc2f78f280b",
+      "available_config": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.0514478629349326,
+        "inner_switches": 184
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_1-root_30003.tar.gz",
+        "version_id": "eek.DEEJneRz6MEbqBTynKZW2EIuw91H",
+        "sha256": "8e14ec5d6128cda37f646766d9f614db5144b7e928a69c2166dadbd5e7edf17d"
+      },
+      "allowed_contexts": 905,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        869
+      ],
+      "cache_sha256": "c19e081662f4034205de51408b1595612384a9466581bb654da2982ef1b846c3",
+      "available_config": {
+        "tau": 0.15,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.06019546015850898,
+        "inner_switches": 231
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_2-root_30001.tar.gz",
+        "version_id": "AlzOTyzyITx2pBUDX1LBmqFcvyaE8I6p",
+        "sha256": "0ba915dee9293a4533d248835f1a1cd1ba0c3fa820f6ac6dcf88086005757c5c"
+      },
+      "allowed_contexts": 869,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        869
+      ],
+      "cache_sha256": "3d6fc928e776cc0a80950615f329cf710495a444127964aa757c30251bcabc3d",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.0725895777473569,
+        "inner_switches": 270
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_2-root_30002.tar.gz",
+        "version_id": "dLxKGsOwBegQxoFsyElWv8FwxMj3JY6x",
+        "sha256": "4b4ad0c30f70cfb09482d72900259348d5bcdf7cfbc1f7a6a5f6d3cda024dc7c"
+      },
+      "allowed_contexts": 869,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        869
+      ],
+      "cache_sha256": "0ba06a66e93ba84fb88e53d779b1b1fbb0c99d8eab38c1186f1ef9394a7f6051",
+      "available_config": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.09155302744405724,
+        "inner_switches": 235
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_2-root_30003.tar.gz",
+        "version_id": "2222DNdkWiH8f0S98NiW12JgiOQYs2TN",
+        "sha256": "c7ee202a76fd65bd577b090d8ab2f815d4d404c7826d89ad448d236273e97693"
+      },
+      "allowed_contexts": 869,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "root_seed": 30001,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        963
+      ],
+      "cache_sha256": "9a26adc47d27f30d1f1a7e831e83b90eba37c233dc6ec162d4caa8da62606e94",
+      "available_config": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.06371191627097063,
+        "inner_switches": 192
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_3-root_30001.tar.gz",
+        "version_id": "sa6OMvJYE_d7ZdAgTG49i7aViOJoFNYa",
+        "sha256": "c0a2c2b2261b66238d83e52e81e6fa1d962f74fce9772d459dc4db217870734f"
+      },
+      "allowed_contexts": 963,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "root_seed": 30002,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        963
+      ],
+      "cache_sha256": "9cccc2bf46a9eb899eecf855bf71475425dcf086e5dd04e9fb3f7c61aacb6839",
+      "available_config": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.041156025663090574,
+        "inner_switches": 107
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_3-root_30002.tar.gz",
+        "version_id": "haqiwdXJ6giylZeckae6JMcKkFoLroNa",
+        "sha256": "399086ef1f5625b900df499cd629033f4670e252fbc8b4dba9dc970e91a5c8ba"
+      },
+      "allowed_contexts": 963,
+      "context_closure_exact": true
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "root_seed": 30003,
+      "cache_keys": [
+        "cids",
+        "picks"
+      ],
+      "cache_shape": [
+        963
+      ],
+      "cache_sha256": "0b53051c4eef9e21ca11db17d8b43cd2224772606064308fe4e97987d6903e47",
+      "available_config": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.05751871139136709,
+        "inner_switches": 157
+      },
+      "available_configs": 1,
+      "required_configs": 18,
+      "missing_configs": 17,
+      "reason": "MISSING_GRID_OOF: expected int picks[18, outer_train_contexts]",
+      "archived_inner_model_files": 360,
+      "inner_member_policy_metadata_files": [],
+      "source_model_archive": {
+        "bucket": "veox-jopedime-learning-use2",
+        "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/models/P2-fold_3-root_30003.tar.gz",
+        "version_id": "z.tREngLEDmrQOQ.9VmzPy.khbP2nywP",
+        "sha256": "2ace11d4a994dd69f5fd95c2b4d05c82aa8434555a9a038412937ccf887f302a"
+      },
+      "allowed_contexts": 963,
+      "context_closure_exact": true
+    }
+  ],
+  "required_config_cells": 648,
+  "available_config_cells": 36,
+  "missing_config_cells": 612,
+  "member_refits": 0,
+  "selection_calls": 0,
+  "bsel_fit_locks": 0,
+  "bsel_outer_score_calls": 0,
+  "no_partial_scoring": true,
+  "baseline_regression": "PASS",
+  "disposition": "No unapproved inner refit, fabricated abstain count, or scientific NOT_ADVANCED verdict.",
+  "finished_utc": "2026-11-04T17:02:17.261646+00:00"
+}

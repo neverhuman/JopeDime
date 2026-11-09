@@ -1,0 +1,83 @@
+{
+  "scope": "Only listed actual CPU/metadata operators executed; prospective x1transport NOT_RUN; source fixtures do not establish live qualification",
+  "files": {
+    "ops_prepare_inputs.py": {
+      "sha256": "44e406e5770b1d60d4430c6de3c52e886bcfc98a5955590501c83902c8b739af",
+      "deploy_as": "prepare_inputs.py",
+      "execution": "EXECUTED",
+      "host": "xbabe2",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_stage_inputs.py": {
+      "sha256": "76961fdd418e34c0c61ea7f241dc71c330201defcbc053a6918cf79ceefdff4a",
+      "deploy_as": "stage_inputs.py",
+      "execution": "EXECUTED",
+      "host": "xbabe2",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_fetch_nl15.py": {
+      "sha256": "1e2003144c208c5b96c6e2df0c781f43d0acdc8ffc469aaacc3fc2506c366297",
+      "deploy_as": "fetch_nl15.py",
+      "execution": "EXECUTED",
+      "host": "xbabe2",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_cpu_verify.py": {
+      "sha256": "f80c8f7397039083dfdce8af8ac67c476fdb276266e4eefefb71f3c379bb83ba",
+      "deploy_as": "cpu_verify.py",
+      "execution": "EXECUTED",
+      "host": "xbabe2",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_capture_preflight.py": {
+      "sha256": "3069cda8960bc0ec3a861b7205e2eac2b83daebe6a5ed03b458070eb271a3490",
+      "deploy_as": "capture_preflight.py",
+      "execution": "EXECUTED",
+      "host": "xbabe2",
+      "scope": "metadata capture helper sends only stdlib resource probe toxbabe1"
+    },
+    "ops_transfer_guard_only.py": {
+      "sha256": "f6ddbe15ed4c857444710934aa110cf2e9a7294b483163544d4a7820727925c8",
+      "deploy_as": "transfer_guard_only.py",
+      "execution": "EXECUTED",
+      "host": "xbabe2",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_science_review.py": {
+      "sha256": "5b001bd7150208cc406126d6f704aa43732cc527ec2dcb976d6a328a248223d7",
+      "deploy_as": "science_review.py",
+      "execution": "EXECUTED",
+      "host": "xbabe2",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_x1_prepare.py": {
+      "sha256": "3a531e4d5402ea2303ca1aae84ed2cc253c06640d7d8a9b36d4fe96fc40a99f2",
+      "deploy_as": "x1_prepare.py",
+      "execution": "NOT_RUN_RESOURCE_GUARD",
+      "host": "xbabe1",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_x1_launch.py": {
+      "sha256": "65c8e58593a9d586a705c55e7fff6f9fab0aa50529c3703fa149df3031ee4d8f",
+      "deploy_as": "x1_launch.py",
+      "execution": "NOT_RUN_RESOURCE_GUARD",
+      "host": "xbabe1",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_relay.py": {
+      "sha256": "b6419a31a9462fc942bb3a5b10c0b9da0ff51883a3a6e5190ed3059e42ca8ae6",
+      "deploy_as": "relay.py",
+      "execution": "NOT_RUN_RESOURCE_GUARD",
+      "host": "xbabe2",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    },
+    "ops_courier_guard.py": {
+      "sha256": "abcea4fac1a012053fcec27008229ad44fe7b38cc5c688696d0e1d257ed1bb84",
+      "deploy_as": "courier_guard.py",
+      "execution": "NOT_RUN_RESOURCE_GUARD",
+      "host": "xbabe2",
+      "scope": "Qualified parent transport/path adaptation or actual CPU preparation"
+    }
+  },
+  "credential_transfer": false
+}

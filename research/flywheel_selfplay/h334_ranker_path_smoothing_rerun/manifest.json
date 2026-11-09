@@ -1,0 +1,73 @@
+{
+  "sources": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "base_code": "819a45aa5e",
+  "base_code_full": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "dope_frozen": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "kernel": "6.8.0-147-generic",
+    "host": "xbabe2"
+  },
+  "wave": "H334",
+  "authority": "/home/ubuntu/nudges/hw_t2105_gov03_h334_psmooth.md",
+  "cores": [
+    1,
+    2,
+    3,
+    7,
+    9,
+    10,
+    12,
+    14
+  ],
+  "workers_max": 8,
+  "MemoryMax": "6G",
+  "MemorySwapMax": 0,
+  "nice": 19,
+  "numeric_threads": 1,
+  "compute_stop": "2026-11-04T23:59:00Z",
+  "close_stop": "2026-11-05T00:15:00Z",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "parent_prereg": "0ab56940ee96bafd959d29c8fa9e6c4b850fc56b",
+  "copied_H333_patch_sha256": "eccfd982d4b67d69b54f842a6e7b2e7d7cd3b53644b419168575c68c8d1adbdc",
+  "copied_H333_test_sha256": "e1604a2651ce0cf0b9e292ae1b15b218340766c6ba5484fa8bc5ae3c3ac5cf14",
+  "prereg_sha256": "d497dbab9eed44e07acdf45871808814dec1b90b2130068f4266c93fd2b3d5fa",
+  "source_sha256": {
+    "resource_probe.py": "c4220089219860e000b83a306b25c5beb8963738f9a3b273b009f4c60549113a",
+    "controller_h334.py": "2d1b8bdfb38b512d4ac8c17c2c77de8b84a4ba7b4b44bf9bafdd13166c2cf911",
+    "evaluate_h334.py": "c113cf1a52d511f3332d558517fe0dd6efe3ce7ad36fcc38f9d233d9d0d8ceeb",
+    "guard_h334.py": "01e687c9bdfd00c8e91756eea401814de6a0a32c9f1fba9453bc4e19d93a5f2f",
+    "native_baseline_reference.json": "8568b5f1ff2aad7034b9c2e7ff40c7952cf268cd95a56ae153fff44d7ee6243a",
+    "test_evaluator_report.py": "34a92b8f50126d74d06f6f9b5ee06cc82a486dea193e0d2117bf798651f77944",
+    "base_archive_member_inventory.json": "79d2fd3f50501176fd3d06af25149337f126a6eaf2819e13070e1d5334edfb62",
+    "run_h334.py": "7f2355de0bfc53c5d8f7265cc804a9f1e1642a4a29672eb448b67d2983a890c3",
+    "gbdt_reference.json": "ee7e319bcd60fefb399c965af5529d28e201ac4d415e5ba5feebef5b8a07bc14",
+    "fetch_base_h334.py": "4f54cef6d3bab25efd970e07e7866cc6f9791ada2b23b4f2583e2947d2f8f04b",
+    "test_native_audit.py": "9ae527e52b5ea7d6aebbb28cd9826d6ee0c63b98cf4e5ce255319e9803bcdcf8",
+    "test_path_smooth.py": "e1604a2651ce0cf0b9e292ae1b15b218340766c6ba5484fa8bc5ae3c3ac5cf14",
+    "h329_resources.json": "d595a5da7582641805eda2c87374cbfb30d83a8b24e1215c6f3cffc41c09c7ff",
+    "input_preflight.py": "922c98c7c416b03941cfd60474be1ee4ee7f6ba23fc0411fa36b966e652fd88b",
+    "h329_timing.json": "c3461d87fb8f1e7a5bc13915a82bc5fa0909ed77a1df2c15cbb299a7819f4dfa",
+    "test_resource_forecast.py": "199599bfc559f31ed6531b3c17da0ad2251e16c802350bf824e34b4e8eaa88fe",
+    "test_h334.py": "fefd2d5e23c7f6a75497917576a315f41919073fe5fd8d28efd77a1b754dc977",
+    "path_smooth_patch.py": "eccfd982d4b67d69b54f842a6e7b2e7d7cd3b53644b419168575c68c8d1adbdc",
+    "archive_h334.py": "cac7e15643481218562a119ac97d157f1921be91d974f934fd0a9d6bf1b50ae6",
+    "runtime_h334.py": "b4cffb31f76e479c4fda76453aff7386c7feaaec29b574ca425404e8aae3fb6b",
+    "forecast_h334.py": "dc5c5a4b441bd3ebbefb959f0c9346ab14dffd92de9db10790bfc966ae50b71f",
+    "native_audit.py": "15e8a309b5e2be69d969b3e7faa945cfb038cea68d61c386d115610a6d776b97"
+  }
+}

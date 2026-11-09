@@ -1,0 +1,36 @@
+{
+  "wave": "H333",
+  "owner": "sol_v1_gov03",
+  "source_original": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+  "template_harness": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "template_h329": "f6f442f1aad936cf1b695b140aa5e60963ac9a85",
+  "scope": "Resource forecast stopped campaign before fits; patch and data-free controls only; no worker harness instantiated",
+  "authority_sha256": "be982af6dbf22cfa9b2e91e1c21330660a0cc52c7f03c71c688175f924d8608d",
+  "source_sha256": {
+    "resource_probe.py": "39dbe5e9ede10f5bd536b9891cb3f4c66fa9354844aba1ca754b7f66caa20ae2",
+    "forecast_h333.py": "bcd589b670490a3419a4464e73ccb34ee018cb5ddc6221bba8e8a7429d484b35",
+    "gbdt_reference.json": "ee7e319bcd60fefb399c965af5529d28e201ac4d415e5ba5feebef5b8a07bc14",
+    "test_path_smooth.py": "e1604a2651ce0cf0b9e292ae1b15b218340766c6ba5484fa8bc5ae3c3ac5cf14",
+    "h329_resources.json": "d595a5da7582641805eda2c87374cbfb30d83a8b24e1215c6f3cffc41c09c7ff",
+    "capacity.json": "701c21572b7c335f8c51ec5ee6d58706d887add274d01530a32cf8a23f47d19e",
+    "h329_timing.json": "c3461d87fb8f1e7a5bc13915a82bc5fa0909ed77a1df2c15cbb299a7819f4dfa",
+    "test_forecast.py": "909bf845bb26be02c329dd0e2b5d2d2c64221b5728572d805c884967a5bed619",
+    "path_smooth_patch.py": "eccfd982d4b67d69b54f842a6e7b2e7d7cd3b53644b419168575c68c8d1adbdc",
+    "runtime_forecast.json": "4e0f1840c5806d9be58b268405f9279f885b0531820f3bffffab194d8b8392fb"
+  },
+  "baseline_native_default_reference": {
+    "kind": "Existing H329 data-free GBDT timing fixture; not a new BASE or H333 fit",
+    "member": "timing_fixture/329001-GBDT.txt",
+    "model_sha256": "0fc4d76d76995af4934a6ab0ca148cabbee1f8d33babe51d1fd830e70d7946b6",
+    "native_path_smooth": 0.0,
+    "native_boosting": "gbdt",
+    "optimizer_fits_performed_for_this_reference": 0,
+    "archive_sha256": "8cf8e5a979d055c4fb68c830ea9fcb726cd386f020cb3291a5f4ec4ad2f42da9"
+  },
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "prereg_sha256": "dfc0393f16c62732b6314ee6b0c6cd38419ccbb25f70d355705317ccc1f4ccf2"
+}

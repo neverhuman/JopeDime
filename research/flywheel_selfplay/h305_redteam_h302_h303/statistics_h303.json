@@ -1,0 +1,327 @@
+{
+  "gains": [
+    0.04128922328486218,
+    0.0643163334285782,
+    0.07225765693022389
+  ],
+  "median_gain": 0.0643163334285782,
+  "pooled_ci95": [
+    0.022288709568963044,
+    0.13359174046564948
+  ],
+  "per_seed_lcb95": [
+    0.02449449340812922,
+    0.02090731116863874,
+    0.028698887458652917
+  ],
+  "family_medians": [
+    0.0,
+    0.0015880840956337128,
+    0.00698422392386483
+  ],
+  "family_wins_ties_losses": [
+    [
+      88,
+      93,
+      24
+    ],
+    [
+      108,
+      67,
+      30
+    ],
+    [
+      122,
+      50,
+      33
+    ]
+  ],
+  "changed_picks": [
+    219,
+    300,
+    320
+  ],
+  "elo_actual_r882_slot0_1500": [
+    1725.6559443739816,
+    1722.479188261021,
+    1727.0999611175755
+  ],
+  "elo_ci95": [
+    [
+      1652.447886376557,
+      1812.9700690664945
+    ],
+    [
+      1656.7079288809393,
+      1799.2122929353282
+    ],
+    [
+      1665.6454632422033,
+      1798.7037721418976
+    ]
+  ],
+  "requested_r3175_elo": null,
+  "requested_r3175_elo_status": "UNMEASURED: original slot0 is r882",
+  "invalid": [
+    {
+      "baseline": 17,
+      "challenger": 13,
+      "excess": -4,
+      "discordant_worse": 2,
+      "discordant_better": 6,
+      "p_one_sided": 0.96484375
+    },
+    {
+      "baseline": 17,
+      "challenger": 14,
+      "excess": -3,
+      "discordant_worse": 2,
+      "discordant_better": 5,
+      "p_one_sided": 0.9375
+    },
+    {
+      "baseline": 17,
+      "challenger": 11,
+      "excess": -6,
+      "discordant_worse": 2,
+      "discordant_better": 8,
+      "p_one_sided": 0.9892578125
+    }
+  ],
+  "harmed_share": [
+    0.06341463414634146,
+    0.08780487804878048,
+    0.09268292682926829
+  ],
+  "concentration": [
+    {
+      "drop_top_gain": {
+        "1": 0.034482398883391156,
+        "5": 0.022905347540082433,
+        "10": 0.013173556747221864
+      },
+      "top10_net_share": 0.696508114562636,
+      "top10_positive_share": 0.5910763666462913,
+      "top10": [
+        {
+          "family": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3",
+          "gain": 1.4298814011849519
+        },
+        {
+          "family": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc",
+          "gain": 0.9254714658923208
+        },
+        {
+          "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+          "gain": 0.5605388885454538
+        },
+        {
+          "family": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66",
+          "gain": 0.49995512654329355
+        },
+        {
+          "family": "fam-21852904e06ac11cfc763928dd9a0e52d68fadc4b7a7b1e274331927dd803ffb",
+          "gain": 0.46737438321424163
+        },
+        {
+          "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+          "gain": 0.4566371445981402
+        },
+        {
+          "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+          "gain": 0.42710745453582905
+        },
+        {
+          "family": "fam-6ed8ae431d7ebd22d17ebadba29f8ad779ef64845ffba66911789a35434e0493",
+          "gain": 0.41046483445292625
+        },
+        {
+          "family": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e",
+          "gain": 0.39583467210130197
+        },
+        {
+          "family": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e",
+          "gain": 0.3221818366200253
+        }
+      ],
+      "drop_top5_lcb95": 0.01238353706136354
+    },
+    {
+      "drop_top_gain": {
+        "1": 0.03710010271431612,
+        "5": 0.018969760868246765,
+        "10": 0.008632837099038629
+      },
+      "top10_net_share": 0.8723228975214142,
+      "top10_positive_share": 0.6912874772853219,
+      "top10": [
+        {
+          "family": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517",
+          "gain": 5.616427399138043
+        },
+        {
+          "family": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3",
+          "gain": 1.4298814011849519
+        },
+        {
+          "family": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e",
+          "gain": 0.981841746894579
+        },
+        {
+          "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+          "gain": 0.7226024895582718
+        },
+        {
+          "family": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc",
+          "gain": 0.640143142433335
+        },
+        {
+          "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+          "gain": 0.4566371445981402
+        },
+        {
+          "family": "fam-6ed8ae431d7ebd22d17ebadba29f8ad779ef64845ffba66911789a35434e0493",
+          "gain": 0.44175611137014115
+        },
+        {
+          "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+          "gain": 0.42710745453582905
+        },
+        {
+          "family": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e",
+          "gain": 0.39583467210130197
+        },
+        {
+          "family": "fam-e37a104589f0fdbc8a10035abed14b4b9d6d55ee116de1ed8bb294257d9ecffd",
+          "gain": 0.38921355673140745
+        }
+      ],
+      "drop_top5_lcb95": -0.00030387504142724277
+    },
+    {
+      "drop_top_gain": {
+        "1": 0.045081165435168,
+        "5": 0.02751377343114538,
+        "10": 0.016620542843170227
+      },
+      "top10_net_share": 0.7812026388986659,
+      "top10_positive_share": 0.6188760448396168,
+      "top10": [
+        {
+          "family": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517",
+          "gain": 5.616261921921627
+        },
+        {
+          "family": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3",
+          "gain": 1.4298814011849519
+        },
+        {
+          "family": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e",
+          "gain": 0.9489281276290631
+        },
+        {
+          "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+          "gain": 0.674850391297845
+        },
+        {
+          "family": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc",
+          "gain": 0.640143142433335
+        },
+        {
+          "family": "fam-21852904e06ac11cfc763928dd9a0e52d68fadc4b7a7b1e274331927dd803ffb",
+          "gain": 0.46737438321424163
+        },
+        {
+          "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+          "gain": 0.4566371445981402
+        },
+        {
+          "family": "fam-ababb70a016787d17604791ee182876322d6663e729381779e3628df97265283",
+          "gain": 0.45217049297365974
+        },
+        {
+          "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+          "gain": 0.4439849906271639
+        },
+        {
+          "family": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5",
+          "gain": 0.4415818203976767
+        }
+      ],
+      "drop_top5_lcb95": 0.007092168218782928
+    }
+  ],
+  "seed_dependence": {
+    "pairs": [
+      {
+        "seeds": [
+          30001,
+          30002
+        ],
+        "agreement": 0.7793273174733388,
+        "union_switched_contexts": 380,
+        "disagreements": 269,
+        "agreement_on_switched_union": 0.29210526315789476
+      },
+      {
+        "seeds": [
+          30001,
+          30003
+        ],
+        "agreement": 0.7957342083675144,
+        "union_switched_contexts": 375,
+        "disagreements": 249,
+        "agreement_on_switched_union": 0.336
+      },
+      {
+        "seeds": [
+          30002,
+          30003
+        ],
+        "agreement": 0.8014766201804758,
+        "union_switched_contexts": 400,
+        "disagreements": 242,
+        "agreement_on_switched_union": 0.395
+      }
+    ],
+    "family_delta_correlation": [
+      [
+        1.0,
+        0.27024899445549116,
+        0.31093365168580983
+      ],
+      [
+        0.27024899445549116,
+        0.9999999999999999,
+        0.9803674006875587
+      ],
+      [
+        0.31093365168580983,
+        0.9803674006875588,
+        1.0
+      ]
+    ],
+    "effective_seed_count_spectral": 1.7104838819795511,
+    "interpretation": "Descriptive dependence across the same families; three training seeds are not three independent data samples."
+  },
+  "permutation": {
+    "seed": 305150,
+    "draws": 1000,
+    "observed": 0.06431633342857822,
+    "upper_tail_count": 0,
+    "p_upper_plus_one": 0.000999000999000999,
+    "null_mean": 0.0008318492195571834,
+    "null_sd": 0.009218671370645354,
+    "null_min": -0.03006218203955636,
+    "null_max": 0.03375043882670388,
+    "null_q025_q50_q975": [
+      -0.016550713406758972,
+      0.0007799013479084747,
+      0.018641550408652265
+    ],
+    "unique_statistics": 1000,
+    "families_with_nonconstant_pick_vectors": 169,
+    "null_statistics_sha256": "66b15e96acd478fb49ebfd879109559576dea11adab8359ac6ccad750772dfc0",
+    "limitation": "Conditional within-family context-exchange null; not a retraining/label-shuffle null or proof against design selection leakage."
+  }
+}

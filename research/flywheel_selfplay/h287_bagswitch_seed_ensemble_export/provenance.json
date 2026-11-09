@@ -1,0 +1,16 @@
+{
+  "wave": "H287",
+  "slug": "h287_bagswitch_seed_ensemble_export",
+  "owner": "rd_argon",
+  "authority": "/home/ubuntu/nudges/hw_t0005_argon_h287.md",
+  "s3_catalog_version": "v246",
+  "fresh_pools_read": 0,
+  "h284_export_s3": {
+    "bucket": "veox-jopedime-learning-use2",
+    "prefix": "experiments/rd_breakthrough_20261030/H284/export/",
+    "export_manifest_version_id": "AHFLVzBwd_fOfBAFGwHd.ABmkbgIbUu3",
+    "fit_lock_version_id": "4DfJg9U5rybBD2b4UFNTyLnnnmpUb._b"
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "r882_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+}

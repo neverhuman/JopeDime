@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "checkpoint": "/home/ubuntu/jope-data/h276/inputs/round-882.pt",
+  "checkpoint_sha256_before": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "checkpoint_sha256_after": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "recomputed_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "recorded_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "parameter_tensors": 56,
+  "normalizer_tensors": 11,
+  "interpretation": "Immutable non-live r882 source copy verified; H302/H303 consume cached features and cannot update these tensors. This does not audit unrelated live state."
+}

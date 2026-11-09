@@ -1,0 +1,53 @@
+{
+  "scope": "Exact exercised host/report adapter snapshots copied only after treatment unit stopped; frozen science remains unchanged",
+  "files": {
+    "ops_fetch_nl15.py": {
+      "sha256": "28aafbcadd387751f4a5d99fdb676336d5a876200757926a19de9122b49765dd",
+      "deploy_as": "fetch_nl15.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P with science in source/ and vendor pins in vendor/"
+    },
+    "ops_stage_inputs.py": {
+      "sha256": "0fccf434128baadaf9cedd7be7db288579df166c8eb5b65cace498a86af021ae",
+      "deploy_as": "stage_inputs.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P with science in source/ and vendor pins in vendor/"
+    },
+    "ops_prepare_inputs.py": {
+      "sha256": "68267086bdc117f82bb11767a0906cf6004a9108a429094d03f2e6443fa06bad",
+      "deploy_as": "prepare_inputs.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P with science in source/ and vendor pins in vendor/"
+    },
+    "ops_prepare_experiment.py": {
+      "sha256": "297f3f6821ff3ad03c14b081dd8370e887ceef6dc4edce099f4203e14a4be60f",
+      "deploy_as": "prepare_experiment.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P with science in source/ and vendor pins in vendor/"
+    },
+    "ops_launch.py": {
+      "sha256": "d5ed0c4e9be9fe028e7e1edf5396f8f60db0d4521afe62b0123aac455c93b550",
+      "deploy_as": "launch.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P with science in source/ and vendor pins in vendor/"
+    },
+    "ops_science_review.py": {
+      "sha256": "14dd8eab544ac40d72b5b94bbc40793039179a755f6488b65593acfe539d55c9",
+      "deploy_as": "science_review.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P with science in source/ and vendor pins in vendor/"
+    },
+    "ops_close_report.py": {
+      "sha256": "c8d7413e3a6ab672c6ecd835e60bb2700bef955943592ea75a3efb12db97fe55",
+      "deploy_as": "close_report.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P with science in source/ and vendor pins in vendor/"
+    },
+    "ops_render_readme.py": {
+      "sha256": "aa73202a8ebee598b713df58395ed121b4647678831c1c3dfbe2ac5daf664cb4",
+      "deploy_as": "render_readme.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P with science in source/ and vendor pins in vendor/"
+    }
+  }
+}

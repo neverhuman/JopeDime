@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "utc": "2026-11-05T10:31:13.539402+00:00",
+  "train_pool_sha256_matches": 1219,
+  "train_prefix_feature_members": 4,
+  "selected_and_r882_train_costs": "EXACT SHA256",
+  "DLVal_feature_rows_read": 0,
+  "reference_manifest_sha256": "9b148003d48ab609b2a796c57fb8b4c0296cc0ee79771f034944f4b8dc064263",
+  "scope": "All current TRAIN program/fitness/gate pools and all consumed cache feature prefixes exactly match the archived BASE inputs; no file bodies outside TRAIN prefixes."
+}

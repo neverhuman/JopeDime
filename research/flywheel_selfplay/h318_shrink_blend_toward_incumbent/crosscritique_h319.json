@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "scope": "Metadata-only replay; no feature/fitness/model evaluation and no H318 decision change",
+  "reviewed_commit": "f7763b9e4973a1759e2b808c0f070819ade97bb0",
+  "source_sha256": "f9cd95b60ac31a852ecae56ce581513365f25068d8b25ed9346e4a49631056ef",
+  "selected_metadata_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "members": 324,
+  "members_with_duplicate_source_family_across_internal_folds": 324,
+  "internal_splits": 1296,
+  "internal_splits_with_source_family_overlap": 1296,
+  "overlap_family_count_min": 7,
+  "overlap_family_count_max": 27,
+  "outer_leakage_established": false,
+  "interpretation": "H319 relabels copies as independent families before member internal CV, so copies of original families straddle inner training and validation. This changes the internal validation independence; it does not demonstrate leakage of held-out outer families.",
+  "finished_utc": "2026-11-04T12:49:14.830644+00:00"
+}

@@ -1,0 +1,16 @@
+{
+  "source_commit": "ee85f557b4050bb696ac857e93b5ef3a383331ea",
+  "source_prefix": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/",
+  "files": {
+    "common_h252.py": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+    "baseline.py": "36e44f2942532a0b9fa5f7aa4aabdc198e34d1696fa8a2e5aef13875eb26683e",
+    "h268_frozen.py": "79c29ed161c99b0ad4da5f5edc488735648fc51e6b7f55102a9eb257778d17f2",
+    "h265_frozen.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+  },
+  "source_files": {
+    "common_h252.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/common_h252.py",
+    "baseline.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/baseline.py",
+    "h268_frozen.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/runner.py",
+    "h265_frozen.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/h265_frozen.py"
+  }
+}

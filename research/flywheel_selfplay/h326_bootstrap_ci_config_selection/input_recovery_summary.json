@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "source_wave": "H318",
+  "objects": [
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H318/astra-20261104T112505Z/h318_evidence.tar.gz",
+      "version_id": "HiO.tOo0ons7PxKtDAPWzfqznixHZ0AP",
+      "sha256": "c853051526c5eafb0e393e81534ee9e0c75905eff8e14062ba064e8c8848def7",
+      "path": "references/h318_evidence.tar.gz",
+      "bytes": 86525141,
+      "exact_version_get_verified": true,
+      "local_archive_retained": true
+    }
+  ],
+  "members_verified": 1227,
+  "raw_receipt_sha256": "b2b8a532d086f745c3fd5fbfa513f7fb8c74c1f6cc7427ec6d6e733cc20d23de",
+  "raw_receipt_location": "H326 custody archive closeout_provenance/input_receipt.json"
+}

@@ -1,0 +1,700 @@
+{
+  "status": "PASS",
+  "same_agent_independent_recalculation": true,
+  "locks": 36,
+  "ranker_fits_verified": 29484,
+  "constructor_overrides": 0,
+  "callback_insertions": 2,
+  "native_ranker_models_verified": 972,
+  "callback_rounds_verified": 5136800,
+  "unweighted_gate_models_exact_BASE": 108,
+  "changed_final_model_hashes_vs_BASE": 972,
+  "overfit_members_verified": 216,
+  "results": [
+    {
+      "partition": "P0",
+      "fold": 0,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "34c0f8cb3a28c8ace2a7283779514d4bb832427a06e0a9a2310b27be9b68fa7c",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "3885ed545b3b81ddb7243706bb0696ca722823a0d4ac4eff30370b19ca5275bc"
+    },
+    {
+      "partition": "P0",
+      "fold": 0,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "6b17c2feb096c629bc29b60c14a0c4427e735ba7e5edbee9de3ee3d3f8374ac8",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "eefeadcb0abc25601a38c6e493b15e7f5274d19813e92a643663330a9f4a93c2"
+    },
+    {
+      "partition": "P0",
+      "fold": 0,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "9048435dadef5bcbf76ef4b08df7131092ff3092deed0a7b513533f1d4f241fb",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "9f60083baa1cc54b9b981fa2bf87e838ce9035784b649b8acbc7c708e664fd3e"
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "9664e21dfe58c688ff0fd3a60a3734ca12a7dcf4ef179c005a4f111e65d7fc01",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "f231e6d0effb301136a047bd77f3e208eae3f93b6dc06b2fb240312f97142fc6"
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "8e82c9f10ae69559158486a4af1235fadb903285185c26d66290323233379133",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "be8b0e4fc522dafd3e97effc61331fee1034b18613143270217642eccefa96be"
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "dd9d823091c9846424cfa74eef780be6d28be3daecdc47b13d8d79b00cdd1f51",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "87af60cc236f31d320d9df5b25fbec0540ae968212c67cedf14b1db461aa9bd7"
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "a5649fbb3b2672daf8cfa5655d575a7c415f3cb8d2fc254c6686358bb59a4baa",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "7afbc3cecfe09de9a4dfc56ebaf8834c95a68210c0cd133678dacf5299cef7d6"
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "36cad71f59594bf2b956df8d9cf57e800118650da57138c367453e023fbdda8e",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "6477710061d62af63b9e748ded98c0728164b8d3139b35776c57e5e8f23ae04e"
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "7fc077f6297018c15f7d303e65c6e350783b98bfd0017431ee9903a36dbcd8da",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "0c5c272fad462100ee02370a78d280db982c564abbed9ff16ad734df9194ad57"
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "e2a1674ef2619c92cbc9787e3f7b3ded9526469db62d9dbdf0284224847469f4",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "06a2424d49393456be75c1c216d5bc5557b0925da38c03384ea9fba53eba5fc8"
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "c483e1a3b22d28170ff6c65883c59c1da1de6f5c5caafed4a5481cbbe9990710",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "ce93510e1eebd140f963ae1a54ce3ec4597f86162cdf16fb2830d0b21307cfce"
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "93b063504e139a8d6e2610ad5b780950c3ac8814c2557cd4c0129732106d8062",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "9151de612d73f9ea026c00f3e8e99960e05e8230c1b012c855af97ea5d93e041"
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "15df76a67306cc72f395d45752b4b8f60db9746ce80d3e34a1c348babf19d27a",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "92c60a3de0a903400fedfe6b9d5336a94b8ab8da1233763d62e78d55600af69a"
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "fdf91e4a5ca9f1426a08d9092e0d6098e6038f4e6996d480b0c3a3e934dbd90c",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "c172b315a847ecf897111bd81363cc11176adea03216e1697569b563b2b1ec44"
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "76d2443c20bba4b7fdafbb2a48f2c3655e2454f72896516c83b49857240c804b",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "0fe48ab3fd47cf8e22cffb8a8533d909311f826ddfaf547ee395972366ec8bdd"
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "6aa24f850b0bfc6bacf4debd300cebe0b9f4c446e5f955a8b725a077fb287684",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "40c911eac4315deba59673d9e97227dfd8d92dec6a0d5ade8c750e32c7a6becf"
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "c30311af6656fb1a5935f501ac23f008182be0aad9cd2bbe8b5ab30ab9d7201c",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "0168690d07a383cec7b53e96ca3526da11ed1092130140d6ccf9454df3f45c5a"
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "7f9581c3c11363a1a6595cf1f4ba1ffbfb4453369143db9d695f8e0897e8c5df",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "84e9f39ec8cda85cce3b1d99d127fff6212d92567d4b376d154624a9c6901001"
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "4aaea09f3e88c2f5cce35aa1a526f93681a335cec69d9e421ff6514b9a4daf4f",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "8622f4c5b69bc97e6c6a3125db4b1585d0a8f7aa1bbfc5ca4a843a883dcc1860"
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "9b0b3cad08859028c4476318b089705bdac36098fe7a0cae339779bad770a61d",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "3a63d0c559f6773f6f1246e56df20240bbfc4ae37540e40c40c422ee7679c22a"
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "a80458442ff16ca90c844c823df7b378faf4ea271bc0b60bb9fe12f473885b94",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "ca2c798b901c24d6ae9b035ad3f5e50c71a9b1848dd0e289d265430e7e605dd2"
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "186ac8970c0ac26922c4670b8d50ca8e78e8bffcb8f03557b951ed232a3ba607",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "b505948fdff79b64ca50800eb8af6783a105cd2583bfa1974ad29e9b2da4386f"
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "022b699d21ef4b3448f3f598784a80845bbb3b3d7678c461f1f55cc439f47fdf",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "da28d68dcf178b7a7cf818cb438962f695dc6daf77bbff3028d004a7b03837d8"
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "85a9b5e8d71cacb9a36e06460e65cd455c0ec389140f80653618f5d222df9edb",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "5276a518f26c6d335aa0d465f06745cce48b8b6729550df8bc1a2f8ca39a83ad"
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "e7f2f4356ac63ea85e3d624c5dfff748ceaefd68b55913081f7fdcb3548ef416",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "82aa1e29be0327a0ddf36877588e6391bfc8aa3a24b071ae1d413610d91b2e8c"
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "2ff7da6ca0452d16b5dd24670a08daa571ebfbf968f29d1ac699109fa4e1bf78",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "6bc4b971184738f4946c0a5bc3075bad1b09db22edd17cfc9a78abcd9f321d75"
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "6a2d36b9fb231cd9650bfff798d9da647113f2daa0668fad6eb9ef490ff0783b",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "db1bbce92c71dc8b9c44c28ba43429bd721897324e39ec0b66ea0b67fa5ad9bb"
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "8b39cf22db777b7a2c2fa7592066f55ce3f41c605e519a1fb906fdae2619f504",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "70242dddf16c5a1b3be2e3798159b2f37fc25252fec7ec99b5f63bcae090b90a"
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "30c82e4d59310f7b6547b169d57076e26310a46728fd1fac82420a2f0f805569",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "4ba05d39d5084f6dcb5cdb6b3c956eab1aa82010e89d4eb55e6da94db0c787fc"
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "0eccc49e88b9e6ade6419eb0ebda875560693b5bbc4584563a7ee8f907c1b0ab",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "5c4c8d13ed1319a49215ad8486e2da0e27f4689174ba8dcb36baeaa0d0bec085"
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "89c793c98988b4ce6c12a7ea11db6aa44564019199f12c460642d1c10c00ddff",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "ab292ad54ff613a163454fc64338e619f9f8c0a21620c9dde9a508f15ad399e8"
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "2e6017f2f31202a368229af402e1a3e08c5dedf22f32d7c65f4c5e54c0d86451",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "a9fc5a683ee9c700339ba7655fe45909cbacaab0e36272254660f91a167c3767"
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "bef24eb9cf84c80c8d11554e007b1b8ec4442e93c5048ac4f5ed663acb32ad96",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "bf7a19a1ae0af99c04e92b2d3898ef491f15b10a9a2a42ff47e92e04036d57c3"
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "90b1e44fa702a603ddeaf8fb6fb0de4fb7a7023a3479215ce17a4dd6d6e8c34b",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "7c8616743c0f619db0ceb14bae00318cf7836109124738261c8d017b22195bf2"
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "seed": 30002,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "713fe357bb189db49d02b148f0168f18082a4d835cbdd307bbc0dc5baa23e99c",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "3a65d60c9a73cce195931b84febebc892494b42e871764baee151e942089c0c6"
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "seed": 30003,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "5ad0d6e9cd0b63248b49b24f19f221381ed2eaedcf410c818a739aad6fb0b584",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "510eba6172f59ff38a7e2189b6be99d2adc3f33ef04c1a0404278a2bab31e56d"
+    }
+  ],
+  "finished_utc": "2026-11-04T21:14:18.649883+00:00"
+}

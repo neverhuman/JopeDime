@@ -1,0 +1,34 @@
+{
+ "wave": "H320",
+ "step": "regression_first",
+ "status": "PASS",
+ "cells": {
+  "P0": {
+   "per_seed_equal": [
+    true,
+    true,
+    true
+   ],
+   "median": 0.0643163334285782,
+   "median_equals_published": true
+  },
+  "P1": {
+   "per_seed_equal": [
+    true,
+    true,
+    true
+   ],
+   "median": 0.04821480030677507,
+   "median_equals_published": true
+  },
+  "P2": {
+   "per_seed_equal": [
+    true,
+    true,
+    true
+   ],
+   "median": 0.04360142642936269,
+   "median_equals_published": true
+  }
+ }
+}

@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "h287_export_commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+  "selected_json_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "ensemble_spec_sha256": "32ca19f30f427ae135f5f6c2aacc0fe28097d956f4e2ca0e7fd5f41ffec49995",
+  "fit_lock_sha256": "8a20c58bdb4bfcbadfa5ba927aa0577b630e3174e6dc4a7bfd579175ca08f35f",
+  "n_check_contexts": 64,
+  "context_cids_sha256": "4005568e59fc5fddf0893e3f30ddbc5e1b7e8b599a4310d60e21ec26e52de7ba",
+  "ens_vote2_64ctx_changed_count": 19,
+  "ens_vote2_64ctx_picks_sha256": "8ef2837ae43e22721b7f7ffdf30371c29ba18e1ad3d9f0f788462d7c350d6d01",
+  "bit_exact_all_deterministic_and_per_seed_arms": true,
+  "h300_member_seeds_verified": {
+    "30001": [
+      685781424,
+      1430007429,
+      1330439319
+    ],
+    "30002": [
+      1869595753,
+      786733481,
+      1272701215
+    ],
+    "30003": [
+      1510579523,
+      89540748,
+      1415857569
+    ]
+  },
+  "h302_outer_fold_summary": {
+    "0": {
+      "n_test_families": 57,
+      "n_test_contexts": 335,
+      "n_train_families": 148,
+      "n_train_contexts": 884,
+      "test_families_sha256": "bd597ba56ed7fc26472747756551f669f1162a350c6402411a349c6258a31417",
+      "test_contexts_sha256": "6ec9dde33a57353a27ed629d220d658b3c67d881ed97bc0d251a6a79aab62ff1"
+    },
+    "1": {
+      "n_test_families": 45,
+      "n_test_contexts": 239,
+      "n_train_families": 160,
+      "n_train_contexts": 980,
+      "test_families_sha256": "ec5d54e777a34f8b03949b74f2929b00087ad0a8305558adc580b52f07709895",
+      "test_contexts_sha256": "b7fa24f4bb3ea6d192cbe958b2acc74e11d0b9beb1afdc4ad4de578b35a4cafd"
+    },
+    "2": {
+      "n_test_families": 50,
+      "n_test_contexts": 269,
+      "n_train_families": 155,
+      "n_train_contexts": 950,
+      "test_families_sha256": "d3336467d47b89c1739cd5b679424b1ff9bf997ae998109e64c9e390a98e0fa3",
+      "test_contexts_sha256": "6880ba94e4cab8d974edccb67017f7532e8379ba0154d58e4d826c6cdc471b46"
+    },
+    "3": {
+      "n_test_families": 53,
+      "n_test_contexts": 376,
+      "n_train_families": 152,
+      "n_train_contexts": 843,
+      "test_families_sha256": "456680cd81dfac7ad00359aac146dcb5e1c26553176565a0ca4a9be4c3a24c63",
+      "test_contexts_sha256": "0949389787dd0695f4456d160171f64c91f870886f334223eef806fc22b6b871"
+    }
+  }
+}

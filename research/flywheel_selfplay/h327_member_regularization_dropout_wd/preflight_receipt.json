@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "tests_collected": 10,
+  "tests_executed": 10,
+  "failed": 0,
+  "skipped": 0,
+  "sentinel": -2.0,
+  "ranker_overrides": 3,
+  "boundaries": 2
+}

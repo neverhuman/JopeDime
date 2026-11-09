@@ -1,0 +1,66 @@
+{
+  "source_wave": "H338",
+  "source_close_commit": "44bcbe16dc0cc31cb05c5bfeedd35e34697995b1",
+  "source_launch": {
+    "utc": "2026-11-04T22:29:29.788978+00:00",
+    "command": [
+      "systemd-run",
+      "--user",
+      "--unit=h338-run",
+      "--property=MemoryMax=6G",
+      "--property=MemorySwapMax=0",
+      "--property=RuntimeMaxSec=8130",
+      "--property=KillMode=control-group",
+      "--property=TimeoutStopSec=15",
+      "--property=StandardOutput=append:/home/ubuntu/jope-data/h338-solhwv/run.log",
+      "--property=StandardError=append:/home/ubuntu/jope-data/h338-solhwv/run.err",
+      "--property=ExecStopPost=/usr/bin/nice -n 19 /usr/bin/taskset -c 62 /usr/bin/python3 /home/ubuntu/jope-rescue-20260921/h338-solhwv/capture_exit.py",
+      "--setenv=H338_EXIT_RECEIPT=/home/ubuntu/jope-rescue-20260921/h338-solhwv/unit-exit.json",
+      "--setenv=OPENBLAS_NUM_THREADS=1",
+      "--setenv=OMP_NUM_THREADS=1",
+      "--setenv=MKL_NUM_THREADS=1",
+      "--setenv=NUMEXPR_NUM_THREADS=1",
+      "--setenv=VECLIB_MAXIMUM_THREADS=1",
+      "/usr/bin/nice",
+      "-n",
+      "19",
+      "/usr/bin/taskset",
+      "-c",
+      "13,15,60,62",
+      "/usr/bin/python3",
+      "/home/ubuntu/jope-rescue-20260921/h338-solhwv/source/guard_h338.py",
+      "run"
+    ],
+    "fixed_deadline": "2026-11-05T00:45:00+00:00",
+    "invocation_id": "3dcf3229f3854487a5663e646b431830",
+    "prereg": {
+      "commit": "a2a65f24d54ade71a819abf309385b8d4cd20ccf",
+      "parent": "5543bd6e3648c371eaddf04bdda9c61fc18c7ec7",
+      "tree": "78079ef5debbc93c26eb76b7a524e7cbadbe717c",
+      "paths": [
+        "research/flywheel_selfplay/h338_column_subsampling/PREREG.md"
+      ],
+      "published": true,
+      "utc": "2026-11-04T22:28:34.037502+00:00"
+    }
+  },
+  "source_exit": {
+    "utc": "2026-11-05T00:21:55.403507+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "0",
+    "SERVICE_RESULT": "success",
+    "INVOCATION_ID": "3dcf3229f3854487a5663e646b431830"
+  },
+  "source_sha256": {
+    "launch.json": "280b0f4f93affefc64cdb66c3144420595f9fde671cb2ce8721089118b6c0e42",
+    "unit-exit.json": "da8f84e5c6e7a863f4c9e8bd5358b4ec116f851c4fd7ebb103965b81249e9034"
+  },
+  "workers": 4,
+  "wall_seconds": 6745.614529,
+  "capacity_seconds": 26982.458116,
+  "efficiency": 0.9,
+  "safety_multiplier": 1.15,
+  "audit_score_reserve_seconds": 300,
+  "stop_epoch": 1793855700,
+  "rule": "H338 full4worker wallcapacity/(admittedworkers*.9)*1.15+300; conservative upperbound, not a speed estimate"
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261030/H289/astra-t0005/inputs/prepared-closure.tar.gz",
+    "version_id": "dj7fcZrNhjkNwY2s5DkfOah1nfAUObnL",
+    "sha256": "66bc3154f4f2ec49bc9237163712826ec0bda82f32e3ba34c4881ba73b4bd071",
+    "bytes": 3293895,
+    "member": "prepared/history.npz",
+    "member_sha256": "e6214cd5f3f3322a6ef22bfa7b3f7a797e106869c9195cdfe18d217b6ac7f446",
+    "member_bytes": 5957597,
+    "exact_version_get_verified": true
+  },
+  {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261030/H289/astra-t0005/inputs/recorded-snapshot.tar.gz",
+    "version_id": "PyUdeyhv8LqMyLfHB1ondkNF7dITELec",
+    "sha256": "f02363690b6988174afa30d209112501100527f3e8826141efcdc36d5f3dbdce",
+    "bytes": 120115338,
+    "member": "adapter_admissions.jsonl",
+    "member_sha256": "7c01de3b03eeb993d67c84266649a732365afdeaa86c593295b73a9d05b0b868",
+    "member_bytes": 2071499,
+    "exact_version_get_verified": true
+  },
+  {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261030/H304/metrics_full_h304.json",
+    "version_id": "J4bT7je3eRxxiOEKIonPSaRIS0ZLLsHY",
+    "sha256": "60c5f879437bcfe5310b8e6e58cf652f81cd0c5f084dc138468950d0596cd84a",
+    "bytes": 200847,
+    "exact_version_get_verified": true
+  }
+]

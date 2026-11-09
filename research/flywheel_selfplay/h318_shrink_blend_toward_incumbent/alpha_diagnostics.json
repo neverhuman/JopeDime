@@ -1,0 +1,11 @@
+{
+  "scope": "Descriptive inner-selection mechanism only; no new decision criterion",
+  "cells": 36,
+  "ens_objective_min": -0.09427523518772385,
+  "ens_objective_max": -0.006578947368421052,
+  "ens_objective_positive": 0,
+  "ens_median_gain_min": 0.0,
+  "ens_median_gain_max": 0.012021239855887178,
+  "ens_harmed_rate_min": 0.013157894736842105,
+  "ens_harmed_rate_max": 0.19594594594594594
+}

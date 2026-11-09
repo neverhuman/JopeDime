@@ -1,0 +1,19 @@
+{
+  "schema": "jope.h415.archive-manifest/v1",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H415/closeout-20261108/h415_closeout_bundle.tar.zst",
+  "version_id": "EySRHdIQI5S9RFFL7zPCMv39957bd9gT",
+  "sha256": "76f86dc5c0516b86547592e19044fd213c27bc9145c3f1c1f8165b4931c75330",
+  "bytes": 187480058,
+  "members": 926,
+  "members_file": "bundle_SHA256SUMS",
+  "verified": "EXACT_VERSION_GET_VERIFIED_MEMBERS_925_OF_926",
+  "verification": {
+    "exact_version_get_sha256_match": true,
+    "members_matched": 925,
+    "members_mismatched": 1,
+    "mismatched_member": "home/ubuntu/jope_plan/evidence/H415/logs/archive_upload.log",
+    "mismatch_cause": "the upload log was redirected into a bundled directory: it was empty (sha256 e3b0c442…) when the member list was hashed, held 27 bytes when packed, and grew afterwards. It is this upload's process log, not a result, run or screener file",
+    "manifest_written_by": "hand (jq), after the scripted manifest step stopped on that member mismatch"
+  },
+  "utc": "2026-11-09T04:49:25Z"
+}

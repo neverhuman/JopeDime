@@ -1,0 +1,133 @@
+{
+  "schema": "jope.h307.manifest/v1",
+  "wave_id": "H307",
+  "owner": "rd_astra",
+  "status": "ANALYSIS_COMPLETE",
+  "verdict": "RESELECT_NOT_ADVANCED",
+  "prereg_commit": "0cbc429eb7f2e8092fe6146f7ea01633fb613def",
+  "source_commit": "ef3a5a97436d515a76f393a2afcc0fcf0dbbc98a",
+  "input_receipts": [
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H289/astra-t0005/inputs/prepared-closure.tar.gz",
+      "version_id": "dj7fcZrNhjkNwY2s5DkfOah1nfAUObnL",
+      "sha256": "66bc3154f4f2ec49bc9237163712826ec0bda82f32e3ba34c4881ba73b4bd071",
+      "bytes": 3293895,
+      "member": "prepared/history.npz",
+      "member_sha256": "e6214cd5f3f3322a6ef22bfa7b3f7a797e106869c9195cdfe18d217b6ac7f446",
+      "member_bytes": 5957597,
+      "exact_version_get_verified": true
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H289/astra-t0005/inputs/recorded-snapshot.tar.gz",
+      "version_id": "PyUdeyhv8LqMyLfHB1ondkNF7dITELec",
+      "sha256": "f02363690b6988174afa30d209112501100527f3e8826141efcdc36d5f3dbdce",
+      "bytes": 120115338,
+      "member": "adapter_admissions.jsonl",
+      "member_sha256": "7c01de3b03eeb993d67c84266649a732365afdeaa86c593295b73a9d05b0b868",
+      "member_bytes": 2071499,
+      "exact_version_get_verified": true
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H304/metrics_full_h304.json",
+      "version_id": "J4bT7je3eRxxiOEKIonPSaRIS0ZLLsHY",
+      "sha256": "60c5f879437bcfe5310b8e6e58cf652f81cd0c5f084dc138468950d0596cd84a",
+      "bytes": 200847,
+      "exact_version_get_verified": true
+    }
+  ],
+  "source_sha256": {
+    "test_h307.py": "94ef32e2eef342a248dd2b53879387ffab37f8374f77b807d136d837280d8b06",
+    "reselection.py": "a330ccb36d14ccf6475c915d8cc6b9efaf7a2bf49aaca7aee014595211613fdc",
+    "metrics.json": "646f14f0d06c71a7973b741e3d9707d15e37f34c6cc21a8bdf7eb14942d0d592",
+    "resource_guard.py": "f618259e801b4de00824d9071ed001f17e67833a1350cd34281565ebb7de47f8",
+    "PREREG.md": "030014e2c3500dcc46778b43602af2b3f3ac69d0b1dac0cf6be5b2a088d11232",
+    "run_h307.py": "9c16a8658d27baef036ef00495abd66e51d4ce47b41fbfe5770391b60957b1dc",
+    "fetch_inputs.py": "f73c4ebd17d1c6be856699206ebb0309c3ed5a8c37f37158cc9c07523b8365fc",
+    "README.md": "3e83e844657a49b706de79c41d4e1072411d7c76a74b8cae6f5d518cb859937d",
+    "input_receipt.json": "d26cb329413e874d0bff0fdb0f5a7a7a807c94c3e2c8a68f326ce72034771bb4",
+    "regression_receipt.json": "402b18afebf2ef8448f59da9ed78a6f8dfdd0ce016832e53e1602f1fce346e9d"
+  },
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "split_seeds": [
+    30401,
+    30402,
+    30403
+  ],
+  "bootstrap_seed": 304150,
+  "select_bootstrap_draws": 1000,
+  "reporting_bootstrap_draws": 10000,
+  "resources": {
+    "source_sha256": {
+      "test_h307.py": "94ef32e2eef342a248dd2b53879387ffab37f8374f77b807d136d837280d8b06",
+      "reselection.py": "a330ccb36d14ccf6475c915d8cc6b9efaf7a2bf49aaca7aee014595211613fdc",
+      "run_h307.py": "9c16a8658d27baef036ef00495abd66e51d4ce47b41fbfe5770391b60957b1dc",
+      "fetch_inputs.py": "f73c4ebd17d1c6be856699206ebb0309c3ed5a8c37f37158cc9c07523b8365fc"
+    },
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "peak": {
+      "rss": 110096384,
+      "threads": 2,
+      "host_cpu": 21.6
+    },
+    "command": [
+      "/usr/bin/python3",
+      "/home/ubuntu/jope-rescue-20260921/h307-astra/source/run_h307.py",
+      "run",
+      "--scratch",
+      "/home/ubuntu/jope-data/h307-astra"
+    ],
+    "started_epoch": 1793776190.5488706,
+    "finished_epoch": 1793776282.4396572,
+    "cpu_affinity": [
+      60,
+      61,
+      62,
+      63
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "compute_stop": 1793781900
+  },
+  "resource_limits": {
+    "host": "xbabe2",
+    "cores": [
+      60,
+      61,
+      62,
+      63
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "rss_bytes": 4294967296,
+    "minimum_mem_available_bytes": 21474836480,
+    "maximum_host_cpu_percent": 85,
+    "scratch_bytes": 2000000000,
+    "compute_stop": "2026-11-04T08:45:00Z",
+    "close_deadline": "2026-11-04T09:00:00Z"
+  },
+  "regression_status": "PASS",
+  "tests": {
+    "collected": 14,
+    "executed": 14,
+    "failed": 0,
+    "skipped": 0
+  },
+  "CI": "NOT_RUN owner freeze",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H307/astra-20261104T070300Z/",
+  "scratch_disposition": "Remove only after exact-version recovery and consumer checks; final disposition in lifecycle receipt",
+  "source_commit_scope": "Frozen four execution files in resources.source_sha256; later reporting and guard wrapper are pinned separately by source_sha256",
+  "evidence_archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H307/astra-20261104T070300Z/h307_evidence.tar.gz",
+    "version_id": "ViJTFLAeEG_h5BKdBB.pVa5k8_wb8Rim",
+    "sha256": "601cde19109c74ab69ada016fe81c84c71461e366d346d7c18df6e8fe705c1ca",
+    "bytes": 174994,
+    "exact_version_get_verified": true,
+    "members_verified": 275
+  },
+  "archive_member_inventory_sha256": "e3aa3730d3b3b7921bda98db75cc6e1d5592fa7ff2d372292a33b755794c92b3"
+}

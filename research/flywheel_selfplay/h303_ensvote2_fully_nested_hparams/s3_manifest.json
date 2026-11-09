@@ -1,0 +1,30 @@
+{
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H303/",
+  "objects": [
+    {
+      "key": "h303_models_locks_and_outputs.tar.gz",
+      "version_id": "hshnLPUZuvpHewykQNTh..mWAGu9KGHo",
+      "sha256": "8957cf0e0b55c21231fd3d40d56ce5bdf27aa915dc97786bcbc00dbee782857d",
+      "bytes": 273987588,
+      "contents": "12 H303 fit locks + inner/refit LightGBM members, H302 regression fold locks + models, outputs, logs"
+    },
+    {
+      "key": "metrics_full.json",
+      "version_id": "h7K1cY_UE0PQ_WdrOM0CE6agYSCji2kG",
+      "sha256": "202d1a6a077a7dafff4ced66f914f40472fa7bc4995951d7662f2ad813d756e5",
+      "bytes": 46655
+    },
+    {
+      "key": "regression_receipt.json",
+      "version_id": "2CK0LEktzcXU56IU9dS.mtjw370f2mec",
+      "sha256": "0f145686d3a290ed2bfd89ff78d174a00ca4ea1ad851a203a654e65400ae50f5",
+      "bytes": 1532
+    },
+    {
+      "key": "picks.npz",
+      "version_id": "3CUeOo9dmsTM1rZyuAeS9pF7H39Vv80N",
+      "sha256": "0f8435010390c5bff8d6c95a7650163a2ab4c5952e56264fbee96204784d5ea4",
+      "bytes": 2891
+    }
+  ]
+}

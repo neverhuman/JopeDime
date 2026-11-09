@@ -1,0 +1,28 @@
+{
+  "wave": "H394",
+  "arm": "CATS20",
+  "cat_l2": 10.0,
+  "cat_smooth": 20.0,
+  "archived_NL15_cat_smooth": 10.0,
+  "cat_smooth_multiplier": 2,
+  "bagging_freq": 1,
+  "subsample_freq": 1,
+  "bagging_fraction": 0.8,
+  "path_smooth": 0.0,
+  "num_leaves": 15,
+  "max_depth": 3,
+  "learning_rate_grid": [
+    0.03,
+    0.05,
+    0.1
+  ],
+  "iteration_grid": [
+    50,
+    100,
+    200
+  ],
+  "main_ranker_iterations": 200,
+  "learning_rate_multiplier": 1,
+  "ranker_iteration_multiplier": 1,
+  "calibration_fits": 0
+}

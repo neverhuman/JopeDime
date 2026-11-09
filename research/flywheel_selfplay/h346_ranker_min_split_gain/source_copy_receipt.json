@@ -1,0 +1,173 @@
+{
+  "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+  "files": [
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/archive_models.py",
+      "source_sha256": "bef1912266c25b5b3fb970b5d5a1d4ca5fba02aff95669eb14d07032dbe180d4",
+      "target": "archive_models.py",
+      "copy_stage_sha256": "10f77ba0c4c29ea06b00f2e4a24054b0a61fa886be791667f7ef15426361e1b4",
+      "final_sha256": "10f77ba0c4c29ea06b00f2e4a24054b0a61fa886be791667f7ef15426361e1b4"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/base_archive_pin.json",
+      "source_sha256": "616f81bf374649f9c71edd53494336bc1c1b0380434cb888e73bca72c8d4421d",
+      "target": "base_archive_pin.json",
+      "copy_stage_sha256": "616f81bf374649f9c71edd53494336bc1c1b0380434cb888e73bca72c8d4421d",
+      "final_sha256": "616f81bf374649f9c71edd53494336bc1c1b0380434cb888e73bca72c8d4421d"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/base_bagged.py",
+      "source_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+      "target": "base_bagged.py",
+      "copy_stage_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+      "final_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/base_ensemble.py",
+      "source_sha256": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+      "target": "base_ensemble.py",
+      "copy_stage_sha256": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+      "final_sha256": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/base_h265_core.py",
+      "source_sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+      "target": "base_h265_core.py",
+      "copy_stage_sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+      "final_sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/base_topk.py",
+      "source_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+      "target": "base_topk.py",
+      "copy_stage_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+      "final_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/base_veto.py",
+      "source_sha256": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+      "target": "base_veto.py",
+      "copy_stage_sha256": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+      "final_sha256": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/evaluate.py",
+      "source_sha256": "04f1db6af8da0b4daed5d72b8461d03a7c2f533d85d99ec706080fab2949f6db",
+      "target": "evaluate.py",
+      "copy_stage_sha256": "356ff0a99dea89a3c60c2730f45c35a0960cce6d38a5678972b99e7bb250cfd9",
+      "final_sha256": "0837ff0c314b1e759ccb0b16c7fadc67d2e775eede9e1bfb20a47045e0e89c61"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/fit.py",
+      "source_sha256": "53b0fdd767f7a261a4171d80649efaa647ca3c492be7f3f39c6c82234fd2c994",
+      "target": "fit.py",
+      "copy_stage_sha256": "62ecf8f8aa7f0d09b396a74af1f13b6e60e935da7e96533dfa1558537884b246",
+      "final_sha256": "7312aae4bd6e9857967401059e7f09dffdf4550119a9675569eebea8724bc8fa"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/forecast.py",
+      "source_sha256": "e9897fb0bba1e6abbd413fe8fd27e5ecfec5217653a2d95bcdc39f06c61bb259",
+      "target": "forecast.py",
+      "copy_stage_sha256": "e9897fb0bba1e6abbd413fe8fd27e5ecfec5217653a2d95bcdc39f06c61bb259",
+      "final_sha256": "c1679edd912a4d2111860cd7e5b7277f38f5b688554a2c5b61599d626273d39d"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/recover.py",
+      "source_sha256": "778f16ad02f5f5cf0b4edb8662d8958b59b5edf6971229af6a416d47bc572dec",
+      "target": "recover.py",
+      "copy_stage_sha256": "c48a11790473b4c285ba36ad9ebe06ab4adea553ad7abd65cd25e5fc26a56227",
+      "final_sha256": "c48a11790473b4c285ba36ad9ebe06ab4adea553ad7abd65cd25e5fc26a56227"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/regression.py",
+      "source_sha256": "1590f67882cc7c9a6fe973306a6b27723c8dedee4831917693140d1372795e1b",
+      "target": "regression.py",
+      "copy_stage_sha256": "289755c45a7ced7adc5bd07c220cc91df9f1ced06994c169af82dfcc426a7045",
+      "final_sha256": "289755c45a7ced7adc5bd07c220cc91df9f1ced06994c169af82dfcc426a7045"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/regularization.py",
+      "source_sha256": "483d395892d4109ad0a4962f94d5460b20c221ba7ce9d8113bf81ca5e9725b5a",
+      "target": "regularization.py",
+      "copy_stage_sha256": "46ded80b093242d50772704c4f1e48942dcdd68a61558352754365c40d0a6d86",
+      "final_sha256": "8946ff9fb5985df6a76e1ebdd93aacd8f6992b3076d17117b8b31fa01e88e646"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/runtime.py",
+      "source_sha256": "66facf7754b0859b75118987d5c879850ae8362683c67c695c15d4f79bdef691",
+      "target": "runtime.py",
+      "copy_stage_sha256": "ae057c4922ccc1cf8315e7b67dcec9220a4f8abf82de1c02c642c6549668a586",
+      "final_sha256": "ae057c4922ccc1cf8315e7b67dcec9220a4f8abf82de1c02c642c6549668a586"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/score.py",
+      "source_sha256": "274694ceea72dfdd89b21f2bcbbe832eccfedb9d7d345f86c0299c8e24408ba3",
+      "target": "score.py",
+      "copy_stage_sha256": "8125c4f3161242b5cd6479d7aa60774d4393eb014a0bece80fcb78ff621533a2",
+      "final_sha256": "4eef1d130e3d42dd4dcf32dac924282cc504733b32a0476734bdb6d71896e656"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/statistics_h343.py",
+      "source_sha256": "66c56045388049712ef5c7ed7bcab9e56e65e106d2563b9f560d23509cd8969b",
+      "target": "statistics_h346.py",
+      "copy_stage_sha256": "b4e02ac858cf6621eb39c0f056e5cab5e2e0fc3db0b74c4a8a4df42be0c6cfa5",
+      "final_sha256": "612d3fe1c0bac4d8ba73452c7fea48bd8e5c36837e1a77af2f57b22dba822108"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/test_analysis.py",
+      "source_sha256": "9246721d95bcae364ad951fd8969e353c8436cb7c378151151d07b7e8e14964f",
+      "target": "test_analysis.py",
+      "copy_stage_sha256": "86e30c2f90f28207ac8d537a9f41ef85f41c2f4c06572d6a5a69293d05e6a74a",
+      "final_sha256": "524a9a3c0e1734146c03877518eff45cb9910a226552b38b3aaac49c726a8011"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/test_boundary.py",
+      "source_sha256": "d9f3ddabee13889307b04861df12a37834f691ba966c5c425f822cb51cfc8a58",
+      "target": "test_boundary.py",
+      "copy_stage_sha256": "7855ab1ddf9d73b82b1b38c560637d87097671f98005ba90ab500430fe9f8d06",
+      "final_sha256": "7855ab1ddf9d73b82b1b38c560637d87097671f98005ba90ab500430fe9f8d06"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/test_regularization.py",
+      "source_sha256": "eb8bfc8da260d0fee3e6d3ba6cd4a0290a69336bf1bf53bd8285761c2e58bb33",
+      "target": "test_regularization.py",
+      "copy_stage_sha256": "bac64999ad2901b9336527be9507e65749810ed70c6f9fa9547cd17e971096f1",
+      "final_sha256": "d52f060d967fdbf4b1805b456dfdf108beba34e2b2aacde4532738cea76c8c35"
+    },
+    {
+      "source_commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+      "source_path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/vendor_pins.json",
+      "source_sha256": "31eb323d6b5af5c87b120b31f6a2b5f417c01c1aadd8b54908f5e668d32570ac",
+      "target": "vendor_pins.json",
+      "copy_stage_sha256": "31eb323d6b5af5c87b120b31f6a2b5f417c01c1aadd8b54908f5e668d32570ac",
+      "final_sha256": "31eb323d6b5af5c87b120b31f6a2b5f417c01c1aadd8b54908f5e668d32570ac"
+    }
+  ],
+  "changes": [
+    "wave paths/RNG346191/core set/fixed window",
+    "replace max_bin63 with sole min_split_gain0.01; bins remain native255",
+    "required literal-median, per-root and Elo bootstrap intervals",
+    "H338 actual capacity forecast/.9 efficiency/1.15 safety/300second reserve",
+    "full baseline constructor/native parameter records for one-keyword audit"
+  ],
+  "model_seeds": "unchanged"
+}

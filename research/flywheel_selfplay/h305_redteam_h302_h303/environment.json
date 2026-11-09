@@ -1,0 +1,23 @@
+{
+  "python": "3.12.3",
+  "numpy": "1.26.4",
+  "lightgbm": "4.6.0",
+  "torch": "2.7.0",
+  "hostname": "xbabe2",
+  "affinity": [
+    60,
+    61,
+    62,
+    63
+  ],
+  "nice": 19,
+  "numeric_environment": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "RAYON_NUM_THREADS": "1"
+  },
+  "neural_forwards": 0,
+  "optimizer_updates": 0
+}

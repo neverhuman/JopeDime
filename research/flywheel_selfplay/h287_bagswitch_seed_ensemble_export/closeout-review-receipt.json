@@ -1,0 +1,20 @@
+{
+  "schema": "jope.h287.closeout-review-receipt/v1",
+  "wave": "H287",
+  "slug": "h287_bagswitch_seed_ensemble_export",
+  "verdict": "EXPORTED_ADVANCE",
+  "advancing_ens_arms": [
+    "ENS_MEAN"
+  ],
+  "fresh_pools_read": 0,
+  "dl_val_reads_before_lock": 0,
+  "optimizer_updates": 0,
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "r882_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "export_s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H287/export/",
+  "export_manifest_version_id": "rpqNaWcC23tUA06TThSW3103x3DHoinR",
+  "ensemble_spec_version_id": "Wg0jPfW1mYwuaEawsCU2gVn5PkGWGCCX",
+  "fit_lock_version_id": "7FgS1SS0xdHQvxfSXUZtCxIcw.GeyEHs",
+  "metrics_json_bytes": 44730,
+  "metrics_json_lt_50kb": true
+}

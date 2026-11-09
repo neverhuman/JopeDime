@@ -1,0 +1,38 @@
+chosen BCAR.mix  (eligible designs 14/16)  checks kfb_delta 0.00e+00
+BCAR.mix         S 0.6297 elig 1 vsKFB win 0.651 clip +0.0093 | vsBAG3 win 0.630 clip +0.0151 | vsX0e gain +0.1417 mem 16.3
+RBCAR.mix        S 0.5946 elig 1 vsKFB win 0.595 clip +0.0046 | vsBAG3 win 0.608 clip +0.0072 | vsX0e gain +0.1317 mem 15.9
+BRCAR.mix        S 0.5892 elig 1 vsKFB win 0.589 clip +0.0068 | vsBAG3 win 0.622 clip +0.0104 | vsX0e gain +0.0842 mem 23.1
+BCAR.refit       S 0.5811 elig 1 vsKFB win 0.581 clip +0.0112 | vsBAG3 win 0.630 clip +0.0155 | vsX0e gain +0.1445 mem 16.3
+KCAR1000.mix     S 0.5811 elig 1 vsKFB win 0.581 clip +0.0071 | vsBAG3 win 0.614 clip +0.0146 | vsX0e gain +0.1416 mem 6.2
+KCAR100.mix      S 0.5703 elig 1 vsKFB win 0.570 clip +0.0058 | vsBAG3 win 0.611 clip +0.0110 | vsX0e gain +0.1378 mem 6.6
+BCAR.bag         S 0.5568 elig 1 vsKFB win 0.557 clip +0.0017 | vsBAG3 win 0.608 clip +0.0115 | vsX0e gain +0.1319 mem 16.3
+BRCAR.refit      S 0.5541 elig 1 vsKFB win 0.554 clip +0.0056 | vsBAG3 win 0.616 clip +0.0065 | vsX0e gain +0.0861 mem 23.1
+CONS3            S 0.5351 elig 1 vsKFB win 0.535 clip +0.0117 | vsBAG3 win 0.714 clip +0.0222 | vsX0e gain +0.1402 mem None
+RBCAR.refit      S 0.5216 elig 1 vsKFB win 0.522 clip +0.0005 | vsBAG3 win 0.595 clip +0.0008 | vsX0e gain +0.1309 mem 15.9
+CONS2            S 0.5189 elig 1 vsKFB win 0.519 clip +0.0113 | vsBAG3 win 0.695 clip +0.0203 | vsX0e gain +0.1297 mem None
+KCAR100.bag      S 0.5000 elig 1 vsKFB win 0.500 clip +0.0000 | vsBAG3 win 0.605 clip +0.0080 | vsX0e gain +0.1312 mem 6.6
+KCAR1000.bag     S 0.4946 elig 1 vsKFB win 0.495 clip +0.0037 | vsBAG3 win 0.611 clip +0.0142 | vsX0e gain +0.1365 mem 6.2
+KCAR1000.refit   S 0.4838 elig 1 vsKFB win 0.484 clip +0.0017 | vsBAG3 win 0.595 clip +0.0061 | vsX0e gain +0.1336 mem 6.2
+KCAR100.refit    S 0.4784 elig 1 vsKFB win 0.478 clip +0.0000 | vsBAG3 win 0.600 clip +0.0049 | vsX0e gain +0.1339 mem 6.6
+BRCAR.bag        S 0.4703 elig 0 vsKFB win 0.470 clip -0.0002 | vsBAG3 win 0.576 clip +0.0017 | vsX0e gain +0.0676 mem 23.1
+RBCAR.bag        S 0.4432 elig 0 vsKFB win 0.443 clip -0.0021 | vsBAG3 win 0.578 clip +0.0007 | vsX0e gain +0.1198 mem 15.9
+elo BCAR.mix          1702.9 [1650.7, 1760.0]
+elo BCAR.refit        1682.3 [1629.1, 1741.7]
+elo BRCAR.mix         1669.4 [1618.0, 1724.6]
+elo BRCAR.refit       1662.4 [1609.6, 1719.4]
+elo KCAR100.mix       1660.3 [1606.8, 1718.9]
+elo KCAR1000.mix      1659.9 [1606.3, 1718.8]
+elo RBCAR.mix         1659.1 [1607.4, 1716.2]
+elo CONS3             1655.6 [1609.1, 1705.4]
+elo CONS2             1643.6 [1592.2, 1696.7]
+elo BCAR.bag          1642.9 [1587.6, 1702.2]
+elo RBCAR.refit       1634.9 [1581.9, 1691.9]
+elo KCAR1000.bag      1621.2 [1565.7, 1681.1]
+elo P3+LIB3.KFB       1620.9 [1565.8, 1680.4]
+elo KCAR100.bag       1620.9 [1565.8, 1680.4]
+elo KCAR100.refit     1620.7 [1564.8, 1681.5]
+elo KCAR1000.refit    1617.3 [1561.7, 1678.2]
+elo BRCAR.bag         1612.0 [1557.9, 1669.7]
+elo RBCAR.bag         1601.9 [1547.4, 1660.4]
+elo P3+LIB3.BAG_CAR   1560.3 [1507.1, 1615.3]
+elo X0e               1500.0 [1500.0, 1500.0]

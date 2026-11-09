@@ -1,0 +1,192 @@
+{
+  "schema": "jope.h357.metrics/v1",
+  "wave": "H357",
+  "slug": "h357_xstack_cl_confirm",
+  "verdict": "XSTACK_CL_NOT_CONFIRMED",
+  "prereg_commit": "568e1490db36b945c8b5830f7426437bfd22f16b",
+  "amendment_commits": {
+    "3.1_audit_extra": "a2f22b9eadecd904332682797dc9ed1547597a15",
+    "3.2_score_on_xbabe0": "5636f558b2063a1a04320bf35764773e35cd50b8",
+    "3.3_stats_path_fix": "0eb34f91f31d18654e2cb17bd6b5ce397d04ba9d"
+  },
+  "panel": "P201c (TRAIN, 194 families x 1 context: third seeded context per family; disjoint from P205 and P201b; never searched, fit or scored before this wave)",
+  "dev91_rows_read": 0,
+  "arm": "X_CL",
+  "library": [
+    "catboost.v1",
+    "lightgbm.v1",
+    "xgboost.v1",
+    "random_forest.v1"
+  ],
+  "harness": {
+    "x0_check": {
+      "pass": true,
+      "tol": 1E-9,
+      "worst": {
+        "du": 0.0,
+        "dw": 0.0
+      }
+    },
+    "host": "xbabe0, H335 docker sandbox (Amendment 2)",
+    "score2_vs_guard_refused_attempt_bytes": "IDENTICAL (arms.jsonl + x0_check.json)",
+    "attempt1_xbabe2": "X0 check failed on 53e44260 (dw 6.1e-5, du 3.0e-7); outputs kept unread"
+  },
+  "gp": {
+    "seed": 357101,
+    "generations": 50,
+    "outputs": [
+      "AGG.g50.single",
+      "AGG.g50.CV3@12"
+    ],
+    "audit_extra_contexts": 2,
+    "audit_extra_members": 5
+  },
+  "library_runs": {
+    "passes_search_gate": {
+      "catboost.v1": 193,
+      "lightgbm.v1": 190,
+      "random_forest.v1": 192,
+      "xgboost.v1": 188
+    },
+    "failed_fits": 2,
+    "failed_detail": "random_forest.v1 + xgboost.v1 on context 635612f6 (excluded on SEARCH; SEARCH mean at AUDIT if declared — the H317 rule)"
+  },
+  "family_mean_u": {
+    "X0": 1.8915518101014257,
+    "X_CL": 1.8955803117209142
+  },
+  "primary": {
+    "T_clipped_family_mean": 0.005035804234289096,
+    "clip": 0.5,
+    "contexts": 194,
+    "families": 194,
+    "families_lost": 52,
+    "families_tied": 19,
+    "families_won": 123,
+    "family_median": 0.0017388137802794024,
+    "inferior": false,
+    "lofo_min": 0.0044070906047518395,
+    "mirror_signflip_p": 0.925877571105957,
+    "pass": false,
+    "signflip_p": 0.07412242889404297
+  },
+  "adoption_secondary": {
+    "ci95": [
+      -0.005607173609628377,
+      0.010876735556004323
+    ],
+    "contexts": 194,
+    "drop_top_1": 0.0033945688054185354,
+    "drop_top_10": 0.00004397289393960794,
+    "drop_top_3": 0.002343381670065429,
+    "drop_top_5": 0.0016374108018527443,
+    "families": 194,
+    "gain_family_mean": 0.004028501619488438,
+    "gain_family_median": 0.0017388137802794024,
+    "gate": {
+      "checks": {
+        "harm_le_10pct": true,
+        "lcb_gt_margin": false,
+        "lofo_min_gt_0": true,
+        "median_ge_0": true,
+        "signflip_p_lt_alpha": false
+      },
+      "pass": false,
+      "signflip_alpha": 0.025,
+      "signflip_p_used": 0.21297870212978703
+    },
+    "harmed_share_gt_0p01": 0.06701030927835051,
+    "lcb95": -0.005607173609628377,
+    "lofo_min_gain": 0.0033945688054185363,
+    "signflip_p_one_sided": 0.21297870212978703,
+    "wtl": [
+      123,
+      19,
+      52
+    ]
+  },
+  "headline": {
+    "context_mean_gain": 0.004028501619488437,
+    "context_wtl": [
+      123,
+      19,
+      52
+    ],
+    "families_lost": 52,
+    "families_tied": 19,
+    "families_won": 123,
+    "family_mean_gain": 0.004028501619488438,
+    "family_median_gain": 0.0017388137802794024,
+    "n_families": 194,
+    "pct_rmse_reduction": 0.0040203980921823534
+  },
+  "context_deltas": {
+    "lt_minus_0p05": 4,
+    "max": 0.1263775347349796,
+    "min": -0.6954167072713275
+  },
+  "library_weight": {
+    "mean": 0.12030839414849456,
+    "median": 0.0817113728155826,
+    "share_contexts_gt0": 0.979381443298969
+  },
+  "train_audit_elo_p201c": {
+    "h357.X0": {
+      "elo": 1500,
+      "ci95": [
+        1500,
+        1500
+      ]
+    },
+    "h357.X_CL": {
+      "elo": 1581.6,
+      "ci95": [
+        1556,
+        1608
+      ]
+    },
+    "lib.catboost.v1": {
+      "elo": 1324.3,
+      "ci95": [
+        1261,
+        1381
+      ]
+    },
+    "lib.lightgbm.v1": {
+      "elo": 1132.3,
+      "ci95": [
+        1058,
+        1196
+      ]
+    },
+    "lib.random_forest.v1": {
+      "elo": 1205,
+      "ci95": [
+        1138,
+        1262
+      ]
+    },
+    "lib.xgboost.v1": {
+      "elo": 1215.1,
+      "ci95": [
+        1145,
+        1276
+      ]
+    }
+  },
+  "descriptive_notes": {
+    "three_worst_contexts_library_weight": {
+      "19f0714d": 0.00085,
+      "eeff1306": 3.8E-43,
+      "217e0d60": 0.00158
+    },
+    "three_worst_contexts_delta_u": {
+      "19f0714d": -0.6954,
+      "eeff1306": -0.2516,
+      "217e0d60": -0.1525
+    },
+    "mechanism": "the largest losses come from the stacker re-weighting GP members once library columns join the candidate set (library weight ~0 there), at near-perfect contexts (X0 u 8.37, 7.29) where small weight shifts are large log-RMSE changes",
+    "mean_gain_without_worst_context": 0.0077,
+    "p201b_x_cl_gain_for_comparison": 0.0093
+  }
+}

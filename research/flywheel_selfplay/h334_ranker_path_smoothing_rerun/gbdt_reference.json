@@ -1,0 +1,23 @@
+{
+  "utc": "2026-11-04T17:44:11.578742+00:00",
+  "stage": "PRELIMINARY_BEFORE_ANY_FIT",
+  "method": "Assumption-based complete36 planning estimate; refine with fixed synthetic timing fixture after prereg+BASE gate, before any campaign task",
+  "reference_wave": "H323 unchanged GBDT member fits plus extra snapshot scoring (conservative reference)",
+  "reference_cpu_seconds": 26268.587368,
+  "reference_tasks": 36,
+  "reference_wall_seconds": 4550.1,
+  "ranker_cpu_share_assumption": 0.9,
+  "DART_ranker_multiplier_assumption": 1.5,
+  "workers": 6,
+  "parallel_efficiency_assumption": 0.9,
+  "safety_factor": 1.15,
+  "nonfit_reserve_seconds": 600,
+  "forecast_seconds": 8711.642488174075,
+  "assumed_fullrun_start": "2026-11-04T18:05:00+00:00",
+  "forecast_end": "2026-11-04T20:30:11.642488+00:00",
+  "compute_stop": "2026-11-04T20:45:00Z",
+  "provisional_fits": true,
+  "campaign_fits": 0,
+  "synthetic_fits": 0,
+  "mandatory_refinement": "Use paired fixed synthetic ranker timings; no tuning; if refined forecast misses20:45 close INCOMPLETE without campaign fits or cut cells."
+}

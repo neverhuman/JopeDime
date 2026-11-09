@@ -1,0 +1,121 @@
+{
+  "wave": "H294",
+  "authority": "/home/ubuntu/nudges/hw_t0158_opus_h294.md",
+  "primary": "ENS_VOTE2",
+  "secondary": [
+    "ENS_VOTE2+HARMVETO",
+    "CLIP",
+    "BAG_SWITCH"
+  ],
+  "alpha_one_sided": 0.05,
+  "invalid_rule": "NON-INFERIORITY (GOV, decided after H292, before any v5 data): per seed (arm_invalid - slot0_invalid) <= max(2, ceil(0.01 n_families)) AND exact one-sided McNemar on discordant invalid picks p >= 0.05",
+  "seeds": {
+    "ENS_VOTE2": "deterministic single policy; bootstrap seeds 294150-294152 on the same picks",
+    "CLIP": "3 refit seeds; bootstrap 294150",
+    "BAG_SWITCH": "3 seeds (H287 per-seed = H284); bootstrap 294150",
+    "ENS_VOTE2+HARMVETO": "H291 seeds 291101-291103 with locked taus; bootstrap 294150"
+  },
+  "null_seeds": {
+    "random_valid_slot": [
+      294101,
+      294102,
+      294103
+    ],
+    "random_slot_no_labels": [
+      294201,
+      294202,
+      294203
+    ]
+  },
+  "draws": 10000,
+  "min_families": 100,
+  "cohort": {
+    "file": "~/jope_plan/ns/receipts/fresh_cohort_v5_H294.json",
+    "sha256": "ea5364ad8d224719300a7932b0d8418709793405c1668dc581aac59302f7d0c9",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H294/cohort/fresh_cohort_v5_H294.json",
+    "version_id": "zfXFbXPDS1P2CSxGixOrykepkzkWvFNT",
+    "families": 358,
+    "half": "EVEN"
+  },
+  "regression_h292_cell": {
+    "arm": "ENS_VOTE2",
+    "boot_seed": 292150,
+    "gain": 0.06647400236769202,
+    "result": "bit-exact from S3-published H292 artifacts (run before cohort v5)"
+  },
+  "h287_export_manifest_sha256": "874693a78d52ebeee2e2c0c38d0f028cd3887a01abec8d0c383128e0b4cf06d7",
+  "h287_export_commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+  "h291_fit_lock_commit": "d8bc373b80",
+  "h291_fit_lock_sha256": "3d05461907ab6d4513204f70d98800c7af2fe8ca244f0517f40bb26af913f1da",
+  "h278_sources": {
+    "runner.py": "5f5b3de8b34f797df6acfbab890568a5abf6041e4ecc5c519d77dda5c60d7234",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "freeze.py": "b352c488aaf53d2132621c5b5771917892af7924d4c2555d998b5931bbd643ab",
+    "analysis.py": "0151b35374bed298e6841cf9de1f0f27c42248bcd387428653dc178fa1d67208",
+    "manifest.json": "1d43bc10d3245891178bd3043a03ed4e4e34e79bad90cbddea3ae8744536fc0d"
+  },
+  "h281_sources": {
+    "p2.py": "776644cfbbdbc005f44824cedbbe97f0b7ae362500bcf92839118aba49fd4811"
+  },
+  "h283_sources": {
+    "evaluate.py": "11e292549348a99231a30814df92c3a5662ad90452409e907134fffc0f9cc8bb",
+    "fresh_cohort.py": "2b506d43123272b17f233c703682e6282344a32f5c9bb06c830833e2084b3df6"
+  },
+  "h287_sources": {
+    "export_manifest.json": "874693a78d52ebeee2e2c0c38d0f028cd3887a01abec8d0c383128e0b4cf06d7",
+    "ensemble.py": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+    "ensemble_spec.json": "32ca19f30f427ae135f5f6c2aacc0fe28097d956f4e2ca0e7fd5f41ffec49995",
+    "analysis_h287.py": "166b336451f270b31bcc7ad68de72012afba2b6622903f13a793bc0992490930",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+  },
+  "h288_sources": {
+    "evaluate.py": "54ca8991deca4090026797122d9d34687305e5a4bb87b348fb9cb56fcfd2bd84",
+    "analysis.py": "6bb1c7f236556a5bdf9507f4057781569b77ca4423705e7c37f0fdf9321ccffd",
+    "build_fresh.py": "39a90db1b0e53b0e56d976f0d0aa7f5e737c4aed25eb055181539c1aefcc05b4",
+    "gpu_rescore.py": "e0d888c6e7d5e5ed9f356e908ce4a0d3e476cf68bf5d1c88db2cb8541c7f615a"
+  },
+  "h291_sources": {
+    "harm_veto.py": "f025ff3df464c8b312a7b9f4a72818789292dbb68305660cecaa7a60d7f612cb",
+    "fit_lock.json": "3d05461907ab6d4513204f70d98800c7af2fe8ca244f0517f40bb26af913f1da",
+    "s3_manifest.json": "b0d649bb23131317eaab93f26943db1158e0f8846d7fc53bfd3eb97cccf7a64a",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a"
+  },
+  "h292_sources": {
+    "analysis.py": "885bb71915aac03ec40665e74b6b9753a1d7bb469ff14fa33f11e35656fdd842",
+    "cohort_v4.py": "24c2639239260ff696f67d0a73a02dc88deab192995ac55e34c83293f3128acf",
+    "regress_h288.py": "0bd7dcc16cb0a0e74ca7d9c516b85ad9f53f377b9bf757624b2c9a7a6fb5c29b",
+    "build_fresh.py": "39a90db1b0e53b0e56d976f0d0aa7f5e737c4aed25eb055181539c1aefcc05b4",
+    "gpu_rescore.py": "e0d888c6e7d5e5ed9f356e908ce4a0d3e476cf68bf5d1c88db2cb8541c7f615a",
+    "run_gpu.sh": "0cabdf7e7d1bcb8bbb5d05390a0bf1c658509a85d7cb193cf66d3a44353a64ba"
+  },
+  "source_sha256": {
+    "PREREG.md": "5a1605b78f7699535879c48c240b4a896753fbf0c1f83c9483b499ef33afc4c5",
+    "cohort_v5.py": "6d2bf2df0c0bf9f35d8bf8a2a7f537f4979d1972d0f10b6d0d43bbf70f590cea",
+    "regress_h292.py": "42e27480ed5a7798977d2ce9407f8c0e6d7babb1fa94d4a0d493603a3d61c567",
+    "build_fresh.py": "39a90db1b0e53b0e56d976f0d0aa7f5e737c4aed25eb055181539c1aefcc05b4",
+    "gpu_rescore.py": "e0d888c6e7d5e5ed9f356e908ce4a0d3e476cf68bf5d1c88db2cb8541c7f615a",
+    "run_gpu.sh": "aebc54db4ef89e64bbb59020f7a322473b2347e8fa3a876b38af39cf17ab67cd",
+    "evaluate.py": "93e5c771badc4f3cf29c4c937ed17783eaf8acc692bdba7b725a71a7bf35205c",
+    "analysis.py": "7cb46deee58d2d6973e774ae37f96e8b1f48b24c3e1847ea36d9a2ba158963b5",
+    "test_h294.py": "333fead18dc8edc1fe210232a406511d2826bd70a4a591213dfafa4a13731921",
+    "device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e",
+    "dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2"
+  },
+  "r3175": {
+    "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "stored_dev_mean": 1.1389572403748425
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "total_updates": 0,
+  "parent_commit": "0c76140796dfd78da86de4c05ede6ab174a146db",
+  "publication_ref": "v1/next",
+  "compute_stop": "2026-11-04T05:00:00Z"
+}

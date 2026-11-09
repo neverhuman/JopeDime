@@ -1,0 +1,368 @@
+{
+  "status": "PASS",
+  "locks": {
+    "P0/0/30001": {
+      "sha256": "3aafcdfea12f9871edcbcf80f0d819cccd99028a124de9e9f6b79394c99fad22",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.07562996622757585,
+        "inner_switches": 323
+      }
+    },
+    "P0/0/30002": {
+      "sha256": "ea14c8fb6a99d133f56dea79c8ff261d27415c5016966b8776778baa07069eac",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.08936448402706945,
+        "inner_switches": 332
+      }
+    },
+    "P0/0/30003": {
+      "sha256": "d1ee0107b921122a7852a1a6912f838da27735a9982c2b0fc9247cfe83c831ac",
+      "chosen": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.06030292192892863,
+        "inner_switches": 210
+      }
+    },
+    "P0/1/30001": {
+      "sha256": "a3682eadb8f81e55c1d6163e72f26e05c4d3e55699004db2b03d6cf43e77937c",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.05278601349173308,
+        "inner_switches": 315
+      }
+    },
+    "P0/1/30002": {
+      "sha256": "d6d96aa06b1a9f766646200d3c9624de5348dc4b7d3e60191f535127f181e1ac",
+      "chosen": {
+        "tau": 0.15,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.02805971045471664,
+        "inner_switches": 169
+      }
+    },
+    "P0/1/30003": {
+      "sha256": "368003d0bae900029e0ae249d279eb0b160f756a37c2e8f28b92bdf48dc2b432",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.052813153056575836,
+        "inner_switches": 307
+      }
+    },
+    "P0/2/30001": {
+      "sha256": "647284853af66b63834f7cdff77b817d95866073f72e3f8afa9e6fad8b233a0b",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.08133665541337287,
+        "inner_switches": 269
+      }
+    },
+    "P0/2/30002": {
+      "sha256": "7157c54dfc99513cc063a2a8dda4ce2d1ed24e745114aedf38df83e45b710e41",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.03262712033288905,
+        "inner_switches": 184
+      }
+    },
+    "P0/2/30003": {
+      "sha256": "6c0f700f17b21c9510e3599997078771d81012a8e3f0f7f037ac0872ad1abc46",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.06838262759252171,
+        "inner_switches": 231
+      }
+    },
+    "P0/3/30001": {
+      "sha256": "81e41fece3e595c8fa45713566bc67c2c3fac145197d0648d6f84267d05bfe9a",
+      "chosen": {
+        "tau": 0.1,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.02288869104771541,
+        "inner_switches": 94
+      }
+    },
+    "P0/3/30002": {
+      "sha256": "3d79580d4925185d20fafd1adc9a13853a5d9e3f40ddf15453135830368175d1",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.022273434705202808,
+        "inner_switches": 90
+      }
+    },
+    "P0/3/30003": {
+      "sha256": "a1d65267c884afb8a6778010cc9fa22542b3d931e4232686c201f0388ab2ecfc",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.03975129236924062,
+        "inner_switches": 93
+      }
+    },
+    "P1/0/30001": {
+      "sha256": "307941812ed8cae560c0de403b5957c68078613278ea7289d1d93cdae7d5e88e",
+      "chosen": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.04225900974905208,
+        "inner_switches": 137
+      }
+    },
+    "P1/0/30002": {
+      "sha256": "c65adcce55334d46d0329df48c1de7f7c8352d498ddf5fd8cc6e13eedae90cfd",
+      "chosen": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.03548544365191184,
+        "inner_switches": 85
+      }
+    },
+    "P1/0/30003": {
+      "sha256": "87482afd84696e3ec203a33877794d78f9b9340809ea924cfea519f374481474",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.03579427202686824,
+        "inner_switches": 155
+      }
+    },
+    "P1/1/30001": {
+      "sha256": "c271a9ab5babe229cde4d42ba8209a36724a892184be0b2b9feee00cc8fb7c54",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.06856838825370885,
+        "inner_switches": 284
+      }
+    },
+    "P1/1/30002": {
+      "sha256": "be30f599e28e09e9dbcb1ec93827392bb7e8964b77adb5ea59e30a815a6c4526",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.0556790085587415,
+        "inner_switches": 280
+      }
+    },
+    "P1/1/30003": {
+      "sha256": "a4c866c6334f5a4fac7f87e10ff79c9e159949da28bb483deb30a97ba7d8d31f",
+      "chosen": {
+        "tau": 0.15,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.055676188746124025,
+        "inner_switches": 190
+      }
+    },
+    "P1/2/30001": {
+      "sha256": "7c4b017c6b03f90850c0a3c61517c88172c97fd0843f7888fbd5f383dc662106",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.10824510603614104,
+        "inner_switches": 337
+      }
+    },
+    "P1/2/30002": {
+      "sha256": "46359e5902930b495f1d314d054f8f4daaa122173be3273389f5dadad29bff48",
+      "chosen": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.06493791524964053,
+        "inner_switches": 223
+      }
+    },
+    "P1/2/30003": {
+      "sha256": "d3f7400887cfc95a745b483574b467f39002f78e2c20facc00b40f20080d6771",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.09014018497011157,
+        "inner_switches": 298
+      }
+    },
+    "P1/3/30001": {
+      "sha256": "ca868f31f35b8626f7de277ae269a0e515479f6575a6f0859834a71fb1963b20",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.022577544786293015,
+        "inner_switches": 190
+      }
+    },
+    "P1/3/30002": {
+      "sha256": "96a9be5c2a0e0050ea6c692ac82a43dc977575e6bc141da8e04fdcf6a8469924",
+      "chosen": {
+        "tau": 0.05,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.008355254940319091,
+        "inner_switches": 88
+      }
+    },
+    "P1/3/30003": {
+      "sha256": "cbc985eaf4ae759064ca49160aa7577993bf8a081997b96cb76d5f3e0b612987",
+      "chosen": {
+        "tau": 0.05,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.0195108531965924,
+        "inner_switches": 98
+      }
+    },
+    "P2/0/30001": {
+      "sha256": "c26c6d519299e2a76b17ab4992510cce4bbb4ecb3ec172e224ba3a8983255f19",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.054643647889476385,
+        "inner_switches": 201
+      }
+    },
+    "P2/0/30002": {
+      "sha256": "e45b9283efa026aef24041134db5f4caa1f31f10423df0233b6d1238b312641a",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.041065181271191534,
+        "inner_switches": 178
+      }
+    },
+    "P2/0/30003": {
+      "sha256": "94cf856f1913bf048edd8b1b0b34c3ba59c91d480a2425a7ee31d8f8df8cde2c",
+      "chosen": {
+        "tau": 0.15,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.029419449182454264,
+        "inner_switches": 112
+      }
+    },
+    "P2/1/30001": {
+      "sha256": "3041d1bc47147abefa975ed16e8c899578d1ba9be782375051e8eca98f8b8b90",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.03902257817337545,
+        "inner_switches": 232
+      }
+    },
+    "P2/1/30002": {
+      "sha256": "13bad2caab4afd3fa82a48e3ee721676f61ff85b4bb5133ddffe750418c7aa2b",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.04984152906121938,
+        "inner_switches": 227
+      }
+    },
+    "P2/1/30003": {
+      "sha256": "d3f6d4e8b01fdd1d9ba16e95d4d17ee1de1d534923d4aa1e3f0514806571cb0f",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.057581371393906705,
+        "inner_switches": 305
+      }
+    },
+    "P2/2/30001": {
+      "sha256": "863f0971cc034bce5de8c67ded6c37bb0140d3137561a14ac47634cc08b22744",
+      "chosen": {
+        "tau": 0.1,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.07510872067304386,
+        "inner_switches": 165
+      }
+    },
+    "P2/2/30002": {
+      "sha256": "e3ce4d42e1a8e2e8acbc80af3ee7dd63b167992eb0eab5d5e9f9dee91c96c956",
+      "chosen": {
+        "tau": 0.15,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.0766350758255735,
+        "inner_switches": 282
+      }
+    },
+    "P2/2/30003": {
+      "sha256": "9ceeb20f1ae900c3e35f9a3dd1c956abf7a72c2b0af5c44eeaae1a078aa1acf2",
+      "chosen": {
+        "tau": 0.05,
+        "k": 6,
+        "a": 2,
+        "inner_gain": 0.08412983923539478,
+        "inner_switches": 209
+      }
+    },
+    "P2/3/30001": {
+      "sha256": "876988de62d26f021280e9c2fc15f69a1261bb29f5818c038e9c2350e8699542",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.053391735671797565,
+        "inner_switches": 202
+      }
+    },
+    "P2/3/30002": {
+      "sha256": "61c5ffa564ab24038b607757b19e898a75cae7c770f4a41159edc5c580c36bd5",
+      "chosen": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.037621150743621115,
+        "inner_switches": 120
+      }
+    },
+    "P2/3/30003": {
+      "sha256": "7caca4c8d51e9fd080ff53ba2e2c64d65d41efd512c436b94dba47f692175280",
+      "chosen": {
+        "tau": 0.1,
+        "k": 7,
+        "a": 2,
+        "inner_gain": 0.05263769887404805,
+        "inner_switches": 173
+      }
+    }
+  },
+  "count": 36,
+  "model_files_verified": 1080,
+  "outer_rows_read_before_lock": 0
+}

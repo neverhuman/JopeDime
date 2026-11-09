@@ -1,0 +1,19 @@
+{
+ "wave": "H359",
+ "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H359/solhwv-20261105T102000Z/",
+ "objects": [
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H359/solhwv-20261105T102000Z/h359_models_locks_outputs.tar.gz",
+   "version_id": "FNj6zOKtxRM77DUobLQ_K629P9JgFwHe",
+   "sha256": "80e5f632634cf09ba65ac1daf6cd81c45b32c22e2a536c7cbd45d07f2a2c66bc",
+   "bytes": 420746863,
+   "create_only": true,
+   "if_none_match": "*",
+   "exact_version_get_sha256_verified": true,
+   "all_members_exact_version_verified": true,
+   "member_count": 3825
+  }
+ ],
+ "inner_task_archives": []
+}

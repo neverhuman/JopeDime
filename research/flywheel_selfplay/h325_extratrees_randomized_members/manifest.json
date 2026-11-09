@@ -1,0 +1,371 @@
+{
+  "sources": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "base_code": "819a45aa5e",
+  "base_code_full": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "dope_frozen": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "kernel": "6.8.0-147-generic",
+    "host": "xbabe2"
+  },
+  "wave": "H325",
+  "authority": "/home/ubuntu/nudges/hw_t1535_solhwv_h325.md",
+  "prereg_commit": "0fac0d7a80e3a56358ea36df8c213883a5c7d51e",
+  "prereg_sha256": "08c0b13211a2d4070845efbe141cd400c8d11cafe2b27beb20ba2498259a2339",
+  "cores": [
+    13,
+    15,
+    57,
+    59,
+    60,
+    62
+  ],
+  "workers_max": 6,
+  "MemoryMax": "6G",
+  "MemorySwapMax": 0,
+  "nice": 19,
+  "numeric_threads": 1,
+  "compute_stop": "2026-11-04T17:30:00Z",
+  "close_stop": "2026-11-04T17:45:00Z",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "source_sha256": {
+    "fetch_base_h325.py": "446fd27e48a1946c256e1405425a23def5a512e3dc762da7a649217722f8a203",
+    "evaluate_h325.py": "81bcf42fe7b95fabde803e4ed18e4f3008186303284c0082e30704b624475b7b",
+    "guard_h325.py": "7a3b64b4bcf83762810baf023b3cf09696bccb8f21cd53be9cfcba5a6ab9ae91",
+    "resume_h325.py": "f2ee4b49b2698cc66bf8f25861b6ff0c5100b3d9d95251f37ce3684872710560",
+    "runtime_h325.py": "2012c19a6c6510a7e66f718d94ecb5ce19e577574db60682b4d668ebf20c640b",
+    "guard_resume_h325.py": "468b9b6a739176f0a671f96a4a672ec04be7f660f7d74ede25d38b5293fde08a",
+    "run_h325.py": "9a945c397b690c5764b0ea9fe98117abdf8b2e5dd697f17b100748e9835920c5",
+    "archive_h325.py": "84d41981825ae1a0ece1f266dcec37d964a5c952b3cdcd3c539c5e7439b638b0",
+    "test_h325.py": "e45404885391ae8551577345119107a0410690ededf7397509d152b477382088"
+  },
+  "launch_policy": "Use only freshly sampled >=85% idle assigned cores; actual affinity/workers in pre_fit_resource.json",
+  "resource_amendment_commit": "0804a092a0e38e953d44733b34c4dd825aa75ecd",
+  "continuation_cores": [
+    13,
+    15,
+    60,
+    62
+  ],
+  "continuation_workers": 4,
+  "execution": {
+    "utc": "2026-11-04T17:12:02.833328+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "0",
+    "SERVICE_RESULT": "success",
+    "INVOCATION_ID": "a8f0fa736cde478fb40ca0d6eefcd056"
+  },
+  "tests": {
+    "utc": "2026-11-04T15:33:19.287268+00:00",
+    "command": "env numeric1 nice19 taskset15 python3 -m unittest discover -s /home/ubuntu/jope-rescue-20260921/h325-solhwv/source -p test_h325.py -v",
+    "collected": 17,
+    "executed": 17,
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "exit_status": 0,
+    "elapsed_seconds": 1.5072240589943249,
+    "source_sha256": {
+      "fetch_base_h325.py": "446fd27e48a1946c256e1405425a23def5a512e3dc762da7a649217722f8a203",
+      "evaluate_h325.py": "81bcf42fe7b95fabde803e4ed18e4f3008186303284c0082e30704b624475b7b",
+      "guard_h325.py": "33b7804ee9890ad0eb64b465d34a03096bd94ccb9c0ffaed1cdf82dd995197d8",
+      "runtime_h325.py": "2012c19a6c6510a7e66f718d94ecb5ce19e577574db60682b4d668ebf20c640b",
+      "run_h325.py": "9a945c397b690c5764b0ea9fe98117abdf8b2e5dd697f17b100748e9835920c5",
+      "archive_h325.py": "84d41981825ae1a0ece1f266dcec37d964a5c952b3cdcd3c539c5e7439b638b0",
+      "test_h325.py": "e45404885391ae8551577345119107a0410690ededf7397509d152b477382088"
+    }
+  },
+  "input_identity_validation": {
+    "status": "PASS",
+    "utc": "2026-11-04T15:33:41.476250+00:00",
+    "train_pool_sha256_matches": 1219,
+    "train_prefix_feature_members": 4,
+    "selected_and_r882_train_costs": "EXACT SHA256",
+    "DLVal_feature_rows_read": 0,
+    "reference_manifest_sha256": "9b148003d48ab609b2a796c57fb8b4c0296cc0ee79771f034944f4b8dc064263",
+    "scope": "All current TRAIN program/fitness/gate pools and all consumed cache feature prefixes exactly match the archived BASE inputs; no file bodies outside TRAIN prefixes."
+  },
+  "effective_model_review": {
+    "status": "PASS",
+    "utc": "2026-11-04T17:12:34.143031+00:00",
+    "tasks": 36,
+    "native_saved_models": 14040,
+    "constructor_calls": 36504,
+    "all_native_objectives_original": true,
+    "all_native_extra_trees_true": true,
+    "all_native_extra_seed_owning_member": true,
+    "all_native_threads_one": true,
+    "source_sha256": {
+      "fetch_base_h325.py": "446fd27e48a1946c256e1405425a23def5a512e3dc762da7a649217722f8a203",
+      "evaluate_h325.py": "81bcf42fe7b95fabde803e4ed18e4f3008186303284c0082e30704b624475b7b",
+      "guard_h325.py": "33b7804ee9890ad0eb64b465d34a03096bd94ccb9c0ffaed1cdf82dd995197d8",
+      "runtime_h325.py": "2012c19a6c6510a7e66f718d94ecb5ce19e577574db60682b4d668ebf20c640b",
+      "run_h325.py": "9a945c397b690c5764b0ea9fe98117abdf8b2e5dd697f17b100748e9835920c5",
+      "archive_h325.py": "84d41981825ae1a0ece1f266dcec37d964a5c952b3cdcd3c539c5e7439b638b0",
+      "test_h325.py": "e45404885391ae8551577345119107a0410690ededf7397509d152b477382088"
+    },
+    "model_inventory_sha256": "e90f5f93eb1d48d9a9530fab66f021a6061fabcfa1b3c570736db35e817882b6",
+    "tasks_summary": {
+      "P0/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "838294ae30b25a3c061e9b040d7dcb7428cf0e11a579b77aa9cd676d3f5e0fb8",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "c5fd94fd353aef94ae06f6cc2ea072397462e9815babc5ff3d1167e2fce2ceb0",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "9ac3ab13cbc4b204fd19ed242796817c33bcaedb74f7426ec7aa0c7a45508b35",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "af1d52b74a445265bb02bb41044438c36cb843f12dbdc3f28efe6b7559043939",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "9724fd893a0a25957771334ea1218ef28375628475f60b72b91b0150c7bd5d79",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e2c7b7d895aca6df2ac7201f2c40d50adfcf79255472a90a9323c854aafaf9eb",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "f06450d4018539c76bab5049929e6192680ebbcdfa7acc2380b85ff66ba68255",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "58575f2adc97e9e28fcb82a002136cfdc3f268734ecfc8170e98c582a6f527ce",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "b18c9a21a8376b054b8c9e800ad8a1c239af9b10871a54b34675f0ad02261148",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "1a55650a5c62971afe45306d7b84d58bf911f6ae17de24e06f830825bed9f15f",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "b788eea5f52cab56cb1b695cefb889b198b73b6892dbe9c049ac8e1841374729",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a93d25519866302718e31fa31762c5ee99207c0b8728a537b9f8f614a83ee931",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "f39fe7113c1eb8862e8f6fb59064893691e61d86789945503a57eb5f7c2585fa",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "bf40d8f635252ece3206d79964205471a9208732fa431c87251f71ba4d909eb9",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "d2a8770eb1fe91f997624251cedcb0652535ed12d449f7f0e03dbd2e40c619f1",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "0e71e2e71543ac22e30e15cd8a4e6829f208882b7e5653a2809cbe62df83b038",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "899ac2520462534ef26b75db547064aaef8043c44acc05b8079a250874b9bf79",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "63f198a2511a72f0b236668613868e3d1d48f2b95902cff6659097807bdaab92",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "5918816c5ee21859dc721e9d8d46d696aeff70dfd5fe82bf6213e895eb6aeac6",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "6fb45f350ea9af71ba3ec7917f6fed6c0d228e717923a45feb713e9f8b1fffbf",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "8ca43404f7da5e0bfa594a973ed08ee833404475f3b8ae1aaed1ba9a9f821592",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e2d353caef6e22e0beac2e686883db2a9a64806bc61632d03ff1dae2641a6ac9",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e41b2b6d793382eced4a64af1b7b6d988f8f134625bb807c6294d90ac8d0454e",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e025ea42d1d99695bc50394791c95471ca953f8f52579824ca6e9b7bab4894fe",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "8d1f99e904fe33f6e9091facc969d5f5675080113f1895f5d779643dd017e9e8",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "bb4a09e34bd834a53c6c19c558d6b95152a13fe978c881a07d3bb389b4c4c2b9",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "c60ab45f37ce259e8bac65cb0369b7818cb7d17dbd9a0140c3c21ae60d4a437b",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "1a79e16efac67bd8f8bddd91b12dcd74b212868a6f9cdaf06955ea9dad2f7615",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "219e69ac887e5902b1ee47e94fbcb2bc71fc1f50fcff11853a89fb48d333de53",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "58ff6d04649bfc0035b6ec1e9f839aeb127cd8ce9f8b05826c4faddfe5f8eaf9",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "96054c93e4f7ab6534f79dba6789f1941156c62c0b61a6686dd6f21b79ace347",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "f5ca36f492e4d1eb8d3c53fe1328a0d1e07a7ce26b5e615b89a3e87439fe2c85",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "0efcc30c6adca9fbbd435687ccfee60d320616fb42e1bcef6565c42b32eb5908",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "0448c93e5eb44a8a6ee8ce64457706c042eafeb0b907f89f93699fe67a34d4c8",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "f919864867c0543f8f7518f394fcaed59237cda347283e0a25c4fe05f85d3130",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "62c102f1a3e9d6650ffa897f32f6ed6b98a89a8ece8fc71a05d196bf8cc5e4da",
+        "physical_outer_rows_read_before_lock": 0
+      }
+    }
+  },
+  "runtime_source_sha256": {
+    "fetch_base_h325.py": "446fd27e48a1946c256e1405425a23def5a512e3dc762da7a649217722f8a203",
+    "evaluate_h325.py": "81bcf42fe7b95fabde803e4ed18e4f3008186303284c0082e30704b624475b7b",
+    "guard_h325.py": "33b7804ee9890ad0eb64b465d34a03096bd94ccb9c0ffaed1cdf82dd995197d8",
+    "runtime_h325.py": "2012c19a6c6510a7e66f718d94ecb5ce19e577574db60682b4d668ebf20c640b",
+    "run_h325.py": "9a945c397b690c5764b0ea9fe98117abdf8b2e5dd697f17b100748e9835920c5",
+    "archive_h325.py": "84d41981825ae1a0ece1f266dcec37d964a5c952b3cdcd3c539c5e7439b638b0",
+    "test_h325.py": "e45404885391ae8551577345119107a0410690ededf7397509d152b477382088"
+  },
+  "published_source_sha256": {
+    "fetch_base_h325.py": "446fd27e48a1946c256e1405425a23def5a512e3dc762da7a649217722f8a203",
+    "evaluate_h325.py": "81bcf42fe7b95fabde803e4ed18e4f3008186303284c0082e30704b624475b7b",
+    "guard_h325.py": "7a3b64b4bcf83762810baf023b3cf09696bccb8f21cd53be9cfcba5a6ab9ae91",
+    "resume_h325.py": "f2ee4b49b2698cc66bf8f25861b6ff0c5100b3d9d95251f37ce3684872710560",
+    "runtime_h325.py": "2012c19a6c6510a7e66f718d94ecb5ce19e577574db60682b4d668ebf20c640b",
+    "guard_resume_h325.py": "468b9b6a739176f0a671f96a4a672ec04be7f660f7d74ede25d38b5293fde08a",
+    "run_h325.py": "9a945c397b690c5764b0ea9fe98117abdf8b2e5dd697f17b100748e9835920c5",
+    "archive_h325.py": "84d41981825ae1a0ece1f266dcec37d964a5c952b3cdcd3c539c5e7439b638b0",
+    "test_h325.py": "e45404885391ae8551577345119107a0410690ededf7397509d152b477382088"
+  },
+  "post_fit_publication_formatting": {
+    "utc": "2026-11-04T17:21:42.409184+00:00",
+    "scope": "Post-fit publication formatting only: remove one extra newline at EOF of resource guard; identical Python AST; no fit/score/metric/seed/input/decision changes",
+    "file": "guard_h325.py",
+    "runtime_sha256": "33b7804ee9890ad0eb64b465d34a03096bd94ccb9c0ffaed1cdf82dd995197d8",
+    "published_sha256": "7a3b64b4bcf83762810baf023b3cf09696bccb8f21cd53be9cfcba5a6ab9ae91",
+    "python_AST_identical": true,
+    "runtime_source_preserved_in_verified_archive": true,
+    "authoritative_runtime_archive_version": "p7UF0P7WbLL8mZ5ihAfJN.e5OvGgTsAA"
+  }
+}

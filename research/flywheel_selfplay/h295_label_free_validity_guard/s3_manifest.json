@@ -1,0 +1,654 @@
+{
+  "bucket": "veox-jopedime-learning-use2",
+  "fit_lock_content_sha256": "c378913b35a3aacba85672a80b7ca52e0d8854762c28f421d767c1c67baccc3e",
+  "fit_lock_version_id": "ePv1iNHJXjYXupckBWEvwZjoXUb.qROb",
+  "lane": "rd_argon",
+  "n_objects": 71,
+  "objects": [
+    {
+      "bytes": 15380,
+      "file": "fit_lock.json",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/fit_lock.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/fit_lock.json",
+      "sha256": "adf8912732b45c9f7bebf13f6d8440bed68ff8041b9d3d06086235c0edee2223",
+      "version_id": "ePv1iNHJXjYXupckBWEvwZjoXUb.qROb"
+    },
+    {
+      "bytes": 66272,
+      "file": "harmveto_gbm_seed295101_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295101_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295101_fold1.txt",
+      "sha256": "2a694f77960b9cc2e1a47e7f7049ae1baf394dcad6c3cb3ef5e7d4cc65fa0682",
+      "version_id": "jM_BAIWhXG7.zYcS2yFUTlhWJc9kwiCp"
+    },
+    {
+      "bytes": 66394,
+      "file": "harmveto_gbm_seed295101_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295101_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295101_fold2.txt",
+      "sha256": "2e44eeefbb9c5bf8cf1b20f66b8fd840991d03e07fc5baa4e9e97d44d2c9bb91",
+      "version_id": "dafPbhrMi1EsiPhwTXQIAnHLZ3OaJFCe"
+    },
+    {
+      "bytes": 67799,
+      "file": "harmveto_gbm_seed295101_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295101_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295101_fold3.txt",
+      "sha256": "57126f593fd446d9444c2557213cb6daa0c0bffea5b478f52d375262ff00e16b",
+      "version_id": "3qr6E8HccikoIFlJC6xhX2to.m3s90hu"
+    },
+    {
+      "bytes": 65507,
+      "file": "harmveto_gbm_seed295101_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295101_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295101_fold4.txt",
+      "sha256": "4b6e2d0de4c8da3a1755821d00b7ec0df693b059ea352ef95dabc2a57ce40213",
+      "version_id": "9hdr5A1PLLWxXYb4Rgf2aywcihNh7Qeu"
+    },
+    {
+      "bytes": 62266,
+      "file": "harmveto_gbm_seed295102_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295102_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295102_fold1.txt",
+      "sha256": "9c60e1c0debc06ab1844698447b9dfa76c5947d2119179a29e861a9182529981",
+      "version_id": "YPTKEfUxnCu6GRF5uy2UmejZwEFelvbr"
+    },
+    {
+      "bytes": 66431,
+      "file": "harmveto_gbm_seed295102_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295102_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295102_fold2.txt",
+      "sha256": "01c8c7efba0c53795903e9a1f4fdd19f7bfa994d31d85be3ce996465b629c8b4",
+      "version_id": "vSxIqPwwYl4FCd1E23rOv85_A4hyduvy"
+    },
+    {
+      "bytes": 65288,
+      "file": "harmveto_gbm_seed295102_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295102_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295102_fold3.txt",
+      "sha256": "a52494391152ef36a5e24dc2ae861720d405c952e903a5b01de97cb0f021e9ef",
+      "version_id": "s0.WD4UUwth4mp55iZk8VqJ_3.HLyT65"
+    },
+    {
+      "bytes": 62560,
+      "file": "harmveto_gbm_seed295102_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295102_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295102_fold4.txt",
+      "sha256": "cac504e051ab3993c3c8910cfd448822939261f8574457f974e147dc9207fe2e",
+      "version_id": "0MTgni4hHdnIzB33Zo_D5AoX0HdaYjwF"
+    },
+    {
+      "bytes": 65293,
+      "file": "harmveto_gbm_seed295103_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295103_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295103_fold1.txt",
+      "sha256": "ea18bb89474c77725e42fca2834b7dee3059614cd170d4d193a3fa8f8c3e95ae",
+      "version_id": "TiKmiRrAeCFer7IWaS7M0WUKlxZuzKdX"
+    },
+    {
+      "bytes": 64723,
+      "file": "harmveto_gbm_seed295103_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295103_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295103_fold2.txt",
+      "sha256": "fa0f154875c74042254efc4b7d42eb6e64d4a8826d6e14dcab3513f7c7e1311d",
+      "version_id": "jgIPnUaH3C_x0W8YZcF3GfZdI.0cOI90"
+    },
+    {
+      "bytes": 65448,
+      "file": "harmveto_gbm_seed295103_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295103_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295103_fold3.txt",
+      "sha256": "61a755f7e01fea2c6c622bc297be284f773af41c81fbd27bdf44ffcfdf95c440",
+      "version_id": "XCMrQXusNY_.Gg4Ka1sf9dFc6OEM7.VD"
+    },
+    {
+      "bytes": 66417,
+      "file": "harmveto_gbm_seed295103_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295103_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/harmveto_gbm_seed295103_fold4.txt",
+      "sha256": "222754e1f19c31a22fb63f82585cb1724b411be90e5bf2b8e919dacb8e558cf4",
+      "version_id": "QdruH1fnErln7GIXFNHgemeBApxTaTSr"
+    },
+    {
+      "bytes": 138842,
+      "file": "shufnull_gbm_seed295201_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295201_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295201_fold1.txt",
+      "sha256": "2dca7ec5056be8e88002a4c17d339aa91d22f7af0281757e680b0171f69785af",
+      "version_id": "kz2jibTT68fR8uDcDVdifeALaPiI8Yqs"
+    },
+    {
+      "bytes": 138846,
+      "file": "shufnull_gbm_seed295201_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295201_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295201_fold2.txt",
+      "sha256": "72495d14d73226266f298f8524812016d6082c68181e0bf1b143da561d938b45",
+      "version_id": "fTb0R6OE1rTWPAYOJB6OsVPIL.APFGm0"
+    },
+    {
+      "bytes": 137832,
+      "file": "shufnull_gbm_seed295201_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295201_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295201_fold3.txt",
+      "sha256": "b2683f6033ac6c7151b7b25c49940de39a99d1191929bc701a513aaac0be4117",
+      "version_id": "TspAEj5.zMTsxLwFmb_X7WDo6B23AtBH"
+    },
+    {
+      "bytes": 138140,
+      "file": "shufnull_gbm_seed295201_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295201_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295201_fold4.txt",
+      "sha256": "01b1e564cd3d12a295fe922afe1c845149b3809f8cb183b0e2293bab222b7c49",
+      "version_id": "9X7dOyzowx9Fhioq24VlTW1hcO.KJnVH"
+    },
+    {
+      "bytes": 138725,
+      "file": "shufnull_gbm_seed295202_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295202_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295202_fold1.txt",
+      "sha256": "4abf8b0e76e39be30dd5642e35d1fabfd4dc026700ce52cb2bd151b0b0b0b7b0",
+      "version_id": "W54JAapv5UMnzqATs60hWS7VqjMStSUX"
+    },
+    {
+      "bytes": 138589,
+      "file": "shufnull_gbm_seed295202_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295202_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295202_fold2.txt",
+      "sha256": "48bfac7786d6fa41cc696221414ca0eca5687f3202376e8acb694d5d2b2c7f4b",
+      "version_id": "EUCJnmKxwgVPxxdKR0fKNphWfxoo3OLr"
+    },
+    {
+      "bytes": 138423,
+      "file": "shufnull_gbm_seed295202_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295202_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295202_fold3.txt",
+      "sha256": "430bc6796a384837a5366fbfd2c884d9e8aa6954d260bd8b6f0e349f5827e036",
+      "version_id": "NxmVnmJ8XDSsteWVleLtowTP1XWqg4IL"
+    },
+    {
+      "bytes": 138157,
+      "file": "shufnull_gbm_seed295202_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295202_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295202_fold4.txt",
+      "sha256": "da9762f053a7dd2752cbf9ad69fec371e5e136eed0cef6fde35fb4ef09070cd2",
+      "version_id": "H_VqsuUVyoWsw6hqy2ByGZ.j1N0mljbU"
+    },
+    {
+      "bytes": 138354,
+      "file": "shufnull_gbm_seed295203_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295203_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295203_fold1.txt",
+      "sha256": "87ab77f6648f9e8fd093ba2bf1248b94c12db03566e176c4b9035b8f3a5bea0d",
+      "version_id": "YRxmKVBWbLsiGcJRNH7lZguAHr2cAgTM"
+    },
+    {
+      "bytes": 138130,
+      "file": "shufnull_gbm_seed295203_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295203_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295203_fold2.txt",
+      "sha256": "37a0abcd4d3d08c7f2ef8f331fd83ca8f687b292f121a5327413c5f94a98032f",
+      "version_id": "wNjHBVBPehpFTXhCWzgkjeJbinjBSP4l"
+    },
+    {
+      "bytes": 139015,
+      "file": "shufnull_gbm_seed295203_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295203_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295203_fold3.txt",
+      "sha256": "f9c898e44cff586e6bded9eeedfeb61941b5a2462c76885f0e9ac08f6ec9102e",
+      "version_id": "eU_IFxOFNEhGu4agYCfm162oJVjxpUSN"
+    },
+    {
+      "bytes": 138792,
+      "file": "shufnull_gbm_seed295203_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295203_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_gbm_seed295203_fold4.txt",
+      "sha256": "2cb61323e3361240aa49539d3537233afdd30ce3b39dfe00d8abce1f43a5207b",
+      "version_id": "EFNVMmh1zUb3._TdWR7ymBa112LymP2Y"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295201_fold1.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295201_fold1.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295201_fold1.npz",
+      "sha256": "3968c3b8fea7fa868729515eb47eb71a27698b2a9935f804fc784a1bfde08f0f",
+      "version_id": "DribxS9PyQ3hxuWqcMwf1Z8ifFBTkn6U"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295201_fold2.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295201_fold2.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295201_fold2.npz",
+      "sha256": "d40f4fd0154e665b40b0f56ce9a3b7058e0e636e695fb7f08a842ed24b26b41d",
+      "version_id": "EWFwwQc.oWLw_S8SPF1YnMNgki2my4Rb"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295201_fold3.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295201_fold3.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295201_fold3.npz",
+      "sha256": "6d65336a9d4dfde2726336801702e75625fb0a9c814d0857d6f423dd2cca6758",
+      "version_id": "roDz0VgMtjIwHMBcZO9rU9_ja10qdgQr"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295201_fold4.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295201_fold4.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295201_fold4.npz",
+      "sha256": "de718907d218ecf109fb175ba4f178f5e4830f9e849ddbbf4247fbfd529b6be2",
+      "version_id": "2DjbGqaytpzc80SrTDolUKyZYUV4X3wm"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295202_fold1.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295202_fold1.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295202_fold1.npz",
+      "sha256": "f52ea6f1017a03d686f19e1d841f9f63a013b0d210716e10e69f62f332e8f2b5",
+      "version_id": "68uArU1jaeLRa4TKoaADjAn9iWYU7KHB"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295202_fold2.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295202_fold2.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295202_fold2.npz",
+      "sha256": "1513a9e66f33128d71ff308000bc427e63c283c45f13b4c16e78bbe242042fd5",
+      "version_id": "V73elvXaexGgeTHOZpa6tpuLjrysDtCs"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295202_fold3.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295202_fold3.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295202_fold3.npz",
+      "sha256": "1542317dc530eb51f86b43f8d1318995a7c3651cf52c5558f892d80040de4980",
+      "version_id": "nyBBLIJhV1tlKmqWkhADDTMmu7g7ycGR"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295202_fold4.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295202_fold4.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295202_fold4.npz",
+      "sha256": "d7d201f706ed20594fc56518d8e7ccb3cb485ea6b72e0464c7c2b0be8671a774",
+      "version_id": "Iykf1PfyE_QHHxLrqcWZ..V8OTrkcCW7"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295203_fold1.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295203_fold1.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295203_fold1.npz",
+      "sha256": "7ad06fc2e34ca37d712d7a3d7850f947b0f20bd15cd36139a044d39d7ed73156",
+      "version_id": "PuzpPhLsPwnkQySpWGQwFBiHOcDtLOUb"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295203_fold2.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295203_fold2.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295203_fold2.npz",
+      "sha256": "55f12ae6e79b0810a4d824496d8c4cc56fe1b765d4a53d2790da908d032f5d02",
+      "version_id": "6ApEt8VnnACQ43r_zRIcWrZSiany7ogM"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295203_fold3.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295203_fold3.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295203_fold3.npz",
+      "sha256": "028688a0297a32cbd88cb6c0eedd8988b823e43c8d8e22db8c10e95e933f33be",
+      "version_id": "OjBNE3BbLlmJbt6FkmVUYgzFg4JdU1Bj"
+    },
+    {
+      "bytes": 16690,
+      "file": "shufnull_lr_seed295203_fold4.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295203_fold4.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/shufnull_lr_seed295203_fold4.npz",
+      "sha256": "e7955d38754b79f5d367dfd686d3920bc219ca382ebca3f408dc315de907c41d",
+      "version_id": "E2Q5HYnf9F95OPmLmmZ_DqdeOtKYHj_C"
+    },
+    {
+      "bytes": 140433,
+      "file": "valguard_full_dl_train_gbm_seed295101.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295101.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295101.txt",
+      "sha256": "fca18dd1be4c221adfb745fabed7a693a25e65bb5854f43dee315d10482786e5",
+      "version_id": "aehBeE21QHzv2WHONfKNlWHkXXHunyJw"
+    },
+    {
+      "bytes": 139889,
+      "file": "valguard_full_dl_train_gbm_seed295102.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295102.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295102.txt",
+      "sha256": "fe123cc6a73ae52dd5e0c667424ab118f509b43a822303473f86dec3ddd9942f",
+      "version_id": "_I8myoRys1ll1WJ3OlctZ.ThoOu0PMvD"
+    },
+    {
+      "bytes": 140515,
+      "file": "valguard_full_dl_train_gbm_seed295103.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295103.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295103.txt",
+      "sha256": "476b255af6edd4a85fd487272a79eecccb10517856b48ca56249c49fd6caf10e",
+      "version_id": "jv4XExqBGrLA2gh3AG77rLDWnnmvJK82"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_full_dl_train_lr_seed295101.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295101.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295101.npz",
+      "sha256": "e46ffe3ba8ca9fd558bbb7466d649e4562836658bdbbb1e2ed113f73fb39cfc7",
+      "version_id": "9whueeGTY28IKDnCVr6UQPTKR_G7EEzL"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_full_dl_train_lr_seed295102.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295102.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295102.npz",
+      "sha256": "e46ffe3ba8ca9fd558bbb7466d649e4562836658bdbbb1e2ed113f73fb39cfc7",
+      "version_id": "_d5JGyecO8ChkwVUSxNPltNTvsGcJkq0"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_full_dl_train_lr_seed295103.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295103.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295103.npz",
+      "sha256": "e46ffe3ba8ca9fd558bbb7466d649e4562836658bdbbb1e2ed113f73fb39cfc7",
+      "version_id": "oy9Qe3MRW8pPAYgYCLcux.cOeHZ7pb4t"
+    },
+    {
+      "bytes": 139574,
+      "file": "valguard_gbm_seed295101_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295101_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295101_fold1.txt",
+      "sha256": "d133e2f77147f723ab1ec2b2623ca8992c5184306046fb8942e2aa400f646a68",
+      "version_id": ".yg95pvUMJvLkTAHU9HdE3vTFu2VVPxE"
+    },
+    {
+      "bytes": 139617,
+      "file": "valguard_gbm_seed295101_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295101_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295101_fold2.txt",
+      "sha256": "19ef07b335af604bf8d610e4115d23e1750df49bbb6b3dce5ed95e62dcd6dde3",
+      "version_id": "prNDSHgDPSjkcJqDXwEUNooe7aqTjruj"
+    },
+    {
+      "bytes": 138606,
+      "file": "valguard_gbm_seed295101_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295101_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295101_fold3.txt",
+      "sha256": "bc8e5b80aca23ce2e69b954296f9c5cc7afd0f8e7cf83495367de3615e2d9af7",
+      "version_id": "sZapscuy57Nkhivkrz18snNj_2M0Pyu_"
+    },
+    {
+      "bytes": 138471,
+      "file": "valguard_gbm_seed295101_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295101_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295101_fold4.txt",
+      "sha256": "51fd8770fe7ad9413ffb3d8a45bd620ea8c096291a26628d7980e37c51488b8d",
+      "version_id": "hdI7oVzYNYpFW9wDsVV7CfOBWkh4ssjH"
+    },
+    {
+      "bytes": 139048,
+      "file": "valguard_gbm_seed295102_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295102_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295102_fold1.txt",
+      "sha256": "4d713a1f823fe226c1a4a7f78725af6f36b5ed259ae71b8118fcefc7eb47cf3e",
+      "version_id": "r_TSaHPp6FvlE6q01p4inQzzIxD66hj."
+    },
+    {
+      "bytes": 139286,
+      "file": "valguard_gbm_seed295102_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295102_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295102_fold2.txt",
+      "sha256": "b3e5950b48d9ff8ca6721e48931554d5431e41a6f8d1665c4c534f2557f9a295",
+      "version_id": "way101Nvr27jHD.rx0brU43UME6m5xb0"
+    },
+    {
+      "bytes": 139124,
+      "file": "valguard_gbm_seed295102_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295102_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295102_fold3.txt",
+      "sha256": "63fcf2f571a94bbf017dd48c94a91fb5b446eb39757f0feb4af781a3ddab9883",
+      "version_id": "G9G9i4wu8M_NiHXLZTwdS1gs.mPzKQAn"
+    },
+    {
+      "bytes": 139326,
+      "file": "valguard_gbm_seed295102_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295102_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295102_fold4.txt",
+      "sha256": "af44bf482b43c7882aa8df99836d0d62715385a3b6c7657b96b08dcb23dbd496",
+      "version_id": "6_XCgWYbShss4QaSd3s6fr8FIDYHHrCq"
+    },
+    {
+      "bytes": 138859,
+      "file": "valguard_gbm_seed295103_fold1.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295103_fold1.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295103_fold1.txt",
+      "sha256": "57a51980db56c644388f2d569e8bdbd37dc2d4dd5b509474f9320f0f6f938600",
+      "version_id": "CkVFO_w5ZxdHEgXjzeNLHEuFVfFw5edl"
+    },
+    {
+      "bytes": 139402,
+      "file": "valguard_gbm_seed295103_fold2.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295103_fold2.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295103_fold2.txt",
+      "sha256": "4111a7f3749bbb408c9ffd309d2109d844ef2a59155bb167fbce9cab9abc5a77",
+      "version_id": "JdSztq5Rq4dElbuCFegtYO_lXEA8nU3u"
+    },
+    {
+      "bytes": 139308,
+      "file": "valguard_gbm_seed295103_fold3.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295103_fold3.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295103_fold3.txt",
+      "sha256": "7f30ca69860ae346e8ceda1afcb0f9e33a103ea45c3f8ab1963d2035138c9ac8",
+      "version_id": "Klvqwc7_cu69qIsGguYLWyRYh33v7qhr"
+    },
+    {
+      "bytes": 139420,
+      "file": "valguard_gbm_seed295103_fold4.txt",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295103_fold4.txt",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_gbm_seed295103_fold4.txt",
+      "sha256": "e199ea41e78e5dc88874034791332eb7d11df5ce498cbc77b21873d107815441",
+      "version_id": "LygeDYQ5BAOTO0998nfPEhuK6gvkm_mm"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295101_fold1.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295101_fold1.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295101_fold1.npz",
+      "sha256": "872f80d1f0d43d3d596ee2a4b4a6e87b72cbe23da85cf3221a174ce4ebe73bc2",
+      "version_id": "UxxfIbkv4V2cywFT6MtqHzGBnf0YxzeB"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295101_fold2.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295101_fold2.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295101_fold2.npz",
+      "sha256": "04849ede928178b8e7a9ca1574ed32377c7e59ef89687bd1c3fc79b70f1a535d",
+      "version_id": "uNJqyc4xqvKdB8XbD8ZP8npbFjM6cPrk"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295101_fold3.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295101_fold3.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295101_fold3.npz",
+      "sha256": "1b65702b6703b3e8525124bdae66395dbbdaccae06bf441ac32fb0fcdd172eb8",
+      "version_id": ".9x3MV_bnEsMbYXTQ4oRrUCSA0faj3jZ"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295101_fold4.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295101_fold4.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295101_fold4.npz",
+      "sha256": "2719616963bff17fbd3f87fc12446a9615bba3b004f845bd92f050a955cff0c9",
+      "version_id": "MVXh5RKgrF9hSk.t1YLtJ5.FY1Ljg4DZ"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295102_fold1.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295102_fold1.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295102_fold1.npz",
+      "sha256": "3f88d8a0a3fbfa7c121fe406f42b84d51831d68c01231fad71e1207d767e5f67",
+      "version_id": "XGZE0hK23KE_U.UmzgQA5ohR6B9Kzfxl"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295102_fold2.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295102_fold2.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295102_fold2.npz",
+      "sha256": "669f6f14a92e4a488690a30dbccd11d33a6ede30ac9fb5005ed01a8f24897bfb",
+      "version_id": "oyYp2odLVXlWqBGFvAGHgdznTfH39h2W"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295102_fold3.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295102_fold3.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295102_fold3.npz",
+      "sha256": "2ab9bb4668a9fa901ee22ee2866a6e73118cf42deb139d762e6583e48d6264d7",
+      "version_id": "Pa2vx02NxHKog8QaaYogt2z6NPRBBSZ0"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295102_fold4.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295102_fold4.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295102_fold4.npz",
+      "sha256": "40d5dbd1226e205fb7e16f4ddeb2a248bab98a666989f3eea1fcf6768a4b6f0c",
+      "version_id": "V06cq.tJR9zZ9a0rYb_7SxIg29C.emhQ"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295103_fold1.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295103_fold1.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295103_fold1.npz",
+      "sha256": "b5ed6dc2b1bde57ee87426aeb28b59b9c0d02cb6aad53b97f653c32e3d1df7c5",
+      "version_id": "N0EabJNjHeg_s3PZP_m0Qgw_6HE5ro8k"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295103_fold2.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295103_fold2.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295103_fold2.npz",
+      "sha256": "5f0b66dc34056f20d488b28345ba58e3c6d8f3ae725597246d5a3666f36382cc",
+      "version_id": "hUq_VVIdgd5MJejqK73HOM1xNjdYR9ZH"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295103_fold3.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295103_fold3.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295103_fold3.npz",
+      "sha256": "d2c537ef07e3cf6ad713c847071078ac9b5923d3ab288ac535864c58eea69dfe",
+      "version_id": "K8oZE2WmuLXKmogwN_XuSvLyMVcam.ER"
+    },
+    {
+      "bytes": 16690,
+      "file": "valguard_lr_seed295103_fold4.npz",
+      "role": "export",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295103_fold4.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_lr_seed295103_fold4.npz",
+      "sha256": "c12d50c71261a5be79bfb817e35bda410dc17019f50fe45a11f5ff57cdf3cbc2",
+      "version_id": "AJUZaXjqXH.tspczFFaHGUdC5VDeVjwP"
+    },
+    {
+      "bytes": 1496,
+      "file": "fit_and_lock_receipt.json",
+      "role": "run_artifact",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/runs/attempt-001/fit_and_lock_receipt.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/runs/attempt-001/fit_and_lock_receipt.json",
+      "sha256": "d4657dd0c2536243935adf55584b8ea958e64789bfccfccd959ebac25db70e95",
+      "version_id": "WUNqu5xlpMVqAGdlc_WL972DtZjAdg2K"
+    },
+    {
+      "bytes": 20937,
+      "file": "metrics_full.json",
+      "role": "run_artifact",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/runs/attempt-001/metrics_full.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/runs/attempt-001/metrics_full.json",
+      "sha256": "d316d3b0ffb11e9fe2ca7b10664793374d2fe63972297233d57a9f5a15debeed",
+      "version_id": "_AA.UjWz3gIOVd2jw6HIg93Ta66qaJYV"
+    },
+    {
+      "bytes": 511996,
+      "file": "outer_cv_panels.npz",
+      "role": "run_artifact",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/runs/attempt-001/outer_cv_panels.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/runs/attempt-001/outer_cv_panels.npz",
+      "sha256": "4ee82626df88acaa343a1920ae6a88eefd27d677d65d1cc18e72489ca4f9fe83",
+      "version_id": "spMaiyU4nx3TFYO6NN57cuWYA..GSkpR"
+    },
+    {
+      "bytes": 3791,
+      "file": "valguard_export_manifest.json",
+      "role": "export_manifest",
+      "s3_key": "experiments/rd_breakthrough_20261030/H295/export/valguard_export_manifest.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_export_manifest.json",
+      "sha256": "e0cf490943900ec6d2517cbc129998b60639fab6024dd94a44d28042263207a4",
+      "version_id": "2WQPp9RRRUsqaxw6sDQrGLileTsNEMce"
+    }
+  ],
+  "prefix": "experiments/rd_breakthrough_20261030/H295",
+  "prereg_lock_commit": "891af1e69b213ba19a96e36b6322b54273513b2f",
+  "slug": "h295_label_free_validity_guard",
+  "valguard_export_manifest_version_id": "2WQPp9RRRUsqaxw6sDQrGLileTsNEMce",
+  "verdict": "VALGUARD_ADVANCE",
+  "wave": "H295"
+}

@@ -1,0 +1,66 @@
+{
+  "status": "PASS",
+  "prereg_commit": "0cbc429eb7f2e8092fe6146f7ea01633fb613def",
+  "reference_close_commit": "3dccbc745ad48e77835c41380aa07b1f7acb9cb4",
+  "r3175_context_mean": 1.1389572403748425,
+  "journal_cross_verified_rounds": 1500,
+  "history_sha256": "e6214cd5f3f3322a6ef22bfa7b3f7a797e106869c9195cdfe18d217b6ac7f446",
+  "admissions_sha256": "7c01de3b03eeb993d67c84266649a732365afdeaa86c593295b73a9d05b0b868",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "seed": 30401,
+  "select_families": 10,
+  "eval_families": 9,
+  "cases": {
+    "family_equal": {
+      "observed": {
+        "n_promotions": 0,
+        "final_incumbent_round": 3175,
+        "promotion_precision": 0.0,
+        "init_select_utility": 1.257096227098278,
+        "final_select_utility": 1.257096227098278,
+        "init_eval_family_equal_utility": 1.0409883902237302,
+        "final_eval_family_equal_utility": 1.0409883902237302,
+        "time_avg_eval_family_equal_utility": 1.0409883902237305,
+        "net_shrinkage_vs_init": 0.0
+      },
+      "expected": {
+        "n_promotions": 0,
+        "final_incumbent_round": 3175,
+        "promotion_precision": 0.0,
+        "init_select_utility": 1.2570962270982777,
+        "final_select_utility": 1.2570962270982777,
+        "init_eval_family_equal_utility": 1.0409883902237302,
+        "final_eval_family_equal_utility": 1.0409883902237302,
+        "time_avg_eval_family_equal_utility": 1.0409883902237302,
+        "net_shrinkage_vs_init": 0.0
+      },
+      "max_abs_error": 2.220446049250313e-16
+    },
+    "context_mean": {
+      "observed": {
+        "n_promotions": 0,
+        "final_incumbent_round": 3175,
+        "promotion_precision": 0.0,
+        "init_select_utility": 1.2347963329139735,
+        "final_select_utility": 1.2347963329139735,
+        "init_eval_family_equal_utility": 1.0409883902237302,
+        "final_eval_family_equal_utility": 1.0409883902237302,
+        "time_avg_eval_family_equal_utility": 1.0409883902237305,
+        "net_shrinkage_vs_init": 0.0
+      },
+      "expected": {
+        "n_promotions": 0,
+        "final_incumbent_round": 3175,
+        "promotion_precision": 0.0,
+        "init_select_utility": 1.2347963329139733,
+        "final_select_utility": 1.2347963329139735,
+        "init_eval_family_equal_utility": 1.0409883902237302,
+        "final_eval_family_equal_utility": 1.0409883902237302,
+        "time_avg_eval_family_equal_utility": 1.0409883902237302,
+        "net_shrinkage_vs_init": 2.220446049250313e-16
+      },
+      "max_abs_error": 2.220446049250313e-16
+    }
+  },
+  "time": "2026-11-04T07:08:00.899442+00:00"
+}

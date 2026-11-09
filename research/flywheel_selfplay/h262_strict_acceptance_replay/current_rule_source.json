@@ -1,0 +1,31 @@
+{
+  "host": "xbabe1",
+  "cwd": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-gp-fused",
+  "pid": 1402163,
+  "commit": "486b709c3ee84a351a2cd7b55ef0290017e6ecd0",
+  "utc": "2026-11-03T15:57:54.666290+00:00",
+  "files": {
+    "research/flywheel_selfplay/dev_incumbent.py": {
+      "sha256": "cb98158a0599395ce9e446f029e46abe1556e16b5fed578a9bd1f041f5271d22",
+      "matches_commit": true
+    },
+    "research/flywheel_selfplay/run_fused_closed_loop.py": {
+      "sha256": "716c7e449efe6893c4d69d524833c6234a6c55a780191d560d479b608c38e880",
+      "matches_commit": true
+    }
+  },
+  "read_only": true,
+  "process_command": "/home/ubuntu/.venvs/flywheel-gp-fused/bin/python -u research/flywheel_selfplay/run_fused_closed_loop.py --input /home/ubuntu/jope-data/flywheel-full-20261030/input --output /home/ubuntu/jope-data/flywheel-full-20261030/run-20261030 --continuous --steps 2 --batch-size 8192 --resume /home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-4330.pt --campaign-prior-output /home/ubuntu/jope-data/flywheel-gp-fused/run-20261029 --retain-checkpoint round-785.pt --retain-checkpoint round-882.pt",
+  "verbatim_methods": {
+    "_mean": "def _mean(utility):\n        value = float(utility[\"mean\"])\n        if not math.isfinite(value):\n            raise ValueError(\"non-finite development utility\")\n        return value",
+    "restore": "def restore(self, model, optimizer):\n        model.load_state_dict(self.model_state, strict=True)\n        optimizer.load_state_dict(copy.deepcopy(self.optimizer_state))",
+    "accepts": "def accepts(self, utility: dict, identity: str):\n        if identity != self.identity:\n            raise ValueError(\"development evaluation identity changed\")\n        value = self._mean(utility)\n        if self.strict_admission:\n            return value > self.best_utility + self.min_gain\n        return value >= self.best_utility",
+    "decide": "def decide(\n        self,\n        model,\n        optimizer,\n        utility: dict,\n        identity: str,\n        checkpoint: str,\n        round_idx: int,\n    ):\n        if identity != self.identity:\n            raise ValueError(\"development evaluation identity changed\")\n        value = self._mean(utility)\n        old = self.best_utility\n        # The default remains legacy tie acceptance; strict margin mode is opt-in.\n        accepted = value > old + self.min_gain if self.strict_admission else value >= old\n        if accepted:\n            self.best_utility = value\n            self.best_stats = copy.deepcopy(utility)\n            self.best_checkpoint = checkpoint\n            self.best_round = round_idx\n            self.model_state = copy.deepcopy(model.state_dict())\n            self.optimizer_state = copy.deepcopy(optimizer.state_dict())\n        else:\n            self.restore(model, optimizer)\n        event = {\n            \"round\": round_idx,\n            \"evaluation_identity\": identity,\n            \"candidate_utility\": value,\n            \"previous_best_utility\": old,\n            \"accepted\": accepted,\n            \"action\": (\n                \"accept_improvement\"\n                if accepted and value > old\n                else \"accept_tie\"\n                if accepted\n                else \"restore_best_model_and_optimizer\"\n            ),\n            \"best_utility\": self.best_utility,\n            \"best_round\": self.best_round,\n            \"best_checkpoint\": self.best_checkpoint,\n        }\n        if self.strict_admission:\n            event[\"admission_policy\"] = \"strict-margin/v1\"\n            event[\"min_gain\"] = self.min_gain\n        return event"
+  },
+  "method_line_numbers": {
+    "_mean": 592,
+    "restore": 598,
+    "accepts": 633,
+    "decide": 641
+  }
+}

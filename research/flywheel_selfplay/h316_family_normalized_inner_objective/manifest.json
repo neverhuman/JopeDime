@@ -1,0 +1,92 @@
+{
+  "wave": "H316",
+  "parent_code": "819a45aa5e",
+  "prereg_commit": "cf3eadb6baf0699f812a5bac99542f929cac5d6b",
+  "prereg_sha256": "85216340dfcdd1b95cd562d05245498f4966ab69b25a4e08a8fe76109e2d67de",
+  "sources": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "host": {
+    "cores": [
+      52,
+      58,
+      60,
+      61,
+      62,
+      63
+    ],
+    "nice": 19,
+    "MemoryMax": "6G",
+    "numeric_threads": 1
+  },
+  "scratch_limit_bytes": 2000000000,
+  "compute_stop": "2026-11-04T13:15:00Z",
+  "source_sha256": {
+    "test_boundaries_h316.py": "aa8fcba26c52edb96100bd36061b30b8057b3adeaa25af39cd55f9e8250dd8fd",
+    "guard_h316.py": "c9e4666bd92b3ffa2371ceb8172ff5029b6b275c2224a40434320de007afd804",
+    "test_h316.py": "51bedffd889554012591f48a5d045b218ac9dab64fe0f43212f6f392cbab33bc",
+    "archive_h316.py": "ded984df278eb1fddf414f9de32a8c7f9df86ea62fa8ceb9db676cc62c1f49ef",
+    "evaluate_h316.py": "aa8a81592f28a7bc729fddc72dc774c2859b459d45e5d879556714e6c3ffc83c",
+    "run_h316.py": "df3fbe03b3ddedc712506ee611814d8f31f4f42dcf18c64c594d3523926426ac"
+  },
+  "dope_composite_frozen": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "input_identity": {
+    "sha256": "9b148003d48ab609b2a796c57fb8b4c0296cc0ee79771f034944f4b8dc064263",
+    "bytes": 261043,
+    "train_contexts": 1219,
+    "train_families": 205,
+    "dlval_feature_rows_read": 0
+  },
+  "operational_deviations": [
+    {
+      "utc": "2026-11-04T11:06:14.377117+00:00",
+      "stage": "BASE before regression/NORM",
+      "reason": "Bound projected raw inner models below 2GB scratch by exact-version S3 verified compression per completed BASE task. Stopped only own unit; preserve/reuse completed members, refit any interrupted uncommitted member set. No outer scoring or objective/seed/grid change.",
+      "complete_inner_cells": 18
+    },
+    {
+      "utc": "2026-11-04T11:08:02.249559+00:00",
+      "stage": "BASE before outer scoring",
+      "reason": "Make resource telemetry robust to own version-verified raw-model reclamation; own unit restarted with completed member manifests retained. No objective/data/grid change."
+    }
+  ],
+  "parent_code_full": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "kernel": "6.8.0-147-generic",
+    "host": "xbabe2"
+  },
+  "tests": {
+    "utc": "2026-11-04T11:12:49.399320+00:00",
+    "command": "nice -n 19 taskset -c 52 env OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python3 -m unittest discover -s source -p 'test_*h316.py' -v",
+    "collected": 14,
+    "executed": 14,
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0,
+    "exit_status": 0,
+    "tests_sha256": {
+      "test_boundaries_h316.py": "aa8fcba26c52edb96100bd36061b30b8057b3adeaa25af39cd55f9e8250dd8fd",
+      "test_h316.py": "51bedffd889554012591f48a5d045b218ac9dab64fe0f43212f6f392cbab33bc"
+    },
+    "unittest_elapsed_seconds": 0.1,
+    "nice": 19,
+    "affinity": [
+      52
+    ],
+    "environment": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    }
+  },
+  "execution_provenance_sha256": "1817c2afb6b367d745d58a0d9325f1340b61c1dc115af133ef50909bc9286e5a"
+}

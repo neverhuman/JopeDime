@@ -1,0 +1,18 @@
+{
+  "schema": "jope.s3_pointer/v1",
+  "wave": "H269",
+  "wave_id": "h269-nosg-veto-rerank4-20261103",
+  "artifact": "fold_manifest.json",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/fold_manifest.json",
+  "VersionId": "2sI5lN8AUomGGvsGbZvceTrTUup2Cgpz",
+  "ETag": "\"b7377acbcd9e99b6119e77665dae28ad\"",
+  "sha256": "e6267c4b85fd1c22b80a4e3952ca26cffa397826acbf2623d68a0a1f9ca0e97c",
+  "bytes": 347608,
+  "fold_seeds": [
+    269140,
+    269141,
+    269142
+  ],
+  "n_folds": 5,
+  "outcomes_read": 0
+}

@@ -1,0 +1,88 @@
+{
+  "schema": "jope.h336.source-precondition/v1",
+  "wave_id": "H336",
+  "slug": "h336_bag_score_median_aggregation",
+  "status": "INCOMPLETE",
+  "disposition": "INCOMPLETE_SPEC_MISMATCH",
+  "verdict": null,
+  "scientific_outcome": "UNKNOWN",
+  "reason": "No arithmetic-mean reduction over bag raw scores exists on pinned BASE ENS_VOTE2 scoring path",
+  "prereg_commit": "e60eb43c8932c9f745fe46d970f8746862546c2a",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "reference_label": "reference = r882 slot0 (DL-Train outer); r3175 not measured on TRAIN",
+  "measured": {
+    "base_median_gain": null,
+    "medbag_median_gain": null,
+    "paired_drop_top10": null,
+    "paired_lcb95": null,
+    "per_root_medians": null,
+    "median_harmed": null,
+    "elo": null,
+    "config_agreement": null,
+    "drop_top1": null,
+    "drop_top5": null,
+    "lofo_min": null,
+    "wins_ties_losses": null,
+    "invalid": null,
+    "switches": null
+  },
+  "criteria": null,
+  "failed_scientific_clauses": null,
+  "execution": {
+    "model_fits": 0,
+    "model_loads": 0,
+    "score_locks": 0,
+    "base_model_score_calls": 0,
+    "medbag_model_score_calls": 0,
+    "scientific_feature_rows_read": 0,
+    "dev91_rows_read": 0,
+    "optimizer_updates": 0
+  },
+  "gates": {
+    "source_precondition": "FAILED",
+    "data_free_controls": "PASS",
+    "base_recovery": "NOT_RUN",
+    "base_regression": "NOT_RUN",
+    "model1080_hash_audit": "NOT_RUN",
+    "score_locks": "NOT_RUN",
+    "once_only_scoring": "NOT_RUN",
+    "bootstrap": "NOT_RUN",
+    "inverse_mean_replacement": "NOT_APPLICABLE_NO_ORIGINAL_CALL"
+  },
+  "unexecuted_protocol": {
+    "partitions": [
+      "P0",
+      "P1",
+      "P2"
+    ],
+    "roots": [
+      30001,
+      30002,
+      30003
+    ],
+    "folds": 4,
+    "draws": 10000,
+    "rng": 336191,
+    "paired_margin": 0.002,
+    "positive_roots_required": 2
+  },
+  "tests": {
+    "status": "PASS",
+    "collected": 12,
+    "executed": 12,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "scope": "Data-free source/selection fixtures only; no model or scientific data access",
+    "scientific_regression": "NOT_RUN",
+    "model_hash_audit": "NOT_RUN",
+    "medbag_scoring": "NOT_RUN"
+  },
+  "source_pins_sha256": "23e96fb8711afc4b35432572c5f3f40d11f04dfb75b26448d0aa287d36f2fd3b",
+  "source_audit_sha256": "49f5b077da1a9a637350cab15d86b4811cad3d69b42b050de4d2edec6837f9f4",
+  "serving_authority": false
+}
