@@ -140,6 +140,28 @@ pub fn resolve_in(path: &std::path::Path, home: &std::path::Path) -> std::path::
     materialize(demo, home).unwrap_or_else(|_| path.to_owned())
 }
 
+/// Whether `path` holds exactly a bundled demo's bytes: what may run on this machine (owner rule
+/// 2026-11-06). A real file named like a demo with other contents is the user's own data.
+pub fn is_bundled(path: &std::path::Path) -> bool {
+    let Ok(meta) = std::fs::metadata(path) else {
+        return false;
+    };
+    DEMOS
+        .iter()
+        .filter(|demo| demo.bytes.len() as u64 == meta.len())
+        .any(|demo| std::fs::read(path).is_ok_and(|bytes| bytes == demo.bytes))
+}
+
+/// Whether an engine dataset was registered from a bundled demo: its file name, size and rows.
+#[cfg_attr(not(feature = "mcp"), allow(dead_code))]
+pub fn is_bundled_profile(profile: &jope_api::DatasetProfile) -> bool {
+    DEMOS.iter().any(|demo| {
+        profile.name == format!("{}.csv", demo.name)
+            && profile.bytes.0 == demo.bytes.len() as u64
+            && profile.rows.0 == demo.rows() as u64
+    })
+}
+
 /// Write `demo` to `<home>/examples/<name>.csv` unless an identical copy is already there.
 pub fn materialize(demo: &Demo, home: &std::path::Path) -> std::io::Result<std::path::PathBuf> {
     let directory = home.join("examples");
@@ -331,5 +353,44 @@ mod tests {
         for demo in DEMOS {
             assert!(lines.iter().any(|line| line.contains(demo.name)));
         }
+    }
+
+    #[test]
+    fn only_a_bundled_demos_exact_bytes_count_as_a_demo() {
+        let dir = tempfile::tempdir().unwrap();
+        let demo = &DEMOS[0];
+        let copy = materialize(demo, dir.path()).unwrap();
+        assert!(is_bundled(&copy), "the written example is the demo");
+        // A file with the demo's name but the user's own rows is own data.
+        let own = dir.path().join(format!("{}.csv", demo.name));
+        std::fs::write(&own, b"a,b,target\n1,2,3\n").unwrap();
+        assert!(!is_bundled(&own));
+        // Same length, different bytes.
+        let mut same_size = demo.bytes.to_vec();
+        same_size[0] ^= 1;
+        let tweaked = dir.path().join("tweaked.csv");
+        std::fs::write(&tweaked, &same_size).unwrap();
+        assert!(!is_bundled(&tweaked));
+        assert!(!is_bundled(&dir.path().join("missing.csv")));
+        let profile = |name: &str, bytes: usize, rows: usize| -> jope_api::DatasetProfile {
+            serde_json::from_value(serde_json::json!({
+                "dataset_id": "ds_21fbfe8b53dbcd605d79486b", "name": name,
+                "bytes": bytes.to_string(), "rows": rows.to_string(),
+                "columns": [], "target_suggestions": [], "warnings": []
+            }))
+            .unwrap()
+        };
+        let name = format!("{}.csv", demo.name);
+        assert!(is_bundled_profile(&profile(
+            &name,
+            demo.bytes.len(),
+            demo.rows()
+        )));
+        assert!(!is_bundled_profile(&profile(&name, 10, demo.rows())));
+        assert!(!is_bundled_profile(&profile(
+            "mine.csv",
+            demo.bytes.len(),
+            demo.rows()
+        )));
     }
 }

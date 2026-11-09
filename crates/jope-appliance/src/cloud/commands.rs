@@ -2,7 +2,7 @@ use super::*;
 
 pub fn auth_command(command: AuthCommand) -> Result<()> {
     match command {
-        AuthCommand::Status => println!("{}", account_label()),
+        AuthCommand::Status => println!("{}", auth_status()),
         AuthCommand::Logout => println!("{}", logout()?),
         AuthCommand::Login {
             workspace,
@@ -172,6 +172,33 @@ pub(crate) fn filter_runs(
         .collect()
 }
 
+/// `jain auth status`: the login, the plan, and whether the account is admitted yet (owner rule
+/// 2026-11-06: own data trains in the veox Cloud only for an admitted account).
+fn auth_status() -> String {
+    let Ok(c) = connection() else {
+        return format!(
+            "Not signed in · jain auth login (accounts open from the waitlist: {})",
+            super::route::REGISTER_URL
+        );
+    };
+    match super::flow::admission(&c) {
+        Ok((tier, true)) => format!(
+            "VEOX: {} · plan {} · admitted: your own data trains in the veox Cloud",
+            c.email,
+            tier.map_or("unknown", |t| t.as_str())
+        ),
+        Ok((_, false)) => format!(
+            "VEOX: {} · on the waitlist: we'll email you when you're admitted ({}); the bundled demos work meanwhile",
+            c.email,
+            super::route::REGISTER_URL
+        ),
+        Err(error) => format!(
+            "VEOX: {} · the workspace could not be asked for the plan ({error:#})",
+            c.email
+        ),
+    }
+}
+
 /// `cloud results on|off`, and the terminal's `/sync on|off`: one stored answer.
 pub fn results_command(setting: Option<String>) -> Result<String> {
     use crate::terminal::onboarding;
@@ -188,8 +215,9 @@ pub fn results_command(setting: Option<String>) -> Result<String> {
     }
     Ok(match onboarding::load(&home).results_sync {
         Some(true) => format!("Results sync on: {}", RESULTS_NOTE),
-        Some(false) => "Results sync off: finished local runs keep their model and code on this machine. Turn on with /sync on.".into(),
-        None => "Results sync not decided yet: you are asked after your first finished local run while logged in.".into(),
+        Some(false) => "Results sync off: finished local runs keep their model and code on this machine. Turn on with `jain cloud results on` (or /sync on).".into(),
+        // Outside the TUI nothing asks (journey J2-F07): say how to decide.
+        None => "Results sync not decided yet. Decide with `jain cloud results on` or `jain cloud results off` (in the terminal interface, /sync on|off; it also asks after your first finished local run while signed in).".into(),
     })
 }
 
@@ -212,7 +240,7 @@ pub fn spawn_login(
         })
         .map(|c| {
             format!(
-                "Signed in to {} as {}. Local datasets stay local; model publication is explicit.",
+                "Signed in to {} as {}. Your own data trains in the veox Cloud, and jAIn asks before uploading each table; publishing a model is always explicit.",
                 c.origin, c.email
             )
         });

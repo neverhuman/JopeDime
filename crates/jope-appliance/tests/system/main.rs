@@ -1,6 +1,8 @@
 //! INT-02 reconnect, deterministic rerun and real engine crash suites.
 //! Full internal engine cuts require INT02_ENGINE_BOUNDARY_CUTS=1 and the
 //! non-default jope-service/failpoints feature; fixture cuts are separate.
+// The public edition (cloud-tls) leaves out the tests that train own data on this machine.
+#![cfg_attr(feature = "public-edition", allow(dead_code, unused_imports))]
 #![cfg(feature = "engine")]
 
 #[cfg(all(feature = "mcp", any(target_os = "linux", target_os = "macos")))]

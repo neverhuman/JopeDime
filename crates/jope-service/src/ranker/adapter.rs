@@ -374,8 +374,8 @@ impl CpuAdapter {
     pub fn from_bundle(bundle: &VerifiedBundle) -> Result<Self> {
         Self::from_bytes(
             bundle
-                .asset("jope.safetensors")
-                .context("missing authenticated jope.safetensors")?,
+                .asset(super::files::JOPE)
+                .with_context(|| format!("missing authenticated {}", super::files::JOPE))?,
         )
     }
 

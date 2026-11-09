@@ -5,10 +5,6 @@ use super::route::Tier;
 use super::*;
 use crate::terminal::onboarding;
 
-/// Printed before a just-in-time login.
-pub const NEEDS_LOGIN: &str =
-    "This run needs your veox Cloud Workspace — opening your browser to log in…";
-
 /// A local table ready to upload: the exact bytes and what the consent states about them.
 #[derive(Clone)]
 pub struct Prepared {
@@ -46,11 +42,13 @@ impl Prepared {
         })
     }
 
+    /// The upload question, asked once per table (and account). Enter means no.
     pub fn question(&self) -> String {
         format!(
-            "Upload {} ({} rows, {}) to your veox Cloud Workspace? [Y/n]",
+            "Upload {} ({} rows, {} columns, {}) to train in the veox Cloud? [y/N]",
             self.file_name,
             super::route::grouped(self.rows),
+            super::route::grouped(self.columns),
             super::route::size(self.bytes.len() as u64)
         )
     }
@@ -92,23 +90,27 @@ pub fn remember_consent(home: &Path, key: &str, p: &Prepared) -> Result<()> {
     .map(|_| ())
 }
 
-/// The account's plan, read from the workspace and remembered for offline routing (MCP).
-pub fn tier(c: &Connection) -> Result<Option<Tier>> {
-    let (tier, _) = Client::connected(c)?.account_tier()?;
+/// The account's plan and whether it may start runs (`mayRun`: false while it waits on the
+/// waitlist), read from the workspace and remembered for offline checks (MCP).
+pub fn admission(c: &Connection) -> Result<(Option<Tier>, bool)> {
+    let (tier, may_run) = Client::connected(c)?.account_tier()?;
     let _ = onboarding::update(&jope_paths::jopedime_home(), |state| {
         state.account_tier = tier.map(|t| t.as_str().to_owned());
     });
-    Ok(tier)
+    Ok((tier, may_run))
 }
 
-/// The plan last read, without the network.
-#[cfg_attr(not(feature = "mcp"), allow(dead_code))]
-pub fn cached_tier() -> Option<Tier> {
-    connection().ok()?;
-    onboarding::load(&jope_paths::jopedime_home())
-        .account_tier
-        .as_deref()
-        .and_then(Tier::parse)
+/// The own-data gate (owner rule 2026-11-06) for the stored login: signed out, or an account
+/// still on the waitlist, stops with [`super::route::Gate::message`]. The workspace is asked
+/// for the plan; when it cannot be reached the check passes and the workspace decides at upload.
+/// On success, the connection and the plan, when known.
+pub fn admitted() -> std::result::Result<(Connection, Option<Tier>), super::route::Gate> {
+    let Ok(c) = connection() else {
+        return Err(super::route::Gate::SignedOut);
+    };
+    let account = admission(&c).ok();
+    super::route::gate(Some(&c.email), account)?;
+    Ok((c, account.and_then(|(tier, _)| tier)))
 }
 
 pub(crate) fn browser_allowed() -> bool {
@@ -223,11 +225,11 @@ mod tests {
     }
 
     #[test]
-    fn the_question_names_file_rows_and_size() {
+    fn the_question_names_file_rows_columns_and_size_and_defaults_to_no() {
         let p = prepared(&vec![b'x'; 2048], 123_456);
         assert_eq!(
             p.question(),
-            "Upload t.csv (123,456 rows, 2 KB) to your veox Cloud Workspace? [Y/n]"
+            "Upload t.csv (123,456 rows, 3 columns, 2 KB) to train in the veox Cloud? [y/N]"
         );
     }
 }

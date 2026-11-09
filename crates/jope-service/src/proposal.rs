@@ -8,7 +8,13 @@ use jope_runtime::methods::MethodRecord;
 use serde::Deserialize;
 
 pub const METHOD: &str = "proposal.r882.regression";
+#[cfg(not(feature = "public-edition"))]
 const DESCRIPTOR: &str = include_str!("../../../models/bundles/r882.json");
+/// The public jAIn CLI edition carries no model weights and names none of the internal r882
+/// files (owner rule 2026-11-06): its closure is empty, so the method reports itself as
+/// needing the internal package, exactly as it does without one.
+#[cfg(feature = "public-edition")]
+const DESCRIPTOR: &str = r#"{"files":[]}"#;
 
 #[derive(Deserialize)]
 struct Descriptor {
@@ -100,6 +106,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(not(feature = "public-edition"))]
     fn compiled_adapter_needs_assets_and_does_not_impersonate_step60000() {
         let record = record(None).unwrap();
         assert!(record.compiled);

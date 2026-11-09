@@ -222,7 +222,235 @@ impl Progress {
     }
 }
 
-/// The closing lines of a finished cloud run.
+/// A score as the run page says it: four significant figures, no float noise.
+fn figure(value: f64) -> String {
+    if value == 0.0 || !value.is_finite() {
+        return format!("{value}");
+    }
+    let digits = (4 - 1 - value.abs().log10().floor() as i32).clamp(0, 8) as usize;
+    let text = format!("{value:.digits$}");
+    if text.contains('.') {
+        text.trim_end_matches('0').trim_end_matches('.').to_owned()
+    } else {
+        text
+    }
+}
+
+/// What the run page says when nothing names the served model (ai-veox-app
+/// `veox_app_contracts::method::UNAVAILABLE`); the engine id beside it is never printed here.
+const UNAVAILABLE: &str = "method details unavailable";
+
+/// The app's name for a blend whose members its record does not list (`method::describe`).
+const BARE_BLEND: &str = "Blend";
+
+/// What the run page says beside a bare blend (`method::describe`'s description for one).
+const BARE_BLEND_SAID: &str = "Blend (a weighted average of several candidate models)";
+
+/// A model id as a person can read it, as the run page says it (ai-veox-app
+/// `readableModelName`, `veox_app_contracts::method::readable_name`/`learner`): an
+/// egress-redacted identifier is a veox proprietary blend or model, and the learners the engine
+/// serves have their names. `None` for an id nothing names (an internal or trial id such as
+/// `math_e8fb6975` or `alg_00000012`): that is never shown as though it were a name.
+pub fn readable_model(id: &str) -> Option<String> {
+    let clean = crate::terminal::sanitize_user_string(id);
+    if clean.contains("[redacted]") {
+        return Some(
+            if clean.to_ascii_lowercase().contains("blend") {
+                "veox proprietary blend"
+            } else {
+                "veox proprietary model"
+            }
+            .into(),
+        );
+    }
+    let key = clean.trim().to_ascii_lowercase();
+    let base = key.split(['_', '-', ':']).next().unwrap_or(&key);
+    Some(
+        match (key.as_str(), base) {
+            ("bma_blend", _) => "Blend of CatBoost and Bayesian model averaging",
+            (key, _) if key == "blend" || key.ends_with("_blend") => BARE_BLEND_SAID,
+            ("ges", _) => "Greedy ensemble",
+            (_, "bma") => "Bayesian model averaging",
+            (_, "catboost") => "CatBoost",
+            (_, "lightgbm") => "LightGBM",
+            (_, "xgboost") => "XGBoost",
+            (_, "ridge" | "linear" | "lasso" | "elasticnet") => "Linear model",
+            (_, "logistic" | "logreg") => "Logistic regression",
+            (_, "rf" | "randomforest") => "Random forest",
+            (_, "extratrees") => "Extra trees",
+            (_, "knn") => "Nearest neighbours",
+            _ => return None,
+        }
+        .into(),
+    )
+}
+
+/// The served model as the run page names it, never an internal id:
+/// 1. a served id or name the egress redaction rewrote is "veox proprietary blend" or
+///    "veox proprietary model" -- the run page's label for it, even where the app's `method`
+///    names it only by its kind ("Blend", run 20f45ba1…);
+/// 2. else the app's own `method.name` (ai-veox-app #146), the run page's "Winning model";
+///    a bare "Blend" keeps the run page's description beside it, so it is never just "Blend.";
+/// 3. else, from an app without `method`, the served id by [`readable_model`];
+/// 4. else "method details unavailable", as the run page says it.
+pub fn model_name(view: &Value) -> String {
+    fn named(v: &Value) -> Option<&str> {
+        v.as_str().map(str::trim).filter(|s| !s.is_empty())
+    }
+    let method = &view["method"];
+    let ids: Vec<&str> = [
+        &method["id"],
+        &view["servedModel"]["name"],
+        &view["summary"]["final_model"],
+    ]
+    .into_iter()
+    .filter_map(named)
+    .collect();
+    let name = named(&method["name"]);
+    if let Some(redacted) = name
+        .into_iter()
+        .chain(ids.iter().copied())
+        .find(|n| n.contains("[redacted]"))
+    {
+        return readable_model(redacted).unwrap_or_else(|| UNAVAILABLE.into());
+    }
+    let known = method["known"].as_bool() != Some(false);
+    if let Some(name) = name.filter(|n| known && *n != UNAVAILABLE) {
+        if name == BARE_BLEND {
+            return BARE_BLEND_SAID.into();
+        }
+        return crate::terminal::sanitize_user_string(name);
+    }
+    ids.first()
+        .and_then(|id| readable_model(id))
+        .unwrap_or_else(|| UNAVAILABLE.into())
+}
+
+/// The run's lead result exactly as the workspace leads with it: the app's own `headline`
+/// (`veox_app_contracts::headline`). The score is on the rows it names (for a synthetic-first
+/// run, the held-back real rows); a baseline is named only when the app scored one on those same
+/// rows, and otherwise the app's own note says there is none (journey J6). The search's
+/// synthetic score is secondary and said as such. Nothing from different row sets is compared.
+pub fn headline(view: &Value) -> Vec<String> {
+    let clean = crate::terminal::sanitize_user_string;
+    let headline = &view["headline"];
+    let score = &headline["score"];
+    let (Some(value), Some(label)) = (
+        score["value"].as_f64(),
+        score["label"].as_str().or(score["metric"].as_str()),
+    ) else {
+        return Vec::new();
+    };
+    let unit = score["unit"]
+        .as_str()
+        .filter(|u| !u.is_empty())
+        .map(|u| format!(" {}", clean(u)))
+        .unwrap_or_default();
+    let better = match score["direction"].as_str() {
+        Some("minimize") => " (lower is better)",
+        Some("maximize") => " (higher is better)",
+        _ => "",
+    };
+    let rows = headline["rows"]
+        .as_u64()
+        .map(|n| format!("{} ", super::route::grouped(n)))
+        .unwrap_or_default();
+    let on = match headline["basis"].as_str() {
+        Some("real_holdout") => format!("on {rows}held-back real rows"),
+        Some("synthetic_rows") => {
+            "on synthetic training-like rows only; no score on your real rows was recorded".into()
+        }
+        _ => format!("on {rows}held-out evaluation rows"),
+    };
+    let mut lines = vec![format!(
+        "Result: {} {}{unit}{better} {on}.",
+        clean(label),
+        figure(value)
+    )];
+    let baselines = headline["baselines"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    for baseline in &baselines {
+        let Some(b) = baseline["score"]["value"].as_f64() else {
+            continue;
+        };
+        let lift = baseline["lift"].as_f64().unwrap_or(0.0).abs();
+        let verdict = match baseline["outcome"].as_str() {
+            Some("veox") => format!("VEOX ahead by {}", figure(lift)),
+            Some("baseline") => format!("the baseline ahead by {}", figure(lift)),
+            _ => "the same score".to_owned(),
+        };
+        lines.push(format!(
+            "Baseline on the same rows ({}): {} {}{unit} · {verdict}.",
+            clean(baseline["description"].as_str().unwrap_or("a plain model")),
+            clean(label),
+            figure(b)
+        ));
+    }
+    if baselines.is_empty() && headline["basis"] != "synthetic_rows" {
+        lines.push("No baseline on these rows.".into());
+    }
+    if let Some(synthetic) = headline["synthetic"]["value"].as_f64() {
+        lines.push(format!(
+            "Secondary: on synthetic training-like rows the search scored {} {}{unit} (not your data).",
+            clean(label),
+            figure(synthetic)
+        ));
+    }
+    lines.extend(
+        headline["notes"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .map(clean),
+    );
+    for warning in headline["data_warnings"].as_array().into_iter().flatten() {
+        if let Some(message) = warning["message"].as_str() {
+            lines.push(format!("Check the data: {}", clean(message)));
+        }
+    }
+    lines
+}
+
+/// The `Model:` line of a finished cloud run: [`model_name`], or nothing when the run names no
+/// served model at all.
+fn model_line(view: &Value) -> Option<String> {
+    let served = [
+        &view["method"]["id"],
+        &view["method"]["name"],
+        &view["servedModel"]["name"],
+        &view["summary"]["final_model"],
+    ]
+    .iter()
+    .any(|v| v.as_str().is_some_and(|s| !s.trim().is_empty()));
+    served.then(|| format!("Model: {}.", model_name(view)))
+}
+
+/// A run sentence worth repeating under the app's headline: how the table was read and trained.
+/// Score and model sentences are left out (the headline and [`model_line`] say them, without
+/// mixing row sets or internal names).
+fn context_sentence(line: &str) -> bool {
+    line.starts_with("Profiled") || line.starts_with("Selected '") || line.starts_with("Trained on")
+}
+
+/// Rewrites a model identifier in a run sentence ("Selected bma_blend as the served model.").
+fn readable_sentence(line: &str) -> String {
+    match line
+        .strip_prefix("Selected ")
+        .and_then(|rest| rest.strip_suffix(" as the served model."))
+    {
+        Some(id) if !id.starts_with('\'') => match readable_model(id) {
+            Some(name) => format!("Selected {name} as the served model."),
+            None => format!("Selected a served model ({UNAVAILABLE})."),
+        },
+        _ => line.to_owned(),
+    }
+}
+
+/// The closing lines of a finished cloud run: the outcome, the held-out score and baseline,
+/// the run's own sentences and its workspace link (clickable where the terminal can).
 pub fn result_lines(view: &Value, url: &str) -> Vec<String> {
     let clean = crate::terminal::sanitize_user_string;
     let state = view["state"].as_str().unwrap_or("unknown");
@@ -238,18 +466,37 @@ pub fn result_lines(view: &Value, url: &str) -> Vec<String> {
         "cancelled" => lines.push("Cloud run cancelled.".into()),
         _ => {
             lines.push("✓ Cloud run finished.".into());
-            let narrative = &view["summary"]["narrative"];
-            match narrative {
-                Value::Array(items) => {
-                    lines.extend(items.iter().filter_map(Value::as_str).map(clean))
-                }
-                Value::String(text) => lines.extend(text.lines().map(clean)),
-                _ => {}
+            let lead = headline(view);
+            let narrative: Vec<String> = match &view["summary"]["narrative"] {
+                Value::Array(items) => items.iter().filter_map(Value::as_str).map(clean).collect(),
+                Value::String(text) => text.lines().map(clean).collect(),
+                _ => Vec::new(),
+            };
+            if lead.is_empty() {
+                // An app without the headline: its own sentences, with readable model names.
+                lines.extend(narrative.iter().map(|l| readable_sentence(l)));
+            } else {
+                lines.extend(lead);
+                lines.extend(model_line(view));
+                lines.extend(narrative.into_iter().filter(|l| context_sentence(l)));
             }
         }
     }
     lines.push(format!("Open it in your workspace: {url}"));
     lines
+}
+
+/// The `Next:` line after a finished cloud run. `tui` picks slash commands.
+pub fn next_line(url: &str, tui: bool) -> String {
+    if tui {
+        format!(
+            "Next: predict new rows in your workspace: {url}/predict (/copy link copies it) · /open FILE.csv trains another table"
+        )
+    } else {
+        format!(
+            "Next: predict new rows in your workspace: {url}/predict · `jain run FILE.csv --target COLUMN` trains another table"
+        )
+    }
 }
 
 /// What a followed cloud run reports to whoever is drawing it.
@@ -403,11 +650,184 @@ mod tests {
                 "Open it in your workspace: https://app.veox.ai/runs/x"
             ]
         );
+        assert!(next_line("https://app.veox.ai/runs/x", true)
+            .starts_with("Next: predict new rows in your workspace: https://app.veox.ai/runs/x/predict (/copy link copies it)"));
+        assert!(next_line("u", false).contains("`jain run FILE.csv --target COLUMN`"));
         let failed = json!({"state":"failed","failure":{"message":"The table had no rows."}});
         assert_eq!(
             result_lines(&failed, "u")[0],
             "Cloud run failed: The table had no rows."
         );
         assert!(finished("exploring") && !finished("running"));
+    }
+
+    #[test]
+    fn the_result_leads_with_the_real_held_back_rows_like_the_workspace() {
+        // The shape of a synthetic-first run on prod (2026-11-06, run 853ca6d9…, journey J6):
+        // the search's 3.117 and the baseline arm's 5.378 are on synthetic rows; the real
+        // held-back rows scored 5.316, with no baseline on them.
+        let view = json!({"state":"completed",
+            "headline":{"basis":"real_holdout","rows":60,"baselines":[],
+                "score":{"direction":"minimize","label":"RMSE","metric":"rmse","unit":"sales_k","value":5.31614294894832},
+                "synthetic":{"direction":"minimize","label":"RMSE","metric":"rmse","unit":"sales_k","value":3.1166468523193056},
+                "notes":["The engine's baseline arm scored RMSE 5.378 on synthetic rows. That is a different set of rows from the 60 real rows above, so it is not a comparison with this score."],
+                "data_warnings":[]},
+            "method":{"id":"bma_blend","name":"Blend of CatBoost and Bayesian model averaging"},
+            "summary":{"final_model":"bma_blend","narrative":[
+                "Profiled the synthetic copy: 240 rows and 9 columns, from an upload of 300 rows and 9 columns.",
+                "Selected 'sales_k' as the target.",
+                "On 60 held-back real rows, rmse was 5.3161 sales_k (lower is better).",
+                "The search's own holdout, on synthetic rows, scored rmse 3.1166 sales_k.",
+                "Selected bma_blend as the served model.",
+                "Trained on 240 synthetic rows generated from 240 real rows.",
+                "The baseline arm scored 5.3781 sales_k on the same 48 synthetic evaluation rows."]}});
+        let lines = result_lines(&view, "https://app.veox.ai/runs/x");
+        assert_eq!(
+            lines[1],
+            "Result: RMSE 5.316 sales_k (lower is better) on 60 held-back real rows."
+        );
+        assert_eq!(lines[2], "No baseline on these rows.");
+        assert!(lines[3].starts_with(
+            "Secondary: on synthetic training-like rows the search scored RMSE 3.117 sales_k"
+        ));
+        assert!(lines[4].contains("not a comparison with this score"));
+        assert_eq!(
+            lines[5],
+            "Model: Blend of CatBoost and Bayesian model averaging."
+        );
+        let text = lines.join("\n");
+        assert!(
+            !text.contains("ahead by") && !text.contains("same held-out rows"),
+            "{text}"
+        );
+        assert!(
+            !text.contains("bma_blend") && !text.contains("baseline arm scored 5.3781"),
+            "{text}"
+        );
+        assert!(
+            text.contains("Selected 'sales_k' as the target.")
+                && text.contains("Trained on 240 synthetic rows")
+        );
+        // A baseline scored on the same real rows is named, with who is ahead.
+        let mut same = view.clone();
+        same["headline"]["baselines"] = json!([{"kind":"linear","description":"a linear model","rows":60,
+            "score":{"label":"RMSE","value":9.5},"lift":4.18,"outcome":"veox"}]);
+        let lines = result_lines(&same, "u");
+        assert_eq!(
+            lines[2],
+            "Baseline on the same rows (a linear model): RMSE 9.5 sales_k · VEOX ahead by 4.18."
+        );
+        // Without the app's headline: its sentences, with readable model names.
+        let old = json!({"state":"completed","summary":{"narrative":["Selected bma_blend as the served model.","Selected [redacted]_regressor_blend as the served model."]}});
+        let lines = result_lines(&old, "u");
+        assert_eq!(
+            lines[1],
+            "Selected Blend of CatBoost and Bayesian model averaging as the served model."
+        );
+        assert_eq!(
+            lines[2],
+            "Selected veox proprietary blend as the served model."
+        );
+        assert_eq!(
+            readable_model("[redacted]_regressor").as_deref(),
+            Some("veox proprietary model")
+        );
+        assert_eq!(
+            readable_model("bma").as_deref(),
+            Some("Bayesian model averaging")
+        );
+        assert_eq!(figure(1234.5678), "1235");
+        assert_eq!(figure(0.5), "0.5");
+    }
+
+    #[test]
+    fn the_model_line_says_the_name_the_run_page_shows_and_never_an_internal_id() {
+        let line = |view: Value| model_line(&view);
+        // The app's own name, as the run page's "Winning model" (prod runs 34c4a244…, 830aae70…).
+        assert_eq!(
+            line(
+                json!({"method":{"id":"bma_blend","known":true,"family":"ensemble",
+                "name":"Blend of CatBoost and Bayesian model averaging"},
+                "servedModel":{"name":"bma_blend"},"summary":{"final_model":"bma_blend"}})
+            ),
+            Some("Model: Blend of CatBoost and Bayesian model averaging.".into())
+        );
+        assert_eq!(
+            line(json!({"method":{"id":"bma","known":true,"name":"Bayesian model averaging"}})),
+            Some("Model: Bayesian model averaging.".into())
+        );
+        // An invented algorithm's display name is the account's, and is shown as the page shows it.
+        assert_eq!(
+            line(
+                json!({"method":{"id":"alg_00000012","known":true,"name":"Lightning Vector",
+                "family":"invented algorithm"}})
+            ),
+            Some("Model: Lightning Vector.".into())
+        );
+        // Prod run 20f45ba1… (rc.4 printed "Model: Blend."): the served id is redacted and the
+        // app's method names only its kind. The run page labels it "veox proprietary blend".
+        let redacted = json!({"method":{"id":"[redacted]_regressor_blend","known":true,
+            "family":"ensemble","name":"Blend",
+            "description":"A weighted average of several candidate models."},
+            "servedModel":{"name":"[redacted]_regressor_blend"},
+            "summary":{"final_model":"[redacted]_regressor_blend"}});
+        assert_eq!(
+            line(redacted),
+            Some("Model: veox proprietary blend.".into())
+        );
+        assert_eq!(
+            line(
+                json!({"method":{"id":"[redacted]_top500","known":true,"name":"veox proprietary model"}})
+            ),
+            Some("Model: veox proprietary model.".into())
+        );
+        assert_eq!(
+            line(json!({"method":{"id":"x","name":"[redacted]_classifier_blend"}})),
+            Some("Model: veox proprietary blend.".into())
+        );
+        // A bare blend the app could not name the members of keeps the page's description.
+        assert_eq!(
+            line(json!({"method":{"id":"frontier_blend","known":true,"name":"Blend"}})),
+            Some("Model: Blend (a weighted average of several candidate models).".into())
+        );
+        // Nothing names it: the page's neutral words, never the id.
+        for unknown in [
+            json!({"method":{"id":"math_e8fb6975","known":false,"name":"method details unavailable"},
+                "servedModel":{"name":"math_e8fb6975"}}),
+            json!({"servedModel":{"name":"alg_00000012"}}),
+            json!({"summary":{"final_model":"zz_unlisted_x9"}}),
+        ] {
+            let text = line(unknown.clone()).unwrap();
+            assert_eq!(text, "Model: method details unavailable.", "{unknown}");
+        }
+        // An app without `method`: the served id by its readable name.
+        assert_eq!(
+            line(
+                json!({"servedModel":{"name":"catboost_s2"},"summary":{"final_model":"catboost_s2"}})
+            ),
+            Some("Model: CatBoost.".into())
+        );
+        assert_eq!(
+            line(json!({"summary":{"final_model":"bma_blend"}})),
+            Some("Model: Blend of CatBoost and Bayesian model averaging.".into())
+        );
+        // No served model at all: no line.
+        assert_eq!(line(json!({"state":"completed"})), None);
+        // The headline-less fallback rewrites an unnamed id too.
+        assert_eq!(
+            readable_sentence("Selected math_e8fb6975 as the served model."),
+            "Selected a served model (method details unavailable)."
+        );
+        // Every line a finished prod-shaped run prints is free of the internal id.
+        let mut view = json!({"state":"completed",
+            "headline":{"basis":"real_holdout","rows":60,"baselines":[],
+                "score":{"direction":"minimize","label":"RMSE","value":5.4}}});
+        view["method"] = json!({"id":"[redacted]_regressor_blend","known":true,"name":"Blend"});
+        let text = result_lines(&view, "u").join("\n");
+        assert!(text.contains("Model: veox proprietary blend."), "{text}");
+        assert!(
+            !text.contains("[redacted]") && !text.contains("Model: Blend."),
+            "{text}"
+        );
     }
 }

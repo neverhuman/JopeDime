@@ -150,11 +150,20 @@ fn run_demo<T: Transport>(
     };
     spec = draft.run_spec(false).expect("validated draft is complete");
     spec.plan_digest = Some(plan.plan_digest);
-    let snapshot =
-        match client.run_start(&spec, Some(&format!("demo_run_{}", ulid::Ulid::new())))? {
-            RunResult::Started(snapshot) => *snapshot,
-            RunResult::Plan(_) => anyhow::bail!("run request returned a dry-run plan"),
-        };
+    let started = client
+        .run_start(&spec, Some(&format!("demo_run_{}", ulid::Ulid::new())))
+        .map_err(|error| {
+            if crate::terminal::runs::is_busy(&error.to_string()) {
+                let run = crate::terminal::runs::active_run(client);
+                anyhow::anyhow!(crate::terminal::runs::busy_message(run.as_ref(), false))
+            } else {
+                anyhow::Error::new(error)
+            }
+        })?;
+    let snapshot = match started {
+        RunResult::Started(snapshot) => *snapshot,
+        RunResult::Plan(_) => anyhow::bail!("run request returned a dry-run plan"),
+    };
     crate::cloud::remember_run(
         &snapshot.run_id,
         &crate::cloud_events::RunContext::from_spec(&spec, &file, Some(profile)),
@@ -200,7 +209,7 @@ fn run_demo<T: Transport>(
     Ok(())
 }
 
-fn wait_terminal<T: Transport>(
+pub(crate) fn wait_terminal<T: Transport>(
     client: &T,
     mut current: RunSnapshot,
 ) -> anyhow::Result<RunSnapshot> {
@@ -214,7 +223,7 @@ fn wait_terminal<T: Transport>(
 }
 
 /// What a finished demo prints: the outcome, how the search stopped, and what to do next.
-fn result_lines(snapshot: &RunSnapshot) -> Vec<String> {
+pub(crate) fn result_lines(snapshot: &RunSnapshot) -> Vec<String> {
     let mut lines = vec![crate::terminal::status::finished_line(snapshot)];
     lines.extend(crate::terminal::status::budget_stop_line(snapshot));
     if snapshot.state == RunState::Completed {

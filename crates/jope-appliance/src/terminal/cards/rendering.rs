@@ -181,19 +181,29 @@ pub(super) fn render_run_finished(
     theme: Theme,
     symbols: Symbols,
 ) {
-    let champion = finished
+    // Lead with the held-out score, labelled, as the run page does (journey J3-F03); CV and a
+    // test score follow, and a missing test set is left out rather than shown as n/a.
+    let metric = finished
         .champion
         .as_ref()
-        .map(format_champion)
-        .unwrap_or_else(|| "no champion".to_owned());
-    let body = format!(
-        "{} · champion {} · CV {} · HOLDOUT {} · TEST {}",
-        completion_name(finished.completion_reason),
-        champion,
-        format_value(finished.scores.cv),
-        format_value(finished.scores.holdout),
-        format_value(finished.scores.test)
-    );
+        .map(|champion| sanitize_user_string(&champion.metric))
+        .unwrap_or_else(|| "score".to_owned());
+    let mut parts = vec![
+        format!(
+            "held-out {metric} {}",
+            format_value(finished.scores.holdout)
+        ),
+        format!("CV {}", format_value(finished.scores.cv)),
+    ];
+    if finished.scores.test.is_some_and(f64::is_finite) {
+        parts.push(format!("test {}", format_value(finished.scores.test)));
+    }
+    parts.push(match &finished.champion {
+        Some(champion) => format!("champion {}", champion.algorithm_id),
+        None => "no champion".to_owned(),
+    });
+    parts.push(completion_name(finished.completion_reason).to_owned());
+    let body = parts.join(" · ");
     append_card(
         cards,
         symbols.success,

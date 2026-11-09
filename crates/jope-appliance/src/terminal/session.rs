@@ -73,6 +73,8 @@ fn requested_with_tty(args: &[String], input: bool, output: bool) -> Option<Laun
 }
 
 pub fn run(launch: Launch) -> anyhow::Result<()> {
+    // A release executable separated from its package could not run a single candidate.
+    crate::bootstrap::open()?;
     let home = jope_paths::jopedime_home();
     let executable = std::env::current_exe()?;
     let engine = discover::discover(&discover::Options {
@@ -91,7 +93,14 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
     };
     let system = client.system_info()?;
     let engine_version = system.version.clone();
-    let mut session = Session::new(client, home, mode, system.version)?;
+    // The header and the update check name the release (`1.0.0-rc.4`), not only the Cargo
+    // version the engine reports (journey J3-F09).
+    let label = if system.version == env!("CARGO_PKG_VERSION") {
+        crate::release_version().to_owned()
+    } else {
+        system.version
+    };
+    let mut session = Session::new(client, home, mode, label)?;
     if let Some(notice) = discover::take_notice() {
         session.screen.push(&notice);
     }
@@ -162,6 +171,9 @@ struct Session {
     last_refresh: Instant,
     /// Runs whose "status synced" line was already shown.
     status_announced: std::collections::BTreeSet<String>,
+    /// The attached run and when it was attached, for a status clock that moves while the
+    /// engine's snapshot still reports no elapsed time (it records it as the run ends).
+    run_clock: Option<(RunId, Instant)>,
 }
 
 impl Session {
@@ -226,6 +238,7 @@ impl Session {
             follow_cancel: None,
             last_refresh: Instant::now(),
             status_announced: std::collections::BTreeSet::new(),
+            run_clock: None,
         })
     }
 }

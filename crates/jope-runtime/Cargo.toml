@@ -30,5 +30,11 @@ thiserror.workspace = true
 jope-narrator = { path = "../jope-narrator", features = ["testing"] }
 tempfile.workspace = true
 
+[features]
+# The public jAIn CLI edition (selected by jope-appliance `cloud-tls`): the method roster leaves
+# out the internal neural methods, whose names stay with the engine-only builds (owner rule
+# 2026-11-06: no internal model names in the public binary).
+public-edition = []
+
 [lints]
 workspace = true
