@@ -95,6 +95,11 @@ with Sol within both 95% intervals. Sol still has the lowest geometric-mean RMSE
 point estimate.** Elo rewards how often a method wins, while RMSE ratios also
 reflect error size.
 
+`kimik3p1_max` is model release 1.0.0, tag `kimik3p1_max-v1.0.0`
+(`jope_automl::KIMIK3P1_MAX_VERSION`). The frozen source hash is unchanged.
+The workspace crate version stays 1.0.0. The receipt is
+[RELEASE.json](crates/jope-automl/submissions/kimik3p1_max/RELEASE.json).
+
 | Opponent | Opponent / `kimik3p1_max` RMSE | 95% family-bootstrap interval | Holm-adjusted p |
 | --- | ---: | ---: | ---: |
 | `Opus5p5_Extra` | 0.793 | 0.626–0.933 | 0.084 |

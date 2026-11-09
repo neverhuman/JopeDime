@@ -13,8 +13,10 @@ results=assets/automl-elo/v3/RESULTS.json
 record=crates/jope-automl/submissions/kimik3p1_max/verification.json
 # The prose below was reviewed against these exact bytes. If either file changes, reconcile the
 # prose with it first, then update its pin.
+# Reconciled 2026-11-09: the Kimi record gained model_version 1.0.0 and release_tag
+# kimik3p1_max-v1.0.0. The ranking paragraph names that release. Elo numbers are unchanged.
 results_sha256=d6466e2c70b29f209253862ab8555da6d14a41ade08c8721f77e8c3dd95bfd60
-record_sha256=749b2dafbf2fc10301ccc99207a6c7a0507235f33b7ff25d307c6b30987c0909
+record_sha256=3ea70e8dea7b4299676a7bb8431466bf7990fb235fd04647f1bad91bd9b705e7
 boards=assets/readme-performance/v2/boards.json
 golden=assets/regression/elo-tabular-regression-v2.benchmark-valid.json
 published=assets/regression/elo-tabular-regression-v2.json
@@ -176,6 +178,11 @@ TEXT
 with Sol within both 95% intervals. Sol still has the lowest geometric-mean RMSE
 point estimate.** Elo rewards how often a method wins, while RMSE ratios also
 reflect error size.
+
+`kimik3p1_max` is model release 1.0.0, tag `kimik3p1_max-v1.0.0`
+(`jope_automl::KIMIK3P1_MAX_VERSION`). The frozen source hash is unchanged.
+The workspace crate version stays 1.0.0. The receipt is
+[RELEASE.json](crates/jope-automl/submissions/kimik3p1_max/RELEASE.json).
 
 | Opponent | Opponent / `kimik3p1_max` RMSE | 95% family-bootstrap interval | Holm-adjusted p |
 | --- | ---: | ---: | ---: |

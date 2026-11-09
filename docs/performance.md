@@ -62,7 +62,11 @@ It refits the same 64 families, folds and seeds with six entrants. It adds
 `kimik3p1_max` (576 new fits) and reuses every earlier entrant's stored cells,
 including `grok4p7_xhigh`, whose source is not on `main` yet. Kimi ranks third of
 six (Elo 1510.7, 95% interval 1468.7–1554.3), level with Sol within both
-intervals. Its [RESULTS.json](../assets/automl-elo/v3/RESULTS.json) is the
+intervals. Model release 1.0.0 is tag `kimik3p1_max-v1.0.0`
+(`jope_automl::KIMIK3P1_MAX_VERSION`). The frozen source hash is unchanged, and
+the workspace crate version stays 1.0.0. The receipt is
+[RELEASE.json](../crates/jope-automl/submissions/kimik3p1_max/RELEASE.json).
+Its [RESULTS.json](../assets/automl-elo/v3/RESULTS.json) is the
 numerical authority for that panel, and the README's generated table shows it.
 
 ### `kimik3p1_max` on every panel it was scored on
