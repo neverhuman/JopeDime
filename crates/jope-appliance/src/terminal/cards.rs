@@ -4,9 +4,8 @@ use std::{collections::VecDeque, fmt::Write as _};
 
 use jope_api::decimal::DecimalU64;
 use jope_api::{
-    AlgorithmAcceptedBody, BestAlgorithm, CompletionReason, Direction, EventBody,
-    ExperimentOutcome, ExportKind, Language, ParityStatus, Plan, PublicEvent, RunFinishedBody,
-    Severity, Warning, WarningState,
+    AlgorithmAcceptedBody, CompletionReason, Direction, EventBody, ExperimentOutcome, ExportKind,
+    Language, ParityStatus, Plan, PublicEvent, RunFinishedBody, Severity, Warning, WarningState,
 };
 
 use crate::terminal::{sanitize_user_string, Ansi16Color, Symbols, Theme, ThemeColor, ThemeToken};

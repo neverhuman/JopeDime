@@ -1,6 +1,8 @@
-//! `/run` routing: local or the veox Cloud Workspace, just-in-time login, the per-dataset upload
-//! consent, cloud progress in the transcript, limits in plain words, and the results sync of a
-//! finished local run. The decision itself is `crate::cloud::route`; this file is the dialogue.
+//! `/run` routing (owner rule 2026-11-06): a bundled demo runs on this machine; the user's own
+//! table trains in the veox Cloud, after the login and admission gate and the per-table upload
+//! consent. Cloud progress in the transcript, limits in plain words, and the results sync of a
+//! finished local demo run. The decision itself is `crate::cloud::route`; this file is the
+//! dialogue.
 use super::*;
 use crate::cloud::{
     cloud_run::{Refusal, Update},
@@ -21,11 +23,9 @@ pub(crate) struct Source {
     pub profile: Option<jope_api::DatasetProfile>,
 }
 
-/// A cloud run waiting on a login or an answer.
+/// A cloud run waiting on an answer.
 #[derive(Clone, Debug)]
 pub(crate) struct CloudRequest {
-    /// The `/run` arguments without `--cloud`/`--local`, for running locally instead.
-    pub args: Vec<String>,
     pub profile: &'static str,
     pub fallback: &'static str,
     pub target: Option<String>,
@@ -33,9 +33,7 @@ pub(crate) struct CloudRequest {
 
 /// A yes/no question the next line answers.
 pub(crate) enum Pending {
-    OfferCloud(CloudRequest),
     Consent(CloudRequest, Prepared, String),
-    RunLocal(Vec<String>),
     SyncResults(RunId, (String, String)),
 }
 
@@ -51,12 +49,11 @@ pub(crate) enum CloudMsg {
 pub(crate) struct Routing {
     pub source: Option<Source>,
     pub pending: Option<Pending>,
-    pub after_login: Option<CloudRequest>,
     pub cloud_cancel: Option<Arc<AtomicBool>>,
+    /// The workspace link of the cloud run being followed.
+    pub cloud_url: Option<String>,
     pub results_waiting: Option<(RunId, (String, String))>,
     pub results_handled: std::collections::BTreeSet<String>,
-    /// The `/run` arguments of the cloud run in flight, to run it locally instead.
-    pub cloud_args: Vec<String>,
 }
 
 /// Split `--local` / `--cloud` off the `/run` arguments.
@@ -81,6 +78,9 @@ pub(crate) fn force_from(args: &[String]) -> anyhow::Result<(Option<Force>, Vec<
     Ok((force, rest))
 }
 
+/// After `/open` of the user's own table, where it will train.
+pub(crate) const OPENED_OWN: &str = "Type /run to train it in the veox Cloud (jAIn asks before uploading), or /auto for the defaults; /target COLUMN predicts another column.";
+
 impl super::Session {
     /// `/run [--local|--cloud] [--seed S] [--idempotency-key KEY]`.
     pub(super) fn route_run(&mut self, args: &[String]) -> anyhow::Result<Vec<String>> {
@@ -89,79 +89,50 @@ impl super::Session {
             return self.start_run(&rest);
         };
         let source = self.routing.source.clone().unwrap_or_default();
-        let connection = crate::cloud::connection().ok();
-        let needs_tier = force != Some(Force::Local)
-            && !source.demo
-            && (spec.effort != jope_api::Effort::Fast || source.rows > route::LOCAL_ROW_THRESHOLD);
-        let tier = match (&connection, needs_tier) {
-            (Some(c), true) => flow::tier(c).ok().flatten(),
-            _ => None,
-        };
         let decision = route::decide(route::Input {
             effort: spec.effort,
             rows: self.routing.source.as_ref().map(|s| s.rows),
             demo: source.demo,
             force,
-            tier,
+            cloud_first: route::cloud_first(),
         });
         let request = CloudRequest {
-            args: rest.clone(),
             profile: route::profile(spec.effort),
             fallback: decision.cloud_fallback(),
             target: Some(spec.target.clone()),
         };
-        let mut lines = vec![decision.line.clone()];
         match decision.target {
-            route::Target::Local if decision.offer_cloud => {
-                lines.push(route::OFFER_CLOUD.into());
-                self.routing.pending = Some(Pending::OfferCloud(request));
+            route::Target::Refused => Ok(vec![decision.line]),
+            route::Target::Local => {
+                let mut lines = vec![decision.line];
+                lines.extend(self.start_run(&rest)?);
+                Ok(lines)
             }
-            route::Target::Local => lines.extend(self.start_run(&rest)?),
-            route::Target::Cloud => lines.extend(self.begin_cloud(request)?),
+            route::Target::Cloud => self.begin_cloud(request, decision.line),
         }
-        Ok(lines)
     }
 
-    /// Log in if needed, then continue the same run.
-    pub(super) fn begin_cloud(&mut self, request: CloudRequest) -> anyhow::Result<Vec<String>> {
+    /// The own-data gate, then `line` (where it trains) and the upload question (once per
+    /// table) or the run itself.
+    pub(super) fn begin_cloud(
+        &mut self,
+        request: CloudRequest,
+        line: String,
+    ) -> anyhow::Result<Vec<String>> {
         let source = self.routing.source.clone().unwrap_or_default();
-        if source.path.is_none() {
-            let mut lines = vec![
-                "This table was not opened from a file on this machine, so it runs locally.".into(),
-            ];
-            lines.extend(self.start_run(&request.args)?);
-            return Ok(lines);
-        }
-        if crate::cloud::connection().is_ok() {
-            return self.continue_cloud(request);
-        }
-        if let Some(cancel) = self.login_cancel.take() {
-            cancel.store(true, Ordering::SeqCst);
-        }
-        let cancel = Arc::new(AtomicBool::new(false));
-        crate::cloud::spawn_login(
-            crate::cloud::default_workspace(),
-            self.cloud_sender.clone(),
-            Arc::clone(&cancel),
-            Some(self.login_done_sender.clone()),
-        );
-        self.login_cancel = Some(cancel);
-        self.routing.after_login = Some(request);
-        Ok(vec![flow::NEEDS_LOGIN.into()])
-    }
-
-    /// Signed in: check what the plan allows locally, then ask (once per dataset) and upload.
-    pub(super) fn continue_cloud(&mut self, request: CloudRequest) -> anyhow::Result<Vec<String>> {
-        let c = crate::cloud::connection()?;
-        let source = self.routing.source.clone().unwrap_or_default();
-        let path = source
-            .path
-            .clone()
-            .ok_or_else(|| anyhow::anyhow!("no file to upload"))?;
+        let Some(path) = source.path.clone() else {
+            return Ok(vec![
+                "The bundled demos run on this machine: type /run without --cloud. /run --cloud uploads only your own files (/open FILE.csv)."
+                    .into(),
+            ]);
+        };
+        let (c, tier) = match flow::admitted() {
+            Ok(admitted) => admitted,
+            Err(gate) => return Ok(vec![gate.message(true)]),
+        };
+        let mut lines = vec![line];
         // Free's row ceiling is known: say so before uploading anything.
-        if source.rows > route::FREE_MAX_DATA_ROWS
-            && flow::tier(&c).ok().flatten() == Some(Tier::Free)
-        {
+        if source.rows > route::FREE_MAX_DATA_ROWS && tier == Some(Tier::Free) {
             let limit = route::Limit {
                 status: 400,
                 limit: "size".into(),
@@ -171,8 +142,13 @@ impl super::Session {
                 upgrade_url: route::UPGRADE_URL.into(),
                 message: String::new(),
             };
-            self.routing.pending = Some(Pending::RunLocal(request.args));
-            return Ok(vec![limit.render()]);
+            lines.push(limit.render());
+            return Ok(lines);
+        }
+        let mut request = request;
+        if tier == Some(Tier::Free) && request.profile != "fast" {
+            request.profile = "fast";
+            lines.push(route::FREE_RUNS_FAST.into());
         }
         let prepared = Prepared::read(&path, source.rows, source.columns)?;
         let key = flow::consent_key(&c.origin, &c.account_id, &prepared.sha256);
@@ -181,22 +157,30 @@ impl super::Session {
             &key,
             &prepared,
         ) {
-            return Ok(self.spawn_cloud(request, prepared));
+            lines.extend(self.spawn_cloud(request, prepared));
+            return Ok(lines);
         }
-        let question = prepared.question();
+        lines.push(prepared.question());
         self.routing.pending = Some(Pending::Consent(request, prepared, key));
-        Ok(vec![question])
+        Ok(lines)
     }
 
     fn spawn_cloud(&mut self, request: CloudRequest, prepared: Prepared) -> Vec<String> {
         let Ok(c) = crate::cloud::connection() else {
-            return vec!["Not signed in; nothing was uploaded.".into()];
+            return vec!["Not signed in; nothing was uploaded. Type /login first.".into()];
         };
+        if let Some(previous) = self.routing.cloud_cancel.take() {
+            previous.store(true, Ordering::SeqCst);
+        }
         let cancel = Arc::new(AtomicBool::new(false));
         self.routing.cloud_cancel = Some(Arc::clone(&cancel));
-        self.routing.cloud_args = request.args.clone();
+        self.routing.cloud_url = None;
+        // The status bar follows the cloud run, not the last local one.
+        self.snapshot = None;
+        self.message = Some(format!("veox Cloud · uploading {}", prepared.file_name));
         let sender = self.cloud_run_sender.clone();
         let name = prepared.file_name.clone();
+        let size = route::size(prepared.bytes.len() as u64);
         thread::spawn(move || {
             let result = flow::submit_and_follow(
                 &c,
@@ -217,45 +201,37 @@ impl super::Session {
                 }
                 Err(error) => {
                     let _ = sender.send(CloudMsg::Error(format!(
-                        "The upload did not reach your workspace ({error:#})."
+                        "The upload did not reach your workspace ({error:#}); no run started."
                     )));
                 }
             }
         });
-        vec![format!("Uploading {name} to your veox Cloud Workspace…")]
+        vec![format!(
+            "Uploading {name} ({size}) to your veox Cloud Workspace…"
+        )]
     }
 
     /// Answer a pending question. `None`: the line was not an answer and runs as a command.
     pub(super) fn answer(&mut self, input: &str) -> Option<anyhow::Result<Vec<String>>> {
         let pending = self.routing.pending.take()?;
-        let Some(yes) = route::answer(input) else {
+        let answer = match &pending {
+            Pending::Consent(..) => route::consent_answer(input),
+            Pending::SyncResults(..) => route::answer(input),
+        };
+        let Some(yes) = answer else {
             self.routing.pending = None;
             return None;
         };
         Some(match pending {
-            Pending::OfferCloud(request) if yes => self.begin_cloud(request),
-            Pending::OfferCloud(request) => self.start_run(&request.args),
             Pending::Consent(request, prepared, key) if yes => {
                 if let Err(error) = flow::remember_consent(&self.home, &key, &prepared) {
                     return Some(Err(error));
                 }
                 Ok(self.spawn_cloud(request, prepared))
             }
-            Pending::Consent(request, _, _) => {
-                let mut lines = vec!["Nothing was uploaded.".into()];
-                lines.push(route::Limit::local_question().into());
-                self.routing.pending = Some(Pending::RunLocal(request.args));
-                Ok(lines)
-            }
-            Pending::RunLocal(args) if yes => {
-                let mut lines = vec!["Running locally on this machine.".to_owned()];
-                match self.start_run(&args) {
-                    Ok(more) => lines.extend(more),
-                    Err(error) => return Some(Err(error)),
-                }
-                Ok(lines)
-            }
-            Pending::RunLocal(_) => Ok(vec!["Not started.".into()]),
+            Pending::Consent(..) => Ok(vec![
+                "Nothing was uploaded, and no run started. Your own data trains only in the veox Cloud; the bundled demos run here: /demo".into(),
+            ]),
             Pending::SyncResults(run, owner) => {
                 let home = self.home.clone();
                 if let Err(error) =
@@ -321,52 +297,55 @@ impl super::Session {
         let theme = crate::terminal::Theme::from_env(crate::terminal::ThemeMode::Auto);
         match message {
             CloudMsg::Update(Update::Started { url, .. }) => {
+                self.message = Some(format!("veox Cloud · running · {url}"));
+                self.routing.cloud_url = Some(url.clone());
                 vec![format!("Cloud run started · {url}")]
             }
             CloudMsg::Update(Update::Thinking(text)) => {
                 crate::terminal::cards::thinking_card(&text, width, theme)
             }
-            CloudMsg::Update(Update::Finished(lines)) => {
+            CloudMsg::Update(Update::Finished(mut lines)) => {
                 self.routing.cloud_cancel = None;
+                let url = self.routing.cloud_url.take().unwrap_or_default();
+                let done = lines.first().is_some_and(|l| l.starts_with('✓'));
+                self.message = Some(if done {
+                    "veox Cloud · run finished".to_owned()
+                } else {
+                    "veox Cloud · run ended".to_owned()
+                });
+                if done && !url.is_empty() {
+                    lines.push(crate::cloud::cloud_run::next_line(&url, true));
+                }
                 lines
             }
             CloudMsg::Update(Update::Error(line)) | CloudMsg::Error(line) => {
                 self.routing.cloud_cancel = None;
+                self.message = Some("veox Cloud · not following a run".into());
                 vec![line]
             }
             CloudMsg::Refused(Refusal::Limit(limit)) => {
                 self.routing.cloud_cancel = None;
-                self.routing.pending = Some(Pending::RunLocal(self.last_run_args()));
+                self.message = None;
                 vec![limit.render()]
             }
             CloudMsg::Refused(Refusal::Other(message)) => {
                 self.routing.cloud_cancel = None;
-                self.routing.pending = Some(Pending::RunLocal(self.last_run_args()));
-                vec![message, route::Limit::local_question().into()]
+                self.message = None;
+                vec![format!("{message} No run started.")]
             }
         }
     }
 
-    fn last_run_args(&self) -> Vec<String> {
-        self.routing.cloud_args.clone()
-    }
-
-    /// A finished login: continue the run that needed it.
+    /// A finished `/login`: say what now opens up.
     pub(super) fn login_finished(&mut self, ok: bool) -> Vec<String> {
-        let Some(request) = self.routing.after_login.take() else {
+        if !ok {
             return Vec::new();
-        };
-        if ok {
-            match self.continue_cloud(request) {
-                Ok(lines) => lines,
-                Err(error) => vec![format!("error: {error:#}")],
-            }
-        } else {
-            self.routing.pending = Some(Pending::RunLocal(request.args));
-            vec![
-                "The login did not finish, so nothing was uploaded.".into(),
-                route::Limit::local_question().into(),
-            ]
+        }
+        match &self.routing.source {
+            Some(source) if !source.demo && source.path.is_some() => vec![
+                "Signed in: type /run to train the opened table in the veox Cloud (jAIn asks before uploading).".into(),
+            ],
+            _ => Vec::new(),
         }
     }
 }

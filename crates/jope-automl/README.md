@@ -7,8 +7,8 @@ registered in `jope_automl::REGRESSORS`:
 | --- | --- | --- |
 | `GPT6p1_Sol_Max` | [`src/GPT6p1_Sol_Max.rs`](src/GPT6p1_Sol_Max.rs) | `fe5bb21e…f75a8` |
 | `Gemini4_argon_high` | [`src/Gemini4_argon_high.rs`](src/Gemini4_argon_high.rs) | `d5cd85fc…053d3` |
-| `grok4p7_xhigh` | [`src/grok4p7_xhigh.rs`](src/grok4p7_xhigh.rs) | `8e648cef…64f8` |
-| `kimik3p1_max` | [`src/kimik3p1_max.rs`](src/kimik3p1_max.rs) | `0c211694…ceb3` |
+| `grok4p7_xhigh` | [`src/grok4p7_xhigh.rs`](src/grok4p7_xhigh.rs) | `8e648cef…664f8` |
+| `kimik3p1_max` | [`src/kimik3p1_max.rs`](src/kimik3p1_max.rs) | `0c211694…6ceb3` |
 
 Each regressor's entire learning procedure lives in its own file. That file is included
 byte-for-byte and compiles independently:
@@ -20,12 +20,16 @@ rustc --edition=2021 --crate-name gpt6p1_sol_max --crate-type rlib \
 rustc --edition=2021 --crate-name gemini4_argon_high --crate-type rlib \
   -C opt-level=3 -C codegen-units=1 -D unsafe-code \
   crates/jope-automl/src/Gemini4_argon_high.rs -o libgemini4_argon_high.rlib
+rustc --edition=2021 --crate-name kimik3p1_max --crate-type rlib \
+  -C opt-level=3 -C codegen-units=1 -D unsafe-code \
+  crates/jope-automl/src/kimik3p1_max.rs -o libkimik3p1_max.rlib
 ```
 
 `GPT6p1_Sol_Max` was frozen before repository-code inspection or numerical execution.
 `Gemini4_argon_high` was supplied by the owner on 2026-10-22. It replaces the earlier
 `gemini-argon-4` candidate as the Gemini entrant, and its authoring conditions are recorded as
-unknown.
+unknown. `kimik3p1_max` was supplied by the owner on 2026-11-07 as a single file without an
+authoring manifest; its authoring conditions are likewise recorded as unknown.
 
 ## Using a regressor
 
@@ -37,16 +41,16 @@ independent state and accepts features only through `predict_rows`.
   features and adds no numerical preprocessing.
 - **Non-finite output.** It refuses a non-finite prediction with an error, because a frozen source
   is never patched.
-- **Exact challenge API.** Also available directly: `Gpt6p1SolMax` with `RegressorApi`, and
-  `Gemini4ArgonHigh` with `Gemini4ArgonHighApi`.
+- **Exact challenge API.** Also available directly: `Gpt6p1SolMax` with `RegressorApi`,
+  `Gemini4ArgonHigh` with `Gemini4ArgonHighApi`, and `KimiK3p1Max` with `KimiK3p1MaxApi`.
 
-The existing same-cut benchmark accepts either candidate alongside its existing baseline, program
-and external-adapter methods:
+The existing same-cut benchmark accepts any of these candidates alongside its existing baseline,
+program and external-adapter methods:
 
 ```sh
 cargo run --release -p jope-bench -- run \
   --datasets /path/to/catalog --out /path/to/reports \
-  --native GPT6p1_Sol_Max --native Gemini4_argon_high \
+  --native GPT6p1_Sol_Max --native Gemini4_argon_high --native kimik3p1_max \
   --seed 20260907 --folds 5 --top 20 --workers 1
 
 cargo run --release -p jope-bench -- ladder \
@@ -78,21 +82,29 @@ Elo: these two native regressors plus `Opus5p5_Extra` and `GPT6_Astra_Max`.
 - **Figures.** Ratings, pairwise win shares and source sizes are in
   [`figures/`](../../assets/automl-elo/v1/figures).
 
-[`assets/automl-elo/v2`](../../assets/automl-elo/v2/SOURCES.md) refits the same panel with
-`grok4p7_xhigh` added. The other four entrants are not refitted. Their ratings move because
+[`assets/automl-elo/v2`](../../assets/automl-elo/v2/SOURCES.md) refits the v1 panel with
+`grok4p7_xhigh` added. The other four entrants are not refitted; their ratings move because
 Bradley-Terry is recomputed on the five-player pool. v1 is unchanged.
 
-[`assets/automl-elo/v3`](../../assets/automl-elo/v3/SOURCES.md) adds `kimik3p1_max` and refits
-all six. v1 and v2 stay as they were.
+[`assets/automl-elo/v3`](../../assets/automl-elo/v3/SOURCES.md) refits the same panel with
+`kimik3p1_max` added to the five-entrant pool (the v1 four plus `grok4p7_xhigh`). No earlier
+entrant is refitted; ratings move only because Bradley-Terry is recomputed on six players, and
+the analysis first reproduces the five-entrant result exactly. v1 is unchanged.
+
+- **Ratings.** Opus5p5_Extra 1691, Gemini4_argon_high 1603, **kimik3p1_max 1511**,
+  GPT6p1_Sol_Max 1498, GPT6_Astra_Max 1389, grok4p7_xhigh 1308.
+- **Caveat.** Kimi and Sol are level within their intervals: Kimi wins 55% of families against
+  Sol, but Sol's geometric-mean RMSE is lower (ratio 0.764, not significant after Holm
+  adjustment). Gemini's lower RMSE than Kimi's is significant after Holm adjustment.
 
 ## Submission records
 
-| | `GPT6p1_Sol_Max` | `Gemini4_argon_high` |
-| --- | --- | --- |
-| Manifest | [submission.json](submissions/GPT6p1_Sol_Max/submission.json) | [submission.json](submissions/Gemini4_argon_high/submission.json) |
-| Design | [design.md](submissions/GPT6p1_Sol_Max/design.md) | [design.md](submissions/Gemini4_argon_high/design.md) |
-| Authorship and session receipt | [authorship.json](submissions/GPT6p1_Sol_Max/authorship.json) | [authorship.json](submissions/Gemini4_argon_high/authorship.json) |
-| Verification | [verification.json](submissions/GPT6p1_Sol_Max/verification.json) | [verification.json](submissions/Gemini4_argon_high/verification.json) |
+| | `GPT6p1_Sol_Max` | `Gemini4_argon_high` | `kimik3p1_max` |
+| --- | --- | --- | --- |
+| Manifest | [submission.json](submissions/GPT6p1_Sol_Max/submission.json) | [submission.json](submissions/Gemini4_argon_high/submission.json) | [submission.json](submissions/kimik3p1_max/submission.json) |
+| Design | [design.md](submissions/GPT6p1_Sol_Max/design.md) | [design.md](submissions/Gemini4_argon_high/design.md) | [design.md](submissions/kimik3p1_max/design.md) |
+| Authorship and session receipt | [authorship.json](submissions/GPT6p1_Sol_Max/authorship.json) | [authorship.json](submissions/Gemini4_argon_high/authorship.json) | [authorship.json](submissions/kimik3p1_max/authorship.json) |
+| Verification | [verification.json](submissions/GPT6p1_Sol_Max/verification.json) | [verification.json](submissions/Gemini4_argon_high/verification.json) | [verification.json](submissions/kimik3p1_max/verification.json) |
 
 They distinguish source authoring from later correctness checks. Prior project context existed
 when `GPT6p1_Sol_Max` was written, so it is not represented as a pristine fresh-session primary

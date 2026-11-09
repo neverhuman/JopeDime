@@ -48,6 +48,15 @@ pub fn dispatch(args: RunArgs) -> anyhow::Result<()> {
     if args.m1_plan.is_some() {
         return run_m1(&args);
     }
+    // A release executable separated from its package stops before anything starts.
+    crate::bootstrap::open()?;
+    // Own data that cannot run (signed out, waitlisted, `--local`) stops here, before the
+    // background engine is started; `run` checks again when it routes the registered table.
+    if let Some(path) = &args.input {
+        let path = crate::terminal::demos::resolve(path);
+        let effort: jope_api::Effort = parse_value(&args.effort)?;
+        cloud::preflight(&args, crate::terminal::demos::is_bundled(&path), effort)?;
+    }
     use jope_client::discover::{self, Engine, Mode, Options};
     let selection = discover::discover(&Options {
         home: jope_paths::jopedime_home(),
@@ -251,6 +260,13 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
     if let Some(path) = args.input.take() {
         // `example/<name>.csv` reaches the bundled demos, as in the TUI.
         let path = crate::terminal::demos::resolve(&path);
+        // Own data: decide where it trains and check the login before registering anything.
+        let routed = if args.json_m1() {
+            cloud::Routed::Local
+        } else {
+            let effort: jope_api::Effort = parse_value(&args.effort)?;
+            cloud::preflight(&args, crate::terminal::demos::is_bundled(&path), effort)?
+        };
         let name = path
             .file_name()
             .and_then(|name| name.to_str())
@@ -271,17 +287,35 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
         apply_profile_defaults(&mut args, &profile)?;
         args.dataset = Some(profile.dataset_id.to_string());
         registered = Some((name.to_owned(), profile.clone()));
-        if !args.dry_run && !args.detach && args.out.is_none() && args.events.is_none() {
+        if let cloud::Routed::Cloud {
+            decision,
+            connection,
+            tier,
+        } = routed
+        {
             let effort: jope_api::Effort = parse_value(&args.effort)?;
-            if let cloud::Routed::Cloud = cloud::route_run(&args, &absolute, &profile, effort)? {
-                return Ok(());
-            }
+            return cloud::run_in_cloud(
+                &args,
+                &absolute,
+                &profile,
+                effort,
+                &decision,
+                &connection,
+                tier,
+            );
         }
     } else if let Some(dataset) = args.dataset.as_deref() {
         // `--dataset ID` gets the defaults a CSV gets (#2145): the task inferred from the stored
         // profile, and the dataset's own name (not its `ds_…` identifier) as the run label.
         if let Ok(id) = dataset.parse::<jope_api::ids::DatasetId>() {
             if let Ok(profile) = transport.dataset_inspect(&id) {
+                // A registered table that is not a bundled example is own data: it trains in the
+                // veox Cloud, from its file (an engine dataset has no file to upload).
+                if crate::cloud::route::cloud_first()
+                    && !crate::terminal::demos::is_bundled_profile(&profile)
+                {
+                    return Err(jope_runtime::Failure::input(OWN_DATASET));
+                }
                 apply_profile_defaults(&mut args, &profile)?;
                 registered = Some((profile.name.clone(), profile));
             }
@@ -291,9 +325,14 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
         args.languages = DEFAULT_LANGUAGES.iter().map(|&l| l.to_owned()).collect();
     }
     let spec = args.run_spec()?;
-    let response = transport
-        .run_start(&spec, Some(&key))
-        .map_err(explain_start)?;
+    let response = transport.run_start(&spec, Some(&key)).map_err(|error| {
+        if crate::terminal::runs::is_busy(&error.to_string()) {
+            let run = crate::terminal::runs::active_run(transport);
+            jope_runtime::Failure::backend(crate::terminal::runs::busy_message(run.as_ref(), false))
+        } else {
+            explain_start(error)
+        }
+    })?;
     if let (RunResult::Started(snapshot), false) = (&response, args.json_m1()) {
         let (name, profile) = match registered {
             Some((name, profile)) => (name, Some(profile)),
@@ -431,6 +470,9 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
         }
     }
 }
+
+/// `--dataset ID` of the user's own table where own data trains only in the veox Cloud.
+pub(crate) const OWN_DATASET: &str = "Your own data trains in the veox Cloud, from its file: `jain run FILE.csv --target COLUMN` (jAIn asks before uploading). On this machine `--dataset` runs only the bundled examples.";
 
 /// Export languages when none are named: the TUI's default, so every path runs the same way.
 pub(crate) const DEFAULT_LANGUAGES: [&str; 2] = ["rust", "python"];

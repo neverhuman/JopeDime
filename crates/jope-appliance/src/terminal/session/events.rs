@@ -4,6 +4,10 @@ impl super::Session {
     pub(super) fn attach(&mut self, run: RunId, after: Option<DecimalU64>) -> anyhow::Result<()> {
         self.snapshot = Some(self.client.run_status(&run)?);
         self.last_refresh = Instant::now();
+        // The status bar's clock counts from here while the engine reports no elapsed time yet.
+        if self.run_clock.as_ref().map(|(id, _)| id) != Some(&run) {
+            self.run_clock = Some((run.clone(), Instant::now()));
+        }
         // Lines already shown for this run are not replayed (#2143): resume after them.
         let after = match (after, self.shown.get(&run.to_string())) {
             (Some(after), Some(shown)) => Some(DecimalU64(after.0.max(shown.0))),

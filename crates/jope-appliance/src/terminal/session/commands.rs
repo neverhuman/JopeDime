@@ -30,7 +30,7 @@ impl super::Session {
                     workspace,
                     self.cloud_sender.clone(),
                     Arc::clone(&cancel),
-                    None,
+                    Some(self.login_done_sender.clone()),
                 );
                 self.login_cancel = Some(cancel);
                 return Ok(vec![
@@ -312,6 +312,9 @@ impl super::Session {
         }
         // A real file takes precedence; `example/<name>.csv` otherwise opens a bundled demo.
         let on_disk = std::path::Path::new(path).exists();
+        // A file holding exactly a bundled demo's bytes (such as the copy `jain run
+        // example/NAME.csv` writes) is that demo, not the user's own data.
+        let bundled_file = on_disk && demos::is_bundled(std::path::Path::new(path));
         let mut notice = Vec::new();
         let reader: Box<dyn io::Read + Send> = match demos::from_path(path).filter(|_| !on_disk) {
             Some(demo) => {
@@ -329,11 +332,10 @@ impl super::Session {
                     lines.extend(demos::listing());
                     return Ok(lines);
                 }
-                if let Err(message) = onboarding::local_file_gate(
-                    crate::cloud::connection().is_ok(),
-                    onboarding::local_files_override_from_env(),
-                ) {
-                    return Ok(vec![message.to_owned()]);
+                if !bundled_file {
+                    if let Err(message) = onboarding::own_file_gate() {
+                        return Ok(vec![message]);
+                    }
                 }
                 let full = cwd.join(path);
                 if full.is_dir() {
@@ -350,19 +352,22 @@ impl super::Session {
                 Box::new(std::fs::File::open(path)?)
             }
         };
-        let demo = !on_disk;
+        let demo = !on_disk || bundled_file;
+        let own = !demo && crate::cloud::route::cloud_first();
         notice.extend(self.register(&name, reader)?);
-        if self.draft.run_spec(true).is_some() {
+        if self.draft.run_spec(true).is_none() {
+            notice.push("Choose the column to predict with /target COLUMN, then type /run.".into());
+        } else if own {
+            notice.push(routing::OPENED_OWN.into());
+        } else {
             notice.push(
                 "Type /run to start (or /auto for the defaults; /target COLUMN predicts another column)."
                     .into(),
             );
-        } else {
-            notice.push("Choose the column to predict with /target COLUMN, then type /run.".into());
         }
         if let Some(source) = self.routing.source.as_mut() {
             source.demo = demo;
-            if on_disk {
+            if !demo {
                 source.path = std::fs::canonicalize(path).ok();
             }
         }
@@ -530,7 +535,16 @@ impl super::Session {
             .run_spec(false)
             .expect("validated draft is complete");
         spec.plan_digest = Some(plan.plan_digest);
-        match self.client.run_start(&spec, Some(&key))? {
+        let started = self.client.run_start(&spec, Some(&key)).map_err(|error| {
+            let text = error.to_string();
+            if crate::terminal::runs::is_busy(&text) {
+                let run = crate::terminal::runs::active_run(&self.client);
+                anyhow::anyhow!(crate::terminal::runs::busy_message(run.as_ref(), true))
+            } else {
+                anyhow::Error::new(error)
+            }
+        })?;
+        match started {
             RunResult::Started(snapshot) => {
                 let run = snapshot.run_id.clone();
                 let source = self.routing.source.clone().unwrap_or_default();
@@ -580,7 +594,7 @@ pub(super) fn help_lines() -> Vec<String> {
         ("/target COLUMN", "choose the column to predict"),
         (
             "/run [--local|--cloud]",
-            "start a run (your own data: --cloud, asks before uploading)",
+            "start a run: demos here, your own data in the veox Cloud (asks first)",
         ),
         ("/auto", "run the default search on the opened dataset"),
         ("/plan", "check the run plan without starting it"),
@@ -605,7 +619,7 @@ pub(super) fn help_lines() -> Vec<String> {
         ),
         (
             "/login [URL] · /logout",
-            "connect your free veox Cloud Workspace (runs on your own data)",
+            "sign in to your veox account (your own data trains in the cloud)",
         ),
         ("/usage", "account, plan and this machine's runs"),
         (

@@ -389,10 +389,10 @@ fn guidance(width: usize, connected: bool) -> String {
     let login = if connected {
         ""
     } else {
-        ", /login to connect your free veox Cloud Workspace"
+        ", /login for your own data (accounts open from the waitlist: https://app.veox.ai/register)"
     };
     let full = format!(
-        " Type /demo to try a bundled example (your own data runs in the veox Cloud), press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
+        " Type /demo to try a bundled example (your own data trains in the veox Cloud), press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
     );
     if full.chars().count() <= width {
         return full;

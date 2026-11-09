@@ -1,0 +1,140 @@
+{
+  "schema_version": "jope.native-regressor-verification/v1",
+  "source_sha256": "0c211694ec66605b994595fd8f4cf2b8894df6f156caa3b80f1fcc75f5d6ceb3",
+  "base_commit": "4d3c7ff6d9b4e71fb7f812bfda2a378a93faa6b0",
+  "compiler": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "checks": [
+    {
+      "command": "rustc --edition=2021 --crate-type lib --emit=metadata kimik3p1_max.rs",
+      "status": "passed",
+      "attempt": 1,
+      "note": "no warnings"
+    },
+    {
+      "command": "rustc --edition=2021 --crate-type rlib -C opt-level=3 -C codegen-units=1 -D unsafe-code kimik3p1_max.rs",
+      "status": "passed",
+      "attempt": 1,
+      "note": "no warnings; no source edit"
+    },
+    {
+      "command": "edge-case probe (probe.rs): lifecycle and shape errors, NaN/infinite inputs, refit after failure, row locality, permutation, determinism and seed sensitivity, tiny/wide/constant/all-NaN tables, extreme finite inputs, size coverage up to 70000 x 5",
+      "status": "passed",
+      "finding": "outputs are clamped, so extreme finite inputs near +/-f64::MAX stay finite; the adapter non-finite refusal is not reached"
+    },
+    {
+      "command": "cargo test -p jope-automl -p jope-bench --locked",
+      "status": "passed",
+      "jope-automl": {
+        "passed": 10,
+        "failed": 0
+      },
+      "jope-bench": {
+        "passed": 184,
+        "failed": 0,
+        "ignored": 1
+      }
+    },
+    {
+      "command": "cargo clippy -p jope-automl -p jope-bench --all-targets --no-deps --locked -- -D warnings",
+      "status": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "status": "passed",
+      "note": "the first run flagged the formatting of the new lib.rs tests; fixed before the candidate tree was frozen"
+    },
+    {
+      "command": "cargo nextest run --locked -P pr -p feat-math --test compat_freeze --test historical_v1",
+      "status": "passed",
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "command": "deploy/ci/test-inventory.sh (add-only update)",
+      "status": "passed",
+      "rust_tests": 6139,
+      "note": "4 new IDs (3 jope-automl, 1 jope-bench); main lists 6135"
+    },
+    {
+      "command": "just test-pr (isolated real checkout of the candidate tree)",
+      "status": "passed",
+      "passed": 5017,
+      "failed": 0,
+      "skipped": 96
+    },
+    {
+      "command": "just python-check (isolated real checkout of the candidate tree)",
+      "status": "passed"
+    },
+    {
+      "command": "just required (isolated real checkout of the candidate tree)",
+      "status": "failed (pre-existing on main)",
+      "note": "hygiene, fmt, test-pr and python-check pass; clippy fails on unchanged main 4d3c7ff6 with the identical error set: 10 errors in jope-service (needless_range_loop, type_complexity) and, behind them, 1 in jope-appliance (manual_is_multiple_of). None is in a file this change touches."
+    },
+    {
+      "command": "actionlint (with .github/actionlint.yaml) and gitleaks on the candidate range",
+      "status": "passed"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --keep-going -- -D warnings (main 4d3c7ff6 and candidate)",
+      "status": "failed (pre-existing on main)",
+      "note": "identical error locations on both trees (10, all in crates/jope-service/src/ranker)"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked --keep-going -- -D warnings -A clippy::needless_range_loop -A clippy::type_complexity -A clippy::manual_is_multiple_of (main 4d3c7ff6 and candidate)",
+      "status": "passed",
+      "note": "with only the three pre-existing lint families allowed, both trees pass: the change adds no clippy finding"
+    }
+  ],
+  "source_changes_after_freeze": false,
+  "performance_benchmark_run": true,
+  "elo_measured": true,
+  "elo": {
+    "panel": "64 families x 3 folds x 3 seeds (576 cells)",
+    "cells_completed": 576,
+    "rating": 1510.6689563931964,
+    "ci95": [
+      1468.7495833753974,
+      1554.3058691041456
+    ],
+    "rank": "3 of 6",
+    "results": "assets/automl-elo/v3/RESULTS.json",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/external/automl-elo-v3/kimik3p1-max-20261107/kimik3p1_max_automl_v3_evidence.tar.zst",
+      "version_id": "8ogcrMeCZtjajBmeDRK3n3dVZo694DSL",
+      "sha256": "d8022fa8fb84baf466ead0c6d63b321e95e29190bc323d2571bd4b326d0a21ce",
+      "members": 4087
+    }
+  },
+  "reference_boards": {
+    "note": "Scored once by wave H414 under LOCK 73c7b415 (create-once receipt); stored on v1/next 7f7ff32833 in research/elo/reference-board/boards/<board>/scores/h414.kimik3p1_max.jsonl. Panels are not comparable with each other.",
+    "dev91-audit-v1": {
+      "rank": "24 of 31",
+      "elo": 1411.0251131080836,
+      "ci95": [
+        1305.4954371518209,
+        1508.560709240033
+      ]
+    },
+    "dev91-s1-two-fold-v1": {
+      "rank": "13 of 14",
+      "elo": 1369.9898435867685,
+      "ci95": [
+        1276.775881909737,
+        1446.9439963077455
+      ]
+    },
+    "p201b-train-audit-v1": {
+      "rank": "12 of 19",
+      "elo": 1351.8016468484266,
+      "ci95": [
+        1310.8792133815505,
+        1390.84333498777
+      ]
+    },
+    "wave": "research/flywheel_selfplay/h414_kimi_k3p1_max/ (v1/next)"
+  },
+  "hosted_ci": null,
+  "independent_review": false,
+  "logs": "/home/ubuntu/jope-evidence/kimik3p1-max-20261107/ and /home/ubuntu/jope-data/h414/gates/logs/ (also in the H414 closeout bundle, s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H414/closeout-20261107/h414_closeout_bundle.v2.tar.zst version 3Jld.s.Kjg71z47CDmwskvq6Q4bNy7dR)"
+}

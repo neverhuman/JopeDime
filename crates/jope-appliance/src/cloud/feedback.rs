@@ -111,7 +111,7 @@ impl Feedback {
             "kind": self.kind,
             "source": self.source,
             "summary": self.summary,
-            "client": format!("jopedime {}", env!("CARGO_PKG_VERSION")),
+            "client": format!("jopedime {}", crate::release_version()),
             "surface_hint": "cli",
         });
         if let Some(details) = &self.details {

@@ -16,6 +16,10 @@ research = []
 visual-trace = []
 # Optional frozen fused-ranker execution; defaults and native evaluation stay CPU.
 fused-cuda = ["candle_core_0_11_0/cuda"]
+# The public jAIn CLI edition (selected by jope-appliance `cloud-tls`): no internal model file
+# names (the r882 descriptor, ranker asset names) are compiled in. The edition carries no model
+# weights, so the ranker paths that would read them are unreachable there anyway.
+public-edition = ["jope-runtime/public-edition"]
 
 [dependencies]
 # Registry declaration patched to the vendored copy by [patch.crates-io], exactly like starforge.

@@ -101,13 +101,13 @@
       "a": "GPT6_Astra_Max",
       "b": "kimik3p1_max",
       "paired_families": 64,
-      "geometric_rmse_ratio": 1.0277276996699325,
+      "geometric_rmse_ratio": 1.027727762900998,
       "ratio_ci95": [
-        0.871347342691435,
-        1.1938630921650306
+        0.8713475199798311,
+        1.1938632910699054
       ],
       "p": 0.7303269673032696,
-      "holm_kimik_five_p": 0.7303269673032696
+      "holm_kimi_five_p": 0.7303269673032696
     },
     {
       "a": "GPT6p1_Sol_Max",
@@ -146,13 +146,13 @@
       "a": "GPT6p1_Sol_Max",
       "b": "kimik3p1_max",
       "paired_families": 64,
-      "geometric_rmse_ratio": 0.7638378979461151,
+      "geometric_rmse_ratio": 0.7638379449413301,
       "ratio_ci95": [
-        0.5462143879858735,
-        0.9756268459558246
+        0.5462145347568858,
+        0.9756267602623759
       ],
       "p": 0.058894110588941104,
-      "holm_kimik_five_p": 0.11778822117788221
+      "holm_kimi_five_p": 0.11778822117788221
     },
     {
       "a": "Gemini4_argon_high",
@@ -180,13 +180,13 @@
       "a": "Gemini4_argon_high",
       "b": "kimik3p1_max",
       "paired_families": 64,
-      "geometric_rmse_ratio": 0.9020006825270335,
+      "geometric_rmse_ratio": 0.9020007380227297,
       "ratio_ci95": [
-        0.8304534097719285,
-        0.9668132754676596
+        0.8304533938068581,
+        0.9668134732298569
       ],
       "p": 0.0086991300869913,
-      "holm_kimik_five_p": 0.0347965203479652
+      "holm_kimi_five_p": 0.0347965203479652
     },
     {
       "a": "Opus5p5_Extra",
@@ -203,25 +203,25 @@
       "a": "Opus5p5_Extra",
       "b": "kimik3p1_max",
       "paired_families": 64,
-      "geometric_rmse_ratio": 0.7934515176128116,
+      "geometric_rmse_ratio": 0.7934515664300079,
       "ratio_ci95": [
-        0.6258840878490363,
-        0.9328932865121276
+        0.6258841514321412,
+        0.9328932485511626
       ],
       "p": 0.027997200279972004,
-      "holm_kimik_five_p": 0.08399160083991601
+      "holm_kimi_five_p": 0.08399160083991601
     },
     {
       "a": "grok4p7_xhigh",
       "b": "kimik3p1_max",
       "paired_families": 64,
-      "geometric_rmse_ratio": 1.1948115006791025,
+      "geometric_rmse_ratio": 1.194811574190018,
       "ratio_ci95": [
-        1.066989970153274,
-        1.3429948153116422
+        1.066990145120507,
+        1.3429948958738556
       ],
       "p": 0.0020997900209979003,
-      "holm_kimik_five_p": 0.010498950104989501
+      "holm_kimi_five_p": 0.010498950104989501
     }
   ],
   "bootstrap_samples": 10000,
@@ -232,5 +232,19 @@
     109
   ],
   "complete_pairwise_coverage": true,
-  "pool": "six-entrant refit; v1 and v2 ratings are not reused as numbers"
+  "pool": "six-entrant refit; v1 and v2 ratings are not reused as numbers",
+  "provenance": {
+    "analyzer": "analyze_six.py (this file) extends analyze_five.py",
+    "analyze_five_sha256": "43237f3389a46cafd2a9d06e8c20cc085a71602f71a8250ddffd3eabfb889c3e",
+    "elo_core_sha256": "cc9378902551695881e3af8727f3adbb4dbd9f4972e3e494ef60403863f16d9c",
+    "elo_driver_sha256": "475401528fa92473c3e5a2dd3ccecd74951fea1d7b1b03e63c871cc82ab159c7",
+    "bootstrap_indices_sha256": "440d4c56856ebf4c44fdaa3a569378beb87b85e52725011ea0cafda3838f3633",
+    "datasets_json_sha256": "dc7e53e076c7ed4b91c5e3eda9e43baa31703429e2348f65e7e332878765e2dd",
+    "v2_five_entrant_reproduced_exactly": true,
+    "cells_manifest_sha256": {
+      "kimik3p1_max": "c27900ce70d566164266078db27e402008543f9566e2358729685bcd3b245b2f",
+      "grok4p7_xhigh": "ab6b0e0258676d6b02c54e99e2c5295f8e0f1e09102abafd4e9faceebf8fd998",
+      "Gemini4_argon_high": "c6a3004458f5d25b34ff6be14553bf8f1833991a586ee11d21bf0c09e2ca7e23"
+    }
+  }
 }

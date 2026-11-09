@@ -41,14 +41,14 @@ pub use grok4p7_xhigh::Regressor as Grok4p7Xhigh;
 /// receives row-major feature columns only. Both methods validate dimensions and
 /// return errors rather than changing the frozen submission.
 pub use grok4p7_xhigh::RegressorApi as Grok4p7XhighApi;
-/// The frozen Kimik candidate's immutable model state.
-pub use kimik3p1_max::Regressor as Kimik3p1Max;
-/// Lifecycle API for [`Kimik3p1Max`].
+/// The owner-supplied Kimi K3.1 Max candidate's immutable model state.
+pub use kimik3p1_max::Regressor as KimiK3p1Max;
+/// Lifecycle API for [`KimiK3p1Max`].
 ///
 /// `fit` receives a row-major matrix whose final column is the target; `predict`
 /// receives row-major feature columns only. Both methods validate dimensions and
 /// return errors rather than changing the frozen submission.
-pub use kimik3p1_max::RegressorApi as Kimik3p1MaxApi;
+pub use kimik3p1_max::RegressorApi as KimiK3p1MaxApi;
 /// The frozen GPT-6.1 candidate's immutable model state.
 pub use submission::Regressor as Gpt6p1SolMax;
 /// Lifecycle API for [`Gpt6p1SolMax`].
@@ -82,9 +82,9 @@ pub const GROK4P7_XHIGH_SHA256: &str =
 /// The exact file also builds directly with `rustc --crate-type rlib`.
 pub const GROK4P7_XHIGH_SOURCE: &str = include_str!("grok4p7_xhigh.rs");
 
-/// Frozen candidate identifier of the Kimik submission supplied at the repo root.
+/// Frozen candidate identifier of the owner-supplied Kimi K3.1 Max submission.
 pub const KIMIK3P1_MAX: &str = "kimik3p1_max";
-/// Hash of the standalone source. It is included byte-for-byte.
+/// Hash of the owner-supplied standalone source; it is included byte-for-byte.
 pub const KIMIK3P1_MAX_SHA256: &str =
     "0c211694ec66605b994595fd8f4cf2b8894df6f156caa3b80f1fcc75f5d6ceb3";
 /// The exact file also builds directly with `rustc --crate-type rlib`.
@@ -143,7 +143,7 @@ enum Model {
     Gpt6p1SolMax(Gpt6p1SolMax),
     Gemini4ArgonHigh(Box<Gemini4ArgonHigh>),
     Grok4p7Xhigh(Box<Grok4p7Xhigh>),
-    Kimik3p1Max(Box<Kimik3p1Max>),
+    KimiK3p1Max(Box<KimiK3p1Max>),
 }
 
 /// Fit only the supplied training rows. The adapter appends each training target last.
@@ -195,9 +195,9 @@ pub fn fit_rows(
             Model::Grok4p7Xhigh(Box::new(model))
         }
         KIMIK3P1_MAX => {
-            let mut model = <Kimik3p1Max as Kimik3p1MaxApi>::new(seed);
-            Kimik3p1MaxApi::fit(&mut model, &table, features.len(), columns)?;
-            Model::Kimik3p1Max(Box::new(model))
+            let mut model = <KimiK3p1Max as KimiK3p1MaxApi>::new(seed);
+            KimiK3p1MaxApi::fit(&mut model, &table, features.len(), columns)?;
+            Model::KimiK3p1Max(Box::new(model))
         }
         other => return Err(format!("registered regressor {other:?} has no fitter")),
     };
@@ -228,8 +228,8 @@ impl FittedRegressor {
             Model::Grok4p7Xhigh(model) => {
                 Grok4p7XhighApi::predict(&**model, &flat, features.len(), self.width)?
             }
-            Model::Kimik3p1Max(model) => {
-                Kimik3p1MaxApi::predict(&**model, &flat, features.len(), self.width)?
+            Model::KimiK3p1Max(model) => {
+                KimiK3p1MaxApi::predict(&**model, &flat, features.len(), self.width)?
             }
         };
         // A frozen submission is never patched; a non-finite output is refused here instead.
@@ -375,18 +375,113 @@ mod tests {
     }
 
     #[test]
+    fn kimik3p1_max_lifecycle_and_shapes_are_explicit() {
+        let mut model = <KimiK3p1Max as KimiK3p1MaxApi>::new(7);
+        assert!(KimiK3p1MaxApi::predict(&model, &[], 0, 0).is_err());
+        assert!(KimiK3p1MaxApi::fit(&mut model, &[], 0, 1).is_err());
+        assert!(KimiK3p1MaxApi::fit(&mut model, &[], 1, 0).is_err());
+        assert!(KimiK3p1MaxApi::fit(&mut model, &[], usize::MAX, 2).is_err());
+        assert!(KimiK3p1MaxApi::fit(&mut model, &[1.0, 2.0], 2, 2).is_err());
+        KimiK3p1MaxApi::fit(&mut model, &[2.0, 4.0, 6.0], 3, 1).unwrap();
+        assert_eq!(
+            KimiK3p1MaxApi::predict(&model, &[], 3, 0).unwrap(),
+            vec![4.0; 3]
+        );
+        assert_eq!(
+            KimiK3p1MaxApi::predict(&model, &[], 0, 0).unwrap(),
+            Vec::<f64>::new()
+        );
+        // A failed refit leaves no stale fitted state behind.
+        assert!(KimiK3p1MaxApi::fit(&mut model, &[f64::NAN], 1, 1).is_err());
+        assert!(KimiK3p1MaxApi::predict(&model, &[], 1, 0).is_err());
+        assert!(KimiK3p1MaxApi::fit(&mut model, &[f64::INFINITY, 1.0], 1, 2).is_err());
+        assert!(KimiK3p1MaxApi::fit(&mut model, &[1.0, f64::INFINITY], 1, 2).is_err());
+    }
+
+    #[test]
+    fn kimik3p1_max_prediction_is_row_local_and_refit_matches_fresh_state() {
+        // Contract checks only; no accuracy threshold, model comparison, or tuning.
+        let table: Vec<f64> = (0..80)
+            .flat_map(|i| {
+                [
+                    if i % 7 == 0 { f64::NAN } else { i as f64 },
+                    (i % 5) as f64,
+                    (i % 13) as f64,
+                ]
+            })
+            .collect();
+        let mut model = <KimiK3p1Max as KimiK3p1MaxApi>::new(19);
+        KimiK3p1MaxApi::fit(&mut model, &table, 80, 3).unwrap();
+        let rows = [f64::NAN, 2.0, 4.0, 1.0, f64::MAX, 0.0];
+        let all = KimiK3p1MaxApi::predict(&model, &rows, 3, 2).unwrap();
+        assert!(all.iter().all(|value| value.is_finite()));
+        for i in 0..3 {
+            let one = KimiK3p1MaxApi::predict(&model, &rows[2 * i..2 * i + 2], 1, 2);
+            assert_eq!(one.unwrap()[0], all[i]);
+        }
+        let permuted =
+            KimiK3p1MaxApi::predict(&model, &[f64::MAX, 0.0, f64::NAN, 2.0, 4.0, 1.0], 3, 2)
+                .unwrap();
+        assert_eq!(permuted, vec![all[2], all[0], all[1]]);
+        assert!(KimiK3p1MaxApi::predict(&model, &[1.0], 1, 1).is_err());
+        assert!(KimiK3p1MaxApi::predict(&model, &[f64::INFINITY, 0.0], 1, 2).is_err());
+        assert!(KimiK3p1MaxApi::predict(&model, &[], usize::MAX, 2).is_err());
+        assert!(KimiK3p1MaxApi::predict(&model, &[1.0, 2.0, 3.0], 2, 2).is_err());
+        let mut fresh = <KimiK3p1Max as KimiK3p1MaxApi>::new(19);
+        KimiK3p1MaxApi::fit(&mut fresh, &table, 80, 3).unwrap();
+        assert_eq!(KimiK3p1MaxApi::predict(&fresh, &rows, 3, 2).unwrap(), all);
+        // Refitting the same instance on new rows matches a fresh fit on those rows.
+        KimiK3p1MaxApi::fit(&mut model, &[f64::NAN, 8.0, 0.0, 8.0], 2, 2).unwrap();
+        let mut small = <KimiK3p1Max as KimiK3p1MaxApi>::new(19);
+        KimiK3p1MaxApi::fit(&mut small, &[f64::NAN, 8.0, 0.0, 8.0], 2, 2).unwrap();
+        assert_eq!(
+            KimiK3p1MaxApi::predict(&model, &[3.0], 1, 1),
+            KimiK3p1MaxApi::predict(&small, &[3.0], 1, 1)
+        );
+    }
+
+    #[test]
+    fn kimik3p1_max_wide_missing_and_extreme_finite_inputs_remain_defined() {
+        // Unlike the Gemini source, this one clamps its outputs, so the adapter accepts them.
+        let fitted = fit_rows(
+            KIMIK3P1_MAX,
+            &[vec![f64::NAN], vec![f64::NAN]],
+            &[-f64::MAX, f64::MAX],
+            2,
+        )
+        .unwrap();
+        let extreme = fitted
+            .predict_rows(&[vec![f64::NAN], vec![f64::MAX]])
+            .unwrap();
+        assert!(extreme.iter().all(|value| value.is_finite()));
+        let table: Vec<f64> = (0..8)
+            .flat_map(|i| {
+                let mut row = vec![f64::NAN; 110];
+                row[i] = i as f64;
+                row.push(i as f64);
+                row
+            })
+            .collect();
+        let mut model = <KimiK3p1Max as KimiK3p1MaxApi>::new(2);
+        KimiK3p1MaxApi::fit(&mut model, &table, 8, 111).unwrap();
+        let wide = KimiK3p1MaxApi::predict(&model, &vec![f64::NAN; 110], 1, 110).unwrap();
+        assert_eq!(wide.len(), 1);
+        assert!(wide[0].is_finite());
+        let missing: Vec<f64> = (0..50)
+            .flat_map(|i| [f64::NAN, f64::NAN, i as f64])
+            .collect();
+        KimiK3p1MaxApi::fit(&mut model, &missing, 50, 3).unwrap();
+        assert!(
+            KimiK3p1MaxApi::predict(&model, &[f64::NAN, f64::NAN, 1.0, 2.0], 2, 2)
+                .unwrap()
+                .iter()
+                .all(|value| value.is_finite())
+        );
+    }
+
+    #[test]
     fn registry_and_transport_preserve_target_placement() {
         assert_eq!(REGRESSORS.len(), 4);
-        assert_eq!(
-            definition(KIMIK3P1_MAX).unwrap().source_sha256,
-            KIMIK3P1_MAX_SHA256
-        );
-        let kimik = fit_rows(KIMIK3P1_MAX, &[vec![10.0], vec![20.0]], &[7.0, 7.0], 1).unwrap();
-        assert_eq!(
-            kimik.predict_rows(&[vec![1234.0], vec![f64::NAN]]).unwrap(),
-            vec![7.0; 2]
-        );
-        assert!(kimik.predict_rows(&[vec![1.0, 2.0]]).is_err());
         assert_eq!(
             definition(GROK4P7_XHIGH).unwrap().source_sha256,
             GROK4P7_XHIGH_SHA256
@@ -401,6 +496,16 @@ mod tests {
             definition(GEMINI4_ARGON_HIGH).unwrap().source_file,
             "Gemini4_argon_high.rs"
         );
+        assert_eq!(
+            definition(KIMIK3P1_MAX).unwrap().source_file,
+            "kimik3p1_max.rs"
+        );
+        let model = fit_rows(KIMIK3P1_MAX, &[vec![10.0], vec![20.0]], &[7.0, 7.0], 1).unwrap();
+        assert_eq!(
+            model.predict_rows(&[vec![1234.0], vec![f64::NAN]]).unwrap(),
+            vec![7.0; 2]
+        );
+        assert!(model.predict_rows(&[vec![1.0, 2.0]]).is_err());
         let model = fit_rows(
             GEMINI4_ARGON_HIGH,
             &[vec![10.0], vec![20.0]],

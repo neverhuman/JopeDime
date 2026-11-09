@@ -96,13 +96,16 @@ impl super::Session {
                 rows: Some(demo.rows() as u64),
                 demo: true,
                 force: None,
-                tier: None,
+                cloud_first: crate::cloud::route::cloud_first(),
             })
             .line,
         );
         match self.start_run(&[]) {
             Ok(started) => lines.extend(started),
             // e.g. a build whose local engine runs regression only: keep the opened draft.
+            Err(error) if error.to_string().starts_with("Not started:") => {
+                lines.push(error.to_string())
+            }
             Err(error) => lines.push(format!(
                 "The dataset is open, but this engine could not start the {} demo: {error:#}. Try /demo regression.",
                 demo.task
