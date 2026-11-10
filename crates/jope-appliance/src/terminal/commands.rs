@@ -176,7 +176,8 @@ mod tests {
     #[test]
     fn every_registry_command_resolves_with_both_prefixes() {
         let commands = terminal_commands().collect::<Vec<_>>();
-        assert_eq!(commands.len(), 29);
+        // 30 terminal commands: 29 baseline plus \comparators (§4.2).
+        assert_eq!(commands.len(), 30);
 
         for command in commands {
             for prefix in ['\\', '/'] {

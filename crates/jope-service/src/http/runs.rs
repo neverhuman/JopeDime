@@ -6,7 +6,7 @@ use crate::{
     discover::{
         audit::AuditRowId,
         effort::{BudgetOverrides, Effort as SearchEffort},
-        finalize::{FinalizationRequest, Finalizer, Partition},
+        finalize::{ComparatorStagePlan, FinalizationRequest, Finalizer, Partition},
         r#loop::{Discovery, NativeSpace, Plan as SearchPlan, ProcessExecutor, SearchSpace},
         splits::random_split,
     },
@@ -679,6 +679,7 @@ fn q1_run_spec(request: &Q1Request, binding: &Q1DatasetBinding) -> Result<RunSpe
         seed: DecimalU64(request.seed),
         dry_run: false,
         plan_digest: None,
+        comparators: jope_api::ComparatorPolicy::Off,
     })
 }
 

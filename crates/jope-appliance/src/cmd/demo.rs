@@ -271,6 +271,7 @@ mod tests {
         assert_eq!(spec.target, "target");
         assert_eq!(spec.task, jope_api::Task::Regression);
         assert_eq!(spec.effort, jope_api::Effort::Fast);
+        assert_eq!(spec.comparators, jope_api::ComparatorPolicy::Off);
         assert_eq!(
             spec.languages,
             [jope_api::Language::Rust, jope_api::Language::Python]

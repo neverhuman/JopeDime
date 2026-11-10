@@ -3,7 +3,9 @@
 //!
 //! Keep one `Finalizer` per store and share `journal()` with its subscribers. HTTP,
 //! CLI and constrained-split preparation remain adapters; this API never searches.
+mod comparators;
 mod model;
+pub use comparators::ComparatorStagePlan;
 #[cfg(test)]
 pub(super) use model::predict;
 pub(super) use model::{load, publish, put_frozen_model, refit, score};
@@ -60,6 +62,9 @@ pub struct FinalizationRequest {
     pub scratch_root: PathBuf,
     pub max_input_bytes: u64,
     pub max_model_bytes: u64,
+    /// Opt-in same-rows comparator stage; absent when comparators are off or effort is fast.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comparators: Option<ComparatorStagePlan>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -84,6 +89,9 @@ pub struct FinalizationReceipt {
     pub holdout_rows: usize,
     pub test_rows: usize,
     pub audit: Value,
+    /// Same-rows comparator evidence when the opt-in stage ran.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comparisons: Option<Box<jope_api::ComparisonReport>>,
 }
 
 pub struct Finalizer {
