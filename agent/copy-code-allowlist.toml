@@ -272,3 +272,223 @@ fingerprint = "a91e1f2f82268333"
 scope = "research/flywheel_selfplay/h247_muon_grokfast/runner.py"
 reason = "Frozen H247 preregistered runner scaffolding pinned by study manifest."
 expires = "2026-12-31"
+# Main 9d684544 (2026-11-10). Every instance SHA-256 is in a sibling manifest,
+# metrics, or provenance file. Research H* bytes are unchanged.
+# The fingerprint is copy_code.classes[].fingerprint (16 hex). Jankurai 1.7.6
+# does not match the class-id suffix. Register:
+# docs/release/jankurai-main-9d684544-dispositions-20261110.md.
+[[entries]]
+fingerprint = "099920bd61bbf202"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-6295142730344084 (exact_file, python, 7 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "62ef9af1d82240bf"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-f4a0fb280664e5c0 (exact_unit_same_name, python, 65 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "689748cddd04d2cc"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-51297d6c14c5e5e6 (exact_file, python, 4 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "c07c0a6dae70ef26"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-d4662665f301f9e4 (exact_unit_same_name, python, 11 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "de7c36c42efe6ee9"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-af7a9ec31b73332c (exact_file, python, 42 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "a2156251c820c67b"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-783dff3235c13639 (exact_file, python, 4 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "2b2cb9bc91018456"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-1c175432adbb059f (exact_file, python, 4 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "61a439cfb614ef73"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-53ad14b0f1165181 (exact_file, python, 37 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "ca3f2416ea4b4ba8"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-531923585f9c7168 (exact_file, python, 4 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "875abb110abc7553"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-8208e9d371deba9d (exact_unit_same_name, python, 35 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "d6badd1799bda2f4"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-9b953effa3ee2f05 (exact_file, python, 22 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "5a7e3b67b279e6ec"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-ca687233f20b79e2 (exact_unit_same_name, python, 36 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "4a56399a16baca20"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-94f220febd345759 (exact_file, python, 4 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "3e8c251a21c3e726"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-a5a44c02397f2bbf (exact_file, python, 3 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "c1e65a466d7236de"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-b46598829a19acbe (exact_unit_same_name, python, 9 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "a7d9acbd0a23d17b"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-d75e49111d8bdffd (exact_unit_same_name, python, 6 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "8281f3d941f69546"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-30846dd237bbfd4c (exact_file, python, 4 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "1884e9023b8cc9c2"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-17fcba4bf9d65caa (exact_file, python, 5 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "c1777009e12a0e04"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-9a40d542f4daa107 (exact_unit_same_name, python, 5 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "ef44876a04803b2d"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-171f6e18d5a73970 (exact_unit_same_name, python, 14 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "248ebf8de3e29e0a"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-5584fade27f355fc (exact_unit_same_name, python, 9 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "caa19c6f53ff5d5d"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-98dba458514aa164 (exact_file, python, 7 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "b9a7350f3eab742a"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-199376d9d3497a0e (exact_file, python, 2 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "00b843735799d597"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-bf95786fe36ac767 (exact_file, python, 7 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "500b5e74b28ab40d"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-d6840668c04ceaef (exact_unit_same_name, python, 8 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "2b5eea54688b31c6"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-27a5a7544951e1d9 (exact_file, python, 5 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "3f4942f7aaf1eae4"
+owner = "research"
+reason = "Main 9d684544 class copy-code-file-python-e0852ceede538373 (exact_file, python, 3 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "c13e4ced7f431552"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-3feabe7c87b10990 (exact_unit_same_name, python, 6 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "9a58566f7421d78c"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-5bc985d09bf7f530 (exact_unit_same_name, python, 5 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "62c213340072a26f"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-a3723631cd56140c (exact_unit_same_name, python, 5 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "43d5506d573f947c"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-362cb2dd8f024d89 (exact_unit_same_name, python, 5 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "4dd89bbba0e2d565"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-554d809e3169ee91 (exact_unit_same_name, python, 2 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "d715aa6a95fc2c2e"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-ed526488f8a87e5a (exact_unit_same_name, python, 3 instances). Every instance SHA-256 is recorded by a sibling manifest, metrics, or provenance file. Deduplicating would change landed research-wave bytes."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "56b01de59b8aea88"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-5061c4e397b62eb6 extends past the H247 scoped allow. Every instance SHA-256 is recorded by a sibling pin file. Research-wave bytes stay unchanged."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "58e44ddfcdeaa8dc"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-9de4f6c7cf778369 extends past the H242..H244 scoped allow. Every instance SHA-256 is recorded by a sibling pin file. Research-wave bytes stay unchanged."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "921466213e40c282"
+owner = "research"
+reason = "Main 9d684544 class copy-code-unit-python-ee3b2ebf189f7941 extends past the H247 scoped allow. Every instance SHA-256 is recorded by a sibling pin file. Research-wave bytes stay unchanged."
+expires = "2027-02-01"
