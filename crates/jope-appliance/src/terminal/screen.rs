@@ -21,7 +21,7 @@ const TAGLINE: &str = "Your data. Your models. Your next discovery.";
 
 /// What a transcript line is, which decides how it is drawn.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Kind {
+pub enum LineKind {
     /// Output from jAIn: command results, run cards and notices.
     #[default]
     Output,
@@ -49,7 +49,7 @@ pub struct Screen {
     /// Whether the mouse is captured (wheel scrolling) rather than left to the terminal's own
     /// text selection; shown in the footer.
     pub mouse: bool,
-    lines: VecDeque<(Kind, String)>,
+    lines: VecDeque<(LineKind, String)>,
     bytes: usize,
     wrapped: Vec<Wrapped>,
     width: u16,
@@ -63,7 +63,7 @@ pub struct Screen {
 impl Screen {
     /// A command the user submitted, kept as `> text` in the plain transcript.
     pub fn push_input(&mut self, text: &str) {
-        self.push_kind(Some(Kind::Input), &format!("> {text}"));
+        self.push_kind(Some(LineKind::Input), &format!("> {text}"));
     }
 
     /// Output from jAIn; thinking cards, `✓` steps and `error:` lines are recognised.
@@ -71,23 +71,23 @@ impl Screen {
         self.push_kind(None, text);
     }
 
-    fn classify(&self, line: &str) -> Kind {
+    fn classify(&self, line: &str) -> LineKind {
         let previous = self.lines.back().map(|(kind, _)| *kind);
         if line.starts_with("  Thinking ") || line == "  Thinking" {
-            Kind::Thinking
-        } else if previous == Some(Kind::Thinking) && line.starts_with("   ") {
+            LineKind::Thinking
+        } else if previous == Some(LineKind::Thinking) && line.starts_with("   ") {
             // A wrapped thinking card continues with its hanging indent.
-            Kind::Thinking
+            LineKind::Thinking
         } else if line.starts_with("error:") {
-            Kind::Error
+            LineKind::Error
         } else if line.starts_with('✓') {
-            Kind::Success
+            LineKind::Success
         } else {
-            Kind::Output
+            LineKind::Output
         }
     }
 
-    fn push_kind(&mut self, kind: Option<Kind>, text: &str) {
+    fn push_kind(&mut self, kind: Option<LineKind>, text: &str) {
         let clean = sanitize_user_string(text);
         for line in clean.lines() {
             // Transcript is a bounded view, not the durable run/event store.
@@ -495,28 +495,30 @@ fn landing(
 struct Wrapped {
     text: String,
     links: Vec<(u16, String)>,
-    kind: Kind,
+    kind: LineKind,
     gutter: &'static str,
 }
 
 /// Wrap typed transcript lines into drawn rows: a blank row before each command, a `❯`
 /// gutter on commands, `⎿` joining the first reply to its command, a `┊` rail beside
 /// thinking. Link columns include the gutter.
-fn rows(lines: &VecDeque<(Kind, String)>, width: u16) -> Vec<Wrapped> {
+fn rows(lines: &VecDeque<(LineKind, String)>, width: u16) -> Vec<Wrapped> {
     let text_width = width.saturating_sub(GUTTER).max(1);
     let mut out = Vec::new();
-    let mut previous: Option<Kind> = None;
+    let mut previous: Option<LineKind> = None;
     for (kind, line) in lines {
         let kind = *kind;
-        if kind == Kind::Input && previous.is_some() {
+        if kind == LineKind::Input && previous.is_some() {
             out.push(Wrapped::default());
         }
         let (body, first, rest): (&str, &'static str, &'static str) = match kind {
-            Kind::Input => (line.strip_prefix("> ").unwrap_or(line), "❯ ", "  "),
-            Kind::Thinking if previous != Some(Kind::Thinking) => (line.trim_start(), "✻ ", "┊ "),
-            Kind::Thinking => (line.trim_start(), "┊ ", "┊ "),
-            Kind::Error => (line.strip_prefix("error: ").unwrap_or(line), "✗ ", "  "),
-            _ if previous == Some(Kind::Input) => (line.as_str(), "⎿ ", "  "),
+            LineKind::Input => (line.strip_prefix("> ").unwrap_or(line), "❯ ", "  "),
+            LineKind::Thinking if previous != Some(LineKind::Thinking) => {
+                (line.trim_start(), "✻ ", "┊ ")
+            }
+            LineKind::Thinking => (line.trim_start(), "┊ ", "┊ "),
+            LineKind::Error => (line.strip_prefix("error: ").unwrap_or(line), "✗ ", "  "),
+            _ if previous == Some(LineKind::Input) => (line.as_str(), "⎿ ", "  "),
             _ => (line.as_str(), "  ", "  "),
         };
         for (index, row) in wrap_links(body, text_width).into_iter().enumerate() {
@@ -584,27 +586,27 @@ impl Styles {
 
     fn line(&self, row: &Wrapped, width: usize) -> Line<'static> {
         let (gutter, text) = match row.kind {
-            Kind::Input => (self.accent.add_modifier(Modifier::BOLD), self.input_bar),
-            Kind::Thinking => (
+            LineKind::Input => (self.accent.add_modifier(Modifier::BOLD), self.input_bar),
+            LineKind::Thinking => (
                 self.thinking.remove_modifier(Modifier::ITALIC),
                 self.thinking,
             ),
-            Kind::Success => (self.success, Style::default()),
-            Kind::Error => (self.error, self.error),
-            Kind::Output => (self.muted, Style::default()),
+            LineKind::Success => (self.success, Style::default()),
+            LineKind::Error => (self.error, self.error),
+            LineKind::Output => (self.muted, Style::default()),
         };
         let mut spans = vec![
             Span::styled(row.gutter, gutter),
             Span::styled(row.text.clone(), text),
         ];
-        if row.kind == Kind::Success {
+        if row.kind == LineKind::Success {
             if let Some(rest) = row.text.strip_prefix('✓') {
                 spans.truncate(1);
                 spans.push(Span::styled("✓", self.success));
                 spans.push(Span::raw(rest.to_owned()));
             }
         }
-        if row.kind == Kind::Input {
+        if row.kind == LineKind::Input {
             // A full-width bar sets each command apart from what jAIn printed.
             let used = Span::raw(row.gutter).width() + Span::raw(row.text.as_str()).width();
             spans.push(Span::styled(
@@ -942,19 +944,19 @@ mod tests {
         // The plain transcript keeps exactly what was said.
         assert_eq!(screen.transcript()[0], "> /demo regression");
         let rows = rows(&screen.lines, 80);
-        let gutters: Vec<(&str, Kind)> = rows.iter().map(|r| (r.gutter, r.kind)).collect();
+        let gutters: Vec<(&str, LineKind)> = rows.iter().map(|r| (r.gutter, r.kind)).collect();
         assert_eq!(
             gutters,
             vec![
-                ("❯ ", Kind::Input),
-                ("⎿ ", Kind::Output),
-                ("  ", Kind::Output),
-                ("✻ ", Kind::Thinking),
-                ("┊ ", Kind::Thinking),
-                ("  ", Kind::Success),
-                ("", Kind::Output),
-                ("❯ ", Kind::Input),
-                ("✗ ", Kind::Error),
+                ("❯ ", LineKind::Input),
+                ("⎿ ", LineKind::Output),
+                ("  ", LineKind::Output),
+                ("✻ ", LineKind::Thinking),
+                ("┊ ", LineKind::Thinking),
+                ("  ", LineKind::Success),
+                ("", LineKind::Output),
+                ("❯ ", LineKind::Input),
+                ("✗ ", LineKind::Error),
             ]
         );
         assert_eq!(rows[0].text, "/demo regression");

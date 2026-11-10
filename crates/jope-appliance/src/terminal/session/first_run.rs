@@ -5,10 +5,10 @@ impl super::Session {
     /// Apply a finished first-run dialog: persist it, then log in or point at the demos.
     pub(super) fn finish_first_run(
         &mut self,
-        outcome: crate::terminal::onboarding::Outcome,
+        outcome: crate::terminal::onboarding::OnboardingOutcome,
         source: &str,
     ) -> Vec<String> {
-        use crate::terminal::onboarding::{self, Choice, Outcome};
+        use crate::terminal::onboarding::{self, Choice, OnboardingOutcome};
         let version = self
             .first_run
             .take()
@@ -21,7 +21,7 @@ impl super::Session {
                 "Could not save your choices ({error:#}); you may be asked again."
             ));
         }
-        if let Outcome::Finished {
+        if let OnboardingOutcome::Finished {
             terms_accepted,
             telemetry,
             choice,

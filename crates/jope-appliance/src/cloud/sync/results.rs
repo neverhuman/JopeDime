@@ -14,12 +14,12 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Kind {
+pub(crate) enum ResultKind {
     Model,
     Code,
 }
 
-impl Kind {
+impl ResultKind {
     fn label(self) -> &'static str {
         match self {
             Self::Model => "model",
@@ -49,10 +49,10 @@ pub(crate) struct Delivered {
 }
 
 impl Delivered {
-    fn slot(&mut self, kind: Kind) -> &mut Option<String> {
+    fn slot(&mut self, kind: ResultKind) -> &mut Option<String> {
         match kind {
-            Kind::Model => &mut self.model,
-            Kind::Code => &mut self.code,
+            ResultKind::Model => &mut self.model,
+            ResultKind::Code => &mut self.code,
         }
     }
 }
@@ -86,7 +86,7 @@ pub(crate) fn retry<T>(
     Err(last)
 }
 
-fn send(client: &Client, cloud: &str, kind: Kind, bytes: &[u8], hash: &str) -> Attempt<()> {
+fn send(client: &Client, cloud: &str, kind: ResultKind, bytes: &[u8], hash: &str) -> Attempt<()> {
     let (media, header, field, _) = kind.wire();
     let request = match client
         .wire(
@@ -149,7 +149,7 @@ fn delivered_model(state: &Path) -> Option<String> {
 pub(crate) fn push(
     client: &Client,
     cloud: &str,
-    items: Vec<(Kind, Vec<u8>)>,
+    items: Vec<(ResultKind, Vec<u8>)>,
     state: &Path,
     sleep: &dyn Fn(Duration),
 ) -> Vec<String> {
@@ -288,7 +288,7 @@ pub fn sync_results<T: jope_client::Transport>(
         match export(local, run, &request, MAX_MODEL)
             .and_then(|bytes| pack_object(&unpack_object(&bytes)?))
         {
-            Ok(bytes) => items.push((Kind::Model, bytes)),
+            Ok(bytes) => items.push((ResultKind::Model, bytes)),
             Err(error) => lines.push(format!(
                 "Results: the model could not be exported ({error:#})."
             )),
@@ -303,7 +303,7 @@ pub fn sync_results<T: jope_client::Transport>(
             refit: jope_api::Refit::FitHoldout,
         };
         match export(local, run, &request, 64 << 20).and_then(|bytes| flatten_code(&bytes)) {
-            Ok(bytes) => items.push((Kind::Code, bytes)),
+            Ok(bytes) => items.push((ResultKind::Code, bytes)),
             Err(error) => lines.push(format!("Results: no generated code to sync ({error:#}).")),
         }
     }
@@ -326,7 +326,7 @@ pub fn sync_results<T: jope_client::Transport>(
     let client = Client::connected(&c)?.with_timeout(Duration::from_secs(120))?;
     let model = items
         .iter()
-        .find(|(kind, _)| *kind == Kind::Model)
+        .find(|(kind, _)| *kind == ResultKind::Model)
         .map(|(_, bytes)| (jope_runtime::sha256_hex(bytes), bytes.len() as u64));
     lines.extend(push(&client, &cloud, items, &state, &std::thread::sleep));
     // The event follows the model it names (the app checks it against the stored digest).

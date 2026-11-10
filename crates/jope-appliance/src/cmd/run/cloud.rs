@@ -5,9 +5,9 @@
 //! `--upload-consent` by an agent that asked the user), then progress on stderr and a
 //! `cloud_run` JSON line on stdout.
 use crate::cloud::{
-    cloud_run::{Refusal, Update},
+    cloud_run::{CloudRefusal, Update},
     flow::{self, Prepared},
-    route::{self, Force, Tier},
+    route::{self, AccountTier, Force},
     Connection,
 };
 use std::io::{BufRead, IsTerminal, Write};
@@ -20,7 +20,7 @@ pub(super) enum Routed {
     Cloud {
         decision: route::Decision,
         connection: Box<Connection>,
-        tier: Option<Tier>,
+        tier: Option<AccountTier>,
     },
 }
 
@@ -86,7 +86,7 @@ pub(super) fn run_in_cloud(
     effort: jope_api::Effort,
     decision: &route::Decision,
     c: &Connection,
-    tier: Option<Tier>,
+    tier: Option<AccountTier>,
 ) -> anyhow::Result<()> {
     let rows = profile.rows.0;
     let line = route::decide(route::Input {
@@ -99,7 +99,7 @@ pub(super) fn run_in_cloud(
     .line;
     eprintln!("{line}");
     // Free's row ceiling is known: say so before uploading anything.
-    if rows > route::FREE_MAX_DATA_ROWS && tier == Some(Tier::Free) {
+    if rows > route::FREE_MAX_DATA_ROWS && tier == Some(AccountTier::Free) {
         let limit = route::Limit {
             status: 400,
             limit: "size".into(),
@@ -202,8 +202,8 @@ pub(super) fn run_in_cloud(
             );
             Ok(())
         }
-        Err(Refusal::Limit(limit)) => anyhow::bail!(limit.render()),
-        Err(Refusal::Other(message)) => anyhow::bail!("{message} No run started."),
+        Err(CloudRefusal::Limit(limit)) => anyhow::bail!(limit.render()),
+        Err(CloudRefusal::Other(message)) => anyhow::bail!("{message} No run started."),
     }
 }
 
