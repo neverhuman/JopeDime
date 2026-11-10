@@ -384,7 +384,7 @@ pub enum Choice {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Outcome {
+pub enum OnboardingOutcome {
     /// The user declined the terms; exit without changing anything.
     Quit,
     Finished {
@@ -440,7 +440,7 @@ impl FirstRun {
         self.steps.get(self.index).copied()
     }
 
-    fn advance(&mut self) -> Option<Outcome> {
+    fn advance(&mut self) -> Option<OnboardingOutcome> {
         self.index += 1;
         if self.index < self.steps.len() {
             None
@@ -449,8 +449,8 @@ impl FirstRun {
         }
     }
 
-    fn finished(&self, choice: Option<Choice>) -> Outcome {
-        Outcome::Finished {
+    fn finished(&self, choice: Option<Choice>) -> OnboardingOutcome {
+        OnboardingOutcome::Finished {
             terms_accepted: self.terms_accepted,
             telemetry: self.telemetry,
             choice,
@@ -458,7 +458,7 @@ impl FirstRun {
     }
 
     /// Handle one key in the full-screen dialog.
-    pub fn key(&mut self, code: KeyCode) -> Option<Outcome> {
+    pub fn key(&mut self, code: KeyCode) -> Option<OnboardingOutcome> {
         let pressed = match code {
             KeyCode::Enter => Some('\n'),
             KeyCode::Esc => Some('q'),
@@ -471,7 +471,7 @@ impl FirstRun {
                     self.terms_accepted = true;
                     self.advance()
                 }
-                'q' | 'n' => Some(Outcome::Quit),
+                'q' | 'n' => Some(OnboardingOutcome::Quit),
                 _ => None,
             },
             Step::Telemetry => match pressed {
@@ -494,7 +494,7 @@ impl FirstRun {
     }
 
     /// Handle one answered line in line mode: an empty line is Enter.
-    pub fn line(&mut self, answer: &str) -> Option<Outcome> {
+    pub fn line(&mut self, answer: &str) -> Option<OnboardingOutcome> {
         let answer = answer.trim().to_ascii_lowercase();
         let code = match answer.as_str() {
             "" => KeyCode::Enter,
@@ -565,8 +565,13 @@ impl FirstRun {
 
 /// Persist a finished dialog and apply the telemetry choice to the same setting that
 /// `jain cloud telemetry on|off` changes.
-pub fn record(home: &Path, outcome: Outcome, terms_version: &str, source: &str) -> Result<()> {
-    let Outcome::Finished {
+pub fn record(
+    home: &Path,
+    outcome: OnboardingOutcome,
+    terms_version: &str,
+    source: &str,
+) -> Result<()> {
+    let OnboardingOutcome::Finished {
         terms_accepted,
         telemetry,
         ..
@@ -690,7 +695,7 @@ mod tests {
         assert_eq!(dialog.key(KeyCode::Enter), None);
         assert_eq!(
             dialog.key(KeyCode::Enter),
-            Some(Outcome::Finished {
+            Some(OnboardingOutcome::Finished {
                 terms_accepted: true,
                 telemetry: Some(true),
                 choice: Some(Choice::Login)
@@ -705,7 +710,7 @@ mod tests {
         assert_eq!(dialog.line("n"), None);
         assert_eq!(
             dialog.line("2"),
-            Some(Outcome::Finished {
+            Some(OnboardingOutcome::Finished {
                 terms_accepted: true,
                 telemetry: Some(false),
                 choice: Some(Choice::Demos)
@@ -713,11 +718,14 @@ mod tests {
         );
         let mut dialog = FirstRun::new(&State::default(), TERMS_VERSION, false, true).unwrap();
         assert_eq!(dialog.steps, [Step::Terms, Step::Telemetry]);
-        assert_eq!(dialog.key(KeyCode::Char('q')), Some(Outcome::Quit));
+        assert_eq!(
+            dialog.key(KeyCode::Char('q')),
+            Some(OnboardingOutcome::Quit)
+        );
         let mut dialog = FirstRun::new(&State::default(), TERMS_VERSION, false, false).unwrap();
         assert_eq!(dialog.line("nonsense"), None);
         assert_eq!(dialog.step(), Some(Step::Terms));
-        assert_eq!(dialog.line("n"), Some(Outcome::Quit));
+        assert_eq!(dialog.line("n"), Some(OnboardingOutcome::Quit));
     }
 
     #[test]

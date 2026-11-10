@@ -1,7 +1,7 @@
 //! Cloud runs from the CLI (ai-veox-app `docs/connected-cli.md`, *Cloud runs from the jAIn
 //! CLI*): one `POST /api/sessions` with the user's recorded upload consent, then `GET
 //! /api/sessions/:id` every ~2 s, rendering each new `progressEvents[].sequence` once.
-use super::route::{Limit, Tier};
+use super::route::{AccountTier, Limit};
 use super::*;
 
 /// What the user agreed to upload: the bytes are exactly the file read from disk.
@@ -14,14 +14,14 @@ pub struct Upload<'a> {
 
 /// Why a cloud run was not created.
 #[derive(Debug)]
-pub enum Refusal {
+pub enum CloudRefusal {
     /// A tier limit, machine-readable.
     Limit(Limit),
     /// Any other refusal, as the workspace worded it.
     Other(String),
 }
 
-impl std::fmt::Display for Refusal {
+impl std::fmt::Display for CloudRefusal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Limit(limit) => f.write_str(&limit.sentence()),
@@ -82,12 +82,12 @@ pub fn multipart(boundary: &str, upload: &Upload<'_>, profile: &str, fallback: &
 }
 
 /// A refusal body: the limit shape, `{"error": "<sentence>"}`, or just the status.
-pub fn refusal(status: u16, bytes: &[u8]) -> Refusal {
+pub fn refusal(status: u16, bytes: &[u8]) -> CloudRefusal {
     let value: Value = serde_json::from_slice(bytes).unwrap_or(Value::Null);
     if let Some(limit) = Limit::parse(status, &value) {
-        return Refusal::Limit(limit);
+        return CloudRefusal::Limit(limit);
     }
-    Refusal::Other(match value["error"].as_str() {
+    CloudRefusal::Other(match value["error"].as_str() {
         Some(message) => format!(
             "The workspace refused the run (HTTP {status}): {}",
             crate::terminal::sanitize_user_string(message)
@@ -98,10 +98,10 @@ pub fn refusal(status: u16, bytes: &[u8]) -> Refusal {
 
 impl Client {
     /// The account's plan, and whether it may start runs.
-    pub fn account_tier(&self) -> Result<(Option<Tier>, bool)> {
+    pub fn account_tier(&self) -> Result<(Option<AccountTier>, bool)> {
         let account = self.json("GET", "/api/cli/account", Value::Null)?;
         Ok((
-            account["tier"].as_str().and_then(Tier::parse),
+            account["tier"].as_str().and_then(AccountTier::parse),
             account["mayRun"].as_bool().unwrap_or(false),
         ))
     }
@@ -112,7 +112,7 @@ impl Client {
         upload: &Upload<'_>,
         profile: &str,
         fallback: &str,
-    ) -> Result<std::result::Result<String, Refusal>> {
+    ) -> Result<std::result::Result<String, CloudRefusal>> {
         let boundary = format!("jain{}", ulid::Ulid::new());
         let body = multipart(&boundary, upload, profile, fallback);
         // An upload may take longer than an ordinary request: allow a minute per 4 MiB.
@@ -625,17 +625,17 @@ mod tests {
     #[test]
     fn refusals_keep_the_limit_shape_and_the_sentence() {
         match refusal(429, br#"{"error":"limit","limit":"daily_runs","used":10,"allowed":10,"resets_at":null,"upgrade_url":"https://veox.ai/pricing","message":"x"}"#) {
-            Refusal::Limit(limit) => assert_eq!(limit.limit, "daily_runs"),
+            CloudRefusal::Limit(limit) => assert_eq!(limit.limit, "daily_runs"),
             other => panic!("{other:?}"),
         }
         match refusal(
             400,
             br#"{"error":"the upload consent says uploads_data is false"}"#,
         ) {
-            Refusal::Other(message) => assert!(message.contains("uploads_data is false")),
+            CloudRefusal::Other(message) => assert!(message.contains("uploads_data is false")),
             other => panic!("{other:?}"),
         }
-        assert!(matches!(refusal(502, b"<html>"), Refusal::Other(m) if m.contains("502")));
+        assert!(matches!(refusal(502, b"<html>"), CloudRefusal::Other(m) if m.contains("502")));
     }
 
     #[test]
