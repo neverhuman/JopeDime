@@ -994,3 +994,43 @@ is already on `extra_excluded_paths` in `agent/audit-policy.toml`. Jankurai
 file, or moving the kernel into Rust, would replace the inventoried bytes.
 The file is not edited. #2184 comparator files, research H* bytes,
 holdout/dev91 data, and `provenance_bind.py` are not edited.
+
+## Audit of main d1b36e12
+
+Full jankurai 1.7.6 audit of `d1b36e122dbc835f2099a9823525b714d8ab86c3`
+(tree `f888d4e649df064baa1f8e31c521df4caf265398`). Score 68, raw 77, hard 55,
+soft 9, 64 findings. P37 exception integrity passed. Evidence exclusion passed
+(472 paths). Verification artifact valid. Summary sha256
+`e5280b9009b8e0e66bc72b736e187cf4a2a8b64d5c6ffaaac8702cc835d98fd3` and
+repair-queue sha256
+`568706037c7f278514afbcbfc0b778c4ee784cf5953fc09daec8293805dd4671` match the
+prior audit. The rows above stay. This note records the highest-severity
+product batch that is not comparator code and not research or holdout data.
+
+That batch is four `HLT-043-COPY-PASTE-BAD-BEHAVIOR` exact-unit classes. The
+reported product side is `python/src/jope/north_star/`. The other instance of
+each class is `research/flywheel_selfplay/h317_island10_multiscale_curriculum/`.
+The named function bodies are byte-identical across that pair:
+
+- `_lock_dope_weights_and_eval_mode`, product lines 150–232 and h317 lines
+  151–233. Class `copy-code-unit-python-51ae207fba07aa95`. Fingerprint
+  `sha256:bab6e138fe498c0c30db6b043092d31bbbee76f2b1f872de5da7ff47b4ef181f`.
+- `snapshot_dope_weights`, product lines 233–358 and h317 lines 234–359.
+  Class `copy-code-unit-python-c1e262189dafa0fd`. Fingerprint
+  `sha256:6f817584236dae0ef58471bab91a794eb63a80c963300904076ee49ca360fc8d`.
+- `get_trainable_param_counts_by_submodule`, product lines 381–462 and h317
+  lines 382–463. Class `copy-code-unit-python-66fd5bf1f725f729`. Fingerprint
+  `sha256:7f9a780f437a7e1a2781cffeaf035794518d1e9c4188b1c94a26a506f5e3fd6c`.
+- `run_self_test` in `dope_freeze_guard_self_test.py`, product lines 11–221
+  and h317 lines 12–222. Class `copy-code-unit-python-bcb1e5ff7bca93bc`.
+  Fingerprint
+  `sha256:58163d591fe7cc31d2d54d56b92092dd9697474361a2a82c4fd1c674b0875444`.
+
+The whole files are not identical. The shared units are the freeze-guard
+behavior the wave copy kept. Rewriting the product units so the detector
+misses them would split the serving guard from that wave copy. Pointing the
+wave copy at the product module would edit a research tree. The classes are
+not allowlisted: the product file is the mutable owner, and dropping a class
+only rotates the next copy class into the 50-class report cap. Neither file
+is edited. Comparator code, other research H* bytes, holdout/dev91 data,
+`provenance_bind.py`, and the #2189 docs paths are not edited.
