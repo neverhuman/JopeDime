@@ -3833,6 +3833,20 @@
       "reason": "Recorded-event fixture replay through the jope-client fake transport (TUI-11, feature `fake`): validates the committed event fixtures and deterministic replay cadence; test infrastructure for terminal UI tests, not a regression subsystem",
       "role": "infrastructure"
     },
+    "target:jope-comparators/lib/jope_comparators": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
+    "target:jope-comparators/test/comparators": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
     "target:jope-datasets/bin/jope-datasets": {
       "role": "regression",
       "subsystems": [

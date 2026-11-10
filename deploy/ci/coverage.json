@@ -1976,6 +1976,20 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-comparators": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-comparators/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:jope-datasets": {
       "discovery": {
         "kind": "package",
@@ -10569,6 +10583,39 @@
       ],
       "lanes": [],
       "scope": "TUI-11 strict PublicEvent fixture validation and deterministic fake replay; run explicitly with jope-client --features fake."
+    },
+    "target:jope-comparators/lib/jope_comparators": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-comparators/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-comparators/test/comparators": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-comparators/tests/comparators/main.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Comparator model contract: forests, histogram boosting, ridge and Caruana selection beat the training-mean baseline on held-out rows; seeded determinism, row locality, FIT-only median imputation and constant targets over generated tables; every malformed input, invalid parameter and expired deadline refused with its typed error."
     },
     "target:jope-datasets/bin/jope-datasets": {
       "discovery": {
