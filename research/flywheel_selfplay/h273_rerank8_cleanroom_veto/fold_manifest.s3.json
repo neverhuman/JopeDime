@@ -1,0 +1,23 @@
+{
+  "schema": "jope.s3_pointer/v1",
+  "wave": "H273",
+  "wave_id": "h273-rerank8-cleanroom-veto-20261103",
+  "artifact": "fold_manifest.json",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H273/prereg/fold_manifest.json",
+  "VersionId": "oCb50mvrbyR0CCN_nhxc16GuBOpfzSQZ",
+  "ETag": "\"906cf7700f5d3ef81508b0cf2a788c17\"",
+  "sha256": "afa8aa6e312450b8f2aa405d2e05de195746e1c0ba8540967a03e3639f667117",
+  "bytes": 694857,
+  "stage1_fold_seeds": [
+    270140,
+    270141,
+    270142
+  ],
+  "stage2_fold_seeds": [
+    273140,
+    273141,
+    273142
+  ],
+  "n_folds": 5,
+  "outcomes_read": 0
+}

@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "outer_model_score_calls": 36,
+  "fit_locks": 36,
+  "baseline": "Read-only H318 BASE panel, exact-regressed before L2ONLY fitting",
+  "panel_sha256": "bafc31c76484c2ef725df912b7fb69c6b73816ae686d8af4596ab6aca7b40120",
+  "dev91_rows_read": 0,
+  "r3175_train": "NOT_MEASURED"
+}

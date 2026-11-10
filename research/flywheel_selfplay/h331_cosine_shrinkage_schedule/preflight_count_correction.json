@@ -1,0 +1,10 @@
+{
+  "utc": "2026-11-04T19:56:57.605778+00:00",
+  "phase": "checks2",
+  "tests_executed": 11,
+  "tests_failed": 0,
+  "wrapper_exit": 1,
+  "cause": "Copied wrapper expected10; actualsuite11 passed. Originalbytecode had10 even though tracebackread updatedline11 after correction while processran.",
+  "correction": "preflight.py expects11; repeat bounded11controls inchecks3 before anyexperimental fit; preservechecks2status/log/source snapshots.",
+  "original_executed_wrapper_sha256": "cdc6da2f1827c28ca186c6443c7faf066ededf46e70b1c86541982b531f1fd31"
+}

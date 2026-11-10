@@ -1,0 +1,13 @@
+{
+  "first_cell_seconds": 1059.8079736232758,
+  "workers": 4,
+  "remaining_cells": 35,
+  "remaining_batches": 9,
+  "safety_multiplier": 1.15,
+  "audit_score_reserve_seconds": 600,
+  "forecast_epoch": 1793832479.5369895,
+  "projected_finish_epoch": 1793844048.5495164,
+  "compute_stop_epoch": 1793843100,
+  "admit": false,
+  "rule": "ceil(35/workers)*first_completed_cell_seconds*1.15+600 < remaining window"
+}

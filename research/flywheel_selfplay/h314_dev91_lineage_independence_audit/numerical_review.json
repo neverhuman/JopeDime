@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "same_agent_independent_numerical_recalculation": true,
+  "checks": [
+    {
+      "group": "CLEAN",
+      "n": 19,
+      "enumerated": 524288,
+      "signflip_p": 4.57763671875e-05
+    },
+    {
+      "group": "ALL",
+      "n": 19,
+      "enumerated": 524288,
+      "signflip_p": 4.57763671875e-05
+    },
+    {
+      "group": "initial/NEIGHBORED",
+      "n": 1,
+      "enumerated": 2,
+      "signflip_p": 1.0
+    },
+    {
+      "group": "initial/CLEAN",
+      "n": 18,
+      "enumerated": 262144,
+      "signflip_p": 4.57763671875e-05
+    }
+  ],
+  "spearman_rho": -0.01939195510518219,
+  "fisher_verified": true,
+  "decision_verified": true,
+  "verdict": "H310_LINEAGE_INDEPENDENT",
+  "metrics_sha256": "573eb4fc9389ab5cb45dce02c53d5cc58731b7d4cea79b5af492010c9f26e6a7",
+  "finished_utc": "2026-11-04T10:54:55.924240+00:00"
+}

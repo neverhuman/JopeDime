@@ -1,0 +1,220 @@
+{
+ "best": "X_CL",
+ "decision": "NOT_ADVANCED",
+ "eligible": [
+  "X_CL",
+  "X_LLM",
+  "X_ALL"
+ ],
+ "elo": {
+  "anchor": "h354.X0",
+  "contexts": 201,
+  "elo": {
+   "h354.X0": {
+    "ci95": [
+     1500.0,
+     1500.0
+    ],
+    "elo": 1500.0
+   },
+   "h354.X_ALL": {
+    "ci95": [
+     1584.0212286091983,
+     1643.2740056548587
+    ],
+    "elo": 1613.0763332332722
+   },
+   "h354.X_CL": {
+    "ci95": [
+     1556.08415021506,
+     1594.3318007756886
+    ],
+    "elo": 1574.739277982342
+   },
+   "h354.X_LLM": {
+    "ci95": [
+     1552.4855539775754,
+     1602.299233793936
+    ],
+    "elo": 1577.2069092870802
+   },
+   "lib.GPT6_Astra_Max": {
+    "ci95": [
+     1027.0267183036133,
+     1132.6999312699559
+    ],
+    "elo": 1082.173094410454
+   },
+   "lib.GPT6p1_Sol_Max": {
+    "ci95": [
+     1250.6973102162801,
+     1355.9408152319484
+    ],
+    "elo": 1304.978026341448
+   },
+   "lib.Gemini4_argon_high": {
+    "ci95": [
+     1281.9254351379834,
+     1376.8150061500367
+    ],
+    "elo": 1330.9886619393565
+   },
+   "lib.Opus5p5_Extra": {
+    "ci95": [
+     1400.054068913518,
+     1491.811915312656
+    ],
+    "elo": 1446.7491770455842
+   },
+   "lib.catboost.v1": {
+    "ci95": [
+     1236.801090489275,
+     1335.2605353946112
+    ],
+    "elo": 1288.0195956496739
+   },
+   "lib.lightgbm.v1": {
+    "ci95": [
+     1026.526307241817,
+     1137.3628809128752
+    ],
+    "elo": 1083.8745633001517
+   },
+   "lib.random_forest.v1": {
+    "ci95": [
+     1154.1017504262245,
+     1264.8865398074051
+    ],
+    "elo": 1211.19586997129
+   },
+   "lib.xgboost.v1": {
+    "ci95": [
+     1125.9112333300127,
+     1232.437023283751
+    ],
+    "elo": 1181.4478845584033
+   }
+  },
+  "families": 201
+ },
+ "family_mean_u": {
+  "X0": 1.933993721026498,
+  "X_ALL": 1.9428859466353394,
+  "X_CL": 1.9432956816908196,
+  "X_LLM": 1.9387054171887568
+ },
+ "locked_arm": null,
+ "paired_se_vs_best": {
+  "X_ALL": {
+   "gap": 0.00040973505548012857,
+   "se": 0.00698143543002506
+  },
+  "X_CL": {
+   "gap": 0.0,
+   "se": 0.0
+  },
+  "X_LLM": {
+   "gap": 0.0045902645020630016,
+   "se": 0.0072318019368211766
+  }
+ },
+ "rule": "PREREG \u00a73.4: 1-SE rule among X_CL/X_LLM/X_ALL, then the H335 primary vs X0 must pass",
+ "vs_X0": {
+  "X_ALL": {
+   "headline": {
+    "context_mean_gain": 0.00889222560884151,
+    "context_wtl": [
+     134,
+     12,
+     55
+    ],
+    "families_lost": 55,
+    "families_tied": 12,
+    "families_won": 134,
+    "family_mean_gain": 0.008892225608841512,
+    "family_median_gain": 0.0029260437371421144,
+    "n_families": 201,
+    "pct_rmse_reduction": 0.008852806697848603
+   },
+   "primary": {
+    "T_clipped_family_mean": 0.013093835290731473,
+    "clip": 0.5,
+    "contexts": 201,
+    "families": 201,
+    "families_lost": 55,
+    "families_tied": 12,
+    "families_won": 134,
+    "family_median": 0.0029260437371421144,
+    "inferior": false,
+    "lofo_min": 0.011073873409683112,
+    "mirror_signflip_p": 0.994999885559082,
+    "pass": true,
+    "signflip_p": 0.005000114440917969
+   }
+  },
+  "X_CL": {
+   "headline": {
+    "context_mean_gain": 0.009301960664321637,
+    "context_wtl": [
+     132,
+     24,
+     45
+    ],
+    "families_lost": 45,
+    "families_tied": 24,
+    "families_won": 132,
+    "family_mean_gain": 0.009301960664321637,
+    "family_median_gain": 0.001336091606402634,
+    "n_families": 201,
+    "pct_rmse_reduction": 0.009258831261156342
+   },
+   "primary": {
+    "T_clipped_family_mean": 0.009301960664321637,
+    "clip": 0.5,
+    "contexts": 201,
+    "families": 201,
+    "families_lost": 45,
+    "families_tied": 24,
+    "families_won": 132,
+    "family_median": 0.001336091606402634,
+    "inferior": false,
+    "lofo_min": 0.007436426294814818,
+    "mirror_signflip_p": 0.9998989105224609,
+    "pass": true,
+    "signflip_p": 0.0001010894775390625
+   }
+  },
+  "X_LLM": {
+   "headline": {
+    "context_mean_gain": 0.004711696162258635,
+    "context_wtl": [
+     128,
+     14,
+     59
+    ],
+    "families_lost": 59,
+    "families_tied": 14,
+    "families_won": 128,
+    "family_mean_gain": 0.0047116961622586375,
+    "family_median_gain": 0.001640252522363328,
+    "n_families": 201,
+    "pct_rmse_reduction": 0.004700613534719289
+   },
+   "primary": {
+    "T_clipped_family_mean": 0.009010478196400667,
+    "clip": 0.5,
+    "contexts": 201,
+    "families": 201,
+    "families_lost": 59,
+    "families_tied": 14,
+    "families_won": 128,
+    "family_median": 0.001640252522363328,
+    "inferior": false,
+    "lofo_min": 0.006934822080476348,
+    "mirror_signflip_p": 0.9599599838256836,
+    "pass": false,
+    "signflip_p": 0.040040016174316406
+   }
+  }
+ }
+}

@@ -498,10 +498,10 @@ impl super::Session {
             force,
         )?;
         Ok(vec![format!(
-            "Export {} · {} · parity {:?}",
+            "Export {} · {} · parity {}",
             manifest.artifact_id,
             out.display(),
-            manifest.parity_status
+            manifest.parity_status.explanation()
         )])
     }
 

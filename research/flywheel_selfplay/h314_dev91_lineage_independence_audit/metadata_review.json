@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "same_agent_independent_recalculation": true,
+  "pairs_checked": 4883,
+  "metadata_objects_hash_checked": 598,
+  "gain_files_opened": 0,
+  "conflicts": [
+    {
+      "dataset": "c38ded1f1c3fce0b",
+      "split": "train",
+      "conflicts": {
+        "source_ids_multiple": false,
+        "fingerprints_multiple": false,
+        "feature_count_mismatch": false,
+        "header_count_mismatch": true
+      },
+      "metadata_headers": 34,
+      "catalog_columns": 33,
+      "max_jaccard_against_dev": 0.05405405405405406
+    },
+    {
+      "dataset": "1526d48b6e4abb06",
+      "split": "train",
+      "conflicts": {
+        "source_ids_multiple": false,
+        "fingerprints_multiple": false,
+        "feature_count_mismatch": false,
+        "header_count_mismatch": true
+      },
+      "metadata_headers": 45,
+      "catalog_columns": 43,
+      "max_jaccard_against_dev": 0.07547169811320754
+    },
+    {
+      "dataset": "1d8f764f3f1dcc36",
+      "split": "train",
+      "conflicts": {
+        "source_ids_multiple": false,
+        "fingerprints_multiple": false,
+        "feature_count_mismatch": false,
+        "header_count_mismatch": true
+      },
+      "metadata_headers": 8,
+      "catalog_columns": 6,
+      "max_jaccard_against_dev": 0.1111111111111111
+    }
+  ],
+  "limitations": [
+    "Three TRAIN metadata output-header counts exceed catalog column counts; reported without alteration. Their maximum dev Jaccards are below .80.",
+    "No selected dataset matches the 184 full-source-registry metadata entries. Source identities and roots rely on pinned catalog files.meta instead; absence of a match does not establish complete historical lineage.",
+    "CLEAN is rule-unmatched metadata, not proof of semantic independence."
+  ],
+  "finished_utc": "2026-11-04T10:52:32.635470+00:00"
+}

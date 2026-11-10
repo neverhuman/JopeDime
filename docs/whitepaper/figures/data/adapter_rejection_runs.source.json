@@ -1,0 +1,28 @@
+{
+  "schema": "whitepaper.adapter-rejection-runs-source/v1",
+  "source_commit": "6f4d1636d0010c4181f1a4be05c693f2ea5b90c3",
+  "input_csv": "stopped_run_admissions.csv",
+  "input_csv_sha256": "197c519554675d398cb77c81e652788b51462ca372a2ea6c7b41811958b4238a",
+  "input_receipt_sha256": "26337f004c1ed4c1825a5907030e75b0f3944f2001f0d03e747896801f296873",
+  "source_records": 4274,
+  "rejected_records": 4266,
+  "admitted_records": 8,
+  "round_window": [
+    775,
+    5049
+  ],
+  "missing_decision_rounds": [
+    4331
+  ],
+  "derived_runs": 10,
+  "between_admissions": 7,
+  "capture_or_gap_boundary_runs": 3,
+  "rejected_records_omitted": 0,
+  "csv_sha256": "e467a7558f878a2e64d421c3904de16b86a029664fa26ccbad9e37a404bb87e2",
+  "definition": "Maximal consecutive round identifiers with logged restore_best_model_and_optimizer. All scored records delimit runs; all eight admissions serve as boundaries. Missing4331splits the observed run and is never filled. Capture/gap boundaries are labelled, not treated as observed admissions.",
+  "selection": "Every rejected decision belongs to exactly one plotted run, in source order; no selection by utility, duration or gain. Admitted decisions are retained as boundary events rather than plotted rejections.",
+  "scope": "Counts of recorded adaptive adapter decisions, not independent trials, elapsed training time, neural-writer/ranking-map learning or program-search progress. Exact installed source/adapter/pool/input-closure/normalization binding remains unqualified.",
+  "imputed_values": false,
+  "new_observations": 0,
+  "new_scientific_runs": 0
+}

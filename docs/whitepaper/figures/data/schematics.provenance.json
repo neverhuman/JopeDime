@@ -1,0 +1,35 @@
+{
+  "schema": "whitepaper.schematic-rendering/v1",
+  "generator_sha256": "5c3a64b994704e078a5bbbbf0568f949cfb0513d337aeb542f7ffde34f83d1a5",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": {
+    "roman": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "italic": "eaeaf7f2b12544ecde64290c1fa7ec403ff70fd58b313637b265400b20249242",
+    "bold": "9e66c25e20868756bf12eb24a520a4552727c9cd108f577f7ae33e3c0110e39c",
+    "bold_italic": "379010e87421a883f7bbfa7936d23dfe0257a54ce850819b74556e9f2c615a8a"
+  },
+  "minimum_print_target_pt": 7.0,
+  "figure_sha256": {
+    "fig2_novelty_judgment.pdf": "7673618518cff9129847883fd8c770bfff39745c3d577099d34ed49344107ca8",
+    "fig3_game_loop.pdf": "7701aaae5c8cd700cb8dcec28ad64c0eb91daeae428fa0a4d6935463444bcff2",
+    "fig5_network.pdf": "9cd92aa7208db9cdee804c95685dcd0436d87150dd3d5d6967f0d37032a75b90"
+  },
+  "canvas_inches": {
+    "fig2_novelty_judgment.pdf": [
+      3.35,
+      2.3
+    ],
+    "fig3_game_loop.pdf": [
+      7.0,
+      2.3
+    ],
+    "fig5_network.pdf": [
+      7.0,
+      2.9
+    ]
+  },
+  "scope": "Conceptual diagrams only; no empirical data or runtime qualification.",
+  "preservation": "Conceptual nodes, arrows and point locations retained; labels distinguish proposed or unmeasured behavior and the historical reference from the separate live system.",
+  "capacity_label_source": "Unsupported alternative capacity counts omitted. Proposed training is distinct from the offline historical checkpoint and live rule-based proposal/cost-ranking loop.",
+  "reproduce": "python3 figures/scripts/make_schematics.py"
+}

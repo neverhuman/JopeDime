@@ -1,0 +1,36 @@
+{
+  "schema": "whitepaper.recorded-decision-lift-source/v1",
+  "captured_utc": "2026-11-04T04:56:36.812259+00:00",
+  "source_commit": "41f1eb3c32607bea89e99ed54ac6c1fd87da8dc1",
+  "input_csv": "figures/data/full_retained_trajectory.csv",
+  "input_csv_git_blob": "642c754894c729bf4bd6f1b0270c8a6eda4eb825",
+  "input_csv_sha256": "7bb0dd88e1a6ac1a57075d1b72c87db26d7bbe95a953bf90b8ccf526297fdd58",
+  "input_source_receipt_sha256": "79cbb37b1e4f9c885307f9298831a475a85a2d079927152c0a66c877a0bd9a60",
+  "source_prefix_sha256": "11a2550d095fa9593866fb8d618428168412e19e91fbcf0b575c9bed5b61cc1f",
+  "csv_sha256": "76c2442d922896fc4c0654ef4be00968a89c9b56d41c0ece9375a5b15e1d49ff",
+  "records": 4063,
+  "round_window": [
+    775,
+    4838
+  ],
+  "missing_rounds": [
+    4331
+  ],
+  "strict_gain_rounds": [
+    785,
+    859,
+    2750,
+    3175
+  ],
+  "accepted_tie_rounds": [
+    782,
+    882,
+    2795,
+    3100
+  ],
+  "zero_retained_lift": 4059,
+  "rejections": 4055,
+  "selection": "Every row of the pinned committed admission CSV; no outcome/value filtering. Missing rounds remain absent.",
+  "transformation": "Unrounded Decimal candidate minus previous_best utility and best minus previous_best utility for every observed decision; points only, no cumulative envelope, smoothing or gap filling.",
+  "scope": "Logged utility differences on adaptively reused development contexts; no independent writer/ranking-map learning gain, causal training attribution, Elo conversion, serving result or transfer claim. Exact runtime source/adapter/pool/normalization binding remains unqualified."
+}

@@ -1,0 +1,11 @@
+[package]
+name = "jope-disk-steward"
+version = "0.1.0"
+edition = "2021"
+description = "Native Rust fleet disk steward, source preservation verifier, consumer probe, and compiler capacity guard"
+
+[[bin]]
+name = "jope-disk-steward"
+path = "src/main.rs"
+
+[dependencies]

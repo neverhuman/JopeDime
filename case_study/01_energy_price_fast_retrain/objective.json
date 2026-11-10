@@ -1,0 +1,13 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "pinball",
+    "quantile": 0.9
+  },
+  "limits": [
+    {
+      "resource": "fit_seconds",
+      "max": 0.49
+    }
+  ]
+}

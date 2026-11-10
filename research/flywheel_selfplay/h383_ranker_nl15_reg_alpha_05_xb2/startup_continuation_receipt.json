@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "utc": "2026-11-05T17:27:54.492036+00:00",
+  "reason": "Original startup compared sorted kernel affinity lists to primary-first admitted list [31,12,13,14]; same actual CPU set caused assertion before forecast/fits.",
+  "admission": "PASSED4cores/host24.4156915%; not an admission or runtime-forecast miss",
+  "interpretation": "No reprobe/restart if miss remains binding. Admission passed, zero scientific work started. Correct only operational assertion and continue same allocation with same admitted cores/frozen science/RNG/deadline; no repeated experiment, capacity probe or budget.",
+  "admitted_cores": [
+    31,
+    12,
+    13,
+    14
+  ],
+  "startup_execution": {
+    "utc": "2026-11-05T17:22:02.086446+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "1",
+    "SERVICE_RESULT": "exit-code",
+    "INVOCATION_ID": "20c72e3931ce4f159807e274cdcc3691"
+  },
+  "initial_gate": {
+    "only_command": [
+      "systemctl",
+      "--user",
+      "is-active",
+      "h377-run"
+    ],
+    "checks": [
+      {
+        "utc": "2026-11-05T17:21:56.862123+00:00",
+        "state": "inactive",
+        "exit_status": 4
+      }
+    ],
+    "cutoff": "2026-11-05T18:50:00+00:00",
+    "released": true,
+    "timed_out": false,
+    "capacity_samples": 0,
+    "foreign_signals": 0
+  },
+  "capacity_sha256": "de1b1f7a7e3b8014ba6e8dce0e6e6dd969713bcbe2d6288b4d2250bdf682561d",
+  "entrypoint_sha256": "a0f5d105139368a232e7c6cccf4a0459691b18c408559482ff6aa69fbb575dae",
+  "tests": {
+    "passed": 3,
+    "failed": 0,
+    "log_sha256": "f5c4d90f182a27b3faf2c55d9c4140d3d580467087d624fbb0b09bad4d753946"
+  },
+  "frozen_source_files": 45,
+  "source_unchanged": true,
+  "optimizer_fits_before_continuation": 0,
+  "capacity_samples_total": 1,
+  "compute_stop": "2026-11-05T20:45:00Z",
+  "close_stop": "2026-11-05T21:00:00Z"
+}

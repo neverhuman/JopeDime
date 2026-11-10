@@ -1,0 +1,83 @@
+{
+  "prereg": {
+    "commit": "43e00dd31fd3239dbc5d2d337472c83886a5804c",
+    "author_epoch": 1793770691,
+    "committer_epoch": 1793770691
+  },
+  "lock_times": [
+    {
+      "name": "scratch/fold_1/root_30002/fit_lock.json",
+      "epoch": 1793772283,
+      "utc": "2026-11-04T06:04:43+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_1/root_30003/fit_lock.json",
+      "epoch": 1793772403,
+      "utc": "2026-11-04T06:06:43+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_1/root_30001/fit_lock.json",
+      "epoch": 1793772393,
+      "utc": "2026-11-04T06:06:33+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_2/root_30002/fit_lock.json",
+      "epoch": 1793772928,
+      "utc": "2026-11-04T06:15:28+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_2/root_30003/fit_lock.json",
+      "epoch": 1793772910,
+      "utc": "2026-11-04T06:15:10+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_2/root_30001/fit_lock.json",
+      "epoch": 1793772849,
+      "utc": "2026-11-04T06:14:09+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_3/root_30002/fit_lock.json",
+      "epoch": 1793773018,
+      "utc": "2026-11-04T06:16:58+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_3/root_30003/fit_lock.json",
+      "epoch": 1793772997,
+      "utc": "2026-11-04T06:16:37+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_3/root_30001/fit_lock.json",
+      "epoch": 1793772905,
+      "utc": "2026-11-04T06:15:05+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_0/root_30002/fit_lock.json",
+      "epoch": 1793772284,
+      "utc": "2026-11-04T06:04:44+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_0/root_30003/fit_lock.json",
+      "epoch": 1793772313,
+      "utc": "2026-11-04T06:05:13+00:00",
+      "after_prereg": true
+    },
+    {
+      "name": "scratch/fold_0/root_30001/fit_lock.json",
+      "epoch": 1793772247,
+      "utc": "2026-11-04T06:04:07+00:00",
+      "after_prereg": true
+    }
+  ],
+  "all_locks_after_prereg": true,
+  "evidence_limit": "Tar mtimes are mutable timestamps, and locks contain no internal absolute score timestamp. Source orders frozen-model outer scoring after lock. This supports, but does not prove, no undocumented earlier score or remote push time."
+}

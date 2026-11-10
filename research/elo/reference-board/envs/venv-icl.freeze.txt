@@ -1,0 +1,36 @@
+anyio==4.16.0
+certifi==2026.10.23
+click==8.5.1
+cloudpickle==3.1.2
+einops==0.8.2
+faiss-cpu==1.12.0
+filelock==4.2.4
+fsspec==2026.9.0
+h11==0.16.0
+hf-xet==1.8.0
+httpcore==1.0.9
+httpx==0.28.1
+huggingface_hub==1.33.0
+idna==3.20
+Jinja2==3.1.6
+joblib==1.6.0
+MarkupSafe==3.0.3
+mpmath==1.3.0
+narwhals==2.28.0
+networkx==3.7
+numpy==2.5.4
+omegaconf==2.4.0
+packaging==26.3
+psutil==7.2.2
+PyYAML==6.0.3
+safetensors==0.8.0
+scikit-learn==1.9.1
+scipy==1.18.1
+setuptools==78.1.0
+sympy==1.14.0
+tabdpt @ file:///home/ubuntu/jope-data/refboard/src/TabDPT-inference
+tabicl @ file:///home/ubuntu/jope-data/refboard/src/tabicl
+threadpoolctl==3.8.0
+torch==2.15.0+cpu
+tqdm==4.70.1
+typing_extensions==4.16.0

@@ -1,0 +1,34 @@
+{
+  "schema": "whitepaper.program-promotion-contexts-view/v1",
+  "source_csv": "figures/data/program_promotion_contexts.csv",
+  "input_csv_sha256": "48cbe601db7ffd13da2f63fb425fa52fd09b88596f426bd073eeee90882d11b7",
+  "source_receipt_sha256": "b1d5b1b75965b206728310f07fa6cc640c743a4735be8a085d8f80fb265883fc",
+  "generator_sha256": "f1dd04a30fb37154ddaec409bad9ef464ef734494fda7670b2d2bea86c69f70c",
+  "figure_sha256": "f59c809cbc2aad11ec3da8765346b888c0480bfcd035e366cfcaa6f8b7b411d4",
+  "records": 3529,
+  "distinct_logged_context_identifiers": 975,
+  "selection_round_window": [
+    775,
+    5049
+  ],
+  "event_round_window": [
+    775,
+    5047
+  ],
+  "canvas_inches": [
+    7.0,
+    2.15
+  ],
+  "minimum_source_text_pt": 9.0,
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "unknowns_imputed": false,
+  "smoothing": false,
+  "jitter": false,
+  "connecting_lines": false,
+  "definition": "One point per retained promotion record. Count distinct recorded context identifiers observed from the first selected record through the current record in source order.",
+  "scope": "Observed identifiers conditional on admitted program events; not dataset/family coverage,independent tasks,proposal success,adapter retention or writer/map learning. Starts within this window,not at the first-ever promotion. No attempt or total-population denominator supplied.",
+  "source_binding": "Recorded context identifiers only; exact runtime/evaluation-population/input-closure/checkpoint and independent-learning qualification remain unbound.",
+  "reproduce": "python3 figures/scripts/make_program_promotion_contexts.py"
+}

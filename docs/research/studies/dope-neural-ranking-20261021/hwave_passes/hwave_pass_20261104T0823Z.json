@@ -1,0 +1,7 @@
+{"pass":"2026-11-04T0823Z","merge_hold":{"CI_FREEZE":true,"MASTER_MERGE_HOLD":false},
+"waves":{"H308":{"status":"CLOSED","verdict":"PARTITION_ROBUST","prereg":"2e2a22eda5","closeout":"6826ee680c","median_gain_vs_r882_slot0":{"P0":0.0643,"P1":0.0482,"P2":0.0436},"ci95":{"P1":[0.0222,0.0839],"P2":[0.0188,0.0706]},"per_seed_lcb_pos":"6/6","drop_top5_lcb_pos":"6/6","redteam":"RT_PASS_WITH_CAVEAT (r3175 unmeasured, inherited design exposure)"},
+"H309":{"status":"RUNNING","prereg":"9893049543","impl":"adfd5f02d4","close_utc":"10:30Z"},
+"H310":{"status":"LAUNCHED","screen":"rd_opus","nudge":"hw_t0827_opus_h310.md","close_utc":"11:00Z"}},
+"flywheel":{"host":"xbabe1","writer_pid":2252069,"round":4945,"dope_checksum_match":true,"dope_sha256_prefix":"c51a56d0","incumbent_dev":1.1389572403748425,"candidate_dev":1.1301289868010471,"trainable_params":29211},
+"resources":{"xbabe2":{"disk_free_G":620,"disk_pct":92,"load":32,"memavail_G":80},"xbabe1":{"disk_free_G":172,"disk_pct":91,"load":12.7,"memavail_G":34}},
+"breakthrough":false,"safety_problem":false,"blocker_for_jepson":false}

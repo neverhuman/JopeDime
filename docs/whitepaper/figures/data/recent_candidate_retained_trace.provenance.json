@@ -2,8 +2,8 @@
   "schema": "whitepaper.candidate-retained-figure/v1",
   "input_csv_sha256": "3494e66db541d4f9713d65bbe9abfd5d18be94aa2ffadb9dd0d6aea0a3adc092",
   "source_receipt_sha256": "f644de31926798b65d4f6ffe50c58a1320aa47ea08efbdb2ff06023f04d26224",
-  "generator_sha256": "f4d9ba944b78fbfa892419c5fc697d43111b12f86def50e1a5e9e27d9e9e4f23",
-  "figure_sha256": "b13ba41d4a559517bfd1d760a5651d7526183e3e3b35f194daeafb2b34720a1c",
+  "generator_sha256": "4060c21cdc5f0f52920b095ce7add4771ecc3cab9e6c9b220bcf735d42f4c297",
+  "figure_sha256": "da61ac4982bc376317aa1bacd26a64a524214666c232aeb6394aff8128e28a55",
   "rows": 500,
   "round_window": [
     3112,
@@ -26,5 +26,18 @@
   "final_retained_utility": "1.1389572403748425",
   "matplotlib_version": "3.10.8",
   "scope": "Adaptive adapter admission telemetry, not independent first-proposal or deployment performance",
-  "reproduce": "python3 figures/scripts/make_candidate_retained_trace.py --recent"
+  "reproduce": "python3 figures/scripts/make_candidate_retained_trace.py --recent",
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      3.375,
+      2.2326923076923078
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
+  }
 }

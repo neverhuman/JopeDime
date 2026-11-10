@@ -34,13 +34,33 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/04_ct_slice_wide_training_memory/20261103T130723Z-smoke",
+    "observations_sha256": "fef310a85f2331c35d0aab454d07e6f266f5f97a62b614becd9e8928c33b897c",
+    "target_sigma": 0.23405,
+    "medians": {
+      "fit_cpu_seconds": 16.74416933,
+      "fit_peak_heap_bytes": 458214519.0,
+      "fit_seconds": 16.750797482,
+      "hold_rows": 7989.0,
+      "model_bytes": 85137176.0,
+      "predict_peak_heap_bytes": 58543392.0,
+      "predict_rows_per_second": 17587.269527269847,
+      "predict_seconds": 0.931119857,
+      "predict_us_per_row": 116.55023870321692,
+      "program_nodes": 4.0,
+      "stage_count": 4.0,
+      "train_rows": 31888.0,
+      "mae": 0.07977945888893374,
+      "candidates": 20
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +83,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -100,5 +125,11 @@
         }
       }
     ]
-  }
+  },
+  "temporal_risk": "LOW",
+  "comparability": [
+    "Composite price from the calibration rule; see the break-even price",
+    "Memory: ours is heap growth (counting allocator), baselines' is process RSS growth; different instruments"
+  ],
+  "target_leakage_risk": "LOW"
 }

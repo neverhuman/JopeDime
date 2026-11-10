@@ -1,0 +1,98 @@
+{
+  "wave": "H311",
+  "verdict": "VALGUARD_NOT_ADVANCED",
+  "prereg_commit": "37c01836b003f759332cbc64116544bcda33c345",
+  "source_commit": "41f1eb3c32607bea89e99ed54ac6c1fd87da8dc1",
+  "input_receipt_sha256": "5244eb4813969df19c99e6078a1e38b82908fbccbce089c6be99968093321e25",
+  "source_sha256": {
+    "test_h311.py": "da0665a389fbcd48b7e0cbeb1e6a630f48538c51fbd995cac8d7d35f913288a4",
+    "regression.py": "725966216bcc875670c08ae524134da2a85359e48bea7e45981ae09881a98668",
+    "verify_features.py": "7d6b62ca18c2c37bf05e42e43291f0a5a64b9b7d26a627be813942f76a94ea5c",
+    "metrics.json": "d11b6d15a84f1a9a9713b6740f230cdb955a768efee9903b252584a6c97ff8f1",
+    "prepare_inputs.py": "5590d7e071b9c51574d820f01c932e4dba4ce1819e7e9148c9ed896c88ca9e97",
+    "report_summaries.py": "224b481bdb8ec51888f8d887b38e3a48f4175ef57629f0fbca7a1c5b9012a08c",
+    "feature_receipt.json": "e49cf74da4191d93274b0149dfdb57c61acc5b7931f4ca54532a92d8dbd4190d",
+    "dependency_pins.json": "c8436208748be583b9de8e4feab0246d73d611364fbdafe6ee778c61dc519644",
+    "feature_regression.json": "bc7688e47e26fcb886c6ac40d8da0128c0ba714c02d62a421f3c4337cdbba869",
+    "PREREG.md": "36eb8a90c28b2ccb6d3028cc6cb2e1dd9db7a5f4f235a7b62ca9e61dd04e2dd4",
+    "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d",
+    "evaluate_h311.py": "8906fa7d3718c293f16fa7710a42005a4f3f68c00916270e33c02f7cae6a9e7e",
+    "guard_policy.py": "cb9495c50c2cb085a4ba8c5096e9bb10beeaf99de4794f4644f47111c8b44f2d",
+    "README.md": "219af1513f71eb4ab9037910d44ef851e06e2d7ca46136e2c0347811ce9c8ef6",
+    "input_receipt.json": "5244eb4813969df19c99e6078a1e38b82908fbccbce089c6be99968093321e25",
+    "regression_receipt.json": "78b3cfc33fb9cdedbace8621b83622bfb517bf6c15592d86b89d04253824e022",
+    "run_h311.py": "a59212efd3b08a21f9aca28e1c8f37a726c895b822adb4c459258784fac79176"
+  },
+  "seeds": [
+    30001,
+    30002,
+    30003
+  ],
+  "null_seeds": [
+    311201,
+    311202,
+    311203
+  ],
+  "partitions": [
+    "P0",
+    "P1",
+    "P2"
+  ],
+  "resources": {
+    "source_sha256": {
+      "test_h311.py": "da0665a389fbcd48b7e0cbeb1e6a630f48538c51fbd995cac8d7d35f913288a4",
+      "regression.py": "725966216bcc875670c08ae524134da2a85359e48bea7e45981ae09881a98668",
+      "verify_features.py": "7d6b62ca18c2c37bf05e42e43291f0a5a64b9b7d26a627be813942f76a94ea5c",
+      "prepare_inputs.py": "5590d7e071b9c51574d820f01c932e4dba4ce1819e7e9148c9ed896c88ca9e97",
+      "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d",
+      "evaluate_h311.py": "8906fa7d3718c293f16fa7710a42005a4f3f68c00916270e33c02f7cae6a9e7e",
+      "guard_policy.py": "cb9495c50c2cb085a4ba8c5096e9bb10beeaf99de4794f4644f47111c8b44f2d",
+      "run_h311.py": "a59212efd3b08a21f9aca28e1c8f37a726c895b822adb4c459258784fac79176"
+    },
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "peak": {
+      "rss": 4459036672,
+      "threads": 11,
+      "host_cpu": 26.2
+    },
+    "command": [
+      "/usr/bin/python3",
+      "/home/ubuntu/jope-rescue-20260921/h311-astra/source/run_h311.py",
+      "fit"
+    ],
+    "started_epoch": 1793783829.077837,
+    "finished_epoch": 1793783913.005582,
+    "cpu_affinity": [
+      52,
+      56,
+      58,
+      62,
+      74,
+      75
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "compute_stop": 1793790900
+  },
+  "tests": {
+    "collected": 18,
+    "executed": 18,
+    "failed": 0,
+    "skipped": 0
+  },
+  "hosted_CI": "NOT_RUN owner freeze",
+  "elo_reference": "reference = r882 slot0 (DL-Train OOF); r3175-anchored Elo unmeasured",
+  "custody_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H311/astra-20261104T085652Z/",
+  "descriptive_count_summaries_verified": true,
+  "evidence_archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H311/astra-20261104T085652Z/h311_evidence.tar.gz",
+    "version_id": "MbAXDgIO.XcI77OgtCHwgTlAGF2.LXEw",
+    "sha256": "53d33749c7c35f9d9a515778b4227a107f0edf0813af433c6546140a4a5dc03f",
+    "bytes": 35878373,
+    "exact_version_get_verified": true,
+    "members_verified": 888
+  },
+  "archive_member_inventory_sha256": "d57b540ee70f6a3a0507f61133bea4965754a44613c3aede6b108d03617e1a95"
+}

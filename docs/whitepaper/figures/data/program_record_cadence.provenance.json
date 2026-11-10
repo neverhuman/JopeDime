@@ -1,0 +1,30 @@
+{
+  "schema": "whitepaper.program-record-cadence-figure/v1",
+  "csv_sha256": "c7566b5b64c2177e25196cc1c2326cde47a149806397a642b64c565fea7e4278",
+  "source_receipt_sha256": "4ee99e0fdc7f6bde7ab7b776ff667da0de05e805305b336b66925b20e3959c01",
+  "generator_sha256": "4ec2d3a6f99d65c1a4ec4789688c02086cc6f2cc14ffd7e2c2ebc9f36e21b040",
+  "figure_sha256": "675bdc274dc110f042bb4ccf922639c1fabe01e6cca18b5ff67e9257ac2874c9",
+  "input_records": 3364,
+  "plotted_intervals": 3363,
+  "round_window": [
+    775,
+    4561
+  ],
+  "minimum_interval_seconds": "0.031389",
+  "maximum_interval_seconds": "5413.157948",
+  "logarithmic_axis": true,
+  "connected_data_lines": false,
+  "smoothing": false,
+  "filtering": false,
+  "scope": "Recorded training-program journal cadence including work, waits and batched writes. Not attempted-proposal runtime, adapter admission, uptime, deployment throughput, independent learning or a speed comparison. Exact installed source/adapter/evaluation binding remains unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "figure_inches": [
+    3.375,
+    1.35
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_program_record_cadence.py"
+}

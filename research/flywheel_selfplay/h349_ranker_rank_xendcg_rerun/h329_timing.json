@@ -1,0 +1,37 @@
+{
+ "utc": "2026-11-04T18:07:39.923315+00:00",
+ "kind": "SYNTHETIC_TIMING_ONLY",
+ "synthetic_ranker_fits": 6,
+ "campaign_cells_fitted": 0,
+ "BASE_refits": 0,
+ "data_rng": 329000,
+ "shape": [
+  4096,
+  568
+ ],
+ "groups": 512,
+ "rounds": 200,
+ "learning_rate": 0.05,
+ "fixed_pairs": [
+  {
+   "GBDT": 2.4042165620194282,
+   "DART": 2.616732063004747,
+   "seed": 329001,
+   "ratio": 1.088392827976701
+  },
+  {
+   "DART": 2.519605673995102,
+   "GBDT": 2.436658366001211,
+   "seed": 329002,
+   "ratio": 1.0340414188346048
+  },
+  {
+   "GBDT": 2.5926205029827543,
+   "DART": 2.5553743899799883,
+   "seed": 329003,
+   "ratio": 0.9856337967859488
+  }
+ ],
+ "forecast_multiplier": 1.088392827976701,
+ "selection": "worst of3 paired fixed-seed ratios; no parameter tuning"
+}

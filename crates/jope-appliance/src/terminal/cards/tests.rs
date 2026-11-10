@@ -2,7 +2,7 @@ use super::*;
 use jope_api::{
     ids::{AlgorithmId, ArtifactId, RunId},
     AlgorithmAcceptedBody, BestAlgorithm, BudgetUsed, EventBody, ExportCompletedBody, FinalScores,
-    Nondeterminism, Plan, PublicEvent, RunFinishedBody,
+    Nondeterminism, ParityStatus, Plan, PublicEvent, RunFinishedBody,
 };
 
 fn test_event(sequence: u64, seconds: u8, body: EventBody) -> PublicEvent {
@@ -286,11 +286,12 @@ fn golden_80() -> Vec<String> {
         "⚠ Warning raised GPU_FALLBACK · GPU unavailable; continuing on CPU".to_owned(),
         "✓ Warning cleared GPU_FALLBACK · GPU unavailable; continuing on CPU".to_owned(),
         "   Thinking Testing a log transform on skewed income features…".to_owned(),
-        "✓ Export art_0123456789abcdef01234567 · source · python, rust · parity passed".to_owned(),
+        "✓ Export art_0123456789abcdef01234567 · source · python, rust · parity passed:".to_owned(),
+        "         the export matched the engine on this release's qualified check".to_owned(),
         "· 2 experiments in the last 10 s, no improvement".to_owned(),
-        "✓ Run finished held-out RMSE 0.503 · CV 0.487 · test 0.512 · champion alg_0007 ·"
+        "✓ Run finished held-out RMSE 0.503 · CV 0.487 · test 0.512 · champion log-scaled"
             .to_owned(),
-        "               converged".to_owned(),
+        "               income, deeper trees (alg_0007) · converged".to_owned(),
     ]
 }
 
@@ -310,9 +311,11 @@ fn golden_120() -> Vec<String> {
             "⚠ Warning raised GPU_FALLBACK · GPU unavailable; continuing on CPU".to_owned(),
             "✓ Warning cleared GPU_FALLBACK · GPU unavailable; continuing on CPU".to_owned(),
             "   Thinking Testing a log transform on skewed income features…".to_owned(),
-            "✓ Export art_0123456789abcdef01234567 · source · python, rust · parity passed".to_owned(),
+            "✓ Export art_0123456789abcdef01234567 · source · python, rust · parity passed: the export matched the engine on this".to_owned(),
+            "         release's qualified check".to_owned(),
             "· 2 experiments in the last 10 s, no improvement".to_owned(),
-            "✓ Run finished held-out RMSE 0.503 · CV 0.487 · test 0.512 · champion alg_0007 · converged".to_owned(),
+            "✓ Run finished held-out RMSE 0.503 · CV 0.487 · test 0.512 · champion log-scaled income, deeper trees (alg_0007) ·".to_owned(),
+            "               converged".to_owned(),
         ]
 }
 

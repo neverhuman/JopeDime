@@ -4,41 +4,41 @@
 % Historical reference specifications come from the supplied source notes.
 % Checkpoint acceptance and reference runtime receipts remain required.
 % Historical source notes are archived outside the paper tree.
-\section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
+\section{\texorpdfstring{\EZ{}}{EurekaZero}: A Design for Learning Taste}\label{sec:method}
 
-Search-scored lists supply the reference training targets for a writer
-and a separate ranking map. The proposed deployment protocol then freezes
-the writer and commits one proposal. The adapter record in
-\cref{sec:method-status} is a separate loop, with its own cost ledger
-(\cref{sec:price}) and evaluation.
+In the reference design, referee-scored lists define training targets for
+a program writer and a separate ranking map; proposed game day freezes
+the writer for one proposal. The inspected operating loop
+(\cref{sec:method-status}) instead updates an adapter that ranks rule-based GP proposals.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
-A frozen encoder reads the board (\cref{fig:network}); the reference writer
-emits a complete program under the contract in \cref{box:searchone}, as
-AlphaGo's policy proposed a move
-\citep{silver2016mastering}. The separate map enters training search
-through the routes described in \cref{sub:method-map}.
+The reference design's frozen encoder reads the problem board
+(\cref{fig:network}); its writer emits a complete program under the
+contract in \cref{box:searchone}, as AlphaGo's policy proposed a move
+\citep{silver2016mastering}. The separate ranking map enters training search
+only \mbox{through the routes} in \cref{sub:method-map}.
 
 \begin{figure*}[t]
+  \setlength{\abovecaptionskip}{4pt}
   \centering
   \includegraphics[width=\linewidth]{figures/fig5_network.pdf}
-  \caption{\textbf{Reference training updates the writer and map; game day uses the writer alone.}
-  Top: game day, the whole of \searchone{}. Dashed box: proposed training.
-  Search extends the writer's drafts; referee-scored lists supply objectives
+  \caption{\textbf{Proposed training updates the writer and map; game day uses the writer alone.}
+  Top: proposed \searchone{} game day. Dashed box: proposed training; the 27.8M historical checkpoint was trained offline (\cref{app:training}).
+  Search extends the writer's drafts; referee-scored lists supply training objectives
   for the writer ($\theta$) and map ($\psi$). Stillborn programs enter no list.}
   \label{fig:network}
 \end{figure*}
 
 \subsection{Reading the board}\label{sub:method-board}
 
-The reference regression encoder turns the board of \cref{sec:game}
-into \num{2048} numbers, $z_p=\encP(p)$, in three blocks.
-The first summarizes a pretrained row encoder's embeddings across rows,
-independent of row order (512 values). The second projects the hidden
-state of a pretrained third-party tabular regressor that reads the training
-rows and labels (\num{1024}; third-party provenance pending; restricted; redistribution prohibited). The third summarizes two 32-element windows of training targets scaled
-to $[0,1]$ (512 values; constant targets map to zero).
+The reference regression encoder maps the board (\cref{sec:game}) to
+\num{2048} numbers, $z_p=\encP(p)$, in three blocks: a row-order-independent
+summary of pretrained row embeddings (512 values); a projected hidden
+state from a pretrained third-party tabular regressor reading training
+rows and labels (\num{1024}; third-party provenance pending; restricted; redistribution prohibited);
+and a summary of two 32-element training-target windows scaled to $[0,1]$
+(512 values; constant targets map to~zero).
 
 Preparation caps the combined tabular splits at \num{50000} rows. Encoder
 inputs remain training-side only: the regressor block samples at most
@@ -46,39 +46,40 @@ inputs remain training-side only: the regressor block samples at most
 meta-training cohort moments standardize each component block before
 concatenation and elementwise clipping to $[-32,32]$.
 
-The reference encoder is pinned by hash and stays fixed during writer
-training. Encoding is bounded at 30\,s per problem. A context with any non-finite value is refused
-rather than imputed (\cref{app:training}). The input contract permits
-training-side task evidence only; final held-out labels and their derived
-statistics must stay outside the input closure. A context's recorded
-declaration that no final target was used establishes neither input closure
-nor numerical qualification. CPU contexts require native replay and bounded-execution receipts before accepted-policy use.
+The reference encoder is fixed and hash-pinned during writer training.
+Encoding has a 30\,s cap per problem; non-finite contexts are refused,
+not imputed (\cref{app:training}). Final held-out labels and derived
+statistics must stay outside its training-side input closure. Declared
+non-use of final targets establishes neither closure nor numerical
+qualification. Accepted-policy use of CPU contexts requires replay in the native (Rust) implementation
+and bounded-execution \mbox{receipts}.
 
-Whether problems with similar best programs sit together requires a
-separate representation study; \cref{sub:results-ablation} reserves that test.
+Whether similar best programs imply nearby problems needs a separate
+representation study, reserved in \mbox{\cref{sub:results-ablation}}.
 
 \subsection{Describing the move}\label{sub:method-move}
 
 A move is one program in the typed language of \cref{sec:game}, with a
 401-token training inventory listing 31 transforms and 22 prediction heads; the product runtime restricts executable heads.
-The writer emits a flat operator-and-slot token stream with a fixed
-beginning, engine and regression-task header, rather than parenthesis
-tokens or the \texttt{pipe} wrapper. Its nine-phase grammar mask permits
+The reference writer emits a flat operator-and-slot stream with fixed
+start, engine and regression-task tokens: no reasoning or parenthesis
+tokens or \texttt{pipe} wrapper. Its nine-phase grammar mask permits
 up to six transform stages and three expression stages; each expression
 tree is bounded at depth four and 15 nodes
 \citep{kusner2017grammar,dai2018sdvae}. After the end token, detokenization
-renders a parenthesized program that must parse before entering the pool.
-The mask has no remaining-token-budget check: a draw without an end token
-at the 128-token horizon, including the fixed header, is incomplete and
-discarded. Grammar legality does not establish successful execution or
-useful quality. The proposal
-pool removes exact decoded-string duplicates and records their SHA-256.
-The executor also records canonical recipe hashes. Probe-based behavior
-matching is a separate audit, not part of pool deduplication. Without probe
-evidence, this behavior check reports novelty as unknown. Readable Python
-and Rust exports are a reference requirement. Legacy recipe emitters reject
-the synthesized input stage; the separate fitted-state path is allowlisted.
-Reported winners still require the parity check in \cref{sub:method-referee}.
+renders a parenthesized program; it must parse to enter the pool.
+The mask does not check remaining token budget: a draw without an end token
+at the 128-token horizon, including the fixed header, is discarded as
+incomplete. Grammar legality guarantees neither successful execution nor
+program quality.
+
+The pool removes exact decoded-string duplicates and records
+their SHA-256; the executor records canonical recipe hashes. Probe-based
+behavior matching is audited separately from pool deduplication; without
+probe evidence, behavioral novelty is unknown. Readable Python and Rust exports are a reference requirement.
+Legacy recipe emitters reject the synthesized input stage; the separate
+fitted-state path is allowlisted. Reported winners still require the parity
+check in \cref{sub:method-referee}.
 
 \subsection{One map for problems and programs}\label{sub:method-map}
 
@@ -86,31 +87,29 @@ The reference map ranks programs within a problem by decreasing logit.
 It reads a program as $z_w=\encS(w)$, the layer-normalized mean of
 non-padding token embeddings, including \texttt{BOS}, the fixed engine and
 task header, and \texttt{EOS}. Pooling discards token order, limiting its
-ability to distinguish compositions built from the same tokens.
+ability to distinguish \mbox{compositions} built from the same tokens.
 
 The map's own two-layer context network projects the \num{2048}-value $z_p$
-to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
-as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$ and
-$|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
-Four two-layer heads receive this same \num{1536}-value interaction vector;
-their mean gives the ranking logit $\mapv(z_p,z_w)$.
-The reference ranking losses supervise that mean jointly, without separate
-targets or bootstrap samples. Training applies dropout of 0.05 in each
-ranking head. The runtime head instead reads $[r_z,z_w]$, while the
-program-only control reads $z_w$.
+to $e_z\in\mathbb{R}^{512}$. Three 512-value blocks form the interaction:
+$z_w$ as is, $z_w\odot\tanh(W_\gamma e_z+b_\gamma)$ and
+$|z_w-(W_{\mathrm{proj}}e_z+b_{\mathrm{proj}})|$.
+Four two-layer heads read this \num{1536}-value vector; their mean is the
+ranking logit $\mapv(z_p,z_w)$. Reference ranking losses supervise the mean
+jointly, without separate targets or bootstrap samples. Each ranking head
+uses dropout of 0.05 during training. The runtime head reads $[e_z,z_w]$;
+the program-only control reads $z_w$.
 
-The score is not a calibrated error estimate. Comparing its magnitude across problems or reading it as a
-probability of a verified win requires separate evidence. The referee
-still establishes validity and measures performance.
+The logit is uncalibrated: cross-problem comparisons, error estimates and
+verified-win probabilities need separate evidence. The referee, not the map,
+establishes validity and measures performance.
 
-The map's training objective uses scored lists $G_p$ for problem $p$;
-$\rho_w\in[0,1]$ is a program's percentile, 1 for the best.
-Native training requires at least eight scored programs in a source list
-and samples eight per comparison: its champion and seven
-quantile-stratified comparators. The lower-level listwise loss accepts
-groups of at least three with finite percentile targets
-(\cref{app:training}). The list-level form trains the map's softmax toward
-a target concentrated on the best
+Map training uses scored lists $G_p$ for problem $p$, with percentile
+$\rho_w\in[0,1]$: 1 denotes the best. Native training requires at least
+eight scored programs per source list and samples eight per comparison:
+the champion and seven quantile-stratified comparators. The lower-level
+listwise loss accepts groups of at least three with finite percentile
+targets (\cref{app:training}). The list-level form trains the map's softmax
+toward a target concentrated on the best
 \citep{cao2007listnet}:
 \begin{equation}
   \mathcal{L}_{\mathrm{map}}(p)=-\sum_{w\in G_p}
@@ -118,15 +117,14 @@ a target concentrated on the best
   \log\frac{e^{\mapv(z_p,z_w)}}{\sum_{u\in G_p}e^{\mapv(z_p,z_u)}},
   \label{eq:mapLoss}
 \end{equation}
-with native target temperature $\tau=0.25$. Temperature scales the target
-percentiles; the mean ranking logits enter the prediction softmax unscaled.
-With a unique best program, the low-temperature limit concentrates the target on that program. This is a listwise ranking
-objective over programs scored on the same problem; the analogy to
-contrastive learning \citep{oord2018cpc,radford2021clip} does not establish
-CLIP-style alignment across problems and programs.
-A Bradley--Terry term adds pairwise comparisons on the same lists
-\citep{bradley1952rank}. Stillborn moves have no score, so this ranking
-objective covers only programs that run.
+with native target temperature $\tau=0.25$. Target percentiles are scaled;
+mean ranking logits enter the prediction softmax unscaled. A unique best
+program receives all target mass in the low-temperature limit. This
+within-problem listwise ranking objective does not establish CLIP-style
+alignment across problems and programs; contrastive learning
+\citep{oord2018cpc,radford2021clip} is an analogy. A Bradley--Terry term
+compares pairs on the same lists \citep{bradley1952rank}. Stillborn moves
+have no score, so the objective covers only programs that run.
 
 The program-only head controls for ranking without problem context
 (\cref{sub:results-ablation}). Ranking valid scored programs alone does not
@@ -134,34 +132,23 @@ test the validity rate $q_{\mathrm{run}}$ in \cref{sub:price-bill}.
 
 \begin{keyidea}
 The reference game-day protocol omits the ranking map. Matched first
-proposals test whether training improved the writer.
+proposals therefore test whether training improved the program writer.
 \end{keyidea}
 
-In the reference native implementation, the writer and map use separate context
-networks and token embeddings. The map ranks drafts without dropping them
-or screening the writer. One native GP route matches map-derived weights
-by program identity to ranked survivors for parent selection. The bounded
-search driver instead cycles among up to four parents chosen by measured
-loss. These are different influence paths, not evidence of trained-map lift;
-an evaluation must bind the route it used.
+The native reference writer and map use separate context networks and
+token embeddings. Ranking neither drops drafts nor screens the writer.
+One native GP route assigns map-derived parent weights to ranked
+survivors by program identity; the bounded driver cycles among up to
+four parents chosen by measured loss. Neither establishes trained-map
+lift; \mbox{evaluation must} bind the exact search route.
 
-Only the 64 neural or fallback seeds receive normalized rank weights;
-the 16 tail seeds enter unscored. Unscored survivors share the lowest
-scored survivor weight while scored survivors remain.
-A cut identifies a fixed dataset split and evaluation case. Native
-assembly takes up to ten same-cut teachers, then cross-cut teachers
-up to a 16-seed tail. Random fallbacks fill to ten slots if needed; random
-exploration fills the remaining slots. The standalone seed writer instead
-uses 16 random programs. Teacher-first execution prioritizes retained cut
-teachers; \cref{alg:selfplay} leaves the tail route-dependent.
-Search-parent weights and writer-loss weights act at different stages;
-the latter use referee rank. Whether map-guided targets improve later
-proposals requires the matched ablation in \cref{sub:results-ablation}.
-The historical diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
-do not supply that comparison.
+Search-parent weights govern search; writer-loss weights use referee rank
+in training. Whether map-guided targets improve later proposals needs
+the matched ablation in \cref{sub:results-ablation}, not the historical
+diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}.
 
-In the proposed offline loop, referee-scored search outcomes supply
-training targets.
+\Cref{sub:method-selfplay} takes these referee-scored lists as proposed
+offline \mbox{training} targets.
 
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
@@ -172,8 +159,8 @@ training targets.
 \Require training problems; serving writer $\writer$ and map $\mapv$; incumbents $\inc{p}$
 \For{each round}
   \For{each sampled training problem $p$}
-    \State $z_p \gets \encP(p)$; keep the first 64 distinct valid draws from $\writer(\cdot\mid z_p)$ \Comment{$T=1$; bounded fallback if short}
-    \State verified search, seeded with the 64 drafts and 16 tail seeds (teachers/fallbacks and random exploration), proposes more programs \Comment{the teacher}
+    \State $z_p \gets \encP(p)$; keep the first 64 distinct parseable draws from $\writer(\cdot\mid z_p)$ \Comment{$T=1$; bounded fallback if short}
+    \LongState{verified search, seeded with the 64 drafts and 16 tail seeds (teachers/fallbacks and random exploration), \mbox{proposes more programs}}{search as teacher}
     \State $\referee$ fits and scores each distinct program on 5 inner folds \Comment{stillborn: no score}
     \State \textbf{if} a program strictly beats $\inc{p}$ \textbf{then} it becomes $\inc{p}$ \Comment{board ratchet}
     \State add every scored program to the list $G_p$ \Comment{winners and also-rans}
@@ -184,17 +171,28 @@ training targets.
 \end{algorithmic}
 \end{algorithm*}
 
-The native proposal sampler seeks 64 distinct parseable programs at $T=1$,
-scheduling at most eight batches of 128 neural draws (\num{1024} total).
-To fill a shortfall, it tries up to \num{10000} seeded random canonical
-pipelines and projects them through the grammar. It refuses an incomplete
-pool. These are training-search budgets, separate from the one-draw
+\Cref{alg:selfplay} alternates verified search with training: writer
+drafts seed the search, the referee scores what it finds, and the scored
+lists train a challenger.
+The native proposal sampler seeks 64 distinct parseable programs at $T=1$
+in at most eight batches of 128 neural draws (\num{1024} total). A shortfall
+triggers up to \num{10000} seeded random canonical pipelines projected
+through the grammar; an incomplete candidate pool is refused. These
+training-search budgets are separate from the \mbox{single-draw game-day}
 protocol in \cref{sub:method-gameday}.
 
-The reference rule is expert iteration \citep{anthony2017expert}.
-The writer term weights sampled programs from $G_p$ by referee rank;
-it joins the map and auxiliary terms in the combined objective
-(\cref{app:training}):
+Only the 64 neural or fallback seeds receive normalized rank weights;
+the 16 tail seeds are unscored. Unscored survivors inherit the lowest
+scored weight while any scored remain.
+A \emph{cut} fixes a dataset split and evaluation case; \emph{teachers} are programs retained from earlier searches. Native assembly's 16-seed
+tail takes up to ten same-cut teachers, then cross-cut teachers; random
+fallbacks fill to ten, random exploration the rest. Standalone seeding uses
+16 random programs. Teacher-first execution prioritizes retained cut teachers;
+\cref{alg:selfplay} leaves the tail route-dependent.
+
+The reference design uses expert iteration \citep{anthony2017expert},
+combining a writer loss weighted by referee rank on $G_p$ with map and
+auxiliary losses (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\mathrm{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\
@@ -203,10 +201,10 @@ it joins the map and auxiliary terms in the combined objective
   &\quad + 0.1\,\mathcal{L}_{\mathrm{runtime}} + 0.05\,\mathcal{L}_{\mathrm{prog}}.
   \label{eq:totalLoss}
 \end{align}
-The writer loss in \cref{eq:writerLoss} is schematic: it displays the rank
-weights. The native implementation also smooths grammar-legal targets,
-averages token losses within each program and normalizes by the sum of
-program weights (\cref{app:training}).
+\Cref{eq:writerLoss} is schematic: it shows referee-rank weights. The native
+loss also smooths grammar-legal token targets, averages token losses per
+sampled program and normalizes by total \mbox{program weights}
+(\cref{app:training}).
 
 Here $\mathcal{L}_{\mathrm{BT}}$ is a Bradley--Terry loss on the same lists,
 $\mathcal{L}_{\mathrm{runtime}}$ a Huber loss between $\ln(1+s)$ and
@@ -217,30 +215,27 @@ A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's
 ranking targets.
 
-The reference procedure uses two ratchets (\cref{sub:game-referee}). A program
-displaces a board's incumbent only by strictly beating it. The proposed
-reference admission test calls for 16 held-out cuts with three seeds
-each. A challenger may replace the serving writer
-only if its mean log error ratio favors it. It must also win at least as
-many cuts as it loses and fail no more often.
+The reference has two ratchets (\cref{sub:game-referee}): a program must
+strictly beat the board's incumbent; proposed writer admission uses 16
+held-out cuts with three seeds each. A challenger must have a favorable
+mean log error ratio, win at least as many cuts as it loses and fail no
+more often to replace the serving writer.
 %
-The admission cases are fixed before the test. For each cut, the rule takes the natural log of paired best-error ratios
-(challenger divided by serving) and averages over matched seeds; it then
-averages across cuts. Negative values favor the challenger. This admission
-comparison is separate from the single-program comparison in
-\cref{sub:results-learning}.
+The admission cases are fixed before testing. For each cut, take the natural
+log of paired best-error ratios (challenger divided by serving), average
+over matched seeds, then average across cuts. Negative values favor the
+challenger. This admission test remains separate from the single-program
+comparison in \cref{sub:results-learning}.
 
-\paragraph{The historical reference.} The reference model combines a decoder-only writer with separate
-ranking and auxiliary heads. \Cref{app:training} records the architecture,
-registered capacity, token allocation and training corpus in one inventory.
+\paragraph{The historical reference.} Its decoder-only writer is separate
+from the ranking and auxiliary heads. \Cref{app:training} inventories the
+architecture, registered capacity, token allocation and training corpus.
 
-These specifications do not supply the checkpoint's acceptance evidence or
-qualify its runtime. Both records remain inputs to the evaluation contract
-(\cref{sub:results-protocol}). The historical reference checkpoint is
-scoped to tabular regression. Its native training entry point enforces a
-dispatch hold. Numerical parity of the CPU float32 Candle port
-with the native CUDA BF16 tch runtime remains unqualified; random streams
-and uniform-token fallback differ.
+Architecture specifications do not qualify a checkpoint or runtime
+(\cref{sub:results-protocol}). The historical reference covers tabular
+regression only; native training currently refuses numerical dispatch.
+CPU float32 (Candle) and GPU BF16 (tch) inference are not yet shown to agree numerically; random streams and uniform-token fallback differ.
+This record does not establish that \Cref{alg:selfplay}'s proposed player-admission ratchet has run.
 
 
 
@@ -250,29 +245,30 @@ Reliable training targets require a referee that resists exploitation.
 In February 2025 Sakana AI walked back
 claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana2025walkback}. In June
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
-\num{1968} agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}.
+\num{1968} agent-benchmark tasks \mbox{can be passed} without being solved \citep{zhong2026hackerfixer}.
 
-The evaluation protocol must withstand such attacks. Selection,
-promotion and final scoring must use separate data (inner folds, held-out
-cuts, a final fold scored once), with sealed meta-test families outside the
-learner's inputs. The proposed comparisons also require sandboxed execution
-using seccomp and Landlock, with memory, swap and time limits. A
-planted label leak and a sealed canary must both be caught. Every reported
-winner must be re-run from its emitted code, with native and emitted
-predictions agreeing within
+The protocol must withstand such attacks. Selection, promotion and final
+scoring require separate data (inner folds, held-out cuts and a final fold
+scored once), with sealed meta-test families outside learner inputs. The
+proposed comparisons also require seccomp and Landlock sandboxing and
+memory, swap and time limits. Both a planted label leak and a sealed canary
+must be caught. Every reported winner must be re-run from emitted code,
+with native and emitted predictions agreeing within
 $10^{-9}\max(1,|\hat{y}|)$.
 
-One earlier leaderboard entry for our search selected each dataset's best
-test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as test selection (\cref{app:incidents}).
+One earlier leaderboard entry for our search used test scores on all 45 of its
+datasets. On 42 it took each dataset's best test-scored outcome from a ledger of
+\num{63108} evaluations; on the other three it took programs accepted by a
+test-adaptive run. We exclude all 45 rows as test selection (\cref{app:incidents}).
 
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
 
 The proposed game-day protocol fixes the components and seed before one
 regression draw, retaining failures and all incurred costs
-(\cref{alg:gameday,box:searchone}). \Cref{sub:results-learning} compares that
-draw with a frozen reference under matched conditions.
+(\cref{alg:gameday,box:searchone}). \Cref{sub:results-learning} reserves the
+matched comparison with a frozen control writer.
 
-\begin{algorithm}[tb]
+\begin{algorithm}[!htb]
 \caption{\textbf{Proposed game-day protocol (\searchone).}}\label{alg:gameday}
 \begin{algorithmic}[1]
 \Require new regression problem $p$ with training rows and metric; frozen $\encP$ and $\writer$
@@ -285,5 +281,5 @@ draw with a frozen reference under matched conditions.
 \end{algorithm}
 
 Report later search separately, as \citet{silver2017mastering} reported
-AlphaGo Zero's raw network apart from its search (\cref{sec:method-status}).
+AlphaGo Zero's raw policy network apart \mbox{from its lookahead} search (\cref{sub:results-search}).
 \input{sections/06_method/flywheel_status}

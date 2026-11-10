@@ -19,6 +19,8 @@ env:
   CARGO_BUILD_JOBS: "4"
   CARGO_INCREMENTAL: "0"
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  # Condense passing gp-emitter-determinism runs to a hash manifest; failures stay whole (#2158).
+  JOPE_GP_EMITTER_RETAIN: failures
   JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
   BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
@@ -253,7 +255,7 @@ jobs:
     timeout-minutes: 45
     # Three deterministic nextest slices of the unchanged selection, one per native jope-ci runner
     # lane (xbabe1-ci2, xbabe2-ci, xbabe2-full). All always finish so every failure is
-    # reported; the aggregate job proves (check_test_partition.py) that the slices select and
+    # reported; the aggregate job proves (jope-ci test-partition) that the slices select and
     # execute the unsharded rust-test set exactly once between them.
     strategy:
       fail-fast: false
@@ -499,6 +501,9 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      # aggregate.py and the slice proof run `jope-ci test-partition`, built in this lane's target.
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
       - name: Require the current-source Jankurai audit
@@ -714,7 +719,7 @@ jobs:
           set -euo pipefail
           output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           mkdir -p "$output"
-          python3 deploy/ci/check_test_partition.py rust-shards --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --output "$output/rust-test-partition.json"
+          cargo run -q --locked -p jope-ci -- test-partition rust-shards --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --output "$output/rust-test-partition.json"
       - name: Upload aggregate inventory
         if: always()
         uses: ./.github/actions/upload-ci-evidence

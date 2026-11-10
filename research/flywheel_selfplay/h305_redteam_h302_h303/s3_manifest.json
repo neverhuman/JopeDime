@@ -1,0 +1,17 @@
+{
+  "evidence": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/h305_evidence.tar.gz",
+    "version_id": "msfob314CaZPinXSrZwkIeQEy7k8wj9.",
+    "sha256": "8fd13d825b08e97d075bf820911b939d4df7f94f8c04b46b9ab8925cb04920a4",
+    "bytes": 3883415,
+    "exact_version_get_verified": true,
+    "members_verified": 162
+  },
+  "manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/manifest.json",
+    "version_id": "kojW.cT0v3dqqXcvjw1HvfKt0SwJcs5U",
+    "sha256": "c6855afdf0fa62285f0b54cccf685985a2a7659a64b71701bb83633b21f17d12",
+    "bytes": 7111,
+    "exact_version_get_verified": true
+  }
+}

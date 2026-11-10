@@ -34,13 +34,35 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/10_city_power_realtime_dispatch/20261103T130731Z-smoke",
+    "observations_sha256": "291700dccb8e026498fab7d4f3cf4d90464fb6272ce5f20f8d25703caaabe30b",
+    "target_sigma": 0.186662,
+    "medians": {
+      "fit_cpu_seconds": 0.22399495199999997,
+      "fit_peak_heap_bytes": 11386212.0,
+      "fit_seconds": 0.223818121,
+      "hold_rows": 1627.0,
+      "model_bytes": 708775.0,
+      "predict_peak_heap_bytes": 1900336.0,
+      "predict_rows_per_second": 308189.9344068774,
+      "predict_seconds": 0.005879317,
+      "predict_us_per_row": 3.6135937307928705,
+      "program_nodes": 4.0,
+      "row_latency_p50_us": 8.005,
+      "row_latency_p99_us": 12.744,
+      "stage_count": 4.0,
+      "train_rows": 6373.0,
+      "mae": 0.055988483913458315,
+      "candidates": 28
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +85,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -95,5 +122,11 @@
         }
       }
     ]
-  }
+  },
+  "temporal_risk": "HIGH",
+  "comparability": [
+    "Baselines' one-row latency is Python-served; the native-serving proxy table credits them with batch us/row",
+    "Time-ordered sensor data + random folds"
+  ],
+  "target_leakage_risk": "LOW"
 }

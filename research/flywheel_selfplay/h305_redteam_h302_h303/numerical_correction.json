@@ -1,0 +1,14 @@
+{
+  "utc": "2026-11-04T06:20:18.394583+00:00",
+  "issue": "Advanced indexing changes C/F layout, giving differently ordered floating point reductions of identical observed/permuted values.",
+  "reproducer": "test_audit.AuditTests.test_permutation_constant_vectors_with_roundoff",
+  "before": "20 identical null values incorrectly gave p=1/21; observed and null differed by ~1e-16",
+  "fix": "One statistic function with explicit contiguous memory for both identity and permuted picks; no tolerance or scientific rule change.",
+  "after": "12 tests PASS; constant null p=1",
+  "phase": "After H302 outcome; before any H303 outcome inspected. Initial H302 p=1/1001 remains unchanged on corrected rerun.",
+  "preserved_failed_receipts": [
+    "permutation-roundoff-repro.stdout",
+    "permutation-roundoff-fixed.stdout"
+  ],
+  "passed_receipt": "permutation-layout-fixed.stdout"
+}

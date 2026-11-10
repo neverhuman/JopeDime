@@ -1,0 +1,7 @@
+{
+  "wave": "H347",
+  "L1": 0.5,
+  "BASE_expected_lambda_l1": 0.0,
+  "BASE_expected_min_sum_hessian_in_leaf": 0.001,
+  "calibration_fits": 0
+}

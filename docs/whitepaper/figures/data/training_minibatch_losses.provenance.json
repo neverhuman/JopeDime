@@ -1,0 +1,29 @@
+{
+  "schema": "whitepaper.training-minibatch-losses-figure/v1",
+  "csv_sha256": "8d41ed6fca6c0062a5ec0a259174ee4a75ed2710aa790342555ef61ae6a08b31",
+  "source_receipt_sha256": "ca08a5b03b375a44c917ff705ad8e04b091e6cdfef44d41c2445ac1920ab8a31",
+  "source_prefix_sha256": "da51525d51c060265e7e0f5b22a886f40baf464aa8fb4552556fa372225b5e49",
+  "generator_sha256": "ddab56be72cde11e853858caf4eaaafd157425c54e798658686bf23f4cc90d47",
+  "figure_sha256": "fba49e68e363302c5acda065f771cf8df67d5dcbb8742c015067a4e03672d843",
+  "records": 46,
+  "points": 92,
+  "round_window": [
+    4812,
+    4857
+  ],
+  "accepted": 0,
+  "minimum_loss": "3.768993854522705",
+  "maximum_loss": "3.8845138549804688",
+  "transformation": "Two unsmoothed markers per complete retained summary; first and last logged training-minibatch objectives copied exactly. No value/outcome filtering, interpolation or cumulative envelope.",
+  "scope": "Candidate adapter training-minibatch losses before each corresponding optimizer update. Different batches prevent a matched before/after loss comparison. Neither retained learning nor writer/ranking-map improvement or independent evaluation is established; exact runtime binding remains unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "figure_inches": [
+    3.375,
+    1.75
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_training_minibatch_losses.py"
+}

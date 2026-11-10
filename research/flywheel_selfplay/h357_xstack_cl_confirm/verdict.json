@@ -1,0 +1,142 @@
+{
+ "adoption_secondary": {
+  "ci95": [
+   -0.005607173609628377,
+   0.010876735556004323
+  ],
+  "contexts": 194,
+  "drop_top_1": 0.0033945688054185354,
+  "drop_top_10": 4.397289393960794e-05,
+  "drop_top_3": 0.002343381670065429,
+  "drop_top_5": 0.0016374108018527443,
+  "families": 194,
+  "gain_family_mean": 0.004028501619488438,
+  "gain_family_median": 0.0017388137802794024,
+  "gate": {
+   "checks": {
+    "harm_le_10pct": true,
+    "lcb_gt_margin": false,
+    "lofo_min_gt_0": true,
+    "median_ge_0": true,
+    "signflip_p_lt_alpha": false
+   },
+   "pass": false,
+   "signflip_alpha": 0.025,
+   "signflip_p_used": 0.21297870212978703
+  },
+  "harmed_share_gt_0p01": 0.06701030927835051,
+  "lcb95": -0.005607173609628377,
+  "lofo_min_gain": 0.0033945688054185363,
+  "signflip_p_one_sided": 0.21297870212978703,
+  "wtl": [
+   123,
+   19,
+   52
+  ]
+ },
+ "arm": "X_CL",
+ "context_deltas": {
+  "lt_minus_0p05": 4,
+  "max": 0.1263775347349796,
+  "min": -0.6954167072713275
+ },
+ "contexts": 194,
+ "elo": {
+  "anchor": "h357.X0",
+  "contexts": 194,
+  "elo": {
+   "h357.X0": {
+    "ci95": [
+     1500.0,
+     1500.0
+    ],
+    "elo": 1500.0
+   },
+   "h357.X_CL": {
+    "ci95": [
+     1555.8485892207882,
+     1608.2422456724232
+    ],
+    "elo": 1581.6426563850794
+   },
+   "lib.catboost.v1": {
+    "ci95": [
+     1260.917286290957,
+     1380.9155383590735
+    ],
+    "elo": 1324.3246540718285
+   },
+   "lib.lightgbm.v1": {
+    "ci95": [
+     1058.0477444999237,
+     1195.8831817012112
+    ],
+    "elo": 1132.3469619774469
+   },
+   "lib.random_forest.v1": {
+    "ci95": [
+     1138.2781091396441,
+     1261.6874718588733
+    ],
+    "elo": 1204.9919519485638
+   },
+   "lib.xgboost.v1": {
+    "ci95": [
+     1144.6690467942635,
+     1276.2015212619115
+    ],
+    "elo": 1215.147501299771
+   }
+  },
+  "families": 194
+ },
+ "families": 194,
+ "family_mean_u": {
+  "X0": 1.8915518101014257,
+  "X_CL": 1.8955803117209142
+ },
+ "headline": {
+  "context_mean_gain": 0.004028501619488437,
+  "context_wtl": [
+   123,
+   19,
+   52
+  ],
+  "families_lost": 52,
+  "families_tied": 19,
+  "families_won": 123,
+  "family_mean_gain": 0.004028501619488438,
+  "family_median_gain": 0.0017388137802794024,
+  "n_families": 194,
+  "pct_rmse_reduction": 0.0040203980921823534
+ },
+ "library": [
+  "catboost.v1",
+  "lightgbm.v1",
+  "xgboost.v1",
+  "random_forest.v1"
+ ],
+ "library_weight": {
+  "mean": 0.12030839414849456,
+  "median": 0.0817113728155826,
+  "share_contexts_gt0": 0.979381443298969
+ },
+ "panel": "P201c",
+ "primary": {
+  "T_clipped_family_mean": 0.005035804234289096,
+  "clip": 0.5,
+  "contexts": 194,
+  "families": 194,
+  "families_lost": 52,
+  "families_tied": 19,
+  "families_won": 123,
+  "family_median": 0.0017388137802794024,
+  "inferior": false,
+  "lofo_min": 0.0044070906047518395,
+  "mirror_signflip_p": 0.925877571105957,
+  "pass": false,
+  "signflip_p": 0.07412242889404297
+ },
+ "verdict": "XSTACK_CL_NOT_CONFIRMED",
+ "wave": "H357"
+}

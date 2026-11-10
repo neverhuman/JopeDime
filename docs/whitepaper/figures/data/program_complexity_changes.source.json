@@ -1,0 +1,40 @@
+{
+  "schema": "whitepaper.program-complexity-changes-source/v1",
+  "source_file": "promotions.jsonl",
+  "captured_utc": "2026-11-04T18:01:20.017638+00:00",
+  "source_journal_sha256": "d7796fdd7c0dde19e1a23f34c28afc1b9aafa27b0792df746e9f9db01f8cd6c5",
+  "source_journal_bytes": 13426974,
+  "source_journal_records": 3711,
+  "source_line_window": [
+    183,
+    3711
+  ],
+  "selection_round_window": [
+    775,
+    5049
+  ],
+  "event_round_window": [
+    775,
+    5047
+  ],
+  "last_record_utc": "2026-11-04T11:13:46.792039+00:00",
+  "records": 3529,
+  "counts": {
+    "unmatched": 975,
+    "matched": 2554,
+    "same": 1162,
+    "fewer": 788,
+    "more": 604
+  },
+  "ambiguous_prior_counts": 0,
+  "csv_sha256": "5620da7c197f5e084567bf6007aa429c5f0bc56667378a12c3490d4c9e55fd94",
+  "selection": "All ordinary program-journal records in fixed rounds775..5049; no outcome, complexity or score filtering. All182earlier records are excluded from plotted counts but available for predecessor lookup.",
+  "matching": "Within each training context, retain highest earlier logged new_utility and all complexity counts tied at that value. Match only when it equals the current old_utility exactly and the prior count is unambiguous. Unmatched values stay missing, never zero.",
+  "complexity_measure": "Count of opening parentheses in logged program DSL; a representation count, not an independent quality metric.",
+  "change_definition": "prior_form_count - candidate_form_count; positive means fewer counted forms in the promoted program.",
+  "scope": "Adaptive training-program promotions, conditional on admission. Complexity changes do not measure predictive improvement, adapter retention or neural-writer/ranking-map learning. No attempt or throughput denominator is supplied.",
+  "source_binding": "Exact runtime, candidate-pool/input closure, normalization, checkpoint acceptance and independent first-proposal learning remain unqualified.",
+  "source_record_hash_encoding": "SHA256 of raw JSONL line including LF terminator",
+  "stable_reread": true,
+  "writer_restarted": false
+}

@@ -1,0 +1,6 @@
+x,y,label,anchor
+1.30361,0.0102803,ExtraTrees,south west
+1.70347,0.0100511,CatBoost-1000,north west
+2.06647,0.00945165,CatBoost,south west
+4.05745,0.0102149,RF,north west
+301.727,0.00878468,AutoGluon,south west

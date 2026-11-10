@@ -1,0 +1,69 @@
+"""Bind the one archive-derived value and all H392 science before treatment."""
+from pathlib import Path
+import ast,datetime,hashlib,json,sys,unittest
+P=Path(__file__).parent;S=P/'source';sys.path.insert(0,str(S));sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+value=json.loads((S/'hessian_value.json').read_text());assert value['status']=='PASS' and value['models']==12636 and value['calibration_fits']==0
+assert json.loads((P/'derive-unit-exit.json').read_text())['EXIT_STATUS']=='0'
+assert not (P/'runtime-source-manifest.json').exists(),'Freeze once, before admission or treatment'
+(S/'prep_guard_receipt.json').write_bytes((P/'derivation-guard-adaptation.json').read_bytes())
+loader=unittest.TestLoader();suite=loader.discover(str(S));count=suite.countTestCases();assert count>=89 and not loader.errors,loader.errors
+text=f'''# H392 — ranker curvature floor on H352 NL15
+
+Owner: sol_v1_hwv. Authority: /home/ubuntu/nudges/hw_t2030_hwv_h392_nl15_minhess.md.
+Compute ends 2026-11-06 at 00:45Z; close ends 01:00Z. This protocol and its one value must be published non-force to origin/v1/next before any treatment fit. H383 stays closed as L1A05_NOT_ADVANCED at ca89ada6b78bf91439118d2d330de4385a5bde15, with its original CLOSEOUT unchanged.
+
+## Hypothesis and fixed value
+
+Tiny summed LambdaRank Hessians can allow leaves that chase noisy few-pair pockets. Raising the leaf Hessian floor may improve robust family gain over H352 NL15. The only arm is MINHESS. The only ranker parameter changed is native min_sum_hessian_in_leaf, through its installed sklearn alias min_child_weight: **{value['baseline']} -> {value['value']}**.
+
+The value was computed exactly once, at {value['computed_utc']}, as the 25th percentile of every archived H352 NL15 ranker leaf_weight, using numpy.quantile(method='linear'), then Python format '.3g' converted to float. Raw Q25 is {value['raw_q25']!r}. Each leaf receives equal weight. Scope includes all {value['models']} rankers: 972 final models plus 11,664 inner models from 36 compressed inner archives, with {value['trees']} trees and {value['leaves']} leaves. BASE copies and every veto classifier are excluded. Read-only Booster(model_str).dump_model() supplied leaf_weight; no optimizer update, prediction, scoring, calibration, alternate value, or outcome-dependent selection occurred. The pooled little-endian float64 leaf sequence SHA is {value['pooled_leaf_weights_sha256']}. [hessian_value.json](hessian_value.json) pins the complete selection receipt and source archive versions. The full per-model SHA/tree/leaf inventory is retained in owned scratch and final custody.
+
+All observed archived ranker floors equal {value['baseline']}; the rounded value is strictly larger. A value at or below the baseline would close INCOMPLETE_SPEC_MISMATCH before treatment, without choosing another value. Archived models were available, so the authorized fallback calibration is unused (zero calibration fits).
+
+## Sole intervention and design
+
+MINHESS applies to both complete ranker fit functions, covering inner fits, final refits, and all eight bag rankers. The inverse removes only min_child_weight and restores the complete actual committed H352 ASTs at 02dfee2f7e0b8543324494dd4f99d074cd6b93b6. No seed keyword is added. All other H352 settings remain: leaves 15, depth 3, L2 1, L1 0, min_child_samples 20, row fraction 0.8, bagging frequency 1, column fraction 0.8, path_smooth 0, max_bin 255. Labels, default gains, LambdaRank, ndcg, sigmoid 1, truncation 8, eval_at 1/8, learning rates, round selection, all 18 configurations, feature/group construction, derived seed expressions, invalid sentinel -2, and tie rule 1e-4 remain unchanged. Veto classifiers retain their own L1 1/L2 2; all 108 final veto hashes must match BASE.
+
+Every actual optimizer fit is audited against every constructor/native field and the archived H352 constants and seed-derived trace. The only permitted native constant change is the ranker Hessian floor. Both roles use fresh raw-numpy Datasets at max_bin 255, without prebuilt/reference bins. Ordered per-tree depth and leaves are retained; depth 3 bounds actual ranker leaves to eight despite configured leaves 15. These diagnostics never change selection.
+
+P0/P1/P2 × roots 30001/30002/30003 × four family-disjoint outer folds gives 36 mandatory tasks and nine panels, over 1,219 TRAIN contexts and 205 families. Fit parents consume metadata only. Workers admit only outer-TRAIN pool files and declared TRAIN feature ranges, denying archived comparator outcomes and models. All 36 fit locks and parent directories must be fsynced and pass native, physical input, veto, and custody reviews before cold outer packets are read. Outer scoring is once per partition/fold/root. No partial scoring, cut cells, new roots, or fresh cohorts are allowed.
+
+## References and checks
+
+Fresh exact-Version BASE H316/H315 GETs verify whole hashes and selected members, then reproduce nine panels, 36 fold/root pick and lock hashes, and three exact partition medians. Fresh H352 manifest/27 parts verify all 2,691 members, then reproduce nine panels, 36 locks/scores, and raw family arrays. The full archived native trace proves H352 settings and seeds. Selected inputs, all 1,219 current TRAIN pools, r882 costs, and the four consumed TRAIN feature prefixes must match archived identities; protected mixed-cache tails stay excluded. No BASE or NL15 refit or new prediction is allowed. This remains historically exposed TRAIN evidence, without independent confirmation.
+
+{count} collected source/fixture tests must pass locally with zero failures or skips, including the full committed AST inverse, native defaults/alias and seed checks, exact percentile/rounding fixtures, physical outer-lock and poisoned-tail controls, veto identity, decision ties and root CIs, union admission, affinity priority order, and full-minute guard windows. Fixtures perform zero optimizer fits.
+
+## Metrics and decision
+
+Report family-equal mean and literal median gain with whole-family CIs; own-arm drop-best-1/5/10; LOFO minimum; W/T/L; harmed share (gain below -0.01); invalids, switches, configuration agreement, seed Jaccard; Elo and Elo CI. Elo reference is r882 slot0 DL-Train outer; r3175 TRAIN is unmeasured. The PRIMARY paired comparator is H352 NL15; BASE is secondary and adds no decision gate.
+
+Shared whole-family paired resamples use 10,000 draws and RNG 392191. Ordinary reporting keeps RNG 302150. Each arm drops its own best ten families. The paired median is over nine partition/root differences, with CI95 and one-sided LCB95; each root uses the median over its three partitions with the same paired CI procedure.
+
+ADVANCE requires all four gates: primary paired drop10 median at least +0.002 AND LCB95 strictly above zero; median full gain at least 90% of NL15; median harmed share no higher than NL15; strictly positive root paired medians on at least two of three roots. Ties never advance. A completed gate failure yields MINHESS_NOT_ADVANCED. Incomplete work retains UNKNOWN/null metrics and decision, never a partial numerical negative. Multiplicity across exploratory H348–H392 is uncorrected. An advance would require separately authorized one-shot dev91 confirmation outside H392. No speed or serving conclusion is made.
+
+## Admission, forecasts, guards, and custody
+
+CPU-only xbabe2, nice 19, numeric threads 1, MemoryMax 6 GiB, SwapMax 0, CPUQuota at most 800%. After prep and prereg, exactly one fresh five-second mpstat interval covers the union: primary cores 27–37 with SMT siblings 91–101, then fallback 12/13/14 with siblings 76/77/78. Admit the first at most eight pairs with both siblings at least 85% idle; require at least four and same-interval host CPU at most 70%. Bind all controller/worker threads to those cores. A miss closes INCOMPLETE_CPU_ADMISSION with no retry, restart, borrowed pool, or budget reset.
+
+At admission use H352 actual CPU 26189.516914 / (workers × 0.9) × 1.15 + 300 seconds. After the first completed task, forecast 35 × max(H352 CPU/36, actual task CPU) / (workers × 0.9) × 1.15 + 300, with zero credit for ongoing work. Both full-design forecasts must finish before 00:45Z Nov6; a miss closes INCOMPLETE_RUNTIME_FORECAST without cut cells, timing fits, or a reset.
+
+Stop only the owned unit if MemAvailable falls below 20 GiB, scratch exceeds 2 GB, host CPU exceeds 85% over a full 60-second window, load1 exceeds 108 on three consecutive 60-second samples, or the compute cutoff arrives. Exactly 85% CPU does not stop; load at/below 108 resets its streak. Root free space is telemetry. [prep_guard_receipt.json](prep_guard_receipt.json) preserves the early read-only derivation daemon's whitelist error and attachment of an external own-unit guard without restarting the calculation. That early interval is not retrospectively counted as fully guarded; one-core/nice19/math1/CPU100/6GiB/Swap0/fixed-deadline systemd limits remained enforced. The corrected guard is frozen before treatment; the error does not become a passing guard test or a scientific fit.
+
+Own scratch is /home/ubuntu/jope-data/h392-hwv, at most 2 GB. Create-only S3 prefix is experiments/rd_breakthrough_20261030/H392/hwv-20261105T203000Z/. Preparation/custody uses one core 12 with nice19/math1/CPU100/6GiB/Swap0 and owned-I/O backoff. Historical copies may be pruned only after own reference archive whole-object and every-member exact-Version verification. The same proof precedes inner raw/cache removal and final exact-file-set/SHA cleanup. Preserve native/Dataset/tree, models, locks, scoring, input, resource, admission, forecasts, derivation, failures, exits, tests, and source evidence. Models never enter Git.
+
+CI_FREEZE and BATCH_WINDOW require fresh-parent non-force origin/v1/next only, under V1_NEXT.lock, with source/README/metrics below 50 KB and one H392 row in each required index. A private index preserves canonical HEAD/index and foreign files. No PR, main, fastlane, hosted CI, FINDINGS change, new lane, GPU/qualification lock, forbidden host access, protected data, dev91, sealed/holdout/meta-test/DL-Test, foreign signals, or flywheel/writer/AUTORESTART mutation. DOPE c51a56d0 stays frozen and unloaded (CPU selection layer only). Closeout and explicit ownership release are mandatory by 01:00Z.
+'''
+(S/'PREREG.md').write_text(text)
+m=json.loads((S/'manifest.json').read_text());m.update(tests_required=count,min_child_weight=value['value'],min_sum_hessian_in_leaf=value['value'],baseline_min_sum_hessian_in_leaf=value['baseline'],parameter_selection_sha256=sha(S/'hessian_value.json'),calibration_fits=0,prereg_sha256=sha(S/'PREREG.md'))
+m['source_sha256']={p.name:sha(p) for p in S.iterdir() if p.is_file() and p.suffix in ('.py','.json','.md') and p.name!='manifest.json'};(S/'manifest.json').write_text(json.dumps(m,indent=2)+'\n')
+frozen={p.name:sha(p) for p in S.iterdir() if p.is_file() and p.suffix in ('.py','.md','.json')};(P/'runtime-source-manifest.json').write_text(json.dumps(frozen,indent=2)+'\n')
+import depth_patch as dp
+from test_depth import source
+groups={}
+for file,fun in [('topk.py','fit_ranker'),('bagged.py','fit_ranker_n')]:
+ old,new=dp.transform(source(file,fun));assert ast.dump(old,include_attributes=False)==ast.dump(dp.strip(new),include_attributes=False);groups[fun]=dict(H352_AST_sha256=hashlib.sha256(ast.dump(old,include_attributes=False).encode()).hexdigest(),treatment_AST_sha256=hashlib.sha256(ast.dump(new,include_attributes=False).encode()).hexdigest(),complete_inverse=True,sole_added_keyword='min_child_weight')
+(P/'science-equivalence.json').write_text(json.dumps(dict(status='PASS',name='H352_COMPLETE_AST_SINGLE_HESSIAN_DELTA',groups=groups,parameter_value=value['value'],native_parameter='min_sum_hessian_in_leaf',frozen_files=len(frozen),no_other_scientific_change=True),indent=2)+'\n')
+for p in S.iterdir():
+ if p.is_file() and p.suffix=='.py':ast.parse(p.read_text(),filename=str(p))
+print(json.dumps(dict(frozen=len(frozen),tests_required=count,MINHESS=value['value'],baseline=value['baseline'],full_AST_inverse=True)))

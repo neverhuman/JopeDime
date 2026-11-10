@@ -1,0 +1,33 @@
+{
+  "schema": "jope.h304.s3-manifest/v1",
+  "wave_id": "H304",
+  "slug": "h304_lcb_margin_promotion_replay",
+  "owner": "rd_argon",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H304/",
+  "objects": [
+    {
+      "key": "experiments/rd_breakthrough_20261030/H304/metrics_full_h304.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H304/metrics_full_h304.json",
+      "bytes": 200847,
+      "sha256": "60c5f879437bcfe5310b8e6e58cf652f81cd0c5f084dc138468950d0596cd84a",
+      "version_id": "J4bT7je3eRxxiOEKIonPSaRIS0ZLLsHY",
+      "etag": "3508d50b1d5533a38c1858199e162798"
+    },
+    {
+      "key": "experiments/rd_breakthrough_20261030/H304/metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H304/metrics.json",
+      "bytes": 45878,
+      "sha256": "865156fbc4710304c3daf31bc14f2cd66fa4b5d860748392bbfcf45ee7a9a43c",
+      "version_id": "3KLh0iHCmuw5aS614IGpmGya_RQfYbH1",
+      "etag": "1c8a47b9f470d072711a43cd6ead1000"
+    }
+  ],
+  "s3_manifest_self": {
+    "key": "experiments/rd_breakthrough_20261030/H304/s3_manifest.json",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H304/s3_manifest.json",
+    "bytes": 1071,
+    "sha256": "00ddca51bc71fff933b5a16a5027ed7c7581fd6c9bcbed288176c4d15d59812b",
+    "version_id": "9_pwQunf.tMUHsrQwSnq5ZWhjSu2te6g",
+    "etag": "9a71a7b8395850ef8197a9507d565ff3"
+  }
+}

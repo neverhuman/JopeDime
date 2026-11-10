@@ -1,0 +1,44 @@
+{
+ "wave": "H308",
+ "step": "regression_first_trainonly_loader",
+ "task": [
+  "P0",
+  0,
+  30001
+ ],
+ "ref_lock_sha256": "545fa2a68e054b5ebe0d0775a0b2fb94c00fd5f82df9a5591160f9b3359d22ed",
+ "fresh_chosen": {
+  "tau": 0.05,
+  "k": 5,
+  "a": 2,
+  "inner_gain": 0.09612510193329017,
+  "inner_switches": 253
+ },
+ "ref_chosen": {
+  "tau": 0.05,
+  "k": 5,
+  "a": 2,
+  "inner_gain": 0.09612510193329017,
+  "inner_switches": 253
+ },
+ "lock_choice_inner_table_and_member_hashes_equal": true,
+ "fold0_seed30001_picks_sha256_fresh": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa",
+ "fold0_seed30001_picks_sha256_archived": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa",
+ "n_fold0_contexts": 335,
+ "loader_counters": {
+  "feature_bytes_read": 98792568,
+  "feature_rows_read": 2811012,
+  "dlval_feature_rows_read": 0
+ },
+ "guard": {
+  "partition": "P0",
+  "outer_fold": 0,
+  "root_seed": 30001,
+  "outer_test_contexts": 335,
+  "outer_test_packets_built_in_memory_before_lock": 335,
+  "outer_test_packets_accessed_before_lock": 0,
+  "guard_denials": 0,
+  "note": "all 1,219 TRAIN packets (features + utilities) are built once in the parent before forking; the guard raises on any outer-test access inside the task, so 'accessed' is enforced, 'built' is the honest count"
+ },
+ "status": "PASS"
+}

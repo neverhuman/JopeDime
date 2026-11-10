@@ -34,13 +34,33 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/06_etf_frequent_retrain/20261103T130723Z-smoke",
+    "observations_sha256": "7ed0711e49831d374e07ceffb69f7a00bb86b27975f0a5b50d5a53f41b26d32e",
+    "target_sigma": 0.369024,
+    "medians": {
+      "fit_cpu_seconds": 0.14499569400004475,
+      "fit_peak_heap_bytes": 11652089.0,
+      "fit_seconds": 0.144710234,
+      "hold_rows": 1585.0,
+      "model_bytes": 529456.0,
+      "predict_peak_heap_bytes": 304368.0,
+      "predict_rows_per_second": 211839.545110329,
+      "predict_seconds": 0.007598107,
+      "predict_us_per_row": 4.793758359621451,
+      "program_nodes": 4.0,
+      "stage_count": 4.0,
+      "train_rows": 6415.0,
+      "mae": 0.05092600923987293,
+      "candidates": 28
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +83,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -73,8 +98,9 @@
   },
   "why": "Under drift a price model is refitted every session. Training time is a recurring cost, priced per second in a composite with scaled RMSE.",
   "caveats": [
-    "Time-ordered data, but jope pipeline run validates on an unordered fold partition of train.csv, so this case does not exercise chronological (regime) validation",
-    "Corpus copy keeps 3 features (Datetime, Volume, Dividends); OHLC were dropped at ingest."
+    "Corpus copy keeps 3 features (Datetime, Volume, Dividends); OHLC were dropped at ingest.",
+    "LEAKAGE RISK (identified 2026-11-03 during the comparison): 3 features dominated by the Datetime column, with random-fold validation and a target-stratified (non-chronological) test split. A kernel smoother over the date can interpolate between neighbouring days, so a large accuracy advantage over tree ensembles here measures interpolation in time, NOT forecasting skill. Treat accuracy results on this case as non-evidence for forecasting until a chronological split is used.",
+    "Time-ordered data, but jope pipeline run validates on an unordered fold partition of train.csv, so this case does not exercise chronological (regime) validation"
   ],
   "objective_template": {
     "metric": "composite",
@@ -99,5 +125,11 @@
         }
       }
     ]
-  }
+  },
+  "temporal_risk": "HIGH",
+  "comparability": [
+    "Composite price from the calibration rule; see the break-even price",
+    "Time dominates (3 features): random-fold accuracy measures interpolation in time"
+  ],
+  "target_leakage_risk": "HIGH"
 }

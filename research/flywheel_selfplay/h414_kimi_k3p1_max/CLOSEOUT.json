@@ -1,0 +1,18 @@
+{
+  "schema": "jope.h414.archive-manifest/v1",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H414/closeout-20261107/h414_closeout_bundle.v2.tar.zst",
+  "version_id": "3Jld.s.Kjg71z47CDmwskvq6Q4bNy7dR",
+  "sha256": "18005eccfee9e304736ad33b95ee0e35702f42540042de7e1ba33715a6d61990",
+  "members": 303,
+  "members_file": "bundle_SHA256SUMS",
+  "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+  "utc": "2026-11-07T18:42:57Z",
+  "contents": "H414 run dir d91/ (LOCK, code/inputs/two-fold pins, raw dev91 AUDIT and two-fold run records; the two-fold records hold fold0_preds/fold1_preds, the AUDIT records audit_preds_sha256 only), TRAIN/synthetic parity outputs, both harness binaries and build trees (rlibs, entrant sources), the staged code, the H414 receipts, the code pull request gate logs, and the H414 evidence (scripts, logs, results, board staging, source). No envelope, sealed or holdout path.",
+  "supersedes": [
+    {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H414/closeout-20261107/h414_closeout_bundle.tar.zst",
+      "version_id": "u6ZmpmqdCET3oslIhMA00RKOCLAc97U.",
+      "note": "First upload. Its exact-version GET matched, but its member list included the archive script's own live log, so 1 of 303 member checks failed (302 verified). Kept in S3 (create-only); use v2."
+    }
+  ]
+}

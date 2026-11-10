@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "tests_collected": 21,
+  "tests_executed": 21,
+  "failed": 0,
+  "skipped": 0,
+  "total_tests": 32,
+  "staging_sha256": {
+    "score.py": "70e8a979d55f7e395f12b38316ab9d6d63714f6e9842fca8a829bca7e84def81",
+    "overfit.py": "55c3a15f428718fa98509682a84cc457cd09656fb6f5efb2b49ee3ece4768352",
+    "evaluate.py": "98f9d81b1839cb3769cbc779a1627e3adba612aaa5d4c0dbef27ce4b90017521",
+    "test_overfit.py": "211e143c6990153526a480cf93bff4967f21be20a125cf3aabfe493fe34d865f",
+    "test_analysis.py": "e8d9e79d5307d3fc8680404dd46f7ad8f432adb1e55f9f64657706bcb0cd5d05",
+    "statistics_h331.py": "81f2912b8c7b91eb21f6600dac8396088004e76c002a74bbfd574c3b48ff332a"
+  }
+}

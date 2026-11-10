@@ -16,6 +16,12 @@
 \setlength{\intextsep}{10pt plus 6pt minus 2pt}
 \setlength{\dbltextfloatsep}{20pt plus 10pt minus 4pt}% article's 20pt default: full-width floats get more room than column floats
 \setlength{\dblfloatsep}{10pt plus 6pt minus 2pt}
+\makeatletter% float-only columns stack from the top (10pt gaps), so a figure stays right under the previous caption and spare space
+% ends the column; full-width float pages span the full height, first float at the top and last at the bottom (fill in the gap
+% outranks fil at the bottom), with LaTeX's 8pt natural gap so four fit on the Section 6.8 page.
+\setlength{\@fptop}{0pt}\setlength{\@fpsep}{10pt}\setlength{\@fpbot}{0pt plus 1fil}
+\setlength{\@dblfptop}{0pt}\setlength{\@dblfpsep}{8pt plus 1fill}\setlength{\@dblfpbot}{0pt plus 1fil}
+\makeatother
 \setlength{\parskip}{0pt plus 3pt}
 % twocolumn implies \flushbottom, which stretches gaps around floats and headings.
 \raggedbottom
@@ -50,7 +56,7 @@
 \makeatother
 \newcommand{\EZ}{EurekaZero}
 \newcommand{\searchone}{search\,$=$\,1}
-\newcommand{\TBD}[1]{\textcolor{red}{\textbf{[TBD:~#1]}}}
+\newcommand{\TBD}[1]{\textcolor{red}{\textbf{[TBD:~pending source]}}}
 \newcommand{\writer}{\pi_{\theta}}
 \newcommand{\referee}{\mathcal{R}}
 \newcommand{\inc}[1]{\mathrm{inc}(#1)}
@@ -93,9 +99,12 @@
 % stops after a few lines (the Section 7 opening after the Section 6.8 figures).
 % When the barrier leaves an empty column holding no column floats, give it the
 % full column height again.
+% It also breaks the column first (\penalty0): otherwise, when the paragraph
+% before the barrier spills into the next column while floats are held,
+% placeins' \newpage lands after the spilled line and ejects that column too.
 \makeatletter
 \let\fb@plainbarrier\FloatBarrier
-\renewcommand{\FloatBarrier}{\fb@plainbarrier\fb@freshcolumn}
+\renewcommand{\FloatBarrier}{\par\penalty\z@\fb@plainbarrier\fb@freshcolumn}
 \newcommand{\fb@freshcolumn}{%
   \ifdim\pagegoal=\maxdimen
     \ifx\@toplist\@empty\ifx\@botlist\@empty
@@ -109,10 +118,16 @@
 % Each held figure* then reaches the top of a fresh page above the References
 % heading, instead of the float-only page that \FloatBarrier's \clearpage gives
 % a single held figure*. Falls back to \clearpage after 12 columns.
+% \null (which lets \newpage end an empty column) is added only to an empty
+% column: after a full column it spilled into the next one, which \newpage
+% then ejected empty (p27 col0 before the References).
 \makeatletter
 \newif\iffb@held
 \newcount\fb@flushcount
-\newcommand{\FlushFloatsInPlace}{\global\fb@flushcount\z@\fb@flushstep}
+% A zero penalty first lets TeX commit a column break it is still deciding, so floats it
+% is about to place at the next column top are not counted as held (that ended a column
+% under two lines of the last appendix subsection and left it nearly empty).
+\newcommand{\FlushFloatsInPlace}{\par\penalty\z@\global\fb@flushcount\z@\fb@flushstep}
 \newcommand{\fb@flushstep}{%
   \begingroup\let\@elt\relax
   \edef\@tempa{\@botlist\@deferlist\@dbldeferlist}%
@@ -120,7 +135,14 @@
   \endgroup
   \iffb@held
     \global\advance\fb@flushcount\@ne
-    \ifnum\fb@flushcount>12 \clearpage\else\null\newpage\fi
+    \ifnum\fb@flushcount>12 \clearpage\else\ifdim\pagegoal=\maxdimen\null\fi\newpage\fi
     \expandafter\fb@flushstep
   \fi}
+\makeatother
+% A long algorithm statement wraps ragged-right under its own first word, with its
+% comment on the first line, instead of a justified line that restarts at the left edge.
+\makeatletter
+\newlength{\ls@cw}
+\newcommand{\LongState}[2]{\settowidth{\ls@cw}{\hspace{1.5em}\algorithmiccomment{#2}}%
+  \State\parbox[t]{\dimexpr\linewidth-\ALG@thistlm-\ls@cw\relax}{\raggedright\strut #1\strut}\Comment{#2}}
 \makeatother

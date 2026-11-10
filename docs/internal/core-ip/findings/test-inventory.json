@@ -3833,6 +3833,20 @@
       "reason": "Recorded-event fixture replay through the jope-client fake transport (TUI-11, feature `fake`): validates the committed event fixtures and deterministic replay cadence; test infrastructure for terminal UI tests, not a regression subsystem",
       "role": "infrastructure"
     },
+    "target:jope-comparators/lib/jope_comparators": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
+    "target:jope-comparators/test/comparators": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
     "target:jope-datasets/bin/jope-datasets": {
       "role": "regression",
       "subsystems": [
@@ -6078,6 +6092,1998 @@
     "python:research/flywheel_selfplay/h254_active2plus2_confirm/test_h254.py": {
       "reason": "Owner-requested H254 data-free controls for independent frozen-constant replication of H252 Stage-1 ACTIVE_2PLUS2_HURDLE vs GATED_025 and R882 (snapshot SHA-256, fold seed 254140, byte-exact equivalence, zero DL-Val leakage guard, 4-reveal count audit, negative control permuted fitness, Holm m=2 decision rule, H239 A1 <30 GiB memory pause guard).",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h256_gc_agc/test_h256.py": {
+      "role": "research",
+      "reason": "h256_gc_agc research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h257_adan/test_h257.py": {
+      "role": "research",
+      "reason": "h257_adan research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h258_top4_reveal_baseline/test_h258.py": {
+      "role": "research",
+      "reason": "h258_top4_reveal_baseline research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h259_mixed_precision/test_h259.py": {
+      "role": "research",
+      "reason": "h259_mixed_precision research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h260_top4_recall/test_h260.py": {
+      "role": "research",
+      "reason": "h260_top4_recall research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h261_diverse_reveal_set/test_h261.py": {
+      "role": "research",
+      "reason": "h261_diverse_reveal_set research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h262_strict_acceptance_replay/test_h262.py": {
+      "role": "research",
+      "reason": "h262_strict_acceptance_replay research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h263_head4_rerank/test_h263.py": {
+      "role": "research",
+      "reason": "h263_head4_rerank research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h264_knn_memory/test_h264.py": {
+      "role": "research",
+      "reason": "h264_knn_memory research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h265_top4_listwise_reranker/test_h265.py": {
+      "role": "research",
+      "reason": "h265_top4_listwise_reranker research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h266_rerank4_confirm/test_h266.py": {
+      "role": "research",
+      "reason": "h266_rerank4_confirm research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h267_bagged_median_rerank4/test_h267.py": {
+      "role": "research",
+      "reason": "h267_bagged_median_rerank4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/test_h265.py": {
+      "role": "research",
+      "reason": "h268_rerank4_ctxnorm_labels research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/test_h268.py": {
+      "role": "research",
+      "reason": "h268_rerank4_ctxnorm_labels research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h269_nosg_veto_rerank4/test_h269.py": {
+      "role": "research",
+      "reason": "h269_nosg_veto_rerank4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h270_rerank8_deeper_slice/test_h270.py": {
+      "role": "research",
+      "reason": "h270_rerank8_deeper_slice research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h271_ctxnorm_confirm/test_h271.py": {
+      "role": "research",
+      "reason": "h271_ctxnorm_confirm research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h272_rerank8_confirm_depth/test_h272.py": {
+      "role": "research",
+      "reason": "h272_rerank8_confirm_depth research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h273_rerank8_cleanroom_veto/test_h273.py": {
+      "role": "research",
+      "reason": "h273_rerank8_cleanroom_veto research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h274_unc_selector_decomp/test_h274.py": {
+      "role": "research",
+      "reason": "h274_unc_selector_decomp research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h275_rerank8_soft_risk/test_h275.py": {
+      "role": "research",
+      "reason": "h275_rerank8_soft_risk research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h276_rerank8_cluster_out/test_h276.py": {
+      "role": "research",
+      "reason": "h276_rerank8_cluster_out research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h277_rerank8_cluster_balanced/test_h277.py": {
+      "role": "research",
+      "reason": "h277_rerank8_cluster_balanced research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h278_rerank8_veto_frozen_export_transfer/test_h278.py": {
+      "role": "research",
+      "reason": "h278_rerank8_veto_frozen_export_transfer research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h279_rerank8_bagged_strict_switch/test_h279.py": {
+      "role": "research",
+      "reason": "h279_rerank8_bagged_strict_switch research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h280_rerank8_veto_r3175_cluster_out/test_h280.py": {
+      "role": "research",
+      "reason": "h280_rerank8_veto_r3175_cluster_out research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h281_r3175_gpu_rescore_p2/test_h281.py": {
+      "role": "research",
+      "reason": "h281_r3175_gpu_rescore_p2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h282_rerank8_veto_multickpt_transfer/test_h282.py": {
+      "role": "research",
+      "reason": "h282_rerank8_veto_multickpt_transfer research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h283_rerank8_veto_fresh_cohort_gpu/test_h283.py": {
+      "role": "research",
+      "reason": "h283_rerank8_veto_fresh_cohort_gpu research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h284_bagswitch_frozen_fresh/test_h284.py": {
+      "role": "research",
+      "reason": "h284_bagswitch_frozen_fresh research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h285_fresh_odd_veto_cpu_and_swa/test_h285.py": {
+      "role": "research",
+      "reason": "h285_fresh_odd_veto_cpu_and_swa research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h286_fresh_v2_powered_veto_bagswitch/test_h286.py": {
+      "role": "research",
+      "reason": "h286_fresh_v2_powered_veto_bagswitch research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/test_h287.py": {
+      "role": "research",
+      "reason": "h287_bagswitch_seed_ensemble_export research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h288_fresh_v3_odd_powered_ensemble/test_h288.py": {
+      "role": "research",
+      "reason": "h288_fresh_v3_odd_powered_ensemble research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h289_flywheel_accept_rule_replay/test_h289.py": {
+      "role": "research",
+      "reason": "h289_flywheel_accept_rule_replay research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h290_r3175_native_bagswitch_transfer/test_h290.py": {
+      "role": "research",
+      "reason": "h290_r3175_native_bagswitch_transfer research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h291_harm_veto_abstention/test_h291.py": {
+      "role": "research",
+      "reason": "h291_harm_veto_abstention research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h292_fresh_v4_odd_confirm_ensvote2_clip/test_h292.py": {
+      "role": "research",
+      "reason": "h292_fresh_v4_odd_confirm_ensvote2_clip research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h294_fresh_even_v5_confirm_ensvote2/test_h294.py": {
+      "role": "research",
+      "reason": "h294_fresh_even_v5_confirm_ensvote2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h295_label_free_validity_guard/test_h295.py": {
+      "role": "research",
+      "reason": "h295_label_free_validity_guard research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h296_swa_polyak_adapter_averaging/test_h296.py": {
+      "role": "research",
+      "reason": "h296_swa_polyak_adapter_averaging research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h297_robust_ctxnorm_clipped_loss/test_loss.py": {
+      "role": "research",
+      "reason": "h297_robust_ctxnorm_clipped_loss research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h298_family_balanced_gradaccum/test_h298.py": {
+      "role": "research",
+      "reason": "h298_family_balanced_gradaccum research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h299_fresh_cohort_v6_scout/test_scout.py": {
+      "role": "research",
+      "reason": "h299_fresh_cohort_v6_scout research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h301_paired_control_drift_meta/test_h301.py": {
+      "role": "research",
+      "reason": "h301_paired_control_drift_meta research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h302_ensvote2_trainseed_nested_cv/test_h302.py": {
+      "role": "research",
+      "reason": "h302_ensvote2_trainseed_nested_cv research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h303_ensvote2_fully_nested_hparams/test_h303.py": {
+      "role": "research",
+      "reason": "h303_ensvote2_fully_nested_hparams research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h304_lcb_margin_promotion_replay/test_h304.py": {
+      "role": "research",
+      "reason": "h304_lcb_margin_promotion_replay research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h305_redteam_h302_h303/test_audit.py": {
+      "role": "research",
+      "reason": "h305_redteam_h302_h303 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h306_ensvote2_nested_extended_grid/test_h306.py": {
+      "role": "research",
+      "reason": "h306_ensvote2_nested_extended_grid research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h307_shrunk_incumbent_reselection/test_h307.py": {
+      "role": "research",
+      "reason": "h307_shrunk_incumbent_reselection research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h308_ensvote2_trainonly_repartition/test_h308.py": {
+      "role": "research",
+      "reason": "h308_ensvote2_trainonly_repartition research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h309_ensvote2_robust_inner_objective/test_h309.py": {
+      "role": "research",
+      "reason": "h309_ensvote2_robust_inner_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h310_ensvote2_dev91_vs_r3175/test_h310.py": {
+      "role": "research",
+      "reason": "h310_ensvote2_dev91_vs_r3175 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h311_ensvote2_nested_valguard_trainonly/test_h311.py": {
+      "role": "research",
+      "reason": "h311_ensvote2_nested_valguard_trainonly research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h312_h310_smallcluster_redteam/test_h312.py": {
+      "role": "research",
+      "reason": "h312_h310_smallcluster_redteam research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h313_fresh_ingest_census_and_h300_harness/test_h313.py": {
+      "role": "research",
+      "reason": "h313_fresh_ingest_census_and_h300_harness research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h314_dev91_lineage_independence_audit/test_h314.py": {
+      "role": "research",
+      "reason": "h314_dev91_lineage_independence_audit research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h315_margin_gated_ens_vote2_robust/test_h315.py": {
+      "role": "research",
+      "reason": "h315_margin_gated_ens_vote2_robust research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h316_family_normalized_inner_objective/test_boundaries_h316.py": {
+      "role": "research",
+      "reason": "h316_family_normalized_inner_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h316_family_normalized_inner_objective/test_h316.py": {
+      "role": "research",
+      "reason": "h316_family_normalized_inner_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h317_island10_multiscale_curriculum/dope_freeze_guard_self_test.py": {
+      "role": "research",
+      "reason": "h317_island10_multiscale_curriculum research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h317_island10_multiscale_curriculum/test_h317_gp.py": {
+      "role": "research",
+      "reason": "h317_island10_multiscale_curriculum research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h317_island10_multiscale_curriculum/test_h317_guard.py": {
+      "role": "research",
+      "reason": "h317_island10_multiscale_curriculum research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h317_island10_multiscale_curriculum/test_h317_neural.py": {
+      "role": "research",
+      "reason": "h317_island10_multiscale_curriculum research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h317_island10_multiscale_curriculum/test_stage_v_h317.py": {
+      "role": "research",
+      "reason": "h317_island10_multiscale_curriculum research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h318_shrink_blend_toward_incumbent/test_analysis.py": {
+      "role": "research",
+      "reason": "h318_shrink_blend_toward_incumbent research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h318_shrink_blend_toward_incumbent/test_h318.py": {
+      "role": "research",
+      "reason": "h318_shrink_blend_toward_incumbent research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h319_bagged_ens_vote2_members/test_h319.py": {
+      "role": "research",
+      "reason": "h319_bagged_ens_vote2_members research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h320_trimmed_inner_objective/test_h320.py": {
+      "role": "research",
+      "reason": "h320_trimmed_inner_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h321_percontext_target_normalization/test_h321.py": {
+      "role": "research",
+      "reason": "h321_percontext_target_normalization research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h322_family_balanced_member_weights/test_analysis.py": {
+      "role": "research",
+      "reason": "h322_family_balanced_member_weights research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h322_family_balanced_member_weights/test_boundary.py": {
+      "role": "research",
+      "reason": "h322_family_balanced_member_weights research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h322_family_balanced_member_weights/test_weights.py": {
+      "role": "research",
+      "reason": "h322_family_balanced_member_weights research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h323_ema_swa_member_fit_averaging/test_h323.py": {
+      "role": "research",
+      "reason": "h323_ema_swa_member_fit_averaging research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h324_huber_context_influence_cap/test_analysis.py": {
+      "role": "research",
+      "reason": "h324_huber_context_influence_cap research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h324_huber_context_influence_cap/test_boundary.py": {
+      "role": "research",
+      "reason": "h324_huber_context_influence_cap research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h324_huber_context_influence_cap/test_weights.py": {
+      "role": "research",
+      "reason": "h324_huber_context_influence_cap research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h325_extratrees_randomized_members/test_h325.py": {
+      "role": "research",
+      "reason": "h325_extratrees_randomized_members research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h326_bootstrap_ci_config_selection/test_boundary.py": {
+      "role": "research",
+      "reason": "h326_bootstrap_ci_config_selection research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h326_bootstrap_ci_config_selection/test_selection.py": {
+      "role": "research",
+      "reason": "h326_bootstrap_ci_config_selection research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h327_member_regularization_dropout_wd/test_analysis.py": {
+      "role": "research",
+      "reason": "h327_member_regularization_dropout_wd research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h327_member_regularization_dropout_wd/test_boundary.py": {
+      "role": "research",
+      "reason": "h327_member_regularization_dropout_wd research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h327_member_regularization_dropout_wd/test_overfit.py": {
+      "role": "research",
+      "reason": "h327_member_regularization_dropout_wd research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h327_member_regularization_dropout_wd/test_regularization.py": {
+      "role": "research",
+      "reason": "h327_member_regularization_dropout_wd research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h328_ranker_label_gain_smoothing/test_h328.py": {
+      "role": "research",
+      "reason": "h328_ranker_label_gain_smoothing research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h329_dart_tree_dropout_members/test_dart_patch.py": {
+      "role": "research",
+      "reason": "h329_dart_tree_dropout_members research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h329_dart_tree_dropout_members/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h329_dart_tree_dropout_members research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h329_dart_tree_dropout_members/test_h329.py": {
+      "role": "research",
+      "reason": "h329_dart_tree_dropout_members research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h329_dart_tree_dropout_members/test_resource_probe.py": {
+      "role": "research",
+      "reason": "h329_dart_tree_dropout_members research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h330_member_l2_only_ablation/test_analysis.py": {
+      "role": "research",
+      "reason": "h330_member_l2_only_ablation research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h330_member_l2_only_ablation/test_boundary.py": {
+      "role": "research",
+      "reason": "h330_member_l2_only_ablation research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h330_member_l2_only_ablation/test_comparison.py": {
+      "role": "research",
+      "reason": "h330_member_l2_only_ablation research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h330_member_l2_only_ablation/test_overfit.py": {
+      "role": "research",
+      "reason": "h330_member_l2_only_ablation research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h330_member_l2_only_ablation/test_regularization.py": {
+      "role": "research",
+      "reason": "h330_member_l2_only_ablation research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h331_cosine_shrinkage_schedule/test_analysis.py": {
+      "role": "research",
+      "reason": "h331_cosine_shrinkage_schedule research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h331_cosine_shrinkage_schedule/test_boundary.py": {
+      "role": "research",
+      "reason": "h331_cosine_shrinkage_schedule research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h331_cosine_shrinkage_schedule/test_overfit.py": {
+      "role": "research",
+      "reason": "h331_cosine_shrinkage_schedule research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h331_cosine_shrinkage_schedule/test_regularization.py": {
+      "role": "research",
+      "reason": "h331_cosine_shrinkage_schedule research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h332_leaf_step_clipping/test_h332.py": {
+      "role": "research",
+      "reason": "h332_leaf_step_clipping research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h333_ranker_path_smoothing/test_forecast.py": {
+      "role": "research",
+      "reason": "h333_ranker_path_smoothing research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h333_ranker_path_smoothing/test_path_smooth.py": {
+      "role": "research",
+      "reason": "h333_ranker_path_smoothing research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h334_ranker_path_smoothing_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h334_ranker_path_smoothing_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h334_ranker_path_smoothing_rerun/test_h334.py": {
+      "role": "research",
+      "reason": "h334_ranker_path_smoothing_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h334_ranker_path_smoothing_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h334_ranker_path_smoothing_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h334_ranker_path_smoothing_rerun/test_path_smooth.py": {
+      "role": "research",
+      "reason": "h334_ranker_path_smoothing_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h334_ranker_path_smoothing_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h334_ranker_path_smoothing_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h335_aggressive_locked_elo/test_frontier_audit_h335.py": {
+      "role": "research",
+      "reason": "h335_aggressive_locked_elo research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h335_aggressive_locked_elo/test_h335.py": {
+      "role": "research",
+      "reason": "h335_aggressive_locked_elo research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h335_aggressive_locked_elo/test_stage_v_h335.py": {
+      "role": "research",
+      "reason": "h335_aggressive_locked_elo research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h336_bag_score_median_aggregation/test_source_contract.py": {
+      "role": "research",
+      "reason": "h336_bag_score_median_aggregation research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h337_soft_bag_vote_smoothing/test_analysis.py": {
+      "role": "research",
+      "reason": "h337_soft_bag_vote_smoothing research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h337_soft_bag_vote_smoothing/test_boundary.py": {
+      "role": "research",
+      "reason": "h337_soft_bag_vote_smoothing research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h337_soft_bag_vote_smoothing/test_score_route.py": {
+      "role": "research",
+      "reason": "h337_soft_bag_vote_smoothing research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h337_soft_bag_vote_smoothing/test_softvote.py": {
+      "role": "research",
+      "reason": "h337_soft_bag_vote_smoothing research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h338_column_subsampling/test_h338.py": {
+      "role": "research",
+      "reason": "h338_column_subsampling research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h339_lr_halving_double_rounds/test_analysis.py": {
+      "role": "research",
+      "reason": "h339_lr_halving_double_rounds research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h339_lr_halving_double_rounds/test_boundary.py": {
+      "role": "research",
+      "reason": "h339_lr_halving_double_rounds research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h339_lr_halving_double_rounds/test_regularization.py": {
+      "role": "research",
+      "reason": "h339_lr_halving_double_rounds research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h340_ranker_xendcg_objective/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h340_ranker_xendcg_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h340_ranker_xendcg_objective/test_h340.py": {
+      "role": "research",
+      "reason": "h340_ranker_xendcg_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h340_ranker_xendcg_objective/test_native_audit.py": {
+      "role": "research",
+      "reason": "h340_ranker_xendcg_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h340_ranker_xendcg_objective/test_objective.py": {
+      "role": "research",
+      "reason": "h340_ranker_xendcg_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h340_ranker_xendcg_objective/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h340_ranker_xendcg_objective research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/test_analysis.py": {
+      "role": "research",
+      "reason": "h341_ranker_coarse_histogram_maxbin research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/test_boundary.py": {
+      "role": "research",
+      "reason": "h341_ranker_coarse_histogram_maxbin research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h341_ranker_coarse_histogram_maxbin/test_regularization.py": {
+      "role": "research",
+      "reason": "h341_ranker_coarse_histogram_maxbin research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h342_ranker_min_sum_hessian/test_derivation.py": {
+      "role": "research",
+      "reason": "h342_ranker_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h342_ranker_min_sum_hessian/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h342_ranker_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h342_ranker_min_sum_hessian/test_h342.py": {
+      "role": "research",
+      "reason": "h342_ranker_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h342_ranker_min_sum_hessian/test_minhess.py": {
+      "role": "research",
+      "reason": "h342_ranker_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h342_ranker_min_sum_hessian/test_native_audit.py": {
+      "role": "research",
+      "reason": "h342_ranker_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h342_ranker_min_sum_hessian/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h342_ranker_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h343_ranker_maxbin63_rerun/test_analysis.py": {
+      "role": "research",
+      "reason": "h343_ranker_maxbin63_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h343_ranker_maxbin63_rerun/test_boundary.py": {
+      "role": "research",
+      "reason": "h343_ranker_maxbin63_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h343_ranker_maxbin63_rerun/test_regularization.py": {
+      "role": "research",
+      "reason": "h343_ranker_maxbin63_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h344_ranker_lambdarank_sigmoid/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h344_ranker_lambdarank_sigmoid research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h344_ranker_lambdarank_sigmoid/test_h344.py": {
+      "role": "research",
+      "reason": "h344_ranker_lambdarank_sigmoid research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h344_ranker_lambdarank_sigmoid/test_native_audit.py": {
+      "role": "research",
+      "reason": "h344_ranker_lambdarank_sigmoid research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h344_ranker_lambdarank_sigmoid/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h344_ranker_lambdarank_sigmoid research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h344_ranker_lambdarank_sigmoid/test_sigmoid.py": {
+      "role": "research",
+      "reason": "h344_ranker_lambdarank_sigmoid research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h345_ranker_row_subsample_06/test_h345.py": {
+      "role": "research",
+      "reason": "h345_ranker_row_subsample_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h346_ranker_min_split_gain/test_analysis.py": {
+      "role": "research",
+      "reason": "h346_ranker_min_split_gain research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h346_ranker_min_split_gain/test_boundary.py": {
+      "role": "research",
+      "reason": "h346_ranker_min_split_gain research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h346_ranker_min_split_gain/test_regularization.py": {
+      "role": "research",
+      "reason": "h346_ranker_min_split_gain research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h347_ranker_l1_reg_alpha/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h347_ranker_l1_reg_alpha research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h347_ranker_l1_reg_alpha/test_h347.py": {
+      "role": "research",
+      "reason": "h347_ranker_l1_reg_alpha research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h347_ranker_l1_reg_alpha/test_l1.py": {
+      "role": "research",
+      "reason": "h347_ranker_l1_reg_alpha research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h347_ranker_l1_reg_alpha/test_native_audit.py": {
+      "role": "research",
+      "reason": "h347_ranker_l1_reg_alpha research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h347_ranker_l1_reg_alpha/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h347_ranker_l1_reg_alpha research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h347_ranker_l1_reg_alpha/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h347_ranker_l1_reg_alpha research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h348_ranker_min_split_gain_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h348_ranker_min_split_gain_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h348_ranker_min_split_gain_rerun/test_h348.py": {
+      "role": "research",
+      "reason": "h348_ranker_min_split_gain_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h348_ranker_min_split_gain_rerun/test_mingain.py": {
+      "role": "research",
+      "reason": "h348_ranker_min_split_gain_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h348_ranker_min_split_gain_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h348_ranker_min_split_gain_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h348_ranker_min_split_gain_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h348_ranker_min_split_gain_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h348_ranker_min_split_gain_rerun/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h348_ranker_min_split_gain_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h349_ranker_rank_xendcg_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h349_ranker_rank_xendcg_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h349_ranker_rank_xendcg_rerun/test_h349.py": {
+      "role": "research",
+      "reason": "h349_ranker_rank_xendcg_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h349_ranker_rank_xendcg_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h349_ranker_rank_xendcg_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h349_ranker_rank_xendcg_rerun/test_objective.py": {
+      "role": "research",
+      "reason": "h349_ranker_rank_xendcg_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h349_ranker_rank_xendcg_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h349_ranker_rank_xendcg_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350_ranker_reg_lambda_5/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h350_ranker_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350_ranker_reg_lambda_5/test_h350.py": {
+      "role": "research",
+      "reason": "h350_ranker_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350_ranker_reg_lambda_5/test_l2.py": {
+      "role": "research",
+      "reason": "h350_ranker_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350_ranker_reg_lambda_5/test_native_audit.py": {
+      "role": "research",
+      "reason": "h350_ranker_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350_ranker_reg_lambda_5/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h350_ranker_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350_ranker_reg_lambda_5/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h350_ranker_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350r_ranker_reg_lambda_5_x1/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h350r_ranker_reg_lambda_5_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350r_ranker_reg_lambda_5_x1/test_h350r.py": {
+      "role": "research",
+      "reason": "h350r_ranker_reg_lambda_5_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350r_ranker_reg_lambda_5_x1/test_host_transport.py": {
+      "role": "research",
+      "reason": "h350r_ranker_reg_lambda_5_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350r_ranker_reg_lambda_5_x1/test_l2.py": {
+      "role": "research",
+      "reason": "h350r_ranker_reg_lambda_5_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350r_ranker_reg_lambda_5_x1/test_native_audit.py": {
+      "role": "research",
+      "reason": "h350r_ranker_reg_lambda_5_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350r_ranker_reg_lambda_5_x1/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h350r_ranker_reg_lambda_5_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h350r_ranker_reg_lambda_5_x1/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h350r_ranker_reg_lambda_5_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h351_ranker_min_child_samples_40/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h351_ranker_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h351_ranker_min_child_samples_40/test_h351.py": {
+      "role": "research",
+      "reason": "h351_ranker_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h351_ranker_min_child_samples_40/test_mcs.py": {
+      "role": "research",
+      "reason": "h351_ranker_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h351_ranker_min_child_samples_40/test_native_audit.py": {
+      "role": "research",
+      "reason": "h351_ranker_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h351_ranker_min_child_samples_40/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h351_ranker_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h351_ranker_min_child_samples_40/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h351_ranker_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h352_ranker_num_leaves_15/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h352_ranker_num_leaves_15 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h352_ranker_num_leaves_15/test_h352.py": {
+      "role": "research",
+      "reason": "h352_ranker_num_leaves_15 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h352_ranker_num_leaves_15/test_leaves.py": {
+      "role": "research",
+      "reason": "h352_ranker_num_leaves_15 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h352_ranker_num_leaves_15/test_native_audit.py": {
+      "role": "research",
+      "reason": "h352_ranker_num_leaves_15 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h352_ranker_num_leaves_15/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h352_ranker_num_leaves_15 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h352_ranker_num_leaves_15/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h352_ranker_num_leaves_15 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_depth.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_h353.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_host_transport.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_native_audit.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_root_guard.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_tree_structure.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h353_ranker_max_depth_4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h354_xstack_cross_paradigm/test_h354.py": {
+      "role": "research",
+      "reason": "h354_xstack_cross_paradigm research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h355_ranker_min_split_gain_001/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h355_ranker_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h355_ranker_min_split_gain_001/test_h355.py": {
+      "role": "research",
+      "reason": "h355_ranker_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h355_ranker_min_split_gain_001/test_mingain.py": {
+      "role": "research",
+      "reason": "h355_ranker_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h355_ranker_min_split_gain_001/test_native_audit.py": {
+      "role": "research",
+      "reason": "h355_ranker_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h355_ranker_min_split_gain_001/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h355_ranker_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h355_ranker_min_split_gain_001/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h355_ranker_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h356_nl15_dev91_confirmation/test_h356.py": {
+      "role": "research",
+      "reason": "h356_nl15_dev91_confirmation research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h357_xstack_cl_confirm/test_h357.py": {
+      "role": "research",
+      "reason": "h357_xstack_cl_confirm research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h358_ranker_bagging_by_query/test_bagging.py": {
+      "role": "research",
+      "reason": "h358_ranker_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h358_ranker_bagging_by_query/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h358_ranker_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h358_ranker_bagging_by_query/test_h358.py": {
+      "role": "research",
+      "reason": "h358_ranker_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h358_ranker_bagging_by_query/test_native_audit.py": {
+      "role": "research",
+      "reason": "h358_ranker_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h358_ranker_bagging_by_query/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h358_ranker_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h358_ranker_bagging_by_query/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h358_ranker_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_depth.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_h359.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_leaves.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_native_audit.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_secondary.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_tree_structure.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h359_ranker_nl15_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h360_ranker_nl15_bagging_by_query/test_bagging.py": {
+      "role": "research",
+      "reason": "h360_ranker_nl15_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h360_ranker_nl15_bagging_by_query/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h360_ranker_nl15_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h360_ranker_nl15_bagging_by_query/test_guard.py": {
+      "role": "research",
+      "reason": "h360_ranker_nl15_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h360_ranker_nl15_bagging_by_query/test_h360.py": {
+      "role": "research",
+      "reason": "h360_ranker_nl15_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h360_ranker_nl15_bagging_by_query/test_native_audit.py": {
+      "role": "research",
+      "reason": "h360_ranker_nl15_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h360_ranker_nl15_bagging_by_query/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h360_ranker_nl15_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h360_ranker_nl15_bagging_by_query/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h360_ranker_nl15_bagging_by_query research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h361_ranker_nl15_lr_half_trees_double/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h361_ranker_nl15_lr_half_trees_double research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h361_ranker_nl15_lr_half_trees_double/test_h361.py": {
+      "role": "research",
+      "reason": "h361_ranker_nl15_lr_half_trees_double research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h361_ranker_nl15_lr_half_trees_double/test_leaves.py": {
+      "role": "research",
+      "reason": "h361_ranker_nl15_lr_half_trees_double research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h361_ranker_nl15_lr_half_trees_double/test_lrh.py": {
+      "role": "research",
+      "reason": "h361_ranker_nl15_lr_half_trees_double research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h361_ranker_nl15_lr_half_trees_double/test_native_audit.py": {
+      "role": "research",
+      "reason": "h361_ranker_nl15_lr_half_trees_double research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h361_ranker_nl15_lr_half_trees_double/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h361_ranker_nl15_lr_half_trees_double research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h361_ranker_nl15_lr_half_trees_double/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h361_ranker_nl15_lr_half_trees_double research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_depth.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_guard_window.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_h362.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_host_transport.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_leaves.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_native_audit.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_secondary.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_tree_structure.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h362_ranker_nl15_maxdepth4_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_corrected_guard.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_h352_native_contract.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_h363.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_leaves.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_mcs_patch.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_native_audit.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h363_ranker_nl15_min_child_samples_10 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h364_xstack_two_level/test_h364.py": {
+      "role": "research",
+      "reason": "h364_xstack_two_level research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h365_ranker_nl15_extra_trees/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h365_ranker_nl15_extra_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h365_ranker_nl15_extra_trees/test_extra_trees.py": {
+      "role": "research",
+      "reason": "h365_ranker_nl15_extra_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h365_ranker_nl15_extra_trees/test_guard.py": {
+      "role": "research",
+      "reason": "h365_ranker_nl15_extra_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h365_ranker_nl15_extra_trees/test_h365.py": {
+      "role": "research",
+      "reason": "h365_ranker_nl15_extra_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h365_ranker_nl15_extra_trees/test_native_audit.py": {
+      "role": "research",
+      "reason": "h365_ranker_nl15_extra_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h365_ranker_nl15_extra_trees/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h365_ranker_nl15_extra_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h365_ranker_nl15_extra_trees/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h365_ranker_nl15_extra_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h366_ranker_nl15_bagging_fraction_07/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h366_ranker_nl15_bagging_fraction_07 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h366_ranker_nl15_bagging_fraction_07/test_fraction.py": {
+      "role": "research",
+      "reason": "h366_ranker_nl15_bagging_fraction_07 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h366_ranker_nl15_bagging_fraction_07/test_guard.py": {
+      "role": "research",
+      "reason": "h366_ranker_nl15_bagging_fraction_07 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h366_ranker_nl15_bagging_fraction_07/test_h366.py": {
+      "role": "research",
+      "reason": "h366_ranker_nl15_bagging_fraction_07 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h366_ranker_nl15_bagging_fraction_07/test_leaves.py": {
+      "role": "research",
+      "reason": "h366_ranker_nl15_bagging_fraction_07 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h366_ranker_nl15_bagging_fraction_07/test_native_audit.py": {
+      "role": "research",
+      "reason": "h366_ranker_nl15_bagging_fraction_07 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h366_ranker_nl15_bagging_fraction_07/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h366_ranker_nl15_bagging_fraction_07 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h366_ranker_nl15_bagging_fraction_07/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h366_ranker_nl15_bagging_fraction_07 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h367_ranker_nl15_bagging_fraction_07_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h367_ranker_nl15_bagging_fraction_07_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h367_ranker_nl15_bagging_fraction_07_rerun/test_fraction.py": {
+      "role": "research",
+      "reason": "h367_ranker_nl15_bagging_fraction_07_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h367_ranker_nl15_bagging_fraction_07_rerun/test_guard.py": {
+      "role": "research",
+      "reason": "h367_ranker_nl15_bagging_fraction_07_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h367_ranker_nl15_bagging_fraction_07_rerun/test_h367.py": {
+      "role": "research",
+      "reason": "h367_ranker_nl15_bagging_fraction_07_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h367_ranker_nl15_bagging_fraction_07_rerun/test_leaves.py": {
+      "role": "research",
+      "reason": "h367_ranker_nl15_bagging_fraction_07_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h367_ranker_nl15_bagging_fraction_07_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h367_ranker_nl15_bagging_fraction_07_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h367_ranker_nl15_bagging_fraction_07_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h367_ranker_nl15_bagging_fraction_07_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h367_ranker_nl15_bagging_fraction_07_rerun/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h367_ranker_nl15_bagging_fraction_07_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_dataset_audit.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_depth.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_guard_window.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_h368.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_host_transport.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_leaves.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_native_audit.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_secondary.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_tree_structure.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h368_ranker_nl15_max_bin_63_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h370_ranker_nl15_feature_fraction_06/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h370_ranker_nl15_feature_fraction_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h370_ranker_nl15_feature_fraction_06/test_feature_fraction.py": {
+      "role": "research",
+      "reason": "h370_ranker_nl15_feature_fraction_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h370_ranker_nl15_feature_fraction_06/test_guard.py": {
+      "role": "research",
+      "reason": "h370_ranker_nl15_feature_fraction_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h370_ranker_nl15_feature_fraction_06/test_h370.py": {
+      "role": "research",
+      "reason": "h370_ranker_nl15_feature_fraction_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h370_ranker_nl15_feature_fraction_06/test_incumbent_spec.py": {
+      "role": "research",
+      "reason": "h370_ranker_nl15_feature_fraction_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h370_ranker_nl15_feature_fraction_06/test_native_audit.py": {
+      "role": "research",
+      "reason": "h370_ranker_nl15_feature_fraction_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h370_ranker_nl15_feature_fraction_06/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h370_ranker_nl15_feature_fraction_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h370_ranker_nl15_feature_fraction_06/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h370_ranker_nl15_feature_fraction_06 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h371_ranker_nl15_path_smooth_20/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h371_ranker_nl15_path_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h371_ranker_nl15_path_smooth_20/test_h371.py": {
+      "role": "research",
+      "reason": "h371_ranker_nl15_path_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h371_ranker_nl15_path_smooth_20/test_leaves.py": {
+      "role": "research",
+      "reason": "h371_ranker_nl15_path_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h371_ranker_nl15_path_smooth_20/test_native_audit.py": {
+      "role": "research",
+      "reason": "h371_ranker_nl15_path_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h371_ranker_nl15_path_smooth_20/test_psmooth.py": {
+      "role": "research",
+      "reason": "h371_ranker_nl15_path_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h371_ranker_nl15_path_smooth_20/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h371_ranker_nl15_path_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h371_ranker_nl15_path_smooth_20/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h371_ranker_nl15_path_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_corrected_guard.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_h352_native_contract.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_h372.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_l2_patch.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_leaves.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_native_audit.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h372_ranker_nl15_reg_lambda_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_corrected_guard.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_h352_native_contract.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_h373.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_l2_patch.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_leaves.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h373_ranker_nl15_reg_lambda_5_rerun/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h373_ranker_nl15_reg_lambda_5_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h374_ranker_nl15_path_smooth_20_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h374_ranker_nl15_path_smooth_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h374_ranker_nl15_path_smooth_20_rerun/test_h374.py": {
+      "role": "research",
+      "reason": "h374_ranker_nl15_path_smooth_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h374_ranker_nl15_path_smooth_20_rerun/test_leaves.py": {
+      "role": "research",
+      "reason": "h374_ranker_nl15_path_smooth_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h374_ranker_nl15_path_smooth_20_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h374_ranker_nl15_path_smooth_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h374_ranker_nl15_path_smooth_20_rerun/test_psmooth.py": {
+      "role": "research",
+      "reason": "h374_ranker_nl15_path_smooth_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h374_ranker_nl15_path_smooth_20_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h374_ranker_nl15_path_smooth_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h374_ranker_nl15_path_smooth_20_rerun/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h374_ranker_nl15_path_smooth_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h375_ranker_nl15_min_split_gain_001/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h375_ranker_nl15_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h375_ranker_nl15_min_split_gain_001/test_gain.py": {
+      "role": "research",
+      "reason": "h375_ranker_nl15_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h375_ranker_nl15_min_split_gain_001/test_guard.py": {
+      "role": "research",
+      "reason": "h375_ranker_nl15_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h375_ranker_nl15_min_split_gain_001/test_h375.py": {
+      "role": "research",
+      "reason": "h375_ranker_nl15_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h375_ranker_nl15_min_split_gain_001/test_leaves.py": {
+      "role": "research",
+      "reason": "h375_ranker_nl15_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h375_ranker_nl15_min_split_gain_001/test_native_audit.py": {
+      "role": "research",
+      "reason": "h375_ranker_nl15_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h375_ranker_nl15_min_split_gain_001/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h375_ranker_nl15_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h375_ranker_nl15_min_split_gain_001/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h375_ranker_nl15_min_split_gain_001 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_dataset_audit.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_depth.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_guard_window.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_h376.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_host_transport.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_leaves.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_native_audit.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_secondary.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_tree_structure.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h376_ranker_nl15_reg_alpha_05_x1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h377_ranker_nl15_min_split_gain_001_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h377_ranker_nl15_min_split_gain_001_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h377_ranker_nl15_min_split_gain_001_rerun/test_gain.py": {
+      "role": "research",
+      "reason": "h377_ranker_nl15_min_split_gain_001_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h377_ranker_nl15_min_split_gain_001_rerun/test_guard.py": {
+      "role": "research",
+      "reason": "h377_ranker_nl15_min_split_gain_001_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h377_ranker_nl15_min_split_gain_001_rerun/test_h377.py": {
+      "role": "research",
+      "reason": "h377_ranker_nl15_min_split_gain_001_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h377_ranker_nl15_min_split_gain_001_rerun/test_leaves.py": {
+      "role": "research",
+      "reason": "h377_ranker_nl15_min_split_gain_001_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h377_ranker_nl15_min_split_gain_001_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h377_ranker_nl15_min_split_gain_001_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h377_ranker_nl15_min_split_gain_001_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h377_ranker_nl15_min_split_gain_001_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h377_ranker_nl15_min_split_gain_001_rerun/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h377_ranker_nl15_min_split_gain_001_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h378_ranker_nl15_max_delta_step_1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_guard.py": {
+      "role": "research",
+      "reason": "h378_ranker_nl15_max_delta_step_1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_h378.py": {
+      "role": "research",
+      "reason": "h378_ranker_nl15_max_delta_step_1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_incumbent_spec.py": {
+      "role": "research",
+      "reason": "h378_ranker_nl15_max_delta_step_1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_max_delta_step.py": {
+      "role": "research",
+      "reason": "h378_ranker_nl15_max_delta_step_1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_native_audit.py": {
+      "role": "research",
+      "reason": "h378_ranker_nl15_max_delta_step_1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h378_ranker_nl15_max_delta_step_1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h378_ranker_nl15_max_delta_step_1 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_corrected_guard.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_h352_native_contract.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_h379.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_leaves.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_mcs_patch.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_native_audit.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h379_ranker_nl15_min_child_samples_40/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h379_ranker_nl15_min_child_samples_40 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h380_ranker_nl15_bagging_freq_5/test_bagfreq.py": {
+      "role": "research",
+      "reason": "h380_ranker_nl15_bagging_freq_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h380_ranker_nl15_bagging_freq_5/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h380_ranker_nl15_bagging_freq_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h380_ranker_nl15_bagging_freq_5/test_h380.py": {
+      "role": "research",
+      "reason": "h380_ranker_nl15_bagging_freq_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h380_ranker_nl15_bagging_freq_5/test_leaves.py": {
+      "role": "research",
+      "reason": "h380_ranker_nl15_bagging_freq_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h380_ranker_nl15_bagging_freq_5/test_native_audit.py": {
+      "role": "research",
+      "reason": "h380_ranker_nl15_bagging_freq_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h380_ranker_nl15_bagging_freq_5/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h380_ranker_nl15_bagging_freq_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h380_ranker_nl15_bagging_freq_5/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h380_ranker_nl15_bagging_freq_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h382_ranker_nl15_max_delta_step_1_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h382_ranker_nl15_max_delta_step_1_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h382_ranker_nl15_max_delta_step_1_rerun/test_guard.py": {
+      "role": "research",
+      "reason": "h382_ranker_nl15_max_delta_step_1_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h382_ranker_nl15_max_delta_step_1_rerun/test_h382.py": {
+      "role": "research",
+      "reason": "h382_ranker_nl15_max_delta_step_1_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h382_ranker_nl15_max_delta_step_1_rerun/test_incumbent_spec.py": {
+      "role": "research",
+      "reason": "h382_ranker_nl15_max_delta_step_1_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h382_ranker_nl15_max_delta_step_1_rerun/test_max_delta_step.py": {
+      "role": "research",
+      "reason": "h382_ranker_nl15_max_delta_step_1_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h382_ranker_nl15_max_delta_step_1_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h382_ranker_nl15_max_delta_step_1_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h382_ranker_nl15_max_delta_step_1_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h382_ranker_nl15_max_delta_step_1_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h382_ranker_nl15_max_delta_step_1_rerun/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h382_ranker_nl15_max_delta_step_1_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_dataset_audit.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_depth.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_guard_window.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_h383.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_host_transport.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_leaves.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_native_audit.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_secondary.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_tree_structure.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/test_wait_gate.py": {
+      "role": "research",
+      "reason": "h383_ranker_nl15_reg_alpha_05_xb2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_feature.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_guard.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_h384.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_leaves.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_native_audit.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_spec_guard.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h384_ranker_nl15_feature_fraction_bynode/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h384_ranker_nl15_feature_fraction_bynode research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h385_ranker_nl15_max_delta_step_1_rerun2/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h385_ranker_nl15_max_delta_step_1_rerun2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h385_ranker_nl15_max_delta_step_1_rerun2/test_guard.py": {
+      "role": "research",
+      "reason": "h385_ranker_nl15_max_delta_step_1_rerun2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h385_ranker_nl15_max_delta_step_1_rerun2/test_h385.py": {
+      "role": "research",
+      "reason": "h385_ranker_nl15_max_delta_step_1_rerun2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h385_ranker_nl15_max_delta_step_1_rerun2/test_incumbent_spec.py": {
+      "role": "research",
+      "reason": "h385_ranker_nl15_max_delta_step_1_rerun2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h385_ranker_nl15_max_delta_step_1_rerun2/test_max_delta_step.py": {
+      "role": "research",
+      "reason": "h385_ranker_nl15_max_delta_step_1_rerun2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h385_ranker_nl15_max_delta_step_1_rerun2/test_native_audit.py": {
+      "role": "research",
+      "reason": "h385_ranker_nl15_max_delta_step_1_rerun2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h385_ranker_nl15_max_delta_step_1_rerun2/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h385_ranker_nl15_max_delta_step_1_rerun2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h385_ranker_nl15_max_delta_step_1_rerun2/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h385_ranker_nl15_max_delta_step_1_rerun2 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_corrected_guard.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_h352_native_contract.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_h386.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_leaves.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_native_audit.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_ps_patch.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h386_ranker_nl15_path_smooth_5/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h386_ranker_nl15_path_smooth_5 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_guard.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_h387.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_leaves.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_lr.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_native_audit.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_spec_guard.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h387_ranker_nl15_lr_half_2x_trees/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h387_ranker_nl15_lr_half_2x_trees research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h388_ranker_nl15_cat_l2_20/test_cat_l2.py": {
+      "role": "research",
+      "reason": "h388_ranker_nl15_cat_l2_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h388_ranker_nl15_cat_l2_20/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h388_ranker_nl15_cat_l2_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h388_ranker_nl15_cat_l2_20/test_h388.py": {
+      "role": "research",
+      "reason": "h388_ranker_nl15_cat_l2_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h388_ranker_nl15_cat_l2_20/test_leaves.py": {
+      "role": "research",
+      "reason": "h388_ranker_nl15_cat_l2_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h388_ranker_nl15_cat_l2_20/test_native_audit.py": {
+      "role": "research",
+      "reason": "h388_ranker_nl15_cat_l2_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h388_ranker_nl15_cat_l2_20/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h388_ranker_nl15_cat_l2_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h388_ranker_nl15_cat_l2_20/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h388_ranker_nl15_cat_l2_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h389_ranker_nl15_bag16/test_bag.py": {
+      "role": "research",
+      "reason": "h389_ranker_nl15_bag16 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h389_ranker_nl15_bag16/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h389_ranker_nl15_bag16 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h389_ranker_nl15_bag16/test_guard.py": {
+      "role": "research",
+      "reason": "h389_ranker_nl15_bag16 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h389_ranker_nl15_bag16/test_h389.py": {
+      "role": "research",
+      "reason": "h389_ranker_nl15_bag16 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h389_ranker_nl15_bag16/test_leaves.py": {
+      "role": "research",
+      "reason": "h389_ranker_nl15_bag16 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h389_ranker_nl15_bag16/test_native_audit.py": {
+      "role": "research",
+      "reason": "h389_ranker_nl15_bag16 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h389_ranker_nl15_bag16/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h389_ranker_nl15_bag16 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h389_ranker_nl15_bag16/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h389_ranker_nl15_bag16 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h390_ranker_nl15_cat_l2_20_rerun/test_cat_l2.py": {
+      "role": "research",
+      "reason": "h390_ranker_nl15_cat_l2_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h390_ranker_nl15_cat_l2_20_rerun/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h390_ranker_nl15_cat_l2_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h390_ranker_nl15_cat_l2_20_rerun/test_h390.py": {
+      "role": "research",
+      "reason": "h390_ranker_nl15_cat_l2_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h390_ranker_nl15_cat_l2_20_rerun/test_leaves.py": {
+      "role": "research",
+      "reason": "h390_ranker_nl15_cat_l2_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h390_ranker_nl15_cat_l2_20_rerun/test_native_audit.py": {
+      "role": "research",
+      "reason": "h390_ranker_nl15_cat_l2_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h390_ranker_nl15_cat_l2_20_rerun/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h390_ranker_nl15_cat_l2_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h390_ranker_nl15_cat_l2_20_rerun/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h390_ranker_nl15_cat_l2_20_rerun research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h391_ranker_nl11_maxdepth4/test_capacity.py": {
+      "role": "research",
+      "reason": "h391_ranker_nl11_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h391_ranker_nl11_maxdepth4/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h391_ranker_nl11_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h391_ranker_nl11_maxdepth4/test_guard.py": {
+      "role": "research",
+      "reason": "h391_ranker_nl11_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h391_ranker_nl11_maxdepth4/test_h391.py": {
+      "role": "research",
+      "reason": "h391_ranker_nl11_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h391_ranker_nl11_maxdepth4/test_incumbent_spec.py": {
+      "role": "research",
+      "reason": "h391_ranker_nl11_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h391_ranker_nl11_maxdepth4/test_native_audit.py": {
+      "role": "research",
+      "reason": "h391_ranker_nl11_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h391_ranker_nl11_maxdepth4/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h391_ranker_nl11_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h391_ranker_nl11_maxdepth4/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h391_ranker_nl11_maxdepth4 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_affinity.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_dataset_audit.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_depth.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_guard_window.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_h392.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_host_transport.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_leaves.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_minhess.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_native_audit.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_secondary.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_tree_structure.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h392_ranker_nl15_min_sum_hessian/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h392_ranker_nl15_min_sum_hessian research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h393_ranker_nl15_min_gain_to_split/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h393_ranker_nl15_min_gain_to_split research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h393_ranker_nl15_min_gain_to_split/test_gain.py": {
+      "role": "research",
+      "reason": "h393_ranker_nl15_min_gain_to_split research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h393_ranker_nl15_min_gain_to_split/test_guard.py": {
+      "role": "research",
+      "reason": "h393_ranker_nl15_min_gain_to_split research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h393_ranker_nl15_min_gain_to_split/test_h393.py": {
+      "role": "research",
+      "reason": "h393_ranker_nl15_min_gain_to_split research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h393_ranker_nl15_min_gain_to_split/test_leaves.py": {
+      "role": "research",
+      "reason": "h393_ranker_nl15_min_gain_to_split research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h393_ranker_nl15_min_gain_to_split/test_native_audit.py": {
+      "role": "research",
+      "reason": "h393_ranker_nl15_min_gain_to_split research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h393_ranker_nl15_min_gain_to_split/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h393_ranker_nl15_min_gain_to_split research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h393_ranker_nl15_min_gain_to_split/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h393_ranker_nl15_min_gain_to_split research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h394_ranker_nl15_cat_smooth_20/test_cat_smooth.py": {
+      "role": "research",
+      "reason": "h394_ranker_nl15_cat_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h394_ranker_nl15_cat_smooth_20/test_evaluator_report.py": {
+      "role": "research",
+      "reason": "h394_ranker_nl15_cat_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h394_ranker_nl15_cat_smooth_20/test_h394.py": {
+      "role": "research",
+      "reason": "h394_ranker_nl15_cat_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h394_ranker_nl15_cat_smooth_20/test_leaves.py": {
+      "role": "research",
+      "reason": "h394_ranker_nl15_cat_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h394_ranker_nl15_cat_smooth_20/test_native_audit.py": {
+      "role": "research",
+      "reason": "h394_ranker_nl15_cat_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h394_ranker_nl15_cat_smooth_20/test_resource_forecast.py": {
+      "role": "research",
+      "reason": "h394_ranker_nl15_cat_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "python:research/flywheel_selfplay/h394_ranker_nl15_cat_smooth_20/test_veto_identity.py": {
+      "role": "research",
+      "reason": "h394_ranker_nl15_cat_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "target:jope-ci/test/test_partition": {
+      "role": "infrastructure",
+      "reason": "Test-partition proof ported from deploy/ci/check_test_partition.py. It checks rust-test slices, JUnit, and the CI workflow declarations. It is CI infrastructure, not a regression subsystem."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

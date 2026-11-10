@@ -1,0 +1,23 @@
+{
+  "utc": "2026-11-04T17:46:15.989700+00:00",
+  "source_pins": [
+    {
+      "wave": "H325",
+      "commit": "2f7dfe32b684a2adfd0b12c0d6f52f8d4ed37395",
+      "path": "research/flywheel_selfplay/h325_extratrees_randomized_members/README.md",
+      "sha256": "d810bf8c727ad5d4f8836c397d5b72774e77b0c9219485aedce1dbd44d3b5f51"
+    },
+    {
+      "wave": "H326",
+      "commit": "19e479830fe3653b864375ce183c82055c91bb8b",
+      "path": "research/flywheel_selfplay/h326_bootstrap_ci_config_selection/README.md",
+      "sha256": "3e8ebee4413ca40a80b996598a75d8e488fe6a59fdf49e8bd0a9b3f45a4c6c5f"
+    }
+  ],
+  "findings": [
+    "H325 positive point drop10 estimate +.004282 did not pass LCB95(-.002784), and median harmed share increased9.268%->12.195%; no advancement follows from the point gain alone.",
+    "H325 altered veto constructors as well as rankers; H327 leaves gates unchanged, so cross-wave contrast is not solely ranker recipe.",
+    "H326 is INCOMPLETE_INPUT_COVERAGE with0fits/selections/outer scores, not a negative numerical test.36selected OOF policies/648required; aggregate18config means and serialized boosters without inner selection metadata cannot reconstruct family-level full-grid policies.",
+    "H327 also retains selected OOF vectors and aggregate18config means, not a complete full-grid OOF policy cache. Its archives support this preregistered audit/numerical replay, not future bootstrap configuration reselection without additional provenance."
+  ]
+}

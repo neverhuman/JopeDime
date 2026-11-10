@@ -1,0 +1,42 @@
+{
+  "wave": "H356",
+  "h352_source_commit": "02dfee2f7e0b8543324494dd4f99d074cd6b93b6",
+  "source_sha256": {
+    "analysis_h279.py": "763ad41d0e35fbf97dce4ca46deab5557e414d2c93ed46f729cdabfce30752d6",
+    "analysis_h287.py": "166b336451f270b31bcc7ad68de72012afba2b6622903f13a793bc0992490930",
+    "analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "common.py": "c3c731bf71f34add3f0165666ef81653abb2b3f6486186f564194baeaa85ab74",
+    "controller_h356.py": "ba436710dda7bb0746e637dc8f13a39d2071fc8285c2f2e280d981d836116fea",
+    "dev91_contexts.json": "e13b10d17e58573fb43a7783981c47bc856db847b9f308f68ea46dfe40f39a66",
+    "ensemble.py": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+    "fetch_h356.py": "85eea9b077ae1d911ae7a41dca6793d2295f0a7fab4c4d2966025ddaada4aabc",
+    "guard_h356.py": "f1f5fc3fb4fa94430ee873824e35a0548c87c5726e4bbf57dd665ba03d5e4969",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "infer_h356.py": "5529aea9377181788c71f7ca2ca682e89f26c7e18aa491614d56cb34b69a2ff9",
+    "input_pins.json": "52a73e88270731873a5a61ee9b850bf26952e27eee039516fc0011d6dea836e6",
+    "native_audit.py": "50c4363e028c3cef32eb7653fdf091737cb43d39792602bd495274dc0af5be8d",
+    "resource_probe.py": "f266923bac5142b4f8c80ad4937ddfb9234a661d7c00c0e4b619366ebc72fa30",
+    "run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "statistics_h356.py": "70639ea11ae70c8943b6c3f7269dc3a9e4c8bb8892fa6b2bc88bbf0a6cc0ac0b",
+    "test_h356.py": "7be049dea0e1cf8077854c14ff5e5f1478057e5f80e93302db61fd57ff5575ca",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0"
+  },
+  "prereg_sha256": "2d72f3b91d36a22d897ea7250e5bef4ab852df28f676bf6274de71e102f83904",
+  "environment": {
+    "python": "3.12.3",
+    "packages": {
+      "numpy": "1.26.4",
+      "lightgbm": "4.6.0",
+      "scikit-learn": "1.7.2",
+      "torch": "2.7.0",
+      "boto3": "1.35.49",
+      "psutil": "7.1.0"
+    }
+  },
+  "controls": 24,
+  "compute_stop": "2026-11-05T12:15:00Z",
+  "close_stop": "2026-11-05T12:30:00Z"
+}

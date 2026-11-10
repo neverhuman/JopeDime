@@ -1,0 +1,38 @@
+{
+  "schema": "whitepaper.full-retained-trajectory-source/v1",
+  "source_journal": "adapter_admissions.jsonl",
+  "captured_utc": "2026-11-04T04:56:36.812259+00:00",
+  "records": 4063,
+  "round_window": [
+    775,
+    4838
+  ],
+  "missing_rounds": [
+    4331
+  ],
+  "strict_gain_rounds": [
+    785,
+    859,
+    2750,
+    3175
+  ],
+  "tie_rounds": [
+    782,
+    882,
+    2795,
+    3100
+  ],
+  "retained_state_chain_breaks": [],
+  "evaluation_identity_sha256": [
+    "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6"
+  ],
+  "source_prefix_bytes": 2159454,
+  "source_prefix_records": 4063,
+  "source_prefix_sha256": "11a2550d095fa9593866fb8d618428168412e19e91fbcf0b575c9bed5b61cc1f",
+  "trailing_incomplete_bytes_omitted": 0,
+  "stable_prefix_reread": true,
+  "selection": "Every complete admission-journal record from round775 to latest at fixed capture; no outcome/value filtering. Missing rounds remain missing and break the plotted line.",
+  "csv_sha256": "7bb0dd88e1a6ac1a57075d1b72c87db26d7bbe95a953bf90b8ccf526297fdd58",
+  "scope": "Adaptive development-side cost-adapter admission records. These do not establish independent first-proposal quality, writer or ranking-map learning, serving performance or transfer.",
+  "source_binding": "Logged aggregate field interpretation only; exact installed source, adapter, candidate pools, normalization and evaluation-population closure remain unqualified."
+}

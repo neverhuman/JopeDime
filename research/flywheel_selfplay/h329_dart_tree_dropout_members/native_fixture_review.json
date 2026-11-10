@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "models": [
+    {
+      "file": "329001-DART.txt",
+      "sha256": "715435f9bc3875e72fca2dcd73fc606b0ddf4db62bb5e58cffe5391fe8fe7680",
+      "boosting": "dart",
+      "drop_seed": "329001"
+    },
+    {
+      "file": "329002-DART.txt",
+      "sha256": "31822c1686967605d425b20162411f0e4eb3007e4eebdb29fdcb4d1e42463b06",
+      "boosting": "dart",
+      "drop_seed": "329002"
+    },
+    {
+      "file": "329003-DART.txt",
+      "sha256": "f3d0b4fce3504938a5c14430a519393adf4fdcdb0afdbc3fda915123b257ef30",
+      "boosting": "dart",
+      "drop_seed": "329003"
+    }
+  ],
+  "source": "Existing six fixed timing fits; no rerun or new optimizer call"
+}

@@ -7,23 +7,20 @@
 % Figure 3 is introduced at the close of Section 3. Its definition remains
 % early here so the full-width float can reach the next page top.
 \begin{figure*}[t]
+  \setlength{\abovecaptionskip}{4pt}
   \centering
   \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Reference training searches many moves; game-day evaluation commits one.}
-  The training loop (\cref{sub:method-selfplay}) is separate from the adapter
-  record in \cref{sec:method-status}. Blue: game day (\searchone{}); dashed box:
-  proposed training.
-  Valid scored programs enter learning lists; failed attempts consume budget.}
+  In the top band (blue, \searchone{}; proposed game day), the frozen encoder reads board $p$ and the writer $\writer$ commits one move $w$ with no retry or repair.
+  In the lower dashed box (proposed training, \cref{sub:method-selfplay}; separate from the adapter record in \cref{sec:method-status}), valid scored moves join the problem's scored list $G_p$ (\cref{sub:method-map}) while failed attempts consume budget. The game-day verdict never enters $G_p$; a cut fixes a dataset split and evaluation case.}
   \label{fig:game-loop}
 \end{figure*}
 
-An invention attempt is the reference game's unit of play
-(\cref{sec:road}): the encoded problem is the board, a program is the move,
-the referee checks and scores it, and a declared incumbent is the opponent.
-The encoding supplies a shared interface;
-each task type still needs its own qualified encoding, language and
-evaluation protocol (\cref{sub:game-boards}). \Cref{tab:go-vs-innovation}
-makes the comparison with Go explicit.
+The reference game's unit is one invention attempt (\cref{sec:road}):
+a problem is the board, a program the move, the referee supplies a verdict
+and a declared incumbent is the opponent. Each task type still needs a
+qualified encoding, language and evaluation protocol
+(\cref{sub:game-boards}). \Cref{tab:go-vs-innovation} compares it with Go.
 
 % ----------------------------------------------------------------------------
 \subsection{Why games came first}\label{sub:game-games}
@@ -34,28 +31,28 @@ because it is ``sharply defined both in allowed operations (the moves) and in
 the ultimate goal (checkmate)'' \citep{shannon1950chess}, and checkers showed
 that a program could improve by playing itself \citep{samuel1959checkers}.
 
-Together these properties support repeated, reproducible evaluation. People
-scale judgment the same way, through prizes, leaderboards and the common task
-framework's ``scoring referee'' \citep{donoho2017fifty} (\cref{sec:road}).
-Invention has the first three properties once the problem and the solution are
-written down, within the limits of \cref{sub:game-played}; cheap replay is a
-question of cost (\cref{sec:price}).
+These four properties support reproducible repeated evaluation. People
+scale judgment similarly (\cref{sec:road}), through prizes, leaderboards and
+the common task framework's ``scoring referee'' \citep{donoho2017fifty}.
+Once problem and solution are specified, invention shares the first three
+within the limits of \cref{sub:game-played}; cheap replay depends on
+evaluation cost (\cref{sec:price}).
 
 % ----------------------------------------------------------------------------
 \subsection{The rules}\label{sub:game-rules}
 
-Every submitted program counts as an attempt, including an illegal move. The reference writer $\writer$ reads the encoded problem,
-while the referee keeps the incumbent as a separate comparison standard
-(\cref{sub:method-board}); its code and score must stay outside the writer's
-input.
+Every submitted program counts as an attempt, including an illegal move.
+The reference writer $\writer$ reads the encoded problem; the referee uses
+the incumbent as a separate standard (\cref{sub:method-board}). The incumbent's code and
+score \mbox{must stay outside} the writer's input.
 
-\Cref{fig:game-loop} separates training from game day. Its top row follows
-the single-candidate contract in \cref{box:searchone}.
+The top band of \cref{fig:game-loop} follows the single-candidate contract
+in \cref{box:searchone}; the dashed box covers reference training.
 
 \begin{table}[htb]
   \caption{\textbf{Go and the innovation game share structure but differ in move cost.}
   Go's moves are cheap, while each program is costly to judge
-  (\cref{sub:game-played}). Go's game length is
+  (\cref{sub:game-played}). Go's move count is
   from \citet{silver2016mastering}.}
   \label{tab:go-vs-innovation}
   \centering
@@ -66,41 +63,40 @@ the single-candidate contract in \cref{box:searchone}.
     \toprule
     Element        & Go                              & The innovation game \\
     \midrule
-    Board          & Stones on a $19\times19$ grid   & The encoded problem $z_p = \encP(p)$ for $p \in \Prob$ \\
-    Move           & Place one stone, or pass        & Write one complete program $w \in \Sol$ \\
+    Board          & Stones on a \mbox{$19\times19$ grid} & The encoded problem $z_p = \encP(p)$ for $p \in \Prob$ \\
+    Move           & Place one stone, \mbox{or pass} & Write one complete \mbox{program $w \in \Sol$} \\
     Legal move     & Empty point; no suicide or forbidden repetition & Parses, type-checks, runs within limits \\
-    Illegal move   & Not allowed                     & Stillborn ($\tilde{w}$): an automatic loss \\
-    Referee        & The rules of Go                 & The referee $\referee$, on hidden folds \\
+    Illegal move   & Not allowed                     & Stillborn ($\tilde{w}$): \mbox{an automatic loss} \\
+    Referee        & The rules of Go                 & The referee $\referee$, \mbox{on hidden folds} \\
     Win            & Higher final score             & Valid move $w^+$ beating $\inc{p}$ under $\reward$ \\
-    Opponent       & A past self                     & The incumbent $\inc{p}$ from $\opp$, often a past self \\
-    Rating         & Elo                             & Win rate and Elo across problems \\
-    Moves per game & About 150, each cheap           & One ($\budget$), costly to judge \\
+    Opponent       & A past self                     & The incumbent $\inc{p}$ from $\opp$, possibly a past self \\
+    Rating         & Elo                             & Win rate and Elo \mbox{across problems} \\
+    Moves per game & About 150, \mbox{each cheap}    & One ($\budget$), \mbox{costly to judge} \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-Formally, the game is a tuple of seven parts,
+Six parts specify the reference game:
 \[
-  \Game = (\Prob, \encP, \Sol, \encS, \referee, \reward, \opp).
+  \Game = (\Prob, \encP, \Sol, \referee, \reward, \opp).
 \]
-In the reference learner, $\encP$ represents a problem $p \in \Prob$ as
-$z_p$, while $\encS$ embeds a program $w \in \Sol$ as $z_w$ for the separate
-ranking map (\cref{sub:method-map}). Game-day generation and the referee
-do not use $\encS$. The referee $\referee$ reports validity and score, the
+In the reference design, $\encP$ represents a problem $p \in \Prob$ as
+$z_p$. The referee $\referee$ reports validity and score, the
+%
+%
 reward $\reward$ orders moves, and the opponent $\opp$ supplies the
 incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
-selection \citep{rice1976algorithm}: the player writes the algorithm instead of
-picking it, and a declared incumbent sets the comparison standard.
+selection \citep{rice1976algorithm}: the player writes an algorithm instead of
+\mbox{picking} it, and the incumbent sets the comparison standard.
 
-With one move, the game is a contextual bandit: the board supplies context,
-the program is the action and the
-verdict is the reward \citep{lattimore2020bandit}. The incumbent supplies a
-changing comparison standard as verified programs displace it. The asymmetry is in the
-moves: Go offers about 250 legal moves per turn over about 150 turns, each free
-to check \citep{silver2016mastering}, while this game offers one move, costly to
-judge. Under a single-candidate budget, the chance $\winprob$ of a win matters
-directly (\cref{eq:taste}). Whether training raises that chance on new
-families is the test in \cref{sec:results}.
+One move makes the game a contextual bandit: board as context, program as
+action and verdict as reward \citep{lattimore2020bandit}. Verified programs
+can displace the incumbent, changing the comparison standard. Move cost
+sets the games apart: Go offers about 250 legal moves per turn over about
+150 turns, each free to check \citep{silver2016mastering}; this game offers
+one move, costly to judge. Under a single-candidate budget, the chance $\winprob$ of a win matters
+directly (\cref{eq:taste}). Whether training raises that win probability on unseen
+problem families is the empirical test in \cref{sec:results}.
 
 % ----------------------------------------------------------------------------
 \subsection{The board and the move}\label{sub:game-board}
@@ -110,20 +106,20 @@ summary of the training data, the objective and metric, and the constraints.
 Landmark scores from cheap learners \citep{pfahringer2000landmarking} and
 learned tabular summaries are possible encodings; \cref{sub:method-board}
 specifies the reference encoder and its cost limit.
-In the inspected implementation, that encoder consumes prepared numeric training
+In the reference implementation, that encoder consumes prepared numeric training
 rows and targets; the writer's engine and regression-task tokens are
 supplied separately. The objective, metric and budget are protocol
-settings, not additional fields in this encoder call.
+settings, not \mbox{additional input fields} in this encoder call.
 
-A useful board should preserve distinctions relevant to algorithm choice,
-remain stable under irrelevant reorderings, exclude final evaluation
-information and have a measured cost. These are requirements to test, not
-properties guaranteed by naming an encoder. People still choose the problem
-and define what counts as a useful solution.
+A usable board must preserve distinctions relevant to algorithm choice,
+ignore irrelevant reorderings, exclude final-evaluation information and
+have a measured cost. Each property needs a test; naming an encoder is
+insufficient. People still choose the problem and define what counts
+as useful.
 
-A move is one program in a typed language over learning primitives.
-A task-specific grammar restricts legal moves; \cref{sub:method-move}
-specifies the reference vocabulary and composition limits.
+A move is one complete program written in a typed language over learning primitives.
+A task-specific grammar restricts legal moves, and \cref{sub:method-move}
+specifies the reference operator vocabulary and composition limits.
 
 Types remove whole classes of stillborn
 programs before they run \citep{montana1995stgp}. Canonicalization can merge
@@ -131,11 +127,11 @@ syntactic variants; it need not identify every functionally equivalent
 implementation. AutoML-Zero
 reused scores when hashes of truncated predictions matched after a short
 training and validation probe \citep{real2020automlzero}. Matching a probe
-does not establish agreement on other inputs (\cref{sub:method-move}).
+does not establish \mbox{agreement on other} inputs (\cref{sub:method-move}).
 
 The language bounds what can be expressed; changing its primitives changes
-that space \citep{boden1990creative}. Structural constraints can prevent invalid programs; their effect on useful proposal
-quality must be measured (\cref{sec:results}).
+that space \citep{boden1990creative}. Structural constraints can prevent invalid programs; their effect on useful \mbox{proposal
+quality} must be measured (\cref{sec:results}).
 
 % ----------------------------------------------------------------------------
 \subsection{The referee and the opponent}\label{sub:game-referee}
@@ -150,23 +146,21 @@ $\tilde{w}$, an also-ran $w^-$ and a win $w^+$ on board $p$,
   \reward(p, \tilde{w}) \;<\; \reward(p, w^-) \;<\; \reward(p, w^+).
 \]
 
-The opponent is a ratcheting incumbent. A program must strictly improve
-under the same evaluation protocol to displace a board's incumbent.
-The reference design gives a retrained writer a separate proposed admission
-test (\cref{sub:method-selfplay}). The two rules define its self-play:
-a proposer faces incumbents retained from earlier play.
-AlphaGo Zero likewise separated network admission from move
-selection \citep{silver2017mastering}.
-These are reference rules, not a record of writer improvement. The later loop in
-\cref{sec:method-status} updates only a ranking adapter; its default
-admission gate can retain equal utility. That record does not establish
-retraining or admission of the neural writer.
+The program incumbent changes only after strict improvement under the
+same evaluation protocol. The reference design proposes a separate
+admission test for a retrained writer (\cref{sub:method-selfplay}).
+Both rules compare against incumbents retained from earlier play.
+AlphaGo Zero likewise separated network admission from move selection
+\citep{silver2017mastering}. These are reference rules, not a record of
+writer improvement. The separate loop in \cref{sec:method-status} updates
+only a cost-ranking adapter and can admit equal utility by default.
+Its record does not establish neural writer retraining or admission.
 
 Subtracting the incumbent's score does not change which move is best.
-Promotion raises the bar, turns yesterday's winners
+Promotion raises the bar, turns old winners
 into today's also-rans and shifts which problems are worth playing. The
-reference learning targets use each program's rank within its scored list
-(\cref{sub:method-map,sub:method-selfplay}).
+reference targets use each program's rank within its scored list, with no
+novelty term (\cref{sub:method-map,sub:method-selfplay}).
 
 % ----------------------------------------------------------------------------
 \subsection{One game, many boards}\label{sub:game-boards}
@@ -177,13 +171,12 @@ multiplication and AlphaDev for sorting
 \citep{fawzi2022alphatensor,mankowitz2023alphadev}. AlphaZero used one algorithm
 for three games and trained a separate network for each
 \citep{silver2018general}. Here the problem is an input on the board, so one
-player can, in principle, learn many boards.
+player can, \mbox{in principle, learn} many boards.
 
-The historical reference checkpoint and the comparison protocol here are
-scoped to tabular regression. Binary and multiclass classification, ranking,
-forecasting
-and relational prediction remain prospective boards, each needing a qualified
-encoding, program language, metric and validation protocol.
+The historical reference checkpoint and comparison protocol cover only
+tabular regression. Binary and multiclass classification, ranking,
+forecasting and relational prediction remain prospective; each needs a
+qualified encoding, program language, metric and validation protocol.
 
 Beyond machine learning, examples of referees include sorting tests
 \citep{mankowitz2023alphadev}, evaluators for mathematical constructions
@@ -215,14 +208,13 @@ isolation and parity checks required here.
 uniformly over all problems, no learner has lower error off the training set
 than another, ours included \citep{wolpert1996nfl}.
 
-Real problems are structured, though, and a player that
-reads the board can choose its bias board by board. \Cref{sec:results} reserves the tests of that hypothesis against fixed
+Problem structure motivates a player that chooses its bias from the board.
+\Cref{sec:results} reserves tests of that hypothesis against fixed
 frontier-designed regressors, with paired outcomes beside Elo summaries
-\citep{elo1978rating}. Non-transitive comparisons are one reason not to
-reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
-A worked game, chosen by a rule fixed before inspection, is to be reported with
-the results (\cref{sub:results-failures}).
+\citep{elo1978rating}. Non-transitivity limits what a single rating can establish
+\citep{balduzzi2018reevaluating}. A worked game, chosen by a rule fixed
+before inspection, will \mbox{accompany the results}
+(\cref{sub:results-failures}).
 
-The game defines an attempt and a verdict. \Cref{sec:price} accounts for
-the work required to obtain a verified improvement, including invalid
-programs and valid losses.
+\Cref{sec:price} turns the budget limit into a cost ledger that bills invalid
+programs and valid losses alongside wins.

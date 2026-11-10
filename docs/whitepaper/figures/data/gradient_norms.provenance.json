@@ -1,0 +1,29 @@
+{
+  "schema": "whitepaper.gradient-norms-figure/v1",
+  "csv_sha256": "f2f388cbccc8c4f3e547d6ce84ab6568a37f4c00b8a3463964ac2ef88f5e9f55",
+  "source_receipt_sha256": "8bfeede59451f2378f09fc61f9a1dc0f45dc362c8905f6f89da220bad9f9970d",
+  "source_prefix_sha256": "ffb53dc26416057f5fc0ea9ca001877a417c756891e9c4778320bf5d796c2b64",
+  "generator_sha256": "13498bba5ec1c4d08412f0ebba8bca7aae321b0082a48776173615207db91b0a",
+  "figure_sha256": "7a8e84e4eb3d9c7880c7aa203e919fb36d99df241628886b837819331b3df760",
+  "records": 9,
+  "points": 18,
+  "round_window": [
+    4762,
+    4770
+  ],
+  "accepted": 0,
+  "minimum_gradient_norm": "0.46243879199028015",
+  "maximum_gradient_norm": "0.47311684489250183",
+  "transformation": "One unsmoothed marker per recorded optimizer step per completed round. Color/shape distinguishes step index; no filtering, interpolation or cumulative envelope.",
+  "scope": "Logged candidate adapter gradient magnitudes before clipping. The two steps use separate recorded training batches; their difference is not a matched loss reduction, parameter displacement, retained improvement or independent learning. Exact runtime binding remains unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "figure_inches": [
+    3.375,
+    1.65
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_gradient_norms.py"
+}

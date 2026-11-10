@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "outer_model_score_calls": 36,
+  "score_locks": 36,
+  "final_models_unchanged": 1080,
+  "model_fits": 0,
+  "dev91_rows_read": 0,
+  "panel_sha256": "6220eea7bfc90e7dd4d2058a0939ae811f54f5da217511f018bea31b6748fb19",
+  "r3175_train": "NOT_MEASURED"
+}

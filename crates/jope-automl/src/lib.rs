@@ -17,6 +17,11 @@ mod gemini4_argon_high;
 
 #[rustfmt::skip]
 #[allow(clippy::all, unused_imports)]
+#[path = "grok4p7_xhigh.rs"]
+mod grok4p7_xhigh;
+
+#[rustfmt::skip]
+#[allow(clippy::all, unused_imports)]
 #[path = "kimik3p1_max.rs"]
 mod kimik3p1_max;
 
@@ -28,6 +33,14 @@ pub use gemini4_argon_high::Regressor as Gemini4ArgonHigh;
 /// receives row-major feature columns only. Both methods validate dimensions and
 /// return errors rather than changing the frozen submission.
 pub use gemini4_argon_high::RegressorApi as Gemini4ArgonHighApi;
+/// The frozen Grok 4.7 candidate's immutable model state.
+pub use grok4p7_xhigh::Regressor as Grok4p7Xhigh;
+/// Lifecycle API for [`Grok4p7Xhigh`].
+///
+/// `fit` receives a row-major matrix whose final column is the target; `predict`
+/// receives row-major feature columns only. Both methods validate dimensions and
+/// return errors rather than changing the frozen submission.
+pub use grok4p7_xhigh::RegressorApi as Grok4p7XhighApi;
 /// The owner-supplied Kimi K3.1 Max candidate's immutable model state.
 pub use kimik3p1_max::Regressor as KimiK3p1Max;
 /// Lifecycle API for [`KimiK3p1Max`].
@@ -60,6 +73,14 @@ pub const GEMINI4_ARGON_HIGH_SHA256: &str =
     "d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3";
 /// The exact file also builds directly with `rustc --crate-type rlib`.
 pub const GEMINI4_ARGON_HIGH_SOURCE: &str = include_str!("Gemini4_argon_high.rs");
+
+/// Frozen candidate identifier of the Grok 4.7 xhigh submission.
+pub const GROK4P7_XHIGH: &str = "grok4p7_xhigh";
+/// Hash of the standalone source. It is included byte-for-byte.
+pub const GROK4P7_XHIGH_SHA256: &str =
+    "8e648cef93186aca9d10868ed1ed2a62407950169082aa1f4fab87af379664f8";
+/// The exact file also builds directly with `rustc --crate-type rlib`.
+pub const GROK4P7_XHIGH_SOURCE: &str = include_str!("grok4p7_xhigh.rs");
 
 /// Frozen candidate identifier of the owner-supplied Kimi K3.1 Max submission.
 pub const KIMIK3P1_MAX: &str = "kimik3p1_max";
@@ -95,6 +116,11 @@ pub const REGRESSORS: &[Definition] = &[
         source_file: "Gemini4_argon_high.rs",
     },
     Definition {
+        id: GROK4P7_XHIGH,
+        source_sha256: GROK4P7_XHIGH_SHA256,
+        source_file: "grok4p7_xhigh.rs",
+    },
+    Definition {
         id: KIMIK3P1_MAX,
         source_sha256: KIMIK3P1_MAX_SHA256,
         source_file: "kimik3p1_max.rs",
@@ -118,6 +144,7 @@ pub struct FittedRegressor {
 enum Model {
     Gpt6p1SolMax(Gpt6p1SolMax),
     Gemini4ArgonHigh(Box<Gemini4ArgonHigh>),
+    Grok4p7Xhigh(Box<Grok4p7Xhigh>),
     KimiK3p1Max(Box<KimiK3p1Max>),
 }
 
@@ -164,6 +191,11 @@ pub fn fit_rows(
             Gemini4ArgonHighApi::fit(&mut model, &table, features.len(), columns)?;
             Model::Gemini4ArgonHigh(Box::new(model))
         }
+        GROK4P7_XHIGH => {
+            let mut model = <Grok4p7Xhigh as Grok4p7XhighApi>::new(seed);
+            Grok4p7XhighApi::fit(&mut model, &table, features.len(), columns)?;
+            Model::Grok4p7Xhigh(Box::new(model))
+        }
         KIMIK3P1_MAX => {
             let mut model = <KimiK3p1Max as KimiK3p1MaxApi>::new(seed);
             KimiK3p1MaxApi::fit(&mut model, &table, features.len(), columns)?;
@@ -194,6 +226,9 @@ impl FittedRegressor {
             Model::Gpt6p1SolMax(model) => model.predict(&flat, features.len(), self.width)?,
             Model::Gemini4ArgonHigh(model) => {
                 Gemini4ArgonHighApi::predict(&**model, &flat, features.len(), self.width)?
+            }
+            Model::Grok4p7Xhigh(model) => {
+                Grok4p7XhighApi::predict(&**model, &flat, features.len(), self.width)?
             }
             Model::KimiK3p1Max(model) => {
                 KimiK3p1MaxApi::predict(&**model, &flat, features.len(), self.width)?
@@ -448,7 +483,17 @@ mod tests {
 
     #[test]
     fn registry_and_transport_preserve_target_placement() {
-        assert_eq!(REGRESSORS.len(), 3);
+        assert_eq!(REGRESSORS.len(), 4);
+        assert_eq!(
+            definition(GROK4P7_XHIGH).unwrap().source_sha256,
+            GROK4P7_XHIGH_SHA256
+        );
+        let grok = fit_rows(GROK4P7_XHIGH, &[vec![10.0], vec![20.0]], &[7.0, 7.0], 1).unwrap();
+        assert_eq!(
+            grok.predict_rows(&[vec![1234.0], vec![f64::NAN]]).unwrap(),
+            vec![7.0; 2]
+        );
+        assert!(grok.predict_rows(&[vec![1.0, 2.0]]).is_err());
         assert_eq!(
             definition(GEMINI4_ARGON_HIGH).unwrap().source_file,
             "Gemini4_argon_high.rs"

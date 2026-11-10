@@ -1,0 +1,118 @@
+{
+  "wave_id": "H341",
+  "slug": "h341_ranker_coarse_histogram_maxbin",
+  "status": "INCOMPLETE",
+  "disposition": "INCOMPLETE_CPU_ADMISSION",
+  "verdict": null,
+  "scientific_outcome": "UNKNOWN",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "prereg_commit": "f11e106f16d9650ab56e2a02eb8675ecf7e74e56",
+  "fit_source_commit": "98c3c6f7531e8de5838c9e33f9b79ff89feb7c3f",
+  "regression": "EXACT PASS",
+  "tests": {
+    "status": "PASS",
+    "collected": 32,
+    "executed": 32,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "scope": "10 max-bin/forecast +4physical-boundary +18analysis controls; two synthetic ranker fits, one unchanged synthetic gate fit; BASE Dataset construction without fit"
+  },
+  "cpu_admission": {
+    "utc": "2026-11-04T23:13:12.840664+00:00",
+    "sample_seconds": 5,
+    "minimum_idle": 85,
+    "idle": {
+      "4": [
+        83.75,
+        73.6
+      ],
+      "5": [
+        67.49,
+        86.13
+      ],
+      "6": [
+        86.21,
+        82.19
+      ],
+      "8": [
+        54.85,
+        39.79
+      ],
+      "27": [
+        88.8,
+        92.47
+      ],
+      "33": [
+        86.75,
+        85.21
+      ],
+      "57": [
+        82.25,
+        78.22
+      ],
+      "59": [
+        84.65,
+        85.51
+      ]
+    },
+    "admitted": [
+      27,
+      33
+    ],
+    "status": "INCOMPLETE_CPU_ADMISSION",
+    "minimum_cores": 4,
+    "single_probe": true
+  },
+  "execution": {
+    "completed_fit_cells": 0,
+    "required_fit_cells": 36,
+    "scientific_ranker_fits": 0,
+    "required_ranker_fits": 29484,
+    "fit_locks": 0,
+    "treatment_outer_model_score_calls": 0,
+    "outer_test_rows_before_lock": 0,
+    "synthetic_ranker_control_fits": 2,
+    "synthetic_unchanged_gate_control_fits": 1,
+    "base_scientific_refits": 0,
+    "base_models_verified": 1080
+  },
+  "gates": {
+    "base_regression": "PASS",
+    "native_base_bin": "PASS: 972 rankers and 108 veto models all 255",
+    "cpu_admission": "NOT_MET",
+    "first_cell_forecast": "NOT_RUN",
+    "full36_fit_audit": "NOT_RUN",
+    "all36_locks": "NOT_MET",
+    "outer_scoring": "NOT_RUN",
+    "numerical_comparison": "NOT_RUN"
+  },
+  "measured": {
+    "MAXBIN63_gain": null,
+    "MAXBIN63_harm": null,
+    "MAXBIN63_elo": null,
+    "paired_drop10": null,
+    "paired_lcb95": null,
+    "seed_consistency": null,
+    "config_agreement": null
+  },
+  "historical_control_medians": [
+    0.0643163334285782,
+    0.04821480030677507,
+    0.04360142642936269
+  ],
+  "elo_label": "reference = r882 slot0 (DL-Train outer); r3175 not measured on TRAIN",
+  "bootstrap": {
+    "draws": 10000,
+    "rng": 341191,
+    "status": "NOT_RUN"
+  },
+  "dev91_rows_read": 0,
+  "r3175_train": "NOT_MEASURED",
+  "serving_authority": false,
+  "automatic_next": null
+}

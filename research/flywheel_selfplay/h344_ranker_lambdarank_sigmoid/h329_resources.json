@@ -1,0 +1,31 @@
+{
+  "host": "xbabe2",
+  "device": "CPU",
+  "nice": 19,
+  "workers": 6,
+  "cores": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    22
+  ],
+  "numeric_threads": 1,
+  "memory_max_bytes": 6442450944,
+  "swap_max_bytes": 0,
+  "memory_peak_bytes": 2661875712,
+  "memory_swap_peak_bytes": 0,
+  "cpu_usage_nsec": 30409446641000,
+  "sample_count": 1088,
+  "host_cpu_percent_max": 28.33291010665312,
+  "load1_max": 40.34375,
+  "mem_available_bytes_min": 76162678784,
+  "scratch_bytes_max": 1146277839,
+  "first_sample_utc": "2026-11-04T18:04:06.469914+00:00",
+  "last_sample_utc": "2026-11-04T19:48:01.646610+00:00",
+  "unit_start": "Wed 2026-11-04 18:19:45 UTC",
+  "unit_end": "Wed 2026-11-04 19:48:03 UTC",
+  "compute_stop": "2026-11-04T20:45:00Z",
+  "close_stop": "2026-11-04T21:00:00Z"
+}

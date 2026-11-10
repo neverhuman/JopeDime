@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "same_agent_independent_recalculation": true,
+  "bootstrap_draws_verified": 10000,
+  "cells": 9,
+  "families": 205,
+  "raw_utilities_counts_drops_intervals_decision_verified": true,
+  "metrics_sha256": "0c1a6ce9aed136c4a9f1c1a9ef80f92a7c6b39dee91bb3f63a3975a50142bc8b",
+  "verdict": "BLEND_NOT_ADVANCED",
+  "finished_utc": "2026-11-04T13:00:22.910267+00:00"
+}

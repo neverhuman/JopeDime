@@ -1,0 +1,14 @@
+"""H344 measured full36 reference; H340 had no fits. One H349 first-task reforecast."""
+from pathlib import Path
+import datetime,json
+HERE=Path(__file__).resolve().parent
+STOP=datetime.datetime(2026,11,5,6,15,tzinfo=datetime.timezone.utc)
+def reference():return json.loads((HERE/'forecast_reference.json').read_text())['cpu_usage_nsec']/1e9
+def estimate(cap,start=None):
+ start=start or datetime.datetime.now(datetime.timezone.utc);workers=len(cap['eligible_cores']);assert 1<=workers<=6
+ cpu=reference();seconds=cpu/(workers*.9)*1.15+300;end=start+datetime.timedelta(seconds=seconds)
+ return dict(wave='H349',status='PREFIT_FORECAST',forecast_start=start.isoformat(),workers=workers,eligible_cores=cap['eligible_cores'],mandatory_tasks=36,reference_wave='H344 measured full36; H340 zero fits/no first-cell sample',forecast_reference_cpu_seconds=cpu,objective_cost_multiplier_assumption=1.0,parallel_efficiency=.9,safety_factor=1.15,score_reserve_seconds=300,forecast_seconds=seconds,forecast_end=end.isoformat(),compute_stop=STOP.isoformat(),close_stop='2026-11-05T06:30:00Z',launch_full_36=workers>=4 and cap.get('host_cpu_percent',0)<=70 and end<STOP,campaign_fits=0,synthetic_fits=0,BASE_refits=0,outer_scores=0,capacity_retries=0,caveat='XENDCG cost is unmeasured; no acceleration, borrowed cores, reduced design, reset or repeated capacity sampling.')
+def after_first_cell(cell,workers,start=None):
+ start=start or datetime.datetime.now(datetime.timezone.utc);baseline=reference();per_task=max(baseline/36,cell['cpu_seconds'])
+ seconds=35*per_task/(workers*.9)*1.15+300;end=start+datetime.timedelta(seconds=seconds)
+ return dict(wave='H349',stage='FIRST_COMPLETED_CELL',forecast_start=start.isoformat(),first_completed_cell=cell,workers=workers,completed_tasks=1,remaining_tasks=35,baseline_reference_cpu_seconds=baseline,per_task_cpu_reference_seconds=per_task,parallel_efficiency=.9,safety_factor=1.15,score_reserve_seconds=300,forecast_seconds=seconds,forecast_end=end.isoformat(),compute_stop=STOP.isoformat(),launch_full_36=4<=workers<=6 and end<STOP,outer_scores=0,note='Remaining35 at max(H344CPU/36,first measured H349 task CPU), ongoing credit0; no second capacity probe.')

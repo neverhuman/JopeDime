@@ -1,0 +1,9 @@
+protocol_id,series,entity,role,elo,elo_lo,elo_hi,admitted,token_kind,tokens,source_sha256
+automl-64-family-rmse-bt-v2,automl-tabular-v2,GPT6_Astra_Max,entrant,1393.18436441178,1345.0301001733687,1436.6026977783863,true,lexical_source_total,5924,b51ad3291c6e433388a49ed8338d069a245300d634c9da76be1fb1f1454cd0eb
+automl-64-family-rmse-bt-v2,automl-tabular-v2,GPT6p1_Sol_Max,entrant,1504.0445149290852,1464.3204911989023,1545.7687229916557,true,lexical_source_total,5442,fe5bb21ed62edb3aebc1bd141d54834dd3f42b97cb9b0366f2e6b24bc99f75a8
+automl-64-family-rmse-bt-v2,automl-tabular-v2,Gemini4_argon_high,entrant,1602.7238688041107,1562.1138631995825,1647.8552537503872,true,lexical_source_total,17417,d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3
+automl-64-family-rmse-bt-v2,automl-tabular-v2,Opus5p5_Extra,entrant,1681.2740802183203,1632.4106242754735,1736.7471588951937,true,lexical_source_total,14706,2e2352f8ac7087076ef60e0408dfee5319a8d7aa8aaac8d657bc67f07f755834
+automl-64-family-rmse-bt-v2,automl-tabular-v2,grok4p7_xhigh,entrant,1318.7731716367032,1254.870157012973,1374.624184992721,true,lexical_source_total,9401,8e648cef93186aca9d10868ed1ed2a62407950169082aa1f4fab87af379664f8
+hwave-median-seed-vs-r882,h129-vs-r882,h129/BLEND_025,strongest_admitted,1523.48,1512.92,1532.76,true,,,
+hwave-median-seed-vs-r882,h129-vs-r882,h129/PURE_GBM,highest_point_not_admitted,1528.02,1510.13,1551.08,,,,
+hwave-median-seed-vs-r882,h129-vs-r882,r882,anchor,1500.0,1500.0,1500.0,,,,

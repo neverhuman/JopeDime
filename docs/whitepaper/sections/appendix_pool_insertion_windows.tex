@@ -2,11 +2,11 @@
 
 \Cref{fig:pool-insertion-windows} partitions the insertion history in
 \cref{app:event-counters} into ten consecutive, nonoverlapping windows of
-20 logged rounds. Every round contributes to exactly one window; the
-first window starts at the committed admission history's first round.
-The denominator is logged rounds, not candidate attempts or elapsed time.
+20 logged rounds. Each round contributes to exactly one window, starting
+at the committed admission history's first round. The denominator is
+logged rounds, not \mbox{candidate attempts or elapsed} time.
 
-\begin{figure}[tb]
+\begin{figure}[!tb]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_pool_insertion_windows.pdf}
   \caption{\textbf{Pool-insertion frequency varies across fixed round windows.}

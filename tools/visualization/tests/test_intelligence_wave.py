@@ -68,7 +68,9 @@ class IntelligenceWaveTests(unittest.TestCase):
     def test_source_spans_follow_their_language_and_file(self):
         font = next((Path(path) for path in FONT_CANDIDATES if Path(path).is_file()), None)
         if font is None:
-            self.skipTest("monospace raster font unavailable")
+            self.fail(
+                "monospace raster font required (DejaVu Sans Mono or Liberation Mono)"
+            )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
             files = []

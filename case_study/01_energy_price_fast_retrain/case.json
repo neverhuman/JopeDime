@@ -34,13 +34,33 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/01_energy_price_fast_retrain/20261103T130547Z-smoke",
+    "observations_sha256": "f4491b8d74ddf877686d8180322d2bf82d83a1f8549b8c1b93ed87b04fbc419f",
+    "target_sigma": 0.0648294,
+    "medians": {
+      "fit_cpu_seconds": 0.48539813200000026,
+      "fit_peak_heap_bytes": 12360188.0,
+      "fit_seconds": 0.485845982,
+      "hold_rows": 1570.0,
+      "model_bytes": 702006.0,
+      "predict_peak_heap_bytes": 1984480.0,
+      "predict_rows_per_second": 255643.1599253131,
+      "predict_seconds": 0.008627624,
+      "predict_us_per_row": 5.495301910828025,
+      "program_nodes": 4.0,
+      "stage_count": 4.0,
+      "train_rows": 6351.0,
+      "mae": 0.012003384081200191,
+      "candidates": 28
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +83,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -93,5 +118,10 @@
         }
       }
     ]
-  }
+  },
+  "temporal_risk": "HIGH",
+  "comparability": [
+    "Time column + random folds"
+  ],
+  "target_leakage_risk": "LOW"
 }

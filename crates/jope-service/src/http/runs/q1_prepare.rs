@@ -93,28 +93,23 @@ impl RunService {
                 "Ignored columns must be distinct registered columns.",
             ));
         }
-        let selected: Vec<_> = table
-            .headers
-            .iter()
-            .enumerate()
-            .filter(|(_, name)| !ignored.contains(name))
-            .map(|(i, _)| i)
+        let numeric: Vec<bool> = (0..table.headers.len())
+            .map(|index| matrix.columns()[index].kind == jmat::ColumnKind::Numeric)
             .collect();
-        if selected.len() < 2
-            || selected
-                .iter()
-                .any(|&i| matrix.columns()[i].kind != jmat::ColumnKind::Numeric)
-            || table.rows.iter().any(|row| {
-                row[target]
-                    .as_deref()
-                    .and_then(|v| v.trim().parse::<f64>().ok())
-                    .is_none_or(|v| !v.is_finite())
-            })
-        {
-            return Err(invalid(
-                "At least one numeric feature and a finite numeric target in every row are required.",
-            ));
+        let selection = numeric_feature_selection(&table.headers, &numeric, target, &ignored)
+            .map_err(|detail| invalid(&detail))?;
+        if table.rows.iter().any(|row| {
+            row[target]
+                .as_deref()
+                .and_then(|v| v.trim().parse::<f64>().ok())
+                .is_none_or(|v| !v.is_finite())
+        }) {
+            return Err(invalid(&format!(
+                "Target column `{}` must be a finite number in every row.",
+                spec.target
+            )));
         }
+        let selected = selection.kept;
         let features: Vec<_> = selected
             .iter()
             .filter(|&&i| i != target)
@@ -214,6 +209,12 @@ impl RunService {
             "languages":{"requested":spec.languages,"excluded_operations":language_filter.excluded_ops(),"intersection_empty":false},
             "placement":backend.placement,
             "limits":{"eval_timeout_s":timeout.div_ceil(1000),"worker_rss_bytes":WORKER_RAM.to_string()},"estimates":estimates,"warnings":backend.warnings})).map_err(io)?;
+        if !selection.skipped.is_empty() {
+            public.warnings.push(
+                skipped_column_warning(&selection.skipped)
+                    .map_err(|error| invalid(&error.to_string()))?,
+            );
+        }
         let search = SearchPlan {
             run_id: format!("run_{}", ulid::Ulid::new()).parse().map_err(io)?,
             dataset_id: spec.dataset.clone(),
@@ -323,4 +324,132 @@ pub(in crate::http::runs) fn resolve_comparators(
         ceiling_seconds: Some(tier.budget().stage_ceiling.as_secs()),
         reason: "requested".into(),
     })
+}
+
+#[derive(Debug)]
+struct NumericColumns {
+    kept: Vec<usize>,
+    skipped: Vec<String>,
+}
+
+/// Keep the numeric target and numeric features. Non-numeric features are skipped
+/// and named. A non-numeric target, or a table with no numeric feature, is an error
+/// that names the columns (#2161).
+fn numeric_feature_selection(
+    headers: &[String],
+    numeric: &[bool],
+    target: usize,
+    ignored: &std::collections::BTreeSet<&String>,
+) -> std::result::Result<NumericColumns, String> {
+    if headers.len() != numeric.len() || target >= headers.len() {
+        return Err("Target column is not in this table.".into());
+    }
+    if !numeric[target] {
+        return Err(format!(
+            "Target column `{}` is not numeric. This engine needs a numeric target.",
+            headers[target]
+        ));
+    }
+    let mut kept = Vec::new();
+    let mut skipped = Vec::new();
+    for (index, name) in headers.iter().enumerate() {
+        if ignored.contains(&name) {
+            continue;
+        }
+        if index == target || numeric[index] {
+            kept.push(index);
+        } else {
+            skipped.push(name.clone());
+        }
+    }
+    if !kept.iter().any(|&index| index != target) {
+        let detail = if skipped.is_empty() {
+            "there is no other column".to_owned()
+        } else {
+            format!(
+                "these columns are not numeric: {}",
+                skipped
+                    .iter()
+                    .map(|name| format!("`{name}`"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        };
+        return Err(format!(
+            "At least one numeric feature is required. {detail}."
+        ));
+    }
+    Ok(NumericColumns { kept, skipped })
+}
+
+fn skipped_column_warning(
+    skipped: &[String],
+) -> std::result::Result<jope_api::Warning, crate::warnings::WarningInputError> {
+    let list = skipped
+        .iter()
+        .map(|name| format!("`{name}`"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let plural = if skipped.len() == 1 { "" } else { "s" };
+    crate::warnings::catalog("NON_NUMERIC_COLUMNS_SKIPPED")
+        .expect("NON_NUMERIC_COLUMNS_SKIPPED is catalogued")
+        .event(
+            WarningState::Raised,
+            None,
+            None,
+            format!(
+                "Ignoring non-numeric column{plural} {list}. jAIn uses numeric columns for now."
+            ),
+            "Remove those columns from the file, or pass --ignore-column, to silence this note.",
+        )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn names(headers: &[&str]) -> Vec<String> {
+        headers.iter().map(|header| (*header).to_owned()).collect()
+    }
+
+    #[test]
+    fn text_feature_is_skipped_and_named() {
+        let headers = names(&["region", "units", "sales"]);
+        let ignored = std::collections::BTreeSet::new();
+        let selection =
+            numeric_feature_selection(&headers, &[false, true, true], 2, &ignored).unwrap();
+        assert_eq!(selection.kept, vec![1, 2]);
+        assert_eq!(selection.skipped, vec!["region".to_owned()]);
+        let warning = skipped_column_warning(&selection.skipped).unwrap();
+        assert_eq!(warning.code, "NON_NUMERIC_COLUMNS_SKIPPED");
+        assert!(warning.message.contains("`region`"), "{}", warning.message);
+    }
+
+    #[test]
+    fn text_only_features_name_the_columns() {
+        let headers = names(&["region", "sales"]);
+        let ignored = std::collections::BTreeSet::new();
+        let error = numeric_feature_selection(&headers, &[false, true], 1, &ignored).unwrap_err();
+        assert!(error.contains("`region`"), "{error}");
+        assert!(error.contains("At least one numeric feature"), "{error}");
+    }
+
+    #[test]
+    fn text_target_is_named() {
+        let headers = names(&["units", "region"]);
+        let ignored = std::collections::BTreeSet::new();
+        let error = numeric_feature_selection(&headers, &[true, false], 1, &ignored).unwrap_err();
+        assert!(error.contains("Target column `region`"), "{error}");
+    }
+
+    #[test]
+    fn an_ignored_text_column_is_not_reported_again() {
+        let headers = names(&["region", "units", "sales"]);
+        let region = headers[0].clone();
+        let ignored = std::collections::BTreeSet::from([&region]);
+        let selection =
+            numeric_feature_selection(&headers, &[false, true, true], 2, &ignored).unwrap();
+        assert!(selection.skipped.is_empty());
+        assert_eq!(selection.kept, vec![1, 2]);
+    }
 }

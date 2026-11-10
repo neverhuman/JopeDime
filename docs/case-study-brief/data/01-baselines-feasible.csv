@@ -1,0 +1,7 @@
+x,y,label,anchor
+0.0141694,0.0112816,kNN,south west
+0.0196323,0.014155,Ridge,north west
+0.148483,0.0100885,LightGBM,south west
+0.241728,0.00957249,XGBoost,north west
+0.318274,0.00800633,TabPFN,south west
+0.360261,0.00991692,HistGB,north west

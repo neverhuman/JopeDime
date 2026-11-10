@@ -1,0 +1,94 @@
+{
+  "wave": "H286",
+  "authority": "/home/ubuntu/nudges/hw_t2325_opus_h286.md",
+  "arms": [
+    "RERANK8_VETO (primary)",
+    "BAG_SWITCH",
+    "BAG_SWITCH_NESTED"
+  ],
+  "seeds": [
+    278101,
+    278102,
+    278103
+  ],
+  "h284_seeds": [
+    279101,
+    279102,
+    279103
+  ],
+  "null_seeds": [
+    286101,
+    286102,
+    286103
+  ],
+  "boot_seed": 286150,
+  "draws": 10000,
+  "cohort": {
+    "file": "~/jope_plan/ns/receipts/fresh_cohort_v2_H286.json",
+    "sha256": "0de1b3839cb3201d6c8a05aafec134e28e119ae6c233588b41d6169adb3e7b11",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H286/cohort/fresh_cohort_v2_H286.json",
+    "version_id": "S7duiC8OFJoMp9Bhs8cnGc6E3.K3IhWW",
+    "families": 200,
+    "parent": "fresh_cohort_v1.json sha 12d2b1f3"
+  },
+  "export_manifest_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H278/export/export_manifest.json",
+  "export_manifest_version_id": "S_PoMNCZ0jiAYru1vEligisesVuKDuPf",
+  "export_manifest_sha256": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+  "h284_export_manifest_sha256": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc",
+  "h284_export_commit": "972d3011e9f9655c9180e075012477084420ce85",
+  "h278_sources": {
+    "runner.py": "5f5b3de8b34f797df6acfbab890568a5abf6041e4ecc5c519d77dda5c60d7234",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "freeze.py": "b352c488aaf53d2132621c5b5771917892af7924d4c2555d998b5931bbd643ab",
+    "analysis.py": "0151b35374bed298e6841cf9de1f0f27c42248bcd387428653dc178fa1d67208",
+    "manifest.json": "1d43bc10d3245891178bd3043a03ed4e4e34e79bad90cbddea3ae8744536fc0d"
+  },
+  "h281_sources": {
+    "gpu_rescore.py": "1ce3d54d287be660779158ed3a74dbb3d5c1bb2cd8888d2a0eb2cede227cd866",
+    "p2.py": "776644cfbbdbc005f44824cedbbe97f0b7ae362500bcf92839118aba49fd4811",
+    "device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e",
+    "dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2"
+  },
+  "h283_sources": {
+    "fresh_cohort.py": "2b506d43123272b17f233c703682e6282344a32f5c9bb06c830833e2084b3df6",
+    "build_fresh.py": "f108323a358d338f40535c687750f78f5ee90eeafb3e78aef0efd40f278a7dea",
+    "gpu_rescore.py": "6ab1c0aae66c2777b19ba42ee1d026d4d81bd3a942161753b5341bc1dd0d8d73",
+    "analysis.py": "feabc5095e8e16c3c427c52d55d50ca943a2f595361472fb5a0825de44338a49",
+    "evaluate.py": "11e292549348a99231a30814df92c3a5662ad90452409e907134fffc0f9cc8bb"
+  },
+  "h284_sources": {
+    "export_manifest.json": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc",
+    "freeze_bagged.py": "50d8ea9d1af560820dad819184f5bf70cc480bd741a68f236ac80ee837b52cba",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+  },
+  "source_sha256": {
+    "PREREG.md": "3b8191f0762f705bfb84b86350a4162f0f37d0bd77443b262e351e487cd1e4d7",
+    "cohort_v2.py": "d21eca140c3a3c79295563e6ecfd60b48e63cd2267497a1c522974aff7aa1ad4",
+    "build_fresh.py": "39a90db1b0e53b0e56d976f0d0aa7f5e737c4aed25eb055181539c1aefcc05b4",
+    "gpu_rescore.py": "e0d888c6e7d5e5ed9f356e908ce4a0d3e476cf68bf5d1c88db2cb8541c7f615a",
+    "run_gpu.sh": "9290bedc03bbfc54e79887e8c7b0329b62c1eb76f5ba9abc9438d5de235b1817",
+    "evaluate.py": "fa55f943273ad3d425122ecf683d395371485a3156393006c675940bc396a5c7",
+    "analysis.py": "57a30ffd57eb278d60b4cd73899b02d48c4827193f28ae602dde49ce135185be",
+    "test_h286.py": "435f144891269aa88c9a7ac0fa9999c1c7939217fe813517c99092e046411294",
+    "device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e",
+    "dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2"
+  },
+  "descriptive_checkpoints": {
+    "r782": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+    "r785": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a"
+  },
+  "r3175": {
+    "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "stored_dev_mean": 1.1389572403748425
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "total_updates": 0,
+  "parent_commit": "972d3011e9f9655c9180e075012477084420ce85",
+  "publication_ref": "v1/next",
+  "compute_stop": "2026-11-04T03:00:00Z"
+}

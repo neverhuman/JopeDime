@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot the consolidated 3-panel earlier admission prefix (rounds 775-2663): trajectory, cumulative acceptance rate, and shortfall ECDF."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 
 import csv
 import hashlib
@@ -97,7 +98,7 @@ axes[0].step(
     where="post",
     color="#0b5394",
     lw=1.1,
-    label="recorded best",
+    label="retained best",
 )
 axes[0].scatter(
     [rounds[i] for i in gains],
@@ -119,7 +120,7 @@ axes[0].scatter(
     zorder=4,
     label=f"accepted ties ({len(ties)})",
 )
-axes[0].set_title("(a) Candidate & recorded-best utility", loc="left", fontsize=7.5)
+axes[0].set_title("(a) Candidate & retained-best utility", loc="left", fontsize=7.5)
 axes[0].set_xlabel("round (775–2663)")
 axes[0].set_ylabel("validation pool utility")
 axes[0].set_xlim(rounds[0] - 15, rounds[-1] + 15)
@@ -165,7 +166,7 @@ axes[1].scatter(
 )
 axes[1].set_title("(b) Cumulative acceptance rate", loc="left", fontsize=7.5)
 axes[1].set_xlabel("round (775–2663)")
-axes[1].set_ylabel("accepted share of rounds (%)")
+axes[1].set_ylabel("cumulative\nacceptance rate (%)")
 axes[1].set_xlim(rounds[0] - 15, rounds[-1] + 15)
 axes[1].set_ylim(-0.6, max(cum_rate_pct) * 1.12)
 axes[1].xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
@@ -191,7 +192,7 @@ axes[2].step(
     lw=1.1,
 )
 axes[2].set_title("(c) Candidate shortfall ECDF", loc="left", fontsize=7.5)
-axes[2].set_xlabel("recorded best − candidate utility")
+axes[2].set_xlabel("retained best − candidate utility")
 axes[2].set_ylabel("share of logged rounds")
 axes[2].set_xlim(0, float(max(gaps)) * 1.05)
 axes[2].set_ylim(0, 1.03)
@@ -208,6 +209,7 @@ axes[2].text(
 )
 
 fig.tight_layout(pad=0.35, w_pad=0.85)
+style_figure(fig, OUTPUT)
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 
@@ -240,3 +242,5 @@ print(
     f"Plotted {len(rows)} rounds ({rounds[0]}..{rounds[-1]}); "
     f"peak acceptance {max(cum_rate_pct):.2f}%, final {cum_rate_pct[-1]:.2f}%"
 )
+
+finalize_typography_receipts(__file__)

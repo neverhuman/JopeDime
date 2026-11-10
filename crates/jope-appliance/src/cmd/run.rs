@@ -321,6 +321,12 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
             }
         }
     }
+    // Say which objective the run optimizes when the user did not choose one (#2132).
+    if let Some(line) = args.default_objective()? {
+        if !args.json_m1() {
+            eprintln!("{line}");
+        }
+    }
     if args.languages.is_empty() {
         args.languages = DEFAULT_LANGUAGES.iter().map(|&l| l.to_owned()).collect();
     }
@@ -498,6 +504,13 @@ fn explain_start(error: jope_client::transport::TransportError) -> anyhow::Error
     let text = error.to_string();
     let hint = if text.contains("requires task=regression") {
         Some("this engine runs regression only: pass `--task regression` with a numeric `--target` column")
+    } else if text.contains("random FIT") || text.contains("random holdout") {
+        Some("this engine supports random splits only; leave group_column and time_column null")
+    } else if text.contains("not numeric")
+        || text.contains("numeric feature")
+        || text.contains("finite number")
+    {
+        Some("use a numeric target and at least one numeric feature; a text column is named in the error, and is ignored when another column is numeric")
     } else if text.contains("export language") {
         Some("pass `--language rust,python` (or rust, python, javascript)")
     } else {

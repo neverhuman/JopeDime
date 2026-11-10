@@ -44,7 +44,7 @@ python3 deploy/ci/test-provenance.py
 python3 deploy/ci/test-full-main.py
     # Split jobs cover the families and rust-test slices of the single jobs they replaced (and,
     # on a pull request, nothing the base declared is missing)
-python3 deploy/ci/check_test_partition.py static --base "${BASE_SHA:-}" --output "$EVIDENCE/test-partition-static.json"
+cargo run -q --locked -p jope-ci -- test-partition static --base "${BASE_SHA:-}" --output "$EVIDENCE/test-partition-static.json"
 python3 deploy/ci/test-training-proof.py
 python3 deploy/ci/test-install-private.py
 python3 deploy/ci/test-qualify-demo.py
@@ -265,7 +265,7 @@ if [ -f "$junit" ]; then mv "$junit" "$EVIDENCE"/prior-junit.xml; fi
 cargo run -q --locked -p jope-ci -- cargo-artifact nextest-config --output "$EVIDENCE"/nextest.toml
 selection=(--config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features "jope-cli/asm,jope-cli/qualified-training-context")
 # The unpartitioned listing is the whole pre-split rust-test selection. The aggregate job's
-# check_test_partition.py proves the slices select and execute it exactly once between them.
+# `jope-ci test-partition rust-shards` proves the slices select and execute it exactly once between them.
 cargo nextest list "${selection[@]}" --message-format json > "$EVIDENCE/collection-unsharded.json"
 cargo nextest list "${selection[@]}" --partition "$partition" --message-format json > "$EVIDENCE/collection.json"
 touch "$EVIDENCE"/nextest-started

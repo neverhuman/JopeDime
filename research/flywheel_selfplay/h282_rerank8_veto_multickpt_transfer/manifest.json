@@ -1,0 +1,137 @@
+{
+  "wave": "H282",
+  "authority": "/home/ubuntu/nudges/hw_t2235_opus_h282.md",
+  "seeds": [
+    278101,
+    278102,
+    278103
+  ],
+  "boot_seed": 282150,
+  "draws": 10000,
+  "candidates": [
+    782,
+    785,
+    859,
+    2750,
+    2795,
+    3100,
+    4330
+  ],
+  "eligible_rounds": [
+    782,
+    785,
+    859,
+    2750,
+    2795,
+    3100,
+    4330
+  ],
+  "checkpoints": [
+    {
+      "round": 782,
+      "pt_sha256": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+      "json_sha256": "0bd324bdcf9fd3e864ebd101c9a7b3dd5f2e85e3f555fbad357afeacaeee4bbe",
+      "strict_load": true,
+      "admission": "incumbent",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+      "eligible": true
+    },
+    {
+      "round": 785,
+      "pt_sha256": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+      "json_sha256": "e776cac504b9e3fb1bea1445664144a943e88abf0c5f94f3f992f6260b8a52a7",
+      "strict_load": true,
+      "admission": "incumbent",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+      "eligible": true
+    },
+    {
+      "round": 859,
+      "pt_sha256": "5802245f447b1852610576cde08b8a299a9e1e99eb82991aac63c958284fa715",
+      "json_sha256": "8cca1c67461f809ed6cc2605ec70cdd4f84190f946412f6716fb03969e5cd669",
+      "strict_load": true,
+      "admission": "incumbent",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+      "eligible": true
+    },
+    {
+      "round": 2750,
+      "pt_sha256": "e9de405105fa1cffe77f8c5bcbf45869540793da3b4d7e0395b93b7c3f25ea2c",
+      "json_sha256": "aedeafab2e1d354538dbf4876e1f5406d064173a8d0bc510f31504cdffde659d",
+      "strict_load": true,
+      "admission": "incumbent",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+      "eligible": true
+    },
+    {
+      "round": 2795,
+      "pt_sha256": "5c31bba56a8d39ccd2a04f8ace94e15318cd443da93b5b9fa53432ff2dda77c7",
+      "json_sha256": "9689f576208c76b3b3021c1d7bbfbb8bebdf1ab2e010de7422410d0c2d9ddabd",
+      "strict_load": true,
+      "admission": "incumbent",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+      "eligible": true
+    },
+    {
+      "round": 3100,
+      "pt_sha256": "df0cd494786e48a1d2ebda8b57613081317851f22126950985e19819c27f2854",
+      "json_sha256": "cfd0c7eeb967e2fd1073778dfe38b12a1453b71b6c0a2d0a4e6cd25ea48be93e",
+      "strict_load": true,
+      "admission": "incumbent",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+      "eligible": true
+    },
+    {
+      "round": 4330,
+      "pt_sha256": "fba67e92d5abf38b79b152d251854edc2a800e476b595cd3cf40302e85728b57",
+      "json_sha256": "e003b249966992595acf3d0e972e8ea8c9f2a95aab9421f35e5524f4f49dd6ef",
+      "strict_load": true,
+      "admission": "incumbent",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+      "eligible": true
+    }
+  ],
+  "export_manifest_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H278/export/export_manifest.json",
+  "export_manifest_version_id": "S_PoMNCZ0jiAYru1vEligisesVuKDuPf",
+  "export_manifest_sha256": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+  "h278_sources": {
+    "runner.py": "5f5b3de8b34f797df6acfbab890568a5abf6041e4ecc5c519d77dda5c60d7234",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "freeze.py": "b352c488aaf53d2132621c5b5771917892af7924d4c2555d998b5931bbd643ab",
+    "analysis.py": "0151b35374bed298e6841cf9de1f0f27c42248bcd387428653dc178fa1d67208",
+    "manifest.json": "1d43bc10d3245891178bd3043a03ed4e4e34e79bad90cbddea3ae8744536fc0d"
+  },
+  "h281_sources": {
+    "gpu_rescore.py": "1ce3d54d287be660779158ed3a74dbb3d5c1bb2cd8888d2a0eb2cede227cd866",
+    "p2.py": "776644cfbbdbc005f44824cedbbe97f0b7ae362500bcf92839118aba49fd4811",
+    "device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e",
+    "dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2"
+  },
+  "source_sha256": {
+    "PREREG.md": "d3ceefa634f0d8f892b979cd3c40b443c82b2bf14adec04931de99fce5366068",
+    "eligibility.py": "f21f05b171ee19660750d77ad72041f788c0ef0a3cf7879f3fa2da7ee95d18d2",
+    "eligible.txt": "c24c75f640f958e60653125f626df3195797d4fdb3d8184fe52aeecdade0aa77",
+    "gpu_rescore.py": "b6b70e4b1849a82558343ca8ea7e586593782125ed5b95e38d9922be8f77efba",
+    "run_gpu.sh": "c9ce1096425fd92e697fed2c75ce5a9c969aa9f9f7e9d88cf292732e18d47097",
+    "transfer.py": "b194b722beee32a0c181ab5c446d057fd16665a76dfb474e898f2fd9b8588a54",
+    "analysis.py": "c2cb3b79d2cd10a6590ac599505cda43502871f3cfca744c3cd498fc625ac36d",
+    "test_h282.py": "4c2965b19557d4796cdbccfbc67adeb0e5275025173a755412c4dedcc7c37c0e",
+    "device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e",
+    "dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2"
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "total_updates": 0,
+  "parent_commit": "4fd3a6d3bede31ed7cc14a9c97035defac0c19ba",
+  "publication_ref": "v1/next",
+  "compute_stop": "2026-11-04T01:00:00Z"
+}

@@ -1,0 +1,469 @@
+{
+  "schema": "jope.h412.metrics/v1",
+  "wave": "H412",
+  "status": "COMPLETE",
+  "verdict": "OURS_BEATS_ALL_5_FRONTIER__TRAILS_FOUNDATION",
+  "board": "dev91-audit-v1",
+  "board_sha256": "40cb4828cf5c9a0d2d9cc0f32b7900819c992ec9a58c5d18f83ac84b29fa4069",
+  "n_contexts": 91,
+  "n_families": 19,
+  "anchor": "h335.H257_REPLICA",
+  "ours": "h364.XSTACK_2L",
+  "final_study_json_sha256": "6e1a0a52c9b7904178c2080765b9de40e27c604d7b89c3ff2f4a513ae5786c3c",
+  "ours_rank": 6,
+  "ours_elo": 1724.6,
+  "ours_ci95": [
+    1632,
+    1850
+  ],
+  "ladder": [
+    {
+      "rank": 1,
+      "id": "kumo_tabular_large_e8.v1",
+      "class": "foundation model",
+      "elo": 2045.3,
+      "family_mean_u": 1.9356
+    },
+    {
+      "rank": 2,
+      "id": "tabfm_ensemble.v1",
+      "class": "foundation model",
+      "elo": 1898.5,
+      "family_mean_u": 1.7675
+    },
+    {
+      "rank": 3,
+      "id": "tabfm.v1",
+      "class": "foundation model",
+      "elo": 1873.4,
+      "family_mean_u": 1.7202
+    },
+    {
+      "rank": 4,
+      "id": "tabpfn_v3p5.v1",
+      "class": "foundation model",
+      "elo": 1820.3,
+      "family_mean_u": 1.6411
+    },
+    {
+      "rank": 5,
+      "id": "tabpfn_v3.v1",
+      "class": "foundation model",
+      "elo": 1785.8,
+      "family_mean_u": 1.6427
+    },
+    {
+      "rank": 6,
+      "id": "h364.XSTACK_2L",
+      "class": "JopeDime",
+      "elo": 1724.6,
+      "family_mean_u": 1.5607
+    },
+    {
+      "rank": 7,
+      "id": "h335.H335_AGG",
+      "class": "JopeDime",
+      "elo": 1705.7,
+      "family_mean_u": 1.5592
+    },
+    {
+      "rank": 8,
+      "id": "h335.OLD_MATCHED_CV3",
+      "class": "JopeDime",
+      "elo": 1625.4,
+      "family_mean_u": 1.4607
+    },
+    {
+      "rank": 9,
+      "id": "h335.Opus5p5_Extra",
+      "class": "frontier LLM",
+      "elo": 1577.8,
+      "family_mean_u": 1.2943
+    },
+    {
+      "rank": 10,
+      "id": "h335.OLD_MATCHED",
+      "class": "JopeDime",
+      "elo": 1530.9,
+      "family_mean_u": 1.4465
+    },
+    {
+      "rank": 11,
+      "id": "h335.H317_BASE",
+      "class": "JopeDime",
+      "elo": 1526.6,
+      "family_mean_u": 1.4073
+    },
+    {
+      "rank": 12,
+      "id": "autogluon_300s.v1",
+      "class": "AutoML",
+      "elo": 1526,
+      "family_mean_u": 1.2524
+    },
+    {
+      "rank": 13,
+      "id": "h335.Gemini4_argon_high",
+      "class": "frontier LLM",
+      "elo": 1524.4,
+      "family_mean_u": 1.3587
+    },
+    {
+      "rank": 14,
+      "id": "h335.H257_REPLICA",
+      "class": "JopeDime",
+      "elo": 1500,
+      "family_mean_u": 1.3703
+    },
+    {
+      "rank": 15,
+      "id": "h335.GPT6p1_Sol_Max",
+      "class": "frontier LLM",
+      "elo": 1497.3,
+      "family_mean_u": 1.3543
+    },
+    {
+      "rank": 16,
+      "id": "catboost.v1",
+      "class": "classic learner",
+      "elo": 1480.2,
+      "family_mean_u": 1.1886
+    },
+    {
+      "rank": 17,
+      "id": "h335.BANK_NN8_PORTFOLIO",
+      "class": "JopeDime",
+      "elo": 1453.3,
+      "family_mean_u": 1.2715
+    },
+    {
+      "rank": 18,
+      "id": "h335.BANK_NN8_PICK",
+      "class": "JopeDime",
+      "elo": 1421.3,
+      "family_mean_u": 1.2636
+    },
+    {
+      "rank": 19,
+      "id": "xgboost.v1",
+      "class": "classic learner",
+      "elo": 1374.4,
+      "family_mean_u": 1.0742
+    },
+    {
+      "rank": 20,
+      "id": "random_forest.v1",
+      "class": "classic learner",
+      "elo": 1366.6,
+      "family_mean_u": 1.1245
+    },
+    {
+      "rank": 21,
+      "id": "lightgbm.v1",
+      "class": "classic learner",
+      "elo": 1316.2,
+      "family_mean_u": 1.0492
+    },
+    {
+      "rank": 22,
+      "id": "h335.GPT6_Astra_Max",
+      "class": "frontier LLM",
+      "elo": 1308.4,
+      "family_mean_u": 1.0215
+    },
+    {
+      "rank": 23,
+      "id": "ridge.v1",
+      "class": "classic learner",
+      "elo": 1223.2,
+      "family_mean_u": 0.9208
+    },
+    {
+      "rank": 24,
+      "id": "h335.BANK_NN1",
+      "class": "JopeDime",
+      "elo": 1189.6,
+      "family_mean_u": 0.9031
+    },
+    {
+      "rank": 25,
+      "id": "h412.grok4p7_xhigh",
+      "class": "frontier LLM",
+      "elo": 1127.4,
+      "family_mean_u": 0.8639
+    }
+  ],
+  "ours_vs_frontier": {
+    "h335.Opus5p5_Extra": {
+      "gain": 0.2664,
+      "rmse_cut_pct": 23.4,
+      "families_wtl": [
+        13,
+        0,
+        6
+      ],
+      "signflip_p": 0.000659942626953125,
+      "lofo_min": 0.1209,
+      "gain_ci95": [
+        0.097,
+        0.4755
+      ],
+      "pass": true,
+      "inferior": false
+    },
+    "h335.Gemini4_argon_high": {
+      "gain": 0.202,
+      "rmse_cut_pct": 18.3,
+      "families_wtl": [
+        14,
+        0,
+        5
+      ],
+      "signflip_p": 0.003101348876953125,
+      "lofo_min": 0.0839,
+      "gain_ci95": [
+        0.0437,
+        0.4135
+      ],
+      "pass": true,
+      "inferior": false
+    },
+    "h335.GPT6p1_Sol_Max": {
+      "gain": 0.2064,
+      "rmse_cut_pct": 18.6,
+      "families_wtl": [
+        18,
+        0,
+        1
+      ],
+      "signflip_p": 0.0010089874267578125,
+      "lofo_min": 0.0968,
+      "gain_ci95": [
+        0.0607,
+        0.3899
+      ],
+      "pass": true,
+      "inferior": false
+    },
+    "h335.GPT6_Astra_Max": {
+      "gain": 0.5392,
+      "rmse_cut_pct": 41.7,
+      "families_wtl": [
+        19,
+        0,
+        0
+      ],
+      "signflip_p": 0.0000019073486328125,
+      "lofo_min": 0.228,
+      "gain_ci95": [
+        0.2453,
+        0.9699
+      ],
+      "pass": true,
+      "inferior": false
+    },
+    "h412.grok4p7_xhigh": {
+      "gain": 0.6969,
+      "rmse_cut_pct": 50.2,
+      "families_wtl": [
+        19,
+        0,
+        0
+      ],
+      "signflip_p": 0.0000019073486328125,
+      "lofo_min": 0.2524,
+      "gain_ci95": [
+        0.3257,
+        1.1582
+      ],
+      "pass": true,
+      "inferior": false
+    }
+  },
+  "ours_vs_foundation": {
+    "kumo_tabular_large_e8.v1": {
+      "gain": -0.3749,
+      "rmse_cut_pct": -45.5,
+      "families_wtl": [
+        1,
+        0,
+        18
+      ],
+      "signflip_p": 0.9998664855957031,
+      "lofo_min": -0.2028,
+      "gain_ci95": [
+        -0.6569,
+        -0.1538
+      ],
+      "pass": false,
+      "inferior": true
+    },
+    "tabfm_ensemble.v1": {
+      "gain": -0.2068,
+      "rmse_cut_pct": -23,
+      "families_wtl": [
+        3,
+        0,
+        16
+      ],
+      "signflip_p": 0.9823188781738281,
+      "lofo_min": -0.1568,
+      "gain_ci95": [
+        -0.4017,
+        -0.0416
+      ],
+      "pass": false,
+      "inferior": true
+    },
+    "tabfm.v1": {
+      "gain": -0.1595,
+      "rmse_cut_pct": -17.3,
+      "families_wtl": [
+        4,
+        0,
+        15
+      ],
+      "signflip_p": 0.9734210968017578,
+      "lofo_min": -0.1451,
+      "gain_ci95": [
+        -0.3191,
+        -0.0172
+      ],
+      "pass": false,
+      "inferior": false
+    },
+    "tabpfn_v3p5.v1": {
+      "gain": -0.0804,
+      "rmse_cut_pct": -8.4,
+      "families_wtl": [
+        5,
+        0,
+        14
+      ],
+      "signflip_p": 0.9316997528076172,
+      "lofo_min": -0.0938,
+      "gain_ci95": [
+        -0.1906,
+        0.0332
+      ],
+      "pass": false,
+      "inferior": false
+    },
+    "tabpfn_v3.v1": {
+      "gain": -0.082,
+      "rmse_cut_pct": -8.5,
+      "families_wtl": [
+        2,
+        0,
+        17
+      ],
+      "signflip_p": 0.9478588104248047,
+      "lofo_min": -0.0971,
+      "gain_ci95": [
+        -0.1938,
+        0.0497
+      ],
+      "pass": false,
+      "inferior": false
+    }
+  },
+  "ours_vs_automl_classic": {
+    "autogluon_300s.v1": {
+      "gain": 0.3083,
+      "rmse_cut_pct": 26.5,
+      "families_wtl": [
+        18,
+        0,
+        1
+      ],
+      "signflip_p": 0.00018310546875,
+      "lofo_min": 0.1153,
+      "gain_ci95": [
+        0.0885,
+        0.6019
+      ],
+      "pass": true,
+      "inferior": false
+    },
+    "catboost.v1": {
+      "gain": 0.3722,
+      "rmse_cut_pct": 31.1,
+      "families_wtl": [
+        17,
+        0,
+        2
+      ],
+      "signflip_p": 0.0006618499755859375,
+      "lofo_min": 0.1383,
+      "gain_ci95": [
+        0.1271,
+        0.6926
+      ],
+      "pass": true,
+      "inferior": false
+    }
+  },
+  "ours_vs_h335_agg": {
+    "gain": 0.0015,
+    "rmse_cut_pct": 0.2,
+    "families_wtl": [
+      14,
+      3,
+      2
+    ],
+    "signflip_p": 0.044891357421875,
+    "lofo_min": 0.0011,
+    "gain_ci95": [
+      -0.0001,
+      0.003
+    ],
+    "pass": false,
+    "inferior": false
+  },
+  "frontier_order_dev91": [
+    "Opus5p5_Extra",
+    "Gemini4_argon_high",
+    "GPT6p1_Sol_Max",
+    "GPT6_Astra_Max",
+    "grok4p7_xhigh"
+  ],
+  "same_order_dev91_vs_automl_v2": true,
+  "same_order_dev91_vs_automl_v1": true,
+  "sol_source_differs_between_panels": true,
+  "grok": {
+    "id": "h412.grok4p7_xhigh",
+    "rank": 25,
+    "elo": 1127.4,
+    "source_sha256": "8e648cef93186aca9d10868ed1ed2a62407950169082aa1f4fab87af379664f8",
+    "source_commit": "1177c4f9c1",
+    "rows_sha256": "e1edeafa0965c42fa2789f0601a867d7936ebc8e4ac127a1cb77a1ae88462784",
+    "completed": 91,
+    "run_wall_s_total": 1.05,
+    "jobs": 16
+  },
+  "gates": {
+    "lock_sha256": "8b368f930489411aa08352c30e8c645a6d0f2e1b52976aca782139f1cde17429",
+    "lock_receipt": "ns/receipts/H412_LOCK_sha256.txt",
+    "binary_sha256": "085c1acbfe026d0cf56cf84a72a02053ec5314e56d3961ceaa567d869b7453db",
+    "prereg_commit": "269a1bc24dafc8efd1a08d70f096335239c4c763",
+    "unlocks": 1,
+    "guard_refusals_h412_log": 0,
+    "h335_parity_train_records": "804/804 identical",
+    "synthetic_pairs_identical": 40,
+    "grok_train_completed": "201/201, deterministic (2 runs identical)",
+    "scores_diff": "exactly 1 new file",
+    "ladder_root_equals_git_copy": true,
+    "study_root_equals_git_copy": true,
+    "board_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261107T120005Z.tar.zst",
+      "version_id": "wSLUByLp0bS8RozTkAMOyBshyuaXPhwL",
+      "members": 1029,
+      "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED"
+    }
+  },
+  "disclosures": [
+    "6 pre-LOCK guard-refused probe lines in the shared H335 refusal log (pid 795627), annotated not deleted",
+    "grok authorship record fresh_session=false (noted; scoring unaffected)"
+  ],
+  "next_candidate": "H410 P2+LIB.BAG_CAR (+8.1% RMSE on 120 TRAIN families, p 0.0006); needs k-fold selection + own LOCK"
+}

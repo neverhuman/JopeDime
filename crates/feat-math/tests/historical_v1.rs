@@ -797,7 +797,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     );
     assert_eq!(
         comparators_lockfile["source_commit"],
-        "ea472077980dd180e12715c89522db572b006eda"
+        "cdfe3566c1bd54acdf91ef157eccb3fd3c0e13b0"
     );
     assert_eq!(
         comparators_lockfile["fixtures"].as_array().unwrap().len(),
