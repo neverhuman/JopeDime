@@ -16,7 +16,7 @@ pub struct Deadline {
 
 impl Deadline {
     /// A deadline that never expires.
-    pub fn unbounded() -> Self {
+    pub fn no_limit() -> Self {
         Self { expires_at: None }
     }
 

@@ -44,7 +44,7 @@ fn random_forest_beats_the_mean_baseline() {
             y,
             &ForestParams::random_forest(60),
             SEED,
-            &Deadline::unbounded(),
+            &Deadline::no_limit(),
         )?
         .predict(hold)
     });
@@ -59,7 +59,7 @@ fn extra_trees_beat_the_mean_baseline() {
             y,
             &ForestParams::extra_trees(60),
             SEED,
-            &Deadline::unbounded(),
+            &Deadline::no_limit(),
         )?
         .predict(hold)
     });
@@ -70,7 +70,7 @@ fn extra_trees_beat_the_mean_baseline() {
 fn histogram_boosting_beats_the_mean_baseline() {
     let (score, baseline) = holdout_scores(&nonlinear(600, 3), |train, y, hold| {
         let params = HistGbmParams::scikit_learn_style(200);
-        HistGbmModel::fit(train, y, &params, SEED, &Deadline::unbounded())?.predict(hold)
+        HistGbmModel::fit(train, y, &params, SEED, &Deadline::no_limit())?.predict(hold)
     });
     assert!(
         score < 0.35 * baseline,
@@ -92,7 +92,7 @@ fn early_stopping_keeps_fewer_rounds_and_still_learns() {
         }),
         ..HistGbmParams::scikit_learn_style(2_000)
     };
-    let model = HistGbmModel::fit(train, y, &params, SEED, &Deadline::unbounded()).expect("fit");
+    let model = HistGbmModel::fit(train, y, &params, SEED, &Deadline::no_limit()).expect("fit");
     assert!(model.rounds_kept() < 2_000);
     assert!(model.rounds_kept() >= 1);
     let predictions = model.predict(hold).expect("predict");

@@ -28,7 +28,7 @@ impl Fitted {
 
 fn fit_all(values: &[f64], targets: &[f64], rows: usize, cols: usize, seed: u64) -> Vec<Fitted> {
     let features = FeatureMatrix::new(values, rows, cols).expect("valid matrix");
-    let unbounded = Deadline::unbounded();
+    let no_limit = Deadline::no_limit();
     let boosting = HistGbmParams {
         min_samples_leaf: 2,
         ..HistGbmParams::scikit_learn_style(15)
@@ -40,7 +40,7 @@ fn fit_all(values: &[f64], targets: &[f64], rows: usize, cols: usize, seed: u64)
                 targets,
                 &ForestParams::random_forest(8),
                 seed,
-                &unbounded,
+                &no_limit,
             )
             .expect("rf fit"),
         ),
@@ -50,12 +50,12 @@ fn fit_all(values: &[f64], targets: &[f64], rows: usize, cols: usize, seed: u64)
                 targets,
                 &ForestParams::extra_trees(8),
                 seed,
-                &unbounded,
+                &no_limit,
             )
             .expect("et fit"),
         ),
         Fitted::Boosting(
-            HistGbmModel::fit(features, targets, &boosting, seed, &unbounded).expect("gbm fit"),
+            HistGbmModel::fit(features, targets, &boosting, seed, &no_limit).expect("gbm fit"),
         ),
         Fitted::Ridge(
             RidgeModel::fit(features, targets, &RidgeParams { alpha: 1.0 }).expect("ridge fit"),
@@ -147,7 +147,7 @@ fn a_different_seed_gives_a_different_forest() {
             &table.targets,
             &ForestParams::random_forest(5),
             seed,
-            &Deadline::unbounded(),
+            &Deadline::no_limit(),
         )
         .expect("fit")
         .predict(features)
@@ -161,13 +161,13 @@ fn a_different_seed_gives_a_different_forest() {
 fn model_sizes_grow_with_capacity() {
     let table = nonlinear(200, 10);
     let features = FeatureMatrix::new(&table.values, table.rows, table.cols).expect("valid matrix");
-    let unbounded = Deadline::unbounded();
+    let no_limit = Deadline::no_limit();
     let small = ForestModel::fit(
         features,
         &table.targets,
         &ForestParams::random_forest(2),
         1,
-        &unbounded,
+        &no_limit,
     )
     .expect("fit");
     let large = ForestModel::fit(
@@ -175,7 +175,7 @@ fn model_sizes_grow_with_capacity() {
         &table.targets,
         &ForestParams::random_forest(20),
         1,
-        &unbounded,
+        &no_limit,
     )
     .expect("fit");
     assert_eq!(small.tree_count(), 2);
@@ -188,7 +188,7 @@ fn model_sizes_grow_with_capacity() {
         &table.targets,
         &HistGbmParams::scikit_learn_style(5),
         1,
-        &unbounded,
+        &no_limit,
     )
     .expect("fit");
     assert_eq!(boosting.rounds_kept(), 5);
