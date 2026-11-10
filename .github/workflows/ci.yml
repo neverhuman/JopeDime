@@ -19,6 +19,8 @@ env:
   CARGO_BUILD_JOBS: "4"
   CARGO_INCREMENTAL: "0"
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  # Condense passing gp-emitter-determinism runs to a hash manifest; failures stay whole (#2158).
+  JOPE_GP_EMITTER_RETAIN: failures
   JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
   BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
