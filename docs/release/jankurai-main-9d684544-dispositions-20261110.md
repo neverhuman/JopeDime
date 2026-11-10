@@ -98,7 +98,7 @@ bytes and the exact-path exclusion are unchanged.
 - Path: `crates/jope-bench/src/panel/inference_report/json.rs`
 - Fingerprint: `sha256:65ea902cf3ae463a40760f73d01b50280892c165e0d036c56afe619d9c74ff74`
 - Problem: enum `Json` has 2 divergent definitions across modules where one consistent definition is expected
-- Disposition: Left visible. The enums share a short name and serve different domains. They are not unified, and they are not added to the copy-code allowlist. enum `Json` is defined with diverging shapes in 2 modules (crates/jope-bench/src/panel/inference_report/json.rs:8, tools/ops/jope-disk-steward/src/json.rs:10)
+- Disposition: Fixed by renaming the enum items, not by unifying the types. `ReportJson` is the order-preserving inference-report value. `StewardJson` is the disk steward's RFC 8259 value. Each module keeps `type Json` as an alias, so call sites are unchanged. The shapes stay different. The jope-appliance variety enums are not part of this change.
 
 ### 09. hard HLT-000-SCORE-DIMENSION:stack
 
