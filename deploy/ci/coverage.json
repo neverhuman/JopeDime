@@ -846,6 +846,134 @@
       ],
       "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
     },
+    "feature:jope-carbon/cli": {
+      "discovery": {
+        "dependencies": [
+          "dep:clap"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default CLI parser feature for the `carbon` binary; exercised by default package check/test lanes."
+    },
+    "feature:jope-carbon/default": {
+      "discovery": {
+        "dependencies": [
+          "cli",
+          "emu",
+          "engine",
+          "eval",
+          "serve"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Default Carbon crate feature bundle enabling CLI, engine, eval, Enterprise serve, and local emulator roles."
+    },
+    "feature:jope-carbon/edge": {
+      "discovery": {
+        "dependencies": [
+          "dep:aws-lc-rs",
+          "dep:base64",
+          "dep:http",
+          "dep:jope-api",
+          "dep:jope-prep",
+          "dep:p256",
+          "dep:rustls",
+          "dep:ureq",
+          "dep:url",
+          "dep:zeroize"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Feature-isolated regional edge gateway boundary (`ADR-0007`); standalone `--no-default-features --features edge` graph isolation verified by `CT3` in `carbon_core`."
+    },
+    "feature:jope-carbon/emu": {
+      "discovery": {
+        "dependencies": [
+          "serve"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Local multi-cell Lambda Runtime API and S3 CAS emulator feature enabled in default builds."
+    },
+    "feature:jope-carbon/engine": {
+      "discovery": {
+        "dependencies": [
+          "dep:flate2",
+          "dep:jope-paths",
+          "dep:jope-runtime",
+          "dep:jope-service",
+          "dep:jope-telemetry",
+          "dep:ruzstd",
+          "dep:tokio",
+          "dep:zstd",
+          "edge"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Sealed engine cell feature enabled in default builds."
+    },
+    "feature:jope-carbon/eval": {
+      "discovery": {
+        "dependencies": [
+          "engine"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Stateless batch evaluation worker feature enabled in default builds."
+    },
+    "feature:jope-carbon/serve": {
+      "discovery": {
+        "dependencies": [
+          "dep:axum",
+          "dep:http-body-util",
+          "eval"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Self-hosted VPC / on-premises Enterprise single-binary server feature enabled in default builds."
+    },
     "feature:jope-cli/dope-cuda": {
       "discovery": {
         "dependencies": [
@@ -1933,6 +2061,20 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-carbon": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-carbon/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:jope-ci": {
       "discovery": {
         "kind": "package",
@@ -2147,6 +2289,20 @@
       "discovery": {
         "kind": "package",
         "manifest": "crates/jope-policy/Cargo.toml"
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "package:jope-prep": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-prep/Cargo.toml"
       },
       "dispositions": [],
       "lanes": [
@@ -10244,6 +10400,76 @@
       ],
       "scope": "Independent transfer KPI oracle on synthetic plans, reading only the plan, freeze, report and hash-pinned assets and never panel::transfer's scoring code: exact gains by construction, per-unit minimum, equal family weighting, missing pairs and zero baselines never becoming zero gains, tamper and unplanned-prediction refusal, and unit/family/loss/headline drift detection against the Rust reporter. No transfer measurement is established."
     },
+    "target:jope-carbon/bin/carbon": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "cli",
+          "serve"
+        ],
+        "source": "crates/jope-carbon/src/bin/carbon.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Multi-role Carbon cell CLI (`version`, `plan`, `spot-check`) over adaptive worker sizing and the 3-Gate Spot-Hybrid advisor; source/local CLI tested via carbon_core."
+    },
+    "target:jope-carbon/bin/carbon-edge": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "edge"
+        ],
+        "source": "crates/jope-carbon/src/bin/carbon_edge.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Feature-isolated Carbon regional edge gateway binary (`--no-default-features --features edge`, ADR-0007): excludes jope-service, jope-runtime, feat-math, and neural weights; local CLI/healthcheck tested via carbon_core."
+    },
+    "target:jope-carbon/lib/jope_carbon": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-carbon/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-carbon/test/carbon_core": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-carbon/tests/carbon_core.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Carbon Phase C1b contracts: CT3 cargo-tree proof that `edge` excludes engine/search/neural crates, Free/Pro/Enterprise tier admission, adaptive Solo vs Hybrid planner, AES-256-GCM context-bound checkpoint sealing and tamper refusal, 3-Gate Spot-Hybrid break-even verdicts, CLI smoke, and CarbonError::guidance() coverage."
+    },
     "target:jope-ci/bin/jope-ci": {
       "discovery": {
         "doctest": false,
@@ -15342,6 +15568,39 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-prep/lib/jope_prep": {
+      "discovery": {
+        "doctest": true,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-prep/src/lib.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-prep/test/prep": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-prep/tests/prep.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Client-side preparation contract (Carbon C1a): deterministic FIT/HOLDOUT split, <= 1,024-row FIT landmark subsampling, bit-exact 6,368-byte JLMB v1 wire round-trip, HOLDOUT NaN/Infinity poison invariance proving zero holdout leakage, standalone JMAT v1 encoding/tamper refusal, and PrepError::guidance() coverage."
     },
     "target:jope-records/bin/jope-records": {
       "discovery": {

@@ -230,7 +230,7 @@ fn target_simplex(z: &[f64], y: &[f64], n: usize, p: usize) -> [f64; 20] {
                         .sum();
                 }
             }
-            let (e, _) = feat_math::heads::jacobi_eigen(&mut gram, k);
+            let e = symmetric_eigenvalues(&mut gram, k);
             let mut singular: Vec<f64> = e.into_iter().map(|v| squash(v.max(0.0).sqrt())).collect();
             singular.sort_by(|a, b| b.total_cmp(a));
             let singular_count = singular.len().min(6);

@@ -3733,6 +3733,34 @@
         "evaluation"
       ]
     },
+    "target:jope-carbon/bin/carbon": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
+    "target:jope-carbon/bin/carbon-edge": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
+    "target:jope-carbon/lib/jope_carbon": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
+    "target:jope-carbon/test/carbon_core": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "fitting",
+        "evaluation"
+      ]
+    },
     "target:jope-ci/bin/jope-ci": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"
@@ -5616,6 +5644,18 @@
       "source": "crates/jope-policy/tests/typed_edit_policy.rs",
       "subsystems": [
         "policy"
+      ]
+    },
+    "target:jope-prep/lib/jope_prep": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
+      ]
+    },
+    "target:jope-prep/test/prep": {
+      "role": "regression",
+      "subsystems": [
+        "preparation"
       ]
     },
     "target:jope-records/bin/jope-records": {

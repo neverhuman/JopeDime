@@ -455,14 +455,14 @@ limits and client examples](docs/program-source-stream.md).
 | What | 1.0.0 |
 | --- | --- |
 | `jope` with no arguments | prints `jope 1.0.0` <sup>1</sup> |
-| Workspace | 38 members: 31 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
+| Workspace | 40 members: 33 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | 6,139 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |
 | Python tests | 210, found by a static scan, not collected or run <sup>5</sup> |
 | CI | 17 jobs per pull request configured in `ci.yml` (export parity executes only on manual main) (automatic triggering paused; dispatch manually) (top-level declarations; 20 expanded jobs); 11 `full-main-cpu` families available by manual dispatch <sup>6</sup> |
-| Coverage map | 1,743 items over 35 lanes |
-| Capability matrix | 846 rows: 353 moved, 83 new, 1 pending, 402 dropped, 7 lost |
+| Coverage map | 1,758 items over 35 lanes |
+| Capability matrix | 848 rows: 353 moved, 85 new, 1 pending, 402 dropped, 7 lost |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 5,518 `.py` files, 309 of them under `python/` |
 | Architecture decision records | 7 <sup>10</sup> |
@@ -602,7 +602,7 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 ## Layout (this SHA)
 
-The 38 workspace members, by directory under `crates/`; the package name follows where it differs.
+The 40 workspace members, by directory under `crates/`; the package name follows where it differs.
 [docs/architecture.md](docs/architecture.md#crate-graph) describes each crate.
 
 | Group | Crates | Role |
@@ -614,6 +614,7 @@ The 38 workspace members, by directory under `crates/`; the package name follows
 | Engine and campaigns | `jope-engine` (`jope-parallel`), `jope-campaigns` (`jope-dime-regressor`), `battle-gpu`, `jope-arena` | The engine and its binaries, `jope-native-loop` among them; benchmark campaigns; raw-CUDA screening (feature `gpu`); SOTArena scores and Elo. |
 | Learning, records and CI | `jope-learning`, `jope-records`, `jope-ci`, `jope-paths` | The HWM ledger, champion bank and W8 progress, and the offline CLOVER tools (`jope_pools`, `jope_retention`, `jope_support`, `jope_custody`); record verifiers, the hygiene guards and the paper and README numbers trace; CI tooling; the ADR-0003 runtime roots. |
 | Appliance | `jope-appliance` (binary `jopedime`), `jope-runtime`, `jope-assets`, `jope-dist` | The signed single-file executable: local fitting and prediction with the native methods, its package format and verification, [custom regression objectives via CLI/API/MCP](docs/regression-objectives.md), and the build-time packer ([deploy/appliance](deploy/appliance/README.md)). Not published yet. |
+| Carbon cells | [`jope-prep`](crates/jope-prep/README.md), [`jope-carbon`](crates/jope-carbon/README.md) (binaries `carbon-edge`, `carbon`) | Client-side deterministic `FIT`/`HOLDOUT` splitting, `FIT`-only landmark conditioning (`6,368` B `JLMB` v1), and standalone `JMAT` v1 encoding (`jope-prep`, WASM-clean); feature-separated regional edge gateway, adaptive `Solo` vs `Hybrid` worker planner, `AES-256-GCM` checkpoint sealing, and 3-Gate Spot-Hybrid advisor (`jope-carbon`, [ADR-0007](docs/adr/ADR-0007-carbon-lambda-cells.md)). Local scaffold only; no live cloud deployment yet. |
 | Vendored | `smartcluster/*` (7 crates) | The jain-smartcluster scheduler, at its own version 8.0.0. |
 
 | Path | Role |
