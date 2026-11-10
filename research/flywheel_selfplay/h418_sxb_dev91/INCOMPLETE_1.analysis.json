@@ -1,0 +1,167 @@
+{
+ "board": "dev91-audit-v1",
+ "checks": {
+  "audit_envelope_matches_board": 182,
+  "board": {
+   "bad": [],
+   "complete_entrants": 31,
+   "files": 33,
+   "files_match_manifest": true,
+   "h416_files": [],
+   "incomplete": {},
+   "ladder_reproduced_max_abs": 0.0
+  },
+  "derivations": {
+   "335101": {
+    "kcar100_bag_vs_kfb_max_abs_delta": 0.0,
+    "ref_pred_max_abs_delta": 4.440892098500626e-16,
+    "sxb_offline_max_abs_delta": 1.7763568394002505e-15,
+    "units": 91
+   },
+   "335102": {
+    "kcar100_bag_vs_kfb_max_abs_delta": 0.0,
+    "ref_pred_max_abs_delta": 8.881784197001252e-16,
+    "sxb_offline_max_abs_delta": 2.6645352591003757e-15,
+    "units": 91
+   }
+  },
+  "lock_sha256": "f923e5b79bcf6d80d6c69a496e0bad49ce90dac9bc48f5b9bfce073ea6d60026",
+  "memo_conflict_contexts": [],
+  "records": {
+   "bad": [],
+   "no_usable_H": {
+    "335101": 0,
+    "335102": 0
+   },
+   "recomputed_as": 0,
+   "units": 182
+  },
+  "replay": {
+   "GE.335101": {
+    "max_abs_delta": 0.0,
+    "members_same": 91
+   },
+   "GE.335102": {
+    "max_abs_delta": 3.4288102700008594e-05,
+    "members_same": 90
+   },
+   "GL.335101": {
+    "max_abs_delta": 0.0,
+    "members_same": 91
+   },
+   "GL.335102": {
+    "max_abs_delta": 0.0,
+    "members_same": 91
+   },
+   "GS.335101": {
+    "a1_exempt": [],
+    "failed": [],
+    "max_abs_delta_vs_board": 0.0,
+    "max_abs_delta_vs_stored": 0.0,
+    "members_same": 91
+   },
+   "GS.335102": {
+    "a1_exempt": [],
+    "failed": [],
+    "max_abs_delta_vs_board": 0.0,
+    "max_abs_delta_vs_stored": 0.0,
+    "members_same": 91
+   }
+  },
+  "runs": {
+   "D1": {
+    "physical_by_kind": {
+     "akf0": 5810,
+     "akf1": 5810,
+     "akf2": 5810,
+     "akf3": 5810,
+     "akf4": 5810,
+     "audit": 11696,
+     "kf0": 5811,
+     "kf1": 5811,
+     "kf2": 5811,
+     "kf3": 5811,
+     "kf4": 5811,
+     "search": 11932
+    },
+    "status_files": 1,
+    "wall_s": 13301.707638025284
+   },
+   "D2": {
+    "physical_by_kind": {
+     "akf0": 5803,
+     "akf1": 5803,
+     "akf2": 5803,
+     "akf3": 5803,
+     "akf4": 5803,
+     "audit": 11380,
+     "kf0": 5804,
+     "kf1": 5804,
+     "kf2": 5804,
+     "kf3": 5804,
+     "kf4": 5804,
+     "search": 11535
+    },
+    "status_files": 1,
+    "wall_s": 13756.035628318787
+   },
+   "GE": {
+    "physical_by_kind": {
+     "audit": 2009,
+     "search": 56220
+    },
+    "status_files": 1,
+    "wall_s": 4364.610881567001
+   },
+   "GL": {
+    "physical_by_kind": {
+     "audit": 2037,
+     "search": 56427
+    },
+    "status_files": 1,
+    "wall_s": 10928.81536579132
+   }
+  }
+ },
+ "entrant": "h416.SXB",
+ "gate": {
+  "audit_envelope": true,
+  "board_entrants": true,
+  "board_files": true,
+  "board_id": true,
+  "board_ladder": true,
+  "configs": true,
+  "contexts": true,
+  "design": true,
+  "ge_replay_335101": true,
+  "ge_replay_335102": false,
+  "gl_replay_335101": true,
+  "gl_replay_335102": true,
+  "gs_replay_335101": true,
+  "gs_replay_335102": true,
+  "kcar100_bag_is_kfb_335101": true,
+  "kcar100_bag_is_kfb_335102": true,
+  "lock": true,
+  "records": true,
+  "ref_preds_335101": true,
+  "ref_preds_335102": true,
+  "sxb_offline_335101": true,
+  "sxb_offline_335102": true,
+  "x0_board": true
+ },
+ "gate_failed": [
+  "ge_replay_335102"
+ ],
+ "schema": "jope.h418.dev91-analysis/v1",
+ "seeds": [
+  335101,
+  335102
+ ],
+ "status": "INCOMPLETE",
+ "tolerances": {
+  "derivation": 1e-06,
+  "ladder": 1e-06,
+  "replay": 1e-09
+ },
+ "wave": "H418"
+}
