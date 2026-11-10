@@ -16,7 +16,7 @@ Use these numbers instead when saying how a JopeDime model performs:
 | --- | --- | --- |
 | Best test-scored candidate in the published evolution envelope | Elo 2259.8, rank 1 of 305 | Only with the label “test-selected / oracle envelope” |
 | Best fair tabular model on that benchmark | TabFM Ensemble, Elo 1934.9, rank 1 of 304 | `benchmark-valid` ladder |
-| Our one fixed-seed reproducible run of the same engine | `jope-dime-regressor`, Elo 1687.0, rank 31 of 304, 42/45, 1 win | `benchmark-valid` ladder |
+| Our one recorded fixed-seed run of the same engine (run reports not committed) | `jope-dime-regressor`, Elo 1687.0, rank 31 of 304, 42/45, 1 win | `benchmark-valid` ladder |
 | Best native Rust regressor on the later 64-family panel | `Opus5p5_Extra`, Elo 1690.8345518061888 | AutoML v3. A different panel. Do not subtract it from 2259.8 |
 
 The gap from 2259.8 down to TabFM’s 1933.1 on the published ladder is about 327 Elo. That gap is the advantage of picking the minimum test RMSE out of a large search, not evidence that one frozen program is that much stronger than TabFM.
@@ -80,10 +80,11 @@ The combined copy of the two tabular ladders plus the six native regressors is `
 
 1. **The headline number is an oracle envelope.** Reporting 2259.8 as “our model’s Elo” overstates a search result as if it were one frozen program. The source URI for 42 of 45 rows is the evaluations ledger.
 2. **The published validity flag disagrees with the campaign.** All 45 `scores.csv` rows say `benchmark_valid=True`. The Golden46 campaign writes `benchmark_valid: false` and `test_adaptive: true`. The acceptance manifest flips the flag to true. Anyone who trusts only the scores file will refit 2259.8 and think it is a valid benchmark row.
-3. **The fair number is much lower, and it is already computed.** `jope-dime-regressor` at 1687.0 is the reproducible fixed-seed run. It is rank 31, not rank 1. TabFM Ensemble leads the fair ladder by about 248 Elo.
+3. **The fair number is much lower, and it is already computed.** `jope-dime-regressor` at 1687.0 is recorded as a fixed-seed run; its 42 run reports (`results/external-references/golden42/<id>/jope-dime-regressor.json`) are not committed and its `source_revision` is empty, so the run cannot be re-checked from the repository. It is rank 31, not rank 1. 17 of the 30 methods above it cover fewer than 42 of the 45 datasets (four are 1/45 singletons); refit on the 124 methods with at least 42/45 coverage it is 14th (1662.2), and on the 42 Golden42 datasets alone it is still 31st (1686.9). TabFM Ensemble leads the fair ladder by about 248 Elo.
 4. **Partial coverage inflates some neighbors, but it does not create 2259.8.** Many methods on this ladder score 1 of 45 datasets. A full-coverage method is easier to rank highly. `jope-dime` does have 45/45 coverage, so the rating is not a small-sample fluke. The selection rule, not missing opponents, is what puts it first. TabFM also has 45/45 and still trails by hundreds of Elo on the published fit.
-5. **Line citations in the corrections file have drifted.** `protocol-corrections-tabular-regression-v2.json` points at `aggressive.rs` lines 510–748. That file is now a module facade. The flags live in `crates/jope-campaigns/src/test_adaptive/aggressive/`. The scores and the test still identify the same 45 rows. A later editor should not treat a stale line number as a reason to drop the correction.
-6. **Do not repair 2259.8 by editing the published snapshot in place.** The published ladder is pinned, including its `leaderboard_sha256`. The honest presentation is the pair of ladders that already exists: published, and benchmark-valid.
+5. **Line citations in the corrections file have drifted.** `protocol-corrections-tabular-regression-v2.json` points at `aggressive.rs` lines 510–748. That file is now a module facade. The flags live in `crates/jope-campaigns/src/test_adaptive/aggressive/`. The scores and the test still identify the same 45 rows. Other citations have drifted too (`train_only_redteam.rs`, `train_only_redteam_results.rs`, `scq_batch.rs:32`, `main.rs:714`); the current locations are in the "Citation drift (2026-11-09)" table in `assets/regression/SOURCES.md`. A later editor should not treat a stale line number as a reason to drop the correction.
+6. **The `notes` column contradicts the corrections.** All 45 `jope-dime` rows in `scores.csv.zst` say "frozen test targets were used only for scoring". The corrections file exists to refute exactly that: the rows are test-selected. Read the corrections, not the `notes` column, for what the rows are.
+7. **Do not repair 2259.8 by editing the published snapshot in place.** The published ladder is pinned, including its `leaderboard_sha256`. The honest presentation is the pair of ladders that already exists: published, and benchmark-valid.
 
 ## Key files
 
@@ -109,9 +110,9 @@ Later panels, kept separate on purpose:
 
 - `assets/automl-elo/v3/RESULTS.json` and `assets/automl-elo/v3/SOURCES.md` are the six-entrant native-regressor refit.
 - `assets/comparisons/full-elo/v1/full-elo.csv` copies the 305 published rows, the 304 fair rows, and the 6 native regressors. `protocol_id` keeps them apart.
-- `assets/comparisons/full-elo/v1/PATHS.txt` lists the absolute paths of the checked-in Elo receipts.
+- `assets/comparisons/full-elo/v1/PATHS.txt` lists the repository-relative paths of the checked-in Elo receipts, including the Golden45 `scores.csv.zst`.
 - `research/flywheel_selfplay/h129_gbm_blend_harm_gate/metrics.json` is the H-wave comparison against `r882` at 1500. It is not a tabular-regression Elo.
 
 ## How to cite it
 
-Say: “The published Golden45 ladder rates the JopeDime evolution envelope at 2259.8. That figure is the best test-scored candidate per dataset, 42 ledger minima plus 3 test-adaptive Golden46 accepts. The fair ladder removes those rows. The reproducible JopeDime regressor is Elo 1687.0, rank 31 of 304. TabFM Ensemble leads that ladder at 1934.9.”
+Say: “The published Golden45 ladder rates the JopeDime evolution envelope at 2259.8. That figure is the best test-scored candidate per dataset, 42 ledger minima plus 3 test-adaptive Golden46 accepts. The fair ladder removes those rows. The recorded fixed-seed JopeDime regressor is Elo 1687.0, rank 31 of 304. TabFM Ensemble leads that ladder at 1934.9.”
