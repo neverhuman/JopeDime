@@ -30,7 +30,7 @@ if [ "$MODE" = pub ]; then
 fi
 [ "$(date -u +%s)" -lt "$(date -u -d "$DEADLINE" +%s)" ] || { echo "past the compute deadline $DEADLINE" >&2; exit 8; }
 mkdir -p "$EV/logs" "$EV/results" "$EV/pulled"
-case $HOST in xbabe2) KIND=bwrap ;; xbabe1|xbabe3) KIND=docker ;; *) echo "host $HOST is not an H420 GP host" >&2; exit 2 ;; esac
+case $HOST in xbabe2) KIND=${H420_LOCAL_KIND:-bwrap} ;; xbabe1|xbabe3) KIND=docker ;; *) echo "host $HOST is not an H420 GP host" >&2; exit 2 ;; esac
 on() { if [ "$HOST" = xbabe2 ]; then bash -c "$1"; else ssh -o BatchMode=yes "$HOST" "export XDG_RUNTIME_DIR=/run/user/\$(id -u); $1"; fi; }
 unit() {  # UNIT MEM <command...>
   local U=$1 M=$2; shift 2

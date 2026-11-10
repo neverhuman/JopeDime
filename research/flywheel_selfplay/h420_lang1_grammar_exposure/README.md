@@ -11,7 +11,17 @@ Plan: [`PREREG.md`](PREREG.md), addenda [1](PREREG_ADDENDUM_1.md) and [2](PREREG
 | 10:36 | GX search run on `FIT-SEL` (xbabe1) stopped, 0 finished contexts | deferred until a `DEV` test passes (addendum 1) |
 | 10:54 | GX `DEV` restarted as 16 processes, same run directory and memo | — |
 | **11:34** | GX `DEV` finished contexts | **0 of 115** |
-| 10:15– | Unseeded deploy smoke (B, TBOTH; 2 contexts) | still running after 80 minutes |
+| 12:02 | **xbabe2 rebooted (not by this wave).** GX `DEV` died at 37 of 115 finished contexts; the unseeded smoke had finished variant B and was inside TBOTH | no torn record; memo intact (85 context files) |
+| 12:22 | GX `DEV` resumed from its memo, same stage and arguments | the 37 finished contexts are store hits; in-flight contexts replay from the memo |
+| 10:15–12:02 | Unseeded deploy smoke (B, TBOTH; 2 contexts) | B finished (about 60 minutes); TBOTH interrupted by the reboot and not resumed: the seeded smoke runs B and TBOTH instead |
+
+**Interruption and lost time (reboot of 12:02Z).**
+- Lost: the 20 minutes between the reboot and the resume, plus the Python-side progress of the contexts in flight
+  (16 processes × about 50 minutes since their last finished context at worst; their worker evaluations are in the
+  memo and are not repeated). About 1.5 hours of wall-clock in all for this run.
+- After the reboot the bubblewrap sandbox on xbabe2 no longer starts (`kernel.apparmor_restrict_unprivileged_userns`
+  is back at 1). I did not change the setting. From 12:22Z the xbabe2 runs use the docker sandbox
+  (`sandbox_h335_docker.sh`, the one used on xbabe0, xbabe1 and xbabe3), with the same staged code.
 
 **Negatives.**
 - Two errors of mine were caught before any scored deploy: a mistyped design checksum (the first smoke deploy
