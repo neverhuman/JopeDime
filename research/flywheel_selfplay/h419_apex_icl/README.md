@@ -10,6 +10,8 @@ exists. Plan: [`PREREG.md`](PREREG.md), [`PREREG_ADDENDUM_1.md`](PREREG_ADDENDUM
 | `ICL_S_r3` | xbabe3 3090 | 7.56M | stopped at 0.77 h (11:38Z) for the 104M run (addendum 2); checkpoint kept |
 | `ICL_M_r3` | xbabe1 4090 | 23.66M | 46 h run, started 2026-11-10T10:52Z; same data mix |
 | `ICL_L_r4` | xbabe3 3090 | 104.36M | 72 h run, started 2026-11-10T11:40Z from scratch (addendum 2); same data mix |
+| `ICL_L_g1_w1`, `ICL_L_g1_w2` | xbabe0 3090, xbabe2 3090 | 104.36M | started 12:29Z as averaging workers cloned from `ICL_L_r4` at step 5,531 (addendum 3); the xbabe3 run joins after the cut-over checks |
+| `ICL_M_x4_inj`, `ICL_M_x4_noinj` | xbabe4 Apple GPU | 23.66M | column-injection ablation, two arms, stopped at 24 h each (addendum 4) |
 
 ## Tracked metrics
 - **Real-table monitor:** 106 core FIT-SEL contexts, SEARCH rows only; query = fold 0 of `kfold_labels`, context =
@@ -44,6 +46,15 @@ larger model is expected to at that point; this is neither good nor bad news yet
   (0.931 to 0.917) while its win rate rose. Forty minutes of the new data mix is too short to credit the column
   injection or the real-table tasks with anything; the real-table share was still ramping (0.25–0.29 of batches).
 - The on-track rule (addendum 1: win rate ≥ 0.55 and median above its start value by hour 12) has not come due.
+
+## Why xbabe4 runs an ablation and not a fourth 104M worker
+- The Apple GPU trains the 104M model at about 0.36 times a 3090 per step (1.4–2.0 s against about 0.5 s). In an
+  equal-weight average it would pull the group back each round, so it stays out of the group.
+- The owner's direction for this wave is synthetic column injection, and nothing yet measured its contribution.
+  xbabe4 therefore runs the published 24M recipe with and without injection, side by side on the same hardware
+  (addendum 4). The arm with injection is also the only replicate of the 24M run, so it gives a first noise estimate.
+- Limit: at about 19 tasks per second per arm, 24 hours cover only the first 1.6 million tasks. A clear early effect
+  can show; a small or late one cannot.
 
 ## Mistakes and corrections so far
 - `ICL_*_r1` were stopped seconds after launch: the largest training shapes had not been tested. The stress test

@@ -101,10 +101,10 @@ class RealBank:
         first = p.rand(1, 1) < 0.5
         return torch.where(first, p.warp_y(p.noise(f, xs)), p.noise(p.std(p.warp_y(f)), xs))
 
-    def sample(self, rng, B, N, Fn):
+    def sample(self, rng, B, N, Fn, fill=True):
         """Returns x [B,N,Fn], y [B,N], modes [B] (0 own target, 1 other column, 2 teacher), mean injected share."""
         p = self.prior
-        ok = self.eligible(N)
+        ok = self.eligible(N) if fill else [i for i in self.eligible(N) if self.tabs[i].shape[1] - 2 >= Fn]
         if not ok:
             return None
         xs, ys, modes, inj = [], [], [], 0
@@ -117,7 +117,7 @@ class RealBank:
             feats = [j for j in range(c) if j != tcol]
             if mode == 2:
                 feats = feats[:-1] if rng.random() < 0.5 else feats      # the real target may serve as a feature
-            k_real = rng.randint(min(2, len(feats)), min(len(feats), Fn))
+            k_real = rng.randint(min(2, len(feats)), min(len(feats), Fn)) if fill else Fn   # fill=False: no injected column
             pick = torch.tensor(rng.sample(feats, k_real), device=self.dev)
             rows = torch.randperm(r, device=self.dev, generator=p.g)
             if mode < 2:

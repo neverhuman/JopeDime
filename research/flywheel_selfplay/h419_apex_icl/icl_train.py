@@ -54,18 +54,23 @@ def draw_shape(rng, frac, tokens, bmax, cap_rows=0, row_tokens=0):
     return B, N, Fn, n_ctx
 
 
+def _c(t):
+    """CPU float64 copy (the Apple GPU backend has no float64)."""
+    return t.detach().cpu().double()
+
+
 def ridge_u(x, y, n_ctx):
     """Reference: u of a ridge fit on standardised, zero-imputed features (same context/query rows)."""
-    x = torch.nan_to_num(x.double())
+    x = torch.nan_to_num(_c(x))
     xc, xq = x[:, :n_ctx], x[:, n_ctx:]
     mu, sd = xc.mean(1, keepdim=True), xc.std(1, keepdim=True).clamp_min(1e-9)
     xc, xq = (xc - mu) / sd, (xq - mu) / sd
-    yc = y[:, :n_ctx].double()
+    yc = _c(y[:, :n_ctx])
     ym = yc.mean(1, keepdim=True)
     A = xc.transpose(1, 2) @ xc + 1.0 * torch.eye(x.shape[-1], device=x.device, dtype=torch.float64)
     w = torch.linalg.solve(A, xc.transpose(1, 2) @ (yc - ym).unsqueeze(-1))
     pred = (xq @ w).squeeze(-1) + ym
-    return u_score(pred, y[:, n_ctx:].double(), ym)
+    return u_score(pred, _c(y[:, n_ctx:]), ym)
 
 
 def u_score(pred, yq, ym):
@@ -86,7 +91,7 @@ def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
             n_ctx = N * 3 // 4
             logits, ym, ys = model(x, y[:, :n_ctx], n_ctx)
             loss = model.loss(logits, y[:, n_ctx:], ym, ys).mean(1)
-            u = u_score(model.mean(logits, ym, ys).double(), y[:, n_ctx:].double(), ym.double())
+            u = u_score(_c(model.mean(logits, ym, ys)), _c(y[:, n_ctx:]), _c(ym))
             ur = ridge_u(x, y, n_ctx)
             for i in range(bsz):
                 rows.append((KINDS[int(kinds[i])], float(loss[i]), float(u[i]), float(ur[i])))
@@ -96,14 +101,14 @@ def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
         x, y, _k, _n = INJ.sample_synth(prior2, rng2, bsz, N, Fn, p=1.0)
         n_ctx = N * 3 // 4
         logits, ym, ys = model(x, y[:, :n_ctx], n_ctx)
-        u = u_score(model.mean(logits, ym, ys).double(), y[:, n_ctx:].double(), ym.double())
+        u = u_score(_c(model.mean(logits, ym, ys)), _c(y[:, n_ctx:]), _c(ym))
         inj.extend(zip(u.tolist(), ridge_u(x, y, n_ctx).tolist()))
     # real FIT-SEL SEARCH rows: context = folds 1-4, query = fold 0 (one task per forward, no padding)
     real = []
     for m, n_ctx in (real_val.items if real_val is not None else []):
         x, y = m[None, :, :-1], m[None, :, -1]
         logits, ym, ys = model(x, y[:, :n_ctx], n_ctx)
-        u = u_score(model.mean(logits, ym, ys).double(), y[:, n_ctx:].double(), ym.double())
+        u = u_score(_c(model.mean(logits, ym, ys)), _c(y[:, n_ctx:]), _c(ym))
         real.append((float(u), float(ridge_u(x, y, n_ctx)), x.shape[-1]))
     model.train()
     out = {"loss": sum(r[1] for r in rows) / len(rows), "u": sum(r[2] for r in rows) / len(rows),
@@ -140,7 +145,7 @@ def code_sha():
 
 
 def train(a):
-    dev = torch.device("cuda")
+    dev = torch.device(a.device)
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
     torch.set_num_threads(4)
@@ -175,7 +180,7 @@ def train(a):
         sys.exit(f"{a.out} holds a run; pass --resume or a new --out")
     else:
         cfg = dict(vars(a), params=n_params(model), code_sha256=code_sha(), torch=torch.__version__, init_sha256=init_sha,
-                   gpu=torch.cuda.get_device_name(0), model=model.cfg, started=time.strftime("%FT%TZ", time.gmtime()))
+                   gpu=(torch.cuda.get_device_name(0) if dev.type == "cuda" else dev.type), model=model.cfg, started=time.strftime("%FT%TZ", time.gmtime()))
         cfg.pop("fn", None)
         with open(os.path.join(a.out, "config.json"), "x") as f:
             json.dump(cfg, f, indent=1)
@@ -190,12 +195,12 @@ def train(a):
     run_loss, run_n, run_ds, run_real, run_inj = 0.0, 0, 0, 0, 0
     model.train()
     sync_k = int(time.time() // a.sync_s) if a.sync_dir else 0
-    while state["elapsed"] < total:
+    while state["elapsed"] < total and (not a.stop_h or state["elapsed"] < a.stop_h * 3600.0):
         frac = state["elapsed"] / total
         B, N, Fn, n_ctx = draw_shape(rng, frac, a.tokens, a.bmax, a.max_rows, a.row_tokens)
         got = None
         if bank is not None and rng.random() < a.real_frac * min(1.0, state["elapsed"] / max(1.0, a.real_ramp_s)):
-            got = bank.sample(rng, min(B, a.real_bmax), N, Fn)
+            got = bank.sample(rng, min(B, a.real_bmax), N, Fn, fill=not a.no_inject_real)
         if got is not None:
             x, y, _modes, _share = got
             B = x.shape[0]
@@ -257,7 +262,7 @@ def train(a):
                                   "loss": round(run_loss / run_n, 5), "ds_per_s": round(run_ds / (now - t_log), 2),
                                   "lr": opt.param_groups[0]["lr"], "datasets": state["datasets"],
                                   "real_share": round(run_real / run_n, 3), "inj_share": round(run_inj / run_n, 3),
-                                  "mem_gb": round(torch.cuda.max_memory_allocated() / 2 ** 30, 2)}) + "\n")
+                                  "mem_gb": round((torch.cuda.max_memory_allocated() if dev.type == "cuda" else torch.mps.driver_allocated_memory()) / 2 ** 30, 2)}) + "\n")
             run_loss, run_n, run_ds, run_real, run_inj, t_log = 0.0, 0, 0, 0, 0, now
         if now - t_eval >= a.eval_s:
             ev = evaluate(ema, dev, real_val=rval)
@@ -331,6 +336,9 @@ def main():
     t.add_argument("--real-bmax", type=int, default=32); t.add_argument("--inject-p", type=float, default=0.5)
     t.add_argument("--val-real", help="icl_bank.py val output (FIT-SEL SEARCH rows, monitor only)")
     t.add_argument("--clone", help="checkpoint to continue: weights, EMA, optimizer and schedule position")
+    t.add_argument("--stop-h", type=float, default=0.0, help="end the run after this many training hours (schedule unchanged)")
+    t.add_argument("--device", default="cuda"); t.add_argument("--no-inject-real", action="store_true",
+                   help="ablation: real-table tasks take exactly F real columns, no injected column")
     t.add_argument("--name", default="w0"); t.add_argument("--sync-dir", help="parameter-averaging exchange directory")
     t.add_argument("--sync-s", type=float, default=300.0); t.add_argument("--sync-wait", type=float, default=240.0)
     t.add_argument("--ckpt-s", type=float, default=1200.0); t.add_argument("--named-h", type=float, default=2.0)
