@@ -108,12 +108,18 @@ impl RunArgs {
         let task: Task = parse_value(&self.task)?;
         let objective = crate::draft::default_objective(task);
         self.objective = Some(objective.to_owned());
-        let reason = match task {
-            Task::Auto => "the default when the task is not inferred".to_owned(),
-            task => format!(
-                "the default for a {} task",
-                serde_json::to_value(task)?.as_str().unwrap_or_default()
-            ),
+        // Name the task from the enum. `serde_json::to_value(...).as_str().unwrap_or_default()`
+        // was fallback soup: a non-string encoding would announce "a  task" instead of failing.
+        let task_name = match task {
+            Task::Auto => "auto",
+            Task::Regression => "regression",
+            Task::Binary => "binary",
+            Task::Multiclass => "multiclass",
+        };
+        let reason = if task == Task::Auto {
+            "the default when the task is not inferred".to_owned()
+        } else {
+            format!("the default for a {task_name} task")
         };
         Ok(Some(format!(
             "Objective: {objective} ({reason}; choose another with --objective)"

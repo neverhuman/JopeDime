@@ -27,6 +27,8 @@ advisory_on = ["medium", "low", "info"]
 # Generated caches, the established custody snapshot, the scanner fixture, and
 # owner-approved exact-file false-positive exceptions are the only scoring exclusions.
 # Current-main P5/streaming exceptions have per-path evidence in the registers below.
+# The 2026-11-10 main 9d684544 triage, including findings left visible on purpose,
+# is docs/release/jankurai-main-9d684544-dispositions-20261110.md.
 # P9 path-specific reasons follow their entries; pinned research and paper bytes remain
 # unchanged. These rules do not alter Gitleaks, Rust/Python tests, or source content.
 # Do not add broad globs or unreviewed paths. Gitleaks still scans the synthetic fixture.
@@ -1257,6 +1259,54 @@ paths = ["deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive
 owner = "dl-flywheel"
 expires = "2027-02-01"
 reason = "HLT-001 sha256:3740a6e00ade6e4fe9e0be004362168ebfb4ab21276cfcce8332337f3c0f29ee flags `old` in a frozen legacy archive-unit shutdown check. The file is immutable reviewed evidence at SHA256 c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69, pinned by deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/provenance/README.md and provenance/validation.json. Preserve those bytes; this exact term-and-path allowance affects no other rule, term, or file."
+
+[[dead_language_allow]]
+name = "ci-runner-trim-unused-days-flag"
+term = "unused"
+paths = ["deploy/ci/_runner_case_trim.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "HLT-001 on main 9d684544 flags `unused` inside the `--unused-days` flag of the runner-trim argument-refusal test. That flag is the tool's contract. This term-and-path allowance does not suppress other rules or files. See docs/release/jankurai-main-9d684544-dispositions-20261110.md."
+
+[[dead_language_allow]]
+name = "elo-reference-board-work-queue"
+term = "todo"
+paths = ["research/elo/reference-board/tools/run_board.sh"]
+owner = "research"
+expires = "2027-02-01"
+reason = "HLT-001 flags `todo` on the resumable work-list tempfile (`TODO=$(mktemp -p \"$BR\" .todo.XXXXXX)`), not an unfinished stub. Renaming the queue file would change live board artifacts. See docs/release/jankurai-main-9d684544-dispositions-20261110.md."
+
+[[dead_language_allow]]
+name = "wave-h317-audit-work-queue"
+term = "todo"
+paths = ["research/flywheel_selfplay/h317_island10_multiscale_curriculum/stage_v_h317.py"]
+owner = "research"
+expires = "2027-02-01"
+reason = "HLT-001 flags the work-queue variable `todo` in run_audit_loop. These are landed research-wave bytes. Owner order 2026-11-10: do not edit research H* folders. See docs/release/jankurai-main-9d684544-dispositions-20261110.md."
+
+[[dead_language_allow]]
+name = "wave-h335-incomplete-shard-queue"
+term = "todo"
+paths = ["research/flywheel_selfplay/h335_aggressive_locked_elo/stage_v_h335.py"]
+owner = "research"
+expires = "2027-02-01"
+reason = "HLT-001 flags `todo` as the planned shards that have no AUDIT_DONE receipt. It is completion accounting, not a stub. Owner order 2026-11-10: do not edit research H* folders. See docs/release/jankurai-main-9d684544-dispositions-20261110.md."
+
+[[dead_language_allow]]
+name = "wave-h357-remaining-context-queue"
+term = "todo"
+paths = ["research/flywheel_selfplay/h357_xstack_cl_confirm/gp_c_h357.py"]
+owner = "research"
+expires = "2027-02-01"
+reason = "HLT-001 flags `todo` as the contexts not yet present in done.jsonl. Owner order 2026-11-10: do not edit research H* folders. See docs/release/jankurai-main-9d684544-dispositions-20261110.md."
+
+[[dead_language_allow]]
+name = "wave-h368-legacy-forecast-miss-phrase"
+term = "legacy"
+paths = ["research/flywheel_selfplay/h368_ranker_nl15_max_bin_63_x1/ops_science_review.py"]
+owner = "research"
+expires = "2027-02-01"
+reason = "HLT-001 flags `legacy` in the declared delta 'correct legacy forecast-miss target', a reviewed science-equivalence note, not a dead code path. Owner order 2026-11-10: do not edit research H* folders. See docs/release/jankurai-main-9d684544-dispositions-20261110.md."
 
 # Hash-pinned evidence snapshots. Each entry lists exact copies inside a frozen
 # evidence package whose sha256 is recorded by that package's own receipt or
