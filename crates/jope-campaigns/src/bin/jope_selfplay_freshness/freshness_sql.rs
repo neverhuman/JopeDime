@@ -7,8 +7,7 @@ pub(crate) fn sqlite_rows(database: &Path, sql: &str) -> Result<Vec<Value>> {
         .with_context(|| format!("prepare SQLite audit for {}", database.display()))?;
     let names = statement
         .column_names()
-        .iter()
-        .map(|name| (*name).to_owned())
+        .map(|name| name.to_owned())
         .collect::<Vec<_>>();
     let mut rows = statement.query([])?;
     let mut result = Vec::new();

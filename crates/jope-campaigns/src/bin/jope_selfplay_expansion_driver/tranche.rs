@@ -401,7 +401,6 @@ pub(crate) fn query(root: &Path, dataset: Option<&str>, summary: bool) -> Result
         let mut statement = conn.prepare("SELECT * FROM datasets WHERE dataset_hash=?")?;
         let names: Vec<String> = statement
             .column_names()
-            .iter()
             .map(|s| s.to_string())
             .collect();
         let rows = statement.query_map([id], |r| {

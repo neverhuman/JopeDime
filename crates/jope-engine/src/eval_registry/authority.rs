@@ -1720,7 +1720,7 @@ impl Authority {
             return Self::scope_training_postimage(db, key);
         }
         let mut stmt = db.prepare(Self::state_row_sql(table)?)?;
-        let names: Vec<String> = stmt.column_names().iter().map(|s| s.to_string()).collect();
+        let names: Vec<String> = stmt.column_names().map(|s| s.to_string()).collect();
         let row = stmt.query_row([key], |r| {
             let mut value = serde_json::Map::new();
             for (i, name) in names.iter().enumerate() {
@@ -3590,7 +3590,7 @@ impl Authority {
                 // jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=validated-input expires=2026-12-31
                 let stmt = authority.db.prepare(&format!("SELECT * FROM {table}"))?; // allowlist
                 let columns: Vec<String> =
-                    stmt.column_names().iter().map(|s| s.to_string()).collect();
+                    stmt.column_names().map(|s| s.to_string()).collect();
                 let object = row.as_object().context("original postimage is not a row")?;
                 ensure!(
                     object.len() == columns.len()
