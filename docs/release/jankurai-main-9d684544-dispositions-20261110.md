@@ -967,3 +967,30 @@ SHA-256 values in the receipt. They prove the announced identity values.
 They are not a new historical runtime table row. The receipt bytes are not
 edited. #2184 comparator files, research H* bytes, holdout/dev91 data, and
 `provenance_bind.py` are not edited.
+
+## Audit of main 8a7f68d9
+
+`8a7f68d926520b2dc542cf1ee51dbc97e97d92c7` is the squash of #2187. Its tree
+matches reviewed head `81871381cf48057a4cefb445580dfcc3c0c6ad32`
+(`48aa7b6d0abb6e90819f04a05948314f224e5208`). Hosted run 42859053257 on that
+head kept score 68, raw 77, hard 55, soft 9, and the same repair queue
+(`sha256:568706037c7f278514afbcbfc0b778c4ee784cf5953fc09daec8293805dd4671`).
+P37 passed. The H310 and observatory-receipt rows above stay. This note
+records the next row.
+
+The next repair-queue item is the stack finding on
+`crates/jope-campaigns/manifests/advanced-v3/recovery-evidence/portable-xlang/ref.cpp`,
+fingerprint `sha256:6b8b234f4696e6b7b92518063ff106efc6c0ae260da0e7e5d5b9623b4f9530d9`.
+The file is the C++ port of the portable exp/ln kernel. Its header says it
+must print byte-identical output to `ref.rs`. `ref.rs` and `ref.js` sit beside
+it as the other language ports. This is recovery evidence, not the product
+runtime.
+
+The bytes are SHA-256
+`a841d5099231a6f19c5b7a09c290d3b7e11396a7488ac4ae89e3445363c7a7da`. That hash
+is the reconciliation inventory pin and the evidence-exclusion pin. The path
+is already on `extra_excluded_paths` in `agent/audit-policy.toml`. Jankurai
+1.7.6 still reports the stack detector for the `.cpp` suffix. Rewriting the
+file, or moving the kernel into Rust, would replace the inventoried bytes.
+The file is not edited. #2184 comparator files, research H* bytes,
+holdout/dev91 data, and `provenance_bind.py` are not edited.
