@@ -29,7 +29,10 @@ fn decode_32byte_hex_or_default(env_key: &str, fallback: [u8; 32]) -> [u8; 32] {
 }
 
 fn run_edge_lambda_loop(runtime_api: &str) -> Result<(), String> {
-    let region = env::var("CARBON_REGION").unwrap_or_else(|_| "us-east-2".to_owned());
+    let region = match env::var("CARBON_REGION") {
+        Ok(val) if !val.is_empty() => val,
+        _ => "us-east-2".to_owned(),
+    };
     let public_base_url = env::var("CARBON_PUBLIC_BASE_URL").unwrap_or_default();
     let cas_url = env::var("CARBON_CAS_URL")
         .map_err(|_| "missing CARBON_CAS_URL for carbon-edge runtime".to_owned())?;

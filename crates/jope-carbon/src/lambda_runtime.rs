@@ -107,7 +107,8 @@ where
                     "errorMessage": err_msg,
                     "errorType": "CarbonHandlerError"
                 });
-                let body = serde_json::to_vec(&err_json).unwrap_or_default();
+                let body = serde_json::to_vec(&err_json)
+                    .map_err(|e| format!("encode Lambda error payload failed: {e}"))?;
                 let _ = agent
                     .post(&err_url)
                     .header("content-type", "application/json")

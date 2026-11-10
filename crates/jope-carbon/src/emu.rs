@@ -490,12 +490,10 @@ async fn rt_error_handler(
     let Some(queue) = state.role_queue(&role) else {
         return StatusCode::NOT_FOUND;
     };
-    let bytes = req
-        .into_body()
-        .collect()
-        .await
-        .map(|c| c.to_bytes().to_vec())
-        .unwrap_or_default();
+    let Ok(collected) = req.into_body().collect().await else {
+        return StatusCode::BAD_REQUEST;
+    };
+    let bytes = collected.to_bytes().to_vec();
     let msg = String::from_utf8_lossy(&bytes).into_owned();
     let mut waiters = queue.waiters.lock().await;
     if let Some(tx) = waiters.remove(&req_id) {

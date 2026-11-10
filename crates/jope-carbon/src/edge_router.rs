@@ -176,9 +176,10 @@ impl CarbonGatewayResponse {
     }
 
     pub fn decoded_body(&self) -> Vec<u8> {
-        base64::engine::general_purpose::STANDARD
-            .decode(&self.body_b64)
-            .unwrap_or_default()
+        if let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(&self.body_b64) {
+            return bytes;
+        }
+        Vec::new()
     }
 }
 
@@ -485,11 +486,19 @@ impl CarbonEdgeRouter {
             region: self.config.region.clone(),
             failure_message: None,
         };
-        let status_bytes = serde_json::to_vec(&initial_progress).unwrap_or_default();
-        let _ = self.cas.put_state_object(
+        let Ok(status_bytes) = serde_json::to_vec(&initial_progress) else {
+            return CarbonGatewayResponse::error_json(
+                500,
+                "serialize_failed",
+                "failed to encode initial run progress",
+            );
+        };
+        if let Err(err) = self.cas.put_state_object(
             &state_key(&create.tenant_id, &run_str, "status.json"),
             &status_bytes,
-        );
+        ) {
+            return CarbonGatewayResponse::error_json(500, "cas_write_failed", &err);
+        }
 
         let cmd = CarbonEngineWireCommand::StartRun {
             request: create,
