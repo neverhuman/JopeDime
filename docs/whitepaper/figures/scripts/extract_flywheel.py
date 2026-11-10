@@ -10,7 +10,7 @@ paths = sorted(glob.glob(f"{root}/custody/*/*/summary.jsonl")) + sorted(glob.glo
 for p in paths:
     for line in open(p):
         try: d = json.loads(line)
-        except Exception: continue
+        except json.JSONDecodeError: continue
         r = d.get("round"); v = d.get("val_reg"); g = d.get("train_vs_val_gap_reg")
         if r is None or not isinstance(v, (int, float)): continue
         num = lambda k: d.get(k) if isinstance(d.get(k), (int, float)) else ""
@@ -24,7 +24,7 @@ adm = {}
 for p in glob.glob(f"{root}/run-*/adapter_admissions.jsonl"):
     for line in open(p):
         try: d = json.loads(line)
-        except Exception: continue
+        except json.JSONDecodeError: continue
         if "round" in d: adm[d["round"]] = (d.get("candidate_utility"), d.get("best_utility"), int(bool(d.get("accepted"))), d.get("timestamp"))
 with open(f"{out}/admissions.csv", "w", newline="") as f:
     w = csv.writer(f); w.writerow(["round","candidate_val","best_val","accepted","timestamp"])
