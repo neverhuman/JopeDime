@@ -46,9 +46,9 @@ pub(super) fn preflight(
         cloud_first: route::cloud_first(),
     });
     match decision.target {
-        route::Target::Refused => Err(jope_runtime::Failure::input(decision.line)),
-        route::Target::Local => Ok(Routed::Local),
-        route::Target::Cloud => {
+        route::RouteTarget::Refused => Err(jope_runtime::Failure::input(decision.line)),
+        route::RouteTarget::Local => Ok(Routed::Local),
+        route::RouteTarget::Cloud => {
             // --cloud already conflicts with these; for implied cloud runs, say why.
             if args.detach || args.out.is_some() || args.events.is_some() || args.dry_run {
                 return Err(jope_runtime::Failure::input(

@@ -116,7 +116,7 @@ pub struct Input {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Target {
+pub enum RouteTarget {
     Local,
     Cloud,
     /// Not started anywhere: the line says why and what to do.
@@ -137,7 +137,7 @@ pub enum Reason {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Decision {
-    pub target: Target,
+    pub target: RouteTarget,
     pub reason: Reason,
     /// The one line the CLI prints.
     pub line: String,
@@ -176,12 +176,12 @@ pub fn decide(input: Input) -> Decision {
         .unwrap_or_default();
     let effort = effort_name(input.effort);
     let local = |reason, why: &str| Decision {
-        target: Target::Local,
+        target: RouteTarget::Local,
         reason,
         line: format!("Running locally on this machine · {why}{rows}."),
     };
     let cloud = |reason, why: &str| Decision {
-        target: Target::Cloud,
+        target: RouteTarget::Cloud,
         reason,
         line: format!("Training in the veox Cloud · {why}{rows}."),
     };
@@ -189,7 +189,7 @@ pub fn decide(input: Input) -> Decision {
         (_, Some(Force::Cloud)) => cloud(Reason::AskedCloud, "you asked for --cloud"),
         (true, _) => local(Reason::Demo, "a bundled demo, no account needed"),
         (false, Some(Force::Local)) if input.cloud_first => Decision {
-            target: Target::Refused,
+            target: RouteTarget::Refused,
             reason: Reason::LocalIsForDemos,
             line: LOCAL_IS_FOR_DEMOS.into(),
         },
@@ -437,7 +437,7 @@ mod tests {
             let mut i = input(false, None, true);
             i.effort = effort;
             let d = decide(i);
-            assert_eq!((d.target, d.reason), (Target::Cloud, Reason::OwnData));
+            assert_eq!((d.target, d.reason), (RouteTarget::Cloud, Reason::OwnData));
             assert_eq!(d.cloud_fallback(), "no_gpu");
             assert!(
                 d.line.starts_with("Training in the veox Cloud"),
@@ -447,40 +447,46 @@ mod tests {
             assert!(d.line.ends_with("149 rows."), "{}", d.line);
         }
         let demo = decide(input(true, None, true));
-        assert_eq!((demo.target, demo.reason), (Target::Local, Reason::Demo));
+        assert_eq!(
+            (demo.target, demo.reason),
+            (RouteTarget::Local, Reason::Demo)
+        );
         assert!(demo.line.contains("no account needed"), "{}", demo.line);
         // --local is for the bundled examples only.
         let local = decide(input(false, Some(Force::Local), true));
-        assert_eq!(local.target, Target::Refused);
+        assert_eq!(local.target, RouteTarget::Refused);
         assert_eq!(local.line, LOCAL_IS_FOR_DEMOS);
         assert_eq!(
             decide(input(true, Some(Force::Local), true)).target,
-            Target::Local
+            RouteTarget::Local
         );
         // --cloud is explicit everywhere, demos included.
         let cloud = decide(input(false, Some(Force::Cloud), true));
         assert_eq!(
             (cloud.target, cloud.cloud_fallback()),
-            (Target::Cloud, "user_choice")
+            (RouteTarget::Cloud, "user_choice")
         );
         assert_eq!(
             decide(input(true, Some(Force::Cloud), true)).target,
-            Target::Cloud
+            RouteTarget::Cloud
         );
     }
 
     #[test]
     fn engine_and_development_builds_keep_training_here_unless_asked() {
         let d = decide(input(false, None, false));
-        assert_eq!((d.target, d.reason), (Target::Local, Reason::LocalBuild));
+        assert_eq!(
+            (d.target, d.reason),
+            (RouteTarget::Local, Reason::LocalBuild)
+        );
         assert!(d.line.starts_with("Running locally on this machine"));
         assert_eq!(
             decide(input(false, Some(Force::Local), false)).target,
-            Target::Local
+            RouteTarget::Local
         );
         assert_eq!(
             decide(input(false, Some(Force::Cloud), false)).target,
-            Target::Cloud
+            RouteTarget::Cloud
         );
         // The public edition always applies the rule; elsewhere JAIN_PUBLIC_EDITION=1 does.
         assert!(cloud_first_with(Some("1".into())));
