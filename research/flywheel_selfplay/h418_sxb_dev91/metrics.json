@@ -1,0 +1,454 @@
+{
+  "schema": "jope.h418.closeout-metrics/v1",
+  "wave": "H418",
+  "entrant": "h416.SXB",
+  "board": "dev91-audit-v1",
+  "verdict": "ONCE_SCORED_UNDER_AMENDMENT_2_NOT_LEADER",
+  "headline": {
+    "audit_elo": 1765.9733708538643,
+    "ci95": [
+      1661.077366029664,
+      1911.6740180759452
+    ],
+    "rank": 8,
+    "n_entrants": 32,
+    "top_other": "kumo_tabular_large_e8.v1",
+    "family_mean_u": 1.6216840728449737
+  },
+  "gaps": {
+    "elo": {
+      "vs_h335.H335_AGG": 78.86207156364026,
+      "vs_h364.XSTACK_2L": 62.77683292260281,
+      "vs_kumo_tabular_large_e8.v1": -297.9036256322156
+    },
+    "elo_vs_stored_ladder": {
+      "vs_h335.H335_AGG": 76.50011128785877,
+      "vs_h364.XSTACK_2L": 60.05706059539693,
+      "vs_kumo_tabular_large_e8.v1": -292.7408867737104
+    },
+    "delta_elo_bootstrap": {
+      "h335.H335_AGG": {
+        "a": "h416.SXB",
+        "b": "h335.H335_AGG",
+        "ci95": [
+          16.115981047050877,
+          138.64566818788998
+        ],
+        "delta": 78.86207156364026,
+        "p_le0": 0.0082,
+        "p_two_sided": 0.0164
+      },
+      "h364.XSTACK_2L": {
+        "a": "h416.SXB",
+        "b": "h364.XSTACK_2L",
+        "ci95": [
+          2.058915410925985,
+          117.07376759494302
+        ],
+        "delta": 62.77683292260281,
+        "p_le0": 0.0215,
+        "p_two_sided": 0.043
+      },
+      "kumo_tabular_large_e8.v1": {
+        "a": "h416.SXB",
+        "b": "kumo_tabular_large_e8.v1",
+        "ci95": [
+          -460.062653938673,
+          -175.48115724221734
+        ],
+        "delta": -297.9036256322156,
+        "p_le0": 1.0,
+        "p_two_sided": 0.0
+      }
+    }
+  },
+  "paired": {
+    "h335.H335_AGG": {
+      "clipped_mean": 0.051773052979479595,
+      "family_median": 0.0150837047274203,
+      "gain": 0.06247669199716408,
+      "inferior": false,
+      "lofo_min": 0.03478646694481338,
+      "mirror_signflip_p": 0.9264583587646484,
+      "pass": false,
+      "pct_rmse": 0.06056504108901595,
+      "signflip_p": 0.07354354858398438,
+      "win_frac": 0.7263157894736842,
+      "wtl": [
+        17,
+        0,
+        2
+      ]
+    },
+    "h364.XSTACK_2L": {
+      "clipped_mean": 0.05072488936475443,
+      "family_median": 0.015077180249268064,
+      "gain": 0.06096262444836291,
+      "inferior": false,
+      "lofo_min": 0.033714827858867216,
+      "mirror_signflip_p": 0.9239673614501953,
+      "pass": false,
+      "pct_rmse": 0.059141595779269474,
+      "signflip_p": 0.0760345458984375,
+      "win_frac": 0.7157894736842105,
+      "wtl": [
+        18,
+        0,
+        1
+      ]
+    },
+    "kumo_tabular_large_e8.v1": {
+      "clipped_mean": -0.16585188618020244,
+      "family_median": -0.11164965647261818,
+      "gain": -0.3138928870497851,
+      "inferior": true,
+      "lofo_min": -0.19352649560068286,
+      "mirror_signflip_p": 0.0011959075927734375,
+      "pass": false,
+      "pct_rmse": -0.36874311858165676,
+      "signflip_p": 0.9988059997558594,
+      "win_frac": 0.12631578947368424,
+      "wtl": [
+        1,
+        0,
+        18
+      ]
+    }
+  },
+  "descriptive": {
+    "a2_deploy_values": {
+      "cells": [
+        {
+          "cid": "43022ae6a8bc",
+          "deploy_sxb_value": 1.3444851379859677,
+          "seed": 335102,
+          "x0b_value_scored": 1.3280215080199127
+        }
+      ],
+      "elo": {
+        "ci95": [
+          1661.6911027985486,
+          1912.5874157932474
+        ],
+        "elo": 1766.8906351376136
+      },
+      "gap_vs_h364.XSTACK_2L": 63.67125525373331,
+      "n": 32,
+      "rank": 8,
+      "units": 1
+    },
+    "seed_335101_only": {
+      "elo": {
+        "ci95": [
+          1667.1794250532087,
+          1925.0822189852568
+        ],
+        "elo": 1775.7456718066458
+      },
+      "gap_vs_h364.XSTACK_2L": 73.43463661048077,
+      "n": 32,
+      "rank": 8
+    },
+    "seed_335102_only": {
+      "elo": {
+        "ci95": [
+          1639.607712731024,
+          1890.812428390372
+        ],
+        "elo": 1744.1799929388426
+      },
+      "gap_vs_h364.XSTACK_2L": 39.59737799920276,
+      "n": 32,
+      "rank": 8
+    },
+    "without_exposed_contexts": {
+      "contexts": 86,
+      "elo": {
+        "ci95": [
+          1700.5056413890852,
+          1939.910154822385
+        ],
+        "elo": 1797.81929916013
+      },
+      "excluded": 5,
+      "gap_vs_h364.XSTACK_2L": 83.21849957357654,
+      "n": 32,
+      "rank": 7
+    }
+  },
+  "ladder_checks": {
+    "stored_entrants_elo_shift_max_abs": 6.5728140759406415,
+    "elo_panel_vs_boot_max_abs": 0.0,
+    "ladder_py_equals_analysis": true,
+    "git_copy_ladder_reproduced": true
+  },
+  "value_source": {
+    "335101": {
+      "sxb": 91
+    },
+    "335102": {
+      "a2_exempt_x0b": 1,
+      "sxb": 90
+    }
+  },
+  "a1_exempt": {
+    "335101": [],
+    "335102": []
+  },
+  "a2_exempt": {
+    "335101": [],
+    "335102": [
+      "43022ae6a8bc"
+    ]
+  },
+  "harness": {
+    "gates": {
+      "a2_cells_file": true,
+      "audit_envelope": true,
+      "board_entrants": true,
+      "board_files": true,
+      "board_id": true,
+      "board_ladder": true,
+      "configs": true,
+      "contexts": true,
+      "design": true,
+      "ge_replay_335101": true,
+      "ge_replay_335102": true,
+      "gl_replay_335101": true,
+      "gl_replay_335102": true,
+      "gs_replay_335101": true,
+      "gs_replay_335102": true,
+      "kcar100_bag_is_kfb_335101": true,
+      "kcar100_bag_is_kfb_335102": true,
+      "lock": true,
+      "records": true,
+      "ref_preds_335101": true,
+      "ref_preds_335102": true,
+      "sxb_offline_335101": true,
+      "sxb_offline_335102": true,
+      "x0_board": true
+    },
+    "checks": {
+      "a2_cells": {
+        "cells": [
+          [
+            "43022ae6a8bc",
+            335102,
+            "GE"
+          ]
+        ],
+        "n": 1,
+        "sha256": "006460dbe5503fc1239e68844442a7c8b847e064cdf5e6303e523a6bf1218206"
+      },
+      "audit_envelope_matches_board": 182,
+      "board": {
+        "bad": [],
+        "complete_entrants": 31,
+        "files": 33,
+        "files_match_manifest": true,
+        "h416_files": [],
+        "incomplete": {},
+        "ladder_reproduced_max_abs": 0.0
+      },
+      "derivations": {
+        "335101": {
+          "kcar100_bag_vs_kfb_max_abs_delta": 0.0,
+          "ref_pred_max_abs_delta": 4.440892098500626E-16,
+          "sxb_offline_max_abs_delta": 1.7763568394002505E-15,
+          "units": 91
+        },
+        "335102": {
+          "kcar100_bag_vs_kfb_max_abs_delta": 0.0,
+          "ref_pred_max_abs_delta": 8.881784197001252E-16,
+          "sxb_offline_max_abs_delta": 2.6645352591003757E-15,
+          "units": 91
+        }
+      },
+      "lock_sha256": "f923e5b79bcf6d80d6c69a496e0bad49ce90dac9bc48f5b9bfce073ea6d60026",
+      "memo_conflict_contexts": [],
+      "records": {
+        "bad": [],
+        "no_usable_H": {
+          "335101": 0,
+          "335102": 0
+        },
+        "recomputed_as": 0,
+        "units": 182
+      },
+      "replay": {
+        "GE.335101": {
+          "a2_listed": [],
+          "failed": [],
+          "max_abs_delta": 0.0,
+          "max_abs_delta_unlisted": 0.0,
+          "members_same": 91
+        },
+        "GE.335102": {
+          "a2_listed": [
+            "43022ae6a8bc"
+          ],
+          "failed": [
+            "43022ae6a8bc"
+          ],
+          "max_abs_delta": 0.000034288102700008594,
+          "max_abs_delta_unlisted": 0.0,
+          "members_same": 90
+        },
+        "GL.335101": {
+          "a2_listed": [],
+          "failed": [],
+          "max_abs_delta": 0.0,
+          "max_abs_delta_unlisted": 0.0,
+          "members_same": 91
+        },
+        "GL.335102": {
+          "a2_listed": [],
+          "failed": [],
+          "max_abs_delta": 0.0,
+          "max_abs_delta_unlisted": 0.0,
+          "members_same": 91
+        },
+        "GS.335101": {
+          "a1_exempt": [],
+          "failed": [],
+          "max_abs_delta_vs_board": 0.0,
+          "max_abs_delta_vs_stored": 0.0,
+          "members_same": 91
+        },
+        "GS.335102": {
+          "a1_exempt": [],
+          "failed": [],
+          "max_abs_delta_vs_board": 0.0,
+          "max_abs_delta_vs_stored": 0.0,
+          "members_same": 91
+        }
+      },
+      "runs": {
+        "D1": {
+          "physical_by_kind": {
+            "akf0": 5810,
+            "akf1": 5810,
+            "akf2": 5810,
+            "akf3": 5810,
+            "akf4": 5810,
+            "audit": 11696,
+            "kf0": 5811,
+            "kf1": 5811,
+            "kf2": 5811,
+            "kf3": 5811,
+            "kf4": 5811,
+            "search": 11932
+          },
+          "status_files": 1,
+          "wall_s": 13301.707638025284
+        },
+        "D2": {
+          "physical_by_kind": {
+            "akf0": 5803,
+            "akf1": 5803,
+            "akf2": 5803,
+            "akf3": 5803,
+            "akf4": 5803,
+            "audit": 11380,
+            "kf0": 5804,
+            "kf1": 5804,
+            "kf2": 5804,
+            "kf3": 5804,
+            "kf4": 5804,
+            "search": 11535
+          },
+          "status_files": 1,
+          "wall_s": 13756.035628318787
+        },
+        "GE": {
+          "physical_by_kind": {
+            "audit": 2009,
+            "search": 56220
+          },
+          "status_files": 1,
+          "wall_s": 4364.610881567001
+        },
+        "GL": {
+          "physical_by_kind": {
+            "audit": 2037,
+            "search": 56427
+          },
+          "status_files": 1,
+          "wall_s": 10928.81536579132
+        }
+      }
+    },
+    "tolerances": {
+      "derivation": 0.000001,
+      "ladder": 0.000001,
+      "replay": 1E-9
+    }
+  },
+  "rows": {
+    "n": 91,
+    "path": "/home/ubuntu/jope_plan/evidence/H418/results/h416.SXB.jsonl",
+    "sha256": "7a7262ffd49a209e78052396cdce26c45499d69a071f2312137fa64ecd73eda2"
+  },
+  "runs": {
+    "GE": {
+      "wall_s": 4364.610881567001,
+      "units": 182,
+      "timeouts": 7,
+      "failures": 7,
+      "retries": 10,
+      "physical_runs": 58229,
+      "memo_hits": 7001,
+      "resource_pauses": 0
+    },
+    "GL": {
+      "wall_s": 10928.81536579132,
+      "units": 182,
+      "timeouts": 28,
+      "failures": 28,
+      "retries": 30,
+      "physical_runs": 58464,
+      "memo_hits": 6778,
+      "resource_pauses": 0
+    },
+    "D1": {
+      "wall_s": 13301.707638025284,
+      "units": 91,
+      "timeouts": 0,
+      "failures": 20,
+      "retries": 0,
+      "physical_runs": 81733,
+      "memo_hits": 142164,
+      "resource_pauses": 37
+    },
+    "D2": {
+      "wall_s": 13756.035628318787,
+      "units": 91,
+      "timeouts": 0,
+      "failures": 19,
+      "retries": 0,
+      "physical_runs": 80950,
+      "memo_hits": 142452,
+      "resource_pauses": 15
+    }
+  },
+  "provenance": {
+    "prereg_commit": "43020dc51eddd4e2130d38bc1131c2afce2e0b83",
+    "amendment_2_commit": "f57a655508a174806ba4fc46721eae269b5c4183",
+    "lock_sha256": "f923e5b79bcf6d80d6c69a496e0bad49ce90dac9bc48f5b9bfce073ea6d60026",
+    "lock_receipt": "~/jope_plan/ns/receipts/H418_LOCK_sha256.txt",
+    "analyze_receipt": "~/jope_plan/ns/receipts/H418_A2_ANALYZE.txt",
+    "stage_a2_code_sha256": "ab36314bbe79d5f52b972760e299278baf083824c71c631f2413be84a60d45e7",
+    "incomplete_1_analysis_sha256": "ee9652bf293672ecc7c28bec460dea417e5477b72c734de359fb701ad572ce6a",
+    "a2_analysis_sha256": "e6d8fbbffb15547b22156aad2f95681d197f3bd3026e994336459df7c5787781",
+    "owner_approvals": [
+      "Jepson 2026-11-10 4:09 AM MST: run the SXB dev91 score once after PR 2180 and PR 2181 merge",
+      "Jepson 2026-11-10 3:22 PM MST: Amendment 2 (option B)"
+    ]
+  },
+  "deviations": [
+    "DEVIATION_1.md: TRAIN merged bank-view link missing from the H418 data root (restored, sha eb042276 = H335/H410 LOCK value) and the gp resume screener_manifest defect; both before any evaluation",
+    "INCOMPLETE_1.md + AMENDMENT_2.md: GE replay of (43022ae6, 335102) diverged in D2 (1 of 12 stock members); scored at X0b under Amendment 2, deploy value descriptive only"
+  ],
+  "adoption_claim": null,
+  "note": "dev91 is a reuse cohort (H257 tuned on it; 5 contexts exposed by H381/H410). SXB was chosen on TRAIN P201e and confirmed on TRAIN P201b. No adoption claim."
+}
