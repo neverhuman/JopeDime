@@ -177,6 +177,7 @@ pub(super) fn render_no_improvement(
 pub(super) fn render_run_finished(
     cards: &mut Vec<String>,
     finished: &RunFinishedBody,
+    summaries: &std::collections::BTreeMap<String, String>,
     width: usize,
     theme: Theme,
     symbols: Symbols,
@@ -199,7 +200,17 @@ pub(super) fn render_run_finished(
         parts.push(format!("test {}", format_value(finished.scores.test)));
     }
     parts.push(match &finished.champion {
-        Some(champion) => format!("champion {}", champion.algorithm_id),
+        Some(champion) => {
+            let id = champion.algorithm_id.to_string();
+            match summaries
+                .get(&id)
+                .map(|summary| sanitize_user_string(summary))
+                .filter(|summary| !summary.is_empty())
+            {
+                Some(summary) => format!("champion {summary} ({id})"),
+                None => format!("champion {id}"),
+            }
+        }
         None => "no champion".to_owned(),
     });
     parts.push(completion_name(finished.completion_reason).to_owned());

@@ -17,7 +17,60 @@ fn emit_child() {
     }
 }
 
-fn evidence_directory(label: &str) -> std::path::PathBuf {
+/// One run's evidence directory. Every run is retained by default. With
+/// `JOPE_GP_EMITTER_RETAIN=failures` (set by CI, issue #2158) a run whose test
+/// passed is condensed on drop into `<run>.passed.tsv` listing each file's
+/// relative path, size and SHA-256, and only then removed; a failing run stays
+/// whole. Earlier runs are never touched.
+struct Evidence(std::path::PathBuf);
+
+impl std::ops::Deref for Evidence {
+    type Target = Path;
+    fn deref(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl Drop for Evidence {
+    fn drop(&mut self) {
+        if std::thread::panicking()
+            || std::env::var("JOPE_GP_EMITTER_RETAIN").as_deref() != Ok("failures")
+        {
+            return;
+        }
+        let mut files = Vec::new();
+        list_files(&self.0, &mut files);
+        files.sort();
+        let mut manifest = String::new();
+        for file in files {
+            use sha2::Digest;
+            let bytes = fs::read(&file).unwrap();
+            let relative = file.strip_prefix(&self.0).unwrap().display();
+            let digest = sha2::Sha256::digest(&bytes);
+            let hex: String = digest.iter().map(|b| format!("{b:02x}")).collect();
+            manifest += &format!("{relative}\t{}\t{hex}\n", bytes.len());
+        }
+        let summary = self.0.with_extension("passed.tsv");
+        let partial = self.0.with_extension("passed.tsv.partial");
+        fs::write(&partial, manifest).unwrap();
+        fs::rename(&partial, &summary).unwrap();
+        fs::remove_dir_all(&self.0).unwrap();
+        println!("GP emitter evidence condensed: {}", summary.display());
+    }
+}
+
+fn list_files(directory: &Path, files: &mut Vec<std::path::PathBuf>) {
+    for entry in fs::read_dir(directory).unwrap() {
+        let entry = entry.unwrap();
+        if entry.file_type().unwrap().is_dir() {
+            list_files(&entry.path(), files);
+        } else {
+            files.push(entry.path());
+        }
+    }
+}
+
+fn evidence_directory(label: &str) -> Evidence {
     let root = Path::new(env!("CARGO_TARGET_TMPDIR")).join("gp-emitter-determinism");
     fs::create_dir_all(&root).unwrap();
     let path = tempfile::Builder::new()
@@ -26,7 +79,7 @@ fn evidence_directory(label: &str) -> std::path::PathBuf {
         .unwrap()
         .keep();
     println!("GP emitter evidence: {}", path.display());
-    path
+    Evidence(path)
 }
 
 #[test]

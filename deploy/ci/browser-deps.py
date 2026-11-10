@@ -25,6 +25,10 @@ LOCK = Path(__file__).with_name("browser-deps.lock.json")
 # The archive mirror occasionally drops a connection; a job fetches about a hundred packages.
 ATTEMPTS = 4
 BACKOFF_SECONDS = 2.0
+# Socket timeout for each attempt, applied to the connect and to every read. When one of the mirror's addresses
+# stops answering (91.189.91.83 on 2026-11-10), each fetch that resolves to it first waits this long before the
+# next address is tried. About a hundred fetches share the 25-minute observatory-ui budget, so keep it small.
+TIMEOUT_SECONDS = 10
 
 
 def digest(path):
@@ -100,7 +104,7 @@ def download(package, path, archives):
         with tempfile.NamedTemporaryFile(dir=archives, delete=False) as output:
             temporary = Path(output.name)
             try:
-                with urllib.request.urlopen(package["url"], timeout=60) as response:
+                with urllib.request.urlopen(package["url"], timeout=TIMEOUT_SECONDS) as response:
                     size = 0
                     while block := response.read(1024 * 1024):
                         size += len(block)

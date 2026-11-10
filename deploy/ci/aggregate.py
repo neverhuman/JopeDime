@@ -2,6 +2,7 @@
 """Fail closed on every required lane; only a declared path exclusion permits skipping."""
 import argparse
 import datetime
+import functools
 import importlib.util
 import json
 import os
@@ -10,7 +11,6 @@ from pathlib import Path
 import sys
 import subprocess
 
-from check_test_partition import RUST_TEST_SHARDS, shard_unit, verify_shards
 from receipt import INPUTS, digest, identity, validate_counts
 from results import summarize
 
@@ -18,6 +18,41 @@ ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("ci_plan", ROOT / "deploy/ci/ci-plan.py")
 plan_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(plan_module)
+RUST_TEST_SHARDS = 3
+SHARD = re.compile(r"slice:([1-9][0-9]*)/([1-9][0-9]*)")
+
+
+def shard_unit(receipt):
+    """The execution unit of a CI receipt: its lane, or rust-test-M for slice M of rust-test."""
+    lane = receipt["lane"]
+    if lane != "rust-test":
+        return lane
+    match = SHARD.fullmatch(str(receipt.get("environment", {}).get("JOPE_RUST_TEST_PARTITION", "")))
+    if not match:
+        raise ValueError("rust-test receipt does not record its slice partition")
+    return f"rust-test-{match[1]}"
+
+
+@functools.cache
+def jope_ci():
+    """The jope-ci executable, built once from this checkout (or $JOPE_CI_BIN)."""
+    if os.environ.get("JOPE_CI_BIN"):
+        return os.environ["JOPE_CI_BIN"]
+    return subprocess.check_output(["cargo", "run", "-q", "--locked", "-p", "jope-ci", "--", "cargo-artifact", "build",
+                                    "--package", "jope-ci", "--bin", "jope-ci"], cwd=ROOT, text=True).strip()
+
+
+def verify_shards(dirs):
+    """`jope-ci test-partition rust-shards` over [(unit, evidence directory)] in slice order: the
+    slices select and execute the unsharded rust-test selection exactly once (its JSON report)."""
+    command = [jope_ci(), "test-partition", "rust-shards"]
+    for _, folder in dirs:
+        command += ["--shard-dir", str(folder)]
+    run = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+    try:
+        return json.loads(run.stdout)
+    except ValueError:
+        raise ValueError(f"jope-ci test-partition exited {run.returncode} without a report: {run.stderr.strip()}") from None
 
 
 def load_receipts(root, publications=None):
@@ -204,7 +239,7 @@ def verify(mapping, plan, needs, receipts, expected):
         if all(len(receipts.get(unit, [])) == 1 for unit in units):
             try:
                 proof = verify_shards([(unit, receipts[unit][0][0].parent) for unit in units])
-            except (OSError, ValueError, KeyError, TypeError, SyntaxError) as exc:
+            except (OSError, ValueError, KeyError, TypeError, SyntaxError, subprocess.CalledProcessError) as exc:
                 proof = {"status": "failed", "errors": [str(exc)]}
             for error in proof["errors"]:
                 reject(f"rust-test partition: {error}")
