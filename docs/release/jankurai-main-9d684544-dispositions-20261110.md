@@ -15,7 +15,7 @@ recorded as an exact `dead_language_allow` or copy-code allowlist entry, or left
 visible with the reason below. Research H* folders, holdout data, and
 `~/jope-data/comparators` were not edited.
 
-Follow-up on the same branch, before the confirming audit. Jankurai 1.7.6 matches
+Follow-up on the same branch. The confirming audit is the last section of this file. Jankurai 1.7.6 matches
 `[[entries]].fingerprint` to `copy_code.classes[].fingerprint` (16 hex). It does
 not match the class-id suffix, and it does not read `[[allow]]` tables. The 36
 pinned classes below are recorded under the class fingerprint. `dead_language_allow`
@@ -589,3 +589,266 @@ bytes and the exact-path exclusion are unchanged.
 - Fingerprint: `sha256:718761dd2e70ce55387331128dc9624f81a6f92e1389495b48a41b50c7e3f5c4`
 - Problem: copy-code hard class `copy-code-file-python-94f220febd345759` detected
 - Disposition: Register entry in `agent/copy-code-allowlist.toml`. Every instance's SHA-256 is recorded by a sibling manifest, metrics, or provenance file. The copies stay byte-identical because they are landed research-wave receipts.
+
+## Confirming audit 7a372ff2
+
+Full jankurai 1.7.6 audit of `7a372ff221d22bc9ec09a787ba9395a431829246`
+(2026-11-10T09:09:14Z to 2026-11-10T09:22:19Z). Score 68, raw 77, hard 55, soft 9,
+64 findings. P37 exception integrity passed (24 exact files; 26 exact rule/fingerprint
+findings). Evidence-exclusion check passed (472 exact paths). Verification artifact
+valid. Policy fingerprint `sha256:ca385b94cf4babd226d66d254559acab9ca801acc5d93669711364cd723ea2e5`.
+The 36 pinned classes from the baseline top 50 dropped out once their allowlist entries
+used `copy_code.classes[].fingerprint`. The report cap is 50 classes, so the next 36
+hard classes entered. They are disposed below. Research H* bytes were not edited.
+
+### R01. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `python/src/jope/north_star/dope_freeze_guard.py`
+- Fingerprint: `sha256:bab6e138fe498c0c30db6b043092d31bbbee76f2b1f872de5da7ff47b4ef181f`
+- Problem: copy-code hard class `copy-code-unit-python-51ae207fba07aa95` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `python/src/jope/north_star/dope_freeze_guard.py`, `research/flywheel_selfplay/h317_island10_multiscale_curriculum/dope_freeze_guard.py`. Outside `research/flywheel_selfplay/`: `python/src/jope/north_star/dope_freeze_guard.py`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+### R02. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `python/src/jope/north_star/dope_freeze_guard.py`
+- Fingerprint: `sha256:6f817584236dae0ef58471bab91a794eb63a80c963300904076ee49ca360fc8d`
+- Problem: copy-code hard class `copy-code-unit-python-c1e262189dafa0fd` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `python/src/jope/north_star/dope_freeze_guard.py`, `research/flywheel_selfplay/h317_island10_multiscale_curriculum/dope_freeze_guard.py`. Outside `research/flywheel_selfplay/`: `python/src/jope/north_star/dope_freeze_guard.py`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+### R03. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `python/src/jope/north_star/dope_freeze_guard.py`
+- Fingerprint: `sha256:7f9a780f437a7e1a2781cffeaf035794518d1e9c4188b1c94a26a506f5e3fd6c`
+- Problem: copy-code hard class `copy-code-unit-python-66fd5bf1f725f729` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `python/src/jope/north_star/dope_freeze_guard.py`, `research/flywheel_selfplay/h317_island10_multiscale_curriculum/dope_freeze_guard.py`. Outside `research/flywheel_selfplay/`: `python/src/jope/north_star/dope_freeze_guard.py`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+### R04. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/dev_incumbent.py`
+- Fingerprint: `sha256:c8cfd292806e4cee973179dc0a0fd0b654d7b9f87798c585556bbc5e514c05e2`
+- Problem: copy-code hard class `copy-code-unit-python-436f6b302ea9c136` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `research/flywheel_selfplay/dev_incumbent.py`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+### R05. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h256_gc_agc/analysis.py`
+- Fingerprint: `sha256:7a567c1205b2e2c5e03fd5f53c553cb0dbdae491f23d2cb7719c2f0c28ff6611`
+- Problem: copy-code hard class `copy-code-unit-python-518dd7a3812d5b4b` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h256_gc_agc/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R06. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h256_gc_agc/analysis.py`
+- Fingerprint: `sha256:fd814ac5e3d3e430f96078757106fb94a035d9acc8694ea4a6bdb124683bcf46`
+- Problem: copy-code hard class `copy-code-unit-python-6d101aae98672d00` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h256_gc_agc/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R07. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h256_gc_agc/runner.py`
+- Fingerprint: `sha256:ff411037b7bef1151b0bd055c4214891fbac9c7cb58115daece70e3510bce7fb`
+- Problem: copy-code hard class `copy-code-unit-python-61323ea86834a0bd` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h256_gc_agc/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R08. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/eval_frontier_dl_val91.rs`
+- Fingerprint: `sha256:481f5dd3f47261dfc4d28c2e10f9cad11543758931c3e8cdf2e78bd21628a4d4`
+- Problem: copy-code hard class `copy-code-unit-rust-9b26131c6fec0b15` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `research/flywheel_selfplay/h257_phase2_subsample_gp_curriculum/eval_frontier_dl_val91.rs`, `research/flywheel_selfplay/h414_kimi_k3p1_max/twofold_eval_h414.rs`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+### R09. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h265_top4_listwise_reranker/monitor.py`
+- Fingerprint: `sha256:0977307bf8c013a4254721e98b69d9460c1bc321b04140670d3f4128110e6e90`
+- Problem: copy-code hard class `copy-code-unit-python-ccd10eb382e8896e` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h265_top4_listwise_reranker/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R10. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h270_rerank8_deeper_slice/runner.py`
+- Fingerprint: `sha256:a89aa8c3fc24bd0d1a80b3bfa0203ce4b73b7e319984e124afa4424660052884`
+- Problem: copy-code hard class `copy-code-unit-python-f49ed5a5d11cd290` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h270_rerank8_deeper_slice/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R11. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h277_rerank8_cluster_balanced/monitor.py`
+- Fingerprint: `sha256:b652493d4866877e690d0b78a951bb572b187a01b0384ea74a1499372f3ef62e`
+- Problem: copy-code hard class `copy-code-unit-python-656a647e9fc96150` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h277_rerank8_cluster_balanced/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R12. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h280_rerank8_veto_r3175_cluster_out/data.py`
+- Fingerprint: `sha256:fb4886aa7e539a6327160d6dc34bda863452a9e8b2913cf2eb33c4e88a500654`
+- Problem: copy-code hard class `copy-code-file-python-bb54fd0d43e92a0e` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h280_rerank8_veto_r3175_cluster_out/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R13. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h335_aggressive_locked_elo/frontier_audit_h335.rs`
+- Fingerprint: `sha256:d7d89e7214c5e04be18b5ed824149918e4b4dd794e5758b64cd6c5bcfd08b044`
+- Problem: copy-code hard class `copy-code-unit-rust-238648cff467bda9` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `research/flywheel_selfplay/h335_aggressive_locked_elo/frontier_audit_h335.rs`, `research/flywheel_selfplay/h412_final_frontier_elo/frontier_audit_h412.rs`, `research/flywheel_selfplay/h414_kimi_k3p1_max/frontier_audit_h414.rs`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+### R14. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h335_aggressive_locked_elo/frontier_audit_h335.rs`
+- Fingerprint: `sha256:40857c315daae4a27dfbb8aa9247e243e15ffb63517da30d7c23db0a3fbd936c`
+- Problem: copy-code hard class `copy-code-unit-rust-a1cc9e5d296f67d5` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `research/flywheel_selfplay/h335_aggressive_locked_elo/frontier_audit_h335.rs`, `research/flywheel_selfplay/h412_final_frontier_elo/frontier_audit_h412.rs`, `research/flywheel_selfplay/h414_kimi_k3p1_max/frontier_audit_h414.rs`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+### R15. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h335_aggressive_locked_elo/frontier_audit_h335.rs`
+- Fingerprint: `sha256:3a574086b679ca614674e5ce3b56fd40294b75d275aa3040f76009e9b5b6dbe4`
+- Problem: copy-code hard class `copy-code-unit-rust-a7c4629eba9addcb` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `research/flywheel_selfplay/h335_aggressive_locked_elo/frontier_audit_h335.rs`, `research/flywheel_selfplay/h412_final_frontier_elo/frontier_audit_h412.rs`, `research/flywheel_selfplay/h414_kimi_k3p1_max/frontier_audit_h414.rs`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+### R16. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h342_ranker_min_sum_hessian/run_h342.py`
+- Fingerprint: `sha256:736e9a71d92993de7c69d7aea1385874b06e551cdbb232d737aa9c16fa877b59`
+- Problem: copy-code hard class `copy-code-unit-python-f854d36b65da58d4` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h342_ranker_min_sum_hessian/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R17. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h353_ranker_max_depth_4_x1/test_tree_structure.py`
+- Fingerprint: `sha256:354d5d949c0f33fd9285d1bee6417c71b3bdc338f879819db76799ebdba9585b`
+- Problem: copy-code hard class `copy-code-file-python-dfe7eacd576b573e` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h353_ranker_max_depth_4_x1/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R18. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h358_ranker_bagging_by_query/resource_probe.py`
+- Fingerprint: `sha256:5010eeaa9b8efcd7918b3dfd769a2ccb9127e8e2c8fd96ef9dc7e800b7273f43`
+- Problem: copy-code hard class `copy-code-file-python-37193fec39ea41eb` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h358_ranker_bagging_by_query/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R19. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/nl15_reference.py`
+- Fingerprint: `sha256:c01678a79aa9a047e8b246b5fa9a6a5ca0986fc67a9b3d2d591d04543b3babf6`
+- Problem: copy-code hard class `copy-code-file-python-d34208c5f556d383` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h359_ranker_nl15_maxdepth4/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R20. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/archive_h362.py`
+- Fingerprint: `sha256:d09e0ed5f10f1d209d5d93cdeb6f17a48ea86f6ac4687855099a706ab594cbae`
+- Problem: copy-code hard class `copy-code-unit-python-69d1690676d4363e` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h362_ranker_nl15_maxdepth4_x1/run_receipt.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R21. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/test_corrected_guard.py`
+- Fingerprint: `sha256:64a24f669e00de9538bb9c53fa9e311c1add541f90e2cb8261922c89b458f06a`
+- Problem: copy-code hard class `copy-code-file-python-973eaf4121549e04` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h363_ranker_nl15_min_child_samples_10/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R22. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/archive_h372.py`
+- Fingerprint: `sha256:8710464178173383f757938135200dabf468a216568a9421110c5b81f9513a95`
+- Problem: copy-code hard class `copy-code-unit-python-65fc3c04a48fcaec` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R23. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/evaluate_h372.py`
+- Fingerprint: `sha256:c3e630129bc56641b6d9bcb4244471e086bf3476df06bc1d78278e62a30eb019`
+- Problem: copy-code hard class `copy-code-unit-python-176563a31a1f2f00` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R24. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/l2_patch.py`
+- Fingerprint: `sha256:da0e29b779eb3ca1a354c591f729b2233aa4d3dfaa572a1a90995429141e0d80`
+- Problem: copy-code hard class `copy-code-file-python-ba34e5353179f7a6` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R25. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/native_audit.py`
+- Fingerprint: `sha256:af8fa508c9561650d8e0e75ef07aeff06a303763301422a95ef4e1a6279b81bd`
+- Problem: copy-code hard class `copy-code-file-python-6a12d4bbc79e6d40` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R26. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/run_h372.py`
+- Fingerprint: `sha256:7386b4dab1a1c748da1c088b49489c943791db18dd47f6d804033e6d0d1d9f8d`
+- Problem: copy-code hard class `copy-code-unit-python-b522fd590f8c30d7` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R27. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_evaluator_report.py`
+- Fingerprint: `sha256:5f531f6d31ab6e83eb2858832eba0a6f6ef94a6233e7e1398c3aaf2b1d1d88a6`
+- Problem: copy-code hard class `copy-code-unit-python-90a4c77013018a79` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R28. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/test_native_audit.py`
+- Fingerprint: `sha256:86bdb449de394a2ac7cb9d598aff8d9553e141dd8af16b3f646449ee18b99edf`
+- Problem: copy-code hard class `copy-code-file-python-d8c8946dea39b3ba` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h372_ranker_nl15_reg_lambda_5/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R29. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/dataset_audit.py`
+- Fingerprint: `sha256:73d1ca35e51f0ebbbbe282c7f81f9a497b0d25c1246eed480258402e1591a288`
+- Problem: copy-code hard class `copy-code-file-python-a233c0198ecde2af` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/run_receipt.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R30. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/fetch_nl15.py`
+- Fingerprint: `sha256:e1cd38ae1aa2ac4b81906dc29d507feccec9d8b252c5bf448067fa13de7bc305`
+- Problem: copy-code hard class `copy-code-unit-python-1b672be2ad64748a` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R31. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/native_audit.py`
+- Fingerprint: `sha256:e71b4c42a0428babbdfaecb61c0eb98ea965a6f3e2b43b9bb6bb6f574d076d0a`
+- Problem: copy-code hard class `copy-code-file-python-645b06ed398d7cfd` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R32. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_evaluator_report.py`
+- Fingerprint: `sha256:f0dc64a1798a9265787b62de5b2f3bdcc52a548237a364efb23a7a0ac06bd11a`
+- Problem: copy-code hard class `copy-code-unit-python-cfb310d380f1b671` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R33. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_incumbent_spec.py`
+- Fingerprint: `sha256:a9ca9077c8c1cdab8ff3fcd72762da95507732891dafc35ef44598b4d3dc17ee`
+- Problem: copy-code hard class `copy-code-file-python-784bd7e5f8167e07` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R34. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_max_delta_step.py`
+- Fingerprint: `sha256:179d847a6be89907c5ceb755a26af1b511e706e6b5e3cbe22732deb14fa2a11c`
+- Problem: copy-code hard class `copy-code-file-python-2f6b6027621ad0fc` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R35. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/test_native_audit.py`
+- Fingerprint: `sha256:cf67d408b34496ad936211ae545ed420ec1524fbbacbc6942da15342a008ec1f`
+- Problem: copy-code hard class `copy-code-file-python-26346e138d3908b4` detected
+- Disposition: Left visible. Every instance SHA-256 is recorded by a sibling pin (for example `research/flywheel_selfplay/h378_ranker_nl15_max_delta_step_1/manifest.json`), and the copies stay byte-identical because they are landed research-wave receipts. This class is not allowlisted. The report keeps 50 hard copy classes; suppressing this one only admits the next class. Research H* bytes were not edited.
+
+### R36. hard HLT-043-COPY-PASTE-BAD-BEHAVIOR
+
+- Path: `research/flywheel_selfplay/h412_final_frontier_elo/final_study_h412.py`
+- Fingerprint: `sha256:a8596d280d31ac071f7d4f96b4792e2e9b4a8bdf28ace3c8963c043d42005313`
+- Problem: copy-code hard class `copy-code-unit-python-14e31cac8da55e47` detected
+- Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `research/flywheel_selfplay/h412_final_frontier_elo/final_study_h412.py`, `research/flywheel_selfplay/h414_kimi_k3p1_max/final_study_h414.py`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
