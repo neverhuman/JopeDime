@@ -289,11 +289,28 @@ find the lane free.
 
 At most once per day per lane (`JOPE_RUNNER_TRIM_INTERVAL_S`), `trim-deps.sh` runs in a
 network-less, read-only container, as uid 1001, mounting only that lane's target volume. It
-removes files directly in `<volume>/*/debug/deps` that are named `<stem>-<16 hex>[.<ext>]` and
-are older than the newest `JOPE_RUNNER_TRIM_KEEP` (3; it was 6 until xbabe3 ran short of disk on 2026-10-22) builds of the same directory, crate stem
-and kind, so each feature and profile variant keeps its recent builds. Nothing else is touched:
-other names, `build/`, `incremental/`, `tmp/`, deeper paths, and any top-level directory whose
-name contains `evidence`.
+considers files directly in `<volume>/<lane>/<profile>/deps` for every profile (`debug`,
+`release`, `dist-ci`, ...) that are named `<stem>-<16 hex>[.<ext>]`, and removes:
+
+- those older than the newest `JOPE_RUNNER_TRIM_KEEP` (3; it was 6 until xbabe3 ran short of disk
+  on 2026-10-22) builds of the same directory, crate stem and kind, so each feature and profile
+  variant keeps its recent builds; and
+- executables (no extension: test, bench and binary outputs, ~75 MB each) with a single link whose
+  last use, the later of mtime (last link) and atime (last execution), is older than
+  `JOPE_RUNNER_TRIM_UNUSED_DAYS` (7). On 2026-11-06 superseded test executables were 104 GB of
+  the 197 GB `main-full` target and 86 GB of the 112 GB `pr-ci` target, and PR churn adds about
+  40 GB a day per lane, so keep-newest alone could not bound them (issue #2158). Docker volumes
+  normally live on the host's root filesystem, whose default `relatime` updates atime on an execution at
+  least once a day; on a `noatime` mount the rule falls back to build age, and a current but
+  idle executable is only rebuilt. A hard-linked executable (Cargo's uplifted current binary)
+  is never removed by this rule.
+
+Nothing else is touched: other names, `build/`, `incremental/`, `tmp/` (including
+`tmp/gp-emitter-determinism/`), deeper paths, and any directory whose name contains `evidence`.
+New gp-emitter-determinism runs in CI are condensed to a hash manifest when they pass
+([gp-emitter-determinism](../parity/gp-emitter-determinism.md)); runs already retained under
+`tmp/` are evidence and leave the volume only through the custody process (archive,
+restore-verify, then an owner-authorized removal), never through this trim.
 
 Every removed path, size and mtime is listed in
 `/var/lib/jope-runner/trim/<UTC>-<lane>.tsv` before deletion, and its sha256 is logged. A listing
