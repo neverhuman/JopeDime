@@ -3,7 +3,8 @@
 # by the CI-yield watcher while a GitHub runner container is busy). H417's arms and memos stay on xbabe0.
 #   run_h420.sh gx     HOST PANEL CPUS SHARDS WORKERS MEM [RUNTAG]   GX arm -> $DATA/runs/H420_GX_<PANEL>
 #   run_h420.sh memo   HOST PANEL [BASERUN] [RUNTAG]                 GS+GE+GL (xbabe0, H417) + GX (HOST) -> one memo
-#   run_h420.sh chain  HOST PANEL CPUS JOBS MEM [RUNTAG]             replay check + deploys B, TGX, TLIB, TBOTH
+#   run_h420.sh seed   HOST PANEL [BASERUN] [BASETAG] [RUNTAG]       H417 post-deploy memo (xbabe0) + GX -> one memo
+#   run_h420.sh chain  HOST PANEL CPUS JOBS MEM [RUNTAG]             replay check + deploys (H420_VARIANTS, in order)
 #   run_h420.sh status HOST PANEL [RUNTAG]
 # RUNTAG (default empty) names smoke runs: H420_SMOKE_<x>... with APEX_DEV_OK=1 and a dev stage.
 set -euo pipefail
@@ -83,11 +84,38 @@ case $STEP in
       done" < "$L.cids" > "$L.sha256"
     chmod a-w "$L.sha256" "$L.cids" "$L.src.sha256"
     echo "memo $(name "$RT") $PANEL on $HOST: $(grep -c "$R/gproot_AGG" "$L.sha256") concatenated memos; manifest $L.sha256" ;;
+  seed)
+    # addendum 1: no recomputation of the baseline. The run memo = H417 post-deploy memo (every search, fold and
+    # AUDIT evaluation H417 already made for these contexts) + the GX memo. Only new programs are evaluated.
+    BASE=${1:-APEX_BASE}; BTAG=${2:-BASE}; RT=${3:-}
+    smoke_ok "$RT" "$PANEL"
+    R=$DATA/runs/$(name "$RT")_$PANEL; GXR=$DATA/runs/$(name "${H420_GXTAG-$RT}")_GX_$PANEL   # H420_GXTAG: smoke reuse
+    L=$EV/logs/seed_$(name "$RT")_${PANEL}_$HOST
+    [ ! -e "$L.sha256" ] || { echo "$L.sha256 exists (create-once)" >&2; exit 3; }
+    PYTHONDONTWRITEBYTECODE=1 python3 -B "$STAGE/code/apex_core_meta.py" panel "$PANEL" > "$L.cids"
+    ssh -o BatchMode=yes xbabe0 "set -euo pipefail; for c in \$(cat); do
+        [ \$(grep -c '\"type\": \"result\"' $DATA/runs/$BASE/stages/H416_$BTAG/\${c}__confirm.jsonl) -ge 1 ] || { echo \"H417 deploy has no record for \$c\" >&2; exit 4; }
+        (cd $DATA/runs && sha256sum $BASE/gproot_AGG/memo/\$c.split.jsonl)
+      done" < "$L.cids" > "$L.src.sha256"
+    cut -c67- "$L.src.sha256" > "$L.src.files"
+    mkdir -p "$DATA/h420/src"
+    rsync -a --files-from="$L.src.files" "xbabe0:$DATA/runs/" "$DATA/h420/src/"
+    [ "$HOST" = xbabe2 ] || { ssh -o BatchMode=yes "$HOST" "mkdir -p $DATA/h420/src"; rsync -a --files-from="$L.src.files" "$DATA/h420/src/" "$HOST:$DATA/h420/src/"; }
+    on "cd $DATA/h420/src && sha256sum --quiet -c" < "$L.src.sha256"
+    on "set -euo pipefail; [ ! -e $R ] || { echo '$R exists (create-once)' >&2; exit 3; }; mkdir -p $R/gproot_AGG/memo
+      for c in \$(cat); do
+        [ \$(grep -c '\"type\": \"result\"' $GXR/stages/E420_AGG/\${c}__$SEED.jsonl) = 1 ] || { echo \"GX \$c: no single stage record\" >&2; exit 4; }
+        src=\"$DATA/h420/src/$BASE/gproot_AGG/memo/\$c.split.jsonl $GXR/gproot_AGG/memo/\$c.split.jsonl\"
+        cat \$src > $R/gproot_AGG/memo/\$c.split.jsonl
+        sha256sum \$src $R/gproot_AGG/memo/\$c.split.jsonl
+      done" < "$L.cids" > "$L.sha256"
+    chmod a-w "$L.sha256" "$L.cids" "$L.src.sha256"
+    echo "seed $(name "$RT") $PANEL on $HOST: $(grep -c "$R/gproot_AGG" "$L.sha256") memos seeded from $BASE; manifest $L.sha256" ;;
   chain)
     CPUS=${1:?CPUS}; JOBS=${2:?JOBS}; MEM=${3:?MEM}; RT=${4:-}
     smoke_ok "$RT" "$PANEL"
     R=$DATA/runs/$(name "$RT")_$PANEL
-    on "[ -d $R/gproot_AGG/memo ] && [ ! -e $R/config_B.json ]" || { echo "$HOST:$R is not ready or already deployed" >&2; exit 3; }
+    on "[ -d $R/gproot_AGG/memo ] && ! ls $R/config_*.json >/dev/null 2>&1" || { echo "$HOST:$R is not ready or already deployed" >&2; exit 3; }
     unit "h420-chain-${RT:+$RT-}$PANEL" "$MEM" "${H420_VARIANTS:+-E H420_VARIANTS='$H420_VARIANTS'} bash $STAGE/code/h420_chain.sh $STAGE $KIND $CPUS $MEM $PANEL $R $JOBS" \
       | tee -a "$EV/logs/chain_${RT:+${RT}_}${PANEL}_$HOST.log" ;;
   status)

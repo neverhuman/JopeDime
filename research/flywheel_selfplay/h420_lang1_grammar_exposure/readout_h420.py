@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""H420 part B: the paired readout fixed in PREREG section 3, from a pulled, sha-compared run directory that holds the
-four variant tags of one panel (B, TGX, TLIB, TBOTH). No GP stack: train_h416's helpers, numpy, h335_stats.
+"""H420 readout: the paired tests fixed in PREREG section 3, from pulled, sha-compared run directories.
+No GP stack: train_h416's helpers, numpy, h335_stats.
 
-  readout_h420.py --run-dir DIR --out OUT [--h417-run DIR417 --h417-tag BASE]
+  readout_h420.py --run-dir DIR --out OUT --h417-run DIR417 [--h417-tag BASE]
+
+Baseline (addendum 1): the stored H417 deploy of the same contexts. It is not recomputed: the H420 run directory was
+seeded with H417's evaluation memo, so the variants differ from it only in the programs they add. If the run
+directory holds a variant B, that B is the baseline and the stored H417 deploy is reported as a host replicate.
 
 Entrant = P3+LIB3.SXB of each variant; value = AUDIT u; an invalid or missing output scores the variant's single-run
-stock value X0.GS (H415 / H416 rule) and is counted. Paired by context against variant B, families = contexts.
-Primary: TBOTH vs B (h335_stats.primary_test). Secondary: TGX vs B and TLIB vs B, Holm at 0.025.
+stock value X0.GS (H415 / H416 rule) and is counted. Paired by context, families = contexts.
+Primary: TBOTH vs baseline (h335_stats.primary_test). Secondary: TGX and TLIB vs baseline, Holm at 0.025.
 The panel's cohort (DEV = the test cohort, FIT-SEL = reported only) is read from the manifest and printed.
 """
 
@@ -27,12 +31,13 @@ ALPHA = 0.025
 BOOT_SEED, N_BOOT = 420150, 10_000
 
 
-def _load(run_dir: Path, tag: str):
+def _load(run_dir: Path, tag: str, only=None):
     import train_apex as TA
 
     T16, cfg, r16, r15 = TA._records(run_dir, tag)
+    cids = [c for c in cfg["cids"] if only is None or c in only]
     sxb, kfb, x0s, inv = {}, {}, {}, {"SXB": 0, "KFB": 0, "X0": 0}
-    for c in cfg["cids"]:
+    for c in cids:
         gs = r15[c]["outputs"].get("GS.stock")
         ok = gs is not None and not gs.get("invalid") and gs["raw"].get("status") == "completed"
         x0 = float(gs["value"]) if ok else 0.0
@@ -46,11 +51,13 @@ def _load(run_dir: Path, tag: str):
         kfb[c] = v
         inv["KFB"] += bool(badk)
     ws = {}
-    for r in list(r16.values()) + list(r15.values()):
-        for k, v in r["worker_s"].items():
-            ws[k] = ws.get(k, 0.0) + float(v)
-    members = {c: (r16[c]["outputs"].get(SXB_KEY) or {}).get("spec", {}).get("members", []) for c in cfg["cids"]}
-    return T16, cfg, {"SXB": sxb, "KFB": kfb, "X0": x0s, "invalid": inv, "worker_s": ws, "members": members}
+    for c in cids:
+        for r in (r16[c], r15[c]):
+            for k, v in r["worker_s"].items():
+                ws[k] = ws.get(k, 0.0) + float(v)
+    members = {c: (r16[c]["outputs"].get(SXB_KEY) or {}).get("spec", {}).get("members", []) for c in cids}
+    return T16, dict(cfg, cids=cids), {"SXB": sxb, "KFB": kfb, "X0": x0s, "invalid": inv, "worker_s": ws,
+                                       "members": members}
 
 
 def main() -> None:
@@ -68,21 +75,34 @@ def main() -> None:
     for v in VARIANTS:
         if (run_dir / f"config_{v}.json").is_file():
             T16, cfgs[v], data[v] = _load(run_dir, v)
-    if "B" not in data:
-        raise SystemExit("variant B is missing")
-    np, H = T16._stats_mod()
-    cids = cfgs["B"]["cids"]
+    treat = [v for v in ("TBOTH", "TGX", "TLIB") if v in data]
+    if not treat:
+        raise SystemExit("no treatment variant in the run directory")
+    cids = cfgs[treat[0]]["cids"]
     for v in data:
         if cfgs[v]["cids"] != cids:
             raise SystemExit(f"variant {v} ran on other contexts")
+    d17 = None
+    if a.h417_run:
+        _t, _c17, d17 = _load(Path(a.h417_run), a.h417_tag, only=set(cids))
+        if sorted(d17["SXB"]) != sorted(cids):
+            raise SystemExit("the stored H417 deploy does not cover these contexts")
+    if "B" in data:
+        baseline = "variant B of this run directory"
+    elif d17 is not None:
+        data["B"], baseline = d17, f"stored H417 deploy, tag {a.h417_tag} (not recomputed)"
+    else:
+        raise SystemExit("no baseline: pass --h417-run")
+    np, H = T16._stats_mod()
     rows = AM.rows()
     cohorts = sorted({rows[c]["cohort"] for c in cids})
     fam_of = AM.family_of(cids)
     if len(set(fam_of.values())) != len(cids):
         raise SystemExit("one context per family expected")
     lib_shas = {hashlib.sha256(d.encode()).hexdigest(): n for n, d in LP.LIB_EXT}
-    res = {"schema": "jope.h420.readout/v1", "panel": cfgs["B"]["panel"], "cohorts": cohorts, "n": len(cids),
-           "role": "test" if cohorts == ["DEV"] else "reported only", "variants": {}, "vs_B": {}}
+    res = {"schema": "jope.h420.readout/v2", "panel": cfgs[treat[0]]["panel"], "cohorts": cohorts, "n": len(cids),
+           "baseline": baseline, "role": "test" if cohorts == ["DEV"] else "reported only", "variants": {},
+           "vs_B": {}}
     for v, d in data.items():
         with_lib = sum(1 for c in cids if any(m in lib_shas for m in d["members"][c]))
         res["variants"][v] = {"family_mean_u": {k: H.family_mean(d[k], fam_of) for k in ("SXB", "KFB", "X0")},
@@ -90,10 +110,9 @@ def main() -> None:
                               "worker_s_total": float(sum(d["worker_s"].values())),
                               "contexts_with_lib_ext_member": with_lib,
                               "x0_max_abs_diff_vs_B": max(abs(d["X0"][c] - data["B"]["X0"][c]) for c in cids)}
-    for v in ("TBOTH", "TGX", "TLIB"):
-        if v in data:
-            res["vs_B"][v] = {"SXB": T16.pair_stats(np, H, data[v]["SXB"], data["B"]["SXB"], fam_of),
-                              "KFB": T16.pair_stats(np, H, data[v]["KFB"], data["B"]["KFB"], fam_of)}
+    for v in treat:
+        res["vs_B"][v] = {"SXB": T16.pair_stats(np, H, data[v]["SXB"], data["B"]["SXB"], fam_of),
+                          "KFB": T16.pair_stats(np, H, data[v]["KFB"], data["B"]["KFB"], fam_of)}
     sec = sorted((res["vs_B"][v]["SXB"]["signflip_p"], v) for v in ("TGX", "TLIB") if v in res["vs_B"])
     holm, alive = {}, True
     for i, (p, v) in enumerate(sec):
@@ -108,16 +127,13 @@ def main() -> None:
     vals["B.KFB"] = data["B"]["KFB"]
     arms, point, boot, elo = T16.elo_boot(np, H, vals, fam_of, "B.SXB", BOOT_SEED, N_BOOT)
     res["elo_anchor_B.SXB_1500"] = elo
-    res["delta_elo_vs_B"] = {v: T16.delta_elo(np, arms, point, boot, f"{v}.SXB", "B.SXB")
-                             for v in ("TBOTH", "TGX", "TLIB") if v in data}
-    if a.h417_run:
-        _t, c17, d17 = _load(Path(a.h417_run), a.h417_tag)
-        both = [c for c in cids if c in d17["SXB"]]
-        diffs = [data["B"]["SXB"][c] - d17["SXB"][c] for c in both]
-        res["host_replicate_B_minus_H417"] = {"n": len(both), "mean": float(np.mean(diffs)) if diffs else None,
-                                              "max_abs": float(np.max(np.abs(diffs))) if diffs else None,
+    res["delta_elo_vs_B"] = {v: T16.delta_elo(np, arms, point, boot, f"{v}.SXB", "B.SXB") for v in treat}
+    if d17 is not None and baseline.startswith("variant B"):
+        diffs = [data["B"]["SXB"][c] - d17["SXB"][c] for c in cids]
+        res["host_replicate_B_minus_H417"] = {"n": len(cids), "mean": float(np.mean(diffs)),
+                                              "max_abs": float(np.max(np.abs(diffs))),
                                               "exact": int(sum(1 for x in diffs if x == 0.0))}
-    print(f"== panel {res['panel']} cohorts {cohorts} n {res['n']} role: {res['role']}")
+    print(f"== panel {res['panel']} cohorts {cohorts} n {res['n']} role: {res['role']} baseline: {baseline}")
     for v, o in res["variants"].items():
         m = o["family_mean_u"]
         print(f"   {v:6s} SXB {m['SXB']:.4f} KFB {m['KFB']:.4f} X0.GS {m['X0']:.4f} invalid {o['invalid']} "
