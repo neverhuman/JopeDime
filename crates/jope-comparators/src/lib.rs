@@ -14,8 +14,8 @@
 //!
 //! Every fit is a deterministic function of its rows, parameters and seed. Missing values (NaN)
 //! are imputed with medians learned from the training rows only. Failures are typed
-//! [`ComparatorError`] values; nothing here panics on bad input, performs IO or reads a clock
-//! except through the caller's [`Deadline`].
+//! [`ComparatorError`] values with [`ComparatorError::guidance`] repair hints; nothing here
+//! panics on bad input, performs IO or reads a clock except through the caller's [`Deadline`].
 //!
 //! ```
 //! use jope_comparators::{Deadline, FeatureMatrix, ForestModel, ForestParams, rmse};
@@ -24,7 +24,7 @@
 //! let targets = [0.0, 0.0, 0.0, 10.0, 10.0, 10.0];
 //! let features = FeatureMatrix::new(&train, 6, 1)?;
 //! let model = ForestModel::fit(features, &targets, &ForestParams::random_forest(10), 7,
-//!     &Deadline::unbounded())?;
+//!     &Deadline::no_limit())?;
 //! let holdout = [0.5, 4.5];
 //! let predictions = model.predict(FeatureMatrix::new(&holdout, 2, 1)?)?;
 //! assert!(rmse(&[0.0, 10.0], &predictions)? < 5.0);
@@ -36,6 +36,7 @@ mod deadline;
 mod ensemble;
 mod error;
 mod forest;
+mod guidance;
 mod histgbm;
 mod linear;
 mod matrix;
@@ -47,6 +48,7 @@ pub use deadline::Deadline;
 pub use ensemble::caruana_weights;
 pub use error::{ComparatorError, ComparatorResult};
 pub use forest::{ForestModel, ForestParams};
+pub use guidance::{ComparatorGuidance, COMPARATORS_DOCS_URL};
 pub use histgbm::{EarlyStopping, HistGbmModel, HistGbmParams};
 pub use linear::{RidgeModel, RidgeParams, MAX_RIDGE_FEATURES};
 pub use matrix::{FeatureMatrix, MedianImputer};

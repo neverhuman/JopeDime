@@ -2,7 +2,8 @@
 
 use jope_comparators::{
     caruana_weights, rmse, ComparatorError, Deadline, EarlyStopping, FeatureMatrix, ForestModel,
-    ForestParams, HistGbmModel, HistGbmParams, RidgeModel, RidgeParams, MAX_RIDGE_FEATURES,
+    ForestParams, HistGbmModel, HistGbmParams, RidgeModel, RidgeParams, COMPARATORS_DOCS_URL,
+    MAX_RIDGE_FEATURES,
 };
 use std::time::Duration;
 
@@ -16,7 +17,7 @@ fn forest(values: &[f64], targets: &[f64], rows: usize, params: &ForestParams) -
         targets,
         params,
         0,
-        &Deadline::unbounded(),
+        &Deadline::no_limit(),
     )
     .expect_err("fit must be refused")
 }
@@ -27,7 +28,7 @@ fn boosting(params: &HistGbmParams) -> ComparatorError {
         &[1.0, 2.0],
         params,
         0,
-        &Deadline::unbounded(),
+        &Deadline::no_limit(),
     )
     .expect_err("fit must be refused")
 }
@@ -206,7 +207,7 @@ fn ridge_refuses_bad_penalties_singular_systems_and_oversized_inputs() {
 fn an_expired_deadline_stops_the_fit() {
     let expired = Deadline::after(Duration::ZERO);
     assert!(expired.expired());
-    assert!(!Deadline::unbounded().expired());
+    assert!(!Deadline::no_limit().expired());
     let features = matrix(&[1.0, 2.0, 3.0], 3, 1);
     assert_eq!(
         ForestModel::fit(
@@ -239,7 +240,7 @@ fn prediction_refuses_a_different_width() {
         &[1.0, 2.0],
         &ForestParams::random_forest(1),
         0,
-        &Deadline::unbounded(),
+        &Deadline::no_limit(),
     )
     .expect("fit");
     assert_eq!(
@@ -290,4 +291,37 @@ fn errors_render_readable_messages() {
         ComparatorError::DeadlineExceeded.to_string(),
         "the fit deadline passed"
     );
+}
+
+#[test]
+fn every_error_carries_actionable_guidance() {
+    let errors = [
+        ComparatorError::EmptyFit,
+        ComparatorError::EmptyScore,
+        ComparatorError::NoFeatures,
+        ComparatorError::ShapeMismatch {
+            expected: 2,
+            actual: 1,
+        },
+        ComparatorError::ShapeOverflow,
+        ComparatorError::TooManyRows { limit: 1 },
+        ComparatorError::TooManyFeatures { limit: 1 },
+        ComparatorError::NonFiniteTarget { row: 0 },
+        ComparatorError::InfiniteFeature { row: 0, column: 0 },
+        ComparatorError::InvalidParameter { name: "trees" },
+        ComparatorError::SingularSystem,
+        ComparatorError::DeadlineExceeded,
+        ComparatorError::NonFinitePrediction { row: 0 },
+    ];
+    for error in errors {
+        let guidance = error.guidance();
+        assert_eq!(guidance.reason, error.to_string());
+        assert_eq!(guidance.docs_url, COMPARATORS_DOCS_URL);
+        assert!(!guidance.purpose.is_empty());
+        assert!(!guidance.common_fixes.is_empty());
+        assert!(!guidance.repair_hint.is_empty());
+    }
+    assert!(std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("README.md")
+        .is_file());
 }
