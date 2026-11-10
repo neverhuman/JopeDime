@@ -307,8 +307,8 @@ considers files directly in `<volume>/<lane>/<profile>/deps` for every profile (
 
 Nothing else is touched: other names, `build/`, `incremental/`, `tmp/` (including
 `tmp/gp-emitter-determinism/`), deeper paths, and any directory whose name contains `evidence`.
-New gp-emitter-determinism runs in CI are condensed to a hash manifest when they pass
-([gp-emitter-determinism](../parity/gp-emitter-determinism.md)); runs already retained under
+New `gp-emitter-determinism` runs in CI are condensed to a hash manifest when they pass
+(`docs/parity/gp-emitter-determinism.md`); runs already retained under
 `tmp/` are evidence and leave the volume only through the custody process (archive,
 restore-verify, then an owner-authorized removal), never through this trim.
 
