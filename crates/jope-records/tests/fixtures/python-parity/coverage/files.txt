@@ -1213,8 +1213,6 @@ crates/jope-engine/assets/sampling-extra20-v1/foundation-spec.json
 crates/jope-engine/assets/sampling-extra20-v1/foundation/parity.json
 crates/jope-engine/assets/sampling-extra20-v1/foundation/sampling.json
 crates/jope-engine/assets/sampling-extra20-v1/request.json
-crates/jope-engine/assets/sampling-reviewed3-v1/foundation/sampling.json
-crates/jope-engine/assets/sampling-reviewed3-v1/request.json
 crates/jope-engine/assets/sampling-reviewed3-v2/foundation-spec.json
 crates/jope-engine/assets/sampling-reviewed3-v2/foundation/parity.json
 crates/jope-engine/assets/sampling-reviewed3-v2/foundation/sampling.json
