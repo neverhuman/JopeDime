@@ -1,7 +1,8 @@
 # H419 — APEX-ICL, our own in-context tabular regressor (in progress)
 
 **This is a status log, not a closeout.** No prediction on a test cohort (stored P201b matrices, APEX-DEV, CONFIRM)
-exists. Plan: [`PREREG.md`](PREREG.md), [`PREREG_ADDENDUM_1.md`](PREREG_ADDENDUM_1.md).
+exists. Plan: [`PREREG.md`](PREREG.md) and addenda [1](PREREG_ADDENDUM_1.md), [2](PREREG_ADDENDUM_2.md),
+[3](PREREG_ADDENDUM_3.md), [4](PREREG_ADDENDUM_4.md), [5](PREREG_ADDENDUM_5.md).
 
 ## Runs
 | Run | Host | Size | State |
@@ -13,6 +14,7 @@ exists. Plan: [`PREREG.md`](PREREG.md), [`PREREG_ADDENDUM_1.md`](PREREG_ADDENDUM
 | `ICL_L_g1_w0` | xbabe3 3090 | 104.36M | averaging worker since 13:01:55Z, cloned from the last `ICL_L_r4` checkpoint (addendum 3) |
 | `ICL_L_g1_w1`, `ICL_L_g1_w2` | xbabe0 3090, xbabe2 3090 | 104.36M | started 12:29Z as averaging workers cloned from `ICL_L_r4` at step 5,531 (addendum 3) |
 | `ICL_M_x4b_inj`, `ICL_M_x4b_noinj` | xbabe4 Apple GPU | 23.66M | column-injection ablation, two arms, stopped at 24 h each (addendum 4) |
+| `ICL_M_x4c_res` | xbabe4 Apple GPU | 23.66M | control for residual-target training: the `inj` recipe plus `--p-resid 0.5`, started 16:36Z (addendum 5) |
 
 ## Tracked metrics
 - **Real-table monitor:** 106 core FIT-SEL contexts, SEARCH rows only; query = fold 0 of `kfold_labels`, context =
@@ -39,6 +41,33 @@ exists. Plan: [`PREREG.md`](PREREG.md), [`PREREG_ADDENDUM_1.md`](PREREG_ADDENDUM
 
 Clock times of the 13:30–15:42 rows are approximate; the hours column is exact. Worker hours exclude the time a
 worker waits for the group average.
+
+**Diagnostics and changes, 16:10–16:55Z (addendum 5).**
+- **Recipes on the same checkpoints** (`icl_diag.py`; 24M at 5.0 h, 104M at 3.7 h; win rate vs ridge / median u):
+
+  | Recipe | 24M | 104M |
+  | --- | --- | --- |
+  | Plain | 0.594 / 0.713 | 0.519 / 0.606 |
+  | Residual of an in-context ridge (`icl_resid.py`) | 0.868 / 0.919 | 0.868 / 0.857 |
+  | Ridge alone | — / 0.636 | |
+
+  The plain models win 0 of 8 contexts above 100 features. 896 context rows are no better than four 320-row
+  subsamples. The win rate under the residual readout moves by about ±0.04 with the fold draw.
+- **Negative, and the more important number: against our own GP programs on the same rows the model is far behind.**
+  The stored H417 matrices give, for the same folds: best cross-validated GP program median u 1.200, Caruana blend
+  1.228. The 24M residual readout beats the best program on 0.10 of contexts and the blend on 0.04. Used as a
+  corrector of the blend without training for it, blend + model beats the blend on 0.20 (24M) and 0.18 (104M) of
+  contexts, mean u 1.765 against 1.774. **Ridge was too weak a reference; the tracked number is now the share of
+  contexts where blend + model beats the blend.**
+- **Change:** the 104M group moves to `--p-resid 0.5 --row-floor 1024` by rolling restart. Worker 2 restarted at
+  16:52:08Z from its 16:51:44Z checkpoint (step 38,510, 4.60 h; a copy is kept). The others follow behind gates
+  (`roll_driver.sh`). A 24M control arm with residual-target tasks started on xbabe4 at 16:36Z.
+- **Averaging:** successive displacements of the group mean are orthogonal (cosine 0.008, 0.001); outer momentum is
+  implemented and off.
+- **Correction:** a 104M worker trains at about 97 tasks per second at 384 rows. Rates near 41–47 that I quoted
+  elsewhere came from log intervals that include the averaging wait. With rows up to 1,024 worker 2 is at about 48.
+- **Mistake:** I tracked the win rate against ridge for five hours before testing inference recipes or a stronger
+  reference; both were ten-minute checks.
 
 **Reading at 15:46Z.**
 - **24M run (4.66 h):** ahead of ridge on real tables by win rate (0.613) and by median (0.675 against 0.630), and

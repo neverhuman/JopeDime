@@ -12,6 +12,9 @@ Recipes (all use context rows only for anything that is fitted):
   ridgeres        the model predicts the residual of that ridge (context targets = out-of-fold residuals), by
                   icl_resid.residual_targets, the code the trainer uses; ridgeres0 = the first diagnostic version
   top100          contexts wider than 100 features keep the 100 with the largest |correlation| to the context target
+  kcarres/bestres the model predicts the residual of a stored GP reference (--base; icl_refs.py): the Caruana blend of
+                  the context's GP programs / its best program by cross-validation. Context rows carry out-of-fold
+                  predictions, query rows the fold models' predictions. kcarfeat: that prediction as a feature
 Suffix "+permK" on ridgefeat / ridgeres / top100 adds the feature-permutation average.
 """
 import argparse
@@ -27,6 +30,22 @@ from icl_inject import RealVal
 from icl_model import ICL
 
 RIDGE_LAMBDA = 1.0   # the monitor's ridge reference (icl_train.ridge_u)
+BASE, CUR = {}, {}   # stored reference predictions per context (--base), the context being evaluated
+
+
+def load_base(val_path, base_path):
+    """icl_refs.py *_pred.npz -> {name: [per-context float64 tensor, rows in RealVal order (context first)]}."""
+    v, b = np.load(val_path, allow_pickle=False), np.load(base_path, allow_pickle=False)
+    if b["cids"].tolist() != v["cids"].tolist():
+        raise SystemExit("the base predictions are not for this monitor bank")
+    out, lo = {"kcar": [], "best": []}, 0
+    for r, _c in v["shape"].tolist():
+        fold = torch.from_numpy(v["lab"][lo:lo + r].astype(np.int64))
+        order = torch.cat([torch.nonzero(fold != 0).squeeze(1), torch.nonzero(fold == 0).squeeze(1)])
+        for k in out:
+            out[k].append(torch.from_numpy(b[k][lo:lo + r])[order])
+        lo += r
+    return out
 
 
 def u_of(pred, yq, ym):
@@ -105,6 +124,11 @@ def run_variant(model, name, x, y, n_ctx, seed):
         yr, used, bq = RES.residual_targets(x[None], y[None], n_ctx, torch.Generator().manual_seed(seed))
         res = predict(model, x, yr[0, :n_ctx], n_ctx, perms, seed)
         return res + bq[0].cpu() if bool(used[0]) else res
+    if base in ("kcarres", "bestres", "kcarfeat"):   # base = stored GP reference predictions (icl_refs.py)
+        b = BASE[base[:4]][CUR["i"]]                 # all rows, context first
+        if base == "kcarfeat":
+            return predict(model, torch.cat([x, b.float()[:, None]], 1), yc, n_ctx, perms, seed)
+        return b[n_ctx:] + predict(model, x, (yc.double() - b[:n_ctx]).float(), n_ctx, perms, seed)
     if base in ("ridgefeat", "ridgeres0"):   # ridgeres0: the first version (features standardised per fold)
         oof, rq = ridge_columns(x, y, n_ctx, seed)
         if base == "ridgefeat":
@@ -115,20 +139,53 @@ def run_variant(model, name, x, y, n_ctx, seed):
     raise SystemExit(f"unknown variant {name}")
 
 
+def oof_columns(model, a):
+    """Out-of-fold predictions of the model for every SEARCH row of every monitor context (each of the 5 folds in
+    turn is the query, the other four the context): the columns a stack would get. Saved in the bank's row order."""
+    v = np.load(a.val, allow_pickle=False)
+    if set(v["cohort"].tolist()) != {"FIT-SEL"}:
+        raise SystemExit("the monitor bank holds a context outside FIT-SEL")
+    names = a.oof_variants.split(",")
+    out, lo = {n: [] for n in names}, 0
+    for i, ((r, c), o) in enumerate(zip(v["shape"].tolist(), v["offset"].tolist())):
+        m = torch.from_numpy(v["data"][o:o + r * c].reshape(r, c).copy())
+        fold = torch.from_numpy(v["lab"][lo:lo + r].astype(np.int64))
+        lo += r
+        col = {n: torch.zeros(r, dtype=torch.float64) for n in names}
+        for k in range(5):
+            ci, qi = torch.nonzero(fold != k).squeeze(1), torch.nonzero(fold == k).squeeze(1)
+            mm = m[torch.cat([ci, qi])]
+            x, y, n_ctx = mm[:, :-1], mm[:, -1], int(ci.numel())
+            for n in names:
+                col[n][qi] = run_variant(model, n, x, y, n_ctx, 419_700 + 10 * i + k)
+        for n in names:
+            out[n].append(col[n].numpy())
+        print(json.dumps({"i": i, "rows": r, "F": c - 1}), flush=True)
+    np.savez(a.oof_out, cids=v["cids"], shape=v["shape"], **{n.replace("+", "_"): np.concatenate(x) for n, x in out.items()})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", required=True); ap.add_argument("--size", required=True)
-    ap.add_argument("--val", required=True); ap.add_argument("--out", required=True)
+    ap.add_argument("--val", required=True); ap.add_argument("--out")
     ap.add_argument("--threads", type=int, default=16); ap.add_argument("--device", default="cpu")
     ap.add_argument("--variants", default="full,sub4_320,sub4_560,perm4,ridgefeat,ridgeres,top100")
     ap.add_argument("--weights", default="ema", choices=("ema", "model"))
+    ap.add_argument("--base", help="icl_refs.py *_pred.npz: enables kcarres / bestres / kcarfeat (stack-residual readouts)")
+    ap.add_argument("--oof-out", help="write 5-fold out-of-fold prediction columns to this npz and exit")
+    ap.add_argument("--oof-variants", default="full,ridgeres")
     a = ap.parse_args()
     torch.set_num_threads(a.threads)
     random.seed(0); torch.manual_seed(0)
     ck = torch.load(a.ckpt, map_location="cpu", weights_only=False)
     model = ICL(a.size)
     model.load_state_dict(ck[a.weights]); model.eval(); model.to(torch.device(a.device))
+    if a.oof_out:
+        oof_columns(model, a)
+        return
     rv = RealVal(a.val, "cpu")
+    if a.base:
+        BASE.update(load_base(a.val, a.base))
     names = a.variants.split(",")
     rows = []
     for i, (m, n_ctx) in enumerate(rv.items):
@@ -138,6 +195,7 @@ def main():
                                [torch.nan_to_num(x[n_ctx:].double())])[0]
         rec = {"i": i, "family": rv.family[i], "n_ctx": n_ctx, "n_q": int(yq.numel()), "F": int(x.shape[1]),
                "u_ridge": u_of(rq, yq, ym), "u": {}}
+        CUR["i"] = i
         for v in names:
             rec["u"][v] = u_of(run_variant(model, v, x, y, n_ctx, 419_500 + i), yq, ym)
         rows.append(rec)
