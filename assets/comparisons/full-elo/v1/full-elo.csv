@@ -1,0 +1,616 @@
+protocol_id,elo_rank,method_id,method,elo,elo_lo,elo_hi,datasets_scored,datasets_total,dataset_wins,coverage,benchmark_valid,role
+tabular-regression-v2-published,1,jope-dime,jope-dime (evolved),2259.8,,,45,45,11,45/45,True,highest_published_test_adaptive
+tabular-regression-v2-published,2,tabfm_ensemble_regressor,TabFM Ensemble,1933.1,,,45,45,5,45/45,True,entrant
+tabular-regression-v2-published,3,tabpfn_v3_regressor,TabPFN v3,1906.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,4,tabpfn_v3_regressor_default,TabPFN v3 Default,1903.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,5,tabpfn_v25_regressor_default,Tabpfn V25 Regressor Default,1891.6,,,45,45,3,45/45,True,entrant
+tabular-regression-v2-published,6,tabicl,Tabicl,1885.4,,,45,45,2,45/45,True,entrant
+tabular-regression-v2-published,7,chimera_regression,Chimera Regression,1873.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,8,tabpfn_v25_regressor_real,Tabpfn V25 Regressor Real,1873.1,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,9,tabfm_regressor,TabFM,1870.7,,,39,45,0,39/45,True,entrant
+tabular-regression-v2-published,10,jable_regressor,Jable Regressor,1868.6,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,11,jain_regressor_1000,Jain Regressor 1000,1812.8,,,21,45,1,21/45,True,entrant
+tabular-regression-v2-published,12,tabdpt_regressor,Tabdpt Regressor,1786.0,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,13,jain_regressor_42,Jain Regressor 42,1780.8,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,14,jain_regressor,Jain Regressor,1777.3,,,37,45,1,37/45,True,entrant
+tabular-regression-v2-published,15,hunt9b_r1,Hunt9B R1,1774.2,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,16,fable5_regressor,Fable 5 attempt,1770.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,17,jain_regressor_300,Jain Regressor 300,1763.9,,,41,45,1,41/45,True,entrant
+tabular-regression-v2-published,18,autogluon_tabular_seconds60,Autogluon Tabular Seconds60,1761.3,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-published,19,autogluon_tabular_seconds30,Autogluon Tabular Seconds30,1746.4,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-published,20,jain_prime,Jain Prime,1740.1,,,45,45,2,45/45,True,entrant
+tabular-regression-v2-published,21,jain_regressor_fast30,Jain Regressor Fast30,1731.4,,,41,45,0,41/45,True,entrant
+tabular-regression-v2-published,22,jope-lime,Jope Lime,1729.9,,,31,45,1,31/45,True,entrant
+tabular-regression-v2-published,23,jope_prime,Jope Prime,1729.9,,,31,45,0,31/45,True,entrant
+tabular-regression-v2-published,24,hunt9_b,Hunt9 B,1728.8,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,25,autogluon_300s,Autogluon 300S,1728.1,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,26,flaml_automl_300s,Flaml Automl 300S,1727.7,,,38,45,0,38/45,True,entrant
+tabular-regression-v2-published,27,stacking_trees_meta,Stacking Trees Meta,1724.2,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,28,hunt9b_a,Hunt9B A,1719.7,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,29,autogluon_tabular_seconds300,Autogluon Tabular Seconds300,1703.1,,,18,45,0,18/45,True,entrant
+tabular-regression-v2-published,30,grok4p5_regressor,Grok 4.5 attempt,1689.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,31,hunt9b_r2,Hunt9B R2,1689.3,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,32,jope-dime-regressor,Jope Dime Regressor,1684.9,,,42,45,1,42/45,True,entrant
+tabular-regression-v2-published,33,pytabkit_realmlp_td_s_regressor,Pytabkit Realmlp Td S Regressor,1682.6,,,35,45,0,35/45,True,entrant
+tabular-regression-v2-published,34,hyp3_chimera_regression,Hyp3 Chimera Regression,1673.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,35,jope_gp_v1,Jope Gp V1,1660.8,,,32,45,0,32/45,True,entrant
+tabular-regression-v2-published,36,hunt9_a,Hunt9 A,1660.2,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,37,catboost_300,Catboost 300,1658.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,38,catboost,Catboost,1651.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,39,realmlp_regressor_capped_rows50000,Realmlp Regressor Capped Rows50000,1650.3,,,37,45,0,37/45,True,entrant
+tabular-regression-v2-published,40,nm_ca9c2027cc9ff0ed_append_rank_normal_pairwise_product_histgbm,Nm Ca9C2027Cc9Ff0Ed Append Rank Normal Pairwise Product Histgbm,1642.0,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-published,41,catboost_plain_trees200_depth4_lr0p06,Catboost Plain Trees200 Depth4 Lr0P06,1636.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,42,validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m1,Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M1,1634.3,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,43,validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m2,Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M2,1634.3,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,44,validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m3,Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M3,1634.3,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,45,validation_gp_full_20260710_143239__ab0239b9ef0ba28e__single_primary,Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Single Primary,1634.3,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,46,hyp3_tabicl,Hyp3 Tabicl,1632.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,47,catboost_ordered_trees300_depth6_lr0p04,Catboost Ordered Trees300 Depth6 Lr0P04,1631.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,48,catboost_ordered_trees500_depth6,Catboost Ordered Trees500 Depth6,1631.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,49,catboost_lossguide_trees300_leaves32_lr0p04,Catboost Lossguide Trees300 Leaves32 Lr0P04,1630.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,50,ebm_interactions,Ebm Interactions,1628.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,51,catboost_huber_delta1_trees300_depth6,Catboost Huber Delta1 Trees300 Depth6,1621.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,52,voting_regressor,Voting Regressor,1619.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,53,lightgbm_gbdt_trees150_leaves15_lr0p07,Lightgbm Gbdt Trees150 Leaves15 Lr0P07,1610.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,54,gaussian_process,Gaussian Process,1607.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,55,xgboost_dart,Xgboost Dart,1606.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,56,lightgbm_gbdt,Lightgbm Gbdt,1606.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,57,catboost_mae_trees300_depth6,Catboost Mae Trees300 Depth6,1603.3,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,58,catboost_quantile_alpha0p5_trees300_depth6,Catboost Quantile Alpha0P5 Trees300 Depth6,1603.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,59,gpt5p6sol_regressor,OpenAI* attempt,1601.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,60,nm_6942d9611ac26088_append_copula_tail_dependence_sketch_elasticnet,Nm 6942D9611Ac26088 Append Copula Tail Dependence Sketch Elasticnet,1600.5,,,4,45,0,4/45,True,entrant
+tabular-regression-v2-published,61,nm_98a233168924f418_append_quantile_bin_rff_histgbm,Nm 98A233168924F418 Append Quantile Bin Rff Histgbm,1600.0,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-published,62,catboost_deep,Catboost Deep,1599.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,63,catboost_lossguide,Catboost Lossguide,1598.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,64,hist_gradient_boosting,Hist Gradient Boosting,1594.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,65,xgboost_hist,Xgboost Hist,1593.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,66,nm_4411767d8c5348e6_append_diffusion_curvature_per_row_ridge,Nm 4411767D8C5348E6 Append Diffusion Curvature Per Row Ridge,1591.8,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-published,67,nm_ad00ced3b148d032_append_betti_curve_sparse_stateless_elasticnet,Nm Ad00Ced3B148D032 Append Betti Curve Sparse Stateless Elasticnet,1589.9,,,19,45,0,19/45,True,entrant
+tabular-regression-v2-published,68,xgboost_hist_trees300_depth4_lr0p04,Xgboost Hist Trees300 Depth4 Lr0P04,1588.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,69,nm_1e81d14c107d52e3_append_random_vine_surprise_histgbm,Nm 1E81D14C107D52E3 Append Random Vine Surprise Histgbm,1586.5,,,26,45,0,26/45,True,entrant
+tabular-regression-v2-published,70,nm_d48ec9ad8eb3117d_append_random_power_sphere_map_histgbm,Nm D48Ec9Ad8Eb3117D Append Random Power Sphere Map Histgbm,1585.9,,,22,45,0,22/45,True,entrant
+tabular-regression-v2-published,71,gpboost_regressor,Gpboost Regressor,1585.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,72,lightgbm_gbdt_trees300_leaves31_lr0p04,Lightgbm Gbdt Trees300 Leaves31 Lr0P04,1584.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,73,random_forest_mae,Random Forest Mae,1583.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,74,lightgbm_huber_trees300_leaves31_lr0p04,Lightgbm Huber Trees300 Leaves31 Lr0P04,1583.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,75,xgboost_hist_trees120_depth3_lr0p08,Xgboost Hist Trees120 Depth3 Lr0P08,1582.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,76,gradient_boosting,Gradient Boosting,1580.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,77,nm_32b73c69dee36ddc_append_partition_moment_features_histgbm,Nm 32B73C69Dee36Ddc Append Partition Moment Features Histgbm,1579.2,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-published,78,lightgbm_extra_trees_trees300_leaves63_lr0p04,Lightgbm Extra Trees Trees300 Leaves63 Lr0P04,1578.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,79,random_forest_512,Random Forest 512,1576.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,80,xgboost_interaction_depth4_trees400,Xgboost Interaction Depth4 Trees400,1576.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,81,xgboost_hist_trees900_depth4_lr0p02,Xgboost Hist Trees900 Depth4 Lr0P02,1576.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,82,ngboost,Ngboost,1576.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,83,nm_02ecd0b48ba74762_append_orbit_moment_bank_histgbm,Nm 02Ecd0B48Ba74762 Append Orbit Moment Bank Histgbm,1572.6,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,84,random_forest_1024,Random Forest 1024,1571.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,85,lightgbm_goss_trees300_leaves31_lr0p04,Lightgbm Goss Trees300 Leaves31 Lr0P04,1570.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,86,lightgbm_large_leaves,Lightgbm Large Leaves,1570.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,87,lightgbm_goss,Lightgbm Goss,1569.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,88,nm_2ac0fd906eb47dc9_append_manifold_isometry_defect_elasticnet,Nm 2Ac0Fd906Eb47Dc9 Append Manifold Isometry Defect Elasticnet,1568.8,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,89,lightgbm_extra_trees,Lightgbm Extra Trees,1568.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,90,nm_7cbb8ba549d9b58d_append_gaussian_depth_elasticnet,Nm 7Cbb8Ba549D9B58D Append Gaussian Depth Elasticnet,1567.3,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-published,91,evalml_automl_seconds60,Evalml Automl Seconds60,1567.0,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-published,92,random_forest,Random Forest,1566.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,93,nm_a1d490b48a2abba8_append_knn_hull_area_ratio_ridge,Nm A1D490B48A2Abba8 Append Knn Hull Area Ratio Ridge,1566.0,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,94,xgboost_pseudohuber_trees300_depth4_lr0p04,Xgboost Pseudohuber Trees300 Depth4 Lr0P04,1565.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,95,nm_0b378bc57fdda416_append_per_row_geodesic_curvature_ridge,Nm 0B378Bc57Fdda416 Append Per Row Geodesic Curvature Ridge,1564.7,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,96,xgboost_hist_240,Xgboost Hist 240,1564.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,97,nm_abc31da7f580fdcc_append_anchor_moment_kernel_elasticnet,Nm Abc31Da7F580Fdcc Append Anchor Moment Kernel Elasticnet,1564.0,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-published,98,histgbm_regularized,Histgbm Regularized,1563.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,99,nm_8874a8406f1d5770_append_orthogonal_rff_bins_histgbm,Nm 8874A8406F1D5770 Append Orthogonal Rff Bins Histgbm,1562.2,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-published,100,nm_6d960b82598dc8a9_append_gaussian_depth_ridge,Nm 6D960B82598Dc8A9 Append Gaussian Depth Ridge,1561.2,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,101,nm_216aa360f9ea1cf4_append_knn_hull_area_ratio_elasticnet,Nm 216Aa360F9Ea1Cf4 Append Knn Hull Area Ratio Elasticnet,1557.6,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-published,102,nm_28b4f1fc6d2da47a_append_per_row_geodesic_curvature_elasticnet,Nm 28B4F1Fc6D2Da47A Append Per Row Geodesic Curvature Elasticnet,1555.2,,,19,45,0,19/45,True,entrant
+tabular-regression-v2-published,103,gradient_boosting_stochastic,Gradient Boosting Stochastic,1554.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,104,nm_9ea2dcf78bb3f4c3_append_row_fractal_hurst_histgbm,Nm 9Ea2Dcf78Bb3F4C3 Append Row Fractal Hurst Histgbm,1554.4,,,30,45,0,30/45,True,entrant
+tabular-regression-v2-published,105,nm_8a3027aaede9ede2_append_betti_gaps_composite_ridge,Nm 8A3027Aaede9Ede2 Append Betti Gaps Composite Ridge,1553.7,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-published,106,nm_aa42b2892200feeb_append_grassmann_subspace_angles_elasticnet,Nm Aa42B2892200Feeb Append Grassmann Subspace Angles Elasticnet,1553.5,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,107,nm_b6801a8708e4b2a1_append_recurrence_graph_spectrum_histgbm,Nm B6801A8708E4B2A1 Append Recurrence Graph Spectrum Histgbm,1552.8,,,27,45,0,27/45,True,entrant
+tabular-regression-v2-published,108,histgbm_large,Histgbm Large,1552.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,109,nm_08c311618d88f009_append_piecewise_affine_projection_bank_elasticnet,Nm 08C311618D88F009 Append Piecewise Affine Projection Bank Elasticnet,1551.0,,,5,45,0,5/45,True,entrant
+tabular-regression-v2-published,110,tabm,Tabm,1550.5,,,45,45,2,45/45,True,entrant
+tabular-regression-v2-published,111,nm_a8e5675b95cef532_append_diffusion_curvature_per_row_elasticnet,Nm A8E5675B95Cef532 Append Diffusion Curvature Per Row Elasticnet,1548.0,,,25,45,0,25/45,True,entrant
+tabular-regression-v2-published,112,extra_trees_1024,Extra Trees 1024,1547.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,113,nm_0cb1fdafe6ed45e5_append_random_power_sphere_map_elasticnet,Nm 0Cb1Fdafe6Ed45E5 Append Random Power Sphere Map Elasticnet,1547.7,,,24,45,1,24/45,True,entrant
+tabular-regression-v2-published,114,nm_490c843b47647e10_append_jackknife_leverage_perrow_ridge,Nm 490C843B47647E10 Append Jackknife Leverage Perrow Ridge,1547.2,,,7,45,0,7/45,True,entrant
+tabular-regression-v2-published,115,nm_7d9df972a094e492_append_piecewise_affine_projection_bank_histgbm,Nm 7D9Df972A094E492 Append Piecewise Affine Projection Bank Histgbm,1545.7,,,30,45,0,30/45,True,entrant
+tabular-regression-v2-published,116,nm_8aa86846ca5308ec_append_rank_normalized_kernel_ridge,Nm 8Aa86846Ca5308Ec Append Rank Normalized Kernel Ridge,1544.1,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,117,nm_cc9e5ec332c4dc5c_append_diffusion_curvature_per_row_histgbm,Nm Cc9E5Ec332C4Dc5C Append Diffusion Curvature Per Row Histgbm,1543.6,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-published,118,lightgbm_quantile_alpha0p5_trees300_leaves31_lr0p04,Lightgbm Quantile Alpha0P5 Trees300 Leaves31 Lr0P04,1543.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,119,extra_trees_512,Extra Trees 512,1543.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,120,nm_0bce2ff986be4643_append_grouped_orthogonal_rff_histgbm,Nm 0Bce2Ff986Be4643 Append Grouped Orthogonal Rff Histgbm,1542.4,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-published,121,catboost_lq_q1p5_trees300_depth6,Catboost Lq Q1P5 Trees300 Depth6,1540.4,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,122,nm_706191de4bd2503b_append_copula_grad_rff_histgbm,Nm 706191De4Bd2503B Append Copula Grad Rff Histgbm,1540.2,,,18,45,0,18/45,True,entrant
+tabular-regression-v2-published,123,nm_d07a525b60678542_append_mst_graph_profile_histgbm,Nm D07A525B60678542 Append Mst Graph Profile Histgbm,1537.9,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-published,124,xgboost_hist_trees1200_depth6_lr0p015,Xgboost Hist Trees1200 Depth6 Lr0P015,1536.9,,,9,45,0,9/45,True,entrant
+tabular-regression-v2-published,125,extra_trees,Extra Trees,1536.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,126,nm_0cb439490f211946_append_random_power_sphere_map_ridge,Nm 0Cb439490F211946 Append Random Power Sphere Map Ridge,1536.2,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-published,127,nm_7b3302db3c55e909_append_copula_tail_dependence_sketch_ridge,Nm 7B3302Db3C55E909 Append Copula Tail Dependence Sketch Ridge,1535.8,,,7,45,0,7/45,True,entrant
+tabular-regression-v2-published,128,nm_e3b41e148f32cbfa_append_knn_hull_area_ratio_histgbm,Nm E3B41E148F32Cbfa Append Knn Hull Area Ratio Histgbm,1535.1,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,129,xgboost_monotone_none_trees300_depth6,Xgboost Monotone None Trees300 Depth6,1535.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,130,ada_boost_deep,Ada Boost Deep,1533.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,131,lightgbm_deep,Lightgbm Deep,1532.6,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,132,xgboost_absoluteerror_trees300_depth4_lr0p04,Xgboost Absoluteerror Trees300 Depth4 Lr0P04,1527.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,133,nm_b8b2dd63b09b094c_append_per_row_geodesic_curvature_histgbm,Nm B8B2Dd63B09B094C Append Per Row Geodesic Curvature Histgbm,1527.6,,,9,45,1,9/45,True,entrant
+tabular-regression-v2-published,134,bagging,Bagging,1527.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,135,nm_4827f95b08f0a9af_append_compressed_rank_kernel_sketch_elasticnet,Nm 4827F95B08F0A9Af Append Compressed Rank Kernel Sketch Elasticnet,1527.1,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-published,136,nm_859f6d9f37942924_append_betti_gaps_composite_elasticnet,Nm 859F6D9F37942924 Append Betti Gaps Composite Elasticnet,1526.9,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,137,nm_d0fce33676934a86_append_delay_embed_histgbm,Nm D0Fce33676934A86 Append Delay Embed Histgbm,1525.6,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-published,138,nm_3e5b4fec2c927192_append_bootstrap_tangent_angular_variance_elasticnet,Nm 3E5B4Fec2C927192 Append Bootstrap Tangent Angular Variance Elasticnet,1524.3,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,139,nm_9aaa22f6cd3a5fc9_append_betti_curve_sparse_stateless_ridge,Nm 9Aaa22F6Cd3A5Fc9 Append Betti Curve Sparse Stateless Ridge,1524.1,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,140,imodels_rulefit_regressor,Imodels Rulefit Regressor,1523.1,,,3,45,0,3/45,True,entrant
+tabular-regression-v2-published,141,nm_d3acab20d12ca1e7_append_copula_chi2_local_ridge,Nm D3Acab20D12Ca1E7 Append Copula Chi2 Local Ridge,1522.8,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-published,142,nm_5fcac9465e794d1d_append_cumulative_sign_rff_histgbm,Nm 5Fcac9465E794D1D Append Cumulative Sign Rff Histgbm,1522.7,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-published,143,xgboost_rf_trees500_depth8,Xgboost Rf Trees500 Depth8,1521.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,144,nystroem_ridge,Nystroem Ridge,1520.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,145,nm_3595a3176b1867e3_append_row_recurrence_features_histgbm,Nm 3595A3176B1867E3 Append Row Recurrence Features Histgbm,1520.0,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,146,torch_frame_trompt_regressor,Torch Frame Trompt Regressor,1520.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,147,xgboost_hist_trees600_depth6_lr0p03,Xgboost Hist Trees600 Depth6 Lr0P03,1519.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,148,nm_60f1d62c8e9a538e_append_mobius_pair_proj_histgbm,Nm 60F1D62C8E9A538E Append Mobius Pair Proj Histgbm,1517.5,,,19,45,0,19/45,True,entrant
+tabular-regression-v2-published,149,xgboost_hist_trees500_depth6,Xgboost Hist Trees500 Depth6,1515.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,150,nm_678b4df369c34ca6_append_recurrence_graph_spectrum_elasticnet,Nm 678B4Df369C34Ca6 Append Recurrence Graph Spectrum Elasticnet,1515.0,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-published,151,nm_08e4914dfd087229_append_copula_grad_rff_ridge,Nm 08E4914Dfd087229 Append Copula Grad Rff Ridge,1513.7,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,152,nm_2a0bcceb71fab7a5_append_copula_chi2_local_elasticnet,Nm 2A0Bcceb71Fab7A5 Append Copula Chi2 Local Elasticnet,1513.1,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-published,153,nm_c8ae9658ac9de190_append_manifold_isometry_defect_ridge,Nm C8Ae9658Ac9De190 Append Manifold Isometry Defect Ridge,1512.3,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-published,154,nm_8d45de7cb6dc5968_append_copula_grad_rff_elasticnet,Nm 8D45De7Cb6Dc5968 Append Copula Grad Rff Elasticnet,1511.6,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-published,155,nm_389c358741cccf96_append_copula_diag_entropy_elasticnet,Nm 389C358741Cccf96 Append Copula Diag Entropy Elasticnet,1511.5,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-published,156,nm_8f4739d21cc2ee7e_append_deterministic_cosine_pool_rff_elasticnet,Nm 8F4739D21Cc2Ee7E Append Deterministic Cosine Pool Rff Elasticnet,1511.1,,,27,45,0,27/45,True,entrant
+tabular-regression-v2-published,157,torch_frame_resnet_regressor,Torch Frame Resnet Regressor,1510.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,158,nm_4e9a5ce11584b89e_append_anchor_moment_kernel_ridge,Nm 4E9A5Ce11584B89E Append Anchor Moment Kernel Ridge,1508.8,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,159,nm_4971fe23a4ff8280_append_orthogonal_rff_bins_elasticnet,Nm 4971Fe23A4Ff8280 Append Orthogonal Rff Bins Elasticnet,1508.3,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-published,160,torch_frame_fttransformer_regressor,Torch Frame Fttransformer Regressor,1507.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,161,ada_boost,Ada Boost,1507.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,162,nm_578a402572df9dfb_append_hammersley_rff_histgbm,Nm 578A402572Df9Dfb Append Hammersley Rff Histgbm,1507.0,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,163,nm_57a25013708284c2_append_deterministic_hadamard_kernel_features_ridge,Nm 57A25013708284C2 Append Deterministic Hadamard Kernel Features Ridge,1503.9,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-published,164,nm_f1a65a72f8c248f3_append_hammersley_rff_ridge,Nm F1A65A72F8C248F3 Append Hammersley Rff Ridge,1502.3,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-published,165,pygam_linear_gam_regressor,Pygam Linear Gam Regressor,1501.9,,,39,45,0,39/45,True,entrant
+tabular-regression-v2-published,166,nm_3e95b085efa7010f_append_cumulative_sign_rff_ridge,Nm 3E95B085Efa7010F Append Cumulative Sign Rff Ridge,1501.7,,,26,45,0,26/45,True,entrant
+tabular-regression-v2-published,167,nm_92c5500eb0e10f87_append_phase_curvature_transform_elasticnet,Nm 92C5500Eb0E10F87 Append Phase Curvature Transform Elasticnet,1501.1,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-published,168,xgboost_deep,Xgboost Deep,1500.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,169,nm_dc11f5a6a6100593_append_grouped_orthogonal_rff_elasticnet,Nm Dc11F5A6A6100593 Append Grouped Orthogonal Rff Elasticnet,1498.2,,,31,45,0,31/45,True,entrant
+tabular-regression-v2-published,170,nm_9379f2eb196b5c02_append_compressed_rank_kernel_sketch_ridge,Nm 9379F2Eb196B5C02 Append Compressed Rank Kernel Sketch Ridge,1498.2,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,171,tabr_regressor,Tabr Regressor,1497.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,172,nm_d22288bcd5864509_append_grassmann_subspace_angles_ridge,Nm D22288Bcd5864509 Append Grassmann Subspace Angles Ridge,1497.1,,,18,45,1,18/45,True,entrant
+tabular-regression-v2-published,173,ebm,Ebm,1497.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,174,ada_boost_200,Ada Boost 200,1496.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,175,nm_5c11dfcf6d345373_append_conformal_local_scale_elasticnet,Nm 5C11Dfcf6D345373 Append Conformal Local Scale Elasticnet,1495.4,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-published,176,lightgbm_linear_tree_trees300_leaves31_lr0p04,Lightgbm Linear Tree Trees300 Leaves31 Lr0P04,1495.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,177,nm_3ee5ce9a36ff1b45_append_orthogonal_rff_bins_ridge,Nm 3Ee5Ce9A36Ff1B45 Append Orthogonal Rff Bins Ridge,1494.9,,,37,45,0,37/45,True,entrant
+tabular-regression-v2-published,178,nm_31b031445611ed91_append_harmonic_phase_entropy_elasticnet,Nm 31B031445611Ed91 Append Harmonic Phase Entropy Elasticnet,1492.6,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,179,nm_33896aa0fc0f650d_append_quantized_copula_hmm_elasticnet,Nm 33896Aa0Fc0F650D Append Quantized Copula Hmm Elasticnet,1489.7,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-published,180,nm_205f84f829c3b9fa_append_manifold_isometry_defect_histgbm,Nm 205F84F829C3B9Fa Append Manifold Isometry Defect Histgbm,1489.0,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-published,181,nm_07c7bb3da36a3338_append_hammersley_rff_elasticnet,Nm 07C7Bb3Da36A3338 Append Hammersley Rff Elasticnet,1488.1,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-published,182,nu_svr_rbf,Nu Svr Rbf,1485.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,183,elastic_net_cv,Elastic Net Cv,1482.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,184,hyp3_stacking_trees_meta,Hyp3 Stacking Trees Meta,1482.2,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-published,185,nm_ca4335826b6f7ed8_append_sign_stable_rff_elasticnet,Nm Ca4335826B6F7Ed8 Append Sign Stable Rff Elasticnet,1481.8,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-published,186,nm_f3b838c3e2cab833_append_rank_uncertainty_proj_elasticnet,Nm F3B838C3E2Cab833 Append Rank Uncertainty Proj Elasticnet,1481.7,,,3,45,0,3/45,True,entrant
+tabular-regression-v2-published,187,nm_a92d20b8e3117277_append_grouped_orthogonal_rff_ridge,Nm A92D20B8E3117277 Append Grouped Orthogonal Rff Ridge,1480.3,,,28,45,0,28/45,True,entrant
+tabular-regression-v2-published,188,ard_regression,Ard Regression,1478.7,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,189,lasso,Lasso,1478.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,190,bayesian_ridge,Bayesian Ridge,1478.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,191,nm_5a4da1e844a6d376_append_deterministic_cosine_pool_rff_ridge,Nm 5A4Da1E844A6D376 Append Deterministic Cosine Pool Rff Ridge,1477.6,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-published,192,nm_6d06f81eaba859ca_append_cumulative_sign_rff_elasticnet,Nm 6D06F81Eaba859Ca Append Cumulative Sign Rff Elasticnet,1476.4,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,193,nm_ba04c88dfd2bc5f2_append_rank_normalized_kernel_elasticnet,Nm Ba04C88Dfd2Bc5F2 Append Rank Normalized Kernel Elasticnet,1476.0,,,21,45,0,21/45,True,entrant
+tabular-regression-v2-published,194,knn_distance,Knn Distance,1474.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,195,nm_0d7bebbe9e763cce_append_rank_uncertainty_proj_ridge,Nm 0D7Bebbe9E763Cce Append Rank Uncertainty Proj Ridge,1474.6,,,3,45,0,3/45,True,entrant
+tabular-regression-v2-published,196,nm_bf4001fb0fb58a5b_append_phase_coupling_entropy_elasticnet,Nm Bf4001Fb0Fb58A5B Append Phase Coupling Entropy Elasticnet,1473.8,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-published,197,ridge_cv,Ridge Cv,1472.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,198,nm_79f84d4095326876_append_mst_graph_profile_elasticnet,Nm 79F84D4095326876 Append Mst Graph Profile Elasticnet,1470.6,,,5,45,0,5/45,True,entrant
+tabular-regression-v2-published,199,nm_0039f3c487da3912_append_row_blom_normal_scores_ridge,Nm 0039F3C487Da3912 Append Row Blom Normal Scores Ridge,1469.2,,,10,45,0,10/45,True,entrant
+tabular-regression-v2-published,200,knn,Knn,1467.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,201,nm_b3ed9b5d98a97dbd_append_copula_diag_entropy_ridge,Nm B3Ed9B5D98A97Dbd Append Copula Diag Entropy Ridge,1464.6,,,3,45,0,3/45,True,entrant
+tabular-regression-v2-published,202,elastic_net,Elastic Net,1463.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,203,nm_d10236965260e01a_append_pseudo_winsor_moments_elasticnet,Nm D10236965260E01A Append Pseudo Winsor Moments Elasticnet,1462.2,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-published,204,nm_8fd03c4ae22d5318_append_betti_curve_sparse_stateless_histgbm,Nm 8Fd03C4Ae22D5318 Append Betti Curve Sparse Stateless Histgbm,1461.9,,,7,45,0,7/45,True,entrant
+tabular-regression-v2-published,205,lightgbm_dart,Lightgbm Dart,1459.7,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,206,nm_ccb82531603316b5_append_cepstrum_envelope_elasticnet,Nm Ccb82531603316B5 Append Cepstrum Envelope Elasticnet,1459.5,,,21,45,0,21/45,True,entrant
+tabular-regression-v2-published,207,ridge,Ridge,1459.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,208,nm_54cc3c571d77f910_append_deterministic_pair_hash_kernel_ridge,Nm 54Cc3C571D77F910 Append Deterministic Pair Hash Kernel Ridge,1459.2,,,9,45,0,9/45,True,entrant
+tabular-regression-v2-published,209,nm_a79f7115d751b8a4_append_rank_quantile_warp_adapt_elasticnet,Nm A79F7115D751B8A4 Append Rank Quantile Warp Adapt Elasticnet,1458.6,,,23,45,1,23/45,True,entrant
+tabular-regression-v2-published,210,nm_409bcb6bb142c570_append_phase_amplitude_coupling_index_elasticnet,Nm 409Bcb6Bb142C570 Append Phase Amplitude Coupling Index Elasticnet,1457.9,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-published,211,nm_08ced5aa8f2aab86_append_phase_entropy_quantile_ridge,Nm 08Ced5Aa8F2Aab86 Append Phase Entropy Quantile Ridge,1456.5,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-published,212,lightgbm_rf_trees500_leaves63,Lightgbm Rf Trees500 Leaves63,1455.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,213,nm_42e5036e51cf9ead_append_deterministic_hadamard_kernel_features_elasticnet,Nm 42E5036E51Cf9Ead Append Deterministic Hadamard Kernel Features Elasticnet,1454.5,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,214,nm_f3beb0cc460406fa_append_phase_structure_moment_elasticnet,Nm F3Beb0Cc460406Fa Append Phase Structure Moment Elasticnet,1453.4,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-published,215,nm_921de4428243e8f4_append_mcd_leverage_proj_ridge,Nm 921De4428243E8F4 Append Mcd Leverage Proj Ridge,1449.8,,,5,45,0,5/45,True,entrant
+tabular-regression-v2-published,216,nm_0e6fe45ac95e6bf2_append_cepstrum_envelope_ridge,Nm 0E6Fe45Ac95E6Bf2 Append Cepstrum Envelope Ridge,1449.4,,,25,45,0,25/45,True,entrant
+tabular-regression-v2-published,217,nm_0232ca9200032f73_append_gabor_phase_congruency_approx_ridge,Nm 0232Ca9200032F73 Append Gabor Phase Congruency Approx Ridge,1449.0,,,26,45,0,26/45,True,entrant
+tabular-regression-v2-published,218,poly2_ridge,Poly2 Ridge,1447.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,219,nm_4044f8a5a4fee913_append_phase_curvature_transform_ridge,Nm 4044F8A5A4Fee913 Append Phase Curvature Transform Ridge,1447.1,,,21,45,0,21/45,True,entrant
+tabular-regression-v2-published,220,nm_8e04a31c9bbe34ac_append_phase_coupling_entropy_ridge,Nm 8E04A31C9Bbe34Ac Append Phase Coupling Entropy Ridge,1447.0,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-published,221,nm_21c8513198332e1a_append_orbit_moment_bank_elasticnet,Nm 21C8513198332E1A Append Orbit Moment Bank Elasticnet,1446.9,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-published,222,nm_2b8fafb5273f0bd9_append_harmonic_phase_entropy_ridge,Nm 2B8Fafb5273F0Bd9 Append Harmonic Phase Entropy Ridge,1445.5,,,21,45,0,21/45,True,entrant
+tabular-regression-v2-published,223,nm_0195a4ea9f5f9dc0_append_row_fractal_hurst_ridge,Nm 0195A4Ea9F5F9Dc0 Append Row Fractal Hurst Ridge,1445.1,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-published,224,nm_500d47983b91e59d_append_phase_gated_ratio_ridge,Nm 500D47983B91E59D Append Phase Gated Ratio Ridge,1443.2,,,28,45,0,28/45,True,entrant
+tabular-regression-v2-published,225,nm_ba5912832fa39272_append_jackknife_leverage_perrow_elasticnet,Nm Ba5912832Fa39272 Append Jackknife Leverage Perrow Elasticnet,1439.3,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-published,226,nm_b9f40b762c24d559_append_robust_phase_autocov_summary_elasticnet,Nm B9F40B762C24D559 Append Robust Phase Autocov Summary Elasticnet,1438.8,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-published,227,nm_8775587f28a78f4c_append_phase_amplitude_coupling_contrast_ridge,Nm 8775587F28A78F4C Append Phase Amplitude Coupling Contrast Ridge,1438.5,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-published,228,nm_bd2996293441aa75_append_pseudo_winsor_moments_ridge,Nm Bd2996293441Aa75 Append Pseudo Winsor Moments Ridge,1437.0,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-published,229,nm_65778ee0ce111df5_append_row_fractal_hurst_elasticnet,Nm 65778Ee0Ce111Df5 Append Row Fractal Hurst Elasticnet,1435.9,,,4,45,0,4/45,True,entrant
+tabular-regression-v2-published,230,nm_d3a3205740f40c59_append_recurrence_graph_spectrum_ridge,Nm D3A3205740F40C59 Append Recurrence Graph Spectrum Ridge,1435.5,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,231,nm_6dbacd2e99134561_append_quantile_bin_rff_ridge,Nm 6Dbacd2E99134561 Append Quantile Bin Rff Ridge,1433.7,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,232,nm_d31aefa0767985e2_append_phase_amplitude_coupling_contrast_elasticnet,Nm D31Aefa0767985E2 Append Phase Amplitude Coupling Contrast Elasticnet,1433.0,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-published,233,nm_fd99e93e79259ba9_append_robust_phase_autocov_summary_ridge,Nm Fd99E93E79259Ba9 Append Robust Phase Autocov Summary Ridge,1432.6,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,234,nm_8c6c778914ead3dc_append_mcd_leverage_proj_elasticnet,Nm 8C6C778914Ead3Dc Append Mcd Leverage Proj Elasticnet,1432.3,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-published,235,linear_regression,Linear Regression,1431.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,236,nm_99140796a9ac134e_append_phase_structure_moment_ridge,Nm 99140796A9Ac134E Append Phase Structure Moment Ridge,1429.6,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-published,237,nm_c6711fd746192507_append_phase_gated_ratio_elasticnet,Nm C6711Fd746192507 Append Phase Gated Ratio Elasticnet,1428.8,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,238,nm_543717e7a12b6b9d_append_mobius_pair_proj_elasticnet,Nm 543717E7A12B6B9D Append Mobius Pair Proj Elasticnet,1428.1,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,239,huber,Huber,1426.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,240,rbf_svr,Rbf Svr,1424.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,241,nm_84dbfe25bb990ba1_append_delay_embed_elasticnet,Nm 84Dbfe25Bb990Ba1 Append Delay Embed Elasticnet,1423.3,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-published,242,imodels_figs_regressor_depth3,Imodels Figs Regressor Depth3,1423.0,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,243,nm_3d2c0865fd617050_append_phase_quadrant_coherence_elasticnet,Nm 3D2C0865Fd617050 Append Phase Quadrant Coherence Elasticnet,1422.0,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-published,244,nm_bc5772e8e5f9ed90_append_row_recurrence_features_ridge,Nm Bc5772E8E5F9Ed90 Append Row Recurrence Features Ridge,1421.4,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-published,245,imodels_figs_regressor,Imodels Figs Regressor,1421.0,,,19,45,0,19/45,True,entrant
+tabular-regression-v2-published,246,nm_868356988412eea0_append_piecewise_affine_projection_bank_ridge,Nm 868356988412Eea0 Append Piecewise Affine Projection Bank Ridge,1420.2,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,247,nm_9c0c12a03ce466f0_append_quantile_bin_rff_elasticnet,Nm 9C0C12A03Ce466F0 Append Quantile Bin Rff Elasticnet,1418.1,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-published,248,imodels_figs_regressor_rules64_depth3,Imodels Figs Regressor Rules64 Depth3,1417.7,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-published,249,nm_a09e9a02990bed59_append_orbit_moment_bank_ridge,Nm A09E9A02990Bed59 Append Orbit Moment Bank Ridge,1417.7,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-published,250,kernel_ridge_rbf,Kernel Ridge Rbf,1417.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,251,nm_f28b696f57d9cb85_append_phase_amplitude_coupling_index_ridge,Nm F28B696F57D9Cb85 Append Phase Amplitude Coupling Index Ridge,1412.4,,,22,45,0,22/45,True,entrant
+tabular-regression-v2-published,252,imodels_figs_regressor_rules16,Imodels Figs Regressor Rules16,1410.6,,,25,45,0,25/45,True,entrant
+tabular-regression-v2-published,253,nm_8b6d7c7d0244c504_append_phase_quadrant_coherence_ridge,Nm 8B6D7C7D0244C504 Append Phase Quadrant Coherence Ridge,1410.5,,,22,45,0,22/45,True,entrant
+tabular-regression-v2-published,254,nm_0062a441167c6e4e_append_quantized_copula_hmm_ridge,Nm 0062A441167C6E4E Append Quantized Copula Hmm Ridge,1406.3,,,2,45,0,2/45,True,entrant
+tabular-regression-v2-published,255,orthogonal_matching_pursuit,Orthogonal Matching Pursuit,1402.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,256,nm_b302358723d9091a_append_gabor_phase_congruency_approx_elasticnet,Nm B302358723D9091A Append Gabor Phase Congruency Approx Elasticnet,1401.0,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-published,257,nm_10dd2466bd7e3a96_append_rank_quantile_warp_adapt_ridge,Nm 10Dd2466Bd7E3A96 Append Rank Quantile Warp Adapt Ridge,1400.6,,,4,45,0,4/45,True,entrant
+tabular-regression-v2-published,258,nm_46378e9fbe0ee3dc_append_partition_moment_features_ridge,Nm 46378E9Fbe0Ee3Dc Append Partition Moment Features Ridge,1400.1,,,9,45,0,9/45,True,entrant
+tabular-regression-v2-published,259,huber_robust,Huber Robust,1400.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,260,knn_cosine,Knn Cosine,1397.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,261,knn_large,Knn Large,1397.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,262,linear_svr,Linear Svr,1393.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,263,pca_lgbm,Pca Lgbm,1385.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,264,quantile_median,Quantile Median,1383.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,265,nm_7924d040f8482660_append_bootstrap_tangent_angular_variance_ridge,Nm 7924D040F8482660 Append Bootstrap Tangent Angular Variance Ridge,1382.9,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-published,266,nm_67bc114fe8a7713a_append_copula_gaussian_loglik_ridge,Nm 67Bc114Fe8A7713A Append Copula Gaussian Loglik Ridge,1382.7,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-published,267,nm_356d74fd4b2f0b70_append_conformal_local_scale_ridge,Nm 356D74Fd4B2F0B70 Append Conformal Local Scale Ridge,1376.8,,,2,45,0,2/45,True,entrant
+tabular-regression-v2-published,268,ransac,Ransac,1375.6,,,41,45,1,41/45,True,entrant
+tabular-regression-v2-published,269,nm_f00d627ae4cf7985_append_delay_embed_ridge,Nm F00D627Ae4Cf7985 Append Delay Embed Ridge,1374.9,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-published,270,nm_b6c265e586f6f8f8_append_phase_entropy_quantile_elasticnet,Nm B6C265E586F6F8F8 Append Phase Entropy Quantile Elasticnet,1372.1,,,4,45,0,4/45,True,entrant
+tabular-regression-v2-published,271,nm_022bbd54efeaeb7a_append_sign_stable_rff_ridge,Nm 022Bbd54Efeaeb7A Append Sign Stable Rff Ridge,1371.7,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-published,272,kimik3_regressor,Kimi K3 attempt,1370.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,273,tweedie_regressor,Tweedie Regressor,1367.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,274,decision_tree,Decision Tree,1363.7,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-published,275,passive_aggressive_regressor,Passive Aggressive Regressor,1360.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,276,mlp,Mlp,1355.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,277,pytorch_tabular_fttransformer_regressor_epochs40,Pytorch Tabular Fttransformer Regressor Epochs40,1334.8,,,25,45,0,25/45,True,entrant
+tabular-regression-v2-published,278,nm_4e85ba54ac456cdc_append_row_recurrence_features_elasticnet,Nm 4E85Ba54Ac456Cdc Append Row Recurrence Features Elasticnet,1332.4,,,7,45,0,7/45,True,entrant
+tabular-regression-v2-published,279,pytorch_tabular_autoint_regressor,Pytorch Tabular Autoint Regressor,1315.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,280,theil_sen,Theil Sen,1311.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,281,poisson_regressor,Poisson Regressor,1308.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,282,nm_52636a5ff6f79b67_append_copula_log_density_estimate_ridge,Nm 52636A5Ff6F79B67 Append Copula Log Density Estimate Ridge,1297.9,,,10,45,0,10/45,True,entrant
+tabular-regression-v2-published,283,skorch_resmlp_regressor,Skorch Resmlp Regressor,1263.4,,,30,45,0,30/45,True,entrant
+tabular-regression-v2-published,284,xgboost_gblinear,Xgboost Gblinear,1262.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,285,xgboost_gblinear_alpha0p001_lambda1,Xgboost Gblinear Alpha0P001 Lambda1,1249.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,286,pytorch_tabular_fttransformer_regressor,Pytorch Tabular Fttransformer Regressor,1244.6,,,26,45,0,26/45,True,entrant
+tabular-regression-v2-published,287,hunt9b_r3,Hunt9B R3,1242.3,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-published,288,sgd_regressor,Sgd Regressor,1242.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,289,nm_5672934811e2231f_append_random_vine_surprise_ridge,Nm 5672934811E2231F Append Random Vine Surprise Ridge,1233.2,,,5,45,0,5/45,True,entrant
+tabular-regression-v2-published,290,pytorch_tabular_gate_regressor,Pytorch Tabular Gate Regressor,1219.6,,,37,45,0,37/45,True,entrant
+tabular-regression-v2-published,291,rbfsampler_sgd,Rbfsampler Sgd,1204.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,292,pytorch_tabular_gandalf_regressor,Pytorch Tabular Gandalf Regressor,1140.1,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-published,293,skorch_resmlp_regressor_hidden256_depth4_epochs30,Skorch Resmlp Regressor Hidden256 Depth4 Epochs30,1133.2,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-published,294,tabm_regressor_epochs10,Tabm Regressor Epochs10,1119.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,295,tabnet_regressor_steps3_epochs50,Tabnet Regressor Steps3 Epochs50,1077.9,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-published,296,pytorch_tabular_node_regressor,Pytorch Tabular Node Regressor,1042.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,297,tabnet,Tabnet,1034.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,298,skorch_resmlp_regressor_hidden64_depth2_epochs10,Skorch Resmlp Regressor Hidden64 Depth2 Epochs10,1002.0,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-published,299,pytorch_tabular_fttransformer_regressor_epochs5,Pytorch Tabular Fttransformer Regressor Epochs5,949.0,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-published,300,pytorch_tabular_category_embedding_regressor_epochs40,Pytorch Tabular Category Embedding Regressor Epochs40,931.5,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-published,301,pytorch_tabular_category_embedding_regressor,Pytorch Tabular Category Embedding Regressor,868.9,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-published,302,pytorch_tabular_category_embedding_regressor_epochs5,Pytorch Tabular Category Embedding Regressor Epochs5,693.6,,,31,45,0,31/45,True,entrant
+tabular-regression-v2-published,303,pytorch_tabular_danet_regressor,Pytorch Tabular Danet Regressor,645.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-published,304,pytorch_tabular_tabtransformer_regressor,Pytorch Tabular Tabtransformer Regressor,524.6,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-published,305,pytorch_tabular_mdn_regressor,Pytorch Tabular Mdn Regressor,403.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,1,tabfm_ensemble_regressor,TabFM Ensemble,1934.9,,,45,45,7,45/45,True,best_fair_tabular
+tabular-regression-v2-benchmark-valid,2,tabpfn_v3_regressor,TabPFN v3,1909.5,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,3,tabpfn_v3_regressor_default,TabPFN v3 Default,1906.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,4,tabpfn_v25_regressor_default,Tabpfn V25 Regressor Default,1893.3,,,45,45,5,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,5,tabicl,Tabicl,1887.6,,,45,45,4,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,6,chimera_regression,Chimera Regression,1876.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,7,tabpfn_v25_regressor_real,Tabpfn V25 Regressor Real,1874.8,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,8,tabfm_regressor,TabFM,1872.9,,,39,45,1,39/45,True,entrant
+tabular-regression-v2-benchmark-valid,9,jable_regressor,Jable Regressor,1871.2,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,10,jain_regressor_1000,Jain Regressor 1000,1815.0,,,21,45,1,21/45,True,entrant
+tabular-regression-v2-benchmark-valid,11,tabdpt_regressor,Tabdpt Regressor,1788.6,,,24,45,1,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,12,jain_regressor_42,Jain Regressor 42,1783.2,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,13,jain_regressor,Jain Regressor,1779.5,,,37,45,1,37/45,True,entrant
+tabular-regression-v2-benchmark-valid,14,hunt9b_r1,Hunt9B R1,1776.6,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,15,fable5_regressor,Fable 5 attempt,1772.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,16,jain_regressor_300,Jain Regressor 300,1766.2,,,41,45,1,41/45,True,entrant
+tabular-regression-v2-benchmark-valid,17,autogluon_tabular_seconds60,Autogluon Tabular Seconds60,1763.7,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-benchmark-valid,18,autogluon_tabular_seconds30,Autogluon Tabular Seconds30,1748.9,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-benchmark-valid,19,jain_prime,Jain Prime,1742.3,,,45,45,2,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,20,jain_regressor_fast30,Jain Regressor Fast30,1733.7,,,41,45,0,41/45,True,entrant
+tabular-regression-v2-benchmark-valid,21,jope-lime,Jope Lime,1732.1,,,31,45,1,31/45,True,entrant
+tabular-regression-v2-benchmark-valid,22,jope_prime,Jope Prime,1732.1,,,31,45,0,31/45,True,entrant
+tabular-regression-v2-benchmark-valid,23,hunt9_b,Hunt9 B,1731.1,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,24,autogluon_300s,Autogluon 300S,1730.7,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,25,flaml_automl_300s,Flaml Automl 300S,1730.3,,,38,45,0,38/45,True,entrant
+tabular-regression-v2-benchmark-valid,26,stacking_trees_meta,Stacking Trees Meta,1726.8,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,27,hunt9b_a,Hunt9B A,1722.1,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,28,autogluon_tabular_seconds300,Autogluon Tabular Seconds300,1705.6,,,18,45,0,18/45,True,entrant
+tabular-regression-v2-benchmark-valid,29,grok4p5_regressor,Grok 4.5 attempt,1692.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,30,hunt9b_r2,Hunt9B R2,1691.5,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,31,jope-dime-regressor,Jope Dime Regressor,1687.0,,,42,45,1,42/45,True,our_reproducible_tabular_entry
+tabular-regression-v2-benchmark-valid,32,pytabkit_realmlp_td_s_regressor,Pytabkit Realmlp Td S Regressor,1685.3,,,35,45,1,35/45,True,entrant
+tabular-regression-v2-benchmark-valid,33,hyp3_chimera_regression,Hyp3 Chimera Regression,1675.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,34,jope_gp_v1,Jope Gp V1,1663.2,,,32,45,0,32/45,True,entrant
+tabular-regression-v2-benchmark-valid,35,hunt9_a,Hunt9 A,1662.5,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,36,catboost_300,Catboost 300,1660.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,37,catboost,Catboost,1653.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,38,realmlp_regressor_capped_rows50000,Realmlp Regressor Capped Rows50000,1652.9,,,37,45,0,37/45,True,entrant
+tabular-regression-v2-benchmark-valid,39,nm_ca9c2027cc9ff0ed_append_rank_normal_pairwise_product_histgbm,Nm Ca9C2027Cc9Ff0Ed Append Rank Normal Pairwise Product Histgbm,1644.6,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-benchmark-valid,40,catboost_plain_trees200_depth4_lr0p06,Catboost Plain Trees200 Depth4 Lr0P06,1638.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,41,validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m1,Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M1,1636.5,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,42,validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m2,Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M2,1636.5,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,43,validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m3,Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M3,1636.5,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,44,validation_gp_full_20260710_143239__ab0239b9ef0ba28e__single_primary,Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Single Primary,1636.5,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,45,hyp3_tabicl,Hyp3 Tabicl,1635.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,46,catboost_ordered_trees300_depth6_lr0p04,Catboost Ordered Trees300 Depth6 Lr0P04,1634.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,47,catboost_ordered_trees500_depth6,Catboost Ordered Trees500 Depth6,1633.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,48,catboost_lossguide_trees300_leaves32_lr0p04,Catboost Lossguide Trees300 Leaves32 Lr0P04,1633.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,49,ebm_interactions,Ebm Interactions,1630.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,50,catboost_huber_delta1_trees300_depth6,Catboost Huber Delta1 Trees300 Depth6,1623.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,51,voting_regressor,Voting Regressor,1621.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,52,lightgbm_gbdt_trees150_leaves15_lr0p07,Lightgbm Gbdt Trees150 Leaves15 Lr0P07,1613.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,53,gaussian_process,Gaussian Process,1609.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,54,xgboost_dart,Xgboost Dart,1609.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,55,lightgbm_gbdt,Lightgbm Gbdt,1609.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,56,catboost_mae_trees300_depth6,Catboost Mae Trees300 Depth6,1605.8,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,57,catboost_quantile_alpha0p5_trees300_depth6,Catboost Quantile Alpha0P5 Trees300 Depth6,1605.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,58,gpt5p6sol_regressor,OpenAI* attempt,1603.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,59,nm_6942d9611ac26088_append_copula_tail_dependence_sketch_elasticnet,Nm 6942D9611Ac26088 Append Copula Tail Dependence Sketch Elasticnet,1603.0,,,4,45,0,4/45,True,entrant
+tabular-regression-v2-benchmark-valid,60,catboost_deep,Catboost Deep,1602.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,61,nm_98a233168924f418_append_quantile_bin_rff_histgbm,Nm 98A233168924F418 Append Quantile Bin Rff Histgbm,1602.6,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-benchmark-valid,62,catboost_lossguide,Catboost Lossguide,1601.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,63,hist_gradient_boosting,Hist Gradient Boosting,1596.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,64,xgboost_hist,Xgboost Hist,1596.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,65,nm_4411767d8c5348e6_append_diffusion_curvature_per_row_ridge,Nm 4411767D8C5348E6 Append Diffusion Curvature Per Row Ridge,1594.4,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-benchmark-valid,66,nm_ad00ced3b148d032_append_betti_curve_sparse_stateless_elasticnet,Nm Ad00Ced3B148D032 Append Betti Curve Sparse Stateless Elasticnet,1592.5,,,19,45,0,19/45,True,entrant
+tabular-regression-v2-benchmark-valid,67,xgboost_hist_trees300_depth4_lr0p04,Xgboost Hist Trees300 Depth4 Lr0P04,1591.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,68,nm_1e81d14c107d52e3_append_random_vine_surprise_histgbm,Nm 1E81D14C107D52E3 Append Random Vine Surprise Histgbm,1589.0,,,26,45,0,26/45,True,entrant
+tabular-regression-v2-benchmark-valid,69,nm_d48ec9ad8eb3117d_append_random_power_sphere_map_histgbm,Nm D48Ec9Ad8Eb3117D Append Random Power Sphere Map Histgbm,1588.5,,,22,45,0,22/45,True,entrant
+tabular-regression-v2-benchmark-valid,70,gpboost_regressor,Gpboost Regressor,1587.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,71,lightgbm_gbdt_trees300_leaves31_lr0p04,Lightgbm Gbdt Trees300 Leaves31 Lr0P04,1586.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,72,random_forest_mae,Random Forest Mae,1585.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,73,lightgbm_huber_trees300_leaves31_lr0p04,Lightgbm Huber Trees300 Leaves31 Lr0P04,1585.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,74,xgboost_hist_trees120_depth3_lr0p08,Xgboost Hist Trees120 Depth3 Lr0P08,1584.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,75,gradient_boosting,Gradient Boosting,1582.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,76,nm_32b73c69dee36ddc_append_partition_moment_features_histgbm,Nm 32B73C69Dee36Ddc Append Partition Moment Features Histgbm,1581.7,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-benchmark-valid,77,lightgbm_extra_trees_trees300_leaves63_lr0p04,Lightgbm Extra Trees Trees300 Leaves63 Lr0P04,1581.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,78,random_forest_512,Random Forest 512,1579.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,79,ngboost,Ngboost,1579.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,80,xgboost_hist_trees900_depth4_lr0p02,Xgboost Hist Trees900 Depth4 Lr0P02,1579.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,81,xgboost_interaction_depth4_trees400,Xgboost Interaction Depth4 Trees400,1579.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,82,nm_02ecd0b48ba74762_append_orbit_moment_bank_histgbm,Nm 02Ecd0B48Ba74762 Append Orbit Moment Bank Histgbm,1575.0,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,83,random_forest_1024,Random Forest 1024,1574.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,84,lightgbm_goss_trees300_leaves31_lr0p04,Lightgbm Goss Trees300 Leaves31 Lr0P04,1573.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,85,lightgbm_large_leaves,Lightgbm Large Leaves,1572.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,86,lightgbm_goss,Lightgbm Goss,1571.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,87,nm_2ac0fd906eb47dc9_append_manifold_isometry_defect_elasticnet,Nm 2Ac0Fd906Eb47Dc9 Append Manifold Isometry Defect Elasticnet,1571.4,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,88,lightgbm_extra_trees,Lightgbm Extra Trees,1570.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,89,nm_7cbb8ba549d9b58d_append_gaussian_depth_elasticnet,Nm 7Cbb8Ba549D9B58D Append Gaussian Depth Elasticnet,1569.8,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-benchmark-valid,90,evalml_automl_seconds60,Evalml Automl Seconds60,1569.6,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-benchmark-valid,91,random_forest,Random Forest,1569.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,92,nm_a1d490b48a2abba8_append_knn_hull_area_ratio_ridge,Nm A1D490B48A2Abba8 Append Knn Hull Area Ratio Ridge,1568.6,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,93,xgboost_pseudohuber_trees300_depth4_lr0p04,Xgboost Pseudohuber Trees300 Depth4 Lr0P04,1568.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,94,nm_0b378bc57fdda416_append_per_row_geodesic_curvature_ridge,Nm 0B378Bc57Fdda416 Append Per Row Geodesic Curvature Ridge,1567.3,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,95,xgboost_hist_240,Xgboost Hist 240,1567.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,96,nm_abc31da7f580fdcc_append_anchor_moment_kernel_elasticnet,Nm Abc31Da7F580Fdcc Append Anchor Moment Kernel Elasticnet,1566.6,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-benchmark-valid,97,histgbm_regularized,Histgbm Regularized,1565.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,98,nm_8874a8406f1d5770_append_orthogonal_rff_bins_histgbm,Nm 8874A8406F1D5770 Append Orthogonal Rff Bins Histgbm,1564.8,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-benchmark-valid,99,nm_6d960b82598dc8a9_append_gaussian_depth_ridge,Nm 6D960B82598Dc8A9 Append Gaussian Depth Ridge,1563.8,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,100,nm_216aa360f9ea1cf4_append_knn_hull_area_ratio_elasticnet,Nm 216Aa360F9Ea1Cf4 Append Knn Hull Area Ratio Elasticnet,1560.2,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-benchmark-valid,101,nm_28b4f1fc6d2da47a_append_per_row_geodesic_curvature_elasticnet,Nm 28B4F1Fc6D2Da47A Append Per Row Geodesic Curvature Elasticnet,1557.8,,,19,45,0,19/45,True,entrant
+tabular-regression-v2-benchmark-valid,102,gradient_boosting_stochastic,Gradient Boosting Stochastic,1557.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,103,nm_9ea2dcf78bb3f4c3_append_row_fractal_hurst_histgbm,Nm 9Ea2Dcf78Bb3F4C3 Append Row Fractal Hurst Histgbm,1556.8,,,30,45,0,30/45,True,entrant
+tabular-regression-v2-benchmark-valid,104,nm_8a3027aaede9ede2_append_betti_gaps_composite_ridge,Nm 8A3027Aaede9Ede2 Append Betti Gaps Composite Ridge,1556.3,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-benchmark-valid,105,nm_aa42b2892200feeb_append_grassmann_subspace_angles_elasticnet,Nm Aa42B2892200Feeb Append Grassmann Subspace Angles Elasticnet,1555.7,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,106,nm_b6801a8708e4b2a1_append_recurrence_graph_spectrum_histgbm,Nm B6801A8708E4B2A1 Append Recurrence Graph Spectrum Histgbm,1555.3,,,27,45,0,27/45,True,entrant
+tabular-regression-v2-benchmark-valid,107,histgbm_large,Histgbm Large,1554.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,108,nm_08c311618d88f009_append_piecewise_affine_projection_bank_elasticnet,Nm 08C311618D88F009 Append Piecewise Affine Projection Bank Elasticnet,1553.6,,,5,45,0,5/45,True,entrant
+tabular-regression-v2-benchmark-valid,109,tabm,Tabm,1552.9,,,45,45,2,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,110,nm_a8e5675b95cef532_append_diffusion_curvature_per_row_elasticnet,Nm A8E5675B95Cef532 Append Diffusion Curvature Per Row Elasticnet,1550.6,,,25,45,0,25/45,True,entrant
+tabular-regression-v2-benchmark-valid,111,extra_trees_1024,Extra Trees 1024,1550.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,112,nm_0cb1fdafe6ed45e5_append_random_power_sphere_map_elasticnet,Nm 0Cb1Fdafe6Ed45E5 Append Random Power Sphere Map Elasticnet,1550.1,,,24,45,1,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,113,nm_490c843b47647e10_append_jackknife_leverage_perrow_ridge,Nm 490C843B47647E10 Append Jackknife Leverage Perrow Ridge,1549.8,,,7,45,0,7/45,True,entrant
+tabular-regression-v2-benchmark-valid,114,nm_7d9df972a094e492_append_piecewise_affine_projection_bank_histgbm,Nm 7D9Df972A094E492 Append Piecewise Affine Projection Bank Histgbm,1548.1,,,30,45,0,30/45,True,entrant
+tabular-regression-v2-benchmark-valid,115,nm_8aa86846ca5308ec_append_rank_normalized_kernel_ridge,Nm 8Aa86846Ca5308Ec Append Rank Normalized Kernel Ridge,1546.4,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,116,nm_cc9e5ec332c4dc5c_append_diffusion_curvature_per_row_histgbm,Nm Cc9E5Ec332C4Dc5C Append Diffusion Curvature Per Row Histgbm,1546.0,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-benchmark-valid,117,extra_trees_512,Extra Trees 512,1546.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,118,lightgbm_quantile_alpha0p5_trees300_leaves31_lr0p04,Lightgbm Quantile Alpha0P5 Trees300 Leaves31 Lr0P04,1546.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,119,nm_0bce2ff986be4643_append_grouped_orthogonal_rff_histgbm,Nm 0Bce2Ff986Be4643 Append Grouped Orthogonal Rff Histgbm,1545.0,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-benchmark-valid,120,catboost_lq_q1p5_trees300_depth6,Catboost Lq Q1P5 Trees300 Depth6,1542.9,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,121,nm_706191de4bd2503b_append_copula_grad_rff_histgbm,Nm 706191De4Bd2503B Append Copula Grad Rff Histgbm,1542.8,,,18,45,0,18/45,True,entrant
+tabular-regression-v2-benchmark-valid,122,nm_d07a525b60678542_append_mst_graph_profile_histgbm,Nm D07A525B60678542 Append Mst Graph Profile Histgbm,1540.5,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-benchmark-valid,123,xgboost_hist_trees1200_depth6_lr0p015,Xgboost Hist Trees1200 Depth6 Lr0P015,1539.5,,,9,45,0,9/45,True,entrant
+tabular-regression-v2-benchmark-valid,124,extra_trees,Extra Trees,1539.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,125,nm_0cb439490f211946_append_random_power_sphere_map_ridge,Nm 0Cb439490F211946 Append Random Power Sphere Map Ridge,1538.5,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-benchmark-valid,126,nm_7b3302db3c55e909_append_copula_tail_dependence_sketch_ridge,Nm 7B3302Db3C55E909 Append Copula Tail Dependence Sketch Ridge,1538.4,,,7,45,0,7/45,True,entrant
+tabular-regression-v2-benchmark-valid,127,nm_e3b41e148f32cbfa_append_knn_hull_area_ratio_histgbm,Nm E3B41E148F32Cbfa Append Knn Hull Area Ratio Histgbm,1537.7,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,128,xgboost_monotone_none_trees300_depth6,Xgboost Monotone None Trees300 Depth6,1537.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,129,ada_boost_deep,Ada Boost Deep,1536.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,130,lightgbm_deep,Lightgbm Deep,1535.1,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,131,xgboost_absoluteerror_trees300_depth4_lr0p04,Xgboost Absoluteerror Trees300 Depth4 Lr0P04,1530.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,132,nm_b8b2dd63b09b094c_append_per_row_geodesic_curvature_histgbm,Nm B8B2Dd63B09B094C Append Per Row Geodesic Curvature Histgbm,1529.7,,,9,45,1,9/45,True,entrant
+tabular-regression-v2-benchmark-valid,133,bagging,Bagging,1529.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,134,nm_4827f95b08f0a9af_append_compressed_rank_kernel_sketch_elasticnet,Nm 4827F95B08F0A9Af Append Compressed Rank Kernel Sketch Elasticnet,1529.6,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-benchmark-valid,135,nm_859f6d9f37942924_append_betti_gaps_composite_elasticnet,Nm 859F6D9F37942924 Append Betti Gaps Composite Elasticnet,1529.3,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,136,nm_d0fce33676934a86_append_delay_embed_histgbm,Nm D0Fce33676934A86 Append Delay Embed Histgbm,1528.0,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-benchmark-valid,137,nm_3e5b4fec2c927192_append_bootstrap_tangent_angular_variance_elasticnet,Nm 3E5B4Fec2C927192 Append Bootstrap Tangent Angular Variance Elasticnet,1526.8,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,138,nm_9aaa22f6cd3a5fc9_append_betti_curve_sparse_stateless_ridge,Nm 9Aaa22F6Cd3A5Fc9 Append Betti Curve Sparse Stateless Ridge,1526.7,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,139,imodels_rulefit_regressor,Imodels Rulefit Regressor,1525.5,,,3,45,0,3/45,True,entrant
+tabular-regression-v2-benchmark-valid,140,nm_d3acab20d12ca1e7_append_copula_chi2_local_ridge,Nm D3Acab20D12Ca1E7 Append Copula Chi2 Local Ridge,1525.4,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-benchmark-valid,141,nm_5fcac9465e794d1d_append_cumulative_sign_rff_histgbm,Nm 5Fcac9465E794D1D Append Cumulative Sign Rff Histgbm,1525.0,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-benchmark-valid,142,xgboost_rf_trees500_depth8,Xgboost Rf Trees500 Depth8,1524.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,143,nystroem_ridge,Nystroem Ridge,1522.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,144,torch_frame_trompt_regressor,Torch Frame Trompt Regressor,1522.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,145,xgboost_hist_trees600_depth6_lr0p03,Xgboost Hist Trees600 Depth6 Lr0P03,1522.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,146,nm_3595a3176b1867e3_append_row_recurrence_features_histgbm,Nm 3595A3176B1867E3 Append Row Recurrence Features Histgbm,1522.4,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,147,nm_60f1d62c8e9a538e_append_mobius_pair_proj_histgbm,Nm 60F1D62C8E9A538E Append Mobius Pair Proj Histgbm,1520.1,,,19,45,0,19/45,True,entrant
+tabular-regression-v2-benchmark-valid,148,xgboost_hist_trees500_depth6,Xgboost Hist Trees500 Depth6,1518.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,149,nm_678b4df369c34ca6_append_recurrence_graph_spectrum_elasticnet,Nm 678B4Df369C34Ca6 Append Recurrence Graph Spectrum Elasticnet,1517.5,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-benchmark-valid,150,nm_08e4914dfd087229_append_copula_grad_rff_ridge,Nm 08E4914Dfd087229 Append Copula Grad Rff Ridge,1516.2,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,151,nm_2a0bcceb71fab7a5_append_copula_chi2_local_elasticnet,Nm 2A0Bcceb71Fab7A5 Append Copula Chi2 Local Elasticnet,1515.6,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-benchmark-valid,152,nm_c8ae9658ac9de190_append_manifold_isometry_defect_ridge,Nm C8Ae9658Ac9De190 Append Manifold Isometry Defect Ridge,1514.8,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-benchmark-valid,153,nm_8d45de7cb6dc5968_append_copula_grad_rff_elasticnet,Nm 8D45De7Cb6Dc5968 Append Copula Grad Rff Elasticnet,1514.2,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-benchmark-valid,154,nm_8f4739d21cc2ee7e_append_deterministic_cosine_pool_rff_elasticnet,Nm 8F4739D21Cc2Ee7E Append Deterministic Cosine Pool Rff Elasticnet,1513.7,,,27,45,0,27/45,True,entrant
+tabular-regression-v2-benchmark-valid,155,nm_389c358741cccf96_append_copula_diag_entropy_elasticnet,Nm 389C358741Cccf96 Append Copula Diag Entropy Elasticnet,1513.4,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-benchmark-valid,156,torch_frame_resnet_regressor,Torch Frame Resnet Regressor,1513.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,157,nm_4e9a5ce11584b89e_append_anchor_moment_kernel_ridge,Nm 4E9A5Ce11584B89E Append Anchor Moment Kernel Ridge,1511.3,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,158,nm_4971fe23a4ff8280_append_orthogonal_rff_bins_elasticnet,Nm 4971Fe23A4Ff8280 Append Orthogonal Rff Bins Elasticnet,1510.8,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-benchmark-valid,159,torch_frame_fttransformer_regressor,Torch Frame Fttransformer Regressor,1510.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,160,ada_boost,Ada Boost,1509.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,161,nm_578a402572df9dfb_append_hammersley_rff_histgbm,Nm 578A402572Df9Dfb Append Hammersley Rff Histgbm,1509.5,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,162,nm_57a25013708284c2_append_deterministic_hadamard_kernel_features_ridge,Nm 57A25013708284C2 Append Deterministic Hadamard Kernel Features Ridge,1506.5,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-benchmark-valid,163,nm_f1a65a72f8c248f3_append_hammersley_rff_ridge,Nm F1A65A72F8C248F3 Append Hammersley Rff Ridge,1504.8,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-benchmark-valid,164,pygam_linear_gam_regressor,Pygam Linear Gam Regressor,1504.4,,,39,45,0,39/45,True,entrant
+tabular-regression-v2-benchmark-valid,165,nm_3e95b085efa7010f_append_cumulative_sign_rff_ridge,Nm 3E95B085Efa7010F Append Cumulative Sign Rff Ridge,1504.1,,,26,45,0,26/45,True,entrant
+tabular-regression-v2-benchmark-valid,166,nm_92c5500eb0e10f87_append_phase_curvature_transform_elasticnet,Nm 92C5500Eb0E10F87 Append Phase Curvature Transform Elasticnet,1503.7,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-benchmark-valid,167,xgboost_deep,Xgboost Deep,1503.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,168,nm_dc11f5a6a6100593_append_grouped_orthogonal_rff_elasticnet,Nm Dc11F5A6A6100593 Append Grouped Orthogonal Rff Elasticnet,1500.8,,,31,45,0,31/45,True,entrant
+tabular-regression-v2-benchmark-valid,169,nm_9379f2eb196b5c02_append_compressed_rank_kernel_sketch_ridge,Nm 9379F2Eb196B5C02 Append Compressed Rank Kernel Sketch Ridge,1500.8,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,170,tabr_regressor,Tabr Regressor,1500.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,171,ebm,Ebm,1499.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,172,nm_d22288bcd5864509_append_grassmann_subspace_angles_ridge,Nm D22288Bcd5864509 Append Grassmann Subspace Angles Ridge,1499.5,,,18,45,1,18/45,True,entrant
+tabular-regression-v2-benchmark-valid,173,ada_boost_200,Ada Boost 200,1499.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,174,nm_5c11dfcf6d345373_append_conformal_local_scale_elasticnet,Nm 5C11Dfcf6D345373 Append Conformal Local Scale Elasticnet,1498.0,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-benchmark-valid,175,lightgbm_linear_tree_trees300_leaves31_lr0p04,Lightgbm Linear Tree Trees300 Leaves31 Lr0P04,1497.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,176,nm_3ee5ce9a36ff1b45_append_orthogonal_rff_bins_ridge,Nm 3Ee5Ce9A36Ff1B45 Append Orthogonal Rff Bins Ridge,1497.5,,,37,45,0,37/45,True,entrant
+tabular-regression-v2-benchmark-valid,177,nm_31b031445611ed91_append_harmonic_phase_entropy_elasticnet,Nm 31B031445611Ed91 Append Harmonic Phase Entropy Elasticnet,1495.1,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,178,nm_33896aa0fc0f650d_append_quantized_copula_hmm_elasticnet,Nm 33896Aa0Fc0F650D Append Quantized Copula Hmm Elasticnet,1492.2,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-benchmark-valid,179,nm_205f84f829c3b9fa_append_manifold_isometry_defect_histgbm,Nm 205F84F829C3B9Fa Append Manifold Isometry Defect Histgbm,1491.6,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-benchmark-valid,180,nm_07c7bb3da36a3338_append_hammersley_rff_elasticnet,Nm 07C7Bb3Da36A3338 Append Hammersley Rff Elasticnet,1490.6,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-benchmark-valid,181,nu_svr_rbf,Nu Svr Rbf,1487.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,182,hyp3_stacking_trees_meta,Hyp3 Stacking Trees Meta,1484.7,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-benchmark-valid,183,elastic_net_cv,Elastic Net Cv,1484.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,184,nm_ca4335826b6f7ed8_append_sign_stable_rff_elasticnet,Nm Ca4335826B6F7Ed8 Append Sign Stable Rff Elasticnet,1484.3,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-benchmark-valid,185,nm_f3b838c3e2cab833_append_rank_uncertainty_proj_elasticnet,Nm F3B838C3E2Cab833 Append Rank Uncertainty Proj Elasticnet,1484.2,,,3,45,0,3/45,True,entrant
+tabular-regression-v2-benchmark-valid,186,nm_a92d20b8e3117277_append_grouped_orthogonal_rff_ridge,Nm A92D20B8E3117277 Append Grouped Orthogonal Rff Ridge,1482.8,,,28,45,0,28/45,True,entrant
+tabular-regression-v2-benchmark-valid,187,lasso,Lasso,1481.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,188,ard_regression,Ard Regression,1480.9,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,189,bayesian_ridge,Bayesian Ridge,1480.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,190,nm_5a4da1e844a6d376_append_deterministic_cosine_pool_rff_ridge,Nm 5A4Da1E844A6D376 Append Deterministic Cosine Pool Rff Ridge,1480.2,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-benchmark-valid,191,nm_6d06f81eaba859ca_append_cumulative_sign_rff_elasticnet,Nm 6D06F81Eaba859Ca Append Cumulative Sign Rff Elasticnet,1479.0,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,192,nm_ba04c88dfd2bc5f2_append_rank_normalized_kernel_elasticnet,Nm Ba04C88Dfd2Bc5F2 Append Rank Normalized Kernel Elasticnet,1478.3,,,21,45,0,21/45,True,entrant
+tabular-regression-v2-benchmark-valid,193,knn_distance,Knn Distance,1477.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,194,nm_0d7bebbe9e763cce_append_rank_uncertainty_proj_ridge,Nm 0D7Bebbe9E763Cce Append Rank Uncertainty Proj Ridge,1477.1,,,3,45,0,3/45,True,entrant
+tabular-regression-v2-benchmark-valid,195,nm_bf4001fb0fb58a5b_append_phase_coupling_entropy_elasticnet,Nm Bf4001Fb0Fb58A5B Append Phase Coupling Entropy Elasticnet,1476.4,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-benchmark-valid,196,ridge_cv,Ridge Cv,1475.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,197,nm_79f84d4095326876_append_mst_graph_profile_elasticnet,Nm 79F84D4095326876 Append Mst Graph Profile Elasticnet,1473.1,,,5,45,0,5/45,True,entrant
+tabular-regression-v2-benchmark-valid,198,nm_0039f3c487da3912_append_row_blom_normal_scores_ridge,Nm 0039F3C487Da3912 Append Row Blom Normal Scores Ridge,1471.8,,,10,45,0,10/45,True,entrant
+tabular-regression-v2-benchmark-valid,199,knn,Knn,1469.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,200,nm_b3ed9b5d98a97dbd_append_copula_diag_entropy_ridge,Nm B3Ed9B5D98A97Dbd Append Copula Diag Entropy Ridge,1467.1,,,3,45,0,3/45,True,entrant
+tabular-regression-v2-benchmark-valid,201,elastic_net,Elastic Net,1465.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,202,nm_d10236965260e01a_append_pseudo_winsor_moments_elasticnet,Nm D10236965260E01A Append Pseudo Winsor Moments Elasticnet,1464.7,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-benchmark-valid,203,nm_8fd03c4ae22d5318_append_betti_curve_sparse_stateless_histgbm,Nm 8Fd03C4Ae22D5318 Append Betti Curve Sparse Stateless Histgbm,1464.5,,,7,45,0,7/45,True,entrant
+tabular-regression-v2-benchmark-valid,204,lightgbm_dart,Lightgbm Dart,1462.2,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,205,nm_ccb82531603316b5_append_cepstrum_envelope_elasticnet,Nm Ccb82531603316B5 Append Cepstrum Envelope Elasticnet,1462.0,,,21,45,0,21/45,True,entrant
+tabular-regression-v2-benchmark-valid,206,ridge,Ridge,1461.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,207,nm_54cc3c571d77f910_append_deterministic_pair_hash_kernel_ridge,Nm 54Cc3C571D77F910 Append Deterministic Pair Hash Kernel Ridge,1461.7,,,9,45,0,9/45,True,entrant
+tabular-regression-v2-benchmark-valid,208,nm_a79f7115d751b8a4_append_rank_quantile_warp_adapt_elasticnet,Nm A79F7115D751B8A4 Append Rank Quantile Warp Adapt Elasticnet,1460.8,,,23,45,1,23/45,True,entrant
+tabular-regression-v2-benchmark-valid,209,nm_409bcb6bb142c570_append_phase_amplitude_coupling_index_elasticnet,Nm 409Bcb6Bb142C570 Append Phase Amplitude Coupling Index Elasticnet,1460.4,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-benchmark-valid,210,nm_08ced5aa8f2aab86_append_phase_entropy_quantile_ridge,Nm 08Ced5Aa8F2Aab86 Append Phase Entropy Quantile Ridge,1459.1,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-benchmark-valid,211,lightgbm_rf_trees500_leaves63,Lightgbm Rf Trees500 Leaves63,1458.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,212,nm_42e5036e51cf9ead_append_deterministic_hadamard_kernel_features_elasticnet,Nm 42E5036E51Cf9Ead Append Deterministic Hadamard Kernel Features Elasticnet,1457.1,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,213,nm_f3beb0cc460406fa_append_phase_structure_moment_elasticnet,Nm F3Beb0Cc460406Fa Append Phase Structure Moment Elasticnet,1455.9,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-benchmark-valid,214,nm_921de4428243e8f4_append_mcd_leverage_proj_ridge,Nm 921De4428243E8F4 Append Mcd Leverage Proj Ridge,1452.3,,,5,45,0,5/45,True,entrant
+tabular-regression-v2-benchmark-valid,215,nm_0e6fe45ac95e6bf2_append_cepstrum_envelope_ridge,Nm 0E6Fe45Ac95E6Bf2 Append Cepstrum Envelope Ridge,1452.0,,,25,45,0,25/45,True,entrant
+tabular-regression-v2-benchmark-valid,216,nm_0232ca9200032f73_append_gabor_phase_congruency_approx_ridge,Nm 0232Ca9200032F73 Append Gabor Phase Congruency Approx Ridge,1451.5,,,26,45,0,26/45,True,entrant
+tabular-regression-v2-benchmark-valid,217,poly2_ridge,Poly2 Ridge,1449.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,218,nm_4044f8a5a4fee913_append_phase_curvature_transform_ridge,Nm 4044F8A5A4Fee913 Append Phase Curvature Transform Ridge,1449.7,,,21,45,0,21/45,True,entrant
+tabular-regression-v2-benchmark-valid,219,nm_8e04a31c9bbe34ac_append_phase_coupling_entropy_ridge,Nm 8E04A31C9Bbe34Ac Append Phase Coupling Entropy Ridge,1449.5,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-benchmark-valid,220,nm_21c8513198332e1a_append_orbit_moment_bank_elasticnet,Nm 21C8513198332E1A Append Orbit Moment Bank Elasticnet,1449.5,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-benchmark-valid,221,nm_2b8fafb5273f0bd9_append_harmonic_phase_entropy_ridge,Nm 2B8Fafb5273F0Bd9 Append Harmonic Phase Entropy Ridge,1448.1,,,21,45,0,21/45,True,entrant
+tabular-regression-v2-benchmark-valid,222,nm_0195a4ea9f5f9dc0_append_row_fractal_hurst_ridge,Nm 0195A4Ea9F5F9Dc0 Append Row Fractal Hurst Ridge,1447.7,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-benchmark-valid,223,nm_500d47983b91e59d_append_phase_gated_ratio_ridge,Nm 500D47983B91E59D Append Phase Gated Ratio Ridge,1445.8,,,28,45,0,28/45,True,entrant
+tabular-regression-v2-benchmark-valid,224,nm_ba5912832fa39272_append_jackknife_leverage_perrow_elasticnet,Nm Ba5912832Fa39272 Append Jackknife Leverage Perrow Elasticnet,1441.8,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-benchmark-valid,225,nm_b9f40b762c24d559_append_robust_phase_autocov_summary_elasticnet,Nm B9F40B762C24D559 Append Robust Phase Autocov Summary Elasticnet,1441.4,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-benchmark-valid,226,nm_8775587f28a78f4c_append_phase_amplitude_coupling_contrast_ridge,Nm 8775587F28A78F4C Append Phase Amplitude Coupling Contrast Ridge,1441.0,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-benchmark-valid,227,nm_bd2996293441aa75_append_pseudo_winsor_moments_ridge,Nm Bd2996293441Aa75 Append Pseudo Winsor Moments Ridge,1439.6,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-benchmark-valid,228,nm_65778ee0ce111df5_append_row_fractal_hurst_elasticnet,Nm 65778Ee0Ce111Df5 Append Row Fractal Hurst Elasticnet,1438.3,,,4,45,0,4/45,True,entrant
+tabular-regression-v2-benchmark-valid,229,nm_d3a3205740f40c59_append_recurrence_graph_spectrum_ridge,Nm D3A3205740F40C59 Append Recurrence Graph Spectrum Ridge,1438.0,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,230,nm_6dbacd2e99134561_append_quantile_bin_rff_ridge,Nm 6Dbacd2E99134561 Append Quantile Bin Rff Ridge,1435.9,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,231,nm_d31aefa0767985e2_append_phase_amplitude_coupling_contrast_elasticnet,Nm D31Aefa0767985E2 Append Phase Amplitude Coupling Contrast Elasticnet,1435.5,,,11,45,0,11/45,True,entrant
+tabular-regression-v2-benchmark-valid,232,nm_fd99e93e79259ba9_append_robust_phase_autocov_summary_ridge,Nm Fd99E93E79259Ba9 Append Robust Phase Autocov Summary Ridge,1435.2,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,233,nm_8c6c778914ead3dc_append_mcd_leverage_proj_elasticnet,Nm 8C6C778914Ead3Dc Append Mcd Leverage Proj Elasticnet,1434.8,,,16,45,0,16/45,True,entrant
+tabular-regression-v2-benchmark-valid,234,linear_regression,Linear Regression,1434.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,235,nm_99140796a9ac134e_append_phase_structure_moment_ridge,Nm 99140796A9Ac134E Append Phase Structure Moment Ridge,1432.2,,,24,45,0,24/45,True,entrant
+tabular-regression-v2-benchmark-valid,236,nm_c6711fd746192507_append_phase_gated_ratio_elasticnet,Nm C6711Fd746192507 Append Phase Gated Ratio Elasticnet,1431.4,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,237,nm_543717e7a12b6b9d_append_mobius_pair_proj_elasticnet,Nm 543717E7A12B6B9D Append Mobius Pair Proj Elasticnet,1430.6,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,238,huber,Huber,1428.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,239,rbf_svr,Rbf Svr,1427.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,240,nm_84dbfe25bb990ba1_append_delay_embed_elasticnet,Nm 84Dbfe25Bb990Ba1 Append Delay Embed Elasticnet,1425.8,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-benchmark-valid,241,imodels_figs_regressor_depth3,Imodels Figs Regressor Depth3,1425.6,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,242,nm_3d2c0865fd617050_append_phase_quadrant_coherence_elasticnet,Nm 3D2C0865Fd617050 Append Phase Quadrant Coherence Elasticnet,1424.6,,,20,45,0,20/45,True,entrant
+tabular-regression-v2-benchmark-valid,243,nm_bc5772e8e5f9ed90_append_row_recurrence_features_ridge,Nm Bc5772E8E5F9Ed90 Append Row Recurrence Features Ridge,1423.9,,,17,45,0,17/45,True,entrant
+tabular-regression-v2-benchmark-valid,244,imodels_figs_regressor,Imodels Figs Regressor,1423.6,,,19,45,0,19/45,True,entrant
+tabular-regression-v2-benchmark-valid,245,nm_868356988412eea0_append_piecewise_affine_projection_bank_ridge,Nm 868356988412Eea0 Append Piecewise Affine Projection Bank Ridge,1422.7,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,246,imodels_figs_regressor_rules64_depth3,Imodels Figs Regressor Rules64 Depth3,1420.3,,,12,45,0,12/45,True,entrant
+tabular-regression-v2-benchmark-valid,247,nm_a09e9a02990bed59_append_orbit_moment_bank_ridge,Nm A09E9A02990Bed59 Append Orbit Moment Bank Ridge,1420.3,,,14,45,0,14/45,True,entrant
+tabular-regression-v2-benchmark-valid,248,nm_9c0c12a03ce466f0_append_quantile_bin_rff_elasticnet,Nm 9C0C12A03Ce466F0 Append Quantile Bin Rff Elasticnet,1420.0,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-benchmark-valid,249,kernel_ridge_rbf,Kernel Ridge Rbf,1419.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,250,nm_f28b696f57d9cb85_append_phase_amplitude_coupling_index_ridge,Nm F28B696F57D9Cb85 Append Phase Amplitude Coupling Index Ridge,1415.0,,,22,45,0,22/45,True,entrant
+tabular-regression-v2-benchmark-valid,251,imodels_figs_regressor_rules16,Imodels Figs Regressor Rules16,1413.1,,,25,45,0,25/45,True,entrant
+tabular-regression-v2-benchmark-valid,252,nm_8b6d7c7d0244c504_append_phase_quadrant_coherence_ridge,Nm 8B6D7C7D0244C504 Append Phase Quadrant Coherence Ridge,1413.0,,,22,45,0,22/45,True,entrant
+tabular-regression-v2-benchmark-valid,253,nm_0062a441167c6e4e_append_quantized_copula_hmm_ridge,Nm 0062A441167C6E4E Append Quantized Copula Hmm Ridge,1408.7,,,2,45,0,2/45,True,entrant
+tabular-regression-v2-benchmark-valid,254,orthogonal_matching_pursuit,Orthogonal Matching Pursuit,1405.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,255,nm_b302358723d9091a_append_gabor_phase_congruency_approx_elasticnet,Nm B302358723D9091A Append Gabor Phase Congruency Approx Elasticnet,1403.5,,,15,45,0,15/45,True,entrant
+tabular-regression-v2-benchmark-valid,256,nm_10dd2466bd7e3a96_append_rank_quantile_warp_adapt_ridge,Nm 10Dd2466Bd7E3A96 Append Rank Quantile Warp Adapt Ridge,1403.1,,,4,45,0,4/45,True,entrant
+tabular-regression-v2-benchmark-valid,257,nm_46378e9fbe0ee3dc_append_partition_moment_features_ridge,Nm 46378E9Fbe0Ee3Dc Append Partition Moment Features Ridge,1402.7,,,9,45,0,9/45,True,entrant
+tabular-regression-v2-benchmark-valid,258,huber_robust,Huber Robust,1402.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,259,knn_cosine,Knn Cosine,1400.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,260,knn_large,Knn Large,1400.0,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,261,linear_svr,Linear Svr,1396.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,262,pca_lgbm,Pca Lgbm,1387.9,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,263,quantile_median,Quantile Median,1386.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,264,nm_7924d040f8482660_append_bootstrap_tangent_angular_variance_ridge,Nm 7924D040F8482660 Append Bootstrap Tangent Angular Variance Ridge,1385.4,,,6,45,0,6/45,True,entrant
+tabular-regression-v2-benchmark-valid,265,nm_67bc114fe8a7713a_append_copula_gaussian_loglik_ridge,Nm 67Bc114Fe8A7713A Append Copula Gaussian Loglik Ridge,1385.2,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-benchmark-valid,266,nm_356d74fd4b2f0b70_append_conformal_local_scale_ridge,Nm 356D74Fd4B2F0B70 Append Conformal Local Scale Ridge,1379.2,,,2,45,0,2/45,True,entrant
+tabular-regression-v2-benchmark-valid,267,ransac,Ransac,1377.9,,,41,45,1,41/45,True,entrant
+tabular-regression-v2-benchmark-valid,268,nm_f00d627ae4cf7985_append_delay_embed_ridge,Nm F00D627Ae4Cf7985 Append Delay Embed Ridge,1377.4,,,13,45,0,13/45,True,entrant
+tabular-regression-v2-benchmark-valid,269,nm_b6c265e586f6f8f8_append_phase_entropy_quantile_elasticnet,Nm B6C265E586F6F8F8 Append Phase Entropy Quantile Elasticnet,1374.6,,,4,45,0,4/45,True,entrant
+tabular-regression-v2-benchmark-valid,270,nm_022bbd54efeaeb7a_append_sign_stable_rff_ridge,Nm 022Bbd54Efeaeb7A Append Sign Stable Rff Ridge,1374.2,,,8,45,0,8/45,True,entrant
+tabular-regression-v2-benchmark-valid,271,kimik3_regressor,Kimi K3 attempt,1372.7,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,272,tweedie_regressor,Tweedie Regressor,1370.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,273,decision_tree,Decision Tree,1366.1,,,45,45,1,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,274,passive_aggressive_regressor,Passive Aggressive Regressor,1363.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,275,mlp,Mlp,1358.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,276,pytorch_tabular_fttransformer_regressor_epochs40,Pytorch Tabular Fttransformer Regressor Epochs40,1337.3,,,25,45,0,25/45,True,entrant
+tabular-regression-v2-benchmark-valid,277,nm_4e85ba54ac456cdc_append_row_recurrence_features_elasticnet,Nm 4E85Ba54Ac456Cdc Append Row Recurrence Features Elasticnet,1334.9,,,7,45,0,7/45,True,entrant
+tabular-regression-v2-benchmark-valid,278,pytorch_tabular_autoint_regressor,Pytorch Tabular Autoint Regressor,1317.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,279,theil_sen,Theil Sen,1314.2,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,280,poisson_regressor,Poisson Regressor,1310.5,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,281,nm_52636a5ff6f79b67_append_copula_log_density_estimate_ridge,Nm 52636A5Ff6F79B67 Append Copula Log Density Estimate Ridge,1300.4,,,10,45,0,10/45,True,entrant
+tabular-regression-v2-benchmark-valid,282,skorch_resmlp_regressor,Skorch Resmlp Regressor,1266.0,,,30,45,0,30/45,True,entrant
+tabular-regression-v2-benchmark-valid,283,xgboost_gblinear,Xgboost Gblinear,1264.9,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,284,xgboost_gblinear_alpha0p001_lambda1,Xgboost Gblinear Alpha0P001 Lambda1,1252.3,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,285,pytorch_tabular_fttransformer_regressor,Pytorch Tabular Fttransformer Regressor,1247.1,,,26,45,0,26/45,True,entrant
+tabular-regression-v2-benchmark-valid,286,sgd_regressor,Sgd Regressor,1244.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,287,hunt9b_r3,Hunt9B R3,1244.3,,,1,45,0,1/45,True,entrant
+tabular-regression-v2-benchmark-valid,288,nm_5672934811e2231f_append_random_vine_surprise_ridge,Nm 5672934811E2231F Append Random Vine Surprise Ridge,1235.6,,,5,45,0,5/45,True,entrant
+tabular-regression-v2-benchmark-valid,289,pytorch_tabular_gate_regressor,Pytorch Tabular Gate Regressor,1222.1,,,37,45,0,37/45,True,entrant
+tabular-regression-v2-benchmark-valid,290,rbfsampler_sgd,Rbfsampler Sgd,1206.6,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,291,pytorch_tabular_gandalf_regressor,Pytorch Tabular Gandalf Regressor,1142.6,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-benchmark-valid,292,skorch_resmlp_regressor_hidden256_depth4_epochs30,Skorch Resmlp Regressor Hidden256 Depth4 Epochs30,1135.7,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-benchmark-valid,293,tabm_regressor_epochs10,Tabm Regressor Epochs10,1121.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,294,tabnet_regressor_steps3_epochs50,Tabnet Regressor Steps3 Epochs50,1080.4,,,40,45,0,40/45,True,entrant
+tabular-regression-v2-benchmark-valid,295,pytorch_tabular_node_regressor,Pytorch Tabular Node Regressor,1045.4,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,296,tabnet,Tabnet,1037.1,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,297,skorch_resmlp_regressor_hidden64_depth2_epochs10,Skorch Resmlp Regressor Hidden64 Depth2 Epochs10,1004.4,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-benchmark-valid,298,pytorch_tabular_fttransformer_regressor_epochs5,Pytorch Tabular Fttransformer Regressor Epochs5,951.4,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-benchmark-valid,299,pytorch_tabular_category_embedding_regressor_epochs40,Pytorch Tabular Category Embedding Regressor Epochs40,934.0,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-benchmark-valid,300,pytorch_tabular_category_embedding_regressor,Pytorch Tabular Category Embedding Regressor,871.3,,,29,45,0,29/45,True,entrant
+tabular-regression-v2-benchmark-valid,301,pytorch_tabular_category_embedding_regressor_epochs5,Pytorch Tabular Category Embedding Regressor Epochs5,695.9,,,31,45,0,31/45,True,entrant
+tabular-regression-v2-benchmark-valid,302,pytorch_tabular_danet_regressor,Pytorch Tabular Danet Regressor,647.8,,,45,45,0,45/45,True,entrant
+tabular-regression-v2-benchmark-valid,303,pytorch_tabular_tabtransformer_regressor,Pytorch Tabular Tabtransformer Regressor,526.7,,,23,45,0,23/45,True,entrant
+tabular-regression-v2-benchmark-valid,304,pytorch_tabular_mdn_regressor,Pytorch Tabular Mdn Regressor,405.8,,,45,45,0,45/45,True,entrant
+automl-64-family-rmse-bt-v3,1,Opus5p5_Extra,Opus5p5_Extra,1690.8345518061888,1642.3524060892548,1747.0507484901684,64,64,,64/64,True,best_native_regressor
+automl-64-family-rmse-bt-v3,2,Gemini4_argon_high,Gemini4_argon_high,1603.3122972978863,1561.6420581438033,1649.3772216803586,64,64,,64/64,True,entrant
+automl-64-family-rmse-bt-v3,3,kimik3p1_max,kimik3p1_max,1510.6689563931964,1468.7495833753974,1554.3058691041456,64,64,,64/64,True,entrant
+automl-64-family-rmse-bt-v3,4,GPT6p1_Sol_Max,GPT6p1_Sol_Max,1497.5246661880271,1455.9469146661218,1541.7683357422368,64,64,,64/64,True,entrant
+automl-64-family-rmse-bt-v3,5,GPT6_Astra_Max,GPT6_Astra_Max,1389.2113069552752,1339.4267730935544,1433.5961305632059,64,64,,64/64,True,entrant
+automl-64-family-rmse-bt-v3,6,grok4p7_xhigh,grok4p7_xhigh,1308.4482213594254,1240.265086452558,1366.2754657380437,64,64,,64/64,True,entrant

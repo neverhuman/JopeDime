@@ -1,12 +1,13 @@
 # Native AutoML regressors
 
-Three original safe Rust regressors, with no dependencies beyond the standard library, are
+Four original safe Rust regressors, with no dependencies beyond the standard library, are
 registered in `jope_automl::REGRESSORS`:
 
 | Id | Source | SHA-256 |
 | --- | --- | --- |
 | `GPT6p1_Sol_Max` | [`src/GPT6p1_Sol_Max.rs`](src/GPT6p1_Sol_Max.rs) | `fe5bb21e…f75a8` |
 | `Gemini4_argon_high` | [`src/Gemini4_argon_high.rs`](src/Gemini4_argon_high.rs) | `d5cd85fc…053d3` |
+| `grok4p7_xhigh` | [`src/grok4p7_xhigh.rs`](src/grok4p7_xhigh.rs) | `8e648cef…664f8` |
 | `kimik3p1_max` | [`src/kimik3p1_max.rs`](src/kimik3p1_max.rs) | `0c211694…6ceb3` |
 
 `kimik3p1_max` is model release **1.0.0** (`KIMIK3P1_MAX_VERSION`). The receipt is
@@ -84,6 +85,10 @@ Elo: these two native regressors plus `Opus5p5_Extra` and `GPT6_Astra_Max`.
   after Holm adjustment.
 - **Figures.** Ratings, pairwise win shares and source sizes are in
   [`figures/`](../../assets/automl-elo/v1/figures).
+
+[`assets/automl-elo/v2`](../../assets/automl-elo/v2/SOURCES.md) refits the v1 panel with
+`grok4p7_xhigh` added. The other four entrants are not refitted; their ratings move because
+Bradley-Terry is recomputed on the five-player pool. v1 is unchanged.
 
 [`assets/automl-elo/v3`](../../assets/automl-elo/v3/SOURCES.md) refits the same panel with
 `kimik3p1_max` added to the five-entrant pool (the v1 four plus `grok4p7_xhigh`). No earlier
