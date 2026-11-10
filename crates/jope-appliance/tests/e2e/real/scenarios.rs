@@ -55,7 +55,7 @@ pub(crate) fn shared_run_surfaces() -> Result<()> {
     let mut rpc = Rpc::open(server.home.path())?;
     let mut args = serde_json::to_value(&spec)?;
     args["idempotency_key"] = json!(KEY);
-    let started: RunSnapshot = serde_json::from_value(rpc.tool("run_start", args)?)?;
+    let started: RunSnapshot = serde_json::from_value(rpc.run_start_when_idle(args)?)?;
     ensure!(&started.run_id == id, "MCP retry created another run");
     let snapshot: RunSnapshot =
         serde_json::from_value(rpc.tool("run_status", json!({"run_id":id}))?)?;
@@ -104,7 +104,7 @@ pub(crate) fn shared_run_surfaces() -> Result<()> {
     )?);
     let mut args = serde_json::to_value(&spec)?;
     args["idempotency_key"] = json!("int01-independent-mcp");
-    let started: RunSnapshot = serde_json::from_value(rpc.tool("run_start", args)?)?;
+    let started: RunSnapshot = serde_json::from_value(rpc.run_start_when_idle(args)?)?;
     wait_complete(&server.client, &started.run_id)?;
     let snapshot =
         serde_json::from_value(rpc.tool("run_status", json!({"run_id":started.run_id}))?)?;
