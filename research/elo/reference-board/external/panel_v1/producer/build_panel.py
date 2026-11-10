@@ -8,8 +8,11 @@ add([r["dataset_id"] for r in m],"flywheel-corpus")
 a=json.load(open("/home/ubuntu/gpu_bench/fused/bridge_provenance_audit.json"))["selected_datasets"]
 add([r["dataset_id"] for r in a],"fused-bridge-train/val")
 for p in glob.glob("/home/ubuntu/gpu_bench/runs/infer_v1_cohort915/*.json")+glob.glob("/home/ubuntu/gpu_bench/runs/infer_v1_cohort915/*manifest*"):
-    try: add(re.findall(r'"dataset_id"\s*:\s*"([0-9a-f]{16})"',open(p).read()),"cohort915")
-    except Exception: pass
+    try:
+        text = open(p).read()
+    except (OSError, UnicodeDecodeError):
+        continue
+    add(re.findall(r'"dataset_id"\s*:\s*"([0-9a-f]{16})"', text), "cohort915")
 g=json.load(open("/home/ubuntu/JopeDime/assets/regression/sotarena-tabular-regression-v2/registry/datasets.tabular-regression-v2.json"))["datasets"]
 add([d["id"] for d in g],"golden45")
 excl_fam=set(it["family_key"] for it in inv if it["id"] in excl and it.get("family_key"))

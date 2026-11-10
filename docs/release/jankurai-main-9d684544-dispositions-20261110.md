@@ -865,7 +865,24 @@ The placeholder marker is fixed in `research/elo/reference-board/tools/run_board
 
 These high findings stay as already disposed, and this pass does not edit them:
 
-- `build_panel.py:12` (`except Exception: pass`) stays. It is the reported fallback-soup hit. The next non-excluded swallows are in research H* trees, which this lane does not own. Narrowing this one line would only move the cap onto a file this pass cannot change.
+- `build_panel.py:12` (`except Exception: pass`) stays on this audit. It is the reported fallback-soup hit. The next swallows of that shape are in research H* trees.
 - `evolve.rs` shape, `ref.cpp`, the six short enum names, `jankurai.yml`, and the observatory receipt stay for the reasons already recorded. `ref.cpp` is pinned recovery evidence. `evolve.rs` is an ADR-0004 compatibility-freeze source.
 - H* copy classes, `h252` `exec`, and `h310` false-green stay. Those trees are out of scope. `dope_freeze_guard.py` is not diverged from its H* copy.
 - #2180 comparator files, #2181 `search_inner/slot.rs`, holdout/dev91 data, and `provenance_bind.py` were not edited.
+
+## Audit of main e6e79d81
+
+Full jankurai 1.7.6 audit of `e6e79d818ed490b591957dda5f4aaa1df43ff1d7`
+(2026-11-10T13:02:15Z to 2026-11-10T13:16:58Z). Score 68, raw 77, hard 55, soft 9,
+64 findings. P37 exception integrity passed. Evidence exclusion passed (472 paths).
+Verification artifact valid. The `run_board.sh` placeholder is gone. The placeholder
+cap is now `research/flywheel_selfplay/h317_island10_multiscale_curriculum/test_stage_v_h317.py:862`,
+`monkeypatch.setattr(SV, "verify_inputs", lambda r, a, b: {"stub": True})`. That is a
+test double in an H* tree. The file is not edited.
+
+`build_panel.py` no longer uses `except Exception`. A missing or undecodable cohort
+file is skipped with `OSError` or `UnicodeDecodeError`, and the dataset ids from a
+readable file are still added. `deploy/dl-flywheel/tests/test_batch_stream.py`
+tearDown closes the stream and continues only on `sqlite3.Error`, which is what
+`BatchStream.close` can raise. The other `except Exception: pass` bodies are in
+research H* trees and stay.
