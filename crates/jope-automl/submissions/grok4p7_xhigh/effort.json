@@ -1,0 +1,31 @@
+{
+  "schema_version": "jopedime-authoring-effort-estimate/v1",
+  "scope": "Authoring of grok4p7_xhigh through source freeze, then the separate post-freeze Elo panel.",
+  "clock": {
+    "zone": "UTC",
+    "session_created_at": "2026-11-05T16:37:17Z",
+    "learner_files_frozen_at": "2026-11-06T01:19:07Z",
+    "wall_seconds_session_create_to_freeze": 31310,
+    "wall_clock_note": "8 h 42 min from session create to the frozen files. That span includes the wait for plan approval. Implementation after approval was 2026-11-06T01:06:06Z to 2026-11-06T01:19:07Z.",
+    "panel_completed_at": "2026-11-06T16:30:23Z",
+    "panel_note": "576 cells, four at a time, after the later request to score the frozen source. Fit wall time is in assets/automl-elo/v2/GROK_COSTS.json."
+  },
+  "tokens": {
+    "metered_input_tokens": null,
+    "metered_output_tokens": null,
+    "metered_reasoning_tokens": null,
+    "metered_api_total_tokens": null,
+    "exact_provider_usage_available": false,
+    "learner_source_bytes": 43142,
+    "manifest_bytes": 1026,
+    "design_words": 1560,
+    "deliverable_bytes": 53201,
+    "context_window_recorded_on_session": 500000,
+    "billing_caveat": "The session record has no provider token meter. These byte counts are the frozen deliverable. They are not a billed token total."
+  },
+  "algorithm_revisions_after_source_freeze": 0,
+  "initial_compiler_attempts": 1,
+  "design_time_predictive_experiments": 0,
+  "panel_cells_completed": 576,
+  "panel_cells_failed": 0
+}

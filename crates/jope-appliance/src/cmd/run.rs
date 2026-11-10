@@ -498,6 +498,13 @@ fn explain_start(error: jope_client::transport::TransportError) -> anyhow::Error
     let text = error.to_string();
     let hint = if text.contains("requires task=regression") {
         Some("this engine runs regression only: pass `--task regression` with a numeric `--target` column")
+    } else if text.contains("random FIT") || text.contains("random holdout") {
+        Some("this engine supports random splits only; leave group_column and time_column null")
+    } else if text.contains("not numeric")
+        || text.contains("numeric feature")
+        || text.contains("finite number")
+    {
+        Some("use a numeric target and at least one numeric feature; a text column is named in the error, and is ignored when another column is numeric")
     } else if text.contains("export language") {
         Some("pass `--language rust,python` (or rust, python, javascript)")
     } else {

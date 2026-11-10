@@ -142,24 +142,15 @@ impl Draft {
                                 .map(str::to_owned)
                                 .collect();
                         }
-                        "--group" => {
-                            i += 1;
-                            self.split.group_column =
-                                Some(args.get(i).ok_or("--group needs a value")?.clone());
-                            self.split.kind = SplitKind::Grouped;
-                        }
-                        "--time" => {
-                            i += 1;
-                            self.split.time_column =
-                                Some(args.get(i).ok_or("--time needs a value")?.clone());
-                            self.split.kind = SplitKind::TimeOrdered;
+                        "--group" | "--time" => {
+                            return Err(
+                                "this engine supports random splits only. Grouped and time-ordered splits are not available"
+                                    .into(),
+                            );
                         }
                         flag => return Err(format!("unknown target option {flag}")),
                     }
                     i += 1;
-                }
-                if self.split.group_column.is_some() && self.split.time_column.is_some() {
-                    return Err("--group and --time cannot be used together".into());
                 }
             }
             "\\objective" => {
@@ -299,7 +290,7 @@ mod tests {
     fn draft_commands_update_a_runspec_without_inventing_a_dataset() {
         let mut draft = Draft::default();
         draft
-            .apply(r"\target value --task regression --ignore id,group --group group")
+            .apply(r"\target value --task regression --ignore id,group")
             .unwrap();
         draft.apply(r"\effort medium --evals 64 --time 2m").unwrap();
         draft.apply(r"\lang rust,python --best-effort").unwrap();
@@ -307,8 +298,8 @@ mod tests {
         assert_eq!(draft.target.as_deref(), Some("value"));
         assert_eq!(draft.task, Task::Regression);
         assert_eq!(draft.ignore_columns, ["id", "group"]);
-        assert_eq!(draft.split.group_column.as_deref(), Some("group"));
-        assert_eq!(draft.split.kind, SplitKind::Grouped);
+        assert_eq!(draft.split.kind, SplitKind::Random);
+        assert!(draft.split.group_column.is_none());
         assert_eq!(draft.budget.evaluations, Some(DecimalU64(64)));
         assert_eq!(draft.budget.wall_seconds, Some(DecimalU64(120)));
         assert!(!draft.require_all_languages);
@@ -343,7 +334,7 @@ mod tests {
         draft.set_dataset(profile);
         assert_eq!(draft.run_spec(true).unwrap().task, Task::Regression);
         draft
-            .apply(r"\target target --task regression --ignore group --group group")
+            .apply(r"\target target --task regression --ignore group")
             .unwrap();
         draft.apply(r"\effort medium --evals 64 --time 2m").unwrap();
         draft.apply(r"\landmarks none").unwrap();
@@ -355,8 +346,8 @@ mod tests {
         assert_eq!(spec.target, "target");
         assert_eq!(spec.task, Task::Regression);
         assert_eq!(spec.ignore_columns, ["group"]);
-        assert_eq!(spec.split.kind, SplitKind::Grouped);
-        assert_eq!(spec.split.group_column.as_deref(), Some("group"));
+        assert_eq!(spec.split.kind, SplitKind::Random);
+        assert!(spec.split.group_column.is_none());
         assert_eq!(spec.effort, Effort::Medium);
         assert_eq!(spec.budget.evaluations, Some(DecimalU64(64)));
         assert_eq!(spec.budget.wall_seconds, Some(DecimalU64(120)));
@@ -381,5 +372,17 @@ mod tests {
         let mut draft = Draft::default();
         assert!(draft.apply(r"\effort fast --evals -1").is_err());
         assert!(draft.apply(r"\effort fast --time nope").is_err());
+    }
+
+    #[test]
+    fn grouped_and_time_splits_are_refused() {
+        let mut draft = Draft::default();
+        let group = draft.apply(r"\target value --group subject").unwrap_err();
+        assert!(group.contains("random splits only"), "{group}");
+        let time = draft.apply(r"\target value --time date").unwrap_err();
+        assert!(time.contains("random splits only"), "{time}");
+        assert_eq!(draft.split.kind, SplitKind::Random);
+        assert!(draft.split.group_column.is_none());
+        assert!(draft.split.time_column.is_none());
     }
 }
