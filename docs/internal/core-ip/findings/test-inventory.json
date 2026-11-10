@@ -8066,6 +8066,10 @@
     "python:research/flywheel_selfplay/h394_ranker_nl15_cat_smooth_20/test_veto_identity.py": {
       "role": "research",
       "reason": "h394_ranker_nl15_cat_smooth_20 research test copied from v1/next with its wave. Not a product release or live qualification."
+    },
+    "target:jope-ci/test/test_partition": {
+      "role": "infrastructure",
+      "reason": "Test-partition proof ported from deploy/ci/check_test_partition.py. It checks rust-test slices, JUnit, and the CI workflow declarations. It is CI infrastructure, not a regression subsystem."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
