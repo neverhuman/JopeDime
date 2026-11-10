@@ -417,7 +417,8 @@ pub struct EvaluationFailure {
 #[cfg(test)]
 mod api_enum_domain_tests {
     use super::{
-        ApiObjectiveDirection, ApiRunLandmarkMode, ApiRunTask, Direction, LandmarkMode, Task,
+        ApiObjectiveDirection, ApiRunLandmarkMode, ApiRunTask, ComparatorPolicy, Direction,
+        LandmarkMode, Task,
     };
     use schemars::JsonSchema;
 
@@ -433,5 +434,29 @@ mod api_enum_domain_tests {
         assert_eq!(ApiRunTask::schema_name(), "Task");
         assert_eq!(ApiRunLandmarkMode::schema_name(), "LandmarkMode");
         assert_eq!(ApiObjectiveDirection::schema_name(), "Direction");
+    }
+
+    #[test]
+    fn comparator_tokens_map_to_off_all_or_only_and_refuse_a_mix() {
+        assert_eq!(
+            ComparatorPolicy::from_tokens::<&str>(&[]).unwrap(),
+            ComparatorPolicy::Off
+        );
+        assert_eq!(
+            ComparatorPolicy::from_tokens(&["off"]).unwrap(),
+            ComparatorPolicy::Off
+        );
+        assert_eq!(
+            ComparatorPolicy::from_tokens(&["all"]).unwrap(),
+            ComparatorPolicy::All
+        );
+        assert_eq!(
+            ComparatorPolicy::from_tokens(&["xgboost_style", "random_forest"]).unwrap(),
+            ComparatorPolicy::Only {
+                ids: vec!["xgboost_style".into(), "random_forest".into()],
+            }
+        );
+        assert!(ComparatorPolicy::from_tokens(&["all", "xgboost_style"]).is_err());
+        assert!(ComparatorPolicy::is_off(&ComparatorPolicy::Off));
     }
 }

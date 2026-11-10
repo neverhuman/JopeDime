@@ -452,4 +452,65 @@ mod tests {
         assert!(selection.skipped.is_empty());
         assert_eq!(selection.kept, vec![1, 2]);
     }
+
+    #[test]
+    fn comparators_are_off_by_default_and_fast_never_runs_them() {
+        let off = resolve_comparators(&ComparatorPolicy::Off, Effort::Medium).unwrap();
+        assert!(!off.enabled);
+        assert_eq!(off.reason, "not requested");
+        assert!(off.ids.is_empty());
+
+        let fast_all = resolve_comparators(&ComparatorPolicy::All, Effort::Fast).unwrap();
+        assert!(!fast_all.enabled);
+        assert_eq!(fast_all.reason, "fast effort");
+        assert!(fast_all.ids.is_empty());
+
+        let fast_only = resolve_comparators(
+            &ComparatorPolicy::Only {
+                ids: vec!["xgboost_style".into()],
+            },
+            Effort::Fast,
+        )
+        .unwrap();
+        assert!(!fast_only.enabled);
+        assert_eq!(fast_only.reason, "fast effort");
+    }
+
+    #[test]
+    fn unknown_comparator_is_refused_before_any_fit_even_at_fast() {
+        let error = resolve_comparators(
+            &ComparatorPolicy::Only {
+                ids: vec!["not-a-model".into()],
+            },
+            Effort::Fast,
+        )
+        .unwrap_err();
+        let text = format!("{error:?}");
+        assert!(text.contains("not-a-model"), "{text}");
+        assert!(text.contains("Unknown comparator"), "{text}");
+    }
+
+    #[test]
+    fn all_and_only_at_medium_enable_the_named_roster() {
+        let auto = resolve_comparators(&ComparatorPolicy::Auto, Effort::High).unwrap();
+        assert!(auto.enabled);
+        assert_eq!(auto.tier.as_deref(), Some("high"));
+
+        let all = resolve_comparators(&ComparatorPolicy::All, Effort::Medium).unwrap();
+        assert!(all.enabled);
+        assert_eq!(all.tier.as_deref(), Some("medium"));
+        assert_eq!(all.reason, "requested");
+        assert_eq!(all.ids.len(), 10);
+        assert!(all.ids.iter().any(|id| id == "xgboost_style"));
+
+        let only = resolve_comparators(
+            &ComparatorPolicy::Only {
+                ids: vec!["random_forest".into(), "random_forest".into()],
+            },
+            Effort::Medium,
+        )
+        .unwrap();
+        assert!(only.enabled);
+        assert_eq!(only.ids, vec!["random_forest".to_owned()]);
+    }
 }
