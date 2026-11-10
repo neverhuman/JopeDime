@@ -19,10 +19,10 @@ Follow-up on the same branch. The confirming audit is the last section of this f
 `[[entries]].fingerprint` to `copy_code.classes[].fingerprint` (16 hex). It does
 not match the class-id suffix, and it does not read `[[allow]]` tables. The 36
 pinned classes below are recorded under the class fingerprint. `dead_language_allow`
-clears a named term and does not clear a placeholder marker, so
-`run_board.sh` fingerprint `sha256:0720b379b212013dc3b6739eb5e4b5e9b8b8cc82364c1227cbcd43d4528bb82e`
-(`TODO=$(mktemp -p "$BR" .todo.XXXXXX)`) stays visible. The filename stays because
-live boards write `.todo.done.*`.
+clears a named term and does not clear a placeholder marker. On the
+`f6460a4e` audit the marker was the shell variable `TODO` in `run_board.sh`.
+That variable is now `worklist`. The queue filename `.todo.XXXXXX` stays, so
+live boards still write `.todo.done.*`.
 
 The re-audit of commit `fdbf55d1` scored 68 (raw 77, hard 55, soft 9) and added one
 finding that this baseline list did not contain. `research/elo/reference-board/external/panel_v1/producer/build_panel.py:12`
@@ -140,7 +140,7 @@ bytes and the exact-path exclusion are unchanged.
 - Path: `research/elo/reference-board/tools/run_board.sh`
 - Fingerprint: `sha256:0720b379b212013dc3b6739eb5e4b5e9b8b8cc82364c1227cbcd43d4528bb82e`
 - Problem: product code contains TODO/stub/unimplemented/unreachable placeholder markers
-- Disposition: Left visible. Allowance `elo-reference-board-work-queue` clears the term `todo` and does not clear this placeholder marker. The line is `TODO=$(mktemp -p "$BR" .todo.XXXXXX)`, a live resumable queue. Renaming it would change board artifacts under the data root. The script is research/elo, not an H* wave folder.
+- Disposition: Fixed on `f6460a4e` by renaming the shell variable from `TODO` to `worklist`. The queue file is still `.todo.XXXXXX` and the finished file is still `.todo.done.*`, so live board artifacts keep their names. Allowance `elo-reference-board-work-queue` still covers the term `todo` in that filename and in the log line. The script is research/elo, not an H* wave folder.
 
 ### 15. hard HLT-001-DEAD-MARKER
 
@@ -852,3 +852,20 @@ hard classes entered. They are disposed below. Research H* bytes were not edited
 - Fingerprint: `sha256:a8596d280d31ac071f7d4f96b4792e2e9b4a8bdf28ace3c8963c043d42005313`
 - Problem: copy-code hard class `copy-code-unit-python-14e31cac8da55e47` detected
 - Disposition: Left visible. Not every instance is a pinned research-wave file, so this class is not allowlisted. Unpinned: `research/flywheel_selfplay/h412_final_frontier_elo/final_study_h412.py`, `research/flywheel_selfplay/h414_kimi_k3p1_max/final_study_h414.py`. Research H* bytes were not edited, and the product `dope_freeze_guard.py` was not diverged to escape the detector.
+
+## Audit of main f6460a4e
+
+Full jankurai 1.7.6 audit of `f6460a4ea176df58df707c10acef380a6acd2a89`
+(2026-11-10T11:07:09Z to 2026-11-10T11:22:00Z). Score 68, raw 77, hard 55, soft 9,
+64 findings. The finding set matches the confirming audit recorded above.
+P37 exception integrity passed (24 exact files; 26 exact rule/fingerprint findings).
+Evidence-exclusion check passed (472 paths). Verification artifact valid.
+
+The placeholder marker is fixed in `research/elo/reference-board/tools/run_board.sh` as described in finding 14. The queue filename is unchanged.
+
+These high findings stay as already disposed, and this pass does not edit them:
+
+- `build_panel.py:12` (`except Exception: pass`) stays. It is the reported fallback-soup hit. The next non-excluded swallows are in research H* trees, which this lane does not own. Narrowing this one line would only move the cap onto a file this pass cannot change.
+- `evolve.rs` shape, `ref.cpp`, the six short enum names, `jankurai.yml`, and the observatory receipt stay for the reasons already recorded. `ref.cpp` is pinned recovery evidence. `evolve.rs` is an ADR-0004 compatibility-freeze source.
+- H* copy classes, `h252` `exec`, and `h310` false-green stay. Those trees are out of scope. `dope_freeze_guard.py` is not diverged from its H* copy.
+- #2180 comparator files, #2181 `search_inner/slot.rs`, holdout/dev91 data, and `provenance_bind.py` were not edited.

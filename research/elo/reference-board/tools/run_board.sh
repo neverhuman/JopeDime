@@ -20,14 +20,14 @@ for m in "$@"; do
   "$TOOLS/sandbox_refboard.sh" "$BR" "$py" "$TOOLS/score_reference.py" check "$m" >/dev/null \
     || { echo "preflight (versions + weights sha) failed for $m" >&2; exit 3; }
 done
-TODO=$(mktemp -p "$BR" .todo.XXXXXX)
+worklist=$(mktemp -p "$BR" .todo.XXXXXX)
 for m in "$@"; do
   touch "$BR/scores/$m.jsonl"
   jq -r '.contexts[].cid' "$BR/BOARD.json" | grep -vxFf <(jq -r .cid "$BR/scores/$m.jsonl") | sed "s/^/$m /" || true
-done > "$TODO"
-echo "$(date -u +%FT%TZ) board=$(basename "$BR") todo=$(wc -l < "$TODO") jobs=$JOBS models=$*"
+done > "$worklist"
+echo "$(date -u +%FT%TZ) board=$(basename "$BR") todo=$(wc -l < "$worklist") jobs=$JOBS models=$*"
 export BR TOOLS REG CPUS
-xargs -a "$TODO" -P "$JOBS" -L 1 bash -c '
+xargs -a "$worklist" -P "$JOBS" -L 1 bash -c '
   m=$0; c=$1
   py=$(jq -r --arg m "$m" ".models[\$m].python" "$REG"); to=$(jq -r --arg m "$m" ".models[\$m].timeout_s" "$REG")
   timeout -k 15 "$to" nice -n 19 taskset -c "$CPUS" "$TOOLS/sandbox_refboard.sh" "$BR" "$py" \
@@ -37,7 +37,7 @@ xargs -a "$TODO" -P "$JOBS" -L 1 bash -c '
       "{board:\$b,cid:\$c,model_id:\$m,status:(if \$rc==124 or \$rc==137 then \"timeout\" else \"failed\" end),utility:0.0,error:(\"exit \"+(\$rc|tostring)),harness_version:\"refboard-score-v1\"}" \
       >> "$BR/scores/$m.jsonl"
   fi'
-mv "$TODO" "$BR/.todo.done.$(date -u +%Y%m%dT%H%M%SZ)"
+mv "$worklist" "$BR/.todo.done.$(date -u +%Y%m%dT%H%M%SZ)"
 for m in "$@"; do
   echo "$m: $(jq -r .status "$BR/scores/$m.jsonl" | sort | uniq -c | tr '\n' ' ')"
 done
