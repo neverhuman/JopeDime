@@ -23,7 +23,7 @@ memmap2 = "0.9"
 nix = { workspace = true, features = ["sched"] }
 ratatui = "=0.29.0"
 rayon = "1"
-rusqlite = { version = "0.41", features = ["bundled", "fallible_uint"] }
+rusqlite = "0.32"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 sha2 = "0.10"

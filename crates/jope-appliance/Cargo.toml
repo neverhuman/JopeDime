@@ -17,7 +17,7 @@ anyhow.workspace = true
 clap = { workspace = true, features = ["derive"] }
 jope-api = { path = "../jope-api" }
 jope-client = { path = "../jope-client", optional = true }
-rmcp = { version = "=3.9.0", default-features = false, features = ["server", "transport-io"], optional = true }
+rmcp = { version = "=3.8.0", default-features = false, features = ["server", "transport-io"], optional = true }
 tokio = { workspace = true, optional = true }
 jope-assets = { path = "../jope-assets" }
 jope-paths = { path = "../jope-paths" }

@@ -27,7 +27,7 @@ jope-paths = { path = "../jope-paths" }
 # The claims/revocation graph verifier (W12-T05): live consumers import its revocation closure
 # instead of re-implementing the claim rules.
 jope-records = { path = "../jope-records" }
-rusqlite = { version = "0.41", features = ["bundled", "fallible_uint"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
 # Nofollow descriptor-relative controller evidence reads; this version is already in the graph.
 rustix = { version = "1.1.4", features = ["fs"] }
 schemars = "1"
