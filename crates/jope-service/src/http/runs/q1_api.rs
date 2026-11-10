@@ -99,6 +99,7 @@ impl RunService {
             seed: DecimalU64(request.seed),
             dry_run: false,
             plan_digest: None,
+            comparators: jope_api::ComparatorPolicy::Off,
         };
         let mut backend = BackendPlan::resolve(&backend_spec, self.activity.admitted_ranker(), 1)
             .map_err(|error| {

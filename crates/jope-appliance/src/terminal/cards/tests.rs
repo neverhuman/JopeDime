@@ -72,6 +72,7 @@ fn sample_events() -> Vec<PublicEvent> {
             disk_bytes: DecimalU64(0),
         },
         warnings: Vec::new(),
+        comparators: None,
     };
     let first = AlgorithmAcceptedBody {
         algorithm_id: algorithm.clone(),
@@ -184,6 +185,7 @@ fn sample_events() -> Vec<PublicEvent> {
                 experiment_ids: Vec::new(),
             },
             evaluation_receipt: None,
+            comparisons: None,
         }),
     ));
     events

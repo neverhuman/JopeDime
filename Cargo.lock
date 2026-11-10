@@ -2964,6 +2964,7 @@ dependencies = [
  "futures-util",
  "jope-api",
  "jope-assets",
+ "jope-comparators",
  "jope-paths",
  "jope-runtime",
  "jope-telemetry",

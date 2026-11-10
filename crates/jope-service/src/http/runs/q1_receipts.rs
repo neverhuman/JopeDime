@@ -113,6 +113,7 @@ impl RunService {
                 experiment_ids: vec![],
             },
             evaluation_receipt: Some(Box::new(receipt.clone())),
+            comparisons: None,
         }));
         let command_key = q1_command_key(&request.request_sha256);
         let receipt_text = String::from_utf8(receipt_bytes.clone())

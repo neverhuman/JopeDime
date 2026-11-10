@@ -24,6 +24,10 @@ pub enum RowAuditPhase {
     HoldoutScore,
     FinalizationRefit,
     TestScore,
+    /// Opt-in comparator fits after the champion's holdout score; FIT rows only.
+    ComparatorFit,
+    /// Opt-in comparator and champion scoring on the HOLDOUT rows.
+    ComparatorScore,
 }
 impl RowAuditPhase {
     fn search(self) -> bool {
@@ -120,8 +124,11 @@ impl RowAudit {
             | RowAuditPhase::Rung1
             | RowAuditPhase::Preprocessing
             | RowAuditPhase::Calibration
-            | RowAuditPhase::FinalizationFit => self.fit.contains(row),
-            RowAuditPhase::HoldoutScore => self.holdout.contains(row),
+            | RowAuditPhase::FinalizationFit
+            | RowAuditPhase::ComparatorFit => self.fit.contains(row),
+            RowAuditPhase::HoldoutScore | RowAuditPhase::ComparatorScore => {
+                self.holdout.contains(row)
+            }
             RowAuditPhase::FinalizationRefit => {
                 self.fit.contains(row) || self.holdout.contains(row)
             }
@@ -199,6 +206,7 @@ mod tests {
         );
         log.begin_finalization();
         log.begin_finalization();
+        let (holdout_copy, test_copy) = (holdout.clone(), test.clone());
         for (phase, allowed) in [
             (RowAuditPhase::FinalizationFit, vec![fit.clone()]),
             (RowAuditPhase::HoldoutScore, vec![holdout.clone()]),
@@ -211,6 +219,26 @@ mod tests {
             log.record(RowAuditPhase::FinalizationRefit, &[test]),
             Err(RowAuditError::ForbiddenRow)
         );
+        log.record(RowAuditPhase::ComparatorFit, std::slice::from_ref(&fit))
+            .unwrap();
+        log.record(
+            RowAuditPhase::ComparatorScore,
+            std::slice::from_ref(&holdout_copy),
+        )
+        .unwrap();
+        for (phase, forbidden) in [
+            (RowAuditPhase::ComparatorFit, &holdout_copy),
+            (RowAuditPhase::ComparatorFit, &test_copy),
+            (RowAuditPhase::ComparatorScore, &fit),
+            (RowAuditPhase::ComparatorScore, &test_copy),
+        ] {
+            assert_eq!(
+                log.with_rows(phase, std::slice::from_ref(forbidden), |_| panic!(
+                    "refused comparator reader ran"
+                )),
+                Err(RowAuditError::ForbiddenRow)
+            );
+        }
         assert_eq!(
             log.record(RowAuditPhase::Rung0, &[fit]),
             Err(RowAuditError::PhaseNotAllowed)

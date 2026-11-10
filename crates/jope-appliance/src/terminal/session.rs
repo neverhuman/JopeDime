@@ -338,9 +338,12 @@ fn plan_lines(plan: Plan) -> Vec<String> {
         "plan validated: {:?} · {} rows · {} · digest {}",
         plan.task.value, plan.rows.total.0, plan.objective.name, plan.plan_digest
     )];
-    lines.extend(plan.warnings.iter().filter_map(|warning| {
-        (warning.code == "NON_NUMERIC_COLUMNS_SKIPPED").then(|| warning.message.clone())
-    }));
+    lines.extend(
+        plan.warnings
+            .iter()
+            .filter(|warning| warning.code == "NON_NUMERIC_COLUMNS_SKIPPED")
+            .map(|warning| warning.message.clone()),
+    );
     lines
 }
 

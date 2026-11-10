@@ -323,6 +323,33 @@ impl Finalizer {
                 Ok((table, score))
             },
         )??;
+        self.ensure_current(snapshot)?;
+        let comparisons = request
+            .comparators
+            .as_ref()
+            .map(|stage| {
+                super::comparators::run_stage(
+                    stage,
+                    plan,
+                    &objective,
+                    audit,
+                    &ids(&request.fit),
+                    &ids(&request.holdout),
+                    &fit_table,
+                    &holdout_table,
+                    &super::comparators::ChampionSide {
+                        object: &fit_object,
+                        algorithm_id: &champion.candidate.algorithm_id,
+                        cv: champion.value,
+                    },
+                    &super::comparators::PartitionDigests {
+                        fit: &request.fit.sha256,
+                        holdout: &request.holdout.sha256,
+                    },
+                )
+                .map(Box::new)
+            })
+            .transpose()?;
         let mut union_ids = ids(&request.fit);
         union_ids.extend(ids(&request.holdout));
         self.ensure_current(snapshot)?;
@@ -413,6 +440,7 @@ impl Finalizer {
             holdout_rows: request.holdout.rows.len(),
             test_rows: request.test.as_ref().map_or(0, |p| p.rows.len()),
             audit: serde_json::to_value(&audit)?,
+            comparisons,
         };
         let mut blobs = vec![champion.model.clone()];
         let fit_refs = publish(&self.store, &fit_object)?;
@@ -440,6 +468,7 @@ impl Finalizer {
             budget_used: finished.budget_used.clone(),
             nondeterminism,
             evaluation_receipt: finished.evaluation_receipt.clone().map(Box::new),
+            comparisons: receipt.comparisons.clone(),
         });
         self.journal.commit(RunUpdate { expected_revision: Some(snapshot.revision.0), snapshot: finished, checkpoint, blobs }, vec![event], |tx| {
             let old = tx.get(key)?.ok_or(StoreError::Invalid("finalization claim missing"))?;

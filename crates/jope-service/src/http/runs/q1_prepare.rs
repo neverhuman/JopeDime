@@ -8,6 +8,8 @@ impl RunService {
         if jope_runtime::backend::DeviceRequest::parse(&spec.device).is_none() {
             return Err(invalid("Unknown device."));
         }
+        // Unknown comparator keys are refused here, before any dataset read or fit.
+        let comparators = resolve_comparators(&spec.comparators, spec.effort)?;
         let mut backend =
             BackendPlan::resolve(spec, self.activity.admitted_ranker(), 1).map_err(|error| {
                 let code = crate::run::service::error_code(&error);
@@ -240,6 +242,7 @@ impl RunService {
             .bind_fit(&fit, &search)
             .map_err(|_| invalid("Unable to prepare numeric FIT landmarks."))?;
         public.landmarks.sample_rows = backend.landmark_rows as u32;
+        public.comparators = Some(comparators);
         let rows = |ids: Vec<usize>| {
             ids.into_iter()
                 .map(|row| AuditRowId {
@@ -258,6 +261,69 @@ impl RunService {
             backend,
         })
     }
+}
+
+/// Resolve the requested comparator policy at the run effort. `off` and every policy at `fast`
+/// effort disable the stage; `auto` and `all` select the full roster at the matching tier;
+/// `only` selects a validated subset. Unknown keys are refused at every effort, before any fit.
+pub(in crate::http::runs) fn resolve_comparators(
+    policy: &ComparatorPolicy,
+    effort: Effort,
+) -> Result<ResolvedComparators> {
+    use jope_comparators::{ComparatorId, ComparatorTier};
+    let ids: Vec<ComparatorId> = match policy {
+        ComparatorPolicy::Off => Vec::new(),
+        ComparatorPolicy::Auto | ComparatorPolicy::All => ComparatorId::ALL.to_vec(),
+        ComparatorPolicy::Only { ids } => {
+            let mut selected = Vec::with_capacity(ids.len());
+            for key in ids {
+                let id = ComparatorId::from_key(key).ok_or_else(|| {
+                    let valid: Vec<_> = ComparatorId::ALL.iter().map(|id| id.key()).collect();
+                    let mut problem = invalid(&format!(
+                        "Unknown comparator `{key}`. Valid comparators: {}.",
+                        valid.join(", ")
+                    ));
+                    problem.field = Some("comparators.ids".into());
+                    problem
+                })?;
+                if !selected.contains(&id) {
+                    selected.push(id);
+                }
+            }
+            if selected.is_empty() {
+                let mut problem =
+                    invalid("comparators mode `only` needs at least one comparator id.");
+                problem.field = Some("comparators.ids".into());
+                return Err(problem);
+            }
+            selected
+        }
+    };
+    let disabled = |reason: &str| ResolvedComparators {
+        enabled: false,
+        tier: None,
+        ids: Vec::new(),
+        ceiling_seconds: None,
+        reason: reason.into(),
+    };
+    if policy.is_off() {
+        return Ok(disabled("not requested"));
+    }
+    let effort_name = match effort {
+        Effort::Fast => return Ok(disabled("fast effort")),
+        Effort::Medium => "medium",
+        Effort::High => "high",
+        Effort::Ultra => "ultra",
+    };
+    let tier = ComparatorTier::from_effort(effort_name)
+        .ok_or_else(|| io("Comparator tier is missing for this effort."))?;
+    Ok(ResolvedComparators {
+        enabled: true,
+        tier: Some(tier.as_str().into()),
+        ids: ids.iter().map(|id| id.key().to_owned()).collect(),
+        ceiling_seconds: Some(tier.budget().stage_ceiling.as_secs()),
+        reason: "requested".into(),
+    })
 }
 
 #[derive(Debug)]
@@ -385,5 +451,66 @@ mod tests {
             numeric_feature_selection(&headers, &[false, true, true], 2, &ignored).unwrap();
         assert!(selection.skipped.is_empty());
         assert_eq!(selection.kept, vec![1, 2]);
+    }
+
+    #[test]
+    fn comparators_are_off_by_default_and_fast_never_runs_them() {
+        let off = resolve_comparators(&ComparatorPolicy::Off, Effort::Medium).unwrap();
+        assert!(!off.enabled);
+        assert_eq!(off.reason, "not requested");
+        assert!(off.ids.is_empty());
+
+        let fast_all = resolve_comparators(&ComparatorPolicy::All, Effort::Fast).unwrap();
+        assert!(!fast_all.enabled);
+        assert_eq!(fast_all.reason, "fast effort");
+        assert!(fast_all.ids.is_empty());
+
+        let fast_only = resolve_comparators(
+            &ComparatorPolicy::Only {
+                ids: vec!["xgboost_style".into()],
+            },
+            Effort::Fast,
+        )
+        .unwrap();
+        assert!(!fast_only.enabled);
+        assert_eq!(fast_only.reason, "fast effort");
+    }
+
+    #[test]
+    fn unknown_comparator_is_refused_before_any_fit_even_at_fast() {
+        let error = resolve_comparators(
+            &ComparatorPolicy::Only {
+                ids: vec!["not-a-model".into()],
+            },
+            Effort::Fast,
+        )
+        .unwrap_err();
+        let text = format!("{error:?}");
+        assert!(text.contains("not-a-model"), "{text}");
+        assert!(text.contains("Unknown comparator"), "{text}");
+    }
+
+    #[test]
+    fn all_and_only_at_medium_enable_the_named_roster() {
+        let auto = resolve_comparators(&ComparatorPolicy::Auto, Effort::High).unwrap();
+        assert!(auto.enabled);
+        assert_eq!(auto.tier.as_deref(), Some("high"));
+
+        let all = resolve_comparators(&ComparatorPolicy::All, Effort::Medium).unwrap();
+        assert!(all.enabled);
+        assert_eq!(all.tier.as_deref(), Some("medium"));
+        assert_eq!(all.reason, "requested");
+        assert_eq!(all.ids.len(), 10);
+        assert!(all.ids.iter().any(|id| id == "xgboost_style"));
+
+        let only = resolve_comparators(
+            &ComparatorPolicy::Only {
+                ids: vec!["random_forest".into(), "random_forest".into()],
+            },
+            Effort::Medium,
+        )
+        .unwrap();
+        assert!(only.enabled);
+        assert_eq!(only.ids, vec!["random_forest".to_owned()]);
     }
 }

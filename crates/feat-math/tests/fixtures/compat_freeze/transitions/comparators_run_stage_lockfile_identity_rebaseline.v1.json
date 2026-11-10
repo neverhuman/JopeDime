@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced COMPARATORS-20261110 PR-3 run stage adds the jope-service dependency edge on jope-comparators to Cargo.lock. Append this ADR-0004 evaluator identity and lineage fixture provenance edge after the PR-1 workspace-registration transition; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
+  "plan_reference": "COMPARATORS-20261110 PR-3 (opt-in run stage); ADR-0004 identity-only procedure",
+  "source_commit": "4383741dc4a5a4a317c4a96ea83003c626e002f7",
+  "base_commit": "2b86899903e7f94e09327865c2d70cbd0d580b78",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "a4b1ea3736376fc39f74188b0bea70435a6241bc139b4901370fe6087da5c4ae",
+      "after": "542c18c0d51a2575b6265821b984563cd0d75443e2f83c2cef8008f37dd9abff"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "7a2a23934f687fe05089c99d557d588d5744d7e5e21a19d4f6cee5d725adb1f8",
+      "after": "c392e0d4f535c423966088bbbb2c133468f2006fee9c110965a62b8f559bbae5"
+    }
+  ],
+  "before_identity_digest": "51819084e01575f510b9c6fe4298861a7dc18ee4f3bb666529e8769cec80b868",
+  "after_identity_digest": "2b2b7c781c96b628e04c71ef0b001d77b49814be3dc3c8e8a0ecc4a067fecff6",
+  "before_implementation_sha256": "0dd4ab4abea79300515e4a8a5029c455bedab5cf8e95a776faf59eab773de8cc",
+  "after_implementation_sha256": "f252680f72365d314c9839ed0a17f7a54b49a1be2009208d4a5a10b95de2118a",
+  "before_cargo_lock_sha256": "98d962b69e45d57ff381a4ab3208525d85deb958dbb1e18f7f757f88dbef16ae",
+  "after_cargo_lock_sha256": "82750afc35db964cd787e8998335be255dcde8cd5d4f5d7c36aae914df744630",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

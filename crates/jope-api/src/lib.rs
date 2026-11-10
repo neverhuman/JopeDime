@@ -16,6 +16,8 @@
 //! Runtime semantic validation and release qualification remain separate gates.
 
 pub mod artifacts;
+/// Same-rows comparator evidence attached to a finished run.
+pub mod comparisons;
 /// Canonical decimal-string serialization and validation for wire integers.
 pub mod decimal;
 pub mod events;
@@ -32,6 +34,7 @@ pub mod error;
 pub mod ids;
 
 pub use artifacts::*;
+pub use comparisons::*;
 pub use events::*;
 pub use metrics::*;
 pub use runs::*;

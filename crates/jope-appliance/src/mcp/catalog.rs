@@ -27,6 +27,8 @@ fn string() -> Value {
 fn strings() -> Value {
     json!({"type":"array","items":string()})
 }
+/// Agent-facing guidance for the `run_start` comparator field.
+pub const COMPARATORS_HELP: &str = "Comparators are off by default. To also fit pure-Rust comparator models (AutoGluon-, FLAML-, H2O-, MLJAR-, XGBoost-, LightGBM- and CatBoost-style analogues, random forest, extra trees, histogram GBM) on the same FIT rows and score them on the same holdout rows, pass {\"mode\":\"all\"} or {\"mode\":\"only\",\"ids\":[\"xgboost_style\",\"random_forest\"]} at effort medium, high or ultra. Ignored at effort fast. Unknown ids are refused before any fit; the error lists the valid ids. Results arrive in the run.finished event's comparisons field.";
 fn object() -> Value {
     json!({"type":"object"})
 }
@@ -85,7 +87,11 @@ pub fn input_schema(op: &Operation) -> Value {
                 false,
             );
         }
-        6 => {}
+        6 => {
+            if let Some(field) = s["properties"]["comparators"].as_object_mut() {
+                field.insert("description".into(), json!(COMPARATORS_HELP));
+            }
+        }
         7 => {
             add(&mut s, "run_id", string(), false);
             add(&mut s, "wait_seconds", integer(60), false);
