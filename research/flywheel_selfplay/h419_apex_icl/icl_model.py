@@ -21,6 +21,7 @@ import torch.nn.functional as F
 SIZES = {
     "S": dict(d_col=96, col_blocks=2, n_ind=24, d_row=96, row_layers=2, n_cls=4, d=256, layers=8, heads=4),
     "M": dict(d_col=128, col_blocks=2, n_ind=24, d_row=128, row_layers=3, n_cls=4, d=384, layers=12, heads=6),
+    "L": dict(d_col=128, col_blocks=2, n_ind=24, d_row=160, row_layers=3, n_cls=4, d=768, layers=14, heads=12),
 }
 N_BINS = 1024
 BIN_RANGE = 40.0      # bins cover the context-standardised target in [-40, 40], dense near 0 (sinh spacing)
