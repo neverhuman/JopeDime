@@ -36,7 +36,6 @@ mod deadline;
 mod ensemble;
 mod error;
 mod forest;
-mod guidance;
 mod histgbm;
 mod linear;
 mod matrix;
@@ -46,9 +45,8 @@ mod tree;
 
 pub use deadline::Deadline;
 pub use ensemble::caruana_weights;
-pub use error::{ComparatorError, ComparatorResult};
+pub use error::{ComparatorError, ComparatorGuidance, ComparatorResult, COMPARATORS_DOCS_URL};
 pub use forest::{ForestModel, ForestParams};
-pub use guidance::{ComparatorGuidance, COMPARATORS_DOCS_URL};
 pub use histgbm::{EarlyStopping, HistGbmModel, HistGbmParams};
 pub use linear::{RidgeModel, RidgeParams, MAX_RIDGE_FEATURES};
 pub use matrix::{FeatureMatrix, MedianImputer};
