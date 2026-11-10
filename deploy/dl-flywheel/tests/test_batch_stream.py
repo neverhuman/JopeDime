@@ -22,8 +22,10 @@ class StreamTests(unittest.TestCase):
     def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.path=Path(self.tmp.name).resolve()/'stream.sqlite';self.streams=[]
     def tearDown(self):
         for s in self.streams:
-            try:s.close()
-            except Exception:pass
+            try:
+                s.close()
+            except sqlite3.Error:
+                continue
         self.tmp.cleanup()
     def stream(self,m=None,size=3,seed=123,path=None):
         m=fixture()if m is None else m;raw=canonical(m);s=BatchStream(path or self.path,raw,digest(m),seed=seed,batch_size=size,initial_checkpoint_sha256='0'*64);self.streams.append(s);return s
