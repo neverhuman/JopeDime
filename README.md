@@ -465,7 +465,7 @@ limits and client examples](docs/program-source-stream.md).
 | Capability matrix | 846 rows: 353 moved, 83 new, 1 pending, 402 dropped, 7 lost |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
 | Python still tracked | 5,518 `.py` files, 309 of them under `python/` |
-| Architecture decision records | 6 <sup>10</sup> |
+| Architecture decision records | 7 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
 2. `cargo metadata --locked --no-deps --format-version 1 | jq '(.workspace_members, .workspace_default_members | length), ([.packages[].version] | group_by(.) | map({(.[0]): length}) | add)'`
