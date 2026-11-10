@@ -15,6 +15,26 @@ recorded as an exact `dead_language_allow` or copy-code allowlist entry, or left
 visible with the reason below. Research H* folders, holdout data, and
 `~/jope-data/comparators` were not edited.
 
+Follow-up on the same branch, before the confirming audit. Jankurai 1.7.6 matches
+`[[entries]].fingerprint` to `copy_code.classes[].fingerprint` (16 hex). It does
+not match the class-id suffix, and it does not read `[[allow]]` tables. The 36
+pinned classes below are recorded under the class fingerprint. `dead_language_allow`
+clears a named term and does not clear a placeholder marker, so
+`run_board.sh` fingerprint `sha256:0720b379b212013dc3b6739eb5e4b5e9b8b8cc82364c1227cbcd43d4528bb82e`
+(`TODO=$(mktemp -p "$BR" .todo.XXXXXX)`) stays visible. The filename stays because
+live boards write `.todo.done.*`.
+
+The re-audit of commit `fdbf55d1` scored 68 (raw 77, hard 55, soft 9) and added one
+finding that this baseline list did not contain. `research/elo/reference-board/external/panel_v1/producer/build_panel.py:12`
+(`sha256:16b9a4db3073587922c6e3b4a3b34d65a1728319854f5f78d2e352420b6f1cc8`) is
+`except Exception: pass` around an optional cohort-file glob. The producer is a
+one-shot research/elo script, not an H* folder, and it writes
+`/home/ubuntu/jope_plan/elo/panel_v1.json`. The skip stays. That line is why the
+fallback-soup cap remains after `args.rs` was fixed. The same product fix unmasked
+`v2_rowsel_build.py:831` on the exclusion-stripped P37 cross scan; that identity is
+restored on `docs/release/jankurai-pyexec-p37-dispositions-20261102.json`. The file
+bytes and the exact-path exclusion are unchanged.
+
 ## Findings
 
 ### 00. soft HLT-001-DEAD-MARKER
@@ -120,7 +140,7 @@ visible with the reason below. Research H* folders, holdout data, and
 - Path: `research/elo/reference-board/tools/run_board.sh`
 - Fingerprint: `sha256:0720b379b212013dc3b6739eb5e4b5e9b8b8cc82364c1227cbcd43d4528bb82e`
 - Problem: product code contains TODO/stub/unimplemented/unreachable placeholder markers
-- Disposition: Register allowance `elo-reference-board-work-queue`. `todo` is the resumable work-list tempfile (`.todo.XXXXXX`), not an unfinished stub. The script is research/elo, not an H* wave folder; the queue filename stays so live board artifacts keep their names.
+- Disposition: Left visible. Allowance `elo-reference-board-work-queue` clears the term `todo` and does not clear this placeholder marker. The line is `TODO=$(mktemp -p "$BR" .todo.XXXXXX)`, a live resumable queue. Renaming it would change board artifacts under the data root. The script is research/elo, not an H* wave folder.
 
 ### 15. hard HLT-001-DEAD-MARKER
 
