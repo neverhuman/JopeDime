@@ -13,9 +13,12 @@ the `repository` named in `Cargo.toml`. It is **not** the 8×A100 node workspace
 `jain-split` sibling. Training corpora and model weights live in S3. Git holds source, catalogs,
 forty generated synthetic fixtures and ten tiny test datasets.
 
-SOTArena **ASPFM** / `jope-dime` campaign wins are the feat-math program track. The
-encodings→program neural policy will ship because the product needs a router; it is
-**not** a held-out SOTA claim.
+The SOTArena **ASPFM** / `jope-dime (evolved)` row that ranks first on the published
+Golden45 ladder (Elo 2259.8) is the best test-scored program per dataset, an oracle
+envelope, **not** a held-out result. This repository's benchmark-valid entry is
+`jope-dime-regressor`; [Regression performance](#regression-performance) has its rank
+and our models' current Elo. The encodings→program neural policy will ship because the
+product needs a router; it is **not** a held-out SOTA claim.
 
 Trained models have a [shared model-object contract](docs/model-objects.md):
 `jopedime fit --train train.csv --target y --json` saves to `models/sha256-…/`.
@@ -36,12 +39,40 @@ program-library and checkpoint views with source identities, observation age and
 
 ## Regression performance
 
-The ranking below is the newest complete panel: the November 7 six-entrant refit
-that adds `kimik3p1_max`. The paper's evidence binds the earlier four-entrant panel.
-The [performance audit](docs/performance.md) traces the Git history, plots,
+The first table shows where JopeDime's own models rank on the panels that rate them.
+The second is the newest complete panel of native regressors: the November 7
+six-entrant refit that adds `kimik3p1_max`. The
+[InnovationZero paper](docs/paper/innovationzero/)'s evidence binds the earlier
+four-entrant panel. The [performance audit](docs/performance.md) traces the Git history, plots,
 model lineages and the requested fast/low/medium/high generation profiles.
 
 <!-- current-performance:begin -->
+
+### Where JopeDime's own models rank
+
+| Panel | What it scores | Model | Rank | Elo | 95% interval | Panel leader |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| [`dev91-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-audit-v1/LADDER.md) | DL-Val91: 91 development contexts in 19 families, AUDIT split | `h364.XSTACK_2L` | 9 of 31 | 1705.9 | 1621.1–1822.1 | `kumo_tabular_large_e8.v1` 2058.7 |
+| [`dev91-audit-v1`](https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-audit-v1/LADDER.md) | DL-Val91: 91 development contexts in 19 families, AUDIT split | `h335.H335_AGG` | 11 of 31 | 1689.5 | 1608.7–1800.0 | `kumo_tabular_large_e8.v1` 2058.7 |
+| [Golden45, benchmark-valid](assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv) | 45 public regression datasets, test RMSE | `jope-dime-regressor` | 31 of 304 | 1687.0 | not published | TabFM Ensemble 1934.9 |
+
+On `dev91-audit-v1`, `h364.XSTACK_2L` ranks above all six frontier LLM-authored
+regressors, the algorithms ranked in the next table. The best of them, `h335.Opus5p5_Extra`,
+ranks 14 of 31 at 1564.1, and the two 95% intervals overlap. The 8 entrants above
+`h364.XSTACK_2L` are tabular foundation models (Kumo-Tabular, TabFM, TabPFN and Mitra).
+DL-Val91 is a reuse cohort, not untouched data: H257 tuned on it, and H381 and H410
+read five of its contexts. Our models are read on it only as locked candidates, each
+scored once; nothing was rerun for this table.
+
+The Golden45 published ladder puts a `jope-dime (evolved)` row first at Elo
+2259.8. That row is the best test-scored program per dataset (42 minima over the
+candidate ledger plus 3 test-adaptive Golden46 accepts): an oracle envelope, not a
+held-out result. The benchmark-valid ladder drops those 45 rows and publishes no
+intervals. `jope-dime-regressor` covers 42 of its 45 datasets. Its run reports are
+described in [the sources](assets/regression/SOURCES.md) but are not committed.
+
+`p201b-train-audit-v1` is not in this table, because our entrants were selected on
+those training contexts. Elo values cannot be compared across rows.
 
 ### Latest complete native-regressor ranking
 
@@ -63,6 +94,11 @@ LLMs at inference time or the neural program-proposal policy.
 with Sol within both 95% intervals. Sol still has the lowest geometric-mean RMSE
 point estimate.** Elo rewards how often a method wins, while RMSE ratios also
 reflect error size.
+
+`kimik3p1_max` is model release 1.0.0, tag `kimik3p1_max-v1.0.0`
+(`jope_automl::KIMIK3P1_MAX_VERSION`). The frozen source hash is unchanged.
+The workspace crate version stays 1.0.0. The receipt is
+[RELEASE.json](crates/jope-automl/submissions/kimik3p1_max/RELEASE.json).
 
 | Opponent | Opponent / `kimik3p1_max` RMSE | 95% family-bootstrap interval | Holm-adjusted p |
 | --- | ---: | ---: | ---: |
@@ -98,15 +134,17 @@ pull request; its source is not on `main` yet.
 Each panel has its own opponents and anchor, so Elo values cannot be compared
 across rows. The reference boards also rate other kinds of model: foundation
 models on both DL-Val91 boards, and classical baselines and JopeDime's own search
-models on `dev91-audit-v1` and `p201b-train-audit-v1`. Their full ladders are on
-the research branch `v1/next`, linked above. Kimi was scored once on each board,
-and no other entrant was rerun.
+models on `dev91-audit-v1` and `p201b-train-audit-v1` (our models' rows are in the
+first table). Their full ladders are on the research branch `v1/next`, linked
+above. Kimi was scored once on each board, and no other entrant was rerun.
 
 Source: [results and uncertainty](assets/automl-elo/v3/RESULTS.json),
-[protocol and fit custody](assets/automl-elo/v3/SOURCES.md), and
-[Kimi's verification record](crates/jope-automl/submissions/kimik3p1_max/verification.json).
-The paper's evidence binds the earlier four-entrant panel and its figures,
-[`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md).
+[protocol and fit custody](assets/automl-elo/v3/SOURCES.md),
+[Kimi's verification record](crates/jope-automl/submissions/kimik3p1_max/verification.json),
+[our models' board rows](assets/readme-performance/v2/boards.json) and the
+[Golden45 benchmark-valid ladder](assets/regression/elo-tabular-regression-v2.benchmark-valid.json).
+The InnovationZero paper's evidence binds the earlier four-entrant panel and its
+figures, [`assets/automl-elo/v1`](assets/automl-elo/v1/SOURCES.md).
 
 <!-- current-performance:end -->
 
@@ -121,7 +159,7 @@ reports no established incremental Dope-state or landmark routing lift.
 
 For post-inference comparisons, **fast / low / medium / high** mean **0 / 4 / 16 /
 64 subsequent search generations**. Those four modes have no matched measured Elo
-in the committed evidence; the table above must not be relabelled as their
+in the committed evidence; the tables above must not be relabelled as their
 results. See the [checkpoint evidence and ten-problem panel](docs/performance.md#neural-inference-and-refinement).
 
 <details>
