@@ -886,3 +886,13 @@ readable file are still added. `deploy/dl-flywheel/tests/test_batch_stream.py`
 tearDown closes the stream and continues only on `sqlite3.Error`, which is what
 `BatchStream.close` can raise. The other `except Exception: pass` bodies are in
 research H* trees and stay.
+
+Confirming audit of `3da2c695ccb166b317edabedcd1d9a6a91d694e6`
+(2026-11-10T13:20:52Z to 2026-11-10T13:35:51Z). Score 68, raw 77, hard 55, soft 9.
+P37 exception integrity passed. `build_panel.py` left the finding list. The
+fallback slot is now `research/elo/reference-board/external/panel_v1/producer/run_methods.py:65`:
+`except Exception as e` sets `status` to `error`, stores `repr(e)[:300]`, and the
+loop scores the next method. TabPFN, AutoGluon, XGBoost, LightGBM, and CatBoost
+do not share one exception type. An uncaught failure would skip the rest of the
+panel. The line stays. It is not a silent pass. The H* test double named above
+stays unedited. `test_batch_stream.py` did not enter the findings.
