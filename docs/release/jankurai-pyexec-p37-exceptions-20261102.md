@@ -56,3 +56,5 @@ vendored, or historical source bytes are changed by this disposition.
 | `research/flywheel_selfplay/h153_sam/runtime.py:99` | The experiment runner verifies the input paths against its exact `manifest.json` pins before calling `build`; `cpu_exact_fused.py` is a recorded input identity. This runtime is also pinned by downstream H-wave manifests; its source bytes are preserved. |
 
 The baseline full audit is retained at `/home/ubuntu/jope_plan/master/audit/rerun/j_fbe191a33.json`; its repository-wide score is not a P37-only result.
+
+On 2026-11-10, after PRs 2170 to 2174 merged, the jankurai 1.7.6 cross-file audit no longer emitted the `HLT-001-DEAD-MARKER` identity at `deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py:831`. The file is unchanged, with participant sha256 `b1487969…`. That identity was removed from the cross-file register. The other three identities and the raw copy-code classes match the scan unchanged.
