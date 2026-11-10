@@ -896,3 +896,29 @@ loop scores the next method. TabPFN, AutoGluon, XGBoost, LightGBM, and CatBoost
 do not share one exception type. An uncaught failure would skip the rest of the
 panel. The line stays. It is not a silent pass. The H* test double named above
 stays unedited. `test_batch_stream.py` did not enter the findings.
+
+## Audit of main 2b868999
+
+Full jankurai 1.7.6 audit of `2b86899903e7f94e09327865c2d70cbd0d580b78`
+(2026-11-10T15:07:41Z to 2026-11-10T15:21:06Z). Score 68, raw 77, hard 55, soft 9,
+64 findings. P37 exception integrity passed. Evidence exclusion passed (472 paths).
+Verification artifact valid. The repair queue matches the confirming audit of
+`3da2c695`. #2184 comparator files were not part of the findings and are not edited.
+
+The next reported copies outside H* directories stay, because the other instance
+is a pinned wave receipt:
+
+- `research/flywheel_selfplay/automatic_promotion.py` is byte-identical to
+  `h296_swa_polyak_adapter_averaging/pinned/automatic_promotion.py`.
+- `research/flywheel_selfplay/device_pool_cache.py` is byte-identical to that
+  wave's pinned copy and to seven other wave copies.
+- `research/flywheel_selfplay/dev_incumbent.py` shares
+  `publish_checkpoint_archive` with the pinned copy. That function uploads to
+  the learning bucket and checks the versioned readback. It is not rewritten,
+  and the pinned file is not edited.
+
+`docs/whitepaper/figures/scripts/extract_flywheel.py` skipped a bad JSONL line
+on any `Exception`. Both sites now continue only on `json.JSONDecodeError`.
+That script is not in the top findings. The reported fallback remains
+`run_methods.py:65`, already justified above. The H* test double stays unedited.
+`provenance_bind.py`, holdout/dev91 data, and #2184 files were not edited.
