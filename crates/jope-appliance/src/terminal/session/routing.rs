@@ -5,9 +5,9 @@
 //! dialogue.
 use super::*;
 use crate::cloud::{
-    cloud_run::{Refusal, Update},
+    cloud_run::{CloudRefusal, Update},
     flow::{self, Prepared},
-    route::{self, Force, Tier},
+    route::{self, AccountTier, Force},
 };
 
 /// The table the draft was opened from.
@@ -40,7 +40,7 @@ pub(crate) enum Pending {
 /// What the cloud-run thread reports.
 pub(crate) enum CloudMsg {
     Update(Update),
-    Refused(Refusal),
+    Refused(CloudRefusal),
     Error(String),
 }
 
@@ -132,7 +132,7 @@ impl super::Session {
         };
         let mut lines = vec![line];
         // Free's row ceiling is known: say so before uploading anything.
-        if source.rows > route::FREE_MAX_DATA_ROWS && tier == Some(Tier::Free) {
+        if source.rows > route::FREE_MAX_DATA_ROWS && tier == Some(AccountTier::Free) {
             let limit = route::Limit {
                 status: 400,
                 limit: "size".into(),
@@ -146,7 +146,7 @@ impl super::Session {
             return Ok(lines);
         }
         let mut request = request;
-        if tier == Some(Tier::Free) && request.profile != "fast" {
+        if tier == Some(AccountTier::Free) && request.profile != "fast" {
             request.profile = "fast";
             lines.push(route::FREE_RUNS_FAST.into());
         }
@@ -323,12 +323,12 @@ impl super::Session {
                 self.message = Some("veox Cloud · not following a run".into());
                 vec![line]
             }
-            CloudMsg::Refused(Refusal::Limit(limit)) => {
+            CloudMsg::Refused(CloudRefusal::Limit(limit)) => {
                 self.routing.cloud_cancel = None;
                 self.message = None;
                 vec![limit.render()]
             }
-            CloudMsg::Refused(Refusal::Other(message)) => {
+            CloudMsg::Refused(CloudRefusal::Other(message)) => {
                 self.routing.cloud_cancel = None;
                 self.message = None;
                 vec![format!("{message} No run started.")]

@@ -1,7 +1,7 @@
 //! The steps of a cloud run that the terminal and `jopedime run --cloud` share: just-in-time
 //! login, the account's plan, the remembered per-dataset upload consent, and submit + follow.
-use super::cloud_run::{Refusal, Update, Upload};
-use super::route::Tier;
+use super::cloud_run::{CloudRefusal, Update, Upload};
+use super::route::AccountTier;
 use super::*;
 use crate::terminal::onboarding;
 
@@ -92,7 +92,7 @@ pub fn remember_consent(home: &Path, key: &str, p: &Prepared) -> Result<()> {
 
 /// The account's plan and whether it may start runs (`mayRun`: false while it waits on the
 /// waitlist), read from the workspace and remembered for offline checks (MCP).
-pub fn admission(c: &Connection) -> Result<(Option<Tier>, bool)> {
+pub fn admission(c: &Connection) -> Result<(Option<AccountTier>, bool)> {
     let (tier, may_run) = Client::connected(c)?.account_tier()?;
     let _ = onboarding::update(&jope_paths::jopedime_home(), |state| {
         state.account_tier = tier.map(|t| t.as_str().to_owned());
@@ -104,7 +104,7 @@ pub fn admission(c: &Connection) -> Result<(Option<Tier>, bool)> {
 /// still on the waitlist, stops with [`super::route::Gate::message`]. The workspace is asked
 /// for the plan; when it cannot be reached the check passes and the workspace decides at upload.
 /// On success, the connection and the plan, when known.
-pub fn admitted() -> std::result::Result<(Connection, Option<Tier>), super::route::Gate> {
+pub fn admitted() -> std::result::Result<(Connection, Option<AccountTier>), super::route::Gate> {
     let Ok(c) = connection() else {
         return Err(super::route::Gate::SignedOut);
     };
@@ -173,7 +173,7 @@ pub fn submit_and_follow(
     interval: Duration,
     cancel: &AtomicBool,
     emit: &mut dyn FnMut(Update),
-) -> Result<std::result::Result<(), Refusal>> {
+) -> Result<std::result::Result<(), CloudRefusal>> {
     let client = Client::connected(c)?;
     let id = match client.start_cloud_run(&prepared.upload(), profile, fallback)? {
         Ok(id) => id,
