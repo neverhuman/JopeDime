@@ -32,7 +32,7 @@ jobs:
     strategy:
       # Groups are independent outcomes, as families are within a group: one failing group must
       # not cancel the other. deploy/ci/full-main.py GROUPS is the partition; the aggregate job
-      # and check_test_partition.py prove it covers every declared family exactly once.
+      # and `jope-ci test-partition static` prove it covers every declared family exactly once.
       fail-fast: false
       matrix:
         group: [cpu-1, cpu-2]

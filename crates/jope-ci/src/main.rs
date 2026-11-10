@@ -7,6 +7,7 @@ use std::process::ExitCode;
 use clap::{Args, Parser, Subcommand};
 use jope_ci::build_report;
 use jope_ci::cargo_artifact::{self, Build, Failure};
+use jope_ci::test_partition;
 
 // The argument grammar is argparse's where the two agree and stricter where they do not (review
 // round seven of PR #117): a repeated option other than `--features` (argparse kept the last value)
@@ -43,6 +44,110 @@ enum Top {
         #[command(subcommand)]
         command: Report,
     },
+    /// Prove that split CI jobs run exactly the tests of the single job each one replaced.
+    ///
+    /// Prints a `jope.test-partition/v1` report; the exit status is 0 only when it passed.
+    TestPartition {
+        #[command(subcommand)]
+        command: Partition,
+    },
+}
+
+#[derive(Subcommand)]
+enum Partition {
+    /// Workflow, group and scope declarations (hygiene lane).
+    Static {
+        /// Also require that nothing declared at this revision is missing (empty: no base; the
+        /// all-zero new-push SHA compares with origin/main).
+        #[arg(long)]
+        base: Option<String>,
+        /// The checkout to check (default: the one this binary was built from).
+        #[arg(long)]
+        root: Option<PathBuf>,
+        /// Write the report here too (exclusive create).
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Downloaded rust-test shard evidence (ci.yml aggregate job).
+    #[command(group = clap::ArgGroup::new("evidence").required(true).multiple(false))]
+    RustShards {
+        /// The downloaded CI artifacts of this run and attempt.
+        #[arg(long, group = "evidence")]
+        receipts: Option<PathBuf>,
+        /// Each shard's evidence directory, in slice order (aggregate.py's verified receipts).
+        #[arg(long = "shard-dir", value_name = "DIR", group = "evidence")]
+        shard_dirs: Vec<PathBuf>,
+        /// Write the report here too (exclusive create).
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Any listings, e.g. the base command against the shards.
+    Collections {
+        /// An unsharded listing (repeatable; all must be identical).
+        #[arg(long, required = true)]
+        unsharded: Vec<PathBuf>,
+        /// A partitioned listing (repeatable).
+        #[arg(long, required = true)]
+        shard: Vec<PathBuf>,
+        /// Write the report here too (exclusive create).
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+}
+
+fn test_partition_command(command: Partition) -> ExitCode {
+    let (kind, report, output) = match command {
+        Partition::Static { base, root, output } => {
+            let root = root.unwrap_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."));
+            (
+                "static",
+                test_partition::static_check(&root, base.as_deref()),
+                output,
+            )
+        }
+        Partition::RustShards {
+            receipts,
+            shard_dirs,
+            output,
+        } => {
+            let dirs = match receipts {
+                Some(receipts) => test_partition::rust_shard_dirs(&receipts),
+                None => test_partition::named_shard_dirs(&shard_dirs),
+            };
+            (
+                "rust-shards",
+                dirs.and_then(|dirs| test_partition::verify_shards(&dirs)),
+                output,
+            )
+        }
+        Partition::Collections {
+            unsharded,
+            shard,
+            output,
+        } => {
+            let shards: Vec<test_partition::Shard> = shard
+                .into_iter()
+                .map(|path| test_partition::Shard {
+                    name: path.display().to_string(),
+                    collection: path,
+                    junit: None,
+                })
+                .collect();
+            (
+                "collections",
+                test_partition::compare(&unsharded, &shards),
+                output,
+            )
+        }
+    };
+    let report = report.unwrap_or_else(|error| test_partition::failure(kind, error));
+    match test_partition::emit(&report, output.as_deref()) {
+        Ok(code) => ExitCode::from(code),
+        Err(error) => {
+            eprintln!("test-partition: {error}");
+            ExitCode::from(1)
+        }
+    }
 }
 
 #[derive(Subcommand)]
@@ -318,6 +423,7 @@ fn main() -> ExitCode {
     }
     match Cli::parse_from(args).command {
         Top::BuildReport { command } => build_report_command(command),
+        Top::TestPartition { command } => test_partition_command(command),
         Top::CargoArtifact { command } => match artifact(command) {
             Ok(None) => ExitCode::SUCCESS,
             Ok(Some(line)) => {
