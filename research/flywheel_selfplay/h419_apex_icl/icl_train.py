@@ -158,6 +158,11 @@ def train(a):
                             lr=a.lr, betas=(0.9, 0.98), eps=1e-8)
     state = {"step": 0, "elapsed": 0.0, "datasets": 0, "next_named": 2.0}
     init_sha = None
+    if a.clone and not (a.resume and os.path.exists(last)):   # continue another run: weights, EMA, optimizer, schedule
+        ck = torch.load(a.clone, map_location=dev, weights_only=False)
+        model.load_state_dict(ck["model"]); ema.load_state_dict(ck["ema"]); opt.load_state_dict(ck["opt"])
+        state = dict(ck["state"])
+        init_sha = hashlib.sha256(open(a.clone, "rb").read()).hexdigest()
     if a.init and not (a.resume and os.path.exists(last)):
         ck = torch.load(a.init, map_location=dev, weights_only=False)
         model.load_state_dict(ck["model"]); ema.load_state_dict(ck["ema"])
@@ -184,6 +189,7 @@ def train(a):
     t_ck = t_eval = t_log = t_last
     run_loss, run_n, run_ds, run_real, run_inj = 0.0, 0, 0, 0, 0
     model.train()
+    sync_k = int(time.time() // a.sync_s) if a.sync_dir else 0
     while state["elapsed"] < total:
         frac = state["elapsed"] / total
         B, N, Fn, n_ctx = draw_shape(rng, frac, a.tokens, a.bmax, a.max_rows, a.row_tokens)
@@ -219,6 +225,33 @@ def train(a):
         state["step"] += 1
         state["datasets"] += B
         run_loss += float(loss.detach()); run_n += 1; run_ds += B
+        if a.sync_dir and int(now // a.sync_s) > sync_k:
+            # parameter averaging round (addendum 3): publish my weights, wait for the group mean, load it.
+            sync_k = int(now // a.sync_s)
+            os.makedirs(a.sync_dir, exist_ok=True)
+            po = os.path.join(a.sync_dir, f"out_{a.name}")
+            torch.save({"model": model.state_dict()}, po + ".pt.tmp"); os.replace(po + ".pt.tmp", po + ".pt")
+            with open(po + ".json.tmp", "w") as f:
+                json.dump({"round": sync_k, "step": state["step"], "elapsed": state["elapsed"]}, f)
+            os.replace(po + ".json.tmp", po + ".json")
+            pi, got, t_w = os.path.join(a.sync_dir, "in"), None, time.time()
+            while time.time() - t_w < a.sync_wait:
+                try:
+                    meta = json.load(open(pi + ".json"))
+                    if meta.get("round") == sync_k:
+                        model.load_state_dict(torch.load(pi + ".pt", map_location=dev, weights_only=False)["model"])
+                        got = meta
+                        break
+                    if meta.get("round", 0) > sync_k:
+                        break
+                except (OSError, ValueError, KeyError, RuntimeError):
+                    pass
+                time.sleep(2.0)
+            log.write(json.dumps({"sync": sync_k, "step": state["step"], "h": round(state["elapsed"] / 3600, 4),
+                                  "wait_s": round(time.time() - t_w, 1), "loaded": got is not None,
+                                  "n": (got or {}).get("n"), "dist": (got or {}).get("dist"),
+                                  "loss_before": round(run_loss / max(1, run_n), 5)}) + "\n")
+            now = t_last = time.time()
         if now - t_log >= a.log_s:
             log.write(json.dumps({"step": state["step"], "h": round(state["elapsed"] / 3600, 4),
                                   "loss": round(run_loss / run_n, 5), "ds_per_s": round(run_ds / (now - t_log), 2),
@@ -231,11 +264,11 @@ def train(a):
             ev.update(step=state["step"], h=round(state["elapsed"] / 3600, 4), eval="ema")
             log.write(json.dumps({k: (round(v, 5) if isinstance(v, float) else v) for k, v in ev.items()}) + "\n")
             t_eval = t_last = time.time()
-        if now - t_ck >= 1200:
+        if now - t_ck >= a.ckpt_s:
             save(last, model, ema, opt, state)
             if state["elapsed"] / 3600 >= state["next_named"]:
                 save(os.path.join(a.out, "ckpt_h%03d.pt" % int(state["next_named"])), model, ema, opt, state)
-                state["next_named"] += 2.0
+                state["next_named"] += a.named_h
             t_ck = t_last = time.time()
     ev = evaluate(ema, dev, n_batches=6, real_val=rval)
     ev.update(step=state["step"], h=round(state["elapsed"] / 3600, 4), eval="ema_final")
@@ -297,6 +330,10 @@ def main():
     t.add_argument("--real-frac", type=float, default=0.4); t.add_argument("--real-ramp-s", type=float, default=3600)
     t.add_argument("--real-bmax", type=int, default=32); t.add_argument("--inject-p", type=float, default=0.5)
     t.add_argument("--val-real", help="icl_bank.py val output (FIT-SEL SEARCH rows, monitor only)")
+    t.add_argument("--clone", help="checkpoint to continue: weights, EMA, optimizer and schedule position")
+    t.add_argument("--name", default="w0"); t.add_argument("--sync-dir", help="parameter-averaging exchange directory")
+    t.add_argument("--sync-s", type=float, default=300.0); t.add_argument("--sync-wait", type=float, default=240.0)
+    t.add_argument("--ckpt-s", type=float, default=1200.0); t.add_argument("--named-h", type=float, default=2.0)
     t.add_argument("--log-s", type=float, default=60); t.add_argument("--eval-s", type=float, default=1800)
     t.add_argument("--resume", action="store_true"); t.set_defaults(fn=train)
     s = sub.add_parser("selftest"); s.set_defaults(fn=selftest)
