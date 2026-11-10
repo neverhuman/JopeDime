@@ -104,16 +104,24 @@ def cmd_deploy(a) -> None:
            "code_sha256": K.code_manifest(A.code_files() + ("lang_h420.py", "gp_h420.py", "train_h420.py")),
            "screener_manifest": man}
     p = run_dir / f"config_{tag}.json"
-    if p.exists():
-        old = json.loads(p.read_text())
-        if any(old.get(k) != v for k, v in cfg.items()):
+    try:  # shards start together: the first creates the config, the others must equal it
+        with open(p, "x") as f:
+            json.dump(cfg, f, sort_keys=True)
+    except FileExistsError:
+        for _try in range(10):
+            try:
+                old = json.loads(p.read_text())
+                break
+            except json.JSONDecodeError:
+                time.sleep(1.0)
+        if any(old.get(k) != v for k, v in json.loads(json.dumps(cfg)).items()):
             raise SystemExit("run config mismatch")
-    else:
-        C.write_json(p, cfg)
     DH.GPH.install(0)
     npz_dir = run_dir / f"h416_{tag}_npz"
     t0 = time.time()
     order = sorted(cids, key=lambda c: (-K.table_size(c), c))
+    sk, sn = (int(v) for v in a.shard.split("/"))
+    order = order[sk::sn]
     recs = L.run_parallel(lambda c, _s: DH.h416_unit(rt, tag, c, scr, seed, "confirm", npz_dir, design,
                                                      a.inner_jobs), [(c, 0) for c in order], a.jobs)
     st = {"tag": tag, "variant": a.variant, "mode": "confirm", "units": len(recs), "wall_s": time.time() - t0,
@@ -122,7 +130,8 @@ def cmd_deploy(a) -> None:
           "physical_by_kind": DH.DP.physical_by_kind(rt), "lang_selfcheck": chk, "host": os.uname().nodename}
     if st["bank_counters"]["same_family_bank_hits"]:
         raise AssertionError("same_family_bank_hits != 0")
-    C.write_json(run_dir / f"status_{tag}_{int(t0)}.json", st)
+    st["shard"] = a.shard
+    C.write_json(run_dir / f"status_{tag}_{int(t0)}_s{sk}of{sn}.json", st)
     print(json.dumps({k: st[k] for k in ("tag", "units", "wall_s", "physical_by_kind", "akf_ledger", "audit_ledger")}
                      | {"guard_refused": st["guard"].get("refused"), "bank": st["bank_counters"]}))
     rt.engine.close()
@@ -168,11 +177,12 @@ def main() -> None:
         p.add_argument("--run-dir", required=True)
         p.add_argument("--panel", required=True)
         p.add_argument("--cores", required=True)
-        p.add_argument("--timeout", type=float, default=60.0)
+        p.add_argument("--timeout", type=float, default=300.0)   # the stored H416 / H417 deploy limit
         if name == "deploy":
             p.add_argument("--variant", required=True, choices=sorted(VARIANTS))
             p.add_argument("--jobs", type=int, default=12)
             p.add_argument("--inner-jobs", type=int, default=3)
+            p.add_argument("--shard", default="0/1", help="k/n: this process runs the contexts order[k::n]")
         else:
             p.add_argument("--limit", type=int, default=0)
             p.add_argument("--jobs", type=int, default=12)

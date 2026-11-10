@@ -4,7 +4,7 @@
 #   run_h420.sh gx     HOST PANEL CPUS SHARDS WORKERS MEM [RUNTAG]   GX arm -> $DATA/runs/H420_GX_<PANEL>
 #   run_h420.sh memo   HOST PANEL [BASERUN] [RUNTAG]                 GS+GE+GL (xbabe0, H417) + GX (HOST) -> one memo
 #   run_h420.sh seed   HOST PANEL [BASERUN] [BASETAG] [RUNTAG]       H417 post-deploy memo (xbabe0) + GX -> one memo
-#   run_h420.sh chain  HOST PANEL CPUS JOBS MEM [RUNTAG]             replay check + deploys (H420_VARIANTS, in order)
+#   run_h420.sh chain  HOST PANEL CPUS JOBS MEM [RUNTAG] [SHARDS]    replay check + deploys (H420_VARIANTS, in order)
 #   run_h420.sh status HOST PANEL [RUNTAG]
 # RUNTAG (default empty) names smoke runs: H420_SMOKE_<x>... with APEX_DEV_OK=1 and a dev stage.
 set -euo pipefail
@@ -112,11 +112,11 @@ case $STEP in
     chmod a-w "$L.sha256" "$L.cids" "$L.src.sha256"
     echo "seed $(name "$RT") $PANEL on $HOST: $(grep -c "$R/gproot_AGG" "$L.sha256") memos seeded from $BASE; manifest $L.sha256" ;;
   chain)
-    CPUS=${1:?CPUS}; JOBS=${2:?JOBS}; MEM=${3:?MEM}; RT=${4:-}
+    CPUS=${1:?CPUS}; JOBS=${2:?JOBS}; MEM=${3:?MEM}; RT=${4:-}; SHARDS=${5:-1}
     smoke_ok "$RT" "$PANEL"
     R=$DATA/runs/$(name "$RT")_$PANEL
     on "[ -d $R/gproot_AGG/memo ] && ! ls $R/config_*.json >/dev/null 2>&1" || { echo "$HOST:$R is not ready or already deployed" >&2; exit 3; }
-    unit "h420-chain-${RT:+$RT-}$PANEL" "$MEM" "${H420_VARIANTS:+-E H420_VARIANTS='$H420_VARIANTS'} bash $STAGE/code/h420_chain.sh $STAGE $KIND $CPUS $MEM $PANEL $R $JOBS" \
+    unit "h420-chain-${RT:+$RT-}$PANEL" "$MEM" "${H420_VARIANTS:+-E H420_VARIANTS='$H420_VARIANTS'} bash $STAGE/code/h420_chain.sh $STAGE $KIND $CPUS $MEM $PANEL $R $JOBS 2 $SHARDS" \
       | tee -a "$EV/logs/chain_${RT:+${RT}_}${PANEL}_$HOST.log" ;;
   status)
     RT=${1:-}

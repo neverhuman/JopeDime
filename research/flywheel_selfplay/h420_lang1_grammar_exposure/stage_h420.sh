@@ -10,7 +10,7 @@ SRC=$(dirname "$(readlink -f "$0")")
 REPO=/home/ubuntu/JopeDime
 BASE=/home/ubuntu/apex-stage/h417/pub-p1
 G420=research/flywheel_selfplay/h420_lang1_grammar_exposure
-FILES=(lang_h420.py gp_h420.py train_h420.py readout_h420.py run_h420.sh run_h420_local.sh h420_chain.sh stage_h420.sh PREREG_ADDENDUM_1.md)
+FILES=(lang_h420.py gp_h420.py train_h420.py readout_h420.py run_h420.sh run_h420_local.sh h420_chain.sh stage_h420.sh PREREG_ADDENDUM_1.md PREREG_ADDENDUM_2.md)
 DST=/home/ubuntu/apex-stage/h420/$MODE-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }
