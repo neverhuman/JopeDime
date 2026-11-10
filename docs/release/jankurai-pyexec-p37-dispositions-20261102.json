@@ -27,6 +27,33 @@
         "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
       },
       "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+    },
+    {
+      "check_id": "HLT-001-DEAD-MARKER:vibe",
+      "fingerprint": "sha256:167577228256838a98914fe64562e88668757a9985ae577f83adf8ffdb82d809",
+      "justification": "Restored on 2026-11-10. The appliance fallback fix in crates/jope-appliance/src/cmd/run/args.rs cleared the single fallback-soup slot, so the exclusion-stripped P37 cross scan emits this identity again. The score scan still excludes the file. Source bytes are unchanged (participant sha256 b1487969896224a733a9af9f8106c6d1ff879526fca9d0e17719196828631a00). The except at line 831 records a dataset failure and continues; it is not a stub. The exact-path exclusion stays.",
+      "line": 831,
+      "participants": {
+        "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py": "b1487969896224a733a9af9f8106c6d1ff879526fca9d0e17719196828631a00"
+      },
+      "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+      "raw_identity": {
+        "category": "vibe",
+        "check_id": "HLT-001-DEAD-MARKER:vibe",
+        "evidence": [
+          "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py:831 except Exception as e:"
+        ],
+        "fingerprint": "sha256:167577228256838a98914fe64562e88668757a9985ae577f83adf8ffdb82d809",
+        "line": 831,
+        "participants": [
+          "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py"
+        ],
+        "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+        "problem": "fallback soup detected in product code",
+        "reason": "",
+        "rule_id": "HLT-001-DEAD-MARKER"
+      },
+      "rule_id": "HLT-001-DEAD-MARKER"
     }
   ],
   "expires_on": "2026-12-02",
