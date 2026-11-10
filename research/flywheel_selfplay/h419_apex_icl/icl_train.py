@@ -22,6 +22,7 @@ import time
 import torch
 
 from icl_model import ICL, n_params
+import icl_inject as INJ
 from icl_prior import KINDS, Prior, draw_features
 
 ROW_BUCKETS = (384, 640, 1024, 1536)
@@ -75,7 +76,7 @@ def u_score(pred, yq, ym):
 
 
 @torch.no_grad()
-def evaluate(model, dev, n_batches=2, bsz=16):
+def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
     model.eval()
     prior = Prior(dev, VAL_SEED)
     rows = []
@@ -89,9 +90,32 @@ def evaluate(model, dev, n_batches=2, bsz=16):
             ur = ridge_u(x, y, n_ctx)
             for i in range(bsz):
                 rows.append((KINDS[int(kinds[i])], float(loss[i]), float(u[i]), float(ur[i])))
+    # the same shapes with injected columns in 20-60% of the feature slots (robustness to injection)
+    prior2, rng2, inj = Prior(dev, VAL_SEED + 1), random.Random(VAL_SEED), []
+    for N, Fn in VAL_SHAPES:
+        x, y, _k, _n = INJ.sample_synth(prior2, rng2, bsz, N, Fn, p=1.0)
+        n_ctx = N * 3 // 4
+        logits, ym, ys = model(x, y[:, :n_ctx], n_ctx)
+        u = u_score(model.mean(logits, ym, ys).double(), y[:, n_ctx:].double(), ym.double())
+        inj.extend(zip(u.tolist(), ridge_u(x, y, n_ctx).tolist()))
+    # real FIT-SEL SEARCH rows: context = folds 1-4, query = fold 0 (one task per forward, no padding)
+    real = []
+    for m, n_ctx in (real_val.items if real_val is not None else []):
+        x, y = m[None, :, :-1], m[None, :, -1]
+        logits, ym, ys = model(x, y[:, :n_ctx], n_ctx)
+        u = u_score(model.mean(logits, ym, ys).double(), y[:, n_ctx:].double(), ym.double())
+        real.append((float(u), float(ridge_u(x, y, n_ctx)), x.shape[-1]))
     model.train()
     out = {"loss": sum(r[1] for r in rows) / len(rows), "u": sum(r[2] for r in rows) / len(rows),
            "u_ridge": sum(r[3] for r in rows) / len(rows), "win_vs_ridge": sum(r[2] > r[3] for r in rows) / len(rows)}
+    out.update(u_inj=sum(a for a, _ in inj) / len(inj), u_ridge_inj=sum(b for _, b in inj) / len(inj))
+    if real:
+        nar = [r for r in real if r[2] <= 100] or real
+        out.update(real_n=len(real), real_u=sum(r[0] for r in real) / len(real),
+                   real_u_ridge=sum(r[1] for r in real) / len(real),
+                   real_win_vs_ridge=sum(r[0] > r[1] for r in real) / len(real),
+                   real_u_le100=sum(r[0] for r in nar) / len(nar), real_u_ridge_le100=sum(r[1] for r in nar) / len(nar),
+                   real_u_median=sorted(r[0] for r in real)[len(real) // 2])
     for k in KINDS:
         sel = [r for r in rows if r[0] == k]
         if sel:
@@ -110,7 +134,7 @@ def save(path, model, ema, opt, state):
 def code_sha():
     h = hashlib.sha256()
     here = os.path.dirname(os.path.abspath(__file__))
-    for f in ("icl_model.py", "icl_prior.py", "icl_train.py"):
+    for f in ("icl_model.py", "icl_prior.py", "icl_inject.py", "icl_train.py"):
         h.update(open(os.path.join(here, f), "rb").read())
     return h.hexdigest()
 
@@ -133,6 +157,11 @@ def train(a):
     opt = torch.optim.AdamW([{"params": decay, "weight_decay": 0.01}, {"params": nodecay, "weight_decay": 0.0}],
                             lr=a.lr, betas=(0.9, 0.98), eps=1e-8)
     state = {"step": 0, "elapsed": 0.0, "datasets": 0, "next_named": 2.0}
+    init_sha = None
+    if a.init and not (a.resume and os.path.exists(last)):
+        ck = torch.load(a.init, map_location=dev, weights_only=False)
+        model.load_state_dict(ck["model"]); ema.load_state_dict(ck["ema"])
+        init_sha = hashlib.sha256(open(a.init, "rb").read()).hexdigest()
     if a.resume and os.path.exists(last):
         ck = torch.load(last, map_location=dev, weights_only=False)
         model.load_state_dict(ck["model"]); ema.load_state_dict(ck["ema"]); opt.load_state_dict(ck["opt"])
@@ -140,23 +169,34 @@ def train(a):
     elif os.path.exists(os.path.join(a.out, "config.json")):
         sys.exit(f"{a.out} holds a run; pass --resume or a new --out")
     else:
-        cfg = dict(vars(a), params=n_params(model), code_sha256=code_sha(), torch=torch.__version__,
+        cfg = dict(vars(a), params=n_params(model), code_sha256=code_sha(), torch=torch.__version__, init_sha256=init_sha,
                    gpu=torch.cuda.get_device_name(0), model=model.cfg, started=time.strftime("%FT%TZ", time.gmtime()))
         cfg.pop("fn", None)
         with open(os.path.join(a.out, "config.json"), "x") as f:
             json.dump(cfg, f, indent=1)
     rng = random.Random(a.seed * 1_000_003 + state["step"])
     prior = Prior(dev, a.seed * 7_919 + state["step"])
+    bank = INJ.RealBank(a.real_bank, dev, prior) if a.real_bank else None
+    rval = INJ.RealVal(a.val_real, dev) if a.val_real else None
     log = open(os.path.join(a.out, "log.jsonl"), "a", buffering=1)
     total = a.hours * 3600.0
     t_last = time.time()
     t_ck = t_eval = t_log = t_last
-    run_loss, run_n, run_ds = 0.0, 0, 0
+    run_loss, run_n, run_ds, run_real, run_inj = 0.0, 0, 0, 0, 0
     model.train()
     while state["elapsed"] < total:
         frac = state["elapsed"] / total
         B, N, Fn, n_ctx = draw_shape(rng, frac, a.tokens, a.bmax, a.max_rows, a.row_tokens)
-        x, y, _ = prior.sample(B, N, Fn)
+        got = None
+        if bank is not None and rng.random() < a.real_frac * min(1.0, state["elapsed"] / max(1.0, a.real_ramp_s)):
+            got = bank.sample(rng, min(B, a.real_bmax), N, Fn)
+        if got is not None:
+            x, y, _modes, _share = got
+            B = x.shape[0]
+            run_real += 1
+        else:
+            x, y, _kinds, k_inj = INJ.sample_synth(prior, rng, B, N, Fn, a.inject_p)
+            run_inj += k_inj > 0
         slots = torch.randperm(256, device=dev)[:Fn]
         for g in opt.param_groups:
             g["lr"] = a.lr * lr_factor(frac)
@@ -183,10 +223,11 @@ def train(a):
             log.write(json.dumps({"step": state["step"], "h": round(state["elapsed"] / 3600, 4),
                                   "loss": round(run_loss / run_n, 5), "ds_per_s": round(run_ds / (now - t_log), 2),
                                   "lr": opt.param_groups[0]["lr"], "datasets": state["datasets"],
+                                  "real_share": round(run_real / run_n, 3), "inj_share": round(run_inj / run_n, 3),
                                   "mem_gb": round(torch.cuda.max_memory_allocated() / 2 ** 30, 2)}) + "\n")
-            run_loss, run_n, run_ds, t_log = 0.0, 0, 0, now
+            run_loss, run_n, run_ds, run_real, run_inj, t_log = 0.0, 0, 0, 0, 0, now
         if now - t_eval >= a.eval_s:
-            ev = evaluate(ema, dev)
+            ev = evaluate(ema, dev, real_val=rval)
             ev.update(step=state["step"], h=round(state["elapsed"] / 3600, 4), eval="ema")
             log.write(json.dumps({k: (round(v, 5) if isinstance(v, float) else v) for k, v in ev.items()}) + "\n")
             t_eval = t_last = time.time()
@@ -196,7 +237,7 @@ def train(a):
                 save(os.path.join(a.out, "ckpt_h%03d.pt" % int(state["next_named"])), model, ema, opt, state)
                 state["next_named"] += 2.0
             t_ck = t_last = time.time()
-    ev = evaluate(ema, dev, n_batches=6)
+    ev = evaluate(ema, dev, n_batches=6, real_val=rval)
     ev.update(step=state["step"], h=round(state["elapsed"] / 3600, 4), eval="ema_final")
     log.write(json.dumps({k: (round(v, 5) if isinstance(v, float) else v) for k, v in ev.items()}) + "\n")
     save(last, model, ema, opt, state)
@@ -251,6 +292,11 @@ def main():
     t.add_argument("--seed", type=int, default=1); t.add_argument("--tokens", type=int, default=600_000)
     t.add_argument("--bmax", type=int, default=64); t.add_argument("--max-rows", type=int, default=0)
     t.add_argument("--row-tokens", type=int, default=0, help="cap on batch x rows (trunk memory); 0 = none")
+    t.add_argument("--init", help="checkpoint whose raw and EMA weights start the run (fresh optimizer and schedule)")
+    t.add_argument("--real-bank", help="icl_bank.py fit output (FIT-ICL tables)")
+    t.add_argument("--real-frac", type=float, default=0.4); t.add_argument("--real-ramp-s", type=float, default=3600)
+    t.add_argument("--real-bmax", type=int, default=32); t.add_argument("--inject-p", type=float, default=0.5)
+    t.add_argument("--val-real", help="icl_bank.py val output (FIT-SEL SEARCH rows, monitor only)")
     t.add_argument("--log-s", type=float, default=60); t.add_argument("--eval-s", type=float, default=1800)
     t.add_argument("--resume", action="store_true"); t.set_defaults(fn=train)
     s = sub.add_parser("selftest"); s.set_defaults(fn=selftest)
