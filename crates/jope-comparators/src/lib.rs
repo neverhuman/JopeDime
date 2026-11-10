@@ -11,6 +11,10 @@
 //!   those libraries.
 //! - [`RidgeModel`]: standardized ridge regression.
 //! - [`caruana_weights`]: greedy weighted ensemble selection for AutoML-style portfolios.
+//! - [`fit_comparator`]: the roster entry point. Every [`ComparatorId`] is fitted at a
+//!   [`ComparatorTier`] (`medium`, `high`, `ultra`; there is no `fast` tier) whose
+//!   [`TierBudget`] fixes deterministic work counts and the stage's wall-clock ceiling.
+//!   [`ComparatorId::descriptor`] gives the honest display label and known gaps.
 //!
 //! Every fit is a deterministic function of its rows, parameters and seed. Missing values (NaN)
 //! are imputed with medians learned from the training rows only. Failures are typed
@@ -31,6 +35,7 @@
 //! # Ok::<(), jope_comparators::ComparatorError>(())
 //! ```
 
+mod automl;
 mod binning;
 mod deadline;
 mod ensemble;
@@ -40,7 +45,11 @@ mod histgbm;
 mod linear;
 mod matrix;
 mod metrics;
+mod portfolio;
+mod presets;
 mod rng;
+mod roster;
+mod tier;
 mod tree;
 
 pub use deadline::Deadline;
@@ -51,3 +60,5 @@ pub use histgbm::{EarlyStopping, HistGbmModel, HistGbmParams};
 pub use linear::{RidgeModel, RidgeParams, MAX_RIDGE_FEATURES};
 pub use matrix::{FeatureMatrix, MedianImputer};
 pub use metrics::{mae, r_squared, rmse};
+pub use roster::{fit_comparator, ComparatorDescriptor, ComparatorId, FittedComparator};
+pub use tier::{ComparatorTier, TierBudget};
