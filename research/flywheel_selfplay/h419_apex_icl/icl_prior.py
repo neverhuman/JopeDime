@@ -9,6 +9,11 @@ Function families (PROBS):
          sums and products, optional linear and periodic parts);
   tree - random oblivious trees and forests with data-dependent thresholds;
   mix  - a GP draw combined with a forest draw (sum, gate or product).
+Version 2 (addendum 6) adds three simple families, because real tables are much easier than the first four:
+  lin    - a linear function of the features (dense with decaying coefficients, or sparse);
+  add    - an additive model: a sum of random univariate functions (linear, saturating, hinge, V, quadratic, slow
+           sine, step, log, sigmoid), optionally blended toward linear;
+  addint - an additive model plus 1-5 pairwise products of its univariate terms.
 Then: target warps, noise (30% of tasks noise-free; homo- or heteroscedastic; normal, Student-t or Laplace), feature
 quantisation, monotone feature warps, missing cells, and a random affine map of every column and of the target.
 """
@@ -16,8 +21,10 @@ import math
 
 import torch
 
-KINDS = ("scm", "gp", "tree", "mix")
-PROBS = (0.35, 0.25, 0.20, 0.20)
+KINDS = ("scm", "gp", "tree", "mix", "lin", "add", "addint")
+PROBS = (0.35, 0.25, 0.20, 0.20)                       # version 1: the first four families (addenda 1-5)
+PROBS_V2 = (0.20, 0.15, 0.15, 0.10, 0.10, 0.20, 0.10)  # version 2 (addendum 6): 40% simple families
+PROBS_SIMPLE = (0.0, 0.0, 0.0, 0.0, 0.3, 0.4, 0.3)     # the simple families alone (validation block)
 
 
 def draw_features(rng):
@@ -146,6 +153,45 @@ class Prior:
         vals = self.randn(B, T, 2 ** D) * decay
         return vals.gather(2, leaf.transpose(1, 2)).sum(1)
 
+    # ---- simple families (version 2) ----
+    def _coef(self, B, Fn, kmax):
+        """[B,F] coefficients: half of the tasks dense, half sparse (relevance); magnitudes decay over a random order."""
+        dense = self.rand(B, 1) < 0.5
+        rel = torch.where(dense, torch.ones(B, Fn, device=self.dev), self.relevance(B, Fn, kmax))
+        order = torch.argsort(torch.argsort(self.rand(B, Fn), 1), 1).float()
+        return self.randn(B, Fn) * rel * torch.exp(-self.logu(0.01, 1.0, B, 1) * order)
+
+    def lin(self, xs):
+        return (xs @ self._coef(xs.shape[0], xs.shape[2], 12).unsqueeze(-1)).squeeze(-1)
+
+    def _uni(self, xs):
+        """[B,N,F] -> one random univariate function of each feature, standardised over rows."""
+        B, N, Fn = xs.shape
+        k = self.randint(0, 9, (B, 1, Fn))
+        t = self.randn(B, 1, Fn) * 0.8
+        s = self.logu(0.5, 3.0, B, 1, Fn)
+        z = xs - t
+        outs = [xs, torch.tanh(s * z), torch.relu(z), z.abs(), z * z, torch.sin(s * xs + 3 * t), (z > 0).to(xs.dtype),
+                torch.sign(xs) * torch.log1p(xs.abs()), torch.sigmoid(3 * s * z)]
+        g = outs[0]
+        for i in range(1, len(outs)):
+            g = torch.where(k == i, outs[i], g)
+        return self.std(g)
+
+    def add(self, xs, inter=False):
+        B, N, Fn = xs.shape
+        g = self._uni(xs)
+        share = self.rand(B, 1, 1) * (self.rand(B, 1, 1) < 0.5)   # half of the tasks are blended toward linear
+        g = (1 - share) * g + share * xs
+        f = (g @ self._coef(B, Fn, 20).unsqueeze(-1)).squeeze(-1)
+        if inter:
+            P = self.pick(1, 5)
+            ja = self.randint(0, Fn, (B, 1, P)).expand(-1, N, -1)
+            jb = self.randint(0, Fn, (B, 1, P)).expand(-1, N, -1)
+            prod = self.std(g.gather(2, ja) * g.gather(2, jb))
+            f = self.std(f) + (prod @ self.randn(B, P, 1)).squeeze(-1) * self.logu(0.05, 0.7, B, 1) / math.sqrt(P)
+        return f
+
     # ---- post-processing ----
     def warp_y(self, f):
         B = f.shape[0]
@@ -189,10 +235,11 @@ class Prior:
         return torch.where(miss, torch.nan, x)
 
     # ---- one batch ----
-    def sample(self, B, N, Fn, kinds=None):
-        """Returns x [B,N,F] (NaN = missing), y [B,N], kind [B] (index into KINDS)."""
+    def sample(self, B, N, Fn, kinds=None, probs=PROBS):
+        """Returns x [B,N,F] (NaN = missing), y [B,N], kind [B] (index into KINDS). probs: family probabilities
+        (PROBS = version 1; with it this function draws exactly what it drew before version 2 existed)."""
         if kinds is None:
-            kinds = torch.multinomial(torch.tensor(PROBS, device=self.dev), B, replacement=True, generator=self.g)
+            kinds = torch.multinomial(torch.tensor(probs, device=self.dev), B, replacement=True, generator=self.g)
         xs_all, f_all = [], []
         for ki, name in enumerate(KINDS):
             b = int((kinds == ki).sum().item())
@@ -207,6 +254,10 @@ class Prior:
                     f = self.gp(xs)
                 elif name == "tree":
                     f = self.tree(xs)
+                elif name == "lin":
+                    f = self.lin(xs)
+                elif name in ("add", "addint"):
+                    f = self.add(xs, inter=name == "addint")
                 else:
                     f1, f2 = self.std(self.gp(xs)), self.std(self.tree(xs))
                     a = self.rand(b, 1)

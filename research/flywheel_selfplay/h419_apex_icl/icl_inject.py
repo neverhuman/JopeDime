@@ -60,12 +60,13 @@ def _shuffle_columns(prior, x):
     return x.gather(2, perm.unsqueeze(1).expand(-1, N, -1))
 
 
-def sample_synth(prior, rng, B, N, Fn, p=0.5):
-    """Synthetic-prior batch; with probability p a share of the Fn feature slots holds injected columns."""
+def sample_synth(prior, rng, B, N, Fn, p=0.5, probs=None):
+    """Synthetic-prior batch; with probability p a share of the Fn feature slots holds injected columns.
+    probs: family probabilities for Prior.sample (None = version 1)."""
     k = 0
     if Fn >= 4 and rng.random() < p:
         k = min(Fn - 2, max(1, int(round(rng.uniform(0.2, 0.6) * Fn))))
-    x, y, kinds = prior.sample(B, N, Fn - k)
+    x, y, kinds = prior.sample(B, N, Fn - k) if probs is None else prior.sample(B, N, Fn - k, probs=probs)
     if k:
         x = _shuffle_columns(prior, torch.cat([x, inject_columns(prior, x, k)], -1))
     return x, y, kinds, k

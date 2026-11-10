@@ -13,6 +13,8 @@ and ckpt_hNNN.pt every 2 hours, each with raw and EMA weights, the optimizer and
 Addendum 5: --p-resid P turns a share P of the training batches into residual-target tasks (icl_resid.py: the target
 is what an in-context ridge leaves over); --row-floor N lifts the row curriculum's current maximum to at least N.
 The monitor reports the residual readout (ridge + model) beside the plain one, with per-context values.
+Addendum 6: --prior v2 draws synthetic tasks from icl_prior.PROBS_V2 (40% simple families: linear, additive, additive
+with pairwise terms). Every evaluation adds a block on the simple families alone (u_simple, u_lin, u_add, u_addint).
 """
 import argparse
 import hashlib
@@ -28,7 +30,7 @@ import torch
 from icl_model import ICL, n_params
 import icl_inject as INJ
 import icl_resid as RES
-from icl_prior import KINDS, Prior, draw_features
+from icl_prior import KINDS, PROBS_SIMPLE, PROBS_V2, Prior, draw_features
 
 ROW_BUCKETS = (384, 640, 1024, 1536)
 EMA = 0.9995
@@ -120,6 +122,15 @@ def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
         logits, ym, ys = model(x, y[:, :n_ctx], n_ctx)
         u = u_score(_c(model.mean(logits, ym, ys)), _c(y[:, n_ctx:]), _c(ym))
         inj.extend(zip(u.tolist(), ridge_u(x, y, n_ctx).tolist()))
+    # the simple families of prior version 2 alone (addendum 6), same shapes
+    prior3, simple = Prior(dev, VAL_SEED + 2), []
+    for N, Fn in VAL_SHAPES:
+        x, y, kinds = prior3.sample(bsz, N, Fn, probs=PROBS_SIMPLE)
+        n_ctx = N * 3 // 4
+        logits, ym, ys = model(x, y[:, :n_ctx], n_ctx)
+        u = u_score(_c(model.mean(logits, ym, ys)), _c(y[:, n_ctx:]), _c(ym))
+        ur, ures = ridge_u(x, y, n_ctx), resid_u(model, x, y, n_ctx, VAL_SEED + 7 * N + Fn)
+        simple.extend((KINDS[int(kinds[i])], float(u[i]), float(ur[i]), float(ures[i])) for i in range(bsz))
     # real FIT-SEL SEARCH rows: context = folds 1-4, query = fold 0 (one task per forward, no padding)
     real = []
     for i, (m, n_ctx) in enumerate(real_val.items if real_val is not None else []):
@@ -132,6 +143,15 @@ def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
            "u_ridge": sum(r[3] for r in rows) / len(rows), "win_vs_ridge": sum(r[2] > r[3] for r in rows) / len(rows),
            "u_res": sum(r[4] for r in rows) / len(rows), "win_res_vs_ridge": sum(r[4] > r[3] for r in rows) / len(rows)}
     out.update(u_inj=sum(a for a, _ in inj) / len(inj), u_ridge_inj=sum(b for _, b in inj) / len(inj))
+    out.update(u_simple=sum(r[1] for r in simple) / len(simple), u_ridge_simple=sum(r[2] for r in simple) / len(simple),
+               u_res_simple=sum(r[3] for r in simple) / len(simple),
+               win_simple_vs_ridge=sum(r[1] > r[2] for r in simple) / len(simple))
+    for k in ("lin", "add", "addint"):
+        sel = [r for r in simple if r[0] == k]
+        if sel:
+            out["u_" + k] = sum(r[1] for r in sel) / len(sel)
+            out["u_ridge_" + k] = sum(r[2] for r in sel) / len(sel)
+            out["u_res_" + k] = sum(r[3] for r in sel) / len(sel)
     if real:
         nar = [r for r in real if r[2] <= 100] or real
         out.update(real_n=len(real), real_u=sum(r[0] for r in real) / len(real),
@@ -236,7 +256,7 @@ def train(a):
             B = x.shape[0]
             run_real += 1
         else:
-            x, y, _kinds, k_inj = INJ.sample_synth(prior, rng, B, N, Fn, a.inject_p)
+            x, y, _kinds, k_inj = INJ.sample_synth(prior, rng, B, N, Fn, a.inject_p, PROBS_V2 if a.prior == "v2" else None)
             run_inj += k_inj > 0
         if a.p_resid and rng.random() < a.p_resid:   # addendum 5: the target becomes the in-context ridge residual
             y, _used, _base = RES.residual_targets(x, y, n_ctx, res_gen)
@@ -379,6 +399,7 @@ def main():
     t.add_argument("--log-s", type=float, default=60); t.add_argument("--eval-s", type=float, default=1800)
     t.add_argument("--p-resid", type=float, default=0.0, help="share of batches trained on ridge-residual targets")
     t.add_argument("--row-floor", type=int, default=0, help="lift the row curriculum's maximum to at least this")
+    t.add_argument("--prior", default="v1", choices=("v1", "v2"), help="synthetic family probabilities (icl_prior.py)")
     t.add_argument("--resume", action="store_true"); t.set_defaults(fn=train)
     s = sub.add_parser("selftest"); s.set_defaults(fn=selftest)
     a = ap.parse_args()

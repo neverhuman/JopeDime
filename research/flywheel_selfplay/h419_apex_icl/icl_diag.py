@@ -124,11 +124,13 @@ def run_variant(model, name, x, y, n_ctx, seed):
         yr, used, bq = RES.residual_targets(x[None], y[None], n_ctx, torch.Generator().manual_seed(seed))
         res = predict(model, x, yr[0, :n_ctx], n_ctx, perms, seed)
         return res + bq[0].cpu() if bool(used[0]) else res
-    if base in ("kcarres", "bestres", "kcarfeat"):   # base = stored GP reference predictions (icl_refs.py)
+    if base in ("kcarres", "bestres", "kcarfeat", "kcarresf", "kcarresh"):   # base = stored GP reference predictions
         b = BASE[base[:4]][CUR["i"]]                 # all rows, context first
         if base == "kcarfeat":
             return predict(model, torch.cat([x, b.float()[:, None]], 1), yc, n_ctx, perms, seed)
-        return b[n_ctx:] + predict(model, x, (yc.double() - b[:n_ctx]).float(), n_ctx, perms, seed)
+        xx = torch.cat([x, b.float()[:, None]], 1) if base == "kcarresf" else x   # kcarresf: the base is also a feature
+        r = predict(model, xx, (yc.double() - b[:n_ctx]).float(), n_ctx, perms, seed)
+        return b[n_ctx:] + (0.5 * r if base == "kcarresh" else r)                  # kcarresh: half of the correction
     if base in ("ridgefeat", "ridgeres0"):   # ridgeres0: the first version (features standardised per fold)
         oof, rq = ridge_columns(x, y, n_ctx, seed)
         if base == "ridgefeat":
