@@ -9,6 +9,10 @@ registered in `jope_automl::REGRESSORS`:
 | `Gemini4_argon_high` | [`src/Gemini4_argon_high.rs`](src/Gemini4_argon_high.rs) | `d5cd85fc…053d3` |
 | `kimik3p1_max` | [`src/kimik3p1_max.rs`](src/kimik3p1_max.rs) | `0c211694…6ceb3` |
 
+`kimik3p1_max` is model release **1.0.0** (`KIMIK3P1_MAX_VERSION`). The receipt is
+[submissions/kimik3p1_max/RELEASE.json](submissions/kimik3p1_max/RELEASE.json).
+That version is the regressor release. The workspace crate version stays `1.0.0`.
+
 Each regressor's entire learning procedure lives in its own file. That file is included
 byte-for-byte and compiles independently:
 

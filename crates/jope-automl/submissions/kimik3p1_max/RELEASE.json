@@ -1,0 +1,20 @@
+{
+  "schema_version": "jope.native-regressor-release/v1",
+  "model_id": "kimik3p1_max",
+  "model_version": "1.0.0",
+  "release_tag": "kimik3p1_max-v1.0.0",
+  "source_file": "crates/jope-automl/src/kimik3p1_max.rs",
+  "source_sha256": "0c211694ec66605b994595fd8f4cf2b8894df6f156caa3b80f1fcc75f5d6ceb3",
+  "source_bytes": 47156,
+  "registered_constant": "jope_automl::KIMIK3P1_MAX_VERSION",
+  "workspace_version": "1.0.0",
+  "workspace_version_note": "The product crate version is unchanged. 1.0.0 here is the first release of this regressor.",
+  "elo": {
+    "panel": "automl-64-family-rmse-bt-v3",
+    "results": "assets/automl-elo/v3/RESULTS.json",
+    "rank": "3 of 6",
+    "rating": 1510.6689563931964,
+    "ci95": [1468.7495833753974, 1554.3058691041456]
+  },
+  "released_at": "2026-11-09"
+}

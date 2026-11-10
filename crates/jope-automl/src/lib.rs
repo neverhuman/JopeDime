@@ -66,6 +66,8 @@ pub const KIMIK3P1_MAX: &str = "kimik3p1_max";
 /// Hash of the owner-supplied standalone source; it is included byte-for-byte.
 pub const KIMIK3P1_MAX_SHA256: &str =
     "0c211694ec66605b994595fd8f4cf2b8894df6f156caa3b80f1fcc75f5d6ceb3";
+/// Model release of this frozen source. This is not the workspace crate version.
+pub const KIMIK3P1_MAX_VERSION: &str = "1.0.0";
 /// The exact file also builds directly with `rustc --crate-type rlib`.
 pub const KIMIK3P1_MAX_SOURCE: &str = include_str!("kimik3p1_max.rs");
 
@@ -455,6 +457,7 @@ mod tests {
             definition(KIMIK3P1_MAX).unwrap().source_file,
             "kimik3p1_max.rs"
         );
+        assert_eq!(KIMIK3P1_MAX_VERSION, "1.0.0");
         let model = fit_rows(KIMIK3P1_MAX, &[vec![10.0], vec![20.0]], &[7.0, 7.0], 1).unwrap();
         assert_eq!(
             model.predict_rows(&[vec![1234.0], vec![f64::NAN]]).unwrap(),

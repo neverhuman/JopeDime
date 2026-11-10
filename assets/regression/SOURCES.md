@@ -77,6 +77,31 @@ had when it was written. Two of them name Python that the Python removal P1 (ADR
 `docs/archive/python-archive-manifest.json`). The README best-known block quotes the first of them
 from this file verbatim.
 
+**Rust citations that have moved since the file was written (checked 2026-11-09).** The
+pinned file still cites the line numbers below. The rows it selects do not depend on them: it
+selects by `source_kind`, `source_revision` and `source_uri`. The cited code still exists at:
+
+| Cited in the corrections file | Where it is now |
+|---|---|
+| `train_only_redteam.rs:402-407` (`oracle_aspfm`, role `oracle_reference_only`, 63,108 evaluations) | `crates/jope-campaigns/src/commands/train_only_redteam.rs:406-411` |
+| `train_only_redteam.rs:550-556` (a config that labels it otherwise is refused) | same file, `:550-560` |
+| `train_only_redteam_results.rs:566-578` (`oracle_aspfm_rmse` read from `/best_rmse`) | `crates/jope-campaigns/src/commands/train_only_redteam_results/scoring.rs:69` |
+| `train_only_redteam_results.rs:1440-1471` (kept out of `fair_ladder`) | `train_only_redteam_results.rs:134-135` and `train_only_redteam_results/report.rs:159-160` |
+| `aggressive.rs:510-530` (`PreflightReceipt` and `CampaignIdentity` carry the flags) | `crates/jope-campaigns/src/test_adaptive/aggressive/preflight.rs:252-255` and `aggressive/population.rs:6-9` |
+| `aggressive.rs:700-724` (parent seed by lowest RMSE, `corrected_test_adaptive_parent`) | `crates/jope-campaigns/src/test_adaptive/aggressive/population/seed.rs:118-127` |
+| `aggressive.rs:732-748` (`GenerationZeroSeedSnapshot { benchmark_valid: false, test_adaptive: true, … }`) | `aggressive/population/seed.rs:142-149` |
+| `scq_batch.rs:32` (`GOLDEN46_RUN_ID`) | `crates/jope-campaigns/src/test_adaptive/scq_batch.rs:31` |
+| `main.rs:714` (`run-golden46` defaults to this run id) | `crates/jope-campaigns/src/cli.rs:609,623` |
+
+`aggressive.rs` is now a 69-line module facade. A stale line number is not a reason to drop
+a correction.
+
+**What the score rows themselves say.** All 45 `jope-dime` rows in the published `scores.csv`
+carry `benchmark_valid=True`. Their `notes` field says the frozen test targets were used only
+for scoring. That describes how each candidate was fitted. It does not describe how the row
+was chosen: each value is the best test-scored result of a search, as above. Read the
+corrections, not the `notes` field, when deciding whether a row is a held-out result.
+
 ## `leaderboard-tabular-regression-v2.benchmark-valid.csv` and `elo-tabular-regression-v2.benchmark-valid.json`
 
 `jope-arena elo --track tabular-regression-v2 --root assets/regression/sotarena-tabular-regression-v2

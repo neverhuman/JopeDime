@@ -1,0 +1,109 @@
+{
+  "above_ours": [
+    "kumo_tabular_large_e8.v1",
+    "tabfm_ensemble.v1",
+    "kumo_tabular_small_e8.v1",
+    "tabfm.v1",
+    "tabpfn_v3p5.v1",
+    "tabpfn_v3p5_e1.v1",
+    "tabpfn_v3.v1",
+    "mitra_v2_zeroshot.v1"
+  ],
+  "anchor": "h335.H257_REPLICA",
+  "board": "dev91-audit-v1",
+  "contexts": 91,
+  "entrants": 31,
+  "families": 19,
+  "frontier": [
+    {
+      "ci95": [
+        1445.070359298518,
+        1686.8178668232113
+      ],
+      "elo": 1564.0689040828822,
+      "id": "h335.Opus5p5_Extra",
+      "rank": 14
+    },
+    {
+      "ci95": [
+        1412.0727524433755,
+        1631.6533077677182
+      ],
+      "elo": 1519.3628375512753,
+      "id": "h335.Gemini4_argon_high",
+      "rank": 17
+    },
+    {
+      "ci95": [
+        1424.2490478041707,
+        1586.7507779875782
+      ],
+      "elo": 1503.2091648978276,
+      "id": "h335.GPT6p1_Sol_Max",
+      "rank": 19
+    },
+    {
+      "ci95": [
+        1305.4954371518209,
+        1508.560709240033
+      ],
+      "elo": 1411.0251131080836,
+      "id": "h414.kimik3p1_max",
+      "rank": 24
+    },
+    {
+      "ci95": [
+        1187.931562821309,
+        1424.783339768255
+      ],
+      "elo": 1312.9421085836616,
+      "id": "h335.GPT6_Astra_Max",
+      "rank": 27
+    },
+    {
+      "ci95": [
+        989.9992478513125,
+        1220.1519488101135
+      ],
+      "elo": 1120.745467050786,
+      "id": "h412.grok4p7_xhigh",
+      "rank": 31
+    }
+  ],
+  "leader": {
+    "ci95": [
+      1883.724014854615,
+      2319.015771020147
+    ],
+    "elo": 2058.7142576275746,
+    "id": "kumo_tabular_large_e8.v1",
+    "rank": 1
+  },
+  "ours": [
+    {
+      "ci95": [
+        1621.0538977331064,
+        1822.0771323960264
+      ],
+      "elo": 1705.9163102584673,
+      "id": "h364.XSTACK_2L",
+      "rank": 9
+    },
+    {
+      "ci95": [
+        1608.7385358010804,
+        1800.039191571279
+      ],
+      "elo": 1689.4732595660055,
+      "id": "h335.H335_AGG",
+      "rank": 11
+    }
+  ],
+  "schema": "jope.readme-reference-boards/v1",
+  "source": {
+    "commit": "7f7ff32833de92327c71ed6abcd683d0decf4660",
+    "git_blob": "3fd41e5d6e62abf62759cd8451cef7b24cc5ced1",
+    "path": "research/elo/reference-board/boards/dev91-audit-v1/ladder.json",
+    "sha256": "92ebf1f6ea2645d6eb6295f2a16b2c404cbfc38a9ae61d2c9c808721f62c601d"
+  }
+}

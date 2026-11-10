@@ -1,6 +1,8 @@
 {
   "schema_version": "jope.native-regressor-verification/v1",
   "source_sha256": "0c211694ec66605b994595fd8f4cf2b8894df6f156caa3b80f1fcc75f5d6ceb3",
+  "model_version": "1.0.0",
+  "release_tag": "kimik3p1_max-v1.0.0",
   "base_commit": "4d3c7ff6d9b4e71fb7f812bfda2a378a93faa6b0",
   "compiler": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
   "checks": [

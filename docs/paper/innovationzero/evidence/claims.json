@@ -8,7 +8,7 @@
       "id": "IZ-E01",
       "claim": "Corrected public-development engine ladder: rank 31/304, Elo 1687.0, coverage 42/45.",
       "status": "repository-reported",
-      "manuscript": "sections/04-evidence.tex",
+      "manuscript": "sections/06-evidence.tex",
       "sources": [
         {
           "repository": "neverhuman/JopeDime",
@@ -27,13 +27,13 @@
           "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/assets/regression/elo-tabular-regression-v2.benchmark-valid.json"
         }
       ],
-      "qualification": "Mixed-protocol public-development ladder; not prospective neural K=1 synthesis."
+      "qualification": "Mixed-protocol public-development ladder that removes the 45 test-selected or test-adaptive jope-dime (evolved) rows (assets/regression/protocol-corrections-tabular-regression-v2.json); not prospective neural K=1 synthesis."
     },
     {
       "id": "IZ-E02",
-      "claim": "Published 2259.8 Elo rank-one row is a test-selected oracle envelope.",
+      "claim": "Published 2259.8 Elo rank-one row (first of 305 methods) is a test-selected oracle envelope.",
       "status": "repository-reported",
-      "manuscript": "sections/04-evidence.tex",
+      "manuscript": "sections/06-evidence.tex",
       "sources": [
         {
           "repository": "neverhuman/JopeDime",
@@ -44,13 +44,13 @@
           "url": "https://github.com/neverhuman/JopeDime/blob/bdf9441aaa17f87dcb37053d33b185ba2217bf17/README.md"
         }
       ],
-      "qualification": "42 Golden42 rows selected over 63,108 test-scored evaluations; no held-out claim."
+      "qualification": "42 Golden42 rows selected over 63,108 test-scored evaluations plus 3 Golden46 rows accepted from a test-adaptive run, all removed by assets/regression/protocol-corrections-tabular-regression-v2.json; no held-out claim."
     },
     {
       "id": "IZ-E03",
       "claim": "Same-cut engine searched 32 programs x 8 rounds per cut; rank 3/15, Elo 1556.6.",
       "status": "repository-reported",
-      "manuscript": "sections/04-evidence.tex",
+      "manuscript": "sections/06-evidence.tex",
       "sources": [
         {
           "repository": "neverhuman/JopeDime",
@@ -142,7 +142,7 @@
       "id": "IZ-E07",
       "claim": "Four-entrant Elo ratings and intervals shown in figure2 derive from exact RESULTS.json.",
       "status": "repository-reported",
-      "manuscript": "sections/04-evidence.tex",
+      "manuscript": "sections/04-frontier.tex",
       "sources": [
         {
           "repository": "neverhuman/JopeDime",
@@ -272,6 +272,23 @@
         }
       ],
       "qualification": "Historical reportD remains unattributed; do not link it by model-like filename."
+    },
+    {
+      "id": "IZ-E14",
+      "claim": "On dev91-audit-v1 (91 AUDIT contexts, 19 families, 31 entrants) the two-level stack h364.XSTACK_2L ranks 9/31 at Elo 1705.9 [1621.1,1822.1], above all six frontier entrants (best: Opus5p5_Extra 14/31, 1564.1 [1445.1,1686.8]); eight tabular foundation models rank higher, led by kumo_tabular_large_e8.v1 at 2058.7.",
+      "status": "branch-reported",
+      "qualification": "Development board on unmerged branch v1/next; anchor h335.H257_REPLICA = 1500; reuse cohort (H257 tuned on it; H381 and H410 read 5 contexts); intervals overlap; not an untouched-family or K=1 result. README rows are generated from assets/readme-performance/v2/boards.json, extracted from this ladder.",
+      "manuscript": "sections/06-evidence.tex",
+      "sources": [
+        {
+          "repository": "neverhuman/JopeDime",
+          "revision": "7f7ff32833de92327c71ed6abcd683d0decf4660",
+          "path": "research/elo/reference-board/boards/dev91-audit-v1/ladder.json",
+          "sha256": "92ebf1f6ea2645d6eb6295f2a16b2c404cbfc38a9ae61d2c9c808721f62c601d",
+          "bytes": 34348,
+          "url": "https://github.com/neverhuman/JopeDime/blob/7f7ff32833de92327c71ed6abcd683d0decf4660/research/elo/reference-board/boards/dev91-audit-v1/ladder.json"
+        }
+      ]
     },
     {
       "id": "IZ-P01",
