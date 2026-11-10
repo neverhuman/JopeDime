@@ -153,9 +153,11 @@ class BrowserDependencies(unittest.TestCase):
         """Prepare with an empty package cache and a scripted mirror; returns the call count."""
         self.cached.unlink()
         calls = []
+        self.timeouts = []
 
         def mirror(url, timeout):
             calls.append(url)
+            self.timeouts.append(timeout)
             outcome = outcomes[min(len(calls), len(outcomes)) - 1]
             if isinstance(outcome, BaseException):
                 raise outcome
@@ -175,6 +177,15 @@ class BrowserDependencies(unittest.TestCase):
         self.fetch([http.client.RemoteDisconnected("closed"), eof, archive])
         self.assertEqual(3, self.calls)
         self.assertEqual(MODULE.digest(self.cached), MODULE.digest(self.archive))
+
+    def test_a_dead_mirror_address_cannot_exhaust_the_job_budget(self):
+        """Each attempt is bounded, and one timeout per locked package still fits in the 25-minute job."""
+        archive = self.archive.read_bytes()
+        self.fetch([TimeoutError("timed out"), archive])
+        self.assertEqual(2, self.calls)
+        self.assertEqual([MODULE.TIMEOUT_SECONDS] * 2, self.timeouts)
+        packages = len(json.loads(Path(__file__).with_name("browser-deps.lock.json").read_bytes())["packages"])
+        self.assertLess(packages * MODULE.TIMEOUT_SECONDS, 25 * 60 * 3 // 4)
 
     def test_persistent_drops_fail_after_bounded_attempts(self):
         with self.assertRaises(http.client.RemoteDisconnected):
