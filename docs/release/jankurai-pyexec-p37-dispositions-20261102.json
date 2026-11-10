@@ -27,33 +27,6 @@
         "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
       },
       "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
-    },
-    {
-      "check_id": "HLT-001-DEAD-MARKER:vibe",
-      "fingerprint": "sha256:167577228256838a98914fe64562e88668757a9985ae577f83adf8ffdb82d809",
-      "justification": "Re-reviewed by Jankurai 1.7.6 full cross-file audit at captured source 945e0f532a81314a1a1072350f9da3c9fbb5c2b6; retained current raw identity and pinned participant source hashes. The 45 prior cross-file identities no longer emitted were removed from this exact-path P37 inventory.",
-      "line": 831,
-      "participants": {
-        "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py": "b1487969896224a733a9af9f8106c6d1ff879526fca9d0e17719196828631a00"
-      },
-      "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
-      "raw_identity": {
-        "category": "vibe",
-        "check_id": "HLT-001-DEAD-MARKER:vibe",
-        "evidence": [
-          "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py:831 except Exception as e:"
-        ],
-        "fingerprint": "sha256:167577228256838a98914fe64562e88668757a9985ae577f83adf8ffdb82d809",
-        "line": 831,
-        "participants": [
-          "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py"
-        ],
-        "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
-        "problem": "fallback soup detected in product code",
-        "reason": "",
-        "rule_id": "HLT-001-DEAD-MARKER"
-      },
-      "rule_id": "HLT-001-DEAD-MARKER"
     }
   ],
   "expires_on": "2026-12-02",
