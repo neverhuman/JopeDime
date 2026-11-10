@@ -16,6 +16,7 @@ pub const WARNING_CODES: &[&str] = &[
     "MODEL_INTEGRITY_FAILED",
     "NO_VALID_MODEL",
     "EVENT_LAG",
+    "NON_NUMERIC_COLUMNS_SKIPPED",
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

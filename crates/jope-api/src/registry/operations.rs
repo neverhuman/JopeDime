@@ -438,7 +438,7 @@ pub static LOCAL_COMMANDS: &[TerminalCommand] = &[
     command!(
         "\\target",
         &[],
-        "COLUMN [--task regression|binary|multiclass] [--ignore COL,…] [--group COL] [--time COL]",
+        "COLUMN [--task regression|binary|multiclass] [--ignore COL,…]",
         Draft,
         &[],
         Some(6),

@@ -65,7 +65,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     },
     CommandSpec {
         name: "target",
-        flags: &["--task", "--ignore", "--group", "--time"],
+        flags: &["--task", "--ignore"],
     },
     CommandSpec {
         name: "objective",
@@ -314,7 +314,7 @@ fn complete_flags(command: &CommandSpec, used: &[String], prefix: &str) -> Vec<S
 fn value_source_for_flag(command: &str, flag: &str) -> Option<ValueSource> {
     match (command, flag) {
         ("target", "--task") => Some(ValueSource::Enum(TASKS)),
-        ("target", "--ignore" | "--group" | "--time") => Some(ValueSource::Column),
+        ("target", "--ignore") => Some(ValueSource::Column),
         ("effort", "--evals" | "--time") | ("run", "--seed") => None,
         ("open", "--name") => None,
         ("export", "--kind") => Some(ValueSource::Enum(EXPORT_KINDS)),
