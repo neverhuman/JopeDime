@@ -3,7 +3,19 @@ all-features = false
 
 [advisories]
 version = 2
-ignore = []
+# Each ignore names its advisory, why this workspace is not exposed, and when it ends. Recorded 2026-11-09 when both
+# advisories turned the hygiene security lane red for every pull request; a lockfile bump would move the
+# Cargo.lock-bound evaluator identity (crates/feat-math/tests/compat_freeze.rs) and needs its own reviewed rebaseline.
+ignore = [
+  # libsqlite3-sys 0.30.1 bundles SQLite < 3.54.0 (rusqlite "bundled" in jope-engine / jope-learning). The flaw needs a
+  # database opened together with a -wal file whose page size differs, written by a less trusted party. These crates
+  # open only campaign / learning stores that this process family creates. Remove once a libsqlite3-sys bundling SQLite >= 3.54.0 is adopted.
+  { id = "RUSTSEC-2026-0459", reason = "bundled SQLite only opens self-written stores; no untrusted -wal; remove once libsqlite3-sys bundles SQLite >= 3.54.0" },
+  # rmcp 3.8.0 (jope-appliance `mcp`, pinned =3.8.0 with only "server" and "transport-io"). The advisory is unbounded
+  # response buffering in the Streamable HTTP *client* transports (transport-streamable-http-client-*), which no crate
+  # here enables. Remove with the rmcp >= 3.9.0 bump.
+  { id = "RUSTSEC-2026-0462", reason = "only rmcp server + transport-io are enabled; the affected HTTP client transports are not compiled; remove with rmcp >= 3.9.0" },
+]
 
 [licenses]
 version = 2

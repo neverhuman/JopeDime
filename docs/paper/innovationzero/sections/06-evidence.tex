@@ -26,13 +26,24 @@ however carefully reasoned.
 
 The public Golden45 ladder makes the same point from the other side \est. When the engine's best
 program per dataset is chosen by looking at test scores --- the minimum over 63,108 test-scored
-evaluations on 42 datasets --- it ranks first of 304 methods at Elo 2259.8. A single fixed-seed run of
-the engine, which never sees test labels, ranks 31st at 1687.0 with 42 of 45 datasets covered,
-below tabular foundation models such as TabFM
+evaluations on 42 datasets, plus three programs accepted from a test-adaptive run on the other
+three --- it ranks first of the 305 methods on the published ladder, at Elo 2259.8. The
+benchmark-valid ladder removes those 45 rows. On it, a single fixed-seed run of the engine, recorded
+as never seeing test labels, ranks 31st of 304 at 1687.0 with 42 of 45 datasets covered, below
+tabular foundation models such as TabFM Ensemble
 (1934.9) and TabPFN v3 (1909.5) \citep{hollmann2025tabpfn}. The first number is an oracle envelope
 and must never be read as a result; the gap between the two is the clearest statement we have of
 the problem InnovationZero addresses. \emph{Strong programs for these datasets exist in the space.
 Finding them without looking at the answer is the whole problem.}
+
+A later development board places the engine's locked candidates, the frontier entrants and the
+foundation models on one split \pre. On \code{dev91-audit-v1} (91 AUDIT contexts in 19
+families, 31 entrants, November 2026), the engine's two-level stack ranks ninth at Elo 1705.9
+[1621.1, 1822.1]. That is above all six frontier entrants on the board; the best of them, Opus, is
+fourteenth at 1564.1 [1445.1, 1686.8], and the two intervals overlap. Eight tabular foundation
+models rank higher, led by Kumo-Tabular large at 2058.7. The board is a reuse cohort: an earlier
+study tuned on its contexts, and five of them were later read again. This is development evidence,
+not an untouched-family result, and it is not the $K=1$ synthesis this paper proposes.
 
 \subsection{Tracks U and S on identical cuts}
 \label{sec:pilot}

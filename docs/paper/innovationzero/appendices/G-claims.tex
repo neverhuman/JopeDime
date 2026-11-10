@@ -10,11 +10,18 @@ committed to the repository and reproducible from it. \pre{} preliminary: an unm
 non-qualifying host, a small panel, or an estimate. \pend{} pending. External facts are cited in the
 text and listed in the references.
 
-\begin{center}\sffamily\scriptsize\lining
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.38\linewidth}L>{\centering\arraybackslash}p{0.07\linewidth}@{}}
+{\sffamily\scriptsize\lining
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.38\linewidth}L>{\centering\arraybackslash}p{0.07\linewidth}@{}}
 \toprule
 Statement & Source & Status \\
 \midrule
+\endfirsthead
+\toprule
+Statement & Source & Status \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
 Challenge file 68,744 B; participant packet 39,747 B as archived (lines 16--541, 5,757 words, plus the newline closing its opening marker) & \code{artifacts/challenge/}, \code{evidence/artifact-manifest.json} & \est \\
 Opus entrant 66,536 B, 2,284 lines; 35/35 contract-driver cases; report C & \code{artifacts/sources/Opus5p5\_Extra.rs}, \code{artifacts/receipts/opus/} & \est \\
 Astra entrant 27,729 B, 821 lines; written at 678.5 s, frozen at 770 s; 80k (60--110k) content & \code{artifacts/receipts/astra/effort.json}, \code{provenance.json} & \est \\
@@ -27,7 +34,8 @@ Head-to-head majorities; best of four on 30 / 20 / 7 / 5 families, 2 shared; swe
 Fit 459.5 / 1,985.8 / 72.1 / 61.9 s per 576 fits; memory 19--80 MB; hosts differ & \code{artifacts/benchmark/HISTORICAL\_THREE\_ENTRANT.json}, \code{GEMINI\_COSTS.json} & \pre \\
 Token yields, session and source tokens per second (\cref{tab:yield,fig:frontier}) & receipts above; bytes / 3.5; \code{data/frontier-entrants.csv} & \pre \\
 Entrants' RMSE 2.29 / 2.21 / 2.97 times the incumbent's; 21 / 11 / 3 wins & \code{artifacts/benchmark/HISTORICAL\_THREE\_ENTRANT.json} & \pre \\
-Golden45: engine rank 31 of 304, Elo 1687.0, 42/45 coverage; test-selected envelope 2259.8 over 63,108 evaluations on 42 datasets; TabFM 1934.9, TabPFN v3 1909.5 & \code{README.md}, \code{assets/regression/} at \code{bdf9441}; \code{evidence/claims.json} IZ-E01--E02 & \est \\
+Golden45 published ladder: test-selected envelope first of 305 at Elo 2259.8 (42 ledger minima over 63,108 evaluations on 42 datasets, plus 3 test-adaptive Golden46 accepts); benchmark-valid ladder without those 45 rows: engine rank 31 of 304, Elo 1687.0, 42/45 coverage; TabFM Ensemble 1934.9, TabPFN v3 1909.5 & \code{README.md}, \code{assets/regression/} (including \code{protocol-corrections-tabular-regression-v2.json}) at \code{bdf9441}; \code{evidence/claims.json} IZ-E01--E02 & \est \\
+\code{dev91-audit-v1} (91 contexts, 19 families, 31 entrants): two-level stack rank 9, Elo 1705.9 [1621.1, 1822.1]; best frontier entrant (Opus) rank 14, 1564.1 [1445.1, 1686.8]; eight foundation models above, led by Kumo-Tabular large at 2058.7; reuse cohort & \code{research/elo/reference-board/boards/dev91-audit-v1/ladder.json} on branch \code{v1/next} at \code{7f7ff32}; \code{assets/readme-performance/v2/boards.json}; \code{evidence/claims.json} IZ-E14 & \pre \\
 Committed same-cut run: engine third of 15, Elo 1556.6, partial coverage & \code{assets/same-cut/v2/reports/}; \code{evidence/claims.json} IZ-E03 & \est \\
 Pilot ladder (18 methods), paired tests, relative RMSE, wins & \code{evidence/pilot-2026-10-22/scores-deep.csv}, \code{elo-deep.csv}; \code{data/pilot-*.csv} & \pre \\
 Engine programs and search times on the pilot; identical to committed run & \code{evidence/pilot-2026-10-22/programs/}; \code{assets/same-cut/v2/reports/} & \est \\
@@ -41,6 +49,4 @@ Corpus 3,859 datasets; 14,987 runs; 7,120 contexts; 1,068 lineages & \code{docs/
 Neural policy did not beat the non-neural proposer on held-out seeds & \code{docs/archive/CURSOR\_GITHUB\_PORT\_PLAN.md} & \est \\
 First accepted-model proposal attempt timed out & \code{docs/asm.md} & \est \\
 Track C results; $k_{\mathrm{eq}}$; Move~42 & \cref{sec:protocol} & \pend \\
-\bottomrule
-\end{tabularx}
-\end{center}
+\end{xltabular}}
