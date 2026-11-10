@@ -9,8 +9,9 @@ exists. Plan: [`PREREG.md`](PREREG.md), [`PREREG_ADDENDUM_1.md`](PREREG_ADDENDUM
 | `ICL_S_r2`, `ICL_M_r2` | xbabe3 3090, xbabe1 4090 | 7.56M, 23.66M | synthetic prior only; stopped at about 1.3 h; their checkpoints start r3 |
 | `ICL_S_r3` | xbabe3 3090 | 7.56M | stopped at 0.77 h (11:38Z) for the 104M run (addendum 2); checkpoint kept |
 | `ICL_M_r3` | xbabe1 4090 | 23.66M | 46 h run, started 2026-11-10T10:52Z; same data mix |
-| `ICL_L_r4` | xbabe3 3090 | 104.36M | 72 h run, started 2026-11-10T11:40Z from scratch (addendum 2); same data mix |
-| `ICL_L_g1_w1`, `ICL_L_g1_w2` | xbabe0 3090, xbabe2 3090 | 104.36M | started 12:29Z as averaging workers cloned from `ICL_L_r4` at step 5,531 (addendum 3); the xbabe3 run joins after the cut-over checks |
+| `ICL_L_r4` | xbabe3 3090 | 104.36M | started 2026-11-10T11:40Z from scratch (addendum 2); stopped at its 13:00:43Z checkpoint for the cut-over; checkpoint kept |
+| `ICL_L_g1_w0` | xbabe3 3090 | 104.36M | averaging worker since 13:01:55Z, cloned from the last `ICL_L_r4` checkpoint (addendum 3) |
+| `ICL_L_g1_w1`, `ICL_L_g1_w2` | xbabe0 3090, xbabe2 3090 | 104.36M | started 12:29Z as averaging workers cloned from `ICL_L_r4` at step 5,531 (addendum 3) |
 | `ICL_M_x4b_inj`, `ICL_M_x4b_noinj` | xbabe4 Apple GPU | 23.66M | column-injection ablation, two arms, stopped at 24 h each (addendum 4) |
 
 ## Tracked metrics
@@ -26,9 +27,46 @@ exists. Plan: [`PREREG.md`](PREREG.md), [`PREREG_ADDENDUM_1.md`](PREREG_ADDENDUM
 | 11:33 | S, 0.67 h | 0.491 | 0.597 | 0.818 | 0.277 (0.149) | 0.272 (0.109) |
 | 11:13 | M, 0.33 h | 0.547 | 0.643 | 0.931 | 0.292 (0.132) | 0.265 (0.100) |
 | 11:33 | M, 0.67 h | 0.575 | 0.645 | 0.917 | 0.297 (0.132) | 0.270 (0.100) |
-
 | 12:13 | M, 1.33 h | 0.585 | 0.633 | 0.940 | 0.300 (0.132) | — |
 | 12:01 | L (104M), 0.33 h | 0.019 | 0.013 | 0.033 | 0.007 | — |
+| 12:53 | L, 0.98 h (worker 1) | 0.264 | 0.361 | 0.541 | 0.124 (0.149) | 0.123 (0.109) |
+| 13:30 | M, 2.67 h | 0.585 | 0.663 | 0.899 | 0.365 (0.132) | 0.288 (0.100) |
+| 14:30 | M, 3.66 h | 0.594 | 0.687 | 1.023 | 0.372 (0.132) | 0.299 (0.100) |
+| 15:30 | M, 4.66 h | 0.613 | 0.675 | 1.013 | 0.373 (0.132) | 0.295 (0.100) |
+| 13:35 | L group, 1.63 h (worker 0) | 0.406 | 0.474 | 0.703 | 0.161 (0.149) | 0.169 (0.109) |
+| 14:30 | L group, 2.52 h | 0.472 | 0.580 | 0.831 | 0.207 (0.149) | 0.210 (0.109) |
+| 15:42 | L group, 3.70 h | 0.538 | 0.608 | 0.884 | 0.249 (0.149) | 0.238 (0.109) |
+
+Clock times of the 13:30–15:42 rows are approximate; the hours column is exact. Worker hours exclude the time a
+worker waits for the group average.
+
+**Reading at 15:46Z.**
+- **24M run (4.66 h):** ahead of ridge on real tables by win rate (0.613) and by median (0.675 against 0.630), and
+  within 0.05 of ridge on the mean (1.013 against 1.061). The median has been above its start value (0.643) at 12
+  of the 13 evaluations since the first. The on-track rule (hour 12) has not come due; the run is on course for it.
+- **104M group (3.7 h per worker, three workers):** rising at every evaluation: win rate 0.26 → 0.54, median
+  0.36 → 0.61, mean 0.54 → 0.88 in 2.7 hours. It is still behind the 24M run on every real-table measure and has
+  not yet passed ridge's median. The size rule (first check at hour 12) has not come due.
+- **Negatives:** on the linear-leaning `scm` synthetic tasks both sizes are still below ridge (24M: 0.267 against
+  0.296; 104M: 0.242 against 0.254). The 24M run's win rate moves by up to 0.05 between consecutive evaluations, so
+  single readings are noisy. On synthetic tasks the 24M run has gained little in its last two hours (0.365 → 0.373).
+- **xbabe4 ablation at 2.67 h of 24:** with injection win rate 0.519, median 0.645, mean 0.926; without injection
+  0.528, 0.585, 0.840. The arms cross between evaluations; nothing can be read from this yet.
+
+**Cut-over of the 104M run into the averaging group (13:01:55Z, addendum 3).** `ICL_L_r4` on xbabe3 was stopped
+right after its 13:00:43Z checkpoint, and `ICL_L_g1_w0` started from that checkpoint as the third worker. About one
+minute of single-run progress was lost. Since then (to 15:56Z): 35 three-worker rounds, every round loaded by every worker,
+mean wait 24–33 s of each 300 s round (8–11% of worker time), worker-to-mean distance steady at 0.032 (0.053 for
+worker 0 in its first round).
+
+Stop rule (c) (loss after the average more than 0.1 above the loss before it, three rounds in a row) has not
+triggered. By the literal comparison 6 of 119 worker-rounds exceeded 0.1, at most two in a row (worker 0, rounds
+5981072–5981073). In each of the six, the value before or the value after is an average
+over only a few batches (the log window is cut at the average), and the loss after was at most 0.07 above the last
+full log line except twice on worker 1 (+0.11 at round 5981061; +0.31 at round 5981086 on a few batches, back to
+4.88 at the next full line).
+**Weakness:** this comparison is noisy (consecutive full log lines differ by 0.07 on average), so the rule as written
+is a coarse alarm, not a measurement.
 
 **Reboots of 12:02Z (xbabe2) and 11:56Z / 12:05Z (xbabe0), not by this wave.** Neither training run was on a
 rebooted host. `ICL_M_r3` (step 31,010 at 1.42 h, checkpoint 12:13:10Z) and `ICL_L_r4` (step 5,263 at 0.63 h,
