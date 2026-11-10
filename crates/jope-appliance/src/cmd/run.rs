@@ -321,6 +321,12 @@ pub fn run<T: Transport>(mut args: RunArgs, transport: &T) -> anyhow::Result<()>
             }
         }
     }
+    // Say which objective the run optimizes when the user did not choose one (#2132).
+    if let Some(line) = args.default_objective()? {
+        if !args.json_m1() {
+            eprintln!("{line}");
+        }
+    }
     if args.languages.is_empty() {
         args.languages = DEFAULT_LANGUAGES.iter().map(|&l| l.to_owned()).collect();
     }

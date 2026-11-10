@@ -596,3 +596,57 @@ fn run_uses_the_typed_in_process_api_contract() {
             if problem.code == jope_api::error::ErrorCode::CapabilityUnavailable
     ));
 }
+
+/// #2132: without `--objective` the run optimizes its task's primary metric, not always RMSE, and
+/// the chosen default is announced; an explicit objective is kept as given.
+#[test]
+fn objective_defaults_to_the_task_metric_and_explicit_objective_wins() {
+    let parse = |extra: &[&str]| {
+        let mut argv = vec![
+            "jopedime",
+            "run",
+            "--dataset",
+            "ds_0123456789abcdef01234567",
+            "--target",
+            "label",
+        ];
+        argv.extend_from_slice(extra);
+        let crate::cli::ApplianceCommand::Run(args) = Args::try_parse_from(argv).unwrap().command
+        else {
+            panic!("run command")
+        };
+        args
+    };
+    for (task, expected) in [
+        ("binary", "auroc"),
+        ("multiclass", "log_loss"),
+        ("regression", "rmse"),
+        ("auto", "rmse"),
+    ] {
+        let mut args = parse(&["--task", task]);
+        assert_eq!(args.objective, None);
+        assert_eq!(
+            args.run_spec().unwrap().objective,
+            jope_api::ObjectiveSpec::Name(expected.into()),
+            "{task}"
+        );
+        let reason = if task == "auto" {
+            "the default when the task is not inferred".to_owned()
+        } else {
+            format!("the default for a {task} task")
+        };
+        assert_eq!(
+            args.default_objective().unwrap().unwrap(),
+            format!("Objective: {expected} ({reason}; choose another with --objective)")
+        );
+        assert_eq!(args.objective.as_deref(), Some(expected));
+        assert_eq!(args.default_objective().unwrap(), None, "announced once");
+    }
+
+    let mut explicit = parse(&["--task", "binary", "--objective", "mae"]);
+    assert_eq!(explicit.default_objective().unwrap(), None);
+    assert_eq!(
+        explicit.run_spec().unwrap().objective,
+        jope_api::ObjectiveSpec::Name("mae".into())
+    );
+}
