@@ -69,6 +69,20 @@ pub enum ParityStatus {
     Unavailable,
 }
 
+impl ParityStatus {
+    /// The one sentence a person should read for this status (#2136).
+    /// The wire value stays the enum; clients must not invent their own wording.
+    pub fn explanation(self) -> &'static str {
+        match self {
+            Self::Passed => {
+                "passed: the export matched the engine on this release's qualified check"
+            }
+            Self::Failed => "failed: a parity check ran and did not match the engine",
+            Self::Unavailable => "unavailable: this export was not measured against the engine",
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ExportManifest {
     pub artifact_id: ArtifactId,

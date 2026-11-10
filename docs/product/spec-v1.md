@@ -1006,6 +1006,7 @@ With `require_all_languages: true` (default), the proposer only generates operat
 
 ### 10.5 Parity
 
+- **`parity_status` is one of three values.** `passed`: this export matched the engine on the release's qualified check. `failed`: a check ran and did not match the engine. `unavailable`: this export was not measured against the engine, which is not a failed check. Clients print `ParityStatus::explanation` and do not invent another wording.
 - **In CI, not in the binary.** For every entry in the capability registry, CI emits code for golden models and runs it with pinned toolchains (`rustc`, `python3`, `node`) against the engine's `f64` predictions on fixed rows that include missing values, unknown categories, extremes, signed zero, constant columns and calibrated outputs.
 - **Tolerances** *(validate per operation; any looser bound needs a written reason):*
 
