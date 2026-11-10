@@ -37,7 +37,9 @@ while :; do
     files+=("$G/out_$name.pt")
   done
   wait; t1=$(date +%s)
-  res=$(PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=8 python3 -B "$CODE/icl_avg.py" --out "$G/in.pt.tmp" "${files[@]}" 2>>"$G/coordinator.log") || { echo "{\"round\": $k, \"error\": \"average failed\"}" >> "$LOG"; continue; }
+  SM=()   # addendum 5: outer-step tracking / momentum; beta is read each round from $G/slowmo_beta (absent = 0 = plain mean)
+  if [ -n "${SLOWMO:-}" ]; then SM=(--slowmo "$G/slowmo_state.pt" --beta "$(cat "$G/slowmo_beta" 2>/dev/null || echo 0)"); fi
+  res=$(PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=8 python3 -B "$CODE/icl_avg.py" --out "$G/in.pt.tmp" "${SM[@]}" "${files[@]}" 2>>"$G/coordinator.log") || { echo "{\"round\": $k, \"error\": \"average failed\"}" >> "$LOG"; continue; }
   mv "$G/in.pt.tmp" "$G/in.pt"; t2=$(date +%s)
   meta=$(echo "$res" | jq -c --argjson k "$k" '. + {round: $k}')
   for w in "${present[@]}"; do

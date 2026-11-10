@@ -9,6 +9,10 @@ The schedule is a function of elapsed training time / --hours (so a run ends on 
 warmup 2%, stable, cosine decay over the last 15% to 5% of the peak. Row curriculum by the same fraction:
 max rows 384 -> 640 (25%) -> 1,024 (50%) -> 1,536 (85%). Checkpoints: ckpt_last.pt every 20 minutes (atomic replace)
 and ckpt_hNNN.pt every 2 hours, each with raw and EMA weights, the optimizer and the elapsed time.
+
+Addendum 5: --p-resid P turns a share P of the training batches into residual-target tasks (icl_resid.py: the target
+is what an in-context ridge leaves over); --row-floor N lifts the row curriculum's current maximum to at least N.
+The monitor reports the residual readout (ridge + model) beside the plain one, with per-context values.
 """
 import argparse
 import hashlib
@@ -23,6 +27,7 @@ import torch
 
 from icl_model import ICL, n_params
 import icl_inject as INJ
+import icl_resid as RES
 from icl_prior import KINDS, Prior, draw_features
 
 ROW_BUCKETS = (384, 640, 1024, 1536)
@@ -43,8 +48,9 @@ def max_rows(frac):
     return ROW_BUCKETS[0] if frac < 0.25 else ROW_BUCKETS[1] if frac < 0.5 else ROW_BUCKETS[2] if frac < 0.85 else ROW_BUCKETS[3]
 
 
-def draw_shape(rng, frac, tokens, bmax, cap_rows=0, row_tokens=0):
-    top = max_rows(frac) if not cap_rows else min(cap_rows, max_rows(frac))
+def draw_shape(rng, frac, tokens, bmax, cap_rows=0, row_tokens=0, row_floor=0):
+    top = max(max_rows(frac), row_floor)
+    top = top if not cap_rows else min(cap_rows, top)
     opts = [n for n in ROW_BUCKETS if n <= top]
     N = opts[-1] if rng.random() < 0.5 else rng.choice(opts)
     Fn = draw_features(rng)
@@ -81,6 +87,16 @@ def u_score(pred, yq, ym):
 
 
 @torch.no_grad()
+def resid_u(model, x, y, n_ctx, seed):
+    """u of the residual readout (addendum 5): ridge on the context + the model's prediction of the ridge residual.
+    A task that keeps its raw target (icl_resid.MIN_RES_SD) is read out plainly."""
+    yr, used, base_q = RES.residual_targets(x, y, n_ctx, torch.Generator().manual_seed(seed))
+    logits, ym, ys = model(x, yr[:, :n_ctx], n_ctx)
+    pred = _c(model.mean(logits, ym, ys)) + torch.where(_c(used)[:, None] > 0, base_q.cpu(), torch.zeros_like(base_q.cpu()))
+    return u_score(pred, _c(y[:, n_ctx:]), _c(y[:, :n_ctx]).mean(1, keepdim=True))
+
+
+@torch.no_grad()
 def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
     model.eval()
     prior = Prior(dev, VAL_SEED)
@@ -93,8 +109,9 @@ def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
             loss = model.loss(logits, y[:, n_ctx:], ym, ys).mean(1)
             u = u_score(_c(model.mean(logits, ym, ys)), _c(y[:, n_ctx:]), _c(ym))
             ur = ridge_u(x, y, n_ctx)
+            ures = resid_u(model, x, y, n_ctx, VAL_SEED + len(rows))
             for i in range(bsz):
-                rows.append((KINDS[int(kinds[i])], float(loss[i]), float(u[i]), float(ur[i])))
+                rows.append((KINDS[int(kinds[i])], float(loss[i]), float(u[i]), float(ur[i]), float(ures[i])))
     # the same shapes with injected columns in 20-60% of the feature slots (robustness to injection)
     prior2, rng2, inj = Prior(dev, VAL_SEED + 1), random.Random(VAL_SEED), []
     for N, Fn in VAL_SHAPES:
@@ -105,14 +122,15 @@ def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
         inj.extend(zip(u.tolist(), ridge_u(x, y, n_ctx).tolist()))
     # real FIT-SEL SEARCH rows: context = folds 1-4, query = fold 0 (one task per forward, no padding)
     real = []
-    for m, n_ctx in (real_val.items if real_val is not None else []):
+    for i, (m, n_ctx) in enumerate(real_val.items if real_val is not None else []):
         x, y = m[None, :, :-1], m[None, :, -1]
         logits, ym, ys = model(x, y[:, :n_ctx], n_ctx)
         u = u_score(_c(model.mean(logits, ym, ys)), _c(y[:, n_ctx:]), _c(ym))
-        real.append((float(u), float(ridge_u(x, y, n_ctx)), x.shape[-1]))
+        real.append((float(u), float(ridge_u(x, y, n_ctx)), x.shape[-1], float(resid_u(model, x, y, n_ctx, 419_500 + i))))
     model.train()
     out = {"loss": sum(r[1] for r in rows) / len(rows), "u": sum(r[2] for r in rows) / len(rows),
-           "u_ridge": sum(r[3] for r in rows) / len(rows), "win_vs_ridge": sum(r[2] > r[3] for r in rows) / len(rows)}
+           "u_ridge": sum(r[3] for r in rows) / len(rows), "win_vs_ridge": sum(r[2] > r[3] for r in rows) / len(rows),
+           "u_res": sum(r[4] for r in rows) / len(rows), "win_res_vs_ridge": sum(r[4] > r[3] for r in rows) / len(rows)}
     out.update(u_inj=sum(a for a, _ in inj) / len(inj), u_ridge_inj=sum(b for _, b in inj) / len(inj))
     if real:
         nar = [r for r in real if r[2] <= 100] or real
@@ -120,7 +138,12 @@ def evaluate(model, dev, n_batches=2, bsz=16, real_val=None):
                    real_u_ridge=sum(r[1] for r in real) / len(real),
                    real_win_vs_ridge=sum(r[0] > r[1] for r in real) / len(real),
                    real_u_le100=sum(r[0] for r in nar) / len(nar), real_u_ridge_le100=sum(r[1] for r in nar) / len(nar),
-                   real_u_median=sorted(r[0] for r in real)[len(real) // 2])
+                   real_u_median=sorted(r[0] for r in real)[len(real) // 2],
+                   real_res_u=sum(r[3] for r in real) / len(real),
+                   real_res_win_vs_ridge=sum(r[3] > r[1] for r in real) / len(real),
+                   real_res_u_median=sorted(r[3] for r in real)[len(real) // 2],
+                   real_res_u_le100=sum(r[3] for r in nar) / len(nar),
+                   real_u_all=[round(r[0], 4) for r in real], real_res_u_all=[round(r[3], 4) for r in real])
     for k in KINDS:
         sel = [r for r in rows if r[0] == k]
         if sel:
@@ -139,7 +162,7 @@ def save(path, model, ema, opt, state):
 def code_sha():
     h = hashlib.sha256()
     here = os.path.dirname(os.path.abspath(__file__))
-    for f in ("icl_model.py", "icl_prior.py", "icl_inject.py", "icl_train.py"):
+    for f in ("icl_model.py", "icl_prior.py", "icl_inject.py", "icl_resid.py", "icl_train.py"):
         h.update(open(os.path.join(here, f), "rb").read())
     return h.hexdigest()
 
@@ -189,6 +212,13 @@ def train(a):
     bank = INJ.RealBank(a.real_bank, dev, prior) if a.real_bank else None
     rval = INJ.RealVal(a.val_real, dev) if a.val_real else None
     log = open(os.path.join(a.out, "log.jsonl"), "a", buffering=1)
+    if a.resume and state["step"]:   # a resumed run may carry new arguments or code: record them
+        args = {k: v for k, v in vars(a).items() if k != "fn"}
+        log.write(json.dumps({"resume": args, "code_sha256": code_sha(), "torch": torch.__version__,
+                              "step": state["step"], "h": round(state["elapsed"] / 3600, 4),
+                              "time": time.strftime("%FT%TZ", time.gmtime())}) + "\n")
+    res_gen = torch.Generator().manual_seed(a.seed * 104_729 + state["step"])
+    run_res = 0
     total = a.hours * 3600.0
     t_last = time.time()
     t_ck = t_eval = t_log = t_last
@@ -197,7 +227,7 @@ def train(a):
     sync_k = int(time.time() // a.sync_s) if a.sync_dir else 0
     while state["elapsed"] < total and (not a.stop_h or state["elapsed"] < a.stop_h * 3600.0):
         frac = state["elapsed"] / total
-        B, N, Fn, n_ctx = draw_shape(rng, frac, a.tokens, a.bmax, a.max_rows, a.row_tokens)
+        B, N, Fn, n_ctx = draw_shape(rng, frac, a.tokens, a.bmax, a.max_rows, a.row_tokens, a.row_floor)
         got = None
         if bank is not None and rng.random() < a.real_frac * min(1.0, state["elapsed"] / max(1.0, a.real_ramp_s)):
             got = bank.sample(rng, min(B, a.real_bmax), N, Fn, fill=not a.no_inject_real)
@@ -208,6 +238,9 @@ def train(a):
         else:
             x, y, _kinds, k_inj = INJ.sample_synth(prior, rng, B, N, Fn, a.inject_p)
             run_inj += k_inj > 0
+        if a.p_resid and rng.random() < a.p_resid:   # addendum 5: the target becomes the in-context ridge residual
+            y, _used, _base = RES.residual_targets(x, y, n_ctx, res_gen)
+            run_res += 1
         slots = torch.randperm(256, device=dev)[:Fn]
         for g in opt.param_groups:
             g["lr"] = a.lr * lr_factor(frac)
@@ -262,8 +295,9 @@ def train(a):
                                   "loss": round(run_loss / run_n, 5), "ds_per_s": round(run_ds / (now - t_log), 2),
                                   "lr": opt.param_groups[0]["lr"], "datasets": state["datasets"],
                                   "real_share": round(run_real / run_n, 3), "inj_share": round(run_inj / run_n, 3),
+                                  "res_share": round(run_res / run_n, 3), "rows_top": max(max_rows(frac), a.row_floor),
                                   "mem_gb": round((torch.cuda.max_memory_allocated() if dev.type == "cuda" else torch.mps.driver_allocated_memory()) / 2 ** 30, 2)}) + "\n")
-            run_loss, run_n, run_ds, run_real, run_inj, t_log = 0.0, 0, 0, 0, 0, now
+            run_loss, run_n, run_ds, run_real, run_inj, run_res, t_log = 0.0, 0, 0, 0, 0, 0, now
         if now - t_eval >= a.eval_s:
             ev = evaluate(ema, dev, real_val=rval)
             ev.update(step=state["step"], h=round(state["elapsed"] / 3600, 4), eval="ema")
@@ -343,6 +377,8 @@ def main():
     t.add_argument("--sync-s", type=float, default=300.0); t.add_argument("--sync-wait", type=float, default=240.0)
     t.add_argument("--ckpt-s", type=float, default=1200.0); t.add_argument("--named-h", type=float, default=2.0)
     t.add_argument("--log-s", type=float, default=60); t.add_argument("--eval-s", type=float, default=1800)
+    t.add_argument("--p-resid", type=float, default=0.0, help="share of batches trained on ridge-residual targets")
+    t.add_argument("--row-floor", type=int, default=0, help="lift the row curriculum's maximum to at least this")
     t.add_argument("--resume", action="store_true"); t.set_defaults(fn=train)
     s = sub.add_parser("selftest"); s.set_defaults(fn=selftest)
     a = ap.parse_args()
