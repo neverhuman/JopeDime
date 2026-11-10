@@ -1,0 +1,37 @@
+{
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H310/",
+  "verification": "exact-version GET + sha256 match for every object before local deletion",
+  "objects": [
+    {
+      "key": "h310_locks_models_outputs.tar.gz",
+      "version_id": "1JWgsGRcV3fD5r4hvAJXptCQ_crMYoQl",
+      "sha256": "f42107b67cf9540f4192c8edc8d2f04a1af374e221d34329af9b30d9177918e1",
+      "bytes": 84801665,
+      "contents": "3 DL-Train fit locks + inner/refit LightGBM members (fold_4), crashed attempt-0 partial members, H303 P0 train regression task, outputs, logs, receipts"
+    },
+    {
+      "key": "metrics_full.json",
+      "version_id": "7yFDoiEs6d8JJPwzqls3nrgSmWzp2KYE",
+      "sha256": "5f05626f7fee8bb7e3ebb26a188a024d7b8df45627677b46cb002fffa0b92af2",
+      "bytes": 27297
+    },
+    {
+      "key": "picks.npz",
+      "version_id": "A2YgofnledZcp_sj_Aa6wcg4dP_BdlAg",
+      "sha256": "ad85ccc95f42533962fcbf0009b1cd4edf0beff43c5da25b8a65a7848646cda1",
+      "bytes": 1136
+    },
+    {
+      "key": "lock_receipt.json",
+      "version_id": "o77G3BwjNRt1MVrRIRIDPVe1jZddOW3B",
+      "sha256": "bcf3e7958485fbe1ffb8f5159c88624178b11b3efb8196201658a330ce4dc8eb",
+      "bytes": 2384
+    },
+    {
+      "key": "regression_train_receipt.json",
+      "version_id": "MZMFMJogtLT51u9aeaOZ_gdXGMBeOOKF",
+      "sha256": "d9de35094def8b5272abe4913362189694f2ec2ff621c082cd3a88fa7401cbc3",
+      "bytes": 1417
+    }
+  ]
+}

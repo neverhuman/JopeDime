@@ -1,0 +1,27 @@
+{
+ "schema": "jope.h317.h0-neural-run-plan/v1",
+ "status": "PROPOSAL from permuted-target timing; the parent / PREREG fixes the budget before any true-target run",
+ "budget": {"steps": 3000, "slate": 128, "top_k": 48, "batch_contexts": 16, "n_seeds": 2},
+ "budget_notes": [
+  "steps are identical for every arm of H0.1-H0.3 (compute-matched, coordinator amendment 2)",
+  "3000 steps x 16 contexts = ~49 epoch-equivalents of a 975-context training fold; arm A (~421 subset contexts per fold) = ~114",
+  "slate = the 48 best candidates by utility + 80 uniform others of the context's pool (128)",
+  "seeds 317101, 317102 (common_h317.TRAIN_SEEDS[:2]); per-context utilities are averaged over seeds before the bootstrap"
+ ],
+ "fold_host": {"0": "xbabe1 RTX 4090", "1": "xbabe1 RTX 4090", "2": "xbabe1 RTX 4090", "3": "xbabe3 RTX 3090", "4": "xbabe3 RTX 3090"},
+ "run_roots": {"xbabe1": "/home/ubuntu/jope-data/h317-cl/neural/runs", "xbabe3": "/dev/shm/h317-cl/runs (pull to xbabe2 after each stage)"},
+ "H0.1": {
+  "keep_models": true,
+  "arms": [
+   {"arm_id": "H0.1-A", "scale": "S", "recipe": "opt1", "views": "A4", "subset": "A525", "mixup": false},
+   {"arm_id": "H0.1-B", "scale": "S", "recipe": "opt1", "views": "B16", "subset": "all", "mixup": false},
+   {"arm_id": "H0.1-C", "scale": "S", "recipe": "opt1", "views": "C32", "subset": "all", "mixup": true}
+  ],
+  "baseline": "H0.1-A"
+ },
+ "H0.2": {"keep_models": false, "arms": "rapid_hypothesis_lab.h02_arms(<H0.1 winner>): S = the H0.1 winner run (reused), H0.2-M, H0.2-L", "baseline": "S"},
+ "H0.3": {"keep_models": false, "arms": "rapid_hypothesis_lab.h03_arms(<H0.2 winner>): opt1 = the H0.2 winner run (reused), H0.3-opt1p, H0.3-opt2, H0.3-opt3, H0.3-opt4",
+          "baseline": "opt1 (PREREG)", "isolating_contrasts": "opt2-opt1p (SAM), opt3-opt1p (Muon), opt4-opt1p (Lion+SAM), opt1p-opt1 (scaffold)"},
+ "launch_example": "systemd-run --user --unit=h317cl-oof-h01 --nice=10 -p CPUQuota=200% -p MemoryMax=12G --setenv=H317_RES01=/home/ubuntu/jope-data/h317-cl/res01-train --setenv=H317_DATA=/home/ubuntu/jope-data/h317-cl --setenv=OMP_NUM_THREADS=2 --setenv=MKL_NUM_THREADS=2 --setenv=OPENBLAS_NUM_THREADS=2 --setenv=PYTHONDONTWRITEBYTECODE=1 --working-directory=<code dir> python3 rapid_hypothesis_lab.py oof --arms-json arms_h01.json --budget-json '{\"steps\": 3000, \"slate\": 128, \"top_k\": 48, \"batch_contexts\": 16, \"n_seeds\": 2}' --keep-models --confirm-true-targets",
+ "estimated_wall_minutes_xbabe1_bottleneck_2_seeds": {"H0.1": 10, "H0.2": 21, "H0.3_if_L": 116, "H0.3_if_M": 47, "H0.3_if_S": 19, "total_worst": 147}
+}

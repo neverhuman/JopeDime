@@ -1,0 +1,25 @@
+{
+  "schema": "whitepaper.parameter-displacement-source/v1",
+  "source_journal": "summary.jsonl",
+  "captured_utc": "2026-11-04T00:55:26.466205+00:00",
+  "source_prefix_bytes": 6727456,
+  "source_prefix_sha256": "509ef235e22f7570a99096727f95b5aa59853a4e620382243b0c91ec0a94a0e8",
+  "source_prefix_records": 40,
+  "selection": "Latest up to 60 complete retained summary records, selected before inspecting displacement or admission values; every selected record retained with no outcome/value filtering.",
+  "records": 40,
+  "round_window": [
+    4662,
+    4701
+  ],
+  "source_line_window": [
+    1,
+    40
+  ],
+  "csv_sha256": "4dfa90f8856cc389b5fc283947004686a2fe8ea76a3199359ab6974ff2c23417",
+  "minimum_displacement_l2": "0.010301772505044937",
+  "maximum_displacement_l2": "0.11334812641143799",
+  "accepted": 0,
+  "plotted_field": "parameter_update_l2 copied exactly to CSV parameter_displacement_l2",
+  "transformation": "One unsmoothed point per complete selected summary, keyed to completed round; no filtering, interpolation, imputation or cumulative envelope.",
+  "scope": "Recorded candidate parameter-space displacement. Inspected loop computes it from the trainable-parameter snapshot before warm restart to the candidate after optimization, before admission. Includes both perturbation and optimizer effects; not isolated optimizer movement, retained improvement or independent learning evidence. Exact runtime binding remains unqualified."
+}

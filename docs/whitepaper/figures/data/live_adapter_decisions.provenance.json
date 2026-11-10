@@ -2,8 +2,8 @@
   "schema": "whitepaper.live-adapter-decisions-figure/v1",
   "input_csv_sha256": "c88f9aee09512452e2a8e62793bc8f86c6ea6d96f7efd9914ef932d551c81b5c",
   "source_receipt_sha256": "62aa2c6f66ceb348e9abc5f6b36230fe855f19f2eb36ca1963a3ca3bf0203fad",
-  "generator_sha256": "36024098bbc44558eb791a6e367e4bbb6864fd67dcf4970083bb286b49cf81ce",
-  "figure_sha256": "63bd03d259ea2a681e9373b313416e7d521b4c1bd5ef807553c153f2ce189992",
+  "generator_sha256": "38ba65306b112abda5b97bf4c0dc20365d5388031bc4200defade6fac24b02d7",
+  "figure_sha256": "5489702b0ac3164458beb8fe04a6342dcb8369a260a55af409d27d880e3bf285",
   "rows": 20,
   "round_window": [
     3931,

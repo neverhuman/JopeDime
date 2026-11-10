@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "H263 study-local metrics",
+  "type": "object",
+  "required": [
+    "wave",
+    "status",
+    "verdict",
+    "source_commit",
+    "optimizer_updates"
+  ],
+  "properties": {
+    "wave": {
+      "const": "H263"
+    },
+    "status": {
+      "enum": [
+        "PREREGISTERED",
+        "COMPLETE",
+        "INCOMPLETE"
+      ]
+    },
+    "verdict": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "optimizer_updates": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2400
+    }
+  },
+  "additionalProperties": true
+}

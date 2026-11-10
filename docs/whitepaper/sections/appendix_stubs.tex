@@ -1,18 +1,17 @@
 \section{Referee Inventory}\label{app:history}
 
-A reliable, affordable referee is a condition for the innovation game
-(\cref{sub:game-boards}). \Cref{tab:referees} inventories the evaluators
-behind algorithm selection \citep{rice1976algorithm}, typed and
-evolutionary search \citep{koza1992genetic,montana1995stgp,real2020automlzero},
-self-play and expert iteration
-\citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and tabular
-amortization \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}
-discussed in \cref{sec:anatomy,sec:road}.
+\Cref{tab:referees} lists the referees used by the systems in
+\cref{sec:road,sec:game}. The innovation game requires a reliable,
+affordable referee (\cref{sub:game-boards}).
+
+
+
+
 
 \begin{table}[htb]
   \caption{\textbf{Each domain in the main text relies on an explicit referee.}
-  Each row restates a referee from \cref{sec:road,sec:game}; the last row
-  states the reference referee for algorithm invention.}
+  Rows restate the referees in \cref{sec:road,sec:game}; the last row
+  \mbox{gives the} reference referee for algorithm invention.}
   \label{tab:referees}
   \centering
   \small
@@ -37,39 +36,36 @@ discussed in \cref{sec:anatomy,sec:road}.
   \end{tabularx}
 \end{table}
 
-The inventory identifies the evaluator; family allocation is a separate
-requirement. In the native audit path, approved datasets are grouped by
-source identity, declared family or identical training bytes before seeded
-family ordering assigns the meta-training, meta-validation and meta-test
-partitions.
-
-This code path does not establish that a corpus or checkpoint satisfies
-the split.
+Family allocation is separate from evaluator choice. The native audit
+groups approved datasets by source identity, declared family or identical
+training bytes, then assigns meta-training, meta-validation and meta-test
+partitions in seeded family order. This path alone establishes neither
+corpus nor checkpoint compliance with the required split.
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-Two safeguards bound the comparisons in \cref{sub:method-referee}: exclude
-test-selected search outcomes, and require final-evaluation receipts for
+The excluded search baseline and required safeguards appear in
+\cref{sub:method-referee}. Final evaluation still needs receipts for
 input closure and execution isolation:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
-  leaderboard entry selected each dataset's best test-scored outcome from
-  \num{63108} evaluations in total across 42 datasets. Selection using test-fold scores biases the reported metric upward
-  \citep{cawley2010overfitting}. The entry is therefore excluded from
+  leaderboard entry chose each dataset's best test-scored outcome from \num{63108}
+  evaluations across 42 datasets, and took programs accepted by a test-adaptive
+  run on three more. Test-fold selection biases the metric
+  upward \citep{cawley2010overfitting}; all 45 rows are \mbox{excluded from}
   all comparative claims.
   \item \textbf{Input-closure and canary checks.} Benchmark release requires
   passing receipts for an inner-fold label-poison test, a sealed canary and
-  a train-only input-closure audit. The audit must exclude held-out targets
-  and derived statistics from board encoding and candidate generation.
-  Final pre-registration and receipts belong to the evaluation record in
-  \cref{sub:results-protocol}.
+  a train-only input-closure audit excluding held-out targets and derived
+  statistics from both board encoding and candidate generation. The \mbox{primary evaluation record}
+  in \cref{sub:results-protocol} must contain final pre-registration and receipts.
 \end{itemize}
 
 \section{Training Details}\label{app:training}
 
-The historical reference in \cref{sec:method} still requires checkpoint
-qualification. Its encoder, training objective and execution requirements
-are inventoried below, separately from the adapter record in
+This appendix inventories the historical reference's encoder, objective
+and execution requirements from \cref{sec:method}. Checkpoint
+qualification remains pending; the separate adapter record appears in
 \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
@@ -82,43 +78,42 @@ are inventoried below, separately from the adapter record in
   rows; third-party provenance pending; restricted; redistribution prohibited); and (iii)~512 values from two
   frozen seed-17 target-summary windows. Each block is normalized before
   concatenation and clipping to $[-32,32]$. Non-finite contexts are refused. Encoding records
-  report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
-  encoding jobs, within the 30\,s cap.
+  report wall-clock latency from 11.7\,s to 20.8\,s across eight \mbox{reference
+  encoding jobs,} within the 30\,s cap.
   \item \textbf{Comparison construction (\cref{sub:method-map,sub:method-selfplay}).}
-  Lists $G_p$ require at least eight valid scored programs per problem, with
+  Lists $G_p$ require at least eight valid scored programs per problem (excluding
+  stillborn draws), with
   percentile $\rho_w = 1 - \mathrm{rank}/\allowbreak{(|G_p|-1)}$ and writer $\writer$ sequence weight
   $0.05 + \rho_w^4$. The base native sampler balances families and takes
   the best program plus one draw from each of seven rank bands of the rest.
-  Fresh-program replay can replace a comparator to include a newly admitted
-  program.
+  Fresh-program replay can substitute a newly admitted candidate for
+  one comparator.
 
-  Pairs stay within each comparison, keyed by corpus context and
-  comparison index. The Python ranking helpers instead group by dataset
-  identifier. The native helper skips non-finite targets and exact ties,
-  $q_w=q_u$, without an exclusion margin or logit rescaling. The trainer
-  refuses non-finite supervision before constructing the loss.
-  \Cref{eq:writerLoss,eq:mapLoss} show the list-level form.
+  Within-comparison pairs use corpus context and comparison index;
+  Python ranking helpers group by dataset identifier. Native pairing skips
+  non-finite targets and exact ties, $\kappa_w=\kappa_u$, without an exclusion margin
+  or logit rescaling. Training refuses non-finite supervision before loss
+  formation. \mbox{\Cref{eq:writerLoss,eq:mapLoss}} give list-level losses.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
-  loss leaves \texttt{BOS} unsupervised but includes the following non-padding
+  loss leaves \texttt{BOS} unsupervised but covers following non-padding
   tokens, including the engine and regression-task header and \texttt{EOS}.
-  That header is fixed during inference. Label smoothing of 0.05 applies
-  over legal tokens; token losses are averaged within each program before
-  the normalized rank-weighted mean over programs. The displayed aggregate
-  coefficients match the native objective; the checkpoint's objective
-  identity and configuration still belong in its evaluation record.
+  The header stays fixed during inference. Label smoothing of 0.05 applies
+  over legal tokens; losses average within each program before the
+  normalized rank-weighted mean over programs. Displayed aggregate
+  coefficients match the native objective; the evaluation record must still
+  identify the checkpoint objective and \mbox{its configuration}.
   \item \textbf{Runtime supervision (\cref{eq:totalLoss}).}
-  The runtime term compares $\ln(1+s)$ with
+  The auxiliary runtime term compares $\ln(1+s)$ with
   $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
-  for measured seconds $s\geq0$ and raw head output $h$.
+  for measured seconds \mbox{$s\geq0$ and} raw scalar head output $h$.
   \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
-  Here $q_w=1/(1+\mathrm{RMSE}_w/m_p)$ (\cref{eq:totalLoss}), with $m_p$
-  the corpus list's median RMSE. For microbatch normalization,
-  Bradley--Terry weights use $|q_w-q_u|$, doubled when either member is at
-  or above the 90th percentile. Weights are mean-scaled and cast to
-  float32; weighted losses average non-tied within-comparison pairs
-  in the rank-local microbatch. Listwise losses average eligible groups.
-  The global-batch route uses separate reductions.
+  Here $\kappa_w=1/(1+\mathrm{RMSE}_w/m_p)$ (\cref{eq:totalLoss}), with $m_p$
+  the corpus list's median RMSE. Microbatch Bradley--Terry weights use
+  $|\kappa_w-\kappa_u|$, doubled when either member is at or above the 90th percentile.
+  Weights are mean-scaled and cast to float32; weighted losses average
+  non-tied within-comparison pairs in the rank-local microbatch. Listwise
+  losses average eligible groups; the global-batch route uses separate reductions.
   \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
   The historical reference registers \num{27796494} parameters in total (six
   decoder blocks, width 512, four attention heads, prefix context token
@@ -128,37 +123,35 @@ are inventoried below, separately from the adapter record in
   are never indexed as valid input or output tokens; the tied writer
   projection is restricted to the grammar rows.
 
-  The registered total also
-  includes zero-weight stability and loss-scale terms, so it does not
-  measure learned or exercised capacity. Approximately 6.90 million parameters lie outside the writer's token
-  generation path. Decoding bypasses them, but the native checkpoint loader
-  still requires them.
+  The registered total includes zero-weight stability and loss-scale
+  terms, so it measures neither learned nor exercised capacity. Approximately
+  6.90 million parameters lie outside writer token generation and share no
+  weights with it: game-day decoding bypasses them; native loading requires them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
-  The records describe AdamW training (learning rate $10^{-4}$,
+  Records describe offline AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
   on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
-  80 training datasets (\num{7877} lists; \num{8894} contexts). Global batch size
-  alone does not establish per-GPU microbatch or accumulation settings.
-  Checkpoint acceptance evidence and a held-out promotion receipt remain
-  required by the evaluation contract (\cref{sub:results-protocol}).
+  80 training datasets (\num{7877} lists; \num{8894} contexts). Global batch size specifies
+  neither per-GPU microbatch nor accumulation settings.
+  Checkpoint acceptance and held-out promotion still require receipts
+  (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
-  The final evaluation protocol requires candidate isolation with seccomp
-  and Landlock, cgroup memory limits with swap disabled and native versus
-  emitted-code agreement within $10^{-9}\max(1,|\hat{y}|)$. Isolation and
-  parity receipts from the final evaluator belong to the same evaluation
-  record.
+  Final evaluation requires seccomp and Landlock isolation, cgroup memory
+  limits, disabled swap and native/emitted-code agreement within
+  $10^{-9}\max(1,|\hat{y}|)$. Its evaluation record must include final-evaluator isolation and parity
+  receipts.
 \end{itemize}
 
-\section{Flywheel Telemetry}\label{app:flywheel-telemetry}
+\section{Operating-Loop Telemetry}\label{app:flywheel-telemetry}
 
-Each capture keeps its own date, population scope and event units
-(\cref{sec:method-status}). \Cref{app:latest-admissions} gives the canonical
-admission chronology.
-
-The exhibits distinguish adapter decisions from program-incumbent events
-and operating clocks (\cref{app:round-throughput}). Historical GP
-diagnostics (\cref{app:historical-search}) retain their own comparison
-protocol.
+Adapter utility and admission occupy Appendices \ref{app:latest-admissions}--\ref{app:live-adapter-decisions}
+and \ref{app:candidate-margin-window}. Program-journal activity and operating
+clocks interleave across Appendices \ref{app:event-counters}--\ref{app:round-throughput}
+and \ref{app:decision-cadence}; the historical GP diagnostics in
+\ref{app:historical-search} use a separate protocol.
+Supplementary diagnostics in Appendices \ref{app:parameter-displacement}--\ref{app:program-record-cadence}
+precede the closing record in \ref{app:stopped-run-record}. Captures differ in
+units, dates and populations; \cref{sec:method-status} sets their scope.
 
 % Adapter admission records, ordered by their role and capture cutoff.
 \input{sections/appendix_latest_admissions}
@@ -171,9 +164,10 @@ protocol.
 \input{sections/appendix_admission_outcomes}
 \input{sections/appendix_live_adapter_decisions}
 \input{sections/appendix_event_counters}
-
-\FloatBarrier
+% No \FloatBarrier here: it ejected a column under the last lines of D.10 (a 30-line hole on that page),
+% and the D.1-D.10 figures already reach their pages by [tbp] placement.
 \input{sections/appendix_pool_insertion_windows}
+\input{sections/appendix_program_promotion_margins}
 % Program-incumbent events and operating clocks.
 \input{sections/appendix_operating_records}
 \input{sections/appendix_completed_time}
@@ -185,3 +179,20 @@ protocol.
 
 % Historical search diagnostics are distinct from the live admission record.
 \input{sections/appendix_historical_search}
+
+\input{sections/appendix_candidate_margin_window}
+
+\input{sections/appendix_decision_cadence}
+
+\input{sections/appendix_parameter_displacement}
+
+\input{sections/appendix_gradient_norms}
+\input{sections/fig_stopped_run_record}
+
+\input{sections/appendix_recent_discovery_retention}
+
+\input{sections/appendix_recorded_decision_lift}
+
+\input{sections/appendix_program_record_cadence}
+
+\input{sections/appendix_stopped_run}

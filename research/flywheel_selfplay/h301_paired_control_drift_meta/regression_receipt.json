@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "h297_exact_s3_get": {
+    "manifest_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/closeout-manifest.json",
+    "manifest_version_id": "9rFcHFjvo72_WQ6kmiAAurahBKPPu.Yw",
+    "results_tar_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/results.tar.gz",
+    "results_tar_version_id": "K7zNgkztjDJ32iTNlNc9clWVrzZDw2tF",
+    "results_tar_sha256": "d3829dd9591d39428062f8c50ea99b276872c4126452b7c853fe83d088cf2216",
+    "primary_arm": "CTXNORM_CLIP",
+    "recomputed_median_lift": -0.008461025318455606,
+    "committed_median_lift": -0.008461025318455606,
+    "recomputed_median_lift_ci95": [
+      -0.019228082690923506,
+      0.0003517660130095988
+    ],
+    "committed_median_lift_ci95": [
+      -0.019228082690923506,
+      0.0003517660130095988
+    ],
+    "recomputed_median_elo": 1488.5444469574622,
+    "committed_median_elo": 1488.5444469574622,
+    "recomputed_median_elo_ci95": [
+      1467.9687997051508,
+      1504.185164900202
+    ],
+    "committed_median_elo_ci95": [
+      1467.9687997051508,
+      1504.185164900202
+    ],
+    "control_median_lift": -0.008461025318455606,
+    "control_median_lift_ci95": [
+      -0.019228082690923506,
+      0.0003517660130095988
+    ],
+    "bit_for_bit_match_all_arms": true
+  },
+  "h298_exact_s3_get": {
+    "manifest_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H298/s3_manifest.json",
+    "manifest_version_id": "6qFHIFeiLNUQNWqxCbcVNkKYJiAeJyvx",
+    "results_tar_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H298/h298_checkpoints_and_results.tar.gz",
+    "results_tar_version_id": "lG1UYi3tUz3vNfkFllycDAWzTvOLIbOE",
+    "results_tar_sha256": "95494ce2efc99eead40e5f40d503aa750f8783e1b6f5cb472bfcdb8d5f72865a",
+    "primary_arm": "FAMBAL_ACC4",
+    "recomputed_median_lift_vs_r3175": -0.033528458894059865,
+    "committed_median_lift_vs_r3175": -0.033528458894059865,
+    "recomputed_median_ci95_vs_r3175": [
+      -0.09813891237891575,
+      0.0035028817498420945
+    ],
+    "committed_median_ci95_vs_r3175": [
+      -0.09813891237891575,
+      0.0035028817498420945
+    ],
+    "control_median_lift_vs_r3175": -0.03683030173874502,
+    "control_median_ci95_vs_r3175": [
+      -0.10260735527823622,
+      0.0029918138749592755
+    ],
+    "bit_for_bit_match_all_arms": true
+  }
+}

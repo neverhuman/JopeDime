@@ -1,0 +1,133 @@
+{
+  "wave_id": "H346",
+  "slug": "h346_ranker_min_split_gain",
+  "status": "INCOMPLETE",
+  "disposition": "INCOMPLETE_CPU_ADMISSION",
+  "verdict": null,
+  "scientific_outcome": "UNKNOWN",
+  "prereg_commit": "fe59efd6681a82878ad7b443572e74595b1e305c",
+  "fit_source_commit": "aed4f9c75592be9fdf4a5b374bb54fd4ef59130f",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "tests": {
+    "status": "PASS",
+    "collected": 35,
+    "executed": 35,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "scope": "10 min-split-gain/forecast +4physical-boundary +21analysis controls; two synthetic ranker fits, one unchanged synthetic gate fit; BASE Dataset construction without fit"
+  },
+  "regression": "EXACT PASS",
+  "cpu_admission": {
+    "utc": "2026-11-05T01:36:58.686333+00:00",
+    "sample_seconds": 5,
+    "minimum_idle": 85,
+    "idle": {
+      "27": [
+        82.08,
+        96.14
+      ],
+      "28": [
+        87.76,
+        89.68
+      ],
+      "29": [
+        66.94,
+        92.87
+      ],
+      "30": [
+        85.34,
+        87.42
+      ],
+      "31": [
+        84.01,
+        87.42
+      ],
+      "32": [
+        81.47,
+        85.6
+      ],
+      "33": [
+        80.61,
+        89.43
+      ]
+    },
+    "admitted": [
+      28,
+      30
+    ],
+    "status": "INCOMPLETE_CPU_ADMISSION",
+    "minimum_cores": 4,
+    "single_probe": true
+  },
+  "execution": {
+    "completed_fit_cells": 0,
+    "required_fit_cells": 36,
+    "scientific_ranker_fits": 0,
+    "required_ranker_fits": 29484,
+    "fit_locks": 0,
+    "treatment_outer_model_score_calls": 0,
+    "outer_test_rows_before_lock": 0,
+    "outer_test_packets_built_before_lock": 0,
+    "synthetic_ranker_control_fits": 2,
+    "synthetic_unchanged_gate_control_fits": 1,
+    "base_scientific_refits": 0,
+    "base_models_verified": 1080
+  },
+  "gates": {
+    "base_regression": "PASS",
+    "native_base_min_gain_to_split": "PASS: 972 rankers and 108 veto models all0;bins255",
+    "cpu_admission": "NOT_MET",
+    "admission_forecast": "NOT_RUN_CPU_ADMISSION",
+    "first_cell_forecast": "NOT_RUN_CPU_ADMISSION",
+    "full36_fit_audit": "NOT_RUN",
+    "all36_locks": "NOT_MET",
+    "outer_scoring": "NOT_RUN",
+    "numerical_comparison": "NOT_RUN"
+  },
+  "intervention": {
+    "rankers_only": true,
+    "parameter": "min_split_gain",
+    "native_parameter": "min_gain_to_split",
+    "base": 0,
+    "treatment": 0.01,
+    "model_seeds": "UNCHANGED",
+    "native_scientific_audit": "NOT_RUN",
+    "native_fixture_audit": "PASS"
+  },
+  "measured": {
+    "MINGAIN_gain": null,
+    "MINGAIN_gain_ci95": null,
+    "MINGAIN_literal_family_median": null,
+    "MINGAIN_literal_family_median_ci95": null,
+    "MINGAIN_harm": null,
+    "MINGAIN_elo": null,
+    "MINGAIN_elo_ci95": null,
+    "paired_drop10": null,
+    "paired_ci95": null,
+    "paired_lcb95": null,
+    "per_root_paired_medians": null,
+    "per_root_paired_ci95": null,
+    "seed_consistency": null,
+    "config_agreement": null
+  },
+  "historical_control_medians": [
+    0.0643163334285782,
+    0.04821480030677507,
+    0.04360142642936269
+  ],
+  "elo_label": "reference = r882 slot0 (DL-Train outer); r3175 not measured on TRAIN",
+  "bootstrap": {
+    "draws": 10000,
+    "rng": 346191,
+    "status": "NOT_RUN"
+  },
+  "dev91_rows_read": 0,
+  "r3175_train": "NOT_MEASURED",
+  "serving_authority": false,
+  "automatic_next": null
+}

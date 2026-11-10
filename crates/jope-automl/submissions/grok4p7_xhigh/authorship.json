@@ -1,0 +1,26 @@
+{
+  "schema_version": "jope.native-regressor-authorship/v1",
+  "requested_submission_name": "grok4p7_xhigh.rs",
+  "served_model_id": "grok-4.7",
+  "served_model_revision": null,
+  "model_identity_note": "Session summary recorded current_model_id grok-4.7 and reasoning_effort xhigh. No separate provider revision was exposed.",
+  "source_sha256": "8e648cef93186aca9d10868ed1ed2a62407950169082aa1f4fab87af379664f8",
+  "source_bytes": 43142,
+  "source_written_at_utc": "2026-11-06T01:19:07Z",
+  "source_changed_after_freeze": false,
+  "compilation_attempts_before_first_success": 1,
+  "authoring": {
+    "method": "reasoning_only",
+    "numerical_experiments": false,
+    "repository_code_read_before_freeze": false,
+    "external_implementation_used_in_source": false,
+    "fresh_session": false,
+    "prior_project_context_present": true,
+    "eligible_for_pristine_primary_challenge_round": false,
+    "post_freeze_checks": "Standalone rustc, one repeated cell, then the 576-cell AutoML panel. No source revision."
+  },
+  "session_estimates": {
+    "exact_provider_usage_available": false,
+    "note": "See effort.json. Byte counts are recorded. Billed tokens are not."
+  }
+}

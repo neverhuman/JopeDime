@@ -1,0 +1,10 @@
+{
+  "reference_wave": "H344",
+  "cpu_usage_nsec": 26110639439000,
+  "source_invocation_id": "efa10a149a384724877a3dc4f5bbdf82",
+  "exit_status": 0,
+  "measured_full_tasks": 36,
+  "source_receipt_sha256": "8d860ca02f90654155bb0f6d52ddae61a44b0ec8c77d52d8798c6956218d8466",
+  "H340_first_cell_cpu_seconds": null,
+  "H340_timing_reason": "H340 admitted only3cores and ran zero fits; no first-cell timing exists. H344 actual full36 is the authorized measured reference; XENDCG cost remains unmeasured."
+}

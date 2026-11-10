@@ -1,0 +1,59 @@
+{
+  "observed_git": "d65a79f737f5f9b2985a72ea37adb6f95715cfc8",
+  "H328": {
+    "metrics_sha256": "fc0618bdc1488dcd61b6c6685e377433f9e13feecb76e65a307d9fc795d126c8",
+    "verdict": "LGS_NOT_ADVANCED",
+    "criteria": {
+      "gain_retention": true,
+      "harmed_nonincrease": false,
+      "paired_drop_top10_at_least_002": true,
+      "positive_on_two_seeds": true
+    },
+    "failed_clauses": null
+  },
+  "H342": {
+    "prereg_sha256": "bf35f3f88727fa90e0c641b88fe9cbbc5de2e3bcfd896b2059f7e9f596608a5d",
+    "scope": "Separate data-derived Hessian floor; no H343 source or decision changes",
+    "interpretation": "Published PREREG explicitly derives 9.87 globally from972archived TRAIN rankers, not inside eachouterfold. LambdaRank leaf Hessians depend on fitted margins/labels, so the fixed scalar carries historical TRAIN information across folds. No outcome-based hyperparameter selection was performed, but this is not an independently learned outer-fold-local scalar. This conditional-protocol caveat does not establish benefit/harm or invalidate own worker physical-read checks."
+  },
+  "H338": {
+    "observed_commit": "44bcbe16dc0cc31cb05c5bfeedd35e34697995b1",
+    "metrics_path": "research/flywheel_selfplay/h338_column_subsampling/metrics.json",
+    "metrics_sha256": "1b90465d8b221bb20d0c1a11064e1c4e7af453c7ddfe935efcf1c3b9b2fe0a71",
+    "verdict": "COLSUB_NOT_ADVANCED",
+    "criteria": {
+      "gain_retention": true,
+      "harmed_nonincrease": false,
+      "paired_drop_top10_at_least_002": false,
+      "positive_on_two_seeds": false
+    },
+    "paired_drop_top10": {
+      "ci95": [
+        -0.008221796233816029,
+        0.0042008636948849066
+      ],
+      "draws": 10000,
+      "lcb95": -0.007121461327330337,
+      "median": -0.0024496648742264975,
+      "per_cell": [
+        -0.008659366588093353,
+        0.012520387004013832,
+        0.004028608985454315,
+        0.0008849786822924133,
+        -0.0073544010712844,
+        -0.006477354097090268,
+        0.0016932716854703208,
+        -0.0024496648742264975,
+        -0.007305840014218894
+      ],
+      "per_seed_partition_median": [
+        0.0008849786822924133,
+        -0.0024496648742264975,
+        -0.006477354097090268
+      ],
+      "rng": 338191
+    },
+    "interpretation": "Ranker feature_fraction_bynode=.8 plus an explicit feature_fraction_seed changes node sampling and the seed used by existing tree-level sampling. This two-keyword intervention does not isolate only node-level sampling and cannot substitute for the H343 max_bin test. Its non-advancement is conditional on reused TRAIN and the preregistered protocol."
+  },
+  "refreshed_utc": "2026-11-05T01:00:59.924221+00:00"
+}

@@ -714,7 +714,7 @@ Backslash is canonical; `/` is accepted as a silent alias. Engine-backed command
 | --- | --- | --- | --- |
 | `\help` | `[command]` | client | Command reference and key bindings |
 | `\open` | `PATH [--name N]` | engine (op 2) | Register a CSV; show its profile and a suggested target |
-| `\target` | `COLUMN [--task regression\|binary\|multiclass] [--ignore COL,…] [--group COL] [--time COL]` | draft | Set target, task and column roles; prints the plan |
+| `\target` | `COLUMN [--task regression\|binary\|multiclass] [--ignore COL,…]` | draft | Set target, task and column roles; prints the plan. Grouped and time-ordered splits are not available |
 | `\objective` (alias `\fitness`) | `NAME \| NAME:k=v \| @file.json \| {json}` | engine (op 5) / draft | Validate and set the objective; prints its description and direction |
 | `\effort` | `fast\|medium\|high\|ultra [--evals N] [--time DURATION]` | draft before a run; engine (op 8) during one | Set or change caps |
 | `\landmarks` | `full\|none` | draft | Set landmark mode (and shows why other modes are unavailable) |
@@ -737,7 +737,7 @@ Backslash is canonical; `/` is accepted as a silent alias. Engine-backed command
 
 ### 6.4 Completion and editing
 
-- **Tab** completes, in order: command names; flags; enum values; column names after `\target`, `--ignore`, `--group`, `--time`; run and algorithm IDs; file paths after `\open`, `--input`, `--output`, `--out` and `@` (relative to the working directory, quoting spaces). **Shift-Tab** cycles backward. A completion never executes on its own.
+- **Tab** completes, in order: command names; flags; enum values; column names after `\target` and `--ignore`; run and algorithm IDs; file paths after `\open`, `--input`, `--output`, `--out` and `@` (relative to the working directory, quoting spaces). **Shift-Tab** cycles backward. A completion never executes on its own.
 - Completion data comes from the same registry as the parser, so help, completion and validation never disagree.
 - Editing: grapheme-correct cursor; Ctrl-A/E, Alt-B/F, Ctrl-W, Ctrl-U, Ctrl-K; Alt-Enter or Shift-Enter for a newline; bracketed paste (pasted text never executes until Enter); ↑/↓ history; Ctrl-R reverse search; Ctrl-L redraw.
 - Windows paths such as `C:\data\x.csv` are arguments; only a backslash in command position starts a command.
@@ -965,6 +965,7 @@ Each warning has `code`, `severity` (`info | warn | error`), `state` (`raised | 
 | `MODEL_INTEGRITY_FAILED` | error | no | Bundle verification failed | No learned guidance; `doctor` fails |
 | `NO_VALID_MODEL` | error | no | Budget ended without a valid model | Exit 5; suggests more effort or another objective |
 | `EVENT_LAG` | warn | yes | A client stream is > 1,000 events behind | Telemetry frames dropped for that client; durable events kept |
+| `NON_NUMERIC_COLUMNS_SKIPPED` | info | no | A feature column is not numeric | Those columns are left out of the run; "remove them or pass --ignore-column" |
 
 ---
 
@@ -1005,6 +1006,7 @@ With `require_all_languages: true` (default), the proposer only generates operat
 
 ### 10.5 Parity
 
+- **`parity_status` is one of three values.** `passed`: this export matched the engine on the release's qualified check. `failed`: a check ran and did not match the engine. `unavailable`: this export was not measured against the engine, which is not a failed check. Clients print `ParityStatus::explanation` and do not invent another wording.
 - **In CI, not in the binary.** For every entry in the capability registry, CI emits code for golden models and runs it with pinned toolchains (`rustc`, `python3`, `node`) against the engine's `f64` predictions on fixed rows that include missing values, unknown categories, extremes, signed zero, constant columns and calibrated outputs.
 - **Tolerances** *(validate per operation; any looser bound needs a written reason):*
 

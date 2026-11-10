@@ -1,0 +1,2345 @@
+{
+ "schema": "jope.h291.metrics/v1",
+ "hypothesis_id": "H291",
+ "slug": "h291_harm_veto_abstention",
+ "lane": "rd_argon",
+ "status": "COMPLETE",
+ "verdict": "HARMVETO_NOT_ADVANCED",
+ "prereg_commit_on_v1_next": "d8bc373b80c80892600ddaaa83272616f2b1bda9",
+ "fit_lock_content_sha256": "cd04dec452bacd84ea68a1c08e53a214ba2452b09c982652b5aeaf7fff2498cf",
+ "fit_lock_file_sha256": "3d05461907ab6d4513204f70d98800c7af2fe8ca244f0517f40bb26af913f1da",
+ "part_b_pools_read_during_part_a": 0,
+ "neural_forwards": 0,
+ "neural_updates": 0,
+ "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "step1_h287_regression": {
+  "cell": "CLIP_seed_287101_inner_cv",
+  "seed": 287101,
+  "n_families": 205,
+  "n_contexts": 1219,
+  "family_equal_mean_gain": 0.09355105605170717,
+  "expected_family_equal_mean_gain": 0.09355105605170717,
+  "gain_abs_diff": 0.0,
+  "utility_vector_max_abs_diff_vs_h287_panel": 0.0,
+  "harmed_families_gt_0p01": 31,
+  "raw_neg2_invalid_picks": 13,
+  "changed_contexts": 472,
+  "bit_exact": true
+ },
+ "part_a_gate_evaluation": {
+  "verdict": "HARMVETO_NOT_ADVANCED",
+  "clip_median_gain": 0.08735368923306665,
+  "required_gain_floor_0p7_clip": 0.06114758246314665,
+  "ens_vote3_harmed_median": 7.0,
+  "slot0_raw_neg2": 17,
+  "placebo_fails_gate": true,
+  "null_lf_fails_gate": true,
+  "passing_candidates": [],
+  "best_by_prereg_arm": "ENS_VOTE2+HARMVETO",
+  "arm_checks": {
+   "CLIP+HARMVETO": {
+    "arm": "CLIP+HARMVETO",
+    "median_gain": 0.07219823951863745,
+    "gain_retention_vs_clip": 0.8265047550081915,
+    "gain_ge_0p7_clip": true,
+    "lcb95_positive_seeds": 3,
+    "lcb95_gt_0_all_3_seeds": true,
+    "harmed_median": 16.0,
+    "harmed_median_le_ens_vote3": false,
+    "raw_neg2_median": 14.0,
+    "raw_neg2_per_seed": [
+     15,
+     14,
+     13
+    ],
+    "raw_neg2_le_slot0": true,
+    "passes_arm_criteria": false
+   },
+   "ENS_VOTE2+HARMVETO": {
+    "arm": "ENS_VOTE2+HARMVETO",
+    "median_gain": 0.037398712525259996,
+    "gain_retention_vs_clip": 0.42812974304356205,
+    "gain_ge_0p7_clip": false,
+    "lcb95_positive_seeds": 3,
+    "lcb95_gt_0_all_3_seeds": true,
+    "harmed_median": 6.0,
+    "harmed_median_le_ens_vote3": true,
+    "raw_neg2_median": 15.0,
+    "raw_neg2_per_seed": [
+     18,
+     14,
+     15
+    ],
+    "raw_neg2_le_slot0": false,
+    "passes_arm_criteria": false
+   },
+   "PLACEBO": {
+    "arm": "PLACEBO",
+    "median_gain": 0.018857690868495022,
+    "gain_retention_vs_clip": 0.21587744071325013,
+    "gain_ge_0p7_clip": false,
+    "lcb95_positive_seeds": 3,
+    "lcb95_gt_0_all_3_seeds": true,
+    "harmed_median": 8.0,
+    "harmed_median_le_ens_vote3": false,
+    "raw_neg2_median": 16.0,
+    "raw_neg2_per_seed": [
+     16,
+     13,
+     17
+    ],
+    "raw_neg2_le_slot0": true,
+    "passes_arm_criteria": false
+   },
+   "NULL_LF": {
+    "arm": "NULL_LF",
+    "median_gain": 0.02816130814176488,
+    "gain_retention_vs_clip": 0.3223825849716347,
+    "gain_ge_0p7_clip": false,
+    "lcb95_positive_seeds": 3,
+    "lcb95_gt_0_all_3_seeds": true,
+    "harmed_median": 13.0,
+    "harmed_median_le_ens_vote3": false,
+    "raw_neg2_median": 14.0,
+    "raw_neg2_per_seed": [
+     17,
+     12,
+     14
+    ],
+    "raw_neg2_le_slot0": true,
+    "passes_arm_criteria": false
+   }
+  }
+ },
+ "part_a_inner_cv": {
+  "cohort": "DL-Train_4fold_inner_cv",
+  "n_families": 205,
+  "n_contexts": 1219,
+  "seed_labels": [
+   291101,
+   291102,
+   291103
+  ],
+  "bootstrap": {
+   "seed": 291150,
+   "n_draws": 10000
+  },
+  "inner_inner_selected_taus": {
+   "ENS_VOTE2+HARMVETO": [
+    [
+     0.15,
+     0.18,
+     0.12,
+     0.12
+    ],
+    [
+     0.25,
+     0.15,
+     0.18,
+     0.12
+    ],
+    [
+     0.15,
+     0.12,
+     0.18,
+     0.12
+    ]
+   ],
+   "CLIP+HARMVETO": [
+    [
+     0.25,
+     0.22,
+     0.3,
+     0.2
+    ],
+    [
+     0.15,
+     0.15,
+     0.2,
+     0.22
+    ],
+    [
+     0.3,
+     0.2,
+     0.3,
+     0.15
+    ]
+   ],
+   "CLIP_VOTE2+HARMVETO": [
+    [
+     0.15,
+     0.25,
+     0.12,
+     0.15
+    ],
+    [
+     0.18,
+     0.12,
+     0.15,
+     0.12
+    ],
+    [
+     0.18,
+     0.15,
+     0.18,
+     0.12
+    ]
+   ]
+  },
+  "arms": {
+   "SLOT0": {
+    "median_of_seeds_gain": 0.0,
+    "median_of_seeds_ci95": [
+     0.0,
+     0.0
+    ],
+    "seed_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "per_seed_ci95": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "lcb95_positive_seeds": 0,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 0.0,
+    "harmed_families_per_seed": [
+     0,
+     0,
+     0
+    ],
+    "helped_families_median": 0.0,
+    "helped_families_per_seed": [
+     0,
+     0,
+     0
+    ],
+    "raw_neg2_median": 17.0,
+    "raw_neg2_per_seed": [
+     17,
+     17,
+     17
+    ],
+    "slot0_raw_neg2": 17,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 1.0,
+    "abstain_rate_per_seed": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "mm_bt_elo_median": 1500.0,
+    "mm_bt_elo_per_seed": [
+     1500.0,
+     1500.0,
+     1500.0
+    ],
+    "non_tied_wins_per_seed": [
+     0,
+     0,
+     0
+    ],
+    "non_tied_losses_per_seed": [
+     0,
+     0,
+     0
+    ],
+    "ties_per_seed": [
+     205,
+     205,
+     205
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "CLIP": {
+    "median_of_seeds_gain": 0.08735368923306665,
+    "median_of_seeds_ci95": [
+     0.042727837720457865,
+     0.1476608301372894
+    ],
+    "seed_gains": [
+     0.09355105605170722,
+     0.061723328833356385,
+     0.08735368923306665
+    ],
+    "per_seed_ci95": [
+     [
+      0.04583962779283702,
+      0.16777658038381962
+     ],
+     [
+      0.03139225346973202,
+      0.10749381497387377
+     ],
+     [
+      0.04508203597115451,
+      0.14774712550018648
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.013051955532607563,
+    "seed_family_median_gains": [
+     0.020038918995426536,
+     0.0025765614446320697,
+     0.013051955532607563
+    ],
+    "harmed_families_median": 26.0,
+    "harmed_families_per_seed": [
+     31,
+     12,
+     26
+    ],
+    "helped_families_median": 110.0,
+    "helped_families_per_seed": [
+     124,
+     90,
+     110
+    ],
+    "raw_neg2_median": 13.0,
+    "raw_neg2_per_seed": [
+     13,
+     13,
+     10
+    ],
+    "slot0_raw_neg2": 17,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.6710418375717802,
+    "abstain_rate_per_seed": [
+     0.6127973748974569,
+     0.7965545529122231,
+     0.6710418375717802
+    ],
+    "mm_bt_elo_median": 1697.667283380136,
+    "mm_bt_elo_per_seed": [
+     1714.1838301097885,
+     1667.784202847415,
+     1697.667283380136
+    ],
+    "non_tied_wins_per_seed": [
+     142,
+     113,
+     134
+    ],
+    "non_tied_losses_per_seed": [
+     39,
+     26,
+     41
+    ],
+    "ties_per_seed": [
+     24,
+     66,
+     30
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     5.908089274102629e-15,
+     3.957348200516671e-14,
+     1.0058013720237446e-12
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     2.954044637051232e-15,
+     1.9786741002583794e-14,
+     5.029006860118494e-13
+    ]
+   },
+   "ENS_VOTE3": {
+    "median_of_seeds_gain": 0.02174858479398116,
+    "median_of_seeds_ci95": [
+     0.00858946529303107,
+     0.03203190307504264
+    ],
+    "seed_gains": [
+     0.02174858479398116,
+     0.014363930123439426,
+     0.02362378770182797
+    ],
+    "per_seed_ci95": [
+     [
+      0.008144562881305504,
+      0.0384634855123995
+     ],
+     [
+      0.004995544048307812,
+      0.025672820075574594
+     ],
+     [
+      0.008767484242229324,
+      0.041785576777586715
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 7.0,
+    "harmed_families_per_seed": [
+     9,
+     7,
+     7
+    ],
+    "helped_families_median": 36.0,
+    "helped_families_per_seed": [
+     36,
+     36,
+     36
+    ],
+    "raw_neg2_median": 16.0,
+    "raw_neg2_per_seed": [
+     18,
+     16,
+     14
+    ],
+    "slot0_raw_neg2": 17,
+    "raw_neg2_le_slot0_all_seeds": false,
+    "abstain_rate_median": 0.9245283018867925,
+    "abstain_rate_per_seed": [
+     0.9212469237079574,
+     0.9245283018867925,
+     0.9360131255127153
+    ],
+    "mm_bt_elo_median": 1553.513946622931,
+    "mm_bt_elo_per_seed": [
+     1562.0839620330867,
+     1552.2512300426868,
+     1553.513946622931
+    ],
+    "non_tied_wins_per_seed": [
+     58,
+     48,
+     52
+    ],
+    "non_tied_losses_per_seed": [
+     14,
+     17,
+     14
+    ],
+    "ties_per_seed": [
+     133,
+     140,
+     139
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     1.6464300115968866e-07,
+     0.00015210657584807533,
+     2.8220182313622785e-06
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     8.232150057984354e-08,
+     7.605328792403867e-05,
+     1.4110091156811302e-06
+    ]
+   },
+   "CLIP+HARMVETO": {
+    "median_of_seeds_gain": 0.07219823951863745,
+    "median_of_seeds_ci95": [
+     0.033558692314822926,
+     0.12866598042068364
+    ],
+    "seed_gains": [
+     0.07647014054798904,
+     0.04761227644444199,
+     0.07219823951863745
+    ],
+    "per_seed_ci95": [
+     [
+      0.03733356808633999,
+      0.13594653023907222
+     ],
+     [
+      0.020491184818076096,
+      0.09195555734674066
+     ],
+     [
+      0.03504754527744152,
+      0.13045316406584792
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.006632112355507269,
+    "seed_family_median_gains": [
+     0.010851553655126255,
+     0.0,
+     0.006632112355507269
+    ],
+    "harmed_families_median": 16.0,
+    "harmed_families_per_seed": [
+     24,
+     6,
+     16
+    ],
+    "helped_families_median": 97.0,
+    "helped_families_per_seed": [
+     104,
+     66,
+     97
+    ],
+    "raw_neg2_median": 14.0,
+    "raw_neg2_per_seed": [
+     15,
+     14,
+     13
+    ],
+    "slot0_raw_neg2": 17,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.760459392945037,
+    "abstain_rate_per_seed": [
+     0.6915504511894995,
+     0.8654634946677605,
+     0.760459392945037
+    ],
+    "mm_bt_elo_median": 1667.247779245739,
+    "mm_bt_elo_per_seed": [
+     1677.9885110698813,
+     1611.8339625209492,
+     1667.247779245739
+    ],
+    "non_tied_wins_per_seed": [
+     123,
+     87,
+     119
+    ],
+    "non_tied_losses_per_seed": [
+     34,
+     17,
+     29
+    ],
+    "ties_per_seed": [
+     48,
+     101,
+     57
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     4.908732910637511e-13,
+     1.6725939198415423e-12,
+     3.817657045442712e-14
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     2.4543664553186866e-13,
+     8.362969599207592e-13,
+     1.9088285227213612e-14
+    ]
+   },
+   "ENS_VOTE2+HARMVETO": {
+    "median_of_seeds_gain": 0.037398712525259996,
+    "median_of_seeds_ci95": [
+     0.013764872113394132,
+     0.0687378564329449
+    ],
+    "seed_gains": [
+     0.02107882050366137,
+     0.037398712525259996,
+     0.04651547027273749
+    ],
+    "per_seed_ci95": [
+     [
+      0.005492946618236192,
+      0.040789319239296414
+     ],
+     [
+      0.015475307241812548,
+      0.06876923994597241
+     ],
+     [
+      0.013610677593685446,
+      0.10311864598804131
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 6.0,
+    "harmed_families_per_seed": [
+     6,
+     6,
+     5
+    ],
+    "helped_families_median": 45.0,
+    "helped_families_per_seed": [
+     33,
+     52,
+     45
+    ],
+    "raw_neg2_median": 15.0,
+    "raw_neg2_per_seed": [
+     18,
+     14,
+     15
+    ],
+    "slot0_raw_neg2": 17,
+    "raw_neg2_le_slot0_all_seeds": false,
+    "abstain_rate_median": 0.9105824446267432,
+    "abstain_rate_per_seed": [
+     0.9245283018867925,
+     0.8843314191960624,
+     0.9105824446267432
+    ],
+    "mm_bt_elo_median": 1581.6524199692847,
+    "mm_bt_elo_per_seed": [
+     1572.7008955335225,
+     1596.9852622521207,
+     1581.6524199692847
+    ],
+    "non_tied_wins_per_seed": [
+     57,
+     67,
+     60
+    ],
+    "non_tied_losses_per_seed": [
+     12,
+     16,
+     13
+    ],
+    "ties_per_seed": [
+     136,
+     122,
+     132
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     3.742249487503606e-08,
+     1.3888556445417932e-08,
+     2.307073850524299e-08
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     1.8711247437517912e-08,
+     6.944278222708858e-09,
+     1.153536925262161e-08
+    ]
+   },
+   "PLACEBO": {
+    "median_of_seeds_gain": 0.018857690868495022,
+    "median_of_seeds_ci95": [
+     0.006660607753512205,
+     0.037141054834940214
+    ],
+    "seed_gains": [
+     0.018857690868495022,
+     0.03768933371475509,
+     0.008981685995903986
+    ],
+    "per_seed_ci95": [
+     [
+      0.003532369768616966,
+      0.03716653972917195
+     ],
+     [
+      0.01794160758464955,
+      0.06728966451429982
+     ],
+     [
+      0.00013676610102472252,
+      0.018818126240794965
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 8.0,
+    "harmed_families_per_seed": [
+     8,
+     7,
+     12
+    ],
+    "helped_families_median": 35.0,
+    "helped_families_per_seed": [
+     35,
+     53,
+     34
+    ],
+    "raw_neg2_median": 16.0,
+    "raw_neg2_per_seed": [
+     16,
+     13,
+     17
+    ],
+    "slot0_raw_neg2": 17,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.9155045118949959,
+    "abstain_rate_per_seed": [
+     0.9155045118949959,
+     0.8810500410172273,
+     0.9228876127973749
+    ],
+    "mm_bt_elo_median": 1563.6029210623028,
+    "mm_bt_elo_per_seed": [
+     1563.6029210623028,
+     1583.6606478521137,
+     1546.9418302946974
+    ],
+    "non_tied_wins_per_seed": [
+     57,
+     70,
+     47
+    ],
+    "non_tied_losses_per_seed": [
+     18,
+     20,
+     18
+    ],
+    "ties_per_seed": [
+     130,
+     115,
+     140
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     7.24415651377427e-06,
+     1.1363565084238432e-07,
+     0.000422130323475208
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     3.622078256887086e-06,
+     5.681782542119294e-08,
+     0.00021106516173760692
+    ]
+   },
+   "NULL_LF": {
+    "median_of_seeds_gain": 0.02816130814176488,
+    "median_of_seeds_ci95": [
+     0.012575986605493007,
+     0.04224225589372796
+    ],
+    "seed_gains": [
+     0.01926847622977262,
+     0.02816130814176488,
+     0.03449435416309427
+    ],
+    "per_seed_ci95": [
+     [
+      0.005747621336457554,
+      0.03693156629430788
+     ],
+     [
+      0.013779187394670813,
+      0.04629351366275793
+     ],
+     [
+      0.01126919026805625,
+      0.06949290461554011
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 13.0,
+    "harmed_families_per_seed": [
+     13,
+     11,
+     13
+    ],
+    "helped_families_median": 43.0,
+    "helped_families_per_seed": [
+     35,
+     49,
+     43
+    ],
+    "raw_neg2_median": 14.0,
+    "raw_neg2_per_seed": [
+     17,
+     12,
+     14
+    ],
+    "slot0_raw_neg2": 17,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.9105824446267432,
+    "abstain_rate_per_seed": [
+     0.9245283018867925,
+     0.8843314191960624,
+     0.9105824446267432
+    ],
+    "mm_bt_elo_median": 1555.784085740692,
+    "mm_bt_elo_per_seed": [
+     1546.3261559644038,
+     1576.5066036407113,
+     1555.784085740692
+    ],
+    "non_tied_wins_per_seed": [
+     53,
+     71,
+     61
+    ],
+    "non_tied_losses_per_seed": [
+     21,
+     25,
+     22
+    ],
+    "ties_per_seed": [
+     131,
+     109,
+     122
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.0002564885942369338,
+     2.8675552580223706e-06,
+     2.1806574627155626e-05
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.00012824429711846583,
+     1.4337776290111853e-06,
+     1.0903287313577752e-05
+    ]
+   }
+  }
+ },
+ "part_a_diagnostics_arms": {
+  "CLIP_VOTE2": {
+   "median_of_seeds_gain": 0.06486879160013706,
+   "median_of_seeds_ci95": [
+    0.03225863634467179,
+    0.1131935442196859
+   ],
+   "seed_gains": [
+    0.06367754876356868,
+    0.06486879160013706,
+    0.06655041286398436
+   ],
+   "per_seed_ci95": [
+    [
+     0.03140931151043667,
+     0.11226629245605824
+    ],
+    [
+     0.03246237575512495,
+     0.11051775434342007
+    ],
+    [
+     0.027673155256495167,
+     0.12541156452787786
+    ]
+   ],
+   "lcb95_positive_seeds": 3,
+   "all_seeds_lcb95_gt_0": true,
+   "median_of_seeds_family_median_gain": 0.004151454836485336,
+   "seed_family_median_gains": [
+    0.004151454836485336,
+    0.004018480726305107,
+    0.005317772288314715
+   ],
+   "harmed_families_median": 21.0,
+   "harmed_families_per_seed": [
+    24,
+    16,
+    21
+   ],
+   "helped_families_median": 88.0,
+   "helped_families_per_seed": [
+    85,
+    92,
+    88
+   ],
+   "raw_neg2_median": 13.0,
+   "raw_neg2_per_seed": [
+    15,
+    11,
+    13
+   ],
+   "slot0_raw_neg2": 17,
+   "raw_neg2_le_slot0_all_seeds": true,
+   "abstain_rate_median": 0.7686628383921247,
+   "abstain_rate_per_seed": [
+    0.7621000820344545,
+    0.7752255947497949,
+    0.7686628383921247
+   ],
+   "mm_bt_elo_median": 1638.6502735569447,
+   "mm_bt_elo_per_seed": [
+    1636.247706587542,
+    1675.1703353698954,
+    1638.6502735569447
+   ],
+   "non_tied_wins_per_seed": [
+    117,
+    119,
+    117
+   ],
+   "non_tied_losses_per_seed": [
+    35,
+    26,
+    38
+   ],
+   "ties_per_seed": [
+    53,
+    60,
+    50
+   ],
+   "sign_test_p_two_sided_per_seed": [
+    1.5822524943795676e-11,
+    2.0422112272970114e-15,
+    1.4788685528457758e-10
+   ],
+   "sign_test_p_one_sided_per_seed": [
+    7.911262471897775e-12,
+    1.021105613648472e-15,
+    7.394342764228711e-11
+   ]
+  },
+  "ENS_VOTE2": {
+   "median_of_seeds_gain": 0.059931533238705155,
+   "median_of_seeds_ci95": [
+    0.03047845209312931,
+    0.10461018641213271
+   ],
+   "seed_gains": [
+    0.05390285774797592,
+    0.059931533238705155,
+    0.06220389739748974
+   ],
+   "per_seed_ci95": [
+    [
+     0.031201513931988476,
+     0.08027181443599259
+    ],
+    [
+     0.028997837858884466,
+     0.10574496987264383
+    ],
+    [
+     0.02371068119471717,
+     0.1213408516168901
+    ]
+   ],
+   "lcb95_positive_seeds": 3,
+   "all_seeds_lcb95_gt_0": true,
+   "median_of_seeds_family_median_gain": 0.002874333633876636,
+   "seed_family_median_gains": [
+    0.006299274297193874,
+    0.002874333633876636,
+    0.0025648354289462883
+   ],
+   "harmed_families_median": 22.0,
+   "harmed_families_per_seed": [
+    24,
+    17,
+    22
+   ],
+   "helped_families_median": 86.0,
+   "helped_families_per_seed": [
+    88,
+    86,
+    80
+   ],
+   "raw_neg2_median": 14.0,
+   "raw_neg2_per_seed": [
+    14,
+    13,
+    14
+   ],
+   "slot0_raw_neg2": 17,
+   "raw_neg2_le_slot0_all_seeds": true,
+   "abstain_rate_median": 0.7801476620180475,
+   "abstain_rate_per_seed": [
+    0.7571780147662018,
+    0.7801476620180475,
+    0.782608695652174
+   ],
+   "mm_bt_elo_median": 1647.08105472433,
+   "mm_bt_elo_per_seed": [
+    1647.08105472433,
+    1650.632359731461,
+    1635.1412648293283
+   ],
+   "non_tied_wins_per_seed": [
+    120,
+    109,
+    111
+   ],
+   "non_tied_losses_per_seed": [
+    34,
+    32,
+    33
+   ],
+   "ties_per_seed": [
+    51,
+    64,
+    61
+   ],
+   "sign_test_p_two_sided_per_seed": [
+    1.8953053686025307e-12,
+    5.0229615652605205e-11,
+    4.580325624173239e-11
+   ],
+   "sign_test_p_one_sided_per_seed": [
+    9.476526843012385e-13,
+    2.51148078263029e-11,
+    2.2901628120865814e-11
+   ]
+  },
+  "CLIP_VOTE2+HARMVETO": {
+   "median_of_seeds_gain": 0.03628765840793294,
+   "median_of_seeds_ci95": [
+    0.015945332777410937,
+    0.06479147388347263
+   ],
+   "seed_gains": [
+    0.029251709081896678,
+    0.03628765840793294,
+    0.043230684143503
+   ],
+   "per_seed_ci95": [
+    [
+     0.012022365894132418,
+     0.049846897528426685
+    ],
+    [
+     0.013694083880418415,
+     0.0678685243474388
+    ],
+    [
+     0.020363422616176637,
+     0.07256363003448431
+    ]
+   ],
+   "lcb95_positive_seeds": 3,
+   "all_seeds_lcb95_gt_0": true,
+   "median_of_seeds_family_median_gain": 0.0,
+   "seed_family_median_gains": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "harmed_families_median": 9.0,
+   "harmed_families_per_seed": [
+    10,
+    8,
+    9
+   ],
+   "helped_families_median": 50.0,
+   "helped_families_per_seed": [
+    49,
+    53,
+    50
+   ],
+   "raw_neg2_median": 13.0,
+   "raw_neg2_per_seed": [
+    16,
+    13,
+    13
+   ],
+   "slot0_raw_neg2": 17,
+   "raw_neg2_le_slot0_all_seeds": true,
+   "abstain_rate_median": 0.8917145200984413,
+   "abstain_rate_per_seed": [
+    0.8917145200984413,
+    0.889253486464315,
+    0.8949958982772764
+   ],
+   "mm_bt_elo_median": 1584.7441326444634,
+   "mm_bt_elo_per_seed": [
+    1588.3401258167992,
+    1584.7441326444634,
+    1578.2895771487813
+   ],
+   "non_tied_wins_per_seed": [
+    74,
+    66,
+    72
+   ],
+   "non_tied_losses_per_seed": [
+    14,
+    17,
+    18
+   ],
+   "ties_per_seed": [
+    117,
+    122,
+    115
+   ],
+   "sign_test_p_two_sided_per_seed": [
+    5.0891941127087235e-11,
+    5.602931385052948e-08,
+    8.070744444116017e-09
+   ],
+   "sign_test_p_one_sided_per_seed": [
+    2.5445970563543366e-11,
+    2.8014656925264334e-08,
+    4.035372222057949e-09
+   ]
+  },
+  "CLIP+HARMVETO_PLACEBO": {
+   "median_of_seeds_gain": 0.061080515256571585,
+   "median_of_seeds_ci95": [
+    0.03140861410462909,
+    0.09972934471098427
+   ],
+   "seed_gains": [
+    0.0790706516830668,
+    0.04409105948240381,
+    0.061080515256571585
+   ],
+   "per_seed_ci95": [
+    [
+     0.0344700764494965,
+     0.15216778454001295
+    ],
+    [
+     0.01517868195565539,
+     0.09022407860156298
+    ],
+    [
+     0.03318308619554634,
+     0.09870934570054854
+    ]
+   ],
+   "lcb95_positive_seeds": 3,
+   "all_seeds_lcb95_gt_0": true,
+   "median_of_seeds_family_median_gain": 0.0035772246635982024,
+   "seed_family_median_gains": [
+    0.010851553655126255,
+    0.0,
+    0.0035772246635982024
+   ],
+   "harmed_families_median": 20.0,
+   "harmed_families_per_seed": [
+    24,
+    9,
+    20
+   ],
+   "helped_families_median": 83.0,
+   "helped_families_per_seed": [
+    104,
+    69,
+    83
+   ],
+   "raw_neg2_median": 14.0,
+   "raw_neg2_per_seed": [
+    14,
+    17,
+    14
+   ],
+   "slot0_raw_neg2": 17,
+   "raw_neg2_le_slot0_all_seeds": true,
+   "abstain_rate_median": 0.7719442165709598,
+   "abstain_rate_per_seed": [
+    0.7054963084495488,
+    0.8605414273995078,
+    0.7719442165709598
+   ],
+   "mm_bt_elo_median": 1642.3843064599137,
+   "mm_bt_elo_per_seed": [
+    1686.8046161742411,
+    1613.6661421810668,
+    1642.3843064599137
+   ],
+   "non_tied_wins_per_seed": [
+    125,
+    91,
+    110
+   ],
+   "non_tied_losses_per_seed": [
+    32,
+    19,
+    36
+   ],
+   "ties_per_seed": [
+    48,
+    95,
+    59
+   ],
+   "sign_test_p_two_sided_per_seed": [
+    3.459546749074816e-14,
+    1.8675665909733584e-12,
+    6.54725587913919e-10
+   ],
+   "sign_test_p_one_sided_per_seed": [
+    1.729773374537355e-14,
+    9.33783295486693e-13,
+    3.273627939569588e-10
+   ]
+  },
+  "CLIP+HARMVETO_NULL_LF": {
+   "median_of_seeds_gain": 0.06245129924897953,
+   "median_of_seeds_ci95": [
+    0.03435503870759715,
+    0.08812117622652971
+   ],
+   "seed_gains": [
+    0.06245129924897953,
+    0.031141694945213728,
+    0.07428126035336588
+   ],
+   "per_seed_ci95": [
+    [
+     0.038298083580648394,
+     0.08848870056290815
+    ],
+    [
+     0.015057994290038363,
+     0.05109397296620591
+    ],
+    [
+     0.03533867664642308,
+     0.1338205902937394
+    ]
+   ],
+   "lcb95_positive_seeds": 3,
+   "all_seeds_lcb95_gt_0": true,
+   "median_of_seeds_family_median_gain": 0.005413477045479886,
+   "seed_family_median_gains": [
+    0.015166973128330397,
+    0.0,
+    0.005413477045479886
+   ],
+   "harmed_families_median": 24.0,
+   "harmed_families_per_seed": [
+    28,
+    11,
+    24
+   ],
+   "helped_families_median": 92.0,
+   "helped_families_per_seed": [
+    112,
+    63,
+    92
+   ],
+   "raw_neg2_median": 14.0,
+   "raw_neg2_per_seed": [
+    12,
+    15,
+    14
+   ],
+   "slot0_raw_neg2": 17,
+   "raw_neg2_le_slot0_all_seeds": true,
+   "abstain_rate_median": 0.760459392945037,
+   "abstain_rate_per_seed": [
+    0.6915504511894995,
+    0.8654634946677605,
+    0.760459392945037
+   ],
+   "mm_bt_elo_median": 1639.747873284942,
+   "mm_bt_elo_per_seed": [
+    1694.7383784195438,
+    1595.6272228811033,
+    1639.747873284942
+   ],
+   "non_tied_wins_per_seed": [
+    134,
+    80,
+    115
+   ],
+   "non_tied_losses_per_seed": [
+    37,
+    23,
+    42
+   ],
+   "ties_per_seed": [
+    34,
+    102,
+    48
+   ],
+   "sign_test_p_two_sided_per_seed": [
+    4.1449960686976916e-14,
+    1.4622475248230568e-08,
+    4.850650835383112e-09
+   ],
+   "sign_test_p_one_sided_per_seed": [
+    2.0724980343488878e-14,
+    7.311237624115426e-09,
+    2.4253254176915616e-09
+   ]
+  }
+ },
+ "part_b_semi_fresh_h286_v2_even": {
+  "cohort": "H286_v2_200_EVEN_r3175",
+  "scope": "SEMI_FRESH_DESCRIPTIVE_ONLY",
+  "reused": true,
+  "fresh_claim": false,
+  "best_by_prereg_arm": "ENS_VOTE2+HARMVETO",
+  "r882_fit_bit_exact_with_h286": true,
+  "n_families": 200,
+  "n_contexts": 200,
+  "seed_labels": [
+   291101,
+   291102,
+   291103
+  ],
+  "bootstrap": {
+   "seed": 291150,
+   "n_draws": 10000
+  },
+  "locked_part_b_taus": {
+   "ENS_VOTE2+HARMVETO": [
+    0.135,
+    0.16499999999999998,
+    0.135
+   ],
+   "CLIP+HARMVETO": [
+    0.235,
+    0.175,
+    0.25
+   ],
+   "CLIP_VOTE2+HARMVETO": [
+    0.15,
+    0.135,
+    0.16499999999999998
+   ]
+  },
+  "arms": {
+   "SLOT0": {
+    "median_of_seeds_gain": 0.0,
+    "median_of_seeds_ci95": [
+     0.0,
+     0.0
+    ],
+    "seed_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "per_seed_ci95": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "lcb95_positive_seeds": 0,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 0.0,
+    "harmed_families_per_seed": [
+     0,
+     0,
+     0
+    ],
+    "helped_families_median": 0.0,
+    "helped_families_per_seed": [
+     0,
+     0,
+     0
+    ],
+    "raw_neg2_median": 4.0,
+    "raw_neg2_per_seed": [
+     4,
+     4,
+     4
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 1.0,
+    "abstain_rate_per_seed": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "mm_bt_elo_median": 1500.0,
+    "mm_bt_elo_per_seed": [
+     1500.0,
+     1500.0,
+     1500.0
+    ],
+    "non_tied_wins_per_seed": [
+     0,
+     0,
+     0
+    ],
+    "non_tied_losses_per_seed": [
+     0,
+     0,
+     0
+    ],
+    "ties_per_seed": [
+     200,
+     200,
+     200
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "CLIP": {
+    "median_of_seeds_gain": 0.047419774121007056,
+    "median_of_seeds_ci95": [
+     0.010492619184963223,
+     0.10232473131584281
+    ],
+    "seed_gains": [
+     0.047419774121007056,
+     0.06299527974306188,
+     0.03555532770001218
+    ],
+    "per_seed_ci95": [
+     [
+      0.008488593876299882,
+      0.0934402328903123
+     ],
+     [
+      0.01951489963031989,
+      0.11603812352393485
+     ],
+     [
+      -0.026123771378259927,
+      0.09838765874341401
+     ]
+    ],
+    "lcb95_positive_seeds": 2,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 17.0,
+    "harmed_families_per_seed": [
+     24,
+     7,
+     17
+    ],
+    "helped_families_median": 28.0,
+    "helped_families_per_seed": [
+     31,
+     27,
+     28
+    ],
+    "raw_neg2_median": 2.0,
+    "raw_neg2_per_seed": [
+     2,
+     2,
+     4
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.71,
+    "abstain_rate_per_seed": [
+     0.68,
+     0.815,
+     0.71
+    ],
+    "mm_bt_elo_median": 1512.9561167290474,
+    "mm_bt_elo_per_seed": [
+     1500.1580651348688,
+     1530.8440426457132,
+     1512.9561167290474
+    ],
+    "non_tied_wins_per_seed": [
+     32,
+     27,
+     32
+    ],
+    "non_tied_losses_per_seed": [
+     31,
+     10,
+     24
+    ],
+    "ties_per_seed": [
+     137,
+     163,
+     144
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.9999999999999999,
+     0.007632078602910086,
+     0.3496819529836933
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.49999999999999806,
+     0.00381603930145503,
+     0.17484097649184605
+    ]
+   },
+   "ENS_VOTE3": {
+    "median_of_seeds_gain": 0.01627994663059895,
+    "median_of_seeds_ci95": [
+     -0.0027315468008855264,
+     0.049255435340714165
+    ],
+    "seed_gains": [
+     0.01627994663059895,
+     0.01627994663059895,
+     0.01627994663059895
+    ],
+    "per_seed_ci95": [
+     [
+      -0.0027315468008855264,
+      0.049255435340714165
+     ],
+     [
+      -0.0027315468008855264,
+      0.049255435340714165
+     ],
+     [
+      -0.0027315468008855264,
+      0.049255435340714165
+     ]
+    ],
+    "lcb95_positive_seeds": 0,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 2.0,
+    "harmed_families_per_seed": [
+     2,
+     2,
+     2
+    ],
+    "helped_families_median": 5.0,
+    "helped_families_per_seed": [
+     5,
+     5,
+     5
+    ],
+    "raw_neg2_median": 3.0,
+    "raw_neg2_per_seed": [
+     3,
+     3,
+     3
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.96,
+    "abstain_rate_per_seed": [
+     0.96,
+     0.96,
+     0.96
+    ],
+    "mm_bt_elo_median": 1503.4815364387136,
+    "mm_bt_elo_per_seed": [
+     1503.6348210639678,
+     1503.4815364387136,
+     1503.4770369587068
+    ],
+    "non_tied_wins_per_seed": [
+     5,
+     5,
+     5
+    ],
+    "non_tied_losses_per_seed": [
+     3,
+     3,
+     3
+    ],
+    "ties_per_seed": [
+     192,
+     192,
+     192
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.7265624999999989,
+     0.7265624999999989,
+     0.7265624999999989
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.36328124999999933,
+     0.36328124999999933,
+     0.36328124999999933
+    ]
+   },
+   "CLIP+HARMVETO": {
+    "median_of_seeds_gain": 0.046143175267129806,
+    "median_of_seeds_ci95": [
+     0.01051607947405116,
+     0.08959551996150943
+    ],
+    "seed_gains": [
+     0.046143175267129806,
+     0.049184201873537815,
+     0.037711995829679566
+    ],
+    "per_seed_ci95": [
+     [
+      0.009015403863118152,
+      0.09185242003707422
+     ],
+     [
+      0.015617265392915901,
+      0.09141693164326209
+     ],
+     [
+      -0.02349602138110585,
+      0.09992163291519505
+     ]
+    ],
+    "lcb95_positive_seeds": 2,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 12.0,
+    "harmed_families_per_seed": [
+     16,
+     4,
+     12
+    ],
+    "helped_families_median": 21.0,
+    "helped_families_per_seed": [
+     21,
+     19,
+     23
+    ],
+    "raw_neg2_median": 3.0,
+    "raw_neg2_per_seed": [
+     2,
+     3,
+     4
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.79,
+    "abstain_rate_per_seed": [
+     0.79,
+     0.875,
+     0.78
+    ],
+    "mm_bt_elo_median": 1515.8002987468842,
+    "mm_bt_elo_per_seed": [
+     1503.6348210645951,
+     1523.0870112510743,
+     1515.8002987468842
+    ],
+    "non_tied_wins_per_seed": [
+     22,
+     19,
+     26
+    ],
+    "non_tied_losses_per_seed": [
+     20,
+     6,
+     17
+    ],
+    "ties_per_seed": [
+     158,
+     175,
+     157
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.8776143287523146,
+     0.014633297920227033,
+     0.22205282015602368
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.43880716437615835,
+     0.007316648960113492,
+     0.11102641007801173
+    ]
+   },
+   "ENS_VOTE2+HARMVETO": {
+    "median_of_seeds_gain": 0.02714368976363186,
+    "median_of_seeds_ci95": [
+     0.0026368537892452813,
+     0.06423755353542959
+    ],
+    "seed_gains": [
+     0.0023750521973936573,
+     0.02714368976363186,
+     0.03312056683143756
+    ],
+    "per_seed_ci95": [
+     [
+      -3.821081782181379e-05,
+      0.00568861823410638
+     ],
+     [
+      0.0028185297931240414,
+      0.06451268308500889
+     ],
+     [
+      0.005140372360151713,
+      0.07222722863710482
+     ]
+    ],
+    "lcb95_positive_seeds": 2,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 1.0,
+    "harmed_families_per_seed": [
+     0,
+     1,
+     1
+    ],
+    "helped_families_median": 7.0,
+    "helped_families_per_seed": [
+     3,
+     8,
+     7
+    ],
+    "raw_neg2_median": 3.0,
+    "raw_neg2_per_seed": [
+     4,
+     3,
+     3
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.945,
+    "abstain_rate_per_seed": [
+     0.98,
+     0.94,
+     0.945
+    ],
+    "mm_bt_elo_median": 1508.690676315836,
+    "mm_bt_elo_per_seed": [
+     1503.7928306614936,
+     1510.4392341545595,
+     1508.690676315836
+    ],
+    "non_tied_wins_per_seed": [
+     3,
+     9,
+     8
+    ],
+    "non_tied_losses_per_seed": [
+     1,
+     3,
+     3
+    ],
+    "ties_per_seed": [
+     196,
+     188,
+     189
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.6249999999999994,
+     0.14599609375000028,
+     0.2265625000000006
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.3124999999999997,
+     0.07299804687500007,
+     0.11328125000000021
+    ]
+   },
+   "PLACEBO": {
+    "median_of_seeds_gain": 0.015980359010922044,
+    "median_of_seeds_ci95": [
+     -0.00028351201785590017,
+     0.04747351978586394
+    ],
+    "seed_gains": [
+     0.02966678378949266,
+     0.0008072650098676505,
+     0.015980359010922044
+    ],
+    "per_seed_ci95": [
+     [
+      0.001005899889573843,
+      0.0693216528133508
+     ],
+     [
+      -0.0033459813649912196,
+      0.004996481670028749
+     ],
+     [
+      -0.0005074350718198788,
+      0.04747351978586394
+     ]
+    ],
+    "lcb95_positive_seeds": 1,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 1.0,
+    "harmed_families_per_seed": [
+     1,
+     2,
+     1
+    ],
+    "helped_families_median": 4.0,
+    "helped_families_per_seed": [
+     9,
+     4,
+     2
+    ],
+    "raw_neg2_median": 3.0,
+    "raw_neg2_per_seed": [
+     3,
+     4,
+     3
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.965,
+    "abstain_rate_per_seed": [
+     0.94,
+     0.965,
+     0.975
+    ],
+    "mm_bt_elo_median": 1501.8993128011862,
+    "mm_bt_elo_per_seed": [
+     1513.2727712958683,
+     1501.8993128011862,
+     1498.5770865997165
+    ],
+    "non_tied_wins_per_seed": [
+     10,
+     4,
+     2
+    ],
+    "non_tied_losses_per_seed": [
+     2,
+     3,
+     3
+    ],
+    "ties_per_seed": [
+     188,
+     193,
+     195
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.03857421875000006,
+     1.0,
+     1.0
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.019287109375000003,
+     0.5000000000000002,
+     0.8125000000000004
+    ]
+   },
+   "NULL_LF": {
+    "median_of_seeds_gain": 0.0038725000901330266,
+    "median_of_seeds_ci95": [
+     -0.001253285934280809,
+     0.012773813505260637
+    ],
+    "seed_gains": [
+     0.0010094634868243184,
+     0.03303791880979663,
+     0.0038725000901330266
+    ],
+    "per_seed_ci95": [
+     [
+      -0.003114982639849705,
+      0.0053537505749421364
+     ],
+     [
+      0.005348737785595821,
+      0.07173926515080091
+     ],
+     [
+      -0.006415889082148355,
+      0.013062915951569332
+     ]
+    ],
+    "lcb95_positive_seeds": 1,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 1.0,
+    "harmed_families_per_seed": [
+     1,
+     1,
+     2
+    ],
+    "helped_families_median": 8.0,
+    "helped_families_per_seed": [
+     2,
+     10,
+     8
+    ],
+    "raw_neg2_median": 4.0,
+    "raw_neg2_per_seed": [
+     4,
+     3,
+     4
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.945,
+    "abstain_rate_per_seed": [
+     0.98,
+     0.94,
+     0.945
+    ],
+    "mm_bt_elo_median": 1508.0587780786054,
+    "mm_bt_elo_per_seed": [
+     1503.792830668521,
+     1512.968387544865,
+     1508.0587780786054
+    ],
+    "non_tied_wins_per_seed": [
+     3,
+     10,
+     8
+    ],
+    "non_tied_losses_per_seed": [
+     1,
+     2,
+     3
+    ],
+    "ties_per_seed": [
+     196,
+     188,
+     189
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.6249999999999994,
+     0.03857421875000006,
+     0.2265625000000006
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.3124999999999997,
+     0.019287109375000003,
+     0.11328125000000021
+    ]
+   },
+   "R882_FIT": {
+    "median_of_seeds_gain": 0.06299527974306188,
+    "median_of_seeds_ci95": [
+     0.018816355201390054,
+     0.1159920492280597
+    ],
+    "seed_gains": [
+     0.06917362020686675,
+     0.06299527974306188,
+     0.03555532770001218
+    ],
+    "per_seed_ci95": [
+     [
+      0.02225791679437807,
+      0.12419323008955822
+     ],
+     [
+      0.01951489963031989,
+      0.11603812352393485
+     ],
+     [
+      -0.026123771378259927,
+      0.09838765874341401
+     ]
+    ],
+    "lcb95_positive_seeds": 2,
+    "all_seeds_lcb95_gt_0": false,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 17.0,
+    "harmed_families_per_seed": [
+     21,
+     7,
+     17
+    ],
+    "helped_families_median": 28.0,
+    "helped_families_per_seed": [
+     38,
+     27,
+     28
+    ],
+    "raw_neg2_median": 2.0,
+    "raw_neg2_per_seed": [
+     2,
+     2,
+     4
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.71,
+    "abstain_rate_per_seed": [
+     0.615,
+     0.815,
+     0.71
+    ],
+    "mm_bt_elo_median": 1522.2861254103111,
+    "mm_bt_elo_per_seed": [
+     1522.2861254103111,
+     1530.8440426484706,
+     1512.9561167250683
+    ],
+    "non_tied_wins_per_seed": [
+     44,
+     27,
+     32
+    ],
+    "non_tied_losses_per_seed": [
+     32,
+     10,
+     24
+    ],
+    "ties_per_seed": [
+     124,
+     163,
+     144
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.2067368418083936,
+     0.007632078602910086,
+     0.3496819529836933
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.10336842090419794,
+     0.00381603930145503,
+     0.17484097649184605
+    ]
+   },
+   "ENS_VOTE2": {
+    "median_of_seeds_gain": 0.03961984131619332,
+    "median_of_seeds_ci95": [
+     0.00844192158473978,
+     0.07999040781139433
+    ],
+    "seed_gains": [
+     0.03961984131619332,
+     0.03961984131619332,
+     0.03961984131619332
+    ],
+    "per_seed_ci95": [
+     [
+      0.00844192158473978,
+      0.07999040781139433
+     ],
+     [
+      0.00844192158473978,
+      0.07999040781139433
+     ],
+     [
+      0.00844192158473978,
+      0.07999040781139433
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 7.0,
+    "harmed_families_per_seed": [
+     7,
+     7,
+     7
+    ],
+    "helped_families_median": 21.0,
+    "helped_families_per_seed": [
+     21,
+     21,
+     21
+    ],
+    "raw_neg2_median": 3.0,
+    "raw_neg2_per_seed": [
+     3,
+     3,
+     3
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.825,
+    "abstain_rate_per_seed": [
+     0.825,
+     0.825,
+     0.825
+    ],
+    "mm_bt_elo_median": 1518.4893456338,
+    "mm_bt_elo_per_seed": [
+     1518.4893456338,
+     1518.1848557767241,
+     1519.2777664314135
+    ],
+    "non_tied_wins_per_seed": [
+     23,
+     23,
+     23
+    ],
+    "non_tied_losses_per_seed": [
+     12,
+     12,
+     12
+    ],
+    "ties_per_seed": [
+     165,
+     165,
+     165
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.08953107893466952,
+     0.08953107893466952,
+     0.08953107893466952
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.04476553946733483,
+     0.04476553946733483,
+     0.04476553946733483
+    ]
+   },
+   "CLIP_VOTE2": {
+    "median_of_seeds_gain": 0.04607333662024041,
+    "median_of_seeds_ci95": [
+     0.008586236593924955,
+     0.09158423274686768
+    ],
+    "seed_gains": [
+     0.04607333662024041,
+     0.04607333662024041,
+     0.04607333662024041
+    ],
+    "per_seed_ci95": [
+     [
+      0.008586236593924955,
+      0.09158423274686768
+     ],
+     [
+      0.008586236593924955,
+      0.09158423274686768
+     ],
+     [
+      0.008586236593924955,
+      0.09158423274686768
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 9.0,
+    "harmed_families_per_seed": [
+     9,
+     9,
+     9
+    ],
+    "helped_families_median": 19.0,
+    "helped_families_per_seed": [
+     19,
+     19,
+     19
+    ],
+    "raw_neg2_median": 2.0,
+    "raw_neg2_per_seed": [
+     2,
+     2,
+     2
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.83,
+    "abstain_rate_per_seed": [
+     0.83,
+     0.83,
+     0.83
+    ],
+    "mm_bt_elo_median": 1506.6367877981554,
+    "mm_bt_elo_per_seed": [
+     1506.6367877981554,
+     1505.8541082753231,
+     1508.0587780995568
+    ],
+    "non_tied_wins_per_seed": [
+     19,
+     19,
+     19
+    ],
+    "non_tied_losses_per_seed": [
+     15,
+     15,
+     15
+    ],
+    "ties_per_seed": [
+     166,
+     166,
+     166
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.6075913612730821,
+     0.6075913612730821,
+     0.6075913612730821
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.3037956806365412,
+     0.3037956806365412,
+     0.3037956806365412
+    ]
+   },
+   "CLIP_VOTE2+HARMVETO": {
+    "median_of_seeds_gain": 0.022876376744192687,
+    "median_of_seeds_ci95": [
+     0.0033136695707829482,
+     0.05241690487133716
+    ],
+    "seed_gains": [
+     0.008907063543846981,
+     0.022876376744192687,
+     0.028903692853681946
+    ],
+    "per_seed_ci95": [
+     [
+      0.0007330252618615932,
+      0.022668863496791446
+     ],
+     [
+      0.0033541549144500324,
+      0.05318000837233526
+     ],
+     [
+      0.00379365631950828,
+      0.062498220308514936
+     ]
+    ],
+    "lcb95_positive_seeds": 3,
+    "all_seeds_lcb95_gt_0": true,
+    "median_of_seeds_family_median_gain": 0.0,
+    "seed_family_median_gains": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "harmed_families_median": 0.0,
+    "harmed_families_per_seed": [
+     0,
+     0,
+     2
+    ],
+    "helped_families_median": 8.0,
+    "helped_families_per_seed": [
+     5,
+     8,
+     11
+    ],
+    "raw_neg2_median": 3.0,
+    "raw_neg2_per_seed": [
+     4,
+     3,
+     3
+    ],
+    "slot0_raw_neg2": 4,
+    "raw_neg2_le_slot0_all_seeds": true,
+    "abstain_rate_median": 0.955,
+    "abstain_rate_per_seed": [
+     0.975,
+     0.955,
+     0.925
+    ],
+    "mm_bt_elo_median": 1512.0199771603764,
+    "mm_bt_elo_per_seed": [
+     1509.480597232725,
+     1512.0199771603764,
+     1512.9561167372194
+    ],
+    "non_tied_wins_per_seed": [
+     5,
+     8,
+     11
+    ],
+    "non_tied_losses_per_seed": [
+     0,
+     1,
+     4
+    ],
+    "ties_per_seed": [
+     195,
+     191,
+     185
+    ],
+    "sign_test_p_two_sided_per_seed": [
+     0.0625,
+     0.039062499999999965,
+     0.11846923828124994
+    ],
+    "sign_test_p_one_sided_per_seed": [
+     0.03125,
+     0.019531249999999983,
+     0.05923461914062496
+    ]
+   }
+  }
+ },
+ "resources": {
+  "part_a_end": {
+   "stage": "part_a_end",
+   "timestamp_utc": "2026-11-04T01:21:50Z",
+   "hostname": "xbabe2",
+   "pid": 1290740,
+   "nice": 19,
+   "mem_available_kb": 81731912,
+   "peak_rss_kb": 989552
+  },
+  "part_b_end": {
+   "stage": "part_b_end",
+   "timestamp_utc": "2026-11-04T01:35:01Z",
+   "hostname": "xbabe2",
+   "pid": 1985841,
+   "nice": 19,
+   "mem_available_kb": 77473192,
+   "peak_rss_kb": 989552
+  }
+ }
+}

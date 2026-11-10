@@ -1,0 +1,65 @@
+{
+  "capture_started": "2026-11-03T19:49:17.025713+00:00",
+  "capture_completed": "2026-11-03T19:49:17.082861+00:00",
+  "source_prefix_bytes": 1992722,
+  "source_prefix_records": 3754,
+  "source_prefix_sha256": "7c7d63d20a93885c7570e7160040bb718769f788fc1c0fbc408800eba4f90d97",
+  "incomplete_tail_bytes_omitted": 0,
+  "projection_sha256": "3d3f8a29b8f5ef06ed3dd331b3e1fe4d72af7964c9421e5fb61c4db8688785e9",
+  "projection_bytes": 1153743,
+  "round_window": [
+    775,
+    4529
+  ],
+  "missing_rounds": [
+    4331
+  ],
+  "action_counts": {
+    "restore_best_model_and_optimizer": 3746,
+    "accept_tie": 4,
+    "accept_improvement": 4
+  },
+  "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+  "stable_prefix_reread": true,
+  "source_read_only": true,
+  "quality_fields_retained": false,
+  "schema": "whitepaper.adapter-admission-rates-source/v1",
+  "journal": "adapter_admissions.jsonl",
+  "csv_sha256": "88adddc01885772fca626cb9a815050fba9a98579bc9908357a1ed1f0c605550",
+  "events_csv_sha256": "1b209ed8abcd25b0552c916f60d79731d926f469e16b4030a5686aa3a62e5d9c",
+  "bin_decisions": 200,
+  "bins": 19,
+  "bin_denominators": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    154
+  ],
+  "accepted_rounds": [
+    782,
+    785,
+    859,
+    882,
+    2750,
+    2795,
+    3100,
+    3175
+  ],
+  "policy": "All complete current-run journal records; fixed200-decision bins from first record; final partial bin retained with actual denominator. Missing rounds are disclosed, never imputed. No predecessor run joined.",
+  "scope": "Adaptive training-side adapter admissions per recorded decision. Includes ties; not strict utility gain, program-promotion success, calendar-time throughput or independent learning."
+}

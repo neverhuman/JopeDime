@@ -14,11 +14,13 @@ command = "just score"
 read_only = true
 write_policy = "auditor_output"
 
-# Historical third-party environment snapshot retained as research custody evidence.
-# Never edit or regenerate in place; verify its inventory against the owning manifest.
+# Frozen third-party environment snapshot. verify_custody.py checks the manifest;
+# it does not regenerate these bytes. reviewed_manual is the zone schema value for
+# reviewed files that are not generator output (generator_only, auditor_output,
+# lockfile, reviewed_manual). Do not edit the snapshot in place.
 [[zone]]
 path = "research/flywheel_selfplay/custody/files/"
 source = "research/flywheel_selfplay/custody/MANIFEST.json and EXTERNAL.json"
 command = "python3 research/flywheel_selfplay/custody/verify_custody.py"
 read_only = true
-write_policy = "immutable_custody"
+write_policy = "reviewed_manual"

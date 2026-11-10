@@ -1,0 +1,16 @@
+{
+  "wave": "H349",
+  "status": "PASS",
+  "utc": "2026-11-05T04:03:52.266380+00:00",
+  "XENDCG": "rank_xendcg",
+  "BASE_effective_native_objective": "lambdarank",
+  "BASE_effective_native_sigmoid": 1.0,
+  "model_count": 972,
+  "lightgbm_version": "4.6.0",
+  "native_model_inventory_sha256": "ccd64cd998d3901751ec2c497aefb041418355b98b0d77916342889f849a9e9e",
+  "source_archive_sha256": "4eae1dec792e1c7b4adff9ff9a5226d0c38cfe1bd9605ba07cc2596f4ad7b0b5",
+  "calibration_fits": 0,
+  "treatment_fits": 0,
+  "model_predictions": 0,
+  "method": "All972 exact-version archived refit rankers; fixed rank_xendcg with objective_seed=original random_state, no calibration/tuning"
+}

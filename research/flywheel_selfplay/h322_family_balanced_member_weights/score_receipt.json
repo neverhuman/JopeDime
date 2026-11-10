@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "outer_model_score_calls": 36,
+  "fit_locks": 36,
+  "baseline": "Read-only H318 BASE panel, exact-regressed before FAMW fitting",
+  "panel_sha256": "07f2b5bb0ff235e861fee9d839ead4b38dc4b40fc4235aad61cfa8f639afa969",
+  "dev91_rows_read": 0,
+  "r3175_train": "NOT_MEASURED"
+}

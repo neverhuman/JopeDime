@@ -1,0 +1,71 @@
+{
+  "schema": "whitepaper.stopped-operating-record-figure/v1",
+  "input_csv_sha256": {
+    "stopped_run_admissions.csv": "197c519554675d398cb77c81e652788b51462ca372a2ea6c7b41811958b4238a",
+    "stopped_run_promotions.csv": "913841307f33c827b60174288c8b09404c92be1f186ff74bc83f9be6103813cc"
+  },
+  "source_receipt_sha256": "26337f004c1ed4c1825a5907030e75b0f3944f2001f0d03e747896801f296873",
+  "generator_sha256": "48982371e9c435fdab993f27b392005e7f5d8aeb0df3fd82b620b38eede2e96d",
+  "figure_sha256": "bac7757fb97f170c9fd9c0921ad3c0bfb699023097cb124b792a0bdb30a1f3c2",
+  "admission_points": 4274,
+  "program_event_records": 3529,
+  "program_count_bins": 22,
+  "round_window": [
+    775,
+    5049
+  ],
+  "missing_admission_rounds": [
+    4331
+  ],
+  "logged_increase_rounds": [
+    785,
+    859,
+    2750,
+    3175
+  ],
+  "accepted_tie_rounds": [
+    782,
+    882,
+    2795,
+    3100
+  ],
+  "last_bin_rounds": 75,
+  "bin_counts": [
+    568,
+    388,
+    277,
+    241,
+    205,
+    186,
+    169,
+    175,
+    143,
+    145,
+    104,
+    125,
+    103,
+    92,
+    105,
+    86,
+    80,
+    104,
+    69,
+    78,
+    56,
+    30
+  ],
+  "smoothing": false,
+  "cumulative_maximum": false,
+  "scope": "Adaptive training-side cost-adapter decisions and training-program promotion records with different event meanings. Counts are not proposal attempts or success rates. No neural-writer or ranking-map learning, independent quality, causality, throughput or transfer is established.",
+  "source_binding": "Logged aggregate fields only; installed runtime, exact adapter, candidate pools, normalization and evaluation-population closure remain unqualified. Prior native replay limitation remains in the manuscript.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "minimum_text_size_pt": 8.5,
+  "figure_inches": [
+    7.0,
+    3.4
+  ],
+  "fixed_canvas_no_tight_crop": true,
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_stopped_run_record.py"
+}

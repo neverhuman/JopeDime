@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "collected": 32,
+  "executed": 32,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "scope": "10 max-bin/forecast +4physical-boundary +18analysis controls; two synthetic ranker fits, one unchanged synthetic gate fit; BASE Dataset construction without fit"
+}

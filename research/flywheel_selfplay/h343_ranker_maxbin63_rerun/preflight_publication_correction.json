@@ -1,0 +1,9 @@
+{
+  "utc": "2026-11-04T23:28:29.089797+00:00",
+  "cause": "Concurrent nonforce v1next update rejected first prereg push; dependent replay correctly failed prereg receipt check before initialize loaded rows/pools or scored.",
+  "failed_prereg_candidate": "22144a982871796d0b4703d8ddf18f0fa91e0e70",
+  "scientific_fits_started": 0,
+  "synthetic_fits_started": 0,
+  "regression_predictions_started": 0,
+  "remediation": "Fetch latest receiving branch and publish same prereg as new child; retry replay once only after confirmed published receipt. Original failed phases preserved. No scientific source or deadline change."
+}

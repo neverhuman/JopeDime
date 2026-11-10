@@ -1,0 +1,354 @@
+{
+ "wave": "H321",
+ "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/",
+ "objects": [
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/h321_models_locks_outputs_closeout_v2.tar.gz",
+   "version_id": "3r2oWQjlKDNX71KYvLZzfIU2JX.6pKN8",
+   "sha256": "8aeb502d299e35eed03bb60b306844782ed09a935077a550e686833c37add21d",
+   "bytes": 802592712,
+   "create_only": true,
+   "if_none_match": "*",
+   "exact_version_get_sha256_verified": true,
+   "all_members_exact_version_verified": true,
+   "member_count": 1445
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/h321_models_locks_outputs.tar.gz",
+   "version_id": "v2UGDypSNfPhgu5HPoZ4jW1JiWORWNXL",
+   "sha256": "a7d9991461316c535987c602898b05d74d281133c2a5daf450e4e69ee5f0ea1f",
+   "bytes": 802583822,
+   "exact_version_get_sha256_verified": true,
+   "all_members_exact_version_verified": true,
+   "member_count": 1441
+  }
+ ],
+ "inner_task_archives": [
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_0-root_30001.tar.gz",
+   "version_id": "t0_cnCrPgHBns_.HgbRFu4i4bhs.Wep_",
+   "sha256": "38b5db380b81b8c9a6ce63ca8b874a35b0899c98358ddc35df8103a165c268df",
+   "bytes": 20823854,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_0-root_30002.tar.gz",
+   "version_id": "FPhz9XbLdp2OPTofQkAzwh9dCFI2Sxiu",
+   "sha256": "593ca3d1a082bebf16d8a12955d73ff2303c467d84fcd116ca2afec0ad983e19",
+   "bytes": 21819535,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_0-root_30003.tar.gz",
+   "version_id": "X9IL0sKeUGuLzrwxzuV3xase0F6Hw.2t",
+   "sha256": "f8a854bfa9208ef6c0bf1dc1005b0c7f1481d5a12e4872f6788b8a4fe53dfbf2",
+   "bytes": 19879869,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_1-root_30001.tar.gz",
+   "version_id": "sCTF7_hc87sAlNdn3iAUAYprAkFE6a12",
+   "sha256": "e246ce263cf5325faf332fa5790a8ede09077e7819e7fce11fc53552070f5f6d",
+   "bytes": 22004340,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_1-root_30002.tar.gz",
+   "version_id": "9_9rX4V_CNzbZjV6JAhJ5k.zUl.VQKYg",
+   "sha256": "df5ee5df125c7683f955caf6fbbbcc0ef4b46ad0524e0f949041a3186b6e4a76",
+   "bytes": 21239973,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_1-root_30003.tar.gz",
+   "version_id": "ZJVw3ANy41n5g5PtS.oU5aDu3jdonR3i",
+   "sha256": "d300b5cd769110e6af5d024cd93e8a8be2721600bd229cd5c916893003a4ccb5",
+   "bytes": 20599952,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_2-root_30001.tar.gz",
+   "version_id": "EcuAOhAnnBkda5TKST5i_tDgYC_GJL8J",
+   "sha256": "bc3294dcbe0fe5e417e8fa2bf5189f8ba4eb4f740844776514f7cda02191b686",
+   "bytes": 20216056,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_2-root_30002.tar.gz",
+   "version_id": "GNXXB0A1dwPS6PR6USLqBn18HiAs5Zsp",
+   "sha256": "171d4e3aba29162905bd87697dbbdcbf2996d546cb4813d36a7124a4f059fade",
+   "bytes": 20940075,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_2-root_30003.tar.gz",
+   "version_id": "ETDg_fOdfvoGi7HlgbnjfZ6SQHGCtfgR",
+   "sha256": "1323be0472d2d67a565a6a756964a49927a80749c4cc31aa19829b0e8fdb2caf",
+   "bytes": 21348606,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_3-root_30001.tar.gz",
+   "version_id": "86.49AcqoRdkEsHVqDNve87H2DrFBvz5",
+   "sha256": "3ec0db548c20e26cc4275fefc77ef292b27fb5cbe819d57e7f7462f4c1266fa6",
+   "bytes": 21165347,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_3-root_30002.tar.gz",
+   "version_id": "ocWPk7P9.8Udmnf2gRB8ZdC6Ix0XMJVK",
+   "sha256": "2a4fda8bc6fabf1f9d505da4ccf44b011a02463e4843e1b187cc2d23a9c4cc46",
+   "bytes": 20977012,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P0-fold_3-root_30003.tar.gz",
+   "version_id": "yU0pRGc_wajz7uSh7FeGH_AA4p_kYuqu",
+   "sha256": "e1abce9db2a93e48e1e444894e664fae24f4b98a50d225659c936b403ad84f2e",
+   "bytes": 20193144,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_0-root_30001.tar.gz",
+   "version_id": "8fJj3Dw2M_X143f84ngOUmt2Ys8Ka26X",
+   "sha256": "7b62d01b42d1c31218ca888cc73df8e42ccff46f55a204837c4c58871d9d1d63",
+   "bytes": 20072414,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_0-root_30002.tar.gz",
+   "version_id": "vE7xXkvA8VkLZloR_TGStzdZ3pMCc3q4",
+   "sha256": "46e320ad8441d804e53c74e6dca1476d1eb063210a9b5f8785659ebbf1f8d8ec",
+   "bytes": 18589255,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_0-root_30003.tar.gz",
+   "version_id": "nnXRaApAGWzWtcNEA03.pAtp_M420UFj",
+   "sha256": "a54de18903f23c9430a3661bc77920555fd4b3c1fba5541076af0a8450eaeddd",
+   "bytes": 20140595,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_1-root_30001.tar.gz",
+   "version_id": "XYenSjrN8xc4Ce20m0zHaneYf1KtF4.N",
+   "sha256": "c5fb757eda38a81f3e5dcf6d8b04a098af13de4a65c708bc280ba5a20bcb199e",
+   "bytes": 20273374,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_1-root_30002.tar.gz",
+   "version_id": "3l25eByqvYpkD_qSh96lIAUlqIcnEUhK",
+   "sha256": "8e0ae080697bf191bf6699d3d606a48577580fdd2d146283293d92ee764415e7",
+   "bytes": 20109944,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_1-root_30003.tar.gz",
+   "version_id": "HnxpSBQnfIm90SAqiY7te6ikqSjn1eO0",
+   "sha256": "1594c571fdadba59ac4d38b9096b1bd66eff97fc5cc35275351aad77a50d1112",
+   "bytes": 20979913,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_2-root_30001.tar.gz",
+   "version_id": "q.MprE6DGEA0JUt6gaxx5HlypKWITRZ4",
+   "sha256": "116c9f164d17f425a09d0a990c523ce3f95d2460f3fab857125289d839173f05",
+   "bytes": 19754164,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_2-root_30002.tar.gz",
+   "version_id": "BHjez_L1kUjlkdQTTG.X3m0AegvTKEF6",
+   "sha256": "a32d1ede84878353968d702213fa360015f96f418082f68cd858d7d45ba22d64",
+   "bytes": 20002878,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_2-root_30003.tar.gz",
+   "version_id": "Pq35gmxqmF8S3XybTsPm3zFMykDYZZDs",
+   "sha256": "f1a0ae0af6d0a07313d5263f2c697f677e83cc23b5e5f4b8dcbc8e4862a1cafa",
+   "bytes": 17763580,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_3-root_30001.tar.gz",
+   "version_id": "4X8Evfu8BkAP6Y5XX1ma51JvGCXUVvMf",
+   "sha256": "840f7dc55dbb33e3dc3032841c53fe1dfbbe0354a2c3ebf4602ca01165e02db7",
+   "bytes": 21334134,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_3-root_30002.tar.gz",
+   "version_id": "gmXQ3_tZ0kHUdY6NKM5Z8uLR0MGStVny",
+   "sha256": "d5548288d1ec0b755f50062d10f76d82d4df3cbb9a8315fad5ebba5900f42e5d",
+   "bytes": 20019944,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P1-fold_3-root_30003.tar.gz",
+   "version_id": "igWyncCq7OSKSlGHMuABw2EFqVgLYpu5",
+   "sha256": "5547acc3f0dd618385a6fce1a71814ea0444aa35d75ec6d71072be1548a05e77",
+   "bytes": 20869714,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_0-root_30001.tar.gz",
+   "version_id": "c1iPwOhFOin3LfHOZb17T1uFCnhYg8t2",
+   "sha256": "26b2d3de31e0497bc13ab563545388129385744bb67ce63917c6bff33e40be59",
+   "bytes": 19400338,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_0-root_30002.tar.gz",
+   "version_id": "OLF0j4PFywaTqUuDWSa_1W71MRwRGCn.",
+   "sha256": "92ef0b287abfc7965507f17cc512aa233c561a9eb0ed6d6b4fc6e6aa79e359a3",
+   "bytes": 22500612,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_0-root_30003.tar.gz",
+   "version_id": "Zy8QobtSnnbJAxYywsAXsrPCxjQ7oXsn",
+   "sha256": "1b4172eba37b1127bab97239fefe54505b918ede0077f2dc80b8fdec9b8c560a",
+   "bytes": 20175219,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_1-root_30001.tar.gz",
+   "version_id": "AVYxhDK8MOBoivnPVxQZUuOPj3tpVLzZ",
+   "sha256": "d84fc91f8e108538cd875859faf5aa9c44f26eb3840bf19ee91ecc647df1a4db",
+   "bytes": 18047206,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_1-root_30002.tar.gz",
+   "version_id": ".6f_Ev7z4heFXZ9AbB01R0NEIdqBoeg8",
+   "sha256": "05433f7212138b1c0dc5bc16bc31ec30d97e54351418e01fe5c15893ef7b4289",
+   "bytes": 21615549,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_1-root_30003.tar.gz",
+   "version_id": "JcG8uXYkRrI4isc3aeaif0eBkvwQFmpq",
+   "sha256": "5245109b08fe0b019df19de57d1ba7db7d8a76d19bd47055d82f2e1fb9bea6c7",
+   "bytes": 20069556,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_2-root_30001.tar.gz",
+   "version_id": "kdhp_qG4VuS6LmpZBeyo5IVUP.JGpOJZ",
+   "sha256": "1014f706c59179dfc22ec6ce105e0154d5b5aa7aef7554e95a26b5efcdf70542",
+   "bytes": 21185995,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_2-root_30002.tar.gz",
+   "version_id": "bCg3E.jOtYWSJ60GMlf9oa6AdTtG4LeS",
+   "sha256": "69d68845827f833985d07fc6f0acb04b13c3d7209a4719c5030bb9aa3419f11e",
+   "bytes": 21946921,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_2-root_30003.tar.gz",
+   "version_id": "Y1_GFUF8bwYeSboVb81xTqIse35gkZ9F",
+   "sha256": "a3c327f45d336cf70178770d61494d335f9baca76fa220c5a5e702b938424bab",
+   "bytes": 19707631,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_3-root_30001.tar.gz",
+   "version_id": "lVHwYURTDBzfKevvFEIgyeN4evLpUnsL",
+   "sha256": "4c7657cada171cc3309f5cfd5b8b3726f847128e9b7556b5bee83e019e0d75c2",
+   "bytes": 21434712,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_3-root_30002.tar.gz",
+   "version_id": "OmK9DTD33Ba7W63s0a3BdmvmL0sXSmcW",
+   "sha256": "816f5f50bbda6fa23e6b297a3ef2f7f29724531ab0630050d969e15f18a21b07",
+   "bytes": 20408360,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H321/solhwv-20261104T132610Z/cnorm_members/P2-fold_3-root_30003.tar.gz",
+   "version_id": "A56Fw77RaecL6sOZszfXccbmOXjWnB3v",
+   "sha256": "e86edde88dbd0d5546fd8ccbe4864de3a8ee5dcbee2a032a3ac32e310aaa06c5",
+   "bytes": 19903724,
+   "exact_version_get_sha256_verified": true,
+   "member_count": 384
+  }
+ ]
+}

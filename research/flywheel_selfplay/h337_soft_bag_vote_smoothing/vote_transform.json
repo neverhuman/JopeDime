@@ -1,0 +1,10 @@
+{
+  "original_sha256": "dd666f12f91dea88603b4fbdcfdbd0fda3ecae091b05359e85bef40bd846747b",
+  "original_ast_sha256": "c5d4baa28a2fdf9b70278f20b6e41c5b8cce7658bd4a7e60131d6d6e3f895b78",
+  "treatment_ast_sha256": "a12f83b49a7f4162d6da379a42c712cd4e32314efc179e7a7643287c66c80bc8",
+  "replacement_nodes": 1,
+  "inverse_exact": true,
+  "original_comparison": "bag_scores[:, i, j_int] - bag_scores[:, i, 0] > margin",
+  "replacement": "_h337_indicator(bag_scores[:, i, j_int] - bag_scores[:, i, 0], margin)",
+  "source": "def vote_counts(bag_scores, base_picks, margin):\n    \"\"\"Count how many of B bagged score matrices (B, N, K) rank base_picks[i] above slot 0 by > margin.\"\"\"\n    n_ctx = len(base_picks)\n    votes = np.zeros(n_ctx, dtype=np.int32)\n    if math.isinf(margin):\n        return votes\n    for i, j in enumerate(base_picks):\n        j_int = int(j)\n        if j_int != 0:\n            votes[i] = int(np.sum(_h337_indicator(bag_scores[:, i, j_int] - bag_scores[:, i, 0], margin)))\n    return votes"
+}

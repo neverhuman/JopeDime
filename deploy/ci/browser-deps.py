@@ -10,6 +10,7 @@ import os
 from pathlib import Path, PurePosixPath
 import platform
 import re
+import socket
 import stat
 import subprocess
 import sys
@@ -25,6 +26,49 @@ LOCK = Path(__file__).with_name("browser-deps.lock.json")
 # The archive mirror occasionally drops a connection; a job fetches about a hundred packages.
 ATTEMPTS = 4
 BACKOFF_SECONDS = 2.0
+# Socket timeout for each attempt, applied to the connect and to every read. When one of the mirror's addresses
+# stops answering (91.189.91.83 on 2026-11-10), each fetch that resolves to it first waits this long before the
+# next address is tried. About a hundred fetches share the 25-minute observatory-ui budget, so keep it small.
+TIMEOUT_SECONDS = 10
+
+# A connect to one address is bounded separately, and an address that fails to connect is tried last
+# for the rest of the process, so a dead mirror address costs one short wait, not one per package.
+CONNECT_SECONDS = 5
+UNREACHABLE = set()
+
+
+def connect_skipping_unreachable(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None, *args, **kwargs):
+    """socket.create_connection with a bounded connect that remembers unreachable addresses."""
+    host, port = address
+    infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+    infos.sort(key=lambda info: (host, port, info[4][0]) in UNREACHABLE)
+    reads = None if timeout is socket._GLOBAL_DEFAULT_TIMEOUT else timeout
+    error = OSError(f"no address for {host}")
+    for family, kind, proto, _, sockaddr in infos:
+        sock = socket.socket(family, kind, proto)
+        try:
+            sock.settimeout(CONNECT_SECONDS if reads is None else min(CONNECT_SECONDS, reads))
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(sockaddr)
+            sock.settimeout(reads)
+            return sock
+        except OSError as failure:
+            sock.close()
+            UNREACHABLE.add((host, port, sockaddr[0]))
+            error = failure
+    raise error
+
+
+class SkippingHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._create_connection = connect_skipping_unreachable
+
+
+class SkippingHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(SkippingHTTPSConnection, req, context=self._context)
 
 
 def digest(path):
@@ -93,14 +137,36 @@ def transient(error):
     return isinstance(error, (urllib.error.URLError, http.client.HTTPException, OSError))
 
 
+# Ubuntu pool paths are immutable and every package is checked against its locked size and sha256, so a second
+# mirror changes availability only, never content. The locked URL is tried first. After DEMOTE_AFTER transient
+# failures or slow fetches on one mirror in this process, the others are preferred for the remaining packages.
+MIRRORS = ("https://us.archive.ubuntu.com/ubuntu/", "https://mirrors.edge.kernel.org/ubuntu/")
+# A fetch slower than SLOW_SECONDS also counts against its mirror: a degraded mirror is usually slow, not down.
+DEMOTE_AFTER = 3
+SLOW_SECONDS = 5
+MIRROR_FAILURES = {}
+
+
+def sources(url):
+    """(mirror, url) choices for one locked URL: its own mirror first unless demoted, then the others."""
+    for prefix in MIRRORS:
+        if url.startswith(prefix):
+            ordered = sorted(MIRRORS, key=lambda mirror: (MIRROR_FAILURES.get(mirror, 0) >= DEMOTE_AFTER, mirror != prefix))
+            return [(mirror, mirror + url[len(prefix):]) for mirror in ordered]
+    return [(None, url)]
+
+
 def download(package, path, archives):
     """Fetch one locked package, retrying only transient transport failures."""
     for attempt in range(1, ATTEMPTS + 1):
+        choices = sources(package["url"])
+        mirror, url = choices[(attempt - 1) % len(choices)]
         # Exclusive temporary output is unpublished until size+hash verification.
         with tempfile.NamedTemporaryFile(dir=archives, delete=False) as output:
             temporary = Path(output.name)
             try:
-                with urllib.request.urlopen(package["url"], timeout=60) as response:
+                started = time.monotonic()
+                with urllib.request.urlopen(url, timeout=TIMEOUT_SECONDS) as response:
                     size = 0
                     while block := response.read(1024 * 1024):
                         size += len(block)
@@ -110,12 +176,16 @@ def download(package, path, archives):
                 output.flush()
                 if size != package["size"] or digest(temporary) != package["sha256"]:
                     raise ValueError("downloaded package differs from lock")
+                if mirror is not None and time.monotonic() - started > SLOW_SECONDS:
+                    MIRROR_FAILURES[mirror] = MIRROR_FAILURES.get(mirror, 0) + 1
                 temporary.replace(path)
                 return
             except (Exception,) as error:
+                if mirror is not None and transient(error):
+                    MIRROR_FAILURES[mirror] = MIRROR_FAILURES.get(mirror, 0) + 1
                 if attempt == ATTEMPTS or not transient(error):
                     raise
-                print(f"browser-deps: attempt {attempt}/{ATTEMPTS} for {package['url']} failed: {error!r}; retrying", file=sys.stderr)
+                print(f"browser-deps: attempt {attempt}/{ATTEMPTS} for {url} failed: {error!r}; retrying", file=sys.stderr)
             finally:
                 if temporary.exists():
                     temporary.unlink()
@@ -152,6 +222,7 @@ def hermetic_fontconfig(runtime, fontcache):
 
 
 def prepare(cache, receipt, lock_path=None):
+    urllib.request.install_opener(urllib.request.build_opener(SkippingHTTPSHandler()))
     if platform.machine() != "x86_64":
         raise ValueError("Ubuntu browser dependency lock is amd64 only")
     lock_bytes = (LOCK if lock_path is None else lock_path).read_bytes()

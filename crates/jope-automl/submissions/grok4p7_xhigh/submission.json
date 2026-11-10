@@ -1,0 +1,19 @@
+{
+  "schema_version": "general-regressor-challenge/v2",
+  "algorithm_name": "Ridge Additive Boost",
+  "language": "rust",
+  "edition": "2021",
+  "target_column": "last",
+  "prediction_input": "features_only",
+  "external_dependencies": [],
+  "unsafe_code": false,
+  "authoring_mode": "reasoning_only",
+  "data_accessed_during_design": false,
+  "experiments_run_during_design": false,
+  "external_code_used": false,
+  "compiled_during_design": false,
+  "single_frozen_implementation": true,
+  "fit_complexity": "Theta(n*C) validation scan, plus O(n_s*P) screening arithmetic, plus O(n_l*M_r*E + n_l*M*K + T*D*n_l*M), where P=C-1, n_l=min(n,32768), n_s=min(n_l,max(400,40000000/max(P,1))), M<=24, M_r<=38, E<=16, K<=16, T<=36, D<=4",
+  "predict_complexity": "O(m*(M_r + M*log(K) + T*D)) with the same caps; each row is independent of the other prediction rows",
+  "memory_complexity": "O(P) moment table during fit plus O(n_l*M_r) working storage, released except a fitted state O(M*K + T*2^D); caller-owned inputs are extra"
+}

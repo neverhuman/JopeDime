@@ -1,0 +1,19 @@
+{
+ "wave": "H376",
+ "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H376/solhwv-x1-20261105T145600Z/",
+ "objects": [
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H376/solhwv-x1-20261105T145600Z/h376_guard_preflight_inputs_source.tar.gz",
+   "version_id": "BvKM3h0EkgzOszAB4Tw5T4gJkRq6q4H5",
+   "sha256": "677b1154e14457da25205a30eba5cb630c9b21f6a5e4f24a7e42366043ff6670",
+   "bytes": 410515899,
+   "create_only": true,
+   "if_none_match": "*",
+   "exact_version_get_sha256_verified": true,
+   "all_members_exact_version_verified": true,
+   "member_count": 3734
+  }
+ ],
+ "inner_task_archives": []
+}

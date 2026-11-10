@@ -1,0 +1,38 @@
+"""Read-only native BASE configuration and final-veto SHA inventory; zero fits."""
+from pathlib import Path
+import datetime,hashlib,json,re
+HERE=Path(__file__).resolve().parent;E=HERE.parent;D=Path('/home/ubuntu/jope-data/h348-gov03')
+def main():
+ assert json.loads((D/'regression.json').read_text())['status']=='PASS'
+ fetch=json.loads((E/'base-fetch-receipt.json').read_text());assert fetch['status']=='EXACT_VERSION_GET_AND_SHA_PASS'
+ rows=[];rankers=[];vetos=[]
+ for name,rec in sorted(fetch['h316']['members'].items()):
+  if not re.fullmatch(r'run/P[012]/fold_[0-3]/root_3000[123]/refit/[^/]+\.txt',name):continue
+  path=D/'base_native'/name[4:];raw=path.read_bytes();assert hashlib.sha256(raw).hexdigest()==rec['sha256'] and len(raw)==rec['bytes']
+  params=dict(re.findall(r'^\[([^:\]]+): (.*)\]$',raw.decode(),re.M));veto=name.endswith('-veto.txt')
+  assert params['boosting']=='gbdt' and params['device_type']=='cpu' and params['num_threads']=='1'
+  assert params['objective'].split()[0]==('binary' if veto else 'lambdarank')
+  assert float(params['min_sum_hessian_in_leaf'])==.001 and float(params['sigmoid'])==1
+  if veto:assert float(params['lambda_l1'])==1 and float(params['lambda_l2'])==2
+  if not veto:assert float(params['lambda_l1'])==0 and float(params['lambda_l2'])==1 and params['metric']=='ndcg' and params['label_gain']=='' and params['min_data_in_leaf']=='20' and params['max_depth']=='3' and params['num_leaves']=='7'
+  r=dict(archive_member=name,sha256=rec['sha256'],role='veto' if veto else 'ranker',lambda_l1=float(params['lambda_l1']),min_gain_to_split=float(params['min_gain_to_split']),min_sum_hessian_in_leaf=float(params['min_sum_hessian_in_leaf']),sigmoid=float(params['sigmoid']))
+  rows.append(r);(vetos if veto else rankers).append(r)
+ assert len(rankers)==972 and len(vetos)==108
+ save_veto_reference(vetos[0])
+ alpha=sorted(set(r['lambda_l1'] for r in rankers));gain=sorted(set(r['min_gain_to_split'] for r in rankers));status='PASS' if gain==[0.0] else 'INCOMPLETE_SPEC_MISMATCH'
+ expected=json.loads((HERE/'base_veto_sha256.json').read_text())['members'];assert len(expected)==108 and all(r['sha256']==expected[r['archive_member']]['sha256'] for r in vetos)
+ result=dict(status=status,wave='H348',utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),BASE_effective_lambda_l1=alpha,BASE_effective_min_gain_to_split=gain,BASE_effective_min_sum_hessian_in_leaf=.001,BASE_sigmoid=1.0,treatment_min_split_gain=.01,rankers_verified=len(rankers),veto_SHA_identities_verified=len(vetos),models=rows,model_inventory_sha256=hashlib.sha256(json.dumps(rows,sort_keys=True,separators=(',',':')).encode()).hexdigest(),source_archive={k:v for k,v in fetch['h316'].items() if k!='members'},optimizer_fits=0,BASE_refits=0,model_predictions=0)
+ (E/'base-native-config.json').write_text(json.dumps(result,indent=2)+'\n');(D/'base-native-config.json').write_text(json.dumps(result,indent=2)+'\n')
+ print(json.dumps({k:v for k,v in result.items() if k not in ['models','source_archive']}),flush=True)
+ if status!='PASS':raise SystemExit(3)
+def save_veto_reference(row):
+ import lightgbm as lgb
+ import subprocess,ast
+ name=row['archive_member'];raw=(D/'base_native'/name[4:]).read_text();native=dict(re.findall(r'^\[([^:\]]+): (.*)\]$',raw,re.M))
+ source=subprocess.check_output(['git','-C','/home/ubuntu/JopeDime','show','213b30ad52e1ce48927bba960ed609bd98ab4dfe:research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/veto.py'],text=True)
+ fn=next(n for n in ast.parse(source).body if isinstance(n,ast.FunctionDef) and n.name=='fit_gate')
+ call=next(n for n in ast.walk(fn) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr=='LGBMClassifier')
+ kwargs={k.arg:eval(compile(ast.Expression(k.value),'<pinned-veto-kwargs>','eval'),{'int':int,'random_state':int(native['seed'])}) for k in call.keywords}
+ params=lgb.LGBMClassifier(**kwargs).get_params()
+ (HERE/'base_veto_native_reference.json').write_text(json.dumps(dict(reference='Read-only real archived BASE veto; constructor from exact pinned fit_gate AST, no fit',archive_member=name,model_sha256=row['sha256'],constructor_params=params,native_params=native,optimizer_fits=0,model_predictions=0),indent=2)+'\n')
+if __name__=='__main__':main()

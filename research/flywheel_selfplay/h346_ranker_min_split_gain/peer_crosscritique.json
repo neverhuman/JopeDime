@@ -1,0 +1,29 @@
+{
+  "H343": {
+    "commit": "2b48ec8eedac5b17fe3f444d7544b6f76bed62c7",
+    "path": "research/flywheel_selfplay/h343_ranker_maxbin63_rerun/metrics.json",
+    "sha256": "84db6262bc1bfe3022696f70c2ca4b2887ad9c945f4e13723bac446f387e9bd7",
+    "status": "COMPLETE",
+    "verdict": "MAXBIN_NOT_ADVANCED",
+    "disposition": null,
+    "interpretation": "Different intervention or capacity-only refusal; does not measure H346 minimum split gain."
+  },
+  "H345": {
+    "commit": "4165d6f90bfe46d24d761430fa10fc6fa8992b15",
+    "path": "research/flywheel_selfplay/h345_ranker_row_subsample_06/metrics.json",
+    "sha256": "eea1b01803a4996cfead1abac3060c0f21c54659178652ec8e6152c00347c99a",
+    "status": "INCOMPLETE_CPU_ADMISSION",
+    "verdict": null,
+    "disposition": null,
+    "interpretation": "Different intervention or capacity-only refusal; does not measure H346 minimum split gain."
+  },
+  "H338": {
+    "commit": "44bcbe16dc0cc31cb05c5bfeedd35e34697995b1",
+    "path": "research/flywheel_selfplay/h338_column_subsampling/metrics.json",
+    "sha256": "1b90465d8b221bb20d0c1a11064e1c4e7af453c7ddfe935efcf1c3b9b2fe0a71",
+    "status": "COMPLETE",
+    "verdict": "COLSUB_NOT_ADVANCED",
+    "disposition": null,
+    "interpretation": "Explicit feature_fraction_seed changes existing tree-level sampling as well as the added node sampling; not a single node-sampling factor."
+  }
+}

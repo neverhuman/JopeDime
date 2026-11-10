@@ -1,0 +1,441 @@
+{
+  "sources": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "base_code": "819a45aa5e",
+  "base_code_full": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "dope_frozen": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "kernel": "6.8.0-147-generic",
+    "host": "xbabe2"
+  },
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "wave": "H338",
+  "authority": "/home/ubuntu/nudges/hw_t2225_solhwv_h338_colsub.md",
+  "feature_fraction_bynode": 0.8,
+  "feature_fraction_seed": "original fit constructor random_state",
+  "colsample_bytree": 0.8,
+  "cores": [
+    13,
+    15,
+    60,
+    62
+  ],
+  "workers_max": 4,
+  "MemoryMax": "6G",
+  "MemorySwapMax": 0,
+  "nice": 19,
+  "numeric_threads": 1,
+  "compute_stop": "2026-11-05T00:45:00Z",
+  "close_stop": "2026-11-05T01:00:00Z",
+  "latest_fit_admission": "2026-11-04T22:45:00Z",
+  "prereg_sha256": "9857681955c3afa996e0287e22023827beec73435d4fccdf317a51d180bd2930",
+  "source_sha256": {
+    "archive_h338.py": "54fdbb59c8597d297e8d07e13e9596883a4f8fe6a50d2ebf2eb1958182e78596",
+    "fetch_base_h338.py": "b3ab3c09977b7d628459aaeb71c52a05d408e39a736a582c876eb25415b4e689",
+    "evaluate_h338.py": "28b27ee2ff344237cc3b192b4083a492b0ef23bb664e0b8c9d20eac5096f7dd8",
+    "run_h338.py": "b85d988077052541057d841bee8a8924e94cd7b16bd77025cd01ee9baaaf7b5d",
+    "runtime_h338.py": "ff6feaee5d8725a71a4eed54a6c1aefb80a5b25479cbc4d07385b2ac64bad798",
+    "guard_h338.py": "0ed77136918b0d6ad05943a7fadb2815bd108048ae05cf53a82813e7498c19a3",
+    "test_h338.py": "efa9d3fc2ecaf3124098f9ce071f0fd13a9584048f1c73485c4850b99b4c0f38",
+    "column_subsampling.py": "8c1f09036bf4fa145c6829a2efac341bbf5ab9ae7022d96c9d966573f7c38cf2"
+  },
+  "prereg_commit": "a2a65f24d54ade71a819abf309385b8d4cd20ccf",
+  "execution": {
+    "utc": "2026-11-05T00:21:55.403507+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "0",
+    "SERVICE_RESULT": "success",
+    "INVOCATION_ID": "3dcf3229f3854487a5663e646b431830"
+  },
+  "tests": {
+    "utc": "2026-11-04T22:28:06.410829+00:00",
+    "command": "numeric1 nice19 taskset62 python3 -m unittest discover -s /home/ubuntu/jope-rescue-20260921/h338-solhwv/source -p test_h338.py -v",
+    "collected": 24,
+    "executed": 24,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "exit_status": 0,
+    "elapsed_seconds": 1.6824079370126128,
+    "source_sha256": {
+      "archive_h338.py": "54fdbb59c8597d297e8d07e13e9596883a4f8fe6a50d2ebf2eb1958182e78596",
+      "fetch_base_h338.py": "b3ab3c09977b7d628459aaeb71c52a05d408e39a736a582c876eb25415b4e689",
+      "evaluate_h338.py": "28b27ee2ff344237cc3b192b4083a492b0ef23bb664e0b8c9d20eac5096f7dd8",
+      "run_h338.py": "b85d988077052541057d841bee8a8924e94cd7b16bd77025cd01ee9baaaf7b5d",
+      "runtime_h338.py": "ff6feaee5d8725a71a4eed54a6c1aefb80a5b25479cbc4d07385b2ac64bad798",
+      "guard_h338.py": "0ed77136918b0d6ad05943a7fadb2815bd108048ae05cf53a82813e7498c19a3",
+      "test_h338.py": "efa9d3fc2ecaf3124098f9ce071f0fd13a9584048f1c73485c4850b99b4c0f38",
+      "column_subsampling.py": "8c1f09036bf4fa145c6829a2efac341bbf5ab9ae7022d96c9d966573f7c38cf2"
+    }
+  },
+  "input_identity_validation": {
+    "status": "PASS",
+    "utc": "2026-11-04T22:29:36.596418+00:00",
+    "train_pool_sha256_matches": 1219,
+    "train_prefix_feature_members": 4,
+    "selected_and_r882_train_costs": "EXACT SHA256",
+    "DLVal_feature_rows_read": 0,
+    "reference_manifest_sha256": "9b148003d48ab609b2a796c57fb8b4c0296cc0ee79771f034944f4b8dc064263",
+    "scope": "All current TRAIN program/fitness/gate pools and all consumed cache feature prefixes exactly match the archived BASE inputs; no file bodies outside TRAIN prefixes."
+  },
+  "effective_model_review": {
+    "status": "PASS",
+    "utc": "2026-11-05T00:22:50.512065+00:00",
+    "tasks": 36,
+    "native_saved_models": 14040,
+    "constructor_calls": 36504,
+    "ranker_constructors": 29484,
+    "veto_constructors": 7020,
+    "unchanged_final_veto_models": 108,
+    "colsub_AST_receipt": {
+      "call_sites": [
+        {
+          "BASE_AST_sha256": "5a6013608cb318e44eaf7fdd5d2c4b079095c5adc59d9151ce24950c3e0df2ad",
+          "COLSUB_AST_sha256": "a07d07fe54a02e5ba0b64404a38565011ae33982bae49b8c7b92ad97aa3ae501",
+          "removed_override_AST_sha256": "5a6013608cb318e44eaf7fdd5d2c4b079095c5adc59d9151ce24950c3e0df2ad",
+          "removing_two_keywords_restores_exact_BASE_AST": true,
+          "feature_fraction_bynode": 0.8,
+          "feature_fraction_seed_AST": "Call(func=Name(id='int', ctx=Load()), args=[Name(id='random_state', ctx=Load())], keywords=[])",
+          "function": "fit_ranker",
+          "module": "topk",
+          "source_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+          "only_added_keywords": [
+            "feature_fraction_bynode",
+            "feature_fraction_seed"
+          ],
+          "label_gain": "BASE implicit default",
+          "colsample_bytree": 0.8
+        },
+        {
+          "BASE_AST_sha256": "41f7211354240280b80fe199efaa8145fe15f6e58b8cb1f17a94a4ece61cc47d",
+          "COLSUB_AST_sha256": "327a5de34fdfdea6b2bb42a1bfc8af988d02fbad915f28a54c8aa52dd523f4a4",
+          "removed_override_AST_sha256": "41f7211354240280b80fe199efaa8145fe15f6e58b8cb1f17a94a4ece61cc47d",
+          "removing_two_keywords_restores_exact_BASE_AST": true,
+          "feature_fraction_bynode": 0.8,
+          "feature_fraction_seed_AST": "Call(func=Name(id='int', ctx=Load()), args=[Name(id='random_state', ctx=Load())], keywords=[])",
+          "function": "fit_ranker_n",
+          "module": "bagged",
+          "source_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+          "only_added_keywords": [
+            "feature_fraction_bynode",
+            "feature_fraction_seed"
+          ],
+          "label_gain": "BASE implicit default",
+          "colsample_bytree": 0.8
+        }
+      ],
+      "veto_unmodified": true,
+      "only_added_keywords": [
+        "feature_fraction_bynode",
+        "feature_fraction_seed"
+      ],
+      "feature_fraction_bynode": 0.8,
+      "feature_fraction_seed": "existing constructor random_state"
+    },
+    "feature_fraction_bynode": 0.8,
+    "feature_fraction_seed": "original fit random_state",
+    "all_native_objectives_original": true,
+    "all_native_extra_trees_false": true,
+    "all_ranker_label_gain_BASE_default": true,
+    "all_ranker_native_bynode_fraction_exact": true,
+    "all_ranker_native_feature_seed_equals_native_seed": true,
+    "all_constructor_fractions_and_seeds_exact": true,
+    "all_native_step_clipping_disabled": true,
+    "all_native_threads_one": true,
+    "source_sha256": {
+      "archive_h338.py": "54fdbb59c8597d297e8d07e13e9596883a4f8fe6a50d2ebf2eb1958182e78596",
+      "fetch_base_h338.py": "b3ab3c09977b7d628459aaeb71c52a05d408e39a736a582c876eb25415b4e689",
+      "evaluate_h338.py": "28b27ee2ff344237cc3b192b4083a492b0ef23bb664e0b8c9d20eac5096f7dd8",
+      "run_h338.py": "b85d988077052541057d841bee8a8924e94cd7b16bd77025cd01ee9baaaf7b5d",
+      "runtime_h338.py": "ff6feaee5d8725a71a4eed54a6c1aefb80a5b25479cbc4d07385b2ac64bad798",
+      "guard_h338.py": "0ed77136918b0d6ad05943a7fadb2815bd108048ae05cf53a82813e7498c19a3",
+      "test_h338.py": "efa9d3fc2ecaf3124098f9ce071f0fd13a9584048f1c73485c4850b99b4c0f38",
+      "column_subsampling.py": "8c1f09036bf4fa145c6829a2efac341bbf5ab9ae7022d96c9d966573f7c38cf2"
+    },
+    "model_inventory_sha256": "b3f6a3465ade2f6ccbb878e98f200527996a0c43e4145bc7373e2bd9e77d7dd3",
+    "tasks_summary": {
+      "P0/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "d373b98f2dcd0e50b29cc1073d8752007aaf34daf715d40195e4b14938d6c824",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "6290ddef5269aa89d8de8d082500dca6b79299149c19a50cbc379ed0f91e1fd5",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "fb2021f6b6f62569d976307225e70576ee94506a8c1aa8900eb636d82d740ff6",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "742316c966825ce6da0fdfdbdb0d316a473b5bed73a83feab2b1517effd0a625",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "240ad47771999612fc2d6bb620465a88eb2adc7f18c39967c16a17033b9d6495",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "c9ec0970757667a4d21782b1bfc2570e2b08c6855942d31f9119bb857f9842dc",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "484cc788da5dd14b83571cdcb4d253994de4cf4753d716e7950192abc06fe6cd",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "bb4389e774e5572c605c8a1b28bc54853e82635edacb898bbbcc4ebecabb2bb4",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "95f6612b0ff9f384dc1b6f80eba9fc70b8f5cafb16126e60d2131e47bb7e271d",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "1b5377b7cf65da3bf0fcdf2e90e0240ee650ffa119aaf0bfc52717adf2d8afe5",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "19ba5b18c68771afcd83f57a3e1086931efef011250b46c64c0573bd1e37b760",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P0/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "ec2a15e73aa18f5718cb99d731323b5e1e424174947bd6bf7b247e164d43530a",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "63eb030057df2f37417f6d4847af9874cfd48e80af8f536418606c11d26146d5",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "87dd5a94f0e2d565ac9f6777361a95a0a2a1954f8c6829bfb79a4b450acab647",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "c1680643ac1f7de4675551e9cb92c806ef73e845fbb305cec825e1298b7ac0b0",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "78f28cd32dbc4ec80cd6841a3cd7ff945b69a2265cd177266c3fcd0d67c78a2b",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "5916de7a9fd659c739c6c5244f2fe38755f8d8bb940a303b1811850f25fee967",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e00f289f550262907dfce6228d2e9a609ef0214e9f787673ae9a08ba73f89bc5",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "f22ae88bcb4f0169f4061d069d2e86660b9f13d1d2e21b935d1fdb68642dfe93",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "f3ba1e9bbdf2d9b9b879f30cc8733e52bc239bb0899d26d7127b335fb8cc2a27",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a703cc57534e67272ea3e8091a4ceac14ddc5d8d321ff6d245b77e381f455ee4",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "5bb177f75b2eda11db4471389d8484ab5f764aab5a25cb3373ff4cd5e8120aa7",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "675f4e1c3bb42d20016b00eea1faf0dbe78f9440bb2db255b8eebf182bdaa325",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P1/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "8f03cb446ce117434da67c427d7ea71db1e5acdf448b34e2c8ba29f64f324168",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "e830854d17e37b1e1ba182b6a7edb4c1e1ad8f1242e07892fc8e4c8b6651e372",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "82872fdcfc106bc48aaf76c581e16e32b193984604791822244d3c6a47e25c06",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_0/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "33851ba48cd449730f9a7136832cfec4f99a00289c0b81903456f406667485aa",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "6be98c7cf871000de4b69fb52d424e0fab64544fffd2d66df1c0930d2b54f27b",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "646ea8b59f1cacbe9075cc7a0e4211768a956c22d642738eecfbd4f289705186",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_1/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "a8e77831add7a72c2e2f0a45ca529cd496907f05c84e02d7c0bfbc1c52e2145b",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "ae05d76bc385b1cb7eab70337134a86cc0e86815d15afa4ceaa04ccf08fd3f8d",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "03f245c37991a208b52aa7a68c5a427cc1a13f50bc3785a78dd16405bfa8d2b1",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_2/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "15ae5242ae940035a2413198da3cebc961317551f8cd428308715a6333a3f910",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30001": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "031c2376a5f2de54c98a859b5fda88eef60a50fad3d8c45657ac39055cf6b941",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30002": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "d0576c1108d7918ee14f9db0ecf804686f7cace14d0c13ad168d870d759875b6",
+        "physical_outer_rows_read_before_lock": 0
+      },
+      "P2/fold_3/root_30003": {
+        "models": 390,
+        "constructor_calls": 1014,
+        "audit_sha256": "c0ca6873a96886ff2eb35463802eeebea8021610e53d10300039c81000eefffa",
+        "physical_outer_rows_read_before_lock": 0
+      }
+    }
+  },
+  "colsub_AST_proof": {
+    "call_sites": [
+      {
+        "BASE_AST_sha256": "5a6013608cb318e44eaf7fdd5d2c4b079095c5adc59d9151ce24950c3e0df2ad",
+        "COLSUB_AST_sha256": "a07d07fe54a02e5ba0b64404a38565011ae33982bae49b8c7b92ad97aa3ae501",
+        "removed_override_AST_sha256": "5a6013608cb318e44eaf7fdd5d2c4b079095c5adc59d9151ce24950c3e0df2ad",
+        "removing_two_keywords_restores_exact_BASE_AST": true,
+        "feature_fraction_bynode": 0.8,
+        "feature_fraction_seed_AST": "Call(func=Name(id='int', ctx=Load()), args=[Name(id='random_state', ctx=Load())], keywords=[])",
+        "function": "fit_ranker",
+        "module": "topk",
+        "source_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+        "only_added_keywords": [
+          "feature_fraction_bynode",
+          "feature_fraction_seed"
+        ],
+        "label_gain": "BASE implicit default",
+        "colsample_bytree": 0.8
+      },
+      {
+        "BASE_AST_sha256": "41f7211354240280b80fe199efaa8145fe15f6e58b8cb1f17a94a4ece61cc47d",
+        "COLSUB_AST_sha256": "327a5de34fdfdea6b2bb42a1bfc8af988d02fbad915f28a54c8aa52dd523f4a4",
+        "removed_override_AST_sha256": "41f7211354240280b80fe199efaa8145fe15f6e58b8cb1f17a94a4ece61cc47d",
+        "removing_two_keywords_restores_exact_BASE_AST": true,
+        "feature_fraction_bynode": 0.8,
+        "feature_fraction_seed_AST": "Call(func=Name(id='int', ctx=Load()), args=[Name(id='random_state', ctx=Load())], keywords=[])",
+        "function": "fit_ranker_n",
+        "module": "bagged",
+        "source_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "only_added_keywords": [
+          "feature_fraction_bynode",
+          "feature_fraction_seed"
+        ],
+        "label_gain": "BASE implicit default",
+        "colsample_bytree": 0.8
+      }
+    ],
+    "veto_unmodified": true,
+    "only_added_keywords": [
+      "feature_fraction_bynode",
+      "feature_fraction_seed"
+    ],
+    "feature_fraction_bynode": 0.8,
+    "feature_fraction_seed": "existing constructor random_state"
+  },
+  "fetch_actual_exit": {
+    "utc": "2026-11-04T22:27:08.291694+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "0",
+    "SERVICE_RESULT": "success",
+    "INVOCATION_ID": "f74c66863f944036a159e47257ba073d"
+  }
+}

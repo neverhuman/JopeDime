@@ -1,0 +1,25 @@
+{
+  "policy": {
+    "source_wave": "H339",
+    "source_file": "/home/ubuntu/jope-rescue-20260921/h339-astra/source/runtime_forecast.json",
+    "source_sha256": "0d6b8f83a4e77519c52060afd398f456ae7d92e5e24b471baed1556e5b42fa02",
+    "source_first_cell_seconds": 1059.8079736232758,
+    "rule": "ceil(36/admitted_workers)*historical_first_cell_seconds*1.15+600 < remaining fixed window",
+    "use": "Conservative pre-fit capacity screen only; H339 doubled constructor rounds, so this is not a treatment speed estimate. H343 first-cell elapsed overrides remaining35 gate without weakening its formula.",
+    "minimum_workers": 4,
+    "maximum_workers": 8,
+    "stop_epoch": 1793848500
+  },
+  "policy_sha256": "de3e572e51c723782245c52f13d8fbcd17d90461495c5a9470fcca6972e598fb",
+  "workers": 4,
+  "admitted_cores": [
+    24,
+    25,
+    26,
+    28
+  ],
+  "forecast_epoch": 1793835016.2198887,
+  "projected_finish_epoch": 1793846585.2324157,
+  "compute_stop_epoch": 1793848500,
+  "admit": true
+}

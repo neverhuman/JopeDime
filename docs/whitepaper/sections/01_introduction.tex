@@ -16,10 +16,10 @@
 \makeatletter\widowpenalty=\@M\clubpenalty=\@M\@clubpenalty=\@M\makeatother
 \hyphenation{FunSearch Alpha-Geometry AlphaZero AlphaGo AlphaFold AlphaDev AlphaProof AlphaEvolve EurekaZero DreamCoder HumanEval ImageNet MotherNet KumoRFM TabPFN EURISKO MuZero AlphaStar intelligence scoring}
 
-We specify how to test whether feedback from execution improves the first
-algorithm a system proposes for a new problem. AlphaGo Zero supplies a
-precedent within a fixed game: it went beyond the best human play without
-seeing a human game, learning from self-play under the rules of Go
+We specify a test of whether execution feedback improves the first
+algorithm proposal on a new problem. AlphaGo Zero provides a
+precedent within a fixed game: it went beyond the best human play through
+self-play under the rules of Go, without seeing a human game
 \citep{silver2017mastering}.
 
 \paragraph{The skeptics' challenge.}
@@ -35,13 +35,13 @@ memorized'' that had not made ``a single new connection that has led to a
 discovery'' \citep{patel2023question}. In January 2025, Demis Hassabis posed
 the hardest version as a benchmark for general intelligence: today's systems
 ``can play a game of Go at a world champion level. But could a system invent
-Go?'' \citep{hassabis2025bigtech}. These challenges concern both proposing
-solutions and choosing new questions; our test concerns only algorithm
-proposals under human-defined tasks and metrics (\cref{sec:meaning}).
+Go?'' \citep{hassabis2025bigtech}. These challenges ask both how to propose solutions and how to choose new
+questions. Our test covers only algorithm proposals under human-defined
+\mbox{tasks and evaluation} metrics (\cref{sec:meaning}).
 
-Predicting historical text does not directly reward improvement over an
-incumbent. That motivates a different training signal; it does not establish
-a ceiling on what a pretrained model can discover (\cref{sec:anatomy}).
+Text prediction does not directly reward improvement over an incumbent.
+This motivates a different training signal without establishing a ceiling
+on what a \mbox{pretrained model} can discover (\cref{sec:anatomy}).
 
 \paragraph{The human challenge.}
 Research effort rose while productivity declined in the industries,
@@ -51,38 +51,30 @@ researchers as in the early 1970s to sustain chip-density growth.
 \citet{jones2009burden} found later first inventions and greater
 specialization in the inventor data he studied.
 \citet{park2023disruptive} reported declining disruption on citation-based
-measures of papers and patents. These observations motivate our question:
-can execution feedback help a proposer depart usefully from familiar ideas?
-\Cref{sub:anatomy-history} develops the role of the scientific record.
+measures of papers and patents. These observations motivate testing execution feedback as an additional
+teacher.
+\mbox{\Cref{sub:anatomy-history} develops} the role of the scientific record.
 
 \paragraph{From search to learning.}
-Tests can select a better candidate without teaching the next proposer.
+Selecting a better program does not by itself improve the proposer.
 Automated research systems already couple proposals to tests
 \citep{lu2024aiscientist,gottweis2025coscientist,novikov2025alphaevolve,karpathy2026autoresearch,socher2026bookbite,socher2026eureka}.
-\Cref{sub:anatomy-where,sec:road} distinguish retained solutions from
-proposer updates.
-
-\begin{figure}[tb]% floats so the text above can fill the column
-\begin{keyidea}
-Can judgment bought during training improve the first proposal at deployment?
-\end{keyidea}
-\end{figure}
+\Cref{sub:anatomy-where,sec:road} distinguish retaining \mbox{candidate solutions} from
+training the proposer.
 
 \paragraph{The Zero move.}
 AlphaGo learned from human expert games and searched heavily at every move
 \citep{silver2016mastering}.
 AlphaGo Zero learned only from games against itself, and its network alone,
 with no search, rated \num{3055}~Elo. That is close to the \num{3144} of AlphaGo Fan, the
-version that beat the European champion Fan Hui
+version that beat \mbox{the European champion} Fan Hui
 \citep{silver2016mastering,silver2017mastering}.
 
-This motivates an analogous
-goal for invention: learn from repeated program evaluations during training,
-then deploy a writer with a single-candidate budget, \searchone{}
-(\cref{box:searchone}). The budget is a test condition, not a
-promise that every first proposal wins. \Cref{fig:emptysquare} separates
-the training feedback path from the frozen writer and fitting procedure at
-deployment.
+The reference design uses repeated program evaluations as training feedback
+and proposes a single-candidate deployment budget, \searchone{} (\cref{box:searchone}).
+This test condition does not promise that every first proposal wins.
+\Cref{fig:emptysquare} separates training feedback from the frozen writer
+and fitting procedure at deployment.
 
 \begin{figure}[t]
   \centering
@@ -121,27 +113,18 @@ deployment.
   \label{fig:emptysquare}
 \end{figure}
 
-\paragraph{Engineered intelligence.}
-The reference design assigns each role in \cref{sec:anatomy} an inspectable
-component: a declared task and metric, a grammar-constrained writer, a
-referee and retained state (\cref{tab:pillars}). Program-incumbent
-promotion and proposed writer admission are distinct rules in that design.
-We call the design \emph{engineered intelligence}: its aim, proposer, referee
-and retained state are specified for audit. Pretrained components still supply prior knowledge
-(\cref{box:searchone}); execution feedback supplies the additional teacher.
-
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:searchone]{What ``search = 1'' means}
 \begin{itemize}[leftmargin=*,nosep]
-  \item \textbf{One inference, one candidate.} For a new problem, the program
+  \item \textbf{One inference, one candidate.} For each new problem, the program
     writer emits one complete program ($\budget = 1$), with no retries, repairs,
-    best-of-$N$, reranking or weight updates.
+    best-of-$N$ selection, reranking \mbox{or model} parameter weight updates.
   \item \textbf{Everything is counted.} This includes reasoning tokens and
-    problem encoding. One inference is one generation, not one forward pass.
+    problem encoding. One inference is one \mbox{generation, not} a single forward pass.
   \item \textbf{Declare the fitting procedure.} Fitting the emitted algorithm
     to training rows is allowed. Any internal model or hyperparameter
     selection must be disclosed and counted in its compute budget. One
-    outer proposal does not establish the absence of internal search.
+    outer \mbox{proposal} does not establish the absence of internal search.
     \mbox{Training} search is priced separately in \cref{sec:price}.
 \end{itemize}
 \textbf{A single candidate, with prior knowledge:} human-designed program
@@ -151,21 +134,21 @@ Zero analogy concerns the additional training feedback from the referee.
 \end{figure}
 
 \paragraph{Contributions.}
-We formulate algorithm invention as a game and give a tabular-regression
-reference whose moves are typed programs of learning primitives.
+We define the game, its costs, a tabular-regression reference design
+and a protocol for evaluating its first proposals.
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=3pt,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
     judgment and retention), with an idealized relation between proposal
     quality and the number of attempts (\cref{sec:anatomy}).
-  \item \textbf{The innovation game:} a board, move, referee and opponent,
+  \item \textbf{The innovation game:} a board, move, referee and \mbox{opponent},
     with a reward ordering and two reference admission rules; each task
-    type needs a qualified encoding and referee (\cref{sec:game}).
+    type requires a qualified \mbox{board encoding} and task referee (\cref{sec:game}).
   \item \textbf{The economics of algorithmic self-play:} a cost model for
-    training and for the cost per verified improvement (\cref{sec:price}).
-  \item \textbf{\EZ{}:} a reference learner with a frozen problem encoder,
+    self-play training and for the expected compute cost per verified improvement (\cref{sec:price}).
+  \item \textbf{\EZ{}:} a reference design with a frozen problem encoder,
     a grammar-constrained program writer and a problem--program ranking map,
-    plus an expert-\hspace{0pt}iteration procedure and safeguards against reward hacking
-    (\cref{sec:method}).
+    with proposed expert-\hspace{0pt}iteration training and safeguards against
+    \mbox{referee reward} hacking (\cref{sec:method}).
   \item \textbf{An evaluation protocol for the single-proposal claim:}
     paired comparisons with frozen algorithms whose receipts record the
     model that designed them, performance curves against agents
@@ -173,14 +156,26 @@ reference whose moves are typed programs of learning primitives.
     program-only control (\cref{sec:results}).
 \end{enumerate}
 
-\paragraph{Evidence scope.}
-The adapter records in \cref{sec:method-status} establish neither neural
-writer updates nor a training gain in the separate ranking map. Independent
-first-proposal comparisons remain pending; \cref{sec:method,sec:results}
-specify the reference design and its tests.
+\begin{figure}[tb]% floats so the text above can fill the column
+\begin{keyidea}
+Can judgment bought during training improve the first algorithm proposal at deployment?
+\end{keyidea}
+\end{figure}
 
-\Cref{sec:anatomy,sec:road} identify the roles and components;
-\cref{sec:game} defines an attempt. \Cref{sec:price,sec:method} account
-for its cost and specify how attempts supply reference training targets.
-The tests in \cref{sec:results} bound the conclusions in
-\cref{sec:meaning,sec:conclusion}.
+\paragraph{Engineered intelligence.}
+The reference design makes the roles in \cref{sec:anatomy} auditable:
+a declared task and metric, a program writer, a referee and retained state
+(\cref{tab:pillars}). We call this \emph{engineered intelligence}.
+\Cref{sec:method} specifies the components and admission rules.
+
+\paragraph{Evidence scope.}
+The inspected operating loop (\cref{sec:method-status}) runs no neural writer:
+a small cost-ranking adapter ranks rule-based genetic programming proposals. The reference program writer and ranking map are separate networks outside this loop. The recorded adapter decisions establish no learning gain for either reference network; each requires its own matched evaluation.
+Independent first-proposal comparisons remain pending;
+\cref{sec:method,sec:results} specify the design and planned tests.
+
+\Cref{sec:anatomy} identifies the roles of invention; \cref{sec:road}
+traces their AI building blocks. \Cref{sec:game} defines the game,
+\cref{sec:price} its costs and \cref{sec:method} the reference design.
+\Cref{sec:results} specifies the planned tests; \cref{sec:meaning,sec:conclusion}
+reserve discussion and conclusions until results are supplied.

@@ -1,16 +1,15 @@
 \subsection{Recorded selection changes}\label{app:selection-changes}
 
-\Cref{fig:fw-selection-changes} uses an observer that refuses changed
-evaluation identities, inconsistent selection counts and duplicate context
-identifiers before comparing ordered program
-identities. It counts candidate and retained differences from one stored
-reference, rather than counting utility changes. Admission uses unrounded
-utility and accepts exact ties by default, so the recorded best-round
-identity can change without a strict score gain. Counts describe changes
-on reused development contexts; matched controls are still required for
-attribution to training or proposal quality.
+The observer in \cref{fig:fw-selection-changes} refuses changed evaluation
+identities, inconsistent selection counts and duplicate context identifiers
+before comparing ordered program identities. It counts candidate and retained
+differences from one stored reference, rather than utility changes.
+The tie-admission and best-round identity rules follow
+\cref{sec:method-status}.
+These changes occur on reused development contexts; matched controls are
+still required for \mbox{attribution to training} or proposal quality.
 
-\begin{figure}[htb]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_selection_changes.pdf}
   \caption{\textbf{Retained program selections change only at admitted rounds.}

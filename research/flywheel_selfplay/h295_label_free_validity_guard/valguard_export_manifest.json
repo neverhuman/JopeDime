@@ -1,0 +1,97 @@
+{
+  "consensus_median_tau_val": 0.04,
+  "fit_lock_content_sha256": "c378913b35a3aacba85672a80b7ca52e0d8854762c28f421d767c1c67baccc3e",
+  "fit_lock_s3": {
+    "bytes": 15380,
+    "file": "fit_lock.json",
+    "role": "export",
+    "s3_key": "experiments/rd_breakthrough_20261030/H295/export/fit_lock.json",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/fit_lock.json",
+    "sha256": "adf8912732b45c9f7bebf13f6d8440bed68ff8041b9d3d06086235c0edee2223",
+    "version_id": "ePv1iNHJXjYXupckBWEvwZjoXUb.qROb"
+  },
+  "full_dl_train_valguard_models": [
+    {
+      "fold_taus_val": [
+        0.05,
+        0.05,
+        0.03,
+        0.035
+      ],
+      "gbm_model": {
+        "bytes": 140433,
+        "file": "valguard_full_dl_train_gbm_seed295101.txt",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295101.txt",
+        "sha256": "fca18dd1be4c221adfb745fabed7a693a25e65bb5854f43dee315d10482786e5",
+        "version_id": "aehBeE21QHzv2WHONfKNlWHkXXHunyJw"
+      },
+      "locked_tau_val": 0.0425,
+      "lr_model": {
+        "bytes": 16690,
+        "file": "valguard_full_dl_train_lr_seed295101.npz",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295101.npz",
+        "sha256": "e46ffe3ba8ca9fd558bbb7466d649e4562836658bdbbb1e2ed113f73fb39cfc7",
+        "version_id": "9whueeGTY28IKDnCVr6UQPTKR_G7EEzL"
+      },
+      "replicate": 0,
+      "seed": 295101
+    },
+    {
+      "fold_taus_val": [
+        0.03,
+        0.04,
+        0.035,
+        0.03
+      ],
+      "gbm_model": {
+        "bytes": 139889,
+        "file": "valguard_full_dl_train_gbm_seed295102.txt",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295102.txt",
+        "sha256": "fe123cc6a73ae52dd5e0c667424ab118f509b43a822303473f86dec3ddd9942f",
+        "version_id": "_I8myoRys1ll1WJ3OlctZ.ThoOu0PMvD"
+      },
+      "locked_tau_val": 0.0325,
+      "lr_model": {
+        "bytes": 16690,
+        "file": "valguard_full_dl_train_lr_seed295102.npz",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295102.npz",
+        "sha256": "e46ffe3ba8ca9fd558bbb7466d649e4562836658bdbbb1e2ed113f73fb39cfc7",
+        "version_id": "_d5JGyecO8ChkwVUSxNPltNTvsGcJkq0"
+      },
+      "replicate": 1,
+      "seed": 295102
+    },
+    {
+      "fold_taus_val": [
+        0.04,
+        0.04,
+        0.06,
+        0.035
+      ],
+      "gbm_model": {
+        "bytes": 140515,
+        "file": "valguard_full_dl_train_gbm_seed295103.txt",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_gbm_seed295103.txt",
+        "sha256": "476b255af6edd4a85fd487272a79eecccb10517856b48ca56249c49fd6caf10e",
+        "version_id": "jv4XExqBGrLA2gh3AG77rLDWnnmvJK82"
+      },
+      "locked_tau_val": 0.04,
+      "lr_model": {
+        "bytes": 16690,
+        "file": "valguard_full_dl_train_lr_seed295103.npz",
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H295/export/valguard_full_dl_train_lr_seed295103.npz",
+        "sha256": "e46ffe3ba8ca9fd558bbb7466d649e4562836658bdbbb1e2ed113f73fb39cfc7",
+        "version_id": "oy9Qe3MRW8pPAYgYCLcux.cOeHZ7pb4t"
+      },
+      "replicate": 2,
+      "seed": 295103
+    }
+  ],
+  "lane": "rd_argon",
+  "prereg_lock_commit": "891af1e69b213ba19a96e36b6322b54273513b2f",
+  "slot0_alt_max_pinv": 0.015,
+  "slot0_escape_floor": 0.055,
+  "slug": "h295_label_free_validity_guard",
+  "verdict": "VALGUARD_ADVANCE",
+  "wave": "H295"
+}

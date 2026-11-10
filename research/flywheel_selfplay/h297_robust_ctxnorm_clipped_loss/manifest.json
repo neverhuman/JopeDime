@@ -1,0 +1,88 @@
+{
+  "wave_id": "H297",
+  "parent_commit": "9099299ad2cdd26a5bcd73b9783eddb018b8c098",
+  "source_sha256": {
+    "run.py": "67b7aff5e7e9db99c626095d3323a5d14f3e8adafc22a1a5750aec71087d0826",
+    "regression.py": "0e6c40e8cbc3cd6f3bd869a1e9b0728790d15c35ae6dd9e0377ff53687cf8cd6",
+    "test_loss.py": "de4e82bbeac759a538caf3019089598a4873cdbcb778b180a2e970b4a77b80c3",
+    "runtime.py": "2c55c5cbdf9cdbab98d817b335d6e2421090d30a6e4f0ad3fdac02e6dd74ce27",
+    "loss.py": "983e2593221847c1b9f038cd8c897dfbe1ad8cbb3253547ad128439576b6ebf6",
+    "analysis.py": "4affcdb6ef534c7becb0ded4bcfe1a31f6f278d381aa147e3193716c6f7e16d4",
+    "trajectory.py": "50a1a56a25c828169b20b154c85eaf414bdef952fece4742eb727e4f26d86f28",
+    "monitor.py": "b782e98cf05c940da44f3af82e384432efddc961a810830761187ca6bc376ce1"
+  },
+  "plan_sha256": "df471d5bd52a043d38a9bca8ee15e066b4a4c24a10bb185c66f253e0542743ef",
+  "prereg_sha256": "b27b78e715384d28cb75d6ca6979628b72640777c5c9c947b721e9f124f2f8e3",
+  "input_archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/inputs-source.tar.gz",
+    "version_id": "PVoZZo09fFm.MegYE67gQIv1XobpbBik",
+    "sha256": "bf807bfbf530ec90de4f94c0dd72a955d3c202003233388f9b57322433077597",
+    "bytes": 282167822,
+    "exact_version_get_verified": true,
+    "members_verified": 2674,
+    "members_sha256_verified": true
+  },
+  "input_members": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/inputs-source-manifest.json",
+    "version_id": "OEcLWrn9KSn2I5RAEXqMw9z6zaJ34hsK",
+    "sha256": "7ca56b89893997cf74fe1eed73444723d90c84bf3342eb549de7919f4355bc52",
+    "bytes": 579641,
+    "exact_version_get_verified": true
+  },
+  "regression": {
+    "status": "PASS",
+    "identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+    "baseline_mean": 1.1389572403748425,
+    "baseline_choices_exact": 91,
+    "control_seed": 184501,
+    "control_mean": 1.1354387884248622,
+    "control_choices_exact": 91,
+    "optimizer_updates": 2,
+    "source_sha256": {
+      "test_loss.py": "8c4e66fe391fb9f20a87e0690636f743f328f6deef365cd7523a05457cb5a7b6",
+      "trajectory.py": "e079173f26d144b2167198e371393bb91515ead9cb07952c2aa3bbd503b8d8b4",
+      "runtime.py": "cf663c93506707fdc70bbafef763477bde7dc65e4724ad3fa0b723525fd70315",
+      "loss.py": "fbb609129f32e62d22753874acd37f474dd214a52c7607adf9a7d387965a52d9",
+      "regression.py": "a7b9a2f4e8250a57a08a2532fbddd3d7b0be3713102d2946a6c680d23e3d29bd"
+    },
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "trainable_parameters": 29211,
+    "epoch": 1793760440.635489
+  },
+  "resources": {
+    "host": "xbabe1",
+    "cpu": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "numeric_threads": 1,
+    "aggregate_threads_max": 4,
+    "rss_bytes_max": 4294967296,
+    "copy_bytes_max": 3221225472,
+    "mem_pause_bytes": 12884901888,
+    "host_cpu_pause_above": 85,
+    "compute_stop": "2026-11-04T05:35:00Z"
+  },
+  "epoch": 1793761076.978514,
+  "results": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/results.tar.gz",
+    "version_id": "K7zNgkztjDJ32iTNlNc9clWVrzZDw2tF",
+    "sha256": "d3829dd9591d39428062f8c50ea99b276872c4126452b7c853fe83d088cf2216",
+    "bytes": 129503755,
+    "exact_version_get_verified": true,
+    "members_verified": 88,
+    "members_sha256_verified": true
+  },
+  "result_members": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H297/astra-t0240/results-member-manifest.json",
+    "version_id": "xYtwmNYEdo_nxjt2JgGmuj5HAYt7VjKg",
+    "sha256": "4b63c596de06eee389a75fbe710e224e7d471a0c6c6a8ce47dc52f1404f4de99",
+    "bytes": 14436,
+    "exact_version_get_verified": true
+  },
+  "source_commit": "8f4c22f5fb568951de563aecf1d14d903a542c7f",
+  "verdict": "NOT_ADVANCED",
+  "closed_epoch": 1793764622.3502476
+}

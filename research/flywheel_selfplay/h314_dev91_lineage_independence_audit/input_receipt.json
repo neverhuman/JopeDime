@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "objects": [
+    {
+      "path": "references/h312_evidence.tar.gz",
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H312/astra-20261104T093953Z/h312_evidence.tar.gz",
+      "version_id": "IWjt3KdZCfYSgh6.XeNPrKrBXQW_MNqQ",
+      "sha256": "d8bbd501469baaeb777ce93e5d1bf49d657a7a4aa11e8f71a008f3d0df29ed15",
+      "exact_version_get_verified": true
+    }
+  ],
+  "members": [
+    {
+      "path": "references/all_seeds.npz",
+      "archive_member": "outputs/out/all_seeds.npz",
+      "sha256": "8cc958c2d682482a4e93bf4e07f779752c7ebeb0f82cf879674adbaa369a47cf",
+      "bytes": 9192
+    },
+    {
+      "path": "references/family_gains.npz",
+      "archive_member": "outputs/out/family_gains.npz",
+      "sha256": "6a2d2d63ce62d16ff567d44b53a5efe3d5b19d33a1aede6fbf57b021df8d4c56",
+      "bytes": 2285
+    },
+    {
+      "path": "references/metrics.json",
+      "archive_member": "source/metrics.json",
+      "sha256": "f713303e95756447e67f57093782ab0ee2dd49132785dcd6de4c167cf5849fb5",
+      "bytes": 14180
+    },
+    {
+      "path": "references/score_receipt.json",
+      "archive_member": "source/score_receipt.json",
+      "sha256": "b67481d643fcfe43f7744786a8c38b247ebf883129f136258a60b9ab1443febc",
+      "bytes": 894
+    }
+  ]
+}

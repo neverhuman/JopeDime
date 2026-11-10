@@ -1,0 +1,60 @@
+{
+  "wave": "H306",
+  "h303_sources": {
+    "run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327"
+  },
+  "authority": "/home/ubuntu/nudges/hw_t0630_opus_h306.md",
+  "primary": "ENS_VOTE2_NESTED_XGRID",
+  "grid": {
+    "tau": [
+      0.025,
+      0.05,
+      0.10
+    ],
+    "k": [
+      4,
+      5,
+      6
+    ],
+    "a": [
+      2
+    ]
+  },
+  "h303_prereg": "43e00dd31fd3239dbc5d2d337472c83886a5804c",
+  "h303_close": "7bef8870f7a9ffdb6565c5277c59f4af6c27c93d",
+  "h303_elo_label_fix": "e7e6318cc11c09657585f95ff792ab3b55121ba9",
+  "h303_s3_tar": {
+    "version_id": "hshnLPUZuvpHewykQNTh..mWAGu9KGHo",
+    "sha256": "8957cf0e0b55c21231fd3d40d56ce5bdf27aa915dc97786bcbc00dbee782857d"
+  },
+  "elo_reference": "r882 slot0 (DL-Train OOF) = 1500; NOT r3175",
+  "boot_seed": 302150,
+  "draws": 10000,
+  "source_sha256": {
+    "PREREG.md": "6ccb62507616a34dd763883805425edf0251957c1ed96bfdec33865dbd25a276",
+    "run_h306.py": "dd4841f7c82f8b6ad18e8b941edb1e08efd61d9a7ea6a810fc6fdc9a05a6c2d4",
+    "evaluate_h306.py": "d9e93cd0ead029a2457e347d1e38585c4303fad038e597d135815986525d5c4d",
+    "test_h306.py": "84284106a7b7834382fe6977fbc15161ea3f0cbc2a151ee2972cddcf0f8366c3"
+  },
+  "host": {
+    "name": "xbabe2",
+    "cores": "120-127",
+    "nice": 19,
+    "workers": 6,
+    "memory_max": "8G"
+  },
+  "parent_commit": "7919046451cef265b635745c433970fc47c17a4c",
+  "compute_stop": "2026-11-04T08:15:00Z",
+  "post_prereg_sources": {
+    "run_h306.py": {
+      "sha256": "9e9800cc63603b0d64e18e2617b6dd8a60025e26ef0288f4e3e13a00a21c3f1f",
+      "deviation": "selective memory-mapped loader for the two mixed cache npz files (H305 audit h); byte-identical TRAIN values"
+    },
+    "test_h306.py": {
+      "sha256": "fc1d167d98e376bbd80043ce1ccbcf9f66d38d6dbbacc8a8dfb3a8b1710dfe6d",
+      "deviation": "added test_selective_loader_matches_np_load"
+    }
+  }
+}

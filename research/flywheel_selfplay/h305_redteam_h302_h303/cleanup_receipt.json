@@ -1,0 +1,13 @@
+{
+  "status": "DELETED",
+  "epoch": 1793774025.972549,
+  "scratch": "/home/ubuntu/jope-data/h305-astra",
+  "files": 747,
+  "bytes": 433398988,
+  "scope": "Only own non-Git scratch. All foreign source/stashes/local-only commits retained; no repository/worktree/tag deleted.",
+  "lsof_exit": 1,
+  "archive_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/h305_evidence.tar.gz",
+  "archive_version": "msfob314CaZPinXSrZwkIeQEy7k8wj9.",
+  "scratch_absent": true,
+  "finished_epoch": 1793774027.171026
+}

@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "events_verified": 17988,
+  "saved_family_draws_verified": 3,
+  "draws_per_seed": 10000,
+  "chronological_incumbents_verified": true,
+  "rank_transform_independently_reconstructed_past_only": true,
+  "accepted_round_raw_qualification_recomputed": true,
+  "baseline_and_tail_decomposition_verified": true,
+  "neural_forwards": 0,
+  "neural_updates": 0,
+  "metrics_sha256": "1dcbd945a875f2c7a10222df6578a218ba9ac306cf9898226ebf87a77e23ecce"
+}

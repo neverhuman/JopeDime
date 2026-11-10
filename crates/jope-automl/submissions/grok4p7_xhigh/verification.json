@@ -1,0 +1,22 @@
+{
+  "schema_version": "jope.native-regressor-verification/v1",
+  "source_sha256": "8e648cef93186aca9d10868ed1ed2a62407950169082aa1f4fab87af379664f8",
+  "source_changed_after_freeze": false,
+  "compile": {
+    "command": "rustc --edition=2021 --crate-name grok4p7_xhigh --crate-type rlib -C opt-level=3 -C codegen-units=1 -D unsafe-code crates/jope-automl/src/grok4p7_xhigh.rs",
+    "result": "exit 0 on the first attempt"
+  },
+  "repeat_cell": {
+    "cell_id": "g4p7-s41-d00-f0",
+    "predictions": "byte-identical across two fresh fits"
+  },
+  "panel": {
+    "cells": 576,
+    "completed": 576,
+    "failed": 0,
+    "rank": 5,
+    "elo": 1318.7731716367032,
+    "ci95": [1254.870157012973, 1374.624184992721],
+    "receipt": "assets/automl-elo/v2/SOURCES.md"
+  }
+}

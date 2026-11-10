@@ -19,8 +19,10 @@ JOPE_RUNNER_HOST=$(hostname -s)       # runner names and labels follow the host
 JOPE_RUNNER_CPUS=16
 JOPE_RUNNER_PIDS=4096
 JOPE_RUNNER_TMPFS_SIZE=4g
-# Build-cache trim (jope_runner_trim_lane): newest builds kept per crate and kind, at most daily.
+# Build-cache trim (jope_runner_trim_lane): newest builds kept per crate and kind, at most daily;
+# executables neither built nor run for JOPE_RUNNER_TRIM_UNUSED_DAYS also go (issue #2158).
 JOPE_RUNNER_TRIM_KEEP=3
+JOPE_RUNNER_TRIM_UNUSED_DAYS=7
 JOPE_RUNNER_TRIM_INTERVAL_S=86400
 JOPE_RUNNER_DOCKER_PROXY_SOCK=${JOPE_RUNNER_DOCKER_PROXY_SOCK:-/run/jope-docker-proxy/docker.sock}
 
@@ -201,10 +203,11 @@ jope_runner_exclusive_cpu() {
 # each, and the disk guard then refused every listener (2026-10-22). run.sh calls this while it
 # holds the lane lock and before the lane's container starts, so no build of this lane can be
 # running. At most once per JOPE_RUNNER_TRIM_INTERVAL_S it removes older duplicate builds from
-# <target volume>/*/debug/deps with trim-deps.sh (the newest JOPE_RUNNER_TRIM_KEEP per crate and
-# kind stay), inside a network-less container that mounts only this lane's target volume. Every
-# removed path is recorded in a manifest under the state directory. A failure never blocks the
-# listener, and nothing is removed that was not listed first.
+# <target volume>/<lane>/<profile>/deps with trim-deps.sh (the newest JOPE_RUNNER_TRIM_KEEP per
+# crate and kind stay, and executables unused for JOPE_RUNNER_TRIM_UNUSED_DAYS go), inside a
+# network-less container that mounts only this lane's target volume. Every removed path is
+# recorded in a manifest under the state directory. A failure never blocks the listener, and
+# nothing is removed that was not listed first.
 jope_runner_trim_lane() { # <lane>; needs JOPE_RUNNER_DOMAIN from jope_runner_role
   local lane=${1:?lane required} dir stamp_file now last manifest volume summary
   volume="jope-$JOPE_RUNNER_DOMAIN-$lane-target"
@@ -223,7 +226,8 @@ jope_runner_trim_lane() { # <lane>; needs JOPE_RUNNER_DOMAIN from jope_runner_ro
        --pids-limit 256 --memory 1g --cpus 2 \
        -v "$volume:/v" -v /opt/jope-runner/trim-deps.sh:/opt/jope-runner/trim-deps.sh:ro \
        --entrypoint bash "$JOPE_RUNNER_IMAGE" \
-       /opt/jope-runner/trim-deps.sh /v "$JOPE_RUNNER_TRIM_KEEP" --apply > "$manifest"; then
+       /opt/jope-runner/trim-deps.sh /v "$JOPE_RUNNER_TRIM_KEEP" \
+       "--unused-days=$JOPE_RUNNER_TRIM_UNUSED_DAYS" --apply > "$manifest"; then
     touch "$stamp_file"
     summary=$(awk -F'\t' '{n++; s+=$2} END {printf "%d files, %d bytes", n, s}' "$manifest")
     echo "trim $lane: removed $summary from $volume; manifest $manifest sha256 $(sha256sum < "$manifest" | cut -d' ' -f1)"

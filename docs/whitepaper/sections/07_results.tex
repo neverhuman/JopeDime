@@ -2,9 +2,10 @@
 
 \begin{table*}[t]% defined before the opening paragraph so it can reach the next page top
   \caption{\textbf{Evaluation plan at a glance.} Each test is specified in the
-  subsection named in the first column. No outcome is reported yet; the
-  contract in \cref{sub:results-protocol} fixes inputs, budgets and splits
-  before outcomes are opened.}
+  subsection named in the first column. No first-proposal outcome is
+  reported yet; the fixed-method row reports only a development reference
+  board. The contract in \cref{sub:results-protocol} fixes inputs, budgets
+  and splits before outcomes are opened.}
   \label{tab:results-plan}
   \centering
   \small\setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
@@ -21,7 +22,7 @@
       & Does one task-conditioned program compete with methods that run
         unchanged across tasks?
       & Frozen algorithms whose receipts record the designing model
-      & \Cref{tab:headtohead,fig:leaderboard} & Pending \\
+      & \Cref{tab:headtohead,fig:leaderboard} & Reference board only \\
     The cost of more attempts (\cref{sub:results-search})
       & What do successive attempts buy, per attempt and per unit of cost?
       & Agents allowed successive attempts; the pilot cost funnel
@@ -38,12 +39,12 @@
   \end{tabularx}
 \end{table*}
 
-With the single-candidate budget fixed, the tests below ask whether
-training improves a first proposal on an unseen family. The development
-records in \cref{sec:method-status} concern program search and adapter
-admission; their clock and decisions do not establish deployment performance.
-\Cref{tab:results-plan} separates the training, fixed-method, search and
-map comparisons from the failure analyses. All first-proposal evaluation outcomes remain pending.
+These tests ask whether training improves a first proposal on an unseen
+family under the fixed single-candidate budget. Development records
+in \cref{sec:method-status} cover program search and adapter admission;
+their clocks and decisions do not establish deployment performance.
+\Cref{tab:results-plan} separates training, fixed-method, search and
+map comparisons from failure analyses. All first-proposal evaluation outcomes remain pending.
 \TBD{Add independent evaluation evidence before making a performance claim.}
 \TBD{Supply a source-bound benchmark before claiming deployment throughput.}
 
@@ -55,9 +56,9 @@ hashes, row splits and family assignments. Separate unseen problem
 families from training and development, and report which task types were
 actually tested.
 
-Report known training and pretraining exposure for the writer, encoders
-and learned comparators, with unresolved provenance marked explicitly.
-Bound unseen-family claims to the exclusions actually established.
+Disclose known training and pretraining exposure for the writer, encoders
+and learned comparators; mark unresolved provenance explicitly.
+Limit unseen-family claims to the exclusions actually established.
 
 Each \EZ{} submission follows \cref{alg:gameday}, counting failed generations
 and executions in the overall win rate. Also report validity and wins among
@@ -71,10 +72,10 @@ checkpoint, seeds, task metrics and failure accounting.}
 \subsection{The effect of training}\label{sub:results-learning}
 
 Use a frozen reference writer as the control.
-Predeclare its checkpoint and the evaluated training intervention before
-opening final outcomes. Hold the encoder, program grammar and output
-support, permitted task inputs, decoding rules and fitting protocol,
-referee, incumbent and resource budgets constant; vary the writer checkpoint. Changes to the
+Predeclare its checkpoint and training intervention before opening final
+outcomes. Vary the writer checkpoint while holding the encoder, program
+grammar and output support, permitted task inputs, decoding rules, fitting
+protocol, referee, incumbent and resource budgets constant. Changes to the
 support, encoder or evaluator belong in separate conditions.
 
 Pair the first draws under predeclared seeds and report all of them, with
@@ -85,32 +86,62 @@ comparison and training-update evidence before claiming transfer.}
 
 \subsection{One proposal against fixed methods}\label{sub:results-headtohead}
 
-\TBD{Identify Jepson's supplied frozen comparators, their provenance and
-eligibility, and the matched outcomes and uncertainty for
-\cref{tab:headtohead,fig:leaderboard}.}
+No one-proposal writer has yet been evaluated against fixed methods. As a
+development reference, \cref{tab:headtohead,fig:leaderboard} report the
+reference board \texttt{dev91-audit-v1}: 31 frozen entrants, each fitted on
+the search rows of 91 development contexts in 19 families and scored once on
+their audit rows. They are six frontier-designed regressors, whose receipts
+record the designing model; ten tabular foundation models; one AutoML system;
+five classic learners; and nine search models and baselines of ours. Our
+entrant is the locked two-level stack \texttt{XSTACK\_2L}, a search-assisted
+ensemble rather than a single first proposal. It is rated ninth, at Elo
+\num{1705.9} (95\% interval \num{1621.1}--\num{1822.1}).
 
-\begin{table}[t]
+Paired over families, \texttt{XSTACK\_2L} is better than each of the six
+frontier-designed regressors under a predeclared test: a one-sided exact
+sign-flip test on clipped family means at $\alpha=0.025$, with a positive
+leave-one-family-out minimum. The mirrored test finds it worse than
+Kumo-Tabular large, Kumo-Tabular small and the TabFM ensemble. It is not
+separated from the other foundation models. The board is a reuse cohort: an
+earlier study tuned on its contexts, and five of them were read again. These
+are development comparisons, not untouched-family evidence.
+\TBD{Supply the one-proposal writer's matched outcomes against these
+comparators on untouched families.}
+
+\begin{table*}[t]
   \centering
-  \caption{\textbf{Planned paired comparisons.} No outcomes are yet supplied.
-  Report ties, failures and excluded cases alongside wins.}
+  \caption[Development reference: XSTACK\_2L against frozen comparators]{\textbf{Development reference: \texttt{XSTACK\_2L} against frozen
+  comparators on \texttt{dev91-audit-v1}.} Gain is the family-equal mean of
+  $u(\texttt{XSTACK\_2L})-u(\text{comparator})$, with
+  $u=-\ln(\mathrm{RMSE}/\mathrm{RMSE}_{\text{mean}})$ against the search-row
+  mean predictor, and its 95\% family-bootstrap interval (\num{10000} draws).
+  RMSE is the implied cut $1-e^{-\text{gain}}$; positive values favour
+  \texttt{XSTACK\_2L}. $p$ is the one-sided exact sign-flip test over the 19
+  families on family means clipped at $\pm0.5$, and LOFO is the smallest
+  leave-one-family-out clipped mean. ``Better'' means the test passes
+  ($p<0.025$, LOFO $>0$); ``worse'' means its mirror passes. Wins, ties and
+  losses count families. Every entrant was scored on all 91 contexts; none
+  failed or was excluded. The rows are every frontier-designed regressor; the
+  foundation models rated first and second and the best TabPFN; the two adjacent
+  to \texttt{XSTACK\_2L}; and the best AutoML system and classic learner. All 30
+  contrasts are in \texttt{figures/data/leaderboard\_dev91.json}. This is a reuse
+  cohort, not a first-proposal result.}
   \label{tab:headtohead}
-  \small\setlength{\tabcolsep}{4pt}\setlength{\extrarowheight}{2pt}% separates rows whose cells wrap
-  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.55\linewidth}>{\raggedright\arraybackslash}X@{}}
-    \toprule
-    Comparator & Outcome and uncertainty \\
-    \midrule
-    \TBD{first frozen comparator identity} & \TBD{paired evaluation} \\
-    \TBD{second frozen comparator identity} & \TBD{paired evaluation} \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
+  \small\setlength{\tabcolsep}{4pt}
+  \input{figures/data/leaderboard_dev91_table}
+\end{table*}
 
 \begin{figure}[t]
   \centering
-  \fbox{\parbox{0.88\linewidth}{\TBD{Leaderboard: supply the evaluated methods,
-  paired outcomes, rating protocol and uncertainty.}}}
-  \caption{\textbf{Leaderboard pending.} Elo is a summary of a specified
-  comparison population, not a substitute for paired task results.}
+  \input{figures/fig_leaderboard_dev91}
+  \caption{\textbf{Development leaderboard on \texttt{dev91-audit-v1}.} Elo of
+  all 31 frozen entrants, with 95\% family-bootstrap intervals (family-grouped
+  Bradley--Terry; anchor \texttt{H257\_REPLICA} $=1500$), from 91 development
+  contexts in 19 families. Every entrant was fitted on the search rows and
+  scored once on the audit rows. Bold: our locked candidates. The board is a
+  reuse cohort, not the untouched-family test of
+  \cref{sub:results-headtohead}. Elo is a summary of a specified comparison
+  population, not a substitute for paired task results (\cref{tab:headtohead}).}
   \label{fig:leaderboard}
 \end{figure}
 
@@ -189,7 +220,7 @@ writers' paired first proposals, including validity, wins and incurred costs.
 
 \subsection{Failure cases and a worked example}\label{sub:results-failures}
 
-Describe unsuccessful proposals and coverage limits as well as wins.
+Report failures and coverage limits alongside wins.
 Assign each attempt one terminal status: incomplete generation, parse or
 type-checking refusal, execution
 or resource failure, invalid output under declared checks, and valid ties,
@@ -199,9 +230,9 @@ and the validity rules before opening final outcomes.
 \TBD{Supply attempt inventories and costs by outcome class, identifying
 unresolved cases.}
 
-Select the worked example by a rule fixed before inspecting outcomes. Report its
-emitted program, fitting procedure and comparison outcome. If the selected
-category is empty, report that fact. \TBD{Supply the example selection rule, actual
+Fix the worked-example rule before inspecting outcomes. Report the selected
+emitted program, fitting procedure and comparison outcome. Report an empty
+selected category explicitly. \TBD{Supply the example selection rule, actual
 program and verified outcomes, with no replacement of failed attempts.}
 \Cref{tab:worked} lists the record for the selected game. The attempt
 permits no repair or second try, and its sealed verdict is reported
@@ -245,7 +276,7 @@ across seeds and summarize the median seed gain. Reported intervals are
 These studies reuse a development population; they are not independent
 replications.
 
-\href{https://github.com/neverhuman/JopeDime/blob/2b4014b7c3036f2b23bba92a0593b76242ed6e90/docs/whitepaper/development_results.sources.json#L19}{\textbf{Calibrated blend.}}
+\href{https://github.com/neverhuman/JopeDime/blob/40604b0936611697348dbed20b4cdd58cbe946df/docs/whitepaper/development_results.sources.json#L13}{\textbf{Calibrated blend.}}
 A calibrated tree prior receives weight $0.25$ in a cost-space blend with
 the reference adapter. Its primary endpoint is the maximum utility among
 four revealed and four lowest-cost unrevealed candidates, rather than a
@@ -256,7 +287,7 @@ Family harm below $-0.01$ is $7.3\%$ ($15/205$).
 The result is a \textbf{candidate}, with no adoption and zero adapter
 optimizer updates; the tree prior was fitted.
 
-\href{https://github.com/neverhuman/JopeDime/blob/2b4014b7c3036f2b23bba92a0593b76242ed6e90/docs/whitepaper/development_results.sources.json#L50}{\textbf{Per-context clipping.}}
+\href{https://github.com/neverhuman/JopeDime/blob/40604b0936611697348dbed20b4cdd58cbe946df/docs/whitepaper/development_results.sources.json#L45}{\textbf{Per-context clipping.}}
 Clipping each context's gradient before averaging, with 40 updates per
 trajectory, gives utility gain $-0.02510$
 ($[-0.05128,+0.00009]$; $p=0.9743$; $0/3$ positive seeds).
@@ -264,7 +295,7 @@ Elo is $1485.63$ (lift $-14.37$, 95\% interval $[-24.34,-4.38]$).
 Family harm below zero is $46.83\%$, and the treatment does not strictly
 beat its shuffled-factor placebo: \textbf{NO\_ADVANCE}.
 
-\href{https://github.com/neverhuman/JopeDime/blob/2b4014b7c3036f2b23bba92a0593b76242ed6e90/docs/whitepaper/development_results.sources.json#L81}{\textbf{Revealed-only adaptation.}}
+\href{https://github.com/neverhuman/JopeDime/blob/40604b0936611697348dbed20b4cdd58cbe946df/docs/whitepaper/development_results.sources.json#L76}{\textbf{Revealed-only adaptation.}}
 Selection on a separate panel chose one SGD step at learning rate
 $10^{-5}$ in all $15/15$ cells. At that locked setting, adaptation
 changes scores in $1{,}219/1{,}219$ contexts but changes no selected
@@ -275,7 +306,7 @@ The verdict is \textbf{NO\_ADVANCE (inert treatment)} within the tested
 one-to-five-step, $10^{-5}$--$10^{-4}$ learning-rate grid; it does not
 exclude effective adaptation at larger budgets.
 
-\href{https://github.com/neverhuman/JopeDime/blob/2b4014b7c3036f2b23bba92a0593b76242ed6e90/docs/whitepaper/development_results.sources.json#L112}{\textbf{Admission audit.}}
+\href{https://github.com/neverhuman/JopeDime/blob/40604b0936611697348dbed20b4cdd58cbe946df/docs/whitepaper/development_results.sources.json#L107}{\textbf{Admission audit.}}
 The sole primary attempt is \textbf{INCOMPLETE}, with formal verdict
 \textbf{INCONCLUSIVE}: one of $91$ choices in $19$ development-validation
 families differs from its archived choice, failing the native parity gate.
@@ -289,7 +320,7 @@ best-of-eight endpoint; the reported Elo values are specific to each
 protocol. Checkpoints, cohort identities, seeds and locks are pinned by
 the linked reports and their accompanying protocol and metrics records.
 
-None of these closeouts adopts a checkpoint or establishes learning of
+These closeouts neither adopt a checkpoint nor establish learning of
 independent first proposals, deployment throughput or unseen-family
-transfer. The final comparisons above and their interpretation in
+transfer. The final comparisons and their interpretation in
 \cref{sec:meaning} remain pending.

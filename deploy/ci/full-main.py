@@ -22,7 +22,7 @@ def families(mapping):
 
 # full-main.yml runs one `cpu` matrix leg per group, each on its own jope-full-cpu runner when one
 # is free. Grouping changes scheduling only: every family keeps its command, deadline and receipt,
-# and check_test_partition.py proves the groups cover the declared families exactly once.
+# and `jope-ci test-partition static` proves the groups cover the declared families exactly once.
 # Balanced on measured family wall time (runs 38347124647 and 38361021688: ~1240 s and ~1190 s).
 GROUPS = {
     'cpu-1': ('full-build-reuse', 'full-default', 'full-doctests', 'full-e2e', 'full-emitters',

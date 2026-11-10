@@ -4,9 +4,9 @@ Each trailing window in \cref{fig:fw-rolling-admissions} counts exactly 100
 observed decisions, including accepted ties and rejected candidates.
 Its capture is separate from the canonical ledger in \cref{tab:admission-ledger}.
 These overlapping counts describe decisions on adaptively reused
-development contexts; the independent first-proposal comparison remains pending.
+development contexts; the independent \mbox{first-proposal comparison} remains pending.
 
-\begin{figure}[htb]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_rolling_admissions.pdf}
   \caption{\textbf{Trailing 100-round windows record at most two adapter admissions.}
@@ -18,7 +18,7 @@ development contexts; the independent first-proposal comparison remains pending.
   or 901 overlapping windows. The first 99 source rows supply history
   without a plotted partial window. Every accepted/rejected pair sums to
   100; one decision per 100 rounds also equals one percentage point.
-  Decisions use unrounded candidate and prior-best utility.
+  Decisions use unrounded candidate and prior retained-best utility.
   These are adapter admissions, distinct from training-program incumbent
   events; no uncertainty interval or independent improvement estimate is
   implied. Scope: \cref{sec:method-status}.}

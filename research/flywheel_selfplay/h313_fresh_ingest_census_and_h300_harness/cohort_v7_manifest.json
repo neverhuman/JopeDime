@@ -1,0 +1,20 @@
+{
+ "schema": "jope.fresh-cohort/v7",
+ "wave": "H313",
+ "verdict": "NO_NEW_CATALOG",
+ "split_rule": "SHA256(UTF8(\"H313-v7-split-v1\") || NUL || UTF8(family_key)); last byte parity 0=v7A,1=v7B",
+ "threshold_total_families": 120,
+ "qualifying_families": 0,
+ "candidates": [],
+ "v7A": [],
+ "v7B": [],
+ "catalog": {
+  "latest_pointer": "v246",
+  "pointer_version_id": "imd2epYIYkULQZWzV5eubsCRo2epIky2",
+  "v246_version_id": "eJuErIwj0Pgu.lAgflPcWvvRKyuwptLC"
+ },
+ "exclusions": "H299 exclusion sets, unchanged (26 sets; sha256s identical to H299 metrics.json)",
+ "no_dataset_or_model_payload_reads": true,
+ "s3_write_operations": 0,
+ "scoring_authorized": false
+}

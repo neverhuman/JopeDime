@@ -1,0 +1,254 @@
+{
+  "schema": "jope.h369.metrics/v1",
+  "wave": "H369",
+  "board": "dev91-audit-v1",
+  "entrant": "h364.XSTACK_2L",
+  "design": {
+    "key": "c0.35_l0.1_d0_tinf",
+    "commit": "f052a59f35"
+  },
+  "prereg_commit": "e75d2b935f",
+  "amendment_commits": [
+    "b54b875fc6"
+  ],
+  "lock_sha256": "1ce9a1521a151a5a288dff7bc9d8822b226f525a9662ea5012415b1bd261dba4",
+  "lock_attempt1_sha256": "b752ccdc5967f08d10a46da0199d501d0003913c9536c01a962b7bf6ac04413f",
+  "harness": {
+    "align_worst_rel": 3.774758283725532E-15,
+    "align_units": 182,
+    "x0_check": {
+      "pass": true,
+      "tol": 0.000001,
+      "units": 182,
+      "worst": {
+        "board_du": 2.6645352591003757E-15,
+        "dlr": 3.552713678800501E-15,
+        "du": 2.6645352591003757E-15
+      }
+    }
+  },
+  "library": {
+    "outputs": 364,
+    "oof_failed": 0,
+    "hosts": "xbabe1-nosb=85,xbabe2-bwrap=151,xbabe3-nosb=128",
+    "audit_source": "stored dev91-audit-v1 records (no refit)",
+    "cross_host_rerun": {
+      "rerun": "all 364 on xbabe3 (no bwrap)",
+      "identical": 295,
+      "differ": 69,
+      "differ_learner": "random_forest.v1 only",
+      "magnitude": "random_forest SEARCH OOF, 69 contexts: max |diff| 5.82e-11, max relative 2.03e-13"
+    }
+  },
+  "paired_vs_H335_AGG": {
+    "active_units": 55,
+    "context_gain": {
+      "exact_ties": 38,
+      "lt_minus_0p05": 0,
+      "max": 0.02837876384337279,
+      "mean": 0.001580619968528718,
+      "min": -0.0464632976036492
+    },
+    "contexts": 91,
+    "entrant": "h364.XSTACK_2L",
+    "family": {
+      "families": 19,
+      "lcb": -0.00011404164104101655,
+      "lost": 2,
+      "mean": 0.0015140675488011836,
+      "sd": 0.003620797667128586,
+      "tied": 3,
+      "won": 14
+    },
+    "rows_sha256": "64777d3d70dbebc2e4b07fbbeb6e9866192018acbb60a4ae80a7d85447292908",
+    "units": 182,
+    "vs": "h335.H335_AGG"
+  },
+  "ladder": {
+    "anchor": "h335.H257_REPLICA",
+    "elo": {
+      "autogluon_300s.v1": {
+        "elo": 1526.4273900658086,
+        "ci95": [
+          1409.4642222689938,
+          1639.884434703523
+        ]
+      },
+      "catboost.v1": {
+        "elo": 1481.0630614250445,
+        "ci95": [
+          1363.9803024185483,
+          1594.2497378261808
+        ]
+      },
+      "h335.BANK_NN1": {
+        "elo": 1196.159082655142,
+        "ci95": [
+          1091.8005623838224,
+          1279.3284797049917
+        ]
+      },
+      "h335.BANK_NN8_PICK": {
+        "elo": 1422.843915414285,
+        "ci95": [
+          1361.9211742284126,
+          1483.5427522084647
+        ]
+      },
+      "h335.BANK_NN8_PORTFOLIO": {
+        "elo": 1454.33404238236,
+        "ci95": [
+          1383.7802352448332,
+          1527.7928778978069
+        ]
+      },
+      "h335.GPT6_Astra_Max": {
+        "elo": 1317.958260507799,
+        "ci95": [
+          1191.123476200297,
+          1436.040505731257
+        ]
+      },
+      "h335.GPT6p1_Sol_Max": {
+        "elo": 1496.4182738244217,
+        "ci95": [
+          1409.870977199112,
+          1585.1027249145343
+        ]
+      },
+      "h335.Gemini4_argon_high": {
+        "elo": 1524.4406661399141,
+        "ci95": [
+          1412.9234229569859,
+          1641.6193405687939
+        ]
+      },
+      "h335.H257_REPLICA": {
+        "elo": 1500.0,
+        "ci95": [
+          1500.0,
+          1500.0
+        ]
+      },
+      "h335.H317_BASE": {
+        "elo": 1527.420852060818,
+        "ci95": [
+          1492.4219607875664,
+          1566.2603756346514
+        ]
+      },
+      "h335.H335_AGG": {
+        "elo": 1707.8201056586877,
+        "ci95": [
+          1619.5342902270754,
+          1825.7804935100935
+        ]
+      },
+      "h335.OLD_MATCHED": {
+        "elo": 1532.5883032455388,
+        "ci95": [
+          1480.1390991334415,
+          1595.502835139135
+        ]
+      },
+      "h335.OLD_MATCHED_CV3": {
+        "elo": 1627.116457682062,
+        "ci95": [
+          1564.3298648625578,
+          1707.1230082581637
+        ]
+      },
+      "h335.Opus5p5_Extra": {
+        "elo": 1578.1757229409664,
+        "ci95": [
+          1461.3988345410316,
+          1699.7437701327633
+        ]
+      },
+      "h364.XSTACK_2L": {
+        "elo": 1726.8271075483606,
+        "ci95": [
+          1632.6190497239306,
+          1852.1948544045074
+        ]
+      },
+      "kumo_tabular_large_e8.v1": {
+        "elo": 2047.866072909861,
+        "ci95": [
+          1860.2900385110395,
+          2339.9187769016185
+        ]
+      },
+      "lightgbm.v1": {
+        "elo": 1313.6372762495362,
+        "ci95": [
+          1186.8502041405309,
+          1420.9067721757199
+        ]
+      },
+      "random_forest.v1": {
+        "elo": 1367.662300820015,
+        "ci95": [
+          1244.8597465168045,
+          1473.9359340911953
+        ]
+      },
+      "ridge.v1": {
+        "elo": 1242.1846120146506,
+        "ci95": [
+          1031.369794608124,
+          1377.5264428565756
+        ]
+      },
+      "tabfm.v1": {
+        "elo": 1875.7185640925195,
+        "ci95": [
+          1706.219401287833,
+          2107.9342863169486
+        ]
+      },
+      "tabfm_ensemble.v1": {
+        "elo": 1900.9436733266039,
+        "ci95": [
+          1732.289369437915,
+          2136.397178972456
+        ]
+      },
+      "tabpfn_v3.v1": {
+        "elo": 1787.5600487052334,
+        "ci95": [
+          1651.2305688110193,
+          1963.3629566528957
+        ]
+      },
+      "tabpfn_v3p5.v1": {
+        "elo": 1822.8507214627132,
+        "ci95": [
+          1650.0480203002362,
+          2076.819114661539
+        ]
+      },
+      "xgboost.v1": {
+        "elo": 1375.3362883005125,
+        "ci95": [
+          1262.3583092228348,
+          1484.517173760376
+        ]
+      }
+    },
+    "focus_2L_vs_H335_AGG": {
+      "gain": 0.0015,
+      "families": "14/3/2",
+      "signflip_p": 0.04489,
+      "lofo_min": 0.0011,
+      "pass": false
+    }
+  },
+  "board_archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/reference-board/dev91-audit-v1/results-20261105T140116Z.tar.zst",
+    "version_id": "0Ax4wTWMm5FEtd0UqGKtQZae9pHK2AcQ",
+    "sha256": "bb1fcdb40b78a38bfba8da0b7aeec6491d5253a0fd268c280711c53a58cb866d",
+    "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED"
+  },
+  "dev91_reads": "LOCK2 unlock 2026-11-05 ~13:40Z; SEARCH rows for library OOF fits, AUDIT labels for the once-score only"
+}

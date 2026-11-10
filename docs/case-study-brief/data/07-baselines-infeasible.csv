@@ -1,0 +1,5 @@
+x,y,label,anchor
+646.533,0.114121,AutoGluon,north west
+12636.7,0.12244,ExtraTrees,south west
+15465,0.123038,RF,north west
+30133.4,0.133134,kNN,south west

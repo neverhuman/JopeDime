@@ -1,0 +1,72 @@
+{
+  "wave": "H308",
+  "h303_sources": {
+    "run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327"
+  },
+  "authority": "/home/ubuntu/nudges/hw_t0735_opus_h308.md",
+  "primary": "ENS_VOTE2_NESTED (H303, frozen) on P1/P2",
+  "partition_salts": {
+    "P0": "H302-outer-v1\\u0000 (H303, no refit)",
+    "P1": "H308-outer-v1\\u0000",
+    "P2": "H308-outer-v2\\u0000"
+  },
+  "grid": {
+    "tau": [
+      0.05,
+      0.10,
+      0.15
+    ],
+    "k": [
+      5,
+      6,
+      7
+    ],
+    "a": [
+      2,
+      3
+    ]
+  },
+  "train_prefix": {
+    "n_train": 1219,
+    "n_total": 1310,
+    "pool_rows_prefix": 1404287,
+    "pool_rows_total": 1509119
+  },
+  "h303_prereg": "43e00dd31fd3239dbc5d2d337472c83886a5804c",
+  "h303_close": "7bef8870f7a9ffdb6565c5277c59f4af6c27c93d",
+  "h303_s3_tar": {
+    "version_id": "hshnLPUZuvpHewykQNTh..mWAGu9KGHo",
+    "sha256": "8957cf0e0b55c21231fd3d40d56ce5bdf27aa915dc97786bcbc00dbee782857d"
+  },
+  "regression_target": {
+    "chosen": [
+      0.05,
+      5,
+      2
+    ],
+    "inner_gain": 0.0961251,
+    "fold0_picks_sha256": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa"
+  },
+  "elo_label": "reference = r882 slot0 (DL-Train OOF); r3175-anchored Elo unmeasured",
+  "boot_seed": 302150,
+  "draws": 10000,
+  "source_sha256": {
+    "PREREG.md": "0515b047bb31dbb34558ffbb61372284efa6d2b9504264dfbb7ed168b9980d52",
+    "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d",
+    "run_h308.py": "f552e3acf6a16cb63b41058c6c06267f27d4950dcec10b45b72a727bf5d894e8",
+    "evaluate_h308.py": "fa36883478b97e894ecb726349c8f3667d4bca271b83104cc818f221a5b03d22",
+    "test_h308.py": "55d33c9181f7e8d4d297b7a7e1950ede4f637271fb04a5891792a9796efaac73"
+  },
+  "host": {
+    "name": "xbabe2",
+    "regress_core": 121,
+    "fit_cores": "100,101,102,112,113,115,123,125",
+    "nice": 19,
+    "workers": 8,
+    "memory_max": "8G"
+  },
+  "parent_commit": "f95cff0a8055fc1041214c467489d66724dad14f",
+  "compute_stop": "2026-11-04T09:15:00Z"
+}

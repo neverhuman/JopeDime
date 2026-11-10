@@ -14,7 +14,8 @@ pub struct Draft {
     suggested_tasks: BTreeMap<String, Task>,
     ignore_columns: Vec<String>,
     split: SplitSpec,
-    objective: ObjectiveSpec,
+    /// `None` until `\objective` sets one: the run then gets [`default_objective`] for its task.
+    objective: Option<ObjectiveSpec>,
     effort: Effort,
     budget: Budget,
     landmarks: LandmarkMode,
@@ -40,7 +41,7 @@ impl Default for Draft {
                 group_column: None,
                 time_column: None,
             },
-            objective: ObjectiveSpec::Name("rmse".into()),
+            objective: None,
             effort: Effort::Fast,
             budget: Budget {
                 evaluations: None,
@@ -82,6 +83,17 @@ pub(crate) fn inferred_tasks(profile: &DatasetProfile) -> BTreeMap<String, Task>
         }
     }
     tasks
+}
+
+/// The objective a run gets when none is named: the runtime's primary metric for its task (#2132),
+/// so a classification target is not scored by RMSE. An unresolved `auto` task keeps `rmse`.
+pub(crate) fn default_objective(task: Task) -> &'static str {
+    use jope_runtime::task::{metric, TaskKind};
+    metric(match task {
+        Task::Binary => TaskKind::Binary,
+        Task::Multiclass => TaskKind::Multiclass,
+        Task::Regression | Task::Auto => TaskKind::Regression,
+    })
 }
 
 impl Draft {
@@ -142,29 +154,20 @@ impl Draft {
                                 .map(str::to_owned)
                                 .collect();
                         }
-                        "--group" => {
-                            i += 1;
-                            self.split.group_column =
-                                Some(args.get(i).ok_or("--group needs a value")?.clone());
-                            self.split.kind = SplitKind::Grouped;
-                        }
-                        "--time" => {
-                            i += 1;
-                            self.split.time_column =
-                                Some(args.get(i).ok_or("--time needs a value")?.clone());
-                            self.split.kind = SplitKind::TimeOrdered;
+                        "--group" | "--time" => {
+                            return Err(
+                                "this engine supports random splits only. Grouped and time-ordered splits are not available"
+                                    .into(),
+                            );
                         }
                         flag => return Err(format!("unknown target option {flag}")),
                     }
                     i += 1;
                 }
-                if self.split.group_column.is_some() && self.split.time_column.is_some() {
-                    return Err("--group and --time cannot be used together".into());
-                }
             }
             "\\objective" => {
                 let value = args.first().ok_or("usage: \\objective NAME|JSON|@FILE")?;
-                self.objective = parse_objective(value)?;
+                self.objective = Some(parse_objective(value)?);
             }
             "\\effort" => {
                 self.effort = match args.first().map(String::as_str) {
@@ -220,21 +223,25 @@ impl Draft {
     }
 
     pub fn run_spec(&self, dry_run: bool) -> Option<RunSpec> {
+        let task = if self.task == Task::Auto {
+            self.suggested_tasks
+                .get(self.target.as_ref()?)
+                .copied()
+                .unwrap_or(Task::Auto)
+        } else {
+            self.task
+        };
         Some(RunSpec {
             dataset: self.dataset.clone()?,
             target: self.target.clone()?,
-            task: if self.task == Task::Auto {
-                self.suggested_tasks
-                    .get(self.target.as_ref()?)
-                    .copied()
-                    .unwrap_or(Task::Auto)
-            } else {
-                self.task
-            },
+            task,
             ignore_columns: self.ignore_columns.clone(),
             test_dataset: None,
             split: self.split.clone(),
-            objective: self.objective.clone(),
+            objective: self
+                .objective
+                .clone()
+                .unwrap_or_else(|| ObjectiveSpec::Name(default_objective(task).into())),
             effort: self.effort,
             budget: self.budget.clone(),
             landmarks: self.landmarks,
@@ -299,7 +306,7 @@ mod tests {
     fn draft_commands_update_a_runspec_without_inventing_a_dataset() {
         let mut draft = Draft::default();
         draft
-            .apply(r"\target value --task regression --ignore id,group --group group")
+            .apply(r"\target value --task regression --ignore id,group")
             .unwrap();
         draft.apply(r"\effort medium --evals 64 --time 2m").unwrap();
         draft.apply(r"\lang rust,python --best-effort").unwrap();
@@ -307,8 +314,8 @@ mod tests {
         assert_eq!(draft.target.as_deref(), Some("value"));
         assert_eq!(draft.task, Task::Regression);
         assert_eq!(draft.ignore_columns, ["id", "group"]);
-        assert_eq!(draft.split.group_column.as_deref(), Some("group"));
-        assert_eq!(draft.split.kind, SplitKind::Grouped);
+        assert_eq!(draft.split.kind, SplitKind::Random);
+        assert!(draft.split.group_column.is_none());
         assert_eq!(draft.budget.evaluations, Some(DecimalU64(64)));
         assert_eq!(draft.budget.wall_seconds, Some(DecimalU64(120)));
         assert!(!draft.require_all_languages);
@@ -343,7 +350,7 @@ mod tests {
         draft.set_dataset(profile);
         assert_eq!(draft.run_spec(true).unwrap().task, Task::Regression);
         draft
-            .apply(r"\target target --task regression --ignore group --group group")
+            .apply(r"\target target --task regression --ignore group")
             .unwrap();
         draft.apply(r"\effort medium --evals 64 --time 2m").unwrap();
         draft.apply(r"\landmarks none").unwrap();
@@ -355,8 +362,8 @@ mod tests {
         assert_eq!(spec.target, "target");
         assert_eq!(spec.task, Task::Regression);
         assert_eq!(spec.ignore_columns, ["group"]);
-        assert_eq!(spec.split.kind, SplitKind::Grouped);
-        assert_eq!(spec.split.group_column.as_deref(), Some("group"));
+        assert_eq!(spec.split.kind, SplitKind::Random);
+        assert!(spec.split.group_column.is_none());
         assert_eq!(spec.effort, Effort::Medium);
         assert_eq!(spec.budget.evaluations, Some(DecimalU64(64)));
         assert_eq!(spec.budget.wall_seconds, Some(DecimalU64(120)));
@@ -366,6 +373,50 @@ mod tests {
         assert_eq!(spec.seed, DecimalU64(7));
         assert!(spec.dry_run);
         assert_eq!(draft.columns, ["target", "group"]);
+    }
+
+    #[test]
+    fn objective_defaults_to_the_inferred_task_metric_until_set() {
+        let profile: DatasetProfile = serde_json::from_value(serde_json::json!({
+            "dataset_id": "ds_0123456789abcdef01234567",
+            "name": "churn.csv",
+            "bytes": "128",
+            "rows": "12",
+            "columns": [
+                {"name": "churned", "data_type": "number", "missing": "0", "distinct": "2"},
+                {"name": "spend", "data_type": "number", "missing": "0", "distinct": "9"}
+            ],
+            "target_suggestions": [
+                {"column": "churned", "task": "auto", "reason": "non-binding target hint"}
+            ],
+            "warnings": []
+        }))
+        .unwrap();
+        let mut draft = Draft::default();
+        draft.set_dataset(profile);
+        let spec = draft.run_spec(true).unwrap();
+        assert_eq!(spec.task, Task::Binary);
+        assert_eq!(spec.objective, ObjectiveSpec::Name("auroc".into()));
+
+        draft.apply(r"\target spend").unwrap();
+        let spec = draft.run_spec(true).unwrap();
+        assert_eq!(spec.task, Task::Regression);
+        assert_eq!(spec.objective, ObjectiveSpec::Name("rmse".into()));
+
+        draft.apply(r"\target churned").unwrap();
+        draft.apply(r"\objective mae").unwrap();
+        assert_eq!(
+            draft.run_spec(true).unwrap().objective,
+            ObjectiveSpec::Name("mae".into())
+        );
+    }
+
+    #[test]
+    fn default_objective_follows_each_task() {
+        assert_eq!(default_objective(Task::Regression), "rmse");
+        assert_eq!(default_objective(Task::Auto), "rmse");
+        assert_eq!(default_objective(Task::Binary), "auroc");
+        assert_eq!(default_objective(Task::Multiclass), "log_loss");
     }
 
     #[test]
@@ -381,5 +432,17 @@ mod tests {
         let mut draft = Draft::default();
         assert!(draft.apply(r"\effort fast --evals -1").is_err());
         assert!(draft.apply(r"\effort fast --time nope").is_err());
+    }
+
+    #[test]
+    fn grouped_and_time_splits_are_refused() {
+        let mut draft = Draft::default();
+        let group = draft.apply(r"\target value --group subject").unwrap_err();
+        assert!(group.contains("random splits only"), "{group}");
+        let time = draft.apply(r"\target value --time date").unwrap_err();
+        assert!(time.contains("random splits only"), "{time}");
+        assert_eq!(draft.split.kind, SplitKind::Random);
+        assert!(draft.split.group_column.is_none());
+        assert!(draft.split.time_column.is_none());
     }
 }

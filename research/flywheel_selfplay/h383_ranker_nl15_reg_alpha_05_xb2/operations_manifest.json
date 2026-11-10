@@ -1,0 +1,100 @@
+{
+  "utc": "2026-11-05T19:58:19.084345+00:00",
+  "scope": "Actual local preparation/custody/control/review snapshots; frozen45scientific files unchanged",
+  "files": {
+    "ops_prepare_inputs.py": {
+      "sha256": "f958acb5bd727c78cbb0c58830fcfa14b6b7d5f32507ed543b86621e512e82dd",
+      "deploy_as": "prepare_inputs.py",
+      "host": "xbabe2"
+    },
+    "ops_stage_inputs.py": {
+      "sha256": "be06c4e5a10a4ba8fad95ce478734750d8ddc1ef5abd2d49f24a2bb102c874af",
+      "deploy_as": "stage_inputs.py",
+      "host": "xbabe2"
+    },
+    "ops_fetch_nl15.py": {
+      "sha256": "6d4bba13c5eabaa5a9a965b0b332b63ce0b695aba22a0d78608c0607c0d8be9e",
+      "deploy_as": "fetch_nl15.py",
+      "host": "xbabe2"
+    },
+    "ops_prepare.py": {
+      "sha256": "73c83630d42cd30cb90a1029ede677c7062215c81611c4de84666bda66ce1116",
+      "deploy_as": "prepare.py",
+      "host": "xbabe2"
+    },
+    "ops_launch.py": {
+      "sha256": "d033ccad6bc398a88fb2831228cde1d2f8cf7f58a944d5626382660222e6adec",
+      "deploy_as": "launch.py",
+      "host": "xbabe2"
+    },
+    "ops_science_review.py": {
+      "sha256": "a8245d1409cf3ecb20f29f2831f70e17434e8204f974a12fea81e4331be9f8b2",
+      "deploy_as": "science_review.py",
+      "host": "xbabe2"
+    },
+    "ops_reference_custody.py": {
+      "sha256": "de8ee010814be08346f257ea3659b399d91bcc5250021e7215526de330b20b9c",
+      "deploy_as": "reference_custody.py",
+      "host": "xbabe2"
+    },
+    "ops_reclaim_reference.py": {
+      "sha256": "bfcfd374a3e1f27acc22a359916287b6d558aceca3c2976a53f5594fa4dab312",
+      "deploy_as": "reclaim_reference.py",
+      "host": "xbabe2"
+    },
+    "ops_continue_admitted.py": {
+      "sha256": "a0f5d105139368a232e7c6cccf4a0459691b18c408559482ff6aa69fbb575dae",
+      "deploy_as": "continue_admitted.py",
+      "host": "xbabe2"
+    },
+    "ops_test_continuation.py": {
+      "sha256": "f55ff60e9adb70ae3ee6d392baeaf64265d5993d7ee844109f5d2e90e67cf491",
+      "deploy_as": "test_continuation.py",
+      "host": "xbabe2"
+    },
+    "ops_launch_continue.py": {
+      "sha256": "3e13b08ed066fc2cb7a67303ae0a744aac7faf117d53909a36f75b6d6d03b084",
+      "deploy_as": "launch_continue.py",
+      "host": "xbabe2"
+    },
+    "ops_stop_snapshot.py": {
+      "sha256": "db98e762f95b0d83d0724bedfa63e6f256c82da1cafba4c94cf6949418bf5996",
+      "deploy_as": "stop_snapshot.py",
+      "host": "xbabe2"
+    },
+    "ops_review_and_report.py": {
+      "sha256": "53d7243be8f67dcb71cd4ff9725dcf090376a4ddd262edf40a0ab525a0cf7d53",
+      "deploy_as": "review_and_report.py",
+      "host": "xbabe2"
+    },
+    "ops_render_readme.py": {
+      "sha256": "0c5dda0d8ae0e8d1f04e86280f3a7d0d3524f7fa5301ba1c29b7296d8774cdc2",
+      "deploy_as": "render_readme.py",
+      "host": "xbabe2"
+    }
+  },
+  "executed_scientific_entrypoint": "ops_continue_admitted.py",
+  "original_controller": "controller_h383.py retained exact pre-fit failed startup; no optimizer fit before continuation",
+  "startup_tests": 3,
+  "source_tests": 89,
+  "capacity_samples_total": 1,
+  "core_set": [
+    31,
+    12,
+    13,
+    14
+  ],
+  "budget_reset": false,
+  "foreign_signals": 0,
+  "notice": {
+    "head": "b8d80c834f8e9b3067e1e6949312183fe7984558",
+    "commit": "b8d80c834f8e9b3067e1e6949312183fe7984558",
+    "parent": "d1c552a04f2d0e17c79cd8cadab7c889ce8272a4",
+    "tree": "80b8c9c21311464530f9504a523cefeebd0a263e",
+    "paths": [
+      "research/flywheel_selfplay/h383_ranker_nl15_reg_alpha_05_xb2/RESOURCE_AMENDMENT.md"
+    ],
+    "published": true,
+    "utc": "2026-11-05T17:27:59.167610+00:00"
+  }
+}

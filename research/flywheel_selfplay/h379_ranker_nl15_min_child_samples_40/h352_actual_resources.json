@@ -1,0 +1,21 @@
+{
+  "MainPID": "0",
+  "Result": "success",
+  "ExecMainStartTimestamp": "Thu 2026-11-05 08:16:54 UTC",
+  "ExecMainExitTimestamp": "Thu 2026-11-05 09:19:26 UTC",
+  "ExecMainCode": "1",
+  "ExecMainStatus": "0",
+  "MemoryCurrent": "[not set]",
+  "MemoryPeak": "3874422784",
+  "MemorySwapCurrent": "[not set]",
+  "MemorySwapPeak": "0",
+  "CPUUsageNSec": "26189516914000",
+  "CPUQuotaPerSecUSec": "8s",
+  "MemoryMax": "6442450944",
+  "MemorySwapMax": "0",
+  "Nice": "19",
+  "ActiveState": "inactive",
+  "SubState": "dead",
+  "InvocationID": "b43ca85cb1434a7ca8709b588a573ef4",
+  "observed_utc": "2026-11-05T09:19:27.087150+00:00"
+}

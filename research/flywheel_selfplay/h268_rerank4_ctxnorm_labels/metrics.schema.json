@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "required": [
+    "schema",
+    "status",
+    "verdict",
+    "source_commit"
+  ],
+  "properties": {
+    "schema": {
+      "const": "jope.h268.metrics/v1"
+    },
+    "status": {
+      "enum": [
+        "PREREGISTERED",
+        "COMPLETE",
+        "INCOMPLETE"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        null,
+        "ADVANCE",
+        "NO_ADVANCE",
+        "INCOMPLETE"
+      ]
+    },
+    "source_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

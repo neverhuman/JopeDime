@@ -1,0 +1,360 @@
+{
+  "status": "PASS",
+  "utc": "2026-11-05T19:22:50.872064+00:00",
+  "scope": "Same-agent declared transport review; new scientific arm, not an equivalence claim about treatment outcomes",
+  "parent": "d0acbe30e4b50b498b3365fe0838925f67230382",
+  "files": {
+    "actual_resources_reference.json": {
+      "parent_sha256": "806075b6efdf7c4a680e7b5d8aad46f3902f328957f4df292feb1c12b0f46906",
+      "current_sha256": "806075b6efdf7c4a680e7b5d8aad46f3902f328957f4df292feb1c12b0f46906",
+      "declared_replacements": []
+    },
+    "archive_h391.py": {
+      "parent_sha256": "5fdaa24282779d2ad3f76fd57033d54c2ef838ba8883b77201f8202e98b07bc0",
+      "current_sha256": "d91a2e6f216386b29ec12b39d93e024bbc8f1cf42aaad97217eae4c706a7fd0a",
+      "declared_replacements": []
+    },
+    "base_archive_member_inventory.json": {
+      "parent_sha256": "79d2fd3f50501176fd3d06af25149337f126a6eaf2819e13070e1d5334edfb62",
+      "current_sha256": "79d2fd3f50501176fd3d06af25149337f126a6eaf2819e13070e1d5334edfb62",
+      "declared_replacements": []
+    },
+    "base_veto_native_reference.json": {
+      "parent_sha256": "2cf35f8e0dd76f9296f68b722cabae2e905b77abe3cec9686c8f1350507b4430",
+      "current_sha256": "2cf35f8e0dd76f9296f68b722cabae2e905b77abe3cec9686c8f1350507b4430",
+      "declared_replacements": []
+    },
+    "base_veto_sha256.json": {
+      "parent_sha256": "c20a7500b4624528e1170b59a3caeb06deafc06685cf451c546c0304ca1ab6f8",
+      "current_sha256": "c20a7500b4624528e1170b59a3caeb06deafc06685cf451c546c0304ca1ab6f8",
+      "declared_replacements": []
+    },
+    "check_base_native.py": {
+      "parent_sha256": "a529626c09d40aa593c801c169f0f85c440766fab30506f3557491bb98ec3280",
+      "current_sha256": "35f0d39fda934054c64f86682be5bb05e9380883ea14567086211c89b4f9fdb8",
+      "declared_replacements": [
+        [
+          "treatment_num_leaves=15",
+          "treatment_num_leaves=11,treatment_max_depth=4"
+        ],
+        [
+          "treatment_max_delta_step=1.0",
+          "treatment_max_delta_step=0.0"
+        ]
+      ]
+    },
+    "controller_h391.py": {
+      "parent_sha256": "164bd647507493e73c2747d084d91f9d78228ed3dad29facd3c687e35a9c5183",
+      "current_sha256": "8b9fdb131067086ba547991004ae3f78a91d979e3c406a8bb65738b3ccc8edef",
+      "declared_replacements": [
+        [
+          "fallback46..49",
+          "fallback15..20"
+        ]
+      ]
+    },
+    "evaluate_h391.py": {
+      "parent_sha256": "ec210752318f4a86b767564a4ad79dfa44b914e68d3b0bdb8bc1adaa49dfc844",
+      "current_sha256": "38bb083c511106627d7b6ec5861bf315212e1e716c895ab52b8014b036a8ff18",
+      "declared_replacements": [
+        [
+          "max_delta_step0->1.0 vs H352 NL15 leaves15/max_depth3",
+          "num_leaves15->11/max_depth3->4 vs H352 NL15; restored max_delta_step0"
+        ]
+      ]
+    },
+    "fetch_base_h391.py": {
+      "parent_sha256": "cbcf2b98d864bce957bc7c98d5266c4ca38a82609e755a509d8fb4d42e8fc4a7",
+      "current_sha256": "58b545eb3fa781a87cca71a20062c56cef6faf52d8d2e2c3b6feddb90246ee0d",
+      "declared_replacements": []
+    },
+    "fetch_nl15.py": {
+      "parent_sha256": "10300328e78bf36aef5e47d0905b634565f923d5e6f3090a3cff44b3e552c06b",
+      "current_sha256": "a10858273ecff1d7812988ce3efe6dbfe97a41be44496a45a2d74f7d5df1917d",
+      "declared_replacements": []
+    },
+    "forecast_h391.py": {
+      "parent_sha256": "efef638e319dfc814e528a3a16ed1818372c72879da08e7bbf6615159616288a",
+      "current_sha256": "b447ecc62e49b65b25833cb6ec810ac173944c25a6cc69c0fa1e7b974f761cae",
+      "declared_replacements": [
+        [
+          "max_delta_step_cost",
+          "capacity_cost"
+        ],
+        [
+          "Leaf-output-clipping cost",
+          "Deeper-tree cost"
+        ]
+      ]
+    },
+    "guard_h391.py": {
+      "parent_sha256": "a6dc3527689df0d15e1efb3581fd42d60347c47172a17981d38e952913a0d658",
+      "current_sha256": "884ecab4f17e58dbdc81eddb92bdddd9efbafd4106c491a89e57c7cbf6707123",
+      "declared_replacements": []
+    },
+    "h347_actual_resources.json": {
+      "parent_sha256": "efe5f3a47a0f8848ae2bb43a330a403d68f9a17fc38a0163fa3a4edf6d7725f9",
+      "current_sha256": "efe5f3a47a0f8848ae2bb43a330a403d68f9a17fc38a0163fa3a4edf6d7725f9",
+      "declared_replacements": []
+    },
+    "incumbent_regression.py": {
+      "parent_sha256": "b018b644352fb6f1bff79adc86af37b134fd9f77bea930eae407c34f442dc8ff",
+      "current_sha256": "34196d846777da69b78f444396a79da727f54a26b25b42322e58ec5e8e31a05e",
+      "declared_replacements": []
+    },
+    "input_preflight.py": {
+      "parent_sha256": "7723a707cd9e1434656e17847a7dcf549c6397b2e4e452938c150709af3ba9d6",
+      "current_sha256": "75459eca489fb6066676c4f5b835bafb0f28e1ab142ac950f6b108a6484c1faa",
+      "declared_replacements": []
+    },
+    "native_audit.py": {
+      "parent_sha256": "89f33828f4ee1a4cd13ae810c2a99dcc3e6df7c35c410f735c8df22780d83018",
+      "current_sha256": "52636512fe3c02a4311c1c6e094bda9f285c04be13a1b394e06b06fd1e6ae90e",
+      "declared_replacements": [
+        [
+          "int(native['num_leaves'])==15 and int(native['max_depth'])==3",
+          "int(native['num_leaves'])==(11 if check_treatment else 15) and int(native['max_depth'])==(4 if check_treatment else 3)"
+        ],
+        [
+          "float(native['max_delta_step'])==(1.0 if kind=='LGBMRanker' and check_treatment else 0.0)",
+          "float(native['max_delta_step'])==0.0"
+        ],
+        [
+          "if kind=='LGBMRanker':assert depth==3 and max(counts)<=8",
+          "if kind=='LGBMRanker':assert (configured,depth) in {(11,4),(15,3),(7,3)} and max(counts)<=min(configured,2**depth)"
+        ],
+        [
+          "{'max_delta_step':['0','1']}",
+          "{'num_leaves':['15','11'],'max_depth':['3','4']}"
+        ],
+        [
+          "Only max_delta_step differs",
+          "Only ranker num_leaves15->11 and max_depth3->4 differ; max_delta_step remains0"
+        ]
+      ]
+    },
+    "native_baseline_reference.json": {
+      "parent_sha256": "36b74215d844a5469acc91aad0076b2bd6d51b6e8f1a8925c86496986145b957",
+      "current_sha256": "36b74215d844a5469acc91aad0076b2bd6d51b6e8f1a8925c86496986145b957",
+      "declared_replacements": []
+    },
+    "nl15_baseline_patch.py": {
+      "parent_sha256": "8356118f482370c25a78e74af2ed17cccc0201213492cd4bb995abf41fed64f2",
+      "current_sha256": "8356118f482370c25a78e74af2ed17cccc0201213492cd4bb995abf41fed64f2",
+      "declared_replacements": []
+    },
+    "resource_probe.py": {
+      "parent_sha256": "2d7f4726cd1acbb199f62d92494d6e296131f062df3d9bd742b4d8e457fd38e0",
+      "current_sha256": "2fcf7dabfd097c0fcc4ebaf9c54afea370d735a0cbd1f3c2601ba9cd7395f4d4",
+      "declared_replacements": [
+        [
+          "'F':tuple(range(46,50))",
+          "'F':tuple(range(15,21))"
+        ],
+        [
+          "fallback46..49",
+          "fallback15..20"
+        ]
+      ]
+    },
+    "run_h391.py": {
+      "parent_sha256": "2c7ee6d10fc98f66032a2ad96582b2a1d76df58ebcb01de0837961066ef5cc5d",
+      "current_sha256": "8dc1c6bf8eb704edc24d7b6928e7eab086527799381d656a93d837a599503c39",
+      "declared_replacements": [
+        [
+          "fixed ranker-only max_delta_step=1.0; NL15 leaves15/depth3",
+          "ranker-only num_leaves11/max_depth4; restored max_delta_step0"
+        ],
+        [
+          "from capacity_patch import LEAVES",
+          "from capacity_patch import LEAVES,DEPTH"
+        ],
+        [
+          "assert params['max_delta_step']==1.0 and kwargs['max_delta_step']==1.0 and params['colsample_bytree']==.8",
+          "assert params.get('max_delta_step',0)==0 and 'max_delta_step' not in kwargs and params['colsample_bytree']==.8 and kwargs['num_leaves']==LEAVES and kwargs['max_depth']==DEPTH"
+        ],
+        [
+          "params['max_depth']==3",
+          "params['max_depth']==DEPTH"
+        ],
+        [
+          "'drop_seed','callbacks'",
+          "'drop_seed','max_delta_step','max_tree_output','max_leaf_output','callbacks'"
+        ],
+        [
+          "{'max_delta_step':[0,1.0]}",
+          "{'num_leaves':[15,11],'max_depth':[3,4]}"
+        ],
+        [
+          "assert p['max_delta_step']==1.0 and p['colsample_bytree']==.8",
+          "assert p.get('max_delta_step',0)==0 and p['colsample_bytree']==.8"
+        ],
+        [
+          "p['max_depth']==3",
+          "p['max_depth']==DEPTH"
+        ]
+      ]
+    },
+    "runtime_h391.py": {
+      "parent_sha256": "3e2cf18d3020fb69db7217a6e44deab078ec6947116c304954a3f10513591efd",
+      "current_sha256": "dee063130ac131ebecba1ae6df97b494cc37e1ea04739156fc7e6ac9e0f704c1",
+      "declared_replacements": []
+    },
+    "test_evaluator_report.py": {
+      "parent_sha256": "63703f143df293c42355f4c61290081313fca5f286c77e94923224907120dec1",
+      "current_sha256": "8fada7a999613a4bb744ad72dee4c8d3ed483eee122c0a4eee5368166369eb26",
+      "declared_replacements": [
+        [
+          "max_delta_step0->1.0",
+          "num_leaves15->11/max_depth3->4"
+        ]
+      ]
+    },
+    "test_guard.py": {
+      "parent_sha256": "25ddfa7f31bd876bdf6bbcc9355b6f2a86423759dc055dfe1c08ed1461bbb5fb",
+      "current_sha256": "955ca213fc89141d08b2c78385ca86e309f6769a4c618f4885e843f02bfff91c",
+      "declared_replacements": []
+    },
+    "test_h391.py": {
+      "parent_sha256": "72cc6937876654e4a7e6aa1a5d322c3a69435c70fbd258d4d955bf3f1e6f828b",
+      "current_sha256": "030076c42f372693099a4809fe6ea4f0d2b4490cbe0d6c793ed9313ccfc3c8b6",
+      "declared_replacements": [
+        [
+          "from capacity_patch import LEAVES",
+          "from capacity_patch import LEAVES,DEPTH"
+        ],
+        [
+          "max_delta_step=1.0,colsample_bytree=.8,num_leaves=LEAVES,max_depth=3",
+          "colsample_bytree=.8,num_leaves=LEAVES,max_depth=DEPTH"
+        ]
+      ]
+    },
+    "test_incumbent_spec.py": {
+      "parent_sha256": "a69395dc624e041bd22b968f5876161551dfc99f21dbe386e9ecf5835261f450",
+      "current_sha256": "a69395dc624e041bd22b968f5876161551dfc99f21dbe386e9ecf5835261f450",
+      "declared_replacements": []
+    },
+    "test_resource_forecast.py": {
+      "parent_sha256": "fe41c225c93ddf8a672342fa5946978704fc2dc4b4901bb7e2228a3848e89ab1",
+      "current_sha256": "95c8942fa3325e226f06cef56a3a26f2a1c5193598427234049ebb0d605736d9",
+      "declared_replacements": [
+        [
+          "'F':tuple(range(46,50))",
+          "'F':tuple(range(15,21))"
+        ],
+        [
+          "tuple(range(38,50))",
+          "(*range(38,46),*range(15,21))"
+        ],
+        [
+          "list(range(39,47))",
+          "[*range(39,46),15]"
+        ],
+        [
+          "[38,39,46,47]",
+          "[38,39,15,16]"
+        ],
+        [
+          "[38,39,46]",
+          "[38,39,15]"
+        ],
+        [
+          "(38,39,46,47,102,103,110,111)",
+          "(38,39,15,16,102,103,79,80)"
+        ],
+        [
+          "row['cpu']=='111'",
+          "row['cpu']=='80'"
+        ],
+        [
+          "2026,11,5,21,30,tzinfo",
+          "2026,11,5,23,tzinfo"
+        ]
+      ]
+    },
+    "test_veto_identity.py": {
+      "parent_sha256": "c89c8925d067142942fe55c9ffdc2367c475a8b4651a8e3b5cd18ae1694c5ff5",
+      "current_sha256": "c89c8925d067142942fe55c9ffdc2367c475a8b4651a8e3b5cd18ae1694c5ff5",
+      "declared_replacements": []
+    },
+    "veto_identity.py": {
+      "parent_sha256": "727cf8c17d6383c0d4cb1b1a1cbbe9429dc95f20dacc761a5cba460d89347142",
+      "current_sha256": "fc6bc4760eb4a2d139175843eeac63c950e68ac555ef7882a6a573cca1b6d949",
+      "declared_replacements": []
+    }
+  },
+  "new_implementation_files": [
+    "capacity_patch.py",
+    "test_capacity.py",
+    "test_native_audit.py"
+  ],
+  "new_documentation": [
+    "PREREG.md",
+    "README.md",
+    "metrics.json",
+    "manifest.json"
+  ],
+  "new_files_validation": "Exact full H352 AST inverse for both functions; only two existing keyword values; strict complete native delta; negative capacity/default/veto controls; histogram accepts1..11 and is diagnostic only",
+  "ranker_delta_vs_NL15": {
+    "num_leaves": [
+      15,
+      11
+    ],
+    "max_depth": [
+      3,
+      4
+    ]
+  },
+  "max_delta_step": 0,
+  "vendor_verified": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "negative_controls": [
+    {
+      "file": "run_h391.py",
+      "mutation": [
+        "len(lock['inner_table'])==18",
+        "len(lock['inner_table'])==17"
+      ],
+      "refused": true
+    },
+    {
+      "file": "resource_probe.py",
+      "mutation": [
+        "idle[c]>=85",
+        "idle[c]>=75"
+      ],
+      "refused": true
+    },
+    {
+      "file": "native_audit.py",
+      "mutation": [
+        "float(native['lambda_l2'])==1.0",
+        "float(native['lambda_l2'])==5.0"
+      ],
+      "refused": true
+    }
+  ],
+  "prior_closes_unchanged": {
+    "H378": {
+      "closeout": "/home/ubuntu/jope_plan/evidence/H378/api01-20261105-t1629/CLOSEOUT.json",
+      "sha256": "e97d00e898c4881c8f99b9b935f73fb06155c8a728750a60230ce87479e2555a"
+    },
+    "H382": {
+      "closeout": "/home/ubuntu/jope_plan/evidence/H382/api01-20261105-t1705/CLOSEOUT.json",
+      "sha256": "968db193b4ba64291d1b999e6bb8fa29cc2d853483306c609934bd0bbdf74110"
+    },
+    "H385": {
+      "closeout": "/home/ubuntu/jope_plan/evidence/H385/api01-20261105-t1730/CLOSEOUT.json",
+      "sha256": "893a128b0ad558f314056e9e68300402af9e2486dfa0ef50edec45e74d8ef25a"
+    }
+  },
+  "outer_scoring_bootstrap_decision": "Committed H385 algorithm unchanged after wave/RNG/arm annotation normalization",
+  "no_new_keyword": true
+}

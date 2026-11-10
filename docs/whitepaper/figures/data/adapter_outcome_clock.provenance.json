@@ -1,0 +1,37 @@
+{
+  "schema": "whitepaper.adapter-outcome-clock-figure/v1",
+  "input_csv_sha256": {
+    "full_round_wall_time.csv": "46daa1916799f347f1af01311c07a6044d9bc2c9e9d6f758ed6e7e15aafd6488",
+    "full_retained_trajectory.csv": "7bb0dd88e1a6ac1a57075d1b72c87db26d7bbe95a953bf90b8ccf526297fdd58"
+  },
+  "aggregate_csv_sha256": "f1729166ac7180dd734e966e54b995fe03a9a796303340349ee694c4b9917cdc",
+  "source_receipt_sha256": "020f5c39eba21d78ecc0255f799bbb3a0469c834d9d48a24c6a10c5132d3abc3",
+  "generator_sha256": "89608151155e096349ccb29b6b4d75108ac1db036fe9d934232c15582fef1b87",
+  "figure_sha256": "54348152901d792f1df0f03a4933b5937eb2679f8dac83e69b704f571053471c",
+  "source_clock_records": 4064,
+  "plotted_aggregate_points": 4,
+  "memberships_total": 4064,
+  "round_window": [
+    775,
+    4838
+  ],
+  "x_unit": "sum of recorded in-round wall hours",
+  "x_scale": "logarithmic",
+  "unknown_outcome_kept_separate": true,
+  "filtering": false,
+  "smoothing": false,
+  "interpolation": false,
+  "jitter": false,
+  "imputation": false,
+  "estimated_uncertainty": false,
+  "minimum_text_size_pt": 8.5,
+  "figure_inches": [
+    3.375,
+    2.35
+  ],
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_adapter_outcome_clock.py"
+}

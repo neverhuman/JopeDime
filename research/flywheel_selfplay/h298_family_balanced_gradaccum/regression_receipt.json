@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "elapsed_sec": 69.708,
+  "round_3175_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "frozen_state_sha256": "d4dde909145d9da75ec74fd61b9827d8fc2ec9236505b7cdf72b4161994551b7",
+  "r3175_replay": {
+    "mean": 1.1389572403748425,
+    "expected_mean": 1.1389572403748425,
+    "exact_match": true,
+    "selected_programs_match_91_of_91": true,
+    "per_context_exact_match": true
+  },
+  "t1845_control_184501_replay": {
+    "seed": 184501,
+    "mean": 1.1354387884248622,
+    "round_10_mean": 1.1354387884,
+    "expected_round_10_mean": 1.1354387884,
+    "exact_match_ref": true,
+    "selected_programs_match_91_of_91": true,
+    "adapter_sha256": "fd690ea216af7e93fe246e849e9f66a876d23306492cca3ad6866c57e28d56f1",
+    "expected_adapter_sha256": "fd690ea216af7e93fe246e849e9f66a876d23306492cca3ad6866c57e28d56f1",
+    "training_losses": [
+      3.6976123168209374,
+      3.6815590622078673
+    ],
+    "gradient_norms": [
+      0.45910459756851196,
+      0.4583529531955719
+    ],
+    "optimizer_step_before": 487,
+    "optimizer_step_after": 489
+  }
+}

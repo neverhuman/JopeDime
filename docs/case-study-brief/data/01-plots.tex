@@ -1,0 +1,6 @@
+\addplot[only marks,mark=*,mark size=2.6pt,color=ours] table[col sep=comma,x=x,y=y]{data/01-ours-A.csv};\addlegendentry{Ours: DL seeds (A)}
+\addplot[only marks,mark=diamond*,mark size=3.4pt,color=oursext] table[col sep=comma,x=x,y=y]{data/01-ours-A-extended.csv};\addlegendentry{Ours: DL seeds, extended}
+\addplot[only marks,mark=square*,mark size=2.4pt,color=ourse] table[col sep=comma,x=x,y=y]{data/01-ours-E.csv};\addlegendentry{Ours: best-practice seeds (E)}
+\addplot[only marks,mark=o,mark size=2.6pt,color=oursc,thick] table[col sep=comma,x=x,y=y]{data/01-ours-C.csv};\addlegendentry{Ours: accuracy-only (C)}
+\addplot[only marks,mark=triangle*,mark size=3pt,color=alt,nodes near coords,point meta=explicit symbolic,visualization depends on={value \thisrow{anchor}\as\myanchor},every node near coord/.style={font=\tiny,anchor=\myanchor,inner sep=1pt,color=alt}] table[col sep=comma,x=x,y=y,meta=label]{data/01-baselines-feasible.csv};\addlegendentry{Alternative, feasible}
+\addplot[only marks,mark=x,mark size=3.2pt,color=bad,thick,nodes near coords,point meta=explicit symbolic,visualization depends on={value \thisrow{anchor}\as\myanchor},every node near coord/.style={font=\tiny,anchor=\myanchor,inner sep=1pt,color=bad}] table[col sep=comma,x=x,y=y,meta=label]{data/01-baselines-infeasible.csv};\addlegendentry{Alternative, infeasible}

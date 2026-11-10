@@ -1,0 +1,30 @@
+{
+  "schema": "whitepaper.program-record-multiplicity-source/v1",
+  "source_commit": "e6606d964699b46b0d4380e32f1f653196039069",
+  "input_sha256": {
+    "stopped_run_admissions.csv": "197c519554675d398cb77c81e652788b51462ca372a2ea6c7b41811958b4238a",
+    "stopped_run_promotions.csv": "913841307f33c827b60174288c8b09404c92be1f186ff74bc83f9be6103813cc",
+    "stopped_run_record.source.json": "26337f004c1ed4c1825a5907030e75b0f3944f2001f0d03e747896801f296873"
+  },
+  "round_window": [
+    775,
+    5049
+  ],
+  "round_identifiers": 4275,
+  "scored_admission_records": 4274,
+  "program_records": 3529,
+  "program_record_rounds": 2148,
+  "zero_program_record_rounds": 2127,
+  "maximum_records_per_round": 10,
+  "derived_thresholds": 11,
+  "missing_admission_rounds": [
+    4331
+  ],
+  "missing_admission_round_program_records": 1,
+  "CSV_sha256": "0cb52a03ec5a9fb94b076fb97002e4de49de0f42935295794999cb1d836e1b99",
+  "selection": "Union of both complete committed journals across every logged round775..5049; all4274 admission records and3529 program records retained. Historical/earlier warm-up records were already excluded by the owning capture receipt. No outcome, duration or count filtering.",
+  "transformation": "Each round belongs to exactly one exact-count group. Each plotted thresholdk counts the round identifiers in groupsk..10. Threshold counts overlap by definition; no round or program record is imputed.",
+  "scope": "Adaptive training-side journal counts, not proposal attempts, success rates, independent tasks, elapsed time or neural-writer/ranking-map learning.",
+  "new_observations": 0,
+  "new_scientific_runs": 0
+}

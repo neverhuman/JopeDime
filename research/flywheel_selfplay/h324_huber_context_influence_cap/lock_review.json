@@ -1,0 +1,1848 @@
+{
+  "status": "PASS",
+  "same_agent_independent_recalculation": true,
+  "locks": 36,
+  "weight_vectors_verified": 29484,
+  "only_weight_AST_changes": true,
+  "unweighted_gate_models_exact_BASE": 108,
+  "changed_final_model_hashes_vs_BASE": 972,
+  "results": [
+    {
+      "partition": "P0",
+      "fold": 0,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "1be0dcf901c992aa62eadb126a7e2f5e2fda06cfc9495907955eb110dd6ea8c3",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 476817,
+        "capped_context_occurrences": 238053,
+        "capped_fraction": 0.4992544309452054,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.017181439075098053,
+          0.05559418576349021,
+          0.12942187288494458,
+          0.40903724939719804,
+          1.4172405604068645,
+          1.4724060768763587,
+          1.5079354652380152,
+          1.5295358738839093,
+          1.5555884140102159
+        ],
+        "delta_quantiles": [
+          0.18242450509495564,
+          0.31435675205857483,
+          0.33609229194188817,
+          0.3537997670076425,
+          0.5194391949105821
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "45ccfeb5af778d8f35f5fb41506d8a795a365873ffa3c6af2e70ea27db03b84d"
+    },
+    {
+      "partition": "P0",
+      "fold": 0,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "ef4cd8a83597eefd63f1722abe94032c53f16ff85e48a136c5cafa365bd1fc9f",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 476591,
+        "capped_context_occurrences": 237936,
+        "capped_fraction": 0.49924568445480505,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.018079286610951706,
+          0.05447713636461148,
+          0.12852295645572254,
+          0.4026484836914315,
+          1.4250473412785336,
+          1.4728526807848141,
+          1.5123384823995851,
+          1.5401164962487062,
+          1.5593042647386728
+        ],
+        "delta_quantiles": [
+          0.21909322638007528,
+          0.31755471680381514,
+          0.33445386909000197,
+          0.3595455623328707,
+          0.506552605344678
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "ee011bc7cb3c41482d509885e201203e8916e68ca749d4f9df3d87338afd6121"
+    },
+    {
+      "partition": "P0",
+      "fold": 0,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "9807f36fe266a68e2aa74bfa05b7d23dc8e4e4f2e76b8a51b6d9db99212f6d9f",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 477251,
+        "capped_context_occurrences": 238259,
+        "capped_fraction": 0.49923206027855366,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.016874527343533282,
+          0.055457658046873845,
+          0.13107132070239777,
+          0.40737915492630133,
+          1.4277388291945503,
+          1.472462904396099,
+          1.5053319773283034,
+          1.5341352867407165,
+          1.5500493126437465
+        ],
+        "delta_quantiles": [
+          0.23598005843529374,
+          0.30975630741472115,
+          0.33486623222283546,
+          0.35997053908150867,
+          0.5086556618055366
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "a2e18477516601272c033faf8bbdd52115609c86a67efa26d32153a5995df5c8"
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "cf76e812e6b433074dbf783bb7ac7b916dcdac2171399aed1a27ac89047c15e1",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 529648,
+        "capped_context_occurrences": 264447,
+        "capped_fraction": 0.4992882065069631,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.02116468545334424,
+          0.0594483145416441,
+          0.13849253417428362,
+          0.41998670588979525,
+          1.419244961900962,
+          1.4580637953645121,
+          1.4826934724267369,
+          1.4972243281779989,
+          1.515365773194617
+        ],
+        "delta_quantiles": [
+          0.22145115037563515,
+          0.2933353140588586,
+          0.320797754651731,
+          0.34380590337805966,
+          0.42001797682449493
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "8ff0ea3707993a5dd32373e3e938ae6011295b7b157eba11180bdafbeae93a00"
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "f0a938f9b60a18a6218ef7d5683fd2de7d18047ab64b0969418e689bb7d17db3",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 528689,
+        "capped_context_occurrences": 264004,
+        "capped_fraction": 0.49935595406751415,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.022608595483679498,
+          0.05868649346585007,
+          0.1388367362787834,
+          0.4114907150717046,
+          1.4167739531817376,
+          1.4593317252634828,
+          1.4821843961185714,
+          1.503315021224971,
+          1.5167704599832275
+        ],
+        "delta_quantiles": [
+          0.24428288722631855,
+          0.2972349944212282,
+          0.3248977301712763,
+          0.3415867918875031,
+          0.40442536194105333
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "2415c553fee84436cf5cba797b7c780493ea7d48cd1933b9443cbfab3425a7fa"
+    },
+    {
+      "partition": "P0",
+      "fold": 1,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "2f4c8fd7b826db9c80329e1088f6698257204ffb1cae26c201313beb924374c9",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 528088,
+        "capped_context_occurrences": 263642,
+        "capped_fraction": 0.4992387632364303,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.024169041096875902,
+          0.05918285969410507,
+          0.13856258286929163,
+          0.4197697014430725,
+          1.4166835661863932,
+          1.4586087785343065,
+          1.4828893246506496,
+          1.4929918225454955,
+          1.5022004767848876
+        ],
+        "delta_quantiles": [
+          0.2533977518202546,
+          0.2937635890174938,
+          0.32175253779036705,
+          0.3354588064236341,
+          0.40695010794407555
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "57cd807f0eb3840a48f26ed32dfdc00cedde491ee03b67e0c600430e8c97a521"
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "8aa37144bc76d757e9e46c07620f913b1e0383ee1e5f69d6eb7e92c40a061284",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 517298,
+        "capped_context_occurrences": 258330,
+        "capped_fraction": 0.49938333417101943,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.01739445785293289,
+          0.04518616610811493,
+          0.11979751657027833,
+          0.387796286622149,
+          1.422351426433313,
+          1.4680593578297791,
+          1.493021449143181,
+          1.5181061404822727,
+          1.5534970414880844
+        ],
+        "delta_quantiles": [
+          0.23167448732814433,
+          0.3009205373042802,
+          0.3260531173735924,
+          0.353575393922803,
+          0.5160559911991478
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "6ebd4842ed07ecca817cc5e43627f0a12bcc7ae2c5c0eca4d25c1a0d70df265f"
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "d3985aa0275251bad5a232246b9d3905d6a141be89f94e9bc9b2ecfa6df50947",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 511658,
+        "capped_context_occurrences": 255523,
+        "capped_fraction": 0.49940194426745993,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.015700186459488015,
+          0.04619970619410743,
+          0.12015146611474081,
+          0.3857985387845941,
+          1.428550731742835,
+          1.4683857006524095,
+          1.494247549527219,
+          1.5123352442898645,
+          1.5252056722838219
+        ],
+        "delta_quantiles": [
+          0.21507311864173434,
+          0.30254209861222026,
+          0.3300235558290088,
+          0.3611720546188193,
+          0.466258969730709
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "85c69ac895d86abdecce5442e207f6ba43ee42ca4732f97a6a32910c8f7ccca5"
+    },
+    {
+      "partition": "P0",
+      "fold": 2,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "bc0e6f183e822f1f18e61b6fe6095d2a05998fd555677f81e25d0be4ad7d1800",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 511379,
+        "capped_context_occurrences": 255336,
+        "capped_fraction": 0.49930873187987773,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.017424716547866412,
+          0.04534104276944657,
+          0.11818737091521522,
+          0.3853816497421555,
+          1.4234775640950332,
+          1.4693995163141478,
+          1.4939559942800447,
+          1.5171519576407178,
+          1.5243827100544753
+        ],
+        "delta_quantiles": [
+          0.21909322638007528,
+          0.3009205373042802,
+          0.3237612038643687,
+          0.34329396668949197,
+          0.4339182685797971
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "3ed30a5571ce81e1e95a7ceabd0a75de3af24e9229442a0be0a56d59667b5a1c"
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "14c6d9834ca785bbb741ea36f5fd9756699592be335e1572723db7796eb7e073",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 455964,
+        "capped_context_occurrences": 227674,
+        "capped_fraction": 0.4993245080751989,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.015444861753287647,
+          0.047972881747956386,
+          0.1253092388565153,
+          0.3702554359975667,
+          1.4475209936039795,
+          1.4841634728242186,
+          1.5124069608514212,
+          1.5254922275099438,
+          1.5419824594641567
+        ],
+        "delta_quantiles": [
+          0.21306302811747657,
+          0.30254209861222026,
+          0.33222307325292255,
+          0.3692918526604878,
+          0.563804989432863
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "8103c7d2a8428561228adebcebfa98796b90a24ab1d0834da666edb2d381c291"
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "019b1cf930a8e92dc78991e20d527ed6f34a7fda2665cec8e50b4088ba323e6d",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 453321,
+        "capped_context_occurrences": 226317,
+        "capped_fraction": 0.49924225879674666,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.01720266939244033,
+          0.04907787761034464,
+          0.1272418747934774,
+          0.3764181600948682,
+          1.4330957244788538,
+          1.4807384015300014,
+          1.5081885418598937,
+          1.5210582404952375,
+          1.544076405224486
+        ],
+        "delta_quantiles": [
+          0.22130265181337522,
+          0.30444877524418645,
+          0.3386129046895512,
+          0.3777238447079112,
+          0.47263013570688905
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "d6267c3ef957286a207cd3a23a779950fb796426f7d6b590054ed45de07ed6ba"
+    },
+    {
+      "partition": "P0",
+      "fold": 3,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "0177a05d4461a3dc76bec16c93d4ce82548290b5976f745bc2150fce39c36bc5",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 455663,
+        "capped_context_occurrences": 227468,
+        "capped_fraction": 0.49920226132031786,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.017024360804440076,
+          0.04777382886052457,
+          0.12537501205302054,
+          0.37395583453319536,
+          1.430413227435589,
+          1.4845323164803097,
+          1.5108666890437237,
+          1.536574604379084,
+          1.5599648139831799
+        ],
+        "delta_quantiles": [
+          0.222706648464303,
+          0.2955243621583832,
+          0.3291675511501762,
+          0.3773121295437909,
+          0.45876118892144957
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "4913187fa413ea72cf734f42bac78f11e887371bdb2b0aab2b223e9501fb6c41"
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "4e56d6c4240ffc1d461a3cbde7f922c363588987f49b062a37b333300f8f9432",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 463891,
+        "capped_context_occurrences": 231571,
+        "capped_fraction": 0.49919269828472634,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.0245879879749323,
+          0.05133180206528288,
+          0.1375363765710058,
+          0.4272393195767648,
+          1.3935354162655273,
+          1.4561632598367547,
+          1.4857722975703966,
+          1.5065399243840925,
+          1.5205755951502269
+        ],
+        "delta_quantiles": [
+          0.24678845039939512,
+          0.33361688073810636,
+          0.3540481330451528,
+          0.3791479486419515,
+          0.4339182685797971
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "3e2fd33da1d2542c62fbd02f535c147147a44ee9f4b3b2e84e76c7ce83c8f765"
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "600cc80f484414174e84ac49112dee08f56186f5147dca005f933d9fc9bd9981",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 460717,
+        "capped_context_occurrences": 230024,
+        "capped_fraction": 0.4992739577658302,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.023931302066079605,
+          0.051059058501932146,
+          0.13721293815818683,
+          0.4246882278838421,
+          1.404691381507411,
+          1.4561632598367547,
+          1.4805867054480188,
+          1.5159731010892394,
+          1.5528969184463206
+        ],
+        "delta_quantiles": [
+          0.24120661448888026,
+          0.32801922467676503,
+          0.3524268948307816,
+          0.3819258501419571,
+          0.4983708592199081
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "46958caa3e703ab099a0ab558000cf44745610160ef9251098e7d3262622ff2a"
+    },
+    {
+      "partition": "P1",
+      "fold": 0,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "1a4de96de8c5270fd4c6d072d9d3989d106ae42099ff1c56c5d8c3ff0044f841",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 463644,
+        "capped_context_occurrences": 231474,
+        "capped_fraction": 0.499249424127132,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.02369183312230509,
+          0.050905121947223804,
+          0.1362166144774827,
+          0.42626016432477853,
+          1.4025486866890817,
+          1.4562888148437303,
+          1.4856203761330153,
+          1.5015049685036352,
+          1.5177816731083127
+        ],
+        "delta_quantiles": [
+          0.22142272219667192,
+          0.3288885988952679,
+          0.3540481330451528,
+          0.3875019622066874,
+          0.5494574827037189
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "c004bdbbe81030017807953adfc393556f8790a968a2240a6a557140d761b743"
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "d6cbf831b4d5c24b8c49f0012ea05e08397775c000b3f67d7b5761950c8ce865",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 495318,
+        "capped_context_occurrences": 247290,
+        "capped_fraction": 0.49925502404515887,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.018300119536936936,
+          0.04445489520367522,
+          0.12280299337729418,
+          0.3907458309546614,
+          1.4274135752109225,
+          1.467302164959905,
+          1.4979107586623424,
+          1.5176833864794255,
+          1.526489488641421
+        ],
+        "delta_quantiles": [
+          0.24979990310278755,
+          0.28932107435034615,
+          0.32496025586534527,
+          0.33774487352312077,
+          0.4364617412049907
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "1c5911d29e03642d894eba5fefe058c7655bd2026b3f579c6fbd0fd75cf68840"
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "6de5f79519cc1df2d37cf55cee7f217c0882ccc18c12e1558b18de40a7b0777f",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 491927,
+        "capped_context_occurrences": 245667,
+        "capped_fraction": 0.4993972682938729,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.017600555340510166,
+          0.045069095146114076,
+          0.1221952836781481,
+          0.3896338038003505,
+          1.433391027613429,
+          1.4719319332738556,
+          1.49638141919936,
+          1.5136980214933864,
+          1.525780768276335
+        ],
+        "delta_quantiles": [
+          0.23694948979226826,
+          0.28932107435034615,
+          0.3229881638940042,
+          0.3366848661426869,
+          0.43250780537330613
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "7adf9c1ce4c94315b34c4a404fed574b1dc05ca0644513bb08fc25bf0aeb1435"
+    },
+    {
+      "partition": "P1",
+      "fold": 1,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "7849d7c1023034c88d679485c0a10c180ea942ff857c74d3cec2897f56c810cc",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 494690,
+        "capped_context_occurrences": 247002,
+        "capped_fraction": 0.49930663647941137,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.017514112471870565,
+          0.04381828996781505,
+          0.12209292446496538,
+          0.3878311084567375,
+          1.4250103205364228,
+          1.4699478048962844,
+          1.4961222478614729,
+          1.5157578816705075,
+          1.54313797438462
+        ],
+        "delta_quantiles": [
+          0.23666467131124896,
+          0.29143526294426114,
+          0.3250227815594142,
+          0.33445386909000197,
+          0.46752055636419093
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "6cd284be79436f49d59407086b014097f30c65aa8895f5fb8e0da9e27e391aac"
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "534a9ff3e3eaa1737f08d0732d6c9df7316c575b36839d23528dde890848cb71",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 520906,
+        "capped_context_occurrences": 260037,
+        "capped_fraction": 0.4992013914218688,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.016380462903215397,
+          0.0438317435557436,
+          0.12164089881973414,
+          0.38963971082567367,
+          1.4257625468940245,
+          1.4717920691350757,
+          1.501674958780552,
+          1.517876132164755,
+          1.540336631658277
+        ],
+        "delta_quantiles": [
+          0.22738933516413515,
+          0.281522766968604,
+          0.31151028706154404,
+          0.33361688073810636,
+          0.48747803267998624
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "ac3f03f19ce8f8acdc4ccbb27aaef023bbc7d800eddae1c6c16bea4af022761e"
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "510f84fe9e97ae526e51ea5a2c9b2c50cf3f21f60ad725759184ab482f0b5ca4",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 517571,
+        "capped_context_occurrences": 258402,
+        "capped_fraction": 0.4992590388565047,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.017318094219992516,
+          0.043872771315678016,
+          0.11956495889239754,
+          0.3874782439205853,
+          1.4300535133644598,
+          1.4763043418280966,
+          1.5036123976106284,
+          1.5212448865618684,
+          1.5252040587646079
+        ],
+        "delta_quantiles": [
+          0.20758269451044026,
+          0.2845548510755177,
+          0.310269642297466,
+          0.338838700122246,
+          0.45159176793857037
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "073f1a23ae81014719d163f186ee740ce630a37b89262d116ca31db9f2edcb39"
+    },
+    {
+      "partition": "P1",
+      "fold": 2,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "d8eb40d84554610126e65dcbce382725cfd412476702e0f2fd8538590c954bed",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 519205,
+        "capped_context_occurrences": 259260,
+        "capped_fraction": 0.4993403376315713,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.016612412997509006,
+          0.04418752551591272,
+          0.11986605297600686,
+          0.38955549628647684,
+          1.4368777233661834,
+          1.4747096326845024,
+          1.5042890454045879,
+          1.5178517625746393,
+          1.5240168582182174
+        ],
+        "delta_quantiles": [
+          0.222706648464303,
+          0.28117618107554265,
+          0.310889964679505,
+          0.3366848661426869,
+          0.5209212192634228
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "90c6abed8f8174467eb19af873ce8015c65704f1501c3e25e04dde9361999dd4"
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "080517a62908774ed6f4af1182572f14f6b0fbe3e4728224ab919218fa267df4",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 501290,
+        "capped_context_occurrences": 250280,
+        "capped_fraction": 0.4992718785533324,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.017826590669105934,
+          0.0837842089513749,
+          0.13913785364195244,
+          0.3792831055758306,
+          1.4376847449667562,
+          1.4873616966171606,
+          1.5100327479391884,
+          1.5321321002416006,
+          1.5437156047062202
+        ],
+        "delta_quantiles": [
+          0.24428288722631855,
+          0.30213670828523526,
+          0.33291892797448946,
+          0.3490807846357331,
+          0.521204217723301
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "4da21bef1a8c026867e08e4541d67b2fcc920941cae3ceece3f7892d480566ea"
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "1ea38d8951a598f1be86852695f4ba1644f24bb381bf41b84612c321b5bdac6a",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 497566,
+        "capped_context_occurrences": 248433,
+        "capped_fraction": 0.49929657573065683,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.0174893725905309,
+          0.08320366089136921,
+          0.13901680236074562,
+          0.3806266399853305,
+          1.4489023513318926,
+          1.48576202330107,
+          1.5087178925157436,
+          1.5254029287654236,
+          1.5434295291953017
+        ],
+        "delta_quantiles": [
+          0.23220933096544483,
+          0.30635545187615265,
+          0.32657179370631717,
+          0.3577768641255146,
+          0.468800758336843
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "de489b1c1b0f83a71fa85b17f268d275cb6199d7b9ef1be1dddbb308d971a8a8"
+    },
+    {
+      "partition": "P1",
+      "fold": 3,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "9330416fbf879c8a50e320685b77cb53d6d83a7a21d947ed6ab245f3af5c1708",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 496624,
+        "capped_context_occurrences": 247942,
+        "capped_fraction": 0.49925496955443155,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.016092823229624624,
+          0.08286884015875706,
+          0.13803181915611318,
+          0.38146564839465535,
+          1.44322955333258,
+          1.4856049044640267,
+          1.5075727944495294,
+          1.5261326841217822,
+          1.551303905443092
+        ],
+        "delta_quantiles": [
+          0.21246330564518442,
+          0.2937635890174938,
+          0.3260531173735924,
+          0.346151961130613,
+          0.47581069966419065
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "862d1b57f4a8b57050a935ea123a6135a8a4c7f4526d7db9ff6e785884f23b38"
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "5050f7f62f7321f1228f6b84de99b268845b577e1c56f23c5887696937ec73f1",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 497924,
+        "capped_context_occurrences": 248583,
+        "capped_fraction": 0.4992388396622778,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.01821495655225445,
+          0.05125690240705022,
+          0.1267679476601316,
+          0.38487073442754033,
+          1.4280756750372527,
+          1.477636688525129,
+          1.4980279067200069,
+          1.5134709592015225,
+          1.5321951012525514
+        ],
+        "delta_quantiles": [
+          0.2440373046834223,
+          0.3291675511501762,
+          0.3415867918875031,
+          0.3628865719141632,
+          0.45480991861704534
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "0fb506cc242608790e39b44c1c14c0a2d307ab09635a33d6bbd0adb18d30a774"
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "aebd75fc901380fc76f1143d17a2a7dd72e7ca9d5c33c6a974c3634e7311e0d7",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 494142,
+        "capped_context_occurrences": 246715,
+        "capped_fraction": 0.4992795593169575,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.015546474150579338,
+          0.05179770485962351,
+          0.12608322112357143,
+          0.38291078823793956,
+          1.4345341761301789,
+          1.4775370431360517,
+          1.4978991980527958,
+          1.5179147686883092,
+          1.5448843657085876
+        ],
+        "delta_quantiles": [
+          0.214473680905946,
+          0.3324224354014356,
+          0.34384850113496424,
+          0.3673795394508145,
+          0.43798107593689223
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "d13041a575b52427628f485032ac31edfdab48d3d7563c75dd19b5e9b4238650"
+    },
+    {
+      "partition": "P2",
+      "fold": 0,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "14024adb82e997e044e0ecbdd09a2bc0f7b09ca5cfb55b9dcf70a36a28d9243f",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 497781,
+        "capped_context_occurrences": 248508,
+        "capped_fraction": 0.49923158979551246,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.01908391573851373,
+          0.051468011175830206,
+          0.12533874487892038,
+          0.3788441547509262,
+          1.4415775737290915,
+          1.477982161432327,
+          1.5051700379284638,
+          1.5216989363461,
+          1.5293509449664149
+        ],
+        "delta_quantiles": [
+          0.2571354804069052,
+          0.3255344410408676,
+          0.34239787353759743,
+          0.3675130584360409,
+          0.4608033900750939
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "e4ee624186d3fcdc5128249ead8fa9c1fd2a3fbacff18c375d787778ca4c80f0"
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "c2e6a0d6b10e654cbc1d020948042ba0a853be3c3f18700c0b6366736c4ebdd2",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 489121,
+        "capped_context_occurrences": 244222,
+        "capped_fraction": 0.4993079422065297,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.016167930813748354,
+          0.04566760882327608,
+          0.12581170070753858,
+          0.42756608370090393,
+          1.4147218015052205,
+          1.4723415459217641,
+          1.4960345885915642,
+          1.513238200239976,
+          1.5429108148766342
+        ],
+        "delta_quantiles": [
+          0.22159964893789508,
+          0.2791745929547198,
+          0.28932107435034615,
+          0.3237612038643687,
+          0.4097433734532845
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "066c39bf6ebf9ff16dfc0697a681f3d08fc69033366158b198ee28da0291ce19"
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "96bae36f1eb018f60e633f0779d83152fec557e1b9e5cc5fd4d7294b2109025a",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 485590,
+        "capped_context_occurrences": 242400,
+        "capped_fraction": 0.49918655656006095,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.017186729870666675,
+          0.045928918244399035,
+          0.12662142052660447,
+          0.43044832780028597,
+          1.4219722203198788,
+          1.4681240367065076,
+          1.4932955738648879,
+          1.5090048768738629,
+          1.5253957175633646
+        ],
+        "delta_quantiles": [
+          0.22816902174374976,
+          0.27667408746684474,
+          0.2933353140588586,
+          0.3194705315851733,
+          0.3987124331555516
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "92c74b5eece1c2b04a26df61f3e855976d4e52f3adca61af51c7a132ec38442b"
+    },
+    {
+      "partition": "P2",
+      "fold": 1,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "9f3de884b90854b6e16b18779e19486ee93bb370b19ed399863e80e0b698cc3d",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 488526,
+        "capped_context_occurrences": 243876,
+        "capped_fraction": 0.49920782107810024,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.015676287444806185,
+          0.04494145478382436,
+          0.12474272173705594,
+          0.42842868484607094,
+          1.4236781976316035,
+          1.4714369736238317,
+          1.4929623151008824,
+          1.5062851875805892,
+          1.52486450731343
+        ],
+        "delta_quantiles": [
+          0.22029316070720106,
+          0.2762663987471544,
+          0.28932107435034615,
+          0.32118427463691324,
+          0.45221602182228915
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "aaaa125591c0d610b4f46bce36df07bac35329b27bd58e7e13bbcf742e989684"
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "347cedda65e66e65255436917576da55041d322f9e6056c88cc37a797eeeb33e",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 469549,
+        "capped_context_occurrences": 234411,
+        "capped_fraction": 0.4992258528928823,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.021511665974530247,
+          0.05495293266113206,
+          0.12592136521939493,
+          0.4103122732625604,
+          1.4227711111000245,
+          1.4730521294057712,
+          1.5050953100227018,
+          1.5199029614937356,
+          1.5251002871095287
+        ],
+        "delta_quantiles": [
+          0.21276659681047544,
+          0.27024443076446325,
+          0.2933353140588586,
+          0.3377377941584476,
+          0.4464803994541997
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "1d150537ac06bc683426db73406ad18c0685bd4fee6cd7b1caa63e9ac18d6490"
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "e3103c87f021800560c54837ca6f6f5e7c5fcb1ffbdb295933c99c491869b8ae",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 468386,
+        "capped_context_occurrences": 233827,
+        "capped_fraction": 0.4992185932115819,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.021513513433354097,
+          0.05412660052931668,
+          0.12369176254287303,
+          0.40832119981749837,
+          1.4257986063041663,
+          1.4773764779744383,
+          1.5053825570734407,
+          1.5242372393261279,
+          1.543002259965693
+        ],
+        "delta_quantiles": [
+          0.22010527972022428,
+          0.2719189200900453,
+          0.284121755587997,
+          0.3377377941584476,
+          0.4464803994541997
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "e15b3d5d3da273715cd7db5e0fdc95aa78f5c9c418fd2b571366a23625b9ed21"
+    },
+    {
+      "partition": "P2",
+      "fold": 2,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "31bbffd37b6a14024672e804e8e46968eda5fa9759c65832bd67d75eeb99ebb3",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 469686,
+        "capped_context_occurrences": 234507,
+        "capped_fraction": 0.49928462845390326,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.021185873939340606,
+          0.054364860308462576,
+          0.12366871209163055,
+          0.4065062207307731,
+          1.4205215798638624,
+          1.4761397745052607,
+          1.503005250453638,
+          1.518739292252939,
+          1.533276747551941
+        ],
+        "delta_quantiles": [
+          0.1914410713360125,
+          0.27007423229865063,
+          0.2880527971802815,
+          0.3310134981775359,
+          0.4777396820270706
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "018f4cf060e7f70589d83afa4e118f6069775d3ca19085cf6725620eb3cd3eed"
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "seed": 30001,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "28d17ad67505b88e6666baaff49a405f6443ba481bbc723c56191ae28c41f548",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 520343,
+        "capped_context_occurrences": 259811,
+        "capped_fraction": 0.4993071877588437,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.021110871627236565,
+          0.05346473527179343,
+          0.1368081363569901,
+          0.3849344544544368,
+          1.4315558459231679,
+          1.4692018070717154,
+          1.498650853154937,
+          1.5147114720903612,
+          1.5243126993669407
+        ],
+        "delta_quantiles": [
+          0.23694948979226826,
+          0.33669194550736004,
+          0.35132808927926806,
+          0.3837772591198486,
+          0.4978473584201718
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "88c4367133bc91cb91b14ef6a5f0511c504802793675f9efd9afe7ddd8e14765"
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "seed": 30002,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "745fc650619bf39dfe847733c891fad636b14fa29a3410889ed64185ccb75cf1",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 520889,
+        "capped_context_occurrences": 260072,
+        "capped_fraction": 0.4992848764324069,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.01966958823850493,
+          0.056646572457171536,
+          0.13693733673429356,
+          0.38905642513896355,
+          1.4269245089368006,
+          1.4683116642782572,
+          1.4949819928173318,
+          1.5111426642501198,
+          1.5282393002877797
+        ],
+        "delta_quantiles": [
+          0.25881581899913264,
+          0.3356390174915993,
+          0.353575393922803,
+          0.3920934895641733,
+          0.5075002109974636
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "2a366ef888784381d1b4dafc86218a1fcef9cb287ca7893f6c4528fea482230a"
+    },
+    {
+      "partition": "P2",
+      "fold": 3,
+      "seed": 30003,
+      "weight_audit": {
+        "status": "PASS",
+        "pairs_verified": 819,
+        "complete": true,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "238d5ea1f5592e52363807afcb47cd82d87ee91b1e7e7b0a643c191b2aa9cbb4",
+        "formula_and_context_order_exact": true,
+        "fitting_context_occurrences": 518382,
+        "capped_context_occurrences": 258838,
+        "capped_fraction": 0.49931903499735714,
+        "quantile_levels": [
+          0,
+          0.01,
+          0.05,
+          0.25,
+          0.5,
+          0.75,
+          0.95,
+          0.99,
+          1
+        ],
+        "weight_quantiles": [
+          0.022295610110438624,
+          0.054708573791521484,
+          0.13718393893360972,
+          0.38651694656511965,
+          1.4252204793175867,
+          1.4698010012329445,
+          1.4975130412455353,
+          1.5134273742858289,
+          1.5192703782683257
+        ],
+        "delta_quantiles": [
+          0.23694948979226826,
+          0.33669194550736004,
+          0.353575393922803,
+          0.3837772591198486,
+          0.5364898289685648
+        ]
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "a2d013b923f820ea885c04d69c089131cd1865de7bda7abf713b9ba977645007"
+    }
+  ],
+  "finished_utc": "2026-11-04T16:53:01.595839+00:00"
+}

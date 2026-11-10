@@ -1,19 +1,8 @@
 \subsection{Throughput and program-incumbent diagnostics}\label{app:round-throughput}\label{app:program-gain-distribution}\label{app:current-program-clock}
 
-The 20-round 2696--2715 slice in \cref{fig:fw-round-throughput}, captured
-at 06:54 UTC on 1 November 2026, has no adapter admission. Summary and
-admission journals agree on candidate utility, recorded best, acceptance
-and best-round identity. \Cref{fig:fw-live-round-throughput} adds a later
-capture. Completed-round throughput divides distinct training contexts
-by full round time; it differs from presentations per training second and
-does not count distinct tasks across rounds.
-
-The increments in \cref{fig:fw-program-gain-distribution} are logged
-utility changes, not Elo changes or independent performance estimates.
-The event counts in \cref{fig:fw-current-program-clock} are checked
-against the promotion journal.
-
+% Defined before the text, so the figure can head the page after D.18 opens.
 \begin{figure*}[!t]
+  \setlength{\abovecaptionskip}{4pt}
   \begin{minipage}[t]{\dimexpr.5\textwidth-.5\columnsep\relax}
   \vspace{0pt}
   \centering
@@ -24,7 +13,7 @@ against the promotion journal.
   that round's full wall time (contexts per second), including all work and
   waits. The dashed line divides the window's summed counts by summed time.
   Repeated contexts across rounds are not independent tasks; this is an
-  operating observation, not deployment throughput.
+  operating observation, not \mbox{deployment} throughput.
   Scope: \cref{sec:method-status}.}
   \label{fig:fw-live-round-throughput}
   \end{minipage}\hfill
@@ -37,10 +26,10 @@ against the promotion journal.
   The empirical cumulative distribution gives each of the nine strict events
   equal weight; the horizontal axis is logarithmic. An increment is the
   journaled new utility minus its previous incumbent utility, computed
-  from unrounded values. All 20 completed rounds were checked against the
-  journal; 13 had no event and contribute no zero-gain observation.
+  from unrounded values. All 20 completed rounds are checked against the
+  journal; 13 have no event and contribute no zero-gain observation.
   The window records zero adapter admissions. Event-level confidence
-  intervals are unavailable; the curve is descriptive, without uncertainty
+  intervals are unavailable; the curve is \mbox{descriptive,} without uncertainty
   bands. Scope: \cref{sec:method-status}.}
   \label{fig:fw-program-gain-distribution}
   \end{minipage}
@@ -59,7 +48,20 @@ against the promotion journal.
   \num{1987.27}\,s (21.74 events per hour). All 20 rounds are retained,
   including 10 with no event. The window records zero adapter admissions
   and no retained-utility gain; these program events do not measure
-  independent first-proposal or serving performance. Scope: \cref{sec:method-status}.}
+  independent first-proposal or game-day \mbox{serving performance. Scope: \cref{sec:method-status}.}}
   \label{fig:fw-current-program-clock}
   \end{minipage}
 \end{figure*}
+
+The 20-round 2696--2715 slice in \cref{fig:fw-round-throughput}, captured
+at 06:54 UTC on 1 November 2026, has no adapter admission. Summary and
+admission journals agree on candidate utility, retained best, admission
+and best-round \mbox{identity.} \Cref{fig:fw-live-round-throughput} adds a later
+capture. Completed-round throughput divides distinct training contexts
+by full round time; it differs from presentations per training second and
+does not count distinct tasks across rounds.
+
+The increments in \cref{fig:fw-program-gain-distribution} are logged
+utility changes, not Elo changes or independent performance estimates.
+The event counts in \cref{fig:fw-current-program-clock} are checked
+against the logged \mbox{promotion journal.}

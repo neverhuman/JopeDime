@@ -2,18 +2,18 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Announced COMPARATORS-20261110 PR-1 workspace registration adds only the dependency-free jope-comparators package record to Cargo.lock (its sole dev-dependency, proptest, was already locked). Append this ADR-0004 evaluator identity and lineage fixture provenance edge after the v1.0.0 transition; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
   "plan_reference": "COMPARATORS-20261110 PR-1 (jope-comparators core crate); owner request relayed 2026-11-10 01:36Z; ADR-0004 identity-only procedure",
-  "source_commit": "ea472077980dd180e12715c89522db572b006eda",
-  "base_commit": "2ece0cbf127d7a4c1181eccb96e815a0186e4bfa",
+  "source_commit": "cdfe3566c1bd54acdf91ef157eccb3fd3c0e13b0",
+  "base_commit": "6300419f3a7a8a81bafea529193286850451e32a",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "7b2de8c213dbd499657acf55a157c8564d29a9588b134c0544dc02ed04ba7f27",
-      "after": "89ed8c61c039147c43b2c52df1018026fb7c17d97cf799b853f7a8b15a0cac1a"
+      "after": "a4b1ea3736376fc39f74188b0bea70435a6241bc139b4901370fe6087da5c4ae"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "220c91624ceab0daa9671f98fe73019b65b0f4e855b6616d9d72a04e28b4d76f",
-      "after": "b7e37b654f83940349d22a62869f1e1584f56c471577077ae0a8961f9951854c"
+      "after": "7a2a23934f687fe05089c99d557d588d5744d7e5e21a19d4f6cee5d725adb1f8"
     }
   ],
   "before_identity_digest": "61be21b47b83b4a6507583500c30be90e088a5f9db02ed04e2ab88c2a180d670",

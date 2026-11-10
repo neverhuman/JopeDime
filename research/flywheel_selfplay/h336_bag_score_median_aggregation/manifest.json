@@ -1,0 +1,33 @@
+{
+  "schema": "jope.h336.manifest/v1",
+  "wave_id": "H336",
+  "disposition": "INCOMPLETE_SPEC_MISMATCH",
+  "prereg_commit": "e60eb43c8932c9f745fe46d970f8746862546c2a",
+  "source_sha256": {
+    "test_source_contract.py": "f5f9f982935a9c7b34e6f77c2aa6b07672074ecc66d2fa6e8733ccd62926b315",
+    "base_run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "base_bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "base_veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "base_ensemble.py": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+    "metrics.json": "87d302d71879a360130bf8bb98db61a7d9d0b9f3b76b54744f7ce11b893cdd5d",
+    "resource_receipt.json": "74054e74604485d781fa389cf774c2de74198f270ce04812cff8a24dd40a9977",
+    "tests_receipt.json": "6f818ad0748fd081aa3f2b2ca2d58fec4bd0f1cafecad74eb7a28c1a72b190a7",
+    "source_audit.json": "49f5b077da1a9a637350cab15d86b4811cad3d69b42b050de4d2edec6837f9f4",
+    "PREREG.md": "b51e8415baf8cd606f8c30f7ecede9fb91e29bb2eb81ed70339468a8071f9299",
+    "source_pins.json": "23e96fb8711afc4b35432572c5f3f40d11f04dfb75b26448d0aa287d36f2fd3b",
+    "README.md": "55cdc20fef2ecf985baded3ee4d1222533a8e59703fc640ebeb03c026c2d1259",
+    "base_h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+  },
+  "tests_passed": 12,
+  "scientific_verdict": null,
+  "scientific_execution": "NOT_RUN",
+  "evidence_archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H336/astra-20261104T213200Z/h336_evidence.tar.gz",
+    "version_id": "H9JLWGzWcT6DjClDA5Y3qFY9XZ3qfcyg",
+    "sha256": "2e91c3f3a8a04aaac8c758ca87232570a240a7d910db383f7e9ab09b8b74baa7",
+    "bytes": 227527,
+    "exact_version_get_verified": true,
+    "members_verified": 71
+  },
+  "archive_member_inventory_sha256": "bc1f7e95a0e24f35415135f09d04e736849b147bf7c2e5fefc385a7cd06a4a15"
+}

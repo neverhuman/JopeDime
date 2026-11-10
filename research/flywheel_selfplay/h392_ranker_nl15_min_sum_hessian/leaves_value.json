@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "wave": "H352",
+  "utc": "2026-11-05T08:08:56.468604+00:00",
+  "BASE_effective_lambda_l1": [
+    0.0
+  ],
+  "BASE_effective_lambda_l2": [
+    1.0
+  ],
+  "BASE_effective_min_sum_hessian_in_leaf": 0.001,
+  "BASE_sigmoid": 1.0,
+  "BASE_effective_num_leaves": [
+    7
+  ],
+  "BASE_effective_max_depth": [
+    3
+  ],
+  "treatment_num_leaves": 15,
+  "treatment_reg_lambda": 1.0,
+  "rankers_verified": 972,
+  "veto_SHA_identities_verified": 108,
+  "model_inventory_sha256": "be06741d1011e3b6693b6862d8117bba8729b21b9006f03570c9d73b8b0a6518",
+  "optimizer_fits": 0,
+  "BASE_refits": 0,
+  "model_predictions": 0
+}

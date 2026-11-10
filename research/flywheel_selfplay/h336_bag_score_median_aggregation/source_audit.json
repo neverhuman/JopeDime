@@ -1,0 +1,190 @@
+{
+  "status": "PRECONDITION_FAILED",
+  "wave_status": "INCOMPLETE_SPEC_MISMATCH",
+  "reason": "No arithmetic-mean reduction over bag raw scores exists on pinned BASE ENS_VOTE2 scoring path",
+  "reachable_functions": [
+    {
+      "file": "base_run_h303.py",
+      "function": "score_members",
+      "line": 75,
+      "end_line": 81,
+      "ast_sha256": "5341bdd781a086017a8dddca611f4daaf64829359d5622074240e4096d0d7c1b",
+      "calls": [
+        "ens.score_single_member_from_disk",
+        "outs.append",
+        "float"
+      ]
+    },
+    {
+      "file": "base_run_h303.py",
+      "function": "member_picks",
+      "line": 61,
+      "end_line": 68,
+      "ast_sha256": "e7b7decccc02a574a9238821fa9140218eba70e6237c3e2c79efd72f3849e60e",
+      "calls": [
+        "veto.mask",
+        "bagged.vote_counts",
+        "bagged.switch_by_votes",
+        "np.asarray",
+        "np.asarray",
+        "core.select_from_top4_scores",
+        "np.asarray",
+        "range"
+      ]
+    },
+    {
+      "file": "base_run_h303.py",
+      "function": "ens_picks",
+      "line": 71,
+      "end_line": 72,
+      "ast_sha256": "cd734effce6fc36f75cef7d25c2b9cd187178621b6fa67e4a382f6964838be46",
+      "calls": [
+        "ens.vote_consensus_pick",
+        "range",
+        "len"
+      ]
+    },
+    {
+      "file": "base_ensemble.py",
+      "function": "score_single_member_from_disk",
+      "line": 447,
+      "end_line": 499,
+      "ast_sha256": "6d117a4ef3f0902f957fb1a46a515a1c5ac4f9b48b4bd1c4d248c3daad0bb953",
+      "calls": [
+        "Path",
+        "np.asarray(X, dtype=np.float32).reshape",
+        "int",
+        "parse_margin",
+        "float",
+        "int",
+        "lgb.Booster",
+        "lgb.Booster",
+        "np.asarray(gate.predict(X_2d), dtype=np.float64).reshape",
+        "np.asarray(ranker.predict(X_2d, num_iteration=n_est), dtype=np.float64).reshape",
+        "veto.mask",
+        "np.stack",
+        "bagged.vote_counts",
+        "bagged.switch_by_votes",
+        "sha256_file",
+        "RuntimeError",
+        "sha256_file",
+        "RuntimeError",
+        "cell_info.get",
+        "cell_info.get",
+        "RuntimeError",
+        "core.select_from_top4_scores",
+        "lgb.Booster",
+        "np.asarray(bm.predict(X_2d, num_iteration=n_est), dtype=np.float64).reshape",
+        "bag_scores.append",
+        "np.asarray",
+        "str",
+        "str",
+        "ranker.num_feature",
+        "gate.num_feature",
+        "np.asarray",
+        "np.asarray",
+        "range",
+        "sha256_file",
+        "RuntimeError",
+        "bm.num_feature",
+        "RuntimeError",
+        "math.isinf",
+        "float",
+        "gate.predict",
+        "ranker.predict",
+        "str",
+        "np.asarray",
+        "bm.predict"
+      ]
+    },
+    {
+      "file": "base_ensemble.py",
+      "function": "vote_consensus_pick",
+      "line": 105,
+      "end_line": 111,
+      "ast_sha256": "8da3292d6fd9a2727280d037fdb8a6944c21cf7fcd1b8ceb3d4cff1d5740fc14",
+      "calls": [
+        "sorted",
+        "int",
+        "set",
+        "non_zero.count",
+        "int",
+        "int",
+        "int"
+      ]
+    },
+    {
+      "file": "base_bagged.py",
+      "function": "vote_counts",
+      "line": 56,
+      "end_line": 68,
+      "ast_sha256": "ab8c9294e5af8e23439b59537b5bf413e4f8ce5ec6ab1ecf07ef5ced19faab3a",
+      "calls": [
+        "len",
+        "np.zeros",
+        "math.isinf",
+        "enumerate",
+        "int",
+        "int",
+        "np.sum"
+      ]
+    },
+    {
+      "file": "base_bagged.py",
+      "function": "switch_by_votes",
+      "line": 71,
+      "end_line": 76,
+      "ast_sha256": "0aad9ccbc09e173622c7d1876e571f98da68b583ef6460c0ac924b15841f7a45",
+      "calls": [
+        "int",
+        "zip",
+        "int",
+        "int",
+        "int"
+      ]
+    },
+    {
+      "file": "base_h265_core.py",
+      "function": "select_from_top4_scores",
+      "line": 326,
+      "end_line": 340,
+      "ast_sha256": "1efed465e1e9748abb52b13075e3409f5c51f0e22e480d6e514839246a6323b8",
+      "calls": [
+        "math.isinf",
+        "int",
+        "np.argmax",
+        "float",
+        "float"
+      ]
+    },
+    {
+      "file": "base_veto.py",
+      "function": "mask",
+      "line": 45,
+      "end_line": 50,
+      "ast_sha256": "92c2315d54de33cc935f01f17a657f5c9469b7f6f4835367a090647d97f8adc4",
+      "calls": [
+        "np.array"
+      ]
+    }
+  ],
+  "existing_bag_reduction": "sum of Boolean per-bag margin comparisons; one vote per bag",
+  "replacement_call_sites": 0,
+  "experiment_patch": null,
+  "scientific_verdict": null,
+  "source_pins_sha256": "23e96fb8711afc4b35432572c5f3f40d11f04dfb75b26448d0aa287d36f2fd3b",
+  "tests": {
+    "status": "PASS",
+    "collected": 12,
+    "executed": 12,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "scope": "Data-free source/selection fixtures only; no model or scientific data access",
+    "scientific_regression": "NOT_RUN",
+    "model_hash_audit": "NOT_RUN",
+    "medbag_scoring": "NOT_RUN"
+  },
+  "prereg_commit": "e60eb43c8932c9f745fe46d970f8746862546c2a",
+  "checked_utc": "2026-11-04T21:34:54.986001+00:00"
+}

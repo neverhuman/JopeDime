@@ -1,4 +1,5 @@
 from _runner_case_support import *
+import time
 
 
 class TrimTests(unittest.TestCase):
@@ -39,12 +40,23 @@ class TrimTests(unittest.TestCase):
             p = make(f'ci2/debug/deps/libfoo-{h(i)}.rlib', i)
             if i < 1:
                 selected.add(p)
+        for i in range(9):   # every profile directory is covered, each counted separately
+            p = make(f'ci/dist-ci/deps/libfoo-{h(i)}.rlib', i)
+            if i < 3:
+                selected.add(p)
+            p = make(f'ci/release/deps/foo-{h(i)}', i)
+            if i < 3:
+                selected.add(p)
         # Never candidates: other names, other directories, deeper paths, evidence.
         for i in range(9):
             make(f'ci/debug/build/foo-{h(i)}/out/libfoo-{h(i)}.rlib', i)
             make(f'ci/tmp/libfoo-{h(i)}.rlib', i)
-            make(f'ci/dist-ci/deps/libfoo-{h(i)}.rlib', i)
+            make(f'ci/tmp/deps/libfoo-{h(i)}.rlib', i)
+            make(f'ci/build/deps/libfoo-{h(i)}.rlib', i)
+            make(f'ci/incremental/deps/libfoo-{h(i)}.rlib', i)
+            make(f'ci/evidence/deps/libfoo-{h(i)}.rlib', i)
             make(f'ci-evidence-retained/debug/deps/libfoo-{h(i)}.rlib', i)
+            make(f'ci/debug/deps/nested/libfoo-{h(i)}.rlib', i)
             make(f'ci/debug/deps/README-{i}', i)
             make(f'ci/debug/deps/libbar-{i}23.rlib', i)
             make(f'ci/debug/deps/libbaz-{h(i).upper()}.rlib', i)
@@ -88,11 +100,49 @@ class TrimTests(unittest.TestCase):
                 again = self.run_trim(root, '6', '--apply', awk=awk)
                 self.assertEqual((0, ''), (again.returncode, again.stdout))
 
+    def test_drops_executables_neither_built_nor_run_recently(self):
+        now = time.time()
+        day = 86400
+
+        def make(root, rel, built, ran, link=False):
+            path = root / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b'x')
+            if link:
+                os.link(path, path.parent.parent / rel.split('/')[-1].rsplit('-', 1)[0])
+            os.utime(path, (now - ran * day, now - built * day))
+            return path
+        with self.scratch() as name:
+            root = Path(name) / 'v'
+            stale = {
+                make(root, 'ci/debug/deps/old-0000000000000001', 30, 30),
+                make(root, 'ci/release/deps/old-0000000000000002', 9, 8),
+            }
+            kept = [
+                make(root, 'ci/debug/deps/built-0000000000000003', 1, 40),    # built recently
+                make(root, 'ci/debug/deps/ran-0000000000000004', 40, 2),      # run recently
+                make(root, 'ci/debug/deps/linked-0000000000000005', 40, 40, link=True),  # uplifted
+                make(root, 'ci/debug/deps/libold-0000000000000006.rlib', 40, 40),  # not an executable
+                make(root, 'ci/debug/deps/old-0000000000000007.d', 40, 40),
+                make(root, 'ci/tmp/old-0000000000000008', 40, 40),
+                make(root, 'ci-evidence-retained/debug/deps/old-0000000000000009', 40, 40),
+            ]
+            without = self.run_trim(root, '3')
+            self.assertEqual((0, ''), (without.returncode, without.stdout), without.stderr)
+            dry = self.run_trim(root, '3', '--unused-days=7')
+            self.assertEqual(0, dry.returncode, dry.stderr)
+            self.assertEqual({str(p) for p in stale}, {line.split('\t')[0] for line in dry.stdout.splitlines()})
+            applied = self.run_trim(root, '3', '--apply', '--unused-days=7')
+            self.assertEqual((0, dry.stdout), (applied.returncode, applied.stdout), applied.stderr)
+            self.assertFalse(any(p.exists() for p in stale))
+            self.assertTrue(all(p.exists() for p in kept))
+
     def test_refuses_bad_arguments(self):
         with self.scratch() as name:
             root = Path(name) / 'v'
             root.mkdir()
-            for args in [('0',), ('-1',), ('six',), ('6', '--delete'), ()]:
+            for args in [('0',), ('-1',), ('six',), ('6', '--delete'), (), ('6', '--unused-days=0'),
+                         ('6', '--unused-days=x'), ('6', '--unused-days')]:
                 with self.subTest(args=args):
                     self.assertNotEqual(0, self.run_trim(root, *args).returncode)
             missing = self.run_trim(root / 'absent', '6', '--apply')
@@ -135,7 +185,7 @@ class TrimTests(unittest.TestCase):
                 self.assertIn(flag, run[0])
             mounts = [args[i + 1] for i, a in enumerate(args) if a == '-v']
             self.assertEqual(['jope-pr-ci-target:/v', '/opt/jope-runner/trim-deps.sh:/opt/jope-runner/trim-deps.sh:ro'], mounts)
-            self.assertEqual(['/v', '3', '--apply'], args[-3:])
+            self.assertEqual(['/v', '3', '--unused-days=7', '--apply'], args[-4:])
             manifests = sorted((state / 'trim').glob('*-ci.tsv'))
             self.assertEqual(1, len(manifests))
             self.assertIn('libfoo-0123456789abcdef.rlib\t10\t1.5', manifests[0].read_text())

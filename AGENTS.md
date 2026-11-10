@@ -166,13 +166,17 @@ receipt records the agent's findings without requiring that approval.
 1. Claim the checkout as above and preserve existing commit authorship. Verify the posting
    identity with `gh-role writer api user --jq .login`. Freeze the final full head SHA and retain
    the PR, commit inventory and complete review diff.
-2. Dispatch `gh-role writer workflow run ci.yml --repo neverhuman/JopeDime --ref BRANCH`.
-   Record dispatch time, then identify the new manual run by branch, creation time and frozen
-   source SHA. Retain run ID, full source SHA and attempt; never substitute an older success.
-   All declared full manual lanes, including both Rust test shards, frontend tests and aggregate,
-   must pass at that head. A path-gated PR run may legitimately skip declared lanes; retain its
-   synthetic checkout SHA separately. Missing, stale, cancelled, failed and zero-test results
-   are not passes. Use **Re-run all jobs** for another attempt.
+2. Start CI by marking the PR **ready for review** (`gh-role writer pr ready PR_NUMBER --repo
+   neverhuman/JopeDime`). `ci.yml` runs on `pull_request: [ready_for_review]` only. A
+   `workflow_dispatch` on any ref other than `main` fails at the `changes` job (manual
+   classification runs only on `main`), so a branch cannot be tested by dispatching `ci.yml`.
+   To re-test a changed head, convert the PR back to draft and mark it ready again. Record the
+   time, then identify the new run by PR, creation time and frozen head SHA. Retain run ID,
+   full head SHA and attempt; never substitute an older success. All declared lanes, including
+   the three Rust test slices, frontend tests and aggregate, must pass at that head. A
+   path-gated PR run may legitimately skip declared lanes; retain its synthetic checkout SHA
+   separately. Missing, stale, cancelled, failed and zero-test results are not passes. Use
+   **Re-run all jobs** for another attempt.
 3. Review the complete candidate and relevant context, including substantive test evidence and
    unresolved discussions. The same implementing agent may perform this review. Record the
    exact full SHA, findings and disposition in a durable receipt or native `COMMENT` review

@@ -5,7 +5,7 @@ use std::{collections::VecDeque, fmt::Write as _};
 use jope_api::decimal::DecimalU64;
 use jope_api::{
     AlgorithmAcceptedBody, CompletionReason, Direction, EventBody, ExperimentOutcome, ExportKind,
-    Language, ParityStatus, Plan, PublicEvent, RunFinishedBody, Severity, Warning, WarningState,
+    Language, Plan, PublicEvent, RunFinishedBody, Severity, Warning, WarningState,
 };
 
 use crate::terminal::{sanitize_user_string, Ansi16Color, Symbols, Theme, ThemeColor, ThemeToken};
@@ -49,6 +49,7 @@ pub fn render_transcript(
     let mut untimed_no_improvements = 0usize;
     let mut no_improvement_start = None;
     let mut last_no_improvement_summary = None;
+    let mut champion_summaries = std::collections::BTreeMap::<String, String>::new();
 
     for event in events {
         let at = timestamp_seconds(&event.time);
@@ -59,6 +60,8 @@ pub fn render_transcript(
                 render_plan(&mut cards, plan, width, theme);
             }
             EventBody::AlgorithmAccepted(accepted) => {
+                champion_summaries
+                    .insert(accepted.algorithm_id.to_string(), accepted.summary.clone());
                 if accepted.previous_value.is_none() {
                     render_first_model(&mut cards, accepted, width, theme, symbols);
                 } else {
@@ -127,7 +130,7 @@ pub fn render_transcript(
                     export.artifact_id,
                     export_kind_name(export.kind),
                     languages,
-                    parity_name(export.parity_status)
+                    export.parity_status.explanation()
                 );
                 append_card(
                     &mut cards,
@@ -157,7 +160,14 @@ pub fn render_transcript(
                 no_improvement_times.clear();
                 untimed_no_improvements = 0;
                 no_improvement_start = None;
-                render_run_finished(&mut cards, finished, width, theme, symbols);
+                render_run_finished(
+                    &mut cards,
+                    finished,
+                    &champion_summaries,
+                    width,
+                    theme,
+                    symbols,
+                );
             }
             EventBody::RunState(_)
             | EventBody::RunConfig(_)

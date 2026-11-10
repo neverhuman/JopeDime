@@ -1,0 +1,11 @@
+run_index,first_round,last_round,recorded_rejections,left_boundary,right_boundary,left_admitted_round,right_admitted_round,between_admissions,first_source_line,last_source_line,members_sha256
+1,775,781,7,capture_start,admission,,782,0,1,7,6508d03b1099ea1e1d4830fed64bc14bf9ba98e91f8ea8456d0b01fadd9326e2
+2,783,784,2,admission,admission,782,785,1,9,10,dba88ddfce2bcf801a5bfe737dec293fcb48141a6f001a70dfd90335838dc37d
+3,786,858,73,admission,admission,785,859,1,12,84,8aa198ee6af1bcc75856edc3fb1b226c0c3c72218eb417d93655f7a2a1c602d0
+4,860,881,22,admission,admission,859,882,1,86,107,c574afbf0a9a173656032d2424f0855bf62a49188acb4ba16a59d9666a91f225
+5,883,2749,1867,admission,admission,882,2750,1,109,1975,cdce363e4bb99c29128e01a52b3daaebcc3b65ddd76c5f3a8574fd68e21610c1
+6,2751,2794,44,admission,admission,2750,2795,1,1977,2020,f7504bae41e03c79f38b8806a644aba5cc8a266cdf02e49ca82d94c829ec62e6
+7,2796,3099,304,admission,admission,2795,3100,1,2022,2325,87dcb11e41f2ae2b8fa2ef884afbfac567022180dd383a1e222e68838ddc5621
+8,3101,3174,74,admission,admission,3100,3175,1,2327,2400,fa59e2b2096f05b1dbe40cb2a68bf6682a78dd8eb7a622789e66c7e2ee8e5f5c
+9,3176,4330,1155,admission,missing_decision,3175,,0,2402,3556,29bf22a435167a9f64a6d72fa13448115c0ec149c146386f9504f5bafea1dfb8
+10,4332,5049,718,missing_decision,capture_end,,,0,3557,4274,6a7cdb723cbed3e45307962a8a85ef227c26bea06f339709370bc0c92eb20c84
