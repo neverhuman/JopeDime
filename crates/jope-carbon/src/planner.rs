@@ -140,8 +140,8 @@ pub fn estimate_working_set_mb(fit_rows: usize, features: usize) -> CarbonResult
     }
     // Base runtime + allocator overhead (~64 MB) + JMAT column matrix (8 B/cell) + 6x scratch/residual f64 vectors.
     let matrix_bytes = (fit_rows as u128) * (features as u128) * 8;
-    let scratch_bytes = (fit_rows as u128) * (features.min(32).max(6) as u128) * 8;
-    let total_mb = 64u128 + ((matrix_bytes + scratch_bytes + 1_048_575) / 1_048_576);
+    let scratch_bytes = (fit_rows as u128) * (features.clamp(6, 32) as u128) * 8;
+    let total_mb = 64u128 + (matrix_bytes + scratch_bytes).div_ceil(1_048_576);
     usize::try_from(total_mb).map_err(|_| CarbonError::InvalidPlanInput {
         reason: "working-set byte estimate overflowed usize",
     })

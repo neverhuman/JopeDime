@@ -22,6 +22,7 @@
 //! # Ok::<(), jope_client::Error>(())
 //! ```
 
+pub mod carbon_regions;
 pub mod discover;
 pub mod files;
 pub mod http;
