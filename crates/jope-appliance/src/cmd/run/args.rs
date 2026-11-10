@@ -1,5 +1,5 @@
 use clap::Args;
-use jope_api::{ids::DatasetId, Language, RunSpec};
+use jope_api::{ids::DatasetId, Language, ObjectiveSpec, RunSpec, Task};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::{path::PathBuf, str::FromStr};
@@ -32,8 +32,10 @@ pub struct RunArgs {
         default_value = "{\"kind\":\"random\",\"holdout_fraction\":0.2,\"group_column\":null,\"time_column\":null}"
     )]
     pub split: String,
-    #[arg(long, default_value = "rmse")]
-    pub objective: String,
+    /// Defaults to the task's primary metric: rmse for regression, auroc for binary and log_loss
+    /// for multiclass (#2132).
+    #[arg(long)]
+    pub objective: Option<String>,
     #[arg(long, default_value = "medium")]
     pub effort: String,
     #[arg(long, default_value = "{\"evaluations\":null,\"wall_seconds\":null}")]
@@ -97,6 +99,27 @@ impl RunArgs {
         self.m1_plan.is_some()
     }
 
+    /// Fill in the task's default objective when none was given, returning the line that says so.
+    /// Call it once the task is resolved (after `--task auto` reads the dataset profile).
+    pub fn default_objective(&mut self) -> anyhow::Result<Option<String>> {
+        if self.objective.is_some() {
+            return Ok(None);
+        }
+        let task: Task = parse_value(&self.task)?;
+        let objective = crate::draft::default_objective(task);
+        self.objective = Some(objective.to_owned());
+        let reason = match task {
+            Task::Auto => "the default when the task is not inferred".to_owned(),
+            task => format!(
+                "the default for a {} task",
+                serde_json::to_value(task)?.as_str().unwrap_or_default()
+            ),
+        };
+        Ok(Some(format!(
+            "Objective: {objective} ({reason}; choose another with --objective)"
+        )))
+    }
+
     pub fn run_spec(&self) -> anyhow::Result<RunSpec> {
         let dataset = DatasetId::from_str(self.dataset.as_deref().ok_or_else(|| {
             anyhow::anyhow!("CSV must be registered before constructing RunSpec")
@@ -108,14 +131,18 @@ impl RunArgs {
             .map(DatasetId::from_str)
             .transpose()
             .map_err(|_| anyhow::anyhow!("invalid test dataset identifier"))?;
+        let task: Task = parse_value(&self.task)?;
         Ok(RunSpec {
             dataset,
             target: self.target.clone(),
-            task: parse_value(&self.task)?,
+            task,
             ignore_columns: self.ignore_columns.clone(),
             test_dataset,
             split: parse_json(&self.split)?,
-            objective: parse_value(&self.objective)?,
+            objective: match &self.objective {
+                Some(objective) => parse_value(objective)?,
+                None => ObjectiveSpec::Name(crate::draft::default_objective(task).into()),
+            },
             effort: parse_value(&self.effort)?,
             budget: parse_json(&self.budget)?,
             landmarks: parse_value(&self.landmarks)?,

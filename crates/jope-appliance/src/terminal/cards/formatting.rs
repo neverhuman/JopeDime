@@ -181,14 +181,6 @@ pub(super) fn export_kind_name(kind: ExportKind) -> &'static str {
     }
 }
 
-pub(super) fn parity_name(status: ParityStatus) -> &'static str {
-    match status {
-        ParityStatus::Passed => "passed",
-        ParityStatus::Failed => "failed",
-        ParityStatus::Unavailable => "unavailable",
-    }
-}
-
 pub(super) fn completion_name(reason: CompletionReason) -> &'static str {
     match reason {
         CompletionReason::BudgetEvaluations => "evaluation budget reached",
