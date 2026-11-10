@@ -1,0 +1,15 @@
+{
+  "status": "DOCUMENTATION_ONLY",
+  "utc": "2026-11-04T18:15:56.764814+00:00",
+  "reason": "Clarify that native serialized-model audit checked the three REG overrides, not every serialized native parameter. Other invariants are covered by AST and fit-parameter audits.",
+  "old_readme_sha256": "4e1811e470e23cdb9bd55f019433e58dbc25dc6216c4a7723f0c0bc0cfb29220",
+  "new_readme_sha256": "880495b2527d8d95ad6096ff170ac0cac096e489e0196f0b3c13e6ed189357ed",
+  "previous_manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H327/astra-20261104T170100Z/manifest.json",
+    "version_id": "oH5nh813ZdtgxJdrttqsEBjuvQ2q4lNI",
+    "sha256": "7fa4575b99b75d3540d324878379a46d6d1f2b8fcf30df9a508a72f8a5624233",
+    "bytes": 4782,
+    "exact_version_get_verified": true
+  },
+  "fits_scores_metrics_unchanged": true
+}

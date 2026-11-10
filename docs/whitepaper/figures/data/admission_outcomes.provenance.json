@@ -2,8 +2,8 @@
   "schema": "whitepaper.admission-outcomes-figure/v1",
   "input_csv_sha256": "45434af46868347e5cceb0492247125b58fbff939dc08316de6efe44287edb46",
   "source_receipt_sha256": "d11514de533602e5786c6f2571b3632b2bb46badecb0a13b9eda0d9bd4419d9e",
-  "generator_sha256": "a61c33d1fb43452c5220da736628092945da8a78085d3073bacb369c7516bd8b",
-  "figure_sha256": "097776a7f4bf2b69dceae84a8d168565d3ccb8a16d6832dc5aefeb9a969a2bf0",
+  "generator_sha256": "42c6e87b1f486f0239892cc3ad847b44b15bcfbd2d7272c0099433fef4134068",
+  "figure_sha256": "f901c8256d44fb2520b4934a31fcf2160e4615cbf3a20643e7bea52a4a0e4f1e",
   "round_window": [
     883,
     3819
@@ -24,5 +24,18 @@
   "definition": "At completed round r, divide the cumulative accepted decisions in rounds883..r by r-882; split accepted strict utility gains from accepted exact ties using unrounded logged values and actual admission flags. Rejections remain in every denominator. This is a descriptive cumulative frequency, not a prospective or independent probability of improvement.",
   "scope": "Adaptive reused development observations, not independent first-proposal, training causality, transfer, serving or Elo qualification; exact loop/adapter/population/normalization closure remains pending.",
   "matplotlib_version": "3.10.8",
-  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --admission-outcomes"
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --admission-outcomes",
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      3.375,
+      1.9211538461538462
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
+  }
 }

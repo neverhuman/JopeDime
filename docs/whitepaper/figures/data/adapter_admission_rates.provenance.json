@@ -1,0 +1,51 @@
+{
+  "schema": "whitepaper.adapter-admission-rates-figure/v1",
+  "csv_sha256": "88adddc01885772fca626cb9a815050fba9a98579bc9908357a1ed1f0c605550",
+  "events_csv_sha256": "1b209ed8abcd25b0552c916f60d79731d926f469e16b4030a5686aa3a62e5d9c",
+  "source_receipt_sha256": "e6acc462bfdd3e2ad1e0ff43e14d6ab4c1dcfd2747c3680bae142662c83e7fe2",
+  "generator_sha256": "466efd414886007b4c76e5788abec1c121fe74b772a8f3f52ac890a2bd8e1d04",
+  "figure_sha256": "c7b85c2906fc11f5b33c2584016424bf6771fc15e3ceb3da7144acd972d43d43",
+  "source_prefix_sha256": "7c7d63d20a93885c7570e7160040bb718769f788fc1c0fbc408800eba4f90d97",
+  "rows": 3754,
+  "bins": 19,
+  "bin_denominators": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    154
+  ],
+  "missing_rounds": [
+    4331
+  ],
+  "action_counts": {
+    "restore_best_model_and_optimizer": 3746,
+    "accept_tie": 4,
+    "accept_improvement": 4
+  },
+  "scope": "Adaptive training-side adapter admissions per recorded decision. Includes ties; not strict utility gain, program-promotion success, calendar-time throughput or independent learning.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    6.75,
+    1.35
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_adapter_admission_rates.py"
+}

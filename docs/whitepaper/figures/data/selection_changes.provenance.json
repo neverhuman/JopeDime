@@ -2,8 +2,8 @@
   "schema": "whitepaper.selection-changes-figure/v1",
   "input_csv_sha256": "a0ea4013fa38bb3bbb8211b8a4399515b342f60f9dc4e966a1754259430d7e9e",
   "source_receipt_sha256": "7e99ca1ff5aaab722d661e1b85d8828b81294b0ef510c202d17e36d83bbeb07f",
-  "generator_sha256": "a61c33d1fb43452c5220da736628092945da8a78085d3073bacb369c7516bd8b",
-  "figure_sha256": "e3d22d8c0b291fe9e8b1c7fcd7bdff654e0b01da0f00118a5b388ea7707a2204",
+  "generator_sha256": "42c6e87b1f486f0239892cc3ad847b44b15bcfbd2d7272c0099433fef4134068",
+  "figure_sha256": "2b0e7aa3cc0bc7dd59933db811c6bcb82d843a119c3a5a06540c965eeafe40d9",
   "rows": 1000,
   "round_window": [
     2744,
@@ -31,5 +31,18 @@
   "field_definition": "Observer compares selected program identities against the recorded round882reference; candidate is pre-decision, retained is post-decision; counts use91ordereddevelopmentcontexts. Changes may reflect both adapter and candidate-pool variation.",
   "scope": "Adaptive repeatedly used development population; no independent first-proposal, deployment, transfer or learned writer/value-net benefit inferred",
   "matplotlib_version": "3.10.8",
-  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --selection-changes"
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --selection-changes",
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      3.375,
+      2.076923076923077
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
+  }
 }

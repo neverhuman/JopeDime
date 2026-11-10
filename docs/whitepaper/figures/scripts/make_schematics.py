@@ -1,31 +1,43 @@
 #!/usr/bin/env python3
-"""Generate conceptual & architectural schematics (Figures 2, 3, and 5).
+"""Generate the conceptual novelty, game-loop and reference-network schematics.
 
 Contains zero fabricated empirical results:
 - fig2_novelty_judgment.pdf: Conceptual 2D schematic of Novelty vs. Referee Value,
   with EurekaZero's single proposal (B=1) explicitly shown as an unmeasured
-  vertical question-mark interval ('?', tested in Section 7).
+  vertical question-mark interval ('?', to be tested in Section 7).
 - fig3_game_loop.pdf: Schematic of the innovation game loop (top blue row:
   game-day search=1 deployment; dashed box: training-only referee & ratchets).
-- fig5_network.pdf: Architectural schematic of the 27.8M historical reference
-  checkpoint showing the frozen 2,048-value encoder, grammar-masked writer
+- fig5_network.pdf: Architectural schematic of proposed reference training, showing the frozen 2,048-value encoder, grammar-masked writer
   pi_theta, and separate training-only ranking map v_psi (with explicit note
   that v_psi has no influence path into pi_theta's draw).
 """
 
 from pathlib import Path
+import hashlib
+import json
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+from matplotlib.text import Text
+from matplotlib import font_manager
 import numpy as np
 
 OUT = Path(__file__).resolve().parents[1]
 
 plt.rcParams.update(
     {
-        "font.family": "serif",
+        "font.family": "Liberation Serif",
+        "mathtext.fontset": "custom",
+        "mathtext.rm": "Liberation Serif",
+        "mathtext.it": "Liberation Serif:italic",
+        "mathtext.bf": "Liberation Serif:bold",
+        "mathtext.bfit": "Liberation Serif:bold:italic",
+        "mathtext.cal": "Liberation Serif:italic",
+        "mathtext.sf": "Liberation Serif",
+        "mathtext.tt": "Liberation Serif",
+        "mathtext.fallback": None,
         "font.size": 8,
         "axes.labelsize": 8.0,
         "axes.titlesize": 8.5,
@@ -36,6 +48,27 @@ plt.rcParams.update(
         "ps.fonttype": 42,
     }
 )
+
+
+def render_math_symbols(text):
+    # Liberation Serif lacks these three relation codepoints. Use equivalent
+    # constituent glyphs from the same face, preserving mathematical meaning.
+    return (text.replace(r"\gg", r">\hspace{-0.65}>")
+                .replace(r"\sim", r"\,\text{~}\,").replace(r"\mid", r"\,|\,"))
+
+
+def glyph_safe_size(text, requested=8.5):
+    # Matplotlib draws a first-level math script at 70% of its base size.
+    minimum = 10.5 if "$" in text and any(c in text for c in "^_") else 8.5
+    return max(requested, minimum)
+
+
+def finish_fonts(fig):
+    for text in fig.findobj(Text):
+        text.set_text(render_math_symbols(text.get_text()))
+        text.set_fontfamily("Liberation Serif")
+        text.set_math_fontfamily("stix" if r"\mathcal{R}" in text.get_text() else "custom")
+        text.set_fontsize(glyph_safe_size(text.get_text(), text.get_fontsize()))
 
 
 def make_fig2_novelty_judgment() -> None:
@@ -53,7 +86,7 @@ def make_fig2_novelty_judgment() -> None:
     ax.set_xlabel(
         "Distance from prior human solutions (novelty) $\\rightarrow$", labelpad=4
     )
-    ax.set_ylabel("Value judged by referee $\\mathcal{R}$ $\\rightarrow$", labelpad=4)
+    ax.set_ylabel("Value judged by referee $\\mathcal{R}$ $\\rightarrow$", labelpad=2)
 
     # Declared incumbent horizontal dashed line
     inc_y = 0.55
@@ -189,7 +222,7 @@ def make_fig2_novelty_judgment() -> None:
     ax.text(
         0.81,
         0.79,
-        "Learned proposer ($B = 1$)\n(height tested in Section 7)",
+        "Learned proposer ($B = 1$)\n(height to be tested\nin Section 7)",
         fontsize=7.2,
         color="#92400e",
         ha="center",
@@ -199,8 +232,11 @@ def make_fig2_novelty_judgment() -> None:
         ),
     )
 
-    fig.tight_layout(pad=0.25)
-    fig.savefig(OUT / "fig2_novelty_judgment.pdf")
+    finish_fonts(fig)
+    fig.tight_layout(pad=0.55)
+    finish_fonts(fig)
+    fig.savefig(OUT / "fig2_novelty_judgment.pdf",
+                metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
 
 
@@ -232,18 +268,18 @@ def _draw_box(
     )
     ax.add_patch(patch)
     weight = "bold" if bold else "normal"
-    ax.text(
-        x + w / 2,
-        y + h / 2,
-        text,
-        ha="center",
-        va="center",
-        fontsize=fontsize,
-        color=textcolor,
-        fontweight=weight,
-        zorder=4,
-        linespacing=1.2,
-    )
+    # Separate lines keep normal labels compact while math scripts stay >=7pt.
+    lines = text.split("\n")
+    sizes = [glyph_safe_size(line, fontsize) for line in lines]
+    heights = [size * 1.2 for size in sizes]
+    axes_height_pt = ax.get_window_extent().height * 72 / ax.figure.dpi
+    cursor = y + h / 2 + sum(heights) / (2 * axes_height_pt)
+    for line, size, height in zip(lines, sizes, heights):
+        cursor -= height / (2 * axes_height_pt)
+        ax.text(x + w / 2, cursor, render_math_symbols(line), ha="center", va="center", fontsize=size,
+                color=textcolor, fontweight=weight, zorder=4)
+        cursor -= height / (2 * axes_height_pt)
+
 
 
 def _draw_arrow(ax, x0, y0, x1, y1, color="#334155", ls="-", lw=1.05, rad=0.0):
@@ -450,6 +486,7 @@ def make_fig3_game_loop() -> None:
         fontweight="bold",
     )
 
+    finish_fonts(fig)
     fig.savefig(
         OUT / "fig3_game_loop.pdf", metadata={"CreationDate": None, "ModDate": None}
     )
@@ -458,8 +495,10 @@ def make_fig3_game_loop() -> None:
 
 def make_fig5_network() -> None:
     """Schematic: Writer pi_theta and separate ranking map v_psi in historical reference checkpoint."""
-    fig, ax = plt.subplots(figsize=(7.0, 2.6))
-    fig.subplots_adjust(left=0.005, right=0.995, bottom=0.005, top=0.995)
+    fig, ax = plt.subplots(figsize=(7.0, 2.9))
+    fig.subplots_adjust(left=0.005, right=0.995,
+                        bottom=(0.30 + 0.005 * 2.6) / 2.9,
+                        top=1 - 0.005 * 2.6 / 2.9)
     ax.set_xlim(0.0, 1.0)
     ax.set_ylim(0.0, 1.0)
     ax.axis("off")
@@ -479,7 +518,7 @@ def make_fig5_network() -> None:
     ax.text(
         0.03,
         0.955,
-        "Game day (search = 1): frozen encoder + single writer draw (map $v_\\psi$ absent)",
+        "Proposed game day (search = 1): frozen encoder + single writer draw (map $v_\\psi$ absent)",
         fontsize=8.6,
         fontweight="bold",
         color="#1e3a8a",
@@ -548,7 +587,7 @@ def make_fig5_network() -> None:
     ax.text(
         0.66,
         0.545,
-        "Training only: 27.8M reference checkpoint",
+        "Proposed training (reference design)",
         fontsize=8.2,
         fontweight="bold",
         color="#334155",
@@ -588,7 +627,7 @@ def make_fig5_network() -> None:
         y_mid,
         0.295,
         h_mid,
-        "Map $v_\\psi(z_p, z_w)$\nProgram embed $z_w = \\phi_{\\mathrm{S}}(w)$;\n4-head scorer ($\\mathcal{L}_{\\mathrm{map}} + \\mathcal{L}_{\\mathrm{BT}}$)",
+        "Map $v_\\psi(z_p, z_w)$\nProgram embed $z_w = \\phi_{\\mathrm{S}}(w)$;\n4 ranking heads ($\\mathcal{L}_{\\mathrm{map}} + \\mathcal{L}_{\\mathrm{BT}}$)",
         "#fef3c7",
         "#d97706",
         "#78350f",
@@ -660,14 +699,41 @@ def make_fig5_network() -> None:
         rad=0.05,
     )
 
+    fig.text(0.5, 0.068, "Inspected operating loop (Section 6.8): rule-based GP proposals, no neural writer.",
+             ha="center", va="center", fontsize=8.5, color="#334155")
+    fig.text(0.5, 0.024, "A cost-ranking adapter picks which proposals are scored.",
+             ha="center", va="center", fontsize=8.5, color="#334155")
+    finish_fonts(fig)
     fig.savefig(
         OUT / "fig5_network.pdf", metadata={"CreationDate": None, "ModDate": None}
     )
     plt.close(fig)
 
 
+def write_provenance():
+    sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
+    names = ["fig2_novelty_judgment.pdf", "fig3_game_loop.pdf", "fig5_network.pdf"]
+    fonts = {face: sha(font_manager.findfont(font_manager.FontProperties(
+        family="Liberation Serif", style=style, weight=weight), fallback_to_default=False))
+        for face, style, weight in [("roman", "normal", "normal"),
+                                    ("italic", "italic", "normal"),
+                                    ("bold", "normal", "bold"),
+                                    ("bold_italic", "italic", "bold")]}
+    data = {"schema": "whitepaper.schematic-rendering/v1",
+            "generator_sha256": sha(__file__), "font_family": "Liberation Serif",
+            "font_file_sha256": fonts, "minimum_print_target_pt": 7.0,
+            "figure_sha256": {name: sha(OUT / name) for name in names},
+            "canvas_inches": {names[0]: [3.35, 2.3], names[1]: [7.0, 2.3], names[2]: [7.0, 2.9]},
+            "scope": "Conceptual diagrams only; no empirical data or runtime qualification.",
+            "preservation": "Conceptual nodes, arrows and point locations retained; labels distinguish proposed or unmeasured behavior and the historical reference from the separate live system.",
+            "capacity_label_source": "Unsupported alternative capacity counts omitted. Proposed training is distinct from the offline historical checkpoint and live rule-based proposal/cost-ranking loop.",
+            "reproduce": "python3 figures/scripts/make_schematics.py"}
+    (OUT / "data/schematics.provenance.json").write_text(json.dumps(data, indent=2) + "\n")
+
+
 if __name__ == "__main__":
     make_fig2_novelty_judgment()
     make_fig3_game_loop()
     make_fig5_network()
+    write_provenance()
     print("schematics ok")

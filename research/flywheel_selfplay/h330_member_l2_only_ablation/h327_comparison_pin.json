@@ -1,0 +1,6 @@
+{
+  "commit": "9b8e5076ed80359d7bc49890c64a32205fbadf10",
+  "path": "research/flywheel_selfplay/h327_member_regularization_dropout_wd/metrics.json",
+  "sha256": "733a0bba68a449df03d3d192eb92c64e90b34d2c258358db978c4453e24f54d3",
+  "scope": "Descriptive only; no extra decision, no historical outcome input to fitting workers"
+}

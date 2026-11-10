@@ -1,0 +1,146 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}\usepackage[utf8]{inputenc}
+\usepackage{mathptmx,amsmath,graphicx,caption}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={EurekaZero: Supplementary Telemetry},pdfauthor={JopeDime Team},pdflang={en-US},pdfsubject={Supplementary operating-loop telemetry for the EurekaZero white paper},pdfkeywords={operating-loop telemetry, adapter admission, program journal, supplementary figures}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\captionsetup{font=small}% captions match the main paper (9pt)
+\makeatletter\setlength{\@fptop}{0pt}\setlength{\@fpsep}{10pt}\setlength{\@fpbot}{0pt plus 1fil}\makeatother% float-only pages stack from the top, as in the main paper
+\begin{document}
+\section*{EurekaZero: Supplementary Telemetry}
+\noindent Candidate movement precedes admission; retention and independent learning
+remain separate questions.
+\begin{figure}[h]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering\hypertarget{supp-parameter-displacement}{}\pdfbookmark[0]{Figure S1: Recorded candidate displacement varies across rounds}{bm-supp-parameter-displacement}
+  \includegraphics[width=3.375in]{figures/fig_parameter_displacement.pdf}
+  \caption{\textbf{Recorded candidate displacement varies across rounds.}
+  All 40 complete retained summaries, rounds 4662--4701, captured at
+  00:55 UTC on 4 November 2026. Points show logged candidate parameter-space
+  L2 displacement; no smoothing or filtering is applied. In the inspected
+  loop, it includes warm-restart perturbation and optimization before
+  admission. The journal records zero admissions in this window.
+  This does not isolate optimizer effects or establish a retained learning
+  gain. Scope: the adaptive adapter admission record in the main manuscript.}
+  \label{fig:parameter-displacement}
+\end{figure}
+
+\begin{figure}[h]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering\hypertarget{supp-training-minibatch-losses}{}\pdfbookmark[0]{Figure S2: First and last recorded minibatch losses use different batches}{bm-supp-training-minibatch-losses}
+  \includegraphics[width=3.375in]{figures/fig_training_minibatch_losses.pdf}
+  \caption{\textbf{First and last recorded minibatch losses use different batches.}
+  All 46 complete retained summaries, rounds 4812--4857, captured at
+  05:53 UTC on 4 November 2026. The 92 points show logged first and last
+  training-minibatch objectives, with two optimizer steps per candidate round.
+  Batch-order hashes differ within every round; these are not matched
+  before/after losses. No smoothing or filtering is applied. The window
+  records zero admissions; these losses establish no retained learning gain.
+  Scope: the adaptive adapter admission record in the main manuscript.}
+  \label{fig:training-minibatch-losses}
+\end{figure}
+\begin{figure}[!htbp]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering\hypertarget{supp-recent-discovery-retention}{}\pdfbookmark[0]{Figure S3: Program promotion and adapter retention are distinct events}{bm-supp-recent-discovery-retention}
+  \includegraphics[width=3.375in]{figures/fig_recent_discovery_retention.pdf}
+  \caption{\textbf{Program promotion and adapter retention are distinct events.}
+  All 48 complete retained summaries, rounds 4862--4909, captured at
+  07:21 UTC on 4 November 2026. Top: 17 strict training-program promotions,
+  independently matched to the program journal; zero-event rounds retained.
+  Bottom: candidate and post-decision retained adapter utility (higher is
+  better); zero adapter admissions. Values are unsmoothed, without outcome
+  filtering. Reused development contexts do not establish independent
+  writer or ranking-map learning gains. The inspected caller decides adapter
+  admission before program search; round alignment does not identify a training
+  effect. Scope: the adaptive adapter admission record in the main manuscript.}
+  \label{fig:recent-discovery-retention}
+\end{figure}
+\begin{figure}[!htbp]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering\hypertarget{supp-recorded-decision-lift}{}\pdfbookmark[0]{Figure S4: Logged retained utility increases at four recorded decisions}{bm-supp-recorded-decision-lift}
+  \includegraphics[width=3.375in]{figures/fig_recorded_decision_lift.pdf}
+  \caption{\textbf{Logged retained utility increases at four recorded decisions.}
+  All 4,063 admission records in rounds 775--4838, captured at
+  04:56 UTC on 4 November 2026. Top: candidate utility minus the logged
+  prior retained best; bottom: post-decision retained utility minus that same
+  retained best. Stars mark the four strict gains. The other 4,059 retained
+  differences are zero, including four accepted ties; zero does not imply
+  unchanged weights. Axes are symmetric-log, linear within $10^{-4}$ utility
+  units of zero. Points retain every observed decision; missing round 4331
+  is not imputed. These unsmoothed differences on reused development contexts
+  establish neither a causal training effect nor independent writer or
+  ranking-map learning. Scope: the adaptive adapter admission record in the main manuscript.}
+  \label{fig:recorded-decision-lift}
+\end{figure}
+\begin{figure}[!htbp]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering\hypertarget{supp-program-record-cadence}{}\pdfbookmark[0]{Figure S5: Program-journal records arrive at varying intervals}{bm-supp-program-record-cadence}
+  \includegraphics[width=3.375in]{figures/fig_program_record_cadence.pdf}
+  \caption{\textbf{Program-journal records arrive at varying intervals.}
+  All 3,363 adjacent timestamp gaps (seconds) from 3,364 committed records
+  in rounds 775--4561, captured at 20:57 UTC on 3 November 2026; warm-up records are excluded.
+  Each point is keyed to the later record's round; all pairs are retained.
+  The vertical axis is logarithmic. Recording cadence includes work, waits
+  and batched writes, not per-proposal runtime or adapter admission.
+  These observations establish neither a speed comparison nor learning.
+  Scope: the training-program journal in the main manuscript.}
+  \label{fig:program-record-cadence}
+\end{figure}
+\begin{figure}[!htbp]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering\hypertarget{supp-program-record-windows}{}\pdfbookmark[0]{Figure S6: Program-record counts vary across round windows}{bm-supp-program-record-windows}
+  \includegraphics[width=3.375in]{figures/fig_program_record_windows.pdf}
+  \caption{\textbf{Program-record counts vary across round windows.}
+  All 3,364 committed program-journal records in rounds 775--4561, captured
+  at 20:57 UTC on 3 November 2026; warm-up records are excluded.
+  Each bar counts records in one fixed 100-round-identifier bin.
+  The hatched final bin spans only 4475--4561 (87 identifiers); its count is
+  not rescaled. Every record enters exactly one bin. Round identifiers do
+  not supply completed-round exposure or a denominator of attempted proposals.
+  These counts establish neither adapter admission nor independent learning.
+  Scope: the training-program journal in the main manuscript.}
+  \label{fig:program-record-windows}
+\end{figure}
+\begin{figure}[!htbp]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering\hypertarget{supp-program-complexity-changes}{}\pdfbookmark[0]{Figure S7: Matched promotions can simplify or enlarge the counted program}{bm-supp-program-complexity-changes}
+  \includegraphics[width=\linewidth]{figures/fig_program_complexity_changes.pdf}
+  \caption{\textbf{Matched promotions can simplify or enlarge the counted program.}
+  All 3,529 ordinary program promotions in rounds 775--5049; the last event
+  is at round 5047 (at 11:13 UTC on 4 November 2026). Left: prior minus new
+  opening-parenthesis count for 2,554 records with an exactly matched prior
+  incumbent utility and an unambiguous prior count in the same context's
+  earlier journal records. Positive values mean fewer counted forms.
+  Right: 788 fewer, 1,162 unchanged, 604 more and 975 without a prior match.
+  Unmatched values are omitted from the left panel, not set to zero;
+  every record enters the right panel. No jitter or smoothing is applied.
+  These context-local representation changes are conditional on admission;
+  they do not measure predictive improvement, adapter retention, neural-writer
+  learning or ranking-map learning. Scope: the training-program journal in
+  the main manuscript.}
+  \label{fig:program-complexity-changes}
+\end{figure}
+
+\begin{figure}[!htbp]
+  \setlength{\abovecaptionskip}{4pt}
+  \centering\hypertarget{supp-program-promotion-contexts}{}\pdfbookmark[0]{Figure S8: Recorded promotions carry 975 distinct context identifiers}{bm-supp-program-promotion-contexts}
+  \includegraphics[width=\linewidth]{figures/fig_program_promotion_contexts.pdf}
+  \caption{\textbf{Recorded promotions carry 975 distinct context identifiers.}
+  All 3,529 ordinary promotion records in rounds 775--5049; the last event
+  is at round 5047 (at 11:13 UTC on 4 November 2026).
+  Each point counts distinct logged context identifiers seen through that
+  record, in source order; repeated identifiers remain in the plot.
+  The count starts at the first record in this window, not the first-ever
+  promotion. No points or connecting lines fill rounds without records.
+  These identifiers do not establish dataset or family coverage or independent
+  tasks. The journal records admitted programs, not all attempted proposals;
+  the count measures neither adapter admission, predictive improvement
+  nor neural-writer or ranking-map learning. Scope: the training-program
+  journal in the main manuscript.}
+  \label{fig:program-promotion-contexts}
+\end{figure}
+\input{supplement_adapter_rejection_runs}
+\input{supplement_program_event_concurrence}
+\input{supplement_program_record_multiplicity}
+\end{document}

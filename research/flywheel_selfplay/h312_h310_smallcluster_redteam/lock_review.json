@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "locks": [
+    {
+      "root": 30004,
+      "lock_sha256": "d1d29d49049b6d8c04b5a9df0e31cf65796c6c9a14c64c7d9cb5719f74cd3c81",
+      "model_count": 30
+    },
+    {
+      "root": 30005,
+      "lock_sha256": "4c72861b662bed7ebf0d13f8adf9421356e5e4d14bad068afbfbdf94353a1edd",
+      "model_count": 30
+    },
+    {
+      "root": 30006,
+      "lock_sha256": "cbf253acdd2a6ca018013500e2144ab7acd1ee180ced9c9df10d704d2dbf96b4",
+      "model_count": 30
+    }
+  ],
+  "finished_utc": "2026-11-04T10:03:17.551793+00:00"
+}

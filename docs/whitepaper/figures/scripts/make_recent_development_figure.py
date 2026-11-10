@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot the committed development snapshot; re-extract with --logs SNAPSHOT_DIR."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 import argparse
 import csv
 import hashlib
@@ -164,7 +165,7 @@ if wide:
     axes[1].plot(rounds, candidate, "o-", color="#6e7781", ms=2.5, lw=0.8,
                  label="candidate adapter")
     axes[1].step(rounds, best, where="post", color="#0b5394", lw=1.15,
-                 label="recorded best")
+                 label="retained best")
     axes[1].set_title("Right: Adapter validation", fontsize=8, loc="left", pad=3)
     axes[1].set_ylabel("validation\npool utility")
     axes[1].set_ylim(min(candidate + best) - 0.004, max(candidate + best) + 0.0013)
@@ -226,7 +227,7 @@ else:
         ax_bot.plot(w_rounds, w_cand, "o-", color="#6e7781", ms=2.2, lw=0.8,
                     label="candidate adapter")
         ax_bot.step(w_rounds, w_best, where="post", color="#0b5394", lw=1.1,
-                    label="recorded best (1.1378)")
+                    label="retained best (1.1378)")
         ax_bot.set_ylim(1.124, 1.1395)
         ax_bot.ticklabel_format(axis="y", style="plain", useOffset=False)
         ax_bot.set_xlabel("round")
@@ -241,6 +242,7 @@ else:
                       framealpha=0.88, edgecolor="none", handlelength=1.1,
                       handletextpad=0.25, borderpad=0.2)
     fig.tight_layout(pad=0.35, w_pad=0.45, h_pad=0.5)
+style_figure(fig, OUTPUT)
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 if PROVENANCE.exists():
@@ -259,3 +261,5 @@ if PROVENANCE.exists():
         }
     PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 print(f"{len(rows)} summary rounds; {sum(counts)} strict program promotions")
+
+finalize_typography_receipts(__file__)

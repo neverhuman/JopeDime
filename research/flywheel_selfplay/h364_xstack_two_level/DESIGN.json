@@ -1,0 +1,75 @@
+{
+ "chosen": {
+  "c": 0.35,
+  "delta": 0.0,
+  "lam": 0.1,
+  "tau": "inf"
+ },
+ "chosen_key": "c0.35_l0.1_d0_tinf",
+ "dev": {
+  "chosen": {
+   "active_share": 0.21772151898734177,
+   "by_panel": {
+    "P201b": 0.0025077789636541565,
+    "P201c": 0.0026992250555542556
+   },
+   "ctx_lt_minus_0p05": 0,
+   "ctx_min": -0.024425492347197153,
+   "design": {
+    "c": 0.35,
+    "delta": 0.0,
+    "lam": 0.1,
+    "tau": "inf"
+   },
+   "families": 201,
+   "key": "c0.35_l0.1_d0_tinf",
+   "lcb": 0.0014457006499956032,
+   "lost": 11,
+   "mean": 0.0025565005782885847,
+   "mean_beta_sum": 0.031174472695885556,
+   "sd": 0.008034850498113137,
+   "tied": 133,
+   "won": 57
+  },
+  "contexts": 395,
+  "noguard": {
+   "active_share": 0.21772151898734177,
+   "by_panel": {
+    "P201b": 0.0025077789636541565,
+    "P201c": 0.0026992250555542556
+   },
+   "ctx_lt_minus_0p05": 0,
+   "ctx_min": -0.024425492347197153,
+   "design": {
+    "c": 0.35,
+    "delta": 0.0,
+    "lam": 0.1,
+    "tau": "inf"
+   },
+   "families": 201,
+   "key": "c0.35_l0.1_d0_tinf",
+   "lcb": 0.0014457006499956032,
+   "lost": 11,
+   "mean": 0.0025565005782885847,
+   "mean_beta_sum": 0.031174472695885556,
+   "sd": 0.008034850498113137,
+   "tied": 133,
+   "won": 57
+  },
+  "panels": {
+   "P201b": 201,
+   "P201c": 194
+  },
+  "x0_check_worst": {
+   "dlr": 1.094026202963505e-09,
+   "du": 5.503686395513796e-11
+  }
+ },
+ "dev_contexts_sha256": "4a4bfdbabf980dd6f0b0f55fd93cacdba9b6f942d39fa8dd80014ee236f24dfd",
+ "dev_grid_sha256": "ffd645f1ac245a68da039aef37a1407e2f4dc6f86d919fce5d4f66fdfa70609c",
+ "noguard_key": "c0.35_l0.1_d0_tinf",
+ "part": "B",
+ "rule": "PREREG \u00a74.3: max family LCB = mean - 1.96 sd/sqrt(F) of the unclipped per-family AUDIT gain 2L - X0 on P201b + P201c; ties within 1e-6 -> smaller c, larger lambda, larger delta, smaller tau",
+ "schema": "jope.h364.design/v1",
+ "wave": "H364"
+}

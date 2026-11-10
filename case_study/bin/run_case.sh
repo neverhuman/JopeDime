@@ -33,7 +33,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 here=$(cd "$(dirname "$0")" && pwd)
-root=$(git -C "$here" rev-parse --show-toplevel)
+root=${JOPE_CASE_ROOT:-$(git -C "$here" rev-parse --show-toplevel)}
 jope=${JOPE_BIN:-$root/target/release/jope}
 [ -x "$jope" ] || die "no jope binary at $jope (cargo build --locked --release -p jope-cli --bin jope)"
 spec=$case_dir/case.json
@@ -46,7 +46,9 @@ case "$out_root" in /tmp/*|"$root"/*) die "--out must be outside /tmp and the re
 "$here/check_sealed.sh" "$id" || die "$id is sealed or held out; refusing"
 
 cache=${JOPE_CACHE:-$HOME/.cache/jope}/datasets/by-id/$id
-if [ ! -f "$cache/manifest.json" ]; then
+missing=0; for f in manifest.json meta.json train.csv test.csv; do [ -f "$cache/$f" ] || missing=1; done
+# The search verifies every catalog file before it starts (it never reads test.csv rows).
+if [ $missing = 1 ]; then
   echo "run_case: fetching $id into the dataset cache"
   AWS_PROFILE=${AWS_PROFILE:-veox-jepson-prod} "$jope" datasets fetch "$id" >/dev/null
 fi
@@ -55,15 +57,18 @@ fi
 [ -n "$arms" ] || arms=$(jq -r '.arms | keys | join(",")' "$spec")
 [ -n "$seeds" ] || seeds=$(jq -r '.rng_seeds | map(tostring) | join(",")' "$spec")
 evaluations=$(jq -r .budget.evaluations "$spec"); seconds=$(jq -r .budget.seconds "$spec")
+{ [ "$seconds" -ge 1 ] && [ "$seconds" -le 600 ]; } || die "case.json budget.seconds $seconds is outside jope pipeline's 1..=600"
 if [ $smoke = 1 ]; then evaluations=$(jq -r '.budget.smoke_evaluations // 20' "$spec"); seconds=600; seeds=${seeds%%,*}; fi
 seed_file=$case_dir/$(jq -r .seeds.file "$spec"); seed_limit=$(jq -r .seeds.limit "$spec")
 
-[ -n "$stamp" ] || stamp=$(date -u +%Y%m%dT%H%M%SZ); out=$out_root/$name/$stamp$( [ $smoke = 1 ] && echo -smoke)
+[ -n "$stamp" ] || stamp=$(date -u +%Y%m%dT%H%M%SZ)
+suffix=""; if [ $smoke = 1 ]; then suffix=-smoke; fi
+out=$out_root/$name/$stamp$suffix
 mkdir -p "$out"
 taskset_cmd=(); [ -n "${JOPE_CASE_CPUS:-}" ] && taskset_cmd=(taskset -c "$JOPE_CASE_CPUS")
 sha() { sha256sum "$1" | cut -c1-64; }
 [ -f "$out/run.json" ] || jq -n --arg name "$name" --arg id "$id" --arg stamp "$stamp" --arg host "$(hostname)" \
-  --arg commit "$(git -C "$root" rev-parse HEAD)" --arg dirty "$(git -C "$root" status --porcelain -- case_study crates | wc -l)" \
+  --arg commit "${JOPE_CASE_COMMIT:-$(git -C "$root" rev-parse HEAD)}" --arg dirty "$( [ -n "${JOPE_CASE_COMMIT:-}" ] && echo 0 || git -C "$root" status --porcelain -- case_study crates | wc -l)" \
   --arg binary "$(sha "$jope")" --arg case_sha "$(sha "$spec")" --arg arms "$arms" --arg seeds "$seeds" \
   --argjson evaluations "$evaluations" --argjson seconds "$seconds" --argjson smoke $smoke \
   --arg load "$(cut -d' ' -f1-3 /proc/loadavg)" --arg cpus "${JOPE_CASE_CPUS:-all}" --arg rayon "${JOPE_CASE_RAYON:-4}" \
@@ -79,6 +84,7 @@ for arm in ${arms//,/ }; do
   [ -n "$fitness_key" ] || die "case has no arm $arm"
   fitness_file=$case_dir/$(jq -r --arg k "$fitness_key" '.[$k]' "$spec")
   use_seeds=$(jq -r --arg a "$arm" '.arms[$a].seeds' "$spec")
+  arm_seed_file=$case_dir/$(jq -r --arg a "$arm" '.arms[$a].seeds_file // .seeds.file' "$spec")
   for seed in ${seeds//,/ }; do
     dir=$out/$arm/s$seed; mkdir -p "$out/$arm"
     args=(pipeline run --dataset "$id" --cuts 1 --threads 1 --policy skip --emit rust
@@ -86,11 +92,11 @@ for arm in ${arms//,/ }; do
           --fitness "@$fitness_file" --output "$dir")
     status=run
     if [ "$use_seeds" = true ]; then
-      if [ ! -s "$seed_file" ]; then
+      if [ ! -s "$arm_seed_file" ]; then
         jq -nc --arg arm "$arm" --argjson seed "$seed" '{arm:$arm, rng_seed:$seed, status:"pending: no DL seeds file"}' | flock "$out/runs.jsonl.lock" tee -a "$out/runs.jsonl" >/dev/null
-        echo "run_case: $arm s$seed pending (no $seed_file)"; continue
+        echo "run_case: $arm s$seed pending (no $arm_seed_file)"; continue
       fi
-      args+=(--seed-genomes "$seed_file" --seed-limit "$seed_limit")
+      args+=(--seed-genomes "$arm_seed_file" --seed-limit "$seed_limit")
     fi
     t0=$(date -u +%FT%TZ); echo "run_case: $arm s$seed -> $dir"
     set +e
@@ -102,7 +108,7 @@ for arm in ${arms//,/ }; do
     set -e
     jq -nc --arg arm "$arm" --argjson seed "$seed" --arg t0 "$t0" --arg t1 "$(date -u +%FT%TZ)" \
       --argjson rc $rc --argjson vrc $vrc --arg dir "$dir" --arg fitness "$(basename "$fitness_file")" \
-      --arg seeds "$( [ "$use_seeds" = true ] && basename "$seed_file" || echo none)" \
+      --arg seeds "$( [ "$use_seeds" = true ] && basename "$arm_seed_file" || echo none)" \
       '{arm:$arm, rng_seed:$seed, fitness:$fitness, seeds:$seeds, started:$t0, ended:$t1, exit:$rc, verify_exit:$vrc, dir:$dir,
         status:(if $rc != 0 then "failed" elif $vrc != 0 then "unverified" else "verified" end)}' | flock "$out/runs.jsonl.lock" tee -a "$out/runs.jsonl" >/dev/null
   done

@@ -1,0 +1,31 @@
+{
+  "arms": [
+    "CONTROL",
+    "L2SP",
+    "HEAD4",
+    "HEAD4_NOTR"
+  ],
+  "seeds": [
+    263101,
+    263102,
+    263103
+  ],
+  "folds": 5,
+  "updates_per_cell": 40,
+  "total_updates": 2400,
+  "smoke_updates": 4,
+  "optimizer": "torch.optim.AdamW",
+  "lr": 0.0001,
+  "betas": [
+    0.9,
+    0.999
+  ],
+  "weight_decay": 0.0001,
+  "epsilon": 1e-08,
+  "clip": 1.0,
+  "batch_contexts": 8,
+  "batch_candidates": 24,
+  "gradient_accumulation": "CTRL backward; each head context adds .5/8 mean pair loss; anchor last, one clip and step",
+  "anchor_beta": 50,
+  "post_step_retraction": 0.25
+}

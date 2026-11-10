@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "same_agent_independent_recalculation": true,
+  "bootstrap_draws_verified": 10000,
+  "cells": 9,
+  "families": 205,
+  "raw_utilities_counts_drops_intervals_decision_verified": true,
+  "concentration_lofo_jaccard_config_verified": true,
+  "selection_replay": {
+    "member_selection_replays": 108,
+    "hard_BASE_panels_exact": true,
+    "softvote_panels_exact": true,
+    "model_rescores": 0,
+    "once_only_score_markers": 36
+  },
+  "metrics_sha256": "b1e32e423163adba31489e24d4ea9c0971fe00e7fa8fa315d834486a162f9e13",
+  "verdict": "SOFTVOTE_NOT_ADVANCED",
+  "finished_utc": "2026-11-04T22:19:09.368974+00:00"
+}

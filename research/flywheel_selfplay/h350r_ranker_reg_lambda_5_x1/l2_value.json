@@ -1,0 +1,5 @@
+{
+  "BASE_reg_lambda": 1.0,
+  "treatment_reg_lambda": 5.0,
+  "reg_alpha": 0.0
+}

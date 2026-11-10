@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "same_agent_independent_recalculation": true,
+  "bootstrap_draws_verified": 10000,
+  "cells": 9,
+  "families": 205,
+  "raw_utilities_counts_drops_intervals_decision_verified": true,
+  "concentration_lofo_jaccard_config_verified": true,
+  "overfit_member_gaps_reconstructed": 216,
+  "metrics_sha256": "bef4b80d1b0e49bfcb8f0ce7095a57253029ab7b722da4d9fedec958d86611e8",
+  "verdict": "COS_NOT_ADVANCED",
+  "finished_utc": "2026-11-04T21:15:42.321185+00:00"
+}

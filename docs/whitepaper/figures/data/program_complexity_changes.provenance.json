@@ -1,0 +1,39 @@
+{
+  "schema": "whitepaper.program-complexity-changes-figure/v1",
+  "input_csv_sha256": "5620da7c197f5e084567bf6007aa429c5f0bc56667378a12c3490d4c9e55fd94",
+  "source_receipt_sha256": "3222770945854ca859dcadebfb21da71127301b1952a8ed79f43acdbdc4bc331",
+  "generator_sha256": "ec3b67b322258764fe87e6d0d6a584f64d0b15579dad67d90b7c1de1081a2906",
+  "figure_sha256": "9641963dec471aa942a116a2052bfddecba1e5a479953369922d513ac5a9b738",
+  "records": 3529,
+  "plotted_pairs": 2554,
+  "counts": {
+    "unmatched": 975,
+    "matched": 2554,
+    "same": 1162,
+    "fewer": 788,
+    "more": 604
+  },
+  "event_round_window": [
+    775,
+    5047
+  ],
+  "selection_round_window": [
+    775,
+    5049
+  ],
+  "unknowns_imputed": false,
+  "jitter": false,
+  "smoothing": false,
+  "scope": "Adaptive training-program promotions, conditional on admission. Complexity changes do not measure predictive improvement, adapter retention or neural-writer/ranking-map learning. No attempt or throughput denominator is supplied.",
+  "source_binding": "Exact runtime, candidate-pool/input closure, normalization, checkpoint acceptance and independent first-proposal learning remain unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "minimum_text_size_pt": 8.5,
+  "figure_inches": [
+    7.0,
+    2.45
+  ],
+  "fixed_canvas_no_tight_crop": true,
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_program_complexity_changes.py"
+}

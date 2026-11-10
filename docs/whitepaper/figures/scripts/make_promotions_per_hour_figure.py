@@ -211,9 +211,9 @@ axes[1].step(
     where="post",
     color="#0b5394",
     lw=1.15,
-    label="recorded best (round 882)",
+    label="retained best (round 882)",
 )
-axes[1].set_title("Candidate vs. recorded-best validation", loc="left", fontsize=9)
+axes[1].set_title("Candidate vs. retained-best utility", loc="left", fontsize=9)
 axes[1].set_xlabel("round (retained window 2644–2663)")
 axes[1].set_ylabel("validation pool utility")
 axes[1].ticklabel_format(axis="y", style="plain", useOffset=False)

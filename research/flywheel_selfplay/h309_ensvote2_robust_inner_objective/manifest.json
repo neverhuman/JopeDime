@@ -1,0 +1,310 @@
+{
+  "schema": "jope.h309.manifest/v1",
+  "wave_id": "H309",
+  "owner": "rd_astra",
+  "status": "ANALYSIS_COMPLETE",
+  "verdict": "ROBUSTSEL_NOT_ADVANCED",
+  "prereg_commit": "989304954361cce0b8896c19d241f1beaf0c3fd6",
+  "prereg_push_verified_by": "2026-11-04T07:57:48.494576+00:00",
+  "source_commit": "adfd5f02d49b291c85bba96b37eadc9988fa0462",
+  "source_commit_scope": "Frozen fit/evaluation implementation; final report and receipt annotations pinned separately",
+  "source_sha256": {
+    "verify_train_inputs.py": "96e7f79a2af64f0e38a037fb5d1638deff023b75c0ad20afb911a14bebbd1fb5",
+    "evaluate_h309.py": "2a18aea958876e33f29d246c548b526cc518593345e2d038f1870858cb184cc1",
+    "metrics.json": "7e9c9bcf58d7bd69611e18b6fc25baedb89ec49a610a4bef2f02e6a6d4d33a7d",
+    "prepare_inputs.py": "8642671f541dd309282c8570ba31ba47afa73d6259163366aa5ab8465e4237e4",
+    "run_h309.py": "8d1fd249a5531ff03ea9e19caee53f326ef4c96c3b05af12fede4f6a4cb29a27",
+    "test_h309.py": "79ee674af883901a1ab098f6a570cd0efa9d943f041cad43770169cd1172e602",
+    "train_input_receipt.json": "fd0210e7771681430c136e8e7b570c0f12de467f76b787b04712b773498a2882",
+    "robust_objective.py": "caea881c381a2fc4d99da5c3397f7a0abd272b3ad241be540b4e6bdcfdbb7c24",
+    "dependency_pins.json": "0b9de558b9fa0479e255845622dc9f7742aaad1d95678975de414b4526d1fbfb",
+    "PREREG.md": "4591c98f5f647cf94d55db3509858c926b0d9c283a73f4567c6a33155ede3ad9",
+    "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d",
+    "README.md": "827b3eb32f27d3fa518adcae628414b3eae46c080424bcee3f436257e0c7a2a1",
+    "input_receipt.json": "73d48e7b0bac6ddd47b12b2ca72eb3669fe93fa15393c4fc8954c429ea601db7",
+    "regression_receipt.json": "9549051de95cca3714be0e229c7c3c67ef4575f14033aa1fb0c27930152aa537"
+  },
+  "dependencies": {
+    "h303_commit": "7bef8870f7a9ffdb6565c5277c59f4af6c27c93d",
+    "vendor": {
+      "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+      "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+      "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+      "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+      "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4"
+    },
+    "loader_commit": "2e2a22eda5d67c2ac65e591b76e343d533c53088",
+    "loader_sha256": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "input_receipt": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261030/H303/h303_models_locks_and_outputs.tar.gz",
+    "version_id": "hshnLPUZuvpHewykQNTh..mWAGu9KGHo",
+    "sha256": "8957cf0e0b55c21231fd3d40d56ce5bdf27aa915dc97786bcbc00dbee782857d",
+    "bytes": 273987588,
+    "exact_version_get_verified": true,
+    "members": [
+      {
+        "path": "scratch/fold_1/root_30002/fit_lock.json",
+        "bytes": 10866,
+        "sha256": "5448d5108488a919a3a1e6fe509fda09456707d96929293a348fe719cf1d56ed"
+      },
+      {
+        "path": "scratch/fold_1/root_30003/fit_lock.json",
+        "bytes": 10856,
+        "sha256": "82112821f62dc4509ac6fcbca65ca870f61848bce035df1b620929fa007889be"
+      },
+      {
+        "path": "scratch/fold_1/root_30001/fit_lock.json",
+        "bytes": 10862,
+        "sha256": "f797594b51a8daf1b684d9bff00519f301bb57c18b2960f80a191081ecdccc59"
+      },
+      {
+        "path": "scratch/fold_2/root_30002/fit_lock.json",
+        "bytes": 10859,
+        "sha256": "850fba6389c3ff001d4640f50352cdca71e6cacbcf6db782e9ba5e764e820880"
+      },
+      {
+        "path": "scratch/fold_2/root_30003/fit_lock.json",
+        "bytes": 10844,
+        "sha256": "d0c5f72f8e60dc29c5675cceb980f15c257095b99f8cfe0856619ed5c0eada24"
+      },
+      {
+        "path": "scratch/fold_2/root_30001/fit_lock.json",
+        "bytes": 10870,
+        "sha256": "0d34bb1203a0431fadd6fff532c69d1680f37150c39d5075dfc4d417d5ed96f7"
+      },
+      {
+        "path": "scratch/fold_3/root_30002/fit_lock.json",
+        "bytes": 10865,
+        "sha256": "7e39a43451793e9801e468b318035c676b053adfa5525d59f79a9062b5af74dc"
+      },
+      {
+        "path": "scratch/fold_3/root_30003/fit_lock.json",
+        "bytes": 10857,
+        "sha256": "9144be682ae5a8aed693663d2853559b82d7d6118803df3862581d76c20826af"
+      },
+      {
+        "path": "scratch/fold_3/root_30001/fit_lock.json",
+        "bytes": 10858,
+        "sha256": "cd2dc12892c39fefe835e218c43030518f72cca50c01fc82456f57277a27956b"
+      },
+      {
+        "path": "scratch/fold_0/root_30002/fit_lock.json",
+        "bytes": 10861,
+        "sha256": "689bdc404a60ab37cad4f3f8747f39a57e25f5c7b71fe089a7427522336e020a"
+      },
+      {
+        "path": "scratch/fold_0/root_30003/fit_lock.json",
+        "bytes": 10850,
+        "sha256": "34d9dce7d6fbbb5f611b03b09395e2a98d071eb49b9008f19b228e7298f152ba"
+      },
+      {
+        "path": "scratch/fold_0/root_30001/fit_lock.json",
+        "bytes": 10856,
+        "sha256": "545fa2a68e054b5ebe0d0775a0b2fb94c00fd5f82df9a5591160f9b3359d22ed"
+      },
+      {
+        "path": "out/metrics_full.json",
+        "bytes": 46655,
+        "sha256": "202d1a6a077a7dafff4ced66f914f40472fa7bc4995951d7662f2ad813d756e5"
+      },
+      {
+        "path": "out/picks.npz",
+        "bytes": 2891,
+        "sha256": "0f8435010390c5bff8d6c95a7650163a2ab4c5952e56264fbee96204784d5ea4"
+      }
+    ]
+  },
+  "train_input_receipt": {
+    "status": "PASS",
+    "reference": "H305 independent TRAIN-only replay pins",
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "costs_sha256": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "pool_identities_sha256": "436fb6220accc33ec8c49991f9b6a5d8a2dfa7da508287938d703e9a019de8a1",
+    "train_array_sha256": {
+      "prior": "9f376cdbb4ef0ca94938da486b8f4677563986b03e2a979389bd6b2c1847e14e",
+      "projection": "6178ec557257927c753fcfbc152d7c4d45f02f550825e8d795385d092b6e0002",
+      "lm48": "f01ee60f738f08e94fc80953dd40a2b14fe2eb991cc5a104886a154f44dde00c",
+      "dope629": "d3f91651a5241e7e98263df536dfee8152432a4757e50d96f13828bdbd2e2c50"
+    },
+    "loader_counters": {
+      "feature_bytes_read": 98792568,
+      "feature_rows_read": 2811012,
+      "dlval_feature_rows_read": 0
+    },
+    "train_contexts": 1219,
+    "dlval_features_read": 0
+  },
+  "resources": {
+    "regression": {
+      "source_sha256": {
+        "prepare_inputs.py": "243bb3f5ccdc3d9f4ff12e3a1a9e07879d96450ecdc213c1371b083061ba5532",
+        "run_h309.py": "ba83c5d7db1720f06bac18b49cab573e6b6a3849db9704925b341b69c41e2504",
+        "robust_objective.py": "559882c44ed6714a843b77377284f0a175d29fd12e214443cc0d1df7c3eefb58",
+        "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 847790080,
+        "threads": 3,
+        "host_cpu": 29.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h309-astra/source/run_h309.py",
+        "regression"
+      ],
+      "started_epoch": 1793779263.3580325,
+      "finished_epoch": 1793779889.5940487,
+      "cpu_affinity": [
+        56,
+        57,
+        59,
+        64,
+        66,
+        67
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793787300
+    },
+    "fit": {
+      "source_sha256": {
+        "verify_train_inputs.py": "96e7f79a2af64f0e38a037fb5d1638deff023b75c0ad20afb911a14bebbd1fb5",
+        "evaluate_h309.py": "2a18aea958876e33f29d246c548b526cc518593345e2d038f1870858cb184cc1",
+        "prepare_inputs.py": "8642671f541dd309282c8570ba31ba47afa73d6259163366aa5ab8465e4237e4",
+        "run_h309.py": "8d1fd249a5531ff03ea9e19caee53f326ef4c96c3b05af12fede4f6a4cb29a27",
+        "test_h309.py": "79ee674af883901a1ab098f6a570cd0efa9d943f041cad43770169cd1172e602",
+        "robust_objective.py": "caea881c381a2fc4d99da5c3397f7a0abd272b3ad241be540b4e6bdcfdbb7c24",
+        "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 3747495936,
+        "threads": 11,
+        "host_cpu": 36.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h309-astra/source/run_h309.py",
+        "fit",
+        "--workers",
+        "6"
+      ],
+      "started_epoch": 1793779912.2347143,
+      "finished_epoch": 1793781386.080825,
+      "cpu_affinity": [
+        56,
+        57,
+        59,
+        64,
+        66,
+        67
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793787300
+    },
+    "score": {
+      "source_sha256": {
+        "verify_train_inputs.py": "96e7f79a2af64f0e38a037fb5d1638deff023b75c0ad20afb911a14bebbd1fb5",
+        "evaluate_h309.py": "2a18aea958876e33f29d246c548b526cc518593345e2d038f1870858cb184cc1",
+        "prepare_inputs.py": "8642671f541dd309282c8570ba31ba47afa73d6259163366aa5ab8465e4237e4",
+        "run_h309.py": "8d1fd249a5531ff03ea9e19caee53f326ef4c96c3b05af12fede4f6a4cb29a27",
+        "test_h309.py": "79ee674af883901a1ab098f6a570cd0efa9d943f041cad43770169cd1172e602",
+        "robust_objective.py": "caea881c381a2fc4d99da5c3397f7a0abd272b3ad241be540b4e6bdcfdbb7c24",
+        "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 847867904,
+        "threads": 3,
+        "host_cpu": 21.6
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h309-astra/source/run_h309.py",
+        "score"
+      ],
+      "started_epoch": 1793781389.5447254,
+      "finished_epoch": 1793781411.595781,
+      "cpu_affinity": [
+        56,
+        57,
+        59,
+        64,
+        66,
+        67
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793787300
+    }
+  },
+  "limits": {
+    "cores": [
+      56,
+      57,
+      59,
+      64,
+      66,
+      67
+    ],
+    "nice": 19,
+    "workers": 6,
+    "numeric_threads": 1,
+    "memory_max_bytes": 8589934592,
+    "aggregate_rss_bytes": 8589934592,
+    "minimum_mem_available_bytes": 21474836480,
+    "host_cpu_percent": 85,
+    "scratch_bytes": 4000000000,
+    "compute_stop": "2026-11-04T10:15:00Z",
+    "close_deadline": "2026-11-04T10:30:00Z"
+  },
+  "software": {
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "boto3": "1.35.49",
+    "psutil": "7.1.0"
+  },
+  "tests": {
+    "collected": 12,
+    "executed": 12,
+    "failed": 0,
+    "skipped": 0
+  },
+  "CI": "NOT_RUN owner freeze",
+  "elo_reference": "reference = r882 slot0 (DL-Train OOF); r3175-anchored Elo unmeasured",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H309/astra-20261104T075500Z/",
+  "fit_systemd_readback": {
+    "utc": "2026-11-04T08:33:23.228483+00:00",
+    "properties": {
+      "MainPID": "1441183",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/h309-astra-fit.service",
+      "MemoryCurrent": "1356795904",
+      "MemoryPeak": "1629310976",
+      "MemoryMax": "8589934592",
+      "Nice": "19"
+    }
+  },
+  "source_snapshot_policy": {
+    "execution_authority": "guard phase.launch.json and phase-source-snapshot; regression launch predates this helper and uses regression_source_snapshot plus regression.resource_summary.json",
+    "regression_note": "Ruff formatting/import cleanup during regression was preserved with the original execution source; the runner completion file hashes are observed files at completion, not a substitute for guard launch hashes. No algorithm or parameter change."
+  },
+  "evidence_archive": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H309/astra-20261104T075500Z/h309_evidence.tar.gz",
+    "version_id": "xJOH1foPqeyZMRk0YdVAKK6pBS35ZK7Z",
+    "sha256": "fe9fe58b4a0d65d94afe25c4ca668bbc8e46879bb5a53aa9d10b878b98c0db35",
+    "bytes": 279572173,
+    "exact_version_get_verified": true,
+    "members_verified": 5133
+  },
+  "archive_member_inventory_sha256": "c462a3ce1bc8dbb1c908c039fa175840edbd68e889a6b7ecf432ef59b224f74f"
+}

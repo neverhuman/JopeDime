@@ -1,0 +1,1 @@
+AutoGluon (fold 1): 379.3 against our 0.2869 on the same fold; Kumo-Tabular (fold 1): 0.8951 against our 0.2869 on the same fold; TabPFN-v2 (fold 1): 0.3921 against our 0.2869 on the same fold

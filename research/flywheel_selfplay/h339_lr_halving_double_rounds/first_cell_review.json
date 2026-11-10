@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "same_agent_independent_recalculation": true,
+  "locks": 1,
+  "ranker_fits_verified": 819,
+  "constructor_values_changed_per_function": 2,
+  "callback_insertions": 0,
+  "native_ranker_models_verified": 27,
+  "constructor_rounds_verified": 290000,
+  "unweighted_gate_models_exact_BASE": 3,
+  "changed_final_model_hashes_vs_BASE": 27,
+  "results": [
+    {
+      "partition": "P0",
+      "fold": 0,
+      "seed": 30001,
+      "parameter_audit": {
+        "status": "PASS",
+        "fits_verified": 819,
+        "roles": {
+          "topk.fit_ranker": 507,
+          "bagged.fit_ranker_n": 312
+        },
+        "audit_sha256": "b77a95afe5fdc6aeb62b4390b41d15f6372ae2dbac093227f7ed1f0a253a524c",
+        "multiset_sizes_verified": true,
+        "complete": true
+      },
+      "config_rule_and_inner_objective_verified": true,
+      "packet_hashes_equal_BASE": true,
+      "fit_lock_sha256": "30aad67b8421118b57775edcdb430d05d7c4b6619d34e43edd8259aa83c1ebc9"
+    }
+  ],
+  "finished_utc": "2026-11-04T22:48:35.429452+00:00"
+}

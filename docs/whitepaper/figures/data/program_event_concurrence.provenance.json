@@ -1,0 +1,31 @@
+{
+  "schema": "whitepaper.program-event-concurrence-figure/v1",
+  "input_sha256": {
+    "stopped_run_admissions.csv": "197c519554675d398cb77c81e652788b51462ca372a2ea6c7b41811958b4238a",
+    "stopped_run_promotions.csv": "913841307f33c827b60174288c8b09404c92be1f186ff74bc83f9be6103813cc",
+    "stopped_run_record.source.json": "26337f004c1ed4c1825a5907030e75b0f3944f2001f0d03e747896801f296873"
+  },
+  "csv_sha256": "a01444a3284e82389dd451303396f6ddea3cf34cc25d09735a1a90d50c9f8909",
+  "source_receipt_sha256": "2981f4e9715f1514f98152230d435da3edfd97b424cad4a0f9c6d108f43e8234",
+  "generator_sha256": "812010be507c9741a4fb7548fd5d7067361e9ad8633365aca0dd8fcd2d4f678d",
+  "figure_sha256": "d760618b984a3995f24c525568ec784167b6cc1c57cf2c5772f1d75931205372",
+  "round_count_total": 4275,
+  "scored_decisions": 4274,
+  "missing_decisions": 1,
+  "program_records": 3529,
+  "figure_inches": [
+    7.0,
+    2.7
+  ],
+  "minimum_text_size_pt": 9.0,
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "color_scale": "logarithmic round count; hatched cell denotes zero",
+  "cells": 8,
+  "smoothing": false,
+  "jitter": false,
+  "interpolation": false,
+  "imputed_decisions": false,
+  "reproduce": "python3 figures/scripts/make_program_event_concurrence.py"
+}

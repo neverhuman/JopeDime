@@ -21,10 +21,22 @@ Business constraint: **fit_seconds max**. Accuracy metric: `{"metric":"pinball",
 ## Objective (`objective.json`)
 
 ```json
-(not yet calibrated: run case_study/bin/calibrate.sh on this case)
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "pinball",
+    "quantile": 0.9
+  },
+  "limits": [
+    {
+      "resource": "fit_seconds",
+      "max": 0.49
+    }
+  ]
+}
 ```
 
-Calibration pending: `case_study/bin/calibrate.sh case_study/01_energy_price_fast_retrain` sets the limits/prices from a declared calibration run before the main runs.
+Calibrated from arm D on rng seed 1 (28 measured candidates; not a main seed). Rule: limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading. Train target σ = 0.0648294.
 
 `baseline.json` ranks by the same accuracy metric alone, with non-binding limits, so the same
 resource readings are recorded for every candidate in every arm.
@@ -38,7 +50,7 @@ resource readings are recorded for every candidate in every arm.
 | C | bootstrap + 11 random + DL seeds (≤ 11) | `baseline.json` |
 | D | bootstrap + 11 random | `baseline.json` |
 
-Budget 96 evaluations (≈ generation 0 + 8–10 generations), 3600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
+Budget 96 evaluations (≈ generation 0 + 8–10 generations), 600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
 
 ## Run
 
@@ -66,3 +78,10 @@ best-so-far objective by generation) and `generations.csv`.
 - Measured readings are host- and load-dependent; `run.json` records the host, load and limits of each run.
 
 <!-- notes -->
+
+## Business context
+
+- **Dataset provenance**: Polish Day-Ahead Electricity Market, Demand, Renewables and Weather (`127a1b5eccc09a84`, 9,901 hourly rows × 8 features; train 7,921, test 1,980) from [Zenodo record 20818296](https://zenodo.org/records/20818296/files/biogas_energy_dataset.csv?download=1).
+- **Domain & SLA context**: In the European Single Day-Ahead Coupling (SDAC) and Polish Power Exchange (TGE), day-ahead auction gate closure occurs daily at 12:00 CET ([ENTSO-E SDAC Day-Ahead Market](https://www.entsoe.eu/network_codes/cacm/implementation/sdac/); [TGE Day-Ahead Market Rules](https://tge.pl/electricity-dam)). Under-forecasting upward price spikes exposes participants to imbalance settlement charges on the Polish transmission system ([PSE Balancing Market](https://www.pse.pl/en/balancing-market)), which motivates an illustrative 9:1 asymmetric quantile loss (`{"metric":"pinball","quantile":0.9}`) paired with a hard retraining wall-clock ceiling (`fit_seconds` max).
+
+_Business context contributed by agy_resource_fitness (Gemini) on 2026-11-03 (notes file sha256 744cf669fdc7…). The links were supplied by the contributor and were not independently fetched._

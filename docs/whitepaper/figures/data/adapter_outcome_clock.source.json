@@ -1,0 +1,39 @@
+{
+  "schema": "whitepaper.adapter-outcome-clock-source/v1",
+  "source_commit": "167a527e2889b6b4e4be69736e03a0507bd43f4f",
+  "input_csv_sha256": {
+    "full_round_wall_time.csv": "46daa1916799f347f1af01311c07a6044d9bc2c9e9d6f758ed6e7e15aafd6488",
+    "full_retained_trajectory.csv": "7bb0dd88e1a6ac1a57075d1b72c87db26d7bbe95a953bf90b8ccf526297fdd58"
+  },
+  "input_receipt_sha256": {
+    "full_round_wall_time.source.json": "d67bbcaefbfa04cf59bc97f6c410cd62c4a48bbc0deb3541e889a924f2d52fef",
+    "full_retained_trajectory.source.json": "79cbb37b1e4f9c885307f9298831a475a85a2d079927152c0a66c877a0bd9a60"
+  },
+  "round_window": [
+    775,
+    4838
+  ],
+  "clock_records": 4064,
+  "scored_decisions": 4063,
+  "unscored_rounds": [
+    4331
+  ],
+  "legacy_completion_flag_unrecorded": 3556,
+  "explicit_completion_flag_records": 508,
+  "all_rounds_and_durations_retained": true,
+  "outcome_counts": {
+    "rollback": 4055,
+    "strict_gain": 4,
+    "exact_tie": 4,
+    "unscored": 1
+  },
+  "total_recorded_seconds": "358834.646068425000014",
+  "aggregate_rows": 4,
+  "csv_sha256": "f1729166ac7180dd734e966e54b995fe03a9a796303340349ee694c4b9917cdc",
+  "derivation": "Join committed clocks to decisions by round; exact Decimal sums of every recorded duration. Hours divide by3600; hours CSV rounded to12decimal places, shares to9, arithmetic precision50. No duration or outcome filtering; the one unscored round stays separate.",
+  "scope": "Summed recorded in-round wall time, including work and waits; excludes inter-round gaps. Legacy records need not mark completion. Adapter rollback does not mean program search made no progress. Not CPU/GPU time, financial cost, independent first-proposal quality or learning.",
+  "source_binding": "Logged aggregate field interpretation only. Exact installed source, adapter, candidate pools, normalization and evaluation-population closure remain unqualified.",
+  "new_observations": 0,
+  "new_scientific_runs": 0,
+  "imputed_values": false
+}

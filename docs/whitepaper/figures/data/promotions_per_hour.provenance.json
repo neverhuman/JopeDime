@@ -18,9 +18,9 @@
   "csv": "figures/data/promotions_per_hour.csv",
   "csv_sha256": "c45b14fe81fba0f3c225bf29abb05d3d67fcfce663121cc16f85ccd9ee05b508",
   "figure": "figures/fig_fw_promotions_per_hour.pdf",
-  "figure_sha256": "4768bfbeec05141c3e22bef4f319ceb54ae0552700c81ce5c503e7a821c4a403",
+  "figure_sha256": "eb6054968bd38961543246ace72184f0683ddf446a8c964302a5a00dcbf747ca",
   "generator": "figures/scripts/make_promotions_per_hour_figure.py",
-  "generator_sha256": "5fb65b01a05df77656f75cf05cd219a6350cc07e2c08e1503eb1beddfa00d324",
+  "generator_sha256": "94cffaac360371d6f84c8dcfbcbc1539c77d281794dc7bded20b3c6f4b55cec9",
   "round_window": [
     2644,
     2663

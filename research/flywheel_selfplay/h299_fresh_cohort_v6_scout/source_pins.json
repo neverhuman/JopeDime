@@ -1,0 +1,78 @@
+{
+  "reference_commit": "acb07d1139e9ff4163b7f30eed1ae0dc505e4d82",
+  "h287_export_commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+  "files": {
+    "research/flywheel_selfplay/h283_rerank8_veto_fresh_cohort_gpu/fresh_cohort.py": "2b506d43123272b17f233c703682e6282344a32f5c9bb06c830833e2084b3df6",
+    "research/flywheel_selfplay/h283_rerank8_veto_fresh_cohort_gpu/manifest.json": "d6c15855af6af86579723d18fe3ed9fe074d1383e651899ae541e6883cc4425c",
+    "research/flywheel_selfplay/h286_fresh_v2_powered_veto_bagswitch/cohort_v2.py": "d21eca140c3a3c79295563e6ecfd60b48e63cd2267497a1c522974aff7aa1ad4",
+    "research/flywheel_selfplay/h286_fresh_v2_powered_veto_bagswitch/manifest.json": "c1bef19318ddffade0dfa19040ff9e9979ee02f8095da84c6ee813740fa86e9f",
+    "research/flywheel_selfplay/h288_fresh_v3_odd_powered_ensemble/cohort_v3.py": "db8e7dc340c9d89d848a8fb57063ea7e6827a24441b1f7a34dc81e1b336596f0",
+    "research/flywheel_selfplay/h288_fresh_v3_odd_powered_ensemble/manifest.json": "331a5bfbe891143e8e0ef2e3db518fd96a8e436358924f4cc2fdb6fe3e270c12",
+    "research/flywheel_selfplay/h292_fresh_v4_odd_confirm_ensvote2_clip/cohort_v4.py": "24c2639239260ff696f67d0a73a02dc88deab192995ac55e34c83293f3128acf",
+    "research/flywheel_selfplay/h292_fresh_v4_odd_confirm_ensvote2_clip/manifest.json": "e2502879b04fe6c0a28b60dc1c597f14492081f040d2343282a1ed332d23e71c",
+    "research/flywheel_selfplay/h292_fresh_v4_odd_confirm_ensvote2_clip/analysis.py": "885bb71915aac03ec40665e74b6b9753a1d7bb469ff14fa33f11e35656fdd842",
+    "research/flywheel_selfplay/h294_fresh_even_v5_confirm_ensvote2/cohort_v5.py": "6d2bf2df0c0bf9f35d8bf8a2a7f537f4979d1972d0f10b6d0d43bbf70f590cea",
+    "research/flywheel_selfplay/h294_fresh_even_v5_confirm_ensvote2/manifest.json": "22892cc117f488a12b8d34995eb4ac63baacc766cf37ac3c99d918274e1bc6d7",
+    "research/flywheel_selfplay/h294_fresh_even_v5_confirm_ensvote2/analysis.py": "7cb46deee58d2d6973e774ae37f96e8b1f48b24c3e1847ea36d9a2ba158963b5",
+    "research/flywheel_selfplay/h294_fresh_even_v5_confirm_ensvote2/gpu_rescore.py": "e0d888c6e7d5e5ed9f356e908ce4a0d3e476cf68bf5d1c88db2cb8541c7f615a",
+    "research/flywheel_selfplay/h294_fresh_even_v5_confirm_ensvote2/build_fresh.py": "39a90db1b0e53b0e56d976f0d0aa7f5e737c4aed25eb055181539c1aefcc05b4",
+    "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/ensemble.py": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+    "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/manifest.json": "e2b989f050c8ba4fdb71606ee63c8733b1e4db32ec2ae7e342f70a2c06b04e59",
+    "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/export_manifest.json": "874693a78d52ebeee2e2c0c38d0f028cd3887a01abec8d0c383128e0b4cf06d7",
+    "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/fit_lock.json": "8a20c58bdb4bfcbadfa5ba927aa0577b630e3174e6dc4a7bfd579175ca08f35f",
+    "research/flywheel_selfplay/h291_harm_veto_abstention/harm_veto.py": "f025ff3df464c8b312a7b9f4a72818789292dbb68305660cecaa7a60d7f612cb",
+    "research/flywheel_selfplay/h291_harm_veto_abstention/fit_lock.json": "3d05461907ab6d4513204f70d98800c7af2fe8ca244f0517f40bb26af913f1da",
+    "research/flywheel_selfplay/h295_label_free_validity_guard/valguard.py": "ec0c5ebdf3aab1004a3fa63e764e6d976ecbcc3dbf80d46cba9627a1d2903564",
+    "research/flywheel_selfplay/h295_label_free_validity_guard/fit_lock.json": "adf8912732b45c9f7bebf13f6d8440bed68ff8041b9d3d06086235c0edee2223"
+  },
+  "prior_cohort_metadata": {
+    "H294": {
+      "file": "~/jope_plan/ns/receipts/fresh_cohort_v5_H294.json",
+      "sha256": "ea5364ad8d224719300a7932b0d8418709793405c1668dc581aac59302f7d0c9",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H294/cohort/fresh_cohort_v5_H294.json",
+      "version_id": "zfXFbXPDS1P2CSxGixOrykepkzkWvFNT",
+      "families": 358,
+      "half": "EVEN"
+    },
+    "H292": {
+      "file": "~/jope_plan/ns/receipts/fresh_cohort_v4_H292.json",
+      "sha256": "7f7ff09da91b5ab8338a43d62a553b0fefe2cda59e00a8d48e80e49c57266aba",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H292/cohort/fresh_cohort_v4_H292.json",
+      "version_id": "Ie7wT7_grve0Jo3OgIxdB2aYyi6EgqZD",
+      "families": 295,
+      "half": "ODD",
+      "source": "H288 reserve (649 ODD families after H288s 300th); all 295 qualifying taken; 0 remain reserved"
+    },
+    "H286": {
+      "file": "~/jope_plan/ns/receipts/fresh_cohort_v2_H286.json",
+      "sha256": "0de1b3839cb3201d6c8a05aafec134e28e119ae6c233588b41d6169adb3e7b11",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H286/cohort/fresh_cohort_v2_H286.json",
+      "version_id": "S7duiC8OFJoMp9Bhs8cnGc6E3.K3IhWW",
+      "families": 200,
+      "parent": "fresh_cohort_v1.json sha 12d2b1f3"
+    },
+    "H283": {
+      "file": "~/jope_plan/ns/receipts/fresh_cohort_v1.json",
+      "sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H283/cohort/fresh_cohort_v1.json",
+      "version_id": "IFA1R_jOLs0Dw7HfbyMzuAxVgfsvv_Ps",
+      "half": "EVEN",
+      "families": 60
+    },
+    "H288": {
+      "file": "~/jope_plan/ns/receipts/fresh_cohort_v3_H288.json",
+      "sha256": "e247983d0412f37ad28ba3553decee1f4f6a096bd461caefafca58fdc858eac3",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H288/cohort/fresh_cohort_v3_H288.json",
+      "version_id": "jSdAj.ZnUf6gUlcKeAWaPWfhvhe2bHsI",
+      "families": 300,
+      "half": "ODD",
+      "parent": "fresh_cohort_v1.json sha 12d2b1f3"
+    }
+  },
+  "local_custody": "/home/ubuntu/jope-rescue-20260921/h299-astra",
+  "read_only_s3": true
+}

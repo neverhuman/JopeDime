@@ -1,0 +1,100 @@
+{
+ "wave": "H310",
+ "phase": "lock",
+ "tasks": [
+  {
+   "root_seed": 30001,
+   "chosen": {
+    "tau": 0.1,
+    "k": 5,
+    "a": 2,
+    "inner_gain": 0.05639755383015419,
+    "inner_switches": 212
+   },
+   "n_tied": 1,
+   "elapsed_sec": 681.9
+  },
+  {
+   "root_seed": 30002,
+   "chosen": {
+    "tau": 0.05,
+    "k": 5,
+    "a": 2,
+    "inner_gain": 0.05496110251614889,
+    "inner_switches": 310
+   },
+   "n_tied": 1,
+   "elapsed_sec": 705.5
+  },
+  {
+   "root_seed": 30003,
+   "chosen": {
+    "tau": 0.05,
+    "k": 5,
+    "a": 2,
+    "inner_gain": 0.044733018189392966,
+    "inner_switches": 341
+   },
+   "n_tied": 1,
+   "elapsed_sec": 709.4
+  }
+ ],
+ "locks": {
+  "30001": {
+   "fit_lock_sha256": "a06cb7f09a771a5d3a802b3388e3bb73dd61972bcdae58be2f37a50ad52e3347",
+   "chosen": {
+    "tau": 0.1,
+    "k": 5,
+    "a": 2,
+    "inner_gain": 0.05639755383015419,
+    "inner_switches": 212
+   },
+   "n_tied": 1,
+   "member_ranker_sha256": [
+    "df8832b27e0f8f1bfe8267265fa3d597fc6264d8a008f9f2ba1b13e030d998de",
+    "6f5b37eedce282b9dd3860a89c04a6d48c6880bcb72cb81e5a4c130522eebc07",
+    "ad5f0db93b3b4abdfca1a39e19dd307d939038187856a30da7bcaf65ac00869e"
+   ]
+  },
+  "30002": {
+   "fit_lock_sha256": "d78922f4a23d42a20da081c3b4be61b9b902986bbcdea882236400171c3c8c81",
+   "chosen": {
+    "tau": 0.05,
+    "k": 5,
+    "a": 2,
+    "inner_gain": 0.05496110251614889,
+    "inner_switches": 310
+   },
+   "n_tied": 1,
+   "member_ranker_sha256": [
+    "7a10b79766f4cff627a1124753220daf3ef1543c45d22494c337eef4d1ffc3a7",
+    "38b36792e6796927fb327f446fca4c018b61fe669548bfeeff4a006bef670cbc",
+    "0efaa759f1cf9a735fb3f54c51b415de4c4b7aed84afb5a63c322feafead46f9"
+   ]
+  },
+  "30003": {
+   "fit_lock_sha256": "40f02d99a0fd58c4345b7c26ff2c275a8f22ec4801a837795dfbd20333eddc3f",
+   "chosen": {
+    "tau": 0.05,
+    "k": 5,
+    "a": 2,
+    "inner_gain": 0.044733018189392966,
+    "inner_switches": 341
+   },
+   "n_tied": 1,
+   "member_ranker_sha256": [
+    "2e02c3633064c85b151c916893f1d0238e9b88a0ce96ae29a97fa9ab423f8ec3",
+    "29e8c7b44e60b09adb92b7c6aa1b26e88bac523a5a69dbf00fcfa7f8b21020eb",
+    "c62d525e27fb54c20dbac0aae4aa3a90a28b1c3fd3f97398e77172e67b73e9eb"
+   ]
+  }
+ },
+ "dev91_rows_read_before_lock": 0,
+ "counters": {
+  "feature_bytes_read": 98792568,
+  "feature_rows_read": 2811012,
+  "dlval_feature_rows_read": 0,
+  "dev91_packets_built_before_lock": 0,
+  "dev91_guard_denials": 0
+ }
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "whitepaper.adapter-rejection-runs-figure/v1",
+  "input_csv_sha256": "197c519554675d398cb77c81e652788b51462ca372a2ea6c7b41811958b4238a",
+  "aggregate_csv_sha256": "e467a7558f878a2e64d421c3904de16b86a029664fa26ccbad9e37a404bb87e2",
+  "source_receipt_sha256": "1c8d6421fb542afa048851895ba7d8a530ff1f06a1120068a2fadd6933487e3a",
+  "generator_sha256": "f2c840ef78e4546190d6e5bda5596e76b1e395a10d0e2e22fe0e5d637e037065",
+  "figure_sha256": "293284bc942d1fef71b8ef40dd9bcffc3812864565a420004c9402e76290a7b6",
+  "source_records": 4274,
+  "rejection_memberships": 4266,
+  "points": 10,
+  "filled_points": 7,
+  "open_points": 3,
+  "x_unit": "recorded rejected decisions",
+  "x_scale": "logarithmic",
+  "y_unit": "logged round interval",
+  "missing_decisions_imputed": false,
+  "smoothing": false,
+  "jitter": false,
+  "interpolation": false,
+  "estimated_uncertainty": false,
+  "figure_inches": [
+    7.0,
+    3.25
+  ],
+  "minimum_text_size_pt": 9.0,
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_adapter_rejection_runs.py"
+}

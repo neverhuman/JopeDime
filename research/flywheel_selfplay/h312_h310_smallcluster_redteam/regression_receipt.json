@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "per_seed_gain": [
+    0.011448661872055522,
+    0.01526524924436801,
+    0.027356744513885204
+  ],
+  "expected_full_precision": [
+    0.011448661872055522,
+    0.01526524924436801,
+    0.027356744513885204
+  ],
+  "rounded6": [
+    0.011449,
+    0.015265,
+    0.027357
+  ],
+  "baseline_mean": 1.1389572403748425,
+  "baseline_per_context_exact": true,
+  "h310_locks": {
+    "30001": "/home/ubuntu/jope-data/h312-astra/references/archive/lock/fold_4/root_30001/fit_lock.json",
+    "30002": "/home/ubuntu/jope-data/h312-astra/references/archive/lock/fold_4/root_30002/fit_lock.json",
+    "30003": "/home/ubuntu/jope-data/h312-astra/references/archive/lock/fold_4/root_30003/fit_lock.json"
+  },
+  "historical_feature_rows_decoded": 0,
+  "prereg_commit": "08c46e22a85e5fce3ecd39cf5c75ecf191d82fcd",
+  "input_hashes": {
+    "/home/ubuntu/jope-data/h278/inputs/r3175/round-3175.json": "7565576d267f83400fee14e369e461d0a177fee097329b41c093420ceb0b6bbc",
+    "/home/ubuntu/jope-data/h312-astra/references/gpu-attempt-001-r3175-gpu-costs.npz": "d99363f62c36463e6fe1ca825a87332198e6a817021bc208c6379b2d2c330bab"
+  }
+}

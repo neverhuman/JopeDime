@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "collected": 12,
+  "executed": 12,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "scope": "Data-free source/selection fixtures only; no model or scientific data access",
+  "scientific_regression": "NOT_RUN",
+  "model_hash_audit": "NOT_RUN",
+  "medbag_scoring": "NOT_RUN"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "whitepaper.recent-discovery-retention-source/v1",
+  "captured_utc": "2026-11-04T07:21:58.246727+00:00",
+  "selection": "Latest up60newline-complete retained summary records fixed before inspecting promotion values or admission outcomes; every selected record retained. Program journal independently tallied in exactly that round window; no value/outcome filtering.",
+  "records": 48,
+  "round_window": [
+    4862,
+    4909
+  ],
+  "program_promotions": 17,
+  "adapter_admissions": 0,
+  "csv_sha256": "009c4522dd04d1b389c20c1d3494baeee32ffb701dd2462c68bd16a01f7a5307",
+  "summary_prefix_sha256": "84546c10b6fbf00e4524b7ce161d922501c0b4718911a0bf24caea5e94083d38",
+  "summary_prefix_bytes": 8073096,
+  "summary_prefix_records": 48,
+  "program_prefix_sha256": "7bed18462ab7d3e8af1d3da7ee7bbfb7356e6b752c08399430b37b3c2879b031",
+  "program_prefix_bytes": 13278392,
+  "program_prefix_records": 3670,
+  "source_fields": [
+    "summary.promotions",
+    "summary.adapter_admission.candidate_utility",
+    "summary.adapter_admission.best_utility",
+    "promotion.kind"
+  ],
+  "event_reconciliation": "Every per-round count matches all kind=promotion records in the bounded program-journal prefix. Passing training-CV gates and strict utility gains verified. Zero-event rounds are complete summary records with no journal event.",
+  "transformation": "48per-round event bars plus48candidate utility markers and48logged post-decision retained utility values. No smoothing, interpolation across gaps, value filtering or cumulative envelope.",
+  "scope": "Strict training-program promotions and adapter development-pool retention have different admission meanings. Utility is logged higher-is-better on reused development contexts, not independent evaluation or a neural-writer/ranking-map learning gain. Exact runtime source binding remains unqualified.",
+  "within_round_order": "Inspected caller records adapter admission before program search. Round alignment does not establish a causal effect; exact runtime source binding remains unqualified."
+}

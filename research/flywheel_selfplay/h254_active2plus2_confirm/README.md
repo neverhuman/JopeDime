@@ -84,3 +84,9 @@ Wave H254 tests whether the Stage-1 `ACTIVE_2PLUS2_HURDLE` sequential `2+2` acti
   - `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H254/prereg-e77ab29e2debcc74850aa60d7ea79a6dc764ac0f/prereg_s3_manifest.json` (`VersionId = fyfEwHKOy2bFdiO.VRpiyPWFfs2QbRTf`, `sha256 = 3082e112ae4fe6e96c1c7d203f8b064e8b6db579505aa477d7ce48baad793c7a`)
 - **Closeout Run (`attempt-001`) S3 Manifest**:
   - `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H254/attempt-001/s3_manifest.json` (`VersionId = 2HmNPWjZLGk4IZX_RHgkU_p3mkGkKRaT`, `sha256 = db7c9ca26a882b969e05e5778ed0d2fc256ae4a048f2607faaae5d1c2bae78fc`)
+
+## Red-team caveats (watcher 14:05Z)
+
+- Revealed `fitness` IS the scored quantity (`utility = -fitness`, `common_h252.py:137`). `ACTIVE_2PLUS2_HURDLE` is a test-time 4-true-evaluation search policy, NOT adapter/checkpoint lift; the vs-`R882` secondary compares 4 oracle reveals vs 0 reveals (unequal budget).
+- `GATED_025` reveals 4 RANDOM candidates, a weak equal-budget comparator (Elo `1496.34` < `R882` `1500.00`). The obvious strong equal-budget baseline "reveal `r882` top-4 by cost, pick best revealed" (`TOP4_PICK`) was never run. Verdict stands as preregistered (`ADVANCE` vs `GATED_025`) but adoption is **BLOCKED pending H258**.
+- Seeds only vary the reveal RNG on one fixed model; `3/3` seeds is weak evidence of robustness. `19` `DL-Val` families; W/T/L `9/8/2`.

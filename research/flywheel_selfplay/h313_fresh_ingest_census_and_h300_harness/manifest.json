@@ -1,0 +1,24 @@
+{
+  "wave": "H313",
+  "h310_commit": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "h310_sources": {
+    "run_h310.py": "5df537132cf4847cbb753c8501ecf6da4ad8c6b0a9ba77dab2cf14182b987a8b",
+    "evaluate_h310.py": "09169b8eaabf04d8ee6da3b2fbb619c9dbd910f1749be9bf37d7c6232086f730",
+    "manifest.json": "1dad1480abe306dce8a91d1bf2b7753689ccfe856abbf15bea09d15a0222b213",
+    "lock_receipt.json": "bcf3e7958485fbe1ffb8f5159c88624178b11b3efb8196201658a330ce4dc8eb"
+  },
+  "source_sha256": {
+    "PREREG.md": "95dab95bf501d7fe4e5c8d6b4a0d71c69ebde974aedba4de9f9a04dc9b4732f6",
+    "census_h313.py": "5f803ca2b72cd94add16fef01ac87c35870c0d38fdd720cc40d580d91e4d7656",
+    "harness_h313.py": "1b3e7fea24a30b240b704405701e915d04dc50f86828dc2a83b9c37c17bb6be4",
+    "test_h313.py": "6335e0f081039174a06dfd78c7b4743cf70cd721e62101925ec75583d6e461a6"
+  },
+  "run_copies": {
+    "note": "lock and dry-run phases ran from byte-identical copies in ~/jope-data/h313-opus/code because the study folder name contains H310 frozen dev-guard needle fresh_",
+    "harness_h313.py": "1b3e7fea24a30b240b704405701e915d04dc50f86828dc2a83b9c37c17bb6be4"
+  },
+  "h299_pins": {
+    "reference_commit": "acb07d1139e9ff4163b7f30eed1ae0dc505e4d82",
+    "scripts_from": "origin/v1/next research/flywheel_selfplay/h299_fresh_cohort_v6_scout"
+  }
+}

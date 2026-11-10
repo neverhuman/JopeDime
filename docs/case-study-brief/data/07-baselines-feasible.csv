@@ -1,0 +1,7 @@
+x,y,label,anchor
+280917,0.118473,HistGB,south west
+389073,0.11575,CatBoost,north west
+425825,0.116123,CatBoost-1000,south west
+562021,0.118503,LightGBM,north west
+1.08773e+06,0.12561,XGBoost,south west
+1.78392e+06,0.126524,Ridge,north west

@@ -1,0 +1,145 @@
+{
+  "wave_id": "H298",
+  "slug": "h298_family_balanced_gradaccum",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H298/",
+  "uploaded_objects": [
+    {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H298/h298_checkpoints_and_results.tar.gz",
+      "key": "experiments/rd_breakthrough_20261030/H298/h298_checkpoints_and_results.tar.gz",
+      "version_id": "lG1UYi3tUz3vNfkFllycDAWzTvOLIbOE",
+      "bytes": 41324918,
+      "sha256": "95494ce2efc99eead40e5f40d503aa750f8783e1b6f5cb472bfcdb8d5f72865a"
+    },
+    {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H298/metrics_h298.json",
+      "key": "experiments/rd_breakthrough_20261030/H298/metrics_h298.json",
+      "version_id": "hn.QqQDNDME9X1KtQ5xwUckbS26dOlGM",
+      "bytes": 27768,
+      "sha256": "0af56f66fdfa7fd7a0b94441efe324fbdb75f0f2576c42354f5428d1a097ec90"
+    }
+  ],
+  "archived_files_in_tar": [
+    {
+      "relpath": "FAMBAL_ACC1-29801.json",
+      "bytes": 21458,
+      "sha256": "db284040ebf09093c357777370bbee020fff9bc3683ec90b1599a8fbbf47e8ee"
+    },
+    {
+      "relpath": "FAMBAL_ACC1-29802.json",
+      "bytes": 21476,
+      "sha256": "67ec2cd6d1b3be36a25d24781d14f01ebdbac59141a88a93189c4c2146291cdf"
+    },
+    {
+      "relpath": "FAMBAL_ACC1-29803.json",
+      "bytes": 21463,
+      "sha256": "cb5bcdc078e6130d343bd77813ecbb90292f50ebb853b5b5b4d236ee09a2a806"
+    },
+    {
+      "relpath": "FAMBAL_ACC4-29801.json",
+      "bytes": 21457,
+      "sha256": "64ee4b44ea0b5ddf21c7fbb8ca45e5a2015b867a73898aaa9343a6b5bf53c091"
+    },
+    {
+      "relpath": "FAMBAL_ACC4-29802.json",
+      "bytes": 21484,
+      "sha256": "f04e12f620d97e2dfc2607c2859a75e176c9681d7eefbe6d33274183ee4a3a7b"
+    },
+    {
+      "relpath": "FAMBAL_ACC4-29803.json",
+      "bytes": 21464,
+      "sha256": "fb2344ffcf17b1261e5f5175f3087f51127b34f21e5fa135a7c3bd09bf416ce2"
+    },
+    {
+      "relpath": "PAIRED_CONTROL-29801.json",
+      "bytes": 21464,
+      "sha256": "3a10e73a6636d4c5a117d416c43078755775337b0b198e949d31b4d17e08cf6d"
+    },
+    {
+      "relpath": "PAIRED_CONTROL-29802.json",
+      "bytes": 21485,
+      "sha256": "84e50a9e49d9f5af17d00e57f987599ca273974fc49377b10177812c423a55ee"
+    },
+    {
+      "relpath": "PAIRED_CONTROL-29803.json",
+      "bytes": 21472,
+      "sha256": "73b81ee5ea465cd8cd1569c54a58bf1e400e9c5f31ea0f3243c6719a4e063653"
+    },
+    {
+      "relpath": "TRIAL_BASELINE.json",
+      "bytes": 20177,
+      "sha256": "d8070cdbea211d127b31b290246725d9c78d6abfd07d77c37e915ac308c562e0"
+    },
+    {
+      "relpath": "arms/FAMBAL_ACC1-29801.pt",
+      "bytes": 7489002,
+      "sha256": "e7d869ee38cb63361aefcd13282983824350bf44189caf449e1a7e61c107bd46"
+    },
+    {
+      "relpath": "arms/FAMBAL_ACC1-29802.pt",
+      "bytes": 7489002,
+      "sha256": "4b5135535dcebf0d796ea6e90a6db9c4d84462622a57781f188809e8d7922ab1"
+    },
+    {
+      "relpath": "arms/FAMBAL_ACC1-29803.pt",
+      "bytes": 7489002,
+      "sha256": "f1741bf20a77784ceee32650aa11dc51997ba5ecec264b9622b28853b7be4ceb"
+    },
+    {
+      "relpath": "arms/FAMBAL_ACC4-29801.pt",
+      "bytes": 7489002,
+      "sha256": "95052d78ea4b51868cbb2779bfb0e4272ca92810cdc7da84bc454dc75428f1ea"
+    },
+    {
+      "relpath": "arms/FAMBAL_ACC4-29802.pt",
+      "bytes": 7489002,
+      "sha256": "601081e183d08e0eb88694683e339a0c55854a60b91eb324fd81b56494f484f6"
+    },
+    {
+      "relpath": "arms/FAMBAL_ACC4-29803.pt",
+      "bytes": 7489002,
+      "sha256": "789a9f5a886b5df7a95fabc2afec967f84809859bdc10f64cf9a290963b6da56"
+    },
+    {
+      "relpath": "arms/PAIRED_CONTROL-29801.pt",
+      "bytes": 7490452,
+      "sha256": "be8403e659f1624280643cb6c2241874ed6fc6a98040603a174df9997a9bb451"
+    },
+    {
+      "relpath": "arms/PAIRED_CONTROL-29802.pt",
+      "bytes": 7490452,
+      "sha256": "ba69224990784c42b2ec399f31f7acc7f572fcda42dcc6ba4b83a5f225be5659"
+    },
+    {
+      "relpath": "arms/PAIRED_CONTROL-29803.pt",
+      "bytes": 7490452,
+      "sha256": "0d2deb08a07e5ebcbf8f438d04eb2b73a161132c19065ecebec4a9389b9ffbbb"
+    },
+    {
+      "relpath": "events_h298.jsonl",
+      "bytes": 23236,
+      "sha256": "aa735a8c50a38dbfe02e53f19c92e286b633bb9c02c794c9814181a6dbe087e7"
+    },
+    {
+      "relpath": "metrics_h298.json",
+      "bytes": 27768,
+      "sha256": "0af56f66fdfa7fd7a0b94441efe324fbdb75f0f2576c42354f5428d1a097ec90"
+    },
+    {
+      "relpath": "preregistered_batches.json",
+      "bytes": 23964,
+      "sha256": "51e93dff787ee5d38f12fc41c2fb4b8021929ed59926a708922c5340bd359f95"
+    },
+    {
+      "relpath": "regression_receipt.json",
+      "bytes": 1282,
+      "sha256": "20e6f23c1eedde54b72c8ae6b968b7f4032c3fef66fdd61c5b59e479d4367928"
+    }
+  ],
+  "s3_manifest_object": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H298/s3_manifest.json",
+    "key": "experiments/rd_breakthrough_20261030/H298/s3_manifest.json",
+    "version_id": "6qFHIFeiLNUQNWqxCbcVNkKYJiAeJyvx",
+    "bytes": 4737,
+    "sha256": "b9e0a80bc733146110f2cc33d272ab48de3ccf91f716584334987e62308d44cc"
+  }
+}

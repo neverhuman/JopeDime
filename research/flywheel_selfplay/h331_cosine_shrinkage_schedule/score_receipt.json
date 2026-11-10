@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "outer_model_score_calls": 36,
+  "fit_locks": 36,
+  "baseline": "Read-only H318 BASE panel, exact-regressed before COS fitting",
+  "panel_sha256": "0f63b8b4851383c30a2bcf12d67e7d6e1d6f585516640b8b5f5a5cc72d890dbf",
+  "dev91_rows_read": 0,
+  "r3175_train": "NOT_MEASURED"
+}

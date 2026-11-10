@@ -1,0 +1,9 @@
+{
+  "cpu_usage_nsec": 26189516914000,
+  "cpu_seconds": 26189.516914,
+  "invocation_id": "b43ca85cb1434a7ca8709b588a573ef4",
+  "closeout_sha256": "042905333cc018c3baef067f670a86261ef6f0919d732f676c92465c62256eeb",
+  "ranker_cpu_share_upper_bound": 1.0,
+  "forecast_reference_cpu_seconds": 26189.516914,
+  "reason": "Owner H390 forecast uses actual H352 CPU unchanged; CATL2 runtime unmeasured; no timing fits"
+}

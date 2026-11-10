@@ -1,0 +1,8 @@
+{
+  "wave": "H348",
+  "MINGAIN": 0.01,
+  "BASE_expected_min_gain_to_split": 0.0,
+  "BASE_expected_lambda_l1": 0.0,
+  "BASE_expected_min_sum_hessian_in_leaf": 0.001,
+  "calibration_fits": 0
+}

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot source-bound adapter admission frequencies in observed-round blocks."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 import csv
 import hashlib
 import json
@@ -129,6 +130,7 @@ def main():
         ax.set_axisbelow(True)
         ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout(pad=0.45, w_pad=1.0)
+    style_figure(fig, OUTPUT)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     provenance = {
@@ -150,3 +152,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+finalize_typography_receipts(__file__)

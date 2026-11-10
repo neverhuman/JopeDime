@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Replay the conditional distribution of logged strict program-event gains."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 
 import csv
 import hashlib
@@ -94,6 +95,7 @@ def main():
     ax.grid(alpha=0.2, linewidth=0.4)
     ax.set_axisbelow(True)
     fig.tight_layout(pad=0.5)
+    style_figure(fig, OUTPUT)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     facts = dict(
@@ -206,6 +208,7 @@ def rolling_admissions():
     axes[1].set(ylim=(min(rejections) - 0.3, 100.1), yticks=[98, 99, 100])
     axes[-1].set_xlabel("completed window-end round")
     fig.tight_layout(pad=0.5, h_pad=0.8)
+    style_figure(fig, output)
     fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     facts = dict(
@@ -338,6 +341,7 @@ def selection_changes():
         columnspacing=0.65,
     )
     fig.tight_layout(pad=0.5)
+    style_figure(fig, output)
     fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     facts = dict(
@@ -441,6 +445,7 @@ def retained_utility_lift():
     ax.legend(loc="upper left", frameon=False, fontsize=6.6, handlelength=1.4)
     ax.tick_params(labelsize=7)
     fig.tight_layout(pad=0.5)
+    style_figure(fig, output)
     fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     facts = dict(
@@ -533,6 +538,7 @@ def admission_outcomes():
     ax.legend(loc="upper left", frameon=False, fontsize=6.3, handlelength=1.4)
     ax.tick_params(labelsize=7)
     fig.tight_layout(pad=0.5)
+    style_figure(fig, output)
     fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     facts = dict(
@@ -570,3 +576,5 @@ if __name__ == "__main__":
         admission_outcomes()
     else:
         main()
+
+finalize_typography_receipts(__file__)

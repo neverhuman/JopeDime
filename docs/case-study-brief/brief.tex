@@ -1,0 +1,215 @@
+% JopeDime: where our evolved models win. A plain-language brief.
+% Every number and chart comes from winners-data/ (build-winners.sh), computed from cross-validated
+% evidence on training data only (5 folds of train.csv; test.csv is never read). The full technical
+% record of all 14 cases is campaign-technical.tex. This is not the white paper (docs/whitepaper/).
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=20mm,headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[scaled=0.92]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{microtype}
+\usepackage[table]{xcolor}
+\usepackage{booktabs,array,tabularx}
+\usepackage{siunitx}
+\sisetup{mode=text,round-mode=figures,round-precision=3,exponent-product=\times,group-digits=integer,group-separator={,},group-minimum-digits=4}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=1.3em,itemsep=3pt}
+\usepackage{pgfplots,pgfplotstable}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage[most]{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{ours}{HTML}{1F5FAD}
+\definecolor{oursmid}{HTML}{5B8BD0}
+\definecolor{oursstart}{HTML}{B9CDE8}
+\definecolor{eruns}{HTML}{7FB6A6}
+\definecolor{alt}{HTML}{8C8C8C}
+\definecolor{bad}{HTML}{C0504D}
+\definecolor{win}{HTML}{0B8A6F}
+\definecolor{ink}{HTML}{1D1D1F}
+\definecolor{panel}{HTML}{F3F5F8}
+
+\titleformat{\section}{\Large\bfseries\color{ink}}{}{0em}{}
+\titleformat{\subsection}{\large\bfseries\color{ours}}{}{0em}{}
+\titlespacing*{\section}{0pt}{12pt}{5pt}
+\titlespacing*{\subsection}{0pt}{9pt}{3pt}
+\pagestyle{fancy}\fancyhf{}
+\fancyhead[L]{\small\color{alt}JopeDime --- where our evolved models win}
+\fancyhead[R]{\small\color{alt}data of \BriefDataStamp}
+\fancyfoot[C]{\small\color{alt}\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+
+\newtcolorbox{plainbox}[1]{colback=panel,colframe=ours,boxrule=0.6pt,arc=3pt,left=8pt,right=8pt,top=5pt,bottom=5pt,fonttitle=\bfseries,title=#1}
+\newtcolorbox{resultbox}{colback=win!6,colframe=win,boxrule=0.9pt,arc=3pt,left=9pt,right=9pt,top=7pt,bottom=7pt}
+\newtcolorbox{carebox}{colback=white,colframe=alt,boxrule=0.5pt,arc=3pt,left=8pt,right=8pt,top=5pt,bottom=5pt,fonttitle=\bfseries\color{ink},coltitle=ink,colbacktitle=panel,title=Keep in mind}
+
+\input{winners-data/macros.tex}
+\newcommand{\W}[2]{\csname Win#1#2\endcsname}   % \W{Two}{Ours}
+\newcommand{\bignum}[2]{\begin{minipage}[t]{0.31\linewidth}\centering{\fontsize{22}{24}\selectfont\bfseries #1}\\[2pt]{\small #2}\end{minipage}}
+
+% Benchmark chart: every alternative's cross-validated score, our start, typical and best runs.
+\newcommand{\benchchart}[3]{% #1 case number, #2 case word, #3 x label
+  \pgfplotstableread[col sep=comma]{winners-data/#1-bench.csv}\benchtable
+  \begin{tikzpicture}\begin{axis}[xbar,width=0.74\linewidth,y=0.44cm,bar width=0.30cm,bar shift=0pt,
+      enlarge y limits={abs=0.45},xmin=0,xmax=\W{#2}{BenchMax},ytick={0,...,\W{#2}{BenchLast}},yticklabels from table={\benchtable}{label},
+      y tick label style={font=\small},x tick label style={font=\footnotesize,/pgf/number format/fixed},
+      xlabel={#3},label style={font=\small},axis x line*=bottom,axis y line*=left,unbounded coords=discard,
+      nodes near coords,point meta=explicit symbolic,every node near coord/.style={font=\scriptsize,anchor=west,color=ink}]
+    \addplot[fill=alt!50,draw=none] table[x=alt,y expr=\coordindex,meta=text]{\benchtable};
+    \addplot[fill=bad!30,draw=bad] table[x=bad,y expr=\coordindex,meta=text]{\benchtable};
+    \addplot[fill=oursstart,draw=none] table[x=start,y expr=\coordindex,meta=text]{\benchtable};
+    \addplot[fill=oursmid,draw=none] table[x=ours,y expr=\coordindex,meta=text]{\benchtable};
+    \addplot[fill=ours,draw=none] table[x=best,y expr=\coordindex,meta=text]{\benchtable};
+  \end{axis}\end{tikzpicture}}
+
+% Evolution chart: the best cross-validated score so far, per run; the best run is bold.
+\newcommand{\evochart}[6]{% #1 case number, #2 case word, #3 csv suffix, #4 y label, #5 reference value, #6 reference label
+  \begin{tikzpicture}\begin{axis}[width=0.92\linewidth,height=6.6cm,grid=major,grid style={gray!18},unbounded coords=jump,
+      xlabel={generations of evolution (across all rounds)},ylabel={#4},label style={font=\small},tick label style={font=\footnotesize},
+      scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=2},xmin=0,
+      legend style={font=\footnotesize,draw=none,fill=white,fill opacity=0.9,text opacity=1,at={(0.99,0.99)},anchor=north east,cells={anchor=west}}]
+    \foreach \c in {E7,E11,E13} {\addplot[eruns,thick,const plot,forget plot] table[col sep=comma,x=g,y=\c]{winners-data/#1-#3.csv};}
+    \foreach \c in {A7,A11,A13} {\addplot[oursstart,thick,const plot,forget plot] table[col sep=comma,x=g,y=\c]{winners-data/#1-#3.csv};}
+    \addplot[ours,ultra thick,const plot] table[col sep=comma,x=g,y=\W{#2}{BestChain}]{winners-data/#1-#3.csv};\addlegendentry{best run}
+    \addlegendimage{eruns,thick}\addlegendentry{runs started from industry-standard settings}
+    \addlegendimage{oursstart,thick}\addlegendentry{runs started from our neural model's suggestions}
+    \addplot[bad,dashed,thick,domain=0:\W{#2}{Gens}] {#5};\addlegendentry{#6}
+    \addplot[only marks,mark=*,mark size=3pt,color=ours] coordinates {(0,\W{#2}{StartObj}) (\W{#2}{EndGen},\W{#2}{EndObj})};
+    \node[font=\footnotesize\bfseries,color=ours,anchor=south west] at (axis cs:1,\W{#2}{StartObj}) {start \num{\W{#2}{StartObj}}};
+    \node[font=\footnotesize\bfseries,color=ours,anchor=north west] at (axis cs:\W{#2}{EndGen},\W{#2}{EndObj}) {end \num{\W{#2}{EndObj}}};
+  \end{axis}\end{tikzpicture}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries\color{ink} Where JopeDime's evolved models win}\\[6pt]
+{\large\color{ours} Prediction programs tuned to what the business actually pays for}\\[5pt]
+{\small\color{alt} Case-study brief \textbullet{} every score cross-validated on training data \textbullet{} \BriefDataStamp}
+\end{center}
+
+\section{The short version}
+Most machine-learning contests reward accuracy and nothing else. A business pays for more than accuracy:
+for the computer time it takes to retrain a model, for how fast it answers, and for how much it costs to run.
+JopeDime lets an evolutionary search write prediction programs and judges every candidate on a
+\textbf{business scorecard} that includes those costs.
+
+We ran 14 business cases. In each, we compared our evolved programs with well-known alternatives: in this case, \W{Two}{AltFull} of them on all
+5 folds (including XGBoost, LightGBM, CatBoost, tuned versions of the most popular libraries, and classic statistical methods) and
+\W{Two}{AltPartial} slower ones (AutoGluon, TabPFN and Kumo) on one fold.
+We count a case only if we win it \emph{clearly}: no alternative comes close on that case's scorecard.
+\textbf{One case passes that test}, and this brief is about it.
+
+\begin{resultbox}
+{\large\bfseries\color{win} Hourly electricity-price forecasting, with every retrain billed by CPU time}\par\medskip
+\bignum{\W{Two}{Better}\,\%}{better business score than the best alternative (XGBoost), for our typical run}\hfill
+\bignum{\W{Two}{BestBetter}\,\%}{better for our best run, which wins on \W{Two}{FoldWins} of 5 data folds}\hfill
+\bignum{\W{Two}{CpuRatio}\,\texttimes}{less training CPU per refit than XGBoost (\num[round-precision=2]{\W{Two}{AltCpu}}\,s vs \num[round-precision=2]{\W{Two}{EndFitCpuSeconds}}\,s), for our best program}
+\end{resultbox}
+
+\begin{plainbox}{How we kept it fair}
+\begin{itemize}
+\item \textbf{The same data and the same scorecard for everyone.} Every model, ours and the alternatives, is fitted on the same rows and scored
+by the same program.
+\item \textbf{Cross-validation on the training data only.} The training data is split into 5 parts (``folds''). Each model is
+trained on 4 parts and scored on the fifth, five times over, and the score is the average. The separate test data was never used.
+\item \textbf{Every number comes from the run records.} The brief is regenerated from them by a script; nothing is typed by hand.
+\end{itemize}
+\end{plainbox}
+
+\newpage
+\section{The case: forecasting tomorrow's hourly electricity prices}
+\subsection{The question}
+An energy trader re-estimates a price-forecast model every hour, across many markets, and every refit is paid
+for in computer time. \emph{Which model gives the best forecasts once you also pay for the computer time it takes to retrain?}
+The data are \num{\W{Two}{Rows}} hours of day-ahead electricity prices with \W{Two}{Features} inputs (the market, the time, the day of the week
+and two outside variables), from a public benchmark collection (Nixtla).
+
+\subsection{The scorecard}
+\textbf{Score = forecast error + a charge for training time.} The error is measured relative to how much prices normally move.
+The charge adds a tenth of a typical price swing for every 0.22 seconds of CPU time a retrain uses.
+A model that forecasts equally well but retrains in a fifth of the time therefore gets the better score.
+\textbf{Lower is better.}
+
+\subsection{How everyone scored}
+\begin{center}
+\benchchart{02}{Two}{business score, averaged over 5 folds (lower is better)}
+\end{center}
+{\small Grey: \W{Two}{AltFull} alternatives, each scored on all 5 folds (``tuned'' versions searched 40 settings inside every training fold).
+Light blue: where our best run \emph{started}, from our engine's version of XGBoost's default settings.
+Blue: our typical run (the middle of 6 runs). Dark blue: our best run. Very large scores are cut at the edge of the chart, with their value written beside them.}
+
+\smallskip
+{\small \W{Two}{AltPartial} slower alternatives were scored on one fold only, so they are not in the chart. On that fold they scored
+\W{Two}{PartialList}, against \num{\W{Two}{OursFoldOneObj}} for our best program on the same fold.}
+
+\newpage
+\subsection{How evolution improved the score}
+\begin{center}
+\evochart{02}{Two}{evo}{business score of the best program so far}{\W{Two}{Alt}}{best alternative: XGBoost (\num{\W{Two}{Alt}})}
+\end{center}
+{\small Each line is one run of the search: six runs in all (two ways of choosing the starting programs $\times$ three random seeds), each of up to six rounds.
+A line drops each time the run finds a better program, scored over all 5 folds. Together the runs evaluated about
+\num{\W{Two}{Evals}} programs.}
+
+\subsection{Where the best run started, and where it ended up}
+\noindent\begin{tcolorbox}[enhanced,sidebyside,sidebyside align=top seam,colback=white,colframe=ours!60,boxrule=0.6pt,arc=3pt,
+    lefthand width=0.47\linewidth,left=7pt,right=7pt,top=6pt,bottom=6pt,segmentation style={dashed,ours!40}]
+  {\bfseries\color{alt}Where it started} {\small(generation 0)}\par\smallskip
+  Boosted decision trees with XGBoost's standard settings, as our engine runs them.\par\smallskip
+  \begin{tabular}{@{}ll@{}}
+  business score & \textbf{\num{\W{Two}{StartObj}}}\\
+  forecast error (RMSE) & \num{\W{Two}{StartRmse}}\\
+  training CPU per refit & \num[round-precision=2]{\W{Two}{StartFitCpuSeconds}}\,s\\
+  model size & \W{Two}{StartModelKB}\,KB
+  \end{tabular}\par\smallskip
+  {\scriptsize\ttfamily\color{alt}\W{Two}{StartProgram}}
+\tcblower
+  {\bfseries\color{ours}Where it ended up} {\small(found in generation \W{Two}{EndGen})}\par\smallskip
+  What changed: \W{Two}{Changes}.\par\smallskip
+  \begin{tabular}{@{}ll@{}}
+  business score & \textbf{\num{\W{Two}{EndObj}}}\\
+  forecast error (RMSE) & \num{\W{Two}{EndRmse}}\\
+  training CPU per refit & \num[round-precision=2]{\W{Two}{EndFitCpuSeconds}}\,s\\
+  model size & \W{Two}{EndModelKB}\,KB
+  \end{tabular}\par\smallskip
+  {\scriptsize\ttfamily\color{alt}\W{Two}{EndProgram}}
+\end{tcolorbox}
+
+\subsection{What this means}
+\begin{itemize}
+\item \textbf{More accurate and cheaper at the same time.} Our best program's forecast error (\num{\W{Two}{EndRmse}}) is lower than that of every
+alternative scored on all 5 folds (the best of them, XGBoost: \num{\W{Two}{AltAcc}}). It also retrains with about \W{Two}{CpuRatio} times less CPU time than XGBoost.
+\item \textbf{Two sources of the win.} Our engine already runs a standard boosted-tree model with far less CPU than the Python libraries do:
+the starting point beats XGBoost on its own. Evolution then found settings that are both more accurate and cheaper still.
+\item \textbf{Tuning the libraries does not close the gap.} Searching 40 settings for XGBoost or LightGBM inside every fold gives scores near
+\num{\W{Two}{XGBTunedMean}}: the extra training time costs more than the accuracy gained.
+\end{itemize}
+
+\begin{carebox}
+\begin{itemize}
+\item \textbf{The CPU price is part of the case.} It was fixed before any run, not taken from a real tariff. Our best program is also the most
+accurate of the fully cross-validated models, so it stays ahead whenever computer time costs anything at all. Our typical run's error
+(\num{\W{Two}{OursMedianRmse}}) is about the same as XGBoost's (\num{\W{Two}{AltAcc}}); its lead comes from the CPU saving.
+\item \textbf{The most accurate model of all was much costlier.} On the one fold where AutoGluon was run, its 5-minute ensemble had a
+somewhat lower error (\num{\W{Two}{AutoGluonFoldOneAcc}} vs our \num{\W{Two}{OursFoldOneRmse}}), but it used about
+\num[round-precision=2]{\W{Two}{AutoGluonFoldOneCpu}} CPU-seconds per refit.
+\item \textbf{The folds are shuffled hours.} Like every model here, ours was checked on randomly chosen hours. That measures how well
+a model fits the period, not how it forecasts a future it has not seen.
+\item \textbf{The other 13 cases.} We do not claim them. Under the same cross-validation either an alternative won, or our lead was within the
+normal variation between folds.
+\end{itemize}
+\end{carebox}
+
+\vfill
+{\scriptsize\color{alt}\sloppy\textbf{Behind the numbers.} Our runs: \texttt{extend\_case.sh -{}-cuts 5}, run stamp \texttt{\BriefCvStamp}, case 02.
+Alternatives: \texttt{summary\_cv.csv}, scored by \texttt{jopedime fitness evaluate}.
+Built by \texttt{make -C docs/case-study-brief} from \BriefInputCount{} evidence files (digest \texttt{\BriefInputsSha}). The full technical
+record of all 14 cases is \texttt{campaign-technical.pdf}.}
+
+\end{document}

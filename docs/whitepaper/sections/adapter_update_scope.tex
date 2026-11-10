@@ -1,29 +1,32 @@
-Typed program edits, cross-family retrieval and grammar synthesis supply
-candidates in the inspected implementation. The inspected loop freezes every
-network parameter, then enables updates
-only for non-anchor parameters of the cost-ranking adapter. This loop
-has no neural program writer. Its pool-utility calculation uses the
-recorded scores and gate
-outcomes of the first four candidates as revealed history, then selects
-the lowest predicted cost from the pool, including those entries.
-Training puts the lowest recorded scores first in its slates; utility
-evaluation uses stored pool order. The calls can therefore reveal different
-examples. For new proposals, the caller uses predicted costs and an
-exploration setting to select programs for exact evaluation.
+Proposals in this operating loop use typed edits, cross-family retrieval
+and grammar synthesis. The loop freezes that candidate network, then enables
+only non-anchor cost-adapter updates (the parent-delta head receives no
+loss gradient). No neural program writer runs.
+Validation-pool utility evaluation reveals recorded scores and candidate-gate
+outcomes for the first four stored entries, then selects the pool's lowest
+predicted cost, including those entries. Training slates put the lowest recorded scores first;
+utility evaluation uses stored order, so the calls can reveal different
+examples. The caller rotates same-context bank parents for mutation. Optional
+exploration adds up to two random remaining candidates to its two
+\mbox{lowest-cost picks}.
 
-At the adapter interface, the caller supplies modality tokens and their
-mask. It separately zeros the 584-entry context-feature slot and both
-prior inputs, and supplies a fixed scale constant of \num{0.4208}; zero context
-features do not mean absent modality tokens. Its objective combines regression to recorded costs and listwise
-matching; failed gates receive target cost $+2.0$. Reporting averages
-negative selected scores rather than cost predictions, with utility $-2.0$
-for failed gates. The full-cohort
-route disables development-anchor margin projection; smaller-cohort runs can
-enable it. These routes require separate receipts.
+The caller supplies modality tokens and their mask but zeros the 584-entry
+context-feature slot and both prior inputs. It uses fixed scale \num{0.4208};
+zero context features do not mean absent modality tokens. Cost regression
+is weighted ten-to-one over listwise matching; failed candidate gates get target cost
+$+2.0$. Reporting averages negative selected scores, not cost predictions,
+with utility $-2.0$ for failed candidate gates. The full-cohort route disables
+development-anchor margin projection; smaller-cohort runs can enable it.
+Each route needs its own verification receipt.
 
-These selection records alone do not establish a gain from optimizer
-updates or from the separate reference map. The limits of component
-diagnostics are discussed in \cref{sub:results-diagnostics}.
-Testing learning requires matched trained and untrained controls with
-the same pool and revealed history, reporting invalid selections separately
-from valid-program quality (\cref{sub:results-ablation}).
+Each round in the inspected full-cohort route adds small Gaussian noise
+to trainable adapter parameters and takes at most two optimizer steps.
+Rejection (rollback) restores retained weights and optimizer state. Consecutive
+rejections restart from perturbed checkpoint copies; they do not accumulate
+updates across rounds.
+
+Selection records alone establish no gain from optimizer updates or the
+separate reference map (\cref{sub:results-diagnostics} covers the diagnostic
+limits). Learning tests require matched trained and untrained controls
+with the same pool and revealed history, and must report invalid selections
+separately from valid-program quality (\cref{sub:results-ablation}).

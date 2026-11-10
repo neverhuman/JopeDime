@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "same_agent_independent_recalculation": true,
+  "bootstrap_draws_verified": 10000,
+  "cells": 9,
+  "families": 205,
+  "raw_utilities_counts_drops_intervals_decision_verified": true,
+  "concentration_lofo_jaccard_config_verified": true,
+  "overfit_member_gaps_reconstructed": 216,
+  "h327_descriptive_comparison_verified": true,
+  "metrics_sha256": "014c0da35329af2767c4875117190d01a396138eae47b5be943fe1c48e8d48c8",
+  "verdict": "L2ONLY_NOT_ADVANCED",
+  "finished_utc": "2026-11-04T19:47:46.628695+00:00"
+}

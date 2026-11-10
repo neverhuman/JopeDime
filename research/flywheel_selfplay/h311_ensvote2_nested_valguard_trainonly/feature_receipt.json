@@ -1,0 +1,14 @@
+{
+ "sha256": "5b7f34acb1aef3dc4c11b8620a721c2be7d5dc4f0838660c9055fbad7c84f3e0",
+ "X_sha256": "b571397ea727459f8fc6bd247fb00c178bb31ad139bcbba164f915964cdd4116",
+ "indices_sha256": "0dbed09a26296e08660c3a828250b1ae1a55cf73687f5c6938dae44a7b0514e4",
+ "loader_counters": {
+  "feature_bytes_read": 98792568,
+  "feature_rows_read": 2811012,
+  "dlval_feature_rows_read": 0
+ },
+ "physical_validity_or_utility_arrays_read": 0,
+ "contexts": 1219,
+ "families": 205,
+ "source_sha256": "ba8c2e6e18547a6f9725061de5941db94b1815b6ce5d056c1411388c4d06d719"
+}
