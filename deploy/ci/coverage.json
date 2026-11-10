@@ -10615,7 +10615,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Comparator model contract: forests, histogram boosting, ridge and Caruana selection beat the training-mean baseline on held-out rows; seeded determinism, row locality, FIT-only median imputation and constant targets over generated tables; every malformed input, invalid parameter and expired deadline refused with its typed error."
+      "scope": "Comparator model contract: forests, histogram boosting, ridge and Caruana selection beat the training-mean baseline on held-out rows; seeded determinism, row locality, FIT-only median imputation and constant targets over generated tables; every malformed input, invalid parameter and expired deadline refused with its typed error; the ten-entry roster learns at the medium tier, reproduces under a seed, honours an expired deadline and keeps honest Rust labels; tiers exist only for medium, high and ultra."
     },
     "target:jope-datasets/bin/jope-datasets": {
       "discovery": {
