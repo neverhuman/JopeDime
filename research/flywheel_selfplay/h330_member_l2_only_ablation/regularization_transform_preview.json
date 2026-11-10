@@ -1,0 +1,36 @@
+[
+  {
+    "module": "topk",
+    "function": "fit_ranker",
+    "original_sha256": "c2791dbbfdb1ca7eb4768124b1b92b7f29715928bc377bb4dffcbf6acc436cd1",
+    "source": "def fit_ranker(X, y, n_groups, k, lr, random_state):\n    import lightgbm as lgb\n    model = lgb.LGBMRanker(objective='lambdarank', metric='ndcg', lambdarank_truncation_level=k, boosting_type='gbdt', max_depth=3, num_leaves=7, min_child_samples=20, learning_rate=float(lr), n_estimators=200, subsample=0.8, subsample_freq=1, colsample_bytree=0.8, reg_lambda=10.0, n_jobs=1, random_state=int(random_state), verbosity=-1, deterministic=True, force_row_wise=True)\n    model.fit(X, y, group=np.full(n_groups, k, dtype=np.int32), eval_at=[1, k])\n    return model\n",
+    "base": {
+      "reg_lambda": 1.0,
+      "colsample_bytree": 0.8,
+      "min_child_samples": 20
+    },
+    "reg": {
+      "reg_lambda": 10.0,
+      "colsample_bytree": 0.8,
+      "min_child_samples": 20
+    },
+    "restored_AST_exact": true
+  },
+  {
+    "module": "bagged",
+    "function": "fit_ranker_n",
+    "original_sha256": "80a26d399a4180043a11ea702d99c56286bc9b6e3cf490028f4508551229ef95",
+    "source": "def fit_ranker_n(X, y, n_groups, k, lr, n_est, random_state):\n    \"\"\"Exact topk.fit_ranker configuration stopped at n_estimators = int(n_est) (verified bit-identical to\n    fitting 200 trees and predicting with num_iteration = int(n_est)).\"\"\"\n    import lightgbm as lgb\n    model = lgb.LGBMRanker(objective='lambdarank', metric='ndcg', lambdarank_truncation_level=k, boosting_type='gbdt', max_depth=3, num_leaves=7, min_child_samples=20, learning_rate=float(lr), n_estimators=int(n_est), subsample=0.8, subsample_freq=1, colsample_bytree=0.8, reg_lambda=10.0, n_jobs=1, random_state=int(random_state), verbosity=-1, deterministic=True, force_row_wise=True)\n    model.fit(X, y, group=np.full(n_groups, k, dtype=np.int32), eval_at=[1, k])\n    return model\n",
+    "base": {
+      "reg_lambda": 1.0,
+      "colsample_bytree": 0.8,
+      "min_child_samples": 20
+    },
+    "reg": {
+      "reg_lambda": 10.0,
+      "colsample_bytree": 0.8,
+      "min_child_samples": 20
+    },
+    "restored_AST_exact": true
+  }
+]

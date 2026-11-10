@@ -1,0 +1,10 @@
+{
+  "host": "xbabe2",
+  "python": "3.12.3",
+  "numpy": "1.26.4",
+  "sklearn": "1.7.2",
+  "lightgbm": "4.6.0",
+  "kernel": "6.8.0-147-generic",
+  "lightgbm_library_sha256": "6a12e1a7b13824d14c252d2a4d2e36af467383331a114eb0e7448eecbf02d7b1",
+  "GPU_used": false
+}

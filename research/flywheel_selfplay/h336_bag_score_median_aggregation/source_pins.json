@@ -1,0 +1,27 @@
+{
+  "base_bagged.py": {
+    "commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+    "path": "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/bagged.py",
+    "sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a"
+  },
+  "base_ensemble.py": {
+    "commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+    "path": "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/ensemble.py",
+    "sha256": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8"
+  },
+  "base_h265_core.py": {
+    "commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+    "path": "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/h265_core.py",
+    "sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+  },
+  "base_veto.py": {
+    "commit": "213b30ad52e1ce48927bba960ed609bd98ab4dfe",
+    "path": "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/veto.py",
+    "sha256": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0"
+  },
+  "base_run_h303.py": {
+    "commit": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+    "path": "research/flywheel_selfplay/h303_ensvote2_fully_nested_hparams/run_h303.py",
+    "sha256": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067"
+  }
+}

@@ -56,3 +56,9 @@ vendored, or historical source bytes are changed by this disposition.
 | `research/flywheel_selfplay/h153_sam/runtime.py:99` | The experiment runner verifies the input paths against its exact `manifest.json` pins before calling `build`; `cpu_exact_fused.py` is a recorded input identity. This runtime is also pinned by downstream H-wave manifests; its source bytes are preserved. |
 
 The baseline full audit is retained at `/home/ubuntu/jope_plan/master/audit/rerun/j_fbe191a33.json`; its repository-wide score is not a P37-only result.
+
+On 2026-11-09, after the flywheel waves through H416 were copied onto this branch, jankurai 1.7.6 no longer emitted the H147 and H168 copy-code identities in the changed-scope audit. The copy-code classes that touch a registered path were refreshed to that scan: 36 classes, replacing the previous 34. The 24 exact file pins and their per-file findings were not changed. `ops/ci/verify-pyexec-exceptions.sh` passed against that inventory.
+
+On 2026-11-10, after PRs 2170 to 2174 merged, the jankurai 1.7.6 cross-file audit no longer emitted the `HLT-001-DEAD-MARKER` identity at `deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py:831`. The file is unchanged, with participant sha256 `b1487969…`. That identity was removed from the cross-file register. The other three identities and the raw copy-code classes match the scan unchanged.
+
+When PR 2175 was merged into PR 2168 on 2026-11-10, the two removals combined. The cross-file register now holds the single identity that the cross-file audit emits on the merged tree (`test_fresh32.py:33`), and the 36 raw copy-code classes are unchanged.

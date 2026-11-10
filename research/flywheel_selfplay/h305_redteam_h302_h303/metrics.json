@@ -1,0 +1,1145 @@
+{
+  "wave_id": "H305",
+  "owner": "rd_astra",
+  "status": "COMPLETE",
+  "prereg_commit": "4844618b6a1b049e14d5a85bcc05adab20a66ea6",
+  "h302": {
+    "verdict": "RT_FAIL",
+    "failed_items": [
+      "a",
+      "h"
+    ],
+    "regression": {
+      "status": "PASS",
+      "picks_sha256": [
+        "b47088d981afa1a53a8926afc1a025492fafcb9591a9cc52aa191e452c8560d7",
+        "0c5761b312cd9366e2fd1e3f49ee7cb37908ff1b8d2228f49d4604d4ece40bed",
+        "a4ff743c9b974aa5145cb0aebed51b946bddda47b237dc21024ef2011c95c9ee"
+      ],
+      "expected_picks_sha256": [
+        "b47088d981afa1a53a8926afc1a025492fafcb9591a9cc52aa191e452c8560d7",
+        "0c5761b312cd9366e2fd1e3f49ee7cb37908ff1b8d2228f49d4604d4ece40bed",
+        "a4ff743c9b974aa5145cb0aebed51b946bddda47b237dc21024ef2011c95c9ee"
+      ],
+      "gains": [
+        0.02682276553907294,
+        0.06035828581904661,
+        0.05889172313111307
+      ],
+      "published_gains": [
+        0.02682276553907294,
+        0.06035828581904661,
+        0.05889172313111307
+      ],
+      "folds": [
+        {
+          "fold": 0,
+          "test_families": 57,
+          "test_contexts": 335,
+          "fit_families": 148,
+          "direct_fit_overlap": 0,
+          "fit_lock_sha256": "896e915c977f8ac7cd9ec05361a009e83aecce1369ed8925badf3b911b2c0e85"
+        },
+        {
+          "fold": 1,
+          "test_families": 45,
+          "test_contexts": 239,
+          "fit_families": 160,
+          "direct_fit_overlap": 0,
+          "fit_lock_sha256": "c163e3603c2aac8f893714520e1fccbe6cebb4e32e80a473533782fdc4f51fd5"
+        },
+        {
+          "fold": 2,
+          "test_families": 50,
+          "test_contexts": 269,
+          "fit_families": 155,
+          "direct_fit_overlap": 0,
+          "fit_lock_sha256": "1f31cb90a8394b16ef2925f1c7c152eaaeb80cb3b409cc55b5cdf3d5bfd52a8a"
+        },
+        {
+          "fold": 3,
+          "test_families": 53,
+          "test_contexts": 376,
+          "fit_families": 152,
+          "direct_fit_overlap": 0,
+          "fit_lock_sha256": "43e032b1de18eccd016773886709dea10ec8b22de335c83021d220570ccb2233"
+        }
+      ]
+    },
+    "statistics": {
+      "gains": [
+        0.02682276553907295,
+        0.06035828581904661,
+        0.05889172313111306
+      ],
+      "median_gain": 0.05889172313111306,
+      "pooled_ci95": [
+        0.013275346493645647,
+        0.12647271440710536
+      ],
+      "per_seed_lcb95": [
+        0.014776021597390719,
+        0.017448999136957414,
+        0.01656091871000656
+      ],
+      "family_medians": [
+        0.0,
+        0.0015880840956337128,
+        0.0
+      ],
+      "family_wins_ties_losses": [
+        [
+          77,
+          111,
+          17
+        ],
+        [
+          108,
+          61,
+          36
+        ],
+        [
+          96,
+          87,
+          22
+        ]
+      ],
+      "changed_picks": [
+        154,
+        301,
+        211
+      ],
+      "elo_actual_r882_slot0_1500": [
+        1762.3371239114147,
+        1690.816337882448,
+        1755.878570855487
+      ],
+      "elo_ci95": [
+        [
+          1679.296798497966,
+          1868.8236785933711
+        ],
+        [
+          1628.1092786317342,
+          1762.5241376958033
+        ],
+        [
+          1682.9131808965176,
+          1846.576500754206
+        ]
+      ],
+      "requested_r3175_elo": null,
+      "requested_r3175_elo_status": "UNMEASURED: original slot0 is r882",
+      "invalid": [
+        {
+          "baseline": 17,
+          "challenger": 15,
+          "excess": -2,
+          "discordant_worse": 2,
+          "discordant_better": 4,
+          "p_one_sided": 0.890625
+        },
+        {
+          "baseline": 17,
+          "challenger": 14,
+          "excess": -3,
+          "discordant_worse": 2,
+          "discordant_better": 5,
+          "p_one_sided": 0.9375
+        },
+        {
+          "baseline": 17,
+          "challenger": 14,
+          "excess": -3,
+          "discordant_worse": 1,
+          "discordant_better": 4,
+          "p_one_sided": 0.96875
+        }
+      ],
+      "harmed_share": [
+        0.04390243902439024,
+        0.1073170731707317,
+        0.04878048780487805
+      ],
+      "concentration": [
+        {
+          "drop_top_gain": {
+            "1": 0.022417624851066832,
+            "5": 0.013592235737426423,
+            "10": 0.007947769380855948
+          },
+          "top10_net_share": 0.7181471350340702,
+          "top10_positive_share": 0.5910753310281006,
+          "top10": [
+            {
+              "family": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc",
+              "gain": 0.9254714658923208
+            },
+            {
+              "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+              "gain": 0.5605388885454538
+            },
+            {
+              "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+              "gain": 0.4566371445981402
+            },
+            {
+              "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+              "gain": 0.42710745453582905
+            },
+            {
+              "family": "fam-6ed8ae431d7ebd22d17ebadba29f8ad779ef64845ffba66911789a35434e0493",
+              "gain": 0.41046483445292625
+            },
+            {
+              "family": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e",
+              "gain": 0.3221818366200253
+            },
+            {
+              "family": "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9",
+              "gain": 0.24448456493685122
+            },
+            {
+              "family": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66",
+              "gain": 0.24123186942756236
+            },
+            {
+              "family": "fam-7bfa740016f6f7f2d139a1deabe40ff3eebc59f1e16a376bda46035265e60e5f",
+              "gain": 0.19028614114553255
+            },
+            {
+              "family": "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243",
+              "gain": 0.1704477060884031
+            }
+          ],
+          "drop_top5_lcb95": 0.006062395603554454
+        },
+        {
+          "drop_top_gain": {
+            "1": 0.03312265291062016,
+            "5": 0.01599486015398043,
+            "10": 0.006322905501327549
+          },
+          "top10_net_share": 0.9003538452920954,
+          "top10_positive_share": 0.6987734616864507,
+          "top10": [
+            {
+              "family": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517",
+              "gain": 5.616427399138043
+            },
+            {
+              "family": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3",
+              "gain": 1.4298814011849519
+            },
+            {
+              "family": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e",
+              "gain": 0.9489281276290631
+            },
+            {
+              "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+              "gain": 0.7226024895582718
+            },
+            {
+              "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+              "gain": 0.4566371445981402
+            },
+            {
+              "family": "fam-6ed8ae431d7ebd22d17ebadba29f8ad779ef64845ffba66911789a35434e0493",
+              "gain": 0.44175611137014115
+            },
+            {
+              "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+              "gain": 0.42710745453582905
+            },
+            {
+              "family": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e",
+              "gain": 0.39583467210130197
+            },
+            {
+              "family": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5",
+              "gain": 0.3791253834099164
+            },
+            {
+              "family": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e",
+              "gain": 0.3221818366200253
+            }
+          ],
+          "drop_top5_lcb95": -0.0027478259743384725
+        },
+        {
+          "drop_top_gain": {
+            "1": 0.03164971235272818,
+            "5": 0.014566653179905171,
+            "10": 0.005566117861018658
+          },
+          "top10_net_share": 0.9100960264859097,
+          "top10_positive_share": 0.7338679661563445,
+          "top10": [
+            {
+              "family": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517",
+              "gain": 5.616261921921627
+            },
+            {
+              "family": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3",
+              "gain": 1.4298814011849519
+            },
+            {
+              "family": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e",
+              "gain": 0.981841746894579
+            },
+            {
+              "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+              "gain": 0.674850391297845
+            },
+            {
+              "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+              "gain": 0.4566371445981402
+            },
+            {
+              "family": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5",
+              "gain": 0.4415818203976767
+            },
+            {
+              "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+              "gain": 0.42710745453582905
+            },
+            {
+              "family": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e",
+              "gain": 0.39583467210130197
+            },
+            {
+              "family": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e",
+              "gain": 0.3221818366200253
+            },
+            {
+              "family": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66",
+              "gain": 0.24123186942756236
+            }
+          ],
+          "drop_top5_lcb95": -0.0037220835610650743
+        }
+      ],
+      "seed_dependence": {
+        "pairs": [
+          {
+            "seeds": [
+              30001,
+              30002
+            ],
+            "agreement": 0.7867104183757178,
+            "union_switched_contexts": 347,
+            "disagreements": 260,
+            "agreement_on_switched_union": 0.2507204610951009
+          },
+          {
+            "seeds": [
+              30001,
+              30003
+            ],
+            "agreement": 0.8441345365053322,
+            "union_switched_contexts": 267,
+            "disagreements": 190,
+            "agreement_on_switched_union": 0.2883895131086142
+          },
+          {
+            "seeds": [
+              30002,
+              30003
+            ],
+            "agreement": 0.837571780147662,
+            "union_switched_contexts": 333,
+            "disagreements": 198,
+            "agreement_on_switched_union": 0.40540540540540543
+          }
+        ],
+        "family_delta_correlation": [
+          [
+            1.0,
+            0.12929423695184,
+            0.14081108616798613
+          ],
+          [
+            0.12929423695184,
+            1.0,
+            0.984155100239882
+          ],
+          [
+            0.14081108616798615,
+            0.9841551002398821,
+            1.0
+          ]
+        ],
+        "effective_seed_count_spectral": 1.7963311567013878,
+        "interpretation": "Descriptive dependence across the same families; three training seeds are not three independent data samples."
+      },
+      "permutation": {
+        "seed": 305150,
+        "draws": 1000,
+        "observed": 0.058891723131113065,
+        "upper_tail_count": 0,
+        "p_upper_plus_one": 0.000999000999000999,
+        "null_mean": 0.0010818267159495183,
+        "null_sd": 0.00814504295366804,
+        "null_min": -0.02365901717187268,
+        "null_max": 0.034308019913254204,
+        "null_q025_q50_q975": [
+          -0.014674511760257842,
+          0.0008899974504902034,
+          0.018328886001136163
+        ],
+        "unique_statistics": 1000,
+        "families_with_nonconstant_pick_vectors": 161,
+        "null_statistics_sha256": "1cef29bb5207b2bf501a3c264c22251ba4a98061ea47492d971a6393e41e3998",
+        "limitation": "Conditional within-family context-exchange null; not a retraining/label-shuffle null or proof against design selection leakage."
+      }
+    },
+    "audit": {
+      "a": {
+        "status": "FAIL",
+        "reason": "Inherited tau=.10, q=6, a=2 selected/evaluated using all205TRAINfamilies; all205 outer-test families were historically exposed. Direct per-fold model fit and lr/n/margin selection are disjoint in source.",
+        "references": [
+          "H302 run_h302.py:196,198,290,301",
+          "H287 README.md:10,19,22,35,76",
+          "structure_audit.json"
+        ]
+      },
+      "b": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Git prereg05:03:14 precedes archived fit-lock mtimes05:10:38\u201305:19:11; source scores after lock. No absolute per-score times or immutable publication receipt, so every-score temporal exclusion not proven.",
+        "references": [
+          "structure_audit.json",
+          "H302 run_h302.py:379,396"
+        ]
+      },
+      "c": {
+        "status": "PASS",
+        "reason": "Family absolute delta<=1e-4 is a tie, never a win; independent counts77/111/17,108/61/36,96/87/22.",
+        "references": [
+          "statistics_h302.json",
+          "test_audit.py"
+        ]
+      },
+      "d": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Higher utility is better and Elo sign correct. Actual reference is r882 slot0; requested r3175 Elo cannot be computed from these inputs.",
+        "references": [
+          "H302 run_h302.py:245",
+          "H287 topk.py:158,171",
+          "statistics_h302.json"
+        ]
+      },
+      "e": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Three distinct pick vectors; spectral effective seed count1.796; seeds30002/30003 family gain correlation.984. Training seeds share data.",
+        "references": [
+          "statistics_h302.json"
+        ]
+      },
+      "f": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Net gain concentration top10:71.8/90.0/91.0%; drop-top5 positive LCB only1/3; all drop-top10 point means remain positive.",
+        "references": [
+          "statistics_h302.json"
+        ]
+      },
+      "g": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Registered within-family joint-pick permutation1000draws RNG305150:0null>=observed, p=1/1001. This conditional null does not remove design adaptivity.",
+        "references": [
+          "statistics_h302.json"
+        ]
+      },
+      "h": {
+        "status": "FAIL",
+        "reason": "NPZ arrays are fully decoded before TRAIN slicing:91DL-Val cached feature rows are read. They are absent from fit/selection arrays; no Val labels/outcomes or sealed/holdout/fresh payload reads found in called source. All outer-test TRAIN features/labels loaded before lock, contradicting zero-read counters. No exhaustive runtime file-open trace exists.",
+        "references": [
+          "H302 run_h302.py:255,264,265,269,388,529",
+          "H287 topk.py:151-181",
+          "input_receipt.json"
+        ]
+      },
+      "i": {
+        "status": "PASS",
+        "reason": "Independent frozen non-live r882 checkpoint tensor hashing reproduces c51a56d0; source and output paths cannot update its DOPE tensors.",
+        "references": [
+          "dope_receipt.json"
+        ]
+      }
+    }
+  },
+  "h303": {
+    "status": "COMPLETE",
+    "verdict": "RT_FAIL",
+    "failed_items": [
+      "a_inherited_design_scope",
+      "d",
+      "h"
+    ],
+    "declared_nested_primary": "NESTED_CONFIRMED_REPRODUCED",
+    "regression": {
+      "status": "PASS",
+      "picks_sha256": {
+        "30001": "0b187de957f692238ee0c21702822baae6f7845f344ecb5c3c0db483a711a7ac",
+        "30002": "35530bb5db8b9a93e093d759510a575569d3dfb22c9d46da9cd09fc14375c2f8",
+        "30003": "b8fb9c1476a0e6ddb18c05d0fba63b23c1bf93d99a1492d82c8f2d6da42ffda3"
+      },
+      "expected_picks_sha256": {
+        "30001": "0b187de957f692238ee0c21702822baae6f7845f344ecb5c3c0db483a711a7ac",
+        "30002": "35530bb5db8b9a93e093d759510a575569d3dfb22c9d46da9cd09fc14375c2f8",
+        "30003": "b8fb9c1476a0e6ddb18c05d0fba63b23c1bf93d99a1492d82c8f2d6da42ffda3"
+      },
+      "gains": [
+        0.04128922328486218,
+        0.0643163334285782,
+        0.07225765693022389
+      ],
+      "published_gains": [
+        0.0412892232848622,
+        0.0643163334285782,
+        0.07225765693022389
+      ],
+      "locks": [
+        {
+          "outer": 0,
+          "root": 30001,
+          "chosen": {
+            "tau": 0.05,
+            "k": 5,
+            "a": 2,
+            "inner_gain": 0.09612510193329017,
+            "inner_switches": 253
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "545fa2a68e054b5ebe0d0775a0b2fb94c00fd5f82df9a5591160f9b3359d22ed"
+        },
+        {
+          "outer": 0,
+          "root": 30002,
+          "chosen": {
+            "tau": 0.15,
+            "k": 5,
+            "a": 2,
+            "inner_gain": 0.04990812236121466,
+            "inner_switches": 209
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "689bdc404a60ab37cad4f3f8747f39a57e25f5c7b71fe089a7427522336e020a"
+        },
+        {
+          "outer": 0,
+          "root": 30003,
+          "chosen": {
+            "tau": 0.05,
+            "k": 5,
+            "a": 2,
+            "inner_gain": 0.07546451241125224,
+            "inner_switches": 280
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "34d9dce7d6fbbb5f611b03b09395e2a98d071eb49b9008f19b228e7298f152ba"
+        },
+        {
+          "outer": 1,
+          "root": 30001,
+          "chosen": {
+            "tau": 0.05,
+            "k": 6,
+            "a": 2,
+            "inner_gain": 0.04194931569032038,
+            "inner_switches": 310
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "f797594b51a8daf1b684d9bff00519f301bb57c18b2960f80a191081ecdccc59"
+        },
+        {
+          "outer": 1,
+          "root": 30002,
+          "chosen": {
+            "tau": 0.1,
+            "k": 6,
+            "a": 2,
+            "inner_gain": 0.04213075417392936,
+            "inner_switches": 276
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "5448d5108488a919a3a1e6fe509fda09456707d96929293a348fe719cf1d56ed"
+        },
+        {
+          "outer": 1,
+          "root": 30003,
+          "chosen": {
+            "tau": 0.1,
+            "k": 5,
+            "a": 2,
+            "inner_gain": 0.04870699099953354,
+            "inner_switches": 349
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "82112821f62dc4509ac6fcbca65ca870f61848bce035df1b620929fa007889be"
+        },
+        {
+          "outer": 2,
+          "root": 30001,
+          "chosen": {
+            "tau": 0.15,
+            "k": 5,
+            "a": 2,
+            "inner_gain": 0.03340321499233683,
+            "inner_switches": 162
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "0d34bb1203a0431fadd6fff532c69d1680f37150c39d5075dfc4d417d5ed96f7"
+        },
+        {
+          "outer": 2,
+          "root": 30002,
+          "chosen": {
+            "tau": 0.05,
+            "k": 7,
+            "a": 2,
+            "inner_gain": 0.07153303054935838,
+            "inner_switches": 126
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "850fba6389c3ff001d4640f50352cdca71e6cacbcf6db782e9ba5e764e820880"
+        },
+        {
+          "outer": 2,
+          "root": 30003,
+          "chosen": {
+            "tau": 0.05,
+            "k": 5,
+            "a": 2,
+            "inner_gain": 0.06342329300935323,
+            "inner_switches": 167
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "d0c5f72f8e60dc29c5675cceb980f15c257095b99f8cfe0856619ed5c0eada24"
+        },
+        {
+          "outer": 3,
+          "root": 30001,
+          "chosen": {
+            "tau": 0.05,
+            "k": 5,
+            "a": 2,
+            "inner_gain": 0.05176442582421969,
+            "inner_switches": 126
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "cd2dc12892c39fefe835e218c43030518f72cca50c01fc82456f57277a27956b"
+        },
+        {
+          "outer": 3,
+          "root": 30002,
+          "chosen": {
+            "tau": 0.05,
+            "k": 5,
+            "a": 2,
+            "inner_gain": 0.039012278799754815,
+            "inner_switches": 112
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "7e39a43451793e9801e468b318035c676b053adfa5525d59f79a9062b5af74dc"
+        },
+        {
+          "outer": 3,
+          "root": 30003,
+          "chosen": {
+            "tau": 0.05,
+            "k": 6,
+            "a": 2,
+            "inner_gain": 0.013568867863902089,
+            "inner_switches": 58
+          },
+          "selection_rule_matches": true,
+          "fit_lock_sha256": "9144be682ae5a8aed693663d2853559b82d7d6118803df3862581d76c20826af"
+        }
+      ],
+      "closeout": {
+        "closed": true,
+        "commit": "7bef8870f7a9ffdb6565c5277c59f4af6c27c93d",
+        "observed_utc": "2026-11-04T06:24:45.704531+00:00",
+        "claim_receipt": "2026-11-04T05:32:53Z rd_opus ACCEPTS H303 (h303_ensvote2_fully_nested_hparams): regression first (H302 seed 30001 picks hash), fully nested ENS_VOTE2 hyperparameters (Q_FIXED, TAU, member vote k, ensemble agreement) chosen by inner 4-fold family-grouped CV inside each outer_train only, plus concentration audit; prereg before any outer-test score; xbabe2 CPU only. Not touching xbabe1/xbabe3, the writer, other lanes' jobs, sealed/fresh/DL-Test data, cores 0-7 if rd_argon is busy.\n2026-11-04T06:17:12Z pre-score lock inventory sha c52796aacd84511e541e37fe610ba1998aa067297874aa5d4eda4670daf65a83\n2026-11-04T06:22:43Z rd_opus H303 DONE: NESTED_CONFIRMED; prereg 43e00dd31fd3239dbc5d2d337472c83886a5804c, closeout 7bef8870f7a9ffdb6565c5277c59f4af6c27c93d on origin/v1/next; S3 H303/ tar VersionId hshnLPUZuvpHewykQNTh..mWAGu9KGHo; scratch deleted after S3 sha verify; lane h303-opus removed; claim RELEASED.\n",
+        "on_origin_v1next": true
+      }
+    },
+    "statistics": {
+      "gains": [
+        0.04128922328486218,
+        0.0643163334285782,
+        0.07225765693022389
+      ],
+      "median_gain": 0.0643163334285782,
+      "pooled_ci95": [
+        0.022288709568963044,
+        0.13359174046564948
+      ],
+      "per_seed_lcb95": [
+        0.02449449340812922,
+        0.02090731116863874,
+        0.028698887458652917
+      ],
+      "family_medians": [
+        0.0,
+        0.0015880840956337128,
+        0.00698422392386483
+      ],
+      "family_wins_ties_losses": [
+        [
+          88,
+          93,
+          24
+        ],
+        [
+          108,
+          67,
+          30
+        ],
+        [
+          122,
+          50,
+          33
+        ]
+      ],
+      "changed_picks": [
+        219,
+        300,
+        320
+      ],
+      "elo_actual_r882_slot0_1500": [
+        1725.6559443739816,
+        1722.479188261021,
+        1727.0999611175755
+      ],
+      "elo_ci95": [
+        [
+          1652.447886376557,
+          1812.9700690664945
+        ],
+        [
+          1656.7079288809393,
+          1799.2122929353282
+        ],
+        [
+          1665.6454632422033,
+          1798.7037721418976
+        ]
+      ],
+      "requested_r3175_elo": null,
+      "requested_r3175_elo_status": "UNMEASURED: original slot0 is r882",
+      "invalid": [
+        {
+          "baseline": 17,
+          "challenger": 13,
+          "excess": -4,
+          "discordant_worse": 2,
+          "discordant_better": 6,
+          "p_one_sided": 0.96484375
+        },
+        {
+          "baseline": 17,
+          "challenger": 14,
+          "excess": -3,
+          "discordant_worse": 2,
+          "discordant_better": 5,
+          "p_one_sided": 0.9375
+        },
+        {
+          "baseline": 17,
+          "challenger": 11,
+          "excess": -6,
+          "discordant_worse": 2,
+          "discordant_better": 8,
+          "p_one_sided": 0.9892578125
+        }
+      ],
+      "harmed_share": [
+        0.06341463414634146,
+        0.08780487804878048,
+        0.09268292682926829
+      ],
+      "concentration": [
+        {
+          "drop_top_gain": {
+            "1": 0.034482398883391156,
+            "5": 0.022905347540082433,
+            "10": 0.013173556747221864
+          },
+          "top10_net_share": 0.696508114562636,
+          "top10_positive_share": 0.5910763666462913,
+          "top10": [
+            {
+              "family": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3",
+              "gain": 1.4298814011849519
+            },
+            {
+              "family": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc",
+              "gain": 0.9254714658923208
+            },
+            {
+              "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+              "gain": 0.5605388885454538
+            },
+            {
+              "family": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66",
+              "gain": 0.49995512654329355
+            },
+            {
+              "family": "fam-21852904e06ac11cfc763928dd9a0e52d68fadc4b7a7b1e274331927dd803ffb",
+              "gain": 0.46737438321424163
+            },
+            {
+              "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+              "gain": 0.4566371445981402
+            },
+            {
+              "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+              "gain": 0.42710745453582905
+            },
+            {
+              "family": "fam-6ed8ae431d7ebd22d17ebadba29f8ad779ef64845ffba66911789a35434e0493",
+              "gain": 0.41046483445292625
+            },
+            {
+              "family": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e",
+              "gain": 0.39583467210130197
+            },
+            {
+              "family": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e",
+              "gain": 0.3221818366200253
+            }
+          ],
+          "drop_top5_lcb95": 0.01238353706136354
+        },
+        {
+          "drop_top_gain": {
+            "1": 0.03710010271431612,
+            "5": 0.018969760868246765,
+            "10": 0.008632837099038629
+          },
+          "top10_net_share": 0.8723228975214142,
+          "top10_positive_share": 0.6912874772853219,
+          "top10": [
+            {
+              "family": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517",
+              "gain": 5.616427399138043
+            },
+            {
+              "family": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3",
+              "gain": 1.4298814011849519
+            },
+            {
+              "family": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e",
+              "gain": 0.981841746894579
+            },
+            {
+              "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+              "gain": 0.7226024895582718
+            },
+            {
+              "family": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc",
+              "gain": 0.640143142433335
+            },
+            {
+              "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+              "gain": 0.4566371445981402
+            },
+            {
+              "family": "fam-6ed8ae431d7ebd22d17ebadba29f8ad779ef64845ffba66911789a35434e0493",
+              "gain": 0.44175611137014115
+            },
+            {
+              "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+              "gain": 0.42710745453582905
+            },
+            {
+              "family": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e",
+              "gain": 0.39583467210130197
+            },
+            {
+              "family": "fam-e37a104589f0fdbc8a10035abed14b4b9d6d55ee116de1ed8bb294257d9ecffd",
+              "gain": 0.38921355673140745
+            }
+          ],
+          "drop_top5_lcb95": -0.00030387504142724277
+        },
+        {
+          "drop_top_gain": {
+            "1": 0.045081165435168,
+            "5": 0.02751377343114538,
+            "10": 0.016620542843170227
+          },
+          "top10_net_share": 0.7812026388986659,
+          "top10_positive_share": 0.6188760448396168,
+          "top10": [
+            {
+              "family": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517",
+              "gain": 5.616261921921627
+            },
+            {
+              "family": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3",
+              "gain": 1.4298814011849519
+            },
+            {
+              "family": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e",
+              "gain": 0.9489281276290631
+            },
+            {
+              "family": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+              "gain": 0.674850391297845
+            },
+            {
+              "family": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc",
+              "gain": 0.640143142433335
+            },
+            {
+              "family": "fam-21852904e06ac11cfc763928dd9a0e52d68fadc4b7a7b1e274331927dd803ffb",
+              "gain": 0.46737438321424163
+            },
+            {
+              "family": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc",
+              "gain": 0.4566371445981402
+            },
+            {
+              "family": "fam-ababb70a016787d17604791ee182876322d6663e729381779e3628df97265283",
+              "gain": 0.45217049297365974
+            },
+            {
+              "family": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1",
+              "gain": 0.4439849906271639
+            },
+            {
+              "family": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5",
+              "gain": 0.4415818203976767
+            }
+          ],
+          "drop_top5_lcb95": 0.007092168218782928
+        }
+      ],
+      "seed_dependence": {
+        "pairs": [
+          {
+            "seeds": [
+              30001,
+              30002
+            ],
+            "agreement": 0.7793273174733388,
+            "union_switched_contexts": 380,
+            "disagreements": 269,
+            "agreement_on_switched_union": 0.29210526315789476
+          },
+          {
+            "seeds": [
+              30001,
+              30003
+            ],
+            "agreement": 0.7957342083675144,
+            "union_switched_contexts": 375,
+            "disagreements": 249,
+            "agreement_on_switched_union": 0.336
+          },
+          {
+            "seeds": [
+              30002,
+              30003
+            ],
+            "agreement": 0.8014766201804758,
+            "union_switched_contexts": 400,
+            "disagreements": 242,
+            "agreement_on_switched_union": 0.395
+          }
+        ],
+        "family_delta_correlation": [
+          [
+            1.0,
+            0.27024899445549116,
+            0.31093365168580983
+          ],
+          [
+            0.27024899445549116,
+            0.9999999999999999,
+            0.9803674006875587
+          ],
+          [
+            0.31093365168580983,
+            0.9803674006875588,
+            1.0
+          ]
+        ],
+        "effective_seed_count_spectral": 1.7104838819795511,
+        "interpretation": "Descriptive dependence across the same families; three training seeds are not three independent data samples."
+      },
+      "permutation": {
+        "seed": 305150,
+        "draws": 1000,
+        "observed": 0.06431633342857822,
+        "upper_tail_count": 0,
+        "p_upper_plus_one": 0.000999000999000999,
+        "null_mean": 0.0008318492195571834,
+        "null_sd": 0.009218671370645354,
+        "null_min": -0.03006218203955636,
+        "null_max": 0.03375043882670388,
+        "null_q025_q50_q975": [
+          -0.016550713406758972,
+          0.0007799013479084747,
+          0.018641550408652265
+        ],
+        "unique_statistics": 1000,
+        "families_with_nonconstant_pick_vectors": 169,
+        "null_statistics_sha256": "66b15e96acd478fb49ebfd879109559576dea11adab8359ac6ccad750772dfc0",
+        "limitation": "Conditional within-family context-exchange null; not a retraining/label-shuffle null or proof against design selection leakage."
+      }
+    },
+    "audit": {
+      "a": {
+        "status": "FAIL_UNQUALIFIED_CONFIRMATION",
+        "within_declared_grid": "PASS",
+        "reason": "All12 chosen tau/k/a settings satisfy independent inner-table and tie-rule replay, and reconstructed fit/selection families exclude the outer test. Historical architecture, grid, member recipe and r882 proposer were developed on these TRAIN families. H303 itself acknowledges this residual exposure; an unbiased unseen-family confirmation is not established.",
+        "references": [
+          "regression_h303.json",
+          "structure_audit.json",
+          "H303 run_h303.py:123-156",
+          "H303 README.md Deviations4"
+        ]
+      },
+      "b": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Prereg05:38:11 precedes all12 archived locks; pre-score hash inventory matches all12. Source scores after locks. Archive times and self-reported score timing cannot exclude undocumented earlier scoring.",
+        "references": [
+          "chronology_h303.json",
+          "h303_supplemental_checks.json"
+        ]
+      },
+      "c": {
+        "status": "PASS",
+        "reason": "Ties |d|<=1e-4 are excluded from wins/losses. Independent W/T/L=88/93/24,108/67/30,122/50/33. README claims that most families are neutral contradict these counts: ties are45.4%,32.7%,24.4%.",
+        "references": [
+          "statistics_h303.json"
+        ]
+      },
+      "d": {
+        "status": "FAIL",
+        "reason": "Utility direction and Elo sign are correct; README and prereg incorrectly label the reference r3175. Predictions and baseline utilities use r882-train-costs.npz. Correct diagnostic Elo1725.66/1722.48/1727.10 anchored to r882=1500; r3175 Elo remains unmeasured.",
+        "references": [
+          "H303 README.md Outcome table notes",
+          "H303 run_h303.py:191",
+          "H302 run_h302.py:245",
+          "statistics_h303.json"
+        ]
+      },
+      "e": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Distinct picks with pairwise77.9-80.1% agreement. Family-gain correlation of seeds30002/30003=.9804; spectral effective seed count1.7105. These are shared-data seeds, not independent data replicas.",
+        "references": [
+          "statistics_h303.json"
+        ]
+      },
+      "f": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Top10 account69.7/87.2/78.1% net gain. Drop-top5 LCBs +.01238/-.000304/+.00709:2/3positive. All three drop-top10 point means positive; one drop-top5 interval crosses zero.",
+        "references": [
+          "statistics_h303.json"
+        ]
+      },
+      "g": {
+        "status": "PASS_WITH_CAVEATS",
+        "reason": "Registered1000within-family joint-pick permutations, RNG305150:0null>=observed; p=1/1001. Conditional null does not undo design selection.",
+        "references": [
+          "statistics_h303.json"
+        ]
+      },
+      "h": {
+        "status": "FAIL",
+        "reason": "Actual run source hoists full shared NPZ array loads, including91DL-Val feature rows, then filters TRAIN. No Val labels or Val fit/selection use found. Outer-test TRAIN feature/label rows are also loaded before fit locks, despite zero-read counters. No exhaustive syscall trace supports stronger absence claims.",
+        "references": [
+          "H303 run_h303.py:194-208",
+          "input_receipt.json"
+        ]
+      },
+      "i": {
+        "status": "PASS",
+        "reason": "Same cached-input/no-neural-update closure and r882 source identity; independent c51a56d0 tensor hash check passes.",
+        "references": [
+          "dope_receipt.json"
+        ]
+      }
+    },
+    "prereg_commit": "43e00dd31fd3239dbc5d2d337472c83886a5804c",
+    "closeout_commit": "7bef8870f7a9ffdb6565c5277c59f4af6c27c93d",
+    "interpretation": "Nested numerical gain reproduces and the within-grid choice is isolated. RT_FAIL concerns broad historical independence, incorrect baseline attribution and read-boundary assertions; it does not say the observed TRAIN gain disappears."
+  },
+  "dope": {
+    "status": "PASS",
+    "checkpoint": "/home/ubuntu/jope-data/h276/inputs/round-882.pt",
+    "checkpoint_sha256_before": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "checkpoint_sha256_after": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "recomputed_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "recorded_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "parameter_tensors": 56,
+    "normalizer_tensors": 11,
+    "interpretation": "Immutable non-live r882 source copy verified; H302/H303 consume cached features and cannot update these tensors. This does not audit unrelated live state."
+  },
+  "new_val_reg_inner": null,
+  "new_dev91_read": false,
+  "requested_r3175_elo": null,
+  "resource_limits": {
+    "host": "xbabe2",
+    "cores": [
+      60,
+      61,
+      62,
+      63
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "rss_bytes": 4294967296,
+    "scratch_bytes": 3000000000,
+    "memavailable_min_bytes": 21474836480,
+    "host_cpu_max": 85,
+    "compute_stop": "2026-11-04T08:30:00Z",
+    "close": "2026-11-04T08:45:00Z"
+  },
+  "runtime_evidence_scope": "Audited source, frozen artifacts, independent replay and tar mtimes; no exhaustive historical syscall trace.",
+  "validation": {
+    "focused_tests": 12,
+    "status": "PASS",
+    "numerical_correction": "numerical_correction.json",
+    "hosted_CI": "NOT_RUN owner freeze"
+  },
+  "resource_exceptions": [
+    "A supplemental tar metadata/hash extraction was inadvertently run outside the nice/taskset supervisor (~seconds, one process); no numerical scoring, foreign process action or forbidden data read occurred. It is retained as a scheduling-control deviation, not certified compliant."
+  ],
+  "completed_utc": "2026-11-04T06:34:28.788775+00:00",
+  "custody": {
+    "evidence": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/h305_evidence.tar.gz",
+      "version_id": "msfob314CaZPinXSrZwkIeQEy7k8wj9.",
+      "sha256": "8fd13d825b08e97d075bf820911b939d4df7f94f8c04b46b9ab8925cb04920a4",
+      "bytes": 3883415,
+      "exact_version_get_verified": true,
+      "members_verified": 162
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/manifest.json",
+      "version_id": "kojW.cT0v3dqqXcvjw1HvfKt0SwJcs5U",
+      "sha256": "c6855afdf0fa62285f0b54cccf685985a2a7659a64b71701bb83633b21f17d12",
+      "bytes": 7111,
+      "exact_version_get_verified": true
+    }
+  },
+  "scratch_cleanup": {
+    "status": "DELETED",
+    "epoch": 1793774025.972549,
+    "scratch": "/home/ubuntu/jope-data/h305-astra",
+    "files": 747,
+    "bytes": 433398988,
+    "scope": "Only own non-Git scratch. All foreign source/stashes/local-only commits retained; no repository/worktree/tag deleted.",
+    "lsof_exit": 1,
+    "archive_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H305/astra-20261104T055813Z/h305_evidence.tar.gz",
+    "archive_version": "msfob314CaZPinXSrZwkIeQEy7k8wj9.",
+    "scratch_absent": true,
+    "finished_epoch": 1793774027.171026
+  },
+  "execution_code_commit": "7919046451cef265b635745c433970fc47c17a4c"
+}

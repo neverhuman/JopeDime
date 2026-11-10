@@ -1,0 +1,51 @@
+{
+  "schema": "H297.plan/v1",
+  "wave_id": "H297",
+  "primary": "CTXNORM_CLIP",
+  "arms": [
+    "CONTROL",
+    "CTXNORM_CLIP",
+    "CTXNORM_CLIP_NOSMOOTH"
+  ],
+  "seeds": [
+    29701,
+    29702,
+    29703
+  ],
+  "updates_per_candidate": 8,
+  "lr": 3.6880929895544625e-05,
+  "sigma": 2.7751362402065425e-05,
+  "weight_decay": 0.0001,
+  "clip_grad_norm": 1.0,
+  "source_sha256": {
+    "run.py": "67b7aff5e7e9db99c626095d3323a5d14f3e8adafc22a1a5750aec71087d0826",
+    "regression.py": "0e6c40e8cbc3cd6f3bd869a1e9b0728790d15c35ae6dd9e0377ff53687cf8cd6",
+    "test_loss.py": "de4e82bbeac759a538caf3019089598a4873cdbcb778b180a2e970b4a77b80c3",
+    "runtime.py": "2c55c5cbdf9cdbab98d817b335d6e2421090d30a6e4f0ad3fdac02e6dd74ce27",
+    "loss.py": "983e2593221847c1b9f038cd8c897dfbe1ad8cbb3253547ad128439576b6ebf6",
+    "analysis.py": "4affcdb6ef534c7becb0ded4bcfe1a31f6f278d381aa147e3193716c6f7e16d4",
+    "trajectory.py": "50a1a56a25c828169b20b154c85eaf414bdef952fece4742eb727e4f26d86f28",
+    "monitor.py": "b782e98cf05c940da44f3af82e384432efddc961a810830761187ca6bc376ce1"
+  },
+  "monitor_sha256": "b782e98cf05c940da44f3af82e384432efddc961a810830761187ca6bc376ce1",
+  "prereg_sha256": "b27b78e715384d28cb75d6ca6979628b72640777c5c9c947b721e9f124f2f8e3",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "regression_sha256": "3c6f6a1d72edea8fa39ec2d9eff135a6e733b880d40bde43fd12a3c712e7ffc2",
+  "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "cpu_affinity": [
+    100,
+    101,
+    102,
+    103
+  ],
+  "numeric_threads": 1,
+  "aggregate_threads_max": 4,
+  "rss_bytes_max": 4294967296,
+  "copy_bytes_max": 3221225472,
+  "mem_pause_bytes": 12884901888,
+  "host_cpu_pause": 85,
+  "compute_stop_utc": "2026-11-04T05:35:00Z",
+  "scientific_attempts": 1,
+  "created_epoch": 1793760721.4048002
+}

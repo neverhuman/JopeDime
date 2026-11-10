@@ -1,8 +1,12 @@
 {
   "schema": "whitepaper.retained-best-plateau-figure/v1",
+  "figure_path": "fig_legacy_retained_best_plateau_866.pdf",
+  "legacy_only": true,
+  "canonical_figure": "fig_fw_retained_best_plateau.pdf",
+  "canonical_provenance": "data/full_retained_trajectory.provenance.json",
   "input_csv_sha256": "cf613cba08044493bc1da9722107848c33d02768297aa6c1749077ac2fcca1bc",
   "source_receipt_sha256": "40b904b6f214d23b8891097e922b6b33566378083a4056702d8388295e400503",
-  "generator_sha256": "9c88415c99460dd99c20154fcd220bdc602bc9bdfda57a59993b923a1d5eb71e",
+  "generator_sha256": "6a43471c9609c83643f5299f0465e2469911d77919d6364f63a42b9d6bed4305",
   "figure_sha256": "26e28ff2357d0c443a3df29255685be39bd4e08b09cc922b8a4bc94659367ced",
   "rows": 866,
   "round_window": [

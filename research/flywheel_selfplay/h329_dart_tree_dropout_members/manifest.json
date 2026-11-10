@@ -1,0 +1,63 @@
+{
+  "sources": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "base_code": "819a45aa5e",
+  "base_code_full": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "dope_frozen": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "kernel": "6.8.0-147-generic",
+    "host": "xbabe2"
+  },
+  "wave": "H329",
+  "authority": "/home/ubuntu/nudges/hw_t1735_gov03_h329_dart.md",
+  "cores": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    22
+  ],
+  "workers_max": 6,
+  "MemoryMax": "6G",
+  "MemorySwapMax": 0,
+  "nice": 19,
+  "numeric_threads": 1,
+  "compute_stop": "2026-11-04T20:45:00Z",
+  "close_stop": "2026-11-04T21:00:00Z",
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only"
+  },
+  "prereg_sha256": "b2b63044d2a4c008d9833f18acd23a8233c96635e03dd845c2db99bb9946534d",
+  "source_sha256": {
+    "resource_probe.py": "39dbe5e9ede10f5bd536b9891cb3f4c66fa9354844aba1ca754b7f66caa20ae2",
+    "test_h329.py": "1510798c79a126067097c99d18666737104463bc094ce73cf8396500f28a3772",
+    "dart_patch.py": "0efb8cad60e2adc034935c539c6a561cfb21980b904cd73050b7e2ed4d0dab07",
+    "forecast_h329.py": "2be62ede463b6740580dc3558724a1f5c871b1f37ddd3f59f3899b6e6c9fb0c5",
+    "run_h329.py": "504793164da989075105e58dfea2fd41ec5358135151b76c20fb24191a8763a8",
+    "evaluate_h329.py": "5f3e034595f5623f422af109e4697247a624be294651127de3fffaa949fddf1d",
+    "resume_resource_h329.py": "265cbb047210a2c334a4213685741662da47658037bb4ecaaf959f95fa581013",
+    "fetch_base_h329.py": "00f3894c405b3a7f88fe398c82e1a7e40ff691a130d2c11892d3eff8f42c4d76",
+    "input_preflight.py": "283ad752c5f037e28d20fae8e39e52171d07e1810b0944e6f3e4f06ea6254001",
+    "runtime_h329.py": "336baa758384dfde959e31972c7b6367f31c622560aab4fe3693c7137899317e",
+    "guard_h329.py": "c46fefc7075c6fc268c29a39a43489f2a93c8291d8a31d10ede831c6ec0a8298",
+    "test_resource_probe.py": "bc5b9c4de352a74f7477d7e81b888b5ce10dcb4c2a28a82bc7543889263420ae",
+    "test_dart_patch.py": "5e0335332de3ccf911c3ca43d543ff584d4ecbc2612a86ad1eee4b2d1f839833",
+    "archive_h329.py": "6f486fa9f5b5fc73b5cf13dfe15b65f85899089df1ebf4ccfb21709e65822b01",
+    "test_evaluator_report.py": "0a5b73d4035db9b5d1386d23e5b514154b144610e0603a57085a1edfee9a7ed0"
+  },
+  "resource_measurement_correction": "RESOURCE_MEASUREMENT.md; one fixed five-second interval; scientific code and all parameters unchanged",
+  "evaluator_field_correction": "EVALUATOR_FIELD_CORRECTION.md; XT report field renamed DART before once-only score; numerical algorithms unchanged"
+}

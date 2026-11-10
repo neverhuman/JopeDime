@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "fresh_base_pick_matches": {
+    "P0": true,
+    "P1": true,
+    "P2": true
+  },
+  "outer_model_score_calls": 36,
+  "fit_locks": 36,
+  "panel_sha256": "2366e3c2d5be73d62d9c519a017bcaf25b047049c9b8c8167d7cd27b66952850",
+  "dev91_rows_read": 0,
+  "r3175_train": "NOT_MEASURED"
+}

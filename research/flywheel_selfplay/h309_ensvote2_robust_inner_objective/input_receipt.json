@@ -1,0 +1,80 @@
+{
+  "bucket": "veox-jopedime-learning-use2",
+  "key": "experiments/rd_breakthrough_20261030/H303/h303_models_locks_and_outputs.tar.gz",
+  "version_id": "hshnLPUZuvpHewykQNTh..mWAGu9KGHo",
+  "sha256": "8957cf0e0b55c21231fd3d40d56ce5bdf27aa915dc97786bcbc00dbee782857d",
+  "bytes": 273987588,
+  "exact_version_get_verified": true,
+  "members": [
+    {
+      "path": "scratch/fold_1/root_30002/fit_lock.json",
+      "bytes": 10866,
+      "sha256": "5448d5108488a919a3a1e6fe509fda09456707d96929293a348fe719cf1d56ed"
+    },
+    {
+      "path": "scratch/fold_1/root_30003/fit_lock.json",
+      "bytes": 10856,
+      "sha256": "82112821f62dc4509ac6fcbca65ca870f61848bce035df1b620929fa007889be"
+    },
+    {
+      "path": "scratch/fold_1/root_30001/fit_lock.json",
+      "bytes": 10862,
+      "sha256": "f797594b51a8daf1b684d9bff00519f301bb57c18b2960f80a191081ecdccc59"
+    },
+    {
+      "path": "scratch/fold_2/root_30002/fit_lock.json",
+      "bytes": 10859,
+      "sha256": "850fba6389c3ff001d4640f50352cdca71e6cacbcf6db782e9ba5e764e820880"
+    },
+    {
+      "path": "scratch/fold_2/root_30003/fit_lock.json",
+      "bytes": 10844,
+      "sha256": "d0c5f72f8e60dc29c5675cceb980f15c257095b99f8cfe0856619ed5c0eada24"
+    },
+    {
+      "path": "scratch/fold_2/root_30001/fit_lock.json",
+      "bytes": 10870,
+      "sha256": "0d34bb1203a0431fadd6fff532c69d1680f37150c39d5075dfc4d417d5ed96f7"
+    },
+    {
+      "path": "scratch/fold_3/root_30002/fit_lock.json",
+      "bytes": 10865,
+      "sha256": "7e39a43451793e9801e468b318035c676b053adfa5525d59f79a9062b5af74dc"
+    },
+    {
+      "path": "scratch/fold_3/root_30003/fit_lock.json",
+      "bytes": 10857,
+      "sha256": "9144be682ae5a8aed693663d2853559b82d7d6118803df3862581d76c20826af"
+    },
+    {
+      "path": "scratch/fold_3/root_30001/fit_lock.json",
+      "bytes": 10858,
+      "sha256": "cd2dc12892c39fefe835e218c43030518f72cca50c01fc82456f57277a27956b"
+    },
+    {
+      "path": "scratch/fold_0/root_30002/fit_lock.json",
+      "bytes": 10861,
+      "sha256": "689bdc404a60ab37cad4f3f8747f39a57e25f5c7b71fe089a7427522336e020a"
+    },
+    {
+      "path": "scratch/fold_0/root_30003/fit_lock.json",
+      "bytes": 10850,
+      "sha256": "34d9dce7d6fbbb5f611b03b09395e2a98d071eb49b9008f19b228e7298f152ba"
+    },
+    {
+      "path": "scratch/fold_0/root_30001/fit_lock.json",
+      "bytes": 10856,
+      "sha256": "545fa2a68e054b5ebe0d0775a0b2fb94c00fd5f82df9a5591160f9b3359d22ed"
+    },
+    {
+      "path": "out/metrics_full.json",
+      "bytes": 46655,
+      "sha256": "202d1a6a077a7dafff4ced66f914f40472fa7bc4995951d7662f2ad813d756e5"
+    },
+    {
+      "path": "out/picks.npz",
+      "bytes": 2891,
+      "sha256": "0f8435010390c5bff8d6c95a7650163a2ab4c5952e56264fbee96204784d5ea4"
+    }
+  ]
+}

@@ -21,10 +21,29 @@ Business constraint: **price per heap byte**. Accuracy metric: `{"metric":"rmse"
 ## Objective (`objective.json`)
 
 ```json
-(not yet calibrated: run case_study/bin/calibrate.sh on this case)
+{
+  "metric": "composite",
+  "terms": [
+    {
+      "weight": 1.0,
+      "scale": 0.23,
+      "fitness": {
+        "metric": "rmse"
+      }
+    },
+    {
+      "weight": 0.1,
+      "scale": 460000000,
+      "fitness": {
+        "metric": "resource",
+        "name": "fit_peak_heap_bytes"
+      }
+    }
+  ]
+}
 ```
 
-Calibration pending: `case_study/bin/calibrate.sh case_study/04_ct_slice_wide_training_memory` sets the limits/prices from a declared calibration run before the main runs.
+Calibrated from arm D on rng seed 1 (20 measured candidates; not a main seed). Rule: limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading. Train target σ = 0.23405.
 
 `baseline.json` ranks by the same accuracy metric alone, with non-binding limits, so the same
 resource readings are recorded for every candidate in every arm.
@@ -38,7 +57,7 @@ resource readings are recorded for every candidate in every arm.
 | C | bootstrap + 11 random + DL seeds (≤ 11) | `baseline.json` |
 | D | bootstrap + 11 random | `baseline.json` |
 
-Budget 96 evaluations (≈ generation 0 + 8–10 generations), 3600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
+Budget 96 evaluations (≈ generation 0 + 8–10 generations), 600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
 
 ## Run
 
@@ -65,3 +84,10 @@ best-so-far objective by generation) and `generations.csv`.
 - Measured readings are host- and load-dependent; `run.json` records the host, load and limits of each run.
 
 <!-- notes -->
+
+## Business context
+
+- **Dataset provenance**: Relative Location of CT Slices on Axial Images (`2056a3aad9468d87`, 50,000 rows × 384 features; train 39,877, test 10,123) from [UCI Machine Learning Repository dataset 206](https://archive.ics.uci.edu/dataset/206) ([Graf et al., 2011](https://lms.uni-passau.de/)).
+- **Domain & SLA context**: Each row encodes 384 spatial and density histogram descriptors across 39,877 training slices (~12.2 MB raw `f64` feature matrix). Multi-stage basis expansions and kernel learners allocate large intermediate matrices during training, so pricing `fit_peak_heap_bytes` alongside `{"metric":"rmse"}` penalizes peak heap growth under memory-capped container limits ([Kubernetes Memory Resource Limits](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)).
+
+_Business context contributed by agy_resource_fitness (Gemini) on 2026-11-03 (notes file sha256 744cf669fdc7…). The links were supplied by the contributor and were not independently fetched._

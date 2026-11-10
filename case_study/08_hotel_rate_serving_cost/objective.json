@@ -1,0 +1,34 @@
+{
+  "metric": "custom",
+  "name": "error_plus_serving_cost",
+  "direction": "minimize",
+  "expression": {
+    "op": "add",
+    "left": {
+      "op": "abs",
+      "arg": {
+        "op": "sub",
+        "left": {
+          "op": "y"
+        },
+        "right": {
+          "op": "pred"
+        }
+      }
+    },
+    "right": {
+      "op": "mul",
+      "left": {
+        "op": "constant",
+        "value": 0.00067
+      },
+      "right": {
+        "op": "resource",
+        "name": "predict_us_per_row"
+      }
+    }
+  },
+  "aggregation": {
+    "kind": "mean"
+  }
+}

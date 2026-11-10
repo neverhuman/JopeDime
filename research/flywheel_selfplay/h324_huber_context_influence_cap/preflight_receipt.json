@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "same_agent_review": true,
+  "tests": {
+    "collected": 17,
+    "executed": 17,
+    "failed": 0,
+    "skipped": 0
+  },
+  "reviewed_utc": "2026-11-04T15:32:05.458995+00:00",
+  "findings": [
+    "Only three ranker call sites and two ranker boundaries gain sample_weight; original AST recovered exactly.",
+    "Gate function identity and source unchanged; actual synthetic member routes21ranker fits and8bags.",
+    "Uniform weights preserve exact predictions/parameters and LambdaRank; nonuniform weights change real ranker predictions.",
+    "Sentinel -2.0 verified from pinned source; raw utility spread weighting leaves ordinal labels untouched.",
+    "Full BASE36fold/9panel/3median regression exact; physical input boundary tests pass.",
+    "Zero median spread fails closed; cap fraction refers to pre-normalization weights.",
+    "No blocking finding; final source and metadata checks required before closeout."
+  ]
+}

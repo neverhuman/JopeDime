@@ -1,0 +1,70 @@
+{
+  "schema": "whitepaper.program-promotion-margins-source/v2",
+  "source_file": "promotions.jsonl",
+  "captured_at_utc": "2026-11-04T16:28:03.522410+00:00",
+  "last_record_utc": "2026-11-04T11:13:46.792039+00:00",
+  "stopped_run_round_cutoff": 5049,
+  "selection_round_window": [
+    775,
+    5049
+  ],
+  "source_prefix_sha256": "d7796fdd7c0dde19e1a23f34c28afc1b9aafa27b0792df746e9f9db01f8cd6c5",
+  "source_prefix_bytes": 13426974,
+  "source_prefix_records": 3711,
+  "source_window_sha256": "bc023f04ef41fe658f2bbd4655028c552ef1f3fbaf4bd9780951b20740a49795",
+  "source_window_byte_offset": 659825,
+  "source_window_bytes": 12767149,
+  "source_line_window": [
+    183,
+    3711
+  ],
+  "rows": 3529,
+  "round_window": [
+    775,
+    5047
+  ],
+  "csv_sha256": "059e635e5c9c99bf2134f96856799224ff984d4ffbee6d1a52cd1ab05c50b66e",
+  "selection": "All complete promotion-journal records in fixed rounds775..5049, without kind/outcome/score filtering. All selected records are subsequently validated ordinary promotions. All182 pre-window records are excluded (85historical admissions and97earlier ordinary warm-up records).",
+  "derivation": "Parse JSON numeric lexemes as Decimal; subtract old_utility from new_utility within each source record. Keep exact decimal values and every source-line identity; float conversion only for rendering.",
+  "program_gate_utility_margin": "0.000001",
+  "all_cv_gates_passed": true,
+  "all_records_kind": "promotion",
+  "all_evaluation_scope": "full_train_cv",
+  "min_margin": "0.00000106528921664",
+  "max_margin": "3.961601311040369",
+  "previous_101_records_preserved_numeric_and_hash_exact": true,
+  "previous_source_window_sha256": "966a3237d0df1211da4302a6845032e728a2f8154d263d056fcfa1168e6d5237",
+  "source_record_hash_encoding": "SHA256 of raw JSONL line including LF terminator",
+  "scope": "Adaptive training-side admitted program/context records only; each increment uses that record's own previous and new utilities. Different contexts and incumbents must not be summed into a learning curve. Positivity is required by admission and does not estimate proposal-level success, adapter improvement or neural writer learning.",
+  "source_binding": "Logged aggregate fields only; exact runtime, evaluation-population and normalization closure remain unqualified. No Elo, independent-learning or speed inference.",
+  "stable_prefix_reread": true,
+  "new_runtime_or_scientific_execution": false,
+  "band_explanation": {
+    "band_value": "0.0005",
+    "band_absolute_tolerance": "0.00000005",
+    "band_definition": "Absolute difference from0.0005 <=5e-8 (equivalent here to rounding to7decimal places); this is a descriptive band, not exact equality.",
+    "exact_decimal_matches": 222,
+    "counts": {
+      "band_records": 533,
+      "unmatched_prior_incumbent_records": 143,
+      "matched_incumbent_records": 390,
+      "complexity_drop_1": 390
+    },
+    "maximum_abs_residual_matched_pairs": "2.96809145E-8",
+    "complexity_measure": "Count of opening parentheses in logged program DSL.",
+    "utility_contribution_per_complexity_unit": "-0.0005",
+    "evaluator_source_sha256": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "evaluator_function_sha256": "dd399b95292830c95b671801787ce46b74b3506d24098d807d052f57093fdc96",
+    "all_startup_manifests_declare_this_source": true,
+    "reference_evaluator_sha256": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
+    "reference_scoring_function_identical": true,
+    "qualification": "One fewer counted node in every band pair with a journaled incumbent. Prior incumbents without an exact journal match remain unpaired; this component-level explanation does not qualify whole runtime, input closure, checkpoints or independent learning.",
+    "evaluator_source": "rust_evaluator.py",
+    "reference_source": "research/flywheel_selfplay/rust_evaluator.py",
+    "evaluator_function": "compute_s1_metrics_from_inner_cv",
+    "diagnostic_receipt_sha256": "0120896e18415198cbe0b3f1b80e1e72fdf7a22f530dda279527f7d60063f45c",
+    "recorded_startup_manifest_count": 12,
+    "explanation": "The score adds0.0005 per counted opening parenthesis; utility negates the score. All390 band pairs with an exactly matched journaled incumbent reduce that count byone. The143remaining prior incumbents are unmatched; no decomposition is supplied for them.",
+    "band_is_descriptive_not_an_inferential_test": true
+  }
+}

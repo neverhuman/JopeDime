@@ -1,8 +1,12 @@
 {
   "schema": "whitepaper.latest-round-clock-figure/v1",
+  "figure_path": "fig_legacy_round_clock_20.pdf",
+  "legacy_only": true,
+  "canonical_figure": "fig_fw_latest_round_clock.pdf",
+  "canonical_provenance": "data/full_round_wall_time.provenance.json",
   "input_csv_sha256": "14a5f7a8a6bace9d18c7bad132fe563cd0737ddd0a82b6e38f6cb26178168f64",
   "source_receipt_sha256": "845b5f092fefa03d30757a41cd9baa2988890a712bf9b9a9e2c506c32f2dbf88",
-  "generator_sha256": "d26561326f13f3983508010ba8de52635f4e22765ba9d1c2a2e7bb33ff9542fd",
+  "generator_sha256": "42cf0bf637a3cd0d45ada15b8bc8b959017cc70415dde8293a8688a4425d787e",
   "figure_sha256": "c040aff4e93ee3369621f1a7afb3b949ded7c1017c7180a597db85799bf8256b",
   "rows": 20,
   "round_window": [

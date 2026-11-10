@@ -1,0 +1,150 @@
+{
+ "adoption_secondary": {
+  "ci95": [
+   0.00046308618230742456,
+   0.008219304791653167
+  ],
+  "contexts": 190,
+  "drop_top_1": 0.0017299791201194606,
+  "drop_top_10": -2.56524627689356e-05,
+  "drop_top_3": 0.0010266024132392863,
+  "drop_top_5": 0.0006778707214455945,
+  "families": 190,
+  "gain_family_mean": 0.0036359985761818285,
+  "gain_family_median": 0.0,
+  "gate": {
+   "checks": {
+    "harm_le_10pct": true,
+    "lcb_gt_margin": false,
+    "lofo_min_gt_0": true,
+    "median_ge_0": true,
+    "signflip_p_lt_alpha": true
+   },
+   "pass": false,
+   "signflip_alpha": 0.025,
+   "signflip_p_used": 0.0112988701129887
+  },
+  "harmed_share_gt_0p01": 0.015789473684210527,
+  "lcb95": 0.00046308618230742456,
+  "lofo_min_gain": 0.0017299791201194606,
+  "signflip_p_one_sided": 0.0112988701129887,
+  "wtl": [
+   31,
+   149,
+   10
+  ]
+ },
+ "context_deltas": {
+  "exact_ties": 148,
+  "lt_minus_0p05": 1,
+  "max": 0.3638736757719694,
+  "min": -0.10167591644134744
+ },
+ "contexts": 190,
+ "design": {
+  "c": 0.35,
+  "delta": 0.0,
+  "lam": 0.1,
+  "tau": "inf"
+ },
+ "design_key": "c0.35_l0.1_d0_tinf",
+ "elo": {
+  "anchor": "h364.X0",
+  "contexts": 190,
+  "elo": {
+   "h364.2L": {
+    "ci95": [
+     1515.4487958370983,
+     1547.913605688942
+    ],
+    "elo": 1530.9635934547684
+   },
+   "h364.X0": {
+    "ci95": [
+     1500.0,
+     1500.0
+    ],
+    "elo": 1500.0
+   },
+   "lib.catboost.v1": {
+    "ci95": [
+     1246.4776376291165,
+     1361.8237870168316
+    ],
+    "elo": 1307.901793112562
+   },
+   "lib.lightgbm.v1": {
+    "ci95": [
+     1005.9381464811071,
+     1136.973755273416
+    ],
+    "elo": 1077.2205723012833
+   },
+   "lib.random_forest.v1": {
+    "ci95": [
+     1134.9115545809711,
+     1260.729322926397
+    ],
+    "elo": 1203.5199423490835
+   },
+   "lib.xgboost.v1": {
+    "ci95": [
+     1100.353122103952,
+     1231.343603283849
+    ],
+    "elo": 1170.8528062345094
+   }
+  },
+  "families": 190
+ },
+ "families": 190,
+ "family_mean_u": {
+  "2L": 2.0598757014749283,
+  "X0": 2.0562397028987465
+ },
+ "headline": {
+  "context_mean_gain": 0.0036359985761818285,
+  "context_wtl": [
+   31,
+   149,
+   10
+  ],
+  "families_lost": 10,
+  "families_tied": 149,
+  "families_won": 31,
+  "family_mean_gain": 0.0036359985761818285,
+  "family_median_gain": 0.0,
+  "n_families": 190,
+  "pct_rmse_reduction": 0.0036293963376927696
+ },
+ "panel": "P201d",
+ "primary": {
+  "T_clipped_family_mean": 0.0036359985761818285,
+  "clip": 0.5,
+  "contexts": 190,
+  "families": 190,
+  "families_lost": 10,
+  "families_tied": 149,
+  "families_won": 31,
+  "family_median": 0.0,
+  "inferior": false,
+  "lofo_min": 0.0017299791201194606,
+  "mirror_signflip_p": 0.9887266159057617,
+  "pass": true,
+  "signflip_p": 0.011273384094238281
+ },
+ "second_level": {
+  "active_share": 0.22105263157894736,
+  "audit_substitutions": 0,
+  "mean_beta_sum": 0.03544724921083617,
+  "mean_beta_sum_active": 0.1603566035728303,
+  "reasons": {
+   "acceptance_gate": 115,
+   "active": 42,
+   "beta_zero": 32,
+   "no_library_column": 1
+  }
+ },
+ "verdict": "XSTACK2L_CONFIRMED",
+ "wave": "H364"
+}

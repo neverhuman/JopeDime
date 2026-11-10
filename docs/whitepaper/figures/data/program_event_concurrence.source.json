@@ -1,0 +1,27 @@
+{
+  "schema": "whitepaper.program-event-concurrence-source/v1",
+  "source_commit": "84a5338bd73469681d3e8ba8a7c2316046c87152",
+  "input_sha256": {
+    "stopped_run_admissions.csv": "197c519554675d398cb77c81e652788b51462ca372a2ea6c7b41811958b4238a",
+    "stopped_run_promotions.csv": "913841307f33c827b60174288c8b09404c92be1f186ff74bc83f9be6103813cc",
+    "stopped_run_record.source.json": "26337f004c1ed4c1825a5907030e75b0f3944f2001f0d03e747896801f296873"
+  },
+  "scored_decisions": 4274,
+  "unrecorded_decision_rounds": [
+    4331
+  ],
+  "logged_round_span": [
+    775,
+    5049
+  ],
+  "round_identifiers_counted": 4275,
+  "program_records": 3529,
+  "program_record_rounds": 2148,
+  "derived_cells": 8,
+  "csv_sha256": "a01444a3284e82389dd451303396f6ddea3cf34cc25d09735a1a90d50c9f8909",
+  "selection": "Every round identifier775..5049 in the committed capture. No admission decision is inferred at4331. Every3529 program record appears once, attached to its logged round; all4274 scored admission records appear once.",
+  "zero_definition": "No program record at a round in this complete bounded journal capture; not zero proposals, zero work or a failed search.",
+  "scope": "Descriptive coexistence of recorded events with different admission rules, not proposal success, independence, causal effect, elapsed time or writer/map learning.",
+  "new_observations": 0,
+  "imputed_decisions": false
+}

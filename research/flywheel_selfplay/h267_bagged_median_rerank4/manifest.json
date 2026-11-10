@@ -1,0 +1,74 @@
+{
+  "wave": "H267",
+  "authority": "/home/ubuntu/nudges/hw_t1805_opus_h267.md",
+  "arms": [
+    "CONTROL",
+    "RERANK4",
+    "BAG_MED",
+    "BAG_SHUF"
+  ],
+  "seeds": [
+    267101,
+    267102,
+    267103
+  ],
+  "fold_seeds": {
+    "267101": 267140,
+    "267102": 267141,
+    "267103": 267142
+  },
+  "boot_seed": 267150,
+  "bags": {
+    "n": 25,
+    "bootstrap_seed_base": 267160,
+    "unit": "family",
+    "aggregation": "median within-context rank (0 = best), ties to r882 slot order",
+    "hyperparameters": "(lr*, n_est*) from the frozen H265 inner selector on the full FIT set, 200 trees",
+    "admission": "out-of-bag equal-family gain > .001 and LCB95 > 0 (2,000 draws), else r882"
+  },
+  "h265_core": {
+    "sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "source": "origin/v1/next research/flywheel_selfplay/h265_top4_listwise_reranker/runner.py",
+    "commit": "da5a08afb"
+  },
+  "checkpoint": "/home/ubuntu/jope-data/h267/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h267/inputs/best_dev_checkpoint.json",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "total_updates": 0,
+  "inputs": {
+    "/home/ubuntu/jope-data/h267/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h267/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h267/inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "/home/ubuntu/jope-data/h267/inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "/home/ubuntu/jope-data/h267/inputs/snapshot/common_h252.py": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h58/cache/pool_priors.npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/h265_top4_listwise_reranker/runner.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "research/flywheel_selfplay/h265_top4_listwise_reranker/test_h265.py": "35eb19251ea92f1c59855cec872cdc5c7aee101d82aa18f51238a0a7eee30307",
+    "research/flywheel_selfplay/h265_top4_listwise_reranker/manifest.json": "fb084cfa04cd5eee007b574e301b26e79a32c7d86c6d49fed5aefe1131fc33d9",
+    "research/flywheel_selfplay/h264_knn_memory/monitor.py": "ad537005fe176e2eb902c8d152179ca42f1829da6be9cae8cbf9309f4606ce71"
+  },
+  "source_sha256": {
+    "test_h267.py": "b1a69f2f7af406ceaa0fd9f6c0da308dd8586e1d713d4a9cb88d59ca3efc0f0c",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "analysis.py": "d30f92bf2195cf70fc44d933c5974405598ba8e561fd3c373bedd419a3000790",
+    "runner.py": "a8dc3fedddba40bec9aa23a89d6a6aacde1d344bc287781157f8fd7503ef9d6d",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "PREREG.md": "bc9c5ecafb446e0e9a9516ba78dde1209f55ce9d0a7b8398d1662f64ae447d5b",
+    "monitor.py": "dd1ffd25f658b9572650790744144a1d10d859cf3bcf6f9f380da277a91d5835",
+    "fold_manifest.json": "61e800e3dbcc5c3769064930e6f472cc756ae220746f515c1fa725ba7045ab21"
+  },
+  "packages": {
+    "lightgbm": "4.6.0",
+    "numpy": "1.26.4",
+    "torch": "2.7.0"
+  },
+  "parent_commit": "603c6a5c5771dd62e266ffc0ccd0ab1b32a603b0",
+  "publication_ref": "v1/next",
+  "host": "xbabe2 CPU (taskset cores 44-47, nice 19, LightGBM n_jobs 1; H239 A1 memory guard; source runs from the registered lane outside ~/jope-data)",
+  "compute_stop": "2026-11-03T20:30:00Z"
+}

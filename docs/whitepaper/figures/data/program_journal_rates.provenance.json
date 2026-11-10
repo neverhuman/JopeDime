@@ -1,0 +1,46 @@
+{
+  "schema": "whitepaper.program-journal-rates-figure/v1",
+  "bins_csv_sha256": "4afeb053a2d1a348ff165974a40a78dcca6227419e022245e36e851c65098c85",
+  "events_csv_sha256": "11ccd9a0c286aa0fbe97cd9a0214e08f110bdcaef1f83d604741f52f4da8df29",
+  "source_receipt_sha256": "807976380827edb70d12c35197e2cc1919e248cd4111c8d40ff132638c6ce7b0",
+  "generator_sha256": "db683819d844d70227318910fd8960ac323cab702c66706dcb69254832725f1f",
+  "figure_sha256": "5c951c0368cef11e670ad85c8722b7a45d864ea1d50180e559349c9f5b687cc0",
+  "source_prefix_sha256": "574ee75abb612245c33f9500c84e576fdd69a9243090c58e0a7d79ede2f7ad96",
+  "source_records": 3490,
+  "plotted_bins": 21,
+  "full_bins": 20,
+  "partial_bins": 1,
+  "ordinary_promotions": 3405,
+  "historical_admissions": 85,
+  "unrecorded_protocol_ids": 90,
+  "scope": "Adaptive training-side program-pool journal additions, ordinary promotions distinguished from historical admissions. Clock exposure includes work, waits and gaps; zero bins mean no journal additions. Not attempted proposals, adapter admissions, model updates, serving throughput, stable-population comparisons or learning gains. Exact loop/population/normalization qualification remains separate.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    6.75,
+    1.7
+  ],
+  "minimum_text_size_pt": 8.5,
+  "vertical_scale": "linear",
+  "bar_width_tracks_observed_exposure": true,
+  "fixed_canvas_no_tight_crop": true,
+  "cohort_transition": {
+    "round": 775,
+    "warmup_records": 182,
+    "full_cohort_records": 3308,
+    "last_warmup_source_line": 182,
+    "first_full_cohort_source_line": 183,
+    "last_warmup_record_sha256": "f72ea64f37719bef345aa7f726cee800b22ace88774a83ddbf06a8ec7c728fcc",
+    "first_full_cohort_record_sha256": "50ad7e2617af240ca01fd59edddf5cc447aff4d5e274a45041c8abab6d792b06",
+    "last_warmup_timestamp_utc": "2026-10-30T02:06:43.552278+00:00",
+    "first_full_cohort_timestamp_utc": "2026-10-30T04:49:15.453823+00:00",
+    "clock_bracket_offset_us": [
+      39584356964,
+      49336258509
+    ],
+    "marker": "Bracket between last warm-up and first full-cohort journal events; exact switch time is not inferred. Fixed count bins remain unchanged and may straddle the bracket.",
+    "source_events_csv_sha256": "11ccd9a0c286aa0fbe97cd9a0214e08f110bdcaef1f83d604741f52f4da8df29"
+  },
+  "reproduce": "python3 figures/scripts/make_program_journal_rates.py"
+}

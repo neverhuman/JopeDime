@@ -1,0 +1,247 @@
+{
+ "anchor": "h257.Opus5p5_Extra",
+ "board": "dev91-s1-two-fold-v1",
+ "board_sha256": "b8836033c0540e1c7d6a488cb33248372cab02e4a16776cd57b08ede269ea190",
+ "elo": {
+  "anchor": "h257.Opus5p5_Extra",
+  "contexts": 91,
+  "elo": {
+   "h257.GPT6_Astra_Max": {
+    "ci95": [
+     1109.0392787195674,
+     1416.614458486873
+    ],
+    "elo": 1284.830054216144
+   },
+   "h257.GPT6p1_Sol_Max": {
+    "ci95": [
+     1357.9896628542087,
+     1587.6325013476599
+    ],
+    "elo": 1476.4067886832172
+   },
+   "h257.Gemini4_argon_high": {
+    "ci95": [
+     1398.3465037882147,
+     1595.7001196239814
+    ],
+    "elo": 1499.2384933661608
+   },
+   "h257.Kumo_Tabular_L": {
+    "ci95": [
+     1818.0108946880653,
+     2205.884220951825
+    ],
+    "elo": 1965.613350049919
+   },
+   "h257.Kumo_Tabular_S": {
+    "ci95": [
+     1741.9717256866304,
+     2033.5285148849625
+    ],
+    "elo": 1859.060286518998
+   },
+   "h257.Mitra_v2": {
+    "ci95": [
+     1560.0143469912775,
+     1820.9416930656416
+    ],
+    "elo": 1682.2445871615134
+   },
+   "h257.Opus5p5_Extra": {
+    "ci95": [
+     1500.0,
+     1500.0
+    ],
+    "elo": 1500.0
+   },
+   "h257.PriorLabs_TabPFN_3p5": {
+    "ci95": [
+     1681.16914995521,
+     2014.381696532109
+    ],
+    "elo": 1824.9722147176058
+   },
+   "h257.PriorLabs_TabPFN_3p5_Single": {
+    "ci95": [
+     1771.8676108424384,
+     1981.4165223566515
+    ],
+    "elo": 1849.907604425602
+   },
+   "h257.TabDPT_1p3": {
+    "ci95": [
+     1579.5339698021617,
+     1788.846633444459
+    ],
+    "elo": 1673.8369151507097
+   },
+   "h257.TabFM": {
+    "ci95": [
+     1627.4378562061092,
+     1838.9412294461047
+    ],
+    "elo": 1716.254834272671
+   },
+   "h257.TabFM_Ensemble": {
+    "ci95": [
+     1749.0333799105965,
+     1957.358010548055
+    ],
+    "elo": 1834.1786621107362
+   },
+   "h257.TabICL_v2": {
+    "ci95": [
+     1578.533027411042,
+     1756.4120500605452
+    ],
+    "elo": 1654.9777756374651
+   },
+   "h414.kimik3p1_max": {
+    "ci95": [
+     1276.775881909737,
+     1446.9439963077455
+    ],
+    "elo": 1369.9898435867685
+   }
+  },
+  "families": 19
+ },
+ "entrants": {
+  "h257.GPT6_Astra_Max": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.GPT6p1_Sol_Max": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Gemini4_argon_high": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Kumo_Tabular_L": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Kumo_Tabular_S": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Mitra_v2": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.Opus5p5_Extra": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.PriorLabs_TabPFN_3p5": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.PriorLabs_TabPFN_3p5_Single": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.TabDPT_1p3": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.TabFM": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.TabFM_Ensemble": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h257.TabICL_v2": {
+   "label": null,
+   "median_wall_s": null,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  },
+  "h414.kimik3p1_max": {
+   "label": null,
+   "median_wall_s": 0.43424599999999997,
+   "n": 91,
+   "status": {
+    "completed": 91
+   }
+  }
+ },
+ "family_mean_u": {
+  "h257.GPT6_Astra_Max": 0.883093869228421,
+  "h257.GPT6p1_Sol_Max": 1.1415723635031578,
+  "h257.Gemini4_argon_high": 1.140703591891579,
+  "h257.Kumo_Tabular_L": 1.5006890063052634,
+  "h257.Kumo_Tabular_S": 1.3963950289694738,
+  "h257.Mitra_v2": 1.325378212756842,
+  "h257.Opus5p5_Extra": 1.1125845190505264,
+  "h257.PriorLabs_TabPFN_3p5": 1.346831395116842,
+  "h257.PriorLabs_TabPFN_3p5_Single": 1.3907401305115792,
+  "h257.TabDPT_1p3": 1.283347320674737,
+  "h257.TabFM": 1.3256182754957895,
+  "h257.TabFM_Ensemble": 1.3889201917578946,
+  "h257.TabICL_v2": 1.2694610456,
+  "h414.kimik3p1_max": 0.9866633603978949
+ },
+ "focus": "none",
+ "focus_vs": {},
+ "incomplete": {},
+ "n_contexts": 91,
+ "n_families": 19,
+ "prediction_files_verified": 0,
+ "schema": "jope.reference-board.ladder/v1"
+}

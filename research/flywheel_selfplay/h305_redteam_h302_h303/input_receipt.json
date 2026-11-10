@@ -1,0 +1,18 @@
+{
+  "contexts": 1219,
+  "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "costs_sha256": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+  "pool_identities_sha256": "436fb6220accc33ec8c49991f9b6a5d8a2dfa7da508287938d703e9a019de8a1",
+  "train_array_sha256": {
+    "prior": "9f376cdbb4ef0ca94938da486b8f4677563986b03e2a979389bd6b2c1847e14e",
+    "projection": "6178ec557257927c753fcfbc152d7c4d45f02f550825e8d795385d092b6e0002",
+    "lm48": "f01ee60f738f08e94fc80953dd40a2b14fe2eb991cc5a104886a154f44dde00c",
+    "dope629": "d3f91651a5241e7e98263df536dfee8152432a4757e50d96f13828bdbd2e2c50"
+  },
+  "cache_metadata_rows": 1310,
+  "cache_feature_rows_read": 1219,
+  "excluded_tail_rows": 91,
+  "physical_zip_decompression": "May prefetch compressed trailing bytes; no trailing NPY rows requested, decoded or used",
+  "output_sha256": "399175fe0205280529b055b6c46c7270ef7cc6b7df36192fd469aa7eac54eb02",
+  "cache_tail_exactly_matches_selected_dev91_roster": true
+}

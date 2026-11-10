@@ -1,0 +1,315 @@
+{
+  "wave": "H313",
+  "slug": "h313_fresh_ingest_census_and_h300_harness",
+  "owner": "rd_opus",
+  "status": "COMPLETE",
+  "verdict": "NO_NEW_CATALOG",
+  "prereg_commit": "6772accf302aa4bf0d3b13059e05199b633de769",
+  "census": {
+    "wave": "H313",
+    "verdict": "NO_NEW_CATALOG",
+    "regression": {
+      "fields_equal": true,
+      "exclusion_sets_equal": true,
+      "n_exclusion_sets": 26
+    },
+    "catalog_latest_pointer": "v246",
+    "catalog_latest_pointer_version": "imd2epYIYkULQZWzV5eubsCRo2epIky2",
+    "catalog_latest_pointer_modified": "2026-10-05T05:57:43+00:00",
+    "newest_catalog_prefix": "v246",
+    "v246_versions": [
+      "eJuErIwj0Pgu.lAgflPcWvvRKyuwptLC"
+    ],
+    "new_catalog": false,
+    "registry_objects_after_cutoff": 0,
+    "prefix_listings": {
+      "full-source-registry/": {
+        "objects": 378,
+        "modified_after_cutoff": 0,
+        "latest": "2026-09-30T23:19:55+00:00"
+      },
+      "split-registry/": {
+        "objects": 3850,
+        "modified_after_cutoff": 0,
+        "latest": "2026-09-30T21:02:24+00:00"
+      },
+      "datasets/": {
+        "objects": 8819,
+        "modified_after_cutoff": 0,
+        "latest": "2026-10-05T05:57:21+00:00"
+      },
+      "ingest/": {
+        "objects": 12,
+        "modified_after_cutoff": 0,
+        "latest": "2026-09-27T07:18:25+00:00"
+      },
+      "raw/": {
+        "objects": 873,
+        "modified_after_cutoff": 0,
+        "latest": "2026-09-27T07:11:02+00:00"
+      },
+      "research/corpus-benchmark/": {
+        "objects": 131895,
+        "modified_after_cutoff": 0,
+        "latest": "2026-09-30T18:57:50+00:00"
+      },
+      "jarambit/evo_continuous/": {
+        "objects": 172777,
+        "modified_after_cutoff": 49022,
+        "latest": "2026-11-04T10:09:02+00:00"
+      },
+      "regression-hunt/": {
+        "objects": 6088,
+        "modified_after_cutoff": 0,
+        "latest": "2026-10-05T22:12:42+00:00"
+      }
+    },
+    "qualifying_families": 0,
+    "ingest_needed": {
+      "floor_families": 120,
+      "observed_yield": {
+        "qualified": 1153,
+        "scanned_including_failures": 2609,
+        "rate": 0.44193177462629357
+      },
+      "new_disjoint_regression_families_to_ingest_and_gp_run": 272,
+      "per_split_half_approx": 136
+    }
+  },
+  "harness": {
+    "status": "READY (locks frozen; fresh gate closed until manifest verifies; no fresh population scored)",
+    "seeds": [
+      30001,
+      30002,
+      30003,
+      30004,
+      30005,
+      30006
+    ],
+    "lock_manifest_sha256": "5b993129092f16b8499adfdad04e5ea89ed1586a2b0c34b16ce83515e0d3acb4",
+    "locks": {
+      "30001": "a06cb7f09a771a5d3a802b3388e3bb73dd61972bcdae58be2f37a50ad52e3347",
+      "30002": "d78922f4a23d42a20da081c3b4be61b9b902986bbcdea882236400171c3c8c81",
+      "30003": "40f02d99a0fd58c4345b7c26ff2c275a8f22ec4801a837795dfbd20333eddc3f",
+      "30004": "3edf0ec25cfa8f3b5215a4dde672d6e224fbfd92b02f32aaf109f9c72ac9a32f",
+      "30005": "e684c1994d3741b0f72e3308aa7db47e59153b2ec1ac8d04b8b03bec7c2a35c8",
+      "30006": "396dd73a3a1b1cf3dcadc8d0ce30608122e88b5aa788ac232ac261092981005e"
+    },
+    "chosen": {
+      "30001": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.05639755383015419,
+        "inner_switches": 212
+      },
+      "30002": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.05496110251614889,
+        "inner_switches": 310
+      },
+      "30003": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.044733018189392966,
+        "inner_switches": 341
+      },
+      "30004": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.04534964347998098,
+        "inner_switches": 255
+      },
+      "30005": {
+        "tau": 0.1,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.058178359709196124,
+        "inner_switches": 284
+      },
+      "30006": {
+        "tau": 0.05,
+        "k": 5,
+        "a": 2,
+        "inner_gain": 0.06584180299814386,
+        "inner_switches": 349
+      }
+    },
+    "member_seeds_new": {
+      "30004": [
+        1952251935,
+        1554721030,
+        514753433
+      ],
+      "30005": [
+        1316784594,
+        642759331,
+        744149750
+      ],
+      "30006": [
+        1442930024,
+        1192635410,
+        1213673495
+      ]
+    },
+    "dev91_rows_read_before_lock": 0,
+    "loader_counters": {
+      "feature_rows_read": 2811012,
+      "dlval_feature_rows_read": 0
+    },
+    "h310_reused": [
+      30001,
+      30002,
+      30003
+    ],
+    "fitted_here": [
+      30004,
+      30005,
+      30006
+    ],
+    "decision_rule_draft": "FRESH_CONFIRMED iff median family-equal gain vs r3175 slot0 over 6 seeds > +0.001 AND pooled whole-family bootstrap LCB95 > 0 (RNG 302150, 10k) AND sign-flip p < 0.05 on >= 4/6 seeds (exact <= 20 families else MC 200k RNG 313150) AND invalid <= r3175 each seed AND harmed <= 15% each seed; ties never win",
+    "elo_label": "reference = r3175 slot0 (fresh v7)",
+    "h314_prerequisites": [
+      "a qualifying disjoint cohort (none exists: NO_NEW_CATALOG)",
+      "r3175 GPU-exact costs for the fresh contexts (H281/H283 path)",
+      "owner decision after H312 closes"
+    ]
+  },
+  "dryrun": {
+    "pseudo_fresh": "DL-Train P0 outer fold 0",
+    "elo_label": "reference = r882 slot0 (DL-Train pseudo-fresh dry run)",
+    "harness_regression_seed30001_picks_sha_ok": true,
+    "verdict_dry": "FRESH_NOT_CONFIRMED",
+    "criteria": {
+      "c1_median_gain_gt_0_001": true,
+      "c2_pooled_lcb95_gt_0": true,
+      "c3_sign_flip_p_lt_05_on_enough_seeds": true,
+      "c4_invalid_le_reference_each": true,
+      "c5_harmed_le_15pct_each": false
+    },
+    "summary": {
+      "seeds": 3,
+      "families": 57,
+      "contexts": 335,
+      "per_seed_family_mean_gain": [
+        0.026871203187939906,
+        0.030386398287289503,
+        0.02877076043428984
+      ],
+      "per_seed_ci95": [
+        [
+          0.007474203000924646,
+          0.048151655202172905
+        ],
+        [
+          -0.0006236344772503979,
+          0.060860400195000205
+        ],
+        [
+          0.006779454505121403,
+          0.05237093228887528
+        ]
+      ],
+      "per_seed_lcb95": [
+        0.010336665315901354,
+        0.0042735452906185285,
+        0.010221831544807504
+      ],
+      "median_gain_across_seeds": 0.02877076043428984,
+      "pooled_ci95": [
+        0.007456699982088003,
+        0.05119618586194811
+      ],
+      "pooled_lcb95": 0.010914800500651424,
+      "per_seed_family_median_gain": [
+        0.005765142225346742,
+        0.016452175884023146,
+        0.011913045697160785
+      ],
+      "wtl": [
+        [
+          32,
+          17,
+          8
+        ],
+        [
+          41,
+          2,
+          14
+        ],
+        [
+          38,
+          6,
+          13
+        ]
+      ],
+      "sign_flip_p": [
+        0.0026799866000669996,
+        0.028999855000724998,
+        0.005394973025134874
+      ],
+      "sign_flip_method": "monte_carlo",
+      "harmed_share": [
+        0.08771929824561403,
+        0.15789473684210525,
+        0.12280701754385964
+      ],
+      "invalid": [
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          4
+        ]
+      ],
+      "switches": [
+        74,
+        161,
+        120
+      ],
+      "elo_by_seed": [
+        1740.6612632239578,
+        1686.580653600684,
+        1686.2482292166071
+      ],
+      "drop_top5_gain": [
+        0.011404503999917482,
+        0.006356535669957544,
+        0.010919413277152666
+      ],
+      "drop_top10_gain": [
+        0.002522060220533303,
+        -0.004882269518647015,
+        0.001161519639475167
+      ]
+    },
+    "note": "pipeline exercise on already-analysed DL-Train OOF; not new evidence"
+  },
+  "reads": {
+    "fresh_or_sealed_or_holdout_rows": 0,
+    "dlval_feature_rows": 0,
+    "dl_test": 0,
+    "dataset_bodies": 0,
+    "s3_writes_outside_H313": 0
+  },
+  "resources": {
+    "host": "xbabe2",
+    "cores": "53,54,55 (locks), 116 (regression, dry run), 117 (census script, tests)",
+    "nice": 19,
+    "memory_max": "4G per unit (not hit; memwatch never fired)",
+    "lock_wall": "10:05:34-10:18:26Z",
+    "census_regression_wall": "10:05:46-10:08:30Z",
+    "dryrun_wall": "10:12:12-10:12:35Z"
+  },
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H313/"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "whitepaper.recent-discovery-retention-figure/v1",
+  "csv_sha256": "009c4522dd04d1b389c20c1d3494baeee32ffb701dd2462c68bd16a01f7a5307",
+  "source_receipt_sha256": "4004a13a8afd15d74216c1005ea637078a10f72db1afe6a86765fc3f14fe15c0",
+  "generator_sha256": "6eb182df4d04369867d78df9b679ab6d9b3684f612af6ab7414fda09a5861560",
+  "figure_sha256": "c12bc6140d626ec18cf83366543459180c3faaed71051f51e4d41e3fd3be16e0",
+  "records": 48,
+  "program_promotions": 17,
+  "adapter_admissions": 0,
+  "utility_observations": 96,
+  "round_window": [
+    4862,
+    4909
+  ],
+  "summary_prefix_sha256": "84546c10b6fbf00e4524b7ce161d922501c0b4718911a0bf24caea5e94083d38",
+  "program_prefix_sha256": "7bed18462ab7d3e8af1d3da7ee7bbfb7356e6b752c08399430b37b3c2879b031",
+  "transformation": "48per-round event bars plus48candidate utility markers and48logged post-decision retained utility values. No smoothing, interpolation across gaps, value filtering or cumulative envelope.",
+  "scope": "Strict training-program promotions and adapter development-pool retention have different admission meanings. Utility is logged higher-is-better on reused development contexts, not independent evaluation or a neural-writer/ranking-map learning gain. Exact runtime source binding remains unqualified.",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "matplotlib_version": "3.10.8",
+  "figure_inches": [
+    3.375,
+    2.3
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_recent_discovery_retention.py"
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "whitepaper.program-record-cadence-source/v1",
+  "captured_utc": "2026-11-03T20:57:04.364580+00:00",
+  "source_commit": "8285eab4ee5ad473c8ac8a3bd52115a520c192e2",
+  "input_csv": "figures/data/full_cohort_program_rates.events.csv",
+  "input_csv_git_blob": "44940c44275b27c521b113087c7d05e159136acd",
+  "input_csv_sha256": "90ea47709b31f2bd9f809dafe997930976e115538d327d34e082e1ac41c6ba23",
+  "input_source_receipt_sha256": "4b43d90221726c5bbcbc9ac3e45e6ce78bb59349b028f0f82939d5e02e0a4bb5",
+  "source_prefix_sha256": "9d96625d22a614b999a34e58783bbddf17b28833c3eb2a7353660173740c8029",
+  "csv_sha256": "c7566b5b64c2177e25196cc1c2326cde47a149806397a642b64c565fea7e4278",
+  "input_records": 3364,
+  "intervals": 3363,
+  "round_window": [
+    775,
+    4561
+  ],
+  "selection": "Every adjacent pair within all3364committed selected records; no outcome/value/interval filtering. First selected record has no within-cohort predecessor; no interval after the final record is imputed.",
+  "transformation": "Exact UTC microsecond difference of adjacent timestamps, divided by1000000 with Decimal seconds; keyed to later endpoint round. Both endpoint journal line numbers and hashes retained. Scatter only; no joined data line, smoothing or resampling.",
+  "scope": "Recorded training-program journal cadence including work, waits and batched writes. Not attempted-proposal runtime, adapter admission, uptime, deployment throughput, independent learning or a speed comparison. Exact installed source/adapter/evaluation binding remains unqualified."
+}

@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "pre_score_inventory_sha256": "c52796aacd84511e541e37fe610ba1998aa067297874aa5d4eda4670daf65a83",
+  "inventory_lock_hashes_exact": true,
+  "metrics_full_sha256": "202d1a6a077a7dafff4ced66f914f40472fa7bc4995951d7662f2ad813d756e5",
+  "observed_running_source_equals_closeout": true
+}

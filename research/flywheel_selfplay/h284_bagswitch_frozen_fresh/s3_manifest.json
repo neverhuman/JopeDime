@@ -1,0 +1,94 @@
+{
+  "schema": "jope.h284.s3-manifest/v1",
+  "wave": "H284",
+  "slug": "h284_bagswitch_frozen_fresh",
+  "verdict": "NOT_ADVANCED_FRESH",
+  "export_manifest_s3": {
+    "S3_bucket": "veox-jopedime-learning-use2",
+    "S3_key": "experiments/rd_breakthrough_20261030/H284/export/export_manifest.json",
+    "S3_VersionId": "AHFLVzBwd_fOfBAFGwHd.ABmkbgIbUu3",
+    "sha256": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc"
+  },
+  "uploads": [
+    {
+      "file": "metrics_full.json",
+      "sha256": "3a4a0b248a6d1d9396714c0ec3841dfc758a42e282b495c2ad58523c57cc6915",
+      "bytes": 222473,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/metrics_full.json",
+      "S3_VersionId": "cXFV4GJ5olfIGKTKYwPO0nUvk40ZGJD_"
+    },
+    {
+      "file": "metrics.json",
+      "sha256": "a0b2716f871aba633ae70f89d213bf0c87ecb937bffa6b6993ec1a7a6d27bc7f",
+      "bytes": 138099,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/metrics.json",
+      "S3_VersionId": "Bk92lIbTJbYxK.wm50IxcLTCndQMyoCr"
+    },
+    {
+      "file": "fresh_union_panel.npz",
+      "sha256": "ec986b093808c17114e97824686ea49193c256a3c63be54c39d8dbe991ada7ed",
+      "bytes": 2031,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/fresh_union_panel.npz",
+      "S3_VersionId": "76JnDgTaBybN_byiN7I83Tf28tH2ySFr"
+    },
+    {
+      "file": "fresh_union_picks.json",
+      "sha256": "db8392af06b5b2b944141279ffb2205bd84a358c332a0e2144a9e42a2eeb60b5",
+      "bytes": 22387,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/fresh_union_picks.json",
+      "S3_VersionId": "j5DCkTINmMWIw1.No.0WrPUSOzVIlZV2"
+    },
+    {
+      "file": "baseline.json",
+      "sha256": "2b8bb4994c567499906333073c75755ad732a430e2935db0cb6769f64f8611a3",
+      "bytes": 142,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/baseline.json",
+      "S3_VersionId": "HzJgq.terXhMPgRVTeLRPJ_6pcqU5Wov"
+    },
+    {
+      "file": "attempt-001.resource_summary.json",
+      "sha256": "b3510d8931b5e0f02990318193d44fdf2e7427d135494cc172bf5c39748facb4",
+      "bytes": 110,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/attempt-001.resource_summary.json",
+      "S3_VersionId": "8R8fuqCIA7bBzk50OsLowF.JXm2qkcy0"
+    },
+    {
+      "file": "attempt-001.resources.jsonl",
+      "sha256": "15cf7cce45b6bad31fe8c3470461919012f7c77a91923e2455671a847068ec02",
+      "bytes": 2267,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/attempt-001.resources.jsonl",
+      "S3_VersionId": "ltAdDOx.uBGlj9bhXUv6U8e0GdcUAyGm"
+    },
+    {
+      "file": "export_summary.json",
+      "sha256": "eb48c15be8afcfa0740e94befcdd09c16c631c15c12741b48d5b95cc61a1507b",
+      "bytes": 4416,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/export_summary.json",
+      "S3_VersionId": "ttEN3rLTaJQp8ejp7JEbCVHEHzGElble"
+    },
+    {
+      "file": "export-001.resource_summary.json",
+      "sha256": "16ee052e6736e301afd6819ea6f7fa23129d18fe001e4b65a9f992262d257edc",
+      "bytes": 111,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/export-001.resource_summary.json",
+      "S3_VersionId": "ohZqIsjhK17Kh9ahiXZVNbUq4psidRoq"
+    },
+    {
+      "file": "export-001.resources.jsonl",
+      "sha256": "05c28ebc3c086ee16f432ca74e1e8b81838c322495cf7338f1933e71a54a0530",
+      "bytes": 6210,
+      "S3_bucket": "veox-jopedime-learning-use2",
+      "S3_key": "experiments/rd_breakthrough_20261030/H284/attempt-001/export-001.resources.jsonl",
+      "S3_VersionId": "ZKBxI9vbhKS66W6Wnu_FbBIxU3_lMWik"
+    }
+  ]
+}

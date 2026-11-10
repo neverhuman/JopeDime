@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "analysis_tests": 18,
+  "total_tests": 35,
+  "threshold": 0.002,
+  "threshold_inclusive": true,
+  "seed_requirement": "median across3partitions strictlypositive on>=2roots",
+  "rng": 324191,
+  "draws": 10000,
+  "config_insensitive_threshold": 30,
+  "scoring_not_yet_executed": true,
+  "original_fit_sources_unchanged": true,
+  "reviewed_utc": "2026-11-04T15:38:12.134418+00:00"
+}

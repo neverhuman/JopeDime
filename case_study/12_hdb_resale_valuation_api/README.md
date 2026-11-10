@@ -21,10 +21,26 @@ Business constraint: **row_latency_p99_us max + model_bytes max**. Accuracy metr
 ## Objective (`objective.json`)
 
 ```json
-(not yet calibrated: run case_study/bin/calibrate.sh on this case)
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "mape",
+    "epsilon": 1.0
+  },
+  "limits": [
+    {
+      "resource": "row_latency_p99_us",
+      "max": 17
+    },
+    {
+      "resource": "model_bytes",
+      "max": 600000
+    }
+  ]
+}
 ```
 
-Calibration pending: `case_study/bin/calibrate.sh case_study/12_hdb_resale_valuation_api` sets the limits/prices from a declared calibration run before the main runs.
+Calibrated from arm D on rng seed 1 (28 measured candidates; not a main seed). Rule: limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading. Train target σ = 0.130219.
 
 `baseline.json` ranks by the same accuracy metric alone, with non-binding limits, so the same
 resource readings are recorded for every candidate in every arm.
@@ -38,7 +54,7 @@ resource readings are recorded for every candidate in every arm.
 | C | bootstrap + 11 random + DL seeds (≤ 11) | `baseline.json` |
 | D | bootstrap + 11 random | `baseline.json` |
 
-Budget 96 evaluations (≈ generation 0 + 8–10 generations), 3600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
+Budget 96 evaluations (≈ generation 0 + 8–10 generations), 600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
 
 ## Run
 
@@ -64,3 +80,10 @@ best-so-far objective by generation) and `generations.csv`.
 - Measured readings are host- and load-dependent; `run.json` records the host, load and limits of each run.
 
 <!-- notes -->
+
+## Business context
+
+- **Dataset provenance**: Singapore HDB Resale Flat Prices from January 2017 (`f2d74feab0307e24`, 10,000 rows × 7 features; train 8,000, test 2,000) from [data.gov.sg resale-flat-prices](https://storage.data.gov.sg/resale-flat-prices/resources/resale-flat-prices-based-on-registration-date-from-jan-2017-onwards-2023-04-17T03-28-08Z.csv) ([Singapore HDB Resale Statistics](https://www.hdb.gov.sg/residential/selling-a-flat/overview/resale-statistics)).
+- **Domain & SLA context**: Automated property valuation APIs commonly evaluate relative percentage error (`{"metric":"mape","epsilon":1.0}`) while enforcing joint deployment constraints on single-request tail latency (`row_latency_p99_us` max) and serialized artifact footprint (`model_bytes` max).
+
+_Business context contributed by agy_resource_fitness (Gemini) on 2026-11-03 (notes file sha256 744cf669fdc7…). The links were supplied by the contributor and were not independently fetched._

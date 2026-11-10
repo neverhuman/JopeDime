@@ -1,0 +1,183 @@
+{
+  "schema": "jope.h415.metrics/v1",
+  "wave": "H415",
+  "verdict": "KFB_CONFIRMED",
+  "gain_components": [
+    "S2"
+  ],
+  "source_result": {
+    "path": "results/H415_DEPLOY_P201E.json (closeout bundle)",
+    "sha256": "0ac2974e3fb7a740134fbf088d66f4473d96314b1c61b514ccc32fc0c3aac024"
+  },
+  "train": {
+    "panel": "P201e",
+    "n_contexts": 185,
+    "n_families": 185,
+    "primary": {
+      "arm": "P3+LIB3.KFB",
+      "ctrl": "X0e",
+      "gain": 0.1312,
+      "rmse_cut_pct": 12.29,
+      "wtl": [
+        126,
+        1,
+        58
+      ],
+      "clipped_mean": 0.0568,
+      "signflip_p": 0.00002193450927734375,
+      "lofo_min": 0.0544,
+      "family_median": 0.0125,
+      "pass": true,
+      "inferior": false,
+      "boot_lcb95_clipped": 0.030079876260601577
+    },
+    "S1": {
+      "arm": "P3+LIB3.KFB",
+      "ctrl": "P3+LIB3.BAG_CAR",
+      "gain": -0.0018,
+      "rmse_cut_pct": -0.18,
+      "wtl": [
+        112,
+        0,
+        73
+      ],
+      "clipped_mean": 0.008,
+      "signflip_p": 0.2550191879272461,
+      "lofo_min": 0.0054,
+      "family_median": 0.006,
+      "pass": false,
+      "inferior": false,
+      "boot_lcb95_clipped": -0.01579760847740056
+    },
+    "S2": {
+      "arm": "P2+LIB2.BAG_CAR",
+      "ctrl": "X0e",
+      "gain": 0.1296,
+      "rmse_cut_pct": 12.16,
+      "wtl": [
+        105,
+        1,
+        79
+      ],
+      "clipped_mean": 0.0381,
+      "signflip_p": 0.0007114410400390625,
+      "lofo_min": 0.0356,
+      "family_median": 0.002,
+      "pass": true,
+      "inferior": false,
+      "boot_lcb95_clipped": 0.015294776675033943
+    },
+    "S3": {
+      "arm": "GL.stock",
+      "ctrl": "X0e",
+      "gain": 0.005,
+      "rmse_cut_pct": 0.5,
+      "wtl": [
+        99,
+        4,
+        82
+      ],
+      "clipped_mean": 0.0076,
+      "signflip_p": 0.27834510803222656,
+      "lofo_min": 0.0049,
+      "family_median": 0.0022,
+      "pass": false,
+      "inferior": false,
+      "boot_lcb95_clipped": -0.01789559192904498
+    },
+    "elo_anchor": "X0e",
+    "elo_top": [
+      {
+        "arm": "P3+LIB3.HFR",
+        "elo": 1655.3,
+        "ci95": [
+          1606.9,
+          1705.8
+        ]
+      },
+      {
+        "arm": "P3+LIB3.KFB",
+        "elo": 1645.3,
+        "ci95": [
+          1597.8,
+          1693.3
+        ]
+      },
+      {
+        "arm": "P3+LIB3.W48",
+        "elo": 1630.5,
+        "ci95": [
+          1590.2,
+          1673.1
+        ]
+      },
+      {
+        "arm": "P3.RUNBAG",
+        "elo": 1608.5,
+        "ci95": [
+          1575.7,
+          1642.7
+        ]
+      },
+      {
+        "arm": "P3+LIB3.BAG_CAR",
+        "elo": 1572.8,
+        "ci95": [
+          1526.4,
+          1620.7
+        ]
+      }
+    ],
+    "kfb_pool": "P3+LIB3",
+    "hf": {
+      "contexts_without_usable": 0,
+      "envelopes_ok": 185,
+      "kcar_members_mean": 6.589189189189189,
+      "kcar_minus_best_single_oof_u_mean": 0.05291232501297224,
+      "n_candidates_mean": 63.79459459459459,
+      "n_usable_mean": 63.79459459459459
+    },
+    "worker_s_total": {
+      "akf.P3+LIB3.KFB": 17494,
+      "akf.P3+LIB3.KFB1": 2870,
+      "hf": 201251,
+      "library": 103159,
+      "search.GE": 185836,
+      "search.GL": 238437,
+      "search.GS": 191891
+    }
+  },
+  "integrity": {
+    "replay_exact": {
+      "GE": {
+        "max_abs_delta": 0.0,
+        "members_same": 185,
+        "n": 185,
+        "n_nonzero": 0
+      },
+      "GL": {
+        "max_abs_delta": 0.0,
+        "members_same": 185,
+        "n": 185,
+        "n_nonzero": 0
+      },
+      "GS": {
+        "max_abs_delta": 0.0,
+        "members_same": 185,
+        "n": 185,
+        "n_nonzero": 0
+      }
+    },
+    "stored_baselines_rerun": 0,
+    "dev91_contexts_read": 0,
+    "dope": "c51a56d0 unchanged",
+    "sealed_holdout_dltest": "closed",
+    "process_note": "The deploy parent ran at nice 0 inside docker: the systemd unit Nice setting did not reach the container. Results are unaffected; the gap is in the run wrapper."
+  },
+  "prereg_commits": {
+    "prereg": "3293d21144",
+    "amendment_1": "a36054add0",
+    "amendment_2": "26a31b8403"
+  },
+  "lock_sha256": null
+}

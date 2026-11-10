@@ -1,0 +1,8 @@
+{
+  "wave": "H351",
+  "MCS40": 40,
+  "BASE_expected_min_data_in_leaf": 20,
+  "BASE_expected_lambda_l1": 0.0,
+  "BASE_expected_lambda_l2": 1.0,
+  "calibration_fits": 0
+}

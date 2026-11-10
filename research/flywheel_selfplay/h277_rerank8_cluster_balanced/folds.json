@@ -1,0 +1,9 @@
+{
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H277/astra-t2055/prereg/h276-clusters.json",
+  "version_id": "YqM1LriEX6q3vWu1gWmLrqihFvgtBGc0",
+  "sha256": "e89f9aa130cf1529a684c83c2dc8bd1658dbae69a5c1e0af87760ed8d92208f2",
+  "bytes": 16921,
+  "exact_version_get_verified": true,
+  "h276_source_commit": "f709f8d01fe7036241114f4728eb1d91cd16ed40",
+  "no_h276_outcomes_read": true
+}

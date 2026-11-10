@@ -1,0 +1,28 @@
+{
+  "schema": "whitepaper.candidate-margin-window-figure/v1",
+  "csv_sha256": "3b58237a14e2d088ba3bf1326d8d0a301324db2e67d2073b4eafd0cbe77f5b80",
+  "source_receipt_sha256": "105e0bb329583402c6581a3b91e1582f85665e7505d2c1c46f785cf7d5649fbb",
+  "source_prefix_sha256": "96b01f45c5ed3b4ef0a90bc7fbaa6f1105af2ddc73f95c191e7f7d6678a73c45",
+  "generator_sha256": "1581a9b058b592f22d4dd677ad2bb821b2e25ae96898385a76560029fb3f7d1f",
+  "figure_sha256": "d7ecdc496acad227d21d89e80e3dbb2f62464345a3a8af4e745675b864d6a2ff",
+  "round_window": [
+    4351,
+    4550
+  ],
+  "plotted_decisions": 200,
+  "accepted": 0,
+  "margin_min": -0.011656492711164423,
+  "margin_max": -0.0022743394317388255,
+  "transformation": "Signed candidate_utility minus explicit previous_best_utility, using unrounded recorded values; empirical CDF weights each decision equally. No smoothing, imputation or cumulative minimum.",
+  "scope": "Adaptive training-side development-pool decisions; not independent evaluation units, learning evidence or deployment performance. Exact loop/adapter/pool binding remains unresolved in the common telemetry scope.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    7.0,
+    1.6
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_candidate_margin_window.py"
+}

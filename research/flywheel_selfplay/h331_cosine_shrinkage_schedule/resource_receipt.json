@@ -1,0 +1,620 @@
+{
+  "cores": [
+    4,
+    5,
+    6,
+    8,
+    33,
+    41
+  ],
+  "nice": 19,
+  "numeric_threads": 1,
+  "memory_max_bytes": 6442450944,
+  "memory_swap_max_bytes": 0,
+  "scratch_limit_bytes": 2000000000,
+  "compute_stop": "2026-11-04T22:15Z",
+  "close_stop": "2026-11-04T22:30Z",
+  "peak_sampled_rss_bytes": 3842174976,
+  "peak_sampled_host_cpu": 30.4,
+  "guard_violations": [],
+  "phases": {
+    "checks3.resource_summary.json": {
+      "source_sha256": {
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 649719808,
+        "threads": 3,
+        "host_cpu": 13.7
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/preflight.py"
+      ],
+      "started_epoch": 1793822217.9754188,
+      "finished_epoch": 1793822222.6431181,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "analysischecks.resource_summary.json": {
+      "source_sha256": {
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 47177728,
+        "threads": 2,
+        "host_cpu": 10.6
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/analysis_preflight.py"
+      ],
+      "started_epoch": 1793822273.8431118,
+      "finished_epoch": 1793822274.4270692,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "checks2.resource_summary.json": {
+      "source_sha256": {
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "INCOMPLETE",
+      "exit_code": 1,
+      "reasons": [],
+      "peak": {
+        "rss": 652435456,
+        "threads": 3,
+        "host_cpu": 10.6
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/preflight.py"
+      ],
+      "started_epoch": 1793822181.381719,
+      "finished_epoch": 1793822186.0512736,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "fitrun.resource_summary.json": {
+      "source_sha256": {
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 3842174976,
+        "threads": 11,
+        "host_cpu": 30.4
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/launch_fit.py"
+      ],
+      "started_epoch": 1793822348.5145423,
+      "finished_epoch": 1793826696.1018686,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "regression.resource_summary.json": {
+      "source_sha256": {
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 746692608,
+        "threads": 3,
+        "host_cpu": 14.4
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/source/regression.py"
+      ],
+      "started_epoch": 1793822222.990128,
+      "finished_epoch": 1793822255.59603,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "lockreview.resource_summary.json": {
+      "source_sha256": {
+        "score.py": "70e8a979d55f7e395f12b38316ab9d6d63714f6e9842fca8a829bca7e84def81",
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "overfit.py": "55c3a15f428718fa98509682a84cc457cd09656fb6f5efb2b49ee3ece4768352",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "evaluate.py": "98f9d81b1839cb3769cbc779a1627e3adba612aaa5d4c0dbef27ce4b90017521",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_overfit.py": "211e143c6990153526a480cf93bff4967f21be20a125cf3aabfe493fe34d865f",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_analysis.py": "e8d9e79d5307d3fc8680404dd46f7ad8f432adb1e55f9f64657706bcb0cd5d05",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "statistics_h331.py": "81f2912b8c7b91eb21f6600dac8396088004e76c002a74bbfd574c3b48ff332a",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 803250176,
+        "threads": 3,
+        "host_cpu": 19.4
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/review_locks.py"
+      ],
+      "started_epoch": 1793826701.8205738,
+      "finished_epoch": 1793826859.7810106,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "recover.resource_summary.json": {
+      "source_sha256": {
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 77979648,
+        "threads": 2,
+        "host_cpu": 8.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/source/recover.py"
+      ],
+      "started_epoch": 1793822174.2534416,
+      "finished_epoch": 1793822181.0407522,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "prereg.resource_summary.json": {
+      "source_sha256": {
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 87420928,
+        "threads": 7,
+        "host_cpu": 5.5
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/publish.py",
+        "prereg"
+      ],
+      "started_epoch": 1793822090.893836,
+      "finished_epoch": 1793822094.2728384,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "nativesmoke.resource_summary.json": {
+      "source_sha256": {
+        "score.py": "70e8a979d55f7e395f12b38316ab9d6d63714f6e9842fca8a829bca7e84def81",
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "overfit.py": "55c3a15f428718fa98509682a84cc457cd09656fb6f5efb2b49ee3ece4768352",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "evaluate.py": "98f9d81b1839cb3769cbc779a1627e3adba612aaa5d4c0dbef27ce4b90017521",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_overfit.py": "211e143c6990153526a480cf93bff4967f21be20a125cf3aabfe493fe34d865f",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_analysis.py": "e8d9e79d5307d3fc8680404dd46f7ad8f432adb1e55f9f64657706bcb0cd5d05",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "statistics_h331.py": "81f2912b8c7b91eb21f6600dac8396088004e76c002a74bbfd574c3b48ff332a",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 19251200,
+        "threads": 2,
+        "host_cpu": 14.9
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/native_smoke.py"
+      ],
+      "started_epoch": 1793823311.118225,
+      "finished_epoch": 1793823311.7511642,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "score.resource_summary.json": {
+      "source_sha256": {
+        "score.py": "70e8a979d55f7e395f12b38316ab9d6d63714f6e9842fca8a829bca7e84def81",
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "overfit.py": "55c3a15f428718fa98509682a84cc457cd09656fb6f5efb2b49ee3ece4768352",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "evaluate.py": "98f9d81b1839cb3769cbc779a1627e3adba612aaa5d4c0dbef27ce4b90017521",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_overfit.py": "211e143c6990153526a480cf93bff4967f21be20a125cf3aabfe493fe34d865f",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_analysis.py": "e8d9e79d5307d3fc8680404dd46f7ad8f432adb1e55f9f64657706bcb0cd5d05",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "statistics_h331.py": "81f2912b8c7b91eb21f6600dac8396088004e76c002a74bbfd574c3b48ff332a",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 685912064,
+        "threads": 3,
+        "host_cpu": 19.3
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/source/score.py"
+      ],
+      "started_epoch": 1793826860.1380672,
+      "finished_epoch": 1793826926.6458604,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "evaluate.resource_summary.json": {
+      "source_sha256": {
+        "score.py": "70e8a979d55f7e395f12b38316ab9d6d63714f6e9842fca8a829bca7e84def81",
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "overfit.py": "55c3a15f428718fa98509682a84cc457cd09656fb6f5efb2b49ee3ece4768352",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "evaluate.py": "98f9d81b1839cb3769cbc779a1627e3adba612aaa5d4c0dbef27ce4b90017521",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_overfit.py": "211e143c6990153526a480cf93bff4967f21be20a125cf3aabfe493fe34d865f",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_analysis.py": "e8d9e79d5307d3fc8680404dd46f7ad8f432adb1e55f9f64657706bcb0cd5d05",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "statistics_h331.py": "81f2912b8c7b91eb21f6600dac8396088004e76c002a74bbfd574c3b48ff332a",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 114008064,
+        "threads": 2,
+        "host_cpu": 13.6
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/source/evaluate.py"
+      ],
+      "started_epoch": 1793826926.9888418,
+      "finished_epoch": 1793826935.0523825,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "prescore.resource_summary.json": {
+      "source_sha256": {
+        "score.py": "70e8a979d55f7e395f12b38316ab9d6d63714f6e9842fca8a829bca7e84def81",
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "overfit.py": "55c3a15f428718fa98509682a84cc457cd09656fb6f5efb2b49ee3ece4768352",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "evaluate.py": "98f9d81b1839cb3769cbc779a1627e3adba612aaa5d4c0dbef27ce4b90017521",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_overfit.py": "211e143c6990153526a480cf93bff4967f21be20a125cf3aabfe493fe34d865f",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_analysis.py": "e8d9e79d5307d3fc8680404dd46f7ad8f432adb1e55f9f64657706bcb0cd5d05",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "statistics_h331.py": "81f2912b8c7b91eb21f6600dac8396088004e76c002a74bbfd574c3b48ff332a",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 90537984,
+        "threads": 7,
+        "host_cpu": 17.2
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/publish.py",
+        "prescore"
+      ],
+      "started_epoch": 1793822559.7616165,
+      "finished_epoch": 1793822564.577069,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "implementation.resource_summary.json": {
+      "source_sha256": {
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 90898432,
+        "threads": 7,
+        "host_cpu": 11.2
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/publish.py",
+        "implementation"
+      ],
+      "started_epoch": 1793822335.842536,
+      "finished_epoch": 1793822340.1624897,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "earlyreview.resource_summary.json": {
+      "source_sha256": {
+        "score.py": "70e8a979d55f7e395f12b38316ab9d6d63714f6e9842fca8a829bca7e84def81",
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "overfit.py": "55c3a15f428718fa98509682a84cc457cd09656fb6f5efb2b49ee3ece4768352",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "evaluate.py": "98f9d81b1839cb3769cbc779a1627e3adba612aaa5d4c0dbef27ce4b90017521",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_overfit.py": "211e143c6990153526a480cf93bff4967f21be20a125cf3aabfe493fe34d865f",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_analysis.py": "e8d9e79d5307d3fc8680404dd46f7ad8f432adb1e55f9f64657706bcb0cd5d05",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "statistics_h331.py": "81f2912b8c7b91eb21f6600dac8396088004e76c002a74bbfd574c3b48ff332a",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 612200448,
+        "threads": 3,
+        "host_cpu": 17.2
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/early_review.py"
+      ],
+      "started_epoch": 1793822685.0990899,
+      "finished_epoch": 1793822689.6286974,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    },
+    "numreview.resource_summary.json": {
+      "source_sha256": {
+        "score.py": "70e8a979d55f7e395f12b38316ab9d6d63714f6e9842fca8a829bca7e84def81",
+        "fit.py": "291577dcfb28ba4e38a07d744fffa19cc9debe5ec5c52007636ab6451a96d8d1",
+        "overfit.py": "55c3a15f428718fa98509682a84cc457cd09656fb6f5efb2b49ee3ece4768352",
+        "regression.py": "5ef33476925b8764e15f92da84e37e9fc7efc9b2026546ca1b8e8a4c00308f19",
+        "recover.py": "8430297edf6660fce315f4e3a7ebec21882d18a12a623f7f5a38070534fe305b",
+        "evaluate.py": "98f9d81b1839cb3769cbc779a1627e3adba612aaa5d4c0dbef27ce4b90017521",
+        "runtime.py": "4d2c57dd1820f5c27504980af2a2770b1b78fb59d0241414b225672337b53e8c",
+        "test_overfit.py": "211e143c6990153526a480cf93bff4967f21be20a125cf3aabfe493fe34d865f",
+        "test_boundary.py": "954961cf0a6f2c0ba8cf48183d115ea2762e6a7a8489eb8c9b21ae0f1786c56e",
+        "archive_models.py": "ea5d2e524d123521ff6527c1b5b9ae81220a7d5871406f15757c78955452d5e6",
+        "test_analysis.py": "e8d9e79d5307d3fc8680404dd46f7ad8f432adb1e55f9f64657706bcb0cd5d05",
+        "test_regularization.py": "63452c810fdc4a8ecd0a31cf88d80db04f5caae6478dd917d0162de864643e06",
+        "statistics_h331.py": "81f2912b8c7b91eb21f6600dac8396088004e76c002a74bbfd574c3b48ff332a",
+        "regularization.py": "6d759c751efcf2a1e09815c2a9b0c32eb82b5a0110e0f55d2c733b9fbd065d18"
+      },
+      "status": "PASS",
+      "exit_code": 0,
+      "reasons": [],
+      "peak": {
+        "rss": 110632960,
+        "threads": 2,
+        "host_cpu": 16.6
+      },
+      "command": [
+        "/usr/bin/python3",
+        "/home/ubuntu/jope-rescue-20260921/h331-astra/review_numbers.py"
+      ],
+      "started_epoch": 1793826935.3952384,
+      "finished_epoch": 1793826942.8318808,
+      "cpu_affinity": [
+        4,
+        5,
+        6,
+        8,
+        33,
+        41
+      ],
+      "nice": 19,
+      "numeric_threads": 1,
+      "compute_stop": 1793830500
+    }
+  }
+}

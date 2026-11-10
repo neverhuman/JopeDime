@@ -1,0 +1,56 @@
+{
+  "wave": "H296",
+  "authority": "/home/ubuntu/nudges/hw_t0240_opus_h296.md",
+  "seeds": [
+    29601,
+    29602,
+    29603
+  ],
+  "updates": 16,
+  "cycles": 4,
+  "per_cycle": 4,
+  "lr_min_frac": 0.1,
+  "ema_decay": 0.8,
+  "primary": "SWA_CYCLE",
+  "control": "final (16th) iterate",
+  "secondary": [
+    "EMA_POLYAK",
+    "SOUP_RET"
+  ],
+  "harness": {
+    "t1845": "/home/ubuntu/jope_plan/evidence/fw-plateau-t1845-20261102/{experiment.py c785a61a...,trials.py 8426aa24...}",
+    "pinned_source_commit": "e5c5b85271987793e4ab6e02bdc5ae5b5ae13168",
+    "telemetry_so_sha256": "93acd3087e04b5b26d6ff74a47752d463bd7104b3ad1c32b5642e992676bc76f"
+  },
+  "checkpoints": {
+    "r3175": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "r3100": "df0cd494786e48a1d2ebda8b57613081317851f22126950985e19819c27f2854"
+  },
+  "identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "regressions": {
+    "r3175": 1.1389572403748425,
+    "t1845_control_184501": 1.1354387884248622,
+    "both_exact": true
+  },
+  "host": {
+    "name": "xbabe1",
+    "cores": "20,21,28,29 (assigned 56-59 outside allowed cpuset)",
+    "threads": "3 forked workers x 1 torch thread",
+    "nice": 19,
+    "cuda": "hidden"
+  },
+  "source_sha256": {
+    "PREREG.md": "cd8daffdb8a98fb6678c08d3c022e8376069233e60cc5c6093d55df82acf4fb9",
+    "h296.py": "05db630da3c5301baf9e398616b9c72f227d5b16c3a6d2ecee66707ab6876e50",
+    "analysis.py": "86069ec882ec1dce8acb20e3daa5f782e61081c29f2d29314b8131e4efba6f32",
+    "test_h296.py": "e5ba85b9f2829bcb83c1c4fd888af3ec758f5573a16c780a4a7eac78ce9f4ac6",
+    "pinned/dev_incumbent.py": "81c85296643ec06acc7ea31a7c7ed248abc8d4040ad28f53aa42eb4209d2f42a",
+    "pinned/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+    "pinned/device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e",
+    "pinned/dope_freeze_guard.py": "07de5bc34f181e8ef14c3e5cdc20716716b2cc7dd418792f82f3db1d0d576f9c"
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "parent_commit": "8f4c22f5fb568951de563aecf1d14d903a542c7f",
+  "publication_ref": "v1/next",
+  "compute_stop": "2026-11-04T05:15:00Z"
+}

@@ -1,0 +1,93 @@
+{
+  "utc": "2026-11-05T12:53:15.058641+00:00",
+  "scope": "Exact exercised host/report adapter snapshots after all model workers stopped; original42scientific source files unchanged",
+  "files": {
+    "ops_stage_inputs.py": {
+      "sha256": "8be5e3c76b54c969ba266ff2e5d2893f8ae9fd93ecf62235ca52126d8934527d",
+      "deploy_as": "stage_inputs.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_prepare_inputs.py": {
+      "sha256": "b9912799ebb2844bf97c87a066992d72f35f659424550e9758657cb4d796e05f",
+      "deploy_as": "prepare_inputs.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_fetch_nl15.py": {
+      "sha256": "50eb63710411e46992af977937eb1ca7076711f86e8e9b18e5845f2ffe2409e5",
+      "deploy_as": "fetch_nl15.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_x1_prepare.py": {
+      "sha256": "ad0831164969332b0c95b8f108d5f9396e4c3fb221257e96e887214cf04c9fa4",
+      "deploy_as": "x1_prepare.py",
+      "host": "xbabe1",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_x1_launch.py": {
+      "sha256": "15d38e255f2b3497a458ac5fac02c5b92252ad7f357a91a52944b95df5ff1ade",
+      "deploy_as": "x1_launch.py",
+      "host": "xbabe1",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_relay.py": {
+      "sha256": "a05098a8442fe31207f0be71d3caa1c4626e4a342bc2a85bac1d9dd93004f7db",
+      "deploy_as": "relay.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_courier_guard.py": {
+      "sha256": "702f82828a652c1a9ddcfd0c682844836c8727e8f90364fcc1334dfda9a66a35",
+      "deploy_as": "courier_guard.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_reference_custody.py": {
+      "sha256": "255b1f41e8d46bda9b837eae91147ae989d755a3ed04711417a10c49b11f13ae",
+      "deploy_as": "reference_custody.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_reclaim_reference_copies.py": {
+      "sha256": "c989dd622dfd3c24b4809553875c6b642a6913ba9d0760e124e0937a24777454",
+      "deploy_as": "reclaim_reference_copies.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_forecast_watch.py": {
+      "sha256": "f58bd5027a82aa1ee1b85728bdb3095f4ba769cd83fd2013fffee2dd8c50bb95",
+      "deploy_as": "forecast_watch.py",
+      "host": "xbabe1",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_transfer_back.py": {
+      "sha256": "4b3f884da3e6e8dd99038e435f56e33ac424030029b5bbf433862cfcdb81fc85",
+      "deploy_as": "transfer_back.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_science_review.py": {
+      "sha256": "50d2a9fabec87123832350e979032aa0469bb5c552f5582e504b1c45b2214a65",
+      "deploy_as": "science_review.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_review_and_report.py": {
+      "sha256": "8a65177387d5e1eb3b8b5422d8bbe70253bca97e1a3647e62bae7e205f0b9e00",
+      "deploy_as": "review_and_report.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    },
+    "ops_render_readme.py": {
+      "sha256": "333101b9f06bddfc2fad0685d1fa356d4afa2498648af140656618ce2e2f9433",
+      "deploy_as": "render_readme.py",
+      "host": "xbabe2",
+      "deploy_directory": "Custody P; science in source/ and pinned modules in vendor/"
+    }
+  },
+  "credential_transfer": false,
+  "forecast_stop_wiring": "Frozen source legacy h362-run.service miss target is backed by owned required h362-x1-forecast-watch targeting actualh362-x1-run.service; actualPASS/noactionreceipt retained",
+  "instructions": "Deploy ops_ files with prefixremoved into the correct host custodyP. Run credential-free x1prepare/run AND forecast_watch onxbabe1. AWS fetch/courier/custody stayxbabe2 only."
+}

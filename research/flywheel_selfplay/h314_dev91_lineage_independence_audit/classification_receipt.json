@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "classification_sha256": "2e97b4cf06dfdfb6d93e369f93ae0994870f1371847758639892e17678299b9c",
+  "metadata_sha256": "7d5bbfc06351c8d341c437d3c3ec37d95b21d7776ac4fc40f83fdcfe6f2c9b66",
+  "pair_comparisons_sha256": "c8bee3f193229c4cf8547ff70f2d1b5dd8ec45ae56c4c01b9122b4c631392551",
+  "groups": {
+    "NEIGHBORED": {
+      "count": 0,
+      "ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "family_ids": []
+    },
+    "CLEAN": {
+      "count": 19,
+      "ids_sha256": "bc447c2efb1793c1d7472efaf5d7547d4d103831820660483157e5dc442a88ba",
+      "family_ids": [
+        "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+        "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
+        "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+        "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+        "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+        "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+        "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+        "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+        "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c",
+        "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8",
+        "fam-866f66b1528d7cee008dd5df931f9c6b93c6bcd60a6cd59264f53f72b0a771a7",
+        "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+        "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+        "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+        "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+        "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+        "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345",
+        "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02",
+        "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4"
+      ]
+    },
+    "UNKNOWN": {
+      "count": 0,
+      "ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "family_ids": []
+    }
+  },
+  "dataset_records": 276,
+  "selected_train_families": 205,
+  "selected_dev_families": 19,
+  "source_registry_entries_read": 184,
+  "split_registry_entries_read": 138,
+  "metadata_objects_read": 598,
+  "missing_by_field": {},
+  "source_registry_datasets_matched": 0,
+  "split_registry_datasets_matched": 138,
+  "gain_files_opened": 0,
+  "feature_or_label_rows_read": 0,
+  "finished_utc": "2026-11-04T10:47:47.536561+00:00"
+}

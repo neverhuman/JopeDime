@@ -1,0 +1,149 @@
+{
+  "scope": "Descriptive cross-critique only; no input to COS fitting/scoring/decision",
+  "utc": "2026-11-04T20:21:15.940257+00:00",
+  "sources": [
+    {
+      "wave": "H328",
+      "commit": "64653a605ac3a3706cbd9bde8bfd24c12d46c9c9",
+      "path": "research/flywheel_selfplay/h328_ranker_label_gain_smoothing/metrics.json",
+      "sha256": "fc0618bdc1488dcd61b6c6685e377433f9e13feecb76e65a307d9fc795d126c8",
+      "verdict": "LGS_NOT_ADVANCED",
+      "criteria": {
+        "gain_retention": true,
+        "harmed_nonincrease": false,
+        "paired_drop_top10_at_least_002": true,
+        "positive_on_two_seeds": true
+      },
+      "paired_drop10": {
+        "ci95": [
+          0.0006109937234960905,
+          0.019138152828032908
+        ],
+        "draws": 10000,
+        "lcb95": 0.0019729481559044655,
+        "median": 0.011375833626592745,
+        "per_cell": [
+          0.0004347561350614929,
+          0.011375833626592745,
+          0.016026537078532223,
+          -0.0016918130229592217,
+          0.007467562080399351,
+          0.015416600115188103,
+          0.012011548329765748,
+          0.026091863872162693,
+          -0.002377751130231271
+        ],
+        "per_seed_partition_median": [
+          0.0004347561350614929,
+          0.011375833626592745,
+          0.015416600115188103
+        ],
+        "rng": 328191
+      },
+      "base": {
+        "gain_ci95": [
+          0.025121606279544264,
+          0.07598989822651814
+        ],
+        "literal_family_median_ci95": [
+          0.0004378293769140007,
+          0.007726430567748466
+        ],
+        "literal_family_median_gain": 0.0036242581966516307,
+        "median_elo": 1725.6559443739816,
+        "median_gain": 0.04821480030677507,
+        "median_harmed": 0.09268292682926829,
+        "median_seed_jaccard": 0.4418052256532066
+      },
+      "arm": {
+        "gain_ci95": [
+          0.03550062041790897,
+          0.12712373713345235
+        ],
+        "literal_family_median_ci95": [
+          0.008960451271892156,
+          0.01962554214619061
+        ],
+        "literal_family_median_gain": 0.013821509268092225,
+        "median_elo": 1707.4997939482214,
+        "median_gain": 0.07093297239049379,
+        "median_harmed": 0.13170731707317074,
+        "median_seed_jaccard": 0.6153846153846154
+      }
+    },
+    {
+      "wave": "H329",
+      "commit": "b60961466dd41446d09f7e1fdaddee311f0e78a8",
+      "path": "research/flywheel_selfplay/h329_dart_tree_dropout_members/metrics.json",
+      "sha256": "3ab8ca34a59055f5003b0b83160f4d81c0527d6194d1f8d8e8f5f90fae0897c2",
+      "verdict": "DART_NOT_ADVANCED",
+      "criteria": {
+        "paired_drop_top10_at_least_002": false,
+        "gain_retention": true,
+        "harmed_nonincrease": false,
+        "positive_on_two_seeds": false
+      },
+      "paired_drop10": {
+        "per_cell": [
+          0.005840089418019792,
+          0.002074413969863475,
+          -0.006448011820578298,
+          0.007307420297318266,
+          -0.0017950628608065407,
+          -0.0001385669265549106,
+          -0.013868418949896773,
+          -0.00016690213636185412,
+          -0.0007839744876299813
+        ],
+        "median": -0.00016690213636185412,
+        "ci95": [
+          -0.0065138208125137586,
+          0.0073837679590860105
+        ],
+        "lcb95": -0.005541440286381829,
+        "rng": 329191,
+        "draws": 10000,
+        "per_seed_partition_median": [
+          0.005840089418019792,
+          -0.00016690213636185412,
+          -0.0007839744876299813
+        ]
+      },
+      "base": {
+        "median_gain": 0.04821480030677507,
+        "gain_ci95": [
+          0.02515720394241285,
+          0.0764515046564326
+        ],
+        "literal_family_median_gain": 0.0036242581966516307,
+        "literal_family_median_ci95": [
+          0.0002989597199160865,
+          0.007726430567748466
+        ],
+        "median_harmed": 0.09268292682926829,
+        "median_elo": 1725.6559443739816,
+        "median_seed_jaccard": 0.4418052256532066
+      },
+      "arm": {
+        "median_gain": 0.058526195709268494,
+        "gain_ci95": [
+          0.024616080158089672,
+          0.1102011118328765
+        ],
+        "literal_family_median_gain": 0.006299274297193902,
+        "literal_family_median_ci95": [
+          0.0024361294662185173,
+          0.01052055380236619
+        ],
+        "median_harmed": 0.12682926829268293,
+        "median_elo": 1693.556486416393,
+        "median_seed_jaccard": 0.5010224948875256
+      }
+    }
+  ],
+  "findings": [
+    "H328 positivepairedLCB is not a total robustness failure: it passes pairedtail andseedcriteria but increasesmedianharm .09268292682926829->.13170731707317074. Allcriteria remain binding.",
+    "H329 higherpooledgain .058526195709268494 doesnot implyrobustness: pairedmedian-.00016690213636185412/LCB-.005541440286381829,1positive root,andharm .12682926829268293.",
+    "DifferentRNGs andadaptive reusedTRAIN; no formal cross-wave ranking or newCOSdecision."
+  ]
+}

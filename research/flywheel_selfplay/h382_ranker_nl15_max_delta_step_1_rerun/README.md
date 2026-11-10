@@ -1,0 +1,17 @@
+# H382 — NL15 ranker max_delta_step1
+
+**INCOMPLETE_CPU_ADMISSION**. The assigned attempt is incomplete; numerical effects remain unknown and no partial scientific readout is used.
+
+Hypothesis: clipping NL15 ranker leaf outputs may reduce single-context noise chasing. ONE preregistered MDS1 arm adds ranker max_delta_step=1.0 for inner/final/all8 bag rankers. num_leaves15/max_depth3/MCS20/L2=1/L1=0, LR/tree options, labels/seeds/groups/grid/ties/failure sentinel and veto GBDT stay fixed. Depth3 permits at most8 realized binary leaves. Reverting the one added keyword restores exact committed H352 NL15 ASTs in both ranker functions.
+
+Preregistration commit `c476cc02b54a57e94e5ce184f91de3a1ebb55c3e`, published 2026-11-05T17:17:58.716834+00:00; first treatment fit NOT_STARTED. Full specification in [PREREG.md](PREREG.md). Exact-version archived BASE9panels/36hashes/3medians and NL15ninepanels/36locks/scores/rawarrays passed before fitting; no BASE/NL15 refits or new archived-model predictions.
+
+Full-study gains, paired CIs, Elo, harmed share and decision are UNKNOWN. Partial physical costs/states are preserved in custody and the closeout receipt. No replay, new capacity sample, reduced design or partial-result promotion.
+
+The sole CPU admission gate found 3 eligible cores, below the required4. No treatment fits or outer scoring ran. Admission failed before runtime forecasts; no retry or new probe was performed. No periodic resource series was created before refusal; series extrema remain unknown, with the initial observation and exact gate/cgroup/preparation accounting retained. The inherited zero-fit closeout guards are covered by five resource-audit controls and five accounting controls. The H382 closeout audit passed on its first attempt.
+
+Resources: xbabe2 CPU only, eligible cores [57, 4, 5], nice19/math1/systemd MemoryMax6G/SwapMax0/CPUQuota800%. One5second admission gate; initial and first-task forecasts use H352 actual26189.516914CPU/.9eff/1.15safety/+300s reserve. Actual cgroupCPU 0.151064s; no speed verdict. Corrected guard uses hostCPU>85% over60s, load1>108 on3 consecutive60s samples, MemAvailable<20GiB or ownscratch>2GB. Fixed compute stop20:15Z/close20:30Z Nov5 unchanged.
+Verification: 54 data-free controls and11 custody controls pass. Same-agent red-team verifies zero started treatment tasks, null scientific readout, frozen source, both regressions and custody. Treatment native results and root CIs remain unmeasured. Zero fit-worker outer payload reads before locks; zero DL-Val/dev91/DL-Test/sealed/holdout/meta_test payload rows. DOPEc51a56d0 unloaded/untouched; no neural optimizer updates, GPU, qualification.lock, writer restart or foreign-job action.
+Custody: create-only s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H382/api01-20261105T170500Z/closeout/closeout-manifest.json, exact VersionId `F72Fb4b3rymyptZMlnTrHYYnDbkNraV_`, SHA256 `7eaa2bb629264e256d9d484d5f3ff737d866eda95bcd254d249c423448105a91`; 1323 files/4 parts, exact-version GET plus every member verified before own scratch cleanup. No models in Git. Evidence and executed source/vendor retained at `/home/ubuntu/jope_plan/evidence/H382/api01-20261105-t1705`.
+
+Multiplicity: exploratory sequential H348-H382 sweep on the same folds/roots, without correction. Any ADVANCE needs separately authorized one-shot dev91 confirmation; none is performed here. Next: any further attempt requires new owner allocation; do not restart this closed attempt.

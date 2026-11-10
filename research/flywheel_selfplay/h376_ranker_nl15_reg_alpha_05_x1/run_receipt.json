@@ -1,0 +1,370 @@
+{
+  "wave": "H376",
+  "status": "INCOMPLETE_RESOURCE_GUARD",
+  "qualification": "NOT_RUN_RESOURCE_GUARD",
+  "utc": "2026-11-05T15:41:32.132054+00:00",
+  "prereg": {
+    "head": "8383d031176b2d4708893c2e4caa6d41f6766e4a",
+    "commit": "8383d031176b2d4708893c2e4caa6d41f6766e4a",
+    "parent": "a7e5bbd49cd872bf70fadaee7b2352ed4faeeb37",
+    "tree": "5108b9e3055f33ed10aaa08db9afd8245bed4b3e",
+    "paths": [
+      "research/flywheel_selfplay/h376_ranker_nl15_reg_alpha_05_x1/PREREG.md"
+    ],
+    "published": true,
+    "utc": "2026-11-05T15:36:50.893453+00:00"
+  },
+  "prereg_order": "Published after initial metadata guard failure; before any treatment fit (none)",
+  "resource_stop": {
+    "wave": "H376",
+    "host": "xbabe1",
+    "utc": "2026-11-05T15:30:01.435933+00:00",
+    "phase": "initial_metadata_resource_preflight",
+    "root_free_bytes": 66710728704,
+    "required_root_free_bytes": 85899345920,
+    "mem_available_bytes": 41792753664,
+    "host_nproc": 128,
+    "capacity_probes": 0,
+    "CPU60_windows": 0,
+    "load60_windows": 0,
+    "optimizer_fits": 0,
+    "outer_scores": 0,
+    "compute_units_launched": 0,
+    "reason": [
+      "root free <80GiB"
+    ],
+    "initial_observed_root_free_bytes": 70442295296,
+    "status": "INCOMPLETE_RESOURCE_GUARD",
+    "resource_gate": "Initial observed root-free failure closes this allocation; fresh metadata is custody readback, not a new admission attempt",
+    "metadata_capture_exit_status": 0,
+    "command": [
+      "ssh",
+      "-T",
+      "-o",
+      "BatchMode=yes",
+      "xbabe1",
+      "nice -n 19 taskset -c 35 python3 -c 'from pathlib import Path\nimport shutil,json,datetime,os\nD=Path('\"'\"'/home/ubuntu/jope-data/h376-x1'\"'\"');assert not D.exists();free=shutil.disk_usage('\"'\"'/'\"'\"').free\nmem=int(next(x.split()[1] for x in Path('\"'\"'/proc/meminfo'\"'\"').read_text().splitlines() if x.startswith('\"'\"'MemAvailable:'\"'\"')))*1024\nr=dict(wave='\"'\"'H376'\"'\"',host=os.uname().nodename,utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),phase='\"'\"'initial_metadata_resource_preflight'\"'\"',root_free_bytes=free,required_root_free_bytes=80*2**30,mem_available_bytes=mem,host_nproc=sum(x.startswith('\"'\"'cpu'\"'\"') and x.split()[0][3:].isdigit() for x in Path('\"'\"'/proc/stat'\"'\"').read_text().splitlines()),capacity_probes=0,CPU60_windows=0,load60_windows=0,optimizer_fits=0,outer_scores=0,compute_units_launched=0,reason=['\"'\"'root free <80GiB'\"'\"'],initial_observed_root_free_bytes=70442295296,status='\"'\"'INCOMPLETE_RESOURCE_GUARD'\"'\"',resource_gate='\"'\"'Initial observed root-free failure closes this allocation; fresh metadata is custody readback, not a new admission attempt'\"'\"')\nD.mkdir(parents=True);(D/'\"'\"'STOP.json'\"'\"').write_text(json.dumps(r,indent=2)+'\"'\"'\\n'\"'\"');print(json.dumps(r))\n'"
+    ],
+    "source_sha256": "707b826aad033bfd5ed489c3bf372e2b15110615f48b8705e6e82220db83eb3d"
+  },
+  "scientific_execution": {
+    "status": "NOT_RUN_RESOURCE_GUARD",
+    "unit_launched": false,
+    "exit_status": null
+  },
+  "xbabe1_staging_tests_regression": "NOT_RUN_RESOURCE_GUARD",
+  "capacity_probe": {
+    "status": "NOT_RUN",
+    "samples": 0
+  },
+  "runtime_forecasts": {
+    "status": "NOT_RUN",
+    "timing_fits": 0
+  },
+  "mandatory_tasks": 36,
+  "tasks_executed": 0,
+  "optimizer_fits": 0,
+  "fit_locks": 0,
+  "native_fit_records": 0,
+  "treatment_saved_models": 0,
+  "treatment_veto_SHA_checks": 0,
+  "outer_score_markers": 0,
+  "BASE_refits": 0,
+  "NL15_refits": 0,
+  "new_comparator_predictions": 0,
+  "tests": {
+    "status": "PASS",
+    "host": "xbabe2",
+    "tests_collected": 84,
+    "tests_executed": 84,
+    "failed": 0,
+    "skipped": 0,
+    "exit_status": 0,
+    "synthetic_model_fits": 0,
+    "Dataset_only_bin_fixture": true,
+    "log_sha256": "c3995ec3b097f2a7aee42001e507932ef7e1b54e48c2cb3ed54476501b7331b0",
+    "source_sha256": {
+      "resource_probe.py": "5c3c7d614525266df72f6c73e213a9d9b8fa12a305293a6c5434395a63cc5108",
+      "check_nl15_native.py": "6694e42878d3dc681dc72bb10ba66d21e4182366e66d28767d61a442dfbfafec",
+      "test_leaves.py": "ddabca8647e09ec9559c207cfd383ce25738c9cdb8def1058e4f8a484955b63f",
+      "forecast_reference.json": "1d0037712d93a8124e0f283bc499bed53a80790018a30a9d27d08c18ce3aa5a0",
+      "leaves_patch.py": "8356118f482370c25a78e74af2ed17cccc0201213492cd4bb995abf41fed64f2",
+      "test_host_transport.py": "16634b5c8a5fe6c0f7dec6021b9081190241fab17d71910baf46e3017e4a1322",
+      "test_secondary.py": "dcdac9075d84ba2c9d46d7116e256e95b2c571fa3695d9bab86bd840b0a32672",
+      "forecast_h376.py": "e0fcef4fb8aab2fca4d0d202264676bce6bb905351db9e63d806146077830190",
+      "native_baseline_reference.json": "36b74215d844a5469acc91aad0076b2bd6d51b6e8f1a8925c86496986145b957",
+      "test_evaluator_report.py": "c9e7ecefb5f10e78c2a6100dbd3f8eb79f90a85541096c34d9a6ae3584520c19",
+      "veto_identity.py": "fe39667ace0394b322f53d6e9181f13376764fb3575d959d77cbf2a338fc3213",
+      "test_h376.py": "808fc2f1a7bfb92f59a71d79ae80b8c6b5e51ee36cfa9d3f907180375b98e71f",
+      "base_archive_member_inventory.json": "79d2fd3f50501176fd3d06af25149337f126a6eaf2819e13070e1d5334edfb62",
+      "archive_h376.py": "ee290c4e5dc10d310810e562d813fe6e49ed750621fb4f04a0ee152543516230",
+      "test_native_audit.py": "794c9a1f363e08aff728432da962c208055d80766ae2e0328f72629846bee96e",
+      "capture_exit.py": "4797451bd773314c960179ab06cbc4346ea62026238d888390756fe8b0e47ed3",
+      "guard_h376.py": "2b0836049f2e9bebb7eaf7d41ec44f7cf4c03dbe943ab76b6d55b62f55214a84",
+      "archive_relay.py": "51af792f89af936cd61374d6a2daa6f844d22fc4df2715350691428212485d74",
+      "base_veto_native_reference.json": "2cf35f8e0dd76f9296f68b722cabae2e905b77abe3cec9686c8f1350507b4430",
+      "tree_structure.py": "22c215f8958ab25653e9323533e54e35e5ec72dbe01590fba63d0d0b63a4a08c",
+      "controller_h376.py": "cf58fe3a8682639178d871b22ae66b3fd29b0087ce255605495ad9b18c3d342b",
+      "test_guard_window.py": "3ea04d01137fba544d8530e7630a8fca9096ecbef166950ec3f006dc4f450248",
+      "test_dataset_audit.py": "e2d80e23593b72c0576385705fe38b38b63dee4a305b3a62d3653b73f345913a",
+      "leaves_value.json": "ffd3e3fbac755ca552078847e263614014332bd2b50223b0f4d24245a0696778",
+      "depth_patch.py": "536e710a8ea72772ae173edf27945873cf58d20117dd75ab6e8a84b96e5f0e1d",
+      "test_veto_identity.py": "c89c8925d067142942fe55c9ffdc2367c475a8b4651a8e3b5cd18ae1694c5ff5",
+      "test_tree_structure.py": "738fd24e379f695e0f3a1006342b78e42414d16f15a28d213c720ad64b66c295",
+      "runtime_h376.py": "b9e719221a43ad2661cd711db41aa3aab5a41ea741321029bc06cd2ce0d7e612",
+      "test_depth.py": "296d1a3dd76a0f51b069efcf0326117187315c90209fa72f45e300aa4deb1a54",
+      "input_preflight.py": "16b43a84714eb1ee7042166da17bebcf6b5892788e0f46865a6b19424e01193c",
+      "test_resource_forecast.py": "432210b1ff526f49d65a3f30ee486c148b5a21f46e39b93be03a3e8fef4470f7",
+      "manifest.json": "2bd9ce4270c3f1c1f9d7da6480298b1583376a98797c71b57ae312588cc57104",
+      "base_veto_sha256.json": "c20a7500b4624528e1170b59a3caeb06deafc06685cf451c546c0304ca1ab6f8",
+      "PREREG.md": "5a7e520cee0149354049ae180aeff164cc55b8d1d54ac364b305bde4c3781b48",
+      "check_base_native.py": "98c06616a0235f59f2918cc93d6286dbbc255f559871e535c39c7618a04f06f7",
+      "h352_metrics_reference.json": "a07d4f6bdba9f04900afa94c4dc923dd2c294c5014c6622dd0d6cb67a6cfc5b9",
+      "evaluate_h376.py": "635f407b4858939a7d600bee99160bda2c542d8524086ce2bfada92df86331d6",
+      "h352_native_reference.json": "ad7d8c5af9d1ed4d104d0d57120b2bbe7b12e995aef7212c89d2d5d808f2b7ee",
+      "fetch_base_h376.py": "a78555cb89e57327e7040c90dbd10e0ed88a81c6931654ae44373a5563ae4dd1",
+      "nl15_reference.py": "4861294f723bc501fc8648b8ea0952ff03818443dba690eeab05d561da9b149a",
+      "native_audit.py": "f2d205b37932f463e0a9fa2c3caf60b3bc8441dbacd22bace350bc00dbc32ec2",
+      "h347_actual_resources.json": "efe5f3a47a0f8848ae2bb43a330a403d68f9a17fc38a0163fa3a4edf6d7725f9",
+      "run_h376.py": "0b5e4572e418c652a82b183b8568c7fd6f3b6d89de2483aa84e360851d1fa38a",
+      "dataset_audit.py": "b34a39f4a8a6d2988946288e1728f4595c676ee484f476e9ecb31b082eeff2eb"
+    },
+    "xbabe1_tests": "NOT_RUN_RESOURCE_GUARD"
+  },
+  "CPU_preparation": {
+    "status": "PASS",
+    "host": "xbabe2",
+    "utc": "2026-11-05T15:38:43.545768+00:00",
+    "scope": "CPU preparation only; archived arrays/native/input proof, no new predictions/refits/treatment",
+    "BASE_panels": 9,
+    "BASE_pick_lock_hashes": 36,
+    "BASE_partition_medians_exact": true,
+    "NL15_panels": 9,
+    "NL15_locks_scores": 36,
+    "NL15_raw_family_arrays_exact": true,
+    "H352_saved_ranker_headers": 972,
+    "H352_actual_ranker_fit_headers": 29484,
+    "H352_native_lambda_l1": [
+      0
+    ],
+    "H352_native_max_bin": [
+      255
+    ],
+    "optimizer_fits": 0,
+    "new_model_predictions": 0,
+    "xbabe1_staging_tests_regressions": "NOT_RUN_RESOURCE_GUARD",
+    "frozen_source_sha256": {
+      "resource_probe.py": "5c3c7d614525266df72f6c73e213a9d9b8fa12a305293a6c5434395a63cc5108",
+      "check_nl15_native.py": "6694e42878d3dc681dc72bb10ba66d21e4182366e66d28767d61a442dfbfafec",
+      "test_leaves.py": "ddabca8647e09ec9559c207cfd383ce25738c9cdb8def1058e4f8a484955b63f",
+      "forecast_reference.json": "1d0037712d93a8124e0f283bc499bed53a80790018a30a9d27d08c18ce3aa5a0",
+      "leaves_patch.py": "8356118f482370c25a78e74af2ed17cccc0201213492cd4bb995abf41fed64f2",
+      "test_host_transport.py": "16634b5c8a5fe6c0f7dec6021b9081190241fab17d71910baf46e3017e4a1322",
+      "test_secondary.py": "dcdac9075d84ba2c9d46d7116e256e95b2c571fa3695d9bab86bd840b0a32672",
+      "forecast_h376.py": "e0fcef4fb8aab2fca4d0d202264676bce6bb905351db9e63d806146077830190",
+      "native_baseline_reference.json": "36b74215d844a5469acc91aad0076b2bd6d51b6e8f1a8925c86496986145b957",
+      "test_evaluator_report.py": "c9e7ecefb5f10e78c2a6100dbd3f8eb79f90a85541096c34d9a6ae3584520c19",
+      "veto_identity.py": "fe39667ace0394b322f53d6e9181f13376764fb3575d959d77cbf2a338fc3213",
+      "test_h376.py": "808fc2f1a7bfb92f59a71d79ae80b8c6b5e51ee36cfa9d3f907180375b98e71f",
+      "base_archive_member_inventory.json": "79d2fd3f50501176fd3d06af25149337f126a6eaf2819e13070e1d5334edfb62",
+      "archive_h376.py": "ee290c4e5dc10d310810e562d813fe6e49ed750621fb4f04a0ee152543516230",
+      "test_native_audit.py": "794c9a1f363e08aff728432da962c208055d80766ae2e0328f72629846bee96e",
+      "capture_exit.py": "4797451bd773314c960179ab06cbc4346ea62026238d888390756fe8b0e47ed3",
+      "guard_h376.py": "2b0836049f2e9bebb7eaf7d41ec44f7cf4c03dbe943ab76b6d55b62f55214a84",
+      "archive_relay.py": "51af792f89af936cd61374d6a2daa6f844d22fc4df2715350691428212485d74",
+      "base_veto_native_reference.json": "2cf35f8e0dd76f9296f68b722cabae2e905b77abe3cec9686c8f1350507b4430",
+      "tree_structure.py": "22c215f8958ab25653e9323533e54e35e5ec72dbe01590fba63d0d0b63a4a08c",
+      "controller_h376.py": "cf58fe3a8682639178d871b22ae66b3fd29b0087ce255605495ad9b18c3d342b",
+      "test_guard_window.py": "3ea04d01137fba544d8530e7630a8fca9096ecbef166950ec3f006dc4f450248",
+      "test_dataset_audit.py": "e2d80e23593b72c0576385705fe38b38b63dee4a305b3a62d3653b73f345913a",
+      "leaves_value.json": "ffd3e3fbac755ca552078847e263614014332bd2b50223b0f4d24245a0696778",
+      "depth_patch.py": "536e710a8ea72772ae173edf27945873cf58d20117dd75ab6e8a84b96e5f0e1d",
+      "test_veto_identity.py": "c89c8925d067142942fe55c9ffdc2367c475a8b4651a8e3b5cd18ae1694c5ff5",
+      "test_tree_structure.py": "738fd24e379f695e0f3a1006342b78e42414d16f15a28d213c720ad64b66c295",
+      "runtime_h376.py": "b9e719221a43ad2661cd711db41aa3aab5a41ea741321029bc06cd2ce0d7e612",
+      "test_depth.py": "296d1a3dd76a0f51b069efcf0326117187315c90209fa72f45e300aa4deb1a54",
+      "input_preflight.py": "16b43a84714eb1ee7042166da17bebcf6b5892788e0f46865a6b19424e01193c",
+      "test_resource_forecast.py": "432210b1ff526f49d65a3f30ee486c148b5a21f46e39b93be03a3e8fef4470f7",
+      "manifest.json": "2bd9ce4270c3f1c1f9d7da6480298b1583376a98797c71b57ae312588cc57104",
+      "base_veto_sha256.json": "c20a7500b4624528e1170b59a3caeb06deafc06685cf451c546c0304ca1ab6f8",
+      "PREREG.md": "5a7e520cee0149354049ae180aeff164cc55b8d1d54ac364b305bde4c3781b48",
+      "check_base_native.py": "98c06616a0235f59f2918cc93d6286dbbc255f559871e535c39c7618a04f06f7",
+      "h352_metrics_reference.json": "a07d4f6bdba9f04900afa94c4dc923dd2c294c5014c6622dd0d6cb67a6cfc5b9",
+      "evaluate_h376.py": "635f407b4858939a7d600bee99160bda2c542d8524086ce2bfada92df86331d6",
+      "h352_native_reference.json": "ad7d8c5af9d1ed4d104d0d57120b2bbe7b12e995aef7212c89d2d5d808f2b7ee",
+      "fetch_base_h376.py": "a78555cb89e57327e7040c90dbd10e0ed88a81c6931654ae44373a5563ae4dd1",
+      "nl15_reference.py": "4861294f723bc501fc8648b8ea0952ff03818443dba690eeab05d561da9b149a",
+      "native_audit.py": "f2d205b37932f463e0a9fa2c3caf60b3bc8441dbacd22bace350bc00dbc32ec2",
+      "h347_actual_resources.json": "efe5f3a47a0f8848ae2bb43a330a403d68f9a17fc38a0163fa3a4edf6d7725f9",
+      "run_h376.py": "0b5e4572e418c652a82b183b8568c7fd6f3b6d89de2483aa84e360851d1fa38a",
+      "dataset_audit.py": "b34a39f4a8a6d2988946288e1728f4595c676ee484f476e9ecb31b082eeff2eb"
+    }
+  },
+  "actual_Beta_IO_exits": {
+    "inputs-unit-exit.json": {
+      "utc": "2026-11-05T15:31:38.535946+00:00",
+      "EXIT_CODE": "exited",
+      "EXIT_STATUS": "0",
+      "SERVICE_RESULT": "success",
+      "INVOCATION_ID": "e9a87ab6ea704f21983927cd52c35d4c"
+    },
+    "reference-unit-exit.json": {
+      "utc": "2026-11-05T15:32:07.012153+00:00",
+      "EXIT_CODE": "exited",
+      "EXIT_STATUS": "0",
+      "SERVICE_RESULT": "success",
+      "INVOCATION_ID": "f2d5271d2ebc404986ad549038b01306"
+    }
+  },
+  "H352_native_preparation": {
+    "status": "PASS",
+    "wave": "H376",
+    "reference_wave": "H352",
+    "effective_lambda_l1": [
+      0.0
+    ],
+    "effective_max_bin": [
+      255
+    ],
+    "effective_num_leaves": [
+      15
+    ],
+    "effective_max_depth": [
+      3
+    ],
+    "rankers_verified": 972,
+    "veto_models_verified": 108,
+    "optimizer_fits": 0,
+    "new_model_predictions": 0
+  },
+  "source_equivalence": {
+    "status": "PASS",
+    "utc": "2026-11-05T15:36:45.687035+00:00",
+    "reference_commit": "a3d72923dc0dc530904eb0e9107751e1ed8c7be5",
+    "groups": [
+      {
+        "file": "runtime_h376.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "leaves_patch.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "veto_identity.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "forecast_h376.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "guard_h376.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "resource_probe.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "archive_h376.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "archive_relay.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "nl15_reference.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "input_preflight.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "controller_h376.py",
+        "entire_AST_exact_after_wave_path_RNG_window_normalization": true
+      },
+      {
+        "file": "run_h376.py",
+        "exact_unchanged_functions": [
+          "sha",
+          "durable",
+          "outer_fold",
+          "member_scope",
+          "initialize",
+          "full_packets",
+          "install_depth",
+          "task",
+          "score",
+          "verify_locks",
+          "main"
+        ],
+        "reviewed_delta_functions": [
+          "audit_summary",
+          "ctor_audit",
+          "fit_native_audit",
+          "native_audit_summary"
+        ]
+      },
+      {
+        "file": "evaluate_h376.py",
+        "exact_unchanged_functions": [
+          "family_d",
+          "regress",
+          "drop_top",
+          "paired_drop_top",
+          "decide",
+          "decide_with_secondary",
+          "jaccard"
+        ],
+        "reviewed_delta_functions": [
+          "evaluate"
+        ]
+      },
+      {
+        "file": "native_audit.py",
+        "exact_unchanged_functions": [
+          "parse",
+          "digest",
+          "observed_leaves"
+        ],
+        "reviewed_delta_functions": [
+          "compare_h352_defaults",
+          "compare_native"
+        ]
+      },
+      {
+        "file": "dataset_audit.py",
+        "exact_unchanged_functions": [],
+        "reviewed_delta_functions": [
+          "audit_fit",
+          "validate_rows"
+        ]
+      }
+    ],
+    "declared_deltas": [
+      "wave/path/RNG376191/window",
+      "Restore H352 implicit max_bin255, add only ranker reg_alpha=.5/native lambda_l1; inverse removes reg_alpha restoring two complete H352 ASTs",
+      "Native/dataset checks require H352 max_bin255; ranker lambda_l1=.5/veto own1; archived H352 zeroL1 spec gate",
+      "Unchanged primaryNL15/four gates and secondaryBASE metrics; reporting arm/intervention text only"
+    ],
+    "qualification": "Source/fixture proof only; x1resourceguard prevented trial",
+    "same_agent_review": true
+  },
+  "metadata_transfer": {
+    "status": "PASS",
+    "scope": "STOP metadata copy only; TRAIN/checkpoint/source transfer to xbabe1 NOT_RUN_RESOURCE_GUARD",
+    "files": 2,
+    "all_transferred_SHA256_verified": true,
+    "remote_inventory_sha256": "25dc89d892fa1d780634cec4d55f3b24473391faebd4d9be2bc2d8737cf1aafb",
+    "optimizer_fits": 0,
+    "outer_scores": 0,
+    "credential_transfer": false,
+    "utc": "2026-11-05T15:41:32.025446+00:00"
+  },
+  "CI": "NOT_RUN_OWNER_CI_FREEZE",
+  "GPU_used": false,
+  "credential_transfer": false
+}

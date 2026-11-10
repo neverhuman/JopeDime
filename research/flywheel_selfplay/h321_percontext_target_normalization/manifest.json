@@ -1,0 +1,176 @@
+{
+  "wave": "H321",
+  "authority": "/home/ubuntu/nudges/hw_t1330_solhwv_h321.md",
+  "prereg_commit": "fea4923183a0c26a3aeb6a7bf5909b92b2fa98d7",
+  "prereg_sha256": "a90d7ae0c6fa1181dbec56b3d244e7b42dbd4b989a39bb091a0d8262d22e202b",
+  "sources": {
+    "h302_ensvote2_trainseed_nested_cv/analysis_h302.py": "e63bfaeae9d7171e43cb5ee605ce95f1a5c7ac903997956b59c50b3cf19b5dc4",
+    "h302_ensvote2_trainseed_nested_cv/run_h302.py": "14abc42abd1f6aebd03c64ae59e6cae70e833f870247971fe05406ff8e0b8237",
+    "h303_ensvote2_fully_nested_hparams/evaluate_h303.py": "b532a405ad07bef3c377b3016f00a900162ef3349369b4ecff82ba3eaa9a5134",
+    "h303_ensvote2_fully_nested_hparams/run_h303.py": "fa393b0a512efe0b471d8efc7f0a927b72f1e2334c3980941ab39b9afe20e067",
+    "h303_ensvote2_fully_nested_hparams/manifest.json": "0349604d1849d2028dc6c688835a308f3d7198afd85500c6c1d0cdd2792fe327",
+    "h308_ensvote2_trainonly_repartition/manifest.json": "d9686c57bf0380f76eaeb046aa18777b02dcb127b85467282b65c39a841ffce3",
+    "h308_ensvote2_trainonly_repartition/trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "cores": [
+    48,
+    49,
+    50,
+    52,
+    53,
+    54
+  ],
+  "workers_max": 6,
+  "MemoryMax": "6G",
+  "MemorySwapMax": 0,
+  "nice": 19,
+  "numeric_threads": 1,
+  "compute_stop": "2026-11-04T15:15:00Z",
+  "base_code": "819a45aa5e",
+  "dope_frozen": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "source_sha256": {
+    "fetch_base_h321.py": "82dcbbbb83dcb541e40a181bd6374d48b524fde97a0d38f568a18074a0302822",
+    "run_h321.py": "adacbd11c64a3e5b3c447fa643c3038bc795175d4f0d8a58c7b8843c39127b8b",
+    "test_h321.py": "9eb143b771b3d5f7fd53c065455b4483c5f2beebdda3a85e85242e7e46822bb4",
+    "archive_h321.py": "de2769482c9268ecfb02f3a187901dfa988e056acec20c44c10b803b5b11a9b6",
+    "guard_h321.py": "7177162f57ad261c47da681a6cebf0108782d77c4dcf6a5c36928f1002b58ec8",
+    "evaluate_h321.py": "5db1a36e870b1d22be8afa5f457c7ccc9d7e53a5faa8ad1cde7f05f3e237afcd"
+  },
+  "shared_numeric_settings_review": {
+    "status": "PASS",
+    "utc": "2026-11-04T13:56:09.416056+00:00",
+    "scope": "AST-extracted pinned BASE constructors vs actual CNORM constructor; mocked constructors/fit only, zero optimizer updates",
+    "comparisons": [
+      {
+        "base_function": "fit_ranker",
+        "base_source_sha256": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+        "shared_settings": {
+          "boosting_type": "gbdt",
+          "max_depth": 3,
+          "num_leaves": 7,
+          "min_child_samples": 20,
+          "learning_rate": 0.05,
+          "n_estimators": 200,
+          "subsample": 0.8,
+          "subsample_freq": 1,
+          "colsample_bytree": 0.8,
+          "reg_lambda": 1.0,
+          "n_jobs": 1,
+          "random_state": 123,
+          "verbosity": -1,
+          "deterministic": true,
+          "force_row_wise": true
+        },
+        "only_required_changes": {
+          "BASE_objective": "lambdarank",
+          "CNORM_objective": "regression_l2",
+          "BASE_metric": "ndcg",
+          "CNORM_metric": "l2",
+          "removed_ranker_specific": [
+            "lambdarank_truncation_level",
+            "group",
+            "eval_at"
+          ]
+        },
+        "status": "EXACT COMMON SETTINGS"
+      },
+      {
+        "base_function": "fit_ranker_n",
+        "base_source_sha256": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+        "shared_settings": {
+          "boosting_type": "gbdt",
+          "max_depth": 3,
+          "num_leaves": 7,
+          "min_child_samples": 20,
+          "learning_rate": 0.05,
+          "n_estimators": 100,
+          "subsample": 0.8,
+          "subsample_freq": 1,
+          "colsample_bytree": 0.8,
+          "reg_lambda": 1.0,
+          "n_jobs": 1,
+          "random_state": 123,
+          "verbosity": -1,
+          "deterministic": true,
+          "force_row_wise": true
+        },
+        "only_required_changes": {
+          "BASE_objective": "lambdarank",
+          "CNORM_objective": "regression_l2",
+          "BASE_metric": "ndcg",
+          "CNORM_metric": "l2",
+          "removed_ranker_specific": [
+            "lambdarank_truncation_level",
+            "group",
+            "eval_at"
+          ]
+        },
+        "status": "EXACT COMMON SETTINGS"
+      }
+    ]
+  },
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "1.26.4",
+    "lightgbm": "4.6.0",
+    "kernel": "6.8.0-147-generic",
+    "host": "xbabe2"
+  },
+  "input_identity_validation": {
+    "status": "PASS",
+    "utc": "2026-11-04T13:48:08.064091+00:00",
+    "train_pool_sha256_matches": 1219,
+    "train_prefix_feature_members": 4,
+    "selected_and_r882_train_costs": "EXACT SHA256",
+    "DLVal_feature_rows_read": 0,
+    "reference_manifest_sha256": "9b148003d48ab609b2a796c57fb8b4c0296cc0ee79771f034944f4b8dc064263",
+    "scope": "All current TRAIN program/fitness/gate pools and all consumed cache feature prefixes exactly match the archived BASE inputs; no file bodies outside TRAIN prefixes."
+  },
+  "tests": {
+    "utc": "2026-11-04T13:37:46.889859+00:00",
+    "command": "nice19 taskset48 numeric1 python3 -m unittest discover -s source -p test_h321.py -v",
+    "collected": 16,
+    "executed": 16,
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "exit_status": 0,
+    "unittest_elapsed_seconds": 1.565,
+    "source_sha256": {
+      "fetch_base_h321.py": "82dcbbbb83dcb541e40a181bd6374d48b524fde97a0d38f568a18074a0302822",
+      "run_h321.py": "adacbd11c64a3e5b3c447fa643c3038bc795175d4f0d8a58c7b8843c39127b8b",
+      "test_h321.py": "9eb143b771b3d5f7fd53c065455b4483c5f2beebdda3a85e85242e7e46822bb4",
+      "archive_h321.py": "efb5c9152f060f06a6c4f640ee1da776b27430756e49a2290e532196836c7ecf",
+      "guard_h321.py": "7177162f57ad261c47da681a6cebf0108782d77c4dcf6a5c36928f1002b58ec8",
+      "evaluate_h321.py": "5db1a36e870b1d22be8afa5f457c7ccc9d7e53a5faa8ad1cde7f05f3e237afcd"
+    }
+  },
+  "base_code_full": "819a45aa5e30e662ab511cd9962b85b2b8c1e44a",
+  "execution": {
+    "utc": "2026-11-04T14:51:37.557104+00:00",
+    "EXIT_CODE": "exited",
+    "EXIT_STATUS": "0",
+    "SERVICE_RESULT": "success",
+    "INVOCATION_ID": "12fe2bd4bae648dfb14769552c58f6d1"
+  },
+  "runtime_source_sha256": {
+    "fetch_base_h321.py": "82dcbbbb83dcb541e40a181bd6374d48b524fde97a0d38f568a18074a0302822",
+    "run_h321.py": "adacbd11c64a3e5b3c447fa643c3038bc795175d4f0d8a58c7b8843c39127b8b",
+    "test_h321.py": "9eb143b771b3d5f7fd53c065455b4483c5f2beebdda3a85e85242e7e46822bb4",
+    "archive_h321.py": "efb5c9152f060f06a6c4f640ee1da776b27430756e49a2290e532196836c7ecf",
+    "guard_h321.py": "7177162f57ad261c47da681a6cebf0108782d77c4dcf6a5c36928f1002b58ec8",
+    "evaluate_h321.py": "5db1a36e870b1d22be8afa5f457c7ccc9d7e53a5faa8ad1cde7f05f3e237afcd"
+  },
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only; DOPE weights not loaded or modified"
+  },
+  "post_fit_operational_amendment": {
+    "authority": "/home/ubuntu/nudges/hw_t1500_close_h321_h322.md",
+    "authority_sha256": "5add27adba9b6b8ffd8a75cc1842e16479521082abefca17a6fa8659bb5a88e2",
+    "scope": "DOPE metadata + explicit confound wording, create-only archive PUT hardening only; no fit/score/loss/threshold changes",
+    "archive_source_sha256_before": "efb5c9152f060f06a6c4f640ee1da776b27430756e49a2290e532196836c7ecf",
+    "archive_source_sha256_after": "de2769482c9268ecfb02f3a187901dfa988e056acec20c44c10b803b5b11a9b6"
+  }
+}

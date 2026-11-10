@@ -1,0 +1,37 @@
+{
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H313/",
+  "verification": "exact-version GET + sha256 match for every object before local deletion",
+  "objects": [
+    {
+      "key": "h313_harness_census.tar.gz",
+      "version_id": "1XFeNFRwVIsL0Zd8WAoIjbzjyiaixkcy",
+      "sha256": "c42b656f279a68a1f6d65c3624cac8d2914cc6a5e7d655162e89f98d9ece39a2",
+      "bytes": 136030748,
+      "contents": "6 harness fit locks + members (30004-6 fitted, 30001-3 H310 copies), lock manifest, dry run, census outputs (H299 re-run evidence incl. catalog-v246 metadata, S3 listings), run copies of the code, logs of all attempts"
+    },
+    {
+      "key": "lock_manifest.json",
+      "version_id": "53b6akhr5pZXtfO7Bb3_AKL1EmC8rkgU",
+      "sha256": "5b993129092f16b8499adfdad04e5ea89ed1586a2b0c34b16ce83515e0d3acb4",
+      "bytes": 1778
+    },
+    {
+      "key": "dryrun.json",
+      "version_id": "6kBFuE5kbogLIb2qCG8cPn1kCkopWkDT",
+      "sha256": "01a9bb0e46761fe770a9188a6c67a7811d33ecc94742d43c6394767251989e9c",
+      "bytes": 2438
+    },
+    {
+      "key": "census.json",
+      "version_id": "5eJjuUzY7OXhvAUm1JLVE_tdAXHDUdmi",
+      "sha256": "a514ab4cbf7c2023fc14911f9676996bbc4096c40780c24d77b21a6f0c0048fe",
+      "bytes": 1759
+    },
+    {
+      "key": "cohort_v7_manifest.json",
+      "version_id": "IjQgsSincWdsv9XRsj0oshuUhUP6pRL.",
+      "sha256": "aa78d347e56ff04be73ab7745cad1d4039fe2a57e08c805aadef4b2459e941d4",
+      "bytes": 661
+    }
+  ]
+}

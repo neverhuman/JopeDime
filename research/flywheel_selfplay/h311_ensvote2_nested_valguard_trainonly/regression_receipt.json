@@ -1,0 +1,96 @@
+{
+  "status": "PASS",
+  "h308": {
+    "wave": "H308",
+    "step": "regression_first_trainonly_loader",
+    "task": [
+      "P0",
+      0,
+      30001
+    ],
+    "ref_lock_sha256": "545fa2a68e054b5ebe0d0775a0b2fb94c00fd5f82df9a5591160f9b3359d22ed",
+    "fresh_chosen": {
+      "tau": 0.05,
+      "k": 5,
+      "a": 2,
+      "inner_gain": 0.09612510193329017,
+      "inner_switches": 253
+    },
+    "ref_chosen": {
+      "tau": 0.05,
+      "k": 5,
+      "a": 2,
+      "inner_gain": 0.09612510193329017,
+      "inner_switches": 253
+    },
+    "lock_choice_inner_table_and_member_hashes_equal": true,
+    "fold0_seed30001_picks_sha256_fresh": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa",
+    "fold0_seed30001_picks_sha256_archived": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa",
+    "n_fold0_contexts": 335,
+    "loader_counters": {
+      "feature_bytes_read": 98792568,
+      "feature_rows_read": 2811012,
+      "dlval_feature_rows_read": 0
+    },
+    "guard": {
+      "partition": "P0",
+      "outer_fold": 0,
+      "root_seed": 30001,
+      "outer_test_contexts": 335,
+      "outer_test_packets_built_in_memory_before_lock": 335,
+      "outer_test_packets_accessed_before_lock": 0,
+      "guard_denials": 0,
+      "note": "all 1,219 TRAIN packets (features + utilities) are built once in the parent before forking; the guard raises on any outer-test access inside the task, so 'accessed' is enforced, 'built' is the honest count"
+    },
+    "status": "PASS"
+  },
+  "h295": {
+    "cell": "H287_ENS_VOTE2_dl_train_inner_cv",
+    "n_families": 205,
+    "n_contexts": 1219,
+    "median_gain_exact": 0.059931533238705134,
+    "median_gain_round6": 0.059932,
+    "published_median_gain_round6": 0.059932,
+    "per_seed_gain_exact": [
+      0.053902857747975874,
+      0.059931533238705134,
+      0.062203897397489716
+    ],
+    "per_seed_gain_round6": [
+      0.053903,
+      0.059932,
+      0.062204
+    ],
+    "utility_vector_max_abs_diff_by_seed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "harmed_001_by_seed": [
+      24,
+      17,
+      22
+    ],
+    "invalid_by_seed": [
+      14,
+      13,
+      14
+    ],
+    "changed_by_seed": [
+      296,
+      268,
+      265
+    ],
+    "bit_exact": true
+  },
+  "h295_archived_reference_vectors_exact": true,
+  "reference_files": {
+    "/home/ubuntu/jope-data/h291/cache/dl_train_member_oof.npz": "7bbad071d17edc6c4c76a3c81acf67443e30f2443603a9e9af52fab5c87882de",
+    "/home/ubuntu/jope_plan/evidence/H287/argon-t0005/runs/attempt-001/inner_cv_panel.npz": "c521ca0f04f69f812a84a812229d4bcae73030a781f7533b9a3e237ff9e94ebf",
+    "/home/ubuntu/jope_plan/evidence/H287/argon-t0005/capsule/research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/metrics.json": "0d5938fa201959e06061d840ee344b3e985d6939e511999ac637ab0e7222753c"
+  },
+  "finished_utc": "2026-11-04T09:13:31.536054+00:00",
+  "source_sha256": "483f0d83886f7cce60cd5b637dd9fc32cd513cb646bf4bd94da0e2ef1406c04d",
+  "prereg_commit": "37c01836b003f759332cbc64116544bcda33c345",
+  "source_provenance_note": "source_sha256 is executed regression wrapper preserved in regression-source-snapshot; replay wrapper subsequently redirects setup source exports to H311 scratch. No algorithm or parameter change."
+}

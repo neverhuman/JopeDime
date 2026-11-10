@@ -4,6 +4,7 @@ import contextlib
 import hashlib
 import http.client
 import importlib.util
+import itertools
 import io
 import json
 from pathlib import Path
@@ -170,6 +171,7 @@ class BrowserDependencies(unittest.TestCase):
                 self.prepare()
             finally:
                 self.calls = len(calls)
+                self.urls = list(calls)
 
     def test_dropped_connections_are_retried(self):
         archive = self.archive.read_bytes()
@@ -186,6 +188,73 @@ class BrowserDependencies(unittest.TestCase):
         self.assertEqual([MODULE.TIMEOUT_SECONDS] * 2, self.timeouts)
         packages = len(json.loads(Path(__file__).with_name("browser-deps.lock.json").read_bytes())["packages"])
         self.assertLess(packages * MODULE.TIMEOUT_SECONDS, 25 * 60 * 3 // 4)
+
+    def test_an_unreachable_address_is_tried_last_for_the_rest_of_the_process(self):
+        """One dead mirror address costs one bounded connect, not one wait per package."""
+        dead, alive = ("192.0.2.83", 443), ("192.0.2.81", 443)
+        attempts = []
+
+        class Socket:
+            def __init__(self, *args):
+                self.timeouts = []
+
+            def settimeout(self, value):
+                self.timeouts.append(value)
+
+            def connect(self, sockaddr):
+                attempts.append((sockaddr, self.timeouts[-1]))
+                if sockaddr == dead:
+                    raise TimeoutError("timed out")
+
+            def close(self):
+                pass
+
+        infos = [(2, 1, 6, "", dead), (2, 1, 6, "", alive)]
+        with mock.patch.object(MODULE.socket, "getaddrinfo", lambda *args: list(infos)), \
+                mock.patch.object(MODULE.socket, "socket", Socket), \
+                mock.patch.object(MODULE, "UNREACHABLE", set()):
+            first = MODULE.connect_skipping_unreachable(("mirror.test", 443), MODULE.TIMEOUT_SECONDS)
+            second = MODULE.connect_skipping_unreachable(("mirror.test", 443), MODULE.TIMEOUT_SECONDS)
+        connect = min(MODULE.CONNECT_SECONDS, MODULE.TIMEOUT_SECONDS)
+        self.assertEqual([(dead, connect), (alive, connect), (alive, connect)], attempts)
+        self.assertEqual([connect, MODULE.TIMEOUT_SECONDS], first.timeouts)
+        self.assertEqual([connect, MODULE.TIMEOUT_SECONDS], second.timeouts)
+
+    def test_the_installed_opener_uses_the_skipping_connection(self):
+        handler = MODULE.SkippingHTTPSHandler()
+        self.assertIs(MODULE.connect_skipping_unreachable, MODULE.SkippingHTTPSConnection("mirror.test")._create_connection)
+        self.assertTrue(handler._context.check_hostname)
+
+    def test_a_failed_fetch_moves_to_the_fallback_mirror_with_the_same_pool_path(self):
+        archive = self.archive.read_bytes()
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}):
+            self.fetch([TimeoutError("timed out"), archive])
+        pool = "pool/main/f/fixture/fixture.deb"
+        self.assertEqual([mirror + pool for mirror in MODULE.MIRRORS], self.urls)
+        self.assertEqual(MODULE.digest(self.cached), MODULE.digest(self.archive))
+
+    def test_a_fallback_mirror_cannot_change_the_content(self):
+        archive = self.archive.read_bytes()
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}), self.assertRaises(ValueError):
+            self.fetch([TimeoutError("timed out"), archive + b"x"])
+        self.assertEqual(2, self.calls)
+        self.assertFalse(self.cached.exists())
+
+    def test_a_demoted_mirror_is_tried_last(self):
+        url = MODULE.MIRRORS[0] + "pool/main/f/fixture/fixture.deb"
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}) as failures:
+            self.assertEqual(MODULE.MIRRORS, tuple(mirror for mirror, _ in MODULE.sources(url)))
+            failures[MODULE.MIRRORS[0]] = MODULE.DEMOTE_AFTER
+            self.assertEqual(MODULE.MIRRORS[::-1], tuple(mirror for mirror, _ in MODULE.sources(url)))
+        self.assertEqual([(None, "https://example.test/x.deb")], MODULE.sources("https://example.test/x.deb"))
+
+    def test_a_slow_fetch_counts_against_its_mirror(self):
+        archive = self.archive.read_bytes()
+        ticks = itertools.count(0, MODULE.SLOW_SECONDS + 1)
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}) as failures, \
+                mock.patch.object(MODULE.time, "monotonic", lambda: next(ticks)):
+            self.fetch([archive])
+            self.assertEqual({MODULE.MIRRORS[0]: 1}, failures)
 
     def test_persistent_drops_fail_after_bounded_attempts(self):
         with self.assertRaises(http.client.RemoteDisconnected):

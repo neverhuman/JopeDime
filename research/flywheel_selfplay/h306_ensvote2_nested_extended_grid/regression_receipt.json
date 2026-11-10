@@ -1,0 +1,29 @@
+{
+ "wave": "H306",
+ "step": "regression_first",
+ "task": [
+  0,
+  30001
+ ],
+ "ref_lock_sha256": "545fa2a68e054b5ebe0d0775a0b2fb94c00fd5f82df9a5591160f9b3359d22ed",
+ "fresh_chosen": {
+  "tau": 0.05,
+  "k": 5,
+  "a": 2,
+  "inner_gain": 0.09612510193329017,
+  "inner_switches": 253
+ },
+ "ref_chosen": {
+  "tau": 0.05,
+  "k": 5,
+  "a": 2,
+  "inner_gain": 0.09612510193329017,
+  "inner_switches": 253
+ },
+ "lock_choice_inner_table_and_member_hashes_equal": true,
+ "fold0_seed30001_picks_sha256_fresh": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa",
+ "fold0_seed30001_picks_sha256_archived": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa",
+ "n_fold0_contexts": 335,
+ "fold0_changed": 74,
+ "status": "PASS"
+}

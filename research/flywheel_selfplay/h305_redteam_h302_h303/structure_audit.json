@@ -1,0 +1,655 @@
+{
+  "partitions": [
+    {
+      "outer": 0,
+      "test_count": 57,
+      "train_count": 148,
+      "test_families_sha256": "bd597ba56ed7fc26472747756551f669f1162a350c6402411a349c6258a31417",
+      "inherited_H287_training_selection_overlap": 57,
+      "members": [
+        {
+          "root": 30001,
+          "member": 0,
+          "seed": 685781424,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30001,
+          "member": 1,
+          "seed": 1430007429,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30001,
+          "member": 2,
+          "seed": 1330439319,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 0,
+          "seed": 1869595753,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 1,
+          "seed": 786733481,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 2,
+          "seed": 1272701215,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 0,
+          "seed": 1510579523,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 1,
+          "seed": 89540748,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 2,
+          "seed": 1415857569,
+          "inner_sizes": [
+            37,
+            37,
+            37,
+            37
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        }
+      ],
+      "h303_inner": [
+        {
+          "inner": 0,
+          "fit": 115,
+          "selection": 33,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 1,
+          "fit": 107,
+          "selection": 41,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 2,
+          "fit": 111,
+          "selection": 37,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 3,
+          "fit": 111,
+          "selection": 37,
+          "outer_overlap": 0
+        }
+      ]
+    },
+    {
+      "outer": 1,
+      "test_count": 45,
+      "train_count": 160,
+      "test_families_sha256": "ec5d54e777a34f8b03949b74f2929b00087ad0a8305558adc580b52f07709895",
+      "inherited_H287_training_selection_overlap": 45,
+      "members": [
+        {
+          "root": 30001,
+          "member": 0,
+          "seed": 685781424,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30001,
+          "member": 1,
+          "seed": 1430007429,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30001,
+          "member": 2,
+          "seed": 1330439319,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 0,
+          "seed": 1869595753,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 1,
+          "seed": 786733481,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 2,
+          "seed": 1272701215,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 0,
+          "seed": 1510579523,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 1,
+          "seed": 89540748,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 2,
+          "seed": 1415857569,
+          "inner_sizes": [
+            40,
+            40,
+            40,
+            40
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        }
+      ],
+      "h303_inner": [
+        {
+          "inner": 0,
+          "fit": 123,
+          "selection": 37,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 1,
+          "fit": 120,
+          "selection": 40,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 2,
+          "fit": 118,
+          "selection": 42,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 3,
+          "fit": 119,
+          "selection": 41,
+          "outer_overlap": 0
+        }
+      ]
+    },
+    {
+      "outer": 2,
+      "test_count": 50,
+      "train_count": 155,
+      "test_families_sha256": "d3336467d47b89c1739cd5b679424b1ff9bf997ae998109e64c9e390a98e0fa3",
+      "inherited_H287_training_selection_overlap": 50,
+      "members": [
+        {
+          "root": 30001,
+          "member": 0,
+          "seed": 685781424,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30001,
+          "member": 1,
+          "seed": 1430007429,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30001,
+          "member": 2,
+          "seed": 1330439319,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 0,
+          "seed": 1869595753,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 1,
+          "seed": 786733481,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 2,
+          "seed": 1272701215,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 0,
+          "seed": 1510579523,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 1,
+          "seed": 89540748,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 2,
+          "seed": 1415857569,
+          "inner_sizes": [
+            39,
+            39,
+            39,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        }
+      ],
+      "h303_inner": [
+        {
+          "inner": 0,
+          "fit": 117,
+          "selection": 38,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 1,
+          "fit": 123,
+          "selection": 32,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 2,
+          "fit": 104,
+          "selection": 51,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 3,
+          "fit": 121,
+          "selection": 34,
+          "outer_overlap": 0
+        }
+      ]
+    },
+    {
+      "outer": 3,
+      "test_count": 53,
+      "train_count": 152,
+      "test_families_sha256": "456680cd81dfac7ad00359aac146dcb5e1c26553176565a0ca4a9be4c3a24c63",
+      "inherited_H287_training_selection_overlap": 53,
+      "members": [
+        {
+          "root": 30001,
+          "member": 0,
+          "seed": 685781424,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30001,
+          "member": 1,
+          "seed": 1430007429,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30001,
+          "member": 2,
+          "seed": 1330439319,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 0,
+          "seed": 1869595753,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 1,
+          "seed": 786733481,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30002,
+          "member": 2,
+          "seed": 1272701215,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 0,
+          "seed": 1510579523,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 1,
+          "seed": 89540748,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        },
+        {
+          "root": 30003,
+          "member": 2,
+          "seed": 1415857569,
+          "inner_sizes": [
+            38,
+            38,
+            38,
+            38
+          ],
+          "selection_test_overlap": 0,
+          "final_fit_test_overlap": 0
+        }
+      ],
+      "h303_inner": [
+        {
+          "inner": 0,
+          "fit": 127,
+          "selection": 25,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 1,
+          "fit": 105,
+          "selection": 47,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 2,
+          "fit": 118,
+          "selection": 34,
+          "outer_overlap": 0
+        },
+        {
+          "inner": 3,
+          "fit": 106,
+          "selection": 46,
+          "outer_overlap": 0
+        }
+      ]
+    }
+  ],
+  "h302_chronology": {
+    "prereg": {
+      "commit": "2a77787c3df2a0ac9b5ae6bf5684bd862bfca7fc",
+      "author_epoch": 1793768594,
+      "committer_epoch": 1793768594
+    },
+    "lock_times": [
+      {
+        "name": "fold_0/fold_0_fit_lock.json",
+        "epoch": 1793769038.0906384,
+        "utc": "2026-11-04T05:10:38.090638+00:00",
+        "after_prereg": true
+      },
+      {
+        "name": "fold_1/fold_1_fit_lock.json",
+        "epoch": 1793769222.1885653,
+        "utc": "2026-11-04T05:13:42.188565+00:00",
+        "after_prereg": true
+      },
+      {
+        "name": "fold_2/fold_2_fit_lock.json",
+        "epoch": 1793769399.1712615,
+        "utc": "2026-11-04T05:16:39.171262+00:00",
+        "after_prereg": true
+      },
+      {
+        "name": "fold_3/fold_3_fit_lock.json",
+        "epoch": 1793769551.1316154,
+        "utc": "2026-11-04T05:19:11.131615+00:00",
+        "after_prereg": true
+      }
+    ],
+    "all_locks_after_prereg": true,
+    "evidence_limit": "Tar mtimes are mutable timestamps, and locks contain no internal absolute score timestamp. Source orders frozen-model outer scoring after lock. This supports, but does not prove, no undocumented earlier score or remote push time."
+  },
+  "h303_prereg": {
+    "commit": "43e00dd31fd3239dbc5d2d337472c83886a5804c",
+    "author_epoch": 1793770691,
+    "committer_epoch": 1793770691
+  },
+  "direct_admission": "PASS source-reconstructed member fit and lr/n/margin selection; no runtime fit-row trace was archived",
+  "h302_inherited_selection": "FAIL (a): inherited tau=.10, q=6 and agreement=2 were evaluated/retained using all205 TRAIN families before H302",
+  "h303_design_scope": "Within-wave tau/q/agreement choice is nested in source. Prior choice of dataset, r882 proposer, K=8, feature schema, algorithm and grid still used earlier TRAIN outcomes; not an untouched family population."
+}

@@ -1,0 +1,31 @@
+{
+  "wave": "H303",
+  "step": "regression_first",
+  "what": "H302 run_h302.py re-run unchanged (scratch path only) with a full refit of all 36 members, xbabe2 cores 101-108 nice 19, 2026-11-04 05:34:05-05:45:39Z",
+  "status": "PASS",
+  "picks_sha256_by_seed": {
+    "30001": "b47088d981afa1a53a8926afc1a025492fafcb9591a9cc52aa191e452c8560d7",
+    "30002": "0c5761b312cd9366e2fd1e3f49ee7cb37908ff1b8d2228f49d4604d4ece40bed",
+    "30003": "a4ff743c9b974aa5145cb0aebed51b946bddda47b237dc21024ef2011c95c9ee"
+  },
+  "expected": {
+    "30001": "b47088d981afa1a53a8926afc1a025492fafcb9591a9cc52aa191e452c8560d7",
+    "30002": "0c5761b312cd9366e2fd1e3f49ee7cb37908ff1b8d2228f49d4604d4ece40bed",
+    "30003": "a4ff743c9b974aa5145cb0aebed51b946bddda47b237dc21024ef2011c95c9ee"
+  },
+  "verdict": "INNERCV_CONFIRMED_TRAINING_SEEDS",
+  "per_seed_family_mean_gain": [
+    0.02682276553907294,
+    0.06035828581904661,
+    0.05889172313111307
+  ],
+  "fold_fit_lock_sha256": [
+    "896e915c977f8ac7cd9ec05361a009e83aecce1369ed8925badf3b911b2c0e85",
+    "c163e3603c2aac8f893714520e1fccbe6cebb4e32e80a473533782fdc4f51fd5",
+    "1f31cb90a8394b16ef2925f1c7c152eaaeb80cb3b409cc55b5cdf3d5bfd52a8a",
+    "43e032b1de18eccd016773886709dea10ec8b22de335c83021d220570ccb2233"
+  ],
+  "preflight_outer_train_only": "run_h303.member_picks/ens_picks at TAU 0.10,k 6,a 2 reproduce H302 picks_bag and ENS_VOTE2 on 64 outer_train check contexts, 12/12 fold x seed",
+  "evaluator_recompute_from_locks": "3/3 hashes equal (evaluate_h303.h302_picks)",
+  "match": true
+}

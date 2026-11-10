@@ -1,0 +1,35 @@
+{
+  "schema": "whitepaper.program-promotion-contexts-source/v1",
+  "captured_utc": "2026-11-04T23:02:39.341881+00:00",
+  "source_file": "promotions.jsonl",
+  "source_journal_sha256": "d7796fdd7c0dde19e1a23f34c28afc1b9aafa27b0792df746e9f9db01f8cd6c5",
+  "source_journal_bytes": 13426974,
+  "source_journal_records": 3711,
+  "source_line_window": [
+    183,
+    3711
+  ],
+  "selection_round_window": [
+    775,
+    5049
+  ],
+  "event_round_window": [
+    775,
+    5047
+  ],
+  "last_record_utc": "2026-11-04T11:13:46.792039+00:00",
+  "records": 3529,
+  "distinct_logged_context_identifiers": 975,
+  "missing_context_identifiers": 0,
+  "all_context_identifiers_64hex": true,
+  "rounds_nondecreasing": true,
+  "csv_sha256": "48cbe601db7ffd13da2f63fb425fa52fd09b88596f426bd073eeee90882d11b7",
+  "selection": "All3529ordinary promotion records in fixed rounds775..5049; all182earlier source records excluded. Every selected event retained, including repeated context identifiers.",
+  "derivation": "Read source JSONL in order. At each selected record,count distinct context_sha256 values seen within this window. CSV exposes only counts and per-record hashes,never identifiers or context inputs.",
+  "scope": "Observed identifiers conditional on admitted program events; not dataset/family coverage,independent tasks,proposal success,adapter retention or writer/map learning. Starts within this window,not at the first-ever promotion. No attempt or total-population denominator supplied.",
+  "source_binding": "Recorded context identifiers only; exact runtime/evaluation-population/input-closure/checkpoint and independent-learning qualification remain unbound.",
+  "unknowns_imputed": false,
+  "smoothing": false,
+  "stable_reread": true,
+  "writer_restarted": false
+}

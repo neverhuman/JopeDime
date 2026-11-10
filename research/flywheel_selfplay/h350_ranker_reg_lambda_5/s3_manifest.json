@@ -1,0 +1,32 @@
+{
+ "wave": "H350",
+ "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H350/solhwv-20261105T052900Z/",
+ "objects": [
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H350/solhwv-20261105T052900Z/h350_models_locks_outputs.tar.gz",
+   "version_id": "Fhg7aL5jPGfgB32vqVBNk3gDVyTg3mAf",
+   "sha256": "a89402ddefa09fbe518d85b7ea8b51b349ecbda8ee08fe7a12eb344f72a78ab5",
+   "bytes": 136933874,
+   "create_only": true,
+   "if_none_match": "*",
+   "exact_version_get_sha256_verified": true,
+   "all_members_exact_version_verified": true,
+   "member_count": 2354
+  },
+  {
+   "bucket": "veox-jopedime-learning-use2",
+   "key": "experiments/rd_breakthrough_20261030/H350/solhwv-20261105T052900Z/h350_archive_completion_logs.tar.gz",
+   "version_id": "QNiaIOvIxM0pY_XYMe82TNEu5eCiKbLm",
+   "sha256": "cc03a9fa05575aa2c2fc08672acda62024f2a07c975b0c232852b2cd0515416c",
+   "bytes": 2148,
+   "exact_version_get_sha256_verified": true,
+   "create_only": true,
+   "if_none_match": "*",
+   "all_members_exact_version_verified": true,
+   "member_count": 5,
+   "purpose": "Archiver completion stdout/actual exit written after the main frozen inventory; original zero-length log snapshots remain preserved in the primary archive."
+  }
+ ],
+ "inner_task_archives": []
+}

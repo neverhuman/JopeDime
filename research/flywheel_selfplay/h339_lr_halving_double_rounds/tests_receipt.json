@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "collected": 30,
+  "executed": 30,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "scope": "8LR-half/forecast +4physical-boundary +18analysis controls; two treatment-only synthetic native fits"
+}

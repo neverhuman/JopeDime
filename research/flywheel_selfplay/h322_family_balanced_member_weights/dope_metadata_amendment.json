@@ -1,0 +1,14 @@
+{
+  "authority": "/home/ubuntu/nudges/hw_t1500_close_h321_h322.md",
+  "applied_utc": "2026-11-04T14:59:07.392356+00:00",
+  "before_metrics_sha256": "b162497e5fe5a56ceb5892aff2d4437aae1a99c3ea7cb9c12f7d48a597151665",
+  "after_metrics_sha256": "fff64a8e2c5334b19ff2837d7a4ff14555a2f8264b5de5d0f5a1ead23a908787",
+  "only_added_key": "dope",
+  "all_existing_fields_identical": true,
+  "dope": {
+    "composite_sha256_prefix": "c51a56d0",
+    "loaded": false,
+    "scope": "CPU selection layer only; DOPE weights not loaded or modified"
+  },
+  "next": "Repeat numerical review on saved panel; do not repeat model scoring."
+}

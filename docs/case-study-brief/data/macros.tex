@@ -1,0 +1,309 @@
+\newcommand{\CaseThreeName}{NYC Green Taxi Trip Sample with Fare and Distance}
+\newcommand{\CaseThreeRows}{10000}
+\newcommand{\CaseThreeFeatures}{11}
+\newcommand{\CaseThreeTrainRows}{6370}
+\newcommand{\CaseThreeHoldRows}{1630}
+\newcommand{\CaseThreeLimits}{row\_latency\_p99\_us $\le$ 8.4}
+\newcommand{\CaseThreeAAcc}{0.0018842}
+\newcommand{\CaseThreeARes}{2.936}
+\newcommand{\CaseThreeAN}{3}
+\newcommand{\CaseThreeCAcc}{0.0018135}
+\newcommand{\CaseThreeCRes}{3616}
+\newcommand{\CaseThreeCN}{3}
+\newcommand{\CaseThreeEAcc}{0.0018722}
+\newcommand{\CaseThreeERes}{1.222}
+\newcommand{\CaseThreeEN}{3}
+\newcommand{\CaseThreeAextendedAcc}{0.0018418}
+\newcommand{\CaseThreeAextendedRes}{3.426}
+\newcommand{\CaseThreeAextendedN}{3}
+\newcommand{\CaseNineName}{mtp2}
+\newcommand{\CaseNineRows}{274}
+\newcommand{\CaseNineFeatures}{1142}
+\newcommand{\CaseNineTrainRows}{181}
+\newcommand{\CaseNineHoldRows}{47}
+\newcommand{\CaseNineLimits}{none (priced)}
+\newcommand{\CaseNineAAcc}{0.14523}
+\newcommand{\CaseNineARes}{1}
+\newcommand{\CaseNineAN}{3}
+\newcommand{\CaseNineCAcc}{0.14324}
+\newcommand{\CaseNineCRes}{2}
+\newcommand{\CaseNineCN}{3}
+\newcommand{\CaseNineEAcc}{0.14055}
+\newcommand{\CaseNineERes}{1}
+\newcommand{\CaseNineEN}{3}
+\newcommand{\CaseNineAextendedAcc}{0.1279}
+\newcommand{\CaseNineAextendedRes}{2}
+\newcommand{\CaseNineAextendedN}{3}
+\newcommand{\CaseTwoName}{Hourly Day-Ahead Electricity Prices with Exogenous Variables}
+\newcommand{\CaseTwoRows}{6720}
+\newcommand{\CaseTwoFeatures}{11}
+\newcommand{\CaseTwoTrainRows}{4337}
+\newcommand{\CaseTwoHoldRows}{1039}
+\newcommand{\CaseTwoLimits}{none (priced)}
+\newcommand{\CaseTwoAAcc}{0.011991}
+\newcommand{\CaseTwoARes}{0.028}
+\newcommand{\CaseTwoAN}{3}
+\newcommand{\CaseTwoCAcc}{0.0091863}
+\newcommand{\CaseTwoCRes}{69.79}
+\newcommand{\CaseTwoCN}{3}
+\newcommand{\CaseTwoEAcc}{0.0070931}
+\newcommand{\CaseTwoERes}{0.075}
+\newcommand{\CaseTwoEN}{3}
+\newcommand{\CaseTwoAextendedAcc}{n/a}
+\newcommand{\CaseTwoAextendedRes}{n/a}
+\newcommand{\CaseTwoAextendedN}{0}
+\newcommand{\CaseOneName}{Polish Day-Ahead Electricity Market, Demand, Renewables and Weather}
+\newcommand{\CaseOneRows}{9901}
+\newcommand{\CaseOneFeatures}{8}
+\newcommand{\CaseOneTrainRows}{6351}
+\newcommand{\CaseOneHoldRows}{1570}
+\newcommand{\CaseOneLimits}{fit\_seconds $\le$ 0.49}
+\newcommand{\CaseOneAAcc}{0.010549}
+\newcommand{\CaseOneARes}{0.2759}
+\newcommand{\CaseOneAN}{3}
+\newcommand{\CaseOneCAcc}{0.0097191}
+\newcommand{\CaseOneCRes}{55.82}
+\newcommand{\CaseOneCN}{3}
+\newcommand{\CaseOneEAcc}{0.0092148}
+\newcommand{\CaseOneERes}{0.06927}
+\newcommand{\CaseOneEN}{3}
+\newcommand{\CaseOneAextendedAcc}{0.0095333}
+\newcommand{\CaseOneAextendedRes}{0.2163}
+\newcommand{\CaseOneAextendedN}{3}
+\newcommand{\CaseSevenName}{OpenIntro loans\_full\_schema (Lending Club), interest\_rate}
+\newcommand{\CaseSevenRows}{10000}
+\newcommand{\CaseSevenFeatures}{41}
+\newcommand{\CaseSevenTrainRows}{6431}
+\newcommand{\CaseSevenHoldRows}{1569}
+\newcommand{\CaseSevenLimits}{predict\_rows\_per\_second $\ge$ 180000}
+\newcommand{\CaseSevenAAcc}{0.11874}
+\newcommand{\CaseSevenARes}{5.484e+05}
+\newcommand{\CaseSevenAN}{3}
+\newcommand{\CaseSevenCAcc}{0.11701}
+\newcommand{\CaseSevenCRes}{1.07e+04}
+\newcommand{\CaseSevenCN}{3}
+\newcommand{\CaseSevenEAcc}{0.11768}
+\newcommand{\CaseSevenERes}{2.845e+05}
+\newcommand{\CaseSevenEN}{3}
+\newcommand{\CaseSevenAextendedAcc}{0.11741}
+\newcommand{\CaseSevenAextendedRes}{6.02e+05}
+\newcommand{\CaseSevenAextendedN}{3}
+\newcommand{\CaseThreeBestFeasibleObj}{}
+\newcommand{\CaseThreeBestFeasibleModel}{}
+\newcommand{\CaseNineBestFeasibleObj}{}
+\newcommand{\CaseNineBestFeasibleModel}{}
+\newcommand{\CaseTwoBestFeasibleObj}{0.368425}
+\newcommand{\CaseTwoBestFeasibleModel}{xgboost\_default}
+\newcommand{\CaseOneBestFeasibleObj}{0.00800633}
+\newcommand{\CaseOneBestFeasibleModel}{tabpfn\_v2}
+\newcommand{\CaseSevenBestFeasibleObj}{0.11575}
+\newcommand{\CaseSevenBestFeasibleModel}{catboost\_default}
+\newcommand{\CaseThreeAGBytesMB}{612}
+\newcommand{\CaseThreeLibPNinetyNineMin}{471}
+\newcommand{\CaseThreeLibPNinetyNineMax}{2031}
+\newcommand{\CaseThreeXGBAcc}{0.00185849}
+\newcommand{\CaseOneAGFit}{302}
+\newcommand{\CaseOneCatFit}{2.1}
+\newcommand{\CaseOneAGAcc}{0.0087847}
+\newcommand{\CaseTwoXGBCpu}{0.309}
+\newcommand{\CaseTwoXGBAcc}{0.0070703}
+\newcommand{\CaseSevenCatAcc}{0.11575}
+\newcommand{\CaseSevenCatRps}{389073}
+\newcommand{\CaseNineHGBAcc}{0.14418}
+\newcommand{\CaseNineHGBBytes}{1304}
+\newcommand{\CaseNineOursBytes}{1382}
+\newcommand{\CaseTwoBigModelMB}{40}
+\newcommand{\CaseOneXGBAcc}{0.0095725}
+\newcommand{\CaseOneEVsXGB}{-3.7}
+\newcommand{\CaseOneTabAcc}{0.0080063}
+\newcommand{\CaseOneTabMsRow}{123}
+\newcommand{\CaseOneTabFit}{0.32}
+\newcommand{\CaseThreeTabAcc}{0.0016013}
+\newcommand{\CaseThreeTabMsRow}{141}
+\newcommand{\CaseTwoTabObj}{0.3921}
+\newcommand{\CaseNineAGAcc}{0.1524}
+\newcommand{\CaseNineAGMB}{50}
+\newcommand{\CaseNineCatAcc}{0.149}
+\newcommand{\CaseNineVsHGB}{-11.3}
+\newcommand{\CaseNineXNodes}{1--2}
+\newcommand{\CaseNineXKB}{355}
+\newcommand{\CaseThreeOffScale}{Off the chart (worse than 2$\times$ the best): Kumo \num{0.0116}.}
+\newcommand{\CaseNineOffScale}{}
+\newcommand{\CaseTwoOffScale}{Off the chart (worse than 2$\times$ the best): Ridge \num{0.0164}; Kumo \num{0.0246}.}
+\newcommand{\CaseOneOffScale}{Off the chart (worse than 2$\times$ the best): Kumo \num{0.0525}.}
+\newcommand{\CaseSevenOffScale}{Off the chart (worse than 2$\times$ the best): Kumo \num{0.265}.}
+\newcommand{\CaseThreeAObj}{0.0018842}
+\newcommand{\CaseThreeAVsBest}{n/a}
+\newcommand{\CaseThreeEObj}{0.0018722}
+\newcommand{\CaseThreeEVsBest}{n/a}
+\newcommand{\CaseThreeAextendedObj}{0.0018418}
+\newcommand{\CaseThreeAextendedVsBest}{n/a}
+\newcommand{\CaseNineAObj}{0.83181}
+\newcommand{\CaseNineAVsBest}{n/a}
+\newcommand{\CaseNineEObj}{0.80584}
+\newcommand{\CaseNineEVsBest}{n/a}
+\newcommand{\CaseNineAextendedObj}{0.75224}
+\newcommand{\CaseNineAextendedVsBest}{n/a}
+\newcommand{\CaseTwoAObj}{0.39982}
+\newcommand{\CaseTwoAVsBest}{+8.5}
+\newcommand{\CaseTwoEObj}{0.26305}
+\newcommand{\CaseTwoEVsBest}{-28.6}
+\newcommand{\CaseTwoAextendedObj}{n/a}
+\newcommand{\CaseTwoAextendedVsBest}{n/a}
+\newcommand{\CaseOneAObj}{0.010549}
+\newcommand{\CaseOneAVsBest}{+31.8}
+\newcommand{\CaseOneEObj}{0.0092148}
+\newcommand{\CaseOneEVsBest}{+15.1}
+\newcommand{\CaseOneAextendedObj}{0.0095333}
+\newcommand{\CaseOneAextendedVsBest}{+19.1}
+\newcommand{\CaseSevenAObj}{0.11874}
+\newcommand{\CaseSevenAVsBest}{+2.6}
+\newcommand{\CaseSevenEObj}{0.11768}
+\newcommand{\CaseSevenEVsBest}{+1.7}
+\newcommand{\CaseSevenAextendedObj}{0.11741}
+\newcommand{\CaseSevenAextendedVsBest}{+1.4}
+\newcommand{\KumoCases}{01, 02, 03, 06, 07, 08, 10, 11, 12, 14}
+\newcommand{\TabPFNCases}{01, 02, 03, 06}
+\newcommand{\AutoGluonCases}{01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14}
+\newcommand{\BriefHosts}{xbabe1, xbabe2}
+\newcommand{\BriefHasArm}{yes}
+\newcommand{\BriefEvidenceCommit}{9db418413a1c}
+\newcommand{\BriefJopeSha}{5e99de09fdfa, ef02d846c14b}
+\pgfplotsset{evo01/.style={ymin=0.00769974,ymax=0.0134228,xmin=0,xmax=70,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode01\endcsname{normal}
+\expandafter\def\csname evotitle01\endcsname{01 energy price fast retrain}
+\expandafter\def\csname evorisk01\endcsname{HIGH}
+\expandafter\def\csname evoylabel01\endcsname{pinball, feasible programs}
+\pgfplotsset{evo02/.style={ymin=0.247206,ymax=0.48044,xmin=0,xmax=12,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode02\endcsname{normal}
+\expandafter\def\csname evotitle02\endcsname{02 energy price hourly retrain cost}
+\expandafter\def\csname evorisk02\endcsname{HIGH}
+\expandafter\def\csname evoylabel02\endcsname{composite objective}
+\pgfplotsset{evo03/.style={ymin=0.00181173,ymax=0.00196898,xmin=0,xmax=120,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode03\endcsname{normal}
+\expandafter\def\csname evotitle03\endcsname{03 taxi fare online latency}
+\expandafter\def\csname evorisk03\endcsname{MEDIUM}
+\expandafter\def\csname evoylabel03\endcsname{rmse, feasible programs}
+\pgfplotsset{evo04/.style={ymin=0.122991,ymax=0.146873,xmin=0,xmax=4,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode04\endcsname{normal}
+\expandafter\def\csname evotitle04\endcsname{04 ct slice wide training memory}
+\expandafter\def\csname evorisk04\endcsname{LOW}
+\expandafter\def\csname evoylabel04\endcsname{composite objective}
+\pgfplotsset{evo05/.style={ymin=0.00111035,ymax=0.00308786,xmin=0,xmax=37,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode05\endcsname{normal}
+\expandafter\def\csname evotitle05\endcsname{05 consumer finance edge model}
+\expandafter\def\csname evorisk05\endcsname{HIGH}
+\expandafter\def\csname evoylabel05\endcsname{rmse, feasible programs}
+\pgfplotsset{evo06/.style={ymin=0.0244828,ymax=0.0918929,xmin=0,xmax=12,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode06\endcsname{normal}
+\expandafter\def\csname evotitle06\endcsname{06 etf frequent retrain}
+\expandafter\def\csname evorisk06\endcsname{HIGH}
+\expandafter\def\csname evoylabel06\endcsname{composite objective}
+\pgfplotsset{evo07/.style={ymin=0.115107,ymax=0.127104,xmin=0,xmax=27,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode07\endcsname{normal}
+\expandafter\def\csname evotitle07\endcsname{07 loan rate batch throughput}
+\expandafter\def\csname evorisk07\endcsname{LOW}
+\expandafter\def\csname evoylabel07\endcsname{mae, feasible programs}
+\pgfplotsset{evo08/.style={ymin=0.0241746,ymax=0.0342203,xmin=0,xmax=4,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode08\endcsname{normal}
+\expandafter\def\csname evotitle08\endcsname{08 hotel rate serving cost}
+\expandafter\def\csname evorisk08\endcsname{MEDIUM}
+\expandafter\def\csname evoylabel08\endcsname{custom objective}
+\pgfplotsset{evo09/.style={ymin=0.722582,ymax=0.939808,xmin=0,xmax=257,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode09\endcsname{normal}
+\expandafter\def\csname evotitle09\endcsname{09 ultrawide parsimony}
+\expandafter\def\csname evorisk09\endcsname{LOW}
+\expandafter\def\csname evoylabel09\endcsname{composite objective}
+\pgfplotsset{evo10/.style={ymin=0.0378996,ymax=0.0846633,xmin=0,xmax=43,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode10\endcsname{normal}
+\expandafter\def\csname evotitle10\endcsname{10 city power realtime dispatch}
+\expandafter\def\csname evorisk10\endcsname{HIGH}
+\expandafter\def\csname evoylabel10\endcsname{rmse, feasible programs}
+\pgfplotsset{evo11/.style={ymin=7.38116e-09,ymax=0.00830372,xmin=0,xmax=61,y tick label style={/pgf/number format/sci,/pgf/number format/precision=1}}}
+\expandafter\def\csname evoymode11\endcsname{log}
+\expandafter\def\csname evotitle11\endcsname{11 bike rebalancing latency}
+\expandafter\def\csname evorisk11\endcsname{HIGH}
+\expandafter\def\csname evoylabel11\endcsname{asymmetric absolute, feasible programs}
+\pgfplotsset{evo12/.style={ymin=0.0216714,ymax=0.0616666,xmin=0,xmax=48,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode12\endcsname{normal}
+\expandafter\def\csname evotitle12\endcsname{12 hdb resale valuation api}
+\expandafter\def\csname evorisk12\endcsname{HIGH}
+\expandafter\def\csname evoylabel12\endcsname{mape, feasible programs}
+\pgfplotsset{evo13/.style={ymin=0.00213158,ymax=0.121065,xmin=0,xmax=16,y tick label style={/pgf/number format/sci,/pgf/number format/precision=1}}}
+\expandafter\def\csname evoymode13\endcsname{log}
+\expandafter\def\csname evotitle13\endcsname{13 loan default wide memory}
+\expandafter\def\csname evorisk13\endcsname{HIGH}
+\expandafter\def\csname evoylabel13\endcsname{rmse, feasible programs}
+\pgfplotsset{evo14/.style={ymin=0.12514,ymax=0.152155,xmin=0,xmax=97,scaled y ticks=false,y tick label style={/pgf/number format/fixed,/pgf/number format/precision=5}}}
+\expandafter\def\csname evoymode14\endcsname{normal}
+\expandafter\def\csname evotitle14\endcsname{14 transformer load edge device}
+\expandafter\def\csname evorisk14\endcsname{HIGH}
+\expandafter\def\csname evoylabel14\endcsname{rmse, feasible programs}
+\newcommand{\EvoMedianXGain}{14.4}
+\newcommand{\EvoXCases}{11}
+\newcommand{\EvoXImproved}{10}
+\newcommand{\EvoCases}{14}
+\newcommand{\EvoMainRuns}{107}
+\newcommand{\EvoMainMatch}{107}
+\newcommand{\EvoExtRuns}{32}
+\newcommand{\EvoExtMatch}{30}
+\expandafter\def\csname evogain01X\endcsname{24.2}
+\expandafter\def\csname evogain01A\endcsname{6.8}
+\expandafter\def\csname evogain01E\endcsname{0.0}
+\expandafter\def\csname evogain01B\endcsname{7.5}
+\expandafter\def\csname evogain02X\endcsname{--}
+\expandafter\def\csname evogain02A\endcsname{11.4}
+\expandafter\def\csname evogain02E\endcsname{2.3}
+\expandafter\def\csname evogain02B\endcsname{13.3}
+\expandafter\def\csname evogain03X\endcsname{2.4}
+\expandafter\def\csname evogain03A\endcsname{0.6}
+\expandafter\def\csname evogain03E\endcsname{3.3}
+\expandafter\def\csname evogain03B\endcsname{3.4}
+\expandafter\def\csname evogain04X\endcsname{--}
+\expandafter\def\csname evogain04A\endcsname{--}
+\expandafter\def\csname evogain04E\endcsname{0.0}
+\expandafter\def\csname evogain04B\endcsname{--}
+\expandafter\def\csname evogain05X\endcsname{53.3}
+\expandafter\def\csname evogain05A\endcsname{0.0}
+\expandafter\def\csname evogain05E\endcsname{0.0}
+\expandafter\def\csname evogain05B\endcsname{26.7}
+\expandafter\def\csname evogain06X\endcsname{--}
+\expandafter\def\csname evogain06A\endcsname{29.9}
+\expandafter\def\csname evogain06E\endcsname{19.0}
+\expandafter\def\csname evogain06B\endcsname{35.7}
+\expandafter\def\csname evogain07X\endcsname{1.6}
+\expandafter\def\csname evogain07A\endcsname{0.0}
+\expandafter\def\csname evogain07E\endcsname{0.0}
+\expandafter\def\csname evogain07B\endcsname{3.6}
+\expandafter\def\csname evogain08X\endcsname{0.0}
+\expandafter\def\csname evogain08A\endcsname{--}
+\expandafter\def\csname evogain08E\endcsname{0.0}
+\expandafter\def\csname evogain08B\endcsname{--}
+\expandafter\def\csname evogain09X\endcsname{14.4}
+\expandafter\def\csname evogain09A\endcsname{3.9}
+\expandafter\def\csname evogain09E\endcsname{0.0}
+\expandafter\def\csname evogain09B\endcsname{5.1}
+\expandafter\def\csname evogain10X\endcsname{11.0}
+\expandafter\def\csname evogain10A\endcsname{5.7}
+\expandafter\def\csname evogain10E\endcsname{2.0}
+\expandafter\def\csname evogain10B\endcsname{18.3}
+\expandafter\def\csname evogain11X\endcsname{90.6}
+\expandafter\def\csname evogain11A\endcsname{98.9}
+\expandafter\def\csname evogain11E\endcsname{98.9}
+\expandafter\def\csname evogain11B\endcsname{98.9}
+\expandafter\def\csname evogain12X\endcsname{53.6}
+\expandafter\def\csname evogain12A\endcsname{0.0}
+\expandafter\def\csname evogain12E\endcsname{--}
+\expandafter\def\csname evogain12B\endcsname{0.0}
+\expandafter\def\csname evogain13X\endcsname{70.2}
+\expandafter\def\csname evogain13A\endcsname{9.6}
+\expandafter\def\csname evogain13E\endcsname{67.3}
+\expandafter\def\csname evogain13B\endcsname{66.3}
+\expandafter\def\csname evogain14X\endcsname{11.0}
+\expandafter\def\csname evogain14A\endcsname{0.0}
+\expandafter\def\csname evogain14E\endcsname{--}
+\expandafter\def\csname evogain14B\endcsname{4.3}
+\newcommand{\BriefDataStamp}{2026-11-03T16:21:35Z}
+\newcommand{\BriefInputsSha}{a8f3745e190a0c2f}
+\newcommand{\BriefInputCount}{480}
+\newcommand{\BriefSourceCommit}{9db418413a1c}

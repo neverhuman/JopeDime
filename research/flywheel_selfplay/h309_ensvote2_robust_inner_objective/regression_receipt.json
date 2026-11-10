@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "raw_runner_receipt": {
+    "status": "PASS",
+    "task": [
+      0,
+      30001
+    ],
+    "chosen": {
+      "tau": 0.05,
+      "k": 5,
+      "a": 2,
+      "inner_gain": 0.09612510193329017,
+      "inner_switches": 253
+    },
+    "whole_lock_semantics_equal": true,
+    "fresh_picks_sha256": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa",
+    "reference_picks_sha256": "18fdb2538ceabd9a9e5d07ac4a80cf9ff0eaf7597d9dc5fd1645acf0566bd3aa",
+    "reference_lock_sha256": "545fa2a68e054b5ebe0d0775a0b2fb94c00fd5f82df9a5591160f9b3359d22ed",
+    "inner_table_sha256": "e3a1dfcec13c07b3ded799386f6adea30f923ad82bf8f47bdea3b11ec0ac4b56",
+    "reference_inner_table_sha256": "e3a1dfcec13c07b3ded799386f6adea30f923ad82bf8f47bdea3b11ec0ac4b56",
+    "loader_counters": {
+      "feature_bytes_read": 98792568,
+      "feature_rows_read": 2811012,
+      "dlval_feature_rows_read": 0
+    },
+    "source_sha256": {
+      "verify_train_inputs.py": "96e7f79a2af64f0e38a037fb5d1638deff023b75c0ad20afb911a14bebbd1fb5",
+      "evaluate_h309.py": "2a18aea958876e33f29d246c548b526cc518593345e2d038f1870858cb184cc1",
+      "prepare_inputs.py": "8642671f541dd309282c8570ba31ba47afa73d6259163366aa5ab8465e4237e4",
+      "run_h309.py": "8d1fd249a5531ff03ea9e19caee53f326ef4c96c3b05af12fede4f6a4cb29a27",
+      "test_h309.py": "79ee674af883901a1ab098f6a570cd0efa9d943f041cad43770169cd1172e602",
+      "robust_objective.py": "caea881c381a2fc4d99da5c3397f7a0abd272b3ad241be540b4e6bdcfdbb7c24",
+      "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+    },
+    "time": "2026-11-04T08:11:27.718011+00:00"
+  },
+  "guard_execution_source_sha256": {
+    "prepare_inputs.py": "243bb3f5ccdc3d9f4ff12e3a1a9e07879d96450ecdc213c1371b083061ba5532",
+    "run_h309.py": "ba83c5d7db1720f06bac18b49cab573e6b6a3849db9704925b341b69c41e2504",
+    "robust_objective.py": "559882c44ed6714a843b77377284f0a175d29fd12e214443cc0d1df7c3eefb58",
+    "trainonly_loader.py": "65a86b6d636461761eaca9bdba413ba5dec34140cd49d4e0ca020aa849a26c6d"
+  },
+  "raw_runner_source_sha256_semantics": "Files visible at completion. Scientific regression executed the preserved guard-launch snapshot; formatter/import cleanup occurred while it ran, and the fit-only input gate was added for the next phase. No regression algorithm/parameter was changed.",
+  "original_source_archive_location": "regression-execution-source/",
+  "resource_summary_sha256": "31cb7fc2a5c7fb6147722670bbc213ccd78eeee29a70fe6d2dfca18f91c35568"
+}

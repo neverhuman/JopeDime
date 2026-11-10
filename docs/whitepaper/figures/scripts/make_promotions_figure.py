@@ -5,6 +5,7 @@ The default promotion plot is an archived window. The manuscript uses the
 live-development and live-admissions generators for its current main panels.
 Historical target modes require --source-dir with the retained input tables.
 """
+from flywheel_typography import style_figure, finalize_typography_receipts
 import argparse
 import csv
 import hashlib
@@ -122,6 +123,7 @@ def target_progress(source):
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=3, frameon=False,
               fontsize=7.5, handlelength=0.8, handletextpad=0.3, columnspacing=0.7)
     fig.tight_layout(pad=0.4)
+    style_figure(fig, FIGURES / "fig_fw_target_progress.pdf")
     fig.savefig(FIGURES / "fig_fw_target_progress.pdf",
                 metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
@@ -209,6 +211,7 @@ def target_history(source):
         ax.set_axisbelow(True)
     axes[0].set_ylabel("Reported best\ndevelopment RMSE")
     fig.tight_layout(pad=0.4, w_pad=0.7)
+    style_figure(fig, FIGURES / "fig_fw_target_history.pdf")
     fig.savefig(FIGURES / "fig_fw_target_history.pdf",
                 metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
@@ -277,6 +280,7 @@ def plot_target_combined():
         ax.grid(alpha=0.22, linewidth=0.4)
         ax.set_axisbelow(True)
     fig.tight_layout(pad=0.35, w_pad=0.45)
+    style_figure(fig, FIGURES / "fig_fw_target_history.pdf")
     fig.savefig(FIGURES / "fig_fw_target_history.pdf",
                 metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
@@ -352,7 +356,12 @@ selection.add_argument("--target-progress", action="store_true",
 selection.add_argument("--target-history", action="store_true",
                        help="Plot all generations of the merged historical GP target example")
 parser.add_argument("--source-dir", type=Path, help="Retained historical tables with neutral filenames")
+parser.add_argument("--committed-target-history", action="store_true", help="Render the consolidated figure from committed target CSVs")
 args = parser.parse_args()
+if args.committed_target_history:
+    plot_target_combined()
+    finalize_typography_receipts(__file__)
+    raise SystemExit(0)
 if (args.target_history or args.target_progress) and args.source_dir is None:
     parser.error("historical target modes require --source-dir INPUT_DIR")
 if args.target_history:
@@ -389,8 +398,11 @@ for ax in axes:
     ax.set_axisbelow(True)
     ax.set_xlim(rounds[0] - 0.7, rounds[-1] + 0.7)
 fig.tight_layout(pad=0.45, h_pad=0.7)
+style_figure(fig, FIGURES / "fig_fw_program_promotions.pdf")
 fig.savefig(FIGURES / "fig_fw_program_promotions.pdf",
             metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 plot_target_combined()
 print(f"{len(rows)} summary rounds; {sum(counts)} recorded program promotions")
+
+finalize_typography_receipts(__file__)

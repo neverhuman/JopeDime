@@ -34,13 +34,33 @@
   },
   "budget": {
     "evaluations": 96,
-    "seconds": 3600,
+    "seconds": 600,
     "smoke_evaluations": 28
   },
   "calibration": {
     "rng_seed": 1,
     "arm": "D",
-    "status": "pending"
+    "status": "calibrated",
+    "run": "/home/ubuntu/jope-data/case_study/08_hotel_rate_serving_cost/20261103T130723Z-smoke",
+    "observations_sha256": "eaff0027716a99af1dbe12bce3c96967350e4c25458a600efc43200a38a8f8e3",
+    "target_sigma": 0.173006,
+    "medians": {
+      "fit_cpu_seconds": 0.9539516359999993,
+      "fit_peak_heap_bytes": 33833977.0,
+      "fit_seconds": 0.954445775,
+      "hold_rows": 2479.0,
+      "model_bytes": 538320.0,
+      "predict_peak_heap_bytes": 4561360.0,
+      "predict_rows_per_second": 190061.97446407354,
+      "predict_seconds": 0.014377276,
+      "predict_us_per_row": 5.799627269060105,
+      "program_nodes": 4.0,
+      "stage_count": 4.0,
+      "train_rows": 9842.0,
+      "mae": 0.03859595366368337,
+      "candidates": 28
+    },
+    "rules": "limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading"
   },
   "rng_seeds": [
     7,
@@ -63,6 +83,11 @@
     "D": {
       "seeds": false,
       "fitness": "baseline"
+    },
+    "E": {
+      "seeds": true,
+      "fitness": "objective",
+      "seeds_file": "../seeds.bestpractice.json"
     }
   },
   "readout": [
@@ -114,5 +139,11 @@
     "aggregation": {
       "kind": "mean"
     }
-  }
+  },
+  "temporal_risk": "MEDIUM",
+  "comparability": [
+    "Booking dates among features",
+    "Serving price from the calibration rule"
+  ],
+  "target_leakage_risk": "LOW"
 }

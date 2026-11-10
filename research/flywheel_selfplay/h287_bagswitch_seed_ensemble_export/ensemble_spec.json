@@ -1,0 +1,2256 @@
+{
+  "schema": "jope.h287.ensemble-spec/v1",
+  "wave": "H287",
+  "slug": "h287_bagswitch_seed_ensemble_export",
+  "fit_split": "DL-Train",
+  "training_family_count": 205,
+  "training_context_count": 1219,
+  "fresh_pools_read": 0,
+  "dl_val_reads_before_lock": 0,
+  "k": 8,
+  "tau": 0.1,
+  "n_bags_per_seed": 8,
+  "q_fixed": 6,
+  "scorer_module": "research/flywheel_selfplay/h287_bagswitch_seed_ensemble_export/ensemble.py",
+  "scorer_function": "score_h287_arm",
+  "batch_scorer_function": "score_all_h287_arms",
+  "arms": {
+    "ENS_MEAN": {
+      "deterministic_single_policy": true,
+      "member_group": "h284_bag_switch_members",
+      "member_seeds": [
+        279101,
+        279102,
+        279103
+      ],
+      "member_strict_margins": [
+        0.02,
+        0.1,
+        0.1
+      ],
+      "ensemble_strict_margin": 0.07333333333333335,
+      "veto_threshold_tau": 0.1,
+      "min_total_bag_votes_out_of_24": 18,
+      "aggregation_rule": "p_inv_mean = mean_{m in 1..3} p_inv_m; mask k >= 1 where p_inv_mean[k] >= 0.10 to -inf; s_mean = mean_{m in 1..3} ranker_score_m; j* = argmax_k masked(s_mean)[k]; switch from slot 0 to j* iff (s_mean[j*] - s_mean[0]) > mean(strict_margin_m) AND sum_{m=1..3} sum_{b=0..7} 1[(bag_{m,b}[j*] - bag_{m,b}[0]) > strict_margin_m] >= 18",
+      "member_models": [
+        {
+          "seed": 279101,
+          "selected_lr": 0.03,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.02,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279101.txt",
+            "sha256": "2dcecbe56f3f985e5a8e74082888b7d1c3e8b5cbf0194dfa54fb9226ea6c77c4",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279101.txt",
+            "S3_VersionId": "EVSD69q4WAvJKWGABL9o2ABVBIxo8wHv"
+          },
+          "veto": {
+            "file": "veto-seed279101.txt",
+            "sha256": "3c26deb747046bbe3fcba5cbe8a37db7c2abb4a0d734af6d3a5a159a8905b485",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279101.txt",
+            "S3_VersionId": "UdDUxnZxNXTZRD5ThDrKo9b2qEh3gla7"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279101.txt",
+              "sha256": "3c3cfd67219ace7842e5cb99270002e7c42bb09a2d011fe86ff1b557bf431cc3",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279101.txt",
+              "S3_VersionId": "6O3mljGU4hDJm3xtgI6OCJxPJZ5f1ujV"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279101.txt",
+              "sha256": "892411fb47f039c6a5b97d2362e2b6375e0d4ffe094a9fe7f040a22febcd8360",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279101.txt",
+              "S3_VersionId": "TlCm5PQjCyfLnXp4iDYP3LBFyaZN17fW"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279101.txt",
+              "sha256": "e0337c9da45548810d5077a05dbee0bf86e264bafd6bf410dd205f3b9e314d72",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279101.txt",
+              "S3_VersionId": "HyzP7VVosEbvbEXcKjekxdPkmGmUMcb7"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279101.txt",
+              "sha256": "4cabc83a031136c8bc1b632dc77f559d5f6d2747674d29eaf45ac25f27aa1806",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279101.txt",
+              "S3_VersionId": "OcdTejgrHWF5LXKff6aM6siL7cg6syX8"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279101.txt",
+              "sha256": "00a0197675239f28dffd513e2632646a3094385a01c5331b1ea86e0ef42620f1",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279101.txt",
+              "S3_VersionId": "XxS7F7.m7w.jhyjWNJzINa06uQWJe1ko"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279101.txt",
+              "sha256": "6742d3e1abd346edf42090fc4b145523fe8de3584d67671ff680cd5859f7138a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279101.txt",
+              "S3_VersionId": "CGJ_uwNAwF5URJpZifGttjiSu76rBYnl"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279101.txt",
+              "sha256": "76ab3e9257d1e6f0d5c6c84d45facba12582bf11dfdfe0813d176c75ef654b05",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279101.txt",
+              "S3_VersionId": "uo4cODwPPAFbbjOqaJsdjWMrwvpdCipR"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279101.txt",
+              "sha256": "124a42c3f7501e3642324de641f3534a49eea0a54cbf255947a03fcfc2486bcd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279101.txt",
+              "S3_VersionId": "4WP8BRbXd0irGRXrzXiV3LmdUbfkVuxr"
+            }
+          ]
+        },
+        {
+          "seed": 279102,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279102.txt",
+            "sha256": "c048665ae78b870b865a827ba20844dbbbd646768483cb4ba7c11d62e6d82881",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279102.txt",
+            "S3_VersionId": "ABZALCPY5U3aK4T103PvWXPiF4jjtjbl"
+          },
+          "veto": {
+            "file": "veto-seed279102.txt",
+            "sha256": "3039a68ada31bb72a5d1067c3bcda31196ef90817424f69eebb11c1ef3a57553",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279102.txt",
+            "S3_VersionId": "YjfOeRLzLFCuvpRuRl3KGa6_PAFGHqOP"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279102.txt",
+              "sha256": "abb9ee3635b1b5344cb6a55a351a6442280a5cba21f1746e1644b2d9e7789126",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279102.txt",
+              "S3_VersionId": "1TYdPsKssCn4zYS4GekQ8m7TmQBg4cyu"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279102.txt",
+              "sha256": "3db21b71b0451391d4473f86060f858e5f65653e2718cf82a46f702cd0a6199a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279102.txt",
+              "S3_VersionId": "hIsoJ_h8yb4l0qDfyxZVAEJuntTyXt8j"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279102.txt",
+              "sha256": "7712b2683da1fc4d40ef31366d0f8b5c04bc5c3a285c4b02159c2457bcf5a665",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279102.txt",
+              "S3_VersionId": "SMOE7z8UJNYqWdxbIV0n4hnBKEZ7tvfQ"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279102.txt",
+              "sha256": "fb338aa01475febfbf1634add15f3c0387a69b695e8c53694013e6313dfe48bd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279102.txt",
+              "S3_VersionId": "olZURBbaCMXlVufCAmNzTLFd6yD75oV_"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279102.txt",
+              "sha256": "a61d8f25919d055e545aee0f366c0503b0a38034eaa6468c95fca072b35db727",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279102.txt",
+              "S3_VersionId": "pJCPHyyawfyaMsY1e61ch5iuKojs8xuv"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279102.txt",
+              "sha256": "b51e001d7d15c8af8bc0cfcb3e43160c37ff898b730cc318e4824744c6c1c140",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279102.txt",
+              "S3_VersionId": "y_5gPSoT0xg4IxEqwTxoq.6WrTZtuY9T"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279102.txt",
+              "sha256": "4d82e8de8a5f0288592dc03bad8743a1636117798723d451a3de486c15525c60",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279102.txt",
+              "S3_VersionId": "TpVncjW9lhJKyROn_h_LYyVf5QLx4lJi"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279102.txt",
+              "sha256": "874b3c5d3ebb43e1b6a9bf2b8ac6206f91d97ed83ec94bfb35454e117a6b1a44",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279102.txt",
+              "S3_VersionId": "zUoOS4wvoKoXm_iqhYUXVWAVFX.WNbXF"
+            }
+          ]
+        },
+        {
+          "seed": 279103,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 100,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279103.txt",
+            "sha256": "4b5c94de6795ae18bea034602418029617a3638bf3a16d8364fb243fb4d57d24",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279103.txt",
+            "S3_VersionId": "vQO.uJls9AqnZH2fuZAbMuAIX4Ab0iL1"
+          },
+          "veto": {
+            "file": "veto-seed279103.txt",
+            "sha256": "882d8b360166c79e942a3254917f3a345c0292c84fe0c1912c9c418d996c9f16",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279103.txt",
+            "S3_VersionId": "4xYI5gFbH1lP4agWWilGXayhf5kFdyIp"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279103.txt",
+              "sha256": "1d2dd9d3bcb4bbe612ad8dedc7e97d1f364257a3406f443e3a148fac2af9b4e0",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279103.txt",
+              "S3_VersionId": "BNielNZlOnfUG.LrY_oXAqXXz693su7t"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279103.txt",
+              "sha256": "930776605fc7d67679bd50442e1821931fcf8e3c7b0dfcb2fc5ed120871dc379",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279103.txt",
+              "S3_VersionId": "ECTMwES4t8uFdeITYWkyRWO8tYTGoKe4"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279103.txt",
+              "sha256": "9f10dc7c5a47399282e86d52d9d463a713b79fda71102d1b2dd577fb3d83b09c",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279103.txt",
+              "S3_VersionId": "q_q8YLWoB06kzZZwZiUtI5PhyHpdS48d"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279103.txt",
+              "sha256": "445e1ff19a239c7925099beb6642c67858b68e510a4e4e9cb25d618cf8f03701",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279103.txt",
+              "S3_VersionId": "1u.yFGUFyYrgbrzMxndDP3p9XsJ55goU"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279103.txt",
+              "sha256": "24703caca6ce5b7fe63b0a999a3d8ec5c69980e73f5d38a115e7a6bd2954c5e6",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279103.txt",
+              "S3_VersionId": "ldsAplYGTXZPp3vkPCPJMj5zr2loDE60"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279103.txt",
+              "sha256": "6eb83ed8a95cdae48ed7be2eab2c4625bf0dd1e45d196f480a3637d37135650e",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279103.txt",
+              "S3_VersionId": "O8g3OYzgmPSnWBN7lyWWQv69qMIdM0z3"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279103.txt",
+              "sha256": "52864b9e17a31a9f163b40bfd9cc6fa9ca5d50a4669ebc275413ad786b6ebdad",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279103.txt",
+              "S3_VersionId": "JyjfIPbD0uwPI35D6pSBPCwSYz9IVgSR"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279103.txt",
+              "sha256": "70fbe5affae4c536360885318922b8a4ca69bba34fd89d6d6858177aeea8b0b2",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279103.txt",
+              "S3_VersionId": "D0xX6xi7OeXo4ZRDvymdJGQ8Aa.SJRcf"
+            }
+          ]
+        }
+      ]
+    },
+    "ENS_MEAN_PROPOSER": {
+      "deterministic_single_policy": true,
+      "member_group": "h284_bag_switch_members",
+      "member_seeds": [
+        279101,
+        279102,
+        279103
+      ],
+      "member_strict_margins": [
+        0.02,
+        0.1,
+        0.1
+      ],
+      "ensemble_strict_margin": 0.07333333333333335,
+      "veto_threshold_tau": 0.1,
+      "aggregation_rule": "p_inv_mean = mean_{m in 1..3} p_inv_m; mask k >= 1 where p_inv_mean[k] >= 0.10 to -inf; s_mean = mean_{m in 1..3} ranker_score_m; j* = argmax_k masked(s_mean)[k]; switch from slot 0 to j* iff (s_mean[j*] - s_mean[0]) > mean(strict_margin_m)",
+      "member_models": [
+        {
+          "seed": 279101,
+          "selected_lr": 0.03,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.02,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279101.txt",
+            "sha256": "2dcecbe56f3f985e5a8e74082888b7d1c3e8b5cbf0194dfa54fb9226ea6c77c4",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279101.txt",
+            "S3_VersionId": "EVSD69q4WAvJKWGABL9o2ABVBIxo8wHv"
+          },
+          "veto": {
+            "file": "veto-seed279101.txt",
+            "sha256": "3c26deb747046bbe3fcba5cbe8a37db7c2abb4a0d734af6d3a5a159a8905b485",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279101.txt",
+            "S3_VersionId": "UdDUxnZxNXTZRD5ThDrKo9b2qEh3gla7"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279101.txt",
+              "sha256": "3c3cfd67219ace7842e5cb99270002e7c42bb09a2d011fe86ff1b557bf431cc3",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279101.txt",
+              "S3_VersionId": "6O3mljGU4hDJm3xtgI6OCJxPJZ5f1ujV"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279101.txt",
+              "sha256": "892411fb47f039c6a5b97d2362e2b6375e0d4ffe094a9fe7f040a22febcd8360",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279101.txt",
+              "S3_VersionId": "TlCm5PQjCyfLnXp4iDYP3LBFyaZN17fW"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279101.txt",
+              "sha256": "e0337c9da45548810d5077a05dbee0bf86e264bafd6bf410dd205f3b9e314d72",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279101.txt",
+              "S3_VersionId": "HyzP7VVosEbvbEXcKjekxdPkmGmUMcb7"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279101.txt",
+              "sha256": "4cabc83a031136c8bc1b632dc77f559d5f6d2747674d29eaf45ac25f27aa1806",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279101.txt",
+              "S3_VersionId": "OcdTejgrHWF5LXKff6aM6siL7cg6syX8"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279101.txt",
+              "sha256": "00a0197675239f28dffd513e2632646a3094385a01c5331b1ea86e0ef42620f1",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279101.txt",
+              "S3_VersionId": "XxS7F7.m7w.jhyjWNJzINa06uQWJe1ko"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279101.txt",
+              "sha256": "6742d3e1abd346edf42090fc4b145523fe8de3584d67671ff680cd5859f7138a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279101.txt",
+              "S3_VersionId": "CGJ_uwNAwF5URJpZifGttjiSu76rBYnl"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279101.txt",
+              "sha256": "76ab3e9257d1e6f0d5c6c84d45facba12582bf11dfdfe0813d176c75ef654b05",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279101.txt",
+              "S3_VersionId": "uo4cODwPPAFbbjOqaJsdjWMrwvpdCipR"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279101.txt",
+              "sha256": "124a42c3f7501e3642324de641f3534a49eea0a54cbf255947a03fcfc2486bcd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279101.txt",
+              "S3_VersionId": "4WP8BRbXd0irGRXrzXiV3LmdUbfkVuxr"
+            }
+          ]
+        },
+        {
+          "seed": 279102,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279102.txt",
+            "sha256": "c048665ae78b870b865a827ba20844dbbbd646768483cb4ba7c11d62e6d82881",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279102.txt",
+            "S3_VersionId": "ABZALCPY5U3aK4T103PvWXPiF4jjtjbl"
+          },
+          "veto": {
+            "file": "veto-seed279102.txt",
+            "sha256": "3039a68ada31bb72a5d1067c3bcda31196ef90817424f69eebb11c1ef3a57553",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279102.txt",
+            "S3_VersionId": "YjfOeRLzLFCuvpRuRl3KGa6_PAFGHqOP"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279102.txt",
+              "sha256": "abb9ee3635b1b5344cb6a55a351a6442280a5cba21f1746e1644b2d9e7789126",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279102.txt",
+              "S3_VersionId": "1TYdPsKssCn4zYS4GekQ8m7TmQBg4cyu"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279102.txt",
+              "sha256": "3db21b71b0451391d4473f86060f858e5f65653e2718cf82a46f702cd0a6199a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279102.txt",
+              "S3_VersionId": "hIsoJ_h8yb4l0qDfyxZVAEJuntTyXt8j"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279102.txt",
+              "sha256": "7712b2683da1fc4d40ef31366d0f8b5c04bc5c3a285c4b02159c2457bcf5a665",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279102.txt",
+              "S3_VersionId": "SMOE7z8UJNYqWdxbIV0n4hnBKEZ7tvfQ"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279102.txt",
+              "sha256": "fb338aa01475febfbf1634add15f3c0387a69b695e8c53694013e6313dfe48bd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279102.txt",
+              "S3_VersionId": "olZURBbaCMXlVufCAmNzTLFd6yD75oV_"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279102.txt",
+              "sha256": "a61d8f25919d055e545aee0f366c0503b0a38034eaa6468c95fca072b35db727",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279102.txt",
+              "S3_VersionId": "pJCPHyyawfyaMsY1e61ch5iuKojs8xuv"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279102.txt",
+              "sha256": "b51e001d7d15c8af8bc0cfcb3e43160c37ff898b730cc318e4824744c6c1c140",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279102.txt",
+              "S3_VersionId": "y_5gPSoT0xg4IxEqwTxoq.6WrTZtuY9T"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279102.txt",
+              "sha256": "4d82e8de8a5f0288592dc03bad8743a1636117798723d451a3de486c15525c60",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279102.txt",
+              "S3_VersionId": "TpVncjW9lhJKyROn_h_LYyVf5QLx4lJi"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279102.txt",
+              "sha256": "874b3c5d3ebb43e1b6a9bf2b8ac6206f91d97ed83ec94bfb35454e117a6b1a44",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279102.txt",
+              "S3_VersionId": "zUoOS4wvoKoXm_iqhYUXVWAVFX.WNbXF"
+            }
+          ]
+        },
+        {
+          "seed": 279103,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 100,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279103.txt",
+            "sha256": "4b5c94de6795ae18bea034602418029617a3638bf3a16d8364fb243fb4d57d24",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279103.txt",
+            "S3_VersionId": "vQO.uJls9AqnZH2fuZAbMuAIX4Ab0iL1"
+          },
+          "veto": {
+            "file": "veto-seed279103.txt",
+            "sha256": "882d8b360166c79e942a3254917f3a345c0292c84fe0c1912c9c418d996c9f16",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279103.txt",
+            "S3_VersionId": "4xYI5gFbH1lP4agWWilGXayhf5kFdyIp"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279103.txt",
+              "sha256": "1d2dd9d3bcb4bbe612ad8dedc7e97d1f364257a3406f443e3a148fac2af9b4e0",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279103.txt",
+              "S3_VersionId": "BNielNZlOnfUG.LrY_oXAqXXz693su7t"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279103.txt",
+              "sha256": "930776605fc7d67679bd50442e1821931fcf8e3c7b0dfcb2fc5ed120871dc379",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279103.txt",
+              "S3_VersionId": "ECTMwES4t8uFdeITYWkyRWO8tYTGoKe4"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279103.txt",
+              "sha256": "9f10dc7c5a47399282e86d52d9d463a713b79fda71102d1b2dd577fb3d83b09c",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279103.txt",
+              "S3_VersionId": "q_q8YLWoB06kzZZwZiUtI5PhyHpdS48d"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279103.txt",
+              "sha256": "445e1ff19a239c7925099beb6642c67858b68e510a4e4e9cb25d618cf8f03701",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279103.txt",
+              "S3_VersionId": "1u.yFGUFyYrgbrzMxndDP3p9XsJ55goU"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279103.txt",
+              "sha256": "24703caca6ce5b7fe63b0a999a3d8ec5c69980e73f5d38a115e7a6bd2954c5e6",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279103.txt",
+              "S3_VersionId": "ldsAplYGTXZPp3vkPCPJMj5zr2loDE60"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279103.txt",
+              "sha256": "6eb83ed8a95cdae48ed7be2eab2c4625bf0dd1e45d196f480a3637d37135650e",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279103.txt",
+              "S3_VersionId": "O8g3OYzgmPSnWBN7lyWWQv69qMIdM0z3"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279103.txt",
+              "sha256": "52864b9e17a31a9f163b40bfd9cc6fa9ca5d50a4669ebc275413ad786b6ebdad",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279103.txt",
+              "S3_VersionId": "JyjfIPbD0uwPI35D6pSBPCwSYz9IVgSR"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279103.txt",
+              "sha256": "70fbe5affae4c536360885318922b8a4ca69bba34fd89d6d6858177aeea8b0b2",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279103.txt",
+              "S3_VersionId": "D0xX6xi7OeXo4ZRDvymdJGQ8Aa.SJRcf"
+            }
+          ]
+        }
+      ]
+    },
+    "ENS_VOTE2": {
+      "deterministic_single_policy": true,
+      "member_group": "h284_bag_switch_members",
+      "member_seeds": [
+        279101,
+        279102,
+        279103
+      ],
+      "member_strict_margins": [
+        0.02,
+        0.1,
+        0.1
+      ],
+      "min_agreeing_seeds": 2,
+      "q_fixed_per_seed": 6,
+      "aggregation_rule": "Each member m in {279101, 279102, 279103} computes its frozen H284 BAG_SWITCH (q=6) pick p_m in 0..7; switch away from slot 0 to candidate j >= 1 iff at least 2 of 3 members have p_m == j; else slot 0.",
+      "member_models": [
+        {
+          "seed": 279101,
+          "selected_lr": 0.03,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.02,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279101.txt",
+            "sha256": "2dcecbe56f3f985e5a8e74082888b7d1c3e8b5cbf0194dfa54fb9226ea6c77c4",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279101.txt",
+            "S3_VersionId": "EVSD69q4WAvJKWGABL9o2ABVBIxo8wHv"
+          },
+          "veto": {
+            "file": "veto-seed279101.txt",
+            "sha256": "3c26deb747046bbe3fcba5cbe8a37db7c2abb4a0d734af6d3a5a159a8905b485",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279101.txt",
+            "S3_VersionId": "UdDUxnZxNXTZRD5ThDrKo9b2qEh3gla7"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279101.txt",
+              "sha256": "3c3cfd67219ace7842e5cb99270002e7c42bb09a2d011fe86ff1b557bf431cc3",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279101.txt",
+              "S3_VersionId": "6O3mljGU4hDJm3xtgI6OCJxPJZ5f1ujV"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279101.txt",
+              "sha256": "892411fb47f039c6a5b97d2362e2b6375e0d4ffe094a9fe7f040a22febcd8360",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279101.txt",
+              "S3_VersionId": "TlCm5PQjCyfLnXp4iDYP3LBFyaZN17fW"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279101.txt",
+              "sha256": "e0337c9da45548810d5077a05dbee0bf86e264bafd6bf410dd205f3b9e314d72",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279101.txt",
+              "S3_VersionId": "HyzP7VVosEbvbEXcKjekxdPkmGmUMcb7"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279101.txt",
+              "sha256": "4cabc83a031136c8bc1b632dc77f559d5f6d2747674d29eaf45ac25f27aa1806",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279101.txt",
+              "S3_VersionId": "OcdTejgrHWF5LXKff6aM6siL7cg6syX8"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279101.txt",
+              "sha256": "00a0197675239f28dffd513e2632646a3094385a01c5331b1ea86e0ef42620f1",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279101.txt",
+              "S3_VersionId": "XxS7F7.m7w.jhyjWNJzINa06uQWJe1ko"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279101.txt",
+              "sha256": "6742d3e1abd346edf42090fc4b145523fe8de3584d67671ff680cd5859f7138a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279101.txt",
+              "S3_VersionId": "CGJ_uwNAwF5URJpZifGttjiSu76rBYnl"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279101.txt",
+              "sha256": "76ab3e9257d1e6f0d5c6c84d45facba12582bf11dfdfe0813d176c75ef654b05",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279101.txt",
+              "S3_VersionId": "uo4cODwPPAFbbjOqaJsdjWMrwvpdCipR"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279101.txt",
+              "sha256": "124a42c3f7501e3642324de641f3534a49eea0a54cbf255947a03fcfc2486bcd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279101.txt",
+              "S3_VersionId": "4WP8BRbXd0irGRXrzXiV3LmdUbfkVuxr"
+            }
+          ]
+        },
+        {
+          "seed": 279102,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279102.txt",
+            "sha256": "c048665ae78b870b865a827ba20844dbbbd646768483cb4ba7c11d62e6d82881",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279102.txt",
+            "S3_VersionId": "ABZALCPY5U3aK4T103PvWXPiF4jjtjbl"
+          },
+          "veto": {
+            "file": "veto-seed279102.txt",
+            "sha256": "3039a68ada31bb72a5d1067c3bcda31196ef90817424f69eebb11c1ef3a57553",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279102.txt",
+            "S3_VersionId": "YjfOeRLzLFCuvpRuRl3KGa6_PAFGHqOP"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279102.txt",
+              "sha256": "abb9ee3635b1b5344cb6a55a351a6442280a5cba21f1746e1644b2d9e7789126",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279102.txt",
+              "S3_VersionId": "1TYdPsKssCn4zYS4GekQ8m7TmQBg4cyu"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279102.txt",
+              "sha256": "3db21b71b0451391d4473f86060f858e5f65653e2718cf82a46f702cd0a6199a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279102.txt",
+              "S3_VersionId": "hIsoJ_h8yb4l0qDfyxZVAEJuntTyXt8j"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279102.txt",
+              "sha256": "7712b2683da1fc4d40ef31366d0f8b5c04bc5c3a285c4b02159c2457bcf5a665",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279102.txt",
+              "S3_VersionId": "SMOE7z8UJNYqWdxbIV0n4hnBKEZ7tvfQ"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279102.txt",
+              "sha256": "fb338aa01475febfbf1634add15f3c0387a69b695e8c53694013e6313dfe48bd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279102.txt",
+              "S3_VersionId": "olZURBbaCMXlVufCAmNzTLFd6yD75oV_"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279102.txt",
+              "sha256": "a61d8f25919d055e545aee0f366c0503b0a38034eaa6468c95fca072b35db727",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279102.txt",
+              "S3_VersionId": "pJCPHyyawfyaMsY1e61ch5iuKojs8xuv"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279102.txt",
+              "sha256": "b51e001d7d15c8af8bc0cfcb3e43160c37ff898b730cc318e4824744c6c1c140",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279102.txt",
+              "S3_VersionId": "y_5gPSoT0xg4IxEqwTxoq.6WrTZtuY9T"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279102.txt",
+              "sha256": "4d82e8de8a5f0288592dc03bad8743a1636117798723d451a3de486c15525c60",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279102.txt",
+              "S3_VersionId": "TpVncjW9lhJKyROn_h_LYyVf5QLx4lJi"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279102.txt",
+              "sha256": "874b3c5d3ebb43e1b6a9bf2b8ac6206f91d97ed83ec94bfb35454e117a6b1a44",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279102.txt",
+              "S3_VersionId": "zUoOS4wvoKoXm_iqhYUXVWAVFX.WNbXF"
+            }
+          ]
+        },
+        {
+          "seed": 279103,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 100,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279103.txt",
+            "sha256": "4b5c94de6795ae18bea034602418029617a3638bf3a16d8364fb243fb4d57d24",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279103.txt",
+            "S3_VersionId": "vQO.uJls9AqnZH2fuZAbMuAIX4Ab0iL1"
+          },
+          "veto": {
+            "file": "veto-seed279103.txt",
+            "sha256": "882d8b360166c79e942a3254917f3a345c0292c84fe0c1912c9c418d996c9f16",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279103.txt",
+            "S3_VersionId": "4xYI5gFbH1lP4agWWilGXayhf5kFdyIp"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279103.txt",
+              "sha256": "1d2dd9d3bcb4bbe612ad8dedc7e97d1f364257a3406f443e3a148fac2af9b4e0",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279103.txt",
+              "S3_VersionId": "BNielNZlOnfUG.LrY_oXAqXXz693su7t"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279103.txt",
+              "sha256": "930776605fc7d67679bd50442e1821931fcf8e3c7b0dfcb2fc5ed120871dc379",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279103.txt",
+              "S3_VersionId": "ECTMwES4t8uFdeITYWkyRWO8tYTGoKe4"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279103.txt",
+              "sha256": "9f10dc7c5a47399282e86d52d9d463a713b79fda71102d1b2dd577fb3d83b09c",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279103.txt",
+              "S3_VersionId": "q_q8YLWoB06kzZZwZiUtI5PhyHpdS48d"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279103.txt",
+              "sha256": "445e1ff19a239c7925099beb6642c67858b68e510a4e4e9cb25d618cf8f03701",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279103.txt",
+              "S3_VersionId": "1u.yFGUFyYrgbrzMxndDP3p9XsJ55goU"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279103.txt",
+              "sha256": "24703caca6ce5b7fe63b0a999a3d8ec5c69980e73f5d38a115e7a6bd2954c5e6",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279103.txt",
+              "S3_VersionId": "ldsAplYGTXZPp3vkPCPJMj5zr2loDE60"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279103.txt",
+              "sha256": "6eb83ed8a95cdae48ed7be2eab2c4625bf0dd1e45d196f480a3637d37135650e",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279103.txt",
+              "S3_VersionId": "O8g3OYzgmPSnWBN7lyWWQv69qMIdM0z3"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279103.txt",
+              "sha256": "52864b9e17a31a9f163b40bfd9cc6fa9ca5d50a4669ebc275413ad786b6ebdad",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279103.txt",
+              "S3_VersionId": "JyjfIPbD0uwPI35D6pSBPCwSYz9IVgSR"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279103.txt",
+              "sha256": "70fbe5affae4c536360885318922b8a4ca69bba34fd89d6d6858177aeea8b0b2",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279103.txt",
+              "S3_VersionId": "D0xX6xi7OeXo4ZRDvymdJGQ8Aa.SJRcf"
+            }
+          ]
+        }
+      ]
+    },
+    "ENS_VOTE3": {
+      "deterministic_single_policy": true,
+      "member_group": "h284_bag_switch_members",
+      "member_seeds": [
+        279101,
+        279102,
+        279103
+      ],
+      "member_strict_margins": [
+        0.02,
+        0.1,
+        0.1
+      ],
+      "min_agreeing_seeds": 3,
+      "q_fixed_per_seed": 6,
+      "aggregation_rule": "Each member m in {279101, 279102, 279103} computes its frozen H284 BAG_SWITCH (q=6) pick p_m in 0..7; switch away from slot 0 to candidate j >= 1 iff all 3 of 3 members have p_m == j; else slot 0.",
+      "member_models": [
+        {
+          "seed": 279101,
+          "selected_lr": 0.03,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.02,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279101.txt",
+            "sha256": "2dcecbe56f3f985e5a8e74082888b7d1c3e8b5cbf0194dfa54fb9226ea6c77c4",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279101.txt",
+            "S3_VersionId": "EVSD69q4WAvJKWGABL9o2ABVBIxo8wHv"
+          },
+          "veto": {
+            "file": "veto-seed279101.txt",
+            "sha256": "3c26deb747046bbe3fcba5cbe8a37db7c2abb4a0d734af6d3a5a159a8905b485",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279101.txt",
+            "S3_VersionId": "UdDUxnZxNXTZRD5ThDrKo9b2qEh3gla7"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279101.txt",
+              "sha256": "3c3cfd67219ace7842e5cb99270002e7c42bb09a2d011fe86ff1b557bf431cc3",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279101.txt",
+              "S3_VersionId": "6O3mljGU4hDJm3xtgI6OCJxPJZ5f1ujV"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279101.txt",
+              "sha256": "892411fb47f039c6a5b97d2362e2b6375e0d4ffe094a9fe7f040a22febcd8360",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279101.txt",
+              "S3_VersionId": "TlCm5PQjCyfLnXp4iDYP3LBFyaZN17fW"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279101.txt",
+              "sha256": "e0337c9da45548810d5077a05dbee0bf86e264bafd6bf410dd205f3b9e314d72",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279101.txt",
+              "S3_VersionId": "HyzP7VVosEbvbEXcKjekxdPkmGmUMcb7"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279101.txt",
+              "sha256": "4cabc83a031136c8bc1b632dc77f559d5f6d2747674d29eaf45ac25f27aa1806",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279101.txt",
+              "S3_VersionId": "OcdTejgrHWF5LXKff6aM6siL7cg6syX8"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279101.txt",
+              "sha256": "00a0197675239f28dffd513e2632646a3094385a01c5331b1ea86e0ef42620f1",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279101.txt",
+              "S3_VersionId": "XxS7F7.m7w.jhyjWNJzINa06uQWJe1ko"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279101.txt",
+              "sha256": "6742d3e1abd346edf42090fc4b145523fe8de3584d67671ff680cd5859f7138a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279101.txt",
+              "S3_VersionId": "CGJ_uwNAwF5URJpZifGttjiSu76rBYnl"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279101.txt",
+              "sha256": "76ab3e9257d1e6f0d5c6c84d45facba12582bf11dfdfe0813d176c75ef654b05",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279101.txt",
+              "S3_VersionId": "uo4cODwPPAFbbjOqaJsdjWMrwvpdCipR"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279101.txt",
+              "sha256": "124a42c3f7501e3642324de641f3534a49eea0a54cbf255947a03fcfc2486bcd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279101.txt",
+              "S3_VersionId": "4WP8BRbXd0irGRXrzXiV3LmdUbfkVuxr"
+            }
+          ]
+        },
+        {
+          "seed": 279102,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279102.txt",
+            "sha256": "c048665ae78b870b865a827ba20844dbbbd646768483cb4ba7c11d62e6d82881",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279102.txt",
+            "S3_VersionId": "ABZALCPY5U3aK4T103PvWXPiF4jjtjbl"
+          },
+          "veto": {
+            "file": "veto-seed279102.txt",
+            "sha256": "3039a68ada31bb72a5d1067c3bcda31196ef90817424f69eebb11c1ef3a57553",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279102.txt",
+            "S3_VersionId": "YjfOeRLzLFCuvpRuRl3KGa6_PAFGHqOP"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279102.txt",
+              "sha256": "abb9ee3635b1b5344cb6a55a351a6442280a5cba21f1746e1644b2d9e7789126",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279102.txt",
+              "S3_VersionId": "1TYdPsKssCn4zYS4GekQ8m7TmQBg4cyu"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279102.txt",
+              "sha256": "3db21b71b0451391d4473f86060f858e5f65653e2718cf82a46f702cd0a6199a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279102.txt",
+              "S3_VersionId": "hIsoJ_h8yb4l0qDfyxZVAEJuntTyXt8j"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279102.txt",
+              "sha256": "7712b2683da1fc4d40ef31366d0f8b5c04bc5c3a285c4b02159c2457bcf5a665",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279102.txt",
+              "S3_VersionId": "SMOE7z8UJNYqWdxbIV0n4hnBKEZ7tvfQ"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279102.txt",
+              "sha256": "fb338aa01475febfbf1634add15f3c0387a69b695e8c53694013e6313dfe48bd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279102.txt",
+              "S3_VersionId": "olZURBbaCMXlVufCAmNzTLFd6yD75oV_"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279102.txt",
+              "sha256": "a61d8f25919d055e545aee0f366c0503b0a38034eaa6468c95fca072b35db727",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279102.txt",
+              "S3_VersionId": "pJCPHyyawfyaMsY1e61ch5iuKojs8xuv"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279102.txt",
+              "sha256": "b51e001d7d15c8af8bc0cfcb3e43160c37ff898b730cc318e4824744c6c1c140",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279102.txt",
+              "S3_VersionId": "y_5gPSoT0xg4IxEqwTxoq.6WrTZtuY9T"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279102.txt",
+              "sha256": "4d82e8de8a5f0288592dc03bad8743a1636117798723d451a3de486c15525c60",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279102.txt",
+              "S3_VersionId": "TpVncjW9lhJKyROn_h_LYyVf5QLx4lJi"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279102.txt",
+              "sha256": "874b3c5d3ebb43e1b6a9bf2b8ac6206f91d97ed83ec94bfb35454e117a6b1a44",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279102.txt",
+              "S3_VersionId": "zUoOS4wvoKoXm_iqhYUXVWAVFX.WNbXF"
+            }
+          ]
+        },
+        {
+          "seed": 279103,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 100,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "ranker-seed279103.txt",
+            "sha256": "4b5c94de6795ae18bea034602418029617a3638bf3a16d8364fb243fb4d57d24",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279103.txt",
+            "S3_VersionId": "vQO.uJls9AqnZH2fuZAbMuAIX4Ab0iL1"
+          },
+          "veto": {
+            "file": "veto-seed279103.txt",
+            "sha256": "882d8b360166c79e942a3254917f3a345c0292c84fe0c1912c9c418d996c9f16",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279103.txt",
+            "S3_VersionId": "4xYI5gFbH1lP4agWWilGXayhf5kFdyIp"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "bag0-seed279103.txt",
+              "sha256": "1d2dd9d3bcb4bbe612ad8dedc7e97d1f364257a3406f443e3a148fac2af9b4e0",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279103.txt",
+              "S3_VersionId": "BNielNZlOnfUG.LrY_oXAqXXz693su7t"
+            },
+            {
+              "bag_index": 1,
+              "file": "bag1-seed279103.txt",
+              "sha256": "930776605fc7d67679bd50442e1821931fcf8e3c7b0dfcb2fc5ed120871dc379",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279103.txt",
+              "S3_VersionId": "ECTMwES4t8uFdeITYWkyRWO8tYTGoKe4"
+            },
+            {
+              "bag_index": 2,
+              "file": "bag2-seed279103.txt",
+              "sha256": "9f10dc7c5a47399282e86d52d9d463a713b79fda71102d1b2dd577fb3d83b09c",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279103.txt",
+              "S3_VersionId": "q_q8YLWoB06kzZZwZiUtI5PhyHpdS48d"
+            },
+            {
+              "bag_index": 3,
+              "file": "bag3-seed279103.txt",
+              "sha256": "445e1ff19a239c7925099beb6642c67858b68e510a4e4e9cb25d618cf8f03701",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279103.txt",
+              "S3_VersionId": "1u.yFGUFyYrgbrzMxndDP3p9XsJ55goU"
+            },
+            {
+              "bag_index": 4,
+              "file": "bag4-seed279103.txt",
+              "sha256": "24703caca6ce5b7fe63b0a999a3d8ec5c69980e73f5d38a115e7a6bd2954c5e6",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279103.txt",
+              "S3_VersionId": "ldsAplYGTXZPp3vkPCPJMj5zr2loDE60"
+            },
+            {
+              "bag_index": 5,
+              "file": "bag5-seed279103.txt",
+              "sha256": "6eb83ed8a95cdae48ed7be2eab2c4625bf0dd1e45d196f480a3637d37135650e",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279103.txt",
+              "S3_VersionId": "O8g3OYzgmPSnWBN7lyWWQv69qMIdM0z3"
+            },
+            {
+              "bag_index": 6,
+              "file": "bag6-seed279103.txt",
+              "sha256": "52864b9e17a31a9f163b40bfd9cc6fa9ca5d50a4669ebc275413ad786b6ebdad",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279103.txt",
+              "S3_VersionId": "JyjfIPbD0uwPI35D6pSBPCwSYz9IVgSR"
+            },
+            {
+              "bag_index": 7,
+              "file": "bag7-seed279103.txt",
+              "sha256": "70fbe5affae4c536360885318922b8a4ca69bba34fd89d6d6858177aeea8b0b2",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279103.txt",
+              "S3_VersionId": "D0xX6xi7OeXo4ZRDvymdJGQ8Aa.SJRcf"
+            }
+          ]
+        }
+      ]
+    },
+    "CLIP": {
+      "deterministic_single_policy": false,
+      "exploratory": true,
+      "member_group": "clip_bag_switch_members",
+      "member_seeds": [
+        279101,
+        279102,
+        279103
+      ],
+      "refit_seeds": [
+        287101,
+        287102,
+        287103
+      ],
+      "clip_floor": -1.0,
+      "member_strict_margins": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "q_fixed_per_seed": 6,
+      "aggregation_rule": "3-seed BAG_SWITCH (q=6) refit on DL-Train with per-context training utility clipped at -1.0 so -2.0 invalid picks do not dominate inner hyperparameter selection loss.",
+      "member_models": [
+        {
+          "seed": 279101,
+          "selected_lr": 0.03,
+          "selected_n_estimators": 200,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "clip-ranker-seed279101.txt",
+            "sha256": "2dcecbe56f3f985e5a8e74082888b7d1c3e8b5cbf0194dfa54fb9226ea6c77c4",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279101.txt",
+            "S3_VersionId": "8_GYquoRWtQu_TXxLxPZP2Hc54apAB53"
+          },
+          "veto": {
+            "file": "clip-veto-seed279101.txt",
+            "sha256": "3c26deb747046bbe3fcba5cbe8a37db7c2abb4a0d734af6d3a5a159a8905b485",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279101.txt",
+            "S3_VersionId": "wCuM1dMNnpECk_BfX8Dqv.oECr7BV79z"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "clip-bag0-seed279101.txt",
+              "sha256": "72d40f8a08d8755e5accfe453716cfeb911122bb3a9b293df8c26c02fb5a6117",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279101.txt",
+              "S3_VersionId": "m9c1UL5sKYeS.5yPTwZeQg7_naQXwQZk"
+            },
+            {
+              "bag_index": 1,
+              "file": "clip-bag1-seed279101.txt",
+              "sha256": "e6ba3f7c5ed5058b3235099f45d76bdf493a37a1911c1dced19c6bb1a23176f6",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279101.txt",
+              "S3_VersionId": "Cw04ctkibs8ZaliUqX3ATfQhjyM9oF5k"
+            },
+            {
+              "bag_index": 2,
+              "file": "clip-bag2-seed279101.txt",
+              "sha256": "1806415b9918fe1264280647fd5c0a6eaab21d9598133b550b3df8e9c29de37b",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279101.txt",
+              "S3_VersionId": "aYiWJ97uekcRG5xVpH_0KoGi8P3pctlF"
+            },
+            {
+              "bag_index": 3,
+              "file": "clip-bag3-seed279101.txt",
+              "sha256": "55840fbdeb9b62aaa8f2cbbc8231ef1bffe8172fd3897927fdddf0d3ffa222d5",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279101.txt",
+              "S3_VersionId": "MeM1h8EKiO0D9eybfP8DwI8NoTQ9aE07"
+            },
+            {
+              "bag_index": 4,
+              "file": "clip-bag4-seed279101.txt",
+              "sha256": "ecedba62f57dcc11fa95f93e49664bf1487f18d8fb9043c21de03be3f9bae1a2",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279101.txt",
+              "S3_VersionId": "Bb5QH6xrK5hNujlcsgjDzeQEJl868dFq"
+            },
+            {
+              "bag_index": 5,
+              "file": "clip-bag5-seed279101.txt",
+              "sha256": "c9f35771c070607186e98bad6c171b4ade67d6f03673e21c9a93adc1ab1fb7cb",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279101.txt",
+              "S3_VersionId": "BR3js39tTfdzAlc0zk2Gk1Uahg8rw9IF"
+            },
+            {
+              "bag_index": 6,
+              "file": "clip-bag6-seed279101.txt",
+              "sha256": "cca5ca01121a32cdfcd73253c87c02c5e05258ef082de40e508736f8e98836e5",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279101.txt",
+              "S3_VersionId": "yShg.LuE7KEjz1Gm1ZplooIxhkfoXm8V"
+            },
+            {
+              "bag_index": 7,
+              "file": "clip-bag7-seed279101.txt",
+              "sha256": "94e59330bef5eac6b36dba515086bbc7fe0903e4e758aa20693bc5aafe47ae57",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279101.txt",
+              "S3_VersionId": "f2m7ad4YYT68gVQwPTO7gpBSLOJK.jyH"
+            }
+          ]
+        },
+        {
+          "seed": 279102,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "clip-ranker-seed279102.txt",
+            "sha256": "c048665ae78b870b865a827ba20844dbbbd646768483cb4ba7c11d62e6d82881",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279102.txt",
+            "S3_VersionId": "Phj5v2FfyEVd3QySu9lQHdoIQg0bWtmh"
+          },
+          "veto": {
+            "file": "clip-veto-seed279102.txt",
+            "sha256": "3039a68ada31bb72a5d1067c3bcda31196ef90817424f69eebb11c1ef3a57553",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279102.txt",
+            "S3_VersionId": "cYapai_yxAWTiHFmMslmIiCYfAdgoSME"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "clip-bag0-seed279102.txt",
+              "sha256": "abb9ee3635b1b5344cb6a55a351a6442280a5cba21f1746e1644b2d9e7789126",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279102.txt",
+              "S3_VersionId": "xR1I0vHnx5xsgMrtqtIjgmOHC5Ediilh"
+            },
+            {
+              "bag_index": 1,
+              "file": "clip-bag1-seed279102.txt",
+              "sha256": "3db21b71b0451391d4473f86060f858e5f65653e2718cf82a46f702cd0a6199a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279102.txt",
+              "S3_VersionId": "FLNVnwQ0cThXUjbZHaYwMuECD9P4CyyU"
+            },
+            {
+              "bag_index": 2,
+              "file": "clip-bag2-seed279102.txt",
+              "sha256": "7712b2683da1fc4d40ef31366d0f8b5c04bc5c3a285c4b02159c2457bcf5a665",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279102.txt",
+              "S3_VersionId": "oPBsI0P3CyhvMYVWVrI.O74K4uz.RWoF"
+            },
+            {
+              "bag_index": 3,
+              "file": "clip-bag3-seed279102.txt",
+              "sha256": "fb338aa01475febfbf1634add15f3c0387a69b695e8c53694013e6313dfe48bd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279102.txt",
+              "S3_VersionId": "t408qCSlGcYQilVF.gNSS3PY1JVnEU8w"
+            },
+            {
+              "bag_index": 4,
+              "file": "clip-bag4-seed279102.txt",
+              "sha256": "a61d8f25919d055e545aee0f366c0503b0a38034eaa6468c95fca072b35db727",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279102.txt",
+              "S3_VersionId": "iWaUYlrIkucBZzRl4bIS7uzhjw5ntRl1"
+            },
+            {
+              "bag_index": 5,
+              "file": "clip-bag5-seed279102.txt",
+              "sha256": "b51e001d7d15c8af8bc0cfcb3e43160c37ff898b730cc318e4824744c6c1c140",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279102.txt",
+              "S3_VersionId": "vLj8.7nBkGktRVmbPrH2ON8jYLpwgS4K"
+            },
+            {
+              "bag_index": 6,
+              "file": "clip-bag6-seed279102.txt",
+              "sha256": "4d82e8de8a5f0288592dc03bad8743a1636117798723d451a3de486c15525c60",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279102.txt",
+              "S3_VersionId": "nW9QDaFgS7ZebiRdruksxi4rMoI8H17y"
+            },
+            {
+              "bag_index": 7,
+              "file": "clip-bag7-seed279102.txt",
+              "sha256": "874b3c5d3ebb43e1b6a9bf2b8ac6206f91d97ed83ec94bfb35454e117a6b1a44",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279102.txt",
+              "S3_VersionId": "lq08ioaVL5HNxj9q3N8xEKujN3b_DWwB"
+            }
+          ]
+        },
+        {
+          "seed": 279103,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 100,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "clip-ranker-seed279103.txt",
+            "sha256": "4b5c94de6795ae18bea034602418029617a3638bf3a16d8364fb243fb4d57d24",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279103.txt",
+            "S3_VersionId": "hZaQv7vbkb9HWquU.6EeCRmsEFn1UDRp"
+          },
+          "veto": {
+            "file": "clip-veto-seed279103.txt",
+            "sha256": "882d8b360166c79e942a3254917f3a345c0292c84fe0c1912c9c418d996c9f16",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279103.txt",
+            "S3_VersionId": "4f_fqwEKiPuHmbaWZAV5uUQg1w19aXHE"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "clip-bag0-seed279103.txt",
+              "sha256": "1d2dd9d3bcb4bbe612ad8dedc7e97d1f364257a3406f443e3a148fac2af9b4e0",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279103.txt",
+              "S3_VersionId": "lwu4_dyyUnbvKI_rZ.IsxDzGJOP_oLVR"
+            },
+            {
+              "bag_index": 1,
+              "file": "clip-bag1-seed279103.txt",
+              "sha256": "930776605fc7d67679bd50442e1821931fcf8e3c7b0dfcb2fc5ed120871dc379",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279103.txt",
+              "S3_VersionId": "2agtUIroZKDUyurBJhmJFaHm.3pGkUaF"
+            },
+            {
+              "bag_index": 2,
+              "file": "clip-bag2-seed279103.txt",
+              "sha256": "9f10dc7c5a47399282e86d52d9d463a713b79fda71102d1b2dd577fb3d83b09c",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279103.txt",
+              "S3_VersionId": "SvJ1wA5G1pIa729wHlogJTTf5MFxv2xR"
+            },
+            {
+              "bag_index": 3,
+              "file": "clip-bag3-seed279103.txt",
+              "sha256": "445e1ff19a239c7925099beb6642c67858b68e510a4e4e9cb25d618cf8f03701",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279103.txt",
+              "S3_VersionId": "_HQDiDpbdgc1piHO8OCNXGj1xWTY2fs8"
+            },
+            {
+              "bag_index": 4,
+              "file": "clip-bag4-seed279103.txt",
+              "sha256": "24703caca6ce5b7fe63b0a999a3d8ec5c69980e73f5d38a115e7a6bd2954c5e6",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279103.txt",
+              "S3_VersionId": "kpHdM11uALXPd6hQBCQH56Uc2BkTXMiE"
+            },
+            {
+              "bag_index": 5,
+              "file": "clip-bag5-seed279103.txt",
+              "sha256": "6eb83ed8a95cdae48ed7be2eab2c4625bf0dd1e45d196f480a3637d37135650e",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279103.txt",
+              "S3_VersionId": "gJBC.g.WQt8Spr9UnDtp2v_g7msu6ukX"
+            },
+            {
+              "bag_index": 6,
+              "file": "clip-bag6-seed279103.txt",
+              "sha256": "52864b9e17a31a9f163b40bfd9cc6fa9ca5d50a4669ebc275413ad786b6ebdad",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279103.txt",
+              "S3_VersionId": "WA_WbDowLys4TJx5a85oTy2KyIDz.sjK"
+            },
+            {
+              "bag_index": 7,
+              "file": "clip-bag7-seed279103.txt",
+              "sha256": "70fbe5affae4c536360885318922b8a4ca69bba34fd89d6d6858177aeea8b0b2",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279103.txt",
+              "S3_VersionId": "eaPxqUpJT2OmdzOblJKxITErSeYQd25J"
+            }
+          ]
+        }
+      ]
+    },
+    "CLIP_ENS_VOTE2": {
+      "deterministic_single_policy": true,
+      "exploratory": true,
+      "member_group": "clip_bag_switch_members",
+      "member_seeds": [
+        279101,
+        279102,
+        279103
+      ],
+      "clip_floor": -1.0,
+      "member_strict_margins": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "min_agreeing_seeds": 2,
+      "q_fixed_per_seed": 6,
+      "aggregation_rule": "Majority (>=2 of 3) candidate-agreement ensemble over the 3 CLIP BAG_SWITCH (q=6) policies.",
+      "member_models": [
+        {
+          "seed": 279101,
+          "selected_lr": 0.03,
+          "selected_n_estimators": 200,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "clip-ranker-seed279101.txt",
+            "sha256": "2dcecbe56f3f985e5a8e74082888b7d1c3e8b5cbf0194dfa54fb9226ea6c77c4",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279101.txt",
+            "S3_VersionId": "8_GYquoRWtQu_TXxLxPZP2Hc54apAB53"
+          },
+          "veto": {
+            "file": "clip-veto-seed279101.txt",
+            "sha256": "3c26deb747046bbe3fcba5cbe8a37db7c2abb4a0d734af6d3a5a159a8905b485",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279101.txt",
+            "S3_VersionId": "wCuM1dMNnpECk_BfX8Dqv.oECr7BV79z"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "clip-bag0-seed279101.txt",
+              "sha256": "72d40f8a08d8755e5accfe453716cfeb911122bb3a9b293df8c26c02fb5a6117",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279101.txt",
+              "S3_VersionId": "m9c1UL5sKYeS.5yPTwZeQg7_naQXwQZk"
+            },
+            {
+              "bag_index": 1,
+              "file": "clip-bag1-seed279101.txt",
+              "sha256": "e6ba3f7c5ed5058b3235099f45d76bdf493a37a1911c1dced19c6bb1a23176f6",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279101.txt",
+              "S3_VersionId": "Cw04ctkibs8ZaliUqX3ATfQhjyM9oF5k"
+            },
+            {
+              "bag_index": 2,
+              "file": "clip-bag2-seed279101.txt",
+              "sha256": "1806415b9918fe1264280647fd5c0a6eaab21d9598133b550b3df8e9c29de37b",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279101.txt",
+              "S3_VersionId": "aYiWJ97uekcRG5xVpH_0KoGi8P3pctlF"
+            },
+            {
+              "bag_index": 3,
+              "file": "clip-bag3-seed279101.txt",
+              "sha256": "55840fbdeb9b62aaa8f2cbbc8231ef1bffe8172fd3897927fdddf0d3ffa222d5",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279101.txt",
+              "S3_VersionId": "MeM1h8EKiO0D9eybfP8DwI8NoTQ9aE07"
+            },
+            {
+              "bag_index": 4,
+              "file": "clip-bag4-seed279101.txt",
+              "sha256": "ecedba62f57dcc11fa95f93e49664bf1487f18d8fb9043c21de03be3f9bae1a2",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279101.txt",
+              "S3_VersionId": "Bb5QH6xrK5hNujlcsgjDzeQEJl868dFq"
+            },
+            {
+              "bag_index": 5,
+              "file": "clip-bag5-seed279101.txt",
+              "sha256": "c9f35771c070607186e98bad6c171b4ade67d6f03673e21c9a93adc1ab1fb7cb",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279101.txt",
+              "S3_VersionId": "BR3js39tTfdzAlc0zk2Gk1Uahg8rw9IF"
+            },
+            {
+              "bag_index": 6,
+              "file": "clip-bag6-seed279101.txt",
+              "sha256": "cca5ca01121a32cdfcd73253c87c02c5e05258ef082de40e508736f8e98836e5",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279101.txt",
+              "S3_VersionId": "yShg.LuE7KEjz1Gm1ZplooIxhkfoXm8V"
+            },
+            {
+              "bag_index": 7,
+              "file": "clip-bag7-seed279101.txt",
+              "sha256": "94e59330bef5eac6b36dba515086bbc7fe0903e4e758aa20693bc5aafe47ae57",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279101.txt",
+              "S3_VersionId": "f2m7ad4YYT68gVQwPTO7gpBSLOJK.jyH"
+            }
+          ]
+        },
+        {
+          "seed": 279102,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 50,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "clip-ranker-seed279102.txt",
+            "sha256": "c048665ae78b870b865a827ba20844dbbbd646768483cb4ba7c11d62e6d82881",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279102.txt",
+            "S3_VersionId": "Phj5v2FfyEVd3QySu9lQHdoIQg0bWtmh"
+          },
+          "veto": {
+            "file": "clip-veto-seed279102.txt",
+            "sha256": "3039a68ada31bb72a5d1067c3bcda31196ef90817424f69eebb11c1ef3a57553",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279102.txt",
+            "S3_VersionId": "cYapai_yxAWTiHFmMslmIiCYfAdgoSME"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "clip-bag0-seed279102.txt",
+              "sha256": "abb9ee3635b1b5344cb6a55a351a6442280a5cba21f1746e1644b2d9e7789126",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279102.txt",
+              "S3_VersionId": "xR1I0vHnx5xsgMrtqtIjgmOHC5Ediilh"
+            },
+            {
+              "bag_index": 1,
+              "file": "clip-bag1-seed279102.txt",
+              "sha256": "3db21b71b0451391d4473f86060f858e5f65653e2718cf82a46f702cd0a6199a",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279102.txt",
+              "S3_VersionId": "FLNVnwQ0cThXUjbZHaYwMuECD9P4CyyU"
+            },
+            {
+              "bag_index": 2,
+              "file": "clip-bag2-seed279102.txt",
+              "sha256": "7712b2683da1fc4d40ef31366d0f8b5c04bc5c3a285c4b02159c2457bcf5a665",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279102.txt",
+              "S3_VersionId": "oPBsI0P3CyhvMYVWVrI.O74K4uz.RWoF"
+            },
+            {
+              "bag_index": 3,
+              "file": "clip-bag3-seed279102.txt",
+              "sha256": "fb338aa01475febfbf1634add15f3c0387a69b695e8c53694013e6313dfe48bd",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279102.txt",
+              "S3_VersionId": "t408qCSlGcYQilVF.gNSS3PY1JVnEU8w"
+            },
+            {
+              "bag_index": 4,
+              "file": "clip-bag4-seed279102.txt",
+              "sha256": "a61d8f25919d055e545aee0f366c0503b0a38034eaa6468c95fca072b35db727",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279102.txt",
+              "S3_VersionId": "iWaUYlrIkucBZzRl4bIS7uzhjw5ntRl1"
+            },
+            {
+              "bag_index": 5,
+              "file": "clip-bag5-seed279102.txt",
+              "sha256": "b51e001d7d15c8af8bc0cfcb3e43160c37ff898b730cc318e4824744c6c1c140",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279102.txt",
+              "S3_VersionId": "vLj8.7nBkGktRVmbPrH2ON8jYLpwgS4K"
+            },
+            {
+              "bag_index": 6,
+              "file": "clip-bag6-seed279102.txt",
+              "sha256": "4d82e8de8a5f0288592dc03bad8743a1636117798723d451a3de486c15525c60",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279102.txt",
+              "S3_VersionId": "nW9QDaFgS7ZebiRdruksxi4rMoI8H17y"
+            },
+            {
+              "bag_index": 7,
+              "file": "clip-bag7-seed279102.txt",
+              "sha256": "874b3c5d3ebb43e1b6a9bf2b8ac6206f91d97ed83ec94bfb35454e117a6b1a44",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279102.txt",
+              "S3_VersionId": "lq08ioaVL5HNxj9q3N8xEKujN3b_DWwB"
+            }
+          ]
+        },
+        {
+          "seed": 279103,
+          "selected_lr": 0.05,
+          "selected_n_estimators": 100,
+          "strict_margin": 0.1,
+          "q_fixed": 6,
+          "ranker": {
+            "file": "clip-ranker-seed279103.txt",
+            "sha256": "4b5c94de6795ae18bea034602418029617a3638bf3a16d8364fb243fb4d57d24",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279103.txt",
+            "S3_VersionId": "hZaQv7vbkb9HWquU.6EeCRmsEFn1UDRp"
+          },
+          "veto": {
+            "file": "clip-veto-seed279103.txt",
+            "sha256": "882d8b360166c79e942a3254917f3a345c0292c84fe0c1912c9c418d996c9f16",
+            "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279103.txt",
+            "S3_VersionId": "4f_fqwEKiPuHmbaWZAV5uUQg1w19aXHE"
+          },
+          "bags": [
+            {
+              "bag_index": 0,
+              "file": "clip-bag0-seed279103.txt",
+              "sha256": "1d2dd9d3bcb4bbe612ad8dedc7e97d1f364257a3406f443e3a148fac2af9b4e0",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279103.txt",
+              "S3_VersionId": "lwu4_dyyUnbvKI_rZ.IsxDzGJOP_oLVR"
+            },
+            {
+              "bag_index": 1,
+              "file": "clip-bag1-seed279103.txt",
+              "sha256": "930776605fc7d67679bd50442e1821931fcf8e3c7b0dfcb2fc5ed120871dc379",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279103.txt",
+              "S3_VersionId": "2agtUIroZKDUyurBJhmJFaHm.3pGkUaF"
+            },
+            {
+              "bag_index": 2,
+              "file": "clip-bag2-seed279103.txt",
+              "sha256": "9f10dc7c5a47399282e86d52d9d463a713b79fda71102d1b2dd577fb3d83b09c",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279103.txt",
+              "S3_VersionId": "SvJ1wA5G1pIa729wHlogJTTf5MFxv2xR"
+            },
+            {
+              "bag_index": 3,
+              "file": "clip-bag3-seed279103.txt",
+              "sha256": "445e1ff19a239c7925099beb6642c67858b68e510a4e4e9cb25d618cf8f03701",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279103.txt",
+              "S3_VersionId": "_HQDiDpbdgc1piHO8OCNXGj1xWTY2fs8"
+            },
+            {
+              "bag_index": 4,
+              "file": "clip-bag4-seed279103.txt",
+              "sha256": "24703caca6ce5b7fe63b0a999a3d8ec5c69980e73f5d38a115e7a6bd2954c5e6",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279103.txt",
+              "S3_VersionId": "kpHdM11uALXPd6hQBCQH56Uc2BkTXMiE"
+            },
+            {
+              "bag_index": 5,
+              "file": "clip-bag5-seed279103.txt",
+              "sha256": "6eb83ed8a95cdae48ed7be2eab2c4625bf0dd1e45d196f480a3637d37135650e",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279103.txt",
+              "S3_VersionId": "gJBC.g.WQt8Spr9UnDtp2v_g7msu6ukX"
+            },
+            {
+              "bag_index": 6,
+              "file": "clip-bag6-seed279103.txt",
+              "sha256": "52864b9e17a31a9f163b40bfd9cc6fa9ca5d50a4669ebc275413ad786b6ebdad",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279103.txt",
+              "S3_VersionId": "WA_WbDowLys4TJx5a85oTy2KyIDz.sjK"
+            },
+            {
+              "bag_index": 7,
+              "file": "clip-bag7-seed279103.txt",
+              "sha256": "70fbe5affae4c536360885318922b8a4ca69bba34fd89d6d6858177aeea8b0b2",
+              "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279103.txt",
+              "S3_VersionId": "eaPxqUpJT2OmdzOblJKxITErSeYQd25J"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "h284_bag_switch_members": [
+    {
+      "seed": 279101,
+      "selected_lr": 0.03,
+      "selected_n_estimators": 50,
+      "raw_margin": 0.02,
+      "strict_margin": 0.02,
+      "strict_admitted": true,
+      "selected_tau": 0.1,
+      "n_bags": 8,
+      "q_fixed": 6,
+      "q_selected": 6,
+      "ranker": {
+        "file": "ranker-seed279101.txt",
+        "sha256": "2dcecbe56f3f985e5a8e74082888b7d1c3e8b5cbf0194dfa54fb9226ea6c77c4",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "h284_S3_VersionId": "WEcQw3NB2dUpFCUtSsWLNMYqQqTugky0",
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279101.txt",
+        "S3_VersionId": "EVSD69q4WAvJKWGABL9o2ABVBIxo8wHv"
+      },
+      "veto": {
+        "file": "veto-seed279101.txt",
+        "sha256": "3c26deb747046bbe3fcba5cbe8a37db7c2abb4a0d734af6d3a5a159a8905b485",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "h284_S3_VersionId": "y_FrwdBuPTWLHfeU6zn1Nli1eucdSkNq",
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279101.txt",
+        "S3_VersionId": "UdDUxnZxNXTZRD5ThDrKo9b2qEh3gla7"
+      },
+      "bags": [
+        {
+          "file": "bag0-seed279101.txt",
+          "sha256": "3c3cfd67219ace7842e5cb99270002e7c42bb09a2d011fe86ff1b557bf431cc3",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 0,
+          "h284_S3_VersionId": "H2Gu1vUe1g7smo2GEsQclEyc9x9Om8tH",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279101.txt",
+          "S3_VersionId": "6O3mljGU4hDJm3xtgI6OCJxPJZ5f1ujV"
+        },
+        {
+          "file": "bag1-seed279101.txt",
+          "sha256": "892411fb47f039c6a5b97d2362e2b6375e0d4ffe094a9fe7f040a22febcd8360",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 1,
+          "h284_S3_VersionId": "cL4151wvxwXe9Y0NnHiv8mxoAPGOP_4G",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279101.txt",
+          "S3_VersionId": "TlCm5PQjCyfLnXp4iDYP3LBFyaZN17fW"
+        },
+        {
+          "file": "bag2-seed279101.txt",
+          "sha256": "e0337c9da45548810d5077a05dbee0bf86e264bafd6bf410dd205f3b9e314d72",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 2,
+          "h284_S3_VersionId": "zNFiidWz67y6kzh7fId_PZWZM_mnoT6R",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279101.txt",
+          "S3_VersionId": "HyzP7VVosEbvbEXcKjekxdPkmGmUMcb7"
+        },
+        {
+          "file": "bag3-seed279101.txt",
+          "sha256": "4cabc83a031136c8bc1b632dc77f559d5f6d2747674d29eaf45ac25f27aa1806",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 3,
+          "h284_S3_VersionId": "Cvt3W4DEpzWLfOhDqJ30dYvzINs7DoaI",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279101.txt",
+          "S3_VersionId": "OcdTejgrHWF5LXKff6aM6siL7cg6syX8"
+        },
+        {
+          "file": "bag4-seed279101.txt",
+          "sha256": "00a0197675239f28dffd513e2632646a3094385a01c5331b1ea86e0ef42620f1",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 4,
+          "h284_S3_VersionId": "xwIQvUS6mpp9AfJj3Zx9eBueM9pcJq6A",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279101.txt",
+          "S3_VersionId": "XxS7F7.m7w.jhyjWNJzINa06uQWJe1ko"
+        },
+        {
+          "file": "bag5-seed279101.txt",
+          "sha256": "6742d3e1abd346edf42090fc4b145523fe8de3584d67671ff680cd5859f7138a",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 5,
+          "h284_S3_VersionId": "VNuL4ViVKV2UMoRVTSmwvkdnFp2r8XxP",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279101.txt",
+          "S3_VersionId": "CGJ_uwNAwF5URJpZifGttjiSu76rBYnl"
+        },
+        {
+          "file": "bag6-seed279101.txt",
+          "sha256": "76ab3e9257d1e6f0d5c6c84d45facba12582bf11dfdfe0813d176c75ef654b05",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 6,
+          "h284_S3_VersionId": "JK.GTrXStSVZhtNdyTcWDTqE0UDPgjF6",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279101.txt",
+          "S3_VersionId": "uo4cODwPPAFbbjOqaJsdjWMrwvpdCipR"
+        },
+        {
+          "file": "bag7-seed279101.txt",
+          "sha256": "124a42c3f7501e3642324de641f3534a49eea0a54cbf255947a03fcfc2486bcd",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 7,
+          "h284_S3_VersionId": "W21.Yw.5mueW4VneP9WYTacisGlJIEVH",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279101.txt",
+          "S3_VersionId": "4WP8BRbXd0irGRXrzXiV3LmdUbfkVuxr"
+        }
+      ]
+    },
+    {
+      "seed": 279102,
+      "selected_lr": 0.05,
+      "selected_n_estimators": 50,
+      "raw_margin": 0.1,
+      "strict_margin": 0.1,
+      "strict_admitted": true,
+      "selected_tau": 0.1,
+      "n_bags": 8,
+      "q_fixed": 6,
+      "q_selected": 5,
+      "ranker": {
+        "file": "ranker-seed279102.txt",
+        "sha256": "c048665ae78b870b865a827ba20844dbbbd646768483cb4ba7c11d62e6d82881",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "h284_S3_VersionId": "FH4iAWCFfRNdmwh2SbKWiiKkLCAIfQyB",
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279102.txt",
+        "S3_VersionId": "ABZALCPY5U3aK4T103PvWXPiF4jjtjbl"
+      },
+      "veto": {
+        "file": "veto-seed279102.txt",
+        "sha256": "3039a68ada31bb72a5d1067c3bcda31196ef90817424f69eebb11c1ef3a57553",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "h284_S3_VersionId": "0jVsW1uuwFBf7W_x8mkULfEWpBYQYkVd",
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279102.txt",
+        "S3_VersionId": "YjfOeRLzLFCuvpRuRl3KGa6_PAFGHqOP"
+      },
+      "bags": [
+        {
+          "file": "bag0-seed279102.txt",
+          "sha256": "abb9ee3635b1b5344cb6a55a351a6442280a5cba21f1746e1644b2d9e7789126",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 0,
+          "h284_S3_VersionId": "I_6WLJFY__dQL9OdptHnBW_9tnezzTVF",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279102.txt",
+          "S3_VersionId": "1TYdPsKssCn4zYS4GekQ8m7TmQBg4cyu"
+        },
+        {
+          "file": "bag1-seed279102.txt",
+          "sha256": "3db21b71b0451391d4473f86060f858e5f65653e2718cf82a46f702cd0a6199a",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 1,
+          "h284_S3_VersionId": "6F5cvTUlXTfRgTvhpMldHg.k3a9aBNo_",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279102.txt",
+          "S3_VersionId": "hIsoJ_h8yb4l0qDfyxZVAEJuntTyXt8j"
+        },
+        {
+          "file": "bag2-seed279102.txt",
+          "sha256": "7712b2683da1fc4d40ef31366d0f8b5c04bc5c3a285c4b02159c2457bcf5a665",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 2,
+          "h284_S3_VersionId": "3jbV2y_C6YPqTXaDQDNVy6HXntMfKpLd",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279102.txt",
+          "S3_VersionId": "SMOE7z8UJNYqWdxbIV0n4hnBKEZ7tvfQ"
+        },
+        {
+          "file": "bag3-seed279102.txt",
+          "sha256": "fb338aa01475febfbf1634add15f3c0387a69b695e8c53694013e6313dfe48bd",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 3,
+          "h284_S3_VersionId": "qbDkTi.AZQRPpm4t2Fq69ODYSgMQC3A9",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279102.txt",
+          "S3_VersionId": "olZURBbaCMXlVufCAmNzTLFd6yD75oV_"
+        },
+        {
+          "file": "bag4-seed279102.txt",
+          "sha256": "a61d8f25919d055e545aee0f366c0503b0a38034eaa6468c95fca072b35db727",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 4,
+          "h284_S3_VersionId": "jBDkQ6h_eqCwljyQHn8e7cGkYEq0HqO2",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279102.txt",
+          "S3_VersionId": "pJCPHyyawfyaMsY1e61ch5iuKojs8xuv"
+        },
+        {
+          "file": "bag5-seed279102.txt",
+          "sha256": "b51e001d7d15c8af8bc0cfcb3e43160c37ff898b730cc318e4824744c6c1c140",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 5,
+          "h284_S3_VersionId": "Q6z4bJauJcsOlu0hdnwdNOMhOw4AKEWq",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279102.txt",
+          "S3_VersionId": "y_5gPSoT0xg4IxEqwTxoq.6WrTZtuY9T"
+        },
+        {
+          "file": "bag6-seed279102.txt",
+          "sha256": "4d82e8de8a5f0288592dc03bad8743a1636117798723d451a3de486c15525c60",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 6,
+          "h284_S3_VersionId": "UfiKpcaGf41hhDkG2qfZR5QNdW2Nqyev",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279102.txt",
+          "S3_VersionId": "TpVncjW9lhJKyROn_h_LYyVf5QLx4lJi"
+        },
+        {
+          "file": "bag7-seed279102.txt",
+          "sha256": "874b3c5d3ebb43e1b6a9bf2b8ac6206f91d97ed83ec94bfb35454e117a6b1a44",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 7,
+          "h284_S3_VersionId": "EukFTfUUgzDQ9G6XcxLOMFXupaXGjb_4",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279102.txt",
+          "S3_VersionId": "zUoOS4wvoKoXm_iqhYUXVWAVFX.WNbXF"
+        }
+      ]
+    },
+    {
+      "seed": 279103,
+      "selected_lr": 0.05,
+      "selected_n_estimators": 100,
+      "raw_margin": 0.1,
+      "strict_margin": 0.1,
+      "strict_admitted": true,
+      "selected_tau": 0.1,
+      "n_bags": 8,
+      "q_fixed": 6,
+      "q_selected": 6,
+      "ranker": {
+        "file": "ranker-seed279103.txt",
+        "sha256": "4b5c94de6795ae18bea034602418029617a3638bf3a16d8364fb243fb4d57d24",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "h284_S3_VersionId": "Usj49zDv7ETn9nuNHZDgAoIFXQbi9tJQ",
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/ranker-seed279103.txt",
+        "S3_VersionId": "vQO.uJls9AqnZH2fuZAbMuAIX4Ab0iL1"
+      },
+      "veto": {
+        "file": "veto-seed279103.txt",
+        "sha256": "882d8b360166c79e942a3254917f3a345c0292c84fe0c1912c9c418d996c9f16",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "h284_S3_VersionId": ".OW6QH5dIC_7kjm_BZ1DzvUKuRF7gKyq",
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/veto-seed279103.txt",
+        "S3_VersionId": "4xYI5gFbH1lP4agWWilGXayhf5kFdyIp"
+      },
+      "bags": [
+        {
+          "file": "bag0-seed279103.txt",
+          "sha256": "1d2dd9d3bcb4bbe612ad8dedc7e97d1f364257a3406f443e3a148fac2af9b4e0",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 0,
+          "h284_S3_VersionId": "9lgGS9gthe9zrWtDvpraspUEOTkTjLiK",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag0-seed279103.txt",
+          "S3_VersionId": "BNielNZlOnfUG.LrY_oXAqXXz693su7t"
+        },
+        {
+          "file": "bag1-seed279103.txt",
+          "sha256": "930776605fc7d67679bd50442e1821931fcf8e3c7b0dfcb2fc5ed120871dc379",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 1,
+          "h284_S3_VersionId": "JtaLdS_vxUNo4U3PWRxCCPX4E4UlIdsk",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag1-seed279103.txt",
+          "S3_VersionId": "ECTMwES4t8uFdeITYWkyRWO8tYTGoKe4"
+        },
+        {
+          "file": "bag2-seed279103.txt",
+          "sha256": "9f10dc7c5a47399282e86d52d9d463a713b79fda71102d1b2dd577fb3d83b09c",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 2,
+          "h284_S3_VersionId": "zbdkwv8e9o5PAxjzdppZxVmWuTPWc6py",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag2-seed279103.txt",
+          "S3_VersionId": "q_q8YLWoB06kzZZwZiUtI5PhyHpdS48d"
+        },
+        {
+          "file": "bag3-seed279103.txt",
+          "sha256": "445e1ff19a239c7925099beb6642c67858b68e510a4e4e9cb25d618cf8f03701",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 3,
+          "h284_S3_VersionId": "mKl7qPl8TjT.zlCb.yvHUpqJK._5EOEJ",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag3-seed279103.txt",
+          "S3_VersionId": "1u.yFGUFyYrgbrzMxndDP3p9XsJ55goU"
+        },
+        {
+          "file": "bag4-seed279103.txt",
+          "sha256": "24703caca6ce5b7fe63b0a999a3d8ec5c69980e73f5d38a115e7a6bd2954c5e6",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 4,
+          "h284_S3_VersionId": "4Q2r0YMt1ZuS5Ai4mSd1ckqcVV.zGtYi",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag4-seed279103.txt",
+          "S3_VersionId": "ldsAplYGTXZPp3vkPCPJMj5zr2loDE60"
+        },
+        {
+          "file": "bag5-seed279103.txt",
+          "sha256": "6eb83ed8a95cdae48ed7be2eab2c4625bf0dd1e45d196f480a3637d37135650e",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 5,
+          "h284_S3_VersionId": "3G9hFP58y1c3v2p0VIPRsDg.qEhF15W3",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag5-seed279103.txt",
+          "S3_VersionId": "O8g3OYzgmPSnWBN7lyWWQv69qMIdM0z3"
+        },
+        {
+          "file": "bag6-seed279103.txt",
+          "sha256": "52864b9e17a31a9f163b40bfd9cc6fa9ca5d50a4669ebc275413ad786b6ebdad",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 6,
+          "h284_S3_VersionId": "6X0xzleJvVr9saiQWJRy2qUn7TL34o5r",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag6-seed279103.txt",
+          "S3_VersionId": "JyjfIPbD0uwPI35D6pSBPCwSYz9IVgSR"
+        },
+        {
+          "file": "bag7-seed279103.txt",
+          "sha256": "70fbe5affae4c536360885318922b8a4ca69bba34fd89d6d6858177aeea8b0b2",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 7,
+          "h284_S3_VersionId": "6QmgV4zyh0seI5v_.Cw53NFU3Ki8GP5m",
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/bag7-seed279103.txt",
+          "S3_VersionId": "D0xX6xi7OeXo4ZRDvymdJGQ8Aa.SJRcf"
+        }
+      ]
+    }
+  ],
+  "clip_bag_switch_members": [
+    {
+      "seed": 279101,
+      "refit_seed": 287101,
+      "clip_floor": -1.0,
+      "selected_lr": 0.03,
+      "selected_n_estimators": 200,
+      "raw_margin": 0.1,
+      "strict_margin": 0.1,
+      "strict_admitted": true,
+      "selected_tau": 0.1,
+      "n_bags": 8,
+      "q_fixed": 6,
+      "q_selected": 6,
+      "ranker": {
+        "file": "clip-ranker-seed279101.txt",
+        "sha256": "2dcecbe56f3f985e5a8e74082888b7d1c3e8b5cbf0194dfa54fb9226ea6c77c4",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279101.txt",
+        "S3_VersionId": "8_GYquoRWtQu_TXxLxPZP2Hc54apAB53"
+      },
+      "veto": {
+        "file": "clip-veto-seed279101.txt",
+        "sha256": "3c26deb747046bbe3fcba5cbe8a37db7c2abb4a0d734af6d3a5a159a8905b485",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279101.txt",
+        "S3_VersionId": "wCuM1dMNnpECk_BfX8Dqv.oECr7BV79z"
+      },
+      "bags": [
+        {
+          "file": "clip-bag0-seed279101.txt",
+          "sha256": "72d40f8a08d8755e5accfe453716cfeb911122bb3a9b293df8c26c02fb5a6117",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 0,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279101.txt",
+          "S3_VersionId": "m9c1UL5sKYeS.5yPTwZeQg7_naQXwQZk"
+        },
+        {
+          "file": "clip-bag1-seed279101.txt",
+          "sha256": "e6ba3f7c5ed5058b3235099f45d76bdf493a37a1911c1dced19c6bb1a23176f6",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 1,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279101.txt",
+          "S3_VersionId": "Cw04ctkibs8ZaliUqX3ATfQhjyM9oF5k"
+        },
+        {
+          "file": "clip-bag2-seed279101.txt",
+          "sha256": "1806415b9918fe1264280647fd5c0a6eaab21d9598133b550b3df8e9c29de37b",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 2,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279101.txt",
+          "S3_VersionId": "aYiWJ97uekcRG5xVpH_0KoGi8P3pctlF"
+        },
+        {
+          "file": "clip-bag3-seed279101.txt",
+          "sha256": "55840fbdeb9b62aaa8f2cbbc8231ef1bffe8172fd3897927fdddf0d3ffa222d5",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 3,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279101.txt",
+          "S3_VersionId": "MeM1h8EKiO0D9eybfP8DwI8NoTQ9aE07"
+        },
+        {
+          "file": "clip-bag4-seed279101.txt",
+          "sha256": "ecedba62f57dcc11fa95f93e49664bf1487f18d8fb9043c21de03be3f9bae1a2",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 4,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279101.txt",
+          "S3_VersionId": "Bb5QH6xrK5hNujlcsgjDzeQEJl868dFq"
+        },
+        {
+          "file": "clip-bag5-seed279101.txt",
+          "sha256": "c9f35771c070607186e98bad6c171b4ade67d6f03673e21c9a93adc1ab1fb7cb",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 5,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279101.txt",
+          "S3_VersionId": "BR3js39tTfdzAlc0zk2Gk1Uahg8rw9IF"
+        },
+        {
+          "file": "clip-bag6-seed279101.txt",
+          "sha256": "cca5ca01121a32cdfcd73253c87c02c5e05258ef082de40e508736f8e98836e5",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 6,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279101.txt",
+          "S3_VersionId": "yShg.LuE7KEjz1Gm1ZplooIxhkfoXm8V"
+        },
+        {
+          "file": "clip-bag7-seed279101.txt",
+          "sha256": "94e59330bef5eac6b36dba515086bbc7fe0903e4e758aa20693bc5aafe47ae57",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 7,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279101.txt",
+          "S3_VersionId": "f2m7ad4YYT68gVQwPTO7gpBSLOJK.jyH"
+        }
+      ]
+    },
+    {
+      "seed": 279102,
+      "refit_seed": 287102,
+      "clip_floor": -1.0,
+      "selected_lr": 0.05,
+      "selected_n_estimators": 50,
+      "raw_margin": 0.1,
+      "strict_margin": 0.1,
+      "strict_admitted": true,
+      "selected_tau": 0.1,
+      "n_bags": 8,
+      "q_fixed": 6,
+      "q_selected": 5,
+      "ranker": {
+        "file": "clip-ranker-seed279102.txt",
+        "sha256": "c048665ae78b870b865a827ba20844dbbbd646768483cb4ba7c11d62e6d82881",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279102.txt",
+        "S3_VersionId": "Phj5v2FfyEVd3QySu9lQHdoIQg0bWtmh"
+      },
+      "veto": {
+        "file": "clip-veto-seed279102.txt",
+        "sha256": "3039a68ada31bb72a5d1067c3bcda31196ef90817424f69eebb11c1ef3a57553",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279102.txt",
+        "S3_VersionId": "cYapai_yxAWTiHFmMslmIiCYfAdgoSME"
+      },
+      "bags": [
+        {
+          "file": "clip-bag0-seed279102.txt",
+          "sha256": "abb9ee3635b1b5344cb6a55a351a6442280a5cba21f1746e1644b2d9e7789126",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 0,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279102.txt",
+          "S3_VersionId": "xR1I0vHnx5xsgMrtqtIjgmOHC5Ediilh"
+        },
+        {
+          "file": "clip-bag1-seed279102.txt",
+          "sha256": "3db21b71b0451391d4473f86060f858e5f65653e2718cf82a46f702cd0a6199a",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 1,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279102.txt",
+          "S3_VersionId": "FLNVnwQ0cThXUjbZHaYwMuECD9P4CyyU"
+        },
+        {
+          "file": "clip-bag2-seed279102.txt",
+          "sha256": "7712b2683da1fc4d40ef31366d0f8b5c04bc5c3a285c4b02159c2457bcf5a665",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 2,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279102.txt",
+          "S3_VersionId": "oPBsI0P3CyhvMYVWVrI.O74K4uz.RWoF"
+        },
+        {
+          "file": "clip-bag3-seed279102.txt",
+          "sha256": "fb338aa01475febfbf1634add15f3c0387a69b695e8c53694013e6313dfe48bd",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 3,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279102.txt",
+          "S3_VersionId": "t408qCSlGcYQilVF.gNSS3PY1JVnEU8w"
+        },
+        {
+          "file": "clip-bag4-seed279102.txt",
+          "sha256": "a61d8f25919d055e545aee0f366c0503b0a38034eaa6468c95fca072b35db727",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 4,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279102.txt",
+          "S3_VersionId": "iWaUYlrIkucBZzRl4bIS7uzhjw5ntRl1"
+        },
+        {
+          "file": "clip-bag5-seed279102.txt",
+          "sha256": "b51e001d7d15c8af8bc0cfcb3e43160c37ff898b730cc318e4824744c6c1c140",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 5,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279102.txt",
+          "S3_VersionId": "vLj8.7nBkGktRVmbPrH2ON8jYLpwgS4K"
+        },
+        {
+          "file": "clip-bag6-seed279102.txt",
+          "sha256": "4d82e8de8a5f0288592dc03bad8743a1636117798723d451a3de486c15525c60",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 6,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279102.txt",
+          "S3_VersionId": "nW9QDaFgS7ZebiRdruksxi4rMoI8H17y"
+        },
+        {
+          "file": "clip-bag7-seed279102.txt",
+          "sha256": "874b3c5d3ebb43e1b6a9bf2b8ac6206f91d97ed83ec94bfb35454e117a6b1a44",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 7,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279102.txt",
+          "S3_VersionId": "lq08ioaVL5HNxj9q3N8xEKujN3b_DWwB"
+        }
+      ]
+    },
+    {
+      "seed": 279103,
+      "refit_seed": 287103,
+      "clip_floor": -1.0,
+      "selected_lr": 0.05,
+      "selected_n_estimators": 100,
+      "raw_margin": 0.1,
+      "strict_margin": 0.1,
+      "strict_admitted": true,
+      "selected_tau": 0.1,
+      "n_bags": 8,
+      "q_fixed": 6,
+      "q_selected": 6,
+      "ranker": {
+        "file": "clip-ranker-seed279103.txt",
+        "sha256": "4b5c94de6795ae18bea034602418029617a3638bf3a16d8364fb243fb4d57d24",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-ranker-seed279103.txt",
+        "S3_VersionId": "hZaQv7vbkb9HWquU.6EeCRmsEFn1UDRp"
+      },
+      "veto": {
+        "file": "clip-veto-seed279103.txt",
+        "sha256": "882d8b360166c79e942a3254917f3a345c0292c84fe0c1912c9c418d996c9f16",
+        "num_feature": 568,
+        "reload_bit_exact_on_64_train_contexts": true,
+        "S3_bucket": "veox-jopedime-learning-use2",
+        "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-veto-seed279103.txt",
+        "S3_VersionId": "4f_fqwEKiPuHmbaWZAV5uUQg1w19aXHE"
+      },
+      "bags": [
+        {
+          "file": "clip-bag0-seed279103.txt",
+          "sha256": "1d2dd9d3bcb4bbe612ad8dedc7e97d1f364257a3406f443e3a148fac2af9b4e0",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 0,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag0-seed279103.txt",
+          "S3_VersionId": "lwu4_dyyUnbvKI_rZ.IsxDzGJOP_oLVR"
+        },
+        {
+          "file": "clip-bag1-seed279103.txt",
+          "sha256": "930776605fc7d67679bd50442e1821931fcf8e3c7b0dfcb2fc5ed120871dc379",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 1,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag1-seed279103.txt",
+          "S3_VersionId": "2agtUIroZKDUyurBJhmJFaHm.3pGkUaF"
+        },
+        {
+          "file": "clip-bag2-seed279103.txt",
+          "sha256": "9f10dc7c5a47399282e86d52d9d463a713b79fda71102d1b2dd577fb3d83b09c",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 2,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag2-seed279103.txt",
+          "S3_VersionId": "SvJ1wA5G1pIa729wHlogJTTf5MFxv2xR"
+        },
+        {
+          "file": "clip-bag3-seed279103.txt",
+          "sha256": "445e1ff19a239c7925099beb6642c67858b68e510a4e4e9cb25d618cf8f03701",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 3,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag3-seed279103.txt",
+          "S3_VersionId": "_HQDiDpbdgc1piHO8OCNXGj1xWTY2fs8"
+        },
+        {
+          "file": "clip-bag4-seed279103.txt",
+          "sha256": "24703caca6ce5b7fe63b0a999a3d8ec5c69980e73f5d38a115e7a6bd2954c5e6",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 4,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag4-seed279103.txt",
+          "S3_VersionId": "kpHdM11uALXPd6hQBCQH56Uc2BkTXMiE"
+        },
+        {
+          "file": "clip-bag5-seed279103.txt",
+          "sha256": "6eb83ed8a95cdae48ed7be2eab2c4625bf0dd1e45d196f480a3637d37135650e",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 5,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag5-seed279103.txt",
+          "S3_VersionId": "gJBC.g.WQt8Spr9UnDtp2v_g7msu6ukX"
+        },
+        {
+          "file": "clip-bag6-seed279103.txt",
+          "sha256": "52864b9e17a31a9f163b40bfd9cc6fa9ca5d50a4669ebc275413ad786b6ebdad",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 6,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag6-seed279103.txt",
+          "S3_VersionId": "WA_WbDowLys4TJx5a85oTy2KyIDz.sjK"
+        },
+        {
+          "file": "clip-bag7-seed279103.txt",
+          "sha256": "70fbe5affae4c536360885318922b8a4ca69bba34fd89d6d6858177aeea8b0b2",
+          "num_feature": 568,
+          "reload_bit_exact_on_64_train_contexts": true,
+          "bag_index": 7,
+          "S3_bucket": "veox-jopedime-learning-use2",
+          "S3_key": "experiments/rd_breakthrough_20261030/H287/export/clip-bag7-seed279103.txt",
+          "S3_VersionId": "eaPxqUpJT2OmdzOblJKxITErSeYQd25J"
+        }
+      ]
+    }
+  ],
+  "code_sha256": {
+    "PREREG.md": "fbbfc12413a67f74ba9fd6010e47f65b5aa228afb1db3a6a39b0bf9432c4d029",
+    "analysis_h279.py": "763ad41d0e35fbf97dce4ca46deab5557e414d2c93ed46f729cdabfce30752d6",
+    "analysis_h287.py": "166b336451f270b31bcc7ad68de72012afba2b6622903f13a793bc0992490930",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "ensemble.py": "7def710223138e83cdbe0528444d120cd585ebcdd5676c5195f978bfcf7542b8",
+    "fold_manifest.json": "e89f9aa130cf1529a684c83c2dc8bd1658dbae69a5c1e0af87760ed8d92208f2",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "monitor.py": "fb06dcde664f8eaa0ad9adc7ecd0ba52790f70810156d035733884154c8e2b68",
+    "provenance.json": "80bc359d5733a5303580e22f7adfe481bc7242690cbbb487e48eedb5690be873",
+    "runner.py": "80ab54ab917ef44a79b09179494ccfdb5b0e6cc635de7080168185fec37e0d77",
+    "test_h287.py": "d054fc5967e341b0b902e0646496383427252cef156b4a37e25d949abcf72588",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0"
+  },
+  "source_commit": "48b84209d87f235bc4dd2582cd35c6d8cc566504"
+}

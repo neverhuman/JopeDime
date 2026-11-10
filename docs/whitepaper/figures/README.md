@@ -11,3 +11,5 @@ and content hashes. No data or model payload is fetched by these commands.
 The default promotion plot retains an earlier development window. Current
 main-text promotion and validation panels come from the live-development and
 live-admissions generators; the retained prefix plots remain archival views.
+
+The development leaderboard (`fig:leaderboard`, `tab:headtohead`) is written by `bash figures/scripts/make_leaderboard_dev91.sh --write` from two committed `v1/next` files, read as Git objects; `--check` verifies the committed exhibits. It needs no Python and fetches nothing.

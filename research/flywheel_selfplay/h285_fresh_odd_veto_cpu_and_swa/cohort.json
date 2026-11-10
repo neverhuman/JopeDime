@@ -1,0 +1,497 @@
+{
+  "schema": "jope.h285.cohort/v1",
+  "shared_sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+  "shared_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H283/cohort/fresh_cohort_v1.json",
+  "shared_version_id": "IFA1R_jOLs0Dw7HfbyMzuAxVgfsvv_Ps",
+  "half": "ODD",
+  "counts": {
+    "eligible_families": 2729,
+    "buildable_families": 1972,
+    "even_buildable": 964,
+    "odd_buildable": 1008
+  },
+  "assignment_sha256": "feacae0f29d1f57c7b88cffaa6f08a345d9e2ab5198cea26c6e4e0fb7288319e",
+  "metadata_receipts_sha256": "4108bb59485148da4da8b20bc5fb239123651d46e8decd42728151749749f8b5",
+  "rows": [
+    {
+      "family_key": "srcfile:analcatdata-wildcat",
+      "family_key_sha256": "10055ed01e5e9c81722ccb4f6ac0aaad9e57000456d70e0c5fee61b70bd4f4d6",
+      "dataset_id": "d2df90b7a95ed21b",
+      "context_sha256": "03e5fa78441059001b1557f864199399ecea418322c79359c5f62c2cfe2be1e7",
+      "p3_role": "train_fit",
+      "p3_family": "fam-7a9b801390464fb2bfdcef4f1ba2b081f065514e4f63139aa47ceb19baf98553"
+    },
+    {
+      "family_key": "dc3bee53ed795a27dae8abd18453d509e8f1cd65",
+      "family_key_sha256": "100a72fb89f0c2880c1c0bab5eb9d1749a7d7157279fe5b8af1ca441c9637126",
+      "dataset_id": "1055ade3a6d356eb",
+      "context_sha256": "3998836e286821a3a5e47423a2ef2b76c0c326202320ff31cad3008816ad9cda",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-da8ee0f5c8c517d1866a35a5ba9acd59c52da24acead597cc5ce5762d6dd73bb"
+    },
+    {
+      "family_key": "2da106fbb1c24b728be327ec1b5fea3d3ed94ba1",
+      "family_key_sha256": "101b1225921fb1631a33d4e4ac7fe049a81ec82ee2a3277ed38e8bacc7af0693",
+      "dataset_id": "436cf42e223e0a42",
+      "context_sha256": "133cecfa6a816962b2a64a3282b66407a78fdf79e46c4163b04cd6a47348758b",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-29ce2eed6734ea4ece0009459c95225329cd1348e37ea3279235336987f8c6a4"
+    },
+    {
+      "family_key": "srcfile:cps",
+      "family_key_sha256": "10210269ee5927ecc551b3a3a571160cdc105c2536dc4792b09153113d943b9b",
+      "dataset_id": "c647e0abaeb556b2",
+      "context_sha256": "1b3cff4174078b36a0d6ff7a8312f582cecd9b6b04ee3844b52dff84ba3a53bb",
+      "p3_role": "train_fit",
+      "p3_family": "fam-a3963d3cf6595cad910c7417912df85a73f113befe283ec8925b5af3805d6168"
+    },
+    {
+      "family_key": "srcfile:rdatasets-cardata-freedman",
+      "family_key_sha256": "10406fb627debe8883aeeddffea80baba07cc12ef3c14b59d6cda6fb96209bb4",
+      "dataset_id": "49e3e34340216322",
+      "context_sha256": "31de084d60487493385eb9734e309c2e873731596010554cf688e2f1f6dc9edf",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-56b3821a81641a7cabcdb92f8a6250548037f6dc9d203ec5e752b7881e2f4376"
+    },
+    {
+      "family_key": "ef5dc282e3606d0d8176b193544751ef3c955608",
+      "family_key_sha256": "1048f6aff13c3c50a1d46fa461f57cf5c741efdd7845bc3cacc906007ede95e0",
+      "dataset_id": "acf970d8c2c55b1f",
+      "context_sha256": "0517cdd09bbe6a6bd6991ae9347629c8fd4850107de62fe874bd7785149a9eda",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-84628c03c4716328c4be938fcd42686902bccc613918912fd90cab51ccd28c1b"
+    },
+    {
+      "family_key": "2dc089955e2b96a8a025a1e620b33ba0c26e81aa",
+      "family_key_sha256": "1050adefc1daf1639e077a24afafc55b6817708d328f21e55a30d9cce7d18ae4",
+      "dataset_id": "dea7f031a608f917",
+      "context_sha256": "0a26636536c10a30b616b47cc177194a3cb5ebdd9caa9e1fc9e4bc540842b7b0",
+      "p3_role": "train_fit",
+      "p3_family": "fam-8b705e5fdcae356a83176df240d2ec20b39a8c0eda039307d2e54fce104dfd0a"
+    },
+    {
+      "family_key": "srcfile:rdatasets-wooldridge-rental",
+      "family_key_sha256": "1055f5835d35191f03401c47494e930e3dc1123e4158eb4ef989b2de065d4df9",
+      "dataset_id": "3c4387f5a1a82ae9",
+      "context_sha256": "066adfc6ce8b35d7e136cdff8b65bc2e64691c77b25962e488a8b1d0177fb1a9",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-384d908b7cdf6e31cbce50129531b4b1a1e7ffb8503b3eb34284c09b2c0ab915"
+    },
+    {
+      "family_key": "aefe9129d60e2c7a01548e84fd5d64db49233262",
+      "family_key_sha256": "1056e649b68d79c5814c8273b9819f753d9295e53dca0ed5fbc9967a0259ddee",
+      "dataset_id": "02e6e558e1185219",
+      "context_sha256": "3bfc6d1514022c478b656e1767bb433b2b6ea6374b9f877c20e653f4dfa046f9",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-0374830e7ca8f6a39e073f1c78d73d200d4e50b510cb2c1179205fdb6389a944"
+    },
+    {
+      "family_key": "2cfcd65cbf8b22503197d7a66a3f71418a66340a",
+      "family_key_sha256": "10691e76df4740044354c226ded1e5d8b6c86adc39d041a026eb0adeae92f545",
+      "dataset_id": "7c6cc6aa36ce6ffe",
+      "context_sha256": "282a809265ec207e6568b4f312d01aec8ad35b9e1f09d97e25c342ab1e1e9438",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-af95bd5760ce73a7ceb4c188044198181211aa86af8b964097dea59bf8e64781"
+    },
+    {
+      "family_key": "srcfile:iot-agriculture",
+      "family_key_sha256": "10d24bea6ea62e95fc88fbc237f3740eaa75fd5cd06e9de264b81f8d6e2fa7d5",
+      "dataset_id": "689e24a7802e6f69",
+      "context_sha256": "34ce2334373374387ce6a933a176e5cb4fab957cf2759a66b2454e923cf16f15",
+      "p3_role": "train_fit",
+      "p3_family": "fam-d829d73417a47f5e7ddfd9eaad707a7c26de2915e352df5121ec78b630343023"
+    },
+    {
+      "family_key": "33dee30395f7e8f37474afac1188400ba35312d5",
+      "family_key_sha256": "10d3efc7a0eceeded1347239403bebbc6ca0f80d4fb16b5ff8ba246792a6c676",
+      "dataset_id": "3847b2b782a94b66",
+      "context_sha256": "124fbce9392baffa3f7ce892da6f2989a277db24dd1cb7de1cc2325440143650",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-d35f0992e323b8293550a13aa2ec05ca7aaee3f0540dad5ba2806e08764abeeb"
+    },
+    {
+      "family_key": "304591e832c944c4b8c32872857fe2e6423725e5",
+      "family_key_sha256": "10edf0d038075954f527845f56d3b4868291fa3e75b00cdf09a9d22cbcba54ea",
+      "dataset_id": "74fca63283141074",
+      "context_sha256": "237334164350a8207d7cad2f92f0421e36c9a7abc6f51f2bde47c0c2f8770b2b",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-84b108218c854c99ab361daff411b77eeb565c342a87d438b23a2da5bd91a8c9"
+    },
+    {
+      "family_key": "srcfile:weather-izmir",
+      "family_key_sha256": "111c31dc5116017697ca4d59bfc7a557892a908e550c9576ee6bf67f8b441616",
+      "dataset_id": "859c1c56379870ac",
+      "context_sha256": "3c86c375d78cb4001e8a6e1a0bc8af63b6aec9200f2f7294f90396aa31955213",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-7be1412be446bee3d2610a9b9965c5ee3007a1c8969261c24ea7be2de6741c52"
+    },
+    {
+      "family_key": "95dcf090b58ac580b3ba9c989d1a6e0e71b7fc10",
+      "family_key_sha256": "112865873f6ddabac5a580a36b22eadba4286d5ed6250e6d2f77e18a5b27ae65",
+      "dataset_id": "8b631824c9ad0e09",
+      "context_sha256": "351a42d5b4b33ac9b3d71a90209243196552c0c6c0fd89ea507165c948b206f9",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-78b3908f042807f4adbf51786b0d70601661aefc6f31c6c15e2a36e3c2db9ffd"
+    },
+    {
+      "family_key": "378ee5644aaf76dc79556f9a5ea4238ff15d41a7",
+      "family_key_sha256": "115b6acc62193737edfe458e0a39f3031e2efa28c7264717b5a532ada6206e88",
+      "dataset_id": "18252dfc9071a741",
+      "context_sha256": "3b559822da97bb2200fc001f7bfdf73db806b28596cc8082dd07176673478b49",
+      "p3_role": "train_fit",
+      "p3_family": "fam-de9074ea57537c711ba6d00d8eec2f807eb5d63c69227be61b6b1378aec847ad"
+    },
+    {
+      "family_key": "srcfile:rdatasets-wooldridge-lawsch",
+      "family_key_sha256": "116bb7d48be2d8ffa0414f059bb646b28e7af0df2c03c977f4f199edb33091de",
+      "dataset_id": "0fabba77c3eb7088",
+      "context_sha256": "638a1cf225dcc4b77eea003ae718d25398642ff65ce28ec9b7f2c9a34e3ad471",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-60adeb68eb8c7141543f8ae5f8a88ef97bda18b23b6f97b377142f0c6264b6c0"
+    },
+    {
+      "family_key": "srcfile:ecoli",
+      "family_key_sha256": "117ebdce905c4e7cd4d252f8ff4b0e6cc7ce5f982b78def613046bd3ddbf445c",
+      "dataset_id": "040de60f9cdfecc7",
+      "context_sha256": "1c5aca22d2dd7cc6d036490ed3345a2918ce526cf15c6ecddade9e0af00cd15a",
+      "p3_role": "train_fit",
+      "p3_family": "fam-dedaad901c914093c3325f78ccb6256ced4a6a48237931d5b982f1709bf9d2fc"
+    },
+    {
+      "family_key": "9bc2486bdb0d6fb63fded33055bdca8d43d1c068",
+      "family_key_sha256": "11912b524367ae78a96ec0ed3e980e1f052cc7b316fe9f8f8fd7ac603fde1249",
+      "dataset_id": "656dbe9cb6b5745c",
+      "context_sha256": "28850d5e7a19838f1f1becf0073758383603dc434e20765c9c4f62083eb5013b",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-2c320f4badc68b20e45240d3ba2a2a8441603825fbdabd2a972cfa0a1d1d88f0"
+    },
+    {
+      "family_key": "eaa88d97c1a693b3486832d096ebd6d85b6ee036",
+      "family_key_sha256": "11d020651a62037b85d6d89aefb278084add920429f66ca157d3e617a9a7d100",
+      "dataset_id": "3c8e5cc9f8dd4ad6",
+      "context_sha256": "02826e3663585754990d78947a2188f95da3de9c7ade5d0c6421d5896f4a7a27",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-84b108218c854c99ab361daff411b77eeb565c342a87d438b23a2da5bd91a8c9"
+    },
+    {
+      "family_key": "81be805fdbdc103d356bcebcd3ad7a32adb6ed80",
+      "family_key_sha256": "11edbd2e5795365c246f73c905f8b0eb0cfedfdb81fd080ab077c7eb2f4a01c9",
+      "dataset_id": "a0d5d52b1713659d",
+      "context_sha256": "507c8b468f9f93a665edb788e07f5688a6aacdb85fb99d56410c6859eb582a62",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-1f2503037e6b153041a4f79bbf5c8c9274b5905b81d651d9d3f5b0eb8acc8d37"
+    },
+    {
+      "family_key": "ad0f5e5bc4613818178002332e4374d20f5908e9",
+      "family_key_sha256": "1211987eeecac55f94443fc414d571fe3538ae2aaba7c6e59d69e95d55f8d056",
+      "dataset_id": "236f5dba414ea7c7",
+      "context_sha256": "315d20fcdea19b2221a366c2d139bc4d8a6823a6355677b8714a3e17913f7d93",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-0191ef7cc79c4bd99add3adf44d395fb84ee52c881ce49fbbf0e4d3d3c3ed28b"
+    },
+    {
+      "family_key": "31f880ecf55c85daca767bf447fc95e263296f8e",
+      "family_key_sha256": "12387aa58ec10a5371f919ba5a7182c46e0dedc8d946cffe3ace4594dd5913d2",
+      "dataset_id": "9a01fad84c980a29",
+      "context_sha256": "21fa474c553581a099662a3e50cbaeb239dc7756dbff469769b12a0f72c83f15",
+      "p3_role": "train_fit",
+      "p3_family": "fam-a7da36a6c508d223f7c62e9e90df2a28ab84ad9906ee43d249ab3dc461dbe80b"
+    },
+    {
+      "family_key": "3566df13397232a61c93e80252c0a9e4c3d77f9a",
+      "family_key_sha256": "126de1611f01e794745214efbc420b7277af0b57a4677e1e58ad2b08691147d7",
+      "dataset_id": "d103d4a1b7f5bb2b",
+      "context_sha256": "049684960cf71a8d6040794e5ff1363ddf13d590e6bc6f14fb32a8576bd61a99",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-495853e2ecafe86e4c2fd35d2a55e5d5c345fd3044cc6b00a910327ecca181ca"
+    },
+    {
+      "family_key": "srcfile:rdatasets-agridat-hayman-tobacco",
+      "family_key_sha256": "12ad7bbac7e1d2595e95e7139278a6324a6611d796eab4cf7b10b20c26baba25",
+      "dataset_id": "cf2805f28b880962",
+      "context_sha256": "3bc814a856e6d8b3dc227404946038743b054268d53cd7b331794554bebaa68b",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-01be5cf53ae483b65a272951d699cd6e277725dd9c918da855c89e0fbdd882ce"
+    },
+    {
+      "family_key": "dde3b145736fe987b825c74029f0beb3bf443c48",
+      "family_key_sha256": "12d6dd2fc1a603c31b7fbb059706f2c1efba11601c5174da8f41c840cccc74de",
+      "dataset_id": "0cf32f292174850f",
+      "context_sha256": "1325c7276d911a81bc6313bd08d16308e5299537e4e773a663ff43800400033f",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-79654b5489038b059623be5eab26d23022dbab72cb703307c08bdeefc2521fac"
+    },
+    {
+      "family_key": "32194f257492b628e8e2f2a7f5cabbf9036b403d",
+      "family_key_sha256": "12dbe0afd93cc6bc9e184e606d9f71f2cb9e886f7de17d85e86298c329f7b162",
+      "dataset_id": "bbe39df9a3e89aaf",
+      "context_sha256": "256db0f83c1b1ffeaa40e67a374c5a68024113aafdc5fd6e9003b5a120bc1c3a",
+      "p3_role": "train_fit",
+      "p3_family": "fam-9756b23d3ea0490dd2fa591705c409f507d2af124922eec1ed45a0fbd6c55e53"
+    },
+    {
+      "family_key": "75463837f95e9405924589d5b800e217b8fc5404",
+      "family_key_sha256": "12f289112dad5f152930b311f8f3ba7db400f56e850f1038bca47abfe8f566d6",
+      "dataset_id": "ad060dd9f5bec9ce",
+      "context_sha256": "14aa85fcaa3486f31d90c7faacb7ef05f2fa96a7867aaaafa0fb10801cad387a",
+      "p3_role": "train_fit",
+      "p3_family": "fam-98bfff50059945ad6dfbf0fafdf74c9615f280a2a5266fd64f685d37296203a3"
+    },
+    {
+      "family_key": "srcfile:rdatasets-agridat-minnesota-barley-yield",
+      "family_key_sha256": "131c9ebc43422cea974f5285260aaa11e1a1c9c35719cca0094cee29097dec05",
+      "dataset_id": "c51e8c3735937321",
+      "context_sha256": "28451ad7e948b6a6c2f56a6a4d350b77e69f9d1cb8a53f31b8ab1fcda5140143",
+      "p3_role": "train_fit",
+      "p3_family": "fam-52f380e03b2046ce33682c385717cd8bfbeea549e055b9a9a81de74c43315b60"
+    },
+    {
+      "family_key": "srcfile:internet-usage",
+      "family_key_sha256": "1331ffaedd3e21b83e169eca189a777de20c9ed5f3984fa6d1ab096c0729db91",
+      "dataset_id": "433f3b241fdac9ce",
+      "context_sha256": "0895097762e529a0df80e379dbef260159b9f5943b75387bd2a204933f4a11bc",
+      "p3_role": "train_fit",
+      "p3_family": "fam-a6dde91915aa35f708b17a7828d794c2542bf96621432ed7dd2fedbc44c7a81a"
+    },
+    {
+      "family_key": "7f5caaa92b083015b71205d97cd1c080168a8f42",
+      "family_key_sha256": "133a81a95709ea2bfbef94d6d0d6967cde6c2c3fb4f44b882e4cef1832a23474",
+      "dataset_id": "04b1d71415278ff0",
+      "context_sha256": "03a6a2d58c09eb63fc58e2919970454970351e3899fc7c290531175fadbc6b82",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-b6d46dd0026078b98d615251175ed5d182dac56e37443c9cfd5ca8f0f4250653"
+    },
+    {
+      "family_key": "f5067725049c78d6b2d8c686a0a8b2c7f83046f3",
+      "family_key_sha256": "1361c9106845f43922640436ac1cf8f4e28a4edc41f452502a5d77b3414831c5",
+      "dataset_id": "59f72dd48aed1651",
+      "context_sha256": "11c84c74cd055603dad9287e63c713998b6fe0d9aa1d1e75fefc18ec9873d6d6",
+      "p3_role": "train_fit",
+      "p3_family": "fam-83d2d17567ed77b0b4d8406d1e0cfab1cf4fc59180a41b019310c2dd3de7dc41"
+    },
+    {
+      "family_key": "srcfile:baskball",
+      "family_key_sha256": "13c76a83f01282c36ccbab17d550708a1a36a10497ab9214a24d6f237db7c856",
+      "dataset_id": "1c6bdd99e5f3dbf7",
+      "context_sha256": "73bd115ba38d49372f7f942894fabcb414d8516822ffcea9348a3f9edd9fb313",
+      "p3_role": "train_fit",
+      "p3_family": "fam-4e58c89d35435637b8aeee5bbb71378530a218fa7ba3627f102105fb713b70c6"
+    },
+    {
+      "family_key": "37c123e7c41e94a3e7c3596c0077c36d3d86d0af",
+      "family_key_sha256": "13dd3baeb62f1552d4ed4b489881c8854a749100b0ff6d56dcb601a993ebe9f8",
+      "dataset_id": "9a8f314fbafd3f4c",
+      "context_sha256": "5a1f9d19642bc163cde97d8170a93539f44cc091898e36fa7ef02b1de2166bd5",
+      "p3_role": "train_fit",
+      "p3_family": "fam-9d61adfb1ab4fb46384b9e960a43d2a81d1ceffbb2b7248fa7660b646024cfec"
+    },
+    {
+      "family_key": "b9393d1ac974b0e530ac86f7982dcb052f44172e",
+      "family_key_sha256": "13df57e8e2e7eef7ee7cd1dfa9d190b9ee16260d16c6b119ac5b3b88029d1795",
+      "dataset_id": "b536bc7d7ae18b11",
+      "context_sha256": "36d90e433fbd6229e17ec06e4650c7bb5c10b3156c8937bc0fbd6fa668af88e2",
+      "p3_role": "train_fit",
+      "p3_family": "fam-9ac97eec6dc22ced902286d71a22e4b1e1c1d40f3c95cb95e373adaec0d319d9"
+    },
+    {
+      "family_key": "3c51f10d0b58c46519f4ce4ce2ac5d0b76042783",
+      "family_key_sha256": "13e35645303a4347a33c0e1f34cabda797cca215574b5731d33d22d315149ef9",
+      "dataset_id": "f3c3c6b50f707d38",
+      "context_sha256": "1cb272aa97381a6842c08518b76cb4abcfd6b7e0efd5a5eac51eb4e23376bef2",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-d91a4609953c03fce04f0192499cfd3d81fe00767d7aa1ca942fffb1df7fcec5"
+    },
+    {
+      "family_key": "srcfile:rdatasets-agridat-lu-stability",
+      "family_key_sha256": "13ee29cfc8b3a8334a573ca45c58c3291bceb47dac1f059cd62f7e463f87bcff",
+      "dataset_id": "541c884329ff896e",
+      "context_sha256": "02f347ae157e0d87cb9647a66e9b5d781a05fd07cfdbf40714f0d0374e346b11",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-5d7731a5175899da05c01a4610c50421f55ea56476cc8e23f22e368f7e8f938e"
+    },
+    {
+      "family_key": "srcfile:nafld",
+      "family_key_sha256": "14076349e315a2c1adb999a00edc69d470745b586a348eb5281c0aa0f3e9bb8e",
+      "dataset_id": "424ba7700a3892d7",
+      "context_sha256": "80da8955a954ad661ddc0f80693532fccd827029db909c979c19d913090e4340",
+      "p3_role": "train_fit",
+      "p3_family": "fam-cd7c31943da3881edd6d8b817c66560e31612d914493d8d96d1b2b365cb0f792"
+    },
+    {
+      "family_key": "e1f056b9dd21c978aa345874f20a7f5286086f77",
+      "family_key_sha256": "14187aee65589cbd2cd527e1afea5293a411df12dda6b3ef010a7b5ea9df5e11",
+      "dataset_id": "093aba2f77acc9f2",
+      "context_sha256": "400f246e038dfd5298ea93fbf6a8e9c748494c713221e869dae095123aa624d9",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-f3d6ccb40da074ba5dd7f0eb115f27350c90f0f452f496120001c7e49dcb8160"
+    },
+    {
+      "family_key": "srcfile:rdatasets-openintro-mariokart",
+      "family_key_sha256": "146eaf71ce2c51374c3a3ece4bb5c0e74dba69aa5037d19ab0b545bc3a2a461c",
+      "dataset_id": "807ee124961c592e",
+      "context_sha256": "10c9038ff6c0d603f579fff51dd46b481cf4a21f09abd6bc9ae54b3c65ef549b",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-175dda4dc3c1770e80c2bf9b7b882350cda87ccca666da6df98bfce8ea3c3db8"
+    },
+    {
+      "family_key": "b04170ad14cfbd2f3801ef70409d1454da2fba5b",
+      "family_key_sha256": "1475223f9f6448848afe4bc02294cf60c0b72859a446e180c8777da9c7c96c8c",
+      "dataset_id": "4b021af45419ce04",
+      "context_sha256": "063417ab47c6ef2e2b882aa0fc1fa7251605152026956d4e8f505d786e51cab6",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-fcc1a1c81a9606709c92b83ee288da42023aa9f2f3d54efebb8aadf1a8fb8899"
+    },
+    {
+      "family_key": "2288154e7c13493e7c59ad6805a63562b0e9c254",
+      "family_key_sha256": "149fe7c9cdb8b5ceafe83cb62004a94ca647c7af4e26afa74e180f0f2faf3f1f",
+      "dataset_id": "13c6221e9c858fc9",
+      "context_sha256": "0228edc6c3b7c187257227c856d8092af85ee13aff5da9242583870d1ad3e4ca",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-d4dc0f816584cccfe6a8e15d6438e0195910796d3a3d0ec140b7fd8875746294"
+    },
+    {
+      "family_key": "bb24a7e06a5414252765e41d2344f6b519aac924",
+      "family_key_sha256": "14ab1a5b5d0f09fa2df3db57ba0c42c7a240e536a1e6359483ad20fae162d696",
+      "dataset_id": "fcd6db9e5b59b7b1",
+      "context_sha256": "15d17330d3c318a11505687422e86330d620f8eb9cdbbac029c8480dc3d38bdd",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-a0d8143918ea541f7328c22b6da4f7327e1dfe90148e226349e62d5bfca5365f"
+    },
+    {
+      "family_key": "7a83fab16a9f79e0bec6c81a15dd5a026bc7c49b",
+      "family_key_sha256": "14d9a8f974961eea98a4dbe60a3118fb6087457cd8567a229e77c03a1e59ea4d",
+      "dataset_id": "6e39e2facae846f5",
+      "context_sha256": "3d380397ebbc37909f2731885348ef3ab7f4851cb20bacc00d4f61adbba01555",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-b92a63f6d4a03cdfc3e6a4683ced64ac7403ccac531ec3a03e6384826dcb5565"
+    },
+    {
+      "family_key": "ca8c359f317b49b4f0c4eecaa2e90bab6face5a6",
+      "family_key_sha256": "14ff5945fe9a0649e808f991d9a9075148e9b93282ab1c9f6b8587c99a369b66",
+      "dataset_id": "906b2ff854959978",
+      "context_sha256": "11ebadcf84d729c6da07effe5240ea9ea7c83854af6c465f3d368892dd424691",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-3e0eea60a7f2f42fd2976588c99510c133a467b2efc3277c305eb91f0d1cefce"
+    },
+    {
+      "family_key": "176711e3eebed9ab2d8296d76315ef86503f628d",
+      "family_key_sha256": "1519f930406bece8bb12b2e2ab2a72f0d2b65b2ab9749a217b6d8879efad0598",
+      "dataset_id": "dc186225f1dfa11b",
+      "context_sha256": "06b96f67d60c0d1439a856bbfca5efe97bdbf18e06f7bd39c3adea4f2ce525a0",
+      "p3_role": "train_fit",
+      "p3_family": "fam-f59f97df1bf31a768042884609713c2a94d84bf15a94f27682beeee248797fde"
+    },
+    {
+      "family_key": "b41bfe74d941b73ecd7e6e653ec4c9af284847f7",
+      "family_key_sha256": "152e6938a39cf0fa7a5d971d0b0f58b533237066542fbbc4fee6b9aaf0677466",
+      "dataset_id": "e63b52b2bb7e7c25",
+      "context_sha256": "0605576aeaa3aa5e80481b49d91050a7d39eae78b57c84dd088314377f26def1",
+      "p3_role": "train_fit",
+      "p3_family": "fam-6c313f5435b486bc6364dcf45defa0f8a6c13f6fbea2e40a7e7c6aa8ac13e4ca"
+    },
+    {
+      "family_key": "76c7e3bd3861b40c0fe233ea88b0110daa21569b",
+      "family_key_sha256": "15407f07581a1cc892104bfd8b0f278d96f9c2ec2f2cb9963cf6dd935ab30d60",
+      "dataset_id": "c51a90be7c7b975d",
+      "context_sha256": "6174f00f5eea03edadfa01162e88a0612dc969da47d904299d52d960719dcf7b",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-b865290ce8221ee33e09926b72c22dffe9350ae2c681e32a430927da6911a3e0"
+    },
+    {
+      "family_key": "b2b4ed3140d50413992ab089966d6f07ed026b9f",
+      "family_key_sha256": "1571980a9f38e64bd59f2b191471c22abe5c91388c0d12b35b14072d3059eca6",
+      "dataset_id": "be657bf0530318ec",
+      "context_sha256": "0b11104081b1328431b21dec2eed3870093c6e1b73c97303a9d1355ff98cf92b",
+      "p3_role": "train_fit",
+      "p3_family": "fam-8843374eec2e82cf15607240f174912d9e8c22d7101de813560c16405466f95d"
+    },
+    {
+      "family_key": "srcfile:job-profitability",
+      "family_key_sha256": "1595a30b3fa561ba577d5e29ee62336884abd82e53c37780261c062f70f7deca",
+      "dataset_id": "5edab99e48fa99dc",
+      "context_sha256": "1cd6f3e6789661dda39474dab1f9515842a7bb7e0af0a9acd00b22b2a93eab03",
+      "p3_role": "train_fit",
+      "p3_family": "fam-409447d21dec38f6a0229eda22e9bb074c9925b997e6ea649980542751f15d38"
+    },
+    {
+      "family_key": "d93438d7880dea6b29aa073e78236c621de4858c",
+      "family_key_sha256": "161dc4deae56fe55d9300ea7b068600b12a7efe92bdb7b0f422d903b6c551428",
+      "dataset_id": "7bc2fa2182bf32de",
+      "context_sha256": "3a0c25f2238c9a89d5725d4ec718165555505782dc647c5d1d304393f8b64b7e",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-f7f6f4efe2050b9988cfe6ebb5fba0cdc3e34ec19f746bcdce93a8894873d9ea"
+    },
+    {
+      "family_key": "3e5cd50e32630da194442c0b14a226f6abd800f2",
+      "family_key_sha256": "1648737ea86d92bd7cc5b522416bc2e5c2af55267dc5a81998a87aef2dd3cfb4",
+      "dataset_id": "edbcdd9d872fa9bc",
+      "context_sha256": "06f8d46a431671c0da878d1adc0bc1bb76edf8c15494c301937a56493a7cc4f0",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-cb1c3aeffdf66c4d435fd56ed39369d51a1b0f14643f09188722f0fdb2fe6dd3"
+    },
+    {
+      "family_key": "c4a4c092c2b9b9bc4a52200cbc93f24b55f7906d",
+      "family_key_sha256": "1655aca13546b940e3b67491cc1ca4a57e43ad2c219d89319598789a9dcde36a",
+      "dataset_id": "b8d06b27c27ae89c",
+      "context_sha256": "09c3510f3f98d52f428ebc1c42cc1645932dfb9a0ef8b9275a2962f386e92dea",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-41b475e421bbcd4c8cfd99f45683164bc8b58a524ba4de4e4738c6a082c2933a"
+    },
+    {
+      "family_key": "377ffbe162ee711f08e30bf5fe9d5dc9ad70bb58",
+      "family_key_sha256": "16880ecd2ebe57867dd111d11181e8f91bd330f73fac611626803e955667439b",
+      "dataset_id": "f0cbfd83db1c6f5a",
+      "context_sha256": "09ee45fadabce5e127714e32b3a9fe64a5798d6534d3fdd9e9e121dd42c44357",
+      "p3_role": "train_fit",
+      "p3_family": "fam-68daa7cefd4157561317143c592bc61861ae0057820397922f596e7bef01cd8c"
+    },
+    {
+      "family_key": "srcfile:rdatasets-mosaicdata-tenmilerace",
+      "family_key_sha256": "169256cf0451b7461b875a6e64247b5d6ee30069b4e7bb31318bedd872c320df",
+      "dataset_id": "5dc11415a0d0f8f7",
+      "context_sha256": "140cf75bfec00064904f79e73f6ee84ffc009422708fbfb07f324cfebcd41067",
+      "p3_role": "train_fit",
+      "p3_family": "fam-f84aa2637c805a33e01c226e8a87c02ccb1f507bd0d2b1379004955514c6a81b"
+    },
+    {
+      "family_key": "4fdee854b5462ea004e5c565650182d4838d1f94",
+      "family_key_sha256": "16bf3276299b66c4691d796c4a81a814e976c3d5df8c63245992f0006c7a4880",
+      "dataset_id": "521ac893fa10eddf",
+      "context_sha256": "0b76f80966b533237de5af58fe1e3b6174375c9c87e99a9f11c79472ee454746",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-a5a7d2da8a3f6dc5e9afcc05050bcdb14f14ef46a743e3c496ef3e5a2785737b"
+    },
+    {
+      "family_key": "70489f3af34f79932eb2533351b3a2a663607e8c",
+      "family_key_sha256": "16d35968377abc2b79fb43cb59d29b4339861f9a1a0f3afa55c957d8486584d0",
+      "dataset_id": "43d4d6779e6ab60e",
+      "context_sha256": "14f8d91b51a495d6dd806c281c05142beb80cf06c5d5dd726849e4a36955098d",
+      "p3_role": "train_fit",
+      "p3_family": "fam-e38c513b6dcfd523b44ba8985a7c4741d95bf6a77d9e3360d0709a635fc6bc2d"
+    },
+    {
+      "family_key": "265c6bf913742f64acb7256c0f6dabf6875fdff1",
+      "family_key_sha256": "16e99acfab73c0a221d5d6c9183bb6ff3ea45b523192552c5418c2be78c63998",
+      "dataset_id": "de49a36ba6030856",
+      "context_sha256": "29c59f82715b94ba69601156c4494c1a9928ccf0401f44c2c2e4449b761b73fe",
+      "p3_role": "train_fit",
+      "p3_family": "fam-af7aa1e1658921c14c1a9a5c0e05082358eedefb9bb9cf8aeec5a53260cbe872"
+    },
+    {
+      "family_key": "3381774cbe051a21895a4e772009f41ed4657fb5",
+      "family_key_sha256": "174cf8c2580c5cb21acafe096df34b3c76f7335182623c55c0eef3169b379818",
+      "dataset_id": "baf41a6d1679f514",
+      "context_sha256": "2f989b7e5582b740de40109fb6fc433e65cd6d00507c87d14785a76478aafa01",
+      "p3_role": "train_fit",
+      "p3_family": "fam-0ef623d77229ce68ae6e6039ac314e38c7137f9ea6821dac275d514c662031b8"
+    },
+    {
+      "family_key": "cd0574223ddb70cedb5c46f02b334bea9c5b23c9",
+      "family_key_sha256": "1751f2ee6bf83508ea8ca231a20ab4c3574e25d14bf3bd6dd46f1ab87a06f556",
+      "dataset_id": "c0935adf81407e0d",
+      "context_sha256": "1976316878394475e8bdec58f1dd675f4f4cbc6f8397aff925e25261f54f7df1",
+      "p3_role": "train_nonpool",
+      "p3_family": "fam-51989644e3002e1a2b21af90738ceb89755a48aacafa463822c06fdc457b9fe9"
+    }
+  ]
+}

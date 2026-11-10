@@ -1,0 +1,58 @@
+{
+  "schema": "whitepaper.round-phase-budget-figure/v1",
+  "csv_sha256": "3d78f53d6441393b4f092ad01fd9fe26b4eea0c0ce0473ddb48a13be53d6bac1",
+  "source_receipt_sha256": "2c065f38789925a30b0af428bca9ce14cbdff54a6db29c81cbee524d57f5617b",
+  "generator_sha256": "c4a8d482f8317a14b9de05318322ce5f8861d8139c065596d775c239ec734dc2",
+  "figure_sha256": "6561f07cc99a3a8163b4322e0bc02a4ed7caa855b3f86c4cb4026663b2ccbef7",
+  "source_prefix_sha256": "0bd547b37a78310e6c2e6efa2e95d6b2f8bae79410c9d731e7d40564bac1157d",
+  "timing_projection_sha256": "3660d997ddcc9ad0eb469a2993e6e2a86f0e765d71ac59c6b272c202b73835ed",
+  "records": 20,
+  "round_ids": [
+    4464,
+    4465,
+    4466,
+    4467,
+    4468,
+    4469,
+    4470,
+    4471,
+    4472,
+    4473,
+    4474,
+    4475,
+    4476,
+    4477,
+    4478,
+    4479,
+    4480,
+    4481,
+    4482,
+    4483
+  ],
+  "wall_seconds_total": 1944.804214414,
+  "phase_labels": [
+    "GP interval",
+    "Gate interval",
+    "Update phases",
+    "Headroom",
+    "Remainder"
+  ],
+  "phase_share_percent": {
+    "GP interval": 80.70619232050853,
+    "Gate interval": 13.269542515776628,
+    "Update phases": 4.200685749919232,
+    "Headroom": 0.5173858778510549,
+    "Remainder": 1.3061935359445525
+  },
+  "scope": "Adaptive operational timing only; no validation/test scores, held-out results, parameter states or independent learning evidence.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    6.75,
+    1.6
+  ],
+  "minimum_text_size_pt": 8.5,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_round_phase_budget.py"
+}

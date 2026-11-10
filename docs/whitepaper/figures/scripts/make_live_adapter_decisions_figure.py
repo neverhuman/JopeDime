@@ -73,7 +73,7 @@ def main():
                        label=f"{label} ({len(positions)})", zorder=3)
     low, high = min(Decimal(0), min(margins)), max(Decimal(0), max(margins))
     pad = max(high-low, Decimal("0.001")) * Decimal("0.15")
-    ax.set(xlabel="completed round", ylabel="candidate − pre-round best",
+    ax.set(xlabel="completed round", ylabel="candidate − retained best",
            xlim=(rounds[0]-0.7, rounds[-1]+0.7), ylim=(float(low-pad), float(high+pad)))
     ax.set_xticks([rounds[0], rounds[6], rounds[12], rounds[-1]])
     ax.yaxis.set_major_locator(MaxNLocator(nbins=4))

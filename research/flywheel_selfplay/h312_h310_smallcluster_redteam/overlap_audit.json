@@ -1,0 +1,14 @@
+{
+  "train_families": 205,
+  "dev_families": 19,
+  "overlap_count": 0,
+  "overlap_ids": [],
+  "overlap_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "train_ids_sha256": "4263277e1b7dea34ed523da6832bd7e82f85a41f0f6f9a0cdc56633b662a95bb",
+  "dev_ids_sha256": "bc447c2efb1793c1d7472efaf5d7547d4d103831820660483157e5dc442a88ba",
+  "ens_member_training_closure": "Each full refit ranker/veto sees all205 TRAIN families; bag samples are subsets of that closure. Reconstructed from frozen H310/H303/H302 code; historical member locks do not list training family IDs.",
+  "ens_member_closure_overlap_count": 0,
+  "ens_member_closure_overlap_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "metadata_only": true,
+  "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+}

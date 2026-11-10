@@ -21,10 +21,29 @@ Business constraint: **price per program node**. Accuracy metric: `{"metric":"rm
 ## Objective (`objective.json`)
 
 ```json
-(not yet calibrated: run case_study/bin/calibrate.sh on this case)
+{
+  "metric": "composite",
+  "terms": [
+    {
+      "weight": 1.0,
+      "scale": 0.18,
+      "fitness": {
+        "metric": "rmse"
+      }
+    },
+    {
+      "weight": 0.1,
+      "scale": 4,
+      "fitness": {
+        "metric": "resource",
+        "name": "program_nodes"
+      }
+    }
+  ]
+}
 ```
 
-Calibration pending: `case_study/bin/calibrate.sh case_study/09_ultrawide_parsimony` sets the limits/prices from a declared calibration run before the main runs.
+Calibrated from arm D on rng seed 1 (28 measured candidates; not a main seed). Rule: limits = median calibration reading (2 s.f.); composite resource scale = median reading, accuracy scale = train target sigma; prices = share x median error / median reading. Train target σ = 0.177955.
 
 `baseline.json` ranks by the same accuracy metric alone, with non-binding limits, so the same
 resource readings are recorded for every candidate in every arm.
@@ -38,7 +57,7 @@ resource readings are recorded for every candidate in every arm.
 | C | bootstrap + 11 random + DL seeds (≤ 11) | `baseline.json` |
 | D | bootstrap + 11 random | `baseline.json` |
 
-Budget 96 evaluations (≈ generation 0 + 8–10 generations), 3600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
+Budget 96 evaluations (≈ generation 0 + 8–10 generations), 600 s per run; RNG seeds 7, 11, 13; `--threads 1`.
 
 ## Run
 
@@ -64,3 +83,10 @@ best-so-far objective by generation) and `generations.csv`.
 - Measured readings are host- and load-dependent; `run.json` records the host, load and limits of each run.
 
 <!-- notes -->
+
+## Business context
+
+- **Dataset provenance**: OpenML `mtp2` (`9ae61bc7da3ba01c`, 274 rows × 1,142 features; train 228, test 46) from [OpenML dataset 430](https://www.openml.org/d/430).
+- **Domain & SLA context**: In ultrawide $p \gg n$ molecular/tabular settings (1,142 features vs. 228 training rows), unpenalized symbolic/pipeline search can bloat expression trees and overfit ([La Cava et al., "Contemporary Symbolic Regression Methods and their Relative Performance", NeurIPS Datasets & Benchmarks 2021](https://datasets-benchmarks-proceedings.neurips.cc/paper/2021/hash/c0c7c76d30bd3dcaefc96f40275bdc0a-Abstract-round1.html)). Pricing structural size (`program_nodes`) alongside `{"metric":"rmse"}` enforces parsimony.
+
+_Business context contributed by agy_resource_fitness (Gemini) on 2026-11-03 (notes file sha256 744cf669fdc7…). The links were supplied by the contributor and were not independently fetched._
