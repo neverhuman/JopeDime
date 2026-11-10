@@ -18,6 +18,7 @@ members = [
   "crates/jope-campaigns",
   "crates/jope-ci",
   "crates/jope-client",
+  "crates/jope-comparators",
   "crates/jope-cli",
   "crates/jope-datasets",
   "crates/jope-dist",

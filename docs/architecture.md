@@ -57,6 +57,7 @@ flowchart TB
     arena[jope-arena<br/>SOTArena fetch · Elo · scores]
     bench[jope-bench<br/>same-cut benchmark, demo/benchmark/optimize]
     automl[jope-automl<br/>native AutoML regressors, 0 deps]
+    comparators[jope-comparators<br/>same-rows comparator models, 0 deps]
     pipe[jope-pipeline<br/>dataset → cuts → search → emitted code]
     motifs[jope-motifs<br/>reusable program fragments]
     records[jope-records<br/>record verifiers, hygiene guards]
@@ -144,6 +145,7 @@ crate's `[dependencies]` change. No crate depends on `jope-campaigns`, `jope-eng
 | `crates/jope-learning` | `jope-learning` | landed (WP11) | The S3-facing half of the learning loop of [ADR-0005](adr/ADR-0005-canonical-learning-loop.md): HWM ledger, corpus snapshots, checkpoint lineage, wave pointers; the separate `jope-learning` binary. [docs/learning.md](learning.md). |
 | `crates/jope-arena` | `jope-arena` | landed (WP12) | SOTArena fetch, score emission, family Elo. There is no `docs/arena.md` yet. |
 | `crates/jope-automl` | `jope-automl` | native candidate integration | Immutable original regressor sources and the native AutoML registry; `fit_rows`/`predict_rows`, plus the standalone challenge API. [Native regressors](../crates/jope-automl/README.md). |
+| `crates/jope-comparators` | `jope-comparators` | landed; library only | Dependency-free pure-Rust comparator models re-homed from the `jain-model-zoo` strategy ports (random forest, extra trees, histogram gradient boosting, ridge, Caruana ensemble selection). Deterministic, panic-free, FIT-only median imputation, typed `ComparatorError`. Not yet wired into runs. |
 | `crates/jope-bench` | `jope-bench` | landed | Same-cut benchmark: tier-1 baselines and a searched program scored on identical cuts, screen then deepen; the `jope demo`, `jope benchmark` and `jope optimize` verbs. [docs/same-cut-bench.md](same-cut-bench.md). |
 | `crates/jope-pipeline` | `jope-pipeline` | landed | The product pipeline behind `jope pipeline`: dataset → prepared cuts → program search → emitted code, with a receipt; bin `jope-context-proof`. [docs/pipeline.md](pipeline.md). |
 | `crates/jope-motifs` | `jope-motifs` | landed | Reusable program fragments: private tables, exact expansion and compatibility checks; `jope motifs`, hidden from the default help until the capability is published (owner decision, 2026-09-24). |

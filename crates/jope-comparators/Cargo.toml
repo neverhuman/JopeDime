@@ -1,0 +1,15 @@
+[package]
+name = "jope-comparators"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Dependency-free pure-Rust comparator models (forests, histogram gradient boosting, ridge, Caruana ensembles) for same-rows run comparison"
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[lints]
+workspace = true
