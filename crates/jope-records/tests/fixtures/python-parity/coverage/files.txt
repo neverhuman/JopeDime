@@ -1438,7 +1438,6 @@ crates/jope-engine/src/gp/search_inner/dispatch.rs
 crates/jope-engine/src/gp/search_inner/finalize.rs
 crates/jope-engine/src/gp/search_inner/observation.rs
 crates/jope-engine/src/gp/search_inner/setup.rs
-crates/jope-engine/src/gp/search_inner/slot.rs
 crates/jope-engine/src/gp/search_types.rs
 crates/jope-engine/src/gp/selection_replay.rs
 crates/jope-engine/src/gpu_worker.rs
