@@ -2677,6 +2677,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-comparators"
+version = "1.0.0"
+dependencies = [
+ "proptest",
+]
+
+[[package]]
 name = "jope-datasets"
 version = "1.0.0"
 dependencies = [
