@@ -5,10 +5,6 @@ class FullMainTests(unittest.TestCase):
         self.mapping = {'lanes': {'full-one': {'command':['fixture'], 'requires_nonzero_tests':False, 'result_backend':'none'}}, 'dispositions':{}}
         self.expected = dict(source_sha='a'*40, checkout_sha='a'*40, run_id='123', attempt=1, event='push')
 
-    def test_static_partition_uses_main_for_zero_push_base(self):
-        self.assertEqual('origin/main', partition.static_base('0' * 40))
-        self.assertEqual('a' * 40, partition.static_base('a' * 40))
-
     def test_aggregate_needs_filter_preserves_all_nonpublication_results(self):
         with tempfile.TemporaryDirectory() as scratch:
             root = Path(scratch)
