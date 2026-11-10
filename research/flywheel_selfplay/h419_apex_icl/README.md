@@ -2,7 +2,7 @@
 
 **This is a status log, not a closeout.** No prediction on a test cohort (stored P201b matrices, APEX-DEV, CONFIRM)
 exists. Plan: [`PREREG.md`](PREREG.md) and addenda [1](PREREG_ADDENDUM_1.md), [2](PREREG_ADDENDUM_2.md),
-[3](PREREG_ADDENDUM_3.md), [4](PREREG_ADDENDUM_4.md), [5](PREREG_ADDENDUM_5.md).
+[3](PREREG_ADDENDUM_3.md), [4](PREREG_ADDENDUM_4.md), [5](PREREG_ADDENDUM_5.md), [6](PREREG_ADDENDUM_6.md).
 
 ## Runs
 | Run | Host | Size | State |
@@ -15,6 +15,10 @@ exists. Plan: [`PREREG.md`](PREREG.md) and addenda [1](PREREG_ADDENDUM_1.md), [2
 | `ICL_L_g1_w1`, `ICL_L_g1_w2` | xbabe0 3090, xbabe2 3090 | 104.36M | started 12:29Z as averaging workers cloned from `ICL_L_r4` at step 5,531 (addendum 3) |
 | `ICL_M_x4b_inj`, `ICL_M_x4b_noinj` | xbabe4 Apple GPU | 23.66M | column-injection ablation, two arms, stopped at 24 h each (addendum 4) |
 | `ICL_M_x4c_res` | xbabe4 Apple GPU | 23.66M | control for residual-target training: the `inj` recipe plus `--p-resid 0.5`, started 16:36Z (addendum 5) |
+| `ICL_M_x4d_v2` | xbabe4 Apple GPU | 23.66M | control for prior version 2: the `res` recipe plus `--prior v2`, running since 18:08:44Z (addendum 6; the 17:07Z start failed, see below) |
+
+Since addendum 6 the 24M run `ICL_M_r3` (from 17:15Z) and 104M workers 2 (17:14Z) and 1 (17:53Z) train with
+`--prior v2 --p-resid 0.5 --row-floor 1024`; worker 0 follows behind the same gates.
 
 ## Tracked metrics
 - **Real-table monitor:** 106 core FIT-SEL contexts, SEARCH rows only; query = fold 0 of `kfold_labels`, context =
@@ -41,6 +45,46 @@ exists. Plan: [`PREREG.md`](PREREG.md) and addenda [1](PREREG_ADDENDUM_1.md), [2
 
 Clock times of the 13:30–15:42 rows are approximate; the hours column is exact. Worker hours exclude the time a
 worker waits for the group average.
+
+**Prior version 2: cause, rollout and first readings, 17:05–18:12Z (addendum 6).**
+- **Cause found:** the version-1 synthetic prior has almost no easy tasks (ridge u above 1 on at most 3% of its
+  tasks; on 33% of the real monitor contexts). The 24M model at 5.0 h scored a median u of 0.63 on fresh linear
+  tasks against ridge's 1.11. Prior version 2 gives 40% of synthetic tasks to linear, additive and
+  additive-with-pairs families.
+- **Negative before the change:** as a stack column beside the GP programs the 24M model's out-of-fold predictions
+  changed the fold-0 u of the Caruana blend by +0.001 (used in 38% of contexts, mean weight 0.05).
+- **Rollout** (`roll_driver2.sh`, each run from its own checkpoint, gates: unit active, arguments logged, an
+  averaging round loaded, a new checkpoint, finite loss):
+
+  | Run | Checkpoint it resumed from | Restarted | Gates |
+  | --- | --- | --- | --- |
+  | `ICL_M_r3` | 17:13:45Z, step 138,685 (6.33 h) | 17:15Z | passed 17:34Z |
+  | `ICL_L_g1_w2` | 17:12:35Z, step 40,693 (4.88 h) | 17:14Z | passed 17:34Z |
+  | `ICL_L_g1_w1` | 17:51:27Z, step 45,530 | 17:53Z | pending at 18:12Z |
+  | `ICL_L_g1_w0` | — | after worker 1 passes | — |
+
+- **First readings after the change** (training log; real = the 106-context monitor; simple = held-out tasks of the
+  three new families; too few evaluations to call a trend, single readings move by up to 0.05):
+
+  | Run, hours | Real plain: win vs ridge / median u | Real residual readout: win / median u | Simple tasks: model / ridge | Linear tasks: model / ridge |
+  | --- | --- | --- | --- | --- |
+  | 24M, 6.33 h (last before the change) | 0.632 / 0.727 | 0.868 / 0.919 (checkpoint diagnostic) | — | — |
+  | 24M, 6.66 h | 0.660 / 0.732 | 0.887 / 0.945 | 1.086 / 0.996 | 1.183 / 1.841 |
+  | 24M, 7.00 h | 0.679 / 0.782 | 0.868 / 0.980 | 1.149 / 0.996 | 1.255 / 1.841 |
+  | 104M worker 2, 4.88 h (addendum-5 arguments) | 0.566 / 0.593 | 0.877 / 0.875 | — | — |
+  | 104M worker 2, 5.17 h | 0.557 / 0.617 | 0.887 / 0.872 | 0.758 / 0.927 | 0.890 / 1.725 |
+  | 104M worker 2, 5.47 h | 0.566 / 0.620 | 0.906 / 0.874 | 0.791 / 0.927 | 0.999 / 1.725 |
+
+  - The 24M run's plain median (0.782) and residual median (0.980) are its highest so far.
+  - **Still far from the references that matter:** the best GP program's median on the same rows is 1.200 and the
+    Caruana blend's 1.228. On linear tasks both sizes are still far below ridge.
+  - The 104M worker is behind the 24M run on every column, as before.
+  - Throughput after the change: 24M about 140 tasks/s (275 before, at 384 rows); the 4090 shows 54–99% utilisation,
+    so part of the time it waits for the trainer's main thread. Not yet profiled.
+- **Mistake:** the xbabe4 arm `ICL_M_x4d_v2` started at 17:07Z died at once (`PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.2`
+  without a low-watermark setting is rejected by torch) and I recorded it as running without checking. Found at
+  18:07Z; restarted 18:08:44Z with `PYTORCH_MPS_LOW_WATERMARK_RATIO=0.15` added, and verified alive and logging. The
+  arm is one hour later than recorded; the comparison is at equal training hours, so nothing else changes.
 
 **Diagnostics and changes, 16:10–16:55Z (addendum 5).**
 - **Recipes on the same checkpoints** (`icl_diag.py`; 24M at 5.0 h, 104M at 3.7 h; win rate vs ridge / median u):
