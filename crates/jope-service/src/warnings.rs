@@ -43,6 +43,7 @@ pub const CATALOG: &[WarningDefinition] = &[
     definition("MODEL_INTEGRITY_FAILED", Severity::Error, false),
     definition("NO_VALID_MODEL", Severity::Error, false),
     definition("EVENT_LAG", Severity::Warn, true),
+    definition("NON_NUMERIC_COLUMNS_SKIPPED", Severity::Info, false),
 ];
 
 pub fn catalog(code: &str) -> Option<&'static WarningDefinition> {
@@ -294,13 +295,19 @@ mod tests {
     );
     code_test!(no_valid_model, "NO_VALID_MODEL", Error, false);
     code_test!(event_lag, "EVENT_LAG", Warn, true);
+    code_test!(
+        non_numeric_columns_skipped,
+        "NON_NUMERIC_COLUMNS_SKIPPED",
+        Info,
+        false
+    );
 
     #[test]
     fn catalog_matches_the_exact_api_vocabulary() {
         let actual: BTreeSet<_> = CATALOG.iter().map(|entry| entry.code).collect();
         let api: BTreeSet<_> = jope_api::WARNING_CODES.iter().copied().collect();
         assert_eq!(actual, api);
-        assert_eq!(actual.len(), 13);
+        assert_eq!(actual.len(), 14);
         assert_eq!(CATALOG.len(), actual.len());
         assert_eq!(jope_api::WARNING_CODES.len(), api.len());
         assert!(catalog("UNKNOWN_CODE").is_none());

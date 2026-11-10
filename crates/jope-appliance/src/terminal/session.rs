@@ -334,10 +334,14 @@ fn mouse_from_env() -> bool {
 }
 
 fn plan_lines(plan: Plan) -> Vec<String> {
-    vec![format!(
+    let mut lines = vec![format!(
         "plan validated: {:?} · {} rows · {} · digest {}",
         plan.task.value, plan.rows.total.0, plan.objective.name, plan.plan_digest
-    )]
+    )];
+    lines.extend(plan.warnings.iter().filter_map(|warning| {
+        (warning.code == "NON_NUMERIC_COLUMNS_SKIPPED").then(|| warning.message.clone())
+    }));
+    lines
 }
 
 fn open_cloud_url(url: &str) -> anyhow::Result<()> {

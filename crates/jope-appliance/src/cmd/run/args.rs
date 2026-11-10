@@ -25,6 +25,8 @@ pub struct RunArgs {
     pub ignore_columns: Vec<String>,
     #[arg(long)]
     pub test_dataset: Option<String>,
+    /// Random holdout only. `kind` must be `random`; `group_column` and `time_column` must be null.
+    /// Grouped and time-ordered splits are not supported by this engine.
     #[arg(
         long,
         default_value = "{\"kind\":\"random\",\"holdout_fraction\":0.2,\"group_column\":null,\"time_column\":null}"
