@@ -811,9 +811,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         comparators_lockfile["fixtures"][1]["path"],
         changed_fixtures[1]
     );
-    let comparators_run_stage = old_fixture(
-        "transitions/comparators_run_stage_lockfile_identity_rebaseline.v1.json",
-    );
+    let comparators_run_stage =
+        old_fixture("transitions/comparators_run_stage_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
         comparators_run_stage["source_commit"],
         "4383741dc4a5a4a317c4a96ea83003c626e002f7"
