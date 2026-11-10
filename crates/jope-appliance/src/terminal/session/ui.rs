@@ -110,7 +110,7 @@ impl super::Session {
                     }
                     match dialog.key(key.code) {
                         None => {}
-                        Some(crate::terminal::onboarding::Outcome::Quit) => {
+                        Some(crate::terminal::onboarding::OnboardingOutcome::Quit) => {
                             guard.leave_inline()?;
                             eprintln!(
                                 "The VEOX terms of service were not accepted; nothing was changed."
@@ -334,7 +334,7 @@ impl super::Session {
                     if let Some(dialog) = self.first_run.as_mut() {
                         match dialog.line(line) {
                             None => output.transcript(&dialog.lines())?,
-                            Some(crate::terminal::onboarding::Outcome::Quit) => {
+                            Some(crate::terminal::onboarding::OnboardingOutcome::Quit) => {
                                 output.transcript(&[
                                     "The VEOX terms of service were not accepted; nothing was changed.".into(),
                                 ])?;

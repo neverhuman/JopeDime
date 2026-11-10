@@ -36,13 +36,13 @@ pub fn cloud_first_with(var: Option<String>) -> bool {
 
 /// The account's plan as `GET /api/cli/account` names it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Tier {
+pub enum AccountTier {
     Waitlist,
     Free,
     Pro,
 }
 
-impl Tier {
+impl AccountTier {
     pub fn parse(word: &str) -> Option<Self> {
         match word {
             "waitlist" => Some(Self::Waitlist),
@@ -80,9 +80,12 @@ pub fn profile(effort: jope_api::Effort) -> &'static str {
 /// The profile a plan can run: Free runs the Fast search in the cloud (deep search is Pro's),
 /// so a deep effort on Free is sent as `fast` with [`FREE_RUNS_FAST`] said once, rather than
 /// refused after the upload.
-pub fn profile_for(effort: jope_api::Effort, tier: Option<Tier>) -> (&'static str, Option<String>) {
+pub fn profile_for(
+    effort: jope_api::Effort,
+    tier: Option<AccountTier>,
+) -> (&'static str, Option<String>) {
     let wanted = profile(effort);
-    if tier == Some(Tier::Free) && wanted != "fast" {
+    if tier == Some(AccountTier::Free) && wanted != "fast" {
         return ("fast", Some(FREE_RUNS_FAST.to_owned()));
     }
     (wanted, None)
@@ -214,12 +217,15 @@ pub enum Gate {
 /// The gate for an own-data action. `account` is the signed-in email with the plan and
 /// `mayRun` the workspace reported, or `None` when it could not be asked (then the workspace
 /// itself refuses a waitlisted account's upload).
-pub fn gate(signed_in: Option<&str>, account: Option<(Option<Tier>, bool)>) -> Result<(), Gate> {
+pub fn gate(
+    signed_in: Option<&str>,
+    account: Option<(Option<AccountTier>, bool)>,
+) -> Result<(), Gate> {
     let Some(email) = signed_in else {
         return Err(Gate::SignedOut);
     };
     match account {
-        Some((tier, may_run)) if tier == Some(Tier::Waitlist) || !may_run => {
+        Some((tier, may_run)) if tier == Some(AccountTier::Waitlist) || !may_run => {
             Err(Gate::Waitlisted {
                 email: email.to_owned(),
             })
@@ -492,11 +498,20 @@ mod tests {
     #[test]
     fn the_gate_needs_a_login_and_an_admitted_account() {
         assert_eq!(gate(None, None), Err(Gate::SignedOut));
-        assert_eq!(gate(Some("a@b.c"), Some((Some(Tier::Free), true))), Ok(()));
-        assert_eq!(gate(Some("a@b.c"), Some((Some(Tier::Pro), true))), Ok(()));
+        assert_eq!(
+            gate(Some("a@b.c"), Some((Some(AccountTier::Free), true))),
+            Ok(())
+        );
+        assert_eq!(
+            gate(Some("a@b.c"), Some((Some(AccountTier::Pro), true))),
+            Ok(())
+        );
         // The workspace could not be asked: let the workspace refuse it, if it must.
         assert_eq!(gate(Some("a@b.c"), None), Ok(()));
-        for account in [(Some(Tier::Waitlist), false), (Some(Tier::Free), false)] {
+        for account in [
+            (Some(AccountTier::Waitlist), false),
+            (Some(AccountTier::Free), false),
+        ] {
             assert_eq!(
                 gate(Some("a@b.c"), Some(account)),
                 Err(Gate::Waitlisted {
@@ -532,11 +547,14 @@ mod tests {
         assert_eq!(profile(Effort::High), "deep_high");
         assert_eq!(profile(Effort::Ultra), "deep_ultra");
         assert_eq!(
-            profile_for(Effort::High, Some(Tier::Pro)),
+            profile_for(Effort::High, Some(AccountTier::Pro)),
             ("deep_high", None)
         );
-        assert_eq!(profile_for(Effort::Fast, Some(Tier::Free)), ("fast", None));
-        let (free, note) = profile_for(Effort::Medium, Some(Tier::Free));
+        assert_eq!(
+            profile_for(Effort::Fast, Some(AccountTier::Free)),
+            ("fast", None)
+        );
+        let (free, note) = profile_for(Effort::Medium, Some(AccountTier::Free));
         assert_eq!(free, "fast");
         assert!(note
             .unwrap()
