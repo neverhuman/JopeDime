@@ -1457,6 +1457,136 @@
           ],
           "type": "object"
         },
+        "ComparatorBudgetUsed": {
+          "description": "`ComparatorBudgetUsed` is a struct for the comparator stage cost contract in this module: the\nwall time spent against the stage ceiling and how many comparators hit it.",
+          "properties": {
+            "ceiling_seconds": {
+              "format": "double",
+              "type": "number"
+            },
+            "timed_out": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "wall_seconds": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          "required": [
+            "wall_seconds",
+            "ceiling_seconds",
+            "timed_out"
+          ],
+          "type": "object"
+        },
+        "ComparedModel": {
+          "description": "`ComparedModel` is a struct for the per-model comparison row contract in this module: one\nmodel's identity, outcome and measured cost on the shared rows.",
+          "properties": {
+            "cv": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "fit_seconds": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "holdout": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "implementation": {
+              "description": "`jope_champion` or `rust_port_analogue`.",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "model_bytes": {
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "predict_us_per_row": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "status": {
+              "$ref": "#/$defs/ComparedStatus"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "implementation",
+            "status"
+          ],
+          "type": "object"
+        },
+        "ComparedStatus": {
+          "description": "`ComparedStatus` is an enum for the comparison row outcome contract in this module: whether\na model completed, hit the stage ceiling, or failed with a reason.",
+          "oneOf": [
+            {
+              "properties": {
+                "state": {
+                  "const": "completed",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "state": {
+                  "const": "timed_out",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "reason": {
+                  "type": "string"
+                },
+                "state": {
+                  "const": "failed",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state",
+                "reason"
+              ],
+              "type": "object"
+            }
+          ]
+        },
         "ComparisonEvidence": {
           "properties": {
             "after": {
@@ -1487,6 +1617,60 @@
             "metric",
             "scope",
             "comparable"
+          ],
+          "type": "object"
+        },
+        "ComparisonReport": {
+          "description": "`ComparisonReport` is a struct for the same-rows comparator evidence contract in this module:\nthe champion and every requested comparator measured on identical FIT and HOLDOUT rows.",
+          "properties": {
+            "budget": {
+              "$ref": "#/$defs/ComparatorBudgetUsed"
+            },
+            "champion": {
+              "$ref": "#/$defs/ComparedModel",
+              "description": "The run champion, measured the same way as the comparators."
+            },
+            "comparators": {
+              "description": "Requested comparators in roster order, including timed-out and failed ones.",
+              "items": {
+                "$ref": "#/$defs/ComparedModel"
+              },
+              "type": "array"
+            },
+            "fit_rows_sha256": {
+              "description": "Digest of the FIT partition every model was fitted on.",
+              "type": "string"
+            },
+            "holdout_rows_sha256": {
+              "description": "Digest of the HOLDOUT partition every model was scored on.",
+              "type": "string"
+            },
+            "metric": {
+              "description": "The run objective, for example `rmse`.",
+              "type": "string"
+            },
+            "scope": {
+              "description": "The score scope shared by every row, for example `holdout`.",
+              "type": "string"
+            },
+            "tier": {
+              "description": "`medium`, `high` or `ultra`.",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/$defs/ValueProposition"
+            }
+          },
+          "required": [
+            "tier",
+            "metric",
+            "scope",
+            "fit_rows_sha256",
+            "holdout_rows_sha256",
+            "champion",
+            "comparators",
+            "value",
+            "budget"
           ],
           "type": "object"
         },
@@ -1933,6 +2117,17 @@
         },
         "Plan": {
           "properties": {
+            "comparators": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ResolvedComparators"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The resolved comparator stage; absent from plans produced before comparators existed."
+            },
             "effort": {
               "$ref": "#/$defs/ResolvedEffort"
             },
@@ -2220,6 +2415,46 @@
           ],
           "type": "object"
         },
+        "ResolvedComparators": {
+          "description": "`ResolvedComparators` is a struct for the planned comparator stage contract in this module:\nwhether comparators will run, at which tier, which roster keys and under which wall-clock\nceiling, with the reason for that resolution.",
+          "properties": {
+            "ceiling_seconds": {
+              "description": "Wall-clock ceiling for the whole comparator stage when enabled.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "ids": {
+              "description": "Roster keys in report order; empty when disabled.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "tier": {
+              "description": "`medium`, `high` or `ultra` when enabled.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "enabled",
+            "ids",
+            "reason"
+          ],
+          "type": "object"
+        },
         "ResolvedEffort": {
           "properties": {
             "cv_folds": {
@@ -2461,6 +2696,17 @@
                 }
               ]
             },
+            "comparisons": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ComparisonReport"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Same-rows comparator evidence; present only when comparators were requested and ran."
+            },
             "completion_reason": {
               "$ref": "#/$defs/CompletionReason"
             },
@@ -2581,6 +2827,89 @@
               "type": "string"
             }
           ]
+        },
+        "ValueProposition": {
+          "description": "`ValueProposition` is a struct for the champion-versus-alternatives summary contract in this\nmodule: where the champion ranks among completed models and by how much. Positive deltas mean\nthe champion is better.",
+          "properties": {
+            "beats": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "best_alternative": {
+              "description": "The best completed comparator's id.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "deterministic_replay": {
+              "type": "boolean"
+            },
+            "entrants": {
+              "description": "Completed models ranked, champion included.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "export_languages": {
+              "description": "Languages the champion exports to as readable source; comparators export none.",
+              "items": {
+                "$ref": "#/$defs/Language"
+              },
+              "type": "array"
+            },
+            "holdout_delta_pct_vs_best": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "holdout_delta_pct_vs_median": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "loses_to": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "predict_speedup_vs_best": {
+              "description": "Best alternative's predict time divided by the champion's, when both were measured.",
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "rank": {
+              "description": "The champion's 1-based rank among completed models, champion included.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "size_ratio_vs_best": {
+              "description": "Champion model bytes divided by the best alternative's, when both were measured.",
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "rank",
+            "entrants",
+            "beats",
+            "loses_to",
+            "export_languages",
+            "deterministic_replay"
+          ],
+          "type": "object"
         },
         "Warning": {
           "description": "Public warning fields from §9.3. TEL-06 owns the warning catalog.",
@@ -3175,6 +3504,46 @@
           ],
           "type": "object"
         },
+        "ResolvedComparators": {
+          "description": "`ResolvedComparators` is a struct for the planned comparator stage contract in this module:\nwhether comparators will run, at which tier, which roster keys and under which wall-clock\nceiling, with the reason for that resolution.",
+          "properties": {
+            "ceiling_seconds": {
+              "description": "Wall-clock ceiling for the whole comparator stage when enabled.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "ids": {
+              "description": "Roster keys in report order; empty when disabled.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "tier": {
+              "description": "`medium`, `high` or `ultra` when enabled.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "enabled",
+            "ids",
+            "reason"
+          ],
+          "type": "object"
+        },
         "ResolvedEffort": {
           "properties": {
             "cv_folds": {
@@ -3465,6 +3834,17 @@
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
+        "comparators": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResolvedComparators"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The resolved comparator stage; absent from plans produced before comparators existed."
+        },
         "effort": {
           "$ref": "#/$defs/ResolvedEffort"
         },
@@ -3647,6 +4027,136 @@
           ],
           "type": "object"
         },
+        "ComparatorBudgetUsed": {
+          "description": "`ComparatorBudgetUsed` is a struct for the comparator stage cost contract in this module: the\nwall time spent against the stage ceiling and how many comparators hit it.",
+          "properties": {
+            "ceiling_seconds": {
+              "format": "double",
+              "type": "number"
+            },
+            "timed_out": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "wall_seconds": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          "required": [
+            "wall_seconds",
+            "ceiling_seconds",
+            "timed_out"
+          ],
+          "type": "object"
+        },
+        "ComparedModel": {
+          "description": "`ComparedModel` is a struct for the per-model comparison row contract in this module: one\nmodel's identity, outcome and measured cost on the shared rows.",
+          "properties": {
+            "cv": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "fit_seconds": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "holdout": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "implementation": {
+              "description": "`jope_champion` or `rust_port_analogue`.",
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "model_bytes": {
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "predict_us_per_row": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "status": {
+              "$ref": "#/$defs/ComparedStatus"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "implementation",
+            "status"
+          ],
+          "type": "object"
+        },
+        "ComparedStatus": {
+          "description": "`ComparedStatus` is an enum for the comparison row outcome contract in this module: whether\na model completed, hit the stage ceiling, or failed with a reason.",
+          "oneOf": [
+            {
+              "properties": {
+                "state": {
+                  "const": "completed",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "state": {
+                  "const": "timed_out",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "reason": {
+                  "type": "string"
+                },
+                "state": {
+                  "const": "failed",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state",
+                "reason"
+              ],
+              "type": "object"
+            }
+          ]
+        },
         "ComparisonEvidence": {
           "properties": {
             "after": {
@@ -3677,6 +4187,60 @@
             "metric",
             "scope",
             "comparable"
+          ],
+          "type": "object"
+        },
+        "ComparisonReport": {
+          "description": "`ComparisonReport` is a struct for the same-rows comparator evidence contract in this module:\nthe champion and every requested comparator measured on identical FIT and HOLDOUT rows.",
+          "properties": {
+            "budget": {
+              "$ref": "#/$defs/ComparatorBudgetUsed"
+            },
+            "champion": {
+              "$ref": "#/$defs/ComparedModel",
+              "description": "The run champion, measured the same way as the comparators."
+            },
+            "comparators": {
+              "description": "Requested comparators in roster order, including timed-out and failed ones.",
+              "items": {
+                "$ref": "#/$defs/ComparedModel"
+              },
+              "type": "array"
+            },
+            "fit_rows_sha256": {
+              "description": "Digest of the FIT partition every model was fitted on.",
+              "type": "string"
+            },
+            "holdout_rows_sha256": {
+              "description": "Digest of the HOLDOUT partition every model was scored on.",
+              "type": "string"
+            },
+            "metric": {
+              "description": "The run objective, for example `rmse`.",
+              "type": "string"
+            },
+            "scope": {
+              "description": "The score scope shared by every row, for example `holdout`.",
+              "type": "string"
+            },
+            "tier": {
+              "description": "`medium`, `high` or `ultra`.",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/$defs/ValueProposition"
+            }
+          },
+          "required": [
+            "tier",
+            "metric",
+            "scope",
+            "fit_rows_sha256",
+            "holdout_rows_sha256",
+            "champion",
+            "comparators",
+            "value",
+            "budget"
           ],
           "type": "object"
         },
@@ -4123,6 +4687,17 @@
         },
         "Plan": {
           "properties": {
+            "comparators": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ResolvedComparators"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The resolved comparator stage; absent from plans produced before comparators existed."
+            },
             "effort": {
               "$ref": "#/$defs/ResolvedEffort"
             },
@@ -4222,6 +4797,46 @@
           "required": [
             "stage",
             "summary"
+          ],
+          "type": "object"
+        },
+        "ResolvedComparators": {
+          "description": "`ResolvedComparators` is a struct for the planned comparator stage contract in this module:\nwhether comparators will run, at which tier, which roster keys and under which wall-clock\nceiling, with the reason for that resolution.",
+          "properties": {
+            "ceiling_seconds": {
+              "description": "Wall-clock ceiling for the whole comparator stage when enabled.",
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "ids": {
+              "description": "Roster keys in report order; empty when disabled.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "tier": {
+              "description": "`medium`, `high` or `ultra` when enabled.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "enabled",
+            "ids",
+            "reason"
           ],
           "type": "object"
         },
@@ -4466,6 +5081,17 @@
                 }
               ]
             },
+            "comparisons": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ComparisonReport"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Same-rows comparator evidence; present only when comparators were requested and ran."
+            },
             "completion_reason": {
               "$ref": "#/$defs/CompletionReason"
             },
@@ -4586,6 +5212,89 @@
               "type": "string"
             }
           ]
+        },
+        "ValueProposition": {
+          "description": "`ValueProposition` is a struct for the champion-versus-alternatives summary contract in this\nmodule: where the champion ranks among completed models and by how much. Positive deltas mean\nthe champion is better.",
+          "properties": {
+            "beats": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "best_alternative": {
+              "description": "The best completed comparator's id.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "deterministic_replay": {
+              "type": "boolean"
+            },
+            "entrants": {
+              "description": "Completed models ranked, champion included.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "export_languages": {
+              "description": "Languages the champion exports to as readable source; comparators export none.",
+              "items": {
+                "$ref": "#/$defs/Language"
+              },
+              "type": "array"
+            },
+            "holdout_delta_pct_vs_best": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "holdout_delta_pct_vs_median": {
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "loses_to": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "predict_speedup_vs_best": {
+              "description": "Best alternative's predict time divided by the champion's, when both were measured.",
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "rank": {
+              "description": "The champion's 1-based rank among completed models, champion included.",
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "size_ratio_vs_best": {
+              "description": "Champion model bytes divided by the best alternative's, when both were measured.",
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "rank",
+            "entrants",
+            "beats",
+            "loses_to",
+            "export_languages",
+            "deterministic_replay"
+          ],
+          "type": "object"
         },
         "Warning": {
           "description": "Public warning fields from §9.3. TEL-06 owns the warning catalog.",
@@ -6206,6 +6915,70 @@
           },
           "type": "object"
         },
+        "ComparatorPolicy": {
+          "description": "`ComparatorPolicy` is an enum for the run comparator selection contract in this module:\nwhether the run also fits the pure-Rust comparator roster on the same FIT rows and scores it on\nthe same HOLDOUT rows as the champion. Comparators never run at `fast` effort.",
+          "oneOf": [
+            {
+              "description": "No comparators. This is the default when the field is omitted.",
+              "properties": {
+                "mode": {
+                  "const": "off",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "type": "object"
+            },
+            {
+              "description": "The full roster at medium, high and ultra effort; off at fast.",
+              "properties": {
+                "mode": {
+                  "const": "auto",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "type": "object"
+            },
+            {
+              "description": "The full roster at medium, high and ultra effort; still off at fast.",
+              "properties": {
+                "mode": {
+                  "const": "all",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "type": "object"
+            },
+            {
+              "description": "An explicit subset of roster keys. Unknown keys are refused before any fit, even at fast.",
+              "properties": {
+                "ids": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "mode": {
+                  "const": "only",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "mode",
+                "ids"
+              ],
+              "type": "object"
+            }
+          ]
+        },
         "Effort": {
           "enum": [
             "fast",
@@ -6320,6 +7093,10 @@
       "properties": {
         "budget": {
           "$ref": "#/$defs/Budget"
+        },
+        "comparators": {
+          "$ref": "#/$defs/ComparatorPolicy",
+          "description": "Comparator models fitted on the same rows as the champion; omitted means `off`."
         },
         "dataset": {
           "type": "string"

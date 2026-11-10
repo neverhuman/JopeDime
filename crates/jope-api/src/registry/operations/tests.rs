@@ -132,7 +132,8 @@ fn api08_uniqueness_mutation_keys_and_unexposed_admin_operations() {
             assert!(command_names.insert(*alias));
         }
     }
-    assert_eq!(command_names.len(), 33);
+    // 34 commands: 33 baseline terminal commands plus \\comparators (§4.2).
+    assert_eq!(command_names.len(), 34);
 }
 #[test]
 fn api08_engine_mappings_aliases_and_context_roles() {

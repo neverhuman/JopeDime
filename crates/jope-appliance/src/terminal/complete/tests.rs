@@ -82,11 +82,10 @@ fn column_run_and_algorithm_sources_use_supplied_context() {
 
     let suggestions = complete("\\target med", 11, &data);
     assert_eq!(suggestions[0].insert, "\"median price\"");
-    for line in ["\\target --ignore med"] {
-        let suggestions = complete(line, line.len(), &data);
-        assert_eq!(suggestions[0].insert, "\"median price\"", "{line}");
-        assert_eq!(suggestions[0].source, CompletionSource::Column, "{line}");
-    }
+    let line = "\\target --ignore med";
+    let suggestions = complete(line, line.len(), &data);
+    assert_eq!(suggestions[0].insert, "\"median price\"", "{line}");
+    assert_eq!(suggestions[0].source, CompletionSource::Column, "{line}");
     let line = "\\target target --ignore age,inc";
     let suggestions = complete(line, line.len(), &data);
     assert_eq!(suggestions[0].insert, "age,income");
