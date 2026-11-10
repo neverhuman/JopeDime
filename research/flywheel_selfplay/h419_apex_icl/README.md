@@ -46,6 +46,31 @@ Since addendum 6 the 24M run `ICL_M_r3` (from 17:15Z) and 104M workers 2 (17:14Z
 Clock times of the 13:30–15:42 rows are approximate; the hours column is exact. Worker hours exclude the time a
 worker waits for the group average.
 
+**xbabe4 incident, 20:25Z: our four arms exhausted the Mac Studio's memory; it was reset at 20:30Z.**
+- **What happened.** macOS logged a memory-exhaustion event at 20:25:08Z with 0.1 GiB free. The four arm processes
+  held 178, 161, 138 and 108 GiB (586 GiB together; the machine has 512 GiB), another user's `llama-server` 84 GiB.
+  The machine was reset at 20:30Z. Everything running on it stopped, including applications that are not ours.
+- **Cause.** On the Apple GPU backend a trainer's memory grows with the number of distinct batch shapes it has
+  seen: the buffer pool settles near 94 GiB without a cap (74 GiB with the cap the fourth arm had), and memory
+  outside the pool grows by about 10 GiB an hour. Four arms cannot fit for long.
+- **My mistakes.** No per-process memory limit; the memory guards of addenda 4–6 were not verified to be running
+  (none was); at 20:17Z I read 36% free memory and arms slowed to 2–10 tasks per second and did not act.
+- **Checkpoints.** All four arms have complete checkpoints from 20:05–20:17Z: `inj` 7.34 h, `noinj` 7.35 h, `res`
+  about 3.5 h, `v2` about 2.1 h. At most 20 minutes of training per arm were lost.
+- **Resumed 22:27Z (asked by the owner's watcher at 22:22Z): `ICL_M_x4b_inj` and `ICL_M_x4b_noinj` only**, from their
+  own `ckpt_last.pt`, same code stage (`r6`, the hash in their `config.json`) and same arguments plus `--resume`; the
+  24-hour budget is carried in the checkpoint. New and operational only: a buffer-pool cap
+  (`PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.14`, low 0.10) and a supervisor (`x4_supervise_arm.sh`) that restarts a
+  trainer from its own checkpoint when its physical footprint reaches 75 GiB (right after a checkpoint) or 95 GiB
+  (at once), and stops it if system free memory falls below 25%. Two aborted starts at 22:25Z (the first
+  supervisor read a memory figure that does not count GPU buffers) left duplicate log lines for steps
+  16,342–16,400 (`inj`) and 16,750–16,810 (`noinj`).
+- **Not resumed: `ICL_M_x4c_res` and `ICL_M_x4d_v2`.** Reason: memory; two supervised arms stay under 190 GiB in
+  the worst case, four would not leave room for the machine's other users. Their checkpoints are kept and they can
+  resume with the same arguments when the first pair has finished. **Consequence for addenda 5 and 6:** the ladder
+  arms will not have shared the GPU in the same way, so equal training hours no longer mean equal task counts;
+  their readings will be reported at equal task counts as well.
+
 **Prior version 2: cause, rollout and first readings, 17:05–18:12Z (addendum 6).**
 - **Cause found:** the version-1 synthetic prior has almost no easy tasks (ridge u above 1 on at most 3% of its
   tasks; on 33% of the real monitor contexts). The 24M model at 5.0 h scored a median u of 0.63 on fresh linear
