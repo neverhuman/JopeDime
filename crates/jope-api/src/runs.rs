@@ -92,6 +92,54 @@ pub struct Budget {
     pub wall_seconds: Option<DecimalU64>,
 }
 
+/// `ComparatorPolicy` is an enum for the run comparator selection contract in this module:
+/// whether the run also fits the pure-Rust comparator roster on the same FIT rows and scores it on
+/// the same HOLDOUT rows as the champion. Comparators never run at `fast` effort.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "mode", rename_all = "snake_case")]
+pub enum ComparatorPolicy {
+    /// No comparators. This is the default when the field is omitted.
+    #[default]
+    Off,
+    /// The full roster at medium, high and ultra effort; off at fast.
+    Auto,
+    /// The full roster at medium, high and ultra effort; still off at fast.
+    All,
+    /// An explicit subset of roster keys. Unknown keys are refused before any fit, even at fast.
+    Only { ids: Vec<String> },
+}
+
+impl ComparatorPolicy {
+    /// Whether this is the default `off` policy, which is omitted from serialized specs so that
+    /// pre-existing specs and their plan digests stay byte-identical.
+    pub fn is_off(&self) -> bool {
+        matches!(self, Self::Off)
+    }
+
+    /// Parse the CLI and terminal spelling: no tokens or `off` is `off`, `all` is `all`, and
+    /// anything else is an explicit id list. `off` or `all` mixed with ids is refused. Ids are
+    /// validated against the roster by the engine when it plans the run.
+    pub fn from_tokens<T: AsRef<str>>(tokens: &[T]) -> Result<Self, String> {
+        let tokens: Vec<&str> = tokens
+            .iter()
+            .map(|token| token.as_ref().trim())
+            .filter(|token| !token.is_empty())
+            .collect();
+        let keyword = |token: &&str| matches!(*token, "off" | "all");
+        match tokens.as_slice() {
+            [] | ["off"] => Ok(Self::Off),
+            ["all"] => Ok(Self::All),
+            many if many.iter().any(keyword) => Err(
+                "comparators takes `off`, `all`, or a comma-separated list of comparator ids, not a mix"
+                    .into(),
+            ),
+            ids => Ok(Self::Only {
+                ids: ids.iter().map(|id| (*id).to_owned()).collect(),
+            }),
+        }
+    }
+}
+
 /// Operation 6 uses this same body for a dry-run plan and a real start.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct RunSpec {
@@ -113,6 +161,9 @@ pub struct RunSpec {
     pub seed: DecimalU64,
     pub dry_run: bool,
     pub plan_digest: Option<String>,
+    /// Comparator models fitted on the same rows as the champion; omitted means `off`.
+    #[serde(default, skip_serializing_if = "ComparatorPolicy::is_off")]
+    pub comparators: ComparatorPolicy,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -222,6 +273,24 @@ pub struct Plan {
     pub limits: RunLimits,
     pub estimates: ResourceEstimates,
     pub warnings: Vec<Warning>,
+    /// The resolved comparator stage; absent from plans produced before comparators existed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comparators: Option<ResolvedComparators>,
+}
+
+/// `ResolvedComparators` is a struct for the planned comparator stage contract in this module:
+/// whether comparators will run, at which tier, which roster keys and under which wall-clock
+/// ceiling, with the reason for that resolution.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ResolvedComparators {
+    pub enabled: bool,
+    /// `medium`, `high` or `ultra` when enabled.
+    pub tier: Option<String>,
+    /// Roster keys in report order; empty when disabled.
+    pub ids: Vec<String>,
+    /// Wall-clock ceiling for the whole comparator stage when enabled.
+    pub ceiling_seconds: Option<u64>,
+    pub reason: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

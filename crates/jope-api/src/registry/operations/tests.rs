@@ -73,6 +73,7 @@ fn exact_operations_tools_and_commands_match_spec_inventory() {
         "\\objective",
         "\\effort",
         "\\landmarks",
+        "\\comparators",
         "\\lang",
         "\\plan",
         "\\run",

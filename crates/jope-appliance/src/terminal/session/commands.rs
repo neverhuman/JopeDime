@@ -236,9 +236,8 @@ impl super::Session {
                 vec!["session closed; run continues in the background".into()]
             }
             "\\open" => self.open_dataset(&args)?,
-            "\\target" | "\\objective" | "\\effort" | "\\landmarks" | "\\lang" | "\\language" => {
-                self.update_draft(input)?
-            }
+            "\\target" | "\\objective" | "\\effort" | "\\landmarks" | "\\comparators"
+            | "\\lang" | "\\language" => self.update_draft(input)?,
             "\\plan" => self.validate_draft()?.map(plan_lines).unwrap_or_else(|| {
                 vec![
                     "draft needs a registered dataset and target before it can be validated".into(),

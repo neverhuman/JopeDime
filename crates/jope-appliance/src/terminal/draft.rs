@@ -1,8 +1,8 @@
 //! Terminal-owned RunSpec draft state. The client validates complete drafts with a dry run.
 
 use jope_api::{
-    decimal::DecimalU64, ids::DatasetId, Budget, DatasetProfile, Effort, Guidance, LandmarkMode,
-    Language, ObjectiveSpec, RunSpec, SplitKind, SplitSpec, Task,
+    decimal::DecimalU64, ids::DatasetId, Budget, ComparatorPolicy, DatasetProfile, Effort,
+    Guidance, LandmarkMode, Language, ObjectiveSpec, RunSpec, SplitKind, SplitSpec, Task,
 };
 use std::collections::BTreeMap;
 
@@ -23,6 +23,8 @@ pub struct Draft {
     require_all_languages: bool,
     device: String,
     seed: DecimalU64,
+    /// Comparators stay off unless the draft opts in; they never run at fast effort.
+    comparators: ComparatorPolicy,
     pub columns: Vec<String>,
 }
 
@@ -52,6 +54,7 @@ impl Default for Draft {
             require_all_languages: false,
             device: "auto".into(),
             seed: DecimalU64(0),
+            comparators: ComparatorPolicy::Off,
             columns: Vec::new(),
         }
     }
@@ -214,6 +217,13 @@ impl Draft {
                 self.languages = languages;
                 self.require_all_languages = !args.iter().any(|arg| arg == "--best-effort");
             }
+            "\\comparators" => {
+                let tokens: Vec<&str> = args.iter().flat_map(|arg| arg.split(',')).collect();
+                if tokens.is_empty() {
+                    return Err("usage: \\comparators off|all|ID,…".into());
+                }
+                self.comparators = ComparatorPolicy::from_tokens(&tokens)?;
+            }
             command => return Err(format!("\\{command} does not edit the run draft")),
         }
         Ok(())
@@ -245,6 +255,7 @@ impl Draft {
             seed: self.seed,
             dry_run,
             plan_digest: None,
+            comparators: self.comparators.clone(),
         })
     }
 }

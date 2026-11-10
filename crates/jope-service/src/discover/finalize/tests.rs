@@ -155,6 +155,7 @@ fn fixture(missing: bool) -> Fixture {
         scratch_root: directory.path().join("scratch"),
         max_input_bytes: 1024 * 1024,
         max_model_bytes: HANDOFF_MAX,
+        comparators: None,
     };
     Fixture {
         directory,

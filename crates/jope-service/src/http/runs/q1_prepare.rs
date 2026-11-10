@@ -8,6 +8,8 @@ impl RunService {
         if jope_runtime::backend::DeviceRequest::parse(&spec.device).is_none() {
             return Err(invalid("Unknown device."));
         }
+        // Unknown comparator keys are refused here, before any dataset read or fit.
+        let comparators = resolve_comparators(&spec.comparators, spec.effort)?;
         let mut backend =
             BackendPlan::resolve(spec, self.activity.admitted_ranker(), 1).map_err(|error| {
                 let code = crate::run::service::error_code(&error);
@@ -239,6 +241,7 @@ impl RunService {
             .bind_fit(&fit, &search)
             .map_err(|_| invalid("Unable to prepare numeric FIT landmarks."))?;
         public.landmarks.sample_rows = backend.landmark_rows as u32;
+        public.comparators = Some(comparators);
         let rows = |ids: Vec<usize>| {
             ids.into_iter()
                 .map(|row| AuditRowId {
@@ -257,4 +260,67 @@ impl RunService {
             backend,
         })
     }
+}
+
+/// Resolve the requested comparator policy at the run effort. `off` and every policy at `fast`
+/// effort disable the stage; `auto` and `all` select the full roster at the matching tier;
+/// `only` selects a validated subset. Unknown keys are refused at every effort, before any fit.
+pub(in crate::http::runs) fn resolve_comparators(
+    policy: &ComparatorPolicy,
+    effort: Effort,
+) -> Result<ResolvedComparators> {
+    use jope_comparators::{ComparatorId, ComparatorTier};
+    let ids: Vec<ComparatorId> = match policy {
+        ComparatorPolicy::Off => Vec::new(),
+        ComparatorPolicy::Auto | ComparatorPolicy::All => ComparatorId::ALL.to_vec(),
+        ComparatorPolicy::Only { ids } => {
+            let mut selected = Vec::with_capacity(ids.len());
+            for key in ids {
+                let id = ComparatorId::from_key(key).ok_or_else(|| {
+                    let valid: Vec<_> = ComparatorId::ALL.iter().map(|id| id.key()).collect();
+                    let mut problem = invalid(&format!(
+                        "Unknown comparator `{key}`. Valid comparators: {}.",
+                        valid.join(", ")
+                    ));
+                    problem.field = Some("comparators.ids".into());
+                    problem
+                })?;
+                if !selected.contains(&id) {
+                    selected.push(id);
+                }
+            }
+            if selected.is_empty() {
+                let mut problem =
+                    invalid("comparators mode `only` needs at least one comparator id.");
+                problem.field = Some("comparators.ids".into());
+                return Err(problem);
+            }
+            selected
+        }
+    };
+    let disabled = |reason: &str| ResolvedComparators {
+        enabled: false,
+        tier: None,
+        ids: Vec::new(),
+        ceiling_seconds: None,
+        reason: reason.into(),
+    };
+    if policy.is_off() {
+        return Ok(disabled("not requested"));
+    }
+    let effort_name = match effort {
+        Effort::Fast => return Ok(disabled("fast effort")),
+        Effort::Medium => "medium",
+        Effort::High => "high",
+        Effort::Ultra => "ultra",
+    };
+    let tier = ComparatorTier::from_effort(effort_name)
+        .ok_or_else(|| io("Comparator tier is missing for this effort."))?;
+    Ok(ResolvedComparators {
+        enabled: true,
+        tier: Some(tier.as_str().into()),
+        ids: ids.iter().map(|id| id.key().to_owned()).collect(),
+        ceiling_seconds: Some(tier.budget().stage_ceiling.as_secs()),
+        reason: "requested".into(),
+    })
 }

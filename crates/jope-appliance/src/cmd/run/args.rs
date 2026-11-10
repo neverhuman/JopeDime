@@ -1,5 +1,5 @@
 use clap::Args;
-use jope_api::{ids::DatasetId, Language, RunSpec};
+use jope_api::{ids::DatasetId, ComparatorPolicy, Language, RunSpec};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::{path::PathBuf, str::FromStr};
@@ -52,6 +52,10 @@ pub struct RunArgs {
     pub dry_run: bool,
     #[arg(long)]
     pub plan_digest: Option<String>,
+    /// Also fit comparator models on the same rows: `all`, `off`, or comma-separated ids such as
+    /// `xgboost_style,autogluon_style`. Off by default; never runs at `--effort fast`.
+    #[arg(long, value_delimiter = ',', value_name = "all|off|IDS")]
+    pub comparators: Vec<String>,
     #[arg(long, conflicts_with_all = ["dry_run", "events", "out"])]
     pub detach: bool,
     #[arg(long)]
@@ -128,6 +132,8 @@ impl RunArgs {
             seed: serde_json::from_value(Value::String(self.seed.clone()))?,
             dry_run: self.dry_run,
             plan_digest: self.plan_digest.clone(),
+            comparators: ComparatorPolicy::from_tokens(&self.comparators)
+                .map_err(|reason| anyhow::anyhow!("--comparators: {reason}"))?,
         })
     }
 }

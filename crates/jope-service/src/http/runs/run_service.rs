@@ -50,6 +50,11 @@ impl RunService {
             Ok(value) => value,
             Err(error) => return response(&io(error)),
         };
+        let comparators = prepared
+            .public
+            .comparators
+            .as_ref()
+            .and_then(|resolved| ComparatorStagePlan::from_resolved(resolved, &spec.languages));
         let request = FinalizationRequest {
             run_id: prepared.search.run_id.clone(),
             fit: Partition {
@@ -69,6 +74,7 @@ impl RunService {
             scratch_root: self.home.join("run-scratch"),
             max_input_bytes: self.config.limits.max_dataset_bytes.value,
             max_model_bytes: MODEL_LIMIT,
+            comparators,
         };
         // This context precedes the first run commit, so every visible run can
         // resume from its original immutable plan and partition provenance.

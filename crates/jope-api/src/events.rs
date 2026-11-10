@@ -158,6 +158,9 @@ pub struct RunFinishedBody {
     /// Full Q1 request receipt, atomically committed with this terminal event.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub evaluation_receipt: Option<Box<EvaluationReceipt>>,
+    /// Same-rows comparator evidence; present only when comparators were requested and ran.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comparisons: Option<Box<ComparisonReport>>,
 }
 
 /// Ephemeral SSE frame: deliberately lacks `sequence` and therefore no SSE id.
