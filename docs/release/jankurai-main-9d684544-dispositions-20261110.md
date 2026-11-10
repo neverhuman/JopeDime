@@ -939,3 +939,31 @@ a train path, checks the deny counter is 0, then opens dev paths and fails the
 process when a path is not refused. `# fmt: skip` on the decision-rule fixture is
 a formatter hint. This is a refusal check, not a skipped or tautological test.
 The file is an H* dev91 control and is not edited.
+
+## Audit of main 1db31b33
+
+`1db31b33a464b4e434bbacb7483fa190059113f3` is the squash of #2186. Its tree
+matches reviewed head `c3e987ccd08eba2195242610bfd8716c2a97a671`
+(`d25e3d87d1e51f47e81a55a8dfb3a54373ea37c4`). Hosted run 42853324737 on that
+head kept score 68, raw 77, hard 55, soft 9, and the same repair queue
+(`sha256:568706037c7f278514afbcbfc0b778c4ee784cf5953fc09daec8293805dd4671`).
+P37 passed. The H310 item above stays the first queue row. This note records
+the next row.
+
+The next repair-queue item is `HLT-027-HUMAN-REVIEW-EVIDENCE-GAP` on
+`docs/internal/kernel2/receipts/observatory-evaluator-identity-20261019/receipt.json:60`,
+fingerprint `sha256:e0cb12e1ad094624669a669dbe28e162d5ada272d836904d25b9f50dec6e293e`.
+The evidence is the sentence
+`No new historical runtime receipt was captured; no table row is fabricated or appended.`
+`known_historical_table` stays `changed: false` with 2 rows. That sentence is
+the refusal to invent a historical runtime row. Writing one would make the
+receipt false.
+
+The same file already records the identity checks that did run. `regenerate`,
+`compare`, and `final_compare_and_historical` name the command, exit code 0,
+and the gzip log beside the receipt. Those three logs, plus
+`historical-before-transition.log.gz`, match the compressed and decoded
+SHA-256 values in the receipt. They prove the announced identity values.
+They are not a new historical runtime table row. The receipt bytes are not
+edited. #2184 comparator files, research H* bytes, holdout/dev91 data, and
+`provenance_bind.py` are not edited.
