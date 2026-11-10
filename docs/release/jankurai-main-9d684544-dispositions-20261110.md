@@ -922,3 +922,20 @@ on any `Exception`. Both sites now continue only on `json.JSONDecodeError`.
 That script is not in the top findings. The reported fallback remains
 `run_methods.py:65`, already justified above. The H* test double stays unedited.
 `provenance_bind.py`, holdout/dev91 data, and #2184 files were not edited.
+
+## Audit of main 9a4bc4f8
+
+Full jankurai 1.7.6 audit of `9a4bc4f8b0a1bdc90d3ae9ee9eaeb98e31dd95ac`
+(2026-11-10T16:01:07Z to 2026-11-10T16:17:08Z). Score 68, raw 77, hard 55, soft 9,
+64 findings. P37 exception integrity passed. Evidence exclusion passed (472 paths).
+Verification artifact valid. The repair queue matches the prior confirming audit.
+
+The top repair-queue item is `HLT-008-FALSE-GREEN-RISK` on
+`research/flywheel_selfplay/h310_ensvote2_dev91_vs_r3175/test_h310.py:30`,
+fingerprint `sha256:5ae45f64cab12e836296aead07cc15d8020bb7c5ab66c12c59f35c9809efc311`.
+The evidence is `raise SystemExit("not refused: " + p)` inside
+`test_dev_guard_refuses_dev_paths_and_counts_zero_for_train`. The subprocess opens
+a train path, checks the deny counter is 0, then opens dev paths and fails the
+process when a path is not refused. `# fmt: skip` on the decision-rule fixture is
+a formatter hint. This is a refusal check, not a skipped or tautological test.
+The file is an H* dev91 control and is not edited.
