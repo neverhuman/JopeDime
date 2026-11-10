@@ -16,16 +16,16 @@ precision, seed, budgets and schedule and differ only in the data mix.
 
 | Arm | Run | Data mix |
 | --- | --- | --- |
-| A (replicate of the published 24M recipe) | `ICL_M_x4_inj` | addendum 1: injection in half of the synthetic tasks; real-table tasks filled with injected columns |
-| B (ablation) | `ICL_M_x4_noinj` | no injected column anywhere: `--inject-p 0`; real-table tasks take exactly F real columns from tables that have them |
+| A (replicate of the published 24M recipe) | `ICL_M_x4b_inj` | addendum 1: injection in half of the synthetic tasks; real-table tasks filled with injected columns |
+| B (ablation) | `ICL_M_x4b_noinj` | no injected column anywhere: `--inject-p 0`; real-table tasks take exactly F real columns from tables that have them |
 
 - Both start from the 24M run's pre-injection checkpoint `ICL_M_r2/ckpt_last.pt` (sha256 `a603f767…`), exactly as
   `ICL_M_r3` did, with seed 1, token budget 600,000, row-token cap 40,000, peak LR 2e-4.
-- **Schedule matched per task, not per hour.** The Apple GPU is slow: 33–42 tasks per second alone in the smoke,
-  about 19 per arm when shared, against 289 for `ICL_M_r3`. The schedule length is therefore 700 hours and the
-  real-table ramp 54,800 seconds, so that warmup, ramp and row curriculum fall at the same task counts as in
-  `ICL_M_r3`. Each arm is **stopped at 24 hours** (`--stop-h 24`), after about 1.6 million tasks: the stretch
-  `ICL_M_r3` covered in its first 1.5 hours.
+- **Schedule matched per task, not per hour.** The Apple GPU is slow: 33–42 tasks per second in the smoke, and the
+  two arms barely slow each other (40–57 each in their first minutes), against 289 for `ICL_M_r3`. The schedule
+  length is therefore 360 hours and the real-table ramp 28,100 seconds, so that warmup, ramp and row curriculum
+  fall at the same task counts as in `ICL_M_r3`. Each arm is **stopped at 24 hours** (`--stop-h 24`), after about
+  3 million tasks: the stretch `ICL_M_r3` covered in its first 3 hours.
 - Arm A doubles as a cross-hardware replicate of `ICL_M_r3`: their gap at matched task counts is the only noise
   estimate this wave has.
 - In arm B the real-table share is lower in wide batches (few tables have 33 or more feature columns); the realised
@@ -47,6 +47,11 @@ injected columns.
   applications, which are not touched), or if an arm averages fewer than 8 tasks per second over its first hour.
 - Data: the FIT-ICL bank and the FIT-SEL SEARCH-row monitor of addendum 1 (TRAIN side). No dev91, DL-Val,
   DL-Holdout, sealed or CONFIRM byte.
+
+## 4a. Correction before the scored arms (12:46Z)
+The first launch (`ICL_M_x4_inj`, `ICL_M_x4_noinj`, schedule 700 hours, ramp 54,800 s) assumed the arms would halve
+each other's speed. They do not. Both were stopped after 2 minutes, before any evaluation, and relaunched as
+`ICL_M_x4b_inj` and `ICL_M_x4b_noinj` with the 360-hour schedule above. Nothing else changed.
 
 ## 5. Files
 `icl_train.py` gains `--device`, `--stop-h`, `--no-inject-real` and CPU float64 for the reference maths (the Apple

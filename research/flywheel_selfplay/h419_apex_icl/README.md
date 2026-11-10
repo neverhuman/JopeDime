@@ -11,7 +11,7 @@ exists. Plan: [`PREREG.md`](PREREG.md), [`PREREG_ADDENDUM_1.md`](PREREG_ADDENDUM
 | `ICL_M_r3` | xbabe1 4090 | 23.66M | 46 h run, started 2026-11-10T10:52Z; same data mix |
 | `ICL_L_r4` | xbabe3 3090 | 104.36M | 72 h run, started 2026-11-10T11:40Z from scratch (addendum 2); same data mix |
 | `ICL_L_g1_w1`, `ICL_L_g1_w2` | xbabe0 3090, xbabe2 3090 | 104.36M | started 12:29Z as averaging workers cloned from `ICL_L_r4` at step 5,531 (addendum 3); the xbabe3 run joins after the cut-over checks |
-| `ICL_M_x4_inj`, `ICL_M_x4_noinj` | xbabe4 Apple GPU | 23.66M | column-injection ablation, two arms, stopped at 24 h each (addendum 4) |
+| `ICL_M_x4b_inj`, `ICL_M_x4b_noinj` | xbabe4 Apple GPU | 23.66M | column-injection ablation, two arms, stopped at 24 h each (addendum 4) |
 
 ## Tracked metrics
 - **Real-table monitor:** 106 core FIT-SEL contexts, SEARCH rows only; query = fold 0 of `kfold_labels`, context =
@@ -53,7 +53,7 @@ larger model is expected to at that point; this is neither good nor bad news yet
 - The owner's direction for this wave is synthetic column injection, and nothing yet measured its contribution.
   xbabe4 therefore runs the published 24M recipe with and without injection, side by side on the same hardware
   (addendum 4). The arm with injection is also the only replicate of the 24M run, so it gives a first noise estimate.
-- Limit: at about 19 tasks per second per arm, 24 hours cover only the first 1.6 million tasks. A clear early effect
+- Limit: at 33–42 tasks per second per arm, 24 hours cover only the first 3 million tasks. A clear early effect
   can show; a small or late one cannot.
 
 ## Mistakes and corrections so far
