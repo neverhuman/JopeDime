@@ -236,6 +236,10 @@ is `0a734502661a5e653960bb7623f4ee0bf3a14206`. No evaluator behavior is intentio
 The known-identity table remains unchanged; this lane had no qualifying shipped-receipt path to
 append for the prior current identity.
 
+## Current identity transition: COMPARATORS PR-3 run stage (2026-11-10)
+
+PR-3 adds `jope-comparators` as a normal `jope-service` dependency so the opt-in finalize stage can fit the roster. The only new Cargo.lock edge is `jope-service -> jope-comparators`. No package version, feature, or registry source changes. Chained after the PR-1 workspace-registration identity, implementation hash `0dd4ab4abea79300515e4a8a5029c455bedab5cf8e95a776faf59eab773de8cc` advances to `f252680f72365d314c9839ed0a17f7a54b49a1be2009208d4a5a10b95de2118a`; Cargo.lock hash `98d962b69e45d57ff381a4ab3208525d85deb958dbb1e18f7f757f88dbef16ae` advances to `82750afc35db964cd787e8998335be255dcde8cd5d4f5d7c36aae914df744630`; evaluator identity digest `51819084e01575f510b9c6fe4298861a7dc18ee4f3bb666529e8769cec80b868` advances to `2b2b7c781c96b628e04c71ef0b001d77b49814be3dc3c8e8a0ecc4a067fecff6`. DSL ABI is unchanged. The identity-only regeneration is bound to source commit `4383741dc4a5a4a317c4a96ea83003c626e002f7`. The transition is recorded in `comparators_run_stage_lockfile_identity_rebaseline.v1.json`. No known-identity row is added because this change has no shipped receipt proving the new identity existed.
+
 ## Current identity transition: P42 evaluator source paths and P66 typed error (2026-11-02)
 
 The merged P42 (#1998) evaluator rename changed the labels and paths in the implementation
