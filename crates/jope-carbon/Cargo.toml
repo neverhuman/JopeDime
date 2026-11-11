@@ -1,0 +1,93 @@
+[package]
+name = "jope-carbon"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Carbon serverless cell runtime, adaptive multi-class execution planner, and local emulator"
+
+[[bin]]
+name = "carbon-edge"
+path = "src/bin/carbon_edge.rs"
+required-features = ["edge"]
+
+[[bin]]
+name = "carbon"
+path = "src/bin/carbon.rs"
+required-features = ["cli", "serve"]
+
+[features]
+default = ["cli", "engine", "eval", "serve", "emu"]
+# Public-facing regional edge gateway: strictly excludes jope-service, feat-math, and neural weights.
+edge = [
+    "dep:aws-lc-rs",
+    "dep:base64",
+    "dep:http",
+    "dep:jope-api",
+    "dep:jope-prep",
+    "dep:p256",
+    "dep:rustls",
+    "dep:ureq",
+    "dep:url",
+    "dep:zeroize",
+]
+# Sealed engine cell (neural Gen-0 conditioning + candidate orchestration).
+engine = [
+    "edge",
+    "dep:flate2",
+    "dep:jope-paths",
+    "dep:jope-runtime",
+    "dep:jope-service",
+    "dep:jope-telemetry",
+    "dep:ruzstd",
+    "dep:tokio",
+    "dep:zstd",
+]
+# Memory-rightsized stateless batch evaluation workers (XS..XL).
+eval = ["engine"]
+# Self-hosted VPC / on-premises Enterprise single-binary server.
+serve = ["eval", "dep:axum", "dep:http-body-util"]
+# Local multi-cell Lambda Runtime API + S3 CAS emulator for CI.
+emu = ["serve"]
+# Command-line parser for `carbon` subcommands.
+cli = ["dep:clap"]
+
+[dependencies]
+anyhow.workspace = true
+aws-lc-rs = { version = "=1.18.1", default-features = false, features = ["aws-lc-sys", "alloc"], optional = true }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "query", "tokio"], optional = true }
+base64 = { version = "=0.23.1", optional = true }
+clap = { workspace = true, optional = true }
+flate2 = { version = "=1.1.10", optional = true }
+hex.workspace = true
+http = { version = "=1.5.0", optional = true }
+http-body-util = { version = "=0.1.5", optional = true }
+jope-api = { path = "../jope-api", optional = true }
+jope-paths = { path = "../jope-paths", optional = true }
+jope-prep = { path = "../jope-prep", optional = true }
+jope-runtime = { path = "../jope-runtime", optional = true }
+jope-service = { path = "../jope-service", optional = true }
+jope-telemetry = { workspace = true, optional = true }
+p256 = { workspace = true, optional = true }
+rustls = { workspace = true, optional = true }
+ruzstd = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, optional = true }
+ulid.workspace = true
+ureq = { version = "=3.5.0", default-features = false, features = ["rustls-no-provider", "rustls-webpki-roots", "gzip"], optional = true }
+url = { version = "=2.5.8", optional = true }
+zeroize = { workspace = true, optional = true }
+zstd = { workspace = true, optional = true }
+
+[dev-dependencies]
+proptest.workspace = true
+tempfile.workspace = true
+tower = { version = "=0.5.3", default-features = false, features = ["util"] }
+
+[lints]
+workspace = true

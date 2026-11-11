@@ -77,7 +77,7 @@ impl AdmittedRanker {
             forwards: Arc::new(AtomicUsize::new(0)),
         }
     }
-    pub(crate) fn digest(&self) -> String {
+    pub fn digest(&self) -> String {
         self.bundle.digest().to_string()
     }
     pub(crate) fn trains_objective(&self, objective: &jope_api::ObjectiveSpec) -> bool {
@@ -215,6 +215,111 @@ impl LearnedAdmission {
         });
         self.plan = Some(plan.clone());
         Ok(rows.len())
+    }
+
+    /// Bind client-extracted FIT-only landmarks (`JLMB` v1) directly to this fused Dope + JopeDime
+    /// admission graph without re-scanning raw FIT rows on the worker.
+    pub(crate) fn bind_client_landmarks(
+        &mut self,
+        lm: &jope_prep::conditioning::FitLandmarkBundle,
+        plan: &Plan,
+    ) -> Result<()> {
+        ensure!(
+            format!("sha256:{}", plan.bundle_digest) == self.bundle_digest,
+            "learned FIT/Plan bundle identity mismatch"
+        );
+        ensure!(
+            lm.feature_count() == plan.features.len(),
+            "client landmark feature count {} does not match Plan features {}",
+            lm.feature_count(),
+            plan.features.len()
+        );
+        let columns: Vec<_> = lm.ranker_columns().iter().flatten().copied().collect();
+        let stages = self.graph.stages(lm.vector256(), &columns)?;
+        self.conditioning = Some(TokenProjection {
+            tokens: std::array::from_fn(|i| std::array::from_fn(|j| stages.tokens[i * 32 + j])),
+            mask: stages
+                .mask
+                .try_into()
+                .map_err(|_| anyhow::anyhow!("invalid token mask"))?,
+        });
+        self.plan = Some(plan.clone());
+        Ok(())
+    }
+
+    /// Score and order Wave-0 starter candidates using the conditioned fused forward pass
+    /// (`predict_costs` with unrevealed neutral anchor slots) so `CarbonSeededSpace` starts
+    /// Wave 0 with the highest-affinity candidates first.
+    pub(crate) fn rank_wave0_seeds(&self, candidates: &[String]) -> Result<Vec<String>> {
+        let conditioning = self
+            .conditioning
+            .as_ref()
+            .context("FIT conditioning is not bound")?;
+        if candidates.is_empty() {
+            return Ok(vec![]);
+        }
+        let encoded = candidates
+            .iter()
+            .map(|dsl| self.program(dsl))
+            .collect::<Result<Vec<_>>>()?;
+        let flat_tokens: Vec<f32> = conditioning.tokens.iter().flatten().copied().collect();
+        let mask_slice = conditioning.mask.as_slice();
+        let anchor_prog = encoded[0];
+        let revealed_indices = [0i64, 1, 2, 3];
+        let revealed_fitness = [100.0f32; 4];
+        let revealed_gates = [0.0f32; 4];
+        let ctx_feat = [0.0f32; crate::ranker::adapter::CONTEXT_FEATURES];
+        let base_prior = [0.0f32; 12];
+        let sos_prior = [0.0f32; 24];
+
+        let mut scored: Vec<(f32, usize)> = Vec::with_capacity(candidates.len());
+        for (chunk_idx, chunk) in encoded.chunks(8).enumerate() {
+            let mut prog_412 = Vec::with_capacity(12 * 412);
+            let mut proj_16 = Vec::with_capacity(12 * 16);
+            for _ in 0..4 {
+                prog_412.extend_from_slice(&anchor_prog.0);
+                proj_16.extend_from_slice(&anchor_prog.1);
+            }
+            for (f, p) in chunk {
+                prog_412.extend_from_slice(f);
+                proj_16.extend_from_slice(p);
+            }
+            for _ in chunk.len()..8 {
+                prog_412.extend_from_slice(&anchor_prog.0);
+                proj_16.extend_from_slice(&anchor_prog.1);
+            }
+            let inputs = crate::ranker::adapter::PredictCostsInputs {
+                batch: 1,
+                candidates: 12,
+                prog_412: &prog_412,
+                proj_16: &proj_16,
+                tokens: &flat_tokens,
+                token_mask: mask_slice,
+                revealed_indices: &revealed_indices,
+                revealed_fitness: &revealed_fitness,
+                revealed_gates: &revealed_gates,
+                ctx_feat: &ctx_feat,
+                base_prior_cost: &base_prior,
+                sos_prior: &sos_prior,
+                scale: crate::ranker::adapter::SCALE,
+            };
+            let output = self.graph.predict_costs(inputs)?;
+            self.forwards.fetch_add(1, Ordering::Relaxed);
+            for (local_i, &cost) in output.total_cost[4..4 + chunk.len()].iter().enumerate() {
+                let global_i = chunk_idx * 8 + local_i;
+                let clean_cost = if cost.is_finite() { cost } else { f32::MAX };
+                scored.push((clean_cost, global_i));
+            }
+        }
+        scored.sort_by(|(ca, ia), (cb, ib)| {
+            ca.partial_cmp(cb)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| ia.cmp(ib))
+        });
+        Ok(scored
+            .into_iter()
+            .map(|(_, idx)| candidates[idx].clone())
+            .collect())
     }
     /// Borrow the exact FIT conditioning only when its full Plan binding matches.
     #[cfg(feature = "research")]
