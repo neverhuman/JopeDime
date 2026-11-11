@@ -9,6 +9,12 @@ the best stored candidate out of fold, so it keeps the same 3% weight.
 A development read on a reused cohort: no champion consequence. CPU only; no GPU; `CONFIRM` and dev91 untouched; no
 training run touched.
 
+**Correction (H432, 2026-11-11 16:05Z).** The gaps quoted here as "1.43 u" and "1.48 u behind the best stored
+candidate" are means over the 35 tables. They are driven by 9 tables where the column fails badly (more than 1 u
+behind, two of them more than 10 u). **The median wide table is 0.27 u behind.** H429's improvement was 0.043 u in
+the mean and 0.012 u in the median. The verdict, the test numbers and the weights are unchanged; see
+[H432](../h432_narrow_only_column/README.md) for what a wide-table column would need.
+
 Plan: [`PREREG.md`](PREREG.md). Numbers: [`metrics.json`](metrics.json). Gates: [`gates_h429.sh`](gates_h429.sh).
 
 ## Result (`DEV`, value = AUDIT u; `B` = stored stack, `I` = H424's arm, `IT` = stack + the rebuilt column)
