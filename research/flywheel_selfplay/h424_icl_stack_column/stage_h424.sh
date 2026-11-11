@@ -10,10 +10,10 @@ SRC=$(dirname "$(readlink -f "$0")")
 REPO=/home/ubuntu/JopeDime
 BASE=/home/ubuntu/apex-stage/h422/pub-r1
 G424=research/flywheel_selfplay/h424_icl_stack_column
-FILES=(bank_h424.py cols_h424.py stack_h424.py gates_h424.sh stage_h424.sh)
+FILES=(bank_h424.py cols_h424.py stack_h424.py gates_h424.sh stage_h424.sh readout2_h424.py gates2_h424.sh)
 H419=(icl_model.py icl_resid.py icl_diag.py icl_inject.py)   # the in-context model code, at its published bytes
 G419=research/flywheel_selfplay/h419_apex_icl
-DOCS=(PREREG.md)
+DOCS=(PREREG.md PREREG_ADDENDUM_1.md)
 DST=/home/ubuntu/apex-stage/h424/$MODE-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }
