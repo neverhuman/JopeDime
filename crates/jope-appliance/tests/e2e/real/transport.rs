@@ -26,11 +26,37 @@ pub(crate) fn replay<T: Transport>(
     spec: &RunSpec,
     id: &jope_api::ids::RunId,
 ) -> Result<()> {
-    let RunResult::Started(snapshot) = client.run_start(spec, Some(KEY))? else {
+    let RunResult::Started(snapshot) = start_when_idle(client, spec, KEY)? else {
         bail!("replay returned a plan")
     };
     ensure!(&snapshot.run_id == id, "retry created another run");
     Ok(())
+}
+
+/// Start a run, waiting out "backend is busy".
+///
+/// The one-run gate stays held while the worker pool joins, after the journal
+/// already shows Completed. The refusal says to retry once that run drains.
+pub(crate) fn start_when_idle<T: Transport>(
+    client: &T,
+    spec: &RunSpec,
+    key: &str,
+) -> Result<RunResult> {
+    let deadline = Instant::now() + Duration::from_secs(30);
+    loop {
+        match client.run_start(spec, Some(key)) {
+            Ok(result) => return Ok(result),
+            Err(error)
+                if error.to_string().contains("run backend is busy")
+                    && Instant::now() < deadline =>
+            {
+                thread::sleep(Duration::from_millis(50));
+            }
+            Err(error) => {
+                return Err(anyhow::Error::from(error).context(format!("run start {key} failed")))
+            }
+        }
+    }
 }
 
 pub(crate) struct Server {
@@ -185,6 +211,21 @@ impl Rpc {
         let result = self.call("tools/call", json!({"name":name,"arguments":args}))?;
         ensure!(result["isError"] != true, "MCP tool failed: {result}");
         Ok(result["structuredContent"].clone())
+    }
+    pub(crate) fn run_start_when_idle(&mut self, args: Value) -> Result<Value> {
+        let deadline = Instant::now() + Duration::from_secs(30);
+        loop {
+            match self.tool("run_start", args.clone()) {
+                Ok(value) => return Ok(value),
+                Err(error)
+                    if error.to_string().contains("run backend is busy")
+                        && Instant::now() < deadline =>
+                {
+                    thread::sleep(Duration::from_millis(50));
+                }
+                Err(error) => return Err(error),
+            }
+        }
     }
 }
 impl Drop for Rpc {

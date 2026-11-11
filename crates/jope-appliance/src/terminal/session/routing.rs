@@ -102,13 +102,13 @@ impl super::Session {
             target: Some(spec.target.clone()),
         };
         match decision.target {
-            route::Target::Refused => Ok(vec![decision.line]),
-            route::Target::Local => {
+            route::RouteTarget::Refused => Ok(vec![decision.line]),
+            route::RouteTarget::Local => {
                 let mut lines = vec![decision.line];
                 lines.extend(self.start_run(&rest)?);
                 Ok(lines)
             }
-            route::Target::Cloud => self.begin_cloud(request, decision.line),
+            route::RouteTarget::Cloud => self.begin_cloud(request, decision.line),
         }
     }
 

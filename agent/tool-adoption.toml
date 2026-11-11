@@ -1,0 +1,98 @@
+schema_version = "1.0.0"
+
+# Jankurai tool adoption for this repository (schema: jankurai tool-adoption 1.0.0).
+#
+# Each applicable tool reported by the pinned auditor (jankurai 1.7.6) has one entry.
+# `auto` means the tool's analysis runs today inside the full CI audit:
+# `.github/workflows/ci.yml` job `jankurai-audit` -> `ops/ci/jankurai.sh` ->
+# `jankurai audit <captured source> --full --mode standard`, report-only below the 85 floor
+# (owner decision 2026-10-22). `disabled` means the tool's own command is not run, and the
+# note gives the reason and the lane that covers the concern today. This file records what
+# runs. It is not a promise to add lanes, and it does not change any CI gate.
+
+# Analyses computed by the full audit that ci.yml runs on every PR head and on trusted main.
+[[tools]]
+id = "audit-ci"
+mode = "auto"
+notes = "ci.yml jankurai-audit runs ops/ci/jankurai.sh (full, standard mode, verified captured source, retained reports). Report-only below 85."
+
+[[tools]]
+id = "copy-code"
+mode = "auto"
+notes = "copy_code classes are part of the full audit report; dispositions live in docs/release/jankurai-*-dispositions-*.md and agent/copy-code-allowlist.toml."
+
+[[tools]]
+id = "proof-routing"
+mode = "auto"
+notes = "Proof routing comes from agent/test-map.json and agent/owner-map.json, scored by the full audit; lanes are selected by ci.yml path gates."
+
+[[tools]]
+id = "contract-drift"
+mode = "auto"
+notes = "Contract drift is scored by the full audit and enforced by the jope-api contract and exchange-proof snapshot tests in the rust-test lanes."
+
+[[tools]]
+id = "input-boundary"
+mode = "auto"
+notes = "Input-boundary findings come from the full audit (HLT-023); open items are dispositioned in the release register."
+
+[[tools]]
+id = "authz-matrix"
+mode = "auto"
+notes = "Scored by the full audit."
+
+[[tools]]
+id = "agent-tool-supply"
+mode = "auto"
+notes = "Scored by the full audit. The MCP surface is crates/jope-appliance/src/mcp/ (dispatch tests run in rust-test)."
+
+[[tools]]
+id = "release-readiness"
+mode = "auto"
+notes = "Scored by the full audit; releases follow the reviewed PR lifecycle in AGENTS.md."
+
+[[tools]]
+id = "cost-budget"
+mode = "auto"
+notes = "Scored by the full audit; campaign compute budgets are recorded per claim (AGENTS.md)."
+
+# Tools whose own commands are not run. The concern is covered elsewhere or does not apply.
+[[tools]]
+id = "security"
+mode = "disabled"
+notes = "`jankurai security run` is not run. ci.yml runs tools/security-lane.sh instead: actionlint, vendored-security verification, a syft SBOM, gitleaks via deploy/ci/secret-scan.sh, cargo deny (advisories, bans, licenses, sources) and npm audit."
+
+[[tools]]
+id = "proofbind"
+mode = "disabled"
+notes = "Not run. Changed-surface proof obligations are carried by ci.yml path gates and the exact-head PR review receipt (AGENTS.md)."
+
+[[tools]]
+id = "proofmark-rust"
+mode = "disabled"
+notes = "Not run. Rust proof is the sharded rust-test lanes; no in-diff mutation receipts are produced."
+
+[[tools]]
+id = "rust-witness"
+mode = "disabled"
+notes = "Not run. Rust behavior evidence is the rust-check/rust-test lanes."
+
+[[tools]]
+id = "ux-qa"
+mode = "disabled"
+notes = "`jankurai ux audit` is not run. The rendered UI is covered by the observatory-ui lane and agent/ux-qa.toml."
+
+[[tools]]
+id = "ci-bad-behavior"
+mode = "disabled"
+notes = "Its CI command is jankurai's own test suite (cargo test -p jankurai), which is not a crate in this workspace. Workflow findings are reported by the full audit."
+
+[[tools]]
+id = "git-bad-behavior"
+mode = "disabled"
+notes = "Its CI command is jankurai's own test suite (cargo test -p jankurai), which is not a crate in this workspace. Repository hygiene is the hygiene lane (deploy/ci/check.sh)."
+
+[[tools]]
+id = "release-bad-behavior"
+mode = "disabled"
+notes = "Its CI command is jankurai's own test suite (cargo test -p jankurai), which is not a crate in this workspace."

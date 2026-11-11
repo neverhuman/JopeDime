@@ -211,7 +211,7 @@ pub(super) fn start_independent<T: Transport>(
     key: &str,
     surface: Surface,
 ) -> Result<SurfaceCapture> {
-    let RunResult::Started(snapshot) = client.run_start(spec, Some(key))? else {
+    let RunResult::Started(snapshot) = start_when_idle(client, spec, key)? else {
         bail!("independent run returned a dry plan")
     };
     wait_complete(client, &snapshot.run_id)?;

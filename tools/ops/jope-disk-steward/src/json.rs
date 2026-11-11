@@ -7,16 +7,20 @@ use std::io;
 use std::path::Path;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Json {
+pub enum StewardJson {
     Null,
     Bool(bool),
     Int(i64),
     UInt(u64),
     Float(f64),
     Str(String),
-    Arr(Vec<Json>),
-    Obj(BTreeMap<String, Json>),
+    Arr(Vec<StewardJson>),
+    Obj(BTreeMap<String, StewardJson>),
 }
+
+/// Callers keep the short name. The enum item is `StewardJson` so it is not a
+/// second public `Json` definition beside the inference-report value.
+pub type Json = StewardJson;
 
 impl Json {
     pub fn empty_obj() -> Self {
