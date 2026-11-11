@@ -28,7 +28,7 @@ Mean u: `B` 1.9483, `S` 1.9631, `A` 1.9548, `SA` 1.9929. The frozen model is the
 ## What the result does and does not say
 - **Combining the stored 64 candidates more robustly is not enough.** The estimate is positive, but 46 wins against
   34 losses and +0.0045 u cannot be told from zero. Only 5 of 115 families move by more than 0.05 u (all upward);
-  on the design families it was 22 of 291.
+  in the design cross-fit 20 of 291 moved up by that much and 8 down.
 - **The TRAIN-side estimate again overstated the test** (+0.0197 u out-of-fold on 291 design families, +0.0045 u on
   `DEV`), as in H421. Here the stacker's form was also chosen on the design families, which the cross-fit does not
   cover (PREREG §9).
