@@ -75,6 +75,8 @@ def run_battery(a: argparse.Namespace) -> None:
     n_tasks = len(metas)
     # Balance shards by cost (rows * features)
     order = sorted(range(n_tasks), key=lambda j: (int(shapes[j, 0] * shapes[j, 1]), j))
+    if getattr(a, "rep0_only", False):
+        order = [j for j in order if int(metas[j]["rep"]) == 0]
     k, n_sh = (int(v) for v in a.shard.split("/"))
     my_idx = order[k::n_sh]
 
@@ -280,6 +282,7 @@ def main() -> None:
     b.add_argument("--out", required=True)
     b.add_argument("--shard", default="0/1")
     b.add_argument("--threads", type=int, default=1)
+    b.add_argument("--rep0-only", action="store_true", help="score balanced rep==0 subset (68 cells across B1..B12)")
     b.set_defaults(fn=run_battery)
 
     m = sub.add_parser("monitor")

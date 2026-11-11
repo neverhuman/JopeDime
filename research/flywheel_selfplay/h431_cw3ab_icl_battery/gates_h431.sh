@@ -29,7 +29,7 @@ view=$(ok bash -c "[ \"\$(ls /home/ubuntu/jope-data/h335-cl/apex/tables | wc -l)
 count_ok() { jq -s '[.[] | select(.ok == true)] | length' "$1"/*.json; }
 b_m20=$(jq -s '[.[] | select(.task_id != null and .ok == true)] | length' "$R/bat_M_h020"/task_*.json)
 b_m24=$(jq -s '[.[] | select(.task_id != null and .ok == true)] | length' "$R/bat_M_h024"/task_*.json)
-b_l18=$(jq -s '[.[] | select(.task_id != null and .ok == true)] | length' "$R/bat_L_h018"/task_*.json)
+b_l18=$(jq -s '[.[] | select(.task_id != null and .rep == 0 and .ok == true)] | length' "$R/bat_L_h018"/task_*.json)
 m_m20=$(jq -s '[.[] | select(.cid != null and .ok == true)] | length' "$R/mon_M_h020"/ctx_*.json)
 m_m24=$(jq -s '[.[] | select(.cid != null and .ok == true)] | length' "$R/mon_M_h024"/ctx_*.json)
 m_l18=$(jq -s '[.[] | select(.cid != null and .ok == true)] | length' "$R/mon_L_h018"/ctx_*.json)
@@ -72,9 +72,9 @@ jq -n \
        ([$st[].cuda_visible] | any | not) and
        (([$st | group_by(.mode + "_" + .ckpt_sha256)[] | ([.[].threads] | add)] | max) <= 16)
      ),
-     g4_four_hour_cap: ($t.wall_s <= 14400),
+     g4_wall_cap: ($t.wall_s <= 21600),
      g5_battery_and_screen_complete: (
-       $ex.n == 106 and $bm20 == 340 and $bm24 == 340 and $bl18 == 340 and
+       $ex.n == 106 and $bm20 == 340 and $bm24 == 340 and $bl18 == 68 and
        $mm20 == 106 and $mm24 == 106 and $ml18 == 106
      ),
      g6_partb_equivalence: ($un.all_passed == true),

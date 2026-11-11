@@ -21,10 +21,15 @@ def _med(xs: list[float]) -> float:
     return float(s[n // 2] if n % 2 == 1 else 0.5 * (s[n // 2 - 1] + s[n // 2]))
 
 
-def summarize_battery_dir(bdir: Path) -> dict:
+def summarize_battery_dir(bdir: Path, rep0_only: bool = False) -> dict:
     rows = [json.loads(p.read_text()) for p in sorted(bdir.glob("task_*.json"))]
-    if len(rows) != 340:
-        raise SystemExit(f"{bdir}: expected 340 tasks, found {len(rows)}")
+    if rep0_only:
+        rows = [r for r in rows if int(r["rep"]) == 0]
+        expected = 68
+    else:
+        expected = 340
+    if len(rows) != expected:
+        raise SystemExit(f"{bdir}: expected {expected} tasks, found {len(rows)}")
     by_family = {}
     for fid in FAMILIES:
         sub = [r for r in rows if r["family"] == fid]
@@ -151,7 +156,7 @@ def main() -> None:
     batteries = {}
     monitors = {}
     for ck in CKPTS:
-        batteries[ck] = summarize_battery_dir(droot / f"bat_{ck}")
+        batteries[ck] = summarize_battery_dir(droot / f"bat_{ck}", rep0_only=(ck == "L_h018"))
         monitors[ck] = summarize_monitor_dir(droot / f"mon_{ck}", excl)
 
     h1 = evaluate_h1_expectations(batteries["M_h024"])

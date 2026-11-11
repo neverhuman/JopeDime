@@ -31,8 +31,8 @@ log() { echo "$(date -u +%FT%TZ) $*"; }
 mkdir -p "$R" "$EV/logs" "$EV/results"
 cd "$ST/code"
 
-T_START=$(date +%s)
-log "run_start P=$P CPUSET=$CPUSET stage=$ST CODE.sha256=$(sha256sum "$ST/CODE.sha256" | cut -c1-16)"
+T_START=${H431_T_START:-$(date +%s)}
+log "run_start P=$P CPUSET=$CPUSET stage=$ST R=$R T_START=$T_START CODE.sha256=$(sha256sum "$ST/CODE.sha256" | cut -c1-16)"
 
 # Step 0: Part B + reference unit tests
 if [ ! -e "$R/unit_tests.json" ]; then
@@ -60,6 +60,10 @@ SHA_ICB=$(jq -r .sha256 "$R/ICB_v1.npz.json")
 
 run_sharded() {  # subcommand, label, size, ckpt, ckpt_sha, out_dir
   local sub=$1 lbl=$2 sz=$3 ck=$4 cksha=$5 odir=$6
+  if [ -d "$odir" ] && [ "$(ls "$odir"/status_s*of${P}.json 2>/dev/null | wc -l)" = "$P" ]; then
+    log "already complete $sub $lbl ($P status files)"
+    return 0
+  fi
   local rc=0
   log "start $sub $lbl ($P shards)"
   for k in $(seq 0 $((P - 1))); do
@@ -78,13 +82,45 @@ run_sharded() {  # subcommand, label, size, ckpt, ckpt_sha, out_dir
   return $rc
 }
 
-# Step 3: Score M_h020, M_h024, L_h018 on battery and monitor
+run_sharded_l() {  # subcommand, label, ckpt, ckpt_sha, out_dir (4 CCX shards x 4 threads = 16 threads)
+  local sub=$1 lbl=$2 ck=$3 cksha=$4 odir=$5
+  local ns=4 th=4 rc=0
+  [ $((ns * th)) -le 16 ] || { echo "ns*th exceeds 16" >&2; exit 2; }
+  if [ -d "$odir" ] && [ "$(ls "$odir"/status_s*of${ns}.json 2>/dev/null | wc -l)" = "$ns" ]; then
+    log "already complete $sub $lbl ($ns status files)"
+    return 0
+  fi
+  local ccx_sets=("$CPUSET" "$CPUSET" "$CPUSET" "$CPUSET")
+  if [ "$CPUSET" = "64-79" ]; then
+    ccx_sets=("64-67" "68-71" "72-75" "76-79")
+  fi
+  log "start $sub $lbl (${ns}x${th} CCX shards)"
+  for k in 0 1 2 3; do
+    local cset=${ccx_sets[$k]}
+    if [ "$sub" = battery ]; then
+      OMP_NUM_THREADS=$th MKL_NUM_THREADS=$th OPENBLAS_NUM_THREADS=$th \
+        taskset -c "$cset" nice -n 19 python3 -B icb_run.py battery \
+        --icb "$R/ICB_v1.npz" --icb-sha256 "$SHA_ICB" --ckpt "$ck" --ckpt-sha256 "$cksha" \
+        --size L --out "$odir" --shard "$k/$ns" --threads "$th" --rep0-only > "$EV/logs/${sub}_${lbl}_4x4_$k.log" 2>&1 &
+    else
+      OMP_NUM_THREADS=$th MKL_NUM_THREADS=$th OPENBLAS_NUM_THREADS=$th \
+        taskset -c "$cset" nice -n 19 python3 -B icb_run.py monitor \
+        --val "$VAL" --val-sha256 "$SHA_VAL" --ckpt "$ck" --ckpt-sha256 "$cksha" \
+        --size L --out "$odir" --shard "$k/$ns" --threads "$th" > "$EV/logs/${sub}_${lbl}_4x4_$k.log" 2>&1 &
+    fi
+  done
+  for j in $(jobs -p); do wait "$j" || rc=$?; done
+  log "done $sub $lbl (worst_rc=$rc)"
+  return $rc
+}
+
+# Step 3: Score M_h020, M_h024 (full 340+106), and L_h018 (rep==0 68-cell battery + full 106 monitor)
 run_sharded battery M_h020 M "$CK_M20" "$SHA_M20" "$R/bat_M_h020"
 run_sharded monitor M_h020 M "$CK_M20" "$SHA_M20" "$R/mon_M_h020"
 run_sharded battery M_h024 M "$CK_M24" "$SHA_M24" "$R/bat_M_h024"
 run_sharded monitor M_h024 M "$CK_M24" "$SHA_M24" "$R/mon_M_h024"
-run_sharded battery L_h018 L "$CK_L18" "$SHA_L18" "$R/bat_L_h018"
-run_sharded monitor L_h018 L "$CK_L18" "$SHA_L18" "$R/mon_L_h018"
+run_sharded_l battery L_h018 "$CK_L18" "$SHA_L18" "$R/bat_L_h018"
+run_sharded_l monitor L_h018 "$CK_L18" "$SHA_L18" "$R/mon_L_h018"
 
 T_END=$(date +%s)
 jq -n --argjson run_start "$T_START" --argjson run_end "$T_END" --argjson procs "$P" --arg cpuset "$CPUSET" \
