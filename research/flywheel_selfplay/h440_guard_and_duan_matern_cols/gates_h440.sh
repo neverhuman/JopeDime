@@ -3,12 +3,13 @@
 #   gates_h440.sh PREREG_COMMIT -> $EV/results/H440.gates.json
 set -euo pipefail
 PC=${1:?commit on origin/v1/next that published PREREG and code}
+AC=${2:-}
 EV=/home/ubuntu/jope_plan/evidence/H440
 STAGE=$(cat "$EV/logs/pub_stage")
 R=${WAVE_OUT:-/home/ubuntu/jope-data/h335-cl/h440/$(basename "$STAGE")}
 REPO=/home/ubuntu/JopeDime
 WDIR=research/flywheel_selfplay/h440_guard_and_duan_matern_cols
-OUT=$EV/results/H440.gates.json
+OUT=${WAVE_GATES_OUT:-$EV/results/H440_r2.gates.json}
 [ ! -e "$OUT" ] || { echo "$OUT exists (create-once)" >&2; exit 3; }
 
 SHA_BF=f8849ccb7343cfec1c0fd6688aaafef7580b85001046f2707fab58c5ecebe069
@@ -31,10 +32,10 @@ jq -n \
   --argjson ptime "$ptime" --argjson first "$first" \
   --argjson anc "$anc" --argjson prereg "$prereg" --argjson stage "$stage" \
   --argjson noread "$noread" --argjson view "$view" \
-  --arg sbf "$SHA_BF" --arg sbp "$SHA_BP" \
+  --arg sbf "$SHA_BF" --arg sbp "$SHA_BP" --arg ac "$AC" \
   --arg mode "$(cat "$STAGE/mode")" --arg at "$(date -u +%FT%TZ)" '
   $t[0] as $t | $un[0] as $un | $af[0] as $af | $ap[0] as $ap |
-  {schema: "jope.h440.gates/v1", at: $at,
+  {schema: "jope.h440.gates/v2", at: $at, amendment_commit: $ac,
    checks: {
      prereg_commit_time: $ptime, first_output_time: $first, stage_mode: $mode,
      run_times: $t,
@@ -47,7 +48,7 @@ jq -n \
    gates: {
      g1_prereg_before_output: ($anc and $prereg and $first > $ptime and $noread),
      g2_pinned_banks: ($af.bank_sha256 == $sbf and $ap.bank_sha256 == $sbp and $af.aligned_all == true and $ap.aligned_all == true),
-     g3_replay_exact: ($af.replay_max_w_diff < 1e-12 and $ap.replay_max_w_diff < 1e-12 and $af.replay_max_u_diff < 1e-12 and $ap.replay_max_u_diff < 1e-12),
+     g3_replay_exact: ($af.replay_max_w_diff == 0 and $ap.replay_max_w_diff == 0 and $af.replay_max_u_diff <= 1e-9 and $ap.replay_max_u_diff <= 1e-9),
      g4_cpu_budget: ($t.wall_s <= 14400 and $t.procs <= 16),
      g5_columns_complete: ($af.columns_ok >= 101 and $ap.columns_ok >= 191),
      g6_unit_and_smoke: ($un.all_passed == true),

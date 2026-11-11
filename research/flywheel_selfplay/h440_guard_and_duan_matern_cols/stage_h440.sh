@@ -8,7 +8,7 @@ REPO=/home/ubuntu/JopeDime
 BASE=/home/ubuntu/apex-stage/h424/pub-r1
 G=research/flywheel_selfplay/h440_guard_and_duan_matern_cols
 FILES=(guard_matern_core.py cols_matern.py stack_matern.py test_guard_matern.py smoke_matern.py
-       PROBED_P201B.txt stage_h440.sh driver_h440.sh gates_h440.sh PREREG.md)
+       PROBED_P201B.txt stage_h440.sh driver_h440.sh gates_h440.sh PREREG.md AMENDMENT_1.md)
 DST=/home/ubuntu/apex-stage/h440/pub-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }
