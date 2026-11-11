@@ -1,0 +1,12 @@
+{
+  "schema": "jope.h423.archive-manifest/v1",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H423/closeout-20261111/h423_closeout_bundle.tar.zst",
+  "version_id": "nuODFNHcST5cxMjrs2SPNJ3P00DSnUME",
+  "sha256": "436005fa1ff17ccabd5b0c56504a59d37b7883b860b575ff21e1cd7ea113b417",
+  "bytes": 159900239,
+  "members": 645,
+  "members_file": "bundle_SHA256SUMS",
+  "verified": "EXACT_VERSION_GET_VERIFIED; MEMBERS_VERIFIED_EXCEPT_ONE",
+  "exception": "home/ubuntu/jope_plan/evidence/H423/logs/archive_upload.txt is the upload command own output, redirected into the evidence folder by mistake and still being written when the bundle was made; the bundled copy is a partial log. The other 644 members match their checksums.",
+  "utc": "2026-11-11T07:29:16Z"
+}

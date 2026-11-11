@@ -80,11 +80,16 @@ table rows would need the dev91 tables, which stay closed.
 ## Deviations and weaknesses
 1. One stored baseline value (0.890, one record) was printed while checking the record format, before the PREREG
    (PREREG §8). No stacker value existed then.
-2. The PREREG gave its claim time as 07:17Z; the receipt says 07:17:47Z. The relayed order is dated 07:18Z; the
-   claim was written while reading it.
-3. P201b is the campaign's TRAIN board and overlaps the design at family level (above).
-4. The first test file failed on a development stage (guard, see above) and was split; a development stage
+2. P201b is the campaign's TRAIN board and overlaps the design at family level (above).
+3. The first test file failed on a development stage (guard, see above) and was split; a development stage
    (`dev-t1`) holds the failing version.
+4. The relayed order is stamped 12:18 AM MST (07:18Z); by this host's clock it arrived at 07:17Z, and the claim
+   receipt says 07:17:47Z.
+5. **Archive.** The upload command's own output was redirected into the evidence folder by mistake, so the bundle
+   holds a partial copy of that one log file; the other 644 members match their checksums (`ARCHIVE.json`).
+6. The copies of the two dev91 board definition files (identifiers only) were moved out of the evidence folder
+   after the run, because the archive refuses any path that names a closed board; their sha256 values stay in
+   `logs/closed_board_definitions.sha256`.
 
 ## Queued follow-ups
 1. **Held, with the owner:** confirm wider admission + combiner as a primary on fresh families (about 300
