@@ -1,0 +1,1010 @@
+{
+  "schema": "jope.h426.metrics/v1",
+  "wave": "H426",
+  "role": "restatement; no new verdicts",
+  "contexts": 115,
+  "units": {
+    "any": 104,
+    "copy": 112,
+    "families": 115,
+    "feature": 110,
+    "shape": 95
+  },
+  "cluster_sizes_above_1": {
+    "any": [
+      8,
+      3,
+      2,
+      2
+    ],
+    "copy": [
+      3,
+      2
+    ],
+    "feature": [
+      3,
+      2,
+      2,
+      2
+    ],
+    "shape": [
+      8,
+      5,
+      4,
+      3,
+      2,
+      2,
+      2,
+      2
+    ]
+  },
+  "flips_pre_declared_clustering": [],
+  "flips_any_variant": [
+    "H420 TBOTH vs B (copy)",
+    "H422 SA vs B (any)",
+    "H422 SA vs B (shape)"
+  ],
+  "h422_three_part_rule": {
+    "feature": false,
+    "original": false
+  },
+  "originals_reproduced_max_abs_diff": 0.0,
+  "table": [
+    {
+      "wave": "H420",
+      "comparison": "TBOTH vs B",
+      "role": "primary",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.025232201148068144,
+        "signflip_p": 0.012104034423828125,
+        "lofo_min": 0.021067571333577513,
+        "median": 0.0005898093657186187,
+        "wtl": [
+          61,
+          7,
+          47
+        ],
+        "pass": true,
+        "delta_elo": {
+          "ci95": [
+            -18.21614712995708,
+            105.86092808559897
+          ],
+          "delta": 42.49986935267998
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.02255203944478826,
+          "signflip_p": 0.024103164672851562,
+          "lofo_min": 0.017916622352019212,
+          "median": 0.0005491055828496794,
+          "wtl": [
+            55,
+            6,
+            43
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.021129523962058267,
+          "signflip_p": 0.025734901428222656,
+          "lofo_min": 0.016815375529284016,
+          "median": 0.00038749164178839,
+          "wtl": [
+            58,
+            7,
+            47
+          ],
+          "pass": false,
+          "flip": true,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.022320011020583418,
+          "signflip_p": 0.02000713348388672,
+          "lofo_min": 0.017937625800588768,
+          "median": 0.00038749164178839,
+          "wtl": [
+            57,
+            6,
+            47
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              -26.896013488546032,
+              100.61747399823844
+            ],
+            "delta": 36.449343075065826
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.02432175041267818,
+          "signflip_p": 0.024598121643066406,
+          "lofo_min": 0.019261343502174757,
+          "median": 0.0005898093657186187,
+          "wtl": [
+            51,
+            5,
+            39
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H420",
+      "comparison": "TLIB vs B",
+      "role": "secondary",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.028221258623958193,
+        "signflip_p": 0.0,
+        "lofo_min": 0.024082848611887652,
+        "median": 0.00045486966375268834,
+        "wtl": [
+          63,
+          21,
+          31
+        ],
+        "pass": true,
+        "delta_elo": {
+          "ci95": [
+            39.43700146584138,
+            161.7958470476117
+          ],
+          "delta": 99.27747574843306
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.023799750830742483,
+          "signflip_p": 9.5367431640625E-7,
+          "lofo_min": 0.019176447440749693,
+          "median": 0.0003225739177212805,
+          "wtl": [
+            56,
+            20,
+            28
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.024209991238889176,
+          "signflip_p": 0.0,
+          "lofo_min": 0.019923594763563854,
+          "median": 0.0003225739177212805,
+          "wtl": [
+            60,
+            21,
+            31
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.02454809095754664,
+          "signflip_p": 0.0,
+          "lofo_min": 0.020186146837891106,
+          "median": 0.0003225739177212805,
+          "wtl": [
+            59,
+            20,
+            31
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              33.25950226183045,
+              154.74584150289274
+            ],
+            "delta": 92.09932475162123
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.02553134205731436,
+          "signflip_p": 9.5367431640625E-7,
+          "lofo_min": 0.020483803143030468,
+          "median": 0.00019182198643896697,
+          "wtl": [
+            50,
+            19,
+            26
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H420",
+      "comparison": "TGX vs B",
+      "role": "secondary",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.0039210383140549625,
+        "signflip_p": 0.3581819534301758,
+        "lofo_min": -0.0004305315252954325,
+        "median": -8.732214951123751E-11,
+        "wtl": [
+          50,
+          9,
+          56
+        ],
+        "pass": false,
+        "delta_elo": {
+          "ci95": [
+            -83.10725763431992,
+            42.49986935267998
+          ],
+          "delta": -18.14038836189252
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.0024958419131181323,
+          "signflip_p": 0.4158773422241211,
+          "lofo_min": -0.0023342955440360607,
+          "median": -4.3661074755618756E-11,
+          "wtl": [
+            46,
+            8,
+            50
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.0024027523093595876,
+          "signflip_p": 0.41370105743408203,
+          "lofo_min": -0.0020801057779434792,
+          "median": -0.00002541401038635982,
+          "wtl": [
+            48,
+            9,
+            55
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.0032836433863927964,
+          "signflip_p": 0.3843803405761719,
+          "lofo_min": -0.0012733874082274533,
+          "median": -0.00002541401038635982,
+          "wtl": [
+            48,
+            8,
+            54
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              -87.60076732141374,
+              39.11220599933404
+            ],
+            "delta": -22.663931976877393
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.002848247884320968,
+          "signflip_p": 0.41111087799072266,
+          "lofo_min": -0.0024406005424415745,
+          "median": -0.00005082793345057013,
+          "wtl": [
+            42,
+            6,
+            47
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H421",
+      "comparison": "TPORT vs B*",
+      "role": "primary",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.00473579351613117,
+        "signflip_p": 0.23427104949951172,
+        "lofo_min": 0.0017270158737036818,
+        "median": 0.0,
+        "wtl": [
+          49,
+          32,
+          34
+        ],
+        "pass": false,
+        "delta_elo": {
+          "ci95": [
+            -6.041916325128113,
+            99.27747574843306
+          ],
+          "delta": 45.56932459672498
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.004240382367869276,
+          "signflip_p": 0.2698030471801758,
+          "lofo_min": 0.0009054691408304844,
+          "median": 0.0,
+          "wtl": [
+            46,
+            31,
+            27
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.004791261563946289,
+          "signflip_p": 0.2376089096069336,
+          "lofo_min": 0.0017016653190010766,
+          "median": 0.0,
+          "wtl": [
+            49,
+            31,
+            32
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.004327799184297648,
+          "signflip_p": 0.2591562271118164,
+          "lofo_min": 0.0011772611515584995,
+          "median": 0.0,
+          "wtl": [
+            48,
+            31,
+            31
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              -8.949450411516864,
+              100.61747399823844
+            ],
+            "delta": 44.98709999407106
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.003482433278140206,
+          "signflip_p": 0.31144237518310547,
+          "lofo_min": -0.00017984343967601354,
+          "median": 0.0,
+          "wtl": [
+            43,
+            26,
+            26
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H421",
+      "comparison": "TPORT vs TRAND",
+      "role": "control",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.004047323539309344,
+        "signflip_p": 0.2635650634765625,
+        "lofo_min": 0.0010325066865588574,
+        "median": 0.0,
+        "wtl": [
+          45,
+          31,
+          39
+        ],
+        "pass": false,
+        "delta_elo": {
+          "ci95": [
+            -36.38022514339809,
+            73.57618120129814
+          ],
+          "delta": 18.14038836189252
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.003468768444700894,
+          "signflip_p": 0.303131103515625,
+          "lofo_min": 0.000126363820349788,
+          "median": 0.0,
+          "wtl": [
+            42,
+            29,
+            33
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.00407859423997794,
+          "signflip_p": 0.2673187255859375,
+          "lofo_min": 0.000982577568690671,
+          "median": 0.0,
+          "wtl": [
+            45,
+            29,
+            38
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.003605211539262195,
+          "signflip_p": 0.2896137237548828,
+          "lofo_min": 0.0004480442620731803,
+          "median": 0.0,
+          "wtl": [
+            44,
+            29,
+            37
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              -41.24578095907373,
+              70.42334567545595
+            ],
+            "delta": 14.218622724500847
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.0025772042091046915,
+          "signflip_p": 0.3383026123046875,
+          "lofo_min": -0.0010947026051906286,
+          "median": 0.0,
+          "wtl": [
+            40,
+            24,
+            31
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H422",
+      "comparison": "S vs B",
+      "role": "primary",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.004535858841545207,
+        "signflip_p": 0.2392721176147461,
+        "lofo_min": 0.00018968216471665648,
+        "median": 2.464018633574483E-8,
+        "wtl": [
+          46,
+          35,
+          34
+        ],
+        "pass": false,
+        "delta_elo": {
+          "ci95": [
+            -15.112792726532234,
+            89.52934734672385
+          ],
+          "delta": 36.38022514339809
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.0011432630191907517,
+          "signflip_p": 0.399017333984375,
+          "lofo_min": -0.0013468132379918576,
+          "median": 0.0,
+          "wtl": [
+            41,
+            30,
+            33
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.004529314583477952,
+          "signflip_p": 0.24666690826416016,
+          "lofo_min": 0.00006561471486063627,
+          "median": 5.74454619983733E-9,
+          "wtl": [
+            44,
+            34,
+            34
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.0016072257764649074,
+          "signflip_p": 0.35313987731933594,
+          "lofo_min": -0.0007415255238335752,
+          "median": 5.74454619983733E-9,
+          "wtl": [
+            43,
+            34,
+            33
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              -26.896013488546032,
+              80.35080120867906
+            ],
+            "delta": 26.896013488546032
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.0007876845815543607,
+          "signflip_p": 0.43519020080566406,
+          "lofo_min": -0.0019445859815035665,
+          "median": 0.0,
+          "wtl": [
+            38,
+            27,
+            30
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H422",
+      "comparison": "A vs B",
+      "role": "reported",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.0064995266677541595,
+        "signflip_p": 0.10379219055175781,
+        "lofo_min": 0.002884405454830869,
+        "median": 0.00023170410586015322,
+        "wtl": [
+          64,
+          11,
+          40
+        ],
+        "pass": false,
+        "delta_elo": {
+          "ci95": [
+            12.08748917317348,
+            140.0284324624488
+          ],
+          "delta": 73.57618120129814
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.005590028022745789,
+          "signflip_p": 0.16983795166015625,
+          "lofo_min": 0.0015799958196558526,
+          "median": 0.0002217796980195641,
+          "wtl": [
+            57,
+            8,
+            39
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.006331593827783454,
+          "signflip_p": 0.11697006225585938,
+          "lofo_min": 0.0026172537276643016,
+          "median": 0.00022953877312947846,
+          "wtl": [
+            62,
+            10,
+            40
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.006080026689673903,
+          "signflip_p": 0.1319723129272461,
+          "lofo_min": 0.0022952256047992664,
+          "median": 0.00022953877312947846,
+          "wtl": [
+            61,
+            9,
+            40
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              9.47614252945732,
+              133.58534780462765
+            ],
+            "delta": 69.87527452550785
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.004786850072437167,
+          "signflip_p": 0.23254108428955078,
+          "lofo_min": 0.00038433416958001703,
+          "median": 0.0002125518980465313,
+          "wtl": [
+            51,
+            6,
+            38
+          ],
+          "pass": false,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H422",
+      "comparison": "SA vs B",
+      "role": "reported",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.019062677060076673,
+        "signflip_p": 0.012373924255371094,
+        "lofo_min": 0.014843928613235241,
+        "median": 0.00107225150688528,
+        "wtl": [
+          71,
+          8,
+          36
+        ],
+        "pass": true,
+        "delta_elo": {
+          "ci95": [
+            48.645869240182265,
+            176.98635762521144
+          ],
+          "delta": 109.18024563342851
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.015803615637327458,
+          "signflip_p": 0.031052589416503906,
+          "lofo_min": 0.011102679866816076,
+          "median": 0.0008909315162222708,
+          "wtl": [
+            63,
+            7,
+            34
+          ],
+          "pass": false,
+          "flip": true,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.01910928994716942,
+          "signflip_p": 0.0145263671875,
+          "lofo_min": 0.01477694120795473,
+          "median": 0.001038959807886708,
+          "wtl": [
+            69,
+            8,
+            35
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.01621446067991634,
+          "signflip_p": 0.020441055297851562,
+          "lofo_min": 0.011776061236612819,
+          "median": 0.001038959807886708,
+          "wtl": [
+            67,
+            8,
+            35
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              39.11220599933404,
+              170.35130999387434
+            ],
+            "delta": 101.7619624891745
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.015596795160657153,
+          "signflip_p": 0.047181129455566406,
+          "lofo_min": 0.010443569577259887,
+          "median": 0.000572931361201845,
+          "wtl": [
+            55,
+            6,
+            34
+          ],
+          "pass": false,
+          "flip": true,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H424",
+      "comparison": "I vs B",
+      "role": "primary",
+      "original": {
+        "units": 115,
+        "clipped_mean": 0.009179572796714913,
+        "signflip_p": 0.000064849853515625,
+        "lofo_min": 0.0063893665661237335,
+        "median": 0.0001393091346548747,
+        "wtl": [
+          59,
+          34,
+          22
+        ],
+        "pass": true,
+        "delta_elo": {
+          "ci95": [
+            61.033231027845886,
+            173.13168738854074
+          ],
+          "delta": 115.87791288825292
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 104,
+          "clipped_mean": 0.009823141812908323,
+          "signflip_p": 0.000072479248046875,
+          "lofo_min": 0.00674120063551802,
+          "median": 0.00015532487640121384,
+          "wtl": [
+            54,
+            30,
+            20
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 112,
+          "clipped_mean": 0.009430245341456674,
+          "signflip_p": 0.000049591064453125,
+          "lofo_min": 0.0065668864428742165,
+          "median": 0.0001721840554029519,
+          "wtl": [
+            59,
+            32,
+            21
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 110,
+          "clipped_mean": 0.009624623648473574,
+          "signflip_p": 0.00004482269287109375,
+          "lofo_min": 0.006710509341724622,
+          "median": 0.00019482573343188037,
+          "wtl": [
+            59,
+            30,
+            21
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              72.06964728822686,
+              184.54749011123909
+            ],
+            "delta": 125.74488354133405
+          }
+        },
+        "shape": {
+          "units": 95,
+          "clipped_mean": 0.0104361666024302,
+          "signflip_p": 0.00011348724365234375,
+          "lofo_min": 0.007065667490922974,
+          "median": 0.00022154349166259024,
+          "wtl": [
+            53,
+            25,
+            17
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    },
+    {
+      "wave": "H425",
+      "comparison": "I vs B without feature flags",
+      "role": "sensitivity read",
+      "original": {
+        "units": 94,
+        "clipped_mean": 0.010708184996095976,
+        "signflip_p": 0.0001964569091796875,
+        "lofo_min": 0.007304368887622712,
+        "median": 0.00015532487640121384,
+        "wtl": [
+          49,
+          27,
+          18
+        ],
+        "pass": true,
+        "delta_elo": {
+          "ci95": [
+            59.70627785518991,
+            185.90716703796738
+          ],
+          "delta": 119.0004382915215
+        }
+      },
+      "clusters": {
+        "any": {
+          "units": 90,
+          "clipped_mean": 0.010819270057685725,
+          "signflip_p": 0.00026988983154296875,
+          "lofo_min": 0.0072637215967146715,
+          "median": 0.00013796974394239547,
+          "wtl": [
+            46,
+            27,
+            17
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        },
+        "copy": {
+          "units": 94,
+          "clipped_mean": 0.010708184996095976,
+          "signflip_p": 0.000179290771484375,
+          "lofo_min": 0.007304368887622712,
+          "median": 0.00015532487640121384,
+          "wtl": [
+            49,
+            27,
+            18
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        },
+        "feature": {
+          "units": 94,
+          "clipped_mean": 0.010708184996095976,
+          "signflip_p": 0.000179290771484375,
+          "lofo_min": 0.007304368887622712,
+          "median": 0.00015532487640121384,
+          "wtl": [
+            49,
+            27,
+            18
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": {
+            "ci95": [
+              59.70627785518991,
+              185.90716703796738
+            ],
+            "delta": 119.0004382915215
+          }
+        },
+        "shape": {
+          "units": 81,
+          "clipped_mean": 0.011648930665186649,
+          "signflip_p": 0.000522613525390625,
+          "lofo_min": 0.007703753759950115,
+          "median": 0.0002166239742054099,
+          "wtl": [
+            45,
+            22,
+            14
+          ],
+          "pass": true,
+          "flip": false,
+          "delta_elo": null
+        }
+      }
+    }
+  ],
+  "gates": {
+    "g1_prereg_before_output": true,
+    "g2_stored_inputs": true,
+    "g3_originals_reproduced": true,
+    "g4_confirm_untouched": true,
+    "g5_budget": true,
+    "g6_pub_stage": true
+  },
+  "gates_pass": true,
+  "inputs_sha256": {
+    "h420_readout": "536d581a27e7f65ea8f30bc1561153024585379fbac54c56410864a009fba65a",
+    "h421_readout": "874c6f04609fbd1e6b687fa49075577ea569d8a8d635342a9333c972592ebc80",
+    "h422_apply": "75798905073a6d94933c034115364b43ea6bbdd6cc41a80d27774e23a9b734e1",
+    "h422_readout": "8ceffbd7e319f92f6f7a59653c94faa9f11bbf22aa208577272939528277a090",
+    "h424_apply": "ce0eb88749ebfb5c92aa6c10cd621563b1ab4a041756cc6e882b282be824faca",
+    "h424_readout": "9aedacf12c8498bf4684b977c999fc4da8f231fbf7d1e3b2b0ece56de1341a26",
+    "h425_list": "956260bcc6c25ba89a33379c07096367f425034918bad7912b131e49b69da860",
+    "h425_screen": "fa8edd8a08a9aef30af98b8240f3e3b1f40d11e9681b157d7190cb00ff58891e",
+    "h425_sens": "0661cb25e749909d7bec4430f8cdbb541cd9835a64e25ae47dc1d14205ae9ae3"
+  },
+  "evidence": {
+    "restatement_sha256": "6b7b198191de0176fda91a5bf4399667e8e533a173cb646fd78ab8e372b239f0",
+    "commits": {
+      "prereg_and_code": "cc83f15fe4"
+    }
+  }
+}
