@@ -1,0 +1,159 @@
+{
+  "schema": "jope.h428.metrics/v1",
+  "wave": "H428",
+  "role": "inference-recipe test on the FIT-SEL monitor (33 wide contexts); CPU only; no DEV / CONFIRM / dev91 access",
+  "verdict": "BAG_CONFIRMED",
+  "holm": {
+    "order": [
+      "T1",
+      "T2"
+    ],
+    "passed": {
+      "T1": true,
+      "T2": false
+    },
+    "thresholds": {
+      "T1": 0.0125,
+      "T2": 0.025
+    }
+  },
+  "units": {
+    "clusters": 26,
+    "contexts": 33
+  },
+  "tests": {
+    "clusters": {
+      "T1": {
+        "clipped_mean": 0.02341147144339921,
+        "family_median": 0.005807291751758092,
+        "gain": 0.02341147144339921,
+        "lofo_min": 0.01798766826535978,
+        "mirror_signflip_p": 0.9998607635498047,
+        "signflip_p": 0.0001392364501953125,
+        "wtl": [
+          20,
+          1,
+          5
+        ]
+      },
+      "T2": {
+        "clipped_mean": -0.07126840406766939,
+        "family_median": 0.005903750240487948,
+        "gain": -0.20680847751899642,
+        "lofo_min": -0.08575198524439742,
+        "mirror_signflip_p": 0.05505180358886719,
+        "signflip_p": 0.9449481964111328,
+        "wtl": [
+          14,
+          0,
+          12
+        ]
+      }
+    },
+    "contexts": {
+      "T1": {
+        "clipped_mean": 0.027438948705258783,
+        "family_median": 0.006782442968288338,
+        "gain": 0.027438948705258783,
+        "lofo_min": 0.020018164785605932,
+        "mirror_signflip_p": 0.995884895324707,
+        "signflip_p": 0.004115104675292969,
+        "wtl": [
+          23,
+          1,
+          9
+        ]
+      },
+      "T2": {
+        "clipped_mean": -0.066176932582651,
+        "family_median": 0.0007206771786849586,
+        "gain": -0.2797552301423179,
+        "lofo_min": -0.07733312189306296,
+        "mirror_signflip_p": 0.05799674987792969,
+        "signflip_p": 0.9420032501220703,
+        "wtl": [
+          17,
+          0,
+          16
+        ]
+      }
+    }
+  },
+  "mean_u": {
+    "T1": 1.322203846044282,
+    "T2": 1.0150096671967053,
+    "control": 1.2947648973390231
+  },
+  "mean_u_ridge": 1.204851939443307,
+  "by_width": {
+    "F 31-100": {
+      "mean_control_minus_ridge": 0.11613935871730235,
+      "mean_gain_T1": 0.03560040682723362,
+      "mean_gain_T2": -0.31448586169534115,
+      "n": 25,
+      "wins_losses_T1": [
+        18,
+        7
+      ],
+      "wins_losses_T2": [
+        14,
+        11
+      ]
+    },
+    "F > 100": {
+      "mean_control_minus_ridge": 0.007955455328258983,
+      "mean_gain_T1": 0.0019343920740874099,
+      "mean_gain_T2": -0.17122200653911965,
+      "n": 8,
+      "wins_losses_T1": [
+        5,
+        2
+      ],
+      "wins_losses_T2": [
+        3,
+        5
+      ]
+    }
+  },
+  "variants": {
+    "control": "monitored residual-of-ridge readout on all features",
+    "T1": "ridge on all features + model residual averaged over 8 random 30-feature subsets",
+    "T2": "whole readout on each of the 8 subsets, averaged (the queued prompt)"
+  },
+  "checkpoint": {
+    "name": "ICL_M_r3/ckpt_h020.pt",
+    "sha256": "e3c8fd9972ce0c1684630ff06b159e950f6f498c4461d0454e0c6a6f44d38dd7"
+  },
+  "inference": {
+    "budget_stops": 0,
+    "cpu_s": 25722.274455631,
+    "cuda_visible_any": false,
+    "devices": [
+      "cpu"
+    ],
+    "processes": 16,
+    "wall_s_max": 2149.5928587913513
+  },
+  "cost": {
+    "estimated_core_h": 6.4,
+    "used_core_h": 7.145076237675277,
+    "wall_s": 2152,
+    "cap_s": 14400
+  },
+  "gates": {
+    "g1_prereg_before_output": true,
+    "g2_pinned_checkpoint_and_monitor_bank": true,
+    "g3_fit_sel_wide_contexts": true,
+    "g4_cpu_only_16_threads": true,
+    "g5_four_hour_cap": true,
+    "g6_confirm_untouched": true,
+    "g7_pub_stage": true
+  },
+  "gates_pass": true,
+  "evidence": {
+    "readout_sha256": "50d0641b1eddb65c7ae7254a8a8269513e47958f809f8307605ce9a6d31f25c4",
+    "commits": {
+      "prereg_and_code": "74c0f32a2d"
+    }
+  }
+}
