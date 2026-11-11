@@ -85,14 +85,23 @@ pub(super) fn check_artifact_manifest(
         artifact.path == expected_path,
         "emitted artifact path disagrees"
     );
-    let digest_field = match expected_path {
-        "model.rs" => Some("rs_sha256"),
-        "model.py" => Some("py_sha256"),
+    let digest_field = match (expected_path, language) {
+        ("model.rs", _) => Some("rs_sha256"),
+        ("model.py", _) => Some("py_sha256"),
+        ("model.cpp", "cpp17") => Some("cpp17_sha256"),
+        ("model.cpp", "cpp20") => Some("cpp20_sha256"),
+        ("model.js", _) => Some("js_sha256"),
         _ => None,
     };
     if let Some(field) = digest_field {
+        let declared = manifest[field].as_str().with_context(|| {
+            format!(
+                "cannot bind {} ({language}); manifest has no {field}",
+                artifact.path
+            )
+        })?;
         ensure!(
-            manifest[field].as_str() == Some(artifact.sha256.as_str()),
+            declared == artifact.sha256.as_str(),
             "emitted artifact digest disagrees with selected manifest"
         );
     }

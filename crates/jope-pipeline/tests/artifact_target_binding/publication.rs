@@ -190,7 +190,7 @@ fn native_publication_refuses_manifest_and_receipt_rehash_under_external_pin() {
     assert!(publication::verify_run_v3(&root.join("receipt.json"), &expected).is_err());
 }
 #[test]
-fn legacy_cpp_js_rehash_reproduces_the_documented_binding_gap() {
+fn legacy_cpp_js_rehash_is_refused_by_the_manifest_digest() {
     for name in ["model.cpp", "model.js"] {
         let dir = scratch();
         let root = dir.path().join("run");
@@ -203,13 +203,15 @@ fn legacy_cpp_js_rehash_reproduces_the_documented_binding_gap() {
             }
         }
         write_receipt(&root, &r);
-        assert!(publication::verify_run(&root.join("receipt.json")).is_ok());
-        let expected = ExpectedArtifactV3 {
-            manifest_sha256: r.emit_manifest_sha256.clone(),
-            program_sha256: r.search.best.observation.program_sha256.clone(),
-            requested: Target::RECIPES.to_vec(),
-        };
-        assert!(publication::verify_run_v3(&root.join("receipt.json"), &expected).is_err());
+        // Issue #48: updating only the receipt hash used to leave verify-receipt
+        // green, because battle-artifact-v1 had no C++ or JavaScript digest.
+        let err = publication::verify_run(&root.join("receipt.json"))
+            .expect_err("a substituted C++ or JavaScript artifact was accepted");
+        let msg = format!("{err:#}");
+        assert!(
+            msg.contains(name) || msg.contains("digest"),
+            "the refusal must name the unbound artifact, got: {msg}"
+        );
     }
 }
 

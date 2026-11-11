@@ -11,7 +11,9 @@
 //!
 //! There is exactly one C++ emitter. C++20 is a compile flag over the same
 //! source, so `cpp17` and `cpp20` are two artifact rows sharing one `path` and
-//! differing only in the recorded `build` command.
+//! differing only in the recorded `build` command. The manifest binds that
+//! source with `cpp17_sha256` and `cpp20_sha256`, and binds `model.js` with
+//! `js_sha256`. A requested artifact with no digest is refused.
 //!
 //! A requested language the genome is not covered for is recorded as an
 //! exclusion with the emitter's own reason, never silently dropped.
@@ -159,6 +161,9 @@ pub(crate) mod seam {
 
     thread_local! {
         static RENDER_INSTEAD: RefCell<Option<String>> = const { RefCell::new(None) };
+        /// C++ and JavaScript write path only. The manifest digest stays on the
+        /// genome `transpile::emit` lowered.
+        static UNBOUND_CPP_JS: RefCell<Option<String>> = const { RefCell::new(None) };
     }
 
     pub(crate) fn swapped_genome() -> Result<Option<GenomeIr>> {
@@ -176,6 +181,25 @@ pub(crate) mod seam {
         RENDER_INSTEAD.with(|c| *c.borrow_mut() = Some(genome.to_owned()));
         let out = body();
         RENDER_INSTEAD.with(|c| *c.borrow_mut() = None);
+        out
+    }
+
+    pub(crate) fn unbound_cpp_js() -> Result<Option<GenomeIr>> {
+        let raw = UNBOUND_CPP_JS.with(|c| c.borrow().clone());
+        match raw {
+            Some(g) => Ok(Some(
+                GenomeIr::parse(g.trim()).with_context(|| format!("parse unbound genome {g}"))?,
+            )),
+            None => Ok(None),
+        }
+    }
+
+    /// Write C++ and JavaScript from `genome` while the manifest digest stays on
+    /// the genome the Python/Rust emitter lowered.
+    pub(crate) fn lower_cpp_js_instead<T>(genome: &str, body: impl FnOnce() -> T) -> T {
+        UNBOUND_CPP_JS.with(|c| *c.borrow_mut() = Some(genome.to_owned()));
+        let out = body();
+        UNBOUND_CPP_JS.with(|c| *c.borrow_mut() = None);
         out
     }
 }
@@ -250,6 +274,73 @@ mod tests {
         assert_ne!(
             swapped.genome_sha256, honest.genome_sha256,
             "two different emissions reported the same genome digest"
+        );
+    }
+
+    /// Issue #48: cpp17/cpp20/js were written by a separate lowering and the
+    /// manifest had no digest for them, so a different genome still exited 0.
+    #[test]
+    fn a_cpp_or_js_lowering_of_a_different_genome_is_refused() {
+        let requested = "(pipe X (ridge))";
+        let lowered = "(pipe X (standardize) (ridge))";
+        let dir = tempfile::tempdir().unwrap();
+        let err = match seam::lower_cpp_js_instead(lowered, || {
+            emit(
+                requested,
+                &[Language::Cpp17, Language::Cpp20, Language::JavaScript],
+                dir.path(),
+            )
+        }) {
+            Err(err) => err,
+            Ok(_) => panic!("an unbound C++/JavaScript lowering was accepted"),
+        };
+        let msg = format!("{err:#}");
+        assert!(
+            msg.contains("model.cpp") && msg.contains("but the file written is"),
+            "the refusal must name the C++ file, got: {msg}"
+        );
+
+        let honest = emit(
+            requested,
+            &[Language::Cpp17, Language::JavaScript],
+            dir.path().join("honest").as_path(),
+        )
+        .unwrap();
+        let manifest: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(dir.path().join("honest/manifest.json")).unwrap(),
+        )
+        .unwrap();
+        let cpp = honest
+            .artifacts
+            .iter()
+            .find(|a| a.language == "cpp17")
+            .unwrap();
+        let js = honest
+            .artifacts
+            .iter()
+            .find(|a| a.language == "javascript")
+            .unwrap();
+        assert_eq!(manifest["cpp17_sha256"].as_str(), Some(cpp.sha256.as_str()));
+        assert!(manifest.get("cpp20_sha256").is_none());
+        assert_eq!(manifest["js_sha256"].as_str(), Some(js.sha256.as_str()));
+        assert_eq!(honest.canonical_genome, requested);
+
+        // The honest manifest still has js and cpp17. Strip both and ask the
+        // reader to bind the written artifacts.
+        let mut stripped = manifest.clone();
+        stripped.as_object_mut().unwrap().remove("cpp17_sha256");
+        stripped.as_object_mut().unwrap().remove("js_sha256");
+        std::fs::write(
+            dir.path().join("honest/manifest.json"),
+            serde_json::to_string(&stripped).unwrap(),
+        )
+        .unwrap();
+        let unbound = read_identity(dir.path().join("honest").as_path(), &honest.artifacts)
+            .expect_err("artifacts without digests were accepted");
+        let unbound = format!("{unbound:#}");
+        assert!(
+            unbound.contains("cannot bind"),
+            "a missing digest must be a bind failure, got: {unbound}"
         );
     }
 
