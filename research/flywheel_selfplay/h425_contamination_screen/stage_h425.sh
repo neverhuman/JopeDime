@@ -10,8 +10,8 @@ SRC=$(dirname "$(readlink -f "$0")")
 REPO=/home/ubuntu/JopeDime
 BASE=/home/ubuntu/apex-stage/h422/pub-r1
 G425=research/flywheel_selfplay/h425_contamination_screen
-FILES=(screen_h425.py lists_h425.sh sens_h425.py gates_h425.sh stage_h425.sh)
-DOCS=(PREREG.md)
+FILES=(screen_h425.py lists_h425.sh sens_h425.py gates_h425.sh stage_h425.sh confirm_meta_h425.py)
+DOCS=(PREREG.md PREREG_ADDENDUM_1.md)
 DST=/home/ubuntu/apex-stage/h425/$MODE-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }

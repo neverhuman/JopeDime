@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """H425 contamination screen, run inside the H335 sandbox with the frozen readers (guard v2 installed by apex_core).
 
-  screen_h425.py --queries DEV,CONFIRM --out FILE [--procs 8]        (the scored run)
+  screen_h425.py --queries DEV --out FILE [--procs 8]                (the scored run; addendum 1: CONFIRM tables are not
+                                                                      in the sandbox view, so CONFIRM is not screened here)
+  screen_h425.py --queries DEV,CONFIRM --out FILE                    (the PREREG run; fails while CONFIRM tables are absent)
   screen_h425.py --queries FIT-SEL --out FILE                        (development rehearsal on a design cohort)
 
 Question per query context: is its table a copy (same rows, a different row sample, or a column variant) of a table
@@ -234,8 +236,8 @@ def main() -> None:
     if out.exists():
         raise SystemExit(f"{out} exists (create-once)")
     cohorts = a.queries.split(",")
-    if not set(cohorts) <= {"DEV", "CONFIRM", "FIT-SEL"} or ("FIT-SEL" in cohorts and len(cohorts) > 1):
-        raise SystemExit("--queries: DEV,CONFIRM (scored run) or FIT-SEL (rehearsal)")
+    if cohorts not in (["DEV"], ["DEV", "CONFIRM"], ["FIT-SEL"]):
+        raise SystemExit("--queries: DEV (addendum 1), DEV,CONFIRM (needs CONFIRM tables in the view) or FIT-SEL (rehearsal)")
     t0 = time.time()
     A.install()
     rows = A.rows()

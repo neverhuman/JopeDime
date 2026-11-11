@@ -1,9 +1,10 @@
 #!/bin/bash
 # H425: the two frozen lists, cut from the screen's output by the pre-registered tier rule (create-once).
-#   lists_h425.sh SCREEN.json OUT_DIR   -> OUT_DIR/EXCLUSION_DEV.json (115 DEV contexts), OUT_DIR/CONFIRM_FLAGS.json (241)
+#   lists_h425.sh SCREEN.json OUT_DIR   -> OUT_DIR/EXCLUSION_DEV.json (115 DEV contexts). Addendum 1: no CONFIRM list is cut
+#   here (CONFIRM tables are not in the sandbox view); CONFIRM_META.json comes from confirm_meta_h425.py.
 set -euo pipefail
 S=${1:?SCREEN.json}; O=${2:?out dir}
-[ ! -e "$O/EXCLUSION_DEV.json" ] && [ ! -e "$O/CONFIRM_FLAGS.json" ] || { echo "lists exist (create-once)" >&2; exit 3; }
+[ ! -e "$O/EXCLUSION_DEV.json" ] || { echo "list exists (create-once)" >&2; exit 3; }
 SHA=$(sha256sum "$S" | cut -d' ' -f1)
 cut_list() {  # COHORT
   jq --arg co "$1" --arg sha "$SHA" '
@@ -19,7 +20,6 @@ cut_list() {  # COHORT
      contexts: $c}' "$S"
 }
 cut_list DEV > "$O/EXCLUSION_DEV.json.part"
-cut_list CONFIRM > "$O/CONFIRM_FLAGS.json.part"
-mv -n "$O/EXCLUSION_DEV.json.part" "$O/EXCLUSION_DEV.json"; mv -n "$O/CONFIRM_FLAGS.json.part" "$O/CONFIRM_FLAGS.json"
-chmod a-w "$O/EXCLUSION_DEV.json" "$O/CONFIRM_FLAGS.json"
-jq -c '{cohort, n, tier_counts, tier_counts_core}' "$O/EXCLUSION_DEV.json" "$O/CONFIRM_FLAGS.json"
+mv -n "$O/EXCLUSION_DEV.json.part" "$O/EXCLUSION_DEV.json"
+chmod a-w "$O/EXCLUSION_DEV.json"
+jq -c "{cohort, n, tier_counts, tier_counts_core}" "$O/EXCLUSION_DEV.json"
