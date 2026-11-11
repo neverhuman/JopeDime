@@ -1,0 +1,197 @@
+{
+  "schema": "jope.h425.metrics/v1",
+  "wave": "H425",
+  "role": "contamination screen; nothing scored, predicted or fitted; no dev91 / DL-Val / DL-Holdout / sealed data read; CONFIRM tables not opened",
+  "dev": {
+    "contexts": 115,
+    "fit_icl_tables": 440,
+    "tiers": {
+      "clear": 84,
+      "copy": 8,
+      "possible": 13,
+      "target_only": 10
+    },
+    "screens": {
+      "s1": 17,
+      "s2": 0,
+      "s3": 4,
+      "s4": 2,
+      "b": 18,
+      "applies": {
+        "b": 105,
+        "s1": 93,
+        "s2": 104,
+        "s3": 70,
+        "s4": 23
+      }
+    },
+    "feature_flagged_not_in_target_baseline": 13,
+    "copies_not_in_target_baseline": 7
+  },
+  "fit_icl_internal": {
+    "b": 72,
+    "feature": 102,
+    "s1": 91,
+    "s2": 5,
+    "s3": 7,
+    "s4": 2,
+    "tier_clear": 290,
+    "tier_copy": 62,
+    "tier_possible": 40,
+    "tier_target_only": 48
+  },
+  "rehearsal_fit_sel": {
+    "contexts": 106,
+    "tiers": {
+      "copy": 18,
+      "possible": 12,
+      "target_only": 8,
+      "clear": 68
+    }
+  },
+  "h424_sensitivity": {
+    "role": "sensitivity read of H424; no new verdict",
+    "statement": "the gain survives (pre-declared read: clipped gain above 0, one-sided p < 0.025)",
+    "first_read_h020": {
+      "all": {
+        "n": 115,
+        "clipped_mean": 0.009179572796714913,
+        "signflip_p": 0.000064849853515625,
+        "lofo_min": 0.0063893665661237335,
+        "family_median": 0.0001393091346548747,
+        "wtl": [
+          59,
+          34,
+          22
+        ],
+        "pass": true
+      },
+      "only_feature": {
+        "n": 21,
+        "clipped_mean": 0.002337213428056822,
+        "signflip_p": 0.05075836181640625,
+        "lofo_min": 0.0014638329968568009,
+        "family_median": 0.00008901527931248765,
+        "wtl": [
+          10,
+          7,
+          4
+        ],
+        "pass": false
+      },
+      "without_any": {
+        "n": 84,
+        "clipped_mean": 0.010151289570874602,
+        "signflip_p": 0.0007677078247070312,
+        "lofo_min": 0.006330665552642858,
+        "family_median": 0.00013796974394239547,
+        "wtl": [
+          43,
+          25,
+          16
+        ],
+        "pass": true
+      },
+      "without_copy": {
+        "n": 107,
+        "clipped_mean": 0.009860207985481503,
+        "signflip_p": 0.00004863739013671875,
+        "lofo_min": 0.006865841239268032,
+        "family_median": 0.0002166239742054099,
+        "wtl": [
+          58,
+          29,
+          20
+        ],
+        "pass": true
+      },
+      "without_feature": {
+        "n": 94,
+        "clipped_mean": 0.010708184996095976,
+        "signflip_p": 0.0001964569091796875,
+        "lofo_min": 0.007304368887622712,
+        "family_median": 0.00015532487640121384,
+        "wtl": [
+          49,
+          27,
+          18
+        ],
+        "pass": true
+      }
+    }
+  },
+  "confirm": {
+    "feature_screens": "not run: CONFIRM tables are not in the sandbox view (addendum 1)",
+    "manifest_only": {
+      "n": 241,
+      "core": 142,
+      "counts": {
+        "name_applies": 53,
+        "name_flag": 1,
+        "same_dataset_id": 0,
+        "same_family_id": 0,
+        "same_table_sha256": 0
+      },
+      "name_flag_core": 1
+    },
+    "failure_criterion": "cannot be evaluated; escalated",
+    "estimate_from_other_cohorts": {
+      "copy_rate_dev": 0.06956521739130435,
+      "copy_rate_fit_sel": 0.16981132075471697
+    }
+  },
+  "thresholds": {
+    "K": 256,
+    "b": [
+      20,
+      0.5
+    ],
+    "s1": [
+      0.05,
+      3,
+      0.3,
+      0.5
+    ],
+    "s2": [
+      4,
+      0.5,
+      0.05,
+      20
+    ],
+    "s3": [
+      10,
+      3,
+      0.5
+    ],
+    "s4": [
+      2,
+      0.75
+    ],
+    "spec": [
+      100,
+      0.5
+    ]
+  },
+  "gates": {
+    "g1_prereg_and_addendum_before_screen": true,
+    "g2_dev_only_in_sandbox": true,
+    "g3_confirm_not_opened": true,
+    "g4_list_is_the_screens": true,
+    "g5_lists_published_before_sensitivity": true,
+    "g6_h424_values_unchanged": true,
+    "g7_budget": true,
+    "g8_pub_stage": true
+  },
+  "gates_pass": true,
+  "wall_s": 24.076199054718018,
+  "evidence": {
+    "screen_sha256": "fa8edd8a08a9aef30af98b8240f3e3b1f40d11e9681b157d7190cb00ff58891e",
+    "exclusion_sha256": "956260bcc6c25ba89a33379c07096367f425034918bad7912b131e49b69da860",
+    "confirm_meta_sha256": "acbce707c9631d5206861fbd21185d6033e903e9530dfea83dd5933fb1e7717c",
+    "commits": {
+      "prereg_and_code": "d21cb6a43d",
+      "addendum_1": "74ebb9c908",
+      "lists": "1c44425f36"
+    }
+  }
+}
