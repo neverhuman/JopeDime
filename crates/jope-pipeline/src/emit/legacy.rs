@@ -56,9 +56,19 @@ pub fn emit_with_options(
 
     let wants_cpp = languages.contains(&Language::Cpp17) || languages.contains(&Language::Cpp20);
     if wants_cpp {
-        match cpp_source_with_options(&parsed, options)? {
-            Ok(source) => {
-                let artifact = write(directory, "model.cpp", &source)?;
+        match cpp_source_with_options(render_target, options)? {
+            Ok(honest) => {
+                let written = unbound_source(render_target, &honest, |genome| {
+                    transpile::emit_cpp17(genome, options)
+                })?;
+                let declared = hash(honest.as_bytes());
+                if languages.contains(&Language::Cpp17) {
+                    bind_digest(directory, "cpp17_sha256", &declared)?;
+                }
+                if languages.contains(&Language::Cpp20) {
+                    bind_digest(directory, "cpp20_sha256", &declared)?;
+                }
+                let artifact = write(directory, "model.cpp", &written)?;
                 for (language, standard) in [
                     (Language::Cpp17, CxxStd::Cxx17),
                     (Language::Cpp20, CxxStd::Cxx20),
@@ -87,12 +97,17 @@ pub fn emit_with_options(
     }
 
     if languages.contains(&Language::JavaScript) {
-        match transpile::supports_javascript(&parsed) {
+        match transpile::supports_javascript(render_target) {
             Ok(()) => {
-                let source = transpile::emit_javascript(&parsed, options)?;
+                let honest = transpile::emit_javascript(render_target, options)?;
+                let written = unbound_source(render_target, &honest, |genome| {
+                    transpile::emit_javascript(genome, options)
+                })?;
+                let declared = hash(honest.as_bytes());
+                bind_digest(directory, "js_sha256", &declared)?;
                 artifacts.push(Artifact {
                     language: Language::JavaScript.as_str(),
-                    ..write(directory, "model.js", &source)?
+                    ..write(directory, "model.js", &written)?
                 });
                 targets.push("js");
             }
@@ -214,12 +229,22 @@ fn cpp_source_with_options(
 }
 
 /// The subset of `manifest.json` that identifies what was emitted.
+///
+/// `cpp17_sha256`, `cpp20_sha256` and `js_sha256` are absent on manifests
+/// written before those targets were bound. A new emission that writes the
+/// corresponding file always records the digest.
 #[derive(Debug, serde::Deserialize)]
 pub(super) struct ManifestIdentity {
     dsl: String,
     genome_sha256: String,
     py_sha256: String,
     rs_sha256: String,
+    #[serde(default)]
+    cpp17_sha256: Option<String>,
+    #[serde(default)]
+    cpp20_sha256: Option<String>,
+    #[serde(default)]
+    js_sha256: Option<String>,
 }
 
 /// Read `manifest.json` back from `directory` and check it against the files beside it.
@@ -238,21 +263,84 @@ pub(super) fn read_identity(directory: &Path, artifacts: &[Artifact]) -> Result<
         identity.genome_sha256,
         identity.dsl
     );
-    for (name, declared) in [
-        ("model.py", &identity.py_sha256),
-        ("model.rs", &identity.rs_sha256),
-    ] {
-        let Some(artifact) = artifacts.iter().find(|a| a.path == name) else {
+    for artifact in artifacts {
+        let Some(declared) = digest_for(&identity, artifact)? else {
             continue;
         };
         ensure!(
-            &artifact.sha256 == declared,
-            "{}: declares {name} is {declared}, but the file written is {}",
+            artifact.sha256 == declared,
+            "{}: declares {} is {declared}, but the file written is {}",
             path.display(),
+            artifact.path,
             artifact.sha256
         );
     }
     Ok(identity)
+}
+
+/// Digest field for an artifact this schema binds. Other languages are not
+/// `battle-artifact-v1` rows. A bound path with no digest is a refusal: the
+/// old loop skipped a missing Python or Rust file and also skipped C++ and
+/// JavaScript because the schema had no field for them.
+fn digest_for(identity: &ManifestIdentity, artifact: &Artifact) -> Result<Option<String>> {
+    let declared = match (artifact.path.as_str(), artifact.language) {
+        ("model.py", _) => Some(identity.py_sha256.clone()),
+        ("model.rs", _) => Some(identity.rs_sha256.clone()),
+        ("model.cpp", "cpp17") => identity.cpp17_sha256.clone(),
+        ("model.cpp", "cpp20") => identity.cpp20_sha256.clone(),
+        ("model.js", _) => identity.js_sha256.clone(),
+        _ => return Ok(None),
+    };
+    match declared {
+        Some(digest) => Ok(Some(digest)),
+        None => bail!(
+            "cannot bind {} ({}); manifest.json has no digest for that artifact",
+            artifact.path,
+            artifact.language
+        ),
+    }
+}
+
+/// Record `digest` on the manifest that `transpile::emit` already wrote.
+///
+/// The original key order stays. The new field is appended so an old reader
+/// that only knows `py_sha256` and `rs_sha256` still sees those values, and a
+/// new reader can require the field when the artifact is present.
+fn bind_digest(directory: &Path, field: &str, digest: &str) -> Result<()> {
+    let path = directory.join("manifest.json");
+    let mut text = std::fs::read_to_string(&path)
+        .with_context(|| format!("read {} before binding {field}", path.display()))?;
+    let trimmed = text.trim_end();
+    ensure!(
+        trimmed.ends_with('}'),
+        "{} is not a JSON object",
+        path.display()
+    );
+    ensure!(
+        !trimmed.contains(&format!("\"{field}\"")),
+        "{} already binds {field}",
+        path.display()
+    );
+    text.truncate(trimmed.len() - 1);
+    text.push_str(&format!(",\"{field}\":\"{digest}\"}}"));
+    std::fs::write(&path, &text).with_context(|| format!("write {}", path.display()))?;
+    Ok(())
+}
+
+/// Bytes written for C++ or JavaScript. Production writes the same source the
+/// manifest digest names. The test seam can write a different genome.
+fn unbound_source(
+    honest_genome: &GenomeIr,
+    honest_source: &str,
+    emit_source: impl FnOnce(&GenomeIr) -> Result<String>,
+) -> Result<String> {
+    #[cfg(test)]
+    if let Some(swapped) = super::seam::unbound_cpp_js()? {
+        let _ = honest_genome;
+        return emit_source(&swapped);
+    }
+    let _ = (honest_genome, emit_source);
+    Ok(honest_source.to_owned())
 }
 
 /// The command `deploy/ci/emitters.sh` compiles an emitted C++ source with: the
