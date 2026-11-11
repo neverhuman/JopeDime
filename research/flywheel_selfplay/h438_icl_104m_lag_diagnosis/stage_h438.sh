@@ -10,8 +10,8 @@ SRC=$(dirname "$(readlink -f "$0")")
 REPO=/home/ubuntu/JopeDime
 BASE=/home/ubuntu/apex-stage/h437/pub-r2
 G432=research/flywheel_selfplay/h438_icl_104m_lag_diagnosis
-FILES=(lag_h438.py gates_h438.sh gates2_h438.sh stage_h438.sh)
-DOCS=(PREREG.md PREREG_ADDENDUM_1.md)   # addendum 1 and gates2 were added after the first attempt stopped on a code error
+FILES=(lag_h438.py disp_h438.py gates_h438.sh gates2_h438.sh gates3_h438.sh stage_h438.sh)
+DOCS=(PREREG.md PREREG_ADDENDUM_1.md PREREG_ADDENDUM_2.md)   # addenda and their gate scripts were added after the first staging
 DST=/home/ubuntu/apex-stage/h438/$MODE-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }
