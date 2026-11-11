@@ -18,7 +18,7 @@ exists. Plan: [`PREREG.md`](PREREG.md) and addenda [1](PREREG_ADDENDUM_1.md), [2
 | `ICL_M_x4d_v2` | xbabe4 Apple GPU | 23.66M | control for prior version 2: the `res` recipe plus `--prior v2`, running since 18:08:44Z (addendum 6; the 17:07Z start failed, see below) |
 
 Since addendum 6 the 24M run `ICL_M_r3` (from 17:15Z) and 104M workers 2 (17:14Z) and 1 (17:53Z) train with
-`--prior v2 --p-resid 0.5 --row-floor 1024`; worker 0 follows behind the same gates.
+`--prior v2 --p-resid 0.5 --row-floor 1024`; worker 0 followed at 18:25Z (gates passed 18:44Z).
 
 ## Tracked metrics
 - **Real-table monitor:** 106 core FIT-SEL contexts, SEARCH rows only; query = fold 0 of `kfold_labels`, context =
@@ -45,6 +45,28 @@ Since addendum 6 the 24M run `ICL_M_r3` (from 17:15Z) and 104M workers 2 (17:14Z
 
 Clock times of the 13:30–15:42 rows are approximate; the hours column is exact. Worker hours exclude the time a
 worker waits for the group average.
+
+**Worker 0 killed by a host out-of-memory event on xbabe3, 04:39:38Z Nov 11; resumed 04:47:44Z.**
+- **Cause.** xbabe3 ran out of memory as a whole; the kernel killed several processes, worker 0 among them. The
+  worker's own peak was 5.8 GiB of RAM and 1.5 GiB of swap on a 62 GiB host, so it was a victim. The owner's watcher
+  names a feature-extraction job of another lane as the cause and has told it to cap its memory.
+- **Loss.** One training step. The last checkpoint (04:38:15Z, step 116,058, 14.27 h) was complete.
+- **Resume.** Same unit name, code stage (`r9`) and arguments, plus `--resume`; the resume record matches the one
+  of 18:23Z apart from step and time. Worker 0 was down 8 minutes 10 seconds.
+- **Effect on the group.** Rounds 5981240 and 5981241 averaged workers 1 and 2 only, and each waited the full 100 s
+  collection window for the missing worker (about 110 s against 21–49 s before), so those two workers idled longer
+  in two rounds. Round 5981242 (04:50:56Z) has three workers again; all three loaded it and train at 48–55 tasks
+  per second.
+- **Open risk.** Nothing protects the unit if the host runs out of memory again; the remedy is the same resume.
+
+**Hour-12 rules (readings of 23:22Z Nov 10 and 02:04Z Nov 11): both passed.**
+- **24M on-track rule (addendum 1):** pass. Training-log evaluations at 11.99 h and 12.33 h: win rate 0.660 and
+  0.642 (needs 0.55), median 0.876 and 0.791 (needs 0.643).
+- **104M size rule (addendum 5):** pass, the group continues. Worker 2's checkpoint at 12.24 h: residual readout
+  win rate 0.925 (needs 0.848), median 0.946 (needs 0.899). Plain readout median 0.762.
+- **Stack test on the 24M checkpoint of 12.33 h:** the residual column is used in 49% of contexts with weight
+  0.113, for +0.0051 u. Small; no test cohort is involved.
+- **Next size check:** hour 24, residual win rate ≥ 0.895 and median ≥ 0.953.
 
 **xbabe4 incident, 20:25Z: our four arms exhausted the Mac Studio's memory; it was reset at 20:30Z.**
 - **What happened.** macOS logged a memory-exhaustion event at 20:25:08Z with 0.1 GiB free. The four arm processes
