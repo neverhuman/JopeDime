@@ -1,0 +1,720 @@
+{
+ "LIB_COV_sha256": "a91eb1e115dfdbd360e4a173c5498b5e1bc65083106e90ad15ab96f4e6d31e7e",
+ "LIB_PORT_sha256": "688f0258cad33aab13d014fcb5617d5e6479eebc09f5f8e3c1a0d1701b76e468",
+ "LIB_RAND_sha256": "63d21b71742290961eebd4f1d5000cdfca9e0f7eb7bea270b9fa0fa454d4561a",
+ "base_utility": {
+  "above_10": 9,
+  "max": 19.088586287134444,
+  "mean": 2.2072829884276537,
+  "median": 1.325324477343074
+ },
+ "clip": 0.5,
+ "contexts_without_fill": [],
+ "design_contexts": 291,
+ "families": 291,
+ "fill": {
+  "completed_pairs": 38675,
+  "failed_pairs": 82,
+  "not_valid_pairs": 2565,
+  "stored_candidates_missing": 0,
+  "usable_pairs": 35133
+ },
+ "gate": {
+  "clip": 0.5,
+  "cross_fit": [
+   {
+    "fit_contexts": 156,
+    "fit_half": 0,
+    "fit_objective": 0.017434877163214717,
+    "held_out": 135,
+    "held_out_mean_gain_port": 0.011199271917183501,
+    "held_out_mean_gain_rand": 0.001521123281769384,
+    "selected": [
+     104,
+     63,
+     134,
+     128,
+     133,
+     113,
+     65,
+     117,
+     126,
+     67,
+     112,
+     141,
+     75,
+     103,
+     85,
+     73,
+     114,
+     105,
+     107,
+     127
+    ]
+   },
+   {
+    "fit_contexts": 135,
+    "fit_half": 1,
+    "fit_objective": 0.017550747724258912,
+    "held_out": 156,
+    "held_out_mean_gain_port": 0.01532239346031007,
+    "held_out_mean_gain_rand": 0.0007594999678023798,
+    "selected": [
+     86,
+     128,
+     75,
+     65,
+     134,
+     114,
+     129,
+     112,
+     126,
+     137,
+     120,
+     63,
+     99,
+     115,
+     85,
+     127,
+     132,
+     135,
+     103,
+     121
+    ]
+   }
+  ],
+  "loss": 58,
+  "mean_clipped": 0.012663953552791606,
+  "mean_unclipped": 0.03315993263451129,
+  "median": 0.0,
+  "n": 291,
+  "pass": true,
+  "signflip_p_one_sided": 9.99990000099999e-06,
+  "tie": 119,
+  "win": 114
+ },
+ "harvest_candidates": 102,
+ "k": 20,
+ "objective": {
+  "cov": {
+   "loss": 35,
+   "mean_clipped_gain": 0.014133157500114906,
+   "mean_unclipped_gain": 0.03869650053477839,
+   "median_gain": 0.0,
+   "tie": 149,
+   "win": 107
+  },
+  "port": {
+   "loss": 25,
+   "mean_clipped_gain": 0.017023515608004323,
+   "mean_unclipped_gain": 0.0416753150554927,
+   "median_gain": 0.0,
+   "tie": 133,
+   "win": 133
+  },
+  "rand": {
+   "loss": 20,
+   "mean_clipped_gain": 0.001112830371189134,
+   "mean_unclipped_gain": 0.001112830371189134,
+   "median_gain": 0.0,
+   "tie": 193,
+   "win": 78
+  },
+  "trace_cov_best_single": [
+   0.0,
+   0.003436426116838488,
+   0.0061869002343140755,
+   0.00790511329273332,
+   0.009596022207863635,
+   0.010157923730212012,
+   0.010584178506952419,
+   0.010879025759781369,
+   0.011150861349078436,
+   0.011264010105921589,
+   0.01133004557014905,
+   0.011382266801109125,
+   0.011416859106400622,
+   0.01144690701339496,
+   0.011458110967221715,
+   0.011463179299021044,
+   0.011463179299021044,
+   0.011463179299021044,
+   0.011463179299021044,
+   0.011463179299021044,
+   0.011463179299021044
+  ],
+  "trace_port": [
+   0.0,
+   0.003588428625846036,
+   0.00698027352373801,
+   0.008885559175620455,
+   0.010701386954777445,
+   0.011744363291273287,
+   0.012543587550199083,
+   0.013305624045303279,
+   0.013868984837565358,
+   0.014308860010197252,
+   0.014748489529301186,
+   0.015118742399695564,
+   0.015403097205676288,
+   0.015679909308803603,
+   0.01594271576760333,
+   0.01617267967628671,
+   0.016367761668184915,
+   0.016561884714529372,
+   0.016725716117857357,
+   0.016889367389780724,
+   0.017023515608004323
+  ]
+ },
+ "pool_sha256": "88a6ce9167ee248ab0709c2ec3f318f3d540ecb0b9dc2df01a33375c7e38ef6f",
+ "schema": "jope.h421.selection/v2",
+ "sets": {
+  "LIB_COV": [
+   {
+    "dsl": "(pipe X (rand_proj append=false k=102 seed=7582) (standardize append=true) (robust_scale append=true) (rand_proj append=true k=69 seed=1647) (robust_scale append=true) (nystrom append=true gamma=0.567525 k=27) (svd_project append=true k=4) (standardize) (ridge_gcv))",
+    "enters_alone_in": 16,
+    "id": 137,
+    "n_families": 1,
+    "name": "h116",
+    "rank": 116,
+    "usable_in": 270
+   },
+   {
+    "dsl": "(pipe X (sigmoid append=true) (symlog c=2.0) (standardize append=true) (symlog append=true c=1.64239) (pair_prod topk=12) (pair_prod append=true topk=10) (pair_prod append=true topk=12) (sigmoid append=true) (ridge_gcv))",
+    "enters_alone_in": 21,
+    "id": 128,
+    "n_families": 1,
+    "name": "h107",
+    "rank": 107,
+    "usable_in": 213
+   },
+   {
+    "dsl": "(pipe X (standardize append=false) (pair_prod append=true topk=10) (standardize append=true) (standardize append=true) (standardize append=false) (standardize append=false) (ridge_gcv))",
+    "enters_alone_in": 21,
+    "id": 63,
+    "n_families": 5,
+    "name": "h041",
+    "rank": 41,
+    "usable_in": 255
+   },
+   {
+    "dsl": "(pipe X (sigmoid) (pair_ratio append=true topk=4) (pair_prod append=true topk=17) (svd_project append=true k=10) (landmark_dist append=true gamma=2.3445 k=62) (rff_cos append=true gamma=0.456491 n=34 seed=2026) (ridge_gcv))",
+    "enters_alone_in": 29,
+    "id": 134,
+    "n_families": 1,
+    "name": "h113",
+    "rank": 113,
+    "usable_in": 229
+   },
+   {
+    "dsl": "(pipe X (hinge append=true knots=8) (standardize append=false) (ridge_gcv))",
+    "enters_alone_in": 81,
+    "id": 73,
+    "n_families": 3,
+    "name": "h052",
+    "rank": 52,
+    "usable_in": 273
+   },
+   {
+    "dsl": "(pipe X (cheb append=true degree=3) (gpr kernel=rbf+linear steps=40))",
+    "enters_alone_in": 61,
+    "id": 85,
+    "n_families": 2,
+    "name": "h064",
+    "rank": 64,
+    "usable_in": 259
+   },
+   {
+    "dsl": "(pipe X (target kind=log1p) (sigmoid append=true) (pair_prod append=true topk=12) (cheb degree=6) (row_stats append=true) (sigmoid) (ridge lambda_frac=0.00132392))",
+    "enters_alone_in": 57,
+    "id": 120,
+    "n_families": 1,
+    "name": "h099",
+    "rank": 99,
+    "usable_in": 225
+   },
+   {
+    "dsl": "(pipe X (rank append=true) (poly_interact append=true) (rank append=true) (ridge_gcv))",
+    "enters_alone_in": 36,
+    "id": 75,
+    "n_families": 3,
+    "name": "h054",
+    "rank": 54,
+    "usable_in": 155
+   },
+   {
+    "dsl": "(pipe X (rank append=true) (pair_prod append=true topk=13) (elasticnet alpha=0.007818026135169751 l1_ratio=0.2814240178023062))",
+    "enters_alone_in": 85,
+    "id": 82,
+    "n_families": 2,
+    "name": "h061",
+    "rank": 61,
+    "usable_in": 285
+   },
+   {
+    "dsl": "(pipe X (poly_interact) (ridge_gcv))",
+    "enters_alone_in": 20,
+    "id": 112,
+    "n_families": 1,
+    "name": "h091",
+    "rank": 91,
+    "usable_in": 208
+   },
+   {
+    "dsl": "(pipe X (standardize append=true) (cheb degree=5) (elasticnet alpha=0.02096418666205465 l1_ratio=0.18282803562471384))",
+    "enters_alone_in": 82,
+    "id": 92,
+    "n_families": 2,
+    "name": "h071",
+    "rank": 71,
+    "usable_in": 276
+   },
+   {
+    "dsl": "(pipe X (target_bin_encode append=true bins=9) (poly_interact append=false) (ridge lambda_frac=0.09810389756196963))",
+    "enters_alone_in": 80,
+    "id": 79,
+    "n_families": 3,
+    "name": "h058",
+    "rank": 58,
+    "usable_in": 221
+   },
+   {
+    "dsl": "(pipe X (blom append=true) (pair_prod topk=14) (rank append=true) (standardize append=true) (ridge))",
+    "enters_alone_in": 74,
+    "id": 65,
+    "n_families": 5,
+    "name": "h044",
+    "rank": 44,
+    "usable_in": 278
+   },
+   {
+    "dsl": "(pipe X (cheb degree=6) (standardize append=false) (elasticnet alpha=0.004713411504199952 l1_ratio=0.09473679667147597))",
+    "enters_alone_in": 98,
+    "id": 110,
+    "n_families": 2,
+    "name": "h089",
+    "rank": 89,
+    "usable_in": 280
+   },
+   {
+    "dsl": "(pipe X (blom append=true) (sigmoid) (pair_prod append=true topk=14) (ridge lambda_frac=0.034082458820443015))",
+    "enters_alone_in": 70,
+    "id": 80,
+    "n_families": 3,
+    "name": "h059",
+    "rank": 59,
+    "usable_in": 283
+   },
+   {
+    "dsl": "(pipe X (gpr kernel=rbf+linear steps=40))",
+    "enters_alone_in": 0,
+    "id": 40,
+    "n_families": 48,
+    "name": "h004",
+    "rank": 4,
+    "usable_in": 172
+   },
+   {
+    "dsl": "(pipe X (target kind=log1p) (xtrees max_features=1.0 min_leaf=1 trees=500))",
+    "enters_alone_in": 0,
+    "id": 41,
+    "n_families": 43,
+    "name": "h005",
+    "rank": 5,
+    "usable_in": 201
+   },
+   {
+    "dsl": "(pipe X (blom) (gpr kernel=rbf+linear steps=40))",
+    "enters_alone_in": 0,
+    "id": 42,
+    "n_families": 42,
+    "name": "h006",
+    "rank": 6,
+    "usable_in": 210
+   },
+   {
+    "dsl": "(pipe X (cheb append=true degree=3) (pair_prod append=true topk=24) (ridge_gcv))",
+    "enters_alone_in": 0,
+    "id": 43,
+    "n_families": 27,
+    "name": "h008",
+    "rank": 8,
+    "usable_in": 160
+   },
+   {
+    "dsl": "(pipe X (rank) (xtrees max_features=0.7 min_leaf=3 trees=150))",
+    "enters_alone_in": 0,
+    "id": 44,
+    "n_families": 26,
+    "name": "h009",
+    "rank": 9,
+    "usable_in": 246
+   }
+  ],
+  "LIB_PORT": [
+   {
+    "dsl": "(pipe X (rand_proj append=false k=102 seed=7582) (standardize append=true) (robust_scale append=true) (rand_proj append=true k=69 seed=1647) (robust_scale append=true) (nystrom append=true gamma=0.567525 k=27) (svd_project append=true k=4) (standardize) (ridge_gcv))",
+    "enters_alone_in": 16,
+    "id": 137,
+    "n_families": 1,
+    "name": "h116",
+    "rank": 116,
+    "usable_in": 270
+   },
+   {
+    "dsl": "(pipe X (sigmoid append=true) (symlog c=2.0) (standardize append=true) (symlog append=true c=1.64239) (pair_prod topk=12) (pair_prod append=true topk=10) (pair_prod append=true topk=12) (sigmoid append=true) (ridge_gcv))",
+    "enters_alone_in": 21,
+    "id": 128,
+    "n_families": 1,
+    "name": "h107",
+    "rank": 107,
+    "usable_in": 213
+   },
+   {
+    "dsl": "(pipe X (standardize append=false) (pair_prod append=true topk=10) (standardize append=true) (standardize append=true) (standardize append=false) (standardize append=false) (ridge_gcv))",
+    "enters_alone_in": 21,
+    "id": 63,
+    "n_families": 5,
+    "name": "h041",
+    "rank": 41,
+    "usable_in": 255
+   },
+   {
+    "dsl": "(pipe X (sigmoid) (pair_ratio append=true topk=4) (pair_prod append=true topk=17) (svd_project append=true k=10) (landmark_dist append=true gamma=2.3445 k=62) (rff_cos append=true gamma=0.456491 n=34 seed=2026) (ridge_gcv))",
+    "enters_alone_in": 29,
+    "id": 134,
+    "n_families": 1,
+    "name": "h113",
+    "rank": 113,
+    "usable_in": 229
+   },
+   {
+    "dsl": "(pipe X (rank append=true) (poly_interact append=true) (rank append=true) (ridge_gcv))",
+    "enters_alone_in": 36,
+    "id": 75,
+    "n_families": 3,
+    "name": "h054",
+    "rank": 54,
+    "usable_in": 155
+   },
+   {
+    "dsl": "(pipe X (blom append=true) (pair_prod topk=14) (rank append=true) (standardize append=true) (ridge))",
+    "enters_alone_in": 74,
+    "id": 65,
+    "n_families": 5,
+    "name": "h044",
+    "rank": 44,
+    "usable_in": 278
+   },
+   {
+    "dsl": "(pipe X (hinge append=true knots=5) (bin_onehot append=true bins=4) (target_bin_encode append=true bins=14) (ridge_gcv))",
+    "enters_alone_in": 47,
+    "id": 86,
+    "n_families": 2,
+    "name": "h065",
+    "rank": 65,
+    "usable_in": 188
+   },
+   {
+    "dsl": "(pipe X (target kind=log1p) (sigmoid append=true) (pair_prod append=true topk=12) (cheb degree=6) (row_stats append=true) (sigmoid) (ridge lambda_frac=0.00132392))",
+    "enters_alone_in": 57,
+    "id": 120,
+    "n_families": 1,
+    "name": "h099",
+    "rank": 99,
+    "usable_in": 225
+   },
+   {
+    "dsl": "(pipe X (pair_ratio append=true topk=4) (blom append=true) (pair_prod topk=19) (select_corr append=true k=3) (standardize append=true) (landmark_dist append=true gamma=2.53721 k=106) (ridge lambda_frac=0.00050874))",
+    "enters_alone_in": 23,
+    "id": 126,
+    "n_families": 1,
+    "name": "h105",
+    "rank": 105,
+    "usable_in": 200
+   },
+   {
+    "dsl": "(pipe X (cheb degree=6) (rank) (rank) (cheb append=true degree=7) (target_bin_encode bins=27) (symlog c=0.498202) (robust_scale) (winsor_clip q=0.0974742) (histgbm depth=6 lr=0.207881 rounds=415))",
+    "enters_alone_in": 25,
+    "id": 114,
+    "n_families": 1,
+    "name": "h093",
+    "rank": 93,
+    "usable_in": 204
+   },
+   {
+    "dsl": "(pipe X (poly_interact) (ridge_gcv))",
+    "enters_alone_in": 20,
+    "id": 112,
+    "n_families": 1,
+    "name": "h091",
+    "rank": 91,
+    "usable_in": 208
+   },
+   {
+    "dsl": "(pipe X (target kind=log1p) (histgbm2 bags=1 leaves=8 lr=0.0971405 rounds=562 row_subsample=0.876872 val_pct=5))",
+    "enters_alone_in": 92,
+    "id": 117,
+    "n_families": 1,
+    "name": "h096",
+    "rank": 96,
+    "usable_in": 289
+   },
+   {
+    "dsl": "(pipe X (symlog append=true c=1.10655) (hinge append=true knots=8) (svd_project append=true k=3) (ridge_gcv))",
+    "enters_alone_in": 74,
+    "id": 113,
+    "n_families": 1,
+    "name": "h092",
+    "rank": 92,
+    "usable_in": 242
+   },
+   {
+    "dsl": "(pipe X (robust_scale append=true) (robust_scale append=true) (svd_project append=true k=6) (select_corr append=true k=32) (robust_scale append=true) (svd_project append=true k=4) (select_corr append=true k=18 mode=var) (select_corr append=true k=6) (gpr kernel=rbf+linear steps=70))",
+    "enters_alone_in": 20,
+    "id": 129,
+    "n_families": 1,
+    "name": "h108",
+    "rank": 108,
+    "usable_in": 207
+   },
+   {
+    "dsl": "(pipe X (sigmoid append=true) (standardize append=true) (pair_prod topk=4) (bin_onehot append=true bins=3) (pair_prod append=true topk=13) (sigmoid append=true) (row_stats append=true) (svd_project append=true k=14) (ridge_gcv))",
+    "enters_alone_in": 18,
+    "id": 133,
+    "n_families": 1,
+    "name": "h112",
+    "rank": 112,
+    "usable_in": 198
+   },
+   {
+    "dsl": "(pipe X (pair_prod append=true topk=22) (pair_prod append=true topk=10) (sigmoid append=false) (rand_proj append=true k=53 seed=4814) (robust_scale append=true) (ridge lambda_frac=0.000321251))",
+    "enters_alone_in": 39,
+    "id": 127,
+    "n_families": 1,
+    "name": "h106",
+    "rank": 106,
+    "usable_in": 232
+   },
+   {
+    "dsl": "(pipe X (cheb append=true degree=5) (pair_prod append=true topk=10) (winsor_clip q=0.1053155813880266) (winsor_clip q=0.06613066214918621) (winsor_clip q=0.11639885435706074) (histgbm depth=3 lr=0.2199247975538758 rounds=279))",
+    "enters_alone_in": 82,
+    "id": 67,
+    "n_families": 4,
+    "name": "h046",
+    "rank": 46,
+    "usable_in": 270
+   },
+   {
+    "dsl": "(pipe X (quantile_bins append=true bins=23) (poly_interact append=true) (ridge lambda_frac=0.01225104))",
+    "enters_alone_in": 60,
+    "id": 103,
+    "n_families": 2,
+    "name": "h082",
+    "rank": 82,
+    "usable_in": 214
+   },
+   {
+    "dsl": "(pipe X (cheb append=true degree=3) (gpr kernel=rbf+linear steps=40))",
+    "enters_alone_in": 61,
+    "id": 85,
+    "n_families": 2,
+    "name": "h064",
+    "rank": 64,
+    "usable_in": 259
+   },
+   {
+    "dsl": "(pipe X (cheb append=true degree=5) (row_stats append=true) (target_bin_encode append=true bins=14) (winsor_clip q=0.030871916885606362) (histgbm depth=6 lr=0.1462721142667026 rounds=216))",
+    "enters_alone_in": 89,
+    "id": 99,
+    "n_families": 2,
+    "name": "h078",
+    "rank": 78,
+    "usable_in": 272
+   }
+  ],
+  "LIB_RAND": [
+   {
+    "dsl": "(pipe X (ksmooth k=32))",
+    "enters_alone_in": 0,
+    "id": 49,
+    "n_families": 13,
+    "name": "h020",
+    "rank": 20,
+    "usable_in": 210
+   },
+   {
+    "dsl": "(pipe X (target kind=rank_gauss) (histgbm2 bags=5 col_subsample=0.7 leaves=31 lr=0.03 rounds=1000 row_subsample=0.85))",
+    "enters_alone_in": 0,
+    "id": 50,
+    "n_families": 12,
+    "name": "h021",
+    "rank": 21,
+    "usable_in": 268
+   },
+   {
+    "dsl": "(pipe X (oblivious))",
+    "enters_alone_in": 0,
+    "id": 56,
+    "n_families": 9,
+    "name": "h031",
+    "rank": 31,
+    "usable_in": 274
+   },
+   {
+    "dsl": "(pipe X (target kind=log1p) (rforest max_features=0.33 min_leaf=1 trees=500))",
+    "enters_alone_in": 0,
+    "id": 57,
+    "n_families": 8,
+    "name": "h032",
+    "rank": 32,
+    "usable_in": 257
+   },
+   {
+    "dsl": "(pipe X (target kind=rank_gauss) (oblivious depth=6 l2=3.0 lr=0.03 rounds=1500))",
+    "enters_alone_in": 0,
+    "id": 59,
+    "n_families": 7,
+    "name": "h036",
+    "rank": 36,
+    "usable_in": 276
+   },
+   {
+    "dsl": "(pipe X (rff_cos append=false n=160) (rff_sin append=true n=160) (ridge_gcv))",
+    "enters_alone_in": 0,
+    "id": 60,
+    "n_families": 7,
+    "name": "h037",
+    "rank": 37,
+    "usable_in": 184
+   },
+   {
+    "dsl": "(pipe X (target kind=rank_gauss) (rforest max_features=0.33 min_leaf=1 trees=500))",
+    "enters_alone_in": 0,
+    "id": 62,
+    "n_families": 6,
+    "name": "h039",
+    "rank": 39,
+    "usable_in": 263
+   },
+   {
+    "dsl": "(pipe X (target kind=log1p) (oblivious depth=6 l2=3.0 lr=0.03 rounds=1500))",
+    "enters_alone_in": 0,
+    "id": 64,
+    "n_families": 5,
+    "name": "h042",
+    "rank": 42,
+    "usable_in": 273
+   },
+   {
+    "dsl": "(pipe X (rank append=true) (cheb append=true degree=7) (cheb append=true degree=8) (ridge))",
+    "enters_alone_in": 16,
+    "id": 68,
+    "n_families": 4,
+    "name": "h047",
+    "rank": 47,
+    "usable_in": 56
+   },
+   {
+    "dsl": "(pipe X (blom) (standardize append=true) (rand_proj append=true k=27 seed=3008) (oblique_hinge append=true gamma=1.2849371950786408 n=67 seed=2788) (elasticnet alpha=0.0061025144708097825 l1_ratio=0.36579308111100683))",
+    "enters_alone_in": 45,
+    "id": 77,
+    "n_families": 3,
+    "name": "h056",
+    "rank": 56,
+    "usable_in": 285
+   },
+   {
+    "dsl": "(pipe X (robust_scale append=true) (cheb append=true degree=3) (quantile_bins bins=32) (robust_scale append=true) (histgbm depth=6 lr=0.1984454545837625 rounds=209))",
+    "enters_alone_in": 78,
+    "id": 84,
+    "n_families": 2,
+    "name": "h063",
+    "rank": 63,
+    "usable_in": 259
+   },
+   {
+    "dsl": "(pipe X (cheb append=true degree=3) (gpr kernel=rbf+linear steps=40))",
+    "enters_alone_in": 61,
+    "id": 85,
+    "n_families": 2,
+    "name": "h064",
+    "rank": 64,
+    "usable_in": 259
+   },
+   {
+    "dsl": "(pipe X (robust_scale append=true) (hinge append=true knots=7) (cheb append=true degree=5) (winsor_clip q=0.047491994804128364) (histgbm depth=5 lr=0.14933206593450707 rounds=217))",
+    "enters_alone_in": 33,
+    "id": 89,
+    "n_families": 2,
+    "name": "h068",
+    "rank": 68,
+    "usable_in": 126
+   },
+   {
+    "dsl": "(pipe X (cheb append=true degree=7) (winsor_clip q=0.06194732314352468) (histgbm depth=6 lr=0.1259557803603487 rounds=196))",
+    "enters_alone_in": 90,
+    "id": 93,
+    "n_families": 2,
+    "name": "h072",
+    "rank": 72,
+    "usable_in": 271
+   },
+   {
+    "dsl": "(pipe X (gpr kernel=rbf+linear steps=30))",
+    "enters_alone_in": 18,
+    "id": 97,
+    "n_families": 2,
+    "name": "h076",
+    "rank": 76,
+    "usable_in": 283
+   },
+   {
+    "dsl": "(pipe X (pair_ratio append=true topk=4) (krr m=400))",
+    "enters_alone_in": 59,
+    "id": 105,
+    "n_families": 2,
+    "name": "h084",
+    "rank": 84,
+    "usable_in": 280
+   },
+   {
+    "dsl": "(pipe X (cheb degree=7) (winsor_clip q=0.12191732054620837) (standardize append=true) (histgbm depth=6 lr=0.11010635200614731 rounds=203))",
+    "enters_alone_in": 72,
+    "id": 106,
+    "n_families": 2,
+    "name": "h085",
+    "rank": 85,
+    "usable_in": 259
+   },
+   {
+    "dsl": "(pipe X (cheb append=true degree=3) (symlog append=true c=1.0) (oblivious))",
+    "enters_alone_in": 15,
+    "id": 123,
+    "n_families": 1,
+    "name": "h102",
+    "rank": 102,
+    "usable_in": 280
+   },
+   {
+    "dsl": "(pipe X (landmark_dist append=true gamma=0.0595604 k=25) (gpr kernel=rbf+linear steps=80))",
+    "enters_alone_in": 28,
+    "id": 130,
+    "n_families": 1,
+    "name": "h109",
+    "rank": 109,
+    "usable_in": 276
+   },
+   {
+    "dsl": "(pipe X (poly_interact) (elasticnet alpha=0.0152063 l1_ratio=0.05))",
+    "enters_alone_in": 44,
+    "id": 135,
+    "n_families": 1,
+    "name": "h114",
+    "rank": 114,
+    "usable_in": 246
+   }
+  ]
+ }
+}

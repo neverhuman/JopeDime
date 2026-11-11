@@ -1,0 +1,82 @@
+[
+ [
+  "port_h116",
+  "(pipe X (rand_proj append=false k=102 seed=7582) (standardize append=true) (robust_scale append=true) (rand_proj append=true k=69 seed=1647) (robust_scale append=true) (nystrom append=true gamma=0.567525 k=27) (svd_project append=true k=4) (standardize) (ridge_gcv))"
+ ],
+ [
+  "port_h107",
+  "(pipe X (sigmoid append=true) (symlog c=2.0) (standardize append=true) (symlog append=true c=1.64239) (pair_prod topk=12) (pair_prod append=true topk=10) (pair_prod append=true topk=12) (sigmoid append=true) (ridge_gcv))"
+ ],
+ [
+  "port_h041",
+  "(pipe X (standardize append=false) (pair_prod append=true topk=10) (standardize append=true) (standardize append=true) (standardize append=false) (standardize append=false) (ridge_gcv))"
+ ],
+ [
+  "port_h113",
+  "(pipe X (sigmoid) (pair_ratio append=true topk=4) (pair_prod append=true topk=17) (svd_project append=true k=10) (landmark_dist append=true gamma=2.3445 k=62) (rff_cos append=true gamma=0.456491 n=34 seed=2026) (ridge_gcv))"
+ ],
+ [
+  "port_h054",
+  "(pipe X (rank append=true) (poly_interact append=true) (rank append=true) (ridge_gcv))"
+ ],
+ [
+  "port_h044",
+  "(pipe X (blom append=true) (pair_prod topk=14) (rank append=true) (standardize append=true) (ridge))"
+ ],
+ [
+  "port_h065",
+  "(pipe X (hinge append=true knots=5) (bin_onehot append=true bins=4) (target_bin_encode append=true bins=14) (ridge_gcv))"
+ ],
+ [
+  "port_h099",
+  "(pipe X (target kind=log1p) (sigmoid append=true) (pair_prod append=true topk=12) (cheb degree=6) (row_stats append=true) (sigmoid) (ridge lambda_frac=0.00132392))"
+ ],
+ [
+  "port_h105",
+  "(pipe X (pair_ratio append=true topk=4) (blom append=true) (pair_prod topk=19) (select_corr append=true k=3) (standardize append=true) (landmark_dist append=true gamma=2.53721 k=106) (ridge lambda_frac=0.00050874))"
+ ],
+ [
+  "port_h093",
+  "(pipe X (cheb degree=6) (rank) (rank) (cheb append=true degree=7) (target_bin_encode bins=27) (symlog c=0.498202) (robust_scale) (winsor_clip q=0.0974742) (histgbm depth=6 lr=0.207881 rounds=415))"
+ ],
+ [
+  "port_h091",
+  "(pipe X (poly_interact) (ridge_gcv))"
+ ],
+ [
+  "port_h096",
+  "(pipe X (target kind=log1p) (histgbm2 bags=1 leaves=8 lr=0.0971405 rounds=562 row_subsample=0.876872 val_pct=5))"
+ ],
+ [
+  "port_h092",
+  "(pipe X (symlog append=true c=1.10655) (hinge append=true knots=8) (svd_project append=true k=3) (ridge_gcv))"
+ ],
+ [
+  "port_h108",
+  "(pipe X (robust_scale append=true) (robust_scale append=true) (svd_project append=true k=6) (select_corr append=true k=32) (robust_scale append=true) (svd_project append=true k=4) (select_corr append=true k=18 mode=var) (select_corr append=true k=6) (gpr kernel=rbf+linear steps=70))"
+ ],
+ [
+  "port_h112",
+  "(pipe X (sigmoid append=true) (standardize append=true) (pair_prod topk=4) (bin_onehot append=true bins=3) (pair_prod append=true topk=13) (sigmoid append=true) (row_stats append=true) (svd_project append=true k=14) (ridge_gcv))"
+ ],
+ [
+  "port_h106",
+  "(pipe X (pair_prod append=true topk=22) (pair_prod append=true topk=10) (sigmoid append=false) (rand_proj append=true k=53 seed=4814) (robust_scale append=true) (ridge lambda_frac=0.000321251))"
+ ],
+ [
+  "port_h046",
+  "(pipe X (cheb append=true degree=5) (pair_prod append=true topk=10) (winsor_clip q=0.1053155813880266) (winsor_clip q=0.06613066214918621) (winsor_clip q=0.11639885435706074) (histgbm depth=3 lr=0.2199247975538758 rounds=279))"
+ ],
+ [
+  "port_h082",
+  "(pipe X (quantile_bins append=true bins=23) (poly_interact append=true) (ridge lambda_frac=0.01225104))"
+ ],
+ [
+  "port_h064",
+  "(pipe X (cheb append=true degree=3) (gpr kernel=rbf+linear steps=40))"
+ ],
+ [
+  "port_h078",
+  "(pipe X (cheb append=true degree=5) (row_stats append=true) (target_bin_encode append=true bins=14) (winsor_clip q=0.030871916885606362) (histgbm depth=6 lr=0.1462721142667026 rounds=216))"
+ ]
+]

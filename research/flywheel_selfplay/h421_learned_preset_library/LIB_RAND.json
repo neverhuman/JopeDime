@@ -1,0 +1,82 @@
+[
+ [
+  "rand_h020",
+  "(pipe X (ksmooth k=32))"
+ ],
+ [
+  "rand_h021",
+  "(pipe X (target kind=rank_gauss) (histgbm2 bags=5 col_subsample=0.7 leaves=31 lr=0.03 rounds=1000 row_subsample=0.85))"
+ ],
+ [
+  "rand_h031",
+  "(pipe X (oblivious))"
+ ],
+ [
+  "rand_h032",
+  "(pipe X (target kind=log1p) (rforest max_features=0.33 min_leaf=1 trees=500))"
+ ],
+ [
+  "rand_h036",
+  "(pipe X (target kind=rank_gauss) (oblivious depth=6 l2=3.0 lr=0.03 rounds=1500))"
+ ],
+ [
+  "rand_h037",
+  "(pipe X (rff_cos append=false n=160) (rff_sin append=true n=160) (ridge_gcv))"
+ ],
+ [
+  "rand_h039",
+  "(pipe X (target kind=rank_gauss) (rforest max_features=0.33 min_leaf=1 trees=500))"
+ ],
+ [
+  "rand_h042",
+  "(pipe X (target kind=log1p) (oblivious depth=6 l2=3.0 lr=0.03 rounds=1500))"
+ ],
+ [
+  "rand_h047",
+  "(pipe X (rank append=true) (cheb append=true degree=7) (cheb append=true degree=8) (ridge))"
+ ],
+ [
+  "rand_h056",
+  "(pipe X (blom) (standardize append=true) (rand_proj append=true k=27 seed=3008) (oblique_hinge append=true gamma=1.2849371950786408 n=67 seed=2788) (elasticnet alpha=0.0061025144708097825 l1_ratio=0.36579308111100683))"
+ ],
+ [
+  "rand_h063",
+  "(pipe X (robust_scale append=true) (cheb append=true degree=3) (quantile_bins bins=32) (robust_scale append=true) (histgbm depth=6 lr=0.1984454545837625 rounds=209))"
+ ],
+ [
+  "rand_h064",
+  "(pipe X (cheb append=true degree=3) (gpr kernel=rbf+linear steps=40))"
+ ],
+ [
+  "rand_h068",
+  "(pipe X (robust_scale append=true) (hinge append=true knots=7) (cheb append=true degree=5) (winsor_clip q=0.047491994804128364) (histgbm depth=5 lr=0.14933206593450707 rounds=217))"
+ ],
+ [
+  "rand_h072",
+  "(pipe X (cheb append=true degree=7) (winsor_clip q=0.06194732314352468) (histgbm depth=6 lr=0.1259557803603487 rounds=196))"
+ ],
+ [
+  "rand_h076",
+  "(pipe X (gpr kernel=rbf+linear steps=30))"
+ ],
+ [
+  "rand_h084",
+  "(pipe X (pair_ratio append=true topk=4) (krr m=400))"
+ ],
+ [
+  "rand_h085",
+  "(pipe X (cheb degree=7) (winsor_clip q=0.12191732054620837) (standardize append=true) (histgbm depth=6 lr=0.11010635200614731 rounds=203))"
+ ],
+ [
+  "rand_h102",
+  "(pipe X (cheb append=true degree=3) (symlog append=true c=1.0) (oblivious))"
+ ],
+ [
+  "rand_h109",
+  "(pipe X (landmark_dist append=true gamma=0.0595604 k=25) (gpr kernel=rbf+linear steps=80))"
+ ],
+ [
+  "rand_h114",
+  "(pipe X (poly_interact) (elasticnet alpha=0.0152063 l1_ratio=0.05))"
+ ]
+]

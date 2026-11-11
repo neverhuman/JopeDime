@@ -1,0 +1,82 @@
+[
+ [
+  "cov_h116",
+  "(pipe X (rand_proj append=false k=102 seed=7582) (standardize append=true) (robust_scale append=true) (rand_proj append=true k=69 seed=1647) (robust_scale append=true) (nystrom append=true gamma=0.567525 k=27) (svd_project append=true k=4) (standardize) (ridge_gcv))"
+ ],
+ [
+  "cov_h107",
+  "(pipe X (sigmoid append=true) (symlog c=2.0) (standardize append=true) (symlog append=true c=1.64239) (pair_prod topk=12) (pair_prod append=true topk=10) (pair_prod append=true topk=12) (sigmoid append=true) (ridge_gcv))"
+ ],
+ [
+  "cov_h041",
+  "(pipe X (standardize append=false) (pair_prod append=true topk=10) (standardize append=true) (standardize append=true) (standardize append=false) (standardize append=false) (ridge_gcv))"
+ ],
+ [
+  "cov_h113",
+  "(pipe X (sigmoid) (pair_ratio append=true topk=4) (pair_prod append=true topk=17) (svd_project append=true k=10) (landmark_dist append=true gamma=2.3445 k=62) (rff_cos append=true gamma=0.456491 n=34 seed=2026) (ridge_gcv))"
+ ],
+ [
+  "cov_h052",
+  "(pipe X (hinge append=true knots=8) (standardize append=false) (ridge_gcv))"
+ ],
+ [
+  "cov_h064",
+  "(pipe X (cheb append=true degree=3) (gpr kernel=rbf+linear steps=40))"
+ ],
+ [
+  "cov_h099",
+  "(pipe X (target kind=log1p) (sigmoid append=true) (pair_prod append=true topk=12) (cheb degree=6) (row_stats append=true) (sigmoid) (ridge lambda_frac=0.00132392))"
+ ],
+ [
+  "cov_h054",
+  "(pipe X (rank append=true) (poly_interact append=true) (rank append=true) (ridge_gcv))"
+ ],
+ [
+  "cov_h061",
+  "(pipe X (rank append=true) (pair_prod append=true topk=13) (elasticnet alpha=0.007818026135169751 l1_ratio=0.2814240178023062))"
+ ],
+ [
+  "cov_h091",
+  "(pipe X (poly_interact) (ridge_gcv))"
+ ],
+ [
+  "cov_h071",
+  "(pipe X (standardize append=true) (cheb degree=5) (elasticnet alpha=0.02096418666205465 l1_ratio=0.18282803562471384))"
+ ],
+ [
+  "cov_h058",
+  "(pipe X (target_bin_encode append=true bins=9) (poly_interact append=false) (ridge lambda_frac=0.09810389756196963))"
+ ],
+ [
+  "cov_h044",
+  "(pipe X (blom append=true) (pair_prod topk=14) (rank append=true) (standardize append=true) (ridge))"
+ ],
+ [
+  "cov_h089",
+  "(pipe X (cheb degree=6) (standardize append=false) (elasticnet alpha=0.004713411504199952 l1_ratio=0.09473679667147597))"
+ ],
+ [
+  "cov_h059",
+  "(pipe X (blom append=true) (sigmoid) (pair_prod append=true topk=14) (ridge lambda_frac=0.034082458820443015))"
+ ],
+ [
+  "cov_h004",
+  "(pipe X (gpr kernel=rbf+linear steps=40))"
+ ],
+ [
+  "cov_h005",
+  "(pipe X (target kind=log1p) (xtrees max_features=1.0 min_leaf=1 trees=500))"
+ ],
+ [
+  "cov_h006",
+  "(pipe X (blom) (gpr kernel=rbf+linear steps=40))"
+ ],
+ [
+  "cov_h008",
+  "(pipe X (cheb append=true degree=3) (pair_prod append=true topk=24) (ridge_gcv))"
+ ],
+ [
+  "cov_h009",
+  "(pipe X (rank) (xtrees max_features=0.7 min_leaf=3 trees=150))"
+ ]
+]
