@@ -123,8 +123,9 @@ def facts(run: dict, name: str, cfg: dict, workers: int) -> dict:
          "shares_in_window": {k: float(np.mean([s[k] for s in S if s.get(k) is not None])) for k in ("real_share", "inj_share", "res_share", "rows_top") if any(s.get(k) is not None for s in S)},
          "syncs_in_window": len(sy)}
     if sy:
-        d = np.array([s["dist"] for s in sy if s.get("dist") is not None], float)
-        hh = np.array([s["h"] for s in sy if s.get("dist") is not None], float)
+        # "dist" is a list: the relative L2 distance of each averaged worker to the group mean (icl_avg.py); use its mean
+        d = np.array([float(np.mean(s["dist"])) for s in sy if s.get("dist")], float)
+        hh = np.array([s["h"] for s in sy if s.get("dist")], float)
         o.update({"wait_s_mean": wait / len(sy), "wait_share_of_wall_time": wait / (dh * 3600.0 + wait),
                   "workers_in_average": {str(k): int(sum(1 for s in sy if s.get("n") == k)) for k in sorted({s.get("n") for s in sy if s.get("n") is not None})},
                   "dist_mean": float(d.mean()) if len(d) else None, "dist_first_quarter": float(d[:max(1, len(d) // 4)].mean()) if len(d) else None,
