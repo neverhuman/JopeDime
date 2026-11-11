@@ -241,7 +241,210 @@
       }
     ]
   },
-  "fit_sel": "replication running on xbabe2 at closeout (reported, not tested)",
+  "fit_sel": {
+    "role": "reported only (not a test cohort)",
+    "n_families": 106,
+    "baseline": "stored H417 deploy, tag BASE (not recomputed)",
+    "variants": {
+      "B": {
+        "family_mean_u": {
+          "KFB": 2.262360367181375,
+          "SXB": 2.173096569027574,
+          "X0": 2.1405866051474067
+        },
+        "invalid": {
+          "KFB": 0,
+          "SXB": 0,
+          "X0": 0
+        },
+        "worker_s_total": 698327.7003175067,
+        "contexts_with_lib_ext_member": 0,
+        "x0_max_abs_diff_vs_B": 0.0
+      },
+      "TBOTH": {
+        "family_mean_u": {
+          "KFB": 2.2937614930211003,
+          "SXB": 2.2141776413587233,
+          "X0": 2.1404881498251473
+        },
+        "invalid": {
+          "KFB": 0,
+          "SXB": 0,
+          "X0": 0
+        },
+        "worker_s_total": 873392.7152967658,
+        "contexts_with_lib_ext_member": 81,
+        "x0_max_abs_diff_vs_B": 0.0058321382298417435
+      },
+      "TGX": {
+        "family_mean_u": {
+          "KFB": 2.284116396919732,
+          "SXB": 2.200432586755427,
+          "X0": 2.1404881498251473
+        },
+        "invalid": {
+          "KFB": 0,
+          "SXB": 0,
+          "X0": 0
+        },
+        "worker_s_total": 854531.2524870815,
+        "contexts_with_lib_ext_member": 0,
+        "x0_max_abs_diff_vs_B": 0.0058321382298417435
+      },
+      "TLIB": {
+        "family_mean_u": {
+          "KFB": 2.2898387799661073,
+          "SXB": 2.207744759760666,
+          "X0": 2.1404881498251473
+        },
+        "invalid": {
+          "KFB": 0,
+          "SXB": 0,
+          "X0": 0
+        },
+        "worker_s_total": 720842.6325681664,
+        "contexts_with_lib_ext_member": 91,
+        "x0_max_abs_diff_vs_B": 0.0058321382298417435
+      }
+    },
+    "vs_B_sxb": {
+      "TBOTH": {
+        "gain": 0.04108107233114889,
+        "clipped_mean": 0.03171669015677854,
+        "signflip_p": 0.005183219909667969,
+        "lofo_min": 0.02725684911065262,
+        "family_median": 0.0062604685453067355,
+        "wtl": [
+          71,
+          2,
+          33
+        ],
+        "pct_rmse": 0.04024868248301039,
+        "pass": true
+      },
+      "TGX": {
+        "gain": 0.02733601772785305,
+        "clipped_mean": 0.017531591395743326,
+        "signflip_p": 0.07663154602050781,
+        "lofo_min": 0.01293665417094088,
+        "family_median": 0.00022251696061224846,
+        "wtl": [
+          54,
+          8,
+          44
+        ],
+        "pct_rmse": 0.026965770164481206,
+        "pass": false
+      },
+      "TLIB": {
+        "gain": 0.03464819073309161,
+        "clipped_mean": 0.030717656724532676,
+        "signflip_p": 0.0,
+        "lofo_min": 0.02624830107429013,
+        "family_median": 0.0013160821377575793,
+        "wtl": [
+          64,
+          13,
+          29
+        ],
+        "pct_rmse": 0.034054815045433506,
+        "pass": true
+      }
+    },
+    "vs_B_kfb": {
+      "TBOTH": {
+        "clipped_mean": 0.025493237308162886,
+        "signflip_p": 0.014876365661621094,
+        "wtl": [
+          67,
+          1,
+          38
+        ],
+        "pass": true
+      },
+      "TGX": {
+        "clipped_mean": 0.01472742153527325,
+        "signflip_p": 0.10324859619140625,
+        "wtl": [
+          54,
+          8,
+          44
+        ],
+        "pass": false
+      },
+      "TLIB": {
+        "clipped_mean": 0.026697597235338596,
+        "signflip_p": 0.00000476837158203125,
+        "wtl": [
+          54,
+          30,
+          22
+        ],
+        "pass": true
+      }
+    },
+    "delta_elo_vs_B": {
+      "TBOTH": {
+        "a": "TBOTH.SXB",
+        "b": "B.SXB",
+        "ci95": [
+          49.91146632034261,
+          184.35311177559686
+        ],
+        "delta": 116.33672933820503,
+        "p_le0": 0.0001,
+        "p_two_sided": 0.0002
+      },
+      "TGX": {
+        "a": "TGX.SXB",
+        "b": "B.SXB",
+        "ci95": [
+          -30.409102674383693,
+          86.18646490935869
+        ],
+        "delta": 27.92576610894821,
+        "p_le0": 0.1796,
+        "p_two_sided": 0.3592
+      },
+      "TLIB": {
+        "a": "TLIB.SXB",
+        "b": "B.SXB",
+        "ci95": [
+          58.749697788174906,
+          159.31068383565702
+        ],
+        "delta": 107.89713354228161,
+        "p_le0": 0.0,
+        "p_two_sided": 0.0
+      }
+    },
+    "gates": {
+      "g1_records_and_units": false,
+      "g2_guard_and_bank": true,
+      "g3_lang_selfcheck": true,
+      "g4_replaycheck_zero_worker_runs": true,
+      "g5_seeded_identity": true,
+      "g6_seed_manifests": true,
+      "g7_pub_stage_and_one_config": true
+    },
+    "gates_pass": false,
+    "gates_note": {
+      "schema": "jope.h420.gates_note/v1",
+      "panel": "FIT-SEL",
+      "variant": "TBOTH",
+      "why": "gate g1 compares the sum of units over all status files with the number of contexts; after the host move (xbabe3 -> xbabe2, 2026-11-10 21:01Z) the 13 shards that had finished on xbabe3 ran again on xbabe2 as no-ops and reported their units a second time",
+      "status_files": 37,
+      "shards_distinct": 24,
+      "units_sum_all_files": 162,
+      "units_sum_distinct_shards": 106,
+      "units_equal_within_shard": true,
+      "duplicate_shards": 13,
+      "duplicate_shard_files_with_zero_physical_runs": 13,
+      "duplicate_units": 56
+    },
+    "readout_sha256": "122b48b2e608d8a9dbc81b5e6ddaae80a7c9c38bb82bf6bfa589bd6d57bfacd1",
+    "pulled_manifest_sha256": "c1066ccbc7e56b611e611effd9eb76ad9fd42b04837d61f1c8f2058f270d635b"
+  },
   "evidence": {
     "readout_sha256": "536d581a27e7f65ea8f30bc1561153024585379fbac54c56410864a009fba65a",
     "gates_sha256": "6af2181432f846e91582c026d4ffbb9142ede0ce3dd5147402660fead2d24875",

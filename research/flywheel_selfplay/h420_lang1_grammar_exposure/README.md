@@ -4,7 +4,7 @@
 run and the 20 added library presets (`TBOTH`) beats the stored H417 deploy of the same recipe (`B`) by the
 pre-registered test. **The gain comes from the library presets; the extended search run alone is null.**
 TRAIN-side cohort only: no dev91, DL-Val, DL-Holdout or sealed data was read. The `FIT-SEL` replication (reported,
-not tested) is still running and will be added below when it ends.
+not tested) ended on 2026-11-11 and agrees; see the section below.
 
 Plan: [`PREREG.md`](PREREG.md), addenda [1](PREREG_ADDENDUM_1.md), [2](PREREG_ADDENDUM_2.md),
 [3](PREREG_ADDENDUM_3.md). Numbers: [`metrics.json`](metrics.json). Gates: [`gates_h420.sh`](gates_h420.sh).
@@ -40,9 +40,33 @@ Plan: [`PREREG.md`](PREREG.md), addenda [1](PREREG_ADDENDUM_1.md), [2](PREREG_AD
   test, which passes; the Elo figure is a report. `TLIB`'s interval excludes 0.
 - **The effect is near the detection limit.** The PREREG put the detectable gain at about +0.02 u; the result is
   +0.025 to +0.028.
-- **One cohort, one read.** `FIT-SEL` is not finished. The champion recipe still has to beat `SXB` on `CONFIRM`.
+- **One test cohort, one read.** The `FIT-SEL` replication agrees (below) but is not a test. The champion recipe
+  still has to beat `SXB` on `CONFIRM`.
 - **For the champion wave (PREREG §3):** the library route passes and enters; the extended-search route is null and
   does not.
+
+## `FIT-SEL` replication (106 families; reported, not tested; added 2026-11-11)
+| Comparison | Mean gain (u) | Clipped mean | Sign-flip p | Leave-one-family-out min | Median | Win / tie / loss | ΔElo [95% interval] |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `TBOTH` vs `B` | +0.0411 | +0.0317 | 0.0052 | +0.0273 | +0.0063 | 71 / 2 / 33 | +116.3 [+49.9, +184.4] |
+| `TLIB` vs `B` | +0.0346 | +0.0307 | < 0.0001 | +0.0262 | +0.0013 | 64 / 13 / 29 | +107.9 [+58.7, +159.3] |
+| `TGX` vs `B` | +0.0273 | +0.0175 | 0.077 | +0.0129 | +0.0002 | 54 / 8 / 44 | +27.9 [−30.4, +86.2] |
+
+- **Same picture as `DEV`:** the 20 added presets carry the gain (a stack member in 91 of 106 contexts for
+  `TLIB`); the extended search run alone is positive but does not reach the test's threshold.
+- Mean u, SXB: `B` 2.1731, `TGX` 2.2004, `TLIB` 2.2077, `TBOTH` 2.2142. KFB entrant: `TBOTH` clipped +0.0255
+  (p 0.015), `TLIB` +0.0267 (p < 0.0001), `TGX` +0.0147 (p 0.10).
+- **Cost:** `TLIB` 3.2% more worker time than `B`; `TGX` 22% and `TBOTH` 25% more (on `DEV`: 2.7% and 4.5%). The
+  extended search run was much more expensive on this cohort.
+- **Why it is not a test:** `FIT-SEL` is the cohort the wave may use for design; the pre-registered test is `DEV`.
+- **Gates (`gates_h420.sh FIT-SEL`, run before the readout): 6 of 7 pass; the records-and-units gate fails as
+  written.** It sums the units of all status files (162) and compares with the contexts (106). After the host
+  move the 13 shards that had finished on xbabe3 ran again on xbabe2 as no-ops (0 worker runs) and reported
+  their 56 units a second time; over distinct shards the sum is 106
+  (`results/H420_FIT-SEL.gates_note.json`). Records: 106 per variant and stage, 0 errors, 0 invalid `SXB`;
+  5 `TBOTH` units were interrupted by the move and recomputed from the memo; replay check 0 worker runs.
+- Baseline identity: the stock single-run value differs from H417's stored value by at most 0.0058 u on any
+  context (mean difference 0.0001 u). Engine: 1 failed evaluation, 0 timeouts.
 
 ## Integrity gates (`gates_h420.sh DEV`, run before the readout; all pass)
 | Gate | Value |
@@ -90,6 +114,7 @@ memo makes the rest hits).
 | 14:57 | `DEV` chain launched (seeded from H417's memo) | `TBOTH` 15:26–21:35, `TLIB` –22:51, `TGX` –00:06 (Nov 11) |
 | 16:27 | `FIT-SEL` chain launched on xbabe3 | paused by CI and disk rules; moved to xbabe2 at 21:01–21:31 |
 | 00:10 (Nov 11) | `DEV` records copied (1,135 files, checksum-compared), gates, readout | `LANG_CONFIRMED` |
+| 05:02 (Nov 11) | `FIT-SEL` chain ended on xbabe2 (`TBOTH` 21:31–00:31, `TLIB` –02:58, `TGX` –05:02) | records copied (1,048 files, checksum-compared), gates, readout 06:10: replication agrees |
 
 Two errors of mine were caught before any scored deploy: a mistyped design checksum and a 60 s deploy limit where
 the stored recipe uses 300 s (addendum 2).
