@@ -10,9 +10,12 @@ Every task/context output is create-once so restarts continue without overwritin
 from __future__ import annotations
 
 import argparse
+import fcntl
+import gc
 import hashlib
 import json
 import math
+import os
 import random
 import sys
 import time
@@ -36,15 +39,22 @@ def u_clipped(pred: torch.Tensor, yq: torch.Tensor, ym: torch.Tensor, hi: float)
     return max(-2.0, min(hi, -math.log(max(r / r0, 1e-30))))
 
 
-def _load_ckpt(ckpt_path: str, ckpt_sha256: str, size: str) -> tuple[ICL, dict]:
+def _load_ckpt(ckpt_path: str, ckpt_sha256: str, size: str) -> tuple[ICL, object]:
     actual = hashlib.sha256(Path(ckpt_path).read_bytes()).hexdigest()
     if actual != ckpt_sha256:
         raise SystemExit(f"checkpoint sha256 mismatch: {actual} != {ckpt_sha256}")
-    ck = torch.load(ckpt_path, map_location="cpu", weights_only=False)
     model = ICL(size)
-    model.load_state_dict(ck["ema"])
+    lf_path = Path(os.environ.get("H431_LOCK_FILE", "/home/ubuntu/jope_plan/evidence/H431/logs/ckpt_load.lock"))
+    lf_path.parent.mkdir(parents=True, exist_ok=True)
+    with lf_path.open("w") as lf:
+        fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+        ck = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        ckpt_state = ck.get("state")
+        model.load_state_dict(ck["ema"])
+        del ck
+        gc.collect()
     model.eval()
-    return model, ck
+    return model, ckpt_state
 
 
 def run_battery(a: argparse.Namespace) -> None:
@@ -61,7 +71,7 @@ def run_battery(a: argparse.Namespace) -> None:
     if icb_sha != a.icb_sha256:
         raise SystemExit(f"ICB sha256 mismatch: {icb_sha} != {a.icb_sha256}")
 
-    model, ck = _load_ckpt(a.ckpt, a.ckpt_sha256, a.size)
+    model, ckpt_state = _load_ckpt(a.ckpt, a.ckpt_sha256, a.size)
     z = np.load(a.icb, allow_pickle=False)
     metas = json.loads(str(z["meta_json"]))
     shapes = z["shapes"].astype(np.int64)
@@ -154,7 +164,7 @@ def run_battery(a: argparse.Namespace) -> None:
         "mode": "battery",
         "ckpt": a.ckpt,
         "ckpt_sha256": a.ckpt_sha256,
-        "ckpt_state": ck.get("state"),
+        "ckpt_state": ckpt_state,
         "icb_sha256": icb_sha,
         "size": a.size,
         "weights": "ema",
@@ -188,12 +198,16 @@ def run_monitor(a: argparse.Namespace) -> None:
     if val_sha != a.val_sha256:
         raise SystemExit(f"val bank sha256 mismatch: {val_sha} != {a.val_sha256}")
 
-    model, ck = _load_ckpt(a.ckpt, a.ckpt_sha256, a.size)
+    model, ckpt_state = _load_ckpt(a.ckpt, a.ckpt_sha256, a.size)
     z = np.load(a.val, allow_pickle=False)
     cids = [str(c) for c in z["cids"].tolist()]
     rv = RealVal(a.val, "cpu")
     n_items = len(rv.items)
-    order = sorted(range(n_items), key=lambda j: (int(rv.items[j][0].shape[0] * rv.items[j][0].shape[1]), j))
+    order = sorted(
+        range(n_items),
+        key=lambda j: (int(rv.items[j][0].shape[0] * rv.items[j][0].shape[1]), j),
+        reverse=bool(getattr(a, "lpt", False)),
+    )
     k, n_sh = (int(v) for v in a.shard.split("/"))
     my_idx = order[k::n_sh]
 
@@ -249,7 +263,7 @@ def run_monitor(a: argparse.Namespace) -> None:
         "mode": "monitor",
         "ckpt": a.ckpt,
         "ckpt_sha256": a.ckpt_sha256,
-        "ckpt_state": ck.get("state"),
+        "ckpt_state": ckpt_state,
         "val_sha256": val_sha,
         "size": a.size,
         "weights": "ema",
@@ -294,6 +308,7 @@ def main() -> None:
     m.add_argument("--out", required=True)
     m.add_argument("--shard", default="0/1")
     m.add_argument("--threads", type=int, default=1)
+    m.add_argument("--lpt", action="store_true", help="sort contexts largest rows*cols first")
     m.set_defaults(fn=run_monitor)
 
     a = ap.parse_args()

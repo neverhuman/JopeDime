@@ -12,7 +12,7 @@ FILES=(icb_gen.py icb_run.py icl_prior_v3s.py strong_base.py icl_model_cw3.py ic
 H419=(icl_model.py icl_prior.py icl_resid.py icl_diag.py icl_inject.py)
 G419=research/flywheel_selfplay/h419_apex_icl
 G425=research/flywheel_selfplay/h425_contamination_screen
-DOCS=(PREREG.md AMENDMENT_1.md AMENDMENT_2.md)
+DOCS=(PREREG.md AMENDMENT_1.md AMENDMENT_2.md AMENDMENT_3.md)
 DST=/home/ubuntu/apex-stage/h431/$MODE-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }

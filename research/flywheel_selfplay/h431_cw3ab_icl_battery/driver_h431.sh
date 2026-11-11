@@ -58,23 +58,25 @@ fi
 SHA_ICB=$(jq -r .sha256 "$R/ICB_v1.npz.json")
 [ "$(sha256sum "$R/ICB_v1.npz" | cut -d' ' -f1)" = "$SHA_ICB" ]
 
-run_sharded() {  # subcommand, label, size, ckpt, ckpt_sha, out_dir
-  local sub=$1 lbl=$2 sz=$3 ck=$4 cksha=$5 odir=$6
+run_sharded() {  # subcommand, label, size, ckpt, ckpt_sha, out_dir [, extra_flag]
+  local sub=$1 lbl=$2 sz=$3 ck=$4 cksha=$5 odir=$6 extra=${7:-}
   if [ -d "$odir" ] && [ "$(ls "$odir"/status_s*of${P}.json 2>/dev/null | wc -l)" = "$P" ]; then
     log "already complete $sub $lbl ($P status files)"
     return 0
   fi
   local rc=0
-  log "start $sub $lbl ($P shards)"
+  local extra_args=()
+  [ -n "$extra" ] && extra_args+=("$extra")
+  log "start $sub $lbl ($P shards ${extra})"
   for k in $(seq 0 $((P - 1))); do
     if [ "$sub" = battery ]; then
       taskset -c "$CPUSET" nice -n 19 python3 -B icb_run.py battery \
         --icb "$R/ICB_v1.npz" --icb-sha256 "$SHA_ICB" --ckpt "$ck" --ckpt-sha256 "$cksha" \
-        --size "$sz" --out "$odir" --shard "$k/$P" --threads 1 > "$EV/logs/${sub}_${lbl}_$k.log" 2>&1 &
+        --size "$sz" --out "$odir" --shard "$k/$P" --threads 1 "${extra_args[@]}" > "$EV/logs/${sub}_${lbl}_$k.log" 2>&1 &
     else
       taskset -c "$CPUSET" nice -n 19 python3 -B icb_run.py monitor \
         --val "$VAL" --val-sha256 "$SHA_VAL" --ckpt "$ck" --ckpt-sha256 "$cksha" \
-        --size "$sz" --out "$odir" --shard "$k/$P" --threads 1 > "$EV/logs/${sub}_${lbl}_$k.log" 2>&1 &
+        --size "$sz" --out "$odir" --shard "$k/$P" --threads 1 "${extra_args[@]}" > "$EV/logs/${sub}_${lbl}_$k.log" 2>&1 &
     fi
   done
   for j in $(jobs -p); do wait "$j" || rc=$?; done
@@ -114,13 +116,13 @@ run_sharded_l() {  # subcommand, label, ckpt, ckpt_sha, out_dir (4 CCX shards x 
   return $rc
 }
 
-# Step 3: Score M_h020, M_h024 (full 340+106), and L_h018 (rep==0 68-cell battery + full 106 monitor)
+# Step 3: Score M_h020, M_h024 (full 340+106), and L_h018 (rep==0 68-cell battery + full 106 monitor LPT 16x1)
 run_sharded battery M_h020 M "$CK_M20" "$SHA_M20" "$R/bat_M_h020"
 run_sharded monitor M_h020 M "$CK_M20" "$SHA_M20" "$R/mon_M_h020"
 run_sharded battery M_h024 M "$CK_M24" "$SHA_M24" "$R/bat_M_h024"
 run_sharded monitor M_h024 M "$CK_M24" "$SHA_M24" "$R/mon_M_h024"
 run_sharded_l battery L_h018 "$CK_L18" "$SHA_L18" "$R/bat_L_h018"
-run_sharded_l monitor L_h018 "$CK_L18" "$SHA_L18" "$R/mon_L_h018"
+run_sharded monitor L_h018 L "$CK_L18" "$SHA_L18" "$R/mon_L_h018" --lpt
 
 T_END=$(date +%s)
 jq -n --argjson run_start "$T_START" --argjson run_end "$T_END" --argjson procs "$P" --arg cpuset "$CPUSET" \
