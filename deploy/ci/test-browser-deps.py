@@ -164,14 +164,16 @@ class BrowserDependencies(unittest.TestCase):
                 raise outcome
             return contextlib.nullcontext(io.BytesIO(outcome))
 
+        stderr = io.StringIO()
         with mock.patch.object(MODULE.urllib.request, "urlopen", mirror), \
                 mock.patch.object(MODULE, "BACKOFF_SECONDS", 0), \
-                contextlib.redirect_stderr(io.StringIO()):
+                contextlib.redirect_stderr(stderr):
             try:
                 self.prepare()
             finally:
                 self.calls = len(calls)
                 self.urls = list(calls)
+                self.stderr = stderr.getvalue()
 
     def test_dropped_connections_are_retried(self):
         archive = self.archive.read_bytes()
@@ -265,12 +267,98 @@ class BrowserDependencies(unittest.TestCase):
     def test_content_mismatch_and_client_errors_are_not_retried(self):
         archive = self.archive.read_bytes()
         for outcome, error in ((archive + b"x", ValueError), (archive[:-1] + bytes([archive[-1] ^ 0xFF]), ValueError),
-                               (urllib.error.HTTPError("u", 404, "missing", {}, None), urllib.error.HTTPError)):
-            with self.subTest(outcome=type(outcome).__name__), self.assertRaises(error):
+                               (urllib.error.HTTPError("u", 403, "forbidden", {}, None), urllib.error.HTTPError),
+                               (urllib.error.HTTPError("u", 400, "bad request", {}, None), urllib.error.HTTPError)):
+            with self.subTest(outcome=getattr(outcome, "code", type(outcome).__name__)), self.assertRaises(error):
                 shutil.copyfile(self.archive, self.cached)
                 self.fetch([outcome, archive])
             self.assertEqual(1, self.calls)
             self.assertEqual([], [p for p in self.cached.parent.iterdir() if p != self.cached])
+
+    POOL = "pool/main/f/fixture/fixture.deb"
+
+    @staticmethod
+    def http(code):
+        return urllib.error.HTTPError("u", code, "gone", {}, None)
+
+    def test_a_path_gone_from_the_locked_mirror_is_fetched_from_the_other_mirror(self):
+        archive = self.archive.read_bytes()
+        for code in MODULE.GONE:
+            with self.subTest(code=code), mock.patch.object(MODULE, "MIRROR_FAILURES", {}) as failures, \
+                    mock.patch.object(MODULE.time, "sleep") as sleep:
+                (self.root / "proof.json").unlink(missing_ok=True)
+                self.fetch([self.http(code), archive])
+                self.assertEqual([mirror + self.POOL for mirror in MODULE.MIRRORS], self.urls)
+                # Gone is not a transport failure: no demotion, no backoff, no snapshot.
+                self.assertEqual({}, failures)
+                sleep.assert_not_called()
+                self.assertNotIn("snapshot", self.stderr)
+            self.assertEqual(MODULE.digest(self.cached), MODULE.digest(self.archive))
+
+    def test_a_path_gone_from_every_mirror_is_served_from_the_pinned_snapshot(self):
+        archive = self.archive.read_bytes()
+        snapshot = f"https://snapshot.ubuntu.com/ubuntu/{MODULE.SNAPSHOT_STAMP}/{self.POOL}"
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}) as failures:
+            self.fetch([self.http(404), self.http(410), archive])
+            self.assertEqual({}, failures)
+        self.assertEqual([mirror + self.POOL for mirror in MODULE.MIRRORS] + [snapshot], self.urls)
+        self.assertEqual(MODULE.digest(self.cached), MODULE.digest(self.archive))
+        self.assertIn(f"pinned package fixture.deb gone from archive; served from snapshot {MODULE.SNAPSHOT_STAMP}, "
+                      "sha256 verified", self.stderr)
+
+    def test_snapshot_bytes_must_still_match_the_lock(self):
+        archive = self.archive.read_bytes()
+        for wrong in (archive + b"x", archive[:-1] + bytes([archive[-1] ^ 0xFF])):
+            with self.subTest(size=len(wrong)), mock.patch.object(MODULE, "MIRROR_FAILURES", {}), \
+                    self.assertRaisesRegex(ValueError, "differs from lock|exceeds locked size"):
+                shutil.copyfile(self.archive, self.cached)
+                self.fetch([self.http(404), self.http(404), wrong])
+            self.assertEqual(3, self.calls)
+            self.assertFalse(self.cached.exists())
+            self.assertNotIn("served from snapshot", self.stderr)
+
+    def test_a_path_gone_everywhere_raises_the_404_after_one_try_per_source(self):
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}), self.assertRaises(urllib.error.HTTPError) as raised:
+            self.fetch([self.http(404)])
+        self.assertEqual(404, raised.exception.code)
+        self.assertEqual(len(MODULE.MIRRORS) + 1, self.calls)
+        self.assertFalse(self.cached.exists())
+
+    def test_client_errors_other_than_gone_do_not_fall_back(self):
+        archive = self.archive.read_bytes()
+        for code in (400, 401, 403, 451):
+            with self.subTest(code=code), mock.patch.object(MODULE, "MIRROR_FAILURES", {}), \
+                    self.assertRaises(urllib.error.HTTPError):
+                shutil.copyfile(self.archive, self.cached)
+                self.fetch([self.http(404), self.http(code), archive])
+            self.assertEqual(2, self.calls)
+            self.assertFalse(self.cached.exists())
+
+    def test_a_transient_failure_after_a_gone_mirror_retries_the_remaining_mirror(self):
+        archive = self.archive.read_bytes()
+        with mock.patch.object(MODULE, "MIRROR_FAILURES", {}) as failures:
+            self.fetch([self.http(404), TimeoutError("timed out"), archive])
+            self.assertEqual({MODULE.MIRRORS[1]: 1}, failures)
+        self.assertEqual([MODULE.MIRRORS[0] + self.POOL] + [MODULE.MIRRORS[1] + self.POOL] * 2, self.urls)
+
+    def test_only_official_pool_paths_have_a_snapshot_fallback(self):
+        stamp = MODULE.SNAPSHOT_STAMP
+        for url in [mirror + self.POOL for mirror in MODULE.MIRRORS] + ["https://security.ubuntu.com/ubuntu/" + self.POOL]:
+            self.assertEqual(f"https://snapshot.ubuntu.com/ubuntu/{stamp}/{self.POOL}", MODULE.snapshot_url(url))
+        for url in (f"https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/{self.POOL}", "https://example.test/x.deb",
+                    "https://us.archive.ubuntu.com/ubuntu/dists/noble/InRelease"):
+            self.assertIsNone(MODULE.snapshot_url(url))
+        # The stamp is a valid fixed snapshot path, accepted by the same rule prepare() applies to locked URLs.
+        self.assertRegex(stamp, r"^[0-9]{8}T[0-9]{6}Z$")
+        MODULE.time.strptime(stamp, "%Y%m%dT%H%M%SZ")
+
+    def test_a_locked_snapshot_url_that_is_gone_is_not_rewritten(self):
+        data = json.loads(MODULE.LOCK.read_text())
+        data["packages"][0]["url"] = f"https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/{self.POOL}"
+        MODULE.LOCK.write_text(json.dumps(data))
+        with self.assertRaises(urllib.error.HTTPError):
+            self.fetch([self.http(404), self.archive.read_bytes()])
+        self.assertEqual(1, self.calls)
 
     def test_member_paths_cannot_escape(self):
         for path in ("/absolute", "../outside", "usr/../../outside"):
