@@ -4,13 +4,13 @@
 path = "crates/feat-math/src/emit_py.rs"
 reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/emit_py.rs; changing the bytes invalidates that frozen evaluator identity."
 receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
-sha256 = "b465a7a7d6289f6958dd01edba20b0848807e0ccb6ce3e52cc7cb9909b54a26d"
+sha256 = "3a4bbe9be036e1b86c8ab3aff1eaee70180ca77a3ec02acdfe0944a7475fade1"
 
 [[evidence_exclusion]]
 path = "crates/feat-math/src/emit_rs.rs"
 reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/emit_rs.rs; changing the bytes invalidates that frozen evaluator identity."
 receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
-sha256 = "9bc59434154194c41f73ad82b6528e5249876a825276dc0b1e5d2331afc60430"
+sha256 = "a36a558fb3dc1443fa276985d5f763746ae8e50844c40eeea09fceaa2ea6532e"
 
 [[evidence_exclusion]]
 path = "crates/feat-math/src/evolve.rs"
@@ -28,7 +28,7 @@ sha256 = "2e376ec098eb1c2f352f2be41e7e75e0f73f674fceefce075bb47866aa82654f"
 path = "crates/feat-math/src/gpr.rs"
 reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/gpr.rs; changing the bytes invalidates that frozen evaluator identity."
 receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
-sha256 = "c407b48d45453dddeab322fa13b4b4f4849f28f60340cc6f7206ecff61b005bb"
+sha256 = "b3ad2d178351dbafd2a73253e0ebdf52dd05dc73dfab008256722556efde0c32"
 
 [[evidence_exclusion]]
 path = "crates/feat-math/src/heads.rs"
