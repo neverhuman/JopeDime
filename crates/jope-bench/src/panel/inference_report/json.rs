@@ -5,15 +5,19 @@ use super::*;
 
 /// A JSON value that keeps member order, as Python's `json` module does.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Json {
+pub(crate) enum ReportJson {
     Null,
     Bool(bool),
     Int(i128),
     Float(f64),
     Str(String),
-    Array(Vec<Json>),
+    Array(Vec<ReportJson>),
     Object(Object),
 }
+
+/// Callers keep the short name. The enum item is `ReportJson` so it is not a
+/// second public `Json` definition beside the disk steward.
+pub(crate) type Json = ReportJson;
 
 /// Members in first-insertion order; a repeated key keeps its first position and last value.
 #[derive(Clone, Debug, Default, PartialEq)]
