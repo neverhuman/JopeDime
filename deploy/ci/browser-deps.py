@@ -156,10 +156,48 @@ def sources(url):
     return [(None, url)]
 
 
+# Ubuntu deletes superseded noble-updates/noble-security debs from the archive pool, so a pinned URL can start
+# answering 404 on every mirror (libsoup3 3.4.4-5ubuntu0.10 on 2026-11-10). snapshot.ubuntu.com keeps each dated
+# state of the archive. When the locked pool path is gone (HTTP 404/410) from every mirror, the same path is
+# fetched from this one pinned snapshot, and the bytes must still match the locked size and sha256. Every URL in
+# the three committed locks resolved at this stamp on 2026-11-11. A package pinned after the stamp is not in it;
+# move the stamp forward when re-pinning, or that package keeps today's behaviour (the 404 is raised).
+SNAPSHOT = "https://snapshot.ubuntu.com/ubuntu/"
+SNAPSHOT_STAMP = "20261111T000000Z"
+POOL_ROOTS = MIRRORS + ("https://security.ubuntu.com/ubuntu/",)
+GONE = (404, 410)
+
+
+def gone(error):
+    """The mirror answered that this path does not exist (404) or was removed (410)."""
+    return isinstance(error, urllib.error.HTTPError) and error.code in GONE
+
+
+def snapshot_url(url):
+    """The pinned snapshot copy of an official archive pool URL; None for any other URL."""
+    for root in POOL_ROOTS:
+        if url.startswith(root) and url[len(root):].startswith("pool/"):
+            return SNAPSHOT + SNAPSHOT_STAMP + "/" + url[len(root):]
+    return None
+
+
 def download(package, path, archives):
-    """Fetch one locked package, retrying only transient transport failures."""
-    for attempt in range(1, ATTEMPTS + 1):
-        choices = sources(package["url"])
+    """Fetch one locked package. Transient failures are retried; a 404/410 moves on to the next source.
+
+    The order is the locked mirror, the other mirror, then the pinned snapshot, used only after every mirror
+    answered 404/410. A 404/410 is not a transport failure. It does not use an attempt, sleep, or count toward
+    DEMOTE_AFTER: the path is gone from that source, and the mirror itself is healthy. Any other 4xx and any
+    content mismatch still fail at once.
+    """
+    missing, last_gone, attempt = set(), None, 1
+    while True:
+        choices = [choice for choice in sources(package["url"]) if choice[1] not in missing]
+        snapshot = not choices
+        if snapshot:
+            fallback = snapshot_url(package["url"])
+            if fallback is None or fallback in missing:
+                raise last_gone
+            choices = [(None, fallback)]
         mirror, url = choices[(attempt - 1) % len(choices)]
         # Exclusive temporary output is unpublished until size+hash verification.
         with tempfile.NamedTemporaryFile(dir=archives, delete=False) as output:
@@ -178,9 +216,18 @@ def download(package, path, archives):
                     raise ValueError("downloaded package differs from lock")
                 if mirror is not None and time.monotonic() - started > SLOW_SECONDS:
                     MIRROR_FAILURES[mirror] = MIRROR_FAILURES.get(mirror, 0) + 1
+                if snapshot:
+                    name = package.get("filename") or PurePosixPath(urllib.parse.urlsplit(url).path).name
+                    print(f"browser-deps: pinned package {name} gone from archive; served from snapshot "
+                          f"{SNAPSHOT_STAMP}, sha256 verified ({url})", file=sys.stderr)
                 temporary.replace(path)
                 return
             except (Exception,) as error:
+                if gone(error):
+                    missing.add(url)
+                    last_gone = error
+                    print(f"browser-deps: {url} answered HTTP {error.code}; trying the next source", file=sys.stderr)
+                    continue
                 if mirror is not None and transient(error):
                     MIRROR_FAILURES[mirror] = MIRROR_FAILURES.get(mirror, 0) + 1
                 if attempt == ATTEMPTS or not transient(error):
@@ -190,6 +237,7 @@ def download(package, path, archives):
                 if temporary.exists():
                     temporary.unlink()
         time.sleep(BACKOFF_SECONDS * attempt)
+        attempt += 1
 
 
 def hermetic_fontconfig(runtime, fontcache):
