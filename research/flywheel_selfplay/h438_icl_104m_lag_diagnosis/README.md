@@ -182,7 +182,7 @@ idea was after: the group average is the better point, so weight averaging is no
 | 17:45 | PREREG and code published (`09f0e9d4c0`); gates 4 of 4; first run stops on a code error, no result |
 | 17:48 | addendum 1 and fixed code published (`a89a72ed93`); gates 6 of 6; the read: `OPTIMISATION_UNSEPARATED` |
 | 17:50 | closeout published (`cb1595161f`) and archived |
-| 17:57 | addendum 2 published (`6491869e01`); gate 4 of 4; checkpoint displacement read: `MOVES_MORE_PER_STEP` |
+| 17:54 | addendum 2 published (`6491869e01`); gate 4 of 4; checkpoint displacement read (98 s): `MOVES_MORE_PER_STEP` |
 
 Evidence (xbabe2): `~/jope_plan/evidence/H438/` (`results/H438.lag.{json,txt}`, both gate files,
 `results/H438.monitor_crosscheck.posthoc.json`, `pulled_logs/` with `SHA256SUMS`, `logs/`).
