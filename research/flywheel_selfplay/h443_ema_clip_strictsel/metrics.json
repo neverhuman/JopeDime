@@ -1,0 +1,541 @@
+{
+ "wave": "H443",
+ "verdict": "NO_LIFT",
+ "incumbent": "round-3175 (live best, run-20261030)",
+ "incumbent_val_utility": 1.1389572403748425,
+ "parity_ok": true,
+ "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "trainable_params": 29211,
+ "n_train": 1219,
+ "n_val": 91,
+ "n_val_families": 19,
+ "family_overlap": 0,
+ "config": {
+  "rounds": 10,
+  "steps": 2,
+  "batch": 2048,
+  "slate": 192,
+  "threads": 16,
+  "arms": "ema,clip,strict",
+  "seeds": "1,2,3",
+  "ema_decay": 0.9,
+  "margin": 0.002,
+  "probe": false
+ },
+ "peak": {
+  "min_memavail_gb": 28.539913177490234,
+  "max_rss_gb": 8.305679321289062
+ },
+ "arm_summary": {
+  "ema": {
+   "median_adopted_gain": 0.0,
+   "median_max_cand_minus_incumbent": -0.0022743394317388255,
+   "total_accepts": 0,
+   "median_elo_vs_incumbent": 0.0
+  },
+  "clip": {
+   "median_adopted_gain": 0.0,
+   "median_max_cand_minus_incumbent": -0.003518451949980239,
+   "total_accepts": 0,
+   "median_elo_vs_incumbent": 0.0
+  },
+  "strict": {
+   "median_adopted_gain": 0.0,
+   "median_max_cand_minus_incumbent": -0.003518451949980239,
+   "total_accepts": 0,
+   "median_elo_vs_incumbent": 0.0
+  }
+ },
+ "arms": {
+  "ema": [
+   {
+    "seed": 1,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1366829009431036,
+    "last_raw_val": 1.1305918667231138,
+    "wall_s": 536.2804429531097,
+    "cand_val_by_round": [
+     1.136682901,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.132522132,
+     1.130128987,
+     1.130128987,
+     1.130496215,
+     1.130591867
+    ]
+   },
+   {
+    "seed": 2,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1366829009431036,
+    "last_raw_val": 1.1304962150563866,
+    "wall_s": 306.1759762763977,
+    "cand_val_by_round": [
+     1.136682901,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.132522132,
+     1.130128987,
+     1.130128987,
+     1.130496215,
+     1.130496215
+    ]
+   },
+   {
+    "seed": 3,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1366829009431036,
+    "last_raw_val": 1.1304962150563866,
+    "wall_s": 342.3919355869293,
+    "cand_val_by_round": [
+     1.136682901,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.132522132,
+     1.132522132,
+     1.130128987,
+     1.130496215,
+     1.130496215
+    ]
+   }
+  ],
+  "clip": [
+   {
+    "seed": 1,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1354387884248622,
+    "last_raw_val": 1.1354387884248622,
+    "wall_s": 352.4252824783325,
+    "cand_val_by_round": [
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788
+    ]
+   },
+   {
+    "seed": 2,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1354387884248622,
+    "last_raw_val": 1.1354387884248622,
+    "wall_s": 331.2115354537964,
+    "cand_val_by_round": [
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788
+    ]
+   },
+   {
+    "seed": 3,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1354387884248622,
+    "last_raw_val": 1.1354387884248622,
+    "wall_s": 300.00839042663574,
+    "cand_val_by_round": [
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788
+    ]
+   }
+  ],
+  "strict": [
+   {
+    "seed": 1,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1354387884248622,
+    "last_raw_val": 1.1354387884248622,
+    "wall_s": 324.04218554496765,
+    "cand_val_by_round": [
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788
+    ]
+   },
+   {
+    "seed": 2,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1354387884248622,
+    "last_raw_val": 1.1354387884248622,
+    "wall_s": 298.512521982193,
+    "cand_val_by_round": [
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788
+    ]
+   },
+   {
+    "seed": 3,
+    "adopted_val": 1.1389572403748425,
+    "adopted_round": 0,
+    "gain_vs_incumbent": 0.0,
+    "gain_ci95_family_boot": [
+     0.0,
+     0.0
+    ],
+    "elo_vs_incumbent": 0.0,
+    "elo_ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0.0,
+    "ties": 91.0,
+    "losses": 0.0,
+    "n_accepts": 0,
+    "n_tie_accepts": 0,
+    "max_cand_val": 1.1354387884248622,
+    "last_raw_val": 1.1354387884248622,
+    "wall_s": 273.19636583328247,
+    "cand_val_by_round": [
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788,
+     1.135438788
+    ]
+   }
+  ]
+ },
+ "live_history_replay": {
+  "rounds_parsed": 4274,
+  "first_round": 775,
+  "last_round": 5049,
+  "last400_distinct_candidate_means": 22,
+  "last400_top_candidate_means": [
+   [
+    1.135438788425,
+    96
+   ],
+   [
+    1.130128986801,
+    70
+   ],
+   [
+    1.132522131585,
+    56
+   ],
+   [
+    1.130496215056,
+    42
+   ],
+   [
+    1.130100860935,
+    23
+   ],
+   [
+    1.130591866723,
+    19
+   ]
+  ],
+  "rejections_since_last_accept": 1873,
+  "incumbent_fail_ctx": 0,
+  "incumbent_median": 0.635265868735998,
+  "n_accepts": 8,
+  "n_tie_accepts": 4,
+  "n_accepts_passing_strict": 0,
+  "accepts": [
+   {
+    "round": 782,
+    "cand_mean": 1.1073772627425549,
+    "prev_best": 1.1073772627425547,
+    "gain": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "tie": true,
+    "n_ctx_changed": 0,
+    "max_abs_ctx_delta": 0.0,
+    "dominant_ctx_share": 0.0,
+    "fail_ctx_flips": 0,
+    "strict_pass": false
+   },
+   {
+    "round": 785,
+    "cand_mean": 1.1375952947484103,
+    "prev_best": 1.1073772627425547,
+    "gain": 0.030218032005855218,
+    "ci95": [
+     -0.010807692488760064,
+     0.10351231267691836
+    ],
+    "tie": false,
+    "n_ctx_changed": 8,
+    "max_abs_ctx_delta": 3.1226949552792034,
+    "dominant_ctx_share": 0.889594585247467,
+    "fail_ctx_flips": 1,
+    "strict_pass": false
+   },
+   {
+    "round": 859,
+    "cand_mean": 1.1377941898164525,
+    "prev_best": 1.1375952947484103,
+    "gain": 0.0304169270738975,
+    "ci95": [
+     -0.009866887315143008,
+     0.102868106400837
+    ],
+    "tie": false,
+    "n_ctx_changed": 12,
+    "max_abs_ctx_delta": 3.1226949552792034,
+    "dominant_ctx_share": 0.855536656847916,
+    "fail_ctx_flips": 1,
+    "strict_pass": false
+   },
+   {
+    "round": 882,
+    "cand_mean": 1.1377941898164525,
+    "prev_best": 1.1377941898164525,
+    "gain": 0.0304169270738975,
+    "ci95": [
+     -0.009818602863962772,
+     0.10223546068322395
+    ],
+    "tie": true,
+    "n_ctx_changed": 12,
+    "max_abs_ctx_delta": 3.1226949552792034,
+    "dominant_ctx_share": 0.855536656847916,
+    "fail_ctx_flips": 1,
+    "strict_pass": false
+   },
+   {
+    "round": 2750,
+    "cand_mean": 1.1383668110784328,
+    "prev_best": 1.1377941898164525,
+    "gain": 0.0005726212619803003,
+    "ci95": [
+     -0.0007268366300717408,
+     0.0024447004160126416
+    ],
+    "tie": false,
+    "n_ctx_changed": 2,
+    "max_abs_ctx_delta": 0.07415591261905013,
+    "dominant_ctx_share": 0.770825117439791,
+    "fail_ctx_flips": 0,
+    "strict_pass": false
+   },
+   {
+    "round": 2795,
+    "cand_mean": 1.1383668110784328,
+    "prev_best": 1.1383668110784328,
+    "gain": 0.0005726212619803003,
+    "ci95": [
+     -0.0006962329824897727,
+     0.0024447004160126416
+    ],
+    "tie": true,
+    "n_ctx_changed": 2,
+    "max_abs_ctx_delta": 0.07415591261905013,
+    "dominant_ctx_share": 0.770825117439791,
+    "fail_ctx_flips": 0,
+    "strict_pass": false
+   },
+   {
+    "round": 3100,
+    "cand_mean": 1.1383668110784328,
+    "prev_best": 1.1383668110784328,
+    "gain": 0.0005726212619803003,
+    "ci95": [
+     -0.0006962329824897727,
+     0.0025369665832697167
+    ],
+    "tie": true,
+    "n_ctx_changed": 2,
+    "max_abs_ctx_delta": 0.07415591261905013,
+    "dominant_ctx_share": 0.770825117439791,
+    "fail_ctx_flips": 0,
+    "strict_pass": false
+   },
+   {
+    "round": 3175,
+    "cand_mean": 1.1389572403748425,
+    "prev_best": 1.1383668110784328,
+    "gain": 0.0011630505583898813,
+    "ci95": [
+     -0.00036314014487510114,
+     0.0034562721257784842
+    ],
+    "tie": false,
+    "n_ctx_changed": 4,
+    "max_abs_ctx_delta": 0.22423695980360897,
+    "dominant_ctx_share": 0.45674265710039375,
+    "fail_ctx_flips": 0,
+    "strict_pass": false
+   }
+  ]
+ }
+}
