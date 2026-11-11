@@ -3191,23 +3191,8 @@ def gaussian_process_ard_regression_fit(x, y, m, steps):
     for i in range(n):
         y_mean += y[i]
     y_mean /= max(n, 1)
-    y_min = float("inf")
-    y_max = float("-inf")
-    for i in range(n):
-        v = y[i]
-        if v < y_min:
-            y_min = v
-        if v > y_max:
-            y_max = v
-    if n == 0:
-        clamp_lo = -60.0
-        clamp_hi = 60.0
-    else:
-        spread = max(y_max - y_min, 1e-9)
-        clamp_lo = min(y_min - 0.05 * spread, -60.0)
-        clamp_hi = max(y_max + 0.05 * spread, 60.0)
     if n < 12 or p == 0:
-        return (means, scales, [], [], [], 0.0, y_mean, clamp_lo, clamp_hi)
+        return (means, scales, [], [], [], 0.0, y_mean)
     basis_size = min(n, m)
     if n > m:
         idx = _seeded_rows(n, m, 909)
@@ -3312,14 +3297,14 @@ def gaussian_process_ard_regression_fit(x, y, m, steps):
             a[i * mb + j] = v
             a[j * mb + i] = v
     alpha = _cholesky_solve(a, yc, mb)
-    return (means, scales, z, alpha, ls_final, sf2, y_mean, clamp_lo, clamp_hi)
+    return (means, scales, z, alpha, ls_final, sf2, y_mean)
 
 
 def gaussian_process_ard_regression_predict(state, x):
-    means, scales, basis, alpha, ls, sf2, y_mean, clamp_lo, clamp_hi = state
+    means, scales, basis, alpha, ls, sf2, y_mean = state
     p = len(means)
     if not basis:
-        return [_clamp(y_mean, clamp_lo, clamp_hi) for _ in x]
+        return [_clamp(y_mean, -60.0, 60.0) for _ in x]
     inv_ls2 = [1.0 / (v * v) for v in ls]
     predictions = []
     for row in x:
@@ -3332,7 +3317,7 @@ def gaussian_process_ard_regression_predict(state, x):
                 diff = zr[d] - zb[d]
                 r2 += diff * diff * inv_ls2[d]
             s += alpha[b] * sf2 * math.exp(-0.5 * r2)
-        predictions.append(_clamp(s, clamp_lo, clamp_hi))
+        predictions.append(_clamp(s, -60.0, 60.0))
     return predictions"#;
 
 const GPRK_SRC: &str = r#"def _seeded_rows(n, k, seed):
@@ -3484,23 +3469,8 @@ def gaussian_process_composite_kernel_regression_fit(x, y, m, steps, kernel_term
     for i in range(n):
         y_mean += y[i]
     y_mean /= max(n, 1)
-    y_min = float("inf")
-    y_max = float("-inf")
-    for i in range(n):
-        v = y[i]
-        if v < y_min:
-            y_min = v
-        if v > y_max:
-            y_max = v
-    if n == 0:
-        clamp_lo = -60.0
-        clamp_hi = 60.0
-    else:
-        spread = max(y_max - y_min, 1e-9)
-        clamp_lo = min(y_min - 0.05 * spread, -60.0)
-        clamp_hi = max(y_max + 0.05 * spread, 60.0)
     if n < 12 or p == 0:
-        return (means, scales, [], [], [], y_mean, clamp_lo, clamp_hi)
+        return (means, scales, [], [], [], y_mean)
     pf = float(p)
     basis_size = min(n, m)
     if n > m:
@@ -3712,14 +3682,14 @@ def gaussian_process_composite_kernel_regression_fit(x, y, m, steps, kernel_term
             a[i * mb + j] = v
             a[j * mb + i] = v
     alpha = _cholesky_solve(a, yc, mb)
-    return (means, scales, z, alpha, theta, y_mean, clamp_lo, clamp_hi)
+    return (means, scales, z, alpha, theta, y_mean)
 
 
 def gaussian_process_composite_kernel_regression_predict(state, x, kernel_terms):
-    means, scales, basis, alpha, theta, y_mean, clamp_lo, clamp_hi = state
+    means, scales, basis, alpha, theta, y_mean = state
     p = len(means)
     if not basis:
-        return [_clamp(y_mean, clamp_lo, clamp_hi) for _ in x]
+        return [_clamp(y_mean, -60.0, 60.0) for _ in x]
     pf = float(p)
     dec = _kernel_decode(kernel_terms, theta, p)
     predictions = []
@@ -3728,7 +3698,7 @@ def gaussian_process_composite_kernel_regression_predict(state, x, kernel_terms)
         s = y_mean
         for b in range(len(basis)):
             s += alpha[b] * _kernel_value(kernel_terms, dec, pf, zr, basis[b])
-        predictions.append(_clamp(s, clamp_lo, clamp_hi))
+        predictions.append(_clamp(s, -60.0, 60.0))
     return predictions"#;
 
 const KSMOOTH_SRC: &str = r#"def nadaraya_watson_regression_fit(x, y):

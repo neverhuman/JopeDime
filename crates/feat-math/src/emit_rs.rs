@@ -5176,8 +5176,6 @@ const GPR_SRC: &str = r#"struct GaussianProcessArdRegression {
     ls: Vec<f64>,
     sf2: f64,
     y_mean: f64,
-    clamp_lo: f64,
-    clamp_hi: f64,
 }
 
 /// k distinct row indices out of n via a seeded partial Fisher-Yates shuffle,
@@ -5248,21 +5246,6 @@ fn gaussian_process_ard_regression_fit(x: &[Vec<f64>], y: &[f64], m: usize, step
         y_mean += y[i];
     }
     y_mean /= n.max(1) as f64;
-    let mut y_min = f64::INFINITY;
-    let mut y_max = f64::NEG_INFINITY;
-    for i in 0..n {
-        y_min = y_min.min(y[i]);
-        y_max = y_max.max(y[i]);
-    }
-    let (clamp_lo, clamp_hi) = if n == 0 {
-        (-60.0, 60.0)
-    } else {
-        let spread = (y_max - y_min).max(1e-9);
-        (
-            (y_min - 0.05 * spread).min(-60.0),
-            (y_max + 0.05 * spread).max(60.0),
-        )
-    };
     if n < 12 || p == 0 {
         return GaussianProcessArdRegression {
             means,
@@ -5272,8 +5255,6 @@ fn gaussian_process_ard_regression_fit(x: &[Vec<f64>], y: &[f64], m: usize, step
             ls: Vec::new(),
             sf2: 0.0,
             y_mean,
-            clamp_lo,
-            clamp_hi,
         };
     }
     let basis_size = n.min(m);
@@ -5395,13 +5376,13 @@ fn gaussian_process_ard_regression_fit(x: &[Vec<f64>], y: &[f64], m: usize, step
         }
     }
     let alpha = cholesky_solve(&mut a, &yc, mb);
-    GaussianProcessArdRegression { means, scales, basis: z, alpha, ls: ls_final, sf2, y_mean, clamp_lo, clamp_hi }
+    GaussianProcessArdRegression { means, scales, basis: z, alpha, ls: ls_final, sf2, y_mean }
 }
 
 fn gaussian_process_ard_regression_predict(state: &GaussianProcessArdRegression, x: &[Vec<f64>]) -> Vec<f64> {
     let p = state.means.len();
     if state.basis.is_empty() {
-        return x.iter().map(|_| state.y_mean.clamp(state.clamp_lo, state.clamp_hi)).collect();
+        return x.iter().map(|_| state.y_mean.clamp(-60.0, 60.0)).collect();
     }
     let inv_ls2: Vec<f64> = state.ls.iter().map(|v| 1.0 / (v * v)).collect();
     let mut predictions = Vec::new();
@@ -5419,7 +5400,7 @@ fn gaussian_process_ard_regression_predict(state: &GaussianProcessArdRegression,
             }
             s += state.alpha[b] * state.sf2 * (-0.5 * r2).exp();
         }
-        predictions.push(s.clamp(state.clamp_lo, state.clamp_hi));
+        predictions.push(s.clamp(-60.0, 60.0));
     }
     predictions
 }"#;
@@ -5431,8 +5412,6 @@ const GPRK_SRC: &str = r#"struct GaussianProcessCompositeKernelRegression {
     alpha: Vec<f64>,
     theta: Vec<f64>,
     y_mean: f64,
-    clamp_lo: f64,
-    clamp_hi: f64,
 }
 
 /// Decoded per-evaluation kernel parameters (see kernel_decode).
@@ -5636,21 +5615,6 @@ fn gaussian_process_composite_kernel_regression_fit(x: &[Vec<f64>], y: &[f64], m
         y_mean += y[i];
     }
     y_mean /= n.max(1) as f64;
-    let mut y_min = f64::INFINITY;
-    let mut y_max = f64::NEG_INFINITY;
-    for i in 0..n {
-        y_min = y_min.min(y[i]);
-        y_max = y_max.max(y[i]);
-    }
-    let (clamp_lo, clamp_hi) = if n == 0 {
-        (-60.0, 60.0)
-    } else {
-        let spread = (y_max - y_min).max(1e-9);
-        (
-            (y_min - 0.05 * spread).min(-60.0),
-            (y_max + 0.05 * spread).max(60.0),
-        )
-    };
     if n < 12 || p == 0 {
         return GaussianProcessCompositeKernelRegression {
             means,
@@ -5659,8 +5623,6 @@ fn gaussian_process_composite_kernel_regression_fit(x: &[Vec<f64>], y: &[f64], m
             alpha: Vec::new(),
             theta: Vec::new(),
             y_mean,
-            clamp_lo,
-            clamp_hi,
         };
     }
     let pf = p as f64;
@@ -5918,7 +5880,7 @@ fn gaussian_process_composite_kernel_regression_fit(x: &[Vec<f64>], y: &[f64], m
         }
     }
     let alpha = cholesky_solve(&mut a, &yc, mb);
-    GaussianProcessCompositeKernelRegression { means, scales, basis: z, alpha, theta, y_mean, clamp_lo, clamp_hi }
+    GaussianProcessCompositeKernelRegression { means, scales, basis: z, alpha, theta, y_mean }
 }
 
 fn gaussian_process_composite_kernel_regression_predict(state: &GaussianProcessCompositeKernelRegression,
@@ -5926,7 +5888,7 @@ fn gaussian_process_composite_kernel_regression_predict(state: &GaussianProcessC
                                                         -> Vec<f64> {
     let p = state.means.len();
     if state.basis.is_empty() {
-        return x.iter().map(|_| state.y_mean.clamp(state.clamp_lo, state.clamp_hi)).collect();
+        return x.iter().map(|_| state.y_mean.clamp(-60.0, 60.0)).collect();
     }
     let pf = p as f64;
     let dec = kernel_decode(kernel_terms, &state.theta, p);
@@ -5939,7 +5901,7 @@ fn gaussian_process_composite_kernel_regression_predict(state: &GaussianProcessC
         for b in 0..state.basis.len() {
             s += state.alpha[b] * kernel_value(kernel_terms, &dec, pf, &zr, &state.basis[b]);
         }
-        predictions.push(s.clamp(state.clamp_lo, state.clamp_hi));
+        predictions.push(s.clamp(-60.0, 60.0));
     }
     predictions
 }"#;

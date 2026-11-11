@@ -16,6 +16,9 @@
 //! predictions k(x*, X_m) . alpha are clamped to the union of the training
 //! target range widened by 5% and the legacy +/-60 window (never tighter
 //! than either). Old saved models omit the stored bounds and keep +/-60.
+//! Recipe Rust, Python, and fitted C++ keep that legacy +/-60 clamp. Those
+//! artifact bytes stay on the frozen behavior surface. Native and emitted
+//! predictions match when the union window is exactly +/-60.
 //!
 //! Bit-parity contract: the emitted Python/Rust artifacts replay exactly the
 //! same arithmetic order (kernel, Cholesky, triangular inverse, gradient sums).

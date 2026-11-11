@@ -167,8 +167,7 @@ pub fn head_doc(head: &PlannedHead) -> String {
              0.5 * trace((a a^T - Ky^-1) dKy/dtheta) with a = Ky^-1 y is evaluated with one \
              Cholesky-based inverse per step on at most 256 seeded rows; the predictive coefficients \
              are then solved on up to {m} seeded inducing rows and predictions k(x)^T a are clipped \
-             to the union of the training-target range widened by 5% and [-60, 60] (never tighter \
-             than either)."
+             to [-60, 60]."
         ),
         PlannedHead::GprKernel { m, steps, source, spec } => {
             let mut seen: Vec<KernelPrim> = Vec::new();
@@ -190,8 +189,7 @@ pub fn head_doc(head: &PlannedHead) -> String {
                  0.5 * trace((a a^T - Ky^-1) dKy/dtheta) with a = Ky^-1 y is evaluated with one \
                  Cholesky-based inverse per step on at most 256 seeded rows; the predictive \
                  coefficients are then solved on up to {m} seeded inducing rows and predictions \
-                 k(x)^T a are clipped to the union of the training-target range widened by 5% and \
-                 [-60, 60] (never tighter than either).",
+                 k(x)^T a are clipped to [-60, 60].",
                 prims = prim_docs.join("; ")
             )
         }
