@@ -15554,7 +15554,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Multi-role Carbon cell CLI (`version`, `plan`, `spot-check`) over adaptive worker sizing and the 3-Gate Spot-Hybrid advisor; source/local CLI tested via carbon_core."
+      "scope": "Multi-role Carbon cell CLI (`version`, `package`, `deploy`, `rollback`, `run`, `bench`, `redteam`, `token-mint`, `plan`, `spot-check`, `serve`, `emu`, `engine`, `eval`) over zero-knowledge CUEN/CUDK encryption, r882 neural-fusion GP, declarative CloudFormation :live alias rollouts, and the 3-Gate Spot-Hybrid advisor; tested via carbon_core, carbon_e2e, and carbon_redteam."
     },
     "target:jope-carbon/bin/carbon-edge": {
       "discovery": {
@@ -15621,7 +15621,23 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Carbon Phases C4-C8 end-to-end integration: CarbonLocalLambdaEmulator driving the isolated carbon-edge child binary over LAMBDA_RUNTIME_API plus engine and HybridFanOut eval shards and HTTP CAS, multi-region ping failover, client FIT-only landmarking, cooperative early-stop -> Paused -> predict -> tamper-refusal -> cross-container resume -> Completed, Enterprise carbon serve no_limit(), and Free-tier rejections."
+      "scope": "Carbon Phases C4-C8 end-to-end integration: CarbonLocalLambdaEmulator driving the isolated carbon-edge child binary over LAMBDA_RUNTIME_API plus engine and HybridFanOut eval shards and HTTP CAS, multi-region ping failover, client FIT-only landmarking, zero-knowledge CUEN v1 + CUDK v1 envelope encryption, cooperative early-stop -> Paused -> E2E encrypted predict -> CCKP v2 tamper-refusal -> cross-container resume -> Completed -> DELETE shred, Enterprise carbon serve no_limit(), and Free-tier rejections."
+    },
+    "target:jope-carbon/test/carbon_redteam": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-carbon/tests/carbon_redteam.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Carbon 16-vector adversarial security and zero-knowledge red-team suite (`V-01`..`V-16` + `RT-05` fail-closed AWS Lambda secret boot): CT3/IP non-disclosure, path traversal and URL-encoded `..%2F`, anonymous Free privilege escalation and row/budget caps, cross-tenant IDOR across status/stop/resume/predict/shred, unencrypted upload refusal, wrong-KEK CUDK v1, cross-slot FitJmat/HoldoutJmat swap, bit-flipped CUEN v1 GCM tag, async 202 stop + E2E encrypted predict, and cryptographic DELETE shred."
     },
     "target:jope-ci/bin/jope-ci": {
       "discovery": {

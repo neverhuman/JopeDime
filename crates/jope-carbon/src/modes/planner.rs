@@ -1,5 +1,5 @@
 //! Adaptive `SoloSingleLambda` vs `HybridFanOut` execution planner and Graviton2 memory-class
-//! selector ([ADR-0007](../../../docs/adr/ADR-0007-carbon-lambda-cells.md)).
+//! selector ([ADR-0007](../../../../docs/adr/ADR-0007-carbon-lambda-cells.md)).
 
 use serde::{Deserialize, Serialize};
 
@@ -43,7 +43,7 @@ impl EvalMemoryClass {
         }
     }
 
-    /// Maximum safe working-set budget in MB (`~65–72%` of container RAM, leaving headroom for stack and scratch buffers).
+    /// Maximum safe working-set budget in MB (`~65–72%` of container RAM).
     pub const fn max_working_set_mb(self) -> usize {
         match self {
             Self::Xs512Mb => 192,
@@ -83,27 +83,20 @@ impl EvalMemoryClass {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CarbonExecutionMode {
-    /// Execute neural Wave-0 and all search waves inside `carbon-engine` (`zero` S3 fan-out or extra invocation overhead).
+    /// Execute neural Wave-0 and all search waves inside `carbon-engine` (`zero` S3 fan-out overhead).
     SoloSingleLambda,
     /// Execute neural Wave-0 in `carbon-engine` and fan out candidate shards across `K` parallel `carbon-eval` workers per wave.
     HybridFanOut,
 }
 
-/// `CarbonPlanInput` is a struct for the dataset dimensions, tier, and per-candidate timing inputs
-/// consumed by `plan_carbon_execution`.
+/// `CarbonPlanInput` is a struct for the dataset dimensions, tier, and per-candidate timing inputs.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CarbonPlanInput {
-    /// Commercial product tier (`Free`, `Pro`, `Enterprise`).
     pub product_tier: CarbonProductTier,
-    /// Requested search effort (`fast`, `medium`, `high`, `ultra`).
     pub effort: CarbonEffortTier,
-    /// Total dataset rows (`FIT + HOLDOUT`).
     pub total_rows: usize,
-    /// FIT row count (`< total_rows`).
     pub fit_rows: usize,
-    /// Feature column count.
     pub features: usize,
-    /// Estimated single-vCPU milliseconds to evaluate one candidate on `(fit_rows, features)`.
     pub est_ms_per_candidate_1vcpu: f64,
 }
 
@@ -111,23 +104,14 @@ pub struct CarbonPlanInput {
 /// count, and estimated cost/latency returned by `plan_carbon_execution`.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CarbonPlanDecision {
-    /// Chosen execution mode (`SoloSingleLambda` vs `HybridFanOut`).
     pub mode: CarbonExecutionMode,
-    /// Selected `carbon-eval` worker memory class (also records footprint class in Solo mode).
     pub eval_class: EvalMemoryClass,
-    /// Estimated working-set footprint in MB.
     pub estimated_working_set_mb: usize,
-    /// Parallel `carbon-eval` shards per wave (`0` when `SoloSingleLambda`).
     pub shards_per_wave: u32,
-    /// Planned waves for this invocation leg.
     pub planned_waves: u32,
-    /// Estimated wall-clock milliseconds if run in `SoloSingleLambda`.
     pub solo_wall_ms: f64,
-    /// Estimated wall-clock milliseconds if run in `HybridFanOut`.
     pub hybrid_wall_ms: f64,
-    /// Estimated total Lambda compute + invocation USD in `SoloSingleLambda`.
     pub solo_estimated_usd: f64,
-    /// Estimated total Lambda compute + invocation USD in `HybridFanOut`.
     pub hybrid_estimated_usd: f64,
 }
 
@@ -138,7 +122,6 @@ pub fn estimate_working_set_mb(fit_rows: usize, features: usize) -> CarbonResult
             reason: "fit_rows and features must both be >= 1",
         });
     }
-    // Base runtime + allocator overhead (~64 MB) + JMAT column matrix (8 B/cell) + 6x scratch/residual f64 vectors.
     let matrix_bytes = (fit_rows as u128) * (features as u128) * 8;
     let scratch_bytes = (fit_rows as u128) * (features.clamp(6, 32) as u128) * 8;
     let total_mb = 64u128 + (matrix_bytes + scratch_bytes).div_ceil(1_048_576);
@@ -148,13 +131,6 @@ pub fn estimate_working_set_mb(fit_rows: usize, features: usize) -> CarbonResult
 }
 
 /// Deterministically choose `SoloSingleLambda` vs `HybridFanOut` and right-size `EvalMemoryClass`.
-///
-/// Decision contract (`ADR-0007`):
-/// 1. `fast` effort ALWAYS chooses `SoloSingleLambda` (single Wave-0 inside the already-warm `3,008 MB` `carbon-engine`).
-/// 2. Small runs where `SoloSingleLambda` finishes all waves within `<= 8_000 ms` stay in `SoloSingleLambda` to avoid S3/Lambda dispatch overhead (`~120 ms/wave`).
-/// 3. Otherwise `HybridFanOut` is selected whenever either:
-///    - `SoloSingleLambda` would exceed `45%` of the lease ceiling (`lease_ceiling_secs * 450 ms`), OR
-///    - `HybridFanOut` reduces wall-clock latency by at least `2.2x` while costing `<= 1.15x` `SoloSingleLambda` (or strictly less when `EvalMemoryClass` is `XS`/`S`/`M` vs holding `3,008 MB` `carbon-engine` open!).
 pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlanDecision> {
     input
         .product_tier
@@ -172,9 +148,6 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
 
     let working_set_mb = estimate_working_set_mb(input.fit_rows, input.features)?;
     let base_class = EvalMemoryClass::select_for_working_set_mb(working_set_mb)?;
-    // For multi-wave Hybrid fan-out on Medium/High/Ultra, step small footprints up to at least
-    // M (1,769 MB = 1.0 full vCPU) when candidate compute dominates so workers aren't CPU-throttled,
-    // except Free tier micro runs which prefer minimum memory (XS/S).
     let eval_class = if input.product_tier != CarbonProductTier::Free
         && input.effort >= CarbonEffortTier::High
         && base_class < EvalMemoryClass::M1769Mb
@@ -186,10 +159,9 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
 
     let waves = input.effort.planned_waves();
     let cands_per_wave = input.effort.candidates_per_wave();
-    let engine_vcpus = (ENGINE_MEMORY_MB as f64) / 1_769.0; // ~1.70 vCPUs
+    let engine_vcpus = (ENGINE_MEMORY_MB as f64) / 1_769.0;
     let wave0_neural_ms = 180.0;
 
-    // Solo mode evaluates all candidates inside the 3,008 MB engine container.
     let solo_wave_ms =
         (f64::from(cands_per_wave) * input.est_ms_per_candidate_1vcpu) / engine_vcpus;
     let solo_wall_ms = wave0_neural_ms + f64::from(waves) * solo_wave_ms;
@@ -197,12 +169,11 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
     let solo_estimated_usd = (solo_wall_ms / 1_000.0) * engine_gb * LAMBDA_ARM64_USD_PER_GB_SEC
         + LAMBDA_USD_PER_INVOCATION;
 
-    // Hybrid mode shards each wave across K stateless `carbon-eval` workers (16..32 candidates/shard, capped at 24 shards/wave).
     let target_cands_per_shard = 16u32;
     let shards_per_wave = cands_per_wave.div_ceil(target_cands_per_shard).clamp(2, 24);
     let cands_per_shard = cands_per_wave.div_ceil(shards_per_wave);
     let eval_vcpus = eval_class.effective_vcpus();
-    let dispatch_overhead_ms = 115.0; // same-AZ S3 read + Lambda invoke round-trip
+    let dispatch_overhead_ms = 115.0;
     let shard_compute_ms =
         (f64::from(cands_per_shard) * input.est_ms_per_candidate_1vcpu) / eval_vcpus;
     let hybrid_wave_ms = dispatch_overhead_ms + shard_compute_ms;

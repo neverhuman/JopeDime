@@ -17,6 +17,7 @@ fn smart_router_ranks_by_ewma_rtt_and_trips_circuit_breaker_on_failures() {
         healthy: true,
         server_epoch_ms: DecimalU64(1_000),
         enterprise_self_hosted: false,
+        engine_kek_pubkey_b64: None,
     };
     router
         .record_probe_success("us-east-2", 42.0, None, 1_000)

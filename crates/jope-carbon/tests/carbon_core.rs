@@ -1,13 +1,13 @@
-//! Integration, security-boundary (`CT3`), adaptive planner, envelope seal, Spot-Hybrid 3-Gate,
-//! and CLI smoke tests for `jope-carbon` (Carbon Phase C1b).
+//! Integration, security-boundary (`CT3`), adaptive planner, `CCKP\x02` domain-separated seal,
+//! Spot-Hybrid 3-Gate, and CLI smoke tests for `jope-carbon`.
 
 use std::process::Command;
 
 use jope_carbon::{
     carbon_https_agent, evaluate_spot_hybrid_gates, plan_carbon_execution, CarbonEffortTier,
     CarbonError, CarbonExecutionMode, CarbonPlanInput, CarbonProductTier, CarbonRole,
-    CarbonSealKey, EvalMemoryClass, MonthlyWindowMetrics, SealedCheckpointEnvelope,
-    SpotAdvisorRecommendation, SpotAdvisorThresholds, CARBON_DOCS_URL,
+    CarbonSealDomain, CarbonSealKey, EvalMemoryClass, MonthlyWindowMetrics,
+    SealedCheckpointEnvelope, SpotAdvisorRecommendation, SpotAdvisorThresholds, CARBON_DOCS_URL,
 };
 
 #[test]
@@ -54,7 +54,6 @@ fn ct3_edge_feature_graph_excludes_engine_search_and_neural_crates() {
 
 #[test]
 fn tier_admission_enforces_free_pro_and_enterprise_no_limit() {
-    // Free tier admits <= 5,000 rows, <= 64 cols, fast/medium.
     CarbonProductTier::Free
         .validate_admission(5_000, 64, CarbonEffortTier::Medium)
         .unwrap();
@@ -82,7 +81,6 @@ fn tier_admission_enforces_free_pro_and_enterprise_no_limit() {
         })
     );
 
-    // Pro tier admits <= 100,000 rows, <= 512 cols, fast..ultra.
     CarbonProductTier::Pro
         .validate_admission(100_000, 512, CarbonEffortTier::Ultra)
         .unwrap();
@@ -91,7 +89,6 @@ fn tier_admission_enforces_free_pro_and_enterprise_no_limit() {
         Err(CarbonError::RowLimitExceeded { tier: "pro", .. })
     ));
 
-    // Enterprise no_limit() admits arbitrary row and feature counts.
     CarbonProductTier::no_limit()
         .validate_admission(2_500_000, 2_048, CarbonEffortTier::Ultra)
         .unwrap();
@@ -99,7 +96,6 @@ fn tier_admission_enforces_free_pro_and_enterprise_no_limit() {
 
 #[test]
 fn adaptive_planner_selects_solo_for_fast_and_hybrid_fanout_for_deep_waves() {
-    // Fast run always chooses SoloSingleLambda with zero fan-out shards.
     let fast_plan = plan_carbon_execution(&CarbonPlanInput {
         product_tier: CarbonProductTier::Free,
         effort: CarbonEffortTier::Fast,
@@ -113,7 +109,6 @@ fn adaptive_planner_selects_solo_for_fast_and_hybrid_fanout_for_deep_waves() {
     assert_eq!(fast_plan.shards_per_wave, 0);
     assert_eq!(fast_plan.eval_class, EvalMemoryClass::Xs512Mb);
 
-    // High effort on a 40,000-row Pro dataset chooses HybridFanOut across right-sized workers.
     let high_plan = plan_carbon_execution(&CarbonPlanInput {
         product_tier: CarbonProductTier::Pro,
         effort: CarbonEffortTier::High,
@@ -128,7 +123,6 @@ fn adaptive_planner_selects_solo_for_fast_and_hybrid_fanout_for_deep_waves() {
     assert!(high_plan.shards_per_wave >= 8);
     assert!(high_plan.hybrid_wall_ms * 2.2 <= high_plan.solo_wall_ms);
 
-    // Multi-gigabyte Enterprise working set exceeding XL (7,076 MB) returns typed refusal directing to `carbon serve`.
     let huge = plan_carbon_execution(&CarbonPlanInput {
         product_tier: CarbonProductTier::no_limit(),
         effort: CarbonEffortTier::Ultra,
@@ -144,38 +138,100 @@ fn adaptive_planner_selects_solo_for_fast_and_hybrid_fanout_for_deep_waves() {
 }
 
 #[test]
-fn seal_envelope_authenticates_roundtrip_and_refuses_tamper_or_wrong_context() {
+fn seal_envelope_authenticates_domain_and_udek_and_refuses_tamper() {
     let key = CarbonSealKey::from_bytes([0x5A; 32]);
+    let u_dek = [0x99u8; 32];
+    let other_dek = [0xAAu8; 32];
     let secret_payload = b"opaque-candidate-archive-wave-3";
-    let env =
-        SealedCheckpointEnvelope::seal(&key, "tenant_alpha", "run_01J", 3, secret_payload).unwrap();
+    let env = SealedCheckpointEnvelope::seal_with_domain(
+        &key,
+        CarbonSealDomain::CheckpointArchive,
+        "tenant_alpha",
+        "run_01J",
+        3,
+        Some(&u_dek),
+        secret_payload,
+    )
+    .unwrap();
     assert_eq!(env.wave_index(), 3);
     assert!(!env
         .wire_bytes()
         .windows(secret_payload.len())
         .any(|w| w == secret_payload));
 
-    let (wave, opened) =
-        SealedCheckpointEnvelope::open(&key, "tenant_alpha", "run_01J", env.wire_bytes()).unwrap();
+    let (wave, opened) = SealedCheckpointEnvelope::open_with_domain(
+        &key,
+        CarbonSealDomain::CheckpointArchive,
+        "tenant_alpha",
+        "run_01J",
+        Some(&u_dek),
+        env.wire_bytes(),
+    )
+    .unwrap();
     assert_eq!(wave, 3);
     assert_eq!(opened.as_slice(), secret_payload);
 
-    // Cross-tenant or cross-run replay is cryptographically refused.
+    // Domain swap (`CheckpointArchive` -> `ChampionModel`) MUST fail closed (`RT-06`).
     assert!(matches!(
-        SealedCheckpointEnvelope::open(&key, "tenant_beta", "run_01J", env.wire_bytes()),
-        Err(CarbonError::SealAuthenticationFailed { .. })
-    ));
-    assert!(matches!(
-        SealedCheckpointEnvelope::open(&key, "tenant_alpha", "run_other", env.wire_bytes()),
+        SealedCheckpointEnvelope::open_with_domain(
+            &key,
+            CarbonSealDomain::ChampionModel,
+            "tenant_alpha",
+            "run_01J",
+            Some(&u_dek),
+            env.wire_bytes()
+        ),
         Err(CarbonError::SealAuthenticationFailed { .. })
     ));
 
-    // Single-bit ciphertext mutation is refused by AES-256-GCM tag verification.
+    // Wrong per-user `U_DEK` or missing `U_DEK` MUST fail closed (`RT-06`).
+    assert!(matches!(
+        SealedCheckpointEnvelope::open_with_domain(
+            &key,
+            CarbonSealDomain::CheckpointArchive,
+            "tenant_alpha",
+            "run_01J",
+            Some(&other_dek),
+            env.wire_bytes()
+        ),
+        Err(CarbonError::SealAuthenticationFailed { .. })
+    ));
+    assert!(matches!(
+        SealedCheckpointEnvelope::open_with_domain(
+            &key,
+            CarbonSealDomain::CheckpointArchive,
+            "tenant_alpha",
+            "run_01J",
+            None,
+            env.wire_bytes()
+        ),
+        Err(CarbonError::SealAuthenticationFailed { .. })
+    ));
+
+    // Cross-tenant or bit-mutation is cryptographically refused.
+    assert!(matches!(
+        SealedCheckpointEnvelope::open_with_domain(
+            &key,
+            CarbonSealDomain::CheckpointArchive,
+            "tenant_beta",
+            "run_01J",
+            Some(&u_dek),
+            env.wire_bytes()
+        ),
+        Err(CarbonError::SealAuthenticationFailed { .. })
+    ));
     let mut tampered = env.wire_bytes().to_vec();
     let last = tampered.len() - 1;
     tampered[last] ^= 0x80;
     assert!(matches!(
-        SealedCheckpointEnvelope::open(&key, "tenant_alpha", "run_01J", &tampered),
+        SealedCheckpointEnvelope::open_with_domain(
+            &key,
+            CarbonSealDomain::CheckpointArchive,
+            "tenant_alpha",
+            "run_01J",
+            Some(&u_dek),
+            &tampered
+        ),
         Err(CarbonError::SealAuthenticationFailed { .. })
     ));
 }
@@ -184,7 +240,6 @@ fn seal_envelope_authenticates_roundtrip_and_refuses_tamper_or_wrong_context() {
 fn spot_advisor_enforces_three_conjunctive_gates_and_two_month_window() {
     let thresholds = SpotAdvisorThresholds::default();
 
-    // Spiky traffic (P95/mean = 8.0 > 3.5) stays pure Lambda even with high spend.
     let spiky = MonthlyWindowMetrics::for_region("us-east-2", 4_200.0, 20.0, 22.0, 176.0, 0.01);
     let spiky_verdict = evaluate_spot_hybrid_gates(&[spiky, spiky], &thresholds);
     assert!(spiky_verdict.latest_spend_gate_passed);
@@ -195,7 +250,6 @@ fn spot_advisor_enforces_three_conjunctive_gates_and_two_month_window() {
         SpotAdvisorRecommendation::StayPureLambda
     );
 
-    // Moderate spend + elevated cold-start rate triggers Step 1.5 Warm Standby before Spot.
     let cold_heavy = MonthlyWindowMetrics::for_region("eu-west-1", 600.0, 2.0, 4.0, 18.0, 0.09);
     let warm_verdict = evaluate_spot_hybrid_gates(&[cold_heavy], &thresholds);
     assert_eq!(
@@ -203,8 +257,6 @@ fn spot_advisor_enforces_three_conjunctive_gates_and_two_month_window() {
         SpotAdvisorRecommendation::EnableWarmStandbyLambda
     );
 
-    // Sustained flat load passing S-1 ($3,400), S-2 (P20 = 18 vCPUs), and S-3 (48/24 = 2.0x)
-    // for 1 month waits, then qualifies on month 2!
     let steady = MonthlyWindowMetrics::for_region("us-east-2", 3_400.0, 18.0, 24.0, 48.0, 0.01);
     assert_eq!(
         evaluate_spot_hybrid_gates(&[steady], &thresholds).recommendation,
@@ -279,6 +331,8 @@ fn cli_smoke_tls_provider_and_guidance_cover_all_variants() {
             max_lambda_mb: 7_076,
         },
         CarbonError::SealAuthenticationFailed { reason: "tag" },
+        CarbonError::UserEnvelopeFailed { reason: "cuen" },
+        CarbonError::CapabilityAuthFailed { reason: "ctk1" },
         CarbonError::InvalidRoleOrCommand {
             value: "bogus".into(),
         },
@@ -291,4 +345,127 @@ fn cli_smoke_tls_provider_and_guidance_cover_all_variants() {
         assert_eq!(g.docs_url, CARBON_DOCS_URL);
         assert!(!g.repair_hint.is_empty());
     }
+}
+
+#[test]
+fn cloudformation_cell_template_and_deterministic_packager_invariants() {
+    use jope_carbon::{
+        build_deterministic_zip_bytes, expand_region_targets, synthesize_cell_template_for_release,
+        verify_arm64_lambda_binary, CarbonZipEntry, CANONICAL_17_REGIONS,
+    };
+
+    // 1. Synthesis + zero-trust CloudFormation invariants
+    let synth_str = synthesize_cell_template_for_release("da0ae4a7c0ffee").unwrap();
+    let tpl: serde_json::Value = serde_json::from_str(&synth_str).unwrap();
+    let resources = tpl["Resources"].as_object().unwrap();
+
+    assert!(resources.contains_key("EdgeVersionda0ae4a7c0ffee"));
+    assert!(resources.contains_key("EngineVersionda0ae4a7c0ffee"));
+    assert!(resources.contains_key("EvalVersionda0ae4a7c0ffee"));
+    assert!(!resources.contains_key("EdgeVersionCurrent"));
+
+    // EdgeFunctionUrl MUST enforce AWS_IAM on the :live alias and never Principal: "*"
+    assert_eq!(
+        resources["EdgeFunctionUrl"]["Properties"]["AuthType"],
+        "AWS_IAM"
+    );
+    assert_eq!(
+        resources["EdgeFunctionUrl"]["Properties"]["Qualifier"],
+        "live"
+    );
+    assert_ne!(
+        resources["EdgeLiveUrlPermission"]["Properties"]["Principal"],
+        "*"
+    );
+    assert_ne!(
+        resources["EdgeLiveInvokePermission"]["Properties"]["Principal"],
+        "*"
+    );
+
+    // R882ModelLayer MUST attach strictly to EngineFunction, never EdgeFunction or EvalFunction
+    assert!(resources["EngineFunction"]["Properties"]
+        .get("Layers")
+        .is_some());
+    assert!(resources["EdgeFunction"]["Properties"]
+        .get("Layers")
+        .is_none());
+    assert!(resources["EvalFunction"]["Properties"]
+        .get("Layers")
+        .is_none());
+
+    // Role-separated secrets: EdgeFunction must never receive seal_secret_hex or engine_kek_hex
+    let edge_env =
+        serde_json::to_string(&resources["EdgeFunction"]["Properties"]["Environment"]).unwrap();
+    assert!(!edge_env.contains("seal_secret_hex"));
+    assert!(!edge_env.contains("engine_kek_hex"));
+
+    let eval_env =
+        serde_json::to_string(&resources["EvalFunction"]["Properties"]["Environment"]).unwrap();
+    assert!(!eval_env.contains("auth_secret_hex"));
+    assert!(!eval_env.contains("engine_kek_hex"));
+
+    // 2. Deterministic reproducible ZIP archive invariants + traversal rejection
+    let zip_a = build_deterministic_zip_bytes(vec![
+        CarbonZipEntry {
+            rel_path: "b/weights.bin".to_owned(),
+            bytes: vec![1, 2, 3, 4, 5],
+            unix_mode: 0o100644,
+        },
+        CarbonZipEntry {
+            rel_path: "bootstrap".to_owned(),
+            bytes: b"arm64-bootstrap-stub".to_vec(),
+            unix_mode: 0o100755,
+        },
+    ])
+    .unwrap();
+    let zip_b = build_deterministic_zip_bytes(vec![
+        CarbonZipEntry {
+            rel_path: "bootstrap".to_owned(),
+            bytes: b"arm64-bootstrap-stub".to_vec(),
+            unix_mode: 0o100755,
+        },
+        CarbonZipEntry {
+            rel_path: "b/weights.bin".to_owned(),
+            bytes: vec![1, 2, 3, 4, 5],
+            unix_mode: 0o100644,
+        },
+    ])
+    .unwrap();
+    assert_eq!(
+        zip_a, zip_b,
+        "deterministic ZIP must be order-independent and bit-exact"
+    );
+    assert!(build_deterministic_zip_bytes(vec![CarbonZipEntry {
+        rel_path: "../escape".to_owned(),
+        bytes: vec![0],
+        unix_mode: 0o100644,
+    }])
+    .is_err());
+
+    // 3. ARM64 ELF64 + CT3 symbol fence verifier
+    let mut fake_arm64_elf = vec![0u8; 64];
+    fake_arm64_elf[0..4].copy_from_slice(b"\x7fELF");
+    fake_arm64_elf[4] = 2; // ELFCLASS64
+    fake_arm64_elf[5] = 1; // ELFDATA2LSB
+    fake_arm64_elf[18..20].copy_from_slice(&0x00B7u16.to_le_bytes()); // EM_AARCH64
+    verify_arm64_lambda_binary(&fake_arm64_elf, true).unwrap();
+
+    let mut leaked_edge = fake_arm64_elf.clone();
+    leaked_edge.extend_from_slice(b"models/bundles/r882");
+    assert!(verify_arm64_lambda_binary(&leaked_edge, true).is_err());
+
+    let mut fake_x86_elf = fake_arm64_elf;
+    fake_x86_elf[18..20].copy_from_slice(&0x003Eu16.to_le_bytes()); // EM_X86_64
+    assert!(verify_arm64_lambda_binary(&fake_x86_elf, false).is_err());
+
+    // 4. Region expansion presets
+    assert_eq!(CANONICAL_17_REGIONS.len(), 17);
+    assert_eq!(
+        expand_region_targets(&["all-17".to_owned()]).unwrap().len(),
+        17
+    );
+    assert_eq!(
+        expand_region_targets(&["canary".to_owned()]).unwrap(),
+        vec!["us-east-2".to_owned()]
+    );
 }

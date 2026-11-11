@@ -4,13 +4,10 @@
 //! `Lambda-Runtime-Aws-Request-Id` and `Lambda-Runtime-Deadline-Ms`, invokes the cell handler,
 //! and posts the response or structured runtime error back to the Lambda Runtime API.
 
-#[cfg(feature = "edge")]
 use std::io::Read;
-#[cfg(feature = "edge")]
 use std::time::Duration;
 
 /// `CarbonLambdaInvocation` is a struct representing one dequeued AWS Lambda Runtime API event.
-#[cfg(feature = "edge")]
 #[derive(Clone, Debug)]
 pub struct CarbonLambdaInvocation {
     pub request_id: String,
@@ -18,10 +15,8 @@ pub struct CarbonLambdaInvocation {
     pub payload: Vec<u8>,
 }
 
-/// Execute the AWS Lambda Custom Runtime loop against `runtime_api_host_port`
-/// (from `LAMBDA_RUNTIME_API`), stopping cleanly after `max_invocations` (when `Some`) or when
-/// the runtime server closes (`410 Gone` in `carbon emu` shutdown).
-#[cfg(feature = "edge")]
+/// Execute the AWS Lambda Custom Runtime loop against `runtime_api_host_port`, stopping cleanly
+/// after `max_invocations` (when `Some`) or when the runtime server closes (`410 Gone` in `carbon emu`).
 pub fn run_lambda_custom_runtime_loop<F>(
     runtime_api_host_port: &str,
     max_invocations: Option<usize>,
@@ -56,7 +51,6 @@ where
             .map_err(|e| format!("Lambda Runtime API /next poll failed: {e}"))?;
         let status = next_resp.status().as_u16();
         if status == 410 {
-            // Clean shutdown sentinel used by `carbon emu`.
             return Ok(processed);
         }
         if status != 200 {

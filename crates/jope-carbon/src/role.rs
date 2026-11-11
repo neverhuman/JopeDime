@@ -169,6 +169,33 @@ impl CarbonProductTier {
         }
     }
 
+    /// Optional per-blob upload byte ceiling (`8 MiB` Free, `128 MiB` Pro, `None` Enterprise).
+    pub const fn max_upload_slot_bytes(self) -> Option<u64> {
+        match self {
+            Self::Free => Some(8 * 1_048_576),
+            Self::Pro => Some(128 * 1_048_576),
+            Self::Enterprise => None,
+        }
+    }
+
+    /// Optional per-run `/predict` invocation cap (`20` Free, `1,000` Pro, `None` Enterprise).
+    pub const fn max_predict_calls_per_run(self) -> Option<u32> {
+        match self {
+            Self::Free => Some(20),
+            Self::Pro => Some(1_000),
+            Self::Enterprise => None,
+        }
+    }
+
+    /// Optional per-call `/predict` row cap (`1,000` Free, `50,000` Pro, `None` Enterprise).
+    pub const fn max_predict_rows_per_call(self) -> Option<usize> {
+        match self {
+            Self::Free => Some(1_000),
+            Self::Pro => Some(50_000),
+            Self::Enterprise => None,
+        }
+    }
+
     /// Validate that `(total_rows, features, effort)` is admitted under this product tier.
     pub fn validate_admission(
         self,

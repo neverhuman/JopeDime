@@ -1,0 +1,1043 @@
+//! Zero-knowledge thin client SDK for Carbon regional Lambda cells and Enterprise `carbon serve`.
+//!
+//! Performs deterministic `FIT` / `HOLDOUT` splitting, `FIT`-only landmark conditioning (`JLMB` v1),
+//! `JMAT` v1 encoding, and per-user `ECDH P-256 + HKDF-SHA256 + AES-256-GCM` (`CUEN\x01` / `CUDK\x01`)
+//! envelope encryption strictly on the client before uploading to size/SHA-pinned presigned URLs.
+
+use std::collections::BTreeMap;
+use std::io::Read;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::{Duration, Instant};
+
+use base64::Engine as _;
+use jope_api::{
+    carbon::{
+        CarbonAnonymousAuthResponse, CarbonCreateRunRequest, CarbonEarlyStopRequest,
+        CarbonPingResponse, CarbonPredictRequest, CarbonPredictResponse,
+        CarbonPrepareUploadRequest, CarbonPrepareUploadResponse, CarbonPublicWaveProgress,
+        CarbonRegionCatalog, CarbonResumeRunRequest, CarbonRunStateWire, CarbonShredRunResponse,
+        CarbonTierWire, CarbonUploadSlotWire,
+    },
+    decimal::DecimalU64,
+    ids::{DatasetId, RunId},
+    Effort,
+};
+use jope_prep::{
+    cuen::CuenPayloadKind, split_and_encode_jmat_v1, FitLandmarkBundle, PrepTable,
+    SplitJmatArtifacts, SplitPlan,
+};
+use zeroize::Zeroizing;
+
+use crate::{
+    cells::engine_invoker::now_epoch_ms,
+    security::{
+        auth::{CarbonAuthVerifier, CarbonCapabilityClaims},
+        sigv4::{sign_aws_v4_headers_with_extra, url_encode_component, CarbonAwsCredentials},
+        user_envelope::{
+            decode_p256_pubkey_b64, decrypt_cuen_payload, encrypt_cuen_payload,
+            generate_random_u_dek, unwrap_u_dek_with_kek, wrap_u_dek_to_pubkey,
+            CarbonEncryptedPredictPayload, CarbonEngineKek, CAS_BLOB_CUEN_SCOPE,
+        },
+    },
+    storage::cas::sha256_lower_hex,
+};
+
+#[derive(Clone)]
+struct UploadedEncryptionSecret {
+    u_dek: Zeroizing<[u8; 32]>,
+    fit_cuen_sha256: String,
+    holdout_cuen_sha256: String,
+}
+
+/// `CarbonClientPreparedDataset` is a struct holding client-side split `JMAT` blobs and the
+/// `FIT`-only `6,368`-byte `FitLandmarkBundle` ready for encryption and upload.
+#[derive(Clone, Debug)]
+pub struct CarbonClientPreparedDataset {
+    pub split_plan: SplitPlan,
+    pub landmark_bundle: FitLandmarkBundle,
+    pub artifacts: SplitJmatArtifacts,
+    pub feature_names: Vec<String>,
+    pub target_name: String,
+    pub fit_rows: u32,
+    pub holdout_rows: u32,
+}
+
+/// `CarbonProbedEndpoint` is a struct recording one regional `/v1/carbon/ping` RTT measurement.
+#[derive(Clone, Debug)]
+pub struct CarbonProbedEndpoint {
+    pub base_url: String,
+    pub region: String,
+    pub rtt_ms: f64,
+    pub enterprise_self_hosted: bool,
+    pub engine_kek_pubkey_b64: Option<String>,
+}
+
+/// `CarbonThinClient` is a struct driving zero-knowledge end-to-end Carbon inference, search,
+/// async `202` polling, pause/resume, cryptographic shred, and multi-region failover.
+#[derive(Clone)]
+pub struct CarbonThinClient {
+    endpoints: Vec<String>,
+    active_endpoint: String,
+    enterprise_self_hosted: bool,
+    engine_kek_pubkey: Option<[u8; 65]>,
+    capability_token: Option<String>,
+    uploaded_secrets: Arc<Mutex<BTreeMap<String, UploadedEncryptionSecret>>>,
+    run_udeks: Arc<Mutex<BTreeMap<String, Zeroizing<[u8; 32]>>>>,
+    agent: ureq::Agent,
+}
+
+impl CarbonThinClient {
+    /// Probe `/v1/carbon/ping` across all candidates and select the lowest-RTT healthy cell.
+    pub fn connect_fastest(
+        candidate_urls: Vec<String>,
+    ) -> Result<(Self, Vec<CarbonProbedEndpoint>), String> {
+        if candidate_urls.is_empty() {
+            return Err("CarbonThinClient requires at least one endpoint URL".to_owned());
+        }
+        let agent = crate::tls::carbon_https_agent().clone();
+        let mut healthy = Vec::new();
+        for raw_url in &candidate_urls {
+            let base = raw_url.trim_end_matches('/').to_owned();
+            let t0 = Instant::now();
+            if let Ok((200, buf)) =
+                send_raw_edge_http_with_agent(&agent, &base, "GET", "/v1/carbon/ping", &[], None)
+            {
+                if let Ok(ping) = serde_json::from_slice::<CarbonPingResponse>(&buf) {
+                    if ping.healthy {
+                        healthy.push(CarbonProbedEndpoint {
+                            base_url: base,
+                            region: ping.region,
+                            rtt_ms: t0.elapsed().as_secs_f64() * 1_000.0,
+                            enterprise_self_hosted: ping.enterprise_self_hosted,
+                            engine_kek_pubkey_b64: ping.engine_kek_pubkey_b64,
+                        });
+                    }
+                }
+            }
+        }
+        if healthy.is_empty() {
+            return Err(
+                "all candidate Carbon regional endpoints failed /v1/carbon/ping".to_owned(),
+            );
+        }
+        healthy.sort_by(|a, b| {
+            a.rtt_ms
+                .partial_cmp(&b.rtt_ms)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        let best = &healthy[0];
+        let engine_kek_pubkey = match &best.engine_kek_pubkey_b64 {
+            Some(b64) => Some(decode_p256_pubkey_b64(b64).map_err(|e| e.to_string())?),
+            None => None,
+        };
+        let ordered_endpoints: Vec<String> = healthy.iter().map(|h| h.base_url.clone()).collect();
+        Ok((
+            Self {
+                endpoints: ordered_endpoints,
+                active_endpoint: best.base_url.clone(),
+                enterprise_self_hosted: best.enterprise_self_hosted,
+                engine_kek_pubkey,
+                capability_token: None,
+                uploaded_secrets: Arc::new(Mutex::new(BTreeMap::new())),
+                run_udeks: Arc::new(Mutex::new(BTreeMap::new())),
+                agent,
+            },
+            healthy,
+        ))
+    }
+
+    /// Attach a signed `ctk1.*` capability token for Pro, Free, or Admin requests.
+    pub fn with_capability_token(mut self, token: impl Into<String>) -> Self {
+        let tok = token.into();
+        if !tok.trim().is_empty() {
+            self.capability_token = Some(tok);
+        }
+        self
+    }
+
+    /// Mint a 1-hour anonymous Free-tier capability token from `POST /v1/carbon/auth/anonymous`
+    /// and attach it to this client.
+    pub fn authenticate_anonymous(&mut self) -> Result<CarbonAnonymousAuthResponse, String> {
+        let (code, bytes) = send_raw_edge_http_with_agent(
+            &self.agent,
+            &self.active_endpoint,
+            "POST",
+            "/v1/carbon/auth/anonymous",
+            &[],
+            Some(b"{}"),
+        )?;
+        if code >= 300 {
+            return Err(format!("HTTP {code}: {}", String::from_utf8_lossy(&bytes)));
+        }
+        let resp: CarbonAnonymousAuthResponse = serde_json::from_slice(&bytes)
+            .map_err(|e| format!("decode CarbonAnonymousAuthResponse: {e}"))?;
+        if let Some(b64) = &resp.engine_kek_pubkey_b64 {
+            self.engine_kek_pubkey = Some(decode_p256_pubkey_b64(b64).map_err(|e| e.to_string())?);
+        }
+        self.capability_token = Some(resp.capability_token.clone());
+        Ok(resp)
+    }
+
+    pub fn active_endpoint(&self) -> &str {
+        &self.active_endpoint
+    }
+
+    pub fn enterprise_self_hosted(&self) -> bool {
+        self.enterprise_self_hosted
+    }
+
+    pub fn has_zero_knowledge_kek(&self) -> bool {
+        self.engine_kek_pubkey.is_some()
+    }
+
+    pub fn candidate_endpoints(&self) -> &[String] {
+        &self.endpoints
+    }
+
+    pub fn ping_active(&self) -> Result<CarbonPingResponse, String> {
+        let bytes = self.request_checked("GET", "/v1/carbon/ping", None, None, None)?;
+        serde_json::from_slice(&bytes).map_err(|e| format!("decode CarbonPingResponse: {e}"))
+    }
+
+    pub fn fetch_region_catalog(&self) -> Result<CarbonRegionCatalog, String> {
+        let bytes =
+            self.request_checked("GET", "/.well-known/carbon-regions.json", None, None, None)?;
+        serde_json::from_slice(&bytes).map_err(|e| format!("decode CarbonRegionCatalog: {e}"))
+    }
+
+    /// Perform client-side `SplitPlan::deterministic`, `FitLandmarkBundle::extract_fit_only`,
+    /// and separated `fit.jmat` / `holdout.jmat` encoding so holdout labels never touch landmarks.
+    pub fn prepare_numeric_dataset(
+        headers: Vec<String>,
+        numeric_rows: &[Vec<f64>],
+        target_name: &str,
+        seed: u64,
+        holdout_fraction: f64,
+    ) -> Result<CarbonClientPreparedDataset, String> {
+        let target_idx = headers
+            .iter()
+            .position(|h| h == target_name)
+            .ok_or_else(|| format!("target column '{target_name}' not found in headers"))?;
+        let feature_indices: Vec<usize> = (0..headers.len()).filter(|&i| i != target_idx).collect();
+        if feature_indices.is_empty() {
+            return Err("dataset must have at least one feature column".to_owned());
+        }
+        let feature_names: Vec<String> = feature_indices
+            .iter()
+            .map(|&i| headers[i].clone())
+            .collect();
+        let total_rows = numeric_rows.len();
+        let split_plan = SplitPlan::deterministic(total_rows, seed, holdout_fraction)
+            .map_err(|e| format!("split plan failed: {e}"))?;
+
+        let mut full_x = Vec::with_capacity(total_rows * feature_indices.len());
+        let mut full_y = Vec::with_capacity(total_rows);
+        let mut string_rows = Vec::with_capacity(total_rows);
+        for (r_idx, row) in numeric_rows.iter().enumerate() {
+            if row.len() != headers.len() {
+                return Err(format!("row {r_idx} column count mismatch"));
+            }
+            for &fi in &feature_indices {
+                full_x.push(row[fi] as f32);
+            }
+            full_y.push(row[target_idx] as f32);
+            string_rows.push(row.iter().map(|v| Some(format!("{v:.10}"))).collect());
+        }
+
+        let landmark_bundle = FitLandmarkBundle::extract_fit_only(
+            &full_x,
+            total_rows,
+            feature_indices.len(),
+            &full_y,
+            &split_plan,
+        )
+        .map_err(|e| format!("FIT-only landmark conditioning failed: {e}"))?;
+
+        let table = PrepTable {
+            headers,
+            rows: string_rows,
+        };
+        let artifacts = split_and_encode_jmat_v1(&table, &split_plan)
+            .map_err(|e| format!("JMAT split encoding failed: {e}"))?;
+
+        Ok(CarbonClientPreparedDataset {
+            fit_rows: split_plan.fit_rows().len() as u32,
+            holdout_rows: split_plan.holdout_rows().len() as u32,
+            split_plan,
+            landmark_bundle,
+            artifacts,
+            feature_names,
+            target_name: target_name.to_owned(),
+        })
+    }
+
+    /// Encrypt `fit.jmat` and `holdout.jmat` with a fresh per-upload 256-bit `U_DEK` (`CUEN\x01`)
+    /// when `engine_kek_pubkey` is advertised, request size/SHA-pinned presigned URLs, and `PUT` both blobs.
+    pub fn upload_prepared(
+        &self,
+        tenant_id: &str,
+        tier: CarbonTierWire,
+        prepared: &CarbonClientPreparedDataset,
+    ) -> Result<CarbonPrepareUploadResponse, String> {
+        let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
+        let (fit_wire, fit_sha, holdout_wire, holdout_sha, encrypted_cuen, secret_opt) =
+            if self.engine_kek_pubkey.is_some() {
+                let u_dek = generate_random_u_dek().map_err(|e| e.to_string())?;
+                let fit_enc = encrypt_cuen_payload(
+                    &u_dek,
+                    CuenPayloadKind::FitJmat,
+                    tenant_id,
+                    CAS_BLOB_CUEN_SCOPE,
+                    &prepared.artifacts.fit_jmat,
+                )
+                .map_err(|e| e.to_string())?;
+                let hold_enc = encrypt_cuen_payload(
+                    &u_dek,
+                    CuenPayloadKind::HoldoutJmat,
+                    tenant_id,
+                    CAS_BLOB_CUEN_SCOPE,
+                    &prepared.artifacts.holdout_jmat,
+                )
+                .map_err(|e| e.to_string())?;
+                let f_sha = sha256_lower_hex(&fit_enc);
+                let h_sha = sha256_lower_hex(&hold_enc);
+                let secret = UploadedEncryptionSecret {
+                    u_dek,
+                    fit_cuen_sha256: f_sha.clone(),
+                    holdout_cuen_sha256: h_sha.clone(),
+                };
+                (fit_enc, f_sha, hold_enc, h_sha, true, Some(secret))
+            } else {
+                let f_sha = pt_fit_sha.clone();
+                let h_sha = hex::encode(prepared.artifacts.holdout_sha256);
+                (
+                    prepared.artifacts.fit_jmat.clone(),
+                    f_sha,
+                    prepared.artifacts.holdout_jmat.clone(),
+                    h_sha,
+                    false,
+                    None,
+                )
+            };
+
+        let prep_req = CarbonPrepareUploadRequest {
+            tenant_id: tenant_id.to_owned(),
+            tier,
+            fit_rows: prepared.fit_rows,
+            holdout_rows: prepared.holdout_rows,
+            feature_count: prepared.feature_names.len() as u32,
+            fit_jmat: CarbonUploadSlotWire {
+                sha256: fit_sha,
+                bytes: DecimalU64(fit_wire.len() as u64),
+            },
+            holdout_jmat: CarbonUploadSlotWire {
+                sha256: holdout_sha,
+                bytes: DecimalU64(holdout_wire.len() as u64),
+            },
+            encrypted_cuen,
+        };
+        let payload = serde_json::to_vec(&prep_req).map_err(|e| format!("encode JSON: {e}"))?;
+        let resp_bytes = self.request_checked(
+            "POST",
+            "/v1/carbon/uploads/prepare",
+            Some(tenant_id),
+            Some(tier),
+            Some(&payload),
+        )?;
+        let prep_resp: CarbonPrepareUploadResponse = serde_json::from_slice(&resp_bytes)
+            .map_err(|e| format!("decode upload prepare response: {e}"))?;
+
+        self.put_presigned_bytes(&prep_resp.fit_target.url, &fit_wire)?;
+        self.put_presigned_bytes(&prep_resp.holdout_target.url, &holdout_wire)?;
+        if let Some(secret) = secret_opt {
+            if let Ok(mut guard) = self.uploaded_secrets.lock() {
+                guard.insert(format!("{tenant_id}:{pt_fit_sha}"), secret);
+            }
+        }
+        Ok(prep_resp)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn start_run(
+        &self,
+        run_id: RunId,
+        dataset_id: DatasetId,
+        tenant_id: &str,
+        tier: CarbonTierWire,
+        effort: Effort,
+        objective: &str,
+        seed: u64,
+        prepared: &CarbonClientPreparedDataset,
+    ) -> Result<CarbonPublicWaveProgress, String> {
+        let run_str = run_id.to_string();
+        let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
+        let lm_wire = prepared.landmark_bundle.to_wire_bytes();
+
+        let req = if let Some(kek_pub) = &self.engine_kek_pubkey {
+            let secret = self
+                .uploaded_secrets
+                .lock()
+                .map_err(|_| "uploaded_secrets mutex poisoned".to_owned())?
+                .get(&format!("{tenant_id}:{pt_fit_sha}"))
+                .cloned()
+                .ok_or_else(|| {
+                    "upload_prepared must be called on this client before start_run in zero-knowledge mode"
+                        .to_owned()
+                })?;
+            let enc_lm = encrypt_cuen_payload(
+                &secret.u_dek,
+                CuenPayloadKind::LandmarkJlmb,
+                tenant_id,
+                &run_str,
+                &lm_wire,
+            )
+            .map_err(|e| e.to_string())?;
+            let cudk = wrap_u_dek_to_pubkey(&secret.u_dek, kek_pub, tenant_id, &run_str)
+                .map_err(|e| e.to_string())?;
+            if let Ok(mut run_map) = self.run_udeks.lock() {
+                run_map.insert(format!("{tenant_id}:{run_str}"), secret.u_dek.clone());
+            }
+            CarbonCreateRunRequest {
+                run_id,
+                dataset_id,
+                tenant_id: tenant_id.to_owned(),
+                tier,
+                fit_jmat_sha256: secret.fit_cuen_sha256,
+                holdout_jmat_sha256: secret.holdout_cuen_sha256,
+                fit_rows: prepared.fit_rows,
+                holdout_rows: prepared.holdout_rows,
+                feature_names: prepared.feature_names.clone(),
+                target_name: prepared.target_name.clone(),
+                objective: objective.to_owned(),
+                effort,
+                seed: DecimalU64(seed),
+                landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(enc_lm),
+                encrypted_cuen: true,
+                wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk)),
+            }
+        } else {
+            CarbonCreateRunRequest {
+                run_id,
+                dataset_id,
+                tenant_id: tenant_id.to_owned(),
+                tier,
+                fit_jmat_sha256: pt_fit_sha,
+                holdout_jmat_sha256: hex::encode(prepared.artifacts.holdout_sha256),
+                fit_rows: prepared.fit_rows,
+                holdout_rows: prepared.holdout_rows,
+                feature_names: prepared.feature_names.clone(),
+                target_name: prepared.target_name.clone(),
+                objective: objective.to_owned(),
+                effort,
+                seed: DecimalU64(seed),
+                landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(lm_wire),
+                encrypted_cuen: false,
+                wrapped_u_dek_b64: None,
+            }
+        };
+
+        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let bytes = self.request_checked(
+            "POST",
+            "/v1/carbon/runs",
+            Some(tenant_id),
+            Some(tier),
+            Some(&payload),
+        )?;
+        let initial: CarbonPublicWaveProgress = serde_json::from_slice(&bytes)
+            .map_err(|e| format!("decode start_run progress: {e}"))?;
+        self.wait_for_run_settlement(tenant_id, &run_str, initial)
+    }
+
+    pub fn get_run_status(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+    ) -> Result<CarbonPublicWaveProgress, String> {
+        let path = format!("/v1/carbon/runs/{run_id}?tenant_id={tenant_id}");
+        let bytes = self.request_checked("GET", &path, Some(tenant_id), None, None)?;
+        serde_json::from_slice(&bytes).map_err(|e| format!("decode run status: {e}"))
+    }
+
+    pub fn get_run_events_sse(&self, tenant_id: &str, run_id: &str) -> Result<String, String> {
+        let path = format!("/v1/carbon/runs/{run_id}/events?tenant_id={tenant_id}");
+        let bytes = self.request_checked("GET", &path, Some(tenant_id), None, None)?;
+        String::from_utf8(bytes).map_err(|e| format!("SSE UTF-8 error: {e}"))
+    }
+
+    pub fn signal_early_stop(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+        reason: Option<String>,
+    ) -> Result<(), String> {
+        let path = format!("/v1/carbon/runs/{run_id}/stop");
+        let req = CarbonEarlyStopRequest {
+            tenant_id: tenant_id.to_owned(),
+            reason,
+        };
+        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let _ = self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
+        Ok(())
+    }
+
+    pub fn resume_run(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+        effort: Option<Effort>,
+        additional_waves: Option<u32>,
+    ) -> Result<CarbonPublicWaveProgress, String> {
+        let path = format!("/v1/carbon/runs/{run_id}/resume");
+        let wrapped_u_dek_b64 = if let Some(kek_pub) = &self.engine_kek_pubkey {
+            let u_dek_opt = self
+                .run_udeks
+                .lock()
+                .ok()
+                .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).cloned());
+            if let Some(u_dek) = u_dek_opt {
+                let cudk = wrap_u_dek_to_pubkey(&u_dek, kek_pub, tenant_id, run_id)
+                    .map_err(|e| e.to_string())?;
+                Some(base64::engine::general_purpose::STANDARD.encode(cudk))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let req = CarbonResumeRunRequest {
+            tenant_id: tenant_id.to_owned(),
+            effort,
+            additional_waves,
+            wrapped_u_dek_b64,
+        };
+        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let bytes = self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
+        let initial: CarbonPublicWaveProgress =
+            serde_json::from_slice(&bytes).map_err(|e| format!("decode resume progress: {e}"))?;
+        self.wait_for_run_settlement(tenant_id, run_id, initial)
+    }
+
+    pub fn predict(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+        feature_names: Vec<String>,
+        rows: Vec<Vec<Option<f64>>>,
+    ) -> Result<CarbonPredictResponse, String> {
+        let path = format!("/v1/carbon/runs/{run_id}/predict");
+        let u_dek_opt = self
+            .run_udeks
+            .lock()
+            .ok()
+            .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).cloned());
+
+        if let (Some(kek_pub), Some(u_dek)) = (&self.engine_kek_pubkey, u_dek_opt) {
+            let resp_kek = CarbonEngineKek::generate().map_err(|e| e.to_string())?;
+            let enc_body = serde_json::to_vec(&CarbonEncryptedPredictPayload {
+                feature_names,
+                rows,
+            })
+            .map_err(|e| format!("encode encrypted predict payload: {e}"))?;
+            let cuen_req = encrypt_cuen_payload(
+                &u_dek,
+                CuenPayloadKind::PredictFeatures,
+                tenant_id,
+                run_id,
+                &enc_body,
+            )
+            .map_err(|e| e.to_string())?;
+            let cudk_req = wrap_u_dek_to_pubkey(&u_dek, kek_pub, tenant_id, run_id)
+                .map_err(|e| e.to_string())?;
+            let req = CarbonPredictRequest {
+                tenant_id: tenant_id.to_owned(),
+                feature_names: Vec::new(),
+                rows: Vec::new(),
+                encrypted_rows_cuen_b64: Some(
+                    base64::engine::general_purpose::STANDARD.encode(cuen_req),
+                ),
+                client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
+                wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_req)),
+            };
+            let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+            let bytes =
+                self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
+            let mut resp: CarbonPredictResponse = serde_json::from_slice(&bytes)
+                .map_err(|e| format!("decode predict response: {e}"))?;
+            let cudk_b64 = resp
+                .response_cudk_b64
+                .as_deref()
+                .ok_or_else(|| "missing response_cudk_b64 on encrypted predict".to_owned())?;
+            let cuen_b64 = resp
+                .encrypted_predictions_cuen_b64
+                .as_deref()
+                .ok_or_else(|| "missing encrypted_predictions_cuen_b64".to_owned())?;
+            let cudk_raw = base64::engine::general_purpose::STANDARD
+                .decode(cudk_b64)
+                .map_err(|e| format!("decode response_cudk_b64: {e}"))?;
+            let cuen_raw = base64::engine::general_purpose::STANDARD
+                .decode(cuen_b64)
+                .map_err(|e| format!("decode encrypted_predictions_cuen_b64: {e}"))?;
+            let r_dek = unwrap_u_dek_with_kek(&resp_kek, &cudk_raw, tenant_id, run_id)
+                .map_err(|e| e.to_string())?;
+            let pred_le = decrypt_cuen_payload(
+                &r_dek,
+                CuenPayloadKind::PredictOutputs,
+                tenant_id,
+                run_id,
+                &cuen_raw,
+            )
+            .map_err(|e| e.to_string())?;
+            if sha256_lower_hex(&pred_le) != resp.predictions_sha256 {
+                return Err("decrypted predictions SHA-256 mismatch".to_owned());
+            }
+            if pred_le.len() != (resp.row_count as usize) * 8 {
+                return Err("decrypted predictions byte length mismatch".to_owned());
+            }
+            let mut decoded_preds = Vec::with_capacity(resp.row_count as usize);
+            for chunk in pred_le.chunks_exact(8) {
+                let mut arr = [0u8; 8];
+                arr.copy_from_slice(chunk);
+                decoded_preds.push(f64::from_le_bytes(arr));
+            }
+            resp.predictions = decoded_preds;
+            return Ok(resp);
+        }
+
+        let req = CarbonPredictRequest {
+            tenant_id: tenant_id.to_owned(),
+            feature_names,
+            rows,
+            encrypted_rows_cuen_b64: None,
+            client_response_pubkey_b64: None,
+            wrapped_u_dek_b64: None,
+        };
+        let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
+        let bytes = self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
+        serde_json::from_slice(&bytes).map_err(|e| format!("decode predict response: {e}"))
+    }
+
+    /// Cryptographically shred all CAS blobs and state objects for `run_id` and purge `U_DEK` from client RAM.
+    pub fn shred_run(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+    ) -> Result<CarbonShredRunResponse, String> {
+        let path = format!("/v1/carbon/runs/{run_id}?tenant_id={tenant_id}");
+        let bytes = self.request_checked("DELETE", &path, Some(tenant_id), None, None)?;
+        if let Ok(mut g) = self.run_udeks.lock() {
+            g.remove(&format!("{tenant_id}:{run_id}"));
+        }
+        serde_json::from_slice(&bytes).map_err(|e| format!("decode shred response: {e}"))
+    }
+
+    fn wait_for_run_settlement(
+        &self,
+        tenant_id: &str,
+        run_id: &str,
+        mut progress: CarbonPublicWaveProgress,
+    ) -> Result<CarbonPublicWaveProgress, String> {
+        if progress.state == CarbonRunStateWire::Failed {
+            return Err(format!(
+                "run {run_id} failed: {}",
+                progress.failure_message.unwrap_or_default()
+            ));
+        }
+        let deadline = Instant::now() + Duration::from_secs(600);
+        let mut sleep_ms = 50u64;
+        while matches!(
+            progress.state,
+            CarbonRunStateWire::Queued | CarbonRunStateWire::Running
+        ) {
+            if Instant::now() >= deadline {
+                return Err(format!("timed out waiting for async run {run_id}"));
+            }
+            thread::sleep(Duration::from_millis(sleep_ms));
+            sleep_ms = (sleep_ms * 3 / 2).min(200);
+            progress = self.get_run_status(tenant_id, run_id)?;
+            if progress.state == CarbonRunStateWire::Failed {
+                return Err(format!(
+                    "run {run_id} failed: {}",
+                    progress.failure_message.unwrap_or_default()
+                ));
+            }
+        }
+        Ok(progress)
+    }
+
+    fn resolve_bearer_header(
+        &self,
+        tenant_id: Option<&str>,
+        requested_tier: Option<CarbonTierWire>,
+    ) -> Option<String> {
+        if let Some(tok) = &self.capability_token {
+            return Some(format!("Bearer {}", tok.trim()));
+        }
+        if let Ok(tok) = std::env::var("CARBON_AUTH_TOKEN") {
+            if !tok.trim().is_empty() {
+                return Some(format!("Bearer {}", tok.trim()));
+            }
+        }
+        if let (Some(tid), Ok(secret_hex)) = (tenant_id, std::env::var("CARBON_AUTH_SECRET_HEX")) {
+            if let Ok(verifier) = CarbonAuthVerifier::from_hex(&secret_hex) {
+                let tier = requested_tier.unwrap_or(CarbonTierWire::Pro);
+                if let Ok(tok) = verifier.mint_token(&CarbonCapabilityClaims {
+                    tenant_id: tid.to_owned(),
+                    tier,
+                    exp_epoch_secs: (now_epoch_ms() / 1_000).saturating_add(3_600),
+                    admin: false,
+                }) {
+                    return Some(format!("Bearer {tok}"));
+                }
+            }
+        }
+        None
+    }
+
+    fn request_checked(
+        &self,
+        method: &str,
+        path_and_query: &str,
+        tenant_id: Option<&str>,
+        requested_tier: Option<CarbonTierWire>,
+        body: Option<&[u8]>,
+    ) -> Result<Vec<u8>, String> {
+        let bearer = self.resolve_bearer_header(tenant_id, requested_tier);
+        let extra: Vec<(&str, &str)> = match &bearer {
+            Some(b) => vec![("x-carbon-capability-token", b.as_str())],
+            None => Vec::new(),
+        };
+        let (code, resp_body) = send_raw_edge_http_with_agent(
+            &self.agent,
+            &self.active_endpoint,
+            method,
+            path_and_query,
+            &extra,
+            body,
+        )?;
+        if code >= 300 {
+            return Err(format!(
+                "HTTP {code}: {}",
+                String::from_utf8_lossy(&resp_body)
+            ));
+        }
+        Ok(resp_body)
+    }
+
+    fn put_presigned_bytes(&self, url: &str, bytes: &[u8]) -> Result<(), String> {
+        let (code, body) = send_raw_put_url_with_agent(&self.agent, url, bytes, true)?;
+        if code >= 300 {
+            return Err(format!(
+                "PUT HTTP {code}: {}",
+                String::from_utf8_lossy(&body)
+            ));
+        }
+        Ok(())
+    }
+}
+
+/// Send a `PUT` to a presigned S3 or gateway URL (setting `x-amz-content-sha256` when `include_sha_header` is true).
+pub fn send_raw_put_url(
+    url: &str,
+    bytes: &[u8],
+    include_sha_header: bool,
+) -> Result<(u16, Vec<u8>), String> {
+    let agent = crate::tls::carbon_https_agent();
+    send_raw_put_url_with_agent(agent, url, bytes, include_sha_header)
+}
+
+fn send_raw_put_url_with_agent(
+    agent: &ureq::Agent,
+    url: &str,
+    bytes: &[u8],
+    include_sha_header: bool,
+) -> Result<(u16, Vec<u8>), String> {
+    let mut req = agent.put(url).config().http_status_as_error(false).build();
+    if include_sha_header && url.contains(".s3.") && url.contains("X-Amz-Signature=") {
+        let sha_hex = sha256_lower_hex(bytes);
+        req = req.header("x-amz-content-sha256", &sha_hex);
+    }
+    let mut resp = req
+        .send(bytes)
+        .map_err(|e| format!("PUT {url} failed: {e}"))?;
+    let code = resp.status().as_u16();
+    let mut out = Vec::new();
+    let _ = resp.body_mut().as_reader().read_to_end(&mut out);
+    Ok((code, out))
+}
+
+/// Low-level Carbon edge HTTP/Lambda dispatcher supporting `GET`, `POST`, `PUT`, `DELETE`,
+/// `AWS_IAM` SigV4 Function URLs, and `lambda://` direct Function URL v2 invocation.
+pub fn send_raw_edge_http(
+    base_endpoint: &str,
+    method: &str,
+    path_and_query: &str,
+    extra_headers: &[(&str, &str)],
+    body: Option<&[u8]>,
+) -> Result<(u16, Vec<u8>), String> {
+    let agent = crate::tls::carbon_https_agent();
+    send_raw_edge_http_with_agent(
+        agent,
+        base_endpoint,
+        method,
+        path_and_query,
+        extra_headers,
+        body,
+    )
+}
+
+fn send_raw_edge_http_with_agent(
+    agent: &ureq::Agent,
+    base_endpoint: &str,
+    method: &str,
+    path_and_query: &str,
+    extra_headers: &[(&str, &str)],
+    body: Option<&[u8]>,
+) -> Result<(u16, Vec<u8>), String> {
+    let base = base_endpoint.trim_end_matches('/');
+    if let Some(rest) = base.strip_prefix("lambda://") {
+        let (region, fn_name) = match rest.split_once('/') {
+            Some((r, f)) if !r.is_empty() && !f.is_empty() => (r.to_owned(), f.to_owned()),
+            _ => {
+                let resolved = std::env::var("CARBON_REGION")
+                    .or_else(|_| std::env::var("AWS_REGION"))
+                    .ok()
+                    .filter(|v| !v.trim().is_empty())
+                    .unwrap_or_else(|| "us-east-2".to_owned());
+                (resolved, rest.to_owned())
+            }
+        };
+        let (raw_path, raw_query) = match path_and_query.split_once('?') {
+            Some((p, q)) => (p, q),
+            None => (path_and_query, ""),
+        };
+        let mut hdr_map = serde_json::Map::new();
+        if body.is_some() {
+            hdr_map.insert(
+                "content-type".to_owned(),
+                serde_json::Value::String("application/json".to_owned()),
+            );
+        }
+        for &(hk, hv) in extra_headers {
+            hdr_map.insert(
+                hk.to_ascii_lowercase(),
+                serde_json::Value::String(hv.to_owned()),
+            );
+        }
+        let fn_url_event = match body {
+            Some(b) => serde_json::json!({
+                "version": "2.0",
+                "rawPath": raw_path,
+                "rawQueryString": raw_query,
+                "headers": hdr_map,
+                "requestContext": { "http": { "method": method, "path": raw_path } },
+                "body": base64::engine::general_purpose::STANDARD.encode(b),
+                "isBase64Encoded": true
+            }),
+            None => serde_json::json!({
+                "version": "2.0",
+                "rawPath": raw_path,
+                "rawQueryString": raw_query,
+                "headers": hdr_map,
+                "requestContext": { "http": { "method": method, "path": raw_path } },
+                "isBase64Encoded": false
+            }),
+        };
+        let event_bytes = serde_json::to_vec(&fn_url_event)
+            .map_err(|e| format!("encode Lambda Function URL v2 event: {e}"))?;
+        let creds = CarbonAwsCredentials::from_env()?;
+        let host = format!("lambda.{region}.amazonaws.com");
+        let canonical_uri = format!(
+            "/2015-03-31/functions/{}/invocations",
+            url_encode_component(&fn_name)
+        );
+        let url = format!("https://{host}{canonical_uri}");
+        let now_secs = now_epoch_ms() / 1_000;
+        let headers = sign_aws_v4_headers_with_extra(
+            &creds,
+            &region,
+            "lambda",
+            "POST",
+            &host,
+            &canonical_uri,
+            "",
+            &event_bytes,
+            now_secs,
+            &[],
+        );
+        let mut req = agent
+            .post(&url)
+            .config()
+            .http_status_as_error(false)
+            .build()
+            .header("content-type", "application/json");
+        for (hk, hv) in &headers {
+            req = req.header(hk, hv);
+        }
+        let mut resp = req
+            .send(&event_bytes)
+            .map_err(|e| format!("Lambda edge invoke {fn_name} failed: {e}"))?;
+        let invoke_code = resp.status().as_u16();
+        let fn_err = resp
+            .headers()
+            .get("x-amz-function-error")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_owned());
+        let mut out_bytes = Vec::new();
+        resp.body_mut()
+            .as_reader()
+            .read_to_end(&mut out_bytes)
+            .map_err(|e| format!("read Lambda edge invoke body: {e}"))?;
+        if invoke_code >= 300 {
+            return Err(format!(
+                "Lambda invoke HTTP {invoke_code}: {}",
+                String::from_utf8_lossy(&out_bytes)
+            ));
+        }
+        if let Some(fe) = fn_err {
+            return Err(format!(
+                "Lambda edge function error ({fe}): {}",
+                String::from_utf8_lossy(&out_bytes)
+            ));
+        }
+        let envelope: serde_json::Value = serde_json::from_slice(&out_bytes)
+            .map_err(|e| format!("decode Function URL v2 response envelope: {e}"))?;
+        let status_code = envelope
+            .get("statusCode")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(200) as u16;
+        let is_b64 = envelope
+            .get("isBase64Encoded")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let body_str = envelope.get("body").and_then(|v| v.as_str()).unwrap_or("");
+        let decoded_body = if is_b64 {
+            base64::engine::general_purpose::STANDARD
+                .decode(body_str)
+                .map_err(|e| format!("decode base64 Lambda response body: {e}"))?
+        } else {
+            body_str.as_bytes().to_vec()
+        };
+        return Ok((status_code, decoded_body));
+    }
+
+    let url = format!("{base}{path_and_query}");
+    let payload_slice = body.unwrap_or(&[]);
+    let is_fn_url = base.contains(".lambda-url.");
+    let signed_fn_url_headers = if is_fn_url {
+        if let Ok(parsed) = url::Url::parse(&url) {
+            if let Some(host) = parsed.host_str() {
+                let parts: Vec<&str> = host.split('.').collect();
+                let region = if parts.len() >= 3 && parts[1] == "lambda-url" {
+                    parts[2]
+                } else {
+                    "us-east-2"
+                };
+                if let Ok(creds) = CarbonAwsCredentials::from_env() {
+                    let query = parsed.query().unwrap_or("");
+                    let now_secs = now_epoch_ms() / 1_000;
+                    Some(sign_aws_v4_headers_with_extra(
+                        &creds,
+                        region,
+                        "lambda",
+                        method,
+                        host,
+                        parsed.path(),
+                        query,
+                        payload_slice,
+                        now_secs,
+                        extra_headers,
+                    ))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let mut resp = match method {
+        "GET" => {
+            let mut req = agent.get(&url).config().http_status_as_error(false).build();
+            if let Some(hdrs) = &signed_fn_url_headers {
+                for (hk, hv) in hdrs {
+                    req = req.header(hk, hv);
+                }
+            } else {
+                for &(hk, hv) in extra_headers {
+                    req = req.header(hk, hv);
+                }
+            }
+            req.call().map_err(|e| format!("GET {url} failed: {e}"))?
+        }
+        "DELETE" => {
+            let mut req = agent
+                .delete(&url)
+                .config()
+                .http_status_as_error(false)
+                .build();
+            if let Some(hdrs) = &signed_fn_url_headers {
+                for (hk, hv) in hdrs {
+                    req = req.header(hk, hv);
+                }
+            } else {
+                for &(hk, hv) in extra_headers {
+                    req = req.header(hk, hv);
+                }
+            }
+            req.call()
+                .map_err(|e| format!("DELETE {url} failed: {e}"))?
+        }
+        "PUT" => {
+            let mut req = agent
+                .put(&url)
+                .config()
+                .http_status_as_error(false)
+                .build()
+                .header("content-type", "application/octet-stream");
+            if let Some(hdrs) = &signed_fn_url_headers {
+                for (hk, hv) in hdrs {
+                    req = req.header(hk, hv);
+                }
+            } else {
+                for &(hk, hv) in extra_headers {
+                    req = req.header(hk, hv);
+                }
+            }
+            req.send(payload_slice)
+                .map_err(|e| format!("PUT {url} failed: {e}"))?
+        }
+        _ => {
+            let mut req = agent
+                .post(&url)
+                .config()
+                .http_status_as_error(false)
+                .build()
+                .header("content-type", "application/json");
+            if let Some(hdrs) = &signed_fn_url_headers {
+                for (hk, hv) in hdrs {
+                    req = req.header(hk, hv);
+                }
+            } else {
+                for &(hk, hv) in extra_headers {
+                    req = req.header(hk, hv);
+                }
+            }
+            req.send(payload_slice)
+                .map_err(|e| format!("POST {url} failed: {e}"))?
+        }
+    };
+    let code = resp.status().as_u16();
+    let mut resp_body = Vec::new();
+    resp.body_mut()
+        .as_reader()
+        .read_to_end(&mut resp_body)
+        .map_err(|e| format!("read {method} body: {e}"))?;
+    Ok((code, resp_body))
+}

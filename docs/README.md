@@ -17,6 +17,7 @@ implementation before changing a subsystem.
 | Rust observatory and React/Vite dashboard | `crates/jope-observatory/`, `web/training-dashboard/` | [Dashboard](dashboard/README.md) |
 | CLI and repository verification | `crates/jope-cli/`, `crates/jope-records/`, `crates/jope-ci/` | [Agent contract](../AGENTS.md) |
 | CI, release, systemd and host maintenance | `deploy/ci/`, `deploy/release/`, `deploy/systemd/`, `deploy/maintenance/` | [Release runbook](release/README.md) |
+| Carbon zero-knowledge AWS Lambda & Enterprise cells | `crates/jope-prep/`, `crates/jope-carbon/`, `deploy/carbon/` | [Carbon deployment runbook](runbooks/carbon-lambda-deploy.md), [ADR-0007](adr/ADR-0007-carbon-lambda-cells.md) |
 | Experiment history and research execution | `docs/experiments/`, `docs/research/`, `deploy/dl-flywheel/`, `deploy/dl-trainonly/` | [Experiment index](experiments/README.md), [research workflow](runbooks/research-workflow.md) |
 
 ## Performance and audits
