@@ -15,7 +15,6 @@ path = "src/main.rs"
 anyhow.workspace = true
 clap.workspace = true
 crossterm.workspace = true
-futures-util.workspace = true
 jain-smartcluster = { path = "../jain-smartcluster", version = "8.0.0" }
 jain-smartcluster-core = { path = "../jain-smartcluster-core", version = "8.0.0" }
 nix.workspace = true

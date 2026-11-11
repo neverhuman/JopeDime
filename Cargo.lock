@@ -2389,10 +2389,8 @@ dependencies = [
  "jain-smartcluster-core",
  "nix 0.29.0",
  "nvml-wrapper",
- "pidfd-util",
  "postcard",
  "proptest",
- "rand 0.8.8",
  "redb",
  "rustix 1.1.6",
  "serde",
@@ -2446,7 +2444,6 @@ dependencies = [
  "rustls",
  "serde",
  "serde_json",
- "sha2 0.10.9",
  "tempfile",
  "thiserror 2.0.21",
  "tokio",
@@ -2646,7 +2643,6 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "tempfile",
- "thiserror 2.0.21",
  "tokio",
  "tower",
  "ulid",
@@ -2738,7 +2734,6 @@ dependencies = [
  "thiserror 2.0.21",
  "tokio",
  "url",
- "walkdir",
 ]
 
 [[package]]
@@ -2755,7 +2750,6 @@ dependencies = [
  "jope-datasets",
  "jope-paths",
  "libc",
- "memmap2",
  "nix 0.29.0",
  "ratatui",
  "rayon",
@@ -2955,13 +2949,10 @@ dependencies = [
 name = "jope-prep"
 version = "1.0.0"
 dependencies = [
- "hex",
  "proptest",
- "ruzstd",
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -3060,7 +3051,6 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "tempfile",
- "thiserror 2.0.21",
  "ulid",
 ]
 
@@ -3632,16 +3622,6 @@ name = "percent-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
-
-[[package]]
-name = "pidfd-util"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a66784389d9c6308293bfe877356968afd267862473aae47a6ed3eedef95da6"
-dependencies = [
- "libc",
- "nix 0.31.3",
-]
 
 [[package]]
 name = "pin-project-lite"
@@ -4591,7 +4571,6 @@ dependencies = [
  "anyhow",
  "clap",
  "crossterm 0.29.0",
- "futures-util",
  "jain-smartcluster",
  "jain-smartcluster-core",
  "nix 0.29.0",

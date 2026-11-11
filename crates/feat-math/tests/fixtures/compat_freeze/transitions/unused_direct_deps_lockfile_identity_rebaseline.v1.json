@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced removal of direct dependencies that the crate sources do not import: jope-prep hex/ruzstd/thiserror, jope-telemetry thiserror, jope-datasets walkdir, jope-dime-regressor memmap2, jope-carbon thiserror, jainnode sha2, jain-smartcluster-daemon pidfd-util and rand, and scq futures-util. pidfd-util leaves Cargo.lock. Append this ADR-0004 evaluator identity and lineage fixture provenance edge after the CARBON PR-1 transition; preserve every remaining dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
+  "plan_reference": "Rust bloat pass 2026-11-11; ADR-0004 identity-only procedure",
+  "source_commit": "3f5a25751601016f6ff90188e5e5684da0f0566e",
+  "base_commit": "f5f1d0a4462f00c8ccbddf9add8896ce4a5a0cb9",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "cdb608ad9068b387393a9e83badffbb21af80b048f5db3b6e95ff12d7fca3d9d",
+      "after": "1fc7eaff0f91d392d16828b9d81458b1102a7fc9e4719760c3629ee3a6cd33e1"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "1db948e619a12c740c8401b6a5f2a9020b4992f72c6d13df5bdb1d8b4e451e24",
+      "after": "16600548b693a6436bd8726bf2b7c9865d79fd0e9e966db2c8b8b6d31c6c489d"
+    }
+  ],
+  "before_identity_digest": "ac9f86accfaac507ed5f7588e302bbf8c22995fd8b22e01262c4a640f5d3296b",
+  "after_identity_digest": "d110fce29ea7d5f589feeec25b2ebaa2fffa8347743d16202b5c3b7cd5fdfb93",
+  "before_implementation_sha256": "4986c1d2033fc96ce0ea717ca13af65932f19e7dd362f1161ee9eb579da1eccd",
+  "after_implementation_sha256": "0e01b9cd042273d2107cd60a8551968c494027e0e821814eaee92a8ffb8cdcc5",
+  "before_cargo_lock_sha256": "11c133db9a82c346a96040852de9a836b62239fc6c19f64c7e2232f8a073e631",
+  "after_cargo_lock_sha256": "cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
