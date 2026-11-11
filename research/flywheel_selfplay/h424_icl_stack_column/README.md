@@ -1,4 +1,4 @@
-# H424 — the in-context model as one more stack column: `ICL_CONFIRMED` on DEV (first read; second read running)
+# H424 — the in-context model as one more stack column: `ICL_CONFIRMED` on DEV (two reads: hour 20 and hour 24)
 
 **Verdict: `ICL_CONFIRMED`.** On the 115 fresh `DEV` families, offering the stored stack one more candidate — the
 prediction of our own 24M in-context model (H419, hour-20 checkpoint) — beats the stored H420 stack by the
@@ -6,8 +6,9 @@ pre-registered test: clipped family-mean gain **+0.0092 u** (0.9% lower RMSE), o
 59 wins / 34 ties / 22 losses, ΔElo +115.9 [+64.2, +173.1].
 **This is the first test in the campaign where the in-context model improves the stack on held-out rows.**
 **Open:** a screen found copies of public datasets between `DEV` and the model's training cohort; the gain holds
-without the flagged contexts, but the screen is crude (below). The second read (hour-24 checkpoint) is running and
-will be added here.
+without the flagged contexts, but the screen is crude (below; H425 repeated it at feature level).
+**Second read (hour-24 checkpoint, no new verdict):** the same gain against the stack (+0.0099 u, p 0.00003) and
+**no gain over the hour-20 column** (+0.0008 u, p 0.23). Four more hours of training did not make the column better.
 TRAIN-side cohorts only: no dev91, DL-Val, DL-Holdout, sealed or `CONFIRM` data was read. No GPU was used; the
 104M and 24M training runs were not touched.
 
@@ -81,9 +82,31 @@ column benefit from targets it has seen.
 7. The column exists only as offline code on stored matrices; a deploy needs the model at inference time, on a GPU
    or with about 6 CPU-minutes per table.
 
-## Second read (hour-24 checkpoint)
-Running under addendum 1: same `DEV` bank, same code, no new verdict. Reported when it ends: `I24` vs `B`,
-`I24` vs `I`, and both without the flagged contexts.
+## Second read (hour-24 checkpoint; addendum 1; reported, no new verdict)
+Same `DEV` bank, same code and seeds, checkpoint `ckpt_h024.pt` (sha256 `7fbca0e702be…`). `I24` = stack + the
+hour-24 column. The same 115 families as the first read, so it is not an independent confirmation.
+
+| Comparison | Mean gain (u) | Clipped mean | Sign-flip p (one-sided) | Leave-one-family-out min | Median | Win / tie / loss | ΔElo [95% interval] (three-arm fit) | Test |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `I24` vs `B` | +0.0099 | +0.0099 | 0.00003 | +0.0071 | 0.0000 | 50 / 40 / 25 | +87.8 [+33.8, +146.3] | pass |
+| **`I24` vs `I` (hour 24 against hour 20)** | +0.0008 | +0.0008 | 0.225 | +0.0003 | 0.0000 | 41 / 31 / 43 | −16.5 [−64.6, +30.7] | **no difference** |
+| `I` vs `B` (first read, restated in the three-arm fit) | +0.0092 | +0.0092 | 0.00006 | +0.0064 | +0.0001 | 59 / 34 / 22 | +104.3 [+54.3, +156.9] | pass |
+| `I24` vs `B` without the 17 flagged contexts (98) | +0.0104 | +0.0104 | 0.0004 | +0.0070 | 0.0000 | 39 / 37 / 22 | — | pass |
+
+Mean u: `B` 1.9483, `I` 1.9575, `I24` 1.9583. Pre-declared secondary: no context at the clip; win share of decided
+families 0.67 (`I24` vs `B`), 0.49 (`I24` vs `I`).
+
+- **The gain against the stack repeats with a second checkpoint** (same families, so this shows the column is not a
+  one-checkpoint accident, not that it holds on new families).
+- **The hour-24 column is not better than the hour-20 one.** Mean gain +0.0008 u, 41 wins and 43 losses, and the
+  win-based Elo is 16 points lower with an interval that spans 0. Alone, the hour-24 column is +0.002 u better.
+- **Fewer families gain** (50 against 59) and more tie (40 against 34): the hour-24 column gets weight in 82
+  families (84 before), mean weight 0.118.
+- **Consequence for development:** between hours 20 and 24 the stack value of the column is flat. A later checkpoint
+  is not expected to add much by itself; the wide-table readout (H428, H429) and the training mix are the open
+  routes. The first read's ΔElo (+115.9) comes from a two-arm fit and is not comparable with the three-arm values.
+- Gates (`gates2_h424.sh`): 8 of 8 (the first read's seven on the second read's outputs, plus the addendum older
+  than the first column file). Inference: 115 of 115 columns, 44,371 CPU-seconds, 79 minutes.
 
 ## Timeline (UTC, 2026-11-11)
 | Time | Event |
@@ -95,6 +118,9 @@ Running under addendum 1: same `DEV` bank, same code, no new verdict. Reported w
 | 09:45 | gates (7 of 7); readout: `ICL_CONFIRMED` |
 | 09:46 | duplicate screen |
 | 09:48 | addendum 1 published (`e1f31467e4`); second read waiting for the hour-24 checkpoint |
+| 11:21–12:40 | hour-24 checkpoint copied and hashed; second-read inference (16 CPU processes); stack step |
+| 12:41 | second-read gates (8 of 8); second readout |
 
-Evidence (xbabe2): `~/jope_plan/evidence/H424/` (`results/H424_DEV.{apply,gates,readout}.json`, `audit/`, `logs/`);
-columns and bank under `~/jope-data/h424/pub/` and `~/jope-data/h335-cl/h424/pub/`.
+Evidence (xbabe2): `~/jope_plan/evidence/H424/` (`results/H424_DEV.{apply,gates,readout}.json`,
+`results/H424_DEV_h024.{apply,gates}.json`, `results/H424_DEV_h024.readout2.{json,txt}`, `audit/`, `logs/`);
+columns and bank under `~/jope-data/h424/{pub,pub2}/` and `~/jope-data/h335-cl/h424/pub/`.
