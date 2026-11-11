@@ -68,6 +68,8 @@ flowchart TB
     assets[jope-assets<br/>signed single-file package format]
     app[jope-appliance<br/>the jopedime binary]
     dist[jope-dist<br/>build-time packer and verifier]
+    prep[jope-prep<br/>FIT split · high landmarks · JMAT v1, WASM-clean]
+    carbon[jope-carbon<br/>serverless cells · planner · sealing · emu]
   end
   subgraph vendored["vendored (upstream versions)"]
     sc[crates/smartcluster/*<br/>jain-smartcluster @ 715128f8, 7 crates]
@@ -154,6 +156,8 @@ crate's `[dependencies]` change. No crate depends on `jope-campaigns`, `jope-eng
 | `crates/jope-runtime` | `jope-runtime` | landed | The appliance runtime: the native method roster, raw-cell encoding and bound prediction shared with `jope-bench` and `jope-pipeline` (which re-export them), CSV ingress, bounded automatic selection (`jope.runtime-select/v1` defaults; opt-in v2 regression objectives, forward validation and cross-fitted output calibration), JSON-RPC/MCP adapters, the `model.jope` fitted-state file and run receipts. Depends on `feat-math` without its fitted-C++ feature. |
 | `crates/jope-assets` | `jope-assets` | landed | The signed single-file package: 128-byte footer, canonical manifest, P-256 signature over the footer, per-asset authentication before decompression, bounded decoding; the writer behind feature `pack`. |
 | `crates/jope-appliance` | `jope-appliance` (binary `jopedime`) | landed; not published | The signed single-file executable: `version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `fitness`, `mcp`, `api`, `verify-self`, `licenses`. [deploy/appliance](../deploy/appliance/README.md). |
+| `crates/jope-prep` | `jope-prep` | landed (Carbon C1a) | Pure-Rust, WASM-compatible client preparation ([ADR-0007](adr/ADR-0007-carbon-lambda-cells.md)): deterministic `FIT`/`HOLDOUT` split, `FIT`-only high-resolution landmark extraction (`6,368`-byte `JLMB` v1 wire format; re-exported by `jope-service`), and standalone `JMAT` v1 encoding. [Client preparation](../crates/jope-prep/README.md). |
+| `crates/jope-carbon` | `jope-carbon` (binaries `carbon-edge`, `carbon`) | landed (Carbon C1–C8 local & emulator) | Feature-separated Carbon cell runtime ([ADR-0007](adr/ADR-0007-carbon-lambda-cells.md)): isolated `carbon-edge` public gateway, `engine` and stateless `eval` (`XS`..`XL`) AWS Lambda Custom Runtime (`2018-06-01`) workers, Enterprise `carbon serve` (`no_limit()`), credential-free `carbon emu` multi-cell emulator, `AES-256-GCM` checkpoint sealing, and 3-Gate Spot-Hybrid advisor. Live AWS rollout gated on owner authorization. [Carbon runtime](../crates/jope-carbon/README.md). |
 | `crates/jope-dist` | `jope-dist` | landed | Build-time only: model lock with rights blockers, deterministic pack, release stage and seal, independent verify, dependency audit, notices, size, SBOM and provenance. |
 | `crates/jope-cli` | `jope-cli` (binary `jope`) | landed | The `jope` binary. Verbs today: `doctor`, `demo`, `benchmark`, `train` (Linux), `optimize`, `verify-inputs`, `generate-fixtures`, `encode`, `fit`, `emit`, `search`, `champions`, `train-step`, `route`, `models`, `datasets`, `pipeline`, and the hidden `motifs`. The target design's `propose`, `learn`, `hwm`, `scores`, `arena`, `campaign` and `selfplay` verbs do not exist (see the status note at the top). |
 | `crates/jope-observatory` | `jope-observatory` | landed | The training observatory: an axum read-only JSON API (`/api/v1/snapshot`, `/api/v1/gp`, …) and the `collect-datasets`, `collect-fleet`, `collect-storage` and `gp-source-stream` collector binaries. |

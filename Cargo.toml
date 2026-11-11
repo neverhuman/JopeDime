@@ -28,6 +28,8 @@ members = [
   "crates/jope-motifs",
   "crates/jope-narrator",
   "crates/jope-paths",
+  "crates/jope-prep",
+  "crates/jope-carbon",
   "crates/jope-pipeline",
   "crates/jope-records",
   "crates/jope-runtime",

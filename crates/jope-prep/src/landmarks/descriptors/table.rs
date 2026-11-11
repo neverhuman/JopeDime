@@ -27,7 +27,7 @@ pub(crate) fn table_descriptors(s: &ProbeStage, n: usize, p: usize) -> TableStag
     let mut eig = if p == 1 {
         vec![1.0]
     } else {
-        let (e, _) = feat_math::heads::jacobi_eigen(&mut corr, p);
+        let e = symmetric_eigenvalues(&mut corr, p);
         e.into_iter().map(|v| v.max(0.0)).collect::<Vec<_>>()
     };
     eig.sort_by(|a, b| b.total_cmp(a));

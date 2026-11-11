@@ -16,6 +16,8 @@
 //! Runtime semantic validation and release qualification remain separate gates.
 
 pub mod artifacts;
+/// Carbon serverless cell v1 public wire contracts (`ADR-0007`).
+pub mod carbon;
 /// Same-rows comparator evidence attached to a finished run.
 pub mod comparisons;
 /// Canonical decimal-string serialization and validation for wire integers.

@@ -26,7 +26,7 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 5 | 0 | 0 | 1 | 0 |
 | learning-subcommand | 19 | 0 | 19 | 0 | 0 | 0 |
-| new-bin | 29 | 0 | 29 | 0 | 0 | 0 |
+| new-bin | 31 | 0 | 31 | 0 | 0 | 0 |
 | new-example | 15 | 0 | 15 | 0 | 0 | 0 |
 | ops-sh | 1 | 0 | 0 | 0 | 1 | 0 |
 | pipeline-subcommand | 3 | 0 | 3 | 0 | 0 | 0 |
@@ -44,7 +44,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **846** | **353** | **83** | **1** | **402** | **7** |
+| **total** | **848** | **353** | **85** | **1** | **402** | **7** |
 
 `moved`/`new` rows without a covering test: 305.
 
@@ -904,3 +904,5 @@ you saw.
 
 | new-example | (new) actual data-to-Rust timing protocol | crates/jope-service/examples/visual_inference_metric.rs (visual_inference_metric) | jope-service::example/visual_inference_metric (3 tests) | new | Requires `visual-trace` and optimized release; resident JSONL fresh FIT high-landmark encoding and selected-DSL fit/Rust-only export. Complete-code response ends the caller wall clock; proof/counting follows using canonical Rust lexical tokens and TEL07 Rust throughput event 0x012a. Compatibility all-language count equals Rust count because only Rust is emitted. Tests cover canonical token/time arithmetic, invalid source/zero-time refusal and sixteen-contract capacity; native exact encoding/source proofs and outer fused-model timing receipts are separate local evidence. No production H256 serving promotion. |
 | example | q1 infrastructure retry example | crates/jope-service/examples/q1_infra_retry.rs (jope-service/q1_infra_retry) | none | new | Service retry behavior example. |
+| new-bin | (new) Carbon regional edge gateway | crates/jope-carbon/src/bin/carbon_edge.rs (carbon-edge) | jope-carbon::carbon_core cli_smoke_tls_provider_and_guidance_cover_all_variants; jope-carbon::carbon_e2e emu_lambda_runtime_hybrid_fanout_stop_resume_predict_and_ip_isolation | new | Feature-isolated `carbon-edge` binary (`--no-default-features --features edge`, ADR-0007): excludes `jope-service`, `jope-runtime`, `feat-math`, and neural weights (`CT3`), serves `/v1/carbon/*` and `/.well-known/carbon-regions.json` over AWS Lambda Custom Runtime (`2018-06-01`). Local child-process emulator proof green; live AWS rollout gated on owner authorization. |
+| new-bin | (new) Carbon cell runtime and planner | crates/jope-carbon/src/bin/carbon.rs (carbon) | jope-carbon::carbon_core cli_smoke_tls_provider_and_guidance_cover_all_variants; jope-carbon::carbon_e2e enterprise_serve_vpc_no_limit_and_cloud_free_tier_rejection | new | Multi-role `carbon` CLI (`version`, `plan`, `spot-check`, `serve`, `emu`, `engine`, `eval`) over adaptive `Solo` vs `Hybrid` worker sizing, `AES-256-GCM` checkpoint sealing, Enterprise VPC/on-prem `no_limit()` server, credential-free multi-cell CI emulator, and the 3-Gate Spot-Hybrid advisor (ADR-0007). Live AWS rollout gated on owner authorization. |

@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced CARBON-20261110 PR-1 workspace registration adds only the first-party jope-prep and jope-carbon workspace records and the jope-service -> jope-prep dependency edge to Cargo.lock (all external crates were already locked). Append this ADR-0004 evaluator identity and lineage fixture provenance edge after the COMPARATORS PR-3 transition; preserve every dependency version, feature, registry source, behavior fixture, known identity and prior transition.",
+  "plan_reference": "CARBON-20261110 PR-1 (Phase C1a/C1b, ADR-0007); ADR-0004 identity-only procedure",
+  "source_commit": "45bb0b7f562ef92423dd954f92d1933bcf39f550",
+  "base_commit": "238f50bacca7829d3a1e2f095c2d4e28ed70f8a1",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "542c18c0d51a2575b6265821b984563cd0d75443e2f83c2cef8008f37dd9abff",
+      "after": "cdb608ad9068b387393a9e83badffbb21af80b048f5db3b6e95ff12d7fca3d9d"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "c392e0d4f535c423966088bbbb2c133468f2006fee9c110965a62b8f559bbae5",
+      "after": "1db948e619a12c740c8401b6a5f2a9020b4992f72c6d13df5bdb1d8b4e451e24"
+    }
+  ],
+  "before_identity_digest": "2b2b7c781c96b628e04c71ef0b001d77b49814be3dc3c8e8a0ecc4a067fecff6",
+  "after_identity_digest": "ac9f86accfaac507ed5f7588e302bbf8c22995fd8b22e01262c4a640f5d3296b",
+  "before_implementation_sha256": "f252680f72365d314c9839ed0a17f7a54b49a1be2009208d4a5a10b95de2118a",
+  "after_implementation_sha256": "4986c1d2033fc96ce0ea717ca13af65932f19e7dd362f1161ee9eb579da1eccd",
+  "before_cargo_lock_sha256": "82750afc35db964cd787e8998335be255dcde8cd5d4f5d7c36aae914df744630",
+  "after_cargo_lock_sha256": "11c133db9a82c346a96040852de9a836b62239fc6c19f64c7e2232f8a073e631",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
