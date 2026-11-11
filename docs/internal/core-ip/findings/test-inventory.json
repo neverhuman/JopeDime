@@ -6008,6 +6008,14 @@
         "evaluation"
       ]
     },
+    "target:jope-carbon/test/carbon_redteam": {
+      "role": "regression",
+      "subsystems": [
+        "preparation",
+        "fitting",
+        "evaluation"
+      ]
+    },
     "target:jope-ci/bin/jope-ci": {
       "reason": "CI, path or maintenance infrastructure; supports regression lanes without exercising a regression subsystem",
       "role": "infrastructure"

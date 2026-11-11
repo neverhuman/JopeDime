@@ -1,0 +1,678 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "JopeDime Carbon Zero-Knowledge Serverless Regional Cell (Edge + r882 Engine + Stateless Eval, ARM64 Graviton, Immutable :live Aliases)",
+  "Parameters": {
+    "EnvironmentName": {
+      "Type": "String",
+      "Default": "dev",
+      "AllowedValues": ["dev", "staging", "prod"],
+      "Description": "Deployment tier controlling lifecycle retention and alarm policies."
+    },
+    "ReleaseId": {
+      "Type": "String",
+      "AllowedPattern": "^[a-zA-Z0-9]{6,40}$",
+      "Description": "Alphanumeric release identifier binding Git SHA and artifact manifest digest."
+    },
+    "ArtifactsBucket": {
+      "Type": "String",
+      "MinLength": 3,
+      "Description": "Regional S3 bucket holding content-addressed release ZIP artifacts."
+    },
+    "EdgeZipKey": {
+      "Type": "String",
+      "Description": "S3 key of deterministic carbon-edge.zip (CT3-verified ARM64 bootstrap)."
+    },
+    "EdgeCodeSha256B64": {
+      "Type": "String",
+      "Description": "Base64 SHA-256 of carbon-edge.zip enforced by AWS::Lambda::Version."
+    },
+    "WorkerZipKey": {
+      "Type": "String",
+      "Description": "S3 key of deterministic carbon-worker.zip (ARM64 engine/eval bootstrap)."
+    },
+    "WorkerCodeSha256B64": {
+      "Type": "String",
+      "Description": "Base64 SHA-256 of carbon-worker.zip enforced by AWS::Lambda::Version."
+    },
+    "R882LayerZipKey": {
+      "Type": "String",
+      "Description": "S3 key of deterministic r882-layer.zip (cosign P-256 verified model bundle)."
+    },
+    "R882BundleDigest": {
+      "Type": "String",
+      "Default": "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc",
+      "Description": "Pinned SHA-256 digest of models/bundles/r882.json."
+    },
+    "SecretsArn": {
+      "Type": "String",
+      "Description": "ARN of AWS Secrets Manager secret jopedime/carbon/<env>/cell-secrets."
+    },
+    "SecretsVersionId": {
+      "Type": "String",
+      "Description": "Pinned Secrets Manager VersionId for deterministic secret binding and rotation."
+    },
+    "EngineKekPubkeyB64": {
+      "Type": "String",
+      "Description": "Base64 SEC1 compressed NIST P-256 public KEK advertised on /v1/carbon/ping."
+    },
+    "CasExpireDays": {
+      "Type": "Number",
+      "Default": 1,
+      "MinValue": 1,
+      "MaxValue": 365,
+      "Description": "S3 lifecycle expiration in days for cell-v1/blobs/."
+    },
+    "LogRetentionDays": {
+      "Type": "Number",
+      "Default": 14,
+      "AllowedValues": [7, 14, 30, 60, 90, 180, 365],
+      "Description": "CloudWatch Logs retention window in days."
+    },
+    "EdgeReservedConcurrency": {
+      "Type": "Number",
+      "Default": -1,
+      "MinValue": -1,
+      "Description": "Optional reserved concurrency cap for carbon-edge (-1 uses regional pool)."
+    },
+    "EngineReservedConcurrency": {
+      "Type": "Number",
+      "Default": -1,
+      "MinValue": -1,
+      "Description": "Optional reserved concurrency cap for carbon-engine (-1 uses regional pool)."
+    },
+    "EvalReservedConcurrency": {
+      "Type": "Number",
+      "Default": -1,
+      "MinValue": -1,
+      "Description": "Optional reserved concurrency cap for carbon-eval (-1 uses regional pool)."
+    }
+  },
+  "Conditions": {
+    "IsProd": {
+      "Fn::Equals": [{"Ref": "EnvironmentName"}, "prod"]
+    },
+    "HasEdgeConcurrencyCap": {
+      "Fn::Not": [{"Fn::Equals": [{"Ref": "EdgeReservedConcurrency"}, -1]}]
+    },
+    "HasEngineConcurrencyCap": {
+      "Fn::Not": [{"Fn::Equals": [{"Ref": "EngineReservedConcurrency"}, -1]}]
+    },
+    "HasEvalConcurrencyCap": {
+      "Fn::Not": [{"Fn::Equals": [{"Ref": "EvalReservedConcurrency"}, -1]}]
+    }
+  },
+  "Resources": {
+    "CarbonCasBucket": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "BucketName": {
+          "Fn::Sub": "jopedime-carbon-${EnvironmentName}-cas-${AWS::AccountId}-${AWS::Region}"
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "ExpireEphemeralCasBlobs",
+              "Prefix": "cell-v1/blobs/",
+              "Status": "Enabled",
+              "ExpirationInDays": {"Ref": "CasExpireDays"}
+            },
+            {
+              "Id": "ExpireEphemeralRunsAndCheckpoints",
+              "Prefix": "cell-v1/runs/",
+              "Status": "Enabled",
+              "ExpirationInDays": {"Fn::If": ["IsProd", 30, 7]}
+            },
+            {
+              "Id": "AbortIncompleteMultipartUploads",
+              "Status": "Enabled",
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 1
+              }
+            }
+          ]
+        },
+        "Tags": [
+          {"Key": "Service", "Value": "jopedime-carbon"},
+          {"Key": "Environment", "Value": {"Ref": "EnvironmentName"}}
+        ]
+      }
+    },
+    "CarbonCasBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {"Ref": "CarbonCasBucket"},
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyInsecureTransport",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {"Fn::GetAtt": ["CarbonCasBucket", "Arn"]},
+                {"Fn::Sub": "${CarbonCasBucket.Arn}/*"}
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "EvalLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {"Fn::Sub": "/aws/lambda/${AWS::StackName}-eval"},
+        "RetentionInDays": {"Ref": "LogRetentionDays"}
+      }
+    },
+    "EngineLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {"Fn::Sub": "/aws/lambda/${AWS::StackName}-engine"},
+        "RetentionInDays": {"Ref": "LogRetentionDays"}
+      }
+    },
+    "EdgeLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {"Fn::Sub": "/aws/lambda/${AWS::StackName}-edge"},
+        "RetentionInDays": {"Ref": "LogRetentionDays"}
+      }
+    },
+    "EvalRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {"Fn::Sub": "${AWS::StackName}-eval-role"},
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {"Service": "lambda.amazonaws.com"},
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CarbonEvalLeastPrivilege",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "EvalLogs",
+                  "Effect": "Allow",
+                  "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-eval:*"
+                  }
+                },
+                {
+                  "Sid": "EvalCasReadWrite",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:PutObject"],
+                  "Resource": {"Fn::Sub": "${CarbonCasBucket.Arn}/cell-v1/*"}
+                },
+                {
+                  "Sid": "EvalCasList",
+                  "Effect": "Allow",
+                  "Action": ["s3:ListBucket"],
+                  "Resource": {"Fn::GetAtt": ["CarbonCasBucket", "Arn"]}
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "EngineRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {"Fn::Sub": "${AWS::StackName}-engine-role"},
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {"Service": "lambda.amazonaws.com"},
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CarbonEngineLeastPrivilege",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "EngineLogs",
+                  "Effect": "Allow",
+                  "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-engine:*"
+                  }
+                },
+                {
+                  "Sid": "EngineCasReadWrite",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:PutObject"],
+                  "Resource": {"Fn::Sub": "${CarbonCasBucket.Arn}/cell-v1/*"}
+                },
+                {
+                  "Sid": "EngineCasList",
+                  "Effect": "Allow",
+                  "Action": ["s3:ListBucket"],
+                  "Resource": {"Fn::GetAtt": ["CarbonCasBucket", "Arn"]}
+                },
+                {
+                  "Sid": "EngineInvokeEvalLiveAliasOnly",
+                  "Effect": "Allow",
+                  "Action": ["lambda:InvokeFunction"],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-eval:live"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "EdgeRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {"Fn::Sub": "${AWS::StackName}-edge-role"},
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {"Service": "lambda.amazonaws.com"},
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CarbonEdgeLeastPrivilege",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "EdgeLogs",
+                  "Effect": "Allow",
+                  "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-edge:*"
+                  }
+                },
+                {
+                  "Sid": "EdgeCasPresignAndShred",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+                  "Resource": {"Fn::Sub": "${CarbonCasBucket.Arn}/cell-v1/*"}
+                },
+                {
+                  "Sid": "EdgeCasList",
+                  "Effect": "Allow",
+                  "Action": ["s3:ListBucket"],
+                  "Resource": {"Fn::GetAtt": ["CarbonCasBucket", "Arn"]}
+                },
+                {
+                  "Sid": "EdgeInvokeEngineLiveAliasOnly",
+                  "Effect": "Allow",
+                  "Action": ["lambda:InvokeFunction"],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-engine:live"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "R882ModelLayer": {
+      "Type": "AWS::Lambda::LayerVersion",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "LayerName": {"Fn::Sub": "${AWS::StackName}-r882"},
+        "Description": {
+          "Fn::Sub": "Cosign P-256 verified r882 DOPE+JopeDime ARM64 model bundle (${R882BundleDigest})"
+        },
+        "CompatibleArchitectures": ["arm64"],
+        "CompatibleRuntimes": ["provided.al2023"],
+        "Content": {
+          "S3Bucket": {"Ref": "ArtifactsBucket"},
+          "S3Key": {"Ref": "R882LayerZipKey"}
+        }
+      }
+    },
+    "EvalFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": ["EvalLogGroup"],
+      "Properties": {
+        "FunctionName": {"Fn::Sub": "${AWS::StackName}-eval"},
+        "Description": "Carbon stateless candidate shard evaluation worker (CUEN zeroizing RAM cache)",
+        "Runtime": "provided.al2023",
+        "Architectures": ["arm64"],
+        "Handler": "bootstrap",
+        "MemorySize": 1769,
+        "Timeout": 120,
+        "EphemeralStorage": {"Size": 512},
+        "ReservedConcurrentExecutions": {
+          "Fn::If": [
+            "HasEvalConcurrencyCap",
+            {"Ref": "EvalReservedConcurrency"},
+            {"Ref": "AWS::NoValue"}
+          ]
+        },
+        "Role": {"Fn::GetAtt": ["EvalRole", "Arn"]},
+        "Code": {
+          "S3Bucket": {"Ref": "ArtifactsBucket"},
+          "S3Key": {"Ref": "WorkerZipKey"}
+        },
+        "Environment": {
+          "Variables": {
+            "CARBON_ROLE": "eval",
+            "CARBON_REGION": {"Ref": "AWS::Region"},
+            "CARBON_CAS_URL": {"Fn::Sub": "s3://${CarbonCasBucket}/cell-v1"},
+            "CARBON_SEAL_SECRET_HEX": {
+              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:seal_secret_hex::${SecretsVersionId}}}"
+            },
+            "CARBON_INTERNAL_TOKEN": {
+              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:internal_token::${SecretsVersionId}}}"
+            }
+          }
+        }
+      }
+    },
+    "EvalVersionCurrent": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {"Ref": "EvalFunction"},
+        "CodeSha256": {"Ref": "WorkerCodeSha256B64"},
+        "Description": {"Fn::Sub": "Carbon eval release ${ReleaseId}"}
+      }
+    },
+    "EvalLiveAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {"Ref": "EvalFunction"},
+        "FunctionVersion": {"Fn::GetAtt": ["EvalVersionCurrent", "Version"]},
+        "Name": "live",
+        "Description": "Active zero-downtime serving alias for carbon-eval"
+      }
+    },
+    "EngineFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": ["EngineLogGroup", "EvalLiveAlias"],
+      "Properties": {
+        "FunctionName": {"Fn::Sub": "${AWS::StackName}-engine"},
+        "Description": "Carbon sealed r882 neural GP engine orchestrator (P-256 ECDH KEK)",
+        "Runtime": "provided.al2023",
+        "Architectures": ["arm64"],
+        "Handler": "bootstrap",
+        "MemorySize": 3008,
+        "Timeout": 600,
+        "EphemeralStorage": {"Size": 1024},
+        "ReservedConcurrentExecutions": {
+          "Fn::If": [
+            "HasEngineConcurrencyCap",
+            {"Ref": "EngineReservedConcurrency"},
+            {"Ref": "AWS::NoValue"}
+          ]
+        },
+        "Layers": [{"Ref": "R882ModelLayer"}],
+        "Role": {"Fn::GetAtt": ["EngineRole", "Arn"]},
+        "Code": {
+          "S3Bucket": {"Ref": "ArtifactsBucket"},
+          "S3Key": {"Ref": "WorkerZipKey"}
+        },
+        "Environment": {
+          "Variables": {
+            "CARBON_ROLE": "engine",
+            "CARBON_REGION": {"Ref": "AWS::Region"},
+            "CARBON_CAS_URL": {"Fn::Sub": "s3://${CarbonCasBucket}/cell-v1"},
+            "CARBON_EVAL_INVOKE_URL": {"Fn::Sub": "lambda://${AWS::StackName}-eval:live"},
+            "CARBON_MODEL_R882_DIR": "/opt/jope-models/r882",
+            "CARBON_SEAL_SECRET_HEX": {
+              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:seal_secret_hex::${SecretsVersionId}}}"
+            },
+            "CARBON_ENGINE_KEK_HEX": {
+              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:engine_kek_hex::${SecretsVersionId}}}"
+            },
+            "CARBON_INTERNAL_TOKEN": {
+              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:internal_token::${SecretsVersionId}}}"
+            }
+          }
+        }
+      }
+    },
+    "EngineVersionCurrent": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {"Ref": "EngineFunction"},
+        "CodeSha256": {"Ref": "WorkerCodeSha256B64"},
+        "Description": {"Fn::Sub": "Carbon engine release ${ReleaseId}"}
+      }
+    },
+    "EngineLiveAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {"Ref": "EngineFunction"},
+        "FunctionVersion": {"Fn::GetAtt": ["EngineVersionCurrent", "Version"]},
+        "Name": "live",
+        "Description": "Active zero-downtime serving alias for carbon-engine"
+      }
+    },
+    "EdgeFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": ["EdgeLogGroup", "EngineLiveAlias"],
+      "Properties": {
+        "FunctionName": {"Fn::Sub": "${AWS::StackName}-edge"},
+        "Description": "Carbon regional zero-knowledge edge gateway (CT3 isolated, no neural weights)",
+        "Runtime": "provided.al2023",
+        "Architectures": ["arm64"],
+        "Handler": "bootstrap",
+        "MemorySize": 256,
+        "Timeout": 300,
+        "EphemeralStorage": {"Size": 512},
+        "ReservedConcurrentExecutions": {
+          "Fn::If": [
+            "HasEdgeConcurrencyCap",
+            {"Ref": "EdgeReservedConcurrency"},
+            {"Ref": "AWS::NoValue"}
+          ]
+        },
+        "Role": {"Fn::GetAtt": ["EdgeRole", "Arn"]},
+        "Code": {
+          "S3Bucket": {"Ref": "ArtifactsBucket"},
+          "S3Key": {"Ref": "EdgeZipKey"}
+        },
+        "Environment": {
+          "Variables": {
+            "CARBON_ROLE": "edge",
+            "CARBON_REGION": {"Ref": "AWS::Region"},
+            "CARBON_CAS_URL": {"Fn::Sub": "s3://${CarbonCasBucket}/cell-v1"},
+            "CARBON_ENGINE_INVOKE_URL": {"Fn::Sub": "lambda://${AWS::StackName}-engine:live"},
+            "CARBON_ENGINE_KEK_PUBKEY_B64": {"Ref": "EngineKekPubkeyB64"},
+            "CARBON_PRESIGN_SECRET_HEX": {
+              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:presign_secret_hex::${SecretsVersionId}}}"
+            },
+            "CARBON_AUTH_SECRET_HEX": {
+              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:auth_secret_hex::${SecretsVersionId}}}"
+            },
+            "CARBON_INTERNAL_TOKEN": {
+              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:internal_token::${SecretsVersionId}}}"
+            }
+          }
+        }
+      }
+    },
+    "EdgeVersionCurrent": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {"Ref": "EdgeFunction"},
+        "CodeSha256": {"Ref": "EdgeCodeSha256B64"},
+        "Description": {"Fn::Sub": "Carbon edge release ${ReleaseId}"}
+      }
+    },
+    "EdgeLiveAlias": {
+      "Type": "AWS::Lambda::Alias",
+      "Properties": {
+        "FunctionName": {"Ref": "EdgeFunction"},
+        "FunctionVersion": {"Fn::GetAtt": ["EdgeVersionCurrent", "Version"]},
+        "Name": "live",
+        "Description": "Active zero-downtime serving alias for carbon-edge"
+      }
+    },
+    "EdgeFunctionUrl": {
+      "Type": "AWS::Lambda::Url",
+      "DependsOn": ["EdgeLiveAlias"],
+      "Properties": {
+        "TargetFunctionArn": {"Fn::GetAtt": ["EdgeFunction", "Arn"]},
+        "Qualifier": "live",
+        "AuthType": "AWS_IAM"
+      }
+    },
+    "EdgeLiveUrlPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {"Ref": "EdgeLiveAlias"},
+        "Principal": {"Ref": "AWS::AccountId"},
+        "FunctionUrlAuthType": "AWS_IAM"
+      }
+    },
+    "EdgeLiveInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {"Ref": "EdgeLiveAlias"},
+        "Principal": {"Ref": "AWS::AccountId"}
+      }
+    },
+    "EdgeErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": {"Fn::Sub": "${AWS::StackName}-edge-live-errors"},
+        "AlarmDescription": "Carbon edge :live alias elevated invocation errors",
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {"Name": "FunctionName", "Value": {"Ref": "EdgeFunction"}},
+          {"Name": "Resource", "Value": {"Fn::Sub": "${EdgeFunction}:live"}}
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 5,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "EngineErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": {"Fn::Sub": "${AWS::StackName}-engine-live-errors"},
+        "AlarmDescription": "Carbon engine :live alias elevated invocation errors",
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {"Name": "FunctionName", "Value": {"Ref": "EngineFunction"}},
+          {"Name": "Resource", "Value": {"Fn::Sub": "${EngineFunction}:live"}}
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 3,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "EvalErrorAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": {"Fn::Sub": "${AWS::StackName}-eval-live-errors"},
+        "AlarmDescription": "Carbon eval :live alias elevated invocation errors",
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Errors",
+        "Dimensions": [
+          {"Name": "FunctionName", "Value": {"Ref": "EvalFunction"}},
+          {"Name": "Resource", "Value": {"Fn::Sub": "${EvalFunction}:live"}}
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 5,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
+      }
+    }
+  },
+  "Outputs": {
+    "EdgeEndpointUrl": {
+      "Description": "AWS_IAM-authenticated Carbon regional edge Function URL (:live alias)",
+      "Value": {"Fn::GetAtt": ["EdgeFunctionUrl", "FunctionUrl"]}
+    },
+    "CasBucketName": {
+      "Description": "Encrypted regional CAS S3 bucket",
+      "Value": {"Ref": "CarbonCasBucket"}
+    },
+    "EdgePublishedVersion": {
+      "Description": "Immutable published AWS::Lambda::Version serving carbon-edge:live",
+      "Value": {"Fn::GetAtt": ["EdgeVersionCurrent", "Version"]}
+    },
+    "EnginePublishedVersion": {
+      "Description": "Immutable published AWS::Lambda::Version serving carbon-engine:live",
+      "Value": {"Fn::GetAtt": ["EngineVersionCurrent", "Version"]}
+    },
+    "EvalPublishedVersion": {
+      "Description": "Immutable published AWS::Lambda::Version serving carbon-eval:live",
+      "Value": {"Fn::GetAtt": ["EvalVersionCurrent", "Version"]}
+    },
+    "R882LayerVersionArn": {
+      "Description": "Immutable R882 ARM64 Lambda Layer ARN mounted on carbon-engine",
+      "Value": {"Ref": "R882ModelLayer"}
+    },
+    "ReleaseId": {
+      "Description": "Deployed alphanumeric release identifier",
+      "Value": {"Ref": "ReleaseId"}
+    }
+  }
+}

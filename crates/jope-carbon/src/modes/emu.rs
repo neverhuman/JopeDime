@@ -1,14 +1,10 @@
-//! Local multi-cell AWS Lambda Custom Runtime (`2018-06-01`) + S3 CAS HTTP emulator (`carbon emu`, `ADR-0007` Phase C7).
+//! Local multi-cell AWS Lambda Custom Runtime (`2018-06-01`) + S3 CAS HTTP emulator (`carbon emu`).
 //!
-//! Exercises the exact production cell boundaries in CI with zero AWS credentials:
-//! - Public HTTP Function URL requests are marshaled as `CarbonGatewayRequest` events onto the
-//!   `edge` Lambda Runtime API queue (`/runtime/edge/2018-06-01/runtime/invocation/*`) and
-//!   handled either by an isolated `carbon-edge` OS child process or an isolated `edge` worker.
-//! - `edge` invokes `engine` over HTTP (`/invoke/engine` -> `engine` Lambda Runtime API queue).
-//! - `engine` fans out candidate shards over HTTP (`/invoke/eval` -> `eval` Lambda Runtime API queue)
-//!   across parallel stateless `CarbonEvalWorker` runtime loops!
-//! - All cells read/write blobs and encrypted checkpoints strictly over `CarbonHttpCas` against
-//!   the emulator's HTTP CAS endpoint (`/cas/*`).
+//! Exercises the exact production security and cell boundaries in CI with zero AWS credentials:
+//! - Capability token auth (`CARBON_AUTH_SECRET_HEX`) + zero-knowledge P-256 KEK (`CARBON_ENGINE_KEK_PUBKEY_B64`);
+//! - Async `x-amz-invocation-type: Event` (`202 Accepted`) engine queuing (`RT-12`);
+//! - Conditional `PUT /cas/state/{*key}?if_none_match=1` returning `409 Conflict` (`RT-03`);
+//! - `DELETE /cas/blobs/{sha}` for `DELETE /v1/carbon/runs/{id}` cryptographic shred.
 
 use std::collections::{BTreeMap, VecDeque};
 use std::net::SocketAddr;
@@ -29,21 +25,25 @@ use axum::{
     Router,
 };
 use http_body_util::BodyExt as _;
-use jope_api::carbon::{CarbonRegionCatalog, CarbonRegionDescriptor};
+use jope_api::carbon::{CarbonRegionCatalog, CarbonRegionDescriptor, CarbonTierWire};
 use tokio::sync::{oneshot, Mutex as AsyncMutex, Notify};
 
 use crate::{
-    cas::{CarbonCasStore, CarbonFsCas, CarbonHttpCas},
-    edge_router::{
-        now_epoch_ms, CarbonEdgeConfig, CarbonEdgeRouter, CarbonGatewayResponse,
-        CarbonHttpEngineInvoker,
+    cells::{
+        edge::{CarbonEdgeConfig, CarbonEdgeRouter, CarbonGatewayResponse},
+        engine::CarbonEngineWorker,
+        engine_invoker::{now_epoch_ms, CarbonHttpEngineInvoker},
+        eval::{CarbonEvalWorker, CarbonHttpEvalInvoker},
+        lambda_runtime::run_lambda_custom_runtime_loop,
     },
-    engine_worker::CarbonEngineWorker,
-    eval_worker::{CarbonEvalWorker, CarbonHttpEvalInvoker},
-    lambda_runtime::run_lambda_custom_runtime_loop,
-    presign::CarbonPresigner,
-    seal::CarbonSealKey,
-    serve::{axum_request_to_gateway, gateway_response_to_axum},
+    modes::serve::{axum_request_to_gateway, gateway_response_to_axum},
+    security::{
+        auth::{CarbonAuthVerifier, CarbonCapabilityClaims},
+        seal::CarbonSealKey,
+        sigv4::CarbonPresigner,
+        user_envelope::CarbonEngineKek,
+    },
+    storage::cas::{CarbonCasStore, CarbonFsCas, CarbonHttpCas},
 };
 
 struct PendingInvocation {
@@ -69,6 +69,21 @@ impl CarbonRuntimeRoleQueue {
             notify: Notify::new(),
             invocations: AtomicU64::new(0),
         }
+    }
+
+    async fn enqueue_async(&self, payload: Vec<u8>, lease_ms: u64) {
+        let request_id = format!("req_ev_{}", ulid::Ulid::new());
+        let deadline_epoch_ms = now_epoch_ms().saturating_add(lease_ms);
+        {
+            let mut pending = self.pending.lock().await;
+            pending.push_back(PendingInvocation {
+                request_id,
+                deadline_epoch_ms,
+                payload,
+            });
+        }
+        self.invocations.fetch_add(1, Ordering::SeqCst);
+        self.notify.notify_one();
     }
 
     async fn dispatch(&self, payload: Vec<u8>, lease_ms: u64) -> Result<Vec<u8>, String> {
@@ -130,9 +145,9 @@ pub struct CarbonEmuConfig {
     pub force_hybrid_fanout: bool,
     pub eval_worker_threads: usize,
     pub engine_lease_ms: u64,
-    /// Optional compiled `carbon-edge` executable path to spawn as an OS-isolated child process
-    /// speaking `LAMBDA_RUNTIME_API` over loopback TCP!
     pub edge_binary_path: Option<PathBuf>,
+    pub auth_secret: [u8; 32],
+    pub engine_kek_scalar: [u8; 32],
 }
 
 impl CarbonEmuConfig {
@@ -144,6 +159,8 @@ impl CarbonEmuConfig {
             eval_worker_threads: 2,
             engine_lease_ms: 840_000,
             edge_binary_path: None,
+            auth_secret: [0x44u8; 32],
+            engine_kek_scalar: [0x11u8; 32],
         }
     }
 }
@@ -160,6 +177,8 @@ pub struct CarbonEmuTelemetrySnapshot {
 /// + HTTP S3 CAS cluster with zero cloud credentials.
 pub struct CarbonLocalLambdaEmulator {
     bound_addr: SocketAddr,
+    auth_secret: [u8; 32],
+    engine_kek_pubkey_b64: String,
     shared: Arc<EmulatorSharedState>,
     shutdown_tx: Option<oneshot::Sender<()>>,
     server_join: Option<JoinHandle<()>>,
@@ -182,6 +201,11 @@ impl CarbonLocalLambdaEmulator {
         let internal_token = format!("emu_tok_{}", ulid::Ulid::new());
         let presign_secret = [0x33u8; 32];
         let seal_secret = [0x77u8; 32];
+        let engine_kek = Arc::new(
+            CarbonEngineKek::from_scalar_bytes(&config.engine_kek_scalar)
+                .map_err(|e| e.to_string())?,
+        );
+        let engine_kek_pubkey_b64 = engine_kek.pubkey_b64();
 
         let shared = Arc::new(EmulatorSharedState {
             cas,
@@ -223,7 +247,6 @@ impl CarbonLocalLambdaEmulator {
         let mut worker_joins = Vec::new();
         let mut edge_child = None;
 
-        // 1. Start `edge` cell: either real OS child process (`carbon-edge`) or runtime thread!
         if let Some(bin_path) = &config.edge_binary_path {
             let child = ProcessCommand::new(bin_path)
                 .arg("--lambda-runtime")
@@ -234,6 +257,8 @@ impl CarbonLocalLambdaEmulator {
                 .env("CARBON_INTERNAL_TOKEN", &internal_token)
                 .env("CARBON_ENGINE_INVOKE_URL", &engine_invoke_url)
                 .env("CARBON_PRESIGN_SECRET_HEX", hex::encode(presign_secret))
+                .env("CARBON_AUTH_SECRET_HEX", hex::encode(config.auth_secret))
+                .env("CARBON_ENGINE_KEK_PUBKEY_B64", &engine_kek_pubkey_b64)
                 .stdin(Stdio::null())
                 .stdout(Stdio::null())
                 .stderr(Stdio::inherit())
@@ -259,6 +284,8 @@ impl CarbonLocalLambdaEmulator {
                     enterprise_self_hosted: false,
                     catalog,
                     presigner: CarbonPresigner::from_secret(presign_secret),
+                    auth_verifier: Some(CarbonAuthVerifier::from_secret(config.auth_secret)),
+                    engine_kek_pubkey_b64: Some(engine_kek_pubkey_b64.clone()),
                 },
                 edge_cas,
                 engine_inv,
@@ -280,7 +307,6 @@ impl CarbonLocalLambdaEmulator {
             );
         }
 
-        // 2. Start `engine` cell runtime threads (`2` concurrent Lambda containers so `/resume` or `/predict` never queues behind another invocation).
         for idx in 0..2 {
             let eng_cas = Arc::new(CarbonHttpCas::new(&cas_http_url, &internal_token));
             let eval_inv = Arc::new(CarbonHttpEvalInvoker::new(&eval_invoke_url));
@@ -291,6 +317,7 @@ impl CarbonLocalLambdaEmulator {
                 CarbonSealKey::from_bytes(seal_secret),
                 eng_dir,
             )?
+            .with_engine_kek(Some(Arc::clone(&engine_kek)))
             .with_forced_hybrid_fanout(config.force_hybrid_fanout);
             let engine_rt_api = format!("{bound_addr}/runtime/engine");
             let lease_ms = config.engine_lease_ms;
@@ -309,7 +336,6 @@ impl CarbonLocalLambdaEmulator {
             );
         }
 
-        // 3. Start `eval` stateless shard runtime threads (`eval_worker_threads` warm containers).
         for idx in 0..config.eval_worker_threads.max(1) {
             let eval_cas = Arc::new(CarbonHttpCas::new(&cas_http_url, &internal_token));
             let eval_dir = config.data_dir.join(format!("eval_container_{idx}"));
@@ -329,6 +355,8 @@ impl CarbonLocalLambdaEmulator {
 
         Ok(Self {
             bound_addr,
+            auth_secret: config.auth_secret,
+            engine_kek_pubkey_b64,
             shared,
             shutdown_tx: Some(shutdown_tx),
             server_join: Some(server_join),
@@ -343,6 +371,32 @@ impl CarbonLocalLambdaEmulator {
 
     pub fn cas_root(&self) -> &std::path::Path {
         self.shared.cas.root()
+    }
+
+    pub fn auth_secret(&self) -> [u8; 32] {
+        self.auth_secret
+    }
+
+    pub fn engine_kek_pubkey_b64(&self) -> &str {
+        &self.engine_kek_pubkey_b64
+    }
+
+    /// Mint a capability token signed with this emulator's `auth_secret`.
+    pub fn mint_capability_token(
+        &self,
+        tenant_id: &str,
+        tier: CarbonTierWire,
+        admin: bool,
+    ) -> Result<String, String> {
+        let verifier = CarbonAuthVerifier::from_secret(self.auth_secret);
+        verifier
+            .mint_token(&CarbonCapabilityClaims {
+                tenant_id: tenant_id.to_owned(),
+                tier,
+                exp_epoch_secs: (now_epoch_ms() / 1_000).saturating_add(3_600),
+                admin,
+            })
+            .map_err(|e| e.to_string())
     }
 
     pub fn telemetry(&self) -> CarbonEmuTelemetrySnapshot {
@@ -397,7 +451,9 @@ fn build_emulator_router(state: Arc<EmulatorSharedState>) -> Router {
         .route("/invoke/{role}", post(internal_invoke_handler))
         .route(
             "/cas/blobs/{sha}",
-            put(cas_put_blob_handler).get(cas_get_blob_handler),
+            put(cas_put_blob_handler)
+                .get(cas_get_blob_handler)
+                .delete(cas_delete_blob_handler),
         )
         .route(
             "/cas/state/{*key}",
@@ -476,10 +532,8 @@ async fn rt_response_handler(
     let mut waiters = queue.waiters.lock().await;
     if let Some(tx) = waiters.remove(&req_id) {
         let _ = tx.send(Ok(bytes));
-        StatusCode::ACCEPTED
-    } else {
-        StatusCode::GONE
     }
+    StatusCode::ACCEPTED
 }
 
 async fn rt_error_handler(
@@ -498,10 +552,8 @@ async fn rt_error_handler(
     let mut waiters = queue.waiters.lock().await;
     if let Some(tx) = waiters.remove(&req_id) {
         let _ = tx.send(Err(msg));
-        StatusCode::ACCEPTED
-    } else {
-        StatusCode::GONE
     }
+    StatusCode::ACCEPTED
 }
 
 async fn internal_invoke_handler(
@@ -515,13 +567,26 @@ async fn internal_invoke_handler(
             .body(Body::from("unknown role"))
             .unwrap();
     };
+    let is_event = req
+        .headers()
+        .get("x-amz-invocation-type")
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|s| s.eq_ignore_ascii_case("Event"));
     let Ok(collected) = req.into_body().collect().await else {
         return Response::builder()
             .status(StatusCode::BAD_REQUEST)
             .body(Body::from("bad body"))
             .unwrap();
     };
-    match queue.dispatch(collected.to_bytes().to_vec(), 840_000).await {
+    let payload = collected.to_bytes().to_vec();
+    if is_event {
+        queue.enqueue_async(payload, 840_000).await;
+        return Response::builder()
+            .status(StatusCode::ACCEPTED)
+            .body(Body::empty())
+            .unwrap();
+    }
+    match queue.dispatch(payload, 840_000).await {
         Ok(resp_bytes) => Response::builder()
             .status(StatusCode::OK)
             .header("content-type", "application/json")
@@ -586,6 +651,33 @@ async fn cas_get_blob_handler(
     }
 }
 
+async fn cas_delete_blob_handler(
+    State(state): State<Arc<EmulatorSharedState>>,
+    AxumPath(sha): AxumPath<String>,
+    headers: HeaderMap,
+) -> Response<Body> {
+    if !check_internal_token(&headers, &state.internal_token) {
+        return Response::builder()
+            .status(StatusCode::FORBIDDEN)
+            .body(Body::empty())
+            .unwrap();
+    }
+    match state.cas.delete_blob(&sha) {
+        Ok(true) => Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(Body::empty())
+            .unwrap(),
+        Ok(false) => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::empty())
+            .unwrap(),
+        Err(err) => Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::from(err))
+            .unwrap(),
+    }
+}
+
 async fn cas_put_state_handler(
     State(state): State<Arc<EmulatorSharedState>>,
     AxumPath(key): AxumPath<String>,
@@ -597,6 +689,10 @@ async fn cas_put_state_handler(
             .body(Body::empty())
             .unwrap();
     }
+    let if_none_match = req
+        .uri()
+        .query()
+        .is_some_and(|q| q.split('&').any(|kv| kv == "if_none_match=1"));
     let Ok(collected) = req.into_body().collect().await else {
         return Response::builder()
             .status(StatusCode::BAD_REQUEST)
@@ -604,7 +700,24 @@ async fn cas_put_state_handler(
             .unwrap();
     };
     let clean = key.trim_start_matches('/');
-    match state.cas.put_state_object(clean, &collected.to_bytes()) {
+    let bytes = collected.to_bytes();
+    if if_none_match {
+        return match state.cas.put_state_object_if_absent(clean, &bytes) {
+            Ok(true) => Response::builder()
+                .status(StatusCode::OK)
+                .body(Body::empty())
+                .unwrap(),
+            Ok(false) => Response::builder()
+                .status(StatusCode::CONFLICT)
+                .body(Body::from("state key already exists"))
+                .unwrap(),
+            Err(err) => Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(Body::from(err))
+                .unwrap(),
+        };
+    }
+    match state.cas.put_state_object(clean, &bytes) {
         Ok(()) => Response::builder()
             .status(StatusCode::OK)
             .body(Body::empty())

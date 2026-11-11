@@ -32,6 +32,8 @@ pub enum PrepError {
     InvalidLandmarkWire { reason: &'static str },
     /// A JMAT v1 table or byte buffer failed header, column, alignment, or SHA-256 validation.
     InvalidJmat { reason: &'static str },
+    /// A `CUEN\x01` or `CUDK\x01` per-user encrypted envelope failed header, purpose, or length validation.
+    InvalidUserEnvelope { reason: &'static str },
 }
 
 impl fmt::Display for PrepError {
@@ -65,6 +67,9 @@ impl fmt::Display for PrepError {
                 write!(f, "invalid landmark wire bundle: {reason}")
             }
             Self::InvalidJmat { reason } => write!(f, "invalid JMAT v1 matrix: {reason}"),
+            Self::InvalidUserEnvelope { reason } => {
+                write!(f, "invalid CUEN v1 user envelope: {reason}")
+            }
         }
     }
 }
@@ -151,6 +156,14 @@ impl PrepError {
                     "verify trailing 32-byte SHA-256 checksum matches payload bytes",
                 ],
                 "rerun `cargo test -p jope-prep --test prep jmat_roundtrip_and_refusals`",
+            ),
+            Self::InvalidUserEnvelope { .. } => (
+                "authenticate per-user zero-knowledge CUEN v1 and CUDK v1 ciphertext headers",
+                vec![
+                    "encrypt fit.jmat, holdout.jmat, landmarks, and predict payloads with pack_cuen_v1",
+                    "ensure tenant_id, run_id, and CuenPayloadKind match the target artifact slot",
+                ],
+                "rerun `cargo test -p jope-prep cuen`",
             ),
         };
         PrepGuidance {

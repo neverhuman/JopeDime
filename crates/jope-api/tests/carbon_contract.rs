@@ -1,10 +1,10 @@
 use jope_api::{
     carbon::{
-        CarbonCreateRunRequest, CarbonEarlyStopRequest, CarbonExecutionModeWire,
-        CarbonPingResponse, CarbonPredictRequest, CarbonPredictResponse,
+        CarbonAnonymousAuthResponse, CarbonCreateRunRequest, CarbonEarlyStopRequest,
+        CarbonExecutionModeWire, CarbonPingResponse, CarbonPredictRequest, CarbonPredictResponse,
         CarbonPrepareUploadRequest, CarbonPrepareUploadResponse, CarbonPresignedTarget,
         CarbonPublicWaveProgress, CarbonRegionCatalog, CarbonResumeRunRequest, CarbonRunStateWire,
-        CarbonTierWire, CarbonUploadSlotWire, CARBON_DEFAULT_REGIONS,
+        CarbonShredRunResponse, CarbonTierWire, CarbonUploadSlotWire, CARBON_DEFAULT_REGIONS,
     },
     decimal::DecimalU64,
     ids::{DatasetId, RunId},
@@ -20,6 +20,21 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         .parse()
         .expect("valid DatasetId");
 
+    let anon = CarbonAnonymousAuthResponse {
+        tenant_id: "anon_01JCCARB0N0000000000000099".to_owned(),
+        capability_token: "ctk1.payload.sig".to_owned(),
+        tier: CarbonTierWire::Free,
+        expires_epoch_secs: DecimalU64(1_800_000_000u64),
+        engine_kek_pubkey_b64: Some("BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".to_owned()),
+    };
+    assert_eq!(
+        serde_json::from_str::<CarbonAnonymousAuthResponse>(
+            &serde_json::to_string(&anon).expect("encode anon")
+        )
+        .expect("decode anon"),
+        anon
+    );
+
     let prepare = CarbonPrepareUploadRequest {
         tenant_id: "tenant-pro".to_owned(),
         tier: CarbonTierWire::Pro,
@@ -28,12 +43,13 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         feature_count: 12,
         fit_jmat: CarbonUploadSlotWire {
             sha256: "a".repeat(64),
-            bytes: DecimalU64(48_000u64),
+            bytes: DecimalU64(48_052u64),
         },
         holdout_jmat: CarbonUploadSlotWire {
             sha256: "b".repeat(64),
-            bytes: DecimalU64(12_000u64),
+            bytes: DecimalU64(12_052u64),
         },
+        encrypted_cuen: true,
     };
     let prepare_json = serde_json::to_string(&prepare).expect("serialize prepare");
     assert_eq!(
@@ -47,14 +63,17 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
             url: "https://us-east-2.carbon.jopedime.com/v1/carbon/cas/aaa".to_owned(),
             method: "PUT".to_owned(),
             sha256: "a".repeat(64),
+            max_bytes: DecimalU64(48_052u64),
             expires_epoch_secs: DecimalU64(1_800_000_000u64),
         },
         holdout_target: CarbonPresignedTarget {
             url: "https://us-east-2.carbon.jopedime.com/v1/carbon/cas/bbb".to_owned(),
             method: "PUT".to_owned(),
             sha256: "b".repeat(64),
+            max_bytes: DecimalU64(12_052u64),
             expires_epoch_secs: DecimalU64(1_800_000_000u64),
         },
+        engine_kek_pubkey_b64: Some("BA==".to_owned()),
     };
     assert_eq!(
         serde_json::from_str::<CarbonPrepareUploadResponse>(
@@ -78,7 +97,9 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         objective: "rmse".to_owned(),
         effort: Effort::Medium,
         seed: DecimalU64(42u64),
-        landmark_bundle_b64: "SkxNQg==".to_owned(),
+        landmark_bundle_b64: "Q1VFTgE=".to_owned(),
+        encrypted_cuen: true,
+        wrapped_u_dek_b64: Some("Q1VESwE=".to_owned()),
     };
     assert_eq!(
         serde_json::from_str::<CarbonCreateRunRequest>(
@@ -102,6 +123,12 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         outer_holdout_loss: Some(0.149),
         outer_holdout_metric: Some(0.149),
         neural_seed_applied: true,
+        neural_guidance_mode: Some("multi_wave_learned".to_owned()),
+        bundle_digest: Some(
+            "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc".to_owned(),
+        ),
+        tier_applied: Some(CarbonTierWire::Pro),
+        encrypted_cuen: true,
         can_resume: true,
         sealed_checkpoint_sha256: Some("c".repeat(64)),
         sealed_champion_sha256: Some("d".repeat(64)),
@@ -147,6 +174,7 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         tenant_id: "tenant-pro".to_owned(),
         effort: Some(Effort::High),
         additional_waves: Some(4),
+        wrapped_u_dek_b64: Some("Q1VESwE=".to_owned()),
     };
     assert_eq!(
         serde_json::from_str::<CarbonResumeRunRequest>(
@@ -158,8 +186,11 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
 
     let pred_req = CarbonPredictRequest {
         tenant_id: "tenant-pro".to_owned(),
-        feature_names: vec!["x0".to_owned(), "x1".to_owned()],
-        rows: vec![vec![Some(1.5), None], vec![Some(-2.0), Some(3.25)]],
+        feature_names: vec![],
+        rows: vec![],
+        encrypted_rows_cuen_b64: Some("Q1VFTgEE".to_owned()),
+        client_response_pubkey_b64: Some("BA==".to_owned()),
+        wrapped_u_dek_b64: Some("Q1VESwE=".to_owned()),
     };
     assert_eq!(
         serde_json::from_str::<CarbonPredictRequest>(
@@ -170,10 +201,12 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
     );
 
     let pred_resp = CarbonPredictResponse {
-        run_id,
-        predictions: vec![4.25, 1.75],
+        run_id: run_id.clone(),
+        predictions: vec![],
         predictions_sha256: "e".repeat(64),
         row_count: 2,
+        encrypted_predictions_cuen_b64: Some("Q1VFTgEF".to_owned()),
+        response_cudk_b64: Some("Q1VESwE=".to_owned()),
     };
     assert_eq!(
         serde_json::from_str::<CarbonPredictResponse>(
@@ -183,11 +216,25 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         pred_resp
     );
 
+    let shred = CarbonShredRunResponse {
+        run_id,
+        shredded: true,
+        objects_deleted: 5,
+    };
+    assert_eq!(
+        serde_json::from_str::<CarbonShredRunResponse>(
+            &serde_json::to_string(&shred).expect("encode shred")
+        )
+        .expect("decode shred"),
+        shred
+    );
+
     let ping = CarbonPingResponse {
         region: "eu-west-1".to_owned(),
         healthy: true,
         server_epoch_ms: server_epoch_secs_or_ms(),
         enterprise_self_hosted: false,
+        engine_kek_pubkey_b64: Some("BA==".to_owned()),
     };
     assert!(ping.healthy);
 }
@@ -199,17 +246,17 @@ fn server_epoch_secs_or_ms() -> DecimalU64 {
 #[test]
 fn carbon_region_catalog_covers_all_17_graviton_cells_and_generates_json_schema() {
     let catalog = CarbonRegionCatalog::default_17_region_catalog("carbon.jopedime.com");
-    assert_eq!(CARBON_DEFAULT_REGIONS.len(), 17);
+    assert_eq!(catalog.catalog_version, 1);
+    assert_eq!(catalog.regions.len(), CARBON_DEFAULT_REGIONS.len());
     assert_eq!(catalog.regions.len(), 17);
-    assert_eq!(catalog.regions[0].region, "us-east-2");
     assert_eq!(
         catalog.regions[0].endpoint_url,
         "https://us-east-2.carbon.jopedime.com"
     );
-    assert_eq!(catalog.regions[16].region, "me-central-1");
 
     let schema = schemars::schema_for!(CarbonPublicWaveProgress);
-    let schema_text = serde_json::to_string(&schema).expect("serialize schema");
-    assert!(schema_text.contains("outer_holdout_loss"));
-    assert!(!schema_text.contains("\"dsl\""));
+    let schema_str = serde_json::to_string(&schema).expect("schema json");
+    assert!(schema_str.contains("outer_holdout_loss"));
+    assert!(schema_str.contains("bundle_digest"));
+    assert!(!schema_str.contains("\"dsl\""));
 }

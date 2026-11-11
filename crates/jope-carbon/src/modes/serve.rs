@@ -1,9 +1,8 @@
 //! Downloadable single-binary Enterprise VPC / on-premises server (`carbon serve`, `ADR-0007` Phase C6).
 //!
 //! Runs the identical `/v1/carbon/*` wire contract inside a customer VPC or air-gapped host
-//! with `CarbonProductTier::no_limit()`, local `CarbonFsCas` persistence, `AES-256-GCM` state
-//! sealing, and `tokio::task::spawn_blocking` dispatch so concurrent `/stop`, `/events`, and
-//! `/status` calls remain responsive during active search waves.
+//! with `CarbonProductTier::no_limit()`, local `CarbonFsCas` persistence, `CCKP\x02` state
+//! sealing, and background async `202` wave execution.
 
 use std::collections::BTreeMap;
 use std::net::SocketAddr;
@@ -22,15 +21,40 @@ use http_body_util::BodyExt as _;
 use jope_api::carbon::{CarbonRegionCatalog, CarbonRegionDescriptor};
 
 use crate::{
-    cas::CarbonFsCas,
-    edge_router::{
-        CarbonEdgeConfig, CarbonEdgeRouter, CarbonGatewayRequest, CarbonGatewayResponse,
+    cells::{
+        edge::{CarbonEdgeConfig, CarbonEdgeRouter, CarbonGatewayRequest, CarbonGatewayResponse},
+        engine::CarbonEngineWorker,
+        engine_invoker::{CarbonEngineInvoker, CarbonEngineWireCommand},
+        eval::CarbonEvalWorker,
     },
-    engine_worker::CarbonEngineWorker,
-    eval_worker::CarbonEvalWorker,
-    presign::CarbonPresigner,
-    seal::CarbonSealKey,
+    security::{
+        auth::CarbonAuthVerifier, seal::CarbonSealKey, sigv4::CarbonPresigner,
+        user_envelope::CarbonEngineKek,
+    },
+    storage::cas::CarbonFsCas,
 };
+
+struct InProcessAsyncEngineInvoker {
+    worker: Arc<CarbonEngineWorker>,
+}
+
+impl CarbonEngineInvoker for InProcessAsyncEngineInvoker {
+    fn invoke_engine(&self, command: &CarbonEngineWireCommand) -> Result<Vec<u8>, String> {
+        self.worker.execute_command(command, None)
+    }
+
+    fn invoke_engine_async(&self, command: &CarbonEngineWireCommand) -> Result<(), String> {
+        let worker = Arc::clone(&self.worker);
+        let cmd = command.clone();
+        std::thread::Builder::new()
+            .name("carbon-serve-async-engine".to_owned())
+            .spawn(move || {
+                let _ = worker.execute_command(&cmd, None);
+            })
+            .map(|_| ())
+            .map_err(|e| format!("spawn async engine thread: {e}"))
+    }
+}
 
 pub(crate) async fn axum_request_to_gateway(
     req: Request<Body>,
@@ -111,8 +135,8 @@ pub struct CarbonEnterpriseServeConfig {
     pub region: String,
     pub seal_secret: [u8; 32],
     pub presign_secret: [u8; 32],
-    /// When `true` (default for `carbon serve`), enforces `CarbonProductTier::no_limit()`.
-    /// Set to `false` in cloud-tier tests to exercise `Free` / `Pro` row and effort caps.
+    pub auth_secret: Option<[u8; 32]>,
+    pub enable_user_envelope: bool,
     pub enterprise_self_hosted: bool,
 }
 
@@ -124,13 +148,14 @@ impl CarbonEnterpriseServeConfig {
             region: "vpc-local-1".to_owned(),
             seal_secret: [0x5A; 32],
             presign_secret: [0xA5; 32],
+            auth_secret: None,
+            enable_user_envelope: false,
             enterprise_self_hosted: true,
         }
     }
 }
 
-/// `CarbonEnterpriseServerHandle` is a struct managing a background `CarbonEnterpriseServer`
-/// bound to an ephemeral or fixed TCP port.
+/// `CarbonEnterpriseServerHandle` is a struct managing a background `CarbonEnterpriseServer`.
 pub struct CarbonEnterpriseServerHandle {
     bound_addr: SocketAddr,
     shutdown_tx: Option<tokio::sync::oneshot::Sender<()>>,
@@ -175,12 +200,26 @@ impl CarbonEnterpriseServer {
             cas.clone(),
             config.data_dir.join("eval_scratch"),
         )?);
-        let engine_worker = Arc::new(CarbonEngineWorker::new(
-            cas.clone(),
-            Some(eval_worker),
-            CarbonSealKey::from_bytes(config.seal_secret),
-            config.data_dir.join("engine_work"),
-        )?);
+        let engine_kek = if config.enable_user_envelope {
+            Some(Arc::new(
+                CarbonEngineKek::generate().map_err(|e| e.to_string())?,
+            ))
+        } else {
+            None
+        };
+        let kek_pub_b64 = engine_kek.as_ref().map(|k| k.pubkey_b64());
+        let engine_worker = Arc::new(
+            CarbonEngineWorker::new(
+                cas.clone(),
+                Some(eval_worker),
+                CarbonSealKey::from_bytes(config.seal_secret),
+                config.data_dir.join("engine_work"),
+            )?
+            .with_engine_kek(engine_kek),
+        );
+        let invoker = Arc::new(InProcessAsyncEngineInvoker {
+            worker: engine_worker,
+        });
         let base_url = format!("http://{bound_addr}");
         let catalog = CarbonRegionCatalog {
             catalog_version: 1,
@@ -197,15 +236,12 @@ impl CarbonEnterpriseServer {
             enterprise_self_hosted: config.enterprise_self_hosted,
             catalog,
             presigner: CarbonPresigner::from_secret(config.presign_secret),
+            auth_verifier: config.auth_secret.map(CarbonAuthVerifier::from_secret),
+            engine_kek_pubkey_b64: kek_pub_b64,
         };
-        Ok(Arc::new(CarbonEdgeRouter::new(
-            edge_cfg,
-            cas,
-            engine_worker,
-        )))
+        Ok(Arc::new(CarbonEdgeRouter::new(edge_cfg, cas, invoker)))
     }
 
-    /// Spawn a `CarbonEnterpriseServer` on a dedicated background Tokio runtime thread.
     pub fn spawn_background(
         config: CarbonEnterpriseServeConfig,
     ) -> Result<CarbonEnterpriseServerHandle, String> {
@@ -251,7 +287,6 @@ impl CarbonEnterpriseServer {
         })
     }
 
-    /// Run `carbon serve` in the foreground until `SIGINT` (`Ctrl-C`).
     pub fn run_until_ctrl_c(config: CarbonEnterpriseServeConfig) -> Result<(), String> {
         let std_listener = std::net::TcpListener::bind(config.listen_addr)
             .map_err(|e| format!("bind {}: {e}", config.listen_addr))?;

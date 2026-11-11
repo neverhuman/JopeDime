@@ -16,6 +16,23 @@ use jope_prep::conditioning::FitLandmarkBundle;
 use jope_runtime::backend::DeviceRequest;
 
 const CSNP_MAGIC: &[u8; 8] = b"CSNP\x01\x00\x00\x00";
+const MAX_CSNP_FILES: usize = 256;
+const MAX_CSNP_FILE_BYTES: usize = 32 * 1024 * 1024;
+const MAX_CSNP_TOTAL_BYTES: usize = 64 * 1024 * 1024;
+const DEFAULT_LAMBDA_R882_LAYER_DIR: &str = "/opt/jope-models/r882";
+
+/// `CarbonNeuralGuidancePolicy` is an enum selecting how an authenticated `r882` neural fusion
+/// bundle guides search waves for a product tier (`Wave0SeedOnly` for Free; `MultiWaveLearned`
+/// for Pro and Enterprise).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CarbonNeuralGuidancePolicy {
+    /// Condition `r882` on client `FIT` landmarks to rank Wave-0 starter seeds, then run heuristic
+    /// evolutionary waves (`Free` tier).
+    Wave0SeedOnly,
+    /// Condition `r882` on client `FIT` landmarks to rank Wave-0 starter seeds AND invoke
+    /// `LearnedAdmission` surrogate cost re-ranking across every evolutionary wave (`Pro` / `Enterprise`).
+    MultiWaveLearned,
+}
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -31,6 +48,7 @@ struct CarbonRefitEnvelope {
 /// FIT-landmark digest ordering.
 pub struct CarbonSeededSpace {
     seeded_starters: Vec<String>,
+    seen_digests: std::sync::Mutex<BTreeSet<String>>,
 }
 
 impl CarbonSeededSpace {
@@ -39,10 +57,12 @@ impl CarbonSeededSpace {
     pub fn from_starters(starters: Vec<String>) -> Result<Self> {
         let base = NativeSpace.seeds()?;
         let mut seen = BTreeSet::new();
+        let mut seen_digests = BTreeSet::new();
         let mut ordered = Vec::new();
         for item in starters.into_iter().chain(base) {
             if let Ok(canon) = NativeSpace.canonical(&item) {
                 if seen.insert(canon.clone()) {
+                    seen_digests.insert(digest(canon.as_bytes()));
                     ordered.push(canon);
                 }
             }
@@ -53,7 +73,16 @@ impl CarbonSeededSpace {
         );
         Ok(Self {
             seeded_starters: ordered,
+            seen_digests: std::sync::Mutex::new(seen_digests),
         })
+    }
+
+    fn sync_checkpoint_memo(&self, memo: &BTreeSet<String>) {
+        if let Ok(mut guard) = self.seen_digests.lock() {
+            for entry in memo {
+                guard.insert(entry.clone());
+            }
+        }
     }
 
     /// Build Wave-0 starters conditioned on the client's `FIT`-only `LandmarkBundle`.
@@ -122,7 +151,55 @@ impl SearchSpace for CarbonSeededSpace {
         count: usize,
         rng: &mut ChaCha12Rng,
     ) -> Result<Vec<String>> {
-        NativeSpace.propose(parents, count, rng)
+        let mut guard = self
+            .seen_digests
+            .lock()
+            .map_err(|_| anyhow::anyhow!("CarbonSeededSpace mutex poisoned"))?;
+        for parent in parents {
+            guard.insert(digest(parent.as_bytes()));
+        }
+        let mut output = Vec::with_capacity(count);
+        for _ in 0..64 {
+            for raw in NativeSpace.propose(parents, count, rng)? {
+                let canon = NativeSpace.canonical(&raw)?;
+                if guard.insert(digest(canon.as_bytes())) {
+                    output.push(canon);
+                    if output.len() == count {
+                        return Ok(output);
+                    }
+                }
+            }
+        }
+        anyhow::bail!("unable to build complete fresh Carbon proposal slate of {count} candidates")
+    }
+}
+
+struct CarbonLearnedExecutorAdapter<'a, E> {
+    inner: &'a E,
+    learned: bool,
+}
+
+impl<E: Executor> Executor for CarbonLearnedExecutorAdapter<'_, E> {
+    fn evaluate(&self, request: &Request) -> Response {
+        if self.learned
+            && request.attempt.slot < 65_536
+            && request.fold_spec.get("refit_output").is_none()
+            && request.fold_spec.get("refit_max_bytes").is_none()
+        {
+            let mut request = request.clone();
+            request.fold_spec["version"] = serde_json::json!(2);
+            self.inner.evaluate(&request)
+        } else {
+            self.inner.evaluate(request)
+        }
+    }
+
+    fn fitted_model(&self, request: &Request) -> Result<Vec<u8>> {
+        self.inner.fitted_model(request)
+    }
+
+    fn revoke(&self, attempt: &crate::worker::Attempt) {
+        self.inner.revoke(attempt)
     }
 }
 
@@ -157,7 +234,11 @@ impl CarbonInProcessExecutor {
 impl Executor for CarbonInProcessExecutor {
     fn evaluate(&self, request: &Request) -> Response {
         let t0 = Instant::now();
-        let outcome = evaluate_native(request, &self.fit_matrix);
+        let outcome = if request.fold_spec.get("version") == Some(&serde_json::json!(2)) {
+            crate::run::surrogate::native(request, &self.fit_matrix)
+        } else {
+            evaluate_native(request, &self.fit_matrix)
+        };
         let wall_ms = t0.elapsed().as_millis().min(u128::from(u64::MAX)) as u64;
         match outcome {
             Ok(scores) => Response {
@@ -348,15 +429,43 @@ pub struct CarbonWaveRunOutcome {
     pub best_cv_loss: Option<f64>,
     pub best_cv_metric: Option<f64>,
     pub neural_seed_applied: bool,
+    pub neural_guidance_mode: &'static str,
+    pub bundle_digest: Option<String>,
     pub paused: bool,
     pub completed_reason: Option<CompletionReason>,
     pub champion_model_bytes: Option<Vec<u8>>,
     pub store_archive_bytes: Vec<u8>,
 }
 
-/// Attempt to load the authenticated embedded `r882` proposal ranker when packaged into the
-/// current executable (`Ok(None)` in unbundled public/CI builds).
+/// Attempt to load the authenticated `r882` DOPE + JopeDime neural fusion ranker from:
+/// 1. `CARBON_MODEL_R882_DIR` (explicit directory override; fails closed on any tamper),
+/// 2. `/opt/jope-models/r882` (read-only AWS Lambda Layer mount; fails closed if present & tampered),
+/// 3. Self-embedded signed appliance package (`Ok(None)` in unbundled CI/dev builds).
 pub fn try_open_embedded_ranker() -> Result<Option<AdmittedRanker>> {
+    if let Some(explicit_dir) = std::env::var_os("CARBON_MODEL_R882_DIR") {
+        let dir_path = Path::new(&explicit_dir);
+        let verified =
+            crate::ranker::cuda::release::load_r882_release(dir_path).with_context(|| {
+                format!(
+                    "CARBON_MODEL_R882_DIR ({}) failed cryptographic r882 release verification",
+                    dir_path.display()
+                )
+            })?;
+        return Ok(Some(AdmittedRanker::r882(verified)?));
+    }
+
+    let layer_path = Path::new(DEFAULT_LAMBDA_R882_LAYER_DIR);
+    if layer_path.join("release-catalog.json").exists() {
+        let verified =
+            crate::ranker::cuda::release::load_r882_release(layer_path).with_context(|| {
+                format!(
+                    "Lambda layer {} failed cryptographic r882 release verification",
+                    layer_path.display()
+                )
+            })?;
+        return Ok(Some(AdmittedRanker::r882(verified)?));
+    }
+
     #[cfg(unix)]
     {
         crate::proposal::from_self()
@@ -367,12 +476,27 @@ pub fn try_open_embedded_ranker() -> Result<Option<AdmittedRanker>> {
     }
 }
 
+/// Cryptographically verify an extracted `r882` Lambda Layer bundle directory (cosign P-256
+/// detached signature, `release-catalog.json`, all 56 asset digests, and `AdmittedRanker::r882`
+/// admission) before packaging, returning the canonical `sha256:...` bundle digest.
+pub fn verify_r882_release_dir(dir: &Path) -> Result<String> {
+    let verified = crate::ranker::cuda::release::load_r882_release(dir).with_context(|| {
+        format!(
+            "r882 bundle directory {} failed cryptographic release verification",
+            dir.display()
+        )
+    })?;
+    let _admitted = AdmittedRanker::r882(verified)?;
+    Ok(crate::ranker::cuda::release::R882.to_owned())
+}
+
 /// `CarbonWaveSessionOptions` is a struct bundling the per-session inputs for `run_carbon_waves`.
 pub struct CarbonWaveSessionOptions<'a> {
     pub store_dir: &'a Path,
     pub plan: Plan,
     pub lm_bundle: &'a FitLandmarkBundle,
     pub ranker: Option<&'a AdmittedRanker>,
+    pub guidance_policy: CarbonNeuralGuidancePolicy,
     pub live_workers: usize,
     pub max_waves_this_session: u32,
 }
@@ -391,6 +515,7 @@ pub fn run_carbon_waves(
         plan,
         lm_bundle,
         ranker,
+        guidance_policy,
         live_workers,
         max_waves_this_session,
     } = session;
@@ -398,21 +523,54 @@ pub fn run_carbon_waves(
         max_waves_this_session > 0,
         "max_waves_this_session must be >= 1"
     );
-    let (seeded_space, learned_admission, neural_seed_applied) =
-        CarbonSeededSpace::conditioned_from_landmarks(lm_bundle, plan.seed, ranker, &plan)?;
     let store = Arc::new(Store::open(store_dir)?);
     let mut discovery = Discovery::open(Arc::clone(&store), plan)?;
+    let active_plan = discovery.checkpoint.plan.clone();
+    let (seeded_space, learned_admission, neural_seed_applied) =
+        CarbonSeededSpace::conditioned_from_landmarks(
+            lm_bundle,
+            active_plan.seed,
+            ranker,
+            &active_plan,
+        )?;
+    seeded_space.sync_checkpoint_memo(&discovery.checkpoint.memo);
+    let bundle_digest = ranker.map(|r| r.digest());
+    let fit_rows_admissible = fs::read(&active_plan.matrix_path)
+        .ok()
+        .and_then(|b| Matrix::open(b).ok())
+        .is_some_and(|m| (4..=20_000).contains(&m.rows()));
+    let use_multi_wave_learned = learned_admission.is_some()
+        && matches!(
+            guidance_policy,
+            CarbonNeuralGuidancePolicy::MultiWaveLearned
+        )
+        && fit_rows_admissible
+        && crate::objective::regression::RegressionObjective::parse(&active_plan.objective).is_ok();
+    let adapted_executor = CarbonLearnedExecutorAdapter {
+        inner: executor,
+        learned: use_multi_wave_learned,
+    };
+    let neural_guidance_mode = if !neural_seed_applied {
+        "landmark_digest_fallback"
+    } else if use_multi_wave_learned {
+        "multi_wave_learned"
+    } else {
+        "wave0_seed_only"
+    };
 
     let mut waves_executed = 0u32;
     let mut paused = false;
     while discovery.completed().is_none() && waves_executed < max_waves_this_session {
-        if let Some(learned) = &learned_admission {
-            discovery.advance(&seeded_space, learned, executor, live_workers, 1)?;
+        seeded_space.sync_checkpoint_memo(&discovery.checkpoint.memo);
+        if use_multi_wave_learned {
+            if let Some(learned) = &learned_admission {
+                discovery.advance(&seeded_space, learned, &adapted_executor, live_workers, 1)?;
+            }
         } else {
             discovery.advance(
                 &seeded_space,
                 &HeuristicAdmission,
-                executor,
+                &adapted_executor,
                 live_workers,
                 1,
             )?;
@@ -460,6 +618,8 @@ pub fn run_carbon_waves(
         best_cv_loss,
         best_cv_metric,
         neural_seed_applied,
+        neural_guidance_mode,
+        bundle_digest,
         paused,
         completed_reason,
         champion_model_bytes,
@@ -615,37 +775,62 @@ impl CarbonStoreArchive {
         new_fit_path: &Path,
     ) -> Result<Plan> {
         ensure!(
-            archive_bytes.len() >= 12 && &archive_bytes[..8] == CSNP_MAGIC,
-            "invalid CSNP store archive header"
+            archive_bytes.len() >= 12
+                && archive_bytes.len() <= MAX_CSNP_TOTAL_BYTES
+                && &archive_bytes[..8] == CSNP_MAGIC,
+            "invalid or oversized CSNP store archive header"
         );
         fs::create_dir_all(target_store_dir)?;
         let count = u32::from_le_bytes(archive_bytes[8..12].try_into()?) as usize;
+        ensure!(
+            count <= MAX_CSNP_FILES,
+            "CSNP archive file count {count} exceeds cap {MAX_CSNP_FILES}"
+        );
         let mut cursor = 12usize;
+        let mut unpacked_bytes = 0usize;
+        let mut seen_paths = BTreeSet::new();
         for _ in 0..count {
             ensure!(cursor + 4 <= archive_bytes.len(), "truncated CSNP path len");
             let path_len =
                 u32::from_le_bytes(archive_bytes[cursor..cursor + 4].try_into()?) as usize;
             cursor += 4;
             ensure!(
-                cursor + path_len + 8 <= archive_bytes.len(),
-                "truncated CSNP entry"
+                path_len > 0 && path_len <= 256 && cursor + path_len + 8 <= archive_bytes.len(),
+                "truncated or invalid CSNP entry path"
             );
             let rel = std::str::from_utf8(&archive_bytes[cursor..cursor + path_len])?;
             cursor += path_len;
+            let rel_path = Path::new(rel);
+            let safe_components = !rel.contains('\\')
+                && !rel.contains('\0')
+                && !rel_path.is_absolute()
+                && rel_path
+                    .components()
+                    .all(|c| matches!(c, std::path::Component::Normal(_)));
             ensure!(
-                !rel.is_empty() && !rel.contains("..") && !rel.starts_with('/'),
-                "unsafe relative path in CSNP archive"
+                safe_components && seen_paths.insert(rel.to_owned()),
+                "unsafe or duplicate relative path in CSNP archive"
             );
-            let data_len =
-                u64::from_le_bytes(archive_bytes[cursor..cursor + 8].try_into()?) as usize;
+            let data_len_u64 = u64::from_le_bytes(archive_bytes[cursor..cursor + 8].try_into()?);
+            let data_len = usize::try_from(data_len_u64)?;
             cursor += 8;
             ensure!(
-                cursor + data_len <= archive_bytes.len(),
-                "truncated CSNP file payload"
+                data_len <= MAX_CSNP_FILE_BYTES && cursor + data_len <= archive_bytes.len(),
+                "CSNP file payload exceeds bound or truncates archive"
             );
-            let dest = target_store_dir.join(rel);
+            unpacked_bytes = unpacked_bytes
+                .checked_add(data_len)
+                .filter(|&tot| tot <= MAX_CSNP_TOTAL_BYTES)
+                .context("CSNP unpacked byte total exceeds bound")?;
+            let dest = target_store_dir.join(rel_path);
             if let Some(parent) = dest.parent() {
                 fs::create_dir_all(parent)?;
+            }
+            if let Ok(existing_meta) = fs::symlink_metadata(&dest) {
+                ensure!(
+                    !existing_meta.file_type().is_symlink(),
+                    "refusing symlink target in CSNP unpack"
+                );
             }
             fs::write(&dest, &archive_bytes[cursor..cursor + data_len])?;
             cursor += data_len;
@@ -776,6 +961,7 @@ mod tests {
                 plan: plan_1,
                 lm_bundle: &lm_bundle,
                 ranker: None,
+                guidance_policy: CarbonNeuralGuidancePolicy::Wave0SeedOnly,
                 live_workers: 2,
                 max_waves_this_session: 1,
             },
@@ -787,6 +973,7 @@ mod tests {
         )
         .expect("session 1");
         assert!(!out_1.neural_seed_applied);
+        assert_eq!(out_1.neural_guidance_mode, "landmark_digest_fallback");
         assert!(out_1.paused);
         assert_eq!(seen_waves, 1);
         assert!(out_1.champion_model_bytes.is_some());
@@ -820,6 +1007,7 @@ mod tests {
                 plan: rebound_plan,
                 lm_bundle: &lm_bundle,
                 ranker: None,
+                guidance_policy: CarbonNeuralGuidancePolicy::MultiWaveLearned,
                 live_workers: 2,
                 max_waves_this_session: 2,
             },
@@ -854,5 +1042,191 @@ mod tests {
         .expect("predict with reordered columns + missing cell");
         assert_eq!(preds.len(), 2);
         assert!(preds.iter().all(|p| p.is_finite()));
+    }
+
+    #[test]
+    fn carbon_csnp_bounds_and_tampered_r882_dir_refusal() {
+        let tmp = tempfile::tempdir().expect("tmp");
+        let fit_path = tmp.path().join("fit.jmat");
+        fs::write(&fit_path, b"dummy").expect("write dummy");
+
+        // 1. CSNP archive path-traversal refusal (`RT-09`).
+        let mut bad_archive = Vec::new();
+        bad_archive.extend_from_slice(CSNP_MAGIC);
+        bad_archive.extend_from_slice(&1u32.to_le_bytes());
+        let evil_rel = b"../escape.txt";
+        bad_archive.extend_from_slice(&(evil_rel.len() as u32).to_le_bytes());
+        bad_archive.extend_from_slice(evil_rel);
+        bad_archive.extend_from_slice(&4u64.to_le_bytes());
+        bad_archive.extend_from_slice(b"boom");
+        let unpack_err = CarbonStoreArchive::unpack_store_dir_and_rebind_fit(
+            &bad_archive,
+            &tmp.path().join("bad"),
+            &"run_01JCCARB0N0000000000000012".parse().expect("id"),
+            &fit_path,
+        )
+        .unwrap_err();
+        assert!(unpack_err.to_string().contains("unsafe"));
+
+        // 2. CSNP archive file-count cap refusal (`> 256` entries).
+        let mut too_many = Vec::new();
+        too_many.extend_from_slice(CSNP_MAGIC);
+        too_many.extend_from_slice(&300u32.to_le_bytes());
+        let count_err = CarbonStoreArchive::unpack_store_dir_and_rebind_fit(
+            &too_many,
+            &tmp.path().join("many"),
+            &"run_01JCCARB0N0000000000000012".parse().expect("id"),
+            &fit_path,
+        )
+        .unwrap_err();
+        assert!(count_err.to_string().contains("exceeds cap"));
+
+        // 3. Tampered / unsigned r882 directory fails closed (`RT-13`).
+        let fake_r882 = tmp.path().join("fake_r882");
+        fs::create_dir_all(&fake_r882).expect("mkdir");
+        fs::write(fake_r882.join("release-catalog.json"), b"{}").expect("write fake catalog");
+        let Err(load_err) = crate::ranker::cuda::release::load_r882_release(&fake_r882) else {
+            panic!("unsigned r882 must fail closed");
+        };
+        assert!(!load_err.to_string().is_empty());
+
+        // 4. Optional live r882 verification when `JOPE_TEST_R882_DIR` is supplied.
+        if let Some(real_dir) = std::env::var_os("JOPE_TEST_R882_DIR") {
+            let verified = crate::ranker::cuda::release::load_r882_release(Path::new(&real_dir))
+                .expect("verified r882 release");
+            let ranker = AdmittedRanker::r882(verified).expect("admitted r882");
+            let ranker_hex = ranker.digest().trim_start_matches("sha256:").to_owned();
+
+            let total_rows = 40usize;
+            let features = 2usize;
+            let mut x_f32 = Vec::with_capacity(total_rows * features);
+            let mut y_f32 = Vec::with_capacity(total_rows);
+            let mut rows_opt = Vec::with_capacity(total_rows);
+            for r in 0..total_rows {
+                let x0 = (r as f64) * 0.2 - 2.0;
+                let x1 = ((r * 5 % 11) as f64) * 0.3;
+                let y = 1.8 * x0 - 0.9 * x1 + 0.25;
+                x_f32.extend_from_slice(&[x0 as f32, x1 as f32]);
+                y_f32.push(y as f32);
+                rows_opt.push(vec![
+                    Some(x0.to_string()),
+                    Some(x1.to_string()),
+                    Some(y.to_string()),
+                ]);
+            }
+            let split = SplitPlan::deterministic(total_rows, 7, 0.25).expect("split");
+            let lm_bundle =
+                FitLandmarkBundle::extract_fit_only(&x_f32, total_rows, features, &y_f32, &split)
+                    .expect("landmarks");
+            let table = PrepTable {
+                headers: vec!["x0".into(), "x1".into(), "y".into()],
+                rows: rows_opt,
+            };
+            let split_jmat = split_and_encode_jmat_v1(&table, &split).expect("jmat");
+            let fit_sha_hex = digest(&split_jmat.fit_jmat);
+
+            let free_dir = tempfile::tempdir().expect("free_dir");
+            let free_fit = free_dir.path().join("fit.jmat");
+            fs::write(&free_fit, &split_jmat.fit_jmat).expect("write free fit");
+            let free_exec = CarbonInProcessExecutor::open_fit(
+                split_jmat.fit_jmat.clone(),
+                &fit_sha_hex,
+                free_dir.path().join("scratch"),
+            )
+            .expect("free_exec");
+            let free_plan = Plan {
+                run_id: "run_01JCCARB0N0000000000000011".parse().expect("run_id"),
+                dataset_id: "ds_333333333333333333333333".parse().expect("ds"),
+                problem_digest: "5".repeat(64),
+                bundle_digest: ranker_hex.clone(),
+                binary_version: "1.0.0-test".into(),
+                matrix_path: free_fit,
+                matrix_sha256: fit_sha_hex.clone(),
+                target: "y".into(),
+                features: vec!["x0".into(), "x1".into()],
+                objective: "rmse".into(),
+                seed: 7,
+                planned_workers: 2,
+                effort: Effort::Fast,
+                evaluations: 48,
+                wall_seconds: 60,
+                evaluation_wall_ms: 5_000,
+                evaluation_rss_bytes: 256 * 1024 * 1024,
+                groups: None,
+                times: None,
+                gap_rows: 0,
+            };
+            let free_out = run_carbon_waves(
+                CarbonWaveSessionOptions {
+                    store_dir: &free_dir.path().join("store"),
+                    plan: free_plan,
+                    lm_bundle: &lm_bundle,
+                    ranker: Some(&ranker),
+                    guidance_policy: CarbonNeuralGuidancePolicy::Wave0SeedOnly,
+                    live_workers: 2,
+                    max_waves_this_session: 3,
+                },
+                &free_exec,
+                &|_| false,
+                &mut |_| {},
+            )
+            .expect("free run");
+            assert!(free_out.neural_seed_applied);
+            assert_eq!(free_out.neural_guidance_mode, "wave0_seed_only");
+            let forwards_after_free = ranker.execution_counter().load(Ordering::Relaxed);
+            assert!(forwards_after_free > 0);
+
+            let pro_dir = tempfile::tempdir().expect("pro_dir");
+            let pro_fit = pro_dir.path().join("fit.jmat");
+            fs::write(&pro_fit, &split_jmat.fit_jmat).expect("write pro fit");
+            let pro_exec = CarbonInProcessExecutor::open_fit(
+                split_jmat.fit_jmat.clone(),
+                &fit_sha_hex,
+                pro_dir.path().join("scratch"),
+            )
+            .expect("pro_exec");
+            let pro_plan = Plan {
+                run_id: "run_01JCCARB0N0000000000000012".parse().expect("run_id"),
+                dataset_id: "ds_333333333333333333333333".parse().expect("ds"),
+                problem_digest: "5".repeat(64),
+                bundle_digest: ranker_hex,
+                binary_version: "1.0.0-test".into(),
+                matrix_path: pro_fit,
+                matrix_sha256: fit_sha_hex,
+                target: "y".into(),
+                features: vec!["x0".into(), "x1".into()],
+                objective: "rmse".into(),
+                seed: 7,
+                planned_workers: 2,
+                effort: Effort::Fast,
+                evaluations: 48,
+                wall_seconds: 60,
+                evaluation_wall_ms: 5_000,
+                evaluation_rss_bytes: 256 * 1024 * 1024,
+                groups: None,
+                times: None,
+                gap_rows: 0,
+            };
+            let pro_out = run_carbon_waves(
+                CarbonWaveSessionOptions {
+                    store_dir: &pro_dir.path().join("store"),
+                    plan: pro_plan,
+                    lm_bundle: &lm_bundle,
+                    ranker: Some(&ranker),
+                    guidance_policy: CarbonNeuralGuidancePolicy::MultiWaveLearned,
+                    live_workers: 2,
+                    max_waves_this_session: 3,
+                },
+                &pro_exec,
+                &|_| false,
+                &mut |_| {},
+            )
+            .expect("pro run");
+            assert!(pro_out.neural_seed_applied);
+            assert_eq!(pro_out.neural_guidance_mode, "multi_wave_learned");
+            let pro_forwards =
+                ranker.execution_counter().load(Ordering::Relaxed) - forwards_after_free;
+            assert!(pro_forwards > forwards_after_free);
+        }
     }
 }

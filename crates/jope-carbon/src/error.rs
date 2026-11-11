@@ -6,8 +6,8 @@ use std::fmt;
 pub const CARBON_DOCS_URL: &str = "crates/jope-carbon/README.md";
 
 /// `CarbonError` is an enum for the Carbon runtime failure contract in `jope-carbon`: every tier
-/// refusal, planner input error, checkpoint authentication failure, or CLI argument refusal is
-/// reported as a typed value without panicking.
+/// refusal, planner input error, checkpoint/user-envelope authentication failure, capability auth
+/// error, or CLI argument refusal is reported as a typed value without panicking.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CarbonError {
     /// Dataset row count exceeds the active `CarbonProductTier` ceiling.
@@ -34,8 +34,12 @@ pub enum CarbonError {
         required_mb: usize,
         max_lambda_mb: usize,
     },
-    /// `AES-256-GCM` checkpoint sealing or opening failed authentication, magic, or context binding.
+    /// `AES-256-GCM` checkpoint sealing or opening failed authentication, magic, domain, or context binding.
     SealAuthenticationFailed { reason: &'static str },
+    /// Per-user zero-knowledge `CUEN\x01` or `CUDK\x01` envelope encryption/decryption failed.
+    UserEnvelopeFailed { reason: &'static str },
+    /// Capability token or tenant identity verification failed at the Carbon edge.
+    CapabilityAuthFailed { reason: &'static str },
     /// Unknown or malformed `CARBON_ROLE` / CLI argument.
     InvalidRoleOrCommand { value: String },
 }
@@ -82,6 +86,12 @@ impl fmt::Display for CarbonError {
             }
             Self::SealAuthenticationFailed { reason } => {
                 write!(f, "sealed checkpoint authentication failed: {reason}")
+            }
+            Self::UserEnvelopeFailed { reason } => {
+                write!(f, "per-user CUEN/CUDK envelope error: {reason}")
+            }
+            Self::CapabilityAuthFailed { reason } => {
+                write!(f, "Carbon capability authentication refused: {reason}")
             }
             Self::InvalidRoleOrCommand { value } => {
                 write!(f, "unrecognized Carbon role or subcommand `{value}`")
@@ -133,12 +143,28 @@ impl CarbonError {
                 "rerun `cargo test -p jope-carbon --test carbon_core adaptive_planner`",
             ),
             Self::SealAuthenticationFailed { .. } => (
-                "prevent cleartext exposure, tampering, or cross-tenant replay of sealed checkpoints",
+                "prevent cleartext exposure, domain confusion, or cross-tenant replay of sealed state",
                 vec![
-                    "open the envelope with the exact master secret, tenant_id, and run_id used to seal",
-                    "verify transport or storage did not alter sealed_checkpoint.enc bytes",
+                    "open the envelope with the exact master secret, seal domain, tenant_id, run_id, and U_DEK",
+                    "verify transport or storage did not alter sealed_checkpoint.enc or sealed_champion.enc",
                 ],
                 "rerun `cargo test -p jope-carbon --test carbon_core seal_envelope`",
+            ),
+            Self::UserEnvelopeFailed { .. } => (
+                "enforce per-user zero-knowledge ECDH-P256 + HKDF-SHA256 + AES-256-GCM encryption",
+                vec![
+                    "supply the exact per-run wrapped U_DEK (CUDK v1) matching carbon-engine's P-256 KEK",
+                    "ensure CUEN v1 payload slots (FitJmat, HoldoutJmat, LandmarkJlmb, Predict) are not swapped or modified",
+                ],
+                "rerun `cargo test -p jope-carbon --test carbon_redteam`",
+            ),
+            Self::CapabilityAuthFailed { .. } => (
+                "authenticate tenant capability tokens and isolate tenant namespaces at the edge",
+                vec![
+                    "acquire a Free token via POST /v1/carbon/auth/anonymous or pass a signed Pro Bearer token",
+                    "ensure tenant_id matches ^[A-Za-z0-9_-]{3,64}$ and matches the token's bound tenant_id",
+                ],
+                "rerun `cargo test -p jope-carbon --test carbon_redteam`",
             ),
             Self::InvalidRoleOrCommand { .. } => (
                 "dispatch only recognized Carbon cell roles and CLI subcommands",
