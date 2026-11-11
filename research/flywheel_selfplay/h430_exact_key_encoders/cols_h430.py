@@ -41,14 +41,18 @@ def _alarm(_s, _f):
 
 def load_bank(path: str):
     b = np.load(path, allow_pickle=False)
+    # amendment 2: every array is read from the file once. Indexing the NpzFile inside the loop re-read the whole
+    # array for every context, and for a float64 bank each context then kept its own full copy alive.
+    search, audit, y64, labs = b["search"], b["audit"], b["y64"], b["lab"]
+    s_shape, a_shape = b["s_shape"], b["a_shape"]
     so = ao = lo = 0
     for i, cid in enumerate(b["cids"].tolist()):
-        n, w = (int(v) for v in b["s_shape"][i])
-        na, f = (int(v) for v in b["a_shape"][i])
-        S = np.asarray(b["search"][so:so + n * w], np.float64).reshape(n, w)
-        XA = np.asarray(b["audit"][ao:ao + na * f], np.float64).reshape(na, f)
-        yield {"i": i, "cid": cid, "X": S[:, :-1], "y": np.asarray(b["y64"][lo:lo + n], np.float64),
-               "lab": np.asarray(b["lab"][lo:lo + n], np.int64), "XA": XA}
+        n, w = (int(v) for v in s_shape[i])
+        na, f = (int(v) for v in a_shape[i])
+        S = np.array(search[so:so + n * w], np.float64).reshape(n, w)
+        XA = np.array(audit[ao:ao + na * f], np.float64).reshape(na, f)
+        yield {"i": i, "cid": cid, "X": S[:, :-1], "y": np.array(y64[lo:lo + n], np.float64),
+               "lab": np.array(labs[lo:lo + n], np.int64), "XA": XA}
         so += n * w; ao += na * f; lo += n
 
 
