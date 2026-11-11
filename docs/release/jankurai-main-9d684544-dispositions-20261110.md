@@ -1034,3 +1034,43 @@ not allowlisted: the product file is the mutable owner, and dropping a class
 only rotates the next copy class into the 50-class report cap. Neither file
 is edited. Comparator code, other research H* bytes, holdout/dev91 data,
 `provenance_bind.py`, and the #2189 docs paths are not edited.
+
+## Audit of main f5f1d0a4
+
+Local jankurai 1.7.6 audit of `f5f1d0a4462f00c8ccbddf9add8896ce4a5a0cb9`
+(tree `761447c110ee70da84380e19e79aa0530a6184a6`), report written
+2026-11-11T07:14:44Z. Score 68, raw 78, caps 6, findings 58, hard 55, soft 3.
+P37 exception integrity passed (24 exact files, 26 exact rule/fingerprint
+findings). Evidence exclusion passed (472 paths). Verification artifact valid.
+Repair-queue sha256
+`783738b9c9e70f8648955295bd35f6b6dbfa402d73c1cad950ebcd3ccfda5a83` matches the
+queue on main after #2192. Report-only: the floor stays 85.
+
+This pass looked only at scored findings in TypeScript, docs, and CI or
+scripts. Rust and Go stay with the other lane. The REL-07 qualification
+`command` pairs and the vendored DL label cores stay as previously flagged.
+There is no scored TypeScript finding. The copy-code classes inside the
+50-class cap do not name a TypeScript, docs, or CI path. Two TypeScript
+bad-behavior counts are advisory signals on the security dimension, not
+scored findings, and no product `.ts` or `.tsx` file contains
+`dangerouslySetInnerHTML`, `innerHTML`, `document.write`, or `eval(`.
+
+Two scored rows are in scope. Neither is safely fixable.
+
+- `HLT-016-SUPPLY-CHAIN-DRIFT` on `.github/workflows/jankurai.yml`, fingerprint
+  `sha256:3e21704bc51e05ff9b3194cbc4eea62a77cce19f572ea9056e29ca3ce474c7bd`.
+  The workflow is `workflow_dispatch` only. Issue #375 and the runner
+  admission policy keep it out of pull-request CI. `ci.yml` already runs
+  `tools/security-lane.sh`. Wiring this workflow into pull-request CI would
+  change that admission boundary. The file is not edited.
+- `HLT-027-HUMAN-REVIEW-EVIDENCE-GAP` on
+  `docs/internal/kernel2/receipts/observatory-evaluator-identity-20261019/receipt.json`,
+  fingerprint
+  `sha256:e0cb12e1ad094624669a669dbe28e162d5ada272d836904d25b9f50dec6e293e`.
+  The evidence is still the sentence that no historical runtime row was
+  fabricated. `known_historical_table` stays `changed: false` with 2 rows.
+  The receipt already names the regenerate, compare, and final compare
+  commands, their exit codes, and the gzip logs beside it. Inventing a
+  table row would make the receipt false. The file is not edited.
+
+No Rust, Go, research H*, holdout, or `provenance_bind.py` file is edited.
