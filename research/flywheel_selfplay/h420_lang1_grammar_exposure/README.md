@@ -1,32 +1,95 @@
-# H420 — language exposure (in progress)
+# H420 — language exposure: `LANG_CONFIRMED` on DEV (closeout of the tested panel)
 
-**This is a status log, not a closeout.** No H420 deploy on a scored panel has started; no AUDIT value has been read.
-Plan: [`PREREG.md`](PREREG.md), addenda [1](PREREG_ADDENDUM_1.md) and [2](PREREG_ADDENDUM_2.md).
+**Verdict: `LANG_CONFIRMED`.** On the 115 fresh `DEV` families the stored `h416.SXB` recipe with the extended search
+run and the 20 added library presets (`TBOTH`) beats the stored H417 deploy of the same recipe (`B`) by the
+pre-registered test. **The gain comes from the library presets; the extended search run alone is null.**
+TRAIN-side cohort only: no dev91, DL-Val, DL-Holdout or sealed data was read. The `FIT-SEL` replication (reported,
+not tested) is still running and will be added below when it ends.
 
-| Time (UTC, 2026-11-10) | Item | State |
+Plan: [`PREREG.md`](PREREG.md), addenda [1](PREREG_ADDENDUM_1.md), [2](PREREG_ADDENDUM_2.md),
+[3](PREREG_ADDENDUM_3.md). Numbers: [`metrics.json`](metrics.json). Gates: [`gates_h420.sh`](gates_h420.sh).
+
+## Result (DEV, 115 families, entrant `P3+LIB3.SXB`, value = AUDIT u, paired by family against `B`)
+| Comparison | Mean gain (u) | Clipped mean | Sign-flip p | Leave-one-family-out min | Median | Win / tie / loss | ΔElo [95% interval] | Test |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **`TBOTH` vs `B` (primary)** | +0.0389 | **+0.0252** | **0.0121** | +0.0211 | +0.0006 | 61 / 7 / 47 | +50.7 [−10.8, +114.7] | **pass** |
+| `TLIB` vs `B` (secondary) | +0.0316 | +0.0282 | < 0.0001 | +0.0241 | +0.0005 | 63 / 21 / 31 | +77.6 [+36.4, +121.7] | pass (Holm) |
+| `TGX` vs `B` (secondary) | +0.0153 | +0.0039 | 0.358 | −0.0004 | −0.0000 | 50 / 9 / 56 | −21.8 [−79.6, +34.1] | fail |
+
+| Variant | Mean u, SXB | Mean u, KFB | Worker-seconds (vs `B`) | Contexts with an added preset in the stack |
+| --- | --- | --- | --- | --- |
+| `B` (stored H417 deploy) | 1.9094 | 1.9339 | 946,322 | — |
+| `TGX` (extended search run replaces GL) | 1.9248 | 1.9497 | 972,071 (+2.7%) | — |
+| `TLIB` (20 added presets) | 1.9411 | 1.9629 | 961,619 (+1.6%) | 88 of 115 |
+| `TBOTH` (both) | 1.9483 | 1.9677 | 988,622 (+4.5%) | 84 of 115 |
+
+- A clipped gain of +0.025 u is about 2.5% lower RMSE. The test passes: p below 0.025, leave-one-family-out minimum
+  above 0, median not negative.
+- **KFB entrant (reported):** `TLIB` passes the same test (clipped +0.0254, p < 0.0001); `TBOTH` does not
+  (clipped +0.0185, p 0.063); `TGX` is null (+0.0027, p 0.40).
+
+## What the result does and does not say
+- **The library route carries it.** `TLIB` alone passes with a narrower interval than `TBOTH`, an added preset is a
+  stack member in 88 of 115 contexts, and it costs 1.6% more worker time.
+- **The extended search run adds nothing measurable.** `TGX` is null (50 wins, 56 losses). `TBOTH` has the higher
+  mean than `TLIB` (+0.007 u) but the lower clipped mean and the worse win/loss record; there is no evidence that
+  the extended run helps on top of the presets.
+- **Half the families do not move.** Both passing comparisons have a median gain of +0.0005 u; the gain comes from
+  a minority of families.
+- **The Elo interval of the primary includes 0** (one-sided p 0.053). The pre-registered test is the clipped-mean
+  test, which passes; the Elo figure is a report. `TLIB`'s interval excludes 0.
+- **The effect is near the detection limit.** The PREREG put the detectable gain at about +0.02 u; the result is
+  +0.025 to +0.028.
+- **One cohort, one read.** `FIT-SEL` is not finished. The champion recipe still has to beat `SXB` on `CONFIRM`.
+- **For the champion wave (PREREG §3):** the library route passes and enters; the extended-search route is null and
+  does not.
+
+## Integrity gates (`gates_h420.sh DEV`, run before the readout; all pass)
+| Gate | Value |
+| --- | --- |
+| Records and units | 115 result records per variant and stage, 0 errors, 0 invalid `SXB`, 32 status files per variant |
+| Guard and bank | guard v2 installed in every process, 0 refusals in process, 0 same-family bank hits |
+| Grammar self-check | stock stream equal in every process and in the replay check |
+| Replay check | 0 worker runs for GS, GE and GX |
+| Seeded identity (addendum 1) | 0 worker runs; largest difference from H417's smoke deploy 1.7e-16 |
+| Seed manifests | 115 contexts, 115 concatenated memos, 115 source hashes |
+| Stage | staged PREREG equals the published one; code hash verified; one manifest and one code hash in all configs |
+
+Engine counts: `TBOTH` 57,004 worker runs, 0 timeouts, 4 failed evaluations; `TLIB` 698; `TGX` 1,235 (the seeded
+memo makes the rest hits).
+
+## Deviations and weaknesses
+1. **Sandbox on xbabe2.** The `DEV` deploys ran in the docker sandbox, not bubblewrap (after the 12:02Z reboot
+   bubblewrap no longer starts there; recorded at the time). Same staged code.
+2. **`FIT-SEL` broke the PREREG's disk rule and moved host.** §7 says xbabe3 stays above 60 GB free. It fell below
+   that from about 18:48Z and to 47.7 GB by 21:18Z; our chain had written 6.5 GB of the fall. I did not check the
+   rule; I set a pause threshold of my own (54, then 52, then 50.5 GB) instead. The chain was stopped on xbabe3 at
+   21:01Z (86 of 106 contexts through the first stage), copied to xbabe2 (checksum compare: no differences) and
+   resumed there at 21:31Z. The xbabe3 copies were removed with the owner's approval. `FIT-SEL` is reported only,
+   so the test is not affected.
+3. **Baseline identity is not bit-exact on every context.** The stock single-run value in H420's records equals
+   H417's stored value in 113 of 115 contexts. Two differ: by 1.6e-7 u, and by 0.032 u on a context fitted to
+   u ≈ 17 (numerical precision). The largest possible effect on a mean gain is 0.0003 u.
+4. **Not reported although §3 lists it:** how often an extended-search program is a stack member, and timeouts by
+   head (there were 0 timeouts in the deploys). The readout does not compute them.
+5. **Label bug.** The readout text prints the RMSE fraction with a percent sign (`+0.04% RMSE` means 3.8%); the
+   JSON field `pct_rmse` is a fraction. Same bug as in H417's readout text.
+6. **Resource pauses.** The engine paused 291 times (5 s each) during `TBOTH` on xbabe2 under its host-load rule.
+   Pauses delay evaluations and cannot change a result except through the 300 s limit; there were 0 timeouts.
+7. **Compute.** The variants cost 1.6–4.5% more worker time than `B`; no "more compute only" control was run for
+   the library route (as the PREREG states).
+
+## Timeline (UTC, 2026-11-10)
+| Time | Item | State |
 | --- | --- | --- |
-| 09:28–09:45 | Smoke search run GX, 2 contexts | 2 records; 334 worker runs each, 1 timeout |
-| 09:45–10:13 | Replay check on the smoke | 644 results per source, 0 worker runs (GS, GE, GX) |
-| 10:15 | GX search run on `DEV` started (4 processes) | 0 finished contexts after 40 minutes |
-| 10:36 | GX search run on `FIT-SEL` (xbabe1) stopped, 0 finished contexts | deferred until a `DEV` test passes (addendum 1) |
-| 10:54 | GX `DEV` restarted as 16 processes, same run directory and memo | — |
-| **11:34** | GX `DEV` finished contexts | **0 of 115** |
-| 12:02 | **xbabe2 rebooted (not by this wave).** GX `DEV` died at 37 of 115 finished contexts; the unseeded smoke had finished variant B and was inside TBOTH | no torn record; memo intact (85 context files) |
-| 12:22 | GX `DEV` resumed from its memo, same stage and arguments | the 37 finished contexts are store hits; in-flight contexts replay from the memo |
-| 10:15–12:02 | Unseeded deploy smoke (B, TBOTH; 2 contexts) | B finished (about 60 minutes); TBOTH interrupted by the reboot and not resumed: the seeded smoke runs B and TBOTH instead |
+| 09:28–10:13 | Smoke search run GX and replay check, 2 contexts | 0 worker runs on replay |
+| 10:15 | GX search run on `DEV` started | restarted 10:54 as 16 processes (Python-bound) |
+| 10:36 | GX on `FIT-SEL` (xbabe1) stopped, 0 finished contexts | deferred (addendum 1), then resumed on xbabe3 (addendum 3) |
+| 12:02 | **xbabe2 rebooted (not by this wave)**; GX `DEV` at 37 of 115 | resumed 12:22 from its memo; about 1.5 h lost |
+| 13:59 | Seeded smoke identity check | passed (0 worker runs, 1.7e-16) |
+| 14:57 | `DEV` chain launched (seeded from H417's memo) | `TBOTH` 15:26–21:35, `TLIB` –22:51, `TGX` –00:06 (Nov 11) |
+| 16:27 | `FIT-SEL` chain launched on xbabe3 | paused by CI and disk rules; moved to xbabe2 at 21:01–21:31 |
+| 00:10 (Nov 11) | `DEV` records copied (1,135 files, checksum-compared), gates, readout | `LANG_CONFIRMED` |
 
-**Interruption and lost time (reboot of 12:02Z).**
-- Lost: the 20 minutes between the reboot and the resume, plus the Python-side progress of the contexts in flight
-  (16 processes × about 50 minutes since their last finished context at worst; their worker evaluations are in the
-  memo and are not repeated). About 1.5 hours of wall-clock in all for this run.
-- After the reboot the bubblewrap sandbox on xbabe2 no longer starts (`kernel.apparmor_restrict_unprivileged_userns`
-  is back at 1). I did not change the setting. From 12:22Z the xbabe2 runs use the docker sandbox
-  (`sandbox_h335_docker.sh`, the one used on xbabe0, xbabe1 and xbabe3), with the same staged code.
-
-**Negatives.**
-- Two errors of mine were caught before any scored deploy: a mistyped design checksum (the first smoke deploy
-  stopped on it) and a 60 s deploy limit where the stored recipe uses 300 s (addendum 2).
-- The planned same-host replica of the baseline and the `FIT-SEL` replication were dropped to avoid computation that
-  H417 already stores (addendum 1). The paired baseline is H417's stored deploy.
-- The deploys cannot start before H417's deploy finishes (about 14:40), so no H420 result is expected before the
-  late afternoon UTC.
+Two errors of mine were caught before any scored deploy: a mistyped design checksum and a 60 s deploy limit where
+the stored recipe uses 300 s (addendum 2).

@@ -1,0 +1,252 @@
+{
+  "schema": "jope.h420.metrics/v1",
+  "wave": "H420",
+  "verdict": "LANG_CONFIRMED",
+  "panel": "DEV",
+  "role": "test",
+  "n_families": 115,
+  "baseline": "stored H417 deploy, tag BASE (not recomputed)",
+  "entrant": "P3+LIB3.SXB",
+  "value": "AUDIT u = -ln(RMSE / RMSE of the SEARCH-mean predictor)",
+  "primary_pass": true,
+  "secondary_holm_pass": {
+    "TGX": false,
+    "TLIB": true
+  },
+  "tests_sxb": {
+    "TBOTH": {
+      "gain": 0.038887317485767105,
+      "clipped_mean": 0.025232201148068144,
+      "signflip_p": 0.012104034423828125,
+      "lofo_min": 0.021067571333577513,
+      "family_median": 0.0005898093657186187,
+      "wtl": [
+        61,
+        7,
+        47
+      ],
+      "pct_rmse_fraction": 0.03814091225958982,
+      "pass": true
+    },
+    "TGX": {
+      "gain": 0.015349719300149172,
+      "clipped_mean": 0.0039210383140549625,
+      "signflip_p": 0.3581819534301758,
+      "lofo_min": -0.0004305315252954325,
+      "family_median": -8.732214951123751E-11,
+      "wtl": [
+        50,
+        9,
+        56
+      ],
+      "pct_rmse_fraction": 0.015232512820682942,
+      "pass": false
+    },
+    "TLIB": {
+      "gain": 0.03163612888612327,
+      "clipped_mean": 0.028221258623958193,
+      "signflip_p": 0.0,
+      "lofo_min": 0.024082848611887652,
+      "family_median": 0.00045486966375268834,
+      "wtl": [
+        63,
+        21,
+        31
+      ],
+      "pct_rmse_fraction": 0.031140942228011892,
+      "pass": true
+    }
+  },
+  "reported_kfb": {
+    "TBOTH": {
+      "gain": 0.033744745309691786,
+      "clipped_mean": 0.01851033549273595,
+      "signflip_p": 0.06349658966064453,
+      "lofo_min": 0.014286741944426615,
+      "family_median": 0.0006148333681964546,
+      "wtl": [
+        59,
+        7,
+        49
+      ],
+      "pass": false
+    },
+    "TGX": {
+      "gain": 0.01572604801110275,
+      "clipped_mean": 0.002714808459911558,
+      "signflip_p": 0.4042348861694336,
+      "lofo_min": -0.001647342343071674,
+      "family_median": -0.00008289263172822636,
+      "wtl": [
+        47,
+        11,
+        57
+      ],
+      "pass": false
+    },
+    "TLIB": {
+      "gain": 0.02898067566934632,
+      "clipped_mean": 0.025391684752887108,
+      "signflip_p": 0.0,
+      "lofo_min": 0.021228453917386116,
+      "family_median": 1.9184653865522705E-13,
+      "wtl": [
+        56,
+        36,
+        23
+      ],
+      "pass": true
+    }
+  },
+  "delta_elo_vs_B": {
+    "TBOTH": {
+      "a": "TBOTH.SXB",
+      "b": "B.SXB",
+      "ci95": [
+        -10.778871928930474,
+        114.70462079437841
+      ],
+      "delta": 50.717896256565155,
+      "p_le0": 0.0531,
+      "p_two_sided": 0.1062
+    },
+    "TGX": {
+      "a": "TGX.SXB",
+      "b": "B.SXB",
+      "ci95": [
+        -79.62559307008678,
+        34.14020736338663
+      ],
+      "delta": -21.831569376233347,
+      "p_le0": 0.7761,
+      "p_two_sided": 0.4614
+    },
+    "TLIB": {
+      "a": "TLIB.SXB",
+      "b": "B.SXB",
+      "ci95": [
+        36.420561798779815,
+        121.70109637936692
+      ],
+      "delta": 77.64121164372204,
+      "p_le0": 0.0001,
+      "p_two_sided": 0.0002
+    }
+  },
+  "variants": {
+    "B": {
+      "family_mean_u": {
+        "KFB": 1.933943459167476,
+        "SXB": 1.9094215817654419,
+        "X0": 1.867309328886673
+      },
+      "invalid": {
+        "KFB": 0,
+        "SXB": 0,
+        "X0": 0
+      },
+      "worker_s_total": 946322.3267641546,
+      "contexts_with_lib_ext_member": 0,
+      "x0_max_abs_diff_vs_B": 0.0
+    },
+    "TBOTH": {
+      "family_mean_u": {
+        "KFB": 1.9676882044771677,
+        "SXB": 1.9483088992512092,
+        "X0": 1.8670342888022444
+      },
+      "invalid": {
+        "KFB": 0,
+        "SXB": 0,
+        "X0": 0
+      },
+      "worker_s_total": 988621.7086497531,
+      "contexts_with_lib_ext_member": 84,
+      "x0_max_abs_diff_vs_B": 0.031629772466725825
+    },
+    "TGX": {
+      "family_mean_u": {
+        "KFB": 1.9496695071785786,
+        "SXB": 1.924771301065591,
+        "X0": 1.8670342888022444
+      },
+      "invalid": {
+        "KFB": 0,
+        "SXB": 0,
+        "X0": 0
+      },
+      "worker_s_total": 972071.0904989801,
+      "contexts_with_lib_ext_member": 0,
+      "x0_max_abs_diff_vs_B": 0.031629772466725825
+    },
+    "TLIB": {
+      "family_mean_u": {
+        "KFB": 1.9629241348368223,
+        "SXB": 1.9410577106515654,
+        "X0": 1.8670342888022444
+      },
+      "invalid": {
+        "KFB": 0,
+        "SXB": 0,
+        "X0": 0
+      },
+      "worker_s_total": 961619.4943202336,
+      "contexts_with_lib_ext_member": 88,
+      "x0_max_abs_diff_vs_B": 0.031629772466725825
+    }
+  },
+  "gates": {
+    "g1_records_and_units": true,
+    "g2_guard_and_bank": true,
+    "g3_lang_selfcheck": true,
+    "g4_replaycheck_zero_worker_runs": true,
+    "g5_seeded_identity": true,
+    "g6_seed_manifests": true,
+    "g7_pub_stage_and_one_config": true
+  },
+  "gates_pass": true,
+  "engine": {
+    "TBOTH": {
+      "physical_runs": 57004,
+      "timeouts": 0,
+      "failures": 4,
+      "pauses": 291,
+      "memo_env_mismatch_refused": 0
+    },
+    "TLIB": {
+      "physical_runs": 698,
+      "timeouts": 0,
+      "failures": 0,
+      "pauses": 0,
+      "memo_env_mismatch_refused": 0
+    },
+    "TGX": {
+      "physical_runs": 1235,
+      "timeouts": 0,
+      "failures": 0,
+      "pauses": 0,
+      "memo_env_mismatch_refused": 0
+    }
+  },
+  "baseline_identity": {
+    "contexts": 115,
+    "stock_value_equal_to_h417": 113,
+    "differing": [
+      {
+        "abs_diff_u": 1.6E-7
+      },
+      {
+        "abs_diff_u": 0.0316,
+        "note": "context fitted to u about 17"
+      }
+    ]
+  },
+  "fit_sel": "replication running on xbabe2 at closeout (reported, not tested)",
+  "evidence": {
+    "readout_sha256": "536d581a27e7f65ea8f30bc1561153024585379fbac54c56410864a009fba65a",
+    "gates_sha256": "6af2181432f846e91582c026d4ffbb9142ede0ce3dd5147402660fead2d24875",
+    "pulled_manifest_sha256": "575fb9f5d3b2c6b01ffcb30334242a0c62d4d253c4da9394a30cca4f628565bb",
+    "pulled_files": 1135
+  },
+  "holdout": "TRAIN-side cohort APEX-DEV only; dev91, DL-Val, DL-Holdout and sealed data not read"
+}
