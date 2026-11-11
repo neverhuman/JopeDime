@@ -1,0 +1,147 @@
+{
+  "schema": "jope.h423.metrics/v1",
+  "wave": "H423",
+  "role": "replication on the stored P201b matrices (DL-Train board); nothing fitted; no dev91 / DL-Val / DL-Holdout / sealed / CONFIRM / DEV data read",
+  "n_contexts": 201,
+  "n_families": 201,
+  "value": "AUDIT u = -ln(RMSE / RMSE of the SEARCH-mean predictor)",
+  "baseline": "stored h416.SXB values of the H416 P201b records, not recomputed",
+  "verdict": "REP_CONFIRMED",
+  "primary": {
+    "gain": 0.034036068953661014,
+    "clipped_mean": 0.010580348139327095,
+    "signflip_p": 0.021425247192382812,
+    "mirror_signflip_p": 0.9785747528076172,
+    "lofo_min": 0.00813324988002373,
+    "family_median": 0.0,
+    "wtl": [
+      74,
+      57,
+      70
+    ],
+    "pct_rmse": 0.03346335795657174,
+    "pass": true
+  },
+  "delta_elo": {
+    "a": "S",
+    "b": "B",
+    "ci95": [
+      -34.68200560649211,
+      46.949510806790386
+    ],
+    "delta": 6.914365779371565,
+    "p_le0": 0.3785,
+    "p_two_sided": 0.757
+  },
+  "reported": {
+    "elo_ci_excludes_0": false,
+    "gain_at_least_0.010": true
+  },
+  "movers": {
+    "down_0.05": 6,
+    "up_0.05": 13
+  },
+  "family_mean_u": {
+    "B": 2.0547155709137828,
+    "S": 2.088751639867444
+  },
+  "k_counts": {
+    "6.0": 201
+  },
+  "families_outside_design": {
+    "S_vs_B": {
+      "clipped_mean": 0.019187437015383602,
+      "family_median": 0.0000124123801604481,
+      "gain": 0.019187437015383602,
+      "inferior": false,
+      "lofo_min": 0.0038014872650797577,
+      "mirror_signflip_p": 0.8222503662109375,
+      "pass": false,
+      "pct_rmse": 0.01900452985377754,
+      "signflip_p": 0.177764892578125,
+      "win_frac": 0.5,
+      "wtl": [
+        6,
+        4,
+        6
+      ]
+    },
+    "n": 16
+  },
+  "families_shared_with_h422_design": 185,
+  "arms_not_run": {
+    "wider_admission_plus_stacker": "P201b has one stored candidate set per context; nothing to pool"
+  },
+  "frozen_model": {
+    "sha256": "a43739b6469e2964da21186dcdbd272ea65e0e0a63e13f38f3b9cc25c7d69e00",
+    "commit": "3b30a9051e",
+    "k": "6.0"
+  },
+  "dev91_disjoint": {
+    "schema": "jope.h423.dev91_disjoint/v1",
+    "at": "2026-11-11T07:18:20Z",
+    "source_commit": "eb5efcff10012d639dd82720589f04c8f3457dce",
+    "source": "published board definition files (identifiers only; no table and no score file opened)",
+    "p201b": {
+      "contexts": 201,
+      "cids": 201,
+      "envelopes": 201,
+      "families": 201
+    },
+    "boards": [
+      {
+        "board": "dev91-audit-v1",
+        "contexts": 91,
+        "families": 19,
+        "shared_cid": 0,
+        "shared_envelope_sha256": 0,
+        "shared_family_id": 0
+      },
+      {
+        "board": "dev91-s1-two-fold-v1",
+        "contexts": 91,
+        "families": 19,
+        "shared_cid": 0,
+        "shared_envelope_sha256": 0,
+        "shared_family_id": 0
+      }
+    ],
+    "disjoint": true
+  },
+  "deploy_code_tests": {
+    "schema": "jope.h423.tests/v1",
+    "at": "2026-11-11T07:25:34Z",
+    "stage": "/home/ubuntu/apex-stage/h423/pub-r1",
+    "stage_code_sha256": "283002accb9903315bde476542cd1953a88c1496cfacac0f0ff35c48bf6a8d44",
+    "files": [
+      "test_h423.py",
+      "test_admission_h423.py"
+    ],
+    "ok": true,
+    "tests": 12,
+    "failures": 0,
+    "errors": 0
+  },
+  "gates": {
+    "g1_inputs": true,
+    "g2_p201b_only_and_no_closed_board_overlap": true,
+    "g3_replay": true,
+    "g4_frozen_model_is_h422s": true,
+    "g5_prereg_before_p201b_values": true,
+    "g6_no_audit_target_in_predictions": true,
+    "g7_pub_stage": true,
+    "g8_deploy_code_tests": true,
+    "g9_budget": true
+  },
+  "gates_pass": true,
+  "cpu_s_total": 203.559724079,
+  "cpu_s_cap": 21600,
+  "evidence": {
+    "readout_sha256": "92a212fec8ad54a4d7782000ac9e68904c8a61ae36f39662f1c3434cd5a2d246",
+    "apply_sha256": "f5c18f9af00572d2c3d9229f2f1ab12be31a14e8594080b11f551b488441de0d",
+    "pulled_manifest_sha256": "1c02b60c9a2690acb8a53a574e84e283b4585d99c29a2d041ad6d3221b33910f",
+    "commits": {
+      "prereg_and_code": "e1ac33dfd9"
+    }
+  }
+}
