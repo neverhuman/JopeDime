@@ -262,6 +262,31 @@ def _standardise(Af, Aq):
     return (Af[:, keep] - mu[keep]) / sd[keep], (Aq[:, keep] - mu[keep]) / sd[keep]
 
 
+def _svd(A: np.ndarray):
+    """Thin SVD that does not give up when LAPACK's divide-and-conquer driver fails to converge (amendment 1): the
+    slower driver is tried next, then the eigen-decomposition of the Gram matrix. Non-finite entries count as 0."""
+    A = np.where(np.isfinite(A), A, 0.0)
+    try:
+        return np.linalg.svd(A, full_matrices=False)
+    except np.linalg.LinAlgError:
+        pass
+    try:
+        from scipy import linalg as sl
+
+        return sl.svd(A, full_matrices=False, lapack_driver="gesvd")
+    except Exception:
+        pass
+    if A.shape[0] >= A.shape[1]:
+        w, V = np.linalg.eigh(A.T @ A)
+        s = np.sqrt(np.clip(w[::-1], 0.0, None))
+        V = V[:, ::-1]
+        return (A @ V) / np.where(s > 0, s, 1.0), s, V.T
+    w, U = np.linalg.eigh(A @ A.T)
+    s = np.sqrt(np.clip(w[::-1], 0.0, None))
+    U = U[:, ::-1]
+    return U, s, ((A.T @ U) / np.where(s > 0, s, 1.0)).T
+
+
 def ridge_coef(Af: np.ndarray, y: np.ndarray):
     """Ridge coefficients and intercept, the penalty chosen by generalised cross-validation (design already
     standardised)."""
@@ -269,7 +294,7 @@ def ridge_coef(Af: np.ndarray, y: np.ndarray):
     yc = y - mu
     if Af.shape[1] == 0:
         return np.zeros(0), mu
-    U, s, Vt = np.linalg.svd(Af, full_matrices=False)
+    U, s, Vt = _svd(Af)
     uy = U.T @ yc
     n, tot, best = len(y), float(yc @ yc), None
     for lam in (s.max() ** 2) * np.logspace(-8, 2, 21):
