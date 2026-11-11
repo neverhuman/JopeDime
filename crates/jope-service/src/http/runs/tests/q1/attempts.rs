@@ -27,6 +27,11 @@ fn q1_all_failed_attempts_commit_terminal_replayable_actual_counts() {
     let run: jope_api::ids::RunId = command.data["run_id"].as_str().unwrap().parse().unwrap();
     let snapshot = service.journal.snapshot(&run).unwrap().unwrap();
     assert_eq!(snapshot.state, RunState::Failed);
+    assert_eq!(snapshot.phase, RunPhase::Done);
+    assert!(jope_api::run_state_and_phase_agree(
+        snapshot.state,
+        snapshot.phase
+    ));
     assert!(snapshot.pending.is_none());
     assert_eq!(snapshot.budget_used.evaluations.0, 24);
     let replay = service
@@ -99,6 +104,27 @@ fn q1_deterministic_search_stop_commits_only_actual_attempts() {
 
     let snapshot = service.journal.snapshot(&run_id).unwrap().unwrap();
     assert_eq!(snapshot.state, RunState::Failed);
+    assert_eq!(snapshot.phase, RunPhase::Done);
+    assert!(jope_api::run_state_and_phase_agree(
+        snapshot.state,
+        snapshot.phase
+    ));
+    let events = service.journal.page(&run_id, 0, 256, &[]).unwrap().unwrap();
+    let last_state = events
+        .events
+        .iter()
+        .rev()
+        .find_map(|event| match &event.event {
+            jope_api::EventBody::RunState(body) => Some(body),
+            _ => None,
+        })
+        .expect("finished run publishes a run.state event");
+    assert!(last_state.state.is_terminal());
+    assert_eq!(last_state.phase, RunPhase::Done);
+    assert!(jope_api::run_state_and_phase_agree(
+        last_state.state,
+        last_state.phase
+    ));
     assert_eq!(snapshot.pending, None);
     assert_eq!(snapshot.budget_used.evaluations.0, 1);
     assert_eq!(snapshot.evaluation_receipt, Some(receipt));

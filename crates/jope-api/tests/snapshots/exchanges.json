@@ -2756,14 +2756,23 @@
           "type": "object"
         },
         "RunPhase": {
-          "enum": [
-            "preparing",
-            "encoding",
-            "seeding",
-            "searching",
-            "finalizing"
-          ],
-          "type": "string"
+          "oneOf": [
+            {
+              "enum": [
+                "preparing",
+                "encoding",
+                "seeding",
+                "searching",
+                "finalizing"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "done",
+              "description": "The run state is terminal. `finalizing` remains the live phase while work is still finishing.",
+              "type": "string"
+            }
+          ]
         },
         "RunState": {
           "enum": [
@@ -5141,14 +5150,23 @@
           "type": "object"
         },
         "RunPhase": {
-          "enum": [
-            "preparing",
-            "encoding",
-            "seeding",
-            "searching",
-            "finalizing"
-          ],
-          "type": "string"
+          "oneOf": [
+            {
+              "enum": [
+                "preparing",
+                "encoding",
+                "seeding",
+                "searching",
+                "finalizing"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "done",
+              "description": "The run state is terminal. `finalizing` remains the live phase while work is still finishing.",
+              "type": "string"
+            }
+          ]
         },
         "RunState": {
           "enum": [
@@ -6272,14 +6290,23 @@
           "type": "object"
         },
         "RunPhase": {
-          "enum": [
-            "preparing",
-            "encoding",
-            "seeding",
-            "searching",
-            "finalizing"
-          ],
-          "type": "string"
+          "oneOf": [
+            {
+              "enum": [
+                "preparing",
+                "encoding",
+                "seeding",
+                "searching",
+                "finalizing"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "done",
+              "description": "The run state is terminal. `finalizing` remains the live phase while work is still finishing.",
+              "type": "string"
+            }
+          ]
         },
         "RunSnapshot": {
           "description": "The watermark, rather than revision, is the long-poll/attach cursor (§4.4).",
@@ -6721,14 +6748,23 @@
           "type": "object"
         },
         "RunPhase": {
-          "enum": [
-            "preparing",
-            "encoding",
-            "seeding",
-            "searching",
-            "finalizing"
-          ],
-          "type": "string"
+          "oneOf": [
+            {
+              "enum": [
+                "preparing",
+                "encoding",
+                "seeding",
+                "searching",
+                "finalizing"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "done",
+              "description": "The run state is terminal. `finalizing` remains the live phase while work is still finishing.",
+              "type": "string"
+            }
+          ]
         },
         "RunState": {
           "enum": [

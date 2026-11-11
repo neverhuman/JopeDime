@@ -198,6 +198,9 @@ impl RunController {
             self.view.interrupted = false;
         }
         self.view.state = target;
+        if target.is_terminal() {
+            self.view.phase = RunPhase::for_terminal_state();
+        }
         self.view.revision = revision;
         Ok(())
     }
@@ -402,6 +405,7 @@ impl RunController {
         }
         let revision = self.next_revision()?;
         self.view.state = RunState::Completed;
+        self.view.phase = RunPhase::for_terminal_state();
         self.view.completion_reason = Some(reason);
         self.view.pending_effort = None;
         self.view.revision = revision;
@@ -418,6 +422,7 @@ impl RunController {
         self.view.pending_slots = 0;
         self.view.pending_effort = None;
         self.view.state = RunState::Failed;
+        self.view.phase = RunPhase::for_terminal_state();
         self.view.failure = Some(code);
         self.view.revision = revision;
         Ok(())

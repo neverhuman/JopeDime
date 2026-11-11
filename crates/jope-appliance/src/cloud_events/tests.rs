@@ -3,7 +3,7 @@ use super::*;
 fn snapshot() -> RunSnapshot {
     serde_json::from_value(json!({
         "run_id": "run_01ARZ3NDEKTSV4RRFFQ69G5FAV", "revision": "3", "state": "completed",
-        "phase": "finalizing", "pending": null, "effort": "fast",
+        "phase": "done", "pending": null, "effort": "fast",
         "budget_used": {"evaluations": "2", "wall_seconds": "12.5"},
         "budget_total": {"evaluations": "10", "wall_seconds": "60"},
         "best": null, "event_watermark": "9", "warnings": [], "completion_reason": null

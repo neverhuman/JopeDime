@@ -222,7 +222,7 @@ impl Finalizer {
             if let Some(revision) = failed.revision.0.checked_add(1) {
                 failed.revision.0 = revision;
                 failed.state = RunState::Failed;
-                failed.phase = RunPhase::Finalizing;
+                failed.phase = RunPhase::for_terminal_state();
                 let _ = self.journal.commit(
                     RunUpdate {
                         expected_revision: Some(snapshot.revision.0),
@@ -454,7 +454,7 @@ impl Finalizer {
             .checked_add(1)
             .context("revision exhausted")?;
         finished.state = RunState::Completed;
-        finished.phase = RunPhase::Finalizing;
+        finished.phase = RunPhase::for_terminal_state();
         finished.completion_reason = Some(reason);
         finished
             .best
