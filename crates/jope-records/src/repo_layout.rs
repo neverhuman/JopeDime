@@ -165,12 +165,14 @@ pub struct Input {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Kind {
+enum LayoutKind {
     RootMd,
     Log,
     DirPackage,
     TempDir,
 }
+
+type Kind = LayoutKind;
 
 impl Kind {
     fn parse(word: &str) -> Option<Kind> {

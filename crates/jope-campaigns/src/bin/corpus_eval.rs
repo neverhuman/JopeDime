@@ -241,7 +241,7 @@ struct DecodedMulticlassSplits {
     context: MulticlassContext,
 }
 
-enum Outcome {
+enum CorpusOutcome {
     Score {
         score: f64,
         secondary: f64,
@@ -255,6 +255,8 @@ enum Outcome {
         message: String,
     },
 }
+
+type Outcome = CorpusOutcome;
 
 struct MulticlassEvidence {
     classes: Vec<i64>,
