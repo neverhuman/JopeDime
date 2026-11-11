@@ -1,0 +1,11 @@
+{
+  "schema": "jope.h429.archive-manifest/v1",
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H429/closeout-20261111/h429_closeout_bundle.tar.zst",
+  "version_id": "586bKLHhGqAVm04lIQfrSbG2gsBtoIM9",
+  "sha256": "20fb469629daf32cf604dc1a0ff67b3e8582555980a770a6e0bc6e1517a982ac",
+  "bytes": 197153,
+  "members": 39,
+  "members_file": "bundle_SHA256SUMS",
+  "verified": "EXACT_VERSION_GET_AND_MEMBERS_VERIFIED",
+  "utc": "2026-11-11T15:38:58Z"
+}
