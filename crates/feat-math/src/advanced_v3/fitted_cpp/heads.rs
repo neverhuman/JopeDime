@@ -190,7 +190,9 @@ fn emit_legacy_head(name: &str, head: &FittedHead, out: &mut String) -> Result<(
                 .iter()
                 .map(|length| 1.0 / (length * length))
                 .collect::<Vec<_>>();
-            out.push_str(&format!("static double {name}(const V& x){{const V means={};const V scales={};const M basis={};const V alpha={};const V inv={};if(basis.empty())return clampv({},-60.0,60.0);V z;for(std::size_t j=0;j<std::min(x.size(),means.size());++j)z.push_back((x[j]-means[j])/scales[j]);double value={};for(std::size_t i=0;i<basis.size();++i){{double r2=0.0;for(std::size_t j=0;j<std::min(z.size(),basis[i].size());++j){{double q=z[j]-basis[i][j];r2+=q*q*inv[j];}}value+=alpha[i]*{}*std::exp(-0.5*r2);}}return clampv(value,-60.0,60.0);}}\n",f64_vec(&model.means),f64_vec(&model.scales),f64_matrix(&model.basis),f64_vec(&model.alpha),f64_vec(&inverse),f64_lit(model.y_mean),f64_lit(model.y_mean),f64_lit(model.sf2)));
+            let clip_lo = f64_lit(model.clamp_lo);
+            let clip_hi = f64_lit(model.clamp_hi);
+            out.push_str(&format!("static double {name}(const V& x){{const V means={};const V scales={};const M basis={};const V alpha={};const V inv={};if(basis.empty())return clampv({},{clip_lo},{clip_hi});V z;for(std::size_t j=0;j<std::min(x.size(),means.size());++j)z.push_back((x[j]-means[j])/scales[j]);double value={};for(std::size_t i=0;i<basis.size();++i){{double r2=0.0;for(std::size_t j=0;j<std::min(z.size(),basis[i].size());++j){{double q=z[j]-basis[i][j];r2+=q*q*inv[j];}}value+=alpha[i]*{}*std::exp(-0.5*r2);}}return clampv(value,{clip_lo},{clip_hi});}}\n",f64_vec(&model.means),f64_vec(&model.scales),f64_matrix(&model.basis),f64_vec(&model.alpha),f64_vec(&inverse),f64_lit(model.y_mean),f64_lit(model.y_mean),f64_lit(model.sf2)));
             Ok(())
         }
         FittedHead::GprKernel(model) => emit_gpr_kernel(name, model, out),
@@ -303,9 +305,11 @@ fn decode_gpr_kernel(model: &crate::gpr::GprKernelModel) -> Result<DecodedGprKer
 }
 
 fn emit_gpr_kernel(name: &str, model: &crate::gpr::GprKernelModel, out: &mut String) -> Result<()> {
+    let clip_lo = f64_lit(model.clamp_lo);
+    let clip_hi = f64_lit(model.clamp_hi);
     if model.basis.is_empty() {
         out.push_str(&format!(
-            "static double {name}(const V&){{return clampv({},-60.0,60.0);}}\n",
+            "static double {name}(const V&){{return clampv({},{clip_lo},{clip_hi});}}\n",
             f64_lit(model.y_mean)
         ));
         return Ok(());
@@ -340,7 +344,7 @@ fn emit_gpr_kernel(name: &str, model: &crate::gpr::GprKernelModel, out: &mut Str
         kernel.push_str("kernel+=term;}");
     }
     out.push_str(&format!(
-        "static double {name}(const V& x){{const V means={};const V scales={};const M basis={};const V coefficients={};if(basis.empty())return clampv({},-60.0,60.0);V z;for(std::size_t j=0;j<std::min(x.size(),means.size());++j)z.push_back((x[j]-means[j])/scales[j]);double value={};for(std::size_t row_index=0;row_index<basis.size();++row_index){{const V& basis_row=basis[row_index];{kernel}value+=coefficients[row_index]*kernel;}}return clampv(value,-60.0,60.0);}}\n",
+        "static double {name}(const V& x){{const V means={};const V scales={};const M basis={};const V coefficients={};if(basis.empty())return clampv({},{clip_lo},{clip_hi});V z;for(std::size_t j=0;j<std::min(x.size(),means.size());++j)z.push_back((x[j]-means[j])/scales[j]);double value={};for(std::size_t row_index=0;row_index<basis.size();++row_index){{const V& basis_row=basis[row_index];{kernel}value+=coefficients[row_index]*kernel;}}return clampv(value,{clip_lo},{clip_hi});}}\n",
         f64_vec(&model.means),
         f64_vec(&model.scales),
         f64_matrix(&model.basis),
