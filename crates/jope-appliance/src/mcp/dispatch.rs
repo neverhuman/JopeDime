@@ -230,8 +230,8 @@ pub fn routing_for(
         cloud_first,
     });
     match decision.target {
-        route::Target::Local => RunRouting::Note(format!("Routing: {}", decision.line)),
-        route::Target::Cloud | route::Target::Refused => RunRouting::Refuse(
+        route::RouteTarget::Local => RunRouting::Note(format!("Routing: {}", decision.line)),
+        route::RouteTarget::Cloud | route::RouteTarget::Refused => RunRouting::Refuse(
             serde_json::to_value(problem(
                 jope_api::error::ErrorCode::CapabilityUnavailable,
                 OWN_DATA_REFUSAL,
