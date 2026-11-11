@@ -170,6 +170,44 @@
           32
         ]
       },
+      "GM_CW12_vs_GM_FULL": {
+        "clipped_mean": 0.011577,
+        "delta_elo": 32.94,
+        "delta_elo_ci95": [
+          -8.67,
+          74.14
+        ],
+        "family_median": 0.0,
+        "gain": 0.124173,
+        "lofo_min": 0.006925,
+        "pass": true,
+        "pct_rmse": 0.116773,
+        "signflip_p": 0.0007314682006835938,
+        "wtl": [
+          40,
+          35,
+          31
+        ]
+      },
+      "GM_CW12_vs_GM_H430": {
+        "clipped_mean": 0.004061,
+        "delta_elo": 6.91,
+        "delta_elo_ci95": [
+          -25.16,
+          39.01
+        ],
+        "family_median": 0.0,
+        "gain": 0.004061,
+        "lofo_min": 0.000697,
+        "pass": false,
+        "pct_rmse": 0.004053,
+        "signflip_p": 0.07838916778564453,
+        "wtl": [
+          33,
+          43,
+          30
+        ]
+      },
       "GM_CW12_vs_G_CW12": {
         "clipped_mean": 0.001891,
         "delta_elo": 57.13,
@@ -282,6 +320,44 @@
           61,
           5,
           40
+        ]
+      },
+      "G_CW12_vs_G_H430": {
+        "clipped_mean": 0.005286,
+        "delta_elo": 37.92,
+        "delta_elo_ci95": [
+          7.01,
+          70.25
+        ],
+        "family_median": 0.0,
+        "gain": 0.005286,
+        "lofo_min": 0.001896,
+        "pass": true,
+        "pct_rmse": 0.005272,
+        "signflip_p": 0.00032329559326171875,
+        "wtl": [
+          41,
+          46,
+          19
+        ]
+      },
+      "G_CW12_vs_G_ONLY": {
+        "clipped_mean": 0.013697,
+        "delta_elo": 74.63,
+        "delta_elo_ci95": [
+          30.91,
+          120.84
+        ],
+        "family_median": 0.0,
+        "gain": 0.126293,
+        "lofo_min": 0.009065,
+        "pass": true,
+        "pct_rmse": 0.118644,
+        "signflip_p": 0.0,
+        "wtl": [
+          50,
+          30,
+          26
         ]
       },
       "G_H430_vs_BASE": {
@@ -537,6 +613,44 @@
           62
         ]
       },
+      "GM_CW12_vs_GM_FULL": {
+        "clipped_mean": 0.034685,
+        "delta_elo": 71.03,
+        "delta_elo_ci95": [
+          39.03,
+          103.28
+        ],
+        "family_median": 8.9e-05,
+        "gain": 0.315242,
+        "lofo_min": 0.032359,
+        "pass": true,
+        "pct_rmse": 0.270388,
+        "signflip_p": 0.0,
+        "wtl": [
+          99,
+          51,
+          51
+        ]
+      },
+      "GM_CW12_vs_GM_H430": {
+        "clipped_mean": 0.018679,
+        "delta_elo": 29.04,
+        "delta_elo_ci95": [
+          6.35,
+          51.46
+        ],
+        "family_median": 0.0,
+        "gain": 0.174074,
+        "lofo_min": 0.016273,
+        "pass": true,
+        "pct_rmse": 0.159765,
+        "signflip_p": 1.71661376953125e-05,
+        "wtl": [
+          74,
+          86,
+          41
+        ]
+      },
       "GM_CW12_vs_G_CW12": {
         "clipped_mean": 0.003239,
         "delta_elo": 56.3,
@@ -649,6 +763,44 @@
           126,
           7,
           68
+        ]
+      },
+      "G_CW12_vs_G_H430": {
+        "clipped_mean": 0.018492,
+        "delta_elo": 22.96,
+        "delta_elo_ci95": [
+          1.14,
+          45.27
+        ],
+        "family_median": 0.0,
+        "gain": 0.173887,
+        "lofo_min": 0.016084,
+        "pass": true,
+        "pct_rmse": 0.159608,
+        "signflip_p": 0.00010395050048828125,
+        "wtl": [
+          69,
+          86,
+          46
+        ]
+      },
+      "G_CW12_vs_G_ONLY": {
+        "clipped_mean": 0.03717,
+        "delta_elo": 68.21,
+        "delta_elo_ci95": [
+          35.62,
+          101.06
+        ],
+        "family_median": 9.1e-05,
+        "gain": 0.320386,
+        "lofo_min": 0.034856,
+        "pass": true,
+        "pct_rmse": 0.274131,
+        "signflip_p": 0.0,
+        "wtl": [
+          100,
+          48,
+          53
         ]
       },
       "G_H430_vs_BASE": {
@@ -893,6 +1045,44 @@
           60
         ]
       },
+      "GM_CW12_vs_GM_FULL": {
+        "clipped_mean": 0.022366,
+        "delta_elo": 64.88,
+        "delta_elo_ci95": [
+          32.04,
+          98.41
+        ],
+        "family_median": 3.4e-05,
+        "gain": 0.196166,
+        "lofo_min": 0.019853,
+        "pass": true,
+        "pct_rmse": 0.178124,
+        "signflip_p": 5.7220458984375e-06,
+        "wtl": [
+          93,
+          47,
+          51
+        ]
+      },
+      "GM_CW12_vs_GM_H430": {
+        "clipped_mean": 0.01438,
+        "delta_elo": 27.11,
+        "delta_elo_ci95": [
+          4.31,
+          50.62
+        ],
+        "family_median": 0.0,
+        "gain": 0.081845,
+        "lofo_min": 0.011824,
+        "pass": true,
+        "pct_rmse": 0.078585,
+        "signflip_p": 0.00011539459228515625,
+        "wtl": [
+          71,
+          79,
+          41
+        ]
+      },
       "GM_CW12_vs_G_CW12": {
         "clipped_mean": 0.001127,
         "delta_elo": 57.41,
@@ -1005,6 +1195,44 @@
           118,
           7,
           66
+        ]
+      },
+      "G_CW12_vs_G_H430": {
+        "clipped_mean": 0.014304,
+        "delta_elo": 21.88,
+        "delta_elo_ci95": [
+          -0.68,
+          45.75
+        ],
+        "family_median": 0.0,
+        "gain": 0.081769,
+        "lofo_min": 0.011748,
+        "pass": true,
+        "pct_rmse": 0.078515,
+        "signflip_p": 0.0002651214599609375,
+        "wtl": [
+          67,
+          79,
+          45
+        ]
+      },
+      "G_CW12_vs_G_ONLY": {
+        "clipped_mean": 0.023409,
+        "delta_elo": 61.22,
+        "delta_elo_ci95": [
+          28.75,
+          95.34
+        ],
+        "family_median": 2.9e-05,
+        "gain": 0.197209,
+        "lofo_min": 0.020901,
+        "pass": true,
+        "pct_rmse": 0.178981,
+        "signflip_p": 9.5367431640625e-07,
+        "wtl": [
+          94,
+          44,
+          53
         ]
       },
       "G_H430_vs_BASE": {
@@ -1121,6 +1349,177 @@
     },
     "units": 191
   },
+  "p201b_excl12_189": {
+    "n": 189,
+    "pairs": {
+      "GM_CW12_vs_BASE": {
+        "clipped_mean": 0.035577,
+        "delta_elo": 161.34,
+        "delta_elo_ci95": [
+          110.21,
+          215.03
+        ],
+        "family_median": 0.00258,
+        "gain": 0.215628,
+        "lofo_min": 0.033107,
+        "pass": true,
+        "pct_rmse": 0.193965,
+        "signflip_p": 1.9073486328125e-05,
+        "wtl": [
+          127,
+          3,
+          59
+        ]
+      },
+      "GM_CW12_vs_GM_FULL": {
+        "clipped_mean": 0.022603,
+        "delta_elo": 65.61,
+        "delta_elo_ci95": [
+          32.49,
+          99.16
+        ],
+        "family_median": 8.9e-05,
+        "gain": 0.198242,
+        "lofo_min": 0.020064,
+        "pass": true,
+        "pct_rmse": 0.179829,
+        "signflip_p": 4.76837158203125e-06,
+        "wtl": [
+          93,
+          45,
+          51
+        ]
+      },
+      "GM_CW12_vs_GM_H430": {
+        "clipped_mean": 0.014532,
+        "delta_elo": 27.42,
+        "delta_elo_ci95": [
+          4.04,
+          51.52
+        ],
+        "family_median": 0.0,
+        "gain": 0.082711,
+        "lofo_min": 0.01195,
+        "pass": true,
+        "pct_rmse": 0.079382,
+        "signflip_p": 9.34600830078125e-05,
+        "wtl": [
+          71,
+          77,
+          41
+        ]
+      },
+      "GM_FULL_vs_BASE": {
+        "clipped_mean": 0.015913,
+        "delta_elo": 95.73,
+        "delta_elo_ci95": [
+          52.68,
+          140.47
+        ],
+        "family_median": 0.001965,
+        "gain": 0.017386,
+        "lofo_min": 0.013338,
+        "pass": true,
+        "pct_rmse": 0.017236,
+        "signflip_p": 0.0053558349609375,
+        "wtl": [
+          125,
+          4,
+          60
+        ]
+      },
+      "GM_H430_vs_GM_FULL": {
+        "clipped_mean": 0.010716,
+        "delta_elo": 38.19,
+        "delta_elo_ci95": [
+          11.21,
+          65.89
+        ],
+        "family_median": 0.0,
+        "gain": 0.115531,
+        "lofo_min": 0.008114,
+        "pass": true,
+        "pct_rmse": 0.109107,
+        "signflip_p": 0.0019006729125976562,
+        "wtl": [
+          82,
+          60,
+          47
+        ]
+      },
+      "G_CW12_vs_G_H430": {
+        "clipped_mean": 0.014456,
+        "delta_elo": 22.13,
+        "delta_elo_ci95": [
+          -0.86,
+          45.64
+        ],
+        "family_median": 0.0,
+        "gain": 0.082634,
+        "lofo_min": 0.011873,
+        "pass": true,
+        "pct_rmse": 0.079312,
+        "signflip_p": 0.00025653839111328125,
+        "wtl": [
+          67,
+          77,
+          45
+        ]
+      },
+      "G_CW12_vs_G_ONLY": {
+        "clipped_mean": 0.023657,
+        "delta_elo": 61.9,
+        "delta_elo_ci95": [
+          29.03,
+          95.92
+        ],
+        "family_median": 9.1e-05,
+        "gain": 0.199296,
+        "lofo_min": 0.021123,
+        "pass": true,
+        "pct_rmse": 0.180693,
+        "signflip_p": 9.5367431640625e-07,
+        "wtl": [
+          94,
+          42,
+          53
+        ]
+      },
+      "G_ONLY_vs_BASE": {
+        "clipped_mean": 0.013719,
+        "delta_elo": 41.38,
+        "delta_elo_ci95": [
+          6.17,
+          78.4
+        ],
+        "family_median": 0.000416,
+        "gain": 0.015193,
+        "lofo_min": 0.011133,
+        "pass": true,
+        "pct_rmse": 0.015078,
+        "signflip_p": 0.013274192810058594,
+        "wtl": [
+          107,
+          10,
+          72
+        ]
+      }
+    },
+    "unit_mean_u": {
+      "BASE": 1.960303,
+      "C_PLAIN": 1.959631,
+      "GM_CW12": 2.175932,
+      "GM_CW12H": 2.174943,
+      "GM_FULL": 1.97769,
+      "GM_H430": 2.093221,
+      "G_CW12": 2.174792,
+      "G_H430": 2.092158,
+      "G_ONLY": 1.975496,
+      "M_BCAR": 1.959146,
+      "M_H430_BCAR": 2.076207
+    }
+  },
+  "peer_review_receipt": "/home/ubuntu/jope_plan/evidence/CW5_review/REVIEW_H440_closeout_48b11eef16_20261111T2240Z.md",
   "prereg_commit": "e03c3627e61d1b8784f541ec8e2bb6b7ab6598b7",
   "run_times": {
     "cpuset": "64-79",
