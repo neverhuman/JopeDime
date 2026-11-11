@@ -2688,14 +2688,23 @@
         "type": "object"
       },
       "RunPhase": {
-        "enum": [
-          "preparing",
-          "encoding",
-          "seeding",
-          "searching",
-          "finalizing"
-        ],
-        "type": "string"
+        "oneOf": [
+          {
+            "enum": [
+              "preparing",
+              "encoding",
+              "seeding",
+              "searching",
+              "finalizing"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "done",
+            "description": "The run state is terminal. `finalizing` remains the live phase while work is still finishing.",
+            "type": "string"
+          }
+        ]
       },
       "RunSnapshot": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",

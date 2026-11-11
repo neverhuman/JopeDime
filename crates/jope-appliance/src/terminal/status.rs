@@ -62,8 +62,8 @@ pub fn render(
     (status, truncate(&activity(snapshot), width))
 }
 
-/// The activity row. A finished run reports how it ended, never the phase it ended in: the
-/// engine leaves `phase: finalizing` on a completed run (#2135), which read as still running.
+/// The activity row. A finished run reports how it ended. The engine publishes `phase: done`
+/// with a terminal state (#2135); `finalizing` is only the live phase while work is still finishing.
 fn activity(snapshot: &RunSnapshot) -> String {
     let phase = match snapshot.phase {
         RunPhase::Preparing => "preparing",
@@ -71,6 +71,7 @@ fn activity(snapshot: &RunSnapshot) -> String {
         RunPhase::Seeding => "seeding",
         RunPhase::Searching => "searching",
         RunPhase::Finalizing => "finalizing",
+        RunPhase::Done => "done",
     };
     match snapshot.state {
         RunState::Completed => match snapshot.completion_reason {
@@ -451,8 +452,7 @@ mod tests {
     fn a_finished_run_shows_its_end_not_its_last_phase_or_live_fields() {
         let mut finished = snapshot();
         finished.state = RunState::Completed;
-        // The engine leaves the last phase on a completed run (#2135).
-        finished.phase = RunPhase::Finalizing;
+        finished.phase = RunPhase::Done;
         finished.completion_reason = Some(jope_api::CompletionReason::BudgetTime);
         let (status, activity) = render(&finished, &full_telemetry(), 120);
         assert_eq!(

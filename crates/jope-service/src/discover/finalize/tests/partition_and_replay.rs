@@ -72,7 +72,11 @@ fn finalization_audits_each_real_partition_and_declares_the_refit_and_score_scop
             .unwrap()
             .unwrap();
         assert_eq!(snapshot.state, RunState::Completed);
-        assert_eq!(snapshot.phase, RunPhase::Finalizing);
+        assert_eq!(snapshot.phase, RunPhase::Done);
+        assert!(jope_api::run_state_and_phase_agree(
+            snapshot.state,
+            snapshot.phase
+        ));
         assert_eq!(snapshot.best.unwrap().cv_value, selected.value);
         let events = finalizer
             .journal()

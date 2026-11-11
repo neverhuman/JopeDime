@@ -67,7 +67,7 @@ fn fixture() -> (
         run_id: run.clone(),
         revision: DecimalU64(1),
         state: RunState::Completed,
-        phase: RunPhase::Finalizing,
+        phase: RunPhase::Done,
         pending: None,
         effort: Effort::Fast,
         budget_used: BudgetUsed {

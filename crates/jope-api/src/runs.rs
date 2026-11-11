@@ -312,6 +312,27 @@ pub enum RunPhase {
     Seeding,
     Searching,
     Finalizing,
+    /// The run state is terminal. `finalizing` remains the live phase while work is still finishing.
+    Done,
+}
+
+impl RunState {
+    /// Completed, cancelled, and failed runs have ended.
+    pub fn is_terminal(self) -> bool {
+        matches!(self, Self::Completed | Self::Cancelled | Self::Failed)
+    }
+}
+
+impl RunPhase {
+    /// Phase stored with a terminal [`RunState`].
+    pub const fn for_terminal_state() -> Self {
+        Self::Done
+    }
+}
+
+/// A terminal state is only paired with [`RunPhase::Done`]. A live state never uses that phase.
+pub fn run_state_and_phase_agree(state: RunState, phase: RunPhase) -> bool {
+    state.is_terminal() == (phase == RunPhase::Done)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -418,7 +439,7 @@ pub struct EvaluationFailure {
 mod api_enum_domain_tests {
     use super::{
         ApiObjectiveDirection, ApiRunLandmarkMode, ApiRunTask, ComparatorPolicy, Direction,
-        LandmarkMode, Task,
+        LandmarkMode, RunPhase, RunState, Task,
     };
     use schemars::JsonSchema;
 
@@ -458,5 +479,33 @@ mod api_enum_domain_tests {
         );
         assert!(ComparatorPolicy::from_tokens(&["all", "xgboost_style"]).is_err());
         assert!(ComparatorPolicy::is_off(&ComparatorPolicy::Off));
+    }
+
+    #[test]
+    fn a_terminal_run_state_is_only_paired_with_the_done_phase() {
+        for state in [RunState::Completed, RunState::Cancelled, RunState::Failed] {
+            assert!(super::run_state_and_phase_agree(
+                state,
+                RunPhase::for_terminal_state()
+            ));
+            assert!(!super::run_state_and_phase_agree(
+                state,
+                RunPhase::Finalizing
+            ));
+            assert_eq!(
+                serde_json::to_value(RunPhase::for_terminal_state()).unwrap(),
+                "done"
+            );
+        }
+        for state in [RunState::Running, RunState::Pausing, RunState::Paused] {
+            assert!(super::run_state_and_phase_agree(
+                state,
+                RunPhase::Finalizing
+            ));
+            assert!(!super::run_state_and_phase_agree(
+                state,
+                RunPhase::for_terminal_state()
+            ));
+        }
     }
 }

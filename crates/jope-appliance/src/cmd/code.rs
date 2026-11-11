@@ -58,7 +58,7 @@ mod tests {
     use std::sync::Mutex;
 
     const RUN: &str = "run_01ARZ3NDEKTSV4RRFFQ69G5FAV";
-    const SNAPSHOT: &str = r#"{"run_id":"run_01ARZ3NDEKTSV4RRFFQ69G5FAV","revision":"2","state":"completed","phase":"finalizing","pending":null,"effort":"medium","budget_used":{"evaluations":"10","wall_seconds":"1.0"},"budget_total":{"evaluations":"10","wall_seconds":"10"},"best":{"algorithm_id":"alg_0001","metric":"rmse","cv_value":0.5,"model_artifact":null},"event_watermark":"2","warnings":[],"completion_reason":"budget_evaluations"}"#;
+    const SNAPSHOT: &str = r#"{"run_id":"run_01ARZ3NDEKTSV4RRFFQ69G5FAV","revision":"2","state":"completed","phase":"done","pending":null,"effort":"medium","budget_used":{"evaluations":"10","wall_seconds":"1.0"},"budget_total":{"evaluations":"10","wall_seconds":"10"},"best":{"algorithm_id":"alg_0001","metric":"rmse","cv_value":0.5,"model_artifact":null},"event_watermark":"2","warnings":[],"completion_reason":"budget_evaluations"}"#;
     const ALGORITHM: &str = r#"{"algorithm_id":"alg_0001","bundle_digest":"bundle","conditioning_digest":"conditioning","cv_value":0.5,"metric":"rmse","model_artifact":null,"model_digest":"model","revision":"2","source":[{"language":"python","source":"predict(x)"},{"language":"rust","source":"predict(x)"}],"summary":"golden"}"#;
 
     #[derive(Default)]

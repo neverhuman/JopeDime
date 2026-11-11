@@ -83,7 +83,7 @@ impl RunService {
         } else {
             RunState::Completed
         };
-        snapshot.phase = RunPhase::Finalizing;
+        snapshot.phase = RunPhase::for_terminal_state();
         snapshot.pending = None;
         snapshot.budget_used = BudgetUsed {
             evaluations: DecimalU64(receipt.charged),
@@ -94,7 +94,7 @@ impl RunService {
         if let Some(reason) = terminal_failure.as_deref() {
             attempt_events.push(EventBody::RunState(RunStateBody {
                 state: RunState::Failed,
-                phase: RunPhase::Finalizing,
+                phase: RunPhase::for_terminal_state(),
                 pending: None,
                 reason: Some(reason.to_owned()),
             }));

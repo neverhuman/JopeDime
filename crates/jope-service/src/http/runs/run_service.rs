@@ -295,6 +295,7 @@ impl RunService {
             let expected = snapshot.revision.0;
             snapshot.revision.0 += 1;
             snapshot.state = RunState::Failed;
+            snapshot.phase = RunPhase::for_terminal_state();
             self.journal.commit(
                 RunUpdate {
                     expected_revision: Some(expected),

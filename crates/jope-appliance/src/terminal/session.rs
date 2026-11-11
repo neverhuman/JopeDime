@@ -535,7 +535,7 @@ mod tests {
             "kind": "run.state",
             "body": {
                 "state": "cancelled",
-                "phase": "finalizing",
+                "phase": "done",
                 "pending": null,
                 "reason": "cancelled"
             }
