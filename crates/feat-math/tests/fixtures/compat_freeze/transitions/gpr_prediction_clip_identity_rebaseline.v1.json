@@ -1,25 +1,25 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Gaussian-process prediction clip follows the union of the legacy +/-60 window and the training-target range widened by 5%. Native GprModel and GprKernelModel, and the recipe Rust and Python emitters, are ADR-0004 identity inputs. Append this identity and lineage fixture provenance edge after the unused-direct-deps transition. Cargo.lock, DSL ABI, known identities, and behavior fixtures stay. No shipped receipt proves this identity existed.",
+  "decision": "Native GprModel and GprKernelModel store the union of the legacy +/-60 window and the training-target range widened by 5%. Recipe Rust, Python, and fitted C++ stay on the legacy +/-60 clamp, so emitted bytes and generator streams stay on the historical behavior pin. gpr.rs is an ADR-0004 identity input. Append this identity and lineage fixture provenance edge after the unused-direct-deps transition. Cargo.lock, DSL ABI, known identities, and behavior fixtures stay. No shipped receipt proves this identity existed.",
   "plan_reference": "Issue #2149; ADR-0004 identity-only procedure",
-  "source_commit": "87d3085f6765929a566fa6ab06a1a767a56d8ee6",
-  "base_commit": "15277a2f46dc4ebc82425744aff8f49ddd050f7f",
+  "source_commit": "668091be27e0138a819b2f9c86e17cbe7bd9382c",
+  "base_commit": "40cdbefe9712123cf0897ac764d5546ac3a38a62",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "1fc7eaff0f91d392d16828b9d81458b1102a7fc9e4719760c3629ee3a6cd33e1",
-      "after": "66a27cad5aae0d7a7044353d365f89f7fd87e98ee2ff8ebbf5e41193db66051f"
+      "after": "12bb1b9b25ffd7dbae487d0d191b87ab6103fac0f35cad0e262fc6260ddecc53"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "16600548b693a6436bd8726bf2b7c9865d79fd0e9e966db2c8b8b6d31c6c489d",
-      "after": "926c185621ed782f6bbf3234383c0fc42d3dcc8f0820e843c47014ca2775cf81"
+      "after": "9043551dc3f0f8afdc3bf381ce47fb73c57a18aa6fc102a844263b3760d59da5"
     }
   ],
   "before_identity_digest": "d110fce29ea7d5f589feeec25b2ebaa2fffa8347743d16202b5c3b7cd5fdfb93",
-  "after_identity_digest": "a0b5eb65a36283e4698fe96537bf038bc341c0c76058b90ba20dff5ff88e1a1f",
+  "after_identity_digest": "db8158f5f39f54082374063b3332522deece09c9051cb3d7bc5cfa4f88911975",
   "before_implementation_sha256": "0e01b9cd042273d2107cd60a8551968c494027e0e821814eaee92a8ffb8cdcc5",
-  "after_implementation_sha256": "6723d6f38eb414b97e85f71fd73e6fb3112a6634e1ed5528269b618d9dd974fe",
+  "after_implementation_sha256": "0c0c83700e3ecb5b1f1010bc70b26cb081313296513ca408051c6eaaebc9317a",
   "before_cargo_lock_sha256": "cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af",
   "after_cargo_lock_sha256": "cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af",
   "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"

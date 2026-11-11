@@ -861,7 +861,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/gpr_prediction_clip_identity_rebaseline.v1.json");
     assert_eq!(
         gpr_clip_identity["source_commit"],
-        "87d3085f6765929a566fa6ab06a1a767a56d8ee6"
+        "668091be27e0138a819b2f9c86e17cbe7bd9382c"
     );
     assert_eq!(gpr_clip_identity["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(
