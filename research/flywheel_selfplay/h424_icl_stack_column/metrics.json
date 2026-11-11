@@ -1,0 +1,133 @@
+{
+  "schema": "jope.h424.metrics/v1",
+  "wave": "H424",
+  "role": "TRAIN-side test on APEX-DEV; CPU inference of the H419 24M in-context model; no dev91 / DL-Val / DL-Holdout / sealed / CONFIRM data read",
+  "n_families": 115,
+  "value": "AUDIT u = -ln(RMSE / RMSE of the SEARCH-mean predictor)",
+  "baseline": "stored H420 TBOTH h416.SXB values, not recomputed",
+  "first_read": {
+    "checkpoint": "ICL_M_r3/ckpt_h020.pt (20.0 h, EMA weights)",
+    "ckpt_sha256": "e3c8fd9972ce0c1684630ff06b159e950f6f498c4461d0454e0c6a6f44d38dd7",
+    "verdict": "ICL_CONFIRMED",
+    "primary_I_vs_B": {
+      "gain": 0.009179572796714913,
+      "clipped_mean": 0.009179572796714913,
+      "signflip_p": 0.000064849853515625,
+      "mirror_signflip_p": 0.9999351501464844,
+      "lofo_min": 0.0063893665661237335,
+      "family_median": 0.0001393091346548747,
+      "wtl": [
+        59,
+        34,
+        22
+      ],
+      "pct_rmse": 0.00913756914180941,
+      "pass": true
+    },
+    "delta_elo": {
+      "a": "I",
+      "b": "B",
+      "ci95": [
+        64.15300946317097,
+        173.13168738854074
+      ],
+      "delta": 115.87791288825292,
+      "p_le0": 0.0,
+      "p_two_sided": 0.0
+    },
+    "secondary_clipped_excluded": {
+      "excluded_at_clip": 0,
+      "losses": 22,
+      "mean_gain": 0.009179572796714911,
+      "n": 115,
+      "ties": 34,
+      "win_share_of_decided": 0.7283950617283951,
+      "win_share_ties_half": 0.6608695652173913,
+      "wins": 59
+    },
+    "column": {
+      "alone_beats_B": 23,
+      "alone_minus_B_mean": -0.5562176615528199,
+      "contexts_with_weight": 84,
+      "mean_weight": 0.10765812186235969,
+      "mean_weight_when_used": 0.14738909540680195,
+      "oof_beats_best_stored": 20
+    },
+    "family_mean_u": {
+      "B": 1.9483088992512092,
+      "I": 1.9574884720479242
+    },
+    "columns_ok": 115,
+    "without_flagged_duplicates": {
+      "n": 98,
+      "gain": 0.008671054701835271,
+      "wins_losses": [
+        46,
+        21
+      ],
+      "signflip_p": 0.000925
+    }
+  },
+  "duplicate_screen": {
+    "dev_contexts_all_tiers": 239,
+    "dev_core_contexts": 115,
+    "fit_icl_tables_all_tiers": 440,
+    "fit_icl_training_tables": 419,
+    "gain_all": 0.009179572796714911,
+    "gain_without_share_ge_0.5": 0.008671054701835271,
+    "manifest": {
+      "shared_dataset_id": 0,
+      "shared_family_id": 0,
+      "shared_table_sha256": 0
+    },
+    "n_without_share_ge_0.5": 98,
+    "schema": "jope.h424.dup_audit/v1",
+    "screened_ge20_distinct": 105,
+    "share_ge_0.2": 19,
+    "share_ge_0.5": 17,
+    "share_ge_0.9": 11,
+    "wins_losses_without_share_ge_0.5": [
+      46,
+      21
+    ]
+  },
+  "gates": {
+    "g1_inputs": true,
+    "g2_dev_only_no_audit_target_in_bank": true,
+    "g3_alignment_and_replay": true,
+    "g4_prereg_before_dev_tables": true,
+    "g5_cpu_only_at_most_16_threads": true,
+    "g6_four_hour_cap": true,
+    "g7_pub_stage": true
+  },
+  "gates_pass": true,
+  "inference": {
+    "processes": 16,
+    "threads_max": 1,
+    "devices": [
+      "cpu"
+    ],
+    "cuda_visible_any": false,
+    "ckpt": [
+      "e3c8fd9972ce0c1684630ff06b159e950f6f498c4461d0454e0c6a6f44d38dd7"
+    ],
+    "written": 115,
+    "budget_stops": 0,
+    "cpu_s": 43818.876399759996,
+    "wall_s_max": 4649.254646539688
+  },
+  "run_times": {
+    "run_start": 1794385556,
+    "inference_end": 1794390237,
+    "apply_end": 1794390250
+  },
+  "second_read": "pending (hour-24 checkpoint; addendum 1)",
+  "evidence": {
+    "readout_sha256": "9aedacf12c8498bf4684b977c999fc4da8f231fbf7d1e3b2b0ece56de1341a26",
+    "apply_sha256": "ce0eb88749ebfb5c92aa6c10cd621563b1ab4a041756cc6e882b282be824faca",
+    "commits": {
+      "prereg_and_code": "ab56e31a05",
+      "addendum_1": "e1f31467e4"
+    }
+  }
+}
