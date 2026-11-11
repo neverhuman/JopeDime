@@ -39,6 +39,7 @@ nvml-wrapper.workspace = true
 jope-api = { path = "../jope-api" }
 jope-comparators = { path = "../jope-comparators" }
 jope-paths = { path = "../jope-paths" }
+jope-prep = { path = "../jope-prep" }
 jope-telemetry = { path = "../jope-telemetry", default-features = false }
 redb = { workspace = true }
 ruzstd.workspace = true

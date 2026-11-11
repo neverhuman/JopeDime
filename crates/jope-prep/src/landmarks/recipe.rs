@@ -1,5 +1,8 @@
+#[path = "descriptors.rs"]
 mod descriptors;
+#[path = "probes.rs"]
 mod probes;
+#[path = "stats.rs"]
 mod stats;
 
 use super::*;
@@ -9,7 +12,7 @@ pub(crate) use descriptors::{
 pub(crate) use probes::extract_probes;
 pub(crate) use stats::{
     abs_corr_with_y, corr, gini, mean, probe_bounds, quantile, recipe_argsort,
-    scale_numeric_regression, squash, stddev,
+    scale_numeric_regression, squash, stddev, symmetric_eigenvalues,
 };
 
 /// Full CPU implementation of the numeric-regression `high` landmark recipe.
@@ -26,7 +29,8 @@ pub fn fit_transform_and_extract_bundle_high(
     build_high_full_table(x, rows, features, y)
 }
 
-pub(crate) fn build_high_full_table(
+#[doc(hidden)]
+pub fn build_high_full_table(
     x: &[f32],
     rows: usize,
     features: usize,

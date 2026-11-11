@@ -240,6 +240,7 @@ impl Plan {
 }
 
 mod admission;
+pub mod carbon;
 mod commit;
 mod evaluation;
 mod executor;

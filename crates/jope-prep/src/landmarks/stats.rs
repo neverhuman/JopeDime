@@ -333,6 +333,64 @@ pub(crate) fn scale_numeric_regression(
     (out, sy)
 }
 
+pub(crate) fn symmetric_eigenvalues(mat: &mut [f64], dim: usize) -> Vec<f64> {
+    if dim == 0 {
+        return Vec::new();
+    }
+    let trace: f64 = (0..dim).map(|d| mat[d * dim + d]).sum();
+    let tol = (trace * 1e-12).powi(2);
+    for _sweep in 0..20 {
+        let mut off_sq = 0.0;
+        for r in 0..dim {
+            for c in (r + 1)..dim {
+                let v = mat[r * dim + c];
+                off_sq += v * v;
+            }
+        }
+        if off_sq <= tol {
+            break;
+        }
+        for p in 0..dim {
+            for q in (p + 1)..dim {
+                let apq = mat[p * dim + q];
+                if apq == 0.0 {
+                    continue;
+                }
+                let tau = (mat[q * dim + q] - mat[p * dim + p]) / (2.0 * apq);
+                let tan_phi = if tau >= 0.0 {
+                    1.0 / (tau + (tau * tau + 1.0).sqrt())
+                } else {
+                    -1.0 / ((tau * tau + 1.0).sqrt() - tau)
+                };
+                let cos_phi = 1.0 / (tan_phi * tan_phi + 1.0).sqrt();
+                let sin_phi = tan_phi * cos_phi;
+                for k in 0..dim {
+                    if k != p && k != q {
+                        let mkp = mat[k * dim + p];
+                        let mkq = mat[k * dim + q];
+                        let rot_p = cos_phi * mkp - sin_phi * mkq;
+                        let rot_q = sin_phi * mkp + cos_phi * mkq;
+                        mat[k * dim + p] = rot_p;
+                        mat[p * dim + k] = rot_p;
+                        mat[k * dim + q] = rot_q;
+                        mat[q * dim + k] = rot_q;
+                    }
+                }
+                let app = mat[p * dim + p];
+                let aqq = mat[q * dim + q];
+                mat[p * dim + p] = cos_phi * cos_phi * app - 2.0 * sin_phi * cos_phi * apq
+                    + sin_phi * sin_phi * aqq;
+                mat[q * dim + q] = sin_phi * sin_phi * app
+                    + 2.0 * sin_phi * cos_phi * apq
+                    + cos_phi * cos_phi * aqq;
+                mat[p * dim + q] = 0.0;
+                mat[q * dim + p] = 0.0;
+            }
+        }
+    }
+    (0..dim).map(|d| mat[d * dim + d]).collect()
+}
+
 #[cfg(test)]
 mod q1_regression_tests {
     use super::*;

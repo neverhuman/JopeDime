@@ -2620,6 +2620,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-carbon"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "aws-lc-rs",
+ "axum",
+ "base64 0.23.1",
+ "clap",
+ "flate2",
+ "hex",
+ "http",
+ "http-body-util",
+ "jope-api",
+ "jope-paths",
+ "jope-prep",
+ "jope-runtime",
+ "jope-service",
+ "jope-telemetry",
+ "p256",
+ "proptest",
+ "rustls",
+ "ruzstd",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "tower",
+ "ulid",
+ "ureq",
+ "url",
+ "zeroize",
+ "zstd",
+]
+
+[[package]]
 name = "jope-ci"
 version = "1.0.0"
 dependencies = [
@@ -2915,6 +2952,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-prep"
+version = "1.0.0"
+dependencies = [
+ "hex",
+ "proptest",
+ "ruzstd",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "jope-records"
 version = "1.0.0"
 dependencies = [
@@ -2966,6 +3016,7 @@ dependencies = [
  "jope-assets",
  "jope-comparators",
  "jope-paths",
+ "jope-prep",
  "jope-runtime",
  "jope-telemetry",
  "libc",

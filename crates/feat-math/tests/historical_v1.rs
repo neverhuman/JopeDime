@@ -829,6 +829,16 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         comparators_run_stage["fixtures"][1]["path"],
         changed_fixtures[1]
     );
+    let carbon_lockfile = old_fixture(
+        "transitions/carbon_workspace_registration_lockfile_identity_rebaseline.v1.json",
+    );
+    assert_eq!(
+        carbon_lockfile["source_commit"],
+        "45bb0b7f562ef92423dd954f92d1933bcf39f550"
+    );
+    assert_eq!(carbon_lockfile["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(carbon_lockfile["fixtures"][0]["path"], changed_fixtures[0]);
+    assert_eq!(carbon_lockfile["fixtures"][1]["path"], changed_fixtures[1]);
     assert_eq!(
         p21_family_split["source_commit"],
         "e240a9f27e3bba296acf77d29dae10fd2529a0c1"
@@ -1467,6 +1477,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 v1_0_0_identity.clone(),
                 comparators_lockfile.clone(),
                 comparators_run_stage.clone(),
+                carbon_lockfile.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1552,6 +1563,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 v1_0_0_identity.clone(),
                 comparators_lockfile.clone(),
                 comparators_run_stage.clone(),
+                carbon_lockfile.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1630,6 +1642,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 v1_0_0_identity.clone(),
                 comparators_lockfile.clone(),
                 comparators_run_stage.clone(),
+                carbon_lockfile.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1739,6 +1752,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 v1_0_0_identity.clone(),
                 comparators_lockfile.clone(),
                 comparators_run_stage.clone(),
+                carbon_lockfile.clone(),
             ],
         ),
         (
@@ -1808,6 +1822,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 v1_0_0_identity.clone(),
                 comparators_lockfile.clone(),
                 comparators_run_stage.clone(),
+                carbon_lockfile.clone(),
             ],
         ),
     ] {
@@ -1925,6 +1940,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         v1_0_0_identity,
         comparators_lockfile,
         comparators_run_stage,
+        carbon_lockfile,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
