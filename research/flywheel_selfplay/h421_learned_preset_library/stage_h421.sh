@@ -11,7 +11,7 @@ REPO=/home/ubuntu/JopeDime
 BASE=/home/ubuntu/apex-stage/h420/pub-p4
 G421=research/flywheel_selfplay/h421_learned_preset_library
 FILES=(harvest_h421.py fill_h421.py select_h421.py train_h421.py h421_shards.sh stage_h421.sh)
-DOCS=(PREREG.md PREREG_ADDENDUM_1.md)
+DOCS=(PREREG.md PREREG_ADDENDUM_1.md PREREG_ADDENDUM_2.md)
 DST=/home/ubuntu/apex-stage/h421/$MODE-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }
