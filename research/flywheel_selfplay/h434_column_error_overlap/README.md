@@ -11,6 +11,15 @@ column 10% weight on 111 of 115 tables. It can screen any future column before i
 the most different predictor on record as a stand-in.
 Stored values only: no inference, no GPU, no weight refitted; `CONFIRM` and dev91 untouched.
 
+**Later results (H435, 2026-11-11 17:12Z), both on `FIT-SEL`.**
+- **The screen claim above is narrowed.** Estimated on one fold of rows, the rule failed its prospective test: it
+  would have skipped 19 real-weight columns in 212 decisions (9.0% against a 5% limit). With all rows it held up
+  (93.4% accurate on tables, a checkpoint and a readout it had not seen). It describes the stack; it does not yet
+  save inference.
+- **The plain readout was measured after all**, at hour 12: on the 33 wide `FIT-SEL` tables it is 0.28 u weaker
+  than the residual readout, its overlap is 0.135 lower, and it earns 10% weight on none. The no-go stands.
+See [H435](../h435_weight_screen_prospective/README.md).
+
 Plan: [`PREREG.md`](PREREG.md). Numbers: [`metrics.json`](metrics.json). Gates: [`gates_h434.sh`](gates_h434.sh).
 
 ## Measured overlap (out-of-fold errors on SEARCH rows; clusters as units; median with 95% bootstrap interval)
