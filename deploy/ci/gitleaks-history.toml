@@ -1,0 +1,35 @@
+title = "JopeDime HEAD-history gitleaks"
+# deploy/ci/secret-scan.sh rewrites the extend path to the absolute base
+# config before loading this file. The committed path is only a marker.
+[extend]
+path = ".gitleaks.toml"
+
+# Historical parallel/recovery tree from eight-a100-20260912. It is not an
+# ancestor of current main. A full local object store can still reach it from
+# refs/rescue/20260921. The 225 generic-api-key hits are vendored constants.
+# The 18 jope-env-files hits are the paths listed below. All 18 were confirmed
+# absent from HEAD before this allowlist was added. The HEAD tree scan does
+# not load this file, so putting any of these paths back fails that scan.
+[allowlist]
+description = "Removed historical parallel/recovery tree, absent from HEAD"
+paths = ['''^parallel/recovery/''']
+
+# Absent from HEAD:
+# parallel/recovery/eight-a100-20260912/review/f11-disabled-live-v1/stage/service-f11-disabled-v1.env
+# parallel/recovery/eight-a100-20260912/review/f11-reparent60000-v1/staged/service-f11-reparent60000-v1.env
+# parallel/recovery/eight-a100-20260912/review/f11-training-disabled-v1/staged/service-f11-disabled-v1.env
+# parallel/recovery/eight-a100-20260912/review/native9-integration-draft-v2/private-combined-v1/rendered/service-v9.env
+# parallel/recovery/eight-a100-20260912/review/native9-integration-draft-v2/static-attempt-1/service-v9.env
+# parallel/recovery/eight-a100-20260912/review/native9-integration-draft-v2/static/service-v9.env
+# parallel/recovery/eight-a100-20260912/review/native9-integration-draft/static/service-v9.env
+# parallel/recovery/eight-a100-20260912/review/native9-production-v1/initial-static-c7ae/static/service-v9.env
+# parallel/recovery/eight-a100-20260912/review/native9-production-v1/staged/service-v9.env
+# parallel/recovery/eight-a100-20260912/review/native9-production-v1/static/service-v9.env
+# parallel/recovery/eight-a100-20260912/service-v3.env
+# parallel/recovery/eight-a100-20260912/service-v4.env
+# parallel/recovery/eight-a100-20260912/service-v5.env
+# parallel/recovery/eight-a100-20260912/service-v6.env
+# parallel/recovery/eight-a100-20260912/service-v7.env
+# parallel/recovery/eight-a100-20260912/service-v8.env
+# parallel/recovery/eight-a100-20260912/service-v9.env
+# parallel/recovery/eight-a100-20260912/service.env
