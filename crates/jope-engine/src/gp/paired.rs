@@ -37,10 +37,12 @@ pub struct Arm<'a> {
 /// Outcome of one program in one arm: a measured (objective, predictions)
 /// pair or the explicit failure.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum Outcome {
+enum PairedOutcome {
     Measured(u64, String),
     Failed(String),
 }
+
+type Outcome = PairedOutcome;
 
 fn outcome(row: &Value, scale: f64) -> Result<Outcome> {
     Ok(if row["failure"].is_null() {

@@ -17,10 +17,14 @@ use feat_math::{
 use serde_json::{json, Value};
 
 #[derive(Clone, Copy, Debug)]
-enum Refusal {
+enum ConversionRefusal {
     Unsupported,
     Malformed,
 }
+
+/// Callers in this test keep the short name. The item is `ConversionRefusal`
+/// so it is not a second `Refusal` beside `jope_learning::qualify::Refusal`.
+type Refusal = ConversionRefusal;
 
 fn expect_refusal<T>(result: Result<T, VersionError>, kind: Refusal, reason: &str) {
     let error = result.err().expect("invalid envelope was admitted");

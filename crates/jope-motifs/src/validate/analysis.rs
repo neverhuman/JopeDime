@@ -22,11 +22,13 @@ impl Fitted {
     }
 }
 
-pub(super) enum Outcome {
+pub(super) enum MotifOutcome {
     Refused,
     Fitted(Box<Fitted>),
     Nondeterministic,
 }
+
+pub(super) type Outcome = MotifOutcome;
 
 /// Fit on one synthetic table and predict its probe. Probe predictions must be finite, and
 /// multiclass probabilities must be valid (the engine refuses invalid ones).

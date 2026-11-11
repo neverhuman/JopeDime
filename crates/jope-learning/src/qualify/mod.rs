@@ -75,7 +75,7 @@ impl fmt::Display for QualificationAction {
 /// Why a request was refused. Every request ends in one of these.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, thiserror::Error)]
 #[serde(tag = "refusal", rename_all = "snake_case")]
-pub enum Refusal {
+pub enum QualifyRefusal {
     /// The gate is not on. Nothing was read.
     #[error(
         "{action} refused: {} is {gate}, so the input was not read",
@@ -120,6 +120,10 @@ pub enum Refusal {
         action: QualificationAction,
     },
 }
+
+/// Callers keep the short name. The item is `QualifyRefusal` so it is not a
+/// second `Refusal` beside the versioned-conversion test enum.
+pub type Refusal = QualifyRefusal;
 
 /// Ask to adopt the sealed-family roster in `proposal` (a `jope.rlfw-sealed-roster-proposal/v1`
 /// document) and create its seal.

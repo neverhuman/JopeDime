@@ -123,7 +123,7 @@ pub(crate) const OPS_CONTRACTS: &[Contract] = &[
 /// The JSON shape a serde field demands. `Any` means "presence only" — a nested
 /// struct or enum whose internals this check deliberately does not model.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Kind {
+pub(crate) enum AlarmKind {
     Any,
     Str,
     Bool,
@@ -131,6 +131,8 @@ pub(crate) enum Kind {
     Arr,
     Obj,
 }
+
+pub(crate) type Kind = AlarmKind;
 
 impl Kind {
     fn matches(self, value: &Value) -> bool {
