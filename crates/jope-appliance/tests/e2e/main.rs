@@ -213,7 +213,7 @@ fn synthetic_observation() -> (RunSnapshot, Vec<PublicEvent>) {
         "run_id": "run_01JBD8Q6N4V2T5Y8K3M7P9R1S0",
         "revision": "2",
         "state": "completed",
-        "phase": "finalizing",
+        "phase": "done",
         "pending": null,
         "effort": "fast",
         "budget_used": {"evaluations": "4", "wall_seconds": "1.0"},
@@ -364,7 +364,7 @@ fn terminal_capture_rejects_durable_events_after_run_finished() {
             "kind": "run.state",
             "body": {
                 "state": "completed",
-                "phase": "finalizing",
+                "phase": "done",
                 "pending": null,
                 "reason": null
             }
