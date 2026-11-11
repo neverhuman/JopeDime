@@ -11,7 +11,7 @@ export CUDA_VISIBLE_DEVICES=""
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 EV=/home/ubuntu/jope_plan/evidence/H431
 ST=$(cat "$EV/logs/pub_stage")
-R=/home/ubuntu/jope-data/h335-cl/h431/pub
+R=${H431_OUT:-/home/ubuntu/jope-data/h335-cl/h431/$(basename "$ST")}
 P=${H431_PROCS:-16}
 CPUSET=${H431_CPUSET:-40-55}
 [ "$P" -le 16 ] || { echo "P=$P exceeds 16-thread ceiling" >&2; exit 2; }

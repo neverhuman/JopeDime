@@ -11,7 +11,8 @@ G431=research/flywheel_selfplay/h431_cw3ab_icl_battery
 FILES=(icb_gen.py icb_run.py icl_prior_v3s.py strong_base.py icl_model_cw3.py icl_train_cw3.py test_cw3.py lists_fitsel.sh readout_h431.py stage_h431.sh driver_h431.sh gates_h431.sh)
 H419=(icl_model.py icl_prior.py icl_resid.py icl_diag.py icl_inject.py)
 G419=research/flywheel_selfplay/h419_apex_icl
-DOCS=(PREREG.md)
+G425=research/flywheel_selfplay/h425_contamination_screen
+DOCS=(PREREG.md AMENDMENT_1.md)
 DST=/home/ubuntu/apex-stage/h431/$MODE-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }
@@ -25,7 +26,7 @@ if [ "$MODE" = pub ]; then
 fi
 for f in "${FILES[@]}" "${DOCS[@]}"; do
   dst=$f
-  case $f in PREREG.md) dst=PREREG_H431.md ;; PREREG_ADDENDUM_*) dst=PREREG_H431_${f#PREREG_} ;; esac
+  case $f in PREREG.md) dst=PREREG_H431.md ;; AMENDMENT_*) dst=PREREG_H431_$f ;; PREREG_ADDENDUM_*) dst=PREREG_H431_${f#PREREG_} ;; esac
   [ ! -e "$DST/code/$dst" ] || { echo "$dst already exists in base stage" >&2; exit 5; }
   if [ "$MODE" = pub ]; then
     git -C "$REPO" show "origin/v1/next:$G431/$f" > "$DST/code/$dst" \
@@ -42,6 +43,9 @@ for f in "${H419[@]}"; do
   cmp -s "$DST/code/$f" "/home/ubuntu/apex-stage/h419/r9/code/$f" || { echo "$f differs from training stage r9" >&2; exit 6; }
   chmod 0555 "$DST/code/$f"
 done
+git -C "$REPO" show "origin/v1/next:$G425/screen_h425.py" > "$DST/code/screen_h425.py" || { echo "screen_h425.py is not on origin/v1/next" >&2; exit 5; }
+cmp -s "$DST/code/screen_h425.py" "/home/ubuntu/apex-stage/h425/pub-r2/code/screen_h425.py" || { echo "screen_h425.py differs from h425/pub-r2" >&2; exit 6; }
+chmod 0555 "$DST/code/screen_h425.py"
 git -C "$REPO" rev-parse origin/v1/next > "$DST/source_commit"
 echo "$MODE" > "$DST/mode"
 (cd "$DST/code" && find . -maxdepth 1 -type f | sort | sed 's#^\./##' | xargs sha256sum) > "$DST/CODE.sha256"

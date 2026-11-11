@@ -4,8 +4,8 @@
 set -euo pipefail
 PC=${1:?commit on origin/v1/next that published PREREG and code}
 EV=/home/ubuntu/jope_plan/evidence/H431
-R=/home/ubuntu/jope-data/h335-cl/h431/pub
 STAGE=$(cat "$EV/logs/pub_stage")
+R=${H431_OUT:-/home/ubuntu/jope-data/h335-cl/h431/$(basename "$STAGE")}
 REPO=/home/ubuntu/JopeDime
 WDIR=research/flywheel_selfplay/h431_cw3ab_icl_battery
 OUT=$EV/results/H431.gates.json
