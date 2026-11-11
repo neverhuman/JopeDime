@@ -17,6 +17,7 @@ pub const WARNING_CODES: &[&str] = &[
     "NO_VALID_MODEL",
     "EVENT_LAG",
     "NON_NUMERIC_COLUMNS_SKIPPED",
+    "TARGET_LEAKAGE",
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
