@@ -10,8 +10,8 @@ SRC=$(dirname "$(readlink -f "$0")")
 REPO=/home/ubuntu/JopeDime
 BASE=/home/ubuntu/apex-stage/h435/pub-r1
 G432=research/flywheel_selfplay/h437_weight_screen_fold_count
-FILES=(folds_h437.py gates_h437.sh stage_h437.sh)
-DOCS=(PREREG.md)
+FILES=(folds_h437.py gates_h437.sh gates2_h437.sh stage_h437.sh)
+DOCS=(PREREG.md PREREG_ADDENDUM_1.md)   # addendum 1 and gates2 were added after the first gate run; a stage made before them lacks both
 DST=/home/ubuntu/apex-stage/h437/$MODE-$TAG
 [ ! -e "$DST" ] || { echo "$DST exists (create-once)" >&2; exit 3; }
 [ "$(cat "$BASE/mode")" = pub ] || { echo "$BASE is not a pub stage" >&2; exit 4; }
@@ -25,7 +25,7 @@ if [ "$MODE" = pub ]; then
 fi
 for f in "${FILES[@]}" "${DOCS[@]}"; do
   dst=$f
-  case $f in PREREG.md) dst=PREREG_H437.md ;; esac
+  case $f in PREREG.md) dst=PREREG_H437.md ;; PREREG_ADDENDUM_*) dst=PREREG_H437_${f#PREREG_} ;; esac
   if [ "$MODE" = pub ]; then
     git -C "$REPO" show "origin/v1/next:$G432/$f" > "$DST/code/$dst" \
       || { echo "$f is not published on origin/v1/next" >&2; exit 5; }
