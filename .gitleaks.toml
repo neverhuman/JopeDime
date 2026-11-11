@@ -7,8 +7,10 @@ description = "environment files with credentials must never be committed"
 path = '''(^|/)[^/]*\.env$'''
 [allowlist]
 # python/src/jope/research/test_workspace_sync.py was archived at 8a55c4fef (Python removal P1;
-# docs/archive/python-archive-manifest.json). Its entry stays: `gitleaks detect` in
-# deploy/ci/check.sh scans git history, where the file and its synthetic key fixture remain.
+# docs/archive/python-archive-manifest.json). Its entry stays: the history half of
+# deploy/ci/secret-scan.sh scans HEAD ancestry, where the file and its synthetic key fixture remain.
+# The HEAD tree half of that script uses this file for jope-env-files only. The removed
+# parallel/recovery allowlist lives in deploy/ci/gitleaks-history.toml and is not applied here.
 paths = ['''^docs/legacy/''', '''\.sha256$''', '''SHA256SUMS$''', '''^python/src/jope/research/test_workspace_sync\.py$''']  # synthetic 'BEGIN OPENSSH PRIVATE KEY header\nsecret' fixture
 # A credential may itself be a 40/64-character hexadecimal value. Never allow
 # findings solely because they contain a content hash or Git object ID.

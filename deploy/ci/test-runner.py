@@ -78,6 +78,73 @@ class SecretScanTests(unittest.TestCase):
         self.assertIn('bash tools/security-lane.sh', check)
         self.assertIn('bash deploy/ci/secret-scan.sh', (ROOT/'tools/security-lane.sh').read_text())
 
+    def test_removed_recovery_history_matches_and_live_env_does_not(self):
+        scratch = ROOT / 'target' / 'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        history = (ROOT / 'deploy/ci/gitleaks-history.toml').read_text()
+        absent = [line.split('# ', 1)[1].strip()
+                  for line in history.splitlines() if line.startswith('# parallel/recovery/')]
+        self.assertEqual(18, len(absent))
+        tracked = set(subprocess.check_output(['git', 'ls-files'], cwd=ROOT, text=True).splitlines())
+        self.assertTrue(set(absent).isdisjoint(tracked))
+        with tempfile.TemporaryDirectory(prefix='secret-scan-recovery-', dir=scratch) as name:
+            repo = Path(name)
+            def git(*args):
+                return subprocess.run(['git', '-c', 'user.name=Fixture', '-c',
+                    'user.email=fixture@example.invalid', *args], cwd=repo,
+                    capture_output=True, text=True, check=True)
+            def scan():
+                return subprocess.run(['bash', str(ROOT/'deploy/ci/secret-scan.sh'), str(repo)],
+                    capture_output=True, text=True)
+            git('init', '-q', '-b', 'main')
+            recovered = repo / 'parallel/recovery/eight-a100-20260912'
+            recovered.mkdir(parents=True)
+            (recovered / 'service.env').write_text('SYNTHETIC_FIXTURE=not-a-credential\n')
+            digest = 'a7c3e91b04d25f6871aa09ce44b81d0e55f6a2c3d4e5f60718293a4b5c6d7e8'
+            (recovered / 'vendor.c').write_text('const char *api_key = "A7Q9' + digest + 'K3R2";\n')
+            git('add', 'parallel'); git('commit', '-qm', 'historical recovery tree')
+            git('rm', '-r', 'parallel'); git('commit', '-qm', 'remove recovery tree')
+            gated = scan()
+            self.assertEqual(0, gated.returncode, gated.stderr)
+            bare = subprocess.run(['gitleaks', 'detect', '--redact', '--no-banner',
+                '--config', str(ROOT/'.gitleaks.toml'), '--source', str(repo), '--log-opts=HEAD'],
+                capture_output=True, text=True)
+            self.assertEqual(1, bare.returncode, bare.stderr)
+            live = repo / 'parallel/recovery/eight-a100-20260912/service.env'
+            live.parent.mkdir(parents=True)
+            live.write_text('SYNTHETIC_FIXTURE=not-a-credential\n')
+            git('add', 'parallel'); git('commit', '-qm', 'restore one historical env path')
+            restored = scan()
+            self.assertEqual(1, restored.returncode, restored.stderr)
+
+    def test_shallow_and_full_history_agree_on_a_tracked_env(self):
+        scratch = ROOT / 'target' / 'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='secret-scan-shallow-', dir=scratch) as name:
+            base = Path(name)
+            repo = base / 'full'
+            shallow = base / 'shallow'
+            repo.mkdir()
+            def git(*args, cwd=repo):
+                return subprocess.run(['git', '-c', 'user.name=Fixture', '-c',
+                    'user.email=fixture@example.invalid', *args], cwd=cwd,
+                    capture_output=True, text=True, check=True)
+            def scan(path):
+                return subprocess.run(['bash', str(ROOT/'deploy/ci/secret-scan.sh'), str(path)],
+                    capture_output=True, text=True)
+            git('init', '-q', '-b', 'main')
+            (repo / 'service.env').write_text('SYNTHETIC_FIXTURE=not-a-credential\n')
+            git('add', 'service.env'); git('commit', '-qm', 'tracked env')
+            (repo / 'README').write_text('later commit does not touch the env file\n')
+            git('add', 'README'); git('commit', '-qm', 'docs only')
+            cloned = subprocess.run(['git', 'clone', '--depth', '1', f'file://{repo}', str(shallow)],
+                capture_output=True, text=True)
+            self.assertEqual(0, cloned.returncode, cloned.stderr)
+            full = scan(repo)
+            short = scan(shallow)
+            self.assertEqual(1, full.returncode, full.stderr)
+            self.assertEqual(full.returncode, short.returncode, short.stderr)
+
 
 class DropInAdmissionTests(unittest.TestCase):
     def test_actual_launcher_refuses_unrecorded_systemd_configuration(self):

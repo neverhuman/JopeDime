@@ -21,7 +21,7 @@ class SecurityLane(unittest.TestCase):
         self.root = Path(self.directory.name).resolve()
         self.real_gitleaks = shutil.which("gitleaks")
         self.real_python3 = shutil.which("python3")
-        for name in ("tools/security-lane.sh", "deploy/ci/secret-scan.sh", "deploy/ci/actionlint-workflows.sh", "deploy/ci/verify-vendor-security.py", ".gitleaks.toml"):
+        for name in ("tools/security-lane.sh", "deploy/ci/secret-scan.sh", "deploy/ci/gitleaks-history.toml", "deploy/ci/actionlint-workflows.sh", "deploy/ci/verify-vendor-security.py", ".gitleaks.toml"):
             destination = self.root / name
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, destination)
@@ -30,13 +30,13 @@ class SecurityLane(unittest.TestCase):
         (workflows / "ci.yml").write_text("name: fixture\non: push\n")
         self.bin = self.root / "bin"
         self.bin.mkdir()
-        for command in ("bash", "dirname", "realpath", "find", "sort", "grep", "wc", "mkdir"):
+        for command in ("bash", "dirname", "realpath", "find", "sort", "grep", "wc", "mkdir", "mktemp", "rm", "sed"):
             (self.bin / command).symlink_to(shutil.which(command))
-        self.fake("git", 'case "$*" in *--is-shallow-repository*) echo false ;; *--verify*) printf "%040d\\n" 1 ;; *--count*) echo 7 ;; *) exit 92 ;; esac')
+        self.fake("git", 'case "$*" in *ls-tree*) exit 0 ;; *--is-shallow-repository*) echo false ;; *--verify*) printf "%040d\\n" 1 ;; *--count*) echo 7 ;; *) exit 92 ;; esac')
         self.fake("python3", 'case "$*" in "-B deploy/ci/verify-vendor-security.py --root "*) exit "${FAIL_PROVENANCE:-0}" ;; *) exec "$REAL_PYTHON3" "$@" ;; esac')
         self.fake("syft", 'case "$*" in "version") echo "syft 1.40.0" ;; *"--output spdx-json="*) rc="${FAIL_SBOM:-0}"; [ "$rc" = 0 ] || exit "$rc"; output="${@: -1}"; output="${output#spdx-json=}"; printf %s "{\\"spdxVersion\\":\\"SPDX-2.3\\",\\"packages\\":[]}" > "$output" ;; *) exit 97 ;; esac')
         self.fake("actionlint", 'exit "${FAIL_ACTIONLINT:-0}"')
-        self.fake("gitleaks", '[[ "$*" == *"--redact"* && "$*" == *"--log-opts=HEAD"* ]] || exit 93; exit "${FAIL_GITLEAKS:-0}"')
+        self.fake("gitleaks", '[[ "$*" == *"--redact"* ]] || exit 93; if [[ "$*" == *"--no-git"* ]]; then [[ "$*" == *"--enable-rule=jope-env-files"* ]] || exit 93; exit "${FAIL_TREE:-0}"; fi; [[ "$*" == *"--log-opts=HEAD"* ]] || exit 93; exit "${FAIL_GITLEAKS:-0}"')
         self.fake("npm", '[[ "$*" == "--prefix web/training-dashboard audit --package-lock-only --audit-level=high" ]] || exit 95; exit "${FAIL_NPM:-0}"')
         self.fake("cargo", r'''
 printf '%s\n' "$*" >> "$CARGO_CALL_TRACE"
