@@ -11,6 +11,11 @@ the same decisions (3.3% false negatives), on tables, a checkpoint and a readout
 weight on none. H434's no-go for that column stands.
 `FIT-SEL` only: `DEV` not read, no AUDIT array, no gain; no inference, no GPU; `CONFIRM` and dev91 untouched.
 
+**Later result (H437, 2026-11-11 17:25Z).** Fold 0, the fold this wave used, is the least favourable of the five:
+single folds give 4.7% to 9.0% false negatives, median 6.6% (31% of real-weight columns missed, not 42%). The
+verdict stands at the median too. More folds do not rescue the screen: 8.0% at two, 6.6% at three, under 5% only
+at four, where 36% of inference is left to save. See [H437](../h437_weight_screen_fold_count/README.md).
+
 Plan: [`PREREG.md`](PREREG.md). Numbers: [`metrics.json`](metrics.json). Gates: [`gates_h435.sh`](gates_h435.sh).
 
 ## Result (106 `FIT-SEL` tables in 97 clusters; realised weight from the stored builder; "real" = weight ≥ 0.10)
