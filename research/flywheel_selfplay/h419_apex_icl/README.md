@@ -90,6 +90,12 @@ Monitor: 106 `FIT-SEL` contexts, SEARCH rows only; median u (ridge 0.636, best G
 - **xbabe4 second pair:** `ICL_M_x4c_res` and `ICL_M_x4d_v2` resumed at 15:41Z Nov 11 from their own checkpoints
   (stages `r8` and `r9`, the hashes in their `config.json`; stored arguments plus `--resume`), two arms under the
   memory supervisor; both stepping at 15:42Z. Their 24-hour budgets end about 12:45Z and 14:10Z Nov 12.
+- **Why the 104M model lags (H438, stored logs only, 17:48Z Nov 11): not clearly separated.** Most of the lag is a
+  step deficit: the three workers together see 1.08 times the 24M run's tasks per hour but take 0.47 times its
+  steps. At matched steps since the recipe switch a gap of 0.02 u remains and grows; at matched total steps it is
+  zero. Averaging does not set the workers back (the loss dips after loading the group average) but 17–19% of wall
+  time is spent waiting for it. Both runs are fed the same mix at their constant peak learning rate. A 24M
+  averaging proxy (at most 9 GPU-hours) is pre-registered and queued.
 - **What the 24M checkpoints did as a stack column is recorded in its own waves:** H424 (`ICL_CONFIRMED` on `DEV`
   with the hour-20 checkpoint; the hour-24 column is not better than the hour-20 one), H425–H427, H428–H429
   (wide tables), H432 (column only up to 30 features) and H434–H435 (a weight rule for screening columns).
