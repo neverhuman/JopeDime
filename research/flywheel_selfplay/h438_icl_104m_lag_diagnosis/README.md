@@ -12,6 +12,8 @@ for "it is only a step deficit" was 0.020. At matched total steps the gap is zer
   no signature; (b) is rejected in its schedule-position form.
 - **Most of the lag is a step deficit.** The three workers together see 1.08 times the 24M run's tasks per hour
   but take 0.47 times its steps.
+- **The larger model is not taking smaller steps** (addendum 2, stored checkpoints): relative to their size its
+  weights move 2.8 times as far per step as the 24M model's, in a steady direction.
 
 **What is missing:** whether a real per-step deficit of about 0.02 u exists and is growing. The cheapest decisive
 data is time: the same read at 104M hours 36 and 42 (no GPU). The pre-registered GPU intervention is queued below.
@@ -91,6 +93,32 @@ Rule for (a): a rise of at least 0.01 with its interval above 0. Found: no rise;
 - **Not shown:** anything about the stack value of the 104M model; anything causal (one run per size, differing in
   size, learning rate, token and row budgets, hardware and averaging at once).
 
+## Addendum 2 — how far the weights move (stored checkpoint copies, CPU, no forward pass; added after the closeout; the verdict is unchanged)
+Relative displacement ‖θ_b − θ_a‖ ÷ ‖θ_a‖ of the raw weights (EMA weights within 1%):
+| | 24M | 104M worker 2 | 104M ÷ 24M |
+| --- | --- | --- | --- |
+| Optimizer steps, hours 12→18 / 18→24 | 95,384 / 96,086 | 45,519 / 43,395 | |
+| Displacement, 12→18 / 18→24 | 0.295 / 0.238 | 0.358 / 0.303 | |
+| Per 10,000 steps, 18→24 | 0.0247 | 0.0698 | **2.8×** |
+| Per square root of 10,000 steps, 18→24 | | | 1.9× |
+| Per training hour, 18→24 | 0.040 | 0.051 | 1.3× |
+| Cosine between the two successive displacements | 0.51 | 0.64 | |
+
+- **Label by the addendum's fixed rule: `MOVES_MORE_PER_STEP`** (ratio 2.8, line 2).
+- **The larger model is not taking smaller steps.** Relative to its size it moves almost three times as far per
+  step as the 24M model, and further per hour, at a lower peak rate. The idea that its updates are too small or
+  cancel in the average (advisor note A-006 expected 3–5× less movement) is not supported.
+- **The movement is directed, not a random walk** (cosine 0.64, higher than the 24M model's 0.51), so the addendum's
+  own gloss for this label ("would point to noise") is not supported either.
+- **Read with the rest:** in hours 18–24 the 104M model moves a lot, in a steady direction, lowers its held-out
+  synthetic loss, and its real-table residual median stays flat. That fits the lead above (it is learning its
+  training objective; the gain is not showing on real tables in this stretch) better than it fits a learning-rate
+  problem. It is still one pair of runs and a label, not a test.
+- Limits: the two models are at different step counts (models move less later on); the displacement includes any
+  change in weight norm, which was not separated; one worker of three.
+- Gate (`gates3_h438.sh`, before the read): 4 of 4. Cost: 83 CPU-seconds, two threads. Addendum
+  [2](PREREG_ADDENDUM_2.md), `6491869e01`. These files are not in the S3 bundle (made before the addendum).
+
 ## What data is missing
 1. **Time (no GPU).** The 24M model rose from 1.006 to 1.047 between 192,000 and 288,000 steps after its switch.
    The 104M model reaches that range at its training hours 30 to 43 (about 16:00Z on Nov 12), and the 24M model's
@@ -108,7 +136,8 @@ Rule for (a): a rise of at least 0.01 with its interval above 0. Found: no rise;
   300 s; compared at matched worker steps on the residual median and the training loss. Two averaged workers ahead
   by ≥ 0.010 u → the group design earns its GPUs and the 104M model needs time. Not ahead → the extra workers add
   nothing per step, and the recommendation to the owner is to release two of the three 3090s.
-- **C. A peak learning-rate contrast** would need its own PREREG; not written.
+- **C. A peak learning-rate contrast** would need its own PREREG; not written. Addendum 2 lowers its priority: the
+  larger model is not moving too little.
 - Unchanged: the training mix for wide tables (prompt B of H427, held for a GPU) and the rule-against-gain read
   (needs AUDIT values and an order). With Jepson: the H433 read-only apply, `CONFIRM`, follow-up 1 of H422.
 
@@ -139,7 +168,10 @@ idea was after: the group average is the better point, so weight averaging is no
 5. The monitor cross-check was computed after the readout (`H438.monitor_crosscheck.posthoc.json`); descriptive.
 6. Hour-matched, the in-training gap in this window (−0.027) is smaller than the hour-24 monitor read (−0.070):
    the 24M model's late rise shows more strongly in the monitor's protocol.
-7. Cost: one thread at the lowest priority, about one second. Log files of the live runs were copied once,
+7. **Addendum 2 was added after the closeout** (stored checkpoints were in the order's scope and I had left them
+   out; advisor note A-006 prompted it). Its tokens-per-parameter matching was not adopted: at that point the 24M
+   run had not yet switched recipe.
+8. Cost: one thread at the lowest priority, about one second. Log files of the live runs were copied once,
    read-only; nothing was written on their hosts.
 
 ## Timeline (UTC, 2026-11-11)
@@ -149,6 +181,8 @@ idea was after: the group average is the better point, so weight averaging is no
 | 17:42 | logs copied read-only from xbabe0, xbabe1, xbabe3 and locally; checksums written |
 | 17:45 | PREREG and code published (`09f0e9d4c0`); gates 4 of 4; first run stops on a code error, no result |
 | 17:48 | addendum 1 and fixed code published (`a89a72ed93`); gates 6 of 6; the read: `OPTIMISATION_UNSEPARATED` |
+| 17:50 | closeout published (`cb1595161f`) and archived |
+| 17:57 | addendum 2 published (`6491869e01`); gate 4 of 4; checkpoint displacement read: `MOVES_MORE_PER_STEP` |
 
 Evidence (xbabe2): `~/jope_plan/evidence/H438/` (`results/H438.lag.{json,txt}`, both gate files,
 `results/H438.monitor_crosscheck.posthoc.json`, `pulled_logs/` with `SHA256SUMS`, `logs/`).
