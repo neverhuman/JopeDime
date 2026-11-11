@@ -1,7 +1,8 @@
 # H419 — APEX-ICL, our own in-context tabular regressor (in progress)
 
-**This is a status log, not a closeout.** No prediction on a test cohort (stored P201b matrices, APEX-DEV, CONFIRM)
-exists. Plan: [`PREREG.md`](PREREG.md) and addenda [1](PREREG_ADDENDUM_1.md), [2](PREREG_ADDENDUM_2.md),
+**This is a status log, not a closeout.** H419 itself has made no prediction on a test cohort (stored P201b
+matrices, APEX-DEV, CONFIRM). The hour-20 and hour-24 checkpoints of `ICL_M_r3` were read on APEX-DEV by H424 under
+its own PREREG (see the hour-24 block below). `CONFIRM` is untouched. Plan: [`PREREG.md`](PREREG.md) and addenda [1](PREREG_ADDENDUM_1.md), [2](PREREG_ADDENDUM_2.md),
 [3](PREREG_ADDENDUM_3.md), [4](PREREG_ADDENDUM_4.md), [5](PREREG_ADDENDUM_5.md), [6](PREREG_ADDENDUM_6.md).
 
 ## Runs
@@ -13,9 +14,9 @@ exists. Plan: [`PREREG.md`](PREREG.md) and addenda [1](PREREG_ADDENDUM_1.md), [2
 | `ICL_L_r4` | xbabe3 3090 | 104.36M | started 2026-11-10T11:40Z from scratch (addendum 2); stopped at its 13:00:43Z checkpoint for the cut-over; checkpoint kept |
 | `ICL_L_g1_w0` | xbabe3 3090 | 104.36M | averaging worker since 13:01:55Z, cloned from the last `ICL_L_r4` checkpoint (addendum 3) |
 | `ICL_L_g1_w1`, `ICL_L_g1_w2` | xbabe0 3090, xbabe2 3090 | 104.36M | started 12:29Z as averaging workers cloned from `ICL_L_r4` at step 5,531 (addendum 3) |
-| `ICL_M_x4b_inj`, `ICL_M_x4b_noinj` | xbabe4 Apple GPU | 23.66M | column-injection ablation, two arms, stopped at 24 h each (addendum 4) |
-| `ICL_M_x4c_res` | xbabe4 Apple GPU | 23.66M | control for residual-target training: the `inj` recipe plus `--p-resid 0.5`, started 16:36Z (addendum 5) |
-| `ICL_M_x4d_v2` | xbabe4 Apple GPU | 23.66M | control for prior version 2: the `res` recipe plus `--prior v2`, running since 18:08:44Z (addendum 6; the 17:07Z start failed, see below) |
+| `ICL_M_x4b_inj`, `ICL_M_x4b_noinj` | xbabe4 Apple GPU | 23.66M | column-injection ablation, two arms, stopped at 24 h each (addendum 4); **both finished 15:27Z Nov 11; reading `NO_EVIDENCE`** |
+| `ICL_M_x4c_res` | xbabe4 Apple GPU | 23.66M | control for residual-target training: the `inj` recipe plus `--p-resid 0.5`, started 16:36Z (addendum 5); parked after the 20:25Z incident at 3.4 h; **resumed 15:41Z Nov 11** under the memory supervisor |
+| `ICL_M_x4d_v2` | xbabe4 Apple GPU | 23.66M | control for prior version 2: the `res` recipe plus `--prior v2`, running since 18:08:44Z (addendum 6; the 17:07Z start failed, see below); parked at 2.0 h; **resumed 15:41Z Nov 11** under the memory supervisor |
 
 Since addendum 6 the 24M run `ICL_M_r3` (from 17:15Z) and 104M workers 2 (17:14Z) and 1 (17:53Z) train with
 `--prior v2 --p-resid 0.5 --row-floor 1024`; worker 0 followed at 18:25Z (gates passed 18:44Z).
@@ -67,6 +68,31 @@ worker waits for the group average.
 - **Stack test on the 24M checkpoint of 12.33 h:** the residual column is used in 49% of contexts with weight
   0.113, for +0.0051 u. Small; no test cohort is involved.
 - **Next size check:** hour 24, residual win rate ≥ 0.895 and median ≥ 0.953.
+
+**Hour-18 and hour-24 readings (Nov 11): the 104M size rule passed at hour 24.**
+Monitor: 106 `FIT-SEL` contexts, SEARCH rows only; median u (ridge 0.636, best GP program 1.200, GP blend 1.228).
+| Checkpoint | Plain readout, median u | Residual readout, median u | Residual readout, win rate against ridge | Blend + model beats the blend |
+| --- | --- | --- | --- | --- |
+| 24M, 18.32 h | 0.832 | 1.006 | — | 0.179 |
+| 24M, 24.32 h | 0.877 | 1.047 | 0.925 | 0.217 |
+| 104M worker 2, 18.19 h | 0.795 | 0.973 | 0.972 | 0.170 |
+| **104M worker 2, 24.10 h** | 0.811 | **0.976** | **0.934** | 0.170 |
+
+- **104M size rule at hour 24 (addendum 5): pass.** Needs residual win rate ≥ 0.895 and median ≥ 0.953; has 0.934
+  and 0.976 (reading of 16:57Z Nov 11, step 186,324). The group continues.
+- **The 104M model is still behind the 24M model at the same hours** (0.976 against 1.047 on the residual readout,
+  0.811 against 0.877 plain), and its residual median moved little between hours 18 and 24 (0.973 to 0.976). The
+  rule compares it with the 24M model of hour 12, so a pass does not say the larger model is ahead.
+- **Injection ablation (addendum 4), both arms at 24 h, rule of its section 3** (mean of each arm's last five
+  evaluations): with injection, win rate 0.615 and median 0.709; without, 0.642 and 0.734. Difference −0.026 and
+  −0.025: **`NO_EVIDENCE`** (the band is ±0.03; the difference leans against injection on real tables). One seed
+  per arm. Synthetic held-out u is equal in both arms (0.344 plain, 0.420 with injected columns).
+- **xbabe4 second pair:** `ICL_M_x4c_res` and `ICL_M_x4d_v2` resumed at 15:41Z Nov 11 from their own checkpoints
+  (stages `r8` and `r9`, the hashes in their `config.json`; stored arguments plus `--resume`), two arms under the
+  memory supervisor; both stepping at 15:42Z. Their 24-hour budgets end about 12:45Z and 14:10Z Nov 12.
+- **What the 24M checkpoints did as a stack column is recorded in its own waves:** H424 (`ICL_CONFIRMED` on `DEV`
+  with the hour-20 checkpoint; the hour-24 column is not better than the hour-20 one), H425–H427, H428–H429
+  (wide tables), H432 (column only up to 30 features) and H434–H435 (a weight rule for screening columns).
 
 **xbabe4 incident, 20:25Z: our four arms exhausted the Mac Studio's memory; it was reset at 20:30Z.**
 - **What happened.** macOS logged a memory-exhaustion event at 20:25:08Z with 0.1 GiB free. The four arm processes
