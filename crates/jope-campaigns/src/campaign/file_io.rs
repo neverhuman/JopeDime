@@ -167,22 +167,7 @@ pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
 }
 
 pub(crate) fn sha256_file(path: &Path) -> Result<String> {
-    let mut file =
-        File::open(path).with_context(|| format!("open {} for SHA-256", path.display()))?;
-    let mut hasher = Sha256::new();
-    let mut buffer = [0_u8; 64 * 1024];
-    loop {
-        let read = file.read(&mut buffer)?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-    }
-    Ok(hasher
-        .finalize()
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect())
+    jope_dime_regressor::selfplay_runtime::sha256_file(path)
 }
 
 pub(crate) fn validate_file_hash(path: &Path, expected: &str, label: &str) -> Result<()> {

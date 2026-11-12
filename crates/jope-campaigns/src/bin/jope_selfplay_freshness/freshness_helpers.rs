@@ -59,17 +59,7 @@ pub(crate) fn is_sha256(value: &str) -> bool {
 }
 
 pub(crate) fn sha256_file(path: &Path) -> Result<String> {
-    let mut file = File::open(path)?;
-    let mut hasher = Sha256::new();
-    let mut buffer = [0_u8; 1 << 20];
-    loop {
-        let read = file.read(&mut buffer)?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-    }
-    Ok(hex::encode(hasher.finalize()))
+    jope_dime_regressor::selfplay_runtime::sha256_file(path)
 }
 
 pub(crate) fn content_hash(value: &Value) -> Result<String> {
