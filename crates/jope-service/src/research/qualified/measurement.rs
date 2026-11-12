@@ -155,7 +155,7 @@ pub(in crate::research) fn evaluator_sha256() -> String {
     hash.update(include_bytes!("../../worker/evaluate.rs"));
     hash.update(include_bytes!("../../run/surrogate.rs"));
     hash.update(GATE_RULE.as_bytes());
-    format!("{:x}", hash.finalize())
+    crate::digest::encode_hex(&hash.finalize())
 }
 
 pub(in crate::research) fn seed_protocol_sha256() -> String {
@@ -163,7 +163,7 @@ pub(in crate::research) fn seed_protocol_sha256() -> String {
     hash.update(b"jope.research.evaluation-seed/v1\0");
     hash.update(SEED_PROTOCOL);
     hash.update(include_bytes!("../../discover/loop.rs"));
-    format!("{:x}", hash.finalize())
+    crate::digest::encode_hex(&hash.finalize())
 }
 
 pub(in crate::research) fn conditioning_sha256(
@@ -194,5 +194,5 @@ pub(in crate::research) fn conditioning_sha256(
     for value in conditioning.mask {
         hash.update([u8::from(value == 1.0)]);
     }
-    Ok(format!("{:x}", hash.finalize()))
+    Ok(crate::digest::encode_hex(&hash.finalize()))
 }
