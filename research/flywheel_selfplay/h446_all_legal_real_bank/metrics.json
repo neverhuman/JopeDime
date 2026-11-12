@@ -1,0 +1,63 @@
+{
+  "wave": "H446",
+  "name": "h446_all_legal_real_bank",
+  "prereg_commit": "5e20d976c2e19d5e1e3bb5c971b3d806d877c1bc",
+  "stage": "/home/ubuntu/apex-stage/h446/pub-r6",
+  "stage_code_sha256_prefix": "66b0580dbcd36ec6",
+  "gates": {
+    "g1_prereg_before_output": true,
+    "g2_pinned_stage": true,
+    "g3_selftest": true,
+    "g4_zero_holdout_and_audit_leakage": true,
+    "g5_fit_icl_strict_cohort_and_scale": true,
+    "g6_cpu_budget": true
+  },
+  "gates_pass": true,
+  "gates_sha256": "d12ddea435f8081356eb48ef59469ff3dbba7c2e5d05f050e02fb1d070445847",
+  "banks": {
+    "fit_icl_wide400": {
+      "file": "/home/ubuntu/jope-data/h335-cl/h446/pub-r6/banks/fit_icl_wide400_bank.npz",
+      "sha256": "0fef6b435baa9489d4987895e65b356dfbccc05c7be7ef7e00717b25cd400e7b",
+      "tables": 907,
+      "families": 877,
+      "wide_gt_100": 49,
+      "cells": 21899084
+    },
+    "all_legal_excl_p201b": {
+      "file": "/home/ubuntu/jope-data/h335-cl/h446/pub-r6/banks/all_legal_excl_p201b_bank.npz",
+      "sha256": "bc5c7d6cd1f42096d0f3b31ac95686e81e7bfc439d07f42f1b6992f20b35763e",
+      "tables": 1368,
+      "families": 1319,
+      "wide_gt_100": 85,
+      "cells": 35137085
+    },
+    "all_legal": {
+      "file": "/home/ubuntu/jope-data/h335-cl/h446/pub-r6/banks/all_legal_bank.npz",
+      "sha256": "7d4164f9a9b5e618a2c47b8437c7e06ef87b1de11f3fd36ede2a48d7bfc2dc04",
+      "tables": 1609,
+      "families": 1509,
+      "wide_gt_100": 85,
+      "cells": 39621927
+    }
+  },
+  "checks": {
+    "prereg_commit_time": 1794457358,
+    "first_output_time": 1794457383,
+    "stage_mode": "pub",
+    "run_times": {
+      "run_start": 1794457381,
+      "run_end": 1794457521,
+      "wall_s": 140,
+      "procs": 4,
+      "cpuset": "104-107"
+    },
+    "fit_icl_tables": 907,
+    "excl_p201b_tables": 1368,
+    "all_legal_tables": 1609,
+    "all_legal_wide_gt_100": 85,
+    "dropped_s4": 5,
+    "dropped_dev_h425": 214,
+    "delta_refusal_log_lines": 0,
+    "s3_write_operations": 0
+  }
+}
