@@ -22,6 +22,22 @@ Old receipts remain verifiable and auditable under the identity that produced th
 (WP2's `gpr.rs`, `registry.rs`) creates a new current identity without invalidating history. Reviewers see every
 accepted historical identity in one file.
 
+## Current identity transition: campaign one-shot SHA-256 helper (2026-11-12)
+
+The remaining one-shot SHA-256 hex calls in `jope-dime-regressor` now use
+`selfplay_runtime::sha256_bytes`. `campaign_evaluator.rs` and
+`commands/single_fold_proof.rs` are ADR-0004 evaluator identity inputs, so this
+announces an identity-only transition. `implementation_sha256` changes from
+`014a6fbfaf0909fcc0edf3f1aadf9888fa646babd8a00ea283c0fe323e4810e8` to
+`6367505c0d69f1a137321e8149d86cbad7f12beca37710d51ef22e26b0a3968f`, and
+`identity_digest` changes from
+`3174ad38add05467f69b1cf06b2ee9f57210d241144863d58c058831503ab3ee` to
+`75f4f632406cad050c29cd51d5cd60acaeb733dc241888ab9694294e7f1fbf69`. The DSL ABI
+is unchanged. The regeneration ran
+`JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=b9f0998551d87a4c8b6564331ee2d5fc7c225a0a cargo nextest run --locked -P pr -p feat-math --test compat_freeze`
+(13/13 passed). The append-only known-identity table gains no row because this
+identity has no shipped receipt.
+
 ## Current identity transition: race test dedicated pool (2026-11-02)
 
 P45 changes `crates/feat-math/src/evolve.rs` so `race_respects_tiny_time_budget` runs its one-chunk
