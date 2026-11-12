@@ -78,8 +78,13 @@ def stable_seed(*parts: object) -> int:
     return int(digest, 16) & 0x7FFF_FFFF_FFFF_FFFF
 
 
+def quant_base(home: str | None) -> Path:
+    """`~/quant` expanded only when `home` is absolute."""
+    return expand_target_path("~", home) / "quant"
+
+
 def default_roots() -> dict[int, Path]:
-    base = Path.home() / "quant"
+    base = quant_base(os.environ.get("HOME"))
     return {
         TASK_BINARY: base / "binary",
         TASK_REGRESSION: base / "regression",
