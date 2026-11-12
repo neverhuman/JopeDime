@@ -3,7 +3,26 @@
 set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 helper=${1:-$script_dir/test-clean-host-prestage.sh}
-base=${JOPE_CLEAN_HOST_CONTROL_TMP:-${XDG_CACHE_HOME:-$HOME/.cache}/jopedime-clean-host-controls}
+# JOPE_CLEAN_HOST_CONTROL_TMP stays verbatim. Otherwise use an absolute
+# XDG_CACHE_HOME, else an absolute HOME/.cache. A relative or empty value
+# must not create /.cache or a working-directory cache.
+if [ -n "${JOPE_CLEAN_HOST_CONTROL_TMP:-}" ]; then
+  base=$JOPE_CLEAN_HOST_CONTROL_TMP
+else
+  case ${XDG_CACHE_HOME:-} in
+    /*) cache=$XDG_CACHE_HOME ;;
+    *)
+      case ${HOME:-} in
+        /*) cache=$HOME/.cache ;;
+        *)
+          echo "controls: HOME must be an absolute path when XDG_CACHE_HOME is not" >&2
+          exit 2
+          ;;
+      esac
+      ;;
+  esac
+  base=$cache/jopedime-clean-host-controls
+fi
 case $base in /tmp | /tmp/*) echo "controls must not use /tmp" >&2; exit 2 ;; esac
 mkdir -p "$base"
 root=$(mktemp -d "$base/control.XXXXXX")

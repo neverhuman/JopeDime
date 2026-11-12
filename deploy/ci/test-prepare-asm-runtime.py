@@ -3,6 +3,7 @@
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -15,9 +16,24 @@ prepare = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(prepare)
 
 
+def preparation_fixture_parent(home: str | None) -> Path:
+    """Directory that holds preparation fixtures.
+
+    An empty or relative ``home`` is an error. ``None`` means ``HOME`` is
+    unset and still uses :meth:`Path.home`.
+    """
+    if home is None:
+        return Path.home() / ".cache" / "jope-preparation-fixtures"
+    if not os.path.isabs(home):
+        raise ValueError(
+            "HOME is not an absolute path; the preparation fixture cache cannot be resolved"
+        )
+    return Path(home) / ".cache" / "jope-preparation-fixtures"
+
+
 class Preparation(unittest.TestCase):
     def setUp(self):
-        parent = Path.home() / ".cache" / "jope-preparation-fixtures"
+        parent = preparation_fixture_parent(os.environ.get("HOME"))
         parent.mkdir(parents=True, exist_ok=True)
         self.directory = tempfile.TemporaryDirectory(dir=parent)
         self.addCleanup(self.directory.cleanup)
@@ -191,6 +207,18 @@ class Preparation(unittest.TestCase):
                         prepare.build_workers(args)
                 self.assertTrue((args.output / "failed-build.json").is_file())
                 self.assertFalse((args.output / "summary.json").exists())
+
+
+class FixtureParent(unittest.TestCase):
+    def test_a_relative_home_does_not_name_the_preparation_cache(self):
+        self.assertEqual(
+            preparation_fixture_parent("/users/alice"),
+            Path("/users/alice/.cache/jope-preparation-fixtures"),
+        )
+        with self.assertRaises(ValueError):
+            preparation_fixture_parent("relative/home")
+        with self.assertRaises(ValueError):
+            preparation_fixture_parent("")
 
 
 if __name__ == "__main__":
