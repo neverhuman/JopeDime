@@ -1,8 +1,10 @@
 # H449 — Quarantined Matched Comparison: `ALL-NON-DEV91-COMPLETE` (`0%` `dev91`) vs. `ENTIRE` (`100%` `dev91` In-Corpus Fit) + Token & Compute Cost Ledger
 
 > **STRICT QUARANTINE & SCIENTIFIC INTERPRETATION (`quarantined_unfair_diagnostic = true`, `canonical_promotion_forbidden = true`):**
-> - Zero files in `research/elo/reference-board/` or canonical checkpoint directories were modified. The official fair `dev91-audit-v1` score remains **`h448.APEX_FAIR_CHAMPION`** (`Wave H448`).
+> - Zero files in `research/elo/reference-board/` or canonical checkpoint directories were modified. The sole canonical fair `dev91-audit-v1` entry remains **`h448.APEX_FAIR_CHAMPION`** (`1821.5` Elo, `Wave H448`).
 > - Arms fine-tuned on `everything_all_d91_bank.npz` (`100%` `dev91` included in training) measure **in-corpus fit to `dev91`, NOT out-of-sample generalisation**, and are kept outside the canonical `dev91-audit-v1` ranking and outside any generalisation comparison with external reference models.
+> - **Light-Compute Caveat (`0.25h` CPU, `6.5M` `dev91` cell-tokens):** Moving the stack by `+1.6` BT-Elo (`+3.7` on pure `ICL`) with only `6.5M` `dev91` cell-tokens and `0.25` CPU-hours under legacy `R4-e8` + `Guard+2L` is **too light to upper-bound in-corpus fit** to `dev91` (multi-GPU random-split saturation is evaluated separately in quarantined `Wave H450`).
+> - **`APEX-DEV` Expenditure & Second-Look Note:** `non_d91_complete_bank.npz` (`3,392` tables) includes `APEX-DEV-FULL` (`115` tables with `AUDIT` targets) and `S3-DEV-FULL` (`383` tables). **`APEX-DEV` is therefore spent for anything built on `H449` or `H450` checkpoints**, whereas **`H445`'s `DEV` readout remains valid** because its frozen inputs predate `H449`. Furthermore, `h449.FAIR_ALL_NON_D91_STACK` (`1828.6`, post-hoc second look at `dev91` after `H448` was known; `+7.8` within `~±150` CIs = no statistically meaningful difference) is diagnostic only — `h448.APEX_FAIR_CHAMPION` remains the only fair entry.
 
 # Fair (`NON-DEV91`) vs. Unfair (`ENTIRE` incl. `100%` `dev91`) Elo & Token/Compute Cost Ledger
 
