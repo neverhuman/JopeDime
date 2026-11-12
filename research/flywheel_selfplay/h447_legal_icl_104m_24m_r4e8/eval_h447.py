@@ -420,8 +420,8 @@ def cmd_readout(a) -> None:
             "sha_l": pins["wc_sha_l"],
             "ckpt_m": pins["wc_ckpt_m"],
             "sha_m": pins["wc_sha_m"],
-            "training_bank": "all_legal_bank.npz",
-            "training_bank_sha256": pins["all_legal_bank_sha256"],
+            "training_bank": pins.get("wc_bank_name", "all_legal_excl_p201b_bank.npz"),
+            "training_bank_sha256": pins.get("wc_bank_sha256", pins["all_legal_bank_sha256"]),
         }
     elif selected_arm == "STACK_R4_E8_BASE":
         icl_spec = {
