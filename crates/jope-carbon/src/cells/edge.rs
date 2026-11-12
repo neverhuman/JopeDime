@@ -790,8 +790,10 @@ impl CarbonEdgeRouter {
             return CarbonGatewayResponse::error_json(500, "cas_write_failed", &err);
         }
 
+        let cell_volume = total_rows.saturating_mul(create.feature_names.len());
         let dispatch_async = effort >= CarbonEffortTier::Medium
-            || plan_decision.mode == CarbonExecutionMode::HybridFanOut;
+            || plan_decision.mode == CarbonExecutionMode::HybridFanOut
+            || cell_volume >= 10_000;
         let cmd = CarbonEngineWireCommand::StartRun {
             request: create,
             region: self.config.region.clone(),
@@ -967,12 +969,19 @@ impl CarbonEdgeRouter {
         }
 
         let extra_waves = resume_req.additional_waves.unwrap_or(2);
+        let stored_volume =
+            (stored_create.fit_rows as usize).saturating_mul(stored_create.feature_names.len());
+        let async_resume = extra_waves > 2
+            || (extra_waves >= 2
+                && (map_api_effort(resume_req.effort.unwrap_or(stored_create.effort))
+                    >= CarbonEffortTier::Medium
+                    || stored_volume >= 10_000));
         let cmd = CarbonEngineWireCommand::ResumeRun {
             run_id: run_id.to_owned(),
             resume: resume_req.clone(),
             region: self.config.region.clone(),
         };
-        if extra_waves > 2 {
+        if async_resume {
             if let Ok(status_key) =
                 canonical_run_state_key(&resume_req.tenant_id, run_id, "status.json")
             {
@@ -1362,6 +1371,15 @@ fn parse_lambda_url_v2_event(event: &serde_json::Value) -> Result<CarbonGatewayR
             if let Some(text) = v.as_str() {
                 headers.insert(k.to_ascii_lowercase(), text.to_owned());
             }
+        }
+    }
+    if !headers.contains_key("x-forwarded-for") {
+        if let Some(src_ip) = event
+            .pointer("/requestContext/http/sourceIp")
+            .and_then(serde_json::Value::as_str)
+            .filter(|s| !s.trim().is_empty())
+        {
+            headers.insert("x-forwarded-for".to_owned(), src_ip.trim().to_owned());
         }
     }
 

@@ -382,6 +382,65 @@ fn cloudformation_cell_template_and_deterministic_packager_invariants() {
         "*"
     );
 
+    // Public API Gateway HTTP API v2.0 MUST target only immutable EdgeLiveAlias, enforce PayloadFormatVersion 2.0,
+    // configure stage throttling, and scope Lambda permission strictly to EdgePublicHttpApi.
+    assert_eq!(
+        resources["EdgePublicHttpApi"]["Properties"]["ProtocolType"],
+        "HTTP"
+    );
+    assert_eq!(
+        resources["EdgePublicHttpIntegration"]["Properties"]["PayloadFormatVersion"],
+        "2.0"
+    );
+    assert_eq!(
+        resources["EdgePublicHttpIntegration"]["Properties"]["IntegrationUri"]["Ref"],
+        "EdgeLiveAlias"
+    );
+    assert_eq!(
+        resources["EdgePublicHttpStage"]["Properties"]["AutoDeploy"],
+        true
+    );
+    assert!(
+        resources["EdgePublicHttpStage"]["Properties"]["DefaultRouteSettings"]
+            .get("ThrottlingRateLimit")
+            .is_some()
+    );
+    assert_eq!(
+        resources["EdgePublicApiGatewayInvokePermission"]["Properties"]["Principal"],
+        "apigateway.amazonaws.com"
+    );
+    assert_eq!(
+        resources["EdgePublicApiGatewayInvokePermission"]["Properties"]["FunctionName"]["Ref"],
+        "EdgeLiveAlias"
+    );
+    assert!(tpl["Outputs"].get("PublicEdgeEndpointUrl").is_some());
+
+    // Public clouds discovery manifest resolution + P-256 KEK validation
+    let kek = jope_carbon::CarbonEngineKek::generate().unwrap();
+    let mut clouds_map = std::collections::BTreeMap::new();
+    clouds_map.insert(
+        "dev".to_owned(),
+        jope_carbon::CarbonCloudCellEntry {
+            environment: "dev".to_owned(),
+            region: "us-east-2".to_owned(),
+            public_endpoint: "https://example-dev.execute-api.us-east-2.amazonaws.com".to_owned(),
+            engine_kek_pubkey_b64: Some(kek.pubkey_b64()),
+            release_id: Some("da0ae4a7c0ffee".to_owned()),
+        },
+    );
+    let clouds_doc = jope_carbon::CarbonPublicCloudsManifest {
+        schema: "carbon.clouds/v1".to_owned(),
+        generated_epoch_ms: 1794400000000,
+        clouds: clouds_map,
+    };
+    let tmp_dir = tempfile::tempdir().unwrap();
+    let manifest_file = tmp_dir.path().join("carbon-clouds.json");
+    std::fs::write(&manifest_file, serde_json::to_vec(&clouds_doc).unwrap()).unwrap();
+    let resolved_dev =
+        jope_carbon::resolve_public_cloud_endpoint("dev", manifest_file.to_str()).unwrap();
+    assert_eq!(resolved_dev.region, "us-east-2");
+    assert!(jope_carbon::resolve_public_cloud_endpoint("prod", manifest_file.to_str()).is_err());
+
     // R882ModelLayer MUST attach strictly to EngineFunction, never EdgeFunction or EvalFunction
     assert!(resources["EngineFunction"]["Properties"]
         .get("Layers")

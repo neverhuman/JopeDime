@@ -434,6 +434,21 @@ fn enterprise_serve_vpc_no_limit_and_cloud_free_tier_rejection() {
     assert!(cli_receipt.encrypted_cuen);
     assert!(cli_receipt.shredded_after_run);
     assert_eq!(cli_receipt.sample_predictions.len(), 3);
+    assert_eq!(cli_receipt.sample_targets.len(), 3);
+    assert!(cli_receipt.holdout_r2.unwrap_or(0.0) > 0.85);
+    assert!(cli_receipt.mean_baseline_rmse.unwrap_or(0.0) > 1.0);
+    assert!(cli_receipt.linear_baseline_rmse.is_some());
+    assert!(cli_receipt.rmse_reduction_vs_mean_pct.unwrap_or(0.0) > 50.0);
+    assert!(cli_receipt.e2e_predict_holdout_rmse.is_some());
+    if let (Some(srv_ho), Some(e2e_ho)) = (
+        cli_receipt.outer_holdout_score,
+        cli_receipt.e2e_predict_holdout_rmse,
+    ) {
+        assert!(
+            (srv_ho - e2e_ho).abs() < 1e-4,
+            "E2E encrypted /predict holdout RMSE ({e2e_ho}) must match server holdout RMSE ({srv_ho})"
+        );
+    }
 
     let dummy_cas =
         std::sync::Arc::new(CarbonFsCas::open(root.path().join("fn_url_cas")).expect("fn_url_cas"));

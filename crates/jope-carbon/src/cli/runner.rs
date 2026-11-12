@@ -78,6 +78,24 @@ pub struct CarbonCliRunReceipt {
     pub candidates_evaluated: u64,
     pub best_cv_score: Option<f64>,
     pub outer_holdout_score: Option<f64>,
+    #[serde(default)]
+    pub holdout_r2: Option<f64>,
+    #[serde(default)]
+    pub mean_baseline_rmse: Option<f64>,
+    #[serde(default)]
+    pub linear_baseline_rmse: Option<f64>,
+    #[serde(default)]
+    pub linear_baseline_r2: Option<f64>,
+    #[serde(default)]
+    pub rmse_reduction_vs_mean_pct: Option<f64>,
+    #[serde(default)]
+    pub rmse_reduction_vs_linear_pct: Option<f64>,
+    #[serde(default)]
+    pub e2e_predict_holdout_rmse: Option<f64>,
+    #[serde(default)]
+    pub e2e_predict_holdout_r2: Option<f64>,
+    #[serde(default)]
+    pub sample_targets: Vec<f64>,
     pub sample_predictions: Vec<f64>,
 }
 
@@ -98,6 +116,14 @@ pub struct CarbonBenchScenarioSummary {
     pub eval_shards: u32,
     pub best_cv_score: Option<f64>,
     pub outer_holdout_score: Option<f64>,
+    #[serde(default)]
+    pub holdout_r2: Option<f64>,
+    #[serde(default)]
+    pub mean_baseline_rmse: Option<f64>,
+    #[serde(default)]
+    pub linear_baseline_rmse: Option<f64>,
+    #[serde(default)]
+    pub rmse_reduction_vs_linear_pct: Option<f64>,
     pub notes: String,
 }
 
@@ -217,9 +243,179 @@ fn mint_run_and_dataset_ids() -> Result<(RunId, DatasetId), String> {
     Ok((run_id, ds_id))
 }
 
+#[derive(Clone, Debug)]
+struct PreparedDatasetWithSplitRows {
+    prepared: CarbonClientPreparedDataset,
+    total_rows: usize,
+    fit_x: Vec<Vec<f64>>,
+    fit_y: Vec<f64>,
+    holdout_x: Vec<Vec<f64>>,
+    holdout_y: Vec<f64>,
+    predict_batch_x: Vec<Vec<f64>>,
+    predict_batch_y: Vec<f64>,
+    eval_holdout_count: usize,
+    sample_count: usize,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct HoldoutBaselineStats {
+    sse_mean: f64,
+    mean_baseline_rmse: f64,
+    linear_baseline_rmse: Option<f64>,
+    linear_baseline_r2: Option<f64>,
+}
+
+#[allow(clippy::needless_range_loop)]
+fn solve_linear_system_partial_pivot(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Option<Vec<f64>> {
+    let n = b.len();
+    for col in 0..n {
+        let mut pivot_row = col;
+        let mut max_abs = a[col][col].abs();
+        for (r, row_vals) in a.iter().enumerate().skip(col + 1) {
+            let v = row_vals[col].abs();
+            if v > max_abs {
+                max_abs = v;
+                pivot_row = r;
+            }
+        }
+        if !max_abs.is_finite() || max_abs < 1e-14 {
+            return None;
+        }
+        if pivot_row != col {
+            a.swap(col, pivot_row);
+            b.swap(col, pivot_row);
+        }
+        let diag = a[col][col];
+        for r in (col + 1)..n {
+            let factor = a[r][col] / diag;
+            a[r][col] = 0.0;
+            for c in (col + 1)..n {
+                a[r][c] -= factor * a[col][c];
+            }
+            b[r] -= factor * b[col];
+        }
+    }
+    let mut x = vec![0.0; n];
+    for i in (0..n).rev() {
+        let mut sum = b[i];
+        for j in (i + 1)..n {
+            sum -= a[i][j] * x[j];
+        }
+        x[i] = sum / a[i][i];
+        if !x[i].is_finite() {
+            return None;
+        }
+    }
+    Some(x)
+}
+
+#[allow(clippy::needless_range_loop)]
+fn compute_holdout_baselines(
+    fit_x: &[Vec<f64>],
+    fit_y: &[f64],
+    holdout_x: &[Vec<f64>],
+    holdout_y: &[f64],
+) -> Option<HoldoutBaselineStats> {
+    if fit_y.is_empty() || holdout_y.is_empty() {
+        return None;
+    }
+    let n_fit = fit_y.len() as f64;
+    let n_hold = holdout_y.len() as f64;
+    let fit_mean = fit_y.iter().copied().sum::<f64>() / n_fit;
+    let sse_mean: f64 = holdout_y
+        .iter()
+        .map(|&y| {
+            let d = y - fit_mean;
+            d * d
+        })
+        .sum();
+    let mean_baseline_rmse = (sse_mean / n_hold).sqrt();
+
+    let p = fit_x.first().map(Vec::len).unwrap_or(0);
+    let (linear_baseline_rmse, linear_baseline_r2) = if p > 0 && p <= 256 {
+        let mut means = vec![0.0; p];
+        for row in fit_x {
+            for (j, &v) in row.iter().enumerate() {
+                means[j] += v;
+            }
+        }
+        for m in &mut means {
+            *m /= n_fit;
+        }
+        let mut scales = vec![0.0; p];
+        for row in fit_x {
+            for (j, &v) in row.iter().enumerate() {
+                let d = v - means[j];
+                scales[j] += d * d;
+            }
+        }
+        for s in &mut scales {
+            let std = (*s / n_fit).sqrt();
+            *s = if std > 1e-9 { std } else { 1.0 };
+        }
+
+        let dim = p + 1;
+        let mut xtx = vec![vec![0.0; dim]; dim];
+        let mut xty = vec![0.0; dim];
+        let mut z = vec![1.0; dim];
+        for (row, &y) in fit_x.iter().zip(fit_y.iter()) {
+            z[0] = 1.0;
+            for j in 0..p {
+                z[j + 1] = (row[j] - means[j]) / scales[j];
+            }
+            for r in 0..dim {
+                let zr = z[r];
+                xty[r] += zr * y;
+                for c in r..dim {
+                    xtx[r][c] += zr * z[c];
+                }
+            }
+        }
+        for r in 0..dim {
+            for c in 0..r {
+                xtx[r][c] = xtx[c][r];
+            }
+        }
+        let ridge = 1e-6 * n_fit.max(1.0);
+        for (j, row_mat) in xtx.iter_mut().enumerate().skip(1) {
+            row_mat[j] += ridge;
+        }
+
+        if let Some(weights) = solve_linear_system_partial_pivot(xtx, xty) {
+            let mut sse_lin = 0.0;
+            for (row, &y) in holdout_x.iter().zip(holdout_y.iter()) {
+                let mut pred = weights[0];
+                for j in 0..p {
+                    pred += weights[j + 1] * ((row[j] - means[j]) / scales[j]);
+                }
+                let err = y - pred;
+                sse_lin += err * err;
+            }
+            let lin_rmse = (sse_lin / n_hold).sqrt();
+            let lin_r2 = if sse_mean > 1e-18 {
+                Some(1.0 - (sse_lin / sse_mean))
+            } else {
+                None
+            };
+            (Some(lin_rmse), lin_r2)
+        } else {
+            (None, None)
+        }
+    } else {
+        (None, None)
+    };
+
+    Some(HoldoutBaselineStats {
+        sse_mean,
+        mean_baseline_rmse,
+        linear_baseline_rmse,
+        linear_baseline_r2,
+    })
+}
+
 fn prepare_from_options(
     opts: &CarbonCliRunOptions,
-) -> Result<(CarbonClientPreparedDataset, Vec<Vec<f64>>, usize), String> {
+) -> Result<PreparedDatasetWithSplitRows, String> {
     let (headers, rows, target_col) = if let Some(csv_path) = &opts.csv_path {
         let (h, r) = load_numeric_csv(csv_path)?;
         (h, r, opts.target_column.clone())
@@ -231,16 +427,12 @@ fn prepare_from_options(
         .position(|h| h == &target_col)
         .ok_or_else(|| format!("target column '{target_col}' not found in headers"))?;
     let total_rows = rows.len();
-    let sample_feature_rows: Vec<Vec<f64>> = rows
-        .iter()
-        .take(opts.predict_rows.max(1))
-        .map(|r| {
-            r.iter()
-                .enumerate()
-                .filter_map(|(i, &v)| if i == target_idx { None } else { Some(v) })
-                .collect()
-        })
-        .collect();
+    let extract_features = |r: &[f64]| -> Vec<f64> {
+        r.iter()
+            .enumerate()
+            .filter_map(|(i, &v)| if i == target_idx { None } else { Some(v) })
+            .collect()
+    };
     let prepared = CarbonThinClient::prepare_numeric_dataset(
         headers,
         &rows,
@@ -248,7 +440,49 @@ fn prepare_from_options(
         opts.seed,
         opts.holdout_fraction,
     )?;
-    Ok((prepared, sample_feature_rows, total_rows))
+
+    let mut fit_x = Vec::with_capacity(prepared.split_plan.fit_rows().len());
+    let mut fit_y = Vec::with_capacity(prepared.split_plan.fit_rows().len());
+    for &idx in prepared.split_plan.fit_rows() {
+        fit_x.push(extract_features(&rows[idx]));
+        fit_y.push(rows[idx][target_idx]);
+    }
+
+    let mut holdout_x = Vec::with_capacity(prepared.split_plan.holdout_rows().len());
+    let mut holdout_y = Vec::with_capacity(prepared.split_plan.holdout_rows().len());
+    for &idx in prepared.split_plan.holdout_rows() {
+        holdout_x.push(extract_features(&rows[idx]));
+        holdout_y.push(rows[idx][target_idx]);
+    }
+
+    let requested_samples = opts.predict_rows.max(1).min(total_rows);
+    let eval_holdout_count = holdout_x.len().min(256);
+    let mut predict_batch_x: Vec<Vec<f64>> =
+        holdout_x.iter().take(eval_holdout_count).cloned().collect();
+    let mut predict_batch_y: Vec<f64> =
+        holdout_y.iter().take(eval_holdout_count).copied().collect();
+    if predict_batch_x.len() < requested_samples {
+        for r in &rows {
+            if predict_batch_x.len() >= requested_samples {
+                break;
+            }
+            predict_batch_x.push(extract_features(r));
+            predict_batch_y.push(r[target_idx]);
+        }
+    }
+
+    Ok(PreparedDatasetWithSplitRows {
+        prepared,
+        total_rows,
+        fit_x,
+        fit_y,
+        holdout_x,
+        holdout_y,
+        predict_batch_x,
+        predict_batch_y,
+        eval_holdout_count,
+        sample_count: requested_samples,
+    })
 }
 
 /// Execute a complete `carbon run` lifecycle against the fastest reachable endpoint.
@@ -272,7 +506,19 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
     }
 
     let t_prep = Instant::now();
-    let (prepared, sample_features, total_rows) = prepare_from_options(opts)?;
+    let PreparedDatasetWithSplitRows {
+        prepared,
+        total_rows,
+        fit_x,
+        fit_y,
+        holdout_x,
+        holdout_y,
+        predict_batch_x,
+        predict_batch_y,
+        eval_holdout_count,
+        sample_count,
+    } = prepare_from_options(opts)?;
+    let baseline_stats = compute_holdout_baselines(&fit_x, &fit_y, &holdout_x, &holdout_y);
     let prep_ms = t_prep.elapsed().as_secs_f64() * 1_000.0;
     let jlmb_bytes = prepared.landmark_bundle.to_wire_bytes().len();
 
@@ -332,7 +578,7 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
     }
     let search_ms = t_search.elapsed().as_secs_f64() * 1_000.0;
 
-    let predict_inputs: Vec<Vec<Option<f64>>> = sample_features
+    let predict_inputs: Vec<Vec<Option<f64>>> = predict_batch_x
         .into_iter()
         .map(|r| r.into_iter().map(Some).collect())
         .collect();
@@ -351,6 +597,67 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         shredded_after_run = shred.shredded;
     }
     let total_wall_ms = t_total.elapsed().as_secs_f64() * 1_000.0;
+
+    let n_holdout_f = (prepared.holdout_rows as f64).max(1.0);
+    let holdout_r2 = match (progress.outer_holdout_loss, baseline_stats) {
+        (Some(ho_rmse), Some(b)) if b.sse_mean > 1e-18 && opts.objective == "rmse" => {
+            let sse_model = ho_rmse * ho_rmse * n_holdout_f;
+            Some(1.0 - (sse_model / b.sse_mean))
+        }
+        _ => None,
+    };
+    let mean_baseline_rmse = baseline_stats.map(|b| b.mean_baseline_rmse);
+    let linear_baseline_rmse = baseline_stats.and_then(|b| b.linear_baseline_rmse);
+    let linear_baseline_r2 = baseline_stats.and_then(|b| b.linear_baseline_r2);
+    let rmse_reduction_vs_mean_pct = match (progress.outer_holdout_loss, mean_baseline_rmse) {
+        (Some(ho), Some(mb)) if mb > 1e-12 && opts.objective == "rmse" => {
+            Some(100.0 * (1.0 - ho / mb))
+        }
+        _ => None,
+    };
+    let rmse_reduction_vs_linear_pct = match (progress.outer_holdout_loss, linear_baseline_rmse) {
+        (Some(ho), Some(lb)) if lb > 1e-12 && opts.objective == "rmse" => {
+            Some(100.0 * (1.0 - ho / lb))
+        }
+        _ => None,
+    };
+    let (e2e_predict_holdout_rmse, e2e_predict_holdout_r2) =
+        if eval_holdout_count > 0 && pred_resp.predictions.len() >= eval_holdout_count {
+            let fit_mean = if !fit_y.is_empty() {
+                fit_y.iter().copied().sum::<f64>() / (fit_y.len() as f64)
+            } else {
+                0.0
+            };
+            let mut sse_pred = 0.0;
+            let mut sse_sub_mean = 0.0;
+            for (&yhat, &ytrue) in pred_resp
+                .predictions
+                .iter()
+                .take(eval_holdout_count)
+                .zip(predict_batch_y.iter().take(eval_holdout_count))
+            {
+                let e = ytrue - yhat;
+                sse_pred += e * e;
+                let dm = ytrue - fit_mean;
+                sse_sub_mean += dm * dm;
+            }
+            let rmse_p = (sse_pred / (eval_holdout_count as f64)).sqrt();
+            let r2_p = if sse_sub_mean > 1e-18 {
+                Some(1.0 - (sse_pred / sse_sub_mean))
+            } else {
+                None
+            };
+            (Some(rmse_p), r2_p)
+        } else {
+            (None, None)
+        };
+
+    let sample_targets: Vec<f64> = predict_batch_y.into_iter().take(sample_count).collect();
+    let sample_predictions: Vec<f64> = pred_resp
+        .predictions
+        .into_iter()
+        .take(sample_count)
+        .collect();
 
     Ok(CarbonCliRunReceipt {
         selected_endpoint: client.active_endpoint().to_owned(),
@@ -387,7 +694,16 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         candidates_evaluated: progress.candidates_evaluated.0,
         best_cv_score: progress.best_cv_loss,
         outer_holdout_score: progress.outer_holdout_loss,
-        sample_predictions: pred_resp.predictions,
+        holdout_r2,
+        mean_baseline_rmse,
+        linear_baseline_rmse,
+        linear_baseline_r2,
+        rmse_reduction_vs_mean_pct,
+        rmse_reduction_vs_linear_pct,
+        e2e_predict_holdout_rmse,
+        e2e_predict_holdout_r2,
+        sample_targets,
+        sample_predictions,
     })
 }
 
@@ -546,7 +862,16 @@ pub fn execute_carbon_cli_benchmark_with_token(
     // E2E encrypted `/predict` -> cross-container `/resume` -> cryptographic `DELETE` shred!
     if tier != CarbonTierWire::Free {
         let t_s4 = Instant::now();
-        let (prep_hi, sample_hi, _) = prepare_from_options(&CarbonCliRunOptions {
+        let PreparedDatasetWithSplitRows {
+            prepared: prep_hi,
+            fit_x: fit_x_hi,
+            fit_y: fit_y_hi,
+            holdout_x: holdout_x_hi,
+            holdout_y: holdout_y_hi,
+            predict_batch_x,
+            sample_count: sample_n_hi,
+            ..
+        } = prepare_from_options(&CarbonCliRunOptions {
             endpoints: vec![active_ep.clone()],
             csv_path: None,
             target_column: "y".to_owned(),
@@ -564,6 +889,9 @@ pub fn execute_carbon_cli_benchmark_with_token(
             auth_token: None,
             shred_after_run: true,
         })?;
+        let sample_hi: Vec<Vec<f64>> = predict_batch_x.into_iter().take(sample_n_hi).collect();
+        let s4_baselines =
+            compute_holdout_baselines(&fit_x_hi, &fit_y_hi, &holdout_x_hi, &holdout_y_hi);
         let t_up4 = Instant::now();
         client.upload_prepared(tenant_id, tier, &prep_hi)?;
         let up4_ms = t_up4.elapsed().as_secs_f64() * 1_000.0;
@@ -640,6 +968,18 @@ pub fn execute_carbon_cli_benchmark_with_token(
         } else {
             0.0
         };
+        let s4_r2 = match (final_prog.outer_holdout_loss, s4_baselines) {
+            (Some(ho), Some(b)) if b.sse_mean > 1e-18 => {
+                let sse_m = ho * ho * (prep_hi.holdout_rows as f64).max(1.0);
+                Some(1.0 - (sse_m / b.sse_mean))
+            }
+            _ => None,
+        };
+        let s4_lin_rmse = s4_baselines.and_then(|b| b.linear_baseline_rmse);
+        let s4_lift_lin = match (final_prog.outer_holdout_loss, s4_lin_rmse) {
+            (Some(ho), Some(lb)) if lb > 1e-12 => Some(100.0 * (1.0 - ho / lb)),
+            _ => None,
+        };
         scenarios.push(CarbonBenchScenarioSummary {
             scenario_id: "pro_hybrid_fanout_stop_predict_resume_shred".to_owned(),
             description:
@@ -663,6 +1003,10 @@ pub fn execute_carbon_cli_benchmark_with_token(
             eval_shards: final_prog.eval_shards,
             best_cv_score: final_prog.best_cv_loss,
             outer_holdout_score: final_prog.outer_holdout_loss,
+            holdout_r2: s4_r2,
+            mean_baseline_rmse: s4_baselines.map(|b| b.mean_baseline_rmse),
+            linear_baseline_rmse: s4_lin_rmse,
+            rmse_reduction_vs_linear_pct: s4_lift_lin,
             notes: format!(
                 "paused={was_paused}, wave_pause={}, wave_end={}, guidance={}, cuen={}, shredded_objs={}",
                 first_prog.wave_index,
@@ -703,6 +1047,10 @@ pub fn execute_carbon_cli_benchmark_with_token(
             eval_shards: 0,
             best_cv_score: None,
             outer_holdout_score: None,
+            holdout_r2: None,
+            mean_baseline_rmse: None,
+            linear_baseline_rmse: None,
+            rmse_reduction_vs_linear_pct: None,
             notes: "5,200 rows rejected at edge before S3 presign".to_owned(),
         });
     }
@@ -753,6 +1101,10 @@ fn receipt_to_scenario(
         eval_shards: r.eval_shards,
         best_cv_score: r.best_cv_score,
         outer_holdout_score: r.outer_holdout_score,
+        holdout_r2: r.holdout_r2,
+        mean_baseline_rmse: r.mean_baseline_rmse,
+        linear_baseline_rmse: r.linear_baseline_rmse,
+        rmse_reduction_vs_linear_pct: r.rmse_reduction_vs_linear_pct,
         notes: format!(
             "waves={}/{}, guidance={}, model={}, cuen={}",
             r.waves_completed,
@@ -780,31 +1132,43 @@ pub fn render_benchmark_markdown(report: &CarbonBenchmarkSuiteReport) -> String 
         report.warm_ping_min_ms,
         if report.all_passed { "PASS" } else { "FAIL" }
     ));
-    md.push_str("| Scenario | Mode | Shards | Wall (ms) | Prep (ms) | Upload (ms) | Search (ms) | Predict (ms) | Cands | Cands/s | CV RMSE | Holdout RMSE | Status | Notes |\n");
+    md.push_str("| Scenario | Mode | Shards | Wall (ms) | Search (ms) | Predict (ms) | Cands | CV RMSE | Holdout RMSE | Holdout R² | Linear RMSE | Lift vs OLS | Status | Notes |\n");
     md.push_str("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n");
     for s in &report.scenarios {
-        let cv = match s.best_cv_score {
-            Some(v) => format!("{v:.5}"),
-            None => "-".to_owned(),
-        };
-        let ho = match s.outer_holdout_score {
-            Some(v) => format!("{v:.5}"),
-            None => "-".to_owned(),
-        };
+        let cv = s
+            .best_cv_score
+            .map(|v| format!("{v:.5}"))
+            .unwrap_or_else(|| "-".to_owned());
+        let ho = s
+            .outer_holdout_score
+            .map(|v| format!("{v:.5}"))
+            .unwrap_or_else(|| "-".to_owned());
+        let r2 = s
+            .holdout_r2
+            .map(|v| format!("{v:.5}"))
+            .unwrap_or_else(|| "-".to_owned());
+        let lin = s
+            .linear_baseline_rmse
+            .map(|v| format!("{v:.5}"))
+            .unwrap_or_else(|| "-".to_owned());
+        let lift = s
+            .rmse_reduction_vs_linear_pct
+            .map(|v| format!("{v:+.1}%"))
+            .unwrap_or_else(|| "-".to_owned());
         md.push_str(&format!(
-            "| `{}` | `{}` | {} | {:.1} | {:.1} | {:.1} | {:.1} | {:.1} | {} | {:.1} | {} | {} | {} | {} |\n",
+            "| `{}` | `{}` | {} | {:.1} | {:.1} | {:.1} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
             s.scenario_id,
             s.execution_mode,
             s.eval_shards,
             s.wall_ms,
-            s.prep_ms,
-            s.upload_ms,
             s.search_ms,
             s.predict_ms,
             s.candidates_evaluated,
-            s.candidates_per_sec,
             cv,
             ho,
+            r2,
+            lin,
+            lift,
             if s.passed { "PASS" } else { "FAIL" },
             s.notes
         ));
