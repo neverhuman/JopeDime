@@ -25,10 +25,7 @@ pub(super) fn digest(bytes: &[u8]) -> String {
     crate::digest::sha256_hex(bytes)
 }
 pub(super) fn is_digest(value: &str) -> bool {
-    value.len() == 64
-        && value
-            .bytes()
-            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    crate::digest::is_sha256_hex(value)
 }
 
 pub(crate) fn load(part: &Partition, plan: &Plan, maximum: u64) -> Result<CsvTable> {

@@ -5,10 +5,7 @@ pub(super) fn digest(bytes: &[u8]) -> String {
 }
 
 pub(super) fn hash_valid(value: &str) -> bool {
-    value.len() == 64
-        && value
-            .bytes()
-            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    crate::digest::is_sha256_hex(value)
 }
 
 /// Source identity stays separate from the canonical memo identity. In
