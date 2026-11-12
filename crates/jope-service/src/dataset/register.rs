@@ -214,11 +214,7 @@ pub fn prepare_with_admission(
         return Err(RegistrationError::Admission);
     }
     let matrix = store.publish_blob(encoded.as_slice())?;
-    let digest = csv
-        .sha256
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect::<String>();
+    let digest = crate::digest::encode_hex(&csv.sha256);
     let id: DatasetId = format!("ds_{}", &digest[..24])
         .parse()
         .expect("SHA256 prefix is a dataset ID");

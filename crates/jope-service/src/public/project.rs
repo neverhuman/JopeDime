@@ -152,7 +152,7 @@ impl Projector {
         hash.update([0]);
         hash.update(ordinal.0.to_be_bytes());
         let digest = hash.finalize();
-        let hex: String = digest[..8].iter().map(|b| format!("{b:02x}")).collect();
+        let hex = crate::digest::encode_hex(&digest[..8]);
         format!("exp_{hex}")
     }
 

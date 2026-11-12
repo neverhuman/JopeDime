@@ -12,10 +12,7 @@ fn fixture_key() -> SigningKey {
 }
 
 fn hex(bytes: &[u8]) -> String {
-    Sha256::digest(bytes)
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+    crate::digest::sha256_hex(bytes)
 }
 
 fn load_limits() -> BundleLimits {

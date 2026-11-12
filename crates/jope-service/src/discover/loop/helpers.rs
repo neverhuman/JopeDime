@@ -37,7 +37,7 @@ pub(super) fn rung0_budget_limit(state: &Checkpoint) -> u64 {
 }
 
 pub(super) fn hex_blob(blob: &BlobRef) -> String {
-    blob.sha256.iter().map(|b| format!("{b:02x}")).collect()
+    crate::digest::encode_hex(&blob.sha256)
 }
 pub(super) fn projector(plan: &Plan) -> Result<project::Projector> {
     let mut bytes = [0_u8; 32];

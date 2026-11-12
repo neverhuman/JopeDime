@@ -89,11 +89,7 @@ impl Cas {
     }
 
     pub fn path(&self, reference: &BlobRef) -> PathBuf {
-        let name: String = reference
-            .sha256
-            .iter()
-            .map(|v| format!("{v:02x}"))
-            .collect();
+        let name = crate::digest::encode_hex(&reference.sha256);
         self.home
             .join("cas/sha256")
             .join(&name[..2])

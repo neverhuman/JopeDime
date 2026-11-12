@@ -6,6 +6,11 @@ pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     jope_runtime::sha256_hex(bytes)
 }
 
+/// Lowercase hex of bytes that are already a digest. This does not hash.
+pub(crate) fn encode_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
 /// Sixty-four lowercase hex characters. Uppercase is rejected.
 pub(crate) fn is_sha256_hex(value: &str) -> bool {
     value.len() == 64
@@ -28,5 +33,6 @@ mod tests {
         assert!(super::is_sha256_hex(&digest));
         assert!(!super::is_sha256_hex(&digest.to_ascii_uppercase()));
         assert!(!super::is_sha256_hex("abc"));
+        assert_eq!(super::encode_hex(&[0x0a, 0xff]), "0aff");
     }
 }

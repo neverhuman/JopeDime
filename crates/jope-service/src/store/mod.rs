@@ -247,18 +247,7 @@ impl Store {
 
     /// Read an immutable CAS blob and verify its complete content identity on the bytes returned.
     pub fn read_blob(&self, reference: &BlobRef) -> Result<Vec<u8>> {
-        let digest: String = reference
-            .sha256
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect();
-        let path = self
-            .cas
-            .home
-            .join("cas/sha256")
-            .join(&digest[..2])
-            .join(&digest[2..4])
-            .join(&digest[4..]);
+        let path = self.cas.path(reference);
         for parent in [
             self.cas.home.join("cas"),
             self.cas.home.join("cas/sha256"),
@@ -494,17 +483,7 @@ mod blob_read_tests {
             Err(MetadataStoreError::Integrity(_))
         ));
 
-        let digest: String = reference
-            .sha256
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect();
-        let path = root
-            .path()
-            .join("cas/sha256")
-            .join(&digest[..2])
-            .join(&digest[2..4])
-            .join(&digest[4..]);
+        let path = store.cas.path(&reference);
         fs::write(&path, b"stored model object bytex").unwrap();
         assert!(matches!(
             store.read_blob(&reference),
