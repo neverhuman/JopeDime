@@ -16,10 +16,17 @@ else
   # Default root: the shared persistent target volume. Some runner images mount its parent
   # unwritable for the job user, so fall back to the lane's own target dir, then to the
   # runner home cache. The chosen root is printed and the copy is still sha256-verified.
+  # A relative HOME is omitted so mkdir cannot create a working-directory cache.
+  # Unset or empty HOME keeps the /tmp fallback.
   root=""
+  home_cand=
+  case ${HOME:-} in
+    /*) home_cand=$HOME/.cache/jope/ci-evidence-retained ;;
+    "") home_cand=/tmp/.cache/jope/ci-evidence-retained ;;
+  esac
   for cand in /var/cache/jope/target/ci-evidence-retained \
               ${CARGO_TARGET_DIR:+"$CARGO_TARGET_DIR/ci-evidence-retained"} \
-              "${HOME:-/tmp}/.cache/jope/ci-evidence-retained"; do
+              ${home_cand:+"$home_cand"}; do
     if mkdir -p "$cand" 2>/dev/null && [ -w "$cand" ]; then root=$cand; break; fi
     echo "evidence root not writable, trying next: $cand" >&2
   done
