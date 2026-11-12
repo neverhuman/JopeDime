@@ -528,3 +528,166 @@ fn cloudformation_cell_template_and_deterministic_packager_invariants() {
         vec!["us-east-2".to_owned()]
     );
 }
+
+#[test]
+fn capability_claims_unverified_decode_credentials_store_and_installer_guards() {
+    use jope_api::carbon::CarbonTierWire;
+    use jope_carbon::{
+        load_stored_cloud_token, remove_stored_cloud_token, save_stored_cloud_token,
+        CarbonAuthVerifier, CarbonCapabilityClaims,
+    };
+
+    let verifier = CarbonAuthVerifier::from_secret([0x3C; 32]);
+    let pro_tok = verifier
+        .mint_token(&CarbonCapabilityClaims {
+            tenant_id: "acme_pro_team".to_owned(),
+            tier: CarbonTierWire::Pro,
+            exp_epoch_secs: 4_102_444_800,
+            admin: false,
+        })
+        .expect("mint pro token");
+    let decoded = CarbonCapabilityClaims::decode_unverified(&pro_tok).expect("decode pro claims");
+    assert_eq!(decoded.tenant_id, "acme_pro_team");
+    assert_eq!(decoded.tier, CarbonTierWire::Pro);
+    assert_eq!(decoded.exp_epoch_secs, 4_102_444_800);
+    assert!(!decoded.admin);
+
+    assert!(CarbonCapabilityClaims::decode_unverified("badprefix.abc.def").is_err());
+    assert!(CarbonCapabilityClaims::decode_unverified("ctk1.not_b64!.00").is_err());
+    let bad_hex = format!("{}.zzzz", pro_tok.rsplit_once('.').unwrap().0);
+    assert!(CarbonCapabilityClaims::decode_unverified(&bad_hex).is_err());
+
+    // Verify 0600 credentials store & redacted Debug formatting via isolated subprocess / env check
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let cfg_dir = tmp.path().join("jope-cfg");
+
+    // Verify relative HOME and relative --bin-dir are rejected by deploy/carbon/install.sh
+    let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(|p| p.parent())
+        .expect("repo root");
+    let installer = repo_root.join("deploy/carbon/install.sh");
+    assert!(installer.is_file(), "missing {}", installer.display());
+
+    let rel_home_out = Command::new("sh")
+        .arg(&installer)
+        .arg("--skip-ping")
+        .env("HOME", "relative/home")
+        .output()
+        .expect("run install.sh with relative HOME");
+    assert!(
+        !rel_home_out.status.success(),
+        "install.sh must reject relative HOME"
+    );
+
+    let rel_bin_out = Command::new("sh")
+        .arg(&installer)
+        .args(["--bin-dir", "rel/bin", "--config-dir"])
+        .arg(&cfg_dir)
+        .arg("--skip-ping")
+        .output()
+        .expect("run install.sh with relative --bin-dir");
+    assert!(
+        !rel_bin_out.status.success(),
+        "install.sh must reject relative --bin-dir"
+    );
+
+    // Verify install.sh rejects forged/tampered SHA256SUMS.txt.sig before writing $BIN_DIR/carbon
+    let fake_src = tmp.path().join("forged-release");
+    let bin_dest = tmp.path().join("bin-out");
+    std::fs::create_dir_all(&fake_src).unwrap();
+    let arch_asset = if cfg!(target_arch = "aarch64") {
+        "carbon-linux-aarch64-musl"
+    } else {
+        "carbon-linux-x86_64-musl"
+    };
+    std::fs::write(fake_src.join(arch_asset), b"#!/bin/sh\necho forged\n").unwrap();
+    std::fs::write(
+        fake_src.join("carbon-clouds.json"),
+        br#"{"schema":"carbon.clouds/v1","generated_epoch_ms":1,"clouds":{}}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        fake_src.join("SHA256SUMS.txt"),
+        format!(
+            "{}  {}\n{}  carbon-clouds.json\n",
+            "0".repeat(64),
+            arch_asset,
+            "1".repeat(64)
+        ),
+    )
+    .unwrap();
+    std::fs::write(
+        fake_src.join("SHA256SUMS.txt.sig"),
+        "MEUCIQD00000000000000000\n",
+    )
+    .unwrap();
+
+    let forged_out = Command::new("sh")
+        .arg(&installer)
+        .arg("--source-dir")
+        .arg(&fake_src)
+        .arg("--bin-dir")
+        .arg(&bin_dest)
+        .arg("--config-dir")
+        .arg(&cfg_dir)
+        .arg("--skip-ping")
+        .output()
+        .expect("run install.sh with forged signature");
+    assert!(
+        !forged_out.status.success(),
+        "install.sh must fail closed on invalid ECDSA-P256 signature"
+    );
+    assert!(
+        !bin_dest.join("carbon").exists(),
+        "install.sh must never write $BIN_DIR/carbon when signature verification fails"
+    );
+
+    // Verify CARBON_CONFIG_DIR store lifecycle & 0600 permissions
+    let prev_cfg = std::env::var_os("CARBON_CONFIG_DIR");
+    std::env::set_var("CARBON_CONFIG_DIR", "relative/cfg");
+    assert!(save_stored_cloud_token("prod", "https://prod.example", &pro_tok).is_err());
+
+    std::env::set_var("CARBON_CONFIG_DIR", &cfg_dir);
+    let saved = save_stored_cloud_token("prod", "https://prod.example", &pro_tok)
+        .expect("save prod credential");
+    assert_eq!(saved.tenant_id, "acme_pro_team");
+
+    let dev_tok = verifier
+        .mint_token(&CarbonCapabilityClaims {
+            tenant_id: "acme_dev_team".to_owned(),
+            tier: CarbonTierWire::Pro,
+            exp_epoch_secs: 4_102_444_800,
+            admin: false,
+        })
+        .expect("mint dev token");
+    save_stored_cloud_token("dev", "https://dev.example", &dev_tok).expect("save dev credential");
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let meta = std::fs::metadata(cfg_dir.join("carbon-credentials.json")).unwrap();
+        assert_eq!(meta.permissions().mode() & 0o777, 0o600);
+    }
+
+    let loaded_prod = load_stored_cloud_token("prod")
+        .expect("load prod")
+        .expect("prod present");
+    assert_eq!(loaded_prod.tenant_id, "acme_pro_team");
+    let dbg_str = format!("{loaded_prod:?}");
+    assert!(
+        !dbg_str.contains("ctk1."),
+        "Debug formatting of CarbonStoredCloudCredential must redact raw token: {dbg_str}"
+    );
+
+    assert_eq!(remove_stored_cloud_token(Some("dev")).unwrap(), 1);
+    assert!(load_stored_cloud_token("dev").unwrap().is_none());
+    assert!(load_stored_cloud_token("prod").unwrap().is_some());
+    assert_eq!(remove_stored_cloud_token(None).unwrap(), 1);
+    assert!(!cfg_dir.join("carbon-credentials.json").exists());
+
+    match prev_cfg {
+        Some(v) => std::env::set_var("CARBON_CONFIG_DIR", v),
+        None => std::env::remove_var("CARBON_CONFIG_DIR"),
+    }
+}

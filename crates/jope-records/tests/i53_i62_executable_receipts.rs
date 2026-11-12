@@ -1,4 +1,3 @@
-use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -11,9 +10,7 @@ fn workspace_root() -> PathBuf {
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    let mut h = Sha256::new();
-    h.update(bytes);
-    format!("{:x}", h.finalize())
+    jope_records::py::sha256_hex(bytes)
 }
 
 pub fn verify_i53_contract() {

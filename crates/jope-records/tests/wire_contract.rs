@@ -9,7 +9,6 @@ use jope_records::wire_contract::{
     StorageEnvelopeAdapter, VerifiedMeasuredOutcome, WireContractError,
     CANONICAL_JSON_ENVELOPE_SCHEMA, DOMAIN_SEPARATED_ID_FORMULA, SAFE_INT_MAX, SAFE_INT_MIN,
 };
-use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -27,10 +26,7 @@ fn fixture_dir() -> PathBuf {
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    let mut h = Sha256::new();
-    h.update(bytes);
-    let out = h.finalize();
-    out.iter().map(|b| format!("{b:02x}")).collect()
+    jope_records::py::sha256_hex(bytes)
 }
 
 #[path = "wire_contract/adapters.rs"]
