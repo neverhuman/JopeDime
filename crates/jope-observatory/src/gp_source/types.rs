@@ -9,7 +9,7 @@ pub const LANGUAGES: [&str; 4] = feat_math::source_stream::LANGUAGES;
 
 /// Return the lowercase SHA-256 digest of `bytes`.
 pub fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::digest(bytes)
 }
 pub(crate) fn valid_hash(s: &str) -> bool {
     s.len() == 64

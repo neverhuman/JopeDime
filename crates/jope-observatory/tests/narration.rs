@@ -2,7 +2,6 @@
 use jope_narrator::{Claim, Cursor, Envelope, FactJournal, LineageFact, Links, Narration, SCHEMA};
 use jope_observatory::narration::{self, Index, Limits, MAX_PAGE_BYTES};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{
     fs::{self, OpenOptions},
     io::{Cursor as Input, Write},
@@ -50,7 +49,7 @@ fn record(run: &str, seq: u64, previous: &str) -> Envelope {
         previous_sha256: previous.into(),
         sha256: String::new(),
     };
-    event.sha256 = format!("{:x}", Sha256::digest(serde_json::to_vec(&event).unwrap()));
+    event.sha256 = jope_observatory::digest(&serde_json::to_vec(&event).unwrap());
     event.validate(previous, seq, run).unwrap();
     event
 }

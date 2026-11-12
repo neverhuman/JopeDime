@@ -21,7 +21,6 @@ use jope_dime_regressor::timeseries::{
     validate_timeseries_data, TimeSeriesManifestSpec, TS_REDUCTION_V2,
 };
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -123,7 +122,7 @@ fn export_dataset(source: &Path, destination: &Path) -> Result<(usize, usize)> {
             "dataset_dir": source.display().to_string(),
             "train_sha256": sha256_file(&source.join("train.csv"))?,
             "test_sha256": sha256_file(&source.join("test.csv"))?,
-            "meta_sha256": format!("{:x}", Sha256::digest(&meta_bytes)),
+            "meta_sha256": jope_dime_regressor::selfplay_runtime::sha256_bytes(&meta_bytes),
         },
     });
     let mut out_meta = out_meta;

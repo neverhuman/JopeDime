@@ -4,10 +4,9 @@ use std::fs;
 use jope_dime_regressor::hyperion_gate::*;
 use jope_dime_regressor::jope_generalized_gp::{EvaluatorFreezeV1, FrozenArtifactV1};
 use jope_dime_regressor::search_v3::canonical_sha256;
-use sha2::{Digest, Sha256};
 
 fn sha256(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 fn fixture_folds(

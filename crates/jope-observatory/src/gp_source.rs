@@ -8,7 +8,6 @@ mod prelude {
         tokens::{count_tokens, Lang},
     };
     pub(super) use serde::{Deserialize, Serialize};
-    pub(super) use sha2::{Digest, Sha256};
     pub(super) use std::{
         collections::{BTreeMap, BTreeSet, VecDeque},
         fs::{self, File, OpenOptions},
