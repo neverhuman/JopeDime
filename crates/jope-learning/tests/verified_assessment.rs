@@ -66,8 +66,7 @@ fn canonical<T: Serialize>(value: &T) -> Vec<u8> {
 }
 
 fn sha256(bytes: &[u8]) -> String {
-    use sha2::{Digest, Sha256};
-    hex::encode(Sha256::digest(bytes))
+    jope_learning::canon::sha256_hex(bytes)
 }
 
 fn seal(mut assessment: SignedAssessment) -> SignedAssessment {
