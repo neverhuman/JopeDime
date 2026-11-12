@@ -39,6 +39,12 @@ None was `not_worse`. Peak RSS was 6.35 GB per seed, and the minimum MemAvailabl
 - **Seed 2 restart:** at 01:18Z (6:18 PM MST), seed 2 self-aborted on its MemAvailable < 15 GB guard during `swa_cos` fold 2, because other jobs on xbabe1 were using memory. Nothing was killed externally. It was relaunched at 01:40Z on `hilr_wd` only (`results/seed2_hilr`). Seed 2's `swa_cos` has folds 0–1 only (−0.0258, −0.0008), and these agree with seeds 1 and 3.
 - **Metric direction and ties:** the aggregator recomputes `passes_strict` from the stored mean and CI. Ties score 0.5 in Elo and never count toward acceptance.
 
+## Amendment (after merge): optimizer state leaked across folds
+Building H445 turned up a second H444 bug. `opt.load_state_dict(ck["optimizer"])` does not copy tensors in torch 2.7: the new optimizer **aliases** the checkpoint's `exp_avg`, `exp_avg_sq` and `step` tensors, and AdamW updates them in place. So within each seed process, every fold, arm and the final regression-check retrain continued the Adam moments and step count left by the previous training, instead of restarting from the incumbent's state.
+- This adds to the seed coupling above: every process starts from the same stored momentum and keeps reinforcing it.
+- It mostly affects the arms that ran later in a process. `swa_cos` and `hilr_wd` on seeds 1 and 3 ran after `fbal_accum`. The seed-2 relaunch ran `hilr_wd` first, from fresh state, and still lost by the same amount (−0.091 vs −0.078 and −0.087). So the verdict does not change: still `NO_LIFT`.
+- H445 deep-copies the optimizer state for every candidate and asserts that the stored step count (487) is unchanged.
+
 ## Meaning
 Moving selection to TRAIN-fold CV works as an instrument: it resolves −0.02 effects with CIs clear of zero, which val91 cannot. But nothing in the optimiser or sampling space lifts the incumbent. Small updates stay in the same argmin basin, and larger ones (SWA, high LR) leave it for worse.
 
