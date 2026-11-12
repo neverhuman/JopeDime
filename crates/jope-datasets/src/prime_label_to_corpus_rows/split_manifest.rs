@@ -31,8 +31,7 @@ pub(super) fn validate(manifest: &Value) -> Result<(), String> {
     let mut payload = object.clone();
     payload.remove("manifest_sha256");
     let canonical = super::python_canonical_json(&Value::Object(payload));
-    use sha2::{Digest, Sha256};
-    if hex::encode(Sha256::digest(canonical.as_bytes())) != claimed {
+    if crate::hash::sha256_hex(canonical.as_bytes()) != claimed {
         return Err("split manifest content hash differs".into());
     }
     let status = object["status"]
