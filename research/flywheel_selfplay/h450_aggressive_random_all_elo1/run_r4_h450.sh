@@ -4,7 +4,7 @@
 #
 #   run_r4_h450.sh stage COMMIT TAG                      ~/h450-stage/TAG = pub-r3 code + this folder at COMMIT
 #   run_r4_h450.sh smoke-cpu                             2000-item CPU sampler smoke (cpus 64-71) -> smoke_cl/
-#   run_r4_h450.sh train HOST SIZE RUN HOURS LR SEED [--resume]
+#   run_r4_h450.sh train HOST SIZE RUN HOURS LR SEED [EXTRA_ARGS]   HOST xbabe1|xbabe2|xbabe3; MemoryMax $H450_MEMMAX (20G)
 #                                                        one training process as a user unit on HOST (xbabe2|xbabe3)
 #   run_r4_h450.sh cols-epoch EPOCH RUN_L RUN_M [RUN_LB RUN_MB]
 #                                                        dev91 GPU columns (fit X_search only) from epoch checkpoints
@@ -79,18 +79,23 @@ train)
   if [ "$HOST" = xbabe2 ]; then
     OUT=$R4/runs/$RUN; mkdir -p "$OUT"
     A=${ARGS//INIT/$CK}; A=${A//BANK/$BANK}; A=${A//OUT/$OUT}
-    systemd-run --user --unit="$UNIT" -p WorkingDirectory="$ST/code" -p StandardOutput=append:"$OUT/stdout.log" \
+    systemd-run --user --unit="$UNIT" -p MemoryMax="${H450_MEMMAX:-20G}" -p WorkingDirectory="$ST/code" -p StandardOutput=append:"$OUT/stdout.log" \
       -p StandardError=append:"$OUT/stdout.log" --setenv=PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
       --setenv=PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -B "$ST/code/train_aggressive_random_h450.py" $A
   else
+    case $HOST in   # pub-r9: any GPU host; each keeps its own root
+      xbabe3) X3=xbabe3; X3_ROOT=/home/ubuntu/jope-data/h450-r4-x3 ;;
+      xbabe1) X3=xbabe1; X3_ROOT=/home/ubuntu/jope-data/h450-r4-x1 ;;
+      *) die "HOST xbabe1|xbabe2|xbabe3" ;;
+    esac
     ssh3 "mkdir -p $X3_ROOT/banks $X3_ROOT/inputs $X3_ROOT/runs $X3_ROOT/stage"
     rs3 "$ST/" "$X3:$X3_ROOT/stage/$(basename "$ST")/"
     rs3 "$BANK" "$X3:$X3_ROOT/banks/"
     rs3 "$CK" "$X3:$X3_ROOT/inputs/init_$SIZE.pt"
-    ssh3 "cd $X3_ROOT/stage/$(basename "$ST")/code && sha256sum --quiet -c ../CODE.sha256 && echo '$BANK_SHA  $X3_ROOT/banks/$(basename "$BANK")' | sha256sum --quiet -c - && echo '$CKS  $X3_ROOT/inputs/init_$SIZE.pt' | sha256sum --quiet -c -" || die "xbabe3 copies do not verify"
+    ssh3 "cd $X3_ROOT/stage/$(basename "$ST")/code && sha256sum --quiet -c ../CODE.sha256 && echo '$BANK_SHA  $X3_ROOT/banks/$(basename "$BANK")' | sha256sum --quiet -c - && echo '$CKS  $X3_ROOT/inputs/init_$SIZE.pt' | sha256sum --quiet -c -" || die "$X3 copies do not verify"
     OUT=$X3_ROOT/runs/$RUN
     A=${ARGS//INIT/$X3_ROOT/inputs/init_$SIZE.pt}; A=${A//BANK/$X3_ROOT/banks/$(basename "$BANK")}; A=${A//OUT/$OUT}
-    ssh3 "mkdir -p $OUT && systemd-run --user --unit=$UNIT -p WorkingDirectory=$X3_ROOT/stage/$(basename "$ST")/code -p StandardOutput=append:$OUT/stdout.log -p StandardError=append:$OUT/stdout.log --setenv=PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True --setenv=PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -B $X3_ROOT/stage/$(basename "$ST")/code/train_aggressive_random_h450.py $A"
+    ssh3 "mkdir -p $OUT && systemd-run --user --unit=$UNIT -p MemoryMax=${H450_MEMMAX:-20G} -p WorkingDirectory=$X3_ROOT/stage/$(basename "$ST")/code -p StandardOutput=append:$OUT/stdout.log -p StandardError=append:$OUT/stdout.log --setenv=PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True --setenv=PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -B $X3_ROOT/stage/$(basename "$ST")/code/train_aggressive_random_h450.py $A"
   fi
   log "launched $UNIT on $HOST ($SIZE, $HOURS h, lr $LR, seed $SEED) -> $OUT"
   ;;

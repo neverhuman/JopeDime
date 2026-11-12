@@ -497,8 +497,10 @@ def real_episode(bank: CombinedF64Bank, t_idx: int, rng: np.random.Generator, n_
 
 def dataset_fingerprint(X: np.ndarray, y: np.ndarray, n_ctx: int) -> int:
     """64-bit blake2b fingerprint of one training dataset that ignores row order: the context rows [X | y] and the
-    query rows are each sorted, then hashed with the shape and n_ctx. Equal fingerprints = the exact same dataset."""
-    Z = np.ascontiguousarray(np.column_stack([np.nan_to_num(X, nan=np.inf), y]).astype(np.float64))
+    query rows are each sorted, then hashed with the shape and n_ctx. Equal fingerprints = the exact same dataset.
+    pub-r9: every non-finite value maps to one value (the model masks them all alike), and -0.0 becomes +0.0."""
+    Z = np.column_stack([np.asarray(X, dtype=np.float64), np.asarray(y, dtype=np.float64)])
+    Z = np.ascontiguousarray(np.where(np.isfinite(Z), Z, np.inf) + 0.0)
     h = hashlib.blake2b(digest_size=8)
     h.update(np.array([Z.shape[0], Z.shape[1], n_ctx], dtype=np.int64).tobytes())
     for part in (Z[:n_ctx], Z[n_ctx:]):
@@ -777,6 +779,7 @@ def main() -> None:
     s_seg0 = state["train_s"]
     t_log = t_last = time.time()
     run_loss, run_n = 0.0, 0
+    ds_log0 = state["datasets"]
     try:
         while not stop_flag["stop"]:
             state["train_s"] = s_seg0 + (time.time() - t_seg)
@@ -813,6 +816,23 @@ def main() -> None:
                 xb, yb, n_ctx, infos, fps = ep_q.get(timeout=120.0)
                 xt = torch.from_numpy(xb).to(device=dev, dtype=torch.float64, non_blocking=True)
                 yt = torch.from_numpy(yb).to(device=dev, dtype=torch.float64, non_blocking=True)
+            # pub-r9: skip, before the forward, every dataset whose fingerprint was already trained on (or repeats
+            # within this batch), so the model never sees the exact same dataset twice.
+            keep, fresh = [], set()
+            for b_, fp in enumerate(fps):
+                if fp in ledger.seen_fp or fp in fresh:
+                    state["dedup_skipped"] = state.get("dedup_skipped", 0) + 1
+                else:
+                    keep.append(b_)
+                    fresh.add(fp)
+            if not keep:
+                continue
+            if len(keep) < len(fps):
+                ki = torch.tensor(keep, device=xt.device, dtype=torch.long)
+                xt, yt = xt.index_select(0, ki), yt.index_select(0, ki)
+                fps = [fps[b_] for b_ in keep]
+                if infos is not None:
+                    infos = [infos[b_] for b_ in keep]
             Fn_cur = xt.shape[2]
             slots = torch.randperm(FID_SLOTS, device=dev)[:Fn_cur]
             try:
@@ -825,6 +845,9 @@ def main() -> None:
             except torch.cuda.OutOfMemoryError:
                 state["oom_skips"] += 1
                 opt.zero_grad(set_to_none=True)
+                # pub-r9: the partial gradients of this accumulation cycle are gone, so restart the cycle; the next
+                # optimiser step then sums a full grad_accum micro-batches again.
+                state["micro_batches"] -= state["micro_batches"] % grad_accum
                 torch.cuda.empty_cache()
                 continue
             if infos is None:
@@ -853,7 +876,10 @@ def main() -> None:
                 s = ledger.summary()
                 log_f.write(json.dumps({
                     "step": state["step"], "train_h": round(state["train_s"] / 3600.0, 4), "loss": round(run_loss / run_n, 5),
-                    "lr": round(cur_lr, 9), "datasets": state["datasets"], "ds_per_s": round(run_n / (now - t_log), 3),
+                    "lr": round(cur_lr, 9), "datasets": state["datasets"],
+                    "micro_batches_per_s": round(run_n / (now - t_log), 3),
+                    "datasets_per_s": round((state["datasets"] - ds_log0) / (now - t_log), 2),
+                    "dedup_skipped": state.get("dedup_skipped", 0),
                     "real_batches": state["real_batches"], "synth_batches": state["synth_batches"],
                     "real_eps": s["real_episodes"], "d91_share": s["dev91_share_of_real_episodes"],
                     "unique_datasets": s["unique_datasets_seen"], "datasets_seen": s["datasets_seen"],
@@ -862,6 +888,7 @@ def main() -> None:
                     "inj_share": round(s["injected_column_share"], 4), "oom": state["oom_skips"],
                     "mem_gb": round(torch.cuda.max_memory_allocated() / 2**30, 2) if dev.type == "cuda" else 0.0}) + "\n")
                 run_loss, run_n, t_log = 0.0, 0, now
+                ds_log0 = state["datasets"]
             if now - t_last >= a.last_every_s:
                 save_last()
                 t_last = now

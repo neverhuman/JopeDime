@@ -153,3 +153,19 @@ Every epoch uses the same split. Both hosts run torch 2.7.0 and numpy 1.26.4.
 The pub-r7 single-GPU baseline was stopped after 3 contexts, before any analysis. Its directory is kept as `g00_init.SUPERSEDED_single_gpu`.
 
 **Cadence.** The evaluator scores the newest pair of epoch checkpoints as soon as the previous evaluation finishes. N is therefore about every 2 epochs, or about 150–200k datasets per 104M run. Each result is reported with each run's unique-dataset count.
+
+## 7. Amendment pub-r9 (2026-11-12 about 22:05Z): Gemini's review findings, third GPU
+
+**Review.** agy_apex_w10 reviewed the trainer at 1030eeda92. The receipt is `~/jope_plan/evidence/H450/review_train_aggressive_random_1030eeda92.md`, and its findings were posted in the coord file at 21:34Z.
+
+| Finding | Status in pub-r9 |
+|---|---|
+| (1) `ds_per_s` counts micro-batches | Now logged as `micro_batches_per_s`, plus a true `datasets_per_s` |
+| (3i) duplicates were only counted | Every dataset whose fingerprint is already in the run's seen set, or that repeats within a batch, is now dropped before the forward and counted in `dedup_skipped`. The model can no longer train on the exact same dataset twice. |
+| (3ii) and (3iii) fingerprint canonical form | Every non-finite value hashes as +inf, and -0.0 hashes as +0.0. Fingerprints of datasets with no NaN, inf or -0.0 are unchanged, so the seen sets of resumed runs carry over. |
+| (4) out-of-memory skip | Restarts the gradient-accumulation cycle, so a step never sums a partial cycle |
+| (2) no injection on narrow tables (F < 10, floor(0.1·F) = 0) | By design: 10% of fewer than 10 columns is less than one column. Narrow tables still get columns removed (crops) and the other-column and teacher targets. |
+
+**Launcher.** `run_r4_h450.sh train` now accepts xbabe1 (root `~/jope-data/h450-r4-x1`). Every unit carries `MemoryMax` (default 20G), so a trainer that grows is killed inside its own cgroup and no other service is touched.
+
+**Third GPU.** xbabe1's 4090 became free about 21:55Z, when its non-H450 diffusers job ended. It runs r4_L_X1: L, 420k tokens, 48 h, lr 4e-5, seed 450431, from the same H449 init. r4_L_A and r4_L_B move to the pub-r9 trainer by `--resume`, with no loss of progress.
