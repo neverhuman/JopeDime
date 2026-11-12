@@ -1,9 +1,9 @@
 //! Lowercase SHA-256 hex used by service-local helpers.
-
-use sha2::{Digest, Sha256};
+//!
+//! The bytes are hashed by `jope_runtime::sha256_hex`, which is lowercase hex.
 
 pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 /// Sixty-four lowercase hex characters. Uppercase is rejected.
