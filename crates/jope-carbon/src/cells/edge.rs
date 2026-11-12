@@ -803,11 +803,32 @@ impl CarbonEdgeRouter {
         {
             Ok(true) => {}
             Ok(false) => {
-                return CarbonGatewayResponse::error_json(
-                    409,
-                    "duplicate_run_id",
-                    "run_id already exists for this tenant; conditional create refused overwrite",
+                // Retry-idempotent create: if the exact same client retries a byte-identical
+                // `POST /v1/carbon/runs` (e.g. after a transient gateway timeout), return the
+                // existing progress as `202` without double-invoking `engine`. Any modified field
+                // (`seed`, `dataset_id`, `landmark_bundle_b64` nonce, etc.) fails closed with `409`.
+                let same_payload = matches!(
+                    self.cas.get_state_object(&req_key),
+                    Ok(Some(existing)) if existing == stored_req_bytes
                 );
+                if !same_payload {
+                    return CarbonGatewayResponse::error_json(
+                        409,
+                        "duplicate_run_id",
+                        "run_id already exists for this tenant; conditional create refused overwrite",
+                    );
+                }
+                if let Ok(status_key) =
+                    canonical_run_state_key(&create.tenant_id, &run_str, "status.json")
+                {
+                    if let Ok(Some(cur_bytes)) = self.cas.get_state_object(&status_key) {
+                        if let Ok(cur_progress) =
+                            serde_json::from_slice::<CarbonPublicWaveProgress>(&cur_bytes)
+                        {
+                            return CarbonGatewayResponse::json_ok(202, &cur_progress);
+                        }
+                    }
+                }
             }
             Err(err) => {
                 return CarbonGatewayResponse::error_json(500, "cas_write_failed", &err);
@@ -866,7 +887,8 @@ impl CarbonEdgeRouter {
         let cell_volume = total_rows.saturating_mul(create.feature_names.len());
         let dispatch_async = effort >= CarbonEffortTier::Medium
             || plan_decision.mode == CarbonExecutionMode::HybridFanOut
-            || cell_volume >= 10_000;
+            || cell_volume >= 2_500
+            || total_rows >= 400;
         let cmd = CarbonEngineWireCommand::StartRun {
             request: create,
             region: self.config.region.clone(),
@@ -1048,7 +1070,8 @@ impl CarbonEdgeRouter {
             || (extra_waves >= 2
                 && (map_api_effort(resume_req.effort.unwrap_or(stored_create.effort))
                     >= CarbonEffortTier::Medium
-                    || stored_volume >= 10_000));
+                    || stored_volume >= 2_500
+                    || stored_create.fit_rows >= 400));
         let cmd = CarbonEngineWireCommand::ResumeRun {
             run_id: run_id.to_owned(),
             resume: resume_req.clone(),

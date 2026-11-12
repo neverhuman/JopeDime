@@ -1,13 +1,16 @@
 //! CLI execution (`carbon run`) and Free + Pro `r882` zero-knowledge live Lambda benchmark harness (`carbon bench`).
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
 use jope_api::{
-    carbon::{CarbonExecutionModeWire, CarbonRunStateWire, CarbonTierWire},
+    carbon::{
+        CarbonExecutionModeWire, CarbonPublicWaveProgress, CarbonRunStateWire, CarbonTierWire,
+    },
     ids::{DatasetId, RunId},
     Effort,
 };
@@ -15,12 +18,22 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     cells::engine_invoker::now_epoch_ms,
-    cli::client::{CarbonClientPreparedDataset, CarbonThinClient},
+    cli::client::{CarbonClientPreparedDataset, CarbonProbedEndpoint, CarbonThinClient},
     modes::planner::{
         compute_live_run_cost, CarbonIngressCostMode, CarbonLiveCostInputs, CarbonRunCostBreakdown,
     },
     storage::cas::sha256_lower_hex,
 };
+
+/// `CarbonCliRunUxConfig` is a struct supplying optional pre-probed KEK-pinned client reuse,
+/// explicit `--target` detection, and interactive TTY `stderr` wave/summary telemetry.
+#[derive(Clone, Default)]
+pub struct CarbonCliRunUxConfig {
+    pub pinned_keks: BTreeMap<String, String>,
+    pub pre_probed: Option<(CarbonThinClient, CarbonProbedEndpoint)>,
+    pub target_was_explicit: bool,
+    pub show_stderr_progress: bool,
+}
 
 /// `CarbonCliRunOptions` is a struct configuring a single `carbon run` CLI invocation.
 #[derive(Clone, Debug)]
@@ -200,15 +213,27 @@ pub fn generate_nonlinear_benchmark_rows(
 }
 
 /// Parse a numeric CSV file with a header row into `(headers, numeric_rows)`.
+/// Strips any leading UTF-8 BOM (`\u{feff}`) produced by Excel/Pandas exports.
 pub fn load_numeric_csv(path: &Path) -> Result<(Vec<String>, Vec<Vec<f64>>), String> {
     let raw = fs::read_to_string(path).map_err(|e| format!("read CSV {}: {e}", path.display()))?;
-    let mut lines = raw.lines().map(str::trim).filter(|line| !line.is_empty());
+    let stripped = raw.strip_prefix('\u{feff}').unwrap_or(&raw);
+    let mut lines = stripped
+        .lines()
+        .map(|l| l.trim_matches(|c: char| c.is_whitespace() || c == '\u{feff}'))
+        .filter(|line| !line.is_empty());
     let header_line = lines
         .next()
         .ok_or_else(|| format!("CSV {} is empty", path.display()))?;
     let headers: Vec<String> = header_line
         .split(',')
-        .map(|s| s.trim().trim_matches('"').to_owned())
+        .map(|s| {
+            s.trim()
+                .trim_start_matches('\u{feff}')
+                .trim_matches('"')
+                .trim_start_matches('\u{feff}')
+                .trim()
+                .to_owned()
+        })
         .collect();
     if headers.len() < 2 {
         return Err(format!(
@@ -432,17 +457,32 @@ fn compute_holdout_baselines(
 
 fn prepare_from_options(
     opts: &CarbonCliRunOptions,
+    target_was_explicit: bool,
+    show_stderr_progress: bool,
 ) -> Result<PreparedDatasetWithSplitRows, String> {
-    let (headers, rows, target_col) = if let Some(csv_path) = &opts.csv_path {
+    let (headers, rows, mut target_col) = if let Some(csv_path) = &opts.csv_path {
         let (h, r) = load_numeric_csv(csv_path)?;
         (h, r, opts.target_column.clone())
     } else {
         generate_nonlinear_benchmark_rows(opts.synthetic_rows, opts.synthetic_features, opts.seed)
     };
-    let target_idx = headers
-        .iter()
-        .position(|h| h == &target_col)
-        .ok_or_else(|| format!("target column '{target_col}' not found in headers"))?;
+    if !headers.iter().any(|h| h == &target_col)
+        && !target_was_explicit
+        && target_col == "y"
+        && headers.iter().any(|h| h == "target")
+    {
+        target_col = "target".to_owned();
+        if show_stderr_progress {
+            eprintln!("[carbon] Auto-selected target column 'target' (--target was not specified)");
+        }
+    }
+    let target_idx = headers.iter().position(|h| h == &target_col).ok_or_else(|| {
+        let example_col = headers.last().map(String::as_str).unwrap_or("y");
+        format!(
+            "target column '{target_col}' not found in CSV headers [{}]; pass --target <COLUMN> (for example: --target {example_col})",
+            headers.join(", ")
+        )
+    })?;
     let total_rows = rows.len();
     let extract_features = |r: &[f64]| -> Vec<f64> {
         r.iter()
@@ -502,13 +542,87 @@ fn prepare_from_options(
     })
 }
 
+fn emit_stderr_run_summary(receipt: &CarbonCliRunReceipt) {
+    let mode_desc = match receipt.execution_mode {
+        CarbonExecutionModeWire::HybridFanOut => format!(
+            "HybridFanOut ({} shards x {} MB)",
+            receipt.eval_shards, receipt.eval_memory_mb
+        ),
+        CarbonExecutionModeWire::SoloSingleLambda => {
+            format!("SoloSingleLambda ({} MB)", receipt.eval_memory_mb)
+        }
+    };
+    let r2_str = receipt
+        .holdout_r2
+        .map(|v| format!("{v:.6}"))
+        .unwrap_or_else(|| "n/a".to_owned());
+    let rmse_str = receipt
+        .outer_holdout_score
+        .map(|v| format!("{v:.4}"))
+        .unwrap_or_else(|| "n/a".to_owned());
+    let lin_note = match (
+        receipt.linear_baseline_rmse,
+        receipt.rmse_reduction_vs_linear_pct,
+    ) {
+        (Some(lb), Some(red)) => format!(" (Linear RMSE = {lb:.4}, {red:+.1}% reduction)"),
+        _ => String::new(),
+    };
+    let cost_str = receipt
+        .cost_estimate
+        .as_ref()
+        .map(|c| format!("${:.6} USD", c.total_estimated_usd))
+        .unwrap_or_else(|| "n/a".to_owned());
+    eprintln!("[carbon] ── Run Summary ──────────────────────────────────────────────");
+    eprintln!(
+        "[carbon]   Region & Mode : {} | {} | {}/{} waves",
+        receipt.selected_region, mode_desc, receipt.waves_completed, receipt.waves_target
+    );
+    eprintln!("[carbon]   Accuracy      : Holdout R^2 = {r2_str} | RMSE = {rmse_str}{lin_note}");
+    eprintln!(
+        "[carbon]   Candidates    : {} evaluated in {:.2}s search ({:.2}s total wall)",
+        receipt.candidates_evaluated,
+        receipt.search_ms / 1_000.0,
+        receipt.total_wall_ms / 1_000.0
+    );
+    eprintln!(
+        "[carbon]   Zero-Knowledge: CUEN\\x01 = {} | Shredded = {}",
+        receipt.encrypted_cuen, receipt.shredded_after_run
+    );
+    eprintln!("[carbon]   Est. AWS Cost : {cost_str}");
+}
+
 /// Execute a complete `carbon run` lifecycle against the fastest reachable endpoint.
 pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRunReceipt, String> {
+    execute_carbon_cli_run_with_ux(opts, &CarbonCliRunUxConfig::default())
+}
+
+/// Execute a complete `carbon run` lifecycle with optional pre-probed KEK-pinned client reuse,
+/// `--target` ergonomics, and interactive `stderr` wave/summary telemetry.
+pub fn execute_carbon_cli_run_with_ux(
+    opts: &CarbonCliRunOptions,
+    ux: &CarbonCliRunUxConfig,
+) -> Result<CarbonCliRunReceipt, String> {
     let t_total = Instant::now();
-    let (mut client, probed) = CarbonThinClient::connect_fastest(opts.endpoints.clone())?;
-    let best_probe = probed
-        .first()
-        .ok_or_else(|| "no Carbon endpoints probed".to_owned())?;
+    let (mut client, best_probe) = if let Some((pre_client, pre_probe)) = &ux.pre_probed {
+        pre_client.reset_telemetry_counters();
+        (pre_client.clone(), pre_probe.clone())
+    } else {
+        let (c, probed) =
+            CarbonThinClient::connect_fastest_pinned(opts.endpoints.clone(), &ux.pinned_keks)?;
+        let first = probed
+            .into_iter()
+            .next()
+            .ok_or_else(|| "no Carbon endpoints probed".to_owned())?;
+        (c, first)
+    };
+    if ux.show_stderr_progress {
+        eprintln!(
+            "[carbon] Connected to {} ({:.1} ms RTT, zero-knowledge KEK={})",
+            best_probe.region,
+            best_probe.rtt_ms,
+            best_probe.engine_kek_pubkey_b64.is_some()
+        );
+    }
 
     let mut effective_tenant = opts.tenant_id.clone();
     let mut minted_ephemeral_token = false;
@@ -536,14 +650,59 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         predict_batch_y,
         eval_holdout_count,
         sample_count,
-    } = prepare_from_options(opts)?;
+    } = prepare_from_options(opts, ux.target_was_explicit, ux.show_stderr_progress)?;
     let baseline_stats = compute_holdout_baselines(&fit_x, &fit_y, &holdout_x, &holdout_y);
     let prep_ms = t_prep.elapsed().as_secs_f64() * 1_000.0;
     let jlmb_bytes = prepared.landmark_bundle.to_wire_bytes().len();
+    if ux.show_stderr_progress {
+        eprintln!(
+            "[carbon] Prepared {} rows ({} fit / {} holdout, {} features, target='{}') in {:.1} ms",
+            total_rows,
+            prepared.fit_rows,
+            prepared.holdout_rows,
+            prepared.feature_names.len(),
+            prepared.target_name,
+            prep_ms
+        );
+    }
 
     let t_upload = Instant::now();
-    client.upload_prepared(&effective_tenant, opts.tier, &prepared)?;
+    let prep_upload = client.upload_prepared(&effective_tenant, opts.tier, &prepared)?;
     let upload_ms = t_upload.elapsed().as_secs_f64() * 1_000.0;
+    if ux.show_stderr_progress {
+        let total_kib = ((prep_upload.fit_target.max_bytes.0
+            + prep_upload.holdout_target.max_bytes.0) as f64)
+            / 1024.0;
+        eprintln!(
+            "[carbon] Encrypted & uploaded JMAT blobs ({total_kib:.1} KiB) in {upload_ms:.1} ms"
+        );
+    }
+
+    if ux.show_stderr_progress {
+        let seen = Arc::new(Mutex::new((None::<CarbonRunStateWire>, u32::MAX)));
+        client = client.with_progress_observer(move |p: &CarbonPublicWaveProgress| {
+            let Ok(mut guard) = seen.lock() else {
+                return;
+            };
+            if guard.0 == Some(p.state) && guard.1 == p.wave_index {
+                return;
+            }
+            *guard = (Some(p.state), p.wave_index);
+            let cv_txt = p
+                .best_cv_loss
+                .map(|v| format!("{v:.4}"))
+                .unwrap_or_else(|| "-".to_owned());
+            eprintln!(
+                "[carbon] Wave {}/{} ({:?}) | candidates={} | best_cv={} | elapsed={:.1}s",
+                p.wave_index,
+                p.waves_target,
+                p.state,
+                p.candidates_evaluated.0,
+                cv_txt,
+                (p.elapsed_ms.0 as f64) / 1_000.0
+            );
+        });
+    }
 
     let (run_id, ds_id) = mint_run_and_dataset_ids()?;
     let run_id_str = run_id.to_string();
@@ -734,7 +893,7 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         http_response_bytes,
     });
 
-    Ok(CarbonCliRunReceipt {
+    let receipt = CarbonCliRunReceipt {
         selected_endpoint: client.active_endpoint().to_owned(),
         selected_region: if progress.region.is_empty() {
             best_probe.region.clone()
@@ -787,7 +946,11 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         cost_estimate: Some(cost_breakdown),
         sample_targets,
         sample_predictions,
-    })
+    };
+    if ux.show_stderr_progress {
+        emit_stderr_run_summary(&receipt);
+    }
+    Ok(receipt)
 }
 
 /// Execute the 5-scenario live Carbon Free + Pro `r882` zero-knowledge benchmark suite (`carbon bench`).
@@ -955,24 +1118,28 @@ pub fn execute_carbon_cli_benchmark_with_token(
             predict_batch_x,
             sample_count: sample_n_hi,
             ..
-        } = prepare_from_options(&CarbonCliRunOptions {
-            endpoints: vec![active_ep.clone()],
-            csv_path: None,
-            target_column: "y".to_owned(),
-            synthetic_rows: 300,
-            synthetic_features: 6,
-            tenant_id: tenant_id.to_owned(),
-            tier,
-            effort: Effort::High,
-            objective: "rmse".to_owned(),
-            seed: 404,
-            holdout_fraction: 0.20,
-            stop_after_ms: None,
-            resume_after_stop: false,
-            predict_rows: 3,
-            auth_token: None,
-            shred_after_run: true,
-        })?;
+        } = prepare_from_options(
+            &CarbonCliRunOptions {
+                endpoints: vec![active_ep.clone()],
+                csv_path: None,
+                target_column: "y".to_owned(),
+                synthetic_rows: 300,
+                synthetic_features: 6,
+                tenant_id: tenant_id.to_owned(),
+                tier,
+                effort: Effort::High,
+                objective: "rmse".to_owned(),
+                seed: 404,
+                holdout_fraction: 0.20,
+                stop_after_ms: None,
+                resume_after_stop: false,
+                predict_rows: 3,
+                auth_token: None,
+                shred_after_run: true,
+            },
+            true,
+            false,
+        )?;
         let sample_hi: Vec<Vec<f64>> = predict_batch_x.into_iter().take(sample_n_hi).collect();
         let s4_baselines =
             compute_holdout_baselines(&fit_x_hi, &fit_y_hi, &holdout_x_hi, &holdout_y_hi);

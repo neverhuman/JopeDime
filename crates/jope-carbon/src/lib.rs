@@ -52,11 +52,12 @@ pub use cli::deploy::{
 #[cfg(feature = "edge")]
 pub use cli::{
     client::{
-        load_stored_cloud_token, remove_stored_cloud_token, resolve_public_cloud_endpoint,
-        save_stored_cloud_token, send_raw_edge_http, send_raw_put_url,
-        verified_absolute_jopedime_config_dir, CarbonClientPreparedDataset, CarbonCloudCellEntry,
-        CarbonCloudRegionPin, CarbonProbedEndpoint, CarbonPublicCloudsManifest,
-        CarbonStoredCloudCredential, CarbonThinClient, DEFAULT_PUBLIC_CLOUDS_URL,
+        list_stored_cloud_tokens, load_stored_cloud_token, remove_stored_cloud_token,
+        resolve_public_cloud_endpoint, save_stored_cloud_token, send_raw_edge_http,
+        send_raw_put_url, verified_absolute_jopedime_config_dir, CarbonClientPreparedDataset,
+        CarbonCloudCellEntry, CarbonCloudRegionPin, CarbonProbedEndpoint, CarbonProgressObserver,
+        CarbonPublicCloudsManifest, CarbonStoredCloudCredential, CarbonThinClient,
+        DEFAULT_PUBLIC_CLOUDS_URL, FALLBACK_PUBLIC_CLOUDS_URL,
     },
     redteam::{
         execute_carbon_redteam_suite, render_redteam_markdown, CarbonRedTeamSuiteReport,
@@ -64,9 +65,9 @@ pub use cli::{
     },
     runner::{
         execute_carbon_cli_benchmark, execute_carbon_cli_benchmark_with_token,
-        execute_carbon_cli_run, generate_nonlinear_benchmark_rows, load_numeric_csv,
-        render_benchmark_markdown, CarbonBenchScenarioSummary, CarbonBenchmarkSuiteReport,
-        CarbonCliRunOptions, CarbonCliRunReceipt,
+        execute_carbon_cli_run, execute_carbon_cli_run_with_ux, generate_nonlinear_benchmark_rows,
+        load_numeric_csv, render_benchmark_markdown, CarbonBenchScenarioSummary,
+        CarbonBenchmarkSuiteReport, CarbonCliRunOptions, CarbonCliRunReceipt, CarbonCliRunUxConfig,
     },
 };
 pub use error::{CarbonError, CarbonGuidance, CarbonResult, CARBON_DOCS_URL};

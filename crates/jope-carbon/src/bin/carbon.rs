@@ -1,10 +1,11 @@
 //! Multi-role `carbon` CLI and AWS Lambda custom-runtime entrypoint (`package`, `deploy`,
-//! `rollback`, `clouds-manifest`, `register`, `login`, `whoami`, `logout`, `ping`, `run`, `bench`,
-//! `redteam`, `token-mint`, `serve`, `emu`, `engine`, `eval`, `plan`, and `spot-check`).
+//! `rollback`, `clouds-manifest`, `doctor`, `register`, `login`, `whoami`, `logout`, `ping`,
+//! `run`, `bench`, `redteam`, `token-mint`, `serve`, `emu`, `engine`, `eval`, `plan`, and `spot-check`).
 
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
+use std::io::IsTerminal as _;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -13,18 +14,20 @@ use std::sync::Arc;
 use clap::{Parser, Subcommand};
 use jope_api::{carbon::CarbonTierWire, Effort};
 use jope_carbon::{
-    evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token, execute_carbon_cli_run,
-    execute_carbon_deploy, execute_carbon_package, execute_carbon_redteam_suite,
-    execute_carbon_rollback_multi, generate_public_clouds_manifest, load_stored_cloud_token,
-    mint_capability_token_from_vault, now_epoch_ms, open_eval_invoker, open_remote_cas,
-    plan_carbon_execution, remove_stored_cloud_token, render_benchmark_markdown,
-    render_redteam_markdown, resolve_cell_stack_endpoint, resolve_public_cloud_endpoint,
-    run_lambda_custom_runtime_loop, save_stored_cloud_token, CarbonAuthVerifier,
-    CarbonCapabilityClaims, CarbonCliRunOptions, CarbonDeployOptions, CarbonEffortTier,
-    CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker, CarbonEnterpriseServeConfig,
-    CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions, CarbonLocalLambdaEmulator,
-    CarbonPackageOptions, CarbonPlanInput, CarbonProductTier, CarbonRole, CarbonSealKey,
-    CarbonThinClient, MonthlyWindowMetrics, SpotAdvisorThresholds,
+    evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token,
+    execute_carbon_cli_run_with_ux, execute_carbon_deploy, execute_carbon_package,
+    execute_carbon_redteam_suite, execute_carbon_rollback_multi, generate_public_clouds_manifest,
+    list_stored_cloud_tokens, load_stored_cloud_token, mint_capability_token_from_vault,
+    now_epoch_ms, open_eval_invoker, open_remote_cas, plan_carbon_execution,
+    remove_stored_cloud_token, render_benchmark_markdown, render_redteam_markdown,
+    resolve_cell_stack_endpoint, resolve_public_cloud_endpoint, run_lambda_custom_runtime_loop,
+    save_stored_cloud_token, verified_absolute_jopedime_config_dir, CarbonAuthVerifier,
+    CarbonCapabilityClaims, CarbonCliRunOptions, CarbonCliRunUxConfig, CarbonDeployOptions,
+    CarbonEffortTier, CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker,
+    CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions,
+    CarbonLocalLambdaEmulator, CarbonPackageOptions, CarbonPlanInput, CarbonProbedEndpoint,
+    CarbonProductTier, CarbonRole, CarbonSealKey, CarbonThinClient, MonthlyWindowMetrics,
+    SpotAdvisorThresholds, DEFAULT_PUBLIC_CLOUDS_URL, FALLBACK_PUBLIC_CLOUDS_URL,
 };
 
 #[derive(Debug, Parser)]
@@ -186,6 +189,19 @@ enum Command {
         #[arg(long)]
         all: bool,
     },
+    /// Verify local binary roles, `0700`/`0600` config & credential permissions, regional `ECDH P-256`
+    /// KEK pins, stored capability token TTLs, and live `/v1/carbon/ping` RTT across clouds.
+    Doctor {
+        /// Target Carbon cloud (`prod`, `dev`, or `all`; defaults to `all`).
+        #[arg(long, default_value = "all")]
+        cloud: String,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
+        /// Skip live network `/v1/carbon/ping` probes (validate local config, perms, and KEK pins only).
+        #[arg(long)]
+        offline: bool,
+    },
     /// Probe `/v1/carbon/ping` RTT, region, and zero-knowledge `engine_kek_pubkey_b64` with zero AWS credentials.
     Ping {
         #[arg(long, value_delimiter = ',')]
@@ -220,8 +236,9 @@ enum Command {
         region: String,
         #[arg(long)]
         csv: Option<PathBuf>,
-        #[arg(long, default_value = "y")]
-        target: String,
+        /// Target column name (defaults to 'y', or auto-selects 'target' when 'y' is absent).
+        #[arg(long)]
+        target: Option<String>,
         #[arg(long, default_value_t = 240)]
         synthetic_rows: usize,
         #[arg(long, default_value_t = 6)]
@@ -259,6 +276,12 @@ enum Command {
         /// Cryptographically shred (`DELETE /v1/carbon/runs/{id}`) blobs and state upon completion.
         #[arg(long)]
         shred: bool,
+        /// Force live wave progress and human summary card on stderr even when stderr is not a TTY.
+        #[arg(long, conflicts_with = "quiet")]
+        progress: bool,
+        /// Suppress interactive stderr progress and summary card (stdout remains pure JSON).
+        #[arg(long, conflicts_with = "progress")]
+        quiet: bool,
     },
     /// Run the Free + Pro `r882` zero-knowledge live Carbon Lambda / Enterprise server benchmark suite.
     Bench {
@@ -496,6 +519,9 @@ fn resolve_explicit_tier_flag(
 
 struct ResolvedCliTarget {
     endpoints: Vec<String>,
+    pinned_keks: BTreeMap<String, String>,
+    probed_client: CarbonThinClient,
+    first_probe: CarbonProbedEndpoint,
     tier: CarbonTierWire,
     tenant_id: String,
     auth_token: Option<String>,
@@ -552,10 +578,12 @@ fn resolve_cli_target_and_auth(
         ));
     }
 
-    let (_, probed) = CarbonThinClient::connect_fastest_pinned(endpoints.clone(), &pinned_keks)
-        .map_err(|e| (ExitCode::from(1), e))?;
+    let (probed_client, probed) =
+        CarbonThinClient::connect_fastest_pinned(endpoints.clone(), &pinned_keks)
+            .map_err(|e| (ExitCode::from(1), e))?;
     let first_probe = probed
         .first()
+        .cloned()
         .ok_or_else(|| (ExitCode::from(1), "empty probe response".to_owned()))?;
     endpoints = probed.iter().map(|p| p.base_url.clone()).collect();
 
@@ -679,10 +707,310 @@ fn resolve_cli_target_and_auth(
 
     Ok(ResolvedCliTarget {
         endpoints,
+        pinned_keks,
+        probed_client,
+        first_probe,
         tier: effective_tier,
         tenant_id: effective_tenant,
         auth_token: active_token,
     })
+}
+
+fn execute_doctor_command(
+    cloud_arg: &str,
+    clouds_manifest: Option<&str>,
+    offline: bool,
+) -> ExitCode {
+    let mut healthy = true;
+    let mut checks = Vec::new();
+    let tty_stderr = std::io::stderr().is_terminal();
+
+    let roles = vec![
+        CarbonRole::EngineOrchestrate.as_str(),
+        CarbonRole::EvalBatch.as_str(),
+        CarbonRole::EnterpriseServe.as_str(),
+        CarbonRole::LocalEmulator.as_str(),
+    ];
+    checks.push(serde_json::json!({
+        "check": "binary",
+        "passed": true,
+        "version": env!("CARGO_PKG_VERSION"),
+        "roles": roles,
+    }));
+    if tty_stderr {
+        eprintln!(
+            "[doctor] PASS binary: carbon v{} (roles: engine, eval, serve, emu)",
+            env!("CARGO_PKG_VERSION")
+        );
+    }
+
+    let (config_dir_str, config_dir_ok, cred_mode_ok, cached_manifest_exists) =
+        match verified_absolute_jopedime_config_dir() {
+            Ok(dir) => {
+                let mut dir_mode_ok = true;
+                let mut dir_mode_octal = None;
+                if dir.exists() {
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::PermissionsExt;
+                        if let Ok(meta) = fs::metadata(&dir) {
+                            let m = meta.permissions().mode() & 0o777;
+                            dir_mode_octal = Some(format!("{m:04o}"));
+                            if (m & 0o077) != 0 {
+                                dir_mode_ok = false;
+                            }
+                        }
+                    }
+                }
+                let cred_path = dir.join("carbon-credentials.json");
+                let mut cred_ok = true;
+                let mut cred_mode_octal = None;
+                if cred_path.is_file() {
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::PermissionsExt;
+                        if let Ok(meta) = fs::metadata(&cred_path) {
+                            let m = meta.permissions().mode() & 0o777;
+                            cred_mode_octal = Some(format!("{m:04o}"));
+                            cred_ok = m == 0o600;
+                        }
+                    }
+                }
+                if !dir_mode_ok || !cred_ok {
+                    healthy = false;
+                }
+                let cached_clouds = dir.join("carbon-clouds.json").is_file();
+                checks.push(serde_json::json!({
+                    "check": "config_security",
+                    "passed": dir_mode_ok && cred_ok,
+                    "config_dir": dir.display().to_string(),
+                    "config_dir_exists": dir.exists(),
+                    "config_dir_mode": dir_mode_octal,
+                    "credentials_present": cred_path.is_file(),
+                    "credentials_mode": cred_mode_octal,
+                    "local_clouds_manifest_present": cached_clouds,
+                }));
+                if tty_stderr {
+                    let tag = if dir_mode_ok && cred_ok {
+                        "PASS"
+                    } else {
+                        "FAIL"
+                    };
+                    eprintln!(
+                        "[doctor] {tag} config_security: dir={} (mode={:?}, credentials_mode={:?}, local_pins={cached_clouds})",
+                        dir.display(),
+                        dir_mode_octal.as_deref().unwrap_or("absent"),
+                        cred_mode_octal.as_deref().unwrap_or("absent"),
+                    );
+                }
+                (
+                    dir.display().to_string(),
+                    dir_mode_ok,
+                    cred_ok,
+                    cached_clouds,
+                )
+            }
+            Err(err) => {
+                healthy = false;
+                checks.push(serde_json::json!({
+                    "check": "config_security",
+                    "passed": false,
+                    "error": err,
+                }));
+                if tty_stderr {
+                    eprintln!("[doctor] FAIL config_security: {err}");
+                }
+                (String::new(), false, false, false)
+            }
+        };
+
+    let now_secs = now_epoch_ms() / 1_000;
+    let mut stored_summary = BTreeMap::new();
+    match list_stored_cloud_tokens() {
+        Ok(map) => {
+            for (cname, cred) in map {
+                let expired = now_secs > cred.exp_epoch_secs;
+                let ttl_rem = cred.exp_epoch_secs.saturating_sub(now_secs);
+                stored_summary.insert(
+                    cname.clone(),
+                    serde_json::json!({
+                        "tenant_id": cred.tenant_id,
+                        "tier": cred.tier,
+                        "expired": expired,
+                        "ttl_remaining_secs": ttl_rem,
+                    }),
+                );
+                if tty_stderr {
+                    eprintln!(
+                        "[doctor] INFO stored_token[{cname}]: tenant={} tier={:?} expired={expired} ttl_remaining={}s",
+                        cred.tenant_id, cred.tier, ttl_rem
+                    );
+                }
+            }
+        }
+        Err(err) => {
+            healthy = false;
+            checks.push(serde_json::json!({
+                "check": "credentials_parse",
+                "passed": false,
+                "error": err,
+            }));
+            if tty_stderr {
+                eprintln!("[doctor] FAIL credentials_parse: {err}");
+            }
+        }
+    }
+
+    let clouds_to_check: Vec<&str> = match cloud_arg.trim().to_ascii_lowercase().as_str() {
+        "all" => vec!["prod", "dev"],
+        "prod" => vec!["prod"],
+        "dev" => vec!["dev"],
+        other => {
+            eprintln!("error: unsupported --cloud '{other}' for `carbon doctor` (expected prod, dev, or all)");
+            return ExitCode::from(2);
+        }
+    };
+
+    let mut cloud_reports = BTreeMap::new();
+    for cname in clouds_to_check {
+        match resolve_public_cloud_endpoint(cname, clouds_manifest) {
+            Ok(entry) => {
+                let candidates = entry.candidate_endpoints();
+                let pins = entry.pinned_keks_by_endpoint();
+                let all_pinned = !candidates.is_empty() && pins.len() == candidates.len();
+                if !all_pinned {
+                    healthy = false;
+                }
+                if offline {
+                    cloud_reports.insert(
+                        cname.to_owned(),
+                        serde_json::json!({
+                            "passed": all_pinned,
+                            "configured_regions": candidates.len(),
+                            "kek_pins_count": pins.len(),
+                            "offline": true,
+                        }),
+                    );
+                    if tty_stderr {
+                        let tag = if all_pinned { "PASS" } else { "FAIL" };
+                        eprintln!(
+                            "[doctor] {tag} cloud[{cname}]: {} regional endpoints, {} P-256 KEK pins verified (offline)",
+                            candidates.len(),
+                            pins.len()
+                        );
+                    }
+                } else {
+                    match CarbonThinClient::connect_fastest_pinned(candidates.clone(), &pins) {
+                        Ok((_, probed)) => {
+                            let fastest = probed.first();
+                            let probed_list: Vec<serde_json::Value> = probed
+                                .iter()
+                                .map(|p| {
+                                    serde_json::json!({
+                                        "region": p.region,
+                                        "endpoint": p.base_url,
+                                        "rtt_ms": p.rtt_ms,
+                                    })
+                                })
+                                .collect();
+                            let cloud_ok = all_pinned && !probed.is_empty();
+                            if !cloud_ok {
+                                healthy = false;
+                            }
+                            cloud_reports.insert(
+                                cname.to_owned(),
+                                serde_json::json!({
+                                    "passed": cloud_ok,
+                                    "configured_regions": candidates.len(),
+                                    "healthy_regions": probed.len(),
+                                    "kek_pins_verified": all_pinned,
+                                    "fastest_region": fastest.map(|f| f.region.clone()),
+                                    "fastest_rtt_ms": fastest.map(|f| f.rtt_ms),
+                                    "regions": probed_list,
+                                }),
+                            );
+                            if tty_stderr {
+                                if let Some(f) = fastest {
+                                    eprintln!(
+                                        "[doctor] PASS cloud[{cname}]: {}/{} healthy regions | fastest={} ({:.1} ms RTT) | KEK pins verified={all_pinned}",
+                                        probed.len(),
+                                        candidates.len(),
+                                        f.region,
+                                        f.rtt_ms
+                                    );
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            healthy = false;
+                            cloud_reports.insert(
+                                cname.to_owned(),
+                                serde_json::json!({
+                                    "passed": false,
+                                    "configured_regions": candidates.len(),
+                                    "error": err,
+                                }),
+                            );
+                            if tty_stderr {
+                                eprintln!("[doctor] FAIL cloud[{cname}]: {err}");
+                            }
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                healthy = false;
+                cloud_reports.insert(
+                    cname.to_owned(),
+                    serde_json::json!({
+                        "passed": false,
+                        "error": err,
+                    }),
+                );
+                if tty_stderr {
+                    eprintln!("[doctor] FAIL cloud[{cname}] manifest: {err}");
+                }
+            }
+        }
+    }
+
+    if tty_stderr {
+        if stored_summary.is_empty() {
+            eprintln!("[doctor] HINT: Run `carbon register --free` to mint a 30-day Free capability token (or run immediately in anonymous Free mode).");
+        }
+        eprintln!(
+            "[doctor] OVERALL: {}",
+            if healthy {
+                "HEALTHY"
+            } else {
+                "DEGRADED / ACTION REQUIRED"
+            }
+        );
+    }
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "healthy": healthy,
+            "version": env!("CARGO_PKG_VERSION"),
+            "config_dir": config_dir_str,
+            "config_dir_permissions_ok": config_dir_ok,
+            "credentials_permissions_ok": cred_mode_ok,
+            "local_clouds_manifest_present": cached_manifest_exists,
+            "default_clouds_url": DEFAULT_PUBLIC_CLOUDS_URL,
+            "fallback_clouds_url": FALLBACK_PUBLIC_CLOUDS_URL,
+            "stored_credentials": stored_summary,
+            "clouds": cloud_reports,
+            "checks": checks,
+        }))
+        .unwrap_or_default()
+    );
+
+    if healthy {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
 }
 
 fn run_engine_runtime(runtime_api: &str, work_dir: PathBuf, is_aws_prod: bool) -> ExitCode {
@@ -1307,6 +1635,11 @@ fn main() -> ExitCode {
                 }
             }
         }
+        Command::Doctor {
+            cloud,
+            clouds_manifest,
+            offline,
+        } => execute_doctor_command(&cloud, clouds_manifest.as_deref(), offline),
         Command::Ping {
             mut endpoint,
             mut cloud,
@@ -1419,6 +1752,8 @@ fn main() -> ExitCode {
             resume,
             predict_rows,
             shred,
+            progress,
+            quiet,
         } => {
             let explicit_tier = match resolve_explicit_tier_flag(free, pro, tier.as_deref()) {
                 Ok(t) => t,
@@ -1450,10 +1785,13 @@ fn main() -> ExitCode {
                     return code;
                 }
             };
+            let target_was_explicit = target.is_some();
+            let target_column = target.unwrap_or_else(|| "y".to_owned());
+            let show_stderr_progress = !quiet && (progress || std::io::stderr().is_terminal());
             let opts = CarbonCliRunOptions {
                 endpoints: resolved.endpoints,
                 csv_path: csv,
-                target_column: target,
+                target_column,
                 synthetic_rows,
                 synthetic_features: features,
                 tenant_id: resolved.tenant_id,
@@ -1468,7 +1806,13 @@ fn main() -> ExitCode {
                 auth_token: resolved.auth_token,
                 shred_after_run: shred,
             };
-            match execute_carbon_cli_run(&opts) {
+            let ux = CarbonCliRunUxConfig {
+                pinned_keks: resolved.pinned_keks,
+                pre_probed: Some((resolved.probed_client, resolved.first_probe)),
+                target_was_explicit,
+                show_stderr_progress,
+            };
+            match execute_carbon_cli_run_with_ux(&opts, &ux) {
                 Ok(receipt) => match serde_json::to_string_pretty(&receipt) {
                     Ok(s) => {
                         println!("{s}");
