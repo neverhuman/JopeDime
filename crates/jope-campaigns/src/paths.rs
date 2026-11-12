@@ -211,14 +211,31 @@ pub fn shadow_root() -> PathBuf {
 }
 
 /// `~/.config/systemd/user` — the invoking user's unit directory
-/// (`$XDG_CONFIG_HOME/systemd/user`, else `~/.config/systemd/user`).
+/// (`$XDG_CONFIG_HOME/systemd/user` when that variable is absolute, else
+/// `$HOME/.config/systemd/user` when `HOME` is absolute, else
+/// `<jope_state>/config/systemd/user`).
 pub fn user_unit_root() -> PathBuf {
-    let config = std::env::var_os("XDG_CONFIG_HOME")
+    user_unit_base(
+        std::env::var_os("XDG_CONFIG_HOME").as_deref(),
+        std::env::var_os("HOME").as_deref(),
+    )
+    .join("systemd/user")
+}
+
+fn user_unit_base(
+    xdg_config_home: Option<&std::ffi::OsStr>,
+    home: Option<&std::ffi::OsStr>,
+) -> PathBuf {
+    if let Some(path) = xdg_config_home
         .map(PathBuf::from)
         .filter(|path| path.is_absolute())
-        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
-        .unwrap_or_else(|| jope_state().join("config"));
-    config.join("systemd/user")
+    {
+        return path;
+    }
+    if let Some(path) = home.map(PathBuf::from).filter(|path| path.is_absolute()) {
+        return path.join(".config");
+    }
+    jope_state().join("config")
 }
 
 #[cfg(test)]
@@ -250,5 +267,31 @@ mod tests {
         );
         assert_eq!(test_adaptive_root(), state.join("campaigns/test-adaptive"));
         assert!(user_unit_root().ends_with("systemd/user"));
+    }
+
+    #[test]
+    fn a_relative_home_does_not_choose_the_user_unit_directory() {
+        assert_eq!(
+            user_unit_base(
+                Some(std::ffi::OsStr::new("relative/xdg")),
+                Some(std::ffi::OsStr::new("/users/alice")),
+            ),
+            PathBuf::from("/users/alice/.config")
+        );
+        assert_eq!(
+            user_unit_base(None, Some(std::ffi::OsStr::new("relative/home"))),
+            jope_state().join("config")
+        );
+        assert_eq!(
+            user_unit_base(None, Some(std::ffi::OsStr::new(""))),
+            jope_state().join("config")
+        );
+        assert_eq!(
+            user_unit_base(
+                Some(std::ffi::OsStr::new("/xdg/config")),
+                Some(std::ffi::OsStr::new("relative/home")),
+            ),
+            PathBuf::from("/xdg/config")
+        );
     }
 }
