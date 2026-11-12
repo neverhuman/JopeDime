@@ -315,16 +315,19 @@ fn nonblank(value: &Value) -> bool {
 }
 
 fn expand_home(raw: &str) -> PathBuf {
+    expand_home_in(raw, std::env::var_os("HOME").as_deref())
+}
+
+fn expand_home_in(raw: &str, home: Option<&std::ffi::OsStr>) -> PathBuf {
+    let home = home.map(PathBuf::from).filter(|path| path.is_absolute());
     if raw == "~" {
-        return std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from(raw));
+        return home.unwrap_or_else(|| PathBuf::from(raw));
     }
     if let Some(rest) = raw.strip_prefix("~/") {
-        return std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .unwrap_or_default()
-            .join(rest);
+        if let Some(home) = home {
+            return home.join(rest);
+        }
+        return PathBuf::from(raw);
     }
     PathBuf::from(raw)
 }
@@ -447,4 +450,37 @@ fn json_params(params: &[(String, String)]) -> String {
         .collect::<Vec<_>>()
         .join(", ");
     format!("{{{body}}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_relative_home_does_not_expand_a_tilde() {
+        assert_eq!(
+            expand_home_in("~/models/a.py", Some(std::ffi::OsStr::new("/users/alice"))),
+            PathBuf::from("/users/alice/models/a.py")
+        );
+        assert_eq!(
+            expand_home_in("~/models/a.py", Some(std::ffi::OsStr::new("relative/home"))),
+            PathBuf::from("~/models/a.py")
+        );
+        assert_eq!(
+            expand_home_in("~/models/a.py", Some(std::ffi::OsStr::new(""))),
+            PathBuf::from("~/models/a.py")
+        );
+        assert_eq!(
+            expand_home_in("~/models/a.py", None),
+            PathBuf::from("~/models/a.py")
+        );
+        assert_eq!(
+            expand_home_in("~", Some(std::ffi::OsStr::new(""))),
+            PathBuf::from("~")
+        );
+        assert_eq!(
+            expand_home_in("plain/a.py", Some(std::ffi::OsStr::new("relative/home"))),
+            PathBuf::from("plain/a.py")
+        );
+    }
 }
