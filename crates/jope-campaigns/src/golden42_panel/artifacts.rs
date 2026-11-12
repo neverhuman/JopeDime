@@ -96,7 +96,7 @@ pub(super) fn json_bytes<T: Serialize>(value: &T) -> Result<Vec<u8>> {
 }
 
 pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 pub(super) fn unix_ms() -> u128 {

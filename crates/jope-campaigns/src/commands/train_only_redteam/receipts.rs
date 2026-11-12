@@ -134,7 +134,7 @@ pub(crate) struct ProposalRequest {
 }
 
 pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 pub(crate) fn sha256_file(path: &Path) -> Result<String> {
