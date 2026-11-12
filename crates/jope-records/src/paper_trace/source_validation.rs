@@ -35,7 +35,6 @@ pub(crate) fn source_file(
 /// present here (a derived value, a directory). A declared root that is absent fails: this host
 /// does not hold the evidence.
 pub fn check_sources(ledger_text: &str) -> Result<(Vec<String>, String)> {
-    use sha2::{Digest, Sha256};
     let doc = pyjson::parse_str(ledger_text).map_err(|m| Error::parse(Path::new(LEDGER), m))?;
     let roots: BTreeMap<String, String> = doc
         .get("source_conventions")
@@ -93,10 +92,7 @@ pub fn check_sources(ledger_text: &str) -> Result<(Vec<String>, String)> {
                 Some(d) => d.clone(),
                 None => {
                     let bytes = std::fs::read(&file).map_err(|e| Error::io(&file, e))?;
-                    let d: String = Sha256::digest(&bytes)
-                        .iter()
-                        .map(|b| format!("{b:02x}"))
-                        .collect();
+                    let d = sha256_hex(&bytes);
                     hashes.insert(file.clone(), d.clone());
                     d
                 }
@@ -127,9 +123,5 @@ pub(crate) fn is_lower_hex(s: &str, len: usize) -> bool {
 }
 
 pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
-    use sha2::{Digest, Sha256};
-    Sha256::digest(bytes)
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+    crate::py::sha256_hex(bytes)
 }
