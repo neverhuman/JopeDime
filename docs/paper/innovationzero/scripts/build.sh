@@ -15,7 +15,6 @@ set -euo pipefail
 paper=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 repo=$(git -C "$paper" rev-parse --show-toplevel)
 build=${IZ_BUILD_DIR:-$repo/target/innovationzero-paper}
-cache=${IZ_FONT_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/innovationzero-fonts}
 volumes=(InnovationZero-Supplement:supplement InnovationZero:main InnovationZero-Archive:archive)
 
 if [ "${1:-}" = --clean ]; then
@@ -27,6 +26,22 @@ if [ "${1:-}" = --clean ]; then
   exit 0
 fi
 [ $# -eq 0 ] || { echo "usage: $0 [--clean]" >&2; exit 2; }
+
+# IZ_FONT_CACHE stays verbatim. A relative XDG_CACHE_HOME is ignored. A relative
+# or empty HOME must not name a working-directory or root font cache.
+if [ -n "${IZ_FONT_CACHE:-}" ]; then
+  cache=$IZ_FONT_CACHE
+else
+  case ${XDG_CACHE_HOME:-} in
+    /*) cache=$XDG_CACHE_HOME/innovationzero-fonts ;;
+    *)
+      case ${HOME:-} in
+        /*) cache=$HOME/.cache/innovationzero-fonts ;;
+        *) printf 'build.sh: HOME must be an absolute path when the font cache override and XDG_CACHE_HOME are not\n' >&2; exit 2 ;;
+      esac
+      ;;
+  esac
+fi
 
 for tool in xelatex latexmk bibtex pdfinfo pdftotext pdffonts jq curl unzip sha256sum; do
   command -v "$tool" >/dev/null || { echo "build.sh: $tool is required" >&2; exit 2; }
