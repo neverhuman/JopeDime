@@ -494,3 +494,255 @@ fn enterprise_serve_vpc_no_limit_and_cloud_free_tier_rejection() {
     ent_srv.shutdown();
     cloud_srv.shutdown();
 }
+
+#[test]
+fn cli_binary_free_and_pro_flags_login_whoami_logout_and_auto_tenant_binding() {
+    use std::process::Command;
+
+    let root = tempfile::tempdir().expect("create tempdir");
+    let edge_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge"));
+    let carbon_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+
+    let mut cfg = CarbonEmuConfig::for_dir(root.path().join("cell_cli_flags"));
+    cfg.region = "us-east-2".to_owned();
+    cfg.force_hybrid_fanout = true;
+    cfg.eval_worker_threads = 2;
+    cfg.edge_binary_path = Some(edge_bin);
+    let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start emu");
+
+    let (_, probed) =
+        CarbonThinClient::connect_fastest(vec![emu.base_url()]).expect("probe emu ping");
+    let kek_b64 = probed[0]
+        .engine_kek_pubkey_b64
+        .clone()
+        .expect("emu kek pubkey");
+
+    let mut clouds = std::collections::BTreeMap::new();
+    clouds.insert(
+        "dev".to_owned(),
+        jope_carbon::CarbonCloudCellEntry {
+            environment: "dev".to_owned(),
+            region: "us-east-2".to_owned(),
+            public_endpoint: emu.base_url(),
+            engine_kek_pubkey_b64: Some(kek_b64.clone()),
+            release_id: Some("testrel01".to_owned()),
+        },
+    );
+    clouds.insert(
+        "prod".to_owned(),
+        jope_carbon::CarbonCloudCellEntry {
+            environment: "prod".to_owned(),
+            region: "us-east-2".to_owned(),
+            public_endpoint: emu.base_url(),
+            engine_kek_pubkey_b64: Some(kek_b64),
+            release_id: Some("testrel01".to_owned()),
+        },
+    );
+    let clouds_doc = jope_carbon::CarbonPublicCloudsManifest {
+        schema: "carbon.clouds/v1".to_owned(),
+        generated_epoch_ms: 1_794_400_000_000,
+        clouds,
+    };
+    let config_dir = root.path().join("user_config");
+    fs::create_dir_all(&config_dir).unwrap();
+    fs::write(
+        config_dir.join("carbon-clouds.json"),
+        serde_json::to_vec_pretty(&clouds_doc).unwrap(),
+    )
+    .unwrap();
+
+    // 1. Zero-flag `carbon ping` defaults to `--cloud prod` via local `$CARBON_CONFIG_DIR/carbon-clouds.json`!
+    let ping_default = Command::new(&carbon_bin)
+        .arg("ping")
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .env_remove("CARBON_ENDPOINT")
+        .env_remove("CARBON_AUTH_TOKEN")
+        .env_remove("CARBON_AUTH_SECRET_HEX")
+        .output()
+        .expect("run zero-flag carbon ping");
+    assert!(
+        ping_default.status.success(),
+        "ping stderr: {}",
+        String::from_utf8_lossy(&ping_default.stderr)
+    );
+    let ping_json: serde_json::Value = serde_json::from_slice(&ping_default.stdout).unwrap();
+    assert_eq!(ping_json["healthy"], true);
+    assert_eq!(ping_json["cloud"], "prod");
+    assert_eq!(ping_json["kek_pin_verified"], true);
+
+    // 2. `carbon whoami` before login reports `anonymous_free`
+    let whoami_anon = Command::new(&carbon_bin)
+        .arg("whoami")
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .env_remove("CARBON_AUTH_TOKEN")
+        .output()
+        .expect("run whoami anon");
+    assert!(whoami_anon.status.success());
+    let whoami_anon_json: serde_json::Value = serde_json::from_slice(&whoami_anon.stdout).unwrap();
+    assert_eq!(whoami_anon_json["auth_mode"], "anonymous_free");
+
+    // 3. `carbon run --pro` WITHOUT a token fails fast with exit code 2!
+    let pro_no_tok = Command::new(&carbon_bin)
+        .args([
+            "run",
+            "--cloud",
+            "dev",
+            "--pro",
+            "--synthetic-rows",
+            "60",
+            "--features",
+            "3",
+        ])
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .env_remove("CARBON_AUTH_TOKEN")
+        .env_remove("CARBON_AUTH_SECRET_HEX")
+        .output()
+        .expect("run --pro without token");
+    assert_eq!(pro_no_tok.status.code(), Some(2));
+    let pro_no_tok_err = String::from_utf8_lossy(&pro_no_tok.stderr);
+    assert!(
+        pro_no_tok_err.contains("requires a capability token"),
+        "expected actionable token message, got: {pro_no_tok_err}"
+    );
+
+    // 4. `carbon run --pro --token <ctk1>` WITHOUT `--tenant` auto-extracts `tenant_id` from claims!
+    let custom_pro_token = emu
+        .mint_capability_token("custom_pro_tenant_42", CarbonTierWire::Pro, false)
+        .expect("mint pro token");
+    let pro_inline = Command::new(&carbon_bin)
+        .args([
+            "run",
+            "--cloud",
+            "dev",
+            "--pro",
+            "--token",
+            &custom_pro_token,
+            "--synthetic-rows",
+            "72",
+            "--features",
+            "3",
+            "--effort",
+            "fast",
+            "--shred",
+        ])
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .env_remove("CARBON_AUTH_TOKEN")
+        .env_remove("CARBON_AUTH_SECRET_HEX")
+        .output()
+        .expect("run --pro with inline token and no --tenant");
+    assert!(
+        pro_inline.status.success(),
+        "pro inline stderr: {}",
+        String::from_utf8_lossy(&pro_inline.stderr)
+    );
+    let pro_inline_json: serde_json::Value = serde_json::from_slice(&pro_inline.stdout).unwrap();
+    assert_eq!(pro_inline_json["tier_applied"], "pro");
+    assert_eq!(pro_inline_json["tenant_id"], "custom_pro_tenant_42");
+    assert_eq!(pro_inline_json["final_state"], "completed");
+    assert_eq!(pro_inline_json["shredded_after_run"], true);
+
+    // 5. `carbon login --cloud prod --token-file` -> `whoami` -> `carbon run --pro` (zero token flags!)
+    //    -> `carbon run --free` (overrides stored login!) -> `carbon logout --all`
+    let tok_file = root.path().join("pro.tok");
+    fs::write(&tok_file, format!("{custom_pro_token}\n")).unwrap();
+    let login_out = Command::new(&carbon_bin)
+        .args(["login", "--cloud", "prod", "--token-file"])
+        .arg(&tok_file)
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .output()
+        .expect("run carbon login");
+    assert!(
+        login_out.status.success(),
+        "login stderr: {}",
+        String::from_utf8_lossy(&login_out.stderr)
+    );
+    let login_json: serde_json::Value = serde_json::from_slice(&login_out.stdout).unwrap();
+    assert_eq!(login_json["logged_in"], true);
+    assert_eq!(login_json["tenant_id"], "custom_pro_tenant_42");
+
+    let whoami_pro = Command::new(&carbon_bin)
+        .arg("whoami")
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .env_remove("CARBON_AUTH_TOKEN")
+        .output()
+        .expect("run whoami after login");
+    assert!(whoami_pro.status.success());
+    let whoami_pro_json: serde_json::Value = serde_json::from_slice(&whoami_pro.stdout).unwrap();
+    assert_eq!(whoami_pro_json["auth_mode"], "capability_token");
+    assert_eq!(whoami_pro_json["tenant_id"], "custom_pro_tenant_42");
+    assert_eq!(whoami_pro_json["tier"], "pro");
+
+    // Zero `--cloud` and zero `--token` flags: uses default `prod` + stored Pro login!
+    let stored_pro_run = Command::new(&carbon_bin)
+        .args([
+            "run",
+            "--pro",
+            "--synthetic-rows",
+            "64",
+            "--features",
+            "3",
+            "--shred",
+        ])
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .env_remove("CARBON_ENDPOINT")
+        .env_remove("CARBON_AUTH_TOKEN")
+        .env_remove("CARBON_AUTH_SECRET_HEX")
+        .output()
+        .expect("run --pro with stored login");
+    assert!(
+        stored_pro_run.status.success(),
+        "stored pro stderr: {}",
+        String::from_utf8_lossy(&stored_pro_run.stderr)
+    );
+    let stored_pro_json: serde_json::Value =
+        serde_json::from_slice(&stored_pro_run.stdout).unwrap();
+    assert_eq!(stored_pro_json["tier_applied"], "pro");
+    assert_eq!(stored_pro_json["tenant_id"], "custom_pro_tenant_42");
+    assert_eq!(stored_pro_json["final_state"], "completed");
+
+    // Explicit `--free` overrides stored Pro login and runs anonymous Free!
+    let free_override_run = Command::new(&carbon_bin)
+        .args([
+            "run",
+            "--free",
+            "--synthetic-rows",
+            "64",
+            "--features",
+            "3",
+            "--shred",
+        ])
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .env_remove("CARBON_ENDPOINT")
+        .env_remove("CARBON_AUTH_TOKEN")
+        .env_remove("CARBON_AUTH_SECRET_HEX")
+        .output()
+        .expect("run --free overriding stored login");
+    assert!(
+        free_override_run.status.success(),
+        "free override stderr: {}",
+        String::from_utf8_lossy(&free_override_run.stderr)
+    );
+    let free_override_json: serde_json::Value =
+        serde_json::from_slice(&free_override_run.stdout).unwrap();
+    assert_eq!(free_override_json["tier_applied"], "free");
+    assert!(
+        free_override_json["tenant_id"]
+            .as_str()
+            .unwrap_or_default()
+            .starts_with("anon_"),
+        "expected anonymous tenant_id under --free, got {}",
+        free_override_json["tenant_id"]
+    );
+    assert_eq!(free_override_json["final_state"], "completed");
+
+    let logout_out = Command::new(&carbon_bin)
+        .args(["logout", "--all"])
+        .env("CARBON_CONFIG_DIR", &config_dir)
+        .output()
+        .expect("run carbon logout --all");
+    assert!(logout_out.status.success());
+    let logout_json: serde_json::Value = serde_json::from_slice(&logout_out.stdout).unwrap();
+    assert_eq!(logout_json["entries_removed"], 1);
+
+    emu.shutdown();
+}

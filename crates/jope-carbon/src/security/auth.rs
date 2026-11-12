@@ -76,6 +76,47 @@ pub struct CarbonCapabilityClaims {
     pub admin: bool,
 }
 
+#[cfg(feature = "edge")]
+impl CarbonCapabilityClaims {
+    /// Decode the cleartext `CarbonCapabilityClaims` from a `ctk1.<claims_b64url>.<hmac_hex>`
+    /// capability token on the client side without possessing the server's `HMAC-SHA256` secret.
+    ///
+    /// Note: Server-side authorization MUST always call [`CarbonAuthVerifier::verify_token`].
+    pub fn decode_unverified(token: &str) -> CarbonResult<Self> {
+        let trimmed = token.trim();
+        let Some(after_prefix) = trimmed.strip_prefix(TOKEN_PREFIX) else {
+            return Err(CarbonError::CapabilityAuthFailed {
+                reason: "unrecognized capability token version prefix (expected ctk1.)",
+            });
+        };
+        let Some((payload_b64, sig_hex)) = after_prefix.split_once('.') else {
+            return Err(CarbonError::CapabilityAuthFailed {
+                reason: "malformed capability token segments",
+            });
+        };
+        let sig_bytes = hex::decode(sig_hex).map_err(|_| CarbonError::CapabilityAuthFailed {
+            reason: "malformed capability token signature hex",
+        })?;
+        if sig_bytes.len() != 32 {
+            return Err(CarbonError::CapabilityAuthFailed {
+                reason: "capability token HMAC-SHA256 tag must be 32 bytes (64 hex chars)",
+            });
+        }
+        let claims_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(payload_b64)
+            .map_err(|_| CarbonError::CapabilityAuthFailed {
+                reason: "malformed capability token base64url payload",
+            })?;
+        let claims: Self = serde_json::from_slice(&claims_bytes).map_err(|_| {
+            CarbonError::CapabilityAuthFailed {
+                reason: "invalid capability token claims JSON",
+            }
+        })?;
+        validate_strict_tenant_id(&claims.tenant_id)?;
+        Ok(claims)
+    }
+}
+
 /// `CarbonAuthVerifier` is a struct signing and constant-time verifying `HMAC-SHA256` capability
 /// tokens for Free anonymous sessions and Pro/Admin tenants.
 #[cfg(feature = "edge")]
