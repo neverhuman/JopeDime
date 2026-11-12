@@ -381,10 +381,6 @@ fn quarantine_file(root: &Path, path: &Path) -> Result<PathBuf, AssignmentError>
     Ok(quarantine)
 }
 
-fn hex_digest(digest: Digest32) -> String {
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
-}
-
 #[derive(Debug, Error)]
 pub enum AssignmentError {
     #[error("invalid node runtime identity")]

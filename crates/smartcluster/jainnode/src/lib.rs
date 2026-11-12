@@ -24,6 +24,10 @@ mod storage_control;
 mod storage_facts;
 mod storage_topology;
 
+pub(crate) fn hex_digest(digest: [u8; 32]) -> String {
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
 #[cfg(test)]
 mod storage_config_tests;
 #[cfg(test)]

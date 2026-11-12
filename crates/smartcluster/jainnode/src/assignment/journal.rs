@@ -254,7 +254,7 @@ impl AssignmentJournal {
                     .file_name()
                     .and_then(|value| value.to_str())
                     .ok_or(AssignmentError::UnsafeJournalPath)?,
-                hex_digest(digest)
+                crate::hex_digest(digest)
             ));
             write_new_synced(&quarantine, bytes)?;
             sync_directory(&self.root)?;

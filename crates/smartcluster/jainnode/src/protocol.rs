@@ -267,10 +267,6 @@ fn write_new_synced(root: &Path, path: &Path, bytes: &[u8]) -> Result<(), Protoc
         .map_err(ProtocolError::Io)
 }
 
-fn hex_digest(digest: Digest32) -> String {
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
-}
-
 #[derive(Debug, Error)]
 pub enum ProtocolError {
     #[error("invalid node protocol configuration")]

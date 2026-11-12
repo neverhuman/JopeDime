@@ -230,7 +230,7 @@ where
             ("org.jain.egress".to_owned(), "denied".to_owned()),
             (
                 "org.jain.network-policy-digest".to_owned(),
-                hex_digest(policy_digest),
+                crate::hex_digest(policy_digest),
             ),
         ]);
         let receipt = self.engine.create_internal_network(&name, &labels).await?;
@@ -310,10 +310,6 @@ fn validate_network_shape(
         return Err(DockerError::MalformedResponse);
     }
     Ok(())
-}
-
-fn hex_digest(digest: Digest32) -> String {
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 #[cfg(test)]

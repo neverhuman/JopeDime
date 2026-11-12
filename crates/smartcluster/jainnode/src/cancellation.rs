@@ -8,7 +8,7 @@ use std::{
 };
 
 use async_trait::async_trait;
-use jain_smartcluster_fabric::{sha256, valid_identifier, Digest32};
+use jain_smartcluster_fabric::{sha256, valid_identifier};
 use nix::unistd::Uid;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, Notify};
@@ -177,8 +177,10 @@ impl DurableCancellationRegistry {
     fn record_path(&self, key: &CancellationKey) -> PathBuf {
         let record = CancellationRecord::from_key(key);
         let bytes = postcard::to_stdvec(&record).expect("bounded cancellation record serializes");
-        self.root
-            .join(format!("cancel-{}.record", hex_digest(sha256(&bytes))))
+        self.root.join(format!(
+            "cancel-{}.record",
+            crate::hex_digest(sha256(&bytes))
+        ))
     }
 }
 
@@ -283,7 +285,7 @@ fn validate_existing_records(root: &Path) -> Result<(), ExecutionError> {
             .ok_or(ExecutionError::CancellationState)?;
         let (record, bytes) = read_record(&path)?;
         record.validate()?;
-        if hex_digest(sha256(&bytes)) != digest {
+        if crate::hex_digest(sha256(&bytes)) != digest {
             return Err(ExecutionError::CancellationState);
         }
     }
@@ -330,10 +332,6 @@ fn read_record(path: &Path) -> Result<(CancellationRecord, Vec<u8>), ExecutionEr
     }
     let record = postcard::from_bytes(&bytes).map_err(|_| ExecutionError::CancellationState)?;
     Ok((record, bytes))
-}
-
-fn hex_digest(digest: Digest32) -> String {
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 #[cfg(test)]

@@ -194,7 +194,7 @@ fn validate_sequence_continuity(
 }
 
 fn record_name(sequence: u64, digest: Digest32) -> String {
-    format!("{sequence:020}-{}.outbound", hex_digest(digest))
+    format!("{sequence:020}-{}.outbound", crate::hex_digest(digest))
 }
 
 fn parse_record_name(name: &str) -> Result<(u64, Digest32), OutboxError> {
@@ -262,10 +262,6 @@ fn sync_directory(path: &Path) -> Result<(), OutboxError> {
     File::open(path)
         .and_then(|directory| directory.sync_all())
         .map_err(OutboxError::Io)
-}
-
-fn hex_digest(digest: Digest32) -> String {
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 fn position_checksum(sequence: u64, digest: Digest32) -> Digest32 {
