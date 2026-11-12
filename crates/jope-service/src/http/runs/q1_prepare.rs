@@ -151,6 +151,11 @@ impl RunService {
                 "Budget or FIT row count is outside the backend's configured limits.",
             ));
         }
+        let target_column = table
+            .headers
+            .iter()
+            .position(|name| name == &spec.target)
+            .ok_or_else(|| invalid("Unknown target column."))?;
         let (fit_ids, holdout_ids) = random_split(
             table.rows.len(),
             fit_count,
@@ -165,6 +170,16 @@ impl RunService {
         };
         let fit = encode(&fit_ids)?;
         let holdout = encode(&holdout_ids)?;
+        let baseline = {
+            let training =
+                crate::dataset::baseline::target_values(&table.rows, target_column, &fit_ids)
+                    .ok_or_else(|| invalid("Target column is not finite on the training rows."))?;
+            let evaluation =
+                crate::dataset::baseline::target_values(&table.rows, target_column, &holdout_ids)
+                    .ok_or_else(|| invalid("Target column is not finite on the evaluation rows."))?;
+            crate::dataset::baseline::training_mean_rmse(&training, &evaluation)
+                .ok_or_else(|| invalid("The training-mean baseline needs both row sets."))?
+        };
         let governor = Governor::new(
             std::num::NonZeroU64::new(u64::MAX).unwrap(),
             NonZeroU32::new(1).unwrap(),
@@ -233,6 +248,10 @@ impl RunService {
                     .map_err(|error| invalid(&error.to_string()))?,
             );
         }
+        public.warnings.push(
+            crate::dataset::baseline::warning(&spec.target, holdout_ids.len(), baseline)
+                .map_err(|error| invalid(&error.to_string()))?,
+        );
         let search = SearchPlan {
             run_id: format!("run_{}", ulid::Ulid::new()).parse().map_err(io)?,
             dataset_id: spec.dataset.clone(),
