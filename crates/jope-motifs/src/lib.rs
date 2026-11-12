@@ -85,7 +85,7 @@ where
 }
 
 /// Lowercase hex sha256.
-pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
+pub fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 

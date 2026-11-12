@@ -18,12 +18,10 @@ use promote::{
     MetricDirection, MotifAdmission, MotifCandidate, PreregisteredContrast, ProbeSimilarity,
     VocabularyMigration, ADMISSION_SCHEMA, CONTRAST_SCHEMA,
 };
-use sha2::{Digest, Sha256};
-
 const TABLE_SHA: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
 fn digest(value: &str) -> String {
-    format!("{:x}", Sha256::digest(value.as_bytes()))
+    jope_motifs::sha256_hex(value.as_bytes())
 }
 
 #[test]
