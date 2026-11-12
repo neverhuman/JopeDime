@@ -88,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             if read_only_fuse {
                 return Err("read-only FUSE requires the separately qualified FUSE adapter".into());
             }
-            println!("qualified={}", hex_digest(evidence.digest()));
+            println!("qualified={}", jainnode::hex_digest(evidence.digest()));
         }
         Command::CheckControl {
             hub,
@@ -111,10 +111,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     Ok(())
-}
-
-fn hex_digest(digest: [u8; 32]) -> String {
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 fn parse_digest32(value: &str) -> Result<[u8; 32], String> {

@@ -24,7 +24,7 @@ mod storage_control;
 mod storage_facts;
 mod storage_topology;
 
-pub(crate) fn hex_digest(digest: impl AsRef<[u8]>) -> String {
+pub fn hex_digest(digest: impl AsRef<[u8]>) -> String {
     digest
         .as_ref()
         .iter()
