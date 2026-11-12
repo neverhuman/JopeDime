@@ -109,7 +109,7 @@ pub fn record_model_parity(
         "parity receipt exceeds bound"
     );
     let blob = store.publish_blob(std::io::Cursor::new(bytes))?;
-    let digest = hex_blob(&blob.sha256);
+    let digest = crate::digest::encode_hex(&blob.sha256);
     let id: jope_api::ids::ArtifactId = format!("art_{}", &digest[..24]).parse()?;
     store.transaction(|tx| {
         let mut current = tx.get(&key)?.ok_or(crate::store::StoreError::Invalid(
@@ -136,10 +136,6 @@ pub fn record_model_parity(
         tx.put(&key, &current)
     })?;
     Ok(id)
-}
-
-fn hex_blob(bytes: &[u8]) -> String {
-    bytes.iter().map(|v| format!("{v:02x}")).collect()
 }
 
 /// Return only measured evidence for the exact frozen model, mode and source bytes.

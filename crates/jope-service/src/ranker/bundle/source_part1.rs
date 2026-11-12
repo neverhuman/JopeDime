@@ -53,10 +53,7 @@ impl BundleDigest {
 impl fmt::Display for BundleDigest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("sha256:")?;
-        for byte in self.0 {
-            write!(f, "{byte:02x}")?;
-        }
-        Ok(())
+        f.write_str(&crate::digest::encode_hex(&self.0))
     }
 }
 

@@ -57,7 +57,7 @@ pub fn write_daemon_file(
     fill_random(&mut random)?;
     let record = DaemonFile {
         url: url.into(),
-        token: encode_hex(&random),
+        token: crate::digest::encode_hex(&random),
         pid: std::process::id(),
         version: version.into(),
         build: build_source_sha(),
@@ -159,16 +159,6 @@ fn temporary_path(home: &Path) -> PathBuf {
         time,
         sequence
     ))
-}
-
-fn encode_hex(bytes: &[u8]) -> String {
-    const HEX: &[u8; 16] = b"0123456789abcdef";
-    let mut output = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        output.push(char::from(HEX[usize::from(byte >> 4)]));
-        output.push(char::from(HEX[usize::from(byte & 0x0f)]));
-    }
-    output
 }
 
 #[cfg(unix)]
