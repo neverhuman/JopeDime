@@ -84,19 +84,11 @@ fn paired(table: &CsvTable, feature: usize, target: usize) -> Option<Vec<(f64, f
     }
     let mut pairs = Vec::with_capacity(table.rows.len());
     for row in &table.rows {
-        let feature = numeric(row.get(feature)?.as_deref()?)?;
-        let target = numeric(row.get(target)?.as_deref()?)?;
+        let feature = super::finite_number(row.get(feature)?.as_deref()?)?;
+        let target = super::finite_number(row.get(target)?.as_deref()?)?;
         pairs.push((target, feature));
     }
     Some(pairs)
-}
-
-fn numeric(value: &str) -> Option<f64> {
-    value
-        .trim()
-        .parse::<f64>()
-        .ok()
-        .filter(|number| number.is_finite())
 }
 
 fn relation(pairs: &[(f64, f64)]) -> Option<TargetLeakKind> {

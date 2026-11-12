@@ -49,7 +49,10 @@ pub fn profile(table: &CsvTable) -> DatasetProfile {
 
 fn profile_column(name: &str, index: usize, table: &CsvTable) -> ColumnProfile {
     let values = table.rows.iter().filter_map(|row| row[index].as_deref());
-    let kind = if values.clone().all(|value| numeric(value).is_some()) {
+    let kind = if values
+        .clone()
+        .all(|value| super::finite_number(value).is_some())
+    {
         ColumnKind::Numeric
     } else {
         ColumnKind::Categorical
@@ -69,7 +72,7 @@ fn profile_column(name: &str, index: usize, table: &CsvTable) -> ColumnProfile {
         let mut min: Option<f64> = None;
         let mut max: Option<f64> = None;
         for value in table.rows.iter().filter_map(|row| row[index].as_deref()) {
-            if let Some(value) = numeric(value) {
+            if let Some(value) = super::finite_number(value) {
                 min = Some(min.map_or(value, |current| current.min(value)));
                 max = Some(max.map_or(value, |current| current.max(value)));
             }
@@ -88,14 +91,6 @@ fn profile_column(name: &str, index: usize, table: &CsvTable) -> ColumnProfile {
         min,
         max,
     }
-}
-
-fn numeric(value: &str) -> Option<f64> {
-    value
-        .trim()
-        .parse::<f64>()
-        .ok()
-        .filter(|number| number.is_finite())
 }
 
 fn distinct_count<'a>(values: impl Iterator<Item = &'a str>) -> (usize, bool) {
