@@ -27,6 +27,10 @@ fn env_path(name: &str) -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
+fn absolute_env_path(name: &str) -> Option<PathBuf> {
+    env_path(name).filter(|path| path.is_absolute())
+}
+
 fn marker_ancestor(start: &Path) -> Option<PathBuf> {
     start
         .ancestors()
@@ -53,16 +57,17 @@ pub fn jope_home() -> PathBuf {
     cwd
 }
 
-/// `JOPE_STATE` when set; otherwise `$XDG_STATE_HOME/jope`, else `$HOME/.local/state/jope`, else
-/// `<jope_home>/state`.
+/// `JOPE_STATE` when set, kept verbatim; otherwise `$XDG_STATE_HOME/jope` when that
+/// variable is absolute, else `$HOME/.local/state/jope` when `HOME` is absolute, else
+/// `<jope_home>/state`. A relative `XDG_STATE_HOME` or `HOME` is ignored.
 pub fn jope_state() -> PathBuf {
     if let Some(state) = env_path(var::JOPE_STATE) {
         return state;
     }
-    if let Some(xdg) = env_path("XDG_STATE_HOME") {
+    if let Some(xdg) = absolute_env_path("XDG_STATE_HOME") {
         return xdg.join("jope");
     }
-    if let Some(home) = env_path("HOME") {
+    if let Some(home) = absolute_env_path("HOME") {
         return home.join(".local/state/jope");
     }
     jope_home().join("state")
@@ -156,6 +161,42 @@ mod tests {
                 assert_eq!(sotarena_reporter_root(), PathBuf::from("/data/arena"));
                 assert_eq!(benchmark_cache(), PathBuf::from("/data/cache"));
             },
+        );
+    }
+
+    #[test]
+    fn a_relative_state_home_or_home_does_not_choose_the_state_directory() {
+        with_env(
+            &[
+                (var::JOPE_STATE, Some("relative/state")),
+                ("XDG_STATE_HOME", Some("/xdg/state")),
+                ("HOME", Some("/users/someone")),
+                (var::JOPE_HOME, Some("/opt/jope/checkout")),
+            ],
+            || assert_eq!(jope_state(), PathBuf::from("relative/state")),
+        );
+        with_env(
+            &[
+                (var::JOPE_STATE, None),
+                ("XDG_STATE_HOME", Some("relative/ignored")),
+                ("HOME", Some("/users/someone")),
+                (var::JOPE_HOME, Some("/opt/jope/checkout")),
+            ],
+            || {
+                assert_eq!(
+                    jope_state(),
+                    PathBuf::from("/users/someone/.local/state/jope")
+                )
+            },
+        );
+        with_env(
+            &[
+                (var::JOPE_STATE, None),
+                ("XDG_STATE_HOME", None),
+                ("HOME", Some("relative/home")),
+                (var::JOPE_HOME, Some("/opt/jope/checkout")),
+            ],
+            || assert_eq!(jope_state(), PathBuf::from("/opt/jope/checkout/state")),
         );
     }
 
