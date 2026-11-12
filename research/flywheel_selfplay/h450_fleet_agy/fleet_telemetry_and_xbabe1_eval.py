@@ -64,7 +64,7 @@ def _sha256(p: Path) -> str:
 def collect_host_metrics() -> dict[str, dict]:
     hosts = {}
     linux_probe = (
-        "ncpu=$(nproc); load1=$(awk '{print $1}' /proc/loadavg); "
+        "ncpu=$(nproc --all); load1=$(awk '{print $1}' /proc/loadavg); "
         "mem=$(free -m | awk '/^Mem:/ {print $3\"/\"$2\" MiB (avail \"$7\" MiB)\"}'); "
         "gpu=$(nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits 2>/dev/null | head -n1 || echo 'ERROR_OR_NONE'); "
         "printf '%s|%s|%s|%s\n' \"$ncpu\" \"$load1\" \"$mem\" \"$gpu\""

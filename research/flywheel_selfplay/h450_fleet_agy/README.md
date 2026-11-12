@@ -2,7 +2,7 @@
 
 Additive, non-overlapping H450 5-host fleet components coordinated with `cl_fwriter` via
 `/home/ubuntu/jope_plan/H450_CLAUDE_GEMINI_COORD.md` and `/home/ubuntu/jope_plan/H450_FLEET_COORDINATION.md`
-(staged read-only under `/home/ubuntu/h450-stage/fleet-r2`):
+(staged read-only under `/home/ubuntu/h450-stage/fleet-r3`):
 
 1. `mmap_bank_h450.py` — Zero-copy `np.memmap` drop-in replacement (`MmapF64Bank`) for `CombinedF64Bank`
    (`< 0.5 s` init, `< 80 MiB` private RSS), plus `--cmd convert` and `--cmd verify-parity` (verified bit-identical
