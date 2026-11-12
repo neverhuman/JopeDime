@@ -1,6 +1,6 @@
 #!/bin/bash
 # H446 CPU-only legal real-table bank builder (`cpus 104-107`, <= 4 procs @ nice 19, 0 GPU):
-#   driver_h446.sh run -> selftest + fetch-s3 + build (fit_icl_wide400, all_legal_excl_p201b, all_legal)
+#   driver_h446.sh run -> selftest + fetch-s3 (outside sandbox) + build (inside H335 sandbox, 0 guard refusals)
 set -euo pipefail
 export PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1
 export CUDA_VISIBLE_DEVICES=""
@@ -12,6 +12,7 @@ EV=/home/ubuntu/jope_plan/evidence/H446
 ST=$(cat "$EV/logs/pub_stage")
 R=${WAVE_OUT:-/home/ubuntu/jope-data/h335-cl/h446/$(basename "$ST")}
 BLOBS=/home/ubuntu/jope-data/h446/s3_train_blobs
+PLAN=/home/ubuntu/jope-data/h446/legal_plan_$(basename "$ST").json
 P=${WAVE_PROCS:-4}
 CPUSET=${WAVE_CPUSET:-104-107}
 [ "$P" -le 4 ] || { echo "P=$P exceeds 4-core ceiling" >&2; exit 2; }
@@ -33,12 +34,12 @@ head -n 1 "$R/selftest.raw.txt" > "$R/selftest.json"
 tail -n 1 "$R/selftest.raw.txt"
 
 taskset -c "$CPUSET" nice -n 19 python3 -B icl_bank_all_legal.py fetch-s3 \
-  --blob-dir "$BLOBS" --procs "$P" > "$R/fetch_s3.json"
+  --blob-dir "$BLOBS" --plan-out "$PLAN" --procs "$P" > "$R/fetch_s3.json"
 cat "$R/fetch_s3.json"
 
 rm -rf "$R/banks"
 taskset -c "$CPUSET" nice -n 19 python3 -B icl_bank_all_legal.py build \
-  --blob-dir "$BLOBS" --out-dir "$R/banks" --procs "$P" | tee "$EV/logs/build.log"
+  --plan "$PLAN" --blob-dir "$BLOBS" --out-dir "$R/banks" --procs "$P" | tee "$EV/logs/build.log"
 
 T_END=$(date +%s)
 jq -n --argjson run_start "$T0" --argjson run_end "$T_END" --argjson procs "$P" --arg cpuset "$CPUSET" \

@@ -39,7 +39,7 @@ jq -n \
      all_legal_wide_gt_100: $sm.banks.all_legal.wide_gt_100_feats,
      dropped_s4: ($sm.screen_audit.dropped_confirm_or_dev91_s4 | length),
      dropped_dev_h425: ($sm.screen_audit.dropped_dev_h425_s1_s4 | length),
-     guard_refusals: $sm.guard.refusals,
+     delta_refusal_log_lines: $sm.delta_refusal_log_lines,
      s3_write_operations: $fs.s3_write_operations
    },
    gates: {
@@ -51,8 +51,8 @@ jq -n \
        $sm.banks.all_legal.dev91_table_opens == 0 and
        $sm.banks.all_legal.p201b_audit_rows_written == 0 and
        $sm.banks.all_legal.fitsel_audit_rows_written == 0 and
-       $sm.guard.refusals == 0 and
-       $sm.guard.stage_v == false and
+       $sm.delta_refusal_log_lines == 0 and
+       $sm.guard.stage_v_unlocked == false and
        $fs.s3_write_operations == 0 and
        $view
      ),
