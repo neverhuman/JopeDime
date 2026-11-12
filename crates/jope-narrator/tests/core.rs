@@ -17,9 +17,8 @@ fn scratch() -> tempfile::TempDir {
     tempfile::tempdir_in(root.join("narrator-test-artifacts")).unwrap()
 }
 fn program(text: &str) -> ProgramRef {
-    use sha2::{Digest, Sha256};
     ProgramRef {
-        sha256: format!("{:x}", Sha256::digest(text.as_bytes())),
+        sha256: jope_narrator::digest(text.as_bytes()),
         canonical: text.into(),
     }
 }

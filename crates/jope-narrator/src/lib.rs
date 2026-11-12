@@ -20,7 +20,7 @@ pub use tap::{
     DEFAULT_MAX_FACTS, MAX_FRAME_BYTES, MIN_FRAME_BYTES,
 };
 
-pub(crate) fn digest(bytes: &[u8]) -> String {
+pub fn digest(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     format!("{:x}", Sha256::digest(bytes))
 }

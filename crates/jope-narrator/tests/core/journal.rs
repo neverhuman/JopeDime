@@ -90,12 +90,11 @@ fn corrupt_complete_records_refuse_partial_tails_wait_and_cursor_scope_is_strict
 
 #[test]
 fn forged_claim_or_text_fails_even_after_recomputing_content_hash() {
-    use sha2::{Digest, Sha256};
     let dir = scratch();
     let mut event = journal(&dir.path().join("facts.jsonl"), "run", vec![stop(1)]).remove(0);
     event.narration.text = "The hypothesis was confirmed; error fell 99%.".into();
     event.sha256.clear();
-    event.sha256 = format!("{:x}", Sha256::digest(serde_json::to_vec(&event).unwrap()));
+    event.sha256 = jope_narrator::digest(&serde_json::to_vec(&event).unwrap());
     assert!(event.validate("", 1, "run").is_err());
 }
 
