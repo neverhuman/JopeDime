@@ -16,7 +16,7 @@ from .feedback import build_active_feedback_corpus, ingest_feedback
 from .grammar import corrupt_genome, sample_genome
 from .io import write_jsonl
 from .model import JopeActiveModelV2
-from .prime_config import load_config
+from .prime_config import expand_config_home, load_config
 from .propose import (
     embedding_from_vs,
     load_any_model,
@@ -1344,13 +1344,22 @@ def main(argv: list[str] | None = None) -> int:
     return 2
 
 
+def rust_jope_binary(configured: str | None, home: str | None) -> Path:
+    """`JOPE_RUST_BIN` with `~` expanded only when `home` is absolute."""
+    if not configured:
+        return Path(__file__).resolve().parents[2] / "rust/target/release/jope"
+    try:
+        return expand_config_home(configured, home)
+    except ValueError as error:
+        raise ValueError("HOME is not an absolute path; JOPE_RUST_BIN cannot be resolved") from error
+
+
 def _exec_rust_jope(argv: list[str]) -> None:
     configured = os.environ.get("JOPE_RUST_BIN")
-    binary = (
-        Path(configured).expanduser()
-        if configured
-        else Path(__file__).resolve().parents[2] / "rust/target/release/jope"
-    )
+    try:
+        binary = rust_jope_binary(configured, os.environ.get("HOME"))
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
     if not binary.is_file() or not os.access(binary, os.X_OK):
         raise SystemExit(
             f"Rust jope binary is missing or not executable: {binary}. "
