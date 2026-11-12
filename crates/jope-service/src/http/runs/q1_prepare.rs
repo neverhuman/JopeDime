@@ -110,6 +110,11 @@ impl RunService {
             )));
         }
         let leaks = crate::dataset::leakage::target_leakage(&table, &spec.target);
+        let groups = crate::dataset::group_leak::id_like_columns(
+            &table.headers,
+            &spec.target,
+            &spec.ignore_columns,
+        );
         let selected = selection.kept;
         let features: Vec<_> = selected
             .iter()
@@ -219,6 +224,12 @@ impl RunService {
         for leak in &leaks {
             public.warnings.push(
                 crate::dataset::leakage::warning(leak)
+                    .map_err(|error| invalid(&error.to_string()))?,
+            );
+        }
+        for column in &groups {
+            public.warnings.push(
+                crate::dataset::group_leak::warning(column)
                     .map_err(|error| invalid(&error.to_string()))?,
             );
         }
