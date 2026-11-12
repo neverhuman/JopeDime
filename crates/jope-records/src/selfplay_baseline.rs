@@ -31,8 +31,6 @@ use std::io::Write;
 use std::path::{Component, Path};
 use std::process::{Command, Stdio};
 
-use sha2::{Digest, Sha256};
-
 use crate::pyjson::{self, Dict, Value};
 use crate::{require, Error, Result};
 
@@ -114,9 +112,7 @@ fn has_commit_object(repo: &Path, commit_sha: &str) -> bool {
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(bytes);
-    format!("{:x}", hasher.finalize())
+    crate::py::sha256_hex(bytes)
 }
 
 fn read_utf8(path: &Path) -> Result<String> {
