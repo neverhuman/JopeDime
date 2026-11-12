@@ -17,10 +17,7 @@ fn isolation() -> IsolationEvidence {
 fn work() -> VerifiedWorkUnit {
     let key = hub_key();
     let image_digest = [2; 32];
-    let image_hex = image_digest
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect::<String>();
+    let image_hex = crate::hex_digest(image_digest);
     let projection = WorkUnitProjection {
         run_id: Ulid::from(1_u128),
         project_id: "project-1".to_owned(),
