@@ -213,11 +213,7 @@ impl BundleWriter for StoreBundleWriter<'_> {
 
     fn publish(&mut self, archive: &[u8]) -> Result<Self::Published> {
         let reference = self.store.publish_blob(Cursor::new(archive))?;
-        let sha256: String = reference
-            .sha256
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect();
+        let sha256 = crate::digest::encode_hex(&reference.sha256);
         Ok(PublishedBundle {
             blob_id: format!("sha256:{sha256}"),
             sha256,

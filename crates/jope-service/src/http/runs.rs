@@ -122,13 +122,7 @@ impl ContinuationBackend {
         }
         let fit = roots
             .iter()
-            .find(|blob| {
-                blob.sha256
-                    .iter()
-                    .map(|byte| format!("{byte:02x}"))
-                    .collect::<String>()
-                    == plan.matrix_sha256
-            })
+            .find(|blob| crate::digest::encode_hex(&blob.sha256) == plan.matrix_sha256)
             .ok_or_else(|| unavailable("Original FIT blob is unavailable."))?;
         if store.verified_blob_path(fit).map_err(io)? != plan.matrix_path {
             return Err(unavailable("Original FIT path changed."));

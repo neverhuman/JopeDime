@@ -147,7 +147,7 @@ pub(super) async fn register(
         Err(_) => return internal_error(),
     };
     let identity_body = json!({
-        "sha256": digest.iter().map(|b| format!("{b:02x}")).collect::<String>(),
+        "sha256": crate::digest::encode_hex(&digest),
         "name": body.get("name").cloned().unwrap_or(Value::Null),
     });
     let identity = match RequestIdentity::new(
