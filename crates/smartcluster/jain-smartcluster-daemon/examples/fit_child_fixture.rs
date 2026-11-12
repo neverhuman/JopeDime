@@ -7,7 +7,6 @@ use nix::sys::{
     wait::{waitpid, WaitPidFlag, WaitStatus},
 };
 use nix::unistd::{getpid, Pid};
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     io::Write,
@@ -17,7 +16,7 @@ use std::{
     time::{Duration, Instant},
 };
 fn sha(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jain_smartcluster_daemon::sha256_hex(bytes)
 }
 fn save(path: &Path, value: &impl serde::Serialize) -> Result<()> {
     let parent = path.parent().context("parent")?;
