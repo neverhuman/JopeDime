@@ -12,11 +12,11 @@
 # per-row serving charge. Lower is better. jq and gawk only.
 set -euo pipefail
 # Run dirs recorded inside the xbabe4 container (/w/home/…) are mapped onto this host's evidence tree.
-export JOPE_EV=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}
+export JOPE_EV=${JOPE_CASE_OUT:-$("$(cd "$(dirname "$0")" && pwd)/absolute-home.sh")/jope-data/case_study}
 extended=""; [ "${1:-}" = "--extended" ] && extended=$2
 here=$(cd "$(dirname "$0")" && pwd); top=$(dirname "$here")
-out_root=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}
-baselines=${JOPE_CASE_BASELINES:-$HOME/jope-data/resfit-2071/baselines}
+out_root=${JOPE_CASE_OUT:-$("$here/absolute-home.sh")/jope-data/case_study}
+baselines=${JOPE_CASE_BASELINES:-$("$here/absolute-home.sh")/jope-data/resfit-2071/baselines}
 echo "| Case | Best feasible baseline (mean objective) | Feasible baselines | Our A (mean objective) | Our A extended | Our E (best-practice seeds) | Our C under business objective | A vs best baseline | A-ext vs best baseline | E vs best baseline |"
 echo "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
 for d in "$top"/[0-9][0-9]_*/; do

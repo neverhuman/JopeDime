@@ -20,7 +20,7 @@ set -euo pipefail
 die() { echo "run_case: $*" >&2; exit 2; }
 [ $# -ge 1 ] || die "usage: $0 <case_dir> [--arms A,B,C,D] [--seeds 7,11,13] [--smoke] [--out DIR]"
 case_dir=$(cd "$1" && pwd); shift
-arms=""; seeds=""; smoke=0; stamp=""; summary=1; out_root=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}
+arms=""; seeds=""; smoke=0; stamp=""; summary=1; out_root=${JOPE_CASE_OUT:-$("$(cd "$(dirname "$0")" && pwd)/absolute-home.sh")/jope-data/case_study}
 while [ $# -gt 0 ]; do
   case $1 in
     --arms) arms=$2; shift 2;;
@@ -45,7 +45,7 @@ case "$out_root" in /tmp/*|"$root"/*) die "--out must be outside /tmp and the re
 
 "$here/check_sealed.sh" "$id" || die "$id is sealed or held out; refusing"
 
-cache=${JOPE_CACHE:-$HOME/.cache/jope}/datasets/by-id/$id
+cache=${JOPE_CACHE:-$("$here/absolute-home.sh")/.cache/jope}/datasets/by-id/$id
 missing=0; for f in manifest.json meta.json train.csv test.csv; do [ -f "$cache/$f" ] || missing=1; done
 # The search verifies every catalog file before it starts (it never reads test.csv rows).
 if [ $missing = 1 ]; then

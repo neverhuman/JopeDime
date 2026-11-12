@@ -13,7 +13,7 @@
 # Nothing here feeds back into selection. Output: <case out>/test-look/<stamp>/looks.jsonl.
 set -euo pipefail
 # Run dirs recorded inside the xbabe4 container (/w/home/…) are mapped onto this host's evidence tree.
-export JOPE_EV=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}
+export JOPE_EV=${JOPE_CASE_OUT:-$("$(cd "$(dirname "$0")" && pwd)/absolute-home.sh")/jope-data/case_study}
 die() { echo "final_test: $*" >&2; exit 2; }
 [ $# -ge 1 ] || die "usage: $0 <case_dir> [--main STAMP] [--extended STAMP]"
 case_dir=$(cd "$1" && pwd); shift; main=""; extended=""
@@ -22,8 +22,8 @@ while [ $# -gt 0 ]; do
 done
 here=$(cd "$(dirname "$0")" && pwd); root=${JOPE_CASE_ROOT:-$(git -C "$here" rev-parse --show-toplevel)}
 jope=${JOPE_BIN:-$root/target/release/jope}; [ -x "$jope" ] || die "no jope binary at $jope"
-name=$(basename "$case_dir"); base=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}/$name
-registry=${JOPE_CASE_TEST_REGISTRY:-$HOME/jope-data/case_study/test-registry}
+name=$(basename "$case_dir"); base=${JOPE_CASE_OUT:-$("$here/absolute-home.sh")/jope-data/case_study}/$name
+registry=${JOPE_CASE_TEST_REGISTRY:-$("$here/absolute-home.sh")/jope-data/case_study/test-registry}
 [ -n "$main" ] || main=$(basename "$( { ls -d "$base"/2*Z 2>/dev/null || true; } | { grep -v smoke || true; } | while read -r r; do [ -f "$r/SUPERSEDED.txt" ] || ! grep -q '"arm":"A"' "$r/runs.jsonl" 2>/dev/null || echo "$r"; done | tail -1)")
 out=$base/test-look/$(date -u +%Y%m%dT%H%M%SZ); mkdir -p "$out" "$registry"
 { jq -r 'select(.status == "verified" and (.arm == "A" or .arm == "C")) | "main \(.arm) \(.rng_seed) \(.dir | sub("^.*/jope-data/case_study/"; $ENV.JOPE_EV + "/"))"' "$base/$main/runs.jsonl"

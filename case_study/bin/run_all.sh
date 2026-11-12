@@ -29,7 +29,7 @@ case $phase in
     for d in "${dirs[@]}"; do
       jq -e '.calibration.status == "calibrated"' "$d/case.json" >/dev/null && continue
       echo "$d"
-    done | xargs -r -P "$jobs" -I{} sh -c '"$1/calibrate.sh" "$2" > "$3/$(basename "$2").calibrate.log" 2>&1 && echo "calibrated $(basename "$2")" || echo "FAILED $(basename "$2") (see $3/$(basename "$2").calibrate.log)"' _ "$here" {} "${JOPE_CASE_OUT:-$HOME/jope-data/case_study}"
+    done | xargs -r -P "$jobs" -I{} sh -c '"$1/calibrate.sh" "$2" > "$3/$(basename "$2").calibrate.log" 2>&1 && echo "calibrated $(basename "$2")" || echo "FAILED $(basename "$2") (see $3/$(basename "$2").calibrate.log)"' _ "$here" {} "${JOPE_CASE_OUT:-$("$here/absolute-home.sh")/jope-data/case_study}"
     for d in "${dirs[@]}"; do "$here/render_readme.sh" "$d" >/dev/null; done ;;
   main)
     stamp=$(date -u +%Y%m%dT%H%M%SZ)
@@ -40,7 +40,7 @@ case $phase in
       for arm in ${a//,/ }; do for seed in ${s//,/ }; do echo "$d $arm $seed"; done; done
     done | xargs -r -P "$jobs" -L1 sh -c '"$1/run_case.sh" "$3" --arms "$4" --seeds "$5" --stamp "$2" --no-summary > /dev/null 2>&1; echo "done $(basename "$3") $4 s$5 rc=$?"' _ "$here" "$stamp" || true
     for d in "${dirs[@]}"; do
-      out=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}/$(basename "$d")/$stamp
+      out=${JOPE_CASE_OUT:-$("$here/absolute-home.sh")/jope-data/case_study}/$(basename "$d")/$stamp
       [ -f "$out/runs.jsonl" ] && "$here/summarize.sh" "$out" > "$out/SUMMARY.md" && echo "summary $out/SUMMARY.md"
     done ;;
   extended)

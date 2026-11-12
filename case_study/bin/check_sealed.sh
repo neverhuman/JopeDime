@@ -13,7 +13,7 @@ root=${JOPE_CASE_ROOT:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}
 manifest=$root/research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json
 panel=$root/crates/jope-datasets/releases/regression-10-v1/release.json
 jrb=${JOPE_JRB01_EXCLUSION:-/home/ubuntu/jope_plan/master/approved/JRB01_SEALED_FAMILY_EXCLUSION.json}
-catalog=${JOPE_CASE_CATALOG:-$HOME/.cache/jope/datasets/catalog/v246/catalog.jsonl}
+catalog=${JOPE_CASE_CATALOG:-$("$(cd "$(dirname "$0")" && pwd)/absolute-home.sh")/.cache/jope/datasets/catalog/v246/catalog.jsonl}
 [ "$#" -gt 0 ] || { echo "usage: $0 <dataset_id>..." >&2; exit 2; }
 [ -f "$manifest" ] || { echo "check_sealed: missing $manifest" >&2; exit 2; }
 status=0

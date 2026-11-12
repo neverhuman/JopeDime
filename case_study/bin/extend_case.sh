@@ -41,10 +41,10 @@ fitness_file=$case_dir/$(jq -r --arg k "$fitness_key" '.[$k]' "$spec")
 use_seeds=$(jq -r --arg a "$arm" '.arms[$a].seeds' "$spec")
 dl_seeds=$case_dir/$(jq -r --arg a "$arm" '.arms[$a].seeds_file // .seeds.file' "$spec")
 for f in manifest.json meta.json train.csv test.csv; do
-  [ -f "${JOPE_CACHE:-$HOME/.cache/jope}/datasets/by-id/$id/$f" ] || die "$id is not fully cached (run run_case.sh once)"
+  [ -f "${JOPE_CACHE:-$("$here/absolute-home.sh")/.cache/jope}/datasets/by-id/$id/$f" ] || die "$id is not fully cached (run run_case.sh once)"
 done
 [ -n "$stamp" ] || stamp=$(date -u +%Y%m%dT%H%M%SZ)
-out=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}/$name/extended-$stamp/$arm/s$seed
+out=${JOPE_CASE_OUT:-$("$here/absolute-home.sh")/jope-data/case_study}/$name/extended-$stamp/$arm/s$seed
 case "$out" in /tmp/*|"$root"/*) die "output must be outside /tmp and the repository";; esac
 mkdir -p "$out"; : > "$out/rounds.jsonl"
 taskset_cmd=(); [ -n "${JOPE_CASE_CPUS:-}" ] && taskset_cmd=(taskset -c "$JOPE_CASE_CPUS")

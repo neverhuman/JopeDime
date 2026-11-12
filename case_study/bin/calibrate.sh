@@ -23,7 +23,7 @@ out=$("$here/run_case.sh" "$case_dir" --arms D --seeds "$seed" --smoke | sed -n 
 [ -d "$out" ] || { echo "calibrate: no calibration output" >&2; exit 2; }
 obs=$out/D/s$seed/search/cut-0/observations.json
 [ -f "$obs" ] || { echo "calibrate: calibration run failed; see $out/D/s$seed.log" >&2; exit 2; }
-train=${JOPE_CACHE:-$HOME/.cache/jope}/datasets/by-id/$id/train.csv
+train=${JOPE_CACHE:-$("$here/absolute-home.sh")/.cache/jope}/datasets/by-id/$id/train.csv
 sigma=$(gawk -F, '{ y = $NF; n++; s += y; ss += y * y } END { m = s / n; printf "%.6g", sqrt(ss / n - m * m) }' "$train")
 medians=$(jq '[.[] | select(.status == "measured" and .origin != "remeasure")] as $m
   | ($m | map(.resources // {} | keys[]) | unique) as $keys
