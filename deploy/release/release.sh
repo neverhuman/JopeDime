@@ -347,8 +347,13 @@ EOF
 # real evidence root; init_test_mode then refuses the run unless test mode is valid. open_run_dir
 # moves TMPDIR into the run directory once that exists.
 pin_tmpdir() {
+  # Relative HOME stops here. die() is a function, so it cannot run before the export.
+  if [[ ${HOME:?HOME must be set} != /* ]]; then
+    printf 'release.sh: REFUSED: HOME must be an absolute path\n' >&2
+    exit 1
+  fi
   local base=$EVIDENCE_ROOT
-  if compgen -v JOPE_RELEASE_TEST >/dev/null; then base=${HOME:?HOME must be set}/.cache/jope-test-tmp; fi
+  if compgen -v JOPE_RELEASE_TEST >/dev/null; then base=$HOME/.cache/jope-test-tmp; fi
   export TMPDIR=$base/release-tmp
   mkdir -p -- "$base" || die "cannot create $base"
   mkdir -m 0700 -- "$TMPDIR" 2>/dev/null || [[ -d $TMPDIR ]] || die "cannot create TMPDIR $TMPDIR"

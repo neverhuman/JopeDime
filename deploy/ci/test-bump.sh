@@ -34,8 +34,13 @@ root=$(cd "$here/../.." && pwd -P)
 helper=$here/lambda-workspaces.sh
 commit=$(git -C "$root" rev-parse --verify "${1:-HEAD}^{commit}")
 # Confined like test-release.sh's RELEASE_TEST_DIR: the directory is reset below, so it must be a
-# subdirectory of $HOME/.cache/jope-test-tmp (never $HOME itself, never /tmp).
-test_parent=$(realpath -m -- "${HOME:?HOME must be set}/.cache/jope-test-tmp")
+# subdirectory of $HOME/.cache/jope-test-tmp (never $HOME itself, never /tmp). A relative HOME
+# would make realpath -m name that cache under the working directory.
+case ${HOME:?HOME must be set} in
+  /*) ;;
+  *) printf 'test-bump.sh: HOME must be an absolute path\n' >&2; exit 2 ;;
+esac
+test_parent=$(realpath -m -- "$HOME/.cache/jope-test-tmp")
 work=$(realpath -m -- "${BUMP_TEST_DIR:-$test_parent/bump-selftest}")
 case $work/ in
   "$test_parent"/?*) ;;

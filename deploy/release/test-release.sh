@@ -46,8 +46,13 @@ set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 release=$here/release.sh
-# The same root as release.sh's TEST_ROOT.
-test_parent=$(realpath -m -- "${HOME:?HOME must be set}/.cache/jope-test-tmp")
+# The same root as release.sh's TEST_ROOT. A relative HOME would make realpath -m
+# name that cache under the working directory. Empty HOME still fails ${HOME:?}.
+case ${HOME:?HOME must be set} in
+  /*) ;;
+  *) printf 'test-release.sh: HOME must be an absolute path\n' >&2; exit 2 ;;
+esac
+test_parent=$(realpath -m -- "$HOME/.cache/jope-test-tmp")
 work=$(realpath -m -- "${RELEASE_TEST_DIR:-$test_parent/release-selftest}")
 case $work/ in
   "$test_parent"/?*) ;;
