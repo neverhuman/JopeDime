@@ -3,11 +3,10 @@ use anyhow::{ensure, Context, Result};
 use jope_runtime::model_object::ModelObject;
 use jope_service::lex::{count_tokens, SourceLanguage, LEXER_VERSION};
 use serde_json::json;
-use sha2::{Digest, Sha256};
 use std::{fs, io::Write, path::Path, time::Instant};
 
 fn sha(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 fn main() -> Result<()> {

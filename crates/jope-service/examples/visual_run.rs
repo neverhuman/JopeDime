@@ -18,7 +18,6 @@ use jope_service::{
     visual_trace::begin_run_journal,
 };
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     io::{Cursor, Read},
@@ -31,7 +30,7 @@ use tower::ServiceExt;
 const TOKEN: &str = "abababababababababababababababababababababababababababababababab";
 
 fn sha(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 fn write_json(path: &Path, value: &impl serde::Serialize) -> Result<()> {
     fs::write(path, serde_json::to_vec_pretty(value)?)?;
