@@ -10,8 +10,6 @@ use rand_chacha::{
     ChaCha12Rng,
 };
 use serde_json::{json, Value};
-#[cfg(feature = "research")]
-use sha2::{Digest, Sha256};
 use std::{cell::Cell, env, fs, path::PathBuf};
 
 pub(crate) fn round_admission_fixture(causal_measurements_only: bool) {
@@ -245,7 +243,7 @@ pub(crate) fn round_admission_fixture(causal_measurements_only: bool) {
                 let tokens = f.f32("input.mm_tokens_10x32");
                 let mask = f.f32("input.mm_mask_10");
                 let program = |i: usize| RecordedProgram {
-                    program_sha256: format!("{:x}", Sha256::digest(dsls[i].as_bytes())),
+                    program_sha256: crate::digest::sha256_hex(dsls[i].as_bytes()),
                     // Record metadata is a software control, not an Engine evidence grant.
                     operator_family: "fixture_observation".into(),
                     feat412: prog[i * 412..(i + 1) * 412].to_vec(),

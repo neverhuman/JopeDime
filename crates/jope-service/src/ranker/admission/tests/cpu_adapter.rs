@@ -6,7 +6,6 @@ use super::*;
 #[test]
 #[ignore = "requires externally staged, hash-pinned RES-06 CPU bundle"]
 fn real_cpu_adapter_admission_is_sensitive_to_program_channels_and_revealed_fitness() {
-    use sha2::{Digest, Sha256};
     use std::{env, fs, path::PathBuf};
 
     const JOPE_SHA256: &str = "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef";
@@ -46,7 +45,7 @@ fn real_cpu_adapter_admission_is_sensitive_to_program_channels_and_revealed_fitn
     );
     let bytes = fs::read(root.join("jope.safetensors")).expect("read frozen CPU weights");
     assert_eq!(
-        format!("{:x}", Sha256::digest(&bytes)),
+        crate::digest::sha256_hex(&bytes),
         JOPE_SHA256,
         "frozen CPU adapter identity"
     );
