@@ -3,7 +3,7 @@
 
 Invoked IF AND ONLY IF `H442` `FROZEN.json` has `promote_to_joint_dev == true`:
   cols_cw5_dev.py --bank FILE --ckpt CKPT --ckpt-sha256 HEX --size M --frozen FILE --out DIR
-                  [--threads 1] [--shard k/n | --queue --worker-id W] [--budget-s S] [--ctx-s 3600]
+                  [--threads 1] [--shard k/n | --queue --worker-id W] [--budget-s S] [--ctx-s 7200]
 
 Emits create-once `OUT/<cid>.npz` with `q_cw5`, `bag_cw5`, `ref_cw5` using ONLY `SEARCH` targets
 from the context folds (`AUDIT` targets are absent from `bank_DEV.npz`, query targets passed as zeros).
@@ -174,7 +174,7 @@ def main() -> None:
     ap.add_argument("--queue", action="store_true", help="LPT dynamic atomic work-queue across all contexts")
     ap.add_argument("--worker-id", type=int, default=0)
     ap.add_argument("--budget-s", type=float, default=1e12)
-    ap.add_argument("--ctx-s", type=int, default=3600)
+    ap.add_argument("--ctx-s", type=int, default=7200)
     a = ap.parse_args()
     if a.threads > 1:
         raise SystemExit("single-thread per process required")

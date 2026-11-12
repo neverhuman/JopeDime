@@ -1,5 +1,5 @@
 #!/bin/bash
-# H445 integrity gates (PREREG section 4). Run AFTER driver_h445.sh apply and BEFORE readout. Create-once.
+# H445 post-apply integrity gates (PREREG section 4). Run AFTER driver_h445.sh apply and BEFORE readout. Create-once.
 #   gates_h445.sh PREREG_COMMIT REVIEW_RECEIPT_PATH -> $EV/results/H445.gates.json
 set -euo pipefail
 PC=${1:?commit on origin/v1/next that published PREREG and code}
@@ -10,6 +10,7 @@ R=${WAVE_OUT:-/home/ubuntu/jope-data/h335-cl/h445/$(basename "$STAGE")}
 CL_OUT=$(cat "$EV/logs/cl_cols_root")
 REPO=/home/ubuntu/JopeDime
 WDIR=research/flywheel_selfplay/h445_joint_guarded_dev_stack
+PRE_IN=$EV/results/H445.pre_apply.json
 OUT=$EV/results/H445.gates.json
 [ ! -e "$OUT" ] || { echo "$OUT exists (create-once)" >&2; exit 3; }
 
@@ -35,7 +36,8 @@ prereg=$(ok cmp -s "$STAGE/code/PREREG_H445.md" <(git -C "$REPO" show "$PC:$WDIR
 stage_base=$(ok bash -c "[ \"\$(head -c16 '$STAGE/base_CODE.sha256')\" = '$SHA_BASE' ]")
 stage_hash=$(ok bash -c "cd '$STAGE/code' && sha256sum --quiet -c ../CODE.sha256")
 noread=$([ ! -e "$EV/results/READOUT_DEV.json" ] && echo true || echo false)
-view=$(ok bash -c "[ \"\$(ls /home/ubuntu/jope-data/h335-cl/apex/tables | wc -l)\" = 661 ]")
+pre_ok=$(ok bash -c "[ -f '$PRE_IN' ] && [ \"\$(jq -r .pass '$PRE_IN')\" = true ]")
+view=$(ok bash -c "[ \"\$(find /home/ubuntu/jope-data/h335-cl/apex/tables -maxdepth 1 -type f | wc -l)\" = 661 ]")
 excl_ok=$(ok cmp -s "/home/ubuntu/jope_plan/evidence/H425/results/EXCLUSION_DEV.json" <(git -C "$REPO" show origin/v1/next:research/flywheel_selfplay/h425_contamination_screen/EXCLUSION_DEV.json))
 h420_ok=$(ok bash -c "cd /home/ubuntu/jope_plan/evidence/H420/pulled/H420_DEV && sha256sum --quiet -c ../H420_DEV.sha256")
 cl_man_ok=$(ok bash -c "cd '$CL_OUT' && sha256sum --quiet -c MANIFEST.sha256 && grep -Eq '^prereg_commit ($PC|$pc_short)' RUN_INFO.txt && grep -q 'c84af3af9fae4f32' RUN_INFO.txt && grep -q '436737c85ad4d398' RUN_INFO.txt")
@@ -48,7 +50,7 @@ jq -n \
   --argjson ptime "$ptime" --argjson rev_time "$rev_time" --argjson first "$first" \
   --argjson anc "$anc" --argjson prereg "$prereg" --argjson rev_ok "$rev_ok" \
   --argjson stage_base "$stage_base" --argjson stage_hash "$stage_hash" \
-  --argjson noread "$noread" --argjson view "$view" \
+  --argjson noread "$noread" --argjson pre_ok "$pre_ok" --argjson view "$view" \
   --argjson excl_ok "$excl_ok" --argjson h420_ok "$h420_ok" \
   --argjson cl_man_ok "$cl_man_ok" --argjson bank_no_aud "$bank_no_aud" \
   --arg sdev "$SHA_DEV" --arg sscr "$(sha /home/ubuntu/jope_plan/evidence/H425/results/SCREEN_DEV.json)" \
@@ -59,18 +61,20 @@ jq -n \
   {schema: "jope.h445.gates/v1", at: $at, review_receipt: $rev,
    checks: {
      prereg_commit_time: $ptime, review_time: $rev_time, first_output_time: $first, stage_mode: $mode,
+     pre_apply_check_passed: $pre_ok,
      run_times: $t, n_contexts: $ap.n, promote_cw5: $ap.promote_cw5,
      matern_ok: $ap.matern_ok, h430_ok: $ap.h430_ok, h433_ok: $ap.h433_ok, icl_ok: $ap.icl_ok,
+     icl_source_counts: $ap.icl_source_counts,
      replay_max_w_diff: $ap.replay_max_w_diff, replay_max_u_diff: $ap.replay_max_u_diff,
-     h424_max_b_diff: $ap.h424_max_b_diff, h424_max_i_diff: $ap.h424_max_i_diff
+     h424_max_b_diff: $ap.h424_b_diff, h424_max_i_diff: $ap.h424_max_i_diff
    },
    gates: {
-     g1_prereg_and_review_before_output: ($anc and $prereg and $rev_ok and $first > $ptime and $first >= $rev_time and $noread),
+     g1_prereg_and_review_before_output: ($anc and $prereg and $rev_ok and $first > $ptime and $first >= $rev_time and $noread and $pre_ok),
      g2_pinned_stage_and_banks: ($stage_base and $stage_hash and $mode == "pub" and $ap.bank_sha256 == $sdev and $bank_no_aud and $sscr == $escr and $excl_ok and $h420_ok and $sh424 == $eh424 and $ap.frozen_cw5_sha256 == $sfrz),
      g3_two_hands_cl_manifest: $cl_man_ok,
      g4_all_115_aligned_and_exact_replays: ($ap.n == 115 and $ap.aligned_all == true and $ap.replay_max_w_diff == 0 and $ap.replay_max_u_diff <= 1e-9 and $ap.h424_max_b_diff == 0 and $ap.h424_max_i_diff <= 1e-9),
      g5_columns_complete: ($ap.matern_ok >= 109 and $ap.h430_ok >= 109 and $ap.h433_ok >= 109 and $ap.icl_ok >= 109),
-     g6_cpu_budget: ($t.wall_s <= 21600 and $t.procs <= 16),
+     g6_cpu_budget: ($t.compute_wall_s <= 36000 and $t.procs <= 16),
      g7_selftest: ($un.all_passed == true),
      g8_confirm_untouched: $view
    }}

@@ -76,6 +76,57 @@ def _load_col_block(p: Path, names: tuple[str, ...], n_s: int, n_a: int) -> tupl
     return Q, BAG, REF
 
 
+def _col_file_ok(p: Path, names: tuple[str, ...]) -> bool:
+    if not p.exists():
+        return False
+    z = np.load(p, allow_pickle=False)
+    if not bool(z["ok"]):
+        return False
+    v0 = names[0]
+    if f"q_{v0}" not in z.files or f"bag_{v0}" not in z.files or f"ref_{v0}" not in z.files:
+        return False
+    n_s, n_a = int(len(z[f"q_{v0}"])), int(len(z[f"ref_{v0}"]))
+    if n_s <= 0 or n_a <= 0:
+        return False
+    for v in names:
+        for pref, exp_n in (("q_", n_s), ("bag_", n_a), ("ref_", n_a)):
+            key = f"{pref}{v}"
+            if key not in z.files:
+                return False
+            arr = np.asarray(z[key], np.float64)
+            if arr.ndim != 1 or len(arr) != exp_n or not np.all(np.isfinite(arr)):
+                return False
+    return True
+
+
+def _resolve_icl_slot(
+    promote_cw5: bool,
+    blk_cw5: tuple[np.ndarray, np.ndarray, np.ndarray] | None,
+    blk_r0_narrow: tuple[np.ndarray, np.ndarray, np.ndarray] | None,
+    width_f: int,
+    selected_recipe: str | None = "R4",
+) -> tuple[tuple[np.ndarray, np.ndarray, np.ndarray] | None, bool, bool, str]:
+    """Resolves `(blk_icl, icl_expected, icl_ok, icl_source)`.
+
+    When `promote_cw5` is true:
+      - `icl_ok` strictly counts whether the fresh CW-5 block (`blk_cw5`) succeeded (`ok=true`),
+      - if `blk_cw5` is missing or `ok=false`, falls back cleanly to `blk_r0_narrow` (`F <= 30`, `icl_source="R0"`),
+        or `None` (`icl_source="none"`) when `F > 30` or `blk_r0_narrow` is absent.
+    """
+    rec_lbl = str(selected_recipe or "R4")
+    if promote_cw5:
+        icl_expected = True
+        icl_ok = bool(blk_cw5 is not None)
+        if blk_cw5 is not None:
+            return blk_cw5, icl_expected, icl_ok, rec_lbl
+        if blk_r0_narrow is not None:
+            return blk_r0_narrow, icl_expected, icl_ok, "R0"
+        return None, icl_expected, icl_ok, "none"
+    icl_expected = bool(width_f <= WIDE_F)
+    icl_ok = bool(blk_r0_narrow is not None) if icl_expected else True
+    return blk_r0_narrow, icl_expected, icl_ok, ("R0" if blk_r0_narrow is not None else "none")
+
+
 def one_context(job) -> dict:
     (
         run_dir,
@@ -86,6 +137,7 @@ def one_context(job) -> dict:
         h424_dir,
         cw5_dir,
         promote_cw5,
+        selected_recipe,
         cid,
         bank_row,
         sxb_h417_val,
@@ -176,11 +228,12 @@ def one_context(job) -> dict:
     if promote_cw5:
         if not cw5_dir:
             raise SystemExit("promote_to_joint_dev is true but --cw5-cols was not supplied")
-        blk_icl = _load_col_block(Path(cw5_dir) / f"{cid}.npz", ("cw5",), n_s, n_a)
-        icl_expected = True
+        blk_cw5 = _load_col_block(Path(cw5_dir) / f"{cid}.npz", ("cw5",), n_s, n_a)
     else:
-        blk_icl = blk_r0_narrow
-        icl_expected = bool(width_f <= WIDE_F)
+        blk_cw5 = None
+    blk_icl, icl_expected, icl_ok, icl_source = _resolve_icl_slot(
+        promote_cw5, blk_cw5, blk_r0_narrow, width_f, selected_recipe
+    )
 
     def _run_guarded(blocks: list[tuple[np.ndarray, np.ndarray, np.ndarray] | None]) -> tuple[float, dict]:
         active = [b for b in blocks if b is not None]
@@ -220,8 +273,9 @@ def one_context(job) -> dict:
         "h430_ok": bool(blk_k is not None),
         "h433_ok": bool(blk_f is not None),
         "icl_expected": icl_expected,
-        "icl_ok": bool(blk_icl is not None) if icl_expected else True,
+        "icl_ok": icl_ok,
         "icl_used": bool(blk_icl is not None),
+        "icl_source": icl_source,
         "gp_dropped": meta_joint["gp_dropped"],
         "ext_admitted": meta_joint["ext_admitted"],
         "ext_weight_share": meta_joint["ext_weight_share"],
@@ -292,6 +346,7 @@ def cmd_apply(a) -> None:
             a.h424_cols,
             a.cw5_cols,
             promote_cw5,
+            frz.get("selected_recipe"),
             c,
             bank[c],
             sxb_h417_map[c],
@@ -302,6 +357,8 @@ def cmd_apply(a) -> None:
     with Pool(a.procs) as pool:
         res = pool.map(one_context, jobs, chunksize=1)
 
+    rec_lbl = str(frz.get("selected_recipe") or "R4")
+    src_keys = (rec_lbl, "R0", "none") if rec_lbl not in ("R0", "none") else ("R0", "none")
     out = {
         "schema": "jope.joint_dev.apply/v1",
         "panel": a.panel,
@@ -317,6 +374,7 @@ def cmd_apply(a) -> None:
         "h433_ok": int(sum(r["h433_ok"] for r in res)),
         "icl_ok": int(sum(r["icl_ok"] for r in res)),
         "icl_used_count": int(sum(r["icl_used"] for r in res)),
+        "icl_source_counts": {k: int(sum(r["icl_source"] == k for r in res)) for k in src_keys},
         "total_gp_dropped_by_guard": int(sum(r["gp_dropped"] for r in res)),
         "replay_max_w_diff": float(max(r["w_diff"] for r in res)),
         "replay_max_u_diff": float(max(r["u_diff"] for r in res)),
@@ -333,7 +391,7 @@ def cmd_apply(a) -> None:
         k: out[k]
         for k in (
             "panel", "n", "promote_cw5", "aligned_all", "matern_ok", "h430_ok", "h433_ok", "icl_ok",
-            "replay_max_w_diff", "replay_max_u_diff", "h424_max_i_diff", "cpu_s",
+            "icl_used_count", "icl_source_counts", "replay_max_w_diff", "replay_max_u_diff", "h424_max_i_diff", "cpu_s",
         )
     }), flush=True)
 
@@ -538,8 +596,51 @@ def cmd_selftest(_a) -> None:
     }
     cl = R26.clusterings(fake_screen, ["c1", "c2", "c3"])["feature"]
     assert cl["c1"] == cl["c2"] and cl["c3"] != cl["c1"]
-    print(json.dumps({"all_passed": True, "tests": 2}), flush=True)
+    # Verify B1 R4 -> R0 -> none fallback & icl_ok accounting
+    dummy_cw5 = (ext_q, ext_b, ext_b)
+    dummy_r0 = (ext_q * 0.9, ext_b * 0.9, ext_b * 0.9)
+    b1, exp1, ok1, s1 = _resolve_icl_slot(True, dummy_cw5, dummy_r0, 12, "R4")
+    assert b1 is dummy_cw5 and exp1 is True and ok1 is True and s1 == "R4"
+    b2, exp2, ok2, s2 = _resolve_icl_slot(True, None, dummy_r0, 12, "R4")
+    assert b2 is dummy_r0 and exp2 is True and ok2 is False and s2 == "R0"
+    b3, exp3, ok3, s3 = _resolve_icl_slot(True, None, None, 75, "R4")
+    assert b3 is None and exp3 is True and ok3 is False and s3 == "none"
+    print(json.dumps({"all_passed": True, "tests": 3}), flush=True)
     print("JOINT_DEV_SELFTEST_OK", flush=True)
+
+
+def cmd_precheck(a) -> None:
+    """Pre-apply column completeness check directly from column .npz files (0 AUDIT target reads)."""
+    frz = json.loads(Path(a.frozen_cw5).read_text())
+    promote_cw5 = bool(frz["promote_to_joint_dev"])
+    cfg = json.loads((Path(a.run_dir) / f"config_{a.tag}.json").read_text())
+    cids = sorted(str(c) for c in cfg["cids"])
+    if promote_cw5 and not a.cw5_cols:
+        raise SystemExit("promote_to_joint_dev is true but --cw5-cols was not supplied")
+
+    m_ok = sum(_col_file_ok(Path(a.matern_cols) / f"{c}.npz", GM.PRIMARY_NAMES) for c in cids)
+    k_ok = sum(_col_file_ok(Path(a.h430_cols) / f"{c}.npz", H430_K3) for c in cids)
+    f_ok = sum(_col_file_ok(Path(a.h433_cols) / f"{c}.npz", H433_F4) for c in cids)
+    if promote_cw5:
+        icl_ok = sum(_col_file_ok(Path(a.cw5_cols) / f"{c}.npz", ("cw5",)) for c in cids)
+    else:
+        icl_ok = sum(_col_file_ok(Path(a.h424_cols) / f"{c}.npz", ("ridgeres",)) for c in cids)
+
+    passed = bool(m_ok >= a.min_ok and k_ok >= a.min_ok and f_ok >= a.min_ok and icl_ok >= a.min_ok)
+    rep = {
+        "schema": "jope.joint_dev.precheck/v1",
+        "n_contexts": len(cids),
+        "min_ok": int(a.min_ok),
+        "promote_cw5": promote_cw5,
+        "matern_ok": int(m_ok),
+        "h430_ok": int(k_ok),
+        "h433_ok": int(f_ok),
+        "icl_ok": int(icl_ok),
+        "pass": passed,
+    }
+    print(json.dumps(rep, sort_keys=True), flush=True)
+    if not passed:
+        raise SystemExit(f"REFUSING apply: column completeness below {a.min_ok}: {rep}")
 
 
 def main() -> None:
@@ -547,6 +648,18 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
     p0 = sub.add_parser("selftest")
     p0.set_defaults(fn=cmd_selftest)
+
+    p_pre = sub.add_parser("precheck")
+    p_pre.add_argument("--run-dir", required=True)
+    p_pre.add_argument("--tag", default="TBOTH")
+    p_pre.add_argument("--matern-cols", required=True)
+    p_pre.add_argument("--h430-cols", required=True)
+    p_pre.add_argument("--h433-cols", required=True)
+    p_pre.add_argument("--h424-cols", required=True)
+    p_pre.add_argument("--frozen-cw5", required=True)
+    p_pre.add_argument("--cw5-cols", default="")
+    p_pre.add_argument("--min-ok", type=int, default=109)
+    p_pre.set_defaults(fn=cmd_precheck)
 
     p1 = sub.add_parser("apply")
     p1.add_argument("--run-dir", required=True)
