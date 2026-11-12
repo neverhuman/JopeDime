@@ -580,7 +580,7 @@ fn ensure_zig_musl_wrappers_for_arch(
         zig_abs.display()
     );
     let link_body = format!(
-        "#!/usr/bin/env bash\nset -euo pipefail\nexport ZIG_GLOBAL_CACHE_DIR=\"{}\"\nexport ZIG_LOCAL_CACHE_DIR=\"{}\"\nargs=()\nfor arg in \"$@\"; do\n  case \"$arg\" in\n    --target={rust_target}|-lgcc_s) ;;\n    */self-contained/crt1.o|*/self-contained/crti.o|*/self-contained/crtbegin.o|*/self-contained/crtend.o|*/self-contained/crtn.o) ;;\n    *) args+=(\"$arg\") ;;\n  esac\ndone\nexec \"{}\" cc -target {zig_target} \"${{args[@]}}\"\n",
+        "#!/usr/bin/env bash\nset -euo pipefail\nexport ZIG_GLOBAL_CACHE_DIR=\"{}\"\nexport ZIG_LOCAL_CACHE_DIR=\"{}\"\nargs=()\nfor arg in \"$@\"; do\n  case \"$arg\" in\n    --target={rust_target}|-lgcc_s) ;;\n    */self-contained/*crt*.o) ;;\n    *) args+=(\"$arg\") ;;\n  esac\ndone\nexec \"{}\" cc -target {zig_target} \"${{args[@]}}\"\n",
         cache_abs.display(),
         local_cache_abs.display(),
         zig_abs.display()
