@@ -1040,9 +1040,9 @@ sha256 = "71dbbce7c0c498917f4bfb57e674177c8240ce7b428decceea20dad0e3c259e9"
 
 [[evidence_exclusion]]
 path = "python/src/jope/cli.py"
-reason = "docs/internal/asm-manual/data/extension-guide/source-pins.json records SHA-256 43f1783fe8fbb4e328a8103fea2792a67f37fdebdb125aa1372dab25de0d1d55 for python/src/jope/cli.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+reason = "docs/internal/asm-manual/data/extension-guide/source-pins.json records SHA-256 8e208d17114f192fd775b3c8cd25ce8fb0837a98c5940c7b550383bfac23b3cb for python/src/jope/cli.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
 receipt = "docs/internal/asm-manual/data/extension-guide/source-pins.json"
-sha256 = "43f1783fe8fbb4e328a8103fea2792a67f37fdebdb125aa1372dab25de0d1d55"
+sha256 = "8e208d17114f192fd775b3c8cd25ce8fb0837a98c5940c7b550383bfac23b3cb"
 
 [[evidence_exclusion]]
 path = "python/src/jope/policy/train_v3.py"
