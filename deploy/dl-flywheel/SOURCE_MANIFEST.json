@@ -5,28 +5,28 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "7e655613baf48a38bab612f9d1bdcff005ff6e9505e244c5a387c0eede5b692a"
+      "sha256": "5db9d59a5cebe334461b5d285a6c0eb9b385c49751a67e3623ae9ff5815d641a"
     },
     {
       "normalization": " PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Final PR395 additive exact NPZ target/vendor tamper control and retained upstream benchmark discovery; no prior mapping removed or floor reduced. PR414 C17 native integration: owning fast emitter lane adds required native C17 compiler contracts. All source memberships, original origin hashes and unrelated rows remain unchanged. Phase 7 flywheel self-play research: additive python-family registration and research source classifications; all prior entries and dispositions retained.",
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "ff0fa167771c394e9050455c588c967410d1e5b0a03398c3b973fcab1c5bc1df"
+      "sha256": "f29eaf9eecce4b33bf7ffdc8dca81d51fcdb0046fda13e8fc38c38c5259dee2e"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
       "origin": "Codex heartbeat20261009-0616 scoped source update from PR277@73bd771d907e9007024b2783d93a1174c205f7ec",
       "origin_sha256": "00cdd7774f94c7f500b290f2751bcdbf71926930e149eaf6138d43e240706eb4",
       "path": "deploy/dl-flywheel/README.md",
-      "sha256": "427ae589179fe166cc99dcb264bb19f48db9c169b0397563bbd7c4b47021defe"
+      "sha256": "111411b8744abf44a70c7ea6182451c3958a4f3bba2d70795e7638b88dba7f43"
     },
     {
       "normalization": "H176 adds four exact-hash diagnostic research-source role records; no existing source role changed. Bounded actual-result custody summary or one additive research source classification; no test or live execution by assembler. PR283 review B2: re-pinned bytes/sha of run_fresh32_offline.py and run_telemetry_offline.py after the fixture wall-clock shift. G-S3GP additive executable-cache and lifecycle registration. CX-OP: additive C4/S7/S8 registrations/CPU fixture invocation; prior entries unchanged. CX-KV: additive own KV/trie fixture/source registration and isolated Python CI invocation. Additive portable standalone79/dashboard37 wiring from exact main edf36182b3fb3254afd244c9be1f1f6f274b9e0c; foreign rows retained. No full928 run or runtime authority. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only. v2.0.0 learner source: re-pinned after adding 46 research source classifications; no existing item changed. W03 CX-DUR stacked repair/registration at owner20:20; prior source/fixture IDs preserved. CX-OP GB-03 archive/frozen-round library and CPU synthetic actor fixtures; preserve all prior identities and foreign rows. Phase 7 flywheel self-play research: additive python-family registration and research source classifications; all prior entries and dispositions retained. H179 additive data-free ensemble research test/source registrations; all prior source roles and test dispositions retained. H179 additive data-free ensemble research source registrations; all prior source roles retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "4ce3daaeadeff8063e8b7d49ee560948c7eace2029ce0d8f181d10193b266f23"
+      "sha256": "2319ed83c47941cbf578e8540c443b1699b1e558c069a4794d7dab3dbd67f8fd"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -457,11 +457,11 @@
       "sha256": "3b4c35c7519ebbc1b2f0ba9256c5be77124413e9d9630bdedc31dce26e633429"
     },
     {
+      "normalization": "P28: extend continuous dltrain namespace to the frozen byte-identical dl-trainonly canonical package; automaton/common/oracle resolve there and custody bytes remain unchanged.",
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/__init__.py",
       "origin_sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c",
       "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/__init__.py",
-      "sha256": "834818386c8ce091258b8f6baae783d5e0d9f84abd28b8b27ed2ca74610cd827",
-      "normalization": "P28: extend continuous dltrain namespace to the frozen byte-identical dl-trainonly canonical package; automaton/common/oracle resolve there and custody bytes remain unchanged."
+      "sha256": "834818386c8ce091258b8f6baae783d5e0d9f84abd28b8b27ed2ca74610cd827"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/dsl_tokenizer.py",
@@ -3715,7 +3715,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/test_pool.py",
       "origin_sha256": "8aeb5742912e3b22f1b83946ac0c71a071b1095332847e2c61be0cea5bd42b6f",
       "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py",
-      "sha256": "8aeb5742912e3b22f1b83946ac0c71a071b1095332847e2c61be0cea5bd42b6f"
+      "sha256": "972a8e86c87e49d9b2b9db48bc3312c70ac6d92c53b9f26412d4b5cca4ed3175"
     },
     {
       "origin": "work/heartbeat-20261009-0616/native-v4/historical_custody.py",
@@ -3724,11 +3724,11 @@
       "sha256": "fecb4075b06e60fb118c765282ea08e6a03dd1343934318443eebadf431eac7c"
     },
     {
+      "normalization": "P28: extend the hpc_verified_v4 package namespace to the canonical deploy/dl-flywheel/jope_flywheel implementation; package-specific modules remain local.",
       "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/__init__.py",
       "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/__init__.py",
-      "sha256": "4aec2eee1b90f261f9ebf50791bb7da669e44a2fb815f009f0e49ced687c08f8",
-      "normalization": "P28: extend the hpc_verified_v4 package namespace to the canonical deploy/dl-flywheel/jope_flywheel implementation; package-specific modules remain local."
+      "sha256": "4aec2eee1b90f261f9ebf50791bb7da669e44a2fb815f009f0e49ced687c08f8"
     },
     {
       "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/program_inputs.py",
@@ -3798,11 +3798,11 @@
       "sha256": "bcc6888e4ee22dac35907f1c6a2f5d55bca36d9c82ee452637fa232a82d169d8"
     },
     {
+      "normalization": "Import CachedS3Library and CachedNativeTools from the unpinned canonical pipelines/hpc implementation; preserve hpc_verified_v5 and prepared evidence-pinned copies.",
       "origin": "work/heartbeat-20261009-0616/native-v4/verified_cache.py",
       "origin_sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/verified_cache.py",
-      "sha256": "56731d243f7a0d7ec344a7565c393da8a0578218d365d82e3bc8f8f01fa5d3b3",
-      "normalization": "Import CachedS3Library and CachedNativeTools from the unpinned canonical pipelines/hpc implementation; preserve hpc_verified_v5 and prepared evidence-pinned copies."
+      "sha256": "56731d243f7a0d7ec344a7565c393da8a0578218d365d82e3bc8f8f01fa5d3b3"
     },
     {
       "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner.",
@@ -4176,11 +4176,11 @@
       "sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288"
     },
     {
+      "normalization": "Append canonical frozen dltrain source after continuous shared modules for removed byte-identical duplicates; native modules retain precedence.",
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/__init__.py",
       "origin_sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c",
       "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/__init__.py",
-      "sha256": "e92a6e0cebb819571f980bf05840f7e9c719d20702d74616f19ec68c4a34dfa6",
-      "normalization": "Append canonical frozen dltrain source after continuous shared modules for removed byte-identical duplicates; native modules retain precedence."
+      "sha256": "e92a6e0cebb819571f980bf05840f7e9c719d20702d74616f19ec68c4a34dfa6"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/native_corpus_authority.py",
@@ -5011,7 +5011,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/callback-hygiene-correction-review/candidate/files/deploy/dl-flywheel/test_callback_targets.py",
       "origin_sha256": "7420794391bc0ba7a1a7b7e1e19fccb7dc91bee71d5e2f79c9722de6b363fe5c",
       "path": "deploy/dl-flywheel/test_callback_targets.py",
-      "sha256": "7420794391bc0ba7a1a7b7e1e19fccb7dc91bee71d5e2f79c9722de6b363fe5c"
+      "sha256": "ce493d5d98ad46228aa273e6da5cb01ee6d8f9b3ea3464b4409b09f07a2843c2"
     },
     {
       "origin": "work/flywheel-release-20261009/kumos-component-publication.json",
@@ -5029,7 +5029,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_batch_stream.py",
       "origin_sha256": "efc61b102e921d356bd89f991081fa52bbcb6f91c372d9c1bde7b65a7993608b",
       "path": "deploy/dl-flywheel/tests/test_batch_stream.py",
-      "sha256": "efc61b102e921d356bd89f991081fa52bbcb6f91c372d9c1bde7b65a7993608b"
+      "sha256": "36e66aa10c0d3def6ed6427628301ea8b76b3dc33dfd4f8281f730786c34d4a6"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_evergreen.py",
@@ -5158,11 +5158,11 @@
       "sha256": "52d851f0127ebf77d782be17359c3fb3cb4b750aeaf58285cab379f52860c23e"
     },
     {
+      "normalization": "P28: update source-owner assertion for shared automaton/common/oracle while preserving every behavior assertion.",
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/test_neural_decode.py",
       "origin_sha256": "f059ba3f4355295debf29515989c41d9ff89cd8553dae45dba81a268dcb8d2d3",
       "path": "deploy/dl-flywheel/tests_native/test_neural_decode.py",
-      "sha256": "4a2ed1286972944622a63c9ad318ec4671b72bf99389a4c4d5059e23adc70248",
-      "normalization": "P28: update source-owner assertion for shared automaton/common/oracle while preserving every behavior assertion."
+      "sha256": "4a2ed1286972944622a63c9ad318ec4671b72bf99389a4c4d5059e23adc70248"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/test_neural_native_batch.py",
@@ -5213,14 +5213,14 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "5f1978fc420a285724f4cf632848bb98de1258d04f84d08354ea22b6952cd158"
+      "sha256": "7422ae1ebc739377b4aadb4c214ab2c11582753de89b38ee6bf49c1fd36ea74e"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. PR412 TypeScript integration: exact classifier adds the TypeScript workflow to the Rust gate; refresh only its current adapter declaration and enclosing source pins. Original origin hashes, every fixture/module byte, source membership and refusal guards are retained. Go integration after merged TypeScript: matching owned source pins; all prior origins/dispositions retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/ci/ci-plan.py",
       "origin_sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8",
       "path": "deploy/ci/ci-plan.py",
-      "sha256": "ee0d529c03382db5a71fa948eab488e0d1da5700ba5b99051a9b3ba702181099"
+      "sha256": "39aa05f1ec7ae94d091bb9481cb66f9db430a779fd6396e49f046e9b777a3883"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -5339,7 +5339,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/revision2/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
       "origin_sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
-      "sha256": "5c975b370cce91e835662376beda8662103efe808232fd654ce05a79cc7181e6"
+      "sha256": "71a8ea5fd582332602402bb8d33dea3afbbdb36c9f494b9bb85e6e6630c9cbf1"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -5367,7 +5367,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
       "origin_sha256": "2dbe7d79921aa18bd182e2eec2ab3bc62646d2a99b30816be7b8b7140b9a669f",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
-      "sha256": "96456dfebc037176e1eb0ac418e529d9a49d32ac4e46260fe91676c516daad1b"
+      "sha256": "769dfd2339ab6680782be5c0320b339e2eba6392cbc244ac019cbad5a836092a"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -6659,28 +6659,28 @@
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/cost.rs",
       "origin_sha256": "209b216fe8ffcbacf9ad151c97e25b7e26f28da71545226aa3998f6854b87f97",
       "path": "crates/jope-learning/src/custody/cost.rs",
-      "sha256": "209b216fe8ffcbacf9ad151c97e25b7e26f28da71545226aa3998f6854b87f97"
+      "sha256": "1482296fb4de5722f9fea3e92c9c15bfc4ee0a64b42682fc07faa98d9dc640e1"
     },
     {
       "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures. Preserve an abort witness when a newly created directory parent fsync fails; never write into an existing unowned directory.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/mod.rs",
       "origin_sha256": "189a2b81d33c57fdc700e1ac076295ce1728de3f959a83852b6daff3ea703e91",
       "path": "crates/jope-learning/src/custody/mod.rs",
-      "sha256": "a9598adcf9ffa38be99c3b7bacfc9867e9af79fb956f92eb67c81d572bf601f5"
+      "sha256": "bfd232ea0744d6a27c7dac3e18edb91e8e6ccf41905994c45d289278e184dde6"
     },
     {
       "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/src/custody/reader.rs",
       "origin_sha256": "6e520814bd6eca2adf1cd8df9236163623c12e12581b1d280229673ea9c5c9ae",
       "path": "crates/jope-learning/src/custody/reader.rs",
-      "sha256": "6e520814bd6eca2adf1cd8df9236163623c12e12581b1d280229673ea9c5c9ae"
+      "sha256": "133e891466e110176e56bb6dcf57144f9e481a2cf15e12d84debef0644732314"
     },
     {
       "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json. Also fsync the parent of each newly created custody directory; test both root/pack entry failures. J24 F1: checked TAR member/block/record layout plus bounded PAX allowance; size-varied/native GNU regressions. Original custody fixture bytes unchanged.",
       "origin": "native:GB02-custody-v2/crates/jope-learning/tests/custody.rs",
       "origin_sha256": "a3edfe254382d5beb09d5d646884050faef0b4a92234a3d6c9f7dada647892c6",
       "path": "crates/jope-learning/tests/custody.rs",
-      "sha256": "dd5e2ad0f05a0784bff10315baa792d3c421feca30fd8d76424cc22d6300effe"
+      "sha256": "1680394af2f85c68684b7fc6965c9d3162d57aef367c39724c03010e9737f560"
     },
     {
       "normalization": "Native Rust custody port or preserved portable fixture. Research/source-only; no live retention/reader/storage/scoring authority. Original Python salvage8 source identities stay bound by fixture-index.json.",
