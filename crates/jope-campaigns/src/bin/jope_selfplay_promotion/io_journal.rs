@@ -8,7 +8,7 @@ pub(super) fn now_ms() -> i64 {
 }
 
 pub(super) fn sha256_bytes(data: &[u8]) -> String {
-    hex::encode(Sha256::digest(data))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(data)
 }
 
 pub(super) fn sha256_text(text: &str) -> String {

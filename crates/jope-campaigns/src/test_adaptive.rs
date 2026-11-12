@@ -876,7 +876,7 @@ fn validate_run_id(run_id: &str) -> Result<()> {
 }
 
 fn sha256_bytes(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 /// Streamed (bounded memory); the same digest as hashing the whole file.

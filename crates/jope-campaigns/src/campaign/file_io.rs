@@ -163,8 +163,7 @@ pub(crate) fn canonical_json<T: Serialize>(value: &T) -> Result<Vec<u8>> {
 }
 
 pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
-    let digest = Sha256::digest(bytes);
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 pub(crate) fn sha256_file(path: &Path) -> Result<String> {

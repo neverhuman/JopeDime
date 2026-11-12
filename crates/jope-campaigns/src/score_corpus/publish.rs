@@ -277,7 +277,7 @@ pub(super) fn validate_sha256(value: &str, label: &str) -> Result<()> {
 }
 
 pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 fn canonical_json(value: &Value) -> Result<Vec<u8>> {

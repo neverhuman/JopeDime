@@ -1,5 +1,4 @@
 use super::*;
-use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub(crate) fn numeric_raw_table(rows: &[Vec<f64>]) -> Result<feat_math::RawTable> {
@@ -66,7 +65,7 @@ pub(crate) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
 }
 
 pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 /// Streamed (bounded memory); the same digest as hashing the whole file.

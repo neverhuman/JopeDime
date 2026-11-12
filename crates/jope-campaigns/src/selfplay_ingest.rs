@@ -150,7 +150,7 @@ pub fn sha256_file(path: &Path) -> Result<String> {
 }
 
 fn sha256_bytes(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 fn read_json(path: &Path) -> Result<Value> {
