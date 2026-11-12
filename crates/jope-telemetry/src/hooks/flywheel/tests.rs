@@ -92,6 +92,20 @@ fn round_report_requires_coverage_and_emits_native_rates_and_na() {
     );
 }
 #[test]
+fn a_relative_home_does_not_choose_the_fused_status_file() {
+    assert_eq!(
+        fused_status_path("/users/alice").unwrap(),
+        PathBuf::from("/users/alice/jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md")
+    );
+    assert!(
+        fused_status_path("relative/home").is_err(),
+        "{}",
+        fused_status_path("relative/home").unwrap().display()
+    );
+    assert!(fused_status_path("").is_err());
+}
+
+#[test]
 fn scientific_receipt_floats_round_trip_bit_exactly() {
     for original in [
         1.1073772627425547_f64,
