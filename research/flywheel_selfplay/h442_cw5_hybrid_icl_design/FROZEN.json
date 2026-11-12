@@ -1,0 +1,10 @@
+{
+  "best_design_recipe": "R4",
+  "ckpt_sha256": "e3c8fd9972ce0c1684630ff06b159e950f6f498c4461d0454e0c6a6f44d38dd7",
+  "clean88_clipped_gain_vs_R0": 0.04307572090211322,
+  "clean88_signflip_p": 0.014911651611328125,
+  "clean88_unclipped_gain_vs_R0": 0.09405061080030276,
+  "promote_to_joint_dev": true,
+  "schema": "jope.cw5.frozen/v1",
+  "selected_recipe": "R4"
+}
