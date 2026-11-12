@@ -8,7 +8,6 @@ use feat_math::{genome::GenomeIr, heads::FittedHead, model::Model};
 use jope_api::Language;
 use jope_runtime::{fitted::Header, model_object::ModelObject};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeMap,
     io::{Cursor, Write},
@@ -441,16 +440,7 @@ fn is_sha256(value: &str) -> bool {
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    const HEX: &[u8; 16] = b"0123456789abcdef";
-    Sha256::digest(bytes)
-        .iter()
-        .flat_map(|byte| {
-            [
-                HEX[(byte >> 4) as usize] as char,
-                HEX[(byte & 0x0f) as usize] as char,
-            ]
-        })
-        .collect()
+    crate::digest::sha256_hex(bytes)
 }
 
 #[cfg(test)]

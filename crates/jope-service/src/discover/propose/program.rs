@@ -1,7 +1,7 @@
 use super::*;
 
 pub(super) fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::digest::sha256_hex(bytes)
 }
 
 pub(super) fn hash_valid(value: &str) -> bool {

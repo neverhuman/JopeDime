@@ -23,7 +23,6 @@ use jope_api::{
 use jope_runtime::model_object::{Manifest, ModelObject};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, sync::Arc};
 
 const MODEL_BYTES: u64 = 16 * 1024 * 1024;
@@ -59,7 +58,7 @@ fn response(e: &Problem) -> Response {
     problem(e.code, &e.detail, &e.remedy, e.field.as_deref())
 }
 fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::digest::sha256_hex(bytes)
 }
 
 fn object(state: &DatasetState, id: &ArtifactId) -> Result<(ModelObject, Record)> {
