@@ -57,6 +57,17 @@ fn shuffled<T>(xs: &mut [T], seed: &mut u64) {
     }
 }
 
+/// `$HOME/jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md` when `HOME` is absolute.
+/// An empty or relative `HOME` is refused.
+fn fused_status_path(home: &str) -> Result<PathBuf> {
+    let path = PathBuf::from(home);
+    ensure!(
+        path.is_absolute(),
+        "HOME is not an absolute path; the fused status file cannot be located"
+    );
+    Ok(path.join("jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"))
+}
+
 fn atomic_json(path: &Path, value: &Value) -> Result<()> {
     let temporary = path.with_extension("json.new");
     let mut file = fs::File::create(&temporary)?;
@@ -156,8 +167,7 @@ impl FullFlywheel {
                 .collect(),
             output,
             history,
-            status: Path::new(&std::env::var("HOME")?)
-                .join("jope_plan/ns/FLYWHEEL_GP_FUSED_STATUS.md"),
+            status: fused_status_path(&std::env::var("HOME")?)?,
             start: Instant::now(),
             pack_start: Instant::now(),
             pack_seconds: 0.,
