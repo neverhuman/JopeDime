@@ -415,8 +415,34 @@ fn cloudformation_cell_template_and_deterministic_packager_invariants() {
     );
     assert!(tpl["Outputs"].get("PublicEdgeEndpointUrl").is_some());
 
-    // Public clouds discovery manifest resolution + P-256 KEK validation
+    // Multi-region CloudFormation safety: every IAM RoleName and S3 BucketName MUST embed
+    // `${AWS::Region}` so deploying `jopedime-carbon-prod` across multiple regions never collides!
+    for (logical_id, res_val) in resources {
+        if res_val["Type"] == "AWS::IAM::Role" {
+            let role_sub = res_val["Properties"]["RoleName"]["Fn::Sub"]
+                .as_str()
+                .expect("IAM RoleName must use Fn::Sub");
+            assert!(
+                role_sub.contains("${AWS::Region}"),
+                "IAM Role {logical_id} RoleName '{role_sub}' must include ${{AWS::Region}} for multi-region deploys"
+            );
+        }
+        if res_val["Type"] == "AWS::S3::Bucket" {
+            let bkt_sub = res_val["Properties"]["BucketName"]["Fn::Sub"]
+                .as_str()
+                .expect("S3 BucketName must use Fn::Sub");
+            assert!(
+                bkt_sub.contains("${AWS::Region}"),
+                "S3 Bucket {logical_id} BucketName '{bkt_sub}' must include ${{AWS::Region}}"
+            );
+        }
+    }
+    assert!(resources.contains_key("EdgePublicHttp5xxAlarm"));
+    assert!(resources.contains_key("EvalThrottleAlarm"));
+
+    // Public clouds discovery manifest resolution + P-256 KEK validation (v1 + v2 multi-region)
     let kek = jope_carbon::CarbonEngineKek::generate().unwrap();
+    let kek_west = jope_carbon::CarbonEngineKek::generate().unwrap();
     let mut clouds_map = std::collections::BTreeMap::new();
     clouds_map.insert(
         "dev".to_owned(),
@@ -426,10 +452,26 @@ fn cloudformation_cell_template_and_deterministic_packager_invariants() {
             public_endpoint: "https://example-dev.execute-api.us-east-2.amazonaws.com".to_owned(),
             engine_kek_pubkey_b64: Some(kek.pubkey_b64()),
             release_id: Some("da0ae4a7c0ffee".to_owned()),
+            regions: vec![
+                jope_carbon::CarbonCloudRegionPin {
+                    region: "us-east-2".to_owned(),
+                    public_endpoint: "https://example-dev.execute-api.us-east-2.amazonaws.com"
+                        .to_owned(),
+                    engine_kek_pubkey_b64: Some(kek.pubkey_b64()),
+                    release_id: Some("da0ae4a7c0ffee".to_owned()),
+                },
+                jope_carbon::CarbonCloudRegionPin {
+                    region: "us-west-2".to_owned(),
+                    public_endpoint: "https://example-dev.execute-api.us-west-2.amazonaws.com"
+                        .to_owned(),
+                    engine_kek_pubkey_b64: Some(kek_west.pubkey_b64()),
+                    release_id: Some("da0ae4a7c0ffee".to_owned()),
+                },
+            ],
         },
     );
     let clouds_doc = jope_carbon::CarbonPublicCloudsManifest {
-        schema: "carbon.clouds/v1".to_owned(),
+        schema: "jope-carbon-clouds-v2".to_owned(),
         generated_epoch_ms: 1794400000000,
         clouds: clouds_map,
     };
@@ -439,9 +481,23 @@ fn cloudformation_cell_template_and_deterministic_packager_invariants() {
     let resolved_dev =
         jope_carbon::resolve_public_cloud_endpoint("dev", manifest_file.to_str()).unwrap();
     assert_eq!(resolved_dev.region, "us-east-2");
+    assert_eq!(resolved_dev.candidate_endpoints().len(), 2);
+    assert_eq!(resolved_dev.pinned_keks_by_endpoint().len(), 2);
     assert!(jope_carbon::resolve_public_cloud_endpoint("prod", manifest_file.to_str()).is_err());
 
+    // Deterministic single-binary `.tar.gz` archive check
+    let tgz_a =
+        jope_carbon::build_deterministic_single_bin_targz("carbon", b"\x7fELFtest").unwrap();
+    let tgz_b =
+        jope_carbon::build_deterministic_single_bin_targz("carbon", b"\x7fELFtest").unwrap();
+    assert_eq!(tgz_a, tgz_b);
+    assert!(jope_carbon::build_deterministic_single_bin_targz("../bad", b"x").is_err());
+
     // R882ModelLayer MUST attach strictly to EngineFunction, never EdgeFunction or EvalFunction
+    assert_eq!(
+        resources["EngineFunction"]["Properties"]["Timeout"], 900,
+        "EngineFunction Timeout must be 900s (15 min) for high/ultra search legs"
+    );
     assert!(resources["EngineFunction"]["Properties"]
         .get("Layers")
         .is_some());
@@ -690,4 +746,91 @@ fn capability_claims_unverified_decode_credentials_store_and_installer_guards() 
         Some(v) => std::env::set_var("CARBON_CONFIG_DIR", v),
         None => std::env::remove_var("CARBON_CONFIG_DIR"),
     }
+
+    // Verify registered Free capability token minting (30-day TTL, label normalization & validation)
+    let reg_labeled = verifier
+        .mint_registered_free(
+            Some("Alice_Research-01"),
+            1_794_400_000,
+            Some("kek_pub_demo".to_owned()),
+        )
+        .expect("mint labeled registered free token");
+    assert_eq!(reg_labeled.tier, CarbonTierWire::Free);
+    assert_eq!(reg_labeled.expires_epoch_secs.0, 1_794_400_000 + 2_592_000);
+    assert!(
+        reg_labeled.tenant_id.starts_with("free_alice_research_01_"),
+        "unexpected labeled tenant_id: {}",
+        reg_labeled.tenant_id
+    );
+    let bearer_hdr = format!("Bearer {}", reg_labeled.capability_token);
+    let reg_claims = verifier
+        .verify_bearer_header(Some(&bearer_hdr), 1_794_400_001)
+        .expect("verify registered free token");
+    assert_eq!(reg_claims.tier, CarbonTierWire::Free);
+    assert!(!reg_claims.admin);
+
+    let reg_unlabeled = verifier
+        .mint_registered_free(None, 1_794_400_000, None)
+        .expect("mint unlabeled registered free token");
+    assert!(reg_unlabeled.tenant_id.starts_with("free_"));
+
+    assert!(verifier
+        .mint_registered_free(Some("bad space"), 1_794_400_000, None)
+        .is_err());
+    assert!(verifier
+        .mint_registered_free(Some("../../etc"), 1_794_400_000, None)
+        .is_err());
+    assert!(verifier
+        .mint_registered_free(Some(&"a".repeat(25)), 1_794_400_000, None)
+        .is_err());
+
+    // Verify planner per-dataset cost breakdown across all 4 efforts (`fast` < `medium` < `high` < `ultra`)
+    let mut prev_usd = 0.0;
+    for effort in [
+        jope_carbon::CarbonEffortTier::Fast,
+        jope_carbon::CarbonEffortTier::Medium,
+        jope_carbon::CarbonEffortTier::High,
+        jope_carbon::CarbonEffortTier::Ultra,
+    ] {
+        let decision = jope_carbon::plan_carbon_execution(&jope_carbon::CarbonPlanInput {
+            product_tier: jope_carbon::CarbonProductTier::Pro,
+            effort,
+            total_rows: 1_600,
+            fit_rows: 1_280,
+            features: 11,
+            est_ms_per_candidate_1vcpu: 28.0,
+        })
+        .expect("plan Pro execution");
+        let usd = decision.full_dataset_cost_estimate.total_estimated_usd;
+        assert!(
+            usd > prev_usd,
+            "expected monotonic per-dataset cost across effort {effort:?}: {usd} vs {prev_usd}"
+        );
+        assert!(decision
+            .full_dataset_cost_estimate
+            .runs_per_1_usd
+            .is_some_and(|r| r > 0.0 && r.is_finite()));
+        prev_usd = usd;
+    }
+
+    // Enterprise VPC self-hosted mode reports $0.00 AWS cloud fee and `runs_per_1_usd: None` (valid JSON)
+    let vpc_decision = jope_carbon::plan_carbon_execution(&jope_carbon::CarbonPlanInput {
+        product_tier: jope_carbon::CarbonProductTier::no_limit(),
+        effort: jope_carbon::CarbonEffortTier::High,
+        total_rows: 50_000,
+        fit_rows: 40_000,
+        features: 24,
+        est_ms_per_candidate_1vcpu: 35.0,
+    })
+    .expect("plan Enterprise VPC execution");
+    assert_eq!(
+        vpc_decision.full_dataset_cost_estimate.total_estimated_usd,
+        0.0
+    );
+    assert!(vpc_decision
+        .full_dataset_cost_estimate
+        .runs_per_1_usd
+        .is_none());
+    let serialized = serde_json::to_string(&vpc_decision).expect("serialize CarbonPlanDecision");
+    assert!(serialized.contains("\"full_dataset_cost_estimate\""));
 }

@@ -40,8 +40,9 @@ pub use cells::{
 };
 #[cfg(feature = "engine")]
 pub use cli::deploy::{
-    build_deterministic_zip_bytes, execute_carbon_deploy, execute_carbon_package,
-    execute_carbon_rollback, expand_region_targets, mint_capability_token_from_vault,
+    build_deterministic_single_bin_targz, build_deterministic_zip_bytes, execute_carbon_deploy,
+    execute_carbon_package, execute_carbon_rollback, execute_carbon_rollback_multi,
+    expand_region_targets, generate_public_clouds_manifest, mint_capability_token_from_vault,
     resolve_cell_stack_endpoint, resolve_cell_stack_public_endpoint,
     synthesize_cell_template_for_release, verify_arm64_lambda_binary, CarbonDeployOptions,
     CarbonDeployReport, CarbonLiveAliasVersions, CarbonPackageOptions, CarbonRegionDeployReceipt,
@@ -54,8 +55,8 @@ pub use cli::{
         load_stored_cloud_token, remove_stored_cloud_token, resolve_public_cloud_endpoint,
         save_stored_cloud_token, send_raw_edge_http, send_raw_put_url,
         verified_absolute_jopedime_config_dir, CarbonClientPreparedDataset, CarbonCloudCellEntry,
-        CarbonProbedEndpoint, CarbonPublicCloudsManifest, CarbonStoredCloudCredential,
-        CarbonThinClient, DEFAULT_PUBLIC_CLOUDS_URL,
+        CarbonCloudRegionPin, CarbonProbedEndpoint, CarbonPublicCloudsManifest,
+        CarbonStoredCloudCredential, CarbonThinClient, DEFAULT_PUBLIC_CLOUDS_URL,
     },
     redteam::{
         execute_carbon_redteam_suite, render_redteam_markdown, CarbonRedTeamSuiteReport,
@@ -77,9 +78,12 @@ pub use modes::serve::{
 };
 pub use modes::{
     planner::{
-        estimate_working_set_mb, plan_carbon_execution, CarbonExecutionMode, CarbonPlanDecision,
-        CarbonPlanInput, EvalMemoryClass, ENGINE_MEMORY_MB, LAMBDA_ARM64_USD_PER_GB_SEC,
-        LAMBDA_USD_PER_INVOCATION,
+        compute_live_run_cost, estimate_working_set_mb, plan_carbon_execution, CarbonExecutionMode,
+        CarbonIngressCostMode, CarbonLiveCostInputs, CarbonPlanDecision, CarbonPlanInput,
+        CarbonRunCostBreakdown, EvalMemoryClass, APIGW_HTTP_API_USD_PER_UNIT,
+        AWS_INTERNET_EGRESS_USD_PER_GB, DEPLOYED_EVAL_MEMORY_MB, EDGE_MEMORY_MB, ENGINE_MEMORY_MB,
+        LAMBDA_ARM64_USD_PER_GB_SEC, LAMBDA_USD_PER_INVOCATION, S3_STANDARD_GET_USD_PER_REQ,
+        S3_STANDARD_PUT_LIST_USD_PER_REQ, S3_STANDARD_USD_PER_GB_MONTH,
     },
     spot_advisor::{
         evaluate_spot_hybrid_gates, MonthlyWindowMetrics, SpotAdvisorRecommendation,

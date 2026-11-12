@@ -33,7 +33,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "rust",
             Regex::new(&format!(
-                r"^(crates/|examples/go/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|\.github/workflows/(go|typescript)\.yml$|deploy/ci/|deploy/systemd/|deploy/appliance/|models/bundles/|docs/release/signing\.pub$)"
+                r"^(crates/|web/browser-predict/|examples/go/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|\.github/workflows/(go|typescript)\.yml$|deploy/ci/|deploy/systemd/|deploy/appliance/|deploy/carbon/|models/bundles/|docs/release/signing\.pub$)"
             ))
             .expect("valid rust regex"),
         ),
@@ -61,7 +61,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "e2e",
             Regex::new(&format!(
-                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|docs/release/signing\.pub$|{common})"
+                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist|jope-carbon)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|deploy/carbon/|docs/release/signing\.pub$|{common})"
             ))
             .expect("valid e2e regex"),
         ),
@@ -286,6 +286,10 @@ mod tests {
             "examples/goes/main.go",
             ".github/workflows/go.yml",
             "crates/feat-math/src/lib.rs",
+            "crates/jope-carbon/src/lib.rs",
+            "deploy/carbon/install.sh",
+            "deploy/carbon/cloudformation-cell.json",
+            "web/browser-predict/index.js",
             "deploy/ci/aggregate.py",
             ".github/workflows/ci.yml",
             ".github/workflows/typescript.yml",
@@ -293,6 +297,17 @@ mod tests {
         for path in ["examples/go/main.go", ".github/workflows/go.yml"] {
             let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
             assert!(lanes["rust-check"] && lanes["rust-test"], "{path}");
+        }
+        for path in [
+            "crates/jope-carbon/src/lib.rs",
+            "deploy/carbon/install.sh",
+            "deploy/carbon/cloudformation-cell.json",
+        ] {
+            let (lanes, _) = classify(&[path.to_owned()], "pull_request").unwrap();
+            assert!(
+                lanes["rust-check"] && lanes["rust-test"] && lanes["e2e-smoke"],
+                "{path} must trigger rust-check, rust-test, and e2e-smoke"
+            );
         }
         let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../deploy/ci/ci-plan.py");
         let output = Command::new("python3")

@@ -2,21 +2,22 @@
 # Carbon Zero-Knowledge Serverless CLI Installer (POSIX sh: Ubuntu, Debian, Alpine/musl).
 #
 # One-line install:
-#   curl -fsSL https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.2-live.1/install.sh | sh
+#   curl -fsSL https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.3-live.1/install.sh | sh
 #
 # With options:
 #   curl -fsSL .../install.sh | sh -s -- --bin-dir /usr/local/bin --skip-ping
 
 set -eu
 
-DEFAULT_TAG="carbon-cli-v0.4.2-live.1"
-PUBKEY_SHA256="de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e"
+DEFAULT_TAG="carbon-cli-v0.4.3-live.1"
+SIGNING_PUB_FINGERPRINT="de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e"
 
 TAG="$DEFAULT_TAG"
 BIN_DIR=""
 CONFIG_DIR=""
 BASE_URL=""
 SOURCE_DIR=""
+TEST_PUBKEY_FILE=""
 SKIP_PING=0
 
 say() {
@@ -55,6 +56,11 @@ while [ "$#" -gt 0 ]; do
       SOURCE_DIR="$2"
       shift 2
       ;;
+    --allow-test-pubkey)
+      [ "$#" -ge 2 ] || die "--allow-test-pubkey requires a PEM file path"
+      TEST_PUBKEY_FILE="$2"
+      shift 2
+      ;;
     --skip-ping)
       SKIP_PING=1
       shift 1
@@ -64,12 +70,13 @@ while [ "$#" -gt 0 ]; do
 Usage: install.sh [OPTIONS]
 
 Options:
-  --version <TAG>       Release tag (default: carbon-cli-v0.4.2-live.1)
-  --bin-dir <ABS_DIR>   Binary destination (default: $HOME/.local/bin)
-  --config-dir <DIR>    Config destination (default: $HOME/.config/jopedime)
-  --base-url <URL>      Override HTTPS release download prefix
-  --source-dir <DIR>    Install from a local verified release directory (offline)
-  --skip-ping           Skip post-install live `/v1/carbon/ping` probe
+  --version <TAG>              Release tag (default: carbon-cli-v0.4.3-live.1)
+  --bin-dir <ABS_DIR>          Binary destination (default: $HOME/.local/bin)
+  --config-dir <DIR>           Config destination (default: $HOME/.config/jopedime)
+  --base-url <URL>             Override HTTPS release download prefix
+  --source-dir <DIR>           Install from a local verified release directory (offline)
+  --allow-test-pubkey <FILE>   Override ECDSA-P256 public key for CI/E2E test fixtures only
+  --skip-ping                  Skip post-install live `/v1/carbon/ping` probe
 EOF
       exit 0
       ;;
@@ -134,15 +141,21 @@ rm -rf "$STAGE_DIR"
 mkdir -m 0700 "$STAGE_DIR"
 trap 'rm -rf "$STAGE_DIR"' EXIT INT TERM
 
-cat > "$STAGE_DIR/signing.pub" <<'EOF'
+if [ -n "$TEST_PUBKEY_FILE" ]; then
+  [ -f "$TEST_PUBKEY_FILE" ] || die "missing test public key file '$TEST_PUBKEY_FILE'"
+  say "WARNING: using test public key override ($TEST_PUBKEY_FILE) — NOT for production installs"
+  cp "$TEST_PUBKEY_FILE" "$STAGE_DIR/signing.pub"
+else
+  cat > "$STAGE_DIR/signing.pub" <<'EOF'
 -----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMx44DTDE4ObFoh7otiKzAJA9fd8U
 eEunkkDgvRCL74VyxIW9Q0wt49FMtTqv7aH7sj//B2uqMwPdm/MlBu45Nw==
 -----END PUBLIC KEY-----
 EOF
 
-GOT_PUB_SHA="$(sha256sum "$STAGE_DIR/signing.pub" | awk '{print $1}')"
-[ "$GOT_PUB_SHA" = "$PUBKEY_SHA256" ] || die "embedded release public key fingerprint mismatch ($GOT_PUB_SHA)"
+  GOT_PUB_SHA="$(sha256sum "$STAGE_DIR/signing.pub" | awk '{print $1}')"
+  [ "$GOT_PUB_SHA" = "$SIGNING_PUB_FINGERPRINT" ] || die "embedded release public key fingerprint mismatch ($GOT_PUB_SHA)"
+fi
 
 fetch_asset() {
   asset_name="$1"
@@ -206,5 +219,6 @@ case ":${PATH:-}:" in
 esac
 
 say "Ready! Quickstart:"
-say "  Free (anonymous):  $BIN_DIR/carbon run --free --cloud prod --synthetic-rows 500 --features 6 --shred"
-say "  Pro  (with token): $BIN_DIR/carbon run --pro --cloud prod --token <ctk1...> --effort medium --csv data.csv --target y --shred"
+say "  Register Free (30d): $BIN_DIR/carbon register --free --cloud prod"
+say "  Run Free:            $BIN_DIR/carbon run --free --cloud prod --effort medium --synthetic-rows 500 --features 6 --shred"
+say "  Run Pro (with tok):  $BIN_DIR/carbon run --pro --cloud prod --token <ctk1...> --effort high --csv data.csv --target y --shred"

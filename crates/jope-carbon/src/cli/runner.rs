@@ -16,6 +16,9 @@ use serde::{Deserialize, Serialize};
 use crate::{
     cells::engine_invoker::now_epoch_ms,
     cli::client::{CarbonClientPreparedDataset, CarbonThinClient},
+    modes::planner::{
+        compute_live_run_cost, CarbonIngressCostMode, CarbonLiveCostInputs, CarbonRunCostBreakdown,
+    },
     storage::cas::sha256_lower_hex,
 };
 
@@ -73,6 +76,12 @@ pub struct CarbonCliRunReceipt {
     pub execution_mode: CarbonExecutionModeWire,
     pub eval_memory_mb: u32,
     pub eval_shards: u32,
+    #[serde(default)]
+    pub eval_invocations: u64,
+    #[serde(default)]
+    pub eval_total_wall_ms: u64,
+    #[serde(default)]
+    pub poll_requests: u32,
     pub waves_completed: u32,
     pub waves_target: u32,
     pub candidates_evaluated: u64,
@@ -95,6 +104,8 @@ pub struct CarbonCliRunReceipt {
     #[serde(default)]
     pub e2e_predict_holdout_r2: Option<f64>,
     #[serde(default)]
+    pub cost_estimate: Option<CarbonRunCostBreakdown>,
+    #[serde(default)]
     pub sample_targets: Vec<f64>,
     pub sample_predictions: Vec<f64>,
 }
@@ -114,6 +125,10 @@ pub struct CarbonBenchScenarioSummary {
     pub candidates_evaluated: u64,
     pub candidates_per_sec: f64,
     pub eval_shards: u32,
+    #[serde(default)]
+    pub eval_invocations: u64,
+    #[serde(default)]
+    pub estimated_cost_usd: f64,
     pub best_cv_score: Option<f64>,
     pub outer_holdout_score: Option<f64>,
     #[serde(default)]
@@ -139,6 +154,8 @@ pub struct CarbonBenchmarkSuiteReport {
     pub warm_ping_p50_ms: f64,
     pub warm_ping_min_ms: f64,
     pub all_passed: bool,
+    #[serde(default)]
+    pub total_suite_estimated_usd: f64,
     pub scenarios: Vec<CarbonBenchScenarioSummary>,
 }
 
@@ -494,6 +511,7 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         .ok_or_else(|| "no Carbon endpoints probed".to_owned())?;
 
     let mut effective_tenant = opts.tenant_id.clone();
+    let mut minted_ephemeral_token = false;
     if let Some(tok) = &opts.auth_token {
         client = client.with_capability_token(tok.clone());
     } else if !client.enterprise_self_hosted()
@@ -503,6 +521,7 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
     {
         let anon = client.authenticate_anonymous()?;
         effective_tenant = anon.tenant_id;
+        minted_ephemeral_token = true;
     }
 
     let t_prep = Instant::now();
@@ -531,6 +550,7 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
 
     let t_search = Instant::now();
     let mut paused_mid_run = false;
+    let mut engine_search_invocations = 1u32;
     let mut progress = if let Some(delay_ms) = opts.stop_after_ms {
         let client_arc = Arc::new(client.clone());
         let stopper_client = Arc::clone(&client_arc);
@@ -569,11 +589,37 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         )?
     };
 
-    if progress.state == CarbonRunStateWire::Paused {
-        paused_mid_run = true;
-        if opts.resume_after_stop {
-            progress =
-                client.resume_run(&effective_tenant, &run_id_str, Some(opts.effort), Some(2))?;
+    if opts.stop_after_ms.is_some() {
+        if progress.state == CarbonRunStateWire::Paused {
+            paused_mid_run = true;
+            if opts.resume_after_stop {
+                engine_search_invocations += 1;
+                progress = client.resume_run(
+                    &effective_tenant,
+                    &run_id_str,
+                    Some(opts.effort),
+                    Some(2),
+                )?;
+            }
+        }
+    } else {
+        while progress.state == CarbonRunStateWire::Paused
+            && progress.can_resume
+            && progress.wave_index < progress.waves_target
+            && engine_search_invocations < 4
+        {
+            paused_mid_run = true;
+            engine_search_invocations += 1;
+            let remaining = progress
+                .waves_target
+                .saturating_sub(progress.wave_index)
+                .max(1);
+            progress = client.resume_run(
+                &effective_tenant,
+                &run_id_str,
+                Some(opts.effort),
+                Some(remaining),
+            )?;
         }
     }
     let search_ms = t_search.elapsed().as_secs_f64() * 1_000.0;
@@ -659,9 +705,42 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         .take(sample_count)
         .collect();
 
+    let (poll_requests, http_request_bytes, http_response_bytes) = client.telemetry_counters();
+    let ingress_mode = if client.enterprise_self_hosted() {
+        CarbonIngressCostMode::SelfHostedVpc
+    } else if client.active_endpoint().contains(".lambda-url.") {
+        CarbonIngressCostMode::LambdaFunctionUrl
+    } else {
+        CarbonIngressCostMode::ApiGatewayHttpV2
+    };
+    let uploaded_cas_bytes =
+        prepared.artifacts.fit_jmat.len() + prepared.artifacts.holdout_jmat.len();
+    let cost_breakdown = compute_live_run_cost(&CarbonLiveCostInputs {
+        ingress_mode,
+        minted_ephemeral_token,
+        engine_search_invocations,
+        poll_requests,
+        signaled_early_stop: opts.stop_after_ms.is_some(),
+        shredded_after_run,
+        waves_completed: progress.wave_index,
+        eval_shards: progress.eval_shards,
+        eval_memory_mb: progress.eval_memory_mb,
+        eval_invocations: progress.eval_invocations.0,
+        eval_total_wall_ms: progress.eval_total_wall_ms.0,
+        search_wall_ms: search_ms,
+        predict_wall_ms: predict_ms,
+        uploaded_cas_bytes,
+        http_request_bytes,
+        http_response_bytes,
+    });
+
     Ok(CarbonCliRunReceipt {
         selected_endpoint: client.active_endpoint().to_owned(),
-        selected_region: best_probe.region.clone(),
+        selected_region: if progress.region.is_empty() {
+            best_probe.region.clone()
+        } else {
+            progress.region.clone()
+        },
         ping_rtt_ms: best_probe.rtt_ms,
         run_id: run_id_str,
         dataset_id: ds_id.to_string(),
@@ -689,6 +768,9 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         execution_mode: progress.execution_mode,
         eval_memory_mb: progress.eval_memory_mb,
         eval_shards: progress.eval_shards,
+        eval_invocations: progress.eval_invocations.0,
+        eval_total_wall_ms: progress.eval_total_wall_ms.0,
+        poll_requests,
         waves_completed: progress.wave_index,
         waves_target: progress.waves_target,
         candidates_evaluated: progress.candidates_evaluated.0,
@@ -702,6 +784,7 @@ pub fn execute_carbon_cli_run(opts: &CarbonCliRunOptions) -> Result<CarbonCliRun
         rmse_reduction_vs_linear_pct,
         e2e_predict_holdout_rmse,
         e2e_predict_holdout_r2,
+        cost_estimate: Some(cost_breakdown),
         sample_targets,
         sample_predictions,
     })
@@ -861,6 +944,7 @@ pub fn execute_carbon_cli_benchmark_with_token(
     // Scenario 4: Pro High HybridFanOut (8 eval shards w/ 60s FitJmat subkey grants) + early-stop ->
     // E2E encrypted `/predict` -> cross-container `/resume` -> cryptographic `DELETE` shred!
     if tier != CarbonTierWire::Free {
+        client.reset_telemetry_counters();
         let t_s4 = Instant::now();
         let PreparedDatasetWithSplitRows {
             prepared: prep_hi,
@@ -938,7 +1022,7 @@ pub fn execute_carbon_cli_benchmark_with_token(
             404,
             &prep_hi,
         )?;
-        let _ = stopper.join();
+        let signaled_stop_s4 = stopper.join().unwrap_or(true);
 
         let pred_in_hi: Vec<Vec<Option<f64>>> = sample_hi
             .into_iter()
@@ -968,6 +1052,33 @@ pub fn execute_carbon_cli_benchmark_with_token(
         } else {
             0.0
         };
+        let (s4_polls, s4_req_bytes, s4_resp_bytes) = client.telemetry_counters();
+        let s4_ingress = if enterprise_self_hosted {
+            CarbonIngressCostMode::SelfHostedVpc
+        } else if active_ep.contains(".lambda-url.") {
+            CarbonIngressCostMode::LambdaFunctionUrl
+        } else {
+            CarbonIngressCostMode::ApiGatewayHttpV2
+        };
+        let s4_cost = compute_live_run_cost(&CarbonLiveCostInputs {
+            ingress_mode: s4_ingress,
+            minted_ephemeral_token: false,
+            engine_search_invocations: if was_paused { 2 } else { 1 },
+            poll_requests: s4_polls,
+            signaled_early_stop: signaled_stop_s4,
+            shredded_after_run: shred4.shredded,
+            waves_completed: final_prog.wave_index,
+            eval_shards: final_prog.eval_shards,
+            eval_memory_mb: final_prog.eval_memory_mb,
+            eval_invocations: final_prog.eval_invocations.0,
+            eval_total_wall_ms: final_prog.eval_total_wall_ms.0,
+            search_wall_ms: search4_ms,
+            predict_wall_ms: pred4_ms,
+            uploaded_cas_bytes: prep_hi.artifacts.fit_jmat.len()
+                + prep_hi.artifacts.holdout_jmat.len(),
+            http_request_bytes: s4_req_bytes,
+            http_response_bytes: s4_resp_bytes,
+        });
         let s4_r2 = match (final_prog.outer_holdout_loss, s4_baselines) {
             (Some(ho), Some(b)) if b.sse_mean > 1e-18 => {
                 let sse_m = ho * ho * (prep_hi.holdout_rows as f64).max(1.0);
@@ -1001,6 +1112,8 @@ pub fn execute_carbon_cli_benchmark_with_token(
             candidates_evaluated: s4_cands,
             candidates_per_sec: s4_cps,
             eval_shards: final_prog.eval_shards,
+            eval_invocations: final_prog.eval_invocations.0,
+            estimated_cost_usd: s4_cost.total_estimated_usd,
             best_cv_score: final_prog.best_cv_loss,
             outer_holdout_score: final_prog.outer_holdout_loss,
             holdout_r2: s4_r2,
@@ -1016,6 +1129,32 @@ pub fn execute_carbon_cli_benchmark_with_token(
                 shred4.objects_deleted,
             ),
         });
+
+        // Scenario 4b: Pro Ultra deep multi-wave (`HybridFanOut`, `32` waves + `r882 multi_wave_learned`).
+        let ultra_run = execute_carbon_cli_run(&CarbonCliRunOptions {
+            endpoints: vec![active_ep.clone()],
+            csv_path: None,
+            target_column: "y".to_owned(),
+            synthetic_rows: 180,
+            synthetic_features: 5,
+            tenant_id: tenant_id.to_owned(),
+            tier,
+            effort: Effort::Ultra,
+            objective: "rmse".to_owned(),
+            seed: 454,
+            holdout_fraction: 0.20,
+            stop_after_ms: None,
+            resume_after_stop: false,
+            predict_rows: 4,
+            auth_token: pro_auth_token.clone(),
+            shred_after_run: true,
+        })?;
+        scenarios.push(receipt_to_scenario(
+            "pro_ultra_hybrid_fanout",
+            "Pro Ultra async 202 (32 GP waves + HybridFanOut + r882 multi_wave_learned, 180x5)",
+            &ultra_run,
+            ultra_run.final_state == CarbonRunStateWire::Completed,
+        ));
     }
 
     // Scenario 5: Free-tier >5,000 row admission refusal (HTTP 403) using genuine Free token.
@@ -1032,6 +1171,11 @@ pub fn execute_carbon_cli_benchmark_with_token(
             Err(msg) => msg.contains("403"),
             Ok(_) => false,
         };
+        let guard_edge_usd = if active_ep.contains(".lambda-url.") {
+            2.0 * (0.018 * (256.0 / 1_024.0) * 0.000_013_333_4 + 0.000_000_2)
+        } else {
+            2.0 * (0.018 * (256.0 / 1_024.0) * 0.000_013_333_4 + 0.000_000_2 + 0.000_001)
+        };
         scenarios.push(CarbonBenchScenarioSummary {
             scenario_id: "free_tier_row_cap_403".to_owned(),
             description: "Free tier >5,000 row admission refusal (HTTP 403)".to_owned(),
@@ -1045,6 +1189,8 @@ pub fn execute_carbon_cli_benchmark_with_token(
             candidates_evaluated: 0,
             candidates_per_sec: 0.0,
             eval_shards: 0,
+            eval_invocations: 0,
+            estimated_cost_usd: guard_edge_usd,
             best_cv_score: None,
             outer_holdout_score: None,
             holdout_r2: None,
@@ -1056,6 +1202,7 @@ pub fn execute_carbon_cli_benchmark_with_token(
     }
 
     let all_passed = scenarios.iter().all(|s| s.passed);
+    let total_suite_estimated_usd: f64 = scenarios.iter().map(|s| s.estimated_cost_usd).sum();
     Ok(CarbonBenchmarkSuiteReport {
         timestamp_epoch_ms: now_epoch_ms(),
         target_endpoint: client.active_endpoint().to_owned(),
@@ -1066,6 +1213,7 @@ pub fn execute_carbon_cli_benchmark_with_token(
         warm_ping_p50_ms,
         warm_ping_min_ms,
         all_passed,
+        total_suite_estimated_usd,
         scenarios,
     })
 }
@@ -1086,6 +1234,11 @@ fn receipt_to_scenario(
         .as_deref()
         .map(|d| if d.len() >= 19 { &d[..19] } else { d })
         .unwrap_or("none");
+    let est_usd = r
+        .cost_estimate
+        .as_ref()
+        .map(|c| c.total_estimated_usd)
+        .unwrap_or(0.0);
     CarbonBenchScenarioSummary {
         scenario_id: id.to_owned(),
         description: description.to_owned(),
@@ -1099,6 +1252,8 @@ fn receipt_to_scenario(
         candidates_evaluated: r.candidates_evaluated,
         candidates_per_sec: cps,
         eval_shards: r.eval_shards,
+        eval_invocations: r.eval_invocations,
+        estimated_cost_usd: est_usd,
         best_cv_score: r.best_cv_score,
         outer_holdout_score: r.outer_holdout_score,
         holdout_r2: r.holdout_r2,
@@ -1106,9 +1261,10 @@ fn receipt_to_scenario(
         linear_baseline_rmse: r.linear_baseline_rmse,
         rmse_reduction_vs_linear_pct: r.rmse_reduction_vs_linear_pct,
         notes: format!(
-            "waves={}/{}, guidance={}, model={}, cuen={}",
+            "waves={}/{}, eval_calls={}, guidance={}, model={}, cuen={}",
             r.waves_completed,
             r.waves_target,
+            r.eval_invocations,
             r.neural_guidance_mode.as_deref().unwrap_or("-"),
             short_digest,
             r.encrypted_cuen,
@@ -1121,7 +1277,7 @@ pub fn render_benchmark_markdown(report: &CarbonBenchmarkSuiteReport) -> String 
     let mut md = String::new();
     md.push_str("# Carbon Serverless Benchmark Receipt\n\n");
     md.push_str(&format!(
-        "- **Endpoint**: `{}`\n- **Region**: `{}` (`enterprise_self_hosted={}`, `zero_knowledge_kek={}`)\n- **Timestamp (epoch ms)**: `{}`\n- **Ping RTT**: initial `{:.2} ms`, warm p50 `{:.2} ms`, warm min `{:.2} ms`\n- **Suite Verdict**: **{}**\n\n",
+        "- **Endpoint**: `{}`\n- **Region**: `{}` (`enterprise_self_hosted={}`, `zero_knowledge_kek={}`)\n- **Timestamp (epoch ms)**: `{}`\n- **Ping RTT**: initial `{:.2} ms`, warm p50 `{:.2} ms`, warm min `{:.2} ms`\n- **Total Suite Est. Cost**: `${:.6}`\n- **Suite Verdict**: **{}**\n\n",
         report.target_endpoint,
         report.probed_region,
         report.enterprise_self_hosted,
@@ -1130,10 +1286,11 @@ pub fn render_benchmark_markdown(report: &CarbonBenchmarkSuiteReport) -> String 
         report.cold_ping_ms,
         report.warm_ping_p50_ms,
         report.warm_ping_min_ms,
+        report.total_suite_estimated_usd,
         if report.all_passed { "PASS" } else { "FAIL" }
     ));
-    md.push_str("| Scenario | Mode | Shards | Wall (ms) | Search (ms) | Predict (ms) | Cands | CV RMSE | Holdout RMSE | Holdout R² | Linear RMSE | Lift vs OLS | Status | Notes |\n");
-    md.push_str("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n");
+    md.push_str("| Scenario | Mode | Shards | Eval Calls | Wall (ms) | Search (ms) | Predict (ms) | Cands | CV RMSE | Holdout RMSE | Holdout R² | Linear RMSE | Lift vs OLS | Est. Cost ($) | Status | Notes |\n");
+    md.push_str("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n");
     for s in &report.scenarios {
         let cv = s
             .best_cv_score
@@ -1156,10 +1313,11 @@ pub fn render_benchmark_markdown(report: &CarbonBenchmarkSuiteReport) -> String 
             .map(|v| format!("{v:+.1}%"))
             .unwrap_or_else(|| "-".to_owned());
         md.push_str(&format!(
-            "| `{}` | `{}` | {} | {:.1} | {:.1} | {:.1} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+            "| `{}` | `{}` | {} | {} | {:.1} | {:.1} | {:.1} | {} | {} | {} | {} | {} | {} | ${:.6} | {} | {} |\n",
             s.scenario_id,
             s.execution_mode,
             s.eval_shards,
+            s.eval_invocations,
             s.wall_ms,
             s.search_ms,
             s.predict_ms,
@@ -1169,6 +1327,7 @@ pub fn render_benchmark_markdown(report: &CarbonBenchmarkSuiteReport) -> String 
             r2,
             lin,
             lift,
+            s.estimated_cost_usd,
             if s.passed { "PASS" } else { "FAIL" },
             s.notes
         ));

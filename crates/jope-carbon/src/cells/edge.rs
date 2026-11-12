@@ -15,8 +15,8 @@ use jope_api::{
         CarbonCreateRunRequest, CarbonEarlyStopRequest, CarbonExecutionModeWire,
         CarbonPingResponse, CarbonPredictRequest, CarbonPredictResponse,
         CarbonPrepareUploadRequest, CarbonPrepareUploadResponse, CarbonPresignedTarget,
-        CarbonPublicWaveProgress, CarbonRegionCatalog, CarbonResumeRunRequest, CarbonRunStateWire,
-        CarbonShredRunResponse, CarbonTierWire,
+        CarbonPublicWaveProgress, CarbonRegionCatalog, CarbonRegisterFreeRequest,
+        CarbonResumeRunRequest, CarbonRunStateWire, CarbonShredRunResponse, CarbonTierWire,
     },
     decimal::DecimalU64,
     Effort,
@@ -197,7 +197,13 @@ impl CarbonEdgeRouter {
 
         match (method.as_str(), clean_path) {
             ("GET", "/.well-known/carbon-regions.json") => {
-                CarbonGatewayResponse::json_ok(200, &self.config.catalog)
+                let mut cat = self.config.catalog.clone();
+                for entry in &mut cat.regions {
+                    if entry.endpoint_url.trim().is_empty() && entry.region == self.config.region {
+                        entry.endpoint_url = self.resolve_public_base_url(req);
+                    }
+                }
+                CarbonGatewayResponse::json_ok(200, &cat)
             }
             ("GET", "/v1/carbon/ping") => CarbonGatewayResponse::json_ok(
                 200,
@@ -210,6 +216,7 @@ impl CarbonEdgeRouter {
                 },
             ),
             ("POST", "/v1/carbon/auth/anonymous") => self.handle_anonymous_auth(req),
+            ("POST", "/v1/carbon/auth/register") => self.handle_register_free(req),
             ("POST", "/v1/carbon/uploads/prepare") => self.handle_prepare_upload(req),
             ("POST", "/v1/carbon/runs") => self.handle_create_run(req),
             ("GET", "/v1/carbon/advisor/spot-hybrid") => self.handle_spot_advisor(req),
@@ -349,7 +356,7 @@ impl CarbonEdgeRouter {
             .trim();
         if !self
             .rate_limiter
-            .check_and_record(&format!("anon:{caller}"), now_secs, 30)
+            .check_and_record(&format!("anon:{caller}"), now_secs, 300)
         {
             return CarbonGatewayResponse::error_json(
                 429,
@@ -372,6 +379,66 @@ impl CarbonEdgeRouter {
         }
     }
 
+    fn handle_register_free(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
+        let now_secs = now_epoch_ms() / 1_000;
+        let caller = req
+            .header_ci("x-forwarded-for")
+            .unwrap_or("reg_global")
+            .split(',')
+            .next()
+            .unwrap_or("reg_global")
+            .trim();
+        if !self
+            .rate_limiter
+            .check_and_record(&format!("reg:{caller}"), now_secs, 120)
+        {
+            return CarbonGatewayResponse::error_json(
+                429,
+                "rate_limited",
+                "free account registration rate limit exceeded (max 120/min)",
+            );
+        }
+        let Ok(body) = req.body_bytes() else {
+            return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
+        };
+        if body.len() > 1_024 {
+            return CarbonGatewayResponse::error_json(
+                413,
+                "payload_too_large",
+                "registration payload exceeds 1 KiB limit",
+            );
+        }
+        let reg_req = if body.iter().all(u8::is_ascii_whitespace) {
+            CarbonRegisterFreeRequest::default()
+        } else {
+            match serde_json::from_slice::<CarbonRegisterFreeRequest>(&body) {
+                Ok(r) => r,
+                Err(_) => {
+                    return CarbonGatewayResponse::error_json(
+                        400,
+                        "invalid_json",
+                        "invalid CarbonRegisterFreeRequest JSON",
+                    );
+                }
+            }
+        };
+        let Some(verifier) = &self.config.auth_verifier else {
+            return CarbonGatewayResponse::error_json(
+                501,
+                "auth_not_configured",
+                "free capability registration is not enabled on this gateway",
+            );
+        };
+        match verifier.mint_registered_free(
+            reg_req.label.as_deref(),
+            now_secs,
+            self.config.engine_kek_pubkey_b64.clone(),
+        ) {
+            Ok(resp) => CarbonGatewayResponse::json_ok(201, &resp),
+            Err(err) => CarbonGatewayResponse::error_json(400, "invalid_label", &err.to_string()),
+        }
+    }
+
     fn handle_prepare_upload(&self, req: &CarbonGatewayRequest) -> CarbonGatewayResponse {
         let Ok(body) = req.body_bytes() else {
             return CarbonGatewayResponse::error_json(400, "invalid_body", "malformed body");
@@ -391,7 +458,7 @@ impl CarbonEdgeRouter {
         let now_secs = now_epoch_ms() / 1_000;
         if !self
             .rate_limiter
-            .check_and_record(&format!("prep:{}", prep.tenant_id), now_secs, 60)
+            .check_and_record(&format!("prep:{}", prep.tenant_id), now_secs, 300)
         {
             return CarbonGatewayResponse::error_json(
                 429,
@@ -594,7 +661,7 @@ impl CarbonEdgeRouter {
         let now_secs = now_epoch_ms() / 1_000;
         if !self
             .rate_limiter
-            .check_and_record(&format!("runs:{}", create.tenant_id), now_secs, 30)
+            .check_and_record(&format!("runs:{}", create.tenant_id), now_secs, 120)
         {
             return CarbonGatewayResponse::error_json(
                 429,
@@ -755,7 +822,13 @@ impl CarbonEdgeRouter {
                 CarbonExecutionMode::HybridFanOut => CarbonExecutionModeWire::HybridFanOut,
             },
             eval_memory_mb: plan_decision.eval_class.memory_mb() as u32,
-            eval_shards: plan_decision.shards_per_wave.max(1),
+            eval_shards: if plan_decision.mode == CarbonExecutionMode::HybridFanOut {
+                plan_decision.shards_per_wave
+            } else {
+                0
+            },
+            eval_invocations: DecimalU64(0),
+            eval_total_wall_ms: DecimalU64(0),
             wave_index: 0,
             waves_target: effort.planned_waves(),
             candidates_evaluated: DecimalU64(0),
@@ -1240,7 +1313,7 @@ impl CarbonEdgeRouter {
                 if !self.rate_limiter.check_and_record(
                     &format!("advisor:{}", claims.tenant_id),
                     now_secs,
-                    20,
+                    60,
                 ) {
                     return CarbonGatewayResponse::error_json(
                         429,
@@ -1300,7 +1373,14 @@ impl CarbonEdgeRouter {
             return self.config.public_base_url.clone();
         }
         if let Some(host) = req.header_ci("host") {
-            let proto = req.header_ci("x-forwarded-proto").unwrap_or("http");
+            let host_lc = host.to_ascii_lowercase();
+            let default_proto =
+                if host_lc.ends_with(".amazonaws.com") || host_lc.ends_with(".on.aws") {
+                    "https"
+                } else {
+                    "http"
+                };
+            let proto = req.header_ci("x-forwarded-proto").unwrap_or(default_proto);
             return format!("{proto}://{host}");
         }
         "http://127.0.0.1:8080".to_owned()

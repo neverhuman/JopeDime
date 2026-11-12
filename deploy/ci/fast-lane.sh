@@ -84,6 +84,8 @@ cargo check --workspace --all-targets --locked
     # Telemetry's optional native Python ABI and engine feature gates are part of the crate contract.
 cargo check -p jope-telemetry --features python --all-targets --locked
 cargo check -p jope-parallel --features telemetry --locked
+    # Feature-isolated Carbon edge binary boundary (ADR-0007 CT3: --no-default-features --features edge)
+cargo check -p jope-carbon --no-default-features --features edge --bin carbon-edge --locked
     # Rendered systemd units resolve under the rendered roots
 cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
     # Workspace MSRV (decision 8: at most 1.97.1)
@@ -300,6 +302,9 @@ mkdir -p "$EVIDENCE/appliance"
 cp -- "$appliance_work"/build/{build,pack-receipt,verify,size,sbom-models}.json \
   "$appliance_work"/clean-host/{clean-host,fit}.json "$EVIDENCE/appliance/"
 rm -r -- "$appliance_work"
+    # Carbon zero-knowledge serverless CLI E2E: signed install.sh, Free register/login/whoami/logout,
+    # CarbonLocalLambdaEmulator multi-cell runtime, all 4 efforts (fast/medium/high/ultra), and USD cost receipt.
+cargo test --locked -p jope-carbon --test carbon_e2e
     ;;
   *) echo "unknown CI lane: $1" >&2; exit 2 ;;
 esac

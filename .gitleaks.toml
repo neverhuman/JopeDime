@@ -45,6 +45,13 @@ paths = ['''^deploy/release/release\.sh$''']
 regexes = ['''^PUBKEY_SHA256=[0-9a-f]{64}$''']
 
 [[rules.allowlists]]
+description = "Carbon installer public signing.pub SHA-256 fingerprint pin"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^deploy/carbon/install\.sh$''']
+regexes = ['''^PUBKEY_SHA256="[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
 description = "Reviewed public provenance digest context 4"
 condition = "AND"
 regexTarget = "match"

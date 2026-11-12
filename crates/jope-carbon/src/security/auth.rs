@@ -12,7 +12,7 @@ use aws_lc_rs::hmac;
 use base64::Engine as _;
 #[cfg(feature = "edge")]
 use jope_api::{
-    carbon::{CarbonAnonymousAuthResponse, CarbonTierWire},
+    carbon::{CarbonAnonymousAuthResponse, CarbonRegisterFreeResponse, CarbonTierWire},
     decimal::DecimalU64,
 };
 #[cfg(feature = "edge")]
@@ -26,7 +26,7 @@ use crate::error::{CarbonError, CarbonResult};
 #[cfg(feature = "edge")]
 const TOKEN_PREFIX: &str = "ctk1.";
 #[cfg(feature = "edge")]
-const MAX_RATE_BUCKETS: usize = 4_096;
+const MAX_RATE_BUCKETS: usize = 65_536;
 
 /// Strictly validate `tenant_id` (`^[A-Za-z0-9_-]{3,64}$`) so two distinct tenants can never
 /// collide after path normalization (`RT-08`).
@@ -189,6 +189,58 @@ impl CarbonAuthVerifier {
         })
     }
 
+    /// Mint a persistent 30-day (`2,592,000 s`) Free-tier capability token bound to a unique
+    /// `free_<label>_<ulid12>` (or `free_<ulid>`) `tenant_id` for `POST /v1/carbon/auth/register`.
+    pub fn mint_registered_free(
+        &self,
+        label: Option<&str>,
+        now_epoch_secs: u64,
+        engine_kek_pubkey_b64: Option<String>,
+    ) -> CarbonResult<CarbonRegisterFreeResponse> {
+        let raw_ulid = ulid::Ulid::new().to_string().to_ascii_lowercase();
+        let tenant_id = match label.map(str::trim).filter(|s| !s.is_empty()) {
+            Some(lbl) => {
+                if lbl.len() > 24
+                    || !lbl
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+                {
+                    return Err(CarbonError::CapabilityAuthFailed {
+                        reason: "registration label must be 1..=24 ASCII [A-Za-z0-9_-] characters",
+                    });
+                }
+                let clean: String = lbl
+                    .chars()
+                    .map(|c| {
+                        if c == '-' {
+                            '_'
+                        } else {
+                            c.to_ascii_lowercase()
+                        }
+                    })
+                    .collect();
+                let suffix = &raw_ulid[raw_ulid.len().saturating_sub(12)..];
+                format!("free_{clean}_{suffix}")
+            }
+            None => format!("free_{raw_ulid}"),
+        };
+        let expires = now_epoch_secs.saturating_add(30 * 86_400);
+        let claims = CarbonCapabilityClaims {
+            tenant_id: tenant_id.clone(),
+            tier: CarbonTierWire::Free,
+            exp_epoch_secs: expires,
+            admin: false,
+        };
+        let capability_token = self.mint_token(&claims)?;
+        Ok(CarbonRegisterFreeResponse {
+            tenant_id,
+            capability_token,
+            tier: CarbonTierWire::Free,
+            expires_epoch_secs: DecimalU64(expires),
+            engine_kek_pubkey_b64,
+        })
+    }
+
     /// Verify an HTTP `Authorization: Bearer <token>` header in constant time against `now_epoch_secs`.
     pub fn verify_bearer_header(
         &self,
@@ -291,7 +343,7 @@ impl CarbonRateLimiter {
         if guard.len() >= MAX_RATE_BUCKETS && !guard.contains_key(bucket_key) {
             guard.retain(|_, (s, _)| *s == slot);
             if guard.len() >= MAX_RATE_BUCKETS {
-                guard.clear();
+                return false;
             }
         }
         let entry = guard.entry(bucket_key.to_owned()).or_insert((slot, 0));

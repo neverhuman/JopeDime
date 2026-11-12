@@ -211,7 +211,7 @@
     "EvalRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
-        "RoleName": {"Fn::Sub": "${AWS::StackName}-eval-role"},
+        "RoleName": {"Fn::Sub": "${AWS::StackName}-${AWS::Region}-eval-role"},
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -257,7 +257,7 @@
     "EngineRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
-        "RoleName": {"Fn::Sub": "${AWS::StackName}-engine-role"},
+        "RoleName": {"Fn::Sub": "${AWS::StackName}-${AWS::Region}-engine-role"},
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -311,7 +311,7 @@
     "EdgeRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
-        "RoleName": {"Fn::Sub": "${AWS::StackName}-edge-role"},
+        "RoleName": {"Fn::Sub": "${AWS::StackName}-${AWS::Region}-edge-role"},
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -446,7 +446,7 @@
         "Architectures": ["arm64"],
         "Handler": "bootstrap",
         "MemorySize": 3008,
-        "Timeout": 600,
+        "Timeout": 900,
         "EphemeralStorage": {"Size": 1024},
         "ReservedConcurrentExecutions": {
           "Fn::If": [
@@ -467,6 +467,7 @@
             "CARBON_REGION": {"Ref": "AWS::Region"},
             "CARBON_CAS_URL": {"Fn::Sub": "s3://${CarbonCasBucket}/cell-v1"},
             "CARBON_EVAL_INVOKE_URL": {"Fn::Sub": "lambda://${AWS::StackName}-eval:live"},
+            "CARBON_MAX_EVAL_SHARDS": {"Fn::If": ["IsProd", "4", "2"]},
             "CARBON_MODEL_R882_DIR": "/opt/jope-models/r882",
             "CARBON_SEAL_SECRET_HEX": {
               "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:seal_secret_hex::${SecretsVersionId}}}"
@@ -627,8 +628,8 @@
         "StageName": "$default",
         "AutoDeploy": true,
         "DefaultRouteSettings": {
-          "ThrottlingBurstLimit": {"Fn::If": ["IsProd", 200, 50]},
-          "ThrottlingRateLimit": {"Fn::If": ["IsProd", 100, 25]}
+          "ThrottlingBurstLimit": {"Fn::If": ["IsProd", 2000, 400]},
+          "ThrottlingRateLimit": {"Fn::If": ["IsProd", 1000, 200]}
         }
       }
     },
@@ -696,6 +697,42 @@
         "Period": 60,
         "EvaluationPeriods": 1,
         "Threshold": 5,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "EdgePublicHttp5xxAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": {"Fn::Sub": "${AWS::StackName}-public-api-5xx"},
+        "AlarmDescription": "Carbon public API Gateway elevated HTTP 5xx responses",
+        "Namespace": "AWS/ApiGateway",
+        "MetricName": "5xx",
+        "Dimensions": [
+          {"Name": "ApiId", "Value": {"Ref": "EdgePublicHttpApi"}}
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 5,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "EvalThrottleAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": {"Fn::Sub": "${AWS::StackName}-eval-throttles"},
+        "AlarmDescription": "Carbon eval regional Lambda concurrency throttling detected",
+        "Namespace": "AWS/Lambda",
+        "MetricName": "Throttles",
+        "Dimensions": [
+          {"Name": "FunctionName", "Value": {"Ref": "EvalFunction"}}
+        ],
+        "Statistic": "Sum",
+        "Period": 60,
+        "EvaluationPeriods": 1,
+        "Threshold": 10,
         "ComparisonOperator": "GreaterThanOrEqualToThreshold",
         "TreatMissingData": "notBreaching"
       }
