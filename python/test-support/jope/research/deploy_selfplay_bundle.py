@@ -16,8 +16,9 @@ import time
 from pathlib import Path
 
 from build_selfplay_bundle import build
-from jope.prime_config import expand_config_home
 from test_exact_common import ALLOWED_LIVE_STATES, atomic_json, sha256_file
+
+from jope.prime_config import expand_config_home
 
 ROOT = Path("/home/ubuntu/jope-flywheel/test_exact_gen0")
 SOURCE = Path("/home/ubuntu/jope-dime")
@@ -113,7 +114,8 @@ def activate(
     restart: bool = True,
     freshness_audit_only: bool = True,
 ) -> dict:
-    from test_exact_evaluator import activate_protocol, active as active_evaluator
+    from test_exact_evaluator import activate_protocol
+    from test_exact_evaluator import active as active_evaluator
 
     before = scheduler_jobs()
     gpus_before = gpu_state()
