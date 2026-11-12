@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from ..prime_config import load_config
+from ..prime_config import expand_config_home, load_config
 from .spec import ExprSpec, GrammarSpec, OpSpec, ParamSpec
 
 ENGINE = "prime"
@@ -22,7 +22,7 @@ _HEAD_NAMES = {"ridge"}
 
 def registry_snapshot_path() -> Path:
     if configured := os.environ.get("JOPE_OPERATOR_REGISTRY"):
-        return Path(configured).expanduser().resolve(strict=False)
+        return expand_config_home(configured, os.environ.get("HOME")).resolve(strict=False)
     return load_config().registry_snapshot
 
 

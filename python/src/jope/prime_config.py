@@ -47,8 +47,25 @@ class PrimeConfig:
     max_width: int
 
 
+def expand_config_home(path: str | Path, home: str | None) -> Path:
+    """Expand ``~`` and ``~/…`` only when ``home`` is absolute.
+
+    An empty or relative ``home`` is an error. ``None`` means ``HOME`` is
+    unset and still uses :meth:`Path.expanduser`.
+    """
+    text = os.fspath(path)
+    if text == "~" or text.startswith("~/"):
+        if home is not None and os.path.isabs(home):
+            if text == "~":
+                return Path(home)
+            return Path(home) / text[2:]
+        if home is not None:
+            raise ValueError("HOME is not an absolute path; a tilde config path cannot be resolved")
+    return Path(text).expanduser()
+
+
 def _resolved(path: str | Path, *, relative_to: Path) -> Path:
-    candidate = Path(path).expanduser()
+    candidate = expand_config_home(path, os.environ.get("HOME"))
     if not candidate.is_absolute():
         candidate = relative_to / candidate
     return candidate.resolve(strict=False)
@@ -66,7 +83,7 @@ def load_config(path: str | Path | None = None) -> PrimeConfig:
     config_path = (
         Path(configured) if configured is not None else Path(__file__).resolve().parents[2] / "prime.toml"
     )
-    config_path = config_path.expanduser().resolve(strict=False)
+    config_path = expand_config_home(config_path, os.environ.get("HOME")).resolve(strict=False)
     with config_path.open("rb") as handle:
         data = tomllib.load(handle)
     legacy = data["legacy"]

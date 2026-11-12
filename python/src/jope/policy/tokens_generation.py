@@ -22,7 +22,9 @@ from .tokens import (
 def generation31_vocab_snapshot_path() -> Path:
     """Return the Prime-owned frozen grammar snapshot for generation 31."""
     if configured := os.environ.get("JOPE_GENERATION31_VOCAB"):
-        return Path(configured).expanduser().resolve(strict=False)
+        from ..prime_config import expand_config_home
+
+        return expand_config_home(configured, os.environ.get("HOME")).resolve(strict=False)
     from ..prime_config import load_config
 
     return load_config().generation31_vocab_snapshot
