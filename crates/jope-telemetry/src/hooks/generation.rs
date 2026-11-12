@@ -64,10 +64,7 @@ pub fn status_of(status: &str, rc: Option<i64>) -> &'static str {
 }
 
 pub fn sha256_hex(text: &str) -> String {
-    Sha256::digest(text.as_bytes())
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+    crate::encode_hex(&Sha256::digest(text.as_bytes()))
 }
 
 /// One evaluator result, already read out of its dict.

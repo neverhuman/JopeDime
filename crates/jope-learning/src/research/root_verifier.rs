@@ -2,7 +2,6 @@
 
 use jope_records::research::wave_git::validate_index_rows;
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
@@ -46,7 +45,7 @@ pub struct ArtifactRegistryRootsSummary {
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::canon::sha256_hex(bytes)
 }
 
 fn read_bytes(path: &Path) -> Result<Vec<u8>, String> {

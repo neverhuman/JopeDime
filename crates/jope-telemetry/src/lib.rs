@@ -36,3 +36,8 @@ pub mod train;
 
 #[cfg(feature = "python")]
 mod python;
+
+/// Lowercase hex of raw bytes. This does not hash.
+pub(crate) fn encode_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}

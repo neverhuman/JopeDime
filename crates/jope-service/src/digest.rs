@@ -8,7 +8,7 @@ pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
 
 /// Lowercase hex of bytes that are already a digest. This does not hash.
 pub(crate) fn encode_hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+    jope_runtime::encode_hex(bytes)
 }
 
 /// Sixty-four lowercase hex characters. Uppercase is rejected.
