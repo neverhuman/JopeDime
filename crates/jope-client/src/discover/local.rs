@@ -185,6 +185,7 @@ pub(super) fn attached(home: &Path, deadline: Instant) -> Result<Option<Backgrou
     }))
 }
 /// A lock held by the child this call spawned is that child still starting.
+/// A holder with no pid is that same child while it is still writing the lock.
 /// Any other holder is a foreign store owner.
 pub(super) fn deadline_failure(
     home: &Path,
@@ -192,6 +193,9 @@ pub(super) fn deadline_failure(
     child_exit: Option<i32>,
 ) -> io::Result<Error> {
     Ok(match store_owner(home)? {
+        // The engine truncates `lock` before it writes its pid. While this
+        // call has a child, a holder with no pid is that child still starting.
+        Some((None, _)) if spawned.is_some() => Error::StartupTimeout { child_exit },
         Some((pid, _)) if pid.is_some() && pid == spawned => Error::StartupTimeout { child_exit },
         Some((pid, command)) => Error::Busy { pid, command },
         None => Error::StartupTimeout { child_exit },

@@ -326,6 +326,66 @@ fn losing_child_exit_is_not_readiness_and_retries_shared_metadata() {
 }
 
 #[test]
+#[ignore = "subprocess fixture, invoked by the unlabeled-lock startup test"]
+fn hold_empty_store_lock() {
+    let home = PathBuf::from(std::env::var_os("JOPE_CLT02_HOME").expect("supervised fixture home"));
+    let file = private_options()
+        .write(true)
+        .create_new(true)
+        .open(home.join("lock"))
+        .unwrap();
+    file.lock().unwrap();
+    fs::write(home.join("lock-ready"), b"1").unwrap();
+    thread::sleep(Duration::from_secs(4));
+}
+
+#[test]
+fn an_unlabeled_store_lock_during_our_startup_is_not_engine_busy() {
+    let home = Home::new();
+    let mut command = Command::new(std::env::current_exe().unwrap());
+    command
+        .args([
+            "--exact",
+            "discover::tests::hold_empty_store_lock",
+            "--ignored",
+            "--nocapture",
+            "--test-threads=1",
+        ])
+        .env_remove("JOPEDIME_ENDPOINT")
+        .env("JOPE_CLT02_HOME", &home.0)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    let mut child = command.spawn().unwrap();
+    let ready = home.0.join("lock-ready");
+    let ready_deadline = Instant::now() + Duration::from_secs(2);
+    while !ready.exists() {
+        if Instant::now() >= ready_deadline {
+            panic!("child did not take the store lock");
+        }
+        if let Some(status) = child.try_wait().unwrap() {
+            panic!("lock child exited early: {status}");
+        }
+        thread::sleep(Duration::from_millis(10));
+    }
+    let during_start = super::local::deadline_failure(&home.0, Some(child.id()), None).unwrap();
+    assert!(
+        matches!(during_start, Error::StartupTimeout { child_exit: None }),
+        "{during_start}"
+    );
+    assert!(
+        !during_start.to_string().contains("ENGINE_BUSY"),
+        "{during_start}"
+    );
+    let foreign = super::local::deadline_failure(&home.0, None, None).unwrap();
+    assert!(
+        matches!(foreign, Error::Busy { pid: None, .. }),
+        "{foreign}"
+    );
+    let _ = child.kill();
+    let _ = child.wait();
+}
+
+#[test]
 #[ignore = "subprocess fixture, invoked by the own-child startup test"]
 fn hold_store_lock() {
     let home = PathBuf::from(std::env::var_os("JOPE_CLT02_HOME").expect("supervised fixture home"));
