@@ -81,3 +81,43 @@ The comparison with Kumo L (2070.2) is reported as an in-corpus gap only.
 - **Resume:** the fingerprint set persists in `ckpt_last.pt`, so the counts carry across pauses.
 - **Expectation:** 0 duplicates. Any duplicate is reported as a finding.
 - **CPU smoke:** 1,475 episodes, 1,475 unique, 0 duplicates, 1,056 distinct source tables.
+
+## 4. Amendment pub-r6 (2026-11-12 about 21:08Z): all compute, 104M to exhaustion
+
+**Owner order.** Jepson, in the cl_fwriter session, verbatim:
+
+> I want you to take full ownership and get this running ASAP across ALL of our datasets and all of our compute xbabe0, xbabe1, xbabe2, xbabe3 and xbabe4 ... I want you to do this to the 104M model and I want you to track the elo on dev91 (using our original splits) every N? datasets, please start with our VERY best model and work to fine tune it to exhaustion please. Please make sure our GPUs are 80% memory utilization and our CPUs don't average above 85% utilization.
+
+Coordination with Gemini goes through `/home/ubuntu/jope_plan/H450_CLAUDE_GEMINI_COORD.md`.
+
+**Trainer.** The trainer bytes are unchanged from pub-r5. These runs use them:
+
+| run | host | size | tokens | hours | lr | seed |
+|---|---|---|---|---|---|---|
+| r4_L_A | xbabe2 | L | 320k (bmax 16) | 48 | 4e-5 | 450401 |
+| r4_M_A | xbabe2 | M | 140k | 48 | 6e-5 | 450402 |
+| r4_L_B | xbabe3 | L | 140k | 48 | 4e-5 | 450411 |
+| r4_M_B | xbabe3 | M | 140k | 48 | 6e-5 | 450412 |
+| r4_L_C | xbabe3 | L | 180k | 48 | 4e-5 | 450421 |
+
+- The token budgets put GPU memory at about 80%.
+- r4_L_B and r4_M_B were paused at 21:13Z, through SIGTERM and ckpt_last.pt, after 0.157 h. They resumed on the 48 h schedule.
+- The start model is unchanged: the H449 `all_non_d91_L` 104M checkpoint (b854b518...), the best measured 104M.
+
+**Cadence (N).** One EMA checkpoint per training hour. That is about 25,000 datasets per 104M run on a 3090. Every reported Elo carries the run's `unique_datasets_seen` at that checkpoint.
+
+**Evaluation (`eval_x0_h450.sh`).**
+- dev91 columns: `cols_h450_gpu.py --device cpu` on xbabe0. Its GPU is in error and its 128 CPUs are idle. The run is 26 shards × 4 threads, which keeps it under the 85% cap.
+  - Every checkpoint, epoch 0 included, is scored on the same host and backend.
+  - Epoch 0 is the init L + M pair, which is also the zero-dev91 control arm (`--zero-d91-gpu-cols`) for every later epoch.
+- Then `analyze_h450.py` on xbabe2.
+- Labels are as in §3: in-corpus fit, `canonical_promotion_forbidden`.
+
+**Exhaustion rule.** A run stops when its pair's in-corpus dev91 Elo (the champion stack and the ICL-only arm) has not risen for 4 consecutive checkpoints, or when its 48 h schedule ends.
+
+**Hosts not used for training** (owner informed):
+- xbabe1: a 4090 fully held by a non-H450 diffusers job.
+- xbabe0: GPU in error. Fixing it needs a driver reset or a reboot, and neither was done.
+- xbabe4: a Mac Studio with about 24/32 cores held by llama-server.
+
+**Sealed.** APEX-CONFIRM and DL-Holdout stay out of the bank. This is the owner's earlier answer, "Keep them sealed (Recommended)", and it stands until he types otherwise.

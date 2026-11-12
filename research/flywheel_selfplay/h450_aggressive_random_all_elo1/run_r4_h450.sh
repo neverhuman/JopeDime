@@ -8,7 +8,7 @@
 #                                                        one training process as a user unit on HOST (xbabe2|xbabe3)
 #   run_r4_h450.sh cols-epoch EPOCH RUN_L RUN_M [RUN_LB RUN_MB]
 #                                                        dev91 GPU columns (fit X_search only) from epoch checkpoints
-#   run_r4_h450.sh analyze-epoch TAG COLS_DIR            in-corpus dev91 Elo (y_audit read; H450 lock + receipt)
+#   run_r4_h450.sh analyze-epoch TAG COLS_DIR [ZERO_DIR] in-corpus dev91 Elo (y_audit read; H450 lock + receipt)
 # Quarantine: every output under ~/jope-data/h450-quarantine/r4 or ~/jope_plan/evidence/H450/diag_results/r4_*;
 # canonical_promotion_forbidden; APEX-CONFIRM and DL-Holdout are not in the bank (trainer gate refuses them).
 set -euo pipefail
@@ -120,12 +120,14 @@ cols-epoch)
   [ "$n" = 91 ] || die "incomplete cols $TAG"
   ;;
 analyze-epoch)
-  TAG=${2:?TAG}; COLS=${3:?COLS_DIR}
+  TAG=${2:?TAG}; COLS=${3:?COLS_DIR}; ZERO=${4:-}   # ZERO: the epoch-0 (init, 0 % dev91) column dir, as the control arm
   check_stage
   D=$EV/diag_results/r4_$TAG
   [ ! -e "$D" ] || die "$D exists (create-once)"
+  [ -z "$ZERO" ] || [ -d "$ZERO" ] || die "missing $ZERO"
   mkdir -p "$D"
   (cd "$ST/code" && CUDA_VISIBLE_DEVICES="" taskset -c 64-79 nice -n 19 python3 -B analyze_h450.py --bank "$EVAL_BANK" \
+     ${ZERO:+--zero-d91-gpu-cols "$ZERO"} \
      --gpu-cols "$COLS" --tab-cols "$DATA/cols_tab_h450_D91" --h448-pulled /home/ubuntu/jope_plan/evidence/H448/pulled \
      --h418-pulled /home/ubuntu/jope_plan/evidence/H418/pulled --board "$EV/board_post_h448/dev91-audit-v1" \
      --lock "$EV/stage_v/LOCK.json" --receipt /home/ubuntu/jope_plan/ns/receipts/H450_UNFAIR_LOCK_sha256.txt \
