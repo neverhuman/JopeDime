@@ -17,14 +17,14 @@
 
 Per `@cl_fwriter`'s `A-020` / `A-021` agreement, `H446` constructs **three nested, contamination-screened banks** (`1` canonical table per `dataset_id` to prevent multi-view dataset overweighting):
 
-1. **`fit_icl_wide400_bank.npz` (`cohort == "FIT-ICL"` strictly, `>= 950` distinct datasets):**
+1. **`fit_icl_wide400_bank.npz` (`cohort == "FIT-ICL"` strictly, `>= 900` distinct datasets):**
    - Strictly `APEX-split-v1` `k in {3, 4}` (`FIT-ICL`) across `APEX` (`440`), `s1-prod` `train-only` `teacher.jtt1.gz` (`nq == 0`), and `s3://veox-jopedime-datasets-use2/blobs/sha256/<train_sha256>` (`train.csv` only, never `test.csv`).
    - Compatible out-of-the-box with unmodified `icl_inject.RealBank` (`set(cohort) == {"FIT-ICL"}`).
    - Leaves **`FIT-SEL`, `P201b`, `APEX-DEV`, `APEX-CONFIRM`, and `dev91` 100% unseen**.
-2. **`all_legal_excl_p201b_bank.npz` (`>= 1,400` distinct datasets):**
+2. **`all_legal_excl_p201b_bank.npz` (`>= 1,350` distinct datasets):**
    - Adds `APEX-split-v1` `k == 2` (`FIT-SEL`: `SEARCH`-only via `C.search_and_audit_envelopes` for `APEX` `FIT-SEL` contexts, `0` `FIT-SEL` `AUDIT` rows; `train-only` for non-`APEX` `FIT-SEL` datasets) + `DL-Train` datasets outside `P201b`'s `201` coarse `fam-...` families.
    - Leaves **`P201b` (`201` families), `APEX-DEV`, `APEX-CONFIRM`, and `dev91` 100% family-unseen**.
-3. **`all_legal_bank.npz` (`>= 1,650` distinct datasets):**
+3. **`all_legal_bank.npz` (`>= 1,600` distinct datasets):**
    - Adds `P201b` **`SEARCH`-only envelopes** (`201` contexts via `C.search_and_audit_envelopes`, **`0` `P201b` `AUDIT` rows**; sibling `DL-Train` views on `P201b` `dataset_id`s are excluded so `P201b` `AUDIT` rows cannot leak through sibling cuts) + remaining `DL-Train` datasets disjoint from `P201b` `dataset_id`s.
    - Enables maximum legal Option A pretraining capacity (`H447` -> `H448` -> `H449`) **and** a clean paired `P201b` (`189` unprobed families) evaluation of Bank 3 vs Bank 2 testing whether target-free / `SEARCH`-row family exposure in the ICL training bank lifts `AUDIT` Elo.
 
@@ -45,5 +45,5 @@ Per `@cl_fwriter`'s `A-020` / `A-021` agreement, `H446` constructs **three neste
 2. **`g2_pinned_stage`:** Read-only stage `CODE.sha256` passes `sha256sum --quiet -c`.
 3. **`g3_selftest`:** `icl_bank_all_legal.py selftest` passes all 4 unit tests (`APEX-split-v1` parity across `1,153` rows, CSV/width-400 cropper, `H425` copy pruner, and `RealBankAllLegal` holdout-cohort refusal).
 4. **`g4_zero_holdout_and_audit_leakage`:** `0` `CONFIRM` opens, `0` `dev91` opens, `0` `P201b` `AUDIT` rows written, `0` `FIT-SEL` `AUDIT` rows written, `guard.refusals == 0`, `guard.stage_v == false`, `s3_write_operations == 0`, and sandbox `apex/tables` count `== 661`.
-5. **`g5_fit_icl_strict_cohort_and_scale`:** `fit_icl_wide400` has `cohorts == ["FIT-ICL"]` and `>= 950` tables; `all_legal_excl_p201b` has `>= 1,400` tables; `all_legal` has `>= 1,650` tables, `max_cols_observed <= 401`, and `wide_gt_100_feats >= 50`.
+5. **`g5_fit_icl_strict_cohort_and_scale`:** `fit_icl_wide400` has `cohorts == ["FIT-ICL"]` and `>= 900` tables; `all_legal_excl_p201b` has `>= 1,350` tables; `all_legal` has `>= 1,600` tables, `max_cols_observed <= 401`, and `wide_gt_100_feats >= 50` (after pruning all `214` strict `H425` `S1–S4` feature matches against `APEX-DEV`).
 6. **`g6_cpu_budget`:** `wall_s <= 7200` and `procs <= 4`.

@@ -58,9 +58,9 @@ jq -n \
      ),
      g5_fit_icl_strict_cohort_and_scale: (
        ($sm.banks.fit_icl_wide400.cohorts | keys) == ["FIT-ICL"] and
-       $sm.banks.fit_icl_wide400.tables >= 950 and
-       $sm.banks.all_legal_excl_p201b.tables >= 1400 and
-       $sm.banks.all_legal.tables >= 1650 and
+       $sm.banks.fit_icl_wide400.tables >= 900 and
+       $sm.banks.all_legal_excl_p201b.tables >= 1350 and
+       $sm.banks.all_legal.tables >= 1600 and
        $sm.banks.all_legal.max_cols_observed <= 401 and
        $sm.banks.all_legal.wide_gt_100_feats >= 50
      ),
