@@ -134,7 +134,8 @@ def _sum_stages(stages: list[dict]) -> dict:
 
 def _stage_from_manifest(man: dict, cpu_threads: int = 0) -> dict:
     st = man["state"]
-    el_h = float(st["elapsed_s"]) / 3600.0
+    wall_s = float(st.get("elapsed_s", st.get("elapsed", 0.0)))
+    el_h = wall_s / 3600.0
     is_gpu = str(man.get("device", "")).startswith("cuda")
     return {
         "ckpt_sha256": man["ckpt_sha256"],
@@ -150,7 +151,7 @@ def _stage_from_manifest(man: dict, cpu_threads: int = 0) -> dict:
         "approx_train_flops": int(st["approx_train_flops"]),
         "gpu_hours": round(el_h if is_gpu else 0.0, 4),
         "cpu_hours": round(el_h * max(cpu_threads, 1) if not is_gpu else 0.0, 3),
-        "wall_s": float(st["elapsed_s"]),
+        "wall_s": wall_s,
         "accounting_method": "exact_step_integer_counter",
     }
 

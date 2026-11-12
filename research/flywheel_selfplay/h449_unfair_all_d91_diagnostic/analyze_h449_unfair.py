@@ -17,10 +17,16 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import sys
 from multiprocessing import Pool
 from pathlib import Path
+
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
 import numpy as np
 
@@ -356,6 +362,8 @@ def main(argv=None) -> int:
 
     # Write quarantined diagnostic board copy (NEVER touching canonical reference-board!)
     shutil.copytree(bdir, diag_board)
+    os.chmod(diag_board, 0o755)
+    os.chmod(diag_board / "scores", 0o755)
     score_exports = [(UNFAIR_STACK, u_all, True), (UNFAIR_ICL_ONLY, u_icl, True)]
     if u_non is not None and u_non_icl is not None:
         score_exports.extend([(FAIR_NON_D91_STACK, u_non, False), (FAIR_NON_D91_ICL_ONLY, u_non_icl, False)])
