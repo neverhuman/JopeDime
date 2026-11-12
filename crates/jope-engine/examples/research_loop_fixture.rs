@@ -26,7 +26,7 @@ const VOCAB: i64 = 8;
 const SEALED_CANARY: &str = "I32-SEALED-CANARY-MUST-NOT-ENTER-TRAINING";
 
 fn hash(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_parallel::build_receipt::sha256_hex(bytes)
 }
 
 fn parameters_sha256(store: &nn::VarStore) -> Result<String> {

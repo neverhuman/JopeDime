@@ -1,5 +1,4 @@
 //! Deterministic, byte-accounted public projections for archived wave evidence.
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
@@ -434,7 +433,7 @@ fn hex40(s: &str) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::py::sha256_hex(bytes)
 }
 fn q(v: &str) -> String {
     let mut s = String::from("\"");

@@ -10,7 +10,6 @@ use jope_learning::lake::{
         ProjectionStore, VIEW_SCHEMA,
     },
 };
-use sha2::{Digest, Sha256};
 use std::{cell::Cell, collections::BTreeMap};
 
 const FIXTURE: &[u8] = include_bytes!("fixtures/lake-views-v1/row.bin");
@@ -159,11 +158,11 @@ fn failed_and_unknown_observations_are_preserved() {
     let failed = br#"{"failed":{"reason":"runner_exit"}}"#;
     let unknown = br#""unknown""#;
     let mut manifest = fixture_manifest();
-    manifest.source_objects[0].sha256 = hex::encode(Sha256::digest(failed));
+    manifest.source_objects[0].sha256 = jope_learning::canon::sha256_hex(failed);
     let mut second = manifest.source_objects[0].clone();
     second.key = "receipts/unknown.bin".into();
     second.version_id = "version-unknown".into();
-    second.sha256 = hex::encode(Sha256::digest(unknown));
+    second.sha256 = jope_learning::canon::sha256_hex(unknown);
     manifest.source_objects.push(second);
     let reader = Reader {
         objects: BTreeMap::from([
@@ -290,7 +289,7 @@ fn missing_corrupt_and_wrong_version_objects_are_excluded_with_denominators() {
 
     let mut malformed_manifest = fixture_manifest();
     let malformed_bytes = b"not-json";
-    malformed_manifest.source_objects[0].sha256 = hex::encode(Sha256::digest(malformed_bytes));
+    malformed_manifest.source_objects[0].sha256 = jope_learning::canon::sha256_hex(malformed_bytes);
     let malformed_reader = Reader {
         objects: BTreeMap::from([(
             ("receipts/row.bin".into(), "version-1".into()),
@@ -370,7 +369,7 @@ fn commit(view_bytes: &[u8]) -> ManifestCommit {
         generation: 1,
         parent_sha256: None,
         source_manifest_sha256: "a".repeat(64),
-        view_sha256: hex::encode(Sha256::digest(view_bytes)),
+        view_sha256: jope_learning::canon::sha256_hex(view_bytes),
         requested: 1,
         observed: 1,
         excluded: 0,
@@ -390,7 +389,7 @@ fn publication_writes_immutable_objects_before_observed_head_cas() {
     let next = ManifestCommit {
         generation: 2,
         parent_sha256: Some(stored_commit.digest().unwrap()),
-        view_sha256: hex::encode(Sha256::digest(b"next-view")),
+        view_sha256: jope_learning::canon::sha256_hex(b"next-view"),
         requested: 1,
         observed: 1,
         excluded: 0,

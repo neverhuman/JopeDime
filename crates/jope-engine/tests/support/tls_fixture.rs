@@ -3,7 +3,6 @@
 //! No certificate crate is added to the workspace. Every identity here is synthetic.
 #![allow(dead_code)]
 use ed25519_dalek::{Signer, SigningKey};
-use sha2::{Digest, Sha256};
 use std::{
     io::Write,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
@@ -134,7 +133,7 @@ pub fn certificate(
     ]
     .concat();
     TestCertificate {
-        sha256: hex::encode(Sha256::digest(&der)),
+        sha256: jope_parallel::build_receipt::sha256_hex(&der),
         der,
         pkcs8,
     }

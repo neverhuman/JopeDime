@@ -13,9 +13,7 @@ use std::{
 use tempfile::TempDir;
 
 fn hash(bytes: &[u8]) -> String {
-    use sha2::{Digest, Sha256};
-
-    hex::encode(Sha256::digest(bytes))
+    jope_parallel::build_receipt::sha256_hex(bytes)
 }
 
 struct Fixture {
