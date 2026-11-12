@@ -73,7 +73,6 @@ fn matches_res07_full_recipe_outputs_and_measures_rust_latency() {
 #[test]
 #[ignore = "requires hash-pinned RES-07 sampled/full training capture"]
 fn reports_res07_sampled_full_rust_agreement() {
-    use sha2::{Digest, Sha256};
     use std::{env, fs, time::Instant};
 
     const ATOL: f64 = 1e-5;
@@ -86,8 +85,8 @@ fn reports_res07_sampled_full_rust_agreement() {
     let indices_bytes = fs::read(indices_path).unwrap();
     let capture: serde_json::Value =
         serde_json::from_slice(&fs::read(capture_path).unwrap()).unwrap();
-    let train_sha = format!("{:x}", Sha256::digest(&train_bytes));
-    let indices_sha = format!("{:x}", Sha256::digest(&indices_bytes));
+    let train_sha = crate::digest::sha256_hex(&train_bytes);
+    let indices_sha = crate::digest::sha256_hex(&indices_bytes);
     assert_eq!(train_sha, capture["train_file_sha256"]);
     assert_eq!(indices_sha, capture["sample_row_indices_sha256"]);
     assert_eq!(capture["schema"], "rnk05.sampled-full-recipe-capture/v1");

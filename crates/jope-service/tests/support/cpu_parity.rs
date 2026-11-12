@@ -2,7 +2,6 @@
 #![allow(dead_code)] // Each consumer uses a different subset of this test-only helper.
 use safetensors::{Dtype, SafeTensors};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{
     env, fs,
     path::{Component, Path, PathBuf},
@@ -125,7 +124,7 @@ fn hashed(path: &Path, expected: &str) -> Vec<u8> {
     );
     let bytes = fs::read(path).unwrap();
     assert_eq!(
-        format!("{:x}", Sha256::digest(&bytes)),
+        crate::digest::sha256_hex(&bytes),
         expected,
         "fixture identity: {}",
         path.display()

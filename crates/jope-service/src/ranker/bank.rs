@@ -158,7 +158,6 @@ mod tests {
     use std::path::{Path, PathBuf};
 
     use ruzstd::encoding::{compress_to_vec, CompressionLevel};
-    use sha2::{Digest, Sha256};
 
     use super::*;
 
@@ -296,7 +295,7 @@ mod tests {
     }
 
     fn sha256_hex(bytes: &[u8]) -> String {
-        format!("{:x}", Sha256::digest(bytes))
+        crate::digest::sha256_hex(bytes)
     }
 
     #[test]

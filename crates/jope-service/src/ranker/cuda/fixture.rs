@@ -11,7 +11,6 @@ use crate::ranker::{
     bundle::FROZEN_DOPE_COMPOSITE,
 };
 use candle_core_0_11_0::Device;
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, env, fs, path::PathBuf, time::Instant};
 
 fn view<'a>(shape: &'a [usize], values: &'a [f32]) -> TensorView<'a> {
@@ -34,7 +33,7 @@ fn replay(device: Device, authenticated: bool) {
     fs::create_dir_all(&out).unwrap();
     let bundle = PathBuf::from(env::var_os("JOPE_PARITY_BUNDLE_DIR").unwrap());
     let dope = fs::read(bundle.join("dope.safetensors")).unwrap();
-    let dope_sha = format!("{:x}", Sha256::digest(&dope));
+    let dope_sha = crate::digest::sha256_hex(&dope);
     assert_eq!(
         dope_sha,
         "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d"

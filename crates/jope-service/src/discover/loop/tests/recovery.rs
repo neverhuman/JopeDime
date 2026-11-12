@@ -25,7 +25,6 @@ fn learned_cpu_admission_recovery_matches_uninterrupted_execution() {
         stage1b::TokenProjection,
     };
     use serde_json::Value;
-    use sha2::{Digest, Sha256};
     use std::{
         collections::HashMap,
         env, fs,
@@ -39,7 +38,7 @@ fn learned_cpu_admission_recovery_matches_uninterrupted_execution() {
         assert!(!fs::symlink_metadata(path).unwrap().file_type().is_symlink());
         let bytes = fs::read(path).unwrap();
         assert_eq!(
-            format!("{:x}", Sha256::digest(&bytes)),
+            crate::digest::sha256_hex(&bytes),
             expected,
             "{}",
             path.display()

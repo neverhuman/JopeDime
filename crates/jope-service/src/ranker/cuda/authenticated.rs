@@ -8,7 +8,6 @@ use crate::ranker::bundle::{
 use jope_api::error::ErrorCode;
 use safetensors::Dtype;
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, env, fs, path::PathBuf};
 
 const CATALOG_SHA: &str = "d5a4b21e6167dbd637e940acd3a11d6357c147bb021ea2a8929f06c71951e34f";
@@ -55,7 +54,7 @@ impl Inputs {
                 .expect("release-verified package extraction required"),
         );
         let bytes = fs::read(root.join("release-catalog.json")).unwrap();
-        assert_eq!(format!("{:x}", Sha256::digest(&bytes)), CATALOG_SHA);
+        assert_eq!(crate::digest::sha256_hex(&bytes), CATALOG_SHA);
         let c: Catalog = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(c.schema, "jope.r782-release-catalog/v1");
         assert_eq!(c.bundle_digest, BUNDLE);
