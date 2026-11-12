@@ -39,11 +39,8 @@ pub(crate) fn hmac_sha256(key: &[u8], message: &[u8]) -> [u8; 32] {
 
 /// The 32-hex device id for a machine id.
 pub(crate) fn device_digest(machine_id: &[u8]) -> String {
-    hmac_sha256(KEY, machine_id)
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect::<String>()[..32]
-        .to_owned()
+    let digest = crate::bootstrap::hex(&hmac_sha256(KEY, machine_id));
+    digest[..32].to_owned()
 }
 
 fn machine_id() -> Option<Vec<u8>> {
@@ -140,7 +137,7 @@ mod tests {
 
     #[test]
     fn hmac_matches_rfc_4231() {
-        let hex = |b: [u8; 32]| b.iter().map(|b| format!("{b:02x}")).collect::<String>();
+        let hex = |b: [u8; 32]| crate::bootstrap::hex(&b);
         // RFC 4231 test case 2.
         assert_eq!(
             hex(hmac_sha256(b"Jefe", b"what do ya want for nothing?")),

@@ -281,7 +281,7 @@ fn object_path(root: &Path, id: &str) -> anyhow::Result<PathBuf> {
     sessions::object_path(root, id)
 }
 fn encode_hex(data: &[u8]) -> String {
-    data.iter().map(|b| format!("{b:02x}")).collect()
+    crate::bootstrap::hex(data)
 }
 fn decode_hex(text: &str) -> anyhow::Result<Vec<u8>> {
     if !text.len().is_multiple_of(2) || !text.bytes().all(|b| b.is_ascii_hexdigit()) {
