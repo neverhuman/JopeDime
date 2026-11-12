@@ -584,7 +584,7 @@ def _load_and_sketch_worker(job: tuple[dict, str]) -> dict:
 
 
 def prune_against_dev_h425(dev_queries: list[tuple[dict, object]], candidates: list[dict]) -> tuple[list[dict], list[dict]]:
-    """Fixed-point pruning: drop any candidate matched by S1/S2/S3/S4 on ANY of the 239 APEX-DEV tables until 0 flags remain."""
+    """Fixed-point pruning: drop ALL candidates matched by S1/S2/S3/S4 per round across the 115 core APEX-DEV tables until 0 flags remain."""
     import screen_h425 as S425
 
     alive = list(candidates)
@@ -595,7 +595,6 @@ def prune_against_dev_h425(dev_queries: list[tuple[dict, object]], candidates: l
         fit_sk = [c["sketch"] for c in alive]
         names_fit = [S425.name_tokens(c["entry"]["family_key"]) for c in alive]
         fam_fit = [c["entry"]["family_key"] for c in alive]
-        cid_to_idx = {c["entry"]["cid"]: idx for idx, c in enumerate(alive)}
 
         col_idx = defaultdict(list)
         row_idx = defaultdict(list)
@@ -616,17 +615,78 @@ def prune_against_dev_h425(dev_queries: list[tuple[dict, object]], candidates: l
 
         bad_indices = {}
         for q_sk, q_name in dev_queries:
-            out = S425.screen(q_sk, fit_sk, col_idx, row_idx, pair_idx, pair_df, names_fit, q_name, skip_family=None, fam_fit=fam_fit)
-            if out["flag_feature"]:
-                for sc_name in ("s1", "s2", "s3", "s4"):
-                    sc = out[sc_name]
-                    if sc["flag"] and sc["fit"] is not None:
-                        bi = cid_to_idx[sc["fit"]]
-                        bad_indices.setdefault(bi, []).append(f"dev:{q_sk['cid'][:12]}:{sc_name}")
+            # S1: collect ALL candidates matching strong/weak column thresholds (not just max)
+            per_fit = defaultdict(lambda: [0, 0])
+            for sk in q_sk["spec"]:
+                cnt = Counter()
+                for h in sk.tolist():
+                    for ref in col_idx.get(h, ()):
+                        cnt[ref] += 1
+                best = {}
+                for (fi, cj), c in cnt.items():
+                    if c < 4:
+                        continue
+                    j = S425.jaccard(sk, fit_sk[fi]["spec"][cj])
+                    if j >= S425.COL_J and j > best.get(fi, 0.0):
+                        best[fi] = j
+                for fi, j in best.items():
+                    per_fit[fi][0] += 1
+                    per_fit[fi][1] += int(j >= S425.S1_FEW_J)
+            ns = len(q_sk["spec"])
+            need = max(S425.S1_MIN_COLS, int(np.ceil(S425.S1_MIN_SHARE * ns)))
+            for fi, (nm, nstrong) in per_fit.items():
+                copy = ns >= 3 and nstrong >= need
+                weak = (ns >= 3 and nm >= need) or (1 <= ns <= 2 and nstrong == ns)
+                if copy or weak:
+                    bad_indices.setdefault(fi, []).append(f"dev:{q_sk['cid'][:12]}:s1")
+
+            # S2: collect ALL candidates exceeding shared-row thresholds
+            applies_s2 = (
+                q_sk["F"] >= S425.S2_MIN_WIDTH
+                and q_sk["n"] > 0
+                and len(q_sk["rows"]) >= S425.S2_MIN_UNIQUE * q_sk["n"]
+            )
+            if applies_s2 and len(q_sk["rows"]) > 0:
+                cnt2 = Counter()
+                for h in q_sk["rows"].tolist():
+                    for fi2 in row_idx.get(h, ()):
+                        cnt2[fi2] += 1
+                n_q_rows = len(q_sk["rows"])
+                for fi2, shared in cnt2.items():
+                    if shared >= S425.S2_MIN_ROWS and (shared / n_q_rows) >= S425.S2_MIN_SHARE:
+                        bad_indices.setdefault(fi2, []).append(f"dev:{q_sk['cid'][:12]}:s2")
+
+            # S3: collect ALL candidates exceeding rare-pair thresholds
+            rare = [p for p in q_sk["pairs"] if pair_df[p] <= S425.S3_MAX_DF]
+            if len(rare) >= S425.S3_MIN_COLS:
+                cnt3 = Counter()
+                for p in rare:
+                    for fi3 in pair_idx.get(p, ()):
+                        cnt3[fi3] += 1
+                min_m3 = S425.S3_MIN_SHARE * len(rare)
+                for fi3, m3 in cnt3.items():
+                    if m3 >= S425.S3_MIN_COLS and m3 >= min_m3:
+                        bad_indices.setdefault(fi3, []).append(f"dev:{q_sk['cid'][:12]}:s3")
+
+            # S4: collect ALL candidates matching name-token overlap
+            if q_name is not None:
+                for fi4, t in enumerate(names_fit):
+                    if t is None:
+                        continue
+                    inter = len(q_name & t)
+                    if q_name == t or (inter >= S425.S4_MIN_SHARED and inter / len(q_name | t) >= S425.S4_MIN_J):
+                        bad_indices.setdefault(fi4, []).append(f"dev:{q_sk['cid'][:12]}:s4")
+
         if not bad_indices:
+            for q_sk, q_name in dev_queries:
+                out = S425.screen(
+                    q_sk, fit_sk, col_idx, row_idx, pair_idx, pair_df, names_fit, q_name, skip_family=None, fam_fit=fam_fit
+                )
+                if out["flag_feature"]:
+                    raise RuntimeError(f"S425.screen confirmation failed on {q_sk['cid']}: {out}")
             break
-        if rounds > 12:
-            raise RuntimeError("H425 fixed-point pruning did not converge in 12 rounds")
+        if rounds > 64:
+            raise RuntimeError("H425 fixed-point pruning did not converge in 64 rounds")
         next_alive = []
         for idx, c in enumerate(alive):
             if idx in bad_indices:
