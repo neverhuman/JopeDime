@@ -394,7 +394,7 @@ pub fn verify_quarantined_tree_at(tree: &QuarantinedEncodingTree, root: &Path) -
             "quarantine file-mode drift"
         );
         let digest = if metadata.file_type().is_symlink() {
-            hex::encode(Sha256::digest(fs::read_link(&path)?.as_os_str().as_bytes()))
+            crate::selfplay_runtime::sha256_bytes(fs::read_link(&path)?.as_os_str().as_bytes())
         } else {
             sha256_file(&path)?
         };

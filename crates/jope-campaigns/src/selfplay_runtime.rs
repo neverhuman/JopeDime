@@ -30,8 +30,8 @@ pub fn now_ms() -> u128 {
         .as_millis()
 }
 
-pub fn sha256_bytes(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+pub fn sha256_bytes(bytes: impl AsRef<[u8]>) -> String {
+    hex::encode(Sha256::digest(bytes.as_ref()))
 }
 
 pub fn sha256_file(path: &Path) -> Result<String> {

@@ -1,7 +1,6 @@
 pub use crate::task::Task;
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest as _, Sha256};
 use std::fmt::{Display, Formatter};
 
 pub const ACCEPTED_BY_TASK_SCHEMA: &str = "AcceptedByTask.v2";

@@ -2,7 +2,6 @@
 
 use anyhow::{bail, Result};
 use serde_json::{Map, Value};
-use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 
 const RECEIPT_SCHEMA: &str = "BroadEvaluationReceipt.v1";
@@ -128,7 +127,7 @@ fn validate_broad_receipt(receipt: &Value) -> Result<()> {
         .as_str()
         .filter(|value| !value.is_empty())
         .ok_or_else(|| anyhow::anyhow!("receipt semantic hash does not bind canonical genome"))?;
-    if hex::encode(Sha256::digest(genome.as_bytes())) != receipt["semantic_sha256"] {
+    if crate::selfplay_runtime::sha256_bytes(genome.as_bytes()) != receipt["semantic_sha256"] {
         bail!("receipt semantic hash does not bind canonical genome");
     }
     let fidelity = receipt["fidelity"]
@@ -295,7 +294,7 @@ fn median(mut values: Vec<f64>) -> f64 {
 
 fn content_sha256(value: &Value) -> Result<String> {
     let bytes = serde_json::to_vec(value)?;
-    Ok(hex::encode(Sha256::digest(bytes)))
+    Ok(crate::selfplay_runtime::sha256_bytes(bytes))
 }
 
 #[cfg(test)]
@@ -305,7 +304,6 @@ mod tests {
         RECEIPT_SCHEMA,
     };
     use serde_json::{json, Map, Value};
-    use sha2::{Digest, Sha256};
 
     #[test]
     fn normalized_scores_use_median_and_mad() {
@@ -348,7 +346,7 @@ mod tests {
         fields.insert("train_sha256".to_owned(), json!("b".repeat(64)));
         fields.insert(
             "semantic_sha256".to_owned(),
-            json!(hex::encode(Sha256::digest(genome.as_bytes()))),
+            json!(crate::selfplay_runtime::sha256_bytes(genome.as_bytes())),
         );
         fields.insert("canonical_genome".to_owned(), json!(genome));
         fields.insert("evaluator_release_sha256".to_owned(), json!("c".repeat(64)));

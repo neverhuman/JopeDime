@@ -1,12 +1,13 @@
 use super::*;
-use sha2::{Digest, Sha256};
 
 pub(crate) fn canonical_bytes<T: Serialize>(value: &T) -> Result<Vec<u8>> {
     Ok(serde_json::to_vec(value)?)
 }
 
 pub(crate) fn canonical_sha256<T: Serialize>(value: &T) -> Result<String> {
-    Ok(hex::encode(Sha256::digest(canonical_bytes(value)?)))
+    Ok(crate::selfplay_runtime::sha256_bytes(canonical_bytes(
+        value,
+    )?))
 }
 
 pub(crate) fn domain_sha256(domain: &str, fields: impl Serialize) -> Result<String> {

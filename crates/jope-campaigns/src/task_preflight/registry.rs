@@ -1,7 +1,6 @@
 use crate::task::Task;
 use anyhow::{ensure, Context, Result};
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const TASK_HEAD_POLICY_SCHEMA: &str = "JopeTaskHeadPolicy.v1";
@@ -93,7 +92,7 @@ impl GeneratedOperatorRegistry {
             serde_json::from_str(TASK_HEAD_POLICY_JSON)
                 .context("decode generated task/head policy")?;
         ensure!(
-            hex::encode(Sha256::digest(TASK_HEAD_POLICY_JSON.as_bytes()))
+            crate::selfplay_runtime::sha256_bytes(TASK_HEAD_POLICY_JSON.as_bytes())
                 == TASK_HEAD_POLICY_SHA256,
             "generated task/head policy digest drift"
         );
@@ -124,7 +123,7 @@ impl GeneratedOperatorRegistry {
             );
         }
         Ok(Self {
-            sha256: hex::encode(Sha256::digest(bytes)),
+            sha256: crate::selfplay_runtime::sha256_bytes(bytes),
             operators,
             heads,
         })

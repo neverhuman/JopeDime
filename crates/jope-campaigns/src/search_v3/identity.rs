@@ -1,5 +1,4 @@
 use serde::Serialize;
-use sha2::{Digest, Sha256};
 
 pub fn canonical_json_bytes<T: Serialize>(value: &T) -> Result<Vec<u8>, String> {
     serde_json::to_vec(value)
@@ -8,11 +7,11 @@ pub fn canonical_json_bytes<T: Serialize>(value: &T) -> Result<Vec<u8>, String> 
 
 pub fn canonical_sha256<T: Serialize>(value: &T) -> Result<String, String> {
     let bytes = canonical_json_bytes(value)?;
-    Ok(hex::encode(Sha256::digest(bytes)))
+    Ok(crate::selfplay_runtime::sha256_bytes(bytes))
 }
 
 pub fn bytes_sha256(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 pub fn validate_sha256(name: &str, value: &str) -> Result<(), String> {

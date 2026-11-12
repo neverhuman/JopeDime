@@ -73,7 +73,9 @@ pub(crate) fn sha256_file(path: &Path) -> Result<String> {
 }
 
 pub(crate) fn content_hash(value: &Value) -> Result<String> {
-    Ok(hex::encode(Sha256::digest(serde_json::to_vec(value)?)))
+    Ok(jope_dime_regressor::selfplay_runtime::sha256_bytes(
+        serde_json::to_vec(value)?,
+    ))
 }
 
 pub(crate) fn auto_retirement_idempotency_key(epoch: &str, preview_sha256: &str) -> Result<String> {

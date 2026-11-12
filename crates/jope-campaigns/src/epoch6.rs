@@ -10,7 +10,6 @@ use crate::selfplay_shadow::Sha256Digest;
 use crate::task::{verify_embedded_task_semantics, Task, TASK_SEMANTICS_SHA256};
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};

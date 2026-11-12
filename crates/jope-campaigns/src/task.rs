@@ -6,7 +6,6 @@
 
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use sha2::{Digest, Sha256};
 use std::fmt::{Display, Formatter};
 use std::marker::PhantomData;
 use std::str::FromStr;
@@ -442,7 +441,7 @@ pub fn operational_loss(task: Task, native_score: f64) -> Result<f64> {
 }
 
 pub fn embedded_task_semantics_sha256() -> String {
-    hex::encode(Sha256::digest(TASK_SEMANTICS_JSON.as_bytes()))
+    crate::selfplay_runtime::sha256_bytes(TASK_SEMANTICS_JSON.as_bytes())
 }
 
 pub fn verify_embedded_task_semantics() -> Result<()> {
