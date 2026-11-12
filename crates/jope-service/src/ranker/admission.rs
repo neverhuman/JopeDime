@@ -22,7 +22,6 @@ use crate::{
     research::{BehaviorPolicy, RecordedPolicyKind},
 };
 #[cfg(feature = "research")]
-use sha2::{Digest, Sha256};
 
 const REVEALED: usize = 4;
 const ADMITTED: usize = 4;
@@ -295,8 +294,7 @@ fn validate_recorded_inputs(
         .enumerate()
     {
         ensure!(
-            program.program_sha256
-                == format!("{:x}", Sha256::digest(slate.program_keys[i].as_bytes()))
+            program.program_sha256 == crate::digest::sha256_hex(slate.program_keys[i].as_bytes())
                 && same_f32(
                     &program.feat412,
                     &input.prog_412[i * adapter::PROG_FEATURES..(i + 1) * adapter::PROG_FEATURES]
