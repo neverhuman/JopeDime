@@ -69,13 +69,7 @@ fn field(hash: &mut Sha256, bytes: &[u8]) {
 }
 
 fn hex(bytes: &[u8]) -> String {
-    const HEX: &[u8; 16] = b"0123456789abcdef";
-    let mut out = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        out.push(HEX[(byte >> 4) as usize] as char);
-        out.push(HEX[(byte & 0x0f) as usize] as char);
-    }
-    out
+    jope_runtime::encode_hex(bytes)
 }
 
 /// One bounded cache with explicit generation boundaries.

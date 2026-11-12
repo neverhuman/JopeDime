@@ -62,7 +62,7 @@ pub fn summary(package: &Package) -> PackageSummary {
 }
 
 pub fn hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
+    jope_runtime::encode_hex(bytes)
 }
 
 /// The source commit this executable was built from, as the builder declared it.
