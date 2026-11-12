@@ -1309,3 +1309,164 @@ fn multi_region_parallel_probe_kek_pin_and_failover() {
 
     emu_west.shutdown();
 }
+
+#[test]
+fn cli_doctor_bom_csv_target_ergonomics_and_progress_summary() {
+    use std::process::Command;
+
+    let root = tempfile::tempdir().expect("create tempdir");
+    let edge_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge"));
+    let carbon_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+
+    let mut emu_cfg = CarbonEmuConfig::for_dir(root.path().join("cell_ux_v044"));
+    emu_cfg.region = "us-east-2".to_owned();
+    emu_cfg.eval_worker_threads = 2;
+    emu_cfg.edge_binary_path = Some(edge_bin);
+    let mut emu = CarbonLocalLambdaEmulator::start(emu_cfg).expect("start ux v044 emulator");
+
+    let (_, probed) = CarbonThinClient::connect_fastest(vec![emu.base_url()]).expect("probe emu");
+    let kek_b64 = probed[0]
+        .engine_kek_pubkey_b64
+        .clone()
+        .expect("emu KEK pubkey");
+
+    let cfg_dir = root.path().join("user_cfg");
+    fs::create_dir_all(&cfg_dir).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&cfg_dir, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+
+    let mut clouds = std::collections::BTreeMap::new();
+    for cname in ["dev", "prod"] {
+        clouds.insert(
+            cname.to_owned(),
+            jope_carbon::CarbonCloudCellEntry {
+                environment: cname.to_owned(),
+                region: "us-east-2".to_owned(),
+                public_endpoint: emu.base_url(),
+                engine_kek_pubkey_b64: Some(kek_b64.clone()),
+                release_id: Some("ux044".to_owned()),
+                regions: vec![jope_carbon::CarbonCloudRegionPin {
+                    region: "us-east-2".to_owned(),
+                    public_endpoint: emu.base_url(),
+                    engine_kek_pubkey_b64: Some(kek_b64.clone()),
+                    release_id: Some("ux044".to_owned()),
+                }],
+            },
+        );
+    }
+    let manifest_bytes = serde_json::to_vec_pretty(&jope_carbon::CarbonPublicCloudsManifest {
+        schema: "jope-carbon-clouds-v2".to_owned(),
+        generated_epoch_ms: 1_794_500_000_000,
+        clouds,
+    })
+    .unwrap();
+    fs::write(cfg_dir.join("carbon-clouds.json"), &manifest_bytes).unwrap();
+
+    // 1. Unauthenticated `carbon doctor --cloud all` passes cleanly.
+    let doc1 = Command::new(&carbon_bin)
+        .args(["doctor", "--cloud", "all"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .env_remove("CARBON_AUTH_TOKEN")
+        .output()
+        .expect("run carbon doctor");
+    assert!(
+        doc1.status.success(),
+        "doctor stderr: {}",
+        String::from_utf8_lossy(&doc1.stderr)
+    );
+    let doc1_json: serde_json::Value = serde_json::from_slice(&doc1.stdout).unwrap();
+    assert_eq!(doc1_json["healthy"], true);
+    assert_eq!(doc1_json["clouds"]["prod"]["kek_pins_verified"], true);
+    assert_eq!(doc1_json["clouds"]["dev"]["healthy_regions"], 1);
+
+    // 2. Register Free -> `carbon doctor` reports stored credentials with 0600 mode, and fails closed if 0644!
+    let reg = Command::new(&carbon_bin)
+        .args(["register", "--free", "--cloud", "prod", "--label", "doc_u"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("register free");
+    assert!(reg.status.success());
+
+    let doc2 = Command::new(&carbon_bin)
+        .args(["doctor", "--cloud", "prod"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("doctor after register");
+    assert!(doc2.status.success());
+    let doc2_json: serde_json::Value = serde_json::from_slice(&doc2.stdout).unwrap();
+    assert_eq!(doc2_json["healthy"], true);
+    assert_eq!(doc2_json["credentials_permissions_ok"], true);
+    assert_eq!(doc2_json["stored_credentials"]["prod"]["tier"], "free");
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let cred_file = cfg_dir.join("carbon-credentials.json");
+        fs::set_permissions(&cred_file, fs::Permissions::from_mode(0o644)).unwrap();
+        let doc_bad = Command::new(&carbon_bin)
+            .args(["doctor", "--cloud", "prod", "--offline"])
+            .env("CARBON_CONFIG_DIR", &cfg_dir)
+            .output()
+            .expect("doctor with 0644 credentials");
+        assert!(
+            !doc_bad.status.success(),
+            "doctor must flag world-readable 0644 credentials"
+        );
+        fs::set_permissions(&cred_file, fs::Permissions::from_mode(0o600)).unwrap();
+    }
+
+    // 3. UTF-8 BOM CSV (`\u{feff}feat_a,feat_b,target`), auto-selected `target` column, `--progress`
+    //    summary card on `stderr` with pure JSON on `stdout`, and helpful error on missing column!
+    let bom_csv = root.path().join("bom_target.csv");
+    let mut csv_text = String::from("\u{feff}feat_a,feat_b,target\r\n");
+    for i in 0..48 {
+        let a = (i as f64) * 0.15 - 3.0;
+        let b = ((i % 9) as f64) * 0.4;
+        let t = 1.8 * a - 0.9 * b + 0.3 * a * b + 0.5;
+        csv_text.push_str(&format!("{a:.5},{b:.5},{t:.5}\r\n"));
+    }
+    fs::write(&bom_csv, csv_text.as_bytes()).unwrap();
+
+    let bad_col = Command::new(&carbon_bin)
+        .arg("run")
+        .arg("--csv")
+        .arg(&bom_csv)
+        .args(["--target", "price_usd", "--quiet"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .env("RAYON_NUM_THREADS", "4")
+        .output()
+        .expect("run with missing target column");
+    assert!(!bad_col.status.success());
+    let bad_err = String::from_utf8_lossy(&bad_col.stderr);
+    assert!(
+        bad_err.contains("[feat_a, feat_b, target]") && bad_err.contains("--target target"),
+        "expected discovered CSV headers and --target suggestion, got: {bad_err}"
+    );
+
+    let bom_run = Command::new(&carbon_bin)
+        .arg("run")
+        .arg("--csv")
+        .arg(&bom_csv)
+        .args(["--progress", "--shred"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .env("RAYON_NUM_THREADS", "4")
+        .output()
+        .expect("run BOM CSV with auto-selected target and --progress");
+    assert!(
+        bom_run.status.success(),
+        "BOM CSV stderr: {}",
+        String::from_utf8_lossy(&bom_run.stderr)
+    );
+    let bom_stderr = String::from_utf8_lossy(&bom_run.stderr);
+    assert!(bom_stderr.contains("Auto-selected target column 'target'"));
+    assert!(bom_stderr.contains("Run Summary"));
+    let bom_json: serde_json::Value =
+        serde_json::from_slice(&bom_run.stdout).expect("stdout must remain pure valid JSON");
+    assert_eq!(bom_json["final_state"], "completed");
+    assert_eq!(bom_json["shredded_after_run"], true);
+
+    emu.shutdown();
+}

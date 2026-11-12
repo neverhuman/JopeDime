@@ -79,6 +79,9 @@ pub struct CarbonProbedEndpoint {
 
 static LOAD_SPREAD_SEQ: AtomicUsize = AtomicUsize::new(0);
 
+/// Callback invoked on initial run creation/resume and on each async poll status update.
+pub type CarbonProgressObserver = Arc<dyn Fn(&CarbonPublicWaveProgress) + Send + Sync>;
+
 /// `CarbonThinClient` is a struct driving zero-knowledge end-to-end Carbon inference, search,
 /// async `202` polling, pause/resume, cryptographic shred, and multi-region failover.
 #[derive(Clone)]
@@ -94,6 +97,7 @@ pub struct CarbonThinClient {
     poll_requests: Arc<AtomicU32>,
     http_request_bytes: Arc<AtomicUsize>,
     http_response_bytes: Arc<AtomicUsize>,
+    progress_observer: Option<CarbonProgressObserver>,
     agent: ureq::Agent,
 }
 
@@ -240,10 +244,20 @@ impl CarbonThinClient {
                 poll_requests: Arc::new(AtomicU32::new(0)),
                 http_request_bytes: Arc::new(AtomicUsize::new(0)),
                 http_response_bytes: Arc::new(AtomicUsize::new(0)),
+                progress_observer: None,
                 agent,
             },
             healthy,
         ))
+    }
+
+    /// Attach an observer invoked on initial run creation/resume and on each async poll update.
+    pub fn with_progress_observer<F>(mut self, observer: F) -> Self
+    where
+        F: Fn(&CarbonPublicWaveProgress) + Send + Sync + 'static,
+    {
+        self.progress_observer = Some(Arc::new(observer));
+        self
     }
 
     /// Return `(poll_requests, http_request_bytes, http_response_bytes)` observed on this client.
@@ -836,6 +850,9 @@ impl CarbonThinClient {
         run_id: &str,
         mut progress: CarbonPublicWaveProgress,
     ) -> Result<CarbonPublicWaveProgress, String> {
+        if let Some(obs) = &self.progress_observer {
+            obs(&progress);
+        }
         if progress.state == CarbonRunStateWire::Failed {
             return Err(format!(
                 "run {run_id} failed: {}",
@@ -861,6 +878,9 @@ impl CarbonThinClient {
             sleep_ms = (sleep_ms * 2).min(cap_ms);
             self.poll_requests.fetch_add(1, Ordering::Relaxed);
             progress = self.get_run_status(tenant_id, run_id)?;
+            if let Some(obs) = &self.progress_observer {
+                obs(&progress);
+            }
             if progress.state == CarbonRunStateWire::Failed {
                 return Err(format!(
                     "run {run_id} failed: {}",
@@ -1335,7 +1355,11 @@ fn send_raw_edge_http_with_agent(
 
 /// Default public HTTPS URL publishing live `dev` and `prod` Carbon cloud discovery endpoints.
 pub const DEFAULT_PUBLIC_CLOUDS_URL: &str =
-    "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.3-live.1/carbon-clouds.json";
+    "https://github.com/neverhuman/JopeDime/releases/latest/download/carbon-clouds.json";
+
+/// Secondary HTTPS mirror serving identical release-pinned `carbon-clouds.json` discovery endpoints.
+pub const FALLBACK_PUBLIC_CLOUDS_URL: &str =
+    "https://downloads.neverhuman.org/carbon/carbon-clouds.json";
 
 /// Resolve the user's `jopedime` config directory (`CARBON_CONFIG_DIR` or `$HOME/.config/jopedime`),
 /// strictly refusing empty or relative paths.
@@ -1442,29 +1466,8 @@ pub struct CarbonPublicCloudsManifest {
     pub clouds: BTreeMap<String, CarbonCloudCellEntry>,
 }
 
-/// Resolve a named public Carbon cloud (`dev`, `staging`, `prod`) from an explicit file/URL
-/// override, `CARBON_CLOUDS_URL`, local `$HOME/.config/jopedime/carbon-clouds.json`, or
-/// [`DEFAULT_PUBLIC_CLOUDS_URL`] without AWS credentials.
-pub fn resolve_public_cloud_endpoint(
-    cloud_name: &str,
-    manifest_override: Option<&str>,
-) -> Result<CarbonCloudCellEntry, String> {
-    let env_override = std::env::var("CARBON_CLOUDS_URL")
-        .ok()
-        .filter(|v| !v.trim().is_empty());
-    let local_cached = verified_absolute_jopedime_config_dir()
-        .ok()
-        .map(|d| d.join("carbon-clouds.json"))
-        .filter(|p| p.is_file())
-        .map(|p| p.to_string_lossy().into_owned());
-    let source = manifest_override
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .or(env_override.as_deref())
-        .or(local_cached.as_deref())
-        .unwrap_or(DEFAULT_PUBLIC_CLOUDS_URL);
-
-    let raw_bytes = if source.starts_with("https://") || source.starts_with("http://") {
+fn fetch_clouds_manifest_bytes(source: &str) -> Result<Vec<u8>, String> {
+    if source.starts_with("https://") || source.starts_with("http://") {
         let mut resp = crate::tls::carbon_https_agent()
             .get(source)
             .config()
@@ -1484,11 +1487,50 @@ pub fn resolve_public_cloud_endpoint(
                 String::from_utf8_lossy(&buf)
             ));
         }
-        buf
+        Ok(buf)
     } else {
         std::fs::read(source)
-            .map_err(|e| format!("read local Carbon clouds manifest {source}: {e}"))?
+            .map_err(|e| format!("read local Carbon clouds manifest {source}: {e}"))
+    }
+}
+
+/// Resolve a named public Carbon cloud (`dev`, `staging`, `prod`) from an explicit file/URL
+/// override, `CARBON_CLOUDS_URL`, local `$HOME/.config/jopedime/carbon-clouds.json`, or
+/// [`DEFAULT_PUBLIC_CLOUDS_URL`] (with automatic fallback to [`FALLBACK_PUBLIC_CLOUDS_URL`])
+/// without AWS credentials.
+pub fn resolve_public_cloud_endpoint(
+    cloud_name: &str,
+    manifest_override: Option<&str>,
+) -> Result<CarbonCloudCellEntry, String> {
+    let env_override = std::env::var("CARBON_CLOUDS_URL")
+        .ok()
+        .filter(|v| !v.trim().is_empty());
+    let local_cached = verified_absolute_jopedime_config_dir()
+        .ok()
+        .map(|d| d.join("carbon-clouds.json"))
+        .filter(|p| p.is_file())
+        .map(|p| p.to_string_lossy().into_owned());
+    let explicit_source = manifest_override
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .or(env_override.as_deref())
+        .or(local_cached.as_deref());
+
+    let (source_used, raw_bytes) = if let Some(src) = explicit_source {
+        let b = fetch_clouds_manifest_bytes(src)?;
+        (src.to_owned(), b)
+    } else {
+        match fetch_clouds_manifest_bytes(DEFAULT_PUBLIC_CLOUDS_URL) {
+            Ok(b) => (DEFAULT_PUBLIC_CLOUDS_URL.to_owned(), b),
+            Err(primary_err) => match fetch_clouds_manifest_bytes(FALLBACK_PUBLIC_CLOUDS_URL) {
+                Ok(b) => (FALLBACK_PUBLIC_CLOUDS_URL.to_owned(), b),
+                Err(fallback_err) => {
+                    return Err(format!("{primary_err}; mirror fallback: {fallback_err}"));
+                }
+            },
+        }
     };
+    let source = source_used.as_str();
 
     let manifest: CarbonPublicCloudsManifest = serde_json::from_slice(&raw_bytes)
         .map_err(|e| format!("parse Carbon clouds manifest {source}: {e}"))?;
@@ -1646,6 +1688,21 @@ pub fn load_stored_cloud_token(
         serde_json::from_slice(&raw).map_err(|e| format!("parse {}: {e}", cred_path.display()))?;
     let key = cloud_name.trim().to_ascii_lowercase();
     Ok(store.clouds.get(&key).cloned())
+}
+
+/// Load all stored cloud credentials from `carbon-credentials.json` (empty map when absent).
+pub fn list_stored_cloud_tokens() -> Result<BTreeMap<String, CarbonStoredCloudCredential>, String> {
+    let config_dir = verified_absolute_jopedime_config_dir()?;
+    let cred_path = config_dir.join("carbon-credentials.json");
+    if !cred_path.is_file() {
+        return Ok(BTreeMap::new());
+    }
+    let raw = zeroize::Zeroizing::new(
+        std::fs::read(&cred_path).map_err(|e| format!("read {}: {e}", cred_path.display()))?,
+    );
+    let store: CarbonCredentialsStoreFile =
+        serde_json::from_slice(&raw).map_err(|e| format!("parse {}: {e}", cred_path.display()))?;
+    Ok(store.clouds)
 }
 
 /// Remove stored capability token(s) (`Some(cloud)` removes one cloud; `None` clears all clouds).

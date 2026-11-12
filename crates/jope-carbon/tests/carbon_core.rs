@@ -834,3 +834,194 @@ fn capability_claims_unverified_decode_credentials_store_and_installer_guards() 
     let serialized = serde_json::to_string(&vpc_decision).expect("serialize CarbonPlanDecision");
     assert!(serialized.contains("\"full_dataset_cost_estimate\""));
 }
+
+#[test]
+fn edge_async_202_threshold_and_retry_idempotent_create_run() {
+    use base64::Engine as _;
+    use jope_api::{
+        carbon::{
+            CarbonCreateRunRequest, CarbonRegionCatalog, CarbonRegionDescriptor, CarbonTierWire,
+        },
+        decimal::DecimalU64,
+        ids::{DatasetId, RunId},
+        Effort,
+    };
+    use jope_carbon::{
+        CarbonAuthVerifier, CarbonCasStore, CarbonEdgeConfig, CarbonEdgeRouter,
+        CarbonEngineInvoker, CarbonEngineKek, CarbonEngineWireCommand, CarbonFsCas,
+        CarbonGatewayRequest, CarbonPresigner, CarbonThinClient, CAS_BLOB_CUEN_SCOPE,
+    };
+    use jope_prep::cuen::CuenPayloadKind;
+    use std::collections::BTreeMap;
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
+
+    struct CountingAsyncEngineInvoker {
+        sync_calls: AtomicUsize,
+        async_calls: AtomicUsize,
+    }
+
+    impl CarbonEngineInvoker for CountingAsyncEngineInvoker {
+        fn invoke_engine(&self, _command: &CarbonEngineWireCommand) -> Result<Vec<u8>, String> {
+            self.sync_calls.fetch_add(1, Ordering::SeqCst);
+            Err("unexpected synchronous invoke_engine call".to_owned())
+        }
+
+        fn invoke_engine_async(&self, _command: &CarbonEngineWireCommand) -> Result<(), String> {
+            self.async_calls.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
+    }
+
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let cas = Arc::new(CarbonFsCas::open(tmp.path().join("cas")).expect("open fs cas"));
+    let invoker = Arc::new(CountingAsyncEngineInvoker {
+        sync_calls: AtomicUsize::new(0),
+        async_calls: AtomicUsize::new(0),
+    });
+    let kek = CarbonEngineKek::generate().expect("generate KEK");
+    let kek_b64 = kek.pubkey_b64();
+    let kek_pub = jope_carbon::decode_p256_pubkey_b64(&kek_b64).expect("decode KEK pubkey");
+    let auth_verifier = CarbonAuthVerifier::from_secret([0x5Au8; 32]);
+    let reg = auth_verifier
+        .mint_registered_free(Some("ux_retry"), 1_794_500_000, Some(kek_b64.clone()))
+        .expect("mint registered free");
+
+    let router = CarbonEdgeRouter::new(
+        CarbonEdgeConfig {
+            region: "us-east-2".to_owned(),
+            public_base_url: "https://edge-test.example".to_owned(),
+            enterprise_self_hosted: false,
+            catalog: CarbonRegionCatalog {
+                catalog_version: 1,
+                regions: vec![CarbonRegionDescriptor {
+                    region: "us-east-2".to_owned(),
+                    geography: "americas".to_owned(),
+                    endpoint_url: "https://edge-test.example".to_owned(),
+                    priority_rank: 1,
+                }],
+            },
+            presigner: CarbonPresigner::from_secret([0x6Bu8; 32]),
+            auth_verifier: Some(auth_verifier),
+            engine_kek_pubkey_b64: Some(kek_b64),
+        },
+        cas.clone(),
+        invoker.clone(),
+    );
+
+    // 64 rows x 40 features = 2,560 cells (>= 2,500 threshold, < 10,000 old threshold) on Effort::Fast
+    let (hdrs, mat, _) = jope_carbon::generate_nonlinear_benchmark_rows(64, 40, 77);
+    let prep = CarbonThinClient::prepare_numeric_dataset(hdrs, &mat, "y", 77, 0.20).unwrap();
+    let u_dek = jope_carbon::generate_random_u_dek().unwrap();
+    let fit_enc = jope_carbon::encrypt_cuen_payload(
+        &u_dek,
+        CuenPayloadKind::FitJmat,
+        &reg.tenant_id,
+        CAS_BLOB_CUEN_SCOPE,
+        &prep.artifacts.fit_jmat,
+    )
+    .unwrap();
+    let hold_enc = jope_carbon::encrypt_cuen_payload(
+        &u_dek,
+        CuenPayloadKind::HoldoutJmat,
+        &reg.tenant_id,
+        CAS_BLOB_CUEN_SCOPE,
+        &prep.artifacts.holdout_jmat,
+    )
+    .unwrap();
+    let fit_sha = jope_carbon::sha256_lower_hex(&fit_enc);
+    let hold_sha = jope_carbon::sha256_lower_hex(&hold_enc);
+    cas.put_blob_verified(&fit_sha, &fit_enc).unwrap();
+    cas.put_blob_verified(&hold_sha, &hold_enc).unwrap();
+
+    let run_id_str = "run_01JCCARB0NE2E0000000000044";
+    let run_id: RunId = run_id_str.parse().unwrap();
+    let ds_id: DatasetId = "ds_444444444444444444444444".parse().unwrap();
+    let enc_lm = jope_carbon::encrypt_cuen_payload(
+        &u_dek,
+        CuenPayloadKind::LandmarkJlmb,
+        &reg.tenant_id,
+        run_id_str,
+        &prep.landmark_bundle.to_wire_bytes(),
+    )
+    .unwrap();
+    let cudk =
+        jope_carbon::wrap_u_dek_to_pubkey(&u_dek, &kek_pub, &reg.tenant_id, run_id_str).unwrap();
+
+    let create_req = CarbonCreateRunRequest {
+        run_id,
+        dataset_id: ds_id,
+        tenant_id: reg.tenant_id.clone(),
+        tier: CarbonTierWire::Free,
+        fit_jmat_sha256: fit_sha,
+        holdout_jmat_sha256: hold_sha,
+        fit_rows: prep.fit_rows,
+        holdout_rows: prep.holdout_rows,
+        feature_names: prep.feature_names,
+        target_name: prep.target_name,
+        objective: "rmse".to_owned(),
+        effort: Effort::Fast,
+        seed: DecimalU64(77),
+        landmark_bundle_b64: base64::engine::general_purpose::STANDARD.encode(enc_lm),
+        encrypted_cuen: true,
+        wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk)),
+    };
+    let create_bytes = serde_json::to_vec(&create_req).unwrap();
+
+    let mut headers = BTreeMap::new();
+    headers.insert(
+        "x-carbon-capability-token".to_owned(),
+        format!("Bearer {}", reg.capability_token),
+    );
+
+    let first_resp = router.handle(&CarbonGatewayRequest {
+        method: "POST".to_owned(),
+        path: "/v1/carbon/runs".to_owned(),
+        query: BTreeMap::new(),
+        headers: headers.clone(),
+        body_b64: None,
+        raw_body: create_bytes.clone(),
+    });
+    assert_eq!(
+        first_resp.status, 202,
+        "2,560-cell fast run must dispatch asynchronously (HTTP 202) to avoid API Gateway 30s timeout"
+    );
+    assert_eq!(invoker.sync_calls.load(Ordering::SeqCst), 0);
+    assert_eq!(invoker.async_calls.load(Ordering::SeqCst), 1);
+
+    let retry_same_resp = router.handle(&CarbonGatewayRequest {
+        method: "POST".to_owned(),
+        path: "/v1/carbon/runs".to_owned(),
+        query: BTreeMap::new(),
+        headers: headers.clone(),
+        body_b64: None,
+        raw_body: create_bytes,
+    });
+    assert_eq!(
+        retry_same_resp.status, 202,
+        "byte-identical client retry of POST /v1/carbon/runs must return HTTP 202 idempotently"
+    );
+    assert_eq!(
+        invoker.async_calls.load(Ordering::SeqCst),
+        1,
+        "idempotent retry must NOT re-invoke engine_async"
+    );
+
+    let mut mutated_req = create_req;
+    mutated_req.seed = DecimalU64(999);
+    let mutated_resp = router.handle(&CarbonGatewayRequest {
+        method: "POST".to_owned(),
+        path: "/v1/carbon/runs".to_owned(),
+        query: BTreeMap::new(),
+        headers,
+        body_b64: None,
+        raw_body: serde_json::to_vec(&mutated_req).unwrap(),
+    });
+    assert_eq!(
+        mutated_resp.status, 409,
+        "modified duplicate run_id payload must fail closed with HTTP 409"
+    );
+    assert_eq!(invoker.async_calls.load(Ordering::SeqCst), 1);
+}

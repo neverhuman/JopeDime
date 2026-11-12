@@ -1,21 +1,23 @@
 #!/bin/sh
 # Carbon Zero-Knowledge Serverless CLI Installer (POSIX sh: Ubuntu, Debian, Alpine/musl).
 #
-# One-line install:
-#   curl -fsSL https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.3-live.1/install.sh | sh
+# One-line install (official HTTPS mirror or GitHub Releases Latest):
+#   curl -fsSL https://downloads.neverhuman.org/carbon/install.sh | sh
+#   curl -fsSL https://github.com/neverhuman/JopeDime/releases/latest/download/install.sh | sh
 #
 # With options:
-#   curl -fsSL .../install.sh | sh -s -- --bin-dir /usr/local/bin --skip-ping
+#   curl -fsSL https://downloads.neverhuman.org/carbon/install.sh | sh -s -- --bin-dir /usr/local/bin --skip-ping
 
 set -eu
 
-DEFAULT_TAG="carbon-cli-v0.4.3-live.1"
+DEFAULT_TAG="carbon-cli-v0.4.4"
 SIGNING_PUB_FINGERPRINT="de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e"
 
 TAG="$DEFAULT_TAG"
 BIN_DIR=""
 CONFIG_DIR=""
 BASE_URL=""
+EXPLICIT_BASE_URL=0
 SOURCE_DIR=""
 TEST_PUBKEY_FILE=""
 SKIP_PING=0
@@ -49,6 +51,7 @@ while [ "$#" -gt 0 ]; do
     --base-url)
       [ "$#" -ge 2 ] || die "--base-url requires a URL"
       BASE_URL="$2"
+      EXPLICIT_BASE_URL=1
       shift 2
       ;;
     --source-dir)
@@ -70,7 +73,7 @@ while [ "$#" -gt 0 ]; do
 Usage: install.sh [OPTIONS]
 
 Options:
-  --version <TAG>              Release tag (default: carbon-cli-v0.4.3-live.1)
+  --version <TAG>              Release tag (default: carbon-cli-v0.4.4)
   --bin-dir <ABS_DIR>          Binary destination (default: $HOME/.local/bin)
   --config-dir <DIR>           Config destination (default: $HOME/.config/jopedime)
   --base-url <URL>             Override HTTPS release download prefix
@@ -132,6 +135,7 @@ fi
 if [ -z "$BASE_URL" ]; then
   BASE_URL="https://github.com/neverhuman/JopeDime/releases/download/$TAG"
 fi
+MIRROR_URL="https://downloads.neverhuman.org/carbon/releases/$TAG"
 
 mkdir -p "$BIN_DIR" "$CONFIG_DIR"
 chmod 0700 "$CONFIG_DIR" 2>/dev/null || true
@@ -163,8 +167,14 @@ fetch_asset() {
   if [ -n "$SOURCE_DIR" ]; then
     [ -f "$SOURCE_DIR/$asset_name" ] || die "missing $SOURCE_DIR/$asset_name"
     cp "$SOURCE_DIR/$asset_name" "$dest_path"
-  else
+  elif [ "$EXPLICIT_BASE_URL" -eq 1 ]; then
     curl -fsSL "${BASE_URL%/}/$asset_name" -o "$dest_path" || die "download failed: ${BASE_URL%/}/$asset_name"
+  else
+    if ! curl -fsSL "${BASE_URL%/}/$asset_name" -o "$dest_path" 2>/dev/null; then
+      say "Primary download unavailable for $asset_name; trying official mirror ($MIRROR_URL)..."
+      curl -fsSL "${MIRROR_URL%/}/$asset_name" -o "$dest_path" \
+        || die "download failed from both ${BASE_URL%/}/$asset_name and ${MIRROR_URL%/}/$asset_name"
+    fi
   fi
 }
 
@@ -219,6 +229,7 @@ case ":${PATH:-}:" in
 esac
 
 say "Ready! Quickstart:"
-say "  Register Free (30d): $BIN_DIR/carbon register --free --cloud prod"
-say "  Run Free:            $BIN_DIR/carbon run --free --cloud prod --effort medium --synthetic-rows 500 --features 6 --shred"
-say "  Run Pro (with tok):  $BIN_DIR/carbon run --pro --cloud prod --token <ctk1...> --effort high --csv data.csv --target y --shred"
+say "  1. Check setup:      $BIN_DIR/carbon doctor"
+say "  2. Register Free:    $BIN_DIR/carbon register --free"
+say "  3. Run on CSV:       $BIN_DIR/carbon run --csv data.csv --shred"
+say "  4. Run synthetic:    $BIN_DIR/carbon run --effort medium --synthetic-rows 500 --features 6 --shred"
