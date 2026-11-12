@@ -56,11 +56,7 @@ pub fn target_values(
     let mut values = Vec::with_capacity(ids.len());
     for id in ids {
         let cell = table_rows.get(*id)?.get(index)?.as_deref()?;
-        let value = cell
-            .trim()
-            .parse::<f64>()
-            .ok()
-            .filter(|value| value.is_finite())?;
+        let value = super::finite_number(cell)?;
         values.push(value);
     }
     Some(values)

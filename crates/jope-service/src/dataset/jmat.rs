@@ -80,7 +80,7 @@ fn zero_padding(bytes: &[u8], from: usize, to: usize) -> Result<()> {
     Ok(())
 }
 fn numeric(value: &str) -> Option<f64> {
-    value.trim().parse::<f64>().ok().filter(|v| v.is_finite())
+    super::finite_number(value)
 }
 
 /// Encode the runtime parser's cells without choosing targets or fitting transforms.
