@@ -6,7 +6,10 @@
 
 use std::collections::BTreeMap;
 use std::io::Read;
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    atomic::{AtomicU32, AtomicUsize, Ordering},
+    Arc, Mutex,
+};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -16,8 +19,9 @@ use jope_api::{
         CarbonAnonymousAuthResponse, CarbonCreateRunRequest, CarbonEarlyStopRequest,
         CarbonPingResponse, CarbonPredictRequest, CarbonPredictResponse,
         CarbonPrepareUploadRequest, CarbonPrepareUploadResponse, CarbonPublicWaveProgress,
-        CarbonRegionCatalog, CarbonResumeRunRequest, CarbonRunStateWire, CarbonShredRunResponse,
-        CarbonTierWire, CarbonUploadSlotWire,
+        CarbonRegionCatalog, CarbonRegisterFreeRequest, CarbonRegisterFreeResponse,
+        CarbonResumeRunRequest, CarbonRunStateWire, CarbonShredRunResponse, CarbonTierWire,
+        CarbonUploadSlotWire,
     },
     decimal::DecimalU64,
     ids::{DatasetId, RunId},
@@ -73,78 +77,189 @@ pub struct CarbonProbedEndpoint {
     pub engine_kek_pubkey_b64: Option<String>,
 }
 
+static LOAD_SPREAD_SEQ: AtomicUsize = AtomicUsize::new(0);
+
 /// `CarbonThinClient` is a struct driving zero-knowledge end-to-end Carbon inference, search,
 /// async `202` polling, pause/resume, cryptographic shred, and multi-region failover.
 #[derive(Clone)]
 pub struct CarbonThinClient {
     endpoints: Vec<String>,
-    active_endpoint: String,
+    active_idx: Arc<AtomicUsize>,
     enterprise_self_hosted: bool,
-    engine_kek_pubkey: Option<[u8; 65]>,
+    endpoint_keks: Arc<Mutex<BTreeMap<String, [u8; 65]>>>,
+    pinned_keks: BTreeMap<String, String>,
     capability_token: Option<String>,
     uploaded_secrets: Arc<Mutex<BTreeMap<String, UploadedEncryptionSecret>>>,
     run_udeks: Arc<Mutex<BTreeMap<String, Zeroizing<[u8; 32]>>>>,
+    poll_requests: Arc<AtomicU32>,
+    http_request_bytes: Arc<AtomicUsize>,
+    http_response_bytes: Arc<AtomicUsize>,
     agent: ureq::Agent,
 }
 
 impl CarbonThinClient {
-    /// Probe `/v1/carbon/ping` across all candidates and select the lowest-RTT healthy cell.
+    /// Probe `/v1/carbon/ping` across all candidates in parallel and select a lowest-RTT healthy cell.
     pub fn connect_fastest(
         candidate_urls: Vec<String>,
     ) -> Result<(Self, Vec<CarbonProbedEndpoint>), String> {
-        if candidate_urls.is_empty() {
+        Self::connect_fastest_pinned(candidate_urls, &BTreeMap::new())
+    }
+
+    /// Probe `/v1/carbon/ping` concurrently across all candidate regional URLs, enforce any pinned
+    /// `engine_kek_pubkey_b64` per endpoint, and spread load across healthy cells within a `25 ms`
+    /// RTT band of the fastest cell.
+    pub fn connect_fastest_pinned(
+        candidate_urls: Vec<String>,
+        pinned_keks: &BTreeMap<String, String>,
+    ) -> Result<(Self, Vec<CarbonProbedEndpoint>), String> {
+        let mut deduped = Vec::new();
+        for raw_url in candidate_urls {
+            let trimmed = raw_url.trim().trim_end_matches('/').to_owned();
+            if !trimmed.is_empty() && !deduped.contains(&trimmed) {
+                deduped.push(trimmed);
+            }
+        }
+        if deduped.is_empty() {
             return Err("CarbonThinClient requires at least one endpoint URL".to_owned());
         }
+        let normalized_pins: BTreeMap<String, String> = pinned_keks
+            .iter()
+            .map(|(k, v)| {
+                (
+                    k.trim().trim_end_matches('/').to_owned(),
+                    v.trim().to_owned(),
+                )
+            })
+            .collect();
+
         let agent = crate::tls::carbon_https_agent().clone();
-        let mut healthy = Vec::new();
-        for raw_url in &candidate_urls {
-            let base = raw_url.trim_end_matches('/').to_owned();
-            let t0 = Instant::now();
-            if let Ok((200, buf)) =
-                send_raw_edge_http_with_agent(&agent, &base, "GET", "/v1/carbon/ping", &[], None)
-            {
-                if let Ok(ping) = serde_json::from_slice::<CarbonPingResponse>(&buf) {
-                    if ping.healthy {
-                        healthy.push(CarbonProbedEndpoint {
-                            base_url: base,
-                            region: ping.region,
-                            rtt_ms: t0.elapsed().as_secs_f64() * 1_000.0,
-                            enterprise_self_hosted: ping.enterprise_self_hosted,
-                            engine_kek_pubkey_b64: ping.engine_kek_pubkey_b64,
-                        });
+        let probe_outcomes: Vec<Result<CarbonProbedEndpoint, String>> = thread::scope(|s| {
+            let mut handles = Vec::with_capacity(deduped.len());
+            for base in &deduped {
+                let base_url = base.clone();
+                let ag = agent.clone();
+                let expected_kek = normalized_pins.get(&base_url).cloned();
+                handles.push(s.spawn(move || {
+                    let t0 = Instant::now();
+                    let (code, buf) = send_raw_edge_http_with_agent(
+                        &ag,
+                        &base_url,
+                        "GET",
+                        "/v1/carbon/ping",
+                        &[],
+                        None,
+                    )
+                    .map_err(|e| format!("{base_url}: {e}"))?;
+                    if code != 200 {
+                        return Err(format!("{base_url}: /v1/carbon/ping returned HTTP {code}"));
                     }
+                    let ping: CarbonPingResponse = serde_json::from_slice(&buf)
+                        .map_err(|e| format!("{base_url}: invalid ping JSON: {e}"))?;
+                    if !ping.healthy {
+                        return Err(format!("{base_url}: reported unhealthy"));
+                    }
+                    if let Some(pin_b64) = expected_kek {
+                        if ping.engine_kek_pubkey_b64.as_deref() != Some(pin_b64.as_str()) {
+                            return Err(format!(
+                                "{base_url}: engine_kek_pubkey_b64 mismatch against pinned manifest"
+                            ));
+                        }
+                    }
+                    Ok(CarbonProbedEndpoint {
+                        base_url,
+                        region: ping.region,
+                        rtt_ms: t0.elapsed().as_secs_f64() * 1_000.0,
+                        enterprise_self_hosted: ping.enterprise_self_hosted,
+                        engine_kek_pubkey_b64: ping.engine_kek_pubkey_b64,
+                    })
+                }));
+            }
+            handles
+                .into_iter()
+                .map(|h| {
+                    h.join()
+                        .unwrap_or_else(|_| Err("regional ping probe thread panicked".to_owned()))
+                })
+                .collect()
+        });
+
+        let mut healthy = Vec::new();
+        let mut errors = Vec::new();
+        let mut endpoint_keks = BTreeMap::new();
+        for outcome in probe_outcomes {
+            match outcome {
+                Ok(probed) => {
+                    if let Some(b64) = &probed.engine_kek_pubkey_b64 {
+                        let decoded = decode_p256_pubkey_b64(b64).map_err(|e| e.to_string())?;
+                        endpoint_keks.insert(probed.base_url.clone(), decoded);
+                    }
+                    healthy.push(probed);
                 }
+                Err(err) => errors.push(err),
             }
         }
         if healthy.is_empty() {
-            return Err(
-                "all candidate Carbon regional endpoints failed /v1/carbon/ping".to_owned(),
-            );
+            return Err(format!(
+                "all candidate Carbon regional endpoints failed /v1/carbon/ping ({})",
+                errors.join("; ")
+            ));
         }
         healthy.sort_by(|a, b| {
             a.rtt_ms
                 .partial_cmp(&b.rtt_ms)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
-        let best = &healthy[0];
-        let engine_kek_pubkey = match &best.engine_kek_pubkey_b64 {
-            Some(b64) => Some(decode_p256_pubkey_b64(b64).map_err(|e| e.to_string())?),
-            None => None,
-        };
+        let min_rtt = healthy[0].rtt_ms;
+        let band_len = healthy
+            .iter()
+            .take_while(|h| (h.rtt_ms - min_rtt) <= 25.0)
+            .count();
+        if band_len > 1 {
+            let seq = LOAD_SPREAD_SEQ.fetch_add(1, Ordering::Relaxed);
+            let chosen = (seq
+                .wrapping_add((now_epoch_ms() as usize) & 0xff)
+                .wrapping_add(std::process::id() as usize))
+                % band_len;
+            if chosen > 0 {
+                let picked = healthy.remove(chosen);
+                healthy.insert(0, picked);
+            }
+        }
+        let enterprise_self_hosted = healthy[0].enterprise_self_hosted;
         let ordered_endpoints: Vec<String> = healthy.iter().map(|h| h.base_url.clone()).collect();
         Ok((
             Self {
                 endpoints: ordered_endpoints,
-                active_endpoint: best.base_url.clone(),
-                enterprise_self_hosted: best.enterprise_self_hosted,
-                engine_kek_pubkey,
+                active_idx: Arc::new(AtomicUsize::new(0)),
+                enterprise_self_hosted,
+                endpoint_keks: Arc::new(Mutex::new(endpoint_keks)),
+                pinned_keks: normalized_pins,
                 capability_token: None,
                 uploaded_secrets: Arc::new(Mutex::new(BTreeMap::new())),
                 run_udeks: Arc::new(Mutex::new(BTreeMap::new())),
+                poll_requests: Arc::new(AtomicU32::new(0)),
+                http_request_bytes: Arc::new(AtomicUsize::new(0)),
+                http_response_bytes: Arc::new(AtomicUsize::new(0)),
                 agent,
             },
             healthy,
         ))
+    }
+
+    /// Return `(poll_requests, http_request_bytes, http_response_bytes)` observed on this client.
+    pub fn telemetry_counters(&self) -> (u32, usize, usize) {
+        (
+            self.poll_requests.load(Ordering::Relaxed),
+            self.http_request_bytes.load(Ordering::Relaxed),
+            self.http_response_bytes.load(Ordering::Relaxed),
+        )
+    }
+
+    /// Reset per-run HTTP poll and byte counters on this client.
+    pub fn reset_telemetry_counters(&self) {
+        self.poll_requests.store(0, Ordering::Relaxed);
+        self.http_request_bytes.store(0, Ordering::Relaxed);
+        self.http_response_bytes.store(0, Ordering::Relaxed);
     }
 
     /// Attach a signed `ctk1.*` capability token for Pro, Free, or Admin requests.
@@ -157,30 +272,90 @@ impl CarbonThinClient {
     }
 
     /// Mint a 1-hour anonymous Free-tier capability token from `POST /v1/carbon/auth/anonymous`
-    /// and attach it to this client.
+    /// with automatic multi-region failover, and attach it to this client.
     pub fn authenticate_anonymous(&mut self) -> Result<CarbonAnonymousAuthResponse, String> {
-        let (code, bytes) = send_raw_edge_http_with_agent(
-            &self.agent,
-            &self.active_endpoint,
+        let bytes = self.request_checked_with_policy(
             "POST",
             "/v1/carbon/auth/anonymous",
-            &[],
+            None,
+            None,
             Some(b"{}"),
+            true,
         )?;
-        if code >= 300 {
-            return Err(format!("HTTP {code}: {}", String::from_utf8_lossy(&bytes)));
-        }
         let resp: CarbonAnonymousAuthResponse = serde_json::from_slice(&bytes)
             .map_err(|e| format!("decode CarbonAnonymousAuthResponse: {e}"))?;
-        if let Some(b64) = &resp.engine_kek_pubkey_b64 {
-            self.engine_kek_pubkey = Some(decode_p256_pubkey_b64(b64).map_err(|e| e.to_string())?);
-        }
+        self.record_verified_endpoint_kek(
+            self.active_endpoint(),
+            resp.engine_kek_pubkey_b64.as_deref(),
+        )?;
         self.capability_token = Some(resp.capability_token.clone());
         Ok(resp)
     }
 
+    /// Register a persistent 30-day Free-tier capability token via `POST /v1/carbon/auth/register`
+    /// with automatic multi-region failover, and attach it to this client.
+    pub fn register_free(
+        &mut self,
+        label: Option<&str>,
+    ) -> Result<CarbonRegisterFreeResponse, String> {
+        let req_body = serde_json::to_vec(&CarbonRegisterFreeRequest {
+            label: label.map(str::to_owned),
+        })
+        .map_err(|e| format!("encode CarbonRegisterFreeRequest: {e}"))?;
+        let bytes = self.request_checked_with_policy(
+            "POST",
+            "/v1/carbon/auth/register",
+            None,
+            None,
+            Some(&req_body),
+            true,
+        )?;
+        let resp: CarbonRegisterFreeResponse = serde_json::from_slice(&bytes)
+            .map_err(|e| format!("decode CarbonRegisterFreeResponse: {e}"))?;
+        self.record_verified_endpoint_kek(
+            self.active_endpoint(),
+            resp.engine_kek_pubkey_b64.as_deref(),
+        )?;
+        self.capability_token = Some(resp.capability_token.clone());
+        Ok(resp)
+    }
+
+    fn record_verified_endpoint_kek(
+        &self,
+        endpoint: &str,
+        advertised_b64: Option<&str>,
+    ) -> Result<(), String> {
+        let norm = endpoint.trim().trim_end_matches('/');
+        if let Some(pin_b64) = self.pinned_keks.get(norm) {
+            if advertised_b64 != Some(pin_b64.as_str()) {
+                return Err(format!(
+                    "{norm}: advertised engine_kek_pubkey_b64 did not match pinned manifest"
+                ));
+            }
+        }
+        if let Some(b64) = advertised_b64 {
+            let decoded = decode_p256_pubkey_b64(b64).map_err(|e| e.to_string())?;
+            if let Ok(mut guard) = self.endpoint_keks.lock() {
+                guard.insert(norm.to_owned(), decoded);
+            }
+        }
+        Ok(())
+    }
+
+    fn active_kek_pubkey(&self) -> Option<[u8; 65]> {
+        let active = self.active_endpoint();
+        self.endpoint_keks
+            .lock()
+            .ok()
+            .and_then(|g| g.get(active).copied())
+    }
+
     pub fn active_endpoint(&self) -> &str {
-        &self.active_endpoint
+        let idx = self
+            .active_idx
+            .load(Ordering::Relaxed)
+            .min(self.endpoints.len().saturating_sub(1));
+        &self.endpoints[idx]
     }
 
     pub fn enterprise_self_hosted(&self) -> bool {
@@ -188,7 +363,12 @@ impl CarbonThinClient {
     }
 
     pub fn has_zero_knowledge_kek(&self) -> bool {
-        self.engine_kek_pubkey.is_some()
+        self.active_kek_pubkey().is_some()
+            || self
+                .endpoint_keks
+                .lock()
+                .map(|g| !g.is_empty())
+                .unwrap_or(false)
     }
 
     pub fn candidate_endpoints(&self) -> &[String] {
@@ -196,13 +376,26 @@ impl CarbonThinClient {
     }
 
     pub fn ping_active(&self) -> Result<CarbonPingResponse, String> {
-        let bytes = self.request_checked("GET", "/v1/carbon/ping", None, None, None)?;
-        serde_json::from_slice(&bytes).map_err(|e| format!("decode CarbonPingResponse: {e}"))
+        let bytes =
+            self.request_checked_with_policy("GET", "/v1/carbon/ping", None, None, None, true)?;
+        let resp: CarbonPingResponse = serde_json::from_slice(&bytes)
+            .map_err(|e| format!("decode CarbonPingResponse: {e}"))?;
+        self.record_verified_endpoint_kek(
+            self.active_endpoint(),
+            resp.engine_kek_pubkey_b64.as_deref(),
+        )?;
+        Ok(resp)
     }
 
     pub fn fetch_region_catalog(&self) -> Result<CarbonRegionCatalog, String> {
-        let bytes =
-            self.request_checked("GET", "/.well-known/carbon-regions.json", None, None, None)?;
+        let bytes = self.request_checked_with_policy(
+            "GET",
+            "/.well-known/carbon-regions.json",
+            None,
+            None,
+            None,
+            true,
+        )?;
         serde_json::from_slice(&bytes).map_err(|e| format!("decode CarbonRegionCatalog: {e}"))
     }
 
@@ -282,7 +475,7 @@ impl CarbonThinClient {
     ) -> Result<CarbonPrepareUploadResponse, String> {
         let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
         let (fit_wire, fit_sha, holdout_wire, holdout_sha, encrypted_cuen, secret_opt) =
-            if self.engine_kek_pubkey.is_some() {
+            if self.has_zero_knowledge_kek() {
                 let u_dek = generate_random_u_dek().map_err(|e| e.to_string())?;
                 let fit_enc = encrypt_cuen_payload(
                     &u_dek,
@@ -338,15 +531,20 @@ impl CarbonThinClient {
             encrypted_cuen,
         };
         let payload = serde_json::to_vec(&prep_req).map_err(|e| format!("encode JSON: {e}"))?;
-        let resp_bytes = self.request_checked(
+        let resp_bytes = self.request_checked_with_policy(
             "POST",
             "/v1/carbon/uploads/prepare",
             Some(tenant_id),
             Some(tier),
             Some(&payload),
+            true,
         )?;
         let prep_resp: CarbonPrepareUploadResponse = serde_json::from_slice(&resp_bytes)
             .map_err(|e| format!("decode upload prepare response: {e}"))?;
+        self.record_verified_endpoint_kek(
+            self.active_endpoint(),
+            prep_resp.engine_kek_pubkey_b64.as_deref(),
+        )?;
 
         self.put_presigned_bytes(&prep_resp.fit_target.url, &fit_wire)?;
         self.put_presigned_bytes(&prep_resp.holdout_target.url, &holdout_wire)?;
@@ -374,7 +572,7 @@ impl CarbonThinClient {
         let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
         let lm_wire = prepared.landmark_bundle.to_wire_bytes();
 
-        let req = if let Some(kek_pub) = &self.engine_kek_pubkey {
+        let req = if let Some(kek_pub) = self.active_kek_pubkey() {
             let secret = self
                 .uploaded_secrets
                 .lock()
@@ -393,7 +591,7 @@ impl CarbonThinClient {
                 &lm_wire,
             )
             .map_err(|e| e.to_string())?;
-            let cudk = wrap_u_dek_to_pubkey(&secret.u_dek, kek_pub, tenant_id, &run_str)
+            let cudk = wrap_u_dek_to_pubkey(&secret.u_dek, &kek_pub, tenant_id, &run_str)
                 .map_err(|e| e.to_string())?;
             if let Ok(mut run_map) = self.run_udeks.lock() {
                 run_map.insert(format!("{tenant_id}:{run_str}"), secret.u_dek.clone());
@@ -490,14 +688,14 @@ impl CarbonThinClient {
         additional_waves: Option<u32>,
     ) -> Result<CarbonPublicWaveProgress, String> {
         let path = format!("/v1/carbon/runs/{run_id}/resume");
-        let wrapped_u_dek_b64 = if let Some(kek_pub) = &self.engine_kek_pubkey {
+        let wrapped_u_dek_b64 = if let Some(kek_pub) = self.active_kek_pubkey() {
             let u_dek_opt = self
                 .run_udeks
                 .lock()
                 .ok()
                 .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).cloned());
             if let Some(u_dek) = u_dek_opt {
-                let cudk = wrap_u_dek_to_pubkey(&u_dek, kek_pub, tenant_id, run_id)
+                let cudk = wrap_u_dek_to_pubkey(&u_dek, &kek_pub, tenant_id, run_id)
                     .map_err(|e| e.to_string())?;
                 Some(base64::engine::general_purpose::STANDARD.encode(cudk))
             } else {
@@ -533,7 +731,7 @@ impl CarbonThinClient {
             .ok()
             .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).cloned());
 
-        if let (Some(kek_pub), Some(u_dek)) = (&self.engine_kek_pubkey, u_dek_opt) {
+        if let (Some(kek_pub), Some(u_dek)) = (self.active_kek_pubkey(), u_dek_opt) {
             let resp_kek = CarbonEngineKek::generate().map_err(|e| e.to_string())?;
             let enc_body = serde_json::to_vec(&CarbonEncryptedPredictPayload {
                 feature_names,
@@ -548,7 +746,7 @@ impl CarbonThinClient {
                 &enc_body,
             )
             .map_err(|e| e.to_string())?;
-            let cudk_req = wrap_u_dek_to_pubkey(&u_dek, kek_pub, tenant_id, run_id)
+            let cudk_req = wrap_u_dek_to_pubkey(&u_dek, &kek_pub, tenant_id, run_id)
                 .map_err(|e| e.to_string())?;
             let req = CarbonPredictRequest {
                 tenant_id: tenant_id.to_owned(),
@@ -644,8 +842,9 @@ impl CarbonThinClient {
                 progress.failure_message.unwrap_or_default()
             ));
         }
-        let deadline = Instant::now() + Duration::from_secs(600);
-        let mut sleep_ms = 50u64;
+        let started = Instant::now();
+        let deadline = started + Duration::from_secs(960);
+        let mut sleep_ms = 60u64;
         while matches!(
             progress.state,
             CarbonRunStateWire::Queued | CarbonRunStateWire::Running
@@ -654,7 +853,13 @@ impl CarbonThinClient {
                 return Err(format!("timed out waiting for async run {run_id}"));
             }
             thread::sleep(Duration::from_millis(sleep_ms));
-            sleep_ms = (sleep_ms * 3 / 2).min(200);
+            let cap_ms = if started.elapsed() >= Duration::from_secs(5) {
+                1_000
+            } else {
+                500
+            };
+            sleep_ms = (sleep_ms * 2).min(cap_ms);
+            self.poll_requests.fetch_add(1, Ordering::Relaxed);
             progress = self.get_run_status(tenant_id, run_id)?;
             if progress.state == CarbonRunStateWire::Failed {
                 return Err(format!(
@@ -703,37 +908,123 @@ impl CarbonThinClient {
         requested_tier: Option<CarbonTierWire>,
         body: Option<&[u8]>,
     ) -> Result<Vec<u8>, String> {
+        self.request_checked_with_policy(
+            method,
+            path_and_query,
+            tenant_id,
+            requested_tier,
+            body,
+            false,
+        )
+    }
+
+    fn request_checked_with_policy(
+        &self,
+        method: &str,
+        path_and_query: &str,
+        tenant_id: Option<&str>,
+        requested_tier: Option<CarbonTierWire>,
+        body: Option<&[u8]>,
+        allow_region_failover: bool,
+    ) -> Result<Vec<u8>, String> {
         let bearer = self.resolve_bearer_header(tenant_id, requested_tier);
         let extra: Vec<(&str, &str)> = match &bearer {
             Some(b) => vec![("x-carbon-capability-token", b.as_str())],
             None => Vec::new(),
         };
-        let (code, resp_body) = send_raw_edge_http_with_agent(
-            &self.agent,
-            &self.active_endpoint,
-            method,
-            path_and_query,
-            &extra,
-            body,
-        )?;
-        if code >= 300 {
-            return Err(format!(
-                "HTTP {code}: {}",
-                String::from_utf8_lossy(&resp_body)
-            ));
+        let n_endpoints = self.endpoints.len().max(1);
+        let max_attempts = if allow_region_failover {
+            n_endpoints.max(3)
+        } else {
+            3usize
+        };
+        let start_idx = self
+            .active_idx
+            .load(Ordering::Relaxed)
+            .min(n_endpoints.saturating_sub(1));
+        let mut last_err = String::new();
+        for attempt in 0..max_attempts {
+            let idx = if allow_region_failover && n_endpoints > 1 {
+                (start_idx + attempt) % n_endpoints
+            } else {
+                start_idx
+            };
+            if attempt > 0 && !(allow_region_failover && attempt < n_endpoints) {
+                let wait_ms = (120u64 * attempt as u64) + ((now_epoch_ms() ^ attempt as u64) % 70);
+                thread::sleep(Duration::from_millis(wait_ms));
+            }
+            let target_base = &self.endpoints[idx];
+            if let Some(b) = body {
+                self.http_request_bytes
+                    .fetch_add(b.len(), Ordering::Relaxed);
+            }
+            match send_raw_edge_http_with_agent(
+                &self.agent,
+                target_base,
+                method,
+                path_and_query,
+                &extra,
+                body,
+            ) {
+                Ok((code, resp_body)) => {
+                    self.http_response_bytes
+                        .fetch_add(resp_body.len(), Ordering::Relaxed);
+                    if code < 300 {
+                        if allow_region_failover && idx != start_idx {
+                            self.active_idx.store(idx, Ordering::Relaxed);
+                        }
+                        return Ok(resp_body);
+                    }
+                    let msg = String::from_utf8_lossy(&resp_body);
+                    let lc = msg.to_ascii_lowercase();
+                    let crypto_rejected = lc.contains("cudk")
+                        || lc.contains("cuen")
+                        || lc.contains("decrypt")
+                        || lc.contains("unwrap");
+                    let retriable_status = code == 429
+                        || ((code == 502 || code == 503 || code == 504) && !crypto_rejected);
+                    last_err = format!("HTTP {code}: {msg}");
+                    if !retriable_status || attempt + 1 >= max_attempts {
+                        return Err(last_err);
+                    }
+                }
+                Err(err) => {
+                    last_err = err;
+                    if attempt + 1 >= max_attempts {
+                        return Err(last_err);
+                    }
+                }
+            }
         }
-        Ok(resp_body)
+        Err(last_err)
     }
 
     fn put_presigned_bytes(&self, url: &str, bytes: &[u8]) -> Result<(), String> {
-        let (code, body) = send_raw_put_url_with_agent(&self.agent, url, bytes, true)?;
-        if code >= 300 {
-            return Err(format!(
-                "PUT HTTP {code}: {}",
-                String::from_utf8_lossy(&body)
-            ));
+        let mut last_err = String::new();
+        for attempt in 0..3usize {
+            if attempt > 0 {
+                let wait_ms = (120u64 * attempt as u64) + ((now_epoch_ms() ^ attempt as u64) % 60);
+                thread::sleep(Duration::from_millis(wait_ms));
+            }
+            match send_raw_put_url_with_agent(&self.agent, url, bytes, true) {
+                Ok((code, body)) => {
+                    if code < 300 {
+                        return Ok(());
+                    }
+                    last_err = format!("PUT HTTP {code}: {}", String::from_utf8_lossy(&body));
+                    if !matches!(code, 429 | 500 | 502 | 503 | 504) || attempt == 2 {
+                        return Err(last_err);
+                    }
+                }
+                Err(e) => {
+                    last_err = e;
+                    if attempt == 2 {
+                        return Err(last_err);
+                    }
+                }
+            }
         }
-        Ok(())
+        Err(last_err)
     }
 }
 
@@ -1044,7 +1335,7 @@ fn send_raw_edge_http_with_agent(
 
 /// Default public HTTPS URL publishing live `dev` and `prod` Carbon cloud discovery endpoints.
 pub const DEFAULT_PUBLIC_CLOUDS_URL: &str =
-    "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.2-live.1/carbon-clouds.json";
+    "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.3-live.1/carbon-clouds.json";
 
 /// Resolve the user's `jopedime` config directory (`CARBON_CONFIG_DIR` or `$HOME/.config/jopedime`),
 /// strictly refusing empty or relative paths.
@@ -1077,8 +1368,20 @@ pub fn verified_absolute_jopedime_config_dir() -> Result<std::path::PathBuf, Str
     Ok(home_path.join(".config").join("jopedime"))
 }
 
+/// `CarbonCloudRegionPin` is a struct binding one regional cell inside a named Carbon cloud
+/// (`dev` or `prod`) to its stage-throttled HTTPS endpoint and pinned regional `ECDH P-256` KEK.
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct CarbonCloudRegionPin {
+    pub region: String,
+    pub public_endpoint: String,
+    #[serde(default)]
+    pub engine_kek_pubkey_b64: Option<String>,
+    #[serde(default)]
+    pub release_id: Option<String>,
+}
+
 /// `CarbonCloudCellEntry` is a struct binding a named public Carbon cloud (`dev` or `prod`) to its
-/// stage-throttled HTTPS endpoint and pinned `ECDH P-256` `engine_kek_pubkey_b64`.
+/// primary and multi-region stage-throttled HTTPS endpoints and pinned `ECDH P-256` KEKs.
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct CarbonCloudCellEntry {
     pub environment: String,
@@ -1088,6 +1391,46 @@ pub struct CarbonCloudCellEntry {
     pub engine_kek_pubkey_b64: Option<String>,
     #[serde(default)]
     pub release_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub regions: Vec<CarbonCloudRegionPin>,
+}
+
+impl CarbonCloudCellEntry {
+    /// Return all candidate public regional endpoints for parallel RTT probing and failover.
+    pub fn candidate_endpoints(&self) -> Vec<String> {
+        let mut out = Vec::new();
+        for r in &self.regions {
+            let u = r.public_endpoint.trim().trim_end_matches('/').to_owned();
+            if !u.is_empty() && !out.contains(&u) {
+                out.push(u);
+            }
+        }
+        let primary = self.public_endpoint.trim().trim_end_matches('/').to_owned();
+        if !primary.is_empty() && !out.contains(&primary) {
+            out.push(primary);
+        }
+        out
+    }
+
+    /// Return normalized base URL -> pinned `engine_kek_pubkey_b64` across all configured regions.
+    pub fn pinned_keks_by_endpoint(&self) -> BTreeMap<String, String> {
+        let mut map = BTreeMap::new();
+        let primary = self.public_endpoint.trim().trim_end_matches('/').to_owned();
+        if let Some(kek) = &self.engine_kek_pubkey_b64 {
+            if !primary.is_empty() && !kek.trim().is_empty() {
+                map.insert(primary, kek.trim().to_owned());
+            }
+        }
+        for r in &self.regions {
+            let url = r.public_endpoint.trim().trim_end_matches('/').to_owned();
+            if let Some(kek) = &r.engine_kek_pubkey_b64 {
+                if !url.is_empty() && !kek.trim().is_empty() {
+                    map.insert(url, kek.trim().to_owned());
+                }
+            }
+        }
+        map
+    }
 }
 
 /// `CarbonPublicCloudsManifest` is a struct mapping named Carbon clouds (`dev`, `prod`) for
@@ -1160,6 +1503,16 @@ pub fn resolve_public_cloud_endpoint(
     if let Some(kek_b64) = &entry.engine_kek_pubkey_b64 {
         let _ = decode_p256_pubkey_b64(kek_b64)
             .map_err(|e| format!("invalid pinned engine_kek_pubkey_b64 for '{key}': {e}"))?;
+    }
+    for r in &entry.regions {
+        if let Some(kek_b64) = &r.engine_kek_pubkey_b64 {
+            let _ = decode_p256_pubkey_b64(kek_b64).map_err(|e| {
+                format!(
+                    "invalid pinned engine_kek_pubkey_b64 for '{key}' region '{}': {e}",
+                    r.region
+                )
+            })?;
+        }
     }
     Ok(entry)
 }

@@ -526,6 +526,7 @@ fn cli_binary_free_and_pro_flags_login_whoami_logout_and_auto_tenant_binding() {
             public_endpoint: emu.base_url(),
             engine_kek_pubkey_b64: Some(kek_b64.clone()),
             release_id: Some("testrel01".to_owned()),
+            regions: Vec::new(),
         },
     );
     clouds.insert(
@@ -536,6 +537,7 @@ fn cli_binary_free_and_pro_flags_login_whoami_logout_and_auto_tenant_binding() {
             public_endpoint: emu.base_url(),
             engine_kek_pubkey_b64: Some(kek_b64),
             release_id: Some("testrel01".to_owned()),
+            regions: Vec::new(),
         },
     );
     let clouds_doc = jope_carbon::CarbonPublicCloudsManifest {
@@ -745,4 +747,565 @@ fn cli_binary_free_and_pro_flags_login_whoami_logout_and_auto_tenant_binding() {
     assert_eq!(logout_json["entries_removed"], 1);
 
     emu.shutdown();
+}
+
+#[test]
+fn clean_install_signature_free_register_all_four_efforts_and_live_cost_accounting() {
+    use std::process::Command;
+
+    let root = tempfile::tempdir().expect("create tempdir");
+    let edge_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge"));
+    let compiled_carbon = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+    assert!(edge_bin.is_file() && compiled_carbon.is_file());
+
+    let mut emu_cfg = CarbonEmuConfig::for_dir(root.path().join("cell_e2e_full"));
+    emu_cfg.region = "us-east-2".to_owned();
+    emu_cfg.force_hybrid_fanout = true;
+    emu_cfg.eval_worker_threads = 6;
+    emu_cfg.edge_binary_path = Some(edge_bin);
+    let mut emu = CarbonLocalLambdaEmulator::start(emu_cfg).expect("start full E2E emulator");
+
+    let (_, probed) = CarbonThinClient::connect_fastest(vec![emu.base_url()]).expect("probe emu");
+    let kek_b64 = probed[0]
+        .engine_kek_pubkey_b64
+        .clone()
+        .expect("emu KEK pubkey");
+
+    // 1. Stage a signed offline release directory using an ephemeral ECDSA P-256 keypair and
+    //    prove `deploy/carbon/install.sh` verifies ECDSA-P256 + SHA-256 and refuses 1-byte tampering.
+    let key_dir = root.path().join("test_keys");
+    fs::create_dir_all(&key_dir).unwrap();
+    let priv_pem = key_dir.join("test_signing.key");
+    let pub_pem = key_dir.join("test_signing.pub");
+    assert!(Command::new("openssl")
+        .args([
+            "ecparam",
+            "-name",
+            "prime256v1",
+            "-genkey",
+            "-noout",
+            "-out"
+        ])
+        .arg(&priv_pem)
+        .status()
+        .expect("openssl ecparam")
+        .success());
+    assert!(Command::new("openssl")
+        .args(["ec", "-in"])
+        .arg(&priv_pem)
+        .args(["-pubout", "-out"])
+        .arg(&pub_pem)
+        .status()
+        .expect("openssl ec pubout")
+        .success());
+
+    let stage_rel = root.path().join("staged_release");
+    fs::create_dir_all(&stage_rel).unwrap();
+    let arch_asset = if cfg!(target_arch = "aarch64") {
+        "carbon-linux-aarch64-musl"
+    } else {
+        "carbon-linux-x86_64-musl"
+    };
+    fs::copy(&compiled_carbon, stage_rel.join(arch_asset)).unwrap();
+
+    let mut clouds = std::collections::BTreeMap::new();
+    for cloud_name in ["dev", "prod"] {
+        clouds.insert(
+            cloud_name.to_owned(),
+            jope_carbon::CarbonCloudCellEntry {
+                environment: cloud_name.to_owned(),
+                region: "us-east-2".to_owned(),
+                public_endpoint: emu.base_url(),
+                engine_kek_pubkey_b64: Some(kek_b64.clone()),
+                release_id: Some("e2erel043".to_owned()),
+                regions: Vec::new(),
+            },
+        );
+    }
+    let clouds_bytes = serde_json::to_vec_pretty(&jope_carbon::CarbonPublicCloudsManifest {
+        schema: "carbon.clouds/v1".to_owned(),
+        generated_epoch_ms: 1_794_490_000_000,
+        clouds,
+    })
+    .unwrap();
+    fs::write(stage_rel.join("carbon-clouds.json"), &clouds_bytes).unwrap();
+
+    let bin_sha = jope_carbon::sha256_lower_hex(&fs::read(stage_rel.join(arch_asset)).unwrap());
+    let clouds_sha = jope_carbon::sha256_lower_hex(&clouds_bytes);
+    let sums_path = stage_rel.join("SHA256SUMS.txt");
+    fs::write(
+        &sums_path,
+        format!("{bin_sha}  {arch_asset}\n{clouds_sha}  carbon-clouds.json\n"),
+    )
+    .unwrap();
+
+    let sig_der = Command::new("openssl")
+        .args(["dgst", "-sha256", "-sign"])
+        .arg(&priv_pem)
+        .arg(&sums_path)
+        .output()
+        .expect("openssl dgst -sign");
+    assert!(sig_der.status.success());
+    use base64::Engine as _;
+    let sig_b64 = base64::engine::general_purpose::STANDARD.encode(&sig_der.stdout);
+    fs::write(stage_rel.join("SHA256SUMS.txt.sig"), format!("{sig_b64}\n")).unwrap();
+
+    let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(|p| p.parent())
+        .expect("repo root");
+    let installer = repo_root.join("deploy/carbon/install.sh");
+
+    // Negative check: valid signature on SHA256SUMS.txt, but 1 byte flipped in binary -> refused!
+    let tampered_rel = root.path().join("tampered_release");
+    fs::create_dir_all(&tampered_rel).unwrap();
+    for fname in [
+        arch_asset,
+        "carbon-clouds.json",
+        "SHA256SUMS.txt",
+        "SHA256SUMS.txt.sig",
+    ] {
+        fs::copy(stage_rel.join(fname), tampered_rel.join(fname)).unwrap();
+    }
+    let mut bad_bin = fs::read(tampered_rel.join(arch_asset)).unwrap();
+    let last_i = bad_bin.len() - 1;
+    bad_bin[last_i] ^= 0x5A;
+    fs::write(tampered_rel.join(arch_asset), bad_bin).unwrap();
+
+    let tampered_bin_dir = root.path().join("tampered_bin");
+    let tampered_cfg_dir = root.path().join("tampered_cfg");
+    let tamper_install = Command::new("sh")
+        .arg(&installer)
+        .arg("--source-dir")
+        .arg(&tampered_rel)
+        .arg("--bin-dir")
+        .arg(&tampered_bin_dir)
+        .arg("--config-dir")
+        .arg(&tampered_cfg_dir)
+        .arg("--allow-test-pubkey")
+        .arg(&pub_pem)
+        .arg("--skip-ping")
+        .output()
+        .expect("run install.sh on tampered binary");
+    assert!(
+        !tamper_install.status.success(),
+        "install.sh must reject binary whose SHA-256 differs from signed SHA256SUMS.txt"
+    );
+    assert!(!tampered_bin_dir.join("carbon").exists());
+
+    // Positive check: clean user HOME install via `deploy/carbon/install.sh`!
+    let user_home = root.path().join("fresh_user_home");
+    let installed_bin_dir = user_home.join(".local/bin");
+    let installed_cfg_dir = user_home.join(".config/jopedime");
+    fs::create_dir_all(&user_home).unwrap();
+    let ok_install = Command::new("sh")
+        .arg(&installer)
+        .arg("--source-dir")
+        .arg(&stage_rel)
+        .arg("--allow-test-pubkey")
+        .arg(&pub_pem)
+        .arg("--skip-ping")
+        .env("HOME", &user_home)
+        .output()
+        .expect("run positive install.sh");
+    assert!(
+        ok_install.status.success(),
+        "install.sh stderr: {}",
+        String::from_utf8_lossy(&ok_install.stderr)
+    );
+    let installed_carbon = installed_bin_dir.join("carbon");
+    assert!(installed_carbon.is_file());
+    assert!(installed_cfg_dir.join("carbon-clouds.json").is_file());
+
+    // Prepare a real CSV dataset file (`48` rows x `2` features + target `y`).
+    let csv_path = root.path().join("nonlinear_sensor.csv");
+    let mut csv_text = String::from("f1,f2,y\n");
+    for i in 0..48 {
+        let f1 = (i as f64) * 0.16 - 3.8;
+        let f2 = ((i % 9) as f64) * 0.35 - 1.4;
+        let y = 2.4 * f1 - 1.3 * f2 + 0.6 * f1 * f2 + 1.25;
+        csv_text.push_str(&format!("{f1:.5},{f2:.5},{y:.5}\n"));
+    }
+    fs::write(&csv_path, csv_text).unwrap();
+
+    // 2. Brand-new user registers for Free (`carbon register --free --cloud prod --label e2e_free`)
+    let reg_out = Command::new(&installed_carbon)
+        .args([
+            "register", "--free", "--cloud", "prod", "--label", "e2e_free",
+        ])
+        .env("HOME", &user_home)
+        .env_remove("CARBON_CONFIG_DIR")
+        .env_remove("CARBON_AUTH_TOKEN")
+        .env_remove("CARBON_AUTH_SECRET_HEX")
+        .output()
+        .expect("run carbon register --free");
+    assert!(
+        reg_out.status.success(),
+        "register stderr: {}",
+        String::from_utf8_lossy(&reg_out.stderr)
+    );
+    let reg_json: serde_json::Value = serde_json::from_slice(&reg_out.stdout).unwrap();
+    assert_eq!(reg_json["registered"], true);
+    assert_eq!(reg_json["tier"], "free");
+    assert_eq!(reg_json["credentials_saved"], true);
+    let reg_tenant = reg_json["tenant_id"].as_str().unwrap().to_owned();
+    assert!(
+        reg_tenant.starts_with("free_e2e_free_"),
+        "unexpected registered Free tenant_id: {reg_tenant}"
+    );
+    assert!(reg_json["ttl_remaining_secs"].as_u64().unwrap() >= 2_591_900);
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let cred_meta = fs::metadata(installed_cfg_dir.join("carbon-credentials.json")).unwrap();
+        assert_eq!(cred_meta.permissions().mode() & 0o777, 0o600);
+    }
+
+    // `carbon whoami` reflects the registered Free account
+    let whoami_free = Command::new(&installed_carbon)
+        .args(["whoami", "--cloud", "prod"])
+        .env("HOME", &user_home)
+        .env_remove("CARBON_CONFIG_DIR")
+        .env_remove("CARBON_AUTH_TOKEN")
+        .output()
+        .expect("run whoami after free register");
+    assert!(whoami_free.status.success());
+    let wf_json: serde_json::Value = serde_json::from_slice(&whoami_free.stdout).unwrap();
+    assert_eq!(wf_json["auth_mode"], "capability_token");
+    assert_eq!(wf_json["tier"], "free");
+    assert_eq!(wf_json["tenant_id"], reg_tenant);
+
+    // Registered Free user runs CSV dataset at default `fast` AND `--free --effort medium`,
+    // reusing their persistent `free_e2e_free_<ulid>` identity on both!
+    for (extra_flag, effort, expected_waves) in [(false, "fast", 1u64), (true, "medium", 4u64)] {
+        let mut cmd = Command::new(&installed_carbon);
+        cmd.arg("run")
+            .args(["--cloud", "prod", "--effort", effort, "--csv"])
+            .arg(&csv_path)
+            .args(["--target", "y", "--shred"]);
+        if extra_flag {
+            cmd.arg("--free");
+        }
+        let run_out = cmd
+            .env("HOME", &user_home)
+            .env_remove("CARBON_CONFIG_DIR")
+            .env_remove("CARBON_AUTH_TOKEN")
+            .env_remove("CARBON_AUTH_SECRET_HEX")
+            .output()
+            .expect("run registered free CSV");
+        assert!(
+            run_out.status.success(),
+            "registered free {effort} stderr: {}",
+            String::from_utf8_lossy(&run_out.stderr)
+        );
+        let rj: serde_json::Value = serde_json::from_slice(&run_out.stdout).unwrap();
+        assert_eq!(rj["tenant_id"], reg_tenant);
+        assert_eq!(rj["tier_applied"], "free");
+        assert_eq!(rj["final_state"], "completed");
+        assert_eq!(rj["waves_completed"], expected_waves);
+        assert!(rj["cost_estimate"]["total_estimated_usd"].as_f64().unwrap() > 0.0);
+        assert!(rj["cost_estimate"]["runs_per_1_usd"].as_f64().unwrap() > 0.0);
+    }
+
+    // Registered Free user attempting `--effort high` is refused at the edge (`403`)
+    let free_high_refused = Command::new(&installed_carbon)
+        .args(["run", "--cloud", "prod", "--effort", "high", "--csv"])
+        .arg(&csv_path)
+        .args(["--target", "y"])
+        .env("HOME", &user_home)
+        .env_remove("CARBON_CONFIG_DIR")
+        .env_remove("CARBON_AUTH_TOKEN")
+        .env_remove("CARBON_AUTH_SECRET_HEX")
+        .output()
+        .expect("run free --effort high");
+    assert!(!free_high_refused.status.success());
+
+    // 3. Log in with a Pro capability token on `--cloud dev` and validate ALL FOUR efforts
+    //    (`fast`, `medium`, `high`, `ultra`) with `HybridFanOut` telemetry and per-dataset cost!
+    let pro_tok = emu
+        .mint_capability_token("pro_effort_matrix_team", CarbonTierWire::Pro, false)
+        .expect("mint pro token");
+    let pro_tok_file = root.path().join("pro_dev.tok");
+    fs::write(&pro_tok_file, format!("{pro_tok}\n")).unwrap();
+    assert!(Command::new(&installed_carbon)
+        .args(["login", "--cloud", "dev", "--token-file"])
+        .arg(&pro_tok_file)
+        .env("HOME", &user_home)
+        .env_remove("CARBON_CONFIG_DIR")
+        .status()
+        .expect("carbon login dev")
+        .success());
+
+    let mut observed_costs = Vec::new();
+    for (effort, expected_waves) in [
+        ("fast", 1u64),
+        ("medium", 4u64),
+        ("high", 12u64),
+        ("ultra", 32u64),
+    ] {
+        let out = Command::new(&installed_carbon)
+            .args([
+                "run", "--cloud", "dev", "--pro", "--effort", effort, "--csv",
+            ])
+            .arg(&csv_path)
+            .args(["--target", "y", "--shred"])
+            .env("HOME", &user_home)
+            .env_remove("CARBON_CONFIG_DIR")
+            .env_remove("CARBON_AUTH_TOKEN")
+            .env_remove("CARBON_AUTH_SECRET_HEX")
+            .output()
+            .unwrap_or_else(|e| panic!("run pro effort {effort}: {e}"));
+        assert!(
+            out.status.success(),
+            "pro effort {effort} failed: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        let rj: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+        assert_eq!(rj["tenant_id"], "pro_effort_matrix_team");
+        assert_eq!(rj["tier_applied"], "pro");
+        assert_eq!(rj["final_state"], "completed");
+        assert_eq!(rj["waves_completed"], expected_waves);
+        assert_eq!(rj["waves_target"], expected_waves);
+        assert!(rj["candidates_evaluated"].as_u64().unwrap() > 0);
+        assert!(rj["outer_holdout_score"].as_f64().is_some());
+        assert!(rj["holdout_r2"].as_f64().is_some());
+        let eval_calls = rj["eval_invocations"].as_u64().unwrap();
+        assert!(
+            eval_calls > 0,
+            "expected HybridFanOut eval_invocations > 0 on forced-hybrid emu for {effort}"
+        );
+        assert!(rj["cost_estimate"]["lambda_eval_usd"].as_f64().unwrap() > 0.0);
+        let total_usd = rj["cost_estimate"]["total_estimated_usd"].as_f64().unwrap();
+        assert!(total_usd > 0.0);
+        observed_costs.push((effort, total_usd, eval_calls));
+    }
+
+    // Verify monotonic eval shard calls and positive increasing cost across `fast` -> `medium` -> `high` -> `ultra`
+    for win in observed_costs.windows(2) {
+        let (e_prev, c_prev, inv_prev) = win[0];
+        let (e_next, c_next, inv_next) = win[1];
+        assert!(
+            inv_next > inv_prev,
+            "expected eval_invocations({e_next})={inv_next} > eval_invocations({e_prev})={inv_prev}"
+        );
+        assert!(
+            c_next > c_prev,
+            "expected total_estimated_usd({e_next})={c_next} > total_estimated_usd({e_prev})={c_prev}"
+        );
+    }
+
+    emu.shutdown();
+}
+
+#[test]
+fn multi_region_parallel_probe_kek_pin_and_failover() {
+    use std::collections::BTreeMap;
+    use std::process::Command;
+
+    let root = tempfile::tempdir().expect("create tempdir");
+    let edge_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge"));
+    let carbon_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+
+    // Boot two regional cells (`us-east-2` and `us-west-2`) sharing global `auth_secret` while
+    // holding strictly isolated per-region ECDH P-256 `engine_kek_scalar` keys!
+    let mut east_cfg = CarbonEmuConfig::for_dir(root.path().join("cell_east"));
+    east_cfg.region = "us-east-2".to_owned();
+    east_cfg.auth_secret = [0x5Au8; 32];
+    east_cfg.engine_kek_scalar = [0x11u8; 32];
+    east_cfg.edge_binary_path = Some(edge_bin.clone());
+    let mut emu_east = CarbonLocalLambdaEmulator::start(east_cfg).expect("start east cell");
+
+    let mut west_cfg = CarbonEmuConfig::for_dir(root.path().join("cell_west"));
+    west_cfg.region = "us-west-2".to_owned();
+    west_cfg.auth_secret = [0x5Au8; 32];
+    west_cfg.engine_kek_scalar = [0x22u8; 32];
+    west_cfg.edge_binary_path = Some(edge_bin);
+    let mut emu_west = CarbonLocalLambdaEmulator::start(west_cfg).expect("start west cell");
+
+    let (_, p_east) = CarbonThinClient::connect_fastest(vec![emu_east.base_url()]).unwrap();
+    let (_, p_west) = CarbonThinClient::connect_fastest(vec![emu_west.base_url()]).unwrap();
+    let kek_east = p_east[0].engine_kek_pubkey_b64.clone().unwrap();
+    let kek_west = p_west[0].engine_kek_pubkey_b64.clone().unwrap();
+    assert_ne!(
+        kek_east, kek_west,
+        "regional cells must hold distinct ECDH P-256 KEK keypairs"
+    );
+
+    // 1. Negative check: wrong pinned KEKs must fail closed in `connect_fastest_pinned`!
+    let bogus_kek = jope_carbon::CarbonEngineKek::generate()
+        .unwrap()
+        .pubkey_b64();
+    let mut bad_pins = BTreeMap::new();
+    bad_pins.insert(emu_east.base_url(), bogus_kek.clone());
+    bad_pins.insert(emu_west.base_url(), bogus_kek);
+    let pin_err = match CarbonThinClient::connect_fastest_pinned(
+        vec![emu_east.base_url(), emu_west.base_url()],
+        &bad_pins,
+    ) {
+        Ok(_) => panic!("expected KEK pin mismatch rejection"),
+        Err(err) => err,
+    };
+    assert!(
+        pin_err.contains("mismatch"),
+        "expected KEK mismatch error, got: {pin_err}"
+    );
+
+    // 2. Write a `jope-carbon-clouds-v2` multi-region manifest and verify parallel RTT probing +
+    //    `carbon register --free` + mid-flight failover when `us-east-2` goes down!
+    let mut clouds = BTreeMap::new();
+    clouds.insert(
+        "prod".to_owned(),
+        jope_carbon::CarbonCloudCellEntry {
+            environment: "prod".to_owned(),
+            region: "us-east-2".to_owned(),
+            public_endpoint: emu_east.base_url(),
+            engine_kek_pubkey_b64: Some(kek_east.clone()),
+            release_id: Some("mr043".to_owned()),
+            regions: vec![
+                jope_carbon::CarbonCloudRegionPin {
+                    region: "us-east-2".to_owned(),
+                    public_endpoint: emu_east.base_url(),
+                    engine_kek_pubkey_b64: Some(kek_east.clone()),
+                    release_id: Some("mr043".to_owned()),
+                },
+                jope_carbon::CarbonCloudRegionPin {
+                    region: "us-west-2".to_owned(),
+                    public_endpoint: emu_west.base_url(),
+                    engine_kek_pubkey_b64: Some(kek_west.clone()),
+                    release_id: Some("mr043".to_owned()),
+                },
+            ],
+        },
+    );
+    let cfg_dir = root.path().join("mr_cfg");
+    fs::create_dir_all(&cfg_dir).unwrap();
+    fs::write(
+        cfg_dir.join("carbon-clouds.json"),
+        serde_json::to_vec_pretty(&jope_carbon::CarbonPublicCloudsManifest {
+            schema: "jope-carbon-clouds-v2".to_owned(),
+            generated_epoch_ms: 1_794_500_000_000,
+            clouds,
+        })
+        .unwrap(),
+    )
+    .unwrap();
+
+    let ping_both = Command::new(&carbon_bin)
+        .args(["ping", "--cloud", "prod"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("run multi-region ping");
+    assert!(ping_both.status.success());
+    let ping_j: serde_json::Value = serde_json::from_slice(&ping_both.stdout).unwrap();
+    assert_eq!(ping_j["kek_pin_verified"], true);
+    assert_eq!(ping_j["healthy_regions"].as_array().unwrap().len(), 2);
+
+    // Register a persistent Free account while both regions are up
+    let reg = Command::new(&carbon_bin)
+        .args([
+            "register", "--free", "--cloud", "prod", "--label", "mr_user",
+        ])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("register multi-region free");
+    assert!(reg.status.success());
+
+    // Also connect an in-flight SDK client BEFORE shutting down `us-east-2`, forcing index 0 = east!
+    let mut good_pins = BTreeMap::new();
+    good_pins.insert(emu_east.base_url(), kek_east);
+    good_pins.insert(emu_west.base_url(), kek_west);
+    let (mut inflight_client, _) = CarbonThinClient::connect_fastest_pinned(
+        vec![emu_east.base_url(), emu_west.base_url()],
+        &good_pins,
+    )
+    .unwrap();
+
+    // Simulate complete regional outage of `us-east-2`!
+    emu_east.shutdown();
+
+    // In-flight SDK client automatically fails over `authenticate_anonymous` + `upload_prepared` +
+    // `start_run` (wrapping `U_DEK` to `us-west-2`'s distinct KEK!) + `predict` + `shred_run`!
+    let anon = inflight_client
+        .authenticate_anonymous()
+        .expect("in-flight client should fail over to us-west-2");
+    assert_eq!(
+        inflight_client.active_endpoint(),
+        emu_west.base_url().trim_end_matches('/')
+    );
+    let (_, rows, _) = jope_carbon::generate_nonlinear_benchmark_rows(40, 2, 7);
+    let prep = CarbonThinClient::prepare_numeric_dataset(
+        vec!["x0".to_owned(), "x1".to_owned(), "y".to_owned()],
+        &rows,
+        "y",
+        7,
+        0.20,
+    )
+    .unwrap();
+    inflight_client
+        .upload_prepared(&anon.tenant_id, CarbonTierWire::Free, &prep)
+        .expect("upload_prepared on failover region");
+    let prog = inflight_client
+        .start_run(
+            "run_01JCCARB0NE2E0000000000002".parse().unwrap(),
+            "ds_222222222222222222222222".parse().unwrap(),
+            &anon.tenant_id,
+            CarbonTierWire::Free,
+            Effort::Fast,
+            "rmse",
+            7,
+            &prep,
+        )
+        .expect("start_run wrapped with us-west-2 KEK");
+    assert_eq!(prog.region, "us-west-2");
+    let pred = inflight_client
+        .predict(
+            &anon.tenant_id,
+            "run_01JCCARB0NE2E0000000000002",
+            vec!["x0".to_owned(), "x1".to_owned()],
+            vec![vec![Some(0.5), Some(-0.2)]],
+        )
+        .expect("encrypted predict on us-west-2");
+    assert_eq!(pred.predictions.len(), 1);
+    let shred = inflight_client
+        .shred_run(&anon.tenant_id, "run_01JCCARB0NE2E0000000000002")
+        .unwrap();
+    assert!(shred.shredded);
+
+    // CLI `carbon run --cloud prod` seamlessly fails over to `us-west-2` and authenticates the
+    // stored `ctk1.*` token minted earlier!
+    let cli_failover = Command::new(&carbon_bin)
+        .args([
+            "run",
+            "--cloud",
+            "prod",
+            "--synthetic-rows",
+            "48",
+            "--features",
+            "2",
+            "--effort",
+            "fast",
+            "--shred",
+        ])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .env_remove("CARBON_ENDPOINT")
+        .env_remove("CARBON_AUTH_TOKEN")
+        .env_remove("CARBON_AUTH_SECRET_HEX")
+        .output()
+        .expect("run CLI failover to us-west-2");
+    assert!(
+        cli_failover.status.success(),
+        "CLI failover failed: {}",
+        String::from_utf8_lossy(&cli_failover.stderr)
+    );
+    let rj: serde_json::Value = serde_json::from_slice(&cli_failover.stdout).unwrap();
+    assert_eq!(rj["selected_region"], "us-west-2");
+    assert_eq!(rj["encrypted_cuen"], true);
+    assert_eq!(rj["final_state"], "completed");
+    assert!(rj["tenant_id"]
+        .as_str()
+        .unwrap_or_default()
+        .starts_with("free_mr_user_"));
+
+    emu_west.shutdown();
 }

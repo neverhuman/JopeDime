@@ -1,7 +1,8 @@
 //! Multi-role `carbon` CLI and AWS Lambda custom-runtime entrypoint (`package`, `deploy`,
-//! `rollback`, `run`, `bench`, `redteam`, `token-mint`, `serve`, `emu`, `engine`, `eval`,
-//! `plan`, and `spot-check`).
+//! `rollback`, `clouds-manifest`, `register`, `login`, `whoami`, `logout`, `ping`, `run`, `bench`,
+//! `redteam`, `token-mint`, `serve`, `emu`, `engine`, `eval`, `plan`, and `spot-check`).
 
+use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 use std::net::SocketAddr;
@@ -14,16 +15,16 @@ use jope_api::{carbon::CarbonTierWire, Effort};
 use jope_carbon::{
     evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token, execute_carbon_cli_run,
     execute_carbon_deploy, execute_carbon_package, execute_carbon_redteam_suite,
-    execute_carbon_rollback, load_stored_cloud_token, mint_capability_token_from_vault,
-    now_epoch_ms, open_eval_invoker, open_remote_cas, plan_carbon_execution,
-    remove_stored_cloud_token, render_benchmark_markdown, render_redteam_markdown,
-    resolve_cell_stack_endpoint, resolve_public_cloud_endpoint, run_lambda_custom_runtime_loop,
-    save_stored_cloud_token, CarbonAuthVerifier, CarbonCapabilityClaims, CarbonCliRunOptions,
-    CarbonDeployOptions, CarbonEffortTier, CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker,
-    CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions,
-    CarbonLocalLambdaEmulator, CarbonPackageOptions, CarbonPlanInput, CarbonProductTier,
-    CarbonRole, CarbonRollbackOptions, CarbonSealKey, CarbonThinClient, MonthlyWindowMetrics,
-    SpotAdvisorThresholds,
+    execute_carbon_rollback_multi, generate_public_clouds_manifest, load_stored_cloud_token,
+    mint_capability_token_from_vault, now_epoch_ms, open_eval_invoker, open_remote_cas,
+    plan_carbon_execution, remove_stored_cloud_token, render_benchmark_markdown,
+    render_redteam_markdown, resolve_cell_stack_endpoint, resolve_public_cloud_endpoint,
+    run_lambda_custom_runtime_loop, save_stored_cloud_token, CarbonAuthVerifier,
+    CarbonCapabilityClaims, CarbonCliRunOptions, CarbonDeployOptions, CarbonEffortTier,
+    CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker, CarbonEnterpriseServeConfig,
+    CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions, CarbonLocalLambdaEmulator,
+    CarbonPackageOptions, CarbonPlanInput, CarbonProductTier, CarbonRole, CarbonSealKey,
+    CarbonThinClient, MonthlyWindowMetrics, SpotAdvisorThresholds,
 };
 
 #[derive(Debug, Parser)]
@@ -59,6 +60,9 @@ enum Command {
         /// Max Cargo build jobs when cross-compiling (`-j`).
         #[arg(long, default_value_t = 8)]
         jobs: usize,
+        /// Also cross-compile and package static `x86_64` + `aarch64` musl `carbon` CLI tarballs + `CLI-SHA256SUMS`.
+        #[arg(long)]
+        include_cli_binaries: bool,
     },
     /// Deploy a packaged Carbon cell via AWS CloudFormation ChangeSet + Secrets Manager + `:live` aliases,
     /// followed by mandatory `/ping` and 16-vector live `carbon redteam` verification.
@@ -96,12 +100,49 @@ enum Command {
         /// Target environment (`dev`, `staging`, or `prod`).
         #[arg(long = "env", default_value = "dev")]
         environment: String,
-        /// Target AWS region.
-        #[arg(long, default_value = "us-east-2")]
-        region: String,
+        /// Comma-separated AWS regions or wave preset (`canary`, `wave1`, `all-17`; `--region` alias supported).
+        #[arg(
+            long,
+            alias = "region",
+            value_delimiter = ',',
+            default_value = "us-east-2"
+        )]
+        regions: Vec<String>,
         /// Optional explicit `<edge_ver>,<engine_ver>,<eval_ver>` override.
         #[arg(long, value_delimiter = ',')]
         to_versions: Vec<String>,
+    },
+    /// Query live CloudFormation stacks + Secrets Manager + `/v1/carbon/ping` across regions and emit
+    /// a multi-region pinned `carbon-clouds.json` manifest (`jope-carbon-clouds-v2`).
+    CloudsManifest {
+        /// Output file path for `carbon-clouds.json`.
+        #[arg(long)]
+        out: PathBuf,
+        /// Comma-separated `dev` regions or preset (`us-east-2` by default).
+        #[arg(long, value_delimiter = ',', default_value = "us-east-2")]
+        dev_regions: Vec<String>,
+        /// Comma-separated `prod` regions or preset (`wave1` by default).
+        #[arg(long, value_delimiter = ',', default_value = "wave1")]
+        prod_regions: Vec<String>,
+    },
+    /// Register a persistent 30-day Free-tier account (`<= 5,000` rows, `fast`/`medium`) and store
+    /// its signed `ctk1.*` capability token in `0600` `$HOME/.config/jopedime/carbon-credentials.json`.
+    Register {
+        /// Named public Carbon cloud (`dev` or `prod`, defaults to `prod`).
+        #[arg(long, default_value = "prod")]
+        cloud: String,
+        /// Explicitly select the Free tier (`default = true`).
+        #[arg(long)]
+        free: bool,
+        /// Optional alphanumeric handle (`[A-Za-z0-9_-]{1,24}`) embedded in `free_<label>_<ulid>`.
+        #[arg(long)]
+        label: Option<String>,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
+        /// Optional explicit endpoint URL overriding `--cloud`.
+        #[arg(long)]
+        endpoint: Option<String>,
     },
     /// Store a `ctk1.*` Pro/Enterprise capability token in `0600` `$HOME/.config/jopedime/carbon-credentials.json`.
     Login {
@@ -486,16 +527,14 @@ fn resolve_cli_target_and_auth(
         }
     }
 
-    let mut expected_kek: Option<(String, String)> = None;
+    let mut pinned_keks: BTreeMap<String, String> = BTreeMap::new();
     if let Some(cloud_name) = &cloud {
         if endpoints.is_empty() || clouds_manifest.is_some() {
             let entry = resolve_public_cloud_endpoint(cloud_name, clouds_manifest)
                 .map_err(|e| (ExitCode::from(2), e))?;
-            if let Some(kek) = entry.engine_kek_pubkey_b64 {
-                expected_kek = Some((cloud_name.clone(), kek));
-            }
+            pinned_keks = entry.pinned_keks_by_endpoint();
             if endpoints.is_empty() {
-                endpoints.push(entry.public_endpoint);
+                endpoints = entry.candidate_endpoints();
             }
         }
     }
@@ -513,22 +552,12 @@ fn resolve_cli_target_and_auth(
         ));
     }
 
-    let (_, probed) =
-        CarbonThinClient::connect_fastest(endpoints.clone()).map_err(|e| (ExitCode::from(1), e))?;
+    let (_, probed) = CarbonThinClient::connect_fastest_pinned(endpoints.clone(), &pinned_keks)
+        .map_err(|e| (ExitCode::from(1), e))?;
     let first_probe = probed
         .first()
         .ok_or_else(|| (ExitCode::from(1), "empty probe response".to_owned()))?;
-    if let Some((cloud_name, exp_kek)) = &expected_kek {
-        if first_probe.engine_kek_pubkey_b64.as_deref() != Some(exp_kek.as_str()) {
-            return Err((
-                ExitCode::from(1),
-                format!(
-                    "pinned engine_kek_pubkey_b64 mismatch for cloud '{cloud_name}' (expected {exp_kek}, got {:?})",
-                    first_probe.engine_kek_pubkey_b64
-                ),
-            ));
-        }
-    }
+    endpoints = probed.iter().map(|p| p.base_url.clone()).collect();
 
     let now_secs = now_epoch_ms() / 1_000;
     let cli_tok =
@@ -546,11 +575,15 @@ fn resolve_cli_target_and_auth(
     } else {
         cli_tok.or(env_tok)
     };
-    if active_token.is_none() && explicit_tier != Some(CarbonTierWire::Free) {
+    if active_token.is_none() {
         let lookup_cloud = cloud.as_deref().unwrap_or("prod");
         if cloud.is_some() || !first_probe.enterprise_self_hosted {
             if let Ok(Some(stored)) = load_stored_cloud_token(lookup_cloud) {
-                if stored.exp_epoch_secs > now_secs {
+                if explicit_tier == Some(CarbonTierWire::Free) {
+                    if stored.tier == CarbonTierWire::Free && stored.exp_epoch_secs > now_secs {
+                        active_token = Some(stored.capability_token);
+                    }
+                } else if stored.exp_epoch_secs > now_secs {
                     active_token = Some(stored.capability_token);
                 } else if matches!(
                     explicit_tier,
@@ -918,12 +951,14 @@ fn main() -> ExitCode {
             edge_bin,
             worker_bin,
             jobs,
+            include_cli_binaries,
         } => match execute_carbon_package(&CarbonPackageOptions {
             r882_dir,
             out_dir,
             edge_bin,
             worker_bin,
             build_jobs: jobs,
+            include_cli_binaries,
         }) {
             Ok(manifest) => match serde_json::to_string_pretty(&manifest) {
                 Ok(s) => {
@@ -978,7 +1013,7 @@ fn main() -> ExitCode {
         },
         Command::Rollback {
             environment,
-            region,
+            regions,
             to_versions,
         } => {
             let target_versions = if to_versions.is_empty() {
@@ -993,19 +1028,104 @@ fn main() -> ExitCode {
                 eprintln!("error: --to-versions expects exactly 3 comma-separated versions (<edge>,<engine>,<eval>)");
                 return ExitCode::from(2);
             };
-            match execute_carbon_rollback(&CarbonRollbackOptions {
-                environment,
-                region,
-                target_versions,
-            }) {
-                Ok(receipt) => {
-                    if let Ok(s) = serde_json::to_string_pretty(&receipt) {
-                        println!("{s}");
+            match execute_carbon_rollback_multi(&environment, &regions, target_versions) {
+                Ok(mut receipts) => {
+                    let s = if receipts.len() == 1 {
+                        serde_json::to_string_pretty(&receipts.remove(0))
+                    } else {
+                        serde_json::to_string_pretty(&receipts)
+                    };
+                    if let Ok(text) = s {
+                        println!("{text}");
                     }
                     ExitCode::SUCCESS
                 }
                 Err(err) => {
                     eprintln!("error: carbon rollback failed: {err}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Command::CloudsManifest {
+            out,
+            dev_regions,
+            prod_regions,
+        } => match generate_public_clouds_manifest(&dev_regions, &prod_regions) {
+            Ok(manifest) => {
+                let Ok(json_bytes) = serde_json::to_vec_pretty(&manifest) else {
+                    eprintln!("error: serialize clouds manifest failed");
+                    return ExitCode::from(1);
+                };
+                if let Some(parent) = out.parent() {
+                    let _ = fs::create_dir_all(parent);
+                }
+                if let Err(e) = fs::write(&out, &json_bytes) {
+                    eprintln!("error: write {}: {e}", out.display());
+                    return ExitCode::from(1);
+                }
+                println!("{}", String::from_utf8_lossy(&json_bytes));
+                ExitCode::SUCCESS
+            }
+            Err(err) => {
+                eprintln!("error: carbon clouds-manifest failed: {err}");
+                ExitCode::from(1)
+            }
+        },
+        Command::Register {
+            cloud,
+            free: _free,
+            label,
+            clouds_manifest,
+            endpoint,
+        } => {
+            let (candidates, pinned_keks) = if let Some(ep) = endpoint {
+                (vec![ep], BTreeMap::new())
+            } else {
+                match resolve_public_cloud_endpoint(&cloud, clouds_manifest.as_deref()) {
+                    Ok(entry) => (entry.candidate_endpoints(), entry.pinned_keks_by_endpoint()),
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        return ExitCode::from(2);
+                    }
+                }
+            };
+            let mut client =
+                match CarbonThinClient::connect_fastest_pinned(candidates, &pinned_keks) {
+                    Ok((c, _)) => c,
+                    Err(e) => {
+                        eprintln!("error: probe '{cloud}' failed: {e}");
+                        return ExitCode::from(1);
+                    }
+                };
+            let reg = match client.register_free(label.as_deref()) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("error: carbon register failed: {e}");
+                    return ExitCode::from(1);
+                }
+            };
+            let active_ep = client.active_endpoint().to_owned();
+            let now_secs = now_epoch_ms() / 1_000;
+            match save_stored_cloud_token(&cloud, &active_ep, &reg.capability_token) {
+                Ok(saved) => {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&serde_json::json!({
+                            "registered": true,
+                            "cloud": cloud.trim().to_ascii_lowercase(),
+                            "endpoint": active_ep,
+                            "tenant_id": saved.tenant_id,
+                            "tier": saved.tier,
+                            "expires_epoch_secs": reg.expires_epoch_secs.0,
+                            "ttl_remaining_secs": reg.expires_epoch_secs.0.saturating_sub(now_secs),
+                            "credentials_saved": true,
+                        }))
+                        .unwrap_or_default()
+                    );
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: {e}");
                     ExitCode::from(1)
                 }
             }
@@ -1048,45 +1168,33 @@ fn main() -> ExitCode {
                 );
                 return ExitCode::from(2);
             }
-            let (target_ep, expected_kek) = if let Some(ep) = endpoint {
-                (ep, None)
+            let (candidates, pinned_keks) = if let Some(ep) = endpoint {
+                (vec![ep], BTreeMap::new())
             } else {
                 match resolve_public_cloud_endpoint(&cloud, clouds_manifest.as_deref()) {
-                    Ok(entry) => (entry.public_endpoint, entry.engine_kek_pubkey_b64),
+                    Ok(entry) => (entry.candidate_endpoints(), entry.pinned_keks_by_endpoint()),
                     Err(e) => {
                         eprintln!("error: {e}");
                         return ExitCode::from(2);
                     }
                 }
             };
-            match CarbonThinClient::connect_fastest(vec![target_ep.clone()]) {
-                Ok((_, probed)) => {
-                    if let Some(exp) = &expected_kek {
-                        if probed
-                            .first()
-                            .and_then(|p| p.engine_kek_pubkey_b64.as_deref())
-                            != Some(exp.as_str())
-                        {
-                            eprintln!(
-                                "error: pinned engine_kek_pubkey_b64 mismatch for cloud '{cloud}'"
-                            );
-                            return ExitCode::from(1);
-                        }
-                    }
-                }
+            let active_ep = match CarbonThinClient::connect_fastest_pinned(candidates, &pinned_keks)
+            {
+                Ok((client, _)) => client.active_endpoint().to_owned(),
                 Err(e) => {
-                    eprintln!("error: probe {target_ep} failed: {e}");
+                    eprintln!("error: probe '{cloud}' failed: {e}");
                     return ExitCode::from(1);
                 }
-            }
-            match save_stored_cloud_token(&cloud, &target_ep, &raw_tok) {
+            };
+            match save_stored_cloud_token(&cloud, &active_ep, &raw_tok) {
                 Ok(saved) => {
                     println!(
                         "{}",
                         serde_json::to_string_pretty(&serde_json::json!({
                             "logged_in": true,
                             "cloud": cloud.trim().to_ascii_lowercase(),
-                            "endpoint": target_ep,
+                            "endpoint": active_ep,
                             "tenant_id": saved.tenant_id,
                             "tier": saved.tier,
                             "exp_epoch_secs": saved.exp_epoch_secs,
@@ -1217,13 +1325,13 @@ fn main() -> ExitCode {
                     cloud = Some("prod".to_owned());
                 }
             }
-            let mut expected_kek: Option<String> = None;
+            let mut pinned_keks: BTreeMap<String, String> = BTreeMap::new();
             if let Some(cloud_name) = &cloud {
                 match resolve_public_cloud_endpoint(cloud_name, clouds_manifest.as_deref()) {
                     Ok(entry) => {
-                        expected_kek = entry.engine_kek_pubkey_b64;
+                        pinned_keks = entry.pinned_keks_by_endpoint();
                         if endpoint.is_empty() {
-                            endpoint.push(entry.public_endpoint);
+                            endpoint = entry.candidate_endpoints();
                         }
                     }
                     Err(e) => {
@@ -1249,21 +1357,22 @@ fn main() -> ExitCode {
                 );
                 return ExitCode::from(2);
             }
-            match CarbonThinClient::connect_fastest(endpoint) {
+            match CarbonThinClient::connect_fastest_pinned(endpoint, &pinned_keks) {
                 Ok((_, probed)) => {
                     let Some(first) = probed.first() else {
                         eprintln!("error: empty probe response");
                         return ExitCode::from(1);
                     };
-                    if let Some(exp) = &expected_kek {
-                        if first.engine_kek_pubkey_b64.as_deref() != Some(exp.as_str()) {
-                            eprintln!(
-                                "error: pinned engine_kek_pubkey_b64 mismatch for cloud {:?} (expected {}, got {:?})",
-                                cloud, exp, first.engine_kek_pubkey_b64
-                            );
-                            return ExitCode::from(1);
-                        }
-                    }
+                    let probed_regions: Vec<serde_json::Value> = probed
+                        .iter()
+                        .map(|p| {
+                            serde_json::json!({
+                                "region": p.region,
+                                "endpoint": p.base_url,
+                                "rtt_ms": p.rtt_ms,
+                            })
+                        })
+                        .collect();
                     println!(
                         "{}",
                         serde_json::to_string_pretty(&serde_json::json!({
@@ -1274,7 +1383,8 @@ fn main() -> ExitCode {
                             "rtt_ms": first.rtt_ms,
                             "enterprise_self_hosted": first.enterprise_self_hosted,
                             "engine_kek_pubkey_b64": first.engine_kek_pubkey_b64,
-                            "kek_pin_verified": expected_kek.is_some(),
+                            "kek_pin_verified": !pinned_keks.is_empty(),
+                            "healthy_regions": probed_regions,
                         }))
                         .unwrap_or_default()
                     );

@@ -56,6 +56,28 @@ pub struct CarbonAnonymousAuthResponse {
     pub engine_kek_pubkey_b64: Option<String>,
 }
 
+/// `CarbonRegisterFreeRequest` is a struct submitted to `POST /v1/carbon/auth/register`
+/// to register a persistent `30`-day Free-tier capability token with an optional user label.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonRegisterFreeRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+}
+
+/// `CarbonRegisterFreeResponse` is a struct returned by `POST /v1/carbon/auth/register`
+/// issuing a `30`-day HMAC-signed Free-tier capability token bound to a unique `free_<...>` `tenant_id`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonRegisterFreeResponse {
+    pub tenant_id: String,
+    pub capability_token: String,
+    pub tier: CarbonTierWire,
+    pub expires_epoch_secs: DecimalU64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub engine_kek_pubkey_b64: Option<String>,
+}
+
 /// `CarbonUploadSlotWire` is a struct declaring the SHA-256 digest and byte length of a
 /// client-encoded (and `CUEN\x01`-encrypted) `JMAT` v1 split artifact before presigning.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -164,6 +186,10 @@ pub struct CarbonPublicWaveProgress {
     pub execution_mode: CarbonExecutionModeWire,
     pub eval_memory_mb: u32,
     pub eval_shards: u32,
+    #[serde(default)]
+    pub eval_invocations: DecimalU64,
+    #[serde(default)]
+    pub eval_total_wall_ms: DecimalU64,
     pub wave_index: u32,
     pub waves_target: u32,
     pub candidates_evaluated: DecimalU64,

@@ -150,58 +150,82 @@ impl CarbonEvalInvoker for CarbonAwsLambdaEvalInvoker {
         } else {
             format!("https://{host}{uri}?{canonical_query}")
         };
-        let headers = crate::security::sigv4::sign_aws_v4_headers(
-            &creds,
-            &self.region,
-            "lambda",
-            "POST",
-            &host,
-            &uri,
-            &canonical_query,
-            &req_bytes,
-            now_epoch_ms() / 1_000,
-        );
-        let mut req = self
-            .agent
-            .post(&url)
-            .config()
-            .http_status_as_error(false)
-            .build()
-            .header("content-type", "application/json");
-        for (k, v) in &headers {
-            req = req.header(k, v);
+        let backoffs_ms: &[u64] = &[0, 120];
+        let mut last_err = String::new();
+        for (attempt, &base_wait_ms) in backoffs_ms.iter().enumerate() {
+            if base_wait_ms > 0 {
+                let jitter = (now_epoch_ms() ^ (attempt as u64 * 61)) % 60;
+                std::thread::sleep(std::time::Duration::from_millis(base_wait_ms + jitter));
+            }
+            let headers = crate::security::sigv4::sign_aws_v4_headers(
+                &creds,
+                &self.region,
+                "lambda",
+                "POST",
+                &host,
+                &uri,
+                &canonical_query,
+                &req_bytes,
+                now_epoch_ms() / 1_000,
+            );
+            let mut req = self
+                .agent
+                .post(&url)
+                .config()
+                .http_status_as_error(false)
+                .build()
+                .header("content-type", "application/json");
+            for (k, v) in &headers {
+                req = req.header(k, v);
+            }
+            let mut resp = match req.send(&req_bytes) {
+                Ok(r) => r,
+                Err(e) => {
+                    last_err = format!(
+                        "AWS Lambda eval invoke '{}' failed: {e}",
+                        self.function_name
+                    );
+                    if attempt + 1 < backoffs_ms.len() {
+                        continue;
+                    }
+                    return Err(last_err);
+                }
+            };
+            let status = resp.status().as_u16();
+            let fn_err = resp
+                .headers()
+                .get("x-amz-function-error")
+                .and_then(|v| v.to_str().ok())
+                .map(str::to_owned);
+            let mut body = Vec::new();
+            resp.body_mut()
+                .as_reader()
+                .read_to_end(&mut body)
+                .map_err(|e| format!("read AWS Lambda eval invoke response: {e}"))?;
+            if matches!(status, 429 | 502 | 503 | 504) && attempt + 1 < backoffs_ms.len() {
+                last_err = format!(
+                    "AWS Lambda eval shard HTTP {status}: {}",
+                    String::from_utf8_lossy(&body)
+                );
+                continue;
+            }
+            if status >= 300 {
+                return Err(format!(
+                    "AWS Lambda eval shard HTTP {status}: {}",
+                    String::from_utf8_lossy(&body)
+                ));
+            }
+            if let Some(err_kind) = fn_err {
+                return Err(format!(
+                    "AWS Lambda eval '{}' function error ({err_kind}): {}",
+                    self.function_name,
+                    String::from_utf8_lossy(&body)
+                ));
+            }
+            return serde_json::from_slice(&body)
+                .map_err(|e| format!("decode AWS Lambda eval outcome: {e}"));
         }
-        let mut resp = req.send(&req_bytes).map_err(|e| {
-            format!(
-                "AWS Lambda eval invoke '{}' failed: {e}",
-                self.function_name
-            )
-        })?;
-        let status = resp.status().as_u16();
-        let fn_err = resp
-            .headers()
-            .get("x-amz-function-error")
-            .and_then(|v| v.to_str().ok())
-            .map(str::to_owned);
-        let mut body = Vec::new();
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut body)
-            .map_err(|e| format!("read AWS Lambda eval invoke response: {e}"))?;
-        if status >= 300 {
-            return Err(format!(
-                "AWS Lambda eval shard HTTP {status}: {}",
-                String::from_utf8_lossy(&body)
-            ));
-        }
-        if let Some(err_kind) = fn_err {
-            return Err(format!(
-                "AWS Lambda eval '{}' function error ({err_kind}): {}",
-                self.function_name,
-                String::from_utf8_lossy(&body)
-            ));
-        }
-        serde_json::from_slice(&body).map_err(|e| format!("decode AWS Lambda eval outcome: {e}"))
+        Err(last_err)
     }
 }
 

@@ -12,8 +12,29 @@ pub const LAMBDA_ARM64_USD_PER_GB_SEC: f64 = 0.000_013_333_4;
 /// AWS Lambda request invocation fee in USD (`$0.20` per `1,000,000` requests).
 pub const LAMBDA_USD_PER_INVOCATION: f64 = 0.000_000_2;
 
+/// AWS API Gateway HTTP API v2.0 request fee in USD (`$1.00` per `1,000,000` 512 KB units, `us-east-2`).
+pub const APIGW_HTTP_API_USD_PER_UNIT: f64 = 0.000_001_0;
+
+/// Amazon S3 Standard `PUT` / `POST` / `LIST` fee in USD (`$0.005` per `1,000` requests, `us-east-2`).
+pub const S3_STANDARD_PUT_LIST_USD_PER_REQ: f64 = 0.000_005_0;
+
+/// Amazon S3 Standard `GET` / `HEAD` fee in USD (`$0.0004` per `1,000` requests, `us-east-2`).
+pub const S3_STANDARD_GET_USD_PER_REQ: f64 = 0.000_000_4;
+
+/// Amazon S3 Standard storage fee in USD per decimal GB-month (`$0.023`, `us-east-2`).
+pub const S3_STANDARD_USD_PER_GB_MONTH: f64 = 0.023;
+
+/// AWS internet data transfer out fee in USD per decimal GB (`$0.09`).
+pub const AWS_INTERNET_EGRESS_USD_PER_GB: f64 = 0.09;
+
+/// Memory configured on `carbon-edge` (`256 MB` Graviton2).
+pub const EDGE_MEMORY_MB: usize = 256;
+
 /// Memory configured on `carbon-engine` (`3,008 MB` -> `~2` full vCPUs for neural Wave-0).
 pub const ENGINE_MEMORY_MB: usize = 3_008;
+
+/// Memory configured on `carbon-eval` in `deploy/carbon/cloudformation-cell.json` (`1,769 MB` = `1.0` full vCPU).
+pub const DEPLOYED_EVAL_MEMORY_MB: u32 = 1_769;
 
 /// `EvalMemoryClass` is an enum for the five Arm64 Graviton2 `carbon-eval` worker memory classes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -100,6 +121,213 @@ pub struct CarbonPlanInput {
     pub est_ms_per_candidate_1vcpu: f64,
 }
 
+/// `CarbonIngressCostMode` is an enum identifying how HTTP requests enter the Carbon cell for cost metering.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CarbonIngressCostMode {
+    /// Public API Gateway HTTP API v2.0 (`*.execute-api.*.amazonaws.com`, `$1.00 / 1M` 512 KB units).
+    ApiGatewayHttpV2,
+    /// Direct IAM-authenticated Lambda Function URL (`*.lambda-url.*.on.aws`, `$0.00` gateway fee).
+    LambdaFunctionUrl,
+    /// Customer-managed VPC `carbon serve` (`$0.00` marginal AWS cloud fee).
+    SelfHostedVpc,
+}
+
+/// `CarbonRunCostBreakdown` is a struct itemizing per-dataset AWS compute, API Gateway, S3 request,
+/// storage, and egress costs in USD (`us-east-2` On-Demand rates, zero Free-Tier discount assumed).
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct CarbonRunCostBreakdown {
+    pub ingress_mode: CarbonIngressCostMode,
+    pub edge_invocations: u32,
+    pub engine_invocations: u32,
+    pub engine_billed_ms: u64,
+    pub eval_invocations: u64,
+    pub eval_memory_mb: u32,
+    pub eval_billed_ms: u64,
+    pub apigw_metered_units: u32,
+    pub s3_put_list_requests: u32,
+    pub s3_get_requests: u32,
+    pub lambda_edge_usd: f64,
+    pub lambda_engine_usd: f64,
+    pub lambda_eval_usd: f64,
+    pub apigw_http_api_usd: f64,
+    pub s3_requests_usd: f64,
+    pub s3_storage_and_transfer_usd: f64,
+    pub total_estimated_usd: f64,
+    pub runs_per_1_usd: Option<f64>,
+}
+
+/// `CarbonLiveCostInputs` is a struct supplying observed run telemetry to [`compute_live_run_cost`].
+#[derive(Clone, Copy, Debug)]
+pub struct CarbonLiveCostInputs {
+    pub ingress_mode: CarbonIngressCostMode,
+    pub minted_ephemeral_token: bool,
+    pub engine_search_invocations: u32,
+    pub poll_requests: u32,
+    pub signaled_early_stop: bool,
+    pub shredded_after_run: bool,
+    pub waves_completed: u32,
+    pub eval_shards: u32,
+    pub eval_memory_mb: u32,
+    pub eval_invocations: u64,
+    pub eval_total_wall_ms: u64,
+    pub search_wall_ms: f64,
+    pub predict_wall_ms: f64,
+    pub uploaded_cas_bytes: usize,
+    pub http_request_bytes: usize,
+    pub http_response_bytes: usize,
+}
+
+/// Compute an itemized per-dataset USD cost breakdown from actual observed Carbon run telemetry.
+pub fn compute_live_run_cost(inputs: &CarbonLiveCostInputs) -> CarbonRunCostBreakdown {
+    let auth_calls = u32::from(inputs.minted_ephemeral_token);
+    let stop_calls = u32::from(inputs.signaled_early_stop);
+    let shred_calls = u32::from(inputs.shredded_after_run);
+    let search_legs = inputs.engine_search_invocations.max(1);
+
+    // Edge HTTP calls: ping (1) + optional auth (0..1) + uploads/prepare (1) + start/resume legs + polls + optional stop + predict (1) + optional shred.
+    let edge_invocations = 1u32
+        .saturating_add(auth_calls)
+        .saturating_add(1)
+        .saturating_add(search_legs)
+        .saturating_add(inputs.poll_requests)
+        .saturating_add(stop_calls)
+        .saturating_add(1)
+        .saturating_add(shred_calls);
+    let engine_invocations = search_legs.saturating_add(1); // +1 for synchronous `/predict`
+    let engine_search_ms = (inputs.search_wall_ms.ceil().max(1.0)) as u64;
+    let engine_predict_ms = (inputs.predict_wall_ms.ceil().max(1.0)) as u64;
+    let engine_billed_ms = engine_search_ms.saturating_add(engine_predict_ms);
+
+    let effective_eval_mb = if inputs.eval_invocations > 0 {
+        inputs.eval_memory_mb.max(DEPLOYED_EVAL_MEMORY_MB)
+    } else {
+        inputs.eval_memory_mb
+    };
+
+    // API Gateway HTTP API v2.0 meters requests in 512 KiB increments.
+    let extra_512k_units = (inputs.http_request_bytes / 524_288) as u32;
+    let apigw_metered_units = if inputs.ingress_mode == CarbonIngressCostMode::ApiGatewayHttpV2 {
+        edge_invocations.saturating_add(extra_512k_units)
+    } else {
+        0
+    };
+
+    // S3 PUT/LIST: 2 presigned CAS blobs + request.json + initial status.json + wave status writes
+    // + (sealed_checkpoint.enc + sealed_champion.enc + final status.json) per search leg + optional stop.json + optional shred LIST.
+    let s3_put_list_requests = 4u32
+        .saturating_add(inputs.waves_completed)
+        .saturating_add(3u32.saturating_mul(search_legs))
+        .saturating_add(stop_calls)
+        .saturating_add(shred_calls);
+
+    // S3 GET: 2 CAS blob reads per search leg + 2 state reads per resume leg + status.json per poll
+    // + 2 state reads on `/predict` + 1 cold `fit.jmat` read per unique `eval` shard worker (`LRU` cached across later waves).
+    let resume_legs = search_legs.saturating_sub(1);
+    let cold_eval_reads = if inputs.eval_invocations > 0 {
+        inputs
+            .eval_shards
+            .max(1)
+            .min(inputs.eval_invocations as u32)
+    } else {
+        0
+    };
+    let s3_get_requests = 2u32
+        .saturating_mul(search_legs)
+        .saturating_add(2u32.saturating_mul(resume_legs))
+        .saturating_add(inputs.poll_requests)
+        .saturating_add(2)
+        .saturating_add(cold_eval_reads);
+
+    if inputs.ingress_mode == CarbonIngressCostMode::SelfHostedVpc {
+        return CarbonRunCostBreakdown {
+            ingress_mode: inputs.ingress_mode,
+            edge_invocations,
+            engine_invocations,
+            engine_billed_ms,
+            eval_invocations: inputs.eval_invocations,
+            eval_memory_mb: effective_eval_mb,
+            eval_billed_ms: inputs.eval_total_wall_ms,
+            apigw_metered_units: 0,
+            s3_put_list_requests,
+            s3_get_requests,
+            lambda_edge_usd: 0.0,
+            lambda_engine_usd: 0.0,
+            lambda_eval_usd: 0.0,
+            apigw_http_api_usd: 0.0,
+            s3_requests_usd: 0.0,
+            s3_storage_and_transfer_usd: 0.0,
+            total_estimated_usd: 0.0,
+            runs_per_1_usd: None,
+        };
+    }
+
+    let edge_billed_ms = u64::from(edge_invocations) * 18;
+    let edge_gb = (EDGE_MEMORY_MB as f64) / 1_024.0;
+    let lambda_edge_usd = (edge_billed_ms as f64 / 1_000.0) * edge_gb * LAMBDA_ARM64_USD_PER_GB_SEC
+        + f64::from(edge_invocations) * LAMBDA_USD_PER_INVOCATION;
+
+    let engine_gb = (ENGINE_MEMORY_MB as f64) / 1_024.0;
+    let lambda_engine_usd =
+        (engine_billed_ms as f64 / 1_000.0) * engine_gb * LAMBDA_ARM64_USD_PER_GB_SEC
+            + f64::from(engine_invocations) * LAMBDA_USD_PER_INVOCATION;
+
+    let eval_gb = (effective_eval_mb as f64) / 1_024.0;
+    let lambda_eval_usd = if inputs.eval_invocations == 0 {
+        0.0
+    } else {
+        (inputs.eval_total_wall_ms as f64 / 1_000.0) * eval_gb * LAMBDA_ARM64_USD_PER_GB_SEC
+            + (inputs.eval_invocations as f64) * LAMBDA_USD_PER_INVOCATION
+    };
+
+    let apigw_http_api_usd = f64::from(apigw_metered_units) * APIGW_HTTP_API_USD_PER_UNIT;
+    let s3_requests_usd = f64::from(s3_put_list_requests) * S3_STANDARD_PUT_LIST_USD_PER_REQ
+        + f64::from(s3_get_requests) * S3_STANDARD_GET_USD_PER_REQ;
+
+    let cas_gb = (inputs.uploaded_cas_bytes as f64) / 1_000_000_000.0;
+    let retention_months = if inputs.shredded_after_run {
+        1.0 / 8_640.0 // < 5 minutes before cryptographic DELETE shred
+    } else {
+        1.0 / 30.0 // 1-day lifecycle rule on `blobs/`
+    };
+    let s3_storage_usd = cas_gb * S3_STANDARD_USD_PER_GB_MONTH * retention_months;
+    let egress_gb = (inputs.http_response_bytes as f64) / 1_000_000_000.0;
+    let s3_storage_and_transfer_usd = s3_storage_usd + egress_gb * AWS_INTERNET_EGRESS_USD_PER_GB;
+
+    let total_estimated_usd = lambda_edge_usd
+        + lambda_engine_usd
+        + lambda_eval_usd
+        + apigw_http_api_usd
+        + s3_requests_usd
+        + s3_storage_and_transfer_usd;
+    let runs_per_1_usd = if total_estimated_usd > 0.0 {
+        Some(1.0 / total_estimated_usd)
+    } else {
+        None
+    };
+
+    CarbonRunCostBreakdown {
+        ingress_mode: inputs.ingress_mode,
+        edge_invocations,
+        engine_invocations,
+        engine_billed_ms,
+        eval_invocations: inputs.eval_invocations,
+        eval_memory_mb: effective_eval_mb,
+        eval_billed_ms: inputs.eval_total_wall_ms,
+        apigw_metered_units,
+        s3_put_list_requests,
+        s3_get_requests,
+        lambda_edge_usd,
+        lambda_engine_usd,
+        lambda_eval_usd,
+        apigw_http_api_usd,
+        s3_requests_usd,
+        s3_storage_and_transfer_usd,
+        total_estimated_usd,
+        runs_per_1_usd,
+    }
+}
+
 /// `CarbonPlanDecision` is a struct for the deterministic execution topology, worker sizing, shard
 /// count, and estimated cost/latency returned by `plan_carbon_execution`.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -113,6 +341,7 @@ pub struct CarbonPlanDecision {
     pub hybrid_wall_ms: f64,
     pub solo_estimated_usd: f64,
     pub hybrid_estimated_usd: f64,
+    pub full_dataset_cost_estimate: CarbonRunCostBreakdown,
 }
 
 /// Estimate peak candidate-evaluation working-set footprint in MB from `(fit_rows, features)`.
@@ -201,19 +430,72 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
         CarbonExecutionMode::SoloSingleLambda
     };
 
+    let selected_shards = if mode == CarbonExecutionMode::HybridFanOut {
+        shards_per_wave
+    } else {
+        0
+    };
+    let selected_wall_ms = if mode == CarbonExecutionMode::HybridFanOut {
+        hybrid_wall_ms
+    } else {
+        solo_wall_ms
+    };
+    let est_polls = if input.effort == CarbonEffortTier::Fast && selected_wall_ms < 1_000.0 {
+        0
+    } else if selected_wall_ms <= 5_000.0 {
+        ((selected_wall_ms / 300.0).ceil() as u32).max(1)
+    } else {
+        12 + (((selected_wall_ms - 5_000.0) / 1_000.0).ceil() as u32)
+    };
+    let est_cas_bytes = input
+        .total_rows
+        .saturating_mul(input.features.saturating_add(1))
+        .saturating_mul(8)
+        .saturating_add(512);
+    let est_eval_inv = if mode == CarbonExecutionMode::HybridFanOut {
+        u64::from(total_eval_invocations)
+    } else {
+        0
+    };
+    let est_eval_wall_ms = if mode == CarbonExecutionMode::HybridFanOut {
+        u64::from(total_eval_invocations) * (shard_compute_ms.ceil().max(1.0) as u64)
+    } else {
+        0
+    };
+    let ingress = if input.product_tier == CarbonProductTier::Enterprise {
+        CarbonIngressCostMode::SelfHostedVpc
+    } else {
+        CarbonIngressCostMode::ApiGatewayHttpV2
+    };
+    let full_dataset_cost_estimate = compute_live_run_cost(&CarbonLiveCostInputs {
+        ingress_mode: ingress,
+        minted_ephemeral_token: false,
+        engine_search_invocations: 1,
+        poll_requests: est_polls,
+        signaled_early_stop: false,
+        shredded_after_run: true,
+        waves_completed: waves,
+        eval_shards: selected_shards,
+        eval_memory_mb: eval_class.memory_mb() as u32,
+        eval_invocations: est_eval_inv,
+        eval_total_wall_ms: est_eval_wall_ms,
+        search_wall_ms: selected_wall_ms,
+        predict_wall_ms: 45.0,
+        uploaded_cas_bytes: est_cas_bytes,
+        http_request_bytes: 12_288,
+        http_response_bytes: 8_192,
+    });
+
     Ok(CarbonPlanDecision {
         mode,
         eval_class,
         estimated_working_set_mb: working_set_mb,
-        shards_per_wave: if mode == CarbonExecutionMode::HybridFanOut {
-            shards_per_wave
-        } else {
-            0
-        },
+        shards_per_wave: selected_shards,
         planned_waves: waves,
         solo_wall_ms,
         hybrid_wall_ms,
         solo_estimated_usd,
         hybrid_estimated_usd,
+        full_dataset_cost_estimate,
     })
 }

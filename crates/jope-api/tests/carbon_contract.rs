@@ -3,7 +3,8 @@ use jope_api::{
         CarbonAnonymousAuthResponse, CarbonCreateRunRequest, CarbonEarlyStopRequest,
         CarbonExecutionModeWire, CarbonPingResponse, CarbonPredictRequest, CarbonPredictResponse,
         CarbonPrepareUploadRequest, CarbonPrepareUploadResponse, CarbonPresignedTarget,
-        CarbonPublicWaveProgress, CarbonRegionCatalog, CarbonResumeRunRequest, CarbonRunStateWire,
+        CarbonPublicWaveProgress, CarbonRegionCatalog, CarbonRegisterFreeRequest,
+        CarbonRegisterFreeResponse, CarbonResumeRunRequest, CarbonRunStateWire,
         CarbonShredRunResponse, CarbonTierWire, CarbonUploadSlotWire, CARBON_DEFAULT_REGIONS,
     },
     decimal::DecimalU64,
@@ -33,6 +34,31 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         )
         .expect("decode anon"),
         anon
+    );
+
+    let reg_req = CarbonRegisterFreeRequest {
+        label: Some("alice_laptop".to_owned()),
+    };
+    assert_eq!(
+        serde_json::from_str::<CarbonRegisterFreeRequest>(
+            &serde_json::to_string(&reg_req).expect("encode reg_req")
+        )
+        .expect("decode reg_req"),
+        reg_req
+    );
+    let reg_resp = CarbonRegisterFreeResponse {
+        tenant_id: "free_alice_laptop_01jccarb0n".to_owned(),
+        capability_token: "ctk1.payload.sig".to_owned(),
+        tier: CarbonTierWire::Free,
+        expires_epoch_secs: DecimalU64(1_802_592_000u64),
+        engine_kek_pubkey_b64: Some("BA==".to_owned()),
+    };
+    assert_eq!(
+        serde_json::from_str::<CarbonRegisterFreeResponse>(
+            &serde_json::to_string(&reg_resp).expect("encode reg_resp")
+        )
+        .expect("decode reg_resp"),
+        reg_resp
     );
 
     let prepare = CarbonPrepareUploadRequest {
@@ -114,7 +140,9 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         state: CarbonRunStateWire::Paused,
         execution_mode: CarbonExecutionModeWire::SoloSingleLambda,
         eval_memory_mb: 512,
-        eval_shards: 1,
+        eval_shards: 0,
+        eval_invocations: DecimalU64(0u64),
+        eval_total_wall_ms: DecimalU64(0u64),
         wave_index: 3,
         waves_target: 8,
         candidates_evaluated: DecimalU64(96u64),
@@ -157,6 +185,20 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         serde_json::from_value::<CarbonPublicWaveProgress>(poisoned).is_err(),
         "CarbonPublicWaveProgress must reject unknown candidate-structure fields"
     );
+    let mut legacy_progress: serde_json::Value =
+        serde_json::from_str(&progress_json).expect("valid progress json");
+    legacy_progress
+        .as_object_mut()
+        .unwrap()
+        .remove("eval_invocations");
+    legacy_progress
+        .as_object_mut()
+        .unwrap()
+        .remove("eval_total_wall_ms");
+    let decoded_legacy: CarbonPublicWaveProgress = serde_json::from_value(legacy_progress)
+        .expect("decode legacy progress without eval counters");
+    assert_eq!(decoded_legacy.eval_invocations, DecimalU64(0));
+    assert_eq!(decoded_legacy.eval_total_wall_ms, DecimalU64(0));
 
     let stop = CarbonEarlyStopRequest {
         tenant_id: "tenant-pro".to_owned(),

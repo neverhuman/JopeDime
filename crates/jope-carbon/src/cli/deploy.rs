@@ -15,14 +15,24 @@ use std::time::{Duration, Instant};
 
 use aws_lc_rs::rand as lc_rand;
 use base64::Engine as _;
-use flate2::{write::DeflateEncoder, Compression, Crc};
+use flate2::{
+    write::{DeflateEncoder, GzEncoder},
+    Compression, Crc,
+};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use zeroize::Zeroizing;
 
 use crate::{
     cells::engine_invoker::now_epoch_ms,
-    cli::{client::CarbonThinClient, redteam::execute_carbon_redteam_suite},
+    cli::{
+        client::{
+            CarbonCloudCellEntry, CarbonCloudRegionPin, CarbonPublicCloudsManifest,
+            CarbonThinClient,
+        },
+        redteam::execute_carbon_redteam_suite,
+        runner::{execute_carbon_cli_run, CarbonCliRunOptions},
+    },
     security::{
         auth::{CarbonAuthVerifier, CarbonCapabilityClaims},
         sigv4::{resolve_aws_cli_binary, sign_aws_v4_headers_with_extra, CarbonAwsCredentials},
@@ -108,6 +118,7 @@ pub struct CarbonPackageOptions {
     pub edge_bin: Option<PathBuf>,
     pub worker_bin: Option<PathBuf>,
     pub build_jobs: usize,
+    pub include_cli_binaries: bool,
 }
 
 /// `CarbonDeployOptions` is a struct configuring `carbon deploy`.
@@ -146,6 +157,8 @@ pub struct CarbonRegionDeployReceipt {
     pub edge_endpoint_url: Option<String>,
     #[serde(default)]
     pub public_edge_endpoint_url: Option<String>,
+    #[serde(default)]
+    pub engine_kek_pubkey_b64: Option<String>,
     pub live_versions: Option<CarbonLiveAliasVersions>,
     pub previous_versions: Option<CarbonLiveAliasVersions>,
     pub r882_layer_version_arn: Option<String>,
@@ -197,6 +210,7 @@ struct VaultSecretBinding {
     secret_arn: String,
     version_id: String,
     engine_kek_pubkey_b64: String,
+    auth_secret_hex: Zeroizing<String>,
 }
 
 /// Expand region preset tokens (`canary`, `wave1`, `all-17`) or validate explicit region names.
@@ -515,7 +529,11 @@ struct ZigMuslWrappers {
     linker: PathBuf,
 }
 
-fn ensure_zig_musl_wrappers(wrapper_dir: &Path) -> Result<Option<ZigMuslWrappers>, String> {
+fn ensure_zig_musl_wrappers_for_arch(
+    wrapper_dir: &Path,
+    zig_target: &str,
+    rust_target: &str,
+) -> Result<Option<ZigMuslWrappers>, String> {
     let zig_candidates = [
         std::env::var_os("CARBON_ZIG_BIN").map(PathBuf::from),
         Some(PathBuf::from(
@@ -538,19 +556,19 @@ fn ensure_zig_musl_wrappers(wrapper_dir: &Path) -> Result<Option<ZigMuslWrappers
     let cache_abs = fs::canonicalize(&cache_dir).map_err(|e| e.to_string())?;
     let local_cache_abs = fs::canonicalize(&local_cache_dir).map_err(|e| e.to_string())?;
 
-    let cc_script = wrapper_dir.join("aarch64-linux-musl-cc");
-    let cxx_script = wrapper_dir.join("aarch64-linux-musl-cxx");
-    let ar_script = wrapper_dir.join("aarch64-linux-musl-ar");
-    let link_script = wrapper_dir.join("aarch64-linux-musl-link");
+    let cc_script = wrapper_dir.join(format!("{zig_target}-cc"));
+    let cxx_script = wrapper_dir.join(format!("{zig_target}-cxx"));
+    let ar_script = wrapper_dir.join(format!("{zig_target}-ar"));
+    let link_script = wrapper_dir.join(format!("{zig_target}-link"));
 
     let cc_body = format!(
-        "#!/usr/bin/env bash\nset -euo pipefail\nexport ZIG_GLOBAL_CACHE_DIR=\"{}\"\nexport ZIG_LOCAL_CACHE_DIR=\"{}\"\nargs=()\nfor arg in \"$@\"; do\n  case \"$arg\" in\n    --target=aarch64-unknown-linux-musl|-lgcc_s) ;;\n    *) args+=(\"$arg\") ;;\n  esac\ndone\nexec \"{}\" cc -target aarch64-linux-musl \"${{args[@]}}\"\n",
+        "#!/usr/bin/env bash\nset -euo pipefail\nexport ZIG_GLOBAL_CACHE_DIR=\"{}\"\nexport ZIG_LOCAL_CACHE_DIR=\"{}\"\nargs=()\nfor arg in \"$@\"; do\n  case \"$arg\" in\n    --target={rust_target}|-lgcc_s) ;;\n    *) args+=(\"$arg\") ;;\n  esac\ndone\nexec \"{}\" cc -target {zig_target} \"${{args[@]}}\"\n",
         cache_abs.display(),
         local_cache_abs.display(),
         zig_abs.display()
     );
     let cxx_body = format!(
-        "#!/usr/bin/env bash\nset -euo pipefail\nexport ZIG_GLOBAL_CACHE_DIR=\"{}\"\nexport ZIG_LOCAL_CACHE_DIR=\"{}\"\nargs=()\nfor arg in \"$@\"; do\n  case \"$arg\" in\n    --target=aarch64-unknown-linux-musl|-lgcc_s) ;;\n    *) args+=(\"$arg\") ;;\n  esac\ndone\nexec \"{}\" c++ -target aarch64-linux-musl \"${{args[@]}}\"\n",
+        "#!/usr/bin/env bash\nset -euo pipefail\nexport ZIG_GLOBAL_CACHE_DIR=\"{}\"\nexport ZIG_LOCAL_CACHE_DIR=\"{}\"\nargs=()\nfor arg in \"$@\"; do\n  case \"$arg\" in\n    --target={rust_target}|-lgcc_s) ;;\n    *) args+=(\"$arg\") ;;\n  esac\ndone\nexec \"{}\" c++ -target {zig_target} \"${{args[@]}}\"\n",
         cache_abs.display(),
         local_cache_abs.display(),
         zig_abs.display()
@@ -562,7 +580,7 @@ fn ensure_zig_musl_wrappers(wrapper_dir: &Path) -> Result<Option<ZigMuslWrappers
         zig_abs.display()
     );
     let link_body = format!(
-        "#!/usr/bin/env bash\nset -euo pipefail\nexport ZIG_GLOBAL_CACHE_DIR=\"{}\"\nexport ZIG_LOCAL_CACHE_DIR=\"{}\"\nargs=()\nfor arg in \"$@\"; do\n  case \"$arg\" in\n    --target=aarch64-unknown-linux-musl|-lgcc_s) ;;\n    */self-contained/crt1.o|*/self-contained/crti.o|*/self-contained/crtbegin.o|*/self-contained/crtend.o|*/self-contained/crtn.o) ;;\n    *) args+=(\"$arg\") ;;\n  esac\ndone\nexec \"{}\" cc -target aarch64-linux-musl \"${{args[@]}}\"\n",
+        "#!/usr/bin/env bash\nset -euo pipefail\nexport ZIG_GLOBAL_CACHE_DIR=\"{}\"\nexport ZIG_LOCAL_CACHE_DIR=\"{}\"\nargs=()\nfor arg in \"$@\"; do\n  case \"$arg\" in\n    --target={rust_target}|-lgcc_s) ;;\n    */self-contained/crt1.o|*/self-contained/crti.o|*/self-contained/crtbegin.o|*/self-contained/crtend.o|*/self-contained/crtn.o) ;;\n    *) args+=(\"$arg\") ;;\n  esac\ndone\nexec \"{}\" cc -target {zig_target} \"${{args[@]}}\"\n",
         cache_abs.display(),
         local_cache_abs.display(),
         zig_abs.display()
@@ -592,6 +610,117 @@ fn ensure_zig_musl_wrappers(wrapper_dir: &Path) -> Result<Option<ZigMuslWrappers
         ar: fs::canonicalize(&ar_script).map_err(|e| e.to_string())?,
         linker: fs::canonicalize(&link_script).map_err(|e| e.to_string())?,
     }))
+}
+
+fn ensure_zig_musl_wrappers(wrapper_dir: &Path) -> Result<Option<ZigMuslWrappers>, String> {
+    ensure_zig_musl_wrappers_for_arch(
+        wrapper_dir,
+        "aarch64-linux-musl",
+        "aarch64-unknown-linux-musl",
+    )
+}
+
+fn cross_compile_x86_64_cli_binary(out_dir: &Path, jobs: usize) -> Result<PathBuf, String> {
+    let wrapper_dir = out_dir.join(".zig-toolchain");
+    let build_tmp = wrapper_dir.join("build-tmp");
+    fs::create_dir_all(&build_tmp)
+        .map_err(|e| format!("create build-tmp {}: {e}", build_tmp.display()))?;
+    let build_tmp_abs = fs::canonicalize(&build_tmp).map_err(|e| e.to_string())?;
+    let zig_wrappers = ensure_zig_musl_wrappers_for_arch(
+        &wrapper_dir,
+        "x86_64-linux-musl",
+        "x86_64-unknown-linux-musl",
+    )?;
+    let jobs_str = jobs.max(1).to_string();
+    let mut cmd = Command::new("cargo");
+    cmd.args([
+        "build",
+        "--locked",
+        "--release",
+        "--target",
+        "x86_64-unknown-linux-musl",
+        "-p",
+        "jope-carbon",
+        "--bin",
+        "carbon",
+        "-j",
+        &jobs_str,
+    ])
+    .env("CARGO_INCREMENTAL", "0")
+    .env("CARGO_PROFILE_DEV_DEBUG", "line-tables-only")
+    .env("AWS_LC_SYS_CMAKE_BUILDER", "0")
+    .env("TMPDIR", &build_tmp_abs);
+    if let Some(w) = &zig_wrappers {
+        cmd.env("CC_x86_64_unknown_linux_musl", &w.cc)
+            .env("CXX_x86_64_unknown_linux_musl", &w.cxx)
+            .env("AR_x86_64_unknown_linux_musl", &w.ar)
+            .env("CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER", &w.linker);
+    }
+    let status = cmd
+        .status()
+        .map_err(|e| format!("failed to spawn cargo build for x86_64 musl carbon: {e}"))?;
+    if !status.success() {
+        return Err(format!(
+            "cargo build for x86_64-unknown-linux-musl carbon exited with {status}"
+        ));
+    }
+    let meta_out = Command::new("cargo")
+        .args(["metadata", "--no-deps", "--format-version", "1"])
+        .output()
+        .map_err(|e| format!("cargo metadata failed: {e}"))?;
+    if !meta_out.status.success() {
+        return Err("cargo metadata failed when resolving target_directory".to_owned());
+    }
+    let meta_json: serde_json::Value = serde_json::from_slice(&meta_out.stdout)
+        .map_err(|e| format!("parse cargo metadata JSON: {e}"))?;
+    let target_root = meta_json
+        .get("target_directory")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "cargo metadata missing target_directory".to_owned())?;
+    Ok(Path::new(target_root)
+        .join("x86_64-unknown-linux-musl")
+        .join("release")
+        .join("carbon"))
+}
+
+/// Build a deterministic POSIX USTAR `.tar.gz` containing a single `0755` executable entry.
+pub fn build_deterministic_single_bin_targz(
+    entry_name: &str,
+    bytes: &[u8],
+) -> Result<Vec<u8>, String> {
+    let name_bytes = entry_name.as_bytes();
+    if name_bytes.is_empty() || name_bytes.len() > 99 || entry_name.contains('/') {
+        return Err(format!("invalid USTAR binary entry name '{entry_name}'"));
+    }
+    let mut header = [0u8; 512];
+    header[0..name_bytes.len()].copy_from_slice(name_bytes);
+    header[100..108].copy_from_slice(b"0000755\0");
+    header[108..116].copy_from_slice(b"0000000\0");
+    header[116..124].copy_from_slice(b"0000000\0");
+    let size_octal = format!("{:011o}\0", bytes.len());
+    header[124..136].copy_from_slice(size_octal.as_bytes());
+    header[136..148].copy_from_slice(b"00000000000\0");
+    header[148..156].copy_from_slice(b"        ");
+    header[156] = b'0';
+    header[257..263].copy_from_slice(b"ustar\0");
+    header[263..265].copy_from_slice(b"00");
+    let chksum: u32 = header.iter().map(|&b| u32::from(b)).sum();
+    let chk_octal = format!("{chksum:06o}\0 ");
+    header[148..156].copy_from_slice(chk_octal.as_bytes());
+
+    let pad_len = (512 - (bytes.len() % 512)) % 512;
+    let mut enc = GzEncoder::new(Vec::new(), Compression::default());
+    enc.write_all(&header)
+        .map_err(|e| format!("gzip write tar header: {e}"))?;
+    enc.write_all(bytes)
+        .map_err(|e| format!("gzip write tar payload: {e}"))?;
+    if pad_len > 0 {
+        enc.write_all(&vec![0u8; pad_len])
+            .map_err(|e| format!("gzip write tar padding: {e}"))?;
+    }
+    enc.write_all(&[0u8; 1_024])
+        .map_err(|e| format!("gzip write tar EOF blocks: {e}"))?;
+    enc.finish().map_err(|e| format!("gzip finish tar.gz: {e}"))
 }
 
 fn cross_compile_arm64_binaries(out_dir: &Path, jobs: usize) -> Result<(PathBuf, PathBuf), String> {
@@ -714,7 +843,15 @@ pub fn execute_carbon_package(
     verify_arm64_lambda_binary(&edge_bytes, true)?;
     verify_arm64_lambda_binary(&worker_bytes, false)?;
 
-    // 3. Build deterministic reproducible ZIPs
+    // 3. Build deterministic reproducible ZIPs (+ optional multi-arch musl CLI tarballs)
+    let aarch64_cli_targz = if opts.include_cli_binaries {
+        Some(build_deterministic_single_bin_targz(
+            "carbon",
+            &worker_bytes,
+        )?)
+    } else {
+        None
+    };
     let edge_zip = build_deterministic_zip_bytes(vec![CarbonZipEntry {
         rel_path: "bootstrap".to_owned(),
         bytes: edge_bytes,
@@ -734,6 +871,24 @@ pub fn execute_carbon_package(
         &mut layer_entries,
     )?;
     let layer_zip = build_deterministic_zip_bytes(layer_entries)?;
+
+    if let Some(arm_tgz) = aarch64_cli_targz {
+        let x64_bin_path = cross_compile_x86_64_cli_binary(&opts.out_dir, opts.build_jobs)?;
+        let x64_bytes =
+            fs::read(&x64_bin_path).map_err(|e| format!("read {}: {e}", x64_bin_path.display()))?;
+        let x64_tgz = build_deterministic_single_bin_targz("carbon", &x64_bytes)?;
+        let x64_name = "carbon-linux-x86_64-musl.tar.gz";
+        let arm_name = "carbon-linux-aarch64-musl.tar.gz";
+        let x64_sha = sha256_lower_hex(&x64_tgz);
+        let arm_sha = sha256_lower_hex(&arm_tgz);
+        fs::write(opts.out_dir.join(x64_name), &x64_tgz)
+            .map_err(|e| format!("write {x64_name}: {e}"))?;
+        fs::write(opts.out_dir.join(arm_name), &arm_tgz)
+            .map_err(|e| format!("write {arm_name}: {e}"))?;
+        let sums = format!("{x64_sha}  {x64_name}\n{arm_sha}  {arm_name}\n");
+        fs::write(opts.out_dir.join("CLI-SHA256SUMS"), sums)
+            .map_err(|e| format!("write CLI-SHA256SUMS: {e}"))?;
+    }
 
     // Clean up temporary zig wrapper dir if created inside out_dir
     let _ = fs::remove_dir_all(opts.out_dir.join(".zig-toolchain"));
@@ -904,9 +1059,14 @@ fn random_32byte_hex() -> Result<Zeroizing<String>, String> {
     Ok(Zeroizing::new(hex::encode(*raw)))
 }
 
-fn generate_cell_secret_document() -> Result<(Zeroizing<String>, String), String> {
+fn generate_cell_secret_document(
+    auth_override_hex: Option<&str>,
+) -> Result<(Zeroizing<String>, String, Zeroizing<String>), String> {
     let presign = random_32byte_hex()?;
-    let auth = random_32byte_hex()?;
+    let auth = match auth_override_hex {
+        Some(explicit) => Zeroizing::new(explicit.trim().to_owned()),
+        None => random_32byte_hex()?,
+    };
     let seal = random_32byte_hex()?;
     let internal = random_32byte_hex()?;
     let mut kek_scalar = Zeroizing::new([0u8; 32]);
@@ -931,7 +1091,18 @@ fn generate_cell_secret_document() -> Result<(Zeroizing<String>, String), String
     let serialized = Zeroizing::new(
         serde_json::to_string(&doc).map_err(|e| format!("serialize CellSecretDocument: {e}"))?,
     );
-    Ok((serialized, pub_b64))
+    Ok((serialized, pub_b64, auth))
+}
+
+fn format_uuid_from_random_hex(tok_hex: &str) -> String {
+    format!(
+        "{}-{}-{}-{}-{}",
+        &tok_hex[0..8],
+        &tok_hex[8..12],
+        &tok_hex[12..16],
+        &tok_hex[16..20],
+        &tok_hex[20..32]
+    )
 }
 
 fn ensure_cell_secrets_in_vault(
@@ -939,6 +1110,7 @@ fn ensure_cell_secrets_in_vault(
     region: &str,
     environment: &str,
     bootstrap_if_missing: bool,
+    required_auth_secret_hex: Option<&str>,
 ) -> Result<VaultSecretBinding, String> {
     let secret_id = format!("jopedime/carbon/{environment}/cell-secrets");
     let get_req = serde_json::to_vec(&serde_json::json!({
@@ -956,7 +1128,7 @@ fn ensure_cell_secrets_in_vault(
             .and_then(|v| v.as_str())
             .ok_or_else(|| "SecretsManager response missing ARN".to_owned())?
             .to_owned();
-        let version_id = val
+        let mut version_id = val
             .get("VersionId")
             .and_then(|v| v.as_str())
             .ok_or_else(|| "SecretsManager response missing VersionId".to_owned())?
@@ -967,12 +1139,46 @@ fn ensure_cell_secrets_in_vault(
                 .ok_or_else(|| "SecretsManager response missing SecretString".to_owned())?
                 .to_owned(),
         );
-        let parsed_doc: CellSecretDocument = serde_json::from_str(&secret_str)
+        let mut parsed_doc: CellSecretDocument = serde_json::from_str(&secret_str)
             .map_err(|e| format!("invalid CellSecretDocument schema in '{secret_id}': {e}"))?;
+        if let Some(req_auth) = required_auth_secret_hex {
+            if parsed_doc.auth_secret_hex != req_auth.trim() {
+                parsed_doc.auth_secret_hex = req_auth.trim().to_owned();
+                let updated_json = Zeroizing::new(
+                    serde_json::to_string(&parsed_doc)
+                        .map_err(|e| format!("serialize synced CellSecretDocument: {e}"))?,
+                );
+                let tok_hex = random_32byte_hex()?;
+                let put_payload = Zeroizing::new(
+                    serde_json::to_vec(&serde_json::json!({
+                        "SecretId": secret_id,
+                        "ClientRequestToken": format_uuid_from_random_hex(&tok_hex),
+                        "SecretString": &*updated_json,
+                    }))
+                    .map_err(|e| e.to_string())?,
+                );
+                let (p_status, p_body) =
+                    call_secrets_manager_rpc(creds, region, "PutSecretValue", &put_payload)?;
+                if p_status != 200 {
+                    return Err(format!(
+                        "SecretsManager PutSecretValue '{secret_id}' in {region} failed (HTTP {p_status}): {}",
+                        String::from_utf8_lossy(&p_body)
+                    ));
+                }
+                let put_val: serde_json::Value = serde_json::from_slice(&p_body)
+                    .map_err(|e| format!("parse PutSecretValue response: {e}"))?;
+                version_id = put_val
+                    .get("VersionId")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| "PutSecretValue response missing VersionId".to_owned())?
+                    .to_owned();
+            }
+        }
         return Ok(VaultSecretBinding {
             secret_arn: arn,
             version_id,
             engine_kek_pubkey_b64: parsed_doc.engine_kek_pubkey_b64,
+            auth_secret_hex: Zeroizing::new(parsed_doc.auth_secret_hex),
         });
     }
 
@@ -988,16 +1194,10 @@ fn ensure_cell_secrets_in_vault(
         ));
     }
 
-    let (secret_json, pubkey_b64) = generate_cell_secret_document()?;
+    let (secret_json, pubkey_b64, auth_hex) =
+        generate_cell_secret_document(required_auth_secret_hex)?;
     let tok_hex = random_32byte_hex()?;
-    let client_req_token = format!(
-        "{}-{}-{}-{}-{}",
-        &tok_hex[0..8],
-        &tok_hex[8..12],
-        &tok_hex[12..16],
-        &tok_hex[16..20],
-        &tok_hex[20..32]
-    );
+    let client_req_token = format_uuid_from_random_hex(&tok_hex);
     let create_payload = Zeroizing::new(
         serde_json::to_vec(&serde_json::json!({
             "Name": secret_id,
@@ -1032,6 +1232,7 @@ fn ensure_cell_secrets_in_vault(
         secret_arn: arn,
         version_id,
         engine_kek_pubkey_b64: pubkey_b64,
+        auth_secret_hex: auth_hex,
     })
 }
 
@@ -1306,55 +1507,60 @@ fn decommission_unstacked_prototype_resources(
             &["lambda", "delete-function", "--function-name", &fn_name],
         )?;
 
-        let role_name = format!("{stack_name}-{suffix}-role");
-        if let Some(pols) = run_aws_allow_missing(
-            region,
-            &["iam", "list-role-policies", "--role-name", &role_name],
-        )? {
-            if let Some(names) = pols.get("PolicyNames").and_then(|v| v.as_array()) {
-                for p in names.iter().filter_map(|v| v.as_str()) {
-                    let _ = run_aws_allow_missing(
-                        region,
-                        &[
-                            "iam",
-                            "delete-role-policy",
-                            "--role-name",
-                            &role_name,
-                            "--policy-name",
-                            p,
-                        ],
-                    )?;
-                }
-            }
-        }
-        if let Some(attached) = run_aws_allow_missing(
-            region,
-            &[
-                "iam",
-                "list-attached-role-policies",
-                "--role-name",
-                &role_name,
-            ],
-        )? {
-            if let Some(list) = attached.get("AttachedPolicies").and_then(|v| v.as_array()) {
-                for item in list {
-                    if let Some(arn) = item.get("PolicyArn").and_then(|v| v.as_str()) {
+        for role_name in [
+            format!("{stack_name}-{suffix}-role"),
+            format!("{stack_name}-{region}-{suffix}-role"),
+        ] {
+            if let Some(pols) = run_aws_allow_missing(
+                region,
+                &["iam", "list-role-policies", "--role-name", &role_name],
+            )? {
+                if let Some(names) = pols.get("PolicyNames").and_then(|v| v.as_array()) {
+                    for p in names.iter().filter_map(|v| v.as_str()) {
                         let _ = run_aws_allow_missing(
                             region,
                             &[
                                 "iam",
-                                "detach-role-policy",
+                                "delete-role-policy",
                                 "--role-name",
                                 &role_name,
-                                "--policy-arn",
-                                arn,
+                                "--policy-name",
+                                p,
                             ],
                         )?;
                     }
                 }
             }
+            if let Some(attached) = run_aws_allow_missing(
+                region,
+                &[
+                    "iam",
+                    "list-attached-role-policies",
+                    "--role-name",
+                    &role_name,
+                ],
+            )? {
+                if let Some(list) = attached.get("AttachedPolicies").and_then(|v| v.as_array()) {
+                    for item in list {
+                        if let Some(arn) = item.get("PolicyArn").and_then(|v| v.as_str()) {
+                            let _ = run_aws_allow_missing(
+                                region,
+                                &[
+                                    "iam",
+                                    "detach-role-policy",
+                                    "--role-name",
+                                    &role_name,
+                                    "--policy-arn",
+                                    arn,
+                                ],
+                            )?;
+                        }
+                    }
+                }
+            }
+            let _ =
+                run_aws_allow_missing(region, &["iam", "delete-role", "--role-name", &role_name])?;
         }
-        let _ = run_aws_allow_missing(region, &["iam", "delete-role", "--role-name", &role_name])?;
 
         let log_group = format!("/aws/lambda/{stack_name}-{suffix}");
         let _ = run_aws_allow_missing(
@@ -1587,6 +1793,7 @@ fn deploy_single_region(
     manifest_dir: &Path,
     opts: &CarbonDeployOptions,
     region: &str,
+    global_auth_secret_hex: &str,
 ) -> Result<CarbonRegionDeployReceipt, String> {
     let t0 = Instant::now();
     let stack_name = format!("jopedime-carbon-{}", opts.environment);
@@ -1595,9 +1802,15 @@ fn deploy_single_region(
         .clone()
         .unwrap_or_else(|| format!("jopedime-carbon-artifacts-{account_id}-{region}"));
 
-    // 1. Ensure regional secrets exist in AWS Secrets Manager (zero plaintext in templates/argv!)
-    let vault =
-        ensure_cell_secrets_in_vault(creds, region, &opts.environment, opts.bootstrap_secrets)?;
+    // 1. Ensure regional secrets exist in AWS Secrets Manager with global `auth_secret_hex` sync
+    //    and strictly isolated per-region `engine_kek`, `seal_secret`, `presign_secret`, & `internal_token`!
+    let vault = ensure_cell_secrets_in_vault(
+        creds,
+        region,
+        &opts.environment,
+        opts.bootstrap_secrets,
+        Some(global_auth_secret_hex),
+    )?;
 
     // 2. Stage content-addressed release ZIPs to regional S3 bucket
     ensure_artifacts_bucket(region, &artifacts_bucket)?;
@@ -1820,6 +2033,7 @@ fn deploy_single_region(
             cas_bucket: None,
             edge_endpoint_url: None,
             public_edge_endpoint_url: None,
+            engine_kek_pubkey_b64: Some(vault.engine_kek_pubkey_b64),
             live_versions: previous_versions.clone(),
             previous_versions,
             r882_layer_version_arn: None,
@@ -1957,6 +2171,7 @@ fn deploy_single_region(
         cas_bucket,
         edge_endpoint_url: Some(edge_url),
         public_edge_endpoint_url: public_edge_url,
+        engine_kek_pubkey_b64: Some(vault.engine_kek_pubkey_b64),
         live_versions,
         previous_versions,
         r882_layer_version_arn: layer_arn,
@@ -1997,10 +2212,65 @@ pub fn execute_carbon_deploy(opts: &CarbonDeployOptions) -> Result<CarbonDeployR
         .ok_or_else(|| "sts get-caller-identity missing Account".to_owned())?
         .to_owned();
 
+    // Resolve canonical global `auth_secret_hex` from primary vault region (`us-east-2`) so every
+    // regional cell verifies the same `ctk1.*` capability tokens while retaining isolated regional KEKs.
+    let primary_vault = ensure_cell_secrets_in_vault(
+        &creds,
+        "us-east-2",
+        &opts.environment,
+        opts.bootstrap_secrets,
+        None,
+    )?;
+
     let mut receipts = Vec::with_capacity(target_regions.len());
-    for region in &target_regions {
-        let receipt =
-            deploy_single_region(&creds, &account_id, &manifest, &manifest_dir, opts, region)?;
+    for (idx, region) in target_regions.iter().enumerate() {
+        let receipt = deploy_single_region(
+            &creds,
+            &account_id,
+            &manifest,
+            &manifest_dir,
+            opts,
+            region,
+            &primary_vault.auth_secret_hex,
+        )?;
+        // Progressive wave promotion gate: before rolling out beyond the first (canary) region,
+        // verify a live zero-knowledge `r882` GP inference & cryptographic shred round-trip!
+        if idx == 0 && target_regions.len() > 1 && !opts.dry_run && !opts.skip_redteam {
+            if let Some(canary_url) = receipt
+                .public_edge_endpoint_url
+                .as_ref()
+                .or(receipt.edge_endpoint_url.as_ref())
+            {
+                let canary_receipt = execute_carbon_cli_run(&CarbonCliRunOptions {
+                    endpoints: vec![canary_url.clone()],
+                    csv_path: None,
+                    target_column: "y".to_owned(),
+                    synthetic_rows: 48,
+                    synthetic_features: 2,
+                    tenant_id: "canary_wave_gate".to_owned(),
+                    tier: jope_api::carbon::CarbonTierWire::Free,
+                    effort: jope_api::Effort::Fast,
+                    objective: "rmse".to_owned(),
+                    seed: 42,
+                    holdout_fraction: 0.20,
+                    stop_after_ms: None,
+                    resume_after_stop: false,
+                    predict_rows: 4,
+                    auth_token: None,
+                    shred_after_run: true,
+                })
+                .map_err(|e| {
+                    format!(
+                        "canary region '{region}' failed post-deploy E2E inference gate before multi-region wave promotion: {e}"
+                    )
+                })?;
+                if !canary_receipt.encrypted_cuen || !canary_receipt.shredded_after_run {
+                    return Err(format!(
+                        "canary region '{region}' E2E gate violated zero-knowledge encryption/shred invariant"
+                    ));
+                }
+            }
+        }
         receipts.push(receipt);
     }
 
@@ -2103,14 +2373,113 @@ pub fn execute_carbon_rollback(
         )?;
     }
 
-    let endpoint = resolve_cell_stack_endpoint(&opts.environment, &opts.region)?;
-    let (_, probed) = CarbonThinClient::connect_fastest(vec![endpoint])?;
+    let snap = read_stack_outputs_map(&opts.region, &stack_name)?
+        .ok_or_else(|| format!("stack '{stack_name}' not found in {}", opts.region))?;
+    let mut ping_verified = true;
+    for key in ["EdgeEndpointUrl", "PublicEdgeEndpointUrl"] {
+        if let Some(url) = snap.outputs.get(key) {
+            let (_, probed) = CarbonThinClient::connect_fastest(vec![url.clone()])?;
+            ping_verified = ping_verified && !probed.is_empty();
+        }
+    }
 
     Ok(CarbonRollbackReceipt {
         timestamp_epoch_ms: now_epoch_ms(),
         stack_name,
         region: opts.region.clone(),
         restored_versions: target,
-        ping_verified: !probed.is_empty(),
+        ping_verified,
+    })
+}
+
+/// Execute atomic `:live` alias rollback across one or more regions (`canary`, `wave1`, `all-17`).
+pub fn execute_carbon_rollback_multi(
+    environment: &str,
+    raw_regions: &[String],
+    target_versions: Option<CarbonLiveAliasVersions>,
+) -> Result<Vec<CarbonRollbackReceipt>, String> {
+    let regions = expand_region_targets(raw_regions)?;
+    let mut out = Vec::with_capacity(regions.len());
+    for region in regions {
+        out.push(execute_carbon_rollback(&CarbonRollbackOptions {
+            environment: environment.to_owned(),
+            region,
+            target_versions: target_versions.clone(),
+        })?);
+    }
+    Ok(out)
+}
+
+/// Query live CloudFormation stacks across `dev` and `prod` regions, probe `/v1/carbon/ping` on
+/// every regional `PublicEdgeEndpointUrl`, verify regional `engine_kek_pubkey_b64` against AWS
+/// Secrets Manager, and produce a signed-release-ready `jope-carbon-clouds-v2` manifest.
+pub fn generate_public_clouds_manifest(
+    dev_regions: &[String],
+    prod_regions: &[String],
+) -> Result<CarbonPublicCloudsManifest, String> {
+    let creds = CarbonAwsCredentials::from_env()?;
+    let mut clouds = BTreeMap::new();
+
+    for (cloud_name, raw_list) in [("dev", dev_regions), ("prod", prod_regions)] {
+        if raw_list.iter().all(|s| s.trim().is_empty()) {
+            continue;
+        }
+        let expanded = expand_region_targets(raw_list)?;
+        let stack_name = format!("jopedime-carbon-{cloud_name}");
+        let mut pins = Vec::with_capacity(expanded.len());
+
+        for region in &expanded {
+            let snap = read_stack_outputs_map(region, &stack_name)?.ok_or_else(|| {
+                format!("CloudFormation stack '{stack_name}' not found in region {region}")
+            })?;
+            let pub_url = snap
+                .outputs
+                .get("PublicEdgeEndpointUrl")
+                .or_else(|| snap.outputs.get("EdgeEndpointUrl"))
+                .cloned()
+                .ok_or_else(|| {
+                    format!("stack '{stack_name}' in {region} missing PublicEdgeEndpointUrl")
+                })?;
+            let release_id = snap.outputs.get("ReleaseId").cloned();
+            let vault = ensure_cell_secrets_in_vault(&creds, region, cloud_name, false, None)?;
+            let (_, probed) = CarbonThinClient::connect_fastest(vec![pub_url.clone()])?;
+            let first = probed.first().ok_or_else(|| {
+                format!("live /v1/carbon/ping probe returned empty for {pub_url} ({region})")
+            })?;
+            if first.engine_kek_pubkey_b64.as_deref() != Some(vault.engine_kek_pubkey_b64.as_str())
+            {
+                return Err(format!(
+                    "live KEK mismatch on {cloud_name} ({region}): ping advertised {:?}, vault holds {}",
+                    first.engine_kek_pubkey_b64, vault.engine_kek_pubkey_b64
+                ));
+            }
+            pins.push(CarbonCloudRegionPin {
+                region: region.clone(),
+                public_endpoint: pub_url.trim_end_matches('/').to_owned(),
+                engine_kek_pubkey_b64: Some(vault.engine_kek_pubkey_b64),
+                release_id,
+            });
+        }
+
+        let primary = pins.first().cloned().ok_or_else(|| {
+            format!("no active regional endpoints discovered for cloud '{cloud_name}'")
+        })?;
+        clouds.insert(
+            cloud_name.to_owned(),
+            CarbonCloudCellEntry {
+                environment: cloud_name.to_owned(),
+                region: primary.region,
+                public_endpoint: primary.public_endpoint,
+                engine_kek_pubkey_b64: primary.engine_kek_pubkey_b64,
+                release_id: primary.release_id,
+                regions: pins,
+            },
+        );
+    }
+
+    Ok(CarbonPublicCloudsManifest {
+        schema: "jope-carbon-clouds-v2".to_owned(),
+        generated_epoch_ms: now_epoch_ms(),
+        clouds,
     })
 }

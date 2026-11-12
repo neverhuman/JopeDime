@@ -9,7 +9,10 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc,
+};
 use std::time::Instant;
 
 use base64::Engine as _;
@@ -24,10 +27,10 @@ use jope_api::{
 use jope_prep::{conditioning::FitLandmarkBundle, cuen::CuenPayloadKind};
 use jope_service::discover::r#loop::{
     carbon::{
-        evaluate_outer_holdout_only, predict_with_champion_bytes, run_carbon_waves,
-        try_open_embedded_ranker, CarbonInProcessExecutor, CarbonNeuralGuidancePolicy,
-        CarbonRemoteEvalExecutor, CarbonStoreArchive, CarbonWaveRunOutcome,
-        CarbonWaveSessionOptions,
+        evaluate_carbon_eval_shard, evaluate_outer_holdout_only, predict_with_champion_bytes,
+        run_carbon_waves, try_open_embedded_ranker, CarbonInProcessExecutor,
+        CarbonNeuralGuidancePolicy, CarbonRemoteEvalExecutor, CarbonStoreArchive,
+        CarbonWaveRunOutcome, CarbonWaveSessionOptions,
     },
     Plan,
 };
@@ -55,7 +58,7 @@ use crate::{
     storage::cas::{canonical_run_state_key, sha256_lower_hex, CarbonCasStore},
 };
 
-const DEADLINE_DRAIN_MARGIN_MS: u64 = 15_000;
+const DEADLINE_DRAIN_MARGIN_MS: u64 = 20_000;
 
 struct EngineSessionDir {
     path: PathBuf,
@@ -404,7 +407,7 @@ impl CarbonEngineWorker {
             gap_rows: 0,
         };
 
-        let outcome = self.drive_waves(
+        let (outcome, eval_invocations, eval_total_wall_ms) = self.drive_waves(
             create,
             &run_str,
             region,
@@ -421,6 +424,8 @@ impl CarbonEngineWorker {
             effort.planned_waves(),
             deadline_epoch_ms,
             t0,
+            0,
+            0,
         )?;
 
         self.finalize_and_persist_progress(
@@ -435,6 +440,8 @@ impl CarbonEngineWorker {
             outcome,
             effort.planned_waves(),
             t0.elapsed().as_millis() as u64,
+            eval_invocations,
+            eval_total_wall_ms,
         )
     }
 
@@ -520,7 +527,15 @@ impl CarbonEngineWorker {
             .max(1);
         let waves_target = effort.planned_waves().max(extra_waves);
 
-        let outcome = self.drive_waves(
+        let (prior_eval_invocations, prior_eval_wall_ms, prior_elapsed_ms) =
+            canonical_run_state_key(&resume.tenant_id, run_id_str, "status.json")
+                .ok()
+                .and_then(|k| self.cas.get_state_object(&k).ok().flatten())
+                .and_then(|b| serde_json::from_slice::<CarbonPublicWaveProgress>(&b).ok())
+                .map(|p| (p.eval_invocations.0, p.eval_total_wall_ms.0, p.elapsed_ms.0))
+                .unwrap_or((0, 0, 0));
+
+        let (outcome, eval_invocations, eval_total_wall_ms) = self.drive_waves(
             &create,
             run_id_str,
             region,
@@ -537,6 +552,8 @@ impl CarbonEngineWorker {
             extra_waves,
             deadline_epoch_ms,
             t0,
+            prior_eval_invocations,
+            prior_eval_wall_ms,
         )?;
 
         self.finalize_and_persist_progress(
@@ -550,7 +567,9 @@ impl CarbonEngineWorker {
             u_dek.as_deref(),
             outcome,
             waves_target,
-            t0.elapsed().as_millis() as u64,
+            prior_elapsed_ms.saturating_add(t0.elapsed().as_millis() as u64),
+            eval_invocations,
+            eval_total_wall_ms,
         )
     }
 
@@ -705,11 +724,15 @@ impl CarbonEngineWorker {
         max_waves: u32,
         deadline_epoch_ms: Option<u64>,
         t0: Instant,
-    ) -> Result<CarbonWaveRunOutcome, String> {
+        initial_eval_invocations: u64,
+        initial_eval_wall_ms: u64,
+    ) -> Result<(CarbonWaveRunOutcome, u64, u64), String> {
         let stop_key = canonical_run_state_key(&create.tenant_id, run_str, "stop.json")?;
         let status_key = canonical_run_state_key(&create.tenant_id, run_str, "status.json")?;
         let guidance_policy = select_neural_guidance_policy(create.tier);
         let ranker_digest = ranker.map(|r| r.digest().to_owned());
+        let eval_invocations = Arc::new(AtomicU64::new(initial_eval_invocations));
+        let eval_total_wall_ms = Arc::new(AtomicU64::new(initial_eval_wall_ms));
 
         let should_pause = |_wave: u32| -> bool {
             if let Some(deadline) = deadline_epoch_ms {
@@ -736,6 +759,13 @@ impl CarbonEngineWorker {
         } else {
             Some("unseeded".to_owned())
         };
+        let effective_hybrid_shards = if use_hybrid {
+            resolve_effective_eval_shards(decision.shards_per_wave)
+        } else {
+            0
+        };
+        let eval_inv_wave = Arc::clone(&eval_invocations);
+        let eval_ms_wave = Arc::clone(&eval_total_wall_ms);
         let mut on_wave = |tel: &jope_service::discover::r#loop::carbon::CarbonWaveTelemetry| {
             // Keep `status.json` in `Running` until `finalize_and_persist_progress` has durably
             // sealed `sealed_checkpoint.enc` + `sealed_champion.enc` and scored outer holdout!
@@ -744,11 +774,9 @@ impl CarbonEngineWorker {
                 state: CarbonRunStateWire::Running,
                 execution_mode: mode_wire,
                 eval_memory_mb: decision.eval_class.memory_mb() as u32,
-                eval_shards: if use_hybrid {
-                    decision.shards_per_wave.max(2)
-                } else {
-                    1
-                },
+                eval_shards: effective_hybrid_shards,
+                eval_invocations: DecimalU64(eval_inv_wave.load(Ordering::Relaxed)),
+                eval_total_wall_ms: DecimalU64(eval_ms_wave.load(Ordering::Relaxed)),
                 wave_index: tel.wave_index,
                 waves_target: max_waves,
                 candidates_evaluated: DecimalU64(tel.candidates_evaluated),
@@ -774,7 +802,7 @@ impl CarbonEngineWorker {
         };
 
         let workers = if use_hybrid {
-            decision.shards_per_wave.max(2) as usize
+            effective_hybrid_shards as usize
         } else {
             2usize
         };
@@ -787,7 +815,7 @@ impl CarbonEngineWorker {
             live_workers: workers,
             max_waves_this_session: max_waves,
         };
-        if use_hybrid {
+        let outcome = if use_hybrid {
             let eval_invoker = Arc::clone(
                 self.eval_invoker
                     .as_ref()
@@ -810,6 +838,11 @@ impl CarbonEngineWorker {
             } else {
                 None
             };
+            let fallback_fit_bytes = Arc::new(Zeroizing::new(fit_bytes.to_vec()));
+            let fallback_fit_pt_sha = fit_pt_sha.to_owned();
+            let fallback_scratch_dir = scratch_dir.to_path_buf();
+            let eval_inv_exec = Arc::clone(&eval_invocations);
+            let eval_ms_exec = Arc::clone(&eval_total_wall_ms);
             let remote_exec = CarbonRemoteEvalExecutor::new(move |req, fit_champ| {
                 let decryption_grant = grant_template.as_ref().map(|(tid, sub_b64, pt_sha)| {
                     CarbonEvalDecryptionGrant {
@@ -819,17 +852,37 @@ impl CarbonEngineWorker {
                         exp_epoch_secs: (now_epoch_ms() / 1_000).saturating_add(60),
                     }
                 });
-                eval_invoker
-                    .invoke_eval(&CarbonEvalWireRequest {
-                        fit_jmat_sha256: cas_fit_sha.clone(),
-                        request: req.clone(),
-                        fit_champion: fit_champ,
-                        decryption_grant,
-                    })
-                    .map_err(|e| anyhow::anyhow!("{e}"))
+                let shard_t0 = Instant::now();
+                let res = eval_invoker.invoke_eval(&CarbonEvalWireRequest {
+                    fit_jmat_sha256: cas_fit_sha.clone(),
+                    request: req.clone(),
+                    fit_champion: fit_champ,
+                    decryption_grant,
+                });
+                match res {
+                    Ok(out) => {
+                        let billed_ms = (shard_t0.elapsed().as_millis() as u64).max(1);
+                        eval_inv_exec.fetch_add(1, Ordering::Relaxed);
+                        eval_ms_exec.fetch_add(billed_ms, Ordering::Relaxed);
+                        Ok(out)
+                    }
+                    Err(err) if is_retriable_eval_capacity_error(&err) => {
+                        // Zero-drop saturation safety valve: if regional `carbon-eval` concurrency
+                        // saturates under multi-hundred-user bursts, evaluate this candidate batch
+                        // directly inside `carbon-engine`'s 3,008 MB Graviton2 container!
+                        evaluate_carbon_eval_shard(
+                            fallback_fit_bytes.as_slice(),
+                            &fallback_fit_pt_sha,
+                            &fallback_scratch_dir,
+                            req,
+                            fit_champ,
+                        )
+                    }
+                    Err(err) => Err(anyhow::anyhow!("{err}")),
+                }
             });
             run_carbon_waves(session_opts, &remote_exec, &should_pause, &mut on_wave)
-                .map_err(|e| format!("hybrid wave execution failed: {e}"))
+                .map_err(|e| format!("hybrid wave execution failed: {e}"))?
         } else {
             let inproc_exec = CarbonInProcessExecutor::open_fit(
                 fit_bytes.to_vec(),
@@ -838,8 +891,13 @@ impl CarbonEngineWorker {
             )
             .map_err(|e| format!("open fit in-process failed: {e}"))?;
             run_carbon_waves(session_opts, &inproc_exec, &should_pause, &mut on_wave)
-                .map_err(|e| format!("solo wave execution failed: {e}"))
-        }
+                .map_err(|e| format!("solo wave execution failed: {e}"))?
+        };
+        Ok((
+            outcome,
+            eval_invocations.load(Ordering::Relaxed),
+            eval_total_wall_ms.load(Ordering::Relaxed),
+        ))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -856,6 +914,8 @@ impl CarbonEngineWorker {
         outcome: CarbonWaveRunOutcome,
         waves_target: u32,
         elapsed_ms: u64,
+        eval_invocations: u64,
+        eval_total_wall_ms: u64,
     ) -> Result<CarbonPublicWaveProgress, String> {
         let sealed_ckp = SealedCheckpointEnvelope::seal_with_domain(
             &self.seal_key,
@@ -920,10 +980,12 @@ impl CarbonEngineWorker {
             },
             eval_memory_mb: decision.eval_class.memory_mb() as u32,
             eval_shards: if use_hybrid {
-                decision.shards_per_wave.max(2)
+                resolve_effective_eval_shards(decision.shards_per_wave)
             } else {
-                1
+                0
             },
+            eval_invocations: DecimalU64(eval_invocations),
+            eval_total_wall_ms: DecimalU64(eval_total_wall_ms),
             wave_index: outcome.wave_index,
             waves_target,
             candidates_evaluated: DecimalU64(outcome.candidates_evaluated),
@@ -980,4 +1042,27 @@ impl CarbonEngineInvoker for CarbonEngineWorker {
         let _ = self.execute_command(command, None)?;
         Ok(())
     }
+}
+
+fn resolve_effective_eval_shards(planned: u32) -> u32 {
+    let base = planned.max(2);
+    match std::env::var("CARBON_MAX_EVAL_SHARDS") {
+        Ok(raw) => match raw.trim().parse::<u32>() {
+            Ok(cap) if (1..=16).contains(&cap) => base.min(cap),
+            _ => base,
+        },
+        Err(_) => base,
+    }
+}
+
+fn is_retriable_eval_capacity_error(err: &str) -> bool {
+    let lc = err.to_ascii_lowercase();
+    lc.contains("http 429")
+        || lc.contains("http 502")
+        || lc.contains("http 503")
+        || lc.contains("http 504")
+        || lc.contains("toomanyrequests")
+        || lc.contains("rate exceeded")
+        || lc.contains("serviceexception")
+        || lc.contains("aws lambda eval invoke")
 }
