@@ -14,14 +14,13 @@ use jope_service::{
     visual_trace::{capture, validate_affine},
 };
 use serde_json::json;
-use sha2::{Digest, Sha256};
 use std::{fs, path::Path, time::Instant};
 
 const ROWS: usize = 96;
 const FEATURES: usize = 4;
 
 fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 fn table(case: usize) -> (Vec<f32>, Vec<f32>) {

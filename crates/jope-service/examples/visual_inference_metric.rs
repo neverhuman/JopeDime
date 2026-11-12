@@ -14,7 +14,6 @@ use jope_service::{
 use jope_telemetry::hooks::io::{rates, RateCounters};
 use serde::Deserialize;
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
@@ -95,7 +94,7 @@ struct Pending {
 }
 
 fn sha(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 fn read_bounded(path: &Path, maximum: u64) -> Result<Vec<u8>> {
     let meta = fs::symlink_metadata(path)?;

@@ -8,7 +8,6 @@ use jope_runtime::{
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
@@ -36,7 +35,7 @@ struct Split {
 }
 
 fn sha(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 fn read_bounded(path: &Path, maximum: u64) -> Result<Vec<u8>> {
