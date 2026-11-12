@@ -10,7 +10,6 @@ use super::{capture::CaptureContext, RecordEvidence};
 use crate::discover::r#loop::Plan;
 use anyhow::{ensure, Context, Result};
 use serde::Serialize;
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, sync::Arc};
 
 /// Opaque job admission produced only after trusted receipt verification.
@@ -132,7 +131,7 @@ fn plan_sha256(plan: &Plan) -> Result<String> {
     struct PlanPin<'a>(&'a Plan);
 
     let bytes = serde_json::to_vec(&PlanPin(plan)).context("serialize accepted Plan")?;
-    Ok(format!("{:x}", Sha256::digest(bytes)))
+    Ok(crate::digest::sha256_hex(&bytes))
 }
 
 #[cfg(test)]

@@ -8,7 +8,6 @@ use crate::{
     worker::{Request, Response},
 };
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     io::Cursor,
@@ -294,7 +293,7 @@ fn validate_od13_provider_indices(
 }
 
 pub(crate) fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::digest::sha256_hex(bytes)
 }
 
 #[cfg(test)]

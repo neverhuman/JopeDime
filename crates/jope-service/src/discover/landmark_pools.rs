@@ -199,12 +199,11 @@ mod tests {
     fn matches_res07_landmark_preferred_pool_golden_inputs() {
         use candle_core_0_11_0::{safetensors::load_buffer, Device};
         use serde_json::Value;
-        use sha2::{Digest, Sha256};
         use std::{collections::HashSet, env, fs, path::PathBuf};
 
         let root = PathBuf::from(env::var_os("JOPE_GOLDEN_DIR").expect("set JOPE_GOLDEN_DIR"));
         let index_bytes = fs::read(root.join("index.json")).expect("read RES-07 index.json");
-        let actual_index_sha = format!("{:x}", Sha256::digest(&index_bytes));
+        let actual_index_sha = crate::digest::sha256_hex(&index_bytes);
         assert_eq!(
             actual_index_sha,
             env::var("JOPE_GOLDEN_INDEX_SHA256").expect("set JOPE_GOLDEN_INDEX_SHA256"),
@@ -217,7 +216,7 @@ mod tests {
         assert_eq!(pools_pin["bytes"].as_u64(), Some(pools_bytes.len() as u64));
         assert_eq!(
             pools_pin["sha256"].as_str(),
-            Some(format!("{:x}", Sha256::digest(&pools_bytes)).as_str())
+            Some(crate::digest::sha256_hex(&pools_bytes).as_str())
         );
         let pools: Vec<Value> =
             serde_json::from_slice(&pools_bytes).expect("parse preferred pools");
@@ -253,7 +252,7 @@ mod tests {
             );
             assert_eq!(
                 spec["sha256"].as_str(),
-                Some(format!("{:x}", Sha256::digest(&bytes)).as_str()),
+                Some(crate::digest::sha256_hex(&bytes).as_str()),
                 "{relative} hash differs from the pinned index"
             );
 
