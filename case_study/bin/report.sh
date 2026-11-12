@@ -13,7 +13,7 @@
 # Read-only on the evidence; jq and gawk only.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd); top=$(dirname "$here")
-out_root=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}
+out_root=${JOPE_CASE_OUT:-$("$here/absolute-home.sh")/jope-data/case_study}
 want=${1:-}
 echo "| Case | Primary resource | Arm A: accuracy / resource | Arm C: accuracy / resource | A vs C resource | A vs C accuracy | Arm B: accuracy / resource | Refused (A) | Runs A/B/C/D | Mean evaluations A/B/C/D |"
 echo "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"

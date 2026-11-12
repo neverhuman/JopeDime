@@ -7,7 +7,7 @@
 # updated, never removed (rsync without --delete). Each run.json names the host that produced it.
 # Default hosts: xbabe1 xbabe3 xbabe4.
 set -euo pipefail
-dest=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}
+dest=${JOPE_CASE_OUT:-$("$(cd "$(dirname "$0")" && pwd)/absolute-home.sh")/jope-data/case_study}
 hosts=("$@"); [ ${#hosts[@]} -gt 0 ] || hosts=(xbabe1 xbabe3 xbabe4)
 mkdir -p "$dest"
 for h in "${hosts[@]}"; do
