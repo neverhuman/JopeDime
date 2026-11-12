@@ -1,10 +1,7 @@
 use super::*;
 
 pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
-    Sha256::digest(bytes)
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect()
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 pub(crate) fn prediction_bytes(predictions: &[f64]) -> Vec<u8> {

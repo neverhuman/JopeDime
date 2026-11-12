@@ -30,9 +30,7 @@ fn recount(path: &Path) -> (u64, Option<i64>, Option<i64>) {
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(bytes);
-    hex::encode(hasher.finalize())
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 /// Scalar fields worth lifting out of a row into the index. Everything else

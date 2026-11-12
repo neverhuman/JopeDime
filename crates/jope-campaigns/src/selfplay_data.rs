@@ -69,7 +69,7 @@ const IDENTITY_RECIPE_KEYS: [&str; 9] = [
 ];
 
 fn sha256_hex(bytes: impl AsRef<[u8]>) -> String {
-    hex::encode(Sha256::digest(bytes.as_ref()))
+    crate::selfplay_runtime::sha256_bytes(bytes.as_ref())
 }
 
 fn is_sha256(value: &str) -> bool {

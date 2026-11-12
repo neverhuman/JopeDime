@@ -17,9 +17,7 @@ pub(crate) struct PortfolioGenome {
 }
 
 pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(bytes);
-    hex::encode(hasher.finalize())
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 /// Baseline arm: the cheapest sane program for each task. Without it a lift

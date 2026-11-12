@@ -164,9 +164,7 @@ fn now_ms() -> u64 {
 // ---------------------------------------------------------------------------
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(bytes);
-    hex::encode(hasher.finalize())
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 /// Stream a file through SHA-256. The database snapshot is ~70 MB, so this
