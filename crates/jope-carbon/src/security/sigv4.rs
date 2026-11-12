@@ -80,8 +80,10 @@ pub(crate) fn resolve_aws_cli_binary() -> PathBuf {
             return p;
         }
     }
-    if let Some(home) = std::env::var_os("HOME") {
-        let candidate = PathBuf::from(home).join(".local").join("bin").join("aws");
+    if let Some(candidate) = crate::home_path::absolute_home_path(
+        std::env::var_os("HOME").as_deref(),
+        &[".local", "bin", "aws"],
+    ) {
         if candidate.is_file() {
             return candidate;
         }

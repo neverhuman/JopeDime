@@ -15,6 +15,7 @@ pub mod cells;
 #[cfg(feature = "edge")]
 pub mod cli;
 pub mod error;
+mod home_path;
 pub mod modes;
 pub mod role;
 pub mod security;
