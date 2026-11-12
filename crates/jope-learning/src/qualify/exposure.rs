@@ -71,6 +71,5 @@ pub(crate) fn is_hex64(value: &str) -> bool {
 }
 
 pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
-    use sha2::{Digest, Sha256};
-    hex::encode(Sha256::digest(bytes))
+    crate::canon::sha256_hex(bytes)
 }

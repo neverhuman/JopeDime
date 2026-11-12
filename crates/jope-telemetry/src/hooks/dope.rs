@@ -36,7 +36,7 @@ pub const DOPE_NORMALIZER_BUFFERS: [&str; 11] = [
 ];
 
 fn hex(digest: impl AsRef<[u8]>) -> String {
-    digest.as_ref().iter().map(|b| format!("{b:02x}")).collect()
+    crate::encode_hex(digest.as_ref())
 }
 
 /// Python's `str(list(shape))`: `[]`, `[3]`, `[3, 4]`.

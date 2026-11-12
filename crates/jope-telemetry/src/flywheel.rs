@@ -237,7 +237,7 @@ pub struct Contrast {
 }
 
 fn hex(b: &[u8]) -> String {
-    b.iter().map(|x| format!("{x:02x}")).collect()
+    crate::encode_hex(b)
 }
 
 #[cfg(test)]

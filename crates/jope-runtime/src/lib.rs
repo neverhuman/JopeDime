@@ -43,10 +43,29 @@ pub use error::{Failure, FailureKind};
 /// Version of the runtime contract a fitted file and a receipt name.
 pub const RUNTIME_ABI: &str = "jope.appliance-runtime/v1";
 
+/// Lowercase hex of raw bytes. This does not hash.
+pub fn encode_hex(bytes: &[u8]) -> String {
+    hex::encode(bytes)
+}
+
 /// Lower-case hex sha256.
 pub fn sha256_hex(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
-    hex::encode(Sha256::digest(bytes))
+    encode_hex(&Sha256::digest(bytes))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{encode_hex, sha256_hex};
+
+    #[test]
+    fn encode_hex_does_not_hash_and_sha256_matches_abc() {
+        assert_eq!(encode_hex(&[0x0a, 0xff]), "0aff");
+        assert_eq!(
+            sha256_hex(b"abc"),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+    }
 }
 
 pub mod strict_json;

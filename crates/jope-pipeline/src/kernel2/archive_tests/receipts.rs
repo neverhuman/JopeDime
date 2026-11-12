@@ -91,7 +91,7 @@ fn the_archive_round_trips_and_verify_refuses_every_tampered_archive_or_record()
     restore();
 
     let hex = |bits: u64| format!("{bits:016x}");
-    let key_hex = |key: &[u8; 32]| key.iter().map(|b| format!("{b:02x}")).collect::<String>();
+    let key_hex = |key: &[u8; 32]| jope_runtime::encode_hex(key);
     let members = back.members();
     let last = members.last().unwrap();
     let mut edits: Vec<(&str, String)> = Vec::new();
