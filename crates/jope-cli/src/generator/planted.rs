@@ -7,7 +7,6 @@
 use anyhow::{ensure, Context, Result};
 use feat_math::{genome::GenomeIr, model, Rows};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::time::Instant;
 
 pub const GENERATOR_ID: &str = "jopedime.planted-linear.v1";
@@ -298,5 +297,5 @@ impl SplitMix64 {
 }
 
 fn sha256(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }

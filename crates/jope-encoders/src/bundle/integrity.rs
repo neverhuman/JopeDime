@@ -294,8 +294,5 @@ pub(super) fn validate_relative_path(path: &str) -> Result<()> {
 }
 
 pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
-    Sha256::digest(bytes)
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect()
+    jope_runtime::sha256_hex(bytes)
 }

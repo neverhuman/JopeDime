@@ -196,6 +196,5 @@ pub fn serialize<T: Serialize>(value: &T) -> anyhow::Result<Vec<u8>> {
 }
 
 pub fn digest(bytes: &[u8]) -> String {
-    use sha2::{Digest, Sha256};
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }

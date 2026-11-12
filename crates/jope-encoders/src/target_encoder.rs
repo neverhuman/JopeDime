@@ -425,43 +425,30 @@ impl FusedTargetEncoder {
 #[cfg(test)]
 mod frozen_window_tests {
     use super::*;
-    use sha2::{Digest, Sha256};
     #[test]
     fn native_sampling_windows_match_retained_export_recipes() {
         // Metadata-only recipes from target-export-cuda-v1/sampling.json,
         // SHA256 dec8e830341867516ea232345197aa364818b8166a2ba9aeed91ee20d9cf55bf.
         let windows = FrozenTargetWindows::native(7, TargetTask::Regression, 17).unwrap();
-        let actual = format!(
-            "{:x}",
-            Sha256::digest(serde_json::to_vec(&windows).unwrap())
-        );
+        let actual = jope_runtime::sha256_hex(&serde_json::to_vec(&windows).unwrap());
         assert_eq!(
             actual,
             "a04f9cee42f83b922e2c2179375ad8a1e922486f19cf1e992a591525c6313298"
         );
         let windows = FrozenTargetWindows::native(32, TargetTask::Regression, 17).unwrap();
-        let actual = format!(
-            "{:x}",
-            Sha256::digest(serde_json::to_vec(&windows).unwrap())
-        );
+        let actual = jope_runtime::sha256_hex(&serde_json::to_vec(&windows).unwrap());
         assert_eq!(
             actual,
             "b540d08f3681f445e67ec19319646cac81bb5e995a793b7d15cf076aed9ccff2"
         );
         let windows = FrozenTargetWindows::native(64, TargetTask::Regression, 17).unwrap();
-        let actual = format!(
-            "{:x}",
-            Sha256::digest(serde_json::to_vec(&windows).unwrap())
-        );
+        let actual = jope_runtime::sha256_hex(&serde_json::to_vec(&windows).unwrap());
         assert_eq!(
             actual,
             "bd0e22a3284559a02687d50e4427d42a6b9915d1acd67843484c2775a519508d"
         );
         let windows = FrozenTargetWindows::native(7, TargetTask::Binary, 17).unwrap();
-        let actual = format!(
-            "{:x}",
-            Sha256::digest(serde_json::to_vec(&windows).unwrap())
-        );
+        let actual = jope_runtime::sha256_hex(&serde_json::to_vec(&windows).unwrap());
         assert_eq!(
             actual,
             "a63d8894f1317c85a2b153bc37ad7386b1f2711e623dc68cb9fec0be21f2f71c"

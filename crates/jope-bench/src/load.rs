@@ -8,7 +8,6 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, ensure, Context, Result};
 use feat_math::Rows;
 use jope_datasets::catalog::CatalogRow;
-use sha2::{Digest, Sha256};
 
 use crate::task::Task;
 
@@ -49,7 +48,7 @@ impl Dataset {
 
 /// Lower-case hex SHA-256.
 pub fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 /// Parse a headerless numeric CSV, target last. Every cell must be a finite `f64`; every row

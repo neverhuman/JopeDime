@@ -7,7 +7,6 @@ use anyhow::{bail, Context, Result};
 use feat_math::transpile::{emit, emit_cpp17, emit_javascript, EmitOptions};
 use feat_math::{emit_fitted_cpp17, fit_legacy_numeric_bound, r2, GenomeIr, Model, RawTable};
 use serde::Serialize;
-use sha2::{Digest, Sha256};
 use std::{fs, path::Path};
 
 mod data;
