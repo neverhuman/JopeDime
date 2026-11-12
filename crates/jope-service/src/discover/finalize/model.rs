@@ -22,7 +22,7 @@ pub(super) fn ids(part: &Partition) -> Vec<AuditRowId> {
     part.rows.clone()
 }
 pub(super) fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::digest::sha256_hex(bytes)
 }
 pub(super) fn is_digest(value: &str) -> bool {
     value.len() == 64

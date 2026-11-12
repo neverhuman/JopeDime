@@ -30,7 +30,6 @@ use jope_api::{
     *,
 };
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{
     num::NonZeroU32,
     path::PathBuf,
@@ -407,7 +406,7 @@ impl SearchSpace for CpuRunSpace {
 }
 
 fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::digest::sha256_hex(bytes)
 }
 
 fn parse_digest(value: &str) -> Option<[u8; 32]> {

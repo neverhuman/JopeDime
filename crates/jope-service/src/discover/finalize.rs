@@ -36,7 +36,6 @@ use jope_runtime::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, io::Read, path::PathBuf, sync::Arc};
 
 const HANDOFF_MAX: u64 = 16 * 1024 * 1024;

@@ -11,6 +11,7 @@ pub mod config;
 pub mod daemon_file;
 /// Dataset registration, metadata, and loading support.
 pub mod dataset;
+mod digest;
 /// Dataset discovery and candidate proposal workflows.
 pub mod discover;
 /// Engine lifecycle, locking, and in-process service entry points.
