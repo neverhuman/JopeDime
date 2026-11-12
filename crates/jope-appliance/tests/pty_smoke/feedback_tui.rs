@@ -47,7 +47,12 @@ fn feedback_from_the_terminal_reaches_the_workspace_signed_out() {
         t.wait_for_text(s, Duration::from_secs(secs))
             .unwrap_or_else(|e| panic!("{e}"))
     };
-    wait(&mut terminal, "engine background", 15);
+    // Outlast client discovery: the child prints this only after the engine is ready.
+    wait(
+        &mut terminal,
+        "engine background",
+        (jope_client::discover::STARTUP_TIMEOUT + Duration::from_secs(15)).as_secs(),
+    );
 
     // An empty command explains itself and sends nothing.
     terminal.type_text("/feedback").unwrap();
