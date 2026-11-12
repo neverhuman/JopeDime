@@ -64,7 +64,7 @@ const STATE_TABLES: &[&str] = &[
 ];
 
 fn hash(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::build_receipt::sha256_hex(bytes)
 }
 fn encoded(value: &impl Serialize) -> Result<Vec<u8>> {
     Ok(serde_json::to_vec(value)?)

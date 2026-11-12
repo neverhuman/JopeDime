@@ -136,7 +136,7 @@ pub fn verify_binding(bytes: &[u8], binding: &Binding) -> Result<()> {
     ensure!(
         binding.schema == SCHEMA
             && bytes.len() as u64 >= binding.bytes
-            && hex::encode(Sha256::digest(&bytes[..binding.bytes as usize])) == binding.sha256,
+            && crate::build_receipt::sha256_hex(&bytes[..binding.bytes as usize]) == binding.sha256,
         "consumption journal no longer contains its committed prefix"
     );
     Ok(())
@@ -237,7 +237,7 @@ pub fn recover_published_ack(
     let binding = Binding {
         schema: SCHEMA.into(),
         bytes: updated.len() as u64,
-        sha256: hex::encode(Sha256::digest(&updated)),
+        sha256: crate::build_receipt::sha256_hex(&updated),
     };
     Ok(PublicationAckRecovery {
         binding,

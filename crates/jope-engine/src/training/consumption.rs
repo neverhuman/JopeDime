@@ -28,7 +28,6 @@ use super::objective::Supervision;
 use super::{mix, objective, partition};
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,

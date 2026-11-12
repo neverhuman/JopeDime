@@ -10,7 +10,6 @@ use super::{
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeMap,
     fs::{self, File, OpenOptions},

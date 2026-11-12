@@ -10,7 +10,7 @@ use std::{
 pub const SEED: u64 = 20260907;
 pub const ROW_LIMIT: usize = 50_000;
 pub fn hash(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::build_receipt::sha256_hex(bytes)
 }
 pub fn file_hash(path: &Path) -> Result<String> {
     if let Some(result) = crate::native_input_cache::hash_if_bound(path) {

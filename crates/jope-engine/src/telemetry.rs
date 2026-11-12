@@ -198,7 +198,6 @@ fn executable_observation(pid: u32) -> Result<serde_json::Value> {
 }
 
 fn status_binding(initial: &serde_json::Value) -> Result<serde_json::Value> {
-    use sha2::{Digest, Sha256};
     type CachedExecutable = (
         crate::eval_registry::ProcessIdentity,
         serde_json::Value,
@@ -229,9 +228,9 @@ fn status_binding(initial: &serde_json::Value) -> Result<serde_json::Value> {
             digest
         }
     };
-    let generation = hex::encode(Sha256::digest(serde_json::to_vec(&serde_json::json!({
+    let generation = crate::build_receipt::sha256_hex(&serde_json::to_vec(&serde_json::json!({
         "process":process,"executable":executable,"initial":initial,
-        "created_monotonic_ns":crate::fit_boundary::deadline_after(Duration::ZERO)?}))?));
+        "created_monotonic_ns":crate::fit_boundary::deadline_after(Duration::ZERO)?}))?);
     Ok(
         serde_json::json!({"schema":"parallel.status_binding.v1","process":process,
         "executable":executable,"executable_sha256":executable_sha256,

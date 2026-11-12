@@ -5,7 +5,6 @@
 
 use anyhow::{Context, Result};
 use serde_json::{json, Map, Value};
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -66,7 +65,7 @@ impl<'a> Default for ExportOptions<'a> {
 }
 
 fn sha(text: &str) -> String {
-    hex::encode(Sha256::digest(text.as_bytes()))
+    crate::build_receipt::sha256_hex(text.as_bytes())
 }
 
 fn ops_of(genome: &str) -> Vec<String> {

@@ -15,7 +15,6 @@
 use anyhow::{bail, ensure, Context, Result};
 use serde::Deserialize;
 use serde_json::{Map, Value};
-use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 
 pub const BASE_VOCABULARY: &str = "assets/grammar/featmath.json";
@@ -98,7 +97,7 @@ impl ExecutableOps {
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::build_receipt::sha256_hex(bytes)
 }
 
 /// Rebuild every object with sorted keys so the output bytes do not depend
