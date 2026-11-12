@@ -54,7 +54,7 @@ impl RunService {
             return Err(invalid("Dataset exceeds configured maximum bytes."));
         }
         let fit_estimate =
-            ((dataset.rows as f64) * (1.0 - spec.split.holdout_fraction)).floor() as u64;
+            super::q1_fit_rows::fit_row_count(dataset.rows, spec.split.holdout_fraction);
         if fit_estimate > self.config.limits.rung1_max_rows.value {
             return Err(invalid("FIT exceeds limits.rung1_max_rows."));
         }
@@ -140,7 +140,8 @@ impl RunService {
             .map(|row| selected.iter().map(|&i| row[i].clone()).collect())
             .collect();
         let fit_count =
-            ((table.rows.len() as f64) * (1.0 - spec.split.holdout_fraction)).floor() as usize;
+            super::q1_fit_rows::fit_row_count(table.rows.len() as u64, spec.split.holdout_fraction)
+                as usize;
         let effort = SearchEffort::from_name(match spec.effort {
             Effort::Fast => "fast",
             Effort::Medium => "medium",
