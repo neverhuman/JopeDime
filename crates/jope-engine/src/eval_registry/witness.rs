@@ -43,7 +43,7 @@ pub use store::WitnessStore;
 const ZERO: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 const MAX_FRAME: usize = 4 * 1024 * 1024;
 fn sha(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::build_receipt::sha256_hex(bytes)
 }
 fn bytes(value: &impl Serialize) -> Result<Vec<u8>> {
     Ok(serde_json::to_vec(value)?)

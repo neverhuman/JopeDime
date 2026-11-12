@@ -2,7 +2,6 @@
 use anyhow::{ensure, Result};
 use ed25519_dalek::{Signature, VerifyingKey};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeSet,
     fs,
@@ -14,7 +13,7 @@ use std::{
 const MAX_BYTES: usize = 1024 * 1024;
 pub(crate) const SIGNATURE_DOMAIN: &[u8] = b"jope.smartcluster_fit_grant.signature.v1\0";
 pub(crate) fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::build_receipt::sha256_hex(bytes)
 }
 pub(crate) fn valid_hash(s: &str) -> bool {
     s.len() == 64

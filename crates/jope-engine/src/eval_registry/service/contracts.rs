@@ -1,7 +1,7 @@
 const MAX_FRAME: usize = 65536;
 const SEALS: i32 = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
 fn sha(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::build_receipt::sha256_hex(bytes)
 }
 fn lock<T>(value: &Mutex<T>) -> Result<std::sync::MutexGuard<'_, T>> {
     value

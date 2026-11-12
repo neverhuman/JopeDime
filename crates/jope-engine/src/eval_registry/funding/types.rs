@@ -14,7 +14,7 @@ pub const MAX_AUTHORIZATION_BYTES: usize = 128 * 1024;
 pub const MAX_APPROVED_TASKS: usize = 1024;
 
 pub fn digest(value: &impl Serialize) -> Result<String> {
-    Ok(hex::encode(Sha256::digest(serde_json::to_vec(value)?)))
+    Ok(crate::build_receipt::sha256_hex(&serde_json::to_vec(value)?))
 }
 
 pub(crate) fn hash_valid(value: &str) -> bool {

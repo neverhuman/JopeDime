@@ -2,7 +2,6 @@
 use super::funding::FundingTrust;
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::{
     fs::{self, OpenOptions},
     io::Read,
@@ -108,7 +107,7 @@ impl InstalledFunding {
         );
         Ok(Self {
             path: path.into(),
-            sha256: hex::encode(Sha256::digest(&bytes)),
+            sha256: crate::build_receipt::sha256_hex(&bytes),
             config,
             #[cfg(test)]
             private_fixture: false,
@@ -131,7 +130,7 @@ impl InstalledFunding {
         );
         Ok(Self {
             path: path.into(),
-            sha256: hex::encode(Sha256::digest(&bytes)),
+            sha256: crate::build_receipt::sha256_hex(&bytes),
             config,
             private_fixture: true,
         })
@@ -150,7 +149,7 @@ impl InstalledFunding {
         #[cfg(not(test))]
         let bytes = protected_read(&self.path)?;
         ensure!(
-            hex::encode(Sha256::digest(bytes)) == self.sha256,
+            crate::build_receipt::sha256_hex(&bytes) == self.sha256,
             "installed funding configuration replaced; reconcile before admission"
         );
         Ok(&self.config)
@@ -167,7 +166,7 @@ impl InstalledFunding {
         );
         let bytes = fs::read("/proc/self/exe").context("funding client executable unavailable")?;
         ensure!(
-            hex::encode(Sha256::digest(bytes)) == config.client_executable_sha256,
+            crate::build_receipt::sha256_hex(&bytes) == config.client_executable_sha256,
             "funding client executable digest differs from installation"
         );
         Ok(())

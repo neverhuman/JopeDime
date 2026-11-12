@@ -5,7 +5,6 @@
 //! not introduce a second configuration authority.
 
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, path::Path};
 
 pub const ENGINE: &str = "prime";
@@ -226,7 +225,7 @@ pub fn registry_document(path: &Path, max_width: i64) -> Result<Value, String> {
 
 pub fn registry_snapshot_hash(path: &Path) -> Result<String, String> {
     let bytes = fs::read(path).map_err(|e| e.to_string())?;
-    Ok(format!("{:x}", Sha256::digest(bytes)))
+    Ok(crate::build_receipt::sha256_hex(&bytes))
 }
 
 pub fn load_registry_grammar(path: &Path, max_width: i64) -> Result<GrammarSpec, String> {

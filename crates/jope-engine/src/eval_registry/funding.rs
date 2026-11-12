@@ -4,7 +4,6 @@ use anyhow::{ensure, Context, Result};
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 
 use super::ProcessIdentity;
 

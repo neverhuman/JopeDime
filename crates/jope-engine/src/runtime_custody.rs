@@ -48,7 +48,7 @@ impl FileIdentity {
 static IMAGE_HASHES: OnceLock<Mutex<BTreeMap<FileIdentity, String>>> = OnceLock::new();
 
 fn hash(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::build_receipt::sha256_hex(bytes)
 }
 
 fn bounded_read(path: &Path) -> Result<Vec<u8>> {
