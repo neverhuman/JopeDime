@@ -3,6 +3,7 @@ use super::{
     TOKEN_WIDTH,
 };
 use safetensors::{Dtype, SafeTensors};
+use sha2::{Digest, Sha256};
 use std::{env, fs, path::Path};
 
 struct FixtureProjector;
@@ -64,7 +65,7 @@ fn indexed_file(root: &Path, index: &serde_json::Value, name: &str) -> Vec<u8> {
         Some(bytes.len() as u64),
         "byte count for `{name}`"
     );
-    let digest = crate::digest::sha256_hex(&bytes);
+    let digest = format!("{:x}", Sha256::digest(&bytes));
     assert_eq!(
         metadata["sha256"].as_str(),
         Some(digest.as_str()),
@@ -164,7 +165,7 @@ fn res07_stage1b_reference_packet_has_50_hash_pinned_contexts() {
     let index_bytes = fs::read(root.join("index.json"))
         .expect("RES-07 index.json is required for Stage-1B fixture preflight");
     assert_eq!(
-        crate::digest::sha256_hex(&index_bytes),
+        format!("{:x}", Sha256::digest(&index_bytes)),
         INDEX_SHA256,
         "unexpected RES-07 fixture index"
     );
@@ -311,7 +312,7 @@ fn res07_stage1b_tokens_and_mask_match_reference_on_50_contexts() {
     let index_bytes = fs::read(root.join("index.json"))
         .expect("qualified RES-07 index.json is required for Stage-1B parity");
     assert_eq!(
-        crate::digest::sha256_hex(&index_bytes),
+        format!("{:x}", Sha256::digest(&index_bytes)),
         INDEX_SHA256,
         "unexpected RES-07 fixture index"
     );
