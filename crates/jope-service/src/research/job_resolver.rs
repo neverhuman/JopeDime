@@ -120,10 +120,7 @@ fn validate_job_id(value: &str) -> Result<()> {
 }
 
 fn is_sha256(value: &str) -> bool {
-    value.len() == 64
-        && value
-            .bytes()
-            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    crate::digest::is_sha256_hex(value)
 }
 
 fn plan_sha256(plan: &Plan) -> Result<String> {

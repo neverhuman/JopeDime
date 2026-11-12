@@ -433,10 +433,7 @@ fn safe_entry(path: &str) -> bool {
 }
 
 fn is_sha256(value: &str) -> bool {
-    value.len() == 64
-        && value
-            .bytes()
-            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    crate::digest::is_sha256_hex(value)
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {

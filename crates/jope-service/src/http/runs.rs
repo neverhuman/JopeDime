@@ -410,11 +410,7 @@ fn hash(bytes: &[u8]) -> String {
 }
 
 fn parse_digest(value: &str) -> Option<[u8; 32]> {
-    if value.len() != 64
-        || !value
-            .bytes()
-            .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
-    {
+    if !crate::digest::is_sha256_hex(value) {
         return None;
     }
     let mut bytes = [0; 32];
