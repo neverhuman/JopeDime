@@ -5,7 +5,10 @@ use std::{
     net::TcpListener,
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    sync::atomic::{AtomicU64, Ordering},
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Condvar, Mutex, MutexGuard,
+    },
     thread,
     time::{Duration, Instant},
 };
@@ -602,8 +605,55 @@ fn a_matching_engine_version_is_reused() {
     let _ = fs::remove_file(home.0.join("daemon.json"));
 }
 
+/// One notice slot for this process. Restart tests hold it across publish and
+/// take so a parallel test cannot consume the line.
+fn notice_slot() -> &'static Mutex<()> {
+    static SLOT: Mutex<()> = Mutex::new(());
+    &SLOT
+}
+
+fn hold_notice_slot() -> MutexGuard<'static, ()> {
+    notice_slot()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+#[test]
+fn parallel_restart_notices_stay_with_the_caller() {
+    let _slot = hold_notice_slot();
+    super::set_notice("first".into());
+    let seen = std::sync::Arc::new((Mutex::new(false), Condvar::new()));
+    let seen_worker = std::sync::Arc::clone(&seen);
+    let worker = thread::spawn(move || {
+        while notice_slot().try_lock().is_ok() {
+            thread::yield_now();
+        }
+        {
+            let (flag, cv) = &*seen_worker;
+            *flag.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = true;
+            cv.notify_one();
+        }
+        let _slot = hold_notice_slot();
+        super::set_notice("second".into());
+        take_notice()
+    });
+    {
+        let (flag, cv) = &*seen;
+        let mut ready = flag.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        while !*ready {
+            ready = cv
+                .wait(ready)
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+        }
+    }
+    assert_eq!(take_notice().as_deref(), Some("first"));
+    drop(_slot);
+    assert_eq!(worker.join().unwrap().as_deref(), Some("second"));
+}
+
 #[test]
 fn an_idle_engine_of_another_version_is_stopped_and_replaced() {
+    let _notice = hold_notice_slot();
     let home = Home::new();
     let (url, seen) = engine(home.0.clone(), Some("completed"));
     write_versioned(&home.0, &url, "1.0.1");
@@ -694,6 +744,7 @@ fn an_engine_of_the_same_build_is_reused() {
 /// #2141: rc.1 and rc.2 both report 1.0.0; the build (source commit) tells them apart.
 #[test]
 fn an_idle_engine_of_another_build_with_the_same_version_is_replaced() {
+    let _notice = hold_notice_slot();
     for (theirs, shown) in [
         (Some(BUILD_B), "1.0.0 (build 2ab7f55)"),
         // A descriptor from an engine that predates build identities.
