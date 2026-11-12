@@ -130,6 +130,82 @@ fn jopedime_home_uses_environment_and_os_data_directories() {
 }
 
 #[test]
+fn a_relative_home_or_local_app_data_does_not_choose_the_data_directory() {
+    // `JOPEDIME_HOME` stays verbatim, including a relative value.
+    assert_eq!(
+        default_jopedime_home(
+            "linux",
+            Some(std::ffi::OsStr::new("relative/override")),
+            Some(std::ffi::OsStr::new("/xdg/data")),
+            Some(std::ffi::OsStr::new("/users/alice")),
+            None,
+        ),
+        PathBuf::from("relative/override")
+    );
+    // A relative XDG data home is already ignored.
+    assert_eq!(
+        default_jopedime_home(
+            "linux",
+            None,
+            Some(std::ffi::OsStr::new("relative/xdg")),
+            Some(std::ffi::OsStr::new("/users/alice")),
+            None,
+        ),
+        PathBuf::from("/users/alice/.local/share/jopedime")
+    );
+    assert_eq!(
+        default_jopedime_home(
+            "linux",
+            None,
+            None,
+            Some(std::ffi::OsStr::new("relative/home")),
+            None,
+        ),
+        PathBuf::from(".").join(".local/share/jopedime")
+    );
+    assert_eq!(
+        default_jopedime_home(
+            "macos",
+            None,
+            None,
+            Some(std::ffi::OsStr::new("relative/home")),
+            None,
+        ),
+        PathBuf::from(".").join("Library/Application Support/jopedime")
+    );
+    assert_eq!(
+        default_jopedime_home(
+            "windows",
+            None,
+            None,
+            Some(std::ffi::OsStr::new(r"C:\Users\Alice")),
+            Some(std::ffi::OsStr::new("relative")),
+        ),
+        PathBuf::from(r"C:\Users\Alice").join("AppData/Local/jopedime")
+    );
+    assert_eq!(
+        default_jopedime_home(
+            "windows",
+            None,
+            None,
+            None,
+            Some(std::ffi::OsStr::new(r"\\server\share")),
+        ),
+        PathBuf::from(r"\\server\share").join("jopedime")
+    );
+    assert_eq!(
+        default_jopedime_home(
+            "windows",
+            None,
+            None,
+            Some(std::ffi::OsStr::new("relative/home")),
+            None,
+        ),
+        PathBuf::from(".").join("AppData/Local/jopedime")
+    );
+}
+
+#[test]
 fn home_walks_up_from_the_current_directory_to_the_marker() {
     let _scope = EnvScope::new();
     let root = temp_dir("marker");
