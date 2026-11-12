@@ -5,7 +5,7 @@
 
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Schema identifier for archive values.
@@ -484,19 +484,9 @@ fn cell_key(
 
 fn digest<T: Serialize>(value: &T) -> Result<String> {
     let bytes = serde_json::to_vec(value).context("serialize archive identity")?;
-    Ok(hex_digest(Sha256::digest(bytes).as_slice()))
+    Ok(crate::canon::sha256_hex(&bytes))
 }
 
 fn is_hex_digest(value: &str) -> bool {
     value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
-}
-
-fn hex_digest(bytes: &[u8]) -> String {
-    const HEX: &[u8; 16] = b"0123456789abcdef";
-    let mut out = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        out.push(HEX[(byte >> 4) as usize] as char);
-        out.push(HEX[(byte & 0x0f) as usize] as char);
-    }
-    out
 }
