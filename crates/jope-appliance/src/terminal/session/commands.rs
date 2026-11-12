@@ -659,19 +659,24 @@ pub(super) fn mouse_line(capture: bool) -> String {
 }
 
 /// `~` and `~/…` name the home directory, as in a shell (#2148).
+/// `HOME` is used only when it is absolute. An empty or relative `HOME`
+/// leaves the original text in place.
 pub(super) fn expand_home(path: &str) -> String {
-    let home = || std::env::var_os("HOME").filter(|home| !home.is_empty());
+    expand_home_in(path, std::env::var_os("HOME").as_deref())
+}
+
+fn expand_home_in(path: &str, home: Option<&std::ffi::OsStr>) -> String {
+    let home = home
+        .map(std::path::PathBuf::from)
+        .filter(|home| home.is_absolute());
     if path == "~" {
-        if let Some(home) = home() {
+        if let Some(home) = home {
             return home.to_string_lossy().into_owned();
         }
     }
     if let Some(rest) = path.strip_prefix("~/").or_else(|| path.strip_prefix("~\\")) {
-        if let Some(home) = home() {
-            return std::path::Path::new(&home)
-                .join(rest)
-                .to_string_lossy()
-                .into_owned();
+        if let Some(home) = home {
+            return home.join(rest).to_string_lossy().into_owned();
         }
     }
     path.to_owned()
@@ -712,5 +717,29 @@ mod tests {
         assert_eq!(expand_home("~"), home);
         assert_eq!(expand_home("data/~x.csv"), "data/~x.csv");
         assert_eq!(expand_home("~other/x.csv"), "~other/x.csv");
+    }
+
+    #[test]
+    fn a_relative_home_does_not_expand_a_tilde() {
+        assert_eq!(
+            expand_home_in("~/my-sales.csv", Some(std::ffi::OsStr::new("/users/alice"))),
+            "/users/alice/my-sales.csv"
+        );
+        assert_eq!(
+            expand_home_in(
+                "~/my-sales.csv",
+                Some(std::ffi::OsStr::new("relative/home"))
+            ),
+            "~/my-sales.csv"
+        );
+        assert_eq!(
+            expand_home_in("~/my-sales.csv", Some(std::ffi::OsStr::new(""))),
+            "~/my-sales.csv"
+        );
+        assert_eq!(expand_home_in("~", None), "~");
+        assert_eq!(
+            expand_home_in("~other/x.csv", Some(std::ffi::OsStr::new("/users/alice"))),
+            "~other/x.csv"
+        );
     }
 }
