@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .prime_config import PrimeConfig, load_config
+from .prime_config import PrimeConfig, expand_config_home, load_config
 from .prime_staging import (
     ensure_prime_owned_directory,
     prime_dataset_workspace,
@@ -137,6 +137,16 @@ def _finite(token: str) -> bool:
         return False
 
 
+def expand_signature_dataset(dataset_dir: str | Path, home: str | None) -> Path:
+    """Expand ``~`` and ``~/…`` only when ``home`` is absolute."""
+    try:
+        return expand_config_home(dataset_dir, home)
+    except ValueError as error:
+        raise ValueError(
+            "HOME is not an absolute path; a signature dataset path cannot be resolved"
+        ) from error
+
+
 def make_signatures(
     dataset_dir: Path,
     *,
@@ -148,7 +158,7 @@ def make_signatures(
 ) -> SignatureReport:
     """Generate sidecars without writing through to a legacy dataset directory."""
     config = config or load_config()
-    source_dir = Path(dataset_dir).expanduser().resolve(strict=False)
+    source_dir = expand_signature_dataset(dataset_dir, os.environ.get("HOME")).resolve(strict=False)
     dataset_hash = source_dir.name
     started = time.time()
     train_csv = source_dir / "train.csv"
