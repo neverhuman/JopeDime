@@ -85,8 +85,7 @@ pub const DEFAULT_SEED: u64 = 20260907;
 
 /// Lowercase hex sha256, the one digest form every receipt field carries.
 pub fn sha256_hex(bytes: &[u8]) -> String {
-    use sha2::{Digest, Sha256};
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 /// Lowercase hex sha256 of a file's bytes.

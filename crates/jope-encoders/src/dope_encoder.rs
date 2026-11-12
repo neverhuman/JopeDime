@@ -61,7 +61,7 @@ pub const DOPE512_RECIPE: &str = "dope-mlcv3-high-f32-descriptor256-task128-dist
 pub const ENCODING_RECEIPT_SCHEMA: &str = "jope.landmark-encoding/v1";
 
 pub(crate) fn sha256(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 /// The device tensor has shape [1,512]. It uses no Hyperion normalization or identity.

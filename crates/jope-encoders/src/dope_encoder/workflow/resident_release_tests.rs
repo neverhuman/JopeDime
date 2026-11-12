@@ -9,7 +9,6 @@ use crate::dope_encoder::{
     LandmarkConsumer, LandmarkMode, DOPE512_RECIPE, DOPE_WEIGHTS_SHA256,
 };
 use anyhow::{anyhow, ensure, Result};
-use sha2::{Digest, Sha256};
 use std::{cell::Cell, collections::BTreeSet, path::Path, sync::Arc, time::Instant};
 
 const D0: &str = "d0b6960328d1955386632ff78b512e3add53a9b0256db7bbf067e2e0be5f0c6c";
@@ -27,7 +26,7 @@ struct FitManifest {
     task: String,
 }
 fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 fn admit(m: &FitManifest) -> Result<()> {
     let uri = m

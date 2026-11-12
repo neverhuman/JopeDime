@@ -87,5 +87,5 @@ pub(crate) fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> Result<f64
 }
 
 pub(crate) fn digest(source: &str) -> String {
-    format!("{:x}", Sha256::digest(source.as_bytes()))
+    jope_runtime::sha256_hex(source.as_bytes())
 }

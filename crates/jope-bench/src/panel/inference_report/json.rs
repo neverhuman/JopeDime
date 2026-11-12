@@ -132,7 +132,7 @@ pub(crate) fn object<const N: usize>(entries: [(&str, Json); N]) -> Json {
 }
 
 pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 /// `json.loads` of a file, or an empty object when it cannot be read or parsed.

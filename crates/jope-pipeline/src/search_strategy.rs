@@ -13,7 +13,6 @@ use feat_math::kernel::{
         Reservation, Run, Strategy, StrategyConfig,
     },
 };
-use sha2::{Digest, Sha256};
 
 use crate::{
     clock::Clock,
@@ -142,7 +141,7 @@ pub fn cut_input_sha256(cut: &Cut) -> String {
         &cut.hold_indices,
     ))
     .expect("cut serializes");
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(&bytes)
 }
 
 /// Build the deterministic kernel2 adapter identity with an explicit input digest.

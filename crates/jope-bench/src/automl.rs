@@ -170,12 +170,11 @@ mod contract_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sha2::{Digest, Sha256};
 
     #[test]
     fn frozen_source_and_catalog_identity_agree() {
         let source = include_bytes!("../submissions/GPT6_Astra_Max.rs");
-        assert_eq!(format!("{:x}", Sha256::digest(source)), SOURCE_SHA256);
+        assert_eq!(jope_runtime::sha256_hex(source), SOURCE_SHA256);
         let provenance: serde_json::Value = serde_json::from_str(include_str!(
             "../submissions/gpt6-astra-max/provenance.json"
         ))
