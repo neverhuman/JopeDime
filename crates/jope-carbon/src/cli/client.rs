@@ -1041,3 +1041,87 @@ fn send_raw_edge_http_with_agent(
         .map_err(|e| format!("read {method} body: {e}"))?;
     Ok((code, resp_body))
 }
+
+/// Default public HTTPS URL publishing live `dev` and `prod` Carbon cloud discovery endpoints.
+pub const DEFAULT_PUBLIC_CLOUDS_URL: &str =
+    "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.1-live.1/carbon-clouds.json";
+
+/// `CarbonCloudCellEntry` is a struct binding a named public Carbon cloud (`dev` or `prod`) to its
+/// stage-throttled HTTPS endpoint and pinned `ECDH P-256` `engine_kek_pubkey_b64`.
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct CarbonCloudCellEntry {
+    pub environment: String,
+    pub region: String,
+    pub public_endpoint: String,
+    #[serde(default)]
+    pub engine_kek_pubkey_b64: Option<String>,
+    #[serde(default)]
+    pub release_id: Option<String>,
+}
+
+/// `CarbonPublicCloudsManifest` is a struct mapping named Carbon clouds (`dev`, `prod`) for
+/// zero-credential client discovery (`--cloud dev` / `--cloud prod`).
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct CarbonPublicCloudsManifest {
+    pub schema: String,
+    pub generated_epoch_ms: u64,
+    pub clouds: BTreeMap<String, CarbonCloudCellEntry>,
+}
+
+/// Resolve a named public Carbon cloud (`dev`, `staging`, `prod`) from an explicit file/URL
+/// override, `CARBON_CLOUDS_URL`, or [`DEFAULT_PUBLIC_CLOUDS_URL`] without AWS credentials.
+pub fn resolve_public_cloud_endpoint(
+    cloud_name: &str,
+    manifest_override: Option<&str>,
+) -> Result<CarbonCloudCellEntry, String> {
+    let env_override = std::env::var("CARBON_CLOUDS_URL")
+        .ok()
+        .filter(|v| !v.trim().is_empty());
+    let source = manifest_override
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .or(env_override.as_deref())
+        .unwrap_or(DEFAULT_PUBLIC_CLOUDS_URL);
+
+    let raw_bytes = if source.starts_with("https://") || source.starts_with("http://") {
+        let mut resp = crate::tls::carbon_https_agent()
+            .get(source)
+            .config()
+            .http_status_as_error(false)
+            .build()
+            .call()
+            .map_err(|e| format!("fetch Carbon clouds manifest {source} failed: {e}"))?;
+        let status = resp.status().as_u16();
+        let mut buf = Vec::new();
+        resp.body_mut()
+            .as_reader()
+            .read_to_end(&mut buf)
+            .map_err(|e| format!("read Carbon clouds manifest {source}: {e}"))?;
+        if status >= 300 {
+            return Err(format!(
+                "Carbon clouds manifest {source} returned HTTP {status}: {}",
+                String::from_utf8_lossy(&buf)
+            ));
+        }
+        buf
+    } else {
+        std::fs::read(source)
+            .map_err(|e| format!("read local Carbon clouds manifest {source}: {e}"))?
+    };
+
+    let manifest: CarbonPublicCloudsManifest = serde_json::from_slice(&raw_bytes)
+        .map_err(|e| format!("parse Carbon clouds manifest {source}: {e}"))?;
+    let key = cloud_name.trim().to_ascii_lowercase();
+    let entry = manifest.clouds.get(&key).cloned().ok_or_else(|| {
+        let available: Vec<&str> = manifest.clouds.keys().map(String::as_str).collect();
+        format!(
+            "cloud '{key}' not found in {source} (available: {})",
+            available.join(", ")
+        )
+    })?;
+    if let Some(kek_b64) = &entry.engine_kek_pubkey_b64 {
+        let _ = decode_p256_pubkey_b64(kek_b64)
+            .map_err(|e| format!("invalid pinned engine_kek_pubkey_b64 for '{key}': {e}"))?;
+    }
+    Ok(entry)
+}

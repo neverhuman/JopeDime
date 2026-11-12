@@ -144,6 +144,8 @@ pub struct CarbonRegionDeployReceipt {
     pub artifacts_bucket: String,
     pub cas_bucket: Option<String>,
     pub edge_endpoint_url: Option<String>,
+    #[serde(default)]
+    pub public_edge_endpoint_url: Option<String>,
     pub live_versions: Option<CarbonLiveAliasVersions>,
     pub previous_versions: Option<CarbonLiveAliasVersions>,
     pub r882_layer_version_arn: Option<String>,
@@ -1108,6 +1110,43 @@ pub fn resolve_cell_stack_endpoint(environment: &str, region: &str) -> Result<St
     ))
 }
 
+/// Resolve the live `PublicEdgeEndpointUrl` (falling back to `EdgeEndpointUrl` if absent) from
+/// CloudFormation stack `jopedime-carbon-<env>` in `region`.
+pub fn resolve_cell_stack_public_endpoint(
+    environment: &str,
+    region: &str,
+) -> Result<String, String> {
+    let stack_name = format!("jopedime-carbon-{environment}");
+    let desc = run_aws_json(
+        region,
+        &[
+            "cloudformation",
+            "describe-stacks",
+            "--stack-name",
+            &stack_name,
+        ],
+    )?;
+    let outputs = desc
+        .get("Stacks")
+        .and_then(|s| s.as_array())
+        .and_then(|a| a.first())
+        .and_then(|st| st.get("Outputs"))
+        .and_then(|o| o.as_array())
+        .ok_or_else(|| format!("stack '{stack_name}' in {region} has no Outputs"))?;
+    for key in ["PublicEdgeEndpointUrl", "EdgeEndpointUrl"] {
+        for out in outputs {
+            if out.get("OutputKey").and_then(|k| k.as_str()) == Some(key) {
+                if let Some(url) = out.get("OutputValue").and_then(|v| v.as_str()) {
+                    return Ok(url.to_owned());
+                }
+            }
+        }
+    }
+    Err(format!(
+        "stack '{stack_name}' in {region} missing PublicEdgeEndpointUrl / EdgeEndpointUrl output"
+    ))
+}
+
 fn ensure_artifacts_bucket(region: &str, bucket: &str) -> Result<(), String> {
     if run_aws_allow_missing(region, &["s3api", "head-bucket", "--bucket", bucket])?.is_some() {
         return Ok(());
@@ -1777,6 +1816,7 @@ fn deploy_single_region(
             artifacts_bucket,
             cas_bucket: None,
             edge_endpoint_url: None,
+            public_edge_endpoint_url: None,
             live_versions: previous_versions.clone(),
             previous_versions,
             r882_layer_version_arn: None,
@@ -1821,6 +1861,7 @@ fn deploy_single_region(
         .get("EdgeEndpointUrl")
         .cloned()
         .ok_or_else(|| format!("stack '{stack_name}' missing EdgeEndpointUrl"))?;
+    let public_edge_url = outputs.get("PublicEdgeEndpointUrl").cloned();
     let cas_bucket = outputs.get("CasBucketName").cloned();
     let layer_arn = outputs.get("R882LayerVersionArn").cloned();
     let live_versions = Some(CarbonLiveAliasVersions {
@@ -1838,36 +1879,49 @@ fn deploy_single_region(
             .unwrap_or_default(),
     });
 
-    // 5. Mandatory post-deploy live verification (/ping + 16-vector red-team suite) + auto-rollback!
+    // 5. Mandatory post-deploy live verification (/ping + 16-vector red-team suite on BOTH IAM & Public doors) + auto-rollback!
     let verify_outcome: Result<(Option<usize>, Option<usize>), String> = (|| {
-        let (_, probed) = CarbonThinClient::connect_fastest(vec![edge_url.clone()])?;
-        let first = probed
-            .first()
-            .ok_or_else(|| format!("post-deploy /ping returned empty probe for {edge_url}"))?;
-        if first.engine_kek_pubkey_b64.as_deref() != Some(vault.engine_kek_pubkey_b64.as_str()) {
-            return Err(
-                "post-deploy /ping engine_kek_pubkey_b64 mismatch against vault".to_owned(),
-            );
+        let mut gate_urls = vec![("iam_fn_url", edge_url.as_str())];
+        if let Some(pub_u) = public_edge_url.as_deref() {
+            gate_urls.push(("public_http_api", pub_u));
+        }
+        let mut passed_sum = 0usize;
+        let mut total_sum = 0usize;
+        for (door_label, url) in &gate_urls {
+            let (_, probed) = CarbonThinClient::connect_fastest(vec![(*url).to_owned()])?;
+            let first = probed.first().ok_or_else(|| {
+                format!("post-deploy /ping ({door_label}) returned empty probe for {url}")
+            })?;
+            if first.engine_kek_pubkey_b64.as_deref() != Some(vault.engine_kek_pubkey_b64.as_str())
+            {
+                return Err(format!(
+                    "post-deploy /ping ({door_label}) engine_kek_pubkey_b64 mismatch against vault"
+                ));
+            }
+            if !opts.skip_redteam {
+                let report = execute_carbon_redteam_suite(url)?;
+                if !report.all_passed {
+                    let failed_ids: Vec<String> = report
+                        .vectors
+                        .iter()
+                        .filter(|v| !v.passed)
+                        .map(|v| format!("{} ({})", v.vector_id, v.evidence))
+                        .collect();
+                    return Err(format!(
+                        "post-deploy live redteam on {door_label} failed ({}/{} passed): {}",
+                        report.passed_vectors,
+                        report.total_vectors,
+                        failed_ids.join("; ")
+                    ));
+                }
+                passed_sum = report.passed_vectors;
+                total_sum = report.total_vectors;
+            }
         }
         if opts.skip_redteam {
             return Ok((None, None));
         }
-        let report = execute_carbon_redteam_suite(&edge_url)?;
-        if !report.all_passed {
-            let failed_ids: Vec<String> = report
-                .vectors
-                .iter()
-                .filter(|v| !v.passed)
-                .map(|v| format!("{} ({})", v.vector_id, v.evidence))
-                .collect();
-            return Err(format!(
-                "post-deploy live redteam failed ({}/{} passed): {}",
-                report.passed_vectors,
-                report.total_vectors,
-                failed_ids.join("; ")
-            ));
-        }
-        Ok((Some(report.passed_vectors), Some(report.total_vectors)))
+        Ok((Some(passed_sum), Some(total_sum)))
     })();
 
     let (rt_passed, rt_total) = match verify_outcome {
@@ -1899,6 +1953,7 @@ fn deploy_single_region(
         artifacts_bucket,
         cas_bucket,
         edge_endpoint_url: Some(edge_url),
+        public_edge_endpoint_url: public_edge_url,
         live_versions,
         previous_versions,
         r882_layer_version_arn: layer_arn,
