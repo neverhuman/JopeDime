@@ -13,6 +13,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, get_worker_info
 
+from ..prime_config import expand_config_home
+
 TASK_BINARY = 0
 TASK_REGRESSION = 1
 TASK_NAMES = {TASK_BINARY: "binary", TASK_REGRESSION: "regression"}
@@ -93,6 +95,14 @@ def iter_complete_dataset_dirs(root: Path) -> Iterator[Path]:
             yield child
 
 
+def expand_target_path(path: str | Path, home: str | None) -> Path:
+    """Expand ``~`` and ``~/…`` only when ``home`` is absolute."""
+    try:
+        return expand_config_home(path, home)
+    except ValueError as error:
+        raise ValueError("HOME is not an absolute path; a target-maker path cannot be resolved") from error
+
+
 def scan_datasets(
     roots: Mapping[int, Path] | None = None, limit_per_task: int | None = None
 ) -> list[tuple[int, Path]]:
@@ -100,7 +110,9 @@ def scan_datasets(
     found: list[tuple[int, Path]] = []
     for task in (TASK_BINARY, TASK_REGRESSION):
         count = 0
-        for dataset_dir in iter_complete_dataset_dirs(Path(roots[task]).expanduser()):
+        for dataset_dir in iter_complete_dataset_dirs(
+            expand_target_path(roots[task], os.environ.get("HOME"))
+        ):
             found.append((task, dataset_dir))
             count += 1
             if limit_per_task is not None and count >= limit_per_task:
@@ -287,7 +299,7 @@ def prepare_cache(
     overwrite: bool = False,
     workers: int | None = None,
 ) -> list[DatasetRecord]:
-    cache_dir = Path(cache_dir).expanduser().resolve()
+    cache_dir = expand_target_path(cache_dir, os.environ.get("HOME")).resolve()
     target_dir = cache_dir / "targets"
     target_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = cache_dir / "manifest.jsonl"
@@ -311,7 +323,7 @@ def prepare_cache(
 def load_manifest(
     cache_dir: Path, split: str | None = None, val_fraction: float = 0.05, seed: int = 17
 ) -> list[DatasetRecord]:
-    cache_dir = Path(cache_dir).expanduser().resolve()
+    cache_dir = expand_target_path(cache_dir, os.environ.get("HOME")).resolve()
     manifest_path = cache_dir / "manifest.jsonl"
     records: list[DatasetRecord] = []
     with manifest_path.open("r", encoding="utf-8") as handle:
@@ -455,7 +467,7 @@ def collate_target_batch(items: Sequence[Mapping[str, object]]) -> dict[str, obj
 
 
 def read_target_input(path: Path) -> np.ndarray:
-    path = Path(path).expanduser()
+    path = expand_target_path(path, os.environ.get("HOME"))
     if path.is_dir():
         return read_dataset_target(path)
     if path.suffix.lower() == ".npy":
