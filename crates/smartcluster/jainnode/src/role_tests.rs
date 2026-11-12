@@ -20,7 +20,7 @@ fn node_signing_key() -> SigningKey {
 }
 
 fn hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+    crate::hex_digest(bytes)
 }
 
 fn payload(role: &str, profile: &str, compute_slots: u16, storage_enabled: bool) -> Value {
