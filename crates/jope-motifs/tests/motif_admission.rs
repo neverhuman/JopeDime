@@ -11,7 +11,6 @@ use promote::{
     ExpansionWitness, MetricDirection, MotifAdmission, MotifCandidate, PreregisteredContrast,
     ProbeSimilarity, VocabularyMigration, ADMISSION_SCHEMA, CONTRAST_SCHEMA,
 };
-use sha2::Digest;
 
 const TABLE_SHA: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
@@ -104,7 +103,7 @@ fn host_for(expansion: &str) -> String {
 }
 
 fn digest(value: &str) -> String {
-    format!("{:x}", sha2::Sha256::digest(value.as_bytes()))
+    jope_motifs::sha256_hex(value.as_bytes())
 }
 
 fn safe_boundary() -> EvidenceBoundary {
