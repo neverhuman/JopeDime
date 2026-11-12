@@ -3,15 +3,34 @@
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// `$JOPE_HOME`, else `${XDG_CACHE_HOME:-~/.cache}/jope`.
+/// `$JOPE_HOME` when set and non-empty, kept verbatim; otherwise
+/// `$XDG_CACHE_HOME/jope` when that variable is absolute, else
+/// `$HOME/.cache/jope` when `HOME` is absolute, else `.cache/jope`.
+/// A relative `XDG_CACHE_HOME` or `HOME` is ignored.
 pub fn jope_home() -> PathBuf {
-    if let Some(h) = std::env::var_os("JOPE_HOME").filter(|v| !v.is_empty()) {
-        return PathBuf::from(h);
+    cache_home_from(
+        std::env::var_os("JOPE_HOME").as_deref(),
+        std::env::var_os("XDG_CACHE_HOME").as_deref(),
+        std::env::var_os("HOME").as_deref(),
+    )
+}
+
+fn cache_home_from(
+    jope_home: Option<&std::ffi::OsStr>,
+    xdg_cache_home: Option<&std::ffi::OsStr>,
+    home: Option<&std::ffi::OsStr>,
+) -> PathBuf {
+    if let Some(path) = jope_home.filter(|path| !path.is_empty()) {
+        return PathBuf::from(path);
     }
-    let cache = std::env::var_os("XDG_CACHE_HOME")
-        .filter(|v| !v.is_empty())
+    let cache = xdg_cache_home
         .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
+        .filter(|path| path.is_absolute())
+        .or_else(|| {
+            home.map(PathBuf::from)
+                .filter(|path| path.is_absolute())
+                .map(|path| path.join(".cache"))
+        })
         .unwrap_or_else(|| PathBuf::from(".cache"));
     cache.join("jope")
 }
@@ -133,5 +152,37 @@ mod tests {
     #[test]
     fn relpaths() {
         assert_eq!(relpath(Path::new("/a/b"), Path::new("/a/b/c/d")), "c/d");
+    }
+
+    #[test]
+    fn a_relative_cache_home_does_not_choose_the_dataset_cache() {
+        assert_eq!(
+            cache_home_from(
+                Some(std::ffi::OsStr::new("relative/override")),
+                Some(std::ffi::OsStr::new("/xdg/cache")),
+                Some(std::ffi::OsStr::new("/users/alice")),
+            ),
+            PathBuf::from("relative/override")
+        );
+        assert_eq!(
+            cache_home_from(
+                None,
+                Some(std::ffi::OsStr::new("relative/xdg")),
+                Some(std::ffi::OsStr::new("/users/alice")),
+            ),
+            PathBuf::from("/users/alice/.cache/jope")
+        );
+        assert_eq!(
+            cache_home_from(None, None, Some(std::ffi::OsStr::new("relative/home"))),
+            PathBuf::from(".cache/jope")
+        );
+        assert_eq!(
+            cache_home_from(
+                Some(std::ffi::OsStr::new("")),
+                Some(std::ffi::OsStr::new("/xdg/cache")),
+                Some(std::ffi::OsStr::new("relative/home")),
+            ),
+            PathBuf::from("/xdg/cache/jope")
+        );
     }
 }
