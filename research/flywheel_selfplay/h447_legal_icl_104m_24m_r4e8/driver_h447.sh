@@ -66,9 +66,9 @@ selftest)
   CUDA_VISIBLE_DEVICES="" nice -n 19 python3 -B cols_r4_e8.py selftest > "$R/selftest_cols.txt"
   CUDA_VISIBLE_DEVICES="" nice -n 19 python3 -B eval_h447.py selftest > "$R/selftest_eval.txt"
   jq -n \
-    --slurpfile wc <(head -n 1 "$R/selftest_wc.txt") \
-    --slurpfile co <(head -n 1 "$R/selftest_cols.txt") \
-    --slurpfile ev <(head -n 1 "$R/selftest_eval.txt") \
+    --slurpfile wc <(grep '"all_passed"' "$R/selftest_wc.txt") \
+    --slurpfile co <(grep '"all_passed"' "$R/selftest_cols.txt") \
+    --slurpfile ev <(grep '"all_passed"' "$R/selftest_eval.txt") \
     '{wc: $wc[0], cols: $co[0], eval: $ev[0], all_passed: ($wc[0].all_passed and $co[0].all_passed and $ev[0].all_passed)}' \
     > "$R/selftests.json"
   cat "$R/selftests.json"
