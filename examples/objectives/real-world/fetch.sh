@@ -4,12 +4,25 @@
 #
 #   bash examples/objectives/real-world/fetch.sh [DATA_DIR]
 #
-# DATA_DIR defaults to $JOPE_FITNESS_DATA, else $HOME/jope-data/fitness-real-world.
+# DATA_DIR defaults to $JOPE_FITNESS_DATA, else $HOME/jope-data/fitness-real-world
+# when HOME is absolute. A relative or empty HOME is refused. An explicit DATA_DIR
+# and JOPE_FITNESS_DATA stay verbatim.
 # Needs curl, gzip, awk and sha256sum. freMTPL2freq is optional: it is fetched from OpenML
 # (licence recorded there as CC0; the CASdatasets upstream is GPL>=2, so it is never vendored).
 set -euo pipefail
 root=$(cd "$(dirname "$0")/../../.." && pwd)
-data=${1:-${JOPE_FITNESS_DATA:-$HOME/jope-data/fitness-real-world}}
+# An explicit directory and JOPE_FITNESS_DATA stay verbatim. A relative or empty
+# HOME must not name a working-directory or root dataset directory.
+if [ -n "${1:-}" ]; then
+  data=$1
+elif [ -n "${JOPE_FITNESS_DATA:-}" ]; then
+  data=$JOPE_FITNESS_DATA
+else
+  case ${HOME:-} in
+    /*) data=$HOME/jope-data/fitness-real-world ;;
+    *) printf 'fetch.sh: HOME must be an absolute path when JOPE_FITNESS_DATA is not set\n' >&2; exit 2 ;;
+  esac
+fi
 mkdir -p "$data"
 # Physical paths on both sides, so a symlink into the checkout is refused too.
 data=$(cd "$data" && pwd -P)
