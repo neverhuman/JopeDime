@@ -41,7 +41,6 @@ use jope_dime_regressor::selfplay_expansion::TASKS;
 use jope_dime_regressor::spec_policy::EVAL;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 
 const SHARD_SCHEMA: &str = "JopeFlywheelCorpusEvalShard.v1";
 const PORTFOLIO_SCHEMA: &str = "JopeSealedZeroShotPortfolio.v1";

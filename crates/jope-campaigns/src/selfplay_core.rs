@@ -38,7 +38,7 @@ fn sha256_bytes(bytes: &[u8]) -> [u8; 32] {
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    hex::encode(sha256_bytes(bytes))
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 fn validate_finite(value: f64, label: &str) -> PolicyResult<f64> {

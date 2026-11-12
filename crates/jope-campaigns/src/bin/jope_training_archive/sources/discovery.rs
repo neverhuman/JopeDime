@@ -13,9 +13,7 @@ pub(crate) fn mtime_ms(p: &Path) -> Result<i64> {
 }
 
 pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
-    let mut h = Sha256::new();
-    h.update(bytes);
-    hex::encode(h.finalize())
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 pub(crate) fn f(v: Option<&Value>) -> Option<f64> {

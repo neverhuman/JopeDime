@@ -26,7 +26,6 @@ use clap::{Parser, Subcommand};
 use jope_dime_regressor::paths;
 use rusqlite::{params, Connection};
 use serde_json::{Map, Value};
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::Write as _;
