@@ -17,7 +17,7 @@ use crate::progress::outbox::Outbox;
 use crate::progress::publish::{publish, Publication};
 use crate::progress::rebuild::restore;
 use serde_json::json;
-use sha2::{Digest, Sha256};
+
 use std::path::Path;
 
 fn checkpoint(
@@ -372,7 +372,7 @@ fn a_commit_whose_closure_names_revoked_evidence_never_moves_the_pointer() {
                         "kind": "synthetic-fixture",
                         "location": "repository",
                         "path": evidence_path,
-                        "sha256": hex::encode(Sha256::digest(bytes)),
+                        "sha256": crate::canon::sha256_hex(bytes),
                         "source_commit": "a".repeat(40),
                         "subject": "fixture subject",
                         "scope": "fixture",
