@@ -121,3 +121,23 @@ Coordination with Gemini goes through `/home/ubuntu/jope_plan/H450_CLAUDE_GEMINI
 - xbabe4: a Mac Studio with about 24/32 cores held by llama-server.
 
 **Sealed.** APEX-CONFIRM and DL-Holdout stay out of the bank. This is the owner's earlier answer, "Keep them sealed (Recommended)", and it stands until he types otherwise.
+
+## 5. Amendment pub-r7 (2026-11-12 about 21:37Z): GPU evaluation, 104M only, xbabe3 RAM fix
+
+- **xbabe3 RAM incident.**
+  - What happened: the kernel OOM-killed r4_L_B (21:20:11Z) and r4_L_C (21:21:12Z), then two other services, which have since recovered. Three trainers on the 62 GB host were too many. The trainers use about 8.3 GB (L) and 3.6–4.6 GB (M) of host RAM each.
+  - Fix: one trainer per host from now on. r4_L_C is dropped; it had no saved checkpoint.
+  - Loss: r4_L_B resumed from its 21:13:51Z ckpt_last.pt, so about 6 minutes of its training were lost.
+- **104M only.** The owner asked for the 104M model, so r4_M_A and r4_M_B are paused. Their ckpt_last.pt files are kept. Every dev91 pair now uses the H449 init 24M checkpoint, so any Elo change comes from the 104M fine-tune alone.
+- **Runs:**
+
+  | run | host | batch tokens | GPU memory |
+  |---|---|---|---|
+  | r4_L_A | xbabe2 | 420k | about 15 GB; the dev91 evaluator also runs on this GPU |
+  | r4_L_B | xbabe3 | 560k | about 80% of the GPU |
+
+- **Evaluation (`eval_gpu_h450.sh`).**
+  - `cols_h450_gpu.py --device cuda` runs on xbabe2. On xbabe0's CPUs it finished 0 of 91 contexts in 17 minutes, since each context runs about 1,000 model forwards, so `eval_x0_h450.sh` is retired.
+  - Pairs: A = (L_A at epoch N, M_init) and B = (L_B at epoch N, M_init). Epoch 0 is the init L in both pairs and also serves as the zero-dev91 control arm.
+  - Everything else is as in §3 and §4.
+- **Log field.** The trainer's `ds_per_s` field counts micro-batches per second, not datasets. Datasets per second is computed from the `datasets` difference between log lines; the 104M runs about 29/s on a 3090. The trainer bytes are unchanged, and the mislabel is recorded here as a finding.
