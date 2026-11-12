@@ -2,7 +2,7 @@
 
 Additive, non-overlapping H450 5-host fleet components coordinated with `cl_fwriter` via
 `/home/ubuntu/jope_plan/H450_CLAUDE_GEMINI_COORD.md` and `/home/ubuntu/jope_plan/H450_FLEET_COORDINATION.md`
-(staged read-only under `/home/ubuntu/h450-stage/fleet-r3`):
+(staged read-only under `/home/ubuntu/h450-stage/fleet-r4`):
 
 1. `mmap_bank_h450.py` — Zero-copy `np.memmap` drop-in replacement (`MmapF64Bank`) for `CombinedF64Bank`
    (`< 0.5 s` init, `< 80 MiB` private RSS), plus `--cmd convert` and `--cmd verify-parity` (verified bit-identical
@@ -13,7 +13,7 @@ Additive, non-overlapping H450 5-host fleet components coordinated with `cl_fwri
    interpolation + `bfloat16`/`float32` transformer execution.
 3. `train_mps_104m_h450.py` — `104M` (`ICL_L`) trainer for `xbabe4` MPS and `xbabe1` CUDA (`--cuda-vram-frac 0.80`)
    using `mp.get_context("spawn")`, `MmapF64Bank`, `HostCpuGovernor` (`<= 82%` hard cap -> `<= 85%` host CPU average),
-   bidirectional synthetic feature injection (to & from features even on `F < 10`), and pre-forward `128-bit` `blake2b`
+   bidirectional synthetic feature injection (`k <= floor(0.10 * F)` TO features + masked real column & nonlinear teacher FROM features), and pre-forward `128-bit` `blake2b`
    deduplication (`0` repeats).
 4. `fast_dev91_every_n_h450.py` — 75x-faster (`12` `[2, N, Fn]` forwards/context) frozen-split `dev91-audit-v1`
    `104M` BT-Elo evaluator (`X_search` 5-fold OOF + refit -> legal `stack_h450` Champion, Neural+Tab No-GP, and Pure

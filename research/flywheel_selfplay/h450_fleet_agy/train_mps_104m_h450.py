@@ -500,16 +500,16 @@ def bidirectional_real_episode(
     if (tmode < 2 or blend_real_teacher) and float(np.std(yc)) <= 1e-12:
         return None
 
-    # Bidirectional TO-features synthetic column injection (works on narrow F < 10 tables too!)
+    # Strict 0-10% TO-features synthetic column injection (k <= floor(0.10 * F) per owner 20:30Z rule)
     p = Xc.shape[1]
     if f_fixed is None:
         p_keep = p
         if p >= 6 and rng.random() < 0.45:
             p_keep = int(rng.integers(max(3, int(round(0.60 * p))), p + 1))
-        max_inj = max(1, min(WIDE_GPU, p_keep) // 7)
-        k = int(rng.integers(1, max_inj + 1)) if rng.random() < 0.85 else 0
+        max_inj = min(WIDE_GPU, p_keep) // 9
+        k = int(rng.integers(0, max_inj + 1)) if max_inj >= 1 else 0
         F = min(WIDE_GPU, p_keep + k)
-        k = min(k, max(1, int(math.floor(0.15 * F)))) if k > 0 else 0
+        k = min(k, int(math.floor(0.10 * F)))
         if F - k < 1:
             k = 0
             F = max(1, p_keep)
@@ -517,10 +517,10 @@ def bidirectional_real_episode(
     else:
         F = f_fixed
         k_lo = max(0, F - p)
-        k_hi = max(1 if F >= 2 else 0, int(math.floor(0.15 * F)))
+        k_hi = int(math.floor(0.10 * F))
         if k_lo > k_hi:
             return None
-        k = int(rng.integers(max(1 if (k_hi >= 1 and rng.random() < 0.80) else 0, k_lo), k_hi + 1))
+        k = int(rng.integers(k_lo, k_hi + 1))
         k_real = F - k
         if k_real < 1:
             return None
@@ -591,10 +591,11 @@ def _sample_full_synth_special(B: int, N: int, Fn: int, n_ctx: int, rng: np.rand
             X_full = np.column_stack([ts_col, ent.astype(np.float64), covs])[:, :Fn]
             perm = rng.permutation(N)
             X_full, y_b = X_full[perm], y_b[perm]
-            if Fn >= 8 and rng.random() < 0.50:
-                Ic, Iq = _inject_synth_cols_np(X_full[:n_ctx, : max(2, Fn - 4)], X_full[n_ctx:, : max(2, Fn - 4)], 4, rng)
-                X_aug = np.vstack([np.hstack([X_full[:n_ctx, : max(2, Fn - 4)], Ic]),
-                                   np.hstack([X_full[n_ctx:, : max(2, Fn - 4)], Iq])])
+            k_pan = int(math.floor(0.10 * Fn))
+            if k_pan >= 1 and rng.random() < 0.50:
+                Ic, Iq = _inject_synth_cols_np(X_full[:n_ctx, : max(2, Fn - k_pan)], X_full[n_ctx:, : max(2, Fn - k_pan)], k_pan, rng)
+                X_aug = np.vstack([np.hstack([X_full[:n_ctx, : max(2, Fn - k_pan)], Ic]),
+                                   np.hstack([X_full[n_ctx:, : max(2, Fn - k_pan)], Iq])])
                 if X_aug.shape[1] < Fn:
                     X_aug = np.hstack([X_aug, rng.standard_normal((N, Fn - X_aug.shape[1]))])
                 X_full = X_aug[:, :Fn]
@@ -649,11 +650,11 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
                 pn = np.array([BATCH_N_P[BATCH_N.index(n)] for n in ok_n])
                 N_t = int(rng.choice(ok_n, p=pn / pn.sum()))
                 p0 = min(int(bank.cols_arr[t0]), WIDE_GPU)
-                F_t = max(2, min(WIDE_GPU, p0 + int(rng.integers(0, max(1, p0 // 7) + 1))))
+                F_t = max(2, min(WIDE_GPU, p0 + int(rng.integers(0, (p0 // 9) + 1))))
                 u = float(rng.random())
                 p_ctx = float(rng.uniform(0.25, 0.56) if u < 0.25 else (rng.uniform(0.56, 0.84) if u < 0.75 else rng.uniform(0.84, 0.94)))
                 B_t = max(1, min(bmax, tokens_cap // max(N_t * (F_t + 4), 1), row_tokens_cap // max(N_t, 1)))
-                k_hi_t = max(1 if F_t >= 2 else 0, int(math.floor(0.15 * F_t)))
+                k_hi_t = int(math.floor(0.10 * F_t))
                 elig = ((bank.rows_arr >= N_t + 8) & (bank.cols_arr >= max(1, F_t - k_hi_t))).astype(np.float64)
                 xs, ys, infos, n_ctx_b = [], [], [], None
                 for b in range(B_t):
