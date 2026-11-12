@@ -1,0 +1,351 @@
+{
+ "wave": "H444",
+ "verdict": "NO_LIFT",
+ "metric": "val/OOF utility = -fitness of argmin-predicted pool program (-2.0 if gate fails); higher is better",
+ "incumbent": "round-3175 (live best, run-20261030), scratch copy",
+ "incumbent_val_utility": 1.1389572403748425,
+ "incumbent_train_utility": 1.420532014416241,
+ "parity_ok_all": true,
+ "dope_before_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "trainable_params": 29211,
+ "packet_splits": [
+  "DL-Train",
+  "DL-Val"
+ ],
+ "n_train": 1219,
+ "n_train_families": 205,
+ "n_val": 91,
+ "n_val_families": 19,
+ "family_overlap": 0,
+ "fold_sizes": [
+  244,
+  244,
+  244,
+  244,
+  243
+ ],
+ "strict_rule": {
+  "margin": 0.002,
+  "ci_lower_gt_0": true,
+  "ties_count_as_wins": false
+ },
+ "config": {
+  "micro": 8,
+  "batch": 1024,
+  "slate": 192,
+  "threads": 8,
+  "arms": "fbal_accum,swa_cos,hilr_wd",
+  "folds": 5,
+  "margin": 0.002,
+  "probe": false
+ },
+ "arms_cfg": {
+  "fbal_accum": {
+   "balanced": true,
+   "accum": 4,
+   "peak": 0.0001,
+   "wd": 0.0001,
+   "sched": "const",
+   "swa": false
+  },
+  "swa_cos": {
+   "balanced": false,
+   "accum": 1,
+   "peak": 0.0003,
+   "wd": 0.0001,
+   "sched": "cos",
+   "swa": true
+  },
+  "hilr_wd": {
+   "balanced": true,
+   "accum": 1,
+   "peak": 0.001,
+   "wd": 0.01,
+   "sched": "cos",
+   "swa": false
+  }
+ },
+ "peak": {
+  "seed1": {
+   "min_memavail_gb": 16.754291534423828,
+   "max_rss_gb": 6.346260070800781
+  },
+  "seed3": {
+   "min_memavail_gb": 17.425357818603516,
+   "max_rss_gb": 6.337047576904297
+  },
+  "seed2_hilr": {
+   "min_memavail_gb": 15.783802032470703,
+   "max_rss_gb": 6.3534088134765625
+  }
+ },
+ "seed2_abort": [
+  "ABORT MemAvailable 13.4 GB < 15 GB at cv2/swa_cos/2/7"
+ ],
+ "arm_summary": {
+  "fbal_accum": {
+   "seeds": [
+    1,
+    2,
+    3
+   ],
+   "per_seed_oof_gain": [
+    0.00020944110625518425,
+    0.00030375533251767784,
+    0.00020944110625518425
+   ],
+   "median_oof_gain": 0.00020944110625518425,
+   "per_seed_ci95": [
+    [
+     -0.005635175899433904,
+     0.006411049348435162
+    ],
+    [
+     -0.005244201555879662,
+     0.006288251604096055
+    ],
+    [
+     -0.005744600291990391,
+     0.006339247827031672
+    ]
+   ],
+   "per_seed_fold_gains": [
+    [
+     0.00339063053661806,
+     -0.0008928200749593816,
+     0.009245178359833814,
+     -0.008839850404975948,
+     -0.001864432366687105
+    ],
+    [
+     0.0038618151342163375,
+     -0.0008928200749593816,
+     0.009245178359833814,
+     -0.008839850404975948,
+     -0.001864432366687105
+    ],
+    [
+     0.00339063053661806,
+     -0.0008928200749593816,
+     0.009245178359833814,
+     -0.008839850404975948,
+     -0.001864432366687105
+    ]
+   ],
+   "per_seed_wlt": [
+    [
+     15.0,
+     1182.0,
+     22.0
+    ],
+    [
+     16.0,
+     1181.0,
+     22.0
+    ],
+    [
+     15.0,
+     1182.0,
+     22.0
+    ]
+   ],
+   "per_seed_elo_oof": [
+    -1.9951401408515341,
+    -1.7101151335913,
+    -1.9951401408515341
+   ],
+   "median_elo_oof": -1.9951401408515341,
+   "seeds_passing_strict": 0,
+   "median_beyond_ci_all_seeds": false
+  },
+  "swa_cos": {
+   "seeds": [
+    1,
+    3
+   ],
+   "per_seed_oof_gain": [
+    -0.023902392643176174,
+    -0.021328043913861932
+   ],
+   "median_oof_gain": -0.022615218278519054,
+   "per_seed_ci95": [
+    [
+     -0.044070678532108436,
+     -0.008363631708080585
+    ],
+    [
+     -0.04077666342298966,
+     -0.005620765720816098
+    ]
+   ],
+   "per_seed_fold_gains": [
+    [
+     -0.02562088974855264,
+     -0.0025911116166407104,
+     -0.03552752775295963,
+     -0.0346473617869686,
+     -0.02111364300897981
+    ],
+    [
+     -0.01534879118410242,
+     -0.001921261449862923,
+     -0.03498638954662034,
+     -0.0337776547702019,
+     -0.020603151748993933
+    ]
+   ],
+   "per_seed_wlt": [
+    [
+     104.0,
+     971.0,
+     144.0
+    ],
+    [
+     106.0,
+     974.0,
+     139.0
+    ]
+   ],
+   "per_seed_elo_oof": [
+    -11.404770005109397,
+    -9.407855938466824
+   ],
+   "median_elo_oof": -10.406312971788111,
+   "seeds_passing_strict": 0,
+   "median_beyond_ci_all_seeds": false,
+   "seed2_partial_fold_gains": [
+    -0.02579,
+    -0.000779
+   ]
+  },
+  "hilr_wd": {
+   "seeds": [
+    1,
+    2,
+    3
+   ],
+   "per_seed_oof_gain": [
+    -0.07843122390208293,
+    -0.09092167620377899,
+    -0.08687706711796105
+   ],
+   "median_oof_gain": -0.08687706711796105,
+   "per_seed_ci95": [
+    [
+     -0.11745436698659524,
+     -0.04177850683047614
+    ],
+    [
+     -0.12575574775644005,
+     -0.05537485793939744
+    ],
+    [
+     -0.12564821321801545,
+     -0.05105103588242497
+    ]
+   ],
+   "per_seed_fold_gains": [
+    [
+     -0.09958063359528986,
+     -0.021113174161937934,
+     -0.16580681355588933,
+     -0.03511320949226198,
+     -0.07050982395113817
+    ],
+    [
+     -0.09744429673989263,
+     -0.028290604328849993,
+     -0.1775388249672371,
+     -0.0432666833437327,
+     -0.10813853252574794
+    ],
+    [
+     -0.09555307449381786,
+     -0.03421898996437282,
+     -0.1874280347567044,
+     -0.03785658005826909,
+     -0.07929759289770562
+    ]
+   ],
+   "per_seed_wlt": [
+    [
+     241.0,
+     572.0,
+     406.0
+    ],
+    [
+     235.0,
+     566.0,
+     418.0
+    ],
+    [
+     233.0,
+     576.0,
+     410.0
+    ]
+   ],
+   "per_seed_elo_oof": [
+    -47.318191697684455,
+    -52.55530328857026,
+    -50.80707972945464
+   ],
+   "median_elo_oof": -50.80707972945464,
+   "seeds_passing_strict": 0,
+   "median_beyond_ci_all_seeds": false
+  }
+ },
+ "regression_check_per_seed": {
+  "1": {
+   "arm": "fbal_accum",
+   "val": 1.130128986801047,
+   "val_gain": -0.008828253573795297,
+   "val_gain_ci95_family_boot": [
+    -0.019424131721025178,
+    0.0
+   ],
+   "wins": 0.0,
+   "ties": 87.0,
+   "losses": 4.0,
+   "elo_vs_incumbent_val": -15.281741068091662,
+   "not_worse": false
+  },
+  "3": {
+   "arm": "fbal_accum",
+   "val": 1.1354387884248622,
+   "val_gain": -0.003518451949980102,
+   "val_gain_ci95_family_boot": [
+    -0.009097357726954415,
+    0.0
+   ],
+   "wins": 0.0,
+   "ties": 89.0,
+   "losses": 2.0,
+   "elo_vs_incumbent_val": -7.637176763608926,
+   "not_worse": false
+  },
+  "2": {
+   "arm": "hilr_wd",
+   "val": 1.0904108740313414,
+   "val_gain": -0.04854636634350079,
+   "val_gain_ci95_family_boot": [
+    -0.0974173054578692,
+    -0.008634813047753548
+   ],
+   "wins": 19.0,
+   "ties": 42.0,
+   "losses": 30.0,
+   "elo_vs_incumbent_val": -42.204073907989596,
+   "not_worse": false
+  }
+ },
+ "regression_check_note": "seed2 regcheck ran on hilr_wd only (relaunch had a single arm), so it is not a CV-selected config",
+ "seed_independence": {
+  "fbal_accum_fold_gains_identical_across_seeds": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "cause": "restored Adam moments (step 487, |m|=0.45 vs |sqrt v|=0.25) dominate 2 optimizer steps at lr 1e-4 (micro 8 / accum 4); the seed only changes minibatch/slate/dropout draws, which move the 10% gradient share, and the argmin utility is discrete, so folds 1-4 pick identical programs on every seed"
+ }
+}
