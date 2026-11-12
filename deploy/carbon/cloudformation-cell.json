@@ -587,6 +587,62 @@
         "Principal": {"Ref": "AWS::AccountId"}
       }
     },
+    "EdgePublicHttpApi": {
+      "Type": "AWS::ApiGatewayV2::Api",
+      "Properties": {
+        "Name": {"Fn::Sub": "jopedime-carbon-${EnvironmentName}-public-api"},
+        "ProtocolType": "HTTP",
+        "Description": "Public stage-throttled HTTPS ingress for anonymous and capability-token Carbon clients",
+        "CorsConfiguration": {
+          "AllowMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+          "AllowHeaders": ["content-type", "authorization", "x-carbon-capability-token"],
+          "AllowOrigins": ["*"],
+          "MaxAge": 3600
+        }
+      }
+    },
+    "EdgePublicHttpIntegration": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {"Ref": "EdgePublicHttpApi"},
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {"Ref": "EdgeLiveAlias"},
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "EdgePublicHttpDefaultRoute": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {"Ref": "EdgePublicHttpApi"},
+        "RouteKey": "$default",
+        "AuthorizationType": "NONE",
+        "Target": {"Fn::Sub": "integrations/${EdgePublicHttpIntegration}"}
+      }
+    },
+    "EdgePublicHttpStage": {
+      "Type": "AWS::ApiGatewayV2::Stage",
+      "Properties": {
+        "ApiId": {"Ref": "EdgePublicHttpApi"},
+        "StageName": "$default",
+        "AutoDeploy": true,
+        "DefaultRouteSettings": {
+          "ThrottlingBurstLimit": {"Fn::If": ["IsProd", 200, 50]},
+          "ThrottlingRateLimit": {"Fn::If": ["IsProd", 100, 25]}
+        }
+      }
+    },
+    "EdgePublicApiGatewayInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {"Ref": "EdgeLiveAlias"},
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${EdgePublicHttpApi}/*/*"
+        }
+      }
+    },
     "EdgeErrorAlarm": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
@@ -649,6 +705,12 @@
     "EdgeEndpointUrl": {
       "Description": "AWS_IAM-authenticated Carbon regional edge Function URL (:live alias)",
       "Value": {"Fn::GetAtt": ["EdgeFunctionUrl", "FunctionUrl"]}
+    },
+    "PublicEdgeEndpointUrl": {
+      "Description": "Public stage-throttled API Gateway HTTP API v2.0 endpoint (:live alias)",
+      "Value": {
+        "Fn::Sub": "https://${EdgePublicHttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
+      }
     },
     "CasBucketName": {
       "Description": "Encrypted regional CAS S3 bucket",

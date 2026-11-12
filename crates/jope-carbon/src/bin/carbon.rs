@@ -16,12 +16,13 @@ use jope_carbon::{
     execute_carbon_deploy, execute_carbon_package, execute_carbon_redteam_suite,
     execute_carbon_rollback, mint_capability_token_from_vault, now_epoch_ms, open_eval_invoker,
     open_remote_cas, plan_carbon_execution, render_benchmark_markdown, render_redteam_markdown,
-    resolve_cell_stack_endpoint, run_lambda_custom_runtime_loop, CarbonAuthVerifier,
-    CarbonCapabilityClaims, CarbonCliRunOptions, CarbonDeployOptions, CarbonEffortTier,
-    CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker, CarbonEnterpriseServeConfig,
-    CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions, CarbonLocalLambdaEmulator,
-    CarbonPackageOptions, CarbonPlanInput, CarbonProductTier, CarbonRole, CarbonRollbackOptions,
-    CarbonSealKey, CarbonThinClient, MonthlyWindowMetrics, SpotAdvisorThresholds,
+    resolve_cell_stack_endpoint, resolve_public_cloud_endpoint, run_lambda_custom_runtime_loop,
+    CarbonAuthVerifier, CarbonCapabilityClaims, CarbonCliRunOptions, CarbonDeployOptions,
+    CarbonEffortTier, CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker,
+    CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions,
+    CarbonLocalLambdaEmulator, CarbonPackageOptions, CarbonPlanInput, CarbonProductTier,
+    CarbonRole, CarbonRollbackOptions, CarbonSealKey, CarbonThinClient, MonthlyWindowMetrics,
+    SpotAdvisorThresholds,
 };
 
 #[derive(Debug, Parser)]
@@ -101,11 +102,33 @@ enum Command {
         #[arg(long, value_delimiter = ',')]
         to_versions: Vec<String>,
     },
+    /// Probe `/v1/carbon/ping` RTT, region, and zero-knowledge `engine_kek_pubkey_b64` with zero AWS credentials.
+    Ping {
+        #[arg(long, value_delimiter = ',')]
+        endpoint: Vec<String>,
+        /// Named public Carbon cloud (`dev` or `prod`) resolved without AWS credentials.
+        #[arg(long)]
+        cloud: Option<String>,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
+        /// Optional AWS CloudFormation stack environment (`dev`, `staging`, `prod`).
+        #[arg(long = "env")]
+        environment: Option<String>,
+        #[arg(long, default_value = "us-east-2")]
+        region: String,
+    },
     /// Condition & encrypt a local CSV (or synthetic matrix), upload via size-pinned presigned URL,
     /// run `r882`-guided GP waves, and execute E2E encrypted prediction.
     Run {
         #[arg(long, value_delimiter = ',')]
         endpoint: Vec<String>,
+        /// Named public Carbon cloud (`dev` or `prod`) resolved without AWS credentials.
+        #[arg(long)]
+        cloud: Option<String>,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
         /// Optional stack environment (`dev`, `staging`, `prod`) to auto-resolve endpoint & vault token.
         #[arg(long = "env")]
         environment: Option<String>,
@@ -121,8 +144,8 @@ enum Command {
         features: usize,
         #[arg(long, default_value = "cli_tenant")]
         tenant: String,
-        #[arg(long, default_value = "pro")]
-        tier: String,
+        #[arg(long)]
+        tier: Option<String>,
         #[arg(long, default_value = "fast")]
         effort: String,
         #[arg(long, default_value = "rmse")]
@@ -143,6 +166,12 @@ enum Command {
     Bench {
         #[arg(long, value_delimiter = ',')]
         endpoint: Vec<String>,
+        /// Named public Carbon cloud (`dev` or `prod`) resolved without AWS credentials.
+        #[arg(long)]
+        cloud: Option<String>,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
         /// Optional stack environment (`dev`, `staging`, `prod`) to auto-resolve endpoint & vault token.
         #[arg(long = "env")]
         environment: Option<String>,
@@ -162,6 +191,12 @@ enum Command {
         /// Target Carbon endpoint URL (`https://...lambda-url...` or `http://host:port`).
         #[arg(long)]
         endpoint: Option<String>,
+        /// Named public Carbon cloud (`dev` or `prod`) resolved without AWS credentials.
+        #[arg(long)]
+        cloud: Option<String>,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
         /// Optional stack environment (`dev`, `staging`, `prod`) to auto-resolve endpoint.
         #[arg(long = "env")]
         environment: Option<String>,
@@ -659,8 +694,85 @@ fn main() -> ExitCode {
                 }
             }
         }
+        Command::Ping {
+            mut endpoint,
+            cloud,
+            clouds_manifest,
+            environment,
+            region,
+        } => {
+            let mut expected_kek: Option<String> = None;
+            if let Some(cloud_name) = &cloud {
+                match resolve_public_cloud_endpoint(cloud_name, clouds_manifest.as_deref()) {
+                    Ok(entry) => {
+                        expected_kek = entry.engine_kek_pubkey_b64;
+                        if endpoint.is_empty() {
+                            endpoint.push(entry.public_endpoint);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        return ExitCode::from(2);
+                    }
+                }
+            }
+            if let Some(env_name) = &environment {
+                if endpoint.is_empty() {
+                    match resolve_cell_stack_endpoint(env_name, &region) {
+                        Ok(url) => endpoint.push(url),
+                        Err(e) => {
+                            eprintln!("error: {e}");
+                            return ExitCode::from(2);
+                        }
+                    }
+                }
+            }
+            if endpoint.is_empty() {
+                eprintln!(
+                    "error: pass --cloud <dev|prod>, --endpoint <URL>, or --env <dev|staging|prod>"
+                );
+                return ExitCode::from(2);
+            }
+            match CarbonThinClient::connect_fastest(endpoint) {
+                Ok((_, probed)) => {
+                    let Some(first) = probed.first() else {
+                        eprintln!("error: empty probe response");
+                        return ExitCode::from(1);
+                    };
+                    if let Some(exp) = &expected_kek {
+                        if first.engine_kek_pubkey_b64.as_deref() != Some(exp.as_str()) {
+                            eprintln!(
+                                "error: pinned engine_kek_pubkey_b64 mismatch for cloud {:?} (expected {}, got {:?})",
+                                cloud, exp, first.engine_kek_pubkey_b64
+                            );
+                            return ExitCode::from(1);
+                        }
+                    }
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&serde_json::json!({
+                            "healthy": true,
+                            "endpoint": first.base_url,
+                            "region": first.region,
+                            "rtt_ms": first.rtt_ms,
+                            "enterprise_self_hosted": first.enterprise_self_hosted,
+                            "engine_kek_pubkey_b64": first.engine_kek_pubkey_b64,
+                            "kek_pin_verified": expected_kek.is_some(),
+                        }))
+                        .unwrap_or_default()
+                    );
+                    ExitCode::SUCCESS
+                }
+                Err(err) => {
+                    eprintln!("error: carbon ping failed: {err}");
+                    ExitCode::from(1)
+                }
+            }
+        }
         Command::Run {
             mut endpoint,
+            cloud,
+            clouds_manifest,
             environment,
             region,
             csv,
@@ -677,12 +789,61 @@ fn main() -> ExitCode {
             predict_rows,
             shred,
         } => {
-            let (Ok(tier_wire), Ok(effort_val)) =
-                (parse_tier_wire(&tier), parse_api_effort(&effort))
-            else {
+            let effective_tier_str = tier.unwrap_or_else(|| {
+                if cloud.is_some()
+                    && environment.is_none()
+                    && env::var("CARBON_AUTH_TOKEN").is_err()
+                    && env::var("CARBON_AUTH_SECRET_HEX").is_err()
+                {
+                    "free".to_owned()
+                } else {
+                    "pro".to_owned()
+                }
+            });
+            let (Ok(tier_wire), Ok(effort_val)) = (
+                parse_tier_wire(&effective_tier_str),
+                parse_api_effort(&effort),
+            ) else {
                 eprintln!("error: invalid --tier or --effort");
                 return ExitCode::from(2);
             };
+            if let Some(cloud_name) = &cloud {
+                match resolve_public_cloud_endpoint(cloud_name, clouds_manifest.as_deref()) {
+                    Ok(entry) => {
+                        if let Some(exp_kek) = &entry.engine_kek_pubkey_b64 {
+                            let target_ep = endpoint
+                                .first()
+                                .cloned()
+                                .unwrap_or_else(|| entry.public_endpoint.clone());
+                            match CarbonThinClient::connect_fastest(vec![target_ep]) {
+                                Ok((_, probed)) => {
+                                    if probed
+                                        .first()
+                                        .and_then(|p| p.engine_kek_pubkey_b64.as_deref())
+                                        != Some(exp_kek.as_str())
+                                    {
+                                        eprintln!(
+                                            "error: pinned engine_kek_pubkey_b64 mismatch for cloud '{cloud_name}'"
+                                        );
+                                        return ExitCode::from(1);
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("error: {e}");
+                                    return ExitCode::from(1);
+                                }
+                            }
+                        }
+                        if endpoint.is_empty() {
+                            endpoint.push(entry.public_endpoint);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        return ExitCode::from(2);
+                    }
+                }
+            }
             let mut auth_token = None;
             if let Some(env_name) = &environment {
                 if endpoint.is_empty() {
@@ -710,7 +871,9 @@ fn main() -> ExitCode {
                 }
             }
             if endpoint.is_empty() {
-                eprintln!("error: pass --endpoint <URL> or --env <dev|staging|prod>");
+                eprintln!(
+                    "error: pass --cloud <dev|prod>, --endpoint <URL>, or --env <dev|staging|prod>"
+                );
                 return ExitCode::from(2);
             }
             let opts = CarbonCliRunOptions {
@@ -750,6 +913,8 @@ fn main() -> ExitCode {
         }
         Command::Bench {
             mut endpoint,
+            cloud,
+            clouds_manifest,
             environment,
             region,
             tier,
@@ -761,6 +926,17 @@ fn main() -> ExitCode {
                 eprintln!("error: invalid --tier `{tier}`");
                 return ExitCode::from(2);
             };
+            if let Some(cloud_name) = &cloud {
+                if endpoint.is_empty() {
+                    match resolve_public_cloud_endpoint(cloud_name, clouds_manifest.as_deref()) {
+                        Ok(entry) => endpoint.push(entry.public_endpoint),
+                        Err(e) => {
+                            eprintln!("error: {e}");
+                            return ExitCode::from(2);
+                        }
+                    }
+                }
+            }
             let mut pro_token = None;
             if let Some(env_name) = &environment {
                 if endpoint.is_empty() {
@@ -788,7 +964,9 @@ fn main() -> ExitCode {
                 }
             }
             if endpoint.is_empty() {
-                eprintln!("error: pass --endpoint <URL> or --env <dev|staging|prod>");
+                eprintln!(
+                    "error: pass --cloud <dev|prod>, --endpoint <URL>, or --env <dev|staging|prod>"
+                );
                 return ExitCode::from(2);
             }
             match execute_carbon_cli_benchmark_with_token(endpoint, tier_wire, &tenant, pro_token) {
@@ -818,22 +996,37 @@ fn main() -> ExitCode {
         }
         Command::Redteam {
             endpoint,
+            cloud,
+            clouds_manifest,
             environment,
             region,
             json_out,
             markdown_out,
         } => {
-            let resolved_ep = match (endpoint, environment) {
-                (Some(ep), _) => ep,
-                (None, Some(env_name)) => match resolve_cell_stack_endpoint(&env_name, &region) {
-                    Ok(url) => url,
-                    Err(e) => {
-                        eprintln!("error: {e}");
-                        return ExitCode::from(2);
+            let resolved_ep = match (endpoint, cloud, environment) {
+                (Some(ep), _, _) => ep,
+                (None, Some(cloud_name), _) => {
+                    match resolve_public_cloud_endpoint(&cloud_name, clouds_manifest.as_deref()) {
+                        Ok(entry) => entry.public_endpoint,
+                        Err(e) => {
+                            eprintln!("error: {e}");
+                            return ExitCode::from(2);
+                        }
                     }
-                },
-                (None, None) => {
-                    eprintln!("error: pass --endpoint <URL> or --env <dev|staging|prod>");
+                }
+                (None, None, Some(env_name)) => {
+                    match resolve_cell_stack_endpoint(&env_name, &region) {
+                        Ok(url) => url,
+                        Err(e) => {
+                            eprintln!("error: {e}");
+                            return ExitCode::from(2);
+                        }
+                    }
+                }
+                (None, None, None) => {
+                    eprintln!(
+                        "error: pass --cloud <dev|prod>, --endpoint <URL>, or --env <dev|staging|prod>"
+                    );
                     return ExitCode::from(2);
                 }
             };
