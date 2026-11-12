@@ -87,7 +87,7 @@ fn object(state: &DatasetState, id: &ArtifactId) -> Result<(ModelObject, Record)
         let reference = record
             .blobs
             .iter()
-            .find(|b| b.bytes == part.bytes && hex(&b.sha256) == part.sha256)
+            .find(|b| b.bytes == part.bytes && crate::digest::encode_hex(&b.sha256) == part.sha256)
             .ok_or_else(integrity)?;
         parts.insert(
             part.path.clone(),
@@ -100,9 +100,6 @@ fn object(state: &DatasetState, id: &ArtifactId) -> Result<(ModelObject, Record)
     }
     model.verify_executable().map_err(|_| integrity())?;
     Ok((model, record))
-}
-fn hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|v| format!("{v:02x}")).collect()
 }
 fn champion(
     state: &DatasetState,

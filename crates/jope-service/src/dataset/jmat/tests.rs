@@ -170,7 +170,7 @@ fn semantic_digest<B: AsRef<[u8]>>(matrix: &Matrix<B>) -> String {
             }
         }
     }
-    hash.finalize().iter().map(|v| format!("{v:02x}")).collect()
+    crate::digest::encode_hex(&hash.finalize())
 }
 
 #[test]
