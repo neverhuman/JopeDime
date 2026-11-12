@@ -141,3 +141,15 @@ Coordination with Gemini goes through `/home/ubuntu/jope_plan/H450_CLAUDE_GEMINI
   - Pairs: A = (L_A at epoch N, M_init) and B = (L_B at epoch N, M_init). Epoch 0 is the init L in both pairs and also serves as the zero-dev91 control arm.
   - Everything else is as in §3 and §4.
 - **Log field.** The trainer's `ds_per_s` field counts micro-batches per second, not datasets. Datasets per second is computed from the `datasets` difference between log lines; the 104M runs about 29/s on a 3090. The trainer bytes are unchanged, and the mislabel is recorded here as a finding.
+
+## 6. Amendment pub-r8 (2026-11-12 about 21:46Z): two-GPU sharded dev91 evaluator
+
+On one 3090 that is also training, `cols_h450_gpu.py` takes about 2.4 minutes per context, or about 3.6 hours for all 91. `eval_gpu_h450.sh` now splits the contexts by index parity:
+- **Shard 0:** the xbabe2 GPU.
+- **Shard 1:** the xbabe3 GPU, which also verifies the stage, eval bank and checkpoint sha256.
+
+Every epoch uses the same split. Both hosts run torch 2.7.0 and numpy 1.26.4.
+
+The pub-r7 single-GPU baseline was stopped after 3 contexts, before any analysis. Its directory is kept as `g00_init.SUPERSEDED_single_gpu`.
+
+**Cadence.** The evaluator scores the newest pair of epoch checkpoints as soon as the previous evaluation finishes. N is therefore about every 2 epochs, or about 150–200k datasets per 104M run. Each result is reported with each run's unique-dataset count.
