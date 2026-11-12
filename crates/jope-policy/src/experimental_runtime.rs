@@ -539,7 +539,7 @@ pub fn prepare(
         "site_packages": site_packages,
         "source_files": sources,
         "package_files": installed.into_values().collect::<Vec<_>>(),
-        "runtime_sha256": format!("{:x}", Sha256::digest(encoded(&context.identity)?)),
+        "runtime_sha256": crate::sha256_hex(&encoded(&context.identity)?),
         "environment": {
             "PATH": "/usr/bin:/bin",
             "LC_ALL": "C.UTF-8",
@@ -666,10 +666,7 @@ mod tests {
         write_text(&package, "# fixture distribution");
         let executable = std::env::current_exe().unwrap();
         let distribution_files = json!({"synthetic.py": sha(&package).unwrap()});
-        let distribution_digest = format!(
-            "{:x}",
-            Sha256::digest(encoded(&distribution_files).unwrap())
-        );
+        let distribution_digest = crate::sha256_hex(&encoded(&distribution_files).unwrap());
         let identity = json!({
             "python": artifact(&executable).unwrap(),
             "sources": {"policy/experimental_proposal.py": sha(&module).unwrap()},
@@ -707,7 +704,7 @@ mod tests {
         assert_eq!(value["package_files"], json!([artifact(&package).unwrap()]));
         assert_eq!(
             value["runtime_sha256"],
-            format!("{:x}", Sha256::digest(encoded(&identity).unwrap()))
+            crate::sha256_hex(&encoded(&identity).unwrap())
         );
         assert_eq!(
             manifest["packages"]["synthetic"]["files"]["synthetic.py"],
