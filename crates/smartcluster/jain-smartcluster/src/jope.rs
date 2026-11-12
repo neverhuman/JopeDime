@@ -17,6 +17,10 @@ use crate::{
 pub const MANIFEST_SCHEMA: &str = "jope.smartcluster_task.v1";
 pub const MAX_MANIFEST_BYTES: u64 = 1024 * 1024;
 
+fn sha256_hex(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
+
 /// No executable, shell, environment override, or free-form argv is accepted.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -250,7 +254,7 @@ pub fn job_spec(
     if bytes.len() as u64 > MAX_MANIFEST_BYTES {
         return Err(invalid("manifest", "manifest exceeds 1 MiB").into());
     }
-    if format!("{:x}", Sha256::digest(&bytes)) != expected_sha256 {
+    if sha256_hex(&bytes) != expected_sha256 {
         return Err(invalid("manifest_sha256", "manifest bytes changed").into());
     }
     let task: TaskManifest = serde_json::from_slice(&bytes)?;
@@ -338,7 +342,7 @@ mod tests {
         let path = dir.path().join("task.json");
         let bytes = serde_json::to_vec(task).unwrap();
         std::fs::write(&path, &bytes).unwrap();
-        (path, format!("{:x}", Sha256::digest(&bytes)))
+        (path, sha256_hex(&bytes))
     }
 
     fn spec(path: &Path, hash: &str) -> Result<JobSpec, TaskError> {
