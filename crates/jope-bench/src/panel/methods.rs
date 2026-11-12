@@ -6,7 +6,6 @@ use feat_math::advanced_v3::{
 use feat_math::GenomeIr;
 use jope_datasets::catalog::Task;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 
 use super::data::{fitting_input_sha256, raw_table, RAW_CELL_ENCODING};
@@ -245,7 +244,7 @@ pub fn fit_rust(request: &RustFitRequest) -> Result<RustFitResult> {
 }
 
 pub fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_runtime::sha256_hex(bytes)
 }
 
 /// Raw nullable strings preserve literal categories such as "NA", "null" and whitespace.

@@ -9,7 +9,6 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use serde::de::{Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
-use sha2::{Digest, Sha256};
 use std::{
     cmp::Ordering,
     fmt::{self, Write as _},

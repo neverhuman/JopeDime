@@ -67,7 +67,7 @@ struct CutIdentity<'a> {
 /// SHA-256 of `serde_json::to_vec(value)` (field order as declared).
 pub fn canonical_sha256<T: Serialize>(value: &T) -> Result<String> {
     let bytes = serde_json::to_vec(value)?;
-    Ok(format!("{:x}", Sha256::digest(bytes)))
+    Ok(jope_runtime::sha256_hex(&bytes))
 }
 
 fn indices_sha256(indices: &[usize]) -> String {
