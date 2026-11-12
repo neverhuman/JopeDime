@@ -291,6 +291,13 @@ def enumerate_and_screen_metadata_plan() -> dict:
         if t is not None:
             confirm_tokens.append((f"confirm_idx_{len(confirm_tokens)}", t))
 
+    dev_meta_tokens = []
+    for r in apex_rows:
+        if r["cohort"] == "DEV":
+            t = name_tokens(r["family_key"])
+            if t is not None:
+                dev_meta_tokens.append((f"dev_meta_{len(dev_meta_tokens)}", t))
+
     dev91_tokens = []
     dev91_urls, dev91_files, dev91_names = set(), set(), set()
     for idx, r in enumerate(sel_doc["dev"]):
@@ -328,13 +335,21 @@ def enumerate_and_screen_metadata_plan() -> dict:
             ar = apex_by_ds[ds_id]
             if ar["cohort"] != bkt:
                 raise SystemExit(f"cohort mismatch on {ds_id}")
+            is_core_apex = bool(ar["rows"] >= 800 and 3 <= ar["width"] <= 400)
+            if bkt == "FIT-ICL":
+                coh_lbl, skind = "FIT-ICL", "apex_sandbox_full"
+            elif is_core_apex:
+                coh_lbl, skind = "FIT-SEL-SEARCH", "apex_sandbox_search"
+            else:
+                # Non-core FIT-SEL contexts are not deployed in H417 (0 AUDIT splits) and absent from the 661-table sandbox
+                coh_lbl, skind = "FIT-SEL-TRAINONLY", "s3_train_csv_blob"
             raw_candidates.append({
                 "dataset_id": ds_id,
                 "cid": ar["context_sha256"],
                 "family": ar["family_id"],
                 "family_key": fkey,
-                "cohort": "FIT-ICL" if bkt == "FIT-ICL" else "FIT-SEL-SEARCH",
-                "source_kind": "apex_sandbox_search" if bkt == "FIT-SEL" else "apex_sandbox_full",
+                "cohort": coh_lbl,
+                "source_kind": skind,
                 "path": None,
                 "expected_cols": int(row246["shape"]["columns"]),
                 "train_sha256": tr_meta["sha256"],
@@ -406,13 +421,14 @@ def enumerate_and_screen_metadata_plan() -> dict:
                 "train_bytes": 0,
             })
 
-    # Apply CONFIRM (241) and DL-Val / dev91 (19) S4 + source metadata filters right here before S3 fetch!
+    # Apply CONFIRM (241), all DEV (239), and DL-Val / dev91 (19) S4 + source metadata filters right here before S3 fetch!
     admitted_entries = []
     dropped_meta_s4 = []
     for e in raw_candidates:
         ds_id = e["dataset_id"]
         tok = name_tokens(e["family_key"])
         hit_conf = _s4_hit_stdlib(tok, confirm_tokens)
+        hit_dev_meta = _s4_hit_stdlib(tok, dev_meta_tokens)
         hit_d91 = _s4_hit_stdlib(tok, dev91_tokens)
         dm = cat_enrich.get(ds_id, {})
         meta_url_hit = bool(
@@ -420,12 +436,13 @@ def enumerate_and_screen_metadata_plan() -> dict:
             or (dm.get("source_file") and dm["source_file"] in dev91_files)
             or (norm_name(dm.get("name")) and norm_name(dm.get("name")) in dev91_names)
         )
-        if hit_conf or hit_d91 or meta_url_hit:
+        if hit_conf or hit_dev_meta or hit_d91 or meta_url_hit:
             dropped_meta_s4.append({
                 "cid": e["cid"],
                 "dataset_id": ds_id,
                 "family_key": e["family_key"],
                 "hit_confirm": hit_conf,
+                "hit_dev_meta": hit_dev_meta,
                 "hit_val": hit_d91,
                 "hit_val_source": meta_url_hit,
             })
@@ -699,16 +716,16 @@ def cmd_build(a) -> None:
         raise SystemExit(f"{out_dir} already non-empty (create-once)")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Build H425 feature-only sketches for all 239 APEX-DEV tables in sandbox (target column NEVER sketched!)
+    # 1. Build H425 feature-only sketches for all 115 core APEX-DEV tables in sandbox (target column NEVER sketched!)
     dev_queries = []
     for cid, r in sorted(A.rows().items()):
-        if r["cohort"] != "DEV":
+        if r["cohort"] != "DEV" or not A.is_core(r):
             continue
         env = C.read_jtt1(C.table_path(cid))
         X_dev = np.asarray(env.mat[:, :-1], np.float64)
         dev_queries.append((_sketch_matrix_x(cid, X_dev), S425.name_tokens(r["family_key"])))
-    if len(dev_queries) != 239:
-        raise SystemExit(f"expected 239 APEX-DEV contexts, got {len(dev_queries)}")
+    if len(dev_queries) != 115:
+        raise SystemExit(f"expected 115 core APEX-DEV contexts in sandbox, got {len(dev_queries)}")
 
     # 2. Load sandbox-bound entries in main process, and non-APEX entries in Pool
     loaded_records = []
