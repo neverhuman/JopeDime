@@ -521,7 +521,10 @@ fn ensure_zig_musl_wrappers(wrapper_dir: &Path) -> Result<Option<ZigMuslWrappers
         Some(PathBuf::from(
             "target/zig-stage/zig-linux-x86_64-0.13.0/zig",
         )),
-        std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/zig/zig")),
+        crate::home_path::absolute_home_path(
+            std::env::var_os("HOME").as_deref(),
+            &[".local", "zig", "zig"],
+        ),
     ];
     let Some(zig_bin) = zig_candidates.into_iter().flatten().find(|p| p.is_file()) else {
         return Ok(None);
