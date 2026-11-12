@@ -130,7 +130,12 @@ fn the_terminal_routes_logs_in_streams_and_syncs_results() {
         ("TERM", "dumb"),
     ];
     let mut terminal = pty::PtySession::spawn_jopedime_with_env(&[], &env).unwrap();
-    wait(&mut terminal, "engine background", 15);
+    // Outlast `jope_client::discover::STARTUP_TIMEOUT`: the child prints this only after discovery.
+    wait(
+        &mut terminal,
+        "engine background",
+        (jope_client::discover::STARTUP_TIMEOUT + Duration::from_secs(15)).as_secs(),
+    );
     for setting in [
         "\\landmarks none",
         "\\lang rust",
@@ -235,7 +240,12 @@ fn under_the_public_rule_own_files_need_a_login_and_train_in_the_cloud() {
         ("TERM", "dumb"),
     ];
     let mut terminal = pty::PtySession::spawn_jopedime_with_env(&[], &env).unwrap();
-    wait(&mut terminal, "engine background", 15);
+    // Outlast `jope_client::discover::STARTUP_TIMEOUT`: the child prints this only after discovery.
+    wait(
+        &mut terminal,
+        "engine background",
+        (jope_client::discover::STARTUP_TIMEOUT + Duration::from_secs(15)).as_secs(),
+    );
     let open = format!("/open {}", f.csv.display());
 
     // Signed out: an own file does not open (JAIN_ALLOW_LOCAL_FILES has no effect here).

@@ -190,7 +190,11 @@ fn live_dataset_cli_and_terminal_surfaces_do_not_echo_private_cells() -> std::io
             ("TERM", "dumb"),
         ],
     )?;
-    let screen = terminal.wait_for_text("engine background", Duration::from_secs(10))?;
+    // Outlast client discovery: the child prints this only after the engine is ready.
+    let screen = terminal.wait_for_text(
+        "engine background",
+        jope_client::discover::STARTUP_TIMEOUT + Duration::from_secs(15),
+    )?;
     assert_no_internal_sentinels(&screen);
     // The local run backend validates a bounded regression task with no landmarks
     // when a dataset is opened. Configure that draft before registration.
