@@ -34,7 +34,6 @@ os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
 import numpy as np
 import torch
-from scipy.special import erfinv
 
 torch.set_num_threads(2)
 
@@ -50,12 +49,163 @@ for _cand in (
         sys.path.append(_cand)
 
 import icl_inject as INJ  # noqa: E402
-import relational_struct_h450 as REL  # noqa: E402
-import robust_resid_h450 as RR  # noqa: E402
 from icl_model import FID_SLOTS  # noqa: E402
 from icl_model_mps_h450 import ICLH450MPS, n_params  # noqa: E402
 from icl_prior_v3s import PROBS_V3S, Prior, draw_features  # noqa: E402
 from mmap_bank_h450 import MmapF64Bank, sha256_file  # noqa: E402
+
+
+def _erfinv_np(x: np.ndarray) -> np.ndarray:
+    return torch.erfinv(torch.from_numpy(np.asarray(x, dtype=np.float64))).numpy()
+
+
+def _detect_atom_np(y: np.ndarray) -> float | None:
+    yf = np.asarray(y, dtype=np.float64)
+    yf = yf[np.isfinite(yf)]
+    if yf.size < 32:
+        return None
+    vals, cnts = np.unique(yf, return_counts=True)
+    top_i = int(np.argmax(cnts))
+    cnt = int(cnts[top_i])
+    val = float(vals[top_i])
+    if cnt < 6 or cnt / float(yf.size) < 0.05 or cnt >= yf.size - 16:
+        return None
+    rest = yf[yf != val]
+    if rest.size < 16:
+        return None
+    med = float(np.median(rest))
+    q25, q75 = np.percentile(rest, [25.0, 75.0])
+    scale = max((q75 - q25) / 1.349, float(np.std(rest)), 1e-9)
+    if abs(val - med) >= 2.5 * scale or val in (-99.99, -999.0, -9999.0, 9999.0):
+        return val
+    return None
+
+
+def _robust_ridge_np(X_ctx: np.ndarray, y_ctx: np.ndarray, X_q: np.ndarray, seed: int = 450, folds: int = 5):
+    """Pure NumPy SVD-GCV 5-fold OOF robust ridge (identical math to `robust_resid_h450.robust_ridge_np`, zero scipy)."""
+    X_ctx = np.asarray(X_ctx, dtype=np.float64)
+    y_ctx = np.asarray(y_ctx, dtype=np.float64)
+    X_q = np.asarray(X_q, dtype=np.float64)
+    n_c, p = X_ctx.shape
+    n_q = X_q.shape[0]
+    ym = float(np.mean(y_ctx))
+    sy = float(np.std(y_ctx))
+    if n_c < 16 or p == 0 or sy <= 1e-12:
+        return np.full(n_c, ym), np.full(n_q, ym), False, 0.0
+    miss_c = ~np.isfinite(X_ctx)
+    miss_q = ~np.isfinite(X_q)
+    med = np.zeros(p, dtype=np.float64)
+    sc = np.ones(p, dtype=np.float64)
+    for j in range(p):
+        fin = ~miss_c[:, j]
+        if np.any(fin):
+            v = X_ctx[fin, j]
+            med[j] = float(np.median(v))
+            q25, q75 = np.quantile(v, [0.25, 0.75]) if len(v) >= 4 else (med[j] - 1.0, med[j] + 1.0)
+            iqr = float(q75 - q25) / 1.349
+            sd = float(np.std(v))
+            sc[j] = iqr if iqr > 1e-8 * max(sd, 1.0) and iqr > 0.0 else (sd if sd > 1e-12 else 1.0)
+    zc = 6.0 * np.tanh(np.clip((np.where(miss_c, med[None, :], X_ctx) - med[None, :]) / sc[None, :], -30.0, 30.0) / 6.0)
+    zq = 6.0 * np.tanh(np.clip((np.where(miss_q, med[None, :], X_q) - med[None, :]) / sc[None, :], -30.0, 30.0) / 6.0)
+    miss_cols = [j for j in range(p) if float(np.mean(miss_c[:, j])) >= 0.01][:16]
+    if miss_cols:
+        zc = np.hstack([zc, miss_c[:, miss_cols].astype(np.float64)])
+        zq = np.hstack([zq, miss_q[:, miss_cols].astype(np.float64)])
+    mu_z = zc.mean(axis=0, keepdims=True)
+    zc0, zq0, yc0 = zc - mu_z, zq - mu_z, y_ctx - ym
+    U, s, Vt = np.linalg.svd(np.where(np.isfinite(zc0), zc0, 0.0), full_matrices=False)
+    s2 = s * s
+    uty = U.T @ yc0
+    U2 = U * U
+    best_lam, best_loo_mse = 1.0, float("inf")
+    for lam in (0.15, 1.0, 8.0, 60.0):
+        filt = s2 / (s2 + lam)
+        yhat = U @ (filt * uty)
+        h = np.clip(U2 @ filt + (1.0 / n_c), 0.0, 0.98)
+        loo_err = (yc0 - yhat) / (1.0 - h)
+        mse = float(np.mean(loo_err * loo_err))
+        if mse < best_loo_mse:
+            best_loo_mse, best_lam = mse, lam
+    w_full = Vt.T @ ((s / (s2 + best_lam)) * uty)
+    pred_q = zq0 @ w_full + ym
+    rng = np.random.default_rng(seed)
+    fold = rng.permutation(n_c) % folds
+    oof = np.full(n_c, ym, dtype=np.float64)
+    d = zc0.shape[1]
+    G_full, rhs_full, s_full, sy_full = zc0.T @ zc0, zc0.T @ yc0, zc0.sum(axis=0), float(yc0.sum())
+    eye = best_lam * np.eye(d, dtype=np.float64)
+    for k in range(folds):
+        mk = fold == k
+        nk = int(np.sum(mk))
+        if nk == 0 or nk >= n_c:
+            continue
+        zk, yk = zc0[mk], yc0[mk]
+        ntr = float(n_c - nk)
+        ym_tr = (sy_full - float(yk.sum())) / ntr
+        s_tr = s_full - zk.sum(axis=0)
+        G_tr = G_full - zk.T @ zk - np.outer(s_tr, s_tr) / ntr + eye
+        b_tr = (rhs_full - zk.T @ yk) - ym_tr * s_tr
+        try:
+            wk = np.linalg.solve(G_tr, b_tr)
+        except Exception:
+            wk = np.linalg.lstsq(G_tr, b_tr, rcond=1e-8)[0]
+        oof[mk] = (zk - (s_tr / ntr)[None, :]) @ wk + ym + ym_tr
+    y_lo, y_hi = float(np.min(y_ctx)), float(np.max(y_ctx))
+    span = max(y_hi - y_lo, sy)
+    oof = np.clip(oof, y_lo - 1.5 * span, y_hi + 1.5 * span)
+    pred_q = np.clip(pred_q, y_lo - 1.5 * span, y_hi + 1.5 * span)
+    rc = y_ctx - oof
+    rmse_oof = float(np.sqrt(np.mean(rc * rc)))
+    u_oof = -math.log(max(rmse_oof / sy, 1e-12))
+    used = bool(np.all(np.isfinite(oof)) and np.all(np.isfinite(pred_q)) and rmse_oof < 0.985 * sy and float(np.std(rc)) >= 5e-4 * sy)
+    return oof, pred_q, used, u_oof
+
+
+def _yj_eval_np(yn: np.ndarray, lam: float) -> np.ndarray:
+    pos = yn >= 0.0
+    out = np.empty_like(yn, dtype=np.float64)
+    if abs(lam) < 1e-6:
+        out[pos] = np.log1p(yn[pos])
+    else:
+        out[pos] = (np.power(yn[pos] + 1.0, lam) - 1.0) / lam
+    lam2 = 2.0 - lam
+    if abs(lam2) < 1e-6:
+        out[~pos] = -np.log1p(-yn[~pos])
+    else:
+        out[~pos] = -(np.power(1.0 - yn[~pos], lam2) - 1.0) / lam2
+    return out
+
+
+def _yeojohnson_pair_np(yc: np.ndarray, yq: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
+    """Exact pure-NumPy Yeo-Johnson MLE fit on `yc` applied to `(yc, yq)` (zero scipy)."""
+    mu = float(np.mean(yc))
+    sd = max(float(np.std(yc)), 1e-12)
+    ync = (yc - mu) / sd
+    ynq = (yq - mu) / sd
+    if ync.size < 16:
+        return None
+    skew = abs(float(np.mean(ync ** 3)))
+    if skew < 0.25:
+        return ync, ynq
+    sgn_log = np.sign(ync) * np.log1p(np.abs(ync))
+    sum_sl = float(np.sum(sgn_log))
+    n = float(ync.size)
+    best_lam, best_ll = 1.0, -float("inf")
+    for lam in np.linspace(-1.5, 2.5, 41):
+        zt = _yj_eval_np(ync, float(lam))
+        v = float(np.var(zt))
+        if v <= 1e-18 or not math.isfinite(v):
+            continue
+        ll = -0.5 * n * math.log(v) + (float(lam) - 1.0) * sum_sl
+        if ll > best_ll:
+            best_ll, best_lam = ll, float(lam)
+    zt_c = _yj_eval_np(ync, best_lam)
+    zt_q = _yj_eval_np(ynq, best_lam)
+    z_mu = float(np.mean(zt_c))
+    z_sd = float(np.std(zt_c))
+    if z_sd <= 1e-9 or not (np.all(np.isfinite(zt_c)) and np.all(np.isfinite(zt_q))):
+        return None
+    return (zt_c - z_mu) / z_sd, (zt_q - z_mu) / z_sd
 
 WIDE_GPU = 64
 MAX_TRAIN_ROWS = 2048
@@ -176,7 +326,7 @@ def _inject_synth_cols_np(Xc: np.ndarray, Xq: np.ndarray, k_inj: int, rng: np.ra
             else:
                 c_sorted = np.sort(za[:n_c])
                 ranks = (np.searchsorted(c_sorted, za, side="left") + 0.5) / float(n_c + 1)
-                col = math.sqrt(2.0) * erfinv(np.clip(2.0 * ranks - 1.0, -0.9999, 0.9999))
+                col = math.sqrt(2.0) * _erfinv_np(np.clip(2.0 * ranks - 1.0, -0.9999, 0.9999))
         elif kind == 5:
             col = (za > float(np.percentile(za[:n_c], 25.0 if alt else 75.0))).astype(np.float64)
         else:
@@ -280,7 +430,7 @@ def bidirectional_real_episode(
     if tmode in (0, 1) or blend_real_teacher:
         tab = tab[np.isfinite(tab[:, tcol])]
         if tmode == 0 and rng.random() < 0.45 and tab.shape[0] >= 32:
-            atom = RR.HurdleSentinelDetector.detect_atom(tab[:, tcol])
+            atom = _detect_atom_np(tab[:, tcol])
             if atom is not None:
                 keep = np.abs(tab[:, tcol] - atom) > 1e-7 * max(1.0, abs(atom))
                 if int(np.sum(keep)) >= 32 and (n_rows_fixed is None or int(np.sum(keep)) >= n_rows_fixed):
@@ -404,16 +554,14 @@ def bidirectional_real_episode(
     space = 0
     y_ep = np.concatenate([yc, yq])
     if u_sp < 0.40:
-        oof, pq, used, _ = RR.robust_ridge_np(Xc, yc, Xq, seed=int(rng.integers(1, 1 << 30)))
+        oof, pq, used, _ = _robust_ridge_np(Xc, yc, Xq, seed=int(rng.integers(1, 1 << 30)))
         if used:
             y_ep = np.concatenate([yc - oof, yq - pq])
             space = 1
     elif u_sp < 0.60:
-        warp = RR.YeoJohnsonWarpF64()
-        zc = warp.fit_transform(yc)
-        zq = warp.transform_any(yq)
-        if np.all(np.isfinite(zc)) and np.all(np.isfinite(zq)) and float(np.std(zc)) > 1e-8:
-            y_ep = np.concatenate([zc, zq])
+        yj_pair = _yeojohnson_pair_np(yc, yq)
+        if yj_pair is not None and float(np.std(yj_pair[0])) > 1e-8:
+            y_ep = np.concatenate([yj_pair[0], yj_pair[1]])
             space = 2
     X_ep = np.vstack([Xc, Xq])
     if X_ep.shape[1] != F or not np.all(np.isfinite(y_ep)) or float(np.std(y_ep[:n_ctx])) <= 1e-12:
@@ -444,13 +592,9 @@ def _sample_full_synth_special(B: int, N: int, Fn: int, n_ctx: int, rng: np.rand
             perm = rng.permutation(N)
             X_full, y_b = X_full[perm], y_b[perm]
             if Fn >= 8 and rng.random() < 0.50:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    Xc_cl, Xq_cl, Sc, Sq, _ = REL.build_h450_struct_cols(
-                        X_full[:n_ctx, : max(2, Fn - 6)], y_b[:n_ctx], X_full[n_ctx:, : max(2, Fn - 6)],
-                        seed=int(rng.integers(1, 1 << 30)), fast_mode=True, max_total_cols=6, include_base_struct=False,
-                    )
-                X_aug = np.vstack([np.hstack([Xc_cl, Sc]) if Sc.shape[1] else Xc_cl, np.hstack([Xq_cl, Sq]) if Sq.shape[1] else Xq_cl])
+                Ic, Iq = _inject_synth_cols_np(X_full[:n_ctx, : max(2, Fn - 4)], X_full[n_ctx:, : max(2, Fn - 4)], 4, rng)
+                X_aug = np.vstack([np.hstack([X_full[:n_ctx, : max(2, Fn - 4)], Ic]),
+                                   np.hstack([X_full[n_ctx:, : max(2, Fn - 4)], Iq])])
                 if X_aug.shape[1] < Fn:
                     X_aug = np.hstack([X_aug, rng.standard_normal((N, Fn - X_aug.shape[1]))])
                 X_full = X_aug[:, :Fn]
@@ -661,6 +805,7 @@ def main() -> None:
     ap.add_argument("--grad-accum", type=int, default=3)
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--cpu-hard-pct", type=float, default=82.0)
+    ap.add_argument("--cuda-vram-frac", type=float, default=0.80)
     ap.add_argument("--seed", type=int, default=450_441)
     ap.add_argument("--device", default="mps")
     a = ap.parse_args()
@@ -711,6 +856,8 @@ def main() -> None:
         torch.cuda.manual_seed_all(a.seed)
         torch.backends.cuda.matmul.allow_tf32 = True
         torch.backends.cudnn.allow_tf32 = True
+        if a.cuda_vram_frac > 0.0:
+            torch.cuda.set_per_process_memory_fraction(min(0.84, a.cuda_vram_frac + 0.03), dev.index or 0)
 
     model = ICLH450MPS(a.size).to(dev)
     ema = ICLH450MPS(a.size).to(dev).eval()
@@ -805,9 +952,12 @@ def main() -> None:
                 else:
                     xa, ya = _sample_full_synth_special(B, N, Fn, n_ctx, py_rng)
                 if float(py_rng.random()) < 0.40:
-                    yt_f, _, _ = RR.robust_residual_targets_torch(torch.from_numpy(xa).float(), torch.from_numpy(ya).float(),
-                                                                  n_ctx, seed=int(py_rng.integers(1, 1 << 30)))
-                    ya = yt_f.double().numpy()
+                    seed_r = int(py_rng.integers(1, 1 << 30))
+                    for b_i in range(xa.shape[0]):
+                        oof_b, pq_b, used_b, _ = _robust_ridge_np(xa[b_i, :n_ctx], ya[b_i, :n_ctx], xa[b_i, n_ctx:], seed=seed_r + 31 * b_i)
+                        if used_b:
+                            ya[b_i, :n_ctx] -= oof_b
+                            ya[b_i, n_ctx:] -= pq_b
                 infos = None
                 fps = [dataset_fingerprint_128(xa[b_], ya[b_], n_ctx) for b_ in range(xa.shape[0])]
             else:
@@ -872,6 +1022,19 @@ def main() -> None:
                     decay = min(0.995, (1.0 + state["step"]) / (10.0 + state["step"]))
                     for pe, pm in zip(ema.parameters(), model.parameters()):
                         pe.lerp_(pm, 1.0 - decay)
+                if dev.type == "cuda" and a.cuda_vram_frac > 0.0 and state["step"] == 3:
+                    try:
+                        free_b, tot_b = torch.cuda.mem_get_info(dev)
+                        used_b = tot_b - free_b
+                        tgt_b = int(a.cuda_vram_frac * tot_b)
+                        if used_b < tgt_b - (64 << 20):
+                            _pool_warm = torch.empty(tgt_b - used_b, dtype=torch.uint8, device=dev)
+                            del _pool_warm
+                    except Exception:
+                        pass
+                if state["step"] == 10:
+                    save_last()
+                    t_last = time.time()
 
             now = time.time()
             if now - t_log >= 30.0 and run_n > 0:

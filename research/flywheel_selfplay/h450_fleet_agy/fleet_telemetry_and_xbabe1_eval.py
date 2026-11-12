@@ -113,15 +113,24 @@ def collect_run_logs() -> dict[str, dict]:
     specs = [
         ("r4_L_A", "xbabe2", "104M (L)", "/home/ubuntu/jope-data/h450-quarantine/r4/runs/r4_L_A/log.jsonl"),
         ("r4_L_B", "xbabe3", "104M (L)", "/home/ubuntu/jope-data/h450-r4-x3/runs/r4_L_B/log.jsonl"),
+        ("fleet_L_x1", "xbabe1", "104M (L)", "/home/ubuntu/jope-data/h450-fleet-agy/runs/fleet_L_x1/log.jsonl"),
         ("fleet_L_x4", "xbabe4", "104M (L)", "/Users/agent/jope-data/h450-fleet-agy/runs/fleet_L_x4/log.jsonl"),
         ("r4_M_A", "xbabe2", "24M (M)", "/home/ubuntu/jope-data/h450-quarantine/r4/runs/r4_M_A/log.jsonl"),
         ("r4_M_B", "xbabe3", "24M (M)", "/home/ubuntu/jope-data/h450-r4-x3/runs/r4_M_B/log.jsonl"),
     ]
+    now = int(time.time())
     for name, host, size_lbl, log_p in specs:
-        rc, out = _ssh(host, f"tail -n 5 {log_p} 2>/dev/null || true", timeout=8.0)
+        stat_cmd = f"stat -f %m {log_p} 2>/dev/null || echo 0" if host == "xbabe4" else f"stat -c %Y {log_p} 2>/dev/null || echo 0"
+        rc, out = _ssh(host, f"({stat_cmd}); tail -n 5 {log_p} 2>/dev/null || true", timeout=8.0)
         rec = None
+        mtime = 0
         if rc == 0 and out:
-            for line in reversed(out.splitlines()):
+            lines = out.splitlines()
+            try:
+                mtime = int(lines[0].strip())
+            except Exception:
+                mtime = 0
+            for line in reversed(lines[1:]):
                 try:
                     d = json.loads(line)
                     if "datasets" in d and "loss" in d:
@@ -131,8 +140,9 @@ def collect_run_logs() -> dict[str, dict]:
                     continue
         if rec:
             dups = int(rec.get("dup_real", 0)) + int(rec.get("dup_synth", 0)) + int(rec.get("dup_fed", 0))
+            is_live = (mtime > 0 and (now - mtime) < 240)
             runs[name] = {
-                "host": host, "size": size_lbl, "active": True,
+                "host": host, "size": size_lbl, "active": is_live, "has_log": True,
                 "step": int(rec.get("step", 0)), "train_h": float(rec.get("train_h", 0.0)),
                 "loss": float(rec.get("loss", 0.0)),
                 "unique_datasets": int(rec.get("unique_datasets", rec.get("datasets", 0))),
@@ -143,7 +153,7 @@ def collect_run_logs() -> dict[str, dict]:
                 "mem_gb": float(rec.get("mem_gb", 0.0)),
             }
         else:
-            runs[name] = {"host": host, "size": size_lbl, "active": False, "step": 0, "train_h": 0.0, "loss": 0.0,
+            runs[name] = {"host": host, "size": size_lbl, "active": False, "has_log": False, "step": 0, "train_h": 0.0, "loss": 0.0,
                           "unique_datasets": 0, "datasets_seen": 0, "dups_fed": 0, "src_tables_seen": 0, "inj_share": 0.0, "mem_gb": 0.0}
     return runs
 
@@ -202,8 +212,9 @@ def build_104m_soup(ckpt_paths: list[Path], out_path: Path) -> str:
     return _sha256(out_path)
 
 
-def run_xbabe1_milestone_eval(milestone_ds: int, runs: dict[str, dict], shards: int = 18, threads: int = 2) -> dict | None:
-    """Evaluates current fleet `104M` EMA checkpoints on `xbabe1` CPU (`<= 75%` CPU, `0` GPU touched) on frozen `dev91`."""
+def run_xbabe0_fast_milestone_eval(milestone_ds: int, runs: dict[str, dict]) -> dict | None:
+    """Evaluates `104M` EMA soup (`ms_0000k` init baseline or `ms_NNNNk` 4-GPU fleet soup) across `xbabe0`'s `128` CPUs
+    in ~2-4 minutes via `fast_dev91_every_n_h450.py` (`<= 75%` CPU on `xbabe0`, `0` GPU/RAM touched on `xbabe1`/`xbabe2`/`xbabe3`)."""
     tag = f"ms_{milestone_ds // 1000:04d}k"
     diag_dir = DIAG_ROOT / f"fleet_x1_{tag}"
     if (diag_dir / "H450_DEV91.json").is_file():
@@ -211,114 +222,85 @@ def run_xbabe1_milestone_eval(milestone_ds: int, runs: dict[str, dict], shards: 
 
     work_ck = FLEET_ROOT / "eval_ckpts" / tag
     work_ck.mkdir(parents=True, exist_ok=True)
-
-    # Snapshot read-only checkpoints (copying `.pt` safely; retry once if mid-rename)
-    la_src = Path("/home/ubuntu/jope-data/h450-quarantine/r4/runs/r4_L_A/ckpt_last.pt")
-    ma_src = Path("/home/ubuntu/jope-data/h450-quarantine/r4/runs/r4_M_A/ckpt_last.pt")
     init_l = Path("/home/ubuntu/jope-data/h449-non-d91/ckpts_v2/all_non_d91_L/ckpt_unfair_final.pt")
-    init_m = Path("/home/ubuntu/jope-data/h449-non-d91/ckpts_v2/all_non_d91_M/ckpt_unfair_final.pt")
-
-    la_p = work_ck / "la.pt"
-    ma_p = work_ck / "ma.pt"
-    lb_p = work_ck / "lb.pt"
-    mb_p = work_ck / "mb.pt"
-
-    shutil.copyfile(la_src if la_src.is_file() else init_l, la_p)
-    shutil.copyfile(ma_src if ma_src.is_file() else init_m, ma_p)
-
-    rc_lb, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes",
-                    "xbabe3:/home/ubuntu/jope-data/h450-r4-x3/runs/r4_L_B/ckpt_last.pt", str(lb_p)], timeout=60.0)
-    if rc_lb != 0 or not lb_p.is_file():
-        shutil.copyfile(la_p, lb_p)
-
-    rc_mb, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes",
-                    "xbabe3:/home/ubuntu/jope-data/h450-r4-x3/runs/r4_M_B/ckpt_last.pt", str(mb_p)], timeout=60.0)
-    if rc_mb != 0 or not mb_p.is_file():
-        shutil.copyfile(ma_p, mb_p)
-
-    # Also pull xbabe4 104M checkpoint if available and build 3-way 104M EMA soup into lb_p (keeping la_p = r4_L_A pure, lb_p = fleet 104M soup!)
-    x4_p = work_ck / "x4_l.pt"
-    rc_x4, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes",
-                    "xbabe4:/Users/agent/jope-data/h450-fleet-agy/runs/fleet_L_x4/ckpt_last.pt", str(x4_p)], timeout=60.0)
-    soup_members = [la_p, lb_p] + ([x4_p] if (rc_x4 == 0 and x4_p.is_file()) else [])
     soup_p = work_ck / "soup_l.pt"
-    build_104m_soup(soup_members, soup_p)
 
-    # Strip optimizer/ledger state so rsync to xbabe1 transfers ~415 MB instead of 1.67 GB!
-    slim_dir = work_ck / "slim"
-    slim_dir.mkdir(parents=True, exist_ok=True)
-    for role, src_pt, sz in (("la", la_p, "L"), ("ma", ma_p, "M"), ("lb", soup_p, "L"), ("mb", mb_p, "M")):
-        ck = torch.load(src_pt, map_location="cpu", weights_only=False)
+    if milestone_ds == 0:
+        ck = torch.load(init_l, map_location="cpu", weights_only=False)
         w = ck.get("ema") or ck["model"]
-        torch.save({"ema": w, "model": w, "size": sz}, slim_dir / f"{role}.pt")
+        torch.save({"ema": w, "model": w, "size": "L"}, soup_p)
+        soup_members = [init_l]
+    else:
+        la_src = Path("/home/ubuntu/jope-data/h450-quarantine/r4/runs/r4_L_A/ckpt_last.pt")
+        la_p = work_ck / "la.pt"
+        lb_p = work_ck / "lb.pt"
+        x1_p = work_ck / "x1_l.pt"
+        x4_p = work_ck / "x4_l.pt"
+        shutil.copyfile(la_src if la_src.is_file() else init_l, la_p)
+        rc_lb, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes",
+                        "xbabe3:/home/ubuntu/jope-data/h450-r4-x3/runs/r4_L_B/ckpt_last.pt", str(lb_p)], timeout=60.0)
+        rc_x1, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes",
+                        "xbabe1:/home/ubuntu/jope-data/h450-fleet-agy/runs/fleet_L_x1/ckpt_last.pt", str(x1_p)], timeout=60.0)
+        rc_x4, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes",
+                        "xbabe4:/Users/agent/jope-data/h450-fleet-agy/runs/fleet_L_x4/ckpt_last.pt", str(x4_p)], timeout=60.0)
+        soup_members = [la_p]
+        if rc_lb == 0 and lb_p.is_file():
+            soup_members.append(lb_p)
+        if rc_x1 == 0 and x1_p.is_file():
+            soup_members.append(x1_p)
+        if rc_x4 == 0 and x4_p.is_file():
+            soup_members.append(x4_p)
+        build_104m_soup(soup_members, soup_p)
 
-    x1_root = "/home/ubuntu/jope-data/h450-fleet-agy/x1-eval"
-    _ssh("xbabe1", f"mkdir -p {x1_root}/stage/pub-r6 {x1_root}/ckpts/{tag} {x1_root}/cols/{tag} {x1_root}/logs", timeout=15.0)
-    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"{PUB_R6_STAGE}/", f"xbabe1:{x1_root}/stage/pub-r6/"], timeout=60.0)
-    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", "/home/ubuntu/h448-stage/pub-r1/", f"xbabe1:{x1_root}/stage/h448-pub-r1/"], timeout=60.0)
-    rc_bk, _ = _ssh("xbabe1", f"[ -f {x1_root}/bank_d91_search_f64.npz ] && echo OK || echo MISS", timeout=10.0)
-    if "OK" not in rc_bk and True:
-        _, out_bk = _ssh("xbabe1", f"sha256sum {x1_root}/bank_d91_search_f64.npz 2>/dev/null | cut -c1-64 || true", timeout=15.0)
-        if out_bk.strip() != EVAL_BANK_SHA:
-            _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", str(EVAL_BANK), f"xbabe1:{x1_root}/bank_d91_search_f64.npz"], timeout=60.0)
+    remote_root = "/home/ubuntu/jope-data/h450-fleet-agy/eval_stage"
+    fast_py_local = Path(__file__).resolve().parent / "fast_dev91_every_n_h450.py"
+    _ssh("xbabe0", f"mkdir -p {remote_root}/pub-r6 {remote_root}/h448-pub-r1 {remote_root}/fleet {remote_root}/ckpts/{tag} {remote_root}/cols/{tag} {remote_root}/logs", timeout=15.0)
+    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"{PUB_R6_STAGE}/", f"xbabe0:{remote_root}/pub-r6/"], timeout=60.0)
+    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", "/home/ubuntu/h448-stage/pub-r1/", f"xbabe0:{remote_root}/h448-pub-r1/"], timeout=60.0)
+    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", str(fast_py_local), f"xbabe0:{remote_root}/fleet/fast_dev91_every_n_h450.py"], timeout=30.0)
+    _, out_bk = _ssh("xbabe0", f"sha256sum {remote_root}/bank_d91_search_f64.npz 2>/dev/null | cut -c1-64 || true", timeout=15.0)
+    if out_bk.strip() != EVAL_BANK_SHA:
+        _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", str(EVAL_BANK), f"xbabe0:{remote_root}/bank_d91_search_f64.npz"], timeout=60.0)
+    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", str(soup_p), f"xbabe0:{remote_root}/ckpts/{tag}/soup_l.pt"], timeout=60.0)
 
-    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"{slim_dir}/", f"xbabe1:{x1_root}/ckpts/{tag}/"], timeout=90.0)
-
-    # Run `cols_h450_gpu.py --device cpu` on xbabe1 at nice 15 with 18 shards x 2 threads (~36 cores / 102 -> ~68% total CPU <= 85%!)
-    run_cmd = (
-        f"seq 0 {shards - 1} > {x1_root}/logs/{tag}.shards && "
-        f"PYTHONPATH={x1_root}/stage/pub-r6/code:{x1_root}/stage/h448-pub-r1/code "
-        f"OMP_NUM_THREADS={threads} MKL_NUM_THREADS={threads} OPENBLAS_NUM_THREADS=1 CUDA_VISIBLE_DEVICES='' "
-        f"xargs -a {x1_root}/logs/{tag}.shards -P {shards} -I@ nice -n 15 python3 -B "
-        f"{x1_root}/stage/pub-r6/code/cols_h450_gpu.py "
-        f"--bank {x1_root}/bank_d91_search_f64.npz "
-        f"--ckpt-la {x1_root}/ckpts/{tag}/la.pt --ckpt-ma {x1_root}/ckpts/{tag}/ma.pt "
-        f"--ckpt-lb {x1_root}/ckpts/{tag}/lb.pt --ckpt-mb {x1_root}/ckpts/{tag}/mb.pt "
-        f"--out {x1_root}/cols/{tag} --device cpu --num-shards {shards} --shard-idx @ > {x1_root}/logs/{tag}.log 2>&1"
+    # Run all 91 contexts on xbabe0's 128 idle CPUs (-P 46 x 2 threads = 92/128 = 71.9% CPU <= 85% cap!)
+    cmd_x0 = (
+        f"seq 0 90 > {remote_root}/logs/{tag}.idx && "
+        f"PYTHONPATH={remote_root}/pub-r6/code:{remote_root}/h448-pub-r1/code "
+        f"OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 CUDA_VISIBLE_DEVICES='' "
+        f"xargs -a {remote_root}/logs/{tag}.idx -P 46 -I@ nice -n 15 python3 -B "
+        f"{remote_root}/fleet/fast_dev91_every_n_h450.py --cmd ctx --ctx-idx @ "
+        f"--bank {remote_root}/bank_d91_search_f64.npz --ckpt {remote_root}/ckpts/{tag}/soup_l.pt "
+        f"--cols-dir {remote_root}/cols/{tag} --n-views 2 > {remote_root}/logs/{tag}.log 2>&1"
     )
     t0 = time.time()
-    rc_c, _ = _ssh("xbabe1", run_cmd, timeout=2400.0)
-    _, n_npz_s = _ssh("xbabe1", f"find {x1_root}/cols/{tag} -maxdepth 1 -name '[0-9a-f]*.npz' | wc -l", timeout=10.0)
-    if rc_c != 0 or n_npz_s.strip() != "91":
-        return None
+    p0 = subprocess.Popen(["ssh", "-o", "BatchMode=yes", "xbabe0", cmd_x0])
+    p0.wait(timeout=1800)
 
     loc_cols = FLEET_ROOT / "cols" / tag
     loc_cols.mkdir(parents=True, exist_ok=True)
-    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"xbabe1:{x1_root}/cols/{tag}/", f"{loc_cols}/"], timeout=60.0)
-
-    diag_dir.mkdir(parents=True, exist_ok=True)
-    zero_dir = Path("/home/ubuntu/jope-data/h450-quarantine/r4/cols/ep00_init")
-    zero_args = ["--zero-d91-gpu-cols", str(zero_dir)] if (zero_dir.is_dir() and len(list(zero_dir.glob("[0-9a-f]*.npz"))) == 91) else []
-
-    an_cmd = [
-        "nice", "-n", "19", "python3", "-B", str(PUB_R6_STAGE / "code/analyze_h450.py"),
-        "--bank", str(EVAL_BANK),
-        *zero_args,
-        "--gpu-cols", str(loc_cols),
-        "--tab-cols", "/home/ubuntu/jope-data/h450-quarantine/cols_tab_h450_D91",
-        "--h448-pulled", "/home/ubuntu/jope_plan/evidence/H448/pulled",
-        "--h418-pulled", "/home/ubuntu/jope_plan/evidence/H418/pulled",
-        "--board", "/home/ubuntu/jope_plan/evidence/H450/board_post_h448/dev91-audit-v1",
-        "--lock", "/home/ubuntu/jope_plan/evidence/H450/stage_v/LOCK.json",
-        "--receipt", "/home/ubuntu/jope_plan/ns/receipts/H450_UNFAIR_LOCK_sha256.txt",
-        "--diag-out", str(diag_dir / "H450_DEV91.json"),
-        "--diag-txt", str(diag_dir / "H450_DEV91.txt"),
-        "--diag-board", str(diag_dir / "board"),
-        "--procs", "8",
-    ]
-    env = os.environ.copy()
-    env["CUDA_VISIBLE_DEVICES"] = ""
-    r_an = subprocess.run(an_cmd, env=env, capture_output=True, text=True, timeout=600.0)
-    if r_an.returncode != 0 or not (diag_dir / "H450_DEV91.json").is_file():
+    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"xbabe0:{remote_root}/cols/{tag}/", f"{loc_cols}/"], timeout=60.0)
+    if len(list(loc_cols.glob("[0-9a-f]*.npz"))) != 91:
         return None
 
-    fleet_104m_u = sum(runs[k]["unique_datasets"] for k in ("r4_L_A", "r4_L_B", "fleet_L_x4") if k in runs)
+    diag_dir.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["CUDA_VISIBLE_DEVICES"] = ""
+    r_sc = subprocess.run(
+        ["nice", "-n", "19", "python3", "-B", str(fast_py_local), "--cmd", "score",
+         "--cols-dir", str(loc_cols), "--out-json", str(diag_dir / "H450_DEV91.json")],
+        env=env, capture_output=True, text=True, timeout=300.0,
+    )
+    if r_sc.returncode != 0 or not (diag_dir / "H450_DEV91.json").is_file():
+        return None
+
+    fleet_104m_u = 0 if milestone_ds == 0 else sum(runs[k]["unique_datasets"] for k in ("r4_L_A", "r4_L_B", "fleet_L_x1", "fleet_L_x4") if k in runs)
     ms_meta = {
         "tag": tag,
         "milestone_target_datasets": milestone_ds,
         "fleet_104m_unique_datasets": fleet_104m_u,
         "per_run_unique_datasets": {k: v["unique_datasets"] for k, v in runs.items()},
-        "eval_host": "xbabe1",
+        "eval_hosts": ["xbabe0"],
         "eval_wall_s": round(time.time() - t0, 1),
         "soup_members_count": len(soup_members),
     }
@@ -327,15 +309,15 @@ def run_xbabe1_milestone_eval(milestone_ds: int, runs: dict[str, dict], shards: 
     res_doc = json.loads((diag_dir / "H450_DEV91.json").read_text())
     ch_elo = round(float(res_doc["in_corpus_random_split_champion_91"]["elo"]["elo"]), 1)
     ic_elo = round(float(res_doc["in_corpus_icl_boost_only_91"]["elo"]["elo"]), 1)
+    ng_elo = round(float(res_doc["in_corpus_neural_plus_tab_no_gp_91"]["elo"]["elo"]), 1)
     gap_k = round(float(res_doc["in_corpus_random_split_champion_91"]["gap_elo"]["vs_kumo_tabular_large_e8.v1"]), 1)
 
-    # Notify peer coordination log (`H450_CLAUDE_GEMINI_COORD.md`) under flock!
     ts = time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime())
     line = (
-        f"[{ts}] agy_apex_w10 -> cl_fwriter (cc all): [xbabe1 N={milestone_ds:,} dev91 frozen-split in-corpus readout {tag}] "
-        f"104M_fleet_unique_datasets={fleet_104m_u:,} (0 dups), champion_stack={ch_elo} Elo (vs Kumo L 2070.2: {gap_k:+.1f} Elo), "
-        f"pure_ICL_boost={ic_elo} Elo, wall={ms_meta['eval_wall_s']}s on xbabe1 CPU (<=75% CPU, ZImage GPU untouched); "
-        f"receipt {diag_dir / 'H450_DEV91.json'}."
+        f"[{ts}] agy_apex_w10 -> cl_fwriter (cc all): [xbabe0 128c CPU fast N={milestone_ds:,} dev91 frozen-split readout {tag}] "
+        f"104M_fleet_unique_datasets={fleet_104m_u:,} (0 dups, {len(soup_members)}-member 104M soup), "
+        f"104M_stack_elo={ch_elo} (vs Kumo L 2070.2: {gap_k:+.1f} Elo), neural+tab_elo={ng_elo}, pure_104M_ICL_elo={ic_elo}, "
+        f"wall={ms_meta['eval_wall_s']}s on xbabe0 CPU (0 GPU/RAM touched on xbabe1..3); receipt {diag_dir / 'H450_DEV91.json'}."
     )
     PEER_LOCK.touch(exist_ok=True)
     with open(PEER_LOCK, "r+") as lf:
@@ -348,7 +330,7 @@ def run_xbabe1_milestone_eval(milestone_ds: int, runs: dict[str, dict], shards: 
 
 def write_coordination_dashboard(hosts: dict[str, dict], runs: dict[str, dict], evals: list[dict]) -> dict:
     now_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    u_104m = sum(runs[k]["unique_datasets"] for k in ("r4_L_A", "r4_L_B", "fleet_L_x4") if k in runs)
+    u_104m = sum(runs[k]["unique_datasets"] for k in ("r4_L_A", "r4_L_B", "fleet_L_x1", "fleet_L_x4") if k in runs)
     u_all = sum(v["unique_datasets"] for v in runs.values())
     dups_all = sum(v["dups_fed"] for v in runs.values())
 
@@ -370,11 +352,11 @@ def write_coordination_dashboard(hosts: dict[str, dict], runs: dict[str, dict], 
         "| --- | --- | --- | --- | --- |",
     ]
     roles = {
-        "xbabe0": "`cl_fwriter` `dev91` Frozen-Split CPU Eval (`ep00_init` + hourly epochs)",
-        "xbabe1": "`agy_apex_w10` Every-`25k`-Dataset `dev91` CPU Eval (`ZImage` GPU untouched)",
-        "xbabe2": "`cl_fwriter` `r4_L_A` (`104M`) + `r4_M_A` (`24M`) CUDA Training",
-        "xbabe3": "`cl_fwriter` `r4_L_B` (`104M`) + `r4_M_B` (`24M`) CUDA Training",
-        "xbabe4": "`agy_apex_w10` `fleet_L_x4` (`104M`) M3 Ultra 80-Core MPS Training",
+        "xbabe0": "`agy_apex_w10` Every-`25k`-Dataset Fast Frozen-Split `dev91` CPU Eval (`128c`, GPU in PCIe error)",
+        "xbabe1": "`agy_apex_w10` `fleet_L_x1` (`104M`) `RTX 4090` CUDA Training (`~80%` VRAM, `ZImage` finished)",
+        "xbabe2": "`cl_fwriter` `r4_L_A` (`104M`) `RTX 3090` CUDA Training + `dev91` GPU Eval Shard 0 (`~80%` VRAM)",
+        "xbabe3": "`cl_fwriter` `r4_L_B` (`104M`) `RTX 3090` CUDA Training + `dev91` GPU Eval Shard 1 (`~80%` VRAM)",
+        "xbabe4": "`agy_apex_w10` `fleet_L_x4` (`104M`) `M3 Ultra` 80-Core Metal `MPS` Training (`<= 82%` CPU)",
     }
     for h in ("xbabe0", "xbabe1", "xbabe2", "xbabe3", "xbabe4"):
         hm = hosts.get(h, {})
@@ -390,7 +372,7 @@ def write_coordination_dashboard(hosts: dict[str, dict], runs: dict[str, dict], 
         "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for rname, rv in runs.items():
-        st = "RUNNING" if rv["active"] else "STARTING/IDLE"
+        st = "RUNNING" if rv["active"] else ("PAUSED (`104M`-only)" if rv.get("has_log") else "STARTING/IDLE")
         lines.append(
             f"| `{rname}` | `{rv['host']}` | `{rv['size']}` | `{st}` | `{rv['step']:,}` | `{rv['train_h']:.3f}h` | `{rv['loss']:.4f}` | **`{rv['unique_datasets']:,}`** | **`{rv['dups_fed']}`** | `{rv['src_tables_seen']:,} / 3,525` | `{100.0 * rv['inj_share']:.2f}%` |"
         )
@@ -440,18 +422,22 @@ def main() -> None:
         print(json.dumps({"summary": summary, "hosts": hosts, "runs": runs, "evals": evals}, indent=2, sort_keys=True))
         return
 
-    last_milestone = 0
+    last_milestone = -1
     while True:
         try:
             hosts = collect_host_metrics()
             runs = collect_run_logs()
             evals = collect_dev91_results()
             summary = write_coordination_dashboard(hosts, runs, evals)
+            if not (DIAG_ROOT / "fleet_x1_ms_0000k" / "H450_DEV91.json").is_file():
+                run_xbabe0_fast_milestone_eval(0, runs)
+                evals = collect_dev91_results()
+                write_coordination_dashboard(hosts, runs, evals)
             u_104m = summary["fleet_104m_unique_datasets"]
             target_ms = (u_104m // a.every_datasets) * a.every_datasets
             if target_ms >= a.every_datasets and target_ms > last_milestone:
                 last_milestone = target_ms
-                run_xbabe1_milestone_eval(target_ms, runs, shards=a.xbabe1_shards, threads=a.xbabe1_threads)
+                run_xbabe0_fast_milestone_eval(target_ms, runs)
                 hosts = collect_host_metrics()
                 runs = collect_run_logs()
                 evals = collect_dev91_results()
