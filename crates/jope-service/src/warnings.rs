@@ -46,6 +46,7 @@ pub const CATALOG: &[WarningDefinition] = &[
     definition("NON_NUMERIC_COLUMNS_SKIPPED", Severity::Info, false),
     definition("TARGET_LEAKAGE", Severity::Warn, false),
     definition("GROUP_LEAKAGE", Severity::Warn, false),
+    definition("BASELINE_MEAN", Severity::Info, false),
 ];
 
 pub fn catalog(code: &str) -> Option<&'static WarningDefinition> {
@@ -305,13 +306,14 @@ mod tests {
     );
     code_test!(target_leakage, "TARGET_LEAKAGE", Warn, false);
     code_test!(group_leakage, "GROUP_LEAKAGE", Warn, false);
+    code_test!(baseline_mean, "BASELINE_MEAN", Info, false);
 
     #[test]
     fn catalog_matches_the_exact_api_vocabulary() {
         let actual: BTreeSet<_> = CATALOG.iter().map(|entry| entry.code).collect();
         let api: BTreeSet<_> = jope_api::WARNING_CODES.iter().copied().collect();
         assert_eq!(actual, api);
-        assert_eq!(actual.len(), 16);
+        assert_eq!(actual.len(), 17);
         assert_eq!(CATALOG.len(), actual.len());
         assert_eq!(jope_api::WARNING_CODES.len(), api.len());
         assert!(catalog("UNKNOWN_CODE").is_none());

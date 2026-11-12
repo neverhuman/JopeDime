@@ -19,6 +19,7 @@ pub const WARNING_CODES: &[&str] = &[
     "NON_NUMERIC_COLUMNS_SKIPPED",
     "TARGET_LEAKAGE",
     "GROUP_LEAKAGE",
+    "BASELINE_MEAN",
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
