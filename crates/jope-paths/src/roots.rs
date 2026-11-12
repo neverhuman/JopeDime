@@ -108,7 +108,9 @@ fn windows_base_is_absolute(path: &std::ffi::OsStr) -> bool {
     }
     #[cfg(not(windows))]
     {
-        windows_absolute_bytes(std::os::unix::ffi::OsStrExt::as_bytes(path))
+        // The browser wasm target is neither Windows nor Unix, so `std::os::unix`
+        // is not in its standard library. Drive and UNC forms are ASCII.
+        windows_absolute_bytes(path.as_encoded_bytes())
     }
 }
 
