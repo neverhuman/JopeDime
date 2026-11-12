@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Upstream PRs #2254 and #2258 deduplicated one-shot SHA-256 hex formatting in jope-engine (manifest.rs, eval_registry/authority.rs, eval_registry/service.rs) and jope-campaigns (commands/exact_cv.rs) onto shared sha256_hex / sha256_bytes helpers with zero behavior or output change. exact_cv.rs is an ADR-0004 evaluator identity input and the three jope-engine files are hashed lineage sources. Append this identity and lineage fixture provenance edge after gpr_prediction_clip_identity_rebaseline. Cargo.lock, DSL ABI, known identities, and all behavior fixtures stay unchanged. No shipped receipt proves this identity existed.",
+  "plan_reference": "PR #2254, PR #2258; ADR-0004 identity-only procedure",
+  "source_commit": "2d97d841108f8eceabd4f0a4206248feacec2d39",
+  "base_commit": "cf00cdec9d2e265b5838674351a7974bbe900741",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "12bb1b9b25ffd7dbae487d0d191b87ab6103fac0f35cad0e262fc6260ddecc53",
+      "after": "440edb3caeb244622d810c84eb5f936a265c7f10b635a0de06076b4d2d3196f4"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "9043551dc3f0f8afdc3bf381ce47fb73c57a18aa6fc102a844263b3760d59da5",
+      "after": "8f66430feff5297fd6a7b721d13406b6f3e98b3192e6e194fdf03be82734ebee"
+    }
+  ],
+  "before_identity_digest": "db8158f5f39f54082374063b3332522deece09c9051cb3d7bc5cfa4f88911975",
+  "after_identity_digest": "3174ad38add05467f69b1cf06b2ee9f57210d241144863d58c058831503ab3ee",
+  "before_implementation_sha256": "0c0c83700e3ecb5b1f1010bc70b26cb081313296513ca408051c6eaaebc9317a",
+  "after_implementation_sha256": "014a6fbfaf0909fcc0edf3f1aadf9888fa646babd8a00ea283c0fe323e4810e8",
+  "before_cargo_lock_sha256": "cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af",
+  "after_cargo_lock_sha256": "cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

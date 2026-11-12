@@ -872,6 +872,23 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         gpr_clip_identity["fixtures"][1]["path"],
         changed_fixtures[1]
     );
+    let sha256_dedup_identity = old_fixture("transitions/sha256_dedup_identity_rebaseline.v1.json");
+    assert_eq!(
+        sha256_dedup_identity["source_commit"],
+        "2d97d841108f8eceabd4f0a4206248feacec2d39"
+    );
+    assert_eq!(
+        sha256_dedup_identity["fixtures"].as_array().unwrap().len(),
+        2
+    );
+    assert_eq!(
+        sha256_dedup_identity["fixtures"][0]["path"],
+        changed_fixtures[0]
+    );
+    assert_eq!(
+        sha256_dedup_identity["fixtures"][1]["path"],
+        changed_fixtures[1]
+    );
     assert_eq!(
         p21_family_split["source_commit"],
         "e240a9f27e3bba296acf77d29dae10fd2529a0c1"
@@ -1513,6 +1530,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 carbon_lockfile.clone(),
                 unused_deps_lockfile.clone(),
                 gpr_clip_identity.clone(),
+                sha256_dedup_identity.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1601,6 +1619,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 carbon_lockfile.clone(),
                 unused_deps_lockfile.clone(),
                 gpr_clip_identity.clone(),
+                sha256_dedup_identity.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1682,6 +1701,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 carbon_lockfile.clone(),
                 unused_deps_lockfile.clone(),
                 gpr_clip_identity.clone(),
+                sha256_dedup_identity.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1794,6 +1814,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 carbon_lockfile.clone(),
                 unused_deps_lockfile.clone(),
                 gpr_clip_identity.clone(),
+                sha256_dedup_identity.clone(),
             ],
         ),
         (
@@ -1866,6 +1887,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 carbon_lockfile.clone(),
                 unused_deps_lockfile.clone(),
                 gpr_clip_identity.clone(),
+                sha256_dedup_identity.clone(),
             ],
         ),
     ] {
@@ -1986,6 +2008,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         carbon_lockfile,
         unused_deps_lockfile,
         gpr_clip_identity,
+        sha256_dedup_identity,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
