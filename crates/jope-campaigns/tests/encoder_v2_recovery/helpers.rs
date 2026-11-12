@@ -307,7 +307,7 @@ pub(crate) fn filesystem_quarantine(root: &std::path::Path) -> V1EncodingQuarant
             .into_owned();
         tree.files[0].size_bytes = fs::metadata(&file).unwrap().len();
         tree.files[0].mode = fs::metadata(&file).unwrap().permissions().mode() & 0o7777;
-        tree.files[0].sha256 = hex::encode(Sha256::digest(contents));
+        tree.files[0].sha256 = jope_dime_regressor::selfplay_runtime::sha256_bytes(contents);
         tree.aggregate_directory_sha256 = tree.computed_directory_sha256().unwrap();
     }
     index

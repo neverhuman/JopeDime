@@ -1,9 +1,8 @@
 use anyhow::{Context, Result};
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 
 pub(super) fn sha256(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 pub(super) fn content_sha256(value: &Value) -> Result<String> {

@@ -134,7 +134,7 @@ fn metric_score(task: &str, fitness: f64) -> f64 {
 }
 
 fn sha256(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 fn atomic_json(path: &Path, value: &Value) -> Result<()> {

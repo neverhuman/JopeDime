@@ -31,7 +31,6 @@ use jope_dime_regressor::recovery_contracts::{
 };
 use jope_dime_regressor::selfplay_data::canonical_json_sha256;
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
