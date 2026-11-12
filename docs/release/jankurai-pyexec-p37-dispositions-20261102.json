@@ -2887,7 +2887,7 @@
       ]
     }
   ],
-  "reviewed_on": "2026-11-02",
+  "reviewed_on": "2026-11-12",
   "rule_dispositions": {
     "HLT-000-SCORE-DIMENSION:stack": "Historical/test and offline data tooling files are outside the supported product runtime; finding remains enumerated and is not claimed fixed.",
     "HLT-001-DEAD-MARKER": "The one legacy fallback marker in the pinned training builder remains enumerated; this disposition does not claim the fallback was repaired.",
@@ -2898,5 +2898,403 @@
   },
   "schema": "jopedime.jankurai-pyexec-dispositions/v1",
   "scope_reason": "These exact test, generated-admission, training-tool, and historical research files contain the 42 registered HLT-033 sites and file-level findings recorded below. The H155 executor loads only H153 Git blobs at a fixed commit after SHA-256 checks; H154/H158/H159/H161/H164/H168/H173 runners load the manifest-pinned H50 fused input and SHA-verified fixed-commit guard only after input and executor verification. The exact executor hashes for these files remain in their manifests. The file-scoped auditor skip is coarse, so CI re-audits every whole file and requires exact source SHA-256 plus exact rule/fingerprint inventory; a changed-scope repository audit verifies all raw findings and copy-code classes touching registered paths. Any byte drift, missing finding, or new finding fails closed. Current raw copy-code identities were re-reviewed against the complete Jankurai 1.7.6 --include-tests copy-code scan at captured source d985ab3975f5ce1d2c4c7d89271e45c313d5a7d4; all 34 currently emitted classes involving the exact registered paths are retained. On 2026-11-05, the same 34-class inventory was re-reviewed against the complete retained Jankurai 1.7.6 --include-tests copy-code scan for source a1e47407f30b32665f8d970d9553ea8f1e332502 (CI run 41942757274, job 126967394843; artifact SHA-256 9990949a63f7717062cb5b23d1e836be1179a46ec158e8118fe665f073620151). Exactly four raw identities were refreshed to include six additional instances across five visualization files: SHA-256 helper bodies in short_recipe_source.py, neural_cell_influence.py, code_pages.py and select_examples.py, and the empty Busy exception class in orchestration/render_uhd.py. The 30 other identities, registered paths and source hashes, rule dispositions, severities, policy exclusions and expiry are unchanged; no new audit exclusion or waiver is introduced.",
-  "raw_copy_code_review": "Re-reviewed on 2026-11-12 at origin/main 4c1ab2867c76e85f0f9d5c0384f88d7b66b7e108 with pinned jankurai 1.7.6 (deploy/ci/install-jankurai.sh, archive sha256 03def9b8b63e3b36234c4528a4a4ef5e619ad9eac152f1ffb5fa29d16341c017). copy-code --include-tests --max-findings 10000, after removing the registered exact-path policy lines the way ops/ci/verify-pyexec-exceptions.sh does, emitted 36 classes that touch a registered path. The register held 3, which is the drift CI run 43289882422 reported on ccbf5585a26629fe8b04ab21cc2b7fdf0c2612dc (expected 3, got 36). Those 36 objects are recorded. Exclusions were not broadened. The full-object comparison stays."
+  "raw_copy_code_review": "Re-reviewed on 2026-11-12 at origin/main 60402deb1892141b1d6c8d1e06708f98e4e3fc7c with pinned jankurai 1.7.6 (deploy/ci/install-jankurai.sh archive sha256 03def9b8b63e3b36234c4528a4a4ef5e619ad9eac152f1ffb5fa29d16341c017, binary sha256 63b445f21ca375ebd9515df49d0095aff6823b731121102651caf4e57cef1cf9). copy-code --include-tests --max-findings 10000 on a clean archive of 4c1ab2867c, after removing every registered exact-path policy line the way ops/ci/verify-pyexec-exceptions.sh does, emitted these 36 classes. None of the 128 instance blobs changed between 4c1ab2867c and 60402deb18. The objects equal the register at 519ccc50af, the parent of #2272. #2272 (d94f815e) reduced the list to 3. #2278 put that 3-class list back and CI still reported expected 3, got 36. #2284 recorded the 36 objects without a per-class reason. This review does not add a class and does not change a class object. The copies were introduced by the preregistration commits that cloned an earlier runtime, starting with h144 aad54937c4 (#1266, 2026-10-31) and the first clone h146 8b025049a9 (#1276) the same evening. 84 of the 128 instance paths are sha256-pinned by a manifest or custody JSON outside this register. Editing a pinned file to call a shared helper would change the digest that manifest requires. The bytes stay. Exclusions were not broadened. The full-object comparison stays. Each class is justified in raw_copy_code_class_justifications.",
+  "raw_copy_code_class_justifications": [
+    {
+      "id": "copy-code-unit-python-ca536c6b695487b7",
+      "fingerprint": "7415eae33d9dcbe3",
+      "kind": "exact_unit_same_name",
+      "unit_name": "tree_bytes",
+      "instance_count": 2,
+      "duplicate_lines": 4,
+      "earliest_instance_added": "2026-10-31 22:40:26 -0600\t8874ef4fb2 research(h154): preregister trajectory EMA/SWA weight averaging with train-only stat recalibration (#1315)",
+      "copy_introduced": "2026-11-01 00:23:43 -0600\tc63be43808 research(h147): implement matched-support reveal alignment executor and PREREG_AMENDMENT_A1 (#1383)",
+      "justification": "tree_bytes sums file sizes under a directory. h154 and h147 each close over their own output root. Folding it into a helper would change both pinned runtimes."
+    },
+    {
+      "id": "copy-code-unit-python-b3456c451b6bd5f2",
+      "fingerprint": "d0a0b4fb7cd1abe5",
+      "kind": "exact_unit_same_name",
+      "unit_name": "Audit",
+      "instance_count": 2,
+      "duplicate_lines": 37,
+      "earliest_instance_added": "2026-11-01 01:17:18 -0700\t512897d3c3 research: preregister H168 prospective selector remedy on H156 W10/W20 continuations (#1425)",
+      "copy_introduced": "2026-11-01 03:44:03 -0700\t8dac600b50 research(h173): preregister hard-context regret-weighted r882 continuation (#1477)",
+      "justification": "This Audit class is the h168 read/write guard (FORBIDDEN paths, output-root writes, pinned data reads). It is not research/flywheel_selfplay/runtime_audit.py: that module is a different 48-line Audit and h144 already imports it. h173 copied this one."
+    },
+    {
+      "id": "copy-code-unit-python-216893792fb7c719",
+      "fingerprint": "e2d073144951871e",
+      "kind": "exact_unit_same_name",
+      "unit_name": "forward_adapter_with_anchor",
+      "instance_count": 2,
+      "duplicate_lines": 11,
+      "earliest_instance_added": "2026-11-01 01:17:18 -0700\t512897d3c3 research: preregister H168 prospective selector remedy on H156 W10/W20 continuations (#1425)",
+      "copy_introduced": "2026-11-01 03:44:03 -0700\t8dac600b50 research(h173): preregister hard-context regret-weighted r882 continuation (#1477)",
+      "justification": "forward_adapter_with_anchor is the h168 adapter call, copied into h173. The two bodies match, including the anchor arguments. The runtimes are manifest-pinned."
+    },
+    {
+      "id": "copy-code-unit-python-886c5d00127d19aa",
+      "fingerprint": "a0132c9bb16c3f65",
+      "kind": "exact_unit_same_name",
+      "unit_name": "sha",
+      "instance_count": 11,
+      "duplicate_lines": 5,
+      "earliest_instance_added": "2026-10-31 19:48:01 -0600\taad54937c4 research(h144): preregister r882 weight-decay sweep (#1266)",
+      "copy_introduced": "2026-10-31 20:14:50 -0600\t8b025049a9 research(h146): preregister Lookahead on the r882 adapter continuation (#1276)",
+      "justification": "Five-line streaming sha256 (Path.open, 1 MiB reads) copied with the h144 runtime prelude. It is a different body from the h119 1<<20 loop and from the h168 open() loop, so those stay separate classes."
+    },
+    {
+      "id": "copy-code-unit-python-531fd78159797e98",
+      "fingerprint": "98b9aa9729b7e6b1",
+      "kind": "exact_unit_same_name",
+      "unit_name": "sha",
+      "instance_count": 8,
+      "duplicate_lines": 5,
+      "earliest_instance_added": "2026-10-31 08:37:32 -0600\t695eb7f6da research(h119): report GBM confirmation NO_ADVANCE (#1056)",
+      "copy_introduced": "2026-10-31 08:50:33 -0600\tc989ac5cdc research: add H124 GBM shrink-blend CPU runner (#1058)",
+      "justification": "Streaming sha256 using Path.open and 1<<20 reads. It started as the h119/h124 pair and was copied into later runners. Every instance path is pinned. It does not match the h144 1048576 spelling."
+    },
+    {
+      "id": "copy-code-unit-python-f7d4e71c88523a2e",
+      "fingerprint": "306539884ab1c9cd",
+      "kind": "exact_unit_same_name",
+      "unit_name": "sha",
+      "instance_count": 2,
+      "duplicate_lines": 5,
+      "earliest_instance_added": "2026-11-01 01:17:18 -0700\t512897d3c3 research: preregister H168 prospective selector remedy on H156 W10/W20 continuations (#1425)",
+      "copy_introduced": "2026-11-01 03:44:03 -0700\t8dac600b50 research(h173): preregister hard-context regret-weighted r882 continuation (#1477)",
+      "justification": "h168/h173 streaming sha256 via open() and 1<<20 reads. Same pair as their Audit class. Different spelling from the h144 Path.open helper, so it is not the 11-file class."
+    },
+    {
+      "id": "copy-code-unit-python-8b8320230d2e20ed",
+      "fingerprint": "2226646d97a4f3d7",
+      "kind": "exact_unit_same_name",
+      "unit_name": "write",
+      "instance_count": 2,
+      "duplicate_lines": 8,
+      "earliest_instance_added": "2026-10-31 08:37:32 -0600\t695eb7f6da research(h119): report GBM confirmation NO_ADVANCE (#1056)",
+      "copy_introduced": "2026-10-31 08:50:33 -0600\tc989ac5cdc research: add H124 GBM shrink-blend CPU runner (#1058)",
+      "justification": "h119 and h124 write() dump JSON with indent 2 and allow_nan false. Same pair as source_module. The parameter name differs from the h144 save() class, so the scanner keeps them apart."
+    },
+    {
+      "id": "copy-code-unit-python-db536be4eb5cdaf0",
+      "fingerprint": "96ae5d5727e30214",
+      "kind": "exact_unit_same_name",
+      "unit_name": "tensor_hash",
+      "instance_count": 2,
+      "duplicate_lines": 8,
+      "earliest_instance_added": "2026-11-01 01:17:18 -0700\t512897d3c3 research: preregister H168 prospective selector remedy on H156 W10/W20 continuations (#1425)",
+      "copy_introduced": "2026-11-01 03:44:03 -0700\t8dac600b50 research(h173): preregister hard-context regret-weighted r882 continuation (#1477)",
+      "justification": "h168/h173 tensor_hash walks (name, tensor) pairs and hashes a memoryview. The h144 tensor_hash walks a state dict and views uint8. Different bodies, both pinned."
+    },
+    {
+      "id": "copy-code-unit-python-57cbf86b95fbb526",
+      "fingerprint": "3ddf8adfb3dec541",
+      "kind": "exact_unit_same_name",
+      "unit_name": "check_frozen",
+      "instance_count": 8,
+      "duplicate_lines": 7,
+      "earliest_instance_added": "2026-10-31 19:48:01 -0600\taad54937c4 research(h144): preregister r882 weight-decay sweep (#1266)",
+      "copy_introduced": "2026-10-31 20:14:50 -0600\t8b025049a9 research(h146): preregister Lookahead on the r882 adapter continuation (#1276)",
+      "justification": "check_frozen on the h144 family compares tensor_hash of the non-adapter weights to a frozen digest and the module-level DOPE constant. Moving it requires a new parameter and edits every pinned caller."
+    },
+    {
+      "id": "copy-code-unit-python-9dc0651af83fce82",
+      "fingerprint": "c745070a14849810",
+      "kind": "exact_unit_same_name",
+      "unit_name": "check_frozen",
+      "instance_count": 2,
+      "duplicate_lines": 8,
+      "earliest_instance_added": "2026-10-31 22:40:26 -0600\t8874ef4fb2 research(h154): preregister trajectory EMA/SWA weight averaging with train-only stat recalibration (#1315)",
+      "copy_introduced": "2026-11-01 00:23:43 -0600\tc63be43808 research(h147): implement matched-support reveal alignment executor and PREREG_AMENDMENT_A1 (#1383)",
+      "justification": "h147/h154 check_frozen calls assert_frozen_anchor before the same DOPE and tensor_hash checks. It is not the 8-file check_frozen. Both runtimes are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-9f5c9871c6d27e70",
+      "fingerprint": "810eaeb15e24e44d",
+      "kind": "exact_unit_same_name",
+      "unit_name": "tensor_hash",
+      "instance_count": 11,
+      "duplicate_lines": 15,
+      "earliest_instance_added": "2026-10-31 19:48:01 -0600\taad54937c4 research(h144): preregister r882 weight-decay sweep (#1266)",
+      "copy_introduced": "2026-10-31 20:14:50 -0600\t8b025049a9 research(h146): preregister Lookahead on the r882 adapter continuation (#1276)",
+      "justification": "h144-family tensor_hash over a state dict, including the torch uint8 view. Copied with sha and save. All eleven runtimes are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-28906d63f359d105",
+      "fingerprint": "2226646d97a4f3d7",
+      "kind": "exact_unit_same_name",
+      "unit_name": "source_module",
+      "instance_count": 2,
+      "duplicate_lines": 8,
+      "earliest_instance_added": "2026-10-31 08:37:32 -0600\t695eb7f6da research(h119): report GBM confirmation NO_ADVANCE (#1056)",
+      "copy_introduced": "2026-10-31 08:50:33 -0600\tc989ac5cdc research: add H124 GBM shrink-blend CPU runner (#1058)",
+      "justification": "h119 and h124 source_module load a helper from a fixed git commit and require PINS[path] before exec. The binding is the experiment's source identity. Both runners are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-dc7c34b445e51b1c",
+      "fingerprint": "beec317faf9ef842",
+      "kind": "exact_unit_same_name",
+      "unit_name": "sha",
+      "instance_count": 9,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-06 01:46:01 -0600\tbd78dec3e2 chore(dl): preserve pinned train-only builder source custody",
+      "copy_introduced": "2026-10-06 01:46:01 -0600\tbd78dec3e2 chore(dl): preserve pinned train-only builder source custody",
+      "justification": "One-line sha(b: bytes) -> hashlib.sha256(b).hexdigest() across the train-only custody tools. v2_rowsel_build.py is the registered instance. Those tool bytes are in custody manifests. A shared import would change every pin. The annotated signature is why this is not the unannotated sha(b) class."
+    },
+    {
+      "id": "copy-code-unit-python-19a66e17a358d623",
+      "fingerprint": "25820d09a5f20e32",
+      "kind": "exact_unit_same_name",
+      "unit_name": "sha",
+      "instance_count": 5,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-09 21:06:31 -0600\tc9983160c9 feat: continual GP learning, measured scoring, and live experiment dashboard",
+      "copy_introduced": "2026-10-09 21:06:31 -0600\tc9983160c9 feat: continual GP learning, measured scoring, and live experiment dashboard",
+      "justification": "One-line sha(raw) over bytes. The registered instance is generated_target_admission_v1/common.py, pinned by 15 manifests. The other copies are separate tools, most of them pinned too. Not collapsed into one name."
+    },
+    {
+      "id": "copy-code-unit-python-eaa7a7910071cdc9",
+      "fingerprint": "d611c79e4b9b0a2f",
+      "kind": "exact_unit_same_name",
+      "unit_name": "digest",
+      "instance_count": 5,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-09-22 17:59:30 -0600\t417b3a65d3 asm: freeze the private panel and bind task-correct experiment evidence",
+      "copy_introduced": "2026-10-06 16:53:26 -0600\t132950b100 dl: publish pinned S1 HWM progress through the create-only v2 path",
+      "justification": "One-line digest(data) used by capture_cpu.py, which is the registered golden fixture, plus hwm_publish, benchmarks/prepare.py, h216, and input_manifest.py. capture_cpu.py is byte-pinned. The function name is part of that fixture."
+    },
+    {
+      "id": "copy-code-unit-python-cd0c62b341e1c1c3",
+      "fingerprint": "a142525dfeb54290",
+      "kind": "exact_unit_same_name",
+      "unit_name": "calibration",
+      "instance_count": 2,
+      "duplicate_lines": 12,
+      "earliest_instance_added": "2026-10-31 08:37:32 -0600\t695eb7f6da research(h119): report GBM confirmation NO_ADVANCE (#1056)",
+      "copy_introduced": "2026-10-31 08:50:33 -0600\tc989ac5cdc research: add H124 GBM shrink-blend CPU runner (#1058)",
+      "justification": "h119/h124 calibration fits a non-negative slope of prediction against fitness on the gated rows. It is the scoring rule for that pair, not a generic helper. Both runners are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-033ab9264e48d3fc",
+      "fingerprint": "fcdbba1c2c1f9ea8",
+      "kind": "exact_unit_same_name",
+      "unit_name": "check_frozen",
+      "instance_count": 2,
+      "duplicate_lines": 10,
+      "earliest_instance_added": "2026-11-01 01:17:18 -0700\t512897d3c3 research: preregister H168 prospective selector remedy on H156 W10/W20 continuations (#1425)",
+      "copy_introduced": "2026-11-01 03:44:03 -0700\t8dac600b50 research(h173): preregister hard-context regret-weighted r882 continuation (#1477)",
+      "justification": "h168/h173 check_frozen also refuses a training-mode module and hashes pairs rather than a state dict. Different from the h144 check_frozen. Both files are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-90c779bab75634c6",
+      "fingerprint": "e2d073144951871e",
+      "kind": "exact_unit_same_name",
+      "unit_name": "safe_grad_norm_and_clip",
+      "instance_count": 2,
+      "duplicate_lines": 11,
+      "earliest_instance_added": "2026-11-01 01:17:18 -0700\t512897d3c3 research: preregister H168 prospective selector remedy on H156 W10/W20 continuations (#1425)",
+      "copy_introduced": "2026-11-01 03:44:03 -0700\t8dac600b50 research(h173): preregister hard-context regret-weighted r882 continuation (#1477)",
+      "justification": "safe_grad_norm_and_clip clips only parameters whose grad is not None. h173 copied it from h168. The h168 preregistration names this helper. Both runtimes are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-7e292dce88ae1c00",
+      "fingerprint": "585e0d61f6ab6d2d",
+      "kind": "exact_unit_same_name",
+      "unit_name": "loss",
+      "instance_count": 5,
+      "duplicate_lines": 14,
+      "earliest_instance_added": "2026-10-31 19:48:01 -0600\taad54937c4 research(h144): preregister r882 weight-decay sweep (#1266)",
+      "copy_introduced": "2026-10-31 20:14:50 -0600\t8b025049a9 research(h146): preregister Lookahead on the r882 adapter continuation (#1276)",
+      "justification": "The h144-family loss (clipped fitness target, SmoothL1, KL term) is copied into five of those runtimes, not all eleven. Later experiments pin the parent runtime and call this loss. The five files are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-4d8096d70e34b217",
+      "fingerprint": "e89b23fc704de4d4",
+      "kind": "exact_unit_same_name",
+      "unit_name": "endpoints",
+      "instance_count": 2,
+      "duplicate_lines": 14,
+      "earliest_instance_added": "2026-10-31 08:37:32 -0600\t695eb7f6da research(h119): report GBM confirmation NO_ADVANCE (#1056)",
+      "copy_introduced": "2026-10-31 08:50:33 -0600\tc989ac5cdc research: add H124 GBM shrink-blend CPU runner (#1058)",
+      "justification": "h119/h124 endpoints score the top-4 cost pool against the legacy argmin. It is the decision rule for that confirmation pair. Both runners are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-805679f0338b795e",
+      "fingerprint": "fdf563e7859c0397",
+      "kind": "exact_unit_same_name",
+      "unit_name": "validate_eval_cache_key",
+      "instance_count": 2,
+      "duplicate_lines": 16,
+      "earliest_instance_added": "2026-10-31 22:40:26 -0600\t8874ef4fb2 research(h154): preregister trajectory EMA/SWA weight averaging with train-only stat recalibration (#1315)",
+      "copy_introduced": "2026-11-01 00:23:43 -0600\tc63be43808 research(h147): implement matched-support reveal alignment executor and PREREG_AMENDMENT_A1 (#1383)",
+      "justification": "validate_eval_cache_key requires (split_name, context id tuple, 64-hex sha). h147 and h154 both refuse any other shape. Both runtimes are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-b700cc0dc5c0023a",
+      "fingerprint": "675d653bfd18eec7",
+      "kind": "exact_unit_same_name",
+      "unit_name": "save",
+      "instance_count": 11,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-31 19:48:01 -0600\taad54937c4 research(h144): preregister r882 weight-decay sweep (#1266)",
+      "copy_introduced": "2026-10-31 20:14:50 -0600\t8b025049a9 research(h146): preregister Lookahead on the r882 adapter continuation (#1276)",
+      "justification": "h144-family save() writes indent-2 JSON. Same eleven pinned runtimes as the streaming sha. The h289 write() variant is a separate class because the name differs."
+    },
+    {
+      "id": "copy-code-unit-python-9c148e4c07397393",
+      "fingerprint": "96d2db12fa08d144",
+      "kind": "exact_unit_same_name",
+      "unit_name": "save",
+      "instance_count": 4,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-31 15:19:06 -0600\t465978dc51 research(h135): preregister native validation blend with sanity and seed gates (#1191)",
+      "copy_introduced": "2026-10-31 18:04:04 -0600\t198053105a research(h138): preregister retained-trajectory adapter SWA and EMA (#1243)",
+      "justification": "save(path, value) with a different parameter name from the h144 save(p, v). Instances are h135, h138, h155, and h157. h155 is the registered runner. All four paths are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-dc28df8ddace0a66",
+      "fingerprint": "909d14ffb7a00e6b",
+      "kind": "exact_unit_same_name",
+      "unit_name": "dropout_census",
+      "instance_count": 11,
+      "duplicate_lines": 19,
+      "earliest_instance_added": "2026-10-31 19:48:01 -0600\taad54937c4 research(h144): preregister r882 weight-decay sweep (#1266)",
+      "copy_introduced": "2026-10-31 20:14:50 -0600\t8b025049a9 research(h146): preregister Lookahead on the r882 adapter continuation (#1276)",
+      "justification": "dropout_census reads adapter_10tok dropout modules, attention dropout, and train flags. Copied with the h144 prelude into the same eleven pinned runtimes."
+    },
+    {
+      "id": "copy-code-unit-python-28a2e40f235f24b3",
+      "fingerprint": "2b13aea9108f97df",
+      "kind": "exact_unit_same_name",
+      "unit_name": "dropout_census",
+      "instance_count": 2,
+      "duplicate_lines": 19,
+      "earliest_instance_added": "2026-11-01 01:17:18 -0700\t512897d3c3 research: preregister H168 prospective selector remedy on H156 W10/W20 continuations (#1425)",
+      "copy_introduced": "2026-11-01 03:44:03 -0700\t8dac600b50 research(h173): preregister hard-context regret-weighted r882 continuation (#1477)",
+      "justification": "A second dropout_census body, used only by h168 and h173. It does not match the 11-file census. Both runtimes are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-1c67f40edb447a33",
+      "fingerprint": "715de7fd20309ce9",
+      "kind": "exact_unit_same_name",
+      "unit_name": "bind_source",
+      "instance_count": 2,
+      "duplicate_lines": 19,
+      "earliest_instance_added": "2026-10-31 22:40:26 -0600\t8874ef4fb2 research(h154): preregister trajectory EMA/SWA weight averaging with train-only stat recalibration (#1315)",
+      "copy_introduced": "2026-11-01 00:23:43 -0600\tc63be43808 research(h147): implement matched-support reveal alignment executor and PREREG_AMENDMENT_A1 (#1383)",
+      "justification": "bind_source checks the reviewed head and the source commit blobs against the working tree, then records sha256. h147 and h154 use it as the run's source identity. Both are pinned."
+    },
+    {
+      "id": "copy-code-unit-python-eb3c300f52c75ff7",
+      "fingerprint": "715de7fd20309ce9",
+      "kind": "exact_unit_same_name",
+      "unit_name": "assert_frozen_anchor",
+      "instance_count": 2,
+      "duplicate_lines": 19,
+      "earliest_instance_added": "2026-10-31 22:40:26 -0600\t8874ef4fb2 research(h154): preregister trajectory EMA/SWA weight averaging with train-only stat recalibration (#1315)",
+      "copy_introduced": "2026-11-01 00:23:43 -0600\tc63be43808 research(h147): implement matched-support reveal alignment executor and PREREG_AMENDMENT_A1 (#1383)",
+      "justification": "assert_frozen_anchor checks the anchor weight digest before training. h147 and h154 only. Both runtimes are pinned. check_frozen in the same files calls it, which is why that check_frozen is its own class."
+    },
+    {
+      "id": "copy-code-body-python-a64764ec622683af",
+      "fingerprint": "59e0f6cdc7bd55de",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 3,
+      "duplicate_lines": 5,
+      "earliest_instance_added": "2026-10-06 01:46:01 -0600\tbd78dec3e2 chore(dl): preserve pinned train-only builder source custody",
+      "copy_introduced": "2026-11-09 23:15:16 -0700\tfb40069b77 Add flywheel waves H252\u2013H416 and integrate v1/next into main (#2168)",
+      "justification": "Streaming sha_file in v2_rowsel_build.py (open, 1<<20), copied as _sha in h335_core.py and grow_h381.py. v2_rowsel_build.py is custody-pinned. h335_core.py is in that experiment's LOCK_CODE_FILES, so an existing stage-v lock hashes it. The bytes stay."
+    },
+    {
+      "id": "copy-code-body-python-8bdf219be882566f",
+      "fingerprint": "e9e64edb193ba4e7",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 7,
+      "duplicate_lines": 5,
+      "earliest_instance_added": "2026-10-24 13:09:52 -0600\t82de4898fb research(flywheel): record Phase 7 expired-deadline stop, intra-loop cap fix, and partial S3 custody receipt",
+      "copy_introduced": "2026-11-01 01:17:18 -0700\t512897d3c3 research: preregister H168 prospective selector remedy on H156 W10/W20 continuations (#1425)",
+      "justification": "The h168 open() sha loop also appears as sha256_file in h317, three frontier audits, and the phase-7 post-audit script. h168 and h173 are the registered, pinned copies. The class remains while those two match."
+    },
+    {
+      "id": "copy-code-body-python-be4a8f1087c9016d",
+      "fingerprint": "0932c00701004d63",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 26,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-06 01:46:01 -0600\tbd78dec3e2 chore(dl): preserve pinned train-only builder source custody",
+      "copy_introduced": "2026-10-06 01:46:01 -0600\tbd78dec3e2 chore(dl): preserve pinned train-only builder source custody",
+      "justification": "Unannotated one-line sha(b) over bytes. The registered instance is v2_rowsel_build.py. 24 of 26 instance paths are pinned custody or research files. This is the same expression as the annotated sha class with the annotation stripped, so the scanner emits both."
+    },
+    {
+      "id": "copy-code-body-python-73963ced05fb3c12",
+      "fingerprint": "be55fd47f1e90ed8",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 13,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-05 17:30:15 -0600\t89567a9604 Add offline train-only GPU budget and output contracts",
+      "copy_introduced": "2026-10-09 21:06:31 -0600\tc9983160c9 feat: continual GP learning, measured scoring, and live experiment dashboard",
+      "justification": "One-line digest/sha/sha256 over bytes, different names. The registered instance is sha() in generated_target_admission_v1/common.py (15 manifest pins). The names are local to each tool. Not merged."
+    },
+    {
+      "id": "copy-code-body-python-939d9f6f39089364",
+      "fingerprint": "29f1a3bc5de2382f",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 27,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-09-22 17:59:30 -0600\t417b3a65d3 asm: freeze the private panel and bind task-correct experiment evidence",
+      "copy_introduced": "2026-10-05 23:30:34 -0600\t0e8db03670 fix(s1): add two-fold teacher bootstrap and fresh G0 artifacts",
+      "justification": "One-line digest across 27 files. The registered instance is digest() in golden/capture_cpu.py, a pinned fixture. 12 of the paths are pinned. The remaining copies are the same expression under local names. Collapsing them does not remove the pinned fixture's copy of the line, and editing the fixture changes its pin."
+    },
+    {
+      "id": "copy-code-body-python-fae3c8260cec1a16",
+      "fingerprint": "b3b48c008c7ab25b",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 12,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-31 19:48:01 -0600\taad54937c4 research(h144): preregister r882 weight-decay sweep (#1266)",
+      "copy_introduced": "2026-10-31 20:14:50 -0600\t8b025049a9 research(h146): preregister Lookahead on the r882 adapter continuation (#1276)",
+      "justification": "save/write JSON dump. Eleven instances are the pinned h144-family save(). The twelfth is write() in h289 prepare.py, also pinned. The name split is why this class is separate from the same-name save class."
+    },
+    {
+      "id": "copy-code-body-python-14d365ea8340f910",
+      "fingerprint": "86f340ef4b1d3ddd",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 6,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-31 15:19:06 -0600\t465978dc51 research(h135): preregister native validation blend with sanity and seed gates (#1191)",
+      "copy_introduced": "2026-10-31 18:04:04 -0600\t198053105a research(h138): preregister retained-trajectory adapter SWA and EMA (#1243)",
+      "justification": "save/write with parameter name path. Registered instance is h155. All six paths are pinned. Same situation as the four-file same-name save class, plus two write() aliases."
+    },
+    {
+      "id": "copy-code-body-python-e225b388d251d099",
+      "fingerprint": "5327b5b7b440856a",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 35,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-09-08 22:40:28 +0000\tbd01229485 Recover router contracts and establish verified workspace custody",
+      "copy_introduced": "2026-09-08 22:40:28 +0000\tbd01229485 Recover router contracts and establish verified workspace custody",
+      "justification": "Thirty-five empty exception subclasses (class Name(RuntimeError): pass, and the same shape on Exception). The registered instance is ExportError in generated_target_admission_v1/common.py. These are different types. common.py is pinned by 15 manifests. A shared base would change public names and that pin."
+    },
+    {
+      "id": "copy-code-body-python-71416a33bdd479c1",
+      "fingerprint": "4cf4628ed68b59a9",
+      "kind": "exact_unit_different_name",
+      "unit_name": null,
+      "instance_count": 2,
+      "duplicate_lines": 1,
+      "earliest_instance_added": "2026-10-31 22:28:49 -0600\tb55ed85e8d research(h155): execute pairwise smoothing and TRAIN-fold calibration (#1310)",
+      "copy_introduced": "2026-11-02 05:11:52 -0700\t98f5ff0674 research(H220): preregister within-family input and target mixup (#1843)",
+      "justification": "target_cost in h155 and cost_target in h220: gate selects clamp(fitness, -4, 2) or the constant 2. Both files are pinned. The names differ on purpose in the two experiments."
+    }
+  ]
 }
