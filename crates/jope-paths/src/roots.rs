@@ -40,8 +40,10 @@ pub fn jope_home() -> PathBuf {
 ///
 /// `JOPEDIME_HOME` when set; otherwise `$XDG_DATA_HOME/jopedime` or
 /// `$HOME/.local/share/jopedime` on Linux, `~/Library/Application Support/jopedime`
-/// on macOS, and `%LOCALAPPDATA%\\jopedime` on Windows. The environment is
-/// read on every call so callers and tests can change it at runtime.
+/// on macOS, and `%LOCALAPPDATA%\\jopedime` on Windows. A relative
+/// `XDG_DATA_HOME`, `HOME`, or `LOCALAPPDATA` is ignored. `JOPEDIME_HOME` is
+/// kept verbatim. The environment is read on every call so callers and tests
+/// can change it at runtime.
 pub fn jopedime_home() -> PathBuf {
     let override_path = env::var_os("JOPEDIME_HOME");
     let xdg_data_home = env::var_os("XDG_DATA_HOME");
@@ -67,21 +69,69 @@ pub(crate) fn default_jopedime_home(
         return PathBuf::from(path);
     }
 
-    let home = home
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("."));
+    let home = absolute_base(os, home).unwrap_or_else(|| PathBuf::from("."));
     match os {
-        "linux" => xdg_data_home
-            .filter(|path| !path.is_empty() && Path::new(path).is_absolute())
-            .map(|path| PathBuf::from(path).join("jopedime"))
+        "linux" => absolute_base(os, xdg_data_home)
+            .map(|path| path.join("jopedime"))
             .unwrap_or_else(|| home.join(".local/share/jopedime")),
         "macos" => home.join("Library/Application Support/jopedime"),
-        "windows" => local_app_data
-            .filter(|path| !path.is_empty())
-            .map(|path| PathBuf::from(path).join("jopedime"))
+        "windows" => absolute_base(os, local_app_data)
+            .map(|path| path.join("jopedime"))
             .unwrap_or_else(|| home.join("AppData/Local/jopedime")),
         _ => home.join(".local/share/jopedime"),
     }
+}
+
+/// A fallback base counts only when it is absolute on `os`.
+///
+/// Callers pass the target operating system, and tests run that choice on a
+/// different host. A Windows drive or UNC path is therefore not asked of the
+/// host `Path` implementation.
+fn absolute_base(os: &str, value: Option<&std::ffi::OsStr>) -> Option<PathBuf> {
+    value
+        .filter(|path| !path.is_empty() && base_is_absolute(os, path))
+        .map(PathBuf::from)
+}
+
+fn base_is_absolute(os: &str, path: &std::ffi::OsStr) -> bool {
+    if os == "windows" {
+        windows_base_is_absolute(path)
+    } else {
+        Path::new(path).is_absolute()
+    }
+}
+
+fn windows_base_is_absolute(path: &std::ffi::OsStr) -> bool {
+    #[cfg(windows)]
+    {
+        Path::new(path).is_absolute()
+    }
+    #[cfg(not(windows))]
+    {
+        // The browser wasm target is neither Windows nor Unix, so `std::os::unix`
+        // is not in its standard library. Drive and UNC forms are ASCII.
+        windows_absolute_bytes(path.as_encoded_bytes())
+    }
+}
+
+#[cfg(not(windows))]
+fn windows_absolute_bytes(bytes: &[u8]) -> bool {
+    if bytes.len() >= 3
+        && bytes[0].is_ascii_alphabetic()
+        && bytes[1] == b':'
+        && matches!(bytes[2], b'\\' | b'/')
+    {
+        return true;
+    }
+    let (separator, rest) = match bytes {
+        [b'\\', b'\\', rest @ ..] => (b'\\', rest),
+        [b'/', b'/', rest @ ..] => (b'/', rest),
+        _ => return false,
+    };
+    let Some(server_end) = rest.iter().position(|byte| *byte == separator) else {
+        return false;
+    };
+    server_end > 0 && rest.len() > server_end + 1 && rest[server_end + 1] != separator
 }
 
 pub(crate) fn select_home(
