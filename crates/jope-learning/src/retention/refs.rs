@@ -23,7 +23,6 @@
 use anyhow::{bail, Context, Result};
 use serde::Serialize;
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::Read;

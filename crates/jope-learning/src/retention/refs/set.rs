@@ -219,7 +219,7 @@ impl RefSet {
             listing.push(format!(
                 "{rel}\t{}\t{}",
                 bytes.len(),
-                hex::encode(Sha256::digest(&bytes))
+                crate::canon::sha256_hex(&bytes)
             ));
             self.source = rel;
             let mut count = (0, 0);
@@ -269,7 +269,7 @@ impl RefSet {
             st.prefix_mentions += count.1;
         }
         listing.sort();
-        st.matched_listing_sha256 = hex::encode(Sha256::digest(listing.join("\n").as_bytes()));
+        st.matched_listing_sha256 = crate::canon::sha256_hex(listing.join("\n").as_bytes());
         self.scans.push(st);
         Ok(())
     }

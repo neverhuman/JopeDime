@@ -3,7 +3,6 @@
 use super::roles::{RoleAuthorizer, RoleFilter, RowRole};
 use anyhow::{bail, ensure, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 
 /// Schema identifier for manifest values.
@@ -97,7 +96,7 @@ impl SourceManifest {
     /// Computes the canonical SHA-256 digest of this value.
     pub fn digest(&self) -> Result<String> {
         self.validate()?;
-        Ok(hex::encode(Sha256::digest(serde_json::to_vec(self)?)))
+        Ok(crate::canon::sha256_hex(&serde_json::to_vec(self)?))
     }
 }
 
@@ -209,7 +208,7 @@ pub fn read_view(
                 index,
                 reason: ExclusionReason::VersionMismatch,
             }),
-            Some(found) if hex::encode(Sha256::digest(&found.bytes)) != object.sha256 => excluded
+            Some(found) if crate::canon::sha256_hex(&found.bytes) != object.sha256 => excluded
                 .push(ExcludedRow {
                     index,
                     reason: ExclusionReason::Corrupt,

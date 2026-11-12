@@ -2,7 +2,6 @@
 
 use anyhow::{bail, ensure, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 
 /// Schema identifier for view values.
 pub const VIEW_SCHEMA: &str = "jope.lake-view/v1";
@@ -50,7 +49,7 @@ impl ManifestCommit {
     /// Computes the canonical SHA-256 digest of this value.
     pub fn digest(&self) -> Result<String> {
         self.validate()?;
-        Ok(hex::encode(Sha256::digest(serde_json::to_vec(self)?)))
+        Ok(crate::canon::sha256_hex(&serde_json::to_vec(self)?))
     }
 }
 
@@ -92,7 +91,7 @@ pub fn publish<S: ProjectionStore>(
 ) -> Result<PublishResult> {
     commit.validate()?;
     ensure!(
-        hex::encode(Sha256::digest(view_bytes)) == commit.view_sha256,
+        crate::canon::sha256_hex(view_bytes) == commit.view_sha256,
         "view bytes do not match commit digest"
     );
     let expected_parent = store.get_head()?;
@@ -146,7 +145,7 @@ pub fn read_committed<S: ProjectionStore>(store: &S) -> Result<Option<(ManifestC
         .get_immutable(&view_key)?
         .ok_or_else(|| anyhow::anyhow!("committed view object is missing"))?;
     ensure!(
-        hex::encode(Sha256::digest(&view)) == commit.view_sha256,
+        crate::canon::sha256_hex(&view) == commit.view_sha256,
         "committed view digest mismatch"
     );
     Ok(Some((commit, view)))
@@ -166,7 +165,7 @@ fn current_commit<S: ProjectionStore>(store: &S, head: &S::Head) -> Result<Manif
         .get_immutable(&pointer.manifest_key)?
         .ok_or_else(|| anyhow::anyhow!("committed manifest is missing"))?;
     ensure!(
-        hex::encode(Sha256::digest(&bytes)) == pointer.commit_sha256,
+        crate::canon::sha256_hex(&bytes) == pointer.commit_sha256,
         "committed manifest digest mismatch"
     );
     let commit: ManifestCommit = serde_json::from_slice(&bytes)?;

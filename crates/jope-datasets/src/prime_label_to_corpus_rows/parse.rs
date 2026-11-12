@@ -74,14 +74,13 @@ fn reward_pair_identity(
     fold_plan: &str,
     evaluator: &str,
 ) -> String {
-    use sha2::{Digest, Sha256};
     // Keys and escaping follow Python's sorted, compact json.dumps contract.
     let payload = serde_json::json!({"dataset":dataset,"evaluator_version":evaluator,"fold_plan":fold_plan,
         "folds":folds,"schema":"RewardPairIdentity.v1","task":task});
     let canonical = super::python_canonical_json(&payload);
     format!(
         "reward-pair-v1:{}",
-        hex::encode(Sha256::digest(canonical.as_bytes()))
+        crate::hash::sha256_hex(canonical.as_bytes())
     )
 }
 

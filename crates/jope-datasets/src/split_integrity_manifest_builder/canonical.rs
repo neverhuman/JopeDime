@@ -1,11 +1,10 @@
 use anyhow::{anyhow, ensure, Result};
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 
 pub(super) fn canonical_sha256(value: &Value) -> Result<String> {
     let mut encoded = String::new();
     write_python_json(value, &mut encoded)?;
-    Ok(hex::encode(Sha256::digest(encoded.as_bytes())))
+    Ok(crate::hash::sha256_hex(encoded.as_bytes()))
 }
 
 fn write_python_json(value: &Value, output: &mut String) -> Result<()> {
