@@ -5,7 +5,6 @@ use super::*;
 #[ignore = "requires real delegated cgroup and SCQ_TEST_FIT_FIXTURE native example binary"]
 async fn fit_child_real_peer_placement_duplicate_and_target_cancellation() -> Result<()> {
     use jain_smartcluster::jope::{TaskKind, TaskManifest, MANIFEST_SCHEMA};
-    use sha2::{Digest, Sha256};
     let fixture = fs::canonicalize(
         std::env::var_os("SCQ_TEST_FIT_FIXTURE").context("build and set native fit fixture")?,
     )?;
@@ -20,7 +19,7 @@ async fn fit_child_real_peer_placement_duplicate_and_target_cancellation() -> Re
     let input = serde_json::to_vec(
         &serde_json::json!({"schema":"jope.smartcluster_input.v1","operation":{"kind":"Search","evaluations":1,"seeds":null}}),
     )?;
-    let input_sha = hex::encode(Sha256::digest(&input));
+    let input_sha = jain_smartcluster_daemon::sha256_hex(&input);
     durable(&h.dir.path().join("fit.input.json"), &input)?;
     let manifest = TaskManifest {
         schema: MANIFEST_SCHEMA.into(),
@@ -45,7 +44,7 @@ async fn fit_child_real_peer_placement_duplicate_and_target_cancellation() -> Re
         checkpoint_allowance_ms: None,
     };
     let bytes = serde_json::to_vec(&manifest)?;
-    let manifest_sha = hex::encode(Sha256::digest(&bytes));
+    let manifest_sha = jain_smartcluster_daemon::sha256_hex(&bytes);
     let path = h.dir.path().join("fit.json");
     durable(&path, &bytes)?;
     let target = h

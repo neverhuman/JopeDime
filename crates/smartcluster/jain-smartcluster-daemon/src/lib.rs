@@ -21,3 +21,9 @@ pub mod store;
 pub mod resource_policy;
 
 pub mod fit_child_policy;
+
+/// Lowercase hex SHA-256 of a complete byte buffer.
+pub fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    hex::encode(Sha256::digest(bytes))
+}

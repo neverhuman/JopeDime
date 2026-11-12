@@ -23,7 +23,7 @@ fn unavailable_fit(error: impl std::fmt::Display) -> ServerError {
     ServerError::new(ErrorCode::Unavailable, error.to_string())
 }
 fn digest(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::sha256_hex(bytes)
 }
 fn file_digest(path: &Path) -> Result<String, ServerError> {
     let mut file = fs::File::open(path).map_err(unavailable_fit)?;

@@ -221,8 +221,7 @@ impl Harness {
             ..Default::default()
         };
         if let Some(fixture) = fit_fixture {
-            use sha2::{Digest, Sha256};
-            let hash = hex::encode(Sha256::digest(fs::read(&fixture)?));
+            let hash = jain_smartcluster_daemon::sha256_hex(&fs::read(&fixture)?);
             for name in ["jope-fit-authority", "jope-gp-search", "jope-continuation"] {
                 cfg.workers
                     .trusted_services
