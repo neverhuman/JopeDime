@@ -43,7 +43,9 @@ impl EvaluatorIdentityV1 {
                 "jope-dime/dsl-abi/v1",
                 b"vendored-feat-math.GenomeIr+fit+Model::predict.v1",
             ),
-            cargo_lock_sha256: hex::encode(Sha256::digest(include_bytes!("../../../Cargo.lock"))),
+            cargo_lock_sha256: jope_dime_regressor::selfplay_runtime::sha256_bytes(include_bytes!(
+                "../../../Cargo.lock"
+            )),
         };
         value
     }
@@ -62,7 +64,9 @@ impl EvaluatorIdentityV1 {
             "jope-dime/dsl-abi/v1",
             b"vendored-feat-math.GenomeIr+fit+Model::predict.v1",
         );
-        let expected_lock = hex::encode(Sha256::digest(include_bytes!("../../../Cargo.lock")));
+        let expected_lock = jope_dime_regressor::selfplay_runtime::sha256_bytes(include_bytes!(
+            "../../../Cargo.lock"
+        ));
         if self.dsl_abi_sha256 != expected_dsl {
             bail!("evaluator DSL ABI identity does not match this build");
         }
@@ -1187,7 +1191,8 @@ fn prepare_evaluation(
     if genome.canonical() != canonical_genome {
         bail!("candidate genome is not canonical");
     }
-    let candidate_semantic_sha256 = hex::encode(Sha256::digest(canonical_genome.as_bytes()));
+    let candidate_semantic_sha256 =
+        jope_dime_regressor::selfplay_runtime::sha256_bytes(canonical_genome.as_bytes());
     let fold_sha256 = fold.digest(view)?;
     let training_target_sha256 = hash_targets(view.targets, &fold.train_rows);
     let mut hash = SemanticHasher::new("jope-dime/evaluation-key/v2");

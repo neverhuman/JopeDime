@@ -97,7 +97,7 @@ impl ArtifactCas {
     ) -> Result<ArtifactRefV1> {
         sha256(protocol_sha256, "artifact protocol")?;
         ensure!(!bytes.is_empty(), "refusing to publish an empty artifact");
-        let object_sha256 = hex::encode(Sha256::digest(bytes));
+        let object_sha256 = crate::selfplay_runtime::sha256_bytes(bytes);
         let manifest = ArtifactObjectManifestV1 {
             schema: ARTIFACT_MANIFEST_SCHEMA.to_owned(),
             kind,
@@ -106,7 +106,7 @@ impl ArtifactCas {
             byte_length: bytes.len() as u64,
         };
         let manifest_bytes = serde_json::to_vec(&manifest)?;
-        let manifest_sha256 = hex::encode(Sha256::digest(&manifest_bytes));
+        let manifest_sha256 = crate::selfplay_runtime::sha256_bytes(&manifest_bytes);
         publish_cas_file(&self.object_path(&object_sha256), bytes)?;
         publish_cas_file(&self.manifest_path(&manifest_sha256), &manifest_bytes)?;
         let reference = ArtifactRefV1 {
@@ -140,13 +140,14 @@ impl ArtifactCas {
             "artifact CAS object length drift"
         );
         ensure!(
-            hex::encode(Sha256::digest(&object)) == reference.object_sha256,
+            crate::selfplay_runtime::sha256_bytes(&object) == reference.object_sha256,
             "artifact CAS object digest drift"
         );
         let manifest_bytes = fs::read(self.manifest_path(&reference.object_manifest_sha256))
             .context("read artifact CAS manifest")?;
         ensure!(
-            hex::encode(Sha256::digest(&manifest_bytes)) == reference.object_manifest_sha256,
+            crate::selfplay_runtime::sha256_bytes(&manifest_bytes)
+                == reference.object_manifest_sha256,
             "artifact CAS manifest digest drift"
         );
         let manifest: ArtifactObjectManifestV1 = serde_json::from_slice(&manifest_bytes)?;

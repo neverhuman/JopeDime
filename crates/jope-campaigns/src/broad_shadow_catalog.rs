@@ -5,7 +5,6 @@
 
 use anyhow::{bail, Result};
 use serde_json::{Map, Value};
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const BROAD_CATALOG_SCHEMA: &str = "BroadDatasetCatalog.v1";
@@ -299,7 +298,7 @@ fn content_hash(payload: &Map<String, Value>, field: &str, name: &str) -> Result
     let mut unhashed = payload.clone();
     unhashed.remove(field);
     let bytes = serde_json::to_vec(&Value::Object(unhashed))?;
-    let actual = hex::encode(Sha256::digest(bytes));
+    let actual = crate::selfplay_runtime::sha256_bytes(bytes);
     if claimed != actual {
         bail!("{name} content hash differs");
     }

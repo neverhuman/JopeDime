@@ -187,10 +187,7 @@ impl FrozenArtifactV1 {
             return Err(format!("frozen artifact {} byte length changed", self.path));
         }
         // Artifacts are executable/checkpoint bytes, not JSON values.
-        let actual = {
-            use sha2::{Digest, Sha256};
-            hex::encode(Sha256::digest(&bytes))
-        };
+        let actual = { crate::selfplay_runtime::sha256_bytes(&bytes) };
         if actual != self.sha256 {
             return Err(format!("frozen artifact {} hash changed", self.path));
         }

@@ -4,7 +4,6 @@
 //! migrate. JSON field names, canonical hashes, and validation messages match it.
 
 use serde_json::{Map, Number, Value};
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeSet, HashMap};
 
 const ANCHOR_COUNT: usize = 4;
@@ -472,7 +471,7 @@ fn decimal_to_exponent(value: &str) -> String {
 }
 
 fn digest(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 #[cfg(test)]

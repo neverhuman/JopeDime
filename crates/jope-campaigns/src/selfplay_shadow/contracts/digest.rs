@@ -18,7 +18,7 @@ impl Sha256Digest {
     }
 
     pub fn of_bytes(bytes: &[u8]) -> Self {
-        Self(hex::encode(Sha256::digest(bytes)))
+        Self(crate::selfplay_runtime::sha256_bytes(bytes))
     }
 
     pub fn as_str(&self) -> &str {

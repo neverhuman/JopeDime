@@ -7,7 +7,6 @@
 use anyhow::{bail, Context, Result};
 use jope_dime_regressor::paths;
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -19,7 +18,7 @@ const REPETITIONS: usize = 30;
 const FITTED_ADMISSION_SCHEMA: &str = "JopeFittedBackendAdmission.v1";
 
 fn sha256(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_dime_regressor::selfplay_runtime::sha256_bytes(bytes)
 }
 
 fn run(program: &str, args: &[&str]) -> Result<Vec<u8>> {

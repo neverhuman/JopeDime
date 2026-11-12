@@ -1,5 +1,4 @@
 use super::*;
-use sha2::{Digest, Sha256};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -242,7 +241,7 @@ pub fn execute_synthetic_wave(
             "manifest_sha256": manifest_sha256,
             "evaluator_object_sha256": evaluator.object_sha256,
         }))?;
-        let output_sha256 = hex::encode(Sha256::digest(&output));
+        let output_sha256 = crate::selfplay_runtime::sha256_bytes(&output);
         let output_path = root.join(format!("jobs/{slot:06}/output.json"));
         durable_write_new(&output_path, &output, 0o444)?;
         let receipt = SyntheticTerminalReceiptV2 {

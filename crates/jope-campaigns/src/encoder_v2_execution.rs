@@ -8,7 +8,6 @@ use crate::selfplay_data::canonical_json_sha256;
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const CAPABILITY_SCHEMA: &str = "JopeEncoderCapabilityReceipt.v1";
@@ -431,7 +430,7 @@ pub fn validate_output_bytes(bytes: &[u8]) -> Result<String> {
             "encoder output feature {index} is nonfinite"
         );
     }
-    Ok(hex::encode(Sha256::digest(bytes)))
+    Ok(crate::selfplay_runtime::sha256_bytes(bytes))
 }
 
 pub fn runtime_artifacts_digest(artifacts: &[ArtifactIdentity]) -> Result<String> {

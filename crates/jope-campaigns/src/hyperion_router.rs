@@ -62,7 +62,7 @@ pub const CURRENT_EXPLORATORY_DATASET_IDS: [&str; ROUTER_DATASET_COUNT] = [
 ];
 
 fn raw_sha256(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 fn require_finite(name: &str, values: &[f64]) -> Result<(), String> {

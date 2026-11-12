@@ -7,7 +7,6 @@ use crate::campaign_evaluator::{
 use crate::data::read_regression_csv_bytes;
 use anyhow::{bail, Context, Result};
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
@@ -78,14 +77,15 @@ fn evaluate_manifest(
     // opaque dataset ID are the sole authority for the training role.
     let train_path = registry.join(&manifest.dataset).join("train.csv");
     let train_bytes = fs::read(&train_path).context("read authorized training CSV")?;
-    let actual_train_sha256 = hex::encode(Sha256::digest(&train_bytes));
+    let actual_train_sha256 = jope_dime_regressor::selfplay_runtime::sha256_bytes(&train_bytes);
     if actual_train_sha256 != manifest.train_sha256 {
         bail!("manifested train CSV differs from its pinned SHA-256");
     }
     let data = read_regression_csv_bytes(&train_bytes, "authorized train.csv")?;
     let view =
         TrainOnlyRegressionView::new(&data.x, &data.y, &manifest.stable_row_ids, data.features)?;
-    let actual_candidate_sha256 = hex::encode(Sha256::digest(manifest.canonical_genome.as_bytes()));
+    let actual_candidate_sha256 =
+        jope_dime_regressor::selfplay_runtime::sha256_bytes(manifest.canonical_genome.as_bytes());
     if actual_candidate_sha256 != manifest.candidate_sha256 {
         bail!("manifested candidate differs from its pinned semantic SHA-256");
     }
@@ -144,7 +144,7 @@ mod tests {
             train.push_str(&format!("{a},{},{}\n", 1.0 - a, 2.0 * a - 0.25));
         }
         fs::write(&train_path, train.as_bytes()).unwrap();
-        let train_sha = hex::encode(Sha256::digest(train.as_bytes()));
+        let train_sha = jope_dime_regressor::selfplay_runtime::sha256_bytes(train.as_bytes());
         let candidate = "(pipe X (ridge))";
         let manifest = json!({
             "schema": MANIFEST_SCHEMA,
@@ -152,7 +152,7 @@ mod tests {
             "train_sha256": train_sha,
             "stable_row_ids": (0..12).map(|row| format!("row-{row:02}")).collect::<Vec<_>>(),
             "canonical_genome": candidate,
-            "candidate_sha256": hex::encode(Sha256::digest(candidate.as_bytes())),
+            "candidate_sha256": jope_dime_regressor::selfplay_runtime::sha256_bytes(candidate.as_bytes()),
             "fold": {
                 "fold_id": 0,
                 "train_rows": (0..8).collect::<Vec<_>>(),

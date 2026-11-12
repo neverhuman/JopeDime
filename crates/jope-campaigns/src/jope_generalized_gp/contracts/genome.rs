@@ -90,8 +90,7 @@ pub fn task_head_valid(task: GpTaskV1, head: &str) -> bool {
 }
 
 pub fn raw_sha256(bytes: &[u8]) -> String {
-    use sha2::{Digest, Sha256};
-    hex::encode(Sha256::digest(bytes))
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
