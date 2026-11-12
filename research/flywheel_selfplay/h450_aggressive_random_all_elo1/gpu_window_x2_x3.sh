@@ -157,7 +157,10 @@ for j in doc["jobs"]:
     cwd = j["cwd"]
     argv_q = " ".join(shlex.quote(x) for x in j["launch_argv"])
     log_p = j["out_dir"] + "/agy_auto_resume.log"
-    cmd = f"cd {shlex.quote(cwd)} && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True setsid nohup {argv_q} >> {shlex.quote(log_p)} 2>&1 < /dev/null & echo $!"
+    cmd = (
+        f"( cd {shlex.quote(cwd)} && exec env PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "
+        f"setsid nohup {argv_q} ) >> {shlex.quote(log_p)} 2>&1 < /dev/null & echo $!"
+    )
     new_pid = sh(h, cmd).strip()
     sys.stderr.write(f"Relaunched {h} ({j['out_dir']}) -> wrapper pid {new_pid}\n")
 

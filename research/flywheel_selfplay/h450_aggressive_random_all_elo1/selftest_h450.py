@@ -199,20 +199,45 @@ def test_5_pool_agnostic_stacker_unthrottling() -> dict:
     return {"winner_col": top_w["col"], "winner_weight": top_w["w"], "test_u": round(u_450, 4)}
 
 
+def test_6_v3s_prior_all_12_families_and_regimes() -> dict:
+    import random as std_random
+    import icl_inject as INJ
+    import train_aggressive_random_h450 as TR
+    from icl_prior_v3s import KINDS_V3S, PROBS_V3S, Prior
+
+    assert TR.Prior is Prior, "train_aggressive_random_h450 must import 12-family Prior from icl_prior_v3s!"
+    dev = torch.device("cpu")
+    pr = Prior(dev, 4506)
+    # Deterministically exercise EVERY ONE of the 12 V3S families so kinds >= 7 can never fail!
+    all_kinds = torch.arange(len(KINDS_V3S), device=dev)
+    xs, ys, _ = pr.sample(len(KINDS_V3S), 64, 12, kinds=all_kinds, probs=PROBS_V3S)
+    assert xs.shape == (12, 64, 12) and ys.shape == (12, 64) and bool(torch.isfinite(ys).all())
+
+    r_py = std_random.Random(4506)
+    xs2, ys2, _, _ = INJ.sample_synth(pr, r_py, 6, 64, 14, 0.55, PROBS_V3S)
+    assert xs2.shape == (6, 64, 14) and bool(torch.isfinite(ys2).all())
+
+    rng = np.random.default_rng(4506)
+    xs3, ys3 = TR._sample_full_synth_special_gpu(dev, 4, 64, 12, 44, rng)
+    assert xs3.shape == (4, 64, 12) and bool(torch.isfinite(ys3).all())
+    return {"v3s_families_tested": len(KINDS_V3S), "sample_synth_ok": True, "special_synth_ok": True}
+
+
 def main() -> None:
     import math  # ensure math in globals for test_4
     globals()["math"] = math
     report = {
-        "schema": "jope.h450.selftest/v1",
+        "schema": "jope.h450.selftest/v2",
         "test_1_float64_precision": test_1_float64_precision_recovery(),
         "test_2_combined_first_random_splits": test_2_combined_first_and_zero_exact_split_match(),
         "test_3_sentinel_outlier_immunity": test_3_sentinel_and_outlier_immunity(),
         "test_4_query_invariance_and_leadlag": test_4_query_target_invariance_and_leadlag(),
         "test_5_stacker_unthrottling": test_5_pool_agnostic_stacker_unthrottling(),
+        "test_6_v3s_prior_and_regimes": test_6_v3s_prior_all_12_families_and_regimes(),
         "pass": True,
     }
     print(json.dumps(report, indent=2, sort_keys=True))
-    print("H450_SELFTEST_ALL_5_PASSED")
+    print("H450_SELFTEST_ALL_6_PASSED")
 
 
 if __name__ == "__main__":

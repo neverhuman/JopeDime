@@ -203,14 +203,14 @@ case $STEP in
 
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 -B "$STAGE/code/train_aggressive_random_h450.py" \
       --size L --init "$CK_NON_L" --bank "$ALL_BANK" --out "$DATA/ckpts/L_seedA" \
-      --hours "$HOURS" --lr 3.0e-5 --d91-mix 0.32 --synth-prob 0.22 \
+      --hours "$HOURS" --lr 3.0e-5 --d91-mix 0.0 --synth-prob 0.45 \
       --tokens 128000 --row-tokens 4096 --bmax 8 --grad-accum 3 --workers 8 --seed 450101 \
       > "$DATA/logs/train_L_seedA.log" 2>&1 &
     PID_LA=$!
 
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 -B "$STAGE/code/train_aggressive_random_h450.py" \
       --size M --init "$CK_NON_M" --bank "$ALL_BANK" --out "$DATA/ckpts/M_seedA" \
-      --hours "$HOURS" --lr 4.0e-5 --d91-mix 0.32 --synth-prob 0.22 \
+      --hours "$HOURS" --lr 4.0e-5 --d91-mix 0.0 --synth-prob 0.45 \
       --tokens 144000 --row-tokens 4096 --bmax 8 --grad-accum 3 --workers 6 --seed 450303 \
       > "$DATA/logs/train_M_seedA.log" 2>&1 &
     PID_MA=$!
@@ -218,13 +218,13 @@ case $STEP in
     "${SSH_X3[@]}" "export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
       python3 -B $STAGE/code/train_aggressive_random_h450.py \
         --size L --init $DATA_X3/inputs/ckpt_non_d91_L.pt --bank $DATA_X3/banks/everything_combined_f64_h450_bank.npz \
-        --out $DATA_X3/ckpts/L_seedB --hours $HOURS --lr 3.0e-5 --d91-mix 0.50 --synth-prob 0.22 \
+        --out $DATA_X3/ckpts/L_seedB --hours $HOURS --lr 3.0e-5 --d91-mix 0.0 --synth-prob 0.45 \
         --tokens 128000 --row-tokens 4096 --bmax 8 --grad-accum 3 --workers 8 --seed 450202 \
         > $DATA_X3/logs/train_L_seedB.log 2>&1 &
       P1=\$!
       python3 -B $STAGE/code/train_aggressive_random_h450.py \
         --size M --init $DATA_X3/inputs/ckpt_non_d91_M.pt --bank $DATA_X3/banks/everything_combined_f64_h450_bank.npz \
-        --out $DATA_X3/ckpts/M_seedB --hours $HOURS --lr 4.0e-5 --d91-mix 0.50 --synth-prob 0.22 \
+        --out $DATA_X3/ckpts/M_seedB --hours $HOURS --lr 4.0e-5 --d91-mix 0.0 --synth-prob 0.45 \
         --tokens 144000 --row-tokens 4096 --bmax 8 --grad-accum 3 --workers 6 --seed 450404 \
         > $DATA_X3/logs/train_M_seedB.log 2>&1 &
       P2=\$!

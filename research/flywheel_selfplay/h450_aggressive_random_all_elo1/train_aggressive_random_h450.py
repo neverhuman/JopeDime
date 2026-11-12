@@ -64,8 +64,7 @@ import relational_struct_h450 as REL  # noqa: E402
 import robust_resid_h450 as RR  # noqa: E402
 from icl_model import FID_SLOTS  # noqa: E402
 from icl_model_h450 import ICLH450, n_params  # noqa: E402
-from icl_prior import Prior  # noqa: E402
-from icl_prior_v3s import PROBS_V3S, draw_features  # noqa: E402
+from icl_prior_v3s import PROBS_V3S, Prior, draw_features  # noqa: E402
 import icl_inject as INJ  # noqa: E402
 
 WIDE_GPU = 64
@@ -101,23 +100,60 @@ class CombinedF64Bank:
 
         self.n_tables = len(self.tabs_f64)
         self.rows_arr = np.array([t.shape[0] for t in self.tabs_f64], dtype=np.int64)
+        self.cols_arr = np.array([t.shape[1] - 1 for t in self.tabs_f64], dtype=np.int64)
+        self.strata = self._compute_structural_strata()
         self.is_d91 = np.array([c.startswith("D91") for c in self.cohorts], dtype=bool)
         self.d91_indices = np.flatnonzero(self.is_d91)
         self.non_d91_indices = np.flatnonzero(~self.is_d91)
         self.d91_mix_prob = float(d91_mix_prob)
 
-        self.non_d91_weights = self._family_balanced_weights(self.non_d91_indices)
-        self.d91_weights = self._family_balanced_weights(self.d91_indices)
+        self.all_indices = np.arange(self.n_tables, dtype=np.int64)
+        self.all_weights = self._smart_stratified_weights(self.all_indices)
+        self.non_d91_weights = self._smart_stratified_weights(self.non_d91_indices)
+        self.d91_weights = self._smart_stratified_weights(self.d91_indices)
 
-    def _family_balanced_weights(self, idxs: np.ndarray) -> np.ndarray:
+    def sample_table_idx(self, rng: np.random.Generator) -> int:
+        if self.d91_mix_prob <= 0.0:
+            return int(rng.choice(self.all_indices, p=self.all_weights))
+        if len(self.d91_indices) > 0 and float(rng.random()) < self.d91_mix_prob:
+            return int(rng.choice(self.d91_indices, p=self.d91_weights))
+        return int(rng.choice(self.non_d91_indices, p=self.non_d91_weights))
+
+    def _compute_structural_strata(self) -> list[str]:
+        strata: list[str] = []
+        for i, tab in enumerate(self.tabs_f64):
+            r, p = int(self.rows_arr[i]), int(self.cols_arr[i])
+            r_b = "S" if r < 250 else ("M" if r < 1200 else "L")
+            p_b = "N" if p <= 8 else ("W" if p <= 30 else "XW")
+            y = tab[:, -1]
+            yf = y[np.isfinite(y)]
+            tail_b = "norm"
+            if yf.size >= 16:
+                q10, q50, q90 = np.percentile(yf, [10.0, 50.0, 90.0])
+                span = max(q90 - q10, 1e-12)
+                max_dev = float(np.max(np.abs(yf - q50))) / span
+                if max_dev > 8.0:
+                    tail_b = "heavy"
+            strata.append(f"{r_b}:{p_b}:{tail_b}")
+        return strata
+
+    def _smart_stratified_weights(self, idxs: np.ndarray) -> np.ndarray:
         if len(idxs) == 0:
             return np.zeros(0, dtype=np.float64)
         fam_counts: dict[str, int] = {}
+        strat_counts: dict[str, int] = {}
         for i in idxs.tolist():
             fk = self.families[i]
+            sk = self.strata[i]
             fam_counts[fk] = fam_counts.get(fk, 0) + 1
+            strat_counts[sk] = strat_counts.get(sk, 0) + 1
+        mean_sc = float(len(idxs)) / max(float(len(strat_counts)), 1.0)
         w = np.array(
-            [(min(self.rows_arr[i], 2048) ** 0.30) / math.sqrt(float(fam_counts[self.families[i]])) for i in idxs.tolist()],
+            [
+                ((min(self.rows_arr[i], 2048) ** 0.30) / math.sqrt(float(fam_counts[self.families[i]])))
+                * ((mean_sc / float(strat_counts[self.strata[i]])) ** 0.25)
+                for i in idxs.tolist()
+            ],
             dtype=np.float64,
         )
         return w / float(np.sum(w))
@@ -489,9 +525,29 @@ def _sample_single_episode(
     else:
         n_rows = min(r_tot, target_n)
 
-    # Brand-new CSPRNG row permutation on EVERY episode (`0` static splits!)
-    perm_r = rng.permutation(r_tot)[:n_rows]
-    sub = tab[perm_r]
+    # Smart target-quantile stratified random subsample + random split (`0` static splits, `0` exact dev91 matches!)
+    if r_tot > n_rows and rng.random() < 0.75:
+        y_ord_all = np.argsort(tab[:, tcol] + (1e-12 * max(float(np.std(tab[:, tcol])), 1.0)) * rng.standard_normal(r_tot), kind="mergesort")
+        k_bins = int(rng.integers(6, 17))
+        bins_all = np.array_split(y_ord_all, k_bins)
+        picked = []
+        rem_need = n_rows
+        for bi, b_arr in enumerate(bins_all):
+            if len(b_arr) == 0:
+                continue
+            take = rem_need if bi == len(bins_all) - 1 else min(len(b_arr), max(1, int(round(n_rows * len(b_arr) / float(r_tot)))))
+            take = min(take, len(b_arr), rem_need)
+            if take > 0:
+                picked.append(rng.permutation(b_arr)[:take])
+                rem_need -= take
+        sel_idx = np.concatenate(picked) if picked else np.empty(0, dtype=np.int64)
+        if len(sel_idx) < n_rows:
+            leftover = np.setdiff1d(np.arange(r_tot, dtype=np.int64), sel_idx, assume_unique=False)
+            sel_idx = np.concatenate([sel_idx, rng.permutation(leftover)[: n_rows - len(sel_idx)]])
+        sub = tab[rng.permutation(sel_idx[:n_rows])]
+    else:
+        perm_r = rng.permutation(r_tot)[:n_rows]
+        sub = tab[perm_r]
     if target_n is not None and n_rows < target_n:
         extra = rng.integers(0, n_rows, size=target_n - n_rows)
         sub = np.vstack([sub, sub[extra]])
@@ -507,6 +563,27 @@ def _sample_single_episode(
     feat_idxs = [j for j in range(c_tot) if j != tcol]
     X_all_raw = sub[:, feat_idxs]
     y_all_raw = sub[:, tcol].copy()
+
+    if rng.random() < 0.75 and n_rows >= 24:
+        # Target-quantile stratified random split into (ctx, query), then independently CSPRNG-shuffle ctx and query!
+        y_jit_s = y_all_raw + (1e-12 * max(float(np.std(y_all_raw)), 1.0)) * rng.standard_normal(n_rows)
+        ord_s = np.argsort(y_jit_s, kind="mergesort")
+        k_st = int(rng.integers(5, min(17, max(6, n_rows // 4))))
+        ctx_parts, qry_parts = [], []
+        for b_arr in np.array_split(ord_s, k_st):
+            if len(b_arr) == 0:
+                continue
+            bp = rng.permutation(b_arr)
+            nc_b = int(round(p_ctx * len(bp)))
+            ctx_parts.append(bp[:nc_b])
+            qry_parts.append(bp[nc_b:])
+        c_idx = np.concatenate(ctx_parts) if ctx_parts else np.empty(0, dtype=np.int64)
+        q_idx = np.concatenate(qry_parts) if qry_parts else np.empty(0, dtype=np.int64)
+        c_idx = rng.permutation(c_idx)
+        q_idx = rng.permutation(q_idx)
+        merged_ord = np.concatenate([c_idx, q_idx])
+        X_all_raw = X_all_raw[merged_ord]
+        y_all_raw = y_all_raw[merged_ord]
 
     Xc_raw = X_all_raw[:n_ctx]
     yc_raw = y_all_raw[:n_ctx].copy()
@@ -636,13 +713,8 @@ def _episode_worker_loop(
         b_seed = hashlib.blake2b(run_nonce + worker_id.to_bytes(4, "little") + seq.to_bytes(8, "little"), digest_size=32).digest()
         rng = np.random.default_rng(np.frombuffer(b_seed, dtype=np.uint32))
 
-        pick_d91 = len(bank.d91_indices) > 0 and (float(rng.random()) < bank.d91_mix_prob)
         if float(rng.random()) < 0.62:
-            idx = int(
-                rng.choice(bank.d91_indices, p=bank.d91_weights)
-                if pick_d91
-                else rng.choice(bank.non_d91_indices, p=bank.non_d91_weights)
-            )
+            idx = bank.sample_table_idx(rng)
             ep_seed = hashlib.blake2b(b_seed + b"\x01", digest_size=32).digest()
             got = _sample_single_episode(bank, idx, target_n=None, target_f=WIDE_GPU, p_ctx_fixed=None, seed_bytes=ep_seed)
             if got is None:
@@ -664,12 +736,7 @@ def _episode_worker_loop(
             c_r0 = c_r1 = c_r2 = 0
             n_ctx_shared = max(16, min(N_tgt - 4, int(round(p_ctx * N_tgt))))
             for b in range(B_tgt):
-                use_d91 = len(bank.d91_indices) > 0 and (float(rng.random()) < bank.d91_mix_prob)
-                t_idx = int(
-                    rng.choice(bank.d91_indices, p=bank.d91_weights)
-                    if use_d91
-                    else rng.choice(bank.non_d91_indices, p=bank.non_d91_weights)
-                )
+                t_idx = bank.sample_table_idx(rng)
                 ep_seed = hashlib.blake2b(b_seed + (b + 2).to_bytes(4, "little"), digest_size=32).digest()
                 got = _sample_single_episode(bank, t_idx, target_n=N_tgt, target_f=F_tgt, p_ctx_fixed=p_ctx, seed_bytes=ep_seed)
                 if got is not None and got[2] == n_ctx_shared and got[0].shape == (N_tgt, F_tgt):

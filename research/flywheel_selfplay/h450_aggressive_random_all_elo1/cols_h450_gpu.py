@@ -182,78 +182,101 @@ def eval_single_context_gpu(
 
     total_cells = 0
     valid_folds = 0
+    base_cols = ("icl_robridge_a", "icl_robridge_b", "icl_robridge_e32", "icl_yj_exact_e16", "icl_nlres_e16")
+    q_sums = {c: np.zeros(n_s, dtype=np.float64) for c in base_cols}
+    q_cnts = {c: np.zeros(n_s, dtype=np.int64) for c in base_cols}
 
-    # Store per-fold augmented matrices so Stage-2 Self-Boosting reuses them cleanly with zero leakage!
-    fold_cache: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {}
+    # Multi-repeat randomized 5-fold GPU cross-validation (`2 x 5 = 10` random folds per context; 0 self-target leakage!)
+    fold_cache: dict[tuple[int, int], tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {}
+    n_repeats = 2
 
-    for fk in range(5):
-        va = lab == fk
-        tr = ~va
-        n_va = int(np.sum(va))
-        if n_va == 0 or int(np.sum(tr)) < 16:
-            continue
-        valid_folds += 1
-        X_tr_raw, y_tr = Xs[tr], y[tr]
-        X_ev_raw = np.vstack([Xs[va], Xa])
-
-        fseed = _sha_seed(f"h450_gpu:{cid}:f{fk}")
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            X_tr_cl, X_ev_cl, S_tr, S_ev, _ = REL.build_h450_struct_cols(
-                X_tr_raw, y_tr, X_ev_raw, seed=fseed, fast_mode=False, max_total_cols=18, include_base_struct=True
-            )
-        X_tr_aug = np.hstack([X_tr_cl, S_tr]) if S_tr.shape[1] > 0 else X_tr_cl
-        X_ev_aug = np.hstack([X_ev_cl, S_ev]) if S_ev.shape[1] > 0 else X_ev_cl
-        fold_cache[fk] = (tr, va, X_tr_aug, X_ev_aug)
-
-        # --- Mode 1: Robust-Ridge Residual (`SeedA`, `SeedB`, `e32`) ---
-        oof_rr, pq_rr, used_rr, _ = RR.robust_ridge_np(X_tr_aug, y_tr, X_ev_aug, seed=fseed + 11)
-        y_tr_rr = (y_tr - oof_rr) if used_rr else y_tr
-        base_rr = pq_rr if used_rr else np.zeros(n_va + n_a, dtype=np.float64)
-
-        views8_a = _build_views(X_tr_aug, y_tr_rr, X_ev_aug, n_views=nv8, seed=fseed + 101)
-        views8_b = _build_views(X_tr_aug, y_tr_rr, X_ev_aug, n_views=nv8, seed=fseed + 202)
-        pa_ev, c1 = _batched_icl_predict(pair_a, views8_a, y_tr_rr, dev, seed=fseed + 101)
-        pb_ev, c2 = _batched_icl_predict(pair_b, views8_b, y_tr_rr, dev, seed=fseed + 202)
-        total_cells += c1 + c2
-
-        pred_a = np.clip(base_rr + pa_ev, lo_guard, hi_guard)
-        pred_b = np.clip(base_rr + pb_ev, lo_guard, hi_guard)
-        pred_e32 = 0.5 * (pred_a + pred_b)
-
-        res["q_icl_robridge_a"][va] = pred_a[:n_va]
-        res["bag_icl_robridge_a"] += pred_a[n_va:]
-        res["q_icl_robridge_b"][va] = pred_b[:n_va]
-        res["bag_icl_robridge_b"] += pred_b[n_va:]
-        res["q_icl_robridge_e32"][va] = pred_e32[:n_va]
-        res["bag_icl_robridge_e32"] += pred_e32[n_va:]
-
-        # --- Mode 2: Yeo-Johnson Exact 1,024-Bin Softmax Integration (`icl_yj_exact_e16`) ---
-        warp = RR.YeoJohnsonWarpF64()
-        z_tr = warp.fit_transform(y_tr)
-        views4_yj = _build_views(X_tr_aug, z_tr, X_ev_aug, n_views=nv4, seed=fseed + 303)
-        pyj_ev, c3 = _batched_icl_predict(all_four, views4_yj, z_tr, dev, seed=fseed + 303, inv_fn=warp.inv_torch)
-        total_cells += c3
-        pred_yj = np.clip(pyj_ev, lo_guard, hi_guard)
-        res["q_icl_yj_exact_e16"][va] = pred_yj[:n_va]
-        res["bag_icl_yj_exact_e16"] += pred_yj[n_va:]
-
-        # --- Mode 3: Nonlinear-Base (`HGB + Laplacian-Matérn`) Residual Zooming (`icl_nlres_e16`) ---
-        oof_nl, pq_nl, used_nl, _ = RR.fast_nonlinear_base_oof(X_tr_aug, y_tr, X_ev_aug, seed=fseed + 404)
-        if used_nl:
-            X_tr_nl = np.column_stack([oof_nl, X_tr_aug])
-            X_ev_nl = np.column_stack([pq_nl, X_ev_aug])
-            y_tr_nl = y_tr - oof_nl
-            views4_nl = _build_views(X_tr_nl, y_tr_nl, X_ev_nl, n_views=nv4, seed=fseed + 404)
-            pnl_ev, c4 = _batched_icl_predict(all_four, views4_nl, y_tr_nl, dev, seed=fseed + 404)
-            total_cells += c4
-            pred_nl = np.clip(pq_nl + pnl_ev, lo_guard, hi_guard)
+    for rep in range(n_repeats):
+        if rep == 0:
+            lab_rep = lab
         else:
-            pred_nl = pred_e32.copy()
-        res["q_icl_nlres_e16"][va] = pred_nl[:n_va]
-        res["bag_icl_nlres_e16"] += pred_nl[n_va:]
+            rep_rng = np.random.default_rng(_sha_seed(f"h450_gpu_rfold:{cid}:rep{rep}"))
+            # Smart target-quantile stratified random 5-fold partition (balanced across y_search deciles & tails)
+            y_jit = y + (1e-12 * sy_glob) * rep_rng.standard_normal(n_s)
+            ord_y = np.argsort(y_jit, kind="mergesort")
+            lab_rep = np.empty(n_s, dtype=np.int64)
+            for b0 in range(0, n_s, 5):
+                chunk = ord_y[b0 : b0 + 5]
+                lab_rep[chunk] = rep_rng.permutation(5)[: len(chunk)]
 
-    for col in ("icl_robridge_a", "icl_robridge_b", "icl_robridge_e32", "icl_yj_exact_e16", "icl_nlres_e16"):
+        for fk in range(5):
+            va = lab_rep == fk
+            tr = ~va
+            n_va = int(np.sum(va))
+            if n_va == 0 or int(np.sum(tr)) < 16:
+                continue
+            valid_folds += 1
+            X_tr_raw, y_tr = Xs[tr], y[tr]
+            X_ev_raw = np.vstack([Xs[va], Xa])
+
+            fseed = _sha_seed(f"h450_gpu:{cid}:r{rep}:f{fk}")
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                X_tr_cl, X_ev_cl, S_tr, S_ev, _ = REL.build_h450_struct_cols(
+                    X_tr_raw, y_tr, X_ev_raw, seed=fseed, fast_mode=False, max_total_cols=18, include_base_struct=True
+                )
+            X_tr_aug = np.hstack([X_tr_cl, S_tr]) if S_tr.shape[1] > 0 else X_tr_cl
+            X_ev_aug = np.hstack([X_ev_cl, S_ev]) if S_ev.shape[1] > 0 else X_ev_cl
+            fold_cache[(rep, fk)] = (tr, va, X_tr_aug, X_ev_aug)
+
+            # --- Mode 1: Robust-Ridge Residual (`SeedA`, `SeedB`, `e32`) ---
+            oof_rr, pq_rr, used_rr, _ = RR.robust_ridge_np(X_tr_aug, y_tr, X_ev_aug, seed=fseed + 11)
+            y_tr_rr = (y_tr - oof_rr) if used_rr else y_tr
+            base_rr = pq_rr if used_rr else np.zeros(n_va + n_a, dtype=np.float64)
+
+            views8_a = _build_views(X_tr_aug, y_tr_rr, X_ev_aug, n_views=nv8, seed=fseed + 101)
+            views8_b = _build_views(X_tr_aug, y_tr_rr, X_ev_aug, n_views=nv8, seed=fseed + 202)
+            pa_ev, c1 = _batched_icl_predict(pair_a, views8_a, y_tr_rr, dev, seed=fseed + 101)
+            pb_ev, c2 = _batched_icl_predict(pair_b, views8_b, y_tr_rr, dev, seed=fseed + 202)
+            total_cells += c1 + c2
+
+            pred_a = np.clip(base_rr + pa_ev, lo_guard, hi_guard)
+            pred_b = np.clip(base_rr + pb_ev, lo_guard, hi_guard)
+            pred_e32 = 0.5 * (pred_a + pred_b)
+
+            q_sums["icl_robridge_a"][va] += pred_a[:n_va]
+            q_cnts["icl_robridge_a"][va] += 1
+            res["bag_icl_robridge_a"] += pred_a[n_va:]
+            q_sums["icl_robridge_b"][va] += pred_b[:n_va]
+            q_cnts["icl_robridge_b"][va] += 1
+            res["bag_icl_robridge_b"] += pred_b[n_va:]
+            q_sums["icl_robridge_e32"][va] += pred_e32[:n_va]
+            q_cnts["icl_robridge_e32"][va] += 1
+            res["bag_icl_robridge_e32"] += pred_e32[n_va:]
+
+            # --- Mode 2: Yeo-Johnson Exact 1,024-Bin Softmax Integration (`icl_yj_exact_e16`) ---
+            warp = RR.YeoJohnsonWarpF64()
+            z_tr = warp.fit_transform(y_tr)
+            views4_yj = _build_views(X_tr_aug, z_tr, X_ev_aug, n_views=nv4, seed=fseed + 303)
+            pyj_ev, c3 = _batched_icl_predict(all_four, views4_yj, z_tr, dev, seed=fseed + 303, inv_fn=warp.inv_torch)
+            total_cells += c3
+            pred_yj = np.clip(pyj_ev, lo_guard, hi_guard)
+            q_sums["icl_yj_exact_e16"][va] += pred_yj[:n_va]
+            q_cnts["icl_yj_exact_e16"][va] += 1
+            res["bag_icl_yj_exact_e16"] += pred_yj[n_va:]
+
+            # --- Mode 3: Nonlinear-Base (`HGB + Laplacian-Matérn`) Residual Zooming (`icl_nlres_e16`) ---
+            oof_nl, pq_nl, used_nl, _ = RR.fast_nonlinear_base_oof(X_tr_aug, y_tr, X_ev_aug, seed=fseed + 404)
+            if used_nl:
+                X_tr_nl = np.column_stack([oof_nl, X_tr_aug])
+                X_ev_nl = np.column_stack([pq_nl, X_ev_aug])
+                y_tr_nl = y_tr - oof_nl
+                views4_nl = _build_views(X_tr_nl, y_tr_nl, X_ev_nl, n_views=nv4, seed=fseed + 404)
+                pnl_ev, c4 = _batched_icl_predict(all_four, views4_nl, y_tr_nl, dev, seed=fseed + 404)
+                total_cells += c4
+                pred_nl = np.clip(pq_nl + pnl_ev, lo_guard, hi_guard)
+            else:
+                pred_nl = pred_e32.copy()
+            q_sums["icl_nlres_e16"][va] += pred_nl[:n_va]
+            q_cnts["icl_nlres_e16"][va] += 1
+            res["bag_icl_nlres_e16"] += pred_nl[n_va:]
+
+    for col in base_cols:
+        res[f"q_{col}"] = np.where(q_cnts[col] > 0, q_sums[col] / np.maximum(q_cnts[col], 1), ym_glob)
         res[f"bag_{col}"] /= float(max(valid_folds, 1))
 
     # --- Full-X_search Refits for Modes 1, 2, 3 ---
@@ -297,33 +320,36 @@ def eval_single_context_gpu(
     else:
         res["ref_icl_nlres_e16"] = res["ref_icl_robridge_e32"].copy()
 
-    # --- Optional Hurdle-Sentinel Calibration on `icl_robridge_e32` (Strictly 5-fold OOF gated!) ---
+    # --- Optional Hurdle-Sentinel Calibration on `icl_robridge_e32` (Strictly OOF gated across random folds!) ---
     hurdle_used = False
     atom = RR.HurdleSentinelDetector.detect_atom(y)
     if atom is not None:
         is_atom = np.abs(y - atom) <= 1e-7 * max(1.0, abs(atom))
         if int(np.sum(is_atom)) >= 4 and int(np.sum(~is_atom)) >= 20:
             p_oof, p_qa = RR.HurdleSentinelDetector.fit_oof_and_query_probs(Xs_aug, is_atom, Xa_aug, lab, seed=rseed + 555)
-            # Bulk-only 5-fold + refit `ICLH450` prediction
-            bulk_q = res["q_icl_robridge_e32"].copy()
+            bulk_q_sum = np.zeros(n_s, dtype=np.float64)
+            bulk_q_cnt = np.zeros(n_s, dtype=np.int64)
             bulk_bag = np.zeros(n_a, dtype=np.float64)
             bf_cnt = 0
-            for fk, (tr, va, X_tr_aug, X_ev_aug) in fold_cache.items():
+            for (rep, fk), (tr, va, X_tr_aug, X_ev_aug) in fold_cache.items():
                 n_va = int(np.sum(va))
                 b_mask = ~is_atom[tr]
                 if int(np.sum(b_mask)) < 16:
                     continue
                 bf_cnt += 1
+                f_off = 10 * rep + fk
                 Xb_tr, yb_tr = X_tr_aug[b_mask], y[tr][b_mask]
-                oof_b, pq_b, u_b, _ = RR.robust_ridge_np(Xb_tr, yb_tr, X_ev_aug, seed=rseed + 600 + fk)
+                oof_b, pq_b, u_b, _ = RR.robust_ridge_np(Xb_tr, yb_tr, X_ev_aug, seed=rseed + 600 + f_off)
                 yb_res = (yb_tr - oof_b) if u_b else yb_tr
-                vb = _build_views(Xb_tr, yb_res, X_ev_aug, n_views=nv4, seed=rseed + 600 + fk)
-                pb_ev2, cb2 = _batched_icl_predict(all_four, vb, yb_res, dev, seed=rseed + 600 + fk)
+                vb = _build_views(Xb_tr, yb_res, X_ev_aug, n_views=nv4, seed=rseed + 600 + f_off)
+                pb_ev2, cb2 = _batched_icl_predict(all_four, vb, yb_res, dev, seed=rseed + 600 + f_off)
                 total_cells += cb2
                 pred_b_all = (pq_b if u_b else 0.0) + pb_ev2
-                bulk_q[va] = pred_b_all[:n_va]
+                bulk_q_sum[va] += pred_b_all[:n_va]
+                bulk_q_cnt[va] += 1
                 bulk_bag += pred_b_all[n_va:]
             if bf_cnt > 0:
+                bulk_q = np.where(bulk_q_cnt > 0, bulk_q_sum / np.maximum(bulk_q_cnt, 1), res["q_icl_robridge_e32"])
                 bulk_bag /= float(bf_cnt)
                 cand_q = p_oof * atom + (1.0 - p_oof) * bulk_q
                 mse_base = float(np.mean((res["q_icl_robridge_e32"] - y) ** 2))
@@ -350,25 +376,29 @@ def eval_single_context_gpu(
     rmse_s1 = float(np.sqrt(np.mean(r1_s * r1_s)))
     eta_best = 0.0
     if rmse_s1 < 0.55 * sy_glob and float(np.std(r1_s)) > 1e-6 * sy_glob and len(fold_cache) >= 4:
-        r2_oof = np.zeros(n_s, dtype=np.float64)
+        r2_oof_sum = np.zeros(n_s, dtype=np.float64)
+        r2_oof_cnt = np.zeros(n_s, dtype=np.int64)
         r2_bag = np.zeros(n_a, dtype=np.float64)
         cnt_s2 = 0
-        for fk, (tr, va, X_tr_aug, X_ev_aug) in fold_cache.items():
+        for (rep, fk), (tr, va, X_tr_aug, X_ev_aug) in fold_cache.items():
             n_va = int(np.sum(va))
             r1_tr = r1_s[tr]
             if float(np.std(r1_tr)) <= 1e-12:
                 continue
             cnt_s2 += 1
+            f_off = 10 * rep + fk
             s1_col_tr = q_s1[tr]
             s1_col_ev = np.concatenate([q_s1[va], bag_s1])
             X2_tr = np.column_stack([s1_col_tr, X_tr_aug])
             X2_ev = np.column_stack([s1_col_ev, X_ev_aug])
-            v2 = _build_views(X2_tr, r1_tr, X2_ev, n_views=nv4, seed=rseed + 800 + fk)
-            pr2_ev, cs2 = _batched_icl_predict(all_four, v2, r1_tr, dev, seed=rseed + 800 + fk)
+            v2 = _build_views(X2_tr, r1_tr, X2_ev, n_views=nv4, seed=rseed + 800 + f_off)
+            pr2_ev, cs2 = _batched_icl_predict(all_four, v2, r1_tr, dev, seed=rseed + 800 + f_off)
             total_cells += cs2
-            r2_oof[va] = pr2_ev[:n_va]
+            r2_oof_sum[va] += pr2_ev[:n_va]
+            r2_oof_cnt[va] += 1
             r2_bag += pr2_ev[n_va:]
         if cnt_s2 > 0:
+            r2_oof = np.where(r2_oof_cnt > 0, r2_oof_sum / np.maximum(r2_oof_cnt, 1), 0.0)
             r2_bag /= float(cnt_s2)
             best_mse2 = rmse_s1 * rmse_s1
             for eta in (0.20, 0.40, 0.65, 0.85, 1.00):
