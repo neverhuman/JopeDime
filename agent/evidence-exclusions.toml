@@ -112,7 +112,7 @@ sha256 = "a841d5099231a6f19c5b7a09c290d3b7e11396a7488ac4ae89e3445363c7a7da"
 path = "crates/jope-campaigns/src/campaign_evaluator.rs"
 reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/jope-campaigns/src/campaign_evaluator.rs; changing the bytes invalidates that frozen evaluator identity."
 receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
-sha256 = "b52ef8f4f41ed1b3e77e15b4b2cc54f485122dcd72718a6ae5bf349a094e54c6"
+sha256 = "3f3a5952d87e1ae458343bcca94a7b6376225fcf465b856c74d3505549f0af1c"
 
 [[evidence_exclusion]]
 path = "crates/jope-campaigns/src/commands/exact_cv.rs"
