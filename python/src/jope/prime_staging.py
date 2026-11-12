@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import stat
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from .prime_config import PrimeConfig, load_config
+from .prime_config import PrimeConfig, expand_config_home, load_config
 
 _OWNED_DIRECTORY_NAMES = ("reports", "outputs")
+
+
+def expand_staged_path(path: str | Path, home: str | None) -> Path:
+    """Expand ``~`` and ``~/…`` only when ``home`` is absolute."""
+    try:
+        return expand_config_home(path, home)
+    except ValueError as error:
+        raise ValueError("HOME is not an absolute path; a Prime staging path cannot be resolved") from error
 
 
 @dataclass(frozen=True)
@@ -26,7 +35,7 @@ def prime_owned_path(path: str | Path, config: PrimeConfig | None = None) -> Pat
     """Resolve ``path`` and reject any destination outside ``prime.root``."""
     config = config or load_config()
     root = config.root.resolve(strict=False)
-    candidate = Path(path).expanduser()
+    candidate = expand_staged_path(path, os.environ.get("HOME"))
     if not candidate.is_absolute():
         candidate = root / candidate
     candidate = candidate.resolve(strict=False)
@@ -38,7 +47,7 @@ def prime_owned_path(path: str | Path, config: PrimeConfig | None = None) -> Pat
 def ensure_prime_owned_directory(path: str | Path, config: PrimeConfig | None = None) -> Path:
     """Create a real Prime-owned directory, never an output symlink."""
     config = config or load_config()
-    requested = Path(path).expanduser()
+    requested = expand_staged_path(path, os.environ.get("HOME"))
     if not requested.is_absolute():
         requested = config.root.resolve(strict=False) / requested
     if requested.is_symlink():
@@ -77,7 +86,7 @@ def stage_read_only_dataset(
     reuse the deterministic workspace without replacing prior owned outputs.
     """
     config = config or load_config()
-    source = Path(source_dir).expanduser().resolve(strict=True)
+    source = expand_staged_path(source_dir, os.environ.get("HOME")).resolve(strict=True)
     if not source.is_dir():
         raise ValueError(f"dataset source is not a directory: {source}")
 
@@ -86,7 +95,7 @@ def stage_read_only_dataset(
     if destination is None:
         workspace = cache / "staged_datasets" / key / source.name
     else:
-        requested = Path(destination).expanduser()
+        requested = expand_staged_path(destination, os.environ.get("HOME"))
         workspace = requested if requested.is_absolute() else cache / requested
     requested_workspace = workspace
     resolved_workspace = prime_owned_path(requested_workspace, config)
@@ -130,7 +139,7 @@ def prime_dataset_workspace(
 ) -> StagedDataset:
     """Use an owned dataset in place, otherwise stage its read-only inputs."""
     config = config or load_config()
-    source = Path(source_dir).expanduser().resolve(strict=True)
+    source = expand_staged_path(source_dir, os.environ.get("HOME")).resolve(strict=True)
     root = config.root.resolve(strict=False)
     if source.is_relative_to(root):
         dataset = prime_owned_path(source, config)
