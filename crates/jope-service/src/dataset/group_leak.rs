@@ -1,11 +1,12 @@
-//! ID-like columns on a random split.
+//! ID-like columns whose values sit on both sides of a random split.
 //!
 //! A column is ID-like when one of its name tokens is `id`, `subject`,
-//! `patient`, or `group`. `subject#` is `subject`. The target and ignored
-//! columns are not flagged. This does not prove the same person is in both
-//! sides; it warns that a random split can put one identifier on both.
+//! `patient`, or `group`. `subject#` is `subject`. The warning is raised only
+//! when one of those values is present in both the training rows and the
+//! evaluation rows. The target and ignored columns are not candidates.
 
 use jope_api::{Warning, WarningState};
+use std::collections::BTreeSet;
 
 /// Columns whose names look like identifiers.
 pub fn id_like_columns(headers: &[String], target: &str, ignored: &[String]) -> Vec<String> {
@@ -27,7 +28,43 @@ fn id_like(name: &str) -> bool {
         })
 }
 
-/// A raised `GROUP_LEAKAGE` warning. This backend only prepares a random split.
+/// ID-like columns that share a non-empty value across `fit` and `holdout`.
+///
+/// `columns` is `(name, one cell per row)`. Missing and blank cells are not values.
+pub fn spanning_columns(
+    columns: &[(String, Vec<Option<String>>)],
+    fit: &[usize],
+    holdout: &[usize],
+) -> Vec<String> {
+    columns
+        .iter()
+        .filter(|(_, values)| overlaps(values, fit, holdout))
+        .map(|(name, _)| name.clone())
+        .collect()
+}
+
+fn overlaps(values: &[Option<String>], fit: &[usize], holdout: &[usize]) -> bool {
+    let mut training = BTreeSet::new();
+    for index in fit {
+        if let Some(value) = cell(values, *index) {
+            training.insert(value);
+        }
+    }
+    holdout
+        .iter()
+        .any(|index| cell(values, *index).is_some_and(|value| training.contains(&value)))
+}
+
+fn cell(values: &[Option<String>], index: usize) -> Option<String> {
+    let text = values.get(index)?.as_deref()?.trim();
+    if text.is_empty() {
+        None
+    } else {
+        Some(text.to_owned())
+    }
+}
+
+/// A raised `GROUP_LEAKAGE` warning for a column that spans the split.
 pub fn warning(column: &str) -> Result<Warning, crate::warnings::WarningInputError> {
     crate::warnings::catalog("GROUP_LEAKAGE")
         .expect("GROUP_LEAKAGE is catalogued")
@@ -36,10 +73,10 @@ pub fn warning(column: &str) -> Result<Warning, crate::warnings::WarningInputErr
             None,
             None,
             format!(
-                "`{column}` looks like an identifier. This run uses a random split, so the same value can appear in training and evaluation."
+                "`{column}` has the same identifier on a training row and an evaluation row."
             ),
             format!(
-                "Ignore `{column}` if the same entity must not sit on both sides. This backend does not take a group column."
+                "Ignore `{column}` if that entity must not sit on both sides. This backend does not take a group column."
             ),
         )
 }
@@ -68,6 +105,24 @@ mod tests {
         assert_eq!(
             id_like_columns(&headers, "age", &ignored),
             names(&["group"])
+        );
+    }
+
+    fn column(name: &str, cells: &[&str]) -> (String, Vec<Option<String>>) {
+        (
+            name.to_owned(),
+            cells.iter().map(|cell| Some((*cell).to_owned())).collect(),
+        )
+    }
+
+    #[test]
+    fn a_shared_subject_is_flagged_and_a_disjoint_one_is_not() {
+        let shared = column("subject#", &["S1", "S2", "S1"]);
+        let apart = column("patient_id", &["A", "B", "C"]);
+        let blank = column("group", &["", "G", ""]);
+        assert_eq!(
+            spanning_columns(&[shared, apart, blank], &[0, 1], &[2]),
+            vec!["subject#".to_owned()]
         );
     }
 }
