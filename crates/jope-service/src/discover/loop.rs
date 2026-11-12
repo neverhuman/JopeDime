@@ -63,7 +63,7 @@ const NATIVE_ARTIFACT_VERSION: u32 = 1;
 const REFIT_HANDOFF_BYTES: u64 = 16 * 1024 * 1024;
 
 fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::digest::sha256_hex(bytes)
 }
 
 /// Internal M1 plan, not a new public API or worker wire schema. `matrix_path`
