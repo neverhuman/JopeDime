@@ -50,9 +50,11 @@ pub use cli::deploy::{
 #[cfg(feature = "edge")]
 pub use cli::{
     client::{
-        resolve_public_cloud_endpoint, send_raw_edge_http, send_raw_put_url,
-        CarbonClientPreparedDataset, CarbonCloudCellEntry, CarbonProbedEndpoint,
-        CarbonPublicCloudsManifest, CarbonThinClient, DEFAULT_PUBLIC_CLOUDS_URL,
+        load_stored_cloud_token, remove_stored_cloud_token, resolve_public_cloud_endpoint,
+        save_stored_cloud_token, send_raw_edge_http, send_raw_put_url,
+        verified_absolute_jopedime_config_dir, CarbonClientPreparedDataset, CarbonCloudCellEntry,
+        CarbonProbedEndpoint, CarbonPublicCloudsManifest, CarbonStoredCloudCredential,
+        CarbonThinClient, DEFAULT_PUBLIC_CLOUDS_URL,
     },
     redteam::{
         execute_carbon_redteam_suite, render_redteam_markdown, CarbonRedTeamSuiteReport,

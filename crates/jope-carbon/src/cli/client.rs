@@ -1044,7 +1044,38 @@ fn send_raw_edge_http_with_agent(
 
 /// Default public HTTPS URL publishing live `dev` and `prod` Carbon cloud discovery endpoints.
 pub const DEFAULT_PUBLIC_CLOUDS_URL: &str =
-    "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.1-live.1/carbon-clouds.json";
+    "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v0.4.2-live.1/carbon-clouds.json";
+
+/// Resolve the user's `jopedime` config directory (`CARBON_CONFIG_DIR` or `$HOME/.config/jopedime`),
+/// strictly refusing empty or relative paths.
+pub fn verified_absolute_jopedime_config_dir() -> Result<std::path::PathBuf, String> {
+    if let Ok(explicit) = std::env::var("CARBON_CONFIG_DIR") {
+        let trimmed = explicit.trim();
+        if !trimmed.is_empty() {
+            let p = std::path::PathBuf::from(trimmed);
+            if !p.is_absolute() {
+                return Err(format!(
+                    "CARBON_CONFIG_DIR must be an absolute path, got '{trimmed}'"
+                ));
+            }
+            return Ok(p);
+        }
+    }
+    let home = std::env::var("HOME").map_err(|_| {
+        "HOME environment variable is unset; pass --clouds-manifest or set absolute HOME".to_owned()
+    })?;
+    let home_trimmed = home.trim();
+    if home_trimmed.is_empty() {
+        return Err("HOME environment variable is empty; refusing relative config path".to_owned());
+    }
+    let home_path = std::path::PathBuf::from(home_trimmed);
+    if !home_path.is_absolute() {
+        return Err(format!(
+            "HOME must be an absolute path, got '{home_trimmed}'"
+        ));
+    }
+    Ok(home_path.join(".config").join("jopedime"))
+}
 
 /// `CarbonCloudCellEntry` is a struct binding a named public Carbon cloud (`dev` or `prod`) to its
 /// stage-throttled HTTPS endpoint and pinned `ECDH P-256` `engine_kek_pubkey_b64`.
@@ -1069,7 +1100,8 @@ pub struct CarbonPublicCloudsManifest {
 }
 
 /// Resolve a named public Carbon cloud (`dev`, `staging`, `prod`) from an explicit file/URL
-/// override, `CARBON_CLOUDS_URL`, or [`DEFAULT_PUBLIC_CLOUDS_URL`] without AWS credentials.
+/// override, `CARBON_CLOUDS_URL`, local `$HOME/.config/jopedime/carbon-clouds.json`, or
+/// [`DEFAULT_PUBLIC_CLOUDS_URL`] without AWS credentials.
 pub fn resolve_public_cloud_endpoint(
     cloud_name: &str,
     manifest_override: Option<&str>,
@@ -1077,10 +1109,16 @@ pub fn resolve_public_cloud_endpoint(
     let env_override = std::env::var("CARBON_CLOUDS_URL")
         .ok()
         .filter(|v| !v.trim().is_empty());
+    let local_cached = verified_absolute_jopedime_config_dir()
+        .ok()
+        .map(|d| d.join("carbon-clouds.json"))
+        .filter(|p| p.is_file())
+        .map(|p| p.to_string_lossy().into_owned());
     let source = manifest_override
         .map(str::trim)
         .filter(|s| !s.is_empty())
         .or(env_override.as_deref())
+        .or(local_cached.as_deref())
         .unwrap_or(DEFAULT_PUBLIC_CLOUDS_URL);
 
     let raw_bytes = if source.starts_with("https://") || source.starts_with("http://") {
@@ -1124,4 +1162,168 @@ pub fn resolve_public_cloud_endpoint(
             .map_err(|e| format!("invalid pinned engine_kek_pubkey_b64 for '{key}': {e}"))?;
     }
     Ok(entry)
+}
+
+/// `CarbonStoredCloudCredential` is a struct persisting a user's `ctk1.*` capability token for one
+/// named Carbon cloud (`dev` or `prod`) inside `0600` `$HOME/.config/jopedime/carbon-credentials.json`.
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct CarbonStoredCloudCredential {
+    pub cloud: String,
+    pub endpoint: String,
+    pub tenant_id: String,
+    pub tier: jope_api::carbon::CarbonTierWire,
+    pub exp_epoch_secs: u64,
+    pub capability_token: String,
+}
+
+impl std::fmt::Debug for CarbonStoredCloudCredential {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonStoredCloudCredential")
+            .field("cloud", &self.cloud)
+            .field("endpoint", &self.endpoint)
+            .field("tenant_id", &self.tenant_id)
+            .field("tier", &self.tier)
+            .field("exp_epoch_secs", &self.exp_epoch_secs)
+            .field("capability_token", &"<redacted>")
+            .finish()
+    }
+}
+
+#[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+struct CarbonCredentialsStoreFile {
+    schema: String,
+    clouds: BTreeMap<String, CarbonStoredCloudCredential>,
+}
+
+fn write_private_credentials_file(
+    config_dir: &std::path::Path,
+    store: &CarbonCredentialsStoreFile,
+) -> Result<(), String> {
+    std::fs::create_dir_all(config_dir)
+        .map_err(|e| format!("create config dir {}: {e}", config_dir.display()))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = std::fs::set_permissions(config_dir, std::fs::Permissions::from_mode(0o700));
+    }
+    let final_path = config_dir.join("carbon-credentials.json");
+    let tmp_path = config_dir.join(format!(".carbon-credentials.{}.tmp", std::process::id()));
+    let encoded = zeroize::Zeroizing::new(
+        serde_json::to_vec_pretty(store).map_err(|e| format!("encode credentials store: {e}"))?,
+    );
+    #[cfg(unix)]
+    {
+        use std::io::Write;
+        use std::os::unix::fs::OpenOptionsExt;
+        let mut f = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&tmp_path)
+            .map_err(|e| format!("open {}: {e}", tmp_path.display()))?;
+        f.write_all(&encoded)
+            .map_err(|e| format!("write {}: {e}", tmp_path.display()))?;
+        f.sync_all()
+            .map_err(|e| format!("fsync {}: {e}", tmp_path.display()))?;
+    }
+    #[cfg(not(unix))]
+    {
+        std::fs::write(&tmp_path, &*encoded)
+            .map_err(|e| format!("write {}: {e}", tmp_path.display()))?;
+    }
+    std::fs::rename(&tmp_path, &final_path)
+        .map_err(|e| format!("activate {}: {e}", final_path.display()))?;
+    Ok(())
+}
+
+/// Validate and store a `ctk1.*` capability token for `cloud_name` inside the `0600` credentials store.
+pub fn save_stored_cloud_token(
+    cloud_name: &str,
+    endpoint: &str,
+    token: &str,
+) -> Result<crate::security::auth::CarbonCapabilityClaims, String> {
+    let trimmed_tok = token.trim();
+    let claims = crate::security::auth::CarbonCapabilityClaims::decode_unverified(trimmed_tok)
+        .map_err(|e| e.to_string())?;
+    let config_dir = verified_absolute_jopedime_config_dir()?;
+    let cred_path = config_dir.join("carbon-credentials.json");
+    let mut store = if cred_path.is_file() {
+        let raw = zeroize::Zeroizing::new(
+            std::fs::read(&cred_path).map_err(|e| format!("read {}: {e}", cred_path.display()))?,
+        );
+        serde_json::from_slice::<CarbonCredentialsStoreFile>(&raw)
+            .map_err(|e| format!("parse {}: {e}", cred_path.display()))?
+    } else {
+        CarbonCredentialsStoreFile {
+            schema: "jope-carbon-credentials-v1".to_owned(),
+            clouds: BTreeMap::new(),
+        }
+    };
+    let key = cloud_name.trim().to_ascii_lowercase();
+    store.schema = "jope-carbon-credentials-v1".to_owned();
+    store.clouds.insert(
+        key.clone(),
+        CarbonStoredCloudCredential {
+            cloud: key,
+            endpoint: endpoint.trim().to_owned(),
+            tenant_id: claims.tenant_id.clone(),
+            tier: claims.tier,
+            exp_epoch_secs: claims.exp_epoch_secs,
+            capability_token: trimmed_tok.to_owned(),
+        },
+    );
+    write_private_credentials_file(&config_dir, &store)?;
+    Ok(claims)
+}
+
+/// Load a previously stored `ctk1.*` capability token for `cloud_name`, if present.
+pub fn load_stored_cloud_token(
+    cloud_name: &str,
+) -> Result<Option<CarbonStoredCloudCredential>, String> {
+    let config_dir = verified_absolute_jopedime_config_dir()?;
+    let cred_path = config_dir.join("carbon-credentials.json");
+    if !cred_path.is_file() {
+        return Ok(None);
+    }
+    let raw = zeroize::Zeroizing::new(
+        std::fs::read(&cred_path).map_err(|e| format!("read {}: {e}", cred_path.display()))?,
+    );
+    let store: CarbonCredentialsStoreFile =
+        serde_json::from_slice(&raw).map_err(|e| format!("parse {}: {e}", cred_path.display()))?;
+    let key = cloud_name.trim().to_ascii_lowercase();
+    Ok(store.clouds.get(&key).cloned())
+}
+
+/// Remove stored capability token(s) (`Some(cloud)` removes one cloud; `None` clears all clouds).
+pub fn remove_stored_cloud_token(cloud_name: Option<&str>) -> Result<usize, String> {
+    let config_dir = verified_absolute_jopedime_config_dir()?;
+    let cred_path = config_dir.join("carbon-credentials.json");
+    if !cred_path.is_file() {
+        return Ok(0);
+    }
+    let raw = zeroize::Zeroizing::new(
+        std::fs::read(&cred_path).map_err(|e| format!("read {}: {e}", cred_path.display()))?,
+    );
+    let mut store: CarbonCredentialsStoreFile =
+        serde_json::from_slice(&raw).map_err(|e| format!("parse {}: {e}", cred_path.display()))?;
+    let removed = match cloud_name {
+        Some(c) => usize::from(
+            store
+                .clouds
+                .remove(&c.trim().to_ascii_lowercase())
+                .is_some(),
+        ),
+        None => {
+            let n = store.clouds.len();
+            store.clouds.clear();
+            n
+        }
+    };
+    if store.clouds.is_empty() {
+        let _ = std::fs::remove_file(&cred_path);
+    } else {
+        write_private_credentials_file(&config_dir, &store)?;
+    }
+    Ok(removed)
 }

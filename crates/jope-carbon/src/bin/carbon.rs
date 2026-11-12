@@ -14,11 +14,12 @@ use jope_api::{carbon::CarbonTierWire, Effort};
 use jope_carbon::{
     evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token, execute_carbon_cli_run,
     execute_carbon_deploy, execute_carbon_package, execute_carbon_redteam_suite,
-    execute_carbon_rollback, mint_capability_token_from_vault, now_epoch_ms, open_eval_invoker,
-    open_remote_cas, plan_carbon_execution, render_benchmark_markdown, render_redteam_markdown,
+    execute_carbon_rollback, load_stored_cloud_token, mint_capability_token_from_vault,
+    now_epoch_ms, open_eval_invoker, open_remote_cas, plan_carbon_execution,
+    remove_stored_cloud_token, render_benchmark_markdown, render_redteam_markdown,
     resolve_cell_stack_endpoint, resolve_public_cloud_endpoint, run_lambda_custom_runtime_loop,
-    CarbonAuthVerifier, CarbonCapabilityClaims, CarbonCliRunOptions, CarbonDeployOptions,
-    CarbonEffortTier, CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker,
+    save_stored_cloud_token, CarbonAuthVerifier, CarbonCapabilityClaims, CarbonCliRunOptions,
+    CarbonDeployOptions, CarbonEffortTier, CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker,
     CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions,
     CarbonLocalLambdaEmulator, CarbonPackageOptions, CarbonPlanInput, CarbonProductTier,
     CarbonRole, CarbonRollbackOptions, CarbonSealKey, CarbonThinClient, MonthlyWindowMetrics,
@@ -102,11 +103,53 @@ enum Command {
         #[arg(long, value_delimiter = ',')]
         to_versions: Vec<String>,
     },
+    /// Store a `ctk1.*` Pro/Enterprise capability token in `0600` `$HOME/.config/jopedime/carbon-credentials.json`.
+    Login {
+        /// Named public Carbon cloud (`dev` or `prod`, defaults to `prod`).
+        #[arg(long, default_value = "prod")]
+        cloud: String,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
+        /// Optional explicit endpoint URL overriding `--cloud`.
+        #[arg(long)]
+        endpoint: Option<String>,
+        /// Signed `ctk1.*` capability token string.
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        /// Path to a file containing the `ctk1.*` capability token (`-` reads stdin).
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+    },
+    /// Inspect active Carbon cloud, authentication mode (`anonymous_free` vs `capability_token`), `tenant_id`, and TTL.
+    Whoami {
+        /// Named public Carbon cloud (`dev` or `prod`, defaults to `prod`).
+        #[arg(long, default_value = "prod")]
+        cloud: String,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
+        /// Optional inline `ctk1.*` capability token to inspect instead of stored credentials.
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        /// Optional file containing a `ctk1.*` capability token to inspect.
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+    },
+    /// Remove stored capability token(s) from `$HOME/.config/jopedime/carbon-credentials.json`.
+    Logout {
+        /// Cloud name (`dev` or `prod`) to remove; defaults to `prod` unless `--all` is passed.
+        #[arg(long, conflicts_with = "all")]
+        cloud: Option<String>,
+        /// Remove stored capability tokens for all clouds.
+        #[arg(long)]
+        all: bool,
+    },
     /// Probe `/v1/carbon/ping` RTT, region, and zero-knowledge `engine_kek_pubkey_b64` with zero AWS credentials.
     Ping {
         #[arg(long, value_delimiter = ',')]
         endpoint: Vec<String>,
-        /// Named public Carbon cloud (`dev` or `prod`) resolved without AWS credentials.
+        /// Named public Carbon cloud (`dev` or `prod`; defaults to `prod` when no endpoint/env is given).
         #[arg(long)]
         cloud: Option<String>,
         /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
@@ -123,7 +166,7 @@ enum Command {
     Run {
         #[arg(long, value_delimiter = ',')]
         endpoint: Vec<String>,
-        /// Named public Carbon cloud (`dev` or `prod`) resolved without AWS credentials.
+        /// Named public Carbon cloud (`dev` or `prod`; defaults to `prod` when no endpoint/env is given).
         #[arg(long)]
         cloud: Option<String>,
         /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
@@ -142,10 +185,24 @@ enum Command {
         synthetic_rows: usize,
         #[arg(long, default_value_t = 6)]
         features: usize,
-        #[arg(long, default_value = "cli_tenant")]
-        tenant: String,
+        /// Optional explicit tenant ID (automatically extracted from `ctk1.*` token claims when omitted).
         #[arg(long)]
+        tenant: Option<String>,
+        /// Select Free anonymous tier (`<= 5,000` rows, `fast`/`medium`).
+        #[arg(long, conflicts_with_all = ["pro", "tier"])]
+        free: bool,
+        /// Select authenticated Pro tier (`<= 100,000` rows, `fast`..`ultra` multi-wave + `HybridFanOut`).
+        #[arg(long, conflicts_with_all = ["free", "tier"])]
+        pro: bool,
+        /// Explicit tier (`free`, `pro`, or `enterprise`).
+        #[arg(long, conflicts_with_all = ["free", "pro"])]
         tier: Option<String>,
+        /// Signed `ctk1.*` capability token for Pro/Enterprise runs.
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        /// File containing a signed `ctk1.*` capability token (`-` reads stdin).
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
         #[arg(long, default_value = "fast")]
         effort: String,
         #[arg(long, default_value = "rmse")]
@@ -166,7 +223,7 @@ enum Command {
     Bench {
         #[arg(long, value_delimiter = ',')]
         endpoint: Vec<String>,
-        /// Named public Carbon cloud (`dev` or `prod`) resolved without AWS credentials.
+        /// Named public Carbon cloud (`dev` or `prod`; defaults to `prod` when no endpoint/env is given).
         #[arg(long)]
         cloud: Option<String>,
         /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
@@ -177,10 +234,23 @@ enum Command {
         environment: Option<String>,
         #[arg(long, default_value = "us-east-2")]
         region: String,
-        #[arg(long, default_value = "pro")]
-        tier: String,
-        #[arg(long, default_value = "bench_tenant")]
-        tenant: String,
+        /// Run only Free-tier compatible scenarios.
+        #[arg(long, conflicts_with_all = ["pro", "tier"])]
+        free: bool,
+        /// Run full Free + Pro multi-wave & `HybridFanOut` benchmark suite.
+        #[arg(long, conflicts_with_all = ["free", "tier"])]
+        pro: bool,
+        #[arg(long, conflicts_with_all = ["free", "pro"])]
+        tier: Option<String>,
+        /// Signed `ctk1.*` Pro capability token.
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        /// File containing a signed `ctk1.*` Pro capability token (`-` reads stdin).
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+        /// Optional explicit tenant ID (automatically extracted from `ctk1.*` token claims when omitted).
+        #[arg(long)]
+        tenant: Option<String>,
         #[arg(long)]
         json_out: Option<PathBuf>,
         #[arg(long)]
@@ -334,6 +404,252 @@ fn decode_32byte_hex_or_default(env_key: &str, fallback: [u8; 32]) -> Result<[u8
         Ok(val) if !val.trim().is_empty() => decode_required_32byte_hex(env_key),
         _ => Ok(fallback),
     }
+}
+
+fn read_cli_token_source(
+    inline_token: Option<String>,
+    token_file: Option<PathBuf>,
+) -> Result<Option<String>, String> {
+    if let Some(tok) = inline_token {
+        let trimmed = tok.trim().to_owned();
+        if trimmed.is_empty() {
+            return Err("--token must not be empty".to_owned());
+        }
+        return Ok(Some(trimmed));
+    }
+    if let Some(path) = token_file {
+        let raw = if path.as_os_str() == "-" {
+            use std::io::Read;
+            let mut s = String::new();
+            std::io::stdin()
+                .read_to_string(&mut s)
+                .map_err(|e| format!("read token from stdin: {e}"))?;
+            s
+        } else {
+            fs::read_to_string(&path).map_err(|e| format!("read {}: {e}", path.display()))?
+        };
+        let trimmed = raw.trim().to_owned();
+        if trimmed.is_empty() {
+            return Err(format!("token file {} is empty", path.display()));
+        }
+        return Ok(Some(trimmed));
+    }
+    Ok(None)
+}
+
+fn resolve_explicit_tier_flag(
+    free: bool,
+    pro: bool,
+    tier: Option<&str>,
+) -> Result<Option<CarbonTierWire>, String> {
+    if free {
+        Ok(Some(CarbonTierWire::Free))
+    } else if pro {
+        Ok(Some(CarbonTierWire::Pro))
+    } else if let Some(t) = tier {
+        parse_tier_wire(t).map(Some)
+    } else {
+        Ok(None)
+    }
+}
+
+struct ResolvedCliTarget {
+    endpoints: Vec<String>,
+    tier: CarbonTierWire,
+    tenant_id: String,
+    auth_token: Option<String>,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn resolve_cli_target_and_auth(
+    mut endpoints: Vec<String>,
+    mut cloud: Option<String>,
+    clouds_manifest: Option<&str>,
+    environment: Option<&str>,
+    region: &str,
+    explicit_tier: Option<CarbonTierWire>,
+    explicit_tenant: Option<String>,
+    default_tenant: &str,
+    inline_token: Option<String>,
+    token_file: Option<PathBuf>,
+    default_tier_when_self_hosted: CarbonTierWire,
+) -> Result<ResolvedCliTarget, (ExitCode, String)> {
+    if endpoints.is_empty() && cloud.is_none() && environment.is_none() {
+        if let Ok(env_ep) = env::var("CARBON_ENDPOINT") {
+            let trimmed = env_ep.trim();
+            if !trimmed.is_empty() {
+                endpoints.push(trimmed.to_owned());
+            }
+        }
+        if endpoints.is_empty() {
+            cloud = Some("prod".to_owned());
+        }
+    }
+
+    let mut expected_kek: Option<(String, String)> = None;
+    if let Some(cloud_name) = &cloud {
+        if endpoints.is_empty() || clouds_manifest.is_some() {
+            let entry = resolve_public_cloud_endpoint(cloud_name, clouds_manifest)
+                .map_err(|e| (ExitCode::from(2), e))?;
+            if let Some(kek) = entry.engine_kek_pubkey_b64 {
+                expected_kek = Some((cloud_name.clone(), kek));
+            }
+            if endpoints.is_empty() {
+                endpoints.push(entry.public_endpoint);
+            }
+        }
+    }
+    if let Some(env_name) = environment {
+        if endpoints.is_empty() {
+            let url = resolve_cell_stack_endpoint(env_name, region)
+                .map_err(|e| (ExitCode::from(2), e))?;
+            endpoints.push(url);
+        }
+    }
+    if endpoints.is_empty() {
+        return Err((
+            ExitCode::from(2),
+            "pass --cloud <dev|prod>, --endpoint <URL>, or --env <dev|staging|prod>".to_owned(),
+        ));
+    }
+
+    let (_, probed) =
+        CarbonThinClient::connect_fastest(endpoints.clone()).map_err(|e| (ExitCode::from(1), e))?;
+    let first_probe = probed
+        .first()
+        .ok_or_else(|| (ExitCode::from(1), "empty probe response".to_owned()))?;
+    if let Some((cloud_name, exp_kek)) = &expected_kek {
+        if first_probe.engine_kek_pubkey_b64.as_deref() != Some(exp_kek.as_str()) {
+            return Err((
+                ExitCode::from(1),
+                format!(
+                    "pinned engine_kek_pubkey_b64 mismatch for cloud '{cloud_name}' (expected {exp_kek}, got {:?})",
+                    first_probe.engine_kek_pubkey_b64
+                ),
+            ));
+        }
+    }
+
+    let now_secs = now_epoch_ms() / 1_000;
+    let cli_tok =
+        read_cli_token_source(inline_token, token_file).map_err(|e| (ExitCode::from(2), e))?;
+    let env_tok = env::var("CARBON_AUTH_TOKEN")
+        .ok()
+        .map(|s| s.trim().to_owned())
+        .filter(|s| !s.is_empty());
+    let has_local_hmac_secret = env::var("CARBON_AUTH_SECRET_HEX")
+        .ok()
+        .is_some_and(|s| !s.trim().is_empty());
+
+    let mut active_token: Option<String> = if explicit_tier == Some(CarbonTierWire::Free) {
+        cli_tok
+    } else {
+        cli_tok.or(env_tok)
+    };
+    if active_token.is_none() && explicit_tier != Some(CarbonTierWire::Free) {
+        let lookup_cloud = cloud.as_deref().unwrap_or("prod");
+        if cloud.is_some() || !first_probe.enterprise_self_hosted {
+            if let Ok(Some(stored)) = load_stored_cloud_token(lookup_cloud) {
+                if stored.exp_epoch_secs > now_secs {
+                    active_token = Some(stored.capability_token);
+                } else if matches!(
+                    explicit_tier,
+                    Some(CarbonTierWire::Pro | CarbonTierWire::Enterprise)
+                ) {
+                    return Err((
+                        ExitCode::from(2),
+                        format!(
+                            "stored capability token for cloud '{lookup_cloud}' expired at epoch {}; run 'carbon login --cloud {lookup_cloud} --token <ctk1...>' or pass --token",
+                            stored.exp_epoch_secs
+                        ),
+                    ));
+                }
+            }
+        }
+    }
+
+    let mut effective_tenant = explicit_tenant
+        .clone()
+        .unwrap_or_else(|| default_tenant.to_owned());
+    let mut effective_tier = explicit_tier.unwrap_or({
+        if first_probe.enterprise_self_hosted || has_local_hmac_secret || environment.is_some() {
+            default_tier_when_self_hosted
+        } else {
+            CarbonTierWire::Free
+        }
+    });
+
+    if let Some(tok) = &active_token {
+        let claims = CarbonCapabilityClaims::decode_unverified(tok)
+            .map_err(|e| (ExitCode::from(2), e.to_string()))?;
+        if now_secs > claims.exp_epoch_secs {
+            return Err((
+                ExitCode::from(2),
+                format!(
+                    "capability token for tenant '{}' has expired (exp={})",
+                    claims.tenant_id, claims.exp_epoch_secs
+                ),
+            ));
+        }
+        if let Some(exp_tenant) = &explicit_tenant {
+            if exp_tenant.trim() != claims.tenant_id {
+                return Err((
+                    ExitCode::from(2),
+                    format!(
+                        "--tenant '{}' does not match token tenant_id '{}' (omit --tenant to auto-use the token's tenant_id)",
+                        exp_tenant.trim(),
+                        claims.tenant_id
+                    ),
+                ));
+            }
+        }
+        effective_tenant = claims.tenant_id;
+        if let Some(req_tier) = explicit_tier {
+            if req_tier == CarbonTierWire::Pro && claims.tier == CarbonTierWire::Free {
+                return Err((
+                    ExitCode::from(2),
+                    "flag --pro requires a Pro or Enterprise capability token, but provided token has tier 'free'".to_owned(),
+                ));
+            }
+            effective_tier = req_tier;
+        } else {
+            effective_tier = claims.tier;
+        }
+    } else if let Some(env_name) = environment {
+        if effective_tier != CarbonTierWire::Free && !has_local_hmac_secret {
+            let minted = mint_capability_token_from_vault(
+                env_name,
+                region,
+                &effective_tenant,
+                effective_tier,
+                3_600,
+                false,
+            )
+            .map_err(|e| (ExitCode::from(2), e))?;
+            active_token = Some(minted);
+        }
+    } else if !first_probe.enterprise_self_hosted
+        && !has_local_hmac_secret
+        && matches!(
+            effective_tier,
+            CarbonTierWire::Pro | CarbonTierWire::Enterprise
+        )
+    {
+        let cloud_hint = cloud.as_deref().unwrap_or("prod");
+        return Err((
+            ExitCode::from(2),
+            format!(
+                "Pro/Enterprise tier on public cloud '{cloud_hint}' requires a capability token; pass --token <ctk1...> / --token-file <PATH> or run 'carbon login --cloud {cloud_hint} --token <ctk1...>'"
+            ),
+        ));
+    }
+
+    Ok(ResolvedCliTarget {
+        endpoints,
+        tier: effective_tier,
+        tenant_id: effective_tenant,
+        auth_token: active_token,
+    })
 }
 
 fn run_engine_runtime(runtime_api: &str, work_dir: PathBuf, is_aws_prod: bool) -> ExitCode {
@@ -694,13 +1010,213 @@ fn main() -> ExitCode {
                 }
             }
         }
+        Command::Login {
+            cloud,
+            clouds_manifest,
+            endpoint,
+            token,
+            token_file,
+        } => {
+            let raw_tok = match read_cli_token_source(token, token_file) {
+                Ok(Some(t)) => t,
+                Ok(None) => match env::var("CARBON_AUTH_TOKEN") {
+                    Ok(v) if !v.trim().is_empty() => v.trim().to_owned(),
+                    _ => {
+                        eprintln!(
+                            "error: pass --token <ctk1...> or --token-file <PATH> to `carbon login`"
+                        );
+                        return ExitCode::from(2);
+                    }
+                },
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let claims = match CarbonCapabilityClaims::decode_unverified(&raw_tok) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let now_secs = now_epoch_ms() / 1_000;
+            if now_secs > claims.exp_epoch_secs {
+                eprintln!(
+                    "error: capability token for tenant '{}' has already expired (exp={})",
+                    claims.tenant_id, claims.exp_epoch_secs
+                );
+                return ExitCode::from(2);
+            }
+            let (target_ep, expected_kek) = if let Some(ep) = endpoint {
+                (ep, None)
+            } else {
+                match resolve_public_cloud_endpoint(&cloud, clouds_manifest.as_deref()) {
+                    Ok(entry) => (entry.public_endpoint, entry.engine_kek_pubkey_b64),
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        return ExitCode::from(2);
+                    }
+                }
+            };
+            match CarbonThinClient::connect_fastest(vec![target_ep.clone()]) {
+                Ok((_, probed)) => {
+                    if let Some(exp) = &expected_kek {
+                        if probed
+                            .first()
+                            .and_then(|p| p.engine_kek_pubkey_b64.as_deref())
+                            != Some(exp.as_str())
+                        {
+                            eprintln!(
+                                "error: pinned engine_kek_pubkey_b64 mismatch for cloud '{cloud}'"
+                            );
+                            return ExitCode::from(1);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("error: probe {target_ep} failed: {e}");
+                    return ExitCode::from(1);
+                }
+            }
+            match save_stored_cloud_token(&cloud, &target_ep, &raw_tok) {
+                Ok(saved) => {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&serde_json::json!({
+                            "logged_in": true,
+                            "cloud": cloud.trim().to_ascii_lowercase(),
+                            "endpoint": target_ep,
+                            "tenant_id": saved.tenant_id,
+                            "tier": saved.tier,
+                            "exp_epoch_secs": saved.exp_epoch_secs,
+                            "ttl_remaining_secs": saved.exp_epoch_secs.saturating_sub(now_secs),
+                        }))
+                        .unwrap_or_default()
+                    );
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Command::Whoami {
+            cloud,
+            clouds_manifest,
+            token,
+            token_file,
+        } => {
+            let now_secs = now_epoch_ms() / 1_000;
+            let ep = resolve_public_cloud_endpoint(&cloud, clouds_manifest.as_deref())
+                .ok()
+                .map(|e| e.public_endpoint);
+            let inline = match read_cli_token_source(token, token_file) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let env_tok = env::var("CARBON_AUTH_TOKEN")
+                .ok()
+                .map(|s| s.trim().to_owned())
+                .filter(|s| !s.is_empty());
+            let (tok_opt, source_label) = if let Some(t) = inline {
+                (Some(t), "cli_flag")
+            } else if let Some(t) = env_tok {
+                (Some(t), "env_CARBON_AUTH_TOKEN")
+            } else if let Ok(Some(stored)) = load_stored_cloud_token(&cloud) {
+                (Some(stored.capability_token), "stored_credentials")
+            } else {
+                (None, "anonymous_default")
+            };
+            if let Some(tok) = tok_opt {
+                match CarbonCapabilityClaims::decode_unverified(&tok) {
+                    Ok(claims) => {
+                        let expired = now_secs > claims.exp_epoch_secs;
+                        println!(
+                            "{}",
+                            serde_json::to_string_pretty(&serde_json::json!({
+                                "cloud": cloud.trim().to_ascii_lowercase(),
+                                "endpoint": ep,
+                                "auth_mode": if expired { "expired_token" } else { "capability_token" },
+                                "source": source_label,
+                                "tenant_id": claims.tenant_id,
+                                "tier": claims.tier,
+                                "admin": claims.admin,
+                                "expired": expired,
+                                "exp_epoch_secs": claims.exp_epoch_secs,
+                                "ttl_remaining_secs": claims.exp_epoch_secs.saturating_sub(now_secs),
+                            }))
+                            .unwrap_or_default()
+                        );
+                        ExitCode::SUCCESS
+                    }
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        ExitCode::from(2)
+                    }
+                }
+            } else {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&serde_json::json!({
+                        "cloud": cloud.trim().to_ascii_lowercase(),
+                        "endpoint": ep,
+                        "auth_mode": "anonymous_free",
+                        "source": source_label,
+                        "tier": "free",
+                    }))
+                    .unwrap_or_default()
+                );
+                ExitCode::SUCCESS
+            }
+        }
+        Command::Logout { cloud, all } => {
+            let target = if all {
+                None
+            } else {
+                Some(cloud.as_deref().unwrap_or("prod"))
+            };
+            match remove_stored_cloud_token(target) {
+                Ok(removed) => {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&serde_json::json!({
+                            "logged_out": true,
+                            "scope": target.unwrap_or("all"),
+                            "entries_removed": removed,
+                        }))
+                        .unwrap_or_default()
+                    );
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
         Command::Ping {
             mut endpoint,
-            cloud,
+            mut cloud,
             clouds_manifest,
             environment,
             region,
         } => {
+            if endpoint.is_empty() && cloud.is_none() && environment.is_none() {
+                if let Ok(env_ep) = env::var("CARBON_ENDPOINT") {
+                    let trimmed = env_ep.trim();
+                    if !trimmed.is_empty() {
+                        endpoint.push(trimmed.to_owned());
+                    }
+                }
+                if endpoint.is_empty() {
+                    cloud = Some("prod".to_owned());
+                }
+            }
             let mut expected_kek: Option<String> = None;
             if let Some(cloud_name) = &cloud {
                 match resolve_public_cloud_endpoint(cloud_name, clouds_manifest.as_deref()) {
@@ -752,6 +1268,7 @@ fn main() -> ExitCode {
                         "{}",
                         serde_json::to_string_pretty(&serde_json::json!({
                             "healthy": true,
+                            "cloud": cloud,
                             "endpoint": first.base_url,
                             "region": first.region,
                             "rtt_ms": first.rtt_ms,
@@ -770,7 +1287,7 @@ fn main() -> ExitCode {
             }
         }
         Command::Run {
-            mut endpoint,
+            endpoint,
             cloud,
             clouds_manifest,
             environment,
@@ -780,7 +1297,11 @@ fn main() -> ExitCode {
             synthetic_rows,
             features,
             tenant,
+            free,
+            pro,
             tier,
+            token,
+            token_file,
             effort,
             objective,
             seed,
@@ -789,101 +1310,44 @@ fn main() -> ExitCode {
             predict_rows,
             shred,
         } => {
-            let effective_tier_str = tier.unwrap_or_else(|| {
-                if cloud.is_some()
-                    && environment.is_none()
-                    && env::var("CARBON_AUTH_TOKEN").is_err()
-                    && env::var("CARBON_AUTH_SECRET_HEX").is_err()
-                {
-                    "free".to_owned()
-                } else {
-                    "pro".to_owned()
+            let explicit_tier = match resolve_explicit_tier_flag(free, pro, tier.as_deref()) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
                 }
-            });
-            let (Ok(tier_wire), Ok(effort_val)) = (
-                parse_tier_wire(&effective_tier_str),
-                parse_api_effort(&effort),
-            ) else {
-                eprintln!("error: invalid --tier or --effort");
+            };
+            let Ok(effort_val) = parse_api_effort(&effort) else {
+                eprintln!("error: invalid --effort `{effort}`");
                 return ExitCode::from(2);
             };
-            if let Some(cloud_name) = &cloud {
-                match resolve_public_cloud_endpoint(cloud_name, clouds_manifest.as_deref()) {
-                    Ok(entry) => {
-                        if let Some(exp_kek) = &entry.engine_kek_pubkey_b64 {
-                            let target_ep = endpoint
-                                .first()
-                                .cloned()
-                                .unwrap_or_else(|| entry.public_endpoint.clone());
-                            match CarbonThinClient::connect_fastest(vec![target_ep]) {
-                                Ok((_, probed)) => {
-                                    if probed
-                                        .first()
-                                        .and_then(|p| p.engine_kek_pubkey_b64.as_deref())
-                                        != Some(exp_kek.as_str())
-                                    {
-                                        eprintln!(
-                                            "error: pinned engine_kek_pubkey_b64 mismatch for cloud '{cloud_name}'"
-                                        );
-                                        return ExitCode::from(1);
-                                    }
-                                }
-                                Err(e) => {
-                                    eprintln!("error: {e}");
-                                    return ExitCode::from(1);
-                                }
-                            }
-                        }
-                        if endpoint.is_empty() {
-                            endpoint.push(entry.public_endpoint);
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("error: {e}");
-                        return ExitCode::from(2);
-                    }
+            let resolved = match resolve_cli_target_and_auth(
+                endpoint,
+                cloud,
+                clouds_manifest.as_deref(),
+                environment.as_deref(),
+                &region,
+                explicit_tier,
+                tenant,
+                "cli_tenant",
+                token,
+                token_file,
+                CarbonTierWire::Pro,
+            ) {
+                Ok(r) => r,
+                Err((code, msg)) => {
+                    eprintln!("error: {msg}");
+                    return code;
                 }
-            }
-            let mut auth_token = None;
-            if let Some(env_name) = &environment {
-                if endpoint.is_empty() {
-                    match resolve_cell_stack_endpoint(env_name, &region) {
-                        Ok(url) => endpoint.push(url),
-                        Err(e) => {
-                            eprintln!("error: {e}");
-                            return ExitCode::from(2);
-                        }
-                    }
-                }
-                if tier_wire != CarbonTierWire::Free
-                    && env::var("CARBON_AUTH_TOKEN").is_err()
-                    && env::var("CARBON_AUTH_SECRET_HEX").is_err()
-                {
-                    match mint_capability_token_from_vault(
-                        env_name, &region, &tenant, tier_wire, 3_600, false,
-                    ) {
-                        Ok(tok) => auth_token = Some(tok),
-                        Err(e) => {
-                            eprintln!("error: {e}");
-                            return ExitCode::from(2);
-                        }
-                    }
-                }
-            }
-            if endpoint.is_empty() {
-                eprintln!(
-                    "error: pass --cloud <dev|prod>, --endpoint <URL>, or --env <dev|staging|prod>"
-                );
-                return ExitCode::from(2);
-            }
+            };
             let opts = CarbonCliRunOptions {
-                endpoints: endpoint,
+                endpoints: resolved.endpoints,
                 csv_path: csv,
                 target_column: target,
                 synthetic_rows,
                 synthetic_features: features,
-                tenant_id: tenant,
-                tier: tier_wire,
+                tenant_id: resolved.tenant_id,
+                tier: resolved.tier,
                 effort: effort_val,
                 objective,
                 seed,
@@ -891,7 +1355,7 @@ fn main() -> ExitCode {
                 stop_after_ms,
                 resume_after_stop: resume,
                 predict_rows,
-                auth_token,
+                auth_token: resolved.auth_token,
                 shred_after_run: shred,
             };
             match execute_carbon_cli_run(&opts) {
@@ -912,64 +1376,52 @@ fn main() -> ExitCode {
             }
         }
         Command::Bench {
-            mut endpoint,
+            endpoint,
             cloud,
             clouds_manifest,
             environment,
             region,
+            free,
+            pro,
             tier,
+            token,
+            token_file,
             tenant,
             json_out,
             markdown_out,
         } => {
-            let Ok(tier_wire) = parse_tier_wire(&tier) else {
-                eprintln!("error: invalid --tier `{tier}`");
-                return ExitCode::from(2);
+            let explicit_tier = match resolve_explicit_tier_flag(free, pro, tier.as_deref()) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
             };
-            if let Some(cloud_name) = &cloud {
-                if endpoint.is_empty() {
-                    match resolve_public_cloud_endpoint(cloud_name, clouds_manifest.as_deref()) {
-                        Ok(entry) => endpoint.push(entry.public_endpoint),
-                        Err(e) => {
-                            eprintln!("error: {e}");
-                            return ExitCode::from(2);
-                        }
-                    }
+            let resolved = match resolve_cli_target_and_auth(
+                endpoint,
+                cloud,
+                clouds_manifest.as_deref(),
+                environment.as_deref(),
+                &region,
+                explicit_tier,
+                tenant,
+                "bench_tenant",
+                token,
+                token_file,
+                CarbonTierWire::Pro,
+            ) {
+                Ok(r) => r,
+                Err((code, msg)) => {
+                    eprintln!("error: {msg}");
+                    return code;
                 }
-            }
-            let mut pro_token = None;
-            if let Some(env_name) = &environment {
-                if endpoint.is_empty() {
-                    match resolve_cell_stack_endpoint(env_name, &region) {
-                        Ok(url) => endpoint.push(url),
-                        Err(e) => {
-                            eprintln!("error: {e}");
-                            return ExitCode::from(2);
-                        }
-                    }
-                }
-                if tier_wire != CarbonTierWire::Free
-                    && env::var("CARBON_AUTH_TOKEN").is_err()
-                    && env::var("CARBON_AUTH_SECRET_HEX").is_err()
-                {
-                    match mint_capability_token_from_vault(
-                        env_name, &region, &tenant, tier_wire, 3_600, false,
-                    ) {
-                        Ok(tok) => pro_token = Some(tok),
-                        Err(e) => {
-                            eprintln!("error: {e}");
-                            return ExitCode::from(2);
-                        }
-                    }
-                }
-            }
-            if endpoint.is_empty() {
-                eprintln!(
-                    "error: pass --cloud <dev|prod>, --endpoint <URL>, or --env <dev|staging|prod>"
-                );
-                return ExitCode::from(2);
-            }
-            match execute_carbon_cli_benchmark_with_token(endpoint, tier_wire, &tenant, pro_token) {
+            };
+            match execute_carbon_cli_benchmark_with_token(
+                resolved.endpoints,
+                resolved.tier,
+                &resolved.tenant_id,
+                resolved.auth_token,
+            ) {
                 Ok(report) => {
                     let Ok(json_text) = serde_json::to_string_pretty(&report) else {
                         return ExitCode::from(1);
