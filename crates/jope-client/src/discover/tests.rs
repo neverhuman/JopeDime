@@ -323,6 +323,68 @@ fn losing_child_exit_is_not_readiness_and_retries_shared_metadata() {
 }
 
 #[test]
+#[ignore = "subprocess fixture, invoked by the own-child startup test"]
+fn hold_store_lock() {
+    let home = PathBuf::from(std::env::var_os("JOPE_CLT02_HOME").expect("supervised fixture home"));
+    let mut file = private_options()
+        .write(true)
+        .create_new(true)
+        .open(home.join("lock"))
+        .unwrap();
+    writeln!(file, "{}", std::process::id()).unwrap();
+    writeln!(file, "fixture serve").unwrap();
+    file.sync_all().unwrap();
+    file.lock().unwrap();
+    fs::write(home.join("lock-ready"), b"1").unwrap();
+    thread::sleep(Duration::from_secs(4));
+}
+
+#[test]
+fn own_starting_child_is_a_startup_timeout_not_a_foreign_owner() {
+    let home = Home::new();
+    let error = discover_any(
+        &home.options(),
+        None,
+        Duration::from_millis(1500),
+        |options| {
+            let mut command = Command::new(std::env::current_exe().unwrap());
+            command
+                .args([
+                    "--exact",
+                    "discover::tests::hold_store_lock",
+                    "--ignored",
+                    "--nocapture",
+                    "--test-threads=1",
+                ])
+                .env_remove("JOPEDIME_ENDPOINT")
+                .env("JOPE_CLT02_HOME", &options.home)
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
+            let child = command.spawn()?;
+            let ready = options.home.join("lock-ready");
+            let ready_deadline = Instant::now() + Duration::from_secs(2);
+            while !ready.exists() {
+                if Instant::now() >= ready_deadline {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::TimedOut,
+                        "child did not take the store lock",
+                    ));
+                }
+                thread::sleep(Duration::from_millis(10));
+            }
+            Ok(child)
+        },
+    )
+    .unwrap_err();
+    assert!(
+        matches!(error, Error::StartupTimeout { child_exit: None }),
+        "{error}"
+    );
+    assert_eq!(error.exit_code(), 9);
+    assert!(!error.to_string().contains("ENGINE_BUSY"), "{error}");
+}
+
+#[test]
 fn held_store_lock_reports_busy_without_modifying_it() {
     let home = Home::new();
     let mut file = private_options()

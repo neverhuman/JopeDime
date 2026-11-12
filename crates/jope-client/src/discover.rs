@@ -298,13 +298,11 @@ fn discover_versioned(
     let mut start = Some(start);
     let mut child = Reaper(None);
     let mut child_exit = None;
+    let mut spawned = None;
     let mut coordination = None;
     let result = loop {
         if Instant::now() >= deadline {
-            break Err(match store_owner(&options.home)? {
-                Some((pid, command)) => Error::Busy { pid, command },
-                None => Error::StartupTimeout { child_exit },
-            });
+            break Err(deadline_failure(&options.home, spawned, child_exit)?);
         }
         if let Some(engine) = attached(&options.home, deadline)? {
             break Ok(Engine::Background(engine));
@@ -323,6 +321,7 @@ fn discover_versioned(
                         break Ok(Engine::Background(engine));
                     }
                     child.0 = Some(start.take().unwrap()(options).map_err(Error::Spawn)?);
+                    spawned = child.0.as_ref().map(Child::id);
                 }
                 Err(fs::TryLockError::WouldBlock) => {}
                 Err(fs::TryLockError::Error(e)) => break Err(Error::Io(e)),
@@ -489,7 +488,7 @@ mod local;
 use local::detached;
 use local::{alive, record};
 use local::{
-    attached, private_file, private_home, private_options, start_engine, store_owner, Reaper,
+    attached, deadline_failure, private_file, private_home, private_options, start_engine, Reaper,
 };
 
 #[cfg(test)]

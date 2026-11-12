@@ -184,6 +184,19 @@ pub(super) fn attached(home: &Path, deadline: Instant) -> Result<Option<Backgrou
         started_at: record.started_at,
     }))
 }
+/// A lock held by the child this call spawned is that child still starting.
+/// Any other holder is a foreign store owner.
+pub(super) fn deadline_failure(
+    home: &Path,
+    spawned: Option<u32>,
+    child_exit: Option<i32>,
+) -> io::Result<Error> {
+    Ok(match store_owner(home)? {
+        Some((pid, _)) if pid.is_some() && pid == spawned => Error::StartupTimeout { child_exit },
+        Some((pid, command)) => Error::Busy { pid, command },
+        None => Error::StartupTimeout { child_exit },
+    })
+}
 pub(super) fn store_owner(home: &Path) -> io::Result<Option<(Option<u32>, String)>> {
     let mut file = match private_options().write(true).open(home.join("lock")) {
         Ok(f) => f,
