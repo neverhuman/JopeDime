@@ -165,6 +165,23 @@ fn every_limit_returns_dataset_invalid_with_its_name_and_no_dataset_record() {
 }
 
 #[test]
+fn a_padded_finite_number_is_not_a_category() {
+    let home = tempfile::tempdir().unwrap();
+    let store = Store::open(home.path()).unwrap();
+    let limits = RegistrationLimits {
+        max_categories_per_column: 0,
+        ..RegistrationLimits::default()
+    };
+    // A category limit of zero refuses text. A padded finite number is numeric.
+    register(&store, b"y\n 1.5 \n".as_slice(), &limits).unwrap();
+    let error = register(&store, b"y\nnan\n".as_slice(), &limits).unwrap_err();
+    let RegistrationError::Invalid(problem) = error else {
+        panic!("nan is a category")
+    };
+    assert_eq!(problem.field.as_deref(), Some("max_categories_per_column"));
+}
+
+#[test]
 fn malformed_utf8_quotes_width_headers_and_empty_input_are_redacted() {
     // Malformed CSV protocol cases, not generated learning datasets.
     for bytes in [
