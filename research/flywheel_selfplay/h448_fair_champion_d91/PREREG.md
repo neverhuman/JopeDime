@@ -1,0 +1,42 @@
+# H448 Pre-Registration — Official Fair `dev91-audit-v1` Evaluation of `h448.APEX_FAIR_CHAMPION` Ranked with Kumo
+
+## 1. Objective, Entrant Identity, and Provenance (`N1`, `N2`)
+- **Wave:** `H448` (`research/flywheel_selfplay/h448_fair_champion_d91`)
+- **Entrant ID:** `h448.APEX_FAIR_CHAMPION`
+- **Target Board:** `dev91-audit-v1` (`91` contexts / `19` families; `32` complete stored entrants including `kumo_tabular_large_e8.v1` at `2063.9` Elo, `tabfm_ensemble.v1` at `1907.7` Elo, `kumo_tabular_small_e8.v1` at `1894.9` Elo, and `h416.SXB` at `1766.0` Elo; anchor `h335.H257_REPLICA = 1500.0`, `10,000` family-bootstrap draws, seed `335160`).
+- **Zero Prior `dev91` Exposure:** Every model family, hyperparameter, structural feature recipe, and combiner rule in `h448.APEX_FAIR_CHAMPION` was developed and frozen **strictly prior** to unlocking `H448` Stage V (`0` `dev91` bytes read during `H419–H447`).
+- **Out-of-Sample Disclosure (`N1`):** Every block of the 5-block stack (`guard_and_stack_2l`, `M7`, `K3`, `F4`, and `R4-e8`) was selected or validated on `FIT-SEL` (`106` contexts) and `P201b` (`201` contexts; `excl10 = 191`). Consequently, this single-shot `dev91-audit-v1` evaluation is the **sole out-of-sample test** in that chain.
+- **Cross-Scale `R4-e8` Weight Disclosure (`N2`):** When `FROZEN_FAIR_CHAMPION.json` selects `STACK_R4_E8_BASE` (or `STACK_R4_E8_WC`), the cross-scale residual ICL prediction is `0.60 * r4_l + 0.40 * r4_m` (`4` permutations/wide-subsets of `104M` plain ICL + `4` permutations/wide-subsets of `24M` plain ICL = `8` total forward members matching `kumo_tabular_*_e8.v1`'s `e8` inference budget). The `0.60 / 0.40` weights are an **a-priori capacity ratio** (`log(104M) : log(24M)` rounded to `0.60 : 0.40`) fixed before any `R4-e8` evaluation and never tuned on `FIT-SEL`, `P201b`, `APEX-DEV`, or `dev91`.
+
+## 2. Exact Recipe (Frozen by `H447`'s `FROZEN_FAIR_CHAMPION.json`)
+1. **Stored GP Candidate Pools (`H418` `D1` & `D2`):**
+   - Rather than re-running GP evolution or Rust workers, `H448` reuses the SHA-256-verified `H418` `D1` (`seed = 335101`) and `D2` (`seed = 335102`) 64-program `.npz` deployments (`/home/ubuntu/jope_plan/evidence/H418/pulled/{D1,D2}/h416_D{1,2}_npz/<cid>.npz`).
+   - Before computing any `h448.APEX_FAIR_CHAMPION` score, `analyze_h448.py` verifies `D1.sha256` and `D2.sha256` and confirms that replaying `BCAR.mix` (with `H418` Amendment 2's single `a2_exempt_x0b` cell `(43022ae6a8bc..., 335102)`) reproduces `scores/h416.SXB.jsonl` (`1766.0` Elo) to `<= 1e-9` across all `91` contexts.
+2. **`SEARCH`-Only 5-Fold External Blocks (`0` `AUDIT` Target Reads):**
+   - Inside the `--network none` `h317-empty:v1` Docker sandbox (`sandbox_h448_d91.sh`), `d91_h448.py bank_and_screen` builds `bank_d91_search.npz` (`audit_targets_written = False`), holding each `dev91` context's `70%` `SEARCH` rows `(X_search, y_search)`, deterministic 5-fold labels `DP15.kfold_labels(cid, y_search)`, `30%` `AUDIT` feature matrix `X_audit` (no `y_audit`), and `sha256(y_audit)` for row-order alignment verification.
+   - Because `DP15.kfold_labels(cid, y_search)` depends only on `(415201, "kf", cid)` and `y_search` (seed-independent across `335101` and `335102`), the external 5-fold OOF (`q_*`), fold-bag (`bag_*`), and full-`SEARCH` refit (`ref_*`) blocks are computed once on `bank_d91_search.npz`:
+     - **`M7`** (`cols_matern.py`): 7 Duan-smearing `log1p` + ARD Matérn GP columns (`GM.PRIMARY_NAMES`).
+     - **`K3`** (`cols_h430.py`, `pub-r3` `c84af3af9fae4f32`): `key_direct` (clipped to `[y_min - 0.25*span, y_max + 0.25*span]`), `key_gbm`, `factor_glm`.
+     - **`F4`** (`cols_h433.py`, `pub-r1` `436737c85ad4d398`): `form_gbm`, `form_gam`, `form_sr`, `form_interp` (with `form_sr` and `form_interp` clipped to `[y_min - 0.50*span, y_max + 0.50*span]`).
+     - **Frozen ICL Block** (`cols_r4_e8.py`, per `FROZEN_FAIR_CHAMPION.json`): `r4_e8` (`STACK_R4_E8_BASE` or `STACK_R4_E8_WC`), `cw5_m20` (`STACK_R4_M20`), or omitted (`GM_CW12`).
+3. **Per-Seed Guarded 2-Layer Combiner & Board Aggregation:**
+   - For each seed `s in (335101, 335102)` (`D1`, `D2`) and each context `c`, `analyze_h448.py` combines seed `s`'s GP pool (`Q`, `bcols_gp`, `ref_gp`) with the active external blocks via `guard_matern_core.guard_and_stack_2l(c, Xs, Xa, y, lab, Q, bcols_gp, ref_gp, active)` using `SEARCH` OOF predictions and `y_search` **only**.
+   - If a `(c, s)` unit had `r.get("error")` in `H418` (`0` in `H418`), it falls back to `x0[s][c]` (`h335.H335_AGG` per-seed value). For `H418` Amendment 2's single cell `(43022ae6a8bc..., 335102)`, `D2`'s 64-program `.npz` is 100% `SEARCH`-valid (`0` `AUDIT` reads), so `h448.APEX_FAIR_CHAMPION` scores its guarded stack output directly and reports the `a2_exempt_x0b` substitution under `readout.descriptive.a2_exempt_sensitivity`.
+   - Context utility `u[c] = 0.5 * (u_seed[335101][c] + u_seed[335102][c])`, matching `h335.*`, `h364.*`, and `h416.SXB`.
+
+## 3. `X_search`-Only `H425` Contamination Screen & Dual Headline Protocol
+Per `@cl_fwriter`'s peer-review protocol (`2026-11-12T04:33Z`), `fit_icl_bank.npz` (`419` tables) / `all_legal_bank.npz` (`1,609` tables) were never previously `H425`-screened against `dev91`:
+1. Inside `sandbox_h448_d91.sh`, `d91_h448.py bank_and_screen` runs the exact `H425` feature-only contamination screen (`S1` specific columns, `S2` row hashes, `S3` rare column ranges, `S4` source-name tokens; **`use_target = False`**, `confirm_targets_keyed = False`, **`audit_rows_read = 0`**) on `views-search` (`X_search = search.mat[:, :-1]`) against every table in the `FROZEN_FAIR_CHAMPION.json` `training_bank`, writing create-once `SCREEN_D91_SEARCH.json`.
+2. **`analyze_h448.py` reports BOTH pre-declared evaluations against `kumo_tabular_large_e8.v1` (`2063.9`):**
+   - **Headline Clean-Holdout Fair Comparison (`readout.h425_without_feature_clear`):** Restricts all `33` board entrants (`32` stored + `h448.APEX_FAIR_CHAMPION`) to the `H425` `without_feature` clear slice (`[c for c in cids91 if not screen[c]["flag_feature"]]`) and computes exact `ladder.py` (`T16.elo_boot`, `10,000` family-bootstrap draws, seed `335160`, anchor `h335.H257_REPLICA = 1500.0`) Elo, `95%` CI, rank, and paired family stats vs `kumo_tabular_large_e8.v1`, `tabfm_ensemble.v1`, `kumo_tabular_small_e8.v1`, and `h416.SXB`. Also reports `without_copy_tier` (`tier != "copy"`) and `without_exposed_contexts` (`86` contexts excluding `H418`'s 5 `EXPOSED` prefixes) sensitivities.
+   - **Canonical 91-Context / 19-Family `dev91-audit-v1` Board Score (`readout.canonical_board_91`):** Scores all `91` contexts / `19` families, writes create-once `scores/h448.APEX_FAIR_CHAMPION.jsonl`, and cross-checks `tools/ladder.py --write` to `< 1e-9`.
+
+## 4. `H445` (`APEX-DEV`) Precondition & Harness Gates (`R1`)
+1. **`H445` Precondition (`R1`):** By default, `run_h448.sh unlock` and `analyze_h448.py` require `/home/ubuntu/jope_plan/evidence/H445/results/READOUT_DEV.json` to exist:
+   - If `H445` verdict is `HARM`, `H448` refuses to unlock (`INCOMPLETE` unless owner receipt explicitly overrides).
+   - If `H445` verdict is `NULL`, `H448` records `"following_null_h445_dev": true` prominently in `H448_DEV91.json` and `README.md`.
+   - If `H445` verdict is `JOINT_DEV_CONFIRMED`, `H448` records `"h445_verdict": "JOINT_DEV_CONFIRMED"`.
+   - If the owner explicitly includes the token `OWNER_DIRECT_D91` in the signed Stage-V receipt (`/home/ubuntu/jope_plan/ns/receipts/H448_LOCK_sha256.txt`) to score `dev91` prior to `H445` completion, `H448` records `"h445_dev_status": "OWNER_DIRECT_D91"` prominently in `H448_DEV91.json` and `README.md`.
+2. **Pre-Readout Harness Gates (`analyze_h448.py`):** Checked before any `h448.APEX_FAIR_CHAMPION` utility is computed or printed (`INCOMPLETE` exit `3`, zero rows written on any failure):
+   - `lock`, `frozen_champion`, `h445_precondition`, `board_files`, `board_id`, `board_ladder` (`<= 1e-6`), `board_entrants` (`32` complete entrants, zero `h448.*`), `contexts` (`91` contexts / `19` families), `h418_pulled_shas`, `bank_d91_alignment` (`audit_targets_written == False`, exact `y`, `lab`, `ya_sha256` match vs `D1` & `D2`), `h418_sxb_replay` (`max_abs_delta <= 1e-9` vs `scores/h416.SXB.jsonl`), `screen_d91` (`confirm_targets_keyed == False`, `audit_rows_read == 0`), and `columns_complete` (`>= 86/91` per enabled block).
+3. **Zero Holdout Opens:** `APEX-CONFIRM` (`142` families) and `DL-Holdout` / `sealed` remain at `0` opens throughout.
