@@ -95,9 +95,10 @@ impl NodeProtocolState {
         now_ms: u64,
     ) -> Result<(), ProtocolError> {
         ticket.verify(&self.node_id, &self.issuer, self.hub_public_key, now_ms)?;
-        let consumed = self
-            .root
-            .join(format!("enrollment-{}.consumed", hex_digest(ticket.nonce)));
+        let consumed = self.root.join(format!(
+            "enrollment-{}.consumed",
+            crate::hex_digest(ticket.nonce)
+        ));
         write_new_synced(&self.root, &consumed, &ticket.signed_bytes()?).map_err(
             |error| match error {
                 ProtocolError::Io(io) if io.kind() == std::io::ErrorKind::AlreadyExists => {
