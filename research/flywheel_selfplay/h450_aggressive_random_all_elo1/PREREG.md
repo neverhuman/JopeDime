@@ -69,3 +69,15 @@ At evaluation time on `dev91` (`91` contexts / `19` families), all features, nei
 - the init (0 %-dev91) columns computed by pub-r3 serve as epoch 0.
 
 The comparison with Kumo L (2070.2) is reported as an in-corpus gap only.
+
+**pub-r5 addition (unique-dataset tracking).** Jepson: "I want to track the # of unique datasets this model has seen... it should NEVER see the exact same datasets due to our seed and synthetic injection".
+- **Fingerprint:** every training dataset gets a 64-bit blake2b fingerprint. It is computed after every transform, so it covers the exact X, y and n_ctx the model sees. The context rows and the query rows are each sorted before hashing, so a reordered copy of the same split still counts as a duplicate.
+- **What is logged** (every 30 s, in every `epoch_NN.json` and in `manifest.json`):
+  - `unique_datasets_seen`;
+  - `datasets_seen`;
+  - `duplicate_real_datasets`;
+  - `duplicate_synthetic_datasets`;
+  - `distinct_source_tables_seen` out of 3,525.
+- **Resume:** the fingerprint set persists in `ckpt_last.pt`, so the counts carry across pauses.
+- **Expectation:** 0 duplicates. Any duplicate is reported as a finding.
+- **CPU smoke:** 1,475 episodes, 1,475 unique, 0 duplicates, 1,056 distinct source tables.

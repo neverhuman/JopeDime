@@ -2,7 +2,7 @@
 # H450 pub-r4 (cl_fwriter): maximum-entropy random-split fine-tune of the H449 best checkpoints on every non-sealed
 # regression table (dev91 included), with per-epoch dev91 in-corpus Elo tracking.
 #
-#   run_r4_h450.sh stage COMMIT                          ~/h450-stage/pub-r4 = pub-r3 code + this folder at COMMIT
+#   run_r4_h450.sh stage COMMIT TAG                      ~/h450-stage/TAG = pub-r3 code + this folder at COMMIT
 #   run_r4_h450.sh smoke-cpu                             2000-item CPU sampler smoke (cpus 64-71) -> smoke_cl/
 #   run_r4_h450.sh train HOST SIZE RUN HOURS LR SEED [--resume]
 #                                                        one training process as a user unit on HOST (xbabe2|xbabe3)
@@ -15,7 +15,7 @@ set -euo pipefail
 export PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1
 REPO=/home/ubuntu/JopeDime
 GROUP=research/flywheel_selfplay/h450_aggressive_random_all_elo1
-ST=/home/ubuntu/h450-stage/pub-r4
+ST=$(dirname "$(dirname "$(readlink -f "$0")")")   # the stage this script runs from (stage COMMIT TAG creates a new one)
 BASE_STAGE=/home/ubuntu/h450-stage/pub-r3
 DATA=/home/ubuntu/jope-data/h450-quarantine
 R4=$DATA/r4
@@ -42,7 +42,8 @@ check_stage() {
 CMD=${1:?stage|smoke-cpu|train|cols-epoch|analyze-epoch}
 case $CMD in
 stage)
-  C=${2:?COMMIT}
+  C=${2:?COMMIT}; TAG=${3:?TAG e.g. pub-r5}
+  ST=/home/ubuntu/h450-stage/$TAG
   [ ! -e "$ST" ] || die "$ST exists (create-once)"
   git -C "$REPO" merge-base --is-ancestor "$C" origin/v1/next || die "$C is not on origin/v1/next"
   (cd "$BASE_STAGE/code" && sha256sum --quiet -c ../CODE.sha256) || die "pub-r3 stage does not verify"
@@ -83,13 +84,13 @@ train)
       --setenv=PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -B "$ST/code/train_aggressive_random_h450.py" $A
   else
     ssh3 "mkdir -p $X3_ROOT/banks $X3_ROOT/inputs $X3_ROOT/runs $X3_ROOT/stage"
-    rs3 "$ST/" "$X3:$X3_ROOT/stage/pub-r4/"
+    rs3 "$ST/" "$X3:$X3_ROOT/stage/$(basename "$ST")/"
     rs3 "$BANK" "$X3:$X3_ROOT/banks/"
     rs3 "$CK" "$X3:$X3_ROOT/inputs/init_$SIZE.pt"
-    ssh3 "cd $X3_ROOT/stage/pub-r4/code && sha256sum --quiet -c ../CODE.sha256 && echo '$BANK_SHA  $X3_ROOT/banks/$(basename "$BANK")' | sha256sum --quiet -c - && echo '$CKS  $X3_ROOT/inputs/init_$SIZE.pt' | sha256sum --quiet -c -" || die "xbabe3 copies do not verify"
+    ssh3 "cd $X3_ROOT/stage/$(basename "$ST")/code && sha256sum --quiet -c ../CODE.sha256 && echo '$BANK_SHA  $X3_ROOT/banks/$(basename "$BANK")' | sha256sum --quiet -c - && echo '$CKS  $X3_ROOT/inputs/init_$SIZE.pt' | sha256sum --quiet -c -" || die "xbabe3 copies do not verify"
     OUT=$X3_ROOT/runs/$RUN
     A=${ARGS//INIT/$X3_ROOT/inputs/init_$SIZE.pt}; A=${A//BANK/$X3_ROOT/banks/$(basename "$BANK")}; A=${A//OUT/$OUT}
-    ssh3 "mkdir -p $OUT && systemd-run --user --unit=$UNIT -p WorkingDirectory=$X3_ROOT/stage/pub-r4/code -p StandardOutput=append:$OUT/stdout.log -p StandardError=append:$OUT/stdout.log --setenv=PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True --setenv=PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -B $X3_ROOT/stage/pub-r4/code/train_aggressive_random_h450.py $A"
+    ssh3 "mkdir -p $OUT && systemd-run --user --unit=$UNIT -p WorkingDirectory=$X3_ROOT/stage/$(basename "$ST")/code -p StandardOutput=append:$OUT/stdout.log -p StandardError=append:$OUT/stdout.log --setenv=PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True --setenv=PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -B $X3_ROOT/stage/$(basename "$ST")/code/train_aggressive_random_h450.py $A"
   fi
   log "launched $UNIT on $HOST ($SIZE, $HOURS h, lr $LR, seed $SEED) -> $OUT"
   ;;

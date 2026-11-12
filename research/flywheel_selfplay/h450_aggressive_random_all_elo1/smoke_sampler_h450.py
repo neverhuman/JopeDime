@@ -49,8 +49,12 @@ def main() -> None:
     max_inj_frac, viol, dup_rows, shapes_bad, n_batched, n_eps = 0.0, 0, 0, 0, 0, 0
     widths, rows = [], []
     for i in range(a.items):
-        xb, yb, n_ctx, infos = q.get(timeout=300)
+        xb, yb, n_ctx, infos, fps = q.get(timeout=300)
         led.add_real(infos)
+        led.add_fps(fps, synthetic=False)
+        for b_, fp in enumerate(fps):
+            if T.dataset_fingerprint(xb[b_], yb[b_], n_ctx) != fp:
+                raise SystemExit("fingerprint does not reproduce in the main process")
         n_batched += int(xb.shape[0] > 1 or len(infos) > 1)
         for b, (t, tm, k, F, n, sp) in enumerate(infos):
             n_eps += 1
@@ -78,7 +82,9 @@ def main() -> None:
         json.dump(doc, f, indent=1, sort_keys=True)
     print(json.dumps({k: doc[k] for k in ("episodes", "episodes_per_s", "max_injected_fraction", "injection_rule_violations",
                                           "shape_mismatches", "episodes_with_duplicate_rows")}),
-          json.dumps({k: s[k] for k in ("dev91_share_of_real_episodes", "injected_column_share", "target_modes", "target_spaces")}))
+          json.dumps({k: s[k] for k in ("dev91_share_of_real_episodes", "injected_column_share", "target_modes", "target_spaces",
+                                        "unique_datasets_seen", "datasets_seen", "duplicate_real_datasets",
+                                        "distinct_source_tables_seen")}))
 
 
 if __name__ == "__main__":
