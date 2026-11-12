@@ -16,7 +16,6 @@ use jope_parallel::native_loop::bounded::{
     controller::{Liveness, RankLaunch, Supervisor, SupervisorHandle},
     rendezvous::{self, AdmittedMember, Challenge, Hello, HelloBody, Rendezvous, ResultBody},
 };
-use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeMap,
     fs,
@@ -28,7 +27,7 @@ use std::{
 pub const GIB: u64 = 1024 * 1024 * 1024;
 
 pub fn sha(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_parallel::build_receipt::sha256_hex(bytes)
 }
 pub fn now_ms() -> u64 {
     SystemTime::now()

@@ -49,7 +49,6 @@ use std::path::Path;
 use std::process::Command;
 
 use regex::Regex;
-use sha2::Digest;
 
 use crate::pyjson::Value;
 use crate::{Error, Result};
@@ -145,7 +144,7 @@ fn reviewed_vendor_pair(input: &Input, name: &str, paths: &[&str]) -> bool {
             };
             package.get("name").and_then(toml::Value::as_str) == Some(name)
                 && package.get("version").and_then(toml::Value::as_str) == Some(*version)
-                && format!("{:x}", sha2::Sha256::digest(bytes)) == *pin
+                && crate::py::sha256_hex(bytes) == *pin
         })
 }
 

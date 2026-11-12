@@ -3,7 +3,6 @@ use super::{
     verify_inventory, ReaderOptions,
 };
 use serde_json::{json, Value};
-use sha2::Digest;
 use std::{fs, io::Cursor};
 use tempfile::tempdir;
 
@@ -70,10 +69,7 @@ fn valid_round_inventory_counts_and_hashes_source_bytes() {
     assert_eq!(inventory["counts"]["outcomes"], 1);
     assert_eq!(inventory["counts"]["successes"], 1);
     assert_eq!(inventory["counts"]["failures"], 0);
-    assert_eq!(
-        inventory["records_sha256"],
-        format!("{:x}", sha2::Sha256::digest(&bytes))
-    );
+    assert_eq!(inventory["records_sha256"], crate::py::sha256_hex(&bytes));
     assert_eq!(
         summary_counts(&inventory, false).unwrap(),
         json!({"rounds":1,"proposals":1,"outcomes":1,"failures":0,"incomplete_rounds":0})

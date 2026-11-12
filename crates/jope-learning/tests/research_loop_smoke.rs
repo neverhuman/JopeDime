@@ -2,7 +2,6 @@
 //! Missing or unpinned artifacts are explicit BLOCKED failures, not smoke passes.
 
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{
     env, fs,
     os::unix::fs::PermissionsExt,
@@ -44,7 +43,7 @@ fn pinned_binary(name: &str) -> PathBuf {
     let expected = env::var(format!("{name}_SHA256"))
         .unwrap_or_else(|_| panic!("BLOCKED: {name}_SHA256 is unset"));
     let bytes = fs::read(&path).expect("read fixture executable for digest");
-    let actual = hex::encode(Sha256::digest(bytes));
+    let actual = jope_learning::canon::sha256_hex(&bytes);
     assert_eq!(
         actual, expected,
         "BLOCKED: fixture executable digest changed"

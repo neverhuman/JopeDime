@@ -1,5 +1,4 @@
 use super::ResearchCapsuleV2;
-use sha2::{Digest, Sha256};
 use std::fmt::Write;
 
 pub const CAPSULE_BYTE_LIMIT: usize = 12 * 1024;
@@ -48,7 +47,7 @@ pub fn render_capsule(c: &ResearchCapsuleV2) -> Result<CapsuleBytes, RenderError
             bytes.len()
         )));
     }
-    let hash = format!("{:x}", Sha256::digest(&bytes));
+    let hash = crate::py::sha256_hex(&bytes);
     Ok(CapsuleBytes {
         canonical_json: bytes,
         sha256: hash,

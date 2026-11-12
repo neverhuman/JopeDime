@@ -3,13 +3,12 @@
 //! written without one. No remote object store is contacted.
 
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::Path;
 use std::process::{Command, Output};
 
 fn sha(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
+    jope_learning::canon::sha256_hex(bytes)
 }
 
 fn pretty(v: &Value) -> Vec<u8> {
