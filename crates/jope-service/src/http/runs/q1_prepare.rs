@@ -101,8 +101,8 @@ impl RunService {
         if table.rows.iter().any(|row| {
             row[target]
                 .as_deref()
-                .and_then(|v| v.trim().parse::<f64>().ok())
-                .is_none_or(|v| !v.is_finite())
+                .and_then(crate::dataset::finite_number)
+                .is_none()
         }) {
             return Err(invalid(&format!(
                 "Target column `{}` must be a finite number in every row.",

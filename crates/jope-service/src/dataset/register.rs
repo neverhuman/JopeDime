@@ -197,7 +197,7 @@ pub fn prepare_with_admission(
             .rows
             .iter()
             .filter_map(|r| r[column].as_deref())
-            .all(|v| v.trim().parse::<f64>().is_ok_and(f64::is_finite));
+            .all(|v| super::finite_number(v).is_some());
         if !numeric {
             let mut distinct = BTreeSet::new();
             for value in parsed.rows.iter().filter_map(|r| r[column].as_deref()) {
