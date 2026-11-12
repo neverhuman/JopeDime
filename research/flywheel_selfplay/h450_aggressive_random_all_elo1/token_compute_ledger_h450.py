@@ -183,7 +183,7 @@ def main() -> None:
     if z91 is not None:
         part_a_fair.append({
             "entrant": "h450.FAIR_UPGRADED_ZERO_D91_CONTROL",
-            "category": "Quarantined Out-of-Sample Control (0% dev91 neural weights + H450 float64/LeadLag/Tab/Stacker)",
+            "category": "Post-Hoc on dev91 (0% neural dev91 weights; upgrades designed post-H448/H449 — NOT fair)",
             "real_tables_seen": 3392,
             "d91_tables_seen": 0,
             "elo_91": float(z91["elo"]["elo"]),
@@ -198,7 +198,7 @@ def main() -> None:
         fn = r449_doc["fair_all_non_d91_stack"]
         part_a_fair.append({
             "entrant": "h449.FAIR_ALL_NON_D91_STACK",
-            "category": "Quarantined Out-of-Sample Control (0% dev91, legacy R4-e8 + Guard+2L)",
+            "category": "Post-H448 Second Look (0% dev91, legacy R4-e8 + Guard+2L — diagnostic only)",
             "real_tables_seen": 3392,
             "d91_tables_seen": 0,
             "elo_91": float(fn["elo"]["elo"]),

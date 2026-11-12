@@ -163,7 +163,7 @@ case $STEP in
       --bank "$DATA/bank_d91_search_f64.npz" \
       --out "$DATA/cols_tab_h450_D91" \
       --procs "$PROCS" | tee "$EV/logs/cols_tab_h450.log"
-    cp "$DATA/cols_tab_h450_D91/summary.json" "$EV/pulled/cols_tab_h450_summary.json" ;;
+    cp "$DATA/cols_tab_h450_D91/tab_summary.json" "$EV/pulled/cols_tab_h450_summary.json" ;;
 
   gpu-train-and-cols)
     HOURS=${1:-0.48}
@@ -194,23 +194,23 @@ case $STEP in
     rm -rf "$DATA/smoke_check"
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 -B "$STAGE/code/train_aggressive_random_h450.py" \
       --size M --init "$CK_NON_M" --bank "$ALL_BANK" --out "$DATA/smoke_check" \
-      --max-steps 2 --workers 2 --tokens 96000 --row-tokens 3072 --bmax 6 --grad-accum 1 --seed 450999 > "$EV/logs/gpu_smoke.log" 2>&1
+      --max-steps 2 --workers 2 --tokens 96000 --row-tokens 3072 --bmax 6 --grad-accum 1 --synth-prob 0.35 --seed 450999 > "$EV/logs/gpu_smoke.log" 2>&1
     rm -rf "$DATA/smoke_check"
     echo "$(date -u +%FT%TZ) Smoke check passed!"
 
-    echo "$(date -u +%FT%TZ) [GPU 2/4] Launching 4-model multi-seed online random-split fine-tuning (--hours $HOURS) across xbabe2 & xbabe3..."
+    echo "$(date -u +%FT%TZ) [GPU 2/4] Launching 4-model 3-regime multi-seed online random-split fine-tuning (--hours $HOURS) across xbabe2 & xbabe3..."
     mkdir -p "$DATA/ckpts" "$DATA/logs"
 
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 -B "$STAGE/code/train_aggressive_random_h450.py" \
       --size L --init "$CK_NON_L" --bank "$ALL_BANK" --out "$DATA/ckpts/L_seedA" \
-      --hours "$HOURS" --lr 3.0e-5 --d91-mix 0.30 --synth-prob 0.08 \
+      --hours "$HOURS" --lr 3.0e-5 --d91-mix 0.32 --synth-prob 0.22 \
       --tokens 128000 --row-tokens 4096 --bmax 8 --grad-accum 3 --workers 8 --seed 450101 \
       > "$DATA/logs/train_L_seedA.log" 2>&1 &
     PID_LA=$!
 
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 -B "$STAGE/code/train_aggressive_random_h450.py" \
       --size M --init "$CK_NON_M" --bank "$ALL_BANK" --out "$DATA/ckpts/M_seedA" \
-      --hours "$HOURS" --lr 4.0e-5 --d91-mix 0.30 --synth-prob 0.08 \
+      --hours "$HOURS" --lr 4.0e-5 --d91-mix 0.32 --synth-prob 0.22 \
       --tokens 144000 --row-tokens 4096 --bmax 8 --grad-accum 3 --workers 6 --seed 450303 \
       > "$DATA/logs/train_M_seedA.log" 2>&1 &
     PID_MA=$!
@@ -218,13 +218,13 @@ case $STEP in
     "${SSH_X3[@]}" "export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
       python3 -B $STAGE/code/train_aggressive_random_h450.py \
         --size L --init $DATA_X3/inputs/ckpt_non_d91_L.pt --bank $DATA_X3/banks/everything_combined_f64_h450_bank.npz \
-        --out $DATA_X3/ckpts/L_seedB --hours $HOURS --lr 3.0e-5 --d91-mix 0.50 --synth-prob 0.08 \
+        --out $DATA_X3/ckpts/L_seedB --hours $HOURS --lr 3.0e-5 --d91-mix 0.50 --synth-prob 0.22 \
         --tokens 128000 --row-tokens 4096 --bmax 8 --grad-accum 3 --workers 8 --seed 450202 \
         > $DATA_X3/logs/train_L_seedB.log 2>&1 &
       P1=\$!
       python3 -B $STAGE/code/train_aggressive_random_h450.py \
         --size M --init $DATA_X3/inputs/ckpt_non_d91_M.pt --bank $DATA_X3/banks/everything_combined_f64_h450_bank.npz \
-        --out $DATA_X3/ckpts/M_seedB --hours $HOURS --lr 4.0e-5 --d91-mix 0.50 --synth-prob 0.08 \
+        --out $DATA_X3/ckpts/M_seedB --hours $HOURS --lr 4.0e-5 --d91-mix 0.50 --synth-prob 0.22 \
         --tokens 144000 --row-tokens 4096 --bmax 8 --grad-accum 3 --workers 6 --seed 450404 \
         > $DATA_X3/logs/train_M_seedB.log 2>&1 &
       P2=\$!
