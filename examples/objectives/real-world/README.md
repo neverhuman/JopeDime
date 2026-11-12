@@ -17,8 +17,10 @@ FETCH_FREMTPL=1 bash examples/objectives/real-world/fetch.sh   # optional: also 
 bash examples/objectives/real-world/benchmark.sh              # or: benchmark.sh wind sp500
 ```
 
-`fetch.sh` writes to `$JOPE_FITNESS_DATA` (default `~/jope-data/fitness-real-world`), refuses a
-directory inside the checkout, pins every download by sha256 and converts it to a header CSV.
+`fetch.sh` writes to `$JOPE_FITNESS_DATA` (default `~/jope-data/fitness-real-world` when
+`HOME` is absolute). A relative or empty `HOME` is refused for that default. An explicit
+directory and `JOPE_FITNESS_DATA` stay verbatim. The script refuses a directory inside the
+checkout, pins every download by sha256 and converts it to a header CSV.
 `benchmark.sh` writes the summary to `target/fitness-real-world/results.{json,md}` and every
 intermediate file (splits, models, predictions and evaluation requests) to
 `$JOPE_FITNESS_DATA/work/`, next to the data and outside the checkout, so each number can be

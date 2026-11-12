@@ -20,7 +20,16 @@
 # Needs awk and jq.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/../../.." && pwd)
-data=${JOPE_FITNESS_DATA:-$HOME/jope-data/fitness-real-world}
+# JOPE_FITNESS_DATA stays verbatim. A relative or empty HOME must not name the
+# default dataset directory, which later receives work/ under that same root.
+if [ -n "${JOPE_FITNESS_DATA:-}" ]; then
+  data=$JOPE_FITNESS_DATA
+else
+  case ${HOME:-} in
+    /*) data=$HOME/jope-data/fitness-real-world ;;
+    *) printf 'benchmark.sh: HOME must be an absolute path when JOPE_FITNESS_DATA is not set\n' >&2; exit 2 ;;
+  esac
+fi
 out=${JOPE_FITNESS_OUT:-$root/target/fitness-real-world}
 if [ -d "$data" ]; then data=$(cd "$data" && pwd -P); fi
 case "$data/" in
