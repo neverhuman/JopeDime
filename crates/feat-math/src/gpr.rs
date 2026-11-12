@@ -13,7 +13,12 @@
 //! evaluated with one Cholesky-based symmetric-positive-definite inverse per step
 //! on a bounded optimization subset. The predictive coefficients are then solved
 //! on up to `m` seeded inducing rows (a subset-of-regressors predictor) and
-//! predictions k(x*, X_m) . alpha are clamped to +/-60.
+//! predictions k(x*, X_m) . alpha are clamped to the union of the training
+//! target range widened by 5% and the legacy +/-60 window (never tighter
+//! than either). Old saved models omit the stored bounds and keep +/-60.
+//! Recipe Rust, Python, and fitted C++ keep that legacy +/-60 clamp. Those
+//! artifact bytes stay on the frozen behavior surface. Native and emitted
+//! predictions match when the union window is exactly +/-60.
 //!
 //! Bit-parity contract: the emitted Python/Rust artifacts replay exactly the
 //! same arithmetic order (kernel, Cholesky, triangular inverse, gradient sums).
@@ -40,6 +45,45 @@ pub const INIT_ROWS: usize = 96;
 pub const LR: f64 = 1.0;
 /// Seed for the partial Fisher-Yates inducing-row selection.
 pub const GPR_SEED: u64 = 909;
+/// Historical prediction window. Models saved before the range-aware clip
+/// omit the bounds and deserialize back to this window.
+const LEGACY_CLIP_LO: f64 = -60.0;
+const LEGACY_CLIP_HI: f64 = 60.0;
+
+fn legacy_clip_lo() -> f64 {
+    LEGACY_CLIP_LO
+}
+
+fn legacy_clip_hi() -> f64 {
+    LEGACY_CLIP_HI
+}
+
+fn is_legacy_clip_lo(value: &f64) -> bool {
+    *value == LEGACY_CLIP_LO
+}
+
+fn is_legacy_clip_hi(value: &f64) -> bool {
+    *value == LEGACY_CLIP_HI
+}
+
+/// Union of the training target range ±5% and the legacy ±60 window.
+/// Empty input keeps the legacy window. `min`/`max` keep `lo <= hi`.
+fn prediction_clip(y: &[f64]) -> (f64, f64) {
+    if y.is_empty() {
+        return (LEGACY_CLIP_LO, LEGACY_CLIP_HI);
+    }
+    let mut y_min = f64::INFINITY;
+    let mut y_max = f64::NEG_INFINITY;
+    for &v in y {
+        y_min = y_min.min(v);
+        y_max = y_max.max(v);
+    }
+    let spread = (y_max - y_min).max(1e-9);
+    (
+        (y_min - 0.05 * spread).min(LEGACY_CLIP_LO),
+        (y_max + 0.05 * spread).max(LEGACY_CLIP_HI),
+    )
+}
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct GprModel {
@@ -53,6 +97,12 @@ pub struct GprModel {
     /// Learned signal variance.
     pub sf2: f64,
     pub y_mean: f64,
+    /// Prediction window. Absent on models saved before this field.
+    #[serde(default = "legacy_clip_lo", skip_serializing_if = "is_legacy_clip_lo")]
+    pub clamp_lo: f64,
+    /// Prediction window. Absent on models saved before this field.
+    #[serde(default = "legacy_clip_hi", skip_serializing_if = "is_legacy_clip_hi")]
+    pub clamp_hi: f64,
 }
 
 /// Linearly interpolated quantile of an ascending slice (numpy 'linear' rule);
@@ -143,6 +193,7 @@ impl GprModel {
             y_mean += v;
         }
         y_mean /= n.max(1) as f64;
+        let (clamp_lo, clamp_hi) = prediction_clip(&y[..n]);
         if n < 12 || p == 0 {
             return GprModel {
                 means,
@@ -152,6 +203,8 @@ impl GprModel {
                 ls: Vec::new(),
                 sf2: 0.0,
                 y_mean,
+                clamp_lo,
+                clamp_hi,
             };
         }
         // Seeded inducing rows (the predictive basis), standardized.
@@ -438,6 +491,8 @@ impl GprModel {
             ls: ls_final,
             sf2,
             y_mean,
+            clamp_lo,
+            clamp_hi,
         }
     }
 
@@ -447,7 +502,7 @@ impl GprModel {
         x.iter()
             .map(|row| {
                 if self.basis.is_empty() {
-                    return self.y_mean.clamp(-60.0, 60.0);
+                    return self.y_mean.clamp(self.clamp_lo, self.clamp_hi);
                 }
                 let zr: Vec<f64> = (0..p.min(row.len()))
                     .map(|j| (row[j] - self.means[j]) / self.scales[j])
@@ -461,7 +516,7 @@ impl GprModel {
                     }
                     s += self.alpha[b] * self.sf2 * (-0.5 * r2).exp();
                 }
-                s.clamp(-60.0, 60.0)
+                s.clamp(self.clamp_lo, self.clamp_hi)
             })
             .collect()
     }
@@ -673,6 +728,12 @@ pub struct GprKernelModel {
     /// Learned flat hyperparameter vector (see `DecodedKernel` for the layout).
     pub theta: Vec<f64>,
     pub y_mean: f64,
+    /// Prediction window. Absent on models saved before this field.
+    #[serde(default = "legacy_clip_lo", skip_serializing_if = "is_legacy_clip_lo")]
+    pub clamp_lo: f64,
+    /// Prediction window. Absent on models saved before this field.
+    #[serde(default = "legacy_clip_hi", skip_serializing_if = "is_legacy_clip_hi")]
+    pub clamp_hi: f64,
 }
 
 impl GprKernelModel {
@@ -697,6 +758,7 @@ impl GprKernelModel {
             y_mean += v;
         }
         y_mean /= n.max(1) as f64;
+        let (clamp_lo, clamp_hi) = prediction_clip(&y[..n]);
         if n < 12 || p == 0 {
             return GprKernelModel {
                 means,
@@ -706,6 +768,8 @@ impl GprKernelModel {
                 spec: spec.clone(),
                 theta: Vec::new(),
                 y_mean,
+                clamp_lo,
+                clamp_hi,
             };
         }
         let pf = p as f64;
@@ -1009,13 +1073,18 @@ impl GprKernelModel {
             spec: spec.clone(),
             theta,
             y_mean,
+            clamp_lo,
+            clamp_hi,
         }
     }
 
     pub fn predict(&self, x: &Rows) -> Vec<f64> {
         let p = self.means.len();
         if self.basis.is_empty() {
-            return x.iter().map(|_| self.y_mean.clamp(-60.0, 60.0)).collect();
+            return x
+                .iter()
+                .map(|_| self.y_mean.clamp(self.clamp_lo, self.clamp_hi))
+                .collect();
         }
         let pf = p as f64;
         let dec = decode_kernel(&self.spec, &self.theta, p);
@@ -1028,7 +1097,7 @@ impl GprKernelModel {
                 for (b, zb) in self.basis.iter().enumerate() {
                     s += self.alpha[b] * kernel_value(&self.spec, &dec, pf, &zr, zb);
                 }
-                s.clamp(-60.0, 60.0)
+                s.clamp(self.clamp_lo, self.clamp_hi)
             })
             .collect()
     }
@@ -1223,6 +1292,8 @@ mod tests {
                 .chain(&model.alpha)
                 .chain(&model.theta)
                 .chain(std::iter::once(&model.y_mean))
+                .chain(std::iter::once(&model.clamp_lo))
+                .chain(std::iter::once(&model.clamp_hi))
                 .all(|v| v.is_finite()));
         }
         let expected = serde_json::to_vec(&historical).unwrap();
@@ -1394,6 +1465,8 @@ mod tests {
         assert_eq!(bits(&historical.ls), bits(&reused.ls));
         assert_eq!(historical.sf2.to_bits(), reused.sf2.to_bits());
         assert_eq!(historical.y_mean.to_bits(), reused.y_mean.to_bits());
+        assert_eq!(historical.clamp_lo.to_bits(), reused.clamp_lo.to_bits());
+        assert_eq!(historical.clamp_hi.to_bits(), reused.clamp_hi.to_bits());
         assert_eq!(historical.basis.len(), reused.basis.len());
         for (a, b) in historical.basis.iter().zip(&reused.basis) {
             assert_eq!(bits(a), bits(b));
@@ -1433,5 +1506,64 @@ mod tests {
             let y: Vec<f64> = (0..n).map(|i| i as f64).collect();
             assert_plain_scratch_parity(&x, &y, 8, 3);
         }
+    }
+
+    #[test]
+    fn gpr_clip_follows_the_training_range_and_keeps_the_legacy_window() {
+        // Concrete-scale target: every training value sits above the historical
+        // ±60 window, so a constant prediction of the mean is already past 60.
+        let x: Rows = (0..32).map(|i| vec![i as f64 / 31.0]).collect();
+        let y: Vec<f64> = x.iter().map(|row| 70.0 + 20.0 * row[0]).collect();
+        let (lo, hi) = prediction_clip(&y);
+        let model = GprModel::fit(&x, &y, DEFAULT_M, 8);
+        assert_eq!(model.clamp_lo.to_bits(), lo.to_bits());
+        assert_eq!(model.clamp_hi.to_bits(), hi.to_bits());
+        assert_eq!(model.clamp_lo.to_bits(), (-60.0f64).to_bits());
+        assert!(model.clamp_hi > 90.0, "hi {}", model.clamp_hi);
+        let preds = model.predict(&x);
+        let peak = preds.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        assert!(peak > 60.0, "peak {peak} still clipped at 60");
+        assert!(preds
+            .iter()
+            .all(|v| (model.clamp_lo..=model.clamp_hi).contains(v)));
+
+        let spec = parse_kernel("linear").unwrap();
+        let kernel = GprKernelModel::fit(&x, &y, DEFAULT_M, 4, &spec);
+        assert_eq!(kernel.clamp_lo.to_bits(), lo.to_bits());
+        assert_eq!(kernel.clamp_hi.to_bits(), hi.to_bits());
+        let kernel_peak = kernel
+            .predict(&x)
+            .into_iter()
+            .fold(f64::NEG_INFINITY, f64::max);
+        assert!(kernel_peak > 60.0, "kernel peak {kernel_peak}");
+
+        // A target inside the legacy window stores exactly ±60, so emitted
+        // and serialized models of small-scale data stay on the old bounds.
+        let y_small: Vec<f64> = x.iter().map(|row| 0.2 + 0.5 * row[0]).collect();
+        let small = GprModel::fit(&x, &y_small, DEFAULT_M, 0);
+        assert_eq!(small.clamp_lo.to_bits(), (-60.0f64).to_bits());
+        assert_eq!(small.clamp_hi.to_bits(), 60.0f64.to_bits());
+        let saved = serde_json::to_value(&small).unwrap();
+        assert!(saved.get("clamp_lo").is_none());
+        assert!(saved.get("clamp_hi").is_none());
+
+        // A model saved before these fields keeps the historical window:
+        // a mean of 80 still clamps to 60.
+        let legacy = r#"{"means":[0.0],"scales":[1.0],"basis":[],"alpha":[],"ls":[],"sf2":0.0,"y_mean":80.0}"#;
+        let old: GprModel = serde_json::from_str(legacy).unwrap();
+        assert_eq!(old.clamp_lo.to_bits(), (-60.0f64).to_bits());
+        assert_eq!(old.clamp_hi.to_bits(), 60.0f64.to_bits());
+        let one: Rows = vec![vec![0.0]];
+        assert_eq!(old.predict(&one)[0].to_bits(), 60.0f64.to_bits());
+
+        // A new constant fallback above 60 is the mean, not 60.
+        let x8: Rows = (0..8).map(|i| vec![i as f64]).collect();
+        let y8 = vec![80.0; 8];
+        let fallback = GprModel::fit(&x8, &y8, DEFAULT_M, 1);
+        assert!(fallback.basis.is_empty());
+        assert_eq!(fallback.predict(&x8)[0].to_bits(), 80.0f64.to_bits());
+        let kernel_fallback = GprKernelModel::fit(&x8, &y8, DEFAULT_M, 1, &spec);
+        assert!(kernel_fallback.basis.is_empty());
+        assert_eq!(kernel_fallback.predict(&x8)[0].to_bits(), 80.0f64.to_bits());
     }
 }

@@ -28,7 +28,7 @@ sha256 = "2e376ec098eb1c2f352f2be41e7e75e0f73f674fceefce075bb47866aa82654f"
 path = "crates/feat-math/src/gpr.rs"
 reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/gpr.rs; changing the bytes invalidates that frozen evaluator identity."
 receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
-sha256 = "c407b48d45453dddeab322fa13b4b4f4849f28f60340cc6f7206ecff61b005bb"
+sha256 = "6bacb530905ab0ca1ad6f1af03e446f5f90c3af9579e0c49b9045245f3efa5aa"
 
 [[evidence_exclusion]]
 path = "crates/feat-math/src/heads.rs"
