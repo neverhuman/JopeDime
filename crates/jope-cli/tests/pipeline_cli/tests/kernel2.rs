@@ -184,14 +184,13 @@ fn kernel2_cli_refuses_unsupported_bounds_and_the_corrected_command_succeeds() {
 /// which re-derives every refinement trace, accepts the run.
 #[test]
 fn kernel2_lm_refinement_records_its_selection_and_verifies_evidence() {
-    use sha2::{Digest, Sha256};
     let temp = tempfile::tempdir().unwrap();
     let directory = temp.path().join("run");
     let seed = "(pipe X (derive expr=\"1*c0\") (ridge))";
     let seeds = temp.path().join("seeds.json");
     let file = serde_json::json!({
         "schema": "jope.pipeline-seeds/v1",
-        "genomes": [{"genome": seed, "program_sha256": format!("{:x}", Sha256::digest(seed))}],
+        "genomes": [{"genome": seed, "program_sha256": jope_runtime::sha256_hex(seed.as_bytes())}],
     });
     std::fs::write(&seeds, serde_json::to_vec(&file).unwrap()).unwrap();
     let result = jope()

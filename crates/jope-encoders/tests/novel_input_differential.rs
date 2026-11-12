@@ -12,7 +12,6 @@ use anyhow::{bail, Context, Result};
 mod models_root;
 use candle_core::{DType, Device};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use starforge::bundle::LoadedModelBundle;
 use starforge::foundation::{
     jope_external_selected_indices, prepare_jope_foundation_rows, preprocess_jope_external_train,
@@ -183,7 +182,7 @@ fn binary_edge_values() -> Vec<f32> {
 }
 
 fn frozen_oracle(request: &OracleRequest) -> Result<OracleOutput> {
-    let actual_fixture = format!("{:x}", Sha256::digest(FROZEN_ORACLE_JSON));
+    let actual_fixture = jope_runtime::sha256_hex(FROZEN_ORACLE_JSON);
     if actual_fixture != FROZEN_ORACLE_SHA256 {
         bail!(
             "frozen differential fixture identity changed: {actual_fixture}, expected {FROZEN_ORACLE_SHA256}"
@@ -195,7 +194,7 @@ fn frozen_oracle(request: &OracleRequest) -> Result<OracleOutput> {
     {
         bail!("frozen differential fixture contains a host-local path");
     }
-    let actual_lock = format!("{:x}", Sha256::digest(FROZEN_ORACLE_LOCK_JSON));
+    let actual_lock = jope_runtime::sha256_hex(FROZEN_ORACLE_LOCK_JSON);
     if actual_lock != FROZEN_ORACLE_LOCK_SHA256 {
         bail!(
             "frozen differential provenance lock changed: {actual_lock}, expected {FROZEN_ORACLE_LOCK_SHA256}"
@@ -208,7 +207,7 @@ fn frozen_oracle(request: &OracleRequest) -> Result<OracleOutput> {
         bail!("frozen differential provenance lock contains a host-local path");
     }
     let request_json = serde_json::to_vec(request)?;
-    let actual_request = format!("{:x}", Sha256::digest(&request_json));
+    let actual_request = jope_runtime::sha256_hex(&request_json);
     if actual_request != FROZEN_ORACLE_REQUEST_SHA256 {
         bail!(
             "frozen differential request identity changed: {actual_request}, expected {FROZEN_ORACLE_REQUEST_SHA256}"

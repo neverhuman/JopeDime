@@ -9,7 +9,6 @@ use anyhow::{Context, Result};
 mod models_root;
 use candle_core::Device;
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use starforge::bundle::LoadedModelBundle;
 use starforge::target_encoder::FusedTargetEncoder;
 use std::collections::BTreeSet;
@@ -136,7 +135,7 @@ fn real_binary_and_regression_fused_target_parity() -> Result<()> {
 
     let bytes = bundle.read_verified(&encoder.artifact)?;
     assert_eq!(bytes.len() as u64, TARGET_BYTES);
-    assert_eq!(format!("{:x}", Sha256::digest(&bytes)), TARGET_SHA256);
+    assert_eq!(jope_runtime::sha256_hex(&bytes), TARGET_SHA256);
     let tensors = candle_core::safetensors::load_buffer(&bytes, &Device::Cpu)?;
     assert_eq!(tensors.len(), 171);
     assert_eq!(
@@ -180,7 +179,7 @@ fn real_binary_and_regression_fused_target_parity() -> Result<()> {
 
     let fixture_bytes = std::fs::read(fixtures().join("target_encoder_fused_v1_parity.json"))?;
     assert_eq!(
-        format!("{:x}", Sha256::digest(&fixture_bytes)),
+        jope_runtime::sha256_hex(&fixture_bytes),
         PARITY_FIXTURE_SHA256
     );
     let fixture: Fixture = serde_json::from_slice(&fixture_bytes)?;

@@ -176,7 +176,7 @@ fn foundation_2048_matches_starlight_reference() -> Result<()> {
         .flat_map(|value| value.to_bits().to_le_bytes())
         .collect::<Vec<_>>();
     assert_eq!(
-        format!("{:x}", Sha256::digest(&payload)),
+        jope_runtime::sha256_hex(&payload),
         fixture.oracle_payload_sha256
     );
     assert!(expected.iter().all(|value| value.is_finite()));
@@ -256,7 +256,7 @@ fn committed_gen18_full_context_is_exact_and_complete() -> Result<()> {
     let bytes = std::fs::read(path)?;
     let source_bytes = bytes.strip_suffix(b"\n").unwrap_or(&bytes);
     assert_eq!(
-        format!("{:x}", Sha256::digest(source_bytes)),
+        jope_runtime::sha256_hex(source_bytes),
         "77e23d521bf8e5bd9a873d6fb4580133a0e2fb1c94161693ae3d8c74e205a1e4"
     );
     let fixture: JopeContextFixture = serde_json::from_slice(&bytes)?;

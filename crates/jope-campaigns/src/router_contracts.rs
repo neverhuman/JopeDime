@@ -5,14 +5,13 @@
 //! can be shared by Core, CLI, and a cloud client.
 
 use serde::Serialize;
-use sha2::{Digest, Sha256};
 
 pub const ROUTER_SEEDS_V2: [u64; 2] = [303, 404];
 pub const ROUTER_FOLDS_V2: usize = 7;
 
 fn canonical_sha256<T: Serialize>(value: &T) -> Result<String, String> {
     let bytes = serde_json::to_vec(value).map_err(|error| format!("canonical JSON: {error}"))?;
-    Ok(format!("{:x}", Sha256::digest(bytes)))
+    Ok(crate::selfplay_runtime::sha256_bytes(bytes))
 }
 
 fn validate_sha256(name: &str, value: &str) -> Result<(), String> {
