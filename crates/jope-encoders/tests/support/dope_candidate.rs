@@ -1,6 +1,5 @@
 //! Explicit artifact qualification; defaults never report absent candidate coverage as a pass.
 use candle_core::{Device, Tensor};
-use sha2::{Digest, Sha256};
 use starforge::dope_encoder::{DopeCheckpointIdentity, DopeEncoder};
 
 const REFERENCE: &str = include_str!("../fixtures/dope_dropout_candidate_reference.json");
@@ -9,7 +8,7 @@ const INPUT: &str = include_str!("../fixtures/dope_cuda_reference.json");
 fn reference(device: &Device) -> anyhow::Result<DopeEncoder> {
     let expected: serde_json::Value = serde_json::from_str(REFERENCE)?;
     assert_eq!(
-        format!("{:x}", Sha256::digest(INPUT)),
+        jope_runtime::sha256_hex(INPUT.as_bytes()),
         expected["input_sha256"]
     );
     let path = std::env::var_os("DOPE_CANDIDATE_WEIGHTS")

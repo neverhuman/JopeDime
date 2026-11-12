@@ -23,7 +23,7 @@ pub(crate) fn require(condition: bool, message: impl Into<String>) -> Oracle<()>
 }
 
 pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    jope_bench::load::sha256_hex(bytes)
 }
 
 /// A JSON member that must exist, as a subscript would demand.

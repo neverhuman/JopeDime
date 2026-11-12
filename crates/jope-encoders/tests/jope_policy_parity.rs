@@ -6,7 +6,6 @@ use anyhow::{bail, Result};
 mod models_root;
 use candle_core::{Device, Tensor};
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use starforge::bundle::LoadedModelBundle;
 use starforge::jope_policy::JopePolicyModel;
 use starforge::JOPE_GEN31_PARITY_FIXTURE_JSON;
@@ -103,7 +102,7 @@ fn assert_scalar_close(label: &str, actual: f32, expected: f32) {
 #[test]
 fn gen31_policy_matches_frozen_full_oracle() -> Result<()> {
     assert_eq!(
-        format!("{:x}", Sha256::digest(JOPE_GEN31_PARITY_FIXTURE_JSON)),
+        jope_runtime::sha256_hex(JOPE_GEN31_PARITY_FIXTURE_JSON),
         FIXTURE_SHA256
     );
     let fixture: Fixture = serde_json::from_slice(JOPE_GEN31_PARITY_FIXTURE_JSON)?;
@@ -153,7 +152,7 @@ fn gen31_policy_matches_frozen_full_oracle() -> Result<()> {
     let oracle_context = model.context_from_values(&fixture.z_512)?;
     let trace_bytes =
         std::fs::read(fixtures().join("jope_gen31_fastpath_trace_014b93f43dbaa1a4.json"))?;
-    assert_eq!(format!("{:x}", Sha256::digest(&trace_bytes)), TRACE_SHA256);
+    assert_eq!(jope_runtime::sha256_hex(&trace_bytes), TRACE_SHA256);
     let trace_fixture: DecoderTrace = serde_json::from_slice(&trace_bytes)?;
     assert_eq!(trace_fixture.schema, "jope-gen31-fastpath-trace/v1");
     assert_eq!(trace_fixture.fixed_tokens, fixture.fixed_tokens);

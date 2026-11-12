@@ -3,7 +3,6 @@
 use anyhow::{Context, Result};
 use jope_learning::{hwm, record::UNBOUND, sources::pipeline, state::State};
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     path::Path,
@@ -15,7 +14,7 @@ fn json(path: &Path) -> Result<Value> {
 }
 
 fn digest(path: &Path) -> Result<String> {
-    Ok(format!("{:x}", Sha256::digest(fs::read(path)?)))
+    Ok(jope_runtime::sha256_hex(&fs::read(path)?))
 }
 
 fn child(executable: &Path, args: &[&str], cwd: &Path) -> Result<(u32, Output)> {

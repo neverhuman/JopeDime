@@ -107,7 +107,7 @@ fn runtime_generated_prime_lime_component_differential() -> Result<()> {
             .iter()
             .find_map(|(candidate, digest)| (candidate == population).then_some(*digest))
             .context("missing fixed subset regression digest")?;
-        assert_eq!(format!("{:x}", Sha256::digest(&bytes)), expected_digest);
+        assert_eq!(jope_runtime::sha256_hex(&bytes), expected_digest);
     }
 
     let raw_cases = BTreeMap::from([("subsample_1005", large), ("reordered_40", reordered)]);
