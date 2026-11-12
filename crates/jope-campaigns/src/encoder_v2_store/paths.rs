@@ -68,17 +68,7 @@ pub(crate) fn sync_directory(path: &Path) -> Result<()> {
 }
 
 pub(crate) fn sha256_file(path: &Path) -> Result<String> {
-    let mut file = File::open(path)?;
-    let mut hash = Sha256::new();
-    let mut buffer = [0u8; 64 * 1024];
-    loop {
-        let read = file.read(&mut buffer)?;
-        if read == 0 {
-            break;
-        }
-        hash.update(&buffer[..read]);
-    }
-    Ok(hex::encode(hash.finalize()))
+    crate::selfplay_runtime::sha256_file(path)
 }
 
 pub(crate) fn publish_file_exclusive(staged: &Path, target: &Path, digest: &str) -> Result<()> {

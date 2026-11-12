@@ -17,9 +17,8 @@ use crate::selfplay_data::canonical_json_sha256;
 use anyhow::{bail, ensure, Context, Result};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
-use sha2::{Digest, Sha256};
 use std::fs::{self, File, OpenOptions};
-use std::io::{Read, Write};
+use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Component, Path, PathBuf};
 

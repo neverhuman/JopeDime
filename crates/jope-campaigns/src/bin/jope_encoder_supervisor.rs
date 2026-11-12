@@ -18,7 +18,6 @@ use jope_dime_regressor::encoder_v2_identity::{
 };
 use jope_dime_regressor::selfplay_data::canonical_json_sha256;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::ffi::{CString, OsString};
 use std::fs::{self, File, OpenOptions};

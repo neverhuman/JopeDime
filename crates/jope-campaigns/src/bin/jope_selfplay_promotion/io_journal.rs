@@ -16,17 +16,7 @@ pub(super) fn sha256_text(text: &str) -> String {
 }
 
 pub(super) fn sha256_file(path: &Path) -> Result<String> {
-    let mut file = fs::File::open(path).with_context(|| format!("open {}", path.display()))?;
-    let mut hasher = Sha256::new();
-    let mut buffer = vec![0u8; 4 << 20];
-    loop {
-        let read = file.read(&mut buffer)?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-    }
-    Ok(hex::encode(hasher.finalize()))
+    jope_dime_regressor::selfplay_runtime::sha256_file(path)
 }
 
 pub(super) fn is_sha256(text: &str) -> bool {

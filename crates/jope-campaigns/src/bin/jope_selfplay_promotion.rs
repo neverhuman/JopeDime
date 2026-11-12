@@ -26,10 +26,10 @@ use jope_dime_regressor::spec_policy::{PROPOSE, TRAINER};
 use jope_dime_regressor::task::Task;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
-use sha2::{Digest, Sha256};
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;

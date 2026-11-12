@@ -22,10 +22,10 @@ use jope_dime_regressor::recovery_contracts::{
 use jope_dime_regressor::selfplay_data::canonical_json_sha256;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File};
-use std::io::{BufReader, Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -468,18 +468,7 @@ fn main() -> Result<()> {
 }
 
 fn sha256_file(path: &Path) -> Result<String> {
-    let mut input =
-        BufReader::new(File::open(path).with_context(|| format!("open {}", path.display()))?);
-    let mut digest = Sha256::new();
-    let mut buffer = [0_u8; 1024 * 1024];
-    loop {
-        let count = input.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-        digest.update(&buffer[..count]);
-    }
-    Ok(hex::encode(digest.finalize()))
+    jope_dime_regressor::selfplay_runtime::sha256_file(path)
 }
 
 fn sha256_bytes(bytes: &[u8]) -> String {

@@ -5,17 +5,7 @@ pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
 }
 
 pub(crate) fn sha256_file(path: &Path) -> Result<String> {
-    let mut file = File::open(path).with_context(|| format!("open {}", path.display()))?;
-    let mut hash = Sha256::new();
-    let mut buffer = [0_u8; 1024 * 1024];
-    loop {
-        let count = file.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-        hash.update(&buffer[..count]);
-    }
-    Ok(hex::encode(hash.finalize()))
+    jope_dime_regressor::selfplay_runtime::sha256_file(path)
 }
 
 pub(crate) fn canonicalize_json(value: Value) -> Value {
