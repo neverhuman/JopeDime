@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -10,6 +11,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
+
+from ..prime_config import expand_config_home
 
 if TYPE_CHECKING:
     from .fused_meta import _meta_features, _meta_features_for_two, _meta_retrieval
@@ -199,9 +202,17 @@ def _score_report_with_retrieval(
     }
 
 
+def expand_fused_bundle(bundle_dir: str | Path, home: str | None) -> Path:
+    """Expand ``~`` and ``~/…`` only when ``home`` is absolute."""
+    try:
+        return expand_config_home(bundle_dir, home)
+    except ValueError as error:
+        raise ValueError("HOME is not an absolute path; a fused bundle path cannot be resolved") from error
+
+
 class FusedTargetEncoder:
     def __init__(self, bundle_dir: Path, device: torch.device | str | None = None) -> None:
-        self.bundle_dir = Path(bundle_dir).expanduser().resolve()
+        self.bundle_dir = expand_fused_bundle(bundle_dir, os.environ.get("HOME")).resolve()
         manifest_path = self.bundle_dir / "manifest.json"
         if not manifest_path.is_file():
             raise FileNotFoundError(f"Fused bundle manifest is missing: {manifest_path}")
