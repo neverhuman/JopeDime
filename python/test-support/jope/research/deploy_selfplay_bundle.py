@@ -18,6 +18,8 @@ from pathlib import Path
 from build_selfplay_bundle import build
 from test_exact_common import ALLOWED_LIVE_STATES, atomic_json, sha256_file
 
+from jope.prime_config import expand_config_home
+
 ROOT = Path("/home/ubuntu/jope-flywheel/test_exact_gen0")
 SOURCE = Path("/home/ubuntu/jope-dime")
 SCQ = Path("/home/ubuntu/smart_cluster/target/release/scq")
@@ -76,8 +78,17 @@ def verify_bundle(manifest: dict) -> None:
         raise RuntimeError((compiled.stderr or compiled.stdout).strip())
 
 
+def user_unit_dir(home: str | None) -> Path:
+    """`~/.config/systemd/user` expanded only when `home` is absolute."""
+    try:
+        base = expand_config_home("~", home)
+    except ValueError as error:
+        raise ValueError("HOME is not an absolute path; the systemd user unit directory cannot be resolved") from error
+    return base / ".config" / "systemd" / "user"
+
+
 def install_units(*, freshness_audit_only: bool) -> None:
-    destination = Path.home() / ".config" / "systemd" / "user"
+    destination = user_unit_dir(os.environ.get("HOME"))
     destination.mkdir(parents=True, exist_ok=True)
     for unit in UNITS:
         source = SOURCE / "systemd" / unit
@@ -103,7 +114,8 @@ def activate(
     restart: bool = True,
     freshness_audit_only: bool = True,
 ) -> dict:
-    from test_exact_evaluator import activate_protocol, active as active_evaluator
+    from test_exact_evaluator import activate_protocol
+    from test_exact_evaluator import active as active_evaluator
 
     before = scheduler_jobs()
     gpus_before = gpu_state()
