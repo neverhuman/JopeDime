@@ -24,3 +24,48 @@ At evaluation time on `dev91` (`91` contexts / `19` families), all features, nei
 5. Specialist Lead-Lag + Laplacian/Matérn-ARD Kernel + multi-depth Duan-CatBoost/ExtraTrees/LightGBM block (`cols_tab_h450.py`) — also evaluated standalone (`0` neural `d91` training) to isolate pure out-of-training-weights tabular/stacker improvements from `d91` random-split neural fine-tuning!
 6. Pool-agnostic global-best OOF anchor + adaptive OOF-validated refit blend + direct 5-fold OOF log-RMSE (`u`-metric) combiner (`stack_h450.py`).
 7. Quarantined diagnostic readout & Token/Compute Cost Ledger (`analyze_h450.py`, `token_compute_ledger_h450.py`), explicitly separating fair out-of-sample entrants (`0%` `dev91`) from quarantined in-corpus `dev91` fit diagnostics.
+
+## 3. Amendment pub-r4 (2026-11-12, cl_fwriter takes over H450)
+**Ownership.** Jepson, in the cl_fwriter session at about 20:26Z: "I need you to take over. train_aggressive_random_h450.py". cl_fwriter now owns the trainer, the stages, the GPU windows and the closeout. agy_apex_w10's pub-r3 run (launched before the transfer, `run_h450.sh gpu-train-and-cols 0.48`) is kept as a separate pub-r3 data point; its files are not changed.
+
+**Owner direction for the pub-r4 run** (quoted with times in `ns/receipts/H450_R4_OWNER_cl_fwriter.txt`): train on all regression data with train and test merged; a different random seed for every sample; 0-10 % injected synthetic columns; start from our best model; maximum data entropy; dev91 included with different random splits; track the fixed-split dev91 Elo at every major epoch; the goal is to beat Kumo. APEX-CONFIRM and DL-Holdout stay sealed, as Jepson decided at about 19:00Z in the same session. The trainer refuses any sealed or unexpected cohort.
+
+**Trainer changes** (`train_aggressive_random_h450.py`; the other pub-r3 files are unchanged):
+1. **Real episodes:**
+   - fresh blake2b seed each, table by smart stratified weights over all 3,525 tables;
+   - dev91 at its natural share, with no `--d91-mix`;
+   - target: own 85 %, another real column 10 %, synthetic teacher on the real features 5 %, plus 30 % Huberised jitter;
+   - rows never duplicated across context and query; the pub-r3 batched path padded short tables by repeating rows;
+   - random p_ctx and a 75 % target-stratified split;
+   - random column crop and order, with injected synthetic columns `k <= floor(0.10 F)`;
+   - target space: raw 40 %, Ridge residual 40 %, Yeo-Johnson 20 %.
+
+   The pub-r3 regimes that added 2-18 synthetic or 16 reviewed columns are removed.
+2. **Synthetic share:** fully synthetic batches are `--synth-prob 0.30` of steps (v3s prior, panel and sentinel tables), unchanged from pub-r3 apart from the share.
+3. **Outputs:**
+   - an EMA epoch checkpoint `ckpt_epoch_NN.pt` and an exposure ledger `epoch_NN.json` every training hour;
+   - `ckpt_last.pt` every 10 min, with SIGTERM saving and `--resume`, so GPU windows can pause and resume;
+   - no SWA soup in the trainer.
+
+   Sha256 checks of the init checkpoint and the bank are required.
+4. **Smoke (CPU, 300 items, 812 episodes):**
+   - 281 episodes/s on 7 workers;
+   - injected share 4.3 %, maximum 10 %, 0 violations;
+   - dev91 2.7 % of real episodes;
+   - targets 689 own / 78 other column / 45 teacher.
+
+   `selftest_h450.py` passes all 6 tests.
+
+**Runs:**
+- **Init:** the H449 best checkpoints, `all_non_d91_L` (b854b518...) and `all_non_d91_M` (5aadefdf...).
+- **Pairs:** seed A (L + M) on the xbabe2 3090 and seed B (L + M) on the xbabe3 3090.
+- **Schedule:** 10 h cosine, lr 4e-5 for L and 6e-5 for M, grad-accum 3, tokens 140k.
+- **cl_apex:** its runs are paused under rule 7 and resumed from ckpt_last.pt with a loaded=true sync check.
+
+**Per-epoch dev91 tracking:**
+- for each epoch, `cols_h450_gpu.py` fits on X_search only with the epoch's L + M checkpoints;
+- `analyze_h450.py` then reads y_audit under the H450 lock and receipt;
+- results are reported as **in-corpus fit**: outside the ranking, never a generalisation claim, and never compared with Kumo as generalisation;
+- the init (0 %-dev91) columns computed by pub-r3 serve as epoch 0.
+
+The comparison with Kumo L (2070.2) is reported as an in-corpus gap only.
