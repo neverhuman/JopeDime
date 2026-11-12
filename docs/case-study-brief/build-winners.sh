@@ -11,8 +11,10 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd); root=$(cd "$here/../.." && pwd)
 cases_dir=$root/case_study; out=$here/winners-data
-evidence=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}
-baselines=${JOPE_CASE_BASELINES:-$HOME/jope-data/resfit-2071/baselines}
+# JOPE_CASE_OUT and JOPE_CASE_BASELINES stay verbatim. A relative or empty HOME
+# must not name the default evidence or baseline directory.
+evidence=${JOPE_CASE_OUT:-$("$root/case_study/bin/absolute-home.sh")/jope-data/case_study}
+baselines=${JOPE_CASE_BASELINES:-$("$root/case_study/bin/absolute-home.sh")/jope-data/resfit-2071/baselines}
 winners=${BRIEF_WINNERS:-"09 02 12"}; seeds=${BRIEF_SEEDS:-"7 11 13"}
 cvstamp=${BRIEF_CV_STAMP:-$({ ls -d "$evidence"/*/extended-*-cv5 2>/dev/null || true; } | sed 's|.*/extended-||' | sort | tail -1)}
 [ -n "$cvstamp" ] || { echo "build-winners: no cross-validated (…-cv5) runs under $evidence" >&2; exit 2; }

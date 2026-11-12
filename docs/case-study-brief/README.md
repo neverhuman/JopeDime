@@ -39,8 +39,8 @@ tcolorbox.
 
 **Inputs** are read only:
 
-- `JOPE_CASE_OUT` (default `~/jope-data/case_study`): receipts and per-fold observations.
-- `JOPE_CASE_BASELINES` (default `~/jope-data/resfit-2071/baselines`): `<case>/summary_cv.csv` for
+- `JOPE_CASE_OUT` (default `~/jope-data/case_study` when `HOME` is absolute): receipts and per-fold observations. A relative or empty `HOME` is refused for that default.
+- `JOPE_CASE_BASELINES` (default `~/jope-data/resfit-2071/baselines` when `HOME` is absolute): `<case>/summary_cv.csv` for
   `brief.pdf` and `<case>/summary.csv` for the technical record.
 - `BRIEF_WINNERS` (default `09 02 12`) and `BRIEF_CV_STAMP` (default: the latest `extended-*-cv5`
   runs).

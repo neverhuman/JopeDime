@@ -11,9 +11,11 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd); root=$(cd "$here/../.." && pwd)
 cases_dir=$root/case_study; out=$here/data
-evidence=${JOPE_CASE_OUT:-$HOME/jope-data/case_study}
+# JOPE_CASE_OUT and JOPE_CASE_BASELINES stay verbatim. A relative or empty HOME
+# must not name the default evidence or baseline directory.
+evidence=${JOPE_CASE_OUT:-$("$root/case_study/bin/absolute-home.sh")/jope-data/case_study}
 export JOPE_EV=$evidence  # run dirs recorded inside the xbabe4 container are mapped onto this tree
-baselines=${JOPE_CASE_BASELINES:-$HOME/jope-data/resfit-2071/baselines}
+baselines=${JOPE_CASE_BASELINES:-$("$root/case_study/bin/absolute-home.sh")/jope-data/resfit-2071/baselines}
 featured=${BRIEF_CASES:-"03 01 02 07"}
 mkdir -p "$out" "$out/evo"; : > "$out/inputs.txt"
 note() { printf '%s\n' "$1" >> "$out/inputs.txt"; }
