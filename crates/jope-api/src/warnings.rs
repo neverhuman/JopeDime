@@ -18,6 +18,7 @@ pub const WARNING_CODES: &[&str] = &[
     "EVENT_LAG",
     "NON_NUMERIC_COLUMNS_SKIPPED",
     "TARGET_LEAKAGE",
+    "GROUP_LEAKAGE",
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
