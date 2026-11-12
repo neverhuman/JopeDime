@@ -109,6 +109,7 @@ impl RunService {
                 spec.target
             )));
         }
+        let leaks = crate::dataset::leakage::target_leakage(&table, &spec.target);
         let selected = selection.kept;
         let features: Vec<_> = selected
             .iter()
@@ -212,6 +213,12 @@ impl RunService {
         if !selection.skipped.is_empty() {
             public.warnings.push(
                 skipped_column_warning(&selection.skipped)
+                    .map_err(|error| invalid(&error.to_string()))?,
+            );
+        }
+        for leak in &leaks {
+            public.warnings.push(
+                crate::dataset::leakage::warning(leak)
                     .map_err(|error| invalid(&error.to_string()))?,
             );
         }
