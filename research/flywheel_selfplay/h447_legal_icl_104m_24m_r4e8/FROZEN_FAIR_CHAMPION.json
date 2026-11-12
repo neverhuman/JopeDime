@@ -1,0 +1,76 @@
+{
+  "blocks": {
+    "exact_keys_k3": [
+      "key_direct",
+      "key_gbm",
+      "factor_glm"
+    ],
+    "formulas_f4": [
+      "form_gbm",
+      "form_gam",
+      "form_sr",
+      "form_interp"
+    ],
+    "gp_pool": "stored_h416_64_candidates",
+    "icl": {
+      "ckpt_l": "/home/ubuntu/jope-data/h335-cl/h447/pub-r3/wc_L/ckpt_wc_final.pt",
+      "ckpt_m": "/home/ubuntu/jope-data/h335-cl/h447/pub-r3/wc_M/ckpt_wc_final.pt",
+      "col_name": "r4_e8",
+      "enabled": true,
+      "k_bag_wide": 4,
+      "perms_narrow": 4,
+      "recipe": "R4_E8",
+      "sha_l": "56ba4e9662d86e7b00e749aa598e24f8fc64bb46b77da016045e0749777ab36b",
+      "sha_m": "de54452812e750d16be3dedfdaa8a86d62ed711c71a804444243fcf916a848bd",
+      "tag_l": "R4E8_L",
+      "tag_m": "R4E8_M",
+      "training_bank": "all_legal_excl_p201b_bank.npz",
+      "training_bank_sha256": "bc5c7d6cd1f42096d0f3b31ac95686e81e7bfc439d07f42f1b6992f20b35763e",
+      "w_l": 0.6,
+      "w_m": 0.4
+    },
+    "matern_m7": [
+      "rel_cb_yjduan",
+      "matern_rq_duan",
+      "subgp_rgduan",
+      "spline_ratio_yjduan",
+      "dag_gp_on_cb",
+      "dag_hgb_on_spline",
+      "regime_route_gp"
+    ]
+  },
+  "combiner": "guard_matern_core.guard_and_stack_2l",
+  "d91_fairness_rule": {
+    "canonical_board_score": "all_91_contexts_19_families_scores/h448.APEX_FAIR_CHAMPION.jsonl",
+    "headline_fair_comparison": "H425_without_feature_clear_slice_vs_kumo_tabular_large_e8.v1",
+    "screen_method": "screen_h425.screen on views-search X_search ONLY against selected_arm training_bank (0 AUDIT target reads)"
+  },
+  "has_wc_evaluated": true,
+  "schema": "jope.h447.frozen_fair_champion/v1",
+  "selected_arm": "STACK_R4_E8_WC",
+  "selection_reason": "WC beat BASE and GM_CW12 on P201b excl10 with FIT-SEL clean-88 non-harm",
+  "summary_metrics": {
+    "fitsel_clean88_mean_u": 2.24674968422359,
+    "p201b_all201_board_elo": {
+      "ci95": [
+        1822.6408443404946,
+        1918.3071980293455
+      ],
+      "elo": 1868.4774702426603,
+      "rank": 2
+    },
+    "p201b_all201_mean_u": 2.431723514196241,
+    "p201b_excl10_board_elo": {
+      "ci95": [
+        1809.8963936380503,
+        1907.5164766976432
+      ],
+      "elo": 1856.6027567183887,
+      "rank": 2
+    },
+    "p201b_excl10_gain_vs_BASE_SXB": 0.2305116966999469,
+    "p201b_excl10_mean_u": 2.271254491191468
+  },
+  "utc": "2026-11-12T14:49:13Z",
+  "wave": "H447"
+}
