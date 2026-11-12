@@ -44,7 +44,6 @@ use jope_dime_regressor::timeseries::{
     TimeSeriesMetrics, TimeSeriesTable,
 };
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 use std::panic::{catch_unwind, AssertUnwindSafe};

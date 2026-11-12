@@ -2,7 +2,6 @@
 
 use anyhow::{bail, ensure, Result};
 use serde_json::{json, Map, Value};
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeSet, HashSet};
 
 mod validation;
@@ -59,7 +58,7 @@ const PROTOCOL_FIELDS: &[&str] = &[
 ];
 
 fn sha256_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    crate::selfplay_runtime::sha256_bytes(bytes)
 }
 
 fn canonical_hash(value: &Value) -> Result<String> {
