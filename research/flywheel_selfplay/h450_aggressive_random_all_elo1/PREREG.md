@@ -169,3 +169,16 @@ The pub-r7 single-GPU baseline was stopped after 3 contexts, before any analysis
 **Launcher.** `run_r4_h450.sh train` now accepts xbabe1 (root `~/jope-data/h450-r4-x1`). Every unit carries `MemoryMax` (default 20G), so a trainer that grows is killed inside its own cgroup and no other service is touched.
 
 **Third GPU.** xbabe1's 4090 became free about 21:55Z, when its non-H450 diffusers job ended. It runs r4_L_X1: L, 420k tokens, 48 h, lr 4e-5, seed 450431, from the same H449 init. r4_L_A and r4_L_B move to the pub-r9 trainer by `--resume`, with no loss of progress.
+
+## 8. Amendment pub-r10 (2026-11-12 about 22:25Z): evaluation queue and exhaustion rule
+
+`eval_queue_h450.sh` runs as the user unit `h450-eval-queue`. Each time the previous evaluation finishes, it scores the newest epoch that both r4_L_A and r4_L_B have written, as pairs (L_A, M_init) and (L_B, M_init).
+
+For each scored epoch it appends one line to `~/jope_plan/evidence/H450/diag_results/r4_TRAJECTORY.jsonl` and posts that line to AGENT_CHAT and the coord file. Each line holds:
+- the Elo arms;
+- the gaps to Kumo L;
+- each run's unique-dataset, duplicate and source-table counts from `epoch_NN.json`.
+
+The §4 exhaustion rule is now mechanical. When neither the champion stack nor the ICL-only arm has beaten its best for 4 scored epochs in a row, the queue posts EXHAUSTED and stops. Stopping the trainers stays a decision cl_fwriter states in a post.
+
+r4_L_A epoch 1 (train 1.00 h) had seen 113,533 datasets, all unique, with 0 duplicates. They came from 3,473 of 3,525 source tables, with 4.24% injected columns and a 1.97% dev91 share.
