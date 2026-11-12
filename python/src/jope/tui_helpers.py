@@ -346,6 +346,22 @@ def _inline_code(row: dict[str, Any], lang: str) -> str | None:
     return None
 
 
+def _expand_home_in(value: str, home: str | None) -> Path:
+    """Expand ``~`` and ``~/…`` only when ``home`` is absolute.
+
+    An empty or relative ``home`` leaves the original text in place. ``None``
+    means ``HOME`` is unset and still uses :meth:`Path.expanduser`.
+    """
+    if value == "~" or value.startswith("~/"):
+        if home is not None and os.path.isabs(home):
+            if value == "~":
+                return Path(home)
+            return Path(home) / value[2:]
+        if home is not None:
+            return Path(value)
+    return Path(value).expanduser()
+
+
 def _code_path(row: dict[str, Any], lang: str, roots: list[Path]) -> Path | None:
     values: list[Any] = []
     for key in (f"{lang}_path", f"{lang}_source_path", f"{lang}_code_path"):
@@ -359,7 +375,7 @@ def _code_path(row: dict[str, Any], lang: str, roots: list[Path]) -> Path | None
     for value in values:
         if not isinstance(value, str) or not value:
             continue
-        path = Path(value).expanduser()
+        path = _expand_home_in(value, os.environ.get("HOME"))
         candidates = [path] if path.is_absolute() else [root / path for root in roots] + [path]
         for candidate in candidates:
             if candidate.exists() and candidate.is_file():
