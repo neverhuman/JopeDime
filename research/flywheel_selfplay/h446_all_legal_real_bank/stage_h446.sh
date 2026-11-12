@@ -25,8 +25,7 @@ git -C "$REPO" -c credential.helper= -c "credential.helper=!/home/ubuntu/.local/
 
 git -C "$REPO" show "origin/v1/next:research/flywheel_selfplay/h425_contamination_screen/screen_h425.py" > "$DST/code/screen_h425.py"
 git -C "$REPO" show "origin/v1/next:research/flywheel_selfplay/h425_contamination_screen/CONFIRM_META.json" > "$DST/code/CONFIRM_META.json"
-cp -a /home/ubuntu/apex-stage/h431/pub-r2/code/icl_inject.py "$DST/code/icl_inject.py"
-chmod 0555 "$DST/code/screen_h425.py" "$DST/code/icl_inject.py"
+chmod 0555 "$DST/code/screen_h425.py"
 chmod 0444 "$DST/code/CONFIRM_META.json"
 
 for f in "${FILES[@]}"; do
