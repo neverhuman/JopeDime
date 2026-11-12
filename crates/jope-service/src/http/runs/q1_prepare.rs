@@ -110,11 +110,23 @@ impl RunService {
             )));
         }
         let leaks = crate::dataset::leakage::target_leakage(&table, &spec.target);
-        let groups = crate::dataset::group_leak::id_like_columns(
+        let id_columns = crate::dataset::group_leak::id_like_columns(
             &table.headers,
             &spec.target,
             &spec.ignore_columns,
         );
+        let id_values: Vec<(String, Vec<Option<String>>)> = id_columns
+            .iter()
+            .filter_map(|name| {
+                let index = table.headers.iter().position(|header| header == name)?;
+                let values = table
+                    .rows
+                    .iter()
+                    .map(|row| row.get(index).cloned().flatten())
+                    .collect();
+                Some((name.clone(), values))
+            })
+            .collect();
         let selected = selection.kept;
         let features: Vec<_> = selected
             .iter()
@@ -170,6 +182,8 @@ impl RunService {
         };
         let fit = encode(&fit_ids)?;
         let holdout = encode(&holdout_ids)?;
+        let spanning =
+            crate::dataset::group_leak::spanning_columns(&id_values, &fit_ids, &holdout_ids);
         let baseline = {
             let training =
                 crate::dataset::baseline::target_values(&table.rows, target_column, &fit_ids)
@@ -242,7 +256,7 @@ impl RunService {
                     .map_err(|error| invalid(&error.to_string()))?,
             );
         }
-        for column in &groups {
+        for column in &spanning {
             public.warnings.push(
                 crate::dataset::group_leak::warning(column)
                     .map_err(|error| invalid(&error.to_string()))?,
