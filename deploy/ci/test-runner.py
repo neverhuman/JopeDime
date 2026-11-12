@@ -451,6 +451,63 @@ class LocalRetentionTests(unittest.TestCase):
             self.assertIn('retained at', result.stdout)
             self.assertIn('receipt.json: OK', result.stdout)
 
+    def test_relative_home_is_not_a_local_evidence_cache(self):
+        scratch = ROOT / 'target' / 'tmp'
+        scratch.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='retention-relative-home-', dir=scratch) as name:
+            base = Path(name)
+            source = base / 'source'
+            source.mkdir()
+            (source / 'receipt.json').write_text('{"probe":"relative-home"}\n')
+            bindir = base / 'bin'
+            bindir.mkdir()
+            log = base / 'mkdir.log'
+            mkdir_stub = bindir / 'mkdir'
+            mkdir_stub.write_text(
+                '#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$RETENTION_MKDIR_LOG"\nexit 1\n'
+            )
+            mkdir_stub.chmod(0o755)
+            abs_home = base / 'abs-home'
+            abs_home.mkdir()
+
+            def run(home):
+                log.write_text('')
+                env = {k: v for k, v in os.environ.items()
+                       if k not in ('JOPE_LOCAL_EVIDENCE_ROOT', 'CARGO_TARGET_DIR')}
+                env.update(PATH=f'{bindir}:{env.get("PATH", "")}',
+                           RETENTION_MKDIR_LOG=str(log),
+                           GITHUB_REPOSITORY='neverhuman/JopeDime',
+                           JOPE_EVIDENCE_S3_URI='',
+                           GITHUB_STEP_SUMMARY=str(base / 'summary.md'),
+                           TMPDIR=str(base))
+                if home is None:
+                    env.pop('HOME', None)
+                else:
+                    env['HOME'] = home
+                result = subprocess.run(
+                    ['bash', str(ROOT / 'deploy/ci/retain-local-evidence.sh'), 'fixture', str(source)],
+                    cwd=base, env=env, capture_output=True, text=True)
+                return result, log.read_text()
+
+            result, logged = run('relative/home')
+            self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+            self.assertNotIn('relative/home', logged)
+            self.assertNotIn('retained at', result.stdout)
+            self.assertFalse((base / 'relative').exists())
+
+            result, logged = run('')
+            self.assertNotEqual(0, result.returncode, result.stderr)
+            self.assertIn('/tmp/.cache/jope/ci-evidence-retained', logged)
+            self.assertNotIn('relative/home', logged)
+
+            result, logged = run(None)
+            self.assertNotEqual(0, result.returncode, result.stderr)
+            self.assertIn('/tmp/.cache/jope/ci-evidence-retained', logged)
+
+            result, logged = run(str(abs_home))
+            self.assertNotEqual(0, result.returncode, result.stderr)
+            self.assertIn(str(abs_home / '.cache/jope/ci-evidence-retained'), logged)
+            self.assertFalse((abs_home / '.cache').exists())
 
     def test_local_retention_success_has_verified_recoverable_bytes(self):
         scratch = ROOT/'target'/'tmp'
