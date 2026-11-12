@@ -35,7 +35,9 @@ announces an identity-only transition. `implementation_sha256` changes from
 `75f4f632406cad050c29cd51d5cd60acaeb733dc241888ab9694294e7f1fbf69`. The DSL ABI
 is unchanged. The regeneration ran
 `JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=b9f0998551d87a4c8b6564331ee2d5fc7c225a0a cargo nextest run --locked -P pr -p feat-math --test compat_freeze`
-(13/13 passed). The append-only known-identity table gains no row because this
+(13/13 passed). The append-only historical chain records both fixture successors in
+`crates/feat-math/tests/fixtures/compat_freeze/transitions/campaign_oneshot_sha256_identity_rebaseline.v1.json`.
+The append-only known-identity table gains no row because this
 identity has no shipped receipt.
 
 ## Current identity transition: race test dedicated pool (2026-11-02)

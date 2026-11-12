@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "PR #2273 pointed the remaining jope-campaigns one-shot SHA-256 hex calls at selfplay_runtime::sha256_bytes. campaign_evaluator.rs and commands/single_fold_proof.rs are ADR-0004 evaluator identity inputs. Append this identity fixture provenance edge after sha256_dedup_identity_rebaseline. Cargo.lock, DSL ABI, known identities, and behavior fixtures stay unchanged. No shipped receipt proves this identity existed.",
+  "plan_reference": "PR #2273, PR #2274; ADR-0004 identity-only procedure",
+  "source_commit": "b9f0998551d87a4c8b6564331ee2d5fc7c225a0a",
+  "base_commit": "5f68b76065eab69f935f547eff22123da32977d6",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "440edb3caeb244622d810c84eb5f936a265c7f10b635a0de06076b4d2d3196f4",
+      "after": "f6fa0fc7587bd5dbd263c0033c357a693dfe472a6dc2cc025c702242a8133a51"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "8f66430feff5297fd6a7b721d13406b6f3e98b3192e6e194fdf03be82734ebee",
+      "after": "ea5d6c2c5ee4ff16db1007c815ca27af24ec18ed5c294900f2ad7cc3549e5db2"
+    }
+  ],
+  "before_identity_digest": "3174ad38add05467f69b1cf06b2ee9f57210d241144863d58c058831503ab3ee",
+  "after_identity_digest": "75f4f632406cad050c29cd51d5cd60acaeb733dc241888ab9694294e7f1fbf69",
+  "before_implementation_sha256": "014a6fbfaf0909fcc0edf3f1aadf9888fa646babd8a00ea283c0fe323e4810e8",
+  "after_implementation_sha256": "6367505c0d69f1a137321e8149d86cbad7f12beca37710d51ef22e26b0a3968f",
+  "before_cargo_lock_sha256": "cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af",
+  "after_cargo_lock_sha256": "cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
