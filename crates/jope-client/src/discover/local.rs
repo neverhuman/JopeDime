@@ -143,7 +143,7 @@ pub(super) fn attached(home: &Path, deadline: Instant) -> Result<Option<Backgrou
     );
     let budget = deadline
         .saturating_duration_since(Instant::now())
-        .min(Duration::from_millis(200));
+        .min(super::PROBE_BUDGET);
     if budget.is_zero() {
         return Ok(None);
     }

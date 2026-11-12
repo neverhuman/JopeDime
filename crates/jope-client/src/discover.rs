@@ -14,11 +14,14 @@ use std::{
 };
 
 /// Maximum time local discovery spends attaching to or starting an engine.
-pub const STARTUP_TIMEOUT: Duration = Duration::from_secs(5);
+/// A loaded host can still be starting past five seconds; this bound still fails closed.
+pub const STARTUP_TIMEOUT: Duration = Duration::from_secs(45);
 /// Message returned when no explicit, existing, or startable engine is available.
 pub const NO_ENGINE: &str = "no engine found; run `jain serve` or pass `--endpoint`";
 const MAX_METADATA: u64 = 16 * 1024;
 const POLL: Duration = Duration::from_millis(20);
+/// One health probe, also sliced by the time remaining on the startup deadline.
+pub(super) const PROBE_BUDGET: Duration = Duration::from_secs(2);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Mode {
@@ -148,7 +151,7 @@ impl fmt::Display for DiscoveryError {
             Self::NoEngine => f.write_str(NO_ENGINE),
             Self::Busy { pid, command } => write!(f, "ENGINE_BUSY: store owner PID {} command {command:?}; retry or use another JOPEDIME_HOME", pid.map_or("unknown".into(), |p|p.to_string())),
             Self::OutdatedBusy { version, running } => write!(f, "An older jAIn engine ({version}) is still running a job ({}). Wait for it or run `jain serve --stop --force`.", running.join(", ")),
-            Self::StartupTimeout { child_exit } => write!(f, "engine did not become ready within 5 s (child exit: {child_exit:?}); run `jain serve` for diagnostics"),
+            Self::StartupTimeout { child_exit } => write!(f, "engine did not become ready within {} s (child exit: {child_exit:?}); run `jain serve` for diagnostics", STARTUP_TIMEOUT.as_secs()),
         }
     }
 }

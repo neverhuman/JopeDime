@@ -198,6 +198,22 @@ fn health_probe_obeys_deadline() {
     fs::remove_file(home.0.join("daemon.json")).unwrap();
 }
 
+#[test]
+fn slow_health_probe_counts_as_ready_inside_the_deadline() {
+    let home = Home::new();
+    let (url, handle) = server(200, Duration::from_millis(400));
+    write_record(&home.0, &url, std::process::id());
+    let mut options = home.options();
+    options.engine_available = false;
+    let before = Instant::now();
+    let engine = discover_any(&options, None, Duration::from_secs(3), |_| panic!()).unwrap();
+    assert!(matches!(engine, Engine::Background(_)));
+    assert!(before.elapsed() >= Duration::from_millis(400));
+    assert!(before.elapsed() < Duration::from_secs(3));
+    handle.join().unwrap();
+    fs::remove_file(home.0.join("daemon.json")).unwrap();
+}
+
 #[cfg(unix)]
 #[test]
 fn public_metadata_and_symlinks_are_refused() {
