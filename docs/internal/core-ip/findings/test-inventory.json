@@ -2073,6 +2073,10 @@
         "policy"
       ]
     },
+    "python:python/tests/test_fused_bundle_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
+    },
     "python:python/tests/test_fused_hpc_accelerator.py": {
       "role": "regression",
       "subsystems": [
@@ -2110,6 +2114,18 @@
         "training"
       ]
     },
+    "python:python/tests/test_prime_config_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
+    },
+    "python:python/tests/test_prime_staging_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
+    },
+    "python:python/tests/test_quant_root_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
+    },
     "python:python/tests/test_recipe_e.py": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
@@ -2124,9 +2140,17 @@
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
     },
+    "python:python/tests/test_rust_jope_binary_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
+    },
     "python:python/tests/test_selfplay_controller.py": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
+    },
+    "python:python/tests/test_signature_dataset_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
     },
     "python:python/tests/test_target_artifact_pins.py": {
       "role": "regression",
@@ -2134,6 +2158,10 @@
         "encoders",
         "storage"
       ]
+    },
+    "python:python/tests/test_target_maker_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
     },
     "python:python/tests/test_telemetry_smoke.py": {
       "role": "regression",
@@ -2183,6 +2211,14 @@
       "subsystems": [
         "training"
       ]
+    },
+    "python:python/tests/test_tui_code_path_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
+    },
+    "python:python/tests/test_user_unit_home.py": {
+      "reason": "Refuses a relative or empty HOME before path expansion; path policy infrastructure, not a regression subsystem.",
+      "role": "infrastructure"
     },
     "python:research/flywheel_selfplay/golden/test_generate.py": {
       "reason": "RES-07 CPU pre-stage proofs for golden fixture generation (model_prior subset); no qualification capture generation or GPU use; offline research analysis outside the reviewed product baseline.",
