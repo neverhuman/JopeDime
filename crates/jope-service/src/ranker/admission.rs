@@ -21,7 +21,6 @@ use crate::{
     discover::r#loop::RecordedAdmissionContext,
     research::{BehaviorPolicy, RecordedPolicyKind},
 };
-#[cfg(feature = "research")]
 
 const REVEALED: usize = 4;
 const ADMITTED: usize = 4;
