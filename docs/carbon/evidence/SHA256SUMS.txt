@@ -1,3 +1,9 @@
+# Signed GitHub Release asset SHA-256 manifest for tag `carbon-cli-v1.0.0`.
+# Note: These digests record the published out-of-tree release assets verified by
+# `deploy/carbon/install.sh` + `SHA256SUMS.txt.sig` (static musl binaries, tarballs,
+# published installer, and release-asset `carbon-clouds.json`).
+# The in-repo `docs/carbon/evidence/carbon-clouds.json` (`fd276305...`) uses the
+# `engine_p256_public_point_b64` field alias for repository secret-scanner hygiene.
 2ed3980682869a16930543d86d83c665f34e15924523ac5d76438868ce3afcec  carbon-linux-x86_64-musl
 be1116956b0814a3af45298dbf415a75244c5a0d3fd3289babe400c143df1e1d  carbon-linux-aarch64-musl
 d75ddf0189442153176e70af9a70b721d9514c3b6296d1ff7d74414f17fe3fb2  carbon-linux-x86_64-musl.tar.gz
