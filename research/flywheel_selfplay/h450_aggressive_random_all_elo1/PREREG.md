@@ -182,3 +182,28 @@ For each scored epoch it appends one line to `~/jope_plan/evidence/H450/diag_res
 The §4 exhaustion rule is now mechanical. When neither the champion stack nor the ICL-only arm has beaten its best for 4 scored epochs in a row, the queue posts EXHAUSTED and stops. Stopping the trainers stays a decision cl_fwriter states in a post.
 
 r4_L_A epoch 1 (train 1.00 h) had seen 113,533 datasets, all unique, with 0 duplicates. They came from 3,473 of 3,525 source tables, with 4.24% injected columns and a 1.97% dev91 share.
+
+## 9. Amendment pub-r11 (2026-11-13 about 00:20Z): dynamic two-3090 evaluator
+
+**Cross-host check.** Two 3090s give byte-identical columns for the same context.
+- Context 016648dc… (index 0) of the epoch-0 baseline was computed on xbabe2. It was recomputed on xbabe3 with the same published `cols_h450_gpu.py`, the same checkpoints (sha verified) and torch 2.7.0 / numpy 1.26.4.
+- `cmp` showed the two `.npz` files are identical.
+- The fixed parity split of §6 is therefore not needed for comparability.
+
+**Epoch 2.** The xbabe2 shard ran about 3 times slower than the xbabe3 shard (about 3 min against about 1 min per context) because xbabe2's CPUs are busy with other jobs.
+- `helper_g02_steal.sh`, published here, had xbabe3 compute xbabe2's shard-0 contexts one at a time from the top index down.
+- The local process skipped contexts already present. Every context was still computed exactly once by the published script, on a 3090.
+
+**pub-r11 evaluator.** `eval_gpu_h450.sh` splits the 91 contexts into 91 one-context tasks (`--num-shards 91 --shard-idx I`), taken from a locked queue by whichever of the two 3090 workers (xbabe2, xbabe3) is free.
+
+**Queue.** `eval_queue_h450.sh` starts its no-gain streak from the epoch-0 baseline and replays `r4_TRAJECTORY.jsonl`, so a restart keeps the streak.
+
+**Epoch-0 baseline** (init L + init M, 0% dev91 in its training; original split):
+
+| Arm | Elo | 95% interval |
+|---|---|---|
+| Champion stack | 1783.7 | [1663.5, 1950.7] |
+| Legacy guard stack | 1852.8 | [1719.0, 2035.2] |
+| ICL boost-only | 1652.0 | [1500.3, 1815.7] |
+
+Receipt: `diag_results/r4_g00_init/`.

@@ -1,5 +1,5 @@
 #!/bin/bash
-# H450 pub-r8 (cl_fwriter): in-corpus dev91 Elo of the 104M fine-tune, on the original dev91 split, on the xbabe2 + xbabe3 GPUs.
+# H450 pub-r11 (cl_fwriter): in-corpus dev91 Elo of the 104M fine-tune, on the original dev91 split, on the xbabe2 + xbabe3 GPUs.
 #
 # Replaces eval_x0_h450.sh. On xbabe0's CPUs, cols_h450_gpu.py finished 0 of 91 contexts in 17 min: each context runs
 # about 1,000 model forwards (10 folds x views x modes x 2 pairs).
@@ -56,7 +56,7 @@ OUTC=$R4/cols/$TAG
 [ ! -e "$OUTC" ] || die "$OUTC exists (create-once)"
 sha256sum "$LA" "$LB" "$CK_M" > "$R4/cols/$TAG.ckpts.sha256"
 t0=$(date +%s)
-# Two shards by context index: shard 0 on the xbabe2 GPU, shard 1 on the xbabe3 GPU, the same split for every epoch.
+# Contexts are computed on the xbabe2 and xbabe3 GPUs (see the pub-r11 note below).
 # Both hosts run torch 2.7.0 and numpy 1.26.4.
 SN=$(basename "$ST")
 XE=$X3_ROOT/eval
@@ -73,18 +73,36 @@ for p in "la:$LA" "lb:$LB" "m:$CK_M"; do
 done
 printf '%s\n' "${RX[@]}" "$EVAL_SHA  $XE/$(basename "$EVAL_BANK")" | ssh3 "cd $X3_ROOT/stage/$SN/code && sha256sum --quiet -c ../CODE.sha256 && sha256sum --quiet -c -" \
   || die "xbabe3 stage, eval bank or checkpoint copies do not verify"
-log "cols $TAG: shard 0/2 on $(hostname), shard 1/2 on $X3; la=$LA lb=$LB m=init"
-(cd "$ST/code" && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True nice -n 10 python3 -B cols_h450_gpu.py --bank "$EVAL_BANK" \
-   --ckpt-la "$LA" --ckpt-ma "$CK_M" --ckpt-lb "$LB" --ckpt-mb "$CK_M" --out "$OUTC" --device cuda \
-   --num-shards 2 --shard-idx 0) > "$R4/cols/$TAG.s0.log" 2>&1 &
-P0=$!
-ssh3 "cd $X3_ROOT/stage/$SN/code && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True PYTHONDONTWRITEBYTECODE=1 nice -n 10 python3 -B cols_h450_gpu.py \
-   --bank $XE/$(basename "$EVAL_BANK") --ckpt-la $XE/ckpts/$TAG/la.pt --ckpt-ma $XE/ckpts/$TAG/m.pt --ckpt-lb $XE/ckpts/$TAG/lb.pt \
-   --ckpt-mb $XE/ckpts/$TAG/m.pt --out $XE/cols/$TAG --device cuda --num-shards 2 --shard-idx 1" > "$R4/cols/$TAG.s1.log" 2>&1 || die "xbabe3 shard failed"
-wait "$P0" || die "local shard failed"
-n1=$(ssh3 "find $XE/cols/$TAG -maxdepth 1 -name '[0-9a-f]*.npz' | wc -l")
-rs3 --ignore-existing "$X3:$XE/cols/$TAG/" "$OUTC/"
-log "cols $TAG: xbabe3 shard gave $n1 contexts"
+# pub-r11: 91 one-context tasks (--num-shards 91 --shard-idx I) handed to whichever 3090 is free. This is safe because
+# both 3090s give byte-identical columns: baseline context 016648dc, recomputed on xbabe3, cmp-matched xbabe2's copy.
+Q=$R4/cols/$TAG.queue
+seq 0 90 > "$Q"
+pop() { flock "$Q.lock" bash -c 'i=$(head -1 "$1"); [ -n "$i" ] && sed -i 1d "$1"; echo "$i"' _ "$Q"; }
+worker() {  # local | xbabe3
+  local w=$1 i
+  while i=$(pop); [ -n "$i" ]; do
+    if [ "$w" = local ]; then
+      (cd "$ST/code" && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True nice -n 10 python3 -B cols_h450_gpu.py --bank "$EVAL_BANK" \
+         --ckpt-la "$LA" --ckpt-ma "$CK_M" --ckpt-lb "$LB" --ckpt-mb "$CK_M" --out "$OUTC" --device cuda \
+         --num-shards 91 --shard-idx "$i") >> "$R4/cols/$TAG.local.log" 2>&1 || { echo "local task $i failed" >&2; return 1; }
+    else
+      ssh3 "cd $X3_ROOT/stage/$SN/code && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True PYTHONDONTWRITEBYTECODE=1 nice -n 10 python3 -B cols_h450_gpu.py \
+         --bank $XE/$(basename "$EVAL_BANK") --ckpt-la $XE/ckpts/$TAG/la.pt --ckpt-ma $XE/ckpts/$TAG/m.pt --ckpt-lb $XE/ckpts/$TAG/lb.pt \
+         --ckpt-mb $XE/ckpts/$TAG/m.pt --out $XE/cols/$TAG --device cuda --num-shards 91 --shard-idx $i" >> "$R4/cols/$TAG.x3.log" 2>&1 \
+        || { echo "xbabe3 task $i failed" >&2; return 1; }
+      rs3 --ignore-existing --include='[0-9a-f]*.npz' --exclude='*' "$X3:$XE/cols/$TAG/" "$OUTC/"
+      echo "$i" >> "$R4/cols/$TAG.x3.tasks"
+    fi
+  done
+}
+mkdir -p "$OUTC"
+log "cols $TAG: 91 one-context tasks on $(hostname) + $X3 (dynamic); la=$LA lb=$LB m=init"
+worker local & P0=$!
+worker xbabe3 & P1=$!
+wait "$P0" || die "local worker failed"
+wait "$P1" || die "xbabe3 worker failed"
+n1=$(wc -l < "$R4/cols/$TAG.x3.tasks" 2>/dev/null || echo 0)
+log "cols $TAG: xbabe3 computed $n1 of 91 contexts"
 n=$(find "$OUTC" -maxdepth 1 -name '[0-9a-f]*.npz' | wc -l)
 log "cols $TAG: $n/91 contexts in $(( $(date +%s) - t0 )) s"
 [ "$n" = 91 ] || die "incomplete cols $TAG"

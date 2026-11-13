@@ -1,5 +1,5 @@
 #!/bin/bash
-# H450 pub-r10 (cl_fwriter): dev91 evaluation queue for the 104M runs r4_L_A (xbabe2) and r4_L_B (xbabe3).
+# H450 pub-r11 (cl_fwriter): dev91 evaluation queue for the 104M runs r4_L_A (xbabe2) and r4_L_B (xbabe3).
 #
 # Each pass:
 #   - waits until no h450-eval-* unit is running;
@@ -38,7 +38,24 @@ max_epoch() {  # newest epoch both runs have written
   [ -n "$a" ] && [ -n "$b" ] || { echo 0; return; }
   echo $(( 10#$a < 10#$b ? 10#$a : 10#$b ))
 }
+upd() {  # LINE -> update best_c, best_i, stale
+  local c i imp
+  c=$(jq -r .champion_stack <<<"$1"); i=$(jq -r .icl_only <<<"$1")
+  imp=$(jq -n --argjson c "$c" --argjson i "$i" --argjson bc "$best_c" --argjson bi "$best_i" '($c > $bc) or ($i > $bi)')
+  if [ "$imp" = true ]; then
+    stale=0
+    best_c=$(jq -n --argjson c "$c" --argjson bc "$best_c" '[$c, $bc] | max')
+    best_i=$(jq -n --argjson i "$i" --argjson bi "$best_i" '[$i, $bi] | max')
+  else
+    stale=$((stale + 1))
+  fi
+}
+# pub-r11: the streak starts from the epoch-0 baseline and replays TRAJECTORY.jsonl, so a queue restart keeps it.
 best_c=-1e9; best_i=-1e9; stale=0
+until [ -s "$EV/diag_results/r4_g00_init/SUMMARY.json" ]; do sleep 120; done
+upd "$(cat "$EV/diag_results/r4_g00_init/SUMMARY.json")"; stale=0
+if [ -s "$TRAJ" ]; then while read -r l; do upd "$l"; done < "$TRAJ"; fi
+log "start: best champion $best_c, best ICL-only $best_i, no-gain streak $stale"
 while true; do
   while systemctl --user list-units --no-legend 'h450-eval-g*' | grep -q 'running'; do sleep 60; done
   E=$(max_epoch)
@@ -59,15 +76,7 @@ while true; do
                  dup_synth: $b[0].exposure.duplicate_synthetic_datasets, src_tables: $b[0].exposure.distinct_source_tables_seen},
          label: "in-corpus (dev91 in training), canonical_promotion_forbidden"}' "$S")
   echo "$line" >> "$TRAJ"
-  c=$(jq -r .champion_stack <<<"$line"); i=$(jq -r .icl_only <<<"$line")
-  imp=$(jq -n --argjson c "$c" --argjson i "$i" --argjson bc "$best_c" --argjson bi "$best_i" '($c > $bc) or ($i > $bi)')
-  if [ "$imp" = true ]; then
-    stale=0
-    best_c=$(jq -n --argjson c "$c" --argjson bc "$best_c" '[$c, $bc] | max')
-    best_i=$(jq -n --argjson i "$i" --argjson bi "$best_i" '[$i, $bi] | max')
-  else
-    stale=$((stale + 1))
-  fi
+  upd "$line"
   post "H450 dev91 in-corpus Elo, epoch $e (Kumo L 2070.2): $line; no-gain streak $stale/$PATIENCE"
   if [ "$stale" -ge "$PATIENCE" ]; then
     post "H450 EXHAUSTED: no dev91 gain for $PATIENCE scored epochs (best champion $best_c, best ICL-only $best_i). Queue stopped; stopping the trainers is cl_fwriter's call."
