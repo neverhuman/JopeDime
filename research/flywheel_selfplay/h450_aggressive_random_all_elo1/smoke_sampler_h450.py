@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """H450 pub-r4 CPU sampler smoke: draw real-table worker items (no model, no GPU) and report the exposure ledger,
 the injected-column share (must be <= 10 % on every episode), dev91's share, row duplication and throughput.
+pub-r12: with the trainer's AUG flags it also counts episodes that miss the per-episode drop or injection.
 
   smoke_sampler_h450.py --bank BANK --bank-sha256 HEX --items 2000 --workers 8 --out SMOKE.json
 """
@@ -29,7 +30,12 @@ def main() -> None:
     ap.add_argument("--row-tokens", type=int, default=4_096)
     ap.add_argument("--bmax", type=int, default=8)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--feature-drop-every-batch", type=int, choices=(0, 1), default=0)
+    ap.add_argument("--feature-drop-max-frac", type=float, default=0.35)
+    ap.add_argument("--synth-inj-every-batch", type=int, choices=(0, 1), default=0)
     a = ap.parse_args()
+    T.AUG.update(feature_drop_every=bool(a.feature_drop_every_batch), feature_drop_max_frac=float(a.feature_drop_max_frac),
+                 synth_inj_every=bool(a.synth_inj_every_batch))   # before the fork, as in the trainer
     out = Path(a.out)
     if out.exists():
         raise SystemExit(f"{out} exists (create-once)")
@@ -48,6 +54,7 @@ def main() -> None:
     t1 = time.time()
     max_inj_frac, viol, dup_rows, shapes_bad, n_batched, n_eps = 0.0, 0, 0, 0, 0, 0
     widths, rows = [], []
+    drop_miss, inj_miss, drop_over_unb, drop_over_bat, drop_fracs = 0, 0, 0, 0, []
     for i in range(a.items):
         xb, yb, n_ctx, infos, fps = q.get(timeout=300)
         led.add_real(infos)
@@ -56,8 +63,18 @@ def main() -> None:
             if T.dataset_fingerprint(xb[b_], yb[b_], n_ctx) != fp:
                 raise SystemExit("fingerprint does not reproduce in the main process")
         n_batched += int(xb.shape[0] > 1 or len(infos) > 1)
-        for b, (t, tm, k, F, n, sp) in enumerate(infos):
+        batched = len(infos) > 1 or xb.shape[0] > 1
+        for b, (t, tm, k, F, n, sp, d, p) in enumerate(infos):
             n_eps += 1
+            if p >= 2:   # pub-r12 per-episode audit: >= 1 real column removed, >= 1 injected when F >= 10
+                drop_miss += int(d < 1)
+                drop_fracs.append(d / p)
+                # tables wider than WIDE_GPU always lose columns to the width cap; batch mates lose what F_t needs
+                over = p <= T.WIDE_GPU and d > max(1, int(np.floor(a.feature_drop_max_frac * p)))
+                drop_over_bat += int(over and batched)
+                drop_over_unb += int(over and not batched)
+            if F >= 10:
+                inj_miss += int(k < 1)
             frac = k / F
             max_inj_frac = max(max_inj_frac, frac)
             viol += int(k > int(np.floor(0.10 * F)))
@@ -77,11 +94,16 @@ def main() -> None:
            "workers": a.workers, "wall_s": round(wall, 2), "episodes_per_s": round(n_eps / wall, 2),
            "max_injected_fraction": max_inj_frac, "injection_rule_violations": viol, "shape_mismatches": shapes_bad,
            "episodes_with_duplicate_rows": dup_rows, "width_quantiles": np.percentile(widths, [5, 25, 50, 75, 95]).tolist(),
-           "row_quantiles": np.percentile(rows, [5, 25, 50, 75, 95]).tolist(), "exposure": s}
+           "row_quantiles": np.percentile(rows, [5, 25, 50, 75, 95]).tolist(), "exposure": s,
+           "augmentation": dict(T.AUG), "episodes_p2_without_drop": drop_miss, "episodes_f10_without_injection": inj_miss,
+           "drop_over_max_frac_unbatched": drop_over_unb, "drop_over_max_frac_batch_mates": drop_over_bat,
+           "drop_frac_quantiles": np.percentile(drop_fracs, [5, 25, 50, 75, 95]).tolist() if drop_fracs else None}
     with open(out, "x") as f:
         json.dump(doc, f, indent=1, sort_keys=True)
     print(json.dumps({k: doc[k] for k in ("episodes", "episodes_per_s", "max_injected_fraction", "injection_rule_violations",
-                                          "shape_mismatches", "episodes_with_duplicate_rows")}),
+                                          "shape_mismatches", "episodes_with_duplicate_rows", "augmentation",
+                                          "episodes_p2_without_drop", "episodes_f10_without_injection",
+                                          "drop_over_max_frac_unbatched", "drop_over_max_frac_batch_mates", "drop_frac_quantiles")}),
           json.dumps({k: s[k] for k in ("dev91_share_of_real_episodes", "injected_column_share", "target_modes", "target_spaces",
                                         "unique_datasets_seen", "datasets_seen", "duplicate_real_datasets",
                                         "distinct_source_tables_seen")}))

@@ -207,3 +207,28 @@ r4_L_A epoch 1 (train 1.00 h) had seen 113,533 datasets, all unique, with 0 dupl
 | ICL boost-only | 1652.0 | [1500.3, 1815.7] |
 
 Receipt: `diag_results/r4_g00_init/`.
+
+## 10. Amendment pub-r12 (2026-11-13 about 03:40Z): per-episode feature removal and injection
+
+**Trigger.** ENG:watcher, in agy_apex_w10's session at 03:04:47Z (verbatim as relayed at 03:26Z): "confirm, with config flags per live worker (r4_L_A xbabe2, r4_L_B xbabe3, fleet_L_x1 xbabe1), that every batch uses a fresh random train/test split, random synthetic-feature injection, and random feature removal, and fix any worker that does not at its next checkpoint boundary". This matches the owner's "add synthetic data to and from the features each time randomly" and "maximum data entropy".
+
+**pub-r11 behaviour, measured against the request:**
+- Fresh random split on every episode: yes.
+- Injection: k drawn from 0..floor(0.10·F), so some F ≥ 10 episodes got none.
+- Feature removal: only on p ≥ 6 tables, in 40% of unbatched real episodes (lines 446–447). In the batched path, removal happened only when k > F − p.
+
+**pub-r12 flags.** These are the fleet-r5 settings, so the two fleets match. Both flags default to 0, which reproduces pub-r11 exactly; `parity_r12_h450.py` checks this byte for byte.
+- `--feature-drop-every-batch 1`: every real episode with p ≥ 2 removes at least 1 real column.
+  - Unbatched episodes and each batch's anchor table remove 1..max(1, floor(0.35·p)) columns.
+  - Batch mates remove whatever their width F_t requires (at least 1).
+  - Tables wider than 64 also lose columns to the width cap, as before.
+- `--feature-drop-max-frac 0.35`.
+- `--synth-inj-every-batch 1`: every real episode with F ≥ 10 injects 1..floor(0.10·F) synthetic columns. The cap k ≤ floor(0.10·F) is unchanged, so F < 10 episodes still get none.
+- Fully synthetic prior batches are unchanged: the open scope question in review finding 4 is still with the owner.
+
+**Telemetry.** The epoch JSON and `log.jsonl` record the counters since the pub-r12 resume: `feature_drop_share_p2_since_r12` and `synth_inj_share_f10_since_r12`. Both should be exactly 1.0.
+
+**Switch-over.** r4_L_A and r4_L_B take SIGTERM. Each trainer saves `ckpt_last.pt` on exit and resumes with the pub-r12 stage and the same argv plus the three flags. The seen-fingerprint set, ledger, optimiser, EMA and LR schedule carry over.
+- Epochs written before the switch are pub-r11 protocol.
+- The epoch JSON of every later epoch states `augmentation`.
+- The dev91 trajectory marks the first mixed epoch, which contains both protocols.

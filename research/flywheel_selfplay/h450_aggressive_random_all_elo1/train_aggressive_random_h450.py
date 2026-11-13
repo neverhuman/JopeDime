@@ -19,6 +19,9 @@ Every real episode draws a fresh blake2b seed, then independently and at random:
   - the real columns (random crop 40 % of the time; widest tables use a 70 % top-|corr| + 30 % random selection)
     and their order and slot ids;
   - 0-10 % injected synthetic columns (k <= floor(0.10 * F) of the F columns the model sees; 7 kinds);
+  - pub-r12 flags (ENG:watcher 03:04Z audit): --feature-drop-every-batch 1 makes every p >= 2 episode drop
+    1..max(1, floor(0.35 p)) real columns; --synth-inj-every-batch 1 makes every F >= 10 episode inject
+    1..floor(0.10 F) columns. Both default to 0 (pub-r11 behaviour, identical rng calls);
   - the target space: raw 40 %, Ridge-GCV residual 40 %, Yeo-Johnson warp 20 %.
 Fully synthetic batches (v3s prior, panel/lead-lag and sentinel tables) take `--synth-prob` of steps.
 
@@ -69,6 +72,16 @@ import icl_inject as INJ  # noqa: E402
 WIDE_GPU = 64
 MAX_TRAIN_ROWS = 2048
 INJ_MAX_FRAC = 0.10
+# pub-r12 (ENG:watcher 03:04Z audit, relayed by agy_apex_w10 03:26Z): per-episode feature removal and injection.
+# Set from --feature-drop-every-batch / --feature-drop-max-frac / --synth-inj-every-batch before the workers fork.
+AUG = {"feature_drop_every": False, "feature_drop_max_frac": 0.35, "synth_inj_every": False}
+
+
+def _drop_count(p: int, rng: np.random.Generator) -> int:
+    """Real columns to remove from a p >= 2 column episode: uniform in [1, max(1, floor(max_frac * p))]."""
+    return int(rng.integers(1, max(1, int(math.floor(AUG["feature_drop_max_frac"] * p))) + 1))
+
+
 SEALED_TOKENS = ("CONFIRM", "HOLDOUT", "SEALED", "DL-VAL", "DLVAL")
 EXPECTED_COHORTS = {
     "APEX-DEV-FULL", "APEX-FIT-ICL-FULL", "APEX-FIT-SEL-FULL", "D91-COMBINED-SHUFFLED", "D91-S3-COUSIN",
@@ -440,12 +453,17 @@ def real_episode(bank: CombinedF64Bank, t_idx: int, rng: np.random.Generator, n_
         return None
 
     # columns: F seen by the model, k = injected synthetic columns with k <= floor(0.10 * F)
+    # pub-r12: with AUG flags on, every p >= 2 episode drops >= 1 real column and every episode whose cap allows it
+    # (F >= 10) gets >= 1 injected column. With the flags off the rng calls are the pub-r11 ones.
     p = Xc.shape[1]
     if f_fixed is None:
         p_keep = p
-        if p >= 6 and rng.random() < 0.40:
+        if AUG["feature_drop_every"] and p >= 2:
+            p_keep = p - _drop_count(p, rng)
+        elif p >= 6 and rng.random() < 0.40:
             p_keep = int(rng.integers(max(3, int(round(0.65 * p))), p + 1))
-        k = int(rng.integers(0, min(p_keep, WIDE_GPU) // 9 + 1))
+        k_hi = min(p_keep, WIDE_GPU) // 9
+        k = int(rng.integers(1 if (AUG["synth_inj_every"] and k_hi >= 1) else 0, k_hi + 1))
         F = min(WIDE_GPU, p_keep + k)
         k = min(k, int(math.floor(INJ_MAX_FRAC * F)))
         k_real = F - k
@@ -453,6 +471,10 @@ def real_episode(bank: CombinedF64Bank, t_idx: int, rng: np.random.Generator, n_
         F = f_fixed
         k_lo = max(0, F - p)
         k_hi = int(math.floor(INJ_MAX_FRAC * F))
+        if AUG["feature_drop_every"] and p >= 2:
+            k_lo = max(k_lo, F - p + 1)                        # keep at most p - 1 real columns
+        if AUG["synth_inj_every"] and k_hi >= 1:
+            k_lo = max(k_lo, 1)
         if k_lo > k_hi:
             return None
         k = int(rng.integers(k_lo, k_hi + 1))
@@ -492,7 +514,7 @@ def real_episode(bank: CombinedF64Bank, t_idx: int, rng: np.random.Generator, n_
     X_ep = np.vstack([Xc, Xq])
     if X_ep.shape[1] != F or not np.all(np.isfinite(y_ep)) or float(np.std(y_ep[:n_ctx])) <= 1e-12:
         return None
-    return X_ep, y_ep, n_ctx, (int(t_idx), tmode, k, F, n_rows, space)
+    return X_ep, y_ep, n_ctx, (int(t_idx), tmode, k, F, n_rows, space, int(p - k_real), int(p))
 
 
 def dataset_fingerprint(X: np.ndarray, y: np.ndarray, n_ctx: int) -> int:
@@ -534,11 +556,15 @@ def _episode_worker_loop(worker_id, run_nonce, bank, tokens_cap, row_tokens_cap,
                 pn = np.array([BATCH_N_P[BATCH_N.index(n)] for n in ok_n])
                 N_t = int(rng.choice(ok_n, p=pn / pn.sum()))
                 p0 = min(int(bank.cols_arr[t0]), WIDE_GPU)
-                F_t = max(1, min(WIDE_GPU, p0 + int(rng.integers(0, p0 // 9 + 1))))
+                if AUG["feature_drop_every"] and p0 >= 2:   # pub-r12: the batch width leaves t0 a column drop
+                    p0 -= _drop_count(p0, rng)
+                kh0 = p0 // 9
+                F_t = max(1, min(WIDE_GPU, p0 + int(rng.integers(1 if (AUG["synth_inj_every"] and kh0 >= 1) else 0, kh0 + 1))))
                 u = float(rng.random())
                 p_ctx = float(rng.uniform(0.25, 0.56) if u < 0.25 else (rng.uniform(0.56, 0.84) if u < 0.75 else rng.uniform(0.84, 0.94)))
                 B_t = max(1, min(bmax, tokens_cap // max(N_t * (F_t + 4), 1), row_tokens_cap // max(N_t, 1)))
-                elig = ((bank.rows_arr >= N_t + 8) & (bank.cols_arr >= F_t - int(math.floor(INJ_MAX_FRAC * F_t)))).astype(np.float64)
+                p_min = F_t - int(math.floor(INJ_MAX_FRAC * F_t)) + (1 if AUG["feature_drop_every"] else 0)
+                elig = ((bank.rows_arr >= N_t + 8) & (bank.cols_arr >= p_min)).astype(np.float64)
                 xs, ys, infos, n_ctx_b = [], [], [], None
                 for b in range(B_t):
                     t_idx = t0 if b == 0 else bank.sample_eligible(rng, elig)
@@ -578,6 +604,11 @@ class Ledger:
         self.seen_fp: set[int] = set()
         self.dup_real = 0
         self.dup_synth = 0
+        # pub-r12 per-episode audit counters (episodes since the pub-r12 resume; older ckpt_last files lack them)
+        self.drop_elig = 0      # real episodes with p >= 2 available real columns
+        self.drop_eps = 0       # ... of which at least 1 real column was removed
+        self.inj_elig = 0       # real episodes with F >= 10 (the cap allows >= 1 injected column)
+        self.inj_eps = 0        # ... of which at least 1 synthetic column was injected
 
     def add_fps(self, fps, synthetic: bool) -> None:
         for fp in fps:
@@ -591,7 +622,13 @@ class Ledger:
 
     def add_real(self, infos) -> int:
         cells = 0
-        for t, tm, k, F, n, sp in infos:
+        for t, tm, k, F, n, sp, d, p in infos:
+            if p >= 2:
+                self.drop_elig += 1
+                self.drop_eps += int(d >= 1)
+            if F >= 10:
+                self.inj_elig += 1
+                self.inj_eps += int(k >= 1)
             c = int(n * (F + 1))
             self.table_eps[t] += 1
             self.table_cells[t] += c
@@ -613,6 +650,7 @@ class Ledger:
                 "table_rows": self.table_rows.tolist(), "tmode": self.tmode.tolist(), "space": self.space.tolist(),
                 "inj_cols": self.inj_cols, "real_cols": self.real_cols, "synth_datasets": self.synth_datasets,
                 "synth_cells": self.synth_cells, "dup_real": self.dup_real, "dup_synth": self.dup_synth,
+                "drop_elig": self.drop_elig, "drop_eps": self.drop_eps, "inj_elig": self.inj_elig, "inj_eps": self.inj_eps,
                 "seen_fp": np.fromiter(self.seen_fp, dtype=np.uint64, count=len(self.seen_fp))}
 
     def load(self, s: dict) -> None:
@@ -623,6 +661,8 @@ class Ledger:
         self.space = np.array(s["space"], dtype=np.int64)
         for k in ("inj_cols", "real_cols", "synth_datasets", "synth_cells", "dup_real", "dup_synth"):
             setattr(self, k, int(s[k]))
+        for k in ("drop_elig", "drop_eps", "inj_elig", "inj_eps"):   # pub-r12 counters: 0 when resuming a pub-r11 file
+            setattr(self, k, int(s.get(k, 0)))
         self.seen_fp = set(int(v) for v in np.asarray(s["seen_fp"], dtype=np.uint64).tolist())
 
     def summary(self) -> dict:
@@ -649,7 +689,11 @@ class Ledger:
                 "unique_datasets_seen": len(self.seen_fp),
                 "datasets_seen": real_eps + self.synth_datasets,
                 "duplicate_real_datasets": self.dup_real, "duplicate_synthetic_datasets": self.dup_synth,
-                "distinct_source_tables_seen": int((self.table_eps > 0).sum()), "source_tables_in_bank": int(b.n_tables)}
+                "distinct_source_tables_seen": int((self.table_eps > 0).sum()), "source_tables_in_bank": int(b.n_tables),
+                "augmentation": dict(AUG),
+                "feature_drop_share_p2_since_r12": (self.drop_eps / self.drop_elig) if self.drop_elig else None,
+                "synth_inj_share_f10_since_r12": (self.inj_eps / self.inj_elig) if self.inj_elig else None,
+                "audit_episodes_since_r12": {"drop_elig": self.drop_elig, "inj_elig": self.inj_elig}}
 
 
 def _atomic_save(obj, path: Path) -> None:
@@ -680,6 +724,11 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--seed", type=int, default=450_401)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--feature-drop-every-batch", type=int, choices=(0, 1), default=0,
+                    help="pub-r12: every real episode with p >= 2 drops 1..max(1, floor(max_frac * p)) real columns")
+    ap.add_argument("--feature-drop-max-frac", type=float, default=0.35)
+    ap.add_argument("--synth-inj-every-batch", type=int, choices=(0, 1), default=0,
+                    help="pub-r12: every real episode with F >= 10 gets 1..floor(0.10 * F) injected columns")
     a = ap.parse_args()
 
     out_dir = Path(a.out)
@@ -697,6 +746,10 @@ def main() -> None:
     t_load0 = time.time()
     bank = CombinedF64Bank(Path(a.bank), expect_sha256=a.bank_sha256)
     bank_load_s = round(time.time() - t_load0, 2)
+    if not 0.0 < a.feature_drop_max_frac <= 0.5:
+        raise SystemExit("--feature-drop-max-frac must be in (0, 0.5]")
+    AUG.update(feature_drop_every=bool(a.feature_drop_every_batch), feature_drop_max_frac=float(a.feature_drop_max_frac),
+               synth_inj_every=bool(a.synth_inj_every_batch))   # before the fork: workers inherit AUG
     ledger = Ledger(bank)
     run_nonce = hashlib.blake2b(secrets.token_bytes(32) + int(a.seed).to_bytes(8, "little"), digest_size=32).digest()
 
@@ -886,6 +939,7 @@ def main() -> None:
                     "dup_real": s["duplicate_real_datasets"], "dup_synth": s["duplicate_synthetic_datasets"],
                     "src_tables_seen": s["distinct_source_tables_seen"],
                     "inj_share": round(s["injected_column_share"], 4), "oom": state["oom_skips"],
+                    "drop_share_p2": s["feature_drop_share_p2_since_r12"], "inj_ep_share_f10": s["synth_inj_share_f10_since_r12"],
                     "mem_gb": round(torch.cuda.max_memory_allocated() / 2**30, 2) if dev.type == "cuda" else 0.0}) + "\n")
                 run_loss, run_n, t_log = 0.0, 0, now
                 ds_log0 = state["datasets"]
@@ -916,7 +970,7 @@ def main() -> None:
         "gpu_name": torch.cuda.get_device_name(0) if dev.type == "cuda" else "cpu", "seed": a.seed,
         "run_nonce_sha256": hashlib.sha256(run_nonce).hexdigest(), "init_ckpt": str(a.init), "init_sha256": a.init_sha256,
         "bank": str(a.bank), "bank_sha256": bank.sha256, "bank_tables": bank.n_tables, "synth_prob": a.synth_prob,
-        "inj_max_frac": INJ_MAX_FRAC, "ckpt_final_path": str(final_p), "ckpt_final_sha256": _sha256_file(final_p),
+        "inj_max_frac": INJ_MAX_FRAC, "augmentation": dict(AUG), "ckpt_final_path": str(final_p), "ckpt_final_sha256": _sha256_file(final_p),
         "state": state, "exposure": ledger.summary(),
     }
     man_p = out_dir / "manifest.json"
