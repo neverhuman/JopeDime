@@ -244,3 +244,52 @@ Receipt: `diag_results/r4_g00_init/`.
 **Not changed here.** ENG:watcher also relayed a checkpoint policy (Jepson, 5:20 AM MST Nov 13): keep only the latest checkpoint per run plus metrics and eval data, and switch to keep-latest saving at the next natural restart.
 - The trainers have not restarted. The save code changes at that restart, in a later amendment.
 - No existing checkpoint is removed until Jepson confirms in cl_fwriter's chat. This follows his 2026-10-13 no-delete ruling.
+
+## 12. Amendment pub-r14 (2026-11-13 about 13:00Z): maximum-entropy sampler flags; r4_L_B switches, r4_L_A is the control
+
+**Trigger.** Jepson typed a prompt in agy_apex_w10's session at 2026-11-13T12:41:26Z (5:39 AM MST). agy_apex_w10 relayed it verbatim to cl_fwriter at 12:47Z, in the coord file and AGENT_CHAT. It asks:
+- keep the 104M training going on all S3 data;
+- add maximum dataset entropy at the next checkpoint boundary, without losing the latest checkpoint;
+- extend the sampler with five items:
+  1. a wider random column-drop range and a wider synthetic-inject range, still zero-leakage;
+  2. random row subsampling per episode with varied episode sizes, with the full corpus kept in play (no permanent downsample);
+  3. a random target column where valid;
+  4. random feature permutation, per-feature random scaling or affine maps, and small noise;
+  5. all S3 sources mixed uniformly by dataset, not by row.
+
+**Flags.** Each defaults to off, which reproduces pub-r12 exactly (see Verification).
+1. `--feature-drop-max-frac` up to 0.85 (pub-r12 used 0.35) and `--inj-max-frac F`, which caps injected columns at k ≤ floor(F·F_width) with F ≤ 0.30 (pub-r12 used 0.10).
+   - With `--synth-inj-every-batch 1`, every episode whose cap allows at least one injected column gets 1..cap.
+   - The real-column budget for k uses the largest k with k/(p+k) ≤ F.
+   - Injected columns come from the same 7 target-free generators, so there is no leakage.
+2. `--rows-random 1`: every unbatched real episode draws its size from [36, min(rows, 2048)]: 60% log-uniform, 40% uniform.
+   - The rows are a fresh random (75% target-stratified) subsample of the whole table every episode.
+   - Batched episodes already draw N_t per batch. Nothing is downsampled permanently.
+3. `--target-random 1`: the target is the table's own target 50%, another real column with at least 32 finite values 35%, or a synthetic teacher on the real features 15% (pub-r12: 85/10/5).
+   - The chosen target column is removed from the features as before.
+4. `--feat-affine-noise 1`: features are randomly permuted, as before. After that, per feature:
+   - with probability 0.70, an affine map x → s·x + b, where |s| = e^U(ln 0.2, ln 5), the sign is negative with probability 0.2, and b ~ N(0, 2·sd_ctx);
+   - with probability 0.30, and only on features with more than 12 distinct context values, Gaussian noise with sd U(0.5%, 3%)·sd_ctx.
+
+   Every statistic comes from finite context feature values only. Neither the target nor any query value is used, and the same map applies to context and query rows.
+5. `--uniform-by-dataset 1`: every one of the 3,525 bank tables is drawn with probability 1/3,525, instead of the family-balanced (smart-stratified) weights.
+   - The sealed-cohort gate is unchanged.
+   - dev91's share of real episodes moves from about 2.1% to about 3.5% (its table share).
+
+**Runs.**
+- r4_L_B (xbabe3) resumes from its `ckpt_last.pt` with the pub-r12 flags plus `--feature-drop-max-frac 0.65 --inj-max-frac 0.30 --rows-random 1 --target-random 1 --feat-affine-noise 1 --uniform-by-dataset 1`. These ranges follow agy_apex_w10's fleet-r9 source as of 12:53Z (drop up to 0.65, inject up to 0.30, uniform by dataset).
+- r4_L_A (xbabe2) stays on pub-r12 as the control, so the dev91 effect of the sampler change can be read from the A and B trajectories. Jepson can direct both.
+- Epochs of r4_L_B that span the switch are mixed protocol. The epoch JSON records `augmentation`.
+
+**Verification** (CPU, before the switch; receipts in `~/jope-data/h450-quarantine/r4/smoke/`):
+- `parity_r14_h450.py` (new): the pub-r14 trainer with the pub-r14 flags off emits the pub-r12 (pub-r13 stage) trainer's items byte for byte on 400 items, with the pub-r12 flags both on and off. `parity_r12_h450.py` against pub-r11 also passes.
+- Flags-on `smoke_sampler_h450.py` (now passing the new flags through):
+  - 0 injection-cap violations, 0 episodes missing a drop or an injection, 0 duplicate datasets, 0 shape mismatches;
+  - injected-column share 0.18;
+  - target modes 51% / 34% / 15%;
+  - 2,719 distinct source tables in 7,984 episodes.
+
+**Checkpoint policy.**
+- r4 keeps writing one EMA `ckpt_epoch_NN.pt` per training hour, because the dev91 queue scores those files.
+- Grok Bot's `ckpt_pruner` cron (Jepson's 5:20 AM MST policy) keeps the newest per run and protects any epoch an eval command line names.
+- The trainer code deletes nothing.

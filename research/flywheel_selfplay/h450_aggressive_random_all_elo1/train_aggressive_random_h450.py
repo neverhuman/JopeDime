@@ -22,6 +22,11 @@ Every real episode draws a fresh blake2b seed, then independently and at random:
   - pub-r12 flags (ENG:watcher 03:04Z audit): --feature-drop-every-batch 1 makes every p >= 2 episode drop
     1..max(1, floor(0.35 p)) real columns; --synth-inj-every-batch 1 makes every F >= 10 episode inject
     1..floor(0.10 F) columns. Both default to 0 (pub-r11 behaviour, identical rng calls);
+  - pub-r14 maximum-entropy flags (Jepson 5:39 AM MST Nov 13, relayed by agy_apex_w10 12:47Z), all default off
+    (pub-r12 behaviour, identical rng calls): --inj-max-frac F caps injection at floor(F * width) (<= 0.30);
+    --rows-random 1 draws every unbatched episode size from [36, min(rows, 2048)]; --target-random 1 sets the target
+    mix to own 50 % / other column 35 % / teacher 15 %; --feat-affine-noise 1 applies a per-feature random affine map
+    and small noise from context statistics only; --uniform-by-dataset 1 samples tables uniformly;
   - the target space: raw 40 %, Ridge-GCV residual 40 %, Yeo-Johnson warp 20 %.
 Fully synthetic batches (v3s prior, panel/lead-lag and sentinel tables) take `--synth-prob` of steps.
 
@@ -74,7 +79,50 @@ MAX_TRAIN_ROWS = 2048
 INJ_MAX_FRAC = 0.10
 # pub-r12 (ENG:watcher 03:04Z audit, relayed by agy_apex_w10 03:26Z): per-episode feature removal and injection.
 # Set from --feature-drop-every-batch / --feature-drop-max-frac / --synth-inj-every-batch before the workers fork.
-AUG = {"feature_drop_every": False, "feature_drop_max_frac": 0.35, "synth_inj_every": False}
+AUG = {"feature_drop_every": False, "feature_drop_max_frac": 0.35, "synth_inj_every": False,
+       # pub-r14 maximum-entropy sampler (Jepson 5:39 AM MST Nov 13, relayed verbatim by agy_apex_w10 12:47Z).
+       # Defaults reproduce pub-r12 exactly.
+       "inj_max_frac": INJ_MAX_FRAC, "rows_random": False, "target_random": False, "feat_affine_noise": False,
+       "uniform_by_dataset": False}
+
+
+def _k_hi_from_real(p_real: int) -> int:
+    """Largest k with k / (p_real + k) <= inj_max_frac (pub-r12: p_real // 9 for the 10 % cap)."""
+    f = AUG["inj_max_frac"]
+    if f == INJ_MAX_FRAC:
+        return p_real // 9
+    return int(math.floor(f / (1.0 - f) * p_real + 1e-9))
+
+
+def _affine_noise_np(Xc: np.ndarray, Xq: np.ndarray, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
+    """pub-r14: per-feature random affine map (70 % of features: scale e^U(ln .2, ln 5), sign flip 20 %, shift N(0, 2 sd))
+    and small Gaussian noise (30 % of features with > 12 distinct context values: 0.5-3 % of sd). Every parameter comes
+    from the context rows only and never from the target; context and query rows get the same map. Non-finite values
+    stay non-finite."""
+    Xc, Xq = Xc.copy(), Xq.copy()
+    for j in range(Xc.shape[1]):
+        c = Xc[:, j]
+        fin = np.isfinite(c)
+        if int(fin.sum()) < 2:
+            continue
+        sd = float(np.std(c[fin]))
+        sd = sd if sd > 1e-12 else 1.0
+        many = np.unique(c[fin]).size > 12
+        if rng.random() < 0.70:
+            s = float(np.exp(rng.uniform(math.log(0.2), math.log(5.0)))) * (-1.0 if rng.random() < 0.20 else 1.0)
+            b = float(rng.normal(0.0, 2.0)) * sd
+            Xc[:, j] = c * s + b
+            Xq[:, j] = Xq[:, j] * s + b
+            sd *= abs(s)
+        if many and rng.random() < 0.30:
+            lvl = float(rng.uniform(0.005, 0.03)) * sd
+            Xc[:, j] = Xc[:, j] + lvl * rng.standard_normal(Xc.shape[0])
+            Xq[:, j] = Xq[:, j] + lvl * rng.standard_normal(Xq.shape[0])
+    return Xc, Xq
+
+
+def _inj_cap(F: int) -> int:
+    return int(math.floor(AUG["inj_max_frac"] * F + 1e-9)) if AUG["inj_max_frac"] != INJ_MAX_FRAC else int(math.floor(INJ_MAX_FRAC * F))
 
 
 def _drop_count(p: int, rng: np.random.Generator) -> int:
@@ -136,11 +184,16 @@ class CombinedF64Bank:
         self.all_indices = np.arange(self.n_tables, dtype=np.int64)
         self.all_weights = self._smart_stratified_weights(self.all_indices)
 
+    def _weights(self) -> np.ndarray:
+        if AUG["uniform_by_dataset"]:      # pub-r14: every table equally likely (uniform by dataset, not by row)
+            return np.full(self.n_tables, 1.0 / self.n_tables)
+        return self.all_weights
+
     def sample_table_idx(self, rng: np.random.Generator) -> int:
-        return int(rng.choice(self.all_indices, p=self.all_weights))
+        return int(rng.choice(self.all_indices, p=self._weights()))
 
     def sample_eligible(self, rng: np.random.Generator, elig: np.ndarray) -> int | None:
-        w = self.all_weights * elig
+        w = self._weights() * elig
         s = float(w.sum())
         if s <= 0.0:
             return None
@@ -375,7 +428,10 @@ def real_episode(bank: CombinedF64Bank, t_idx: int, rng: np.random.Generator, n_
     if tab.shape[0] < 28 or c_tot < 2:
         return None
     u = float(rng.random())
-    tmode = 0 if u < 0.85 else (1 if u < 0.95 else 2)
+    if AUG["target_random"]:          # pub-r14: own target 50 %, a random other valid column 35 %, teacher 15 %
+        tmode = 0 if u < 0.50 else (1 if u < 0.85 else 2)
+    else:
+        tmode = 0 if u < 0.85 else (1 if u < 0.95 else 2)
     tcol = c_tot - 1
     if tmode == 1:
         cand = [j for j in range(c_tot - 1) if int(np.sum(np.isfinite(tab[:, j]))) >= 32]
@@ -394,7 +450,16 @@ def real_episode(bank: CombinedF64Bank, t_idx: int, rng: np.random.Generator, n_
     r_tot = tab.shape[0]
     if r_tot < 28:
         return None
-    if n_rows_fixed is None:
+    if n_rows_fixed is None and AUG["rows_random"]:
+        # pub-r14: a random episode size every time (60 % log-uniform, 40 % uniform on [36, min(rows, 2048)]); the rows
+        # themselves are a fresh random subsample of the whole table, so the full corpus stays in play
+        hi = max(37, min(r_tot, MAX_TRAIN_ROWS))
+        if rng.random() < 0.60:
+            n_rows = int(round(math.exp(rng.uniform(math.log(36.0), math.log(float(hi))))))
+        else:
+            n_rows = int(rng.integers(36, hi + 1))
+        n_rows = int(min(r_tot, max(36, n_rows)))
+    elif n_rows_fixed is None:
         if rng.random() < 0.75:
             n_rows = min(r_tot, MAX_TRAIN_ROWS)
         else:
@@ -462,15 +527,15 @@ def real_episode(bank: CombinedF64Bank, t_idx: int, rng: np.random.Generator, n_
             p_keep = p - _drop_count(p, rng)
         elif p >= 6 and rng.random() < 0.40:
             p_keep = int(rng.integers(max(3, int(round(0.65 * p))), p + 1))
-        k_hi = min(p_keep, WIDE_GPU) // 9
+        k_hi = _k_hi_from_real(min(p_keep, WIDE_GPU))
         k = int(rng.integers(1 if (AUG["synth_inj_every"] and k_hi >= 1) else 0, k_hi + 1))
         F = min(WIDE_GPU, p_keep + k)
-        k = min(k, int(math.floor(INJ_MAX_FRAC * F)))
+        k = min(k, _inj_cap(F))
         k_real = F - k
     else:
         F = f_fixed
         k_lo = max(0, F - p)
-        k_hi = int(math.floor(INJ_MAX_FRAC * F))
+        k_hi = _inj_cap(F)
         if AUG["feature_drop_every"] and p >= 2:
             k_lo = max(k_lo, F - p + 1)                        # keep at most p - 1 real columns
         if AUG["synth_inj_every"] and k_hi >= 1:
@@ -495,6 +560,8 @@ def real_episode(bank: CombinedF64Bank, t_idx: int, rng: np.random.Generator, n_
         Xc, Xq = np.hstack([Xc, Ic]), np.hstack([Xq, Iq])
     perm_f = rng.permutation(Xc.shape[1])
     Xc, Xq = Xc[:, perm_f], Xq[:, perm_f]
+    if AUG["feat_affine_noise"]:
+        Xc, Xq = _affine_noise_np(Xc, Xq, rng)
 
     u = float(rng.random())
     space = 0
@@ -558,12 +625,12 @@ def _episode_worker_loop(worker_id, run_nonce, bank, tokens_cap, row_tokens_cap,
                 p0 = min(int(bank.cols_arr[t0]), WIDE_GPU)
                 if AUG["feature_drop_every"] and p0 >= 2:   # pub-r12: the batch width leaves t0 a column drop
                     p0 -= _drop_count(p0, rng)
-                kh0 = p0 // 9
+                kh0 = _k_hi_from_real(p0)
                 F_t = max(1, min(WIDE_GPU, p0 + int(rng.integers(1 if (AUG["synth_inj_every"] and kh0 >= 1) else 0, kh0 + 1))))
                 u = float(rng.random())
                 p_ctx = float(rng.uniform(0.25, 0.56) if u < 0.25 else (rng.uniform(0.56, 0.84) if u < 0.75 else rng.uniform(0.84, 0.94)))
                 B_t = max(1, min(bmax, tokens_cap // max(N_t * (F_t + 4), 1), row_tokens_cap // max(N_t, 1)))
-                p_min = F_t - int(math.floor(INJ_MAX_FRAC * F_t)) + (1 if AUG["feature_drop_every"] else 0)
+                p_min = F_t - _inj_cap(F_t) + (1 if AUG["feature_drop_every"] else 0)
                 elig = ((bank.rows_arr >= N_t + 8) & (bank.cols_arr >= p_min)).astype(np.float64)
                 xs, ys, infos, n_ctx_b = [], [], [], None
                 for b in range(B_t):
@@ -626,7 +693,7 @@ class Ledger:
             if p >= 2:
                 self.drop_elig += 1
                 self.drop_eps += int(d >= 1)
-            if F >= 10:
+            if _inj_cap(F) >= 1:
                 self.inj_elig += 1
                 self.inj_eps += int(k >= 1)
             c = int(n * (F + 1))
@@ -728,7 +795,18 @@ def main() -> None:
                     help="pub-r12: every real episode with p >= 2 drops 1..max(1, floor(max_frac * p)) real columns")
     ap.add_argument("--feature-drop-max-frac", type=float, default=0.35)
     ap.add_argument("--synth-inj-every-batch", type=int, choices=(0, 1), default=0,
-                    help="pub-r12: every real episode with F >= 10 gets 1..floor(0.10 * F) injected columns")
+                    help="pub-r12: every real episode whose cap allows it (F >= 10 at 0.10) gets 1..cap injected columns")
+    # pub-r14 maximum-entropy sampler (Jepson 5:39 AM MST Nov 13, relayed by agy_apex_w10). All default to pub-r12.
+    ap.add_argument("--inj-max-frac", type=float, default=INJ_MAX_FRAC,
+                    help="pub-r14: injected columns k <= floor(frac * F) (default 0.10, at most 0.30)")
+    ap.add_argument("--rows-random", type=int, choices=(0, 1), default=0,
+                    help="pub-r14: unbatched episodes take a random row count in [36, min(rows, MAX_TRAIN_ROWS)] (60 % log-uniform)")
+    ap.add_argument("--target-random", type=int, choices=(0, 1), default=0,
+                    help="pub-r14: target = own 50 % / another valid column 35 % / teacher 15 % (default 85/10/5)")
+    ap.add_argument("--feat-affine-noise", type=int, choices=(0, 1), default=0,
+                    help="pub-r14: per-feature random affine map and small noise from context statistics only")
+    ap.add_argument("--uniform-by-dataset", type=int, choices=(0, 1), default=0,
+                    help="pub-r14: every table equally likely instead of the family-balanced weights")
     a = ap.parse_args()
 
     out_dir = Path(a.out)
@@ -746,10 +824,14 @@ def main() -> None:
     t_load0 = time.time()
     bank = CombinedF64Bank(Path(a.bank), expect_sha256=a.bank_sha256)
     bank_load_s = round(time.time() - t_load0, 2)
-    if not 0.0 < a.feature_drop_max_frac <= 0.5:
-        raise SystemExit("--feature-drop-max-frac must be in (0, 0.5]")
+    if not 0.0 < a.feature_drop_max_frac <= 0.85:     # pub-r14: up to 0.85 (fleet-r9 uses 0.65); pub-r12 used 0.35
+        raise SystemExit("--feature-drop-max-frac must be in (0, 0.85]")
+    if not 0.0 < a.inj_max_frac <= 0.30:
+        raise SystemExit("--inj-max-frac must be in (0, 0.30]")
     AUG.update(feature_drop_every=bool(a.feature_drop_every_batch), feature_drop_max_frac=float(a.feature_drop_max_frac),
-               synth_inj_every=bool(a.synth_inj_every_batch))   # before the fork: workers inherit AUG
+               synth_inj_every=bool(a.synth_inj_every_batch), inj_max_frac=float(a.inj_max_frac),
+               rows_random=bool(a.rows_random), target_random=bool(a.target_random),
+               feat_affine_noise=bool(a.feat_affine_noise), uniform_by_dataset=bool(a.uniform_by_dataset))   # before the fork: workers inherit AUG
     ledger = Ledger(bank)
     run_nonce = hashlib.blake2b(secrets.token_bytes(32) + int(a.seed).to_bytes(8, "little"), digest_size=32).digest()
 

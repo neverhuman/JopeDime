@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """H450 pub-r4 CPU sampler smoke: draw real-table worker items (no model, no GPU) and report the exposure ledger,
-the injected-column share (must be <= 10 % on every episode), dev91's share, row duplication and throughput.
+the injected-column share (at most floor(inj_max_frac * F) per episode, default 10 %), dev91's share, row duplication and throughput.
 pub-r12: with the trainer's AUG flags it also counts episodes that miss the per-episode drop or injection.
+pub-r14: the max-entropy flags (--inj-max-frac, --rows-random, --target-random, --feat-affine-noise,
+--uniform-by-dataset) pass through to the trainer AUG; the injection checks use the trainer cap floor(inj_max_frac * F).
 
   smoke_sampler_h450.py --bank BANK --bank-sha256 HEX --items 2000 --workers 8 --out SMOKE.json
 """
@@ -33,9 +35,14 @@ def main() -> None:
     ap.add_argument("--feature-drop-every-batch", type=int, choices=(0, 1), default=0)
     ap.add_argument("--feature-drop-max-frac", type=float, default=0.35)
     ap.add_argument("--synth-inj-every-batch", type=int, choices=(0, 1), default=0)
+    ap.add_argument("--inj-max-frac", type=float, default=T.INJ_MAX_FRAC)
+    for fl in ("--rows-random", "--target-random", "--feat-affine-noise", "--uniform-by-dataset"):
+        ap.add_argument(fl, type=int, choices=(0, 1), default=0)
     a = ap.parse_args()
     T.AUG.update(feature_drop_every=bool(a.feature_drop_every_batch), feature_drop_max_frac=float(a.feature_drop_max_frac),
-                 synth_inj_every=bool(a.synth_inj_every_batch))   # before the fork, as in the trainer
+                 synth_inj_every=bool(a.synth_inj_every_batch), inj_max_frac=float(a.inj_max_frac),
+                 rows_random=bool(a.rows_random), target_random=bool(a.target_random),
+                 feat_affine_noise=bool(a.feat_affine_noise), uniform_by_dataset=bool(a.uniform_by_dataset))   # before the fork, as in the trainer
     out = Path(a.out)
     if out.exists():
         raise SystemExit(f"{out} exists (create-once)")
@@ -66,18 +73,18 @@ def main() -> None:
         batched = len(infos) > 1 or xb.shape[0] > 1
         for b, (t, tm, k, F, n, sp, d, p) in enumerate(infos):
             n_eps += 1
-            if p >= 2:   # pub-r12 per-episode audit: >= 1 real column removed, >= 1 injected when F >= 10
+            if p >= 2:   # pub-r12 per-episode audit: >= 1 real column removed, >= 1 injected when the cap allows it
                 drop_miss += int(d < 1)
                 drop_fracs.append(d / p)
                 # tables wider than WIDE_GPU always lose columns to the width cap; batch mates lose what F_t needs
                 over = p <= T.WIDE_GPU and d > max(1, int(np.floor(a.feature_drop_max_frac * p)))
                 drop_over_bat += int(over and batched)
                 drop_over_unb += int(over and not batched)
-            if F >= 10:
+            if T._inj_cap(F) >= 1:
                 inj_miss += int(k < 1)
             frac = k / F
             max_inj_frac = max(max_inj_frac, frac)
-            viol += int(k > int(np.floor(0.10 * F)))
+            viol += int(k > T._inj_cap(F))
             shapes_bad += int(xb.shape[1] != n or xb.shape[2] != F)
             widths.append(F)
             rows.append(n)
