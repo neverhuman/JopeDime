@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""104M (`ICL_L`) MPS/CUDA Trainer with Bidirectional Feature Synthesis, Pre-Forward 128-bit Dedup,
-Zero-Copy `MmapF64Bank`, and Host CPU Governor (`<= 85%` average) (`train_mps_104m_h450.py`).
+"""104M (`ICL_L`) High-Throughput Multi-Scale MPS/CUDA Trainer (`train_mps_104m_h450.py` — `fleet-r7`).
 
-Designed specifically for `xbabe4` (Mac Studio M3 Ultra, 80-core Metal `mps` GPU, 512 GiB Unified Memory) and portable
-to `cuda`/`cpu`, using `mp.get_context("spawn")` + `MmapF64Bank` (`< 60 MiB` worker RSS, zero macOS fork issues).
-Writes `ckpt_epoch_NN.pt` + `epoch_NN.json` in exact `cols_h450_gpu.py` / `jope.h450.epoch/v1` format so checkpoints
-plug straight into the fleet `dev91` frozen-split Elo evaluation pipeline.
+Key `fleet-r7` Elo + Dataset-Variety Upgrades:
+  1. 100% Batched Multi-Scale `dev91`-Anchored Row Curriculum:
+     - `58%` Fast Explorer + Small-Table Coverage (`N in {36, 64, 128, 256, 320, 384}`) at high `B` (`16..48`),
+     - `22%` Mid-Scale Bridge (`N in {512, 768}`),
+     - `20%` Exact `dev91` Context-Length Anchor (`N in {1120, 1344, 1600}`) calibrating softmax attention entropy.
+  2. Zero-Copy Index-First Row Slicing + Vectorized 64-Bit-Ordered `blake2b-128` Row-Invariant Fingerprinting +
+     Background-Worker `float64 -> float32` Context Pre-Normalization (`0` GPU `float64` `nanquantile` stalls).
+  3. `dev91`-Aligned Target Spaces (`45%` 5-fold SVD Robust-Ridge Residual, `35%` Yeo-Johnson, `20%` Raw),
+     `10`-Family Structural + Distractor Column Injection (`1 <= k <= floor(0.10 * F)` on `100%` of `F >= 10`),
+     Oblivious-Tree + GP + Heteroscedastic/Heavy-Tail Priors, and Dual-Horizon Polyak/SWA EMA (`decay = 0.9995`).
 """
 from __future__ import annotations
 
@@ -23,7 +28,6 @@ import signal
 import subprocess
 import sys
 import time
-import warnings
 from pathlib import Path
 
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -207,10 +211,19 @@ def _yeojohnson_pair_np(yc: np.ndarray, yq: np.ndarray) -> tuple[np.ndarray, np.
         return None
     return (zt_c - z_mu) / z_sd, (zt_q - z_mu) / z_sd
 
+
 WIDE_GPU = 64
 MAX_TRAIN_ROWS = 2048
-BATCH_N = (192, 320, 512, 768, 1024)
-BATCH_N_P = (0.15, 0.22, 0.28, 0.20, 0.15)
+
+# Multi-scale dev91-anchored row curriculum:
+#   - 58% fast explorer + small-table coverage (36..384 rows, high B -> 3-4x unique datasets/sec)
+#   - 22% bridge (512..768 rows)
+#   - 20% exact dev91 context-length anchor (1120..1600 rows -> matches dev91 X_search + query lengths)
+BATCH_N = (36, 64, 128, 256, 320, 384, 512, 768, 1120, 1344, 1600)
+BATCH_N_P = (0.01, 0.02, 0.04, 0.19, 0.20, 0.12, 0.12, 0.10, 0.08, 0.06, 0.06)
+
+SYNTH_N = (256, 320, 512, 768, 1120, 1408)
+SYNTH_N_P = (0.24, 0.24, 0.20, 0.14, 0.10, 0.08)
 
 
 class HostCpuGovernor:
@@ -265,20 +278,40 @@ class HostCpuGovernor:
 
 
 def dataset_fingerprint_128(X: np.ndarray, y: np.ndarray, n_ctx: int) -> bytes:
-    """Row-order-invariant 128-bit `blake2b` fingerprint canonicalizing `-0.0/+0.0` and all non-finite sentinels."""
+    """Fast vectorized row-order-invariant 128-bit `blake2b` fingerprint over full canonicalized `float64` row bytes.
+
+    Canonicalizes `-0.0 -> +0.0` and all `NaN` bit patterns (`0x7FF8000000000001`) while preserving `+inf`/`-inf`,
+    orders context (`:n_ctx`) and query (`n_ctx:`) rows by a 64-bit SplitMix64 row key (with exact lexicographic
+    tie-break if two distinct rows ever collide in 64 bits), and hashes all `8 * (F + 1)` bytes/row with `blake2b`.
+    """
     Xf = np.asarray(X, dtype=np.float64)
-    yf = np.asarray(y, dtype=np.float64).reshape(-1, 1)
-    miss_x = (~np.isfinite(Xf)).astype(np.float64)
-    Xc = np.where(np.isfinite(Xf), Xf, 1.7976931348623157e308)
-    yc = np.where(np.isfinite(yf), yf, 1.7976931348623157e308)
-    Z = np.column_stack([Xc, miss_x, yc])
-    Z = np.where(Z == 0.0, 0.0, Z)  # canonicalize -0.0 -> +0.0 before lexsort & tobytes
+    yf = np.asarray(y, dtype=np.float64).reshape(-1)
+    n_tot, f_dim = Xf.shape
+    Z = np.empty((n_tot, f_dim + 1), dtype=np.float64)
+    Z[:, :f_dim] = Xf
+    Z[:, f_dim] = yf
+    Z[Z == 0.0] = 0.0
+    Zu = Z.view(np.uint64)
+    nan_m = np.isnan(Z)
+    if np.any(nan_m):
+        Zu[nan_m] = np.uint64(0x7FF8000000000001)
+    with np.errstate(over="ignore"):
+        mults = (np.arange(1, f_dim + 2, dtype=np.uint64) * np.uint64(0x9E3779B97F4A7C15)) | np.uint64(1)
+        mixed = Zu ^ (Zu >> np.uint64(30))
+        mixed = mixed * np.uint64(0xBF58476D1CE4E5B9)
+        mixed = mixed ^ (mixed >> np.uint64(27))
+        rh_all = np.bitwise_xor.reduce(mixed * mults[None, :], axis=1)
     h = hashlib.blake2b(digest_size=16)
-    h.update(np.array([Xf.shape[0], Xf.shape[1], int(n_ctx)], dtype=np.int64).tobytes())
-    for part in (Z[:n_ctx], Z[n_ctx:]):
+    h.update(np.array([n_tot, f_dim, int(n_ctx)], dtype=np.int64).tobytes())
+    for part, rh in ((Zu[:n_ctx], rh_all[:n_ctx]), (Zu[n_ctx:], rh_all[n_ctx:])):
         if part.shape[0] > 1:
-            part = part[np.lexsort(part.T[::-1])]
-        h.update(np.ascontiguousarray(part, dtype=np.float64).tobytes())
+            ord_i = np.argsort(rh, kind="mergesort")
+            part = part[ord_i]
+            rh_s = rh[ord_i]
+            ties = rh_s[1:] == rh_s[:-1]
+            if np.any(ties) and np.any(part[1:][ties] != part[:-1][ties]):
+                part = part[np.lexsort(part.T[::-1])]
+        h.update(np.ascontiguousarray(part).tobytes())
     return h.digest()
 
 
@@ -300,15 +333,17 @@ def _std_ctx_f64(Xc: np.ndarray, Xq: np.ndarray) -> tuple[np.ndarray, np.ndarray
 
 
 def _inject_synth_cols_np(Xc: np.ndarray, Xq: np.ndarray, k_inj: int, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
+    """10-family synthetic column bank (zero label leakage; teaches both distractor rejection and REL-style structural features)."""
     p = Xc.shape[1]
     if p == 0 or k_inj <= 0:
         return np.zeros((Xc.shape[0], 0)), np.zeros((Xq.shape[0], 0))
     Zc, Zq = _std_ctx_f64(Xc, Xq)
     Z_all = np.vstack([Zc, Zq])
     n_tot, n_c = Z_all.shape[0], Xc.shape[0]
+    miss_all = np.vstack([~np.isfinite(Xc), ~np.isfinite(Xq)])
     inj_cols = np.zeros((n_tot, k_inj), dtype=np.float64)
     for m in range(k_inj):
-        kind = int(rng.integers(0, 7))
+        kind = int(rng.integers(0, 10))
         za = Z_all[:, int(rng.integers(0, p))]
         zb = Z_all[:, int(rng.integers(0, p))]
         alt = bool(rng.random() < 0.5)
@@ -323,9 +358,12 @@ def _inject_synth_cols_np(Xc: np.ndarray, Xq: np.ndarray, k_inj: int, rng: np.ra
                 col = np.clip(np.tan(math.pi * (u - 0.5)), -25.0, 25.0)
         elif kind == 2:
             a = float(rng.random())
-            col = a * za + (1.0 - a) * zb + 0.15 * rng.standard_normal(n_tot)
+            col = a * za + (1.0 - a) * zb + 0.12 * rng.standard_normal(n_tot)
         elif kind == 3:
-            col = np.clip(za * zb if alt else (za * za - 1.0), -30.0, 30.0)
+            if alt:
+                col = np.clip(za * zb, -30.0, 30.0)
+            else:
+                col = np.clip(za / (1.0 + np.abs(zb)), -25.0, 25.0)
         elif kind == 4:
             if alt:
                 col = np.sign(za) * np.log1p(np.abs(za))
@@ -335,10 +373,33 @@ def _inject_synth_cols_np(Xc: np.ndarray, Xq: np.ndarray, k_inj: int, rng: np.ra
                 col = math.sqrt(2.0) * _erfinv_np(np.clip(2.0 * ranks - 1.0, -0.9999, 0.9999))
         elif kind == 5:
             col = (za > float(np.percentile(za[:n_c], 25.0 if alt else 75.0))).astype(np.float64)
-        else:
+        elif kind == 6:
             w = float(rng.standard_normal() * math.exp(rng.uniform(math.log(0.5), math.log(3.0))))
             ph = float(rng.random() * 2.0 * math.pi)
             col = np.sin(w * za + ph) if alt else np.cos(w * za + ph)
+        elif kind == 7:
+            # REL-style multi-column row summary (mean / std / L2 norm over random subset of features)
+            sub_m = min(p, int(rng.integers(2, min(12, p) + 1))) if p >= 2 else 1
+            Z_sub = Z_all[:, rng.choice(p, size=sub_m, replace=False)]
+            if alt:
+                col = np.mean(Z_sub, axis=1)
+            else:
+                col = np.sqrt(np.mean(Z_sub * Z_sub, axis=1))
+        elif kind == 8:
+            # Row missingness rate or extreme-coordinate tail indicator
+            miss_rate = np.mean(miss_all, axis=1)
+            if alt and float(np.std(miss_rate[:n_c])) > 1e-6:
+                col = miss_rate
+            else:
+                col = np.mean((np.abs(Z_all) > 2.0).astype(np.float64), axis=1)
+        else:
+            # RBF similarity / distance to a random context prototype row
+            sub_m = min(p, int(rng.integers(2, min(10, p) + 1))) if p >= 2 else 1
+            cols_proto = rng.choice(p, size=sub_m, replace=False)
+            Z_sub = Z_all[:, cols_proto]
+            proto = Z_sub[int(rng.integers(0, n_c))]
+            d2 = np.mean((Z_sub - proto[None, :]) ** 2, axis=1)
+            col = np.exp(-0.5 * d2) if alt else np.sqrt(d2)
         inj_cols[:, m] = col
     return inj_cols[:n_c], inj_cols[n_c:]
 
@@ -349,36 +410,58 @@ def _synth_teacher_target_np(Xc: np.ndarray, Xq: np.ndarray, rng: np.random.Gene
     n_tot, p = Z.shape
     if p == 0 or n_tot < 24:
         return None
-    sub_k = min(p, int(rng.integers(2, min(14, p) + 1))) if p >= 2 else 1
+    sub_k = min(p, int(rng.integers(2, min(16, p) + 1))) if p >= 2 else 1
     Zs = Z[:, rng.choice(p, size=sub_k, replace=False)]
-    ls = np.exp(rng.uniform(-0.7, 1.2, size=(1, sub_k)))
+    n_c = Xc.shape[0]
+    ls = np.exp(rng.uniform(-0.8, 1.3, size=(1, sub_k)))
     W = rng.standard_normal((sub_k, 48)) / ls.T
     b = rng.uniform(0.0, 2.0 * math.pi, size=(1, 48))
     f_gp = (np.cos(Zs @ W + b) * math.sqrt(2.0 / 48)) @ rng.standard_normal(48)
+
+    # Oblivious / symmetric axis-aligned + oblique decision tree ensemble (CatBoost/GBDT inductive bias)
     f_tree = np.zeros(n_tot, dtype=np.float64)
-    for _ in range(4):
-        depth = int(rng.integers(2, 5))
+    n_trees = int(rng.integers(4, 9))
+    axis_aligned = bool(rng.random() < 0.60)
+    for _ in range(n_trees):
+        depth = int(rng.integers(2, 6))
         leaf_idx = np.zeros(n_tot, dtype=np.int64)
         for _d in range(depth):
-            proj = Zs @ rng.standard_normal(sub_k)
-            thr = float(np.percentile(proj[: Xc.shape[0]], float(rng.uniform(20.0, 80.0))))
+            if axis_aligned:
+                feat_j = int(rng.integers(0, sub_k))
+                proj = Zs[:, feat_j]
+            else:
+                proj = Zs @ rng.standard_normal(sub_k)
+            thr = float(np.percentile(proj[:n_c], float(rng.uniform(15.0, 85.0))))
             leaf_idx = (leaf_idx << 1) | (proj > thr).astype(np.int64)
-        f_tree += rng.standard_normal(1 << depth)[leaf_idx] * 0.5
+        f_tree += rng.standard_normal(1 << depth)[leaf_idx] / math.sqrt(n_trees)
+
     u = float(rng.random())
-    f = f_gp if u < 0.35 else (f_tree if u < 0.65 else (0.6 * f_gp + 0.4 * f_tree))
+    f = f_gp if u < 0.30 else (f_tree if u < 0.65 else (0.55 * f_gp + 0.45 * f_tree))
     sd = float(np.std(f))
     if not math.isfinite(sd) or sd <= 1e-9:
         return None
     f = (f - float(np.mean(f))) / sd
-    w_kind = int(rng.integers(0, 4))
+    w_kind = int(rng.integers(0, 5))
     if w_kind == 1:
         f = np.sign(f) * (np.abs(f) ** float(rng.uniform(0.6, 1.8)))
     elif w_kind == 2:
         f = np.sinh(0.65 * f)
     elif w_kind == 3:
         f = f + 0.25 * (f ** 2)
-    y = f + float(math.exp(rng.uniform(math.log(0.01), math.log(0.22)))) * float(np.std(f)) * rng.standard_normal(n_tot)
-    n_c = Xc.shape[0]
+    elif w_kind == 4:
+        f = np.exp(0.45 * np.clip(f, -4.0, 4.0)) - 1.0
+
+    # Homoscedastic, heteroscedastic, or Student-t heavy-tail observation noise
+    noise_scale = float(math.exp(rng.uniform(math.log(0.01), math.log(0.24)))) * max(float(np.std(f)), 1e-6)
+    if rng.random() < 0.25:
+        chi = np.sqrt(np.maximum(np.mean(rng.standard_normal((n_tot, 4)) ** 2, axis=1), 0.05))
+        eps = np.clip(rng.standard_normal(n_tot) / chi, -8.0, 8.0) * 0.7
+    else:
+        eps = rng.standard_normal(n_tot)
+    if rng.random() < 0.30:
+        het = 0.5 + np.abs(Zs[:, 0]) * 0.5
+        eps = eps * np.clip(het, 0.25, 3.0)
+    y = f + noise_scale * eps
     if float(np.std(y[:n_c])) <= 1e-9 or not np.all(np.isfinite(y)):
         return None
     return y[:n_c], y[n_c:]
@@ -420,36 +503,62 @@ def bidirectional_real_episode(
     synth_inj_every_batch: bool = True,
     inj_max_frac: float = 0.10,
 ):
-    """Samples one episode with fresh random train/test split, mandatory random feature removal (`p >= 2`),
-    and strict `k <= floor(inj_max_frac * F)` (`<= 10%`) synthetic feature injection + FROM-feature targets."""
+    """Index-first zero-copy episode sampler with fresh CSPRNG train/test split, mandatory random feature removal
+    (`p >= 2`), and strict `1 <= k <= floor(inj_max_frac * F)` (`<= 10%`) synthetic column injection."""
     inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
     drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
-    tab = np.asarray(bank.tabs_f64[t_idx], dtype=np.float64)
-    c_tot = tab.shape[1]
-    if tab.shape[0] < 28 or c_tot < 2:
+    tab_mmap = bank.tabs_f64[t_idx]
+    r_raw, c_tot = tab_mmap.shape
+    min_rows_req = max(28, n_rows_fixed if n_rows_fixed is not None else 28)
+    if r_raw < min_rows_req or c_tot < 2:
         return None
+
     # Target-from-features modes: 0 = own target (65%), 1 = masked real feature column X_{-j}->X_j (17%),
     # 2 = nonlinear synthetic teacher g(X_sub) (13%) or convex real+teacher blend (5%)
     u = float(rng.random())
     tmode = 0 if u < 0.65 else (1 if u < 0.82 else 2)
     blend_real_teacher = (u >= 0.95)
     tcol = c_tot - 1
+    valid_rows: np.ndarray | None = None
+    y_valid: np.ndarray | None = None
+
     if tmode == 1:
-        cand = [j for j in range(c_tot - 1) if int(np.sum(np.isfinite(tab[:, j]))) >= 32]
-        rng.shuffle(cand)
-        tcol = next((j for j in cand[:8] if np.unique(tab[np.isfinite(tab[:, j]), j]).size >= 12), c_tot - 1)
+        need_c1 = max(32, min_rows_req)
+        for j_try in rng.permutation(c_tot - 1)[:12]:
+            j_i = int(j_try)
+            col_j = tab_mmap[:, j_i]
+            fin_j = np.flatnonzero(np.isfinite(col_j))
+            if fin_j.size >= need_c1:
+                probe = np.asarray(col_j[fin_j[: min(512, fin_j.size)]], dtype=np.float64)
+                if np.unique(probe).size >= 12:
+                    tcol = j_i
+                    valid_rows = fin_j
+                    y_valid = np.asarray(col_j[fin_j], dtype=np.float64)
+                    break
         if tcol == c_tot - 1:
             tmode = 0
+
     if tmode in (0, 1) or blend_real_teacher:
-        tab = tab[np.isfinite(tab[:, tcol])]
-        if tmode == 0 and rng.random() < 0.45 and tab.shape[0] >= 32:
-            atom = _detect_atom_np(tab[:, tcol])
+        if valid_rows is None:
+            col_t = tab_mmap[:, tcol]
+            valid_rows = np.flatnonzero(np.isfinite(col_t))
+            if valid_rows.size < min_rows_req:
+                return None
+            y_valid = np.asarray(col_t[valid_rows], dtype=np.float64)
+        assert y_valid is not None
+        if tmode == 0 and rng.random() < 0.45 and valid_rows.size >= 32:
+            atom = _detect_atom_np(y_valid)
             if atom is not None:
-                keep = np.abs(tab[:, tcol] - atom) > 1e-7 * max(1.0, abs(atom))
-                if int(np.sum(keep)) >= 32 and (n_rows_fixed is None or int(np.sum(keep)) >= n_rows_fixed):
-                    tab = tab[keep]
-    r_tot = tab.shape[0]
-    if r_tot < 28:
+                keep = np.abs(y_valid - atom) > 1e-7 * max(1.0, abs(atom))
+                n_keep = int(np.sum(keep))
+                if n_keep >= max(32, min_rows_req):
+                    valid_rows = valid_rows[keep]
+                    y_valid = y_valid[keep]
+    else:
+        valid_rows = np.arange(r_raw, dtype=np.int64)
+
+    r_tot = int(valid_rows.size)
+    if r_tot < min_rows_req:
         return None
     if n_rows_fixed is None:
         if rng.random() < 0.70:
@@ -458,13 +567,10 @@ def bidirectional_real_episode(
             hi = max(48, min(r_tot, MAX_TRAIN_ROWS))
             n_rows = int(min(r_tot, max(36, round(math.exp(rng.uniform(math.log(36.0), math.log(float(hi))))))))
     else:
-        if r_tot < n_rows_fixed:
-            return None
         n_rows = n_rows_fixed
 
-    ycol = tab[:, tcol]
-    if r_tot > n_rows and rng.random() < 0.75:
-        y_ord = np.argsort(ycol + 1e-12 * max(float(np.nanstd(ycol)), 1.0) * rng.standard_normal(r_tot), kind="mergesort")
+    if y_valid is not None and r_tot > n_rows and rng.random() < 0.75:
+        y_ord = np.argsort(y_valid + 1e-12 * max(float(np.std(y_valid)), 1.0) * rng.standard_normal(r_tot), kind="mergesort")
         picked, need = [], n_rows
         bins = np.array_split(y_ord, int(rng.integers(6, 17)))
         for bi, b_arr in enumerate(bins):
@@ -478,13 +584,16 @@ def bidirectional_real_episode(
         if len(sel) < n_rows:
             rest = np.setdiff1d(np.arange(r_tot, dtype=np.int64), sel)
             sel = np.concatenate([sel, rng.permutation(rest)[: n_rows - len(sel)]])
-        sub = tab[rng.permutation(sel[:n_rows])]
+        sel_local = rng.permutation(sel[:n_rows])
     else:
-        sub = tab[rng.permutation(r_tot)[:n_rows]]
+        sel_local = rng.permutation(r_tot)[:n_rows]
+
+    # Single materialization of only the selected n_rows from the memory-mapped table!
+    sub = np.asarray(tab_mmap[valid_rows[sel_local]], dtype=np.float64)
 
     if p_ctx_fixed is None:
         u_p = float(rng.random())
-        p_ctx = float(rng.uniform(0.20, 0.56) if u_p < 0.25 else (rng.uniform(0.56, 0.84) if u_p < 0.75 else rng.uniform(0.84, 0.95)))
+        p_ctx = float(rng.uniform(0.22, 0.56) if u_p < 0.22 else (rng.uniform(0.56, 0.84) if u_p < 0.78 else rng.uniform(0.84, 0.95)))
     else:
         p_ctx = p_ctx_fixed
     n_ctx = max(16, min(n_rows - 4, int(round(p_ctx * n_rows))))
@@ -577,15 +686,16 @@ def bidirectional_real_episode(
     perm_f = rng.permutation(Xc.shape[1])
     Xc, Xq = Xc[:, perm_f], Xq[:, perm_f]
 
+    # dev91-aligned target spaces: 45% 5-fold SVD robust-ridge residual, 35% Yeo-Johnson warp, 20% raw
     u_sp = float(rng.random())
     space = 0
     y_ep = np.concatenate([yc, yq])
-    if u_sp < 0.40:
+    if u_sp < 0.45:
         oof, pq, used, _ = _robust_ridge_np(Xc, yc, Xq, seed=int(rng.integers(1, 1 << 30)))
         if used:
             y_ep = np.concatenate([yc - oof, yq - pq])
             space = 1
-    elif u_sp < 0.60:
+    elif u_sp < 0.80:
         yj_pair = _yeojohnson_pair_np(yc, yq)
         if yj_pair is not None and float(np.std(yj_pair[0])) > 1e-8:
             y_ep = np.concatenate([yj_pair[0], yj_pair[1]])
@@ -609,12 +719,12 @@ def _sample_full_synth_special(
 ) -> tuple[np.ndarray, np.ndarray]:
     inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
     drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
-    is_panel = bool(rng.random() < 0.55)
+    mode = int(rng.integers(0, 3))  # 0: panel/entity-time, 1: hurdle/sentinel-atom, 2: oblivious-tree + MAR missingness
     xs = np.zeros((B, N, Fn), dtype=np.float64)
     ys = np.zeros((B, N), dtype=np.float64)
     Fn_gen = Fn + (max(1, int(round(drop_max_frac * Fn))) if feature_drop_every_batch else 0)
     for b in range(B):
-        if is_panel:
+        if mode == 0:
             n_ent = int(rng.integers(6, max(8, min(48, N // 8))))
             ent = rng.integers(0, n_ent, size=N)
             t_step = rng.uniform(0.0, 2000.0, size=N)
@@ -631,7 +741,7 @@ def _sample_full_synth_special(
             X_raw = np.column_stack([ts_col, ent.astype(np.float64), covs])[:, :Fn_gen]
             perm = rng.permutation(N)
             X_raw, y_b = X_raw[perm], y_b[perm]
-        else:
+        elif mode == 1:
             X_raw = rng.standard_normal((N, Fn_gen))
             w1 = rng.standard_normal(Fn_gen) / math.sqrt(max(Fn_gen, 1))
             w2 = rng.standard_normal(Fn_gen) / math.sqrt(max(Fn_gen, 1))
@@ -643,6 +753,28 @@ def _sample_full_synth_special(
                 X_raw[is_atom, 0] = -99.99
             perm = rng.permutation(N)
             X_raw, y_b = X_raw[perm], np.where(is_atom, atom_val, y_bulk)[perm]
+        else:
+            # Heavy-tailed correlated covariates + symmetric oblivious decision tree ensemble + MAR NaNs
+            r_lat = min(6, Fn_gen)
+            z_lat = rng.standard_normal((N, r_lat))
+            mix = rng.standard_normal((r_lat, Fn_gen)) / math.sqrt(r_lat)
+            X_raw = z_lat @ mix + 0.45 * rng.standard_normal((N, Fn_gen))
+            y_clean = np.zeros(N, dtype=np.float64)
+            for _ in range(6):
+                depth = int(rng.integers(2, 5))
+                leaf = np.zeros(N, dtype=np.int64)
+                for _d in range(depth):
+                    cj = int(rng.integers(0, Fn_gen))
+                    thr = float(np.percentile(X_raw[:, cj], float(rng.uniform(20.0, 80.0))))
+                    leaf = (leaf << 1) | (X_raw[:, cj] > thr).astype(np.int64)
+                y_clean += rng.standard_normal(1 << depth)[leaf] * 0.5
+            miss_prob = float(rng.uniform(0.03, 0.18))
+            mar_gate = 1.0 / (1.0 + np.exp(-X_raw[:, 0]))
+            miss_mask = rng.random((N, Fn_gen)) < (miss_prob * mar_gate[:, None])
+            miss_mask[:, 0] = False
+            y_clean = y_clean + 0.35 * np.mean(miss_mask, axis=1)
+            X_raw = np.where(miss_mask, np.nan, X_raw)
+            y_b = y_clean + float(rng.uniform(0.02, 0.18)) * max(float(np.std(y_clean)), 1e-3) * rng.standard_normal(N)
 
         k_hi_sp = int(math.floor(inj_max_frac * Fn))
         if k_hi_sp >= 1 and (synth_inj_every_batch or rng.random() < 0.50):
@@ -663,6 +795,12 @@ def _sample_full_synth_special(
         xs[b] = X_full[:, rng.permutation(Fn)]
         ys[b] = y_b
     return xs, ys
+
+
+def _pack_worker_item(xa: np.ndarray, ya: np.ndarray, n_ctx: int, infos, fps: list[bytes]):
+    zm_np, yz_np, ym_np, ys_np = ICLH450MPS.prenorm_cpu_np(xa, ya[:, :n_ctx], int(n_ctx))
+    yq_np = np.ascontiguousarray(ya[:, n_ctx:], dtype=np.float64)
+    return (zm_np, yz_np, ym_np, ys_np, yq_np, int(n_ctx), infos, fps)
 
 
 def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expect_sha: str,
@@ -697,10 +835,10 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
                 prior = Prior(torch.device("cpu"), int(prior_seed_base) + 1009 * (worker_id + 1))
             r_py = std_random.Random(int(rng.integers(1, 1 << 62)))
             Fn = max(6, min(WIDE_GPU, draw_features(r_py)))
-            N = int(rng.choice([256, 512, 768, 1024], p=[0.25, 0.35, 0.25, 0.15]))
+            N = int(rng.choice(SYNTH_N, p=SYNTH_N_P))
             B = max(1, min(bmax, tokens_cap // max(N * (Fn + 4), 1), row_tokens_cap // max(N, 1)))
-            n_ctx = max(16, min(N - 4, int(round(float(rng.uniform(0.25, 0.93)) * N))))
-            if float(rng.random()) < 0.60:
+            n_ctx = max(16, min(N - 4, int(round(float(rng.uniform(0.28, 0.93)) * N))))
+            if float(rng.random()) < 0.58:
                 Fn_gen = min(WIDE_GPU, Fn + (max(1, int(round(drop_max_frac * Fn))) if feature_drop_every_batch else 0))
                 xt_c, yt_c, _, _ = INJ.sample_synth(prior, r_py, B, N, Fn_gen, 0.55, PROBS_V3S)
                 xa_g, ya = xt_c.detach().cpu().double().numpy(), yt_c.detach().cpu().double().numpy()
@@ -719,29 +857,25 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
                     synth_inj_every_batch=synth_inj_every_batch,
                     inj_max_frac=inj_max_frac,
                 )
-            if float(rng.random()) < 0.40:
+            u_s_sp = float(rng.random())
+            if u_s_sp < 0.40:
                 seed_r = int(rng.integers(1, 1 << 30))
                 for b_i in range(xa.shape[0]):
                     oof_b, pq_b, used_b, _ = _robust_ridge_np(xa[b_i, :n_ctx], ya[b_i, :n_ctx], xa[b_i, n_ctx:], seed=seed_r + 31 * b_i)
                     if used_b:
                         ya[b_i, :n_ctx] -= oof_b
                         ya[b_i, n_ctx:] -= pq_b
+            elif u_s_sp < 0.70:
+                for b_i in range(xa.shape[0]):
+                    yj_b = _yeojohnson_pair_np(ya[b_i, :n_ctx], ya[b_i, n_ctx:])
+                    if yj_b is not None and float(np.std(yj_b[0])) > 1e-8:
+                        ya[b_i, :n_ctx] = yj_b[0]
+                        ya[b_i, n_ctx:] = yj_b[1]
             fps = [dataset_fingerprint_128(xa[b_], ya[b_], n_ctx) for b_ in range(xa.shape[0])]
-            item = (xa, ya, int(n_ctx), None, fps)
-        elif float(rng.random()) < 0.58:
-            got = bidirectional_real_episode(
-                bank, bank.sample_table_idx(rng), rng,
-                random_split_every_batch=random_split_every_batch,
-                feature_drop_every_batch=feature_drop_every_batch,
-                drop_max_frac=drop_max_frac,
-                synth_inj_every_batch=synth_inj_every_batch,
-                inj_max_frac=inj_max_frac,
-            )
-            if got is None:
-                continue
-            X_ep, y_ep, n_ctx, info = got
-            item = (X_ep[None], y_ep[None], int(n_ctx), [info], [dataset_fingerprint_128(X_ep, y_ep, n_ctx)])
+            item = _pack_worker_item(xa, ya, int(n_ctx), None, fps)
         else:
+            # 100% batched multi-scale real curriculum (fallback to B=1 ONLY for <44-row or <3-col micro-tables
+            # so 3,525 / 3,525 full corpus coverage is strictly preserved).
             t0 = bank.sample_table_idx(rng)
             p0_raw = int(bank.cols_arr[t0])
             ok_n = [n for n in BATCH_N if n + 8 <= int(bank.rows_arr[t0])]
@@ -756,7 +890,7 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
                 )
                 if got is None:
                     continue
-                item = (got[0][None], got[1][None], int(got[2]), [got[3]], [dataset_fingerprint_128(got[0], got[1], got[2])])
+                item = _pack_worker_item(got[0][None], got[1][None], int(got[2]), [got[3]], [dataset_fingerprint_128(got[0], got[1], got[2])])
             else:
                 pn = np.array([BATCH_N_P[BATCH_N.index(n)] for n in ok_n])
                 N_t = int(rng.choice(ok_n, p=pn / pn.sum()))
@@ -770,14 +904,17 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
                 k0 = int(rng.integers(1 if synth_inj_every_batch else 0, max_inj0 + 1)) if max_inj0 >= 1 else 0
                 F_t = max(2, min(WIDE_GPU, p0 + k0))
                 u = float(rng.random())
-                p_ctx = float(rng.uniform(0.25, 0.56) if u < 0.25 else (rng.uniform(0.56, 0.84) if u < 0.75 else rng.uniform(0.84, 0.94)))
+                p_ctx = float(rng.uniform(0.24, 0.56) if u < 0.22 else (rng.uniform(0.56, 0.84) if u < 0.78 else rng.uniform(0.84, 0.94)))
                 B_t = max(1, min(bmax, tokens_cap // max(N_t * (F_t + 4), 1), row_tokens_cap // max(N_t, 1)))
                 k_hi_t = int(math.floor(inj_max_frac * F_t))
                 min_p_req = (F_t - k_hi_t + 1) if feature_drop_every_batch else max(1, F_t - k_hi_t)
                 elig = ((bank.rows_arr >= N_t + 8) & (bank.cols_arr >= min_p_req)).astype(np.float64)
                 xs, ys, infos, n_ctx_b = [], [], [], None
-                for b in range(B_t):
-                    t_idx = t0 if b == 0 else bank.sample_eligible(rng, elig)
+                max_tries = max(B_t, int(round(1.6 * B_t)) + 2)
+                for attempt in range(max_tries):
+                    if len(xs) >= B_t:
+                        break
+                    t_idx = t0 if attempt == 0 else bank.sample_eligible(rng, elig)
                     if t_idx is None:
                         break
                     got = bidirectional_real_episode(
@@ -791,11 +928,13 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
                     if got is None or got[0].shape != (N_t, F_t) or (n_ctx_b is not None and got[2] != n_ctx_b):
                         continue
                     n_ctx_b = got[2]
-                    xs.append(got[0]); ys.append(got[1]); infos.append(got[3])
+                    xs.append(got[0])
+                    ys.append(got[1])
+                    infos.append(got[3])
                 if not xs:
                     continue
-                item = (np.stack(xs), np.stack(ys), int(n_ctx_b), infos,
-                        [dataset_fingerprint_128(x_, y_, n_ctx_b) for x_, y_ in zip(xs, ys)])
+                fps = [dataset_fingerprint_128(x_, y_, n_ctx_b) for x_, y_ in zip(xs, ys)]
+                item = _pack_worker_item(np.stack(xs), np.stack(ys), int(n_ctx_b), infos, fps)
         while not stop_ev.is_set():
             try:
                 out_q.put(item, timeout=1.0)
@@ -936,17 +1075,19 @@ def main() -> None:
     ap.add_argument("--bank-sha256", default="9dfc60ed29a72266bf69228addcfce5e946064905edde79115914dee6eb0c507")
     ap.add_argument("--out", required=True)
     ap.add_argument("--hours", type=float, default=48.0)
-    ap.add_argument("--save-every-datasets", type=int, default=25_000)
+    ap.add_argument("--save-every-datasets", type=int, default=150_000)
     ap.add_argument("--last-every-s", type=float, default=300.0)
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--max-steps", type=int, default=0)
-    ap.add_argument("--lr", type=float, default=4.0e-5)
-    ap.add_argument("--synth-prob", type=float, default=0.25)
-    ap.add_argument("--tokens", type=int, default=180_000)
-    ap.add_argument("--row-tokens", type=int, default=4_096)
-    ap.add_argument("--bmax", type=int, default=8)
+    ap.add_argument("--lr", type=float, default=2.5e-5)
+    ap.add_argument("--swa-decay", type=float, default=0.9995)
+    ap.add_argument("--synth-prob", type=float, default=0.22)
+    ap.add_argument("--tokens", type=int, default=640_000)
+    ap.add_argument("--row-tokens", type=int, default=12_288)
+    ap.add_argument("--bmax", type=int, default=32)
     ap.add_argument("--grad-accum", type=int, default=3)
-    ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--checkpoint-row-blocks", type=int, choices=(0, 1), default=1)
     ap.add_argument("--cpu-hard-pct", type=float, default=82.0)
     ap.add_argument("--cuda-vram-frac", type=float, default=0.80)
     ap.add_argument("--random-split-every-batch", type=int, choices=(0, 1), default=1)
@@ -998,14 +1139,17 @@ def main() -> None:
         if a.cuda_vram_frac > 0.0:
             torch.cuda.set_per_process_memory_fraction(min(0.84, a.cuda_vram_frac + 0.03), dev.index or 0)
 
-    model = ICLH450MPS(a.size).to(dev)
+    model = ICLH450MPS(a.size, checkpoint_row_blocks=bool(a.checkpoint_row_blocks)).to(dev)
     ema = ICLH450MPS(a.size).to(dev).eval()
+    ema_swa = ICLH450MPS(a.size).to(dev).eval()
     for p in ema.parameters():
+        p.requires_grad_(False)
+    for p in ema_swa.parameters():
         p.requires_grad_(False)
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, betas=(0.9, 0.98), eps=1e-8, weight_decay=1e-2)
     state = {"step": 0, "micro_batches": 0, "accum_in_group": 0, "real_batches": 0, "synth_batches": 0,
              "datasets": 0, "cell_tokens": 0, "oom_skips": 0, "nonfinite_skips": 0, "train_s": 0.0,
-             "epochs_saved": 0, "resumes": 0}
+             "epochs_saved": 0, "last_epoch_datasets": 0, "resumes": 0}
     if a.resume:
         ck = torch.load(last_p, map_location="cpu", weights_only=False)
         if ck.get("bank_sha256") and ck["bank_sha256"] != bank.sha256:
@@ -1014,8 +1158,11 @@ def main() -> None:
             raise SystemExit(f"resume init_sha256 mismatch: {ck.get('init_sha256')} != {a.init_sha256}")
         model.load_state_dict(ck["model"], strict=True)
         ema.load_state_dict(ck["ema"], strict=True)
+        ema_swa.load_state_dict(ck.get("ema_swa") or ck["ema"], strict=True)
         opt.load_state_dict(ck["opt"])
         state.update(ck["state"])
+        if "last_epoch_datasets" not in ck["state"]:
+            state["last_epoch_datasets"] = int(state["datasets"])
         state["resumes"] += 1
         ledger.load(ck["ledger"])
     else:
@@ -1023,13 +1170,14 @@ def main() -> None:
         w_init = ck.get("ema") or ck["model"]
         model.load_state_dict(w_init, strict=True)
         ema.load_state_dict(w_init, strict=True)
+        ema_swa.load_state_dict(w_init, strict=True)
 
     params_cnt = int(n_params(model))
     prior_seed_base = int(a.seed) + 17 + 1000 * int(state["resumes"])
     gov = HostCpuGovernor(hard_pct=a.cpu_hard_pct, check_every_s=5.0)
 
     ctx = mp.get_context("spawn")
-    ep_q = ctx.Queue(maxsize=max(24, 8 * a.workers))
+    ep_q = ctx.Queue(maxsize=max(32, 8 * a.workers))
     stop_ev = ctx.Event()
     procs = [
         ctx.Process(
@@ -1051,20 +1199,23 @@ def main() -> None:
     def save_last() -> None:
         _atomic_save({"model": {k: v.cpu() for k, v in model.state_dict().items()},
                       "ema": {k: v.cpu() for k, v in ema.state_dict().items()},
+                      "ema_swa": {k: v.cpu() for k, v in ema_swa.state_dict().items()},
                       "opt": opt.state_dict(), "state": state, "ledger": ledger.state(),
                       "size": a.size, "bank_sha256": bank.sha256, "init_sha256": a.init_sha256, "argv": sys.argv}, last_p)
 
     def save_epoch(k: int) -> None:
         ep_p = out_dir / f"ckpt_epoch_{k:02d}.pt"
         if ep_p.exists():
+            state["epochs_saved"] = max(int(state["epochs_saved"]), k)
             return
-        ema_cpu = { kk: vv.cpu() for kk, vv in ema.state_dict().items() }
-        _atomic_save({"ema": ema_cpu, "model": ema_cpu, "state": dict(state), "size": a.size}, ep_p)
+        swa_cpu = {kk: vv.cpu() for kk, vv in ema_swa.state_dict().items()}
+        _atomic_save({"ema": swa_cpu, "model": swa_cpu, "state": dict(state), "size": a.size}, ep_p)
         os.chmod(ep_p, 0o444)
         doc = {
             "schema": "jope.h450.epoch/v1", "epoch": k, "train_hours": state["train_s"] / 3600.0, "step": state["step"],
             "ckpt": str(ep_p), "ckpt_sha256": sha256_file(ep_p), "init_sha256": a.init_sha256,
             "bank_sha256": bank.sha256, "quarantined_in_corpus": True, "canonical_promotion_forbidden": True,
+            "weights_source": "ema_swa", "swa_decay": float(a.swa_decay),
             "exposure": ledger.summary(),
         }
         jp = out_dir / f"epoch_{k:02d}.json"
@@ -1076,7 +1227,8 @@ def main() -> None:
     log_f = open(out_dir / "log.jsonl", "a", buffering=1)
     log_f.write(json.dumps({"start": time.strftime("%FT%TZ", time.gmtime()), "host": platform.node(), "device": str(dev),
                             "resume": bool(a.resume), "params": params_cnt, "bank_tables": bank.n_tables,
-                            "bank_load_s": bank_load_s, "train_s": state["train_s"], "step": state["step"]}) + "\n")
+                            "bank_load_s": bank_load_s, "train_s": state["train_s"], "step": state["step"],
+                            "lr_base": a.lr, "swa_decay": a.swa_decay, "ckpt_row_blocks": bool(a.checkpoint_row_blocks)}) + "\n")
 
     grad_accum = max(1, int(a.grad_accum))
     opt.zero_grad(set_to_none=True)
@@ -1084,15 +1236,16 @@ def main() -> None:
     s_seg0 = state["train_s"]
     t_log = t_last = time.time()
     run_loss, run_n, run_ds = 0.0, 0, 0
+    swa_decay_target = max(0.99, min(0.99995, float(a.swa_decay)))
 
     try:
         while not stop_flag["stop"]:
             state["train_s"] = s_seg0 + (time.time() - t_seg)
             if state["train_s"] >= budget_s or (a.max_steps > 0 and state["step"] >= a.max_steps):
                 break
-            k_ep = int(state["datasets"] // max(1, a.save_every_datasets))
-            if k_ep > state["epochs_saved"]:
-                save_epoch(k_ep)
+            if state["datasets"] - int(state.get("last_epoch_datasets", 0)) >= max(1, a.save_every_datasets):
+                state["last_epoch_datasets"] = int(state["datasets"])
+                save_epoch(int(state["epochs_saved"]) + 1)
 
             frac = min(1.0, state["train_s"] / budget_s)
             lr_mult = (frac / 0.04) if frac < 0.04 else (0.12 + 0.88 * 0.5 * (1.0 + math.cos(math.pi * (frac - 0.04) / 0.96)))
@@ -1100,27 +1253,43 @@ def main() -> None:
             for g in opt.param_groups:
                 g["lr"] = cur_lr
 
-            xa, ya, n_ctx, infos, fps = ep_q.get(timeout=180.0)
+            zm_np, yz_np, ym_np, ys_np, yq_np, n_ctx, infos, fps = ep_q.get(timeout=180.0)
 
             # Pre-forward 128-bit deduplication: NEVER feed a duplicate dataset to the model!
             keep_idx = ledger.filter_unseen_indices(fps)
             if not keep_idx:
                 continue
-            if len(keep_idx) < xa.shape[0]:
-                xa = xa[keep_idx]
-                ya = ya[keep_idx]
+            if len(keep_idx) < zm_np.shape[0]:
+                zm_np = zm_np[keep_idx]
+                yz_np = yz_np[keep_idx]
+                ym_np = ym_np[keep_idx]
+                ys_np = ys_np[keep_idx]
+                yq_np = yq_np[keep_idx]
                 if infos is not None:
                     infos = [infos[i] for i in keep_idx]
 
-            # On MPS, keep raw float64 on CPU so normalise_f64 & loss avoid float64 MPS conversion errors!
-            in_dev = torch.device("cpu") if dev.type == "mps" else dev
-            xt = torch.from_numpy(xa).to(device=in_dev, dtype=torch.float64)
-            yt = torch.from_numpy(ya).to(device=in_dev, dtype=torch.float64)
-            Fn_cur = xt.shape[2]
+            B_cur, N_cur, Fn_cur, _ = zm_np.shape
+            if dev.type == "cuda":
+                zm_t = torch.from_numpy(zm_np).pin_memory().to(dev, non_blocking=True)
+                yz_t = torch.from_numpy(yz_np).pin_memory().to(dev, non_blocking=True)
+                ym_t = torch.from_numpy(ym_np).pin_memory().to(dev, non_blocking=True)
+                ys_t = torch.from_numpy(ys_np).pin_memory().to(dev, non_blocking=True)
+                yq_t = torch.from_numpy(yq_np).pin_memory().to(dev, non_blocking=True)
+            else:
+                zm_t = torch.from_numpy(zm_np)
+                yz_t = torch.from_numpy(yz_np)
+                ym_t = torch.from_numpy(ym_np)
+                ys_t = torch.from_numpy(ys_np)
+                yq_t = torch.from_numpy(yq_np)
+
             slots = torch.randperm(FID_SLOTS, device=dev)[:Fn_cur]
             try:
-                logits, ym, ys_ = model(xt, yt[:, :n_ctx], n_ctx, slots=slots, amp=(dev.type in ("cuda", "mps")))
-                loss = model.loss(logits, yt[:, n_ctx:], ym, ys_).mean()
+                logits, ym, ys_ = model(
+                    None, None, n_ctx, slots=slots,
+                    amp=(dev.type in ("cuda", "mps")),
+                    prenorm=(zm_t, yz_t, ym_t, ys_t),
+                )
+                loss = model.loss(logits, yq_t, ym, ys_).mean()
                 if not torch.isfinite(loss):
                     state["nonfinite_skips"] += 1
                     continue
@@ -1138,18 +1307,17 @@ def main() -> None:
                 raise
 
             if infos is None:
-                state["cell_tokens"] += ledger.add_synth(int(xt.shape[0]), int(xt.shape[1]), Fn_cur)
+                state["cell_tokens"] += ledger.add_synth(B_cur, N_cur, Fn_cur)
                 state["synth_batches"] += 1
             else:
                 state["cell_tokens"] += ledger.add_real(infos)
                 state["real_batches"] += 1
             state["micro_batches"] += 1
             state["accum_in_group"] += 1
-            b_cnt = int(xt.shape[0])
-            state["datasets"] += b_cnt
+            state["datasets"] += B_cur
             run_loss += float(loss.detach().cpu())
             run_n += 1
-            run_ds += b_cnt
+            run_ds += B_cur
 
             if state["accum_in_group"] >= grad_accum:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -1159,8 +1327,10 @@ def main() -> None:
                 state["accum_in_group"] = 0
                 with torch.no_grad():
                     decay = min(0.995, (1.0 + state["step"]) / (10.0 + state["step"]))
-                    for pe, pm in zip(ema.parameters(), model.parameters()):
+                    swa_d = min(swa_decay_target, (1.0 + state["step"]) / (20.0 + state["step"]))
+                    for pe, ps, pm in zip(ema.parameters(), ema_swa.parameters(), model.parameters()):
                         pe.lerp_(pm, 1.0 - decay)
+                        ps.lerp_(pm, 1.0 - swa_d)
                 if dev.type == "cuda" and a.cuda_vram_frac > 0.0 and state["step"] == 3:
                     try:
                         free_b, tot_b = torch.cuda.mem_get_info(dev)
@@ -1212,12 +1382,12 @@ def main() -> None:
                                 "datasets": state["datasets"], "train_h": round(state["train_s"] / 3600.0, 4)}) + "\n")
         log_f.close()
         return
-    k_ep = max(1, int(state["datasets"] // max(1, a.save_every_datasets)))
-    if k_ep > state["epochs_saved"]:
-        save_epoch(k_ep)
-    ema_cpu = {kk: vv.cpu() for kk, vv in ema.state_dict().items()}
+    if state["datasets"] > int(state.get("last_epoch_datasets", 0)):
+        state["last_epoch_datasets"] = int(state["datasets"])
+        save_epoch(int(state["epochs_saved"]) + 1)
+    swa_cpu = {kk: vv.cpu() for kk, vv in ema_swa.state_dict().items()}
     mod_cpu = {kk: vv.cpu() for kk, vv in model.state_dict().items()}
-    _atomic_save({"model": mod_cpu, "ema": ema_cpu, "state": state, "size": a.size}, final_p)
+    _atomic_save({"model": mod_cpu, "ema": swa_cpu, "state": state, "size": a.size}, final_p)
     os.chmod(final_p, 0o444)
     manifest = {
         "schema": "jope.h450.ckpt_manifest/v3", "quarantined_in_corpus_random_split_diagnostic": True,

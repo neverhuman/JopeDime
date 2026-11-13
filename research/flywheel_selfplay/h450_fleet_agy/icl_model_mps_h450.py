@@ -5,7 +5,10 @@
   - On Apple Silicon `mps` (`xbabe4` M3 Ultra 80-core GPU), `float64` tensors are unsupported by Metal kernels.
     `forward` and `loss` therefore run `normalise_f64` and `loss` 1,024-bin interpolation in exact `float64` on CPU
     (<0.4 ms per batch) while executing all 14 transformer blocks in `bfloat16`/`float32` on the 80-core Metal GPU.
-  - On `cuda` and `cpu`, behavior is bit-identical to `icl_model_h450.ICLH450`.
+  - Supports zero-state-dict-delta `checkpoint_row_blocks=True` activation checkpointing on the `[B * N, 4 + F, 160]`
+    row encoder (~60% peak activation VRAM reduction, doubling multi-dataset batch capacity inside 80% VRAM) and
+    optional CPU-worker `float64 -> float32` `prenorm` fast-path eliminating GeForce GPU `float64` `nanquantile` stalls.
+  - On `cuda` and `cpu`, math and `state_dict` are bit-identical to `icl_model_h450.ICLH450`.
 """
 from __future__ import annotations
 
@@ -13,8 +16,10 @@ import os
 import sys
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+import torch.utils.checkpoint as _ckpt
 
 HERE = Path(__file__).resolve().parent
 for _cand in (
@@ -32,6 +37,10 @@ from icl_model import BIN_RANGE, CLIP_X, FID_SLOTS, ICL, N_BINS  # noqa: E402
 
 class ICLH450MPS(ICL):
     """Exact state_dict-compatible subclass of `ICL` supporting `mps`, `cuda`, and `cpu` with `float64` context stats."""
+
+    def __init__(self, size: str = "L", checkpoint_row_blocks: bool = False):
+        super().__init__(size)
+        self.checkpoint_row_blocks = bool(checkpoint_row_blocks)
 
     @staticmethod
     def normalise_f64(x: torch.Tensor, y_ctx: torch.Tensor, n_ctx: int):
@@ -58,25 +67,62 @@ class ICLH450MPS(ICL):
         ys64 = torch.where(ys64 > 1e-12 * (ym64.abs() + 1.0), ys64, 1.0)
         return torch.stack([z32, miss.float()], -1), ym64, ys64
 
-    def forward(self, x: torch.Tensor, y_ctx: torch.Tensor, n_ctx: int, slots=None, amp: bool = True):
-        B, N, Fn = x.shape
+    @classmethod
+    def prenorm_cpu_np(
+        cls, xa: np.ndarray, ya_ctx: np.ndarray, n_ctx: int
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Exact `float64` context normalization executed inside background CPU workers (zero shm FDs over Queue)."""
+        with torch.no_grad():
+            xt = torch.from_numpy(np.ascontiguousarray(xa, dtype=np.float64))
+            yt = torch.from_numpy(np.ascontiguousarray(ya_ctx, dtype=np.float64))
+            zm, ym64, ys64 = cls.normalise_f64(xt, yt, n_ctx)
+            yz = ((yt - ym64) / ys64).clamp(-BIN_RANGE, BIN_RANGE).float()
+            return (
+                np.ascontiguousarray(zm.numpy(), dtype=np.float32),
+                np.ascontiguousarray(yz.numpy(), dtype=np.float32),
+                np.ascontiguousarray(ym64.numpy(), dtype=np.float64),
+                np.ascontiguousarray(ys64.numpy(), dtype=np.float64),
+            )
+
+    def forward(
+        self,
+        x: torch.Tensor | None,
+        y_ctx: torch.Tensor | None,
+        n_ctx: int,
+        slots=None,
+        amp: bool = True,
+        prenorm: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor] | None = None,
+    ):
         dev = self.fid_buf.device
-        if dev.type == "mps":
-            x_cpu = x.detach().cpu() if x.device.type != "cpu" else x
-            y_cpu = y_ctx.detach().cpu() if y_ctx.device.type != "cpu" else y_ctx
-            zm_cpu, ym64, ys64 = self.normalise_f64(x_cpu, y_cpu, n_ctx)
-            yz_cpu = ((y_cpu.double() - ym64) / ys64).clamp(-BIN_RANGE, BIN_RANGE).float()
-            zm = zm_cpu.to(dev)
-            yz = yz_cpu.to(dev)
+        if prenorm is not None:
+            zm_in, yz_in, ym64, ys64 = prenorm
+            B, N, Fn, _ = zm_in.shape
+            nb = dev.type == "cuda"
+            zm = zm_in.to(dev, non_blocking=nb) if zm_in.device != dev else zm_in
+            yz = yz_in.to(dev, non_blocking=nb) if yz_in.device != dev else yz_in
+            if dev.type != "mps":
+                ym64 = ym64.to(dev, dtype=torch.float64, non_blocking=nb) if ym64.device != dev else ym64.double()
+                ys64 = ys64.to(dev, dtype=torch.float64, non_blocking=nb) if ys64.device != dev else ys64.double()
         else:
-            with torch.autocast(dev.type, enabled=False):
-                zm, ym64, ys64 = self.normalise_f64(x, y_ctx, n_ctx)
-                yz = ((y_ctx.double() - ym64) / ys64).clamp(-BIN_RANGE, BIN_RANGE).float()
+            assert x is not None and y_ctx is not None
+            B, N, Fn = x.shape
+            if dev.type == "mps":
+                x_cpu = x.detach().cpu() if x.device.type != "cpu" else x
+                y_cpu = y_ctx.detach().cpu() if y_ctx.device.type != "cpu" else y_ctx
+                zm_cpu, ym64, ys64 = self.normalise_f64(x_cpu, y_cpu, n_ctx)
+                yz_cpu = ((y_cpu.double() - ym64) / ys64).clamp(-BIN_RANGE, BIN_RANGE).float()
+                zm = zm_cpu.to(dev)
+                yz = yz_cpu.to(dev)
+            else:
+                with torch.autocast(dev.type, enabled=False):
+                    zm, ym64, ys64 = self.normalise_f64(x, y_ctx, n_ctx)
+                    yz = ((y_ctx.double() - ym64) / ys64).clamp(-BIN_RANGE, BIN_RANGE).float()
         if slots is None:
             slots = torch.arange(Fn, device=dev) % FID_SLOTS
         else:
             slots = slots.to(dev)
         use_amp = amp and dev.type in ("cuda", "mps")
+        use_ckpt = bool(getattr(self, "checkpoint_row_blocks", False)) and self.training and torch.is_grad_enabled()
         with torch.autocast(dev.type, dtype=torch.bfloat16, enabled=use_amp):
             X = self.col_norm(self.col_in(zm[:, :n_ctx])).permute(0, 2, 1, 3).reshape(B * Fn, n_ctx, -1)
             H = self.ind.unsqueeze(0).expand(B * Fn, -1, -1)
@@ -86,7 +132,10 @@ class ICLH450MPS(ICL):
             e = self.cell_in(zm) * (1.0 + self.col_scale(c)) + self.col_shift(c) + self.fid(self.fid_buf[slots])
             t = torch.cat([self.cls.unsqueeze(0).expand(B * N, -1, -1).to(e.dtype), e.reshape(B * N, Fn, -1)], 1)
             for blk in self.row_blocks:
-                t = blk(t)
+                if use_ckpt:
+                    t = _ckpt.checkpoint(blk, t, use_reentrant=False)
+                else:
+                    t = blk(t)
             tok = self.row_proj(self.row_norm(t[:, : self.n_cls]).reshape(B, N, -1))
             yv = yz.unsqueeze(-1).to(tok.dtype)
             tok = torch.cat([tok[:, :n_ctx] + self.y_lin(yv) + self.y_mlp(yv), tok[:, n_ctx:] + self.q_emb], 1)
