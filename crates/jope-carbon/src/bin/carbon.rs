@@ -16,7 +16,8 @@ use jope_api::{carbon::CarbonTierWire, Effort};
 use jope_carbon::{
     evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token,
     execute_carbon_cli_run_with_ux, execute_carbon_deploy, execute_carbon_package,
-    execute_carbon_redteam_suite, execute_carbon_rollback_multi, generate_public_clouds_manifest,
+    execute_carbon_redteam_suite, execute_carbon_rollback_multi, execute_carbon_spec_report,
+    execute_carbon_spec_verify, generate_nonlinear_benchmark_rows, generate_public_clouds_manifest,
     list_stored_cloud_tokens, load_stored_cloud_token, mint_capability_token_from_vault,
     now_epoch_ms, open_eval_invoker, open_remote_cas, plan_carbon_execution,
     remove_stored_cloud_token, render_benchmark_markdown, render_redteam_markdown,
@@ -26,8 +27,9 @@ use jope_carbon::{
     CarbonEffortTier, CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker,
     CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions,
     CarbonLocalLambdaEmulator, CarbonPackageOptions, CarbonPlanInput, CarbonProbedEndpoint,
-    CarbonProductTier, CarbonRole, CarbonSealKey, CarbonThinClient, MonthlyWindowMetrics,
-    SpotAdvisorThresholds, DEFAULT_PUBLIC_CLOUDS_URL, FALLBACK_PUBLIC_CLOUDS_URL,
+    CarbonProductTier, CarbonRole, CarbonSealKey, CarbonSpecReportOptions, CarbonSpecVerifyOptions,
+    CarbonThinClient, MonthlyWindowMetrics, SpotAdvisorThresholds, DEFAULT_PUBLIC_CLOUDS_URL,
+    FALLBACK_PUBLIC_CLOUDS_URL,
 };
 
 #[derive(Debug, Parser)]
@@ -405,6 +407,63 @@ enum Command {
         work_dir: PathBuf,
         #[arg(long)]
         self_test: bool,
+    },
+    /// Generate a sample CSV and/or run a 1-command zero-knowledge E2E live demo (`CUEN\x01` + `r882` + `/predict` + `--shred`).
+    Quickstart {
+        /// Optional path to write the generated 240-row x 6-feature nonlinear CSV (`feat_1..feat_6,target`).
+        #[arg(long)]
+        emit_csv: Option<PathBuf>,
+        /// Only write `--emit-csv` and exit without running a cloud job.
+        #[arg(long, requires = "emit_csv")]
+        csv_only: bool,
+        /// Named public Carbon cloud (`prod` or `dev`, defaults to `prod`).
+        #[arg(long, default_value = "prod")]
+        cloud: String,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
+        /// Optional explicit endpoint URL(s) overriding `--cloud`.
+        #[arg(long, value_delimiter = ',')]
+        endpoint: Vec<String>,
+        /// Search effort (`fast` or `medium` on Free; up to `ultra` when logged into Pro).
+        #[arg(long, default_value = "fast")]
+        effort: String,
+        /// Keep remote encrypted run artifacts instead of cryptographically shredding upon completion.
+        #[arg(long)]
+        no_shred: bool,
+        /// Suppress interactive step-by-step walkthrough lines on stderr.
+        #[arg(long)]
+        quiet: bool,
+    },
+    /// Generate the publication-grade Carbon engineering & testing specification HTML + CI quickstart receipts.
+    SpecReport {
+        /// Directory holding SHA-256-verified qualification receipts (`docs/carbon/evidence`).
+        #[arg(long, default_value = "docs/carbon/evidence")]
+        evidence_dir: PathBuf,
+        /// Output directory for `carbon-engineering-testing-spec.html`, screenshots, and manifests.
+        #[arg(long)]
+        out_dir: PathBuf,
+        /// Execute the live 8-suite exact-HEAD CI install, multi-region emulator, quickstart & redteam qualification.
+        #[arg(long)]
+        run_ci_qualification: bool,
+        /// Optional pre-existing `ci-quickstart-qualification.json` when `--run-ci-qualification` is false.
+        #[arg(long)]
+        ci_qualification_in: Option<PathBuf>,
+        /// Optional explicit Git source SHA to bind into the specification receipt.
+        #[arg(long)]
+        source_sha: Option<String>,
+        /// Repository root containing `deploy/carbon/install.sh` (defaults to `.`).
+        #[arg(long, default_value = ".")]
+        repo_root: PathBuf,
+    },
+    /// Cryptographically verify `carbon-engineering-testing-spec.pdf`, all 8 PNG screenshots, and receipts.
+    SpecVerify {
+        /// Directory containing `spec-pdf-receipt.json`, `carbon-engineering-testing-spec.pdf`, and `screenshots/`.
+        #[arg(long)]
+        dir: PathBuf,
+        /// Optional expected Git source SHA (`JOPE_SOURCE_SHA` in CI `aggregate`).
+        #[arg(long)]
+        expected_source_sha: Option<String>,
     },
     /// Run the sealed `carbon engine` AWS Lambda Custom Runtime (`2018-06-01`) worker loop.
     Engine {
@@ -1203,6 +1262,165 @@ fn run_emu_self_test(work_dir: PathBuf) -> Result<(), String> {
         })
     );
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_quickstart_command(
+    emit_csv: Option<PathBuf>,
+    csv_only: bool,
+    cloud: String,
+    clouds_manifest: Option<String>,
+    endpoint: Vec<String>,
+    effort_raw: &str,
+    no_shred: bool,
+    quiet: bool,
+) -> ExitCode {
+    let effort_val = match parse_api_effort(effort_raw) {
+        Ok(e) => e,
+        Err(msg) => {
+            eprintln!("error: {msg}");
+            return ExitCode::from(2);
+        }
+    };
+
+    if let Some(csv_out) = &emit_csv {
+        let (_, rows, _) = generate_nonlinear_benchmark_rows(240, 6, 42);
+        let mut buf = String::with_capacity(16 * 1024);
+        buf.push_str("feat_1,feat_2,feat_3,feat_4,feat_5,feat_6,target\n");
+        for r in &rows {
+            for (idx, val) in r.iter().enumerate() {
+                if idx > 0 {
+                    buf.push(',');
+                }
+                buf.push_str(&format!("{val:.6}"));
+            }
+            buf.push('\n');
+        }
+        if let Some(parent) = csv_out.parent() {
+            if !parent.as_os_str().is_empty() {
+                let _ = fs::create_dir_all(parent);
+            }
+        }
+        if let Err(err) = fs::write(csv_out, buf.as_bytes()) {
+            eprintln!("error: write sample CSV {}: {err}", csv_out.display());
+            return ExitCode::from(1);
+        }
+        if !quiet {
+            eprintln!(
+                "[quickstart] Wrote 240-row x 6-feature sample CSV -> {} (target column: 'target')",
+                csv_out.display()
+            );
+        }
+        if csv_only {
+            println!(
+                "{}",
+                serde_json::json!({
+                    "written_csv": csv_out,
+                    "rows": 240,
+                    "features": 6,
+                    "target_column": "target",
+                })
+            );
+            return ExitCode::SUCCESS;
+        }
+    }
+
+    let cloud_opt = if endpoint.is_empty() {
+        Some(cloud)
+    } else {
+        None
+    };
+    let resolved = match resolve_cli_target_and_auth(
+        endpoint,
+        cloud_opt,
+        clouds_manifest.as_deref(),
+        None,
+        "us-east-2",
+        None,
+        None,
+        "quickstart_user",
+        None,
+        None,
+        CarbonTierWire::Free,
+    ) {
+        Ok(r) => r,
+        Err((code, msg)) => {
+            eprintln!("error: {msg}");
+            return code;
+        }
+    };
+
+    if !quiet {
+        eprintln!(
+            "[quickstart] Carbon {} — Zero-Knowledge E2E Walkthrough",
+            env!("CARGO_PKG_VERSION"),
+        );
+        eprintln!(
+            "[quickstart] Step 1/4: Connected to fastest regional edge '{}' ({:.1} ms RTT, P-256 KEK verified)",
+            resolved.first_probe.region, resolved.first_probe.rtt_ms
+        );
+        eprintln!(
+            "[quickstart] Step 2/4: Conditioning & encrypting 240x6 tabular dataset client-side (CUEN v1 + CUDK v1)..."
+        );
+    }
+
+    let opts = CarbonCliRunOptions {
+        endpoints: resolved.endpoints,
+        csv_path: emit_csv.clone(),
+        target_column: if emit_csv.is_some() {
+            "target".to_owned()
+        } else {
+            "y".to_owned()
+        },
+        synthetic_rows: 240,
+        synthetic_features: 6,
+        tenant_id: resolved.tenant_id,
+        tier: resolved.tier,
+        effort: effort_val,
+        objective: "rmse".to_owned(),
+        seed: 42,
+        holdout_fraction: 0.20,
+        stop_after_ms: None,
+        resume_after_stop: false,
+        predict_rows: 5,
+        auth_token: resolved.auth_token,
+        shred_after_run: !no_shred,
+    };
+    let ux = CarbonCliRunUxConfig {
+        pinned_keks: resolved.pinned_keks,
+        pre_probed: Some((resolved.probed_client, resolved.first_probe)),
+        target_was_explicit: emit_csv.is_some(),
+        show_stderr_progress: !quiet,
+    };
+
+    match execute_carbon_cli_run_with_ux(&opts, &ux) {
+        Ok(receipt) => {
+            if !quiet {
+                eprintln!(
+                    "[quickstart] Step 3/4: Holdout R^2 = {:.4} | 5 encrypted /predict rows decrypted locally",
+                    receipt.holdout_r2.unwrap_or(0.0)
+                );
+                eprintln!(
+                    "[quickstart] Step 4/4: Remote S3/CAS blobs cryptographically shredded = {} | Next: `carbon register --free`",
+                    receipt.shredded_after_run
+                );
+            }
+            match serde_json::to_string_pretty(&receipt) {
+                Ok(s) => {
+                    println!("{s}");
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: serialize receipt: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Err(err) => {
+            eprintln!("error: carbon quickstart failed: {err}");
+            ExitCode::from(1)
+        }
+    }
 }
 
 fn resolve_lambda_runtime_api() -> (Result<String, env::VarError>, bool) {
@@ -2138,6 +2356,82 @@ fn main() -> ExitCode {
                 ExitCode::from(2)
             }
         }
+        Command::Quickstart {
+            emit_csv,
+            csv_only,
+            cloud,
+            clouds_manifest,
+            endpoint,
+            effort,
+            no_shred,
+            quiet,
+        } => run_quickstart_command(
+            emit_csv,
+            csv_only,
+            cloud,
+            clouds_manifest,
+            endpoint,
+            &effort,
+            no_shred,
+            quiet,
+        ),
+        Command::SpecReport {
+            evidence_dir,
+            out_dir,
+            run_ci_qualification,
+            ci_qualification_in,
+            source_sha,
+            repo_root,
+        } => match execute_carbon_spec_report(&CarbonSpecReportOptions {
+            evidence_dir,
+            out_dir,
+            run_ci_qualification,
+            ci_qualification_in,
+            source_sha,
+            repo_root,
+        }) {
+            Ok(html_path) => {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "status": "ok",
+                        "html_path": html_path,
+                    })
+                );
+                ExitCode::SUCCESS
+            }
+            Err(err) => {
+                eprintln!("error: carbon spec-report failed: {err}");
+                ExitCode::from(1)
+            }
+        },
+        Command::SpecVerify {
+            dir,
+            expected_source_sha,
+        } => match execute_carbon_spec_verify(&CarbonSpecVerifyOptions {
+            dir,
+            expected_source_sha,
+        }) {
+            Ok(receipt) => {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "status": "verified",
+                        "pdf_file": receipt.pdf_file,
+                        "pdf_bytes": receipt.pdf_bytes,
+                        "pdf_sha256": receipt.pdf_sha256,
+                        "pdf_page_count": receipt.pdf_page_count,
+                        "screenshots_verified": receipt.screenshots.len(),
+                        "source_sha": receipt.source_sha,
+                    })
+                );
+                ExitCode::SUCCESS
+            }
+            Err(err) => {
+                eprintln!("error: carbon spec-verify failed: {err}");
+                ExitCode::from(1)
+            }
+        },
         Command::Engine { work_dir } => {
             let (Ok(runtime_api), is_aws_prod) = resolve_lambda_runtime_api() else {
                 eprintln!("error: AWS_LAMBDA_RUNTIME_API or LAMBDA_RUNTIME_API is required for `carbon engine`");

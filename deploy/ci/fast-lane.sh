@@ -284,7 +284,7 @@ set -euo pipefail
 # Asserted, not printed. e2e-smoke.sh compiles the emitted C++ and runs the emitted
 # JavaScript and Python, so a missing toolchain here is an image defect, not a code
 # failure, and should say so rather than surfacing as a confusing script error.
-for tool in gcc clang g++ clang++ node python3 rustc cargo; do
+for tool in gcc clang g++ clang++ node npm npx python3 rustc cargo; do
   command -v "$tool" >/dev/null || { echo "runner image is missing $tool" >&2; exit 1; }
   printf '%-10s %s\n' "$tool" "$("$tool" --version | head -1)"
 done
@@ -305,6 +305,37 @@ rm -r -- "$appliance_work"
     # Carbon zero-knowledge serverless CLI E2E: signed install.sh, Free register/login/whoami/logout,
     # CarbonLocalLambdaEmulator multi-cell runtime, all 4 efforts (fast/medium/high/ultra), and USD cost receipt.
 cargo test --locked -p jope-carbon --test carbon_e2e
+    # Carbon full engineering & testing specification PDF + 8 2x Retina screenshots + live CI quickstart suite:
+spec_source_sha="${JOPE_SOURCE_SHA:-$(git rev-parse HEAD)}"
+spec_dir="$EVIDENCE/carbon-spec"
+mkdir -p "$spec_dir"
+spec_dir_abs=$(realpath "$spec_dir")
+cargo run --locked -p jope-carbon --bin carbon -- spec-report \
+  --run-ci-qualification \
+  --evidence-dir docs/carbon/evidence \
+  --source-sha "$spec_source_sha" \
+  --out-dir "$spec_dir_abs"
+spec_ui_work="$appliance_target/carbon-spec-ui/${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
+mkdir -p "$spec_ui_work/scripts"
+cp -- web/training-dashboard/package.json web/training-dashboard/package-lock.json "$spec_ui_work/"
+cp -- web/training-dashboard/scripts/render-carbon-spec-pdf.mjs "$spec_ui_work/scripts/"
+native_receipt="$spec_dir_abs/browser-dependencies.json"
+runtime=$(python3 deploy/ci/browser-deps.py --cache "$appliance_target/tool-cache/chromium-dependencies" --receipt "$native_receipt")
+fontconfig_file=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["fontconfig"])' "$native_receipt")
+(
+  cd "$spec_ui_work"
+  export PLAYWRIGHT_BROWSERS_PATH="$appliance_target/browser-cache/playwright"
+  export PLAYWRIGHT_SKIP_BROWSER_GC=1
+  export LD_LIBRARY_PATH="$runtime/usr/lib/x86_64-linux-gnu:$runtime/lib/x86_64-linux-gnu:$runtime/usr/lib:$runtime/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+  export FONTCONFIG_FILE="$fontconfig_file"
+  npm ci --no-audit --no-fund
+  npx playwright install --only-shell chromium
+  node scripts/render-carbon-spec-pdf.mjs --spec-dir "$spec_dir_abs"
+)
+rm -r -- "$spec_ui_work"
+cargo run --locked -p jope-carbon --bin carbon -- spec-verify \
+  --dir "$spec_dir_abs" \
+  --expected-source-sha "$spec_source_sha"
     ;;
   *) echo "unknown CI lane: $1" >&2; exit 2 ;;
 esac

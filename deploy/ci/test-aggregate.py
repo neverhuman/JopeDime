@@ -56,6 +56,15 @@ class BrowserRoutingTests(unittest.TestCase):
         self.assertFalse(lanes['hygiene'])
         self.assertTrue(all(selected for name, selected in lanes.items() if name != 'hygiene'))
 
+    def test_carbon_spec_and_evidence_paths_require_e2e_and_rust_gates(self):
+        for path in ('docs/carbon/evidence/cost-breakdown-v100.json',
+                     'web/training-dashboard/scripts/render-carbon-spec-pdf.mjs'):
+            with self.subTest(path=path):
+                lanes, gates = aggregate.plan_module.classify([path], 'pull_request')
+                self.assertTrue(gates['e2e'])
+                self.assertTrue(gates['rust'])
+                self.assertTrue(lanes['e2e-smoke'])
+
 
 class AggregateTests(unittest.TestCase):
     def setUp(self):

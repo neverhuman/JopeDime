@@ -1,0 +1,92 @@
+{
+  "schema": "jope.carbon.s3-zero-local-storage-proof/v1",
+  "release_version": "1.0.0",
+  "release_tag": "carbon-cli-v1.0.0",
+  "timestamp_epoch_ms": 1794569623324,
+  "wall_ms": 68280.49,
+  "verified": true,
+  "all_checks_passed": true,
+  "bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
+  "atomicsoul_storage_dependency": false,
+  "buckets_verified": 6,
+  "bucket_posture": [
+    {
+      "environment": "dev",
+      "region": "us-east-2",
+      "bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
+      "sse_algorithm": "AES256",
+      "public_access_blocked": true,
+      "verified": true
+    },
+    {
+      "environment": "prod",
+      "region": "us-east-2",
+      "bucket": "jopedime-carbon-prod-cas-714044927654-us-east-2",
+      "sse_algorithm": "AES256",
+      "public_access_blocked": true,
+      "verified": true
+    },
+    {
+      "environment": "prod",
+      "region": "us-east-1",
+      "bucket": "jopedime-carbon-prod-cas-714044927654-us-east-1",
+      "sse_algorithm": "AES256",
+      "public_access_blocked": true,
+      "verified": true
+    },
+    {
+      "environment": "prod",
+      "region": "us-west-2",
+      "bucket": "jopedime-carbon-prod-cas-714044927654-us-west-2",
+      "sse_algorithm": "AES256",
+      "public_access_blocked": true,
+      "verified": true
+    },
+    {
+      "environment": "prod",
+      "region": "eu-central-1",
+      "bucket": "jopedime-carbon-prod-cas-714044927654-eu-central-1",
+      "sse_algorithm": "AES256",
+      "public_access_blocked": true,
+      "verified": true
+    },
+    {
+      "environment": "prod",
+      "region": "eu-west-1",
+      "bucket": "jopedime-carbon-prod-cas-714044927654-eu-west-1",
+      "sse_algorithm": "AES256",
+      "public_access_blocked": true,
+      "verified": true
+    }
+  ],
+  "lambda_cell_check": {
+    "bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
+    "fit_s3_key": "cell-v1/blobs/5819d1d6eaaf9418e974bc59975d17ae082654151b86dfc6415923415df52a83",
+    "storage_backend_reported": "aws_s3",
+    "no_wrapped_udek_at_rest": true,
+    "fit_blob_s3_sse": "AES256",
+    "ciphertext_magic_hex": "4355454e01",
+    "holdout_blob_magic_hex": "4355454e01",
+    "champion_state_magic_hex": "43434b5002",
+    "post_shred_s3_status": 404,
+    "post_shred_fit_blob_exists": false,
+    "post_shred_holdout_blob_exists": false,
+    "post_shred_champion_state_exists": false,
+    "verified": true
+  },
+  "carbon_serve_s3_check": {
+    "cas_url": "s3://jopedime-carbon-dev-cas-714044927654-us-east-2/serve-qual-v100-1794569603",
+    "cas_url_scheme": "s3",
+    "bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
+    "ping_storage_backend": "aws_s3",
+    "local_cas_files_created": 0,
+    "s3_objects_during_run": 3,
+    "s3_objects_after_shred": 0,
+    "s3_fit_blob_verified_during_run": true,
+    "s3_fit_blob_sse": "AES256",
+    "s3_fit_blob_magic_hex": "4355454e01",
+    "s3_champion_state_verified_during_run": true,
+    "post_shred_s3_fit_blob_exists": false,
+    "verified": true
+  }
+}

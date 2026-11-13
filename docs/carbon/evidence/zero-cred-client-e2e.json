@@ -1,0 +1,158 @@
+{
+  "schema": "jopedime.carbon.zero-cred-client-e2e.v1",
+  "all_passed": true,
+  "environments_tested": [
+    "Ubuntu 24.04 LTS (glibc x86_64, zero AWS/GitHub credentials)",
+    "Alpine Linux 3.20 (musl x86_64, zero AWS/GitHub credentials)"
+  ],
+  "total_scenarios": 12,
+  "passed_scenarios": 12,
+  "portability": {
+    "regions_verified": 5,
+    "runs": [
+      {
+        "region": "us-east-2",
+        "public_endpoint": "https://nefrh1y6mk.execute-api.us-east-2.amazonaws.com",
+        "ping_rtt_ms": 103.95,
+        "wall_ms": 8973.71,
+        "run_id": "run_01M78DJQN068CKQDVTN4DN5E3M",
+        "holdout_r2": 0.999988,
+        "holdout_rmse": 0.033031,
+        "usd": 0.0003496454409791667
+      },
+      {
+        "region": "us-east-1",
+        "public_endpoint": "https://2g7g0fmru9.execute-api.us-east-1.amazonaws.com",
+        "ping_rtt_ms": 106.35,
+        "wall_ms": 12318.7,
+        "run_id": "run_01M78DK0EM9MERQ369PHF4WGBT",
+        "holdout_r2": 0.999988,
+        "holdout_rmse": 0.033031,
+        "usd": 0.00047614648685416673
+      },
+      {
+        "region": "us-west-2",
+        "public_endpoint": "https://8qfcp10skl.execute-api.us-west-2.amazonaws.com",
+        "ping_rtt_ms": 52.66,
+        "wall_ms": 8513.69,
+        "run_id": "run_01M78DKC4QJHYG5JZMHX96SG84",
+        "holdout_r2": 0.999988,
+        "holdout_rmse": 0.033031,
+        "usd": 0.00033996654594166674
+      },
+      {
+        "region": "eu-central-1",
+        "public_endpoint": "https://en4v5e1clb.execute-api.eu-central-1.amazonaws.com",
+        "ping_rtt_ms": 174.36,
+        "wall_ms": 11008.73,
+        "run_id": "run_01M78DKNGDWZB0KP7DCAN9KN22",
+        "holdout_r2": 0.999988,
+        "holdout_rmse": 0.033031,
+        "usd": 0.00039550560696666675
+      },
+      {
+        "region": "eu-west-1",
+        "public_endpoint": "https://rm9fr5v1n6.execute-api.eu-west-1.amazonaws.com",
+        "ping_rtt_ms": 178.28,
+        "wall_ms": 13212.3,
+        "run_id": "run_01M78DM0DK4N9GBT831HE47CR4",
+        "holdout_r2": 0.999988,
+        "holdout_rmse": 0.033031,
+        "usd": 0.00047376162824166665
+      }
+    ]
+  },
+  "failover_run": {
+    "dead_primary": "https://127.0.0.1:9",
+    "selected_region": "us-east-2",
+    "wall_ms": 8096.14,
+    "holdout_r2": 0.999988,
+    "estimated_usd": 0.000329
+  },
+  "scenarios": [
+    {
+      "id": "CL-01",
+      "env": "Ubuntu 24.04",
+      "title": "Signed `install.sh` one-line HTTPS install + ECDSA-P256 `SHA256SUMS.txt.sig` verification",
+      "passed": true,
+      "detail": "Static musl binary + carbon-clouds.json installed with 0700 config dir"
+    },
+    {
+      "id": "CL-02",
+      "env": "Alpine 3.20",
+      "title": "Clean `musl` container `install.sh` + Free registration + encrypted `prod` `fast` run",
+      "passed": true,
+      "detail": "8,031.7 ms E2E wall | Holdout R\u00b2 = 0.999988 | $0.000331 USD | shredded=true"
+    },
+    {
+      "id": "CL-03",
+      "env": "Ubuntu 24.04",
+      "title": "Self-serve `carbon register --free` on `prod` & `dev` (0600 `carbon-credentials.json`)",
+      "passed": true,
+      "detail": "Registered tenant free_docker_prod_53jnpyqamm4t (30-day TTL)"
+    },
+    {
+      "id": "CL-04",
+      "env": "Ubuntu 24.04",
+      "title": "Free-tier `fast` (1 wave) & `medium` (4 waves) encrypted `CUEN\\x01` runs on `dev` & `prod`",
+      "passed": true,
+      "detail": "4/4 runs completed | wave0_seed_only | Holdout R\u00b2 = 0.999988 | $0.00035\u2013$0.00055"
+    },
+    {
+      "id": "CL-05",
+      "env": "Ubuntu 24.04",
+      "title": "Free-tier `--effort high` privilege-boundary refusal (`HTTP 403` structured `--pro` guidance)",
+      "passed": true,
+      "detail": "Rejected at Edge before S3 presign with HTTP 403"
+    },
+    {
+      "id": "CL-06",
+      "env": "Ubuntu 24.04",
+      "title": "Cross-cloud capability replay refusal (`dev` `ctk1` presented to `prod` -> `HTTP 401`)",
+      "passed": true,
+      "detail": "Distinct per-cloud Secrets Manager HMAC secrets isolated"
+    },
+    {
+      "id": "CL-07",
+      "env": "Ubuntu 24.04",
+      "title": "5-region `ctk1` portability across `us-east-2`, `us-east-1`, `us-west-2`, `eu-central-1`, `eu-west-1`",
+      "passed": true,
+      "detail": "5/5 Wave-1 regions verified with regional P-256 KEK pins"
+    },
+    {
+      "id": "CL-08",
+      "env": "Ubuntu 24.04",
+      "title": "Automatic multi-region failover across dead primary (`https://127.0.0.1:9` -> fastest healthy cell)",
+      "passed": true,
+      "detail": "Failed over to us-east-2 in 8096.1 ms E2E"
+    },
+    {
+      "id": "CL-09",
+      "env": "Ubuntu 24.04",
+      "title": "Pro `carbon login --token-file -` + `whoami` verification (`dev` & `prod`)",
+      "passed": true,
+      "detail": "Authenticated Pro tenant live_pro_e2e"
+    },
+    {
+      "id": "CL-10",
+      "env": "Ubuntu 24.04",
+      "title": "Pro 4-effort (`fast`, `medium`, `high`, `ultra`) live runs on `240x6` (`1`..`32` waves)",
+      "passed": true,
+      "detail": "8/8 dev+prod runs completed | ultra R\u00b2 = 0.999994 (RMSE 0.02401)"
+    },
+    {
+      "id": "CL-11",
+      "env": "Ubuntu 24.04",
+      "title": "Pro multi-shard (`1,300x8`, `10,400` cells) `HybridFanOut` (`fast`, `medium`, `high`, `ultra`)",
+      "passed": true,
+      "detail": "6/6 dev+prod runs completed | up to 197 distributed eval shard invocations"
+    },
+    {
+      "id": "CL-12",
+      "env": "Ubuntu 24.04",
+      "title": "`carbon logout --all` credential wipe (`carbon-credentials.json` removed cleanly)",
+      "passed": true,
+      "detail": "All stored capability tokens purged from disk"
+    }
+  ]
+}

@@ -49,6 +49,11 @@ pub use cli::deploy::{
     CarbonReleaseManifest, CarbonRollbackOptions, CarbonRollbackReceipt, CarbonZipEntry,
     CANONICAL_17_REGIONS, CLOUDFORMATION_CELL_TEMPLATE_JSON,
 };
+#[cfg(feature = "engine")]
+pub use cli::spec_report::{
+    execute_carbon_spec_report, execute_carbon_spec_verify, verify_pdf_bytes, verify_png_bytes,
+    CarbonSpecReportOptions, CarbonSpecVerifyOptions, MIN_SPEC_PDF_PAGES, SPEC_RELEASE_TAG,
+};
 #[cfg(feature = "edge")]
 pub use cli::{
     client::{
