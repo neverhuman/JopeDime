@@ -293,3 +293,17 @@ Receipt: `diag_results/r4_g00_init/`.
 - r4 keeps writing one EMA `ckpt_epoch_NN.pt` per training hour, because the dev91 queue scores those files.
 - Grok Bot's `ckpt_pruner` cron (Jepson's 5:20 AM MST policy) keeps the newest per run and protects any epoch an eval command line names.
 - The trainer code deletes nothing.
+
+**12a. Per-run readout** (added 2026-11-13 about 16:40Z; the rule was written before any per-run number was read).
+- **Why:** the pre-registered arms pool r4_L_A and r4_L_B, so the A-versus-B comparison promised above needs a per-run statistic.
+- **Script:** `ab_pairs_h450.py` scores the only per-run GPU columns, `icl_robridge_a` (L_A + M_init) and `icl_robridge_b` (L_B + M_init), alone on the dev91 audit rows:
+  - utility is `meta_h416.utility`, the mean over the D1/D2 audit seeds;
+  - the gap is g = u_b − u_a per context;
+  - the baseline is the mean g over the pure pub-r12 epochs 7, 9, 11, 12, 13, 15;
+  - the effect at a post-switch epoch is the difference in differences, with wins/ties/losses and a sign-flip p over the 91 contexts.
+- **Columns:** the refit column is primary and the bag column is secondary.
+- **First read** (epoch 18, about 2.3 h of pub-r14 on L_B; `evidence/H450/diag_results/ab_pairs_e18.json`):
+  - refit: −0.0072 (W/T/L 42/0/49, p 0.052);
+  - bag: −0.0111 (39/0/52, p 0.0007).
+
+  So L_B is slightly behind L_A relative to the baseline. g was already falling before the switch (+0.007 at epoch 9, −0.005 at epoch 15), so part of this is a pre-existing drift. Later epochs decide.
