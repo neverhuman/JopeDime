@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
-"""Fast Every-`N`-Dataset (`N = 25,000`) Frozen-Split `dev91-audit-v1` `104M` BT-Elo Tracker
-Sharded Across `xbabe0` + `xbabe1` CPUs (`fast_dev91_every_n_h450.py`).
+"""Fast Multi-Host Frozen-Split `dev91-audit-v1` `104M` BT-Elo Tracker
+Sharded Across `xbabe0` + `xbabe2` + `xbabe1` CPUs (`fast_dev91_every_n_h450.py`).
 
-Why this enables true `N = 25,000` fleet-wide frozen-split `dev91` Elo tracking with ZERO GPU contention:
-  - Full `cols_h450_gpu.py` executes ~768-1,000 model forwards per context (~1.8h even on GPUs).
-  - By evaluating a single `104M` (`ICL_L`) checkpoint (or fleet `104M` EMA soup) with `V = 2` views across 2 spaces
-    (`Robust-Ridge` residual + exact `1,024`-bin `Yeo-Johnson` warp) on 5-fold `X_search` OOF + full `X_search -> X_audit`
-    refit (`12` batched `[2, N, Fn]` forwards per context — **~75x fewer forwards**, `0` `y_audit` access!), and sharding
-    the `91` `dev91` contexts in parallel across `xbabe0` CPU (`46` contexts, `-P 46` x `2` threads -> `<= 78%` CPU) +
-    `xbabe1` CPU (`45` contexts, `-P 22` x `2` threads -> `<= 78%` CPU, `CUDA_VISIBLE_DEVICES=''`), all `91` contexts
-    complete in ~2-4 minutes on pure CPU (`0` GPU/RAM touched on `xbabe2`/`xbabe3`, `ZImage` GPU untouched on `xbabe1`)!
-  - Computes BOTH:
-      1. `fast_104m_champion_stack_91`: Legal `stack_h450` combining the `104M` `(q, bag, ref)` columns with frozen
-         `H448`/`H450-tab`/`SXB-GP` `dev91` search/audit columns (`0` `y_audit` read before `M.utility(pred, ya, ba)`).
-      2. `fast_104m_pure_icl_91`: Pure `104M` (`ICL_L` only, `0` trees, `0` GP) frozen-split `dev91` BT-Elo.
+Key design:
+  - Evaluates a single `104M` (`ICL_L`) checkpoint (e.g. `fleet_L_x1` newest immutable `ckpt_epoch_NN.pt` or
+    exposure-weighted 3-GPU `104M` EMA soup) with `V` views (`default V = 4`, `24` batched `[4, N, Fn]` forwards/ctx)
+    across 2 spaces (`Robust-Ridge` residual + exact `1,024`-bin `Yeo-Johnson` warp) on 5-fold `X_search` OOF + full
+    `X_search -> X_audit` refit (`0` `y_audit` access!).
+  - Supports `--cmd shard --indices ... --procs P` where each persistent worker process loads `ICLH450("L")` ONCE
+    and enforces `--cpu-hard-pct` (`<= 83%` CPU cap), sharding all `91` `dev91` contexts simultaneously across
+    `xbabe0` (`128c`) + `xbabe2` (`128c`) + `xbabe1` (`128c`) with `CUDA_VISIBLE_DEVICES=''` (`0` GPU/VRAM touched).
+  - Computes ALL FOUR standard H450 frozen-split `dev91-audit-v1` entrants:
+      1. `in_corpus_legacy_guard_stack_91`: `GM.guard_and_stack_2l` (direct comparison vs `1828.6` H449 init & `r4` `1861.6`).
+      2. `in_corpus_random_split_champion_91`: `ST.stack_h450_context` full champion stack.
+      3. `in_corpus_neural_plus_tab_no_gp_91`: Neural + H450-tab (`0` GP / `0` M7/K3/F4).
+      4. `in_corpus_icl_boost_only_91`: Pure `104M` (`ICL_L` only, `0` trees, `0` GP).
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import math
 import os
-import subprocess
 import sys
 import time
 import warnings
@@ -50,6 +49,8 @@ for _cand in (
 
 WIDE_GPU = 64
 FAST_COLS = ("icl104m_robridge", "icl104m_yj", "icl104m_blend")
+
+_SHARD_STATE: dict = {}
 
 
 def _sha_seed(tag: str) -> int:
@@ -88,12 +89,38 @@ def _build_views_fast(X_tr: np.ndarray, y_tr: np.ndarray, X_ev: np.ndarray, n_vi
     return views
 
 
+def _load_model_cpu(ckpt_p: Path):
+    from icl_model_h450 import ICLH450
+
+    dev = torch.device("cpu")
+    ck = torch.load(ckpt_p, map_location="cpu", weights_only=False)
+    sd = ck.get("ema") or ck["model"]
+    model = ICLH450("L").to(dev).eval()
+    model.load_state_dict(sd, strict=True)
+    for p in model.parameters():
+        p.requires_grad_(False)
+    return model
+
+
+def _pace_host_cpu(hard_pct: float) -> None:
+    if hard_pct <= 0.0:
+        return
+    ncpu = max(1, os.cpu_count() or 1)
+    for _ in range(8):
+        try:
+            pct = 100.0 * (os.getloadavg()[0] / float(ncpu))
+        except Exception:
+            break
+        if pct <= hard_pct:
+            break
+        time.sleep(0.35)
+
+
 @torch.no_grad()
-def run_single_context(ctx_idx: int, bank_p: Path, ckpt_p: Path, out_dir: Path, n_views: int = 2) -> None:
+def _eval_context_with_model(ctx_idx: int, bank_p: Path, model, out_dir: Path, n_views: int = 4) -> str:
     import relational_struct_h450 as REL
     import robust_resid_h450 as RR
     from icl_model import FID_SLOTS
-    from icl_model_h450 import ICLH450
 
     with np.load(bank_p, allow_pickle=False) as zb:
         assert "ya" not in zb.files, "audit labels forbidden in search bank!"
@@ -101,7 +128,7 @@ def run_single_context(ctx_idx: int, bank_p: Path, ckpt_p: Path, out_dir: Path, 
         cid = cids[ctx_idx]
         out_p = out_dir / f"{cid}.npz"
         if out_p.is_file():
-            return
+            return cid
         ss, sa = zb["s_shape"], zb["a_shape"]
         so = int(np.sum(ss[:ctx_idx, 0] * ss[:ctx_idx, 1]))
         ao = int(np.sum(sa[:ctx_idx, 0] * sa[:ctx_idx, 1]))
@@ -113,14 +140,6 @@ def run_single_context(ctx_idx: int, bank_p: Path, ckpt_p: Path, out_dir: Path, 
         Xs = np.array(S_mat[:, :-1], np.float64, copy=True)
         y = np.array(zb["y64"][lo : lo + n], np.float64, copy=True)
         lab = np.array(zb["lab"][lo : lo + n], np.int64, copy=True)
-
-    dev = torch.device("cpu")
-    ck = torch.load(ckpt_p, map_location="cpu", weights_only=False)
-    sd = ck.get("ema") or ck["model"]
-    model = ICLH450("L").to(dev).eval()
-    model.load_state_dict(sd, strict=True)
-    for p in model.parameters():
-        p.requires_grad_(False)
 
     def _pred_pair(X_tr: np.ndarray, y_tr: np.ndarray, X_ev: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
         with warnings.catch_warnings():
@@ -134,7 +153,7 @@ def run_single_context(ctx_idx: int, bank_p: Path, ckpt_p: Path, out_dir: Path, 
         y_res = (y_tr - oof_r) if used_r else y_tr
         views_r = _build_views_fast(Xtr_f, y_res, Xev_f, n_views, seed + 23)
         V = len(views_r)
-        n_tr, n_ev, Fn = views_r[0][0].shape[0], views_r[0][1].shape[0], views_r[0][0].shape[1]
+        n_tr, Fn = views_r[0][0].shape[0], views_r[0][0].shape[1]
         xb = torch.from_numpy(np.stack([np.vstack([vt, ve]) for vt, ve in views_r], 0)).double()
         yb = torch.from_numpy(np.broadcast_to(y_res[None, :], (V, n_tr)).copy()).double()
         g = torch.Generator().manual_seed(seed + 37)
@@ -200,13 +219,64 @@ def run_single_context(ctx_idx: int, bank_p: Path, ckpt_p: Path, out_dir: Path, 
         q_icl104m_blend=q_bl, bag_icl104m_blend=bag_bl, ref_icl104m_blend=ref_bl,
     )
     os.replace(tmp, out_p)
+    return cid
+
+
+def run_single_context(ctx_idx: int, bank_p: Path, ckpt_p: Path, out_dir: Path, n_views: int = 4) -> None:
+    with np.load(bank_p, allow_pickle=False) as zb:
+        cid = str(zb["cids"][ctx_idx])
+    if (out_dir / f"{cid}.npz").is_file():
+        return
+    model = _load_model_cpu(ckpt_p)
+    _eval_context_with_model(ctx_idx, bank_p, model, out_dir, n_views=n_views)
+
+
+def _init_shard_worker(bank_s: str, ckpt_s: str, out_s: str, n_views: int, cpu_hard_pct: float, threads: int) -> None:
+    try:
+        os.nice(15)
+    except Exception:
+        pass
+    try:
+        torch.set_num_threads(max(1, int(threads)))
+    except Exception:
+        pass
+    _SHARD_STATE["bank"] = Path(bank_s)
+    _SHARD_STATE["out"] = Path(out_s)
+    _SHARD_STATE["n_views"] = int(n_views)
+    _SHARD_STATE["cpu_hard"] = float(cpu_hard_pct)
+    _SHARD_STATE["model"] = _load_model_cpu(Path(ckpt_s))
+
+
+def _shard_ctx_worker(ctx_idx: int) -> str:
+    _pace_host_cpu(_SHARD_STATE["cpu_hard"])
+    return _eval_context_with_model(
+        int(ctx_idx), _SHARD_STATE["bank"], _SHARD_STATE["model"], _SHARD_STATE["out"], n_views=_SHARD_STATE["n_views"]
+    )
+
+
+def run_shard(indices: list[int], bank_p: Path, ckpt_p: Path, out_dir: Path,
+              n_views: int = 4, procs: int = 16, cpu_hard_pct: float = 83.0, threads: int = 2) -> int:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with np.load(bank_p, allow_pickle=False) as zb:
+        cids = [str(x) for x in zb["cids"].tolist()]
+    todo = [i for i in indices if 0 <= i < len(cids) and not (out_dir / f"{cids[i]}.npz").is_file()]
+    if not todo:
+        return 0
+    w = max(1, min(int(procs), len(todo)))
+    with Pool(
+        processes=w,
+        initializer=_init_shard_worker,
+        initargs=(str(bank_p), str(ckpt_p), str(out_dir), int(n_views), float(cpu_hard_pct), int(threads)),
+    ) as pool:
+        for _ in pool.imap_unordered(_shard_ctx_worker, todo, chunksize=1):
+            pass
+    return len(todo)
 
 
 def _score_ctx_worker(job):
     import guard_matern_core as GM
     import meta_h416 as M
     import stack_h450 as ST
-    from cols_tab_h450 import H450_TAB_COLS
 
     s, c, npz_p, Xs, Xa, y, lab, blk_m, blk_k, blk_f, blk_tab, blk_fast = job
     z16 = np.load(npz_p, allow_pickle=False)
@@ -227,19 +297,31 @@ def _score_ctx_worker(job):
     pred_champ, _ = ST.stack_h450_context(c, Xs, Xa, y, lab, Q_gp, bcols_gp, ref_gp, named_full)
     u_champ = float(M.utility(pred_champ, ya, ba)[0])
 
+    raw_full = [blk for _, blk in named_full]
+    pred_leg, _ = GM.guard_and_stack_2l(c, Xs, Xa, y, lab, Q_gp, bcols_gp, ref_gp, raw_full)
+    u_leg = float(M.utility(pred_leg, ya, ba)[0])
+
     named_nogp = [(tag, blk) for tag, blk in (("tab450", blk_tab), ("gpu104m", blk_fast)) if blk is not None]
     pred_nogp, _ = ST.stack_h450_context(c, Xs, Xa, y, lab, None, None, None, named_nogp)
     u_nogp = float(M.utility(pred_nogp, ya, ba)[0])
 
     pred_icl, _ = ST.stack_h450_context(c, Xs, Xa, y, lab, None, None, None, [("gpu104m", blk_fast)])
     u_icl = float(M.utility(pred_icl, ya, ba)[0])
-    return s, c, u_champ, u_nogp, u_icl
+    return s, c, u_champ, u_leg, u_nogp, u_icl
 
 
-def score_fast_cols(cols_dir: Path, out_json: Path, n_boot: int = 2500, procs: int = 12) -> dict:
-    import guard_matern_core as GM
+def _rank_job_worker(job):
     import train_h416 as T16
-    from analyze_h450 import FAIR_CANONICAL, H430_K3, H433_F4, KUMO_LARGE, SEEDS, TAGS, _check_quarantined_path, _load_col_block, _rank_entrant
+    from analyze_h450 import _rank_entrant
+
+    key, field, eid, u_map, fam, cids, n_boot = job
+    _, H = T16._stats_mod()
+    return key, _rank_entrant(H, field, eid, u_map, fam, cids, n_boot)
+
+
+def score_fast_cols(cols_dir: Path, out_json: Path, n_boot: int = 2500, procs: int = 16) -> dict:
+    import guard_matern_core as GM
+    from analyze_h450 import H430_K3, H433_F4, SEEDS, TAGS, _check_quarantined_path, _load_col_block
 
     _check_quarantined_path(out_json)
     bdir = Path("/home/ubuntu/jope_plan/evidence/H450/board_post_h448/dev91-audit-v1")
@@ -308,52 +390,86 @@ def score_fast_cols(cols_dir: Path, out_json: Path, n_boot: int = 2500, procs: i
         done = pool.map(_score_ctx_worker, jobs)
 
     u_ch_s = {s: {} for s in SEEDS}
+    u_lg_s = {s: {} for s in SEEDS}
     u_ng_s = {s: {} for s in SEEDS}
     u_ic_s = {s: {} for s in SEEDS}
-    for s, c, uc, ung, ui in done:
+    for s, c, uc, ul, ung, ui in done:
         u_ch_s[s][c] = uc
+        u_lg_s[s][c] = ul
         u_ng_s[s][c] = ung
         u_ic_s[s][c] = ui
     u_champ = {c: 0.5 * (u_ch_s[SEEDS[0]][c] + u_ch_s[SEEDS[1]][c]) for c in cids}
+    u_leg = {c: 0.5 * (u_lg_s[SEEDS[0]][c] + u_lg_s[SEEDS[1]][c]) for c in cids}
     u_nogp = {c: u_ng_s[SEEDS[0]][c] for c in cids}
     u_icl = {c: u_ic_s[SEEDS[0]][c] for c in cids}
 
-    _, H = T16._stats_mod()
-    r_champ = _rank_entrant(H, field, "h450.FAST_104M_EVERY_N_CHAMPION", u_champ, fam, cids, n_boot)
-    r_nogp = _rank_entrant(H, field, "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP", u_nogp, fam, cids, n_boot)
-    r_icl = _rank_entrant(H, field, "h450.FAST_104M_PURE_ICL", u_icl, fam, cids, n_boot)
+    rank_jobs = [
+        ("champ", field, "h450.FAST_104M_EVERY_N_CHAMPION", u_champ, fam, cids, n_boot),
+        ("leg", field, "h450.FAST_104M_LEGACY_GUARD_STACK", u_leg, fam, cids, n_boot),
+        ("nogp", field, "h450.FAST_104M_NEURAL_PLUS_TAB_NO_GP", u_nogp, fam, cids, n_boot),
+        ("icl", field, "h450.FAST_104M_PURE_ICL", u_icl, fam, cids, n_boot),
+    ]
+    with Pool(processes=min(4, procs)) as pool:
+        ranked = dict(pool.map(_rank_job_worker, rank_jobs))
+
     doc = {
-        "schema": "jope.h450.fast_every_n_dev91/v1",
+        "schema": "jope.h450.fast_every_n_dev91/v2",
         "quarantined_in_corpus_random_split_diagnostic": True,
         "canonical_promotion_forbidden": True,
-        "in_corpus_random_split_champion_91": r_champ,
-        "in_corpus_icl_boost_only_91": r_icl,
-        "in_corpus_neural_plus_tab_no_gp_91": r_nogp,
+        "in_corpus_random_split_champion_91": ranked["champ"],
+        "in_corpus_legacy_guard_stack_91": ranked["leg"],
+        "in_corpus_icl_boost_only_91": ranked["icl"],
+        "in_corpus_neural_plus_tab_no_gp_91": ranked["nogp"],
     }
     out_json.parent.mkdir(parents=True, exist_ok=True)
     out_json.write_text(json.dumps(doc, indent=2, sort_keys=True, default=lambda o: o.item()) + "\n")
     return doc
 
 
+def _parse_indices(spec: str) -> list[int]:
+    out: list[int] = []
+    for part in spec.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "-" in part:
+            lo_s, hi_s = part.split("-", 1)
+            out.extend(range(int(lo_s), int(hi_s) + 1))
+        else:
+            out.append(int(part))
+    return sorted(set(out))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--cmd", choices=("ctx", "score"), required=True)
+    ap.add_argument("--cmd", choices=("ctx", "shard", "score"), required=True)
     ap.add_argument("--ctx-idx", type=int, default=0)
+    ap.add_argument("--indices", default="0-90")
     ap.add_argument("--bank", default="/home/ubuntu/jope-data/h450-quarantine/bank_d91_search_f64.npz")
     ap.add_argument("--ckpt", default="")
     ap.add_argument("--cols-dir", required=True)
     ap.add_argument("--out-json", default="")
-    ap.add_argument("--n-views", type=int, default=2)
-    ap.add_argument("--procs", type=int, default=12)
+    ap.add_argument("--n-views", type=int, default=4)
+    ap.add_argument("--procs", type=int, default=16)
+    ap.add_argument("--threads", type=int, default=2)
+    ap.add_argument("--cpu-hard-pct", type=float, default=83.0)
     a = ap.parse_args()
 
     if a.cmd == "ctx":
         run_single_context(a.ctx_idx, Path(a.bank), Path(a.ckpt), Path(a.cols_dir), n_views=a.n_views)
+    elif a.cmd == "shard":
+        n_done = run_shard(
+            _parse_indices(a.indices), Path(a.bank), Path(a.ckpt), Path(a.cols_dir),
+            n_views=a.n_views, procs=a.procs, cpu_hard_pct=a.cpu_hard_pct, threads=a.threads,
+        )
+        print(json.dumps({"shard_completed": n_done}, sort_keys=True))
     else:
         doc = score_fast_cols(Path(a.cols_dir), Path(a.out_json), procs=a.procs)
         ch = doc["in_corpus_random_split_champion_91"]
+        lg = doc["in_corpus_legacy_guard_stack_91"]
         ic = doc["in_corpus_icl_boost_only_91"]
         print(json.dumps({
+            "legacy_elo": round(float(lg["elo"]["elo"]), 1),
             "champion_elo": round(float(ch["elo"]["elo"]), 1),
             "pure_104m_icl_elo": round(float(ic["elo"]["elo"]), 1),
             "vs_kumo_L": round(float(ch["gap_elo"]["vs_kumo_tabular_large_e8.v1"]), 1),

@@ -242,10 +242,16 @@ class HostCpuGovernor:
                         self._last_pct = 100.0 * (1.0 - d_idl / float(d_tot))
                 self._prev_stat = (tot, idle)
             else:
-                r = subprocess.run(["ps", "-A", "-o", "%cpu"], capture_output=True, text=True, timeout=1.5)
-                if r.returncode == 0:
-                    s = sum(float(x) for x in r.stdout.splitlines()[1:] if x.strip())
-                    self._last_pct = min(100.0, s / float(self.n_cpus))
+                load_pct = min(100.0, 100.0 * (os.getloadavg()[0] / float(self.n_cpus)))
+                if load_pct > self.hard_pct - 8.0:
+                    r = subprocess.run(["ps", "-A", "-o", "%cpu"], capture_output=True, text=True, timeout=1.5)
+                    if r.returncode == 0:
+                        ps_pct = min(100.0, sum(float(x) for x in r.stdout.splitlines()[1:] if x.strip()) / float(self.n_cpus))
+                        self._last_pct = 0.5 * (load_pct + ps_pct)
+                    else:
+                        self._last_pct = load_pct
+                else:
+                    self._last_pct = load_pct
         except Exception:
             pass
         return self._last_pct
@@ -663,23 +669,66 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
                          tokens_cap: int, row_tokens_cap: int, bmax: int, cpu_hard: float,
                          random_split_every_batch: bool, feature_drop_every_batch: bool, drop_max_frac: float,
                          synth_inj_every_batch: bool, inj_max_frac: float,
+                         synth_prob: float, prior_seed_base: int,
                          out_q, stop_ev) -> None:
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     try:
         os.nice(12)
     except Exception:
         pass
+    try:
+        torch.set_num_threads(1)
+    except Exception:
+        pass
     inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
     drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
+    synth_prob = max(0.0, min(1.0, float(synth_prob)))
     bank = MmapF64Bank(Path(mmap_dir_s), expect_sha256=expect_sha)
-    gov = HostCpuGovernor(hard_pct=cpu_hard, check_every_s=2.5)
+    gov = HostCpuGovernor(hard_pct=cpu_hard, check_every_s=3.0)
+    prior: Prior | None = None
     seq = 0
     while not stop_ev.is_set():
         gov.pace()
         seq += 1
         b_seed = hashlib.blake2b(run_nonce + worker_id.to_bytes(4, "little") + seq.to_bytes(8, "little"), digest_size=32).digest()
         rng = np.random.default_rng(np.frombuffer(b_seed, dtype=np.uint32))
-        if float(rng.random()) < 0.58:
+        if synth_prob > 0.0 and float(rng.random()) < synth_prob:
+            if prior is None:
+                prior = Prior(torch.device("cpu"), int(prior_seed_base) + 1009 * (worker_id + 1))
+            r_py = std_random.Random(int(rng.integers(1, 1 << 62)))
+            Fn = max(6, min(WIDE_GPU, draw_features(r_py)))
+            N = int(rng.choice([256, 512, 768, 1024], p=[0.25, 0.35, 0.25, 0.15]))
+            B = max(1, min(bmax, tokens_cap // max(N * (Fn + 4), 1), row_tokens_cap // max(N, 1)))
+            n_ctx = max(16, min(N - 4, int(round(float(rng.uniform(0.25, 0.93)) * N))))
+            if float(rng.random()) < 0.60:
+                Fn_gen = min(WIDE_GPU, Fn + (max(1, int(round(drop_max_frac * Fn))) if feature_drop_every_batch else 0))
+                xt_c, yt_c, _, _ = INJ.sample_synth(prior, r_py, B, N, Fn_gen, 0.55, PROBS_V3S)
+                xa_g, ya = xt_c.detach().cpu().double().numpy(), yt_c.detach().cpu().double().numpy()
+                if feature_drop_every_batch and Fn_gen >= 3:
+                    max_ds = max(1, min(Fn_gen - 2, int(round(drop_max_frac * Fn_gen))))
+                    n_ds = int(rng.integers(1, max_ds + 1))
+                    keep_s = rng.choice(Fn_gen, size=Fn_gen - n_ds, replace=False)
+                    xa = xa_g[:, :, keep_s]
+                else:
+                    xa = xa_g
+            else:
+                xa, ya = _sample_full_synth_special(
+                    B, N, Fn, n_ctx, rng,
+                    feature_drop_every_batch=feature_drop_every_batch,
+                    drop_max_frac=drop_max_frac,
+                    synth_inj_every_batch=synth_inj_every_batch,
+                    inj_max_frac=inj_max_frac,
+                )
+            if float(rng.random()) < 0.40:
+                seed_r = int(rng.integers(1, 1 << 30))
+                for b_i in range(xa.shape[0]):
+                    oof_b, pq_b, used_b, _ = _robust_ridge_np(xa[b_i, :n_ctx], ya[b_i, :n_ctx], xa[b_i, n_ctx:], seed=seed_r + 31 * b_i)
+                    if used_b:
+                        ya[b_i, :n_ctx] -= oof_b
+                        ya[b_i, n_ctx:] -= pq_b
+            fps = [dataset_fingerprint_128(xa[b_], ya[b_], n_ctx) for b_ in range(xa.shape[0])]
+            item = (xa, ya, int(n_ctx), None, fps)
+        elif float(rng.random()) < 0.58:
             got = bidirectional_real_episode(
                 bank, bank.sample_table_idx(rng), rng,
                 random_split_every_batch=random_split_every_batch,
@@ -932,25 +981,6 @@ def main() -> None:
     ledger = Ledger128(bank)
     run_nonce = hashlib.blake2b(secrets.token_bytes(32) + int(a.seed).to_bytes(8, "little"), digest_size=32).digest()
 
-    ctx = mp.get_context("spawn")
-    ep_q = ctx.Queue(maxsize=max(12, 6 * a.workers))
-    stop_ev = ctx.Event()
-    procs = [
-        ctx.Process(
-            target=_spawned_worker_loop,
-            args=(
-                w, run_nonce, str(a.mmap_bank), a.bank_sha256, a.tokens, a.row_tokens, a.bmax, a.cpu_hard_pct,
-                bool(a.random_split_every_batch), bool(a.feature_drop_every_batch), float(a.feature_drop_max_frac),
-                bool(a.synth_inj_every_batch), float(a.synth_inj_max_frac),
-                ep_q, stop_ev,
-            ),
-            daemon=True,
-        )
-        for w in range(a.workers)
-    ]
-    for p in procs:
-        p.start()
-
     stop_flag = {"stop": False}
 
     def _on_term(signum, frame):
@@ -995,10 +1025,28 @@ def main() -> None:
         ema.load_state_dict(w_init, strict=True)
 
     params_cnt = int(n_params(model))
-    prior_dev = torch.device("cpu") if dev.type == "mps" else dev
-    prior = Prior(prior_dev, a.seed + 17 + 1000 * state["resumes"])
-    py_rng = np.random.default_rng(np.frombuffer(hashlib.blake2b(run_nonce + b"main", digest_size=32).digest(), dtype=np.uint32))
-    gov = HostCpuGovernor(hard_pct=a.cpu_hard_pct, check_every_s=2.5)
+    prior_seed_base = int(a.seed) + 17 + 1000 * int(state["resumes"])
+    gov = HostCpuGovernor(hard_pct=a.cpu_hard_pct, check_every_s=5.0)
+
+    ctx = mp.get_context("spawn")
+    ep_q = ctx.Queue(maxsize=max(24, 8 * a.workers))
+    stop_ev = ctx.Event()
+    procs = [
+        ctx.Process(
+            target=_spawned_worker_loop,
+            args=(
+                w, run_nonce, str(a.mmap_bank), a.bank_sha256, a.tokens, a.row_tokens, a.bmax, a.cpu_hard_pct,
+                bool(a.random_split_every_batch), bool(a.feature_drop_every_batch), float(a.feature_drop_max_frac),
+                bool(a.synth_inj_every_batch), float(a.synth_inj_max_frac),
+                float(a.synth_prob), prior_seed_base,
+                ep_q, stop_ev,
+            ),
+            daemon=True,
+        )
+        for w in range(a.workers)
+    ]
+    for p in procs:
+        p.start()
 
     def save_last() -> None:
         _atomic_save({"model": {k: v.cpu() for k, v in model.state_dict().items()},
@@ -1039,7 +1087,6 @@ def main() -> None:
 
     try:
         while not stop_flag["stop"]:
-            host_cpu_pct = gov.pace()
             state["train_s"] = s_seg0 + (time.time() - t_seg)
             if state["train_s"] >= budget_s or (a.max_steps > 0 and state["step"] >= a.max_steps):
                 break
@@ -1053,42 +1100,7 @@ def main() -> None:
             for g in opt.param_groups:
                 g["lr"] = cur_lr
 
-            if float(py_rng.random()) < a.synth_prob:
-                r_py = std_random.Random(int(py_rng.integers(1, 1 << 62)))
-                Fn = max(6, min(WIDE_GPU, draw_features(r_py)))
-                N = int(py_rng.choice([256, 512, 768, 1024], p=[0.25, 0.35, 0.25, 0.15]))
-                B = max(1, min(a.bmax, a.tokens // max(N * (Fn + 4), 1), a.row_tokens // max(N, 1)))
-                n_ctx = max(16, min(N - 4, int(round(float(py_rng.uniform(0.25, 0.93)) * N))))
-                if float(py_rng.random()) < 0.60:
-                    Fn_gen = min(WIDE_GPU, Fn + (max(1, int(round(a.feature_drop_max_frac * Fn))) if a.feature_drop_every_batch else 0))
-                    xt_c, yt_c, _, _ = INJ.sample_synth(prior, r_py, B, N, Fn_gen, 0.55, PROBS_V3S)
-                    xa_g, ya = xt_c.detach().cpu().double().numpy(), yt_c.detach().cpu().double().numpy()
-                    if a.feature_drop_every_batch and Fn_gen >= 3:
-                        max_ds = max(1, min(Fn_gen - 2, int(round(a.feature_drop_max_frac * Fn_gen))))
-                        n_ds = int(py_rng.integers(1, max_ds + 1))
-                        keep_s = py_rng.choice(Fn_gen, size=Fn_gen - n_ds, replace=False)
-                        xa = xa_g[:, :, keep_s]
-                    else:
-                        xa = xa_g
-                else:
-                    xa, ya = _sample_full_synth_special(
-                        B, N, Fn, n_ctx, py_rng,
-                        feature_drop_every_batch=bool(a.feature_drop_every_batch),
-                        drop_max_frac=float(a.feature_drop_max_frac),
-                        synth_inj_every_batch=bool(a.synth_inj_every_batch),
-                        inj_max_frac=float(a.synth_inj_max_frac),
-                    )
-                if float(py_rng.random()) < 0.40:
-                    seed_r = int(py_rng.integers(1, 1 << 30))
-                    for b_i in range(xa.shape[0]):
-                        oof_b, pq_b, used_b, _ = _robust_ridge_np(xa[b_i, :n_ctx], ya[b_i, :n_ctx], xa[b_i, n_ctx:], seed=seed_r + 31 * b_i)
-                        if used_b:
-                            ya[b_i, :n_ctx] -= oof_b
-                            ya[b_i, n_ctx:] -= pq_b
-                infos = None
-                fps = [dataset_fingerprint_128(xa[b_], ya[b_], n_ctx) for b_ in range(xa.shape[0])]
-            else:
-                xa, ya, n_ctx, infos, fps = ep_q.get(timeout=180.0)
+            xa, ya, n_ctx, infos, fps = ep_q.get(timeout=180.0)
 
             # Pre-forward 128-bit deduplication: NEVER feed a duplicate dataset to the model!
             keep_idx = ledger.filter_unseen_indices(fps)
@@ -1165,6 +1177,7 @@ def main() -> None:
 
             now = time.time()
             if now - t_log >= 30.0 and run_n > 0:
+                host_cpu_pct = gov.sample_pct()
                 s = ledger.summary()
                 dt = max(1e-3, now - t_log)
                 mps_gb = round(torch.mps.current_allocated_memory() / 2**30, 2) if (dev.type == "mps" and hasattr(torch.mps, "current_allocated_memory")) else 0.0

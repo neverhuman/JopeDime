@@ -2,7 +2,7 @@
 
 Additive, non-overlapping H450 5-host fleet components coordinated with `cl_fwriter` via
 `/home/ubuntu/jope_plan/H450_CLAUDE_GEMINI_COORD.md` and `/home/ubuntu/jope_plan/H450_FLEET_COORDINATION.md`
-(staged read-only under `/home/ubuntu/h450-stage/fleet-r5`):
+(staged read-only under `/home/ubuntu/h450-stage/fleet-r6`):
 
 1. `mmap_bank_h450.py` — Zero-copy `np.memmap` drop-in replacement (`MmapF64Bank`) for `CombinedF64Bank`
    (`< 0.5 s` init, `< 80 MiB` private RSS), plus `--cmd convert` and `--cmd verify-parity` (verified bit-identical
@@ -24,8 +24,16 @@ Additive, non-overlapping H450 5-host fleet components coordinated with `cl_fwri
      - Real target spaces: `40%` raw, `40%` 5-fold SVD-GCV robust-ridge residual, `20%` Yeo-Johnson MLE, vs `50% / 35% / 15%` in `pub-r9`.
      - Lineage note: `fleet_L_x1` (`~52,016` datasets before `2026-11-12T22:15Z`) and `fleet_L_x4` (`~3,641` datasets)
        carry pre-`fleet-r4` episodes documented in `/home/ubuntu/jope_plan/evidence/H450/deviation_fleet_r2_r3_inj_cap.json`.
-4. `fast_dev91_every_n_h450.py` — Separate fast (`2` views, `12` `[2, N, Fn]` forwards/context) frozen-split `dev91-audit-v1`
-   `104M` CPU tracker (`0` `y_audit` read before `M.utility`). Kept strictly labeled `fast_2view_cpu (sep)` and never
-   mixed with official `cols_h450_gpu` + `analyze_h450` readouts (`r4_g*`).
+   - **Async Worker Queue (`fleet-r6`):** Both `synth_prob` (`v3s` Prior + panel/hurdle-atom + 5-fold SVD robust-ridge)
+     and `HostCpuGovernor.pace()` run 100% inside background `mp.get_context("spawn")` workers so the main CUDA/MPS
+     trainer loop never blocks on CPU NumPy/SVD or CPU pacing sleeps.
+4. `fast_dev91_every_n_h450.py` — Multi-host (`--cmd shard`, persistent `ICLH450("L")` per worker, `--n-views 4`, `24`
+   `[4, N, Fn]` forwards/context) frozen-split `dev91-audit-v1` `104M` CPU tracker (`0` `y_audit` read before `M.utility`),
+   computing `in_corpus_legacy_guard_stack_91` (`GM.guard_and_stack_2l`), `in_corpus_random_split_champion_91`,
+   `in_corpus_neural_plus_tab_no_gp_91`, and `in_corpus_icl_boost_only_91`. Kept strictly labeled `multihost_4view_cpu`
+   and never mixed with official `cols_h450_gpu` + `analyze_h450` readouts (`r4_g*`).
 5. `fleet_telemetry_and_xbabe1_eval.py` — 5-host (`xbabe0..xbabe4`) live telemetry (preserving last-known counters and
-   marking `STALLED` if SSH drops or `log.jsonl` heartbeat ages `>= 240 s`) + separate `xbabe0` `128c` CPU fast tracker.
+   marking `STALLED` if SSH drops or `log.jsonl` heartbeat ages `>= 240 s`), SHA-256-verified `xbabe1 -> xbabe0`
+   immutable epoch checkpoint archiver, and multi-host (`xbabe0` + `xbabe2` + `xbabe1` CPUs, `CUDA_VISIBLE_DEVICES=''`)
+   `V=4` evaluation of both single-model `fleet_L_x1` newest immutable `ckpt_epoch_NN.pt` (`solo_epNNN`) and
+   exposure-weighted 3-GPU `104M` EMA soups (`soup3_NNNNk` with `SOUP_MANIFEST.json`).
