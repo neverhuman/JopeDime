@@ -1,0 +1,58 @@
+{
+  "timestamp_epoch_ms": 1794503885609,
+  "environment": "dev",
+  "release_id": "5f68b7604e64a1dd",
+  "git_sha": "5f68b76065eab69f935f547eff22123da32977d6",
+  "dry_run": false,
+  "regions": [
+    {
+      "region": "us-east-2",
+      "stack_name": "jopedime-carbon-dev",
+      "environment": "dev",
+      "release_id": "5f68b7604e64a1dd",
+      "dry_run": false,
+      "change_set_action_count": 20,
+      "change_set_summary": [
+        "Modify EdgeFunctionUrl (AWS::Lambda::Url)",
+        "Modify EdgeFunction (AWS::Lambda::Function)",
+        "Modify EdgeLiveAlias (AWS::Lambda::Alias)",
+        "Add EdgePublicHttp5xxAlarm (AWS::CloudWatch::Alarm)",
+        "Modify EdgePublicHttpStage (AWS::ApiGatewayV2::Stage)",
+        "Modify EdgeRole (AWS::IAM::Role)",
+        "Remove EdgeVersion1b7db62ecadd470d (AWS::Lambda::Version)",
+        "Add EdgeVersion5f68b7604e64a1dd (AWS::Lambda::Version)",
+        "Modify EngineFunction (AWS::Lambda::Function)",
+        "Modify EngineLiveAlias (AWS::Lambda::Alias)",
+        "Modify EngineRole (AWS::IAM::Role)",
+        "Remove EngineVersion1b7db62ecadd470d (AWS::Lambda::Version)",
+        "Add EngineVersion5f68b7604e64a1dd (AWS::Lambda::Version)",
+        "Modify EvalFunction (AWS::Lambda::Function)",
+        "Modify EvalLiveAlias (AWS::Lambda::Alias)",
+        "Modify EvalRole (AWS::IAM::Role)",
+        "Add EvalThrottleAlarm (AWS::CloudWatch::Alarm)",
+        "Remove EvalVersion1b7db62ecadd470d (AWS::Lambda::Version)",
+        "Add EvalVersion5f68b7604e64a1dd (AWS::Lambda::Version)",
+        "Modify R882ModelLayer (AWS::Lambda::LayerVersion)"
+      ],
+      "artifacts_bucket": "jopedime-carbon-artifacts-714044927654-us-east-2",
+      "cas_bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
+      "edge_endpoint_url": "https://lchlyzekra3i75jvurq3msfnde0jlcfl.lambda-url.us-east-2.on.aws/",
+      "public_edge_endpoint_url": "https://jv8jobxma5.execute-api.us-east-2.amazonaws.com",
+      "engine_p256_public_point_b64": "BNcCvldm5LBMIcxV1tQLmFyiQRa1o75ZJqefxb30VLwf7paN2zlA1DFHGCYvup98He0dMPFQvf4rlGx8Qyi53pg=",
+      "live_versions": {
+        "edge_version": "3",
+        "engine_version": "3",
+        "eval_version": "3"
+      },
+      "previous_versions": {
+        "edge_version": "2",
+        "engine_version": "2",
+        "eval_version": "2"
+      },
+      "r882_layer_version_arn": "arn:aws:lambda:us-east-2:714044927654:layer:jopedime-carbon-dev-r882:3",
+      "redteam_passed_vectors": 16,
+      "redteam_total_vectors": 16,
+      "wall_ms": 150701.06369
+    }
+  ]
+}

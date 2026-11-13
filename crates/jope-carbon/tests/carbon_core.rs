@@ -1025,3 +1025,79 @@ fn edge_async_202_threshold_and_retry_idempotent_create_run() {
     );
     assert_eq!(invoker.async_calls.load(Ordering::SeqCst), 1);
 }
+
+#[test]
+fn spec_png_and_pdf_verifiers_accept_valid_streams_and_reject_tampering_or_secrets() {
+    use jope_carbon::{verify_pdf_bytes, verify_png_bytes, MIN_SPEC_PDF_PAGES};
+
+    fn crc32(bytes: &[u8]) -> u32 {
+        let mut crc = 0xFFFF_FFFFu32;
+        for &b in bytes {
+            crc ^= u32::from(b);
+            for _ in 0..8 {
+                let mask = (crc & 1).wrapping_neg();
+                crc = (crc >> 1) ^ (0xEDB8_8320u32 & mask);
+            }
+        }
+        !crc
+    }
+
+    fn push_png_chunk(out: &mut Vec<u8>, kind: &[u8; 4], payload: &[u8]) {
+        out.extend_from_slice(&(payload.len() as u32).to_be_bytes());
+        let start = out.len();
+        out.extend_from_slice(kind);
+        out.extend_from_slice(payload);
+        let c = crc32(&out[start..]);
+        out.extend_from_slice(&c.to_be_bytes());
+    }
+
+    let mut valid_png = vec![0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
+    let mut ihdr = Vec::new();
+    ihdr.extend_from_slice(&2240u32.to_be_bytes());
+    ihdr.extend_from_slice(&640u32.to_be_bytes());
+    ihdr.extend_from_slice(&[8, 6, 0, 0, 0]);
+    push_png_chunk(&mut valid_png, b"IHDR", &ihdr);
+    push_png_chunk(
+        &mut valid_png,
+        b"IDAT",
+        &[0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01],
+    );
+    push_png_chunk(&mut valid_png, b"IEND", &[]);
+
+    assert_eq!(
+        verify_png_bytes("valid.png", &valid_png).unwrap(),
+        (2240, 640)
+    );
+
+    let mut bad_crc_png = valid_png.clone();
+    let flip_idx = bad_crc_png.len() - 15;
+    bad_crc_png[flip_idx] ^= 0xFF;
+    assert!(verify_png_bytes("corrupt.png", &bad_crc_png).is_err());
+
+    let mut small_png = vec![0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
+    let mut small_ihdr = Vec::new();
+    small_ihdr.extend_from_slice(&800u32.to_be_bytes());
+    small_ihdr.extend_from_slice(&400u32.to_be_bytes());
+    small_ihdr.extend_from_slice(&[8, 6, 0, 0, 0]);
+    push_png_chunk(&mut small_png, b"IHDR", &small_ihdr);
+    push_png_chunk(&mut small_png, b"IDAT", &[1, 2, 3]);
+    push_png_chunk(&mut small_png, b"IEND", &[]);
+    assert!(verify_png_bytes("too_narrow.png", &small_png).is_err());
+
+    let mut valid_pdf = b"%PDF-1.7\n1 0 obj << /Type /Pages /Count 14 >> endobj\n".to_vec();
+    for idx in 0..14 {
+        valid_pdf
+            .extend_from_slice(format!("{} 0 obj << /Type /Page >> endobj\n", idx + 2).as_bytes());
+    }
+    valid_pdf.extend_from_slice(&vec![b' '; 85_000]);
+    valid_pdf.extend_from_slice(b"\n%%EOF\n");
+    let pages = verify_pdf_bytes("spec.pdf", &valid_pdf).unwrap();
+    assert!(pages >= MIN_SPEC_PDF_PAGES);
+    assert_eq!(pages, 14);
+
+    let mut leaked_pdf = valid_pdf.clone();
+    let tail = leaked_pdf.split_off(leaked_pdf.len() - 10);
+    leaked_pdf.extend_from_slice(b"ctk1.secretpayload.deadbeef\n");
+    leaked_pdf.extend_from_slice(&tail);
+    assert!(verify_pdf_bytes("leaked.pdf", &leaked_pdf).is_err());
+}

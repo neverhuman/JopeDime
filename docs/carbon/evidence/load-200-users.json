@@ -1,0 +1,85 @@
+{
+  "schema": "jopedime.carbon.live-concurrency-benchmark.v1",
+  "concurrent_users": 200,
+  "live_free_registrations_under_load": 50,
+  "regions_tested": [
+    "us-east-2",
+    "us-east-1",
+    "us-west-2",
+    "eu-central-1",
+    "eu-west-1"
+  ],
+  "succeeded": 200,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "wall_clock_seconds": 11.599,
+  "effective_e2e_runs_per_sec": 17.243,
+  "register_latency_ms": {
+    "count": 50,
+    "p50": 759.18,
+    "p95": 1112.22,
+    "p99": 1132.1
+  },
+  "e2e_encrypted_run_predict_shred_latency_ms": {
+    "count": 200,
+    "min": 6201.13,
+    "p50": 9533.11,
+    "p95": 10362.38,
+    "p99": 10413.45,
+    "max": 10491.95
+  },
+  "all_cuen_encrypted": true,
+  "all_shredded_after_run": true,
+  "sample_holdout_r2": 0.9999784989766052,
+  "sample_holdout_rmse": 0.022207636589938393,
+  "total_estimated_aws_usd_200_runs": 0.07053318,
+  "mean_estimated_aws_usd_per_run": 0.00035267,
+  "per_region": {
+    "us-east-2": {
+      "total": 40,
+      "ok": 40,
+      "failed": 0,
+      "usd": 0.01367852,
+      "p50_run_ms": 8854.14,
+      "p95_run_ms": 9333.62,
+      "p99_run_ms": 9403.37
+    },
+    "us-east-1": {
+      "total": 40,
+      "ok": 40,
+      "failed": 0,
+      "usd": 0.01449067,
+      "p50_run_ms": 9602.98,
+      "p95_run_ms": 9869.27,
+      "p99_run_ms": 10032.96
+    },
+    "us-west-2": {
+      "total": 40,
+      "ok": 40,
+      "failed": 0,
+      "usd": 0.01413131,
+      "p50_run_ms": 8854.16,
+      "p95_run_ms": 9351.24,
+      "p99_run_ms": 9649.36
+    },
+    "eu-central-1": {
+      "total": 40,
+      "ok": 40,
+      "failed": 0,
+      "usd": 0.0137797,
+      "p50_run_ms": 9826.36,
+      "p95_run_ms": 10253.18,
+      "p99_run_ms": 10353.69
+    },
+    "eu-west-1": {
+      "total": 40,
+      "ok": 40,
+      "failed": 0,
+      "usd": 0.01445298,
+      "p50_run_ms": 10225.32,
+      "p95_run_ms": 10413.45,
+      "p99_run_ms": 10491.95
+    }
+  },
+  "failures": []
+}

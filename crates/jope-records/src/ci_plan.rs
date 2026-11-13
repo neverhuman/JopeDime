@@ -33,7 +33,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "rust",
             Regex::new(&format!(
-                r"^(crates/|web/browser-predict/|examples/go/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|\.github/workflows/(go|typescript)\.yml$|deploy/ci/|deploy/systemd/|deploy/appliance/|deploy/carbon/|models/bundles/|docs/release/signing\.pub$)"
+                r"^(crates/|web/browser-predict/|web/training-dashboard/scripts/render-carbon-spec-pdf\.mjs$|examples/go/|benchmarks/|schemas/|{common}|\.config/nextest\.toml$|deny\.toml$|\.github/workflows/(go|typescript)\.yml$|deploy/ci/|deploy/systemd/|deploy/appliance/|deploy/carbon/|docs/carbon/|models/bundles/|docs/release/signing\.pub$)"
             ))
             .expect("valid rust regex"),
         ),
@@ -61,7 +61,7 @@ fn filters() -> Vec<(&'static str, Regex)> {
         (
             "e2e",
             Regex::new(&format!(
-                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist|jope-carbon)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|deploy/carbon/|docs/release/signing\.pub$|{common})"
+                r"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math|jope-assets|jope-runtime|jope-appliance|jope-dist|jope-carbon)/|web/training-dashboard/scripts/render-carbon-spec-pdf\.mjs$|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|deploy/appliance/|deploy/carbon/|docs/carbon/|docs/release/signing\.pub$|{common})"
             ))
             .expect("valid e2e regex"),
         ),

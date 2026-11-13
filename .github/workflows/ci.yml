@@ -379,7 +379,7 @@ jobs:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.e2e == 'true') }}
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -712,6 +712,51 @@ jobs:
             --exclude observatory-ui --exclude paper --exclude go --exclude typescript \
             --exclude export-parity --exclude jankurai-audit
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
+      - name: Require exact-head Carbon engineering & testing spec PDF and screenshots
+        if: always() && needs.changes.outputs.e2e == 'true'
+        env:
+          E2E_RESULT: ${{ needs.e2e-smoke.result }}
+        run: |
+          set -euo pipefail
+          test "$E2E_RESULT" = success
+          output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          python3 - "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" "$JOPE_SOURCE_SHA" "$output/carbon-spec" <<'PY'
+          import hashlib, json, shutil, sys
+          from pathlib import Path
+          dl_root, expected_sha, out_dir = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
+          pubs = sorted(p for p in dl_root.iterdir() if p.is_dir() and "-e2e-smoke" in p.name)
+          if not pubs:
+              raise SystemExit("missing e2e-smoke publication in ci-download")
+          spec_dir = pubs[0] / "carbon-spec"
+          bundle_mf = json.loads((spec_dir / "spec-bundle-manifest.json").read_text())
+          ci_qual = json.loads((spec_dir / "ci-quickstart-qualification.json").read_text())
+          pdf_rcpt = json.loads((spec_dir / "spec-pdf-receipt.json").read_text())
+          pdf_path = spec_dir / "carbon-engineering-testing-spec.pdf"
+          pdf_bytes = pdf_path.read_bytes()
+          pdf_sha = hashlib.sha256(pdf_bytes).hexdigest()
+          if bundle_mf.get("source_sha") != expected_sha or pdf_rcpt.get("source_sha") != expected_sha:
+              raise SystemExit(f"spec source_sha mismatch vs {expected_sha}")
+          if not ci_qual.get("all_passed") or ci_qual.get("passed_tests", 0) < 8:
+              raise SystemExit(f"incomplete CI quickstart qualification: {ci_qual}")
+          if not pdf_rcpt.get("all_ci_tests_passed") or not pdf_rcpt.get("all_prod_evidence_verified"):
+              raise SystemExit(f"spec-pdf-receipt flags failed: {pdf_rcpt}")
+          if pdf_rcpt.get("pdf_sha256") != pdf_sha or pdf_rcpt.get("pdf_page_count", 0) < 12 or pdf_rcpt.get("horizontal_overflow_px", 1) != 0:
+              raise SystemExit(f"invalid spec-pdf-receipt metrics: {pdf_rcpt}")
+          if not pdf_bytes.startswith(b"%PDF-1.") or b"%%EOF" not in pdf_bytes[-4096:]:
+              raise SystemExit("malformed PDF framing")
+          shots = pdf_rcpt.get("screenshots", [])
+          if len(shots) != 8:
+              raise SystemExit(f"expected 8 screenshots, got {len(shots)}")
+          for shot in shots:
+              sp = spec_dir / "screenshots" / shot["file_name"]
+              sb = sp.read_bytes()
+              if hashlib.sha256(sb).hexdigest() != shot["sha256"] or shot.get("width", 0) < 1200 or not sb.startswith(b"\x89PNG\r\n\x1a\n"):
+                  raise SystemExit(f"invalid screenshot {shot}")
+          if out_dir.exists():
+              shutil.rmtree(out_dir)
+          shutil.copytree(spec_dir, out_dir)
+          print(f"verified Carbon spec PDF ({len(pdf_bytes)} B, {pdf_rcpt['pdf_page_count']} pages, 8 screenshots, sha256={pdf_sha})")
+          PY
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once
         if: always() && needs.changes.outputs.rust == 'true'
