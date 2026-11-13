@@ -1,0 +1,343 @@
+{
+  "schema": "jopedime.carbon.docker-virgin-ubuntu-prod-e2e.v1",
+  "captured_utc": "2026-11-13T16:34:58Z",
+  "all_passed": true,
+  "container": {
+    "base_image": "ubuntu:24.04",
+    "image_id": "sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5",
+    "repo_digest": "ubuntu@sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5",
+    "os_pretty_name": "Ubuntu 24.04.5 LTS",
+    "uname": "Linux 6.8.0-147-generic x86_64",
+    "zero_credentials_verified": true,
+    "verified_absent_env_vars": [
+      "AWS_ACCESS_KEY_ID",
+      "AWS_SECRET_ACCESS_KEY",
+      "AWS_SESSION_TOKEN",
+      "AWS_PROFILE",
+      "GH_TOKEN",
+      "GITHUB_TOKEN",
+      "CARBON_TOKEN"
+    ],
+    "verified_absent_paths_pre_install": [
+      "/root/.aws",
+      "/root/.ssh",
+      "/root/.config/gh",
+      "/root/.config/jopedime"
+    ]
+  },
+  "install": {
+    "command": "curl -fsSL https://github.com/neverhuman/JopeDime/releases/latest/download/install.sh | sh",
+    "github_latest_redirect_status": "HTTP/2 302 ",
+    "downloads_mirror_status_code": "404",
+    "downloads_mirror_note": "HTTP 404 expected prior to Phase-2 atomicsoul Caddy cutover; GitHub Releases Latest serves signed carbon-cli-v1.0.0 directly.",
+    "install_wall_ms": 3010.75,
+    "installed_binary_path": "/root/.local/bin/carbon",
+    "installed_binary_bytes": 15635736,
+    "installed_binary_sha256": "722cae9152a627863d3b15d5a593f948bb94396a6b688bc4d0553ebda7ea107a",
+    "installed_clouds_json_bytes": 2669,
+    "installed_clouds_json_sha256": "a6eeeccfa067a5e9be7f9dcc4d058b0bae9997b87b30f004f21e3388970fee02",
+    "config_dir_mode": "0o700",
+    "version_output": {
+      "binary": "carbon",
+      "release_tag": "carbon-cli-v1.0.0",
+      "roles": [
+        "engine",
+        "eval",
+        "serve",
+        "emu"
+      ],
+      "version": "1.0.0"
+    },
+    "installer_stderr_log": "[carbon-install] Fetching Carbon release 'carbon-cli-v1.0.0' (carbon-linux-x86_64-musl)...\n[carbon-install] Verifying ECDSA-P256 release signature...\n[carbon-install] Verifying SHA-256 artifact digests...\n[carbon-install] Installed verified static binary -> /root/.local/bin/carbon\n[carbon-install] Installed verified cloud pins    -> /root/.config/jopedime/carbon-clouds.json\n{\"binary\":\"carbon\",\"release_tag\":\"carbon-cli-v1.0.0\",\"roles\":[\"engine\",\"eval\",\"serve\",\"emu\"],\"version\":\"1.0.0\"}\n[carbon-install] Probing live Carbon prod cloud...\n{\n  \"cloud\": \"prod\",\n  \"endpoint\": \"https://nefrh1y6mk.execute-api.us-east-2.amazonaws.com\",\n  \"engine_p256_public_point_b64\": \"BP011Gftv4PkocDmrmJ/pgsKZJuvST6t+KGaoRbjfLRw/b8A8PDQ6tbWVnoZeWwhfKYv/OVrumB4Vr5Lr5duXCE=\",\n  \"enterprise_self_hosted\": false,\n  \"healthy\": true,\n  \"healthy_regions\": [\n    {\n      \"endpoint\": \"https://nefrh1y6mk.execute-api.us-east-2.amazonaws.com\",\n      \"region\": \"us-east-2\",\n      \"rtt_ms\": 581.526742\n    },\n    {\n      \"endpoint\": \"https://8qfcp10skl.execute-api.us-west-2.amazonaws.com\",\n      \"region\": \"us-west-2\",\n      \"rtt_ms\": 643.605132\n    },\n    {\n      \"endpoint\": \"https://2g7g0fmru9.execute-api.us-east-1.amazonaws.com\",\n      \"region\": \"us-east-1\",\n      \"rtt_ms\": 654.653473\n    },\n    {\n      \"endpoint\": \"https://rm9fr5v1n6.execute-api.eu-west-1.amazonaws.com\",\n      \"region\": \"eu-west-1\",\n      \"rtt_ms\": 684.467217\n    },\n    {\n      \"endpoint\": \"https://en4v5e1clb.execute-api.eu-central-1.amazonaws.com\",\n      \"region\": \"eu-central-1\",\n      \"rtt_ms\": 708.1809129999999\n    }\n  ],\n  \"kek_pin_verified\": true,\n  \"region\": \"us-east-2\",\n  \"rtt_ms\": 581.526742\n}\n[carbon-install] NOTE: Add /root/.local/bin to your PATH: export PATH=\"/root/.local/bin:$PATH\"\n[carbon-install] Ready! Quickstart (every command works out-of-the-box):\n[carbon-install]   1. Check setup & RTT:  /root/.local/bin/carbon doctor\n[carbon-install]   2. Run E2E live demo:  /root/.local/bin/carbon quickstart\n[carbon-install]   3. Register Free 30d:  /root/.local/bin/carbon register --free\n[carbon-install]   4. Create & run CSV:   /root/.local/bin/carbon quickstart --emit-csv sample.csv --csv-only && /root/.local/bin/carbon run --csv sample.csv --shred",
+    "published_release_sha256sums": [
+      "722cae9152a627863d3b15d5a593f948bb94396a6b688bc4d0553ebda7ea107a  carbon-linux-x86_64-musl",
+      "2a98aacb3fe27a6fb5cf74b909534ab100b13fde60f1a28315aa463bd4675748  carbon-linux-aarch64-musl",
+      "ab2dc8eccf95b761189436af618574121a0ddaf0203418b4b610dd19aa681d4b  carbon-linux-x86_64-musl.tar.gz",
+      "9919c4ff84e29ab9c5567bf7e4fbbe019ab0eb1715cf91b242e12a0ce73b73dd  carbon-linux-aarch64-musl.tar.gz",
+      "a6eeeccfa067a5e9be7f9dcc4d058b0bae9997b87b30f004f21e3388970fee02  carbon-clouds.json",
+      "fd5950909efe279c52efcdc737010a13df264d70cb52615a2ecaf789052e473f  install.sh"
+    ]
+  },
+  "doctor_dev_and_prod": {
+    "checks": [
+      {
+        "check": "binary",
+        "passed": true,
+        "roles": [
+          "engine",
+          "eval",
+          "serve",
+          "emu"
+        ],
+        "version": "1.0.0"
+      },
+      {
+        "check": "config_security",
+        "config_dir": "/root/.config/jopedime",
+        "config_dir_exists": true,
+        "config_dir_mode": "0700",
+        "credentials_mode": null,
+        "credentials_present": false,
+        "local_clouds_manifest_present": true,
+        "passed": true
+      }
+    ],
+    "clouds": {
+      "dev": {
+        "configured_regions": 1,
+        "fastest_region": "us-east-2",
+        "fastest_rtt_ms": 479.471985,
+        "healthy_regions": 1,
+        "kek_pins_verified": true,
+        "passed": true,
+        "regions": [
+          {
+            "endpoint": "https://jv8jobxma5.execute-api.us-east-2.amazonaws.com",
+            "region": "us-east-2",
+            "rtt_ms": 479.471985,
+            "storage_backend": "aws_s3"
+          }
+        ],
+        "s3_storage_verified": true,
+        "storage_backend": "aws_s3"
+      },
+      "prod": {
+        "configured_regions": 5,
+        "fastest_region": "us-west-2",
+        "fastest_rtt_ms": 290.865595,
+        "healthy_regions": 5,
+        "kek_pins_verified": true,
+        "passed": true,
+        "regions": [
+          {
+            "endpoint": "https://8qfcp10skl.execute-api.us-west-2.amazonaws.com",
+            "region": "us-west-2",
+            "rtt_ms": 290.865595,
+            "storage_backend": "aws_s3"
+          },
+          {
+            "endpoint": "https://nefrh1y6mk.execute-api.us-east-2.amazonaws.com",
+            "region": "us-east-2",
+            "rtt_ms": 328.013302,
+            "storage_backend": "aws_s3"
+          },
+          {
+            "endpoint": "https://2g7g0fmru9.execute-api.us-east-1.amazonaws.com",
+            "region": "us-east-1",
+            "rtt_ms": 342.360313,
+            "storage_backend": "aws_s3"
+          },
+          {
+            "endpoint": "https://rm9fr5v1n6.execute-api.eu-west-1.amazonaws.com",
+            "region": "eu-west-1",
+            "rtt_ms": 479.088699,
+            "storage_backend": "aws_s3"
+          },
+          {
+            "endpoint": "https://en4v5e1clb.execute-api.eu-central-1.amazonaws.com",
+            "region": "eu-central-1",
+            "rtt_ms": 512.40608,
+            "storage_backend": "aws_s3"
+          }
+        ],
+        "s3_storage_verified": true,
+        "storage_backend": "aws_s3"
+      }
+    },
+    "config_dir": "/root/.config/jopedime",
+    "config_dir_permissions_ok": true,
+    "credentials_permissions_ok": true,
+    "default_clouds_url": "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v1.0.0/carbon-clouds.json",
+    "fallback_clouds_url": "https://downloads.neverhuman.org/carbon/carbon-clouds.json",
+    "healthy": true,
+    "local_clouds_manifest_present": true,
+    "pinned_github_clouds_url": "https://github.com/neverhuman/JopeDime/releases/latest/download/carbon-clouds.json",
+    "release_tag": "carbon-cli-v1.0.0",
+    "stored_credentials": {},
+    "version": "1.0.0"
+  },
+  "dataset": {
+    "name": "nonlinear_240x6.csv",
+    "rows": 240,
+    "features": 6,
+    "formula": "y = 3.5*x0*x1 - 2.1*sin(x2) + 0.75*x3^2 - 1.25*x4 + 0.4*x5",
+    "csv_bytes": 15938,
+    "csv_sha256": "3d8765caca6fb0137979893ac7a29dd95002c3e33f9f6bd8f19743506cce59b1"
+  },
+  "prod_runs": {
+    "fast": {
+      "command": "carbon run --csv nonlinear_240x6.csv --target y --cloud prod --free --effort fast --seed 42 --predict-rows 5 --shred --progress",
+      "observed_container_wall_ms": 11724.73,
+      "stderr_progress_excerpt": "[carbon] Connected to us-west-2 (293.5 ms RTT, zero-knowledge KEK=true)\n[carbon] Prepared 240 rows (192 fit / 48 holdout, 6 features, target='y') in 3.5 ms\n[carbon] Encrypted & uploaded JMAT blobs (32.1 KiB) in 351.3 ms\n[carbon] Wave 1/1 (Completed) | candidates=25 | best_cv=0.1149 | elapsed=7.6s\n[carbon] \u2500\u2500 Run Summary \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n[carbon]   Region & Mode : us-west-2 | SoloSingleLambda (512 MB) | 1/1 waves\n[carbon]   Accuracy      : Holdout R^2 = 0.999603 | RMSE = 0.1035 (Linear RMSE = 5.0810, +98.0% reduction)\n[carbon]   Candidates    : 25 evaluated in 10.05s search (11.21s total wall)\n[carbon]   Zero-Knowledge: CUEN\\x01 = true | Shredded = true\n[carbon]   Est. AWS Cost : $0.000459 USD",
+      "receipt": {
+        "selected_endpoint": "https://8qfcp10skl.execute-api.us-west-2.amazonaws.com",
+        "selected_region": "us-west-2",
+        "storage_backend": "aws_s3",
+        "ping_rtt_ms": 293.53258700000004,
+        "run_id": "run_01M7AW5K36GR38WGV4MMVHN71E",
+        "dataset_id": "ds_58b1d34f24e8c996e8eb996a",
+        "tenant_id": "anon_01m7aw5jptamnmdy15j5ygsdvt",
+        "tier_applied": "free",
+        "encrypted_cuen": true,
+        "neural_seed_applied": true,
+        "neural_guidance_mode": "wave0_seed_only",
+        "bundle_digest": "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc",
+        "shredded_after_run": true,
+        "total_rows": 240,
+        "fit_rows": 192,
+        "holdout_rows": 48,
+        "feature_count": 6,
+        "jlmb_wire_bytes": 6368,
+        "fit_jmat_bytes": 21408,
+        "holdout_jmat_bytes": 11280,
+        "prep_ms": 3.483189,
+        "upload_ms": 351.34660699999995,
+        "search_ms": 10051.220926,
+        "predict_ms": 256.83930599999997,
+        "total_wall_ms": 11211.370202,
+        "final_state": "completed",
+        "paused_mid_run": false,
+        "execution_mode": "solo_single_lambda",
+        "eval_memory_mb": 512,
+        "eval_shards": 0,
+        "eval_invocations": 0,
+        "eval_total_wall_ms": 0,
+        "poll_requests": 0,
+        "waves_completed": 1,
+        "waves_target": 1,
+        "candidates_evaluated": 25,
+        "best_cv_score": 0.11486446451402046,
+        "outer_holdout_score": 0.10354261899438866,
+        "holdout_r2": 0.9996027596785552,
+        "mean_baseline_rmse": 5.195082915487056,
+        "linear_baseline_rmse": 5.081045033141667,
+        "linear_baseline_r2": 0.04342038601794951,
+        "rmse_reduction_vs_mean_pct": 98.00691113734263,
+        "rmse_reduction_vs_linear_pct": 97.96217867940511,
+        "e2e_predict_holdout_rmse": 0.10354261899438866,
+        "e2e_predict_holdout_r2": 0.9996027596785552,
+        "cost_estimate": {
+          "ingress_mode": "api_gateway_http_v2",
+          "edge_invocations": 6,
+          "engine_invocations": 2,
+          "engine_billed_ms": 10309,
+          "eval_invocations": 0,
+          "eval_memory_mb": 512,
+          "eval_billed_ms": 0,
+          "apigw_metered_units": 6,
+          "s3_put_list_requests": 9,
+          "s3_get_requests": 4,
+          "lambda_edge_usd": 1.5600018e-06,
+          "lambda_engine_usd": 0.0004041711855125,
+          "lambda_eval_usd": 0.0,
+          "apigw_http_api_usd": 6e-06,
+          "s3_requests_usd": 4.66e-05,
+          "s3_storage_and_transfer_usd": 5.541270166666666e-07,
+          "total_estimated_usd": 0.0004588853143291666,
+          "runs_per_1_usd": 2179.1937304898847
+        },
+        "sample_targets": [
+          13.825395,
+          10.110568,
+          7.533511,
+          0.932238,
+          6.952369
+        ],
+        "sample_predictions": [
+          13.475827426773284,
+          10.173358283853018,
+          7.359267158926491,
+          1.0084024650409038,
+          6.861993098346064
+        ]
+      }
+    },
+    "medium": {
+      "command": "carbon run --csv nonlinear_240x6.csv --target y --cloud prod --free --effort medium --seed 42 --predict-rows 5 --shred --progress",
+      "observed_container_wall_ms": 11851.32,
+      "stderr_progress_excerpt": "[carbon] Connected to us-west-2 (260.9 ms RTT, zero-knowledge KEK=true)\n[carbon] Prepared 240 rows (192 fit / 48 holdout, 6 features, target='y') in 3.3 ms\n[carbon] Encrypted & uploaded JMAT blobs (32.1 KiB) in 312.4 ms\n[carbon] Wave 0/4 (Queued) | candidates=0 | best_cv=- | elapsed=0.0s\n[carbon] Wave 3/4 (Running) | candidates=33 | best_cv=0.0954 | elapsed=8.7s\n[carbon] Wave 4/4 (Completed) | candidates=37 | best_cv=0.0954 | elapsed=9.0s\n[carbon] \u2500\u2500 Run Summary \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n[carbon]   Region & Mode : us-west-2 | SoloSingleLambda (512 MB) | 4/4 waves\n[carbon]   Accuracy      : Holdout R^2 = 0.999603 | RMSE = 0.1035 (Linear RMSE = 5.0810, +98.0% reduction)\n[carbon]   Candidates    : 37 evaluated in 10.20s search (11.34s total wall)\n[carbon]   Zero-Knowledge: CUEN\\x01 = true | Shredded = true\n[carbon]   Est. AWS Cost : $0.000504 USD",
+      "receipt": {
+        "selected_endpoint": "https://8qfcp10skl.execute-api.us-west-2.amazonaws.com",
+        "selected_region": "us-west-2",
+        "storage_backend": "aws_s3",
+        "ping_rtt_ms": 260.934083,
+        "run_id": "run_01M7AW5YFX5PB38J4D6AEFAE51",
+        "dataset_id": "ds_551eb0ef16582b62663ed1f8",
+        "tenant_id": "anon_01m7aw5y57daa0keyw3rjxcgey",
+        "tier_applied": "free",
+        "encrypted_cuen": true,
+        "neural_seed_applied": true,
+        "neural_guidance_mode": "wave0_seed_only",
+        "bundle_digest": "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc",
+        "shredded_after_run": true,
+        "total_rows": 240,
+        "fit_rows": 192,
+        "holdout_rows": 48,
+        "feature_count": 6,
+        "jlmb_wire_bytes": 6368,
+        "fit_jmat_bytes": 21408,
+        "holdout_jmat_bytes": 11280,
+        "prep_ms": 3.251621,
+        "upload_ms": 312.378154,
+        "search_ms": 10204.620815,
+        "predict_ms": 217.10675700000002,
+        "total_wall_ms": 11341.758042,
+        "final_state": "completed",
+        "paused_mid_run": false,
+        "execution_mode": "solo_single_lambda",
+        "eval_memory_mb": 512,
+        "eval_shards": 0,
+        "eval_invocations": 0,
+        "eval_total_wall_ms": 0,
+        "poll_requests": 15,
+        "waves_completed": 4,
+        "waves_target": 4,
+        "candidates_evaluated": 37,
+        "best_cv_score": 0.09543816106696608,
+        "outer_holdout_score": 0.10354261899438866,
+        "holdout_r2": 0.9996027596785552,
+        "mean_baseline_rmse": 5.195082915487056,
+        "linear_baseline_rmse": 5.081045033141667,
+        "linear_baseline_r2": 0.04342038601794951,
+        "rmse_reduction_vs_mean_pct": 98.00691113734263,
+        "rmse_reduction_vs_linear_pct": 97.96217867940511,
+        "e2e_predict_holdout_rmse": 0.10354261899438866,
+        "e2e_predict_holdout_r2": 0.9996027596785552,
+        "cost_estimate": {
+          "ingress_mode": "api_gateway_http_v2",
+          "edge_invocations": 21,
+          "engine_invocations": 2,
+          "engine_billed_ms": 10423,
+          "eval_invocations": 0,
+          "eval_memory_mb": 512,
+          "eval_billed_ms": 0,
+          "apigw_metered_units": 21,
+          "s3_put_list_requests": 12,
+          "s3_get_requests": 19,
+          "lambda_edge_usd": 5.4600063e-06,
+          "lambda_engine_usd": 0.0004086362078375,
+          "lambda_eval_usd": 0.0,
+          "apigw_http_api_usd": 2.1e-05,
+          "s3_requests_usd": 6.76e-05,
+          "s3_storage_and_transfer_usd": 1.0736070166666666e-06,
+          "total_estimated_usd": 0.0005037698211541666,
+          "runs_per_1_usd": 1985.0335570101054
+        },
+        "sample_targets": [
+          13.825395,
+          10.110568,
+          7.533511,
+          0.932238,
+          6.952369
+        ],
+        "sample_predictions": [
+          13.475827426773284,
+          10.173358283853018,
+          7.359267158926491,
+          1.0084024650409038,
+          6.861993098346064
+        ]
+      }
+    }
+  }
+}

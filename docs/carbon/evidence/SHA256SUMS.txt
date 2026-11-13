@@ -1,12 +1,10 @@
-# Signed GitHub Release asset SHA-256 manifest for tag `carbon-cli-v1.0.0`.
-# Note: These digests record the published out-of-tree release assets verified by
-# `deploy/carbon/install.sh` + `SHA256SUMS.txt.sig` (static musl binaries, tarballs,
-# published installer, and release-asset `carbon-clouds.json`).
-# The in-repo `docs/carbon/evidence/carbon-clouds.json` (`fd276305...`) uses the
-# `engine_p256_public_point_b64` field alias for repository secret-scanner hygiene.
-2ed3980682869a16930543d86d83c665f34e15924523ac5d76438868ce3afcec  carbon-linux-x86_64-musl
-be1116956b0814a3af45298dbf415a75244c5a0d3fd3289babe400c143df1e1d  carbon-linux-aarch64-musl
-d75ddf0189442153176e70af9a70b721d9514c3b6296d1ff7d74414f17fe3fb2  carbon-linux-x86_64-musl.tar.gz
-b8d30e8eba2846f923ad7a03475ab8c42ca5ca5e0e60b6ef469ffd1c66c3ca86  carbon-linux-aarch64-musl.tar.gz
-2b6c2b2ca2ed2a90d87c6c9b06d86b0d762657e1a07ccb3b1377a44cba85159b  carbon-clouds.json
-3f1f5eae5760ed4b1232c4c0dc1eaeb7de431fb2a1dbe03a31700fce4b261d50  install.sh
+# Signed GitHub Release asset SHA-256 manifest for tag `carbon-cli-v1.0.0`
+# Verified live via `https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v1.0.0/SHA256SUMS.txt` + `SHA256SUMS.txt.sig`.
+# Note: Release `carbon-clouds.json` (`a6eeeccf...`) carries the wire field name, whereas
+# in-repo `docs/carbon/evidence/carbon-clouds.json` (`fd276305...`) uses `engine_p256_public_point_b64` for secret-scanner hygiene.
+722cae9152a627863d3b15d5a593f948bb94396a6b688bc4d0553ebda7ea107a  carbon-linux-x86_64-musl
+2a98aacb3fe27a6fb5cf74b909534ab100b13fde60f1a28315aa463bd4675748  carbon-linux-aarch64-musl
+ab2dc8eccf95b761189436af618574121a0ddaf0203418b4b610dd19aa681d4b  carbon-linux-x86_64-musl.tar.gz
+9919c4ff84e29ab9c5567bf7e4fbbe019ab0eb1715cf91b242e12a0ce73b73dd  carbon-linux-aarch64-musl.tar.gz
+a6eeeccfa067a5e9be7f9dcc4d058b0bae9997b87b30f004f21e3388970fee02  carbon-clouds.json
+fd5950909efe279c52efcdc737010a13df264d70cb52615a2ecaf789052e473f  install.sh
