@@ -48,8 +48,15 @@ def sha256_file(p: Path) -> str:
 class MmapF64Bank:
     """Zero-copy read-only `np.memmap` float64 table bank, 100% API-compatible with `CombinedF64Bank`."""
 
-    def __init__(self, mmap_dir: Path, expect_sha256: str | None = None, verify_data_sha: bool = False):
+    def __init__(
+        self,
+        mmap_dir: Path,
+        expect_sha256: str | None = None,
+        verify_data_sha: bool = False,
+        sampling_mode: str = "smart_stratified",
+    ):
         self.path = Path(mmap_dir)
+        self.sampling_mode = str(sampling_mode)
         meta_p = self.path / "meta.json"
         data_p = self.path / "data.f64"
         ready_p = self.path / "READY"
@@ -101,12 +108,24 @@ class MmapF64Bank:
         self.strata = [str(x) for x in meta["strata"]] if "strata" in meta else self._compute_structural_strata()
         self.is_d91 = np.array([c.startswith("D91") for c in self.cohorts], dtype=bool)
         self.all_indices = np.arange(self.n_tables, dtype=np.int64)
-        self.all_weights = self._smart_stratified_weights(self.all_indices)
+        if self.sampling_mode in ("uniform", "uniform_dataset"):
+            self.all_weights = np.full(self.n_tables, 1.0 / float(self.n_tables), dtype=np.float64)
+        elif self.sampling_mode == "smart_stratified":
+            self.all_weights = self._smart_stratified_weights(self.all_indices)
+        else:
+            raise SystemExit(f"unknown MmapF64Bank sampling_mode: {self.sampling_mode}")
 
     def sample_table_idx(self, rng: np.random.Generator) -> int:
+        if self.sampling_mode in ("uniform", "uniform_dataset"):
+            return int(rng.integers(0, self.n_tables))
         return int(rng.choice(self.all_indices, p=self.all_weights))
 
     def sample_eligible(self, rng: np.random.Generator, elig: np.ndarray) -> int | None:
+        if self.sampling_mode in ("uniform", "uniform_dataset"):
+            idx_ok = np.flatnonzero(elig > 0.0)
+            if idx_ok.size == 0:
+                return None
+            return int(idx_ok[int(rng.integers(0, idx_ok.size))])
         w = self.all_weights * elig
         s = float(w.sum())
         if s <= 0.0:

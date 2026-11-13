@@ -1,16 +1,29 @@
 #!/usr/bin/env python3
-"""104M (`ICL_L`) High-Throughput Multi-Scale MPS/CUDA Trainer (`train_mps_104m_h450.py` — `fleet-r7`).
+"""104M (`ICL_L`) Maximum-Entropy Uniform-Dataset MPS/CUDA Trainer (`train_mps_104m_h450.py` — `fleet-r9`).
 
-Key `fleet-r7` Elo + Dataset-Variety Upgrades:
-  1. 100% Batched Multi-Scale `dev91`-Anchored Row Curriculum:
-     - `58%` Fast Explorer + Small-Table Coverage (`N in {36, 64, 128, 256, 320, 384}`) at high `B` (`16..48`),
-     - `22%` Mid-Scale Bridge (`N in {512, 768}`),
-     - `20%` Exact `dev91` Context-Length Anchor (`N in {1120, 1344, 1600}`) calibrating softmax attention entropy.
-  2. Zero-Copy Index-First Row Slicing + Vectorized 64-Bit-Ordered `blake2b-128` Row-Invariant Fingerprinting +
-     Background-Worker `float64 -> float32` Context Pre-Normalization (`0` GPU `float64` `nanquantile` stalls).
-  3. `dev91`-Aligned Target Spaces (`45%` 5-fold SVD Robust-Ridge Residual, `35%` Yeo-Johnson, `20%` Raw),
-     `10`-Family Structural + Distractor Column Injection (`1 <= k <= floor(0.10 * F)` on `100%` of `F >= 10`),
-     Oblivious-Tree + GP + Heteroscedastic/Heavy-Tail Priors, and Dual-Horizon Polyak/SWA EMA (`decay = 0.9995`).
+Owner Directive (`Jepson 2026-11-13 05:39 MST` / `12:41Z`):
+  0. Keep-Latest-Only Checkpoint Policy (`--keep-latest-only 1`):
+     - Never lose the latest checkpoint: atomic `.tmp -> os.replace` updates to `ckpt_last.pt` (full resume state)
+       and `ckpt_latest.pt` (latest `ema_swa` inference weights, single rolling file per run, zero per-epoch `.pt`
+       accumulation, zero `unlink`/`rm` calls).
+     - Preserves all numbers and exposure metrics (`log.jsonl` + per-milestone `epoch_NN.json`).
+  1. Wider Zero-Leakage Column Drop & Synthetic Injection Ranges:
+     - Random real-column drop: `[5%, 65%]` (`--feature-drop-min-frac 0.05 --feature-drop-max-frac 0.65`) on `100%` of `p >= 2`.
+     - Zero-leakage synthetic column injection: `[5%, 30%]` of episode width `F` (`--synth-inj-min-frac 0.05 --synth-inj-max-frac 0.30`,
+       14 structural + distractor families fitted strictly on context features `X[:n_ctx]` only).
+  2. Varied Episode Row Subsampling Across Full Corpus (`[32 .. 2048]` rows, NO permanent downsample to 300 rows):
+     - Full table rows (`r_raw`) remain in play on every episode; fresh uniform / quantile-stratified / projection-tilted
+       row subsampling draws varied episode sizes across `ROW_BINS = (32 .. 2048)` with `p_ctx in [0.18, 0.95]`.
+  3. Random Valid Target Column Choice:
+     - Strided-probe validator caches all continuous non-ID columns per table; episodes sample `45%` random valid column
+       (`X_{-j} -> X_j`), `40%` canonical target, and `15%` nonlinear GP/oblivious-tree teacher.
+  4. Per-Episode Feature & Slot Permutations, Random Per-Feature Scaling/Affine, and Small Context-Scaled Noise:
+     - Full column permutation + independent per-episode `FID_SLOTS` permutation `[B, 1, F]`;
+     - Zero-leakage raw sign flip `{-1, +1}` + log-uniform scaling `exp(U(-3, 3))` + shift + `[0.2%, 5%]` context-scaled
+       feature noise, plus post-`normalise_f64` mild per-feature affine jitter (`[0.80, 1.25]` scale, `[-0.18, 0.18]` shift).
+  5. Uniform-by-Dataset Mixing Across All 3,525 S3 Sources (`--dataset-mix uniform`):
+     - Samples `t_idx ~ Uniform({0, ..., 3524})` (`1 / 3,525` per dataset, independent of row count) and batches episodes
+       via a per-worker `(N_b, F_b)` bin accumulator so small-row datasets are never rejected against batch row thresholds.
 """
 from __future__ import annotations
 
@@ -45,6 +58,7 @@ HERE = Path(__file__).resolve().parent
 for _cand in (
     str(HERE),
     os.environ.get("JOPE_REF_CODE", ""),
+    "/home/ubuntu/h450-stage/pub-r6/code",
     "/home/ubuntu/h450-stage/pub-r5/code",
     "/home/ubuntu/h448-stage/pub-r1/code",
     str(Path.home() / "jope-data/h450-fleet-agy/ref_code"),
@@ -53,10 +67,22 @@ for _cand in (
         sys.path.append(_cand)
 
 import icl_inject as INJ  # noqa: E402
-from icl_model import FID_SLOTS  # noqa: E402
+from icl_model import CLIP_X, FID_SLOTS  # noqa: E402
 from icl_model_mps_h450 import ICLH450MPS, n_params  # noqa: E402
 from icl_prior_v3s import PROBS_V3S, Prior, draw_features  # noqa: E402
 from mmap_bank_h450 import MmapF64Bank, sha256_file  # noqa: E402
+
+
+WIDE_GPU = 64
+DEFAULT_MAX_EPISODE_ROWS = 2048
+
+# Full-spectrum episode row & width ladders (full corpus stays in play; NO permanent 300-row downsample)
+ROW_BINS = (32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 1408, 1728, 2048)
+FALLBACK_ROW_BINS = (32, 64, 128, 256, 512, 1024)
+WIDTH_BINS = (1, 2, 4, 8, 12, 20, 32, 48, 64)
+
+SYNTH_N = (48, 96, 192, 320, 512, 768, 1152, 1600, 2048)
+SYNTH_N_P = (0.06, 0.08, 0.14, 0.18, 0.18, 0.14, 0.10, 0.07, 0.05)
 
 
 def _erfinv_np(x: np.ndarray) -> np.ndarray:
@@ -85,8 +111,43 @@ def _detect_atom_np(y: np.ndarray) -> float | None:
     return None
 
 
+def _discover_valid_target_cols(tab_mmap: np.ndarray, min_rows: int = 32) -> tuple[int, ...]:
+    """Identifies all valid continuous non-ID columns in `tab_mmap` via strided finite probes."""
+    r_raw, c_tot = tab_mmap.shape
+    valid: list[int] = []
+    for j in range(c_tot):
+        col_j = tab_mmap[:, j]
+        fin_j = np.flatnonzero(np.isfinite(col_j))
+        if fin_j.size < min_rows:
+            continue
+        if j == c_tot - 1:
+            probe_y = np.asarray(col_j[fin_j[:: max(1, fin_j.size // 512)][:512]], dtype=np.float64)
+            if float(np.std(probe_y)) > 1e-12:
+                valid.append(j)
+            continue
+        stride = max(1, fin_j.size // 512)
+        probe = np.asarray(col_j[fin_j[::stride][:512]], dtype=np.float64)
+        if probe.size < 24:
+            continue
+        sd = float(np.std(probe))
+        if not math.isfinite(sd) or sd <= 1e-9:
+            continue
+        u_vals, u_cnts = np.unique(probe, return_counts=True)
+        if u_vals.size < 10 or (int(u_cnts.max()) / float(probe.size)) > 0.72:
+            continue
+        diffs = np.diff(probe)
+        if diffs.size >= 16 and abs(float(diffs[0])) > 1e-12 and bool(np.all(np.abs(diffs - diffs[0]) <= 1e-9 * max(1.0, abs(float(diffs[0]))))):
+            continue
+        valid.append(j)
+    if (c_tot - 1) not in valid:
+        fin_last = np.flatnonzero(np.isfinite(tab_mmap[:, c_tot - 1]))
+        if fin_last.size >= 28:
+            valid.append(c_tot - 1)
+    return tuple(valid)
+
+
 def _robust_ridge_np(X_ctx: np.ndarray, y_ctx: np.ndarray, X_q: np.ndarray, seed: int = 450, folds: int = 5):
-    """Pure NumPy SVD-GCV 5-fold OOF robust ridge (identical math to `robust_resid_h450.robust_ridge_np`, zero scipy)."""
+    """Pure NumPy SVD-GCV 5-fold OOF robust ridge (context-fitted only, zero query leakage)."""
     X_ctx = np.asarray(X_ctx, dtype=np.float64)
     y_ctx = np.asarray(y_ctx, dtype=np.float64)
     X_q = np.asarray(X_q, dtype=np.float64)
@@ -181,7 +242,7 @@ def _yj_eval_np(yn: np.ndarray, lam: float) -> np.ndarray:
 
 
 def _yeojohnson_pair_np(yc: np.ndarray, yq: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
-    """Exact pure-NumPy Yeo-Johnson MLE fit on `yc` applied to `(yc, yq)` (zero scipy)."""
+    """Exact pure-NumPy Yeo-Johnson MLE fit on `yc` only, applied to `(yc, yq)` (zero query leakage)."""
     mu = float(np.mean(yc))
     sd = max(float(np.std(yc)), 1e-12)
     ync = (yc - mu) / sd
@@ -210,20 +271,6 @@ def _yeojohnson_pair_np(yc: np.ndarray, yq: np.ndarray) -> tuple[np.ndarray, np.
     if z_sd <= 1e-9 or not (np.all(np.isfinite(zt_c)) and np.all(np.isfinite(zt_q))):
         return None
     return (zt_c - z_mu) / z_sd, (zt_q - z_mu) / z_sd
-
-
-WIDE_GPU = 64
-MAX_TRAIN_ROWS = 2048
-
-# Multi-scale dev91-anchored row curriculum:
-#   - 58% fast explorer + small-table coverage (36..384 rows, high B -> 3-4x unique datasets/sec)
-#   - 22% bridge (512..768 rows)
-#   - 20% exact dev91 context-length anchor (1120..1600 rows -> matches dev91 X_search + query lengths)
-BATCH_N = (36, 64, 128, 256, 320, 384, 512, 768, 1120, 1344, 1600)
-BATCH_N_P = (0.01, 0.02, 0.04, 0.19, 0.20, 0.12, 0.12, 0.10, 0.08, 0.06, 0.06)
-
-SYNTH_N = (256, 320, 512, 768, 1120, 1408)
-SYNTH_N_P = (0.24, 0.24, 0.20, 0.14, 0.10, 0.08)
 
 
 class HostCpuGovernor:
@@ -278,12 +325,7 @@ class HostCpuGovernor:
 
 
 def dataset_fingerprint_128(X: np.ndarray, y: np.ndarray, n_ctx: int) -> bytes:
-    """Fast vectorized row-order-invariant 128-bit `blake2b` fingerprint over full canonicalized `float64` row bytes.
-
-    Canonicalizes `-0.0 -> +0.0` and all `NaN` bit patterns (`0x7FF8000000000001`) while preserving `+inf`/`-inf`,
-    orders context (`:n_ctx`) and query (`n_ctx:`) rows by a 64-bit SplitMix64 row key (with exact lexicographic
-    tie-break if two distinct rows ever collide in 64 bits), and hashes all `8 * (F + 1)` bytes/row with `blake2b`.
-    """
+    """Fast vectorized row-order-invariant 128-bit `blake2b` fingerprint over canonicalized `float64` row bytes."""
     Xf = np.asarray(X, dtype=np.float64)
     yf = np.asarray(y, dtype=np.float64).reshape(-1)
     n_tot, f_dim = Xf.shape
@@ -316,6 +358,7 @@ def dataset_fingerprint_128(X: np.ndarray, y: np.ndarray, n_ctx: int) -> bytes:
 
 
 def _std_ctx_f64(Xc: np.ndarray, Xq: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Context-only robust standardisation in float64 (strictly zero query/target leakage)."""
     Zc = np.zeros_like(Xc, dtype=np.float64)
     Zq = np.zeros_like(Xq, dtype=np.float64)
     for j in range(Xc.shape[1]):
@@ -333,7 +376,7 @@ def _std_ctx_f64(Xc: np.ndarray, Xq: np.ndarray) -> tuple[np.ndarray, np.ndarray
 
 
 def _inject_synth_cols_np(Xc: np.ndarray, Xq: np.ndarray, k_inj: int, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
-    """10-family synthetic column bank (zero label leakage; teaches both distractor rejection and REL-style structural features)."""
+    """14-family synthetic column bank fitted strictly on context features `Xc` (zero target or query leakage)."""
     p = Xc.shape[1]
     if p == 0 or k_inj <= 0:
         return np.zeros((Xc.shape[0], 0)), np.zeros((Xq.shape[0], 0))
@@ -343,7 +386,7 @@ def _inject_synth_cols_np(Xc: np.ndarray, Xq: np.ndarray, k_inj: int, rng: np.ra
     miss_all = np.vstack([~np.isfinite(Xc), ~np.isfinite(Xq)])
     inj_cols = np.zeros((n_tot, k_inj), dtype=np.float64)
     for m in range(k_inj):
-        kind = int(rng.integers(0, 10))
+        kind = int(rng.integers(0, 14))
         za = Z_all[:, int(rng.integers(0, p))]
         zb = Z_all[:, int(rng.integers(0, p))]
         alt = bool(rng.random() < 0.5)
@@ -372,36 +415,102 @@ def _inject_synth_cols_np(Xc: np.ndarray, Xq: np.ndarray, k_inj: int, rng: np.ra
                 ranks = (np.searchsorted(c_sorted, za, side="left") + 0.5) / float(n_c + 1)
                 col = math.sqrt(2.0) * _erfinv_np(np.clip(2.0 * ranks - 1.0, -0.9999, 0.9999))
         elif kind == 5:
-            col = (za > float(np.percentile(za[:n_c], 25.0 if alt else 75.0))).astype(np.float64)
+            q_pct = float(rng.choice([20.0, 35.0, 50.0, 65.0, 80.0]))
+            col = (za > float(np.percentile(za[:n_c], q_pct))).astype(np.float64)
         elif kind == 6:
-            w = float(rng.standard_normal() * math.exp(rng.uniform(math.log(0.5), math.log(3.0))))
+            w = float(rng.standard_normal() * math.exp(rng.uniform(math.log(0.4), math.log(3.5))))
             ph = float(rng.random() * 2.0 * math.pi)
             col = np.sin(w * za + ph) if alt else np.cos(w * za + ph)
         elif kind == 7:
-            # REL-style multi-column row summary (mean / std / L2 norm over random subset of features)
             sub_m = min(p, int(rng.integers(2, min(12, p) + 1))) if p >= 2 else 1
             Z_sub = Z_all[:, rng.choice(p, size=sub_m, replace=False)]
-            if alt:
-                col = np.mean(Z_sub, axis=1)
-            else:
-                col = np.sqrt(np.mean(Z_sub * Z_sub, axis=1))
+            col = np.mean(Z_sub, axis=1) if alt else np.sqrt(np.mean(Z_sub * Z_sub, axis=1))
         elif kind == 8:
-            # Row missingness rate or extreme-coordinate tail indicator
             miss_rate = np.mean(miss_all, axis=1)
             if alt and float(np.std(miss_rate[:n_c])) > 1e-6:
                 col = miss_rate
             else:
                 col = np.mean((np.abs(Z_all) > 2.0).astype(np.float64), axis=1)
-        else:
-            # RBF similarity / distance to a random context prototype row
+        elif kind == 9:
             sub_m = min(p, int(rng.integers(2, min(10, p) + 1))) if p >= 2 else 1
-            cols_proto = rng.choice(p, size=sub_m, replace=False)
-            Z_sub = Z_all[:, cols_proto]
+            Z_sub = Z_all[:, rng.choice(p, size=sub_m, replace=False)]
             proto = Z_sub[int(rng.integers(0, n_c))]
             d2 = np.mean((Z_sub - proto[None, :]) ** 2, axis=1)
             col = np.exp(-0.5 * d2) if alt else np.sqrt(d2)
+        elif kind == 10:
+            # Context-hinge / ReLU spline around a context quantile knot
+            knot = float(np.percentile(za[:n_c], float(rng.uniform(20.0, 80.0))))
+            col = np.maximum(0.0, za - knot) if alt else np.abs(za - knot)
+        elif kind == 11:
+            # Signed geometric product or standardized difference
+            prod = za * zb
+            col = (np.sign(prod) * np.sqrt(np.abs(prod))) if alt else (za - zb)
+        elif kind == 12:
+            # Random Gaussian projection over 2..12 context-standardized columns
+            sub_m = min(p, int(rng.integers(2, min(12, p) + 1))) if p >= 2 else 1
+            Z_sub = Z_all[:, rng.choice(p, size=sub_m, replace=False)]
+            u_vec = rng.standard_normal(sub_m) / math.sqrt(float(sub_m))
+            col = Z_sub @ u_vec
+        else:
+            # Context-decile bucket index (piecewise-constant ordinal feature, fitted strictly on Xc)
+            n_q = int(rng.integers(4, 10))
+            edges = np.quantile(za[:n_c], np.linspace(1.0 / n_q, (n_q - 1.0) / n_q, n_q - 1))
+            col = np.digitize(za, edges).astype(np.float64) / float(n_q - 1)
         inj_cols[:, m] = col
     return inj_cols[:n_c], inj_cols[n_c:]
+
+
+def _augment_features_zero_leakage(
+    Xc: np.ndarray,
+    Xq: np.ndarray,
+    rng: np.random.Generator,
+    noise_max_frac: float = 0.05,
+    noise_prob: float = 0.85,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Applies per-feature random sign flip, log-uniform scaling, shift,small context-scaled noise,
+    and full random column permutation using strictly context-only statistics (`Xc`, zero query leakage)."""
+    p = Xc.shape[1]
+    if p == 0:
+        return Xc, Xq
+    X_full = np.vstack([Xc, Xq]).astype(np.float64, copy=True)
+    n_tot, n_c = X_full.shape[0], Xc.shape[0]
+    fin_full = np.isfinite(X_full)
+    fin_c = fin_full[:n_c]
+
+    scales_c = np.ones(p, dtype=np.float64)
+    has_spread = np.zeros(p, dtype=bool)
+    for j in range(p):
+        fc = fin_c[:, j]
+        if int(np.sum(fc)) >= 4:
+            vals = X_full[:n_c, j][fc]
+            q25, q75 = np.percentile(vals, [25.0, 75.0])
+            iqr = float(q75 - q25) / 1.349
+            sd = float(np.std(vals))
+            sc_j = iqr if (iqr > 1e-8 * max(sd, 1.0) and iqr > 0.0) else sd
+            if math.isfinite(sc_j) and sc_j > 1e-12:
+                scales_c[j] = sc_j
+                has_spread[j] = True
+
+    signs = np.where(rng.random(p) < 0.5, -1.0, 1.0)
+    log_muls = np.exp(rng.uniform(-3.0, 3.0, size=p))
+    a_mul = signs * log_muls
+    b_shift = rng.standard_normal(p) * (2.0 * scales_c * log_muls)
+    X_full = np.where(fin_full, X_full * a_mul[None, :] + b_shift[None, :], X_full)
+
+    if noise_max_frac > 0.0 and float(rng.random()) < noise_prob and bool(np.any(has_spread)):
+        lo_n = min(0.002, float(noise_max_frac))
+        sig_rel = np.exp(rng.uniform(math.log(max(1e-5, lo_n)), math.log(max(1e-5, float(noise_max_frac))), size=p))
+        sig_abs = np.where(has_spread, sig_rel * scales_c * log_muls, 0.0)
+        if float(rng.random()) < 0.20:
+            u_lap = np.clip(rng.random((n_tot, p)) - 0.5, -0.4999, 0.4999)
+            eps = -np.sign(u_lap) * np.log1p(-2.0 * np.abs(u_lap)) / math.sqrt(2.0)
+        else:
+            eps = rng.standard_normal((n_tot, p))
+        X_full = np.where(fin_full, X_full + eps * sig_abs[None, :], X_full)
+
+    perm_f = rng.permutation(p)
+    X_full = X_full[:, perm_f]
+    return X_full[:n_c], X_full[n_c:]
 
 
 def _synth_teacher_target_np(Xc: np.ndarray, Xq: np.ndarray, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray] | None:
@@ -418,7 +527,6 @@ def _synth_teacher_target_np(Xc: np.ndarray, Xq: np.ndarray, rng: np.random.Gene
     b = rng.uniform(0.0, 2.0 * math.pi, size=(1, 48))
     f_gp = (np.cos(Zs @ W + b) * math.sqrt(2.0 / 48)) @ rng.standard_normal(48)
 
-    # Oblivious / symmetric axis-aligned + oblique decision tree ensemble (CatBoost/GBDT inductive bias)
     f_tree = np.zeros(n_tot, dtype=np.float64)
     n_trees = int(rng.integers(4, 9))
     axis_aligned = bool(rng.random() < 0.60)
@@ -451,7 +559,6 @@ def _synth_teacher_target_np(Xc: np.ndarray, Xq: np.ndarray, rng: np.random.Gene
     elif w_kind == 4:
         f = np.exp(0.45 * np.clip(f, -4.0, 4.0)) - 1.0
 
-    # Homoscedastic, heteroscedastic, or Student-t heavy-tail observation noise
     noise_scale = float(math.exp(rng.uniform(math.log(0.01), math.log(0.24)))) * max(float(np.std(f)), 1e-6)
     if rng.random() < 0.25:
         chi = np.sqrt(np.maximum(np.mean(rng.standard_normal((n_tot, 4)) ** 2, axis=1), 0.05))
@@ -471,7 +578,7 @@ def _select_cols(Xc: np.ndarray, yc: np.ndarray, Xq: np.ndarray, k: int, rng: np
     p = Xc.shape[1]
     if k >= p:
         return Xc, Xq
-    if p <= WIDE_GPU:
+    if p <= WIDE_GPU or float(rng.random()) < 0.55:
         idx = rng.choice(p, size=k, replace=False)
         return Xc[:, idx], Xq[:, idx]
     yc0 = yc - float(np.mean(yc))
@@ -484,92 +591,178 @@ def _select_cols(Xc: np.ndarray, yc: np.ndarray, Xq: np.ndarray, k: int, rng: np
             vn = float(np.linalg.norm(v))
             if vn > 1e-12:
                 scores[j] = abs(float(np.dot(v, yc0[fin])) / (vn * yn))
-    top = np.argsort(-scores)[: int(round(0.70 * k))]
+    top_share = float(rng.uniform(0.35, 0.70))
+    top = np.argsort(-scores)[: int(round(top_share * k))]
     rest = rng.choice(np.setdiff1d(np.arange(p), top), size=k - len(top), replace=False)
     idx = np.concatenate([top, rest])
     return Xc[:, idx], Xq[:, idx]
 
 
-def bidirectional_real_episode(
+def _choose_width_spec(
+    p: int,
+    rng: np.random.Generator,
+    feature_drop_every_batch: bool,
+    drop_min_frac: float,
+    drop_max_frac: float,
+    synth_inj_every_batch: bool,
+    inj_min_frac: float,
+    inj_max_frac: float,
+) -> tuple[int, int, int]:
+    """Draws `(k_real, k_inj, F_b)` snapped to `WIDTH_BINS` while honoring wide drop & injection bounds."""
+    if feature_drop_every_batch and p >= 2:
+        d_lo = max(1, min(p - 1, int(math.floor(drop_min_frac * p))))
+        d_hi = max(d_lo, min(p - 1, int(math.floor(drop_max_frac * p))))
+        k_real_min = max(1, min(WIDE_GPU, p - d_hi))
+        k_real_max = max(k_real_min, min(WIDE_GPU, p - d_lo))
+    else:
+        k_real_min = max(1, min(WIDE_GPU, p))
+        k_real_max = k_real_min
+
+    k_real_target = int(rng.integers(k_real_min, k_real_max + 1))
+    f_inj_draw = float(rng.uniform(inj_min_frac, inj_max_frac)) if inj_max_frac > 0.0 else 0.0
+    f_target = min(WIDE_GPU, max(1, int(round(k_real_target / max(0.20, 1.0 - f_inj_draw)))))
+
+    candidates: list[tuple[int, int, int, int]] = []
+    for fb in WIDTH_BINS:
+        k_hi = int(math.floor(inj_max_frac * fb))
+        k_lo = max(1, int(math.ceil(inj_min_frac * fb))) if (synth_inj_every_batch and k_hi >= 1) else 0
+        k_lo = min(k_lo, k_hi)
+        kr_lo = max(k_real_min, fb - k_hi)
+        kr_hi = min(k_real_max, fb - k_lo)
+        if kr_lo <= kr_hi:
+            kr_pick = int(np.clip(k_real_target, kr_lo, kr_hi))
+            ki_pick = fb - kr_pick
+            candidates.append((abs(fb - f_target), kr_pick, ki_pick, fb))
+
+    if candidates:
+        candidates.sort(key=lambda t: t[0])
+        _, kr, ki, fb = candidates[0]
+        return kr, ki, fb
+
+    ki_fb = min(WIDE_GPU - k_real_target, max(0, int(round(f_inj_draw / max(0.20, 1.0 - f_inj_draw) * k_real_target))))
+    if synth_inj_every_batch and inj_max_frac > 0.0 and ki_fb == 0 and k_real_target < WIDE_GPU and int(math.floor(inj_max_frac * (k_real_target + 1))) >= 1:
+        ki_fb = 1
+    return k_real_target, ki_fb, k_real_target + ki_fb
+
+
+def sample_max_entropy_real_episode(
     bank: MmapF64Bank,
     t_idx: int,
     rng: np.random.Generator,
-    n_rows_fixed: int | None = None,
-    f_fixed: int | None = None,
-    p_ctx_fixed: float | None = None,
+    valid_tcols_cache: dict[int, tuple[int, ...]],
+    max_episode_rows: int = DEFAULT_MAX_EPISODE_ROWS,
     random_split_every_batch: bool = True,
     feature_drop_every_batch: bool = True,
-    drop_max_frac: float = 0.35,
+    drop_min_frac: float = 0.05,
+    drop_max_frac: float = 0.65,
     synth_inj_every_batch: bool = True,
-    inj_max_frac: float = 0.10,
+    inj_min_frac: float = 0.05,
+    inj_max_frac: float = 0.30,
+    rand_target_prob: float = 0.45,
+    synth_teacher_prob: float = 0.15,
+    feature_noise_max: float = 0.05,
+    force_canonical_target: bool = False,
+    n_ctx_for_shape: dict[tuple[int, int], int] | None = None,
+    preferred_rows: int | None = None,
 ):
-    """Index-first zero-copy episode sampler with fresh CSPRNG train/test split, mandatory random feature removal
-    (`p >= 2`), and strict `1 <= k <= floor(inj_max_frac * F)` (`<= 10%`) synthetic column injection."""
-    inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
-    drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
+    """Samples one high-entropy episode from `t_idx` across the full table (zero permanent row downsampling)."""
     tab_mmap = bank.tabs_f64[t_idx]
     r_raw, c_tot = tab_mmap.shape
-    min_rows_req = max(28, n_rows_fixed if n_rows_fixed is not None else 28)
-    if r_raw < min_rows_req or c_tot < 2:
+    if r_raw < 28 or c_tot < 2:
         return None
 
-    # Target-from-features modes: 0 = own target (65%), 1 = masked real feature column X_{-j}->X_j (17%),
-    # 2 = nonlinear synthetic teacher g(X_sub) (13%) or convex real+teacher blend (5%)
-    u = float(rng.random())
-    tmode = 0 if u < 0.65 else (1 if u < 0.82 else 2)
-    blend_real_teacher = (u >= 0.95)
-    tcol = c_tot - 1
-    valid_rows: np.ndarray | None = None
+    if t_idx not in valid_tcols_cache:
+        valid_tcols_cache[t_idx] = _discover_valid_target_cols(tab_mmap, min_rows=28)
+    valid_tcols = valid_tcols_cache[t_idx]
+
+    # (3) Random target column choice where valid + canonical target + nonlinear synthetic teacher
+    u_tm = 0.0 if force_canonical_target else float(rng.random())
+    other_valid = [j for j in valid_tcols if j != (c_tot - 1)]
+    blend_real_teacher = False
+    if not force_canonical_target and u_tm < synth_teacher_prob:
+        tmode = 2
+        blend_real_teacher = bool(rng.random() < 0.30)
+        tcol = int(rng.choice(valid_tcols)) if valid_tcols else (c_tot - 1)
+    elif not force_canonical_target and other_valid and u_tm < (synth_teacher_prob + rand_target_prob):
+        tmode = 1
+        tcol = int(rng.choice(other_valid))
+    else:
+        tmode = 0
+        tcol = c_tot - 1
+
+    valid_rows: np.ndarray
     y_valid: np.ndarray | None = None
-
-    if tmode == 1:
-        need_c1 = max(32, min_rows_req)
-        for j_try in rng.permutation(c_tot - 1)[:12]:
-            j_i = int(j_try)
-            col_j = tab_mmap[:, j_i]
-            fin_j = np.flatnonzero(np.isfinite(col_j))
-            if fin_j.size >= need_c1:
-                probe = np.asarray(col_j[fin_j[: min(512, fin_j.size)]], dtype=np.float64)
-                if np.unique(probe).size >= 12:
-                    tcol = j_i
-                    valid_rows = fin_j
-                    y_valid = np.asarray(col_j[fin_j], dtype=np.float64)
-                    break
-        if tcol == c_tot - 1:
-            tmode = 0
-
     if tmode in (0, 1) or blend_real_teacher:
-        if valid_rows is None:
-            col_t = tab_mmap[:, tcol]
-            valid_rows = np.flatnonzero(np.isfinite(col_t))
-            if valid_rows.size < min_rows_req:
-                return None
-            y_valid = np.asarray(col_t[valid_rows], dtype=np.float64)
-        assert y_valid is not None
-        if tmode == 0 and rng.random() < 0.45 and valid_rows.size >= 32:
+        col_t = tab_mmap[:, tcol]
+        valid_rows = np.flatnonzero(np.isfinite(col_t))
+        if valid_rows.size < 28:
+            return None
+        y_valid = np.asarray(col_t[valid_rows], dtype=np.float64)
+        if tmode == 0 and rng.random() < 0.40 and valid_rows.size >= 36:
             atom = _detect_atom_np(y_valid)
             if atom is not None:
                 keep = np.abs(y_valid - atom) > 1e-7 * max(1.0, abs(atom))
-                n_keep = int(np.sum(keep))
-                if n_keep >= max(32, min_rows_req):
+                if int(np.sum(keep)) >= 32:
                     valid_rows = valid_rows[keep]
                     y_valid = y_valid[keep]
     else:
         valid_rows = np.arange(r_raw, dtype=np.int64)
 
     r_tot = int(valid_rows.size)
-    if r_tot < min_rows_req:
+    if r_tot < 28:
         return None
-    if n_rows_fixed is None:
-        if rng.random() < 0.70:
-            n_rows = min(r_tot, MAX_TRAIN_ROWS)
-        else:
-            hi = max(48, min(r_tot, MAX_TRAIN_ROWS))
-            n_rows = int(min(r_tot, max(36, round(math.exp(rng.uniform(math.log(36.0), math.log(float(hi))))))))
-    else:
-        n_rows = n_rows_fixed
 
-    if y_valid is not None and r_tot > n_rows and rng.random() < 0.75:
+    # (2) Varied episode row subsampling across full corpus (NO permanent downsample to 300 rows)
+    r_cap = min(r_tot, int(max_episode_rows))
+    if preferred_rows is not None:
+        if r_cap >= int(preferred_rows):
+            n_rows = int(preferred_rows)
+        else:
+            ok_fb = [n for n in FALLBACK_ROW_BINS if n <= r_cap]
+            n_rows = ok_fb[-1] if ok_fb else r_cap
+    else:
+        ok_r = [n for n in ROW_BINS if n <= r_cap]
+        if not ok_r:
+            n_rows = r_cap
+        elif len(ok_r) >= 3 and float(rng.random()) < 0.30:
+            n_rows = int(rng.choice(ok_r[-2:]))
+        else:
+            n_rows = int(rng.choice(ok_r))
+
+    feats = [j for j in range(c_tot) if j != tcol]
+    if tmode == 2 and not blend_real_teacher and len(feats) > 1 and rng.random() < 0.50:
+        feats = [j for j in feats if j != c_tot - 1] or feats
+    p = len(feats)
+    if p < 1:
+        return None
+
+    # (1) Wider random column drop + zero-leakage synthetic column injection
+    k_real, k_inj, F = _choose_width_spec(
+        p, rng,
+        feature_drop_every_batch=feature_drop_every_batch,
+        drop_min_frac=drop_min_frac,
+        drop_max_frac=drop_max_frac,
+        synth_inj_every_batch=synth_inj_every_batch,
+        inj_min_frac=inj_min_frac,
+        inj_max_frac=inj_max_frac,
+    )
+
+    if n_ctx_for_shape is not None and (n_rows, F) in n_ctx_for_shape:
+        n_ctx = int(n_ctx_for_shape[(n_rows, F)])
+        p_ctx = n_ctx / float(n_rows)
+    else:
+        p_ctx = float(rng.uniform(0.18, 0.95))
+        n_ctx = max(16, min(n_rows - 4, int(round(p_ctx * n_rows))))
+        if n_ctx_for_shape is not None:
+            n_ctx_for_shape[(n_rows, F)] = n_ctx
+
+    # High-entropy row subsampling over all r_tot rows in the full table
+    u_sub = float(rng.random())
+    if r_tot <= n_rows:
+        sel_local = rng.permutation(r_tot)[:n_rows]
+    elif u_sub < 0.50 or y_valid is None:
+        sel_local = rng.choice(r_tot, size=n_rows, replace=False)
+    elif u_sub < 0.85:
         y_ord = np.argsort(y_valid + 1e-12 * max(float(np.std(y_valid)), 1.0) * rng.standard_normal(r_tot), kind="mergesort")
         picked, need = [], n_rows
         bins = np.array_split(y_ord, int(rng.integers(6, 17)))
@@ -586,24 +779,29 @@ def bidirectional_real_episode(
             sel = np.concatenate([sel, rng.permutation(rest)[: n_rows - len(sel)]])
         sel_local = rng.permutation(sel[:n_rows])
     else:
-        sel_local = rng.permutation(r_tot)[:n_rows]
+        # Covariate-density-tilted row subsample along a random feature column
+        j_tilt = int(rng.choice(feats))
+        col_tilt = np.asarray(tab_mmap[valid_rows, j_tilt], dtype=np.float64)
+        fin_t = np.isfinite(col_tilt)
+        if int(np.sum(fin_t)) >= n_rows:
+            med_t = float(np.median(col_tilt[fin_t]))
+            sd_t = max(float(np.std(col_tilt[fin_t])), 1e-9)
+            z_t = np.clip((np.where(fin_t, col_tilt, med_t) - med_t) / sd_t, -4.0, 4.0)
+            tilt_temp = float(rng.uniform(-0.65, 0.65))
+            logits_w = tilt_temp * z_t
+            logits_w -= float(np.max(logits_w))
+            w_sub = np.exp(logits_w)
+            w_sub /= float(np.sum(w_sub))
+            sel_local = rng.choice(r_tot, size=n_rows, replace=False, p=w_sub)
+        else:
+            sel_local = rng.choice(r_tot, size=n_rows, replace=False)
 
-    # Single materialization of only the selected n_rows from the memory-mapped table!
     sub = np.asarray(tab_mmap[valid_rows[sel_local]], dtype=np.float64)
-
-    if p_ctx_fixed is None:
-        u_p = float(rng.random())
-        p_ctx = float(rng.uniform(0.22, 0.56) if u_p < 0.22 else (rng.uniform(0.56, 0.84) if u_p < 0.78 else rng.uniform(0.84, 0.95)))
-    else:
-        p_ctx = p_ctx_fixed
-    n_ctx = max(16, min(n_rows - 4, int(round(p_ctx * n_rows))))
-    feats = [j for j in range(c_tot) if j != tcol]
-    if tmode == 2 and not blend_real_teacher and len(feats) > 1 and rng.random() < 0.5:
-        feats = [j for j in feats if j != c_tot - 1] or feats
     X_all = sub[:, feats]
     y_all = sub[:, tcol].copy()
 
-    if rng.random() < 0.75 and n_rows >= 24:
+    # Fresh CSPRNG context/query split (50% pure uniform permutation, 50% quantile-stratified)
+    if random_split_every_batch and float(rng.random()) < 0.50 and n_rows >= 28 and np.all(np.isfinite(y_all)):
         ord_s = np.argsort(y_all + 1e-12 * max(float(np.nanstd(y_all)), 1.0) * rng.standard_normal(n_rows), kind="mergesort")
         cp, qp = [], []
         for b_arr in np.array_split(ord_s, int(rng.integers(5, min(17, max(6, n_rows // 4))))):
@@ -616,50 +814,14 @@ def bidirectional_real_episode(
         else:
             order = np.concatenate([c_idx, q_idx[: n_ctx - len(c_idx)], q_idx[n_ctx - len(c_idx):]])
         X_all, y_all = X_all[order], y_all[order]
+    else:
+        perm_r = rng.permutation(n_rows)
+        X_all, y_all = X_all[perm_r], y_all[perm_r]
 
     Xc, Xq = X_all[:n_ctx], X_all[n_ctx:]
     yc, yq = y_all[:n_ctx].copy(), y_all[n_ctx:].copy()
     if (tmode < 2 or blend_real_teacher) and float(np.std(yc)) <= 1e-12:
         return None
-
-    # Strict 0-10% TO-features synthetic column injection (k <= floor(inj_max_frac * F), inj_max_frac <= 0.10)
-    # plus per-episode random feature removal (k_real <= p - 1 whenever p >= 2 and feature_drop_every_batch=True).
-    p = Xc.shape[1]
-    if f_fixed is None:
-        if feature_drop_every_batch and p >= 2:
-            max_drop = max(1, min(p - 1, int(round(drop_max_frac * p))))
-            p_keep = p - int(rng.integers(1, max_drop + 1))
-        else:
-            p_keep = p
-            if p >= 6 and rng.random() < 0.45:
-                p_keep = int(rng.integers(max(3, int(round(0.60 * p))), p + 1))
-        p_base = min(WIDE_GPU, p_keep)
-        max_inj = int(math.floor((inj_max_frac / max(1e-9, 1.0 - inj_max_frac)) * p_base)) if inj_max_frac > 0.0 else 0
-        if max_inj >= 1:
-            k_try = int(rng.integers(1 if synth_inj_every_batch else 0, max_inj + 1))
-        else:
-            k_try = 0
-        F = min(WIDE_GPU, p_keep + k_try)
-        k_hi = int(math.floor(inj_max_frac * F))
-        k = min(k_try, k_hi)
-        if synth_inj_every_batch and k_hi >= 1 and k < 1:
-            k = 1
-        if F - k < 1:
-            k = 0
-            F = max(1, p_base)
-        k_real = F - k
-    else:
-        F = f_fixed
-        k_hi = int(math.floor(inj_max_frac * F))
-        p_cap = (p - 1) if (feature_drop_every_batch and p >= 2) else p
-        k_min_inj = 1 if (synth_inj_every_batch and k_hi >= 1) else 0
-        k_lo = max(k_min_inj, F - p_cap)
-        if k_lo > k_hi:
-            return None
-        k = int(rng.integers(k_lo, k_hi + 1))
-        k_real = F - k
-        if k_real < 1:
-            return None
 
     Xc, Xq = _select_cols(Xc, yc if tmode < 2 else np.zeros(n_ctx), Xq, k_real, rng)
     if tmode == 2:
@@ -674,36 +836,42 @@ def bidirectional_real_episode(
             yq = (1.0 - alpha) * yq_s + alpha * t_pair[1]
         else:
             yc, yq = t_pair
-    elif rng.random() < 0.35:
+    elif rng.random() < 0.40:
         sy = float(np.std(yc))
         e = rng.standard_normal(n_rows) / np.sqrt(np.maximum(np.mean(rng.standard_normal((n_rows, 3)) ** 2, axis=1), 1e-3)) / 1.732
-        jit = sy * float(rng.uniform(0.015, 0.03)) * np.clip(e, -1.345, 1.345)
+        jit = sy * float(rng.uniform(0.01, 0.035)) * np.clip(e, -1.345, 1.345)
         yc, yq = yc + jit[:n_ctx], yq + jit[n_ctx:]
 
-    if k > 0:
-        Ic, Iq = _inject_synth_cols_np(Xc, Xq, k, rng)
+    if k_inj > 0:
+        Ic, Iq = _inject_synth_cols_np(Xc, Xq, k_inj, rng)
         Xc, Xq = np.hstack([Xc, Ic]), np.hstack([Xq, Iq])
-    perm_f = rng.permutation(Xc.shape[1])
-    Xc, Xq = Xc[:, perm_f], Xq[:, perm_f]
 
-    # dev91-aligned target spaces: 45% 5-fold SVD robust-ridge residual, 35% Yeo-Johnson warp, 20% raw
+    # (4) Per-feature random scaling/affine, small context-scaled noise, and full random feature permutation
+    Xc, Xq = _augment_features_zero_leakage(Xc, Xq, rng, noise_max_frac=feature_noise_max)
+
+    # Target spaces: 42% 5-fold SVD robust-ridge residual, 33% Yeo-Johnson warp, 25% raw/random-affine target
     u_sp = float(rng.random())
     space = 0
     y_ep = np.concatenate([yc, yq])
-    if u_sp < 0.45:
+    if u_sp < 0.42:
         oof, pq, used, _ = _robust_ridge_np(Xc, yc, Xq, seed=int(rng.integers(1, 1 << 30)))
         if used:
             y_ep = np.concatenate([yc - oof, yq - pq])
             space = 1
-    elif u_sp < 0.80:
+    elif u_sp < 0.75:
         yj_pair = _yeojohnson_pair_np(yc, yq)
         if yj_pair is not None and float(np.std(yj_pair[0])) > 1e-8:
             y_ep = np.concatenate([yj_pair[0], yj_pair[1]])
             space = 2
+    else:
+        y_sign = -1.0 if float(rng.random()) < 0.5 else 1.0
+        y_scale = float(math.exp(rng.uniform(-2.0, 2.0)))
+        y_ep = y_sign * y_scale * y_ep
+
     X_ep = np.vstack([Xc, Xq])
-    if X_ep.shape[1] != F or not np.all(np.isfinite(y_ep)) or float(np.std(y_ep[:n_ctx])) <= 1e-12:
+    if X_ep.shape != (n_rows, F) or not np.all(np.isfinite(y_ep)) or float(np.std(y_ep[:n_ctx])) <= 1e-12:
         return None
-    return X_ep, y_ep, n_ctx, (int(t_idx), tmode, k, F, n_rows, space, int(max(0, p - k_real)), int(p))
+    return X_ep, y_ep, n_ctx, (int(t_idx), tmode, int(k_inj), int(F), int(n_rows), space, int(max(0, p - k_real)), int(p))
 
 
 def _sample_full_synth_special(
@@ -713,13 +881,14 @@ def _sample_full_synth_special(
     n_ctx: int,
     rng: np.random.Generator,
     feature_drop_every_batch: bool = True,
-    drop_max_frac: float = 0.35,
+    drop_min_frac: float = 0.05,
+    drop_max_frac: float = 0.65,
     synth_inj_every_batch: bool = True,
-    inj_max_frac: float = 0.10,
+    inj_min_frac: float = 0.05,
+    inj_max_frac: float = 0.30,
+    feature_noise_max: float = 0.05,
 ) -> tuple[np.ndarray, np.ndarray]:
-    inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
-    drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
-    mode = int(rng.integers(0, 3))  # 0: panel/entity-time, 1: hurdle/sentinel-atom, 2: oblivious-tree + MAR missingness
+    mode = int(rng.integers(0, 3))
     xs = np.zeros((B, N, Fn), dtype=np.float64)
     ys = np.zeros((B, N), dtype=np.float64)
     Fn_gen = Fn + (max(1, int(round(drop_max_frac * Fn))) if feature_drop_every_batch else 0)
@@ -754,7 +923,6 @@ def _sample_full_synth_special(
             perm = rng.permutation(N)
             X_raw, y_b = X_raw[perm], np.where(is_atom, atom_val, y_bulk)[perm]
         else:
-            # Heavy-tailed correlated covariates + symmetric oblivious decision tree ensemble + MAR NaNs
             r_lat = min(6, Fn_gen)
             z_lat = rng.standard_normal((N, r_lat))
             mix = rng.standard_normal((r_lat, Fn_gen)) / math.sqrt(r_lat)
@@ -777,10 +945,8 @@ def _sample_full_synth_special(
             y_b = y_clean + float(rng.uniform(0.02, 0.18)) * max(float(np.std(y_clean)), 1e-3) * rng.standard_normal(N)
 
         k_hi_sp = int(math.floor(inj_max_frac * Fn))
-        if k_hi_sp >= 1 and (synth_inj_every_batch or rng.random() < 0.50):
-            k_sp = int(rng.integers(1 if synth_inj_every_batch else 0, k_hi_sp + 1))
-        else:
-            k_sp = 0
+        k_lo_sp = max(1, int(math.ceil(inj_min_frac * Fn))) if (synth_inj_every_batch and k_hi_sp >= 1) else 0
+        k_sp = int(rng.integers(min(k_lo_sp, k_hi_sp), k_hi_sp + 1)) if k_hi_sp >= 1 else 0
         k_keep = max(1, Fn - k_sp)
         keep_idx = rng.choice(X_raw.shape[1], size=k_keep, replace=False) if X_raw.shape[1] > k_keep else np.arange(X_raw.shape[1])
         X_sub = X_raw[:, keep_idx]
@@ -792,24 +958,79 @@ def _sample_full_synth_special(
         if X_full.shape[1] < Fn:
             X_full = np.hstack([X_full, rng.standard_normal((N, Fn - X_full.shape[1]))])
         X_full = X_full[:, :Fn]
-        xs[b] = X_full[:, rng.permutation(Fn)]
+        Xc_aug, Xq_aug = _augment_features_zero_leakage(X_full[:n_ctx], X_full[n_ctx:], rng, noise_max_frac=feature_noise_max)
+        xs[b] = np.vstack([Xc_aug, Xq_aug])
         ys[b] = y_b
     return xs, ys
 
 
-def _pack_worker_item(xa: np.ndarray, ya: np.ndarray, n_ctx: int, infos, fps: list[bytes]):
+def _pack_worker_item(
+    xa: np.ndarray,
+    ya: np.ndarray,
+    n_ctx: int,
+    infos,
+    fps: list[bytes],
+    rng: np.random.Generator,
+    postnorm_affine_max: float = 0.22,
+):
     zm_np, yz_np, ym_np, ys_np = ICLH450MPS.prenorm_cpu_np(xa, ya[:, :n_ctx], int(n_ctx))
+    # Post-normalise_f64 per-feature affine jitter on non-missing cells so random feature scaling/shift
+    # survives context IQR normalization directly into the 104M cell encoder!
+    if postnorm_affine_max > 0.0 and float(rng.random()) < 0.85:
+        B_p, _, Fn_p, _ = zm_np.shape
+        g_af = np.exp(rng.uniform(-postnorm_affine_max, postnorm_affine_max, size=(B_p, 1, Fn_p))).astype(np.float32)
+        d_af = rng.uniform(-0.8 * postnorm_affine_max, 0.8 * postnorm_affine_max, size=(B_p, 1, Fn_p)).astype(np.float32)
+        z_val = zm_np[..., 0]
+        not_miss = zm_np[..., 1] < 0.5
+        zm_np[..., 0] = np.where(not_miss, np.clip(z_val * g_af + d_af, -float(CLIP_X), float(CLIP_X)), np.float32(0.0))
     yq_np = np.ascontiguousarray(ya[:, n_ctx:], dtype=np.float64)
     return (zm_np, yz_np, ym_np, ys_np, yq_np, int(n_ctx), infos, fps)
 
 
-def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expect_sha: str,
-                         tokens_cap: int, row_tokens_cap: int, bmax: int, cpu_hard: float,
-                         random_split_every_batch: bool, feature_drop_every_batch: bool, drop_max_frac: float,
-                         synth_inj_every_batch: bool, inj_max_frac: float,
-                         synth_prob: float, prior_seed_base: int,
-                         out_q, stop_ev) -> None:
-    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+def _target_batch_size(N: int, Fn: int, bmax: int, tokens_cap: int, row_tokens_cap: int, attn_cap: int) -> int:
+    return max(
+        1,
+        min(
+            int(bmax),
+            int(tokens_cap) // max(N * (Fn + 4), 1),
+            int(row_tokens_cap) // max(N, 1),
+            int(attn_cap) // max(N * N, 1),
+        ),
+    )
+
+
+def _spawned_worker_loop(
+    worker_id: int,
+    run_nonce: bytes,
+    mmap_dir_s: str,
+    expect_sha: str,
+    dataset_mix: str,
+    max_episode_rows: int,
+    tokens_cap: int,
+    row_tokens_cap: int,
+    attn_cap: int,
+    bmax: int,
+    cpu_hard: float,
+    random_split_every_batch: bool,
+    feature_drop_every_batch: bool,
+    drop_min_frac: float,
+    drop_max_frac: float,
+    synth_inj_every_batch: bool,
+    inj_min_frac: float,
+    inj_max_frac: float,
+    rand_target_prob: float,
+    synth_teacher_prob: float,
+    feature_noise_max: float,
+    postnorm_affine_max: float,
+    synth_prob: float,
+    prior_seed_base: int,
+    out_q,
+    stop_ev,
+) -> None:
+    try:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except Exception:
+        pass
     try:
         os.nice(12)
     except Exception:
@@ -818,44 +1039,98 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
         torch.set_num_threads(1)
     except Exception:
         pass
-    inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
-    drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
-    synth_prob = max(0.0, min(1.0, float(synth_prob)))
-    bank = MmapF64Bank(Path(mmap_dir_s), expect_sha256=expect_sha)
+
+    sampling_mode = "uniform_dataset" if dataset_mix == "uniform" else "smart_stratified"
+    bank = MmapF64Bank(Path(mmap_dir_s), expect_sha256=expect_sha, sampling_mode=sampling_mode)
     gov = HostCpuGovernor(hard_pct=cpu_hard, check_every_s=3.0)
     prior: Prior | None = None
+    valid_tcols_cache: dict[int, tuple[int, ...]] = {}
+
+    # Per-worker shape bin accumulator: preserves EXACT 1/3525 uniform-by-dataset exposure without row-count rejection!
+    open_bins: dict[tuple[int, int], dict] = {}
+    n_ctx_for_shape: dict[tuple[int, int], int] = {}
+    ready_items: list = []
+    allowed_row_bins = [n for n in ROW_BINS if n <= int(max_episode_rows)] or [min(32, int(max_episode_rows))]
+    active_rows = allowed_row_bins[worker_id % len(allowed_row_bins)]
     seq = 0
+
+    def _flush_bin(shape_key: tuple[int, int], rng_f: np.random.Generator) -> None:
+        b_st = open_bins.pop(shape_key, None)
+        n_ctx_for_shape.pop(shape_key, None)
+        if not b_st or not b_st["xs"]:
+            return
+        xs_b, ys_b, infos_b, n_ctx_b = b_st["xs"], b_st["ys"], b_st["infos"], int(b_st["n_ctx"])
+        fps_b = [dataset_fingerprint_128(x_, y_, n_ctx_b) for x_, y_ in zip(xs_b, ys_b)]
+        ready_items.append(
+            _pack_worker_item(
+                np.stack(xs_b), np.stack(ys_b), n_ctx_b, infos_b, fps_b, rng_f,
+                postnorm_affine_max=postnorm_affine_max,
+            )
+        )
+
     while not stop_ev.is_set():
+        while ready_items and not stop_ev.is_set():
+            nxt = ready_items.pop(0)
+            while not stop_ev.is_set():
+                try:
+                    out_q.put(nxt, timeout=1.0)
+                    break
+                except queue.Full:
+                    gov.pace()
+                    continue
+
         gov.pace()
         seq += 1
         b_seed = hashlib.blake2b(run_nonce + worker_id.to_bytes(4, "little") + seq.to_bytes(8, "little"), digest_size=32).digest()
         rng = np.random.default_rng(np.frombuffer(b_seed, dtype=np.uint32))
+
         if synth_prob > 0.0 and float(rng.random()) < synth_prob:
             if prior is None:
                 prior = Prior(torch.device("cpu"), int(prior_seed_base) + 1009 * (worker_id + 1))
             r_py = std_random.Random(int(rng.integers(1, 1 << 62)))
-            Fn = max(6, min(WIDE_GPU, draw_features(r_py)))
+            Fn = max(4, min(WIDE_GPU, draw_features(r_py)))
             N = int(rng.choice(SYNTH_N, p=SYNTH_N_P))
-            B = max(1, min(bmax, tokens_cap // max(N * (Fn + 4), 1), row_tokens_cap // max(N, 1)))
-            n_ctx = max(16, min(N - 4, int(round(float(rng.uniform(0.28, 0.93)) * N))))
-            if float(rng.random()) < 0.58:
+            N = min(N, int(max_episode_rows))
+            B = _target_batch_size(N, Fn, min(int(bmax), 20), tokens_cap, row_tokens_cap, attn_cap)
+            n_ctx = max(16, min(N - 4, int(round(float(rng.uniform(0.18, 0.95)) * N))))
+            if float(rng.random()) < 0.55:
                 Fn_gen = min(WIDE_GPU, Fn + (max(1, int(round(drop_max_frac * Fn))) if feature_drop_every_batch else 0))
                 xt_c, yt_c, _, _ = INJ.sample_synth(prior, r_py, B, N, Fn_gen, 0.55, PROBS_V3S)
                 xa_g, ya = xt_c.detach().cpu().double().numpy(), yt_c.detach().cpu().double().numpy()
-                if feature_drop_every_batch and Fn_gen >= 3:
-                    max_ds = max(1, min(Fn_gen - 2, int(round(drop_max_frac * Fn_gen))))
-                    n_ds = int(rng.integers(1, max_ds + 1))
-                    keep_s = rng.choice(Fn_gen, size=Fn_gen - n_ds, replace=False)
-                    xa = xa_g[:, :, keep_s]
-                else:
-                    xa = xa_g
+                xa_list = []
+                for b_i in range(B):
+                    xb_raw = xa_g[b_i]
+                    if feature_drop_every_batch and Fn_gen >= 3:
+                        d_lo_s = max(1, min(Fn_gen - 2, int(math.floor(drop_min_frac * Fn_gen))))
+                        d_hi_s = max(d_lo_s, min(Fn_gen - 2, int(math.floor(drop_max_frac * Fn_gen))))
+                        n_ds = int(rng.integers(d_lo_s, d_hi_s + 1))
+                        xb_sub = xb_raw[:, rng.choice(Fn_gen, size=Fn_gen - n_ds, replace=False)]
+                    else:
+                        xb_sub = xb_raw
+                    k_hi_s = int(math.floor(inj_max_frac * Fn))
+                    k_lo_s = max(1, int(math.ceil(inj_min_frac * Fn))) if (synth_inj_every_batch and k_hi_s >= 1) else 0
+                    k_inj_s = int(rng.integers(min(k_lo_s, k_hi_s), k_hi_s + 1)) if k_hi_s >= 1 else 0
+                    k_keep_s = max(1, Fn - k_inj_s)
+                    if xb_sub.shape[1] > k_keep_s:
+                        xb_sub = xb_sub[:, rng.choice(xb_sub.shape[1], size=k_keep_s, replace=False)]
+                    elif xb_sub.shape[1] < k_keep_s:
+                        xb_sub = np.hstack([xb_sub, rng.standard_normal((N, k_keep_s - xb_sub.shape[1]))])
+                    if k_inj_s > 0:
+                        Ic_s, Iq_s = _inject_synth_cols_np(xb_sub[:n_ctx], xb_sub[n_ctx:], k_inj_s, rng)
+                        xb_sub = np.vstack([np.hstack([xb_sub[:n_ctx], Ic_s]), np.hstack([xb_sub[n_ctx:], Iq_s])])
+                    Xc_a, Xq_a = _augment_features_zero_leakage(xb_sub[:n_ctx], xb_sub[n_ctx:], rng, noise_max_frac=feature_noise_max)
+                    xa_list.append(np.vstack([Xc_a, Xq_a]))
+                xa = np.stack(xa_list)
             else:
                 xa, ya = _sample_full_synth_special(
                     B, N, Fn, n_ctx, rng,
                     feature_drop_every_batch=feature_drop_every_batch,
+                    drop_min_frac=drop_min_frac,
                     drop_max_frac=drop_max_frac,
                     synth_inj_every_batch=synth_inj_every_batch,
+                    inj_min_frac=inj_min_frac,
                     inj_max_frac=inj_max_frac,
+                    feature_noise_max=feature_noise_max,
                 )
             u_s_sp = float(rng.random())
             if u_s_sp < 0.40:
@@ -872,76 +1147,61 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
                         ya[b_i, :n_ctx] = yj_b[0]
                         ya[b_i, n_ctx:] = yj_b[1]
             fps = [dataset_fingerprint_128(xa[b_], ya[b_], n_ctx) for b_ in range(xa.shape[0])]
-            item = _pack_worker_item(xa, ya, int(n_ctx), None, fps)
-        else:
-            # 100% batched multi-scale real curriculum (fallback to B=1 ONLY for <44-row or <3-col micro-tables
-            # so 3,525 / 3,525 full corpus coverage is strictly preserved).
-            t0 = bank.sample_table_idx(rng)
-            p0_raw = int(bank.cols_arr[t0])
-            ok_n = [n for n in BATCH_N if n + 8 <= int(bank.rows_arr[t0])]
-            if not ok_n or (feature_drop_every_batch and p0_raw < 3):
-                got = bidirectional_real_episode(
-                    bank, t0, rng,
-                    random_split_every_batch=random_split_every_batch,
-                    feature_drop_every_batch=feature_drop_every_batch,
-                    drop_max_frac=drop_max_frac,
-                    synth_inj_every_batch=synth_inj_every_batch,
-                    inj_max_frac=inj_max_frac,
-                )
-                if got is None:
-                    continue
-                item = _pack_worker_item(got[0][None], got[1][None], int(got[2]), [got[3]], [dataset_fingerprint_128(got[0], got[1], got[2])])
-            else:
-                pn = np.array([BATCH_N_P[BATCH_N.index(n)] for n in ok_n])
-                N_t = int(rng.choice(ok_n, p=pn / pn.sum()))
-                if feature_drop_every_batch and p0_raw >= 3:
-                    max_drop0 = max(1, min(p0_raw - 2, int(round(drop_max_frac * p0_raw))))
-                    p0_keep = p0_raw - int(rng.integers(1, max_drop0 + 1))
-                else:
-                    p0_keep = p0_raw
-                p0 = min(p0_keep, WIDE_GPU)
-                max_inj0 = int(math.floor((inj_max_frac / max(1e-9, 1.0 - inj_max_frac)) * p0)) if inj_max_frac > 0.0 else 0
-                k0 = int(rng.integers(1 if synth_inj_every_batch else 0, max_inj0 + 1)) if max_inj0 >= 1 else 0
-                F_t = max(2, min(WIDE_GPU, p0 + k0))
-                u = float(rng.random())
-                p_ctx = float(rng.uniform(0.24, 0.56) if u < 0.22 else (rng.uniform(0.56, 0.84) if u < 0.78 else rng.uniform(0.84, 0.94)))
-                B_t = max(1, min(bmax, tokens_cap // max(N_t * (F_t + 4), 1), row_tokens_cap // max(N_t, 1)))
-                k_hi_t = int(math.floor(inj_max_frac * F_t))
-                min_p_req = (F_t - k_hi_t + 1) if feature_drop_every_batch else max(1, F_t - k_hi_t)
-                elig = ((bank.rows_arr >= N_t + 8) & (bank.cols_arr >= min_p_req)).astype(np.float64)
-                xs, ys, infos, n_ctx_b = [], [], [], None
-                max_tries = max(B_t, int(round(1.6 * B_t)) + 2)
-                for attempt in range(max_tries):
-                    if len(xs) >= B_t:
-                        break
-                    t_idx = t0 if attempt == 0 else bank.sample_eligible(rng, elig)
-                    if t_idx is None:
-                        break
-                    got = bidirectional_real_episode(
-                        bank, t_idx, rng, n_rows_fixed=N_t, f_fixed=F_t, p_ctx_fixed=p_ctx,
-                        random_split_every_batch=random_split_every_batch,
-                        feature_drop_every_batch=feature_drop_every_batch,
-                        drop_max_frac=drop_max_frac,
-                        synth_inj_every_batch=synth_inj_every_batch,
-                        inj_max_frac=inj_max_frac,
-                    )
-                    if got is None or got[0].shape != (N_t, F_t) or (n_ctx_b is not None and got[2] != n_ctx_b):
-                        continue
-                    n_ctx_b = got[2]
-                    xs.append(got[0])
-                    ys.append(got[1])
-                    infos.append(got[3])
-                if not xs:
-                    continue
-                fps = [dataset_fingerprint_128(x_, y_, n_ctx_b) for x_, y_ in zip(xs, ys)]
-                item = _pack_worker_item(np.stack(xs), np.stack(ys), int(n_ctx_b), infos, fps)
-        while not stop_ev.is_set():
-            try:
-                out_q.put(item, timeout=1.0)
+            ready_items.append(_pack_worker_item(xa, ya, int(n_ctx), None, fps, rng, postnorm_affine_max=postnorm_affine_max))
+            continue
+
+        # (5) Exact uniform-by-dataset draw over all 3,525 S3 tables (no row-count rejection!)
+        if seq > 1 and (seq & 255) == 1:
+            old_r = active_rows
+            for k_old in [k_o for k_o, st_o in open_bins.items() if k_o[0] == old_r and len(st_o["xs"]) >= 2]:
+                _flush_bin(k_old, rng)
+            active_rows = int(rng.choice(allowed_row_bins))
+        t_idx = bank.sample_table_idx(rng)
+        got = None
+        for retry_i in range(4):
+            got = sample_max_entropy_real_episode(
+                bank, t_idx, rng, valid_tcols_cache,
+                max_episode_rows=max_episode_rows,
+                random_split_every_batch=random_split_every_batch,
+                feature_drop_every_batch=feature_drop_every_batch,
+                drop_min_frac=drop_min_frac,
+                drop_max_frac=drop_max_frac,
+                synth_inj_every_batch=synth_inj_every_batch,
+                inj_min_frac=inj_min_frac,
+                inj_max_frac=inj_max_frac,
+                rand_target_prob=rand_target_prob,
+                synth_teacher_prob=synth_teacher_prob,
+                feature_noise_max=feature_noise_max,
+                force_canonical_target=(retry_i >= 2),
+                n_ctx_for_shape=n_ctx_for_shape,
+                preferred_rows=active_rows,
+            )
+            if got is not None:
                 break
-            except queue.Full:
-                gov.pace()
-                continue
+        if got is None:
+            continue
+
+        X_ep, y_ep, n_ctx_ep, info_ep = got
+        sh_key = (int(X_ep.shape[0]), int(X_ep.shape[1]))
+        b_st = open_bins.get(sh_key)
+        if b_st is None or int(b_st["n_ctx"]) != int(n_ctx_ep):
+            if b_st is not None:
+                _flush_bin(sh_key, rng)
+            b_tgt = _target_batch_size(sh_key[0], sh_key[1], min(int(bmax), 24), tokens_cap, row_tokens_cap, attn_cap)
+            b_st = {"xs": [], "ys": [], "infos": [], "n_ctx": int(n_ctx_ep), "b_target": b_tgt, "open_seq": seq}
+            open_bins[sh_key] = b_st
+            n_ctx_for_shape[sh_key] = int(n_ctx_ep)
+
+        b_st["xs"].append(X_ep)
+        b_st["ys"].append(y_ep)
+        b_st["infos"].append(info_ep)
+        if len(b_st["xs"]) >= int(b_st["b_target"]):
+            _flush_bin(sh_key, rng)
+
+        if (seq & 63) == 0 and open_bins:
+            stale_keys = [k_s for k_s, st_s in open_bins.items() if (seq - int(st_s["open_seq"])) >= 384]
+            for k_s in stale_keys:
+                _flush_bin(k_s, rng)
 
 
 class Ledger128:
@@ -1039,6 +1299,8 @@ class Ledger128:
             }
         real_eps = int(self.table_eps.sum())
         d91 = int(self.table_eps[b.cohort_idx == b.cohort_names.index("D91-COMBINED-SHUFFLED")].sum())
+        mean_ep = float(np.mean(self.table_eps)) if b.n_tables else 0.0
+        cv_ep = (float(np.std(self.table_eps)) / mean_ep) if mean_ep > 1e-9 else None
         return {
             "per_cohort": per, "real_episodes": real_eps, "synthetic_datasets": self.synth_datasets,
             "real_cell_tokens": int(self.table_cells.sum()), "synthetic_cell_tokens": self.synth_cells,
@@ -1048,6 +1310,8 @@ class Ledger128:
             "injected_column_share": self.inj_cols / max(1, self.inj_cols + self.real_cols),
             "feature_drop_share_p_ge_2": (self.real_eps_dropped / self.real_eps_p_ge_2) if self.real_eps_p_ge_2 else None,
             "dropped_real_columns_total": self.dropped_real_cols,
+            "table_episodes_cv": round(cv_ep, 4) if cv_ep is not None else None,
+            "dataset_sampling_mode": getattr(b, "sampling_mode", "uniform_dataset"),
             "sealed_cohorts_in_bank": 0,
             "unique_datasets_seen": len(self.seen_fp_128),
             "datasets_seen": real_eps + self.synth_datasets,
@@ -1060,9 +1324,16 @@ class Ledger128:
         }
 
 
-def _atomic_save(obj, path: Path) -> None:
+def _atomic_save(obj, path: Path, mode: int | None = None) -> None:
     tmp = path.with_suffix(".tmp")
+    if path.exists():
+        try:
+            os.chmod(path, 0o644)
+        except Exception:
+            pass
     torch.save(obj, tmp)
+    if mode is not None:
+        os.chmod(tmp, mode)
     os.replace(tmp, path)
 
 
@@ -1074,39 +1345,49 @@ def main() -> None:
     ap.add_argument("--mmap-bank", required=True)
     ap.add_argument("--bank-sha256", default="9dfc60ed29a72266bf69228addcfce5e946064905edde79115914dee6eb0c507")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--hours", type=float, default=48.0)
+    ap.add_argument("--hours", type=float, default=96.0)
     ap.add_argument("--save-every-datasets", type=int, default=150_000)
+    ap.add_argument("--keep-latest-only", type=int, choices=(0, 1), default=1)
     ap.add_argument("--last-every-s", type=float, default=300.0)
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--max-steps", type=int, default=0)
     ap.add_argument("--lr", type=float, default=2.5e-5)
     ap.add_argument("--swa-decay", type=float, default=0.9995)
-    ap.add_argument("--synth-prob", type=float, default=0.22)
-    ap.add_argument("--tokens", type=int, default=640_000)
-    ap.add_argument("--row-tokens", type=int, default=12_288)
-    ap.add_argument("--bmax", type=int, default=32)
+    ap.add_argument("--synth-prob", type=float, default=0.20)
+    ap.add_argument("--dataset-mix", choices=("uniform", "smart_stratified"), default="uniform")
+    ap.add_argument("--max-episode-rows", type=int, default=DEFAULT_MAX_EPISODE_ROWS)
+    ap.add_argument("--tokens", type=int, default=760_000)
+    ap.add_argument("--row-tokens", type=int, default=15_360)
+    ap.add_argument("--attn-cap", type=int, default=18_500_000)
+    ap.add_argument("--bmax", type=int, default=40)
     ap.add_argument("--grad-accum", type=int, default=3)
-    ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--checkpoint-row-blocks", type=int, choices=(0, 1), default=1)
     ap.add_argument("--cpu-hard-pct", type=float, default=82.0)
     ap.add_argument("--cuda-vram-frac", type=float, default=0.80)
     ap.add_argument("--random-split-every-batch", type=int, choices=(0, 1), default=1)
     ap.add_argument("--feature-drop-every-batch", type=int, choices=(0, 1), default=1)
-    ap.add_argument("--feature-drop-max-frac", type=float, default=0.35)
+    ap.add_argument("--feature-drop-min-frac", type=float, default=0.05)
+    ap.add_argument("--feature-drop-max-frac", type=float, default=0.65)
     ap.add_argument("--synth-inj-every-batch", type=int, choices=(0, 1), default=1)
-    ap.add_argument("--synth-inj-max-frac", type=float, default=0.10)
+    ap.add_argument("--synth-inj-min-frac", type=float, default=0.05)
+    ap.add_argument("--synth-inj-max-frac", type=float, default=0.30)
+    ap.add_argument("--rand-target-prob", type=float, default=0.45)
+    ap.add_argument("--synth-teacher-prob", type=float, default=0.15)
+    ap.add_argument("--feature-noise-max", type=float, default=0.05)
+    ap.add_argument("--postnorm-affine-max", type=float, default=0.22)
     ap.add_argument("--seed", type=int, default=450_441)
     ap.add_argument("--device", default="mps")
     a = ap.parse_args()
 
-    if not (0.0 <= a.synth_inj_max_frac <= 0.10):
-        raise SystemExit(f"--synth-inj-max-frac {a.synth_inj_max_frac} exceeds strict owner cap 0.10")
-    if not (0.05 <= a.feature_drop_max_frac <= 0.50):
-        raise SystemExit(f"--feature-drop-max-frac {a.feature_drop_max_frac} outside [0.05, 0.50]")
+    if not (0.0 <= a.synth_inj_min_frac <= a.synth_inj_max_frac <= 0.50):
+        raise SystemExit(f"invalid synth-inj range [{a.synth_inj_min_frac}, {a.synth_inj_max_frac}] (expected 0 <= min <= max <= 0.50)")
+    if not (0.0 <= a.feature_drop_min_frac <= a.feature_drop_max_frac <= 0.85):
+        raise SystemExit(f"invalid feature-drop range [{a.feature_drop_min_frac}, {a.feature_drop_max_frac}] (expected 0 <= min <= max <= 0.85)")
 
     out_dir = Path(a.out)
     out_dir.mkdir(parents=True, exist_ok=True)
-    final_p, last_p = out_dir / "ckpt_h450_final.pt", out_dir / "ckpt_last.pt"
+    final_p, last_p, latest_p = out_dir / "ckpt_h450_final.pt", out_dir / "ckpt_last.pt", out_dir / "ckpt_latest.pt"
     if final_p.exists():
         raise SystemExit(f"{final_p} exists (create-once)")
     if last_p.exists() and not a.resume:
@@ -1116,8 +1397,9 @@ def main() -> None:
     if sha256_file(Path(a.init)) != a.init_sha256:
         raise SystemExit("init checkpoint sha256 mismatch")
 
+    sampling_mode = "uniform_dataset" if a.dataset_mix == "uniform" else "smart_stratified"
     t_load0 = time.time()
-    bank = MmapF64Bank(Path(a.mmap_bank), expect_sha256=a.bank_sha256, verify_data_sha=True)
+    bank = MmapF64Bank(Path(a.mmap_bank), expect_sha256=a.bank_sha256, verify_data_sha=True, sampling_mode=sampling_mode)
     bank_load_s = round(time.time() - t_load0, 3)
     ledger = Ledger128(bank)
     run_nonce = hashlib.blake2b(secrets.token_bytes(32) + int(a.seed).to_bytes(8, "little"), digest_size=32).digest()
@@ -1147,9 +1429,11 @@ def main() -> None:
     for p in ema_swa.parameters():
         p.requires_grad_(False)
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, betas=(0.9, 0.98), eps=1e-8, weight_decay=1e-2)
-    state = {"step": 0, "micro_batches": 0, "accum_in_group": 0, "real_batches": 0, "synth_batches": 0,
-             "datasets": 0, "cell_tokens": 0, "oom_skips": 0, "nonfinite_skips": 0, "train_s": 0.0,
-             "epochs_saved": 0, "last_epoch_datasets": 0, "resumes": 0}
+    state = {
+        "step": 0, "micro_batches": 0, "accum_in_group": 0, "real_batches": 0, "synth_batches": 0,
+        "datasets": 0, "cell_tokens": 0, "oom_skips": 0, "nonfinite_skips": 0, "train_s": 0.0,
+        "epochs_saved": 0, "last_epoch_datasets": 0, "resumes": 0, "switch_history": [],
+    }
     if a.resume:
         ck = torch.load(last_p, map_location="cpu", weights_only=False)
         if ck.get("bank_sha256") and ck["bank_sha256"] != bank.sha256:
@@ -1163,6 +1447,8 @@ def main() -> None:
         state.update(ck["state"])
         if "last_epoch_datasets" not in ck["state"]:
             state["last_epoch_datasets"] = int(state["datasets"])
+        if "switch_history" not in state or not isinstance(state["switch_history"], list):
+            state["switch_history"] = []
         state["resumes"] += 1
         ledger.load(ck["ledger"])
     else:
@@ -1171,6 +1457,23 @@ def main() -> None:
         model.load_state_dict(w_init, strict=True)
         ema.load_state_dict(w_init, strict=True)
         ema_swa.load_state_dict(w_init, strict=True)
+
+    sampler_cfg = {
+        "protocol": "fleet-r9-max-entropy-uniform-ds",
+        "utc": time.strftime("%FT%TZ", time.gmtime()),
+        "resume_step": int(state["step"]),
+        "resume_datasets": int(state["datasets"]),
+        "keep_latest_only": bool(a.keep_latest_only),
+        "dataset_mix": a.dataset_mix,
+        "max_episode_rows": int(a.max_episode_rows),
+        "feature_drop_frac": [float(a.feature_drop_min_frac), float(a.feature_drop_max_frac)],
+        "synth_inj_frac": [float(a.synth_inj_min_frac), float(a.synth_inj_max_frac)],
+        "rand_target_prob": float(a.rand_target_prob),
+        "synth_teacher_prob": float(a.synth_teacher_prob),
+        "feature_noise_max": float(a.feature_noise_max),
+        "postnorm_affine_max": float(a.postnorm_affine_max),
+    }
+    state["switch_history"].append(sampler_cfg)
 
     params_cnt = int(n_params(model))
     prior_seed_base = int(a.seed) + 17 + 1000 * int(state["resumes"])
@@ -1183,9 +1486,13 @@ def main() -> None:
         ctx.Process(
             target=_spawned_worker_loop,
             args=(
-                w, run_nonce, str(a.mmap_bank), a.bank_sha256, a.tokens, a.row_tokens, a.bmax, a.cpu_hard_pct,
-                bool(a.random_split_every_batch), bool(a.feature_drop_every_batch), float(a.feature_drop_max_frac),
-                bool(a.synth_inj_every_batch), float(a.synth_inj_max_frac),
+                w, run_nonce, str(a.mmap_bank), a.bank_sha256, a.dataset_mix, int(a.max_episode_rows),
+                int(a.tokens), int(a.row_tokens), int(a.attn_cap), int(a.bmax), float(a.cpu_hard_pct),
+                bool(a.random_split_every_batch), bool(a.feature_drop_every_batch),
+                float(a.feature_drop_min_frac), float(a.feature_drop_max_frac),
+                bool(a.synth_inj_every_batch), float(a.synth_inj_min_frac), float(a.synth_inj_max_frac),
+                float(a.rand_target_prob), float(a.synth_teacher_prob),
+                float(a.feature_noise_max), float(a.postnorm_affine_max),
                 float(a.synth_prob), prior_seed_base,
                 ep_q, stop_ev,
             ),
@@ -1196,39 +1503,68 @@ def main() -> None:
     for p in procs:
         p.start()
 
+    def save_latest_eval_ckpt() -> str:
+        swa_cpu = {kk: vv.cpu() for kk, vv in ema_swa.state_dict().items()}
+        _atomic_save(
+            {"ema": swa_cpu, "model": swa_cpu, "state": dict(state), "size": a.size, "sampler_cfg": sampler_cfg},
+            latest_p,
+            mode=0o644,
+        )
+        return sha256_file(latest_p)
+
     def save_last() -> None:
-        _atomic_save({"model": {k: v.cpu() for k, v in model.state_dict().items()},
-                      "ema": {k: v.cpu() for k, v in ema.state_dict().items()},
-                      "ema_swa": {k: v.cpu() for k, v in ema_swa.state_dict().items()},
-                      "opt": opt.state_dict(), "state": state, "ledger": ledger.state(),
-                      "size": a.size, "bank_sha256": bank.sha256, "init_sha256": a.init_sha256, "argv": sys.argv}, last_p)
+        _atomic_save(
+            {
+                "model": {k: v.cpu() for k, v in model.state_dict().items()},
+                "ema": {k: v.cpu() for k, v in ema.state_dict().items()},
+                "ema_swa": {k: v.cpu() for k, v in ema_swa.state_dict().items()},
+                "opt": opt.state_dict(), "state": state, "ledger": ledger.state(),
+                "size": a.size, "bank_sha256": bank.sha256, "init_sha256": a.init_sha256, "argv": sys.argv,
+            },
+            last_p,
+            mode=0o644,
+        )
 
     def save_epoch(k: int) -> None:
-        ep_p = out_dir / f"ckpt_epoch_{k:02d}.pt"
-        if ep_p.exists():
+        jp = out_dir / f"epoch_{k:02d}.json"
+        if jp.exists():
             state["epochs_saved"] = max(int(state["epochs_saved"]), k)
             return
-        swa_cpu = {kk: vv.cpu() for kk, vv in ema_swa.state_dict().items()}
-        _atomic_save({"ema": swa_cpu, "model": swa_cpu, "state": dict(state), "size": a.size}, ep_p)
-        os.chmod(ep_p, 0o444)
+        if bool(a.keep_latest_only):
+            # New policy: save ONLY rolling `ckpt_latest.pt` + metrics JSON (no per-epoch model `.pt` files)
+            ck_sha = save_latest_eval_ckpt()
+            ck_path_str = str(latest_p)
+        else:
+            ep_p = out_dir / f"ckpt_epoch_{k:02d}.pt"
+            swa_cpu = {kk: vv.cpu() for kk, vv in ema_swa.state_dict().items()}
+            _atomic_save({"ema": swa_cpu, "model": swa_cpu, "state": dict(state), "size": a.size}, ep_p, mode=0o444)
+            ck_sha = sha256_file(ep_p)
+            ck_path_str = str(ep_p)
         doc = {
             "schema": "jope.h450.epoch/v1", "epoch": k, "train_hours": state["train_s"] / 3600.0, "step": state["step"],
-            "ckpt": str(ep_p), "ckpt_sha256": sha256_file(ep_p), "init_sha256": a.init_sha256,
-            "bank_sha256": bank.sha256, "quarantined_in_corpus": True, "canonical_promotion_forbidden": True,
+            "ckpt": ck_path_str, "ckpt_sha256": ck_sha, "keep_latest_only": bool(a.keep_latest_only),
+            "protocol": "fleet-r9-max-entropy-uniform-ds", "sampler_cfg": sampler_cfg,
+            "init_sha256": a.init_sha256, "bank_sha256": bank.sha256,
+            "quarantined_in_corpus": True, "canonical_promotion_forbidden": True,
             "weights_source": "ema_swa", "swa_decay": float(a.swa_decay),
             "exposure": ledger.summary(),
         }
-        jp = out_dir / f"epoch_{k:02d}.json"
         jp.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
         os.chmod(jp, 0o444)
         state["epochs_saved"] = k
 
+    # Ensure rolling `ckpt_latest.pt` exists immediately at start/resume boundary
+    save_latest_eval_ckpt()
+
     budget_s = max(15.0, a.hours * 3600.0)
     log_f = open(out_dir / "log.jsonl", "a", buffering=1)
-    log_f.write(json.dumps({"start": time.strftime("%FT%TZ", time.gmtime()), "host": platform.node(), "device": str(dev),
-                            "resume": bool(a.resume), "params": params_cnt, "bank_tables": bank.n_tables,
-                            "bank_load_s": bank_load_s, "train_s": state["train_s"], "step": state["step"],
-                            "lr_base": a.lr, "swa_decay": a.swa_decay, "ckpt_row_blocks": bool(a.checkpoint_row_blocks)}) + "\n")
+    log_f.write(json.dumps({
+        "start": time.strftime("%FT%TZ", time.gmtime()), "host": platform.node(), "device": str(dev),
+        "resume": bool(a.resume), "params": params_cnt, "bank_tables": bank.n_tables,
+        "bank_load_s": bank_load_s, "train_s": state["train_s"], "step": state["step"],
+        "lr_base": a.lr, "swa_decay": a.swa_decay, "ckpt_row_blocks": bool(a.checkpoint_row_blocks),
+        "sampler_cfg": sampler_cfg,
+    }) + "\n")
 
     grad_accum = max(1, int(a.grad_accum))
     opt.zero_grad(set_to_none=True)
@@ -1237,6 +1573,7 @@ def main() -> None:
     t_log = t_last = time.time()
     run_loss, run_n, run_ds = 0.0, 0, 0
     swa_decay_target = max(0.99, min(0.99995, float(a.swa_decay)))
+    steps_since_start = 0
 
     try:
         while not stop_flag["stop"]:
@@ -1253,9 +1590,19 @@ def main() -> None:
             for g in opt.param_groups:
                 g["lr"] = cur_lr
 
-            zm_np, yz_np, ym_np, ys_np, yq_np, n_ctx, infos, fps = ep_q.get(timeout=180.0)
+            item_got = None
+            t_wait0 = time.time()
+            while not stop_flag["stop"]:
+                try:
+                    item_got = ep_q.get(timeout=2.0)
+                    break
+                except queue.Empty:
+                    if time.time() - t_wait0 > 180.0:
+                        raise TimeoutError("worker queue empty > 180s")
+            if stop_flag["stop"] or item_got is None:
+                break
+            zm_np, yz_np, ym_np, ys_np, yq_np, n_ctx, infos, fps = item_got
 
-            # Pre-forward 128-bit deduplication: NEVER feed a duplicate dataset to the model!
             keep_idx = ledger.filter_unseen_indices(fps)
             if not keep_idx:
                 continue
@@ -1282,7 +1629,8 @@ def main() -> None:
                 ys_t = torch.from_numpy(ys_np)
                 yq_t = torch.from_numpy(yq_np)
 
-            slots = torch.randperm(FID_SLOTS, device=dev)[:Fn_cur]
+            # Independent random feature-slot permutation per episode [B_cur, 1, Fn_cur]
+            slots = torch.rand(B_cur, FID_SLOTS, device=dev).argsort(dim=-1)[:, None, :Fn_cur]
             try:
                 logits, ym, ys_ = model(
                     None, None, n_ctx, slots=slots,
@@ -1324,6 +1672,7 @@ def main() -> None:
                 opt.step()
                 opt.zero_grad(set_to_none=True)
                 state["step"] += 1
+                steps_since_start += 1
                 state["accum_in_group"] = 0
                 with torch.no_grad():
                     decay = min(0.995, (1.0 + state["step"]) / (10.0 + state["step"]))
@@ -1331,7 +1680,7 @@ def main() -> None:
                     for pe, ps, pm in zip(ema.parameters(), ema_swa.parameters(), model.parameters()):
                         pe.lerp_(pm, 1.0 - decay)
                         ps.lerp_(pm, 1.0 - swa_d)
-                if dev.type == "cuda" and a.cuda_vram_frac > 0.0 and state["step"] == 3:
+                if dev.type == "cuda" and a.cuda_vram_frac > 0.0 and steps_since_start == 3:
                     try:
                         free_b, tot_b = torch.cuda.mem_get_info(dev)
                         used_b = tot_b - free_b
@@ -1341,8 +1690,9 @@ def main() -> None:
                             del _pool_warm
                     except Exception:
                         pass
-                if state["step"] == 10:
+                if steps_since_start == 10:
                     save_last()
+                    save_latest_eval_ckpt()
                     t_last = time.time()
 
             now = time.time()
@@ -1362,14 +1712,21 @@ def main() -> None:
                     "dup_fed": s["duplicate_datasets_fed_to_model"], "dup_filtered": s["duplicates_filtered_pre_forward"],
                     "src_tables_seen": s["distinct_source_tables_seen"], "inj_share": round(s["injected_column_share"], 4),
                     "drop_share_p2": round(s["feature_drop_share_p_ge_2"], 4) if s["feature_drop_share_p_ge_2"] is not None else None,
+                    "tmodes": s["target_modes"], "ds_mix": a.dataset_mix,
                     "host_cpu_pct": round(host_cpu_pct, 1), "oom": state["oom_skips"], "mem_gb": cuda_gb,
                 }) + "\n")
                 run_loss, run_n, run_ds, t_log = 0.0, 0, 0, now
             if now - t_last >= a.last_every_s:
                 save_last()
+                save_latest_eval_ckpt()
                 t_last = now
     finally:
         stop_ev.set()
+        try:
+            ep_q.cancel_join_thread()
+            ep_q.close()
+        except Exception:
+            pass
         for p in procs:
             p.terminate()
         for p in procs:
@@ -1377,6 +1734,7 @@ def main() -> None:
 
     state["train_s"] = s_seg0 + (time.time() - t_seg)
     save_last()
+    save_latest_eval_ckpt()
     if stop_flag["stop"]:
         log_f.write(json.dumps({"paused": time.strftime("%FT%TZ", time.gmtime()), "step": state["step"],
                                 "datasets": state["datasets"], "train_h": round(state["train_s"] / 3600.0, 4)}) + "\n")
@@ -1387,15 +1745,14 @@ def main() -> None:
         save_epoch(int(state["epochs_saved"]) + 1)
     swa_cpu = {kk: vv.cpu() for kk, vv in ema_swa.state_dict().items()}
     mod_cpu = {kk: vv.cpu() for kk, vv in model.state_dict().items()}
-    _atomic_save({"model": mod_cpu, "ema": swa_cpu, "state": state, "size": a.size}, final_p)
-    os.chmod(final_p, 0o444)
+    _atomic_save({"model": mod_cpu, "ema": swa_cpu, "state": state, "size": a.size}, final_p, mode=0o444)
     manifest = {
-        "schema": "jope.h450.ckpt_manifest/v3", "quarantined_in_corpus_random_split_diagnostic": True,
+        "schema": "jope.h450.ckpt_manifest/v4", "quarantined_in_corpus_random_split_diagnostic": True,
         "canonical_promotion_forbidden": True, "size": a.size, "params": params_cnt, "device": str(dev),
         "host": platform.node(), "seed": a.seed, "init_ckpt": str(a.init), "init_sha256": a.init_sha256,
         "bank": str(a.mmap_bank), "bank_sha256": bank.sha256, "bank_tables": bank.n_tables,
         "ckpt_final_path": str(final_p), "ckpt_final_sha256": sha256_file(final_p),
-        "state": state, "exposure": ledger.summary(),
+        "sampler_cfg": sampler_cfg, "state": state, "exposure": ledger.summary(),
     }
     man_p = out_dir / "manifest.json"
     man_p.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")

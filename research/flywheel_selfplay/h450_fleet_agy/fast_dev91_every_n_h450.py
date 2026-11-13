@@ -94,7 +94,7 @@ def _load_model_cpu(ckpt_p: Path):
 
     dev = torch.device("cpu")
     ck = torch.load(ckpt_p, map_location="cpu", weights_only=False)
-    sd = ck.get("ema") or ck["model"]
+    sd = ck.get("ema_swa") or ck.get("ema") or ck["model"]
     model = ICLH450("L").to(dev).eval()
     model.load_state_dict(sd, strict=True)
     for p in model.parameters():

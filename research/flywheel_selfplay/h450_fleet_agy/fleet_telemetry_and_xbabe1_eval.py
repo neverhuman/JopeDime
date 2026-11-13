@@ -94,6 +94,8 @@ eps = []
 for jp in sorted(glob.glob({x1_dir!r} + "/epoch_*.json")):
     try:
         d = json.load(open(jp))
+        if d.get("keep_latest_only") or os.path.basename(d.get("ckpt", "")) in ("ckpt_latest.pt", "ckpt_last.pt"):
+            continue
         ep = int(d["epoch"])
         pt = os.path.join({x1_dir!r}, os.path.basename(d["ckpt"]))
         eps.append((ep, os.path.basename(jp), os.path.basename(pt), d["ckpt_sha256"], os.path.isfile(pt)))
@@ -433,7 +435,7 @@ def collect_dev91_results() -> list[dict]:
 
 
 def _latest_immutable_epoch(host: str, run_dir: str) -> dict | None:
-    """Discovers the newest immutable `epoch_NN.json` + existing `ckpt_epoch_NN.pt` on `host:run_dir` (read-only)."""
+    """Discovers the newest `epoch_NN.json` + latest checkpoint (`ckpt_latest.pt` or `ckpt_epoch_NN.pt`) on `host:run_dir`."""
     py = f"""
 import glob, json, os
 best = None
@@ -441,25 +443,35 @@ for jp in glob.glob({run_dir!r} + "/epoch_*.json"):
     try:
         d = json.load(open(jp))
         ep = int(d["epoch"])
-        pt = os.path.join({run_dir!r}, os.path.basename(d["ckpt"]))
+        raw_ck = d.get("ckpt") or "ckpt_latest.pt"
+        pt = os.path.join({run_dir!r}, os.path.basename(raw_ck))
+        if not os.path.isfile(pt):
+            pt_alt = os.path.join({run_dir!r}, "ckpt_latest.pt")
+            if os.path.isfile(pt_alt):
+                pt = pt_alt
         if os.path.isfile(pt):
             u = int(d.get("exposure", {{}}).get("unique_datasets_seen", d.get("exposure", {{}}).get("datasets_seen", 0)))
-            cand = (ep, pt, d["ckpt_sha256"], u, int(d.get("step", 0)))
+            klo = bool(d.get("keep_latest_only", os.path.basename(pt) == "ckpt_latest.pt"))
+            cand = (ep, pt, "" if klo else str(d.get("ckpt_sha256", "")), u, int(d.get("step", 0)), klo)
             if best is None or cand[0] > best[0]:
                 best = cand
     except Exception:
         pass
 if best is None:
+    pt_lat = os.path.join({run_dir!r}, "ckpt_latest.pt")
+    if os.path.isfile(pt_lat):
+        best = (1, pt_lat, "", 0, 0, True)
+if best is None:
     for pt in glob.glob({run_dir!r} + "/ckpt_epoch_*.pt"):
         bn = os.path.basename(pt)
         try:
             ep = int(bn.replace("ckpt_epoch_", "").replace(".pt", ""))
-            cand = (ep, pt, "", 0, 0)
+            cand = (ep, pt, "", 0, 0, False)
             if best is None or cand[0] > best[0]:
                 best = cand
         except Exception:
             pass
-print(json.dumps(None if best is None else {{"epoch": best[0], "ckpt": best[1], "sha256": best[2], "unique_datasets": best[3], "step": best[4]}}))
+print(json.dumps(None if best is None else {{"epoch": best[0], "ckpt": best[1], "sha256": best[2], "unique_datasets": best[3], "step": best[4], "keep_latest_only": best[5]}}))
 """
     rc, out = _ssh_py(host, py, timeout=20.0)
     if rc != 0 or not out:
@@ -479,7 +491,7 @@ def build_weighted_104m_soup(ckpt_paths: list[Path], weights: list[float], out_p
     states = []
     for p in ckpt_paths:
         ck = torch.load(p, map_location="cpu", weights_only=False)
-        states.append(ck.get("ema") or ck["model"])
+        states.append(ck.get("ema_swa") or ck.get("ema") or ck["model"])
     avg = {}
     for k in states[0]:
         t0 = states[0][k]
@@ -489,8 +501,14 @@ def build_weighted_104m_soup(ckpt_paths: list[Path], weights: list[float], out_p
         else:
             avg[k] = t0.clone()
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists():
+        try:
+            os.chmod(out_path, 0o644)
+        except Exception:
+            pass
     tmp = out_path.with_suffix(".tmp")
     torch.save({"ema": avg, "model": avg, "size": "L", "soup_members": len(states), "weights": wn}, tmp)
+    os.chmod(tmp, 0o644)
     os.replace(tmp, out_path)
     return _sha256(out_path)
 
@@ -708,15 +726,16 @@ def maybe_run_scheduled_evals(runs: dict[str, dict], every_datasets: int) -> boo
                 pass
         if ep_num > last_solo and (last_solo == 0 or (x1_u_now - last_solo_u) >= 220_000):
             solo_tag = f"solo_ep{ep_num:03d}"
-            work_ck = FLEET_ROOT / "eval_ckpts" / solo_tag
+            work_ck = FLEET_ROOT / "eval_ckpts"
             work_ck.mkdir(parents=True, exist_ok=True)
-            loc_pt = work_ck / f"ckpt_epoch_{ep_num:02d}.pt"
+            # Keep-latest-only policy: overwrite single fixed slot `solo_x1_latest.pt` (no per-epoch `.pt` copies)
+            loc_pt = work_ck / "solo_x1_latest.pt"
             if loc_pt.exists():
                 os.chmod(loc_pt, 0o644)
             rc_cp, _ = _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"xbabe1:{x1_ep['ckpt']}", str(loc_pt)], timeout=60.0)
             if rc_cp == 0 and loc_pt.is_file():
                 sha_got = _sha256(loc_pt)
-                if not x1_ep["sha256"] or sha_got == x1_ep["sha256"]:
+                if not x1_ep["sha256"] or x1_ep.get("keep_latest_only") or sha_got == x1_ep["sha256"]:
                     meta_solo = {
                         "mode": "single_model_fleet_L_x1",
                         "epoch": ep_num,
@@ -726,11 +745,12 @@ def maybe_run_scheduled_evals(runs: dict[str, dict], every_datasets: int) -> boo
                         "source_ckpt": x1_ep["ckpt"],
                         "ckpt_sha256": sha_got,
                         "local_staged_ckpt": str(loc_pt),
+                        "keep_latest_only": True,
                     }
                     if run_multihost_fast_eval(solo_tag, loc_pt, meta_solo, n_views=4):
                         did_any = True
 
-    # 3. Exposure-weighted 3-GPU `104M` EMA soup (`fleet_L_x1`, `r4_L_B`, `r4_L_A` immutable `ckpt_epoch_*.pt`)
+    # 3. Exposure-weighted 3-GPU `104M` EMA soup (`fleet_L_x1`, `r4_L_B`, `r4_L_A` latest checkpoints, single rolling `soup_latest.pt`)
     step_ms = max(250_000, int(every_datasets))
     target_ms = (fleet_104m_u // step_ms) * step_ms
     soup_tag = f"soup3_{target_ms // 1000:04d}k"
@@ -738,7 +758,7 @@ def maybe_run_scheduled_evals(runs: dict[str, dict], every_datasets: int) -> boo
         la_ep = _latest_immutable_epoch("xbabe2", "/home/ubuntu/jope-data/h450-quarantine/r4/runs/r4_L_A")
         lb_ep = _latest_immutable_epoch("xbabe3", "/home/ubuntu/jope-data/h450-r4-x3/runs/r4_L_B")
         x1_ep = x1_ep or _latest_immutable_epoch("xbabe1", "/home/ubuntu/jope-data/h450-fleet-agy/runs/fleet_L_x1")
-        work_ck = FLEET_ROOT / "eval_ckpts" / soup_tag
+        work_ck = FLEET_ROOT / "eval_ckpts"
         work_ck.mkdir(parents=True, exist_ok=True)
         mem_cache = FLEET_ROOT / "eval_ckpts" / "member_cache"
         mem_cache.mkdir(parents=True, exist_ok=True)
@@ -754,7 +774,6 @@ def maybe_run_scheduled_evals(runs: dict[str, dict], every_datasets: int) -> boo
                 dst_p = Path(ep_info["ckpt"])
                 rc_m = 0 if dst_p.is_file() else 1
             else:
-                # Overwrite fixed-slot cache file per remote member (zero unlink calls, bounded 834 MB footprint)
                 dst_p = mem_cache / f"{run_lbl}_latest.pt"
                 if dst_p.exists():
                     os.chmod(dst_p, 0o644)
@@ -774,18 +793,18 @@ def maybe_run_scheduled_evals(runs: dict[str, dict], every_datasets: int) -> boo
             raw_w = [math.sqrt(float(m["unique_datasets"])) for m in member_specs]
             w_tot = sum(raw_w)
             norm_w = [round(w / w_tot, 6) for w in raw_w]
-            soup_p = work_ck / "soup_l.pt"
+            soup_p = work_ck / "soup_latest.pt"
             soup_sha = build_weighted_104m_soup([m["local_path"] for m in member_specs], raw_w, soup_p)
             clean_members = [{k: v for k, v in m.items() if k != "local_path"} | {"weight": norm_w[i]} for i, m in enumerate(member_specs)]
             soup_manifest = {
-                "schema": "jope.h450.soup_manifest/v1",
+                "schema": "jope.h450.soup_manifest/v2",
                 "tag": soup_tag,
                 "soup_ckpt": str(soup_p),
                 "soup_sha256": soup_sha,
-                "weighting": "sqrt(unique_datasets) across active CUDA 104M runs (immutable ckpt_epoch_*.pt EMA/SWA weights)",
+                "keep_latest_only": True,
+                "weighting": "sqrt(unique_datasets) across active CUDA 104M runs (rolling latest EMA/SWA weights)",
                 "members": clean_members,
             }
-            (work_ck / "SOUP_MANIFEST.json").write_text(json.dumps(soup_manifest, indent=2, sort_keys=True) + "\n")
             meta_soup = {
                 "mode": "weighted_3gpu_104m_soup",
                 "milestone_target_datasets": target_ms,
@@ -824,11 +843,11 @@ def write_coordination_dashboard(hosts: dict[str, dict], runs: dict[str, dict], 
         "| --- | --- | --- | --- | --- |",
     ]
     roles = {
-        "xbabe0": "`agy_apex_w10` Multi-Host `V=4` `dev91` CPU Eval Primary Shard (`48` workers / `128c`) + SHA-Verified `fleet_L_x1` Epoch Mirror (`GPU` in PCIe error)",
-        "xbabe1": "`agy_apex_w10` `fleet_L_x1` (`104M`, `fleet-r7` multi-scale SWA) `RTX 4090` CUDA Training (`~80%` VRAM) + `dev91` CPU Eval Shard (`6` workers)",
+        "xbabe0": "`agy_apex_w10` Multi-Host `V=4` `dev91` CPU Eval Primary Shard (`48` workers / `128c`) + Legacy Epoch Archive (`GPU` in PCIe error)",
+        "xbabe1": "`agy_apex_w10` `fleet_L_x1` (`104M`, `fleet-r9` max-entropy uniform-ds, keep-latest) `RTX 4090` CUDA Training (`~80%` VRAM) + `dev91` CPU Eval Shard (`6` workers)",
         "xbabe2": "`cl_fwriter` `r4_L_A` (`104M`) `RTX 3090` CUDA Training + `cols_h450_gpu` Shard 0 + `agy` `dev91` CPU Eval Shard (`20` workers, CPUs `64-79` free)",
         "xbabe3": "`cl_fwriter` `r4_L_B` (`104M`) `RTX 3090` CUDA Training + `cols_h450_gpu` Shard 1 (`99-100%` GPU TDP; `0` `agy` disk writes)",
-        "xbabe4": "`agy_apex_w10` `fleet_L_x4` (`104M`, `fleet-r7` multi-scale SWA) `M3 Ultra` 80-Core Metal `MPS` Training (`<= 82%` host CPU)",
+        "xbabe4": "`agy_apex_w10` `fleet_L_x4` (`104M`, `fleet-r9` max-entropy uniform-ds, keep-latest) `M3 Ultra` 80-Core Metal `MPS` Training (`<= 82%` host CPU)",
     }
     for h in ("xbabe0", "xbabe1", "xbabe2", "xbabe3", "xbabe4"):
         hm = hosts.get(h, {})
