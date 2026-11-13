@@ -208,6 +208,13 @@
         "RetentionInDays": {"Ref": "LogRetentionDays"}
       }
     },
+    "EdgePublicAccessLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {"Fn::Sub": "/aws/vendedlogs/apis/${AWS::StackName}-public-http"},
+        "RetentionInDays": {"Ref": "LogRetentionDays"}
+      }
+    },
     "EvalRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -237,9 +244,9 @@
                   }
                 },
                 {
-                  "Sid": "EvalCasReadWrite",
+                  "Sid": "EvalCasReadOnly",
                   "Effect": "Allow",
-                  "Action": ["s3:GetObject", "s3:PutObject"],
+                  "Action": ["s3:GetObject"],
                   "Resource": {"Fn::Sub": "${CarbonCasBucket.Arn}/cell-v1/*"}
                 },
                 {
@@ -285,7 +292,7 @@
                 {
                   "Sid": "EngineCasReadWrite",
                   "Effect": "Allow",
-                  "Action": ["s3:GetObject", "s3:PutObject"],
+                  "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
                   "Resource": {"Fn::Sub": "${CarbonCasBucket.Arn}/cell-v1/*"}
                 },
                 {
@@ -301,6 +308,12 @@
                   "Resource": {
                     "Fn::Sub": "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-eval:live"
                   }
+                },
+                {
+                  "Sid": "EngineReadCellSecrets",
+                  "Effect": "Allow",
+                  "Action": ["secretsmanager:GetSecretValue"],
+                  "Resource": {"Ref": "SecretsArn"}
                 }
               ]
             }
@@ -355,6 +368,12 @@
                   "Resource": {
                     "Fn::Sub": "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-engine:live"
                   }
+                },
+                {
+                  "Sid": "EdgeReadCellSecrets",
+                  "Effect": "Allow",
+                  "Action": ["secretsmanager:GetSecretValue"],
+                  "Resource": {"Ref": "SecretsArn"}
                 }
               ]
             }
@@ -408,12 +427,8 @@
             "CARBON_ROLE": "eval",
             "CARBON_REGION": {"Ref": "AWS::Region"},
             "CARBON_CAS_URL": {"Fn::Sub": "s3://${CarbonCasBucket}/cell-v1"},
-            "CARBON_SEAL_SECRET_HEX": {
-              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:seal_secret_hex::${SecretsVersionId}}}"
-            },
-            "CARBON_INTERNAL_TOKEN": {
-              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:internal_token::${SecretsVersionId}}}"
-            }
+            "CARBON_RELEASE_ID": {"Ref": "ReleaseId"},
+            "CARBON_R882_DIGEST": {"Ref": "R882BundleDigest"}
           }
         }
       }
@@ -469,15 +484,10 @@
             "CARBON_EVAL_INVOKE_URL": {"Fn::Sub": "lambda://${AWS::StackName}-eval:live"},
             "CARBON_MAX_EVAL_SHARDS": {"Fn::If": ["IsProd", "4", "2"]},
             "CARBON_MODEL_R882_DIR": "/opt/jope-models/r882",
-            "CARBON_SEAL_SECRET_HEX": {
-              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:seal_secret_hex::${SecretsVersionId}}}"
-            },
-            "CARBON_ENGINE_KEK_HEX": {
-              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:engine_kek_hex::${SecretsVersionId}}}"
-            },
-            "CARBON_INTERNAL_TOKEN": {
-              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:internal_token::${SecretsVersionId}}}"
-            }
+            "CARBON_SECRETS_ARN": {"Ref": "SecretsArn"},
+            "CARBON_SECRETS_VERSION_ID": {"Ref": "SecretsVersionId"},
+            "CARBON_RELEASE_ID": {"Ref": "ReleaseId"},
+            "CARBON_R882_DIGEST": {"Ref": "R882BundleDigest"}
           }
         }
       }
@@ -531,15 +541,10 @@
             "CARBON_CAS_URL": {"Fn::Sub": "s3://${CarbonCasBucket}/cell-v1"},
             "CARBON_ENGINE_INVOKE_URL": {"Fn::Sub": "lambda://${AWS::StackName}-engine:live"},
             "CARBON_ENGINE_KEK_PUBKEY_B64": {"Ref": "EngineKekPubkeyB64"},
-            "CARBON_PRESIGN_SECRET_HEX": {
-              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:presign_secret_hex::${SecretsVersionId}}}"
-            },
-            "CARBON_AUTH_SECRET_HEX": {
-              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:auth_secret_hex::${SecretsVersionId}}}"
-            },
-            "CARBON_INTERNAL_TOKEN": {
-              "Fn::Sub": "{{resolve:secretsmanager:${SecretsArn}:SecretString:internal_token::${SecretsVersionId}}}"
-            }
+            "CARBON_SECRETS_ARN": {"Ref": "SecretsArn"},
+            "CARBON_SECRETS_VERSION_ID": {"Ref": "SecretsVersionId"},
+            "CARBON_RELEASE_ID": {"Ref": "ReleaseId"},
+            "CARBON_R882_DIGEST": {"Ref": "R882BundleDigest"}
           }
         }
       }
@@ -623,10 +628,17 @@
     },
     "EdgePublicHttpStage": {
       "Type": "AWS::ApiGatewayV2::Stage",
+      "DependsOn": ["EdgePublicAccessLogGroup"],
       "Properties": {
         "ApiId": {"Ref": "EdgePublicHttpApi"},
         "StageName": "$default",
         "AutoDeploy": true,
+        "AccessLogSettings": {
+          "DestinationArn": {
+            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${EdgePublicAccessLogGroup}"
+          },
+          "Format": "{\"requestId\":\"$context.requestId\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"path\":\"$context.path\",\"status\":$context.status,\"responseLength\":$context.responseLength,\"integrationLatency\":\"$context.integrationLatency\"}"
+        },
         "DefaultRouteSettings": {
           "ThrottlingBurstLimit": {"Fn::If": ["IsProd", 2000, 400]},
           "ThrottlingRateLimit": {"Fn::If": ["IsProd", 1000, 200]}

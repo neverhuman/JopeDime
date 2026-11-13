@@ -6021,6 +6021,13 @@
         "preparation"
       ]
     },
+    "target:jope-carbon/bin/carbon-worker": {
+      "role": "regression",
+      "subsystems": [
+        "fitting",
+        "evaluation"
+      ]
+    },
     "target:jope-carbon/lib/jope_carbon": {
       "role": "regression",
       "subsystems": [

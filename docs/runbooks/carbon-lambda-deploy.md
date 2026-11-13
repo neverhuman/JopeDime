@@ -21,25 +21,25 @@ flowchart LR
     Client -- "2. Presigned PUT (CUEN v1 fit.jmat + holdout.jmat)" --> CAS
     Client -- "3. POST /v1/carbon/runs (CUEN v1 JLMB + CUDK v1 wrapped U_DEK)" --> Edge
     Edge -- "lambda:InvokeFunction (engine:live only)" --> Engine
-    Secrets -. "Dynamic VersionId resolve at deploy" .-> Edge
-    Secrets -. "Dynamic VersionId resolve at deploy" .-> Engine
+    Secrets -. "Runtime SigV4 GetSecretValue (Zeroizing RAM)" .-> Edge
+    Secrets -. "Runtime SigV4 GetSecretValue (Zeroizing RAM)" .-> Engine
     Engine -- "Read/Write CUEN v1 & CCKP v2" --> CAS
     Engine -- "HybridFanOut FitJmat-only subkey (eval:live)" --> Eval
-    Eval -- "Read fit.jmat only" --> CAS
+    Eval -- "Read-only s3:GetObject fit.jmat" --> CAS
 ```
 
 ### Cell Function Roles & Trust Surface
 
 | Cell Function | Binary & Build Flags | Default Memory | Timeout | Responsibilities & Isolation Boundary |
 | --- | --- | ---: | ---: | --- |
-| `carbon-edge` (`:live`) | `carbon-edge` (`--no-default-features --features edge`) | `256 MB` | `300 s` | Public Lambda Function URL (`AuthType: AWS_IAM`, `Qualifier: live`); `/v1/carbon/ping` RTT + `engine_kek_pubkey_b64` discovery; `POST /v1/carbon/auth/anonymous` Free token issuance; `ctk1.*` capability token verification (`x-carbon-capability-token`); Free/Pro tier admission; size-pinned S3 SigV4 `PUT` presigning (`Content-Length` + `x-amz-content-sha256`); sync/async (`Event` `202`) `lambda:InvokeFunction` strictly to `engine:live`; `DELETE /v1/carbon/runs/{id}` cryptographic blob & state shredding. Contains **zero** synthesis, fitting, or neural crates (`CT3` compile-time & binary gate) and **zero** decryption keys. |
-| `carbon-engine` (`:live`) | `carbon` (`CARBON_ROLE=engine`) + `R882ModelLayer` | `3,008 MB` (`~1.7 vCPU`) | `600 s` | Private sealed orchestrator (no public URL). Holds `CARBON_ENGINE_KEK_HEX` (NIST P-256 `ECDH` private scalar) and `CARBON_SEAL_SECRET_HEX` via AWS Secrets Manager dynamic references, plus read-only `/opt/jope-models/r882` (`sha256:057e50a9...` cosign P-256 verified DOPE + JopeDime neural fusion bundle). Unwraps per-run `CUDK\x01` in `Zeroizing` RAM, strips `wrapped_u_dek_b64` before persisting `request.json`, decrypts `CUEN\x01` `JLMB` + `fit.jmat`, executes `Wave0SeedOnly` (`Free`) or `MultiWaveLearned` (`Pro`) program-synthesis waves (`SoloSingleLambda` or `HybridFanOut` to `eval:live`), writes domain-separated & `U_DEK`-double-bound `CCKP\x02` checkpoints/champions, scores `holdout.jmat` strictly post-selection, and returns E2E client-encrypted `/predict` (`CUEN\x01` + `CUDK\x01`). |
-| `carbon-eval` (`:live`) | `carbon` (`CARBON_ROLE=eval`) | `1,769 MB` (`1 vCPU`) | `120 s` | Private stateless candidate shard worker (no public URL, no `r882` layer, no KEK, no `auth_secret_hex`). Receives a 60-second `FitJmat`-only HKDF subkey grant per wave, decrypts `fit.jmat` in `Zeroizing` RAM (`<= 2` cached entries, `<= 60 s` TTL), scores candidate program shards in parallel, and returns scalar validation losses only. |
+| `carbon-edge` (`:live`) | `carbon-edge` (`--no-default-features --features edge`) | `256 MB` | `300 s` | Public Lambda Function URL (`AuthType: AWS_IAM`, `Qualifier: live`); `/v1/carbon/ping` RTT + `engine_kek_pubkey_b64` discovery; `/v1/carbon/version` SHA/release provenance; `POST /v1/carbon/auth/anonymous` & `/v1/carbon/auth/register` Free token issuance; dual-key `[active, previous]` `ctk1.*` capability token verification (`x-carbon-capability-token`); Free/Pro tier admission; tenant/upload-scoped (`<tenant>/<upload_id>/<sha256>`) size-pinned S3 SigV4 `PUT` presigning for both training uploads and large `/predict` batches (`POST /v1/carbon/runs/{id}/predict/prepare`); sync/async (`Event` `202`) `lambda:InvokeFunction` strictly to `engine:live`; `DELETE /v1/carbon/runs/{id}` cryptographic blob & state shredding. Fetches `auth_secret_hex` directly from AWS Secrets Manager at cold start into `Zeroizing` RAM (`CARBON_SECRETS_ARN` + `CARBON_SECRETS_VERSION_ID`). Contains **zero** synthesis, fitting, or neural crates (`CT3` compile-time & binary gate) and **zero** decryption keys. |
+| `carbon-engine` (`:live`) | `carbon-worker` (`--no-default-features --features eval`, `CARBON_ROLE=engine`) + `R882ModelLayer` | `3,008 MB` (`~1.7 vCPU`) | `600 s` | Private sealed orchestrator (no public URL; `cli`/`serve`/`emu` crates excluded). Fetches `[active, previous]` `CARBON_ENGINE_KEK_HEX` (NIST P-256 `ECDH` private scalar) and `CARBON_SEAL_SECRET_HEX` at cold start via SigV4 `secretsmanager:GetSecretValue` into `Zeroizing` RAM (zero plaintext secrets in Lambda `Environment.Variables`), plus read-only `/opt/jope-models/r882` (`sha256:057e50a9...` cosign P-256 verified DOPE + JopeDime neural fusion bundle). Unwraps per-run `CUDK\x01` in `Zeroizing` RAM, strips `wrapped_u_dek_b64` before persisting `request.json`, decrypts `CUEN\x01` `JLMB` + `fit.jmat`, executes `Wave0SeedOnly` (`Free`) or `MultiWaveLearned` (`Pro`) program-synthesis waves (`SoloSingleLambda` or `HybridFanOut` to `eval:live`), writes domain-separated & `U_DEK`-double-bound `CCKP\x02` checkpoints/champions, scores `holdout.jmat` strictly post-selection, and returns E2E client-encrypted `/predict` (`CUEN\x01` + `CUDK\x01` inline or via presigned S3 CAS `GET`). |
+| `carbon-eval` (`:live`) | `carbon-worker` (`--no-default-features --features eval`, `CARBON_ROLE=eval`) | `1,769 MB` (`1 vCPU`) | `120 s` | Private stateless candidate shard worker (no public URL, no `r882` layer, no Secrets Manager permissions, no KEK, no `auth_secret_hex`, read-only `s3:GetObject` IAM on `cell-v1/blobs/*`). Receives a 60-second `FitJmat`-only HKDF subkey grant per wave, decrypts `fit.jmat` in `Zeroizing` RAM (`<= 2` cached entries, `<= 60 s` TTL), scores candidate program shards in parallel, and returns scalar validation losses only. |
 
 ### Production Security & Infrastructure Invariants
 
 1. **Zero-Knowledge Per-User Envelope Encryption (`CUEN\x01` + `CUDK\x01`)**: For every upload/run, `CarbonThinClient` (and WASM `jope-prep`) generates a fresh 256-bit CSPRNG `U_DEK`, derives slot-scoped subkeys (`FitJmat`, `HoldoutJmat`, `LandmarkJlmb`, `PredictRows`, `PredictOutput`, `CheckpointSeal`) via `HKDF-SHA256`, encrypts payloads with length-prefixed AAD `(payload_kind, tenant_id, scope_id)`, and wraps `U_DEK` exclusively to `carbon-engine`'s P-256 KEK (`ECDH-ES + HKDF-SHA256 + AES-256-GCM`).
-2. **Zero Plaintext Secrets in Templates, ChangeSets, or `argv`**: Cell secrets reside in AWS Secrets Manager (`jopedime/carbon/<env>/cell-secrets`) and resolve inside CloudFormation via version-pinned dynamic references (`{{resolve:secretsmanager:...:SecretString:key::VersionId}}`). Secrets never appear in Git, CloudFormation template parameters, ChangeSet diffs, process `argv`, or logs.
+2. **Zero Plaintext Secrets in Lambda `Environment.Variables`, Templates, ChangeSets, or `argv`**: Cell secrets reside in AWS Secrets Manager (`jopedime/carbon/<env>/cell-secrets`). Lambda functions store only the non-secret `CARBON_SECRETS_ARN` and version-pinned `CARBON_SECRETS_VERSION_ID`, resolving secret material at cold start over TLS 1.3 (`secretsmanager:GetSecretValue`) directly into `Zeroizing` memory. `aws lambda get-function-configuration` never exposes secret material.
 3. **Immutable Versions & `< 1 s` Atomic `:live` Aliases**: Every deployment publishes `CodeSha256`-verified `AWS::Lambda::Version` resources (`DeletionPolicy: Retain`) and atomically shifts the `live` `AWS::Lambda::Alias` across `eval`, `engine`, and `edge`. `$LATEST` never serves traffic and is never granted Function URL or cross-Lambda `InvokeFunction` permissions.
 4. **Encrypted TLS-Only S3 CAS & Lifecycle Hygiene**: `CarbonCasBucket` enforces SSE-S3 `AES256`, all four `PublicAccessBlock` flags, `BucketOwnerEnforced`, `DenyInsecureTransport` (`aws:SecureTransport == false`), and automatic lifecycle expiration (`1` day `dev`, `7` days `prod` on `cell-v1/blobs/`, plus 1-day `AbortIncompleteMultipartUpload`).
 5. **CloudWatch Observability & Alarms**: Managed `LogGroup`s (`14` days `dev`, `90` days `prod`) and `AWS::CloudWatch::Alarm` error monitors (`EdgeErrorsAlarm`, `EngineErrorsAlarm`, `EvalErrorsAlarm`) are provisioned automatically per cell.
@@ -190,18 +190,39 @@ AWS_PROFILE=veox-jepson-prod ./target/release/carbon rollback \
 
 After emergency stabilization, re-run `carbon deploy` with the prior release's `release-manifest.json` so CloudFormation stack state converges cleanly to the rolled-back version.
 
-### Zero-Downtime Secrets Rotation (`jopedime/carbon/<env>/cell-secrets`)
+### Zero-Downtime Dual-Key Secrets Rotation (`jopedime/carbon/<env>/cell-secrets`)
 
-Each regional cell secret vault stores a JSON payload with four keys:
-- `auth_secret_hex`: 256-bit HMAC key authenticating `ctk1.*` capability tokens (`edge` only).
-- `seal_secret_hex`: 256-bit server secret mixed with client `U_DEK` subkeys for `CCKP\x02` state envelopes (`engine` only).
-- `engine_kek_priv_hex`: 256-bit NIST P-256 `ECDH` private scalar (`engine` only).
+Each regional cell secret vault stores a JSON payload supporting concurrent `[active, previous]` keys:
+- `auth_secret_hex` (and optional `auth_secret_prev_hex`): 256-bit HMAC keys authenticating `ctk1.*` capability tokens (`edge` only).
+- `seal_secret_hex` (and optional `seal_secret_prev_hex`): 256-bit server secrets mixed with client `U_DEK` subkeys for `CCKP\x02` state envelopes (`engine` only).
+- `engine_kek_priv_hex` (and optional `engine_kek_priv_prev_hex`): 256-bit NIST P-256 `ECDH` private scalars (`engine` only).
 - `engine_kek_pubkey_b64`: URL-safe Base64 SEC1 uncompressed P-256 public key advertised by `/v1/carbon/ping` (`edge` + `engine`).
 
-To rotate cell secrets cleanly:
-1. Drain or wait for active multi-wave runs in the target region (or schedule during a low-traffic window, since in-flight paused runs bind to the previous `seal_secret_hex`).
-2. Write a new secret version to `jopedime/carbon/<env>/cell-secrets` via AWS Secrets Manager (`PutSecretValue`), generating a fresh CSPRNG `auth_secret_hex`, `seal_secret_hex`, and NIST P-256 scalar/public-key pair.
-3. Run `carbon deploy --manifest <current-manifest> --env <env> --regions <region>` — `carbon deploy` automatically reads the new `SecretVersionId`, synthesizes a CloudFormation ChangeSet updating `SecretVersionId`, publishes fresh immutable Lambda versions bound to the new secret version, shifts `:live`, and validates all 16 red-team vectors against the rotated keys.
+To rotate cell secrets with zero downtime for in-flight runs and tokens:
+1. Run `carbon rotate-secrets --env <env> --regions <region>` (or write a rotated JSON payload via `PutSecretValue` promoting the prior active keys into `*_prev_hex`).
+2. Run `carbon deploy --manifest <current-manifest> --env <env> --regions <region>` — `carbon deploy` binds the new `SecretVersionId`, publishes fresh immutable Lambda versions that fetch the `[active, previous]` vault at cold start into `Zeroizing` RAM, shifts `:live`, and validates all 16 red-team vectors against the rotated keys while existing tokens/checkpoints sealed under `*_prev_hex` continue verifying cleanly.
+3. After the overlap window (`>= 24 h`), re-run `carbon rotate-secrets --prune-previous` + `carbon deploy` to retire the previous keys.
+
+### Multi-OS Thin Client Installation & Pure-Rust Self-Verification
+
+End users install the stripped `carbon` thin CLI (`--no-default-features --features cli`) without compiling Rust or installing server dependencies:
+
+```sh
+# Linux (x86_64, aarch64, armv7l) & macOS (darwin-universal / arm64 / x86_64), preferring .tar.zst -> .tar.xz -> .tar.gz:
+curl -fsSL https://downloads.neverhuman.org/carbon/install.sh | sh
+
+# Verify binary SHA-256, ECDSA-P256 release signature, and P-256 KEK pins in pure Rust (zero openssl needed):
+carbon self-verify
+
+# Single-command zero-knowledge CSV inference shorthand (fast effort + automatic post-run shred):
+carbon datasets/test/linear_signal.csv
+```
+
+On Windows (`x86_64` and `arm64`), PowerShell 5.1+ / 7 verifies `SHA256SUMS.txt.sig` via `.NET ECDsa` P-256 before installing `carbon.exe`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://downloads.neverhuman.org/carbon/install.ps1 | iex"
+```
 
 ---
 

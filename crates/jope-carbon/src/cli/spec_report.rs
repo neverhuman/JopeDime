@@ -41,7 +41,7 @@ use crate::{
 };
 
 /// Public release tag pinned by `deploy/carbon/install.sh` on `main`.
-pub const SPEC_RELEASE_TAG: &str = "carbon-cli-v0.4.4";
+pub const SPEC_RELEASE_TAG: &str = crate::CARBON_RELEASE_TAG;
 
 /// Minimum required page count for the publication-grade A4 engineering specification PDF.
 pub const MIN_SPEC_PDF_PAGES: usize = 12;
@@ -226,6 +226,8 @@ fn assert_no_secret_substrings(label: &str, text: &str) -> Result<(), String> {
         "PRIVATE KEY",
         "auth_secret_hex",
         "signing.password",
+        "atomicsoul",
+        "xbabe",
     ];
     for needle in forbidden {
         if text.contains(needle) {
@@ -962,7 +964,8 @@ pub fn run_ci_quickstart_qualification(
         ] {
             let _ = fs::copy(rel_dir.join(name), tampered_dir.join(name));
         }
-        fs::write(tampered_dir.join("SHA256SUMS.txt.sig"), "AAAA\n").unwrap();
+        fs::write(tampered_dir.join("SHA256SUMS.txt.sig"), "AAAA\n")
+            .map_err(|e| format!("write tampered SHA256SUMS.txt.sig: {e}"))?;
         let bad_out = Command::new("sh")
             .arg(&install_sh)
             .arg("--source-dir")
@@ -1299,7 +1302,7 @@ pub fn run_ci_quickstart_qualification(
         let t0 = Instant::now();
         let serve_dir = scratch.path().join("enterprise_serve_vpc");
         let mut serve_cfg = CarbonEnterpriseServeConfig::enterprise_default(
-            "127.0.0.1:0".parse().unwrap(),
+            std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
             serve_dir.clone(),
         );
         serve_cfg.enable_user_envelope = true;

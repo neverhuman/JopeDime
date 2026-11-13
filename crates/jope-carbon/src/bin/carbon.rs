@@ -1,54 +1,115 @@
-//! Multi-role `carbon` CLI and AWS Lambda custom-runtime entrypoint (`package`, `deploy`,
-//! `rollback`, `clouds-manifest`, `doctor`, `register`, `login`, `whoami`, `logout`, `ping`,
-//! `run`, `bench`, `redteam`, `token-mint`, `serve`, `emu`, `engine`, `eval`, `plan`, and `spot-check`).
+//! Multi-role `carbon` CLI and AWS Lambda custom-runtime entrypoint (`version`, `self-verify`,
+//! `doctor`, `quickstart`, `register`, `login`, `whoami`, `logout`, `ping`, `run`, `bench`,
+//! `redteam`, `token-mint`, `plan`, `spot-check`, plus feature-gated operator/server subcommands).
 
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 use std::io::IsTerminal as _;
+#[cfg(feature = "serve")]
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::process::ExitCode;
+#[cfg(feature = "engine")]
 use std::sync::Arc;
 
+use base64::Engine as _;
 use clap::{Parser, Subcommand};
 use jope_api::{carbon::CarbonTierWire, Effort};
+#[cfg(any(
+    feature = "engine",
+    feature = "eval",
+    feature = "serve",
+    feature = "emu"
+))]
+use jope_carbon::CarbonRole;
 use jope_carbon::{
-    evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token,
-    execute_carbon_cli_run_with_ux, execute_carbon_deploy, execute_carbon_package,
-    execute_carbon_redteam_suite, execute_carbon_rollback_multi, execute_carbon_spec_report,
-    execute_carbon_spec_verify, generate_nonlinear_benchmark_rows, generate_public_clouds_manifest,
-    list_stored_cloud_tokens, load_stored_cloud_token, mint_capability_token_from_vault,
-    now_epoch_ms, open_eval_invoker, open_remote_cas, plan_carbon_execution,
-    remove_stored_cloud_token, render_benchmark_markdown, render_redteam_markdown,
-    resolve_cell_stack_endpoint, resolve_public_cloud_endpoint, run_lambda_custom_runtime_loop,
-    save_stored_cloud_token, verified_absolute_jopedime_config_dir, CarbonAuthVerifier,
-    CarbonCapabilityClaims, CarbonCliRunOptions, CarbonCliRunUxConfig, CarbonDeployOptions,
-    CarbonEffortTier, CarbonEmuConfig, CarbonEngineKek, CarbonEngineWorker,
-    CarbonEnterpriseServeConfig, CarbonEnterpriseServer, CarbonEvalWorker, CarbonLiveAliasVersions,
-    CarbonLocalLambdaEmulator, CarbonPackageOptions, CarbonPlanInput, CarbonProbedEndpoint,
-    CarbonProductTier, CarbonRole, CarbonSealKey, CarbonSpecReportOptions, CarbonSpecVerifyOptions,
-    CarbonThinClient, MonthlyWindowMetrics, SpotAdvisorThresholds, DEFAULT_PUBLIC_CLOUDS_URL,
-    FALLBACK_PUBLIC_CLOUDS_URL,
+    decode_p256_pubkey_b64, evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token,
+    execute_carbon_cli_run_with_ux, execute_carbon_redteam_suite,
+    generate_nonlinear_benchmark_rows, list_stored_cloud_tokens, load_stored_cloud_token,
+    now_epoch_ms, plan_carbon_execution, remove_stored_cloud_token, render_benchmark_markdown,
+    render_redteam_markdown, resolve_public_cloud_endpoint, save_stored_cloud_token,
+    sha256_lower_hex, verified_absolute_jopedime_config_dir, verify_ecdsa_p256_spki_pem_signature,
+    CarbonAuthVerifier, CarbonCapabilityClaims, CarbonCliRunOptions, CarbonCliRunUxConfig,
+    CarbonEffortTier, CarbonPlanInput, CarbonProbedEndpoint, CarbonProductTier,
+    CarbonPublicCloudsManifest, CarbonThinClient, MonthlyWindowMetrics, SpotAdvisorThresholds,
+    CARBON_BUILD_PROFILE, CARBON_BUILD_TARGET, CARBON_GIT_SHA, CARBON_PKG_VERSION,
+    CARBON_RELEASE_TAG, DEFAULT_PUBLIC_CLOUDS_URL, FALLBACK_PUBLIC_CLOUDS_URL,
+    MAX_MINT_TOKEN_TTL_SECS,
 };
+#[cfg(feature = "engine")]
+use jope_carbon::{
+    execute_carbon_deploy, execute_carbon_package, execute_carbon_rollback_multi,
+    generate_public_clouds_manifest, mint_capability_token_from_vault, open_eval_invoker,
+    open_remote_cas, resolve_cell_stack_endpoint, resolve_engine_secrets,
+    run_lambda_custom_runtime_loop, CarbonDeployOptions, CarbonEngineWorker, CarbonEvalWorker,
+    CarbonLiveAliasVersions, CarbonPackageOptions,
+};
+#[cfg(feature = "emu")]
+use jope_carbon::{
+    execute_carbon_spec_report, execute_carbon_spec_verify, CarbonEmuConfig,
+    CarbonLocalLambdaEmulator, CarbonSpecReportOptions, CarbonSpecVerifyOptions,
+};
+#[cfg(feature = "serve")]
+use jope_carbon::{CarbonEnterpriseServeConfig, CarbonEnterpriseServer};
+
+const LONG_VERSION: &str = concat!(
+    env!("CARGO_PKG_VERSION"),
+    " (",
+    env!("CARBON_RELEASE_TAG"),
+    ", git ",
+    env!("CARBON_GIT_SHA"),
+    ", ",
+    env!("CARBON_BUILD_TARGET"),
+    ", ",
+    env!("CARBON_BUILD_PROFILE"),
+    ")"
+);
+
+const EMBEDDED_RELEASE_SIGNING_PUB_PEM: &str = include_str!("../../../../docs/release/signing.pub");
+const EXPECTED_SIGNING_PUB_SHA256: &str =
+    "de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e";
 
 #[derive(Debug, Parser)]
 #[command(
     name = "carbon",
-    version,
+    version = LONG_VERSION,
+    args_conflicts_with_subcommands = true,
     about = "Carbon zero-knowledge serverless CLI client, benchmark & red-team harness, Lambda runtime, Enterprise server, and CI emulator"
 )]
 struct Cli {
+    /// Positional shorthand (`carbon data.csv`): conditions & encrypts the CSV client-side,
+    /// runs a `fast` zero-knowledge cloud job, decrypts predictions, and shreds remote blobs.
+    #[arg(value_name = "CSV_FILE")]
+    csv_file: Option<PathBuf>,
+
     #[command(subcommand)]
     command: Option<Command>,
 }
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Print build, role, and feature readiness as JSON.
+    /// Print build, git SHA, release tag, target triple, and compiled role readiness as JSON.
     Version,
-    /// Cryptographically verify `r882`, cross-compile ARM64 `carbon-edge` (`CT3` isolated) + `carbon`,
+    /// Cryptographically verify the installed `carbon` binary SHA-256, `carbon-clouds.json` P-256 KEK pins,
+    /// embedded release public key fingerprint, and ECDSA-P256 `SHA256SUMS.txt.sig` signature.
+    SelfVerify {
+        /// Optional path to `SHA256SUMS.txt` (defaults to `$CARBON_CONFIG_DIR/SHA256SUMS.txt` if present).
+        #[arg(long)]
+        manifest: Option<PathBuf>,
+        /// Optional path to base64-encoded ECDSA-P256 `SHA256SUMS.txt.sig` (defaults to `<manifest>.sig`).
+        #[arg(long)]
+        signature: Option<PathBuf>,
+        /// Optional explicit `carbon-clouds.json` path override.
+        #[arg(long)]
+        clouds_manifest: Option<PathBuf>,
+        /// Optional PEM public key override for offline CI/E2E fixture testing only.
+        #[arg(long)]
+        allow_test_pubkey: Option<PathBuf>,
+    },
+    /// Cryptographically verify `r882`, cross-compile ARM64 `carbon-edge` (`CT3` isolated) + `carbon-worker`,
     /// and emit deterministic reproducible `.zip` bundles + `release-manifest.json`.
+    #[cfg(feature = "engine")]
     Package {
         /// Directory containing extracted `r882` release assets (`models/bundles/r882.json` + cosign files).
         #[arg(long)]
@@ -70,7 +131,8 @@ enum Command {
         include_cli_binaries: bool,
     },
     /// Deploy a packaged Carbon cell via AWS CloudFormation ChangeSet + Secrets Manager + `:live` aliases,
-    /// followed by mandatory `/ping` and 16-vector live `carbon redteam` verification.
+    /// followed by mandatory `/ping`, `/version`, and 16-vector live `carbon redteam` verification.
+    #[cfg(feature = "engine")]
     Deploy {
         /// Path to `release-manifest.json` produced by `carbon package`.
         #[arg(long)]
@@ -101,6 +163,7 @@ enum Command {
         json_out: Option<PathBuf>,
     },
     /// Atomically roll `{edge,engine,eval}:live` aliases back to prior retained immutable versions (`< 1 s`).
+    #[cfg(feature = "engine")]
     Rollback {
         /// Target environment (`dev`, `staging`, or `prod`).
         #[arg(long = "env", default_value = "dev")]
@@ -119,6 +182,7 @@ enum Command {
     },
     /// Query live CloudFormation stacks + Secrets Manager + `/v1/carbon/ping` across regions and emit
     /// a multi-region pinned `carbon-clouds.json` manifest (`jope-carbon-clouds-v2`).
+    #[cfg(feature = "engine")]
     CloudsManifest {
         /// Output file path for `carbon-clouds.json`.
         #[arg(long)]
@@ -391,17 +455,28 @@ enum Command {
         consecutive_months: usize,
     },
     /// Run the self-hosted VPC / on-premises Enterprise single-binary server (`no_limit()`).
+    #[cfg(feature = "serve")]
     Serve {
         #[arg(long, default_value = "127.0.0.1:8088")]
         listen: SocketAddr,
         #[arg(long)]
         data_dir: PathBuf,
+        /// Optional S3 CAS URL (`s3://bucket/prefix`, or `CARBON_CAS_URL` env var) for durable object storage.
+        #[arg(long)]
+        cas_url: Option<String>,
+        /// Permit local filesystem CAS (`--data-dir`) when listening on a non-loopback address without `--cas-url`.
+        #[arg(long)]
+        allow_local_fs_dev: bool,
+        /// Permit ephemeral CSPRNG seal/presign secrets when listening on a non-loopback address without env secrets.
+        #[arg(long)]
+        dev_ephemeral: bool,
         #[arg(long, default_value = "vpc-local-1")]
         region: String,
         #[arg(long)]
         enable_user_envelope: bool,
     },
     /// Boot the local multi-cell Lambda Runtime API + S3 CAS emulator (`--self-test` for CI).
+    #[cfg(feature = "emu")]
     Emu {
         #[arg(long)]
         work_dir: PathBuf,
@@ -436,6 +511,7 @@ enum Command {
         quiet: bool,
     },
     /// Generate the publication-grade Carbon engineering & testing specification HTML + CI quickstart receipts.
+    #[cfg(feature = "emu")]
     SpecReport {
         /// Directory holding SHA-256-verified qualification receipts (`docs/carbon/evidence`).
         #[arg(long, default_value = "docs/carbon/evidence")]
@@ -457,6 +533,7 @@ enum Command {
         repo_root: PathBuf,
     },
     /// Cryptographically verify `carbon-engineering-testing-spec.pdf`, all 8 PNG screenshots, and receipts.
+    #[cfg(feature = "emu")]
     SpecVerify {
         /// Directory containing `spec-pdf-receipt.json`, `carbon-engineering-testing-spec.pdf`, and `screenshots/`.
         #[arg(long)]
@@ -466,11 +543,13 @@ enum Command {
         expected_source_sha: Option<String>,
     },
     /// Run the sealed `carbon engine` AWS Lambda Custom Runtime (`2018-06-01`) worker loop.
+    #[cfg(feature = "engine")]
     Engine {
         #[arg(long)]
         work_dir: PathBuf,
     },
     /// Run the stateless `carbon eval` AWS Lambda Custom Runtime (`2018-06-01`) shard worker loop.
+    #[cfg(feature = "eval")]
     Eval {
         #[arg(long)]
         scratch_dir: PathBuf,
@@ -511,6 +590,7 @@ fn parse_api_effort(raw: &str) -> Result<Effort, String> {
     }
 }
 
+#[cfg(feature = "serve")]
 fn decode_required_32byte_hex(env_key: &str) -> Result<[u8; 32], String> {
     let val = env::var(env_key).map_err(|_| format!("missing required {env_key}"))?;
     let raw = hex::decode(val.trim()).map_err(|_| format!("{env_key} must be 64-char hex"))?;
@@ -522,11 +602,74 @@ fn decode_required_32byte_hex(env_key: &str) -> Result<[u8; 32], String> {
     Ok(out)
 }
 
-fn decode_32byte_hex_or_default(env_key: &str, fallback: [u8; 32]) -> Result<[u8; 32], String> {
+#[cfg(feature = "serve")]
+fn decode_or_ephemeral_32byte_secret(
+    env_key: &str,
+    allow_ephemeral: bool,
+) -> Result<[u8; 32], String> {
     match env::var(env_key) {
         Ok(val) if !val.trim().is_empty() => decode_required_32byte_hex(env_key),
-        _ => Ok(fallback),
+        _ if allow_ephemeral => {
+            let mut out = [0u8; 32];
+            aws_lc_rs::rand::fill(&mut out)
+                .map_err(|_| format!("CSPRNG failed generating ephemeral {env_key}"))?;
+            Ok(out)
+        }
+        _ => Err(format!(
+            "non-loopback `carbon serve` requires {env_key} (64-char hex) or explicit --dev-ephemeral"
+        )),
     }
+}
+
+fn resolve_stack_endpoint_if_compiled(env_name: &str, region: &str) -> Result<String, String> {
+    #[cfg(feature = "engine")]
+    {
+        resolve_cell_stack_endpoint(env_name, region)
+    }
+    #[cfg(not(feature = "engine"))]
+    {
+        let _ = (env_name, region);
+        Err(
+            "--env CloudFormation stack resolution requires the operator build (--features engine); public clients use --cloud <prod|dev> or --endpoint <URL>"
+                .to_owned(),
+        )
+    }
+}
+
+fn mint_vault_token_if_compiled(
+    env_name: &str,
+    region: &str,
+    tenant: &str,
+    tier: CarbonTierWire,
+    ttl_secs: u64,
+    admin: bool,
+) -> Result<String, String> {
+    #[cfg(feature = "engine")]
+    {
+        mint_capability_token_from_vault(env_name, region, tenant, tier, ttl_secs, admin)
+    }
+    #[cfg(not(feature = "engine"))]
+    {
+        let _ = (env_name, region, tenant, tier, ttl_secs, admin);
+        Err(
+            "--env Secrets Manager token minting requires the operator build (--features engine); pass CARBON_AUTH_SECRET_HEX or --token <ctk1...>"
+                .to_owned(),
+        )
+    }
+}
+
+fn compiled_binary_roles() -> Vec<&'static str> {
+    #[allow(unused_mut)]
+    let mut roles = vec!["cli"];
+    #[cfg(feature = "engine")]
+    roles.push(CarbonRole::EngineOrchestrate.as_str());
+    #[cfg(feature = "eval")]
+    roles.push(CarbonRole::EvalBatch.as_str());
+    #[cfg(feature = "serve")]
+    roles.push(CarbonRole::EnterpriseServe.as_str());
+    #[cfg(feature = "emu")]
+    roles.push(CarbonRole::LocalEmulator.as_str());
+    roles
 }
 
 fn read_cli_token_source(
@@ -625,7 +768,7 @@ fn resolve_cli_target_and_auth(
     }
     if let Some(env_name) = environment {
         if endpoints.is_empty() {
-            let url = resolve_cell_stack_endpoint(env_name, region)
+            let url = resolve_stack_endpoint_if_compiled(env_name, region)
                 .map_err(|e| (ExitCode::from(2), e))?;
             endpoints.push(url);
         }
@@ -737,7 +880,7 @@ fn resolve_cli_target_and_auth(
         }
     } else if let Some(env_name) = environment {
         if effective_tier != CarbonTierWire::Free && !has_local_hmac_secret {
-            let minted = mint_capability_token_from_vault(
+            let minted = mint_vault_token_if_compiled(
                 env_name,
                 region,
                 &effective_tenant,
@@ -775,6 +918,342 @@ fn resolve_cli_target_and_auth(
     })
 }
 
+fn parse_sha256sums_entries(text: &str) -> Result<Vec<(String, String)>, String> {
+    let mut out = Vec::new();
+    for (idx, raw_line) in text.lines().enumerate() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let mut parts = line.splitn(2, char::is_whitespace);
+        let Some(hex_part) = parts.next() else {
+            continue;
+        };
+        let rest = parts.next().unwrap_or("").trim().trim_start_matches('*');
+        if hex_part.len() != 64
+            || !hex_part.chars().all(|c| c.is_ascii_hexdigit())
+            || rest.is_empty()
+        {
+            return Err(format!(
+                "malformed SHA256SUMS.txt line {}: '{line}'",
+                idx + 1
+            ));
+        }
+        out.push((hex_part.to_ascii_lowercase(), rest.to_owned()));
+    }
+    if out.is_empty() {
+        return Err("SHA256SUMS.txt contains zero digest entries".to_owned());
+    }
+    Ok(out)
+}
+
+fn execute_self_verify_command(
+    manifest_arg: Option<PathBuf>,
+    signature_arg: Option<PathBuf>,
+    clouds_arg: Option<PathBuf>,
+    allow_test_pubkey: Option<PathBuf>,
+) -> ExitCode {
+    let exe_path = match env::current_exe() {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("error: locate current executable: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    let exe_bytes = match fs::read(&exe_path) {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("error: read executable {}: {e}", exe_path.display());
+            return ExitCode::from(1);
+        }
+    };
+    let exe_sha256 = sha256_lower_hex(&exe_bytes);
+
+    let embedded_pub_sha = sha256_lower_hex(EMBEDDED_RELEASE_SIGNING_PUB_PEM.as_bytes());
+    if embedded_pub_sha != EXPECTED_SIGNING_PUB_SHA256 {
+        eprintln!(
+            "error: embedded release public key SHA-256 mismatch (got {embedded_pub_sha}, expected {EXPECTED_SIGNING_PUB_SHA256})"
+        );
+        return ExitCode::from(1);
+    }
+
+    let (pubkey_pem, using_test_pubkey) = if let Some(test_pub) = &allow_test_pubkey {
+        match fs::read_to_string(test_pub) {
+            Ok(pem) => (pem, true),
+            Err(e) => {
+                eprintln!(
+                    "error: read --allow-test-pubkey {}: {e}",
+                    test_pub.display()
+                );
+                return ExitCode::from(2);
+            }
+        }
+    } else {
+        (EMBEDDED_RELEASE_SIGNING_PUB_PEM.to_owned(), false)
+    };
+
+    let config_dir_opt = verified_absolute_jopedime_config_dir().ok();
+    let effective_clouds_path = clouds_arg.or_else(|| {
+        config_dir_opt
+            .as_ref()
+            .map(|d| d.join("carbon-clouds.json"))
+            .filter(|p| p.is_file())
+    });
+
+    let mut clouds_verified = false;
+    let mut clouds_sha256: Option<String> = None;
+    let mut kek_pins_verified = 0usize;
+    if let Some(cpath) = &effective_clouds_path {
+        let raw_clouds = match fs::read(cpath) {
+            Ok(b) => b,
+            Err(e) => {
+                eprintln!("error: read clouds manifest {}: {e}", cpath.display());
+                return ExitCode::from(1);
+            }
+        };
+        let parsed: CarbonPublicCloudsManifest = match serde_json::from_slice(&raw_clouds) {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("error: invalid JSON in {}: {e}", cpath.display());
+                return ExitCode::from(1);
+            }
+        };
+        for (cname, cell) in &parsed.clouds {
+            let pins = cell.pinned_keks_by_endpoint();
+            if pins.is_empty() {
+                eprintln!(
+                    "error: cloud '{cname}' in {} has zero P-256 KEK pins",
+                    cpath.display()
+                );
+                return ExitCode::from(1);
+            }
+            for (ep, pin_b64) in &pins {
+                if let Err(e) = decode_p256_pubkey_b64(pin_b64) {
+                    eprintln!("error: invalid P-256 KEK pin for '{cname}' endpoint '{ep}': {e}");
+                    return ExitCode::from(1);
+                }
+                kek_pins_verified += 1;
+            }
+        }
+        clouds_sha256 = Some(sha256_lower_hex(&raw_clouds));
+        clouds_verified = true;
+    }
+
+    let explicit_manifest = manifest_arg.is_some();
+    let effective_manifest_path = manifest_arg.or_else(|| {
+        config_dir_opt
+            .as_ref()
+            .map(|d| d.join("SHA256SUMS.txt"))
+            .filter(|p| p.is_file())
+    });
+
+    let mut manifest_verified = false;
+    let mut matched_binary_asset: Option<String> = None;
+    let mut manifest_sha256: Option<String> = None;
+    if let Some(mpath) = &effective_manifest_path {
+        let sig_path = signature_arg.unwrap_or_else(|| {
+            let mut s = mpath.as_os_str().to_os_string();
+            s.push(".sig");
+            PathBuf::from(s)
+        });
+        let manifest_bytes = match fs::read(mpath) {
+            Ok(b) => b,
+            Err(e) => {
+                eprintln!("error: read {}: {e}", mpath.display());
+                return ExitCode::from(1);
+            }
+        };
+        let sig_raw = match fs::read_to_string(&sig_path) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("error: read {}: {e}", sig_path.display());
+                return ExitCode::from(1);
+            }
+        };
+        let clean_b64: String = sig_raw.chars().filter(|c| !c.is_whitespace()).collect();
+        let sig_der = match base64::engine::general_purpose::STANDARD.decode(clean_b64.as_bytes()) {
+            Ok(d) => d,
+            Err(e) => {
+                eprintln!(
+                    "error: malformed base64 signature {}: {e}",
+                    sig_path.display()
+                );
+                return ExitCode::from(1);
+            }
+        };
+        if let Err(err) =
+            verify_ecdsa_p256_spki_pem_signature(&pubkey_pem, &manifest_bytes, &sig_der)
+        {
+            eprintln!(
+                "error: {} failed ECDSA-P256 verification against {}: {err}",
+                mpath.display(),
+                if using_test_pubkey {
+                    "test public key"
+                } else {
+                    "embedded owner release public key"
+                }
+            );
+            return ExitCode::from(1);
+        }
+        let manifest_text = match std::str::from_utf8(&manifest_bytes) {
+            Ok(t) => t,
+            Err(e) => {
+                eprintln!("error: {} is not valid UTF-8: {e}", mpath.display());
+                return ExitCode::from(1);
+            }
+        };
+        let entries = match parse_sha256sums_entries(manifest_text) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("error: {e}");
+                return ExitCode::from(1);
+            }
+        };
+        for (digest, name) in &entries {
+            if digest == &exe_sha256 {
+                matched_binary_asset = Some(name.clone());
+                break;
+            }
+        }
+        if matched_binary_asset.is_none() {
+            eprintln!(
+                "error: running executable SHA-256 ({exe_sha256}) does not match any entry in signed {}",
+                mpath.display()
+            );
+            return ExitCode::from(1);
+        }
+        if let Some(csha) = &clouds_sha256 {
+            if let Some((expected_clouds_sha, _)) = entries
+                .iter()
+                .find(|(_, name)| name == "carbon-clouds.json")
+            {
+                if expected_clouds_sha != csha {
+                    eprintln!(
+                        "error: carbon-clouds.json SHA-256 ({csha}) does not match signed manifest ({expected_clouds_sha})"
+                    );
+                    return ExitCode::from(1);
+                }
+            }
+        }
+        manifest_sha256 = Some(sha256_lower_hex(&manifest_bytes));
+        manifest_verified = true;
+    } else if explicit_manifest {
+        eprintln!("error: --manifest file not found");
+        return ExitCode::from(1);
+    }
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "verified": true,
+            "version": CARBON_PKG_VERSION,
+            "release_tag": CARBON_RELEASE_TAG,
+            "git_sha": CARBON_GIT_SHA,
+            "build_target": CARBON_BUILD_TARGET,
+            "build_profile": CARBON_BUILD_PROFILE,
+            "executable_path": exe_path,
+            "executable_bytes": exe_bytes.len(),
+            "executable_sha256": exe_sha256,
+            "signing_pub_fingerprint_sha256": embedded_pub_sha,
+            "test_pubkey_override": using_test_pubkey,
+            "manifest_ecdsa_verified": manifest_verified,
+            "manifest_sha256": manifest_sha256,
+            "matched_binary_asset": matched_binary_asset,
+            "clouds_manifest_verified": clouds_verified,
+            "clouds_manifest_sha256": clouds_sha256,
+            "kek_pins_verified": kek_pins_verified,
+        }))
+        .unwrap_or_default()
+    );
+    ExitCode::SUCCESS
+}
+
+fn execute_positional_csv_shorthand(csv_path: PathBuf) -> ExitCode {
+    let looks_like_tabular_path = csv_path
+        .extension()
+        .and_then(|s| s.to_str())
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("csv") || ext.eq_ignore_ascii_case("tsv"))
+        || csv_path.to_string_lossy().contains('/')
+        || csv_path.to_string_lossy().contains('\\');
+
+    if !csv_path.is_file() {
+        if looks_like_tabular_path {
+            eprintln!("error: CSV file '{}' does not exist", csv_path.display());
+        } else {
+            eprintln!(
+                "error: unrecognized subcommand '{}' (run `carbon --help` for commands, or pass an existing `.csv` file path)",
+                csv_path.display()
+            );
+        }
+        return ExitCode::from(2);
+    }
+
+    let clouds_override = env::var("CARBON_CLOUDS_MANIFEST")
+        .ok()
+        .map(|s| s.trim().to_owned())
+        .filter(|s| !s.is_empty());
+    let resolved = match resolve_cli_target_and_auth(
+        Vec::new(),
+        None,
+        clouds_override.as_deref(),
+        None,
+        "us-east-2",
+        None,
+        None,
+        "cli_tenant",
+        None,
+        None,
+        CarbonTierWire::Pro,
+    ) {
+        Ok(r) => r,
+        Err((code, msg)) => {
+            eprintln!("error: {msg}");
+            return code;
+        }
+    };
+    let show_stderr_progress = std::io::stderr().is_terminal();
+    let opts = CarbonCliRunOptions {
+        endpoints: resolved.endpoints,
+        csv_path: Some(csv_path),
+        target_column: "y".to_owned(),
+        synthetic_rows: 240,
+        synthetic_features: 6,
+        tenant_id: resolved.tenant_id,
+        tier: resolved.tier,
+        effort: Effort::Fast,
+        objective: "rmse".to_owned(),
+        seed: 42,
+        holdout_fraction: 0.20,
+        stop_after_ms: None,
+        resume_after_stop: false,
+        predict_rows: 5,
+        auth_token: resolved.auth_token,
+        shred_after_run: true,
+    };
+    let ux = CarbonCliRunUxConfig {
+        pinned_keks: resolved.pinned_keks,
+        pre_probed: Some((resolved.probed_client, resolved.first_probe)),
+        target_was_explicit: false,
+        show_stderr_progress,
+    };
+    match execute_carbon_cli_run_with_ux(&opts, &ux) {
+        Ok(receipt) => match serde_json::to_string_pretty(&receipt) {
+            Ok(s) => {
+                println!("{s}");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("error: serialize receipt: {e}");
+                ExitCode::from(1)
+            }
+        },
+        Err(err) => {
+            eprintln!("error: carbon CSV shorthand failed: {err}");
+            ExitCode::from(1)
+        }
+    }
+}
+
 fn execute_doctor_command(
     cloud_arg: &str,
     clouds_manifest: Option<&str>,
@@ -784,22 +1263,26 @@ fn execute_doctor_command(
     let mut checks = Vec::new();
     let tty_stderr = std::io::stderr().is_terminal();
 
-    let roles = vec![
-        CarbonRole::EngineOrchestrate.as_str(),
-        CarbonRole::EvalBatch.as_str(),
-        CarbonRole::EnterpriseServe.as_str(),
-        CarbonRole::LocalEmulator.as_str(),
-    ];
+    let roles = compiled_binary_roles();
     checks.push(serde_json::json!({
         "check": "binary",
         "passed": true,
-        "version": env!("CARGO_PKG_VERSION"),
+        "version": CARBON_PKG_VERSION,
+        "release_tag": CARBON_RELEASE_TAG,
+        "git_sha": CARBON_GIT_SHA,
+        "build_target": CARBON_BUILD_TARGET,
+        "build_profile": CARBON_BUILD_PROFILE,
         "roles": roles,
     }));
     if tty_stderr {
+        let sha12: String = CARBON_GIT_SHA.chars().take(12).collect();
         eprintln!(
-            "[doctor] PASS binary: carbon v{} (roles: engine, eval, serve, emu)",
-            env!("CARGO_PKG_VERSION")
+            "[doctor] PASS binary: carbon v{} ({}, git {}, target {}, roles: {})",
+            CARBON_PKG_VERSION,
+            CARBON_RELEASE_TAG,
+            sha12,
+            CARBON_BUILD_TARGET,
+            roles.join(", ")
         );
     }
 
@@ -960,7 +1443,8 @@ fn execute_doctor_command(
                     }
                 } else {
                     match CarbonThinClient::connect_fastest_pinned(candidates.clone(), &pins) {
-                        Ok((_, probed)) => {
+                        Ok((probed_client, probed)) => {
+                            let remote_ver = probed_client.fetch_server_version().ok().flatten();
                             let fastest = probed.first();
                             let probed_list: Vec<serde_json::Value> = probed
                                 .iter()
@@ -985,6 +1469,8 @@ fn execute_doctor_command(
                                     "kek_pins_verified": all_pinned,
                                     "fastest_region": fastest.map(|f| f.region.clone()),
                                     "fastest_rtt_ms": fastest.map(|f| f.rtt_ms),
+                                    "server_git_sha": remote_ver.as_ref().map(|v| v.git_sha.clone()),
+                                    "server_release_id": remote_ver.as_ref().map(|v| v.release_id.clone()),
                                     "regions": probed_list,
                                 }),
                             );
@@ -1051,7 +1537,11 @@ fn execute_doctor_command(
         "{}",
         serde_json::to_string_pretty(&serde_json::json!({
             "healthy": healthy,
-            "version": env!("CARGO_PKG_VERSION"),
+            "version": CARBON_PKG_VERSION,
+            "release_tag": CARBON_RELEASE_TAG,
+            "git_sha": CARBON_GIT_SHA,
+            "build_target": CARBON_BUILD_TARGET,
+            "build_profile": CARBON_BUILD_PROFILE,
             "config_dir": config_dir_str,
             "config_dir_permissions_ok": config_dir_ok,
             "credentials_permissions_ok": cred_mode_ok,
@@ -1072,6 +1562,7 @@ fn execute_doctor_command(
     }
 }
 
+#[cfg(feature = "engine")]
 fn run_engine_runtime(runtime_api: &str, work_dir: PathBuf, is_aws_prod: bool) -> ExitCode {
     let Ok(cas_url) = env::var("CARBON_CAS_URL") else {
         eprintln!("error: CARBON_CAS_URL is required for `carbon engine`");
@@ -1086,49 +1577,12 @@ fn run_engine_runtime(runtime_api: &str, work_dir: PathBuf, is_aws_prod: bool) -
         .ok()
         .filter(|u| !u.trim().is_empty())
         .map(|u| open_eval_invoker(&u, &region));
-    let seal_secret = if is_aws_prod {
-        match decode_required_32byte_hex("CARBON_SEAL_SECRET_HEX") {
-            Ok(s) => s,
-            Err(err) => {
-                eprintln!("error: {err}");
-                return ExitCode::from(2);
-            }
-        }
-    } else {
-        match decode_32byte_hex_or_default("CARBON_SEAL_SECRET_HEX", [0x77u8; 32]) {
-            Ok(s) => s,
-            Err(err) => {
-                eprintln!("error: {err}");
-                return ExitCode::from(2);
-            }
-        }
-    };
-    let engine_kek = if is_aws_prod {
-        let Ok(kek_hex) = env::var("CARBON_ENGINE_KEK_HEX") else {
-            eprintln!("error: missing required CARBON_ENGINE_KEK_HEX on AWS Lambda");
+    let (seal_key, engine_kek) = match resolve_engine_secrets(&region, is_aws_prod) {
+        Ok(pair) => pair,
+        Err(err) => {
+            eprintln!("error: {err}");
             return ExitCode::from(2);
-        };
-        match CarbonEngineKek::from_hex(&kek_hex) {
-            Ok(k) => Some(Arc::new(k)),
-            Err(err) => {
-                eprintln!("error: {err}");
-                return ExitCode::from(2);
-            }
         }
-    } else if let Ok(kek_hex) = env::var("CARBON_ENGINE_KEK_HEX") {
-        if !kek_hex.trim().is_empty() {
-            match CarbonEngineKek::from_hex(&kek_hex) {
-                Ok(k) => Some(Arc::new(k)),
-                Err(err) => {
-                    eprintln!("error: {err}");
-                    return ExitCode::from(2);
-                }
-            }
-        } else {
-            None
-        }
-    } else {
-        None
     };
 
     let cas = match open_remote_cas(&cas_url, &region, &internal_token) {
@@ -1141,14 +1595,9 @@ fn run_engine_runtime(runtime_api: &str, work_dir: PathBuf, is_aws_prod: bool) -
     let force_hybrid = env::var("CARBON_FORCE_HYBRID_FANOUT")
         .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
         .unwrap_or(false);
-    let worker = match CarbonEngineWorker::new(
-        cas,
-        eval_invoker,
-        CarbonSealKey::from_bytes(seal_secret),
-        work_dir,
-    ) {
+    let worker = match CarbonEngineWorker::new(cas, eval_invoker, seal_key, work_dir) {
         Ok(w) => w
-            .with_engine_kek(engine_kek)
+            .with_engine_kek(engine_kek.map(Arc::new))
             .with_forced_hybrid_fanout(force_hybrid),
         Err(err) => {
             eprintln!("error: init CarbonEngineWorker: {err}");
@@ -1166,6 +1615,7 @@ fn run_engine_runtime(runtime_api: &str, work_dir: PathBuf, is_aws_prod: bool) -
     }
 }
 
+#[cfg(feature = "eval")]
 fn run_eval_runtime(runtime_api: &str, scratch_dir: PathBuf) -> ExitCode {
     let Ok(cas_url) = env::var("CARBON_CAS_URL") else {
         eprintln!("error: CARBON_CAS_URL is required for `carbon eval`");
@@ -1201,6 +1651,7 @@ fn run_eval_runtime(runtime_api: &str, scratch_dir: PathBuf) -> ExitCode {
     }
 }
 
+#[cfg(feature = "emu")]
 fn run_emu_self_test(work_dir: PathBuf) -> Result<(), String> {
     fs::create_dir_all(&work_dir).map_err(|e| format!("create work_dir: {e}"))?;
     let mut emu = CarbonLocalLambdaEmulator::start(CarbonEmuConfig::for_dir(work_dir))?;
@@ -1423,6 +1874,7 @@ fn run_quickstart_command(
     }
 }
 
+#[cfg(feature = "engine")]
 fn resolve_lambda_runtime_api() -> (Result<String, env::VarError>, bool) {
     let aws = env::var("AWS_LAMBDA_RUNTIME_API");
     let is_aws_prod = aws.is_ok();
@@ -1453,6 +1905,10 @@ fn write_optional_outputs(
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
+    if let Some(csv_path) = cli.csv_file {
+        return execute_positional_csv_shorthand(csv_path);
+    }
+    #[cfg(feature = "engine")]
     if cli.command.is_none() {
         let (rt_res, is_aws_prod) = resolve_lambda_runtime_api();
         if let Ok(runtime_api) = rt_res {
@@ -1463,6 +1919,7 @@ fn main() -> ExitCode {
             let role = env::var("CARBON_ROLE").unwrap_or_default();
             return match role.trim() {
                 "engine" => run_engine_runtime(&runtime_api, work_dir, is_aws_prod),
+                #[cfg(feature = "eval")]
                 "eval" => run_eval_runtime(&runtime_api, work_dir),
                 other => {
                     eprintln!(
@@ -1480,17 +1937,24 @@ fn main() -> ExitCode {
                 "{}",
                 serde_json::json!({
                     "binary": "carbon",
-                    "version": env!("CARGO_PKG_VERSION"),
-                    "roles": [
-                        CarbonRole::EngineOrchestrate.as_str(),
-                        CarbonRole::EvalBatch.as_str(),
-                        CarbonRole::EnterpriseServe.as_str(),
-                        CarbonRole::LocalEmulator.as_str(),
-                    ],
+                    "version": CARBON_PKG_VERSION,
+                    "release_tag": CARBON_RELEASE_TAG,
+                    "git_sha": CARBON_GIT_SHA,
+                    "build_target": CARBON_BUILD_TARGET,
+                    "build_profile": CARBON_BUILD_PROFILE,
+                    "thin_cli_only": !cfg!(feature = "engine"),
+                    "roles": compiled_binary_roles(),
                 })
             );
             ExitCode::SUCCESS
         }
+        Command::SelfVerify {
+            manifest,
+            signature,
+            clouds_manifest,
+            allow_test_pubkey,
+        } => execute_self_verify_command(manifest, signature, clouds_manifest, allow_test_pubkey),
+        #[cfg(feature = "engine")]
         Command::Package {
             r882_dir,
             out_dir,
@@ -1521,6 +1985,7 @@ fn main() -> ExitCode {
                 ExitCode::from(1)
             }
         },
+        #[cfg(feature = "engine")]
         Command::Deploy {
             manifest,
             environment,
@@ -1557,6 +2022,7 @@ fn main() -> ExitCode {
                 ExitCode::from(1)
             }
         },
+        #[cfg(feature = "engine")]
         Command::Rollback {
             environment,
             regions,
@@ -1592,6 +2058,7 @@ fn main() -> ExitCode {
                 }
             }
         }
+        #[cfg(feature = "engine")]
         Command::CloudsManifest {
             out,
             dev_regions,
@@ -1893,7 +2360,7 @@ fn main() -> ExitCode {
             }
             if let Some(env_name) = &environment {
                 if endpoint.is_empty() {
-                    match resolve_cell_stack_endpoint(env_name, &region) {
+                    match resolve_stack_endpoint_if_compiled(env_name, &region) {
                         Ok(url) => endpoint.push(url),
                         Err(e) => {
                             eprintln!("error: {e}");
@@ -2139,7 +2606,7 @@ fn main() -> ExitCode {
                     }
                 }
                 (None, None, Some(env_name)) => {
-                    match resolve_cell_stack_endpoint(&env_name, &region) {
+                    match resolve_stack_endpoint_if_compiled(&env_name, &region) {
                         Ok(url) => url,
                         Err(e) => {
                             eprintln!("error: {e}");
@@ -2187,12 +2654,18 @@ fn main() -> ExitCode {
             environment,
             region,
         } => {
+            if ttl_secs == 0 || ttl_secs > MAX_MINT_TOKEN_TTL_SECS {
+                eprintln!(
+                    "error: --ttl-secs must be within 1..={MAX_MINT_TOKEN_TTL_SECS} seconds (got {ttl_secs})"
+                );
+                return ExitCode::from(2);
+            }
             let Ok(tier_wire) = parse_tier_wire(&tier) else {
                 eprintln!("error: invalid --tier `{tier}`");
                 return ExitCode::from(2);
             };
             if let Some(env_name) = environment {
-                return match mint_capability_token_from_vault(
+                return match mint_vault_token_if_compiled(
                     &env_name, &region, &tenant, tier_wire, ttl_secs, admin,
                 ) {
                     Ok(tok) => {
@@ -2296,32 +2769,53 @@ fn main() -> ExitCode {
             }
             ExitCode::SUCCESS
         }
+        #[cfg(feature = "serve")]
         Command::Serve {
             listen,
             data_dir,
+            cas_url,
+            allow_local_fs_dev,
+            dev_ephemeral,
             region,
             enable_user_envelope,
         } => {
+            let effective_cas_url = cas_url
+                .or_else(|| env::var("CARBON_CAS_URL").ok())
+                .map(|s| s.trim().to_owned())
+                .filter(|s| !s.is_empty());
+            let is_loopback = listen.ip().is_loopback();
+            if !is_loopback && effective_cas_url.is_none() && !allow_local_fs_dev {
+                eprintln!(
+                    "error: non-loopback `carbon serve` requires --cas-url s3://... (or CARBON_CAS_URL), or explicit --allow-local-fs-dev"
+                );
+                return ExitCode::from(2);
+            }
+            let allow_ephemeral_secrets = is_loopback || dev_ephemeral;
             let mut cfg = CarbonEnterpriseServeConfig::enterprise_default(listen, data_dir);
+            cfg.cas_url = effective_cas_url;
+            cfg.allow_local_fs_dev = is_loopback || allow_local_fs_dev;
             cfg.region = region;
             cfg.enable_user_envelope = enable_user_envelope;
-            cfg.seal_secret =
-                match decode_32byte_hex_or_default("CARBON_SEAL_SECRET_HEX", cfg.seal_secret) {
-                    Ok(s) => s,
-                    Err(e) => {
-                        eprintln!("error: {e}");
-                        return ExitCode::from(2);
-                    }
-                };
-            cfg.presign_secret =
-                match decode_32byte_hex_or_default("CARBON_PRESIGN_SECRET_HEX", cfg.presign_secret)
-                {
-                    Ok(s) => s,
-                    Err(e) => {
-                        eprintln!("error: {e}");
-                        return ExitCode::from(2);
-                    }
-                };
+            cfg.seal_secret = match decode_or_ephemeral_32byte_secret(
+                "CARBON_SEAL_SECRET_HEX",
+                allow_ephemeral_secrets,
+            ) {
+                Ok(s) => s,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            cfg.presign_secret = match decode_or_ephemeral_32byte_secret(
+                "CARBON_PRESIGN_SECRET_HEX",
+                allow_ephemeral_secrets,
+            ) {
+                Ok(s) => s,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
             if let Ok(auth_hex) = env::var("CARBON_AUTH_SECRET_HEX") {
                 if !auth_hex.trim().is_empty() {
                     match decode_required_32byte_hex("CARBON_AUTH_SECRET_HEX") {
@@ -2339,6 +2833,7 @@ fn main() -> ExitCode {
             }
             ExitCode::SUCCESS
         }
+        #[cfg(feature = "emu")]
         Command::Emu {
             work_dir,
             self_test,
@@ -2375,6 +2870,7 @@ fn main() -> ExitCode {
             no_shred,
             quiet,
         ),
+        #[cfg(feature = "emu")]
         Command::SpecReport {
             evidence_dir,
             out_dir,
@@ -2405,6 +2901,7 @@ fn main() -> ExitCode {
                 ExitCode::from(1)
             }
         },
+        #[cfg(feature = "emu")]
         Command::SpecVerify {
             dir,
             expected_source_sha,
@@ -2432,6 +2929,7 @@ fn main() -> ExitCode {
                 ExitCode::from(1)
             }
         },
+        #[cfg(feature = "engine")]
         Command::Engine { work_dir } => {
             let (Ok(runtime_api), is_aws_prod) = resolve_lambda_runtime_api() else {
                 eprintln!("error: AWS_LAMBDA_RUNTIME_API or LAMBDA_RUNTIME_API is required for `carbon engine`");
@@ -2439,6 +2937,7 @@ fn main() -> ExitCode {
             };
             run_engine_runtime(&runtime_api, work_dir, is_aws_prod)
         }
+        #[cfg(feature = "eval")]
         Command::Eval { scratch_dir } => {
             let (Ok(runtime_api), _) = resolve_lambda_runtime_api() else {
                 eprintln!("error: AWS_LAMBDA_RUNTIME_API or LAMBDA_RUNTIME_API is required for `carbon eval`");

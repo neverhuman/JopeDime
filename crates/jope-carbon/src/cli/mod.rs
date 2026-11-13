@@ -7,5 +7,5 @@ pub mod client;
 pub mod deploy;
 pub mod redteam;
 pub mod runner;
-#[cfg(feature = "engine")]
+#[cfg(feature = "emu")]
 pub mod spec_report;

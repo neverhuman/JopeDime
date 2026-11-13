@@ -23,6 +23,34 @@ pub trait CarbonCasStore: Send + Sync {
     fn get_blob_verified(&self, expected_sha256: &str) -> Result<Vec<u8>, String>;
     /// Delete `blobs/<expected_sha256>` during `DELETE /v1/carbon/runs/{id}` cryptographic shred.
     fn delete_blob(&self, expected_sha256: &str) -> Result<bool, String>;
+    /// Store `bytes` at tenant/upload-scoped `blobs/<scope>/<expected_sha256>` (or unscoped when `scope` is `None`).
+    fn put_scoped_blob_verified(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+        bytes: &[u8],
+    ) -> Result<(), String> {
+        let _ = scope;
+        self.put_blob_verified(expected_sha256, bytes)
+    }
+    /// Read `blobs/<scope>/<expected_sha256>`, falling back to unscoped `blobs/<expected_sha256>` when `scope` is `None`.
+    fn get_scoped_blob_verified(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+    ) -> Result<Vec<u8>, String> {
+        let _ = scope;
+        self.get_blob_verified(expected_sha256)
+    }
+    /// Delete `blobs/<scope>/<expected_sha256>` without affecting other runs or tenants (`GAP-S3-3`).
+    fn delete_scoped_blob(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+    ) -> Result<bool, String> {
+        let _ = scope;
+        self.delete_blob(expected_sha256)
+    }
     /// Write a run state object (such as `runs/<tenant>/<run_id>/status.json` or `sealed_checkpoint.enc`).
     fn put_state_object(&self, key: &str, bytes: &[u8]) -> Result<(), String>;
     /// Conditionally create a run state object ONLY if `key` does not already exist (`RT-03`).
@@ -32,6 +60,25 @@ pub trait CarbonCasStore: Send + Sync {
     fn get_state_object(&self, key: &str) -> Result<Option<Vec<u8>>, String>;
     /// Remove a run state object (such as clearing `stop.json` on resume or shredding run state).
     fn delete_state_object(&self, key: &str) -> Result<(), String>;
+}
+
+/// Construct a validated `<tenant_id>/<upload_id>` CAS blob isolation scope (`GAP-S3-3`).
+pub fn canonical_blob_scope(tenant_id: &str, upload_id: &str) -> Result<String, String> {
+    validate_strict_tenant_id(tenant_id)
+        .map_err(|_| "invalid tenant_id for blob scope".to_owned())?;
+    validate_strict_run_id(upload_id).map_err(|_| "invalid upload_id for blob scope".to_owned())?;
+    Ok(format!("{tenant_id}/{upload_id}"))
+}
+
+pub(crate) fn validate_blob_scope(scope: &str) -> Result<(), String> {
+    let Some((tenant_id, upload_id)) = scope.split_once('/') else {
+        return Err("blob scope must be '<tenant_id>/<upload_id>'".to_owned());
+    };
+    if upload_id.contains('/') {
+        return Err("blob scope must have exactly two segments".to_owned());
+    }
+    let _ = canonical_blob_scope(tenant_id, upload_id)?;
+    Ok(())
 }
 
 /// Construct an injective, collision-free per-tenant run state key (`RT-08`).
@@ -194,6 +241,79 @@ impl CarbonCasStore for CarbonFsCas {
         }
     }
 
+    fn put_scoped_blob_verified(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+        bytes: &[u8],
+    ) -> Result<(), String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.put_blob_verified(expected_sha256, bytes);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let actual = sha256_lower_hex(bytes);
+        if actual != expected_lower {
+            return Err(format!(
+                "CAS scoped blob SHA-256 mismatch: declared {expected_lower}, actual {actual}"
+            ));
+        }
+        let path = self.root.join("blobs").join(sc).join(&expected_lower);
+        if path.is_file() {
+            return Ok(());
+        }
+        Self::atomic_write(&path, bytes)
+    }
+
+    fn get_scoped_blob_verified(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+    ) -> Result<Vec<u8>, String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.get_blob_verified(expected_sha256);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let path = self.root.join("blobs").join(sc).join(&expected_lower);
+        match fs::read(&path) {
+            Ok(bytes) => {
+                let actual = sha256_lower_hex(&bytes);
+                if actual != expected_lower {
+                    return Err(format!(
+                        "corrupted scoped CAS blob {expected_lower}: computed {actual}"
+                    ));
+                }
+                Ok(bytes)
+            }
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                self.get_blob_verified(expected_sha256)
+            }
+            Err(err) => Err(format!("read scoped CAS blob {expected_lower}: {err}")),
+        }
+    }
+
+    fn delete_scoped_blob(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+    ) -> Result<bool, String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.delete_blob(expected_sha256);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let path = self.root.join("blobs").join(sc).join(&expected_lower);
+        match fs::remove_file(&path) {
+            Ok(()) => Ok(true),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(false),
+            Err(err) => Err(format!("delete scoped CAS blob {expected_lower}: {err}")),
+        }
+    }
+
     fn put_state_object(&self, key: &str, bytes: &[u8]) -> Result<(), String> {
         validate_state_key(key)?;
         let dest = self.root.join("state").join(key);
@@ -283,69 +403,95 @@ impl CarbonS3Cas {
         let host = format!("{}.s3.{}.amazonaws.com", self.bucket, self.region);
         let canonical_uri = crate::security::sigv4::url_encode_s3_key(object_key);
         let url = format!("https://{host}{canonical_uri}");
-        let headers = crate::security::sigv4::sign_aws_v4_headers_with_extra(
-            &creds,
-            &self.region,
-            "s3",
-            method,
-            &host,
-            &canonical_uri,
-            "",
-            payload,
-            now_epoch_secs(),
-            extra_headers,
-        );
 
-        let mut resp = match method {
-            "PUT" => {
-                let mut req = self
-                    .agent
-                    .put(&url)
-                    .config()
-                    .http_status_as_error(false)
-                    .build();
-                for (k, v) in &headers {
-                    req = req.header(k, v);
-                }
-                req.send(payload)
-                    .map_err(|e| format!("S3 PUT {object_key}: {e}"))?
+        let mut last_err = String::new();
+        for attempt in 0..4usize {
+            if attempt > 0 {
+                let wait_ms =
+                    crate::security::sigv4::compute_backoff_with_jitter_ms(attempt - 1, 120, 2_400);
+                std::thread::sleep(std::time::Duration::from_millis(wait_ms));
             }
-            "GET" => {
-                let mut req = self
-                    .agent
-                    .get(&url)
-                    .config()
-                    .http_status_as_error(false)
-                    .build();
-                for (k, v) in &headers {
-                    req = req.header(k, v);
-                }
-                req.call()
-                    .map_err(|e| format!("S3 GET {object_key}: {e}"))?
-            }
-            "DELETE" => {
-                let mut req = self
-                    .agent
-                    .delete(&url)
-                    .config()
-                    .http_status_as_error(false)
-                    .build();
-                for (k, v) in &headers {
-                    req = req.header(k, v);
-                }
-                req.call()
-                    .map_err(|e| format!("S3 DELETE {object_key}: {e}"))?
-            }
-            other => return Err(format!("unsupported S3 method '{other}'")),
-        };
+            let headers = crate::security::sigv4::sign_aws_v4_headers_with_extra(
+                &creds,
+                &self.region,
+                "s3",
+                method,
+                &host,
+                &canonical_uri,
+                "",
+                payload,
+                now_epoch_secs(),
+                extra_headers,
+            );
 
-        let status = resp.status().as_u16();
-        let mut body = Vec::new();
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut body)
-            .map_err(|e| format!("read S3 {method} {object_key} body: {e}"))?;
-        Ok((status, body))
+            let resp_res = match method {
+                "PUT" => {
+                    let mut req = self
+                        .agent
+                        .put(&url)
+                        .config()
+                        .http_status_as_error(false)
+                        .build();
+                    for (k, v) in &headers {
+                        req = req.header(k, v);
+                    }
+                    req.send(payload)
+                        .map_err(|e| format!("S3 PUT {object_key}: {e}"))
+                }
+                "GET" => {
+                    let mut req = self
+                        .agent
+                        .get(&url)
+                        .config()
+                        .http_status_as_error(false)
+                        .build();
+                    for (k, v) in &headers {
+                        req = req.header(k, v);
+                    }
+                    req.call().map_err(|e| format!("S3 GET {object_key}: {e}"))
+                }
+                "DELETE" => {
+                    let mut req = self
+                        .agent
+                        .delete(&url)
+                        .config()
+                        .http_status_as_error(false)
+                        .build();
+                    for (k, v) in &headers {
+                        req = req.header(k, v);
+                    }
+                    req.call()
+                        .map_err(|e| format!("S3 DELETE {object_key}: {e}"))
+                }
+                other => return Err(format!("unsupported S3 method '{other}'")),
+            };
+
+            let mut resp = match resp_res {
+                Ok(r) => r,
+                Err(e) => {
+                    last_err = e;
+                    if attempt == 3 {
+                        return Err(last_err);
+                    }
+                    continue;
+                }
+            };
+
+            let status = resp.status().as_u16();
+            let mut body = Vec::new();
+            if let Err(e) = resp.body_mut().as_reader().read_to_end(&mut body) {
+                last_err = format!("read S3 {method} {object_key} body: {e}");
+                if attempt == 3 {
+                    return Err(last_err);
+                }
+                continue;
+            }
+            if matches!(status, 408 | 429 | 500 | 502 | 503 | 504) && attempt < 3 {
+                continue;
+            }
+            return Ok((status, body));
+        }
+        Err(last_err)
     }
 }
 
@@ -403,6 +549,91 @@ impl CarbonCasStore for CarbonS3Cas {
         } else {
             Err(format!(
                 "S3 CAS delete blob '{expected_lower}' HTTP {status}: {}",
+                String::from_utf8_lossy(&body)
+            ))
+        }
+    }
+
+    fn put_scoped_blob_verified(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+        bytes: &[u8],
+    ) -> Result<(), String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.put_blob_verified(expected_sha256, bytes);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let actual = sha256_lower_hex(bytes);
+        if actual != expected_lower {
+            return Err(format!(
+                "S3 CAS scoped put SHA-256 mismatch: declared {expected_lower}, actual {actual}"
+            ));
+        }
+        let key = self.join_object_key(&format!("blobs/{sc}/{expected_lower}"));
+        let (status, body) = self.s3_request_with_extra("PUT", &key, bytes, &[])?;
+        if status >= 300 {
+            return Err(format!(
+                "S3 CAS put scoped blob HTTP {status}: {}",
+                String::from_utf8_lossy(&body)
+            ));
+        }
+        Ok(())
+    }
+
+    fn get_scoped_blob_verified(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+    ) -> Result<Vec<u8>, String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.get_blob_verified(expected_sha256);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let key = self.join_object_key(&format!("blobs/{sc}/{expected_lower}"));
+        let (status, body) = self.s3_request_with_extra("GET", &key, &[], &[])?;
+        if status == 404 {
+            return self.get_blob_verified(expected_sha256);
+        }
+        if status != 200 {
+            return Err(format!(
+                "S3 CAS get scoped blob '{expected_lower}' HTTP {status}: {}",
+                String::from_utf8_lossy(&body)
+            ));
+        }
+        let actual = sha256_lower_hex(&body);
+        if actual != expected_lower {
+            return Err(format!(
+                "S3 CAS scoped blob integrity mismatch: expected {expected_lower}, got {actual}"
+            ));
+        }
+        Ok(body)
+    }
+
+    fn delete_scoped_blob(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+    ) -> Result<bool, String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.delete_blob(expected_sha256);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let key = self.join_object_key(&format!("blobs/{sc}/{expected_lower}"));
+        let (status, body) = self.s3_request_with_extra("DELETE", &key, &[], &[])?;
+        if status == 200 || status == 204 {
+            Ok(true)
+        } else if status == 404 {
+            Ok(false)
+        } else {
+            Err(format!(
+                "S3 CAS delete scoped blob '{expected_lower}' HTTP {status}: {}",
                 String::from_utf8_lossy(&body)
             ))
         }
@@ -569,6 +800,118 @@ impl CarbonCasStore for CarbonHttpCas {
             Ok(false)
         } else {
             Err(format!("HTTP CAS delete blob status {code}"))
+        }
+    }
+
+    fn put_scoped_blob_verified(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+        bytes: &[u8],
+    ) -> Result<(), String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.put_blob_verified(expected_sha256, bytes);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let actual = sha256_lower_hex(bytes);
+        if actual != expected_lower {
+            return Err(format!(
+                "HTTP CAS scoped put SHA-256 mismatch: declared {expected_lower}, actual {actual}"
+            ));
+        }
+        let enc_sc = crate::security::sigv4::url_encode_component(sc);
+        let url = format!("{}/blobs/{expected_lower}?scope={enc_sc}", self.base_url);
+        let resp = self
+            .agent
+            .put(&url)
+            .config()
+            .http_status_as_error(false)
+            .build()
+            .header("x-carbon-internal-token", &self.internal_token)
+            .send(bytes)
+            .map_err(|e| format!("HTTP CAS put scoped blob failed: {e}"))?;
+        if resp.status().as_u16() >= 300 {
+            return Err(format!(
+                "HTTP CAS put scoped blob returned status {}",
+                resp.status()
+            ));
+        }
+        Ok(())
+    }
+
+    fn get_scoped_blob_verified(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+    ) -> Result<Vec<u8>, String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.get_blob_verified(expected_sha256);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let enc_sc = crate::security::sigv4::url_encode_component(sc);
+        let url = format!("{}/blobs/{expected_lower}?scope={enc_sc}", self.base_url);
+        let mut resp = self
+            .agent
+            .get(&url)
+            .config()
+            .http_status_as_error(false)
+            .build()
+            .header("x-carbon-internal-token", &self.internal_token)
+            .call()
+            .map_err(|e| format!("HTTP CAS get scoped blob failed: {e}"))?;
+        if resp.status().as_u16() == 404 {
+            return self.get_blob_verified(expected_sha256);
+        }
+        if resp.status().as_u16() != 200 {
+            return Err(format!("HTTP CAS get scoped blob status {}", resp.status()));
+        }
+        let mut buf = Vec::new();
+        resp.body_mut()
+            .as_reader()
+            .read_to_end(&mut buf)
+            .map_err(|e| format!("read HTTP CAS scoped blob body: {e}"))?;
+        let actual = sha256_lower_hex(&buf);
+        if actual != expected_lower {
+            return Err(format!(
+                "HTTP CAS scoped blob integrity mismatch: expected {expected_lower}, got {actual}"
+            ));
+        }
+        Ok(buf)
+    }
+
+    fn delete_scoped_blob(
+        &self,
+        scope: Option<&str>,
+        expected_sha256: &str,
+    ) -> Result<bool, String> {
+        let Some(sc) = scope.filter(|s| !s.is_empty()) else {
+            return self.delete_blob(expected_sha256);
+        };
+        validate_blob_scope(sc)?;
+        validate_hex_sha256(expected_sha256)?;
+        let expected_lower = expected_sha256.to_ascii_lowercase();
+        let enc_sc = crate::security::sigv4::url_encode_component(sc);
+        let url = format!("{}/blobs/{expected_lower}?scope={enc_sc}", self.base_url);
+        let resp = self
+            .agent
+            .delete(&url)
+            .config()
+            .http_status_as_error(false)
+            .build()
+            .header("x-carbon-internal-token", &self.internal_token)
+            .call()
+            .map_err(|e| format!("HTTP CAS delete scoped blob failed: {e}"))?;
+        let code = resp.status().as_u16();
+        if code == 200 || code == 204 {
+            Ok(true)
+        } else if code == 404 {
+            Ok(false)
+        } else {
+            Err(format!("HTTP CAS delete scoped blob status {code}"))
         }
     }
 

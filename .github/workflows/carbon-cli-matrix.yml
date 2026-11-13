@@ -1,0 +1,59 @@
+name: carbon-cli-matrix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: carbon-cli-matrix-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: vars.CARBON_HOSTED_MATRIX_RUNNER == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            label: linux-x86_64
+            target: x86_64-unknown-linux-musl
+            asset: carbon-linux-x86_64
+          - os: macos-15
+            label: darwin-universal
+            target: aarch64-apple-darwin
+            asset: carbon-darwin-universal
+          - os: windows-2025
+            label: windows-x86_64
+            target: x86_64-pc-windows-msvc
+            asset: carbon-windows-x86_64.exe
+          - os: windows-2025
+            label: windows-arm64
+            target: aarch64-pc-windows-msvc
+            asset: carbon-windows-arm64.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      JOPE_BUILD_SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Build stripped thin carbon CLI
+        shell: bash
+        run: bash deploy/carbon/build-cli-matrix.sh "${{ matrix.label }}" "${{ matrix.target }}" "${{ matrix.asset }}"
+
+      - name: Save source-bound CLI matrix cache bundle
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          key: carbon-cli-matrix-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.label }}
+          path: target/carbon-matrix/

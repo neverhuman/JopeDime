@@ -6,7 +6,7 @@ pub mod edge;
 pub mod engine;
 #[cfg(feature = "edge")]
 pub mod engine_invoker;
-#[cfg(feature = "eval")]
+#[cfg(feature = "engine")]
 pub mod eval;
 #[cfg(feature = "edge")]
 pub mod lambda_runtime;

@@ -16,7 +16,7 @@ use jope_service::{
     worker::Request,
 };
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 use crate::{
     cells::engine_invoker::now_epoch_ms,
@@ -30,7 +30,7 @@ const EVAL_CACHE_MAX_ENTRIES: usize = 2;
 /// `CarbonEvalDecryptionGrant` is a struct carrying a 60-second ephemeral `FitJmat`-only slot
 /// subkey from `carbon-engine` to `carbon-eval` (`RT-07`). It cannot decrypt `holdout.jmat`,
 /// `JLMB` landmarks, or `/predict` payloads.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CarbonEvalDecryptionGrant {
     pub tenant_id: String,
@@ -39,11 +39,30 @@ pub struct CarbonEvalDecryptionGrant {
     pub exp_epoch_secs: u64,
 }
 
+impl std::fmt::Debug for CarbonEvalDecryptionGrant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonEvalDecryptionGrant")
+            .field("tenant_id", &self.tenant_id)
+            .field("fit_slot_subkey_b64", &"[REDACTED]")
+            .field("fit_plaintext_sha256", &self.fit_plaintext_sha256)
+            .field("exp_epoch_secs", &self.exp_epoch_secs)
+            .finish()
+    }
+}
+
+impl Drop for CarbonEvalDecryptionGrant {
+    fn drop(&mut self) {
+        self.fit_slot_subkey_b64.zeroize();
+    }
+}
+
 /// `CarbonEvalWireRequest` is a struct sent from `carbon engine` to a stateless `carbon eval` shard.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CarbonEvalWireRequest {
     pub fit_jmat_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub blob_scope: Option<String>,
     pub request: Request,
     pub fit_champion: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -150,12 +169,13 @@ impl CarbonEvalInvoker for CarbonAwsLambdaEvalInvoker {
         } else {
             format!("https://{host}{uri}?{canonical_query}")
         };
-        let backoffs_ms: &[u64] = &[0, 120];
+        const MAX_EVAL_ATTEMPTS: usize = 3;
         let mut last_err = String::new();
-        for (attempt, &base_wait_ms) in backoffs_ms.iter().enumerate() {
-            if base_wait_ms > 0 {
-                let jitter = (now_epoch_ms() ^ (attempt as u64 * 61)) % 60;
-                std::thread::sleep(std::time::Duration::from_millis(base_wait_ms + jitter));
+        for attempt in 0..MAX_EVAL_ATTEMPTS {
+            if attempt > 0 {
+                let wait_ms =
+                    crate::security::sigv4::compute_backoff_with_jitter_ms(attempt - 1, 120, 1_500);
+                std::thread::sleep(std::time::Duration::from_millis(wait_ms));
             }
             let headers = crate::security::sigv4::sign_aws_v4_headers(
                 &creds,
@@ -185,7 +205,7 @@ impl CarbonEvalInvoker for CarbonAwsLambdaEvalInvoker {
                         "AWS Lambda eval invoke '{}' failed: {e}",
                         self.function_name
                     );
-                    if attempt + 1 < backoffs_ms.len() {
+                    if attempt + 1 < MAX_EVAL_ATTEMPTS {
                         continue;
                     }
                     return Err(last_err);
@@ -202,7 +222,7 @@ impl CarbonEvalInvoker for CarbonAwsLambdaEvalInvoker {
                 .as_reader()
                 .read_to_end(&mut body)
                 .map_err(|e| format!("read AWS Lambda eval invoke response: {e}"))?;
-            if matches!(status, 429 | 502 | 503 | 504) && attempt + 1 < backoffs_ms.len() {
+            if matches!(status, 429 | 502 | 503 | 504) && attempt + 1 < MAX_EVAL_ATTEMPTS {
                 last_err = format!(
                     "AWS Lambda eval shard HTTP {status}: {}",
                     String::from_utf8_lossy(&body)
@@ -258,7 +278,7 @@ struct LoadedFitPayload {
 pub struct CarbonEvalWorker {
     cas: Arc<dyn CarbonCasStore>,
     scratch_root: PathBuf,
-    fit_cache: Mutex<BTreeMap<(String, String), CachedFitEntry>>,
+    fit_cache: Mutex<BTreeMap<(String, String, String), CachedFitEntry>>,
 }
 
 impl CarbonEvalWorker {
@@ -275,6 +295,7 @@ impl CarbonEvalWorker {
     fn load_fit_in_ram(
         &self,
         cas_sha256_hex: &str,
+        blob_scope: Option<&str>,
         grant: Option<&CarbonEvalDecryptionGrant>,
     ) -> Result<LoadedFitPayload, String> {
         let now_secs = now_epoch_ms() / 1_000;
@@ -289,7 +310,8 @@ impl CarbonEvalWorker {
             }
         }
 
-        let cache_key = (tenant_scope, cas_key.clone());
+        let scope_key = blob_scope.unwrap_or("").to_owned();
+        let cache_key = (tenant_scope, scope_key, cas_key.clone());
         if let Ok(mut guard) = self.fit_cache.lock() {
             guard.retain(|_, v| v.expires_epoch_secs >= now_secs);
             if let Some(hit) = guard.get(&cache_key) {
@@ -307,7 +329,7 @@ impl CarbonEvalWorker {
             }
         }
 
-        let raw_blob = self.cas.get_blob_verified(&cas_key)?;
+        let raw_blob = self.cas.get_scoped_blob_verified(blob_scope, &cas_key)?;
         let (pt_arc, pt_sha) = if let Some(g) = grant {
             let subkey_vec = Zeroizing::new(
                 base64::engine::general_purpose::STANDARD
@@ -376,7 +398,11 @@ impl CarbonEvalWorker {
         let LoadedFitPayload {
             bytes: fit_bytes,
             plaintext_sha256: pt_sha,
-        } = self.load_fit_in_ram(&wire.fit_jmat_sha256, wire.decryption_grant.as_ref())?;
+        } = self.load_fit_in_ram(
+            &wire.fit_jmat_sha256,
+            wire.blob_scope.as_deref(),
+            wire.decryption_grant.as_ref(),
+        )?;
         evaluate_carbon_eval_shard(
             fit_bytes.as_slice(),
             &pt_sha,

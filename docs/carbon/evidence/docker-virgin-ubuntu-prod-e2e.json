@@ -29,7 +29,7 @@
     "command": "curl -fsSL https://github.com/neverhuman/JopeDime/releases/latest/download/install.sh | sh",
     "github_latest_redirect_status": "HTTP/2 302 ",
     "downloads_mirror_status_code": "404",
-    "downloads_mirror_note": "HTTP 404 expected prior to Phase-2 atomicsoul Caddy cutover; GitHub Releases Latest serves signed carbon-cli-v1.0.0 directly.",
+    "downloads_mirror_note": "HTTP 404 expected prior to Phase-2 downloads mirror cutover; GitHub Releases Latest serves signed carbon-cli-v1.0.0 directly.",
     "install_wall_ms": 3010.75,
     "installed_binary_path": "/root/.local/bin/carbon",
     "installed_binary_bytes": 15635736,

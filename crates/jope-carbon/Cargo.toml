@@ -14,9 +14,14 @@ path = "src/bin/carbon_edge.rs"
 required-features = ["edge"]
 
 [[bin]]
+name = "carbon-worker"
+path = "src/bin/carbon_worker.rs"
+required-features = ["eval"]
+
+[[bin]]
 name = "carbon"
 path = "src/bin/carbon.rs"
-required-features = ["cli", "serve"]
+required-features = ["cli"]
 
 [features]
 default = ["cli", "engine", "eval", "serve", "emu"]
@@ -24,10 +29,8 @@ default = ["cli", "engine", "eval", "serve", "emu"]
 edge = [
     "dep:aws-lc-rs",
     "dep:base64",
-    "dep:http",
     "dep:jope-api",
     "dep:jope-prep",
-    "dep:p256",
     "dep:rustls",
     "dep:ureq",
     "dep:url",
@@ -37,22 +40,26 @@ edge = [
 engine = [
     "edge",
     "dep:flate2",
-    "dep:jope-paths",
-    "dep:jope-runtime",
     "dep:jope-service",
-    "dep:jope-telemetry",
-    "dep:ruzstd",
     "dep:tokio",
-    "dep:zstd",
 ]
 # Memory-rightsized stateless batch evaluation workers (XS..XL).
 eval = ["engine"]
 # Self-hosted VPC / on-premises Enterprise single-binary server.
 serve = ["eval", "dep:axum", "dep:http-body-util"]
 # Local multi-cell Lambda Runtime API + S3 CAS emulator for CI.
-emu = ["serve"]
-# Command-line parser for `carbon` subcommands.
-cli = ["dep:clap"]
+emu = [
+    "serve",
+    "dep:http",
+    "dep:jope-paths",
+    "dep:jope-runtime",
+    "dep:jope-telemetry",
+    "dep:p256",
+    "dep:ruzstd",
+    "dep:zstd",
+]
+# Zero-knowledge public thin CLI (`--no-default-features --features cli --bin carbon`).
+cli = ["edge", "dep:clap"]
 
 [dependencies]
 anyhow.workspace = true

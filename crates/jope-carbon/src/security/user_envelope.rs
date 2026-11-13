@@ -11,6 +11,7 @@ use aws_lc_rs::{
     agreement::{agree, PrivateKey, UnparsedPublicKey, ECDH_P256},
     hkdf::{Salt, HKDF_SHA256},
     rand::fill as secure_random_fill,
+    signature::{UnparsedPublicKey as SigUnparsedPublicKey, ECDSA_P256_SHA256_ASN1},
 };
 #[cfg(feature = "edge")]
 use base64::Engine as _;
@@ -36,12 +37,25 @@ const CUEN_HKDF_SALT: &[u8] = b"jope.carbon.cuen.salt.v1";
 /// upload generates a unique 256-bit `U_DEK` which is then bound to `(tenant_id, run_id)` via `CUDK\x01`.
 pub const CAS_BLOB_CUEN_SCOPE: &str = "cas_blob_v1";
 
-/// `CarbonEngineKek` is a struct holding `carbon-engine`'s NIST P-256 `ECDH` key-encryption keypair.
+/// `CarbonEngineKek` is a struct holding `carbon-engine`'s NIST P-256 `ECDH` key-encryption keypair,
+/// with optional retiring `previous_kek` support for zero-downtime regional KEK rotation.
 /// `carbon-edge` only ever receives the 65-byte uncompressed public point (`pubkey_b64()`).
 #[cfg(feature = "edge")]
 pub struct CarbonEngineKek {
     private_key: PrivateKey,
     pubkey_uncompressed: [u8; P256_UNCOMPRESSED_PUBKEY_BYTES],
+    previous_kek: Option<Box<CarbonEngineKek>>,
+}
+
+#[cfg(feature = "edge")]
+impl std::fmt::Debug for CarbonEngineKek {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonEngineKek")
+            .field("private_key", &"[REDACTED]")
+            .field("pubkey_b64", &self.pubkey_b64())
+            .field("has_previous_kek", &self.previous_kek.is_some())
+            .finish()
+    }
 }
 
 #[cfg(feature = "edge")]
@@ -53,6 +67,12 @@ impl CarbonEngineKek {
                 reason: "failed to generate P-256 ECDH keypair",
             })?;
         Self::from_loaded_private_key(private_key)
+    }
+
+    /// Attach a retiring previous P-256 KEK accepted when unwrapping `CUDK\x01` envelopes from in-flight clients.
+    pub fn with_previous_kek(mut self, previous: Option<CarbonEngineKek>) -> Self {
+        self.previous_kek = previous.map(Box::new);
+        self
     }
 
     /// Load a deterministic P-256 `ECDH` private key from a 32-byte big-endian scalar.
@@ -82,6 +102,19 @@ impl CarbonEngineKek {
         Self::from_scalar_bytes(&arr)
     }
 
+    pub fn from_hex_with_previous(
+        active_hex: &str,
+        previous_hex: Option<&str>,
+    ) -> CarbonResult<Self> {
+        let active = Self::from_hex(active_hex)?;
+        if let Some(prev_raw) = previous_hex.map(str::trim).filter(|s| !s.is_empty()) {
+            let prev = Self::from_hex(prev_raw)?;
+            Ok(active.with_previous_kek(Some(prev)))
+        } else {
+            Ok(active)
+        }
+    }
+
     fn from_loaded_private_key(private_key: PrivateKey) -> CarbonResult<Self> {
         let pub_key =
             private_key
@@ -100,6 +133,7 @@ impl CarbonEngineKek {
         Ok(Self {
             private_key,
             pubkey_uncompressed,
+            previous_kek: None,
         })
     }
 
@@ -211,6 +245,26 @@ pub fn wrap_u_dek_to_pubkey(
 /// response KEK), refusing any tamper or `(tenant_id, run_id)` mismatch.
 #[cfg(feature = "edge")]
 pub fn unwrap_u_dek_with_kek(
+    kek: &CarbonEngineKek,
+    cudk_wire: &[u8],
+    tenant_id: &str,
+    run_id: &str,
+) -> CarbonResult<Zeroizing<[u8; 32]>> {
+    match unwrap_u_dek_single_kek(kek, cudk_wire, tenant_id, run_id) {
+        Ok(dek) => Ok(dek),
+        Err(primary_err) => {
+            if let Some(prev) = &kek.previous_kek {
+                if let Ok(dek) = unwrap_u_dek_single_kek(prev, cudk_wire, tenant_id, run_id) {
+                    return Ok(dek);
+                }
+            }
+            Err(primary_err)
+        }
+    }
+}
+
+#[cfg(feature = "edge")]
+fn unwrap_u_dek_single_kek(
     kek: &CarbonEngineKek,
     cudk_wire: &[u8],
     tenant_id: &str,
@@ -426,4 +480,51 @@ pub fn decrypt_cuen_payload(
 pub struct CarbonEncryptedPredictPayload {
     pub feature_names: Vec<String>,
     pub rows: Vec<Vec<Option<f64>>>,
+}
+
+#[cfg(feature = "edge")]
+const SPKI_P256_UNCOMPRESSED_PREFIX: [u8; 26] = [
+    0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a,
+    0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03, 0x42, 0x00,
+];
+
+/// Verify an ASN.1 DER `ECDSA-P256-SHA256` signature (`openssl dgst -sha256 -sign`) against a
+/// standard SubjectPublicKeyInfo (`BEGIN PUBLIC KEY`) NIST P-256 PEM in pure Rust (`aws-lc-rs`).
+#[cfg(feature = "edge")]
+pub fn verify_ecdsa_p256_spki_pem_signature(
+    pem_text: &str,
+    message: &[u8],
+    der_signature: &[u8],
+) -> Result<(), String> {
+    let mut b64_body = String::new();
+    let mut inside = false;
+    for line in pem_text.lines() {
+        let trimmed = line.trim();
+        if trimmed == "-----BEGIN PUBLIC KEY-----" {
+            inside = true;
+            continue;
+        }
+        if trimmed == "-----END PUBLIC KEY-----" {
+            break;
+        }
+        if inside && !trimmed.is_empty() {
+            b64_body.push_str(trimmed);
+        }
+    }
+    if b64_body.is_empty() {
+        return Err("missing -----BEGIN PUBLIC KEY----- block in SPKI PEM".to_owned());
+    }
+    let der = base64::engine::general_purpose::STANDARD
+        .decode(b64_body.as_bytes())
+        .map_err(|e| format!("invalid base64 in SPKI PEM: {e}"))?;
+    if der.len() != 91 || der[..26] != SPKI_P256_UNCOMPRESSED_PREFIX || der[26] != 0x04 {
+        return Err(format!(
+            "unsupported SPKI public key format (expected 91-byte uncompressed P-256 SPKI DER, got {} bytes)",
+            der.len()
+        ));
+    }
+    let pubkey = SigUnparsedPublicKey::new(&ECDSA_P256_SHA256_ASN1, &der[26..91]);
+    pubkey
+        .verify(message, der_signature)
+        .map_err(|_| "ECDSA-P256-SHA256 signature verification failed".to_owned())
 }

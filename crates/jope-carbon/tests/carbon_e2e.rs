@@ -128,13 +128,13 @@ fn emu_lambda_runtime_zero_knowledge_hybrid_fanout_stop_resume_predict_shred() {
         .upload_prepared("tenant_acme", CarbonTierWire::Pro, &prepared)
         .expect("encrypt, presign, and upload fit + holdout CUEN blobs");
 
-    // Verify stored CAS blobs on disk are `CUEN\x01` ciphertext with ZERO cleartext `JMAT` headers!
+    // Verify stored CAS blobs on disk are `CUEN\x01` ciphertext under `<tenant>/<upload_id>` scope with ZERO cleartext `JMAT` headers!
     let fit_sha_hex = &upload_resp.fit_target.sha256;
     let stored_fit_blob = fs::read(
         emu_us
             .cas_root()
-            .join("blobs")
-            .join(&fit_sha_hex[..2])
+            .join("blobs/tenant_acme")
+            .join(&upload_resp.upload_id)
             .join(fit_sha_hex),
     )
     .expect("read stored fit CUEN blob");
@@ -1467,6 +1467,157 @@ fn cli_doctor_bom_csv_target_ergonomics_and_progress_summary() {
         serde_json::from_slice(&bom_run.stdout).expect("stdout must remain pure valid JSON");
     assert_eq!(bom_json["final_state"], "completed");
     assert_eq!(bom_json["shredded_after_run"], true);
+
+    // 4. Positional CSV shorthand (`carbon <file.csv>`) runs encrypted `fast` + `--shred` automatically!
+    let shorthand_run = Command::new(&carbon_bin)
+        .arg(&bom_csv)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .env("RAYON_NUM_THREADS", "4")
+        .output()
+        .expect("run positional shorthand carbon <file.csv>");
+    assert!(
+        shorthand_run.status.success(),
+        "shorthand stderr: {}",
+        String::from_utf8_lossy(&shorthand_run.stderr)
+    );
+    let shorthand_json: serde_json::Value = serde_json::from_slice(&shorthand_run.stdout).unwrap();
+    assert_eq!(shorthand_json["final_state"], "completed");
+    assert_eq!(shorthand_json["encrypted_cuen"], true);
+    assert!(shorthand_json["sample_predictions"]
+        .as_array()
+        .is_some_and(|a| !a.is_empty()));
+    assert_eq!(shorthand_json["shredded_after_run"], true);
+
+    emu.shutdown();
+}
+
+#[test]
+fn scoped_cas_shred_isolation_and_large_predict_cas_round_trip() {
+    let root = tempfile::tempdir().expect("create tempdir");
+    let edge_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge"));
+    let mut cfg = CarbonEmuConfig::for_dir(root.path().join("cell_scoped_cas"));
+    cfg.region = "us-east-2".to_owned();
+    cfg.eval_worker_threads = 2;
+    cfg.edge_binary_path = Some(edge_bin);
+    let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start emulator");
+
+    let tok_a = emu
+        .mint_capability_token("tenant_alpha", CarbonTierWire::Pro, false)
+        .unwrap();
+    let tok_b = emu
+        .mint_capability_token("tenant_bravo", CarbonTierWire::Pro, false)
+        .unwrap();
+
+    let (raw_a, _) = CarbonThinClient::connect_fastest(vec![emu.base_url()]).unwrap();
+    let client_a = raw_a.with_capability_token(tok_a);
+    let (raw_b, _) = CarbonThinClient::connect_fastest(vec![emu.base_url()]).unwrap();
+    let client_b = raw_b.with_capability_token(tok_b);
+
+    // Verify `/v1/carbon/version` exposes build provenance (`git_sha`, `release_tag`, `version`)
+    let srv_ver = client_a
+        .fetch_server_version()
+        .expect("fetch /v1/carbon/version")
+        .expect("version present");
+    assert_eq!(srv_ver.release_tag, jope_carbon::CARBON_RELEASE_TAG);
+    assert_eq!(srv_ver.git_sha, jope_carbon::CARBON_GIT_SHA);
+
+    let rows = build_synthetic_rows(64);
+    let prep = CarbonThinClient::prepare_numeric_dataset(
+        vec!["x1".to_owned(), "x2".to_owned(), "y".to_owned()],
+        &rows,
+        "y",
+        20261113,
+        0.20,
+    )
+    .unwrap();
+
+    let upl_a = client_a
+        .upload_prepared("tenant_alpha", CarbonTierWire::Pro, &prep)
+        .unwrap();
+    let upl_b = client_b
+        .upload_prepared("tenant_bravo", CarbonTierWire::Pro, &prep)
+        .unwrap();
+    assert_ne!(upl_a.upload_id, upl_b.upload_id);
+
+    let run_a_id = "run_01JCCARB0NSCP000000000001A";
+    let run_b_id = "run_01JCCARB0NSCP000000000001B";
+    let prog_a = client_a
+        .start_run(
+            run_a_id.parse().unwrap(),
+            "ds_555555555555555555555551".parse().unwrap(),
+            "tenant_alpha",
+            CarbonTierWire::Pro,
+            Effort::Fast,
+            "rmse",
+            101,
+            &prep,
+        )
+        .unwrap();
+    assert_eq!(prog_a.state, CarbonRunStateWire::Completed);
+
+    let prog_b = client_b
+        .start_run(
+            run_b_id.parse().unwrap(),
+            "ds_555555555555555555555552".parse().unwrap(),
+            "tenant_bravo",
+            CarbonTierWire::Pro,
+            Effort::Fast,
+            "rmse",
+            101,
+            &prep,
+        )
+        .unwrap();
+    assert_eq!(prog_b.state, CarbonRunStateWire::Completed);
+
+    // Shred Tenant B's run (`DELETE`) and prove Tenant A's scoped blobs and champion remain 100% intact!
+    let shred_b = client_b.shred_run("tenant_bravo", run_b_id).unwrap();
+    assert!(shred_b.shredded);
+    assert!(
+        emu.cas_root()
+            .join("blobs/tenant_alpha")
+            .join(&upl_a.upload_id)
+            .join(&upl_a.fit_target.sha256)
+            .is_file(),
+        "Tenant B shred must NEVER delete Tenant A's scoped CAS blobs"
+    );
+
+    // Compare inline `/predict` vs S3/HTTP CAS-backed `/predict` (`CARBON_FORCE_PREDICT_CAS=1`)!
+    let pred_features = vec!["x1".to_owned(), "x2".to_owned()];
+    let pred_rows: Vec<Vec<Option<f64>>> = (0..25)
+        .map(|i| vec![Some((i as f64) * 0.2 - 1.0), Some(((i % 5) as f64) * 0.3)])
+        .collect();
+
+    let inline_resp = client_a
+        .predict(
+            "tenant_alpha",
+            run_a_id,
+            pred_features.clone(),
+            pred_rows.clone(),
+        )
+        .expect("inline encrypted predict");
+    assert_eq!(inline_resp.row_count, 25);
+    assert!(inline_resp.encrypted_predictions_cuen_b64.is_some());
+
+    let prev_force = std::env::var_os("CARBON_FORCE_PREDICT_CAS");
+    std::env::set_var("CARBON_FORCE_PREDICT_CAS", "1");
+    let cas_resp = client_a
+        .predict("tenant_alpha", run_a_id, pred_features, pred_rows)
+        .expect("CAS-backed encrypted predict");
+    match prev_force {
+        Some(v) => std::env::set_var("CARBON_FORCE_PREDICT_CAS", v),
+        None => std::env::remove_var("CARBON_FORCE_PREDICT_CAS"),
+    }
+
+    assert_eq!(cas_resp.row_count, 25);
+    assert!(
+        cas_resp.encrypted_predictions_cas_url.is_some(),
+        "prefer_cas_output=true must return presigned CAS download URL"
+    );
+    assert_eq!(
+        inline_resp.predictions_sha256, cas_resp.predictions_sha256,
+        "CAS-backed /predict must match inline /predict bit-for-bit"
+    );
+    assert_eq!(inline_resp.predictions, cas_resp.predictions);
 
     emu.shutdown();
 }

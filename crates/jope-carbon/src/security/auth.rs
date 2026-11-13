@@ -27,6 +27,8 @@ use crate::error::{CarbonError, CarbonResult};
 const TOKEN_PREFIX: &str = "ctk1.";
 #[cfg(feature = "edge")]
 const MAX_RATE_BUCKETS: usize = 65_536;
+/// Maximum allowed capability-token lifetime (`90` days) for CLI/vault `token-mint` issuance.
+pub const MAX_MINT_TOKEN_TTL_SECS: u64 = 90 * 86_400;
 
 /// Strictly validate `tenant_id` (`^[A-Za-z0-9_-]{3,64}$`) so two distinct tenants can never
 /// collide after path normalization (`RT-08`).
@@ -118,11 +120,23 @@ impl CarbonCapabilityClaims {
 }
 
 /// `CarbonAuthVerifier` is a struct signing and constant-time verifying `HMAC-SHA256` capability
-/// tokens for Free anonymous sessions and Pro/Admin tenants.
+/// tokens for Free anonymous sessions and Pro/Admin tenants, supporting zero-downtime `[active, previous]`
+/// secret rotation.
 #[cfg(feature = "edge")]
 #[derive(Clone)]
 pub struct CarbonAuthVerifier {
     secret: Zeroizing<[u8; 32]>,
+    previous_secret: Option<Zeroizing<[u8; 32]>>,
+}
+
+#[cfg(feature = "edge")]
+impl std::fmt::Debug for CarbonAuthVerifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonAuthVerifier")
+            .field("secret", &"[REDACTED]")
+            .field("has_previous_secret", &self.previous_secret.is_some())
+            .finish()
+    }
 }
 
 #[cfg(feature = "edge")]
@@ -130,13 +144,22 @@ impl CarbonAuthVerifier {
     pub fn from_secret(secret: [u8; 32]) -> Self {
         Self {
             secret: Zeroizing::new(secret),
+            previous_secret: None,
         }
     }
 
+    /// Attach a retiring previous `32`-byte HMAC secret accepted during verification windows.
+    pub fn with_previous_secret(mut self, previous: Option<[u8; 32]>) -> Self {
+        self.previous_secret = previous.map(Zeroizing::new);
+        self
+    }
+
     pub fn from_hex(hex_str: &str) -> CarbonResult<Self> {
-        let raw = hex::decode(hex_str.trim()).map_err(|_| CarbonError::CapabilityAuthFailed {
-            reason: "CARBON_AUTH_SECRET_HEX must be valid hex",
-        })?;
+        let raw = Zeroizing::new(hex::decode(hex_str.trim()).map_err(|_| {
+            CarbonError::CapabilityAuthFailed {
+                reason: "CARBON_AUTH_SECRET_HEX must be valid hex",
+            }
+        })?);
         if raw.len() != 32 {
             return Err(CarbonError::CapabilityAuthFailed {
                 reason: "CARBON_AUTH_SECRET_HEX must decode to 32 bytes",
@@ -145,6 +168,19 @@ impl CarbonAuthVerifier {
         let mut arr = [0u8; 32];
         arr.copy_from_slice(&raw);
         Ok(Self::from_secret(arr))
+    }
+
+    pub fn from_hex_with_previous(
+        active_hex: &str,
+        previous_hex: Option<&str>,
+    ) -> CarbonResult<Self> {
+        let base = Self::from_hex(active_hex)?;
+        if let Some(prev_raw) = previous_hex.map(str::trim).filter(|s| !s.is_empty()) {
+            let prev = Self::from_hex(prev_raw)?;
+            Ok(base.with_previous_secret(Some(*prev.secret)))
+        } else {
+            Ok(base)
+        }
     }
 
     /// Sign `claims` into a URL-safe `ctk1.<payload_b64url>.<sig_hex>` capability token.
@@ -284,11 +320,19 @@ impl CarbonAuthVerifier {
         })?;
         let signing_input = format!("{TOKEN_PREFIX}{payload_b64}");
         let key = hmac::Key::new(hmac::HMAC_SHA256, self.secret.as_ref());
-        hmac::verify(&key, signing_input.as_bytes(), &sig_bytes).map_err(|_| {
-            CarbonError::CapabilityAuthFailed {
-                reason: "capability token HMAC signature verification failed",
+        let verified_active = hmac::verify(&key, signing_input.as_bytes(), &sig_bytes).is_ok();
+        let verified_previous = match (!verified_active, &self.previous_secret) {
+            (true, Some(prev)) => {
+                let prev_key = hmac::Key::new(hmac::HMAC_SHA256, prev.as_ref());
+                hmac::verify(&prev_key, signing_input.as_bytes(), &sig_bytes).is_ok()
             }
-        })?;
+            _ => false,
+        };
+        if !verified_active && !verified_previous {
+            return Err(CarbonError::CapabilityAuthFailed {
+                reason: "capability token HMAC signature verification failed",
+            });
+        }
 
         let claims_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .decode(payload_b64)
@@ -343,7 +387,15 @@ impl CarbonRateLimiter {
         if guard.len() >= MAX_RATE_BUCKETS && !guard.contains_key(bucket_key) {
             guard.retain(|_, (s, _)| *s == slot);
             if guard.len() >= MAX_RATE_BUCKETS {
-                return false;
+                // Evict one lowest-count bucket in the active window rather than globally locking
+                // out every new legitimate tenant/IP under spoofed cardinality floods (`GAP-SEC3`).
+                if let Some(evict_key) = guard
+                    .iter()
+                    .min_by_key(|(_, (s, c))| (*s, *c))
+                    .map(|(k, _)| k.clone())
+                {
+                    guard.remove(&evict_key);
+                }
             }
         }
         let entry = guard.entry(bucket_key.to_owned()).or_insert((slot, 0));

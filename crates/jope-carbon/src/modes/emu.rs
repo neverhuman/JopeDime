@@ -19,14 +19,15 @@ use std::time::Duration;
 
 use axum::{
     body::Body,
-    extract::{Path as AxumPath, State},
-    http::{HeaderMap, HeaderValue, Request, Response, StatusCode},
+    extract::{ConnectInfo, Path as AxumPath, State},
+    http::{HeaderMap, HeaderValue, Request, Response, StatusCode, Uri},
     routing::{any, get, post, put},
     Router,
 };
-use http_body_util::BodyExt as _;
+use http_body_util::{BodyExt as _, Limited};
 use jope_api::carbon::{CarbonRegionCatalog, CarbonRegionDescriptor, CarbonTierWire};
 use tokio::sync::{oneshot, Mutex as AsyncMutex, Notify};
+use zeroize::Zeroize;
 
 use crate::{
     cells::{
@@ -36,7 +37,9 @@ use crate::{
         eval::{CarbonEvalWorker, CarbonHttpEvalInvoker},
         lambda_runtime::run_lambda_custom_runtime_loop,
     },
-    modes::serve::{axum_request_to_gateway, gateway_response_to_axum},
+    modes::serve::{
+        axum_request_to_gateway_with_peer, gateway_response_to_axum, GatewayBodyReadError,
+    },
     security::{
         auth::{CarbonAuthVerifier, CarbonCapabilityClaims},
         seal::CarbonSealKey,
@@ -138,7 +141,7 @@ impl EmulatorSharedState {
 }
 
 /// `CarbonEmuConfig` is a struct configuring a `CarbonLocalLambdaEmulator` instance.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct CarbonEmuConfig {
     pub data_dir: PathBuf,
     pub region: String,
@@ -148,6 +151,28 @@ pub struct CarbonEmuConfig {
     pub edge_binary_path: Option<PathBuf>,
     pub auth_secret: [u8; 32],
     pub engine_kek_scalar: [u8; 32],
+}
+
+impl std::fmt::Debug for CarbonEmuConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonEmuConfig")
+            .field("data_dir", &self.data_dir)
+            .field("region", &self.region)
+            .field("force_hybrid_fanout", &self.force_hybrid_fanout)
+            .field("eval_worker_threads", &self.eval_worker_threads)
+            .field("engine_lease_ms", &self.engine_lease_ms)
+            .field("edge_binary_path", &self.edge_binary_path)
+            .field("auth_secret", &"[REDACTED]")
+            .field("engine_kek_scalar", &"[REDACTED]")
+            .finish()
+    }
+}
+
+impl Drop for CarbonEmuConfig {
+    fn drop(&mut self) {
+        self.auth_secret.zeroize();
+        self.engine_kek_scalar.zeroize();
+    }
 }
 
 impl CarbonEmuConfig {
@@ -216,20 +241,22 @@ impl CarbonLocalLambdaEmulator {
             eval_q: CarbonRuntimeRoleQueue::new(),
         });
 
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(4)
+            .enable_all()
+            .build()
+            .map_err(|e| format!("build carbon-emu tokio runtime: {e}"))?;
         let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
         let state_for_srv = Arc::clone(&shared);
         let server_join = std::thread::Builder::new()
             .name("carbon-emu-http".to_owned())
             .spawn(move || {
-                let rt = tokio::runtime::Builder::new_multi_thread()
-                    .worker_threads(4)
-                    .enable_all()
-                    .build()
-                    .expect("build carbon-emu tokio runtime");
                 rt.block_on(async move {
-                    let listener = tokio::net::TcpListener::from_std(std_listener)
-                        .expect("tokio listener from std");
-                    let app = build_emulator_router(state_for_srv);
+                    let Ok(listener) = tokio::net::TcpListener::from_std(std_listener) else {
+                        return;
+                    };
+                    let app = build_emulator_router(state_for_srv)
+                        .into_make_service_with_connect_info::<SocketAddr>();
                     let _ = axum::serve(listener, app)
                         .with_graceful_shutdown(async move {
                             let _ = shutdown_rx.await;
@@ -408,6 +435,7 @@ impl CarbonLocalLambdaEmulator {
     }
 
     pub fn shutdown(&mut self) {
+        self.auth_secret.zeroize();
         self.shared.shutdown.store(true, Ordering::SeqCst);
         self.shared.edge_q.notify.notify_waiters();
         self.shared.engine_q.notify.notify_waiters();
@@ -432,6 +460,25 @@ impl Drop for CarbonLocalLambdaEmulator {
     fn drop(&mut self) {
         self.shutdown();
     }
+}
+
+const MAX_INTERNAL_BODY_BYTES: usize = 268_435_456;
+
+fn plain_resp(status: StatusCode, body: impl Into<Body>) -> Response<Body> {
+    Response::builder()
+        .status(status)
+        .body(body.into())
+        .unwrap_or_else(|_| Response::new(Body::empty()))
+}
+
+fn extract_scope_query(uri: &Uri) -> Option<String> {
+    let raw_q = uri.query()?;
+    for (k, v) in url::form_urlencoded::parse(raw_q.as_bytes()) {
+        if k == "scope" && !v.is_empty() {
+            return Some(v.into_owned());
+        }
+    }
+    None
 }
 
 fn build_emulator_router(state: Arc<EmulatorSharedState>) -> Router {
@@ -469,7 +516,10 @@ fn check_internal_token(headers: &HeaderMap, expected: &str) -> bool {
     headers
         .get("x-carbon-internal-token")
         .and_then(|v| v.to_str().ok())
-        .is_some_and(|tok| tok == expected)
+        .is_some_and(|tok| {
+            aws_lc_rs::constant_time::verify_slices_are_equal(tok.as_bytes(), expected.as_bytes())
+                .is_ok()
+        })
 }
 
 async fn rt_next_handler(
@@ -477,41 +527,30 @@ async fn rt_next_handler(
     AxumPath(role): AxumPath<String>,
 ) -> Response<Body> {
     let Some(queue) = state.role_queue(&role) else {
-        return Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap();
+        return plain_resp(StatusCode::NOT_FOUND, Body::empty());
     };
     loop {
         if state.shutdown.load(Ordering::SeqCst) {
-            return Response::builder()
-                .status(StatusCode::GONE)
-                .body(Body::empty())
-                .unwrap();
+            return plain_resp(StatusCode::GONE, Body::empty());
         }
         let notified = queue.notify.notified();
         {
             let mut pending = queue.pending.lock().await;
             if let Some(item) = pending.pop_front() {
-                return Response::builder()
-                    .status(StatusCode::OK)
-                    .header(
-                        "lambda-runtime-aws-request-id",
-                        HeaderValue::from_str(&item.request_id).unwrap(),
-                    )
-                    .header(
-                        "lambda-runtime-deadline-ms",
-                        HeaderValue::from_str(&item.deadline_epoch_ms.to_string()).unwrap(),
-                    )
+                let mut builder = Response::builder().status(StatusCode::OK);
+                if let Ok(req_hv) = HeaderValue::from_str(&item.request_id) {
+                    builder = builder.header("lambda-runtime-aws-request-id", req_hv);
+                }
+                if let Ok(dl_hv) = HeaderValue::from_str(&item.deadline_epoch_ms.to_string()) {
+                    builder = builder.header("lambda-runtime-deadline-ms", dl_hv);
+                }
+                return builder
                     .body(Body::from(item.payload))
-                    .unwrap();
+                    .unwrap_or_else(|_| Response::new(Body::empty()));
             }
         }
         if state.shutdown.load(Ordering::SeqCst) {
-            return Response::builder()
-                .status(StatusCode::GONE)
-                .body(Body::empty())
-                .unwrap();
+            return plain_resp(StatusCode::GONE, Body::empty());
         }
         let _ = tokio::time::timeout(Duration::from_millis(250), notified).await;
     }
@@ -525,7 +564,10 @@ async fn rt_response_handler(
     let Some(queue) = state.role_queue(&role) else {
         return StatusCode::NOT_FOUND;
     };
-    let Ok(collected) = req.into_body().collect().await else {
+    let Ok(collected) = Limited::new(req.into_body(), MAX_INTERNAL_BODY_BYTES)
+        .collect()
+        .await
+    else {
         return StatusCode::BAD_REQUEST;
     };
     let bytes = collected.to_bytes().to_vec();
@@ -544,7 +586,10 @@ async fn rt_error_handler(
     let Some(queue) = state.role_queue(&role) else {
         return StatusCode::NOT_FOUND;
     };
-    let Ok(collected) = req.into_body().collect().await else {
+    let Ok(collected) = Limited::new(req.into_body(), MAX_INTERNAL_BODY_BYTES)
+        .collect()
+        .await
+    else {
         return StatusCode::BAD_REQUEST;
     };
     let bytes = collected.to_bytes().to_vec();
@@ -562,40 +607,31 @@ async fn internal_invoke_handler(
     req: Request<Body>,
 ) -> Response<Body> {
     let Some(queue) = state.role_queue(&role) else {
-        return Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::from("unknown role"))
-            .unwrap();
+        return plain_resp(StatusCode::NOT_FOUND, "unknown role");
     };
     let is_event = req
         .headers()
         .get("x-amz-invocation-type")
         .and_then(|v| v.to_str().ok())
         .is_some_and(|s| s.eq_ignore_ascii_case("Event"));
-    let Ok(collected) = req.into_body().collect().await else {
-        return Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::from("bad body"))
-            .unwrap();
+    let Ok(collected) = Limited::new(req.into_body(), MAX_INTERNAL_BODY_BYTES)
+        .collect()
+        .await
+    else {
+        return plain_resp(StatusCode::BAD_REQUEST, "bad body");
     };
     let payload = collected.to_bytes().to_vec();
     if is_event {
         queue.enqueue_async(payload, 840_000).await;
-        return Response::builder()
-            .status(StatusCode::ACCEPTED)
-            .body(Body::empty())
-            .unwrap();
+        return plain_resp(StatusCode::ACCEPTED, Body::empty());
     }
     match queue.dispatch(payload, 840_000).await {
         Ok(resp_bytes) => Response::builder()
             .status(StatusCode::OK)
             .header("content-type", "application/json")
             .body(Body::from(resp_bytes))
-            .unwrap(),
-        Err(err) => Response::builder()
-            .status(StatusCode::BAD_GATEWAY)
-            .body(Body::from(err))
-            .unwrap(),
+            .unwrap_or_else(|_| Response::new(Body::empty())),
+        Err(err) => plain_resp(StatusCode::BAD_GATEWAY, err),
     }
 }
 
@@ -605,76 +641,54 @@ async fn cas_put_blob_handler(
     req: Request<Body>,
 ) -> Response<Body> {
     if !check_internal_token(req.headers(), &state.internal_token) {
-        return Response::builder()
-            .status(StatusCode::FORBIDDEN)
-            .body(Body::empty())
-            .unwrap();
+        return plain_resp(StatusCode::FORBIDDEN, Body::empty());
     }
-    let Ok(collected) = req.into_body().collect().await else {
-        return Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::empty())
-            .unwrap();
+    let scope = extract_scope_query(req.uri());
+    let Ok(collected) = Limited::new(req.into_body(), MAX_INTERNAL_BODY_BYTES)
+        .collect()
+        .await
+    else {
+        return plain_resp(StatusCode::BAD_REQUEST, Body::empty());
     };
-    match state.cas.put_blob_verified(&sha, &collected.to_bytes()) {
-        Ok(()) => Response::builder()
-            .status(StatusCode::OK)
-            .body(Body::empty())
-            .unwrap(),
-        Err(err) => Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::from(err))
-            .unwrap(),
+    match state
+        .cas
+        .put_scoped_blob_verified(scope.as_deref(), &sha, &collected.to_bytes())
+    {
+        Ok(()) => plain_resp(StatusCode::OK, Body::empty()),
+        Err(err) => plain_resp(StatusCode::BAD_REQUEST, err),
     }
 }
 
 async fn cas_get_blob_handler(
     State(state): State<Arc<EmulatorSharedState>>,
     AxumPath(sha): AxumPath<String>,
+    uri: Uri,
     headers: HeaderMap,
 ) -> Response<Body> {
     if !check_internal_token(&headers, &state.internal_token) {
-        return Response::builder()
-            .status(StatusCode::FORBIDDEN)
-            .body(Body::empty())
-            .unwrap();
+        return plain_resp(StatusCode::FORBIDDEN, Body::empty());
     }
-    match state.cas.get_blob_verified(&sha) {
-        Ok(bytes) => Response::builder()
-            .status(StatusCode::OK)
-            .body(Body::from(bytes))
-            .unwrap(),
-        Err(err) => Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::from(err))
-            .unwrap(),
+    let scope = extract_scope_query(&uri);
+    match state.cas.get_scoped_blob_verified(scope.as_deref(), &sha) {
+        Ok(bytes) => plain_resp(StatusCode::OK, bytes),
+        Err(err) => plain_resp(StatusCode::NOT_FOUND, err),
     }
 }
 
 async fn cas_delete_blob_handler(
     State(state): State<Arc<EmulatorSharedState>>,
     AxumPath(sha): AxumPath<String>,
+    uri: Uri,
     headers: HeaderMap,
 ) -> Response<Body> {
     if !check_internal_token(&headers, &state.internal_token) {
-        return Response::builder()
-            .status(StatusCode::FORBIDDEN)
-            .body(Body::empty())
-            .unwrap();
+        return plain_resp(StatusCode::FORBIDDEN, Body::empty());
     }
-    match state.cas.delete_blob(&sha) {
-        Ok(true) => Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(Body::empty())
-            .unwrap(),
-        Ok(false) => Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap(),
-        Err(err) => Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::from(err))
-            .unwrap(),
+    let scope = extract_scope_query(&uri);
+    match state.cas.delete_scoped_blob(scope.as_deref(), &sha) {
+        Ok(true) => plain_resp(StatusCode::NO_CONTENT, Body::empty()),
+        Ok(false) => plain_resp(StatusCode::NOT_FOUND, Body::empty()),
+        Err(err) => plain_resp(StatusCode::BAD_REQUEST, err),
     }
 }
 
@@ -684,48 +698,30 @@ async fn cas_put_state_handler(
     req: Request<Body>,
 ) -> Response<Body> {
     if !check_internal_token(req.headers(), &state.internal_token) {
-        return Response::builder()
-            .status(StatusCode::FORBIDDEN)
-            .body(Body::empty())
-            .unwrap();
+        return plain_resp(StatusCode::FORBIDDEN, Body::empty());
     }
     let if_none_match = req
         .uri()
         .query()
         .is_some_and(|q| q.split('&').any(|kv| kv == "if_none_match=1"));
-    let Ok(collected) = req.into_body().collect().await else {
-        return Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::empty())
-            .unwrap();
+    let Ok(collected) = Limited::new(req.into_body(), MAX_INTERNAL_BODY_BYTES)
+        .collect()
+        .await
+    else {
+        return plain_resp(StatusCode::BAD_REQUEST, Body::empty());
     };
     let clean = key.trim_start_matches('/');
     let bytes = collected.to_bytes();
     if if_none_match {
         return match state.cas.put_state_object_if_absent(clean, &bytes) {
-            Ok(true) => Response::builder()
-                .status(StatusCode::OK)
-                .body(Body::empty())
-                .unwrap(),
-            Ok(false) => Response::builder()
-                .status(StatusCode::CONFLICT)
-                .body(Body::from("state key already exists"))
-                .unwrap(),
-            Err(err) => Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(Body::from(err))
-                .unwrap(),
+            Ok(true) => plain_resp(StatusCode::OK, Body::empty()),
+            Ok(false) => plain_resp(StatusCode::CONFLICT, "state key already exists"),
+            Err(err) => plain_resp(StatusCode::BAD_REQUEST, err),
         };
     }
     match state.cas.put_state_object(clean, &bytes) {
-        Ok(()) => Response::builder()
-            .status(StatusCode::OK)
-            .body(Body::empty())
-            .unwrap(),
-        Err(err) => Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::from(err))
-            .unwrap(),
+        Ok(()) => plain_resp(StatusCode::OK, Body::empty()),
+        Err(err) => plain_resp(StatusCode::BAD_REQUEST, err),
     }
 }
 
@@ -735,25 +731,13 @@ async fn cas_get_state_handler(
     headers: HeaderMap,
 ) -> Response<Body> {
     if !check_internal_token(&headers, &state.internal_token) {
-        return Response::builder()
-            .status(StatusCode::FORBIDDEN)
-            .body(Body::empty())
-            .unwrap();
+        return plain_resp(StatusCode::FORBIDDEN, Body::empty());
     }
     let clean = key.trim_start_matches('/');
     match state.cas.get_state_object(clean) {
-        Ok(Some(bytes)) => Response::builder()
-            .status(StatusCode::OK)
-            .body(Body::from(bytes))
-            .unwrap(),
-        Ok(None) => Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap(),
-        Err(err) => Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::from(err))
-            .unwrap(),
+        Ok(Some(bytes)) => plain_resp(StatusCode::OK, bytes),
+        Ok(None) => plain_resp(StatusCode::NOT_FOUND, Body::empty()),
+        Err(err) => plain_resp(StatusCode::BAD_REQUEST, err),
     }
 }
 
@@ -763,31 +747,30 @@ async fn cas_delete_state_handler(
     headers: HeaderMap,
 ) -> Response<Body> {
     if !check_internal_token(&headers, &state.internal_token) {
-        return Response::builder()
-            .status(StatusCode::FORBIDDEN)
-            .body(Body::empty())
-            .unwrap();
+        return plain_resp(StatusCode::FORBIDDEN, Body::empty());
     }
     let clean = key.trim_start_matches('/');
     match state.cas.delete_state_object(clean) {
-        Ok(()) => Response::builder()
-            .status(StatusCode::NO_CONTENT)
-            .body(Body::empty())
-            .unwrap(),
-        Err(err) => Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::from(err))
-            .unwrap(),
+        Ok(()) => plain_resp(StatusCode::NO_CONTENT, Body::empty()),
+        Err(err) => plain_resp(StatusCode::BAD_REQUEST, err),
     }
 }
 
 async fn public_function_url_handler(
     State(state): State<Arc<EmulatorSharedState>>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
     req: Request<Body>,
 ) -> Response<Body> {
-    let gw_req = match axum_request_to_gateway(req).await {
+    let gw_req = match axum_request_to_gateway_with_peer(req, Some(peer_addr.ip())).await {
         Ok(r) => r,
-        Err(msg) => {
+        Err(GatewayBodyReadError::PayloadTooLarge(limit)) => {
+            return gateway_response_to_axum(CarbonGatewayResponse::error_json(
+                413,
+                "payload_too_large",
+                &format!("HTTP request body exceeds {limit} byte stream cap"),
+            ));
+        }
+        Err(GatewayBodyReadError::BadRequest(msg)) => {
             return gateway_response_to_axum(CarbonGatewayResponse::error_json(
                 400,
                 "bad_request",

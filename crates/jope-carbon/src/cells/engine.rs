@@ -55,10 +55,13 @@ use crate::{
             CAS_BLOB_CUEN_SCOPE,
         },
     },
-    storage::cas::{canonical_run_state_key, sha256_lower_hex, CarbonCasStore},
+    storage::cas::{
+        canonical_blob_scope, canonical_run_state_key, sha256_lower_hex, CarbonCasStore,
+    },
 };
 
 const DEADLINE_DRAIN_MARGIN_MS: u64 = 20_000;
+const MAX_INLINE_PREDICT_CUEN_BYTES: usize = 1_572_864;
 
 struct EngineSessionDir {
     path: PathBuf,
@@ -85,25 +88,25 @@ impl Drop for EngineSessionDir {
 
 fn scrub_and_remove_dir(dir: &Path) {
     if let Ok(entries) = fs::read_dir(dir) {
-        let zeros = [0u8; 4_096];
+        let zeros = vec![0u8; 65_536];
         for entry in entries.flatten() {
             let p = entry.path();
             if let Ok(meta) = fs::symlink_metadata(&p) {
                 if meta.is_dir() {
                     scrub_and_remove_dir(&p);
                 } else if meta.is_file() {
-                    let len = meta.len() as usize;
-                    if len > 0 {
+                    let mut rem = meta.len();
+                    if rem > 0 {
                         if let Ok(mut f) = fs::OpenOptions::new().write(true).open(&p) {
                             use std::io::Write as _;
-                            let mut rem = len.min(16 * 1_048_576);
                             while rem > 0 {
-                                let chunk = rem.min(zeros.len());
+                                let chunk = (rem.min(zeros.len() as u64)) as usize;
                                 if f.write_all(&zeros[..chunk]).is_err() {
                                     break;
                                 }
-                                rem -= chunk;
+                                rem -= chunk as u64;
                             }
+                            let _ = f.sync_data();
                         }
                     }
                     let _ = fs::remove_file(&p);
@@ -285,12 +288,18 @@ impl CarbonEngineWorker {
             return Err("FitLandmarkBundle feature_count mismatch with feature_names".to_owned());
         }
 
-        let raw_fit = self
-            .cas
-            .get_blob_verified(&create.fit_jmat_sha256.to_ascii_lowercase())?;
-        let raw_holdout = self
-            .cas
-            .get_blob_verified(&create.holdout_jmat_sha256.to_ascii_lowercase())?;
+        let blob_scope = match create.upload_id.as_deref() {
+            Some(uid) => Some(canonical_blob_scope(&create.tenant_id, uid)?),
+            None => None,
+        };
+        let raw_fit = self.cas.get_scoped_blob_verified(
+            blob_scope.as_deref(),
+            &create.fit_jmat_sha256.to_ascii_lowercase(),
+        )?;
+        let raw_holdout = self.cas.get_scoped_blob_verified(
+            blob_scope.as_deref(),
+            &create.holdout_jmat_sha256.to_ascii_lowercase(),
+        )?;
 
         if let Some(dek) = u_dek {
             let fit_pt = decrypt_cuen_payload(
@@ -614,13 +623,26 @@ impl CarbonEngineWorker {
         .map_err(|e| format!("sealed champion authentication failed: {e}"))?;
 
         let (feat_names, rows) = if let Some(dek) = u_dek.as_ref() {
-            let enc_b64 = pred_req
-                .encrypted_rows_cuen_b64
-                .as_deref()
-                .ok_or_else(|| "missing encrypted_rows_cuen_b64".to_owned())?;
-            let enc_wire = base64::engine::general_purpose::STANDARD
-                .decode(enc_b64)
-                .map_err(|e| format!("invalid encrypted_rows_cuen_b64: {e}"))?;
+            let enc_wire = if let Some(cas_sha) = pred_req.encrypted_rows_cas_sha256.as_deref() {
+                let in_scope = match pred_req.predict_upload_id.as_deref() {
+                    Some(puid) => Some(canonical_blob_scope(&pred_req.tenant_id, puid)?),
+                    None => None,
+                };
+                let sha_lc = cas_sha.to_ascii_lowercase();
+                let bytes = self
+                    .cas
+                    .get_scoped_blob_verified(in_scope.as_deref(), &sha_lc)?;
+                let _ = self.cas.delete_scoped_blob(in_scope.as_deref(), &sha_lc);
+                bytes
+            } else {
+                let enc_b64 = pred_req
+                    .encrypted_rows_cuen_b64
+                    .as_deref()
+                    .ok_or_else(|| "missing encrypted_rows_cuen_b64".to_owned())?;
+                base64::engine::general_purpose::STANDARD
+                    .decode(enc_b64)
+                    .map_err(|e| format!("invalid encrypted_rows_cuen_b64: {e}"))?
+            };
             let pt = decrypt_cuen_payload(
                 dek,
                 CuenPayloadKind::PredictFeatures,
@@ -681,6 +703,26 @@ impl CarbonEngineWorker {
             let resp_cudk =
                 wrap_u_dek_to_pubkey(&r_dek, &client_pub, &pred_req.tenant_id, run_id_str)
                     .map_err(|e| e.to_string())?;
+            let resp_cudk_b64 = base64::engine::general_purpose::STANDARD.encode(resp_cudk);
+            if pred_req.prefer_cas_output || resp_cuen.len() > MAX_INLINE_PREDICT_CUEN_BYTES {
+                let out_sha = sha256_lower_hex(&resp_cuen);
+                let out_scope = match pred_req.predict_upload_id.as_deref() {
+                    Some(puid) => Some(canonical_blob_scope(&pred_req.tenant_id, puid)?),
+                    None => Some(canonical_blob_scope(&pred_req.tenant_id, run_id_str)?),
+                };
+                self.cas
+                    .put_scoped_blob_verified(out_scope.as_deref(), &out_sha, &resp_cuen)?;
+                return Ok(CarbonPredictResponse {
+                    run_id,
+                    predictions: Vec::new(),
+                    predictions_sha256,
+                    row_count,
+                    encrypted_predictions_cuen_b64: None,
+                    encrypted_predictions_cas_url: None,
+                    encrypted_predictions_cas_sha256: Some(out_sha),
+                    response_cudk_b64: Some(resp_cudk_b64),
+                });
+            }
             return Ok(CarbonPredictResponse {
                 run_id,
                 predictions: Vec::new(),
@@ -689,9 +731,9 @@ impl CarbonEngineWorker {
                 encrypted_predictions_cuen_b64: Some(
                     base64::engine::general_purpose::STANDARD.encode(resp_cuen),
                 ),
-                response_cudk_b64: Some(
-                    base64::engine::general_purpose::STANDARD.encode(resp_cudk),
-                ),
+                encrypted_predictions_cas_url: None,
+                encrypted_predictions_cas_sha256: None,
+                response_cudk_b64: Some(resp_cudk_b64),
             });
         }
 
@@ -701,6 +743,8 @@ impl CarbonEngineWorker {
             predictions,
             predictions_sha256,
             encrypted_predictions_cuen_b64: None,
+            encrypted_predictions_cas_url: None,
+            encrypted_predictions_cas_sha256: None,
             response_cudk_b64: None,
         })
     }
@@ -815,84 +859,86 @@ impl CarbonEngineWorker {
             live_workers: workers,
             max_waves_this_session: max_waves,
         };
-        let outcome = if use_hybrid {
-            let eval_invoker = Arc::clone(
-                self.eval_invoker
-                    .as_ref()
-                    .expect("use_hybrid verified eval_invoker.is_some()"),
-            );
-            let cas_fit_sha = create.fit_jmat_sha256.to_ascii_lowercase();
-            let grant_template = if let Some(dek) = u_dek {
-                let subkey = derive_cuen_slot_subkey(
-                    dek,
-                    CuenPayloadKind::FitJmat,
-                    &create.tenant_id,
-                    CAS_BLOB_CUEN_SCOPE,
-                )
-                .map_err(|e| e.to_string())?;
-                Some((
-                    create.tenant_id.clone(),
-                    base64::engine::general_purpose::STANDARD.encode(*subkey),
-                    fit_pt_sha.to_owned(),
-                ))
+        let outcome =
+            if let (true, Some(eval_invoker_ref)) = (use_hybrid, self.eval_invoker.as_ref()) {
+                let eval_invoker = Arc::clone(eval_invoker_ref);
+                let cas_fit_sha = create.fit_jmat_sha256.to_ascii_lowercase();
+                let cas_blob_scope = match create.upload_id.as_deref() {
+                    Some(uid) => Some(canonical_blob_scope(&create.tenant_id, uid)?),
+                    None => None,
+                };
+                let grant_template = if let Some(dek) = u_dek {
+                    let subkey = derive_cuen_slot_subkey(
+                        dek,
+                        CuenPayloadKind::FitJmat,
+                        &create.tenant_id,
+                        CAS_BLOB_CUEN_SCOPE,
+                    )
+                    .map_err(|e| e.to_string())?;
+                    Some((
+                        create.tenant_id.clone(),
+                        base64::engine::general_purpose::STANDARD.encode(*subkey),
+                        fit_pt_sha.to_owned(),
+                    ))
+                } else {
+                    None
+                };
+                let fallback_fit_bytes = Arc::new(Zeroizing::new(fit_bytes.to_vec()));
+                let fallback_fit_pt_sha = fit_pt_sha.to_owned();
+                let fallback_scratch_dir = scratch_dir.to_path_buf();
+                let eval_inv_exec = Arc::clone(&eval_invocations);
+                let eval_ms_exec = Arc::clone(&eval_total_wall_ms);
+                let remote_exec = CarbonRemoteEvalExecutor::new(move |req, fit_champ| {
+                    let decryption_grant = grant_template.as_ref().map(|(tid, sub_b64, pt_sha)| {
+                        CarbonEvalDecryptionGrant {
+                            tenant_id: tid.clone(),
+                            fit_slot_subkey_b64: sub_b64.clone(),
+                            fit_plaintext_sha256: pt_sha.clone(),
+                            exp_epoch_secs: (now_epoch_ms() / 1_000).saturating_add(60),
+                        }
+                    });
+                    let shard_t0 = Instant::now();
+                    let res = eval_invoker.invoke_eval(&CarbonEvalWireRequest {
+                        fit_jmat_sha256: cas_fit_sha.clone(),
+                        blob_scope: cas_blob_scope.clone(),
+                        request: req.clone(),
+                        fit_champion: fit_champ,
+                        decryption_grant,
+                    });
+                    match res {
+                        Ok(out) => {
+                            let billed_ms = (shard_t0.elapsed().as_millis() as u64).max(1);
+                            eval_inv_exec.fetch_add(1, Ordering::Relaxed);
+                            eval_ms_exec.fetch_add(billed_ms, Ordering::Relaxed);
+                            Ok(out)
+                        }
+                        Err(err) if is_retriable_eval_capacity_error(&err) => {
+                            // Zero-drop saturation safety valve: if regional `carbon-eval` concurrency
+                            // saturates under multi-hundred-user bursts, evaluate this candidate batch
+                            // directly inside `carbon-engine`'s 3,008 MB Graviton2 container!
+                            evaluate_carbon_eval_shard(
+                                fallback_fit_bytes.as_slice(),
+                                &fallback_fit_pt_sha,
+                                &fallback_scratch_dir,
+                                req,
+                                fit_champ,
+                            )
+                        }
+                        Err(err) => Err(anyhow::anyhow!("{err}")),
+                    }
+                });
+                run_carbon_waves(session_opts, &remote_exec, &should_pause, &mut on_wave)
+                    .map_err(|e| format!("hybrid wave execution failed: {e}"))?
             } else {
-                None
+                let inproc_exec = CarbonInProcessExecutor::open_fit(
+                    fit_bytes.to_vec(),
+                    fit_pt_sha,
+                    scratch_dir.to_path_buf(),
+                )
+                .map_err(|e| format!("open fit in-process failed: {e}"))?;
+                run_carbon_waves(session_opts, &inproc_exec, &should_pause, &mut on_wave)
+                    .map_err(|e| format!("solo wave execution failed: {e}"))?
             };
-            let fallback_fit_bytes = Arc::new(Zeroizing::new(fit_bytes.to_vec()));
-            let fallback_fit_pt_sha = fit_pt_sha.to_owned();
-            let fallback_scratch_dir = scratch_dir.to_path_buf();
-            let eval_inv_exec = Arc::clone(&eval_invocations);
-            let eval_ms_exec = Arc::clone(&eval_total_wall_ms);
-            let remote_exec = CarbonRemoteEvalExecutor::new(move |req, fit_champ| {
-                let decryption_grant = grant_template.as_ref().map(|(tid, sub_b64, pt_sha)| {
-                    CarbonEvalDecryptionGrant {
-                        tenant_id: tid.clone(),
-                        fit_slot_subkey_b64: sub_b64.clone(),
-                        fit_plaintext_sha256: pt_sha.clone(),
-                        exp_epoch_secs: (now_epoch_ms() / 1_000).saturating_add(60),
-                    }
-                });
-                let shard_t0 = Instant::now();
-                let res = eval_invoker.invoke_eval(&CarbonEvalWireRequest {
-                    fit_jmat_sha256: cas_fit_sha.clone(),
-                    request: req.clone(),
-                    fit_champion: fit_champ,
-                    decryption_grant,
-                });
-                match res {
-                    Ok(out) => {
-                        let billed_ms = (shard_t0.elapsed().as_millis() as u64).max(1);
-                        eval_inv_exec.fetch_add(1, Ordering::Relaxed);
-                        eval_ms_exec.fetch_add(billed_ms, Ordering::Relaxed);
-                        Ok(out)
-                    }
-                    Err(err) if is_retriable_eval_capacity_error(&err) => {
-                        // Zero-drop saturation safety valve: if regional `carbon-eval` concurrency
-                        // saturates under multi-hundred-user bursts, evaluate this candidate batch
-                        // directly inside `carbon-engine`'s 3,008 MB Graviton2 container!
-                        evaluate_carbon_eval_shard(
-                            fallback_fit_bytes.as_slice(),
-                            &fallback_fit_pt_sha,
-                            &fallback_scratch_dir,
-                            req,
-                            fit_champ,
-                        )
-                    }
-                    Err(err) => Err(anyhow::anyhow!("{err}")),
-                }
-            });
-            run_carbon_waves(session_opts, &remote_exec, &should_pause, &mut on_wave)
-                .map_err(|e| format!("hybrid wave execution failed: {e}"))?
-        } else {
-            let inproc_exec = CarbonInProcessExecutor::open_fit(
-                fit_bytes.to_vec(),
-                fit_pt_sha,
-                scratch_dir.to_path_buf(),
-            )
-            .map_err(|e| format!("open fit in-process failed: {e}"))?;
-            run_carbon_waves(session_opts, &inproc_exec, &should_pause, &mut on_wave)
-                .map_err(|e| format!("solo wave execution failed: {e}"))?
-        };
         Ok((
             outcome,
             eval_invocations.load(Ordering::Relaxed),

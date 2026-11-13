@@ -36,10 +36,23 @@ pub enum CarbonSealDomain {
 }
 
 /// `CarbonSealKey` is a struct wrapping a 32-byte master secret in `Zeroizing` memory for deriving
-/// per-tenant, per-run, domain-separated `AES-256-GCM` keys.
+/// per-tenant, per-run, domain-separated `AES-256-GCM` keys, with optional `[active, previous]`
+/// rotation support for zero-downtime key rollover.
 #[cfg(feature = "edge")]
+#[derive(Clone)]
 pub struct CarbonSealKey {
     master: Zeroizing<[u8; 32]>,
+    previous_master: Option<Zeroizing<[u8; 32]>>,
+}
+
+#[cfg(feature = "edge")]
+impl std::fmt::Debug for CarbonSealKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonSealKey")
+            .field("master", &"[REDACTED]")
+            .field("has_previous_master", &self.previous_master.is_some())
+            .finish()
+    }
 }
 
 #[cfg(feature = "edge")]
@@ -48,17 +61,24 @@ impl CarbonSealKey {
     pub fn from_bytes(secret: [u8; 32]) -> Self {
         Self {
             master: Zeroizing::new(secret),
+            previous_master: None,
         }
     }
 
-    fn derive_domain_key(
-        &self,
+    /// Attach a retiring previous `32`-byte master secret accepted when opening existing checkpoints/champions.
+    pub fn with_previous_bytes(mut self, previous: Option<[u8; 32]>) -> Self {
+        self.previous_master = previous.map(Zeroizing::new);
+        self
+    }
+
+    fn derive_domain_key_from_master(
+        master_secret: &[u8; 32],
         domain: CarbonSealDomain,
         tenant_id: &str,
         run_id: &str,
         u_dek: Option<&[u8; 32]>,
     ) -> Zeroizing<[u8; 32]> {
-        let prk = hmac::Key::new(hmac::HMAC_SHA256, self.master.as_ref());
+        let prk = hmac::Key::new(hmac::HMAC_SHA256, master_secret);
         let mut ctx = hmac::Context::with_key(&prk);
         ctx.update(b"jope.carbon.checkpoint_key.v2\0");
         ctx.update(&[domain as u8]);
@@ -80,6 +100,16 @@ impl CarbonSealKey {
         let mut derived = Zeroizing::new([0u8; 32]);
         derived.copy_from_slice(&tag.as_ref()[..32]);
         derived
+    }
+
+    fn derive_domain_key(
+        &self,
+        domain: CarbonSealDomain,
+        tenant_id: &str,
+        run_id: &str,
+        u_dek: Option<&[u8; 32]>,
+    ) -> Zeroizing<[u8; 32]> {
+        Self::derive_domain_key_from_master(&self.master, domain, tenant_id, run_id, u_dek)
     }
 }
 
@@ -229,28 +259,47 @@ impl SealedCheckpointEnvelope {
         wave_raw.copy_from_slice(&wire_bytes[8 + NONCE_BYTES..8 + NONCE_BYTES + 8]);
         let wave_index = u64::from_le_bytes(wave_raw);
 
-        let derived = key.derive_domain_key(expected_domain, tenant_id, run_id, u_dek);
-        let unbound = UnboundKey::new(&AES_256_GCM, derived.as_ref()).map_err(|_| {
-            CarbonError::SealAuthenticationFailed {
-                reason: "failed to initialize AES-256-GCM key",
-            }
-        })?;
-        let aead_key = LessSafeKey::new(unbound);
         let aad_vec = build_aad(&header, tenant_id, run_id, wave_index, &nonce_bytes);
+        let try_open_with_master = |master_bytes: &[u8; 32]| -> CarbonResult<Zeroizing<Vec<u8>>> {
+            let derived = CarbonSealKey::derive_domain_key_from_master(
+                master_bytes,
+                expected_domain,
+                tenant_id,
+                run_id,
+                u_dek,
+            );
+            let unbound = UnboundKey::new(&AES_256_GCM, derived.as_ref()).map_err(|_| {
+                CarbonError::SealAuthenticationFailed {
+                    reason: "failed to initialize AES-256-GCM key",
+                }
+            })?;
+            let aead_key = LessSafeKey::new(unbound);
+            let mut buf = Zeroizing::new(wire_bytes[8 + NONCE_BYTES + 8..].to_vec());
+            let plaintext_len = aead_key
+                .open_in_place(
+                    Nonce::assume_unique_for_key(nonce_bytes),
+                    Aad::from(&aad_vec),
+                    buf.as_mut_slice(),
+                )
+                .map_err(|_| CarbonError::SealAuthenticationFailed {
+                    reason: "AES-256-GCM tag verification failed",
+                })?
+                .len();
+            buf.truncate(plaintext_len);
+            Ok(buf)
+        };
 
-        let mut buf = Zeroizing::new(wire_bytes[8 + NONCE_BYTES + 8..].to_vec());
-        let plaintext_len = aead_key
-            .open_in_place(
-                Nonce::assume_unique_for_key(nonce_bytes),
-                Aad::from(&aad_vec),
-                buf.as_mut_slice(),
-            )
-            .map_err(|_| CarbonError::SealAuthenticationFailed {
-                reason: "AES-256-GCM tag verification failed",
-            })?
-            .len();
-        buf.truncate(plaintext_len);
-        Ok((wave_index, buf))
+        match try_open_with_master(&key.master) {
+            Ok(buf) => Ok((wave_index, buf)),
+            Err(primary_err) => {
+                if let Some(prev) = &key.previous_master {
+                    if let Ok(buf) = try_open_with_master(prev) {
+                        return Ok((wave_index, buf));
+                    }
+                }
+                Err(primary_err)
+            }
+        }
     }
 
     /// Wave index recorded in the authenticated header.
