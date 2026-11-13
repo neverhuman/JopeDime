@@ -1053,6 +1053,7 @@ def _spawned_worker_loop(
     allowed_row_bins = [n for n in ROW_BINS if n <= int(max_episode_rows)] or [min(32, int(max_episode_rows))]
     active_rows = allowed_row_bins[worker_id % len(allowed_row_bins)]
     seq = 0
+    real_seq = 0
 
     def _flush_bin(shape_key: tuple[int, int], rng_f: np.random.Generator) -> None:
         b_st = open_bins.pop(shape_key, None)
@@ -1150,58 +1151,64 @@ def _spawned_worker_loop(
             ready_items.append(_pack_worker_item(xa, ya, int(n_ctx), None, fps, rng, postnorm_affine_max=postnorm_affine_max))
             continue
 
-        # (5) Exact uniform-by-dataset draw over all 3,525 S3 tables (no row-count rejection!)
-        if seq > 1 and (seq & 255) == 1:
-            old_r = active_rows
-            for k_old in [k_o for k_o, st_o in open_bins.items() if k_o[0] == old_r and len(st_o["xs"]) >= 2]:
-                _flush_bin(k_old, rng)
-            active_rows = int(rng.choice(allowed_row_bins))
-        t_idx = bank.sample_table_idx(rng)
-        got = None
-        for retry_i in range(4):
-            got = sample_max_entropy_real_episode(
-                bank, t_idx, rng, valid_tcols_cache,
-                max_episode_rows=max_episode_rows,
-                random_split_every_batch=random_split_every_batch,
-                feature_drop_every_batch=feature_drop_every_batch,
-                drop_min_frac=drop_min_frac,
-                drop_max_frac=drop_max_frac,
-                synth_inj_every_batch=synth_inj_every_batch,
-                inj_min_frac=inj_min_frac,
-                inj_max_frac=inj_max_frac,
-                rand_target_prob=rand_target_prob,
-                synth_teacher_prob=synth_teacher_prob,
-                feature_noise_max=feature_noise_max,
-                force_canonical_target=(retry_i >= 2),
-                n_ctx_for_shape=n_ctx_for_shape,
-                preferred_rows=active_rows,
-            )
-            if got is not None:
+        # (5) Exact uniform-by-dataset draw over all 3,525 S3 tables (no row-count rejection!).
+        # Sample a 16-episode real S3 burst per non-synth tick so 1 real tick (~16 ds) matches 1 synth batch (~13-16 ds),
+        # yielding ~80-83% real S3 datasets and ~17-20% synthetic prior datasets at `--synth-prob 0.20`.
+        for _burst_i in range(16):
+            if stop_ev.is_set():
                 break
-        if got is None:
-            continue
+            real_seq += 1
+            if real_seq > 1 and (real_seq & 255) == 1:
+                old_r = active_rows
+                for k_old in [k_o for k_o, st_o in open_bins.items() if k_o[0] == old_r and len(st_o["xs"]) >= 2]:
+                    _flush_bin(k_old, rng)
+                active_rows = int(rng.choice(allowed_row_bins))
+            t_idx = bank.sample_table_idx(rng)
+            got = None
+            for retry_i in range(4):
+                got = sample_max_entropy_real_episode(
+                    bank, t_idx, rng, valid_tcols_cache,
+                    max_episode_rows=max_episode_rows,
+                    random_split_every_batch=random_split_every_batch,
+                    feature_drop_every_batch=feature_drop_every_batch,
+                    drop_min_frac=drop_min_frac,
+                    drop_max_frac=drop_max_frac,
+                    synth_inj_every_batch=synth_inj_every_batch,
+                    inj_min_frac=inj_min_frac,
+                    inj_max_frac=inj_max_frac,
+                    rand_target_prob=rand_target_prob,
+                    synth_teacher_prob=synth_teacher_prob,
+                    feature_noise_max=feature_noise_max,
+                    force_canonical_target=(retry_i >= 2),
+                    n_ctx_for_shape=n_ctx_for_shape,
+                    preferred_rows=active_rows,
+                )
+                if got is not None:
+                    break
+            if got is None:
+                continue
 
-        X_ep, y_ep, n_ctx_ep, info_ep = got
-        sh_key = (int(X_ep.shape[0]), int(X_ep.shape[1]))
-        b_st = open_bins.get(sh_key)
-        if b_st is None or int(b_st["n_ctx"]) != int(n_ctx_ep):
-            if b_st is not None:
+            X_ep, y_ep, n_ctx_ep, info_ep = got
+            sh_key = (int(X_ep.shape[0]), int(X_ep.shape[1]))
+            b_st = open_bins.get(sh_key)
+            if b_st is None or int(b_st["n_ctx"]) != int(n_ctx_ep):
+                if b_st is not None:
+                    _flush_bin(sh_key, rng)
+                b_tgt = _target_batch_size(sh_key[0], sh_key[1], min(int(bmax), 24), tokens_cap, row_tokens_cap, attn_cap)
+                b_st = {"xs": [], "ys": [], "infos": [], "n_ctx": int(n_ctx_ep), "b_target": b_tgt, "open_seq": real_seq}
+                open_bins[sh_key] = b_st
+                n_ctx_for_shape[sh_key] = int(n_ctx_ep)
+
+            b_st["xs"].append(X_ep)
+            b_st["ys"].append(y_ep)
+            b_st["infos"].append(info_ep)
+            if len(b_st["xs"]) >= int(b_st["b_target"]):
                 _flush_bin(sh_key, rng)
-            b_tgt = _target_batch_size(sh_key[0], sh_key[1], min(int(bmax), 24), tokens_cap, row_tokens_cap, attn_cap)
-            b_st = {"xs": [], "ys": [], "infos": [], "n_ctx": int(n_ctx_ep), "b_target": b_tgt, "open_seq": seq}
-            open_bins[sh_key] = b_st
-            n_ctx_for_shape[sh_key] = int(n_ctx_ep)
 
-        b_st["xs"].append(X_ep)
-        b_st["ys"].append(y_ep)
-        b_st["infos"].append(info_ep)
-        if len(b_st["xs"]) >= int(b_st["b_target"]):
-            _flush_bin(sh_key, rng)
-
-        if (seq & 63) == 0 and open_bins:
-            stale_keys = [k_s for k_s, st_s in open_bins.items() if (seq - int(st_s["open_seq"])) >= 384]
-            for k_s in stale_keys:
-                _flush_bin(k_s, rng)
+            if (real_seq & 63) == 0 and open_bins:
+                stale_keys = [k_s for k_s, st_s in open_bins.items() if (real_seq - int(st_s["open_seq"])) >= 384]
+                for k_s in stale_keys:
+                    _flush_bin(k_s, rng)
 
 
 class Ledger128:
