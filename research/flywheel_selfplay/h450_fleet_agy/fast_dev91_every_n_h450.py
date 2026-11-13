@@ -236,7 +236,7 @@ def _score_ctx_worker(job):
     return s, c, u_champ, u_nogp, u_icl
 
 
-def score_fast_cols(cols_dir: Path, out_json: Path, n_boot: int = 2500, procs: int = 2) -> dict:
+def score_fast_cols(cols_dir: Path, out_json: Path, n_boot: int = 2500, procs: int = 12) -> dict:
     import guard_matern_core as GM
     import train_h416 as T16
     from analyze_h450 import FAIR_CANONICAL, H430_K3, H433_F4, KUMO_LARGE, SEEDS, TAGS, _check_quarantined_path, _load_col_block, _rank_entrant
@@ -344,12 +344,13 @@ def main() -> None:
     ap.add_argument("--cols-dir", required=True)
     ap.add_argument("--out-json", default="")
     ap.add_argument("--n-views", type=int, default=2)
+    ap.add_argument("--procs", type=int, default=12)
     a = ap.parse_args()
 
     if a.cmd == "ctx":
         run_single_context(a.ctx_idx, Path(a.bank), Path(a.ckpt), Path(a.cols_dir), n_views=a.n_views)
     else:
-        doc = score_fast_cols(Path(a.cols_dir), Path(a.out_json))
+        doc = score_fast_cols(Path(a.cols_dir), Path(a.out_json), procs=a.procs)
         ch = doc["in_corpus_random_split_champion_91"]
         ic = doc["in_corpus_icl_boost_only_91"]
         print(json.dumps({

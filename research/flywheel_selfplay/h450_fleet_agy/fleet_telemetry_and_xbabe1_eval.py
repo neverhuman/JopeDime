@@ -110,6 +110,14 @@ def collect_host_metrics() -> dict[str, dict]:
 
 def collect_run_logs() -> dict[str, dict]:
     runs = {}
+    cache_p = FLEET_ROOT / "last_runs_cache.json"
+    cache: dict[str, dict] = {}
+    if cache_p.is_file():
+        try:
+            cache = json.loads(cache_p.read_text())
+        except Exception:
+            cache = {}
+
     specs = [
         ("r4_L_A", "xbabe2", "104M (L)", "/home/ubuntu/jope-data/h450-quarantine/r4/runs/r4_L_A/log.jsonl"),
         ("r4_L_B", "xbabe3", "104M (L)", "/home/ubuntu/jope-data/h450-r4-x3/runs/r4_L_B/log.jsonl"),
@@ -123,6 +131,7 @@ def collect_run_logs() -> dict[str, dict]:
         stat_cmd = f"stat -f %m {log_p} 2>/dev/null || echo 0" if host == "xbabe4" else f"stat -c %Y {log_p} 2>/dev/null || echo 0"
         rc, out = _ssh(host, f"({stat_cmd}); tail -n 5 {log_p} 2>/dev/null || true", timeout=8.0)
         rec = None
+        last_obj = None
         mtime = 0
         if rc == 0 and out:
             lines = out.splitlines()
@@ -133,6 +142,8 @@ def collect_run_logs() -> dict[str, dict]:
             for line in reversed(lines[1:]):
                 try:
                     d = json.loads(line)
+                    if last_obj is None:
+                        last_obj = d
                     if "datasets" in d and "loss" in d:
                         rec = d
                         break
@@ -141,8 +152,17 @@ def collect_run_logs() -> dict[str, dict]:
         if rec:
             dups = int(rec.get("dup_real", 0)) + int(rec.get("dup_synth", 0)) + int(rec.get("dup_fed", 0))
             is_live = (mtime > 0 and (now - mtime) < 240)
-            runs[name] = {
+            hb_utc = time.strftime("%FT%TZ", time.gmtime(mtime)) if mtime > 0 else "unknown"
+            paused_cleanly = bool((last_obj and "paused" in last_obj) or name.startswith("r4_M_"))
+            if is_live:
+                status_str = "RUNNING"
+            elif paused_cleanly:
+                status_str = "PAUSED (`104M`-only)"
+            else:
+                status_str = f"STALLED (last hb {hb_utc})"
+            entry = {
                 "host": host, "size": size_lbl, "active": is_live, "has_log": True,
+                "status_str": status_str, "heartbeat_utc": hb_utc,
                 "step": int(rec.get("step", 0)), "train_h": float(rec.get("train_h", 0.0)),
                 "loss": float(rec.get("loss", 0.0)),
                 "unique_datasets": int(rec.get("unique_datasets", rec.get("datasets", 0))),
@@ -152,9 +172,34 @@ def collect_run_logs() -> dict[str, dict]:
                 "inj_share": float(rec.get("inj_share", 0.0)),
                 "mem_gb": float(rec.get("mem_gb", 0.0)),
             }
+            runs[name] = entry
+            cache[name] = entry
+        elif name in cache:
+            prev = dict(cache[name])
+            prev["active"] = False
+            hb_prev = prev.get("heartbeat_utc", "unknown")
+            reason = "SSH unreachable" if rc != 0 else "no heartbeat"
+            prev["status_str"] = (
+                "PAUSED (`104M`-only)" if name.startswith("r4_M_")
+                else f"STALLED ({reason}; last hb {hb_prev})"
+            )
+            runs[name] = prev
         else:
-            runs[name] = {"host": host, "size": size_lbl, "active": False, "has_log": False, "step": 0, "train_h": 0.0, "loss": 0.0,
-                          "unique_datasets": 0, "datasets_seen": 0, "dups_fed": 0, "src_tables_seen": 0, "inj_share": 0.0, "mem_gb": 0.0}
+            st_fallback = f"STALLED (SSH unreachable)" if rc != 0 else "STARTING/IDLE"
+            runs[name] = {
+                "host": host, "size": size_lbl, "active": False, "has_log": False,
+                "status_str": st_fallback, "heartbeat_utc": "n/a",
+                "step": 0, "train_h": 0.0, "loss": 0.0,
+                "unique_datasets": 0, "datasets_seen": 0, "dups_fed": 0,
+                "src_tables_seen": 0, "inj_share": 0.0, "mem_gb": 0.0,
+            }
+    try:
+        FLEET_ROOT.mkdir(parents=True, exist_ok=True)
+        tmp_c = cache_p.with_suffix(".json.tmp")
+        tmp_c.write_text(json.dumps(cache, indent=2, sort_keys=True) + "\n")
+        os.replace(tmp_c, cache_p)
+    except Exception:
+        pass
     return runs
 
 
@@ -162,6 +207,21 @@ def collect_dev91_results() -> list[dict]:
     rows = []
     if not DIAG_ROOT.is_dir():
         return rows
+    traj_ds: dict[str, int] = {}
+    traj_p = DIAG_ROOT / "r4_TRAJECTORY.jsonl"
+    if traj_p.is_file():
+        for line in traj_p.read_text().splitlines():
+            if not line.strip():
+                continue
+            try:
+                td = json.loads(line)
+                t_tag = "r4_" + str(td.get("tag", ""))
+                ua = int(td.get("run_a", {}).get("unique_datasets", 0))
+                ub = int(td.get("run_b", {}).get("unique_datasets", 0))
+                if ua + ub > 0:
+                    traj_ds[t_tag] = ua + ub
+            except Exception:
+                continue
     for p in sorted(DIAG_ROOT.glob("*/H450_DEV91.json"), key=lambda x: x.stat().st_mtime):
         tag = p.parent.name
         if not (tag.startswith("r4_") or tag.startswith("fleet_x1_")):
@@ -171,15 +231,25 @@ def collect_dev91_results() -> list[dict]:
             ch = d["in_corpus_random_split_champion_91"]
             ic = d["in_corpus_icl_boost_only_91"]
             ng = d["in_corpus_neural_plus_tab_no_gp_91"]
-            zr = d.get("fair_zero_d91_control_91")
+            lg = d.get("in_corpus_legacy_guard_stack_91")
+            zr = d.get("fair_zero_d91_control_91") or d.get("fair_zero_d91_upgraded_control_91")
             meta_p = p.parent / "MILESTONE_META.json"
             ms_meta = json.loads(meta_p.read_text()) if meta_p.is_file() else {}
+            ds_val = ms_meta.get(
+                "fleet_104m_unique_datasets",
+                0 if ("ep00_init" in tag or "g00_init" in tag or "ms_0000k" in tag) else traj_ds.get(tag),
+            )
+            pipe_lbl = "fast_2view_cpu (sep)" if tag.startswith("fleet_x1_") else "cols_h450_gpu"
+            leg_elo = round(float(lg["elo"]["elo"]), 1) if lg else None
             rows.append({
                 "tag": tag,
+                "pipeline": pipe_lbl,
                 "mtime_utc": time.strftime("%FT%TZ", time.gmtime(p.stat().st_mtime)),
-                "fleet_104m_unique_ds": ms_meta.get("fleet_104m_unique_datasets", 0 if "ep00_init" in tag else None),
+                "fleet_104m_unique_ds": ds_val,
                 "champion_elo": round(float(ch["elo"]["elo"]), 1),
                 "champion_ci95": [round(float(x), 1) for x in ch["elo"]["ci95"]],
+                "legacy_elo": leg_elo,
+                "legacy_vs_1828": round(leg_elo - 1828.6, 1) if leg_elo is not None else None,
                 "icl_only_elo": round(float(ic["elo"]["elo"]), 1),
                 "nogp_elo": round(float(ng["elo"]["elo"]), 1),
                 "zero_ctrl_elo": round(float(zr["elo"]["elo"]), 1) if zr else None,
@@ -287,9 +357,9 @@ def run_xbabe0_fast_milestone_eval(milestone_ds: int, runs: dict[str, dict]) -> 
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = ""
     r_sc = subprocess.run(
-        ["nice", "-n", "19", "python3", "-B", str(fast_py_local), "--cmd", "score",
+        ["nice", "-n", "12", "python3", "-B", str(fast_py_local), "--cmd", "score", "--procs", "12",
          "--cols-dir", str(loc_cols), "--out-json", str(diag_dir / "H450_DEV91.json")],
-        env=env, capture_output=True, text=True, timeout=300.0,
+        env=env, capture_output=True, text=True, timeout=900.0,
     )
     if r_sc.returncode != 0 or not (diag_dir / "H450_DEV91.json").is_file():
         return None
@@ -368,30 +438,35 @@ def write_coordination_dashboard(hosts: dict[str, dict], runs: dict[str, dict], 
         "",
         "## 2. Live Per-Worker Unique-Dataset & Loss Ledger (`0` Repeats)",
         "",
-        "| Run | Host | Model | Status | Step | Train Hours | Loss | Unique Datasets Seen | Duplicates Fed | Distinct Source Tables | Inj Col Share |",
-        "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Run | Host | Model | Status | Last Heartbeat (UTC) | Step | Train Hours | Loss | Unique Datasets Seen | Duplicates Fed | Distinct Source Tables | Inj Col Share |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for rname, rv in runs.items():
-        st = "RUNNING" if rv["active"] else ("PAUSED (`104M`-only)" if rv.get("has_log") else "STARTING/IDLE")
+        st = rv.get("status_str") or ("RUNNING" if rv["active"] else ("PAUSED (`104M`-only)" if rv.get("has_log") else "STARTING/IDLE"))
+        hb = rv.get("heartbeat_utc", "n/a")
         lines.append(
-            f"| `{rname}` | `{rv['host']}` | `{rv['size']}` | `{st}` | `{rv['step']:,}` | `{rv['train_h']:.3f}h` | `{rv['loss']:.4f}` | **`{rv['unique_datasets']:,}`** | **`{rv['dups_fed']}`** | `{rv['src_tables_seen']:,} / 3,525` | `{100.0 * rv['inj_share']:.2f}%` |"
+            f"| `{rname}` | `{rv['host']}` | `{rv['size']}` | `{st}` | `{hb}` | `{rv['step']:,}` | `{rv['train_h']:.3f}h` | `{rv['loss']:.4f}` | **`{rv['unique_datasets']:,}`** | **`{rv['dups_fed']}`** | `{rv['src_tables_seen']:,} / 3,525` | `{100.0 * rv['inj_share']:.2f}%` |"
         )
 
     lines.extend([
         "",
-        "## 3. Frozen-Split `dev91-audit-v1` In-Corpus BT-Elo Trajectory (`N = 25,000` Cadence)",
+        "## 3. Frozen-Split `dev91-audit-v1` In-Corpus BT-Elo Trajectory (`cols_h450_gpu` Official + Separate `fast_2view_cpu`)",
         "",
-        "| Milestone / Tag | Timestamp (UTC) | `104M` Fleet Unique Datasets | Champion Stack Elo (`95% CI`) | Pure `ICL` Boost Elo | Neural+Tab (No GP) Elo | Gap vs `Kumo L` (`2070.2`) | Gap vs `H448` Fair (`1821.5`) |",
-        "| --- | --- | ---: | --- | ---: | ---: | ---: | ---: |",
+        "| Milestone / Tag | Pipeline | Timestamp (UTC) | Evaluated `104M` Unique Datasets | Legacy Guard Stack Elo (vs `1828.6` Init) | H450 Champion Stack Elo (`95% CI`) | Pure `ICL` Boost Elo | Gap vs `Kumo L` (`2070.2`) |",
+        "| --- | --- | --- | ---: | --- | --- | ---: | ---: |",
     ])
     if not evals:
-        lines.append("| `ep00_init` + `ms_0050k` | *evaluating now on `xbabe0` & `xbabe1`* | *in progress* | *pending* | *pending* | *pending* | *pending* | *pending* |")
+        lines.append("| `r4_g00_init` | `cols_h450_gpu` | *evaluating* | `0` | *pending* | *pending* | *pending* | *pending* |")
     else:
         for ev in evals:
             ds_s = f"`{ev['fleet_104m_unique_ds']:,}`" if ev["fleet_104m_unique_ds"] is not None else "`hourly`"
             ci = ev["champion_ci95"]
+            leg_s = (
+                f"**`{ev['legacy_elo']:.1f}`** (`{ev['legacy_vs_1828']:+.1f}`)"
+                if ev.get("legacy_elo") is not None else "*(n/a — fast 2-view)*"
+            )
             lines.append(
-                f"| `{ev['tag']}` | `{ev['mtime_utc']}` | {ds_s} | **`{ev['champion_elo']:.1f}`** (`[{ci[0]:.1f}, {ci[1]:.1f}]`) | `{ev['icl_only_elo']:.1f}` | `{ev['nogp_elo']:.1f}` | `{ev['gap_vs_kumo_L']:+.1f}` | `{ev['gap_vs_h448_fair']:+.1f}` |"
+                f"| `{ev['tag']}` | `{ev.get('pipeline', 'cols_h450_gpu')}` | `{ev['mtime_utc']}` | {ds_s} | {leg_s} | **`{ev['champion_elo']:.1f}`** (`[{ci[0]:.1f}, {ci[1]:.1f}]`) | `{ev['icl_only_elo']:.1f}` | `{ev['gap_vs_kumo_L']:+.1f}` |"
             )
 
     body = "\n".join(lines) + "\n"

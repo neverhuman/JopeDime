@@ -408,9 +408,16 @@ def bidirectional_real_episode(
     n_rows_fixed: int | None = None,
     f_fixed: int | None = None,
     p_ctx_fixed: float | None = None,
+    random_split_every_batch: bool = True,
+    feature_drop_every_batch: bool = True,
+    drop_max_frac: float = 0.35,
+    synth_inj_every_batch: bool = True,
+    inj_max_frac: float = 0.10,
 ):
-    """Samples one episode with fresh shuffle AND bidirectional synthetic augmentation TO and FROM features
-    (including narrow tables `F < 10`, resolving the `floor(0.1*F) == 0` narrow-table blind spot)."""
+    """Samples one episode with fresh random train/test split, mandatory random feature removal (`p >= 2`),
+    and strict `k <= floor(inj_max_frac * F)` (`<= 10%`) synthetic feature injection + FROM-feature targets."""
+    inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
+    drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
     tab = np.asarray(bank.tabs_f64[t_idx], dtype=np.float64)
     c_tot = tab.shape[1]
     if tab.shape[0] < 28 or c_tot < 2:
@@ -500,24 +507,38 @@ def bidirectional_real_episode(
     if (tmode < 2 or blend_real_teacher) and float(np.std(yc)) <= 1e-12:
         return None
 
-    # Strict 0-10% TO-features synthetic column injection (k <= floor(0.10 * F) per owner 20:30Z rule)
+    # Strict 0-10% TO-features synthetic column injection (k <= floor(inj_max_frac * F), inj_max_frac <= 0.10)
+    # plus per-episode random feature removal (k_real <= p - 1 whenever p >= 2 and feature_drop_every_batch=True).
     p = Xc.shape[1]
     if f_fixed is None:
-        p_keep = p
-        if p >= 6 and rng.random() < 0.45:
-            p_keep = int(rng.integers(max(3, int(round(0.60 * p))), p + 1))
-        max_inj = min(WIDE_GPU, p_keep) // 9
-        k = int(rng.integers(0, max_inj + 1)) if max_inj >= 1 else 0
-        F = min(WIDE_GPU, p_keep + k)
-        k = min(k, int(math.floor(0.10 * F)))
+        if feature_drop_every_batch and p >= 2:
+            max_drop = max(1, min(p - 1, int(round(drop_max_frac * p))))
+            p_keep = p - int(rng.integers(1, max_drop + 1))
+        else:
+            p_keep = p
+            if p >= 6 and rng.random() < 0.45:
+                p_keep = int(rng.integers(max(3, int(round(0.60 * p))), p + 1))
+        p_base = min(WIDE_GPU, p_keep)
+        max_inj = int(math.floor((inj_max_frac / max(1e-9, 1.0 - inj_max_frac)) * p_base)) if inj_max_frac > 0.0 else 0
+        if max_inj >= 1:
+            k_try = int(rng.integers(1 if synth_inj_every_batch else 0, max_inj + 1))
+        else:
+            k_try = 0
+        F = min(WIDE_GPU, p_keep + k_try)
+        k_hi = int(math.floor(inj_max_frac * F))
+        k = min(k_try, k_hi)
+        if synth_inj_every_batch and k_hi >= 1 and k < 1:
+            k = 1
         if F - k < 1:
             k = 0
-            F = max(1, p_keep)
+            F = max(1, p_base)
         k_real = F - k
     else:
         F = f_fixed
-        k_lo = max(0, F - p)
-        k_hi = int(math.floor(0.10 * F))
+        k_hi = int(math.floor(inj_max_frac * F))
+        p_cap = (p - 1) if (feature_drop_every_batch and p >= 2) else p
+        k_min_inj = 1 if (synth_inj_every_batch and k_hi >= 1) else 0
+        k_lo = max(k_min_inj, F - p_cap)
         if k_lo > k_hi:
             return None
         k = int(rng.integers(k_lo, k_hi + 1))
@@ -566,13 +587,26 @@ def bidirectional_real_episode(
     X_ep = np.vstack([Xc, Xq])
     if X_ep.shape[1] != F or not np.all(np.isfinite(y_ep)) or float(np.std(y_ep[:n_ctx])) <= 1e-12:
         return None
-    return X_ep, y_ep, n_ctx, (int(t_idx), tmode, k, F, n_rows, space)
+    return X_ep, y_ep, n_ctx, (int(t_idx), tmode, k, F, n_rows, space, int(max(0, p - k_real)), int(p))
 
 
-def _sample_full_synth_special(B: int, N: int, Fn: int, n_ctx: int, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
+def _sample_full_synth_special(
+    B: int,
+    N: int,
+    Fn: int,
+    n_ctx: int,
+    rng: np.random.Generator,
+    feature_drop_every_batch: bool = True,
+    drop_max_frac: float = 0.35,
+    synth_inj_every_batch: bool = True,
+    inj_max_frac: float = 0.10,
+) -> tuple[np.ndarray, np.ndarray]:
+    inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
+    drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
     is_panel = bool(rng.random() < 0.55)
     xs = np.zeros((B, N, Fn), dtype=np.float64)
     ys = np.zeros((B, N), dtype=np.float64)
+    Fn_gen = Fn + (max(1, int(round(drop_max_frac * Fn))) if feature_drop_every_batch else 0)
     for b in range(B):
         if is_panel:
             n_ent = int(rng.integers(6, max(8, min(48, N // 8))))
@@ -580,7 +614,7 @@ def _sample_full_synth_special(B: int, N: int, Fn: int, n_ctx: int, rng: np.rand
             t_step = rng.uniform(0.0, 2000.0, size=N)
             base_epoch_ms = float(rng.choice([1.7040672e12, 20725.0, 15000.0]))
             ts_col = base_epoch_ms + t_step * (60_000.0 if base_epoch_ms > 1e9 else 0.01)
-            covs = rng.standard_normal((N, max(1, Fn - 2)))
+            covs = rng.standard_normal((N, max(1, Fn_gen - 2)))
             ent_base = rng.standard_normal(n_ent) * 2.5
             ent_freq = rng.uniform(0.003, 0.02, size=n_ent)
             ent_ph = rng.uniform(0.0, 2.0 * math.pi, size=n_ent)
@@ -588,42 +622,55 @@ def _sample_full_synth_special(B: int, N: int, Fn: int, n_ctx: int, rng: np.rand
             w_cov = rng.standard_normal(covs.shape[1]) * 0.35
             y_clean = ent_base[ent] + 1.8 * np.sin(ent_freq[ent] * t_step + ent_ph[ent]) + ent_slope[ent] * t_step + covs @ w_cov
             y_b = y_clean + float(rng.uniform(0.015, 0.12)) * max(float(np.std(y_clean)), 1e-3) * rng.standard_normal(N)
-            X_full = np.column_stack([ts_col, ent.astype(np.float64), covs])[:, :Fn]
+            X_raw = np.column_stack([ts_col, ent.astype(np.float64), covs])[:, :Fn_gen]
             perm = rng.permutation(N)
-            X_full, y_b = X_full[perm], y_b[perm]
-            k_pan = int(math.floor(0.10 * Fn))
-            if k_pan >= 1 and rng.random() < 0.50:
-                Ic, Iq = _inject_synth_cols_np(X_full[:n_ctx, : max(2, Fn - k_pan)], X_full[n_ctx:, : max(2, Fn - k_pan)], k_pan, rng)
-                X_aug = np.vstack([np.hstack([X_full[:n_ctx, : max(2, Fn - k_pan)], Ic]),
-                                   np.hstack([X_full[n_ctx:, : max(2, Fn - k_pan)], Iq])])
-                if X_aug.shape[1] < Fn:
-                    X_aug = np.hstack([X_aug, rng.standard_normal((N, Fn - X_aug.shape[1]))])
-                X_full = X_aug[:, :Fn]
-            xs[b] = X_full[:, rng.permutation(Fn)]
-            ys[b] = y_b
+            X_raw, y_b = X_raw[perm], y_b[perm]
         else:
-            X_b = rng.standard_normal((N, Fn))
-            w1 = rng.standard_normal(Fn) / math.sqrt(max(Fn, 1))
-            w2 = rng.standard_normal(Fn) / math.sqrt(max(Fn, 1))
-            y_bulk = 15.0 + 8.0 * np.sin(X_b @ w1) + 5.0 * ((X_b @ w2) ** 2 - 1.0) + 0.6 * rng.standard_normal(N)
+            X_raw = rng.standard_normal((N, Fn_gen))
+            w1 = rng.standard_normal(Fn_gen) / math.sqrt(max(Fn_gen, 1))
+            w2 = rng.standard_normal(Fn_gen) / math.sqrt(max(Fn_gen, 1))
+            y_bulk = 15.0 + 8.0 * np.sin(X_raw @ w1) + 5.0 * ((X_raw @ w2) ** 2 - 1.0) + 0.6 * rng.standard_normal(N)
             atom_val = float(rng.choice([-99.99, -999.0, 0.0, 9999.0]))
-            gate_score = 0.75 * X_b[:, 0] - 0.55 * X_b[:, min(1, Fn - 1)] + 0.25 * rng.standard_normal(N)
+            gate_score = 0.75 * X_raw[:, 0] - 0.55 * X_raw[:, min(1, Fn_gen - 1)] + 0.25 * rng.standard_normal(N)
             is_atom = gate_score < float(np.percentile(gate_score, float(rng.uniform(8.0, 22.0))))
             if rng.random() < 0.65:
-                X_b[is_atom, 0] = -99.99
-            xs[b] = X_b[:, rng.permutation(Fn)]
-            ys[b] = np.where(is_atom, atom_val, y_bulk)
+                X_raw[is_atom, 0] = -99.99
+            perm = rng.permutation(N)
+            X_raw, y_b = X_raw[perm], np.where(is_atom, atom_val, y_bulk)[perm]
+
+        k_hi_sp = int(math.floor(inj_max_frac * Fn))
+        if k_hi_sp >= 1 and (synth_inj_every_batch or rng.random() < 0.50):
+            k_sp = int(rng.integers(1 if synth_inj_every_batch else 0, k_hi_sp + 1))
+        else:
+            k_sp = 0
+        k_keep = max(1, Fn - k_sp)
+        keep_idx = rng.choice(X_raw.shape[1], size=k_keep, replace=False) if X_raw.shape[1] > k_keep else np.arange(X_raw.shape[1])
+        X_sub = X_raw[:, keep_idx]
+        if k_sp >= 1:
+            Ic, Iq = _inject_synth_cols_np(X_sub[:n_ctx], X_sub[n_ctx:], k_sp, rng)
+            X_full = np.vstack([np.hstack([X_sub[:n_ctx], Ic]), np.hstack([X_sub[n_ctx:], Iq])])
+        else:
+            X_full = X_sub
+        if X_full.shape[1] < Fn:
+            X_full = np.hstack([X_full, rng.standard_normal((N, Fn - X_full.shape[1]))])
+        X_full = X_full[:, :Fn]
+        xs[b] = X_full[:, rng.permutation(Fn)]
+        ys[b] = y_b
     return xs, ys
 
 
 def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expect_sha: str,
                          tokens_cap: int, row_tokens_cap: int, bmax: int, cpu_hard: float,
+                         random_split_every_batch: bool, feature_drop_every_batch: bool, drop_max_frac: float,
+                         synth_inj_every_batch: bool, inj_max_frac: float,
                          out_q, stop_ev) -> None:
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     try:
         os.nice(12)
     except Exception:
         pass
+    inj_max_frac = max(0.0, min(0.10, float(inj_max_frac)))
+    drop_max_frac = max(0.05, min(0.50, float(drop_max_frac)))
     bank = MmapF64Bank(Path(mmap_dir_s), expect_sha256=expect_sha)
     gov = HostCpuGovernor(hard_pct=cpu_hard, check_every_s=2.5)
     seq = 0
@@ -633,35 +680,65 @@ def _spawned_worker_loop(worker_id: int, run_nonce: bytes, mmap_dir_s: str, expe
         b_seed = hashlib.blake2b(run_nonce + worker_id.to_bytes(4, "little") + seq.to_bytes(8, "little"), digest_size=32).digest()
         rng = np.random.default_rng(np.frombuffer(b_seed, dtype=np.uint32))
         if float(rng.random()) < 0.58:
-            got = bidirectional_real_episode(bank, bank.sample_table_idx(rng), rng)
+            got = bidirectional_real_episode(
+                bank, bank.sample_table_idx(rng), rng,
+                random_split_every_batch=random_split_every_batch,
+                feature_drop_every_batch=feature_drop_every_batch,
+                drop_max_frac=drop_max_frac,
+                synth_inj_every_batch=synth_inj_every_batch,
+                inj_max_frac=inj_max_frac,
+            )
             if got is None:
                 continue
             X_ep, y_ep, n_ctx, info = got
             item = (X_ep[None], y_ep[None], int(n_ctx), [info], [dataset_fingerprint_128(X_ep, y_ep, n_ctx)])
         else:
             t0 = bank.sample_table_idx(rng)
+            p0_raw = int(bank.cols_arr[t0])
             ok_n = [n for n in BATCH_N if n + 8 <= int(bank.rows_arr[t0])]
-            if not ok_n:
-                got = bidirectional_real_episode(bank, t0, rng)
+            if not ok_n or (feature_drop_every_batch and p0_raw < 3):
+                got = bidirectional_real_episode(
+                    bank, t0, rng,
+                    random_split_every_batch=random_split_every_batch,
+                    feature_drop_every_batch=feature_drop_every_batch,
+                    drop_max_frac=drop_max_frac,
+                    synth_inj_every_batch=synth_inj_every_batch,
+                    inj_max_frac=inj_max_frac,
+                )
                 if got is None:
                     continue
                 item = (got[0][None], got[1][None], int(got[2]), [got[3]], [dataset_fingerprint_128(got[0], got[1], got[2])])
             else:
                 pn = np.array([BATCH_N_P[BATCH_N.index(n)] for n in ok_n])
                 N_t = int(rng.choice(ok_n, p=pn / pn.sum()))
-                p0 = min(int(bank.cols_arr[t0]), WIDE_GPU)
-                F_t = max(2, min(WIDE_GPU, p0 + int(rng.integers(0, (p0 // 9) + 1))))
+                if feature_drop_every_batch and p0_raw >= 3:
+                    max_drop0 = max(1, min(p0_raw - 2, int(round(drop_max_frac * p0_raw))))
+                    p0_keep = p0_raw - int(rng.integers(1, max_drop0 + 1))
+                else:
+                    p0_keep = p0_raw
+                p0 = min(p0_keep, WIDE_GPU)
+                max_inj0 = int(math.floor((inj_max_frac / max(1e-9, 1.0 - inj_max_frac)) * p0)) if inj_max_frac > 0.0 else 0
+                k0 = int(rng.integers(1 if synth_inj_every_batch else 0, max_inj0 + 1)) if max_inj0 >= 1 else 0
+                F_t = max(2, min(WIDE_GPU, p0 + k0))
                 u = float(rng.random())
                 p_ctx = float(rng.uniform(0.25, 0.56) if u < 0.25 else (rng.uniform(0.56, 0.84) if u < 0.75 else rng.uniform(0.84, 0.94)))
                 B_t = max(1, min(bmax, tokens_cap // max(N_t * (F_t + 4), 1), row_tokens_cap // max(N_t, 1)))
-                k_hi_t = int(math.floor(0.10 * F_t))
-                elig = ((bank.rows_arr >= N_t + 8) & (bank.cols_arr >= max(1, F_t - k_hi_t))).astype(np.float64)
+                k_hi_t = int(math.floor(inj_max_frac * F_t))
+                min_p_req = (F_t - k_hi_t + 1) if feature_drop_every_batch else max(1, F_t - k_hi_t)
+                elig = ((bank.rows_arr >= N_t + 8) & (bank.cols_arr >= min_p_req)).astype(np.float64)
                 xs, ys, infos, n_ctx_b = [], [], [], None
                 for b in range(B_t):
                     t_idx = t0 if b == 0 else bank.sample_eligible(rng, elig)
                     if t_idx is None:
                         break
-                    got = bidirectional_real_episode(bank, t_idx, rng, n_rows_fixed=N_t, f_fixed=F_t, p_ctx_fixed=p_ctx)
+                    got = bidirectional_real_episode(
+                        bank, t_idx, rng, n_rows_fixed=N_t, f_fixed=F_t, p_ctx_fixed=p_ctx,
+                        random_split_every_batch=random_split_every_batch,
+                        feature_drop_every_batch=feature_drop_every_batch,
+                        drop_max_frac=drop_max_frac,
+                        synth_inj_every_batch=synth_inj_every_batch,
+                        inj_max_frac=inj_max_frac,
+                    )
                     if got is None or got[0].shape != (N_t, F_t) or (n_ctx_b is not None and got[2] != n_ctx_b):
                         continue
                     n_ctx_b = got[2]
@@ -695,6 +772,9 @@ class Ledger128:
         self.synth_cells = 0
         self.seen_fp_128: set[bytes] = set()
         self.dup_filtered_pre_forward = 0
+        self.real_eps_p_ge_2 = 0
+        self.real_eps_dropped = 0
+        self.dropped_real_cols = 0
 
     def filter_unseen_indices(self, fps: list[bytes]) -> list[int]:
         keep = []
@@ -708,7 +788,10 @@ class Ledger128:
 
     def add_real(self, infos) -> int:
         cells = 0
-        for t, tm, k, F, n, sp in infos:
+        for row in infos:
+            t, tm, k, F, n, sp = row[:6]
+            n_drop = int(row[6]) if len(row) > 6 else 0
+            p_src = int(row[7]) if len(row) > 7 else int(F - k)
             c = int(n * (F + 1))
             self.table_eps[t] += 1
             self.table_cells[t] += c
@@ -717,6 +800,11 @@ class Ledger128:
             self.space[sp] += 1
             self.inj_cols += int(k)
             self.real_cols += int(F - k)
+            if p_src >= 2:
+                self.real_eps_p_ge_2 += 1
+                if n_drop >= 1:
+                    self.real_eps_dropped += 1
+            self.dropped_real_cols += n_drop
             cells += c
         return cells
 
@@ -732,6 +820,8 @@ class Ledger128:
             "table_rows": self.table_rows.tolist(), "tmode": self.tmode.tolist(), "space": self.space.tolist(),
             "inj_cols": self.inj_cols, "real_cols": self.real_cols, "synth_datasets": self.synth_datasets,
             "synth_cells": self.synth_cells, "dup_filtered_pre_forward": self.dup_filtered_pre_forward,
+            "real_eps_p_ge_2": self.real_eps_p_ge_2, "real_eps_dropped": self.real_eps_dropped,
+            "dropped_real_cols": self.dropped_real_cols,
             "seen_fp_128_bytes": np.frombuffer(raw_fp, dtype=np.uint8).copy(),
         }
 
@@ -741,7 +831,8 @@ class Ledger128:
         self.table_rows = np.array(s["table_rows"], dtype=np.int64)
         self.tmode = np.array(s["tmode"], dtype=np.int64)
         self.space = np.array(s["space"], dtype=np.int64)
-        for k in ("inj_cols", "real_cols", "synth_datasets", "synth_cells", "dup_filtered_pre_forward"):
+        for k in ("inj_cols", "real_cols", "synth_datasets", "synth_cells", "dup_filtered_pre_forward",
+                  "real_eps_p_ge_2", "real_eps_dropped", "dropped_real_cols"):
             setattr(self, k, int(s.get(k, 0)))
         raw = np.asarray(s.get("seen_fp_128_bytes", np.empty(0, np.uint8)), dtype=np.uint8).tobytes()
         self.seen_fp_128 = {raw[i : i + 16] for i in range(0, len(raw), 16)}
@@ -767,6 +858,8 @@ class Ledger128:
             "target_modes": dict(zip(("own", "other_column", "teacher"), self.tmode.tolist())),
             "target_spaces": dict(zip(("raw", "ridge_residual", "yeo_johnson"), self.space.tolist())),
             "injected_column_share": self.inj_cols / max(1, self.inj_cols + self.real_cols),
+            "feature_drop_share_p_ge_2": (self.real_eps_dropped / self.real_eps_p_ge_2) if self.real_eps_p_ge_2 else None,
+            "dropped_real_columns_total": self.dropped_real_cols,
             "sealed_cohorts_in_bank": 0,
             "unique_datasets_seen": len(self.seen_fp_128),
             "datasets_seen": real_eps + self.synth_datasets,
@@ -807,9 +900,19 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--cpu-hard-pct", type=float, default=82.0)
     ap.add_argument("--cuda-vram-frac", type=float, default=0.80)
+    ap.add_argument("--random-split-every-batch", type=int, choices=(0, 1), default=1)
+    ap.add_argument("--feature-drop-every-batch", type=int, choices=(0, 1), default=1)
+    ap.add_argument("--feature-drop-max-frac", type=float, default=0.35)
+    ap.add_argument("--synth-inj-every-batch", type=int, choices=(0, 1), default=1)
+    ap.add_argument("--synth-inj-max-frac", type=float, default=0.10)
     ap.add_argument("--seed", type=int, default=450_441)
     ap.add_argument("--device", default="mps")
     a = ap.parse_args()
+
+    if not (0.0 <= a.synth_inj_max_frac <= 0.10):
+        raise SystemExit(f"--synth-inj-max-frac {a.synth_inj_max_frac} exceeds strict owner cap 0.10")
+    if not (0.05 <= a.feature_drop_max_frac <= 0.50):
+        raise SystemExit(f"--feature-drop-max-frac {a.feature_drop_max_frac} outside [0.05, 0.50]")
 
     out_dir = Path(a.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -824,7 +927,7 @@ def main() -> None:
         raise SystemExit("init checkpoint sha256 mismatch")
 
     t_load0 = time.time()
-    bank = MmapF64Bank(Path(a.mmap_bank), expect_sha256=a.bank_sha256)
+    bank = MmapF64Bank(Path(a.mmap_bank), expect_sha256=a.bank_sha256, verify_data_sha=True)
     bank_load_s = round(time.time() - t_load0, 3)
     ledger = Ledger128(bank)
     run_nonce = hashlib.blake2b(secrets.token_bytes(32) + int(a.seed).to_bytes(8, "little"), digest_size=32).digest()
@@ -835,7 +938,12 @@ def main() -> None:
     procs = [
         ctx.Process(
             target=_spawned_worker_loop,
-            args=(w, run_nonce, str(a.mmap_bank), a.bank_sha256, a.tokens, a.row_tokens, a.bmax, a.cpu_hard_pct, ep_q, stop_ev),
+            args=(
+                w, run_nonce, str(a.mmap_bank), a.bank_sha256, a.tokens, a.row_tokens, a.bmax, a.cpu_hard_pct,
+                bool(a.random_split_every_batch), bool(a.feature_drop_every_batch), float(a.feature_drop_max_frac),
+                bool(a.synth_inj_every_batch), float(a.synth_inj_max_frac),
+                ep_q, stop_ev,
+            ),
             daemon=True,
         )
         for w in range(a.workers)
@@ -870,6 +978,10 @@ def main() -> None:
              "epochs_saved": 0, "resumes": 0}
     if a.resume:
         ck = torch.load(last_p, map_location="cpu", weights_only=False)
+        if ck.get("bank_sha256") and ck["bank_sha256"] != bank.sha256:
+            raise SystemExit(f"resume bank_sha256 mismatch: {ck.get('bank_sha256')} != {bank.sha256}")
+        if ck.get("init_sha256") and ck["init_sha256"] != a.init_sha256:
+            raise SystemExit(f"resume init_sha256 mismatch: {ck.get('init_sha256')} != {a.init_sha256}")
         model.load_state_dict(ck["model"], strict=True)
         ema.load_state_dict(ck["ema"], strict=True)
         opt.load_state_dict(ck["opt"])
@@ -948,10 +1060,24 @@ def main() -> None:
                 B = max(1, min(a.bmax, a.tokens // max(N * (Fn + 4), 1), a.row_tokens // max(N, 1)))
                 n_ctx = max(16, min(N - 4, int(round(float(py_rng.uniform(0.25, 0.93)) * N))))
                 if float(py_rng.random()) < 0.60:
-                    xt_c, yt_c, _, _ = INJ.sample_synth(prior, r_py, B, N, Fn, 0.55, PROBS_V3S)
-                    xa, ya = xt_c.detach().cpu().double().numpy(), yt_c.detach().cpu().double().numpy()
+                    Fn_gen = min(WIDE_GPU, Fn + (max(1, int(round(a.feature_drop_max_frac * Fn))) if a.feature_drop_every_batch else 0))
+                    xt_c, yt_c, _, _ = INJ.sample_synth(prior, r_py, B, N, Fn_gen, 0.55, PROBS_V3S)
+                    xa_g, ya = xt_c.detach().cpu().double().numpy(), yt_c.detach().cpu().double().numpy()
+                    if a.feature_drop_every_batch and Fn_gen >= 3:
+                        max_ds = max(1, min(Fn_gen - 2, int(round(a.feature_drop_max_frac * Fn_gen))))
+                        n_ds = int(py_rng.integers(1, max_ds + 1))
+                        keep_s = py_rng.choice(Fn_gen, size=Fn_gen - n_ds, replace=False)
+                        xa = xa_g[:, :, keep_s]
+                    else:
+                        xa = xa_g
                 else:
-                    xa, ya = _sample_full_synth_special(B, N, Fn, n_ctx, py_rng)
+                    xa, ya = _sample_full_synth_special(
+                        B, N, Fn, n_ctx, py_rng,
+                        feature_drop_every_batch=bool(a.feature_drop_every_batch),
+                        drop_max_frac=float(a.feature_drop_max_frac),
+                        synth_inj_every_batch=bool(a.synth_inj_every_batch),
+                        inj_max_frac=float(a.synth_inj_max_frac),
+                    )
                 if float(py_rng.random()) < 0.40:
                     seed_r = int(py_rng.integers(1, 1 << 30))
                     for b_i in range(xa.shape[0]):
@@ -1052,6 +1178,7 @@ def main() -> None:
                     "unique_datasets": s["unique_datasets_seen"], "datasets_seen": s["datasets_seen"],
                     "dup_fed": s["duplicate_datasets_fed_to_model"], "dup_filtered": s["duplicates_filtered_pre_forward"],
                     "src_tables_seen": s["distinct_source_tables_seen"], "inj_share": round(s["injected_column_share"], 4),
+                    "drop_share_p2": round(s["feature_drop_share_p_ge_2"], 4) if s["feature_drop_share_p_ge_2"] is not None else None,
                     "host_cpu_pct": round(host_cpu_pct, 1), "oom": state["oom_skips"], "mem_gb": cuda_gb,
                 }) + "\n")
                 run_loss, run_n, run_ds, t_log = 0.0, 0, 0, now
