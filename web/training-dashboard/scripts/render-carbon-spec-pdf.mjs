@@ -48,12 +48,26 @@ function countPdfPages(buf) {
   return matches ? matches.length : 0;
 }
 
+function resolveContainedLeaf(baseDir, rawLeaf) {
+  const leaf = String(rawLeaf ?? "");
+  if (!/^[a-z0-9][a-z0-9.-]*\.(?:png|html|pdf|json)$/.test(leaf) || leaf.includes("..")) {
+    throw new Error(`Refusing unsafe relative asset leaf: ${leaf}`);
+  }
+  const resolvedBase = path.resolve(baseDir);
+  const candidate = path.resolve(resolvedBase, leaf);
+  const rel = path.relative(resolvedBase, candidate);
+  if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) {
+    throw new Error(`Resolved asset path escaped base directory: ${leaf}`);
+  }
+  return { leaf, candidate };
+}
+
 async function main() {
   const specDir = parseArgs(process.argv);
-  const manifestPath = path.join(specDir, "spec-bundle-manifest.json");
+  const manifestPath = resolveContainedLeaf(specDir, "spec-bundle-manifest.json").candidate;
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  const htmlPath = path.join(specDir, manifest.html_file);
-  const shotsDir = path.join(specDir, "screenshots");
+  const htmlPath = resolveContainedLeaf(specDir, manifest.html_file).candidate;
+  const shotsDir = path.resolve(specDir, "screenshots");
   fs.mkdirSync(shotsDir, { recursive: true });
 
   const consoleErrors = [];
@@ -75,8 +89,11 @@ async function main() {
 
     // 1. Capture all 8 Retina (2x) PNG screenshots from `#capture-stage`
     const screenshotEntries = [];
-    for (const [shotId, fileName, caption] of manifest.required_screenshots) {
-      const outPng = path.join(shotsDir, fileName);
+    for (const [shotId, rawShotLeaf, caption] of manifest.required_screenshots) {
+      if (!/^shot-0[1-8]$/.test(String(shotId))) {
+        throw new Error(`Refusing unexpected screenshot DOM selector id: ${shotId}`);
+      }
+      const { leaf: safeShotLeaf, candidate: outPng } = resolveContainedLeaf(shotsDir, rawShotLeaf);
       const loc = page.locator(`#${shotId}`);
       await loc.waitFor({ state: "visible", timeout: 10000 });
       await loc.screenshot({ path: outPng, type: "png" });
@@ -84,7 +101,7 @@ async function main() {
       const dims = readPngDimensions(raw);
       screenshotEntries.push({
         id: shotId,
-        file_name: fileName,
+        file_name: safeShotLeaf,
         caption,
         width: dims.width,
         height: dims.height,
@@ -101,7 +118,7 @@ async function main() {
       }
       for (const img of document.querySelectorAll("img.spec-screenshot-img")) {
         const fn = img.getAttribute("data-file-name");
-        if (fn) {
+        if (fn && /^[0-9]{2}-[a-z0-9-]+\.png$/.test(fn)) {
           img.setAttribute("src", `screenshots/${fn}?v=${Date.now()}`);
         }
       }
@@ -124,8 +141,10 @@ async function main() {
     }
 
     // 4. Render publication-grade A4 PDF with header & page-numbered footer
-    const pdfFileName = "carbon-engineering-testing-spec.pdf";
-    const pdfPath = path.join(specDir, pdfFileName);
+    const { leaf: pdfOutputLeaf, candidate: pdfPath } = resolveContainedLeaf(
+      specDir,
+      "carbon-engineering-testing-spec.pdf"
+    );
     await page.pdf({
       path: pdfPath,
       format: "A4",
@@ -146,7 +165,7 @@ async function main() {
       release_tag: manifest.release_tag,
       all_ci_tests_passed: Boolean(manifest.all_ci_tests_passed),
       all_prod_evidence_verified: Boolean(manifest.all_prod_evidence_verified),
-      pdf_file: pdfFileName,
+      pdf_file: pdfOutputLeaf,
       pdf_bytes: pdfRaw.length,
       pdf_sha256: sha256Hex(pdfRaw),
       pdf_page_count: pdfPageCount,
@@ -156,11 +175,11 @@ async function main() {
       screenshots: screenshotEntries,
       evidence_ledger: manifest.evidence_ledger,
     };
-    const receiptPath = path.join(specDir, "spec-pdf-receipt.json");
+    const receiptPath = resolveContainedLeaf(specDir, "spec-pdf-receipt.json").candidate;
     fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
     process.stdout.write(
       `${JSON.stringify({
-        pdf_file: pdfFileName,
+        pdf_file: pdfOutputLeaf,
         pdf_bytes: pdfRaw.length,
         pdf_page_count: pdfPageCount,
         screenshots: screenshotEntries.length,

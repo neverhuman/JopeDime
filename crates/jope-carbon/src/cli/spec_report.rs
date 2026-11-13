@@ -433,7 +433,10 @@ pub fn verify_pdf_bytes(label: &str, raw: &[u8]) -> Result<usize, String> {
     let mut i = 0usize;
     while i + 10 <= bytes.len() {
         if i + needle_a.len() <= bytes.len() && &bytes[i..i + needle_a.len()] == needle_a {
-            let next = bytes.get(i + needle_a.len()).copied().unwrap_or(b' ');
+            let next = match bytes.get(i + needle_a.len()) {
+                Some(&b) => b,
+                None => b' ',
+            };
             if next != b's' && next != b'S' {
                 pages += 1;
             }
@@ -441,7 +444,10 @@ pub fn verify_pdf_bytes(label: &str, raw: &[u8]) -> Result<usize, String> {
             continue;
         }
         if i + needle_b.len() <= bytes.len() && &bytes[i..i + needle_b.len()] == needle_b {
-            let next = bytes.get(i + needle_b.len()).copied().unwrap_or(b' ');
+            let next = match bytes.get(i + needle_b.len()) {
+                Some(&b) => b,
+                None => b' ',
+            };
             if next != b's' && next != b'S' {
                 pages += 1;
             }
@@ -583,6 +589,80 @@ pub fn execute_carbon_spec_verify(
     Ok(receipt)
 }
 
+fn parse_cli_json(stdout: &[u8], context_label: &str) -> Result<serde_json::Value, String> {
+    serde_json::from_slice(stdout)
+        .map_err(|e| format!("parse JSON output from `{context_label}`: {e}"))
+}
+
+fn exit_status_code(status: &std::process::ExitStatus) -> i32 {
+    if status.success() {
+        return 0;
+    }
+    match status.code() {
+        Some(code) if code != 0 => code,
+        _ => 1,
+    }
+}
+
+fn j_str<'a>(val: &'a serde_json::Value, key: &str) -> &'a str {
+    j_str_default(val, key, "")
+}
+
+fn j_str_default<'a>(val: &'a serde_json::Value, key: &str, default_val: &'a str) -> &'a str {
+    match &val[key] {
+        serde_json::Value::String(s) => s.as_str(),
+        _ => default_val,
+    }
+}
+
+fn j_f64(val: &serde_json::Value, key: &str) -> f64 {
+    j_f64_default(val, key, 0.0)
+}
+
+fn j_f64_default(val: &serde_json::Value, key: &str, default_val: f64) -> f64 {
+    match &val[key] {
+        serde_json::Value::Number(n) => {
+            if let Some(f) = n.as_f64() {
+                f
+            } else {
+                default_val
+            }
+        }
+        _ => default_val,
+    }
+}
+
+fn j_u64(val: &serde_json::Value, key: &str) -> u64 {
+    j_u64_default(val, key, 0)
+}
+
+fn j_u64_default(val: &serde_json::Value, key: &str, default_val: u64) -> u64 {
+    match &val[key] {
+        serde_json::Value::Number(n) => {
+            if let Some(u) = n.as_u64() {
+                u
+            } else {
+                default_val
+            }
+        }
+        _ => default_val,
+    }
+}
+
+fn j_bool_default(val: &serde_json::Value, key: &str, default_val: bool) -> bool {
+    match &val[key] {
+        serde_json::Value::Bool(b) => *b,
+        _ => default_val,
+    }
+}
+
+fn j_slice<'a>(val: &'a serde_json::Value, key: &str) -> &'a [serde_json::Value] {
+    match &val[key] {
+        serde_json::Value::Array(items) => items.as_slice(),
+        _ => &[],
+    }
+}
+
 fn redact_sensitive_lines(raw: &str) -> String {
     let mut cleaned = Vec::new();
     for line in raw.lines() {
@@ -593,9 +673,10 @@ fn redact_sensitive_lines(raw: &str) -> String {
                 replaced.push_str(&rest[..idx]);
                 replaced.push_str("<redacted-capability-token>");
                 let after = &rest[idx..];
-                let end = after
-                    .find(|c: char| c.is_whitespace() || c == '"' || c == '\'')
-                    .unwrap_or(after.len());
+                let end = match after.find(|c: char| c.is_whitespace() || c == '"' || c == '\'') {
+                    Some(pos) => pos,
+                    None => after.len(),
+                };
                 rest = &after[end..];
             }
             replaced.push_str(rest);
@@ -908,21 +989,21 @@ pub fn run_ci_quickstart_qualification(
             && ver_text.contains(env!("CARGO_PKG_VERSION"));
         let combined = format!(
             "$ sh deploy/carbon/install.sh --version {SPEC_RELEASE_TAG}\n{inst_stderr}\n$ carbon --version\n{ver_text}\n\n# Adversarial forged-signature check (rc={}):\n{}",
-            bad_out.status.code().unwrap_or(1),
+            exit_status_code(&bad_out.status),
             bad_stderr.trim()
         );
         steps.push(CiQuickstartStepReceipt {
             test_id: "CI-QS-01".to_owned(),
             title: "Signed `install.sh` ECDSA-P256 verification, live `/ping` & forged-signature refusal".to_owned(),
             command: "sh deploy/carbon/install.sh && carbon --version".to_owned(),
-            exit_code: inst_out.status.code().unwrap_or(1),
+            exit_code: exit_status_code(&inst_out.status),
             passed: ok,
             wall_ms: t0.elapsed().as_secs_f64() * 1_000.0,
             highlights: format!(
                 "version={} | tag={} | forged_sig_rc={}",
                 ver_text,
                 SPEC_RELEASE_TAG,
-                bad_out.status.code().unwrap_or(1)
+                exit_status_code(&bad_out.status)
             ),
             transcript_excerpt: truncate_excerpt(&combined, 22, 1_900),
         });
@@ -940,8 +1021,7 @@ pub fn run_ci_quickstart_qualification(
             .output()
             .map_err(|e| format!("run carbon doctor: {e}"))?;
         let stdout_s = String::from_utf8_lossy(&doc_out.stdout);
-        let doc_json: serde_json::Value =
-            serde_json::from_slice(&doc_out.stdout).unwrap_or_default();
+        let doc_json = parse_cli_json(&doc_out.stdout, "carbon doctor --cloud all")?;
         let ok = doc_out.status.success()
             && doc_json["healthy"] == true
             && doc_json["config_dir_permissions_ok"] == true
@@ -953,7 +1033,7 @@ pub fn run_ci_quickstart_qualification(
             test_id: "CI-QS-02".to_owned(),
             title: "`carbon doctor --cloud all` (0700/0600 permissions, multi-region RTT & P-256 KEK pins)".to_owned(),
             command: "carbon doctor --cloud all".to_owned(),
-            exit_code: doc_out.status.code().unwrap_or(1),
+            exit_code: exit_status_code(&doc_out.status),
             passed: ok,
             wall_ms: t0.elapsed().as_secs_f64() * 1_000.0,
             highlights: format!(
@@ -975,36 +1055,33 @@ pub fn run_ci_quickstart_qualification(
             .output()
             .map_err(|e| format!("run carbon quickstart: {e}"))?;
         let stderr_s = String::from_utf8_lossy(&qs_out.stderr);
-        let rj: serde_json::Value = serde_json::from_slice(&qs_out.stdout).unwrap_or_default();
+        let rj = parse_cli_json(&qs_out.stdout, "carbon quickstart")?;
         let ok = qs_out.status.success()
             && rj["encrypted_cuen"] == true
             && rj["final_state"] == "completed"
             && rj["shredded_after_run"] == true
-            && rj["sample_predictions"]
-                .as_array()
-                .map(|a| a.len() == 5)
-                .unwrap_or(false);
+            && j_slice(&rj, "sample_predictions").len() == 5;
         let excerpt = format!(
             "$ carbon quickstart\n{}\n{{\n  \"selected_region\": {},\n  \"encrypted_cuen\": {},\n  \"neural_guidance_mode\": {},\n  \"holdout_r2\": {:.6},\n  \"outer_holdout_score\": {:.6},\n  \"shredded_after_run\": {}\n}}",
             stderr_s.trim(),
             rj["selected_region"],
             rj["encrypted_cuen"],
             rj["neural_guidance_mode"],
-            rj["holdout_r2"].as_f64().unwrap_or(0.0),
-            rj["outer_holdout_score"].as_f64().unwrap_or(0.0),
+            j_f64(&rj, "holdout_r2"),
+            j_f64(&rj, "outer_holdout_score"),
             rj["shredded_after_run"]
         );
         steps.push(CiQuickstartStepReceipt {
             test_id: "CI-QS-03".to_owned(),
             title: "One-command `carbon quickstart` E2E encrypted demo (`CUEN v1` + `r882` + `/predict` + `--shred`)".to_owned(),
             command: "carbon quickstart".to_owned(),
-            exit_code: qs_out.status.code().unwrap_or(1),
+            exit_code: exit_status_code(&qs_out.status),
             passed: ok,
             wall_ms: t0.elapsed().as_secs_f64() * 1_000.0,
             highlights: format!(
                 "R2={:.4} | RMSE={:.4} | encrypted_cuen=true | shredded=true",
-                rj["holdout_r2"].as_f64().unwrap_or(0.0),
-                rj["outer_holdout_score"].as_f64().unwrap_or(0.0)
+                j_f64(&rj, "holdout_r2"),
+                j_f64(&rj, "outer_holdout_score")
             ),
             transcript_excerpt: truncate_excerpt(&excerpt, 24, 1_900),
         });
@@ -1030,7 +1107,7 @@ pub fn run_ci_quickstart_qualification(
             .env("RAYON_NUM_THREADS", "4")
             .output()
             .map_err(|e| format!("carbon run --csv sample.csv: {e}"))?;
-        let rj: serde_json::Value = serde_json::from_slice(&run_out.stdout).unwrap_or_default();
+        let rj = parse_cli_json(&run_out.stdout, "carbon run --csv sample.csv")?;
         let ok = emit_out.status.success()
             && run_out.status.success()
             && empty_cwd.join("sample.csv").is_file()
@@ -1045,14 +1122,14 @@ pub fn run_ci_quickstart_qualification(
             test_id: "CI-QS-04".to_owned(),
             title: "Verbatim empty-directory `sample.csv` generation & encrypted CSV run".to_owned(),
             command: "carbon quickstart --emit-csv sample.csv --csv-only && carbon run --csv sample.csv --shred".to_owned(),
-            exit_code: run_out.status.code().unwrap_or(1),
+            exit_code: exit_status_code(&run_out.status),
             passed: ok,
             wall_ms: t0.elapsed().as_secs_f64() * 1_000.0,
             highlights: format!(
                 "rows={} | features={} | R2={:.4} | shredded=true",
-                rj["total_rows"].as_u64().unwrap_or(0),
-                rj["feature_count"].as_u64().unwrap_or(0),
-                rj["holdout_r2"].as_f64().unwrap_or(0.0)
+                j_u64(&rj, "total_rows"),
+                j_u64(&rj, "feature_count"),
+                j_f64(&rj, "holdout_r2")
             ),
             transcript_excerpt: truncate_excerpt(&excerpt, 22, 1_900),
         });
@@ -1088,32 +1165,31 @@ pub fn run_ci_quickstart_qualification(
             .map_err(|e| format!("run 1200x6 async csv: {e}"))?;
 
         let bom_stderr = String::from_utf8_lossy(&bom_out.stderr);
-        let async_rj: serde_json::Value =
-            serde_json::from_slice(&async_out.stdout).unwrap_or_default();
+        let async_rj = parse_cli_json(&async_out.stdout, "carbon run medium_1200x6.csv")?;
         let ok = bom_out.status.success()
             && bom_stderr.contains("Auto-selected target column 'target'")
             && bom_stderr.contains("Run Summary")
             && async_out.status.success()
             && async_rj["final_state"] == "completed"
-            && async_rj["poll_requests"].as_u64().unwrap_or(0) >= 1;
+            && j_u64(&async_rj, "poll_requests") >= 1;
         let excerpt = format!(
             "$ carbon run --csv excel_bom_crlf.csv --progress --shred\n{}\n\n$ carbon run --csv medium_1200x6.csv --effort fast --shred\nasync HTTP 202 settled: poll_requests={}, holdout_r2={:.6}, shredded={}",
             bom_stderr.trim(),
             async_rj["poll_requests"],
-            async_rj["holdout_r2"].as_f64().unwrap_or(0.0),
+            j_f64(&async_rj, "holdout_r2"),
             async_rj["shredded_after_run"]
         );
         steps.push(CiQuickstartStepReceipt {
             test_id: "CI-QS-05".to_owned(),
             title: "UTF-8 BOM + CRLF CSV auto-`target`, TTY `Run Summary` card & `1,200x6` async `HTTP 202`".to_owned(),
             command: "carbon run --csv excel_bom_crlf.csv --progress --shred".to_owned(),
-            exit_code: async_out.status.code().unwrap_or(1),
+            exit_code: exit_status_code(&async_out.status),
             passed: ok,
             wall_ms: t0.elapsed().as_secs_f64() * 1_000.0,
             highlights: format!(
                 "bom_auto_target=true | async_1200x6_polls={} | R2={:.4}",
-                async_rj["poll_requests"].as_u64().unwrap_or(0),
-                async_rj["holdout_r2"].as_f64().unwrap_or(0.0)
+                j_u64(&async_rj, "poll_requests"),
+                j_f64(&async_rj, "holdout_r2")
             ),
             transcript_excerpt: truncate_excerpt(&excerpt, 24, 1_900),
         });
@@ -1130,7 +1206,7 @@ pub fn run_ci_quickstart_qualification(
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .output()
             .map_err(|e| format!("carbon register: {e}"))?;
-        let reg_j: serde_json::Value = serde_json::from_slice(&reg_out.stdout).unwrap_or_default();
+        let reg_j = parse_cli_json(&reg_out.stdout, "carbon register --free")?;
 
         let pro_tok = emu_us
             .mint_capability_token("pro_ci_spec_user", CarbonTierWire::Pro, false)
@@ -1176,20 +1252,17 @@ pub fn run_ci_quickstart_qualification(
             if !eff_out.status.success() {
                 all_efforts_ok = false;
             } else {
-                let rj: serde_json::Value =
-                    serde_json::from_slice(&eff_out.stdout).unwrap_or_default();
+                let rj = parse_cli_json(&eff_out.stdout, eff)?;
                 if rj["tier_applied"] != "pro" || rj["final_state"] != "completed" {
                     all_efforts_ok = false;
                 }
                 effort_summaries.push(format!(
                     "{eff}: waves={}/{}, cands={}, R2={:.4}, est_usd=${:.6}",
-                    rj["waves_completed"].as_u64().unwrap_or(0),
-                    rj["waves_target"].as_u64().unwrap_or(0),
-                    rj["candidates_evaluated"].as_u64().unwrap_or(0),
-                    rj["holdout_r2"].as_f64().unwrap_or(0.0),
-                    rj["cost_estimate"]["total_estimated_usd"]
-                        .as_f64()
-                        .unwrap_or(0.0)
+                    j_u64(&rj, "waves_completed"),
+                    j_u64(&rj, "waves_target"),
+                    j_u64(&rj, "candidates_evaluated"),
+                    j_f64(&rj, "holdout_r2"),
+                    j_f64(&rj["cost_estimate"], "total_estimated_usd")
                 ));
             }
         }
@@ -1205,7 +1278,7 @@ pub fn run_ci_quickstart_qualification(
 
         let excerpt = format!(
             "$ carbon register --free --cloud prod --label ci_spec\ntenant_id={} (0600 credentials saved)\n$ printf '***' | carbon login --cloud prod --token-file -\n{}\n$ carbon logout --all\ncredentials removed: true",
-            reg_j["tenant_id"].as_str().unwrap_or(""),
+            j_str(&reg_j, "tenant_id"),
             effort_summaries.join("\n")
         );
         steps.push(CiQuickstartStepReceipt {
@@ -1254,7 +1327,7 @@ pub fn run_ci_quickstart_qualification(
             .env("RAYON_NUM_THREADS", "4")
             .output()
             .map_err(|e| format!("run against CarbonEnterpriseServer: {e}"))?;
-        let vpc_rj: serde_json::Value = serde_json::from_slice(&vpc_run.stdout).unwrap_or_default();
+        let vpc_rj = parse_cli_json(&vpc_run.stdout, "carbon run --endpoint vpc")?;
         vpc_srv.shutdown();
 
         let blobs_us = count_files_in_dir(&emu_us.cas_root().join("blobs"));
@@ -1272,7 +1345,7 @@ pub fn run_ci_quickstart_qualification(
         let excerpt = format!(
             "$ carbon serve --listen 127.0.0.1:0 --enable-user-envelope\nGET /v1/carbon/ping -> enterprise_self_hosted={self_hosted_flag}, engine_kek_present={kek_present}\n$ carbon run --endpoint {vpc_url} --synthetic-rows 96 --features 4 --effort fast --shred\nencrypted_cuen={}, holdout_r2={:.6}, shredded_after_run={}\nresidual_user_cas_blobs_across_all_cells={total_rem_blobs} (prod_use2={blobs_us}, prod_euc1={blobs_eu}, vpc_serve={blobs_vpc})",
             vpc_rj["encrypted_cuen"],
-            vpc_rj["holdout_r2"].as_f64().unwrap_or(0.0),
+            j_f64(&vpc_rj, "holdout_r2"),
             vpc_rj["shredded_after_run"]
         );
         steps.push(CiQuickstartStepReceipt {
@@ -1300,19 +1373,19 @@ pub fn run_ci_quickstart_qualification(
             .env("CARBON_CONFIG_DIR", &cfg_dir)
             .output()
             .map_err(|e| format!("run carbon redteam: {e}"))?;
-        let rt_json: serde_json::Value = serde_json::from_slice(&rt_out.stdout).unwrap_or_default();
-        let vecs = rt_json["vectors"].as_array().cloned().unwrap_or_default();
+        let rt_json = parse_cli_json(&rt_out.stdout, "carbon redteam --cloud prod")?;
+        let vecs = j_slice(&rt_json, "vectors");
         let passed_vecs = vecs.iter().filter(|v| v["passed"] == true).count();
         let ok = rt_out.status.success() && rt_json["all_passed"] == true && passed_vecs == 16;
         let mut vec_lines = Vec::new();
-        for v in &vecs {
-            let vid = v["vector_id"].as_str().unwrap_or("").to_owned();
-            let fref = v["finding_ref"].as_str().unwrap_or("").to_owned();
-            let vtitle = redact_sensitive_lines(v["title"].as_str().unwrap_or(""));
-            let status_u16 = v["observed_http_status"].as_u64().unwrap_or(0) as u16;
-            let wms = v["wall_ms"].as_f64().unwrap_or(0.0);
-            let vpass = v["passed"].as_bool().unwrap_or(false);
-            let ev = redact_sensitive_lines(v["evidence"].as_str().unwrap_or(""));
+        for v in vecs {
+            let vid = j_str(v, "vector_id").to_owned();
+            let fref = j_str(v, "finding_ref").to_owned();
+            let vtitle = redact_sensitive_lines(j_str(v, "title"));
+            let status_u16 = j_u64(v, "observed_http_status") as u16;
+            let wms = j_f64(v, "wall_ms");
+            let vpass = j_bool_default(v, "passed", false);
+            let ev = redact_sensitive_lines(j_str(v, "evidence"));
             vec_lines.push(format!(
                 "[PASS] {vid} ({fref}) — {vtitle} (HTTP {status_u16}, {wms:.1} ms)"
             ));
@@ -1335,7 +1408,7 @@ pub fn run_ci_quickstart_qualification(
             test_id: "CI-QS-08".to_owned(),
             title: "16-vector `carbon redteam` zero-knowledge & adversarial security suite (`V-01`..`V-16`)".to_owned(),
             command: "carbon redteam --cloud prod".to_owned(),
-            exit_code: rt_out.status.code().unwrap_or(1),
+            exit_code: exit_status_code(&rt_out.status),
             passed: ok,
             wall_ms: t0.elapsed().as_secs_f64() * 1_000.0,
             highlights: format!("{passed_vecs}/{} adversarial vectors passed", vecs.len()),
@@ -1463,21 +1536,18 @@ fn render_s3_architecture_svg() -> String {
 }
 
 fn render_accuracy_rmse_reduction_svg(bench_prod: &serde_json::Value) -> String {
-    let scenarios = bench_prod["scenarios"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
+    let scenarios = j_slice(bench_prod, "scenarios");
     let mut rows = Vec::new();
     let mut max_rmse = 6.0f64;
-    for sc in &scenarios {
+    for sc in scenarios {
         let Some(mean_r) = sc["mean_baseline_rmse"].as_f64() else {
             continue;
         };
-        let lin_r = sc["linear_baseline_rmse"].as_f64().unwrap_or(0.0);
-        let carb_r = sc["outer_holdout_score"].as_f64().unwrap_or(0.0);
-        let red_pct = sc["rmse_reduction_vs_linear_pct"].as_f64().unwrap_or(0.0);
-        let r2 = sc["holdout_r2"].as_f64().unwrap_or(0.0);
-        let id = sc["scenario_id"].as_str().unwrap_or("");
+        let lin_r = j_f64(sc, "linear_baseline_rmse");
+        let carb_r = j_f64(sc, "outer_holdout_score");
+        let red_pct = j_f64(sc, "rmse_reduction_vs_linear_pct");
+        let r2 = j_f64(sc, "holdout_r2");
+        let id = j_str(sc, "scenario_id");
         let short_lbl = match id {
             "free_anon_r882_wave0_cuen" => "Free Fast (Wave-0)",
             "pro_solo_fast_warm" => "Pro Fast (1 Wave)",
@@ -1549,16 +1619,13 @@ fn render_effort_time_and_cost_svg(cost_runs: &[serde_json::Value]) -> String {
                 && r["dataset"] == ds
                 && r["effort"] == eff
         }) {
-            let wall_s = r["wall_ms"].as_f64().unwrap_or(0.0) / 1_000.0;
-            let eng_m = r["lambda_engine_usd"].as_f64().unwrap_or(0.0) * 1_000.0;
-            let eval_m = r["lambda_eval_usd"].as_f64().unwrap_or(0.0) * 1_000.0;
-            let s3_m = (r["s3_requests_usd"].as_f64().unwrap_or(0.0)
-                + r["s3_storage_and_transfer_usd"].as_f64().unwrap_or(0.0))
-                * 1_000.0;
-            let edge_m = (r["apigw_http_api_usd"].as_f64().unwrap_or(0.0)
-                + r["lambda_edge_usd"].as_f64().unwrap_or(0.0))
-                * 1_000.0;
-            let tot_m = r["total_estimated_usd"].as_f64().unwrap_or(0.0) * 1_000.0;
+            let wall_s = j_f64(r, "wall_ms") / 1_000.0;
+            let eng_m = j_f64(r, "lambda_engine_usd") * 1_000.0;
+            let eval_m = j_f64(r, "lambda_eval_usd") * 1_000.0;
+            let s3_m =
+                (j_f64(r, "s3_requests_usd") + j_f64(r, "s3_storage_and_transfer_usd")) * 1_000.0;
+            let edge_m = (j_f64(r, "apigw_http_api_usd") + j_f64(r, "lambda_edge_usd")) * 1_000.0;
+            let tot_m = j_f64(r, "total_estimated_usd") * 1_000.0;
             if wall_s > max_wall_s {
                 max_wall_s = wall_s * 1.12;
             }
@@ -1635,11 +1702,11 @@ fn render_concurrency_svg(load200: &serde_json::Value) -> String {
     let mut rows = Vec::new();
     for reg in regions {
         let pr = &load200["per_region"][reg];
-        let p50 = pr["p50_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0;
-        let p95 = pr["p95_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0;
-        let p99 = pr["p99_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0;
-        let ok = pr["ok"].as_u64().unwrap_or(0);
-        let tot = pr["total"].as_u64().unwrap_or(0);
+        let p50 = j_f64(pr, "p50_run_ms") / 1_000.0;
+        let p95 = j_f64(pr, "p95_run_ms") / 1_000.0;
+        let p99 = j_f64(pr, "p99_run_ms") / 1_000.0;
+        let ok = j_u64(pr, "ok");
+        let tot = j_u64(pr, "total");
         if p99 > max_s {
             max_s = p99 * 1.15;
         }
@@ -1701,12 +1768,13 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     fs::create_dir_all(opts.out_dir.join("screenshots"))
         .map_err(|e| format!("create screenshots dir: {e}"))?;
 
-    let resolved_sha = opts
-        .source_sha
-        .clone()
-        .or_else(|| std::env::var("JOPE_SOURCE_SHA").ok())
-        .filter(|s| !s.trim().is_empty())
-        .unwrap_or_else(|| "workspace".to_owned());
+    let resolved_sha = match &opts.source_sha {
+        Some(s) if !s.trim().is_empty() => s.clone(),
+        _ => match std::env::var("JOPE_SOURCE_SHA") {
+            Ok(env_s) if !env_s.trim().is_empty() => env_s,
+            _ => "workspace".to_owned(),
+        },
+    };
 
     let ci_qual: CiQuickstartQualificationReceipt = if opts.run_ci_qualification {
         let exe = std::env::current_exe().map_err(|e| format!("current_exe: {e}"))?;
@@ -1724,7 +1792,8 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
 
     let ci_qual_bytes =
         serde_json::to_vec_pretty(&ci_qual).map_err(|e| format!("serialize ci_qual: {e}"))?;
-    let ci_qual_text = String::from_utf8(ci_qual_bytes.clone()).unwrap_or_default();
+    let ci_qual_text =
+        String::from_utf8(ci_qual_bytes.clone()).map_err(|e| format!("ci_qual utf8: {e}"))?;
     assert_no_secret_substrings("ci-quickstart-qualification.json", &ci_qual_text)?;
     let ci_qual_out = opts.out_dir.join("ci-quickstart-qualification.json");
     fs::write(&ci_qual_out, &ci_qual_bytes)
@@ -1762,12 +1831,10 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         && client_e2e["all_passed"] == true;
 
     let step_by_id = |id: &str| -> String {
-        ci_qual
-            .steps
-            .iter()
-            .find(|s| s.test_id == id)
-            .map(|s| s.transcript_excerpt.clone())
-            .unwrap_or_default()
+        match ci_qual.steps.iter().find(|s| s.test_id == id) {
+            Some(step) => step.transcript_excerpt.clone(),
+            None => String::new(),
+        }
     };
 
     // --- 8 High-DPI (2x Retina) Screenshot Terminal Panels (`#shot-01` .. `#shot-08`) ---
@@ -1796,16 +1863,17 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         &format!("{}\n\n{}", step_by_id("CI-QS-04"), step_by_id("CI-QS-05")),
     );
 
+    let s3_cell = &s3_proof["lambda_cell_check"];
     let s3_proof_summary = format!(
         "$ # 1. Live AWS S3 CAS Inspection During Active Encrypted Run (bucket: {})\n  fit_s3_key              = {}\n  fit_ciphertext_magic    = 0x{} (\"CUEN\\x01\" + SSE-S3 AES256; zero plaintext)\n  holdout_magic           = 0x{} (\"CUEN\\x01\") | champion_state_magic = 0x{} (\"CCKP\\x02\")\n  no_wrapped_udek_at_rest = {} | buckets_verified_aes256_pab = {}/6\n  post_shred_s3_status    = HTTP {} (fit, holdout & champion state immediately deleted)\n\n$ # 2. Enterprise Server Envelope & CAS Shred Verification\n{}",
-        s3_proof["bucket"].as_str().unwrap_or(""),
-        s3_proof["lambda_cell_check"]["fit_s3_key"].as_str().unwrap_or(""),
-        s3_proof["lambda_cell_check"]["ciphertext_magic_hex"].as_str().unwrap_or(""),
-        s3_proof["lambda_cell_check"]["holdout_blob_magic_hex"].as_str().unwrap_or(""),
-        s3_proof["lambda_cell_check"]["champion_state_magic_hex"].as_str().unwrap_or(""),
-        s3_proof["lambda_cell_check"]["no_wrapped_udek_at_rest"].as_bool().unwrap_or(true),
-        s3_proof["buckets_verified"].as_u64().unwrap_or(6),
-        s3_proof["lambda_cell_check"]["post_shred_s3_status"].as_u64().unwrap_or(404),
+        j_str(&s3_proof, "bucket"),
+        j_str(s3_cell, "fit_s3_key"),
+        j_str(s3_cell, "ciphertext_magic_hex"),
+        j_str(s3_cell, "holdout_blob_magic_hex"),
+        j_str(s3_cell, "champion_state_magic_hex"),
+        j_bool_default(s3_cell, "no_wrapped_udek_at_rest", true),
+        j_u64_default(&s3_proof, "buckets_verified", 6),
+        j_u64_default(s3_cell, "post_shred_s3_status", 404),
         step_by_id("CI-QS-07")
     );
     let shot05 = render_terminal_card(
@@ -1815,26 +1883,26 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         &s3_proof_summary,
     );
 
-    let cost_runs = cost_doc["runs"].as_array().cloned().unwrap_or_default();
+    let cost_runs = j_slice(&cost_doc, "runs");
     let mut cost_shot_lines = vec![
         String::from("CLOUD  TIER  DATASET            EFFORT  MODE                SHARDS  WAVES     R2       WALL(s)   TOTAL_USD   RUNS/$1"),
         String::from("-----  ----  -----------------  ------  ------------------  ------  -----  --------  --------  ----------  --------"),
     ];
-    for r in &cost_runs {
+    for r in cost_runs {
         cost_shot_lines.push(format!(
             "{:<5}  {:<4}  {:<17}  {:<6}  {:<18}  {:>6}  {:>2}/{:<2}  {:>8.6}  {:>8.2}  ${:>9.6}  {:>8.1}",
-            r["cloud"].as_str().unwrap_or(""),
-            r["tier_applied"].as_str().unwrap_or(""),
-            r["dataset"].as_str().unwrap_or(""),
-            r["effort"].as_str().unwrap_or(""),
-            r["execution_mode"].as_str().unwrap_or(""),
-            r["eval_shards"].as_u64().unwrap_or(0),
-            r["waves_completed"].as_u64().unwrap_or(0),
-            r["waves_target"].as_u64().unwrap_or(0),
-            r["holdout_r2"].as_f64().unwrap_or(0.0),
-            r["wall_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-            r["total_estimated_usd"].as_f64().unwrap_or(0.0),
-            r["runs_per_1_usd"].as_f64().unwrap_or(0.0),
+            j_str(r, "cloud"),
+            j_str(r, "tier_applied"),
+            j_str(r, "dataset"),
+            j_str(r, "effort"),
+            j_str(r, "execution_mode"),
+            j_u64(r, "eval_shards"),
+            j_u64(r, "waves_completed"),
+            j_u64(r, "waves_target"),
+            j_f64(r, "holdout_r2"),
+            j_f64(r, "wall_ms") / 1_000.0,
+            j_f64(r, "total_estimated_usd"),
+            j_f64(r, "runs_per_1_usd"),
         ));
     }
     let shot06 = render_terminal_card(
@@ -1855,30 +1923,29 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         "WAVE-1 PROD & DEV CLOUDFORMATION CELLS (AWS Account 714044927654 — Regional S3 CAS):",
     )];
     for (cl, doc) in [("dev", &deploy_dev), ("prod", &deploy_prod)] {
-        if let Some(regs) = doc["regions"].as_array() {
-            for cell in regs {
-                wave1_lines.push(format!(
-                    "  [LIVE:{:<4}] {:<13} stack={:<21} s3={:<48} redteam={}/{}",
-                    cl,
-                    cell["region"].as_str().unwrap_or(""),
-                    cell["stack_name"].as_str().unwrap_or(""),
-                    cell["cas_bucket"].as_str().unwrap_or(""),
-                    cell["redteam_passed_vectors"].as_u64().unwrap_or(0),
-                    cell["redteam_total_vectors"].as_u64().unwrap_or(0),
-                ));
-            }
+        for cell in j_slice(doc, "regions") {
+            wave1_lines.push(format!(
+                "  [LIVE:{:<4}] {:<13} stack={:<21} s3={:<48} redteam={}/{}",
+                cl,
+                j_str(cell, "region"),
+                j_str(cell, "stack_name"),
+                j_str(cell, "cas_bucket"),
+                j_u64(cell, "redteam_passed_vectors"),
+                j_u64(cell, "redteam_total_vectors"),
+            ));
         }
     }
+    let load200_lat = &load200["e2e_encrypted_run_predict_shred_latency_ms"];
     wave1_lines.push(String::new());
     wave1_lines.push(format!(
         "LIVE 200-USER WAVE-1 BURST (+50 Concurrent Free Registrations): {}/{} OK | 0.00% Error | {:.2} E2E runs/s | p50={:.2}s p95={:.2}s p99={:.2}s | Total=${:.5}",
-        load200["succeeded"].as_u64().unwrap_or(0),
-        load200["concurrent_users"].as_u64().unwrap_or(0),
-        load200["effective_e2e_runs_per_sec"].as_f64().unwrap_or(0.0),
-        load200["e2e_encrypted_run_predict_shred_latency_ms"]["p50"].as_f64().unwrap_or(0.0) / 1_000.0,
-        load200["e2e_encrypted_run_predict_shred_latency_ms"]["p95"].as_f64().unwrap_or(0.0) / 1_000.0,
-        load200["e2e_encrypted_run_predict_shred_latency_ms"]["p99"].as_f64().unwrap_or(0.0) / 1_000.0,
-        load200["total_estimated_aws_usd_200_runs"].as_f64().unwrap_or(0.0),
+        j_u64(&load200, "succeeded"),
+        j_u64(&load200, "concurrent_users"),
+        j_f64(&load200, "effective_e2e_runs_per_sec"),
+        j_f64(load200_lat, "p50") / 1_000.0,
+        j_f64(load200_lat, "p95") / 1_000.0,
+        j_f64(load200_lat, "p99") / 1_000.0,
+        j_f64(&load200, "total_estimated_aws_usd_200_runs"),
     ));
     for reg in [
         "us-east-2",
@@ -1891,13 +1958,13 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         wave1_lines.push(format!(
             "  region={:<13} users={:>2}/{:<2} failed={} p50={:.2}s p95={:.2}s p99={:.2}s region_cost=${:.5}",
             reg,
-            pr["ok"].as_u64().unwrap_or(0),
-            pr["total"].as_u64().unwrap_or(0),
-            pr["failed"].as_u64().unwrap_or(0),
-            pr["p50_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-            pr["p95_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-            pr["p99_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-            pr["usd"].as_f64().unwrap_or(0.0),
+            j_u64(pr, "ok"),
+            j_u64(pr, "total"),
+            j_u64(pr, "failed"),
+            j_f64(pr, "p50_run_ms") / 1_000.0,
+            j_f64(pr, "p95_run_ms") / 1_000.0,
+            j_f64(pr, "p99_run_ms") / 1_000.0,
+            j_f64(pr, "usd"),
         ));
     }
     let shot08 = render_terminal_card(
@@ -1911,18 +1978,16 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
 
     // Table 2A: 6-Bucket S3 Security Posture
     let mut s3_bucket_rows_html = String::new();
-    if let Some(bpost) = s3_proof["bucket_posture"].as_array() {
-        for b in bpost {
-            s3_bucket_rows_html.push_str(&format!(
-                "<tr><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><span class=\"pill-pass\">{}</span></td></tr>\n",
-                html_escape(b["environment"].as_str().unwrap_or("")),
-                html_escape(b["region"].as_str().unwrap_or("")),
-                html_escape(b["bucket"].as_str().unwrap_or("")),
-                html_escape(b["sse_algorithm"].as_str().unwrap_or("AES256")),
-                if b["public_access_blocked"] == true { "4/4 Blocked" } else { "Unblocked" },
-                if b["verified"] == true { "VERIFIED" } else { "FAIL" },
-            ));
-        }
+    for b in j_slice(&s3_proof, "bucket_posture") {
+        s3_bucket_rows_html.push_str(&format!(
+            "<tr><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><span class=\"pill-pass\">{}</span></td></tr>\n",
+            html_escape(j_str(b, "environment")),
+            html_escape(j_str(b, "region")),
+            html_escape(j_str(b, "bucket")),
+            html_escape(j_str_default(b, "sse_algorithm", "AES256")),
+            if b["public_access_blocked"] == true { "4/4 Blocked" } else { "Unblocked" },
+            if b["verified"] == true { "VERIFIED" } else { "FAIL" },
+        ));
     }
 
     // Table 4A: CI Quickstart 8-Suite Table
@@ -1941,93 +2006,83 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     // Table 5A: 6-Cell AWS CloudFormation Inventory
     let mut deploy_rows_html = String::new();
     for (env_label, doc) in [("dev", &deploy_dev), ("prod", &deploy_prod)] {
-        if let Some(regs) = doc["regions"].as_array() {
-            for c in regs {
-                let kek_short = c["engine_p256_public_point_b64"]
-                    .as_str()
-                    .or_else(|| c["engine_kek_pubkey_b64"].as_str())
-                    .unwrap_or("")
-                    .chars()
-                    .take(12)
-                    .collect::<String>();
-                let eng_ver = c["live_versions"]["engine_version"].as_str().unwrap_or("1");
-                deploy_rows_html.push_str(&format!(
-                    "<tr><td class=\"nowrap\"><code>{env_label}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code> (v{eng_ver})</td><td><code class=\"wrap-any\">{}</code></td><td><code class=\"wrap-any\">{}</code></td><td class=\"nowrap\"><code>{kek_short}...</code></td><td class=\"num\">{}/{}</td></tr>\n",
-                    html_escape(c["region"].as_str().unwrap_or("")),
-                    html_escape(c["stack_name"].as_str().unwrap_or("")),
-                    html_escape(c["cas_bucket"].as_str().unwrap_or("")),
-                    html_escape(c["public_edge_endpoint_url"].as_str().unwrap_or("")),
-                    c["redteam_passed_vectors"].as_u64().unwrap_or(0),
-                    c["redteam_total_vectors"].as_u64().unwrap_or(0),
-                ));
-            }
+        for c in j_slice(doc, "regions") {
+            let kek_raw = match c["engine_p256_public_point_b64"].as_str() {
+                Some(s) => s,
+                None => j_str(c, "engine_kek_pubkey_b64"),
+            };
+            let kek_short: String = kek_raw.chars().take(12).collect();
+            let eng_ver = j_str_default(&c["live_versions"], "engine_version", "1");
+            deploy_rows_html.push_str(&format!(
+                "<tr><td class=\"nowrap\"><code>{env_label}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code> (v{eng_ver})</td><td><code class=\"wrap-any\">{}</code></td><td><code class=\"wrap-any\">{}</code></td><td class=\"nowrap\"><code>{kek_short}...</code></td><td class=\"num\">{}/{}</td></tr>\n",
+                html_escape(j_str(c, "region")),
+                html_escape(j_str(c, "stack_name")),
+                html_escape(j_str(c, "cas_bucket")),
+                html_escape(j_str(c, "public_edge_endpoint_url")),
+                j_u64(c, "redteam_passed_vectors"),
+                j_u64(c, "redteam_total_vectors"),
+            ));
         }
     }
 
     // Table 6A & 6B: Zero-Credential Ubuntu & Alpine Client E2E + 5-Region Portability
     let mut client_e2e_rows_html = String::new();
-    if let Some(scs) = client_e2e["scenarios"].as_array() {
-        for sc in scs {
-            client_e2e_rows_html.push_str(&format!(
-                "<tr><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td>{}</td><td>{}</td><td class=\"nowrap\"><span class=\"pill-pass\">{}</span></td></tr>\n",
-                html_escape(sc["id"].as_str().unwrap_or("")),
-                html_escape(sc["env"].as_str().unwrap_or("")),
-                format_inline_code_html(sc["title"].as_str().unwrap_or("")),
-                format_inline_code_html(sc["detail"].as_str().unwrap_or("")),
-                if sc["passed"] == true { "PASS" } else { "FAIL" },
-            ));
-        }
+    for sc in j_slice(&client_e2e, "scenarios") {
+        client_e2e_rows_html.push_str(&format!(
+            "<tr><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td>{}</td><td>{}</td><td class=\"nowrap\"><span class=\"pill-pass\">{}</span></td></tr>\n",
+            html_escape(j_str(sc, "id")),
+            html_escape(j_str(sc, "env")),
+            format_inline_code_html(j_str(sc, "title")),
+            format_inline_code_html(j_str(sc, "detail")),
+            if sc["passed"] == true { "PASS" } else { "FAIL" },
+        ));
     }
 
     let mut portability_rows_html = String::new();
-    if let Some(pruns) = client_e2e["portability"]["runs"].as_array() {
-        for pr in pruns {
-            portability_rows_html.push_str(&format!(
-                "<tr><td class=\"nowrap\"><code>{}</code></td><td><code class=\"wrap-any\">{}</code></td><td class=\"num\">{:.2} ms</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.6}</td><td class=\"num\">{:.5}</td><td class=\"num\">${:.6}</td></tr>\n",
-                html_escape(pr["region"].as_str().unwrap_or("")),
-                html_escape(pr["public_endpoint"].as_str().unwrap_or("")),
-                pr["ping_rtt_ms"].as_f64().unwrap_or(0.0),
-                pr["wall_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-                pr["holdout_r2"].as_f64().unwrap_or(0.0),
-                pr["holdout_rmse"].as_f64().unwrap_or(0.0),
-                pr["usd"].as_f64().unwrap_or(0.0),
-            ));
-        }
+    for pr in j_slice(&client_e2e["portability"], "runs") {
+        portability_rows_html.push_str(&format!(
+            "<tr><td class=\"nowrap\"><code>{}</code></td><td><code class=\"wrap-any\">{}</code></td><td class=\"num\">{:.2} ms</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.6}</td><td class=\"num\">{:.5}</td><td class=\"num\">${:.6}</td></tr>\n",
+            html_escape(j_str(pr, "region")),
+            html_escape(j_str(pr, "public_endpoint")),
+            j_f64(pr, "ping_rtt_ms"),
+            j_f64(pr, "wall_ms") / 1_000.0,
+            j_f64(pr, "holdout_r2"),
+            j_f64(pr, "holdout_rmse"),
+            j_f64(pr, "usd"),
+        ));
     }
 
     // Table 7A: 12-Row Standardized `carbon bench --pro` (`dev` + `prod`)
     let mut bench_rows_html = String::new();
     for (cloud_lbl, bdoc) in [("dev", &bench_dev), ("prod", &bench_prod)] {
-        if let Some(scs) = bdoc["scenarios"].as_array() {
-            for sc in scs {
-                let fmt_opt = |k: &str, dec: usize| -> String {
-                    match sc[k].as_f64() {
-                        Some(v) => format!("{v:.dec$}"),
-                        None => "—".to_owned(),
-                    }
-                };
-                let red_s = match sc["rmse_reduction_vs_linear_pct"].as_f64() {
-                    Some(v) => format!("-{v:.2}%"),
+        for sc in j_slice(bdoc, "scenarios") {
+            let fmt_opt = |k: &str, dec: usize| -> String {
+                match sc[k].as_f64() {
+                    Some(v) => format!("{v:.dec$}"),
                     None => "—".to_owned(),
-                };
-                let raw_sc_id = sc["scenario_id"].as_str().unwrap_or("");
-                let raw_mode = sc["execution_mode"].as_str().unwrap_or("");
-                bench_rows_html.push_str(&format!(
-                    "<tr><td class=\"nowrap\"><code>{cloud_lbl}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"num\">{}</td><td class=\"num\">{}</td><td class=\"num\">{:.0}</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.2}s</td><td class=\"num\">{}</td><td class=\"num\">{}</td><td class=\"num\"><strong>{}</strong></td><td class=\"num\"><strong>{red_s}</strong></td><td class=\"num\">{}</td><td class=\"num\">${:.6}</td></tr>\n",
-                    html_escape(short_bench_scenario(raw_sc_id)),
-                    html_escape(short_mode_label(raw_mode)),
-                    sc["candidates_evaluated"].as_u64().unwrap_or(0),
-                    sc["eval_invocations"].as_u64().unwrap_or(0),
-                    sc["upload_ms"].as_f64().unwrap_or(0.0),
-                    sc["search_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-                    sc["wall_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-                    fmt_opt("mean_baseline_rmse", 3),
-                    fmt_opt("linear_baseline_rmse", 3),
-                    fmt_opt("outer_holdout_score", 4),
-                    fmt_opt("holdout_r2", 6),
-                    sc["estimated_cost_usd"].as_f64().unwrap_or(0.0),
-                ));
-            }
+                }
+            };
+            let red_s = match sc["rmse_reduction_vs_linear_pct"].as_f64() {
+                Some(v) => format!("-{v:.2}%"),
+                None => "—".to_owned(),
+            };
+            let raw_sc_id = j_str(sc, "scenario_id");
+            let raw_mode = j_str(sc, "execution_mode");
+            bench_rows_html.push_str(&format!(
+                "<tr><td class=\"nowrap\"><code>{cloud_lbl}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"num\">{}</td><td class=\"num\">{}</td><td class=\"num\">{:.0}</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.2}s</td><td class=\"num\">{}</td><td class=\"num\">{}</td><td class=\"num\"><strong>{}</strong></td><td class=\"num\"><strong>{red_s}</strong></td><td class=\"num\">{}</td><td class=\"num\">${:.6}</td></tr>\n",
+                html_escape(short_bench_scenario(raw_sc_id)),
+                html_escape(short_mode_label(raw_mode)),
+                j_u64(sc, "candidates_evaluated"),
+                j_u64(sc, "eval_invocations"),
+                j_f64(sc, "upload_ms"),
+                j_f64(sc, "search_ms") / 1_000.0,
+                j_f64(sc, "wall_ms") / 1_000.0,
+                fmt_opt("mean_baseline_rmse", 3),
+                fmt_opt("linear_baseline_rmse", 3),
+                fmt_opt("outer_holdout_score", 4),
+                fmt_opt("holdout_r2", 6),
+                j_f64(sc, "estimated_cost_usd"),
+            ));
         }
     }
 
@@ -2044,22 +2099,22 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
                     && r["dataset"] == ds
                     && r["effort"] == eff
             }) {
-                let raw_mode = r["execution_mode"].as_str().unwrap_or("");
+                let raw_mode = j_str(r, "execution_mode");
                 effort_exec_rows_html.push_str(&format!(
                     "<tr><td class=\"nowrap\"><code>{ds_cells}</code></td><td class=\"nowrap\"><code><strong>{eff}</strong></code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"num\">{}/{}</td><td class=\"num\">{}</td><td class=\"num\">{}</td><td class=\"num\">{:.0} ms</td><td class=\"num\">{:.2}s</td><td class=\"num\"><strong>{:.2}s</strong></td><td class=\"num\">{:.6}</td><td class=\"num\">{:.5} (-{:.2}%)</td><td class=\"num\"><strong>${:.6}</strong></td><td class=\"num\">{:.1}</td></tr>\n",
                     html_escape(short_mode_label(raw_mode)),
-                    r["waves_completed"].as_u64().unwrap_or(0),
-                    r["waves_target"].as_u64().unwrap_or(0),
-                    r["candidates_evaluated"].as_u64().unwrap_or(0),
-                    r["eval_invocations"].as_u64().unwrap_or(0),
-                    r["upload_ms"].as_f64().unwrap_or(0.0),
-                    r["search_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-                    r["wall_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-                    r["holdout_r2"].as_f64().unwrap_or(0.0),
-                    r["holdout_rmse"].as_f64().unwrap_or(0.0),
-                    r["rmse_reduction_vs_linear_pct"].as_f64().unwrap_or(0.0),
-                    r["total_estimated_usd"].as_f64().unwrap_or(0.0),
-                    r["runs_per_1_usd"].as_f64().unwrap_or(0.0),
+                    j_u64(r, "waves_completed"),
+                    j_u64(r, "waves_target"),
+                    j_u64(r, "candidates_evaluated"),
+                    j_u64(r, "eval_invocations"),
+                    j_f64(r, "upload_ms"),
+                    j_f64(r, "search_ms") / 1_000.0,
+                    j_f64(r, "wall_ms") / 1_000.0,
+                    j_f64(r, "holdout_r2"),
+                    j_f64(r, "holdout_rmse"),
+                    j_f64(r, "rmse_reduction_vs_linear_pct"),
+                    j_f64(r, "total_estimated_usd"),
+                    j_f64(r, "runs_per_1_usd"),
                 ));
             }
         }
@@ -2067,29 +2122,29 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
 
     // Table 8B: Full 19-Run Itemized Phase Timing & 6-Component AWS Billing Matrix
     let mut cost_rows_html = String::new();
-    for r in &cost_runs {
+    for r in cost_runs {
         cost_rows_html.push_str(&format!(
             "<tr><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"num\">{}/{}</td><td class=\"num\">{}</td><td class=\"num\">{:.0}ms</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.6}</td><td class=\"num\">${:.6}</td><td class=\"num\">${:.6}</td><td class=\"num\">${:.6}</td><td class=\"num\"><strong>${:.6}</strong></td><td class=\"num\">{:.0}</td></tr>\n",
-            html_escape(r["cloud"].as_str().unwrap_or("")),
-            html_escape(short_client_label(r["client_env"].as_str().unwrap_or(""))),
-            html_escape(r["tier_applied"].as_str().unwrap_or("")),
-            html_escape(short_dataset_label(r["dataset"].as_str().unwrap_or(""))),
-            html_escape(r["effort"].as_str().unwrap_or("")),
-            r["waves_completed"].as_u64().unwrap_or(0),
-            r["waves_target"].as_u64().unwrap_or(0),
-            r["eval_invocations"].as_u64().unwrap_or(0),
-            r["upload_ms"].as_f64().unwrap_or(0.0),
-            r["search_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-            r["wall_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-            r["holdout_r2"].as_f64().unwrap_or(0.0),
-            r["lambda_engine_usd"].as_f64().unwrap_or(0.0),
-            r["lambda_eval_usd"].as_f64().unwrap_or(0.0),
-            r["s3_requests_usd"].as_f64().unwrap_or(0.0)
-                + r["s3_storage_and_transfer_usd"].as_f64().unwrap_or(0.0)
-                + r["apigw_http_api_usd"].as_f64().unwrap_or(0.0)
-                + r["lambda_edge_usd"].as_f64().unwrap_or(0.0),
-            r["total_estimated_usd"].as_f64().unwrap_or(0.0),
-            r["runs_per_1_usd"].as_f64().unwrap_or(0.0),
+            html_escape(j_str(r, "cloud")),
+            html_escape(short_client_label(j_str(r, "client_env"))),
+            html_escape(j_str(r, "tier_applied")),
+            html_escape(short_dataset_label(j_str(r, "dataset"))),
+            html_escape(j_str(r, "effort")),
+            j_u64(r, "waves_completed"),
+            j_u64(r, "waves_target"),
+            j_u64(r, "eval_invocations"),
+            j_f64(r, "upload_ms"),
+            j_f64(r, "search_ms") / 1_000.0,
+            j_f64(r, "wall_ms") / 1_000.0,
+            j_f64(r, "holdout_r2"),
+            j_f64(r, "lambda_engine_usd"),
+            j_f64(r, "lambda_eval_usd"),
+            j_f64(r, "s3_requests_usd")
+                + j_f64(r, "s3_storage_and_transfer_usd")
+                + j_f64(r, "apigw_http_api_usd")
+                + j_f64(r, "lambda_edge_usd"),
+            j_f64(r, "total_estimated_usd"),
+            j_f64(r, "runs_per_1_usd"),
         ));
     }
 
@@ -2103,16 +2158,16 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         "eu-west-1",
     ] {
         let pr = &load200["per_region"][reg];
-        let tot = pr["total"].as_u64().unwrap_or(40);
-        let usd = pr["usd"].as_f64().unwrap_or(0.0);
+        let tot = j_u64_default(pr, "total", 40);
+        let usd = j_f64(pr, "usd");
         conc_rows_html.push_str(&format!(
             "<tr><td class=\"nowrap\"><code>{reg}</code></td><td class=\"num\">{}/{}</td><td class=\"num\">{}</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.2}s</td><td class=\"num\">${:.5}</td><td class=\"num\">${:.6}</td><td class=\"nowrap\"><span class=\"pill-pass\">PASS</span></td></tr>\n",
-            pr["ok"].as_u64().unwrap_or(0),
+            j_u64(pr, "ok"),
             tot,
-            pr["failed"].as_u64().unwrap_or(0),
-            pr["p50_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-            pr["p95_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
-            pr["p99_run_ms"].as_f64().unwrap_or(0.0) / 1_000.0,
+            j_u64(pr, "failed"),
+            j_f64(pr, "p50_run_ms") / 1_000.0,
+            j_f64(pr, "p95_run_ms") / 1_000.0,
+            j_f64(pr, "p99_run_ms") / 1_000.0,
             usd,
             usd / (tot.max(1) as f64),
         ));
@@ -2165,7 +2220,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
 
     let svg_arch = render_s3_architecture_svg();
     let svg_rmse = render_accuracy_rmse_reduction_svg(&bench_prod);
-    let svg_cost = render_effort_time_and_cost_svg(&cost_runs);
+    let svg_cost = render_effort_time_and_cost_svg(cost_runs);
     let svg_conc = render_concurrency_svg(&load200);
 
     let html_doc = format!(
@@ -2764,81 +2819,66 @@ cargo run --locked -p jope-carbon --bin carbon -- spec-verify \
         emu_eng = ci_qual.emulator_engine_invocations,
         emu_eval = ci_qual.emulator_eval_invocations,
         rem_blobs = ci_qual.residual_cas_blobs_after_shred,
-        s3_bucket = html_escape(s3_proof["bucket"].as_str().unwrap_or("")),
-        s3_fit_key = html_escape(
-            s3_proof["lambda_cell_check"]["fit_s3_key"]
-                .as_str()
-                .unwrap_or("")
+        s3_bucket = html_escape(j_str(&s3_proof, "bucket")),
+        s3_fit_key = html_escape(j_str(&s3_proof["lambda_cell_check"], "fit_s3_key")),
+        s3_magic = html_escape(j_str_default(
+            &s3_proof["lambda_cell_check"],
+            "ciphertext_magic_hex",
+            "4355454e01"
+        )),
+        s3_cckp = html_escape(j_str_default(
+            &s3_proof["lambda_cell_check"],
+            "champion_state_magic_hex",
+            "43434b5002"
+        )),
+        s3_post_shred = j_u64_default(&s3_proof["lambda_cell_check"], "post_shred_s3_status", 404),
+        s3_serve_objs = j_u64_default(
+            &s3_proof["carbon_serve_s3_check"],
+            "s3_objects_during_run",
+            3
         ),
-        s3_magic = html_escape(
-            s3_proof["lambda_cell_check"]["ciphertext_magic_hex"]
-                .as_str()
-                .unwrap_or("4355454e01")
+        s3_local_files = j_u64_default(
+            &s3_proof["carbon_serve_s3_check"],
+            "local_cas_files_created",
+            0
         ),
-        s3_cckp = html_escape(
-            s3_proof["lambda_cell_check"]["champion_state_magic_hex"]
-                .as_str()
-                .unwrap_or("43434b5002")
-        ),
-        s3_post_shred = s3_proof["lambda_cell_check"]["post_shred_s3_status"]
-            .as_u64()
-            .unwrap_or(404),
-        s3_serve_objs = s3_proof["carbon_serve_s3_check"]["s3_objects_during_run"]
-            .as_u64()
-            .unwrap_or(3),
-        s3_local_files = s3_proof["carbon_serve_s3_check"]["local_cas_files_created"]
-            .as_u64()
-            .unwrap_or(0),
-        failover_dead = html_escape(
-            client_e2e["failover_run"]["dead_primary"]
-                .as_str()
-                .unwrap_or("https://127.0.0.1:9")
-        ),
-        failover_reg = html_escape(
-            client_e2e["failover_run"]["selected_region"]
-                .as_str()
-                .unwrap_or("us-east-2")
-        ),
-        failover_s = client_e2e["failover_run"]["wall_ms"]
-            .as_f64()
-            .unwrap_or(0.0)
-            / 1_000.0,
-        failover_r2 = client_e2e["failover_run"]["holdout_r2"]
-            .as_f64()
-            .unwrap_or(0.999988),
-        dev_cold_ms = bench_dev["cold_ping_ms"].as_f64().unwrap_or(0.0),
-        dev_warm_ms = bench_dev["warm_ping_p50_ms"].as_f64().unwrap_or(0.0),
-        prod_cold_ms = bench_prod["cold_ping_ms"].as_f64().unwrap_or(0.0),
-        prod_warm_ms = bench_prod["warm_ping_p50_ms"].as_f64().unwrap_or(0.0),
-        load200_wall = load200["wall_clock_seconds"].as_f64().unwrap_or(0.0),
-        load200_rps = load200["effective_e2e_runs_per_sec"]
-            .as_f64()
-            .unwrap_or(0.0),
-        load200_min = load200["e2e_encrypted_run_predict_shred_latency_ms"]["min"]
-            .as_f64()
-            .unwrap_or(0.0)
-            / 1_000.0,
-        load200_p50 = load200["e2e_encrypted_run_predict_shred_latency_ms"]["p50"]
-            .as_f64()
-            .unwrap_or(0.0)
-            / 1_000.0,
-        load200_p95 = load200["e2e_encrypted_run_predict_shred_latency_ms"]["p95"]
-            .as_f64()
-            .unwrap_or(0.0)
-            / 1_000.0,
-        load200_p99 = load200["e2e_encrypted_run_predict_shred_latency_ms"]["p99"]
-            .as_f64()
-            .unwrap_or(0.0)
-            / 1_000.0,
-        reg_p50 = load200["register_latency_ms"]["p50"]
-            .as_f64()
-            .unwrap_or(0.0),
-        reg_p95 = load200["register_latency_ms"]["p95"]
-            .as_f64()
-            .unwrap_or(0.0),
-        load200_usd = load200["total_estimated_aws_usd_200_runs"]
-            .as_f64()
-            .unwrap_or(0.0),
+        failover_dead = html_escape(j_str_default(
+            &client_e2e["failover_run"],
+            "dead_primary",
+            "https://127.0.0.1:9"
+        )),
+        failover_reg = html_escape(j_str_default(
+            &client_e2e["failover_run"],
+            "selected_region",
+            "us-east-2"
+        )),
+        failover_s = j_f64(&client_e2e["failover_run"], "wall_ms") / 1_000.0,
+        failover_r2 = j_f64_default(&client_e2e["failover_run"], "holdout_r2", 0.999988),
+        dev_cold_ms = j_f64(&bench_dev, "cold_ping_ms"),
+        dev_warm_ms = j_f64(&bench_dev, "warm_ping_p50_ms"),
+        prod_cold_ms = j_f64(&bench_prod, "cold_ping_ms"),
+        prod_warm_ms = j_f64(&bench_prod, "warm_ping_p50_ms"),
+        load200_wall = j_f64(&load200, "wall_clock_seconds"),
+        load200_rps = j_f64(&load200, "effective_e2e_runs_per_sec"),
+        load200_min = j_f64(
+            &load200["e2e_encrypted_run_predict_shred_latency_ms"],
+            "min"
+        ) / 1_000.0,
+        load200_p50 = j_f64(
+            &load200["e2e_encrypted_run_predict_shred_latency_ms"],
+            "p50"
+        ) / 1_000.0,
+        load200_p95 = j_f64(
+            &load200["e2e_encrypted_run_predict_shred_latency_ms"],
+            "p95"
+        ) / 1_000.0,
+        load200_p99 = j_f64(
+            &load200["e2e_encrypted_run_predict_shred_latency_ms"],
+            "p99"
+        ) / 1_000.0,
+        reg_p50 = j_f64(&load200["register_latency_ms"], "p50"),
+        reg_p95 = j_f64(&load200["register_latency_ms"], "p95"),
+        load200_usd = j_f64(&load200, "total_estimated_aws_usd_200_runs"),
     );
 
     assert_no_secret_substrings("carbon-engineering-testing-spec.html", &html_doc)?;
