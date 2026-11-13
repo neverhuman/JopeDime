@@ -509,19 +509,23 @@ def _stage_host_for_eval(host: str, tag: str, ckpt_local: Path, fast_py_local: P
     if rc_m != 0:
         return None
     if host == "xbabe2":
-        shutil.copy2(fast_py_local, f"{remote_root}/fleet/fast_dev91_every_n_h450.py")
+        dst_f = Path(f"{remote_root}/fleet/fast_dev91_every_n_h450.py")
+        if dst_f.exists():
+            os.chmod(dst_f, 0o755)
+        shutil.copyfile(fast_py_local, dst_f)
+        os.chmod(dst_f, 0o755)
         bk_dst = Path(f"{remote_root}/bank_d91_search_f64.npz")
         if not bk_dst.exists():
             os.symlink(EVAL_BANK, bk_dst)
         return remote_root, str(ckpt_local)
-    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"{PUB_R6_STAGE}/", f"{host}:{remote_root}/pub-r6/"], timeout=60.0)
-    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", "/home/ubuntu/h448-stage/pub-r1/", f"{host}:{remote_root}/h448-pub-r1/"], timeout=60.0)
-    _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", str(fast_py_local), f"{host}:{remote_root}/fleet/fast_dev91_every_n_h450.py"], timeout=30.0)
+    _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"{PUB_R6_STAGE}/", f"{host}:{remote_root}/pub-r6/"], timeout=60.0)
+    _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", "/home/ubuntu/h448-stage/pub-r1/", f"{host}:{remote_root}/h448-pub-r1/"], timeout=60.0)
+    _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", str(fast_py_local), f"{host}:{remote_root}/fleet/fast_dev91_every_n_h450.py"], timeout=30.0)
     _, out_bk = _ssh(host, f"sha256sum {remote_root}/bank_d91_search_f64.npz 2>/dev/null | cut -c1-64 || true", timeout=15.0)
     if out_bk.strip() != EVAL_BANK_SHA:
-        _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", str(EVAL_BANK), f"{host}:{remote_root}/bank_d91_search_f64.npz"], timeout=90.0)
+        _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", str(EVAL_BANK), f"{host}:{remote_root}/bank_d91_search_f64.npz"], timeout=90.0)
     remote_ckpt = f"{remote_root}/ckpts/active_model_l.pt"
-    rc_ck, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", str(ckpt_local), f"{host}:{remote_ckpt}"], timeout=60.0)
+    rc_ck, _ = _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", str(ckpt_local), f"{host}:{remote_ckpt}"], timeout=60.0)
     return (remote_root, remote_ckpt) if rc_ck == 0 else None
 
 
@@ -541,16 +545,33 @@ def run_multihost_fast_eval(tag: str, ckpt_local: Path, manifest_meta: dict, n_v
     st2 = _stage_host_for_eval("xbabe2", tag, ckpt_local, fast_py_local)
     st1 = _stage_host_for_eval("xbabe1", tag, ckpt_local, fast_py_local)
 
+    loc_cols = FLEET_ROOT / "cols" / tag
+    loc_cols.mkdir(parents=True, exist_ok=True)
+    if any(loc_cols.glob("[0-9a-f]*.npz")):
+        _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"{loc_cols}/", f"xbabe0:{r0}/cols/{tag}/"], timeout=60.0)
+        if st2 is not None:
+            for npz in loc_cols.glob("[0-9a-f]*.npz"):
+                dst_npz = Path(f"{st2[0]}/cols/{tag}") / npz.name
+                if not dst_npz.exists():
+                    shutil.copyfile(npz, dst_npz)
+        if st1 is not None:
+            _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"{loc_cols}/", f"xbabe1:{st1[0]}/cols/{tag}/"], timeout=60.0)
+
     if st2 is not None and st1 is not None:
+        idx0 = ",".join(str(i) for i in range(91) if (i % 10) < 7)
+        idx2 = ",".join(str(i) for i in range(91) if (i % 10) in (7, 8))
+        idx1 = ",".join(str(i) for i in range(91) if (i % 10) == 9)
         plan = [
-            ("xbabe0", r0, ck0, "0-56", 48, 83.0),
-            ("xbabe2", st2[0], st2[1], "57-78", 20, 78.0),
-            ("xbabe1", st1[0], st1[1], "79-90", 6, 78.0),
+            ("xbabe0", r0, ck0, idx0, 48, 83.0),
+            ("xbabe2", st2[0], st2[1], idx2, 20, 78.0),
+            ("xbabe1", st1[0], st1[1], idx1, 6, 78.0),
         ]
     elif st2 is not None:
+        idx0 = ",".join(str(i) for i in range(91) if (i % 4) < 3)
+        idx2 = ",".join(str(i) for i in range(91) if (i % 4) == 3)
         plan = [
-            ("xbabe0", r0, ck0, "0-64", 48, 83.0),
-            ("xbabe2", st2[0], st2[1], "65-90", 20, 78.0),
+            ("xbabe0", r0, ck0, idx0, 48, 83.0),
+            ("xbabe2", st2[0], st2[1], idx2, 20, 78.0),
         ]
     else:
         plan = [("xbabe0", r0, ck0, "0-90", 48, 83.0)]
@@ -580,18 +601,16 @@ def run_multihost_fast_eval(tag: str, ckpt_local: Path, manifest_meta: dict, n_v
         except Exception:
             p.kill()
 
-    loc_cols = FLEET_ROOT / "cols" / tag
-    loc_cols.mkdir(parents=True, exist_ok=True)
     for host, rroot, _ in procs_running:
         if host == "xbabe2":
             for npz in Path(f"{rroot}/cols/{tag}").glob("[0-9a-f]*.npz"):
-                shutil.copy2(npz, loc_cols / npz.name)
+                shutil.copyfile(npz, loc_cols / npz.name)
         else:
-            _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"{host}:{rroot}/cols/{tag}/", f"{loc_cols}/"], timeout=90.0)
+            _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"{host}:{rroot}/cols/{tag}/", f"{loc_cols}/"], timeout=90.0)
 
     # Fallback sweep on xbabe0 for any missing contexts (idempotent, zero deletions)
     if len(list(loc_cols.glob("[0-9a-f]*.npz"))) < 91:
-        _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"{loc_cols}/", f"xbabe0:{r0}/cols/{tag}/"], timeout=60.0)
+        _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"{loc_cols}/", f"xbabe0:{r0}/cols/{tag}/"], timeout=60.0)
         sweep_cmd = (
             f"PYTHONPATH={r0}/pub-r6/code:{r0}/h448-pub-r1/code OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 CUDA_VISIBLE_DEVICES='' "
             f"nice -n 15 python3 -B -u {r0}/fleet/fast_dev91_every_n_h450.py --cmd shard --indices 0-90 "
@@ -599,7 +618,7 @@ def run_multihost_fast_eval(tag: str, ckpt_local: Path, manifest_meta: dict, n_v
             f"--ckpt {ck0} --cols-dir {r0}/cols/{tag} --n-views {n_views} >> {r0}/logs/{tag}.log 2>&1"
         )
         _ssh("xbabe0", sweep_cmd, timeout=900.0)
-        _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"xbabe0:{r0}/cols/{tag}/", f"{loc_cols}/"], timeout=90.0)
+        _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"xbabe0:{r0}/cols/{tag}/", f"{loc_cols}/"], timeout=90.0)
 
     if len(list(loc_cols.glob("[0-9a-f]*.npz"))) != 91:
         return None
@@ -692,7 +711,9 @@ def maybe_run_scheduled_evals(runs: dict[str, dict], every_datasets: int) -> boo
             work_ck = FLEET_ROOT / "eval_ckpts" / solo_tag
             work_ck.mkdir(parents=True, exist_ok=True)
             loc_pt = work_ck / f"ckpt_epoch_{ep_num:02d}.pt"
-            rc_cp, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"xbabe1:{x1_ep['ckpt']}", str(loc_pt)], timeout=60.0)
+            if loc_pt.exists():
+                os.chmod(loc_pt, 0o644)
+            rc_cp, _ = _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"xbabe1:{x1_ep['ckpt']}", str(loc_pt)], timeout=60.0)
             if rc_cp == 0 and loc_pt.is_file():
                 sha_got = _sha256(loc_pt)
                 if not x1_ep["sha256"] or sha_got == x1_ep["sha256"]:
@@ -735,7 +756,9 @@ def maybe_run_scheduled_evals(runs: dict[str, dict], every_datasets: int) -> boo
             else:
                 # Overwrite fixed-slot cache file per remote member (zero unlink calls, bounded 834 MB footprint)
                 dst_p = mem_cache / f"{run_lbl}_latest.pt"
-                rc_m, _ = _sh(["rsync", "-a", "-e", "ssh -o BatchMode=yes", f"{ep_info['host']}:{ep_info['ckpt']}", str(dst_p)], timeout=60.0)
+                if dst_p.exists():
+                    os.chmod(dst_p, 0o644)
+                rc_m, _ = _sh(["rsync", "-a", "--chmod=u+rwX", "-e", "ssh -o BatchMode=yes", f"{ep_info['host']}:{ep_info['ckpt']}", str(dst_p)], timeout=60.0)
             if rc_m == 0 and dst_p.is_file():
                 u_cnt = max(1, int(ep_info["unique_datasets"] or fallback_u))
                 member_specs.append({
