@@ -34,6 +34,33 @@ pub struct CarbonAwsCredentials {
 }
 
 #[cfg(feature = "edge")]
+impl std::fmt::Debug for CarbonAwsCredentials {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonAwsCredentials")
+            .field("access_key_id", &self.access_key_id)
+            .field("secret_access_key", &"[REDACTED]")
+            .field("has_session_token", &self.session_token.is_some())
+            .finish()
+    }
+}
+
+/// Compute an exponential backoff delay with uniform CSPRNG jitter (`[base * 2^attempt, base * 2^attempt + jitter]`)
+/// capped at `cap_ms`.
+#[cfg(feature = "edge")]
+pub fn compute_backoff_with_jitter_ms(attempt: usize, base_ms: u64, cap_ms: u64) -> u64 {
+    let shift = (attempt.min(8)) as u32;
+    let exp_ms = base_ms.saturating_mul(1u64 << shift).min(cap_ms);
+    let mut rnd = [0u8; 4];
+    let jitter_span = (exp_ms / 3).max(25);
+    let jitter = if aws_lc_rs::rand::fill(&mut rnd).is_ok() {
+        u64::from(u32::from_le_bytes(rnd)) % jitter_span
+    } else {
+        (attempt as u64 * 37) % jitter_span
+    };
+    exp_ms.saturating_add(jitter).min(cap_ms)
+}
+
+#[cfg(feature = "edge")]
 impl CarbonAwsCredentials {
     /// Load AWS credentials from standard Lambda / CLI environment variables (`AWS_ACCESS_KEY_ID`,
     /// `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`), falling back on CLI hosts to a cached
@@ -196,12 +223,12 @@ fn derive_sigv4_signing_key(
     date_stamp: &str,
     region: &str,
     service: &str,
-) -> [u8; 32] {
+) -> Zeroizing<[u8; 32]> {
     let k_secret = Zeroizing::new(format!("AWS4{secret_access_key}").into_bytes());
-    let k_date = hmac_sha256(&k_secret, date_stamp.as_bytes());
-    let k_region = hmac_sha256(&k_date, region.as_bytes());
-    let k_service = hmac_sha256(&k_region, service.as_bytes());
-    hmac_sha256(&k_service, b"aws4_request")
+    let k_date = Zeroizing::new(hmac_sha256(&k_secret, date_stamp.as_bytes()));
+    let k_region = Zeroizing::new(hmac_sha256(k_date.as_slice(), region.as_bytes()));
+    let k_service = Zeroizing::new(hmac_sha256(k_region.as_slice(), service.as_bytes()));
+    Zeroizing::new(hmac_sha256(k_service.as_slice(), b"aws4_request"))
 }
 
 /// Sign an outbound HTTP request (`s3` or `lambda`) with AWS SigV4 (`AWS4-HMAC-SHA256`),
@@ -256,7 +283,7 @@ pub fn sign_aws_v4_headers_with_extra(
     let string_to_sign = format!("AWS4-HMAC-SHA256\n{amz_date}\n{credential_scope}\n{req_hash}");
     let k_signing =
         derive_sigv4_signing_key(&creds.secret_access_key, &date_stamp, region, service);
-    let signature = hex::encode(hmac_sha256(&k_signing, string_to_sign.as_bytes()));
+    let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
     let auth_header = format!(
         "AWS4-HMAC-SHA256 Credential={}/{credential_scope}, SignedHeaders={signed_headers_list}, Signature={signature}",
         creds.access_key_id
@@ -305,11 +332,22 @@ pub fn sign_aws_v4_headers(
 }
 
 /// `CarbonPresigner` is a struct signing and verifying time-bounded, size- and SHA-256-pinned
-/// upload URLs for both AWS S3 (`AWS4-HMAC-SHA256`) and self-hosted Enterprise / emulator gateways.
+/// upload/download URLs for both AWS S3 (`AWS4-HMAC-SHA256`) and self-hosted Enterprise / emulator gateways.
 #[cfg(feature = "edge")]
 #[derive(Clone)]
 pub struct CarbonPresigner {
     secret: Zeroizing<[u8; 32]>,
+    previous_secret: Option<Zeroizing<[u8; 32]>>,
+}
+
+#[cfg(feature = "edge")]
+impl std::fmt::Debug for CarbonPresigner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonPresigner")
+            .field("secret", &"[REDACTED]")
+            .field("has_previous_secret", &self.previous_secret.is_some())
+            .finish()
+    }
 }
 
 #[cfg(feature = "edge")]
@@ -317,7 +355,13 @@ impl CarbonPresigner {
     pub fn from_secret(secret: [u8; 32]) -> Self {
         Self {
             secret: Zeroizing::new(secret),
+            previous_secret: None,
         }
+    }
+
+    pub fn with_previous_secret(mut self, previous: Option<[u8; 32]>) -> Self {
+        self.previous_secret = previous.map(Zeroizing::new);
+        self
     }
 
     pub fn sign_gateway_upload_url(
@@ -327,17 +371,105 @@ impl CarbonPresigner {
         byte_len: u64,
         expires_epoch_secs: u64,
     ) -> String {
-        let lower_sha = sha256_hex.to_ascii_lowercase();
-        let canonical = format!("PUT\n{lower_sha}\n{byte_len}\n{expires_epoch_secs}");
-        let sig = hex::encode(hmac_sha256(self.secret.as_ref(), canonical.as_bytes()));
-        let base = gateway_base_url.trim_end_matches('/');
-        format!(
-            "{base}/v1/carbon/cas/{lower_sha}?bytes={byte_len}&exp={expires_epoch_secs}&sig={sig}"
+        self.sign_gateway_scoped_upload_url(
+            gateway_base_url,
+            None,
+            sha256_hex,
+            byte_len,
+            expires_epoch_secs,
         )
+    }
+
+    pub fn sign_gateway_scoped_upload_url(
+        &self,
+        gateway_base_url: &str,
+        scope_key: Option<&str>,
+        sha256_hex: &str,
+        byte_len: u64,
+        expires_epoch_secs: u64,
+    ) -> String {
+        let lower_sha = sha256_hex.to_ascii_lowercase();
+        let scope_q = match scope_key.filter(|s| !s.is_empty()) {
+            Some(sc) => {
+                let canonical = format!("PUT\n{sc}\n{lower_sha}\n{byte_len}\n{expires_epoch_secs}");
+                let sig = hex::encode(hmac_sha256(self.secret.as_ref(), canonical.as_bytes()));
+                let enc_sc = url_encode_component(sc);
+                return format!(
+                    "{}/v1/carbon/cas/{lower_sha}?scope={enc_sc}&bytes={byte_len}&exp={expires_epoch_secs}&sig={sig}",
+                    gateway_base_url.trim_end_matches('/')
+                );
+            }
+            None => {
+                let canonical = format!("PUT\n{lower_sha}\n{byte_len}\n{expires_epoch_secs}");
+                let sig = hex::encode(hmac_sha256(self.secret.as_ref(), canonical.as_bytes()));
+                format!(
+                    "{}/v1/carbon/cas/{lower_sha}?bytes={byte_len}&exp={expires_epoch_secs}&sig={sig}",
+                    gateway_base_url.trim_end_matches('/')
+                )
+            }
+        };
+        scope_q
+    }
+
+    pub fn sign_gateway_scoped_download_url(
+        &self,
+        gateway_base_url: &str,
+        scope_key: Option<&str>,
+        sha256_hex: &str,
+        expires_epoch_secs: u64,
+    ) -> String {
+        let lower_sha = sha256_hex.to_ascii_lowercase();
+        let base = gateway_base_url.trim_end_matches('/');
+        match scope_key.filter(|s| !s.is_empty()) {
+            Some(sc) => {
+                let canonical = format!("GET\n{sc}\n{lower_sha}\n{expires_epoch_secs}");
+                let sig = hex::encode(hmac_sha256(self.secret.as_ref(), canonical.as_bytes()));
+                let enc_sc = url_encode_component(sc);
+                format!("{base}/v1/carbon/cas/{lower_sha}?scope={enc_sc}&exp={expires_epoch_secs}&sig={sig}")
+            }
+            None => {
+                let canonical = format!("GET\n{lower_sha}\n{expires_epoch_secs}");
+                let sig = hex::encode(hmac_sha256(self.secret.as_ref(), canonical.as_bytes()));
+                format!("{base}/v1/carbon/cas/{lower_sha}?exp={expires_epoch_secs}&sig={sig}")
+            }
+        }
+    }
+
+    fn verify_hmac_canonical(&self, canonical: &str, provided_bytes: &[u8]) -> bool {
+        let active_key = hmac::Key::new(hmac::HMAC_SHA256, self.secret.as_ref());
+        if hmac::verify(&active_key, canonical.as_bytes(), provided_bytes).is_ok() {
+            return true;
+        }
+        if let Some(prev) = &self.previous_secret {
+            let prev_key = hmac::Key::new(hmac::HMAC_SHA256, prev.as_ref());
+            if hmac::verify(&prev_key, canonical.as_bytes(), provided_bytes).is_ok() {
+                return true;
+            }
+        }
+        false
     }
 
     pub fn verify_gateway_upload(
         &self,
+        sha256_hex: &str,
+        declared_bytes: u64,
+        expires_epoch_secs: u64,
+        provided_sig_hex: &str,
+        now_epoch_secs: u64,
+    ) -> Result<(), &'static str> {
+        self.verify_gateway_scoped_upload(
+            None,
+            sha256_hex,
+            declared_bytes,
+            expires_epoch_secs,
+            provided_sig_hex,
+            now_epoch_secs,
+        )
+    }
+
+    pub fn verify_gateway_scoped_upload(
+        &self,
+        scope_key: Option<&str>,
         sha256_hex: &str,
         declared_bytes: u64,
         expires_epoch_secs: u64,
@@ -351,10 +483,41 @@ impl CarbonPresigner {
             return Err("malformed upload signature hex");
         };
         let lower_sha = sha256_hex.to_ascii_lowercase();
-        let canonical = format!("PUT\n{lower_sha}\n{declared_bytes}\n{expires_epoch_secs}");
-        let signing_key = hmac::Key::new(hmac::HMAC_SHA256, self.secret.as_ref());
-        hmac::verify(&signing_key, canonical.as_bytes(), &provided_bytes)
-            .map_err(|_| "presigned upload signature verification failed")
+        let canonical = match scope_key.filter(|s| !s.is_empty()) {
+            Some(sc) => format!("PUT\n{sc}\n{lower_sha}\n{declared_bytes}\n{expires_epoch_secs}"),
+            None => format!("PUT\n{lower_sha}\n{declared_bytes}\n{expires_epoch_secs}"),
+        };
+        if self.verify_hmac_canonical(&canonical, &provided_bytes) {
+            Ok(())
+        } else {
+            Err("presigned upload signature verification failed")
+        }
+    }
+
+    pub fn verify_gateway_scoped_download(
+        &self,
+        scope_key: Option<&str>,
+        sha256_hex: &str,
+        expires_epoch_secs: u64,
+        provided_sig_hex: &str,
+        now_epoch_secs: u64,
+    ) -> Result<(), &'static str> {
+        if now_epoch_secs > expires_epoch_secs {
+            return Err("presigned download URL has expired");
+        }
+        let Ok(provided_bytes) = hex::decode(provided_sig_hex) else {
+            return Err("malformed download signature hex");
+        };
+        let lower_sha = sha256_hex.to_ascii_lowercase();
+        let canonical = match scope_key.filter(|s| !s.is_empty()) {
+            Some(sc) => format!("GET\n{sc}\n{lower_sha}\n{expires_epoch_secs}"),
+            None => format!("GET\n{lower_sha}\n{expires_epoch_secs}"),
+        };
+        if self.verify_hmac_canonical(&canonical, &provided_bytes) {
+            Ok(())
+        } else {
+            Err("presigned download signature verification failed")
+        }
     }
 
     /// Size- and SHA-256-pinned AWS SigV4 S3 `PUT` presigner (`RT-04`): signs
@@ -427,7 +590,7 @@ impl CarbonPresigner {
 
         let k_signing =
             derive_sigv4_signing_key(&creds.secret_access_key, date_stamp, region, "s3");
-        let signature = hex::encode(hmac_sha256(&k_signing, string_to_sign.as_bytes()));
+        let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
 
         Ok(format!(
             "https://{host}{encoded_path}?{canonical_query}&X-Amz-Signature={signature}"
@@ -488,7 +651,69 @@ impl CarbonPresigner {
 
         let k_signing =
             derive_sigv4_signing_key(&creds.secret_access_key, date_stamp, region, "s3");
-        let signature = hex::encode(hmac_sha256(&k_signing, string_to_sign.as_bytes()));
+        let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
+
+        Ok(format!(
+            "https://{host}{encoded_path}?{canonical_query}&X-Amz-Signature={signature}"
+        ))
+    }
+
+    /// Presign a short-lived AWS SigV4 S3 `GET` URL for streaming large encrypted `/predict`
+    /// outputs directly from S3 CAS without buffering through Lambda's 6 MB payload ceiling.
+    pub fn presign_s3_get_v4_with_creds(
+        creds: &CarbonAwsCredentials,
+        region: &str,
+        bucket: &str,
+        object_key: &str,
+        amz_date_iso8601: &str,
+        expires_secs: u32,
+    ) -> Result<String, &'static str> {
+        if amz_date_iso8601.len() < 8 || expires_secs == 0 || expires_secs > 604_800 {
+            return Err("invalid SigV4 timestamp or expiration window");
+        }
+        let date_stamp = &amz_date_iso8601[..8];
+        let host = format!("{bucket}.s3.{region}.amazonaws.com");
+        let encoded_path = url_encode_s3_key(object_key);
+        let credential_scope = format!("{date_stamp}/{region}/s3/aws4_request");
+        let credential_raw = format!("{}/{credential_scope}", creds.access_key_id);
+
+        let mut query_pairs: Vec<(String, String)> = vec![
+            ("X-Amz-Algorithm".to_owned(), "AWS4-HMAC-SHA256".to_owned()),
+            (
+                "X-Amz-Credential".to_owned(),
+                url_encode_component(&credential_raw),
+            ),
+            (
+                "X-Amz-Date".to_owned(),
+                url_encode_component(amz_date_iso8601),
+            ),
+            ("X-Amz-Expires".to_owned(), expires_secs.to_string()),
+            ("X-Amz-SignedHeaders".to_owned(), "host".to_owned()),
+        ];
+        if let Some(tok) = &creds.session_token {
+            query_pairs.push((
+                "X-Amz-Security-Token".to_owned(),
+                url_encode_component(tok.as_str()),
+            ));
+        }
+        query_pairs.sort_by(|a, b| a.0.cmp(&b.0));
+
+        let canonical_query = query_pairs
+            .iter()
+            .map(|(k, v)| format!("{k}={v}"))
+            .collect::<Vec<_>>()
+            .join("&");
+
+        let canonical_request = format!(
+            "GET\n{encoded_path}\n{canonical_query}\nhost:{host}\n\nhost\nUNSIGNED-PAYLOAD"
+        );
+        let req_hash = format!("{:x}", Sha256::digest(canonical_request.as_bytes()));
+        let string_to_sign =
+            format!("AWS4-HMAC-SHA256\n{amz_date_iso8601}\n{credential_scope}\n{req_hash}");
+
+        let k_signing =
+            derive_sigv4_signing_key(&creds.secret_access_key, date_stamp, region, "s3");
+        let signature = hex::encode(hmac_sha256(k_signing.as_ref(), string_to_sign.as_bytes()));
 
         Ok(format!(
             "https://{host}{encoded_path}?{canonical_query}&X-Amz-Signature={signature}"

@@ -199,10 +199,18 @@ pub struct CarbonRollbackReceipt {
 #[derive(Serialize, Deserialize)]
 struct CellSecretDocument {
     presign_secret_hex: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    previous_presign_secret_hex: Option<String>,
     auth_secret_hex: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    previous_auth_secret_hex: Option<String>,
     seal_secret_hex: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    previous_seal_secret_hex: Option<String>,
     internal_token: String,
     engine_kek_hex: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    previous_engine_kek_hex: Option<String>,
     engine_kek_pubkey_b64: String,
 }
 
@@ -511,15 +519,23 @@ fn collect_files_recursively(
 }
 
 fn resolve_git_head_sha() -> String {
+    for env_key in ["JOPE_BUILD_SOURCE_SHA", "JOPE_SOURCE_SHA"] {
+        if let Ok(raw) = std::env::var(env_key) {
+            let trimmed = raw.trim();
+            if trimmed.len() == 40 && trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+                return trimmed.to_ascii_lowercase();
+            }
+        }
+    }
     if let Ok(out) = Command::new("git").args(["rev-parse", "HEAD"]).output() {
         if out.status.success() {
             let s = String::from_utf8_lossy(&out.stdout).trim().to_owned();
             if s.len() == 40 && s.chars().all(|c| c.is_ascii_hexdigit()) {
-                return s;
+                return s.to_ascii_lowercase();
             }
         }
     }
-    "0000000000000000000000000000000000000000".to_owned()
+    crate::CARBON_GIT_SHA.to_owned()
 }
 
 struct ZigMuslWrappers {
@@ -620,27 +636,34 @@ fn ensure_zig_musl_wrappers(wrapper_dir: &Path) -> Result<Option<ZigMuslWrappers
     )
 }
 
-fn cross_compile_x86_64_cli_binary(out_dir: &Path, jobs: usize) -> Result<PathBuf, String> {
+fn cross_compile_musl_thin_cli_binary(
+    out_dir: &Path,
+    jobs: usize,
+    zig_target: &str,
+    rust_target: &str,
+) -> Result<PathBuf, String> {
     let wrapper_dir = out_dir.join(".zig-toolchain");
     let build_tmp = wrapper_dir.join("build-tmp");
     fs::create_dir_all(&build_tmp)
         .map_err(|e| format!("create build-tmp {}: {e}", build_tmp.display()))?;
     let build_tmp_abs = fs::canonicalize(&build_tmp).map_err(|e| e.to_string())?;
-    let zig_wrappers = ensure_zig_musl_wrappers_for_arch(
-        &wrapper_dir,
-        "x86_64-linux-musl",
-        "x86_64-unknown-linux-musl",
-    )?;
+    let zig_wrappers = ensure_zig_musl_wrappers_for_arch(&wrapper_dir, zig_target, rust_target)?;
     let jobs_str = jobs.max(1).to_string();
+    let snake = rust_target.replace('-', "_");
+    let upper = snake.to_ascii_uppercase();
     let mut cmd = Command::new("cargo");
     cmd.args([
         "build",
         "--locked",
-        "--release",
+        "--profile",
+        "carbon-cli",
         "--target",
-        "x86_64-unknown-linux-musl",
+        rust_target,
         "-p",
         "jope-carbon",
+        "--no-default-features",
+        "--features",
+        "cli",
         "--bin",
         "carbon",
         "-j",
@@ -651,17 +674,17 @@ fn cross_compile_x86_64_cli_binary(out_dir: &Path, jobs: usize) -> Result<PathBu
     .env("AWS_LC_SYS_CMAKE_BUILDER", "0")
     .env("TMPDIR", &build_tmp_abs);
     if let Some(w) = &zig_wrappers {
-        cmd.env("CC_x86_64_unknown_linux_musl", &w.cc)
-            .env("CXX_x86_64_unknown_linux_musl", &w.cxx)
-            .env("AR_x86_64_unknown_linux_musl", &w.ar)
-            .env("CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER", &w.linker);
+        cmd.env(format!("CC_{snake}"), &w.cc)
+            .env(format!("CXX_{snake}"), &w.cxx)
+            .env(format!("AR_{snake}"), &w.ar)
+            .env(format!("CARGO_TARGET_{upper}_LINKER"), &w.linker);
     }
     let status = cmd
         .status()
-        .map_err(|e| format!("failed to spawn cargo build for x86_64 musl carbon: {e}"))?;
+        .map_err(|e| format!("failed to spawn cargo build for {rust_target} thin carbon: {e}"))?;
     if !status.success() {
         return Err(format!(
-            "cargo build for x86_64-unknown-linux-musl carbon exited with {status}"
+            "cargo build for {rust_target} thin carbon exited with {status}"
         ));
     }
     let meta_out = Command::new("cargo")
@@ -678,13 +701,13 @@ fn cross_compile_x86_64_cli_binary(out_dir: &Path, jobs: usize) -> Result<PathBu
         .and_then(|v| v.as_str())
         .ok_or_else(|| "cargo metadata missing target_directory".to_owned())?;
     Ok(Path::new(target_root)
-        .join("x86_64-unknown-linux-musl")
-        .join("release")
+        .join(rust_target)
+        .join("carbon-cli")
         .join("carbon"))
 }
 
-/// Build a deterministic POSIX USTAR `.tar.gz` containing a single `0755` executable entry.
-pub fn build_deterministic_single_bin_targz(
+/// Build a deterministic POSIX USTAR `.tar` archive in memory containing a single `0755` executable entry.
+pub fn build_deterministic_single_bin_tar(
     entry_name: &str,
     bytes: &[u8],
 ) -> Result<Vec<u8>, String> {
@@ -709,18 +732,47 @@ pub fn build_deterministic_single_bin_targz(
     header[148..156].copy_from_slice(chk_octal.as_bytes());
 
     let pad_len = (512 - (bytes.len() % 512)) % 512;
-    let mut enc = GzEncoder::new(Vec::new(), Compression::default());
-    enc.write_all(&header)
-        .map_err(|e| format!("gzip write tar header: {e}"))?;
-    enc.write_all(bytes)
-        .map_err(|e| format!("gzip write tar payload: {e}"))?;
+    let mut tar = Vec::with_capacity(512 + bytes.len() + pad_len + 1_024);
+    tar.extend_from_slice(&header);
+    tar.extend_from_slice(bytes);
     if pad_len > 0 {
-        enc.write_all(&vec![0u8; pad_len])
-            .map_err(|e| format!("gzip write tar padding: {e}"))?;
+        tar.resize(tar.len() + pad_len, 0u8);
     }
-    enc.write_all(&[0u8; 1_024])
-        .map_err(|e| format!("gzip write tar EOF blocks: {e}"))?;
+    tar.extend_from_slice(&[0u8; 1_024]);
+    Ok(tar)
+}
+
+/// Build a deterministic POSIX USTAR `.tar.gz` containing a single `0755` executable entry.
+pub fn build_deterministic_single_bin_targz(
+    entry_name: &str,
+    bytes: &[u8],
+) -> Result<Vec<u8>, String> {
+    let tar = build_deterministic_single_bin_tar(entry_name, bytes)?;
+    let mut enc = GzEncoder::new(Vec::new(), Compression::best());
+    enc.write_all(&tar)
+        .map_err(|e| format!("gzip write tar stream: {e}"))?;
     enc.finish().map_err(|e| format!("gzip finish tar.gz: {e}"))
+}
+
+fn try_external_stream_compress(tool: &str, args: &[&str], input: &[u8]) -> Option<Vec<u8>> {
+    let mut child = Command::new(tool)
+        .args(args)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .ok()?;
+    if let Some(mut stdin) = child.stdin.take() {
+        if stdin.write_all(input).is_err() {
+            return None;
+        }
+    }
+    let out = child.wait_with_output().ok()?;
+    if out.status.success() && !out.stdout.is_empty() {
+        Some(out.stdout)
+    } else {
+        None
+    }
 }
 
 fn cross_compile_arm64_binaries(out_dir: &Path, jobs: usize) -> Result<(PathBuf, PathBuf), String> {
@@ -734,11 +786,12 @@ fn cross_compile_arm64_binaries(out_dir: &Path, jobs: usize) -> Result<(PathBuf,
 
     for (label, extra_args) in [
         (
-            "carbon-edge (CT3 isolated)",
+            "carbon-edge (CT3 isolated, carbon-cli profile)",
             vec![
                 "build",
                 "--locked",
-                "--release",
+                "--profile",
+                "carbon-cli",
                 "--target",
                 "aarch64-unknown-linux-musl",
                 "-p",
@@ -753,17 +806,21 @@ fn cross_compile_arm64_binaries(out_dir: &Path, jobs: usize) -> Result<(PathBuf,
             ],
         ),
         (
-            "carbon (engine + eval)",
+            "carbon-worker (stripped dist engine+eval)",
             vec![
                 "build",
                 "--locked",
-                "--release",
+                "--profile",
+                "dist",
                 "--target",
                 "aarch64-unknown-linux-musl",
                 "-p",
                 "jope-carbon",
+                "--no-default-features",
+                "--features",
+                "eval",
                 "--bin",
-                "carbon",
+                "carbon-worker",
                 "-j",
                 &jobs_str,
             ],
@@ -805,10 +862,11 @@ fn cross_compile_arm64_binaries(out_dir: &Path, jobs: usize) -> Result<(PathBuf,
         .get("target_directory")
         .and_then(|v| v.as_str())
         .ok_or_else(|| "cargo metadata missing target_directory".to_owned())?;
-    let rel_dir = Path::new(target_root)
-        .join("aarch64-unknown-linux-musl")
-        .join("release");
-    Ok((rel_dir.join("carbon-edge"), rel_dir.join("carbon")))
+    let arch_root = Path::new(target_root).join("aarch64-unknown-linux-musl");
+    Ok((
+        arch_root.join("carbon-cli").join("carbon-edge"),
+        arch_root.join("dist").join("carbon-worker"),
+    ))
 }
 
 /// Package and verify ARM64 Lambda artifacts (`carbon-edge.zip`, `carbon-worker.zip`,
@@ -843,15 +901,7 @@ pub fn execute_carbon_package(
     verify_arm64_lambda_binary(&edge_bytes, true)?;
     verify_arm64_lambda_binary(&worker_bytes, false)?;
 
-    // 3. Build deterministic reproducible ZIPs (+ optional multi-arch musl CLI tarballs)
-    let aarch64_cli_targz = if opts.include_cli_binaries {
-        Some(build_deterministic_single_bin_targz(
-            "carbon",
-            &worker_bytes,
-        )?)
-    } else {
-        None
-    };
+    // 3. Build deterministic reproducible ZIPs (+ optional multi-arch thin musl CLI archives)
     let edge_zip = build_deterministic_zip_bytes(vec![CarbonZipEntry {
         rel_path: "bootstrap".to_owned(),
         bytes: edge_bytes,
@@ -872,20 +922,58 @@ pub fn execute_carbon_package(
     )?;
     let layer_zip = build_deterministic_zip_bytes(layer_entries)?;
 
-    if let Some(arm_tgz) = aarch64_cli_targz {
-        let x64_bin_path = cross_compile_x86_64_cli_binary(&opts.out_dir, opts.build_jobs)?;
+    if opts.include_cli_binaries {
+        let x64_bin_path = cross_compile_musl_thin_cli_binary(
+            &opts.out_dir,
+            opts.build_jobs,
+            "x86_64-linux-musl",
+            "x86_64-unknown-linux-musl",
+        )?;
+        let arm_bin_path = cross_compile_musl_thin_cli_binary(
+            &opts.out_dir,
+            opts.build_jobs,
+            "aarch64-linux-musl",
+            "aarch64-unknown-linux-musl",
+        )?;
         let x64_bytes =
             fs::read(&x64_bin_path).map_err(|e| format!("read {}: {e}", x64_bin_path.display()))?;
-        let x64_tgz = build_deterministic_single_bin_targz("carbon", &x64_bytes)?;
-        let x64_name = "carbon-linux-x86_64-musl.tar.gz";
-        let arm_name = "carbon-linux-aarch64-musl.tar.gz";
-        let x64_sha = sha256_lower_hex(&x64_tgz);
-        let arm_sha = sha256_lower_hex(&arm_tgz);
-        fs::write(opts.out_dir.join(x64_name), &x64_tgz)
-            .map_err(|e| format!("write {x64_name}: {e}"))?;
-        fs::write(opts.out_dir.join(arm_name), &arm_tgz)
-            .map_err(|e| format!("write {arm_name}: {e}"))?;
-        let sums = format!("{x64_sha}  {x64_name}\n{arm_sha}  {arm_name}\n");
+        let arm_bytes =
+            fs::read(&arm_bin_path).map_err(|e| format!("read {}: {e}", arm_bin_path.display()))?;
+        verify_arm64_lambda_binary(&arm_bytes, true)?;
+
+        let mut sum_lines = Vec::new();
+        for (base_name, raw_bin) in [
+            ("carbon-linux-x86_64-musl", &x64_bytes),
+            ("carbon-linux-aarch64-musl", &arm_bytes),
+        ] {
+            fs::write(opts.out_dir.join(base_name), raw_bin)
+                .map_err(|e| format!("write {base_name}: {e}"))?;
+            sum_lines.push(format!("{}  {base_name}", sha256_lower_hex(raw_bin)));
+
+            let tar_bytes = build_deterministic_single_bin_tar("carbon", raw_bin)?;
+            let tgz = build_deterministic_single_bin_targz("carbon", raw_bin)?;
+            let tgz_name = format!("{base_name}.tar.gz");
+            fs::write(opts.out_dir.join(&tgz_name), &tgz)
+                .map_err(|e| format!("write {tgz_name}: {e}"))?;
+            sum_lines.push(format!("{}  {tgz_name}", sha256_lower_hex(&tgz)));
+
+            if let Some(tzst) =
+                try_external_stream_compress("zstd", &["-19", "--ultra", "-q", "-c"], &tar_bytes)
+            {
+                let tzst_name = format!("{base_name}.tar.zst");
+                fs::write(opts.out_dir.join(&tzst_name), &tzst)
+                    .map_err(|e| format!("write {tzst_name}: {e}"))?;
+                sum_lines.push(format!("{}  {tzst_name}", sha256_lower_hex(&tzst)));
+            }
+            if let Some(txz) = try_external_stream_compress("xz", &["-9e", "-q", "-c"], &tar_bytes)
+            {
+                let txz_name = format!("{base_name}.tar.xz");
+                fs::write(opts.out_dir.join(&txz_name), &txz)
+                    .map_err(|e| format!("write {txz_name}: {e}"))?;
+                sum_lines.push(format!("{}  {txz_name}", sha256_lower_hex(&txz)));
+            }
+        }
+        let sums = format!("{}\n", sum_lines.join("\n"));
         fs::write(opts.out_dir.join("CLI-SHA256SUMS"), sums)
             .map_err(|e| format!("write CLI-SHA256SUMS: {e}"))?;
     }
@@ -1082,10 +1170,14 @@ fn generate_cell_secret_document(
 
     let doc = CellSecretDocument {
         presign_secret_hex: (*presign).clone(),
+        previous_presign_secret_hex: None,
         auth_secret_hex: (*auth).clone(),
+        previous_auth_secret_hex: None,
         seal_secret_hex: (*seal).clone(),
+        previous_seal_secret_hex: None,
         internal_token: (*internal).clone(),
         engine_kek_hex: (*kek_hex).clone(),
+        previous_engine_kek_hex: None,
         engine_kek_pubkey_b64: pub_b64.clone(),
     };
     let serialized = Zeroizing::new(
@@ -1143,7 +1235,11 @@ fn ensure_cell_secrets_in_vault(
             .map_err(|e| format!("invalid CellSecretDocument schema in '{secret_id}': {e}"))?;
         if let Some(req_auth) = required_auth_secret_hex {
             if parsed_doc.auth_secret_hex != req_auth.trim() {
-                parsed_doc.auth_secret_hex = req_auth.trim().to_owned();
+                let prior_auth =
+                    std::mem::replace(&mut parsed_doc.auth_secret_hex, req_auth.trim().to_owned());
+                if !prior_auth.trim().is_empty() {
+                    parsed_doc.previous_auth_secret_hex = Some(prior_auth);
+                }
                 let updated_json = Zeroizing::new(
                     serde_json::to_string(&parsed_doc)
                         .map_err(|e| format!("serialize synced CellSecretDocument: {e}"))?,
@@ -1246,6 +1342,12 @@ pub fn mint_capability_token_from_vault(
     ttl_secs: u64,
     admin: bool,
 ) -> Result<String, String> {
+    let max_ttl = crate::security::auth::MAX_MINT_TOKEN_TTL_SECS;
+    if ttl_secs == 0 || ttl_secs > max_ttl {
+        return Err(format!(
+            "ttl_secs must be in 1..={max_ttl} (90 days max), got {ttl_secs}"
+        ));
+    }
     let creds = CarbonAwsCredentials::from_env()?;
     let secret_id = format!("jopedime/carbon/{environment}/cell-secrets");
     let get_req = serde_json::to_vec(&serde_json::json!({
@@ -1352,24 +1454,23 @@ pub fn resolve_cell_stack_public_endpoint(
 }
 
 fn ensure_artifacts_bucket(region: &str, bucket: &str) -> Result<(), String> {
-    if run_aws_allow_missing(region, &["s3api", "head-bucket", "--bucket", bucket])?.is_some() {
-        return Ok(());
-    }
-    if region == "us-east-1" {
-        let _ = run_aws_json(region, &["s3api", "create-bucket", "--bucket", bucket])?;
-    } else {
-        let cfg = format!("LocationConstraint={region}");
-        let _ = run_aws_json(
-            region,
-            &[
-                "s3api",
-                "create-bucket",
-                "--bucket",
-                bucket,
-                "--create-bucket-configuration",
-                &cfg,
-            ],
-        )?;
+    if run_aws_allow_missing(region, &["s3api", "head-bucket", "--bucket", bucket])?.is_none() {
+        if region == "us-east-1" {
+            let _ = run_aws_json(region, &["s3api", "create-bucket", "--bucket", bucket])?;
+        } else {
+            let cfg = format!("LocationConstraint={region}");
+            let _ = run_aws_json(
+                region,
+                &[
+                    "s3api",
+                    "create-bucket",
+                    "--bucket",
+                    bucket,
+                    "--create-bucket-configuration",
+                    &cfg,
+                ],
+            )?;
+        }
     }
     let _ = run_aws_json(
         region,
@@ -1391,6 +1492,65 @@ fn ensure_artifacts_bucket(region: &str, bucket: &str) -> Result<(), String> {
             bucket,
             "--server-side-encryption-configuration",
             r#"{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}"#,
+        ],
+    )?;
+    let _ = run_aws_json(
+        region,
+        &[
+            "s3api",
+            "put-bucket-versioning",
+            "--bucket",
+            bucket,
+            "--versioning-configuration",
+            "Status=Enabled",
+        ],
+    )?;
+    let _ = run_aws_json(
+        region,
+        &[
+            "s3api",
+            "put-bucket-lifecycle-configuration",
+            "--bucket",
+            bucket,
+            "--lifecycle-configuration",
+            r#"{"Rules":[{"ID":"AbortIncompleteMultipartUploads","Status":"Enabled","Filter":{"Prefix":""},"AbortIncompleteMultipartUpload":{"DaysAfterInitiation":1}}]}"#,
+        ],
+    )?;
+    let partition = if region.starts_with("us-gov-") {
+        "aws-us-gov"
+    } else if region.starts_with("cn-") {
+        "aws-cn"
+    } else {
+        "aws"
+    };
+    let policy_doc = serde_json::json!({
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Sid": "DenyInsecureTransport",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": [
+                format!("arn:{partition}:s3:::{bucket}"),
+                format!("arn:{partition}:s3:::{bucket}/*"),
+            ],
+            "Condition": {
+                "Bool": {
+                    "aws:SecureTransport": "false"
+                }
+            }
+        }]
+    })
+    .to_string();
+    let _ = run_aws_json(
+        region,
+        &[
+            "s3api",
+            "put-bucket-policy",
+            "--bucket",
+            bucket,
+            "--policy",
+            &policy_doc,
         ],
     )?;
     Ok(())
@@ -2105,7 +2265,8 @@ fn deploy_single_region(
         let mut passed_sum = 0usize;
         let mut total_sum = 0usize;
         for (door_label, url) in &gate_urls {
-            let (_, probed) = CarbonThinClient::connect_fastest(vec![(*url).to_owned()])?;
+            let (probed_client, probed) =
+                CarbonThinClient::connect_fastest(vec![(*url).to_owned()])?;
             let first = probed.first().ok_or_else(|| {
                 format!("post-deploy /ping ({door_label}) returned empty probe for {url}")
             })?;
@@ -2114,6 +2275,25 @@ fn deploy_single_region(
                 return Err(format!(
                     "post-deploy /ping ({door_label}) engine_kek_pubkey_b64 mismatch against vault"
                 ));
+            }
+            if let Some(ver) = probed_client.fetch_server_version()? {
+                if !ver.git_sha.is_empty()
+                    && ver.git_sha != "0000000000000000000000000000000000000000"
+                    && ver.git_sha != manifest.git_sha
+                {
+                    return Err(format!(
+                        "post-deploy /v1/carbon/version ({door_label}) git_sha mismatch: server={}, manifest={}",
+                        ver.git_sha, manifest.git_sha
+                    ));
+                }
+                if let Some(rel_id) = ver.release_id.as_deref() {
+                    if rel_id != manifest.release_id {
+                        return Err(format!(
+                            "post-deploy /v1/carbon/version ({door_label}) release_id mismatch: server={rel_id}, manifest={}",
+                            manifest.release_id
+                        ));
+                    }
+                }
             }
             if !opts.skip_redteam {
                 let report = execute_carbon_redteam_suite(url)?;

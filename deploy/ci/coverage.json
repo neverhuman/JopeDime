@@ -817,7 +817,8 @@
     "feature:jope-carbon/cli": {
       "discovery": {
         "dependencies": [
-          "dep:clap"
+          "dep:clap",
+          "edge"
         ],
         "kind": "feature"
       },
@@ -827,7 +828,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Default CLI parser feature for the `carbon` binary; exercised by default package check/test lanes."
+      "scope": "Feature-isolated thin client CLI feature (`--no-default-features --features cli`) for the user-facing `carbon` binary; excludes server/engine/neural crates."
     },
     "feature:jope-carbon/default": {
       "discovery": {
@@ -853,10 +854,8 @@
         "dependencies": [
           "dep:aws-lc-rs",
           "dep:base64",
-          "dep:http",
           "dep:jope-api",
           "dep:jope-prep",
-          "dep:p256",
           "dep:rustls",
           "dep:ureq",
           "dep:url",
@@ -875,6 +874,13 @@
     "feature:jope-carbon/emu": {
       "discovery": {
         "dependencies": [
+          "dep:http",
+          "dep:jope-paths",
+          "dep:jope-runtime",
+          "dep:jope-telemetry",
+          "dep:p256",
+          "dep:ruzstd",
+          "dep:zstd",
           "serve"
         ],
         "kind": "feature"
@@ -891,13 +897,8 @@
       "discovery": {
         "dependencies": [
           "dep:flate2",
-          "dep:jope-paths",
-          "dep:jope-runtime",
           "dep:jope-service",
-          "dep:jope-telemetry",
-          "dep:ruzstd",
           "dep:tokio",
-          "dep:zstd",
           "edge"
         ],
         "kind": "feature"
@@ -1474,6 +1475,16 @@
       ],
       "lanes": [],
       "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
+    },
+    "job:.github/workflows/carbon-cli-matrix.yml/build": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "Manual multi-OS (`ubuntu-24.04`, `macos-15`, `windows-2025`) thin `carbon` CLI matrix build job gated behind `vars.CARBON_HOSTED_MATRIX_RUNNER`; release publication remains governed by `deploy/carbon/release-and-promote.sh`."
     },
     "job:.github/workflows/ci.yml/aggregate": {
       "discovery": {
@@ -15641,8 +15652,7 @@
         "doctest": false,
         "kind": "target",
         "required_features": [
-          "cli",
-          "serve"
+          "cli"
         ],
         "source": "crates/jope-carbon/src/bin/carbon.rs",
         "test": true
@@ -15653,7 +15663,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Multi-role Carbon cell CLI (`version`, `package`, `deploy`, `rollback`, `run`, `bench`, `redteam`, `token-mint`, `plan`, `spot-check`, `serve`, `emu`, `engine`, `eval`) over zero-knowledge CUEN/CUDK encryption, r882 neural-fusion GP, declarative CloudFormation :live alias rollouts, and the 3-Gate Spot-Hybrid advisor; tested via carbon_core, carbon_e2e, and carbon_redteam."
+      "scope": "Feature-isolated user CLI (`--no-default-features --features cli`) and multi-role Carbon cell operator CLI (`version`, `self-verify`, `doctor`, `quickstart`, `package`, `deploy`, `rollback`, `rotate-secrets`, `clouds-manifest`, `register`, `login`, `whoami`, `logout`, `ping`, `run`, `bench`, `redteam`, `token-mint`, `plan`, `spot-check`, `serve`, `spec-report`, `spec-verify`, `emu`, `engine`, `eval`); tested via carbon_core, carbon_e2e, and carbon_redteam."
     },
     "target:jope-carbon/bin/carbon-edge": {
       "discovery": {
@@ -15672,6 +15682,39 @@
         "full-default"
       ],
       "scope": "Feature-isolated Carbon regional edge gateway binary (`--no-default-features --features edge`, ADR-0007): excludes jope-service, jope-runtime, feat-math, and neural weights; local CLI/healthcheck tested via carbon_core."
+    },
+    "target:jope-carbon/bin/carbon-worker": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "eval"
+        ],
+        "source": "crates/jope-carbon/src/bin/carbon_worker.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Feature-isolated Carbon AWS Lambda engine and eval worker binary (`--no-default-features --features eval`, ADR-0007): excludes clap, axum, and local emulator crates; tested via carbon_core and carbon_e2e."
+    },
+    "target:jope-carbon/custom-build/build-script-build": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-carbon/build.rs",
+        "test": false
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Build script executed by Cargo builds, not a standalone test family. Embeds Git source SHA, target triple, and build profile metadata."
     },
     "target:jope-carbon/lib/jope_carbon": {
       "discovery": {
@@ -21593,6 +21636,16 @@
         "full-default"
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "workflow:.github/workflows/carbon-cli-matrix.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "Manual multi-OS (`ubuntu-24.04`, `macos-15`, `windows-2025`) thin `carbon` CLI matrix build workflow gated behind `vars.CARBON_HOSTED_MATRIX_RUNNER`; release publication remains governed by `deploy/carbon/release-and-promote.sh`."
     },
     "workflow:.github/workflows/ci.yml": {
       "discovery": {

@@ -18,10 +18,11 @@ use jope_api::{
     carbon::{
         CarbonAnonymousAuthResponse, CarbonCreateRunRequest, CarbonEarlyStopRequest,
         CarbonPingResponse, CarbonPredictRequest, CarbonPredictResponse,
-        CarbonPrepareUploadRequest, CarbonPrepareUploadResponse, CarbonPublicWaveProgress,
-        CarbonRegionCatalog, CarbonRegisterFreeRequest, CarbonRegisterFreeResponse,
-        CarbonResumeRunRequest, CarbonRunStateWire, CarbonShredRunResponse, CarbonTierWire,
-        CarbonUploadSlotWire,
+        CarbonPreparePredictRequest, CarbonPreparePredictResponse, CarbonPrepareUploadRequest,
+        CarbonPrepareUploadResponse, CarbonPublicWaveProgress, CarbonRegionCatalog,
+        CarbonRegisterFreeRequest, CarbonRegisterFreeResponse, CarbonResumeRunRequest,
+        CarbonRunStateWire, CarbonShredRunResponse, CarbonTierWire, CarbonUploadSlotWire,
+        CarbonVersionResponse,
     },
     decimal::DecimalU64,
     ids::{DatasetId, RunId},
@@ -35,9 +36,13 @@ use zeroize::Zeroizing;
 
 use crate::{
     cells::engine_invoker::now_epoch_ms,
+    role::CarbonProductTier,
     security::{
         auth::{CarbonAuthVerifier, CarbonCapabilityClaims},
-        sigv4::{sign_aws_v4_headers_with_extra, url_encode_component, CarbonAwsCredentials},
+        sigv4::{
+            compute_backoff_with_jitter_ms, sign_aws_v4_headers_with_extra, url_encode_component,
+            CarbonAwsCredentials,
+        },
         user_envelope::{
             decode_p256_pubkey_b64, decrypt_cuen_payload, encrypt_cuen_payload,
             generate_random_u_dek, unwrap_u_dek_with_kek, wrap_u_dek_to_pubkey,
@@ -47,9 +52,12 @@ use crate::{
     storage::cas::sha256_lower_hex,
 };
 
+const PREDICT_CAS_THRESHOLD_BYTES: usize = 1_572_864;
+
 #[derive(Clone)]
 struct UploadedEncryptionSecret {
     u_dek: Zeroizing<[u8; 32]>,
+    upload_id: String,
     fit_cuen_sha256: String,
     holdout_cuen_sha256: String,
 }
@@ -91,14 +99,29 @@ pub struct CarbonThinClient {
     enterprise_self_hosted: bool,
     endpoint_keks: Arc<Mutex<BTreeMap<String, [u8; 65]>>>,
     pinned_keks: BTreeMap<String, String>,
-    capability_token: Option<String>,
+    capability_token: Option<Zeroizing<String>>,
     uploaded_secrets: Arc<Mutex<BTreeMap<String, UploadedEncryptionSecret>>>,
+    uploaded_ids: Arc<Mutex<BTreeMap<String, String>>>,
     run_udeks: Arc<Mutex<BTreeMap<String, Zeroizing<[u8; 32]>>>>,
     poll_requests: Arc<AtomicU32>,
     http_request_bytes: Arc<AtomicUsize>,
     http_response_bytes: Arc<AtomicUsize>,
     progress_observer: Option<CarbonProgressObserver>,
     agent: ureq::Agent,
+}
+
+impl std::fmt::Debug for CarbonThinClient {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CarbonThinClient")
+            .field("endpoints", &self.endpoints)
+            .field("active_idx", &self.active_idx.load(Ordering::Relaxed))
+            .field("enterprise_self_hosted", &self.enterprise_self_hosted)
+            .field(
+                "capability_token",
+                &self.capability_token.as_ref().map(|_| "<redacted>"),
+            )
+            .finish()
+    }
 }
 
 impl CarbonThinClient {
@@ -137,11 +160,12 @@ impl CarbonThinClient {
             .collect();
 
         let agent = crate::tls::carbon_https_agent().clone();
+        let probe_agent = crate::tls::carbon_probe_https_agent().clone();
         let probe_outcomes: Vec<Result<CarbonProbedEndpoint, String>> = thread::scope(|s| {
             let mut handles = Vec::with_capacity(deduped.len());
             for base in &deduped {
                 let base_url = base.clone();
-                let ag = agent.clone();
+                let ag = probe_agent.clone();
                 let expected_kek = normalized_pins.get(&base_url).cloned();
                 handles.push(s.spawn(move || {
                     let t0 = Instant::now();
@@ -240,6 +264,7 @@ impl CarbonThinClient {
                 pinned_keks: normalized_pins,
                 capability_token: None,
                 uploaded_secrets: Arc::new(Mutex::new(BTreeMap::new())),
+                uploaded_ids: Arc::new(Mutex::new(BTreeMap::new())),
                 run_udeks: Arc::new(Mutex::new(BTreeMap::new())),
                 poll_requests: Arc::new(AtomicU32::new(0)),
                 http_request_bytes: Arc::new(AtomicUsize::new(0)),
@@ -280,7 +305,7 @@ impl CarbonThinClient {
     pub fn with_capability_token(mut self, token: impl Into<String>) -> Self {
         let tok = token.into();
         if !tok.trim().is_empty() {
-            self.capability_token = Some(tok);
+            self.capability_token = Some(Zeroizing::new(tok));
         }
         self
     }
@@ -302,7 +327,7 @@ impl CarbonThinClient {
             self.active_endpoint(),
             resp.engine_kek_pubkey_b64.as_deref(),
         )?;
-        self.capability_token = Some(resp.capability_token.clone());
+        self.capability_token = Some(Zeroizing::new(resp.capability_token.clone()));
         Ok(resp)
     }
 
@@ -330,7 +355,7 @@ impl CarbonThinClient {
             self.active_endpoint(),
             resp.engine_kek_pubkey_b64.as_deref(),
         )?;
-        self.capability_token = Some(resp.capability_token.clone());
+        self.capability_token = Some(Zeroizing::new(resp.capability_token.clone()));
         Ok(resp)
     }
 
@@ -399,6 +424,31 @@ impl CarbonThinClient {
             resp.engine_kek_pubkey_b64.as_deref(),
         )?;
         Ok(resp)
+    }
+
+    /// Fetch remote `/v1/carbon/version` build provenance from the active endpoint (`Ok(None)` on
+    /// legacy `v1.0.0` gateways that do not yet expose `/v1/carbon/version`).
+    pub fn fetch_server_version(&self) -> Result<Option<CarbonVersionResponse>, String> {
+        let (code, body) = send_raw_edge_http_with_agent(
+            crate::tls::carbon_probe_https_agent(),
+            self.active_endpoint(),
+            "GET",
+            "/v1/carbon/version",
+            &[],
+            None,
+        )?;
+        if code == 404 || code == 405 {
+            return Ok(None);
+        }
+        if code >= 300 {
+            return Err(format!(
+                "GET /v1/carbon/version returned HTTP {code}: {}",
+                String::from_utf8_lossy(&body)
+            ));
+        }
+        let ver: CarbonVersionResponse = serde_json::from_slice(&body)
+            .map_err(|e| format!("decode CarbonVersionResponse: {e}"))?;
+        Ok(Some(ver))
     }
 
     pub fn fetch_region_catalog(&self) -> Result<CarbonRegionCatalog, String> {
@@ -487,8 +537,28 @@ impl CarbonThinClient {
         tier: CarbonTierWire,
         prepared: &CarbonClientPreparedDataset,
     ) -> Result<CarbonPrepareUploadResponse, String> {
+        if !self.enterprise_self_hosted {
+            let product_tier = match tier {
+                CarbonTierWire::Free => CarbonProductTier::Free,
+                CarbonTierWire::Pro => CarbonProductTier::Pro,
+                CarbonTierWire::Enterprise => CarbonProductTier::no_limit(),
+            };
+            if let Some(max_slot) = product_tier.max_upload_slot_bytes() {
+                let raw_max = prepared
+                    .artifacts
+                    .fit_jmat
+                    .len()
+                    .max(prepared.artifacts.holdout_jmat.len())
+                    as u64;
+                if raw_max > max_slot {
+                    return Err(format!(
+                        "HTTP 413 pre-flight guard: prepared dataset slot ({raw_max} bytes) exceeds {tier:?} tier upload cap ({max_slot} bytes)"
+                    ));
+                }
+            }
+        }
         let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
-        let (fit_wire, fit_sha, holdout_wire, holdout_sha, encrypted_cuen, secret_opt) =
+        let (fit_wire, fit_sha, holdout_wire, holdout_sha, encrypted_cuen, mut secret_opt) =
             if self.has_zero_knowledge_kek() {
                 let u_dek = generate_random_u_dek().map_err(|e| e.to_string())?;
                 let fit_enc = encrypt_cuen_payload(
@@ -511,6 +581,7 @@ impl CarbonThinClient {
                 let h_sha = sha256_lower_hex(&hold_enc);
                 let secret = UploadedEncryptionSecret {
                     u_dek,
+                    upload_id: String::new(),
                     fit_cuen_sha256: f_sha.clone(),
                     holdout_cuen_sha256: h_sha.clone(),
                 };
@@ -562,9 +633,14 @@ impl CarbonThinClient {
 
         self.put_presigned_bytes(&prep_resp.fit_target.url, &fit_wire)?;
         self.put_presigned_bytes(&prep_resp.holdout_target.url, &holdout_wire)?;
-        if let Some(secret) = secret_opt {
+        let upload_key = format!("{tenant_id}:{pt_fit_sha}");
+        if let Ok(mut id_guard) = self.uploaded_ids.lock() {
+            id_guard.insert(upload_key.clone(), prep_resp.upload_id.clone());
+        }
+        if let Some(ref mut secret) = secret_opt {
+            secret.upload_id = prep_resp.upload_id.clone();
             if let Ok(mut guard) = self.uploaded_secrets.lock() {
-                guard.insert(format!("{tenant_id}:{pt_fit_sha}"), secret);
+                guard.insert(upload_key, secret.clone());
             }
         }
         Ok(prep_resp)
@@ -584,6 +660,7 @@ impl CarbonThinClient {
     ) -> Result<CarbonPublicWaveProgress, String> {
         let run_str = run_id.to_string();
         let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
+        let upload_key = format!("{tenant_id}:{pt_fit_sha}");
         let lm_wire = prepared.landmark_bundle.to_wire_bytes();
 
         let req = if let Some(kek_pub) = self.active_kek_pubkey() {
@@ -591,7 +668,7 @@ impl CarbonThinClient {
                 .uploaded_secrets
                 .lock()
                 .map_err(|_| "uploaded_secrets mutex poisoned".to_owned())?
-                .get(&format!("{tenant_id}:{pt_fit_sha}"))
+                .get(&upload_key)
                 .cloned()
                 .ok_or_else(|| {
                     "upload_prepared must be called on this client before start_run in zero-knowledge mode"
@@ -615,6 +692,11 @@ impl CarbonThinClient {
                 dataset_id,
                 tenant_id: tenant_id.to_owned(),
                 tier,
+                upload_id: if secret.upload_id.is_empty() {
+                    None
+                } else {
+                    Some(secret.upload_id)
+                },
                 fit_jmat_sha256: secret.fit_cuen_sha256,
                 holdout_jmat_sha256: secret.holdout_cuen_sha256,
                 fit_rows: prepared.fit_rows,
@@ -629,11 +711,17 @@ impl CarbonThinClient {
                 wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk)),
             }
         } else {
+            let plain_upload_id = self
+                .uploaded_ids
+                .lock()
+                .ok()
+                .and_then(|g| g.get(&upload_key).cloned());
             CarbonCreateRunRequest {
                 run_id,
                 dataset_id,
                 tenant_id: tenant_id.to_owned(),
                 tier,
+                upload_id: plain_upload_id,
                 fit_jmat_sha256: pt_fit_sha,
                 holdout_jmat_sha256: hex::encode(prepared.artifacts.holdout_sha256),
                 fit_rows: prepared.fit_rows,
@@ -762,16 +850,63 @@ impl CarbonThinClient {
             .map_err(|e| e.to_string())?;
             let cudk_req = wrap_u_dek_to_pubkey(&u_dek, &kek_pub, tenant_id, run_id)
                 .map_err(|e| e.to_string())?;
-            let req = CarbonPredictRequest {
-                tenant_id: tenant_id.to_owned(),
-                feature_names: Vec::new(),
-                rows: Vec::new(),
-                encrypted_rows_cuen_b64: Some(
-                    base64::engine::general_purpose::STANDARD.encode(cuen_req),
-                ),
-                client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
-                wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_req)),
+
+            let force_cas = std::env::var("CARBON_FORCE_PREDICT_CAS")
+                .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+                .unwrap_or(false);
+            let req = if cuen_req.len() > PREDICT_CAS_THRESHOLD_BYTES || force_cas {
+                let prep_path = format!("/v1/carbon/runs/{run_id}/predict/prepare");
+                let prep_req = CarbonPreparePredictRequest {
+                    tenant_id: tenant_id.to_owned(),
+                    predict_cuen: CarbonUploadSlotWire {
+                        sha256: sha256_lower_hex(&cuen_req),
+                        bytes: DecimalU64(cuen_req.len() as u64),
+                    },
+                };
+                let prep_payload =
+                    serde_json::to_vec(&prep_req).map_err(|e| format!("encode JSON: {e}"))?;
+                let prep_bytes = self.request_checked(
+                    "POST",
+                    &prep_path,
+                    Some(tenant_id),
+                    None,
+                    Some(&prep_payload),
+                )?;
+                let prep_resp: CarbonPreparePredictResponse =
+                    serde_json::from_slice(&prep_bytes)
+                        .map_err(|e| format!("decode predict prepare response: {e}"))?;
+                self.put_presigned_bytes(&prep_resp.input_target.url, &cuen_req)?;
+                CarbonPredictRequest {
+                    tenant_id: tenant_id.to_owned(),
+                    feature_names: Vec::new(),
+                    rows: Vec::new(),
+                    encrypted_rows_cuen_b64: None,
+                    encrypted_rows_cas_sha256: Some(prep_resp.input_target.sha256),
+                    predict_upload_id: Some(prep_resp.upload_id),
+                    prefer_cas_output: true,
+                    client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
+                    wrapped_u_dek_b64: Some(
+                        base64::engine::general_purpose::STANDARD.encode(cudk_req),
+                    ),
+                }
+            } else {
+                CarbonPredictRequest {
+                    tenant_id: tenant_id.to_owned(),
+                    feature_names: Vec::new(),
+                    rows: Vec::new(),
+                    encrypted_rows_cuen_b64: Some(
+                        base64::engine::general_purpose::STANDARD.encode(cuen_req),
+                    ),
+                    encrypted_rows_cas_sha256: None,
+                    predict_upload_id: None,
+                    prefer_cas_output: false,
+                    client_response_pubkey_b64: Some(resp_kek.pubkey_b64()),
+                    wrapped_u_dek_b64: Some(
+                        base64::engine::general_purpose::STANDARD.encode(cudk_req),
+                    ),
+                }
             };
+
             let payload = serde_json::to_vec(&req).map_err(|e| format!("encode JSON: {e}"))?;
             let bytes =
                 self.request_checked("POST", &path, Some(tenant_id), None, Some(&payload))?;
@@ -781,16 +916,26 @@ impl CarbonThinClient {
                 .response_cudk_b64
                 .as_deref()
                 .ok_or_else(|| "missing response_cudk_b64 on encrypted predict".to_owned())?;
-            let cuen_b64 = resp
-                .encrypted_predictions_cuen_b64
-                .as_deref()
-                .ok_or_else(|| "missing encrypted_predictions_cuen_b64".to_owned())?;
             let cudk_raw = base64::engine::general_purpose::STANDARD
                 .decode(cudk_b64)
                 .map_err(|e| format!("decode response_cudk_b64: {e}"))?;
-            let cuen_raw = base64::engine::general_purpose::STANDARD
-                .decode(cuen_b64)
-                .map_err(|e| format!("decode encrypted_predictions_cuen_b64: {e}"))?;
+            let cuen_raw = if let Some(cas_url) = resp.encrypted_predictions_cas_url.as_deref() {
+                let exp_sha = resp
+                    .encrypted_predictions_cas_sha256
+                    .as_deref()
+                    .unwrap_or("");
+                self.get_presigned_bytes(cas_url, exp_sha)?
+            } else {
+                let cuen_b64 = resp
+                    .encrypted_predictions_cuen_b64
+                    .as_deref()
+                    .ok_or_else(|| {
+                        "missing encrypted_predictions_cuen_b64 on encrypted predict".to_owned()
+                    })?;
+                base64::engine::general_purpose::STANDARD
+                    .decode(cuen_b64)
+                    .map_err(|e| format!("decode encrypted_predictions_cuen_b64: {e}"))?
+            };
             let r_dek = unwrap_u_dek_with_kek(&resp_kek, &cudk_raw, tenant_id, run_id)
                 .map_err(|e| e.to_string())?;
             let pred_le = decrypt_cuen_payload(
@@ -822,6 +967,9 @@ impl CarbonThinClient {
             feature_names,
             rows,
             encrypted_rows_cuen_b64: None,
+            encrypted_rows_cas_sha256: None,
+            predict_upload_id: None,
+            prefer_cas_output: false,
             client_response_pubkey_b64: None,
             wrapped_u_dek_b64: None,
         };
@@ -954,9 +1102,9 @@ impl CarbonThinClient {
         };
         let n_endpoints = self.endpoints.len().max(1);
         let max_attempts = if allow_region_failover {
-            n_endpoints.max(3)
+            n_endpoints.max(6)
         } else {
-            3usize
+            6usize
         };
         let start_idx = self
             .active_idx
@@ -970,7 +1118,7 @@ impl CarbonThinClient {
                 start_idx
             };
             if attempt > 0 && !(allow_region_failover && attempt < n_endpoints) {
-                let wait_ms = (120u64 * attempt as u64) + ((now_epoch_ms() ^ attempt as u64) % 70);
+                let wait_ms = compute_backoff_with_jitter_ms(attempt - 1, 100, 4_000);
                 thread::sleep(Duration::from_millis(wait_ms));
             }
             let target_base = &self.endpoints[idx];
@@ -1001,7 +1149,8 @@ impl CarbonThinClient {
                         || lc.contains("cuen")
                         || lc.contains("decrypt")
                         || lc.contains("unwrap");
-                    let retriable_status = code == 429
+                    let retriable_status = code == 408
+                        || code == 429
                         || ((code == 502 || code == 503 || code == 504) && !crypto_rejected);
                     last_err = format!("HTTP {code}: {msg}");
                     if !retriable_status || attempt + 1 >= max_attempts {
@@ -1021,9 +1170,9 @@ impl CarbonThinClient {
 
     fn put_presigned_bytes(&self, url: &str, bytes: &[u8]) -> Result<(), String> {
         let mut last_err = String::new();
-        for attempt in 0..3usize {
+        for attempt in 0..6usize {
             if attempt > 0 {
-                let wait_ms = (120u64 * attempt as u64) + ((now_epoch_ms() ^ attempt as u64) % 60);
+                let wait_ms = compute_backoff_with_jitter_ms(attempt - 1, 100, 4_000);
                 thread::sleep(Duration::from_millis(wait_ms));
             }
             match send_raw_put_url_with_agent(&self.agent, url, bytes, true) {
@@ -1032,13 +1181,13 @@ impl CarbonThinClient {
                         return Ok(());
                     }
                     last_err = format!("PUT HTTP {code}: {}", String::from_utf8_lossy(&body));
-                    if !matches!(code, 429 | 500 | 502 | 503 | 504) || attempt == 2 {
+                    if !matches!(code, 408 | 429 | 500 | 502 | 503 | 504) || attempt == 5 {
                         return Err(last_err);
                     }
                 }
                 Err(e) => {
                     last_err = e;
-                    if attempt == 2 {
+                    if attempt == 5 {
                         return Err(last_err);
                     }
                 }
@@ -1046,6 +1195,79 @@ impl CarbonThinClient {
         }
         Err(last_err)
     }
+
+    fn get_presigned_bytes(&self, url: &str, expected_sha256: &str) -> Result<Vec<u8>, String> {
+        let mut last_err = String::new();
+        for attempt in 0..6usize {
+            if attempt > 0 {
+                let wait_ms = compute_backoff_with_jitter_ms(attempt - 1, 100, 4_000);
+                thread::sleep(Duration::from_millis(wait_ms));
+            }
+            match send_raw_get_url_with_agent(&self.agent, url) {
+                Ok((code, body)) => {
+                    if code < 300 {
+                        if !expected_sha256.is_empty()
+                            && sha256_lower_hex(&body) != expected_sha256.to_ascii_lowercase()
+                        {
+                            return Err(
+                                "downloaded CAS prediction blob SHA-256 mismatch".to_owned()
+                            );
+                        }
+                        return Ok(body);
+                    }
+                    last_err = format!("GET HTTP {code}: {}", String::from_utf8_lossy(&body));
+                    if !matches!(code, 408 | 429 | 500 | 502 | 503 | 504) || attempt == 5 {
+                        return Err(last_err);
+                    }
+                }
+                Err(e) => {
+                    last_err = e;
+                    if attempt == 5 {
+                        return Err(last_err);
+                    }
+                }
+            }
+        }
+        Err(last_err)
+    }
+}
+
+fn send_raw_get_url_with_agent(agent: &ureq::Agent, url: &str) -> Result<(u16, Vec<u8>), String> {
+    if url.starts_with("lambda://") {
+        // Split `lambda://fn/v1/carbon/cas/...` into base `lambda://fn` and path `/v1/...`.
+        let rest = url.trim_start_matches("lambda://");
+        if let Some((first, tail)) = rest.split_once("/v1/") {
+            let base = format!("lambda://{first}");
+            let pq = format!("/v1/{tail}");
+            return send_raw_edge_http_with_agent(agent, &base, "GET", &pq, &[], None);
+        }
+    }
+    if url.contains(".lambda-url.") {
+        if let Ok(parsed) = url::Url::parse(url) {
+            if let Some(host) = parsed.host_str() {
+                let base = format!("{}://{host}", parsed.scheme());
+                let pq = match parsed.query() {
+                    Some(q) => format!("{}?{q}", parsed.path()),
+                    None => parsed.path().to_owned(),
+                };
+                return send_raw_edge_http_with_agent(agent, &base, "GET", &pq, &[], None);
+            }
+        }
+    }
+    let mut resp = agent
+        .get(url)
+        .config()
+        .http_status_as_error(false)
+        .build()
+        .call()
+        .map_err(|e| format!("GET {url} failed: {e}"))?;
+    let code = resp.status().as_u16();
+    let mut out = Vec::new();
+    resp.body_mut()
+        .as_reader()
+        .read_to_end(&mut out)
+        .map_err(|e| format!("read GET {url} body: {e}"))?;
+    Ok((code, out))
 }
 
 /// Send a `PUT` to a presigned S3 or gateway URL (setting `x-amz-content-sha256` when `include_sha_header` is true).
@@ -1376,7 +1598,11 @@ pub fn verified_absolute_jopedime_config_dir() -> Result<std::path::PathBuf, Str
             return Ok(p);
         }
     }
-    let home = std::env::var("HOME").map_err(|_| {
+    #[cfg(windows)]
+    let home_res = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE"));
+    #[cfg(not(windows))]
+    let home_res = std::env::var("HOME");
+    let home = home_res.map_err(|_| {
         "HOME environment variable is unset; pass --clouds-manifest or set absolute HOME".to_owned()
     })?;
     let home_trimmed = home.trim();

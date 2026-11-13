@@ -160,8 +160,23 @@ panic = "unwind"
 [profile.dist.package.jope-appliance]
 opt-level = "s"
 strip = "symbols"
+[profile.dist.package.jope-carbon]
+opt-level = "s"
+strip = "symbols"
 [profile.dist.package.clap_builder]
 opt-level = "s"
+
+# Ultra-compact zero-knowledge `carbon` thin CLI and `carbon-edge` regional gateway profile:
+# neither binary uses `catch_unwind` (`engine`/`eval` GP workers use `[profile.dist]`).
+[profile.carbon-cli]
+inherits = "dist"
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+debug = 0
+strip = "symbols"
+incremental = false
+panic = "abort"
 
 # The PR lane's appliance build: same flags, thin LTO and parallel codegen to fit the PR budget.
 # Release artifacts always use `dist`.

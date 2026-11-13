@@ -955,6 +955,7 @@ fn edge_async_202_threshold_and_retry_idempotent_create_run() {
         dataset_id: ds_id,
         tenant_id: reg.tenant_id.clone(),
         tier: CarbonTierWire::Free,
+        upload_id: None,
         fit_jmat_sha256: fit_sha,
         holdout_jmat_sha256: hold_sha,
         fit_rows: prep.fit_rows,
@@ -1100,4 +1101,394 @@ fn spec_png_and_pdf_verifiers_accept_valid_streams_and_reject_tampering_or_secre
     leaked_pdf.extend_from_slice(b"ctk1.secretpayload.deadbeef\n");
     leaked_pdf.extend_from_slice(&tail);
     assert!(verify_pdf_bytes("leaked.pdf", &leaked_pdf).is_err());
+}
+
+#[test]
+fn dual_key_rotation_rate_limiter_eviction_and_cloudformation_zero_secret_invariants() {
+    use jope_api::carbon::CarbonTierWire;
+    use jope_carbon::{
+        synthesize_cell_template_for_release, unwrap_u_dek_with_kek, wrap_u_dek_to_pubkey,
+        CarbonAuthVerifier, CarbonCapabilityClaims, CarbonEngineKek, CarbonGatewayRequest,
+        CarbonPresigner, CarbonRateLimiter, CarbonSealDomain, CarbonSealKey,
+        SealedCheckpointEnvelope,
+    };
+    use std::collections::BTreeMap;
+
+    // 1. Dual-key `[active, previous]` rotation across Auth, Presigner, SealKey, and EngineKek
+    let old_secret = [0x11u8; 32];
+    let new_secret = [0x22u8; 32];
+    let old_verifier = CarbonAuthVerifier::from_secret(old_secret);
+    let tok_from_old = old_verifier
+        .mint_token(&CarbonCapabilityClaims {
+            tenant_id: "rot_tenant".to_owned(),
+            tier: CarbonTierWire::Pro,
+            exp_epoch_secs: 4_102_444_800,
+            admin: false,
+        })
+        .unwrap();
+
+    let dual_verifier =
+        CarbonAuthVerifier::from_secret(new_secret).with_previous_secret(Some(old_secret));
+    let verified = dual_verifier
+        .verify_token(&tok_from_old, 1_794_500_000)
+        .expect("dual verifier must accept token minted under previous secret");
+    assert_eq!(verified.tenant_id, "rot_tenant");
+
+    let pruned_verifier = CarbonAuthVerifier::from_secret(new_secret);
+    assert!(
+        pruned_verifier
+            .verify_token(&tok_from_old, 1_794_500_000)
+            .is_err(),
+        "once previous secret is pruned, old tokens must be rejected"
+    );
+
+    let old_presigner = CarbonPresigner::from_secret(old_secret);
+    let signed_url = old_presigner.sign_gateway_scoped_upload_url(
+        "https://edge.example",
+        Some("rot_tenant/upl_01J"),
+        &"a".repeat(64),
+        1_024,
+        2_000_000_000,
+    );
+    let sig_hex = signed_url.rsplit_once("sig=").unwrap().1;
+    let dual_presigner =
+        CarbonPresigner::from_secret(new_secret).with_previous_secret(Some(old_secret));
+    dual_presigner
+        .verify_gateway_scoped_upload(
+            Some("rot_tenant/upl_01J"),
+            &"a".repeat(64),
+            1_024,
+            2_000_000_000,
+            sig_hex,
+            1_900_000_000,
+        )
+        .expect("dual presigner must accept URL signed under previous secret");
+    assert!(CarbonPresigner::from_secret(new_secret)
+        .verify_gateway_scoped_upload(
+            Some("rot_tenant/upl_01J"),
+            &"a".repeat(64),
+            1_024,
+            2_000_000_000,
+            sig_hex,
+            1_900_000_000,
+        )
+        .is_err());
+
+    let old_seal = CarbonSealKey::from_bytes(old_secret);
+    let u_dek = [0x77u8; 32];
+    let ckp = SealedCheckpointEnvelope::seal_with_domain(
+        &old_seal,
+        CarbonSealDomain::ChampionModel,
+        "rot_tenant",
+        "run_01JROT",
+        2,
+        Some(&u_dek),
+        b"champion-bytes",
+    )
+    .unwrap();
+    let dual_seal = CarbonSealKey::from_bytes(new_secret).with_previous_bytes(Some(old_secret));
+    let (wave, opened) = SealedCheckpointEnvelope::open_with_domain(
+        &dual_seal,
+        CarbonSealDomain::ChampionModel,
+        "rot_tenant",
+        "run_01JROT",
+        Some(&u_dek),
+        ckp.wire_bytes(),
+    )
+    .expect("dual seal key must open checkpoint sealed under previous secret");
+    assert_eq!(wave, 2);
+    assert_eq!(opened.as_slice(), b"champion-bytes");
+    assert!(SealedCheckpointEnvelope::open_with_domain(
+        &CarbonSealKey::from_bytes(new_secret),
+        CarbonSealDomain::ChampionModel,
+        "rot_tenant",
+        "run_01JROT",
+        Some(&u_dek),
+        ckp.wire_bytes(),
+    )
+    .is_err());
+
+    let old_kek_hex = "1111111111111111111111111111111111111111111111111111111111111111";
+    let new_kek_hex = "2222222222222222222222222222222222222222222222222222222222222222";
+    let old_kek = CarbonEngineKek::from_hex(old_kek_hex).unwrap();
+    let cudk_old =
+        wrap_u_dek_to_pubkey(&u_dek, old_kek.pubkey_bytes(), "rot_tenant", "run_01JROT").unwrap();
+    let dual_kek = CarbonEngineKek::from_hex_with_previous(new_kek_hex, Some(old_kek_hex)).unwrap();
+    let unwrapped = unwrap_u_dek_with_kek(&dual_kek, &cudk_old, "rot_tenant", "run_01JROT")
+        .expect("dual KEK must unwrap CUDK encrypted to previous KEK pubkey");
+    assert_eq!(*unwrapped, u_dek);
+    let new_only_kek = CarbonEngineKek::from_hex(new_kek_hex).unwrap();
+    assert!(unwrap_u_dek_with_kek(&new_only_kek, &cudk_old, "rot_tenant", "run_01JROT").is_err());
+
+    // 2. Trusted caller IP prefers verified sourceIp over spoofed X-Forwarded-For
+    let mut hdrs = BTreeMap::new();
+    hdrs.insert("x-forwarded-for".to_owned(), "198.51.100.99".to_owned());
+    hdrs.insert(
+        "x-carbon-trusted-source-ip".to_owned(),
+        "203.0.113.7".to_owned(),
+    );
+    let gw_req = CarbonGatewayRequest {
+        method: "POST".to_owned(),
+        path: "/v1/carbon/auth/anonymous".to_owned(),
+        query: BTreeMap::new(),
+        headers: hdrs,
+        body_b64: None,
+        raw_body: Vec::new(),
+    };
+    assert_eq!(gw_req.trusted_caller_ip("unknown"), "203.0.113.7");
+
+    // 3. Rate limiter lowest-count eviction under 65,536-key flood (`GAP-SEC3`)
+    let limiter = CarbonRateLimiter::new(60);
+    assert!(limiter.check_and_record("heavy_abuser", 600, 5));
+    assert!(limiter.check_and_record("heavy_abuser", 600, 5));
+    assert!(limiter.check_and_record("heavy_abuser", 600, 5));
+    assert!(limiter.check_and_record("heavy_abuser", 600, 5));
+    assert!(limiter.check_and_record("heavy_abuser", 600, 5));
+    assert!(!limiter.check_and_record("heavy_abuser", 600, 5));
+    for idx in 0..65_536usize {
+        let key = format!("flood_{idx}");
+        assert!(limiter.check_and_record(&key, 600, 5));
+    }
+    assert!(
+        limiter.check_and_record("legitimate_new_user", 600, 5),
+        "new legitimate caller must NOT be locked out when 65,536 flood keys are present"
+    );
+    assert!(
+        !limiter.check_and_record("heavy_abuser", 600, 5),
+        "heavy_abuser with saturated counter must NOT be evicted ahead of single-hit flood keys"
+    );
+
+    // 4. CloudFormation zero-plaintext-secrets & read-only EvalRole IAM invariants
+    let synth = synthesize_cell_template_for_release("112233445566").unwrap();
+    assert!(
+        !synth.contains("{{resolve:secretsmanager:"),
+        "synthesized CloudFormation template must never inject dynamic plaintext secret strings into Lambda env vars"
+    );
+    let tpl: serde_json::Value = serde_json::from_str(&synth).unwrap();
+    let edge_vars = &tpl["Resources"]["EdgeFunction"]["Properties"]["Environment"]["Variables"];
+    assert!(edge_vars.get("CARBON_SECRETS_ARN").is_some());
+    assert!(edge_vars.get("CARBON_SECRETS_VERSION_ID").is_some());
+    let eval_policies =
+        serde_json::to_string(&tpl["Resources"]["EvalRole"]["Properties"]["Policies"]).unwrap();
+    assert!(eval_policies.contains("s3:GetObject"));
+    assert!(
+        !eval_policies.contains("s3:PutObject") && !eval_policies.contains("s3:DeleteObject"),
+        "EvalRole must be strictly read-only on S3 CAS: {eval_policies}"
+    );
+}
+
+#[test]
+fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
+    use jope_carbon::{
+        build_deterministic_single_bin_targz, sha256_lower_hex,
+        verify_ecdsa_p256_spki_pem_signature, CARBON_GIT_SHA, CARBON_RELEASE_TAG, SPEC_RELEASE_TAG,
+    };
+
+    assert_eq!(CARBON_RELEASE_TAG, SPEC_RELEASE_TAG);
+    assert!(!CARBON_GIT_SHA.is_empty());
+
+    let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(|p| p.parent())
+        .expect("repo root");
+    let install_sh = std::fs::read_to_string(repo_root.join("deploy/carbon/install.sh")).unwrap();
+    let install_ps1 = std::fs::read_to_string(repo_root.join("deploy/carbon/install.ps1")).unwrap();
+    assert!(
+        install_sh.contains(CARBON_RELEASE_TAG),
+        "deploy/carbon/install.sh must pin {CARBON_RELEASE_TAG}"
+    );
+    assert!(
+        install_ps1.contains(CARBON_RELEASE_TAG),
+        "deploy/carbon/install.ps1 must pin {CARBON_RELEASE_TAG}"
+    );
+
+    // Feature-isolated `cli` and `eval` Cargo graphs (`CT3` client & worker boundaries)
+    let cli_tree_out = Command::new("cargo")
+        .args([
+            "tree",
+            "--locked",
+            "-p",
+            "jope-carbon",
+            "--no-default-features",
+            "--features",
+            "cli",
+            "--prefix",
+            "none",
+        ])
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .output()
+        .expect("cargo tree --features cli");
+    assert!(cli_tree_out.status.success());
+    let cli_tree = String::from_utf8(cli_tree_out.stdout).unwrap();
+    for forbidden in [
+        "axum ",
+        "tokio ",
+        "jope-service ",
+        "jope-runtime ",
+        "feat-math ",
+        "candle-core ",
+    ] {
+        assert!(
+            !cli_tree.contains(forbidden),
+            "thin CLI feature graph leaked server/engine crate `{forbidden}`:\n{cli_tree}"
+        );
+    }
+
+    let worker_bin = env!("CARGO_BIN_EXE_carbon-worker");
+    let worker_hc = Command::new(worker_bin)
+        .arg("--healthcheck")
+        .output()
+        .expect("carbon-worker --healthcheck");
+    assert!(worker_hc.status.success());
+
+    // Sign a real temporary release bundle with an ephemeral OpenSSL P-256 keypair, install `.tar.gz`
+    // via `install.sh --pub-key`, then verify pure-Rust `verify_ecdsa_p256_spki_pem_signature` + `carbon self-verify`!
+    let tmp = tempfile::tempdir().unwrap();
+    let priv_pem = tmp.path().join("ephemeral_priv.pem");
+    let pub_pem = tmp.path().join("ephemeral_pub.pem");
+    assert!(Command::new("openssl")
+        .args([
+            "ecparam",
+            "-name",
+            "prime256v1",
+            "-genkey",
+            "-noout",
+            "-out"
+        ])
+        .arg(&priv_pem)
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new("openssl")
+        .args(["ec", "-in"])
+        .arg(&priv_pem)
+        .arg("-pubout")
+        .arg("-out")
+        .arg(&pub_pem)
+        .status()
+        .unwrap()
+        .success());
+
+    let src_dir = tmp.path().join("rel-src");
+    let bin_dir = tmp.path().join("bin-out");
+    let cfg_dir = tmp.path().join("cfg-out");
+    std::fs::create_dir_all(&src_dir).unwrap();
+
+    let carbon_bin = std::path::PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+    let carbon_bytes = std::fs::read(&carbon_bin).unwrap();
+    let arch_base = if cfg!(target_arch = "aarch64") {
+        "carbon-linux-aarch64-musl"
+    } else {
+        "carbon-linux-x86_64-musl"
+    };
+    let tgz_name = format!("{arch_base}.tar.gz");
+    let tgz_bytes = build_deterministic_single_bin_targz("carbon", &carbon_bytes).unwrap();
+    std::fs::write(src_dir.join(&tgz_name), &tgz_bytes).unwrap();
+
+    let kek = jope_carbon::CarbonEngineKek::generate().unwrap();
+    let clouds_bytes = serde_json::to_vec_pretty(&serde_json::json!({
+        "schema": "jope-carbon-clouds-v2",
+        "generated_epoch_ms": 1794500000000u64,
+        "clouds": {
+            "prod": {
+                "environment": "prod",
+                "region": "us-east-2",
+                "public_endpoint": "https://prod.example",
+                "engine_kek_pubkey_b64": kek.pubkey_b64(),
+                "regions": [{
+                    "region": "us-east-2",
+                    "public_endpoint": "https://prod.example",
+                    "engine_kek_pubkey_b64": kek.pubkey_b64()
+                }]
+            }
+        }
+    }))
+    .unwrap();
+    std::fs::write(src_dir.join("carbon-clouds.json"), &clouds_bytes).unwrap();
+
+    let sums_content = format!(
+        "{}  {}\n{}  {}\n{}  carbon-clouds.json\n",
+        sha256_lower_hex(&carbon_bytes),
+        arch_base,
+        sha256_lower_hex(&tgz_bytes),
+        tgz_name,
+        sha256_lower_hex(&clouds_bytes),
+    );
+    let sums_path = src_dir.join("SHA256SUMS.txt");
+    std::fs::write(&sums_path, sums_content.as_bytes()).unwrap();
+
+    let sig_der_out = Command::new("openssl")
+        .args(["dgst", "-sha256", "-sign"])
+        .arg(&priv_pem)
+        .arg(&sums_path)
+        .output()
+        .unwrap();
+    assert!(sig_der_out.status.success());
+    let pub_pem_text = std::fs::read_to_string(&pub_pem).unwrap();
+    verify_ecdsa_p256_spki_pem_signature(
+        &pub_pem_text,
+        sums_content.as_bytes(),
+        &sig_der_out.stdout,
+    )
+    .expect("pure-Rust aws-lc-rs ECDSA-P256 verifier must accept valid OpenSSL signature");
+    let mut bad_sums = sums_content.as_bytes().to_vec();
+    bad_sums[0] ^= 0x01;
+    assert!(
+        verify_ecdsa_p256_spki_pem_signature(&pub_pem_text, &bad_sums, &sig_der_out.stdout)
+            .is_err(),
+        "pure-Rust ECDSA-P256 verifier must reject tampered manifest"
+    );
+
+    use base64::Engine as _;
+    let sig_b64 = format!(
+        "{}\n",
+        base64::engine::general_purpose::STANDARD.encode(&sig_der_out.stdout)
+    );
+    std::fs::write(src_dir.join("SHA256SUMS.txt.sig"), sig_b64).unwrap();
+
+    let inst_out = Command::new("sh")
+        .arg(repo_root.join("deploy/carbon/install.sh"))
+        .arg("--source-dir")
+        .arg(&src_dir)
+        .arg("--bin-dir")
+        .arg(&bin_dir)
+        .arg("--config-dir")
+        .arg(&cfg_dir)
+        .arg("--allow-test-pubkey")
+        .arg(&pub_pem)
+        .arg("--skip-ping")
+        .output()
+        .expect("run install.sh with .tar.gz archive");
+    assert!(
+        inst_out.status.success(),
+        "install.sh .tar.gz install failed: {}",
+        String::from_utf8_lossy(&inst_out.stderr)
+    );
+    assert!(bin_dir.join("carbon").is_file());
+    assert!(cfg_dir.join("SHA256SUMS.txt").is_file());
+    assert!(cfg_dir.join("SHA256SUMS.txt.sig").is_file());
+
+    // Tampered signature must cause `carbon self-verify` to fail closed!
+    let bad_sig_file = tmp.path().join("bad.sig");
+    std::fs::write(&bad_sig_file, "MEUCIQD00000000000000000\n").unwrap();
+    let sv_bad = Command::new(bin_dir.join("carbon"))
+        .arg("self-verify")
+        .arg("--sums")
+        .arg(cfg_dir.join("SHA256SUMS.txt"))
+        .arg("--sig")
+        .arg(&bad_sig_file)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("run carbon self-verify with bad sig");
+    assert!(
+        !sv_bad.status.success(),
+        "carbon self-verify must fail closed on invalid signature"
+    );
+
+    // Unknown subcommand must exit with code 2 (not silently run as CSV)!
+    let unk = Command::new(bin_dir.join("carbon"))
+        .arg("nonexistent-verb")
+        .output()
+        .expect("run unknown verb");
+    assert_eq!(unk.status.code(), Some(2));
 }

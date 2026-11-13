@@ -66,6 +66,8 @@ cargo run -q --locked -p jope-records -- elo-history --require-all
     # check.sh runs the secret, dependency, and workflow scans unconditionally;
     # its receipt therefore records the real scan result and scanner failures.
 bash deploy/ci/check.sh
+    # Fail-closed Carbon Jankurai advisory gate (0 new hard or soft findings permitted)
+bash deploy/ci/verify-carbon-jankurai.sh
     # Lambda workspaces (deploy/lambda: standalone Cargo workspaces, not part of the jope build)
 bash deploy/ci/lambda.sh
 python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py
@@ -84,8 +86,10 @@ cargo check --workspace --all-targets --locked
     # Telemetry's optional native Python ABI and engine feature gates are part of the crate contract.
 cargo check -p jope-telemetry --features python --all-targets --locked
 cargo check -p jope-parallel --features telemetry --locked
-    # Feature-isolated Carbon edge binary boundary (ADR-0007 CT3: --no-default-features --features edge)
+    # Feature-isolated Carbon edge, thin-CLI, and worker binary boundaries (ADR-0007 CT3)
 cargo check -p jope-carbon --no-default-features --features edge --bin carbon-edge --locked
+cargo check -p jope-carbon --no-default-features --features cli --bin carbon --locked
+cargo check -p jope-carbon --no-default-features --features eval --bin carbon-worker --locked
     # Rendered systemd units resolve under the rendered roots
 cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
     # Workspace MSRV (decision 8: at most 1.97.1)

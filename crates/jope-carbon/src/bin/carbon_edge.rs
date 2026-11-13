@@ -1,36 +1,19 @@
 //! Regional public-facing `carbon-edge` gateway bootstrap (`--no-default-features --features edge`).
 //!
 //! Compiles strictly without `jope-service`, `jope-runtime`, `feat-math`, or neural weights, and
-//! fails closed on real AWS Lambda (`AWS_LAMBDA_RUNTIME_API`) if `CARBON_PRESIGN_SECRET_HEX`,
-//! `CARBON_AUTH_SECRET_HEX`, or `CARBON_ENGINE_KEK_PUBKEY_B64` are unconfigured (`RT-05`).
+//! fails closed on real AWS Lambda (`AWS_LAMBDA_RUNTIME_API`) if runtime secrets (`CARBON_SECRETS_ARN`
+//! or explicit dev env vars) are unconfigured (`RT-05`).
 
 use std::env;
 use std::process::ExitCode;
 
 use jope_api::carbon::{CarbonRegionCatalog, CarbonRegionDescriptor};
 use jope_carbon::{
-    carbon_https_agent, decode_p256_pubkey_b64, open_engine_invoker, open_remote_cas,
-    parse_s3_cas_url, run_lambda_custom_runtime_loop, CarbonAuthVerifier, CarbonEdgeConfig,
-    CarbonEdgeRouter, CarbonError, CarbonPresigner, CarbonRole,
+    carbon_https_agent, open_engine_invoker, open_remote_cas, parse_s3_cas_url,
+    resolve_edge_secrets, run_lambda_custom_runtime_loop, CarbonEdgeConfig, CarbonEdgeRouter,
+    CarbonError, CarbonRole, CARBON_BUILD_PROFILE, CARBON_BUILD_TARGET, CARBON_GIT_SHA,
+    CARBON_PKG_VERSION, CARBON_RELEASE_TAG,
 };
-
-fn decode_required_32byte_hex(env_key: &str) -> Result<[u8; 32], String> {
-    let val = env::var(env_key).map_err(|_| format!("missing required {env_key}"))?;
-    let raw = hex::decode(val.trim()).map_err(|_| format!("{env_key} must be 64-char hex"))?;
-    if raw.len() != 32 {
-        return Err(format!("{env_key} must decode to exactly 32 bytes"));
-    }
-    let mut out = [0u8; 32];
-    out.copy_from_slice(&raw);
-    Ok(out)
-}
-
-fn decode_32byte_hex_or_default(env_key: &str, fallback: [u8; 32]) -> Result<[u8; 32], String> {
-    match env::var(env_key) {
-        Ok(val) if !val.trim().is_empty() => decode_required_32byte_hex(env_key),
-        _ => Ok(fallback),
-    }
-}
 
 fn run_edge_lambda_loop(runtime_api: &str, is_aws_production: bool) -> Result<(), String> {
     let region = match env::var("CARBON_REGION").or_else(|_| env::var("AWS_REGION")) {
@@ -44,42 +27,8 @@ fn run_edge_lambda_loop(runtime_api: &str, is_aws_production: bool) -> Result<()
     let engine_url = env::var("CARBON_ENGINE_INVOKE_URL")
         .map_err(|_| "missing CARBON_ENGINE_INVOKE_URL for carbon-edge runtime".to_owned())?;
 
-    let presign_secret = if is_aws_production {
-        decode_required_32byte_hex("CARBON_PRESIGN_SECRET_HEX")?
-    } else {
-        decode_32byte_hex_or_default("CARBON_PRESIGN_SECRET_HEX", [0x33u8; 32])?
-    };
-
-    let auth_verifier = if is_aws_production {
-        let auth_hex = env::var("CARBON_AUTH_SECRET_HEX")
-            .map_err(|_| "missing required CARBON_AUTH_SECRET_HEX on AWS Lambda".to_owned())?;
-        Some(CarbonAuthVerifier::from_hex(&auth_hex).map_err(|e| e.to_string())?)
-    } else if let Ok(auth_hex) = env::var("CARBON_AUTH_SECRET_HEX") {
-        if !auth_hex.trim().is_empty() {
-            Some(CarbonAuthVerifier::from_hex(&auth_hex).map_err(|e| e.to_string())?)
-        } else {
-            None
-        }
-    } else {
-        None
-    };
-
-    let engine_kek_pubkey_b64 = if is_aws_production {
-        let b64 = env::var("CARBON_ENGINE_KEK_PUBKEY_B64").map_err(|_| {
-            "missing required CARBON_ENGINE_KEK_PUBKEY_B64 on AWS Lambda".to_owned()
-        })?;
-        let _ = decode_p256_pubkey_b64(&b64).map_err(|e| e.to_string())?;
-        Some(b64.trim().to_owned())
-    } else if let Ok(b64) = env::var("CARBON_ENGINE_KEK_PUBKEY_B64") {
-        if !b64.trim().is_empty() {
-            let _ = decode_p256_pubkey_b64(&b64).map_err(|e| e.to_string())?;
-            Some(b64.trim().to_owned())
-        } else {
-            None
-        }
-    } else {
-        None
-    };
+    let (presigner, auth_verifier, engine_kek_pubkey_b64) =
+        resolve_edge_secrets(&region, is_aws_production)?;
 
     let catalog = if let Ok(domain) = env::var("CARBON_GLOBAL_DOMAIN_SUFFIX") {
         CarbonRegionCatalog::default_17_region_catalog(&domain)
@@ -105,7 +54,7 @@ fn run_edge_lambda_loop(runtime_api: &str, is_aws_production: bool) -> Result<()
             public_base_url,
             enterprise_self_hosted: false,
             catalog,
-            presigner: CarbonPresigner::from_secret(presign_secret),
+            presigner,
             auth_verifier,
             engine_kek_pubkey_b64,
         },
@@ -127,7 +76,11 @@ fn main() -> ExitCode {
             "{}",
             serde_json::json!({
                 "binary": "carbon-edge",
-                "version": env!("CARGO_PKG_VERSION"),
+                "version": CARBON_PKG_VERSION,
+                "release_tag": CARBON_RELEASE_TAG,
+                "git_sha": CARBON_GIT_SHA,
+                "build_target": CARBON_BUILD_TARGET,
+                "build_profile": CARBON_BUILD_PROFILE,
                 "role": CarbonRole::Edge.as_str(),
                 "engine_linked": false,
             })
@@ -142,6 +95,7 @@ fn main() -> ExitCode {
             serde_json::json!({
                 "status": "ok",
                 "role": CarbonRole::Edge.as_str(),
+                "git_sha": CARBON_GIT_SHA,
                 "tls_provider": "aws_lc_rs",
             })
         );
@@ -170,7 +124,11 @@ fn main() -> ExitCode {
             "{}",
             serde_json::json!({
                 "binary": "carbon-edge",
-                "version": env!("CARGO_PKG_VERSION"),
+                "version": CARBON_PKG_VERSION,
+                "release_tag": CARBON_RELEASE_TAG,
+                "git_sha": CARBON_GIT_SHA,
+                "build_target": CARBON_BUILD_TARGET,
+                "build_profile": CARBON_BUILD_PROFILE,
                 "role": CarbonRole::Edge.as_str(),
                 "engine_linked": false,
             })

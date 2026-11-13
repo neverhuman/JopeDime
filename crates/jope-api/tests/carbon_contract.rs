@@ -126,6 +126,7 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         landmark_bundle_b64: "Q1VFTgE=".to_owned(),
         encrypted_cuen: true,
         wrapped_u_dek_b64: Some("Q1VESwE=".to_owned()),
+        upload_id: Some("upl_01jccarb0n0000000000000001".to_owned()),
     };
     assert_eq!(
         serde_json::from_str::<CarbonCreateRunRequest>(
@@ -231,6 +232,9 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         feature_names: vec![],
         rows: vec![],
         encrypted_rows_cuen_b64: Some("Q1VFTgEE".to_owned()),
+        encrypted_rows_cas_sha256: None,
+        predict_upload_id: None,
+        prefer_cas_output: false,
         client_response_pubkey_b64: Some("BA==".to_owned()),
         wrapped_u_dek_b64: Some("Q1VESwE=".to_owned()),
     };
@@ -248,6 +252,8 @@ fn carbon_wire_round_trip_and_strict_unknown_field_rejection() {
         predictions_sha256: "e".repeat(64),
         row_count: 2,
         encrypted_predictions_cuen_b64: Some("Q1VFTgEF".to_owned()),
+        encrypted_predictions_cas_url: None,
+        encrypted_predictions_cas_sha256: None,
         response_cudk_b64: Some("Q1VESwE=".to_owned()),
     };
     assert_eq!(

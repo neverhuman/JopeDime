@@ -7,7 +7,7 @@
   "verified": true,
   "all_checks_passed": true,
   "bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
-  "atomicsoul_storage_dependency": false,
+  "origin_local_storage_dependency": false,
   "buckets_verified": 6,
   "bucket_posture": [
     {

@@ -151,6 +151,10 @@ pub struct CarbonCreateRunRequest {
     /// Base64-encoded `133`-byte `CUDK\x01` envelope wrapping the per-run `U_DEK` to `carbon-engine`'s P-256 KEK.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wrapped_u_dek_b64: Option<String>,
+    /// Optional upload session identifier (`upl_<ulid>`) scoping S3 CAS blobs to `(tenant_id, upload_id)`
+    /// so `DELETE /v1/carbon/runs/{id}` destroys blobs without cross-run collision (`GAP-S3-3`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub upload_id: Option<String>,
 }
 
 /// `CarbonEarlyStopRequest` is a struct signaling cooperative wave-boundary drain ("see it now").
@@ -221,8 +225,30 @@ pub struct CarbonPublicWaveProgress {
     pub failure_message: Option<String>,
 }
 
+fn is_false(v: &bool) -> bool {
+    !*v
+}
+
+/// `CarbonPreparePredictRequest` is a struct requesting a size/SHA-pinned presigned `PUT` URL
+/// for uploading large `CUEN\x01(PredictFeatures)` batches directly to S3 CAS (`GAP-S3-2`).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonPreparePredictRequest {
+    pub tenant_id: String,
+    pub predict_cuen: CarbonUploadSlotWire,
+}
+
+/// `CarbonPreparePredictResponse` is a struct returning a presigned S3/gateway `PUT` target for
+/// large encrypted `/predict` batches.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CarbonPreparePredictResponse {
+    pub upload_id: String,
+    pub input_target: CarbonPresignedTarget,
+}
+
 /// `CarbonPredictRequest` is a struct submitting feature rows (either cleartext in local VPC mode
-/// or `CUEN\x01`-encrypted under `U_DEK` in zero-knowledge cloud mode) for champion inference.
+/// or `CUEN\x01`-encrypted under `U_DEK` inline or via S3 CAS) for champion inference.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CarbonPredictRequest {
@@ -234,13 +260,19 @@ pub struct CarbonPredictRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub encrypted_rows_cuen_b64: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encrypted_rows_cas_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub predict_upload_id: Option<String>,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub prefer_cas_output: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_response_pubkey_b64: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wrapped_u_dek_b64: Option<String>,
 }
 
 /// `CarbonPredictResponse` is a struct returning scalar predictions (or an E2E `CUEN\x01`
-/// response encrypted to `client_response_pubkey_b64`) without exposing model internals.
+/// response inline or via presigned S3 CAS `GET`) without exposing model internals.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CarbonPredictResponse {
@@ -251,6 +283,10 @@ pub struct CarbonPredictResponse {
     pub row_count: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub encrypted_predictions_cuen_b64: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encrypted_predictions_cas_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encrypted_predictions_cas_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub response_cudk_b64: Option<String>,
 }
@@ -276,6 +312,25 @@ pub struct CarbonPingResponse {
     pub enterprise_self_hosted: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub engine_kek_pubkey_b64: Option<String>,
+}
+
+/// `CarbonVersionResponse` is a struct returned by `GET /v1/carbon/version` exposing build
+/// commit provenance, release tag, deployed `ReleaseId`, and `r882` bundle digest (`GAP-V3`).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct CarbonVersionResponse {
+    pub version: String,
+    pub release_tag: String,
+    pub git_sha: String,
+    pub build_target: String,
+    pub region: String,
+    pub enterprise_self_hosted: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub r882_bundle_digest: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub engine_kek_pubkey_b64: Option<String>,
+    pub server_epoch_ms: DecimalU64,
 }
 
 /// `CarbonRegionDescriptor` is a struct describing one regional Carbon Lambda cell endpoint.
