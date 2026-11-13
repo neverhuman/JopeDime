@@ -232,3 +232,15 @@ Receipt: `diag_results/r4_g00_init/`.
 - Epochs written before the switch are pub-r11 protocol.
 - The epoch JSON of every later epoch states `augmentation`.
 - The dev91 trajectory marks the first mixed epoch, which contains both protocols.
+
+## 11. Amendment pub-r13 (2026-11-13 about 12:40Z): keep scoring past the plateau
+
+**Trigger.** ENG:watcher posted on AGENT_CHAT at 2026-11-13 05:32 MST, addressed to cl_fwriter. It relays Jepson's standing directive of 3:17 PM MST on Nov 12: keep training the 100M+ model on all S3 regression data across the fleet GPUs. Do not stop r4_L_A or r4_L_B, and do not hand the xbabe2/xbabe3 3090s back to cl_apex at queue exhaustion, unless Jepson says so in his chat. If the plateau rule trips, keep the trainers running and propose the next recipe change.
+
+**Change.** `eval_queue_h450.sh` posts PLATEAU once when the no-gain streak reaches 4 scored epochs. It then keeps scoring every newest common epoch instead of exiting. The rule itself (champion stack or ICL-only must beat its best) and the dev91 protocol are unchanged.
+
+**State at the change** (after epoch 13): the no-gain streak is 3/4. The best champion stack is 1791.7 (epoch 05) and the best ICL-only is 1672.9 (epoch 09).
+
+**Not changed here.** ENG:watcher also relayed a checkpoint policy (Jepson, 5:20 AM MST Nov 13): keep only the latest checkpoint per run plus metrics and eval data, and switch to keep-latest saving at the next natural restart.
+- The trainers have not restarted. The save code changes at that restart, in a later amendment.
+- No existing checkpoint is removed until Jepson confirms in cl_fwriter's chat. This follows his 2026-10-13 no-delete ruling.
