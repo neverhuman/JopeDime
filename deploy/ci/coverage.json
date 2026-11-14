@@ -214,6 +214,19 @@
       "lanes": [],
       "scope": "Bounded timing study implementation. Local CUDA build and failure receipt retained; no CI performance or GPU qualification claim."
     },
+    "benchmark:crates/jope-carbon/src/cli/bench_suite.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [
+        "rust-check",
+        "rust-test"
+      ],
+      "scope": "Carbon 11-comparator same-split benchmark CLI (`carbon bench`); unit-tested in rust-test, live cloud benchmarks are opt-in and not run in CI."
+    },
     "benchmark:crates/jope-engine/examples/gpr_cuda_bench.rs": {
       "discovery": {
         "kind": "benchmark-source"
@@ -818,6 +831,7 @@
       "discovery": {
         "dependencies": [
           "dep:clap",
+          "dep:jope-comparators",
           "edge"
         ],
         "kind": "feature"
@@ -828,7 +842,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Feature-isolated thin client CLI feature (`--no-default-features --features cli`) for the user-facing `carbon` binary; excludes server/engine/neural crates."
+      "scope": "Feature-isolated thin client CLI feature (`--no-default-features --features cli`) for the user-facing `carbon` binary and pure-Rust `jope-comparators` `carbon bench` harness; excludes server/engine/neural crates."
     },
     "feature:jope-carbon/default": {
       "discovery": {

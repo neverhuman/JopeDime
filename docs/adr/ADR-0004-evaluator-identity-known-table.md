@@ -22,6 +22,29 @@ Old receipts remain verifiable and auditable under the identity that produced th
 (WP2's `gpr.rs`, `registry.rs`) creates a new current identity without invalidating history. Reviewers see every
 accepted historical identity in one file.
 
+## Current identity transition: Carbon v1.2.0 comparators CLI lockfile edge (2026-11-14)
+
+PR #2314 links the existing workspace crate `jope-comparators` as an optional path
+dependency under `jope-carbon`'s `cli` feature so `carbon bench` can score pure-Rust
+comparators on identical `(FIT, HOLDOUT)` splits. No external crate, version, feature,
+or `feat-math` source changes, and `carbon-edge` (`CT3`) remains isolated, but the
+added `jope-carbon -> jope-comparators` workspace edge updates `Cargo.lock` (an
+ADR-0004 evaluator identity input). `implementation_sha256` changes from
+`6367505c0d69f1a137321e8149d86cbad7f12beca37710d51ef22e26b0a3968f` to
+`806322b53c80e6552981aa059f31ab35bcfd09040eb2830c14cd276eb6f93d7d`;
+`cargo_lock_sha256` changes from
+`cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af` to
+`8356f6cc113abcb7e99ac83fb627766d95e4a9d974f655e49518784b36106b36`; and
+`identity_digest` changes from
+`75f4f632406cad050c29cd51d5cd60acaeb733dc241888ab9694294e7f1fbf69` to
+`e4fe2b6ac9f109eeb9a93c30e04eb452c6eacdb5ea4db45f67d58e16052e518e`. The DSL ABI
+is unchanged. The regeneration ran
+`JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=8c055b496da1aa1019ff0f521f2e3b3708699f4b cargo nextest run --locked -P pr -p feat-math --test compat_freeze`
+(13/13 passed). The append-only historical chain records both fixture successors in
+`crates/feat-math/tests/fixtures/compat_freeze/transitions/carbon_v120_comparators_lockfile_identity_rebaseline.v1.json`.
+The append-only known-identity table gains no row because this identity has no
+shipped receipt.
+
 ## Current identity transition: campaign one-shot SHA-256 helper (2026-11-12)
 
 The remaining one-shot SHA-256 hex calls in `jope-dime-regressor` now use

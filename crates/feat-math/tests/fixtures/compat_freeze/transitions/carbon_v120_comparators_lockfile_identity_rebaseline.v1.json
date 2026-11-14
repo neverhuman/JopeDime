@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "PR #2314 linked the existing workspace crate jope-comparators as an optional path dependency under jope-carbon's cli feature for the carbon bench 11-comparator benchmark harness. That intra-workspace Cargo.lock edge advances cargo_lock_sha256 without adding any external package, version, feature, or evaluator behavior change. Append this ADR-0004 evaluator identity and lineage fixture provenance edge after campaign_oneshot_sha256_identity_rebaseline. DSL ABI, known identities, and behavior fixtures stay unchanged. No shipped receipt proves this identity existed.",
+  "plan_reference": "PR #2314; ADR-0004 identity-only procedure",
+  "source_commit": "8c055b496da1aa1019ff0f521f2e3b3708699f4b",
+  "base_commit": "230f134aab74065b47e05f9782b28930b6ce1fdb",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "f6fa0fc7587bd5dbd263c0033c357a693dfe472a6dc2cc025c702242a8133a51",
+      "after": "e17f918084b75529273689988eb9cd09f58873af92616cbbee461a6dcc524aa6"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "ea5d6c2c5ee4ff16db1007c815ca27af24ec18ed5c294900f2ad7cc3549e5db2",
+      "after": "85d361c0757cc55c68781d80abeffdd9dedb3bbd191e74d4d20d1f56895500d8"
+    }
+  ],
+  "before_identity_digest": "75f4f632406cad050c29cd51d5cd60acaeb733dc241888ab9694294e7f1fbf69",
+  "after_identity_digest": "e4fe2b6ac9f109eeb9a93c30e04eb452c6eacdb5ea4db45f67d58e16052e518e",
+  "before_implementation_sha256": "6367505c0d69f1a137321e8149d86cbad7f12beca37710d51ef22e26b0a3968f",
+  "after_implementation_sha256": "806322b53c80e6552981aa059f31ab35bcfd09040eb2830c14cd276eb6f93d7d",
+  "before_cargo_lock_sha256": "cbd61e7462acc04113899d15debd4cfc07b949598a54978600191c3acd5b19af",
+  "after_cargo_lock_sha256": "8356f6cc113abcb7e99ac83fb627766d95e4a9d974f655e49518784b36106b36",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
