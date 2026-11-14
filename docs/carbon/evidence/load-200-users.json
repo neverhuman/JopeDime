@@ -12,73 +12,73 @@
   "succeeded": 200,
   "failed": 0,
   "error_rate_pct": 0.0,
-  "wall_clock_seconds": 11.599,
-  "effective_e2e_runs_per_sec": 17.243,
+  "wall_clock_seconds": 11.255,
+  "effective_e2e_runs_per_sec": 17.769,
   "register_latency_ms": {
     "count": 50,
-    "p50": 759.18,
-    "p95": 1112.22,
-    "p99": 1132.1
+    "p50": 1275.96,
+    "p95": 1803.56,
+    "p99": 1809.35
   },
   "e2e_encrypted_run_predict_shred_latency_ms": {
     "count": 200,
-    "min": 6201.13,
-    "p50": 9533.11,
-    "p95": 10362.38,
-    "p99": 10413.45,
-    "max": 10491.95
+    "min": 6882.06,
+    "p50": 8392.11,
+    "p95": 9515.44,
+    "p99": 9669.97,
+    "max": 9958.93
   },
   "all_cuen_encrypted": true,
   "all_shredded_after_run": true,
   "sample_holdout_r2": 0.9999784989766052,
   "sample_holdout_rmse": 0.022207636589938393,
-  "total_estimated_aws_usd_200_runs": 0.07053318,
-  "mean_estimated_aws_usd_per_run": 0.00035267,
+  "total_estimated_aws_usd_200_runs": 0.05974617,
+  "mean_estimated_aws_usd_per_run": 0.00029873,
   "per_region": {
     "us-east-2": {
       "total": 40,
       "ok": 40,
       "failed": 0,
-      "usd": 0.01367852,
-      "p50_run_ms": 8854.14,
-      "p95_run_ms": 9333.62,
-      "p99_run_ms": 9403.37
+      "usd": 0.01160677,
+      "p50_run_ms": 7762.63,
+      "p95_run_ms": 8202.37,
+      "p99_run_ms": 8347.3
     },
     "us-east-1": {
       "total": 40,
       "ok": 40,
       "failed": 0,
-      "usd": 0.01449067,
-      "p50_run_ms": 9602.98,
-      "p95_run_ms": 9869.27,
-      "p99_run_ms": 10032.96
+      "usd": 0.01216107,
+      "p50_run_ms": 8393.55,
+      "p95_run_ms": 8699.78,
+      "p99_run_ms": 9824.51
     },
     "us-west-2": {
       "total": 40,
       "ok": 40,
       "failed": 0,
-      "usd": 0.01413131,
-      "p50_run_ms": 8854.16,
-      "p95_run_ms": 9351.24,
-      "p99_run_ms": 9649.36
+      "usd": 0.01164176,
+      "p50_run_ms": 7563.48,
+      "p95_run_ms": 8054.56,
+      "p99_run_ms": 8180.98
     },
     "eu-central-1": {
       "total": 40,
       "ok": 40,
       "failed": 0,
-      "usd": 0.0137797,
-      "p50_run_ms": 9826.36,
-      "p95_run_ms": 10253.18,
-      "p99_run_ms": 10353.69
+      "usd": 0.01212337,
+      "p50_run_ms": 9156.61,
+      "p95_run_ms": 9635.88,
+      "p99_run_ms": 9669.97
     },
     "eu-west-1": {
       "total": 40,
       "ok": 40,
       "failed": 0,
-      "usd": 0.01445298,
-      "p50_run_ms": 10225.32,
-      "p95_run_ms": 10413.45,
-      "p99_run_ms": 10491.95
+      "usd": 0.0122132,
+      "p50_run_ms": 9175.57,
+      "p95_run_ms": 9533.25,
+      "p99_run_ms": 9958.93
     }
   },
   "failures": []

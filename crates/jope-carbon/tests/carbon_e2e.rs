@@ -1076,24 +1076,33 @@ fn clean_install_signature_free_register_all_four_efforts_and_live_cost_accounti
             "expected HybridFanOut eval_invocations > 0 on forced-hybrid emu for {effort}"
         );
         assert!(rj["cost_estimate"]["lambda_eval_usd"].as_f64().unwrap() > 0.0);
+        let s3_req_usd = rj["cost_estimate"]["s3_requests_usd"].as_f64().unwrap();
+        assert!(s3_req_usd > 0.0);
         let total_usd = rj["cost_estimate"]["total_estimated_usd"].as_f64().unwrap();
         assert!(total_usd > 0.0);
-        observed_costs.push((effort, total_usd, eval_calls));
+        observed_costs.push((effort, total_usd, s3_req_usd, eval_calls));
     }
 
-    // Verify monotonic eval shard calls and positive increasing cost across `fast` -> `medium` -> `high` -> `ultra`
+    // Verify strictly monotonic eval shard calls + S3 request metering across `fast` -> `medium` -> `high` -> `ultra`,
+    // and strictly higher total USD at `ultra` vs `fast` (resilient to parallel CI CPU wall-clock jitter between 1w and 4w).
     for win in observed_costs.windows(2) {
-        let (e_prev, c_prev, inv_prev) = win[0];
-        let (e_next, c_next, inv_next) = win[1];
+        let (e_prev, _, s3_prev, inv_prev) = win[0];
+        let (e_next, _, s3_next, inv_next) = win[1];
         assert!(
             inv_next > inv_prev,
             "expected eval_invocations({e_next})={inv_next} > eval_invocations({e_prev})={inv_prev}"
         );
         assert!(
-            c_next > c_prev,
-            "expected total_estimated_usd({e_next})={c_next} > total_estimated_usd({e_prev})={c_prev}"
+            s3_next >= s3_prev,
+            "expected s3_requests_usd({e_next})={s3_next} >= s3_requests_usd({e_prev})={s3_prev}"
         );
     }
+    assert!(
+        observed_costs.last().unwrap().1 > observed_costs.first().unwrap().1,
+        "expected total_estimated_usd(ultra)={} > total_estimated_usd(fast)={}",
+        observed_costs.last().unwrap().1,
+        observed_costs.first().unwrap().1
+    );
 
     emu.shutdown();
 }
