@@ -28,7 +28,7 @@ Evaluated via memory-capped pure-CPU distributed MKL + `openblas64` scoring (`sc
 | `lw2_cooled_plus_m_h455_v2_80_20` | `1681.65` | `1831.16` | `1824.30` | `1824.83` | `1855.65` | `1859.90` | `1859.26` (`1.7228`) | **`1860.76`** | `[1729.28, 2046.53]` | **`+1.13`** |
 | `lw2_cooled_plus_m_h455_v2_65_35` | `1681.34` | **`1836.72`** | `1827.07` | `1828.32` | `1856.22` | `1860.10` | `1860.20` (`1.7238`) | **`1861.34`** | `[1730.43, 2047.49]` | **`+1.71`** |
 
-All 5/5 Stage 1 matrices exceed the prior `1859.63` Wave-2A+ Cooled Soup best. Stage 2 (`fleet_L_x1_h455_maxent_v2` `ckpt_valley_001.pt` + cross-scale `L+M` soups) is running on `xbabe0` (`24` MKL shards inside `MemoryHigh=48G/MemoryMax=58G`) + `xbabe2` (`2` persistent reverse-depth tail-stealers inside `MemoryHigh=10G/MemoryMax=14G`).
+All 5/5 Stage 1 matrices exceed the prior `1859.63` Wave-2A+ Cooled Soup best. Stage 2 (`fleet_L_x1_h455_maxent_v2` `ckpt_valley_001.pt` + cross-scale `L+M` soups) runs on `xbabe0` (`24` MKL shards inside `MemoryHigh=48G/MemoryMax=58G`) + `xbabe2` (`2` `shard_tail` + `4` `cost_desc` MKL stealers inside `MemoryHigh=10–12G/MemoryMax=14–16G`), followed automatically on pure CPU by Stage 3 (`score_h456_stage3_distributed_cpu.py`: `M` `ckpt_valley_003.pt` @ `step 40,525` + `L` `ckpt_valley_004.pt` @ `step 108,437` + 3-valley `M` and multi-valley `L+M` soups, keeping all trainers untouched).
 
 ## Verification
 ```bash

@@ -34,7 +34,12 @@ if str(HERE) not in sys.path:
 
 from mmap_bank_h456 import EXPECTED_COHORTS, MmapF64BankH456, SEALED_TOKENS  # noqa: E402
 from score_h455_distributed_cpu import assign_lpt_buckets  # noqa: E402
-from steal_distributed_tails_cpu import build_reverse_depth_priority  # noqa: E402
+from score_h456_stage3_distributed_cpu import build_stage3_spec_tuple  # noqa: E402
+from steal_distributed_tails_cpu import (  # noqa: E402
+    build_cost_desc_priority,
+    build_reverse_depth_priority,
+    priority_filename_for_order,
+)
 from train_104m_gp_flywheel_h456_ultraent import (  # noqa: E402
     ExactGPTeacherShardStoreH456,
     build_arg_parser,
@@ -406,6 +411,34 @@ def gate_11_distributed_tail_steal_and_stage1_summary() -> dict:
     }
 
 
+def gate_12_cost_desc_stealer_and_stage3_spec() -> dict:
+    pending = [(i, float((91 - i) * 100)) for i in range(91)]
+    buckets = assign_lpt_buckets(pending, n_xbabe0=24)
+    shards_csv = [",".join(str(x) for x in b) for b in buckets]
+    cost_prio = build_cost_desc_priority(shards_csv, total_contexts=91)
+    assert len(cost_prio) == 91 and sorted(cost_prio) == list(range(91))
+    assert priority_filename_for_order("shard_tail") == "priority_order.json"
+    assert priority_filename_for_order("cost_desc") == "priority_order_cost_desc.json"
+    # Heavy 1600x86 contexts [40, 51, 63, 65, 74] must rank in the top 5 of cost_desc order
+    heavy_five = {40, 51, 63, 65, 74}
+    assert set(cost_prio[:5]) == heavy_five, f"expected top-5 heavy contexts {heavy_five}, got {cost_prio[:5]}"
+
+    spec_str, out_dirs = build_stage3_spec_tuple(
+        Path("/nonexistent/m_v3.pt"),
+        Path("/nonexistent/out_m_v3"),
+        Path("/nonexistent/l_v4.pt"),
+        Path("/nonexistent/out_l_v4"),
+    )
+    assert "m_v3_soup50|ema_soup50|M:" in spec_str and "l_v4_soup50|ema_soup50|L:" in spec_str
+    assert len(out_dirs) == 2
+    return {
+        "gate": "12_cost_desc_stealer_and_stage3_spec",
+        "passed": True,
+        "top5_cost_desc_indices": cost_prio[:5],
+        "stage3_spec_arms": 2,
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--mmap-bank", default="/home/ubuntu/jope-data/h450-fleet-agy/banks/mmap_v1")
@@ -433,6 +466,7 @@ def main() -> None:
         gate_9_static_and_jankurai_audit([HERE, Path(args.extra_audit_dir)]),
         gate_10_end_to_end_worker_streams(mmap_dir, shards_dir),
         gate_11_distributed_tail_steal_and_stage1_summary(),
+        gate_12_cost_desc_stealer_and_stage3_spec(),
     ]
     receipt = {
         "schema": "jope.h456.selftest_receipt/v1",

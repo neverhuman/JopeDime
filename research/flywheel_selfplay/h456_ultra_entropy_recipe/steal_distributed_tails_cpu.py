@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Non-Destructive Reverse-Depth Tail-Stealing MKL CPU Pool (`steal_distributed_tails_cpu.py`).
+"""Non-Destructive Reverse-Depth & Cost-Sorted Tail-Stealing MKL CPU Pool (`steal_distributed_tails_cpu.py`).
 
 Designed to run on `xbabe2` inside:
-  CUDA_VISIBLE_DEVICES="" systemd-run --user --scope -p MemoryHigh=10G -p MemoryMax=14G \
-    choom -n 500 -- taskset -c 32-63,80-127 nice -n 19 /home/ubuntu/.venv/bin/python3 -u ...
+  CUDA_VISIBLE_DEVICES="" systemd-run --user --scope -p MemoryHigh=12G -p MemoryMax=16G \
+    choom -n 800 -- taskset -c 32-63,80-127 nice -n 19 /home/ubuntu/.venv/bin/python3 -u ...
 
 Key properties:
-  - Prioritizes tail positions of `xbabe0_pool.json` buckets (`depth max-1 .. 0`) so `xbabe0`
-    never wastes in-flight `b[0]` work and straggler multi-context buckets are eliminated first.
+  - Supports `--order shard_tail` (reverse bucket depth `max-1 .. 0`) and `--order cost_desc`
+    (heaviest `(s_rows + a_rows) * (cols + 8)` contexts first, breaking ties by deeper shard position)
+    while sharing a single POSIX-atomic `os.mkdir(claims_dir / ...)` lock directory.
   - Persistent worker processes load slim checkpoints once (`~0.75 GiB` RSS/worker for `M`,
-    `~1.5 GiB` RSS/worker for `L` -> `--workers 2` for `L` stays `~3.2 GiB`, well below `MemoryHigh=10G`).
+    `~1.5 GiB` RSS/worker for `L` -> `--workers 4` for `L` stays `~6.0 GiB`, well below `MemoryHigh=12G`).
   - Passes a per-fold `abort_check` into `_eval_prepped_context_gpu` so workers abort redundant
     in-flight folds within seconds once `{cid}.npz` lands or all output directories hit `91/91`.
   - Claims 1 context at a time via POSIX-atomic `os.mkdir(claims_dir / ...)` (zero deletions) and
@@ -99,6 +100,48 @@ def build_reverse_depth_priority(shards_csv: list[str], total_contexts: int = 91
     return priority
 
 
+def build_cost_desc_priority(
+    shards_csv: list[str],
+    bank_path: Path = BANK_D91,
+    total_contexts: int = 91,
+) -> list[int]:
+    """Orders contexts `(0..total_contexts-1)` by descending `(s_rows + a_rows) * (cols + 8)` cost,
+    breaking ties toward deeper shard positions so heavy tail stragglers are stolen first."""
+    import numpy as np
+
+    depth_map: dict[int, int] = {}
+    for s in shards_csv:
+        items = [int(x.strip()) for x in s.split(",") if x.strip()]
+        for depth, idx in enumerate(items):
+            if idx not in depth_map or depth > depth_map[idx]:
+                depth_map[idx] = depth
+
+    costs: dict[int, float] = {}
+    if bank_path.is_file():
+        with np.load(bank_path, allow_pickle=False) as zb:
+            assert "ya" not in zb.files, "audit labels forbidden in search bank!"
+            ss, sa = zb["s_shape"], zb["a_shape"]
+            n_bank = min(total_contexts, int(ss.shape[0]))
+            for idx in range(n_bank):
+                n_tot = int(ss[idx, 0]) + int(sa[idx, 0])
+                f_raw = int(sa[idx, 1])
+                costs[idx] = float(n_tot) * float(f_raw + 8) + 8000.0
+    for idx in range(total_contexts):
+        if idx not in costs:
+            costs[idx] = float(total_contexts - idx)
+
+    return sorted(
+        range(total_contexts),
+        key=lambda idx: (-costs[idx], -depth_map.get(idx, 0), idx),
+    )
+
+
+def priority_filename_for_order(order_mode: str) -> str:
+    if order_mode == "cost_desc":
+        return "priority_order_cost_desc.json"
+    return "priority_order.json"
+
+
 def run_tail_steal_worker(a: argparse.Namespace) -> None:
     sys.path.extend(
         [
@@ -116,8 +159,9 @@ def run_tail_steal_worker(a: argparse.Namespace) -> None:
 
     cfg = json.loads(Path(a.stage_cfg).read_text())
     multi_specs = str(cfg["multi_specs"])
-    priority_indices = [int(x) for x in json.loads((Path(a.claims_dir) / "priority_order.json").read_text())]
     claims_dir = Path(a.claims_dir)
+    prio_file = claims_dir / priority_filename_for_order(str(a.order))
+    priority_indices = [int(x) for x in json.loads(prio_file.read_text())]
     dev = torch.device("cpu")
 
     specs = C._parse_multi_specs(multi_specs, "", "auto", "", dev)
@@ -152,6 +196,7 @@ def run_tail_steal_worker(a: argparse.Namespace) -> None:
             {
                 "event": "worker_ready",
                 "worker_id": a.worker_id,
+                "order": a.order,
                 "pid": os.getpid(),
                 "threads": torch.get_num_threads(),
                 "loaded_pending_ctxs": len(ctx_data),
@@ -233,6 +278,7 @@ def run_tail_steal_worker(a: argparse.Namespace) -> None:
         rec = {
             "event": "worker_ctx_done",
             "worker_id": a.worker_id,
+            "order": a.order,
             "idx": idx,
             "cid": c,
             "specs_written": specs_written,
@@ -250,6 +296,7 @@ def run_tail_steal_worker(a: argparse.Namespace) -> None:
             {
                 "event": "worker_exit",
                 "worker_id": a.worker_id,
+                "order": a.order,
                 "worker_completed_total": completed_by_worker,
             },
             sort_keys=True,
@@ -269,16 +316,25 @@ def run_tail_steal_coordinator(a: argparse.Namespace) -> None:
     claims_dir = Path(a.claims_dir) if a.claims_dir else (stage_cfg_p.parent / "tail_claims_v1")
     claims_dir.mkdir(parents=True, exist_ok=True)
 
-    priority = build_reverse_depth_priority(cfg.get("shards", []), total_contexts=91)
-    (claims_dir / "priority_order.json").write_text(json.dumps(priority) + "\n")
+    order_mode = str(a.order)
+    if order_mode == "cost_desc":
+        priority = build_cost_desc_priority(cfg.get("shards", []), bank_path=BANK_D91, total_contexts=91)
+    else:
+        priority = build_reverse_depth_priority(cfg.get("shards", []), total_contexts=91)
+    prio_p = claims_dir / priority_filename_for_order(order_mode)
+    tmp_prio = claims_dir / f".{prio_p.name}.{os.getpid()}.tmp"
+    tmp_prio.write_text(json.dumps(priority) + "\n")
+    os.replace(tmp_prio, prio_p)
 
     print(
         json.dumps(
             {
                 "event": "tail_steal_start",
+                "order": order_mode,
                 "stage_cfg": str(stage_cfg_p),
                 "claims_dir": str(claims_dir),
                 "workers": int(a.workers),
+                "worker_id_offset": int(a.worker_offset),
                 "threads_per_worker": int(a.threads),
                 "first_15_priority_indices": priority[:15],
                 "initial_counts": {od.name: steal_count_npz(od) for od in out_dirs},
@@ -298,7 +354,8 @@ def run_tail_steal_coordinator(a: argparse.Namespace) -> None:
     env["NUMEXPR_NUM_THREADS"] = "1"
 
     procs: list[tuple[int, subprocess.Popen]] = []
-    for wid in range(int(a.workers)):
+    for i_w in range(int(a.workers)):
+        wid = int(a.worker_offset) + i_w
         cmd: list[str] = []
         if a.affinity.strip():
             cmd.extend(["taskset", "-c", a.affinity.strip()])
@@ -314,6 +371,8 @@ def run_tail_steal_coordinator(a: argparse.Namespace) -> None:
                 "worker",
                 "--worker-id",
                 str(wid),
+                "--order",
+                order_mode,
                 "--stage-cfg",
                 str(stage_cfg_p),
                 "--claims-dir",
@@ -340,6 +399,7 @@ def run_tail_steal_coordinator(a: argparse.Namespace) -> None:
             json.dumps(
                 {
                     "event": "tail_steal_progress",
+                    "order": order_mode,
                     "alive_workers": alive,
                     "claimed": claimed_dirs,
                     "stealer_done": done_claims,
@@ -378,6 +438,7 @@ def run_tail_steal_coordinator(a: argparse.Namespace) -> None:
         json.dumps(
             {
                 "event": "tail_steal_workers_finished",
+                "order": order_mode,
                 "bad_workers": bad,
                 "terminated_cleanly_at_91": terminated_cleanly_at_91,
                 "final_counts": {od.name: steal_count_npz(od) for od in out_dirs},
@@ -396,7 +457,9 @@ def run_tail_steal_coordinator(a: argparse.Namespace) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--mode", choices=("coordinator", "worker"), default="coordinator")
+    ap.add_argument("--order", choices=("shard_tail", "cost_desc"), default="shard_tail")
     ap.add_argument("--worker-id", type=int, default=0)
+    ap.add_argument("--worker-offset", type=int, default=0)
     ap.add_argument("--stage-cfg", required=True, help="Path to stage xbabe0_pool.json")
     ap.add_argument("--claims-dir", default="", help="Directory for POSIX-atomic mkdir claims")
     ap.add_argument("--python-bin", default="/home/ubuntu/.venv/bin/python3")
