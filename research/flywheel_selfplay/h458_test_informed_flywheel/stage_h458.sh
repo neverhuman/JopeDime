@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Stages the H458 runtime copy: create-once, read-only, with the source commit, CODE.sha256 and pinned dependencies.
-# usage: stage_h458.sh [<lane dir>] [<stage dir>]
+# usage: stage_h458.sh [<lane dir>] [<stage dir>]   (default stage dir: /home/ubuntu/h458-stage/code-<commit>)
 set -euo pipefail
 LANE="${1:-/home/ubuntu/JopeDime/.agent/worktrees/h458-flywheel}"
-STAGE="${2:-/home/ubuntu/h458-stage/code}"
+STAGE="${2:-/home/ubuntu/h458-stage/code-$(git -C "$LANE" rev-parse --short=10 HEAD)}"
 WAVE="research/flywheel_selfplay/h458_test_informed_flywheel"
 H452="/home/ubuntu/h452-stage/code"
 VENDOR_FILES="cols_104m_e8_gpresid_h452.py stack_guard_cv7_h452.py"

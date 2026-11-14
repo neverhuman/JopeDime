@@ -48,16 +48,28 @@ def row_keys(mat: np.ndarray) -> list[bytes]:
     return [hashlib.blake2b(c[i].tobytes(), key=HASH_KEY, digest_size=16).digest() for i in range(c.shape[0])]
 
 
-def feature_stratum(x_rows: np.ndarray, k: int = 5) -> np.ndarray:
-    """Cross-fitting stratum of every row from its FEATURE bytes only.
+STRATA_KEY = b"h458-k5-strata-v1"
+_CANON_NAN = np.frombuffer((0x7FF8000000000000).to_bytes(8, "little"), dtype="<f8")[0]
 
-    Rows that share X share a stratum (so a held-out label cannot leak through a twin row), and a row can be routed
-    to the model that never trained on it without reading its label.
+
+def canon_feature_rows(x_rows: np.ndarray) -> np.ndarray:
+    """Canonical feature bytes shared by Tracks D, S and G: float64 little-endian, -0.0 -> +0.0, one NaN pattern."""
+    c = np.array(x_rows, dtype="<f8", order="C", copy=True)
+    c[c == 0.0] = 0.0
+    c[np.isnan(c)] = _CANON_NAN
+    return c
+
+
+def feature_stratum(x_rows: np.ndarray, k: int = 5) -> np.ndarray:
+    """Cross-fitting stratum of every row from its canonical FEATURE bytes only.
+
+    `k = blake2b(canon(X_row), digest_size=8, key=b"h458-k5-strata-v1") mod 5`. Rows that share X share a stratum
+    (so a held-out label cannot leak through a twin row), and a row can be routed to the model that never trained
+    on it without reading its label.
     """
-    c = np.ascontiguousarray(x_rows, dtype=np.float64)
-    key = HASH_KEY + b"-stratum"
+    c = canon_feature_rows(x_rows)
     return np.fromiter(
-        (int.from_bytes(hashlib.blake2b(c[i].tobytes(), key=key, digest_size=8).digest(), "little") % k for i in range(c.shape[0])),
+        (int.from_bytes(hashlib.blake2b(c[i].tobytes(), digest_size=8, key=STRATA_KEY).digest(), "little") % k for i in range(c.shape[0])),
         dtype=np.int64,
         count=c.shape[0],
     )

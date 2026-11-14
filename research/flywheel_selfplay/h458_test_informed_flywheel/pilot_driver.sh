@@ -5,7 +5,7 @@
 set -uo pipefail
 FAM="$1"; INIT="$2"; KEY="$3"; EXTRA="${4:-}"; TAG="${5:-p1}"
 [ -n "$EXTRA" ] || EXTRA='{}'
-CODE="${CODE:-/home/ubuntu/h458-stage/code}"
+CODE="${CODE:-$(cd "$(dirname "$0")" && pwd)}"
 Q=/home/ubuntu/jope-data/h458-quarantine
 ARMS="${ARMS:-rand canon}"
 mkdir -p "$Q/runs" "$Q/probe"

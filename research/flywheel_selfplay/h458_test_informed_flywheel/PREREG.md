@@ -45,6 +45,17 @@ one feature build; AdamW(0.9, 0.98), weight decay 0, 300-step warmup, hold to 60
 5e-6, clip 1.0, EMA 0.999; peak LR 5e-5; budget 2,000 query exposures per unique pool row with checkpoints at 250,
 500, 1,000, 1,500 and 2,000.
 
+An exposure is one query row in one forward pass, so a row scored in all three target spaces of a micro-batch counts
+three: 2,000 exposures per row are about 667 three-mode appearances. Exposures and split commitments are booked only
+when their gradients reach an optimizer step. A step with a non-finite gradient norm is dropped.
+
+The GP-residual space is not trained in this cycle. The H458 block that enters the stack therefore carries the three
+direct columns only; it does not emit `icl_e8_gp_resid_cv7` from a specialist.
+
+Cross-fitting strata (skill arm, shared with Tracks S and G): `k = blake2b(canon(X_row), digest_size=8,
+key=b"h458-k5-strata-v1") mod 5` on canonical feature bytes (float64 little-endian, -0.0 to +0.0, one NaN pattern,
+no target).
+
 Pilot families: 60b608db, 90a58676, f2893c38, 469b72b7. Pilot arms:
 
 | Arm | Change from the treatment |
@@ -53,7 +64,7 @@ Pilot families: 60b608db, 90a58676, f2893c38, 469b72b7. Pilot arms:
 | `canon` | canonical feature-ID slots in training and in the probe |
 | `lr1e-5`, `lr1e-4` (60b608db only) | peak LR |
 | `tiny` (60b608db only) | 48–100 context rows for the first 30% of the budget, then the treatment mix |
-| `skill` | leave-context-out pool: every row of the probed context removed by row bytes; one run per context |
+| `skill` | cross-fitted: five runs per family, each without one feature-hash stratum, warm-started from the fair h449 M v2; a row is scored by the run that never trained on its stratum |
 
 ## Measurement and gates
 

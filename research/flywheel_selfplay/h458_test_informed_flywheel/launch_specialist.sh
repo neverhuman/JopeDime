@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Launches one H458 specialist run from the staged runtime copy, with the resource caps the wave was admitted under.
 # usage: launch_specialist.sh <run_name> <family8> <arm rand|canon> <init_ckpt> <init_key> ['{"json": "overrides"}']
-# env:   VRAM_FRAC (default 0.13)  WORKERS (default 8)  CODE (default /home/ubuntu/h458-stage/code)
+# env:   VRAM_FRAC (default 0.13)  WORKERS (default 8)  CODE (default: the folder this script is in)
 set -euo pipefail
 NAME="$1"; FAM="$2"; ARM="$3"; INIT="$4"; KEY="$5"; EXTRA="${6:-}"
 [ -n "$EXTRA" ] || EXTRA='{}'
-CODE="${CODE:-/home/ubuntu/h458-stage/code}"
+CODE="${CODE:-$(cd "$(dirname "$0")" && pwd)}"
 RUN="/home/ubuntu/jope-data/h458-quarantine/runs/$NAME"
 mkdir -p "$RUN"
 /usr/bin/python3 -B - "$RUN/config.json" "$FAM" "$ARM" "$EXTRA" <<'PY'

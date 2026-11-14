@@ -168,6 +168,7 @@ def main() -> None:
     ap.add_argument("--max-items", type=int, default=0)
     ap.add_argument("--log-every-s", type=float, default=30.0)
     ap.add_argument("--no-step-abort-s", type=float, default=900.0)
+    ap.add_argument("--last-every-s", type=float, default=600.0, help="time-based ckpt_last, besides the milestone saves")
     a = ap.parse_args()
 
     cfg = {**DEFAULTS, **json.loads(Path(a.config).read_text())}
@@ -205,11 +206,16 @@ def main() -> None:
             "oom": 0,
             "oom_streak": 0,
             "skips": 0,
+            "skip_reasons": {},
+            "nonfinite_grads": 0,
+            "ctx_hist": {},
             "dup_splits": 0,
             "train_s": 0.0,
             "config_sha256": hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()).hexdigest(),
             "pool_sha256": pool.sha256,
         }
+    for _k, _v in (("skip_reasons", {}), ("nonfinite_grads", 0), ("ctx_hist", {})):
+        state.setdefault(_k, _v)
     if len(state["seq"]) != a.workers:
         raise SystemExit("--workers must match the run being resumed")
     ledger: set[bytes] = set(ck["ledger"]) if ck else set()
@@ -325,7 +331,9 @@ def main() -> None:
         }
     )
 
-    t_run = t_log = t_step = time.time()
+    t_run = t_log = t_step = t_last = time.time()
+    pend: list[tuple[bytes, str, int]] = []  # (split commitment, family, exposures) of the open accumulation group
+    saved_step = int(state["step"])
     s0 = float(state["train_s"])
     run = {"loss": {m: [0.0, 0] for m in E.MODES}, "eps": 0, "qrows": 0, "wait": 0.0, "items": 0}
     opt.zero_grad(set_to_none=True)
@@ -357,9 +365,11 @@ def main() -> None:
             run["items"] += 1
             if "skip" in item:
                 state["skips"] += 1
+                why = str(item["skip"])[:60]
+                state["skip_reasons"][why] = state["skip_reasons"].get(why, 0) + 1
                 if state["skips"] in (1, 10, 100) or state["skips"] % 1000 == 0:
                     log({"event": "skip", "n": state["skips"], "why": item["skip"]})
-            elif item["commit"] in ledger:
+            elif item["commit"] in ledger or any(item["commit"] == c for c, _f, _e in pend):
                 state["dup_splits"] += 1
             else:
                 b, n_q, n_ctx = int(item["zm"].shape[0]), int(item["n_q"]), int(item["n_ctx"])
@@ -387,6 +397,7 @@ def main() -> None:
                         raise
                     opt.zero_grad(set_to_none=True)
                     state["accum_eps"] = 0
+                    pend.clear()
                     if is_oom:
                         state["oom"] += 1
                         state["oom_streak"] += 1
@@ -400,10 +411,11 @@ def main() -> None:
                         state["skips"] += 1
                         log({"event": "nonfinite", "step": state["step"]})
                 if trained:
-                    ledger.add(item["commit"])
+                    pend.append((item["commit"], str(item["fam"]), b * n_q))
                     state["oom_streak"] = 0
                     state["accum_eps"] += b
-                    state["exposures"][str(item["fam"])] += b * n_q
+                    hb = "<256" if n_ctx < 256 else "256-383" if n_ctx < 384 else "384-767" if n_ctx < 768 else "768-999" if n_ctx < 1000 else "1000+"
+                    state["ctx_hist"][hb] = state["ctx_hist"].get(hb, 0) + 1
                     run["eps"] += b
                     run["qrows"] += b * n_q
                     for m_name, v in zip(item["modes"], per_ep.detach().float().cpu().tolist()):
@@ -413,27 +425,45 @@ def main() -> None:
                     cur_lr = lr_at(state["step"], frac, cfg)
                     for g in opt.param_groups:
                         g["lr"] = cur_lr
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), float(cfg["clip"]))
-                    opt.step()
-                    opt.zero_grad(set_to_none=True)
-                    state["step"] += 1
-                    state["accum_eps"] = 0
-                    t_step = time.time()
-                    d = min(float(cfg["ema"]), (1.0 + state["step"]) / (10.0 + state["step"]))
-                    with torch.no_grad():
-                        for pe, pm in zip(ema.parameters(), model.parameters()):
-                            pe.lerp_(pm, 1.0 - d)
-                    done = min(per_row().values())
-                    for tag in cfg["save_at_exposures"]:
-                        if done >= tag and tag not in state["saved"]:
-                            state["saved"].append(tag)
-                            save_milestone(int(tag))
-                            save_last()
-                            log({"event": "milestone", "exposures_per_row": tag, "step": state["step"]})
+                    grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), float(cfg["clip"]))
+                    if not bool(torch.isfinite(grad_norm)):
+                        # a finite loss can still carry non-finite bf16 gradients; stepping would poison the weights,
+                        # the EMA and every later checkpoint
+                        opt.zero_grad(set_to_none=True)
+                        state["accum_eps"] = 0
+                        pend.clear()
+                        state["nonfinite_grads"] += 1
+                        log({"event": "nonfinite_grad", "n": state["nonfinite_grads"], "step": state["step"]})
+                        if state["nonfinite_grads"] >= 50:
+                            abort("non-finite gradients 50 times")
+                    else:
+                        opt.step()
+                        opt.zero_grad(set_to_none=True)
+                        state["step"] += 1
+                        state["accum_eps"] = 0
+                        for c_, f_, e_ in pend:
+                            ledger.add(c_)
+                            state["exposures"][f_] += e_
+                        pend.clear()
+                        t_step = time.time()
+                        d = min(float(cfg["ema"]), (1.0 + state["step"]) / (10.0 + state["step"]))
+                        with torch.no_grad():
+                            for pe, pm in zip(ema.parameters(), model.parameters()):
+                                pe.lerp_(pm, 1.0 - d)
+                        done = min(per_row().values())
+                        for tag in cfg["save_at_exposures"]:
+                            if done >= tag and tag not in state["saved"]:
+                                state["saved"].append(tag)
+                                save_milestone(int(tag))
+                                save_last()
+                                log({"event": "milestone", "exposures_per_row": tag, "step": state["step"]})
             now = time.time()
             state["train_s"] = s0 + (now - t_run)
             if now - t_step > a.no_step_abort_s:
                 abort(f"no optimizer step for {int(now - t_step)} s")
+            if now - t_last >= a.last_every_s and state["step"] > saved_step:
+                save_last()
+                saved_step, t_last = int(state["step"]), now
             if now - t_log >= a.log_every_s:
                 dt = max(1e-3, now - t_log)
                 log(
@@ -450,6 +480,9 @@ def main() -> None:
                         "oom": state["oom"],
                         "cap_scale": round(float(cap_scale.value), 4),
                         "skips": state["skips"],
+                        "skip_reasons": state["skip_reasons"],
+                        "nonfinite_grads": state["nonfinite_grads"],
+                        "ctx_hist": state["ctx_hist"],
                         "dup_splits": state["dup_splits"],
                         "mem_gb": round(torch.cuda.max_memory_allocated() / 2**30, 2) if dev.type == "cuda" else 0.0,
                     }
