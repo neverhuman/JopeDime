@@ -131,7 +131,7 @@ jobs:
     # creates .cache/rosetta when jq starts; retain the checks on native Linux.
     # Apply the source ownership guard before runner allocation.
     if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
-    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-24.04' || 'xbabe1-ci' }}
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-24.04' || 'xbabe2-ci' }}
     # Headroom for the three bounded evidence-publication attempts, each of which can stall for
     # about two minutes on a blackholed connection before it resets.
     timeout-minutes: 20
@@ -221,7 +221,7 @@ jobs:
   rust-check:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.rust == 'true') }}
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -251,10 +251,10 @@ jobs:
     # Rust subprocess/timeout contracts need native x86-64; Rosetta returns exit 127
     # for a missing executable instead of ENOENT. Keep all three complete test slices on
     # existing native Linux slots, preserving every test and timeout.
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ fromJSON('[\"\", \"xbabe1-ci2\", \"xbabe2-ci\", \"xbabe2-full\"]')[matrix.shard] }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ fromJSON('[\"\", \"xbabe2-full\", \"xbabe2-ci\", \"xbabe2-full\"]')[matrix.shard] }}"]
     timeout-minutes: 45
-    # Three deterministic nextest slices of the unchanged selection, one per native jope-ci runner
-    # lane (xbabe1-ci2, xbabe2-ci, xbabe2-full). All always finish so every failure is
+    # Three deterministic nextest slices of the unchanged selection across native xbabe2 jope-ci
+    # lanes (xbabe2-full, xbabe2-ci, xbabe2-full). All always finish so every failure is
     # reported; the aggregate job proves (jope-ci test-partition) that the slices select and
     # execute the unsharded rust-test set exactly once between them.
     strategy:
@@ -295,7 +295,7 @@ jobs:
   emitters:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.emitters == 'true') }}
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
     timeout-minutes: 30
     env:
       JOPE_PARITY_STRICT: "1"
@@ -324,7 +324,7 @@ jobs:
   inputs:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.inputs == 'true') }}
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -378,7 +378,7 @@ jobs:
   e2e-smoke:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.e2e == 'true') }}
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-ci' }}"]
     timeout-minutes: 35
     steps:
       - name: Checkout
@@ -493,7 +493,7 @@ jobs:
   aggregate:
     needs: [changes, hygiene, jankurai-audit, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go, export-parity]
     if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout

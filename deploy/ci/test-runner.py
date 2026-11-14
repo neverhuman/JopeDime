@@ -566,7 +566,7 @@ class WorkflowAdmissionTests(unittest.TestCase):
         hygiene = self.job(workflow, 'hygiene')
         self.assertIn("github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository", hygiene)
         self.assertNotIn('runs-on: [self-hosted', hygiene)
-        self.assertIn("&& 'ubuntu-24.04' || 'xbabe1-ci'", hygiene)
+        self.assertIn("&& 'ubuntu-24.04' || 'xbabe2-ci'", hygiene)
         aggregate = self.job(workflow, 'aggregate')
         collect = aggregate.split('      - name: Collect hygiene evidence', 1)[1].split('      - name:', 1)[0]
         self.assertIn("github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository", collect)
