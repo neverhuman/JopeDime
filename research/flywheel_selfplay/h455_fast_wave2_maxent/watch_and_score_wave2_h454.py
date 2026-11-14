@@ -39,11 +39,8 @@ GP_OOF_CACHE = FLYWHEEL_ROOT / "gp_anchors_oof_cache_v1"
 
 
 def sha256_file(p: Path) -> str:
-    h = hashlib.sha256()
-    with open(p, "rb") as fh:
-        for blk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(blk)
-    return h.hexdigest()
+    with p.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def pin_paths(paths: list[Path], note: str) -> None:
