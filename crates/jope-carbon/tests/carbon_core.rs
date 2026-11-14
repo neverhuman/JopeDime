@@ -1491,4 +1491,46 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
         .output()
         .expect("run unknown verb");
     assert_eq!(unk.status.code(), Some(2));
+
+    // Verify `execute_carbon_spec_report` validates all 8 virgin-Docker dev+prod 4-tier runs and renders Table 6C + Table 6D
+    let ci_qual_fixture = tmp.path().join("ci-qual-fixture.json");
+    std::fs::write(
+        &ci_qual_fixture,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schema": "jopedime.carbon.ci-quickstart-qualification.v1",
+            "timestamp_epoch_ms": 1794500000000u64,
+            "source_sha": "e10c2dd594b64a0d9717823bbc5374db1fa0189d",
+            "binary_version": "1.0.0",
+            "release_tag": "carbon-cli-v1.1.0",
+            "emulator_regions": ["prod:us-east-2", "prod:eu-central-1", "dev:us-east-2"],
+            "emulator_edge_invocations": 42,
+            "emulator_engine_invocations": 12,
+            "emulator_eval_invocations": 8,
+            "residual_cas_blobs_after_shred": 0,
+            "total_tests": 8,
+            "passed_tests": 8,
+            "all_passed": true,
+            "total_wall_ms": 1234.5,
+            "steps": [],
+            "redteam_vectors": []
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    let spec_out_dir = tmp.path().join("spec-out");
+    let spec_html_path =
+        jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
+            evidence_dir: repo_root.join("docs/carbon/evidence"),
+            out_dir: spec_out_dir.clone(),
+            run_ci_qualification: false,
+            ci_qualification_in: Some(ci_qual_fixture),
+            source_sha: Some("e10c2dd594b64a0d9717823bbc5374db1fa0189d".to_owned()),
+            repo_root: repo_root.to_path_buf(),
+        })
+        .expect("execute_carbon_spec_report must validate 8-run dev+prod virgin-Docker receipt");
+    let spec_html = std::fs::read_to_string(&spec_html_path).unwrap();
+    assert!(spec_html.contains("Table 6C"));
+    assert!(spec_html.contains("Table 6D"));
+    assert!(spec_html.contains("run_01M7BMGCC0G2MEQH9ATH2TPAGH"));
+    assert!(spec_html.contains("run_01M7BMG9YKJ5NF0TQJA40TDGAR"));
 }

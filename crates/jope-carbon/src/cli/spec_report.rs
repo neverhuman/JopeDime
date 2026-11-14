@@ -1833,12 +1833,23 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         load_tracked_evidence_json(&opts.evidence_dir, "carbon-clouds.json", &mut ledger)?;
     let _sums_pin = load_tracked_evidence_json(&opts.evidence_dir, "SHA256SUMS.txt", &mut ledger)?;
 
+    let virgin_docker_all_8_ok = ["dev_runs", "prod_runs"].iter().all(|cloud_key| {
+        ["fast", "medium", "high", "ultra"].iter().all(|eff| {
+            let rcpt = &virgin_docker[*cloud_key][*eff]["receipt"];
+            rcpt["final_state"] == "completed"
+                && rcpt["encrypted_cuen"] == true
+                && rcpt["shredded_after_run"] == true
+                && rcpt["holdout_r2"].as_f64().unwrap_or(0.0) > 0.999
+        })
+    }) && j_slice(&virgin_docker, "per_tier_comparison").len() == 4;
+
     let prod_evidence_ok = bench_dev["all_passed"] == true
         && bench_prod["all_passed"] == true
         && s3_proof["all_checks_passed"] == true
         && load200["failed"].as_u64() == Some(0)
         && client_e2e["all_passed"] == true
-        && virgin_docker["all_passed"] == true;
+        && virgin_docker["all_passed"] == true
+        && virgin_docker_all_8_ok;
 
     let step_by_id = |id: &str| -> String {
         match ci_qual.steps.iter().find(|s| s.test_id == id) {
@@ -1915,9 +1926,35 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
             j_f64(r, "runs_per_1_usd"),
         ));
     }
+    cost_shot_lines.push(String::new());
+    cost_shot_lines.push(String::from(
+        "VIRGIN DOCKER (ubuntu:24.04, env -i, nonlinear_240x6.csv) — DEV vs PROD 4-TIER HEAD-TO-HEAD:",
+    ));
+    cost_shot_lines.push(String::from(
+        "EFFORT  TIER  MODE    WAVES  CANDS   DEV_WALL  PROD_WALL   DEV_R2    PROD_R2    DEV_USD     PROD_USD",
+    ));
+    for row in j_slice(&virgin_docker, "per_tier_comparison") {
+        let d = &row["dev"];
+        let p = &row["prod"];
+        cost_shot_lines.push(format!(
+            "{:<6}  {:<4}  {:<6}  {:>2}/{:<2}  {:>5}  {:>8.2}s  {:>8.2}s  {:>8.6}  {:>8.6}  ${:>9.6}  ${:>9.6}",
+            j_str(row, "effort"),
+            j_str(row, "tier_applied"),
+            short_mode_label(j_str(row, "execution_mode")),
+            j_u64(p, "waves_completed"),
+            j_u64(row, "waves_target"),
+            j_u64(p, "candidates_evaluated"),
+            j_f64(d, "total_wall_ms") / 1_000.0,
+            j_f64(p, "total_wall_ms") / 1_000.0,
+            j_f64(d, "holdout_r2"),
+            j_f64(p, "holdout_r2"),
+            j_f64(d, "estimated_aws_usd"),
+            j_f64(p, "estimated_aws_usd"),
+        ));
+    }
     let shot06 = render_terminal_card(
         "shot-06",
-        "Live AWS Free & Pro 4-Effort (fast / medium / high / ultra) Time, R² & Itemized USD (19 Runs)",
+        "Live AWS Free & Pro 4-Effort (fast / medium / high / ultra) Time, R² & Itemized USD + Virgin Docker dev/prod",
         "PASS | 4 EFFORTS",
         &cost_shot_lines.join("\n"),
     );
@@ -2062,27 +2099,56 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         ));
     }
 
-    // Table 6C: Live Virgin `ubuntu:24.04` Docker Zero-Credential `v1.0.0` Install + `prod` `fast` & `medium` Receipt
+    // Table 6C & Table 6D: Live Virgin `ubuntu:24.04` Docker Zero-Credential `dev` & `prod` 4-Effort (`fast`..`ultra`) E2E + Head-to-Head Benchmark
     let mut virgin_docker_rows_html = String::new();
-    for eff in ["fast", "medium"] {
-        let entry = &virgin_docker["prod_runs"][eff];
-        let rcpt = &entry["receipt"];
-        let cost = &rcpt["cost_estimate"];
-        let run_id_short = j_str(rcpt, "run_id");
-        virgin_docker_rows_html.push_str(&format!(
-            "<tr><td class=\"nowrap\"><code>{eff}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"num\">{}/{}</td><td class=\"num\">{}</td><td class=\"num\">{:.4}</td><td class=\"num\">{:.4} (-{:.2}%)</td><td class=\"num\">{:.6}</td><td class=\"num\">{:.2}s</td><td class=\"num\">${:.6}</td><td class=\"nowrap\"><span class=\"pill-pass\">{}</span></td></tr>\n",
-            html_escape(j_str(rcpt, "selected_region")),
-            html_escape(run_id_short),
-            j_u64(rcpt, "waves_completed"),
-            j_u64(rcpt, "waves_target"),
-            j_u64(rcpt, "candidates_evaluated"),
-            j_f64(rcpt, "best_cv_score"),
-            j_f64(rcpt, "outer_holdout_score"),
-            j_f64(rcpt, "rmse_reduction_vs_linear_pct"),
-            j_f64(rcpt, "holdout_r2"),
-            j_f64(rcpt, "total_wall_ms") / 1_000.0,
-            j_f64(cost, "total_estimated_usd"),
-            if rcpt["shredded_after_run"] == true { "SHREDDED" } else { "FAIL" },
+    for (cloud_lbl, runs_key) in [("dev", "dev_runs"), ("prod", "prod_runs")] {
+        for eff in ["fast", "medium", "high", "ultra"] {
+            let entry = &virgin_docker[runs_key][eff];
+            let rcpt = &entry["receipt"];
+            let cost = &rcpt["cost_estimate"];
+            let run_id_short = j_str(rcpt, "run_id");
+            virgin_docker_rows_html.push_str(&format!(
+                "<tr><td class=\"nowrap\"><code>{cloud_lbl}</code></td><td class=\"nowrap\"><code><strong>{eff}</strong></code></td><td class=\"nowrap\"><code>{} {}</code></td><td class=\"nowrap\"><code>{}</code></td><td><code class=\"wrap-any\">{}</code></td><td class=\"num\">{}/{}</td><td class=\"num\">{} ({})</td><td class=\"num\">{:.4} (-{:.2}%)</td><td class=\"num\">{:.6}</td><td class=\"num\">{:.2}s</td><td class=\"num\">${:.6}</td><td class=\"nowrap\"><span class=\"pill-pass\">{}</span></td></tr>\n",
+                html_escape(j_str(rcpt, "tier_applied")),
+                html_escape(short_mode_label(j_str(rcpt, "execution_mode"))),
+                html_escape(j_str(rcpt, "selected_region")),
+                html_escape(run_id_short),
+                j_u64(rcpt, "waves_completed"),
+                j_u64(rcpt, "waves_target"),
+                j_u64(rcpt, "candidates_evaluated"),
+                j_u64(rcpt, "eval_invocations"),
+                j_f64(rcpt, "outer_holdout_score"),
+                j_f64(rcpt, "rmse_reduction_vs_linear_pct"),
+                j_f64(rcpt, "holdout_r2"),
+                j_f64(rcpt, "total_wall_ms") / 1_000.0,
+                j_f64(cost, "total_estimated_usd"),
+                if rcpt["shredded_after_run"] == true { "SHREDDED" } else { "FAIL" },
+            ));
+        }
+    }
+
+    let mut virgin_tier_cmp_rows_html = String::new();
+    for row in j_slice(&virgin_docker, "per_tier_comparison") {
+        let d = &row["dev"];
+        let p = &row["prod"];
+        virgin_tier_cmp_rows_html.push_str(&format!(
+            "<tr><td class=\"nowrap\"><code><strong>{}</strong></code></td><td class=\"nowrap\"><code>{} {}</code></td><td class=\"num\">{}w / {} / {}</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.2}s</td><td class=\"num\">{:.6} ({:.4})</td><td class=\"num\">{:.6} ({:.4})</td><td class=\"num\">${:.6} ({:.0})</td><td class=\"num\"><strong>${:.6}</strong> ({:.0})</td></tr>\n",
+            html_escape(j_str(row, "effort")),
+            html_escape(j_str(row, "tier_applied")),
+            html_escape(short_mode_label(j_str(row, "execution_mode"))),
+            j_u64(row, "waves_target"),
+            j_u64(p, "candidates_evaluated"),
+            j_u64(p, "eval_invocations"),
+            j_f64(d, "total_wall_ms") / 1_000.0,
+            j_f64(p, "total_wall_ms") / 1_000.0,
+            j_f64(d, "holdout_r2"),
+            j_f64(d, "holdout_rmse"),
+            j_f64(p, "holdout_r2"),
+            j_f64(p, "holdout_rmse"),
+            j_f64(d, "estimated_aws_usd"),
+            j_f64(d, "runs_per_1_usd"),
+            j_f64(p, "estimated_aws_usd"),
+            j_f64(p, "runs_per_1_usd"),
         ));
     }
 
@@ -2730,13 +2796,22 @@ carbon logout --all</pre>
     <tbody>{portability_rows_html}</tbody>
   </table>
 
-  <h3>Table 6C — Virgin <code>ubuntu:24.04</code> Docker Zero-Credential <code>carbon-cli-v1.0.0</code> Install + Live <code>prod</code> <code>fast</code> &amp; <code>medium</code> Receipt</h3>
+  <h3>Table 6C — Virgin <code>ubuntu:24.04</code> Docker Zero-Credential Live <code>dev</code> &amp; <code>prod</code> 4-Tier (<code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code>) E2E Receipts</h3>
   <p>
-    Committed receipt <code>docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json</code> records an unmounted, fresh <code>{vd_os}</code> container (<code>env -i</code>, <code>zero_credentials_verified = true</code>, <code>0</code> AWS/GitHub/SSH variables or paths) executing <code>curl -fsSL https://github.com/neverhuman/JopeDime/releases/latest/download/install.sh | sh</code> in <code>{vd_inst_s:.2}s</code> (verifying offline ECDSA-P256 <code>SHA256SUMS.txt.sig</code> + static <code>musl</code> SHA-256 <code>{vd_bin_sha_prefix}…</code> + live 5-region <code>prod</code> KEK pins), <code>carbon doctor --cloud all</code> across <code>dev</code> + <code>prod</code>, and real encrypted <code>CUEN\x01</code> <code>fast</code> (1 wave) and <code>medium</code> (4 waves) runs on a <code>240x6</code> nonlinear CSV against live <code>prod</code>:
+    Committed receipt <code>docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json</code> records an unmounted, fresh <code>{vd_os}</code> container (<code>env -i</code>, <code>zero_credentials_verified = true</code>, <code>0</code> AWS/GitHub/SSH variables or paths) executing <code>curl -fsSL https://github.com/neverhuman/JopeDime/releases/latest/download/install.sh | sh</code> in <code>{vd_inst_s:.2}s</code> (verifying offline ECDSA-P256 <code>SHA256SUMS.txt.sig</code> + static <code>musl</code> SHA-256 <code>{vd_bin_sha_prefix}…</code> + live 5-region <code>prod</code> KEK pins), <code>carbon doctor --cloud all</code> across <code>dev</code> + <code>prod</code>, and all 8 real encrypted <code>CUEN\x01</code> E2E jobs (<code>fast</code> 1w, <code>medium</code> 4w, <code>high</code> 12w, and <code>ultra</code> 32w) on the exact <code>nonlinear_240x6.csv</code> (<code>15,938 B</code>, <code>sha256: 3d8765caca6f…</code>) against both live <code>dev</code> and live <code>prod</code> (with <code>--shred</code> and post-run credential wipe verified):
   </p>
   <table>
-    <thead><tr><th style="width:7%">Effort</th><th style="width:10%">Region</th><th style="width:22%">Live <code>prod</code> Run ID</th><th class="num" style="width:7%">Waves</th><th class="num" style="width:6%">Cands</th><th class="num" style="width:8%">CV RMSE</th><th class="num" style="width:14%">Holdout (vs Lin)</th><th class="num" style="width:9%">R²</th><th class="num" style="width:6%">Wall</th><th class="num" style="width:6%">USD</th><th style="width:5%">CAS</th></tr></thead>
+    <thead><tr><th style="width:5%">Cloud</th><th style="width:7%">Effort</th><th style="width:9%">Tier/Mode</th><th style="width:9%">Region</th><th style="width:20%">Live Run ID</th><th class="num" style="width:6%">Waves</th><th class="num" style="width:8%">Cands (Ev)</th><th class="num" style="width:13%">Holdout (vs Lin)</th><th class="num" style="width:8%">R²</th><th class="num" style="width:5%">Wall</th><th class="num" style="width:5%">USD</th><th style="width:5%">CAS</th></tr></thead>
     <tbody>{virgin_docker_rows_html}</tbody>
+  </table>
+
+  <h3>Table 6D — Per-Tier Virgin-Docker Benchmark &amp; <code>dev</code> vs <code>prod</code> Head-to-Head Comparison (<code>nonlinear_240x6.csv</code>)</h3>
+  <p>
+    Across all four search tiers on the identical <code>240x6</code> nonlinear interaction dataset (<code>y = 3.5*x0*x1 - 2.1*sin(x2) + 0.75*x3^2 - 1.25*x4 + 0.4*x5</code>, Ridge Linear <code>RMSE = 5.0810</code>, <code>R² = 0.0434</code>), live <code>AWS dev</code> (<code>us-east-2</code>) and live <code>AWS prod</code> (<code>us-west-2</code>) achieve bit-identical deterministic outer holdout accuracy at every effort while 32-wave <code>ultra</code> (<code>480</code> distributed Eval shard invocations, <code>169</code> candidates) drives outer holdout RMSE down an additional <strong>9.4%</strong> from <code>0.10354</code> (<code>R² = 0.999603</code>) to <strong><code>0.09382</code> (<code>Holdout R² = 0.999674</code>, <code>-98.15%</code> vs Linear)</strong>:
+  </p>
+  <table>
+    <thead><tr><th style="width:7%">Effort</th><th style="width:10%">Tier / Mode</th><th class="num" style="width:13%">Waves / Cands / Ev</th><th class="num" style="width:8%"><code>dev</code> Wall</th><th class="num" style="width:8%"><code>prod</code> Wall</th><th class="num" style="width:14%"><code>dev</code> R² (RMSE)</th><th class="num" style="width:14%"><code>prod</code> R² (RMSE)</th><th class="num" style="width:13%"><code>dev</code> USD (/ $1)</th><th class="num" style="width:13%"><code>prod</code> USD (/ $1)</th></tr></thead>
+    <tbody>{virgin_tier_cmp_rows_html}</tbody>
   </table>
 
   <h2>7. Standardized <code>carbon bench --pro</code> Latency, Early-Stop/Resume &amp; RMSE-Reduction Analysis</h2>
