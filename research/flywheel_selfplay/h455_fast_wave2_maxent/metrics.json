@@ -1,0 +1,1327 @@
+{
+  "canonical_promotion_forbidden": true,
+  "checkpoint_sha256": {
+    "pre_h454": {
+      "fleet_L_x1_pre_h454.pt": "b9ef40765ddab147d4f565de59b835ec4f2f6b51d21650866050b4fd217abc8a",
+      "fleet_L_x4_pre_h454.pt": "36c3c0fbc277a74b7e28323e7b147fe878feb65a41a03a0f8ccbedf524e75ec5"
+    },
+    "wave1_post_h454": {
+      "fleet_L_x1_post_h454.pt": "2aa6af037f4cc4f37860252041545377423cfe2c549ca1237bf3e06351482bee",
+      "fleet_L_x4_post_h454.pt": "29c61643a69db9ddfd24fb794bd929c3349dafc5dce3c5eedb60f3bc4260f3d4"
+    },
+    "wave2a_h454": {
+      "fleet_L_x1_w2a.pt": "a4e7c26d7cad491261815b4207cfca875cf5aa294176705ce81a1626e463e1e3",
+      "fleet_L_x4_w2a.pt": "7cfaa0a0cda0ac01bc86434874490bc72db3f8c6dc622987a6a0601311d2a34c"
+    },
+    "wave2b_and_wave2aplus_h454": {
+      "fleet_L_x1_h454_w2b_lr5e6.pt": "ac7083bb10486547d510d34bc5ab3a96b1ee860efa8e0883ae48a4ffd3fbf088",
+      "fleet_L_x1_w2aplus.pt": "20b5c5e8364b237f38a5cf3e9661d38544c899b8df7afdfe493cb07c01f344c9",
+      "fleet_L_x4_h454_w2b_lr5e6.pt": "893472e23263e4cb3621ebb048d4bf22d90a02c46b1d8619d4076a907dce5322",
+      "fleet_L_x4_w2aplus.pt": "c2b3b258ed9f72b20e6396363b4c691dbfaa3894309821aa0f0fcac1c3673bf1"
+    }
+  },
+  "ctx0_bitwise_equivalence_gate": {
+    "checked_at": "2026-11-14T06:49:42Z",
+    "cid0": "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da",
+    "comparisons": {
+      "cooldown_uncached_vs_shard0": {
+        "max_abs_diff": 0.0,
+        "per_key_max_abs_diff": {
+          "bag_icl_e8_cw12_robridge_cv7": 0.0,
+          "bag_icl_e8_cw12_yj_cv7": 0.0,
+          "bag_icl_e8_gp_resid_cv7": 0.0,
+          "bag_icl_e8_rankgauss_duan_cv7": 0.0,
+          "q_icl_e8_cw12_robridge_cv7": 0.0,
+          "q_icl_e8_cw12_yj_cv7": 0.0,
+          "q_icl_e8_gp_resid_cv7": 0.0,
+          "q_icl_e8_rankgauss_duan_cv7": 0.0,
+          "ref_icl_e8_cw12_robridge_cv7": 0.0,
+          "ref_icl_e8_cw12_yj_cv7": 0.0,
+          "ref_icl_e8_gp_resid_cv7": 0.0,
+          "ref_icl_e8_rankgauss_duan_cv7": 0.0
+        }
+      },
+      "soup50_cached_vs_shard0": {
+        "max_abs_diff": 0.0,
+        "per_key_max_abs_diff": {
+          "bag_icl_e8_cw12_robridge_cv7": 0.0,
+          "bag_icl_e8_cw12_yj_cv7": 0.0,
+          "bag_icl_e8_gp_resid_cv7": 0.0,
+          "bag_icl_e8_rankgauss_duan_cv7": 0.0,
+          "q_icl_e8_cw12_robridge_cv7": 0.0,
+          "q_icl_e8_cw12_yj_cv7": 0.0,
+          "q_icl_e8_gp_resid_cv7": 0.0,
+          "q_icl_e8_rankgauss_duan_cv7": 0.0,
+          "ref_icl_e8_cw12_robridge_cv7": 0.0,
+          "ref_icl_e8_cw12_yj_cv7": 0.0,
+          "ref_icl_e8_gp_resid_cv7": 0.0,
+          "ref_icl_e8_rankgauss_duan_cv7": 0.0
+        }
+      },
+      "soup50_uncached_vs_shard0": {
+        "max_abs_diff": 0.0,
+        "per_key_max_abs_diff": {
+          "bag_icl_e8_cw12_robridge_cv7": 0.0,
+          "bag_icl_e8_cw12_yj_cv7": 0.0,
+          "bag_icl_e8_gp_resid_cv7": 0.0,
+          "bag_icl_e8_rankgauss_duan_cv7": 0.0,
+          "q_icl_e8_cw12_robridge_cv7": 0.0,
+          "q_icl_e8_cw12_yj_cv7": 0.0,
+          "q_icl_e8_gp_resid_cv7": 0.0,
+          "q_icl_e8_rankgauss_duan_cv7": 0.0,
+          "ref_icl_e8_cw12_robridge_cv7": 0.0,
+          "ref_icl_e8_cw12_yj_cv7": 0.0,
+          "ref_icl_e8_gp_resid_cv7": 0.0,
+          "ref_icl_e8_rankgauss_duan_cv7": 0.0
+        }
+      }
+    },
+    "global_max_abs_diff": 0.0,
+    "status": "PASS"
+  },
+  "gpu_fill_live_snapshot_20261114T0929Z": {
+    "xbabe1_rtx4090": {
+      "fleet_L_x1": {
+        "exact_kd_datasets": 28685,
+        "exact_resid_datasets": 17015,
+        "oom": 29,
+        "status": "running_cycle2_uninterrupted",
+        "step": 616514,
+        "unique_datasets": 9428173
+      },
+      "fleet_L_x1_h455_maxent_v2": {
+        "cuda_vram_frac": 0.36,
+        "ds_per_s": 65.57,
+        "exact_kd_datasets": 3858,
+        "exact_resid_datasets": 2120,
+        "kd_ds_per_batch": 7.32,
+        "mem_gb": 8.07,
+        "resid_ds_per_batch": 7.26,
+        "size": "L",
+        "status": "running_coresident",
+        "step": 591,
+        "unique_datasets": 11949
+      },
+      "gpu_util_pct": 100,
+      "power_w": 332.04,
+      "vram_total_mib": 24564,
+      "vram_used_mib": 23873
+    },
+    "xbabe2_rtx3090": {
+      "fleet_M_x2_h455_maxent": {
+        "cuda_vram_frac": 0.12,
+        "cycle": 1,
+        "ds_per_s": 65.701,
+        "exact_kd_datasets": 180953,
+        "exact_resid_datasets": 103700,
+        "kd_ds_per_batch": 10.48,
+        "mem_gb": 2.82,
+        "pub_r15_eval_sharing": "active_with_7400mib_gate_and_xbabe3_offload",
+        "r4_L_A_trainer_oom": 0,
+        "resid_ds_per_batch": 10.52,
+        "size": "M",
+        "step": 17821,
+        "unique_datasets": 634820
+      },
+      "gpu_util_pct": 90,
+      "gpu_util_range_pct": [
+        76,
+        100
+      ],
+      "power_w": 288.99,
+      "prior_idle_diagnosis": "r4_L_A (15.49 GiB) spent ~65% wall time in single-process GIL CPU batch prep between short CUDA bursts + intermittent cols_h450_gpu.py (~3.01 GiB, ~80% CPU ridge/struct prep)",
+      "vram_total_mib": 24576,
+      "vram_used_mib": 18591
+    }
+  },
+  "headline_summary": {
+    "best_guarded_hyb_joint_signflip_p_vs_pre": 0.012224,
+    "best_guarded_hyb_joint_signflip_p_vs_pre_wave": "wave2a_cooldown",
+    "best_pure_104m_only_elo": 1590.81,
+    "best_pure_104m_only_elo_wave": "wave2b_lr5e6_soup50",
+    "best_pure_104m_only_gain_vs_pre": 0.007433,
+    "best_pure_104m_only_gain_vs_pre_wave": "wave2aplus_cooldown",
+    "best_stack_elo": 1859.63,
+    "best_stack_elo_arm": "stack_no_ugp_post_h454",
+    "best_stack_elo_wave": "wave2a_soup50",
+    "best_stack_rank_of_34": 5,
+    "best_two_tower_104m_ugp_g1000_gain_vs_pre": 0.021325,
+    "best_two_tower_104m_ugp_g1000_gain_vs_pre_wave": "wave2a_cooldown",
+    "best_ugp_joint_elo": 1858.88,
+    "best_ugp_joint_elo_wave": "wave2_cooled_soup_avg",
+    "best_ugp_joint_family_mean_u": 1.722424,
+    "best_ugp_joint_family_mean_u_wave": "wave2a_cooldown",
+    "best_ugp_post_elo": 1858.64,
+    "best_ugp_post_elo_wave": "wave2_cooled_soup_avg"
+  },
+  "in_corpus_dev91_disclosure": true,
+  "quarantine": {
+    "confirm_opens": 0,
+    "file_deletions": 0,
+    "fmgap_bc_opens": 0,
+    "holdout_opens": 0,
+    "sealed_opens": 0,
+    "tmp_paths": 0
+  },
+  "schema": "jope.flywheel_selfplay.h455_fast_wave2_maxent.metrics/v1",
+  "selftest_h455_receipt": {
+    "canonical_promotion_forbidden": true,
+    "elapsed_s": 227.13,
+    "schema": "jope.h455.selftest_receipt/v1",
+    "status": "PASS",
+    "tests": {
+      "1_zero_query_leakage": {
+        "max_diff_exact_kd": 0.0,
+        "max_diff_exact_resid": 0.0,
+        "max_diff_inj_22fam": 0.0
+      },
+      "2_quarantine_audit": {
+        "bank_tables_checked": 3525,
+        "cohorts": [
+          "APEX-DEV-FULL",
+          "APEX-FIT-ICL-FULL",
+          "APEX-FIT-SEL-FULL",
+          "D91-COMBINED-SHUFFLED",
+          "D91-S3-COUSIN",
+          "DL-TRAIN-FULL",
+          "S3-DEV-FULL",
+          "S3-FIT-ICL-FULL",
+          "S3-FIT-SEL-FULL"
+        ],
+        "confirm_opens": 0,
+        "fmgap_bc_opens": 0,
+        "teacher_shards_checked": 3446
+      },
+      "3_s3_source_uniformity": {
+        "analytic_family_mass_max_over_min": 1.4761,
+        "empirical_family_max_over_median": 1.7568,
+        "families_hit_in_90k": 2389,
+        "n_families": 2389
+      },
+      "4_entropy_ranges": {
+        "full_view_empirical_frac": 0.1393,
+        "min_keep_on_p40": 6,
+        "p_ctx_max_seen": 0.9498,
+        "p_ctx_min_seen": 0.0802
+      },
+      "5_cross_shard_batch_density": {
+        "batch_sizes_by_stream": {
+          "exact_kd": [
+            14,
+            16,
+            16,
+            16,
+            16
+          ],
+          "exact_resid": [
+            16,
+            16,
+            9,
+            16,
+            16
+          ],
+          "real_s3": [
+            16,
+            16,
+            16,
+            16,
+            9,
+            16,
+            16
+          ],
+          "synth": [
+            8
+          ]
+        }
+      },
+      "6_cyclic_lr_and_cpu_smoke": {
+        "c1_valley_boundary_gap": 2.541098841762901e-21,
+        "cycle1_peak_lr": 7.499999999999999e-06,
+        "smoke_out": "/home/ubuntu/jope-data/h452-flywheel/selftest_h455_smoke_1794639932/run_s",
+        "smoke_steps": 3
+      },
+      "7_ast_hygiene": {
+        "delete_calls": 0,
+        "files_checked": [
+          "mmap_bank_h450.py",
+          "cols_h450_gpu.py",
+          "cols_104m_e8_gpresid_h452.py",
+          "exact_gp_teacher_harvester_h454.py",
+          "train_104m_gp_flywheel_h455_maxent.py",
+          "watch_and_score_wave2_h454.py"
+        ],
+        "tmp_strings": 0
+      }
+    },
+    "timestamp_utc": "2026-11-14T07:08:57Z"
+  },
+  "staged_code_sha256": {
+    "build_and_score_all_wave2_h455.py": "f69592233d7cb017531a268c29bb82b84fb450e1579dde5e6d770abefa6fa436",
+    "cols_104m_e8_gpresid_h452.py": "61fae4001f2d2d8d439e56ab7a1b50bc84288939fb70a9ad887da11ae3723c9c",
+    "mmap_bank_h450.py": "9c2a0c7e1b03464385d6b4fea3dda0c9062bb7983cde766b798dd1bec87c4740",
+    "score_h454_paired_flywheel_matrix.py": "6e4541134bc2dbb692233b215f8a7f23d61e373a9b26a0a77eae05fceb6390e9",
+    "selftest_h455.py": "1f7e243de6ee49dbee5ed98981ded6589c407d95fa4d893672aeed505fed5d05",
+    "train_104m_gp_flywheel_h455_maxent.py": "9aba719965391a3e96c0461ad1c951bc0c9c9bcd845aa16f44356de2699f3028",
+    "watch_and_score_wave2_h454.py": "3254445f176035edc0e12e695ec14f6a2700953862ad7ed1156490c800cda0b7"
+  },
+  "study_id": "H455-ICL104M",
+  "waves": {
+    "wave1_uncooled_lr2e5": {
+      "board_arms": {},
+      "matrix_filename": "H454_PAIRED_FLYWHEEL_MATRIX.json",
+      "matrix_sha256": "6c48dbdf318e27a5f81d148dd27d3b579b51c9169a7922087d3467d751273c1c",
+      "paired_comparisons": {
+        "hyb_104m_gpresid_cv7_post_vs_pre": {
+          "clipped_mean": 0.001611,
+          "family_median": 0.000142,
+          "gain": 0.001611,
+          "lofo_min": 0.000424,
+          "signflip_p": 0.185043,
+          "wtl": [
+            10,
+            2,
+            7
+          ]
+        },
+        "hyb_vs_pure_104m_only_post": {
+          "clipped_mean": 0.141456,
+          "family_median": 0.048426,
+          "gain": 0.296402,
+          "lofo_min": 0.121537,
+          "signflip_p": 2e-06,
+          "wtl": [
+            19,
+            0,
+            0
+          ]
+        },
+        "neural104m_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.000793,
+          "family_median": -8.8e-05,
+          "gain": 0.000793,
+          "lofo_min": -0.00044,
+          "signflip_p": 0.339851,
+          "wtl": [
+            8,
+            2,
+            9
+          ]
+        },
+        "pure_104m_cv7_post_vs_pre": {
+          "clipped_mean": -0.000867,
+          "family_median": -0.00154,
+          "gain": -0.000867,
+          "lofo_min": -0.001853,
+          "signflip_p": 0.670029,
+          "wtl": [
+            5,
+            2,
+            12
+          ]
+        },
+        "pure_104m_only_cv7_post_vs_pre": {
+          "clipped_mean": -0.005078,
+          "family_median": 0.000746,
+          "gain": -0.005078,
+          "lofo_min": -0.008657,
+          "signflip_p": 0.724041,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": -0.001246,
+          "family_median": -0.00011,
+          "gain": -0.001246,
+          "lofo_min": -0.002247,
+          "signflip_p": 0.799675,
+          "wtl": [
+            4,
+            5,
+            10
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.00023,
+          "family_median": -7.5e-05,
+          "gain": 0.00023,
+          "lofo_min": -0.001439,
+          "signflip_p": 0.463913,
+          "wtl": [
+            6,
+            5,
+            8
+          ]
+        },
+        "stack_no_ugp_post_vs_pre": {
+          "clipped_mean": 0.000338,
+          "family_median": 3.1e-05,
+          "gain": 0.000338,
+          "lofo_min": -0.000895,
+          "signflip_p": 0.413567,
+          "wtl": [
+            8,
+            3,
+            8
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_g16_leg": {
+          "clipped_mean": 0.021611,
+          "family_median": 7.2e-05,
+          "gain": 0.03766,
+          "lofo_min": 0.0019,
+          "signflip_p": 0.203203,
+          "wtl": [
+            9,
+            1,
+            9
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.001061,
+          "family_median": -0.00058,
+          "gain": 0.001061,
+          "lofo_min": -0.000134,
+          "signflip_p": 0.289728,
+          "wtl": [
+            7,
+            1,
+            11
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_g16_leg": {
+          "clipped_mean": 0.020679,
+          "family_median": 6.4e-05,
+          "gain": 0.036504,
+          "lofo_min": 0.000681,
+          "signflip_p": 0.233393,
+          "wtl": [
+            9,
+            2,
+            8
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": -9.5e-05,
+          "family_median": 0.0,
+          "gain": -9.5e-05,
+          "lofo_min": -0.001353,
+          "signflip_p": 0.523693,
+          "wtl": [
+            7,
+            3,
+            9
+          ]
+        }
+      }
+    },
+    "wave2_cooled_soup_avg": {
+      "board_arms": {},
+      "matrix_filename": "H455_WAVE2_COOLED_SOUP_AVG_MATRIX.json",
+      "matrix_sha256": "ca26f4bf3942bf98fab852911783abc082c2d0e71544c4bfdffec20e61d0545d",
+      "paired_comparisons": {
+        "hyb_104m_gpresid_cv7_post_vs_pre": {
+          "clipped_mean": 0.005874,
+          "family_median": 0.002262,
+          "gain": -0.000864,
+          "lofo_min": -0.003675,
+          "signflip_p": 0.417706,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "hyb_vs_pure_104m_only_post": {
+          "clipped_mean": 0.12779,
+          "family_median": 0.042903,
+          "gain": 0.263517,
+          "lofo_min": 0.107111,
+          "signflip_p": 2e-06,
+          "wtl": [
+            19,
+            0,
+            0
+          ]
+        },
+        "neural104m_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.020905,
+          "family_median": 0.004296,
+          "gain": 0.020905,
+          "lofo_min": 0.007296,
+          "signflip_p": 0.144407,
+          "wtl": [
+            11,
+            1,
+            7
+          ]
+        },
+        "pure_104m_cv7_post_vs_pre": {
+          "clipped_mean": 0.001116,
+          "family_median": 0.001472,
+          "gain": 0.001116,
+          "lofo_min": -0.001321,
+          "signflip_p": 0.334295,
+          "wtl": [
+            13,
+            0,
+            6
+          ]
+        },
+        "pure_104m_only_cv7_post_vs_pre": {
+          "clipped_mean": 0.006231,
+          "family_median": 0.002265,
+          "gain": 0.006231,
+          "lofo_min": 0.001431,
+          "signflip_p": 0.227205,
+          "wtl": [
+            10,
+            1,
+            8
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.002043,
+          "family_median": 0.0,
+          "gain": 0.002043,
+          "lofo_min": 0.000805,
+          "signflip_p": 0.035301,
+          "wtl": [
+            8,
+            6,
+            5
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.000488,
+          "family_median": 0.000203,
+          "gain": 0.000488,
+          "lofo_min": -0.000812,
+          "signflip_p": 0.339321,
+          "wtl": [
+            10,
+            3,
+            6
+          ]
+        },
+        "stack_no_ugp_post_vs_pre": {
+          "clipped_mean": -0.012737,
+          "family_median": 5.2e-05,
+          "gain": -0.014915,
+          "lofo_min": -0.017585,
+          "signflip_p": 0.646265,
+          "wtl": [
+            8,
+            2,
+            9
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_g16_leg": {
+          "clipped_mean": 0.026148,
+          "family_median": 0.001931,
+          "gain": 0.041818,
+          "lofo_min": 0.007563,
+          "signflip_p": 0.080984,
+          "wtl": [
+            13,
+            0,
+            6
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.005218,
+          "family_median": 0.000148,
+          "gain": 0.005218,
+          "lofo_min": 0.001766,
+          "signflip_p": 0.064579,
+          "wtl": [
+            11,
+            2,
+            6
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_g16_leg": {
+          "clipped_mean": 0.019354,
+          "family_median": 0.0014,
+          "gain": 0.033621,
+          "lofo_min": 0.00503,
+          "signflip_p": 0.032261,
+          "wtl": [
+            11,
+            3,
+            5
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": -0.002978,
+          "family_median": 5.2e-05,
+          "gain": -0.002978,
+          "lofo_min": -0.006827,
+          "signflip_p": 0.628532,
+          "wtl": [
+            8,
+            2,
+            9
+          ]
+        }
+      }
+    },
+    "wave2a_cooldown": {
+      "board_arms": {},
+      "matrix_filename": "H454_WAVE2A_COOLDOWN_MATRIX.json",
+      "matrix_sha256": "6346c3197c77ab5aaf8639e33b26fc7f2a09f33518d0c9d55f5636e1f1f8bc19",
+      "paired_comparisons": {
+        "hyb_104m_gpresid_cv7_post_vs_pre": {
+          "clipped_mean": 0.007835,
+          "family_median": 0.000199,
+          "gain": 0.000567,
+          "lofo_min": -0.002918,
+          "signflip_p": 0.386168,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "hyb_vs_pure_104m_only_post": {
+          "clipped_mean": 0.130034,
+          "family_median": 0.042926,
+          "gain": 0.282908,
+          "lofo_min": 0.109481,
+          "signflip_p": 2e-06,
+          "wtl": [
+            19,
+            0,
+            0
+          ]
+        },
+        "neural104m_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.021318,
+          "family_median": 0.004841,
+          "gain": 0.021318,
+          "lofo_min": 0.008013,
+          "signflip_p": 0.129217,
+          "wtl": [
+            11,
+            0,
+            8
+          ]
+        },
+        "pure_104m_cv7_post_vs_pre": {
+          "clipped_mean": 0.001872,
+          "family_median": 0.001201,
+          "gain": 0.001872,
+          "lofo_min": -0.000487,
+          "signflip_p": 0.299561,
+          "wtl": [
+            12,
+            0,
+            7
+          ]
+        },
+        "pure_104m_only_cv7_post_vs_pre": {
+          "clipped_mean": 0.000164,
+          "family_median": 0.000171,
+          "gain": 0.000164,
+          "lofo_min": -0.002868,
+          "signflip_p": 0.487333,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.002333,
+          "family_median": 7e-05,
+          "gain": 0.002333,
+          "lofo_min": 0.001109,
+          "signflip_p": 0.012169,
+          "wtl": [
+            9,
+            4,
+            6
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.000218,
+          "family_median": 0.000151,
+          "gain": 0.000218,
+          "lofo_min": -0.001096,
+          "signflip_p": 0.441818,
+          "wtl": [
+            10,
+            3,
+            6
+          ]
+        },
+        "stack_no_ugp_post_vs_pre": {
+          "clipped_mean": -0.013074,
+          "family_median": -0.000106,
+          "gain": -0.015085,
+          "lofo_min": -0.017631,
+          "signflip_p": 0.655891,
+          "wtl": [
+            7,
+            2,
+            10
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_g16_leg": {
+          "clipped_mean": 0.026297,
+          "family_median": 0.001895,
+          "gain": 0.041967,
+          "lofo_min": 0.007721,
+          "signflip_p": 0.090336,
+          "wtl": [
+            13,
+            0,
+            6
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.005368,
+          "family_median": -3.7e-05,
+          "gain": 0.005368,
+          "lofo_min": 0.002251,
+          "signflip_p": 0.07847,
+          "wtl": [
+            9,
+            2,
+            8
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_g16_leg": {
+          "clipped_mean": 0.01925,
+          "family_median": 0.001115,
+          "gain": 0.033517,
+          "lofo_min": 0.004825,
+          "signflip_p": 0.048399,
+          "wtl": [
+            10,
+            2,
+            7
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": -0.003083,
+          "family_median": -0.000106,
+          "gain": -0.003083,
+          "lofo_min": -0.006627,
+          "signflip_p": 0.630142,
+          "wtl": [
+            7,
+            2,
+            10
+          ]
+        }
+      }
+    },
+    "wave2a_soup50": {
+      "board_arms": {},
+      "matrix_filename": "H454_WAVE2A_SOUP50_MATRIX.json",
+      "matrix_sha256": "5925e022e2c11a38beb03bdd277be678ee2d97ece1ec0eee5ecc7810fc1bdb72",
+      "paired_comparisons": {
+        "hyb_104m_gpresid_cv7_post_vs_pre": {
+          "clipped_mean": 0.007298,
+          "family_median": -0.000366,
+          "gain": 1.2e-05,
+          "lofo_min": -0.00333,
+          "signflip_p": 0.394283,
+          "wtl": [
+            9,
+            0,
+            10
+          ]
+        },
+        "hyb_vs_pure_104m_only_post": {
+          "clipped_mean": 0.129812,
+          "family_median": 0.043391,
+          "gain": 0.282489,
+          "lofo_min": 0.109246,
+          "signflip_p": 2e-06,
+          "wtl": [
+            19,
+            0,
+            0
+          ]
+        },
+        "neural104m_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.021162,
+          "family_median": 0.004798,
+          "gain": 0.021162,
+          "lofo_min": 0.007755,
+          "signflip_p": 0.13324,
+          "wtl": [
+            11,
+            0,
+            8
+          ]
+        },
+        "pure_104m_cv7_post_vs_pre": {
+          "clipped_mean": 0.002401,
+          "family_median": 0.00109,
+          "gain": 0.002401,
+          "lofo_min": 7.7e-05,
+          "signflip_p": 0.248066,
+          "wtl": [
+            12,
+            0,
+            7
+          ]
+        },
+        "pure_104m_only_cv7_post_vs_pre": {
+          "clipped_mean": -0.000159,
+          "family_median": -0.000327,
+          "gain": -0.000159,
+          "lofo_min": -0.002783,
+          "signflip_p": 0.513973,
+          "wtl": [
+            7,
+            2,
+            10
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.002144,
+          "family_median": 0.000113,
+          "gain": 0.002144,
+          "lofo_min": 0.000909,
+          "signflip_p": 0.021606,
+          "wtl": [
+            10,
+            3,
+            6
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.000498,
+          "family_median": 0.000174,
+          "gain": 0.000498,
+          "lofo_min": -0.000801,
+          "signflip_p": 0.323566,
+          "wtl": [
+            10,
+            3,
+            6
+          ]
+        },
+        "stack_no_ugp_post_vs_pre": {
+          "clipped_mean": -0.013261,
+          "family_median": -0.000175,
+          "gain": -0.015279,
+          "lofo_min": -0.017851,
+          "signflip_p": 0.661123,
+          "wtl": [
+            8,
+            1,
+            10
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_g16_leg": {
+          "clipped_mean": 0.026227,
+          "family_median": 0.001925,
+          "gain": 0.041897,
+          "lofo_min": 0.007647,
+          "signflip_p": 0.090799,
+          "wtl": [
+            13,
+            0,
+            6
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.005297,
+          "family_median": -5.6e-05,
+          "gain": 0.005297,
+          "lofo_min": 0.002162,
+          "signflip_p": 0.077457,
+          "wtl": [
+            8,
+            3,
+            8
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_g16_leg": {
+          "clipped_mean": 0.019171,
+          "family_median": 0.000809,
+          "gain": 0.033438,
+          "lofo_min": 0.004755,
+          "signflip_p": 0.048092,
+          "wtl": [
+            11,
+            1,
+            7
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": -0.003161,
+          "family_median": -0.000175,
+          "gain": -0.003161,
+          "lofo_min": -0.006732,
+          "signflip_p": 0.633028,
+          "wtl": [
+            8,
+            1,
+            10
+          ]
+        }
+      }
+    },
+    "wave2aplus_cooldown": {
+      "board_arms": {},
+      "matrix_filename": "H454_WAVE2APLUS_COOLDOWN_MATRIX.json",
+      "matrix_sha256": "fa443088953798c427c0a2945e98897b8e7d1d47f02d20348d11844f8325834d",
+      "paired_comparisons": {
+        "hyb_104m_gpresid_cv7_post_vs_pre": {
+          "clipped_mean": 0.004619,
+          "family_median": 0.005938,
+          "gain": -0.001475,
+          "lofo_min": -0.004337,
+          "signflip_p": 0.436319,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "hyb_vs_pure_104m_only_post": {
+          "clipped_mean": 0.127858,
+          "family_median": 0.043398,
+          "gain": 0.259796,
+          "lofo_min": 0.107183,
+          "signflip_p": 2e-06,
+          "wtl": [
+            19,
+            0,
+            0
+          ]
+        },
+        "neural104m_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.020446,
+          "family_median": 0.003967,
+          "gain": 0.020446,
+          "lofo_min": 0.006686,
+          "signflip_p": 0.153284,
+          "wtl": [
+            11,
+            0,
+            8
+          ]
+        },
+        "pure_104m_cv7_post_vs_pre": {
+          "clipped_mean": 0.002008,
+          "family_median": 0.001918,
+          "gain": 0.002008,
+          "lofo_min": -0.000386,
+          "signflip_p": 0.281923,
+          "wtl": [
+            13,
+            0,
+            6
+          ]
+        },
+        "pure_104m_only_cv7_post_vs_pre": {
+          "clipped_mean": 0.007428,
+          "family_median": 0.002858,
+          "gain": 0.007428,
+          "lofo_min": 0.001421,
+          "signflip_p": 0.222094,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.001554,
+          "family_median": 0.0,
+          "gain": 0.001554,
+          "lofo_min": 0.000288,
+          "signflip_p": 0.175385,
+          "wtl": [
+            7,
+            7,
+            5
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 2.5e-05,
+          "family_median": 0.000114,
+          "gain": 2.5e-05,
+          "lofo_min": -0.001301,
+          "signflip_p": 0.49239,
+          "wtl": [
+            10,
+            2,
+            7
+          ]
+        },
+        "stack_no_ugp_post_vs_pre": {
+          "clipped_mean": -0.013047,
+          "family_median": 3.6e-05,
+          "gain": -0.015349,
+          "lofo_min": -0.017935,
+          "signflip_p": 0.653435,
+          "wtl": [
+            9,
+            1,
+            9
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_g16_leg": {
+          "clipped_mean": 0.025665,
+          "family_median": 0.00198,
+          "gain": 0.041335,
+          "lofo_min": 0.007053,
+          "signflip_p": 0.090477,
+          "wtl": [
+            11,
+            1,
+            7
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.004735,
+          "family_median": 0.000116,
+          "gain": 0.004735,
+          "lofo_min": 0.001237,
+          "signflip_p": 0.103296,
+          "wtl": [
+            10,
+            2,
+            7
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_g16_leg": {
+          "clipped_mean": 0.018968,
+          "family_median": 0.001136,
+          "gain": 0.033235,
+          "lofo_min": 0.004617,
+          "signflip_p": 0.048965,
+          "wtl": [
+            13,
+            1,
+            5
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": -0.003364,
+          "family_median": 3.6e-05,
+          "gain": -0.003364,
+          "lofo_min": -0.007256,
+          "signflip_p": 0.640659,
+          "wtl": [
+            9,
+            1,
+            9
+          ]
+        }
+      }
+    },
+    "wave2aplus_soup50": {
+      "board_arms": {},
+      "matrix_filename": "H454_WAVE2APLUS_SOUP50_MATRIX.json",
+      "matrix_sha256": "b5ab7cf123a65e8e6e11e491bbd68fac55299e1917acf5f32d1d63a65ee0ab37",
+      "paired_comparisons": {
+        "hyb_104m_gpresid_cv7_post_vs_pre": {
+          "clipped_mean": 0.005055,
+          "family_median": 0.002402,
+          "gain": -0.001068,
+          "lofo_min": -0.004029,
+          "signflip_p": 0.430134,
+          "wtl": [
+            10,
+            1,
+            8
+          ]
+        },
+        "hyb_vs_pure_104m_only_post": {
+          "clipped_mean": 0.128126,
+          "family_median": 0.043083,
+          "gain": 0.260688,
+          "lofo_min": 0.107467,
+          "signflip_p": 2e-06,
+          "wtl": [
+            19,
+            0,
+            0
+          ]
+        },
+        "neural104m_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.020744,
+          "family_median": 0.002818,
+          "gain": 0.020744,
+          "lofo_min": 0.007046,
+          "signflip_p": 0.148106,
+          "wtl": [
+            10,
+            2,
+            7
+          ]
+        },
+        "pure_104m_cv7_post_vs_pre": {
+          "clipped_mean": 0.002136,
+          "family_median": 0.001724,
+          "gain": 0.002136,
+          "lofo_min": -0.000269,
+          "signflip_p": 0.269924,
+          "wtl": [
+            13,
+            0,
+            6
+          ]
+        },
+        "pure_104m_only_cv7_post_vs_pre": {
+          "clipped_mean": 0.005683,
+          "family_median": 0.002643,
+          "gain": 0.005683,
+          "lofo_min": -0.000398,
+          "signflip_p": 0.273066,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.001658,
+          "family_median": 0.0,
+          "gain": 0.001658,
+          "lofo_min": 0.000398,
+          "signflip_p": 0.132988,
+          "wtl": [
+            7,
+            5,
+            7
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.00018,
+          "family_median": 3.7e-05,
+          "gain": 0.00018,
+          "lofo_min": -0.001138,
+          "signflip_p": 0.440975,
+          "wtl": [
+            9,
+            3,
+            7
+          ]
+        },
+        "stack_no_ugp_post_vs_pre": {
+          "clipped_mean": -0.012991,
+          "family_median": 0.000162,
+          "gain": -0.01524,
+          "lofo_min": -0.017882,
+          "signflip_p": 0.652256,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_g16_leg": {
+          "clipped_mean": 0.026115,
+          "family_median": 0.002059,
+          "gain": 0.041785,
+          "lofo_min": 0.007528,
+          "signflip_p": 0.084421,
+          "wtl": [
+            11,
+            1,
+            7
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.005185,
+          "family_median": 0.000167,
+          "gain": 0.005185,
+          "lofo_min": 0.001712,
+          "signflip_p": 0.081245,
+          "wtl": [
+            11,
+            1,
+            7
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_g16_leg": {
+          "clipped_mean": 0.019056,
+          "family_median": 0.001706,
+          "gain": 0.033323,
+          "lofo_min": 0.004704,
+          "signflip_p": 0.04217,
+          "wtl": [
+            12,
+            2,
+            5
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": -0.003276,
+          "family_median": 0.000162,
+          "gain": -0.003276,
+          "lofo_min": -0.00717,
+          "signflip_p": 0.637205,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        }
+      }
+    },
+    "wave2b_lr5e6_soup50": {
+      "board_arms": {},
+      "matrix_filename": "H454_WAVE2B_LR5E6_SOUP50_MATRIX.json",
+      "matrix_sha256": "11bffbf696c650aad43f4bd8da0de512064ae9fb9a82297b0c3a832c7a4639b9",
+      "paired_comparisons": {
+        "hyb_104m_gpresid_cv7_post_vs_pre": {
+          "clipped_mean": 0.005059,
+          "family_median": 0.002813,
+          "gain": -0.001335,
+          "lofo_min": -0.004738,
+          "signflip_p": 0.429295,
+          "wtl": [
+            10,
+            1,
+            8
+          ]
+        },
+        "hyb_vs_pure_104m_only_post": {
+          "clipped_mean": 0.127573,
+          "family_median": 0.050132,
+          "gain": 0.261828,
+          "lofo_min": 0.106883,
+          "signflip_p": 2e-06,
+          "wtl": [
+            19,
+            0,
+            0
+          ]
+        },
+        "neural104m_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 0.019885,
+          "family_median": 0.003523,
+          "gain": 0.019885,
+          "lofo_min": 0.006314,
+          "signflip_p": 0.159561,
+          "wtl": [
+            10,
+            2,
+            7
+          ]
+        },
+        "pure_104m_cv7_post_vs_pre": {
+          "clipped_mean": 0.000512,
+          "family_median": 0.001121,
+          "gain": 0.000512,
+          "lofo_min": -0.001963,
+          "signflip_p": 0.403337,
+          "wtl": [
+            12,
+            1,
+            6
+          ]
+        },
+        "pure_104m_only_cv7_post_vs_pre": {
+          "clipped_mean": 0.006784,
+          "family_median": 0.002463,
+          "gain": 0.006784,
+          "lofo_min": 0.000943,
+          "signflip_p": 0.251877,
+          "wtl": [
+            10,
+            0,
+            9
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.001657,
+          "family_median": 0.0,
+          "gain": 0.001657,
+          "lofo_min": 0.000397,
+          "signflip_p": 0.080086,
+          "wtl": [
+            7,
+            6,
+            6
+          ]
+        },
+        "stack_guarded_hyb_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": 6.8e-05,
+          "family_median": 3.2e-05,
+          "gain": 6.8e-05,
+          "lofo_min": -0.001264,
+          "signflip_p": 0.485165,
+          "wtl": [
+            9,
+            3,
+            7
+          ]
+        },
+        "stack_no_ugp_post_vs_pre": {
+          "clipped_mean": -0.013165,
+          "family_median": -5.5e-05,
+          "gain": -0.015176,
+          "lofo_min": -0.018073,
+          "signflip_p": 0.656733,
+          "wtl": [
+            8,
+            2,
+            9
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_g16_leg": {
+          "clipped_mean": 0.025897,
+          "family_median": 0.001883,
+          "gain": 0.041567,
+          "lofo_min": 0.007298,
+          "signflip_p": 0.082653,
+          "wtl": [
+            11,
+            1,
+            7
+          ]
+        },
+        "stack_ugp_g1000_cons_joint_vs_pre": {
+          "clipped_mean": 0.004968,
+          "family_median": 0.00016,
+          "gain": 0.004968,
+          "lofo_min": 0.001458,
+          "signflip_p": 0.0781,
+          "wtl": [
+            10,
+            1,
+            8
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_g16_leg": {
+          "clipped_mean": 0.018986,
+          "family_median": 0.001906,
+          "gain": 0.033253,
+          "lofo_min": 0.00471,
+          "signflip_p": 0.032925,
+          "wtl": [
+            11,
+            1,
+            7
+          ]
+        },
+        "stack_ugp_g1000_cons_post_vs_pre": {
+          "clipped_mean": -0.003346,
+          "family_median": -5.5e-05,
+          "gain": -0.003346,
+          "lofo_min": -0.007252,
+          "signflip_p": 0.640646,
+          "wtl": [
+            8,
+            2,
+            9
+          ]
+        }
+      }
+    }
+  }
+}
