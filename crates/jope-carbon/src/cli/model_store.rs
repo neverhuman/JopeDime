@@ -606,6 +606,127 @@ fn current_release_asset_name() -> Option<&'static str> {
     }
 }
 
+fn extract_carbon_from_tar_reader<R: std::io::Read>(
+    mut reader: R,
+    max_bytes: u64,
+) -> Result<Vec<u8>, String> {
+    let mut consumed: u64 = 0;
+    let mut hdr = [0u8; 512];
+    loop {
+        let mut read_hdr = 0usize;
+        while read_hdr < 512 {
+            let n = reader
+                .read(&mut hdr[read_hdr..])
+                .map_err(|e| format!("read upgrade tar header: {e}"))?;
+            if n == 0 {
+                if read_hdr == 0 {
+                    return Err(
+                        "upgrade .tar.gz archive did not contain a 'carbon' regular executable entry"
+                            .to_owned(),
+                    );
+                }
+                return Err("truncated 512-byte header in upgrade tar".to_owned());
+            }
+            read_hdr += n;
+        }
+        consumed = consumed.saturating_add(512);
+        if consumed > max_bytes {
+            return Err("upgrade .tar.gz exceeded 512 MiB safety bound".to_owned());
+        }
+        if hdr.iter().all(|&b| b == 0) {
+            break;
+        }
+        let raw_name = &hdr[0..100];
+        let name_end = raw_name
+            .iter()
+            .position(|&b| b == 0)
+            .unwrap_or(raw_name.len());
+        let entry_name = std::str::from_utf8(&raw_name[..name_end])
+            .map_err(|_| "non-UTF-8 entry name in upgrade tar".to_owned())?;
+        let size_field = std::str::from_utf8(&hdr[124..136])
+            .map_err(|_| "invalid tar octal size header".to_owned())?
+            .trim_matches(|c: char| c == '\0' || c.is_ascii_whitespace());
+        let size = if size_field.is_empty() {
+            0usize
+        } else {
+            usize::from_str_radix(size_field, 8)
+                .map_err(|e| format!("parse tar octal size '{size_field}': {e}"))?
+        };
+        let size_u64 = u64::try_from(size).map_err(|_| "tar entry size overflow".to_owned())?;
+        if consumed.saturating_add(size_u64) > max_bytes {
+            return Err("upgrade .tar.gz exceeded 512 MiB safety bound".to_owned());
+        }
+        let typeflag = hdr[156];
+        let base_name = entry_name.rsplit('/').next().unwrap_or(entry_name);
+        if (typeflag == 0 || typeflag == b'0')
+            && (base_name == "carbon" || base_name == "carbon.exe")
+        {
+            let mut payload = vec![0u8; size];
+            reader
+                .read_exact(&mut payload)
+                .map_err(|e| format!("truncated carbon executable in upgrade tar: {e}"))?;
+            return Ok(payload);
+        }
+        let padded = size_u64
+            .checked_add(511)
+            .map(|n| n & !511)
+            .ok_or_else(|| "tar block alignment overflow".to_owned())?;
+        consumed = consumed.saturating_add(padded);
+        if consumed > max_bytes {
+            return Err("upgrade .tar.gz exceeded 512 MiB safety bound".to_owned());
+        }
+        let skipped = std::io::copy(
+            &mut std::io::Read::take(&mut reader, padded),
+            &mut std::io::sink(),
+        )
+        .map_err(|e| format!("skip non-matching tar entry: {e}"))?;
+        if skipped != padded {
+            return Err("truncated tar entry in upgrade archive".to_owned());
+        }
+    }
+    Err("upgrade .tar.gz archive did not contain a 'carbon' regular executable entry".to_owned())
+}
+
+fn extract_carbon_binary_from_targz(targz_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    const MAX_DECOMPRESSED_TAR_BYTES: u64 = 512 * 1024 * 1024;
+    #[cfg(feature = "engine")]
+    {
+        let decoder = flate2::read::GzDecoder::new(targz_bytes);
+        extract_carbon_from_tar_reader(decoder, MAX_DECOMPRESSED_TAR_BYTES)
+    }
+    #[cfg(not(feature = "engine"))]
+    {
+        use std::io::Write;
+        use std::process::{Command, Stdio};
+        let mut child = Command::new("gzip")
+            .arg("-dc")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("spawn gzip -dc for upgrade .tar.gz: {e}"))?;
+        let mut stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| "open gzip -dc stdin".to_owned())?;
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or_else(|| "open gzip -dc stdout".to_owned())?;
+        let out = std::thread::scope(|s| {
+            let writer = s.spawn(move || {
+                let _ = stdin.write_all(targz_bytes);
+            });
+            let extracted = extract_carbon_from_tar_reader(stdout, MAX_DECOMPRESSED_TAR_BYTES);
+            let _ = child.kill();
+            let _ = child.wait();
+            let _ = writer.join();
+            extracted
+        });
+        out
+    }
+}
+
 /// Check or install a cryptographically signed Carbon CLI update (`SHA256SUMS.txt` + ECDSA-P256 `.sig`).
 pub fn execute_self_upgrade(
     base_url_override: Option<&str>,
@@ -673,18 +794,17 @@ pub fn execute_self_upgrade(
         .map_err(|e| format!("release signature verification failed: {e}"))?;
 
     let sums_text = String::from_utf8_lossy(&sums_bytes);
-    let mut expected_sha = None;
+    let mut verified_sums = BTreeMap::new();
     for line in sums_text.lines() {
         let mut parts = line.split_whitespace();
         if let (Some(sha), Some(name)) = (parts.next(), parts.next()) {
             let clean_name = name.trim_start_matches('*');
-            if clean_name == asset {
-                expected_sha = Some(sha.to_ascii_lowercase());
-                break;
-            }
+            verified_sums.insert(clean_name.to_owned(), sha.to_ascii_lowercase());
         }
     }
-    let expected_sha256 = expected_sha
+    let expected_sha256 = verified_sums
+        .get(asset)
+        .cloned()
         .ok_or_else(|| format!("asset '{asset}' not found in verified SHA256SUMS.txt"))?;
 
     let exe_path = std::env::current_exe().map_err(|e| format!("resolve current_exe: {e}"))?;
@@ -709,7 +829,23 @@ pub fn execute_self_upgrade(
         });
     }
 
-    let bin_bytes = fetch_bytes(&format!("{base_url}/{asset}"))?;
+    let targz_asset = format!("{asset}.tar.gz");
+    let bin_bytes = if let Some(expected_targz_sha) = verified_sums.get(&targz_asset) {
+        match fetch_bytes(&format!("{base_url}/{targz_asset}")) {
+            Ok(targz_bytes) => {
+                let actual_targz_sha = sha256_lower_hex(&targz_bytes);
+                if &actual_targz_sha != expected_targz_sha {
+                    return Err(format!(
+                        "downloaded {targz_asset} SHA-256 mismatch: expected {expected_targz_sha}, got {actual_targz_sha}"
+                    ));
+                }
+                extract_carbon_binary_from_targz(&targz_bytes)?
+            }
+            Err(_) => fetch_bytes(&format!("{base_url}/{asset}"))?,
+        }
+    } else {
+        fetch_bytes(&format!("{base_url}/{asset}"))?
+    };
     let actual_sha = sha256_lower_hex(&bin_bytes);
     if actual_sha != expected_sha256 {
         return Err(format!(

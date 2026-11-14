@@ -4,6 +4,7 @@
 
 pub mod bench_suite;
 pub mod client;
+#[cfg(feature = "engine")]
 pub mod coverage_audit;
 #[cfg(feature = "engine")]
 pub mod deploy;

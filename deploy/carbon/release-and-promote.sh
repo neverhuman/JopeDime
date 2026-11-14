@@ -97,6 +97,21 @@ fi
 
 cp deploy/carbon/install.sh "$OUT_DIR/install.sh"
 cp deploy/carbon/install.ps1 "$OUT_DIR/install.ps1"
+python3 - "$OUT_DIR/install.sh" "$OUT_DIR/install.ps1" "$TAG" <<'PY'
+import re, sys
+sh_path, ps1_path, tag = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(sh_path, "r", encoding="utf-8") as fh:
+    sh = fh.read()
+sh = re.sub(r'^DEFAULT_TAG="[^"]+"', f'DEFAULT_TAG="{tag}"', sh, count=1, flags=re.M)
+sh = re.sub(r'\(default: carbon-cli-v[^)]+\)', f'(default: {tag})', sh, count=1)
+with open(sh_path, "w", encoding="utf-8") as fh:
+    fh.write(sh)
+with open(ps1_path, "r", encoding="utf-8") as fh:
+    ps1 = fh.read()
+ps1 = re.sub(r'(\[string\]\$Version\s*=\s*)"[^"]+"', rf'\1"{tag}"', ps1, count=1)
+with open(ps1_path, "w", encoding="utf-8") as fh:
+    fh.write(ps1)
+PY
 
 if [[ -n "$EXTRA_ASSETS_DIR" ]]; then
   [[ -d "$EXTRA_ASSETS_DIR" ]] || die "missing --extra-assets-dir '$EXTRA_ASSETS_DIR'"

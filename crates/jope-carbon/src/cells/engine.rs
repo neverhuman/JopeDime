@@ -7,11 +7,12 @@
 //! domain-seals `CheckpointArchive` vs `ChampionModel` double-bound to `U_DEK` (`RT-06`), and
 //! returns E2E encrypted `/predict` outputs.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{
     atomic::{AtomicU64, Ordering},
-    Arc,
+    Arc, Mutex,
 };
 use std::time::Instant;
 
@@ -27,10 +28,10 @@ use jope_api::{
 use jope_prep::{conditioning::FitLandmarkBundle, cuen::CuenPayloadKind};
 use jope_service::discover::r#loop::{
     carbon::{
-        evaluate_carbon_eval_shard, evaluate_outer_holdout_only, predict_with_champion_bytes,
-        run_carbon_waves, try_open_embedded_ranker, CarbonInProcessExecutor,
-        CarbonNeuralGuidancePolicy, CarbonRemoteEvalExecutor, CarbonStoreArchive,
-        CarbonWaveRunOutcome, CarbonWaveSessionOptions,
+        evaluate_carbon_eval_shard, evaluate_outer_holdout_only, run_carbon_waves,
+        try_open_embedded_ranker, CarbonInProcessExecutor, CarbonNeuralGuidancePolicy,
+        CarbonParsedChampion, CarbonRemoteEvalExecutor, CarbonStoreArchive, CarbonWaveRunOutcome,
+        CarbonWaveSessionOptions,
     },
     Plan,
 };
@@ -63,6 +64,13 @@ use crate::{
 
 const DEADLINE_DRAIN_MARGIN_MS: u64 = 20_000;
 const MAX_INLINE_PREDICT_CUEN_BYTES: usize = 1_572_864;
+const CHAMPION_CACHE_MAX_ENTRIES: usize = 8;
+const CHAMPION_CACHE_TTL_SECS: u64 = 60;
+
+struct CachedChampionEntry {
+    expires_epoch_secs: u64,
+    parsed: Arc<CarbonParsedChampion>,
+}
 
 struct EngineSessionDir {
     path: PathBuf,
@@ -135,6 +143,7 @@ pub struct CarbonEngineWorker {
     engine_kek: Option<Arc<CarbonEngineKek>>,
     work_root: PathBuf,
     force_hybrid_fanout: bool,
+    champion_cache: Mutex<BTreeMap<(String, String, String), CachedChampionEntry>>,
 }
 
 struct OpenedEngineRunInputs {
@@ -160,6 +169,7 @@ impl CarbonEngineWorker {
             engine_kek: None,
             work_root,
             force_hybrid_fanout: false,
+            champion_cache: Mutex::new(BTreeMap::new()),
         })
     }
 
@@ -609,10 +619,12 @@ impl CarbonEngineWorker {
 
         let champ_key =
             canonical_run_state_key(&pred_req.tenant_id, run_id_str, "sealed_champion.enc")?;
-        let champ_enc = self
-            .cas
-            .get_state_object(&champ_key)?
-            .ok_or_else(|| format!("run '{run_id_str}' has no sealed champion model"))?;
+        let Some(champ_enc) = self.cas.get_state_object(&champ_key)? else {
+            if let Ok(mut guard) = self.champion_cache.lock() {
+                guard.retain(|(t, r, _), _| t != &pred_req.tenant_id || r != run_id_str);
+            }
+            return Err(format!("run '{run_id_str}' has no sealed champion model"));
+        };
         let (_wave, decrypted_champ) = SealedCheckpointEnvelope::open_with_domain(
             &self.seal_key,
             CarbonSealDomain::ChampionModel,
@@ -622,6 +634,42 @@ impl CarbonEngineWorker {
             &champ_enc,
         )
         .map_err(|e| format!("sealed champion authentication failed: {e}"))?;
+        let champ_pt_sha = sha256_lower_hex(&decrypted_champ);
+        let now_secs = now_epoch_ms() / 1_000;
+        let cache_key = (
+            pred_req.tenant_id.clone(),
+            run_id_str.to_owned(),
+            champ_pt_sha,
+        );
+        let parsed_champion = {
+            let cached = self.champion_cache.lock().ok().and_then(|mut guard| {
+                guard.retain(|_, v| v.expires_epoch_secs >= now_secs);
+                guard.get(&cache_key).map(|entry| Arc::clone(&entry.parsed))
+            });
+            match cached {
+                Some(hit) => hit,
+                None => {
+                    let parsed = Arc::new(
+                        CarbonParsedChampion::from_json_bytes(&decrypted_champ)
+                            .map_err(|e| format!("champion parse failed: {e}"))?,
+                    );
+                    if let Ok(mut guard) = self.champion_cache.lock() {
+                        if guard.len() >= CHAMPION_CACHE_MAX_ENTRIES {
+                            guard.clear();
+                        }
+                        guard.insert(
+                            cache_key,
+                            CachedChampionEntry {
+                                expires_epoch_secs: now_secs
+                                    .saturating_add(CHAMPION_CACHE_TTL_SECS),
+                                parsed: Arc::clone(&parsed),
+                            },
+                        );
+                    }
+                    parsed
+                }
+            }
+        };
 
         let (feat_names, rows) = if let Some(dek) = u_dek.as_ref() {
             let enc_wire = if let Some(cas_sha) = pred_req.encrypted_rows_cas_sha256.as_deref() {
@@ -676,7 +724,8 @@ impl CarbonEngineWorker {
             }
         }
 
-        let predictions = predict_with_champion_bytes(&decrypted_champ, &feat_names, &rows)
+        let predictions = parsed_champion
+            .predict(&feat_names, &rows)
             .map_err(|e| format!("champion predict failed: {e}"))?;
 
         let mut pred_le = Zeroizing::new(Vec::with_capacity(predictions.len() * 8));

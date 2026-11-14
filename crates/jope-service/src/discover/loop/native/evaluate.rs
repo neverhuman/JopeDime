@@ -40,6 +40,29 @@ pub fn evaluate_native<B: AsRef<[u8]> + Sync>(
     })
 }
 
+#[derive(Default)]
+struct SerializedByteCounter(u64);
+
+impl std::io::Write for SerializedByteCounter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0 = self.0.saturating_add(buf.len() as u64);
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn serialized_json_byte_len<T: Serialize>(value: &T) -> u64 {
+    let mut counter = SerializedByteCounter::default();
+    if serde_json::to_writer(&mut counter, value).is_ok() {
+        counter.0
+    } else {
+        0
+    }
+}
+
 #[derive(Debug)]
 pub(super) struct UndefinedFitness;
 impl std::fmt::Display for UndefinedFitness {
@@ -59,7 +82,7 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
         "invalid native folds"
     );
     ensure!(
-        digest(matrix.bytes()) == spec.matrix_sha256,
+        matrix.sha256_hex() == spec.matrix_sha256,
         "mapped FIT matrix identity mismatch"
     );
     let objective = RegressionObjective::parse(
@@ -117,9 +140,7 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
             .map_err(|_| UndefinedFitness)?;
         surrogate.push(rmse.loss);
         fold_scores.push(rmse.loss);
-        let model_bytes = serde_json::to_vec(&fitted)
-            .map(|b| b.len() as u64)
-            .unwrap_or(0);
+        let model_bytes = serialized_json_byte_len(&fitted);
         let feat_w = spec.features.len().max(1);
         let fold_mean = fold_scores.iter().sum::<f64>() / fold_scores.len() as f64;
         let fold_std = (fold_scores
@@ -220,7 +241,7 @@ pub(in crate::discover::r#loop) fn numeric_rows<B: AsRef<[u8]>>(
 #[derive(Serialize, Deserialize)]
 pub(crate) struct NativeModel {
     pub(super) version: u32,
-    pub(super) features: Vec<String>,
+    pub(crate) features: Vec<String>,
     pub(super) dsl: String,
     pub(super) min: Vec<f64>,
     pub(super) max: Vec<f64>,
