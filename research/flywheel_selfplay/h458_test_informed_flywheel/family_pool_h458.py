@@ -75,6 +75,12 @@ def feature_stratum(x_rows: np.ndarray, k: int = 5) -> np.ndarray:
     )
 
 
+def feature_keys(x_rows: np.ndarray) -> list[bytes]:
+    """128-bit digest of every row's canonical FEATURE bytes (no target), for membership tests against a pool."""
+    c = canon_feature_rows(x_rows)
+    return [hashlib.blake2b(c[i].tobytes(), digest_size=16, key=STRATA_KEY).digest() for i in range(c.shape[0])]
+
+
 def dedup_and_order(mat: np.ndarray) -> np.ndarray:
     """Unique rows in ascending key order (so the result does not depend on the input order)."""
     keys = row_keys(mat)
@@ -188,6 +194,16 @@ class FamilyPool:
     def member_rows(self, fam: str | int) -> list[int]:
         i = fam if isinstance(fam, int) else self.resolve(fam)
         return list(self.meta["member_rows"][i])
+
+    def coverage(self, fam: str | int, x_rows: np.ndarray) -> float:
+        """Share of the given feature rows that sit in the family pool, by canonical feature bytes."""
+        tab = np.asarray(self.table(fam), dtype=np.float64)
+        x_rows = np.asarray(x_rows, dtype=np.float64)
+        if x_rows.ndim != 2 or x_rows.shape[1] != tab.shape[1] - 1:
+            return 0.0
+        have = set(feature_keys(tab[:, :-1]))
+        keys = feature_keys(x_rows)
+        return sum(k in have for k in keys) / float(max(1, len(keys)))
 
     def table_without_stratum(self, fam: str | int, k_out: int, k: int = 5) -> np.ndarray:
         """The pool without one feature-hash stratum: the training table of a cross-fitted ("skill") specialist."""

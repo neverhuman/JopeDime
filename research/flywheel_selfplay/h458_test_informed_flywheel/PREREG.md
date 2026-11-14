@@ -96,3 +96,23 @@ Kept as scored-inference inputs that cannot be regenerated bit-exactly (bf16 on 
 checkpoints that enter the stack, with sha256 in the evidence manifest. Pilot milestone checkpoints and probe caches
 are listed in a retention receipt and removed only at wave close with the owner's go-ahead. Run configs, logs, probe
 JSONs and per-context results are the durable record.
+
+## Amendments (dated; everything above this line is the text frozen before the first checkpoint)
+
+- 2026-11-14 22:10Z, after the first 60b608db probes and a reviewer challenge (`cl_fwriter`, shared chat): canonical
+  slots are the scored path of the **recall** arm only. Whether they help on unseen rows is decided by the
+  cross-fitted skill arm in both slot modes, not by the recall curve.
+- 2026-11-14 22:50Z, skill arm on 60b608db (four of five strata read): random slots +0.01 to +0.02 u over the fair
+  init at 1,000 exposures, fading by 2,000; canonical slots -0.09 to -0.15 u at 2,000. The skill arm is therefore
+  not trained for the other families at this recipe. This is a departure from the pilot table above (which listed
+  the skill arm per family) and is reported as such.
+- 2026-11-14 22:50Z, looks: the joint final look reports two pre-named numbers from one ledger look, the full stack
+  and the same stack without the recall columns (agreed with Track S). Recall columns are exempt from the peer
+  guard by sidecar closure (rule S6), so one checkpoint per family enters the stack; the 1,500-exposure milestone
+  of the same run may be delivered as a second block.
+- 2026-11-14 22:50Z, operations: an out-of-memory error now trims the item (fewer query rows, then one target
+  mode) and retries it; a queued item built under older caps is re-sized on consumption; only a failed backward
+  pass drops the open gradient group. Data workers may run on another host (`--remote-workers`), which holds a
+  verified copy of the staged code, the dependency stages and the family pool; no checkpoint, bank or audit label
+  leaves the training host. The selftest pins numeric threads to one, because threaded BLAS changes the last bits
+  of the ridge-base product with the shape of the query block.

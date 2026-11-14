@@ -26,7 +26,7 @@ echo "$SRC" > "$STAGE/source_commit"
 import json
 import paths_h458 as P
 P.setup_paths()
-import episodes_h458, probe_h458, train_h458  # noqa: F401  (imports every dependency)
+import cols_h458, episodes_h458, probe_h458, train_h458  # noqa: F401  (imports every dependency)
 assert P.dep_dir() == P.VENDOR, "vendor folder not in use"
 shas = P.verify_deps(strict=False)
 with open("deps_h458.json", "x") as fh:

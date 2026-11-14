@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 # Launches one H458 specialist run from the staged runtime copy, with the resource caps the wave was admitted under.
 # usage: launch_specialist.sh <run_name> <family8> <arm rand|canon> <init_ckpt> <init_key> ['{"json": "overrides"}']
-# env:   VRAM_FRAC (default 0.13)  WORKERS (default 8)  CODE (default: the folder this script is in)
+# env:   VRAM_FRAC (default 0.13)  WORKERS (default 8, on this host)  CODE (default: the folder this script is in)
+#        REMOTE_WORKERS (e.g. "xbabe3:16": data workers on another host that holds the same staged code and pool;
+#        see sync_remote_h458.sh)  RESUME=1 (continue an existing run directory)
 set -euo pipefail
 NAME="$1"; FAM="$2"; ARM="$3"; INIT="$4"; KEY="$5"; EXTRA="${6:-}"
 [ -n "$EXTRA" ] || EXTRA='{}'
 CODE="${CODE:-$(cd "$(dirname "$0")" && pwd)}"
 RUN="/home/ubuntu/jope-data/h458-quarantine/runs/$NAME"
 mkdir -p "$RUN"
-/usr/bin/python3 -B - "$RUN/config.json" "$FAM" "$ARM" "$EXTRA" <<'PY'
+RESUME_FLAG=""
+[ "${RESUME:-0}" = "1" ] && RESUME_FLAG="--resume"
+[ -n "$RESUME_FLAG" ] || /usr/bin/python3 -B - "$RUN/config.json" "$FAM" "$ARM" "$EXTRA" <<'PY'
 import json, sys
 out, fam, arm, extra = sys.argv[1:5]
 cfg = {"arm": arm, "size": "M", "families": [fam]}
@@ -21,4 +25,5 @@ exec systemd-run --user --scope -q -p MemoryHigh=14G -p MemoryMax=18G choom -n 5
       PYTHONDONTWRITEBYTECODE=1 JOPE_REF_CODE= PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
   taskset -c 32-63,80-127 nice -n 19 /usr/bin/python3 -u -B "$CODE/train_h458.py" \
     --config "$RUN/config.json" --init "$INIT" --init-key "$KEY" --out "$RUN" \
-    --device cuda --cuda-vram-frac "${VRAM_FRAC:-0.13}" --workers "${WORKERS:-8}"
+    --device cuda --cuda-vram-frac "${VRAM_FRAC:-0.13}" --workers "${WORKERS:-8}" \
+    --remote-workers "${REMOTE_WORKERS:-}" $RESUME_FLAG

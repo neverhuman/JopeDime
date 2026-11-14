@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""H458 selftest (CPU only, 14 gates). Every gate must pass before any GPU use; the receipt goes to the H458 evidence folder.
+"""H458 selftest (CPU only, 16 gates). Every gate must pass before any GPU use; the receipt goes to the H458 evidence folder.
 
 Not covered here (stated, not hidden): injecting a real CUDA out-of-memory error, and the GP-residual target mode.
 """
@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import os
 
+# one numeric thread, whatever the caller's environment says: the identity gates compare bytes, and threaded BLAS
+# changes the last bits of a product with the shape of its operands
 for _k in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
-    os.environ.setdefault(_k, "1")
+    os.environ[_k] = "1"
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import argparse  # noqa: E402
@@ -27,6 +29,7 @@ P.setup_paths()
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
+import cols_h458 as CB  # noqa: E402
 import episodes_h458 as E  # noqa: E402
 import family_pool_h458 as FP  # noqa: E402
 import probe_h458 as PR  # noqa: E402
@@ -37,7 +40,7 @@ HERE = Path(__file__).resolve().parent
 GP_ANCHOR = Path("/home/ubuntu/jope-data/h452-flywheel/gp_anchors_p0")
 P418 = Path("/home/ubuntu/jope_plan/evidence/H418/pulled")
 P448 = Path("/home/ubuntu/jope_plan/evidence/H448/pulled")
-SOURCES = ("paths_h458.py", "family_pool_h458.py", "episodes_h458.py", "train_h458.py", "probe_h458.py")
+SOURCES = ("paths_h458.py", "family_pool_h458.py", "episodes_h458.py", "train_h458.py", "probe_h458.py", "cols_h458.py")
 
 
 def gate_quarantine(ctx) -> dict:
@@ -267,7 +270,114 @@ def gate_cpu_mini_train(ctx) -> dict:
     assert sum(p.numel() for p in m.parameters()) > 0
     first = [r for r in recs if r.get("event") == "paused"][0]
     assert first["items"] == 4 and last["step"] >= first["step"], "resume did not continue the run"
-    return {"steps": last["step"], "run_dir": str(out)}
+    # injected out-of-memory failures (every batch above 700 rows) in a run of its own: the item is trimmed and retried,
+    # the run keeps stepping, the caps shrink at most once per item and nothing aborts
+    out_f = out.with_name(out.name + "_fault")
+    cfg_f = cfg_p.with_name(cfg_p.stem + "_fault.json")
+    cfg_f.write_text(json.dumps({**json.loads(cfg_p.read_text()), "fault_inject_oom_rows": 700}))
+    cmd_f = [a if a != str(cfg_p) else str(cfg_f) for a in base]
+    cmd_f[cmd_f.index(str(out))] = str(out_f)
+    r3 = subprocess.run(cmd_f + ["--max-items", "5"], capture_output=True, text=True, timeout=900)
+    assert r3.returncode == 0, r3.stderr[-600:]
+    recs_f = [json.loads(line) for line in (out_f / "log.jsonl").read_text().splitlines()]
+    ooms = [r for r in recs_f if r.get("event") == "oom"]
+    end_f = [r for r in recs_f if r.get("event") == "paused"][-1]
+    assert ooms and not (out_f / "ABORTED.json").exists(), "injected OOMs were not absorbed"
+    assert end_f["step"] >= 1, "no optimizer step under injected OOMs"
+    assert min(r["cap_scale"] for r in ooms) >= 0.85**5 - 1e-3, "caps shrank more than once per item"
+    return {"steps": last["step"], "fault_run": {"injected_ooms": len(ooms), "steps": end_f["step"], "cap_scale_end": min(r["cap_scale"] for r in ooms)}, "run_dir": str(out)}
+
+
+def gate_remote_workers(ctx) -> dict:
+    """The remote-worker stream (framing, round-robin order, control lines, shutdown), run on this host without ssh."""
+    out = P.QUARANTINE / "selftest" / f"remote_{int(time.time())}"
+    cfg_p = P.QUARANTINE / "selftest" / f"remote_{int(time.time())}.json"
+    cfg_p.parent.mkdir(parents=True, exist_ok=True)
+    cfg_p.write_text(json.dumps({"arm": "rand", "size": "S", "families": ["f8fd51f3"], "save_at_exposures": [1], "caps": {"tokens": 40000, "row_tokens": 3000}, "warmup_steps": 2, "q_max": 256}))
+    cmd = [sys.executable, "-B", str(HERE / "train_h458.py"), "--config", str(cfg_p), "--init", "random", "--out", str(out), "--device", "cpu", "--workers", "1", "--remote-workers", "local:2", "--max-items", "6", "--log-every-s", "2"]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+    assert r.returncode == 0, r.stderr[-600:]
+    recs = [json.loads(line) for line in (out / "log.jsonl").read_text().splitlines()]
+    end = [x for x in recs if x.get("event") == "paused"][-1]
+    assert end["items"] == 6 and end["step"] >= 1 and end["dup_splits"] == 0, end
+    seq = torch.load(out / "ckpt_last.pt", map_location="cpu", weights_only=False)["state"]["seq"]
+    assert len(seq) == 3 and all(v >= 1 for v in seq), f"not every worker delivered: {seq}"
+    err = (out / "remote_local.stderr").read_text()
+    assert "Traceback" not in err, err[-400:]
+    return {"items": end["items"], "steps": end["step"], "seq": seq}
+
+
+def gate_builder_matches_reference(ctx) -> dict:
+    """The scored builder's canonical-slot path equals an independent fold loop built from the training functions."""
+    cid = ctx["identity_cids"][0]
+    d = ctx["bank_full"][cid]
+    xs, xa, y, lab = d["Xs"], d["Xa"], d["y"], d["lab"]
+    dev = torch.device("cpu")
+    torch.manual_seed(458)
+    model = C.ICLH450("S").eval()
+    reps = 1  # the identity does not depend on the number of repeats; scored blocks use two
+    out = CB.build_context(cid, xs, xa, y, lab, [[(model, 1.0)]], dev, "canon", n_repeats=reps)[0]
+    assert C._build_views is not CB._views_canon and C._batched_icl_predict is not CB._predict_canon, "builder overrides were not restored"
+    n_s, n_a = len(y), xa.shape[0]
+    span = max(float(np.max(y) - np.min(y)), max(float(np.std(y)), 1e-12))
+    lo_g, hi_g = float(np.min(y)) - 1.5 * span, float(np.max(y)) + 1.5 * span
+    eff_k = 7 if n_s >= 35 else 5
+    q_sum = {m: np.zeros(n_s) for m in E.MODES}
+    q_cnt = {m: np.zeros(n_s) for m in E.MODES}
+    bag = {m: np.zeros(n_a) for m in E.MODES}
+    ref, folds = {}, 0
+
+    def score(x_tr, y_tr, x_ev, seed) -> dict:
+        ff = E.eval_fold_features(x_tr, y_tr, x_ev, seed)
+        res = {}
+        for m, mt in E.mode_targets(ff, y_tr, seed).items():
+            vt, ve, slots = E.canonical_view(ff, mt.y_ctx)
+            pr = PR.predict_canon(model, vt, ve, mt.y_ctx, slots, dev, None if mt.warp is None else mt.warp.inv_torch)
+            res[m] = np.clip(mt.base_ev + pr, lo_g, hi_g)
+        return res
+
+    for rep in range(reps):
+        lab_rep = C.make_stratified_kfold(cid, y, k=eff_k, rep=rep) if eff_k != 5 or rep > 0 else lab
+        for fk in range(eff_k):
+            va = lab_rep == fk
+            n_va = int(va.sum())
+            pred = score(xs[~va], y[~va], np.vstack([xs[va], xa]), E.fold_seed(cid, rep, fk))
+            for m in E.MODES:
+                q_sum[m][va] += pred[m][:n_va]
+                q_cnt[m][va] += 1
+                bag[m] += pred[m][n_va:]
+            folds += 1
+    ref = score(xs, y, xa, C._sha_seed(f"h452_cv7:{cid}:refit"))
+    worst = 0.0
+    for m, col in zip(E.MODES, CB.COLUMNS):
+        for name, mine in (("q", q_sum[m] / q_cnt[m]), ("bag", bag[m] / folds), ("ref", ref[m])):
+            worst = max(worst, float(np.max(np.abs(out[f"{name}_{col}"] - mine))))
+    assert worst < 1e-9, f"builder and reference differ by {worst}"
+    assert np.array_equal(out["ref_" + CB.UNUSED_COLUMN], out["ref_" + CB.COLUMNS[0]]), "GP anchor was not switched off"
+    # cross-fit routing: a row's value comes from the checkpoint that was trained without the row's stratum
+    s_s, s_a = FP.feature_stratum(xs, CB.XFIT_K), FP.feature_stratum(xa, CB.XFIT_K)
+    fake = [{"ok": np.array(True), "q_c": np.full(n_s, float(k)), "bag_c": np.full(n_a, float(k)), "ref_c": np.full(n_a, 10.0 + k)} for k in range(CB.XFIT_K)]
+    merged = CB.crossfit_merge(fake, s_s, s_a)
+    assert np.array_equal(merged["q_c"], s_s) and np.array_equal(merged["bag_c"], s_a) and np.array_equal(merged["ref_c"], 10.0 + s_a), "cross-fit routing is wrong"
+    # the file a block is delivered in: three columns, whitelisted keys, right shapes
+    blk = P.QUARANTINE / "selftest" / f"block_{int(time.time())}.npz"
+    blk.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(blk, **CB.pack_block(out, 1.0))
+    CB.verify_block_file(blk, n_s, n_a)
+    with np.load(blk) as z:
+        assert sorted(z.files) == sorted(["ok", "wall_s"] + [pre + c for c in CB.COLUMNS for pre in ("q_", "bag_", "ref_")])
+    # closure "recall" is refused unless the pool holds every row of the context
+    fam8 = d["family"][4:12]
+    cov = CB.require_pool_coverage(ctx["pool"], fam8, cid, xs, xa)
+    assert cov == [1.0, 1.0], cov
+    moved = xa.copy()
+    moved[0, 0] = np.nextafter(xa[0, 0], np.inf) if np.isfinite(xa[0, 0]) else 0.0  # one audit row that is not in the pool
+    try:
+        CB.require_pool_coverage(ctx["pool"], fam8, cid, xs, moved)
+        raise AssertionError("a context with a fresh audit row was accepted for closure recall")
+    except SystemExit:
+        pass
+    return {"max_abs_diff": worst, "fits": folds + 1, "strata_search": np.bincount(s_s, minlength=CB.XFIT_K).tolist(), "pool_coverage": cov}
 
 
 def gate_static_hygiene(ctx) -> dict:
@@ -293,33 +403,10 @@ GATES = (
     gate_feature_strata,
     gate_benchmark_split_audit,
     gate_eval_pipeline_identity,
+    gate_builder_matches_reference,
     gate_cpu_mini_train,
+    gate_remote_workers,
 )
-
-
-def load_bank_full() -> dict:
-    out = {}
-    with np.load(P.EVAL_BANK, allow_pickle=False) as zb:
-        assert "ya" not in zb.files
-        cids = [str(x) for x in zb["cids"].tolist()]
-        fam = [str(x) for x in zb["family"].tolist()]
-        ss, sa = zb["s_shape"], zb["a_shape"]
-        so = ao = lo = 0
-        for i, c in enumerate(cids):
-            n, w = int(ss[i, 0]), int(ss[i, 1])
-            na, f = int(sa[i, 0]), int(sa[i, 1])
-            mat = np.array(zb["search"][so : so + n * w], dtype=np.float64).reshape(n, w)
-            out[c] = {
-                "family": fam[i],
-                "Xs": np.ascontiguousarray(mat[:, :-1]),
-                "Xa": np.array(zb["audit"][ao : ao + na * f], dtype=np.float64).reshape(na, f),
-                "y": np.array(zb["y64"][lo : lo + n], dtype=np.float64),
-                "lab": np.array(zb["lab"][lo : lo + n], dtype=np.int64),
-            }
-            so += n * w
-            ao += na * f
-            lo += n
-    return out
 
 
 def main() -> None:
@@ -327,7 +414,7 @@ def main() -> None:
     ap.add_argument("--only", default="")
     ap.add_argument("--receipt", default=str(P.EVIDENCE / "trackD" / "SELFTEST_H458_RECEIPT.json"))
     a = ap.parse_args()
-    bank_full = load_bank_full()
+    bank_full = CB.load_bank(P.EVAL_BANK)
     by_fam: dict[str, list[str]] = {}
     for cid, d in bank_full.items():
         by_fam.setdefault(d["family"][4:12], []).append(cid)
@@ -344,7 +431,7 @@ def main() -> None:
         ok = ok and passed
         results.append({"gate": g.__name__, "pass": passed, "seconds": round(time.time() - t0, 1), **info})
         print(json.dumps(results[-1])[:900], flush=True)
-    doc = {"schema": "jope.h458.selftest/v1", "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "all_pass": ok, "passed": sum(r["pass"] for r in results), "total": len(results), "not_covered": ["real CUDA OOM injection", "GP-residual target mode"], "deps": P.verify_deps(strict=False), "results": results, **P.DISCLOSURE}
+    doc = {"schema": "jope.h458.selftest/v1", "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "all_pass": ok, "passed": sum(r["pass"] for r in results), "total": len(results), "not_covered": ["a real CUDA out-of-memory error (an injected one is covered)", "GP-residual target mode"], "deps": P.verify_deps(strict=False), "results": results, **P.DISCLOSURE}
     if not a.only:
         rp = P.guard_write_path(Path(a.receipt))
         rp.parent.mkdir(parents=True, exist_ok=True)
