@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic 10-Gate Self-Test Suite for Wave H456 Ultra-Entropy Recipe (`selftest_h456.py`).
+"""Deterministic 11-Gate Self-Test Suite for Wave H456 Ultra-Entropy Recipe & Stage-1 Eval (`selftest_h456.py`).
 
 Verifies:
   1. Strict evaluation quarantine (`0` CONFIRM / FMGAP / HOLDOUT / SEALED / DL-VAL in bank).
@@ -12,6 +12,7 @@ Verifies:
   8. CPU mini-trainer (`--size S --random-init 1 --smoke-cpu-steps 2`) + `ckpt_valley_001.pt` roundtrip.
   9. Static AST/source guard (`0` delete primitives, `0` temp-root paths) + Jankurai `1.7.6` `audit-file` pass.
  10. End-to-end live `mmap_v1` + `gp_teacher_shards_v1` heterogeneous 4-stream worker batch smoke test.
+ 11. Distributed LPT + reverse-depth tail-stealing + per-fold `abort_check` + Stage-1 5-matrix progression summary.
 """
 from __future__ import annotations
 
@@ -32,6 +33,8 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from mmap_bank_h456 import EXPECTED_COHORTS, MmapF64BankH456, SEALED_TOKENS  # noqa: E402
+from score_h455_distributed_cpu import assign_lpt_buckets  # noqa: E402
+from steal_distributed_tails_cpu import build_reverse_depth_priority  # noqa: E402
 from train_104m_gp_flywheel_h456_ultraent import (  # noqa: E402
     ExactGPTeacherShardStoreH456,
     build_arg_parser,
@@ -341,6 +344,68 @@ def gate_10_end_to_end_worker_streams(mmap_dir: Path, shards_dir: Path) -> dict:
     }
 
 
+def gate_11_distributed_tail_steal_and_stage1_summary() -> dict:
+    pending = [(i, float((91 - i) * 100)) for i in range(91)]
+    buckets = assign_lpt_buckets(pending, n_xbabe0=24)
+    assert len(buckets) == 24
+    flat = [x for b in buckets for x in b]
+    assert sorted(flat) == list(range(91)), "LPT buckets did not cover 91 contexts cleanly"
+    shards_csv = [",".join(str(x) for x in b) for b in buckets]
+    prio = build_reverse_depth_priority(shards_csv, total_contexts=91)
+    assert len(prio) == 91 and sorted(prio) == list(range(91))
+    heads = {b[0] for b in buckets if b}
+    deep_tails = {b[-1] for b in buckets if len(b) >= 4}
+    assert max(prio.index(t) for t in deep_tails) < min(prio.index(h) for h in heads)
+
+    stage_dep = Path("/home/ubuntu/h452-stage/code")
+    if stage_dep.is_dir() and str(stage_dep) not in sys.path:
+        sys.path.append(str(stage_dep))
+    for cand_dir in (HERE.parent / "h455_fast_wave2_maxent", HERE.parent / "h455", stage_dep):
+        if (cand_dir / "cols_104m_e8_gpresid_h452.py").is_file():
+            if str(cand_dir) not in sys.path:
+                sys.path.insert(0, str(cand_dir))
+            break
+    import cols_104m_e8_gpresid_h452 as C  # noqa: E402
+
+    fake_prepped = {
+        "cid": "ctx_abort_smoke",
+        "y": np.zeros(8, dtype=np.float64),
+        "n_s": 8,
+        "n_a": 4,
+        "ym_glob": 0.0,
+        "lo_guard": -1.0,
+        "hi_guard": 1.0,
+        "eff_k": 7,
+        "q_gp_anc": np.zeros(8, dtype=np.float64),
+        "bag_gp_anc": np.zeros(4, dtype=np.float64),
+        "ref_gp_anc": np.zeros(4, dtype=np.float64),
+        "gp_anc_ok": False,
+        "prepped_folds": [(0, 0, 0, None, None, None, None, None, None, None, None, None, None)],
+        "rseed": 7,
+    }
+    aborted_res = C._eval_prepped_context_gpu(fake_prepped, [], torch.device("cpu"), abort_check=lambda: True)
+    assert aborted_res is None, "expected immediate None return when abort_check() is True"
+
+    s1_path = HERE / "stage1_m_valley_progression_summary.json"
+    assert s1_path.is_file(), f"missing Stage-1 summary artifact: {s1_path}"
+    s1 = json.loads(s1_path.read_text())
+    assert s1["schema"] == "jope.h455.m_x2_valley_progression/v1"
+    assert s1["in_corpus_dev91_disclosure"] is True
+    assert s1["canonical_promotion_forbidden"] is True
+    assert s1["quarantine"] == {"confirm_opens": 0, "fmgap_bc_opens": 0, "holdout_opens": 0, "sealed_opens": 0}
+    assert len(s1["waves"]) == 5
+    best_elo = float(s1["best_overall_elo"])
+    assert best_elo > 1859.63, f"expected Stage-1 Elo > 1859.63, got {best_elo}"
+    return {
+        "gate": "11_distributed_tail_steal_and_stage1_summary",
+        "passed": True,
+        "lpt_buckets": len(buckets),
+        "stage1_waves": len(s1["waves"]),
+        "stage1_best_overall_label": s1["best_overall_label"],
+        "stage1_best_overall_elo": best_elo,
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--mmap-bank", default="/home/ubuntu/jope-data/h450-fleet-agy/banks/mmap_v1")
@@ -367,6 +432,7 @@ def main() -> None:
         gate_8_cpu_mini_trainer_and_valley_roundtrip(smoke_root),
         gate_9_static_and_jankurai_audit([HERE, Path(args.extra_audit_dir)]),
         gate_10_end_to_end_worker_streams(mmap_dir, shards_dir),
+        gate_11_distributed_tail_steal_and_stage1_summary(),
     ]
     receipt = {
         "schema": "jope.h456.selftest_receipt/v1",

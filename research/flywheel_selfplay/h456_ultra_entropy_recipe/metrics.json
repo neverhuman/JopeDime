@@ -1,7 +1,7 @@
 {
   "all_passed": true,
   "canonical_promotion_forbidden": true,
-  "elapsed_s": 12.17,
+  "elapsed_s": 12.43,
   "gates": [
     {
       "cohorts": [
@@ -66,13 +66,13 @@
         668,
         8
       ],
-      "n_shard_families": 91,
+      "n_shard_families": 63,
       "n_shards_loaded": 256,
       "passed": true,
       "resid_shape": [
-        1,
-        386,
-        79
+        3,
+        57,
+        67
       ]
     },
     {
@@ -80,27 +80,35 @@
       "last_loss": 6.9534,
       "passed": true,
       "steps": 2,
-      "valley_ckpt_sha256": "1c175549a123a0f6e2b5184f80e707d44ed5408d53451b615f43a36792a63887"
+      "valley_ckpt_sha256": "1731a457cce7763d6646dd7aea0f36306239366f7e47a4fb76fe512dc18e81b2"
     },
     {
       "gate": "9_static_and_jankurai_audit",
-      "jankurai_save_gate_passed": 7,
+      "jankurai_save_gate_passed": 9,
       "passed": true,
-      "python_files_checked": 7
+      "python_files_checked": 9
     },
     {
       "gate": "10_end_to_end_worker_streams",
       "passed": true,
       "stream_counts_16_batches": {
-        "exact_kd": 2,
-        "exact_resid": 5,
+        "exact_kd": 5,
+        "exact_resid": 3,
         "s3_exact_uniform": 7,
-        "synth_prior": 2
+        "synth_prior": 1
       }
+    },
+    {
+      "gate": "11_distributed_tail_steal_and_stage1_summary",
+      "lpt_buckets": 24,
+      "passed": true,
+      "stage1_best_overall_elo": 1865.36,
+      "stage1_best_overall_label": "m_x2_h455_valley001_002_avg",
+      "stage1_waves": 5
     }
   ],
-  "gates_passed": 10,
-  "gates_total": 10,
+  "gates_passed": 11,
+  "gates_total": 11,
   "in_corpus_dev91_disclosure": true,
   "quarantine": {
     "confirm_opens": 0,
@@ -109,5 +117,5 @@
     "sealed_opens": 0
   },
   "schema": "jope.h456.selftest_receipt/v1",
-  "timestamp_utc": "2026-11-14T11:20:49Z"
+  "timestamp_utc": "2026-11-14T18:11:16Z"
 }

@@ -708,8 +708,11 @@ def _eval_prepped_context_gpu(
     prepped: dict,
     models_w: list[tuple[ICLH450, float]],
     dev: torch.device,
-) -> dict[str, np.ndarray]:
+    abort_check=None,
+) -> dict[str, np.ndarray] | None:
     """Evaluates one `(models_w)` spec on a pre-computed CPU context pack (`0` redundant CPU feature/anchor work!)."""
+    if abort_check is not None and abort_check():
+        return None
     cid = prepped["cid"]
     y = prepped["y"]
     n_s = prepped["n_s"]
@@ -743,6 +746,8 @@ def _eval_prepped_context_gpu(
         views_rg,
         gp_pack,
     ) in prepped["prepped_folds"]:
+        if abort_check is not None and abort_check():
+            return None
         valid_folds += 1
         pr_rr = _batched_icl_predict(models_w, views_rr, y_tr_rr, dev, seed=fseed + 101)
         pred_rr = np.clip(base_rr + pr_rr, lo_guard, hi_guard)
@@ -783,6 +788,8 @@ def _eval_prepped_context_gpu(
         out[f"q_{col}"] = np.where(q_cnts[col] > 0, q_sums[col] / np.maximum(q_cnts[col], 1), ym_glob)
         out[f"bag_{col}"] = bags[col] / float(max(valid_folds, 1))
 
+    if abort_check is not None and abort_check():
+        return None
     rseed = prepped["rseed"]
     out["ref_icl_e8_cw12_robridge_cv7"] = np.clip(
         prepped["base_rr_f"] + _batched_icl_predict(models_w, prepped["v_rr_f"], prepped["y_rr_f"], dev, seed=rseed + 101),
