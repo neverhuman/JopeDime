@@ -175,7 +175,7 @@ fn shred_local_file(path: &Path) -> Result<bool, String> {
         return Ok(false);
     }
     if let Ok(meta) = fs::metadata(path) {
-        let len = (meta.len() as usize).clamp(64, 1_048_576);
+        let len = (meta.len() as usize).clamp(64, 16 * 1_048_576);
         if let Ok(mut f) = fs::OpenOptions::new().write(true).open(path) {
             let zeros = vec![0u8; len];
             let _ = f.write_all(&zeros);
@@ -484,33 +484,38 @@ pub fn execute_predict_csv_with_handle(
             })?),
             None => None,
         };
+        let push_csv_cell = |buf: &mut String, val: &str| {
+            if val.contains(',') || val.contains('"') || val.contains('\n') || val.contains('\r') {
+                buf.push('"');
+                buf.push_str(&val.replace('"', "\"\""));
+                buf.push('"');
+            } else {
+                buf.push_str(val);
+            }
+        };
         let mut csv_buf = String::with_capacity(all_predictions.len() * 24 + 128);
         if include_inputs {
             for h in &table.headers {
-                csv_buf.push_str(h);
+                push_csv_cell(&mut csv_buf, h);
                 csv_buf.push(',');
             }
             csv_buf.push_str("prediction\n");
             for (row, &pred) in table.rows.iter().zip(all_predictions.iter()) {
                 for cell in row {
                     if let Some(s) = cell {
-                        if s.contains(',') || s.contains('"') {
-                            csv_buf.push('"');
-                            csv_buf.push_str(&s.replace('"', "\"\""));
-                            csv_buf.push('"');
-                        } else {
-                            csv_buf.push_str(s);
-                        }
+                        push_csv_cell(&mut csv_buf, s);
                     }
                     csv_buf.push(',');
                 }
                 csv_buf.push_str(&format!("{pred:.8}\n"));
             }
         } else if let Some(idx) = id_idx {
-            csv_buf.push_str(&format!("{},prediction\n", table.headers[idx]));
+            push_csv_cell(&mut csv_buf, &table.headers[idx]);
+            csv_buf.push_str(",prediction\n");
             for (row, &pred) in table.rows.iter().zip(all_predictions.iter()) {
                 let id_val = row[idx].as_deref().unwrap_or("");
-                csv_buf.push_str(&format!("{id_val},{pred:.8}\n"));
+                push_csv_cell(&mut csv_buf, id_val);
+                csv_buf.push_str(&format!(",{pred:.8}\n"));
             }
         } else {
             csv_buf.push_str("prediction\n");
