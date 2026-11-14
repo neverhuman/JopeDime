@@ -701,8 +701,8 @@ fn truncate_excerpt(text: &str, max_lines: usize, max_chars: usize) -> String {
         lines.truncate(max_lines);
     }
     let mut joined = lines.join("\n");
-    if joined.len() > max_chars {
-        joined.truncate(max_chars);
+    if joined.chars().count() > max_chars {
+        joined = joined.chars().take(max_chars).collect();
         joined.push_str("\n...[truncated]");
     }
     joined
@@ -993,7 +993,7 @@ pub fn run_ci_quickstart_qualification(
         let bad_stderr = String::from_utf8_lossy(&bad_out.stderr);
         let ok = inst_out.status.success()
             && !bad_out.status.success()
-            && ver_text.contains(env!("CARGO_PKG_VERSION"));
+            && ver_text.contains(crate::CARBON_PKG_VERSION);
         let combined = format!(
             "$ sh deploy/carbon/install.sh --version {SPEC_RELEASE_TAG}\n{inst_stderr}\n$ carbon --version\n{ver_text}\n\n# Adversarial forged-signature check (rc={}):\n{}",
             exit_status_code(&bad_out.status),
@@ -1436,7 +1436,7 @@ pub fn run_ci_quickstart_qualification(
         schema: "jopedime.carbon.ci-quickstart-qualification.v1".to_owned(),
         timestamp_epoch_ms: now_epoch_ms(),
         source_sha: source_sha.to_owned(),
-        binary_version: env!("CARGO_PKG_VERSION").to_owned(),
+        binary_version: crate::CARBON_PKG_VERSION.to_owned(),
         release_tag: SPEC_RELEASE_TAG.to_owned(),
         emulator_regions: vec![
             "prod:us-east-2".to_owned(),
@@ -3019,7 +3019,7 @@ cargo run --locked -p jope-carbon --bin carbon -- spec-verify \
 </body>
 </html>
 "##,
-        ver = env!("CARGO_PKG_VERSION"),
+        ver = crate::CARBON_PKG_VERSION,
         tag = SPEC_RELEASE_TAG,
         sha = html_escape(&resolved_sha),
         min_pages = MIN_SPEC_PDF_PAGES,
@@ -3126,7 +3126,7 @@ cargo run --locked -p jope-carbon --bin carbon -- spec-verify \
         schema: "jopedime.carbon.spec-bundle-manifest.v1".to_owned(),
         generated_epoch_ms: now_epoch_ms(),
         source_sha: resolved_sha,
-        binary_version: env!("CARGO_PKG_VERSION").to_owned(),
+        binary_version: crate::CARBON_PKG_VERSION.to_owned(),
         release_tag: SPEC_RELEASE_TAG.to_owned(),
         all_ci_tests_passed: ci_qual.all_passed,
         all_prod_evidence_verified: prod_evidence_ok,
