@@ -1726,7 +1726,7 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
         );
     }
     assert!(dev_receipt.all_passed);
-    assert_eq!(dev_receipt.total_checks, 28);
+    assert_eq!(dev_receipt.total_checks, 33);
     assert_eq!(dev_receipt.redteam_passed, 16);
     assert_eq!(dev_receipt.residual_unshredded_runs, 0);
 
@@ -1753,10 +1753,235 @@ fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
         );
     }
     assert!(prod_receipt.all_passed);
-    assert_eq!(prod_receipt.total_checks, 28);
+    assert_eq!(prod_receipt.total_checks, 33);
     assert_eq!(prod_receipt.redteam_passed, 16);
     assert_eq!(prod_receipt.residual_unshredded_runs, 0);
 
     emu_dev.shutdown();
     emu_prod.shutdown();
+}
+
+fn write_mock_aws_cli_for_rollback(
+    dir: &std::path::Path,
+    log_path: &std::path::Path,
+    endpoint_url: &str,
+) -> PathBuf {
+    use std::os::unix::fs::PermissionsExt;
+    let script_path = dir.join("mock-aws");
+    let script = format!(
+        r#"#!/usr/bin/env python3
+import json, sys
+
+args = sys.argv[1:]
+log_file = {log_q}
+ep_url = {ep_q}
+
+def arg_after(flag):
+    return args[args.index(flag) + 1] if flag in args else ""
+
+if "get-alias" in args:
+    print(json.dumps({{"FunctionVersion": "5"}}))
+elif "list-versions-by-function" in args:
+    print(json.dumps({{"Versions": [
+        {{"Version": "$LATEST"}},
+        {{"Version": "3"}},
+        {{"Version": "4"}},
+        {{"Version": "5"}},
+    ]}}))
+elif "update-alias" in args:
+    fn_name = arg_after("--function-name")
+    ver = arg_after("--function-version")
+    with open(log_file, "a", encoding="utf-8") as fh:
+        fh.write(f"{{fn_name}}:{{ver}}\n")
+    print(json.dumps({{"AliasArn": f"arn:aws:lambda:us-east-2:123:function:{{fn_name}}:live"}}))
+elif "describe-stacks" in args:
+    print(json.dumps({{"Stacks": [{{
+        "StackStatus": "UPDATE_COMPLETE",
+        "Outputs": [
+            {{"OutputKey": "EdgeEndpointUrl", "OutputValue": ep_url}},
+            {{"OutputKey": "PublicEdgeEndpointUrl", "OutputValue": ep_url}},
+        ],
+    }}]}}))
+else:
+    sys.stderr.write(f"unexpected mock aws args: {{args}}\n")
+    sys.exit(2)
+"#,
+        log_q = serde_json::to_string(&log_path.display().to_string()).unwrap(),
+        ep_q = serde_json::to_string(endpoint_url).unwrap(),
+    );
+    std::fs::write(&script_path, script).expect("write mock-aws");
+    std::fs::set_permissions(&script_path, std::fs::Permissions::from_mode(0o755))
+        .expect("chmod mock-aws");
+    script_path
+}
+
+#[test]
+fn cli_rollback_repoints_live_aliases_and_verifies_dual_door_ping() {
+    let root = tempfile::tempdir().expect("tempdir");
+    let mut cfg = CarbonEmuConfig::for_dir(root.path().join("cell"));
+    cfg.region = "us-east-2".to_owned();
+    cfg.eval_worker_threads = 1;
+    cfg.edge_binary_path = Some(PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge")));
+    let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start emulator");
+
+    let log_path = root.path().join("update-alias.log");
+    let mock_aws = write_mock_aws_cli_for_rollback(root.path(), &log_path, &emu.base_url());
+    let carbon_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+    let out = std::process::Command::new(&carbon_bin)
+        .args(["rollback", "--env", "dev", "--regions", "us-east-2"])
+        .env("CARBON_AWS_CLI_BIN", &mock_aws)
+        .output()
+        .expect("invoke carbon rollback");
+    emu.shutdown();
+
+    assert!(
+        out.status.success(),
+        "carbon rollback failed: stderr={}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let receipt: jope_carbon::CarbonRollbackReceipt =
+        serde_json::from_slice(&out.stdout).expect("parse CarbonRollbackReceipt");
+    assert_eq!(receipt.stack_name, "jopedime-carbon-dev");
+    assert_eq!(receipt.region, "us-east-2");
+    assert!(receipt.ping_verified);
+    assert_eq!(receipt.restored_versions.edge_version, "4");
+    assert_eq!(receipt.restored_versions.engine_version, "4");
+    assert_eq!(receipt.restored_versions.eval_version, "4");
+
+    let log_lines: Vec<String> = std::fs::read_to_string(&log_path)
+        .expect("read update-alias.log")
+        .lines()
+        .map(str::to_owned)
+        .collect();
+    assert_eq!(
+        log_lines,
+        vec![
+            "jopedime-carbon-dev-eval:4",
+            "jopedime-carbon-dev-engine:4",
+            "jopedime-carbon-dev-edge:4",
+        ],
+        "rollback must shift eval -> engine -> edge aliases atomically in zero-downtime order"
+    );
+}
+
+fn spawn_two_hop_clouds_redirect_server(
+    manifest_json: String,
+) -> (String, std::thread::JoinHandle<()>) {
+    use std::io::{Read, Write};
+    let hop2 = std::net::TcpListener::bind("127.0.0.1:0").expect("bind hop2");
+    let hop2_addr = hop2.local_addr().expect("hop2 addr");
+    let hop1 = std::net::TcpListener::bind("127.0.0.1:0").expect("bind hop1");
+    let hop1_addr = hop1.local_addr().expect("hop1 addr");
+
+    let handle = std::thread::spawn(move || {
+        if let Ok((mut s1, _)) = hop1.accept() {
+            let mut buf = [0u8; 1024];
+            let _ = s1.read(&mut buf);
+            let resp = format!(
+                "HTTP/1.1 302 Found\r\nLocation: http://{hop2_addr}/releases/carbon-clouds.json\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+            );
+            let _ = s1.write_all(resp.as_bytes());
+        }
+        if let Ok((mut s2, _)) = hop2.accept() {
+            let mut buf = [0u8; 1024];
+            let _ = s2.read(&mut buf);
+            let resp = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                manifest_json.len(),
+                manifest_json
+            );
+            let _ = s2.write_all(resp.as_bytes());
+        }
+    });
+    (
+        format!("http://{hop1_addr}/carbon/carbon-clouds.json"),
+        handle,
+    )
+}
+
+#[test]
+fn clouds_manifest_https_redirect_and_downgrade_refusal() {
+    use jope_carbon::{
+        resolve_clouds_redirect_target, security::user_envelope::CarbonEngineKek,
+        CarbonCloudCellEntry, CarbonPublicCloudsManifest,
+    };
+
+    let hop1 = resolve_clouds_redirect_target(
+        "https://downloads.neverhuman.org/carbon/carbon-clouds.json",
+        "https://github.com/neverhuman/JopeDime/releases/download/carbon-cli-v1.1.0/carbon-clouds.json",
+    )
+    .expect("HTTPS -> GitHub HTTPS redirect allowed");
+    let hop2 = resolve_clouds_redirect_target(
+        &hop1,
+        "https://objects.githubusercontent.com/github-production-release-asset/123?sig=abc",
+    )
+    .expect("GitHub -> objects.githubusercontent.com HTTPS redirect allowed");
+    assert!(hop2.starts_with("https://objects.githubusercontent.com/"));
+    assert_eq!(
+        resolve_clouds_redirect_target("https://downloads.neverhuman.org/carbon/a", "/carbon/b")
+            .expect("relative redirect"),
+        "https://downloads.neverhuman.org/carbon/b"
+    );
+    assert!(resolve_clouds_redirect_target(
+        "https://downloads.neverhuman.org/carbon/carbon-clouds.json",
+        "http://github.com/carbon-clouds.json"
+    )
+    .is_err());
+    assert!(resolve_clouds_redirect_target(
+        "https://downloads.neverhuman.org/carbon/carbon-clouds.json",
+        "https://169.254.169.254/latest/meta-data"
+    )
+    .is_err());
+    assert!(resolve_clouds_redirect_target(
+        "https://downloads.neverhuman.org/carbon/carbon-clouds.json",
+        "https://127.0.0.1:8080/carbon-clouds.json"
+    )
+    .is_err());
+
+    let root = tempfile::tempdir().expect("tempdir");
+    let kek_scalar = [0x33u8; 32];
+    let mut cfg = CarbonEmuConfig::for_dir(root.path().join("cell"));
+    cfg.region = "us-east-2".to_owned();
+    cfg.eval_worker_threads = 1;
+    cfg.engine_kek_scalar = kek_scalar;
+    cfg.edge_binary_path = Some(PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge")));
+    let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start emulator");
+
+    let kek_b64 = CarbonEngineKek::from_scalar_bytes(&kek_scalar)
+        .unwrap()
+        .pubkey_b64();
+    let mut clouds = std::collections::BTreeMap::new();
+    clouds.insert(
+        "prod".to_owned(),
+        CarbonCloudCellEntry {
+            environment: "prod".to_owned(),
+            region: "us-east-2".to_owned(),
+            public_endpoint: emu.base_url(),
+            engine_kek_pubkey_b64: Some(kek_b64),
+            release_id: None,
+            regions: Vec::new(),
+        },
+    );
+    let manifest_json = serde_json::to_string(&CarbonPublicCloudsManifest {
+        schema: "jope-carbon-clouds-v2".to_owned(),
+        generated_epoch_ms: 1_794_620_000_000,
+        clouds,
+    })
+    .unwrap();
+    let (hop1_url, srv_handle) = spawn_two_hop_clouds_redirect_server(manifest_json);
+    let empty_home = root.path().join("isolated-home");
+    std::fs::create_dir_all(&empty_home).unwrap();
+    let out = std::process::Command::new(env!("CARGO_BIN_EXE_carbon"))
+        .args(["ping", "--cloud", "prod"])
+        .env("HOME", &empty_home)
+        .env("CARBON_CLOUDS_URL", &hop1_url)
+        .output()
+        .expect("run carbon ping via 2-hop redirect");
+    let _ = srv_handle.join();
+    emu.shutdown();
+    assert!(
+        out.status.success(),
+        "carbon ping over 2-hop redirect failed: stderr={}",
+        String::from_utf8_lossy(&out.stderr)
+    );
 }

@@ -36,6 +36,14 @@ else
   cargo build --locked --profile carbon-cli --target "$MATRIX_TARGET" \
     -p jope-carbon --no-default-features --features cli --bin carbon
   cp "target/$MATRIX_TARGET/carbon-cli/carbon.exe" "target/carbon-matrix/$MATRIX_ASSET"
+  if command -v powershell.exe >/dev/null 2>&1 || command -v pwsh >/dev/null 2>&1; then
+    PS_BIN="$(command -v pwsh || command -v powershell.exe)"
+    BASE_ZIP="${MATRIX_ASSET%.exe}.zip"
+    STAGE_EXE="target/carbon-matrix/carbon.exe"
+    cp "target/$MATRIX_TARGET/carbon-cli/carbon.exe" "$STAGE_EXE"
+    "$PS_BIN" -NoProfile -Command "Compress-Archive -LiteralPath '$STAGE_EXE' -DestinationPath 'target/carbon-matrix/$BASE_ZIP' -Force"
+    rm -f "$STAGE_EXE"
+  fi
   if [[ "$MATRIX_LABEL" == "windows-x86_64" ]]; then
     "target/carbon-matrix/$MATRIX_ASSET" --version
   fi

@@ -885,6 +885,47 @@ fn cross_compile_arm64_binaries(out_dir: &Path, jobs: usize) -> Result<(PathBuf,
     ))
 }
 
+fn rust_target_is_installed(rust_target: &str) -> bool {
+    Command::new("rustup")
+        .args(["target", "list", "--installed"])
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .is_some_and(|list| list.lines().any(|line| line.trim() == rust_target))
+}
+
+fn emit_cli_binary_and_archives(
+    out_dir: &Path,
+    base_name: &str,
+    raw_bin: &[u8],
+    sum_lines: &mut Vec<String>,
+) -> Result<(), String> {
+    fs::write(out_dir.join(base_name), raw_bin).map_err(|e| format!("write {base_name}: {e}"))?;
+    sum_lines.push(format!("{}  {base_name}", sha256_lower_hex(raw_bin)));
+
+    let tar_bytes = build_deterministic_single_bin_tar("carbon", raw_bin)?;
+    let tgz = build_deterministic_single_bin_targz("carbon", raw_bin)?;
+    let tgz_name = format!("{base_name}.tar.gz");
+    fs::write(out_dir.join(&tgz_name), &tgz).map_err(|e| format!("write {tgz_name}: {e}"))?;
+    sum_lines.push(format!("{}  {tgz_name}", sha256_lower_hex(&tgz)));
+
+    if let Some(tzst) =
+        try_external_stream_compress("zstd", &["-19", "--ultra", "-q", "-c"], &tar_bytes)
+    {
+        let tzst_name = format!("{base_name}.tar.zst");
+        fs::write(out_dir.join(&tzst_name), &tzst)
+            .map_err(|e| format!("write {tzst_name}: {e}"))?;
+        sum_lines.push(format!("{}  {tzst_name}", sha256_lower_hex(&tzst)));
+    }
+    if let Some(txz) = try_external_stream_compress("xz", &["-9e", "-q", "-c"], &tar_bytes) {
+        let txz_name = format!("{base_name}.tar.xz");
+        fs::write(out_dir.join(&txz_name), &txz).map_err(|e| format!("write {txz_name}: {e}"))?;
+        sum_lines.push(format!("{}  {txz_name}", sha256_lower_hex(&txz)));
+    }
+    Ok(())
+}
+
 /// Package and verify ARM64 Lambda artifacts (`carbon-edge.zip`, `carbon-worker.zip`,
 /// `r882-layer.zip`, and `release-manifest.json`).
 pub fn execute_carbon_package(
@@ -959,34 +1000,26 @@ pub fn execute_carbon_package(
 
         let mut sum_lines = Vec::new();
         for (base_name, raw_bin) in [
-            ("carbon-linux-x86_64-musl", &x64_bytes),
-            ("carbon-linux-aarch64-musl", &arm_bytes),
+            ("carbon-linux-x86_64-musl", x64_bytes.as_slice()),
+            ("carbon-linux-aarch64-musl", arm_bytes.as_slice()),
         ] {
-            fs::write(opts.out_dir.join(base_name), raw_bin)
-                .map_err(|e| format!("write {base_name}: {e}"))?;
-            sum_lines.push(format!("{}  {base_name}", sha256_lower_hex(raw_bin)));
-
-            let tar_bytes = build_deterministic_single_bin_tar("carbon", raw_bin)?;
-            let tgz = build_deterministic_single_bin_targz("carbon", raw_bin)?;
-            let tgz_name = format!("{base_name}.tar.gz");
-            fs::write(opts.out_dir.join(&tgz_name), &tgz)
-                .map_err(|e| format!("write {tgz_name}: {e}"))?;
-            sum_lines.push(format!("{}  {tgz_name}", sha256_lower_hex(&tgz)));
-
-            if let Some(tzst) =
-                try_external_stream_compress("zstd", &["-19", "--ultra", "-q", "-c"], &tar_bytes)
-            {
-                let tzst_name = format!("{base_name}.tar.zst");
-                fs::write(opts.out_dir.join(&tzst_name), &tzst)
-                    .map_err(|e| format!("write {tzst_name}: {e}"))?;
-                sum_lines.push(format!("{}  {tzst_name}", sha256_lower_hex(&tzst)));
-            }
-            if let Some(txz) = try_external_stream_compress("xz", &["-9e", "-q", "-c"], &tar_bytes)
-            {
-                let txz_name = format!("{base_name}.tar.xz");
-                fs::write(opts.out_dir.join(&txz_name), &txz)
-                    .map_err(|e| format!("write {txz_name}: {e}"))?;
-                sum_lines.push(format!("{}  {txz_name}", sha256_lower_hex(&txz)));
+            emit_cli_binary_and_archives(&opts.out_dir, base_name, raw_bin, &mut sum_lines)?;
+        }
+        if rust_target_is_installed("armv7-unknown-linux-musleabihf") {
+            if let Ok(armv7_path) = cross_compile_musl_thin_cli_binary(
+                &opts.out_dir,
+                opts.build_jobs,
+                "arm-linux-musleabihf",
+                "armv7-unknown-linux-musleabihf",
+            ) {
+                if let Ok(armv7_bytes) = fs::read(&armv7_path) {
+                    emit_cli_binary_and_archives(
+                        &opts.out_dir,
+                        "carbon-linux-armv7-musleabihf",
+                        &armv7_bytes,
+                        &mut sum_lines,
+                    )?;
+                }
             }
         }
         let sums = format!("{}\n", sum_lines.join("\n"));
