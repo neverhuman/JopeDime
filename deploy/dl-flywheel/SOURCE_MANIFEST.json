@@ -5,14 +5,14 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/deploy/ci/coverage.json",
       "origin_sha256": "4dbb55726e115474a5779908fb9dd87118476657a56a4c79c96ac0808d39d8df",
       "path": "deploy/ci/coverage.json",
-      "sha256": "5db9d59a5cebe334461b5d285a6c0eb9b385c49751a67e3623ae9ff5815d641a"
+      "sha256": "70c89ce58cd3b3e0fe5c8efd6f23c9be61b429ec72dad96bea544046c290c9fd"
     },
     {
       "normalization": " PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. Final PR395 additive exact NPZ target/vendor tamper control and retained upstream benchmark discovery; no prior mapping removed or floor reduced. PR414 C17 native integration: owning fast emitter lane adds required native C17 compiler contracts. All source memberships, original origin hashes and unrelated rows remain unchanged. Phase 7 flywheel self-play research: additive python-family registration and research source classifications; all prior entries and dispositions retained.",
       "origin": "G-S3GP owner BUILD ONLY assignment; product main edf36182b3fb3254afd244c9be1f1f6f274b9e0c",
       "origin_sha256": "f819e1da188e0cfe2dd46370f726d9bb8747aa0fe5feb50e3344c37ce04e8223",
       "path": "deploy/ci/fast-lane.sh",
-      "sha256": "f29eaf9eecce4b33bf7ffdc8dca81d51fcdb0046fda13e8fc38c38c5259dee2e"
+      "sha256": "c8dc42df2213f0403f41c67ae39da99c8c24e81d89ec925823ba99b960290e2a"
     },
     {
       "normalization": "Current coverage and complete394-test qualification roster; historical initial fixture clearly labeled.",
@@ -5213,14 +5213,14 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/tree/docs/internal/core-ip/findings/test-inventory.json",
       "origin_sha256": "23758baac937bd3bd6b555bdd54be80efd3d085c359e4caf8b58b633ae091cbf",
       "path": "docs/internal/core-ip/findings/test-inventory.json",
-      "sha256": "7422ae1ebc739377b4aadb4c214ab2c11582753de89b38ee6bf49c1fd36ea74e"
+      "sha256": "c479cb8453cbb36650a1575439ec4e80b84e07f7e3cb003ac2ba78a3c4e95eb4"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. PR #394 (appliance): re-pinned to the bytes in this tree; the CI path gates add the appliance crates, deploy/appliance/ and models/bundles/. PR395 Jankurai audit remediation: shared local/hosted CI routing, additive security/rendered/cache control assignments, exact classifier source pin and corrected pre-existing nested README pin. Prior origin hashes, frozen imports and dispositions preserved. PR412 TypeScript integration: exact classifier adds the TypeScript workflow to the Rust gate; refresh only its current adapter declaration and enclosing source pins. Original origin hashes, every fixture/module byte, source membership and refusal guards are retained. Go integration after merged TypeScript: matching owned source pins; all prior origins/dispositions retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/ci/ci-plan.py",
       "origin_sha256": "45ca217c008b3c4efe0ec216f42115216130d32767f43ce26f28736951528fe8",
       "path": "deploy/ci/ci-plan.py",
-      "sha256": "39aa05f1ec7ae94d091bb9481cb66f9db430a779fd6396e49f046e9b777a3883"
+      "sha256": "e31a9faa776c6e2da9e70711148db3fd42ad0cbf467d8ad99152f4d9f15f0664"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held.",
@@ -5339,7 +5339,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/revision2/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
       "origin_sha256": "f53cf20d2e3027d1b9def658180eeb934055827d06578578fd18f0ca04498658",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/CI_SOURCE_PIN.json",
-      "sha256": "71a8ea5fd582332602402bb8d33dea3afbbdb36c9f494b9bb85e6e6630c9cbf1"
+      "sha256": "d3e045260730aed3409ae36a8ac356b3856b4b00b804655d18777e39e47bee9e"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
@@ -5367,7 +5367,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/owner-three-objectives-20261010-1358/canonical-payload-author/tree/deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
       "origin_sha256": "2dbe7d79921aa18bd182e2eec2ab3bc62646d2a99b30816be7b8b7140b9a669f",
       "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/SOURCE_MANIFEST.json",
-      "sha256": "769dfd2339ab6680782be5c0320b339e2eba6392cbc244ac019cbad5a836092a"
+      "sha256": "362212894bd8dee9bfad8ed3f98afee85f627171cae8048b79849a68e41c1d19"
     },
     {
       "normalization": "New portable source-only package or exact reviewed dashboard copy. See standalone SOURCE_ORIGINS; runtime held. Cold r2 adds three owning CI cases; standalone82/dashboard37 =>931 wired only.",
