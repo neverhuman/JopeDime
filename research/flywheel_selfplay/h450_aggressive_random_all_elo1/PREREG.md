@@ -307,3 +307,18 @@ Receipt: `diag_results/r4_g00_init/`.
   - bag: −0.0111 (39/0/52, p 0.0007).
 
   So L_B is slightly behind L_A relative to the baseline. g was already falling before the switch (+0.007 at epoch 9, −0.005 at epoch 15), so part of this is a pre-existing drift. Later epochs decide.
+
+## 13. Amendment pub-r15 (2026-11-14 about 07:55Z): evaluator survives a shared xbabe2 3090
+
+**Trigger.** The epoch-33 eval died at 07:18:15Z with CUDA OOM on the xbabe2 3090 (local task 40). The card held the r4_L_A trainer (15.13 GiB) and agy_apex_w10's H455 `train_104m_gp_flywheel_h455_maxent.py --size M` (3.01 GiB; capped at `--cuda-vram-frac 0.12`, launched about 06:52Z under its 06:41:12Z claim update). One context peaks at about 5.5 GiB. That left about 1 GiB short.
+
+**Change** (`eval_gpu_h450.sh` only):
+- The local worker takes a task only while GPU 0 reports at least `LOCAL_MIN_FREE_MIB` = 6500 MiB free. Otherwise it waits and xbabe3 keeps working.
+- A failed local task goes back on the queue for xbabe3, and the eval no longer fails. After 2 local failures the local worker stops for that eval. An xbabe3 failure is still fatal.
+- Tasks requeued after xbabe3 found the queue empty are run by a final xbabe3 pass.
+- Columns are byte-identical on both 3090s (section 9), so no number depends on which card computed a context.
+- A mock test of the four cases passed: low memory, one local failure, two local failures, and a failure after xbabe3 finished. Each computed every context once and left the queue empty.
+
+**Epoch 33** is not scored. Its column directory `r4/cols/g33_r4_L_A_r4_L_B` is partial (create-once, kept). `ab_pairs_e33.json` was computed on 39 of 91 contexts and is marked INVALID by a note file. Later per-run reads leave epoch 33 out of `--epochs`. The queue resumes at the newest epoch that both runs have written.
+
+**Unchanged:** the trainers, the arms, the plateau rule and the per-run rule.

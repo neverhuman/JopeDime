@@ -78,29 +78,63 @@ printf '%s\n' "${RX[@]}" "$EVAL_SHA  $XE/$(basename "$EVAL_BANK")" | ssh3 "cd $X
 Q=$R4/cols/$TAG.queue
 seq 0 90 > "$Q"
 pop() { flock "$Q.lock" bash -c 'i=$(head -1 "$1"); [ -n "$i" ] && sed -i 1d "$1"; echo "$i"' _ "$Q"; }
+push() { flock "$Q.lock" bash -c 'echo "$2" >> "$1"' _ "$Q" "$1"; }
+# pub-r15: the xbabe2 3090 also holds the r4_L_A trainer (about 15.5 GB) and, since 2026-11-14 about 06:52Z, a capped
+# 2.88 GiB H455 job of agy_apex_w10. One context peaks at about 5.5 GiB (epoch 33 died with CUDA OOM at 07:18:15Z).
+# The local worker therefore takes a task only while GPU 0 has LOCAL_MIN_FREE_MIB free. A failed local task goes back
+# on the queue for xbabe3 instead of failing the eval; after 2 local failures the local worker stops. Only an xbabe3
+# failure is fatal. Columns are byte-identical on both 3090s (pub-r11), so where a context runs changes no number.
+LOCAL_MIN_FREE_MIB=${LOCAL_MIN_FREE_MIB:-6500}
+free_mib() { local f; f=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits -i 0 2>/dev/null | tr -d ' ') || f=0
+  case $f in ''|*[!0-9]*) f=0 ;; esac; echo "$f"; }
+run_local() {
+  (cd "$ST/code" && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True nice -n 10 python3 -B cols_h450_gpu.py --bank "$EVAL_BANK" \
+     --ckpt-la "$LA" --ckpt-ma "$CK_M" --ckpt-lb "$LB" --ckpt-mb "$CK_M" --out "$OUTC" --device cuda \
+     --num-shards 91 --shard-idx "$1") >> "$R4/cols/$TAG.local.log" 2>&1
+}
+run_x3() {
+  ssh3 "cd $X3_ROOT/stage/$SN/code && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True PYTHONDONTWRITEBYTECODE=1 nice -n 10 python3 -B cols_h450_gpu.py \
+     --bank $XE/$(basename "$EVAL_BANK") --ckpt-la $XE/ckpts/$TAG/la.pt --ckpt-ma $XE/ckpts/$TAG/m.pt --ckpt-lb $XE/ckpts/$TAG/lb.pt \
+     --ckpt-mb $XE/ckpts/$TAG/m.pt --out $XE/cols/$TAG --device cuda --num-shards 91 --shard-idx $1" >> "$R4/cols/$TAG.x3.log" 2>&1 &&
+  rs3 --ignore-existing --include='[0-9a-f]*.npz' --exclude='*' "$X3:$XE/cols/$TAG/" "$OUTC/"
+}
 worker() {  # local | xbabe3
-  local w=$1 i
-  while i=$(pop); [ -n "$i" ]; do
+  local w=$1 i f nfail=0 said=0
+  while true; do
     if [ "$w" = local ]; then
-      (cd "$ST/code" && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True nice -n 10 python3 -B cols_h450_gpu.py --bank "$EVAL_BANK" \
-         --ckpt-la "$LA" --ckpt-ma "$CK_M" --ckpt-lb "$LB" --ckpt-mb "$CK_M" --out "$OUTC" --device cuda \
-         --num-shards 91 --shard-idx "$i") >> "$R4/cols/$TAG.local.log" 2>&1 || { echo "local task $i failed" >&2; return 1; }
+      f=$(free_mib)
+      if [ "$f" -lt "$LOCAL_MIN_FREE_MIB" ]; then
+        [ ! -e "$Q.x3done" ] || return 0
+        [ "$said" = 1 ] || { echo "$(date -u +%FT%TZ) local: GPU 0 has $f MiB free (< $LOCAL_MIN_FREE_MIB); waiting, xbabe3 continues" >&2; said=1; }
+        sleep 60; continue
+      fi
+    fi
+    i=$(pop); [ -n "$i" ] || break
+    if [ "$w" = local ]; then
+      if run_local "$i"; then
+        echo "$i" >> "$R4/cols/$TAG.local.tasks"
+      else
+        push "$i"; nfail=$((nfail + 1))
+        echo "$(date -u +%FT%TZ) local task $i failed (local failure $nfail); requeued for xbabe3" >&2
+        [ "$nfail" -lt 2 ] || { echo "$(date -u +%FT%TZ) local worker stops after $nfail failures" >&2; return 0; }
+      fi
     else
-      ssh3 "cd $X3_ROOT/stage/$SN/code && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True PYTHONDONTWRITEBYTECODE=1 nice -n 10 python3 -B cols_h450_gpu.py \
-         --bank $XE/$(basename "$EVAL_BANK") --ckpt-la $XE/ckpts/$TAG/la.pt --ckpt-ma $XE/ckpts/$TAG/m.pt --ckpt-lb $XE/ckpts/$TAG/lb.pt \
-         --ckpt-mb $XE/ckpts/$TAG/m.pt --out $XE/cols/$TAG --device cuda --num-shards 91 --shard-idx $i" >> "$R4/cols/$TAG.x3.log" 2>&1 \
-        || { echo "xbabe3 task $i failed" >&2; return 1; }
-      rs3 --ignore-existing --include='[0-9a-f]*.npz' --exclude='*' "$X3:$XE/cols/$TAG/" "$OUTC/"
+      run_x3 "$i" || { echo "xbabe3 task $i failed" >&2; touch "$Q.x3done"; return 1; }
       echo "$i" >> "$R4/cols/$TAG.x3.tasks"
     fi
   done
+  [ "$w" = local ] || touch "$Q.x3done"
 }
 mkdir -p "$OUTC"
-log "cols $TAG: 91 one-context tasks on $(hostname) + $X3 (dynamic); la=$LA lb=$LB m=init"
+log "cols $TAG: 91 one-context tasks on $(hostname) + $X3 (dynamic; local needs $LOCAL_MIN_FREE_MIB MiB free); la=$LA lb=$LB m=init"
 worker local & P0=$!
 worker xbabe3 & P1=$!
-wait "$P0" || die "local worker failed"
 wait "$P1" || die "xbabe3 worker failed"
+wait "$P0" || die "local worker failed"
+if [ -s "$Q" ]; then   # a local task requeued after the xbabe3 worker had found the queue empty
+  log "cols $TAG: $(wc -l < "$Q") requeued task(s) left; xbabe3 takes them"
+  worker xbabe3 || die "xbabe3 worker failed"
+fi
 n1=$(wc -l < "$R4/cols/$TAG.x3.tasks" 2>/dev/null || echo 0)
 log "cols $TAG: xbabe3 computed $n1 of 91 contexts"
 n=$(find "$OUTC" -maxdepth 1 -name '[0-9a-f]*.npz' | wc -l)
