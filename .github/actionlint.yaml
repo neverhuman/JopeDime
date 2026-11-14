@@ -9,6 +9,10 @@ self-hosted-runner:
     - jope-macos
     - xbabe4-native
     - xbabe1-ci
+    - xbabe2-ci
+    - xbabe2-full
+    - xbabe3-ci
+    - xbabe3-full
     - jope-full-cpu
     - jope-main-guard
     - lan-ci
