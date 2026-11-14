@@ -415,6 +415,34 @@ impl CarbonThinClient {
             .and_then(|g| g.get(active).copied())
     }
 
+    /// Return the base64-encoded uncompressed P-256 KEK public key of the active endpoint, if present.
+    pub fn active_kek_pubkey_b64(&self) -> Option<String> {
+        self.active_kek_pubkey()
+            .map(|raw| base64::engine::general_purpose::STANDARD.encode(raw))
+    }
+
+    /// Return the currently attached `ctk1.*` capability token string on this client, if any.
+    pub fn active_capability_token(&self) -> Option<String> {
+        self.capability_token
+            .as_ref()
+            .map(|z| z.as_str().to_owned())
+    }
+
+    /// Export the 32-byte per-run zero-knowledge `u_dek` held in memory for `(tenant_id, run_id)`.
+    pub fn export_run_udek(&self, tenant_id: &str, run_id: &str) -> Option<[u8; 32]> {
+        self.run_udeks
+            .lock()
+            .ok()
+            .and_then(|g| g.get(&format!("{tenant_id}:{run_id}")).map(|z| **z))
+    }
+
+    /// Import a 32-byte per-run zero-knowledge `u_dek` from a saved model handle for subsequent `/predict`.
+    pub fn import_run_udek(&self, tenant_id: &str, run_id: &str, u_dek: [u8; 32]) {
+        if let Ok(mut guard) = self.run_udeks.lock() {
+            guard.insert(format!("{tenant_id}:{run_id}"), Zeroizing::new(u_dek));
+        }
+    }
+
     pub fn active_endpoint(&self) -> &str {
         let idx = self
             .active_idx
@@ -1041,7 +1069,7 @@ impl CarbonThinClient {
         }
         let started = Instant::now();
         let deadline = started + Duration::from_secs(960);
-        let mut sleep_ms = 60u64;
+        let mut sleep_ms = 45u64;
         while matches!(
             progress.state,
             CarbonRunStateWire::Queued | CarbonRunStateWire::Running
@@ -1053,7 +1081,7 @@ impl CarbonThinClient {
             let cap_ms = if started.elapsed() >= Duration::from_secs(5) {
                 1_000
             } else {
-                500
+                400
             };
             sleep_ms = (sleep_ms * 2).min(cap_ms);
             self.poll_requests.fetch_add(1, Ordering::Relaxed);

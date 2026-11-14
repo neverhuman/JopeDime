@@ -12,15 +12,15 @@
 //!
 //! [ADR-0007]: ../../docs/adr/ADR-0007-carbon-lambda-cells.md
 
-/// Workspace package version of `jope-carbon`.
-pub const CARBON_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+/// Semantic release version of Carbon (`1.2.0`) embedded at compile time (`build.rs`).
+pub const CARBON_PKG_VERSION: &str = env!("CARBON_SEMVER");
 /// Full source Git commit SHA embedded at compile time (`build.rs`).
 pub const CARBON_GIT_SHA: &str = env!("CARBON_GIT_SHA");
 /// Target triple (`x86_64-unknown-linux-musl`, `aarch64-apple-darwin`, etc.) embedded at compile time.
 pub const CARBON_BUILD_TARGET: &str = env!("CARBON_BUILD_TARGET");
 /// Cargo profile (`carbon-cli`, `dist`, `release`, `debug`) embedded at compile time.
 pub const CARBON_BUILD_PROFILE: &str = env!("CARBON_BUILD_PROFILE");
-/// Canonical Carbon CLI distribution release tag (`carbon-cli-v1.1.0`).
+/// Canonical Carbon CLI distribution release tag (`carbon-cli-v1.2.0`).
 pub const CARBON_RELEASE_TAG: &str = env!("CARBON_RELEASE_TAG");
 
 /// Return a deterministic provenance `User-Agent` header for outbound Carbon HTTP requests.
@@ -80,6 +80,12 @@ pub use cli::spec_report::{
 };
 #[cfg(feature = "cli")]
 pub use cli::{
+    bench_suite::{
+        compute_quick_run_comparators, evaluate_all_comparators_same_split,
+        execute_scientific_benchmark_suite, paired_wilcoxon_two_sided_p,
+        render_scientific_benchmark_markdown, CarbonComparatorScore, CarbonMethodAggregateSummary,
+        CarbonScientificBenchmarkOptions, CarbonScientificBenchmarkReport, CarbonTaskBenchRecord,
+    },
     client::{
         list_stored_cloud_tokens, load_stored_cloud_token, remove_stored_cloud_token,
         resolve_clouds_redirect_target, resolve_public_cloud_endpoint, save_stored_cloud_token,
@@ -93,6 +99,13 @@ pub use cli::{
         execute_cloud_product_coverage_audit, CarbonCloudCoverageInput, CarbonCloudCoverageReceipt,
         CarbonCoverageCheckResult, CarbonDualCloudCoverageReport,
     },
+    model_store::{
+        compute_residual_quantiles, execute_predict_csv_with_handle, execute_self_upgrade,
+        list_saved_model_handles, load_model_handle_by_spec, persist_model_handle,
+        query_handle_status, shred_handle_and_local_keys, CarbonFeatureImportanceEntry,
+        CarbonPredictCsvReceipt, CarbonResidualQuantiles, CarbonRunRegistryEntry,
+        CarbonSavedModelHandle, CarbonUpgradeReceipt, CARBON_MODEL_HANDLE_SCHEMA,
+    },
     redteam::{
         execute_carbon_redteam_suite, render_redteam_markdown, CarbonRedTeamSuiteReport,
         CarbonRedTeamVectorResult,
@@ -100,8 +113,15 @@ pub use cli::{
     runner::{
         execute_carbon_cli_benchmark, execute_carbon_cli_benchmark_with_token,
         execute_carbon_cli_run, execute_carbon_cli_run_with_ux, generate_nonlinear_benchmark_rows,
-        load_numeric_csv, render_benchmark_markdown, CarbonBenchScenarioSummary,
-        CarbonBenchmarkSuiteReport, CarbonCliRunOptions, CarbonCliRunReceipt, CarbonCliRunUxConfig,
+        load_numeric_csv, render_benchmark_markdown, render_pretty_run_scorecard,
+        CarbonBenchScenarioSummary, CarbonBenchmarkSuiteReport, CarbonCliRunOptions,
+        CarbonCliRunReceipt, CarbonCliRunUxConfig,
+    },
+    tabular::{
+        inspect_tabular_file, load_delimited_table, parse_delimited_str,
+        prepare_encoded_training_set, resolve_target_column, CarbonColumnProfile,
+        CarbonEffortCostPreview, CarbonEncodedTrainingSet, CarbonFeatureTransform, CarbonRawTable,
+        CarbonTabularEncoder, CarbonTabularInspectReport,
     },
 };
 pub use error::{CarbonError, CarbonGuidance, CarbonResult, CARBON_DOCS_URL};
@@ -113,12 +133,13 @@ pub use modes::serve::{
 };
 pub use modes::{
     planner::{
-        compute_live_run_cost, estimate_working_set_mb, plan_carbon_execution, CarbonExecutionMode,
-        CarbonIngressCostMode, CarbonLiveCostInputs, CarbonPlanDecision, CarbonPlanInput,
-        CarbonRunCostBreakdown, EvalMemoryClass, APIGW_HTTP_API_USD_PER_UNIT,
-        AWS_INTERNET_EGRESS_USD_PER_GB, DEPLOYED_EVAL_MEMORY_MB, EDGE_MEMORY_MB, ENGINE_MEMORY_MB,
-        LAMBDA_ARM64_USD_PER_GB_SEC, LAMBDA_USD_PER_INVOCATION, S3_STANDARD_GET_USD_PER_REQ,
-        S3_STANDARD_PUT_LIST_USD_PER_REQ, S3_STANDARD_USD_PER_GB_MONTH,
+        compute_live_run_cost, estimate_ms_per_candidate_1vcpu, estimate_working_set_mb,
+        plan_carbon_execution, CarbonExecutionMode, CarbonIngressCostMode, CarbonLiveCostInputs,
+        CarbonPlanDecision, CarbonPlanInput, CarbonRunCostBreakdown, EvalMemoryClass,
+        APIGW_HTTP_API_USD_PER_UNIT, AWS_INTERNET_EGRESS_USD_PER_GB, DEPLOYED_EVAL_MEMORY_MB,
+        EDGE_MEMORY_MB, ENGINE_MEMORY_MB, LAMBDA_ARM64_USD_PER_GB_SEC, LAMBDA_USD_PER_INVOCATION,
+        S3_STANDARD_GET_USD_PER_REQ, S3_STANDARD_PUT_LIST_USD_PER_REQ,
+        S3_STANDARD_USD_PER_GB_MONTH,
     },
     spot_advisor::{
         evaluate_spot_hybrid_gates, MonthlyWindowMetrics, SpotAdvisorRecommendation,

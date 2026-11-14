@@ -2630,6 +2630,7 @@ dependencies = [
  "http",
  "http-body-util",
  "jope-api",
+ "jope-comparators",
  "jope-paths",
  "jope-prep",
  "jope-runtime",

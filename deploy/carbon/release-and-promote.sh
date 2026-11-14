@@ -4,13 +4,13 @@
 #
 # Usage:
 #   AWS_PROFILE=veox-jepson-prod bash deploy/carbon/release-and-promote.sh \
-#     --tag carbon-cli-v1.1.0 \
+#     --tag carbon-cli-v1.2.0 \
 #     --r882-dir target/lambda-pkgs/layer-root/jope-models/r882 \
-#     --out-dir target/carbon-release-v1.1.0
+#     --out-dir target/carbon-release-v1.2.0
 
 set -euo pipefail
 
-TAG="carbon-cli-v1.1.0"
+TAG="carbon-cli-v1.2.0"
 R882_DIR="target/lambda-pkgs/layer-root/jope-models/r882"
 OUT_DIR=""
 PROD_REGIONS="wave1"

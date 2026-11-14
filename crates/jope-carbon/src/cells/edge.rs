@@ -31,7 +31,10 @@ use serde::{Deserialize, Serialize};
 use crate::{
     cells::engine_invoker::{now_epoch_ms, CarbonEngineInvoker, CarbonEngineWireCommand},
     modes::{
-        planner::{plan_carbon_execution, CarbonExecutionMode, CarbonPlanInput},
+        planner::{
+            estimate_ms_per_candidate_1vcpu, plan_carbon_execution, CarbonExecutionMode,
+            CarbonPlanInput,
+        },
         spot_advisor::{evaluate_spot_hybrid_gates, MonthlyWindowMetrics, SpotAdvisorThresholds},
     },
     role::{CarbonEffortTier, CarbonProductTier},
@@ -940,13 +943,15 @@ impl CarbonEdgeRouter {
             }
         }
 
+        let fit_rows = create.fit_rows as usize;
+        let feature_count = create.feature_names.len();
         let plan_decision = match plan_carbon_execution(&CarbonPlanInput {
             product_tier: tier,
             effort,
             total_rows,
-            fit_rows: create.fit_rows as usize,
-            features: create.feature_names.len(),
-            est_ms_per_candidate_1vcpu: 12.0,
+            fit_rows,
+            features: feature_count,
+            est_ms_per_candidate_1vcpu: estimate_ms_per_candidate_1vcpu(fit_rows, feature_count),
         }) {
             Ok(d) => d,
             Err(err) => {

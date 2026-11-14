@@ -24,18 +24,23 @@ use jope_api::{carbon::CarbonTierWire, Effort};
 ))]
 use jope_carbon::CarbonRole;
 use jope_carbon::{
-    decode_p256_pubkey_b64, evaluate_spot_hybrid_gates, execute_carbon_cli_benchmark_with_token,
-    execute_carbon_cli_run_with_ux, execute_carbon_redteam_suite,
-    generate_nonlinear_benchmark_rows, list_stored_cloud_tokens, load_stored_cloud_token,
-    now_epoch_ms, plan_carbon_execution, remove_stored_cloud_token, render_benchmark_markdown,
-    render_redteam_markdown, resolve_public_cloud_endpoint, save_stored_cloud_token,
-    sha256_lower_hex, verified_absolute_jopedime_config_dir, verify_ecdsa_p256_spki_pem_signature,
-    CarbonAuthVerifier, CarbonCapabilityClaims, CarbonCliRunOptions, CarbonCliRunUxConfig,
-    CarbonEffortTier, CarbonPlanInput, CarbonProbedEndpoint, CarbonProductTier,
-    CarbonPublicCloudsManifest, CarbonThinClient, MonthlyWindowMetrics, SpotAdvisorThresholds,
-    CARBON_BUILD_PROFILE, CARBON_BUILD_TARGET, CARBON_GIT_SHA, CARBON_PKG_VERSION,
-    CARBON_RELEASE_TAG, DEFAULT_PUBLIC_CLOUDS_URL, FALLBACK_PUBLIC_CLOUDS_URL,
-    MAX_MINT_TOKEN_TTL_SECS,
+    decode_p256_pubkey_b64, estimate_ms_per_candidate_1vcpu, evaluate_spot_hybrid_gates,
+    execute_carbon_cli_benchmark_with_token, execute_carbon_cli_run_with_ux,
+    execute_carbon_redteam_suite, execute_predict_csv_with_handle,
+    execute_scientific_benchmark_suite, execute_self_upgrade, generate_nonlinear_benchmark_rows,
+    inspect_tabular_file, list_saved_model_handles, list_stored_cloud_tokens,
+    load_model_handle_by_spec, load_stored_cloud_token, now_epoch_ms, plan_carbon_execution,
+    query_handle_status, remove_stored_cloud_token, render_benchmark_markdown,
+    render_pretty_run_scorecard, render_redteam_markdown, render_scientific_benchmark_markdown,
+    resolve_public_cloud_endpoint, save_stored_cloud_token, sha256_lower_hex,
+    shred_handle_and_local_keys, verified_absolute_jopedime_config_dir,
+    verify_ecdsa_p256_spki_pem_signature, CarbonAuthVerifier, CarbonCapabilityClaims,
+    CarbonCliRunOptions, CarbonCliRunUxConfig, CarbonEffortTier, CarbonPlanInput,
+    CarbonProbedEndpoint, CarbonProductTier, CarbonPublicCloudsManifest,
+    CarbonScientificBenchmarkOptions, CarbonTabularInspectReport, CarbonThinClient,
+    MonthlyWindowMetrics, SpotAdvisorThresholds, CARBON_BUILD_PROFILE, CARBON_BUILD_TARGET,
+    CARBON_GIT_SHA, CARBON_PKG_VERSION, CARBON_RELEASE_TAG, DEFAULT_PUBLIC_CLOUDS_URL,
+    FALLBACK_PUBLIC_CLOUDS_URL, MAX_MINT_TOKEN_TTL_SECS,
 };
 #[cfg(feature = "engine")]
 use jope_carbon::{
@@ -54,7 +59,7 @@ use jope_carbon::{
 use jope_carbon::{CarbonEnterpriseServeConfig, CarbonEnterpriseServer};
 
 const LONG_VERSION: &str = concat!(
-    env!("CARGO_PKG_VERSION"),
+    env!("CARBON_SEMVER"),
     " (",
     env!("CARBON_RELEASE_TAG"),
     ", git ",
@@ -339,6 +344,21 @@ enum Command {
         resume: bool,
         #[arg(long, default_value_t = 5)]
         predict_rows: usize,
+        /// Input CSV has no header row (columns are auto-named `f0..fk`; `--target -1` selects final column).
+        #[arg(long)]
+        no_header: bool,
+        /// Override delimiter character (`,`, `;`, `tab` / `\t`, or `|`; auto-detected when omitted).
+        #[arg(long)]
+        delimiter: Option<String>,
+        /// Persist a `0600` zero-knowledge model handle (`model.carbon.json`) for subsequent `carbon predict`.
+        #[arg(long)]
+        save: Option<PathBuf>,
+        /// Output format on stdout (`auto`, `json`, or `pretty`).
+        #[arg(long, default_value = "json")]
+        format: String,
+        /// Force pure JSON output on stdout (`--format json` shorthand).
+        #[arg(long)]
+        json: bool,
         /// Cryptographically shred (`DELETE /v1/carbon/runs/{id}`) blobs and state upon completion.
         #[arg(long)]
         shred: bool,
@@ -349,7 +369,178 @@ enum Command {
         #[arg(long, conflicts_with = "progress")]
         quiet: bool,
     },
-    /// Run the Free + Pro `r882` zero-knowledge live Carbon Lambda / Enterprise server benchmark suite.
+    /// Train a persistent zero-knowledge Carbon model on a CSV/TSV file and save a `0600` local handle
+    /// (`--save model.carbon.json` and `$HOME/.config/jopedime/runs/<run_id>.json`) for `carbon predict`.
+    Fit {
+        /// Path to training CSV/TSV file (supports RFC-4180 quotes, missing cells, categoricals, booleans).
+        #[arg(value_name = "CSV_FILE")]
+        csv: PathBuf,
+        /// Target column name (or `-1` / `last` when `--no-header` is set).
+        #[arg(long, short = 't')]
+        target: Option<String>,
+        /// Output path for the `0600` zero-knowledge model handle (e.g. `model.carbon.json`).
+        #[arg(long, short = 's')]
+        save: Option<PathBuf>,
+        #[arg(long, value_delimiter = ',')]
+        endpoint: Vec<String>,
+        /// Named public Carbon cloud (`dev` or `prod`; defaults to `prod` when no endpoint/env is given).
+        #[arg(long)]
+        cloud: Option<String>,
+        /// Optional path or HTTPS URL overriding the public `carbon-clouds.json` manifest.
+        #[arg(long)]
+        clouds_manifest: Option<String>,
+        /// Optional stack environment (`dev`, `staging`, `prod`) to auto-resolve endpoint & vault token.
+        #[arg(long = "env")]
+        environment: Option<String>,
+        #[arg(long, default_value = "us-east-2")]
+        region: String,
+        #[arg(long)]
+        tenant: Option<String>,
+        #[arg(long, conflicts_with_all = ["pro", "tier"])]
+        free: bool,
+        #[arg(long, conflicts_with_all = ["free", "tier"])]
+        pro: bool,
+        #[arg(long, conflicts_with_all = ["free", "pro"])]
+        tier: Option<String>,
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+        #[arg(long, default_value = "fast")]
+        effort: String,
+        #[arg(long, default_value = "rmse")]
+        objective: String,
+        #[arg(long, default_value_t = 42)]
+        seed: u64,
+        /// Input CSV has no header row (`f0..fk`; defaults `--target` to final column).
+        #[arg(long)]
+        no_header: bool,
+        /// Override delimiter character (`,`, `;`, `tab` / `\t`, or `|`).
+        #[arg(long)]
+        delimiter: Option<String>,
+        /// Output format on stdout (`auto`, `pretty`, or `json`).
+        #[arg(long, default_value = "auto")]
+        format: String,
+        /// Emit pure JSON on stdout (`--format json` shorthand).
+        #[arg(long)]
+        json: bool,
+        /// Suppress interactive stderr progress and summary card.
+        #[arg(long)]
+        quiet: bool,
+    },
+    /// Score an unlabeled (or labeled) CSV/TSV file in zero-knowledge mode using a saved model handle.
+    Predict {
+        /// Path to CSV/TSV file to score.
+        #[arg(value_name = "CSV_FILE")]
+        csv: PathBuf,
+        /// Path to a saved `0600` model handle (`--save model.carbon.json` from `carbon fit`).
+        #[arg(long, short = 'm', conflicts_with = "run")]
+        model: Option<PathBuf>,
+        /// Saved `run_id` (or `latest`) from `$HOME/.config/jopedime/runs/` when `--model` is omitted.
+        #[arg(long, conflicts_with = "model")]
+        run: Option<String>,
+        /// Optional output CSV path (`prediction` column, or `<id>,prediction` / `<inputs...>,prediction`).
+        #[arg(long, short = 'o')]
+        out: Option<PathBuf>,
+        /// Optional ID column from the input CSV to carry into `--out`.
+        #[arg(long)]
+        id_column: Option<String>,
+        /// Include all original input columns alongside `prediction` in `--out`.
+        #[arg(long)]
+        include_inputs: bool,
+        /// Input CSV has no header row.
+        #[arg(long)]
+        no_header: bool,
+        /// Override delimiter character (`,`, `;`, `tab` / `\t`, or `|`).
+        #[arg(long)]
+        delimiter: Option<String>,
+        /// Optional override `ctk1.*` capability token.
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+        /// Output format on stdout (`auto`, `pretty`, or `json`).
+        #[arg(long, default_value = "auto")]
+        format: String,
+        /// Emit pure JSON on stdout.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Instant zero-network local dataset preflight: schema types, missingness, target stats, and AWS cost/time preview.
+    Inspect {
+        /// Path to CSV/TSV file to inspect locally (no bytes leave your machine).
+        #[arg(value_name = "CSV_FILE")]
+        csv: PathBuf,
+        /// Optional target column name (auto-detected when omitted).
+        #[arg(long, short = 't')]
+        target: Option<String>,
+        /// Input CSV has no header row.
+        #[arg(long)]
+        no_header: bool,
+        /// Override delimiter character (`,`, `;`, `tab` / `\t`, or `|`).
+        #[arg(long)]
+        delimiter: Option<String>,
+        /// Product tier for admission & cost estimation (`free`, `pro`, or `enterprise`).
+        #[arg(long, default_value = "pro")]
+        tier: String,
+        /// Output format on stdout (`auto`, `pretty`, or `json`).
+        #[arg(long, default_value = "auto")]
+        format: String,
+        /// Emit pure JSON on stdout.
+        #[arg(long)]
+        json: bool,
+    },
+    /// List locally saved `0600` zero-knowledge Carbon model handles (`$HOME/.config/jopedime/runs/`).
+    Runs {
+        /// Emit pure JSON even on interactive terminals.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Query live remote cloud status (`/v1/carbon/runs/{id}`) for a saved zero-knowledge model handle.
+    Status {
+        #[arg(long, short = 'm', conflicts_with = "run")]
+        model: Option<PathBuf>,
+        #[arg(long, conflicts_with = "model")]
+        run: Option<String>,
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+    },
+    /// Cryptographically shred remote S3/CAS objects (`DELETE /v1/carbon/runs/{id}`) AND zero-overwrite local key handles.
+    Shred {
+        #[arg(long, short = 'm', conflicts_with = "run")]
+        model: Option<PathBuf>,
+        #[arg(long, conflicts_with = "model")]
+        run: Option<String>,
+        #[arg(long, conflicts_with = "token_file")]
+        token: Option<String>,
+        #[arg(long, conflicts_with = "token")]
+        token_file: Option<PathBuf>,
+    },
+    /// Check or install ECDSA-P256 cryptographically signed Carbon CLI updates (`SHA256SUMS.txt.sig`).
+    Upgrade {
+        /// Verify signature and check whether a newer binary is available without modifying disk.
+        #[arg(long)]
+        check: bool,
+        /// Optional release tag to target (defaults to `latest`).
+        #[arg(long)]
+        version: Option<String>,
+        /// Optional HTTPS/HTTP base URL or local directory override for release assets.
+        #[arg(long)]
+        base_url: Option<String>,
+        /// Optional PEM public key override for offline CI/E2E testing only.
+        #[arg(long)]
+        allow_test_pubkey: Option<PathBuf>,
+    },
+    /// Emit deterministic shell tab-completion script (`bash`, `zsh`, `fish`, or `powershell`).
+    Completions {
+        /// Target shell (`bash`, `zsh`, `fish`, or `powershell`).
+        #[arg(value_name = "SHELL")]
+        shell: String,
+    },
+    /// Run the Free + Pro `r882` zero-knowledge live Carbon Lambda / Enterprise server benchmark suite
+    /// (`ops` 5-scenario cloud suite or `smoke` / `standard` / `comprehensive` 11-comparator scientific suite).
     Bench {
         #[arg(long, value_delimiter = ',')]
         endpoint: Vec<String>,
@@ -364,6 +555,21 @@ enum Command {
         environment: Option<String>,
         #[arg(long, default_value = "us-east-2")]
         region: String,
+        /// Benchmark suite: `ops` (default 5-scenario cloud lifecycle) or `smoke` | `standard` | `comprehensive` (head-to-head vs 11 tabular comparators).
+        #[arg(long)]
+        suite: Option<String>,
+        /// Optional directory of real `<task>/{train.csv,test.csv,meta.json}` tasks (e.g. `datasets/test`) for Panel C.
+        #[arg(long)]
+        datasets_dir: Option<PathBuf>,
+        /// Optional directory of user `*.csv` files to benchmark Carbon vs all 11 comparators on identical splits.
+        #[arg(long)]
+        csv_dir: Option<PathBuf>,
+        /// Carbon search effort for scientific benchmark suites (`fast`, `medium`, `high`, or `ultra`).
+        #[arg(long, default_value = "fast")]
+        effort: String,
+        /// Deterministic RNG seed for scientific benchmark suites.
+        #[arg(long, default_value_t = 20261114)]
+        seed: u64,
         /// Run only Free-tier compatible scenarios.
         #[arg(long, conflicts_with_all = ["pro", "tier"])]
         free: bool,
@@ -434,8 +640,9 @@ enum Command {
         fit_rows: usize,
         #[arg(long)]
         features: usize,
-        #[arg(long, default_value_t = 35.0)]
-        ms_per_candidate: f64,
+        /// Optional override per-candidate 1-vCPU latency in ms (calibrated automatically when omitted).
+        #[arg(long)]
+        ms_per_candidate: Option<f64>,
     },
     /// Evaluate the 3-Gate Spot-Hybrid break-even advisor on a regional monthly snapshot.
     SpotCheck {
@@ -1248,6 +1455,7 @@ fn execute_positional_csv_shorthand(csv_path: PathBuf) -> ExitCode {
         pre_probed: Some((resolved.probed_client, resolved.first_probe)),
         target_was_explicit: false,
         show_stderr_progress,
+        ..CarbonCliRunUxConfig::default()
     };
     match execute_carbon_cli_run_with_ux(&opts, &ux) {
         Ok(receipt) => match serde_json::to_string_pretty(&receipt) {
@@ -1817,7 +2025,7 @@ fn run_quickstart_command(
     if !quiet {
         eprintln!(
             "[quickstart] Carbon {} — Zero-Knowledge E2E Walkthrough",
-            env!("CARGO_PKG_VERSION"),
+            CARBON_PKG_VERSION,
         );
         eprintln!(
             "[quickstart] Step 1/4: Connected to fastest regional edge '{}' ({:.1} ms RTT, P-256 KEK verified)",
@@ -1855,6 +2063,7 @@ fn run_quickstart_command(
         pre_probed: Some((resolved.probed_client, resolved.first_probe)),
         target_was_explicit: emit_csv.is_some(),
         show_stderr_progress: !quiet,
+        ..CarbonCliRunUxConfig::default()
     };
 
     match execute_carbon_cli_run_with_ux(&opts, &ux) {
@@ -2449,10 +2658,26 @@ fn main() -> ExitCode {
             stop_after_ms,
             resume,
             predict_rows,
+            no_header,
+            delimiter,
+            save,
+            format,
+            json,
             shred,
             progress,
             quiet,
         } => {
+            if shred && save.is_some() {
+                eprintln!("error: --shred and --save cannot be combined (a shredded run cannot be queried by `carbon predict`)");
+                return ExitCode::from(2);
+            }
+            let delim_override = match parse_delimiter_arg(delimiter.as_deref()) {
+                Ok(d) => d,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
             let explicit_tier = match resolve_explicit_tier_flag(free, pro, tier.as_deref()) {
                 Ok(t) => t,
                 Err(e) => {
@@ -2464,6 +2689,7 @@ fn main() -> ExitCode {
                 eprintln!("error: invalid --effort `{effort}`");
                 return ExitCode::from(2);
             };
+            let cloud_clone = cloud.clone();
             let resolved = match resolve_cli_target_and_auth(
                 endpoint,
                 cloud,
@@ -2484,8 +2710,16 @@ fn main() -> ExitCode {
                 }
             };
             let target_was_explicit = target.is_some();
-            let target_column = target.unwrap_or_else(|| "y".to_owned());
-            let show_stderr_progress = !quiet && (progress || std::io::stderr().is_terminal());
+            let target_column = target.unwrap_or_else(|| {
+                if no_header {
+                    "-1".to_owned()
+                } else {
+                    "y".to_owned()
+                }
+            });
+            let pretty_stdout = !json && format.trim().eq_ignore_ascii_case("pretty");
+            let show_stderr_progress =
+                !quiet && !pretty_stdout && (progress || std::io::stderr().is_terminal());
             let opts = CarbonCliRunOptions {
                 endpoints: resolved.endpoints,
                 csv_path: csv,
@@ -2509,30 +2743,467 @@ fn main() -> ExitCode {
                 pre_probed: Some((resolved.probed_client, resolved.first_probe)),
                 target_was_explicit,
                 show_stderr_progress,
+                delimiter_override: delim_override,
+                no_header,
+                persist_handle: save.is_some(),
+                save_model_path: save,
+                cloud_name: cloud_clone,
             };
             match execute_carbon_cli_run_with_ux(&opts, &ux) {
-                Ok(receipt) => match serde_json::to_string_pretty(&receipt) {
-                    Ok(s) => {
-                        println!("{s}");
+                Ok(receipt) => {
+                    if pretty_stdout {
+                        println!("{}", render_pretty_run_scorecard(&receipt));
                         ExitCode::SUCCESS
+                    } else {
+                        match serde_json::to_string_pretty(&receipt) {
+                            Ok(s) => {
+                                println!("{s}");
+                                ExitCode::SUCCESS
+                            }
+                            Err(e) => {
+                                eprintln!("error: serialize receipt: {e}");
+                                ExitCode::from(1)
+                            }
+                        }
                     }
-                    Err(e) => {
-                        eprintln!("error: serialize receipt: {e}");
-                        ExitCode::from(1)
-                    }
-                },
+                }
                 Err(err) => {
                     eprintln!("error: carbon run failed: {err}");
                     ExitCode::from(1)
                 }
             }
         }
+        Command::Fit {
+            csv,
+            target,
+            save,
+            endpoint,
+            cloud,
+            clouds_manifest,
+            environment,
+            region,
+            tenant,
+            free,
+            pro,
+            tier,
+            token,
+            token_file,
+            effort,
+            objective,
+            seed,
+            no_header,
+            delimiter,
+            format,
+            json,
+            quiet,
+        } => {
+            let delim_override = match parse_delimiter_arg(delimiter.as_deref()) {
+                Ok(d) => d,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let explicit_tier = match resolve_explicit_tier_flag(free, pro, tier.as_deref()) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let Ok(effort_val) = parse_api_effort(&effort) else {
+                eprintln!("error: invalid --effort `{effort}`");
+                return ExitCode::from(2);
+            };
+            let cloud_clone = cloud.clone();
+            let resolved = match resolve_cli_target_and_auth(
+                endpoint,
+                cloud,
+                clouds_manifest.as_deref(),
+                environment.as_deref(),
+                &region,
+                explicit_tier,
+                tenant,
+                "cli_tenant",
+                token,
+                token_file,
+                CarbonTierWire::Pro,
+            ) {
+                Ok(r) => r,
+                Err((code, msg)) => {
+                    eprintln!("error: {msg}");
+                    return code;
+                }
+            };
+            let target_was_explicit = target.is_some();
+            let target_column = target.unwrap_or_else(|| {
+                if no_header {
+                    "-1".to_owned()
+                } else {
+                    "y".to_owned()
+                }
+            });
+            let pretty_stdout = should_emit_pretty_stdout(&format, json);
+            let show_stderr_progress = !quiet && !pretty_stdout && std::io::stderr().is_terminal();
+            let opts = CarbonCliRunOptions {
+                endpoints: resolved.endpoints,
+                csv_path: Some(csv),
+                target_column,
+                synthetic_rows: 240,
+                synthetic_features: 6,
+                tenant_id: resolved.tenant_id,
+                tier: resolved.tier,
+                effort: effort_val,
+                objective,
+                seed,
+                holdout_fraction: 0.20,
+                stop_after_ms: None,
+                resume_after_stop: false,
+                predict_rows: 5,
+                auth_token: resolved.auth_token,
+                shred_after_run: false,
+            };
+            let ux = CarbonCliRunUxConfig {
+                pinned_keks: resolved.pinned_keks,
+                pre_probed: Some((resolved.probed_client, resolved.first_probe)),
+                target_was_explicit,
+                show_stderr_progress,
+                delimiter_override: delim_override,
+                no_header,
+                persist_handle: true,
+                save_model_path: save,
+                cloud_name: cloud_clone,
+            };
+            match execute_carbon_cli_run_with_ux(&opts, &ux) {
+                Ok(receipt) => {
+                    if pretty_stdout {
+                        println!("{}", render_pretty_run_scorecard(&receipt));
+                        ExitCode::SUCCESS
+                    } else {
+                        match serde_json::to_string_pretty(&receipt) {
+                            Ok(s) => {
+                                println!("{s}");
+                                ExitCode::SUCCESS
+                            }
+                            Err(e) => {
+                                eprintln!("error: serialize receipt: {e}");
+                                ExitCode::from(1)
+                            }
+                        }
+                    }
+                }
+                Err(err) => {
+                    eprintln!("error: carbon fit failed: {err}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Command::Predict {
+            csv,
+            model,
+            run,
+            out,
+            id_column,
+            include_inputs,
+            no_header,
+            delimiter,
+            token,
+            token_file,
+            format,
+            json,
+        } => {
+            let delim_override = match parse_delimiter_arg(delimiter.as_deref()) {
+                Ok(d) => d,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let override_tok = match read_cli_token_source(token, token_file) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+                Ok(pair) => pair,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            match execute_predict_csv_with_handle(
+                &handle,
+                &csv,
+                out.as_deref(),
+                delim_override,
+                no_header,
+                id_column.as_deref(),
+                include_inputs,
+                override_tok,
+            ) {
+                Ok(receipt) => {
+                    if should_emit_pretty_stdout(&format, json) {
+                        println!("┌─ Carbon Zero-Knowledge Batch Prediction ───────────────────────────────┐");
+                        println!(
+                            "  Run & Region : {} | {} (CUEN\\x01={})",
+                            receipt.run_id, receipt.region, receipt.encrypted_cuen
+                        );
+                        println!(
+                            "  Scored Rows  : {} rows across {} encrypted batch(es) in {:.1} ms",
+                            receipt.rows_scored, receipt.batches, receipt.wall_ms
+                        );
+                        if let Some(out_p) = &receipt.output_csv {
+                            println!(
+                                "  Output CSV   : {out_p} (sha256={})",
+                                &receipt.predictions_sha256[..16]
+                            );
+                        }
+                        if let Some(ev) = &receipt.evaluation_if_labeled {
+                            let r2s = ev
+                                .r2
+                                .map(|v| format!("{v:.6}"))
+                                .unwrap_or_else(|| "n/a".to_owned());
+                            println!(
+                                "  Labeled Eval : R^2 = {r2s} | RMSE = {:.4} | MAE = {:.4} (p90={:.4})",
+                                ev.rmse, ev.mae, ev.abs_err_p90
+                            );
+                        }
+                        let preview: Vec<String> = receipt
+                            .sample_predictions
+                            .iter()
+                            .take(5)
+                            .map(|v| format!("{v:.4}"))
+                            .collect();
+                        println!("  Sample Preds : [{}]", preview.join(", "));
+                        println!("└────────────────────────────────────────────────────────────────────────┘");
+                        ExitCode::SUCCESS
+                    } else {
+                        match serde_json::to_string_pretty(&receipt) {
+                            Ok(s) => {
+                                println!("{s}");
+                                ExitCode::SUCCESS
+                            }
+                            Err(e) => {
+                                eprintln!("error: serialize predict receipt: {e}");
+                                ExitCode::from(1)
+                            }
+                        }
+                    }
+                }
+                Err(err) => {
+                    eprintln!("error: carbon predict failed: {err}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Command::Inspect {
+            csv,
+            target,
+            no_header,
+            delimiter,
+            tier,
+            format,
+            json,
+        } => {
+            let delim_override = match parse_delimiter_arg(delimiter.as_deref()) {
+                Ok(d) => d,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let Ok(_ptier) = parse_product_tier(&tier) else {
+                eprintln!("error: invalid --tier `{tier}`");
+                return ExitCode::from(2);
+            };
+            match inspect_tabular_file(&csv, target.as_deref(), delim_override, !no_header) {
+                Ok(report) => {
+                    if should_emit_pretty_stdout(&format, json) {
+                        println!("{}", render_pretty_inspect_report(&report));
+                        ExitCode::SUCCESS
+                    } else {
+                        match serde_json::to_string_pretty(&report) {
+                            Ok(s) => {
+                                println!("{s}");
+                                ExitCode::SUCCESS
+                            }
+                            Err(e) => {
+                                eprintln!("error: serialize inspect report: {e}");
+                                ExitCode::from(1)
+                            }
+                        }
+                    }
+                }
+                Err(err) => {
+                    eprintln!("error: carbon inspect failed: {err}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Command::Runs { json } => match list_saved_model_handles() {
+            Ok(entries) => {
+                if !json && std::io::stdout().is_terminal() {
+                    if entries.is_empty() {
+                        println!("No saved Carbon runs found. Train one with: carbon fit <CSV> --target <COL>");
+                    } else {
+                        println!(
+                            "{:<30}  {:<12}  {:<14}  {:>8}  {:>10}  HANDLE",
+                            "RUN_ID", "REGION", "TARGET", "FIT_ROWS", "HOLDOUT_R2"
+                        );
+                        for e in &entries {
+                            let r2s = e
+                                .holdout_r2
+                                .map(|v| format!("{v:.5}"))
+                                .unwrap_or_else(|| "-".to_owned());
+                            println!(
+                                "{:<30}  {:<12}  {:<14}  {:>8}  {:>10}  {}",
+                                e.run_id, e.region, e.target_column, e.fit_rows, r2s, e.handle_path
+                            );
+                        }
+                    }
+                } else if let Ok(s) = serde_json::to_string_pretty(&entries) {
+                    println!("{s}");
+                }
+                ExitCode::SUCCESS
+            }
+            Err(err) => {
+                eprintln!("error: list saved runs failed: {err}");
+                ExitCode::from(1)
+            }
+        },
+        Command::Status {
+            model,
+            run,
+            token,
+            token_file,
+        } => {
+            let override_tok = match read_cli_token_source(token, token_file) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (handle, _) = match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+                Ok(pair) => pair,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            match query_handle_status(&handle, override_tok) {
+                Ok(status) => {
+                    if let Ok(s) = serde_json::to_string_pretty(&status) {
+                        println!("{s}");
+                    }
+                    ExitCode::SUCCESS
+                }
+                Err(err) => {
+                    eprintln!("error: carbon status failed: {err}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Command::Shred {
+            model,
+            run,
+            token,
+            token_file,
+        } => {
+            let override_tok = match read_cli_token_source(token, token_file) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            let (handle, resolved_path) =
+                match load_model_handle_by_spec(model.as_deref(), run.as_deref()) {
+                    Ok(pair) => pair,
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        return ExitCode::from(2);
+                    }
+                };
+            let explicit_opt = model.as_deref().or(Some(resolved_path.as_path()));
+            match shred_handle_and_local_keys(&handle, explicit_opt, override_tok) {
+                Ok((remote, local_deleted)) => {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&serde_json::json!({
+                            "run_id": remote.run_id,
+                            "remote_shredded": remote.shredded,
+                            "remote_objects_deleted": remote.objects_deleted,
+                            "local_key_handle_shredded": local_deleted,
+                        }))
+                        .unwrap_or_default()
+                    );
+                    ExitCode::SUCCESS
+                }
+                Err(err) => {
+                    eprintln!("error: carbon shred failed: {err}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Command::Upgrade {
+            check,
+            version,
+            base_url,
+            allow_test_pubkey,
+        } => {
+            let pub_pem = if let Some(p) = allow_test_pubkey {
+                match fs::read_to_string(&p) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        eprintln!("error: read --allow-test-pubkey {}: {e}", p.display());
+                        return ExitCode::from(2);
+                    }
+                }
+            } else {
+                let fp = sha256_lower_hex(EMBEDDED_RELEASE_SIGNING_PUB_PEM.as_bytes());
+                if fp != EXPECTED_SIGNING_PUB_SHA256 {
+                    eprintln!("error: embedded signing key fingerprint mismatch");
+                    return ExitCode::from(1);
+                }
+                EMBEDDED_RELEASE_SIGNING_PUB_PEM.to_owned()
+            };
+            match execute_self_upgrade(base_url.as_deref(), version.as_deref(), &pub_pem, check) {
+                Ok(receipt) => {
+                    if let Ok(s) = serde_json::to_string_pretty(&receipt) {
+                        println!("{s}");
+                    }
+                    ExitCode::SUCCESS
+                }
+                Err(err) => {
+                    eprintln!("error: carbon upgrade failed: {err}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        Command::Completions { shell } => match emit_shell_completions(&shell) {
+            Ok(script) => {
+                print!("{script}");
+                ExitCode::SUCCESS
+            }
+            Err(err) => {
+                eprintln!("error: {err}");
+                ExitCode::from(2)
+            }
+        },
         Command::Bench {
             endpoint,
             cloud,
             clouds_manifest,
             environment,
             region,
+            suite,
+            datasets_dir,
+            csv_dir,
+            effort,
+            seed,
             free,
             pro,
             tier,
@@ -2568,6 +3239,57 @@ fn main() -> ExitCode {
                     return code;
                 }
             };
+            let suite_norm = suite
+                .as_deref()
+                .map(|s| s.trim().to_ascii_lowercase())
+                .unwrap_or_else(|| {
+                    if datasets_dir.is_some() || csv_dir.is_some() {
+                        "standard".to_owned()
+                    } else {
+                        "ops".to_owned()
+                    }
+                });
+            if suite_norm != "ops" {
+                let Ok(effort_val) = parse_api_effort(&effort) else {
+                    eprintln!("error: invalid --effort `{effort}`");
+                    return ExitCode::from(2);
+                };
+                let sci_opts = CarbonScientificBenchmarkOptions {
+                    endpoints: resolved.endpoints,
+                    pinned_keks: resolved.pinned_keks,
+                    tier: resolved.tier,
+                    effort: effort_val,
+                    tenant_id: resolved.tenant_id,
+                    auth_token: resolved.auth_token,
+                    suite: suite_norm,
+                    datasets_dir,
+                    csv_dir,
+                    seed,
+                };
+                return match execute_scientific_benchmark_suite(
+                    &sci_opts,
+                    std::io::stderr().is_terminal(),
+                ) {
+                    Ok(report) => {
+                        let Ok(json_text) = serde_json::to_string_pretty(&report) else {
+                            return ExitCode::from(1);
+                        };
+                        let md_text = render_scientific_benchmark_markdown(&report);
+                        if let Err(e) =
+                            write_optional_outputs(json_out, markdown_out, &json_text, &md_text)
+                        {
+                            eprintln!("error: {e}");
+                            return ExitCode::from(1);
+                        }
+                        println!("{json_text}");
+                        ExitCode::SUCCESS
+                    }
+                    Err(err) => {
+                        eprintln!("error: carbon scientific bench failed: {err}");
+                        ExitCode::from(1)
+                    }
+                };
+            }
             match execute_carbon_cli_benchmark_with_token(
                 resolved.endpoints,
                 resolved.tier,
@@ -2738,13 +3460,15 @@ fn main() -> ExitCode {
                     return ExitCode::from(2);
                 }
             };
+            let est_ms = ms_per_candidate
+                .unwrap_or_else(|| estimate_ms_per_candidate_1vcpu(fit_rows, features));
             match plan_carbon_execution(&CarbonPlanInput {
                 product_tier,
                 effort: effort_tier,
                 total_rows,
                 fit_rows,
                 features,
-                est_ms_per_candidate_1vcpu: ms_per_candidate,
+                est_ms_per_candidate_1vcpu: est_ms,
             }) {
                 Ok(decision) => {
                     if let Ok(s) = serde_json::to_string_pretty(&decision) {
@@ -2989,5 +3713,169 @@ fn main() -> ExitCode {
             };
             run_eval_runtime(&runtime_api, scratch_dir)
         }
+    }
+}
+
+fn parse_delimiter_arg(raw: Option<&str>) -> Result<Option<char>, String> {
+    let Some(s) = raw else {
+        return Ok(None);
+    };
+    match s.trim() {
+        "" | "auto" => Ok(None),
+        "," | "comma" | "csv" => Ok(Some(',')),
+        "\t" | "\\t" | "tab" | "tsv" => Ok(Some('\t')),
+        ";" | "semicolon" | "semi" => Ok(Some(';')),
+        "|" | "pipe" => Ok(Some('|')),
+        other if other.chars().count() == 1 => Ok(other.chars().next()),
+        other => Err(format!(
+            "unsupported --delimiter `{other}` (expected `,`, `;`, `tab`, `|`, or `auto`)"
+        )),
+    }
+}
+
+fn should_emit_pretty_stdout(format_arg: &str, force_json: bool) -> bool {
+    if force_json {
+        return false;
+    }
+    match format_arg.trim().to_ascii_lowercase().as_str() {
+        "pretty" | "human" | "table" => true,
+        "json" => false,
+        _ => std::io::stdout().is_terminal(),
+    }
+}
+
+fn render_pretty_inspect_report(report: &CarbonTabularInspectReport) -> String {
+    let mut out = String::with_capacity(1_536);
+    let delim_name = match report.delimiter.as_str() {
+        "\t" => "TAB (TSV)",
+        "," => "',' (CSV)",
+        ";" => "';' (Semicolon)",
+        other => other,
+    };
+    let free_eligible = report.valid_target_rows <= 2_500 && report.encoded_feature_count <= 64;
+    out.push_str("┌─ Carbon Local Dataset Preflight (`carbon inspect` — zero network) ────────┐\n");
+    out.push_str(&format!("  File          : {}\n", report.file_path));
+    out.push_str(&format!(
+        "  Shape         : {} rows x {} raw columns ({} encoded features) | Delimiter = {}\n",
+        report.raw_rows, report.raw_columns, report.encoded_feature_count, delim_name
+    ));
+    out.push_str(&format!(
+        "  Target Column : '{}' (valid={} rows, min={:.4}, median={:.4}, max={:.4}, 3σ-outliers={})\n",
+        report.target_column,
+        report.valid_target_rows,
+        report.target_min,
+        report.target_median,
+        report.target_max,
+        report.target_outliers_3sigma
+    ));
+    out.push_str(&format!(
+        "  Recommended   : --effort {} (Free eligible = {})\n\n",
+        report.recommended_effort, free_eligible
+    ));
+    out.push_str(&format!(
+        "  {:<22}  {:<18}  {:>9}  {:>8}  {}\n",
+        "COLUMN", "DETECTED_KIND", "MISSING%", "UNIQUE", "ROLE"
+    ));
+    for c in report.columns.iter().take(24) {
+        out.push_str(&format!(
+            "  {:<22}  {:<18}  {:>8.1}%  {:>8}  {}\n",
+            c.name, c.detected_type, c.missing_pct, c.distinct_count, c.role
+        ));
+    }
+    if report.columns.len() > 24 {
+        out.push_str(&format!(
+            "  ... ({} additional columns; pass `--json` for full schema)\n",
+            report.columns.len() - 24
+        ));
+    }
+    if !report.effort_previews.is_empty() {
+        out.push_str("\n  Estimated Serverless Execution & Cost Preview:\n");
+        for p in &report.effort_previews {
+            let mode_label = format!("{:?}", p.execution_mode);
+            out.push_str(&format!(
+                "    [{:<4}] --effort {:<6} : {:<16} | {:>2} wave(s), {:>2} shard(s) | ~{:>5.1}s | ~${:.6} USD\n",
+                p.tier,
+                p.effort,
+                mode_label,
+                p.planned_waves,
+                p.eval_shards,
+                p.estimated_wall_secs,
+                p.estimated_usd
+            ));
+        }
+    }
+    if !report.warnings.is_empty() {
+        out.push_str("\n  Notes:\n");
+        for w in &report.warnings {
+            out.push_str(&format!("    - {w}\n"));
+        }
+    }
+    out.push_str(&format!(
+        "\n  Ready: carbon fit \"{}\" --target \"{}\" --save model.carbon.json\n",
+        report.file_path, report.target_column
+    ));
+    out.push_str("└───────────────────────────────────────────────────────────────────────────┘");
+    out
+}
+
+fn emit_shell_completions(shell: &str) -> Result<String, String> {
+    let subcommands = [
+        "version",
+        "self-verify",
+        "register",
+        "login",
+        "whoami",
+        "logout",
+        "doctor",
+        "ping",
+        "inspect",
+        "fit",
+        "predict",
+        "runs",
+        "status",
+        "shred",
+        "upgrade",
+        "completions",
+        "quickstart",
+        "run",
+        "bench",
+        "redteam",
+        "token-mint",
+        "plan",
+        "spot-check",
+    ];
+    match shell.trim().to_ascii_lowercase().as_str() {
+        "bash" => Ok(format!(
+            "# bash completion for carbon\n_carbon_completions() {{\n    local cur prev cmds\n    COMPREPLY=()\n    cur=\"${{COMP_WORDS[COMP_CWORD]}}\"\n    prev=\"${{COMP_WORDS[COMP_CWORD-1]}}\"\n    cmds=\"{cmds}\"\n    if [[ ${{COMP_CWORD}} -eq 1 ]]; then\n        COMPREPLY=( $(compgen -W \"${{cmds}} --help --version\" -- \"${{cur}}\") )\n        return 0\n    fi\n    case \"${{prev}}\" in\n        --effort) COMPREPLY=( $(compgen -W \"fast medium high ultra\" -- \"${{cur}}\") ); return 0 ;;\n        --cloud) COMPREPLY=( $(compgen -W \"prod dev\" -- \"${{cur}}\") ); return 0 ;;\n        --format) COMPREPLY=( $(compgen -W \"auto pretty json\" -- \"${{cur}}\") ); return 0 ;;\n        --suite) COMPREPLY=( $(compgen -W \"ops smoke standard comprehensive\" -- \"${{cur}}\") ); return 0 ;;\n        completions) COMPREPLY=( $(compgen -W \"bash zsh fish powershell\" -- \"${{cur}}\") ); return 0 ;;\n    esac\n    COMPREPLY=( $(compgen -f -- \"${{cur}}\") )\n}}\ncomplete -F _carbon_completions carbon\n",
+            cmds = subcommands.join(" ")
+        )),
+        "zsh" => Ok(format!(
+            "#compdef carbon\n_carbon() {{\n    local -a subcmds\n    subcmds=({cmds})\n    if (( CURRENT == 2 )); then\n        _describe 'carbon command' subcmds\n        _files -g '*.csv *.tsv'\n    else\n        _arguments \\\n            '--target=[Target column]:column:' \\\n            '--effort=[Search effort]:effort:(fast medium high ultra)' \\\n            '--cloud=[Public cloud]:cloud:(prod dev)' \\\n            '--format=[Output format]:format:(auto pretty json)' \\\n            '--suite=[Benchmark suite]:suite:(ops smoke standard comprehensive)' \\\n            '--save=[Model handle output]:file:_files' \\\n            '--model=[Saved model handle]:file:_files' \\\n            '--out=[Predictions CSV]:file:_files' \\\n            '*:file:_files'\n    fi\n}}\n_carbon \"$@\"\n",
+            cmds = subcommands.join(" ")
+        )),
+        "fish" => {
+            let mut s = String::from("# fish completion for carbon\n");
+            for cmd in subcommands {
+                s.push_str(&format!(
+                    "complete -c carbon -n '__fish_use_subcommand' -a '{cmd}'\n"
+                ));
+            }
+            s.push_str("complete -c carbon -l effort -xa 'fast medium high ultra'\n");
+            s.push_str("complete -c carbon -l cloud -xa 'prod dev'\n");
+            s.push_str("complete -c carbon -l format -xa 'auto pretty json'\n");
+            s.push_str("complete -c carbon -l suite -xa 'ops smoke standard comprehensive'\n");
+            Ok(s)
+        }
+        "powershell" | "pwsh" => Ok(format!(
+            "# PowerShell completion for carbon\nRegister-ArgumentCompleter -Native -CommandName carbon -ScriptBlock {{\n    param($wordToComplete, $commandAst, $cursorPosition)\n    $cmds = @({quoted})\n    $cmds | Where-Object {{ $_ -like \"$wordToComplete*\" }} | ForEach-Object {{\n        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)\n    }}\n}}\n",
+            quoted = subcommands
+                .iter()
+                .map(|c| format!("'{c}'"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        )),
+        other => Err(format!(
+            "unsupported shell `{other}` (expected bash, zsh, fish, or powershell)"
+        )),
     }
 }

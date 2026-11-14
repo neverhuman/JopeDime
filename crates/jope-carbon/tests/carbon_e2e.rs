@@ -1994,3 +1994,421 @@ fn clouds_manifest_https_redirect_and_downgrade_refusal() {
         String::from_utf8_lossy(&out.stderr)
     );
 }
+
+fn count_cas_files_recursive(dir: &std::path::Path) -> usize {
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return 0;
+    };
+    let mut n = 0usize;
+    for entry in rd.flatten() {
+        let p = entry.path();
+        if p.is_dir() {
+            n += count_cas_files_recursive(&p);
+        } else if p.is_file() && p.file_name().and_then(|s| s.to_str()) != Some("shredded.json") {
+            n += 1;
+        }
+    }
+    n
+}
+
+#[test]
+fn two_step_fit_predict_inspect_runs_status_shred_and_signed_upgrade_e2e() {
+    use base64::Engine as _;
+    use std::process::Command;
+
+    let root = tempfile::tempdir().expect("tempdir");
+    let mut cfg = CarbonEmuConfig::for_dir(root.path().join("cell"));
+    cfg.region = "us-east-2".to_owned();
+    cfg.eval_worker_threads = 2;
+    cfg.edge_binary_path = Some(PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge")));
+    let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start emulator");
+
+    let carbon_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+    let cfg_dir = root.path().join("user_cfg");
+    std::fs::create_dir_all(&cfg_dir).unwrap();
+
+    // 1. Write messy training CSV (quoted commas, missing `NA`/`null`, boolean, categorical, sequential ID)
+    //    and unlabeled prediction CSV (NO `price` column, unseen category `"Mars Colony"`, missing cells).
+    let train_csv = root.path().join("messy_train.csv");
+    let mut train_text = String::from("listing_id,sqft,has_pool,market,price\n");
+    let markets = ["\"Austin, TX\"", "\"Denver, CO\"", "Seattle"];
+    for i in 0..72usize {
+        let id = format!("L-{:04}", 1000 + i);
+        let sqft = if i % 13 == 5 {
+            "NA".to_owned()
+        } else {
+            format!("{:.1}", 850.0 + (i as f64) * 32.0)
+        };
+        let pool = if i % 3 == 0 { "yes" } else { "no" };
+        let mkt = markets[i % markets.len()];
+        let sqft_num = 850.0 + (i as f64) * 32.0;
+        let price = 95.0
+            + 0.22 * sqft_num
+            + if i % 3 == 0 { 42.0 } else { 0.0 }
+            + ((i % markets.len()) as f64) * 19.5;
+        train_text.push_str(&format!("{id},{sqft},{pool},{mkt},{price:.4}\n"));
+    }
+    std::fs::write(&train_csv, train_text.as_bytes()).unwrap();
+
+    let test_csv = root.path().join("unlabeled_test.csv");
+    let mut test_text = String::from("listing_id,sqft,has_pool,market\n");
+    for i in 0..20usize {
+        let id = format!("T-{:04}", 2000 + i);
+        let sqft = if i == 4 {
+            "null".to_owned()
+        } else {
+            format!("{:.1}", 920.0 + (i as f64) * 45.0)
+        };
+        let pool = if i % 2 == 0 { "true" } else { "false" };
+        let mkt = if i == 7 {
+            "\"Mars Colony, Sector 9\""
+        } else {
+            markets[i % markets.len()]
+        };
+        test_text.push_str(&format!("{id},{sqft},{pool},{mkt}\n"));
+    }
+    std::fs::write(&test_csv, test_text.as_bytes()).unwrap();
+
+    // 2. `carbon inspect` (pure JSON + `--format pretty`, zero network)
+    let insp_json_out = Command::new(&carbon_bin)
+        .arg("inspect")
+        .arg(&train_csv)
+        .arg("--json")
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon inspect --json");
+    assert!(
+        insp_json_out.status.success(),
+        "inspect --json failed: {}",
+        String::from_utf8_lossy(&insp_json_out.stderr)
+    );
+    let insp_val: serde_json::Value = serde_json::from_slice(&insp_json_out.stdout).unwrap();
+    assert_eq!(insp_val["raw_rows"], 72);
+    assert_eq!(insp_val["target_column"], "price");
+
+    let insp_pretty_out = Command::new(&carbon_bin)
+        .arg("inspect")
+        .arg(&train_csv)
+        .args(["--format", "pretty"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon inspect --format pretty");
+    assert!(insp_pretty_out.status.success());
+    let insp_pretty = String::from_utf8(insp_pretty_out.stdout).unwrap();
+    assert!(insp_pretty.contains("Carbon Local Dataset Preflight"));
+    assert!(insp_pretty.contains("carbon fit"));
+
+    // 3. `carbon fit messy_train.csv --target price --save model.carbon.json`
+    let model_path = root.path().join("model.carbon.json");
+    let fit_out = Command::new(&carbon_bin)
+        .arg("fit")
+        .arg(&train_csv)
+        .args(["--target", "price", "--save"])
+        .arg(&model_path)
+        .args(["--endpoint", &emu.base_url(), "--json", "--quiet"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .env("RAYON_NUM_THREADS", "4")
+        .output()
+        .expect("carbon fit");
+    assert!(
+        fit_out.status.success(),
+        "carbon fit failed: {}",
+        String::from_utf8_lossy(&fit_out.stderr)
+    );
+    let fit_json: serde_json::Value = serde_json::from_slice(&fit_out.stdout).unwrap();
+    assert_eq!(fit_json["final_state"], "completed");
+    assert_eq!(fit_json["shredded_after_run"], false);
+    assert!(fit_json["residual_quantiles"]["mae"].as_f64().is_some());
+    assert!(fit_json["residual_quantiles"]["abs_err_p90"]
+        .as_f64()
+        .is_some());
+    assert!(
+        fit_json["comparator_baselines"]
+            .as_array()
+            .map(|a| a.len() >= 3)
+            .unwrap_or(false),
+        "expected same-split comparator baselines in receipt"
+    );
+    assert!(model_path.is_file());
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let m = std::fs::metadata(&model_path).unwrap();
+        assert_eq!(m.permissions().mode() & 0o777, 0o600);
+    }
+    let run_id = fit_json["run_id"].as_str().unwrap().to_owned();
+    let reg_handle = cfg_dir.join("runs").join(format!("{run_id}.json"));
+    assert!(
+        reg_handle.is_file(),
+        "expected registry handle {reg_handle:?}"
+    );
+
+    // 4. `carbon runs --json` & `carbon status --model model.carbon.json`
+    let runs_out = Command::new(&carbon_bin)
+        .args(["runs", "--json"])
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon runs --json");
+    assert!(runs_out.status.success());
+    let runs_arr: serde_json::Value = serde_json::from_slice(&runs_out.stdout).unwrap();
+    assert_eq!(runs_arr.as_array().unwrap().len(), 1);
+    assert_eq!(runs_arr[0]["run_id"], run_id);
+
+    let status_out = Command::new(&carbon_bin)
+        .arg("status")
+        .arg("--model")
+        .arg(&model_path)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon status");
+    assert!(status_out.status.success());
+    let st_json: serde_json::Value = serde_json::from_slice(&status_out.stdout).unwrap();
+    assert_eq!(st_json["state"], "completed");
+
+    // 5. `carbon predict unlabeled_test.csv --model model.carbon.json --id-column listing_id --out preds.csv`
+    let preds_csv = root.path().join("preds.csv");
+    let pred_out = Command::new(&carbon_bin)
+        .arg("predict")
+        .arg(&test_csv)
+        .arg("--model")
+        .arg(&model_path)
+        .args(["--id-column", "listing_id", "--out"])
+        .arg(&preds_csv)
+        .arg("--json")
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon predict");
+    assert!(
+        pred_out.status.success(),
+        "carbon predict failed: {}",
+        String::from_utf8_lossy(&pred_out.stderr)
+    );
+    let pred_json: serde_json::Value = serde_json::from_slice(&pred_out.stdout).unwrap();
+    assert_eq!(pred_json["rows_scored"], 20);
+    assert_eq!(pred_json["encrypted_cuen"], true);
+    let preds_lines: Vec<String> = std::fs::read_to_string(&preds_csv)
+        .unwrap()
+        .lines()
+        .map(str::to_owned)
+        .collect();
+    assert_eq!(preds_lines.len(), 21);
+    assert_eq!(preds_lines[0], "listing_id,prediction");
+    assert!(preds_lines[1].starts_with("T-2000,"));
+    for line in &preds_lines[1..] {
+        let val: f64 = line.split(',').nth(1).unwrap().parse().unwrap();
+        assert!(val.is_finite());
+    }
+
+    // 6. `carbon shred --model model.carbon.json` destroys remote CAS objects AND local 0600 handles!
+    let shred_out = Command::new(&carbon_bin)
+        .arg("shred")
+        .arg("--model")
+        .arg(&model_path)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon shred");
+    assert!(
+        shred_out.status.success(),
+        "carbon shred failed: {}",
+        String::from_utf8_lossy(&shred_out.stderr)
+    );
+    let sh_json: serde_json::Value = serde_json::from_slice(&shred_out.stdout).unwrap();
+    assert_eq!(sh_json["remote_shredded"], true);
+    assert_eq!(sh_json["local_key_handle_shredded"], true);
+    assert!(
+        !model_path.exists() && !reg_handle.exists(),
+        "local 0600 key handles must be unlinked after carbon shred"
+    );
+    assert_eq!(
+        count_cas_files_recursive(emu.cas_root()),
+        0,
+        "all remote CAS blobs must be shredded after carbon shred"
+    );
+    emu.shutdown();
+
+    // 7. `carbon upgrade --check` + forged-signature tamper refusal!
+    let priv_pem = root.path().join("upg_priv.pem");
+    let pub_pem = root.path().join("upg_pub.pem");
+    assert!(Command::new("openssl")
+        .args([
+            "ecparam",
+            "-name",
+            "prime256v1",
+            "-genkey",
+            "-noout",
+            "-out"
+        ])
+        .arg(&priv_pem)
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new("openssl")
+        .args(["ec", "-in"])
+        .arg(&priv_pem)
+        .arg("-pubout")
+        .arg("-out")
+        .arg(&pub_pem)
+        .status()
+        .unwrap()
+        .success());
+
+    let rel_dir = root.path().join("upgrade_rel");
+    std::fs::create_dir_all(&rel_dir).unwrap();
+    let asset_name = if cfg!(target_arch = "aarch64") {
+        "carbon-linux-aarch64-musl"
+    } else {
+        "carbon-linux-x86_64-musl"
+    };
+    let mut next_bin = std::fs::read(&carbon_bin).unwrap();
+    next_bin.extend_from_slice(b"CARBON-UPGRADE-FIXTURE-V999");
+    std::fs::write(rel_dir.join(asset_name), &next_bin).unwrap();
+    let next_sha = jope_carbon::sha256_lower_hex(&next_bin);
+    let sums_path = rel_dir.join("SHA256SUMS.txt");
+    std::fs::write(&sums_path, format!("{next_sha}  {asset_name}\n")).unwrap();
+    let sig_der = Command::new("openssl")
+        .args(["dgst", "-sha256", "-sign"])
+        .arg(&priv_pem)
+        .arg(&sums_path)
+        .output()
+        .unwrap();
+    assert!(sig_der.status.success());
+    std::fs::write(
+        rel_dir.join("SHA256SUMS.txt.sig"),
+        format!(
+            "{}\n",
+            base64::engine::general_purpose::STANDARD.encode(&sig_der.stdout)
+        ),
+    )
+    .unwrap();
+
+    let upg_check = Command::new(&carbon_bin)
+        .args(["upgrade", "--check", "--base-url"])
+        .arg(&rel_dir)
+        .arg("--allow-test-pubkey")
+        .arg(&pub_pem)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon upgrade --check");
+    assert!(
+        upg_check.status.success(),
+        "upgrade --check failed: {}",
+        String::from_utf8_lossy(&upg_check.stderr)
+    );
+    let upg_json: serde_json::Value = serde_json::from_slice(&upg_check.stdout).unwrap();
+    assert_eq!(upg_json["signature_verified"], true);
+    assert_eq!(upg_json["check_only"], true);
+    assert_eq!(upg_json["up_to_date"], false);
+    assert_eq!(upg_json["expected_sha256"], next_sha);
+
+    // Tamper signature -> `carbon upgrade` must refuse closed!
+    std::fs::write(
+        rel_dir.join("SHA256SUMS.txt.sig"),
+        "MEUCIQDBADBADBAD000000==\n",
+    )
+    .unwrap();
+    let upg_tampered = Command::new(&carbon_bin)
+        .args(["upgrade", "--check", "--base-url"])
+        .arg(&rel_dir)
+        .arg("--allow-test-pubkey")
+        .arg(&pub_pem)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .output()
+        .expect("carbon upgrade tampered");
+    assert!(
+        !upg_tampered.status.success(),
+        "carbon upgrade must fail closed when ECDSA-P256 signature is forged"
+    );
+}
+
+#[test]
+fn scientific_benchmark_suite_smoke_all_11_comparators_and_wilcoxon_e2e() {
+    use std::process::Command;
+
+    let root = tempfile::tempdir().expect("tempdir");
+    let mut cfg = CarbonEmuConfig::for_dir(root.path().join("cell"));
+    cfg.region = "us-east-2".to_owned();
+    cfg.eval_worker_threads = 2;
+    cfg.edge_binary_path = Some(PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge")));
+    let mut emu = CarbonLocalLambdaEmulator::start(cfg).expect("start emulator");
+
+    let carbon_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon"));
+    let cfg_dir = root.path().join("bench_cfg");
+    std::fs::create_dir_all(&cfg_dir).unwrap();
+    let json_out = root.path().join("sci-bench.json");
+    let md_out = root.path().join("sci-bench.md");
+
+    let out = Command::new(&carbon_bin)
+        .args([
+            "bench",
+            "--suite",
+            "smoke",
+            "--endpoint",
+            &emu.base_url(),
+            "--json-out",
+        ])
+        .arg(&json_out)
+        .arg("--markdown-out")
+        .arg(&md_out)
+        .env("CARBON_CONFIG_DIR", &cfg_dir)
+        .env("RAYON_NUM_THREADS", "4")
+        .output()
+        .expect("run carbon bench --suite smoke");
+    let residual_blobs = count_cas_files_recursive(emu.cas_root());
+    emu.shutdown();
+
+    assert!(
+        out.status.success(),
+        "carbon bench --suite smoke failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let report: jope_carbon::CarbonScientificBenchmarkReport =
+        serde_json::from_slice(&out.stdout).expect("parse CarbonScientificBenchmarkReport");
+    assert_eq!(report.schema, "jopedime.carbon.scientific-benchmark.v1");
+    assert_eq!(report.suite, "smoke");
+    assert!(report.task_count >= 2);
+    assert_eq!(
+        report.comparator_count, 11,
+        "must compare Carbon head-to-head against Ridge + all 10 jope-comparators learners"
+    );
+    assert_eq!(report.leaderboard.len(), 12);
+    assert!(report.zero_knowledge_cuen_all);
+    assert!(report.all_runs_shredded);
+    assert_eq!(
+        residual_blobs, 0,
+        "all benchmark CAS blobs must be shredded after completion"
+    );
+    assert!(
+        report
+            .tasks
+            .iter()
+            .any(|t| t.task_id == "piecewise_axis_step"),
+        "smoke suite must include tree-favorable adversarial control piecewise_axis_step"
+    );
+    // Verify statistical guard: n < 5 returns None honestly; n >= 5 returns two-sided p in [0, 1].
+    assert_eq!(
+        jope_carbon::paired_wilcoxon_two_sided_p(&[-0.2, -0.3, -0.1, -0.4]),
+        None
+    );
+    let sig_p =
+        jope_carbon::paired_wilcoxon_two_sided_p(&[-0.8, -0.7, -0.6, -0.5, -0.4, -0.9, -1.1, -0.3])
+            .expect("Wilcoxon p-value for n=8");
+    assert!((0.0..0.05).contains(&sig_p), "unexpected p={sig_p}");
+
+    for m in &report.leaderboard {
+        assert!(m.mean_rank >= 1.0 && m.mean_rank <= 12.0);
+        assert!(m.geomean_norm_rmse.is_finite());
+        if m.key != "carbon_r882" {
+            assert_eq!(
+                m.carbon_wins_vs_method + m.carbon_ties_vs_method + m.carbon_losses_vs_method,
+                report.task_count
+            );
+            if let Some(p) = m.paired_wilcoxon_p_value {
+                assert!((0.0..=1.0).contains(&p));
+            }
+        }
+    }
+    assert!(json_out.is_file());
+    let md_text = std::fs::read_to_string(&md_out).expect("read sci-bench.md");
+    assert!(md_text.contains("Aggregate Leaderboard"));
+    assert!(md_text.contains("piecewise_axis_step"));
+}

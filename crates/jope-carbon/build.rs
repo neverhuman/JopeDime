@@ -10,7 +10,8 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const CANONICAL_CARBON_RELEASE_TAG: &str = "carbon-cli-v1.1.0";
+const CANONICAL_CARBON_RELEASE_TAG: &str = "carbon-cli-v1.2.0";
+const CANONICAL_CARBON_SEMVER: &str = "1.2.0";
 
 fn is_valid_hex_sha(candidate: &str) -> bool {
     let trimmed = candidate.trim();
@@ -139,4 +140,5 @@ fn main() {
     println!("cargo:rustc-env=CARBON_BUILD_TARGET={target}");
     println!("cargo:rustc-env=CARBON_BUILD_PROFILE={profile}");
     println!("cargo:rustc-env=CARBON_RELEASE_TAG={release_tag}");
+    println!("cargo:rustc-env=CARBON_SEMVER={CANONICAL_CARBON_SEMVER}");
 }
