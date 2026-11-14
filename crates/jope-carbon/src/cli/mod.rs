@@ -3,9 +3,12 @@
 //! packager/deployer (`deploy`).
 
 pub mod client;
+pub mod coverage_audit;
 #[cfg(feature = "engine")]
 pub mod deploy;
 pub mod redteam;
 pub mod runner;
+#[cfg(feature = "emu")]
+pub mod spec_coverage_matrix;
 #[cfg(feature = "emu")]
 pub mod spec_report;

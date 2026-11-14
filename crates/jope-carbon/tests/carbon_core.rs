@@ -1602,3 +1602,94 @@ fn xz_and_zstd_stream_compress_large_incompressible_payload_without_pipe_deadloc
         "missing compressor binary must return None cleanly"
     );
 }
+
+#[test]
+fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_check() {
+    let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let ci_qual_fixture = tmp.path().join("ci-qual.json");
+    std::fs::write(
+        &ci_qual_fixture,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schema": "jopedime.carbon.ci-quickstart-qualification.v1",
+            "timestamp_epoch_ms": 1794622000000u64,
+            "source_sha": "92ef2d2c1bc4356f95482255e6cc093f7ea76e87",
+            "binary_version": "1.0.0",
+            "release_tag": "carbon-cli-v1.1.0",
+            "emulator_regions": ["prod:us-east-2", "prod:eu-central-1", "dev:us-east-2"],
+            "emulator_edge_invocations": 42,
+            "emulator_engine_invocations": 12,
+            "emulator_eval_invocations": 8,
+            "residual_cas_blobs_after_shred": 0,
+            "total_tests": 8,
+            "passed_tests": 8,
+            "all_passed": true,
+            "total_wall_ms": 1234.5,
+            "steps": [],
+            "redteam_vectors": []
+        }))
+        .expect("serialize ci_qual"),
+    )
+    .expect("write ci_qual");
+
+    let out_ok = tmp.path().join("spec-ok");
+    let html_path =
+        jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
+            evidence_dir: repo_root.join("docs/carbon/evidence"),
+            out_dir: out_ok,
+            run_ci_qualification: false,
+            ci_qualification_in: Some(ci_qual_fixture.clone()),
+            source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
+            repo_root: repo_root.clone(),
+        })
+        .expect("spec-report must validate Section 11 coverage matrix");
+    let html = std::fs::read_to_string(&html_path).expect("read spec html");
+    for expected in [
+        "11. Full Product Test Coverage Matrix",
+        "Table 11A",
+        "Table 11B",
+        "Table 11C",
+        "Table 11D",
+        "Table 11E",
+        "tested-in-CI",
+        "tested-live-prod",
+        "NOT covered",
+        "live-product-coverage-dev-prod.json",
+        "13. Full 64-Hex SHA-256 Cryptographic Provenance Ledger",
+    ] {
+        assert!(html.contains(expected), "missing '{expected}' in spec HTML");
+    }
+
+    // Mutating a live prod check to `passed: false` must fail `execute_carbon_spec_report` closed.
+    let bad_ev = tmp.path().join("bad-evidence");
+    std::fs::create_dir_all(&bad_ev).expect("mkdir bad-evidence");
+    for entry in std::fs::read_dir(repo_root.join("docs/carbon/evidence")).expect("readdir") {
+        let entry = entry.expect("dir entry");
+        if entry.file_type().expect("ft").is_file() {
+            std::fs::copy(entry.path(), bad_ev.join(entry.file_name())).expect("copy ev");
+        }
+    }
+    let cov_path = bad_ev.join("live-product-coverage-dev-prod.json");
+    let mut cov_json: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&cov_path).expect("read cov")).expect("parse cov");
+    cov_json["clouds"]["prod"]["checks"][0]["passed"] = serde_json::Value::Bool(false);
+    std::fs::write(
+        &cov_path,
+        serde_json::to_vec_pretty(&cov_json).expect("ser"),
+    )
+    .expect("write");
+
+    let err = jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
+        evidence_dir: bad_ev,
+        out_dir: tmp.path().join("spec-bad"),
+        run_ci_qualification: false,
+        ci_qualification_in: Some(ci_qual_fixture),
+        source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
+        repo_root,
+    })
+    .expect_err("failed live prod coverage check must reject spec-report");
+    assert!(
+        err.contains("API-LIVE-01") || err.contains("failed"),
+        "unexpected error: {err}"
+    );
+}

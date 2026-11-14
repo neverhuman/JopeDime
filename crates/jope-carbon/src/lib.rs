@@ -60,6 +60,8 @@ pub use cells::{
     lambda_runtime::{run_lambda_custom_runtime_loop, CarbonLambdaInvocation},
 };
 #[cfg(all(feature = "cli", feature = "engine"))]
+pub use cli::coverage_audit::execute_live_aws_product_coverage_audit;
+#[cfg(all(feature = "cli", feature = "engine"))]
 pub use cli::deploy::{
     build_deterministic_single_bin_tar, build_deterministic_single_bin_targz,
     build_deterministic_zip_bytes, execute_carbon_deploy, execute_carbon_package,
@@ -85,6 +87,10 @@ pub use cli::{
         CarbonCloudCellEntry, CarbonCloudRegionPin, CarbonProbedEndpoint, CarbonProgressObserver,
         CarbonPublicCloudsManifest, CarbonStoredCloudCredential, CarbonThinClient,
         DEFAULT_PUBLIC_CLOUDS_URL, FALLBACK_PUBLIC_CLOUDS_URL,
+    },
+    coverage_audit::{
+        execute_cloud_product_coverage_audit, CarbonCloudCoverageInput, CarbonCloudCoverageReceipt,
+        CarbonCoverageCheckResult, CarbonDualCloudCoverageReport,
     },
     redteam::{
         execute_carbon_redteam_suite, render_redteam_markdown, CarbonRedTeamSuiteReport,

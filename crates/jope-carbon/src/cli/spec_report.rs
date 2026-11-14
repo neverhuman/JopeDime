@@ -92,7 +92,7 @@ pub const REQUIRED_SPEC_SCREENSHOTS: [(&str, &str, &str); 8] = [
 ];
 
 /// Required committed production receipt files under `docs/carbon/evidence/`.
-pub const REQUIRED_EVIDENCE_FILES: [&str; 11] = [
+pub const REQUIRED_EVIDENCE_FILES: [&str; 12] = [
     "deploy-dev.json",
     "deploy-prod-wave1.json",
     "s3-cas-crypto-proof.json",
@@ -102,6 +102,7 @@ pub const REQUIRED_EVIDENCE_FILES: [&str; 11] = [
     "load-200-users.json",
     "zero-cred-client-e2e.json",
     "docker-virgin-ubuntu-prod-e2e.json",
+    "live-product-coverage-dev-prod.json",
     "carbon-clouds.json",
     "SHA256SUMS.txt",
 ];
@@ -1782,7 +1783,11 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
 
     let ci_qual: CiQuickstartQualificationReceipt = if opts.run_ci_qualification {
         let exe = std::env::current_exe().map_err(|e| format!("current_exe: {e}"))?;
-        run_ci_quickstart_qualification(&exe, &opts.repo_root, &opts.out_dir, &resolved_sha)?
+        let abs_out_dir = fs::canonicalize(&opts.out_dir)
+            .map_err(|e| format!("canonicalize {}: {e}", opts.out_dir.display()))?;
+        let abs_repo_root = fs::canonicalize(&opts.repo_root)
+            .map_err(|e| format!("canonicalize {}: {e}", opts.repo_root.display()))?;
+        run_ci_quickstart_qualification(&exe, &abs_repo_root, &abs_out_dir, &resolved_sha)?
     } else if let Some(existing) = &opts.ci_qualification_in {
         let raw = fs::read_to_string(existing)
             .map_err(|e| format!("read {}: {e}", existing.display()))?;
@@ -1829,6 +1834,13 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         "docker-virgin-ubuntu-prod-e2e.json",
         &mut ledger,
     )?;
+    let live_cov = load_tracked_evidence_json(
+        &opts.evidence_dir,
+        "live-product-coverage-dev-prod.json",
+        &mut ledger,
+    )?;
+    let coverage_section_html =
+        crate::cli::spec_coverage_matrix::render_product_coverage_section(&live_cov)?;
     let _clouds_pin =
         load_tracked_evidence_json(&opts.evidence_dir, "carbon-clouds.json", &mut ledger)?;
     let _sums_pin = load_tracked_evidence_json(&opts.evidence_dir, "SHA256SUMS.txt", &mut ledger)?;
@@ -1849,7 +1861,8 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         && load200["failed"].as_u64() == Some(0)
         && client_e2e["all_passed"] == true
         && virgin_docker["all_passed"] == true
-        && virgin_docker_all_8_ok;
+        && virgin_docker_all_8_ok
+        && live_cov["all_passed"] == true;
 
     let step_by_id = |id: &str| -> String {
         match ci_qual.steps.iter().find(|s| s.test_id == id) {
@@ -2485,6 +2498,54 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     padding: 0.5px 5px;
     border-radius: 999px;
   }}
+  .pill-ci {{
+    display: inline-block;
+    white-space: nowrap;
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+    font-weight: 700;
+    font-size: 6.6pt;
+    padding: 0.5px 4.5px;
+    border-radius: 999px;
+  }}
+  .pill-live {{
+    display: inline-block;
+    white-space: nowrap;
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+    font-weight: 700;
+    font-size: 6.6pt;
+    padding: 0.5px 4.5px;
+    border-radius: 999px;
+  }}
+  .pill-gap {{
+    display: inline-block;
+    white-space: nowrap;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    font-weight: 700;
+    font-size: 6.6pt;
+    padding: 0.5px 4.5px;
+    border-radius: 999px;
+  }}
+  .cov-table {{
+    table-layout: fixed;
+    width: 100%;
+    font-size: 7.0pt;
+    margin: 5px 0 11px 0;
+  }}
+  .cov-table code {{
+    font-size: 6.8pt;
+  }}
+  .cov-cat {{
+    display: inline-block;
+    font-size: 6.3pt;
+    font-weight: 700;
+    color: #475569;
+  }}
   .svg-box {{
     margin: 8px 0 12px 0;
     break-inside: avoid;
@@ -2652,17 +2713,19 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
 
   <div class="toc-grid">
     <div class="toc-item"><span class="toc-num">01.</span> Three-Plane System Architecture &amp; <code>r882</code> Neural GP Synthesis</div>
-    <div class="toc-item"><span class="toc-num">07.</span> Standardized <code>carbon bench --pro</code> Latency &amp; RMSE Reduction</div>
-    <div class="toc-item"><span class="toc-num">02.</span> Cryptographic Envelopes (<code>CUEN\x01</code>) &amp; AWS S3 CAS Security</div>
     <div class="toc-item"><span class="toc-num">08.</span> <code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code> Time &amp; AWS Cost Economics</div>
-    <div class="toc-item"><span class="toc-num">03.</span> Operator &amp; User Onboarding: Signed Install &amp; CLI Reference</div>
+    <div class="toc-item"><span class="toc-num">02.</span> Cryptographic Envelopes (<code>CUEN\x01</code>) &amp; AWS S3 CAS Security</div>
     <div class="toc-item"><span class="toc-num">09.</span> Multi-Region Concurrency (200 Simultaneous Wave-1 Users)</div>
-    <div class="toc-item"><span class="toc-num">04.</span> Automated GitHub Actions CI Qualification &amp; PDF Pipeline</div>
+    <div class="toc-item"><span class="toc-num">03.</span> Operator &amp; User Onboarding: Signed Install &amp; CLI Reference</div>
     <div class="toc-item"><span class="toc-num">10.</span> 16-Vector Adversarial Red-Team Security Matrix (<code>V-01</code>..<code>V-16</code>)</div>
+    <div class="toc-item"><span class="toc-num">04.</span> Automated GitHub Actions CI Qualification &amp; PDF Pipeline</div>
+    <div class="toc-item"><span class="toc-num">11.</span> Full Product Test Coverage Matrix (<code>CLI</code>, <code>API</code>, <code>Storage</code>, <code>ZK</code> &amp; <code>ADV</code>)</div>
     <div class="toc-item"><span class="toc-num">05.</span> Live AWS <code>dev</code> &amp; 5-Region Wave-1 <code>prod</code> Rollout Inventory</div>
-    <div class="toc-item"><span class="toc-num">11.</span> High-DPI (<code>2x</code> Retina) CLI, S3, Cost &amp; Security Screenshots</div>
+    <div class="toc-item"><span class="toc-num">12.</span> High-DPI (<code>2x</code> Retina) CLI, S3, Cost &amp; Security Screenshots</div>
     <div class="toc-item"><span class="toc-num">06.</span> Zero-Credential Ubuntu &amp; Alpine Client E2E &amp; Portability</div>
-    <div class="toc-item"><span class="toc-num">12.</span> Full 64-Hex SHA-256 Cryptographic Provenance Ledger</div>
+    <div class="toc-item"><span class="toc-num">13.</span> Full 64-Hex SHA-256 Cryptographic Provenance Ledger</div>
+    <div class="toc-item"><span class="toc-num">07.</span> Standardized <code>carbon bench --pro</code> Latency &amp; RMSE Reduction</div>
+    <div class="toc-item"><span class="toc-num">&nbsp;</span> 78 Product Surfaces &amp; 88/88 Live <code>dev</code>+<code>prod</code> Assertions</div>
   </div>
 
   <h2>1. Three-Plane System Architecture &amp; <code>r882</code> Neural-Guided GP Synthesis</h2>
@@ -2761,10 +2824,10 @@ carbon logout --all</pre>
   <table>
     <thead><tr><th style="width:22%">Test Target / Gate</th><th style="width:14%">Cargo / CI Lane</th><th class="num" style="width:10%">Cases</th><th style="width:46%">Verified Invariants &amp; Boundaries</th><th style="width:8%">Status</th></tr></thead>
     <tbody>
-      <tr><td><code>jope-carbon --lib</code></td><td><code>rust-test</code></td><td class="num">1</td><td>Core wire envelope &amp; unit invariants</td><td><span class="pill-pass">PASS</span></td></tr>
-      <tr><td><code>tests/carbon_core.rs</code></td><td><code>rust-test</code> / <code>e2e</code></td><td class="num">10</td><td><code>CUEN\x01</code>/<code>CUDK\x01</code> seal tamper refusal, <code>CT3</code> zero-weight <code>carbon-edge</code> graph, Free/Pro/VPC admission, Spot 3-gate advisor, PNG CRC-32 &amp; PDF verifiers</td><td><span class="pill-pass">PASS</span></td></tr>
-      <tr><td><code>tests/carbon_e2e.rs</code></td><td><code>e2e-smoke</code></td><td class="num">6</td><td>Signed <code>install.sh</code> ECDSA-P256 + binary tamper refusal, multi-region failover, cooperative <code>/stop</code> + <code>/predict</code> + <code>/resume</code> + <code>--shred</code></td><td><span class="pill-pass">PASS</span></td></tr>
-      <tr><td><code>tests/carbon_redteam.rs</code></td><td><code>e2e-smoke</code></td><td class="num">2 (16 vecs)</td><td>Adversarial zero-knowledge suite (<code>V-01</code>..<code>V-16</code>) across public Edge &amp; internal surfaces</td><td><span class="pill-pass">PASS</span></td></tr>
+      <tr><td><code>jope-carbon --lib</code></td><td><code>rust-test</code></td><td class="num">1</td><td>Core wire envelope &amp; relative-<code>HOME</code> path hygiene invariants</td><td><span class="pill-pass">PASS</span></td></tr>
+      <tr><td><code>tests/carbon_core.rs</code></td><td><code>rust-test</code> / <code>e2e</code></td><td class="num">14</td><td><code>CUEN\x01</code>/<code>CUDK\x01</code> tamper refusal, <code>CT3</code> zero-weight Edge graph, dual-key rotation, <code>self-verify</code>, <code>xz</code>/<code>zstd</code> stream round-trip, PNG/PDF &amp; Section 11 verifiers</td><td><span class="pill-pass">PASS</span></td></tr>
+      <tr><td><code>tests/carbon_e2e.rs</code></td><td><code>e2e-smoke</code></td><td class="num">8</td><td>Signed <code>install.sh</code> ECDSA-P256 tamper refusal, multi-region failover, scoped <code>upl_&lt;ULID&gt;</code> CAS shred, cooperative <code>/stop</code> + <code>/resume</code> &amp; 88-check dual-cloud product coverage audit</td><td><span class="pill-pass">PASS</span></td></tr>
+      <tr><td><code>tests/carbon_redteam.rs</code></td><td><code>e2e-smoke</code></td><td class="num">2 (16 vecs)</td><td>Adversarial zero-knowledge suite (<code>V-01</code>..<code>V-16</code>) &amp; fail-closed Lambda boot without secrets</td><td><span class="pill-pass">PASS</span></td></tr>
       <tr><td><code>deploy/ci/test-aggregate.py</code></td><td><code>hygiene</code> / <code>aggregate</code></td><td class="num">29</td><td>CI path routing, exact-HEAD PDF/PNG digest verification &amp; <code>aggregate</code> gate refusal controls</td><td><span class="pill-pass">PASS</span></td></tr>
     </tbody>
   </table>
@@ -2901,8 +2964,9 @@ carbon logout --all</pre>
     <tbody>{redteam_rows_html}</tbody>
   </table>
 
+{coverage_section_html}
   <div class="page-break"></div>
-  <h2>11. High-DPI (<code>2x</code> Retina) CLI, S3 CAS, Cost &amp; Security Screenshot Evidence Gallery</h2>
+  <h2>12. High-DPI (<code>2x</code> Retina) CLI, S3 CAS, Cost &amp; Security Screenshot Evidence Gallery</h2>
   <p>
     All eight terminal evidence figures below (<code>2,240 px</code> wide, <code>deviceScaleFactor: 2</code>) are rendered from fresh exact-HEAD CI execution and SHA-256-verified live cloud receipts during the automated build, validated for PNG chunk CRC-32 integrity and dimensions by <code>carbon spec-verify</code>, and embedded lossless into this specification:
   </p>
@@ -2911,7 +2975,7 @@ carbon logout --all</pre>
   </div>
 
   <div class="page-break"></div>
-  <h2>12. Full 64-Hex SHA-256 Cryptographic Provenance Ledger</h2>
+  <h2>13. Full 64-Hex SHA-256 Cryptographic Provenance Ledger</h2>
   <p>
     Every benchmark table, SVG chart, and terminal transcript in this engineering specification is deterministically bound to the exact 64-character SHA-256 digests listed below and re-verified by <code>carbon spec-verify</code> and the GitHub Actions <code>aggregate</code> gate:
   </p>
