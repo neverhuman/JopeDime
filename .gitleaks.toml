@@ -162,3 +162,17 @@ condition = "AND"
 regexTarget = "match"
 paths = ['''^research/flywheel_selfplay/h205_fresh_vs_static/metrics\.json$''']
 regexes = ['''^family_key": "[0-9a-f]{40}"$''']
+
+[[rules.allowlists]]
+description = "Carbon regional P-256 Engine public KEK (uncompressed SEC1 public point in base64, not a secret)"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/carbon/evidence/(carbon-clouds|deploy-dev|deploy-prod-wave1)\.json$''']
+regexes = ['''^ne_kek_pubkey_b64": "B[A-Za-z0-9+/]{86}="$''']
+
+[[rules.allowlists]]
+description = "Carbon regional P-256 Engine public KEK SHA-256 fingerprint"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e\.json$''']
+regexes = ['''^ne_kek_pubkey_b64_sha256": "[0-9a-f]{64}"$''']

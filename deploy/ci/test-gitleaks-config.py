@@ -30,7 +30,7 @@ def cases():
     # Real scanner controls for reviewed public provenance assignments. Exact
     # file + exact match context must both hold; credentials elsewhere in the
     # same file or minified line must still be found.
-    provenance_contexts = [('python/src/jope/policy/tokens.py', 'ERATION31_TOKEN_SHA256 = "', '"'), ('deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_pins.json', 'MAX_TOKENS_PER_CHUNK": "', '"'), ('deploy/release/release.sh', 'PUBKEY_SHA256=', ''), ('deploy/dl-flywheel/pipelines/final_capture_v1/SOURCE_PINS.json', 'dsl_tokenizer.py": "', '"'), ('deploy/dl-flywheel/docs/continuous-runtime-pins-20261009.json', 'dsl_tokenizer.py":"', '"'), ('deploy/dl-trainonly/lane/src/dl_training_v1/tools/p2_decisions.py', 'family_keys": "', '"'), ('deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/selected-config-draft-review.json', 'program_key": "', '"'), ('docs/internal/kernel2/receipts/evaluator-identity-3ec654cb/receipt.json', 'score_key":"', '"'), ('deploy/lambda/SNAPSHOT.json', 'secrets_existence_sha256": "', '"'), ('docs/internal/clover/gp-expansion-protocol.v1.json', 'tokenizer_sha256": "', '"'), ('crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1C/0001.v1.json', 'tokens": "', '"'), ('crates/jope-engine/assets/grammar/featmath-jain-v1.json', 'tokens.py": "', '"'), ('crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1A/0003.v1.json', 'tokens.rs": "', '"'), ('crates/jope-learning/tests/fixtures/support-policy-v1.json', 'trace_tokens_sha256":"', '"'), ('deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/selected-qualification-v3/actual-readback-summary.json', 'valuation_key": "', '"'), ('deploy/dl-flywheel/docs/native-dispatch-qualification-20261009.json', 'valuation_key":"', '"')]
+    provenance_contexts = [('python/src/jope/policy/tokens.py', 'ERATION31_TOKEN_SHA256 = "', '"'), ('deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_pins.json', 'MAX_TOKENS_PER_CHUNK": "', '"'), ('deploy/release/release.sh', 'PUBKEY_SHA256=', ''), ('deploy/dl-flywheel/pipelines/final_capture_v1/SOURCE_PINS.json', 'dsl_tokenizer.py": "', '"'), ('deploy/dl-flywheel/docs/continuous-runtime-pins-20261009.json', 'dsl_tokenizer.py":"', '"'), ('deploy/dl-trainonly/lane/src/dl_training_v1/tools/p2_decisions.py', 'family_keys": "', '"'), ('deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/selected-config-draft-review.json', 'program_key": "', '"'), ('docs/internal/kernel2/receipts/evaluator-identity-3ec654cb/receipt.json', 'score_key":"', '"'), ('deploy/lambda/SNAPSHOT.json', 'secrets_existence_sha256": "', '"'), ('docs/internal/clover/gp-expansion-protocol.v1.json', 'tokenizer_sha256": "', '"'), ('crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1C/0001.v1.json', 'tokens": "', '"'), ('crates/jope-engine/assets/grammar/featmath-jain-v1.json', 'tokens.py": "', '"'), ('crates/jope-campaigns/manifests/advanced-v3/task-receipts/P-1A/0003.v1.json', 'tokens.rs": "', '"'), ('crates/jope-learning/tests/fixtures/support-policy-v1.json', 'trace_tokens_sha256":"', '"'), ('deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/selected-qualification-v3/actual-readback-summary.json', 'valuation_key": "', '"'), ('deploy/dl-flywheel/docs/native-dispatch-qualification-20261009.json', 'valuation_key":"', '"'), ('docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json', '"engine_kek_pubkey_b64_sha256": "', '"')]
     for index, (relative, prefix, suffix) in enumerate(provenance_contexts):
         metadata = prefix + digest + suffix
         credential = f'api_key = "{digest}"'
@@ -41,6 +41,19 @@ def cases():
         ])
     relative, prefix, suffix = provenance_contexts[0]
     result.append(("provenance-context-in-unreviewed-file", "unreviewed.txt", prefix + digest + suffix + "\n", True))
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    seed = hashlib.sha512(b"JopeDime synthetic SEC1 P-256 public point control").digest() + hashlib.sha256(b"tail").digest()
+    synthetic_sec1_b64 = "B" + "".join(alphabet[b % len(alphabet)] for b in seed[:86]) + "="
+    for name in ("carbon-clouds.json", "deploy-dev.json", "deploy-prod-wave1.json"):
+        rel = f"docs/carbon/evidence/{name}"
+        pubkey_line = f'  "engine_kek_pubkey_b64": "{synthetic_sec1_b64}"'
+        cred_line = f'  "api_key": "{synthetic_sec1_b64}"'
+        result.extend([
+            (f"carbon-public-kek-{name}-allowed", rel, "{\n" + pubkey_line + "\n}\n", False),
+            (f"carbon-public-kek-{name}-credential", rel, "{\n" + cred_line + "\n}\n", True),
+            (f"carbon-public-kek-{name}-same-line-credential", rel, "{" + pubkey_line + ", " + cred_line + "}\n", True),
+        ])
+    result.append(("carbon-public-kek-unreviewed-file", "unreviewed.json", f'{{"engine_kek_pubkey_b64": "{synthetic_sec1_b64}"}}\n', True))
     return result
 
 
