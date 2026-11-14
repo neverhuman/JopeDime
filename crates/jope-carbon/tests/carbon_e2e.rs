@@ -1621,3 +1621,142 @@ fn scoped_cas_shred_isolation_and_large_predict_cas_round_trip() {
 
     emu.shutdown();
 }
+
+#[test]
+fn full_product_coverage_suite_against_dual_cloud_emulator_cells() {
+    use jope_carbon::{
+        execute_cloud_product_coverage_audit,
+        security::{
+            auth::{CarbonAuthVerifier, CarbonCapabilityClaims},
+            user_envelope::CarbonEngineKek,
+        },
+        CarbonCloudCoverageInput,
+    };
+
+    let root = tempfile::tempdir().expect("create tempdir");
+    let edge_bin = PathBuf::from(env!("CARGO_BIN_EXE_carbon-edge"));
+    let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(|p| p.parent())
+        .expect("workspace root")
+        .to_path_buf();
+    let signing_pub_pem =
+        std::fs::read_to_string(repo_root.join("docs/release/signing.pub")).expect("signing.pub");
+
+    let dev_secret = [0x41u8; 32];
+    let dev_kek_scalar = [0x11u8; 32];
+    let mut cfg_dev = CarbonEmuConfig::for_dir(root.path().join("cell_dev"));
+    cfg_dev.region = "us-east-2".to_owned();
+    cfg_dev.eval_worker_threads = 2;
+    cfg_dev.edge_binary_path = Some(edge_bin.clone());
+    cfg_dev.auth_secret = dev_secret;
+    cfg_dev.engine_kek_scalar = dev_kek_scalar;
+    let mut emu_dev = CarbonLocalLambdaEmulator::start(cfg_dev).expect("start dev emulator");
+
+    let prod_secret = [0x52u8; 32];
+    let prod_kek_scalar = [0x22u8; 32];
+    let mut cfg_prod = CarbonEmuConfig::for_dir(root.path().join("cell_prod"));
+    cfg_prod.region = "us-west-2".to_owned();
+    cfg_prod.eval_worker_threads = 2;
+    cfg_prod.edge_binary_path = Some(edge_bin);
+    cfg_prod.auth_secret = prod_secret;
+    cfg_prod.engine_kek_scalar = prod_kek_scalar;
+    let mut emu_prod = CarbonLocalLambdaEmulator::start(cfg_prod).expect("start prod emulator");
+
+    let dev_kek_b64 = CarbonEngineKek::from_scalar_bytes(&dev_kek_scalar)
+        .unwrap()
+        .pubkey_b64();
+    let prod_kek_b64 = CarbonEngineKek::from_scalar_bytes(&prod_kek_scalar)
+        .unwrap()
+        .pubkey_b64();
+
+    let dev_tok_a = emu_dev
+        .mint_capability_token("pro_emu_dev_a", CarbonTierWire::Pro, false)
+        .unwrap();
+    let dev_tok_b = emu_dev
+        .mint_capability_token("pro_emu_dev_b", CarbonTierWire::Pro, false)
+        .unwrap();
+    let dev_exp = CarbonAuthVerifier::from_secret(dev_secret)
+        .mint_token(&CarbonCapabilityClaims {
+            tenant_id: "pro_emu_dev_a".to_owned(),
+            tier: CarbonTierWire::Pro,
+            exp_epoch_secs: 1,
+            admin: false,
+        })
+        .unwrap();
+
+    let prod_tok_a = emu_prod
+        .mint_capability_token("pro_emu_prod_a", CarbonTierWire::Pro, false)
+        .unwrap();
+    let prod_tok_b = emu_prod
+        .mint_capability_token("pro_emu_prod_b", CarbonTierWire::Pro, false)
+        .unwrap();
+    let prod_exp = CarbonAuthVerifier::from_secret(prod_secret)
+        .mint_token(&CarbonCapabilityClaims {
+            tenant_id: "pro_emu_prod_a".to_owned(),
+            tier: CarbonTierWire::Pro,
+            exp_epoch_secs: 1,
+            admin: false,
+        })
+        .unwrap();
+
+    let dev_url = emu_dev.base_url();
+    let prod_url = emu_prod.base_url();
+
+    let dev_receipt = execute_cloud_product_coverage_audit(&CarbonCloudCoverageInput {
+        cloud: "dev",
+        endpoint_url: &dev_url,
+        region: "us-east-2",
+        expected_kek_pubkey_b64: &dev_kek_b64,
+        wrong_peer_kek_pubkey_b64: &prod_kek_b64,
+        pro_tenant_a: "pro_emu_dev_a",
+        pro_token_a: &dev_tok_a,
+        pro_tenant_b: "pro_emu_dev_b",
+        pro_token_b: &dev_tok_b,
+        expired_pro_token_a: &dev_exp,
+        signing_pub_pem: &signing_pub_pem,
+    })
+    .expect("execute dev coverage audit");
+
+    for c in &dev_receipt.checks {
+        assert!(
+            c.passed,
+            "dev check {} ({}) failed: status={}, evidence={}",
+            c.check_id, c.title, c.observed_http_status, c.evidence
+        );
+    }
+    assert!(dev_receipt.all_passed);
+    assert_eq!(dev_receipt.total_checks, 28);
+    assert_eq!(dev_receipt.redteam_passed, 16);
+    assert_eq!(dev_receipt.residual_unshredded_runs, 0);
+
+    let prod_receipt = execute_cloud_product_coverage_audit(&CarbonCloudCoverageInput {
+        cloud: "prod",
+        endpoint_url: &prod_url,
+        region: "us-west-2",
+        expected_kek_pubkey_b64: &prod_kek_b64,
+        wrong_peer_kek_pubkey_b64: &dev_kek_b64,
+        pro_tenant_a: "pro_emu_prod_a",
+        pro_token_a: &prod_tok_a,
+        pro_tenant_b: "pro_emu_prod_b",
+        pro_token_b: &prod_tok_b,
+        expired_pro_token_a: &prod_exp,
+        signing_pub_pem: &signing_pub_pem,
+    })
+    .expect("execute prod coverage audit");
+
+    for c in &prod_receipt.checks {
+        assert!(
+            c.passed,
+            "prod check {} ({}) failed: status={}, evidence={}",
+            c.check_id, c.title, c.observed_http_status, c.evidence
+        );
+    }
+    assert!(prod_receipt.all_passed);
+    assert_eq!(prod_receipt.total_checks, 28);
+    assert_eq!(prod_receipt.redteam_passed, 16);
+    assert_eq!(prod_receipt.residual_unshredded_runs, 0);
+
+    emu_dev.shutdown();
+    emu_prod.shutdown();
+}

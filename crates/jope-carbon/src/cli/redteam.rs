@@ -79,6 +79,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         .clone()
         .ok_or_else(|| "endpoint does not advertise engine_kek_pubkey_b64".to_owned())?;
     let kek_pub = decode_p256_pubkey_b64(&kek_b64).map_err(|e| e.to_string())?;
+    let v1_1_wire = client_a.fetch_server_version()?.is_some();
 
     let anon_a = client_a.authenticate_anonymous()?;
     let mut client_b = CarbonThinClient::connect_fastest(vec![base.clone()])?.0;
@@ -359,7 +360,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         dataset_id: d08,
         tenant_id: anon_a.tenant_id.clone(),
         tier: CarbonTierWire::Free,
-        upload_id: Some(valid_upload.upload_id.clone()),
+        upload_id: v1_1_wire.then(|| valid_upload.upload_id.clone()),
         fit_jmat_sha256: valid_upload.fit_target.sha256.clone(),
         holdout_jmat_sha256: valid_upload.holdout_target.sha256.clone(),
         fit_rows: prepared.fit_rows,
@@ -411,7 +412,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         dataset_id: d09,
         tenant_id: anon_a.tenant_id.clone(),
         tier: CarbonTierWire::Free,
-        upload_id: Some(valid_upload.upload_id.clone()),
+        upload_id: v1_1_wire.then(|| valid_upload.upload_id.clone()),
         fit_jmat_sha256: valid_upload.fit_target.sha256.clone(),
         holdout_jmat_sha256: valid_upload.holdout_target.sha256.clone(),
         fit_rows: prepared.fit_rows,
@@ -480,7 +481,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         dataset_id: d_legit,
         tenant_id: anon_a.tenant_id.clone(),
         tier: CarbonTierWire::Free,
-        upload_id: Some(valid_upload.upload_id.clone()),
+        upload_id: v1_1_wire.then(|| valid_upload.upload_id.clone()),
         fit_jmat_sha256: valid_upload.fit_target.sha256.clone(),
         holdout_jmat_sha256: valid_upload.holdout_target.sha256.clone(),
         fit_rows: prepared.fit_rows,
@@ -524,7 +525,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         dataset_id: d11,
         tenant_id: anon_a.tenant_id.clone(),
         tier: CarbonTierWire::Free,
-        upload_id: Some(valid_upload.upload_id),
+        upload_id: v1_1_wire.then(|| valid_upload.upload_id),
         fit_jmat_sha256: valid_upload.fit_target.sha256,
         holdout_jmat_sha256: valid_upload.holdout_target.sha256,
         fit_rows: prepared.fit_rows,
@@ -651,7 +652,7 @@ pub fn execute_carbon_redteam_suite(endpoint: &str) -> Result<CarbonRedTeamSuite
         dataset_id: d13,
         tenant_id: anon_b.tenant_id.clone(),
         tier: CarbonTierWire::Free,
-        upload_id: Some(prep_13_resp.upload_id),
+        upload_id: v1_1_wire.then(|| prep_13_resp.upload_id),
         fit_jmat_sha256: prep_13_resp.fit_target.sha256,
         holdout_jmat_sha256: prep_13_resp.holdout_target.sha256,
         fit_rows: prepared.fit_rows,

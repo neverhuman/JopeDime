@@ -542,6 +542,19 @@ enum Command {
         #[arg(long)]
         expected_source_sha: Option<String>,
     },
+    /// Execute the 28-check + 16-vector dual-cloud (`dev` + `prod`) live product coverage audit with `--shred`.
+    #[cfg(feature = "engine")]
+    CoverageAudit {
+        /// Path to `carbon-clouds.json` manifest.
+        #[arg(long, default_value = "docs/carbon/evidence/carbon-clouds.json")]
+        clouds_manifest: PathBuf,
+        /// Path to `docs/release/signing.pub`.
+        #[arg(long, default_value = "docs/release/signing.pub")]
+        signing_pub: PathBuf,
+        /// Optional output JSON path for the secret-scrubbed dual-cloud receipt.
+        #[arg(long)]
+        json_out: Option<PathBuf>,
+    },
     /// Run the sealed `carbon engine` AWS Lambda Custom Runtime (`2018-06-01`) worker loop.
     #[cfg(feature = "engine")]
     Engine {
@@ -2926,6 +2939,37 @@ fn main() -> ExitCode {
             }
             Err(err) => {
                 eprintln!("error: carbon spec-verify failed: {err}");
+                ExitCode::from(1)
+            }
+        },
+        #[cfg(feature = "engine")]
+        Command::CoverageAudit {
+            clouds_manifest,
+            signing_pub,
+            json_out,
+        } => match jope_carbon::execute_live_aws_product_coverage_audit(
+            &clouds_manifest,
+            &signing_pub,
+            json_out.as_deref(),
+        ) {
+            Ok(report) => {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "status": if report.all_passed { "passed" } else { "failed" },
+                        "all_passed": report.all_passed,
+                        "total_checks_per_cloud": report.total_checks_per_cloud,
+                        "total_redteam_vectors_per_cloud": report.total_redteam_vectors_per_cloud,
+                    })
+                );
+                if report.all_passed {
+                    ExitCode::SUCCESS
+                } else {
+                    ExitCode::from(1)
+                }
+            }
+            Err(err) => {
+                eprintln!("error: carbon coverage-audit failed: {err}");
                 ExitCode::from(1)
             }
         },

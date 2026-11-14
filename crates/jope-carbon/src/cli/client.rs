@@ -54,6 +54,32 @@ use crate::{
 
 const PREDICT_CAS_THRESHOLD_BYTES: usize = 1_572_864;
 
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CompatPingWire {
+    region: String,
+    healthy: bool,
+    server_epoch_ms: DecimalU64,
+    enterprise_self_hosted: bool,
+    #[serde(default)]
+    engine_kek_pubkey_b64: Option<String>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    storage_backend: Option<String>,
+}
+
+fn decode_wire_ping_response(bytes: &[u8]) -> Result<CarbonPingResponse, String> {
+    let w: CompatPingWire =
+        serde_json::from_slice(bytes).map_err(|e| format!("invalid ping JSON: {e}"))?;
+    Ok(CarbonPingResponse {
+        region: w.region,
+        healthy: w.healthy,
+        server_epoch_ms: w.server_epoch_ms,
+        enterprise_self_hosted: w.enterprise_self_hosted,
+        engine_kek_pubkey_b64: w.engine_kek_pubkey_b64,
+    })
+}
+
 #[derive(Clone)]
 struct UploadedEncryptionSecret {
     u_dek: Zeroizing<[u8; 32]>,
@@ -181,8 +207,8 @@ impl CarbonThinClient {
                     if code != 200 {
                         return Err(format!("{base_url}: /v1/carbon/ping returned HTTP {code}"));
                     }
-                    let ping: CarbonPingResponse = serde_json::from_slice(&buf)
-                        .map_err(|e| format!("{base_url}: invalid ping JSON: {e}"))?;
+                    let ping =
+                        decode_wire_ping_response(&buf).map_err(|e| format!("{base_url}: {e}"))?;
                     if !ping.healthy {
                         return Err(format!("{base_url}: reported unhealthy"));
                     }
@@ -417,7 +443,7 @@ impl CarbonThinClient {
     pub fn ping_active(&self) -> Result<CarbonPingResponse, String> {
         let bytes =
             self.request_checked_with_policy("GET", "/v1/carbon/ping", None, None, None, true)?;
-        let resp: CarbonPingResponse = serde_json::from_slice(&bytes)
+        let resp = decode_wire_ping_response(&bytes)
             .map_err(|e| format!("decode CarbonPingResponse: {e}"))?;
         self.record_verified_endpoint_kek(
             self.active_endpoint(),
@@ -662,6 +688,9 @@ impl CarbonThinClient {
         let pt_fit_sha = hex::encode(prepared.artifacts.fit_sha256);
         let upload_key = format!("{tenant_id}:{pt_fit_sha}");
         let lm_wire = prepared.landmark_bundle.to_wire_bytes();
+        // Legacy v1.0.0 gateways do not expose `/v1/carbon/version` and reject `upload_id` via
+        // `#[serde(deny_unknown_fields)]`; send `upload_id` only when `/v1/carbon/version` is present.
+        let v1_1_wire = self.fetch_server_version()?.is_some();
 
         let req = if let Some(kek_pub) = self.active_kek_pubkey() {
             let secret = self
@@ -692,7 +721,7 @@ impl CarbonThinClient {
                 dataset_id,
                 tenant_id: tenant_id.to_owned(),
                 tier,
-                upload_id: if secret.upload_id.is_empty() {
+                upload_id: if !v1_1_wire || secret.upload_id.is_empty() {
                     None
                 } else {
                     Some(secret.upload_id)
@@ -711,11 +740,14 @@ impl CarbonThinClient {
                 wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk)),
             }
         } else {
-            let plain_upload_id = self
-                .uploaded_ids
-                .lock()
-                .ok()
-                .and_then(|g| g.get(&upload_key).cloned());
+            let plain_upload_id = if v1_1_wire {
+                self.uploaded_ids
+                    .lock()
+                    .ok()
+                    .and_then(|g| g.get(&upload_key).cloned())
+            } else {
+                None
+            };
             CarbonCreateRunRequest {
                 run_id,
                 dataset_id,
