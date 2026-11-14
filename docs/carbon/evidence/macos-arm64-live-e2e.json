@@ -1,0 +1,38 @@
+{
+  "schema": "jopedime.carbon.macos-arm64-live-e2e.v1",
+  "platform": "macOS-26.5.1-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "all_passed": true,
+  "version": {
+    "binary": "carbon",
+    "build_profile": "release",
+    "build_target": "aarch64-apple-darwin",
+    "git_sha": "723b533005f41a99dfe73fe4a987af53961c6035",
+    "release_tag": "carbon-cli-v1.1.0",
+    "roles": [
+      "cli"
+    ],
+    "thin_cli_only": true,
+    "version": "1.0.0"
+  },
+  "self_verify_verified": true,
+  "doctor_healthy": true,
+  "quickstart_run_id": "run_01M7CC4P6K4EPKSD1B3FDDWMS1",
+  "quickstart_holdout_r2": 0.9998388989706226,
+  "quickstart_wall_ms": 10199.90575,
+  "quickstart_shredded": true,
+  "install_log_tail": [
+    "    }",
+    "  ],",
+    "  \"kek_pin_verified\": true,",
+    "  \"region\": \"us-west-2\",",
+    "  \"rtt_ms\": 167.01291600000002",
+    "}",
+    "[carbon-install] NOTE: Add /Users/agent/.cache/carbon-v110-e2e-87910/bin to your PATH: export PATH=\"/Users/agent/.cache/carbon-v110-e2e-87910/bin:$PATH\"",
+    "[carbon-install] Ready! Quickstart:",
+    "[carbon-install]   1. 1-command demo:   /Users/agent/.cache/carbon-v110-e2e-87910/bin/carbon quickstart",
+    "[carbon-install]   2. Run on your CSV:  /Users/agent/.cache/carbon-v110-e2e-87910/bin/carbon data.csv",
+    "[carbon-install]   3. Verify integrity: /Users/agent/.cache/carbon-v110-e2e-87910/bin/carbon self-verify && /Users/agent/.cache/carbon-v110-e2e-87910/bin/carbon doctor",
+    "[carbon-install]   4. Register Free:    /Users/agent/.cache/carbon-v110-e2e-87910/bin/carbon register --free"
+  ]
+}

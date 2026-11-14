@@ -1,0 +1,11 @@
+{
+  "timestamp_epoch_ms": 1794636756384,
+  "stack_name": "jopedime-carbon-dev",
+  "region": "us-east-2",
+  "restored_versions": {
+    "edge_version": "4",
+    "engine_version": "4",
+    "eval_version": "4"
+  },
+  "ping_verified": true
+}
