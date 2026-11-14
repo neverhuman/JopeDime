@@ -324,7 +324,7 @@ jobs:
   inputs:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.inputs == 'true') }}
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-ci' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -351,7 +351,7 @@ jobs:
   python:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.python == 'true') }}
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
     timeout-minutes: 25
     steps:
       - name: Checkout
