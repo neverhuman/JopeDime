@@ -43,7 +43,8 @@ use crate::{
         eval::{CarbonEvalDecryptionGrant, CarbonEvalInvoker, CarbonEvalWireRequest},
     },
     modes::planner::{
-        plan_carbon_execution, CarbonExecutionMode, CarbonPlanDecision, CarbonPlanInput,
+        estimate_ms_per_candidate_1vcpu, plan_carbon_execution, CarbonExecutionMode,
+        CarbonPlanDecision, CarbonPlanInput,
     },
     role::CarbonEffortTier,
     security::{
@@ -408,8 +409,8 @@ impl CarbonEngineWorker {
             planned_workers: decision.shards_per_wave.max(2),
             effort: create.effort,
             evaluations: total_evals.max(16),
-            wall_seconds: u64::from(effort.lease_ceiling_secs()).max(30),
-            evaluation_wall_ms: 15_000,
+            wall_seconds: u64::from(effort.lease_ceiling_secs()).max(60),
+            evaluation_wall_ms: 30_000,
             evaluation_rss_bytes: (decision.eval_class.memory_mb() as u64) * 1_048_576,
             groups: None,
             times: None,
@@ -1066,14 +1067,16 @@ impl CarbonEngineWorker {
         effort: CarbonEffortTier,
     ) -> Result<CarbonPlanDecision, String> {
         let tier = wire_to_product_tier(create.tier);
-        let total_rows = (create.fit_rows as usize).saturating_add(create.holdout_rows as usize);
+        let fit_rows = create.fit_rows as usize;
+        let feature_count = create.feature_names.len();
+        let total_rows = fit_rows.saturating_add(create.holdout_rows as usize);
         plan_carbon_execution(&CarbonPlanInput {
             product_tier: tier,
             effort,
             total_rows,
-            fit_rows: create.fit_rows as usize,
-            features: create.feature_names.len(),
-            est_ms_per_candidate_1vcpu: 12.0,
+            fit_rows,
+            features: feature_count,
+            est_ms_per_candidate_1vcpu: estimate_ms_per_candidate_1vcpu(fit_rows, feature_count),
         })
         .map_err(|e| e.to_string())
     }

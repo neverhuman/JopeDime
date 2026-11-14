@@ -359,6 +359,21 @@ pub fn estimate_working_set_mb(fit_rows: usize, features: usize) -> CarbonResult
     })
 }
 
+/// Empirically calibrated Graviton2 (`1.0 vCPU`) per-candidate 5-fold inner-CV GP evaluation
+/// latency in milliseconds as a function of `(fit_rows, features)`.
+pub fn estimate_ms_per_candidate_1vcpu(fit_rows: usize, features: usize) -> f64 {
+    let n = (fit_rows.max(1)) as f64;
+    let p = (features.max(1)) as f64;
+    let linear_term = 8.0 + 0.045 * n * (1.0 + 0.08 * p);
+    let superlinear_term = if n > 350.0 {
+        let excess = (n - 350.0) / 100.0;
+        18.0 * excess.powf(2.15) * (1.0 + 0.05 * p)
+    } else {
+        0.0
+    };
+    (linear_term + superlinear_term).clamp(8.0, 25_000.0)
+}
+
 /// Deterministically choose `SoloSingleLambda` vs `HybridFanOut` and right-size `EvalMemoryClass`.
 pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlanDecision> {
     input
@@ -377,14 +392,6 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
 
     let working_set_mb = estimate_working_set_mb(input.fit_rows, input.features)?;
     let base_class = EvalMemoryClass::select_for_working_set_mb(working_set_mb)?;
-    let eval_class = if input.product_tier != CarbonProductTier::Free
-        && input.effort >= CarbonEffortTier::High
-        && base_class < EvalMemoryClass::M1769Mb
-    {
-        EvalMemoryClass::M1769Mb
-    } else {
-        base_class
-    };
 
     let waves = input.effort.planned_waves();
     let cands_per_wave = input.effort.candidates_per_wave();
@@ -398,7 +405,23 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
     let solo_estimated_usd = (solo_wall_ms / 1_000.0) * engine_gb * LAMBDA_ARM64_USD_PER_GB_SEC
         + LAMBDA_USD_PER_INVOCATION;
 
-    let target_cands_per_shard = 16u32;
+    let eval_class = if ((input.product_tier != CarbonProductTier::Free
+        && input.effort >= CarbonEffortTier::High)
+        || solo_wall_ms > 8_000.0)
+        && base_class < EvalMemoryClass::M1769Mb
+    {
+        EvalMemoryClass::M1769Mb
+    } else {
+        base_class
+    };
+
+    let target_cands_per_shard = if input.est_ms_per_candidate_1vcpu >= 250.0 {
+        4u32
+    } else if input.est_ms_per_candidate_1vcpu >= 80.0 && cands_per_wave <= 64 {
+        8u32
+    } else {
+        16u32
+    };
     let shards_per_wave = cands_per_wave.div_ceil(target_cands_per_shard).clamp(2, 24);
     let cands_per_shard = cands_per_wave.div_ceil(shards_per_wave);
     let eval_vcpus = eval_class.effective_vcpus();
@@ -419,11 +442,11 @@ pub fn plan_carbon_execution(input: &CarbonPlanInput) -> CarbonResult<CarbonPlan
     let hybrid_estimated_usd = engine_coord_usd + eval_compute_usd + invocation_fees_usd;
 
     let lease_budget_ms = f64::from(input.effort.lease_ceiling_secs()) * 1_000.0;
-    let mode = if input.effort == CarbonEffortTier::Fast || solo_wall_ms <= 8_000.0 {
+    let mode = if solo_wall_ms <= 8_000.0 {
         CarbonExecutionMode::SoloSingleLambda
     } else if solo_wall_ms > 0.45 * lease_budget_ms
-        || (solo_wall_ms / hybrid_wall_ms >= 2.2
-            && hybrid_estimated_usd <= solo_estimated_usd * 1.35)
+        || (solo_wall_ms / hybrid_wall_ms >= 2.0
+            && hybrid_estimated_usd <= solo_estimated_usd * 1.45)
     {
         CarbonExecutionMode::HybridFanOut
     } else {

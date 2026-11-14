@@ -1780,3 +1780,209 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
         "unexpected error: {err}"
     );
 }
+
+#[test]
+fn adaptive_cost_estimator_routes_medium_scale_fast_to_hybrid_fanout() {
+    use jope_carbon::{
+        modes::planner::estimate_ms_per_candidate_1vcpu, plan_carbon_execution, CarbonEffortTier,
+        CarbonExecutionMode, CarbonPlanInput, CarbonProductTier, EvalMemoryClass,
+    };
+
+    assert_eq!(jope_carbon::CARBON_PKG_VERSION, "1.2.0");
+    assert_eq!(jope_carbon::CARBON_RELEASE_TAG, "carbon-cli-v1.2.0");
+
+    let small_est = estimate_ms_per_candidate_1vcpu(160, 5);
+    let med_est = estimate_ms_per_candidate_1vcpu(1_040, 8);
+    let large_est = estimate_ms_per_candidate_1vcpu(4_000, 24);
+    assert!(
+        small_est < med_est && med_est < large_est,
+        "expected strictly monotonic 1vCPU candidate cost: small={small_est:.2}, med={med_est:.2}, large={large_est:.2}"
+    );
+
+    // Small dataset (200 total rows -> 160 fit rows x 5 features) stays SoloSingleLambda on Fast.
+    let small_plan = plan_carbon_execution(&CarbonPlanInput {
+        product_tier: CarbonProductTier::Free,
+        effort: CarbonEffortTier::Fast,
+        total_rows: 200,
+        fit_rows: 160,
+        features: 5,
+        est_ms_per_candidate_1vcpu: small_est,
+    })
+    .expect("plan small fast");
+    assert_eq!(small_plan.mode, CarbonExecutionMode::SoloSingleLambda);
+    assert_eq!(small_plan.shards_per_wave, 0);
+
+    // Medium dataset (1,300 total rows -> 1,040 fit rows x 8 features) promotes Fast to HybridFanOut
+    // on M1769Mb (8 parallel shards of 4 candidates) on both Free and Pro!
+    for tier in [CarbonProductTier::Free, CarbonProductTier::Pro] {
+        let med_plan = plan_carbon_execution(&CarbonPlanInput {
+            product_tier: tier,
+            effort: CarbonEffortTier::Fast,
+            total_rows: 1_300,
+            fit_rows: 1_040,
+            features: 8,
+            est_ms_per_candidate_1vcpu: med_est,
+        })
+        .expect("plan medium fast");
+        assert_eq!(
+            med_plan.mode,
+            CarbonExecutionMode::HybridFanOut,
+            "1,300 x 8 Fast must route to HybridFanOut for {tier:?}"
+        );
+        assert_eq!(med_plan.shards_per_wave, 8);
+        assert_eq!(med_plan.eval_class, EvalMemoryClass::M1769Mb);
+        assert!(
+            med_plan.hybrid_wall_ms * 3.0 < med_plan.solo_wall_ms,
+            "expected >3x HybridFanOut speedup on 1,300x8 Fast: hybrid={:.1} ms vs solo={:.1} ms",
+            med_plan.hybrid_wall_ms,
+            med_plan.solo_wall_ms
+        );
+    }
+}
+
+#[test]
+fn universal_tabular_conditioning_zero_leakage_and_completions() {
+    use jope_carbon::cli::tabular::{
+        inspect_tabular_file, load_delimited_table, parse_delimited_str,
+        prepare_encoded_training_set,
+    };
+
+    let tmp = tempfile::tempdir().expect("tempdir");
+
+    // 1. Messy real-world CSV: RFC-4180 quoted commas, missing tokens (`NA`, `null`, `?`, ``),
+    //    booleans (`yes`/`no`/`true`/`false`), one-hot categorical (`district`), high-cardinality
+    //    categorical (`zip_tag`, >12 levels), auto-dropped row ID (`home_id`) & constant (`const_flag`).
+    let messy_csv = tmp.path().join("messy_homes.csv");
+    let mut csv = String::from("home_id,const_flag,sqft,has_garage,district,zip_tag,price\n");
+    let districts = [
+        "\"Bay Area, North\"",
+        "\"Austin, Central\"",
+        "SeattleCore",
+        "DenverMetro",
+    ];
+    for i in 0..80usize {
+        let id = 10_000 + i;
+        let sqft = if i % 11 == 3 {
+            if i % 2 == 0 {
+                "NA".to_owned()
+            } else {
+                "null".to_owned()
+            }
+        } else {
+            format!("{:.1}", 900.0 + (i as f64) * 28.5)
+        };
+        let garage = match i % 4 {
+            0 => "true",
+            1 => "no",
+            2 => "yes",
+            _ => "?",
+        };
+        let dist = districts[i % districts.len()];
+        let zip = format!("Z{:02}", i % 18);
+        let y = 120.0
+            + (i as f64) * 4.2
+            + if i % 2 == 0 { 35.0 } else { 0.0 }
+            + ((i % districts.len()) as f64) * 18.0;
+        csv.push_str(&format!(
+            "{id},STATIC,{sqft},{garage},{dist},{zip},{y:.3}\n"
+        ));
+    }
+    std::fs::write(&messy_csv, csv.as_bytes()).expect("write messy csv");
+
+    // Typo suggestion (`--target pric` -> `did you mean '--target price'?`)
+    let raw_tbl = load_delimited_table(&messy_csv, None, true).expect("load messy csv");
+    let typo_err = match prepare_encoded_training_set(&raw_tbl, Some("pric"), 42, 0.20, 64) {
+        Ok(_) => panic!("expected typo target column error"),
+        Err(e) => e,
+    };
+    assert!(
+        typo_err.contains("--target price"),
+        "expected fuzzy suggestion for 'pric', got: {typo_err}"
+    );
+
+    let enc_a = prepare_encoded_training_set(&raw_tbl, Some("price"), 42, 0.20, 64)
+        .expect("encode messy csv");
+    let dropped_names: Vec<&str> = enc_a
+        .encoder
+        .dropped_columns
+        .iter()
+        .map(|(n, _)| n.as_str())
+        .collect();
+    assert!(
+        dropped_names.contains(&"home_id") && dropped_names.contains(&"const_flag"),
+        "expected row ID & constant columns auto-dropped, got: {:?}",
+        enc_a.encoder.dropped_columns
+    );
+    assert!(enc_a.fit_x.iter().flatten().all(|v| v.is_finite()));
+    assert!(enc_a.holdout_x.iter().flatten().all(|v| v.is_finite()));
+
+    // Zero-leakage check: perturbing ONLY holdout rows' `sqft` & `price` values must leave
+    // FIT-learned encoder transforms (`medians`, `category_stats`) bit-identical!
+    let holdout_indices: std::collections::BTreeSet<usize> = enc_a
+        .prepared
+        .split_plan
+        .holdout_rows()
+        .iter()
+        .copied()
+        .collect();
+    let mut perturbed_tbl = raw_tbl.clone();
+    for &h_idx in &holdout_indices {
+        perturbed_tbl.rows[h_idx][2] = Some("9999999.0".to_owned());
+        perturbed_tbl.rows[h_idx][6] = Some("-888888.0".to_owned());
+    }
+    let enc_b = prepare_encoded_training_set(&perturbed_tbl, Some("price"), 42, 0.20, 64)
+        .expect("encode perturbed holdout csv");
+    assert_eq!(
+        serde_json::to_value(&enc_a.encoder).unwrap(),
+        serde_json::to_value(&enc_b.encoder).unwrap(),
+        "holdout row values leaked into FIT encoder statistics!"
+    );
+
+    // Semicolon `;` auto-detection and `--no-header` + `-1` target
+    let semi_tbl = parse_delimited_str(
+        "1.0;2.0;3.5\n2.0;4.0;7.0\n3.0;6.0;10.5\n4.0;1.0;5.5\n5.0;2.0;7.5\n6.0;3.0;9.5\n7.0;4.0;11.5\n8.0;5.0;13.5\n9.0;6.0;15.5\n10.0;7.0;17.5\n11.0;8.0;19.5\n12.0;9.0;21.5\n",
+        "semi_no_header",
+        None,
+        false,
+    )
+    .expect("parse semicolon headerless");
+    assert_eq!(semi_tbl.delimiter, ';');
+    assert!(!semi_tbl.had_header);
+    let semi_enc =
+        prepare_encoded_training_set(&semi_tbl, Some("-1"), 7, 0.25, 64).expect("encode -1 target");
+    assert_eq!(semi_enc.encoder.encoded_feature_names.len(), 2);
+
+    // `inspect_tabular_file` zero-network preflight
+    let inspect_rep =
+        inspect_tabular_file(&messy_csv, Some("price"), None, true).expect("inspect messy csv");
+    assert_eq!(inspect_rep.raw_rows, 80);
+    assert_eq!(inspect_rep.valid_target_rows, 80);
+    assert_eq!(inspect_rep.target_column, "price");
+    assert!(!inspect_rep.effort_previews.is_empty());
+
+    // Shell completions for bash, zsh, fish, powershell
+    let carbon_bin = env!("CARGO_BIN_EXE_carbon");
+    for shell in ["bash", "zsh", "fish", "powershell"] {
+        let out = std::process::Command::new(carbon_bin)
+            .args(["completions", shell])
+            .output()
+            .expect("run carbon completions");
+        assert!(out.status.success(), "completions {shell} failed");
+        let text = String::from_utf8(out.stdout).unwrap();
+        for verb in [
+            "fit",
+            "predict",
+            "inspect",
+            "runs",
+            "status",
+            "shred",
+            "upgrade",
+            "completions",
+        ] {
+            assert!(
+                text.contains(verb),
+                "completions {shell} missing subcommand '{verb}'"
+            );
+        }
+    }
+}

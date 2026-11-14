@@ -13,7 +13,7 @@
 
 set -eu
 
-DEFAULT_TAG="carbon-cli-v1.1.0"
+DEFAULT_TAG="carbon-cli-v1.2.0"
 SIGNING_PUB_FINGERPRINT="de84945ec5326877d202d0738e655492a8b2c3b794873a2eb248939c4d326e4e"
 
 TAG="$DEFAULT_TAG"
@@ -76,7 +76,7 @@ while [ "$#" -gt 0 ]; do
 Usage: install.sh [OPTIONS]
 
 Options:
-  --version <TAG>              Release tag (default: carbon-cli-v1.1.0)
+  --version <TAG>              Release tag (default: carbon-cli-v1.2.0)
   --bin-dir <ABS_DIR>          Binary destination (default: $HOME/.local/bin)
   --config-dir <ABS_DIR>       Config destination (default: $HOME/.config/jopedime)
   --base-url <URL>             Override HTTPS release download prefix
