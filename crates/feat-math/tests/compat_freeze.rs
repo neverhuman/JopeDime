@@ -3156,6 +3156,187 @@ fn evaluator_inputs(source: &str) -> (String, Vec<(String, String)>) {
     (domain.expect("hasher domain"), inputs)
 }
 
+/// Canonical `Cargo.lock` subgraph replica matching `campaign_evaluator::evaluator_cargo_lock_subgraph_bytes`.
+fn evaluator_cargo_lock_subgraph_bytes(raw: &[u8]) -> Vec<u8> {
+    use std::collections::{HashSet, VecDeque};
+
+    const EVALUATOR_RUNTIME_CRATES: &[&str] = &[
+        "anyhow",
+        "feat-math",
+        "hex",
+        "libc",
+        "rayon",
+        "serde",
+        "serde_json",
+        "sha2",
+    ];
+
+    struct LockStanza {
+        name: String,
+        version: String,
+        source: Option<String>,
+        deps: Vec<String>,
+        canonical: String,
+    }
+
+    let text = std::str::from_utf8(raw).expect("Cargo.lock must be valid UTF-8");
+    let mut version_line = "version = 4";
+    let mut stanzas: Vec<LockStanza> = Vec::new();
+    let mut current_lines: Vec<&str> = Vec::new();
+    let mut in_stanza = false;
+
+    let parse_stanza = |lines: &[&str]| -> LockStanza {
+        let mut name = String::new();
+        let mut version = String::new();
+        let mut source = None;
+        let mut deps = Vec::new();
+        let mut in_deps = false;
+        for &line in lines {
+            let trimmed = line.trim();
+            if in_deps {
+                if trimmed == "]" {
+                    in_deps = false;
+                } else {
+                    let dep = trimmed.trim_end_matches(',').trim().trim_matches('"');
+                    if !dep.is_empty() {
+                        deps.push(dep.to_owned());
+                    }
+                }
+            } else if let Some(rest) = trimmed.strip_prefix("name = \"") {
+                name = rest.trim_end_matches('"').to_owned();
+            } else if let Some(rest) = trimmed.strip_prefix("version = \"") {
+                version = rest.trim_end_matches('"').to_owned();
+            } else if let Some(rest) = trimmed.strip_prefix("source = \"") {
+                source = Some(rest.trim_end_matches('"').to_owned());
+            } else if let Some(rest) = trimmed.strip_prefix("dependencies = [") {
+                if let Some(inline) = rest.strip_suffix(']') {
+                    for item in inline.split(',') {
+                        let dep = item.trim().trim_matches('"');
+                        if !dep.is_empty() {
+                            deps.push(dep.to_owned());
+                        }
+                    }
+                } else {
+                    in_deps = true;
+                }
+            }
+        }
+        let mut canonical = String::new();
+        for &line in lines {
+            canonical.push_str(line);
+            canonical.push('\n');
+        }
+        LockStanza {
+            name,
+            version,
+            source,
+            deps,
+            canonical,
+        }
+    };
+
+    for raw_line in text.lines() {
+        let line = raw_line.trim_end_matches('\r');
+        let trimmed = line.trim();
+        if !in_stanza {
+            if trimmed.starts_with("version = ") {
+                version_line = trimmed;
+            } else if trimmed == "[[package]]" {
+                in_stanza = true;
+                current_lines.push(line);
+            }
+            continue;
+        }
+        if trimmed == "[[package]]" {
+            stanzas.push(parse_stanza(&current_lines));
+            current_lines.clear();
+            current_lines.push(line);
+        } else if !trimmed.is_empty() && !trimmed.starts_with('#') {
+            current_lines.push(line);
+        }
+    }
+    if !current_lines.is_empty() {
+        stanzas.push(parse_stanza(&current_lines));
+    }
+
+    let resolve_dep = |spec: &str| -> Vec<usize> {
+        let mut parts = spec.splitn(3, ' ');
+        let dep_name = parts.next().unwrap_or("");
+        let dep_ver = parts.next();
+        let dep_src = parts
+            .next()
+            .and_then(|s| s.strip_prefix('(')?.strip_suffix(')'));
+        stanzas
+            .iter()
+            .enumerate()
+            .filter(|(_, pkg)| {
+                pkg.name == dep_name
+                    && dep_ver.is_none_or(|v| pkg.version == v)
+                    && dep_src.is_none_or(|src| pkg.source.as_deref() == Some(src))
+            })
+            .map(|(idx, _)| idx)
+            .collect()
+    };
+
+    let seed_specs: Vec<String> =
+        if let Some(host) = stanzas.iter().find(|pkg| pkg.name == "jope-dime-regressor") {
+            host.deps
+                .iter()
+                .filter(|dep| {
+                    let crate_name = dep.split_whitespace().next().unwrap_or("");
+                    EVALUATOR_RUNTIME_CRATES.contains(&crate_name)
+                })
+                .cloned()
+                .collect()
+        } else {
+            EVALUATOR_RUNTIME_CRATES
+                .iter()
+                .map(|&name| name.to_owned())
+                .collect()
+        };
+
+    let mut visited = HashSet::new();
+    let mut queue = VecDeque::new();
+    for spec in &seed_specs {
+        for idx in resolve_dep(spec) {
+            if visited.insert(idx) {
+                queue.push_back(idx);
+            }
+        }
+    }
+    while let Some(cur) = queue.pop_front() {
+        for dep in &stanzas[cur].deps {
+            for nxt in resolve_dep(dep) {
+                if visited.insert(nxt) {
+                    queue.push_back(nxt);
+                }
+            }
+        }
+    }
+
+    let mut selected: Vec<&LockStanza> = visited.into_iter().map(|i| &stanzas[i]).collect();
+    assert!(
+        selected.iter().any(|pkg| pkg.name == "feat-math"),
+        "Cargo.lock evaluator subgraph must contain feat-math"
+    );
+    selected.sort_by(|a, b| {
+        (&a.name, &a.version, a.source.as_deref().unwrap_or("")).cmp(&(
+            &b.name,
+            &b.version,
+            b.source.as_deref().unwrap_or(""),
+        ))
+    });
+
+    let mut out = String::with_capacity(selected.len() * 192);
+    out.push_str(version_line);
+    out.push('\n');
+    for pkg in selected {
+        out.push('\n');
+        out.push_str(&pkg.canonical);
+    }
+    out.into_bytes()
+}
+
 #[test]
 fn evaluator_identity_inputs_match_the_recorded_identity() {
     let source = String::from_utf8(read_repo_file(EVALUATOR_SOURCE)).unwrap();
@@ -3164,7 +3345,12 @@ fn evaluator_identity_inputs_match_the_recorded_identity() {
     let mut hasher = SemanticHasher::new(&domain);
     let mut inputs = Vec::new();
     for (label, path) in &listed {
-        let bytes = read_repo_file(path);
+        let raw = read_repo_file(path);
+        let bytes = if path == "Cargo.lock" {
+            evaluator_cargo_lock_subgraph_bytes(&raw)
+        } else {
+            raw
+        };
         hasher.bytes(label, &bytes);
         inputs.push(IdentityInput {
             label: label.clone(),
@@ -3179,7 +3365,9 @@ fn evaluator_identity_inputs_match_the_recorded_identity() {
         b"vendored-feat-math.GenomeIr+fit+Model::predict.v1",
     );
     let dsl_abi_sha256 = dsl.finish();
-    let cargo_lock_sha256 = sha256_hex(&read_repo_file("Cargo.lock"));
+    let cargo_lock_sha256 = sha256_hex(&evaluator_cargo_lock_subgraph_bytes(&read_repo_file(
+        "Cargo.lock",
+    )));
     for literal in [
         "\"JopeDimeEvaluatorIdentity.v1\"",
         "\"prime-jain.native-feat-math-f64.evaluation-v2.v1\"",

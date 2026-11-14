@@ -1,9 +1,9 @@
 name: ci
 on:
-  # Deliberate PR event: manual-dispatch job checks do not satisfy PR rulesets.
-  # Mark a draft PR ready after freezing its source to run this full matrix.
+  # Deliberate PR events: run automatically on non-draft PR open/push/reopen/ready;
+  # draft PRs skip all jobs cleanly via job-level `!github.event.pull_request.draft` guards.
   pull_request:
-    types: [ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       provenance_pr:
@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   changes-pr:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
     # PR-controlled source classification runs on a disposable hosted worker.
     runs-on: ubuntu-24.04
     # Action setup and a full-history checkout can exceed 3 minutes when GitHub endpoints stall.
@@ -94,7 +94,7 @@ jobs:
 
   changes:
     needs: [changes-pr, changes-dispatch]
-    if: always()
+    if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     runs-on: ubuntu-24.04
     outputs:
       rust: ${{ needs['changes-pr'].outputs.rust || needs['changes-dispatch'].outputs.rust }}
@@ -130,7 +130,7 @@ jobs:
     # Release security checks require an actually empty tool HOME. Rosetta
     # creates .cache/rosetta when jq starts; retain the checks on native Linux.
     # Apply the source ownership guard before runner allocation.
-    if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    if: (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-24.04' || 'xbabe2-ci' }}
     # Headroom for the three bounded evidence-publication attempts, each of which can stall for
     # about two minutes on a blackholed connection before it resets.
@@ -168,7 +168,7 @@ jobs:
   jankurai-audit:
     # A required CI job for same-repository PRs and manual runs; fork PRs do not write to the
     # local runner evidence store.
-    if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    if: (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ 'xbabe1-ci' }}"]
     timeout-minutes: 35
     steps:
@@ -476,7 +476,7 @@ jobs:
     uses: ./.github/workflows/typescript.yml
 
   paper:
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    if: (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     uses: ./.github/workflows/paper.yml
 
   go:
@@ -492,8 +492,8 @@ jobs:
 
   aggregate:
     needs: [changes, hygiene, jankurai-audit, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go, export-parity]
-    if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
-    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-full' }}"]
+    if: always() && !cancelled() && (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}", "${{ 'xbabe2-ci' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout

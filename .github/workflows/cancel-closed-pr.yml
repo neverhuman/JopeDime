@@ -1,0 +1,40 @@
+name: cancel-closed-pr
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: cancel-closed-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  cancel-superseded-ci:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Cancel queued or in-progress ci.yml runs for closed/merged PR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          cancelled=0
+          for status in queued in_progress waiting requested pending; do
+            ids=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?event=pull_request&status=$status&per_page=100" \
+              --jq ".workflow_runs[] | select(.head_sha == \"$HEAD_SHA\" or .head_branch == \"$HEAD_REF\") | .id" || true)
+            for run_id in $ids; do
+              echo "cancelling superseded ci.yml run $run_id for closed PR #$PR_NUMBER ($HEAD_SHA)"
+              gh api -X POST "repos/$REPO/actions/runs/$run_id/cancel" >/dev/null 2>&1 || true
+              cancelled=$((cancelled + 1))
+            done
+          done
+          echo "cancelled $cancelled superseded ci.yml run(s) for PR #$PR_NUMBER"

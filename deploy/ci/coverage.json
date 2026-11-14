@@ -1490,6 +1490,16 @@
       "lanes": [],
       "scope": "Opt-in Dope encoding; local focused qualification recorded with the draft PR. GPU execution requires CUDA hardware; default CI does not select this feature."
     },
+    "job:.github/workflows/cancel-closed-pr.yml/cancel-superseded-ci": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Ephemeral hosted Ubuntu job cancelling superseded ci.yml workflow runs on pull_request closed; static workflow lint in hygiene."
+    },
     "job:.github/workflows/carbon-cli-matrix.yml/build": {
       "discovery": {
         "kind": "workflow-job"
@@ -1791,6 +1801,18 @@
         "go-parity"
       ],
       "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
+    "job:.github/workflows/jain-cli-qualification.yml/qualify-jain-cli": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Configured hosted Ubuntu qualification job building isolated jope-appliance client and carbon thin CLI binaries, verifying server-crate exclusion, and retaining a SHA-256 receipt without GitHub artifact storage (#2162)."
     },
     "job:.github/workflows/jankurai.yml/jankurai-audit": {
       "discovery": {
@@ -14471,7 +14493,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -15677,7 +15699,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "Feature-isolated user CLI (`--no-default-features --features cli`) and multi-role Carbon cell operator CLI (`version`, `self-verify`, `doctor`, `quickstart`, `package`, `deploy`, `rollback`, `rotate-secrets`, `clouds-manifest`, `register`, `login`, `whoami`, `logout`, `ping`, `run`, `bench`, `redteam`, `token-mint`, `plan`, `spot-check`, `serve`, `spec-report`, `spec-verify`, `emu`, `engine`, `eval`); tested via carbon_core, carbon_e2e, and carbon_redteam."
+      "scope": "Feature-isolated user CLI (`--no-default-features --features cli`) and multi-role Carbon cell operator CLI (`version`, `self-verify`, `doctor`, `quickstart`, `package`, `deploy`, `rollback`, `clouds-manifest`, `register`, `login`, `whoami`, `logout`, `ping`, `run`, `bench`, `redteam`, `token-mint`, `plan`, `spot-check`, `serve`, `spec-report`, `spec-verify`, `emu`, `engine`, `eval`); tested via carbon_core, carbon_e2e, and carbon_redteam."
     },
     "target:jope-carbon/bin/carbon-edge": {
       "discovery": {
@@ -15775,7 +15797,6 @@
       "lanes": [
         "rust-check",
         "rust-test",
-        "e2e-smoke",
         "full-default"
       ],
       "scope": "Carbon Phases C4-C8 end-to-end integration: signed install.sh verification, Free register/login/whoami/logout, CarbonLocalLambdaEmulator driving the isolated carbon-edge child binary over LAMBDA_RUNTIME_API plus engine and HybridFanOut eval shards and HTTP CAS, multi-region ping failover, client FIT-only landmarking, zero-knowledge CUEN v1 + CUDK v1 envelope encryption, all 4 efforts (fast/medium/high/ultra) with per-dataset USD cost telemetry, cooperative early-stop -> Paused -> E2E encrypted predict -> CCKP v2 tamper-refusal -> cross-container resume -> Completed -> DELETE shred, Enterprise carbon serve no_limit(), and Free-tier rejections."
@@ -21651,6 +21672,16 @@
       ],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "workflow:.github/workflows/cancel-closed-pr.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Automatic cancellation of queued or in-progress ci.yml runs when a pull request closes or merges; workflow syntax and runner policy verified in hygiene."
+    },
     "workflow:.github/workflows/carbon-cli-matrix.yml": {
       "discovery": {
         "kind": "workflow"
@@ -21733,6 +21764,18 @@
         "go-parity"
       ],
       "scope": "Complete Go/Wasm registry and golden parity on Go 1.25/1.26, both runtime engines; 100% facade statements, faults, race/fuzz, cross-builds and macOS/Windows execution. Configuration is not passing evidence."
+    },
+    "workflow:.github/workflows/jain-cli-qualification.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Configured hosted Ubuntu qualification workflow for isolated public thin CLIs ahead of 2026-12-04 (#2162); static workflow lint in hygiene, live tag/manual release execution separate."
     },
     "workflow:.github/workflows/jankurai.yml": {
       "discovery": {
@@ -23139,66 +23182,6 @@
     }
   },
   "note": "Execution mappings are promises of scope, not run outcomes. Collection and execution receipts must independently establish counts and capabilities. Changes require explicit assignment; there is no auto-accept/update mode.",
-  "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
-    "discovery": {
-      "kind": "python-family"
-    },
-    "dispositions": [
-      "research"
-    ],
-    "lanes": [],
-    "scope": "H163 data-free score direction, candidate ID alignment, stable argmin ties, z-normalization/rank ensemble, and strict paired family-bootstrap selector controls. Offline research only; no checkpoint, corpus, or live promotion in unit tests."
-  },
-  "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
-    "discovery": {
-      "kind": "python-family"
-    },
-    "dispositions": [
-      "research"
-    ],
-    "lanes": [],
-    "scope": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards. No study data, checkpoint, model, or serving qualification."
-  },
-  "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
-    "discovery": {
-      "kind": "python-family"
-    },
-    "dispositions": [
-      "research"
-    ],
-    "lanes": [],
-    "scope": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion."
-  },
-  "python:research/flywheel_selfplay/h176_data_scaling/test_h176.py": {
-    "discovery": {
-      "kind": "python-family"
-    },
-    "dispositions": [
-      "research"
-    ],
-    "lanes": [],
-    "scope": "H176 data-free controls for nested family-fraction data scaling, role isolation, zero-update baseline alignment, deterministic paired fitting, context-level Elo aggregation, and resource guards. No study data/checkpoint loaded by unit tests; diagnostic research only."
-  },
-  "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
-    "discovery": {
-      "kind": "python-family"
-    },
-    "dispositions": [
-      "research"
-    ],
-    "lanes": [],
-    "scope": "H179 data-free controls for family-separated folds, independent initialization and member seed streams, score averaging before argmin, FIT-only batches, Holm/verdict boundaries, and timing-only execution planning. Synthetic fixtures only; no study data or model checkpoint loaded."
-  },
-  "python:research/flywheel_selfplay/h182_ensemble_size_dose/test_h182.py": {
-    "discovery": {
-      "kind": "python-family"
-    },
-    "dispositions": [
-      "research"
-    ],
-    "lanes": [],
-    "scope": "H182 data-free controls for nested ENS5/ENS10/ENS20 member prefixes, all 60 fresh member seeds and synthetic init hashes, FIT/A/B isolation, score-before-argmin, axis=0 paired bootstrap, strict ENS20 verdict/Holm gates, timing-only four-hour fold rule, and resource guards. No study data or model checkpoint loaded."
-  },
   "schema": "jope.coverage/v1",
   "stage": "static"
 }
