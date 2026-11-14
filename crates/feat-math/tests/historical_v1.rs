@@ -911,6 +911,31 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         campaign_oneshot_sha["fixtures"][1]["path"],
         changed_fixtures[1]
     );
+    let carbon_v120_comparators_lockfile =
+        old_fixture("transitions/carbon_v120_comparators_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        carbon_v120_comparators_lockfile["source_commit"],
+        "8c055b496da1aa1019ff0f521f2e3b3708699f4b"
+    );
+    assert_eq!(
+        carbon_v120_comparators_lockfile["base_commit"],
+        "230f134aab74065b47e05f9782b28930b6ce1fdb"
+    );
+    assert_eq!(
+        carbon_v120_comparators_lockfile["fixtures"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
+    assert_eq!(
+        carbon_v120_comparators_lockfile["fixtures"][0]["path"],
+        changed_fixtures[0]
+    );
+    assert_eq!(
+        carbon_v120_comparators_lockfile["fixtures"][1]["path"],
+        changed_fixtures[1]
+    );
     assert_eq!(
         p21_family_split["source_commit"],
         "e240a9f27e3bba296acf77d29dae10fd2529a0c1"
@@ -1554,6 +1579,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gpr_clip_identity.clone(),
                 sha256_dedup_identity.clone(),
                 campaign_oneshot_sha.clone(),
+                carbon_v120_comparators_lockfile.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1644,6 +1670,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gpr_clip_identity.clone(),
                 sha256_dedup_identity.clone(),
                 campaign_oneshot_sha.clone(),
+                carbon_v120_comparators_lockfile.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1727,6 +1754,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gpr_clip_identity.clone(),
                 sha256_dedup_identity.clone(),
                 campaign_oneshot_sha.clone(),
+                carbon_v120_comparators_lockfile.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1841,6 +1869,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gpr_clip_identity.clone(),
                 sha256_dedup_identity.clone(),
                 campaign_oneshot_sha.clone(),
+                carbon_v120_comparators_lockfile.clone(),
             ],
         ),
         (
@@ -1915,6 +1944,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gpr_clip_identity.clone(),
                 sha256_dedup_identity.clone(),
                 campaign_oneshot_sha.clone(),
+                carbon_v120_comparators_lockfile.clone(),
             ],
         ),
     ] {
@@ -2037,6 +2067,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         gpr_clip_identity,
         sha256_dedup_identity,
         campaign_oneshot_sha,
+        carbon_v120_comparators_lockfile,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
