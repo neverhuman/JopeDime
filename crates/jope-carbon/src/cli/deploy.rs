@@ -754,7 +754,10 @@ pub fn build_deterministic_single_bin_targz(
     enc.finish().map_err(|e| format!("gzip finish tar.gz: {e}"))
 }
 
-fn try_external_stream_compress(tool: &str, args: &[&str], input: &[u8]) -> Option<Vec<u8>> {
+/// Pipe `input` into an external stream compressor/decompressor (`xz`, `zstd`, etc.) while
+/// concurrently draining `stdout` so compressed outputs exceeding the OS pipe buffer (~64 KiB)
+/// never deadlock on `pipe_write`.
+pub fn try_external_stream_compress(tool: &str, args: &[&str], input: &[u8]) -> Option<Vec<u8>> {
     let mut child = Command::new(tool)
         .args(args)
         .stdin(std::process::Stdio::piped())
@@ -762,12 +765,25 @@ fn try_external_stream_compress(tool: &str, args: &[&str], input: &[u8]) -> Opti
         .stderr(std::process::Stdio::null())
         .spawn()
         .ok()?;
-    if let Some(mut stdin) = child.stdin.take() {
-        if stdin.write_all(input).is_err() {
-            return None;
-        }
+    let stdin = child.stdin.take();
+    let (write_res, wait_res) = std::thread::scope(|s| {
+        let writer = s.spawn(move || -> std::io::Result<()> {
+            if let Some(mut pipe) = stdin {
+                pipe.write_all(input)?;
+                pipe.flush()?;
+            }
+            Ok(())
+        });
+        let out = child.wait_with_output();
+        let write_res = writer
+            .join()
+            .unwrap_or_else(|_| Err(std::io::Error::other("stdin writer thread panicked")));
+        (write_res, out)
+    });
+    if write_res.is_err() {
+        return None;
     }
-    let out = child.wait_with_output().ok()?;
+    let out = wait_res.ok()?;
     if out.status.success() && !out.stdout.is_empty() {
         Some(out.stdout)
     } else {

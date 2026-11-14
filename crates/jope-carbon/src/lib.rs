@@ -61,11 +61,12 @@ pub use cells::{
 };
 #[cfg(all(feature = "cli", feature = "engine"))]
 pub use cli::deploy::{
-    build_deterministic_single_bin_targz, build_deterministic_zip_bytes, execute_carbon_deploy,
-    execute_carbon_package, execute_carbon_rollback, execute_carbon_rollback_multi,
-    expand_region_targets, generate_public_clouds_manifest, mint_capability_token_from_vault,
-    resolve_cell_stack_endpoint, resolve_cell_stack_public_endpoint,
-    synthesize_cell_template_for_release, verify_arm64_lambda_binary, CarbonDeployOptions,
+    build_deterministic_single_bin_tar, build_deterministic_single_bin_targz,
+    build_deterministic_zip_bytes, execute_carbon_deploy, execute_carbon_package,
+    execute_carbon_rollback, execute_carbon_rollback_multi, expand_region_targets,
+    generate_public_clouds_manifest, mint_capability_token_from_vault, resolve_cell_stack_endpoint,
+    resolve_cell_stack_public_endpoint, synthesize_cell_template_for_release,
+    try_external_stream_compress, verify_arm64_lambda_binary, CarbonDeployOptions,
     CarbonDeployReport, CarbonLiveAliasVersions, CarbonPackageOptions, CarbonRegionDeployReceipt,
     CarbonReleaseManifest, CarbonRollbackOptions, CarbonRollbackReceipt, CarbonZipEntry,
     CANONICAL_17_REGIONS, CLOUDFORMATION_CELL_TEMPLATE_JSON,

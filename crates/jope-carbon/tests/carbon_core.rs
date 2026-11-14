@@ -1534,3 +1534,71 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
     assert!(spec_html.contains("run_01M7BMGCC0G2MEQH9ATH2TPAGH"));
     assert!(spec_html.contains("run_01M7BMG9YKJ5NF0TQJA40TDGAR"));
 }
+
+#[test]
+fn xz_and_zstd_stream_compress_large_incompressible_payload_without_pipe_deadlock() {
+    use jope_carbon::{build_deterministic_single_bin_tar, try_external_stream_compress};
+
+    // Deterministic 512 KiB high-entropy SplitMix64 payload wrapped in USTAR so compressed output
+    // (> 512 KiB) is > 8x the 64 KiB OS pipe buffer and would deterministically deadlock if stdin
+    // were written synchronously before draining stdout.
+    let mut raw = vec![0u8; 512 * 1_024];
+    let mut state = 0x9E37_79B9_7F4A_7C15u64;
+    for chunk in raw.chunks_exact_mut(8) {
+        state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+        let mut z = state;
+        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+        z ^= z >> 31;
+        chunk.copy_from_slice(&z.to_le_bytes());
+    }
+    let tar_bytes = build_deterministic_single_bin_tar("carbon", &raw).expect("ustar archive");
+    assert!(tar_bytes.len() > 512 * 1_024);
+
+    let mut exercised_any = false;
+    if Command::new("xz")
+        .arg("--version")
+        .output()
+        .is_ok_and(|o| o.status.success())
+    {
+        exercised_any = true;
+        let compressed = try_external_stream_compress("xz", &["-1", "-q", "-c"], &tar_bytes)
+            .expect("xz stream compress >512 KiB payload without deadlock");
+        assert!(
+            compressed.len() > 512 * 1_024,
+            "high-entropy xz stream must exceed 64 KiB pipe buffer, got {} B",
+            compressed.len()
+        );
+        let roundtrip = try_external_stream_compress("xz", &["-d", "-q", "-c"], &compressed)
+            .expect("xz stream decompress >512 KiB payload without deadlock");
+        assert_eq!(roundtrip, tar_bytes);
+    }
+
+    if Command::new("zstd")
+        .arg("--version")
+        .output()
+        .is_ok_and(|o| o.status.success())
+    {
+        exercised_any = true;
+        let compressed = try_external_stream_compress("zstd", &["-1", "-q", "-c"], &tar_bytes)
+            .expect("zstd stream compress >512 KiB payload without deadlock");
+        assert!(
+            compressed.len() > 512 * 1_024,
+            "high-entropy zstd stream must exceed 64 KiB pipe buffer, got {} B",
+            compressed.len()
+        );
+        let roundtrip = try_external_stream_compress("zstd", &["-d", "-q", "-c"], &compressed)
+            .expect("zstd stream decompress >512 KiB payload without deadlock");
+        assert_eq!(roundtrip, tar_bytes);
+    }
+
+    assert!(
+        exercised_any,
+        "expected at least one of `xz` or `zstd` to be installed in test environment"
+    );
+    assert!(
+        try_external_stream_compress("nonexistent-compressor-binary-xyz", &["-c"], &tar_bytes)
+            .is_none(),
+        "missing compressor binary must return None cleanly"
+    );
+}
