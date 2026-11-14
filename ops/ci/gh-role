@@ -1,0 +1,539 @@
+#!/usr/bin/env python3
+"""Route a gh command to one of this host's existing GitHub credentials, refuse an
+approval the selected identity is not entitled to submit, and refuse any PR merge whose
+exact head commit lacks `aggregate == success` or has pending/failing check runs.
+
+This is credential routing plus a guardrail, NOT a security boundary. Every agent here runs
+as the same OS user, so anything that can run gh-role can run gh directly and skip it. It
+exists to stop the two mistakes that actually happen in agent workflows:
+  1. approving a pull request you authored, and
+  2. merging a pull request while `ci.yml` (`aggregate`) is still pending or red.
+
+  writer   -> jepsontaylor   new commits, pushes, PR creation; carries `workflow` scope
+  reviewer -> neverhumanbot  independent review
+
+  gh-role <role> <gh args...>           run gh as that identity
+  gh-role eligible <role> <repo> <pr>   print the exclusion set and the verdict, exit 0/1
+  gh-role preflight [--repo OWNER/REPO] identities, permissions, protection as BOTH roles
+
+The credential is passed to the child through GH_TOKEN only. The global active account is
+never changed, because `gh auth switch` rewrites a hosts.yml that concurrent agents share.
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+
+HOME_DIR = os.path.expanduser('~')
+GH = os.environ.get('GH_ROLE_GH_BIN') or os.path.join(HOME_DIR, '.local', 'bin', 'gh')
+CONFIG_DIR = os.environ.get('GH_ROLE_CONFIG_DIR') or os.path.join(HOME_DIR, '.config', 'gh')
+AUDIT = os.environ.get('GH_ROLE_AUDIT_PATH') or os.path.join(
+    HOME_DIR, '.config', 'github-access', 'gh-role-audit.jsonl'
+)
+ACCOUNTS = {'writer': 'jepsontaylor', 'reviewer': 'neverhumanbot'}
+# The existing credential-store key predates the verified 2026-09-25 account rename.
+CREDENTIAL_USERS = {'neverhumanbot': 'neverhuman'}
+ACCOUNT_IDS = {'neverhumanbot': 219957145}
+# Inherited credential overrides must not survive into the child: an ambient GH_TOKEN would
+# otherwise silently win over the role the caller asked for.
+SCRUB = (
+    'GH_TOKEN',
+    'GITHUB_TOKEN',
+    'GH_ENTERPRISE_TOKEN',
+    'GITHUB_ENTERPRISE_TOKEN',
+    'GH_CONFIG_DIR',
+    'GH_HOST',
+)
+PR_PATH = re.compile(r'^/?repos/([^/]+)/([^/]+)/pulls/(\d+)(/.*)?$')
+PULLS_PATH = re.compile(r'^/?repos/([^/]+)/([^/]+)/pulls/?$')
+SHA40_RE = re.compile(r'^[0-9a-f]{40}$')
+# `gh api` flags that consume the following token. Without this the first bare token in
+# `api -X POST repos/O/R/...` is "POST", not the path, and every explicit-method call slips
+# past the guard -- which is precisely how the previous version was bypassable.
+API_VALUE_FLAGS = frozenset((
+    '-X', '--method', '-f', '--field', '-F', '--raw-field', '-H', '--header',
+    '-q', '--jq', '-t', '--template', '--input', '--cache', '--hostname', '-p', '--preview',
+))
+FIELD_FLAGS = ('-f', '--field', '-F', '--raw-field')
+CLEAN_CONCLUSIONS = frozenset(('success', 'skipped', 'neutral'))
+
+
+def first_positional(tokens, value_flags):
+    """First token that is neither a flag nor a flag's value."""
+    skip = False
+    for token in tokens:
+        if skip:
+            skip = False
+            continue
+        if token.startswith('-'):
+            if token in value_flags:
+                skip = True
+            continue
+        return token
+    return None
+
+
+def field_values(tokens):
+    """Values of every -f/-F/--field/--raw-field, in both `-f k=v` and `--field=k=v` forms."""
+    values, take = [], False
+    for token in tokens:
+        if take:
+            values.append(token)
+            take = False
+        elif token in FIELD_FLAGS:
+            take = True
+        else:
+            for flag in FIELD_FLAGS:
+                if token.startswith(flag + '='):
+                    values.append(token.split('=', 1)[1])
+    return values
+
+
+class Refused(Exception):
+    """A guard declined the command. The message is shown to the caller verbatim."""
+
+
+def audit(record):
+    """Append one decision to the log. Never fatal: a broken log must not block work."""
+    record['at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+    try:
+        os.makedirs(os.path.dirname(AUDIT), mode=0o700, exist_ok=True)
+        fd = os.open(AUDIT, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        with os.fdopen(fd, 'a') as handle:
+            handle.write(json.dumps(record, sort_keys=True) + '\n')
+    except OSError:
+        pass
+
+
+def loggable(args):
+    """argv with review/comment bodies elided."""
+    out, skip = [], False
+    for arg in args:
+        if skip:
+            out.append('<elided>')
+            skip = False
+            continue
+        if arg in ('--body', '-b'):
+            out.append(arg)
+            skip = True
+        elif arg.startswith('--body='):
+            out.append('--body=<elided>')
+        else:
+            out.append(arg)
+    return out
+
+
+def role_env(account):
+    """Environment holding exactly one credential, proven to resolve to `account`."""
+    env = os.environ.copy()
+    for key in SCRUB:
+        env.pop(key, None)
+    env['GH_CONFIG_DIR'] = CONFIG_DIR
+    env['GH_HOST'] = 'github.com'
+    found = subprocess.run(
+        [GH, 'auth', 'token', '--hostname', 'github.com', '--user', CREDENTIAL_USERS.get(account, account)],
+        env=env,
+        capture_output=True,
+    )
+    if found.returncode or not found.stdout.strip():
+        raise Refused('selected account credential unavailable: ' + account)
+    env['GH_TOKEN'] = found.stdout.decode().strip()
+    who = subprocess.run([GH, 'api', 'user'], env=env, capture_output=True)
+    try:
+        identity = json.loads(who.stdout) if not who.returncode else {}
+    except (ValueError, TypeError):
+        identity = {}
+    if identity.get('login') != account or (account in ACCOUNT_IDS and identity.get('id') != ACCOUNT_IDS[account]):
+        raise Refused('credential validation failed for ' + account)
+    return env
+
+
+def api_json(env, path, jq=None):
+    """One read through gh. Any failure raises, so callers fail closed rather than guess."""
+    cmd = [GH, 'api', path] + (['--jq', jq] if jq else [])
+    got = subprocess.run(cmd, env=env, capture_output=True)
+    if got.returncode:
+        raise Refused('could not read %s: %s' % (path, got.stderr.decode().strip()[:200]))
+    text = got.stdout.decode().strip()
+    if not text:
+        raise Refused('empty response for %s (empty is unknown, not clean)' % path)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return text
+
+
+def exclusion_set(env, repo, number):
+    """Who may NOT approve this pull request, and which unassociated commits it carries."""
+    pull = api_json(env, 'repos/%s/pulls/%s' % (repo, number))
+    excluded = {}
+    author = (pull.get('user') or {}).get('login')
+    if author:
+        excluded[author] = 'opened the pull request'
+    commits = api_json(env, 'repos/%s/pulls/%s/commits?per_page=100' % (repo, number))
+    unassociated = []
+    for commit in commits:
+        sha = commit.get('sha', '')[:10]
+        for field, verb in (('author', 'authored'), ('committer', 'committed')):
+            who = commit.get(field)
+            login = who.get('login') if who else None
+            if login:
+                excluded.setdefault(login, '%s commit %s' % (verb, sha))
+            elif field == 'author':
+                name = ((commit.get('commit') or {}).get('author') or {}).get('name', '?')
+                unassociated.append('%s by %s' % (sha, name))
+    return excluded, unassociated, (pull.get('head') or {}).get('sha', '')
+
+
+def check_eligible(env, account, repo, number, ack_unassociated):
+    """Raise Refused unless `account` may approve this pull request."""
+    excluded, unassociated, head = exclusion_set(env, repo, number)
+    if account in excluded:
+        raise Refused(
+            '%s may not approve %s#%s: it %s.\n'
+            'Reviewer must not be the author. Use the other role, or an identity that did not\n'
+            'participate. Do not re-attribute commits to manufacture eligibility.'
+            % (account, repo, number, excluded[account])
+        )
+    if unassociated and not ack_unassociated:
+        raise Refused(
+            '%s#%s carries commits with no GitHub account attached:\n  %s\n'
+            'Unattributed is unknown, not eligible -- their real author may be you. Establish\n'
+            'provenance, then re-run with --ack-unassociated to record that you did.'
+            % (repo, number, '\n  '.join(unassociated))
+        )
+    return excluded, unassociated, head
+
+
+def list_commit_check_runs(env, repo, head_sha):
+    """Fetch all check runs on `head_sha` and collapse re-runs to the newest run per name."""
+    latest_by_name = {}
+    page = 1
+    while page <= 20:
+        payload = api_json(
+            env,
+            'repos/%s/commits/%s/check-runs?per_page=100&page=%d' % (repo, head_sha, page),
+        )
+        if not isinstance(payload, dict) or not isinstance(payload.get('check_runs'), list):
+            raise Refused('malformed check-runs payload for %s@%s' % (repo, head_sha[:12]))
+        runs = payload['check_runs']
+        for run in runs:
+            if not isinstance(run, dict):
+                continue
+            name = run.get('name')
+            if not name:
+                continue
+            run_id = run.get('id') or 0
+            prev = latest_by_name.get(name)
+            if prev is None or (prev.get('id') or 0) <= run_id:
+                latest_by_name[name] = run
+        total = payload.get('total_count')
+        if len(runs) < 100 or (isinstance(total, int) and page * 100 >= total):
+            break
+        page += 1
+    return latest_by_name
+
+
+def check_merge_ci_ready(env, repo, number, match_head):
+    """Refuse to merge unless exact head SHA is bound and `aggregate == success` with 0 pending/failing checks."""
+    if not match_head or not SHA40_RE.fullmatch(match_head):
+        raise Refused(
+            'merge of %s#%s requires an explicit 40-hex head guard '
+            '(--match-head-commit <FULL_SHA> or -f sha=<FULL_SHA>).' % (repo, number)
+        )
+    pull = api_json(env, 'repos/%s/pulls/%s' % (repo, number))
+    if not isinstance(pull, dict):
+        raise Refused('could not read pull request metadata for %s#%s' % (repo, number))
+    live_head = ((pull.get('head') or {}).get('sha') or '').strip()
+    if live_head != match_head:
+        raise Refused(
+            '%s#%s head SHA mismatch: caller guarded %s, live head is %s.'
+            % (repo, number, match_head, live_head or '<missing>')
+        )
+    latest = list_commit_check_runs(env, repo, live_head)
+    agg = latest.get('aggregate')
+    if agg is None:
+        raise Refused(
+            '%s#%s at %s has no `aggregate` check run yet; wait for ci.yml to finish.'
+            % (repo, number, live_head[:12])
+        )
+    agg_status = agg.get('status')
+    agg_conclusion = agg.get('conclusion')
+    if agg_status != 'completed' or agg_conclusion != 'success':
+        raise Refused(
+            '%s#%s at %s cannot merge: `aggregate` is status=%s conclusion=%s (must be completed/success).'
+            % (repo, number, live_head[:12], agg_status, agg_conclusion)
+        )
+    bad = []
+    for name in sorted(latest):
+        run = latest[name]
+        status = run.get('status')
+        conclusion = run.get('conclusion')
+        if status != 'completed' or conclusion not in CLEAN_CONCLUSIONS:
+            bad.append('%s(%s/%s)' % (name, status, conclusion))
+    if bad:
+        raise Refused(
+            '%s#%s at %s cannot merge while checks are pending or unsuccessful: %s'
+            % (repo, number, live_head[:12], ', '.join(bad))
+        )
+    return live_head
+
+
+def split_repo(value):
+    if not value or value.count('/') != 1:
+        raise Refused('could not determine OWNER/REPO; pass --repo explicitly')
+    return value
+
+
+def parse(args):
+    """What is this command trying to do? Returns a dict; unknown shapes pass through."""
+    intent = {
+        'kind': 'other',
+        'repo': None,
+        'number': None,
+        'match_head': None,
+        'ack': '--ack-unassociated' in args,
+    }
+    args = [a for a in args if a != '--ack-unassociated']
+    intent['args'] = args
+    if not args:
+        return intent
+
+    def flag_value(*names):
+        for i, arg in enumerate(args):
+            if arg in names and i + 1 < len(args):
+                return args[i + 1]
+            for name in names:
+                if arg.startswith(name + '='):
+                    return arg.split('=', 1)[1]
+        return None
+
+    if args[0] == 'pr':
+        rest = args[1:]
+        sub = rest[0] if rest and not rest[0].startswith('-') else first_positional(
+            rest,
+            API_VALUE_FLAGS | {'--repo', '-R', '--body', '-b', '--body-file', '--title', '--match-head-commit'},
+        )
+        intent['repo'] = flag_value('--repo', '-R')
+        intent['match_head'] = flag_value('--match-head-commit')
+        for arg in rest[rest.index(sub) + 1:] if sub in rest else []:
+            if arg.isdigit():
+                intent['number'] = arg
+                break
+            match = re.search(r'/pull/(\d+)', arg)
+            if match:
+                intent['number'] = match.group(1)
+                break
+        if sub == 'review' and any(a in ('--approve', '-a') for a in rest):
+            intent['kind'] = 'approve'
+        elif sub == 'merge':
+            intent['kind'] = 'merge'
+        elif sub == 'create':
+            intent['kind'] = 'create'
+        return intent
+
+    if args[0] == 'api':
+        rest = args[1:]
+        path = first_positional(rest, API_VALUE_FLAGS)
+        method = flag_value('-X', '--method')
+        fields = field_values(rest)
+        if not method:
+            method = 'POST' if fields else 'GET'
+        method = method.upper()
+        if path:
+            pull = PR_PATH.match(path)
+            pulls = PULLS_PATH.match(path)
+            if pull and (pull.group(4) or '').startswith('/reviews') and method == 'POST':
+                if any(f.upper() == 'EVENT=APPROVE' for f in fields):
+                    intent['kind'] = 'approve'
+                intent['repo'] = '%s/%s' % (pull.group(1), pull.group(2))
+                intent['number'] = pull.group(3)
+            elif pull and (pull.group(4) or '').startswith('/merge') and method in ('PUT', 'POST'):
+                intent['kind'] = 'merge'
+                intent['repo'] = '%s/%s' % (pull.group(1), pull.group(2))
+                intent['number'] = pull.group(3)
+                for field in fields:
+                    if field.startswith('sha='):
+                        intent['match_head'] = field.split('=', 1)[1]
+                        break
+            elif pulls and method == 'POST':
+                intent['kind'] = 'create'
+                intent['repo'] = '%s/%s' % (pulls.group(1), pulls.group(2))
+    return intent
+
+
+def current_repo(env):
+    got = subprocess.run(
+        [GH, 'repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner'],
+        env=env,
+        capture_output=True,
+    )
+    return got.stdout.decode().strip() if not got.returncode else None
+
+
+def cmd_eligible(argv):
+    if len(argv) < 3:
+        sys.exit('Usage: gh-role eligible writer|reviewer OWNER/REPO PR [--ack-unassociated]')
+    role, repo, number = argv[0], argv[1], argv[2]
+    if role not in ACCOUNTS:
+        sys.exit('Unknown role: ' + role)
+    account = ACCOUNTS[role]
+    env = role_env(account)
+    excluded, unassociated, head = exclusion_set(env, repo, number)
+    print('pull request: %s#%s at %s' % (repo, number, head[:10]))
+    print('role %s -> %s' % (role, account))
+    print('excluded:')
+    for login, why in sorted(excluded.items()):
+        print('  %-16s %s' % (login, why))
+    if unassociated:
+        print('unassociated commits (provenance unknown):')
+        for item in unassociated:
+            print('  ' + item)
+    if account in excluded:
+        print('\nVERDICT: NOT eligible -- %s %s' % (account, excluded[account]))
+        return 1
+    if unassociated:
+        print('\nVERDICT: eligible, but provenance of the above is unknown;'
+              ' approving needs --ack-unassociated')
+        return 1
+    print('\nVERDICT: eligible')
+    return 0
+
+
+def cmd_preflight(argv):
+    """Both identities, and what each can see."""
+    repo = None
+    if '--repo' in argv:
+        repo = argv[argv.index('--repo') + 1]
+    for role, account in ACCOUNTS.items():
+        print('=== %s -> %s' % (role, account))
+        try:
+            env = role_env(account)
+        except Refused as exc:
+            print('  credential: FAILED (%s)' % exc)
+            continue
+        print('  credential: ok')
+        if not repo:
+            continue
+        try:
+            perms = api_json(env, 'repos/%s' % repo, '.permissions|tojson')
+            print('  permissions: %s' % perms)
+        except Refused as exc:
+            print('  permissions: %s' % exc)
+        got = subprocess.run(
+            [
+                GH,
+                'api',
+                'repos/%s/branches/main/protection' % repo,
+                '--jq',
+                '{approvals:.required_pull_request_reviews.required_approving_review_count,'
+                'checks:.required_status_checks.contexts,'
+                'admins:.enforce_admins.enabled}',
+            ],
+            env=env,
+            capture_output=True,
+        )
+        if got.returncode:
+            print('  protection: NOT VISIBLE to this role (%s)'
+                  % got.stderr.decode().strip()[:90])
+            print('              a 404 here means "you lack admin", not "no protection"')
+        else:
+            print('  protection: %s' % got.stdout.decode().strip())
+    return 0
+
+
+def main():
+    argv = sys.argv[1:]
+    if argv and argv[0] == 'eligible':
+        return cmd_eligible(argv[1:])
+    if argv and argv[0] == 'preflight':
+        return cmd_preflight(argv[1:])
+    if len(argv) < 2 or argv[0] not in ACCOUNTS:
+        sys.exit('Usage: gh-role writer|reviewer <gh arguments>\n'
+                 '       gh-role eligible writer|reviewer OWNER/REPO PR\n'
+                 '       gh-role preflight [--repo OWNER/REPO]')
+
+    role, account = argv[0], ACCOUNTS[argv[0]]
+    intent = parse(argv[1:])
+    args = intent['args']
+    record = {
+        'role': role,
+        'account': account,
+        'argv': loggable(args),
+        'kind': intent['kind'],
+        'repo': intent['repo'],
+        'pr': intent['number'],
+    }
+
+    env = role_env(account)
+    if intent['kind'] in ('approve', 'merge') and not intent['repo']:
+        intent['repo'] = current_repo(env)
+        record['repo'] = intent['repo']
+
+    if intent['kind'] == 'create' and role == 'reviewer':
+        raise Refused('use the writer role for new pull requests; an identity that opens a\n'
+                      'pull request can never review it, and the reviewer is the scarce one.')
+
+    if intent['kind'] == 'approve':
+        if not intent['repo'] or not intent['number']:
+            raise Refused('cannot identify which pull request this approves.\n'
+                          'Pass the number and --repo explicitly: eligibility cannot be checked\n'
+                          'against a pull request that has not been named, and an unchecked\n'
+                          'approval is the thing this guard exists to prevent.')
+        excluded, unassoc, head = check_eligible(
+            env, account, split_repo(intent['repo']), intent['number'], intent['ack']
+        )
+        record.update(head=head, acked_unassociated=bool(unassoc))
+
+    if intent['kind'] == 'merge':
+        if not intent['repo'] or not intent['number']:
+            raise Refused(
+                'cannot identify which pull request this merges.\n'
+                'Pass the PR number and --repo OWNER/REPO explicitly so exact-head CI can be verified.'
+            )
+        repo_slug = split_repo(intent['repo'])
+        if os.environ.get('GH_ROLE_ALLOW_UNVERIFIED_MERGE') == '1':
+            record['unverified_merge_override'] = True
+            print(
+                'gh-role: warning: GH_ROLE_ALLOW_UNVERIFIED_MERGE=1 bypassed exact-head CI verification for %s#%s'
+                % (repo_slug, intent['number']),
+                file=sys.stderr,
+            )
+        else:
+            verified_head = check_merge_ci_ready(
+                env, repo_slug, intent['number'], intent['match_head']
+            )
+            record['head'] = verified_head
+        try:
+            excluded, _, _ = exclusion_set(env, repo_slug, intent['number'])
+        except Refused:
+            excluded = {}
+        if account in excluded:
+            note = (
+                '%s %s and is also merging %s#%s; AGENTS.md asks for merger != author'
+                % (account, excluded[account], repo_slug, intent['number'])
+            )
+            record['merger_warning'] = note
+            if os.environ.get('GH_ROLE_STRICT_MERGER') == '1':
+                raise Refused(note + '\n(GH_ROLE_STRICT_MERGER=1 makes this fatal)')
+            print('gh-role: warning: ' + note, file=sys.stderr)
+
+    record['decision'] = 'allowed'
+    result = subprocess.run([GH, *args], env=env)
+    record['exit'] = result.returncode
+    audit(record)
+    return result.returncode
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except Refused as error:
+        audit({
+            'decision': 'refused',
+            'reason': str(error).split('\n')[0],
+            'argv': loggable(sys.argv[1:]),
+        })
+        sys.exit('gh-role: refused: ' + str(error))

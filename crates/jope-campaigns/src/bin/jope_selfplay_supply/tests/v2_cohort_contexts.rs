@@ -31,19 +31,19 @@ fn v2_cohort_contexts_resolve_only_from_the_frozen_catalog_with_receipts() {
                     "task": "binary",
                     "dataset_hash": "valid",
                     "catalog_index": 0,
-                    "context_sha256": sha256_bytes(&context_a),
+                    "context_sha256": sha256_bytes(context_a),
                 },
                 {
                     "task": "regression",
                     "dataset_hash": "ambiguous",
                     "catalog_index": 1,
-                    "context_sha256": sha256_bytes(&context_b),
+                    "context_sha256": sha256_bytes(context_b),
                 },
                 {
                     "task": "regression",
                     "dataset_hash": "ambiguous",
                     "catalog_index": 2,
-                    "context_sha256": sha256_bytes(&context_c),
+                    "context_sha256": sha256_bytes(context_c),
                 }
             ]
         }),
@@ -113,7 +113,7 @@ fn v2_cohort_contexts_resolve_only_from_the_frozen_catalog_with_receipts() {
         request
             .pointer("/requested_contexts/0/context_sha256")
             .and_then(Value::as_str),
-        Some(sha256_bytes(&context_a).as_str())
+        Some(sha256_bytes(context_a).as_str())
     );
     let receipt_path = root.join("proposals/cohort-inputs").join(format!(
         "{cohort_sha256}.{catalog_sha256}.{}.context-migration.v1.json",

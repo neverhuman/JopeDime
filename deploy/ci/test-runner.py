@@ -619,6 +619,28 @@ class WorkflowAdmissionTests(unittest.TestCase):
         self.assertNotIn('JOPE_UI_EVIDENCE', ci)
         self.assertNotIn('NEEDS_JSON"]); n.pop(', ci + full)
 
+    def test_ci_pr_triggers_draft_guards_and_aggregate_pr_lane_routing(self):
+        ci = (ROOT/'.github/workflows/ci.yml').read_text()
+        self.assertIn('types: [opened, synchronize, reopened, ready_for_review]', ci)
+        changes_pr = self.job(ci, 'changes-pr')
+        self.assertIn("!github.event.pull_request.draft", changes_pr)
+        for name in ('changes', 'hygiene', 'jankurai-audit', 'paper', 'aggregate'):
+            self.assertIn(
+                "github.event_name != 'pull_request' || !github.event.pull_request.draft",
+                self.job(ci, name),
+                f'{name} must skip cleanly on draft pull requests',
+            )
+        aggregate = self.job(ci, 'aggregate')
+        self.assertIn('!cancelled()', aggregate)
+        self.assertIn('"${{ \'xbabe2-ci\' }}"', aggregate)
+        self.assertNotIn('xbabe2-full', aggregate)
+        cancel_wf = (ROOT/'.github/workflows/cancel-closed-pr.yml').read_text()
+        self.assertIn('types: [closed]', cancel_wf)
+        self.assertIn('actions/workflows/ci.yml/runs', cancel_wf)
+        qual_wf = (ROOT/'.github/workflows/jain-cli-qualification.yml').read_text()
+        self.assertIn('runs-on: ubuntu-24.04', qual_wf)
+        self.assertIn('uses: ./.github/actions/upload-ci-evidence', qual_wf)
+
 
 class AgentMapTests(unittest.TestCase):
     # This report is emitted by the full-main Jankurai publisher and is excluded from

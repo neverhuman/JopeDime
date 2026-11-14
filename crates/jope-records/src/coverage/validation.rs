@@ -50,6 +50,13 @@ pub fn validate(mapping: &Value, discovered: &Dict) -> Result<Vec<String>> {
         .as_dict()
         .ok_or_else(|| raised("coverage map", py::exception::no_attribute(mapping, "get")))?;
     let mut errors = vec![];
+    const ALLOWED_TOP_KEYS: &[&str] =
+        &["dispositions", "items", "lanes", "note", "schema", "stage"];
+    for key in map.keys() {
+        if !ALLOWED_TOP_KEYS.contains(&key) {
+            errors.push(format!("unexpected top-level coverage key: {key}"));
+        }
+    }
     if map.get("schema") != Some(&Value::from(SCHEMA)) {
         errors.push("unsupported coverage schema".to_owned());
     }

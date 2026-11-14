@@ -103,7 +103,7 @@ pub(crate) fn durable_write(
         atomic_json(output, value)?;
     }
     ensure!(
-        sha256_file(output)? == sha256_bytes(&[serialized.as_slice(), b"\n"].concat()),
+        sha256_file(output)? == sha256_bytes([serialized.as_slice(), b"\n"].concat()),
         "atomic output verification failed"
     );
     let output_file_sha256 = sha256_file(output)?;

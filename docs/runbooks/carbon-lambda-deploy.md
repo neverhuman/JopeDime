@@ -199,9 +199,9 @@ Each regional cell secret vault stores a JSON payload supporting concurrent `[ac
 - `engine_kek_pubkey_b64`: URL-safe Base64 SEC1 uncompressed P-256 public key advertised by `/v1/carbon/ping` (`edge` + `engine`).
 
 To rotate cell secrets with zero downtime for in-flight runs and tokens:
-1. Run `carbon rotate-secrets --env <env> --regions <region>` (or write a rotated JSON payload via `PutSecretValue` promoting the prior active keys into `*_prev_hex`).
+1. Write a rotated JSON payload to `jopedime/carbon/<env>/cell-secrets` via `aws secretsmanager put-secret-value` promoting the prior active keys into `auth_secret_prev_hex`, `seal_secret_prev_hex`, and `engine_kek_priv_prev_hex` alongside fresh 256-bit active keys and updated `engine_kek_pubkey_b64`.
 2. Run `carbon deploy --manifest <current-manifest> --env <env> --regions <region>` — `carbon deploy` binds the new `SecretVersionId`, publishes fresh immutable Lambda versions that fetch the `[active, previous]` vault at cold start into `Zeroizing` RAM, shifts `:live`, and validates all 16 red-team vectors against the rotated keys while existing tokens/checkpoints sealed under `*_prev_hex` continue verifying cleanly.
-3. After the overlap window (`>= 24 h`), re-run `carbon rotate-secrets --prune-previous` + `carbon deploy` to retire the previous keys.
+3. After the overlap window (`>= 24 h`), write a pruned JSON payload via `aws secretsmanager put-secret-value` (omitting `*_prev_hex`) and re-run `carbon deploy` to retire the previous keys.
 
 ### Multi-OS Thin Client Installation & Pure-Rust Self-Verification
 

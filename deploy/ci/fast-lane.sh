@@ -306,9 +306,7 @@ mkdir -p "$EVIDENCE/appliance"
 cp -- "$appliance_work"/build/{build,pack-receipt,verify,size,sbom-models}.json \
   "$appliance_work"/clean-host/{clean-host,fit}.json "$EVIDENCE/appliance/"
 rm -r -- "$appliance_work"
-    # Carbon zero-knowledge serverless CLI E2E: signed install.sh, Free register/login/whoami/logout,
-    # CarbonLocalLambdaEmulator multi-cell runtime, all 4 efforts (fast/medium/high/ultra), and USD cost receipt.
-cargo test --locked -p jope-carbon --test carbon_e2e
+    # Note: `jope-carbon::carbon_e2e` executes once in `rust-test` (partitioned nextest + JUnit XML).
     # Carbon full engineering & testing specification PDF + 8 2x Retina screenshots + live CI quickstart suite:
 spec_source_sha="${JOPE_SOURCE_SHA:-$(git rev-parse HEAD)}"
 spec_dir="$EVIDENCE/carbon-spec"

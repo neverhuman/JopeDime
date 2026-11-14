@@ -1,0 +1,26 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Scope ADR-0004 EvaluatorIdentityV1 Cargo.lock hashing (both cargo_lock_sha256 and compute_implementation_sha256's Cargo.lock input) from the raw 586-crate workspace lockfile to the canonical 59-crate scientific evaluator subgraph (feat-math plus jope-dime-regressor's evaluator runtime dependencies anyhow, hex, libc, rayon, serde, serde_json, sha2). Non-evaluator workspace crates (jope-carbon, jope-comparators, jope-service, ratatui, S3 stores) no longer churn EvaluatorIdentityV1 while any feat-math or evaluator runtime crate change still advances the digest. Append this ADR-0004 evaluator identity and lineage fixture provenance edge after carbon_v120_comparators_lockfile_identity_rebaseline. DSL ABI, known identities, and behavior fixtures stay unchanged. No shipped receipt proves this identity existed.",
+  "plan_reference": "ADR-0004 evaluator lockfile subgraph scoping; identity-only procedure",
+  "source_commit": "31700dfb3003a8815040f130f22396953e43d390",
+  "base_commit": "f7e1b5304288d4f7e8c5e2a03efebd739d624b20",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "e17f918084b75529273689988eb9cd09f58873af92616cbbee461a6dcc524aa6",
+      "after": "0fc4b6a2d1727df59cf999420db64a381fd9406b2add9d3bd846c6ed7dc14989"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "85d361c0757cc55c68781d80abeffdd9dedb3bbd191e74d4d20d1f56895500d8",
+      "after": "72e4d15bd4773eda3c6cb0e3a0d4231c6e81755490a6ea9fad0314ab6e275371"
+    }
+  ],
+  "before_identity_digest": "e4fe2b6ac9f109eeb9a93c30e04eb452c6eacdb5ea4db45f67d58e16052e518e",
+  "after_identity_digest": "2d586706d326766231ff64be8d1cf8865639872761f8ae9ffe694eab1d8bcd59",
+  "before_implementation_sha256": "806322b53c80e6552981aa059f31ab35bcfd09040eb2830c14cd276eb6f93d7d",
+  "after_implementation_sha256": "c6924bd3e0a80f42ebe2b86a816cef480777b89ac3aaba1258e190035e07abd2",
+  "before_cargo_lock_sha256": "8356f6cc113abcb7e99ac83fb627766d95e4a9d974f655e49518784b36106b36",
+  "after_cargo_lock_sha256": "aa3dcb31524258911f6e5c6e7512fdca57566a6fb308ea4a8158e5be028a6045",
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}
