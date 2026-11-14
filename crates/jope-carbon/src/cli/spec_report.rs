@@ -92,7 +92,7 @@ pub const REQUIRED_SPEC_SCREENSHOTS: [(&str, &str, &str); 8] = [
 ];
 
 /// Required committed production receipt files under `docs/carbon/evidence/`.
-pub const REQUIRED_EVIDENCE_FILES: [&str; 12] = [
+pub const REQUIRED_EVIDENCE_FILES: [&str; 14] = [
     "deploy-dev.json",
     "deploy-prod-wave1.json",
     "s3-cas-crypto-proof.json",
@@ -102,6 +102,8 @@ pub const REQUIRED_EVIDENCE_FILES: [&str; 12] = [
     "load-200-users.json",
     "zero-cred-client-e2e.json",
     "docker-virgin-ubuntu-prod-e2e.json",
+    "macos-arm64-live-e2e.json",
+    "rollback-dev-live.json",
     "live-product-coverage-dev-prod.json",
     "carbon-clouds.json",
     "SHA256SUMS.txt",
@@ -1602,24 +1604,28 @@ fn render_accuracy_rmse_reduction_svg(bench_prod: &serde_json::Value) -> String 
 }
 
 fn render_effort_time_and_cost_svg(cost_runs: &[serde_json::Value]) -> String {
-    // Render 8 canonical AWS Prod Pro rows: 4 efforts on `nonlinear_240x6` + 4 efforts on `multishard_1300x8`.
+    // Render 12 canonical AWS dev + prod Pro rows: 4 efforts on `dev 240x6`, 4 on `prod 240x6`, 4 on `prod 1300x8`.
     let targets = [
-        ("240x6 fast", "nonlinear_240x6", "fast"),
-        ("240x6 medium", "nonlinear_240x6", "medium"),
-        ("240x6 high", "nonlinear_240x6", "high"),
-        ("240x6 ultra", "nonlinear_240x6", "ultra"),
-        ("1300x8 fast", "multishard_1300x8", "fast"),
-        ("1300x8 medium", "multishard_1300x8", "medium"),
-        ("1300x8 high", "multishard_1300x8", "high"),
-        ("1300x8 ultra", "multishard_1300x8", "ultra"),
+        ("dev 240x6 fast", "dev", "nonlinear_240x6", "fast"),
+        ("dev 240x6 med", "dev", "nonlinear_240x6", "medium"),
+        ("dev 240x6 high", "dev", "nonlinear_240x6", "high"),
+        ("dev 240x6 ultra", "dev", "nonlinear_240x6", "ultra"),
+        ("prod 240x6 fast", "prod", "nonlinear_240x6", "fast"),
+        ("prod 240x6 med", "prod", "nonlinear_240x6", "medium"),
+        ("prod 240x6 high", "prod", "nonlinear_240x6", "high"),
+        ("prod 240x6 ultra", "prod", "nonlinear_240x6", "ultra"),
+        ("prod 1300x8 fast", "prod", "multishard_1300x8", "fast"),
+        ("prod 1300x8 med", "prod", "multishard_1300x8", "medium"),
+        ("prod 1300x8 high", "prod", "multishard_1300x8", "high"),
+        ("prod 1300x8 ultra", "prod", "multishard_1300x8", "ultra"),
     ];
     let mut rows = Vec::new();
     let mut max_wall_s = 100.0f64;
     let mut max_milli_usd = 5.0f64;
 
-    for (label, ds, eff) in targets {
+    for (label, cl, ds, eff) in targets {
         if let Some(r) = cost_runs.iter().find(|r| {
-            r["cloud"] == "prod"
+            r["cloud"] == cl
                 && r["tier_applied"] == "pro"
                 && r["dataset"] == ds
                 && r["effort"] == eff
@@ -1643,17 +1649,17 @@ fn render_effort_time_and_cost_svg(cost_runs: &[serde_json::Value]) -> String {
 
     let mut left_bars = String::new();
     let mut right_bars = String::new();
-    let panel_bar_w = 215.0f64;
+    let panel_bar_w = 205.0f64;
 
     for (idx, (label, wall_s, eng_m, eval_m, s3_m, edge_m, tot_m)) in rows.iter().enumerate() {
-        let y = 52.0 + (idx as f64) * 26.0;
-        let ty = y + 12.5;
+        let y = 52.0 + (idx as f64) * 23.5;
+        let ty = y + 11.5;
         let w_time = ((wall_s / max_wall_s.max(1.0)) * panel_bar_w).max(2.5);
         left_bars.push_str(&format!(
-            r##"<text x="14" y="{ty:.1}" fill="#0f172a" font-size="9.2" font-weight="700" font-family="Liberation Mono, monospace">{label}</text>
-<rect x="112" y="{y:.1}" width="{w_time:.1}" height="15" rx="2.5" fill="#0284c7"/>
-<text x="{tx:.1}" y="{ty:.1}" fill="#0f172a" font-size="9.0" font-family="Liberation Mono, monospace">{wall_s:.2}s</text>"##,
-            tx = 118.0 + w_time
+            r##"<text x="12" y="{ty:.1}" fill="#0f172a" font-size="8.7" font-weight="700" font-family="Liberation Mono, monospace">{label}</text>
+<rect x="122" y="{y:.1}" width="{w_time:.1}" height="14" rx="2.5" fill="#0284c7"/>
+<text x="{tx:.1}" y="{ty:.1}" fill="#0f172a" font-size="8.6" font-family="Liberation Mono, monospace">{wall_s:.2}s</text>"##,
+            tx = 128.0 + w_time
         ));
 
         let c_scale = panel_bar_w / max_milli_usd.max(0.1);
@@ -1661,36 +1667,36 @@ fn render_effort_time_and_cost_svg(cost_runs: &[serde_json::Value]) -> String {
         let w_eval = eval_m * c_scale;
         let w_s3 = (s3_m * c_scale).max(1.0);
         let w_edge = (edge_m * c_scale).max(1.0);
-        let x0 = 540.0;
+        let x0 = 550.0;
         let x1 = x0 + w_eng;
         let x2 = x1 + w_eval;
         let x3 = x2 + w_s3;
         right_bars.push_str(&format!(
-            r##"<text x="442" y="{ty:.1}" fill="#0f172a" font-size="9.2" font-weight="700" font-family="Liberation Mono, monospace">{label}</text>
-<rect x="{x0:.1}" y="{y:.1}" width="{w_eng:.1}" height="15" fill="#2563eb"/>
-<rect x="{x1:.1}" y="{y:.1}" width="{w_eval:.1}" height="15" fill="#7c3aed"/>
-<rect x="{x2:.1}" y="{y:.1}" width="{w_s3:.1}" height="15" fill="#059669"/>
-<rect x="{x3:.1}" y="{y:.1}" width="{w_edge:.1}" height="15" fill="#d97706"/>
-<text x="{ctx:.1}" y="{ty:.1}" fill="#0f172a" font-size="8.9" font-family="Liberation Mono, monospace">${usd:.5} ({tot_m:.2} m$)</text>"##,
-            ctx = (x3 + w_edge + 6.0).min(762.0),
+            r##"<text x="440" y="{ty:.1}" fill="#0f172a" font-size="8.7" font-weight="700" font-family="Liberation Mono, monospace">{label}</text>
+<rect x="{x0:.1}" y="{y:.1}" width="{w_eng:.1}" height="14" fill="#2563eb"/>
+<rect x="{x1:.1}" y="{y:.1}" width="{w_eval:.1}" height="14" fill="#7c3aed"/>
+<rect x="{x2:.1}" y="{y:.1}" width="{w_s3:.1}" height="14" fill="#059669"/>
+<rect x="{x3:.1}" y="{y:.1}" width="{w_edge:.1}" height="14" fill="#d97706"/>
+<text x="{ctx:.1}" y="{ty:.1}" fill="#0f172a" font-size="8.5" font-family="Liberation Mono, monospace">${usd:.5} ({tot_m:.2} m$)</text>"##,
+            ctx = (x3 + w_edge + 5.0).min(762.0),
             usd = tot_m / 1_000.0
         ));
     }
 
     format!(
-        r##"<svg viewBox="0 0 880 292" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="4-Effort Execution Time and AWS Component Cost">
-  <rect x="1" y="1" width="878" height="290" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
-  <text x="14" y="22" fill="#0f172a" font-size="11.4" font-weight="700" font-family="Liberation Sans, sans-serif">AWS Prod Pro 4-Effort (fast / medium / high / ultra) Wall-Clock Time vs Stacked AWS Component Cost</text>
+        r##"<svg viewBox="0 0 880 368" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="4-Effort Execution Time and AWS Component Cost">
+  <rect x="1" y="1" width="878" height="366" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="14" y="22" fill="#0f172a" font-size="11.2" font-weight="700" font-family="Liberation Sans, sans-serif">AWS dev &amp; prod Pro 4-Effort (fast / medium / high / ultra) Wall-Clock Time vs Stacked AWS Component Cost</text>
   <text x="14" y="40" fill="#475569" font-size="9.5" font-weight="700" font-family="Liberation Sans, sans-serif">Panel A — E2E Wall-Clock Time (Prep + S3 Upload + Search + /predict + Shred)</text>
-  <text x="442" y="40" fill="#475569" font-size="9.5" font-weight="700" font-family="Liberation Sans, sans-serif">Panel B — Itemized AWS Cost per Run (Millidollars, 1 m$ = $0.001 USD)</text>
-  <line x1="428" y1="32" x2="428" y2="262" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="440" y="40" fill="#475569" font-size="9.5" font-weight="700" font-family="Liberation Sans, sans-serif">Panel B — Itemized AWS Cost per Run (Millidollars, 1 m$ = $0.001 USD)</text>
+  <line x1="428" y1="32" x2="428" y2="338" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,3"/>
   {left_bars}
   {right_bars}
-  <rect x="14" y="270" width="12" height="10" fill="#0284c7"/><text x="31" y="279" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">Wall-Clock Seconds (s)</text>
-  <rect x="210" y="270" width="12" height="10" fill="#2563eb"/><text x="227" y="279" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">Engine Lambda (3,008 MB ARM64)</text>
-  <rect x="405" y="270" width="12" height="10" fill="#7c3aed"/><text x="422" y="279" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">Eval Fan-Out Shards</text>
-  <rect x="555" y="270" width="12" height="10" fill="#059669"/><text x="572" y="279" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">S3 CAS PUT/GET/Xfer</text>
-  <rect x="705" y="270" width="12" height="10" fill="#d97706"/><text x="722" y="279" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">API GW v2 + Edge</text>
+  <rect x="14" y="346" width="12" height="10" fill="#0284c7"/><text x="31" y="355" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">Wall-Clock Seconds (s)</text>
+  <rect x="210" y="346" width="12" height="10" fill="#2563eb"/><text x="227" y="355" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">Engine Lambda (3,008 MB ARM64)</text>
+  <rect x="405" y="346" width="12" height="10" fill="#7c3aed"/><text x="422" y="355" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">Eval Fan-Out Shards</text>
+  <rect x="555" y="346" width="12" height="10" fill="#059669"/><text x="572" y="355" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">S3 CAS PUT/GET/Xfer</text>
+  <rect x="705" y="346" width="12" height="10" fill="#d97706"/><text x="722" y="355" fill="#334155" font-size="9" font-family="Liberation Sans, sans-serif">API GW v2 + Edge</text>
 </svg>"##
     )
 }
@@ -1834,6 +1840,10 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         "docker-virgin-ubuntu-prod-e2e.json",
         &mut ledger,
     )?;
+    let macos_e2e =
+        load_tracked_evidence_json(&opts.evidence_dir, "macos-arm64-live-e2e.json", &mut ledger)?;
+    let rollback_dev =
+        load_tracked_evidence_json(&opts.evidence_dir, "rollback-dev-live.json", &mut ledger)?;
     let live_cov = load_tracked_evidence_json(
         &opts.evidence_dir,
         "live-product-coverage-dev-prod.json",
@@ -1843,7 +1853,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         crate::cli::spec_coverage_matrix::render_product_coverage_section(&live_cov)?;
     let _clouds_pin =
         load_tracked_evidence_json(&opts.evidence_dir, "carbon-clouds.json", &mut ledger)?;
-    let _sums_pin = load_tracked_evidence_json(&opts.evidence_dir, "SHA256SUMS.txt", &mut ledger)?;
+    let sums_pin = load_tracked_evidence_json(&opts.evidence_dir, "SHA256SUMS.txt", &mut ledger)?;
 
     let virgin_docker_all_8_ok = ["dev_runs", "prod_runs"].iter().all(|cloud_key| {
         ["fast", "medium", "high", "ultra"].iter().all(|eff| {
@@ -1855,6 +1865,12 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         })
     }) && j_slice(&virgin_docker, "per_tier_comparison").len() == 4;
 
+    let macos_and_rollback_ok =
+        crate::cli::spec_v110_sections::validate_macos_and_rollback_evidence(
+            &macos_e2e,
+            &rollback_dev,
+        );
+
     let prod_evidence_ok = bench_dev["all_passed"] == true
         && bench_prod["all_passed"] == true
         && s3_proof["all_checks_passed"] == true
@@ -1862,6 +1878,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
         && client_e2e["all_passed"] == true
         && virgin_docker["all_passed"] == true
         && virgin_docker_all_8_ok
+        && macos_and_rollback_ok
         && live_cov["all_passed"] == true;
 
     let step_by_id = |id: &str| -> String {
@@ -2027,12 +2044,44 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
             j_f64(pr, "usd"),
         ));
     }
+    wave1_lines.push(String::new());
+    wave1_lines.push(format!(
+        "MULTI-OS & COVERAGE GATE: macOS arm64 ({}) run={} R2={:.6} ({:.2}s, shredded={}) | 98/98 Live Coverage | 6/6 S3 CAS Proof",
+        j_str(&macos_e2e["version"], "build_target"),
+        j_str(&macos_e2e, "quickstart_run_id"),
+        j_f64(&macos_e2e, "quickstart_holdout_r2"),
+        j_f64(&macos_e2e, "quickstart_wall_ms") / 1_000.0,
+        macos_e2e["quickstart_shredded"] == true,
+    ));
     let shot08 = render_terminal_card(
         "shot-08",
-        "Wave-1 5-Region Production Topology & 200-User Simultaneous Multi-Region Concurrency",
-        "PASS | 200/200 RUNS",
+        "Wave-1 5-Region Production Topology, 200-User Concurrency & Multi-OS Live Qualification",
+        "PASS | 200/200 + 98/98",
         &wave1_lines.join("\n"),
     );
+
+    let sums_text = sums_pin.as_str().unwrap_or("");
+    let (min_run_usd, max_run_usd) = crate::cli::spec_v110_sections::compute_overall_cost_bounds(
+        cost_runs,
+        &bench_dev,
+        &bench_prod,
+    );
+    let exec_summary_p2 = crate::cli::spec_v110_sections::render_exec_summary_paragraph_html(
+        cost_runs,
+        &bench_prod,
+        &load200,
+    );
+    let table_2b_html = crate::cli::spec_v110_sections::render_s3_cas_table_2b_html(&s3_proof);
+    let table_5b_html =
+        crate::cli::spec_v110_sections::render_rollback_table_5b_html(&deploy_dev, &rollback_dev);
+    let table_6c1_html =
+        crate::cli::spec_v110_sections::render_virgin_docker_install_table_6c1_html(&virgin_docker);
+    let section_6e_html =
+        crate::cli::spec_v110_sections::render_macos_arm64_section_6e_html(&macos_e2e, sums_text);
+    let bench_bullets_html =
+        crate::cli::spec_v110_sections::render_bench_section7_bullets_html(&bench_dev, &bench_prod);
+    let (cost_bullets_html, effort_exec_rows_html, table_8c_html) =
+        crate::cli::spec_v110_sections::render_cost_section8_bullets_and_tables(cost_runs);
 
     // --- HTML Data Table Builders ---
 
@@ -2196,40 +2245,6 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
                 fmt_opt("holdout_r2", 6),
                 j_f64(sc, "estimated_cost_usd"),
             ));
-        }
-    }
-
-    // Table 8A: Executive 4-Effort (`fast` / `medium` / `high` / `ultra`) Reference Summary (`prod` Pro)
-    let mut effort_exec_rows_html = String::new();
-    for (ds, ds_cells) in [
-        ("nonlinear_240x6", "240x6 (1,440)"),
-        ("multishard_1300x8", "1,300x8 (10,400)"),
-    ] {
-        for eff in ["fast", "medium", "high", "ultra"] {
-            if let Some(r) = cost_runs.iter().find(|r| {
-                r["cloud"] == "prod"
-                    && r["tier_applied"] == "pro"
-                    && r["dataset"] == ds
-                    && r["effort"] == eff
-            }) {
-                let raw_mode = j_str(r, "execution_mode");
-                effort_exec_rows_html.push_str(&format!(
-                    "<tr><td class=\"nowrap\"><code>{ds_cells}</code></td><td class=\"nowrap\"><code><strong>{eff}</strong></code></td><td class=\"nowrap\"><code>{}</code></td><td class=\"num\">{}/{}</td><td class=\"num\">{}</td><td class=\"num\">{}</td><td class=\"num\">{:.0} ms</td><td class=\"num\">{:.2}s</td><td class=\"num\"><strong>{:.2}s</strong></td><td class=\"num\">{:.6}</td><td class=\"num\">{:.5} (-{:.2}%)</td><td class=\"num\"><strong>${:.6}</strong></td><td class=\"num\">{:.1}</td></tr>\n",
-                    html_escape(short_mode_label(raw_mode)),
-                    j_u64(r, "waves_completed"),
-                    j_u64(r, "waves_target"),
-                    j_u64(r, "candidates_evaluated"),
-                    j_u64(r, "eval_invocations"),
-                    j_f64(r, "upload_ms"),
-                    j_f64(r, "search_ms") / 1_000.0,
-                    j_f64(r, "wall_ms") / 1_000.0,
-                    j_f64(r, "holdout_r2"),
-                    j_f64(r, "holdout_rmse"),
-                    j_f64(r, "rmse_reduction_vs_linear_pct"),
-                    j_f64(r, "total_estimated_usd"),
-                    j_f64(r, "runs_per_1_usd"),
-                ));
-            }
         }
     }
 
@@ -2674,8 +2689,8 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
 
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-val">{ci_pass}/{ci_tot} CI + 12/12 E2E</div>
-      <div class="kpi-lbl">Exact-HEAD CI Qualification &amp; Zero-Cred Ubuntu/Alpine E2E</div>
+      <div class="kpi-val">{ci_pass}/{ci_tot} CI + 98/98 Live</div>
+      <div class="kpi-lbl"><code>78/78</code> CI + <code>74/78</code> Live Prod + Ubuntu/Alpine/macOS E2E</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-val">96.6% – 99.4%</div>
@@ -2683,10 +2698,10 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     </div>
     <div class="kpi-card">
       <div class="kpi-val">200/200 Wave-1 OK</div>
-      <div class="kpi-lbl">5-Region Concurrent Burst (<code>17.24</code> runs/s, <code>0.00%</code> Error)</div>
+      <div class="kpi-lbl">5-Region Concurrent Burst (<code>{load200_rps:.2}</code> runs/s, <code>0.00%</code> Error)</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-val">$0.00033 – $0.054</div>
+      <div class="kpi-val">${min_run_usd:.5} – ${max_run_usd:.3}</div>
       <div class="kpi-lbl">Measured AWS Cost / Run Across <code>fast</code>, <code>medium</code>, <code>high</code> &amp; <code>ultra</code></div>
     </div>
   </div>
@@ -2696,36 +2711,36 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
       <tr><th style="width:22%">Control Attribute</th><th style="width:28%">Verified Value</th><th style="width:22%">Control Attribute</th><th style="width:28%">Verified Value</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Binary &amp; Distribution Tag</strong></td><td><code>carbon v{ver}</code> / <code>{tag}</code></td><td><strong>Git Source Commit</strong></td><td><code>{sha}</code></td></tr>
-      <tr><td><strong>Live Cloud Topology</strong></td><td>1 <code>dev</code> Cell + 5 Wave-1 <code>prod</code> Cells (AWS <code>714044927654</code>)</td><td><strong>Cloud User/Job Storage</strong></td><td>100% Regional AWS S3 CAS (<code>SSE-S3 AES256</code> + <code>CUEN\x01</code>)</td></tr>
-      <tr><td><strong>Neural Guidance Weights</strong></td><td><code>r882</code> (<code>sha256:057e50a9a741</code>, 7.22 MB Layer)</td><td><strong>Adversarial Security Gate</strong></td><td><code>16/16</code> CI + <code>96/96</code> Live 6-Cell Red-Team + <code>AWS_IAM</code> URL Lock</td></tr>
+      <tr><td><strong>Binary &amp; Distribution Tag</strong></td><td><code>carbon v{ver}</code> / <code>{tag}</code> (23 Multi-OS Assets)</td><td><strong>Git Source Commit</strong></td><td><code>{sha}</code></td></tr>
+      <tr><td><strong>Live Cloud Topology</strong></td><td>1 <code>dev</code> Cell + 5 Wave-1 <code>prod</code> Cells (AWS <code>714044927654</code>)</td><td><strong>Cloud User/Job Storage</strong></td><td>100% Regional AWS S3 CAS (<code>6/6</code> Buckets, <code>SSE-S3 AES256</code> + <code>CUEN\x01</code>)</td></tr>
+      <tr><td><strong>Client OS Qualification</strong></td><td>Linux (<code>x86_64</code>/<code>aarch64</code> <code>musl</code>, Virgin <code>ubuntu:24.04</code>) + <code>macOS arm64</code></td><td><strong>Adversarial &amp; Product Gate</strong></td><td><code>98/98</code> Live <code>dev</code>+<code>prod</code> + <code>96/96</code> 6-Cell Red-Team + <code>AWS_IAM</code> Lock</td></tr>
       <tr><td><strong>Effort Schedule</strong></td><td><code>fast</code> (1w), <code>medium</code> (4w), <code>high</code> (12w), <code>ultra</code> (32w)</td><td><strong>Idle Infrastructure Cost</strong></td><td><code>$0.00 / hour</code> (Scale-to-Zero Graviton2 Lambda + S3)</td></tr>
     </tbody>
   </table>
 
   <h3>Executive Summary</h3>
   <p>
-    <strong>JopeDime Carbon</strong> (<code>ADR-0007</code>) is a zero-knowledge, serverless neural-guided symbolic regression and Gaussian-process (GP) synthesis platform engineered to deliver state-of-the-art nonlinear tabular modeling from a single static CLI binary with zero cloud credentials, zero standing cluster cost, and cryptographic data confidentiality. Traditional tabular AutoML services force an operational trade-off between uploading cleartext customer datasets to multi-tenant servers or provisioning expensive, always-on GPU instances. Carbon eliminates both constraints: client tabular datasets are conditioned, partitioned into outer fit/holdout folds, compressed into a <code>6,368</code>-byte landmark sketch (<code>JLMB v1</code>), encrypted in client memory under per-run authenticated <code>CUEN\x01</code> (AES-256-GCM) envelopes with ephemeral P-256 key wrapping (<code>CUDK\x01</code>), and uploaded directly to regional AWS S3 Content-Addressable Storage (CAS) via size- and SHA-256-pinned SigV4 presigned URLs.
+    <strong>JopeDime Carbon</strong> (<code>ADR-0007</code>) is a zero-knowledge, serverless neural-guided symbolic regression and Gaussian-process (GP) synthesis platform engineered to deliver state-of-the-art nonlinear tabular modeling from a single thin CLI binary with zero cloud credentials, zero standing cluster cost, and cryptographic data confidentiality. Traditional tabular AutoML services force an operational trade-off between uploading cleartext customer datasets to multi-tenant servers or provisioning expensive, always-on GPU instances. Carbon eliminates both constraints: client tabular datasets are conditioned, partitioned into outer fit/holdout folds, compressed into a <code>6,368</code>-byte landmark sketch (<code>JLMB v1</code>), encrypted in client memory under per-run authenticated <code>CUEN\x01</code> (AES-256-GCM) envelopes with ephemeral P-256 key wrapping (<code>CUDK\x01</code>), and uploaded directly to regional AWS S3 Content-Addressable Storage (CAS) via size- and SHA-256-pinned SigV4 presigned URLs.
   </p>
   <p>
-    Inside each regional cell, a feature-isolated stateless Edge gateway (<code>CT3</code>, <code>1.29 MB</code>) validates capability tokens without ever holding decryption keys or model weights, while a sealed Graviton2 ARM64 Engine (<code>3,008 MB</code>) combines the <code>r882</code> neural prior (<code>103.8M</code> In-Context Learner + <code>24.4M</code> Boost module) with evolutionary multi-wave GP search and distributed <code>HybridFanOut</code> evaluation shards. Across standardized live AWS benchmarks, Carbon reduces outer holdout RMSE by <strong>96.56% to 99.35%</strong> relative to tuned ridge linear regression baselines (achieving <code>Holdout R² = 0.999838</code> to <code>0.999994</code>) at a measured total AWS bill of <strong>$0.00030–$0.00033 per run</strong> at <code>fast</code> effort (<code>~3,020–3,347</code> runs per $1 USD) up to <strong>$0.0225–$0.0543</strong> for multi-hundred-invocation <code>ultra</code> distributed fan-out searches. Every pull request and <code>main</code> push in GitHub Actions (<code>ci.yml</code>) automatically executes the live 8-suite exact-HEAD CLI/emulator qualification, captures 8 <code>2x</code> Retina screenshots via Headless Chromium, renders this multi-page A4 PDF specification, and cryptographically verifies every byte in <code>carbon spec-verify</code> and the <code>aggregate</code> gate.
+    {exec_summary_p2}
   </p>
 
   <div class="toc-grid">
     <div class="toc-item"><span class="toc-num">01.</span> Three-Plane System Architecture &amp; <code>r882</code> Neural GP Synthesis</div>
-    <div class="toc-item"><span class="toc-num">08.</span> <code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code> Time &amp; AWS Cost Economics</div>
-    <div class="toc-item"><span class="toc-num">02.</span> Cryptographic Envelopes (<code>CUEN\x01</code>) &amp; AWS S3 CAS Security</div>
+    <div class="toc-item"><span class="toc-num">08.</span> <code>dev</code> &amp; <code>prod</code> <code>fast</code>/<code>med</code>/<code>high</code>/<code>ultra</code> Time &amp; AWS Cost</div>
+    <div class="toc-item"><span class="toc-num">02.</span> Cryptographic Envelopes (<code>CUEN\x01</code>) &amp; <code>6/6</code> AWS S3 CAS Proof</div>
     <div class="toc-item"><span class="toc-num">09.</span> Multi-Region Concurrency (200 Simultaneous Wave-1 Users)</div>
-    <div class="toc-item"><span class="toc-num">03.</span> Operator &amp; User Onboarding: Signed Install &amp; CLI Reference</div>
+    <div class="toc-item"><span class="toc-num">03.</span> Multi-OS Onboarding: Signed Install, <code>self-verify</code> &amp; CLI</div>
     <div class="toc-item"><span class="toc-num">10.</span> 16-Vector Adversarial Red-Team Security Matrix (<code>V-01</code>..<code>V-16</code>)</div>
     <div class="toc-item"><span class="toc-num">04.</span> Automated GitHub Actions CI Qualification &amp; PDF Pipeline</div>
-    <div class="toc-item"><span class="toc-num">11.</span> Full Product Test Coverage Matrix (<code>CLI</code>, <code>API</code>, <code>Storage</code>, <code>ZK</code> &amp; <code>ADV</code>)</div>
-    <div class="toc-item"><span class="toc-num">05.</span> Live AWS <code>dev</code> &amp; 5-Region Wave-1 <code>prod</code> Rollout Inventory</div>
+    <div class="toc-item"><span class="toc-num">11.</span> <code>98/98</code> Full Product Coverage Matrix (<code>CLI</code>, <code>API</code>, <code>S3</code>, <code>ZK</code>, <code>ADV</code>)</div>
+    <div class="toc-item"><span class="toc-num">05.</span> Live AWS <code>dev</code> &amp; 5-Region <code>prod</code> Rollout + <code>&lt;1s</code> Rollback</div>
     <div class="toc-item"><span class="toc-num">12.</span> High-DPI (<code>2x</code> Retina) CLI, S3, Cost &amp; Security Screenshots</div>
-    <div class="toc-item"><span class="toc-num">06.</span> Zero-Credential Ubuntu &amp; Alpine Client E2E &amp; Portability</div>
-    <div class="toc-item"><span class="toc-num">13.</span> Full 64-Hex SHA-256 Cryptographic Provenance Ledger</div>
-    <div class="toc-item"><span class="toc-num">07.</span> Standardized <code>carbon bench --pro</code> Latency &amp; RMSE Reduction</div>
-    <div class="toc-item"><span class="toc-num">&nbsp;</span> 78 Product Surfaces &amp; 98/98 Live <code>dev</code>+<code>prod</code> Assertions</div>
+    <div class="toc-item"><span class="toc-num">06.</span> Virgin <code>ubuntu:24.04</code> Docker, Alpine &amp; Native <code>macOS arm64</code> E2E</div>
+    <div class="toc-item"><span class="toc-num">13.</span> 15-File Full 64-Hex SHA-256 Cryptographic Provenance Ledger</div>
+    <div class="toc-item"><span class="toc-num">07.</span> Standardized <code>dev</code> &amp; <code>prod</code> <code>carbon bench --pro</code> Suite</div>
+    <div class="toc-item"><span class="toc-num">&nbsp;</span> 78 Product Surfaces, 98/98 Live Checks &amp; Multi-OS Signed Matrix</div>
   </div>
 
   <h2>1. Three-Plane System Architecture &amp; <code>r882</code> Neural-Guided GP Synthesis</h2>
@@ -2733,7 +2748,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     Carbon partitions execution across three strictly isolated trust and compute planes so that public network ingress, durable encrypted storage, and compute-intensive symbolic search scale independently while enforcing defense-in-depth compartmentalization:
   </p>
   <ul>
-    <li><strong>Plane 1 — Zero-Credential Client Conditioning &amp; Envelope Plane (<code>carbon</code> CLI):</strong> Operates on any Linux <code>x86_64</code> or <code>aarch64</code> host with zero AWS IAM credentials. Parses numeric CSV matrices (including Excel UTF-8 BOM <code>0xEFBBBF</code> and CRLF normalization with automatic <code>target</code> column selection), performs deterministic 80%/20% outer <code>FIT</code>/<code>HOLDOUT</code> splitting, computes a compact <code>6,368</code>-byte <code>JLMB v1</code> distributional landmark sketch, encrypts each partition independently under <code>CUEN\x01</code> AES-256-GCM, and wraps the ephemeral Data Encryption Key inside a <code>CUDK\x01</code> ECDH P-256 envelope pinned to the target cell's regional Engine public key.</li>
+    <li><strong>Plane 1 — Zero-Credential Multi-OS Client Conditioning &amp; Envelope Plane (<code>carbon</code> CLI):</strong> Operates natively across Linux (<code>x86_64-unknown-linux-musl</code>, <code>aarch64-unknown-linux-musl</code>) and macOS (<code>aarch64-apple-darwin</code> Apple Silicon, <code>x86_64-apple-darwin</code>, and universal Mach-O) with zero AWS IAM credentials. Parses numeric CSV matrices (including Excel UTF-8 BOM <code>0xEFBBBF</code> and CRLF normalization with automatic <code>target</code> column selection), performs deterministic 80%/20% outer <code>FIT</code>/<code>HOLDOUT</code> splitting, computes a compact <code>6,368</code>-byte <code>JLMB v1</code> distributional landmark sketch, encrypts each partition independently under <code>CUEN\x01</code> AES-256-GCM, and wraps the ephemeral Data Encryption Key inside a <code>CUDK\x01</code> ECDH P-256 envelope pinned to the target cell's regional Engine public key.</li>
     <li><strong>Plane 2 — Stateless Regional Edge Gateway (<code>carbon-edge</code>, <code>256 MB</code> ARM64):</strong> Compiled with <code>--no-default-features --features edge</code> (<code>CT3</code> invariant), excluding <code>jope-service</code>, <code>jope-runtime</code>, symbolic math evaluators, and neural weights. Authenticates <code>ctk1</code> HMAC-SHA256 capability tokens, enforces Free-tier row/feature/effort caps (<code>5,000</code> rows, <code>32</code> features, <code>fast</code>/<code>medium</code>) prior to issuing S3 presigned URLs, and routes synchronous or asynchronous (<code>HTTP 202</code>) orchestration commands to the Engine.</li>
     <li><strong>Plane 3 — Sealed Engine (<code>3,008 MB</code> ARM64) &amp; Scoped Eval Shards (<code>1,769–3,072 MB</code> ARM64):</strong> The Engine unwraps <code>CUDK\x01</code> strictly inside volatile enclave RAM, synthesizes Generation-0 symbolic expressions from the <code>r882</code> neural bundle (<code>wave0_seed_only</code> on Free; closed-loop <code>multi_wave_learned</code> residual guidance across up to <code>32</code> waves on Pro), and dispatches candidate batches either locally (<code>SoloSingleLambda</code>) or across parallel <code>HybridFanOut</code> Eval shards using 60-second <code>FitJmat</code>-only subkeys that physically cannot decrypt the outer <code>HOLDOUT</code> blob.</li>
   </ul>
@@ -2762,30 +2777,33 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     <tbody>{s3_bucket_rows_html}</tbody>
   </table>
 
+{table_2b_html}
+
   <div class="callout">
     <strong>Live S3 At-Rest Magic-Byte &amp; Post-Shred Inspection (<code>{s3_bucket}</code>):</strong> Direct AWS S3 <code>HeadObject</code> and byte-range inspection during active execution verified <code>fit_s3_key = {s3_fit_key}</code> carried <code>SSE = AES256</code> and leading ciphertext bytes <code>0x{s3_magic}</code> (<code>CUEN\x01</code>), <code>holdout</code> carried <code>0x4355454e01</code>, and sealed champion state carried <code>0x{s3_cckp}</code> (<code>CCKP\x02</code>), with <code>no_wrapped_udek_at_rest = true</code>. Immediately upon <code>--shred</code> completion, re-probing all run keys returned <code>HTTP {s3_post_shred}</code> (<code>0</code> residual S3 objects). Live S3-backed <code>carbon serve</code> verification similarly wrote <code>{s3_serve_objs}</code> encrypted S3 objects during execution, created <code>{s3_local_files}</code> local CAS files, and left <code>0</code> S3 objects after <code>--shred</code>.
   </div>
 
   <div class="page-break"></div>
-  <h2>3. Operator &amp; Developer Onboarding: Signed Install, CLI Reference &amp; Quickstart Guide</h2>
+  <h2>3. Multi-OS Operator &amp; Developer Onboarding: Signed Install, <code>self-verify</code> &amp; Quickstart Guide</h2>
   <p>
-    Carbon ships as a single zero-dependency static Linux binary (<code>musl</code>) installed into user space (<code>~/.local/bin/carbon</code>) alongside a mode-<code>0700</code> configuration directory (<code>~/.config/jopedime/</code>) containing the signed regional P-256 KEK manifest (<code>carbon-clouds.json</code>). Every release artifact is verified against <code>SHA256SUMS.txt</code> and an offline ECDSA-P256 signature (<code>SHA256SUMS.txt.sig</code>) before the installer moves the binary into place:
+    Carbon ships as a zero-dependency thin binary across Linux (<code>x86_64</code> / <code>aarch64</code> static <code>musl</code>) and macOS (<code>arm64</code> Apple Silicon, <code>x86_64</code>, and universal Mach-O) installed into user space (<code>~/.local/bin/carbon</code>) alongside a mode-<code>0700</code> configuration directory (<code>~/.config/jopedime/</code>) containing the signed regional P-256 KEK manifest (<code>carbon-clouds.json</code>) and release checksums. Every release artifact is verified against <code>SHA256SUMS.txt</code> and an offline ECDSA-P256 signature (<code>SHA256SUMS.txt.sig</code>) at install time and on demand via <code>carbon self-verify</code>:
   </p>
-  <pre class="code-block"># 1. One-line signed install (verifies ECDSA-P256 SHA256SUMS.txt.sig + SHA-256 + live regional /ping)
-curl -fsSL https://github.com/neverhuman/JopeDime/releases/download/{tag}/install.sh | sh
+  <pre class="code-block"># 1. One-line signed install via stateless HTTPS mirror (or direct GitHub Release tag {tag})
+curl -fsSL https://downloads.neverhuman.org/carbon/install.sh | sh
+# Direct release pin: curl -fsSL https://github.com/neverhuman/JopeDime/releases/download/{tag}/install.sh | sh
 
-# 2. Verify 0700/0600 credential hygiene, parallel multi-region RTT, and P-256 KEK pins
-carbon doctor --cloud all
+# 2. Offline ECDSA-P256 + SHA-256 binary self-verification &amp; multi-region P-256 KEK doctor check
+carbon self-verify &amp;&amp; carbon doctor --cloud all
 
 # 3. One-command zero-knowledge E2E walkthrough (240x6 synthetic dataset -> CUEN\x01 -> r882 -> /predict -> shred)
 carbon quickstart
 
-# 4. Empty-directory CSV workflow (auto-detects 'target' column, handles UTF-8 BOM/CRLF, shreds S3 state)
+# 4. Positional CSV shorthand &amp; explicit run workflow (UTF-8 BOM/CRLF auto-target, shreds S3 state)
 carbon quickstart --emit-csv sample.csv --csv-only
-carbon run --csv sample.csv --effort fast --progress --shred
+carbon sample.csv --effort fast --shred
 
 # 5. Self-serve 30-day Free capability token registration + Pro stdin login + multi-effort execution
-carbon register --free --cloud prod --label my_laptop
+carbon register --free --cloud prod --label my_workstation
 printf '%s\n' "$CARBON_PRO_TOKEN" | carbon login --cloud prod --token-file -
 carbon whoami --cloud prod
 carbon run --csv sample.csv --effort high --progress --shred
@@ -2797,10 +2815,10 @@ carbon logout --all</pre>
       <tr><th style="width:10%">Effort</th><th style="width:12%">Min Tier</th><th style="width:10%" class="num">GP Waves</th><th style="width:12%" class="num">Candidates</th><th style="width:20%">Neural Guidance Mode</th><th style="width:36%">Execution Topology &amp; Intended Workload</th></tr>
     </thead>
     <tbody>
-      <tr><td><code><strong>fast</strong></code></td><td>Free / Pro</td><td class="num">1</td><td class="num">25</td><td><code>wave0_seed_only</code> (Free) / <code>multi_wave_learned</code> (Pro)</td><td><code>SoloSingleLambda</code> synchronous or fast-poll single-wave synthesis; sub-10s interactive exploration and CI smoke checks (<code>~2,100–3,040</code> runs / $1 USD on <code>240x6</code>).</td></tr>
-      <tr><td><code><strong>medium</strong></code></td><td>Free / Pro</td><td class="num">4</td><td class="num">37</td><td><code>wave0_seed_only</code> (Free) / <code>multi_wave_learned</code> (Pro)</td><td><code>SoloSingleLambda</code> 4-wave evolutionary refinement over async <code>HTTP 202</code> polling; balanced accuracy/cost default for production tabular pipelines (<code>12–15s</code> on <code>240x6</code>).</td></tr>
-      <tr><td><code><strong>high</strong></code></td><td>Pro / VPC</td><td class="num">12</td><td class="num">73</td><td><code>multi_wave_learned</code> (<code>r882</code> closed-loop)</td><td><code>HybridFanOut</code> parallel evaluation across 2–4 scoped ARM64 Eval shards (~<code>123–124</code> shard calls); deep nonlinear feature discovery (~<code>57s</code> on <code>240x6</code>, ~<code>341s</code> on <code>1,300x8</code>).</td></tr>
-      <tr><td><code><strong>ultra</strong></code></td><td>Pro / VPC</td><td class="num">32</td><td class="num">169</td><td><code>multi_wave_learned</code> (<code>r882</code> closed-loop)</td><td><code>HybridFanOut</code> maximum-depth 32-wave synthesis (~<code>479–482</code> shard calls); achieves peak holdout accuracy (<code>R² = 0.999994</code>, <code>-99.35%</code> RMSE vs linear on <code>240x6</code>) with automatic <code>CCKP\x02</code> checkpointing.</td></tr>
+      <tr><td><code><strong>fast</strong></code></td><td>Free / Pro</td><td class="num">1</td><td class="num">25</td><td><code>wave0_seed_only</code> (Free) / <code>multi_wave_learned</code> (Pro)</td><td><code>SoloSingleLambda</code> synchronous or fast-poll single-wave synthesis; sub-10s interactive exploration and CI smoke checks (<code>2,548–3,089</code> runs / $1 USD on <code>240x6</code>).</td></tr>
+      <tr><td><code><strong>medium</strong></code></td><td>Free / Pro</td><td class="num">4</td><td class="num">37</td><td><code>wave0_seed_only</code> (Free) / <code>multi_wave_learned</code> (Pro)</td><td><code>SoloSingleLambda</code> 4-wave evolutionary refinement over async <code>HTTP 202</code> polling; balanced accuracy/cost default for production tabular pipelines (<code>12.3–18.8s</code> on <code>240x6</code>).</td></tr>
+      <tr><td><code><strong>high</strong></code></td><td>Pro / VPC</td><td class="num">12</td><td class="num">73</td><td><code>multi_wave_learned</code> (<code>r882</code> closed-loop)</td><td><code>HybridFanOut</code> parallel evaluation across 2–4 scoped ARM64 Eval shards (<code>121–124</code> shard calls); deep nonlinear feature discovery (<code>51.2–54.5s</code> on <code>240x6</code>, <code>335–340s</code> on <code>1,300x8</code>).</td></tr>
+      <tr><td><code><strong>ultra</strong></code></td><td>Pro / VPC</td><td class="num">32</td><td class="num">169</td><td><code>multi_wave_learned</code> (<code>r882</code> closed-loop)</td><td><code>HybridFanOut</code> maximum-depth 32-wave synthesis (<code>479–482</code> shard calls); achieves peak holdout accuracy (<code>R² = 0.999994</code>, <code>-99.35%</code> RMSE vs linear on <code>240x6</code>) with automatic <code>CCKP\x02</code> checkpointing.</td></tr>
     </tbody>
   </table>
 
@@ -2832,18 +2850,20 @@ carbon logout --all</pre>
     </tbody>
   </table>
 
-  <h2>5. Live AWS <code>dev</code> &amp; 5-Region Wave-1 <code>prod</code> CloudFormation Rollout Inventory</h2>
+  <h2>5. Live AWS <code>dev</code> &amp; 5-Region Wave-1 <code>prod</code> CloudFormation Rollout &amp; Atomic Rollback Inventory</h2>
   <p>
-    Every Carbon regional cell is provisioned declaratively via <code>deploy/carbon/cloudformation-cell.json</code> in AWS account <code>714044927654</code>. Rollouts publish immutable SHA-addressed Lambda versions (<code>EdgeVersion*</code>, <code>EngineVersion*</code>, <code>EvalVersion*</code>) and atomically shift the <code>:live</code> alias only after packaging and stack health checks succeed, preserving previous versions for single-command rollback (<code>carbon rollback</code>). Public traffic enters through stage-throttled API Gateway HTTP API v2 endpoints while internal cell diagnostics also verify the underlying Lambda Function URLs (<code>16/16</code> red-team vectors verified on both surfaces per cell = <code>32</code> vectors/cell across <code>5</code> <code>prod</code> regions + <code>1</code> <code>dev</code> region):
+    Every Carbon regional cell is provisioned declaratively via <code>deploy/carbon/cloudformation-cell.json</code> in AWS account <code>714044927654</code>. Rollouts publish immutable SHA-addressed Lambda versions (<code>EdgeVersion*</code>, <code>EngineVersion*</code>, <code>EvalVersion*</code>, release ID <code>723b5330e5be328b</code>) and atomically shift the <code>:live</code> alias only after packaging and stack health checks succeed, preserving previous versions for sub-second single-command rollback (<code>carbon rollback</code>). Public traffic enters exclusively through stage-throttled API Gateway HTTP API v2 endpoints (<code>16/16</code> live red-team vectors verified across all <code>6</code> deployed cells = <code>96/96</code> live vectors), while raw Lambda Function URLs are locked down to <code>AuthType: AWS_IAM</code> (refusing unauthenticated HTTP requests with <code>HTTP 403</code>):
   </p>
   <table>
     <thead><tr><th class="nowrap" style="width:6%">Cloud</th><th class="nowrap" style="width:11%">Region</th><th class="nowrap" style="width:19%">Stack &amp; Live Alias</th><th style="width:27%">Dedicated Regional S3 CAS Bucket</th><th style="width:21%">Public Stage-Throttled Endpoint</th><th class="nowrap" style="width:10%">KEK Pin</th><th class="num" style="width:6%">RT</th></tr></thead>
     <tbody>{deploy_rows_html}</tbody>
   </table>
 
-  <h2>6. Zero-Credential Ubuntu (<code>glibc</code>) &amp; Alpine (<code>musl</code>) Client E2E &amp; Portability Qualification</h2>
+{table_5b_html}
+
+  <h2>6. Zero-Credential Multi-OS Client Qualification: Virgin <code>ubuntu:24.04</code>, Alpine <code>musl</code> &amp; Native <code>macOS arm64</code></h2>
   <p>
-    To prove that external end users require zero AWS credentials, zero GitHub tokens, and zero host-specific dynamic libraries, we executed a 12-scenario clean-room E2E qualification matrix (<code>zero-cred-client-e2e.json</code>) inside unprivileged Ubuntu 24.04 LTS (<code>glibc x86_64</code>) and Alpine Linux 3.20 (<code>musl x86_64</code>) containers talking over public HTTPS to AWS <code>dev</code> and all 5 Wave-1 <code>prod</code> regions:
+    To prove that external end users require zero AWS credentials, zero GitHub tokens, and zero host-specific dynamic libraries across Linux and Apple Silicon macOS, we executed clean-room E2E qualification suites across Ubuntu 24.04 LTS (<code>glibc x86_64</code>), Alpine Linux 3.20 (<code>musl x86_64</code>), a virgin unmounted <code>ubuntu:24.04</code> container (<code>env -i</code>), and native <code>macOS 26.5.1 arm64</code> (<code>aarch64-apple-darwin</code>) over public HTTPS against live AWS <code>dev</code> and all 5 Wave-1 <code>prod</code> regions:
   </p>
   <table>
     <thead><tr><th style="width:8%">ID</th><th style="width:12%">Client OS</th><th style="width:39%">Zero-Credential New-User E2E Scenario</th><th style="width:33%">Observed Live Outcome</th><th style="width:8%">Status</th></tr></thead>
@@ -2859,9 +2879,11 @@ carbon logout --all</pre>
     <tbody>{portability_rows_html}</tbody>
   </table>
 
-  <h3>Table 6C — Virgin <code>ubuntu:24.04</code> Docker Zero-Credential Live <code>dev</code> &amp; <code>prod</code> 4-Tier (<code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code>) E2E Receipts</h3>
+{table_6c1_html}
+
+  <h3>Table 6C-2 — Virgin <code>ubuntu:24.04</code> Docker Zero-Credential Live <code>dev</code> &amp; <code>prod</code> 4-Tier (<code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code>) E2E Runs</h3>
   <p>
-    Committed receipt <code>docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json</code> records an unmounted, fresh <code>{vd_os}</code> container (<code>env -i</code>, <code>zero_credentials_verified = true</code>, <code>0</code> AWS/GitHub/SSH variables or paths) executing <code>curl -fsSL https://github.com/neverhuman/JopeDime/releases/latest/download/install.sh | sh</code> in <code>{vd_inst_s:.2}s</code> (verifying offline ECDSA-P256 <code>SHA256SUMS.txt.sig</code> + static <code>musl</code> SHA-256 <code>{vd_bin_sha_prefix}…</code> + live 5-region <code>prod</code> KEK pins), <code>carbon doctor --cloud all</code> across <code>dev</code> + <code>prod</code>, and all 8 real encrypted <code>CUEN\x01</code> E2E jobs (<code>fast</code> 1w, <code>medium</code> 4w, <code>high</code> 12w, and <code>ultra</code> 32w) on the exact <code>nonlinear_240x6.csv</code> (<code>15,938 B</code>, <code>sha256: 3d8765caca6f…</code>) against both live <code>dev</code> and live <code>prod</code> (with <code>--shred</code> and post-run credential wipe verified):
+    Committed receipt <code>docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json</code> records an unmounted, fresh <code>{vd_os}</code> container (<code>env -i</code>, <code>zero_credentials_verified = true</code>, <code>0</code> AWS/GitHub/SSH variables or paths) executing <code>{vd_cmd}</code> in <code>{vd_inst_s:.2}s</code> (verifying offline ECDSA-P256 <code>SHA256SUMS.txt.sig</code> + static <code>musl</code> SHA-256 <code>{vd_bin_sha_prefix}…</code> + <code>carbon self-verify</code> + live 5-region <code>prod</code> KEK pins), <code>carbon doctor --cloud all</code> across <code>dev</code> + <code>prod</code>, <code>carbon quickstart</code>, and all 8 real encrypted <code>CUEN\x01</code> E2E jobs (<code>fast</code> 1w, <code>medium</code> 4w, <code>high</code> 12w, and <code>ultra</code> 32w) on the exact <code>nonlinear_240x6.csv</code> (<code>15,938 B</code>, <code>sha256: 3d8765caca6f…</code>) against both live <code>dev</code> and live <code>prod</code> (with <code>--shred</code> and post-run credential wipe verified):
   </p>
   <table>
     <thead><tr><th style="width:5%">Cloud</th><th style="width:7%">Effort</th><th style="width:9%">Tier/Mode</th><th style="width:9%">Region</th><th style="width:20%">Live Run ID</th><th class="num" style="width:6%">Waves</th><th class="num" style="width:8%">Cands (Ev)</th><th class="num" style="width:13%">Holdout (vs Lin)</th><th class="num" style="width:8%">R²</th><th class="num" style="width:5%">Wall</th><th class="num" style="width:5%">USD</th><th style="width:5%">CAS</th></tr></thead>
@@ -2877,15 +2899,13 @@ carbon logout --all</pre>
     <tbody>{virgin_tier_cmp_rows_html}</tbody>
   </table>
 
+{section_6e_html}
+
   <h2>7. Standardized <code>carbon bench --pro</code> Latency, Early-Stop/Resume &amp; RMSE-Reduction Analysis</h2>
   <p>
     Section 7 evaluates Carbon's modeling fidelity and orchestration lifecycle using the standardized 6-scenario <code>carbon bench --pro</code> suite on both live <code>AWS dev</code> (cold ping <code>{dev_cold_ms:.1} ms</code>, warm <code>p50 = {dev_warm_ms:.1} ms</code>) and live <code>AWS prod</code> (cold ping <code>{prod_cold_ms:.1} ms</code>, warm <code>p50 = {prod_warm_ms:.1} ms</code>). Every benchmark computes two classical reference baselines on the exact same 80%/20% fit/holdout split—a constant mean predictor (<code>Mean RMSE</code>) and an L2-regularized ridge linear regression predictor (<code>Ridge RMSE</code>)—and measures Carbon's percentage holdout RMSE reduction relative to ridge linear regression:
   </p>
-  <ul>
-    <li><strong>Substantial Nonlinear Gain at Every Effort:</strong> Even anonymous Free-tier Wave-0 synthesis (<code>free_anon_r882_wave0_cuen</code>, 1 wave, 25 candidates, <code>$0.00023–$0.00031</code>) slashes outer holdout RMSE from <code>4.719</code> (Mean) and <code>1.746</code> (Ridge Linear) down to <code>0.0601</code>—a <strong>96.56% RMSE reduction</strong> (<code>Holdout R² = 0.999838</code>) in <code>5.48s–7.67s</code>.</li>
-    <li><strong>Monotonic Multi-Wave &amp; Ultra Scaling:</strong> Scaling to <code>pro_ultra_hybrid_fanout</code> (<code>32/32</code> GP waves, <code>169</code> candidates, <code>479</code> parallel Eval shard invocations across <code>4</code> shards) further drives outer holdout RMSE down from <code>1.921</code> (Ridge) to <code>0.0367</code>—a <strong>98.09% RMSE reduction</strong> (<code>Holdout R² = 0.999960</code>) in <code>89.83s</code> for <code>$0.00827</code>.</li>
-    <li><strong>Stateful Cooperative Pause, Encrypted <code>/predict</code> &amp; Resume:</strong> Scenario <code>pro_hybrid_fanout_stop_predict_resume_shred</code> exercises live mid-flight <code>POST /stop</code> at wave 2, executes an encrypted <code>CUEN\x01</code> <code>POST /predict</code> against the interim sealed champion, resumes via <code>POST /resume</code> from S3 <code>CCKP\x02</code> state to wave 3 (<code>97.05%</code> RMSE reduction), and shreds all 8 S3 objects.</li>
-  </ul>
+{bench_bullets_html}
   <div class="svg-box">{svg_rmse}</div>
 
   <h3>Table 7A — Live <code>AWS dev</code> &amp; <code>AWS prod</code> Standardized <code>carbon bench --pro</code> Suite (12 Scenarios)</h3>
@@ -2900,29 +2920,26 @@ carbon logout --all</pre>
     <tbody>{bench_rows_html}</tbody>
   </table>
 
-  <h2>8. Comprehensive <code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code> Execution Time &amp; AWS Cost Economics</h2>
+  <h2>8. Comprehensive <code>dev</code> &amp; <code>prod</code> <code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code> Execution Time &amp; AWS Cost Economics</h2>
   <p>
-    Every <code>carbon run</code> receipt reports exact per-run cloud consumption derived from measured Lambda billed milliseconds, memory tiers, S3 CAS request counts, and API Gateway HTTP v2 invocations using published AWS <code>us-east-2</code> / <code>us-west-2</code> Graviton2 ARM64 rates: Lambda compute at <code>$0.0000133334 / GB-second</code> + <code>$0.20 / 1M</code> invokes (<code>256 MB</code> Edge, <code>3,008 MB</code> Engine, <code>1,769 MB</code> Eval fan-out shard), API Gateway HTTP API v2 at <code>$1.00 / 1M</code> requests, S3 CAS <code>PUT/LIST</code> at <code>$5.00 / 1M</code>, and S3 CAS <code>GET</code> at <code>$0.40 / 1M</code>. Across all 19 live runs in <code>cost-time-4effort-matrix.json</code>, Carbon exhibits predictable, linear-in-compute scaling across all four effort levels:
+    Every <code>carbon run</code> receipt reports exact per-run cloud consumption derived from measured Lambda billed milliseconds, memory tiers, S3 CAS request counts, and API Gateway HTTP v2 invocations using published AWS <code>us-east-2</code> / <code>us-west-2</code> Graviton2 ARM64 rates: Lambda compute at <code>$0.0000133334 / GB-second</code> + <code>$0.20 / 1M</code> invokes (<code>256 MB</code> Edge, <code>3,008 MB</code> Engine, <code>1,769 MB</code> Eval fan-out shard), API Gateway HTTP API v2 at <code>$1.00 / 1M</code> requests, S3 CAS <code>PUT/LIST</code> at <code>$5.00 / 1M</code>, and S3 CAS <code>GET</code> at <code>$0.40 / 1M</code>. Across all 19 live <code>dev</code> and <code>prod</code> runs in <code>cost-time-4effort-matrix.json</code>, Carbon exhibits predictable, linear-in-compute scaling across all four effort levels:
   </p>
-  <ul>
-    <li><strong><code>fast</code> (1 Wave, 25 Candidates, <code>SoloSingleLambda</code>):</strong> Completes end-to-end (prep + S3 upload + search + <code>/predict</code> + shred) in <strong>8.03s–11.98s</strong> on <code>240x6</code> at <strong>$0.000329–$0.000473</strong> (<strong>2,113–3,040 runs per $1 USD</strong>, <code>R² = 0.999988</code>, <code>-99.11%</code> RMSE vs linear), and in <strong>52.91s</strong> on the 7.2x larger <code>1,300x8</code> (<code>10,400</code>-cell) matrix at <strong>$0.002176</strong> (<strong>460 runs per $1 USD</strong>, <code>R² = 0.999984</code>).</li>
-    <li><strong><code>medium</code> (4 Waves, 37 Candidates, <code>SoloSingleLambda</code>):</strong> Settles asynchronously via <code>HTTP 202</code> polling in <strong>12.34s–15.30s</strong> on <code>240x6</code> at <strong>$0.000535–$0.000655</strong> (<strong>1,526–1,868 runs per $1 USD</strong>), and in <strong>77.10s</strong> on <code>1,300x8</code> at <strong>$0.003170</strong> (<strong>315 runs per $1 USD</strong>). Engine ARM64 compute accounts for ~<code>85%–94%</code> of total cost while S3 + Edge overhead remains under <code>$0.00018</code>.</li>
-    <li><strong><code>high</code> (12 Waves, 73 Candidates, <code>HybridFanOut</code>):</strong> Engages <code>2–4</code> parallel Eval shards (~<code>123–124</code> shard invocations), completing <code>12/12</code> waves in <strong>56.82s–60.60s</strong> on <code>240x6</code> at <strong>$0.004101–$0.004139</strong> (<strong>242–244 runs per $1 USD</strong>), and in <strong>340.76s–349.04s</strong> (~<code>5.7 min</code>) on <code>1,300x8</code> at <strong>$0.027258–$0.027444</strong> (<strong>36.4–36.7 runs per $1 USD</strong>), splitting compute evenly between Engine orchestration (<code>$0.0133</code>) and parallel Eval shards (<code>$0.0133</code>).</li>
-    <li><strong><code>ultra</code> (32 Waves, 169 Candidates, <code>HybridFanOut</code>):</strong> Executes <code>482</code> distributed shard evaluations across <code>32/32</code> waves on <code>240x6</code> in <strong>277.23s</strong> (~<code>4.6 min</code>) on <code>prod</code> (<code>335.33s</code> on <code>dev</code>) at <strong>$0.022480</strong> (<strong>44.5 runs per $1 USD</strong>), driving holdout RMSE down an additional 27% from <code>0.03303</code> to <strong><code>0.02401</code> (<code>Holdout R² = 0.999994</code>, <code>-99.35%</code> vs linear)</strong>. On the heavy <code>1,300x8</code> benchmark, <code>ultra</code> runs for <strong>845.41s</strong> (<code>14.1 min</code>, <code>197</code> shard calls, <strong>$0.054294</strong>) and cleanly checkpoints at wave <code>13/32</code> ahead of AWS Lambda's 15-minute hard invocation ceiling so callers can immediately <code>/predict</code> or <code>POST /resume</code>.</li>
-  </ul>
+{cost_bullets_html}
   <div class="svg-box">{svg_cost}</div>
 
-  <h3>Table 8A — Executive <code>prod</code> Pro 4-Effort (<code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code>) Time &amp; Cost Schedule</h3>
+  <h3>Table 8A — Executive <code>AWS dev</code> &amp; <code>AWS prod</code> Pro 4-Effort (<code>fast</code> / <code>medium</code> / <code>high</code> / <code>ultra</code>) Time &amp; Cost Schedule</h3>
   <table>
     <thead>
       <tr>
-        <th>Dataset (Cells)</th><th>Effort</th><th>Mode</th><th class="num">Waves</th><th class="num">Cands</th><th class="num">Eval</th>
-        <th class="num">Upload</th><th class="num">Search</th><th class="num">Total Wall</th>
+        <th class="nowrap">Cloud</th><th class="nowrap">Dataset</th><th class="nowrap">Effort</th><th class="nowrap">Mode</th><th class="num">Waves</th><th class="num">Cands</th><th class="num">Eval</th>
+        <th class="num">Up</th><th class="num">Search</th><th class="num">Total Wall</th>
         <th class="num">Holdout R²</th><th class="num">RMSE (vs Lin)</th><th class="num">Total USD</th><th class="num">Runs/$1</th>
       </tr>
     </thead>
     <tbody>{effort_exec_rows_html}</tbody>
   </table>
+
+{table_8c_html}
 
   <h3>Table 8B — Complete 19-Run Live Free &amp; Pro Phase-Timing &amp; Itemized AWS Cost Matrix</h3>
   <table>
@@ -2938,7 +2955,7 @@ carbon logout --all</pre>
 
   <h2>9. Global Multi-Region Concurrency &amp; Tail-Latency Qualification (200 Simultaneous Wave-1 Users)</h2>
   <p>
-    To verify horizontal elasticity across AWS Lambda concurrency pools, API Gateway stage throttles, and regional S3 CAS prefixes, we launched <strong>200 simultaneous encrypted E2E user workflows</strong> (40 concurrent users per region across <code>us-east-2</code>, <code>us-east-1</code>, <code>us-west-2</code>, <code>eu-central-1</code>, and <code>eu-west-1</code>) interleaved with <strong>50 concurrent live <code>POST /v1/carbon/auth/register</code> Free-tier token registrations</strong> (<code>load-200-users.json</code>). Every simulated user independently conditioned a nonlinear tabular dataset, encrypted <code>fit.jmat</code> and <code>holdout.jmat</code> under a fresh <code>CUEN\x01</code> + <code>CUDK\x01</code> keypair, uploaded to S3, ran <code>r882</code> synthesis, verified encrypted <code>/predict</code> (<code>R² = 0.999978</code>), and executed <code>--shred</code>:
+    To verify horizontal elasticity across AWS Lambda concurrency pools, API Gateway stage throttles, and regional S3 CAS prefixes, we launched <strong>200 simultaneous encrypted E2E user workflows</strong> (40 concurrent users per region across <code>us-east-2</code>, <code>us-east-1</code>, <code>us-west-2</code>, <code>eu-central-1</code>, and <code>eu-west-1</code>) interleaved with <strong>50 concurrent live <code>POST /v1/carbon/auth/register</code> Free-tier token registrations</strong> (<code>load-200-users.json</code>). Every simulated user independently conditioned a nonlinear tabular dataset, encrypted <code>fit.jmat</code> and <code>holdout.jmat</code> under a fresh <code>CUEN\x01</code> + <code>CUDK\x01</code> keypair, uploaded to S3, ran <code>r882</code> synthesis, verified encrypted <code>/predict</code> (<code>R² = 0.999978</code>, <code>RMSE = {load200_rmse:.5}</code>), and executed <code>--shred</code>:
   </p>
   <div class="svg-box">{svg_conc}</div>
 
@@ -2950,7 +2967,7 @@ carbon logout --all</pre>
     <tbody>{conc_rows_html}</tbody>
   </table>
   <div class="callout">
-    <strong>Aggregate 200-User Burst Telemetry:</strong> <strong>200 / 200</strong> encrypted E2E workflows and <strong>50 / 50</strong> concurrent token registrations succeeded in <code>{load200_wall:.2}s</code> wall-clock window (<code>0.00%</code> HTTP 429/5xx error rate), sustaining <strong><code>{load200_rps:.2}</code> complete encrypted E2E runs/sec</strong> globally (<code>min = {load200_min:.2}s</code>, <code>p50 = {load200_p50:.2}s</code>, <code>p95 = {load200_p95:.2}s</code>, <code>p99 = {load200_p99:.2}s</code>; registration <code>p50 = {reg_p50:.0} ms</code>, <code>p95 = {reg_p95:.0} ms</code>) for a total 5-region AWS bill of <strong><code>${load200_usd:.5}</code></strong> (<code>$0.000353 / run</code>).
+    <strong>Aggregate 200-User Burst Telemetry:</strong> <strong>200 / 200</strong> encrypted E2E workflows (<code>all_cuen_encrypted = {load200_cuen}</code>, <code>all_shredded_after_run = {load200_shred}</code>) and <strong>50 / 50</strong> concurrent token registrations succeeded in <code>{load200_wall:.2}s</code> wall-clock window (<code>0.00%</code> HTTP 429/5xx error rate), sustaining <strong><code>{load200_rps:.2}</code> complete encrypted E2E runs/sec</strong> globally (<code>min = {load200_min:.2}s</code>, <code>p50 = {load200_p50:.2}s</code>, <code>p95 = {load200_p95:.2}s</code>, <code>p99 = {load200_p99:.2}s</code>, <code>max = {load200_max:.2}s</code>; registration <code>p50 = {reg_p50:.0} ms</code>, <code>p95 = {reg_p95:.0} ms</code>, <code>p99 = {reg_p99:.0} ms</code>) for a total 5-region AWS bill of <strong><code>${load200_usd:.5}</code></strong> (<strong><code>${load200_mean_usd:.6} / run</code></strong>).
   </div>
 
   <h2>10. 16-Vector Adversarial Red-Team &amp; Zero-Knowledge Security Matrix (<code>V-01</code>..<code>V-16</code>)</h2>
@@ -3070,13 +3087,27 @@ cargo run --locked -p jope-carbon --bin carbon -- spec-verify \
             &load200["e2e_encrypted_run_predict_shred_latency_ms"],
             "p99"
         ) / 1_000.0,
+        load200_max = j_f64(
+            &load200["e2e_encrypted_run_predict_shred_latency_ms"],
+            "max"
+        ) / 1_000.0,
         reg_p50 = j_f64(&load200["register_latency_ms"], "p50"),
         reg_p95 = j_f64(&load200["register_latency_ms"], "p95"),
+        reg_p99 = j_f64(&load200["register_latency_ms"], "p99"),
         load200_usd = j_f64(&load200, "total_estimated_aws_usd_200_runs"),
+        load200_mean_usd = j_f64(&load200, "mean_estimated_aws_usd_per_run"),
+        load200_rmse = j_f64(&load200, "sample_holdout_rmse"),
+        load200_cuen = j_bool_default(&load200, "all_cuen_encrypted", true),
+        load200_shred = j_bool_default(&load200, "all_shredded_after_run", true),
         vd_os = html_escape(j_str_default(
             &virgin_docker["container"],
             "os_pretty_name",
             "Ubuntu 24.04 LTS"
+        )),
+        vd_cmd = html_escape(j_str_default(
+            &virgin_docker["install"],
+            "command",
+            "curl -fsSL https://downloads.neverhuman.org/carbon/install.sh | sh"
         )),
         vd_inst_s = j_f64(&virgin_docker["install"], "install_wall_ms") / 1_000.0,
         vd_bin_sha_prefix = {

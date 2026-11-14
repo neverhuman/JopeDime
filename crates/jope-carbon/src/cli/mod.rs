@@ -12,3 +12,5 @@ pub mod runner;
 pub mod spec_coverage_matrix;
 #[cfg(feature = "emu")]
 pub mod spec_report;
+#[cfg(feature = "emu")]
+pub mod spec_v110_sections;

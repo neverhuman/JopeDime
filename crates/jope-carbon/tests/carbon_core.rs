@@ -1529,8 +1529,11 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
         })
         .expect("execute_carbon_spec_report must validate 8-run dev+prod virgin-Docker receipt");
     let spec_html = std::fs::read_to_string(&spec_html_path).unwrap();
-    assert!(spec_html.contains("Table 6C"));
+    assert!(spec_html.contains("Table 6C-1"));
+    assert!(spec_html.contains("Table 6C-2"));
     assert!(spec_html.contains("Table 6D"));
+    assert!(spec_html.contains("Table 6E"));
+    assert!(spec_html.contains("https://downloads.neverhuman.org/carbon/install.sh"));
     let docker_ev: serde_json::Value = serde_json::from_slice(
         &std::fs::read(repo_root.join("docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json"))
             .unwrap(),
@@ -1643,19 +1646,42 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
     )
     .expect("write ci_qual");
 
+    assert_eq!(
+        jope_carbon::cli::spec_report::REQUIRED_EVIDENCE_FILES.len(),
+        14
+    );
     let out_ok = tmp.path().join("spec-ok");
     let html_path =
         jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
             evidence_dir: repo_root.join("docs/carbon/evidence"),
-            out_dir: out_ok,
+            out_dir: out_ok.clone(),
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_fixture.clone()),
             source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
             repo_root: repo_root.clone(),
         })
-        .expect("spec-report must validate Section 11 coverage matrix");
+        .expect("spec-report must validate Section 11 coverage matrix and all 14 v1.1.0 receipts");
+    let manifest_json: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(out_ok.join("spec-bundle-manifest.json")).expect("read manifest"),
+    )
+    .expect("parse manifest");
+    assert_eq!(
+        manifest_json["evidence_ledger"]
+            .as_array()
+            .expect("ledger array")
+            .len(),
+        14
+    );
     let html = std::fs::read_to_string(&html_path).expect("read spec html");
     for expected in [
+        "Table 2B",
+        "Table 5B",
+        "Table 6C-1",
+        "Table 6C-2",
+        "Table 6D",
+        "Table 6E",
+        "Table 8A",
+        "Table 8C",
         "11. Full Product Test Coverage Matrix",
         "Table 11A",
         "Table 11B",
@@ -1666,10 +1692,60 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
         "tested-live-prod",
         "NOT covered",
         "live-product-coverage-dev-prod.json",
+        "macos-arm64-live-e2e.json",
+        "aarch64-apple-darwin",
+        "run_01M7CC4P6K4EPKSD1B3FDDWMS1",
+        "rollback-dev-live.json",
+        "origin_local_storage_dependency = false",
+        "https://downloads.neverhuman.org/carbon/install.sh",
+        "17.77",
+        "$0.000299 / run",
+        "284.43s",
+        "317.98s",
+        "852.03s",
+        "21/32",
+        "$0.055166",
         "13. Full 64-Hex SHA-256 Cryptographic Provenance Ledger",
     ] {
         assert!(html.contains(expected), "missing '{expected}' in spec HTML");
     }
+    for stale in ["17.24", "$0.000353", "277.23s", "845.41s", "13/32"] {
+        assert!(
+            !html.contains(stale),
+            "stale pre-v1.1.0 literal '{stale}' remained in spec HTML"
+        );
+    }
+
+    // Mutating `macos-arm64-live-e2e.json` (`quickstart_shredded = false`) must fail closed.
+    let bad_mac = tmp.path().join("bad-macos");
+    std::fs::create_dir_all(&bad_mac).expect("mkdir bad-macos");
+    for entry in std::fs::read_dir(repo_root.join("docs/carbon/evidence")).expect("readdir") {
+        let entry = entry.expect("dir entry");
+        if entry.file_type().expect("ft").is_file() {
+            std::fs::copy(entry.path(), bad_mac.join(entry.file_name())).expect("copy ev");
+        }
+    }
+    let mac_path = bad_mac.join("macos-arm64-live-e2e.json");
+    let mut mac_json: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&mac_path).expect("read mac")).expect("parse mac");
+    mac_json["quickstart_shredded"] = serde_json::Value::Bool(false);
+    std::fs::write(
+        &mac_path,
+        serde_json::to_vec_pretty(&mac_json).expect("ser mac"),
+    )
+    .expect("write mac");
+    assert!(
+        jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
+            evidence_dir: bad_mac,
+            out_dir: tmp.path().join("spec-bad-mac"),
+            run_ci_qualification: false,
+            ci_qualification_in: Some(ci_qual_fixture.clone()),
+            source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
+            repo_root: repo_root.clone(),
+        })
+        .is_err(),
+        "unshredded macOS arm64 receipt must reject spec-report"
+    );
 
     // Mutating a live prod check to `passed: false` must fail `execute_carbon_spec_report` closed.
     let bad_ev = tmp.path().join("bad-evidence");

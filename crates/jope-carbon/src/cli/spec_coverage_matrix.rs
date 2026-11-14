@@ -30,7 +30,7 @@ const CLI_ROWS: &[ProductCoverageRow] = &[
         live_prod_covered: true,
         live_check_ids: &["ADV-SIG-04"],
         test_names: "clean_install_signature_free_register_all_four_efforts_and_live_cost_accounting; CI-QS-01",
-        receipt_and_notes: "`docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json`, `docs/carbon/evidence/zero-cred-client-e2e.json`",
+        receipt_and_notes: "`docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json`, `docs/carbon/evidence/macos-arm64-live-e2e.json`, `docs/carbon/evidence/zero-cred-client-e2e.json`",
     },
     ProductCoverageRow {
         id: "CLI-02",
@@ -48,7 +48,7 @@ const CLI_ROWS: &[ProductCoverageRow] = &[
         live_prod_covered: true,
         live_check_ids: &[],
         test_names: "CI-QS-03; CI-QS-04 (`spec_report::run_ci_quickstart_qualification`)",
-        receipt_and_notes: "`docs/carbon/evidence/zero-cred-client-e2e.json`, `ci-quickstart-qualification.json`",
+        receipt_and_notes: "`docs/carbon/evidence/macos-arm64-live-e2e.json`, `docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json`, `docs/carbon/evidence/zero-cred-client-e2e.json`",
     },
     ProductCoverageRow {
         id: "CLI-04",
@@ -855,7 +855,7 @@ fn resolve_row_live_state(
     if r.id == "CLI-19" && live_cov["rollback_live_verified"] == true {
         return Ok((
             true,
-            "`docs/carbon/evidence/live-product-coverage-dev-prod.json` (`rollback_live_verified = true`, `<1s` `dev` `{edge,engine,eval}:live` shift + dual-door `/ping`)"
+            "`docs/carbon/evidence/rollback-dev-live.json`, `docs/carbon/evidence/live-product-coverage-dev-prod.json` (`rollback_live_verified = true`, `<1s` `dev` `{edge,engine,eval}:live` shift + `/ping`)"
                 .to_owned(),
         ));
     }
@@ -866,6 +866,14 @@ fn resolve_row_live_state(
     {
         verify_check_ids_on_both_clouds(r.id, r.live_check_ids, dev_map, prod_map)?;
         let ids_joined = r.live_check_ids.join("`, `");
+        if r.id == "CLI-14" {
+            return Ok((
+                true,
+                format!(
+                    "`docs/carbon/evidence/live-product-coverage-dev-prod.json` (`{ids_joined}`), `docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json`, `docs/carbon/evidence/macos-arm64-live-e2e.json`"
+                ),
+            ));
+        }
         return Ok((
             true,
             format!(
