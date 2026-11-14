@@ -1,9 +1,9 @@
 {
   "schema": "jope.carbon.s3-zero-local-storage-proof/v1",
-  "release_version": "1.0.0",
-  "release_tag": "carbon-cli-v1.0.0",
-  "timestamp_epoch_ms": 1794569623324,
-  "wall_ms": 68280.49,
+  "release_version": "1.1.0",
+  "release_tag": "carbon-cli-v1.1.0",
+  "timestamp_epoch_ms": 1794638621389,
+  "wall_ms": 47504.45,
   "verified": true,
   "all_checks_passed": true,
   "bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
@@ -61,7 +61,7 @@
   ],
   "lambda_cell_check": {
     "bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
-    "fit_s3_key": "cell-v1/blobs/5819d1d6eaaf9418e974bc59975d17ae082654151b86dfc6415923415df52a83",
+    "fit_s3_key": "cell-v1/blobs/free_s3proof_vdr3nw2vhbkp/upl_01M7CCQF1GG2S847NF04VS1RBG/7cf4be6d6e8476eb7e1449b0ca1b8df3858c875955cd4c2627ff29beb22b837e",
     "storage_backend_reported": "aws_s3",
     "no_wrapped_udek_at_rest": true,
     "fit_blob_s3_sse": "AES256",
@@ -75,12 +75,12 @@
     "verified": true
   },
   "carbon_serve_s3_check": {
-    "cas_url": "s3://jopedime-carbon-dev-cas-714044927654-us-east-2/serve-qual-v100-1794569603",
+    "cas_url": "s3://jopedime-carbon-dev-cas-714044927654-us-east-2/serve-qual-v110-1794638606",
     "cas_url_scheme": "s3",
     "bucket": "jopedime-carbon-dev-cas-714044927654-us-east-2",
     "ping_storage_backend": "aws_s3",
     "local_cas_files_created": 0,
-    "s3_objects_during_run": 3,
+    "s3_objects_during_run": 8,
     "s3_objects_after_shred": 0,
     "s3_fit_blob_verified_during_run": true,
     "s3_fit_blob_sse": "AES256",

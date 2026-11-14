@@ -1531,8 +1531,19 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
     let spec_html = std::fs::read_to_string(&spec_html_path).unwrap();
     assert!(spec_html.contains("Table 6C"));
     assert!(spec_html.contains("Table 6D"));
-    assert!(spec_html.contains("run_01M7BMGCC0G2MEQH9ATH2TPAGH"));
-    assert!(spec_html.contains("run_01M7BMG9YKJ5NF0TQJA40TDGAR"));
+    let docker_ev: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(repo_root.join("docs/carbon/evidence/docker-virgin-ubuntu-prod-e2e.json"))
+            .unwrap(),
+    )
+    .unwrap();
+    let dev_ultra_id = docker_ev["dev_runs"]["ultra"]["receipt"]["run_id"]
+        .as_str()
+        .expect("dev ultra run_id");
+    let prod_ultra_id = docker_ev["prod_runs"]["ultra"]["receipt"]["run_id"]
+        .as_str()
+        .expect("prod ultra run_id");
+    assert!(spec_html.contains(dev_ultra_id));
+    assert!(spec_html.contains(prod_ultra_id));
 }
 
 #[test]

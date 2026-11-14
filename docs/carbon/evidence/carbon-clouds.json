@@ -1,19 +1,19 @@
 {
   "schema": "jope-carbon-clouds-v2",
-  "generated_epoch_ms": 1794504697054,
+  "generated_epoch_ms": 1794637707197,
   "clouds": {
     "dev": {
       "environment": "dev",
       "region": "us-east-2",
       "public_endpoint": "https://jv8jobxma5.execute-api.us-east-2.amazonaws.com",
-      "engine_p256_public_point_b64": "BNcCvldm5LBMIcxV1tQLmFyiQRa1o75ZJqefxb30VLwf7paN2zlA1DFHGCYvup98He0dMPFQvf4rlGx8Qyi53pg=",
-      "release_id": "5f68b7604e64a1dd",
+      "engine_kek_pubkey_b64": "BNcCvldm5LBMIcxV1tQLmFyiQRa1o75ZJqefxb30VLwf7paN2zlA1DFHGCYvup98He0dMPFQvf4rlGx8Qyi53pg=",
+      "release_id": "723b5330e5be328b",
       "regions": [
         {
           "region": "us-east-2",
           "public_endpoint": "https://jv8jobxma5.execute-api.us-east-2.amazonaws.com",
-          "engine_p256_public_point_b64": "BNcCvldm5LBMIcxV1tQLmFyiQRa1o75ZJqefxb30VLwf7paN2zlA1DFHGCYvup98He0dMPFQvf4rlGx8Qyi53pg=",
-          "release_id": "5f68b7604e64a1dd"
+          "engine_kek_pubkey_b64": "BNcCvldm5LBMIcxV1tQLmFyiQRa1o75ZJqefxb30VLwf7paN2zlA1DFHGCYvup98He0dMPFQvf4rlGx8Qyi53pg=",
+          "release_id": "723b5330e5be328b"
         }
       ]
     },
@@ -21,38 +21,38 @@
       "environment": "prod",
       "region": "us-east-2",
       "public_endpoint": "https://nefrh1y6mk.execute-api.us-east-2.amazonaws.com",
-      "engine_p256_public_point_b64": "BP011Gftv4PkocDmrmJ/pgsKZJuvST6t+KGaoRbjfLRw/b8A8PDQ6tbWVnoZeWwhfKYv/OVrumB4Vr5Lr5duXCE=",
-      "release_id": "5f68b7604e64a1dd",
+      "engine_kek_pubkey_b64": "BP011Gftv4PkocDmrmJ/pgsKZJuvST6t+KGaoRbjfLRw/b8A8PDQ6tbWVnoZeWwhfKYv/OVrumB4Vr5Lr5duXCE=",
+      "release_id": "723b5330e5be328b",
       "regions": [
         {
           "region": "us-east-2",
           "public_endpoint": "https://nefrh1y6mk.execute-api.us-east-2.amazonaws.com",
-          "engine_p256_public_point_b64": "BP011Gftv4PkocDmrmJ/pgsKZJuvST6t+KGaoRbjfLRw/b8A8PDQ6tbWVnoZeWwhfKYv/OVrumB4Vr5Lr5duXCE=",
-          "release_id": "5f68b7604e64a1dd"
+          "engine_kek_pubkey_b64": "BP011Gftv4PkocDmrmJ/pgsKZJuvST6t+KGaoRbjfLRw/b8A8PDQ6tbWVnoZeWwhfKYv/OVrumB4Vr5Lr5duXCE=",
+          "release_id": "723b5330e5be328b"
         },
         {
           "region": "us-east-1",
           "public_endpoint": "https://2g7g0fmru9.execute-api.us-east-1.amazonaws.com",
-          "engine_p256_public_point_b64": "BJRbGWM9Tdfa59C0RX6O1pKj6y33qLBgIbqQUsPnmWGAsNzWWlB4a9agls4aeiN+mgq/Q2BJUG67bwkfY6yiPZI=",
-          "release_id": "5f68b7604e64a1dd"
+          "engine_kek_pubkey_b64": "BJRbGWM9Tdfa59C0RX6O1pKj6y33qLBgIbqQUsPnmWGAsNzWWlB4a9agls4aeiN+mgq/Q2BJUG67bwkfY6yiPZI=",
+          "release_id": "723b5330e5be328b"
         },
         {
           "region": "us-west-2",
           "public_endpoint": "https://8qfcp10skl.execute-api.us-west-2.amazonaws.com",
-          "engine_p256_public_point_b64": "BLtXWSXsOmKbG/wYjpd15JsY1NVQ8C5lqIR9WvYi0sh3WfgWjiWTWGmM3zjwPmMkIcqHtD0xC+jRdPYBk88Zmek=",
-          "release_id": "5f68b7604e64a1dd"
+          "engine_kek_pubkey_b64": "BLtXWSXsOmKbG/wYjpd15JsY1NVQ8C5lqIR9WvYi0sh3WfgWjiWTWGmM3zjwPmMkIcqHtD0xC+jRdPYBk88Zmek=",
+          "release_id": "723b5330e5be328b"
         },
         {
           "region": "eu-central-1",
           "public_endpoint": "https://en4v5e1clb.execute-api.eu-central-1.amazonaws.com",
-          "engine_p256_public_point_b64": "BK9IV0rt5atg8rnFE2mOWtgpMW+9WytGSy+5icObx3BPIHyPaIiSzaWBx9vCsqXwv6gbie3WDTg06CK/P5Fc3as=",
-          "release_id": "5f68b7604e64a1dd"
+          "engine_kek_pubkey_b64": "BK9IV0rt5atg8rnFE2mOWtgpMW+9WytGSy+5icObx3BPIHyPaIiSzaWBx9vCsqXwv6gbie3WDTg06CK/P5Fc3as=",
+          "release_id": "723b5330e5be328b"
         },
         {
           "region": "eu-west-1",
           "public_endpoint": "https://rm9fr5v1n6.execute-api.eu-west-1.amazonaws.com",
-          "engine_p256_public_point_b64": "BAwUhDe+312FXbrNjcGhuosD3zSdkilEt160NRE0Av2I0j4a4/YZfI2TNQhvo5tU2WOB8p/sMEO5frEu4XcGtis=",
-          "release_id": "5f68b7604e64a1dd"
+          "engine_kek_pubkey_b64": "BAwUhDe+312FXbrNjcGhuosD3zSdkilEt160NRE0Av2I0j4a4/YZfI2TNQhvo5tU2WOB8p/sMEO5frEu4XcGtis=",
+          "release_id": "723b5330e5be328b"
         }
       ]
     }

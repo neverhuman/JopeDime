@@ -82,7 +82,7 @@ pub const REQUIRED_SPEC_SCREENSHOTS: [(&str, &str, &str); 8] = [
     (
         "shot-07",
         "07-redteam-16vectors-matrix.png",
-        "Figure S7 — `carbon redteam` 16-Vector (`V-01`..`V-16`, 160/160 Live Dual-Surface) Zero-Knowledge Matrix",
+        "Figure S7 — `carbon redteam` 16-Vector (`V-01`..`V-16`, 96/96 Live 6-Cell + `AWS_IAM` Lock) Zero-Knowledge Matrix",
     ),
     (
         "shot-08",
@@ -1507,7 +1507,7 @@ fn render_s3_architecture_svg() -> String {
 
   <rect x="272" y="8" width="268" height="98" rx="10" fill="url(#bgEdge)" stroke="#34d399" stroke-width="1.5"/>
   <text x="286" y="30" fill="#a7f3d0" font-size="10.5" font-weight="700" font-family="Liberation Sans, sans-serif">PLANE 2: STATELESS EDGE (256 MB ARM64)</text>
-  <text x="286" y="48" fill="#ecfdf5" font-size="9.2" font-family="Liberation Mono, monospace">CT3 Isolated: 0 Neural Weights (2.01 MB)</text>
+  <text x="286" y="48" fill="#ecfdf5" font-size="9.2" font-family="Liberation Mono, monospace">CT3 Isolated: 0 Neural Weights (1.29 MB)</text>
   <text x="286" y="65" fill="#ecfdf5" font-size="9.2" font-family="Liberation Mono, monospace">HMAC-SHA256 ctk1 Tier &amp; Row-Cap Guard</text>
   <text x="286" y="82" fill="#6ee7b7" font-size="9.2" font-weight="700" font-family="Liberation Mono, monospace">Size + SHA-256 Pinned SigV4 Presigner</text>
   <text x="286" y="97" fill="#a7f3d0" font-size="8.5" font-family="Liberation Sans, sans-serif">Holds zero decryption keys; never sees dataset bytes</text>
@@ -1974,7 +1974,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
 
     let shot07 = render_terminal_card(
         "shot-07",
-        "carbon redteam — 16-Vector Adversarial Zero-Knowledge & Capability-Boundary Matrix (160/160 Live)",
+        "carbon redteam — 16-Vector Adversarial Zero-Knowledge & Capability-Boundary Matrix (96/96 Live 6-Cell)",
         "PASS | 16/16 VECTORS",
         &step_by_id("CI-QS-08"),
     );
@@ -2698,7 +2698,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     <tbody>
       <tr><td><strong>Binary &amp; Distribution Tag</strong></td><td><code>carbon v{ver}</code> / <code>{tag}</code></td><td><strong>Git Source Commit</strong></td><td><code>{sha}</code></td></tr>
       <tr><td><strong>Live Cloud Topology</strong></td><td>1 <code>dev</code> Cell + 5 Wave-1 <code>prod</code> Cells (AWS <code>714044927654</code>)</td><td><strong>Cloud User/Job Storage</strong></td><td>100% Regional AWS S3 CAS (<code>SSE-S3 AES256</code> + <code>CUEN\x01</code>)</td></tr>
-      <tr><td><strong>Neural Guidance Weights</strong></td><td><code>r882</code> (<code>sha256:057e50a9a741</code>, 7.22 MB Layer)</td><td><strong>Adversarial Security Gate</strong></td><td><code>16/16</code> CI + <code>160/160</code> Live Dual-Surface Red-Team Vectors</td></tr>
+      <tr><td><strong>Neural Guidance Weights</strong></td><td><code>r882</code> (<code>sha256:057e50a9a741</code>, 7.22 MB Layer)</td><td><strong>Adversarial Security Gate</strong></td><td><code>16/16</code> CI + <code>96/96</code> Live 6-Cell Red-Team + <code>AWS_IAM</code> URL Lock</td></tr>
       <tr><td><strong>Effort Schedule</strong></td><td><code>fast</code> (1w), <code>medium</code> (4w), <code>high</code> (12w), <code>ultra</code> (32w)</td><td><strong>Idle Infrastructure Cost</strong></td><td><code>$0.00 / hour</code> (Scale-to-Zero Graviton2 Lambda + S3)</td></tr>
     </tbody>
   </table>
@@ -2708,7 +2708,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     <strong>JopeDime Carbon</strong> (<code>ADR-0007</code>) is a zero-knowledge, serverless neural-guided symbolic regression and Gaussian-process (GP) synthesis platform engineered to deliver state-of-the-art nonlinear tabular modeling from a single static CLI binary with zero cloud credentials, zero standing cluster cost, and cryptographic data confidentiality. Traditional tabular AutoML services force an operational trade-off between uploading cleartext customer datasets to multi-tenant servers or provisioning expensive, always-on GPU instances. Carbon eliminates both constraints: client tabular datasets are conditioned, partitioned into outer fit/holdout folds, compressed into a <code>6,368</code>-byte landmark sketch (<code>JLMB v1</code>), encrypted in client memory under per-run authenticated <code>CUEN\x01</code> (AES-256-GCM) envelopes with ephemeral P-256 key wrapping (<code>CUDK\x01</code>), and uploaded directly to regional AWS S3 Content-Addressable Storage (CAS) via size- and SHA-256-pinned SigV4 presigned URLs.
   </p>
   <p>
-    Inside each regional cell, a feature-isolated stateless Edge gateway (<code>CT3</code>, <code>2.01 MB</code>) validates capability tokens without ever holding decryption keys or model weights, while a sealed Graviton2 ARM64 Engine (<code>3,008 MB</code>) combines the <code>r882</code> neural prior (<code>103.8M</code> In-Context Learner + <code>24.4M</code> Boost module) with evolutionary multi-wave GP search and distributed <code>HybridFanOut</code> evaluation shards. Across standardized live AWS benchmarks, Carbon reduces outer holdout RMSE by <strong>96.56% to 99.35%</strong> relative to tuned ridge linear regression baselines (achieving <code>Holdout R² = 0.999838</code> to <code>0.999994</code>) at a measured total AWS bill of <strong>$0.00033 per run</strong> at <code>fast</code> effort (<code>~3,020</code> runs per $1 USD) up to <strong>$0.0225–$0.0543</strong> for multi-hundred-invocation <code>ultra</code> distributed fan-out searches. Every pull request and <code>main</code> push in GitHub Actions (<code>ci.yml</code>) automatically executes the live 8-suite exact-HEAD CLI/emulator qualification, captures 8 <code>2x</code> Retina screenshots via Headless Chromium, renders this multi-page A4 PDF specification, and cryptographically verifies every byte in <code>carbon spec-verify</code> and the <code>aggregate</code> gate.
+    Inside each regional cell, a feature-isolated stateless Edge gateway (<code>CT3</code>, <code>1.29 MB</code>) validates capability tokens without ever holding decryption keys or model weights, while a sealed Graviton2 ARM64 Engine (<code>3,008 MB</code>) combines the <code>r882</code> neural prior (<code>103.8M</code> In-Context Learner + <code>24.4M</code> Boost module) with evolutionary multi-wave GP search and distributed <code>HybridFanOut</code> evaluation shards. Across standardized live AWS benchmarks, Carbon reduces outer holdout RMSE by <strong>96.56% to 99.35%</strong> relative to tuned ridge linear regression baselines (achieving <code>Holdout R² = 0.999838</code> to <code>0.999994</code>) at a measured total AWS bill of <strong>$0.00030–$0.00033 per run</strong> at <code>fast</code> effort (<code>~3,020–3,347</code> runs per $1 USD) up to <strong>$0.0225–$0.0543</strong> for multi-hundred-invocation <code>ultra</code> distributed fan-out searches. Every pull request and <code>main</code> push in GitHub Actions (<code>ci.yml</code>) automatically executes the live 8-suite exact-HEAD CLI/emulator qualification, captures 8 <code>2x</code> Retina screenshots via Headless Chromium, renders this multi-page A4 PDF specification, and cryptographically verifies every byte in <code>carbon spec-verify</code> and the <code>aggregate</code> gate.
   </p>
 
   <div class="toc-grid">
@@ -2725,7 +2725,7 @@ pub fn execute_carbon_spec_report(opts: &CarbonSpecReportOptions) -> Result<Path
     <div class="toc-item"><span class="toc-num">06.</span> Zero-Credential Ubuntu &amp; Alpine Client E2E &amp; Portability</div>
     <div class="toc-item"><span class="toc-num">13.</span> Full 64-Hex SHA-256 Cryptographic Provenance Ledger</div>
     <div class="toc-item"><span class="toc-num">07.</span> Standardized <code>carbon bench --pro</code> Latency &amp; RMSE Reduction</div>
-    <div class="toc-item"><span class="toc-num">&nbsp;</span> 78 Product Surfaces &amp; 88/88 Live <code>dev</code>+<code>prod</code> Assertions</div>
+    <div class="toc-item"><span class="toc-num">&nbsp;</span> 78 Product Surfaces &amp; 98/98 Live <code>dev</code>+<code>prod</code> Assertions</div>
   </div>
 
   <h2>1. Three-Plane System Architecture &amp; <code>r882</code> Neural-Guided GP Synthesis</h2>
@@ -2955,7 +2955,7 @@ carbon logout --all</pre>
 
   <h2>10. 16-Vector Adversarial Red-Team &amp; Zero-Knowledge Security Matrix (<code>V-01</code>..<code>V-16</code>)</h2>
   <p>
-    Carbon's security posture is continuously enforced by the built-in 16-vector adversarial red-team harness (<code>carbon redteam</code>), executed both in CI on every commit (<code>CI-QS-08</code>) and against every live AWS regional cell across both API Gateway and Lambda Function URL surfaces (<code>160/160</code> live vectors across the 6 deployed stacks). The suite actively attempts capability forgery, privilege escalation, S3 presign tampering, AEAD ciphertext bit-flipping, cross-role/cross-tenant blob substitution, wrong-KEK key wrapping, SSRF/path traversal, and proprietary expression-tree extraction:
+    Carbon's security posture is continuously enforced by the built-in 16-vector adversarial red-team harness (<code>carbon redteam</code>), executed both in CI on every commit (<code>CI-QS-08</code>) and against every live AWS regional cell across all 6 deployed API Gateway stacks (<code>96/96</code> live vectors, with raw Lambda Function URLs IAM-locked via <code>AuthType: AWS_IAM</code> returning <code>HTTP 403</code>). The suite actively attempts capability forgery, privilege escalation, S3 presign tampering, AEAD ciphertext bit-flipping, cross-role/cross-tenant blob substitution, wrong-KEK key wrapping, SSRF/path traversal, and proprietary expression-tree extraction:
   </p>
   <table>
     <thead>

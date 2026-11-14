@@ -124,12 +124,12 @@ const CLI_ROWS: &[ProductCoverageRow] = &[
     },
     ProductCoverageRow {
         id: "CLI-12",
-        surface: "`carbon coverage-audit` (28-check + 16-vector dual-cloud `dev`+`prod` live audit with `--shred`)",
+        surface: "`carbon coverage-audit` (33-check + 16-vector dual-cloud `dev`+`prod` live audit with `--shred`)",
         ci_covered: true,
         live_prod_covered: true,
         live_check_ids: &["API-LIVE-01", "ADV-ABT-05"],
         test_names: "full_product_coverage_suite_against_dual_cloud_emulator_cells",
-        receipt_and_notes: "`docs/carbon/evidence/live-product-coverage-dev-prod.json` (`88/88` checks passed, `0` residual runs)",
+        receipt_and_notes: "`docs/carbon/evidence/live-product-coverage-dev-prod.json` (`98/98` checks passed, `0` residual runs)",
     },
     ProductCoverageRow {
         id: "CLI-13",
@@ -480,7 +480,7 @@ const ZK_ROWS: &[ProductCoverageRow] = &[
         live_prod_covered: true,
         live_check_ids: &[],
         test_names: "ct3_edge_feature_graph_excludes_engine_search_and_neural_crates",
-        receipt_and_notes: "`docs/carbon/evidence/deploy-prod-wave1.json` (`carbon-edge.zip = 2.01 MB`, zero weights)",
+        receipt_and_notes: "`docs/carbon/evidence/deploy-prod-wave1.json` (`carbon-edge.zip = 1.29 MB`, zero weights)",
     },
     ProductCoverageRow {
         id: "ZKP-02",
@@ -769,11 +769,11 @@ fn parse_cloud_check_map(
             "live-product-coverage-dev-prod.json: cloud '{cloud_label}' has all_passed != true"
         ));
     }
-    if cloud_doc["passed_checks"].as_u64() != Some(28)
-        || cloud_doc["total_checks"].as_u64() != Some(28)
-    {
+    let passed = cloud_doc["passed_checks"].as_u64();
+    let total = cloud_doc["total_checks"].as_u64();
+    if !matches!((passed, total), (Some(28), Some(28)) | (Some(33), Some(33))) {
         return Err(format!(
-            "live-product-coverage-dev-prod.json: cloud '{cloud_label}' expected 28/28 checks"
+            "live-product-coverage-dev-prod.json: cloud '{cloud_label}' expected 28/28 or 33/33 checks (got {passed:?}/{total:?})"
         ));
     }
     if cloud_doc["redteam_passed"].as_u64() != Some(16)

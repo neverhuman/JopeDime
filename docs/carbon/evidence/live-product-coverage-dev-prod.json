@@ -1,23 +1,23 @@
 {
   "schema": "jopedime.carbon.live-product-coverage.v1",
-  "generated_epoch_ms": 1794621897725,
+  "generated_epoch_ms": 1794638079798,
   "mode": "live-aws-existing-endpoints-shredded",
   "all_passed": true,
-  "total_checks_per_cloud": 28,
+  "total_checks_per_cloud": 33,
   "total_redteam_vectors_per_cloud": 16,
   "clouds": {
     "dev": {
       "cloud": "dev",
       "region": "us-east-2",
       "target_endpoint": "https://jv8jobxma5.execute-api.us-east-2.amazonaws.com",
-      "version_endpoint_deployed": false,
-      "total_checks": 28,
-      "passed_checks": 28,
+      "version_endpoint_deployed": true,
+      "total_checks": 33,
+      "passed_checks": 33,
       "redteam_total": 16,
       "redteam_passed": 16,
       "residual_unshredded_runs": 0,
       "all_passed": true,
-      "wall_ms": 51155.055525,
+      "wall_ms": 61377.208594,
       "checks": [
         {
           "check_id": "API-LIVE-01",
@@ -25,7 +25,7 @@
           "title": "GET /.well-known/carbon-regions.json discovery catalog",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 91.48062499999999,
+          "wall_ms": 91.995645,
           "evidence": "HTTP 200, catalog_non_empty=true"
         },
         {
@@ -34,7 +34,7 @@
           "title": "GET /v1/carbon/ping healthy & P-256 KEK matches pinned manifest",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 83.917084,
+          "wall_ms": 94.136497,
           "evidence": "region=us-east-2, kek_pin_verified=true"
         },
         {
@@ -42,9 +42,9 @@
           "domain": "API",
           "title": "GET /v1/carbon/version probe & thin-client backward-compat fallback",
           "passed": true,
-          "observed_http_status": 404,
-          "wall_ms": 182.187547,
-          "evidence": "HTTP 404, version_endpoint_deployed=false"
+          "observed_http_status": 200,
+          "wall_ms": 183.950362,
+          "evidence": "HTTP 200, version_endpoint_deployed=true"
         },
         {
           "check_id": "API-LIVE-04",
@@ -52,8 +52,8 @@
           "title": "POST /v1/carbon/auth/register persistent 30-day Free capability",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 82.205395,
-          "evidence": "minted tenant=free_covmatrix_zaax9mj5kkw3 (tier=Free)"
+          "wall_ms": 103.253623,
+          "evidence": "minted tenant=free_covmatrix_ms0rfe0y83yt (tier=Free)"
         },
         {
           "check_id": "API-LIVE-05",
@@ -61,7 +61,7 @@
           "title": "GET /v1/carbon/advisor/spot-hybrid authorized Pro 3-Gate verdict",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 89.018466,
+          "wall_ms": 93.252765,
           "evidence": "Pro token -> HTTP 200, valid_json=true"
         },
         {
@@ -70,7 +70,7 @@
           "title": "Direct unauthenticated PUT /v1/carbon/cas/{sha} refused",
           "passed": true,
           "observed_http_status": 400,
-          "wall_ms": 97.523049,
+          "wall_ms": 101.549708,
           "evidence": "PUT /v1/carbon/cas/<sha> without grant -> HTTP 400"
         },
         {
@@ -79,7 +79,7 @@
           "title": "Forged ctk1 HMAC signature rejected across mutating & Pro routes",
           "passed": true,
           "observed_http_status": 401,
-          "wall_ms": 177.378126,
+          "wall_ms": 193.11045099999998,
           "evidence": "forged HMAC -> prepare HTTP 401, advisor HTTP 401"
         },
         {
@@ -88,7 +88,7 @@
           "title": "Expired ctk1 capability token (valid HMAC, exp < now) rejected",
           "passed": true,
           "observed_http_status": 401,
-          "wall_ms": 185.072586,
+          "wall_ms": 189.857262,
           "evidence": "expired token -> prepare HTTP 401, advisor HTTP 401"
         },
         {
@@ -97,7 +97,7 @@
           "title": "Mutated ciphertext against SHA-256-pinned presigned PUT rejected",
           "passed": true,
           "observed_http_status": 403,
-          "wall_ms": 163.972061,
+          "wall_ms": 219.344125,
           "evidence": "1-byte mutated presigned PUT (exact length) -> HTTP 403"
         },
         {
@@ -106,7 +106,7 @@
           "title": "ECDSA-P256 release signing.pub rejects forged DER signature",
           "passed": true,
           "observed_http_status": 0,
-          "wall_ms": 0.205148,
+          "wall_ms": 0.11897500000000001,
           "evidence": "verify_ecdsa_p256_spki_pem_signature forged_rejected=true"
         },
         {
@@ -115,7 +115,7 @@
           "title": "Client-side wrong P-256 KEK pin fails closed prior to upload",
           "passed": true,
           "observed_http_status": 0,
-          "wall_ms": 68.482689,
+          "wall_ms": 88.73866,
           "evidence": "connect_fastest_pinned(peer_kek) refused=true"
         },
         {
@@ -124,7 +124,7 @@
           "title": "Server-side wrong P-256 KEK CUDK\\x01 wrap on POST /runs rejected",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 559.0271449999999,
+          "wall_ms": 616.132396,
           "evidence": "CUDK wrapped to wrong KEK on POST /runs -> HTTP 502"
         },
         {
@@ -133,7 +133,7 @@
           "title": "GET /v1/carbon/runs/{id}/events SSE stream & cross-tenant 403",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 226.515823,
+          "wall_ms": 227.377349,
           "evidence": "owner SSE -> HTTP 200, cross-tenant -> HTTP 403"
         },
         {
@@ -142,7 +142,7 @@
           "title": "Server-side wrong P-256 KEK CUDK\\x01 wrap on POST /predict rejected",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 439.524249,
+          "wall_ms": 468.597018,
           "evidence": "wrong KEK /predict -> HTTP 502, valid KEK -> HTTP 200"
         },
         {
@@ -151,8 +151,8 @@
           "title": "Duplicate run_id POST /runs replay with mutated seed refused",
           "passed": true,
           "observed_http_status": 409,
-          "wall_ms": 129.79363999999998,
-          "evidence": "duplicate POST /runs(run_01M7BWQGM5EH94TQWMV5PQWSRV) -> HTTP 409"
+          "wall_ms": 155.129572,
+          "evidence": "duplicate POST /runs(run_01M7CC4W2MP9H2XQTAHND94VRK) -> HTTP 409"
         },
         {
           "check_id": "ADV-RPL-03",
@@ -160,7 +160,7 @@
           "title": "Cross-run CUDK\\x01 envelope replay rejected by HKDF/GCM run_id AAD",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 975.916789,
+          "wall_ms": 1144.41796,
           "evidence": "replayed CUDK -> /runs HTTP 502, /predict HTTP 502"
         },
         {
@@ -169,7 +169,7 @@
           "title": "Cross-run CUEN\\x01 ciphertext replay rejected by run_id AAD binding",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 764.537357,
+          "wall_ms": 966.225606,
           "evidence": "run_A LandmarkJlmb replayed in run_C -> HTTP 502"
         },
         {
@@ -178,7 +178,7 @@
           "title": "Cross-tenant upload SHA substitution replay refused by S3 prefix isolation",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 569.849787,
+          "wall_ms": 611.584428,
           "evidence": "tenant_B referencing tenant_A fit/holdout SHA -> HTTP 502"
         },
         {
@@ -187,7 +187,7 @@
           "title": "Cross-tenant DELETE shred refused (403) & owner run remains intact",
           "passed": true,
           "observed_http_status": 403,
-          "wall_ms": 195.893612,
+          "wall_ms": 222.105781,
           "evidence": "tenant_B DELETE -> HTTP 403, owner GET -> HTTP 200"
         },
         {
@@ -196,7 +196,7 @@
           "title": "Post-shred 404 lifecycle sweep (GET, /events, /predict, /resume)",
           "passed": true,
           "observed_http_status": 404,
-          "wall_ms": 861.8722730000001,
+          "wall_ms": 1039.9450889999998,
           "evidence": "deleted=7, GET=404, events=404, predict=404, resume=404"
         },
         {
@@ -205,8 +205,8 @@
           "title": "Post-shred run_id resurrection replay blocked by tombstone (409)",
           "passed": true,
           "observed_http_status": 409,
-          "wall_ms": 120.235345,
-          "evidence": "re-POST shredded run_01M7BWQGM5EH94TQWMV5PQWSRV -> HTTP 409"
+          "wall_ms": 123.21491599999999,
+          "evidence": "re-POST shredded run_01M7CC4W2MP9H2XQTAHND94VRK -> HTTP 409"
         },
         {
           "check_id": "ADV-SHR-03",
@@ -214,7 +214,7 @@
           "title": "CarbonThinClient --shred workflow purges S3 CAS & returns 404",
           "passed": true,
           "observed_http_status": 404,
-          "wall_ms": 6831.319972,
+          "wall_ms": 7401.9680929999995,
           "evidence": "sdk shred deleted=6, post-GET -> HTTP 404"
         },
         {
@@ -223,7 +223,7 @@
           "title": "Cross-tenant POST /v1/carbon/runs/{id}/stop refused (403)",
           "passed": true,
           "observed_http_status": 403,
-          "wall_ms": 91.297862,
+          "wall_ms": 96.355176,
           "evidence": "tenant_B POST /stop on tenant_A run -> HTTP 403"
         },
         {
@@ -232,7 +232,7 @@
           "title": "Server-side wrong P-256 KEK CUDK\\x01 wrap on POST /resume rejected",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 188.972049,
+          "wall_ms": 219.362809,
           "evidence": "wrong KEK on POST /resume -> HTTP 502"
         },
         {
@@ -241,7 +241,7 @@
           "title": "Standalone cooperative POST /stop without /resume + interim /predict + shred",
           "passed": true,
           "observed_http_status": 202,
-          "wall_ms": 4329.73922,
+          "wall_ms": 4681.715438,
           "evidence": "stop=202, state=Paused (wave 1), predict=200, post-shred GET=404"
         },
         {
@@ -250,7 +250,7 @@
           "title": "Encrypted POST /resume missing wrapped_u_dek_b64 refused at Edge (400)",
           "passed": true,
           "observed_http_status": 400,
-          "wall_ms": 105.356906,
+          "wall_ms": 134.236226,
           "evidence": "POST /resume without wrapped_u_dek_b64 -> HTTP 400"
         },
         {
@@ -259,7 +259,7 @@
           "title": "Cooperative /stop + encrypted CCKP\\x02 /resume + /predict + shred",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 9405.216158,
+          "wall_ms": 9882.884743,
           "evidence": "pre_wave=1 -> post_wave=2, resume HTTP 200, predict=200"
         },
         {
@@ -268,12 +268,57 @@
           "title": "Free-tier privilege escalation on POST /resume (effort=high) refused (403)",
           "passed": true,
           "observed_http_status": 403,
-          "wall_ms": 2965.1799739999997,
+          "wall_ms": 3190.317631,
           "evidence": "Free run /resume(effort=high) -> HTTP 403, shredded=true"
+        },
+        {
+          "check_id": "API-LIVE-09",
+          "domain": "API",
+          "title": "GET /v1/carbon/version provenance SHA & release metadata",
+          "passed": true,
+          "observed_http_status": 200,
+          "wall_ms": 100.174806,
+          "evidence": "HTTP 200, valid_version_payload=true"
+        },
+        {
+          "check_id": "API-LIVE-08",
+          "domain": "API",
+          "title": "GET /v1/carbon/cas/{sha} HMAC-grant enforcement (400/401/403)",
+          "passed": true,
+          "observed_http_status": 403,
+          "wall_ms": 276.53897,
+          "evidence": "no_exp=400, no_sig=401, forged_sig=403"
+        },
+        {
+          "check_id": "API-LIVE-10",
+          "domain": "API",
+          "title": "POST /predict/prepare + CAS-backed /predict round-trip & decrypt",
+          "passed": true,
+          "observed_http_status": 200,
+          "wall_ms": 3317.24303,
+          "evidence": "HTTP 200, cas_roundtrip_verified=true, shred_http=200"
+        },
+        {
+          "check_id": "STO-LIVE-01",
+          "domain": "Storage",
+          "title": "Per-upload upl_<ULID> sibling-run shred isolation",
+          "passed": true,
+          "observed_http_status": 200,
+          "wall_ms": 4403.38677,
+          "evidence": "distinct_upl=true, shred1=200, sibling_predict=200, shred2=200"
+        },
+        {
+          "check_id": "CLI-LIVE-01",
+          "domain": "CLI",
+          "title": "Self-verify signing.pub SHA-256, binary digest & KEK pin root check",
+          "passed": true,
+          "observed_http_status": 0,
+          "wall_ms": 43.41312,
+          "evidence": "signing_pub_pin=true, kek_pin=true, exe_sha=true, bogus_sig_refused=true"
         }
       ],
       "redteam": {
-        "timestamp_epoch_ms": 1794621814955,
+        "timestamp_epoch_ms": 1794637981002,
         "target_endpoint": "https://jv8jobxma5.execute-api.us-east-2.amazonaws.com",
         "region": "us-east-2",
         "total_vectors": 16,
@@ -286,7 +331,7 @@
             "title": "Unauthenticated upload prepare rejected",
             "passed": true,
             "observed_http_status": 401,
-            "wall_ms": 92.593288,
+            "wall_ms": 118.12917900000001,
             "evidence": "POST /v1/carbon/uploads/prepare without token -> HTTP 401"
           },
           {
@@ -295,7 +340,7 @@
             "title": "Forged capability HMAC signature rejected in constant time",
             "passed": true,
             "observed_http_status": 401,
-            "wall_ms": 126.26015900000002,
+            "wall_ms": 109.46065200000001,
             "evidence": "Tampered ctk1 signature -> HTTP 401"
           },
           {
@@ -304,7 +349,7 @@
             "title": "Free-to-Pro capability tier escalation refused",
             "passed": true,
             "observed_http_status": 403,
-            "wall_ms": 85.078929,
+            "wall_ms": 107.417445,
             "evidence": "Free token requesting tier=pro -> HTTP 403"
           },
           {
@@ -313,7 +358,7 @@
             "title": "Cross-tenant IDOR access refused",
             "passed": true,
             "observed_http_status": 403,
-            "wall_ms": 101.766555,
+            "wall_ms": 106.11390800000001,
             "evidence": "Token B reading Tenant A run -> HTTP 403"
           },
           {
@@ -322,7 +367,7 @@
             "title": "Path-traversal & non-injective tenant_id rejected",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 197.98419,
+            "wall_ms": 210.624911,
             "evidence": "tenant_id='a..b' -> 400, '..%2Fsecret' -> 400"
           },
           {
@@ -331,7 +376,7 @@
             "title": "Presigned PUT byte-size / SHA-256 inflation rejected",
             "passed": true,
             "observed_http_status": 403,
-            "wall_ms": 352.82791299999997,
+            "wall_ms": 442.833184,
             "evidence": "Inflated PUT (+64B) to size-pinned URL -> HTTP 403"
           },
           {
@@ -340,7 +385,7 @@
             "title": "Cleartext upload refused on zero-knowledge cloud cell",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 99.308264,
+            "wall_ms": 104.70948,
             "evidence": "encrypted_cuen=false -> HTTP 400"
           },
           {
@@ -349,7 +394,7 @@
             "title": "CUEN payload slot-swap (HoldoutJmat -> LandmarkJlmb) rejected",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 1765.864541,
+            "wall_ms": 138.345985,
             "evidence": "Wrong CUEN slot tag in landmark_bundle_b64 -> HTTP 400"
           },
           {
@@ -358,7 +403,7 @@
             "title": "Tampered CUDK v1 wrapped U_DEK envelope rejected by engine",
             "passed": true,
             "observed_http_status": 502,
-            "wall_ms": 821.839153,
+            "wall_ms": 849.549938,
             "evidence": "Flipped GCM auth byte in CUDK -> HTTP 502"
           },
           {
@@ -367,8 +412,8 @@
             "title": "Duplicate run_id state clobber refused via If-None-Match",
             "passed": true,
             "observed_http_status": 409,
-            "wall_ms": 157.21169500000002,
-            "evidence": "Second POST /v1/carbon/runs for run_01M7BWQ06S0A2PV0QCC3RZ74G4 -> HTTP 409"
+            "wall_ms": 149.342809,
+            "evidence": "Second POST /v1/carbon/runs for run_01M7CC4ASWSBVZ6XE41HZ4EAG9 -> HTTP 409"
           },
           {
             "vector_id": "V-11",
@@ -376,7 +421,7 @@
             "title": "Oversized (>16 KiB) landmark wire payload refused at edge",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 147.591622,
+            "wall_ms": 183.13214399999998,
             "evidence": "20,000-byte landmark_bundle_b64 -> HTTP 400"
           },
           {
@@ -385,7 +430,7 @@
             "title": "Cleartext /predict rows refused on encrypted run",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 136.892148,
+            "wall_ms": 129.92880300000002,
             "evidence": "Plaintext rows on encrypted run -> HTTP 400"
           },
           {
@@ -394,7 +439,7 @@
             "title": "Zero-cleartext E2E /predict wire inspection verified",
             "passed": true,
             "observed_http_status": 200,
-            "wall_ms": 2313.790615,
+            "wall_ms": 2607.759213,
             "evidence": "Raw JSON predictions.len()=0, client ECDH decrypted 8B matching sha256 3173c14d2054bf7c"
           },
           {
@@ -403,7 +448,7 @@
             "title": "Free-tier per-run /predict model-extraction quota enforced",
             "passed": true,
             "observed_http_status": 429,
-            "wall_ms": 9272.082615000001,
+            "wall_ms": 9376.294183,
             "evidence": "21st /predict call on Free run -> HTTP 429"
           },
           {
@@ -412,7 +457,7 @@
             "title": "Spot-hybrid advisor telemetry restricted to Pro/Admin",
             "passed": true,
             "observed_http_status": 403,
-            "wall_ms": 174.63252100000003,
+            "wall_ms": 194.27044500000002,
             "evidence": "Unauth -> HTTP 401, Free -> HTTP 403"
           },
           {
@@ -421,7 +466,7 @@
             "title": "Cryptographic DELETE shred purges blobs/state & blocks resurrection",
             "passed": true,
             "observed_http_status": 404,
-            "wall_ms": 670.1107400000001,
+            "wall_ms": 781.521076,
             "evidence": "deleted=7 objects, post-shred GET -> 404, recreate -> 409"
           }
         ]
@@ -429,16 +474,16 @@
     },
     "prod": {
       "cloud": "prod",
-      "region": "us-east-2",
-      "target_endpoint": "https://nefrh1y6mk.execute-api.us-east-2.amazonaws.com",
-      "version_endpoint_deployed": false,
-      "total_checks": 28,
-      "passed_checks": 28,
+      "region": "us-west-2",
+      "target_endpoint": "https://8qfcp10skl.execute-api.us-west-2.amazonaws.com",
+      "version_endpoint_deployed": true,
+      "total_checks": 33,
+      "passed_checks": 33,
       "redteam_total": 16,
       "redteam_passed": 16,
       "residual_unshredded_runs": 0,
       "all_passed": true,
-      "wall_ms": 50717.392545,
+      "wall_ms": 55656.700594,
       "checks": [
         {
           "check_id": "API-LIVE-01",
@@ -446,7 +491,7 @@
           "title": "GET /.well-known/carbon-regions.json discovery catalog",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 97.982817,
+          "wall_ms": 60.566126,
           "evidence": "HTTP 200, catalog_non_empty=true"
         },
         {
@@ -455,17 +500,17 @@
           "title": "GET /v1/carbon/ping healthy & P-256 KEK matches pinned manifest",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 104.223254,
-          "evidence": "region=us-east-2, kek_pin_verified=true"
+          "wall_ms": 48.313615,
+          "evidence": "region=us-west-2, kek_pin_verified=true"
         },
         {
           "check_id": "API-LIVE-03",
           "domain": "API",
           "title": "GET /v1/carbon/version probe & thin-client backward-compat fallback",
           "passed": true,
-          "observed_http_status": 404,
-          "wall_ms": 178.62451900000002,
-          "evidence": "HTTP 404, version_endpoint_deployed=false"
+          "observed_http_status": 200,
+          "wall_ms": 115.032077,
+          "evidence": "HTTP 200, version_endpoint_deployed=true"
         },
         {
           "check_id": "API-LIVE-04",
@@ -473,8 +518,8 @@
           "title": "POST /v1/carbon/auth/register persistent 30-day Free capability",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 89.308002,
-          "evidence": "minted tenant=free_covmatrix_ggkgcq8y8qd6 (tier=Free)"
+          "wall_ms": 56.190455,
+          "evidence": "minted tenant=free_covmatrix_y1yyxx8ckg16 (tier=Free)"
         },
         {
           "check_id": "API-LIVE-05",
@@ -482,7 +527,7 @@
           "title": "GET /v1/carbon/advisor/spot-hybrid authorized Pro 3-Gate verdict",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 95.339825,
+          "wall_ms": 64.564686,
           "evidence": "Pro token -> HTTP 200, valid_json=true"
         },
         {
@@ -491,7 +536,7 @@
           "title": "Direct unauthenticated PUT /v1/carbon/cas/{sha} refused",
           "passed": true,
           "observed_http_status": 400,
-          "wall_ms": 96.319158,
+          "wall_ms": 65.637866,
           "evidence": "PUT /v1/carbon/cas/<sha> without grant -> HTTP 400"
         },
         {
@@ -500,7 +545,7 @@
           "title": "Forged ctk1 HMAC signature rejected across mutating & Pro routes",
           "passed": true,
           "observed_http_status": 401,
-          "wall_ms": 189.799455,
+          "wall_ms": 134.161594,
           "evidence": "forged HMAC -> prepare HTTP 401, advisor HTTP 401"
         },
         {
@@ -509,7 +554,7 @@
           "title": "Expired ctk1 capability token (valid HMAC, exp < now) rejected",
           "passed": true,
           "observed_http_status": 401,
-          "wall_ms": 181.295163,
+          "wall_ms": 124.89663800000001,
           "evidence": "expired token -> prepare HTTP 401, advisor HTTP 401"
         },
         {
@@ -518,7 +563,7 @@
           "title": "Mutated ciphertext against SHA-256-pinned presigned PUT rejected",
           "passed": true,
           "observed_http_status": 403,
-          "wall_ms": 178.011709,
+          "wall_ms": 230.138765,
           "evidence": "1-byte mutated presigned PUT (exact length) -> HTTP 403"
         },
         {
@@ -527,7 +572,7 @@
           "title": "ECDSA-P256 release signing.pub rejects forged DER signature",
           "passed": true,
           "observed_http_status": 0,
-          "wall_ms": 0.14792,
+          "wall_ms": 0.07731600000000001,
           "evidence": "verify_ecdsa_p256_spki_pem_signature forged_rejected=true"
         },
         {
@@ -536,7 +581,7 @@
           "title": "Client-side wrong P-256 KEK pin fails closed prior to upload",
           "passed": true,
           "observed_http_status": 0,
-          "wall_ms": 86.873064,
+          "wall_ms": 57.668232,
           "evidence": "connect_fastest_pinned(peer_kek) refused=true"
         },
         {
@@ -545,7 +590,7 @@
           "title": "Server-side wrong P-256 KEK CUDK\\x01 wrap on POST /runs rejected",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 536.9784490000001,
+          "wall_ms": 851.296383,
           "evidence": "CUDK wrapped to wrong KEK on POST /runs -> HTTP 502"
         },
         {
@@ -554,7 +599,7 @@
           "title": "GET /v1/carbon/runs/{id}/events SSE stream & cross-tenant 403",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 224.051358,
+          "wall_ms": 164.24262000000002,
           "evidence": "owner SSE -> HTTP 200, cross-tenant -> HTTP 403"
         },
         {
@@ -563,7 +608,7 @@
           "title": "Server-side wrong P-256 KEK CUDK\\x01 wrap on POST /predict rejected",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 404.922481,
+          "wall_ms": 367.54424,
           "evidence": "wrong KEK /predict -> HTTP 502, valid KEK -> HTTP 200"
         },
         {
@@ -572,8 +617,8 @@
           "title": "Duplicate run_id POST /runs replay with mutated seed refused",
           "passed": true,
           "observed_http_status": 409,
-          "wall_ms": 148.984224,
-          "evidence": "duplicate POST /runs(run_01M7BWS2MRAM5EKNDNWNA9JTY2) -> HTTP 409"
+          "wall_ms": 110.291324,
+          "evidence": "duplicate POST /runs(run_01M7CC6NKHHYWNHPXFVQ9EDPZ0) -> HTTP 409"
         },
         {
           "check_id": "ADV-RPL-03",
@@ -581,7 +626,7 @@
           "title": "Cross-run CUDK\\x01 envelope replay rejected by HKDF/GCM run_id AAD",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 1077.024399,
+          "wall_ms": 1029.719564,
           "evidence": "replayed CUDK -> /runs HTTP 502, /predict HTTP 502"
         },
         {
@@ -590,7 +635,7 @@
           "title": "Cross-run CUEN\\x01 ciphertext replay rejected by run_id AAD binding",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 770.28713,
+          "wall_ms": 879.351284,
           "evidence": "run_A LandmarkJlmb replayed in run_C -> HTTP 502"
         },
         {
@@ -599,7 +644,7 @@
           "title": "Cross-tenant upload SHA substitution replay refused by S3 prefix isolation",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 547.903787,
+          "wall_ms": 667.519158,
           "evidence": "tenant_B referencing tenant_A fit/holdout SHA -> HTTP 502"
         },
         {
@@ -608,7 +653,7 @@
           "title": "Cross-tenant DELETE shred refused (403) & owner run remains intact",
           "passed": true,
           "observed_http_status": 403,
-          "wall_ms": 212.650757,
+          "wall_ms": 141.22271,
           "evidence": "tenant_B DELETE -> HTTP 403, owner GET -> HTTP 200"
         },
         {
@@ -617,7 +662,7 @@
           "title": "Post-shred 404 lifecycle sweep (GET, /events, /predict, /resume)",
           "passed": true,
           "observed_http_status": 404,
-          "wall_ms": 855.12796,
+          "wall_ms": 912.474018,
           "evidence": "deleted=7, GET=404, events=404, predict=404, resume=404"
         },
         {
@@ -626,8 +671,8 @@
           "title": "Post-shred run_id resurrection replay blocked by tombstone (409)",
           "passed": true,
           "observed_http_status": 409,
-          "wall_ms": 101.965884,
-          "evidence": "re-POST shredded run_01M7BWS2MRAM5EKNDNWNA9JTY2 -> HTTP 409"
+          "wall_ms": 78.503608,
+          "evidence": "re-POST shredded run_01M7CC6NKHHYWNHPXFVQ9EDPZ0 -> HTTP 409"
         },
         {
           "check_id": "ADV-SHR-03",
@@ -635,7 +680,7 @@
           "title": "CarbonThinClient --shred workflow purges S3 CAS & returns 404",
           "passed": true,
           "observed_http_status": 404,
-          "wall_ms": 6932.959552,
+          "wall_ms": 6620.549039,
           "evidence": "sdk shred deleted=6, post-GET -> HTTP 404"
         },
         {
@@ -644,7 +689,7 @@
           "title": "Cross-tenant POST /v1/carbon/runs/{id}/stop refused (403)",
           "passed": true,
           "observed_http_status": 403,
-          "wall_ms": 93.199447,
+          "wall_ms": 54.264079,
           "evidence": "tenant_B POST /stop on tenant_A run -> HTTP 403"
         },
         {
@@ -653,7 +698,7 @@
           "title": "Server-side wrong P-256 KEK CUDK\\x01 wrap on POST /resume rejected",
           "passed": true,
           "observed_http_status": 502,
-          "wall_ms": 193.78136500000002,
+          "wall_ms": 183.891241,
           "evidence": "wrong KEK on POST /resume -> HTTP 502"
         },
         {
@@ -662,7 +707,7 @@
           "title": "Standalone cooperative POST /stop without /resume + interim /predict + shred",
           "passed": true,
           "observed_http_status": 202,
-          "wall_ms": 4201.7556779999995,
+          "wall_ms": 4595.421214,
           "evidence": "stop=202, state=Paused (wave 1), predict=200, post-shred GET=404"
         },
         {
@@ -671,7 +716,7 @@
           "title": "Encrypted POST /resume missing wrapped_u_dek_b64 refused at Edge (400)",
           "passed": true,
           "observed_http_status": 400,
-          "wall_ms": 111.684798,
+          "wall_ms": 97.109895,
           "evidence": "POST /resume without wrapped_u_dek_b64 -> HTTP 400"
         },
         {
@@ -680,7 +725,7 @@
           "title": "Cooperative /stop + encrypted CCKP\\x02 /resume + /predict + shred",
           "passed": true,
           "observed_http_status": 200,
-          "wall_ms": 8939.451383,
+          "wall_ms": 9270.207565,
           "evidence": "pre_wave=1 -> post_wave=2, resume HTTP 200, predict=200"
         },
         {
@@ -689,14 +734,59 @@
           "title": "Free-tier privilege escalation on POST /resume (effort=high) refused (403)",
           "passed": true,
           "observed_http_status": 403,
-          "wall_ms": 2829.097988,
+          "wall_ms": 3087.924436,
           "evidence": "Free run /resume(effort=high) -> HTTP 403, shredded=true"
+        },
+        {
+          "check_id": "API-LIVE-09",
+          "domain": "API",
+          "title": "GET /v1/carbon/version provenance SHA & release metadata",
+          "passed": true,
+          "observed_http_status": 200,
+          "wall_ms": 51.800586,
+          "evidence": "HTTP 200, valid_version_payload=true"
+        },
+        {
+          "check_id": "API-LIVE-08",
+          "domain": "API",
+          "title": "GET /v1/carbon/cas/{sha} HMAC-grant enforcement (400/401/403)",
+          "passed": true,
+          "observed_http_status": 403,
+          "wall_ms": 172.678467,
+          "evidence": "no_exp=400, no_sig=401, forged_sig=403"
+        },
+        {
+          "check_id": "API-LIVE-10",
+          "domain": "API",
+          "title": "POST /predict/prepare + CAS-backed /predict round-trip & decrypt",
+          "passed": true,
+          "observed_http_status": 200,
+          "wall_ms": 3037.700665,
+          "evidence": "HTTP 200, cas_roundtrip_verified=true, shred_http=200"
+        },
+        {
+          "check_id": "STO-LIVE-01",
+          "domain": "Storage",
+          "title": "Per-upload upl_<ULID> sibling-run shred isolation",
+          "passed": true,
+          "observed_http_status": 200,
+          "wall_ms": 3995.783879,
+          "evidence": "distinct_upl=true, shred1=200, sibling_predict=200, shred2=200"
+        },
+        {
+          "check_id": "CLI-LIVE-01",
+          "domain": "CLI",
+          "title": "Self-verify signing.pub SHA-256, binary digest & KEK pin root check",
+          "passed": true,
+          "observed_http_status": 0,
+          "wall_ms": 39.492149,
+          "evidence": "signing_pub_pin=true, kek_pin=true, exe_sha=true, bogus_sig_refused=true"
         }
       ],
       "redteam": {
-        "timestamp_epoch_ms": 1794621866136,
-        "target_endpoint": "https://nefrh1y6mk.execute-api.us-east-2.amazonaws.com",
-        "region": "us-east-2",
+        "timestamp_epoch_ms": 1794638040297,
+        "target_endpoint": "https://8qfcp10skl.execute-api.us-west-2.amazonaws.com",
+        "region": "us-west-2",
         "total_vectors": 16,
         "passed_vectors": 16,
         "all_passed": true,
@@ -707,7 +797,7 @@
             "title": "Unauthenticated upload prepare rejected",
             "passed": true,
             "observed_http_status": 401,
-            "wall_ms": 106.82920299999999,
+            "wall_ms": 64.580805,
             "evidence": "POST /v1/carbon/uploads/prepare without token -> HTTP 401"
           },
           {
@@ -716,7 +806,7 @@
             "title": "Forged capability HMAC signature rejected in constant time",
             "passed": true,
             "observed_http_status": 401,
-            "wall_ms": 95.495647,
+            "wall_ms": 65.799021,
             "evidence": "Tampered ctk1 signature -> HTTP 401"
           },
           {
@@ -725,7 +815,7 @@
             "title": "Free-to-Pro capability tier escalation refused",
             "passed": true,
             "observed_http_status": 403,
-            "wall_ms": 97.291706,
+            "wall_ms": 74.30454999999999,
             "evidence": "Free token requesting tier=pro -> HTTP 403"
           },
           {
@@ -734,7 +824,7 @@
             "title": "Cross-tenant IDOR access refused",
             "passed": true,
             "observed_http_status": 403,
-            "wall_ms": 103.626152,
+            "wall_ms": 64.522926,
             "evidence": "Token B reading Tenant A run -> HTTP 403"
           },
           {
@@ -743,7 +833,7 @@
             "title": "Path-traversal & non-injective tenant_id rejected",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 218.28502,
+            "wall_ms": 138.678945,
             "evidence": "tenant_id='a..b' -> 400, '..%2Fsecret' -> 400"
           },
           {
@@ -752,7 +842,7 @@
             "title": "Presigned PUT byte-size / SHA-256 inflation rejected",
             "passed": true,
             "observed_http_status": 403,
-            "wall_ms": 372.641033,
+            "wall_ms": 276.99712700000003,
             "evidence": "Inflated PUT (+64B) to size-pinned URL -> HTTP 403"
           },
           {
@@ -761,7 +851,7 @@
             "title": "Cleartext upload refused on zero-knowledge cloud cell",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 103.28129899999999,
+            "wall_ms": 63.590410999999996,
             "evidence": "encrypted_cuen=false -> HTTP 400"
           },
           {
@@ -770,7 +860,7 @@
             "title": "CUEN payload slot-swap (HoldoutJmat -> LandmarkJlmb) rejected",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 1592.243686,
+            "wall_ms": 92.25224999999999,
             "evidence": "Wrong CUEN slot tag in landmark_bundle_b64 -> HTTP 400"
           },
           {
@@ -779,7 +869,7 @@
             "title": "Tampered CUDK v1 wrapped U_DEK envelope rejected by engine",
             "passed": true,
             "observed_http_status": 502,
-            "wall_ms": 945.6234569999999,
+            "wall_ms": 314.930735,
             "evidence": "Flipped GCM auth byte in CUDK -> HTTP 502"
           },
           {
@@ -788,8 +878,8 @@
             "title": "Duplicate run_id state clobber refused via If-None-Match",
             "passed": true,
             "observed_http_status": 409,
-            "wall_ms": 156.01135699999998,
-            "evidence": "Second POST /v1/carbon/runs for run_01M7BWRJ8KNF4VP1NSJ2KJMHP9 -> HTTP 409"
+            "wall_ms": 135.33915299999998,
+            "evidence": "Second POST /v1/carbon/runs for run_01M7CC65W0CA5V9AGECQ8ZFPNV -> HTTP 409"
           },
           {
             "vector_id": "V-11",
@@ -797,7 +887,7 @@
             "title": "Oversized (>16 KiB) landmark wire payload refused at edge",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 155.20436,
+            "wall_ms": 100.23825599999999,
             "evidence": "20,000-byte landmark_bundle_b64 -> HTTP 400"
           },
           {
@@ -806,7 +896,7 @@
             "title": "Cleartext /predict rows refused on encrypted run",
             "passed": true,
             "observed_http_status": 400,
-            "wall_ms": 143.586155,
+            "wall_ms": 94.721214,
             "evidence": "Plaintext rows on encrypted run -> HTTP 400"
           },
           {
@@ -815,7 +905,7 @@
             "title": "Zero-cleartext E2E /predict wire inspection verified",
             "passed": true,
             "observed_http_status": 200,
-            "wall_ms": 2377.87474,
+            "wall_ms": 2531.23979,
             "evidence": "Raw JSON predictions.len()=0, client ECDH decrypted 8B matching sha256 3173c14d2054bf7c"
           },
           {
@@ -824,7 +914,7 @@
             "title": "Free-tier per-run /predict model-extraction quota enforced",
             "passed": true,
             "observed_http_status": 429,
-            "wall_ms": 9138.227353,
+            "wall_ms": 8784.995219,
             "evidence": "21st /predict call on Free run -> HTTP 429"
           },
           {
@@ -833,7 +923,7 @@
             "title": "Spot-hybrid advisor telemetry restricted to Pro/Admin",
             "passed": true,
             "observed_http_status": 403,
-            "wall_ms": 188.813348,
+            "wall_ms": 123.050244,
             "evidence": "Unauth -> HTTP 401, Free -> HTTP 403"
           },
           {
@@ -842,11 +932,13 @@
             "title": "Cryptographic DELETE shred purges blobs/state & blocks resurrection",
             "passed": true,
             "observed_http_status": 404,
-            "wall_ms": 655.172718,
+            "wall_ms": 684.91263,
             "evidence": "deleted=7 objects, post-shred GET -> 404, recreate -> 409"
           }
         ]
       }
     }
-  }
+  },
+  "rollback_live_verified": true,
+  "rollback_receipt": "rollback-dev-live.json"
 }
