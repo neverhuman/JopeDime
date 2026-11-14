@@ -1724,28 +1724,77 @@ pub struct CarbonPublicCloudsManifest {
     pub clouds: BTreeMap<String, CarbonCloudCellEntry>,
 }
 
-fn fetch_clouds_manifest_bytes(source: &str) -> Result<Vec<u8>, String> {
-    if source.starts_with("https://") || source.starts_with("http://") {
-        let mut resp = crate::tls::carbon_https_agent()
-            .get(source)
-            .config()
-            .http_status_as_error(false)
-            .build()
-            .call()
-            .map_err(|e| format!("fetch Carbon clouds manifest {source} failed: {e}"))?;
-        let status = resp.status().as_u16();
-        let mut buf = Vec::new();
-        resp.body_mut()
-            .as_reader()
-            .read_to_end(&mut buf)
-            .map_err(|e| format!("read Carbon clouds manifest {source}: {e}"))?;
-        if status >= 300 {
+/// Resolve a redirect `Location` header for unauthenticated `carbon-clouds.json` discovery,
+/// refusing `https -> http` scheme downgrades and private/IMDS loopback redirects from HTTPS origins.
+pub fn resolve_clouds_redirect_target(current_url: &str, location: &str) -> Result<String, String> {
+    let base = url::Url::parse(current_url)
+        .map_err(|e| format!("invalid clouds manifest URL '{current_url}': {e}"))?;
+    let next = base
+        .join(location.trim())
+        .map_err(|e| format!("invalid redirect Location '{location}' from '{current_url}': {e}"))?;
+    if base.scheme() == "https" {
+        if next.scheme() != "https" {
             return Err(format!(
-                "Carbon clouds manifest {source} returned HTTP {status}: {}",
-                String::from_utf8_lossy(&buf)
+                "refusing insecure redirect downgrade from '{current_url}' to '{next}'"
             ));
         }
-        Ok(buf)
+        let host = next.host_str().unwrap_or_default().to_ascii_lowercase();
+        if host == "localhost"
+            || host == "127.0.0.1"
+            || host == "::1"
+            || host.starts_with("169.254.")
+        {
+            return Err(format!(
+                "refusing redirect from public HTTPS '{current_url}' to local/link-local '{next}'"
+            ));
+        }
+    } else if next.scheme() != "http" && next.scheme() != "https" {
+        return Err(format!("unsupported redirect scheme in '{next}'"));
+    }
+    Ok(next.into())
+}
+
+fn fetch_clouds_manifest_bytes(source: &str) -> Result<Vec<u8>, String> {
+    if source.starts_with("https://") || source.starts_with("http://") {
+        let mut current = source.to_owned();
+        for _hop in 0..=5 {
+            let mut resp = crate::tls::carbon_https_agent()
+                .get(&current)
+                .config()
+                .http_status_as_error(false)
+                .build()
+                .call()
+                .map_err(|e| format!("fetch Carbon clouds manifest {current} failed: {e}"))?;
+            let status = resp.status().as_u16();
+            if matches!(status, 301 | 302 | 303 | 307 | 308) {
+                let loc = resp
+                    .headers()
+                    .get("location")
+                    .and_then(|v| v.to_str().ok())
+                    .ok_or_else(|| {
+                        format!(
+                            "Carbon clouds manifest {current} returned redirect HTTP {status} without Location"
+                        )
+                    })?;
+                current = resolve_clouds_redirect_target(&current, loc)?;
+                continue;
+            }
+            let mut buf = Vec::new();
+            resp.body_mut()
+                .as_reader()
+                .read_to_end(&mut buf)
+                .map_err(|e| format!("read Carbon clouds manifest {current}: {e}"))?;
+            if status >= 300 {
+                return Err(format!(
+                    "Carbon clouds manifest {current} returned HTTP {status}: {}",
+                    String::from_utf8_lossy(&buf)
+                ));
+            }
+            return Ok(buf);
+        }
+        Err(format!(
+            "Carbon clouds manifest {source} exceeded maximum 5 redirects"
+        ))
     } else {
         std::fs::read(source)
             .map_err(|e| format!("read local Carbon clouds manifest {source}: {e}"))

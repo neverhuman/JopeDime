@@ -40,6 +40,9 @@ use crate::{
     storage::cas::sha256_lower_hex,
 };
 
+#[path = "coverage_audit_v11.rs"]
+mod v11;
+
 /// `CarbonCoverageCheckResult` is a struct recording one capability or adversarial check outcome.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CarbonCoverageCheckResult {
@@ -1118,7 +1121,7 @@ fn run_kek_replay_and_shred_checks(
         tenant_id: inp.pro_tenant_a.to_owned(),
         effort: None,
         additional_waves: Some(1),
-        wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(&cudk_legit)),
+        wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_legit)),
     })
     .map_err(|e| e.to_string())?;
     let (c_ps_res, _) = send_raw_edge_http(
@@ -1585,7 +1588,7 @@ fn run_abort_and_resume_checks(
         tenant_id: free_tenant.to_owned(),
         effort: Some(Effort::High),
         additional_waves: Some(1),
-        wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(&cudk_free)),
+        wrapped_u_dek_b64: Some(base64::engine::general_purpose::STANDARD.encode(cudk_free)),
     })
     .map_err(|e| e.to_string())?;
     let (c_esc, _) = send_raw_edge_http(
@@ -1666,10 +1669,15 @@ pub fn execute_cloud_product_coverage_audit(
         &prepared_small,
         &mut checks,
     )?;
+    let rem_3 = if ver_deployed {
+        v11::run_v11_deployed_checks(inp, &base, &bearer_a, &prepared_small, &mut checks)?
+    } else {
+        0
+    };
 
     let passed_checks = checks.iter().filter(|c| c.passed).count();
     let total_checks = checks.len();
-    let residual = rem_1 + rem_2;
+    let residual = rem_1 + rem_2 + rem_3;
     let all_passed = passed_checks == total_checks && redteam.all_passed && residual == 0;
 
     let receipt = CarbonCloudCoverageReceipt {

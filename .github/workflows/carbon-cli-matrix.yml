@@ -20,7 +20,7 @@ jobs:
           - os: ubuntu-24.04
             label: linux-x86_64
             target: x86_64-unknown-linux-musl
-            asset: carbon-linux-x86_64
+            asset: carbon-linux-x86_64-musl
           - os: macos-15
             label: darwin-universal
             target: aarch64-apple-darwin
@@ -28,11 +28,11 @@ jobs:
           - os: windows-2025
             label: windows-x86_64
             target: x86_64-pc-windows-msvc
-            asset: carbon-windows-x86_64.exe
+            asset: carbon-windows-x86_64-msvc.exe
           - os: windows-2025
             label: windows-arm64
             target: aarch64-pc-windows-msvc
-            asset: carbon-windows-arm64.exe
+            asset: carbon-windows-aarch64-msvc.exe
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     permissions:
