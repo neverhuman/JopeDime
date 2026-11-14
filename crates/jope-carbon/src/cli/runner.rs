@@ -1,7 +1,6 @@
 //! CLI execution (`carbon run`) and Free + Pro `r882` zero-knowledge live Lambda benchmark harness (`carbon bench`).
 
 use std::collections::BTreeMap;
-use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -15,6 +14,7 @@ use jope_api::{
     ids::{DatasetId, RunId},
     Effort,
 };
+use jope_comparators::{rmse as comp_rmse, FeatureMatrix, RidgeModel, RidgeParams};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -238,62 +238,46 @@ pub fn generate_nonlinear_benchmark_rows(
 }
 
 /// Parse a numeric CSV file with a header row into `(headers, numeric_rows)`.
-/// Strips any leading UTF-8 BOM (`\u{feff}`) produced by Excel/Pandas exports.
+/// Delegates RFC-4180 delimiter/quote/UTF-8 BOM handling to [`load_delimited_table`].
 pub fn load_numeric_csv(path: &Path) -> Result<(Vec<String>, Vec<Vec<f64>>), String> {
-    let raw = fs::read_to_string(path).map_err(|e| format!("read CSV {}: {e}", path.display()))?;
-    let stripped = raw.strip_prefix('\u{feff}').unwrap_or(&raw);
-    let mut lines = stripped
-        .lines()
-        .map(|l| l.trim_matches(|c: char| c.is_whitespace() || c == '\u{feff}'))
-        .filter(|line| !line.is_empty());
-    let header_line = lines
-        .next()
-        .ok_or_else(|| format!("CSV {} is empty", path.display()))?;
-    let headers: Vec<String> = header_line
-        .split(',')
-        .map(|s| {
-            s.trim()
-                .trim_start_matches('\u{feff}')
-                .trim_matches('"')
-                .trim_start_matches('\u{feff}')
-                .trim()
-                .to_owned()
-        })
-        .collect();
-    if headers.len() < 2 {
+    let raw_table = load_delimited_table(path, Some(','), true)?;
+    if raw_table.headers.len() < 2 {
         return Err(format!(
             "CSV {} must contain at least 1 feature column and 1 target column",
             path.display()
         ));
     }
-    let mut rows = Vec::new();
-    for (idx, line) in lines.enumerate() {
-        let cells: Vec<&str> = line.split(',').collect();
-        if cells.len() != headers.len() {
+    let mut rows = Vec::with_capacity(raw_table.rows.len());
+    for (idx, row) in raw_table.rows.iter().enumerate() {
+        if row.len() != raw_table.headers.len() {
             return Err(format!(
                 "CSV {} row {} has {} columns, expected {}",
                 path.display(),
                 idx + 2,
-                cells.len(),
-                headers.len()
+                row.len(),
+                raw_table.headers.len()
             ));
         }
-        let mut parsed_row = Vec::with_capacity(headers.len());
-        for (col_idx, cell) in cells.iter().enumerate() {
-            let trimmed = cell.trim().trim_matches('"');
-            let val: f64 = trimmed.parse().map_err(|e| {
-                format!(
-                    "CSV {} row {} column '{}' ('{trimmed}') is not a finite number: {e}",
-                    path.display(),
-                    idx + 2,
-                    headers[col_idx]
-                )
-            })?;
+        let mut parsed_row = Vec::with_capacity(raw_table.headers.len());
+        for (col_idx, cell) in row.iter().enumerate() {
+            let trimmed = cell.as_deref().map(str::trim).unwrap_or("");
+            let val: f64 = trimmed
+                .parse::<f64>()
+                .ok()
+                .filter(|v| v.is_finite())
+                .ok_or_else(|| {
+                    format!(
+                        "CSV {} row {} column '{}' ('{trimmed}') is not a finite number",
+                        path.display(),
+                        idx + 2,
+                        raw_table.headers[col_idx]
+                    )
+                })?;
             parsed_row.push(val);
         }
         rows.push(parsed_row);
     }
-    Ok((headers, rows))
+    Ok((raw_table.headers, rows))
 }
 
 fn mint_run_and_dataset_ids() -> Result<(RunId, DatasetId), String> {
@@ -333,63 +317,19 @@ struct HoldoutBaselineStats {
     linear_baseline_r2: Option<f64>,
 }
 
-#[allow(clippy::needless_range_loop)]
-fn solve_linear_system_partial_pivot(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Option<Vec<f64>> {
-    let n = b.len();
-    for col in 0..n {
-        let mut pivot_row = col;
-        let mut max_abs = a[col][col].abs();
-        for (r, row_vals) in a.iter().enumerate().skip(col + 1) {
-            let v = row_vals[col].abs();
-            if v > max_abs {
-                max_abs = v;
-                pivot_row = r;
-            }
-        }
-        if !max_abs.is_finite() || max_abs < 1e-14 {
-            return None;
-        }
-        if pivot_row != col {
-            a.swap(col, pivot_row);
-            b.swap(col, pivot_row);
-        }
-        let diag = a[col][col];
-        for r in (col + 1)..n {
-            let factor = a[r][col] / diag;
-            a[r][col] = 0.0;
-            for c in (col + 1)..n {
-                a[r][c] -= factor * a[col][c];
-            }
-            b[r] -= factor * b[col];
-        }
-    }
-    let mut x = vec![0.0; n];
-    for i in (0..n).rev() {
-        let mut sum = b[i];
-        for j in (i + 1)..n {
-            sum -= a[i][j] * x[j];
-        }
-        x[i] = sum / a[i][i];
-        if !x[i].is_finite() {
-            return None;
-        }
-    }
-    Some(x)
-}
-
-#[allow(clippy::needless_range_loop)]
 fn compute_holdout_baselines(
     fit_x: &[Vec<f64>],
     fit_y: &[f64],
     holdout_x: &[Vec<f64>],
     holdout_y: &[f64],
+    precomputed_ridge: Option<(f64, Option<f64>)>,
 ) -> Option<HoldoutBaselineStats> {
     if fit_y.is_empty() || holdout_y.is_empty() {
         return None;
     }
-    let n_fit = fit_y.len() as f64;
-    let n_hold = holdout_y.len() as f64;
-    let fit_mean = fit_y.iter().copied().sum::<f64>() / n_fit;
+    let n_fit = fit_y.len();
+    let n_hold = holdout_y.len();
+    let fit_mean = fit_y.iter().copied().sum::<f64>() / (n_fit as f64);
     let sse_mean: f64 = holdout_y
         .iter()
         .map(|&y| {
@@ -397,77 +337,53 @@ fn compute_holdout_baselines(
             d * d
         })
         .sum();
-    let mean_baseline_rmse = (sse_mean / n_hold).sqrt();
+    let mean_baseline_rmse = (sse_mean / (n_hold as f64)).sqrt();
 
     let p = fit_x.first().map(Vec::len).unwrap_or(0);
-    let (linear_baseline_rmse, linear_baseline_r2) = if p > 0 && p <= 256 {
-        let mut means = vec![0.0; p];
+    let (linear_baseline_rmse, linear_baseline_r2) = if let Some((r_rmse, r_r2)) = precomputed_ridge
+    {
+        (Some(r_rmse), r_r2)
+    } else if p > 0 && p <= 256 {
+        let mut flat_fit = Vec::with_capacity(n_fit * p);
         for row in fit_x {
-            for (j, &v) in row.iter().enumerate() {
-                means[j] += v;
-            }
+            flat_fit.extend_from_slice(row);
         }
-        for m in &mut means {
-            *m /= n_fit;
+        let mut flat_hold = Vec::with_capacity(n_hold * p);
+        for row in holdout_x {
+            flat_hold.extend_from_slice(row);
         }
-        let mut scales = vec![0.0; p];
-        for row in fit_x {
-            for (j, &v) in row.iter().enumerate() {
-                let d = v - means[j];
-                scales[j] += d * d;
-            }
-        }
-        for s in &mut scales {
-            let std = (*s / n_fit).sqrt();
-            *s = if std > 1e-9 { std } else { 1.0 };
-        }
-
-        let dim = p + 1;
-        let mut xtx = vec![vec![0.0; dim]; dim];
-        let mut xty = vec![0.0; dim];
-        let mut z = vec![1.0; dim];
-        for (row, &y) in fit_x.iter().zip(fit_y.iter()) {
-            z[0] = 1.0;
-            for j in 0..p {
-                z[j + 1] = (row[j] - means[j]) / scales[j];
-            }
-            for r in 0..dim {
-                let zr = z[r];
-                xty[r] += zr * y;
-                for c in r..dim {
-                    xtx[r][c] += zr * z[c];
+        match (
+            FeatureMatrix::new(&flat_fit, n_fit, p),
+            FeatureMatrix::new(&flat_hold, n_hold, p),
+        ) {
+            (Ok(train_mat), Ok(hold_mat)) => {
+                if let Ok(ridge) = RidgeModel::fit(
+                    train_mat,
+                    fit_y,
+                    &RidgeParams {
+                        alpha: 1e-6 * (n_fit.max(1) as f64),
+                    },
+                ) {
+                    if let Ok(preds) = ridge.predict(hold_mat) {
+                        if let Ok(lin_rmse) = comp_rmse(holdout_y, &preds) {
+                            let sse_lin = lin_rmse * lin_rmse * (n_hold as f64);
+                            let lin_r2 = if sse_mean > 1e-18 {
+                                Some(1.0 - (sse_lin / sse_mean))
+                            } else {
+                                None
+                            };
+                            (Some(lin_rmse), lin_r2)
+                        } else {
+                            (None, None)
+                        }
+                    } else {
+                        (None, None)
+                    }
+                } else {
+                    (None, None)
                 }
             }
-        }
-        for r in 0..dim {
-            for c in 0..r {
-                xtx[r][c] = xtx[c][r];
-            }
-        }
-        let ridge = 1e-6 * n_fit.max(1.0);
-        for (j, row_mat) in xtx.iter_mut().enumerate().skip(1) {
-            row_mat[j] += ridge;
-        }
-
-        if let Some(weights) = solve_linear_system_partial_pivot(xtx, xty) {
-            let mut sse_lin = 0.0;
-            for (row, &y) in holdout_x.iter().zip(holdout_y.iter()) {
-                let mut pred = weights[0];
-                for j in 0..p {
-                    pred += weights[j + 1] * ((row[j] - means[j]) / scales[j]);
-                }
-                let err = y - pred;
-                sse_lin += err * err;
-            }
-            let lin_rmse = (sse_lin / n_hold).sqrt();
-            let lin_r2 = if sse_mean > 1e-18 {
-                Some(1.0 - (sse_lin / sse_mean))
-            } else {
-                None
-            };
-            (Some(lin_rmse), lin_r2)
-        } else {
-            (None, None)
+            _ => (None, None),
         }
     } else {
         (None, None)
@@ -948,12 +864,17 @@ pub fn execute_carbon_cli_run_with_ux(
         eval_holdout_count,
         sample_count,
     } = prepare_from_options(opts, ux)?;
-    let baseline_stats = compute_holdout_baselines(&fit_x, &fit_y, &holdout_x, &holdout_y);
     let comparator_baselines = if opts.objective == "rmse" && fit_x.len() <= 2_500 {
         compute_quick_run_comparators(&fit_x, &fit_y, &holdout_x, &holdout_y, opts.seed)
     } else {
         Vec::new()
     };
+    let precomputed_ridge = comparator_baselines
+        .iter()
+        .find(|c| c.key == "ridge_l2")
+        .map(|c| (c.rmse, c.r2));
+    let baseline_stats =
+        compute_holdout_baselines(&fit_x, &fit_y, &holdout_x, &holdout_y, precomputed_ridge);
     let feature_importances = compute_holdout_feature_drivers(
         &prepared.feature_names,
         &fit_x,
@@ -1508,7 +1429,7 @@ pub fn execute_carbon_cli_benchmark_with_token(
         )?;
         let sample_hi: Vec<Vec<f64>> = predict_batch_x.into_iter().take(sample_n_hi).collect();
         let s4_baselines =
-            compute_holdout_baselines(&fit_x_hi, &fit_y_hi, &holdout_x_hi, &holdout_y_hi);
+            compute_holdout_baselines(&fit_x_hi, &fit_y_hi, &holdout_x_hi, &holdout_y_hi, None);
         let t_up4 = Instant::now();
         client.upload_prepared(tenant_id, tier, &prep_hi)?;
         let up4_ms = t_up4.elapsed().as_secs_f64() * 1_000.0;

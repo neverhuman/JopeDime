@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::Path;
 
-use jope_prep::{split_and_encode_jmat_v1, FitLandmarkBundle, PrepTable, SplitPlan};
+use jope_prep::{jmat_lite::split_and_encode_numeric_jmat_v1, FitLandmarkBundle, SplitPlan};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -679,7 +679,7 @@ pub fn prepare_encoded_training_set(
     let n_enc = encoded_feature_names.len();
     let mut full_x_f32 = Vec::with_capacity(total_rows * n_enc);
     let mut full_y_f32 = Vec::with_capacity(total_rows);
-    let mut prep_string_rows = Vec::with_capacity(total_rows);
+    let mut jmat_numeric_rows: Vec<Vec<f64>> = Vec::with_capacity(total_rows);
     let mut all_encoded_rows: Vec<Vec<f64>> = Vec::with_capacity(total_rows);
 
     for (r_i, row) in valid_rows.iter().enumerate() {
@@ -695,10 +695,10 @@ pub fn prepare_encoded_training_set(
             full_x_f32.push(v as f32);
         }
         full_y_f32.push(y_val as f32);
-        let mut s_row: Vec<Option<String>> =
-            enc_row.iter().map(|&v| Some(format!("{v:.10}"))).collect();
-        s_row.push(Some(format!("{y_val:.10}")));
-        prep_string_rows.push(s_row);
+        let mut jmat_row = Vec::with_capacity(n_enc + 1);
+        jmat_row.extend_from_slice(&enc_row);
+        jmat_row.push(y_val);
+        jmat_numeric_rows.push(jmat_row);
         all_encoded_rows.push(enc_row);
     }
 
@@ -713,12 +713,9 @@ pub fn prepare_encoded_training_set(
 
     let mut jmat_headers = encoded_feature_names.clone();
     jmat_headers.push(target_col.clone());
-    let jmat_table = PrepTable {
-        headers: jmat_headers,
-        rows: prep_string_rows,
-    };
-    let artifacts = split_and_encode_jmat_v1(&jmat_table, &split_plan)
-        .map_err(|e| format!("JMAT v1 split encoding failed: {e}"))?;
+    let artifacts =
+        split_and_encode_numeric_jmat_v1(&jmat_headers, &jmat_numeric_rows, &split_plan)
+            .map_err(|e| format!("JMAT v1 split encoding failed: {e}"))?;
 
     let mut fit_x = Vec::with_capacity(split_plan.fit_rows().len());
     let mut fit_y = Vec::with_capacity(split_plan.fit_rows().len());
@@ -922,6 +919,24 @@ pub fn inspect_tabular_file(
     delimiter_override: Option<char>,
     has_header: bool,
 ) -> Result<CarbonTabularInspectReport, String> {
+    inspect_tabular_file_with_tier(
+        path,
+        requested_target,
+        delimiter_override,
+        has_header,
+        CarbonProductTier::Pro,
+    )
+}
+
+/// Run a zero-network local preflight inspection evaluated against a specific `CarbonProductTier`
+/// (`--tier free|pro|enterprise`).
+pub fn inspect_tabular_file_with_tier(
+    path: &Path,
+    requested_target: Option<&str>,
+    delimiter_override: Option<char>,
+    has_header: bool,
+    requested_tier: CarbonProductTier,
+) -> Result<CarbonTabularInspectReport, String> {
     let table = load_delimited_table(path, delimiter_override, has_header)?;
     let mut inferred_preview_target: Option<String> = None;
     let effective_target: Option<String> = match requested_target {
@@ -955,7 +970,9 @@ pub fn inspect_tabular_file(
             }
         },
     };
-    let encoded = prepare_encoded_training_set(&table, effective_target.as_deref(), 42, 0.20, 256)?;
+    let max_feats = requested_tier.max_features().unwrap_or(512).min(256);
+    let encoded =
+        prepare_encoded_training_set(&table, effective_target.as_deref(), 42, 0.20, max_feats)?;
     let (target_idx, target_col, _) = resolve_target_column(
         &table.headers,
         effective_target.as_deref(),
@@ -1093,16 +1110,40 @@ pub fn inspect_tabular_file(
 
     let fit_rows = encoded.prepared.fit_rows as usize;
     let feat_cnt = encoded.encoder.encoded_feature_names.len();
+    if let Err(tier_err) = requested_tier.validate_admission(
+        encoded.total_valid_rows,
+        feat_cnt,
+        CarbonEffortTier::Fast,
+    ) {
+        warnings.push(format!(
+            "Selected --tier {} limit exceeded: {tier_err} (use `--tier pro` or `carbon serve` Enterprise).",
+            requested_tier.as_str()
+        ));
+    }
     let est_ms = estimate_ms_per_candidate_1vcpu(fit_rows, feat_cnt);
 
     let mut effort_previews = Vec::new();
-    let preview_specs = [
-        (CarbonProductTier::Free, CarbonEffortTier::Fast),
-        (CarbonProductTier::Pro, CarbonEffortTier::Fast),
-        (CarbonProductTier::Pro, CarbonEffortTier::Medium),
-        (CarbonProductTier::Pro, CarbonEffortTier::High),
-        (CarbonProductTier::Pro, CarbonEffortTier::Ultra),
-    ];
+    let preview_specs: Vec<(CarbonProductTier, CarbonEffortTier)> = match requested_tier {
+        CarbonProductTier::Free => vec![
+            (CarbonProductTier::Free, CarbonEffortTier::Fast),
+            (CarbonProductTier::Free, CarbonEffortTier::Medium),
+            (CarbonProductTier::Pro, CarbonEffortTier::Fast),
+            (CarbonProductTier::Pro, CarbonEffortTier::Medium),
+        ],
+        CarbonProductTier::Pro => vec![
+            (CarbonProductTier::Free, CarbonEffortTier::Fast),
+            (CarbonProductTier::Pro, CarbonEffortTier::Fast),
+            (CarbonProductTier::Pro, CarbonEffortTier::Medium),
+            (CarbonProductTier::Pro, CarbonEffortTier::High),
+            (CarbonProductTier::Pro, CarbonEffortTier::Ultra),
+        ],
+        CarbonProductTier::Enterprise => vec![
+            (CarbonProductTier::Enterprise, CarbonEffortTier::Fast),
+            (CarbonProductTier::Enterprise, CarbonEffortTier::Medium),
+            (CarbonProductTier::Enterprise, CarbonEffortTier::High),
+            (CarbonProductTier::Enterprise, CarbonEffortTier::Ultra),
+        ],
+    };
     for (ptier, eff) in preview_specs {
         if let Ok(plan) = plan_carbon_execution(&CarbonPlanInput {
             product_tier: ptier,

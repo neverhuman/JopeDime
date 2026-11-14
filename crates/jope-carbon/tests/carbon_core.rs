@@ -1285,6 +1285,10 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
     };
 
     assert_eq!(CARBON_RELEASE_TAG, SPEC_RELEASE_TAG);
+    assert_eq!(
+        jope_carbon::CARBON_PUBLISHED_INSTALLER_TAG,
+        "carbon-cli-v1.1.0"
+    );
     assert!(!CARBON_GIT_SHA.is_empty());
 
     let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -1294,12 +1298,14 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
     let install_sh = std::fs::read_to_string(repo_root.join("deploy/carbon/install.sh")).unwrap();
     let install_ps1 = std::fs::read_to_string(repo_root.join("deploy/carbon/install.ps1")).unwrap();
     assert!(
-        install_sh.contains(CARBON_RELEASE_TAG),
-        "deploy/carbon/install.sh must pin {CARBON_RELEASE_TAG}"
+        install_sh.contains(jope_carbon::CARBON_PUBLISHED_INSTALLER_TAG),
+        "deploy/carbon/install.sh must pin published tag {}",
+        jope_carbon::CARBON_PUBLISHED_INSTALLER_TAG
     );
     assert!(
-        install_ps1.contains(CARBON_RELEASE_TAG),
-        "deploy/carbon/install.ps1 must pin {CARBON_RELEASE_TAG}"
+        install_ps1.contains(jope_carbon::CARBON_PUBLISHED_INSTALLER_TAG),
+        "deploy/carbon/install.ps1 must pin published tag {}",
+        jope_carbon::CARBON_PUBLISHED_INSTALLER_TAG
     );
 
     // Feature-isolated `cli` and `eval` Cargo graphs (`CT3` client & worker boundaries)
@@ -1952,7 +1958,7 @@ fn universal_tabular_conditioning_zero_leakage_and_completions() {
         prepare_encoded_training_set(&semi_tbl, Some("-1"), 7, 0.25, 64).expect("encode -1 target");
     assert_eq!(semi_enc.encoder.encoded_feature_names.len(), 2);
 
-    // `inspect_tabular_file` zero-network preflight
+    // `inspect_tabular_file` zero-network preflight + `--tier free` vs `--tier pro`
     let inspect_rep =
         inspect_tabular_file(&messy_csv, Some("price"), None, true).expect("inspect messy csv");
     assert_eq!(inspect_rep.raw_rows, 80);
@@ -1960,7 +1966,78 @@ fn universal_tabular_conditioning_zero_leakage_and_completions() {
     assert_eq!(inspect_rep.target_column, "price");
     assert!(!inspect_rep.effort_previews.is_empty());
 
-    // Shell completions for bash, zsh, fish, powershell
+    let wide_csv = tmp.path().join("wide_free_limit.csv");
+    let mut wide_text = (0..70)
+        .map(|j| format!("f{j}"))
+        .collect::<Vec<_>>()
+        .join(",");
+    wide_text.push_str(",target\n");
+    for r in 0..32usize {
+        for j in 0..70usize {
+            wide_text.push_str(&format!("{:.3},", (r + j) as f64 * 0.1 + (j as f64) * 0.01));
+        }
+        wide_text.push_str(&format!("{:.3}\n", r as f64 * 1.5));
+    }
+    std::fs::write(&wide_csv, wide_text.as_bytes()).unwrap();
+    let free_insp = jope_carbon::inspect_tabular_file_with_tier(
+        &wide_csv,
+        Some("target"),
+        None,
+        true,
+        CarbonProductTier::Free,
+    )
+    .expect("inspect --tier free");
+    assert!(
+        free_insp.encoded_feature_count <= 64,
+        "Free tier preflight must cap encoded features at 64 (got {})",
+        free_insp.encoded_feature_count
+    );
+    let pro_insp = jope_carbon::inspect_tabular_file_with_tier(
+        &wide_csv,
+        Some("target"),
+        None,
+        true,
+        CarbonProductTier::Pro,
+    )
+    .expect("inspect --tier pro");
+    assert_eq!(pro_insp.encoded_feature_count, 70);
+
+    // Zero-copy numeric JMAT v1 preserves full 53-bit IEEE-754 mantissa bits (`1.0 + EPSILON`)
+    let eps_val = 1.0_f64 + f64::EPSILON;
+    let sub10_val = std::f64::consts::PI + 1.234_567_89e-13;
+    let num_headers = vec!["x0".to_owned(), "x1".to_owned(), "y".to_owned()];
+    let mut num_rows = Vec::with_capacity(24);
+    for i in 0..24usize {
+        num_rows.push(vec![
+            eps_val + (i as f64),
+            sub10_val,
+            2.0 * (i as f64) + eps_val,
+        ]);
+    }
+    let split = jope_prep::SplitPlan::deterministic(24, 99, 0.25).unwrap();
+    let zc_arts =
+        jope_prep::jmat_lite::split_and_encode_numeric_jmat_v1(&num_headers, &num_rows, &split)
+            .expect("zero-copy split_and_encode_numeric_jmat_v1");
+    let opened_fit = jope_prep::PrepMatrix::open(&zc_arts.fit_jmat).expect("open zero-copy fit");
+    let first_orig_idx = split.fit_rows()[0];
+    match opened_fit.cell(0, 0).unwrap() {
+        jope_prep::PrepCell::Numeric(got) => {
+            assert_eq!(
+                got.to_bits(),
+                num_rows[first_orig_idx][0].to_bits(),
+                "zero-copy JMAT must preserve exact IEEE-754 bits without 10-decimal string truncation"
+            );
+        }
+        other => panic!("unexpected cell: {other:?}"),
+    }
+    match opened_fit.cell(0, 1).unwrap() {
+        jope_prep::PrepCell::Numeric(got) => {
+            assert_eq!(got.to_bits(), sub10_val.to_bits());
+        }
+        other => panic!("unexpected cell: {other:?}"),
+    }
+
+    // Shell completions for bash, zsh, fish, powershell (+ `bash -n` syntax verification)
     let carbon_bin = env!("CARGO_BIN_EXE_carbon");
     for shell in ["bash", "zsh", "fish", "powershell"] {
         let out = std::process::Command::new(carbon_bin)
@@ -1969,6 +2046,16 @@ fn universal_tabular_conditioning_zero_leakage_and_completions() {
             .expect("run carbon completions");
         assert!(out.status.success(), "completions {shell} failed");
         let text = String::from_utf8(out.stdout).unwrap();
+        if shell == "bash" {
+            let bash_comp = tmp.path().join("carbon.bash");
+            std::fs::write(&bash_comp, text.as_bytes()).unwrap();
+            let syntax = std::process::Command::new("bash")
+                .arg("-n")
+                .arg(&bash_comp)
+                .status()
+                .expect("bash -n completions");
+            assert!(syntax.success(), "bash -n rejected carbon bash completions");
+        }
         for verb in [
             "fit",
             "predict",

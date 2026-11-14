@@ -181,7 +181,7 @@ enum TaskDataKind {
 fn build_numeric_raw_table(headers: Vec<String>, rows: Vec<Vec<f64>>) -> CarbonRawTable {
     let str_rows = rows
         .into_iter()
-        .map(|r| r.into_iter().map(|v| Some(format!("{v:.8}"))).collect())
+        .map(|r| r.into_iter().map(|v| Some(v.to_string())).collect())
         .collect();
     CarbonRawTable {
         headers,

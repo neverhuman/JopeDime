@@ -12,7 +12,9 @@ use std::sync::{Arc, Mutex};
 use base64::Engine as _;
 use jope_prep::cuen::CuenPayloadKind;
 use jope_service::{
-    discover::r#loop::carbon::{evaluate_carbon_eval_shard, CarbonShardEvalOutcome},
+    discover::r#loop::carbon::{
+        evaluate_carbon_eval_shard_with_executor, CarbonInProcessExecutor, CarbonShardEvalOutcome,
+    },
     worker::Request,
 };
 use serde::{Deserialize, Serialize};
@@ -265,16 +267,11 @@ pub fn open_eval_invoker(target: &str, default_region: &str) -> Arc<dyn CarbonEv
 struct CachedFitEntry {
     expires_epoch_secs: u64,
     plaintext_sha256: String,
-    bytes: Arc<Zeroizing<Vec<u8>>>,
-}
-
-struct LoadedFitPayload {
-    bytes: Arc<Zeroizing<Vec<u8>>>,
-    plaintext_sha256: String,
+    executor: Arc<CarbonInProcessExecutor>,
 }
 
 /// `CarbonEvalWorker` is a struct executing stateless candidate shard evaluations with short-lived
-/// `Zeroizing` RAM caching (`<= 2` entries, `<= 60 s` TTL).
+/// `Zeroizing` RAM `Matrix` caching (`<= 2` entries, `<= 60 s` TTL).
 pub struct CarbonEvalWorker {
     cas: Arc<dyn CarbonCasStore>,
     scratch_root: PathBuf,
@@ -292,12 +289,12 @@ impl CarbonEvalWorker {
         })
     }
 
-    fn load_fit_in_ram(
+    fn load_fit_executor_in_ram(
         &self,
         cas_sha256_hex: &str,
         blob_scope: Option<&str>,
         grant: Option<&CarbonEvalDecryptionGrant>,
-    ) -> Result<LoadedFitPayload, String> {
+    ) -> Result<Arc<CarbonInProcessExecutor>, String> {
         let now_secs = now_epoch_ms() / 1_000;
         let cas_key = cas_sha256_hex.to_ascii_lowercase();
         let tenant_scope = grant
@@ -316,21 +313,16 @@ impl CarbonEvalWorker {
             guard.retain(|_, v| v.expires_epoch_secs >= now_secs);
             if let Some(hit) = guard.get(&cache_key) {
                 if let Some(g) = grant {
-                    // Still verify the caller supplied a valid subkey by checking length/base64,
-                    // and match expected plaintext SHA-256!
                     if hit.plaintext_sha256 != g.fit_plaintext_sha256.to_ascii_lowercase() {
                         return Err("eval cache plaintext SHA-256 mismatch".to_owned());
                     }
                 }
-                return Ok(LoadedFitPayload {
-                    bytes: Arc::clone(&hit.bytes),
-                    plaintext_sha256: hit.plaintext_sha256.clone(),
-                });
+                return Ok(Arc::clone(&hit.executor));
             }
         }
 
         let raw_blob = self.cas.get_scoped_blob_verified(blob_scope, &cas_key)?;
-        let (pt_arc, pt_sha) = if let Some(g) = grant {
+        let (mut pt_vec, pt_sha) = if let Some(g) = grant {
             let subkey_vec = Zeroizing::new(
                 base64::engine::general_purpose::STANDARD
                     .decode(&g.fit_slot_subkey_b64)
@@ -353,10 +345,16 @@ impl CarbonEvalWorker {
             if actual_pt_sha != g.fit_plaintext_sha256.to_ascii_lowercase() {
                 return Err("eval decrypted FitJmat SHA-256 mismatch".to_owned());
             }
-            (Arc::new(decrypted), actual_pt_sha)
+            (decrypted, actual_pt_sha)
         } else {
-            (Arc::new(Zeroizing::new(raw_blob)), cas_key)
+            (Zeroizing::new(raw_blob), cas_key)
         };
+
+        let plain_owned = std::mem::take(&mut *pt_vec);
+        let exec = Arc::new(
+            CarbonInProcessExecutor::open_fit(plain_owned, &pt_sha, self.scratch_root.clone())
+                .map_err(|e| format!("open eval FIT matrix failed: {e}"))?,
+        );
 
         let ttl_exp = grant
             .map(|g| {
@@ -373,15 +371,12 @@ impl CarbonEvalWorker {
                 cache_key,
                 CachedFitEntry {
                     expires_epoch_secs: ttl_exp,
-                    plaintext_sha256: pt_sha.clone(),
-                    bytes: Arc::clone(&pt_arc),
+                    plaintext_sha256: pt_sha,
+                    executor: Arc::clone(&exec),
                 },
             );
         }
-        Ok(LoadedFitPayload {
-            bytes: pt_arc,
-            plaintext_sha256: pt_sha,
-        })
+        Ok(exec)
     }
 
     pub fn handle_wire_bytes(&self, payload: &[u8]) -> Result<Vec<u8>, String> {
@@ -395,22 +390,13 @@ impl CarbonEvalWorker {
         &self,
         wire: &CarbonEvalWireRequest,
     ) -> Result<CarbonShardEvalOutcome, String> {
-        let LoadedFitPayload {
-            bytes: fit_bytes,
-            plaintext_sha256: pt_sha,
-        } = self.load_fit_in_ram(
+        let exec = self.load_fit_executor_in_ram(
             &wire.fit_jmat_sha256,
             wire.blob_scope.as_deref(),
             wire.decryption_grant.as_ref(),
         )?;
-        evaluate_carbon_eval_shard(
-            fit_bytes.as_slice(),
-            &pt_sha,
-            &self.scratch_root,
-            &wire.request,
-            wire.fit_champion,
-        )
-        .map_err(|e| format!("eval shard execution error: {e}"))
+        evaluate_carbon_eval_shard_with_executor(&exec, &wire.request, wire.fit_champion)
+            .map_err(|e| format!("eval shard execution error: {e}"))
     }
 }
 

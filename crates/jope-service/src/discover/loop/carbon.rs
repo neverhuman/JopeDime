@@ -203,10 +203,26 @@ impl<E: Executor> Executor for CarbonLearnedExecutorAdapter<'_, E> {
     }
 }
 
+struct ScrubbedFitBytes(Vec<u8>);
+
+impl AsRef<[u8]> for ScrubbedFitBytes {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl Drop for ScrubbedFitBytes {
+    fn drop(&mut self) {
+        self.0.fill(0);
+        std::hint::black_box(&mut self.0);
+    }
+}
+
 /// `CarbonInProcessExecutor` is a struct evaluating candidates directly in-memory against an
-/// immutable `FIT` `Matrix<Vec<u8>>` for `SoloSingleLambda` execution without child processes.
+/// immutable `FIT` `Matrix` (whose backing buffer scrubs itself on drop) for `SoloSingleLambda`
+/// and cached `CarbonEvalWorker` shard execution without child processes.
 pub struct CarbonInProcessExecutor {
-    fit_matrix: Arc<Matrix<Vec<u8>>>,
+    fit_matrix: Arc<Matrix<ScrubbedFitBytes>>,
     scratch_root: PathBuf,
 }
 
@@ -217,17 +233,28 @@ impl CarbonInProcessExecutor {
         expected_fit_sha256: &str,
         scratch_root: PathBuf,
     ) -> Result<Self> {
-        ensure!(
-            digest(&fit_bytes) == expected_fit_sha256,
-            "CarbonInProcessExecutor FIT matrix SHA-256 mismatch"
-        );
         fs::create_dir_all(&scratch_root)?;
         let scratch_root = fs::canonicalize(&scratch_root)?;
-        let matrix = Matrix::open(fit_bytes)?;
+        let matrix = Matrix::open(ScrubbedFitBytes(fit_bytes))?;
+        ensure!(
+            matrix.sha256_hex() == expected_fit_sha256,
+            "CarbonInProcessExecutor FIT matrix SHA-256 mismatch"
+        );
         Ok(Self {
             fit_matrix: Arc::new(matrix),
             scratch_root,
         })
+    }
+
+    /// Validated lowercase SHA-256 hex digest of the opened `FIT` matrix.
+    pub fn fit_sha256_hex(&self) -> &str {
+        self.fit_matrix.sha256_hex()
+    }
+
+    /// Run private refit and return both the checked `Response` and serialized `NativeModel` bytes
+    /// in a single fit pass without re-evaluating all CV folds.
+    pub fn fitted_model_with_response(&self, request: &Request) -> Result<(Response, Vec<u8>)> {
+        run_private_refit_with_response(&self.scratch_root, request, |req| self.evaluate(req))
     }
 }
 
@@ -331,16 +358,24 @@ pub fn evaluate_carbon_eval_shard(
         expected_fit_sha256,
         scratch_root.to_path_buf(),
     )?;
+    evaluate_carbon_eval_shard_with_executor(&exec, request, fit_champion)
+}
+
+/// Evaluate one `Request` (and optional single-pass promoted refit) against a pre-validated
+/// [`CarbonInProcessExecutor`], avoiding per-candidate `fit.jmat` copies, SHA-256 re-hashing,
+/// `Matrix::open` scans, and duplicate 5-fold CV refit passes.
+pub fn evaluate_carbon_eval_shard_with_executor(
+    exec: &CarbonInProcessExecutor,
+    request: &Request,
+    fit_champion: bool,
+) -> Result<CarbonShardEvalOutcome> {
     if fit_champion {
         let t0 = Instant::now();
-        match exec.fitted_model(request) {
-            Ok(model_bytes) => {
-                let eval_resp = exec.evaluate(request);
-                Ok(CarbonShardEvalOutcome {
-                    response: eval_resp,
-                    fitted_model_bytes: Some(model_bytes),
-                })
-            }
+        match exec.fitted_model_with_response(request) {
+            Ok((refit_resp, model_bytes)) => Ok(CarbonShardEvalOutcome {
+                response: refit_resp,
+                fitted_model_bytes: Some(model_bytes),
+            }),
             Err(err) => {
                 let wall_ms = t0.elapsed().as_millis().min(u128::from(u64::MAX)) as u64;
                 let resp = err
@@ -368,6 +403,15 @@ fn run_private_refit(
     request: &Request,
     eval_fn: impl FnOnce(&Request) -> Response,
 ) -> Result<Vec<u8>> {
+    let (_response, model_bytes) = run_private_refit_with_response(scratch_root, request, eval_fn)?;
+    Ok(model_bytes)
+}
+
+fn run_private_refit_with_response(
+    scratch_root: &Path,
+    request: &Request,
+    eval_fn: impl FnOnce(&Request) -> Response,
+) -> Result<(Response, Vec<u8>)> {
     let directory = tempfile::Builder::new()
         .prefix("carbon-fit-")
         .tempdir_in(scratch_root)
@@ -407,7 +451,7 @@ fn run_private_refit(
     {
         return Err(invalid().into());
     }
-    Ok(envelope.model_json.into_bytes())
+    Ok((response, envelope.model_json.into_bytes()))
 }
 
 /// `CarbonWaveTelemetry` is a struct emitted after each committed wave with strictly scalar metrics.
@@ -686,6 +730,66 @@ pub fn evaluate_outer_holdout_only(
     Ok((score.loss, score.value))
 }
 
+/// `CarbonParsedChampion` is an opaque parsed wrapper around `NativeModel` allowing warm
+/// `CarbonEngineWorker` instances to skip repeated JSON deserializations on `/predict` after
+/// authenticating `sealed_champion.enc`.
+pub struct CarbonParsedChampion {
+    inner: super::native::NativeModel,
+}
+
+impl CarbonParsedChampion {
+    /// Parse a decrypted champion JSON payload once into an in-memory `CarbonParsedChampion`.
+    pub fn from_json_bytes(champion_model_bytes: &[u8]) -> Result<Self> {
+        let inner: super::native::NativeModel = serde_json::from_slice(champion_model_bytes)
+            .context("invalid champion model payload")?;
+        Ok(Self { inner })
+    }
+
+    /// Run inference on `rows` aligned by `feature_names`, returning scalar `f64` predictions.
+    pub fn predict(&self, feature_names: &[String], rows: &[Vec<Option<f64>>]) -> Result<Vec<f64>> {
+        ensure!(
+            feature_names.len() == self.inner.features.len(),
+            "predict feature count {} does not match fitted model feature count {}",
+            feature_names.len(),
+            self.inner.features.len()
+        );
+        let col_map: Vec<usize> = self
+            .inner
+            .features
+            .iter()
+            .map(|expected| {
+                feature_names
+                    .iter()
+                    .position(|provided| provided == expected)
+                    .with_context(|| format!("missing required feature column '{expected}'"))
+            })
+            .collect::<Result<_>>()?;
+
+        let mut aligned: feat_math::Rows = Vec::with_capacity(rows.len());
+        for row in rows {
+            ensure!(
+                row.len() == feature_names.len(),
+                "ragged predict row width {} (expected {})",
+                row.len(),
+                feature_names.len()
+            );
+            let mapped: Vec<f64> = col_map
+                .iter()
+                .map(|&idx| match row[idx] {
+                    Some(v) if v.is_finite() => Ok(v),
+                    Some(_) => bail!("non-finite numeric input in predict row"),
+                    None => Ok(f64::NAN),
+                })
+                .collect::<Result<_>>()?;
+            aligned.push(mapped);
+        }
+        if aligned.is_empty() {
+            return Ok(vec![]);
+        }
+        self.inner.predict(&aligned)
+    }
+}
+
 /// Run inference on feature `rows` using a decrypted champion model buffer, returning ONLY scalar
 /// `f64` predictions.
 pub fn predict_with_champion_bytes(
@@ -693,53 +797,8 @@ pub fn predict_with_champion_bytes(
     feature_names: &[String],
     rows: &[Vec<Option<f64>>],
 ) -> Result<Vec<f64>> {
-    #[derive(Deserialize)]
-    struct ChampionHeader {
-        features: Vec<String>,
-    }
-    let header: ChampionHeader =
-        serde_json::from_slice(champion_model_bytes).context("invalid champion model header")?;
-    let fitted: super::native::NativeModel =
-        serde_json::from_slice(champion_model_bytes).context("invalid champion model payload")?;
-    ensure!(
-        feature_names.len() == header.features.len(),
-        "predict feature count {} does not match fitted model feature count {}",
-        feature_names.len(),
-        header.features.len()
-    );
-    let col_map: Vec<usize> = header
-        .features
-        .iter()
-        .map(|expected| {
-            feature_names
-                .iter()
-                .position(|provided| provided == expected)
-                .with_context(|| format!("missing required feature column '{expected}'"))
-        })
-        .collect::<Result<_>>()?;
-
-    let mut aligned: feat_math::Rows = Vec::with_capacity(rows.len());
-    for row in rows {
-        ensure!(
-            row.len() == feature_names.len(),
-            "ragged predict row width {} (expected {})",
-            row.len(),
-            feature_names.len()
-        );
-        let mapped: Vec<f64> = col_map
-            .iter()
-            .map(|&idx| match row[idx] {
-                Some(v) if v.is_finite() => Ok(v),
-                Some(_) => bail!("non-finite numeric input in predict row"),
-                None => Ok(f64::NAN),
-            })
-            .collect::<Result<_>>()?;
-        aligned.push(mapped);
-    }
-    if aligned.is_empty() {
-        return Ok(vec![]);
-    }
-    fitted.predict(&aligned)
+    let parsed = CarbonParsedChampion::from_json_bytes(champion_model_bytes)?;
+    parsed.predict(feature_names, rows)
 }
 
 /// `CarbonStoreArchive` is a struct providing deterministic binary packing and cross-container

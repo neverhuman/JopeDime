@@ -1,10 +1,10 @@
 //! Version1 column-major matrices; see `docs/product/jmat-format.md`.
+//!
+//! Backed by the canonical standalone JMAT v1 codec in [`jope_prep::jmat_lite`].
+use jope_prep::jmat_lite::{encode_jmat_v1, PrepColumnKind, PrepMatrix, PrepTable};
 use jope_runtime::table::CsvTable;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
 
-const MAGIC: &[u8; 8] = b"JMAT\r\n\x1a\n";
 const HEADER: usize = 64;
 const CHECKSUM: usize = 32;
 
@@ -35,11 +35,6 @@ pub struct Column {
     values: u64,
     present: u64,
 }
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Metadata {
-    columns: Vec<Column>,
-}
 
 /// Values retain f64 bits, rather than conflating signed zeros in round-trip tests.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -52,14 +47,12 @@ pub enum JmatCell<'a> {
 /// Validated immutable matrix backed by either bytes or an OS mapping.
 pub struct Matrix<B> {
     storage: B,
-    metadata: Metadata,
+    columns: Vec<Column>,
     rows: usize,
     row_ids: usize,
+    sha256_hex: String,
 }
 
-fn aligned(value: usize) -> Result<usize> {
-    value.checked_add(63).map(|n| n & !63).ok_or(InvalidMatrix)
-}
 fn integer(bytes: &[u8], offset: usize) -> Result<usize> {
     let end = offset.checked_add(8).ok_or(InvalidMatrix)?;
     let raw = bytes.get(offset..end).ok_or(InvalidMatrix)?;
@@ -68,259 +61,56 @@ fn integer(bytes: &[u8], offset: usize) -> Result<usize> {
     ))
     .map_err(|_| InvalidMatrix)
 }
-fn zero_padding(bytes: &[u8], from: usize, to: usize) -> Result<()> {
-    if bytes
-        .get(from..to)
-        .ok_or(InvalidMatrix)?
-        .iter()
-        .any(|b| *b != 0)
-    {
-        return Err(InvalidMatrix);
-    }
-    Ok(())
-}
-fn numeric(value: &str) -> Option<f64> {
-    super::finite_number(value)
-}
 
 /// Encode the runtime parser's cells without choosing targets or fitting transforms.
 pub fn encode(table: &CsvTable) -> Result<Vec<u8>> {
-    if table.headers.is_empty()
-        || table.headers.iter().any(|name| name.trim().is_empty())
-        || table.headers.iter().collect::<BTreeSet<_>>().len() != table.headers.len()
-        || table.rows.iter().any(|r| {
-            r.len() != table.headers.len()
-                || r.iter()
-                    .flatten()
-                    .any(|v| v.trim_matches(|c: char| c.is_ascii_whitespace()).is_empty())
-        })
-    {
-        return Err(InvalidMatrix);
-    }
-    let mut metadata = Metadata {
-        columns: Vec::new(),
+    let prep = PrepTable {
+        headers: table.headers.clone(),
+        rows: table.rows.clone(),
     };
-    for (index, name) in table.headers.iter().enumerate() {
-        let kind = if table
-            .rows
-            .iter()
-            .filter_map(|r| r[index].as_deref())
-            .all(|s| numeric(s).is_some())
-        {
-            ColumnKind::Numeric
-        } else {
-            ColumnKind::Categorical
-        };
-        let dictionary = if kind == ColumnKind::Categorical {
-            table
-                .rows
-                .iter()
-                .filter_map(|r| r[index].clone())
-                .collect::<BTreeSet<_>>()
-                .into_iter()
-                .collect()
-        } else {
-            Vec::new()
-        };
-        metadata.columns.push(Column {
-            name: name.clone(),
-            kind,
-            dictionary,
-            values: 0,
-            present: 0,
-        });
-    }
-    let preliminary = serde_json::to_vec(&metadata).map_err(|_| InvalidMatrix)?;
-    let reserve = metadata
-        .columns
-        .len()
-        .checked_mul(1024)
-        .ok_or(InvalidMatrix)?;
-    let row_ids = aligned(
-        HEADER
-            .checked_add(preliminary.len())
-            .and_then(|n| n.checked_add(reserve))
-            .ok_or(InvalidMatrix)?,
-    )?;
-    let mut bytes = vec![0; row_ids];
-    for row in 0..table.rows.len() {
-        bytes.extend_from_slice(&(row as u64).to_le_bytes());
-    }
-    for (index, column) in metadata.columns.iter_mut().enumerate() {
-        bytes.resize(aligned(bytes.len())?, 0);
-        column.values = bytes.len() as u64;
-        for row in &table.rows {
-            match column.kind {
-                ColumnKind::Numeric => {
-                    let value = match row[index].as_deref() {
-                        None => 0.0,
-                        Some(text) => numeric(text).ok_or(InvalidMatrix)?,
-                    };
-                    bytes.extend_from_slice(&value.to_bits().to_le_bytes());
-                }
-                ColumnKind::Categorical => {
-                    let code = match &row[index] {
-                        None => 0,
-                        Some(value) => u32::try_from(
-                            column
-                                .dictionary
-                                .binary_search(value)
-                                .map_err(|_| InvalidMatrix)?,
-                        )
-                        .map_err(|_| InvalidMatrix)?,
-                    };
-                    bytes.extend_from_slice(&code.to_le_bytes());
-                }
-            }
-        }
-        bytes.resize(aligned(bytes.len())?, 0);
-        column.present = bytes.len() as u64;
-        bytes.extend(table.rows.iter().map(|r| u8::from(r[index].is_some())));
-    }
-    let metadata_bytes = serde_json::to_vec(&metadata).map_err(|_| InvalidMatrix)?;
-    if HEADER
-        .checked_add(metadata_bytes.len())
-        .ok_or(InvalidMatrix)?
-        > row_ids
-    {
-        return Err(InvalidMatrix);
-    }
-    let total = bytes.len().checked_add(CHECKSUM).ok_or(InvalidMatrix)?;
-    bytes[..8].copy_from_slice(MAGIC);
-    for (offset, value) in [
-        (8, 1),
-        (16, total),
-        (24, metadata_bytes.len()),
-        (32, table.rows.len()),
-        (40, table.headers.len()),
-        (48, row_ids),
-    ] {
-        bytes[offset..offset + 8].copy_from_slice(&(value as u64).to_le_bytes());
-    }
-    bytes[HEADER..HEADER + metadata_bytes.len()].copy_from_slice(&metadata_bytes);
-    let checksum = Sha256::digest(&bytes);
-    bytes.extend_from_slice(&checksum);
-    Ok(bytes)
+    encode_jmat_v1(&prep).map_err(|_| InvalidMatrix)
 }
 
 impl<B: AsRef<[u8]>> Matrix<B> {
     pub fn open(storage: B) -> Result<Self> {
-        let bytes = storage.as_ref();
-        let end = bytes.len().checked_sub(CHECKSUM).ok_or(InvalidMatrix)?;
-        if end < HEADER
-            || bytes.get(..8) != Some(MAGIC.as_slice())
-            || integer(bytes, 8)? != 1
-            || integer(bytes, 16)? != bytes.len()
-            || integer(bytes, 56)? != 0
-            || Sha256::digest(&bytes[..end]).as_slice() != &bytes[end..]
-        {
-            return Err(InvalidMatrix);
-        }
-        let metadata_end = HEADER
-            .checked_add(integer(bytes, 24)?)
-            .ok_or(InvalidMatrix)?;
-        let metadata: Metadata =
-            serde_json::from_slice(bytes.get(HEADER..metadata_end).ok_or(InvalidMatrix)?)
-                .map_err(|_| InvalidMatrix)?;
-        let rows = integer(bytes, 32)?;
-        let row_ids = integer(bytes, 48)?;
-        if metadata.columns.is_empty()
-            || integer(bytes, 40)? != metadata.columns.len()
-            || metadata.columns.iter().any(|c| c.name.trim().is_empty())
-            || metadata
-                .columns
-                .iter()
-                .map(|c| &c.name)
-                .collect::<BTreeSet<_>>()
-                .len()
-                != metadata.columns.len()
-            || !row_ids.is_multiple_of(64)
-        {
-            return Err(InvalidMatrix);
-        }
-        zero_padding(bytes, metadata_end, row_ids)?;
-        let mut cursor = row_ids
-            .checked_add(rows.checked_mul(8).ok_or(InvalidMatrix)?)
-            .ok_or(InvalidMatrix)?;
-        if cursor > end {
-            return Err(InvalidMatrix);
-        }
-        for row in 0..rows {
-            if integer(bytes, row_ids + row * 8)? != row {
-                return Err(InvalidMatrix);
-            }
-        }
-        for column in &metadata.columns {
-            let start = aligned(cursor)?;
-            zero_padding(bytes, cursor, start)?;
-            if usize::try_from(column.values).map_err(|_| InvalidMatrix)? != start
-                || (column.kind == ColumnKind::Numeric && !column.dictionary.is_empty())
-                || column.dictionary.windows(2).any(|w| w[0] >= w[1])
-                || column
-                    .dictionary
-                    .iter()
-                    .any(|v| v.trim_matches(|c: char| c.is_ascii_whitespace()).is_empty())
-            {
-                return Err(InvalidMatrix);
-            }
-            cursor = start
-                .checked_add(rows.checked_mul(width(column.kind)).ok_or(InvalidMatrix)?)
-                .ok_or(InvalidMatrix)?;
-            let present = aligned(cursor)?;
-            zero_padding(bytes, cursor, present)?;
-            if usize::try_from(column.present).map_err(|_| InvalidMatrix)? != present {
-                return Err(InvalidMatrix);
-            }
-            cursor = present.checked_add(rows).ok_or(InvalidMatrix)?;
-            if cursor > end {
-                return Err(InvalidMatrix);
-            }
-            for row in 0..rows {
-                let flag = bytes[present + row];
-                let at = start + row * width(column.kind);
-                let value = &bytes[at..at + width(column.kind)];
-                if flag > 1 || (flag == 0 && value.iter().any(|b| *b != 0)) {
-                    return Err(InvalidMatrix);
+        let validated = PrepMatrix::open(storage).map_err(|_| InvalidMatrix)?;
+        let (storage, prep_cols, rows, row_ids, sha256_hex) = validated.into_parts();
+        let columns = prep_cols
+            .into_iter()
+            .map(|c| {
+                let values = c.values_offset();
+                let present = c.present_offset();
+                Column {
+                    name: c.name,
+                    kind: match c.kind {
+                        PrepColumnKind::Numeric => ColumnKind::Numeric,
+                        PrepColumnKind::Categorical => ColumnKind::Categorical,
+                    },
+                    dictionary: c.dictionary,
+                    values,
+                    present,
                 }
-                if flag == 1 {
-                    match column.kind {
-                        ColumnKind::Numeric => {
-                            if !f64::from_le_bytes(value.try_into().map_err(|_| InvalidMatrix)?)
-                                .is_finite()
-                            {
-                                return Err(InvalidMatrix);
-                            }
-                        }
-                        ColumnKind::Categorical => {
-                            if u32::from_le_bytes(value.try_into().map_err(|_| InvalidMatrix)?)
-                                as usize
-                                >= column.dictionary.len()
-                            {
-                                return Err(InvalidMatrix);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if cursor != end {
-            return Err(InvalidMatrix);
-        }
+            })
+            .collect();
         Ok(Self {
             storage,
-            metadata,
+            columns,
             rows,
             row_ids,
+            sha256_hex,
         })
     }
     pub fn rows(&self) -> usize {
         self.rows
     }
     pub fn columns(&self) -> &[Column] {
-        &self.metadata.columns
+        &self.columns
     }
     pub fn bytes(&self) -> &[u8] {
         self.storage.as_ref()
+    }
+    pub fn sha256_hex(&self) -> &str {
+        &self.sha256_hex
     }
     pub fn row_id(&self, row: usize) -> Option<u64> {
         (row < self.rows).then(|| {
@@ -331,7 +121,7 @@ impl<B: AsRef<[u8]>> Matrix<B> {
         if row >= self.rows {
             return None;
         }
-        let column = self.metadata.columns.get(column)?;
+        let column = self.columns.get(column)?;
         let bytes = self.bytes();
         if bytes[column.present as usize + row] == 0 {
             return Some(JmatCell::Missing);

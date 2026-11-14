@@ -28,10 +28,7 @@ use jope_api::{
     ids::{DatasetId, RunId},
     Effort,
 };
-use jope_prep::{
-    cuen::CuenPayloadKind, split_and_encode_jmat_v1, FitLandmarkBundle, PrepTable,
-    SplitJmatArtifacts, SplitPlan,
-};
+use jope_prep::{cuen::CuenPayloadKind, FitLandmarkBundle, SplitJmatArtifacts, SplitPlan};
 use zeroize::Zeroizing;
 
 use crate::{
@@ -55,7 +52,6 @@ use crate::{
 const PREDICT_CAS_THRESHOLD_BYTES: usize = 1_572_864;
 
 #[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
 struct CompatPingWire {
     region: String,
     healthy: bool,
@@ -544,7 +540,6 @@ impl CarbonThinClient {
 
         let mut full_x = Vec::with_capacity(total_rows * feature_indices.len());
         let mut full_y = Vec::with_capacity(total_rows);
-        let mut string_rows = Vec::with_capacity(total_rows);
         for (r_idx, row) in numeric_rows.iter().enumerate() {
             if row.len() != headers.len() {
                 return Err(format!("row {r_idx} column count mismatch"));
@@ -553,7 +548,6 @@ impl CarbonThinClient {
                 full_x.push(row[fi] as f32);
             }
             full_y.push(row[target_idx] as f32);
-            string_rows.push(row.iter().map(|v| Some(format!("{v:.10}"))).collect());
         }
 
         let landmark_bundle = FitLandmarkBundle::extract_fit_only(
@@ -565,12 +559,12 @@ impl CarbonThinClient {
         )
         .map_err(|e| format!("FIT-only landmark conditioning failed: {e}"))?;
 
-        let table = PrepTable {
-            headers,
-            rows: string_rows,
-        };
-        let artifacts = split_and_encode_jmat_v1(&table, &split_plan)
-            .map_err(|e| format!("JMAT split encoding failed: {e}"))?;
+        let artifacts = jope_prep::jmat_lite::split_and_encode_numeric_jmat_v1(
+            &headers,
+            numeric_rows,
+            &split_plan,
+        )
+        .map_err(|e| format!("JMAT split encoding failed: {e}"))?;
 
         Ok(CarbonClientPreparedDataset {
             fit_rows: split_plan.fit_rows().len() as u32,

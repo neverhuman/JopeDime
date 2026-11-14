@@ -1,4 +1,10 @@
 use super::*;
+use sha2::{Digest, Sha256};
+
+fn numeric(value: &str) -> Option<f64> {
+    value.trim().parse::<f64>().ok().filter(|v| v.is_finite())
+}
+
 const REAL: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../test-support/datasets/v1/messy-csv-like/raw-source-subset.csv"
@@ -16,8 +22,8 @@ fn real_catalog_tables_round_trip_every_cell_and_encode_deterministically() {
         let mut missing = 0;
         for (column, header) in parsed.headers.iter().enumerate() {
             assert_eq!(&matrix.columns()[column].name, header);
-            assert!(matrix.metadata.columns[column].values.is_multiple_of(64));
-            assert!(matrix.metadata.columns[column].present.is_multiple_of(64));
+            assert!(matrix.columns()[column].values.is_multiple_of(64));
+            assert!(matrix.columns()[column].present.is_multiple_of(64));
             for (row, values) in parsed.rows.iter().enumerate() {
                 assert_eq!(matrix.row_id(row), Some(row as u64));
                 match (&values[column], matrix.cell(row, column).unwrap()) {
@@ -58,7 +64,7 @@ fn checksum_version_lengths_offsets_padding_and_row_ids_are_validated() {
         48,
         56,
         matrix.row_ids,
-        matrix.metadata.columns[0].present as usize,
+        matrix.columns()[0].present as usize,
     ] {
         let mut corrupt = valid.clone();
         corrupt[offset] ^= 0xff;

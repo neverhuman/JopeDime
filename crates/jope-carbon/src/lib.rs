@@ -22,6 +22,8 @@ pub const CARBON_BUILD_TARGET: &str = env!("CARBON_BUILD_TARGET");
 pub const CARBON_BUILD_PROFILE: &str = env!("CARBON_BUILD_PROFILE");
 /// Canonical Carbon CLI distribution release tag (`carbon-cli-v1.2.0`).
 pub const CARBON_RELEASE_TAG: &str = env!("CARBON_RELEASE_TAG");
+/// Latest published Carbon CLI GitHub Release tag pinned by `deploy/carbon/install.{sh,ps1}` (`carbon-cli-v1.1.0` while `v1.2.0` promotion is staged).
+pub const CARBON_PUBLISHED_INSTALLER_TAG: &str = env!("CARBON_PUBLISHED_INSTALLER_TAG");
 
 /// Return a deterministic provenance `User-Agent` header for outbound Carbon HTTP requests.
 pub fn carbon_user_agent() -> String {
@@ -60,7 +62,11 @@ pub use cells::{
     lambda_runtime::{run_lambda_custom_runtime_loop, CarbonLambdaInvocation},
 };
 #[cfg(all(feature = "cli", feature = "engine"))]
-pub use cli::coverage_audit::execute_live_aws_product_coverage_audit;
+pub use cli::coverage_audit::{
+    execute_cloud_product_coverage_audit, execute_live_aws_product_coverage_audit,
+    CarbonCloudCoverageInput, CarbonCloudCoverageReceipt, CarbonCoverageCheckResult,
+    CarbonDualCloudCoverageReport,
+};
 #[cfg(all(feature = "cli", feature = "engine"))]
 pub use cli::deploy::{
     build_deterministic_single_bin_tar, build_deterministic_single_bin_targz,
@@ -95,10 +101,6 @@ pub use cli::{
         CarbonStoredCloudCredential, CarbonThinClient, DEFAULT_PUBLIC_CLOUDS_URL,
         FALLBACK_PUBLIC_CLOUDS_URL,
     },
-    coverage_audit::{
-        execute_cloud_product_coverage_audit, CarbonCloudCoverageInput, CarbonCloudCoverageReceipt,
-        CarbonCoverageCheckResult, CarbonDualCloudCoverageReport,
-    },
     model_store::{
         compute_residual_quantiles, execute_predict_csv_with_handle, execute_self_upgrade,
         list_saved_model_handles, load_model_handle_by_spec, persist_model_handle,
@@ -118,10 +120,10 @@ pub use cli::{
         CarbonCliRunReceipt, CarbonCliRunUxConfig,
     },
     tabular::{
-        inspect_tabular_file, load_delimited_table, parse_delimited_str,
-        prepare_encoded_training_set, resolve_target_column, CarbonColumnProfile,
-        CarbonEffortCostPreview, CarbonEncodedTrainingSet, CarbonFeatureTransform, CarbonRawTable,
-        CarbonTabularEncoder, CarbonTabularInspectReport,
+        inspect_tabular_file, inspect_tabular_file_with_tier, load_delimited_table,
+        parse_delimited_str, prepare_encoded_training_set, resolve_target_column,
+        CarbonColumnProfile, CarbonEffortCostPreview, CarbonEncodedTrainingSet,
+        CarbonFeatureTransform, CarbonRawTable, CarbonTabularEncoder, CarbonTabularInspectReport,
     },
 };
 pub use error::{CarbonError, CarbonGuidance, CarbonResult, CARBON_DOCS_URL};

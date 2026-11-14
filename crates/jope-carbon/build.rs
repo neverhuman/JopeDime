@@ -11,6 +11,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 const CANONICAL_CARBON_RELEASE_TAG: &str = "carbon-cli-v1.2.0";
+const CANONICAL_CARBON_PUBLISHED_INSTALLER_TAG: &str = "carbon-cli-v1.1.0";
 const CANONICAL_CARBON_SEMVER: &str = "1.2.0";
 
 fn is_valid_hex_sha(candidate: &str) -> bool {
@@ -111,6 +112,7 @@ fn main() {
         "JOPE_SOURCE_SHA",
         "CARBON_GIT_SHA",
         "CARBON_RELEASE_TAG_OVERRIDE",
+        "CARBON_PUBLISHED_INSTALLER_TAG_OVERRIDE",
     ] {
         println!("cargo:rerun-if-env-changed={key}");
     }
@@ -135,10 +137,16 @@ fn main() {
         .map(|s| s.trim().to_owned())
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| CANONICAL_CARBON_RELEASE_TAG.to_owned());
+    let published_installer_tag = env::var("CARBON_PUBLISHED_INSTALLER_TAG_OVERRIDE")
+        .ok()
+        .map(|s| s.trim().to_owned())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| CANONICAL_CARBON_PUBLISHED_INSTALLER_TAG.to_owned());
 
     println!("cargo:rustc-env=CARBON_GIT_SHA={git_sha}");
     println!("cargo:rustc-env=CARBON_BUILD_TARGET={target}");
     println!("cargo:rustc-env=CARBON_BUILD_PROFILE={profile}");
     println!("cargo:rustc-env=CARBON_RELEASE_TAG={release_tag}");
+    println!("cargo:rustc-env=CARBON_PUBLISHED_INSTALLER_TAG={published_installer_tag}");
     println!("cargo:rustc-env=CARBON_SEMVER={CANONICAL_CARBON_SEMVER}");
 }

@@ -28,7 +28,7 @@ use jope_carbon::{
     execute_carbon_cli_benchmark_with_token, execute_carbon_cli_run_with_ux,
     execute_carbon_redteam_suite, execute_predict_csv_with_handle,
     execute_scientific_benchmark_suite, execute_self_upgrade, generate_nonlinear_benchmark_rows,
-    inspect_tabular_file, list_saved_model_handles, list_stored_cloud_tokens,
+    inspect_tabular_file_with_tier, list_saved_model_handles, list_stored_cloud_tokens,
     load_model_handle_by_spec, load_stored_cloud_token, now_epoch_ms, plan_carbon_execution,
     query_handle_status, remove_stored_cloud_token, render_benchmark_markdown,
     render_pretty_run_scorecard, render_redteam_markdown, render_scientific_benchmark_markdown,
@@ -3014,11 +3014,17 @@ fn main() -> ExitCode {
                     return ExitCode::from(2);
                 }
             };
-            let Ok(_ptier) = parse_product_tier(&tier) else {
+            let Ok(ptier) = parse_product_tier(&tier) else {
                 eprintln!("error: invalid --tier `{tier}`");
                 return ExitCode::from(2);
             };
-            match inspect_tabular_file(&csv, target.as_deref(), delim_override, !no_header) {
+            match inspect_tabular_file_with_tier(
+                &csv,
+                target.as_deref(),
+                delim_override,
+                !no_header,
+                ptier,
+            ) {
                 Ok(report) => {
                     if should_emit_pretty_stdout(&format, json) {
                         println!("{}", render_pretty_inspect_report(&report));
