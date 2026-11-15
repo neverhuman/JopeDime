@@ -22,8 +22,8 @@ blocks that the column builder feeds. H458 trains on episodes built by the colum
 | `episodes_h458.py` | evaluation fold pipeline as a training episode; unique-row sampling; slot arms; batch sizing |
 | `train_h458.py` | trainer: exposure-indexed schedule and checkpoints, measured duplicate ledger, trim-and-retry OOM policy, optional data workers on other hosts |
 | `probe_h458.py` | SEARCH-only out-of-fold utility under the evaluation's fold pipeline (reads no audit label) |
-| `cols_h458.py` | scored column builder for specialists (GP anchor off; canonical-slot path; cross-fit routing; pool-coverage refusal); `_load_col_block` layout + sidecar |
-| `selftest_h458.py` | 16 CPU gates; receipt in `/home/ubuntu/jope_plan/evidence/H458/trackD/` |
+| `cols_h458.py` | scored column builder for specialists (GP anchor off; canonical-slot path; cross-fit routing; closures `recall`, `skill-xfit5`, `fair`, `fresh-probe` with their refusals); `_load_col_block` layout + sidecar written per context |
+| `selftest_h458.py` | 17 CPU gates; receipt in `/home/ubuntu/jope_plan/evidence/H458/trackD/` |
 | `launch_specialist.sh` | resource-capped launch of one specialist run from the staged runtime copy |
 | `pilot_driver.sh` | trains the slot arms of one family side by side, then probes every milestone checkpoint |
 | `queue_h458.sh` | one specialist per family, a few at a time, with resume and SEARCH-only probes |
@@ -61,5 +61,18 @@ random slots +0.01 to +0.02 at 1,000 exposures and fading; canonical slots -0.02
 Canonical slots are therefore the scored path of the recall arm only, and `cols_h458.py` refuses closure `recall`
 on any context that is not fully inside the pool.
 
-Full results are recorded in `metrics.json` once the pilot gates in `PREREG.md` have been read for all four pilot
-families.
+First official look (2026-11-14 23:49Z, arm `h458d.RECALL_CANON_E2000_PILOT20`, pre-registered, one of four looks): the
+legacy stack with the canonical-slot recall columns is above the best of all 33 field entrants on 19 of the 20 pilot
+contexts (gate: 16) and beats Kumo Large on 19; the same stack without them beats it on 2. It is recall of labels
+the specialists trained on, it covers 20 of 91 contexts and it has no Elo. Receipt:
+`/home/ubuntu/jope-data/h458-quarantine/looks/pilot20_20261114T2352Z/`.
+
+Skill on rows no model saw is measured separately on Track S's fresh-row probe board (`dev91-freshprobe-v1`: rows in
+no bank and no pool, 10 families): `cols_h458.py --closure fresh-probe` scores each specialist and its
+pre-fine-tune checkpoint on the same contexts. A probe block can never be stacked on the real board.
+
+Where the wave stands against the field is in the Elo report, `/home/ubuntu/jope_plan/evidence/H458/trackD/elo_report_20261114/`
+(revision 7: fifth of 34 on the board, seventh of 23 against external models only; every number in-corpus or fair
+closure as labelled).
+
+Full results are recorded in `metrics.json` once the gates in `PREREG.md` have been read for all families.

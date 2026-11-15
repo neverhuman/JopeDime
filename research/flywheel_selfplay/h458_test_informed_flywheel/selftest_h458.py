@@ -380,6 +380,113 @@ def gate_builder_matches_reference(ctx) -> dict:
     return {"max_abs_diff": worst, "fits": folds + 1, "strata_search": np.bincount(s_s, minlength=CB.XFIT_K).tolist(), "pool_coverage": cov}
 
 
+def _refused(fn, *args, **kwargs) -> bool:
+    try:
+        fn(*args, **kwargs)
+    except (SystemExit, ValueError):
+        return True
+    return False
+
+
+def gate_block_closures(ctx) -> dict:
+    """What a block directory may be labelled as: the fresh-row probe, the fair allowlist, sidecar bookkeeping, slot widths."""
+    cid = ctx["identity_cids"][0]
+    d = ctx["bank_full"][cid]
+    xs, xa, fam8, pool = d["Xs"], d["Xa"], d["family"][4:12], ctx["pool"]
+    root = P.QUARANTINE / "selftest" / f"closures_{int(time.time())}_{os.getpid()}"
+    root.mkdir(parents=True, exist_ok=False)
+    # fresh-probe: every SEARCH row in the pool, no probe row in the pool
+    fresh = xa.copy()
+    col = int(np.argmax(np.isfinite(xa).all(axis=0)))
+    fresh[:, col] = np.nextafter(xa[:, col], np.inf)
+    assert CB.require_probe_rows_fresh(pool, fam8, cid, xs, fresh) == [1.0, 0.0]
+    assert _refused(CB.require_probe_rows_fresh, pool, fam8, cid, xs, xa), "audit rows of the board were accepted as fresh rows"
+    one_known = fresh.copy()
+    one_known[0] = xa[0]
+    assert _refused(CB.require_probe_rows_fresh, pool, fam8, cid, xs, one_known), "a probe set holding one pool row was accepted"
+    assert _refused(CB.require_probe_rows_fresh, pool, fam8, cid, fresh[: len(xs)] if len(fresh) >= len(xs) else fresh, fresh), "SEARCH rows outside the pool were accepted"
+    assert _refused(CB.require_probe_rows_fresh, pool, fam8, cid, xs, fresh[:, :-1]), "a probe set of the wrong width was accepted"
+    # a bank is a probe bank exactly when the board's marker sits beside it and lists its sha
+    bank_dir = root / "board"
+    bank_dir.mkdir()
+    bank_p = bank_dir / "bank.npz"
+    np.savez(bank_p, x=np.arange(3))
+    assert CB.probe_board_of(bank_p) is None
+    (bank_dir / CB.PROBE_MARK).write_text(json.dumps({"name": "selftest"}))
+    assert _refused(CB.probe_board_of, bank_p), "a probe bank outside the board's SHA256SUMS was accepted"
+    (bank_dir / "SHA256SUMS").write_text(f"{P.digest_file(bank_p)}  bank.npz\n")
+    assert CB.probe_board_of(bank_p)["probe_bank_sha256"] == P.digest_file(bank_p)
+    assert CB.probe_board_of(P.EVAL_BANK) is None, "the evaluation bank reads as a probe bank"
+    # checkpoints: fair needs the allowlist and no in-corpus marker; role init is a plain checkpoint scored with random slots
+    plain, marked, spec = root / "plain.pt", root / "marked.pt", root / "spec.pt"
+    torch.save({"ema": {}}, plain)
+    torch.save({"ema": {}, "in_corpus_dev91_disclosure": True}, marked)
+    torch.save({"ema": {}, "cfg": {"families": [fam8], "arm": "canon"}, "state": {"pool_sha256": pool.sha256}}, spec)
+    assert P.digest_file(plain) not in CB.fair_allowlist()
+    assert _refused(CB.check_checkpoint, plain, "ema", "fair", "rand", None, pool.sha256), "a checkpoint off the allowlist was accepted as fair"
+    assert _refused(CB.check_checkpoint, marked, "ema", "fair", "rand", None, pool.sha256), "an in-corpus checkpoint was accepted as fair"
+    assert _refused(CB.check_checkpoint, spec, "ema", "fair", "canon", None, pool.sha256), "a specialist was accepted as fair"
+    assert CB.check_checkpoint(plain, "ema", "fresh-probe", "rand", None, pool.sha256, "init") == {}
+    assert _refused(CB.check_checkpoint, plain, "ema", "fresh-probe", "canon", None, pool.sha256, "init"), "an init was accepted with canonical slots"
+    assert _refused(CB.check_checkpoint, spec, "ema", "fresh-probe", "canon", None, pool.sha256, "init"), "a specialist was accepted as its own init"
+    assert CB.check_checkpoint(spec, "ema", "fresh-probe", "canon", None, pool.sha256, "specialist")["families"] == [fam8]
+    assert _refused(CB.check_checkpoint, spec, "ema", "fresh-probe", "rand", None, pool.sha256, "specialist"), "a canon specialist was accepted with random slots"
+    assert _refused(CB.check_checkpoint, plain, "ema", "recall", "canon", None, pool.sha256), "a plain checkpoint was accepted as a recall specialist"
+    # sidecar bookkeeping: one entry per run, files and sidecar agree, a second closure in the same directory is refused
+    blk = root / "block"
+    blk.mkdir()
+    CB.require_dir_consistent(blk)
+    np.savez(blk / "aaa.npz", ok=np.array(True))
+    assert _refused(CB.require_dir_consistent, blk), "a block file that no sidecar lists was accepted"
+    fixed = {"closure": "recall", "cross_fitted": False, "arm": "canon", "size": "M", "ckpt_key": "ema", "pool_sha256": pool.sha256}
+    call = {"call_id": "t-1", "utc": "u1", "ckpts": ["c"], "ckpt_sha256": ["s"], "elapsed_s": 1.0}
+    CB.update_sidecar(blk, fixed, {**call, "cids": ["aaa"]}, {"aaa": [1.0, 1.0]})
+    CB.require_dir_consistent(blk)
+    np.savez(blk / "bbb.npz", ok=np.array(True))
+    doc = CB.update_sidecar(blk, fixed, {**call, "cids": ["bbb"], "utc": "u2", "elapsed_s": 2.0}, {"bbb": [1.0, 1.0]})
+    assert len(doc["calls"]) == 1 and doc["calls"][0]["cids"] == ["aaa", "bbb"] and doc["contexts"] == ["aaa", "bbb"], doc["calls"]
+    np.savez(blk / "ccc.npz", ok=np.array(True))
+    doc = CB.update_sidecar(blk, fixed, {**call, "call_id": "t-2", "cids": ["ccc"]}, {})
+    assert len(doc["calls"]) == 2 and "probe_role" not in doc
+    CB.require_dir_consistent(blk)
+    assert _refused(CB.update_sidecar, blk, {**fixed, "closure": "fresh-probe", "probe_role": "init"}, {**call, "cids": ["ddd"]}, {}), "two closures in one directory"
+    # probe comparison block: sources renamed per tag, their mean added, blocks of two probe banks never joined
+    fx = {"closure": "fresh-probe", "cross_fitted": False, "arm": "rand", "size": "M", "ckpt_key": "ema", "pool_sha256": pool.sha256, "bank_sha256": "b1", "probe_bank_sha256": "b1", "probe_board_sha256": "p1"}
+    rng = np.random.default_rng(458)
+    srcs = {}
+    for tag, role, bank_sha in (("init", "init", "b1"), ("canon", "specialist", "b1"), ("other", "specialist", "b2")):
+        srcs[tag] = root / f"probe_{tag}"
+        srcs[tag].mkdir()
+        for c in ("c1", "c2") if tag != "canon" else ("c1", "c2", "c3"):
+            np.savez(srcs[tag] / f"{c}.npz", ok=np.array(True), wall_s=np.array(1.0), **{pre + n: rng.normal(size=4 if pre == "q_" else 6) for n in CB.COLUMNS for pre in ("q_", "bag_", "ref_")})
+            CB.update_sidecar(srcs[tag], {**fx, "probe_role": role, "bank_sha256": bank_sha, "probe_bank_sha256": bank_sha}, {**call, "call_id": tag, "cids": [c]}, {})
+    mdir = root / "probe_merged"
+    mdir.mkdir()
+    mdoc = CB.merge_probe_blocks({"init": srcs["init"], "canon": srcs["canon"]}, mdir, [])
+    assert mdoc["contexts"] == ["c1", "c2"] and mdoc["closure"] == "fresh-probe" and mdoc["bank_sha256"] == "b1" and len(mdoc["names"]) == 8, mdoc["names"]
+    with np.load(mdir / "c1.npz") as zm, np.load(srcs["canon"] / "c1.npz") as zs:
+        assert np.array_equal(zm["ref_canon_yj"], zs["ref_" + CB.COLUMNS[1]])
+        assert np.allclose(zm["bag_canon_mean3"], np.mean([zs["bag_" + n] for n in CB.COLUMNS], axis=0), rtol=0, atol=1e-15)
+        assert sorted(k for k in zm.files if k.startswith("q_")) == sorted(f"q_{t}_{m}" for t in ("init", "canon") for m in ("rr", "yj", "rg", "mean3"))
+    CB.require_dir_consistent(mdir)
+    assert _refused(CB.merge_probe_blocks, {"init": srcs["init"], "canon": srcs["canon"]}, mdir, []), "a merge into a filled directory was accepted"
+    m2 = root / "probe_merged_2"
+    m2.mkdir()
+    assert _refused(CB.merge_probe_blocks, {"init": srcs["init"], "other": srcs["other"]}, m2, []), "blocks of two probe banks were merged"
+    assert _refused(CB.merge_probe_blocks, {"init": srcs["init"], "canon": srcs["canon"]}, m2, ["c3"]), "a context missing from one source was merged"
+    assert _refused(CB.merge_probe_blocks, {"init": srcs["init"], "rec": blk}, m2, []), "a recall block was merged into a probe comparison"
+    # canonical slots: the cleaning step must keep every raw column, and the builder module is restored afterwards
+    before = C.REL.build_h450_struct_cols
+    with CB.builder_overrides("canon", xs.shape[1]):
+        assert C.REL.build_h450_struct_cols is not before
+        narrow = CB._struct_cols_same_width(lambda a_, y_, q_, **k_: (a_[:, :-1], q_[:, :-1], None, None, None))
+        assert _refused(narrow, xs[:8], d["y"][:8], xa[:4]), "a cleaning step that drops a column was accepted"
+        same = CB._struct_cols_same_width(lambda a_, y_, q_, **k_: (a_, q_, None, None, None))
+        assert same(xs[:8], d["y"][:8], xa[:4])[0].shape[1] == xs.shape[1]
+    assert C.REL.build_h450_struct_cols is before, "the struct-column function was not restored"
+    return {"checks": 36, "dir": str(root)}
+
+
 def gate_static_hygiene(ctx) -> dict:
     banned = ("/tmp", "os.remove", ".unlink(", "rmtree", "os.rmdir", "h416_", "ya_sha256")
     for name in SOURCES:
@@ -404,6 +511,7 @@ GATES = (
     gate_benchmark_split_audit,
     gate_eval_pipeline_identity,
     gate_builder_matches_reference,
+    gate_block_closures,
     gate_cpu_mini_train,
     gate_remote_workers,
 )

@@ -116,3 +116,26 @@ JSONs and per-context results are the durable record.
   verified copy of the staged code, the dependency stages and the family pool; no checkpoint, bank or audit label
   leaves the training host. The selftest pins numeric threads to one, because threaded BLAS changes the last bits
   of the ridge-base product with the shape of the query block.
+- 2026-11-14 23:49Z, look 1 of 4 spent: arm `h458d.RECALL_CANON_E2000_PILOT20` (legacy stack plus the canonical-slot
+  recall block of the four pilot families at 2,000 exposures), pre-registered with Track S's scorer before scoring.
+  Result: above the field maximum on 19 of 20 contexts (gate D-3: at least 16), mean weight on the recall columns
+  0.957 (gate: at least 0.8), no guard drop. Family f2893c38 was below its D-2 probe line (1.05 against 1.17) and
+  still cleared the field on 5 of 5 contexts. Track D has one look left, the full 91-context ladder.
+- 2026-11-15 00:12Z, fresh-row probe (not a dev91 look: it reads no dev91 audit label; the probe rows sit in no
+  bank and no pool, and every scoring is logged in Track S's `PROBE_LEDGER.jsonl`). Arms named before any scoring:
+  for each of the 10 probe families the canonical-slot specialist at 2,000 exposures against its pre-fine-tune
+  checkpoint, on the same SEARCH contexts with the same builder; for 60b608db also the random-slot specialist.
+  Prediction registered before scoring: canonical-slot specialists are worse than their init on fresh rows (the
+  cross-fitted control gave -0.09 to -0.15 u on 60b608db) and the random-slot one is level (+0.00 to +0.02 u). The
+  canonical arm is scored with one native-order view and the init with the evaluation's four random views; that
+  difference is part of the arm and is stated beside any comparison of the two.
+- 2026-11-15 00:40Z, block builder: closure `fresh-probe` added (refused unless every SEARCH row and no probe row
+  is in the family pool; a probe bank is refused for every other closure). Reviewer notes F5 C1 to C4 applied:
+  closure `fair` needs the checkpoint's sha256 on an allowlist and no in-corpus marker; the sidecar is written per
+  context and a directory whose files and sidecar disagree is refused; the numeric thread variables are forced to
+  one; the canonical path asserts that the builder's cleaning step keeps every raw column. The 20 pilot recall
+  blocks and the 71 remaining ones are built with the stage of the first look (`c9c8b9c95e`), so the full-ladder
+  look uses one builder version; the new stage is used for probe blocks.
+- 2026-11-15 00:40Z, reporting: the recall arm is reported twice at the full-ladder look, as board Elo (33-entrant
+  field, which holds 11 of our own earlier systems) and as family-games won against the 22 external models only (a
+  league of 23), each with and without the recall columns.
