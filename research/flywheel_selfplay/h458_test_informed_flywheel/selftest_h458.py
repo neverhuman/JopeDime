@@ -629,7 +629,29 @@ def gate_gp_chain_units(ctx) -> dict:
     pk3 = work / "packed_part1_missing"
     pk3.mkdir()
     assert _refused(GC.pack_block, arm_dirs, pk3, 1), "arms without an appended bank were packed for its rows"
-    return {"checks": 37, "dir": str(work)}
+    # stack-level read: fixed non-negative blend fitted on SEARCH rows, applied to the audit slot
+    cidr = ctx["identity_cids"][0]
+    dr = ctx["bank_full"][cidr]
+    n_sr, n_ar = len(dr["y"]), dr["Xa"].shape[0]
+    bank_sha = P.digest_file(P.EVAL_BANK)
+    g_blk, o_blk, s_out = work / "stk_gp", work / "stk_other", work / "stk_out"
+    for b_ in (g_blk, o_blk, s_out):
+        b_.mkdir()
+    noise = np.random.default_rng(3).normal(size=n_sr)
+    np.savez(g_blk / f"{cidr}.npz", ok=np.array(True), q_good=dr["y"] + 0.01 * noise, bag_good=np.ones(n_ar), ref_good=np.ones(n_ar),
+             q_good_s1=dr["y"], bag_good_s1=np.ones(n_ar), ref_good_s1=np.ones(n_ar))
+    (g_blk / "SIDECAR.json").write_text(json.dumps({"names": ["good_s1", "good"], "closure": "fair", "bank_sha256": bank_sha, "contexts": [cidr]}))
+    np.savez(o_blk / f"{cidr}.npz", ok=np.array(True), q_a=np.full(n_sr, dr["y"].mean()), bag_a=np.zeros(n_ar), ref_a=np.zeros(n_ar),
+             q_b=dr["y"] + 3.0 * noise * dr["y"].std(), bag_b=np.zeros(n_ar), ref_b=np.zeros(n_ar))
+    (o_blk / "SIDECAR.json").write_text(json.dumps({"names": ["a", "b"], "closure": "fair", "bank_sha256": bank_sha, "contexts": [cidr]}))
+    sdoc = GC.stack_block(g_blk, o_blk, P.EVAL_BANK, s_out)
+    assert sdoc["names"] == ["stk_base", "stk_good"] and sdoc["gp_weight_mean"]["stk_good"] > 0.9, sdoc["gp_weight_mean"]
+    wts = sdoc["weights_by_cid"][cidr]
+    assert abs(sum(wts["stk_base"]) - 1.0) < 1e-9 and abs(sum(wts["stk_good"]) - 1.0) < 1e-9 and min(wts["stk_good"]) >= 0.0
+    with np.load(s_out / f"{cidr}.npz") as z:
+        assert np.allclose(z["ref_stk_base"], 0.0) and np.allclose(z["ref_stk_good"], wts["stk_good"][-1]) and z["q_stk_good"].shape == (n_sr,)
+    assert _refused(GC.stack_block, g_blk, o_blk, P.EVAL_BANK, s_out), "a stack into a filled directory was accepted"
+    return {"checks": 42, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:

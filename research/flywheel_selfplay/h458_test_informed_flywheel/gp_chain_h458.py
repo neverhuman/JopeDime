@@ -60,20 +60,26 @@ ENGINE_SHA256 = {
     "ultra_gp_evolve_h452.py": "6f8c07d2bfebe1c82a533171cf1ee0c8409594eaee1ba7de4cb37fb13069edd6",
     "bagged_neural_seed_h452.py": "6edef73ba052a95edadadbf107ae8606db7de6725ca57137d57cb4a99b7d545b",
 }
-QHAT = Path("/home/ubuntu/jope-data/h452-flywheel/surrogate_v2/qhat_v2_all.pt")
-QHAT_SHA256 = "d93e1e76f2367cf1287ec449330274daf914c9b249989f6219b9c2483901eb15"
+# The engine's surrogate prior ranks proposals before they are evaluated. Two exist: `dev91-free` was fitted with no dev91
+# sample; `in-corpus` (the engine's default, used by the H453 runs) also saw 289 winners of dev91 random splits, which mix
+# SEARCH and AUDIT rows. A column evolved under the in-corpus prior is in-corpus on dev91 whatever else it reads.
+PRIORS = {
+    "dev91-free": (Path("/home/ubuntu/jope-data/h452-flywheel/surrogate_v2/qhat_v2.pt"), "bf05e0404c9e7a2e4d90a8672e4a5b10312b8c95db142a0cd003f83eb9b208e1"),
+    "in-corpus": (Path("/home/ubuntu/jope-data/h452-flywheel/surrogate_v2/qhat_v2_all.pt"), "d93e1e76f2367cf1287ec449330274daf914c9b249989f6219b9c2483901eb15"),
+}
 N_POP, EVAL_PER_GEN, TOP_EXPORT = 48, 3, 4
 _LOCK = threading.Lock()
 
 
-def load_engine():
-    """The engine module with its pins checked, plus the encoder and surrogate prior it needs."""
+def load_engine(prior: str):
+    """The engine module with its pins checked, plus the encoder and the named surrogate prior."""
+    qhat_p, qhat_sha = PRIORS[prior]
     for name, sha in ENGINE_SHA256.items():
         got = P.digest_file(P.H452_STAGE / name)
         if got != sha:
             raise SystemExit(f"engine file {name} changed: {got[:16]} is not the pinned {sha[:16]}")
-    if P.digest_file(QHAT) != QHAT_SHA256:
-        raise SystemExit("surrogate prior changed")
+    if P.digest_file(qhat_p) != qhat_sha:
+        raise SystemExit(f"surrogate prior {prior} changed")
     if str(P.H452_STAGE) not in sys.path:
         sys.path.insert(0, str(P.H452_STAGE))
     import ultra_gp_evolve_1000g_h453 as U
@@ -81,7 +87,10 @@ def load_engine():
     U.C.resume_stage_v()
     if U._sha256_file(U.SUPERSET_BIN) != U.SUPERSET_SHA:
         raise SystemExit("Rust worker binary sha mismatch")
-    return U, U.BaggedNeuralEncoderH452(dope_threads=2), U.PretrainedQHatPrior(QHAT)
+    qhat = U.PretrainedQHatPrior(qhat_p)
+    if not qhat.ok:
+        raise SystemExit(f"surrogate prior {prior} did not load; the engine would run without it and say nothing")
+    return U, U.BaggedNeuralEncoderH452(dope_threads=2), qhat
 
 
 def load_bank(bank_p: Path) -> dict[str, dict]:
@@ -303,7 +312,7 @@ def claim_folder(out_dir: Path, fixed: dict) -> None:
     os.replace(tmp, set_p)
 
 
-def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0) -> dict:
+def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0, closure: str = "") -> dict:
     """One block directory in the `_load_col_block` layout from several arm folders, for a column scorer.
 
     Column `<tag>` is the arm's column after its last stage and `<tag>_s<j>` the column after stage j. Only contexts
@@ -351,10 +360,72 @@ def pack_block(sources: dict[str, Path], out_dir: Path, part: int = 0) -> dict:
         os.replace(tmp, out_dir / f"{cid}.npz")
     probe = next(iter(banks)) in P.KNOWN_PROBE_BANKS or (Path(next(iter(next(iter(books.values())).values()))["settings"][path_key]).parent / "PROBE_BOARD.json").is_file()
     doc = {
-        "names": names, "closure": "fresh-probe" if probe else "fair-gp-search-only", "bank_sha256": next(iter(banks)), "contexts": cids,
+        "names": names, "closure": "fresh-probe" if probe else (closure or "fair-gp-search-only"), "bank_sha256": next(iter(banks)), "contexts": cids,
         "packed_from": {t: {"dir": str(src), "settings": next(iter(books[t].values()))["settings"]} for t, src in sources.items()},
+        "priors": sorted({str(b["settings"].get("prior") or "in-corpus (engine default, before the driver had the option)") for bk in books.values() for b in bk.values()}),
         "producer": "cl_h458 gp_chain_h458.py", "reads_audit_labels": False,
         "notes": "H458 S9 staged residual GP columns; q_ is honest only for out-of-fold arms (see each arm's manifest)", **P.DISCLOSURE,
+    }
+    tmp = out_dir / f".SIDECAR.{os.getpid()}.part.json"
+    tmp.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
+    os.replace(tmp, out_dir / "SIDECAR.json")
+    return doc
+
+
+def blend_weights(q: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Non-negative weights that sum to one, fitted on SEARCH rows; equal weights when the fit degenerates."""
+    w, _ = nnls(np.asarray(q, dtype=np.float64), np.asarray(y, dtype=np.float64))
+    return w / w.sum() if w.sum() > 1e-9 else np.full(q.shape[1], 1.0 / q.shape[1])
+
+
+def stack_block(gp_block: Path, other_block: Path, bank_p: Path, out_dir: Path) -> dict:
+    """A stack-level read for a column scorer, with one fixed rule and no label outside SEARCH rows.
+
+    `stk_base` blends the columns of `other_block` (for example the three ICL columns). `stk_<name>` blends the same
+    columns plus the GP column `<name>` of `gp_block`. Weights are non-negative, sum to one and are fitted on the
+    columns' SEARCH-row values; they are applied to the audit-slot values. A GP column whose SEARCH values are
+    selection-optimistic gets more weight than it deserves here, exactly as in the production stack; an out-of-fold
+    column does not.
+    """
+    docs = {}
+    for blk in (gp_block, other_block):
+        docs[blk] = json.loads((blk / "SIDECAR.json").read_text())
+    if docs[gp_block].get("bank_sha256") != docs[other_block].get("bank_sha256") or docs[gp_block].get("bank_sha256") != P.digest_file(bank_p):
+        raise SystemExit("the two blocks and the bank do not belong together")
+    if any(out_dir.iterdir()):
+        raise SystemExit(f"{out_dir}: not empty")
+    bank = load_bank(bank_p)
+    gp_names = [n for n in docs[gp_block]["names"] if not re.search(r"_s\d+$", n)]
+    other = list(docs[other_block]["names"])
+    cids = sorted(set(docs[gp_block]["contexts"]) & set(docs[other_block]["contexts"]))
+    if not cids or not gp_names or not other:
+        raise SystemExit("nothing to stack")
+    weights: dict[str, dict] = {}
+    for cid in cids:
+        y = bank[cid]["y"]
+        with np.load(gp_block / f"{cid}.npz", allow_pickle=False) as zg, np.load(other_block / f"{cid}.npz", allow_pickle=False) as zo:
+            cols = {pre: [np.asarray(zo[f"{pre}_{n}"], dtype=np.float64) for n in other] for pre in ("q", "bag", "ref")}
+            gp = {pre: {n: np.asarray(zg[f"{pre}_{n}"], dtype=np.float64) for n in gp_names} for pre in ("q", "bag", "ref")}
+        out: dict[str, np.ndarray] = {"ok": np.array(True), "wall_s": np.array(0.0)}
+        w0 = blend_weights(np.column_stack(cols["q"]), y)
+        weights[cid] = {"stk_base": [float(v) for v in w0]}
+        for pre in ("q", "bag", "ref"):
+            out[f"{pre}_stk_base"] = np.column_stack(cols[pre]) @ w0
+        for n in gp_names:
+            w = blend_weights(np.column_stack(cols["q"] + [gp["q"][n]]), y)
+            weights[cid][f"stk_{n}"] = [float(v) for v in w]
+            for pre in ("q", "bag", "ref"):
+                out[f"{pre}_stk_{n}"] = np.column_stack(cols[pre] + [gp[pre][n]]) @ w
+        tmp = out_dir / f".{cid}.{os.getpid()}.part.npz"
+        np.savez(tmp, **out)
+        os.replace(tmp, out_dir / f"{cid}.npz")
+    doc = {
+        "names": ["stk_base"] + [f"stk_{n}" for n in gp_names], "closure": docs[gp_block]["closure"], "bank_sha256": docs[gp_block]["bank_sha256"], "contexts": cids,
+        "rule": "non-negative least squares on SEARCH-row column values, weights normalised to sum one, applied to the audit slot",
+        "columns_base": other, "weights_by_cid": weights, "gp_weight_mean": {f"stk_{n}": float(np.mean([weights[c][f"stk_{n}"][-1] for c in cids])) for n in gp_names},
+        "stacked_from": {"gp": str(gp_block), "gp_sidecar_sha256": P.digest_file(gp_block / "SIDECAR.json"), "other": str(other_block),
+                         "other_sidecar_sha256": P.digest_file(other_block / "SIDECAR.json")},
+        "producer": "cl_h458 gp_chain_h458.py", "reads_audit_labels": False, **P.DISCLOSURE,
     }
     tmp = out_dir / f".SIDECAR.{os.getpid()}.part.json"
     tmp.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
@@ -367,6 +438,8 @@ def main() -> None:
     ap.add_argument("--arm", choices=ARMS, default="")
     ap.add_argument("--pack", default="", help="tag=DIR,tag=DIR: write the arms' columns as one block directory into --out-dir and stop")
     ap.add_argument("--pack-part", type=int, choices=(0, 1), default=0, help="with --pack: 0 = the bank's own audit slot, 1 = the appended bank's")
+    ap.add_argument("--pack-closure", default="", help="with --pack: closure label for a block on an evaluation bank (the scorer's owner names it); a probe bank is always fresh-probe")
+    ap.add_argument("--stack", default="", help="GPBLOCK,OTHERBLOCK: write stk_base and stk_<gp column> blends into --out-dir (weights from SEARCH rows) and stop")
     ap.add_argument("--gens", type=int, default=0, help="total generations of the arm (medium 40, high 160, ultra 1250)")
     ap.add_argument("--stages", type=int, default=4, help="chain arms: number of stages")
     ap.add_argument("--outer", type=int, default=4, help="out-of-fold arms: number of outer folds")
@@ -374,6 +447,7 @@ def main() -> None:
     ap.add_argument("--committee", type=int, default=3, help="chain_sc and oof_chain: programs blended per stage")
     ap.add_argument("--min-gain", type=float, default=0.002, help="keep rule: relative cross-fitted RMSE gain a stage must bring")
     ap.add_argument("--seed", type=int, default=458)
+    ap.add_argument("--prior", choices=tuple(PRIORS), default="dev91-free", help="surrogate prior; a column meant to be fair on dev91 needs dev91-free")
     ap.add_argument("--cids", default="")
     ap.add_argument("--families", default="", help="comma-separated 8-hex family ids")
     ap.add_argument("--per-family", type=int, default=0, help="with --families: only the first N contexts of each family (sorted by id)")
@@ -396,8 +470,15 @@ def main() -> None:
         pairs = [kv.split("=", 1) for kv in a.pack.split(",") if kv]
         if any(len(kv) != 2 for kv in pairs) or len({k for k, _ in pairs}) != len(pairs):
             raise SystemExit("--pack takes tag=DIR pairs with distinct tags")
-        doc = pack_block({k: Path(v) for k, v in pairs}, out_dir, a.pack_part)
+        doc = pack_block({k: Path(v) for k, v in pairs}, out_dir, a.pack_part, a.pack_closure)
         print(json.dumps({"packed": len(doc["contexts"]), "names": doc["names"], "closure": doc["closure"]}))
+        return
+    if a.stack:
+        parts = a.stack.split(",")
+        if len(parts) != 2:
+            raise SystemExit("--stack takes GPBLOCK,OTHERBLOCK")
+        doc = stack_block(Path(parts[0]), Path(parts[1]), Path(a.bank), out_dir)
+        print(json.dumps({"stacked": len(doc["contexts"]), "names": doc["names"], "gp_weight_mean": doc["gp_weight_mean"]}))
         return
     if a.arm not in ARMS or a.gens < 1:
         raise SystemExit("--arm and --gens are required")
@@ -424,11 +505,11 @@ def main() -> None:
     cids = [c for c in dict.fromkeys(cids) if not (out_dir / f"{c}.json").exists()]
     if not cids:
         raise SystemExit("no contexts to run (none selected, or all already written)")
-    eng = load_engine()
-    settings = {k: getattr(a, k) for k in ("arm", "gens", "stages", "outer", "nu", "committee", "min_gain", "seed", "inner_slots", "base_block", "base_col")}
+    eng = load_engine(a.prior)
+    settings = {k: getattr(a, k) for k in ("arm", "gens", "stages", "outer", "nu", "committee", "min_gain", "seed", "inner_slots", "base_block", "base_col", "prior")}
     settings.update({"bank": str(a.bank), "bank_sha256": P.digest_file(Path(a.bank)), "extra_audit_bank": str(a.extra_audit_bank),
                      "extra_audit_bank_sha256": P.digest_file(Path(a.extra_audit_bank)) if a.extra_audit_bank else None,
-                     "engine_sha256": ENGINE_SHA256, "qhat_sha256": QHAT_SHA256,
+                     "engine_sha256": ENGINE_SHA256, "qhat_sha256": PRIORS[a.prior][1],
                      "n_pop": N_POP, "eval_per_gen": EVAL_PER_GEN, "top_export": TOP_EXPORT, "reads_audit_labels": False, **P.DISCLOSURE})
 
     claim_folder(out_dir, {k: v for k, v in settings.items() if k != "inner_slots"})
