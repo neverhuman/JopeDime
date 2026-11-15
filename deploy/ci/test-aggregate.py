@@ -58,7 +58,9 @@ class BrowserRoutingTests(unittest.TestCase):
 
     def test_carbon_spec_and_evidence_paths_require_e2e_and_rust_gates(self):
         for path in ('docs/carbon/evidence/cost-breakdown-v100.json',
-                     'web/training-dashboard/scripts/render-carbon-spec-pdf.mjs'):
+                     'web/training-dashboard/scripts/render-carbon-spec-pdf.mjs',
+                     '.github/workflows/carbon-live-e2e.yml',
+                     'deploy/carbon/ci-live-4tier-docker.py'):
             with self.subTest(path=path):
                 lanes, gates = aggregate.plan_module.classify([path], 'pull_request')
                 self.assertTrue(gates['e2e'])

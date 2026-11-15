@@ -1533,6 +1533,7 @@ fn release_tag_parity_multiformat_installer_and_self_verify_tamper_guards() {
             out_dir: spec_out_dir.clone(),
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_fixture),
+            live_ci_receipt_in: None,
             source_sha: Some("e10c2dd594b64a0d9717823bbc5374db1fa0189d".to_owned()),
             repo_root: repo_root.to_path_buf(),
         })
@@ -1666,6 +1667,7 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
             out_dir: out_ok.clone(),
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_fixture.clone()),
+            live_ci_receipt_in: None,
             source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
             repo_root: repo_root.clone(),
         })
@@ -1749,6 +1751,7 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
             out_dir: tmp.path().join("spec-bad-mac"),
             run_ci_qualification: false,
             ci_qualification_in: Some(ci_qual_fixture.clone()),
+            live_ci_receipt_in: None,
             source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
             repo_root: repo_root.clone(),
         })
@@ -1780,6 +1783,7 @@ fn spec_report_renders_full_product_coverage_matrix_and_rejects_failed_live_chec
         out_dir: tmp.path().join("spec-bad"),
         run_ci_qualification: false,
         ci_qualification_in: Some(ci_qual_fixture),
+        live_ci_receipt_in: None,
         source_sha: Some("92ef2d2c1bc4356f95482255e6cc093f7ea76e87".to_owned()),
         repo_root,
     })
@@ -2075,4 +2079,324 @@ fn universal_tabular_conditioning_zero_leakage_and_completions() {
             );
         }
     }
+}
+
+fn sample_live_ci_4tier_fixture(source_sha: &str) -> serde_json::Value {
+    let mut runs = Vec::new();
+    let mut cmps = Vec::new();
+    for (e_idx, (eff, waves, cands, shards, target)) in [
+        ("fast", 1u64, 25u64, 0u64, "aws_live"),
+        ("medium", 4, 37, 0, "aws_live"),
+        ("high", 12, 73, 120, "ci_emulator"),
+        ("ultra", 32, 169, 480, "ci_emulator"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let tier = if e_idx < 2 { "free" } else { "pro" };
+        let mode = if shards == 0 {
+            "SoloSingleLambda"
+        } else {
+            "HybridFanOut"
+        };
+        let mut pair = serde_json::Map::new();
+        for cloud in ["dev", "prod"] {
+            let wall = 4200.0 + (waves as f64) * 950.0;
+            let usd = 0.00035 + (waves as f64) * 0.00014;
+            let entry = serde_json::json!({
+                "cloud": cloud,
+                "effort": eff,
+                "execution_target": target,
+                "tier_applied": tier,
+                "execution_mode": mode,
+                "region": "us-east-2",
+                "run_id": format!("run_ci_{cloud}_{eff}_01"),
+                "final_state": "completed",
+                "encrypted_cuen": true,
+                "shredded_after_run": true,
+                "waves_completed": waves,
+                "waves_target": waves,
+                "candidates_evaluated": cands,
+                "eval_shards": shards,
+                "poll_requests": waves,
+                "prep_ms": 18.0,
+                "upload_ms": 210.0,
+                "search_ms": wall - 280.0,
+                "predict_ms": 52.0,
+                "total_wall_ms": wall,
+                "container_wall_ms": wall + 45.0,
+                "holdout_rmse": 0.098,
+                "holdout_r2": 0.99962,
+                "rmse_reduction_vs_linear_pct": 98.07,
+                "cost_estimate": {
+                    "apigw_http_api_usd": 0.000008,
+                    "lambda_edge_usd": 0.000004,
+                    "lambda_engine_usd": usd * 0.65,
+                    "lambda_eval_usd": usd * 0.30,
+                    "s3_requests_usd": 0.000015,
+                    "s3_storage_and_transfer_usd": 0.000001,
+                    "total_estimated_usd": usd,
+                    "runs_per_1_usd": 1.0 / usd,
+                }
+            });
+            pair.insert(cloud.to_owned(), entry.clone());
+            runs.push(entry);
+        }
+        cmps.push(serde_json::json!({
+            "effort": eff,
+            "execution_target": target,
+            "waves_target": waves,
+            "dev": pair["dev"],
+            "prod": pair["prod"],
+        }));
+    }
+    serde_json::json!({
+        "schema": "jopedime.carbon.live-ci-4tier-docker.v1",
+        "captured_utc": "2026-11-15T05:25:00Z",
+        "source_sha": source_sha,
+        "github_run_id": "43680999999",
+        "github_run_attempt": 1,
+        "pro_secrets_mode": "zero_secrets_hybrid_live_and_emulator",
+        "all_passed": true,
+        "total_wall_ms": 48210.0,
+        "container": {
+            "base_image": "ubuntu:24.04",
+            "image_id": "sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5",
+            "repo_digest": "ubuntu@sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5",
+            "os_pretty_name": "Ubuntu 24.04.5 LTS",
+            "uname": "Linux x86_64",
+            "zero_credentials_pre_install": true,
+            "post_logout_credentials_absent": true,
+            "verified_absent_env_vars": ["AWS_ACCESS_KEY_ID", "GITHUB_TOKEN"],
+            "verified_absent_paths_pre_install": ["/root/.aws", "/root/.config/jopedime"]
+        },
+        "install": {
+            "command": "curl -fsSL https://downloads.neverhuman.org/carbon/install.sh | sh",
+            "install_wall_ms": 1850.0,
+            "installed_binary_path": "/root/.local/bin/carbon",
+            "installed_binary_bytes": 3763432,
+            "installed_binary_sha256": "b5b6acd9ae1d980c9d197d7d60bc0f2216e3a9123a9a2878e9ee5f28a3991aea",
+            "installed_clouds_json_sha256": "e51963b89f784cb22364de8db24c28c985f9f360ffb073e8a240a7759bc67456",
+            "config_dir_mode": "0o700",
+            "release_tag": "carbon-cli-v1.1.0",
+            "self_verify_verified": true,
+            "manifest_ecdsa_verified": true,
+            "kek_pins_verified": 6,
+            "doctor_healthy": true,
+            "doctor_dev_healthy_regions": 1,
+            "doctor_prod_healthy_regions": 5,
+            "quickstart_passed": true,
+            "quickstart_run_id": "run_qs_live_01",
+            "quickstart_wall_ms": 5120.0,
+            "quickstart_holdout_r2": 0.99984,
+            "quickstart_encrypted_cuen": true,
+            "quickstart_shredded": true,
+            "live_anon_high_gate_status": 403
+        },
+        "dataset": {
+            "name": "nonlinear_240x6.csv",
+            "rows": 240,
+            "fit_rows": 192,
+            "holdout_rows": 48,
+            "features": 6,
+            "bytes": 15938,
+            "sha256": "3d8765caca6fb0137979893ac7a29dd95002c3e33f9f6bd8f19743506cce59b1"
+        },
+        "runs": runs,
+        "per_tier_comparison": cmps,
+        "emulator_cells": {
+            "total_residual_cas_blobs": 0
+        }
+    })
+}
+
+#[test]
+fn spec_report_and_verify_bind_live_ci_4tier_docker_receipt_and_reject_tamper() {
+    let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let sha = "fd3adc664e20d32b2ad51a4860db78b8dd93f939";
+    let ci_qual_path = tmp.path().join("ci-qual.json");
+    std::fs::write(
+        &ci_qual_path,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schema": "jopedime.carbon.ci-quickstart-qualification.v1",
+            "timestamp_epoch_ms": 1794622000000u64,
+            "source_sha": sha,
+            "binary_version": "1.2.0",
+            "release_tag": "carbon-cli-v1.2.0",
+            "emulator_regions": ["prod:us-east-2", "prod:eu-central-1", "dev:us-east-2"],
+            "emulator_edge_invocations": 42,
+            "emulator_engine_invocations": 12,
+            "emulator_eval_invocations": 8,
+            "residual_cas_blobs_after_shred": 0,
+            "total_tests": 8,
+            "passed_tests": 8,
+            "all_passed": true,
+            "total_wall_ms": 1234.5,
+            "steps": [],
+            "redteam_vectors": []
+        }))
+        .expect("ser ci_qual"),
+    )
+    .expect("write ci_qual");
+
+    let live_path = tmp.path().join("live-ci-4tier-docker.json");
+    let live_val = sample_live_ci_4tier_fixture(sha);
+    std::fs::write(
+        &live_path,
+        serde_json::to_vec_pretty(&live_val).expect("ser live"),
+    )
+    .expect("write live");
+
+    let out_dir = tmp.path().join("spec-live-out");
+    let html_path =
+        jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
+            evidence_dir: repo_root.join("docs/carbon/evidence"),
+            out_dir: out_dir.clone(),
+            run_ci_qualification: false,
+            ci_qualification_in: Some(ci_qual_path.clone()),
+            live_ci_receipt_in: Some(live_path),
+            source_sha: Some(sha.to_owned()),
+            repo_root: repo_root.clone(),
+        })
+        .expect("spec-report with live-ci-4tier-docker.json must succeed");
+
+    let html = std::fs::read_to_string(html_path).expect("read html");
+    assert!(html.contains("Table 4C-1"));
+    assert!(html.contains("Table 4C-2"));
+    assert!(html.contains("Table 4C-3"));
+    assert!(html.contains("Figure 4C"));
+    assert!(html.contains("AWS LIVE"));
+    assert!(html.contains("CI EMULATOR"));
+    assert!(html.contains("run_ci_prod_ultra_01"));
+
+    let manifest: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(out_dir.join("spec-bundle-manifest.json")).expect("read manifest"),
+    )
+    .expect("parse manifest");
+    assert_eq!(
+        manifest["live_ci_qualification_file"].as_str(),
+        Some("live-ci-4tier-docker.json")
+    );
+    assert!(manifest["live_ci_qualification_sha256"]
+        .as_str()
+        .is_some_and(|s| s.len() == 64));
+
+    // Wrong source_sha must fail closed during spec-report.
+    let bad_live = tmp.path().join("bad-live.json");
+    std::fs::write(
+        &bad_live,
+        serde_json::to_vec_pretty(&sample_live_ci_4tier_fixture(
+            "0000000000000000000000000000000000000000",
+        ))
+        .expect("ser bad"),
+    )
+    .expect("write bad");
+    assert!(
+        jope_carbon::execute_carbon_spec_report(&jope_carbon::CarbonSpecReportOptions {
+            evidence_dir: repo_root.join("docs/carbon/evidence"),
+            out_dir: tmp.path().join("spec-bad-sha"),
+            run_ci_qualification: false,
+            ci_qualification_in: Some(ci_qual_path),
+            live_ci_receipt_in: Some(bad_live),
+            source_sha: Some(sha.to_owned()),
+            repo_root,
+        })
+        .is_err(),
+        "mismatched source_sha in live-ci-4tier-docker.json must fail closed"
+    );
+}
+
+#[test]
+fn hybrid_fanout_zero_fallback_omits_eval_fallback_shards_for_v110_wire_compat() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let mut emu = jope_carbon::CarbonLocalLambdaEmulator::start(
+        jope_carbon::CarbonEmuConfig::for_dir(tmp.path().join("emu-v110")),
+    )
+    .expect("start emu");
+    let pro_tok = emu
+        .mint_capability_token(
+            "pro_v110_compat",
+            jope_api::carbon::CarbonTierWire::Pro,
+            false,
+        )
+        .expect("mint pro token");
+    let (raw_client, _probed) =
+        jope_carbon::CarbonThinClient::connect_fastest(vec![emu.base_url()]).expect("connect");
+    let client = raw_client.with_capability_token(pro_tok.clone());
+
+    let mut rows = Vec::with_capacity(60);
+    for i in 0..60 {
+        let x1 = (i as f64) * 0.25 - 7.0;
+        let x2 = ((i % 7) as f64) * 0.5;
+        let y = 2.5 * x1 - 1.2 * x2 + 0.75;
+        rows.push(vec![x1, x2, y]);
+    }
+    let prepared = jope_carbon::CarbonThinClient::prepare_numeric_dataset(
+        vec!["x1".to_owned(), "x2".to_owned(), "y".to_owned()],
+        &rows,
+        "y",
+        42,
+        0.20,
+    )
+    .expect("prepare");
+    client
+        .upload_prepared(
+            "pro_v110_compat",
+            jope_api::carbon::CarbonTierWire::Pro,
+            &prepared,
+        )
+        .expect("upload");
+    let run_id_str = "run_01JCCARB0NEM00000000000002";
+    let run_id = run_id_str.parse().expect("parse RunId");
+    let ds_id = "ds_222222222222222222222222"
+        .parse()
+        .expect("parse DatasetId");
+    let progress = client
+        .start_run(
+            run_id,
+            ds_id,
+            "pro_v110_compat",
+            jope_api::carbon::CarbonTierWire::Pro,
+            jope_api::Effort::High,
+            "rmse",
+            42,
+            &prepared,
+        )
+        .expect("high effort run");
+    assert_eq!(
+        progress.eval_fallback_shards, None,
+        "zero-fallback HybridFanOut progress must set eval_fallback_shards = None"
+    );
+    let ser = serde_json::to_string(&progress).expect("serialize progress");
+    assert!(
+        !ser.contains("eval_fallback_shards"),
+        "serialized CarbonPublicWaveProgress must omit eval_fallback_shards when None for v1.1.0 deny_unknown_fields clients: {ser}"
+    );
+
+    let raw = carbon_https_agent()
+        .get(&format!(
+            "{}/v1/carbon/runs/{run_id_str}?tenant_id=pro_v110_compat",
+            emu.base_url()
+        ))
+        .header("Authorization", &format!("Bearer {pro_tok}"))
+        .header("X-Carbon-Tenant-Id", "pro_v110_compat")
+        .call()
+        .expect("GET status")
+        .into_body()
+        .read_to_string()
+        .expect("status body");
+    let val: serde_json::Value = serde_json::from_str(&raw).expect("parse status json");
+    assert!(
+        val.get("eval_fallback_shards").is_none(),
+        "zero-fallback HybridFanOut GET /v1/carbon/runs/<id> must omit eval_fallback_shards for v1.1.0 deny_unknown_fields clients: {raw}"
+    );
+    let sse = client
+        .get_run_events_sse("pro_v110_compat", run_id_str)
+        .expect("GET events SSE");
+    assert!(
+        !sse.contains("eval_fallback_shards"),
+        "zero-fallback HybridFanOut SSE stream must omit eval_fallback_shards for v1.1.0 clients: {sse}"
+    );
+    emu.shutdown();
 }

@@ -1512,6 +1512,26 @@
       "lanes": [],
       "scope": "Manual multi-OS (`ubuntu-24.04`, `macos-15`, `windows-2025`) thin `carbon` CLI matrix build job gated behind `vars.CARBON_HOSTED_MATRIX_RUNNER`; release publication remains governed by `deploy/carbon/release-and-promote.sh`."
     },
+    "job:.github/workflows/carbon-live-e2e.yml/live-docker-4tier": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "carbon-live-e2e"
+      ],
+      "scope": "Hosted Ubuntu 24.04 unmounted env -i Docker production CLI install + dev/prod fast/medium/high/ultra E2E benchmark and cost receipt producer."
+    },
+    "job:.github/workflows/carbon-live-e2e.yml/trust-admission": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "carbon-live-e2e"
+      ],
+      "scope": "Fail-closed caller repository/workflow admission gate before hosted Carbon Fresh-Docker 4-tier execution."
+    },
     "job:.github/workflows/ci.yml/aggregate": {
       "discovery": {
         "kind": "workflow-job"
@@ -1521,6 +1541,16 @@
         "aggregate"
       ],
       "scope": "Always aggregate current run/attempt receipts; reject failures, cancellations, missing/unknown/zero results. Path skips require declared exclusion."
+    },
+    "job:.github/workflows/ci.yml/carbon-live-e2e": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "carbon-live-e2e"
+      ],
+      "scope": "Same-repo PR and main-dispatch caller of carbon-live-e2e.yml; aggregate requires run/attempt/source-bound live-ci-4tier-docker.json and SHA-256 binding in spec-pdf-receipt.json."
     },
     "job:.github/workflows/ci.yml/changes": {
       "discovery": {
@@ -2509,6 +2539,16 @@
         "hygiene"
       ],
       "scope": "Synthetic D1 Darwin development-package identity and receipt controls; native DEV-BUILD execution is separately recorded and never qualifies the signed release gate."
+    },
+    "python:deploy/carbon/test_ci_live_4tier_docker.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of Carbon clean-room Docker 4-tier orchestrator Option B/Option A routing, missing-secret refusal, and secret/hostname scrub refusal."
     },
     "python:deploy/ci/cuda/test_evidence.py": {
       "discovery": {
@@ -21710,6 +21750,16 @@
       "lanes": [],
       "scope": "Manual multi-OS (`ubuntu-24.04`, `macos-15`, `windows-2025`) thin `carbon` CLI matrix build workflow gated behind `vars.CARBON_HOSTED_MATRIX_RUNNER`; release publication remains governed by `deploy/carbon/release-and-promote.sh`."
     },
+    "workflow:.github/workflows/carbon-live-e2e.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "dispositions": [],
+      "lanes": [
+        "carbon-live-e2e"
+      ],
+      "scope": "Reusable hosted Ubuntu 24.04 Fresh-Docker Carbon CLI install and dev+prod fast/medium/high/ultra E2E qualification feeding the CI-built Carbon engineering & testing spec PDF."
+    },
     "workflow:.github/workflows/ci.yml": {
       "discovery": {
         "kind": "workflow"
@@ -21725,7 +21775,8 @@
         "python",
         "e2e-smoke",
         "source-audit",
-        "aggregate"
+        "aggregate",
+        "carbon-live-e2e"
       ],
       "scope": "Configured fast PR/manual lanes plus the required same-repository full-source Jankurai audit; path-excluded jobs are not passes."
     },
@@ -21895,6 +21946,38 @@
         "per-lane receipts and evidence"
       ],
       "path_applicability": "always, including failed or skipped dependencies",
+      "requires_nonzero_tests": false,
+      "result_backend": "none",
+      "stage": "execution"
+    },
+    "carbon-live-e2e": {
+      "checks": [
+        "python3 deploy/carbon/ci-live-4tier-docker.py --source-sha \"$JOPE_SOURCE_SHA\" --out-dir \"target/carbon-live-e2e/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}\""
+      ],
+      "command": [
+        "python3",
+        "deploy/carbon/ci-live-4tier-docker.py"
+      ],
+      "environment": {
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        "CARGO_PROFILE_DIST_CI_LTO": "off",
+        "CARGO_TARGET_DIR": "job-scoped hosted Ubuntu target"
+      },
+      "evidence": [
+        "live-ci-4tier-docker.json (Fresh-Docker ubuntu:24.04 production CLI install, self-verify, doctor --cloud all, quickstart, live anonymous 403 gate, and 8 dev+prod fast/medium/high/ultra E2E runs with wall time and 6-component USD cost)",
+        "MANIFEST.sha256"
+      ],
+      "feature_selection": "package-defaults",
+      "inputs": [
+        "source SHA",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        "ubuntu:24.04 clean-room container",
+        "https://downloads.neverhuman.org/carbon/install.sh"
+      ],
+      "path_applicability": "ci.yml changes.e2e on same-repository pull_request and main workflow_dispatch",
       "requires_nonzero_tests": false,
       "result_backend": "none",
       "stage": "execution"
@@ -22725,7 +22808,8 @@
         "python3 deploy/dl-trainonly/test_verify_lane.py",
         "python3 deploy/dl-trainonly/test_offline_guard.py",
         "python3 deploy/ci/test-dl-offline-group.py",
-        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py"
+        "python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py",
+        "python3 -W error::ResourceWarning deploy/carbon/test_ci_live_4tier_docker.py"
       ],
       "command": [
         "bash",
