@@ -30,6 +30,7 @@ import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
 import cols_h458 as CB  # noqa: E402
+import gp_chain_h458 as GC  # noqa: E402
 import episodes_h458 as E  # noqa: E402
 import family_pool_h458 as FP  # noqa: E402
 import probe_h458 as PR  # noqa: E402
@@ -40,7 +41,7 @@ HERE = Path(__file__).resolve().parent
 GP_ANCHOR = Path("/home/ubuntu/jope-data/h452-flywheel/gp_anchors_p0")
 P418 = Path("/home/ubuntu/jope_plan/evidence/H418/pulled")
 P448 = Path("/home/ubuntu/jope_plan/evidence/H448/pulled")
-SOURCES = ("paths_h458.py", "family_pool_h458.py", "episodes_h458.py", "train_h458.py", "probe_h458.py", "cols_h458.py")
+SOURCES = ("paths_h458.py", "family_pool_h458.py", "episodes_h458.py", "train_h458.py", "probe_h458.py", "cols_h458.py", "gp_chain_h458.py")
 
 
 def gate_quarantine(ctx) -> dict:
@@ -417,6 +418,14 @@ def gate_block_closures(ctx) -> dict:
     (bank_dir / "SHA256SUMS").write_text(f"{P.digest_file(bank_p)}  bank.npz\n")
     assert CB.probe_board_of(bank_p)["probe_bank_sha256"] == P.digest_file(bank_p)
     assert CB.probe_board_of(P.EVAL_BANK) is None, "the evaluation bank reads as a probe bank"
+    moved = root / "moved_bank.npz"
+    np.savez(moved, x=np.arange(4))
+    CB.KNOWN_PROBE_BANKS[P.digest_file(moved)] = "selftest-board"
+    try:
+        assert _refused(CB.probe_board_of, moved), "a probe bank moved away from its board was accepted as an evaluation bank"
+    finally:
+        CB.KNOWN_PROBE_BANKS.pop(P.digest_file(moved))
+    assert CB.probe_board_of(moved) is None
     # checkpoints: fair needs the allowlist and no in-corpus marker; role init is a plain checkpoint scored with random slots
     plain, marked, spec = root / "plain.pt", root / "marked.pt", root / "spec.pt"
     torch.save({"ema": {}}, plain)
@@ -464,6 +473,7 @@ def gate_block_closures(ctx) -> dict:
     mdir.mkdir()
     mdoc = CB.merge_probe_blocks({"init": srcs["init"], "canon": srcs["canon"]}, mdir, [])
     assert mdoc["contexts"] == ["c1", "c2"] and mdoc["closure"] == "fresh-probe" and mdoc["bank_sha256"] == "b1" and len(mdoc["names"]) == 8, mdoc["names"]
+    assert mdoc["dropped_contexts"] == {"init": [], "canon": ["c3"]}, mdoc["dropped_contexts"]
     with np.load(mdir / "c1.npz") as zm, np.load(srcs["canon"] / "c1.npz") as zs:
         assert np.array_equal(zm["ref_canon_yj"], zs["ref_" + CB.COLUMNS[1]])
         assert np.allclose(zm["bag_canon_mean3"], np.mean([zs["bag_" + n] for n in CB.COLUMNS], axis=0), rtol=0, atol=1e-15)
@@ -484,7 +494,91 @@ def gate_block_closures(ctx) -> dict:
         same = CB._struct_cols_same_width(lambda a_, y_, q_, **k_: (a_, q_, None, None, None))
         assert same(xs[:8], d["y"][:8], xa[:4])[0].shape[1] == xs.shape[1]
     assert C.REL.build_h450_struct_cols is before, "the struct-column function was not restored"
-    return {"checks": 36, "dir": str(root)}
+    return {"checks": 39, "dir": str(root)}
+
+
+class _LookupEngine:
+    """Stands in for the GP engine: its "program" knows half the target of every row it was fitted on and nothing else."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    @staticmethod
+    def make_stratified_kfold(key, y, k=5, rep=0):
+        return np.arange(len(y), dtype=np.int64) % int(k)
+
+    def evolve_single_context_1000g(self, *, cid, Xs, Xa, ys, out_root, n_gens, **_kw):
+        table = {Xs[i].tobytes(): float(ys[i]) for i in range(len(ys))}
+        pa = np.array([0.5 * table.get(Xa[i].tobytes(), 0.0) for i in range(len(Xa))])
+        snap = Path(out_root) / f"g{int(n_gens)}"
+        snap.mkdir(parents=True, exist_ok=True)
+        np.savez(snap / f"{cid}.npz", Q_cons=(0.5 * ys)[:, None], AKF_cons=pa[:, None], PA_cons=pa[:, None], u_cons=np.array([0.1]),
+                 dsls=np.array(["stub"]), dsls_cons=np.array(["stub"]))
+        self.calls.append({"cid": cid, "rows": len(ys), "gens": int(n_gens)})
+        return {"total_unique_evaluated": 3 * int(n_gens), "worker_calls": 1, "timeouts": 0}
+
+
+def gate_gp_chain_units(ctx) -> dict:
+    """The staged-GP driver's arithmetic and its row isolation, with a stub in place of the engine (no GP is run)."""
+    assert GC.split_generations(160, 4) == [40, 40, 40, 40] and GC.split_generations(10, 3) == [4, 3, 3]
+    assert _refused(GC.split_generations, 2, 3)
+    rng = np.random.default_rng(9)
+    y = rng.normal(size=60)
+    c1, c2 = y + rng.normal(size=60), y + rng.normal(size=60)
+    snap = {"Q_cons": np.column_stack([c1, c2]), "AKF_cons": np.ones((7, 2)), "PA_cons": np.column_stack([np.ones(7), 3 * np.ones(7)]), "u_cons": np.array([0.2, 0.1]),
+            "dsls": np.array(["a", "b"])}
+    one, w1, _ = GC.stage_column(snap, y, 1)
+    assert w1 == [1.0] and np.array_equal(one["q"], c1)
+    two, w2, names = GC.stage_column(snap, y, 3)
+    assert names == ["a", "b"] and min(w2) >= 0.0 and sum(w2) <= 1.0 + 1e-12 and GC.rmse(two["q"], y) < GC.rmse(c1, y)
+    assert np.allclose(two["ref"], w2[0] * 1.0 + w2[1] * 3.0)
+    big, wb, _ = GC.stage_column({**snap, "Q_cons": np.column_stack([0.25 * y, 0.25 * y])}, y, 2)
+    assert sum(wb) <= 1.0 + 1e-12, "a stage blend inflated its programs"
+    fb, _, nm = GC.stage_column({**snap, "dsls": np.array(["mean_fallback"])}, y, 2)
+    assert nm == ["mean_fallback"] and np.allclose(fb["q"], y.mean())
+    # chains and outer folds on a table whose audit slot repeats ten SEARCH rows
+    xs = rng.normal(size=(48, 3))
+    yy = rng.normal(size=48) + 2.0
+    d = {"Xs": xs, "Xa": np.vstack([xs[:10], rng.normal(size=(5, 3))]), "y": yy, "family": "fam-stubstubstub"}
+    work = P.QUARANTINE / "selftest" / f"gpchain_{int(time.time())}_{os.getpid()}"
+
+    class A:  # the argparse fields run_context reads
+        gens, stages, outer, nu, committee, min_gain, seed, inner_slots = 12, 3, 4, 1.0, 1, 0.0, 1, 1
+
+    eng = _LookupEngine()
+    A.arm = "chain"
+    res = GC.run_context((eng, None, None), "ctxa", d, A, work / "chain")
+    for j, st in enumerate(res["stages"], 1):
+        assert np.allclose(st["q"], (1.0 - 0.5**j) * yy), "the chain does not fit the residual of its running sum"
+        assert np.allclose(st["ref"][:10], (1.0 - 0.5**j) * yy[:10]) and np.allclose(st["ref"][10:], 0.0)
+    assert [c["gens"] for c in eng.calls] == [4, 4, 4] and res["book"]["generations_total"] == 12 and not res["book"]["honest_search_column"]
+    eng = _LookupEngine()
+    A.arm, A.stages = "oof_chain", 2
+    res = GC.run_context((eng, None, None), "ctxb", d, A, work / "oof")
+    lab = res["outer_lab"]
+    assert sorted(set(lab.tolist())) == [0, 1, 2, 3] and res["book"]["honest_search_column"]
+    for st in res["stages"]:
+        assert np.allclose(st["q"], 0.0), "a held-out SEARCH row reached a fit"
+    last = res["stages"][-1]["ref"]
+    assert np.allclose(last[:10], 0.75 * 0.75 * yy[:10]) and np.allclose(last[10:], 0.0), "fold-models are not averaged on the audit slot"
+    assert len(eng.calls) == 8 and all(c["rows"] == 36 for c in eng.calls) and sum(c["gens"] for c in eng.calls) == 12
+    # packing for a column scorer: names, shapes, nothing but the block layout
+    arm_dirs = {}
+    for tag, st in (("single", res["stages"][:1]), ("chain", res["stages"])):
+        ad = work / f"arm_{tag}"
+        ad.mkdir(parents=True)
+        np.savez(ad / "ctxb.npz", outer_lab=lab, **{f"{k}_s{j}": v for j, s_ in enumerate(st, 1) for k, v in s_.items()})
+        (ad / "ctxb.json").write_text(json.dumps({"wall_s": 1.0, "settings": {"bank_sha256": "b", "bank": str(P.EVAL_BANK)}}))
+        arm_dirs[tag] = ad
+    pk = work / "packed"
+    pk.mkdir()
+    doc = GC.pack_block(arm_dirs, pk)
+    assert doc["names"] == ["single", "chain_s1", "chain_s2", "chain"] and doc["closure"] == "fair-gp-search-only" and doc["contexts"] == ["ctxb"]
+    with np.load(pk / "ctxb.npz") as z:
+        assert sorted(k for k in z.files if k not in ("ok", "wall_s")) == sorted(f"{p_}_{n}" for p_ in ("q", "bag", "ref") for n in doc["names"])
+        assert np.array_equal(z["ref_chain"], res["stages"][-1]["ref"]) and np.array_equal(z["q_chain_s1"], res["stages"][0]["q"])
+    assert _refused(GC.pack_block, arm_dirs, pk), "a pack into a filled directory was accepted"
+    return {"checks": 21, "dir": str(work)}
 
 
 def gate_static_hygiene(ctx) -> dict:
@@ -512,6 +606,7 @@ GATES = (
     gate_eval_pipeline_identity,
     gate_builder_matches_reference,
     gate_block_closures,
+    gate_gp_chain_units,
     gate_cpu_mini_train,
     gate_remote_workers,
 )

@@ -23,7 +23,8 @@ blocks that the column builder feeds. H458 trains on episodes built by the colum
 | `train_h458.py` | trainer: exposure-indexed schedule and checkpoints, measured duplicate ledger, trim-and-retry OOM policy, optional data workers on other hosts |
 | `probe_h458.py` | SEARCH-only out-of-fold utility under the evaluation's fold pipeline (reads no audit label) |
 | `cols_h458.py` | scored column builder for specialists (GP anchor off; canonical-slot path; cross-fit routing; closures `recall`, `skill-xfit5`, `fair`, `fresh-probe` with their refusals); `_load_col_block` layout + sidecar written per context |
-| `selftest_h458.py` | 17 CPU gates; receipt in `/home/ubuntu/jope_plan/evidence/H458/trackD/` |
+| `gp_chain_h458.py` | S9 staged residual GP: a loop over the H453 evolution engine's own entry point (single run, residual chains, evolution out of fold); reads no audit label |
+| `selftest_h458.py` | 18 CPU gates; receipt in `/home/ubuntu/jope_plan/evidence/H458/trackD/` |
 | `launch_specialist.sh` | resource-capped launch of one specialist run from the staged runtime copy |
 | `pilot_driver.sh` | trains the slot arms of one family side by side, then probes every milestone checkpoint |
 | `queue_h458.sh` | one specialist per family, a few at a time, with resume and SEARCH-only probes |
@@ -74,5 +75,12 @@ pre-fine-tune checkpoint on the same contexts. A probe block can never be stacke
 Where the wave stands against the field is in the Elo report, `/home/ubuntu/jope_plan/evidence/H458/trackD/elo_report_20261114/`
 (revision 7: fifth of 34 on the board, seventh of 23 against external models only; every number in-corpus or fair
 closure as labelled).
+
+S9, staged residual GP (owner's ask of 2026-11-15): `gp_chain_h458.py` runs GP, fits the next GP run to the residual of
+the running sum, and repeats. The engine's own curve says depth overfits (Ultra-GP alone: 1835 Elo at 50 generations,
+1815 at 1,000), so the arms spend a tier's generations on honesty and diversity instead: residual chains with
+cross-fitted stage columns, and evolution out of fold, where K outer folds each run the chain on the other folds and
+the held-out fold is predicted by a pipeline that never saw it. Every arm is read first on SEARCH rows and on the
+fresh-row probe board; the PREREG, the budget table and all scoring are Track S's (S9).
 
 Full results are recorded in `metrics.json` once the gates in `PREREG.md` have been read for all families.

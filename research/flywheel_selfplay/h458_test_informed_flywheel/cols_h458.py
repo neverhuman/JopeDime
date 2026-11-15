@@ -70,7 +70,10 @@ CLOSURES = ("recall", "skill-xfit5", "fair", "fresh-probe")
 PROBE_MARK = "PROBE_BOARD.json"
 FAIR_ALLOWLIST = P.EVIDENCE / "trackD" / "FAIR_CKPT_ALLOWLIST.json"
 SHORT = {"icl_e8_cw12_robridge_cv7": "rr", "icl_e8_cw12_yj_cv7": "yj", "icl_e8_rankgauss_duan_cv7": "rg"}
-IN_CORPUS_MARKS = ("in_corpus_dev91_disclosure", "quarantined_in_corpus", "quarantined_in_corpus_random_split_diagnostic", "quarantined_unfair_diagnostic")
+# `quarantined_unfair_diagnostic` is not listed: in H449 it marks other boards' test rows, and the dev91-free H449 checkpoints carry it
+IN_CORPUS_MARKS = ("in_corpus_dev91_disclosure", "quarantined_in_corpus", "quarantined_in_corpus_random_split_diagnostic")
+# probe banks by content, so a copy moved away from its board directory cannot pass as an evaluation bank
+KNOWN_PROBE_BANKS = {"ffe5f998181fda96b726e0293911e12d44d960b11abf41b1a43bd7ccd9cba632": "dev91-freshprobe-v1"}
 _STATE = {"n_raw": None}
 
 
@@ -255,9 +258,11 @@ def require_dir_consistent(out_dir: Path) -> None:
 def probe_board_of(bank_p: Path) -> dict | None:
     """The fresh-row probe board a bank file belongs to (Track S writes `PROBE_BOARD.json` beside it), or None."""
     mark = bank_p.parent / PROBE_MARK
-    if not mark.is_file():
-        return None
     sha = P.digest_file(bank_p)
+    if not mark.is_file():
+        if sha in KNOWN_PROBE_BANKS:
+            raise SystemExit(f"{bank_p}: the bank of probe board {KNOWN_PROBE_BANKS[sha]}, away from its board directory; use it in place")
+        return None
     sums = bank_p.parent / "SHA256SUMS"
     listed = {ln.split()[0] for ln in sums.read_text().splitlines() if ln.strip()} if sums.is_file() else set()
     if sha not in listed:
@@ -314,6 +319,7 @@ def merge_probe_blocks(sources: dict[str, Path], out_dir: Path, want: list[str])
         "probe_bank_sha256": bank_sha,
         "probe_board_sha256": next(iter(boards)),
         "contexts": cids,
+        "dropped_contexts": {t: sorted(set(docs[t]["contexts"]) - set(cids)) for t in sources},
         "merged_from": {t: {"dir": str(src), "sidecar_sha256": P.digest_file(src / "SIDECAR.json"), "probe_role": docs[t].get("probe_role"),
                             "arm": docs[t].get("arm"), "weights_sha256": docs[t].get("weights_sha256")} for t, src in sources.items()},
         "producer": producer(),
